@@ -1455,6 +1455,11 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
   function attr(v){ return esc(v).replaceAll("`","&#096;"); }
   // Sanitiza URLs vindas do banco: só permite http(s). Bloqueia javascript:, data:, etc.
   function safeUrl(v){ const s=txt(v); if(!s) return ""; try{ const u=new URL(s, window.location.origin); return (u.protocol==="http:"||u.protocol==="https:") ? s : ""; }catch(e){ return ""; } }
+  function isInternalPanelUrl(v){
+    const s=txt(v);
+    if(!s) return false;
+    try{ const u=new URL(s, window.location.origin); return u.origin === window.location.origin; }catch(e){ return false; }
+  }
   function rpcFirst(data){ return Array.isArray(data) ? (data[0] || null) : (data || null); }
   function sleep(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
 
@@ -3273,6 +3278,12 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
   function openPanel(code){
     const panel=panels.find(p=>p.codigo===code&&p.ativo!==false);
     if(!panel){ toast("Painel indisponível ou inativo.","warn"); return; }
+    const safePanelUrl = safeUrl(panel.url);
+    if(safePanelUrl && isInternalPanelUrl(safePanelUrl)){
+      rememberView(systemHomeView());
+      window.location.assign(new URL(safePanelUrl, window.location.origin).href);
+      return;
+    }
     document.body.classList.add("external-clean");
     currentPanel=panel; currentView="panel:"+code; rememberView(currentView); enforceResponsiveSidebar(); setActiveNav(currentView);
     document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); $("page-external").classList.add("active");
