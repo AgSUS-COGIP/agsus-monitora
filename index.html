@@ -1288,7 +1288,7 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
     skip_link_text:"",
     password_toggle_label:"",
     sidebar_toggle_label:"",
-    external_back_text:"",
+    external_back_text:"Voltar ao sistema",
     dark_mode_label:"",
     action_export_text:"",
     action_more_label:"",
@@ -1459,6 +1459,18 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
     const s=txt(v);
     if(!s) return false;
     try{ const u=new URL(s, window.location.origin); return u.origin === window.location.origin; }catch(e){ return false; }
+  }
+  function isSystemShellUrl(v){
+    const s=txt(v);
+    if(!s) return false;
+    try{
+      const u = new URL(s, window.location.origin);
+      if(u.origin !== window.location.origin) return false;
+      const path = u.pathname.replace(/\/+$/, "") || "/";
+      return path === "/" || path.endsWith("/index.html");
+    }catch(e){
+      return false;
+    }
   }
   function rpcFirst(data){ return Array.isArray(data) ? (data[0] || null) : (data || null); }
   function sleep(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
@@ -3279,7 +3291,7 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
     const panel=panels.find(p=>p.codigo===code&&p.ativo!==false);
     if(!panel){ toast("Painel indisponível ou inativo.","warn"); return; }
     const safePanelUrl = safeUrl(panel.url);
-    if(safePanelUrl && isInternalPanelUrl(safePanelUrl)){
+    if(safePanelUrl && isInternalPanelUrl(safePanelUrl) && isSystemShellUrl(safePanelUrl)){
       rememberView(systemHomeView());
       window.location.assign(new URL(safePanelUrl, window.location.origin).href);
       return;
