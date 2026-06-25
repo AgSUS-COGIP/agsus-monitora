@@ -868,3 +868,15 @@ body.access-request-mode .login-card h1 { font-size: 20px; margin-bottom: 8px; }
   .kpi { min-height: 72px; padding: 8px; }
   .kpi b { font-size: 22px; }
 }
+body.access-request-mode .login-mark,
+body.access-request-mode .login-eyebrow,
+body.access-request-mode #loginTitle,
+body.access-request-mode #loginSubtitle,
+body.access-request-mode #loginSlogan,
+body.access-request-mode #loginMsg {
+  display: none !important;
+}
+
+body.access-request-mode .login-card {
+  padding-top: 20px;
+}
