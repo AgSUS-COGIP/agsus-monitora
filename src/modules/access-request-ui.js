@@ -39,7 +39,7 @@ export function renderAccessRequestAdminItemHTML(req, panels) {
   const selectedPanels = new Set((req.solicitacoes_acesso_paineis || []).map((row) => String(row.painel_id)));
   const profileValue = ["leitor", "editor", "admin"].includes(req.perfil_solicitado) ? req.perfil_solicitado : "leitor";
   const editable = req.status === "pendente";
-  const disabled = editable ? "" : "";
+  const disabled = editable ? "" : "disabled";
 
   const painelChecks = (panels || []).filter((panel) => panel.ativo !== false).map((panel) => `
     <label class="panel-check">
