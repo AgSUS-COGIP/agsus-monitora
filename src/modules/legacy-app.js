@@ -450,6 +450,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
       console.error("Falha ao finalizar login:", error);
       forceAccessRequestFallback("Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.");
     }finally{
+      clearOAuthUrl();
       activeSessionLoadPromise = null;
       loader(false);
       document.body.classList.remove("config-loading");
@@ -476,8 +477,8 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
         manualLogoutInProgress = false; resetSignedOutState(message); return;
       }
       if(event === "TOKEN_REFRESHED"){ currentUser = session?.user || currentUser; return; }
-      if(event === "USER_UPDATED"){ refreshProfileAfterSessionUpdate(session); }
-      if(event === "SIGNED_IN"){ handleSignedInSession(session, "oauth"); }
+      if(event === "USER_UPDATED"){ setTimeout(() => refreshProfileAfterSessionUpdate(session), 0); }
+      if(event === "SIGNED_IN"){ setTimeout(() => handleSignedInSession(session, "oauth"), 0); }
     });
     await loadConfig({ silent:true });
     const { data } = await sb.auth.getSession();
@@ -507,6 +508,13 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   }
 
   function clearRecoveryUrl(){ history.replaceState({}, document.title, window.location.pathname); }
+  function clearOAuthUrl(){
+    const qs = new URLSearchParams(window.location.search || "");
+    const hash = new URLSearchParams(String(window.location.hash || "").replace(/^#/, ""));
+    if(qs.has("code") || hash.has("access_token") || hash.has("refresh_token")){
+      history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
 
   function applyStoredSidebarState(){
     if(isSidebarLockedViewport()) return;
