@@ -171,6 +171,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   let externalPanelsWarmed = false;
   let manualLogoutInProgress = false;
   let accessHeartbeatHandle = null;
+  let activeSessionLoadPromise = null;
   let activeLoadDataPromise = null;
   let loadDataRunCounter = 0;
   let activeRefreshDataPromise = null;
@@ -430,6 +431,32 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     catch(error){ console.error("Falha ao atualizar perfil:", error); }
   }
 
+  async function handleSignedInSession(nextSession, source="auth"){
+    if(!nextSession?.user || manualLogoutInProgress) return;
+    if(activeSessionLoadPromise) return activeSessionLoadPromise;
+    currentUser = nextSession.user;
+    openApp(currentUser);
+    activeSessionLoadPromise = (async()=>{
+      const ready = await loadInitialData();
+      if(ready){
+        await trackAccess(source === "boot" ? "sessao_restaurada" : "login_google", { tela:source });
+        startAccessHeartbeat();
+        startRealtime();
+      }
+    })();
+    try{
+      await activeSessionLoadPromise;
+    }catch(error){
+      console.error("Falha ao finalizar login:", error);
+      forceAccessRequestFallback("Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.");
+    }finally{
+      activeSessionLoadPromise = null;
+      loader(false);
+      document.body.classList.remove("config-loading");
+      const googleBtn = $("googleLoginBtn"); if(googleBtn) googleBtn.disabled = false;
+    }
+  }
+
   async function boot(){
     if(!initSupabase()) return;
     loader(true, "Carregando", "", 5);
@@ -450,6 +477,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
       }
       if(event === "TOKEN_REFRESHED"){ currentUser = session?.user || currentUser; return; }
       if(event === "USER_UPDATED"){ refreshProfileAfterSessionUpdate(session); }
+      if(event === "SIGNED_IN"){ handleSignedInSession(session, "oauth"); }
     });
     await loadConfig({ silent:true });
     const { data } = await sb.auth.getSession();
@@ -462,12 +490,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
       return;
     }
     if(data && data.session){
-      currentUser = data.session.user; openApp(currentUser);
-      const ready = await loadInitialData();
-      if(ready){
-        await trackAccess("sessao_restaurada", { tela:"boot" }); startAccessHeartbeat();
-        startRealtime();
-      }
+      await handleSignedInSession(data.session, "boot");
     } else {
       loader(false);
       document.body.classList.remove("config-loading");
