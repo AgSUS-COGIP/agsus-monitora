@@ -2584,18 +2584,7 @@ function renderAccessRequestAdminItem(req){
       {chave:"feature_modo_executivo", valor:txt($("cfgExecutiveModeEnabled")?.value||"true"), descricao:"Habilita o modo executivo no dashboard principal"}
     ];
 
-    // Preserva o índice original da lista renderizada.
-    // A versão anterior aplicava filter(...).map((panel,i)=>...), e o índice podia
-    // apontar para inputs errados quando houvesse painéis padrão/sem id no array.
-    const panelRows = panels
-      .map((panel,i)=> panel.id ? {
-        id:txt(panel.id),
-        titulo:txt($("panelTitulo"+i)?.value),
-        url:txt($("panelUrl"+i)?.value),
-        ativo:$("panelAtivo"+i)?.value === "true",
-        em_manutencao:$("panelManut"+i)?.value === "true"
-      } : null)
-      .filter(Boolean);
+    const panelRows = collectPanelRows(panels);
 
     const { error:cfgErr } = await sb.rpc(RPC_SAVE_CONFIG,{ p_config_rows:configRows, p_paineis:panelRows });
     if(cfgErr){ loader(false); return toast("Erro ao salvar configurações: "+friendlyError(cfgErr),"error"); }
