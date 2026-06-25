@@ -366,6 +366,7 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
         storageKey: SUPABASE_AUTH_STORAGE_KEY,
         persistSession: true,
         autoRefreshToken: true,
+        flowType: "implicit",
         detectSessionInUrl: true
       }
     });
@@ -601,7 +602,7 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
     currentUser = null;
     profile = null;
     const redirectTo = window.location.origin && window.location.origin !== "null"
-      ? new URL("/auth/callback.html", window.location.origin).href
+      ? window.location.origin + window.location.pathname
       : window.location.href.split("#")[0].split("?")[0];
     const domainHint = txt(cfgValue("auth_google_domain_hint"));
     const queryParams = { prompt:"select_account" };
