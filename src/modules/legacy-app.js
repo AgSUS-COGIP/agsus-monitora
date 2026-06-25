@@ -1,4 +1,12 @@
 import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { createSafeAuthStorage } from "./auth-storage.js";
+import {
+  accessRequestStatusMessage,
+  renderAccessPanelChoicesHTML,
+  renderAccessRequestAdminItemHTML,
+  selectedPanelIdsFromForm
+} from "./access-request-ui.js";
+import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
 
   // ============================================================
   // AgSUS Monitora Web V2.9.35
@@ -124,6 +132,7 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
   const DEFAULT_PANELS = [];
 
   let sb = null;
+  let authStorage = null;
   let currentUser = null;
   let profile = null;
   let appConfig = {};
