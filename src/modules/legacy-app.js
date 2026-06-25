@@ -410,6 +410,15 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     const accessBtn = $("accessRequestBtn"); if(accessBtn) accessBtn.disabled = false;
     if(message) showAlert("loginMsg", message, type);
   }
+  async function clearLocalAuthState(){
+  currentUser = null;
+  profile = null;
+  activeSessionLoadPromise = null;
+  try{ authStorage?.clearAuthState?.(); }catch(e){}
+  try{ sessionStorage.removeItem("agsus_oauth_callback_ok"); }catch(e){}
+  try{ await sb?.auth?.signOut({ scope:"local" }); }catch(e){}
+  clearOAuthUrl();
+}
 
   async function refreshProfileAfterSessionUpdate(nextSession){
     currentUser = nextSession?.user || null;
