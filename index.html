@@ -75,8 +75,17 @@
             <span class="gmark">G</span><span id="googleLoginText"></span>
           </button>
           <div id="accessRequestCard" class="access-request-card hidden">
-            <h2>Solicitar acesso ao sistema</h2>
-            <p>Seu login Google foi reconhecido, mas ainda não existe um perfil ativo para este e-mail. Envie a solicitação para um administrador liberar os módulos e painéis corretos.</p>
+            <div class="access-request-head">
+              <div class="access-request-icon"><i class="fa-solid fa-user-lock"></i></div>
+              <div>
+                <h2>Solicitar acesso ao sistema</h2>
+                <p>Seu e-mail foi autenticado pelo Google. Agora solicite a liberação para acessar os módulos e painéis corretos.</p>
+              </div>
+            </div>
+            <div class="access-authenticated-user">
+              <span>E-mail autenticado</span>
+              <strong id="accessReqEmail">-</strong>
+            </div>
             <div class="access-request-grid">
               <div class="form-row"><label for="accessReqNome">Nome</label><input id="accessReqNome" type="text" autocomplete="name"></div>
               <div class="form-row"><label for="accessReqSetor">Área / setor</label><input id="accessReqSetor" type="text" placeholder="Ex: COGIP, DSEI, gestão"></div>
@@ -89,6 +98,9 @@
             <div id="accessRequestStatus" class="access-status hidden"></div>
             <button id="accessRequestBtn" type="button" class="btn green" style="width:100%;margin-top:12px;min-height:44px;" onclick="submitAccessRequest()">
               <i class="fa-solid fa-paper-plane"></i> Enviar solicitação
+            </button>
+            <button id="accessSwitchAccountBtn" type="button" class="google-login-btn" style="margin-top:10px;" onclick="loginWithGoogle()">
+              <span class="gmark">G</span><span>Entrar com outra conta Google</span>
             </button>
           </div>
           <p id="loginHelp" class="login-help" style="margin:8px 0 0;text-align:center;font-size:12px;color:#63748d;font-weight:700;line-height:1.35;">

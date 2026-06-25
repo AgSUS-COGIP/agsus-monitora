@@ -412,6 +412,7 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
     currentUser = null; profile = null; rows = []; filtered = []; dataLoadedAtLeastOnce = false;
     allowedPanelIds = new Set(); accessRequests = [];
     stopAccessHeartbeat(); clearExternalPanelCache();
+    document.body.classList.remove("access-request-mode");
     $("appScreen").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
     $("loginPassword").value = "";
     const accessCard = $("accessRequestCard"); if(accessCard) accessCard.classList.add("hidden");
@@ -622,6 +623,7 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
   }
 
   function openApp(user){
+    document.body.classList.remove("access-request-mode");
     $("loginScreen").classList.add("hidden"); $("appScreen").classList.remove("hidden"); $("userEmail").textContent = user?.email || "-";
   }
 
@@ -709,8 +711,10 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
     document.body.classList.remove("config-loading");
     $("appScreen").classList.add("hidden");
     $("loginScreen").classList.remove("hidden");
+    document.body.classList.add("access-request-mode");
     const emailInput = $("loginEmail");
     if(emailInput) emailInput.value = currentUser?.email || "";
+    setText("accessReqEmail", currentUser?.email || "-");
     $("loginPassword").value = "";
     showAlert("loginMsg","Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.","warn");
     const card = $("accessRequestCard");
@@ -737,7 +741,9 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
     document.body.classList.remove("config-loading");
     $("appScreen")?.classList.add("hidden");
     $("loginScreen")?.classList.remove("hidden");
+    document.body.classList.add("access-request-mode");
     const emailInput = $("loginEmail"); if(emailInput) emailInput.value = currentUser?.email || "";
+    setText("accessReqEmail", currentUser?.email || "-");
     const pass = $("loginPassword"); if(pass) pass.value = "";
     showAlert("loginMsg", message || "Solicite acesso para continuar.", "warn");
     $("accessRequestCard")?.classList.remove("hidden");
