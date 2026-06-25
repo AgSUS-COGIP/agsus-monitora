@@ -348,30 +348,11 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
       showAlert("configMsg","Não foi possível carregar a biblioteca do Supabase. Verifique a internet.","error");
       return false;
     }
-    // Em iframes de terceiros (ex.: Google Sites), o navegador pode bloquear ou
-    // particionar o localStorage, fazendo o acesso LANÇAR exceção. Sem tratamento,
-    // isso quebra o login/sessão do Supabase e "trava" o painel inteiro.
-    // Usamos um adaptador seguro: tenta localStorage; se falhar, cai para memória.
-    const safeAuthStorage = (() => {
-      let backing = null;
-      try {
-        const k = "__agsus_probe__";
-        window.localStorage.setItem(k, "1");
-        window.localStorage.removeItem(k);
-        backing = window.localStorage;
-      } catch (e) {
-        backing = null; // armazenamento indisponível no iframe -> usa memória
-      }
-      const mem = new Map();
-      return {
-        getItem(key){ try { return backing ? backing.getItem(key) : (mem.has(key) ? mem.get(key) : null); } catch(_) { return mem.has(key) ? mem.get(key) : null; } },
-        setItem(key, value){ try { backing ? backing.setItem(key, value) : mem.set(key, value); } catch(_) { mem.set(key, value); } },
-        removeItem(key){ try { backing ? backing.removeItem(key) : mem.delete(key); } catch(_) { mem.delete(key); } }
-      };
-    })();
+   authStorage = createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY);
+    
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
-        storage: safeAuthStorage,
+        storage: authStorage,
         storageKey: SUPABASE_AUTH_STORAGE_KEY,
         persistSession: true,
         autoRefreshToken: true,
