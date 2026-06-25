@@ -787,14 +787,7 @@ function renderAccessPanelChoices(selectedIds=[]){
       status.classList.remove("hidden");
       status.classList.toggle("success", req.status === "aprovado");
       status.classList.toggle("warn", req.status === "pendente");
-      const msg = req.status === "pendente"
-        ? "Solicitação enviada. Aguarde a análise de um administrador. Você pode entrar com outra conta se precisar."
-        : req.status === "aprovado"
-          ? "Solicitação aprovada. Saia e entre novamente para carregar o perfil."
-          : req.status === "recusado"
-            ? "Solicitação recusada. Você pode ajustar os dados e enviar uma nova solicitação."
-            : "Status da solicitação: "+req.status;
-      status.textContent = req.observacao_admin ? `${msg} Observação: ${req.observacao_admin}` : msg;
+     status.textContent = accessRequestStatusMessage(req);
     }
     if(btn) btn.disabled = req.status === "pendente" || req.status === "aprovado";
     setAccessRequestFormLocked(req.status === "pendente" || req.status === "aprovado");
@@ -808,7 +801,7 @@ function renderAccessPanelChoices(selectedIds=[]){
     const nome = txt($("accessReqNome")?.value) || userDisplayName();
     const setor = txt($("accessReqSetor")?.value);
     const justificativa = txt($("accessReqJustificativa")?.value);
-    const selectedPanels = Array.from(document.querySelectorAll(".access-panel-choice:checked")).map(el=>txt(el.value)).filter(Boolean);
+    const selectedPanels = selectedPanelIdsFromForm();
     if(!nome || !justificativa){
       if(btn) btn.disabled = false;
       return showAlert("loginMsg","Informe seu nome e uma justificativa breve.","warn");
