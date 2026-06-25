@@ -458,6 +458,30 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     }
   }
 
+  async function handleOAuthCodeCallback(){
+    const qs = new URLSearchParams(window.location.search || "");
+    const code = qs.get("code");
+    if(!code) return false;
+    loader(true, "Autenticando com Google", "Finalizando acesso seguro...", 18);
+    try{
+      const { data, error } = await sb.auth.exchangeCodeForSession(code);
+      if(error) throw error;
+      const session = data?.session || (await sb.auth.getSession()).data?.session;
+      if(session?.user){
+        await handleSignedInSession(session, "oauth_callback");
+        return true;
+      }
+      throw new Error("Sessão não encontrada após retorno do Google.");
+    }catch(error){
+      console.error("Falha no callback OAuth:", error);
+      clearOAuthUrl();
+      loader(false);
+      document.body.classList.remove("config-loading");
+      resetSignedOutState("Não foi possível finalizar o login Google. Tente novamente escolhendo a conta.", "error");
+      return true;
+    }
+  }
+
   async function boot(){
     if(!initSupabase()) return;
     loader(true, "Carregando", "", 5);
@@ -481,6 +505,8 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
       if(event === "SIGNED_IN"){ setTimeout(() => handleSignedInSession(session, "oauth"), 0); }
     });
     await loadConfig({ silent:true });
+    const handledOAuth = await handleOAuthCodeCallback();
+    if(handledOAuth) return;
     const { data } = await sb.auth.getSession();
     if(hasPasswordRecoveryParams()){
       currentUser = null;
@@ -658,6 +684,8 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   async function showAccessRequestState(){
     stopRealtime();
     stopAccessHeartbeat();
+    loader(false);
+    document.body.classList.remove("config-loading");
     $("appScreen").classList.add("hidden");
     $("loginScreen").classList.remove("hidden");
     const emailInput = $("loginEmail");
@@ -684,6 +712,8 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   function forceAccessRequestFallback(message){
     stopRealtime();
     stopAccessHeartbeat();
+    loader(false);
+    document.body.classList.remove("config-loading");
     $("appScreen")?.classList.add("hidden");
     $("loginScreen")?.classList.remove("hidden");
     const emailInput = $("loginEmail"); if(emailInput) emailInput.value = currentUser?.email || "";
