@@ -880,3 +880,40 @@ body.access-request-mode #loginMsg {
 body.access-request-mode .login-card {
   padding-top: 20px;
 }
+body.access-request-mode .access-request-card {
+  margin-top: 0;
+  padding: 18px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+body.access-request-mode .access-request-head {
+  display: block;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+body.access-request-mode .access-request-head h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+body.access-request-mode .access-request-head p {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+body.access-request-mode .access-flow-steps,
+body.access-request-mode .access-request-icon {
+  display: none !important;
+}
+
+.access-submit-btn {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 44px;
+}
+
+body.access-request-mode .access-account-actions {
+  margin-top: 10px;
+}
