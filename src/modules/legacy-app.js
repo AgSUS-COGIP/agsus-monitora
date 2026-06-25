@@ -548,12 +548,19 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     if(!cfgBool("auth_google_enabled", false)) return;
     const btn = $("googleLoginBtn");
     if(btn) btn.disabled = true;
+    // Para testes e troca de perfil, limpe a sessao local antes do OAuth.
+    // O Google ainda pode ter conta ativa no navegador; prompt=select_account
+    // forca a tela de escolha de conta.
+    try{ await sb.auth.signOut({ scope:"local" }); }catch(e){}
+    currentUser = null;
+    profile = null;
     const redirectTo = window.location.origin && window.location.origin !== "null"
       ? window.location.origin + window.location.pathname
       : window.location.href.split("#")[0].split("?")[0];
     const domainHint = txt(cfgValue("auth_google_domain_hint"));
-    const options = { redirectTo };
-    if(domainHint) options.queryParams = { hd: domainHint };
+    const queryParams = { prompt:"select_account" };
+    if(domainHint) queryParams.hd = domainHint;
+    const options = { redirectTo, queryParams };
     const { error } = await sb.auth.signInWithOAuth({ provider:"google", options });
     if(error){
       if(btn) btn.disabled = false;
