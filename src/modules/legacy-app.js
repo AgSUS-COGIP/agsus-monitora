@@ -724,7 +724,7 @@ async function returnToLogin(){
     if(emailInput) emailInput.value = currentUser?.email || "";
     setText("accessReqEmail", currentUser?.email || "-");
     $("loginPassword").value = "";
-    showAlert("loginMsg","Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.","warn");
+    showAlert("loginMsg", "", "");
     const card = $("accessRequestCard");
     if(card) card.classList.remove("hidden");
     const nome = $("accessReqNome");
