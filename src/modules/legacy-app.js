@@ -2473,64 +2473,9 @@ function renderPanelAdmin(){
     box.innerHTML = accessRequests.map(renderAccessRequestAdminItem).join("");
   }
 
-  function renderAccessRequestAdminItem(req){
-    const selectedPanels = new Set((req.solicitacoes_acesso_paineis||[]).map(r=>String(r.painel_id)));
-    const profileValue = ["leitor","editor","admin"].includes(req.perfil_solicitado) ? req.perfil_solicitado : "leitor";
-    const editable = req.status === "pendente";
-    const disabled = editable ? "" : "disabled";
-    const painelChecks = panels.filter(p=>p.ativo!==false).map(p=>`
-      <label class="panel-check">
-        <input type="checkbox" data-access-panel="${attr(req.id)}" value="${attr(p.id||"")}" ${selectedPanels.has(String(p.id))?"checked":""} ${disabled}>
-        <span>${esc(p.titulo||p.codigo)}</span>
-      </label>
-    `).join("") || `<div class="access-status">Nenhum painel externo ativo.</div>`;
-    return `<div class="access-admin-item" data-access-request="${attr(req.id)}">
-      <div class="access-admin-head">
-        <div>
-          <strong>${esc(req.nome || req.email)}</strong>
-          <span>${esc(req.email)}${req.setor ? " · "+esc(req.setor) : ""}</span>
-          ${req.justificativa ? `<span>${esc(req.justificativa)}</span>` : ""}
-        </div>
-        <div class="access-status-pill ${attr(req.status)}">${esc(req.status)}</div>
-      </div>
-      <div class="access-admin-controls">
-        <div class="form-row">
-          <label>Perfil</label>
-          <select id="accessPerfil${attr(req.id)}" ${disabled}>
-            <option value="leitor" ${profileValue==="leitor"?"selected":""}>Leitor</option>
-            <option value="editor" ${profileValue==="editor"?"selected":""}>Editor</option>
-            <option value="admin" ${profileValue==="admin"?"selected":""}>Admin</option>
-          </select>
-        </div>
-        <div>
-          <label>Permissões internas</label>
-          <div class="permission-checks">
-            ${permissionCheckHTML(req.id,"ind","Saúde Indígena",true,disabled)}
-            ${permissionCheckHTML(req.id,"cores","Núcleo",false,disabled)}
-            ${permissionCheckHTML(req.id,"paineis","Painéis",true,disabled)}
-            ${permissionCheckHTML(req.id,"config","Config",false,disabled)}
-            ${permissionCheckHTML(req.id,"admin","Admin",false,disabled)}
-          </div>
-        </div>
-      </div>
-      <div style="margin-top:12px">
-        <label>Painéis externos liberados</label>
-        <div class="panel-check-list">${painelChecks}</div>
-      </div>
-      <div class="form-row" style="margin-top:12px">
-        <label>Observação administrativa</label>
-        <input id="accessObs${attr(req.id)}" value="${attr(req.observacao_admin||"")}" placeholder="Opcional" ${disabled}>
-      </div>
-      <div class="access-admin-actions">
-        ${editable ? `<button class="btn green" type="button" onclick="approveAccessRequest('${attr(req.id)}')"><i class="fa-solid fa-check"></i> Aprovar acesso</button>
-        <button class="btn red" type="button" onclick="denyAccessRequest('${attr(req.id)}')"><i class="fa-solid fa-xmark"></i> Recusar</button>` : ""}
-      </div>
-    </div>`;
-  }
-
-  function permissionCheckHTML(id,key,label,checked,disabled){
-    return `<label class="permission-check"><input type="checkbox" id="accessPerm_${attr(key)}_${attr(id)}" ${checked?"checked":""} ${disabled}><span>${esc(label)}</span></label>`;
-  }
+function renderAccessRequestAdminItem(req){
+  return renderAccessRequestAdminItemHTML(req, panels);
+}
 
   function accessRequestById(id){
     return accessRequests.find(r=>String(r.id)===String(id));
