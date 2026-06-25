@@ -749,21 +749,10 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     const btn = $("accessRequestBtn"); if(btn) btn.disabled = false;
   }
 
-  function renderAccessPanelChoices(selectedIds=[]){
-    const box = $("accessPanelChoices"); if(!box) return;
-    const activePanels = panels.filter(p=>p.ativo!==false);
-    if(!activePanels.length){
-      box.innerHTML = `<div class="access-status">Nenhum painel externo ativo encontrado.</div>`;
-      return;
-    }
-    const selected = new Set(selectedIds.map(String));
-    box.innerHTML = activePanels.map(p=>`
-      <label class="panel-check">
-        <input type="checkbox" class="access-panel-choice" value="${attr(p.id||"")}" ${selected.has(String(p.id))?"checked":""}>
-        <span>${esc(p.titulo||p.codigo)}</span>
-      </label>
-    `).join("");
-  }
+function renderAccessPanelChoices(selectedIds=[]){
+  const box = $("accessPanelChoices"); if(!box) return;
+  box.innerHTML = renderAccessPanelChoicesHTML(panels, selectedIds);
+}
 
   function setAccessRequestFormLocked(locked){
     ["accessReqNome","accessReqSetor","accessReqJustificativa"].forEach(id=>{ const el=$(id); if(el) el.disabled=!!locked; });
