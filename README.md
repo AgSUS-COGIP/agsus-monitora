@@ -34,6 +34,8 @@ npm run build
 
 Esta é a primeira etapa segura: separa HTML, CSS, JS, ambiente e migrações sem redesenhar o sistema inteiro.
 
+Veja o plano técnico em `docs/arquitetura-evolucao.md`.
+
 Próximas etapas recomendadas:
 
 1. Trocar `onclick` inline por eventos em módulos.
@@ -41,3 +43,11 @@ Próximas etapas recomendadas:
 3. Separar painéis externos em `src/modules/panels/`.
 4. Separar administração e solicitações em `src/modules/admin/`.
 5. Criar uma camada única para chamadas Supabase.
+
+## Fluxo seguro de trabalho
+
+1. Criar branch a partir de `main`.
+2. Publicar preview no Vercel.
+3. Testar login, permissões, painéis e análises.
+4. Abrir Pull Request.
+5. Só fazer merge para `main` depois de validar o preview.

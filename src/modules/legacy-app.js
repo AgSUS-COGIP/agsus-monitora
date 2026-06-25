@@ -768,6 +768,11 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
     `).join("");
   }
 
+  function setAccessRequestFormLocked(locked){
+    ["accessReqNome","accessReqSetor","accessReqJustificativa"].forEach(id=>{ const el=$(id); if(el) el.disabled=!!locked; });
+    document.querySelectorAll(".access-panel-choice").forEach(el=>{ el.disabled=!!locked; });
+  }
+
   async function loadMyAccessRequest(){
     if(!currentUser?.id) return null;
     const { data, error } = await sb
@@ -787,14 +792,17 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
     if(!req){
       if(status) status.classList.add("hidden");
       if(btn) btn.disabled = false;
+      setAccessRequestFormLocked(false);
       return null;
     }
     const panelIds = (req.solicitacoes_acesso_paineis||[]).map(r=>r.painel_id).filter(Boolean);
     renderAccessPanelChoices(panelIds);
     if(status){
       status.classList.remove("hidden");
+      status.classList.toggle("success", req.status === "aprovado");
+      status.classList.toggle("warn", req.status === "pendente");
       const msg = req.status === "pendente"
-        ? "Solicitação enviada. Aguarde a liberação de um administrador."
+        ? "Solicitação enviada. Aguarde a análise de um administrador. Você pode entrar com outra conta se precisar."
         : req.status === "aprovado"
           ? "Solicitação aprovada. Saia e entre novamente para carregar o perfil."
           : req.status === "recusado"
@@ -803,6 +811,7 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
       status.textContent = req.observacao_admin ? `${msg} Observação: ${req.observacao_admin}` : msg;
     }
     if(btn) btn.disabled = req.status === "pendente" || req.status === "aprovado";
+    setAccessRequestFormLocked(req.status === "pendente" || req.status === "aprovado");
     return req;
   }
 
