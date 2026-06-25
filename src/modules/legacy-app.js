@@ -477,9 +477,10 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   function hasPasswordRecoveryParams(){
     const qs = new URLSearchParams(window.location.search || "");
     const hash = new URLSearchParams(String(window.location.hash || "").replace(/^#/, ""));
-    return qs.get("reset") === "1" || qs.get("type") === "recovery" || qs.has("code") ||
-      qs.has("error") || qs.has("error_code") || hash.get("type") === "recovery" ||
-      hash.has("access_token") || hash.has("refresh_token") || hash.has("error") || hash.has("error_code");
+    // OAuth com Google tambem volta com ?code=...; isso nao e recuperacao de senha.
+    // So trate como recovery quando o tipo vier explicitamente como recovery ou reset=1.
+    return qs.get("reset") === "1" || qs.get("type") === "recovery" ||
+      hash.get("type") === "recovery";
   }
 
   function clearRecoveryUrl(){ history.replaceState({}, document.title, window.location.pathname); }
@@ -544,8 +545,12 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     const profileOk = await loadProfile();
     if(!profileOk){
       loader(true,cfgValue("loader_panels_title"),cfgValue("loader_panels_subtitle"),35);
-      await loadPanels();
-      await showAccessRequestState();
+      try{ await loadPanels(); }catch(error){ console.warn("Falha ao carregar paineis para solicitacao:", error); panels=[...DEFAULT_PANELS]; }
+      try{ await showAccessRequestState(); }
+      catch(error){
+        console.error("Falha ao exibir solicitacao de acesso:", error);
+        forceAccessRequestFallback("Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.");
+      }
       loader(false);
       return false;
     }
@@ -589,7 +594,11 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   async function loadProfile(){
     if(!currentUser?.id) return false;
     const { data, error } = await sb.rpc("meu_usuario");
-    if(error){ await logout(); showAlert("loginMsg","Não foi possível carregar permissões do usuário.","error"); throw new Error("Falha ao carregar perfil"); }
+    if(error){
+      console.warn("Perfil indisponivel para o usuario atual:", error);
+      profile = null;
+      return false;
+    }
     const row = rpcFirst(data);
     if(!row){ profile = null; return false; }
     profile = { ...row, ativo:true };
@@ -622,7 +631,30 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     const nome = $("accessReqNome");
     if(nome && !txt(nome.value)) nome.value = userDisplayName();
     renderAccessPanelChoices();
-    await loadMyAccessRequest();
+    try{ await loadMyAccessRequest(); }
+    catch(error){
+      console.warn("Nao foi possivel consultar solicitacao anterior:", error);
+      const status = $("accessRequestStatus");
+      if(status){
+        status.classList.remove("hidden");
+        status.textContent = "Preencha e envie a solicitação. Não foi possível consultar solicitações anteriores neste momento.";
+      }
+      const btn = $("accessRequestBtn"); if(btn) btn.disabled = false;
+    }
+  }
+
+  function forceAccessRequestFallback(message){
+    stopRealtime();
+    stopAccessHeartbeat();
+    $("appScreen")?.classList.add("hidden");
+    $("loginScreen")?.classList.remove("hidden");
+    const emailInput = $("loginEmail"); if(emailInput) emailInput.value = currentUser?.email || "";
+    const pass = $("loginPassword"); if(pass) pass.value = "";
+    showAlert("loginMsg", message || "Solicite acesso para continuar.", "warn");
+    $("accessRequestCard")?.classList.remove("hidden");
+    const nome = $("accessReqNome"); if(nome && !txt(nome.value)) nome.value = userDisplayName();
+    renderAccessPanelChoices();
+    const btn = $("accessRequestBtn"); if(btn) btn.disabled = false;
   }
 
   function renderAccessPanelChoices(selectedIds=[]){
