@@ -630,6 +630,7 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
       loader(false);
       return false;
     }
+    openApp(currentUser);
     loader(true,cfgValue("loader_config_title"),cfgValue("loader_config_subtitle"),34); await loadConfig();
     loader(true,cfgValue("loader_panels_title"),cfgValue("loader_panels_subtitle"),48); await loadPanels(); await loadPanelPermissions(); buildNav(); warmExternalPanels(); await sleep(180);
     loader(true,cfgValue("loader_map_title"),cfgValue("loader_map_subtitle"),52); await loadMapaConfig();
