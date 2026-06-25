@@ -579,7 +579,7 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
       loader(false); $("loginBtn").disabled = false; setLoginButtonReady();
       showAlert("loginMsg","Falha no login: " + error.message,"error"); return;
     }
-    currentUser = data.user; openApp(currentUser);
+    currentUser = data.user;
     const ready = await loadInitialData();
     if(ready){
       await trackAccess("login", { tela:"login", detalhes:{ email } }); startAccessHeartbeat();
