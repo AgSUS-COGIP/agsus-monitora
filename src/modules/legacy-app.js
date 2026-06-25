@@ -597,14 +597,12 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     // Para testes e troca de perfil, limpe a sessao local antes do OAuth.
     // O Google ainda pode ter conta ativa no navegador; prompt=select_account
     // forca a tela de escolha de conta.
-    try{ await sb.auth.signOut({ scope:"local" }); }catch(e){}
-    currentUser = null;
-    profile = null;
+    await clearLocalAuthState();
     const redirectTo = window.location.origin && window.location.origin !== "null"
       ? window.location.origin + window.location.pathname
       : window.location.href.split("#")[0].split("?")[0];
     const domainHint = txt(cfgValue("auth_google_domain_hint"));
-    const queryParams = { prompt:"select_account" };
+    const queryParams = { prompt:"select_account consent", max_age:"0" };
     if(domainHint) queryParams.hd = domainHint;
     const options = { redirectTo, queryParams };
     const { error } = await sb.auth.signInWithOAuth({ provider:"google", options });
