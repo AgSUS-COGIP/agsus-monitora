@@ -699,11 +699,12 @@ body.external-clean .external-placeholder { min-height: calc(100dvh - 46px) !imp
 .access-authenticated-user { display: grid; gap: 4px; padding: 11px 12px; border: 1px solid #cfe5f8; border-radius: 12px; background: #fff; margin-bottom: 14px; }
 .access-authenticated-user span { color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; font-weight: 900; }
 .access-authenticated-user strong { color: #10243e; font-size: 14px; overflow-wrap: anywhere; }
-.access-request-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.access-request-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .access-request-grid .full { grid-column: 1/-1; }
 .access-request-grid label, .panel-check-list label, .access-admin-list label { font-size: 12px; font-weight: 850; color: #334155; }
 .panel-check-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 8px; }
-.panel-check, .permission-check { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 12px; background: #fff; font-weight: 800; color: #16324f; }
+.access-request-card .panel-check-list { max-height: 132px; overflow: auto; padding-right: 2px; }
+.panel-check, .permission-check { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-weight: 800; color: #16324f; }
 .panel-check input, .permission-check input { width: 16px; height: 16px; accent-color: var(--agsus-azul); }
 .access-status { margin-top: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: #334155; font-size: 12px; font-weight: 850; line-height: 1.45; }
 .access-status.success { border-color: #bfeccd; background: #effaf3; color: #0b6b42; }
@@ -718,6 +719,7 @@ body.external-clean .external-placeholder { min-height: calc(100dvh - 46px) !imp
 .access-status-pill.recusado { background: #ffe1e3; color: #9f0714; border-color: #ffb8bf; }
 .access-admin-controls { display: grid; grid-template-columns: 180px 1fr; gap: 12px; }
 .permission-checks { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; }
+.access-admin-panels, .access-admin-observation { margin-top: 12px; }
 .access-admin-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 12px; }
 
 .modal { position: fixed; inset: 0; z-index: 1100; display: none; place-items: center; padding: 20px; background: rgba(0,0,0,.55); }
