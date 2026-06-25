@@ -699,6 +699,21 @@ body.external-clean .external-placeholder { min-height: calc(100dvh - 46px) !imp
 .access-authenticated-user { display: grid; gap: 4px; padding: 11px 12px; border: 1px solid #cfe5f8; border-radius: 12px; background: #fff; margin-bottom: 14px; }
 .access-authenticated-user span { color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; font-weight: 900; }
 .access-authenticated-user strong { color: #10243e; font-size: 14px; overflow-wrap: anywhere; }
+.access-account-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.access-account-actions .google-login-btn {
+  display: flex !important;
+  margin: 0;
+}
+
+.access-account-actions .btn {
+  min-height: 44px;
+}
 .access-request-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .access-request-grid .full { grid-column: 1/-1; }
 .access-request-grid label, .panel-check-list label, .access-admin-list label { font-size: 12px; font-weight: 850; color: #334155; }
@@ -801,7 +816,7 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
 }
 @media (max-width: 820px) {
   .app { grid-template-columns: 1fr; }
-  .access-request-grid, .panel-check-list, .access-admin-controls, .permission-checks, .cnes-status-grid { grid-template-columns: 1fr; }
+  .access-request-grid, .panel-check-list, .access-admin-controls, .permission-checks, .cnes-status-grid, .access-account-actions { grid-template-columns: 1fr; }
   body.sidebar-collapsed .app { grid-template-columns: 1fr; }
   .hamb { display: grid !important; }
   .sidebar { position: relative; min-height: auto; }
