@@ -146,20 +146,23 @@ body.config-loading #loginScreen {
 .login-form   { text-align: left; display: grid; gap: 13px; margin-top: 4px; }
 .login-foot   { margin-top: 0; color: #00c2e8; font-size: 12px; font-weight: 900; letter-spacing: .12em; }
 
-body.access-request-mode .login-outer { width: min(760px, calc(100vw - 28px)); }
-body.access-request-mode .login-card { padding: 34px 42px 30px; }
-body.access-request-mode .login-mark { width: 74px; height: 74px; margin-bottom: 12px; }
+body.access-request-mode .login-screen { align-items: flex-start; overflow: auto; padding: 18px 12px; }
+body.access-request-mode .login-outer { width: min(560px, calc(100vw - 24px)); border-radius: 20px; }
+body.access-request-mode .login-stripe { height: 32px; }
+body.access-request-mode .login-card { padding: 22px 24px 18px; }
+body.access-request-mode .login-mark { width: 58px; height: 58px; margin-bottom: 8px; }
 body.access-request-mode .login-mark img { width: 58px; height: 58px; }
-body.access-request-mode .login-card h1 { font-size: 26px; }
+body.access-request-mode .login-card h1 { font-size: 22px; }
+body.access-request-mode .login-card .login-subtitle2 { margin-bottom: 10px; }
 body.access-request-mode #loginEmailLabel,
 body.access-request-mode #loginEmail,
 body.access-request-mode #loginPasswordLabel,
 body.access-request-mode .password-wrap,
 body.access-request-mode #loginBtn,
 body.access-request-mode #googleLoginBtn,
-body.access-request-mode #loginHelp,
-body.access-request-mode #loginMsg { display: none !important; }
+body.access-request-mode #loginHelp { display: none !important; }
 body.access-request-mode .login-form { gap: 0; }
+body.access-request-mode .login-cogip { display: none !important; }
 
 /* Rodapé COGIP */
 .login-cogip {
