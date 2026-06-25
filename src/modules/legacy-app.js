@@ -1,4 +1,4 @@
-import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 
   // ============================================================
   // AgSUS Monitora Web V2.9.35
@@ -363,6 +363,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
         storage: safeAuthStorage,
+        storageKey: SUPABASE_AUTH_STORAGE_KEY,
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true
@@ -482,6 +483,17 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     }
   }
 
+  async function waitForAuthSession(maxWaitMs=3500){
+    const started = Date.now();
+    while(Date.now() - started < maxWaitMs){
+      const { data } = await sb.auth.getSession();
+      if(data?.session?.user) return data.session;
+      await sleep(150);
+    }
+    const { data } = await sb.auth.getSession();
+    return data?.session || null;
+  }
+
   async function boot(){
     if(!initSupabase()) return;
     loader(true, "Carregando", "", 5);
@@ -507,8 +519,11 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     await loadConfig({ silent:true });
     const handledOAuth = await handleOAuthCodeCallback();
     if(handledOAuth) return;
-    const authError = new URLSearchParams(window.location.search || "").get("auth_error");
-    const { data } = await sb.auth.getSession();
+    const qs = new URLSearchParams(window.location.search || "");
+    const authError = qs.get("auth_error");
+    const authOk = qs.get("auth") === "google";
+    const sessionFromCallback = authOk ? await waitForAuthSession() : null;
+    const { data } = sessionFromCallback ? { data:{ session:sessionFromCallback } } : await sb.auth.getSession();
     if(hasPasswordRecoveryParams()){
       currentUser = null;
       manualLogoutInProgress = true;
