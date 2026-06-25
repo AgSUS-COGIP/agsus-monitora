@@ -753,7 +753,7 @@ async function returnToLogin(){
     const emailInput = $("loginEmail"); if(emailInput) emailInput.value = currentUser?.email || "";
     setText("accessReqEmail", currentUser?.email || "-");
     const pass = $("loginPassword"); if(pass) pass.value = "";
-    showAlert("loginMsg", message || "Solicite acesso para continuar.", "warn");
+    showAlert("loginMsg", message || "", message ? "warn" : "");
     $("accessRequestCard")?.classList.remove("hidden");
     const nome = $("accessReqNome"); if(nome && !txt(nome.value)) nome.value = userDisplayName();
     renderAccessPanelChoices();
