@@ -2443,35 +2443,10 @@ function renderAccessPanelChoices(selectedIds=[]){
     renderPanelAdmin();
   }
 
-  function renderPanelAdmin(){
-    const box=$("panelAdmin"); if(!box) return;
-    box.innerHTML=`<h3 style="margin:0 0 12px">Painéis externos</h3>`+panels.map((p,i)=>{
-      const hasUrl = !!txt(p.url);
-      const manut = p.em_manutencao;
-      const inativo = p.ativo===false;
-      const statusIcon = inativo
-        ? `<span title="Inativo" style="font-size:11px;padding:2px 9px;border-radius:999px;background:#ffe1e3;color:#9f0714;font-weight:800;border:1px solid #ffb8bf">Inativo</span>`
-        : manut
-          ? `<span title="Em manutenção" style="font-size:11px;padding:2px 9px;border-radius:999px;background:#fff1b8;color:#684600;font-weight:800;border:1px solid #f3cf54">Manutenção</span>`
-          : hasUrl
-            ? `<span title="Ativo e configurado" style="font-size:11px;padding:2px 9px;border-radius:999px;background:#dff8ea;color:#00824c;font-weight:800;border:1px solid #bfeccd">Ativo</span>`
-            : `<span title="URL não configurada" style="font-size:11px;padding:2px 9px;border-radius:999px;background:#eef2f7;color:#334155;font-weight:800;border:1px solid #d5dfec">Sem URL</span>`;
-      return `<div style="margin-bottom:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fafcff;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;">
-          <span style="font-weight:800;font-size:14px;color:#10243e">${esc(p.titulo||p.codigo)}</span>
-          ${statusIcon}
-        </div>
-        <input type="hidden" id="panelId${i}" value="${attr(p.id||"")}">
-        <div class="form-grid">
-          <div class="form-row"><label>Título</label><input id="panelTitulo${i}" value="${attr(p.titulo||"")}"></div>
-          <div class="form-row"><label>Código</label><input value="${attr(p.codigo||"")}" readonly></div>
-          <div class="form-row full"><label>URL</label><input id="panelUrl${i}" value="${attr(p.url||"")}" placeholder="URL do painel" oninput="this.style.borderColor=this.value?'#0b8f58':'var(--line)'"></div>
-          <div class="form-row"><label>Ativo</label><select id="panelAtivo${i}"><option value="true" ${p.ativo!==false?"selected":""}>Sim</option><option value="false" ${p.ativo===false?"selected":""}>Não</option></select></div>
-          <div class="form-row"><label>Manutenção</label><select id="panelManut${i}"><option value="false" ${!p.em_manutencao?"selected":""}>Não</option><option value="true" ${p.em_manutencao?"selected":""}>Sim</option></select></div>
-        </div>
-      </div>`;
-    }).join("")+`<p style="color:var(--muted);font-weight:800;font-size:12px;">As alterações só são enviadas ao Supabase quando clicar em Salvar configurações.</p>`;
-  }
+function renderPanelAdmin(){
+  const box=$("panelAdmin"); if(!box) return;
+  box.innerHTML = renderPanelAdminHTML(panels);
+}
 
   async function renderAccessRequestsAdmin(){
     const card = $("accessRequestsAdminCard");
