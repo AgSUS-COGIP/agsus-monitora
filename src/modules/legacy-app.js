@@ -507,6 +507,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     await loadConfig({ silent:true });
     const handledOAuth = await handleOAuthCodeCallback();
     if(handledOAuth) return;
+    const authError = new URLSearchParams(window.location.search || "").get("auth_error");
     const { data } = await sb.auth.getSession();
     if(hasPasswordRecoveryParams()){
       currentUser = null;
@@ -521,6 +522,10 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     } else {
       loader(false);
       document.body.classList.remove("config-loading");
+      if(authError){
+        showAlert("loginMsg","Não foi possível finalizar o login Google. Tente novamente escolhendo a conta.","error");
+        clearOAuthUrl();
+      }
     }
   }
 
@@ -537,7 +542,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   function clearOAuthUrl(){
     const qs = new URLSearchParams(window.location.search || "");
     const hash = new URLSearchParams(String(window.location.hash || "").replace(/^#/, ""));
-    if(qs.has("code") || hash.has("access_token") || hash.has("refresh_token")){
+    if(qs.has("code") || qs.has("auth") || qs.has("auth_error") || hash.has("access_token") || hash.has("refresh_token")){
       history.replaceState({}, document.title, window.location.pathname);
     }
   }
@@ -581,7 +586,7 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
     currentUser = null;
     profile = null;
     const redirectTo = window.location.origin && window.location.origin !== "null"
-      ? window.location.origin + window.location.pathname
+      ? new URL("/auth/callback.html", window.location.origin).href
       : window.location.href.split("#")[0].split("?")[0];
     const domainHint = txt(cfgValue("auth_google_domain_hint"));
     const queryParams = { prompt:"select_account" };

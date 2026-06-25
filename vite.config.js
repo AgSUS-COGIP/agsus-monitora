@@ -6,7 +6,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
-        analises: resolve(__dirname, "analises.html")
+        analises: resolve(__dirname, "analises.html"),
+        authCallback: resolve(__dirname, "auth/callback.html")
       }
     }
   }
