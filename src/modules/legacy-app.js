@@ -419,6 +419,17 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
   try{ await sb?.auth?.signOut({ scope:"local" }); }catch(e){}
   clearOAuthUrl();
 }
+async function returnToLogin(){
+  await clearLocalAuthState();
+  manualLogoutInProgress = true;
+  if(sb) await sb.auth.signOut();
+  resetSignedOutState("", "");
+  const emailInput = $("loginEmail");
+  if(emailInput) emailInput.value = "";
+  const passwordInput = $("loginPassword");
+  if(passwordInput) passwordInput.value = "";
+  showAlert("loginMsg", "Sessão limpa. Escolha como deseja entrar.", "ok");
+}
 
   async function refreshProfileAfterSessionUpdate(nextSession){
     currentUser = nextSession?.user || null;
@@ -2974,6 +2985,7 @@ function renderAccessRequestAdminItem(req){
     previewImg,
     refreshData,
     reloadExternal,
+    returnToLogin,
     removeFilterPill,
     runGlobalSearch,
     saveAdminSettings,
