@@ -75,44 +75,54 @@
             <span class="gmark">G</span><span id="googleLoginText"></span>
           </button>
           <div id="accessRequestCard" class="access-request-card hidden">
-            <div class="access-request-head">
-              <div class="access-request-icon"><i class="fa-solid fa-user-lock"></i></div>
-              <div>
-                <h2>Solicitar acesso ao sistema</h2>
-                <p>Seu e-mail foi autenticado pelo Google. Agora solicite a liberação para acessar os módulos e painéis corretos.</p>
-              </div>
-            </div>
-            <div class="access-flow-steps" aria-label="Etapas da solicitação">
-              <div><strong>1</strong><span>Você envia a solicitação</span></div>
-              <div><strong>2</strong><span>Um administrador analisa</span></div>
-              <div><strong>3</strong><span>O acesso é liberado</span></div>
-            </div>
-            <div class="access-authenticated-user">
-              <span>E-mail autenticado</span>
-              <strong id="accessReqEmail">-</strong>
-            </div>
+           <div class="access-request-head compact">
+  <div>
+    <h2>Solicitar acesso</h2>
+    <p>Preencha os dados para que um administrador libere seu perfil e os painéis necessários.</p>
+  </div>
+</div>
 
-            <div class="access-account-actions">
+<div class="access-authenticated-user">
+  <span>E-mail autenticado</span>
+  <strong id="accessReqEmail">-</strong>
+</div>
+
+<div class="access-request-grid">
+  <div class="form-row">
+    <label for="accessReqNome">Nome</label>
+    <input id="accessReqNome" type="text" autocomplete="name">
+  </div>
+
+  <div class="form-row">
+    <label for="accessReqSetor">Área / setor</label>
+    <input id="accessReqSetor" type="text" placeholder="Ex: COGIP, DSEI, gestão">
+  </div>
+
+  <div class="form-row full">
+    <label for="accessReqJustificativa">Justificativa</label>
+    <textarea id="accessReqJustificativa" rows="2" placeholder="Explique brevemente por que precisa acessar o sistema"></textarea>
+  </div>
+
+  <div class="form-row full">
+    <label>Painéis externos solicitados</label>
+    <div id="accessPanelChoices" class="panel-check-list"></div>
+  </div>
+</div>
+
+<div id="accessRequestStatus" class="access-status hidden"></div>
+
+<button id="accessRequestBtn" type="button" class="btn green access-submit-btn" onclick="submitAccessRequest()">
+  <i class="fa-solid fa-paper-plane"></i> Enviar solicitação
+</button>
+
+<div class="access-account-actions">
   <button id="accessSwitchAccountBtn" type="button" class="google-login-btn" onclick="loginWithGoogle()">
-    <span class="gmark">G</span><span>Entrar com outra conta Google</span>
+    <span class="gmark">G</span><span>Usar outra conta Google</span>
   </button>
   <button id="accessReturnLoginBtn" type="button" class="btn secondary" onclick="returnToLogin()">
     <i class="fa-solid fa-arrow-right-from-bracket"></i> Voltar ao login
   </button>
 </div>
-            <div class="access-request-grid">
-              <div class="form-row"><label for="accessReqNome">Nome</label><input id="accessReqNome" type="text" autocomplete="name"></div>
-              <div class="form-row"><label for="accessReqSetor">Área / setor</label><input id="accessReqSetor" type="text" placeholder="Ex: COGIP, DSEI, gestão"></div>
-              <div class="form-row full"><label for="accessReqJustificativa">Justificativa</label><textarea id="accessReqJustificativa" rows="3" placeholder="Explique brevemente por que precisa acessar o AgSUS Monitora"></textarea></div>
-              <div class="form-row full">
-                <label>Painéis externos solicitados</label>
-                <div id="accessPanelChoices" class="panel-check-list"></div>
-              </div>
-            </div>
-            <div id="accessRequestStatus" class="access-status hidden"></div>
-            <button id="accessRequestBtn" type="button" class="btn green" style="width:100%;margin-top:12px;min-height:44px;" onclick="submitAccessRequest()">
-              <i class="fa-solid fa-paper-plane"></i> Enviar solicitação
-            </button>
            
           </div>
           <p id="loginHelp" class="login-help" style="margin:8px 0 0;text-align:center;font-size:12px;color:#63748d;font-weight:700;line-height:1.35;">
