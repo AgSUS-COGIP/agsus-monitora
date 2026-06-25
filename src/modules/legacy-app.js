@@ -428,7 +428,6 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     if(!nextSession?.user || manualLogoutInProgress) return;
     if(activeSessionLoadPromise) return activeSessionLoadPromise;
     currentUser = nextSession.user;
-    openApp(currentUser);
     activeSessionLoadPromise = (async()=>{
       const ready = await loadInitialData();
       if(ready){
