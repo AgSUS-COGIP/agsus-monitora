@@ -299,109 +299,130 @@
           </div>
         </section>
 
-        <section id="page-config" class="page">
-          <div class="admin-grid">
-            <div id="accessRequestsAdminCard" class="admin-card card full hidden">
-              <h3>Solicitações de acesso</h3>
-              <div id="accessRequestsAdmin" class="access-admin-list"></div>
-            </div>
-            <div class="admin-card card">
-              <h3>Configuração do Sistema</h3>
-              <div class="form-grid">
-                <div class="form-row" style="display:none"><label>ID / referência da base</label><input id="cfgMonitId"></div>
-                <div class="form-row" style="display:none"><label>Título do sistema</label><input id="cfgTitle"></div>
-                <div class="form-row" style="display:none"><label>Subtítulo do login</label><input id="cfgSubtitle"></div>
-                <div class="form-row" style="display:none"><label>Slogan / área</label><input id="cfgSlogan"></div>
-                <div class="form-row"><label>Título da página inicial</label><input id="cfgPageTitle" placeholder="Ex: Saúde Indígena"></div>
-                <div class="form-row"><label>Subtítulo da página inicial</label><input id="cfgPageSubtitle" placeholder="Ex: Monitoramento DSEI/CASAI"></div>
-                <div class="form-row" style="display:none"><label>Texto superior do login</label><input id="cfgLoginEyebrow"></div>
-                <div class="form-row" style="display:none"><label>Label do e-mail</label><input id="cfgLoginEmailLabel"></div>
-                <div class="form-row" style="display:none"><label>Placeholder do e-mail</label><input id="cfgLoginEmailPlaceholder"></div>
-                <div class="form-row" style="display:none"><label>Label da senha</label><input id="cfgLoginPasswordLabel"></div>
-                <div class="form-row" style="display:none"><label>Placeholder da senha</label><input id="cfgLoginPasswordPlaceholder"></div>
-                <div class="form-row" style="display:none"><label>Texto do botão entrar</label><input id="cfgLoginButtonText"></div>
-                <div class="form-row" style="display:none"><label>Ajuda de senha</label><input id="cfgPasswordResetMessage"></div>
-                <div style="grid-column:1/-1;margin-top:8px;padding-top:10px;border-top:1px solid var(--line);font-weight:900;color:var(--agsus-azul);font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Autenticação Google</div>
-                <div class="form-row"><label>Login Google</label><select id="cfgGoogleEnabled"><option value="false">Inativo</option><option value="true">Ativo</option></select></div>
-                <div class="form-row"><label>Texto do botão Google</label><input id="cfgGoogleButtonText"></div>
-                <div class="form-row"><label>Domínio sugerido</label><input id="cfgGoogleDomainHint" placeholder="agenciasus.org.br"></div>
-                <div style="grid-column:1/-1;margin-top:8px;padding-top:10px;border-top:1px solid var(--line);font-weight:900;color:var(--agsus-azul);font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Textos do dashboard</div>
-                <div class="form-row"><label>Título dos filtros</label><input id="cfgFilterTitle"></div>
-                <div class="form-row"><label>Subtítulo dos filtros</label><input id="cfgFilterSubtitle"></div>
-                <div class="form-row"><label>Mostrar filtros</label><input id="cfgFilterToggleShow"></div>
-                <div class="form-row"><label>Ocultar filtros</label><input id="cfgFilterToggleHide"></div>
-                <div class="form-row"><label>KPI processos</label><input id="cfgKpiProcessos"></div>
-                <div class="form-row"><label>KPI vagas</label><input id="cfgKpiVagas"></div>
-                <div class="form-row"><label>KPI contratações</label><input id="cfgKpiContratados"></div>
-                <div class="form-row"><label>KPI ociosas</label><input id="cfgKpiOciosas"></div>
-                <div class="form-row"><label>KPI críticos</label><input id="cfgKpiCriticos"></div>
-                <div class="form-row"><label>KPI inscritos</label><input id="cfgKpiInscritos"></div>
-                <div class="form-row full"><label>Logo / mascote da sidebar</label>
-                  <input id="cfgMascot" oninput="previewImg('cfgMascot','prevMascot')">
-                  <img id="prevMascot" src="" alt="" style="display:none;height:52px;width:52px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin-top:6px;background:#f4f8fc;">
-                </div>
-                <div class="form-row full" style="display:none"><label>Logo da tela de login</label>
-                  <input id="cfgLoginLogo" oninput="previewImg('cfgLoginLogo','prevLoginLogo')">
-                  <img id="prevLoginLogo" src="" alt="" style="display:none;height:52px;width:52px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin-top:6px;background:#f4f8fc;">
-                </div>
-                <div class="form-row full" style="display:none"><label>Imagem de fundo do login</label>
-                  <input id="cfgLoginBg" oninput="previewImg('cfgLoginBg','prevLoginBg')">
-                  <img id="prevLoginBg" src="" alt="" style="display:none;height:52px;width:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-top:6px;">
-                </div>
-                <div style="grid-column:1/-1;margin-top:8px;padding-top:10px;border-top:1px solid var(--line);font-weight:900;color:var(--agsus-azul);font-size:12px;text-transform:uppercase;letter-spacing:.06em;">Rodapé institucional (COGIP)</div>
-                <div class="form-row"><label>Nome da equipe</label><input id="cfgCogipNome" placeholder="Ex: COGIP"></div>
-                <div class="form-row"><label>Função / área</label><input id="cfgCogipFuncao" placeholder="Ex: Desenvolvimento e sustentação"></div>
-                <div class="form-row"><label>Versão do sistema</label><input id="cfgCogipVersao" placeholder="Ex: V.2.7.3"></div>
-                <div class="form-row"><label>Texto institucional</label><input id="cfgCogipDept" placeholder="Ex: Gestão da Informação de Pessoal"></div>
-                <div class="form-row"><label>Versão publicada</label><input id="cfgAppVersionCurrent" placeholder="Ex: AgSUS Monitora Web V2.9.35"></div>
-                <div class="form-row full"><label>Logo da equipe (URL)</label>
-                  <input id="cfgCogipLogo" oninput="previewImg('cfgCogipLogo','prevCogipLogo')">
-                  <img id="prevCogipLogo" src="" alt="" style="display:none;height:40px;width:40px;object-fit:cover;border-radius:50%;border:1px solid var(--line);margin-top:6px;">
-                </div>
-                <div class="form-row"><label>Rodapé</label><input id="cfgFooter"></div>
-              </div>
-            </div>
-            <div class="admin-card card">
-              <h3>Aviso Global e Painéis</h3>
-              <div class="form-grid">
-                <div class="form-row"><label>Tipo do aviso</label><select id="cfgBroadcastType"><option value="info">Info</option><option value="warning">Alerta</option><option value="danger">Crítico</option></select></div>
-                <div class="form-row"><label>Mensagem</label><input id="cfgBroadcastMsg" placeholder="Mensagem global"></div>
-                <div class="form-row"><label>Modo executivo</label><select id="cfgExecutiveModeEnabled"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
-                <details class="form-row full" style="grid-column:1/-1;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fafcff;">
-                  <summary style="font-weight:900;color:var(--agsus-azul);cursor:pointer;">Avançado técnico</summary>
-                  <div class="form-grid" style="margin-top:10px;">
-                    <div class="form-row"><label>Realtime do monitoramento</label><select id="cfgRealtimeEnabled"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
-                    <div class="form-row"><label>Heartbeat de auditoria (min)</label><input id="cfgAccessHeartbeatMinutos" type="number" min="1" step="1" placeholder="5"></div>
-                  </div>
-                </details>
-              </div>
-              <div id="panelAdmin" style="margin-top:16px"></div>
-              <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn green" onclick="saveAdminSettings()">Salvar configurações</button></div>
-            </div>
-            <div class="admin-card card">
-              <h3>Rede assistencial do CNES (UBSI / CASAI)</h3>
-              <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:4px 0 12px;">
-                As UBSIs e CASAIs já vêm embutidas no sistema (cobertura nacional: 1.011 UBSIs e 72 CASAIs (base CNES tipo 72 + lista oficial CASAI; vínculo DSEI por CNPJ)<b>atualizar</b> a rede com uma versão mais nova do JSON: cole abaixo o conteúdo de
-                <b>rede_saude_indigena_gson_v4_com_coordenadas.json</b> e clique em Aplicar.
-                <br><i>Observação: as coordenadas oficiais ficam nos estabelecimentos (UBSI/CASAI), não nos polos base.</i>
-              </p>
-              <div class="form-row full">
-                <label>JSON v4 (com coordenadas do CNES)</label>
-                <textarea id="cfgCnesJson" rows="6" placeholder='Cole aqui o conteúdo do arquivo rede_saude_indigena_gson_v4_com_coordenadas.json' style="width:100%;font-family:monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical;"></textarea>
-              </div>
-              <div id="cnesImportResumo" style="display:none;font-size:12px;margin-top:10px;padding:10px 12px;border-radius:8px;background:#f0f7ff;border:1px solid #d7e5f2;color:#234;"></div>
-              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-                <button class="btn secondary" onclick="previewCnesCoords()">Pré-visualizar</button>
-                <button class="btn green" onclick="aplicarCnesCoords()">Aplicar ao mapa</button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  </section>
+<section id="page-config" class="page">
+  <div class="admin-grid">
+    <div id="accessRequestsAdminCard" class="admin-card card full hidden">
+      <h3>Solicitações de acesso</h3>
+      <div id="accessRequestsAdmin" class="access-admin-list"></div>
+    </div>
 
-  <div id="editModal" class="modal">
+    <div class="admin-card card config-main-card">
+      <div class="config-card-title">
+        <div>
+          <h3>Configuração do sistema</h3>
+          <p>Ajustes principais da tela inicial, autenticação e rótulos do dashboard.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row" style="display:none"><label>ID / referência da base</label><input id="cfgMonitId"></div>
+        <div class="form-row" style="display:none"><label>Título do sistema</label><input id="cfgTitle"></div>
+        <div class="form-row" style="display:none"><label>Subtítulo do login</label><input id="cfgSubtitle"></div>
+        <div class="form-row" style="display:none"><label>Slogan / área</label><input id="cfgSlogan"></div>
+
+        <div class="form-row"><label>Título da página inicial</label><input id="cfgPageTitle" placeholder="Ex: Saúde Indígena"></div>
+        <div class="form-row"><label>Subtítulo da página inicial</label><input id="cfgPageSubtitle" placeholder="Ex: Monitoramento DSEI/CASAI"></div>
+
+        <div class="form-row" style="display:none"><label>Texto superior do login</label><input id="cfgLoginEyebrow"></div>
+        <div class="form-row" style="display:none"><label>Label do e-mail</label><input id="cfgLoginEmailLabel"></div>
+        <div class="form-row" style="display:none"><label>Placeholder do e-mail</label><input id="cfgLoginEmailPlaceholder"></div>
+        <div class="form-row" style="display:none"><label>Label da senha</label><input id="cfgLoginPasswordLabel"></div>
+        <div class="form-row" style="display:none"><label>Placeholder da senha</label><input id="cfgLoginPasswordPlaceholder"></div>
+        <div class="form-row" style="display:none"><label>Texto do botão entrar</label><input id="cfgLoginButtonText"></div>
+        <div class="form-row" style="display:none"><label>Ajuda de senha</label><input id="cfgPasswordResetMessage"></div>
+
+        <div class="config-section-title">Autenticação Google</div>
+        <div class="form-row"><label>Login Google</label><select id="cfgGoogleEnabled"><option value="false">Inativo</option><option value="true">Ativo</option></select></div>
+        <div class="form-row"><label>Texto do botão Google</label><input id="cfgGoogleButtonText"></div>
+        <div class="form-row"><label>Domínio sugerido</label><input id="cfgGoogleDomainHint" placeholder="agenciasus.org.br"></div>
+
+        <div class="config-section-title">Textos do dashboard</div>
+        <div class="form-row"><label>Título dos filtros</label><input id="cfgFilterTitle"></div>
+        <div class="form-row"><label>Subtítulo dos filtros</label><input id="cfgFilterSubtitle"></div>
+        <div class="form-row"><label>Mostrar filtros</label><input id="cfgFilterToggleShow"></div>
+        <div class="form-row"><label>Ocultar filtros</label><input id="cfgFilterToggleHide"></div>
+        <div class="form-row"><label>KPI processos</label><input id="cfgKpiProcessos"></div>
+        <div class="form-row"><label>KPI vagas</label><input id="cfgKpiVagas"></div>
+        <div class="form-row"><label>KPI contratações</label><input id="cfgKpiContratados"></div>
+        <div class="form-row"><label>KPI ociosas</label><input id="cfgKpiOciosas"></div>
+        <div class="form-row"><label>KPI críticos</label><input id="cfgKpiCriticos"></div>
+        <div class="form-row"><label>KPI inscritos</label><input id="cfgKpiInscritos"></div>
+
+        <div class="form-row full"><label>Logo / mascote da sidebar</label>
+          <input id="cfgMascot" oninput="previewImg('cfgMascot','prevMascot')">
+          <img id="prevMascot" src="" alt="" style="display:none;height:52px;width:52px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin-top:6px;background:#f4f8fc;">
+        </div>
+
+        <div class="form-row full" style="display:none"><label>Logo da tela de login</label>
+          <input id="cfgLoginLogo" oninput="previewImg('cfgLoginLogo','prevLoginLogo')">
+          <img id="prevLoginLogo" src="" alt="" style="display:none;height:52px;width:52px;object-fit:contain;border-radius:10px;border:1px solid var(--line);margin-top:6px;background:#f4f8fc;">
+        </div>
+
+        <div class="form-row full" style="display:none"><label>Imagem de fundo do login</label>
+          <input id="cfgLoginBg" oninput="previewImg('cfgLoginBg','prevLoginBg')">
+          <img id="prevLoginBg" src="" alt="" style="display:none;height:52px;width:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line);margin-top:6px;">
+        </div>
+
+        <div class="config-section-title">Rodapé institucional (COGIP)</div>
+        <div class="form-row"><label>Nome da equipe</label><input id="cfgCogipNome" placeholder="Ex: COGIP"></div>
+        <div class="form-row"><label>Função / área</label><input id="cfgCogipFuncao" placeholder="Ex: Desenvolvimento e sustentação"></div>
+        <div class="form-row"><label>Versão do sistema</label><input id="cfgCogipVersao" placeholder="Ex: V.2.7.3"></div>
+        <div class="form-row"><label>Texto institucional</label><input id="cfgCogipDept" placeholder="Ex: Gestão da Informação de Pessoal"></div>
+        <div class="form-row"><label>Versão publicada</label><input id="cfgAppVersionCurrent" placeholder="Ex: AgSUS Monitora Web V2.9.35"></div>
+        <div class="form-row full"><label>Logo da equipe (URL)</label>
+          <input id="cfgCogipLogo" oninput="previewImg('cfgCogipLogo','prevCogipLogo')">
+          <img id="prevCogipLogo" src="" alt="" style="display:none;height:40px;width:40px;object-fit:cover;border-radius:50%;border:1px solid var(--line);margin-top:6px;">
+        </div>
+        <div class="form-row"><label>Rodapé</label><input id="cfgFooter"></div>
+      </div>
+    </div>
+
+    <div class="admin-card card config-main-card">
+      <div class="config-card-title">
+        <div>
+          <h3>Aviso global</h3>
+          <p>Mensagem de topo e recursos operacionais do dashboard.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row"><label>Tipo do aviso</label><select id="cfgBroadcastType"><option value="info">Info</option><option value="warning">Alerta</option><option value="danger">Crítico</option></select></div>
+        <div class="form-row"><label>Mensagem</label><input id="cfgBroadcastMsg" placeholder="Mensagem global"></div>
+        <div class="form-row"><label>Modo executivo</label><select id="cfgExecutiveModeEnabled"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+
+        <details class="form-row full" style="grid-column:1/-1;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fafcff;">
+          <summary style="font-weight:900;color:var(--agsus-azul);cursor:pointer;">Avançado técnico</summary>
+          <div class="form-grid" style="margin-top:10px;">
+            <div class="form-row"><label>Realtime do monitoramento</label><select id="cfgRealtimeEnabled"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+            <div class="form-row"><label>Heartbeat de auditoria (min)</label><input id="cfgAccessHeartbeatMinutos" type="number" min="1" step="1" placeholder="5"></div>
+          </div>
+        </details>
+      </div>
+
+      <div id="panelAdmin" class="config-subpanel"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn green" onclick="saveAdminSettings()">Salvar configurações</button></div>
+    </div>
+
+    <div class="admin-card card cnes-status-card">
+      <div class="config-card-title">
+        <div>
+          <h3>Rede assistencial do CNES</h3>
+          <p>UBSI / CASAI agora são carregadas do Supabase para reduzir edição manual e risco de quebrar o mapa.</p>
+        </div>
+      </div>
+
+      <div class="cnes-status-grid">
+        <div><span>Fonte atual</span><strong>Supabase</strong></div>
+        <div><span>Uso no sistema</span><strong>Mapa e drill-down</strong></div>
+        <div><span>Edição manual</span><strong>Desativada na rotina</strong></div>
+      </div>
+
+      <p class="config-help">Quando precisar atualizar a base CNES, faça por migração/rotina controlada no Supabase, não colando JSON nesta tela.</p>
+      <textarea id="cfgCnesJson" class="hidden" rows="1"></textarea>
+      <div id="cnesImportResumo" class="hidden"></div>
+    </div>
+  </div>
+</section>
     <div class="modal-card">
       <div class="modal-head"><h3 id="editModalTitle">Editar edital</h3><button class="btn secondary" onclick="closeEditModal()">Fechar</button></div>
       <div class="modal-body">
