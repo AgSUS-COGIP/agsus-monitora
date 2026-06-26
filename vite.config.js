@@ -7,7 +7,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         analises: resolve(__dirname, "analises.html"),
-      },
-    },
-  },
+        authCallback: resolve(__dirname, "auth/callback.html")
+      }
+    }
+  }
 });
