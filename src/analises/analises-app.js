@@ -1,4 +1,5 @@
-import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { createSafeAuthStorage } from "../modules/auth-storage.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME = "vw_analises_dashboard_base";
@@ -163,8 +164,18 @@ import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
   async function boot(){
     applyTheme(); setupFixedTopbar(); bindEvents(); setProgress(6,"Preparando sessão..."); showLoading(true);
     try{
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      sb.auth.onAuthStateChange((event, nextSession) => {
+const authStorage = createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY);
+
+sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    storage: authStorage,
+    storageKey: SUPABASE_AUTH_STORAGE_KEY,
+    persistSession: true,
+    autoRefreshToken: true,
+    flowType: "implicit",
+    detectSessionInUrl: true
+  }
+});      sb.auth.onAuthStateChange((event, nextSession) => {
         if(event === "SIGNED_OUT"){ resetPanelState(); showAuth("Sessão encerrada. Reabra o painel pelo menu do AgSUS Monitora."); return; }
         if(event === "TOKEN_REFRESHED"){ session = nextSession || null; return; }
         if(event === "SIGNED_IN" || event === "USER_UPDATED"){
