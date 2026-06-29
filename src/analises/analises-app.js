@@ -2,7 +2,8 @@ import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/en
 import { createSafeAuthStorage } from "../modules/auth-storage.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
-  const VIEW_NAME = "vw_analises_dashboard_base";
+  const VIEW_NAME_ATIVOS = "vw_analises_dashboard_base";
+  const VIEW_NAME_TODOS = "vw_analises_dashboard_base_todos";
   const ANALISES_DASHBOARD_PAYLOAD_RPC = "get_analises_dashboard_payload";
   const THEME_KEY = "agsus_analises_theme_v3";
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
@@ -32,6 +33,43 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   const num = v => { const x = Number(v || 0); return Number.isFinite(x) ? x : 0; };
   const fmt = v => num(v).toLocaleString("pt-BR");
   const fmtNum = fmt;
+
+  // ---- Escopo do processo seletivo: Ativo, Inativo ou Todos ----
+  function currentEditalScope(){
+    const value = txt($("fSituacaoEdital")?.value).toLowerCase();
+    return ["ativo", "inativo", "todos"].includes(value) ? value : "ativo";
+  }
+
+  function currentEditalScopeLabel(){
+    return { ativo: "Ativo", inativo: "Inativo", todos: "Todos" }[currentEditalScope()] || "Ativo";
+  }
+
+  function currentViewName(){
+    return currentEditalScope() === "ativo" ? VIEW_NAME_ATIVOS : VIEW_NAME_TODOS;
+  }
+
+  function currentScopeQueryOptions(){
+    return currentEditalScope() === "inativo" ? { editalAtivo: false } : {};
+  }
+
+  function currentCacheKey(){
+    return `${CACHE_KEY}_${currentEditalScope()}`;
+  }
+
+  function resetDataForScopeChange(){
+    analisesPayload = null;
+    rows = [];
+    editais = [];
+    baseFilteredRows = [];
+    panelRows = [];
+    tableRows = [];
+    tableRowsDirty = true;
+    expanded.clear();
+    currentPage = 1;
+    activeKpi = "total";
+    activeResponsavel = "";
+    analisesDataLoadedAtLeastOnce = false;
+  }
 
   // ---- Validação de URL: só permite links http(s) seguros vindos da base ----
   function safeUrl(value){
@@ -164,18 +202,20 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   async function boot(){
     applyTheme(); setupFixedTopbar(); bindEvents(); setProgress(6,"Preparando sessão..."); showLoading(true);
     try{
-const authStorage = createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY);
+      const authStorage = createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY);
 
-sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: {
-    storage: authStorage,
-    storageKey: SUPABASE_AUTH_STORAGE_KEY,
-    persistSession: true,
-    autoRefreshToken: true,
-    flowType: "implicit",
-    detectSessionInUrl: true
-  }
-});      sb.auth.onAuthStateChange((event, nextSession) => {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: {
+          storage: authStorage,
+          storageKey: SUPABASE_AUTH_STORAGE_KEY,
+          persistSession: true,
+          autoRefreshToken: true,
+          flowType: "implicit",
+          detectSessionInUrl: true
+        }
+      });
+
+      sb.auth.onAuthStateChange((event, nextSession) => {
         if(event === "SIGNED_OUT"){ resetPanelState(); showAuth("Sessão encerrada. Reabra o painel pelo menu do AgSUS Monitora."); return; }
         if(event === "TOKEN_REFRESHED"){ session = nextSession || null; return; }
         if(event === "SIGNED_IN" || event === "USER_UPDATED"){
@@ -194,8 +234,15 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   function bindEvents(){
     $("themeBtn").onclick = toggleTheme; $("fullBtn").onclick = toggleFullscreen; $("refreshBtn").onclick = manualRefresh; $("exportBtn").onclick = exportCSV;
     $("advancedBtn").onclick = () => { $("advancedFilters").classList.toggle("show"); $("advancedBtn").innerHTML = $("advancedFilters").classList.contains("show") ? '<i class="fa-solid fa-sliders"></i> Ocultar filtros' : '<i class="fa-solid fa-sliders"></i> Mais filtros'; };
+    bindFiltersVisibilityToggle();
     $("applyBtn").onclick = applyFilters; $("clearBtn").onclick = clearFilters;
-    ["fUnidade","fEdital","fVaga","fStatus","fResponsavel","fCategoria","fModalidade","fPdf","fValidacao"].forEach(id => $(id).addEventListener("change", () => { currentPage=1; applyFilters(); }));
+    $("fSituacaoEdital")?.addEventListener("change", () => {
+      resetDataForScopeChange();
+      loadFromCacheOrPrompt().catch(err => {
+        showAuth("Erro ao carregar processos " + currentEditalScopeLabel().toLowerCase() + ": " + (err && err.message ? err.message : err));
+      });
+    });
+    ["fUnidade","fEdital","fVaga","fStatus","fResponsavel","fCategoria","fModalidade","fPdf","fValidacao"].forEach(id => $(id)?.addEventListener("change", () => { currentPage=1; applyFilters(); }));
     $("fBusca").addEventListener("input", debounce(() => { currentPage=1; applyFilters(); }));
     $("tableSearch").addEventListener("input", debounce(() => { currentPage=1; tableRowsDirty=true; renderTable(); }));
     $("rowsPerPage").addEventListener("change", () => { rowsPerPage = Number($("rowsPerPage").value)||25; currentPage=1; renderTable(); });
@@ -204,6 +251,36 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     document.addEventListener("click", event => { document.querySelectorAll(".multi-select-menu:not([hidden])").forEach(menu => { const root = menu.closest(".multi-select"); if(root && !root.contains(event.target)) closeMultiSelect(root.dataset.sourceId); }); });
     document.addEventListener("keydown", event => { if(event.key === "Escape"){ document.querySelectorAll(".multi-select-menu:not([hidden])").forEach(menu => { const root = menu.closest(".multi-select"); if(root){ closeMultiSelect(root.dataset.sourceId); const trg = $(`ms-trigger-${root.dataset.sourceId}`); if(trg) trg.focus(); } }); } });
     window.addEventListener("resize", setupFixedTopbar);
+  }
+
+  function bindFiltersVisibilityToggle(){
+    const toggleBtn = $("toggleFiltersBtn");
+    const filtersBody = $("filtersBody");
+
+    if(!toggleBtn || !filtersBody) return;
+
+    const icon = toggleBtn.querySelector("i");
+    const label = toggleBtn.querySelector(".toggle-label");
+
+    function setCollapsed(collapsed){
+      filtersBody.hidden = collapsed;
+      toggleBtn.setAttribute("aria-expanded", String(!collapsed));
+      toggleBtn.title = collapsed ? "Mostrar filtros" : "Ocultar filtros";
+
+      if(icon){
+        icon.className = collapsed ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
+      }
+
+      if(label){
+        label.textContent = collapsed ? "Mostrar filtros" : "Ocultar filtros";
+      }
+    }
+
+    setCollapsed(false);
+
+    toggleBtn.addEventListener("click", () => {
+      setCollapsed(!filtersBody.hidden);
+    });
   }
 
   async function loadProfile(){
@@ -341,7 +418,7 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   // ---------------- Cache local (30 min) ----------------
   function readCache(){
     try{
-      const raw = localStorage.getItem(CACHE_KEY);
+      const raw = localStorage.getItem(currentCacheKey());
       if(!raw) return null;
       const parsed = JSON.parse(raw);
       if(!parsed || !parsed.ts || !Array.isArray(parsed.rows)) return null;
@@ -350,7 +427,7 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   }
   function writeCache(rawRows, rawEditais){
     try{
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), rows: rawRows, editais: rawEditais }));
+      localStorage.setItem(currentCacheKey(), JSON.stringify({ ts: Date.now(), rows: rawRows, editais: rawEditais }));
     }catch(e){
       console.warn("Não foi possível gravar o cache local:", e);
     }
@@ -375,12 +452,12 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       analisesDataLoadedAtLeastOnce = true;
       const mins = Math.round(cacheAgeMs(cache) / 60000);
       setUpdatedFromCache(cache.ts);
-      toast(`Dados carregados do cache local (${mins} min). Clique em Atualizar para buscar dados novos.`, "info", 6000);
+      toast(`Dados ${currentEditalScopeLabel().toLowerCase()} carregados do cache local (${mins} min). Clique em Atualizar para buscar dados novos.`, "info", 6000);
       return true;
     }
     $("updatedText").textContent = "Carregando dados...";
     $("footerUpdated").textContent = "Carregando dados...";
-    toast("Carregando dados atualizados do Supabase.", "info", 4000);
+    toast(`Carregando dados ${currentEditalScopeLabel().toLowerCase()} do Supabase.`, "info", 4000);
     return refreshData();
   }
 
@@ -395,12 +472,15 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 
   // ---------------- Leitura paginada do Supabase ----------------
   const SUPABASE_PAGE_SIZE = 1000;
-  async function fetchAllSupabaseRows(tableName, columns, orderSpecs){
+  async function fetchAllSupabaseRows(tableName, columns, orderSpecs, options = {}){
     const allRows = [];
     let from = 0;
     const orders = Array.isArray(orderSpecs) ? orderSpecs : [];
     while(true){
       let query = sb.from(tableName).select(columns).range(from, from + SUPABASE_PAGE_SIZE - 1);
+      if(options.editalAtivo !== undefined){
+        query = query.eq("edital_ativo", options.editalAtivo);
+      }
       orders.forEach(spec => { query = query.order(spec.column, { ascending: spec.ascending !== false }); });
       const response = await query;
       if(response.error){ return { data: allRows, error: response.error }; }
@@ -415,7 +495,7 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   }
 
   async function loadAnalisesPayload(){
-    if(!sb) return null;
+    if(!sb || currentEditalScope() !== "ativo") return null;
     const { data, error } = await sb.rpc(ANALISES_DASHBOARD_PAYLOAD_RPC);
     if(error){
       console.warn("Payload consolidado de análises indisponível; usando carregamento legado:", error);
@@ -431,10 +511,10 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       showLoading(true); setProgress(12,"Consultando Supabase em lotes...");
       const [payloadResponse, baseResponse, editaisResponse] = await Promise.all([
         loadAnalisesPayload(),
-        fetchAllSupabaseRows(VIEW_NAME, "*", [
+        fetchAllSupabaseRows(currentViewName(), "*", [
           { column: "unidade", ascending: true }, { column: "edital", ascending: true },
           { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
-        ]),
+        ], currentScopeQueryOptions()),
         fetchAllSupabaseRows("analises_editais", "grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise", [
           { column: "unidade", ascending: true }, { column: "edital", ascending: true }
         ])
@@ -453,7 +533,7 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       rows = hydrateRowsWithEditalWindows(rawBaseRows);
       analisesDataLoadedAtLeastOnce = true;
       hydrateFilters(); setProgress(62,"Calculando indicadores..."); currentPage=1; applyFilters(); setUpdatedAt(); setProgress(100,`Painel pronto com ${fmtNum(rows.length)} registros.`); setTimeout(() => showLoading(false), 180);
-      toast(`Dados atualizados: ${fmtNum(rows.length)} registros carregados.`, "info", 5000);
+      toast(`Dados ${currentEditalScopeLabel().toLowerCase()} atualizados: ${fmtNum(rows.length)} registros carregados.`, "info", 5000);
       return true;
     })();
     try{ return await activeRefreshPromise; }finally{ activeRefreshPromise = null; }
@@ -481,7 +561,7 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   const FILTER_CONFIG_MAP = Object.fromEntries(FILTER_CONFIG.map(filter => [filter.id, filter]));
 
   function hydrateFilters(){ refreshFilterOptions(); }
-  function displayOptionLabel(id, value){ const maps={ fPdf:{COM_PDF:"Com PDF",SEM_PDF:"Sem PDF",ERRO:"PDF com erro",DESATUALIZADO:"PDF desatualizado"}, fValidacao:{DENTRO_PERIODO:"Dentro do período",FORA_PERIODO:"Fora do período",SEM_DATA:"Sem data de análise",SEM_JANELA:"Sem janela configurada"} }; return (maps[id]&&maps[id][value]) || value; }
+  function displayOptionLabel(id, value){ const maps={ fSituacaoEdital:{ativo:"Ativo",inativo:"Inativo",todos:"Todos"}, fPdf:{COM_PDF:"Com PDF",SEM_PDF:"Sem PDF",ERRO:"PDF com erro",DESATUALIZADO:"PDF desatualizado"}, fValidacao:{DENTRO_PERIODO:"Dentro do período",FORA_PERIODO:"Fora do período",SEM_DATA:"Sem data de análise",SEM_JANELA:"Sem janela configurada"} }; return (maps[id]&&maps[id][value]) || value; }
   function valuesForFilter(id, row){ const config = FILTER_CONFIG_MAP[id]; if(!config) return []; return (config.getValues(row) || []).map(v => txt(v)).filter(Boolean); }
   function optionValues(id, sourceRows){
     const seen = new Set(); const values = [];
@@ -534,8 +614,17 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     renderMultiSelect(id);
   }
   function clearFilters(){
+    const scopeBeforeClear = currentEditalScope();
+    if($("fSituacaoEdital")) $("fSituacaoEdital").value = "ativo";
     FILTER_IDS.forEach(id => { if(multiSelectState[id]){ multiSelectState[id].selected=[]; multiSelectState[id].search=""; renderMultiSelect(id); } if($(id)) $(id).value=""; });
-    ["fBusca","tableSearch"].forEach(id => { if($(id)) $(id).value=""; }); activeKpi="total"; activeResponsavel=""; currentPage=1; applyFilters();
+    ["fBusca","tableSearch"].forEach(id => { if($(id)) $(id).value=""; });
+    activeKpi="total"; activeResponsavel=""; currentPage=1;
+    if(scopeBeforeClear !== "ativo"){
+      resetDataForScopeChange();
+      loadFromCacheOrPrompt().catch(err => showAuth("Erro ao limpar filtros: " + (err && err.message ? err.message : err)));
+      return;
+    }
+    applyFilters();
   }
   function selectedValues(id){ if(multiSelectState[id]) return (multiSelectState[id].selected || []).slice(); const el=$(id); return el && txt(el.value) ? [txt(el.value)] : []; }
   function selected(id){ const vals = selectedValues(id); return vals[0] || ""; }
@@ -550,7 +639,7 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   function kpiStatuses(k){ const m = { total:[], analisado:["Revisar","Aprovado","Reprovado"], pendente:["Pendente"], revisar:["Revisar"], aprovado:["Aprovado"], reprovado:["Reprovado"] }; return m[k] || []; }
   function renderAll(){ renderKpis(); renderContext(); renderWindowMeta(); renderPdfMetrics(); renderResponsavelChart(); renderTrendChart(); renderAttention(); renderTable(); }
   function canUseAnalisesPayload(){
-    if(!analisesPayload) return false;
+    if(currentEditalScope() !== "ativo" || !analisesPayload) return false;
     const hasSelectFilters = FILTER_IDS.some(id => selectedValues(id).length > 0);
     const hasSearch = txt($("fBusca")?.value) || txt($("tableSearch")?.value);
     return !hasSelectFilters && !hasSearch && activeKpi === "total" && !activeResponsavel;
@@ -570,9 +659,10 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     document.querySelectorAll("[data-kpi]").forEach(el => { const on = el.dataset.kpi === activeKpi && activeKpi !== "total"; el.classList.toggle("is-active", on); const btn = el.querySelector("button[aria-pressed]"); if(btn) btn.setAttribute("aria-pressed", on ? "true" : "false"); });
   }
   function renderContext(){
-    const parts = []; [["fUnidade","Unidade"],["fEdital","Edital"],["fVaga","Vaga"],["fStatus","Status"],["fResponsavel","Responsável"],["fCategoria","Categoria"],["fModalidade","Modalidade"],["fPdf","PDF"],["fValidacao","Validação"]].forEach(([id,label]) => { const vals=selectedValues(id); if(vals.length) parts.push(`${label}: ${vals.map(v=>displayOptionLabel(id,v)).join(", ")}`); }); if(txt($("fBusca").value)) parts.push(`Busca: ${txt($("fBusca").value)}`); if(activeKpi!=="total") parts.push(`KPI: ${activeKpiLabel(activeKpi)}`); if(activeResponsavel) parts.push(`Responsável visual: ${activeResponsavel}`);
-    $("contextLine").textContent = parts.length ? `Recorte ativo: ${parts.join(" · ")}` : "Sem filtros aplicados. Recorte base: toda a carteira carregada.";
-    $("filterChips").innerHTML = parts.length ? parts.map(p => `<span class="chip-filter"><b>Filtro</b>${esc(p)}</span>`).join("") : `<span class="hint">Sem filtros aplicados. Use filtros e KPIs para navegar pela base.</span>`;
+    const parts = [`Situação do processo: ${currentEditalScopeLabel()}`];
+    [["fUnidade","Unidade"],["fEdital","Edital"],["fVaga","Vaga"],["fStatus","Status"],["fResponsavel","Responsável"],["fCategoria","Categoria"],["fModalidade","Modalidade"],["fPdf","PDF"],["fValidacao","Validação"]].forEach(([id,label]) => { const vals=selectedValues(id); if(vals.length) parts.push(`${label}: ${vals.map(v=>displayOptionLabel(id,v)).join(", ")}`); }); if(txt($("fBusca").value)) parts.push(`Busca: ${txt($("fBusca").value)}`); if(activeKpi!=="total") parts.push(`KPI: ${activeKpiLabel(activeKpi)}`); if(activeResponsavel) parts.push(`Responsável visual: ${activeResponsavel}`);
+    $("contextLine").textContent = `Recorte ativo: ${parts.join(" · ")}`;
+    $("filterChips").innerHTML = parts.map(p => `<span class="chip-filter"><b>Filtro</b>${esc(p)}</span>`).join("");
   }
   function activeKpiLabel(k){ return {analisado:"Análises realizadas",pendente:"Pendentes",revisar:"Em revisão",aprovado:"Aprovados",reprovado:"Reprovados"}[k] || "Todos"; }
   function renderWindowMeta(){
@@ -689,5 +779,5 @@ sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   function applyTheme(){ const saved=localStorage.getItem(THEME_KEY); if(saved==="dark") document.documentElement.dataset.theme="dark"; }
   function toggleTheme(){ const dark=document.documentElement.dataset.theme==="dark"; document.documentElement.dataset.theme=dark?"":"dark"; if(!dark) localStorage.setItem(THEME_KEY,"dark"); else localStorage.removeItem(THEME_KEY); renderResponsavelChart(); renderTrendChart(); }
   function toggleFullscreen(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
-  function exportCSV(){ const source = panelRows; const headers=["grupo","unidade","edital","codigo_vaga","nome_vaga","candidato","status_consolidado","etapa","data_analise","responsavel_analise","nota_final_ajustada","modalidade_concorrencia","link_pdf","data_validacao_status","analise"]; const csv=[headers.join(";"), ...source.map(r=>headers.map(h=>String(r[h] ?? "").replaceAll("\n"," ").replaceAll("\r"," ").replaceAll(";"," ").replaceAll('"',"'")).join(";"))].join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="agsus_analises_curriculares_v3.csv"; a.click(); URL.revokeObjectURL(a.href); toast(`Exportados ${fmt(source.length)} registros do recorte atual.`, "info"); }
+  function exportCSV(){ const source = panelRows; const headers=["edital_status","grupo","unidade","edital","codigo_vaga","nome_vaga","candidato","status_consolidado","etapa","data_analise","responsavel_analise","nota_final_ajustada","modalidade_concorrencia","link_pdf","data_validacao_status","analise"]; const csv=[headers.join(";"), ...source.map(r=>headers.map(h=>String(r[h] ?? "").replaceAll("\n"," ").replaceAll("\r"," ").replaceAll(";"," ").replaceAll('"',"'")).join(";"))].join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="agsus_analises_curriculares_v3.csv"; a.click(); URL.revokeObjectURL(a.href); toast(`Exportados ${fmt(source.length)} registros do recorte atual.`, "info"); }
   window.toggleDetails = toggleDetails; window.goPage = goPage;
