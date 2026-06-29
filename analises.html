@@ -57,12 +57,15 @@
           </div>
           <div class="filter-actions">
             <button class="btn secondary" id="advancedBtn"><i class="fa-solid fa-sliders"></i> Mais filtros</button>
+            <button class="btn secondary" id="toggleFiltersBtn" type="button" aria-expanded="true" title="Ocultar filtros"><i class="fa-solid fa-eye-slash"></i> <span class="toggle-label">Ocultar filtros</span></button>
             <button class="btn" id="applyBtn">Aplicar</button>
             <button class="btn secondary" id="clearBtn">Limpar</button>
           </div>
         </div>
 
-        <div class="filter-grid">
+        <div id="filtersBody" class="filters-body">
+          <div class="filter-grid">
+          <div class="field"><label for="fSituacaoEdital">Situação do processo</label><select id="fSituacaoEdital"><option value="ativo" selected>Ativo</option><option value="inativo">Inativo</option><option value="todos">Todos</option></select></div>
           <div class="field"><label for="fUnidade">Unidade</label><select id="fUnidade"></select></div>
           <div class="field"><label for="fEdital">Edital</label><select id="fEdital"></select></div>
           <div class="field"><label for="fVaga">Código da vaga</label><select id="fVaga"></select></div>
@@ -86,6 +89,7 @@
             <small class="hint">Nesta versão, o painel exibe status e links de PDF já gravados na base. A geração em lote continua no Apps Script.</small>
           </div>
           <div id="pdfMetrics" class="pdf-metrics"></div>
+          </div>
         </div>
       </section>
 
@@ -151,6 +155,37 @@
 
     <footer class="footer"><span>Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde © 2026</span><span><span id="footerUpdated">Atualizado: --</span> <span class="secure">SECURE</span></span></footer>
   </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toggleBtn = document.getElementById("toggleFiltersBtn");
+      const filtersBody = document.getElementById("filtersBody");
+
+      if (!toggleBtn || !filtersBody) return;
+
+      const icon = toggleBtn.querySelector("i");
+      const label = toggleBtn.querySelector(".toggle-label");
+
+      function setFiltersCollapsed(collapsed) {
+        filtersBody.hidden = collapsed;
+        toggleBtn.setAttribute("aria-expanded", String(!collapsed));
+        toggleBtn.title = collapsed ? "Mostrar filtros" : "Ocultar filtros";
+
+        if (icon) {
+          icon.className = collapsed ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
+        }
+
+        if (label) {
+          label.textContent = collapsed ? "Mostrar filtros" : "Ocultar filtros";
+        }
+      }
+
+      setFiltersCollapsed(false);
+
+      toggleBtn.addEventListener("click", function() {
+        setFiltersCollapsed(!filtersBody.hidden);
+      });
+    });
+  </script>
   <script type="module" src="/src/analises/main.js"></script>
 </body>
 </html>
