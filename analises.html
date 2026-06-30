@@ -155,37 +155,6 @@
 
     <footer class="footer"><span>Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde © 2026</span><span><span id="footerUpdated">Atualizado: --</span> <span class="secure">SECURE</span></span></footer>
   </div>
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const toggleBtn = document.getElementById("toggleFiltersBtn");
-      const filtersBody = document.getElementById("filtersBody");
-
-      if (!toggleBtn || !filtersBody) return;
-
-      const icon = toggleBtn.querySelector("i");
-      const label = toggleBtn.querySelector(".toggle-label");
-
-      function setFiltersCollapsed(collapsed) {
-        filtersBody.hidden = collapsed;
-        toggleBtn.setAttribute("aria-expanded", String(!collapsed));
-        toggleBtn.title = collapsed ? "Mostrar filtros" : "Ocultar filtros";
-
-        if (icon) {
-          icon.className = collapsed ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
-        }
-
-        if (label) {
-          label.textContent = collapsed ? "Mostrar filtros" : "Ocultar filtros";
-        }
-      }
-
-      setFiltersCollapsed(false);
-
-      toggleBtn.addEventListener("click", function() {
-        setFiltersCollapsed(!filtersBody.hidden);
-      });
-    });
-  </script>
   <script type="module" src="/src/analises/main.js"></script>
 </body>
 </html>
