@@ -1,8 +1,7 @@
-# AgSUS Monitora
+# AgSUS Monitora 
 
 Aplicacao web do AgSUS Monitora, organizada em uma versao modular com Vite para deploy no Vercel e integracao com Supabase.
 
-Esta versao substitui a estrutura HTML monolitica inicial por uma organizacao mais facil de manter, evoluir e transferir para outra equipe tecnica.
 
 ## Visao geral
 
@@ -171,15 +170,8 @@ Nao coloque chaves secretas, tokens, senhas ou credenciais no repositorio.
 
 Ha duas formas recomendadas.
 
-### Opcao 1: transferir acesso pelo GitHub
 
-Esta e a melhor opcao quando outra coordenacao vai continuar o desenvolvimento.
-
-1. No GitHub, acesse o repositorio `yassurysuira-boop/agsus-monitora-vercel`.
-2. Abra `Settings > Collaborators and teams`.
-3. Convide os responsaveis tecnicos da outra coordenacao.
-4. Garanta que tenham permissao adequada de leitura ou escrita.
-5. Oriente a equipe a clonar o repositorio com:
+a. Clonar o repositorio com:
 
 ```bash
 git clone https://github.com/yassurysuira-boop/agsus-monitora-vercel.git
