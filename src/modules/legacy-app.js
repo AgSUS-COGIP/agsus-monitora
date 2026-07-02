@@ -4,6 +4,7 @@ import {
   accessRequestStatusMessage,
   renderAccessPanelChoicesHTML,
   renderAccessRequestAdminItemHTML,
+  renderAccessUserAdminItemHTML,
   selectedPanelIdsFromForm
 } from "./access-request-ui.js";
 import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
@@ -23,6 +24,9 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
   const RPC_SAVE_MONITORAMENTO = "salvar_monitoramento_indigena";
   const RPC_SAVE_CONFIG        = "salvar_configuracoes_e_paineis";
   const RPC_ACCESS_LOG         = "registrar_evento_acesso";
+  const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
+  const RPC_REVOKE_USER_PANELS = "revogar_paineis_usuario";
+  const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
   const MONITORAMENTO_DASHBOARD_PAYLOAD_RPC = "get_monitoramento_dashboard_payload";
   const MAPA_CONFIG_TABLE = "mapa_saude_indigena_config";
   const DEFAULT_ACCESS_HEARTBEAT_MINUTES = 5;
@@ -171,6 +175,7 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
   let panels = [...DEFAULT_PANELS];
   let allowedPanelIds = new Set();
   let accessRequests = [];
+  let accessProfiles = [];
   let mapConfigLoadOk = false;
   let currentPanel = null;
   let currentView = "dashboard";
@@ -400,7 +405,7 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
 
   function resetSignedOutState(message="", type="warn"){
     currentUser = null; profile = null; rows = []; filtered = []; dataLoadedAtLeastOnce = false;
-    allowedPanelIds = new Set(); accessRequests = [];
+    allowedPanelIds = new Set(); accessRequests = []; accessProfiles = [];
     stopAccessHeartbeat(); clearExternalPanelCache();
     document.body.classList.remove("access-request-mode");
     $("appScreen").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
@@ -2466,26 +2471,64 @@ function renderPanelAdmin(){
     const allowed = can("admin") || can("config");
     card.classList.toggle("hidden", !allowed);
     if(!allowed) return;
-    box.innerHTML = `<div class="access-status">Carregando solicitações...</div>`;
-    const { data, error } = await sb
-      .from("solicitacoes_acesso")
-      .select("id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at,solicitacoes_acesso_paineis(painel_id)")
-      .order("created_at", { ascending:false })
-      .limit(50);
-    if(error){
-      box.innerHTML = `<div class="alert error">Erro ao carregar solicitações: ${esc(friendlyError(error))}</div>`;
+    box.innerHTML = `<div class="access-status">Carregando acessos...</div>`;
+    const [requestsResponse, profilesResponse] = await Promise.all([
+      sb
+        .from("solicitacoes_acesso")
+        .select("id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at,solicitacoes_acesso_paineis(painel_id)")
+        .eq("status", "pendente")
+        .order("created_at", { ascending:false })
+        .limit(50),
+      sb
+        .from("perfis_usuarios")
+        .select("id,email,nome,perfil,ativo,p_ind,p_cores,p_paineis,p_config,p_admin,updated_at,perfis_paineis_externos(painel_id,ativo)")
+        .eq("ativo", true)
+        .order("updated_at", { ascending:false })
+        .limit(80)
+    ]);
+    if(requestsResponse.error || profilesResponse.error){
+      box.innerHTML = `<div class="alert error">Erro ao carregar acessos: ${esc(friendlyError(requestsResponse.error || profilesResponse.error))}</div>`;
       return;
     }
-    accessRequests = Array.isArray(data) ? data : [];
-    if(!accessRequests.length){
-      box.innerHTML = `<div class="access-status">Nenhuma solicitação de acesso encontrada.</div>`;
-      return;
-    }
-    box.innerHTML = accessRequests.map(renderAccessRequestAdminItem).join("");
+    accessRequests = Array.isArray(requestsResponse.data) ? requestsResponse.data : [];
+    accessProfiles = Array.isArray(profilesResponse.data) ? profilesResponse.data : [];
+    const pendingHTML = accessRequests.length
+      ? accessRequests.map(renderAccessRequestAdminItem).join("")
+      : `<div class="access-status">Nenhuma solicitação pendente.</div>`;
+    const usersHTML = accessProfiles.length
+      ? accessProfiles.map(renderAccessUserAdminItem).join("")
+      : `<div class="access-status">Nenhum usuário ativo encontrado.</div>`;
+
+    box.innerHTML = `
+      <div class="access-admin-section">
+        <div class="section-title-row">
+          <div>
+            <h4>Solicitações pendentes</h4>
+            <p>Aprove ou recuse novos pedidos. Solicitações já avaliadas ficam no histórico do banco.</p>
+          </div>
+          <span class="chip blue">${fmt(accessRequests.length)}</span>
+        </div>
+        ${pendingHTML}
+      </div>
+      <div class="access-admin-section">
+        <div class="section-title-row">
+          <div>
+            <h4>Usuários ativos</h4>
+            <p>Revogue painéis ou desative o acesso sem apagar histórico.</p>
+          </div>
+          <span class="chip green">${fmt(accessProfiles.length)}</span>
+        </div>
+        ${usersHTML}
+      </div>
+    `;
   }
 
 function renderAccessRequestAdminItem(req){
   return renderAccessRequestAdminItemHTML(req, panels);
+}
+
+function renderAccessUserAdminItem(user){
+  return renderAccessUserAdminItemHTML(user, panels);
 }
 
   function accessRequestById(id){
@@ -2499,49 +2542,73 @@ function renderAccessRequestAdminItem(req){
       .filter(Boolean);
   }
 
+  function selectedUserPanelIds(id){
+    return Array.from(document.querySelectorAll("[data-user-panel]:checked"))
+      .filter(el=>String(el.getAttribute("data-user-panel"))===String(id))
+      .map(el=>txt(el.value))
+      .filter(Boolean);
+  }
+
   async function approveAccessRequest(id){
     const req = accessRequestById(id);
     if(!req) return toast("Solicitação não encontrada.","warn");
     const perfil = txt($("accessPerfil"+id)?.value) || "leitor";
     const p_paineis = $("accessPerm_paineis_"+id)?.checked === true;
     const selectedPanels = selectedAdminPanelIds(id);
-    const profilePayload = {
-      user_id: req.user_id,
-      email: req.email,
-      nome: req.nome || req.email,
-      perfil,
-      ativo: true,
+    const p_permissoes = {
       p_ind: $("accessPerm_ind_"+id)?.checked === true,
       p_cores: $("accessPerm_cores_"+id)?.checked === true,
       p_paineis,
       p_config: $("accessPerm_config_"+id)?.checked === true,
       p_admin: $("accessPerm_admin_"+id)?.checked === true
     };
-    loader(true,"Aprovando acesso","Criando perfil e permissões...",55);
-    const { data:profileRows, error:profileErr } = await sb
-      .from("perfis_usuarios")
-      .upsert(profilePayload, { onConflict:"email" })
-      .select("id")
-      .limit(1);
-    if(profileErr){ loader(false); return toast("Erro ao criar perfil: "+friendlyError(profileErr),"error"); }
-    const profileId = Array.isArray(profileRows) ? profileRows[0]?.id : profileRows?.id;
-    if(!profileId){ loader(false); return toast("Perfil salvo, mas não foi possível confirmar o ID. Recarregue e tente novamente.","error"); }
-    const { error:deleteErr } = await sb.from("perfis_paineis_externos").delete().eq("perfil_usuario_id", profileId);
-    if(deleteErr){ loader(false); return toast("Erro ao limpar permissões antigas de painéis: "+friendlyError(deleteErr),"error"); }
-    if(p_paineis && selectedPanels.length){
-      const rowsToInsert = selectedPanels.map(painel_id=>({ perfil_usuario_id:profileId, painel_id, ativo:true }));
-      const { error:panelErr } = await sb.from("perfis_paineis_externos").insert(rowsToInsert);
-      if(panelErr){ loader(false); return toast("Erro ao liberar painéis: "+friendlyError(panelErr),"error"); }
-    }
-    const { error:reqErr } = await sb.from("solicitacoes_acesso").update({
-      status:"aprovado",
-      avaliado_por: currentUser?.id || null,
-      avaliado_em: new Date().toISOString(),
-      observacao_admin: txt($("accessObs"+id)?.value)
-    }).eq("id", id);
+    loader(true,"Aprovando acesso","Salvando perfil e permissões em uma transação...",55);
+    const { error:reqErr } = await sb.rpc(RPC_APPROVE_ACCESS_REQUEST, {
+      p_solicitacao_id: id,
+      p_perfil: perfil,
+      p_permissoes,
+      p_paineis: p_paineis ? selectedPanels : [],
+      p_observacao_admin: txt($("accessObs"+id)?.value)
+    });
     loader(false);
-    if(reqErr) return toast("Perfil criado, mas erro ao marcar solicitação como aprovada: "+friendlyError(reqErr),"warn");
-    toast("Acesso aprovado.");
+    if(reqErr) return toast("Erro ao aprovar acesso: "+friendlyError(reqErr),"error");
+    toast("Acesso aprovado. Oriente o usuário a sair e entrar novamente.");
+    await renderAccessRequestsAdmin();
+  }
+
+  async function revokeUserPanels(id){
+    const selectedPanels = selectedUserPanelIds(id);
+    const allPanels = selectedPanels.length === 0;
+    const message = allPanels
+      ? "Nenhum painel marcado. Revogar TODOS os painéis externos deste usuário?"
+      : `Revogar ${selectedPanels.length} painel(is) marcado(s) deste usuário?`;
+    if(!window.confirm(message)) return;
+    const motivo = window.prompt("Motivo da revogação (opcional):", "") || "";
+    loader(true,"Revogando painéis","Atualizando permissões externas...",45);
+    const { error } = await sb.rpc(RPC_REVOKE_USER_PANELS, {
+      p_perfil_usuario_id: id,
+      p_paineis: allPanels ? null : selectedPanels,
+      p_motivo: motivo
+    });
+    loader(false);
+    if(error) return toast("Erro ao revogar painéis: "+friendlyError(error),"error");
+    toast("Painéis revogados.");
+    await renderAccessRequestsAdmin();
+  }
+
+  async function deactivateUserAccess(id){
+    const user = accessProfiles.find(r=>String(r.id)===String(id));
+    const label = user?.email || "este usuário";
+    if(!window.confirm(`Desativar o acesso de ${label}? O histórico será mantido.`)) return;
+    const motivo = window.prompt("Motivo da desativação (opcional):", "") || "";
+    loader(true,"Desativando acesso","Removendo permissões do usuário...",45);
+    const { error } = await sb.rpc(RPC_DEACTIVATE_USER_ACCESS, {
+      p_perfil_usuario_id: id,
+      p_motivo: motivo
+    });
+    loader(false);
+    if(error) return toast("Erro ao desativar acesso: "+friendlyError(error),"error");
+    toast("Acesso desativado.");
     await renderAccessRequestsAdmin();
   }
 
@@ -2972,6 +3039,7 @@ function renderAccessRequestAdminItem(req){
     debouncedNucleo,
     debouncedSearch,
     denyAccessRequest,
+    deactivateUserAccess,
     exitExternalPanel,
     exportCSV,
     exportPDF,
@@ -2987,6 +3055,7 @@ function renderAccessRequestAdminItem(req){
     reloadExternal,
     returnToLogin,
     removeFilterPill,
+    revokeUserPanels,
     runGlobalSearch,
     saveAdminSettings,
     saveEdital,
