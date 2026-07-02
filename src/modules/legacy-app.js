@@ -129,7 +129,7 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     permissions_empty_text:""
     ,executive_mode_enter_text:""
     ,executive_mode_exit_text:""
-    ,auth_google_enabled:"false"
+    ,auth_google_enabled:"true"
     ,auth_google_button_text:""
     ,auth_google_domain_hint:""
   };
@@ -414,7 +414,8 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     stopAccessHeartbeat(); clearExternalPanelCache();
     document.body.classList.remove("access-request-mode");
     $("appScreen").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
-    $("loginPassword").value = "";
+    const loginPassword = $("loginPassword");
+    if(loginPassword) loginPassword.value = "";
     const accessCard = $("accessRequestCard"); if(accessCard) accessCard.classList.add("hidden");
     const accessStatus = $("accessRequestStatus"); if(accessStatus) accessStatus.classList.add("hidden");
     const accessBtn = $("accessRequestBtn"); if(accessBtn) accessBtn.disabled = false;
@@ -587,32 +588,19 @@ async function returnToLogin(){
     if(isSidebarLockedViewport()) return;
     try{ const saved = localStorage.getItem("agsus_monitora_sidebar_collapsed_v1"); if(saved==="0") document.body.classList.remove("sidebar-collapsed"); if(saved==="1") document.body.classList.add("sidebar-collapsed"); }catch(e){}
   }
-  function togglePassword(){ const p = $("loginPassword"); p.type = p.type==="password" ? "text" : "password"; }
+  function togglePassword(){ const p = $("loginPassword"); if(!p) return; p.type = p.type==="password" ? "text" : "password"; }
 
   async function login(){
-    if(!sb && !initSupabase()) return;
-    const email = txt($("loginEmail").value); const password = $("loginPassword").value;
-    if(!email || !password){ showAlert("loginMsg","Informe usuário e senha.","warn"); return; }
-    $("loginBtn").disabled = true; $("loginBtn").textContent = "Entrando...";
-    loader(true,"Autenticando","Validando credenciais...",12);
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if(error){
-      loader(false); $("loginBtn").disabled = false; setLoginButtonReady();
-      showAlert("loginMsg","Falha no login: " + error.message,"error"); return;
-    }
-    currentUser = data.user;
-    const ready = await loadInitialData();
-    if(ready){
-      await trackAccess("login", { tela:"login", detalhes:{ email } }); startAccessHeartbeat();
-      startRealtime();
-      loader(false); toast("Login realizado com sucesso.");
-    }
-    $("loginBtn").disabled = false; setLoginButtonReady();
+    showAlert("loginMsg","Use o login com Google institucional para acessar.","warn");
+    return loginWithGoogle();
   }
 
   async function loginWithGoogle(){
     if(!sb && !initSupabase()) return;
-    if(!cfgBool("auth_google_enabled", false)) return;
+    if(!cfgBool("auth_google_enabled", true)){
+      showAlert("loginMsg","Login Google está desativado nas configurações do sistema.","error");
+      return;
+    }
     const btn = $("googleLoginBtn");
     if(btn) btn.disabled = true;
     // Para testes e troca de perfil, limpe a sessao local antes do OAuth.
@@ -733,7 +721,8 @@ async function returnToLogin(){
     const emailInput = $("loginEmail");
     if(emailInput) emailInput.value = currentUser?.email || "";
     setText("accessReqEmail", currentUser?.email || "-");
-    $("loginPassword").value = "";
+    const loginPassword = $("loginPassword");
+    if(loginPassword) loginPassword.value = "";
     showAlert("loginMsg", "", "");
     const card = $("accessRequestCard");
     if(card) card.classList.remove("hidden");
@@ -871,9 +860,9 @@ function renderAccessPanelChoices(selectedIds=[]){
     setLoginButtonReady();
     const googleBtn = $("googleLoginBtn");
     if(googleBtn){
-      const enabled = cfgBool("auth_google_enabled", false);
+      const enabled = cfgBool("auth_google_enabled", true);
       googleBtn.style.display = enabled ? "flex" : "none";
-      setText("googleLoginText", cfgValue("auth_google_button_text"));
+      setText("googleLoginText", cfgValue("auth_google_button_text") || "Entrar com Google institucional");
     }
     setText("sidebarUserLabel", cfgValue("sidebar_user_label"));
     setText("sidebarVersionLabel", cfgValue("sidebar_version_label"));
@@ -2428,7 +2417,7 @@ function renderAccessPanelChoices(selectedIds=[]){
     $("cfgLoginPasswordPlaceholder") && ($("cfgLoginPasswordPlaceholder").value = cfgValue("login_password_placeholder"));
     $("cfgLoginButtonText") && ($("cfgLoginButtonText").value = cfgValue("login_button_text"));
     $("cfgPasswordResetMessage") && ($("cfgPasswordResetMessage").value = passwordResetMessage());
-    $("cfgGoogleEnabled") && ($("cfgGoogleEnabled").value = String(cfgBool("auth_google_enabled", false)));
+    $("cfgGoogleEnabled") && ($("cfgGoogleEnabled").value = String(cfgBool("auth_google_enabled", true)));
     $("cfgGoogleButtonText") && ($("cfgGoogleButtonText").value = cfgValue("auth_google_button_text"));
     $("cfgGoogleDomainHint") && ($("cfgGoogleDomainHint").value = cfgValue("auth_google_domain_hint"));
     $("cfgFilterTitle") && ($("cfgFilterTitle").value = cfgValue("filter_title"));
@@ -2670,7 +2659,7 @@ function renderAccessUserAdminItem(user){
       {chave:"monit_id",       valor:txt($("cfgMonitId").value),       descricao:"ID / referência da base"},
       {chave:"page_title",     valor:txt($("cfgPageTitle")?.value||""), descricao:"Título da página inicial"},
       {chave:"page_subtitle",  valor:txt($("cfgPageSubtitle")?.value||""), descricao:"Subtítulo da página inicial"},
-      {chave:"auth_google_enabled", valor:txt($("cfgGoogleEnabled")?.value||"false"), descricao:"Exibe ou oculta o login com Google"},
+      {chave:"auth_google_enabled", valor:txt($("cfgGoogleEnabled")?.value||"true"), descricao:"Exibe ou oculta o login com Google"},
       {chave:"auth_google_button_text", valor:txt($("cfgGoogleButtonText")?.value||""), descricao:"Texto do botão de autenticação Google"},
       {chave:"auth_google_domain_hint", valor:txt($("cfgGoogleDomainHint")?.value||""), descricao:"Domínio sugerido no login Google"},
       {chave:"filter_title", valor:txt($("cfgFilterTitle")?.value||""), descricao:"Título dos filtros"},

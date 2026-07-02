@@ -56,24 +56,11 @@
         <p class="login-subtitle2" id="loginSlogan">Painel da Saúde Indígena</p>
         <div id="configMsg" class="alert error hidden"></div>
         <div id="loginMsg" class="alert hidden"></div>
-        <div class="login-form">
-          <label id="loginEmailLabel" for="loginEmail">E-mail institucional</label>
-          <input id="loginEmail" type="email" placeholder="usuario@agenciasus.org.br" autocomplete="email" />
-          <label id="loginPasswordLabel" for="loginPassword">Senha</label>
-          <div class="password-wrap">
-            <input id="loginPassword" type="password" placeholder="Senha de acesso" autocomplete="current-password"
-              onkeydown="if(event.key==='Enter') login()"
-              oninput="const b=$('eyeBtn'); if(b) b.style.display=this.value?'flex':'none';" />
-            <button id="eyeBtn" type="button" onclick="togglePassword()" aria-label="Mostrar senha" style="display:none;align-items:center;justify-content:center;">
-              <i class="fa-solid fa-eye"></i>
-            </button>
-          </div>
-          <button id="loginBtn" class="btn" style="min-height:48px;font-size:15px;background:linear-gradient(135deg,#003b70,#0077c8);margin-top:4px;" onclick="login()">
-            <i class="fa-solid fa-right-to-bracket"></i> Iniciar sessão
-          </button>
+        <div class="login-form google-only-login">
           <button id="googleLoginBtn" type="button" class="google-login-btn" onclick="loginWithGoogle()">
-            <span class="gmark">G</span><span id="googleLoginText"></span>
+            <span class="gmark">G</span><span id="googleLoginText">Entrar com Google institucional</span>
           </button>
+          <p class="google-only-hint">Use sua conta Google corporativa. Acesso liberado somente após aprovação do perfil.</p>
           <div id="accessRequestCard" class="access-request-card hidden">
            <div class="access-request-head compact">
   <div>
@@ -125,9 +112,6 @@
 </div>
            
           </div>
-          <p id="loginHelp" class="login-help" style="margin:8px 0 0;text-align:center;font-size:12px;color:#63748d;font-weight:700;line-height:1.35;">
-            <i class="fa-solid fa-lock" style="font-size:11px;margin-right:4px;"></i>Esqueceu sua senha? Solicite a redefinição ao administrador do sistema.
-          </p>
         </div>
         <div class="login-security" style="display:none!important"></div>
         <div class="login-cogip">
