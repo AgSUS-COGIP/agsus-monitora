@@ -92,6 +92,56 @@ export function renderAccessRequestAdminItemHTML(req, panels) {
   </div>`;
 }
 
+export function renderAccessUserAdminItemHTML(user, panels) {
+  const activePanelIds = new Set((user.perfis_paineis_externos || [])
+    .filter((row) => row.ativo !== false)
+    .map((row) => String(row.painel_id)));
+  const panelChecks = (panels || []).filter((panel) => panel.ativo !== false).map((panel) => {
+    const checked = activePanelIds.has(String(panel.id));
+    return `
+      <label class="panel-check ${checked ? "" : "muted"}">
+        <input type="checkbox" data-user-panel="${attr(user.id)}" value="${attr(panel.id || "")}" ${checked ? "checked" : ""} ${checked ? "" : "disabled"}>
+        <span>${esc(panel.titulo || panel.codigo)}</span>
+      </label>
+    `;
+  }).join("") || `<div class="access-status">Nenhum painel externo ativo.</div>`;
+
+  const permissionLabels = [
+    ["p_ind", "Saúde Indígena"],
+    ["p_cores", "Núcleo"],
+    ["p_paineis", "Painéis"],
+    ["p_config", "Config"],
+    ["p_admin", "Admin"]
+  ];
+  const permissions = permissionLabels.map(([key, label]) => `
+    <span class="permission-chip ${user[key] ? "on" : "off"}">${esc(label)}</span>
+  `).join("");
+
+  return `<div class="access-admin-item access-user-item" data-access-user="${attr(user.id)}">
+    <div class="access-admin-head">
+      <div>
+        <strong>${esc(user.nome || user.email)}</strong>
+        <span>${esc(user.email)} · ${esc(user.perfil || "leitor")}</span>
+      </div>
+      <div class="access-status-pill ${user.ativo ? "aprovado" : "recusado"}">${user.ativo ? "ativo" : "inativo"}</div>
+    </div>
+    <div class="access-user-summary">
+      <div>
+        <label>Permissões internas</label>
+        <div class="permission-checks readonly">${permissions}</div>
+      </div>
+      <div>
+        <label>Painéis externos ativos</label>
+        <div class="panel-check-list">${panelChecks}</div>
+      </div>
+    </div>
+    <div class="access-admin-actions">
+      <button class="btn outline" type="button" onclick="revokeUserPanels('${attr(user.id)}')"><i class="fa-solid fa-eye-slash"></i> Revogar painéis marcados</button>
+      <button class="btn red" type="button" onclick="deactivateUserAccess('${attr(user.id)}')"><i class="fa-solid fa-user-slash"></i> Desativar acesso</button>
+    </div>
+  </div>`;
+}
+
 function permissionCheckHTML(id, key, label, checked, disabled) {
   return `<label class="permission-check"><input type="checkbox" id="accessPerm_${attr(key)}_${attr(id)}" ${checked ? "checked" : ""} ${disabled}><span>${esc(label)}</span></label>`;
 }
