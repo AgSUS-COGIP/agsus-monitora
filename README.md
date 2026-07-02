@@ -63,8 +63,8 @@ Antes de rodar o projeto, confirme que a maquina possui:
 Clone o repositorio:
 
 ```bash
-git clone https://github.com/yassurysuira-boop/agsus-monitora-vercel.git
-cd agsus-monitora-vercel
+git clone https://github.com/yassurysuira-boop/agsus-monitora.git
+cd agsus-monitora
 ```
 
 Instale as dependencias:
@@ -174,7 +174,7 @@ Ha duas formas recomendadas.
 a. Clonar o repositorio com:
 
 ```bash
-git clone https://github.com/yassurysuira-boop/agsus-monitora-vercel.git
+git clone https://github.com/yassurysuira-boop/agsus-monitora.git
 ```
 
 Depois disso, a equipe deve configurar o `.env.local` localmente e solicitar acesso aos projetos no Vercel e no Supabase.
@@ -191,7 +191,7 @@ Esta opcao serve para entrega simples de uma copia do codigo.
 Link direto, se o usuario estiver autenticado no GitHub e tiver acesso ao repositorio:
 
 ```text
-https://github.com/yassurysuira-boop/agsus-monitora-vercel/archive/refs/heads/main.zip
+https://github.com/yassurysuira-boop/agsus-monitora/archive/refs/heads/main.zip
 ```
 
 Importante: o ZIP nao leva variaveis de ambiente, credenciais, configuracoes internas do Vercel nem acessos do Supabase. Esses itens precisam ser concedidos separadamente.
