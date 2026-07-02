@@ -100,22 +100,13 @@ export function renderAccessUserAdminItemHTML(user, panels) {
     const checked = activePanelIds.has(String(panel.id));
     return `
       <label class="panel-check ${checked ? "" : "muted"}">
-        <input type="checkbox" data-user-panel="${attr(user.id)}" value="${attr(panel.id || "")}" ${checked ? "checked" : ""} ${checked ? "" : "disabled"}>
+        <input type="checkbox" data-user-panel="${attr(user.id)}" value="${attr(panel.id || "")}" ${checked ? "checked" : ""}>
         <span>${esc(panel.titulo || panel.codigo)}</span>
       </label>
     `;
   }).join("") || `<div class="access-status">Nenhum painel externo ativo.</div>`;
 
-  const permissionLabels = [
-    ["p_ind", "Saúde Indígena"],
-    ["p_cores", "Núcleo"],
-    ["p_paineis", "Painéis"],
-    ["p_config", "Config"],
-    ["p_admin", "Admin"]
-  ];
-  const permissions = permissionLabels.map(([key, label]) => `
-    <span class="permission-chip ${user[key] ? "on" : "off"}">${esc(label)}</span>
-  `).join("");
+  const profileValue = ["leitor", "editor", "admin"].includes(user.perfil) ? user.perfil : "leitor";
 
   return `<div class="access-admin-item access-user-item" data-access-user="${attr(user.id)}">
     <div class="access-admin-head">
@@ -125,23 +116,40 @@ export function renderAccessUserAdminItemHTML(user, panels) {
       </div>
       <div class="access-status-pill ${user.ativo ? "aprovado" : "recusado"}">${user.ativo ? "ativo" : "inativo"}</div>
     </div>
-    <div class="access-user-summary">
-      <div>
-        <label>Permissões internas</label>
-        <div class="permission-checks readonly">${permissions}</div>
+    <div class="access-admin-controls">
+      <div class="form-row">
+        <label>Perfil</label>
+        <select id="userPerfil${attr(user.id)}">
+          <option value="leitor" ${profileValue === "leitor" ? "selected" : ""}>Leitor</option>
+          <option value="editor" ${profileValue === "editor" ? "selected" : ""}>Editor</option>
+          <option value="admin" ${profileValue === "admin" ? "selected" : ""}>Admin</option>
+        </select>
       </div>
       <div>
-        <label>Painéis externos ativos</label>
+        <label>Permissões internas</label>
+        <div class="permission-checks">
+          ${permissionCheckHTML(user.id, "ind", "Saúde Indígena", user.p_ind === true, "", "userPerm")}
+          ${permissionCheckHTML(user.id, "cores", "Núcleo", user.p_cores === true, "", "userPerm")}
+          ${permissionCheckHTML(user.id, "paineis", "Painéis", user.p_paineis === true, "", "userPerm")}
+          ${permissionCheckHTML(user.id, "config", "Config", user.p_config === true, "", "userPerm")}
+          ${permissionCheckHTML(user.id, "admin", "Admin", user.p_admin === true, "", "userPerm")}
+        </div>
+      </div>
+    </div>
+    <div class="access-user-summary">
+      <div>
+        <label>Painéis externos liberados</label>
         <div class="panel-check-list">${panelChecks}</div>
       </div>
     </div>
     <div class="access-admin-actions">
+      <button class="btn green" type="button" onclick="updateUserAccess('${attr(user.id)}')"><i class="fa-solid fa-floppy-disk"></i> Salvar alterações</button>
       <button class="btn outline" type="button" onclick="revokeUserPanels('${attr(user.id)}')"><i class="fa-solid fa-eye-slash"></i> Revogar painéis marcados</button>
       <button class="btn red" type="button" onclick="deactivateUserAccess('${attr(user.id)}')"><i class="fa-solid fa-user-slash"></i> Desativar acesso</button>
     </div>
   </div>`;
 }
 
-function permissionCheckHTML(id, key, label, checked, disabled) {
-  return `<label class="permission-check"><input type="checkbox" id="accessPerm_${attr(key)}_${attr(id)}" ${checked ? "checked" : ""} ${disabled}><span>${esc(label)}</span></label>`;
+function permissionCheckHTML(id, key, label, checked, disabled, prefix = "accessPerm") {
+  return `<label class="permission-check"><input type="checkbox" id="${attr(prefix)}_${attr(key)}_${attr(id)}" ${checked ? "checked" : ""} ${disabled}><span>${esc(label)}</span></label>`;
 }

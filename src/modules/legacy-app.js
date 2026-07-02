@@ -25,6 +25,7 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
   const RPC_SAVE_CONFIG        = "salvar_configuracoes_e_paineis";
   const RPC_ACCESS_LOG         = "registrar_evento_acesso";
   const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
+  const RPC_UPDATE_USER_ACCESS = "atualizar_acesso_usuario";
   const RPC_REVOKE_USER_PANELS = "revogar_paineis_usuario";
   const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
   const MONITORAMENTO_DASHBOARD_PAYLOAD_RPC = "get_monitoramento_dashboard_payload";
@@ -372,6 +373,10 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     if(!profile) return false;
     if(low(profile.perfil) === "master") return true;
     return profile["p_" + perm] === true;
+  }
+
+  function isMasterProfile(){
+    return low(profile?.perfil) === "master";
   }
 
   function getClientSessionId(){
@@ -2468,7 +2473,7 @@ function renderPanelAdmin(){
     const card = $("accessRequestsAdminCard");
     const box = $("accessRequestsAdmin");
     if(!card || !box) return;
-    const allowed = can("admin") || can("config");
+    const allowed = isMasterProfile();
     card.classList.toggle("hidden", !allowed);
     if(!allowed) return;
     box.innerHTML = `<div class="access-status">Carregando acessos...</div>`;
@@ -2483,6 +2488,7 @@ function renderPanelAdmin(){
         .from("perfis_usuarios")
         .select("id,email,nome,perfil,ativo,p_ind,p_cores,p_paineis,p_config,p_admin,updated_at,perfis_paineis_externos(painel_id,ativo)")
         .eq("ativo", true)
+        .neq("perfil", "master")
         .order("updated_at", { ascending:false })
         .limit(80)
     ]);
@@ -2514,7 +2520,7 @@ function renderPanelAdmin(){
         <div class="section-title-row">
           <div>
             <h4>Usuários ativos</h4>
-            <p>Revogue painéis ou desative o acesso sem apagar histórico.</p>
+            <p>Ajuste perfil, permissões, painéis ou desative o acesso sem apagar histórico.</p>
           </div>
           <span class="chip green">${fmt(accessProfiles.length)}</span>
         </div>
@@ -2547,6 +2553,36 @@ function renderAccessUserAdminItem(user){
       .filter(el=>String(el.getAttribute("data-user-panel"))===String(id))
       .map(el=>txt(el.value))
       .filter(Boolean);
+  }
+
+  async function updateUserAccess(id){
+    const user = accessProfiles.find(r=>String(r.id)===String(id));
+    if(!user) return toast("Usuário não encontrado.","warn");
+    const perfil = txt($("userPerfil"+id)?.value) || "leitor";
+    const p_paineis = $("userPerm_paineis_"+id)?.checked === true;
+    const selectedPanels = selectedUserPanelIds(id);
+    const p_permissoes = {
+      p_ind: $("userPerm_ind_"+id)?.checked === true,
+      p_cores: $("userPerm_cores_"+id)?.checked === true,
+      p_paineis,
+      p_config: $("userPerm_config_"+id)?.checked === true,
+      p_admin: $("userPerm_admin_"+id)?.checked === true
+    };
+    const label = user.email || user.nome || "este usuário";
+    if(!window.confirm(`Salvar alterações de acesso para ${label}?`)) return;
+    const motivo = window.prompt("Motivo da alteração (opcional):", "") || "";
+    loader(true,"Salvando acesso","Atualizando perfil, permissões e painéis em uma transação...",55);
+    const { error } = await sb.rpc(RPC_UPDATE_USER_ACCESS, {
+      p_perfil_usuario_id: id,
+      p_perfil: perfil,
+      p_permissoes,
+      p_paineis: p_paineis ? selectedPanels : [],
+      p_motivo: motivo
+    });
+    loader(false);
+    if(error) return toast("Erro ao salvar acesso: "+friendlyError(error),"error");
+    toast("Acesso atualizado. Oriente o usuário a sair e entrar novamente.");
+    await renderAccessRequestsAdmin();
   }
 
   async function approveAccessRequest(id){
@@ -3063,6 +3099,7 @@ function renderAccessUserAdminItem(user){
     selectAllFilterValues,
     selectSearchResult,
     sortDetails,
+    updateUserAccess,
     submitAccessRequest,
     toggleBrowserFullscreen,
     toggleColMenu,
