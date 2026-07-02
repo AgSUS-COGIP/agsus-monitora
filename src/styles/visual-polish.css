@@ -1,4 +1,5 @@
-/* Polimento visual incremental. Mantem a arquitetura atual e evita reescrever o app legado. */
+/* Polimento visual incremental e conservador.
+   Mantem o dashboard mais legivel sem interferir no Leaflet/mapa do app legado. */
 
 .visual-polish-ready .card,
 .visual-polish-ready .filter-card,
@@ -53,42 +54,7 @@
 }
 
 .executive-mini-chart {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(0, 59, 112, .12);
-}
-
-.executive-mini-chart-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.executive-mini-chart-head span {
-  color: #10243e;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.executive-mini-chart-head strong {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  border-radius: 999px;
-  padding: 0 9px;
-  background: #e8f7ef;
-  color: #0b8f58;
-  font-size: 10px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
-.executive-mini-chart-canvas {
-  width: 100%;
-  height: 190px;
+  display: none !important;
 }
 
 .visual-polish-ready .table-card {
@@ -121,10 +87,6 @@
 @media (max-width: 900px) {
   .visual-polish-ready .kpis-main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .executive-mini-chart-canvas {
-    height: 170px;
   }
 }
 
