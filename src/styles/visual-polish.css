@@ -1,0 +1,135 @@
+/* Polimento visual incremental. Mantem a arquitetura atual e evita reescrever o app legado. */
+
+.visual-polish-ready .card,
+.visual-polish-ready .filter-card,
+.visual-polish-ready .table-card {
+  border-color: rgba(0, 59, 112, .12);
+  box-shadow: 0 10px 28px rgba(15, 35, 60, .07);
+}
+
+.visual-polish-ready .kpis-main {
+  gap: 14px;
+}
+
+.visual-polish-ready .kpi {
+  border-radius: 14px;
+  min-height: 112px;
+  isolation: isolate;
+  box-shadow: 0 8px 22px rgba(15, 35, 60, .06);
+}
+
+.visual-polish-ready .kpi::after {
+  content: "";
+  position: absolute;
+  inset: auto 10px 10px auto;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .08;
+  z-index: -1;
+}
+
+.visual-polish-ready .kpi span {
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+
+.visual-polish-ready .kpi b {
+  font-size: clamp(26px, 3vw, 36px);
+  font-variant-numeric: tabular-nums;
+}
+
+.visual-polish-ready .kpi.ag-navy { color: #003b70; }
+.visual-polish-ready .kpi.ag-blue { color: #0d6efd; }
+.visual-polish-ready .kpi.ag-green { color: #0b8f58; }
+.visual-polish-ready .kpi.ag-red { color: #d92d3a; }
+.visual-polish-ready .kpi.ag-yellow { color: #7a5600; }
+.visual-polish-ready .kpi.ag-cyan { color: #007b95; }
+
+.visual-polish-ready .dashboard-grid,
+.visual-polish-ready .lower-grid {
+  gap: 18px;
+}
+
+.executive-mini-chart {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 59, 112, .12);
+}
+
+.executive-mini-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.executive-mini-chart-head span {
+  color: #10243e;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.executive-mini-chart-head strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 9px;
+  background: #e8f7ef;
+  color: #0b8f58;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.executive-mini-chart-canvas {
+  width: 100%;
+  height: 190px;
+}
+
+.visual-polish-ready .table-card {
+  overflow: clip;
+}
+
+.visual-polish-ready .table-head {
+  background: linear-gradient(135deg, #003b70, #006db8);
+  color: #fff;
+}
+
+.visual-polish-ready #tableSearch {
+  min-height: 42px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.visual-polish-ready #monitorRows tr:hover td {
+  background: #f5fbff;
+}
+
+.visual-polish-ready .risk-list > * {
+  border-radius: 12px;
+}
+
+.visual-polish-ready .status-pill {
+  box-shadow: 0 6px 18px rgba(15, 35, 60, .08);
+}
+
+@media (max-width: 900px) {
+  .visual-polish-ready .kpis-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .executive-mini-chart-canvas {
+    height: 170px;
+  }
+}
+
+@media (max-width: 560px) {
+  .visual-polish-ready .kpis-main {
+    grid-template-columns: 1fr;
+  }
+}
