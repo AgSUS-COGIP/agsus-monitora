@@ -1,0 +1,32 @@
+name: Validar AgSUS Monitora
+
+on:
+  push:
+    branches:
+      - refatoracao-vite
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Rodar testes
+        run: npm run test
+
+      - name: Gerar build
+        run: npm run build
