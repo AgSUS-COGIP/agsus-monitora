@@ -5,7 +5,7 @@ const BRAZIL_VIEW_BOUNDS = [
 
 const BRAZIL_MAX_BOUNDS = [
   [-37.2, -78.5],
-  [8.5, -29.0]
+  [8.7, -29.0]
 ];
 
 const DEFAULT_MAP_OPTIONS = {
@@ -13,7 +13,7 @@ const DEFAULT_MAP_OPTIONS = {
   worldCopyJump: false,
   zoomSnap: 0.25,
   zoomDelta: 0.5,
-  wheelPxPerZoomLevel: 90
+  wheelPxPerZoomLevel: 100
 };
 
 let installed = false;
@@ -22,11 +22,40 @@ export function installLeafletMapGuard() {
   if (installed) return true;
 
   const L = window.L;
-  if (!L?.map || !L.latLngBounds) return false;
+  if (!L?.map || !L.latLngBounds || !L.tileLayer) return false;
   if (L.__agsusMapGuardInstalled) {
     installed = true;
     return true;
   }
+
+  installTileLayerGuard(L);
+  installMapGuard(L);
+
+  L.__agsusMapGuardInstalled = true;
+  installed = true;
+  return true;
+}
+
+function installTileLayerGuard(L) {
+  if (L.__agsusTileLayerGuardInstalled) return;
+
+  const originalTileLayer = L.tileLayer;
+
+  L.tileLayer = function guardedTileLayer(urlTemplate, options = {}) {
+    return originalTileLayer.call(this, urlTemplate, {
+      ...options,
+      bounds: toMaxBounds(L),
+      noWrap: true,
+      updateWhenIdle: true,
+      keepBuffer: 2
+    });
+  };
+
+  L.__agsusTileLayerGuardInstalled = true;
+}
+
+function installMapGuard(L) {
+  if (L.__agsusMapFactoryGuardInstalled) return;
 
   const originalMap = L.map;
 
@@ -43,9 +72,7 @@ export function installLeafletMapGuard() {
     return map;
   };
 
-  L.__agsusMapGuardInstalled = true;
-  installed = true;
-  return true;
+  L.__agsusMapFactoryGuardInstalled = true;
 }
 
 function hardenMapInstance(L, map) {
@@ -58,21 +85,18 @@ function hardenMapInstance(L, map) {
   const originalFlyToBounds = map.flyToBounds?.bind(map);
   const originalFlyTo = map.flyTo?.bind(map);
   const originalSetView = map.setView.bind(map);
+  const originalPanTo = map.panTo?.bind(map);
 
   map.__agsusMapGuarded = true;
 
   map.setMaxBounds = function setGuardedMaxBounds(bounds) {
-    if (!bounds) {
-      const result = originalSetMaxBounds(null);
-      scheduleBoundsRestore(L, map, originalSetMaxBounds);
-      return result;
-    }
-
-    return originalSetMaxBounds(limitBounds(L, bounds, maxBounds));
+    const nextBounds = bounds ? limitBounds(L, bounds, maxBounds) : maxBounds;
+    return originalSetMaxBounds(nextBounds);
   };
 
   map.fitBounds = function fitGuardedBounds(bounds, options = {}) {
     return originalFitBounds(limitBounds(L, bounds, maxBounds), {
+      padding: [24, 24],
       maxZoom: 7,
       animate: false,
       ...options
@@ -82,7 +106,9 @@ function hardenMapInstance(L, map) {
   if (originalFlyToBounds) {
     map.flyToBounds = function flyToGuardedBounds(bounds, options = {}) {
       return originalFlyToBounds(limitBounds(L, bounds, maxBounds), {
+        padding: [32, 32],
         maxZoom: 7,
+        duration: 0.35,
         ...options
       });
     };
@@ -90,50 +116,48 @@ function hardenMapInstance(L, map) {
 
   if (originalFlyTo) {
     map.flyTo = function flyToGuardedCenter(center, zoom, options = {}) {
-      const safeCenter = clampLatLng(L, center, maxBounds);
-      const safeZoom = Math.max(map.getMinZoom?.() ?? 3, Math.min(Number(zoom ?? map.getZoom()), 9));
-      return originalFlyTo(safeCenter, safeZoom, options);
+      return originalFlyTo(clampLatLng(L, center, maxBounds), clampZoom(map, zoom), {
+        duration: 0.35,
+        ...options
+      });
     };
   }
 
   map.setView = function setGuardedView(center, zoom, options = {}) {
-    const safeCenter = clampLatLng(L, center, maxBounds);
-    const safeZoom = Math.max(map.getMinZoom?.() ?? 3, Math.min(Number(zoom ?? map.getZoom()), 9));
-    return originalSetView(safeCenter, safeZoom, options);
+    return originalSetView(clampLatLng(L, center, maxBounds), clampZoom(map, zoom), options);
   };
+
+  if (originalPanTo) {
+    map.panTo = function panToGuardedCenter(center, options = {}) {
+      return originalPanTo(clampLatLng(L, center, maxBounds), {
+        animate: false,
+        ...options
+      });
+    };
+  }
 
   map.whenReady(() => {
     originalSetMaxBounds(maxBounds);
-    map.fitBounds(viewBounds, { padding: [18, 18], animate: false });
-    setTimeout(() => {
-      try {
-        map.invalidateSize({ animate: false, pan: false });
-        map.panInsideBounds(maxBounds, { animate: false });
-      } catch (error) {
-        console.warn("Nao foi possivel estabilizar o mapa:", error);
-      }
-    }, 120);
+    originalFitBounds(viewBounds, { padding: [20, 20], animate: false });
+    stabilizeMap(map, maxBounds);
+    window.setTimeout(() => stabilizeMap(map, maxBounds), 180);
+    window.setTimeout(() => stabilizeMap(map, maxBounds), 600);
   });
 
-  map.on("dragend zoomend moveend resize", () => {
-    try {
-      map.panInsideBounds(maxBounds, { animate: false });
-    } catch (error) {
-      console.warn("Nao foi possivel manter o mapa nos limites do Brasil:", error);
-    }
-  });
+  map.on("drag move zoomend moveend resize layeradd", () => stabilizeMap(map, maxBounds));
 }
 
-function scheduleBoundsRestore(L, map, originalSetMaxBounds) {
-  window.clearTimeout(map.__agsusBoundsRestoreTimer);
-  map.__agsusBoundsRestoreTimer = window.setTimeout(() => {
+function stabilizeMap(map, maxBounds) {
+  window.clearTimeout(map.__agsusStabilizeTimer);
+  map.__agsusStabilizeTimer = window.setTimeout(() => {
     try {
-      originalSetMaxBounds(toMaxBounds(L));
-      map.panInsideBounds(toMaxBounds(L), { animate: false });
+      map.invalidateSize({ animate: false, pan: false });
+      map.panInsideBounds(maxBounds, { animate: false });
+      map.setMaxBounds(maxBounds);
     } catch (error) {
-      console.warn("Nao foi possivel restaurar os limites do mapa:", error);
+      console.warn("Nao foi possivel estabilizar o mapa:", error);
     }
-  }, 80);
+  }, 40);
 }
 
 function toViewBounds(L) {
@@ -161,6 +185,12 @@ function clampLatLng(L, center, maxBounds) {
     Math.max(maxBounds.getSouth(), Math.min(maxBounds.getNorth(), point.lat)),
     Math.max(maxBounds.getWest(), Math.min(maxBounds.getEast(), point.lng))
   );
+}
+
+function clampZoom(map, zoom) {
+  const value = Number(zoom ?? map.getZoom?.() ?? 4);
+  const min = Number(map.getMinZoom?.() ?? 3);
+  return Math.max(min, Math.min(value, 9));
 }
 
 installLeafletMapGuard();
