@@ -58,20 +58,28 @@
 }
 
 .visual-polish-ready .map-card {
-  min-height: clamp(420px, 48vh, 560px) !important;
+  min-height: clamp(430px, 50vh, 590px) !important;
   overflow: hidden;
   background: #b7dce7;
+  contain: layout paint;
 }
 
 .visual-polish-ready #map {
-  height: clamp(420px, 48vh, 560px) !important;
-  min-height: 420px !important;
+  width: 100%;
+  height: clamp(430px, 50vh, 590px) !important;
+  min-height: 430px !important;
   background: #b7dce7;
 }
 
 .visual-polish-ready #map .leaflet-container,
 .visual-polish-ready .leaflet-container {
   background: #b7dce7;
+}
+
+.visual-polish-ready #map .leaflet-pane,
+.visual-polish-ready #map .leaflet-map-pane,
+.visual-polish-ready #map .leaflet-tile-pane {
+  will-change: transform;
 }
 
 .visual-polish-ready .leaflet-control-container .leaflet-top.leaflet-right {
@@ -94,6 +102,9 @@
 .visual-polish-ready .leaflet-control-attribution {
   font-size: 10px;
   line-height: 1.2;
+  max-width: 240px;
+  white-space: normal;
+  text-align: right;
 }
 
 .visual-polish-ready .lower-grid .card {
@@ -148,5 +159,9 @@
   .visual-polish-ready #map {
     height: 360px !important;
     min-height: 360px !important;
+  }
+
+  .visual-polish-ready #mapLegendBox {
+    max-width: calc(100vw - 92px);
   }
 }
