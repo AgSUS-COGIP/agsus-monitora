@@ -1,0 +1,237 @@
+.access-monitor-summary {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.access-monitor-summary > div {
+  border: 1px solid rgba(0, 59, 112, .12);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+  padding: 11px 12px;
+}
+
+.access-monitor-summary span {
+  display: block;
+  color: #63748d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.access-monitor-summary strong {
+  display: block;
+  margin-top: 5px;
+  color: #10243e;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.access-monitor-kpi {
+  position: relative;
+  overflow: hidden;
+}
+
+.access-monitor-kpi::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: .08;
+}
+
+.access-monitor-kpi.is-online { color: #0b8f58; }
+.access-monitor-kpi.is-users { color: #003b70; }
+.access-monitor-kpi.is-events { color: #007b95; }
+.access-monitor-kpi.is-total { color: #334155; }
+.access-monitor-kpi.is-storage { color: #7a5600; }
+
+.access-monitor-kpi b,
+.access-monitor-kpi span {
+  position: relative;
+  z-index: 1;
+}
+
+.access-monitor-panel-online .access-monitor-title {
+  background: linear-gradient(135deg, rgba(11, 143, 88, .1), #f8fbff);
+}
+
+.access-monitor-list {
+  padding: 8px;
+}
+
+.access-monitor-user-card {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #edf3f9;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.access-monitor-user-card + .access-monitor-user-card {
+  margin-top: 8px;
+}
+
+.access-monitor-avatar {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #e8f7ef;
+  color: #087246;
+  border: 1px solid #bfeccd;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.access-monitor-user-main {
+  min-width: 0;
+}
+
+.access-monitor-user-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.access-monitor-user-head strong {
+  min-width: 0;
+  color: #10243e;
+  font-size: 13px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.access-monitor-email {
+  display: block;
+  margin-top: 2px;
+  color: #63748d;
+  font-size: 11px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.access-monitor-screen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: 7px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: #003b70;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.access-monitor-screen i {
+  font-size: 10px;
+  opacity: .72;
+}
+
+.access-monitor-user-meta {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  color: #63748d;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.access-monitor-user-meta strong {
+  color: #10243e;
+  font-size: 12px;
+}
+
+.access-monitor-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.access-monitor-status.is-online {
+  color: #087246;
+  background: #e8f7ef;
+  border-color: #bfeccd;
+}
+
+.access-monitor-status.is-recent {
+  color: #00529b;
+  background: #e8f2ff;
+  border-color: #bfdcff;
+}
+
+.access-monitor-status.is-offline {
+  color: #475569;
+  background: #eef2f7;
+  border-color: #d5dfec;
+}
+
+.access-monitor-screen-chip {
+  display: inline-flex;
+  max-width: 280px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: #003b70;
+  font-size: 11px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.access-monitor-table.compact th,
+.access-monitor-table.compact td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.access-monitor-empty-strong {
+  display: grid;
+  gap: 4px;
+}
+
+.access-monitor-empty-strong strong {
+  color: #10243e;
+}
+
+.access-monitor-empty-strong span {
+  color: #63748d;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .access-monitor-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .access-monitor-user-card {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .access-monitor-user-meta {
+    grid-column: 2;
+    justify-items: start;
+    white-space: normal;
+  }
+}
