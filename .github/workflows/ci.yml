@@ -1,32 +1,33 @@
-name: Validar AgSUS Monitora
+name: Build e smoke tests
 
 on:
-  push:
-    branches:
-      - refatoracao-vite
-      - main
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  validar:
+  build-and-smoke:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar codigo
+      - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
+      - name: Configurar Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
+          cache: npm
 
-      - name: Instalar dependencias
-        run: npm install
+      - name: Instalar dependências
+        run: npm ci
 
-      - name: Rodar testes
-        run: npm run test
-
-      - name: Gerar build
+      - name: Build
         run: npm run build
+
+      - name: Instalar navegador do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke tests
+        run: npm run test:smoke
