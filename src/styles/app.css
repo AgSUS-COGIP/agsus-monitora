@@ -737,6 +737,94 @@ body.external-clean .external-placeholder { min-height: calc(100dvh - 46px) !imp
 .access-admin-panels, .access-admin-observation { margin-top: 12px; }
 .access-admin-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 12px; }
 
+.access-monitor-card { grid-column: 1/-1; }
+.access-monitor-kpis {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(130px,1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.access-monitor-kpi {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fafcff;
+  min-height: 76px;
+}
+.access-monitor-kpi span {
+  display: block;
+  color: #43566d;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 10px;
+  font-weight: 900;
+}
+.access-monitor-kpi b {
+  display: block;
+  margin-top: 6px;
+  font-size: 24px;
+  color: #06142d;
+  font-weight: 900;
+}
+.access-monitor-layout {
+  display: grid;
+  grid-template-columns: minmax(280px,.95fr) minmax(360px,1.45fr);
+  gap: 14px;
+  align-items: start;
+}
+.access-monitor-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.access-monitor-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #f8fbff;
+}
+.access-monitor-title h4 { margin: 0; color: #10243e; font-size: 14px; }
+.access-monitor-title span { color: var(--muted); font-size: 11px; font-weight: 850; }
+.access-monitor-list { display: grid; gap: 0; }
+.access-monitor-user {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 14px;
+  border-bottom: 1px solid #edf3f9;
+}
+.access-monitor-user:last-child { border-bottom: 0; }
+.access-monitor-user strong { display: block; color: #10243e; font-size: 13px; overflow-wrap: anywhere; }
+.access-monitor-user span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; margin-top: 2px; overflow-wrap: anywhere; }
+.access-monitor-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #15a46b;
+  box-shadow: 0 0 0 4px rgba(21,164,107,.13);
+}
+.access-monitor-empty {
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: #fbfdff;
+  color: #43566d;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.access-monitor-table { width: 100%; border-collapse: collapse; }
+.access-monitor-table th,
+.access-monitor-table td { padding: 10px 12px; border-bottom: 1px solid #edf3f9; text-align: left; font-size: 12px; vertical-align: top; }
+.access-monitor-table th { color: #43566d; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; font-weight: 900; background: #f8fbff; }
+.access-monitor-table td { color: #10243e; font-weight: 750; }
+.access-monitor-meta { color: var(--muted); font-size: 11px; font-weight: 800; margin-top: 10px; }
+
+
 .modal { position: fixed; inset: 0; z-index: 1100; display: none; place-items: center; padding: 20px; background: rgba(0,0,0,.55); }
 .modal.show { display: grid; }
 .modal-card { width: min(1040px, calc(100vw - 28px)); max-height: 92vh; overflow: auto; background: var(--card); border-radius: 22px; border: 1px solid var(--line); box-shadow: 0 30px 90px rgba(0,0,0,.32); }
@@ -802,6 +890,8 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
   .filter-body { grid-template-columns: 1fr 1fr; }
   .readonly-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .side-logo  { width: 142px; height: 142px; }
+  .access-monitor-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .access-monitor-layout { grid-template-columns: 1fr; }
   .side-brand { min-height: 146px; }
   body.executive-mode .kpis-main { grid-template-columns: repeat(3,minmax(0,1fr)); }
   body.executive-mode .dashboard-grid { grid-template-columns: 1fr; }
@@ -831,6 +921,7 @@ body.sidebar-locked #page-dashboard .details-table { width: 100%; min-width: 136
 @media (max-width: 640px) {
   .filter-body { grid-template-columns: 1fr; }
   .kpis-main   { grid-template-columns: 1fr 1fr; }
+  .access-monitor-kpis { grid-template-columns: 1fr; }
   .readonly-metrics { grid-template-columns: 1fr; }
   body.sidebar-locked .filter-body, body.sidebar-locked .kpis { grid-template-columns: 1fr; }
   body.sidebar-locked .content { padding-left: 6px; padding-right: 6px; }

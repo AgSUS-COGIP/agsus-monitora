@@ -25,6 +25,7 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
   const RPC_SAVE_CONFIG        = "salvar_configuracoes_e_paineis";
   const RPC_ACCESS_LOG         = "registrar_evento_acesso";
   const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
+  const RPC_ACCESS_CONFIG      = "get_acessos_config_master";
   const RPC_UPDATE_USER_ACCESS = "atualizar_acesso_usuario";
   const RPC_REVOKE_USER_PANELS = "revogar_paineis_usuario";
   const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
@@ -186,6 +187,8 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
   let externalPanelsWarmed = false;
   let manualLogoutInProgress = false;
   let accessHeartbeatHandle = null;
+  let accessDashboardRefreshHandle = null;
+  let accessDashboardLoading = false;
   let activeSessionLoadPromise = null;
   let activeLoadDataPromise = null;
   let loadDataRunCounter = 0;
@@ -408,10 +411,21 @@ import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
     accessHeartbeatHandle = setInterval(() => trackAccess("heartbeat", { detalhes:{ current_view:currentView, page_title:document.title } }), minutes * 60 * 1000);
   }
 
+
+  function stopAccessDashboardRefresh(){
+    if(accessDashboardRefreshHandle){ clearInterval(accessDashboardRefreshHandle); accessDashboardRefreshHandle = null; }
+  }
+  function startAccessDashboardRefresh(){
+    stopAccessDashboardRefresh();
+    if(!isMasterProfile()) return;
+    loadAccessDashboard();
+    accessDashboardRefreshHandle = setInterval(() => { if(currentView === "config") loadAccessDashboard(); }, 60 * 1000);
+  }
+
   function resetSignedOutState(message="", type="warn"){
     currentUser = null; profile = null; rows = []; filtered = []; dataLoadedAtLeastOnce = false;
     allowedPanelIds = new Set(); accessRequests = []; accessProfiles = [];
-    stopAccessHeartbeat(); clearExternalPanelCache();
+    stopAccessHeartbeat(); stopAccessDashboardRefresh(); clearExternalPanelCache();
     document.body.classList.remove("access-request-mode");
     $("appScreen").classList.add("hidden"); $("loginScreen").classList.remove("hidden");
     const loginPassword = $("loginPassword");
@@ -1157,6 +1171,7 @@ function renderAccessPanelChoices(selectedIds=[]){
     currentView = requestedView;
     rememberView(requestedView);
     if(!requestedView.startsWith("panel:")) currentPanel = null;
+    if(requestedView !== "config") stopAccessDashboardRefresh();
     enforceResponsiveSidebar();
     applyExecutiveModeForCurrentView();
     setActiveNav(requestedView);
@@ -1180,6 +1195,7 @@ function renderAccessPanelChoices(selectedIds=[]){
       $("page-config").classList.add("active");
       setPageTitle(cfgValue("config_nav_title"),cfgValue("config_page_subtitle"));
       renderConfigForm();
+      startAccessDashboardRefresh();
       if(previousView !== requestedView) trackAccess("abertura_tela",{tela:requestedView});
       return;
     }
@@ -2450,7 +2466,160 @@ function renderAccessPanelChoices(selectedIds=[]){
     previewImg("cfgLoginBg","prevLoginBg");
     if($("cfgCogipLogo")) previewImg("cfgCogipLogo","prevCogipLogo");
     renderAccessRequestsAdmin();
+    renderAccessDashboard(null);
     renderPanelAdmin();
+  }
+
+  function formatAccessDateTime(value){
+    if(!value) return "-";
+    try{
+      const date = new Date(value);
+      if(Number.isNaN(date.getTime())) return txt(value) || "-";
+      return date.toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
+    }catch(e){ return txt(value) || "-"; }
+  }
+
+  function accessMonitorKpi(label, value){
+    return `<div class="access-monitor-kpi"><span>${esc(label)}</span><b>${esc(value)}</b></div>`;
+  }
+
+  function accessMonitorUsersHTML(users){
+    const list = Array.isArray(users) ? users : [];
+    if(!list.length) return `<div class="access-monitor-empty">Nenhum usuário online nos últimos 15 minutos.</div>`;
+    return `<div class="access-monitor-list">${list.map(user => {
+      const nome = txt(user.nome) || txt(user.email) || "Usuário";
+      const email = txt(user.email);
+      const tela = txt(user.tela_atual) || "sem tela registrada";
+      const ultimo = formatAccessDateTime(user.ultimo_acesso);
+      const eventos = n(user.eventos_online);
+      return `<div class="access-monitor-user">
+        <span class="access-monitor-dot" title="Online"></span>
+        <div>
+          <strong>${esc(nome)}</strong>
+          <span>${esc([email, tela].filter(Boolean).join(" · "))}</span>
+        </div>
+        <span>${esc(ultimo)} · ${fmt(eventos)} evento(s)</span>
+      </div>`;
+    }).join("")}</div>`;
+  }
+
+  function accessMonitorRecentHTML(users){
+    const list = Array.isArray(users) ? users : [];
+    if(!list.length) return `<div class="access-monitor-empty">Ainda não há acessos registrados.</div>`;
+    return `<div class="table-wrap"><table class="access-monitor-table">
+      <thead><tr><th>Usuário</th><th>Último acesso</th><th>Eventos</th><th>Último evento</th></tr></thead>
+      <tbody>${list.map(user => {
+        const nome = txt(user.nome) || txt(user.email) || "Usuário";
+        const email = txt(user.email);
+        return `<tr>
+          <td>${esc(nome)}${email ? `<div class="access-monitor-meta">${esc(email)}</div>` : ""}</td>
+          <td>${esc(formatAccessDateTime(user.ultimo_acesso))}</td>
+          <td>${fmt(user.total_eventos)}</td>
+          <td>${esc(txt(user.ultimo_evento) || "-")}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table></div>`;
+  }
+
+  function accessMonitorStatsHTML(stats){
+    const list = Array.isArray(stats) ? stats.slice(0, 8) : [];
+    if(!list.length) return `<div class="access-monitor-empty">Sem estatísticas recentes.</div>`;
+    return `<div class="table-wrap"><table class="access-monitor-table">
+      <thead><tr><th>Data</th><th>Usuários</th><th>Eventos</th><th>Online</th></tr></thead>
+      <tbody>${list.map(row => `<tr>
+        <td>${esc(fmtDate(row.dia))}</td>
+        <td>${fmt(row.usuarios_unicos)}</td>
+        <td>${fmt(row.eventos)}</td>
+        <td>${fmt(row.online_maximo || 0)}</td>
+      </tr>`).join("")}</tbody>
+    </table></div>`;
+  }
+
+  function renderAccessDashboard(payload){
+    const card = $("accessMonitorCard");
+    const body = $("accessMonitorBody");
+    if(!card || !body) return;
+    const allowed = isMasterProfile();
+    card.classList.toggle("hidden", !allowed);
+    if(!allowed){ body.innerHTML = ""; return; }
+    if(!payload){
+      body.className = "access-monitor-empty";
+      body.textContent = "Carregando acessos...";
+      return;
+    }
+    const summary = payload.resumo || {};
+    const storage = payload.armazenamento || {};
+    const onlineUsers = Array.isArray(payload.usuarios_online) ? payload.usuarios_online : [];
+    const recentUsers = Array.isArray(payload.usuarios_recentes) ? payload.usuarios_recentes : [];
+    const dailyStats = Array.isArray(payload.estatisticas_diarias) ? payload.estatisticas_diarias : [];
+    const lastCleanup = txt(storage.ultima_limpeza);
+    body.className = "";
+    body.innerHTML = `
+      <div class="access-monitor-kpis">
+        ${accessMonitorKpi("Online agora", fmt(summary.online_agora))}
+        ${accessMonitorKpi("Usuários hoje", fmt(summary.usuarios_hoje))}
+        ${accessMonitorKpi("Eventos hoje", fmt(summary.eventos_hoje))}
+        ${accessMonitorKpi("Total de eventos", fmt(summary.eventos_total))}
+        ${accessMonitorKpi("Tamanho da tabela", txt(storage.total_size) || "-")}
+      </div>
+      <div class="access-monitor-layout">
+        <div class="access-monitor-panel">
+          <div class="access-monitor-title">
+            <div><h4>Online agora</h4><span>Últimos ${fmt(payload.online_minutes || 15)} min</span></div>
+            <span class="chip green">${fmt(onlineUsers.length)}</span>
+          </div>
+          ${accessMonitorUsersHTML(onlineUsers)}
+        </div>
+        <div class="access-monitor-panel">
+          <div class="access-monitor-title">
+            <div><h4>Últimos acessos</h4><span>Usuários com atividade registrada</span></div>
+            <span class="chip blue">${fmt(recentUsers.length)}</span>
+          </div>
+          ${accessMonitorRecentHTML(recentUsers)}
+        </div>
+        <div class="access-monitor-panel">
+          <div class="access-monitor-title">
+            <div><h4>Histórico diário</h4><span>Últimos dias monitorados</span></div>
+          </div>
+          ${accessMonitorStatsHTML(dailyStats)}
+        </div>
+        <div class="access-monitor-panel">
+          <div class="access-monitor-title">
+            <div><h4>Retenção e banco</h4><span>Controle de crescimento</span></div>
+          </div>
+          <div class="access-monitor-empty">
+            Eventos mantidos: ${fmt(summary.eventos_total)}.<br>
+            Heartbeats são limpos após 30 dias e demais eventos após 365 dias pela rotina diária do banco.
+            ${lastCleanup ? `<div class="access-monitor-meta">Última limpeza registrada: ${esc(formatAccessDateTime(lastCleanup))}</div>` : ""}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  async function loadAccessDashboard(force=false){
+    const card = $("accessMonitorCard");
+    if(!card) return false;
+    if(!isMasterProfile()){
+      renderAccessDashboard(null);
+      stopAccessDashboardRefresh();
+      return false;
+    }
+    if(accessDashboardLoading && !force) return false;
+    accessDashboardLoading = true;
+    if(force) renderAccessDashboard(null);
+    const { data, error } = await sb.rpc(RPC_ACCESS_CONFIG, {
+      p_online_minutes: 15,
+      p_recent_limit: 20,
+      p_days: 14
+    });
+    accessDashboardLoading = false;
+    if(error){
+      const body = $("accessMonitorBody");
+      if(body){ body.className = ""; body.innerHTML = `<div class="alert error">Erro ao carregar acessos: ${esc(friendlyError(error))}</div>`; }
+      return false;
+    }
+    renderAccessDashboard(data || {});
+    return true;
   }
 
 function renderPanelAdmin(){
@@ -3070,6 +3239,7 @@ function renderAccessUserAdminItem(user){
     exportPDF,
     highlightSearchItems,
     login,
+    loadAccessDashboard,
     loginWithGoogle,
     logout,
     navigate,
