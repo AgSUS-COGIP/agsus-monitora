@@ -42,6 +42,7 @@ test.describe("AgSUS Monitora smoke", () => {
 
     const html = await response.text();
     expect(html).toContain("Finalizando login Google");
-    expect(html).toContain("/src/auth/callback.js");
+    expect(html).toContain('type="module"');
+    expect(html).toMatch(/src="\/assets\/authCallback-[^"]+\.js"/);
   });
 });
