@@ -232,6 +232,48 @@ import { createAccessDashboard } from "./access-dashboard.js";
     searchDebounceTimer = setTimeout(() => applyFilters(), 300);
   }
 
+  // Correção visual da busca: em alguns navegadores/modos de contraste,
+  // o texto digitado no campo da tabela herdava branco sobre fundo branco.
+  function ensureSearchInputTextColor(){
+    const styleId = "agsus-search-input-text-color-fix";
+    if(!document.getElementById(styleId)){
+      const st = document.createElement("style");
+      st.id = styleId;
+      st.textContent = `
+        #tableSearch,
+        #tableSearch:focus,
+        #tableSearch:active,
+        #searchModalInput,
+        #searchModalInput:focus,
+        #searchModalInput:active {
+          color: #0f172a !important;
+          -webkit-text-fill-color: #0f172a !important;
+          caret-color: #0f172a !important;
+          background-color: #ffffff !important;
+        }
+        #tableSearch::placeholder,
+        #searchModalInput::placeholder {
+          color: #64748b !important;
+          -webkit-text-fill-color: #64748b !important;
+          opacity: .72 !important;
+        }
+        #tableSearch:-webkit-autofill,
+        #searchModalInput:-webkit-autofill {
+          -webkit-text-fill-color: #0f172a !important;
+          box-shadow: 0 0 0 1000px #ffffff inset !important;
+        }
+      `;
+      document.head.appendChild(st);
+    }
+    ["tableSearch","searchModalInput"].forEach(id=>{
+      const el=$(id);
+      if(!el) return;
+      el.style.color = "#0f172a";
+      el.style.webkitTextFillColor = "#0f172a";
+      el.style.caretColor = "#0f172a";
+    });
+  }
+
   function $(id){ return document.getElementById(id); }
   function n(v){ const x = Number(v || 0); return Number.isFinite(x) ? x : 0; }
   function txt(v){ return String(v ?? "").trim(); }
@@ -574,6 +616,7 @@ async function returnToLogin(){
     loader(true, "Carregando", "", 5);
     applyStoredSidebarState();
     applyStoredDisplayModes();
+    ensureSearchInputTextColor();
     sb.auth.onAuthStateChange((event, session) => {
       if(event === "PASSWORD_RECOVERY"){
         currentUser = null;
@@ -969,6 +1012,7 @@ function renderAccessPanelChoices(selectedIds=[]){
     if($("tableSearch")){
       $("tableSearch").placeholder = cfgValue("table_search_placeholder");
       $("tableSearch").setAttribute("aria-label", cfgValue("table_search_placeholder"));
+      ensureSearchInputTextColor();
     }
     ["globalSidebarToggle","hambToggle"].forEach(id => { setAttr(id,"title",cfgValue("sidebar_toggle_label")); setAttr(id,"aria-label",cfgValue("sidebar_toggle_label")); });
     ["externalBackBtn"].forEach(id => { setAttr(id,"title",cfgValue("external_back_text")); setAttr(id,"aria-label",cfgValue("external_back_text")); });
@@ -1290,7 +1334,60 @@ function renderAccessPanelChoices(selectedIds=[]){
     if(hideClosed && isEncerrado(r)) return false; // toggle "Ocultar encerrados"
     return FILTER_CONFIG.every(cfg=>{ if(cfg.field===ignoreField) return true; const selected=filterState[cfg.field]; if(!selected||selected.size===0) return true; return selected.has(rowValue(r,cfg.field)); });
   }
-  function optionValuesFor(field){ const values=new Set(); rows.forEach(r=>{ if(rowMatchesFilterState(r,field)){ const value=rowValue(r,field); if(value) values.add(value); } }); return Array.from(values).sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true})); }
+  function normalizeForSort(value){
+    return txt(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  function editalSortParts(value){
+    const m = txt(value).match(/^(\d{1,3})\s*\/\s*(\d{4})/);
+    if(!m) return null;
+    return { numero:Number(m[1]), ano:Number(m[2]) };
+  }
+  function rankFromList(value, list){
+    const key = normalizeForSort(value);
+    const idx = list.map(normalizeForSort).indexOf(key);
+    return idx >= 0 ? idx : 999;
+  }
+  function compareFilterValues(field, a, b){
+    if(field === "edital"){
+      const ea = editalSortParts(a), eb = editalSortParts(b);
+      if(ea && eb){
+        if(ea.ano !== eb.ano) return ea.ano - eb.ano;
+        if(ea.numero !== eb.numero) return ea.numero - eb.numero;
+      }
+      if(ea && !eb) return -1;
+      if(!ea && eb) return 1;
+    }
+    if(field === "etapa"){
+      const ordem = [
+        "Elaboração do Edital",
+        "Impugnação do Edital",
+        "Período de inscrição",
+        "Análise Curricular",
+        "Resultado Preliminar",
+        "Abertura do Prazo de Recurso",
+        "Entrevistas",
+        "Resultado final do Processo Seletivo"
+      ];
+      const ra = rankFromList(a, ordem), rb = rankFromList(b, ordem);
+      if(ra !== rb) return ra - rb;
+    }
+    if(field === "status"){
+      const ordem = ["Em Andamento", "Andamento", "Concluído", "Concluido", "Cancelado", "Cancelada"];
+      const ra = rankFromList(a, ordem), rb = rankFromList(b, ordem);
+      if(ra !== rb) return ra - rb;
+    }
+    if(field === "risco"){
+      const ordem = ["Alto", "Médio", "Medio", "Baixo"];
+      const ra = rankFromList(a, ordem), rb = rankFromList(b, ordem);
+      if(ra !== rb) return ra - rb;
+    }
+    return txt(a).localeCompare(txt(b), "pt-BR", { numeric:true, sensitivity:"base" });
+  }
+  function optionValuesFor(field){
+    const values=new Set();
+    rows.forEach(r=>{ if(rowMatchesFilterState(r,field)){ const value=rowValue(r,field); if(value) values.add(value); } });
+    return Array.from(values).sort((a,b)=>compareFilterValues(field,a,b));
+  }
   function pruneFilterSelections(){ let changed=false; FILTER_CONFIG.forEach(cfg=>{ const allowed=new Set(optionValuesFor(cfg.field)); const selected=filterState[cfg.field]||new Set(); Array.from(selected).forEach(value=>{ if(!allowed.has(value)){ selected.delete(value); changed=true; } }); }); return changed; }
   function filterLabel(cfg){ const selected=selectedValues(cfg.field); if(!selected.length) return cfg.all; if(selected.length===1) return selected[0]; return `${selected.length} selecionados`; }
 
@@ -1298,18 +1395,41 @@ function renderAccessPanelChoices(selectedIds=[]){
     FILTER_CONFIG.forEach(cfg=>{
       const el=$(cfg.id); if(!el) return;
       const values=optionValuesFor(cfg.field); const selected=filterState[cfg.field]||new Set(); const label=filterLabel(cfg);
-      const options=values.length?values.map(value=>`<label class="multi-option" title="${attr(value)}"><input type="checkbox" ${selected.has(value)?"checked":""} onchange="toggleFilterValue('${attr(cfg.field)}','${attr(value)}')"><span>${esc(value)}</span></label>`).join(""):`<div class="multi-option empty">Nenhuma opção disponível</div>`;
-      el.innerHTML=`<button type="button" class="multi-select-toggle" onclick="toggleFilterMenu('${attr(cfg.id)}')" title="${attr(label)}"><span class="multi-label">${esc(label)}</span><span class="multi-caret">▾</span></button><div class="multi-select-menu"><div class="multi-select-actions"><button type="button" class="multi-mini-btn" onclick="selectAllFilterValues('${attr(cfg.field)}')">Selecionar visíveis</button><button type="button" class="multi-mini-btn" onclick="clearFilterField('${attr(cfg.field)}')">Limpar</button></div><div class="multi-options">${options}</div><div class="multi-hint">${values.length} opção(ões) disponível(is).</div></div>`;
+      const options=values.length?values.map(value=>`<label class="multi-option" title="${attr(value)}"><input type="checkbox" data-filter-field="${attr(cfg.field)}" data-filter-value="${attr(value)}" ${selected.has(value)?"checked":""}><span>${esc(value)}</span></label>`).join(""):`<div class="multi-option empty">Nenhuma opção disponível</div>`;
+      el.innerHTML=`<button type="button" class="multi-select-toggle" onclick="toggleFilterMenu('${attr(cfg.id)}')" title="${attr(label)}"><span class="multi-label">${esc(label)}</span><span class="multi-caret">▾</span></button><div class="multi-select-menu"><div class="multi-select-actions"><button type="button" class="multi-mini-btn" data-filter-action="select-all" data-filter-field="${attr(cfg.field)}">Selecionar visíveis</button><button type="button" class="multi-mini-btn" data-filter-action="clear" data-filter-field="${attr(cfg.field)}">Limpar</button></div><div class="multi-options">${options}</div><div class="multi-hint">${values.length} opção(ões) disponível(is).</div></div>`;
     });
   }
 
   function closeFilterMenus(exceptId=""){ document.querySelectorAll(".multi-select.open").forEach(el=>{ if(!exceptId||el.id!==exceptId) el.classList.remove("open"); }); }
   function toggleFilterMenu(id){ const el=$(id); if(!el) return; const opening=!el.classList.contains("open"); closeFilterMenus(id); el.classList.toggle("open",opening); }
-  function applyFilterStateChange(){ pruneFilterSelections(); saveFilterState(); renderFilterControls(); applyFilters(); }
-  function toggleFilterValue(field,value){ const selected=filterState[field]||new Set(); if(selected.has(value)) selected.delete(value); else selected.add(value); filterState[field]=selected; applyFilterStateChange(); }
-  function selectAllFilterValues(field){ filterState[field]=new Set(optionValuesFor(field)); applyFilterStateChange(); }
-  function clearFilterField(field){ filterState[field]=new Set(); applyFilterStateChange(); }
-  function initFilterControls(){ document.addEventListener("click",ev=>{ if(!ev.target.closest||!ev.target.closest(".multi-select")) closeFilterMenus(); }); }
+  function applyFilterStateChange(options={}){
+    const openId = options.keepOpen ? document.querySelector(".multi-select.open")?.id : "";
+    pruneFilterSelections(); saveFilterState(); renderFilterControls();
+    if(openId) $(openId)?.classList.add("open");
+    applyFilters();
+  }
+  function toggleFilterValue(field,value,options={}){ const selected=filterState[field]||new Set(); if(selected.has(value)) selected.delete(value); else selected.add(value); filterState[field]=selected; applyFilterStateChange(options); }
+  function selectAllFilterValues(field){ filterState[field]=new Set(optionValuesFor(field)); applyFilterStateChange({keepOpen:true}); }
+  function clearFilterField(field){ filterState[field]=new Set(); applyFilterStateChange({keepOpen:true}); }
+  function initFilterControls(){
+    document.addEventListener("click",ev=>{
+      const actionBtn = ev.target.closest?.("[data-filter-action]");
+      if(actionBtn){
+        ev.preventDefault(); ev.stopPropagation();
+        const field = actionBtn.dataset.filterField;
+        if(actionBtn.dataset.filterAction === "select-all") selectAllFilterValues(field);
+        if(actionBtn.dataset.filterAction === "clear") clearFilterField(field);
+        return;
+      }
+      if(!ev.target.closest||!ev.target.closest(".multi-select")) closeFilterMenus();
+    });
+    document.addEventListener("change",ev=>{
+      const input = ev.target.closest?.("input[data-filter-field]");
+      if(!input) return;
+      ev.stopPropagation();
+      toggleFilterValue(input.dataset.filterField, input.dataset.filterValue, { keepOpen:true });
+    });
+  }
   function populateFilters(){
     loadFilterState();
     try{ hideClosed = localStorage.getItem("agsus_hide_closed_v1")==="1"; }catch(e){}
@@ -1334,9 +1454,10 @@ function renderAccessPanelChoices(selectedIds=[]){
   }
 
   function applyFilters(){
-    const qt = low($("tableSearch")?.value);
+    ensureSearchInputTextColor();
+    const qt = normalizeForSort($("tableSearch")?.value);
     filtered = rows.filter(r=>{
-      const hay = [r.processo,r.edital,r.unidade,r.ciclo,r.uf,r.status,r.etapa,r.responsavel,r.cargos,r.risco,r.observacoes,r.observacoes_internas,r.link_edital].map(low).join(" | ");
+      const hay = [r.processo,r.edital,r.unidade,r.ciclo,r.uf,r.status,r.etapa,r.responsavel,r.cargos,r.risco,r.observacoes,r.observacoes_internas,r.link_edital].map(normalizeForSort).join(" | ");
       return rowMatchesFilterState(r) && (!qt || hay.includes(qt));
     }).sort(compareRowsForTable);
 
