@@ -188,6 +188,8 @@ import { createAccessDashboard } from "./access-dashboard.js";
   let manualLogoutInProgress = false;
   let accessHeartbeatHandle = null;
   let activeSessionLoadPromise = null;
+  let sessionBootstrappedUserId = "";
+  let lastSignedInEventAt = 0;
   let activeLoadDataPromise = null;
   let loadDataRunCounter = 0;
   let activeRefreshDataPromise = null;
@@ -439,6 +441,7 @@ import { createAccessDashboard } from "./access-dashboard.js";
 
   function resetSignedOutState(message="", type="warn"){
     currentUser = null; profile = null; rows = []; filtered = []; dataLoadedAtLeastOnce = false;
+    sessionBootstrappedUserId = ""; lastSignedInEventAt = 0;
     allowedPanelIds = new Set(); accessRequests = []; accessProfiles = [];
     stopAccessHeartbeat(); stopAccessDashboardRefresh(); clearExternalPanelCache();
     document.body.classList.remove("access-request-mode");
@@ -454,6 +457,8 @@ import { createAccessDashboard } from "./access-dashboard.js";
   currentUser = null;
   profile = null;
   activeSessionLoadPromise = null;
+  sessionBootstrappedUserId = "";
+  lastSignedInEventAt = 0;
   try{ authStorage?.clearAuthState?.(); }catch(e){}
   try{ sessionStorage.removeItem("agsus_oauth_callback_ok"); }catch(e){}
   try{ await sb?.auth?.signOut({ scope:"local" }); }catch(e){}
@@ -484,13 +489,32 @@ async function returnToLogin(){
     catch(error){ console.error("Falha ao atualizar perfil:", error); }
   }
 
+  function appAlreadyLoadedForSession(session){
+    const uid = session?.user?.id || "";
+    return !!uid
+      && currentUser?.id === uid
+      && sessionBootstrappedUserId === uid
+      && dataLoadedAtLeastOnce
+      && !$("appScreen")?.classList.contains("hidden");
+  }
+
   async function handleSignedInSession(nextSession, source="auth"){
     if(!nextSession?.user || manualLogoutInProgress) return;
+
+    // O Supabase pode emitir SIGNED_IN novamente quando a aba volta ao foco
+    // ou quando a sessão é sincronizada entre abas. Se o app já está aberto
+    // para o mesmo usuário, não reinicia todo o AgSUS Monitora.
+    if(appAlreadyLoadedForSession(nextSession)){
+      currentUser = nextSession.user;
+      return;
+    }
+
     if(activeSessionLoadPromise) return activeSessionLoadPromise;
     currentUser = nextSession.user;
     activeSessionLoadPromise = (async()=>{
       const ready = await loadInitialData();
       if(ready){
+        sessionBootstrappedUserId = nextSession.user.id;
         await trackAccess(source === "boot" ? "sessao_restaurada" : "login_google", { tela:source });
         startAccessHeartbeat();
         startRealtime();
@@ -565,7 +589,22 @@ async function returnToLogin(){
       }
       if(event === "TOKEN_REFRESHED"){ currentUser = session?.user || currentUser; return; }
       if(event === "USER_UPDATED"){ setTimeout(() => refreshProfileAfterSessionUpdate(session), 0); }
-      if(event === "SIGNED_IN"){ setTimeout(() => handleSignedInSession(session, "oauth"), 0); }
+      if(event === "SIGNED_IN"){
+        const uid = session?.user?.id || "";
+        const now = Date.now();
+
+        if(appAlreadyLoadedForSession(session)){
+          currentUser = session.user;
+          return;
+        }
+
+        if(uid && currentUser?.id === uid && now - lastSignedInEventAt < 1500){
+          return;
+        }
+
+        lastSignedInEventAt = now;
+        setTimeout(() => handleSignedInSession(session, "oauth"), 0);
+      }
     });
     await loadConfig({ silent:true });
     const handledOAuth = await handleOAuthCodeCallback();
