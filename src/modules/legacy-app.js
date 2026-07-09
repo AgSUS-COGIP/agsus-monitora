@@ -200,7 +200,7 @@ import { createAccessDashboard } from "./access-dashboard.js";
   // No console do navegador, rode:
   // window.__AGSUS_MONITORA_APPS_SCRIPT_FIX__
   // Se retornar undefined, o Vercel ainda está servindo código antigo.
-  try{ window.__AGSUS_MONITORA_APPS_SCRIPT_FIX__ = "v2-2026-07-09"; }catch(e){}
+  try{ window.__AGSUS_MONITORA_APPS_SCRIPT_FIX__ = "allowall-iframe-2026-07-09"; }catch(e){}
 
   // ── Renderização granular: rastreia último conjunto de UFs para evitar
   //    re-render do mapa quando apenas texto da busca muda ──────────────
@@ -2584,23 +2584,6 @@ function renderAccessPanelChoices(selectedIds=[]){
       return;
     }
 
-    // Tratamento antecipado: Google Apps Script não roda em iframe fora do domínio Google.
-    // Isso evita que a tela externa sequer monte um iframe com script.google.com.
-    if(safePanelUrl && isGoogleAppsScriptUrl(safePanelUrl)){
-      document.body.classList.add("external-clean");
-      currentPanel=panel; currentView="panel:"+code; rememberView(currentView); enforceResponsiveSidebar(); setActiveNav(currentView);
-      document.querySelectorAll(".page").forEach(p=>p.classList.remove("active")); $("page-external").classList.add("active");
-      setPageTitle(panel.titulo,cfgValue("external_default_title"));
-      $("externalTitle").textContent=panel.titulo; $("externalOpen").href=safePanelUrl;
-      const mount=$("externalMount");
-      if(mount.classList.contains("external-placeholder")){ mount.className=""; mount.innerHTML=""; }
-      document.querySelectorAll(".external-panel").forEach(el=>el.hidden=true);
-      let holder=document.getElementById("external-panel-"+code);
-      if(!holder){ holder=document.createElement("div"); holder.id="external-panel-"+code; holder.className="external-panel"; mount.appendChild(holder); }
-      renderGoogleAppsScriptBlockedPanel(holder,panel,safePanelUrl);
-      holder.hidden=false;
-      return;
-    }
 
     document.body.classList.add("external-clean");
     currentPanel=panel; currentView="panel:"+code; rememberView(currentView); enforceResponsiveSidebar(); setActiveNav(currentView);
@@ -2615,35 +2598,11 @@ function renderAccessPanelChoices(selectedIds=[]){
     holder.hidden=false;
   }
 
-  function renderGoogleAppsScriptBlockedPanel(holder,panel,safePanelUrl){
-    holder.className = holder.className || "external-panel";
-    holder.innerHTML=`
-      <div class="external-placeholder" style="background:#f8fafc;color:#334155;padding:28px;min-height:calc(100vh - 78px);display:grid;place-items:center;">
-        <div style="max-width:760px;margin:auto;text-align:center;background:#ffffff;border:1px solid #dbeafe;border-radius:22px;padding:30px;box-shadow:0 18px 45px rgba(15,23,42,.10);">
-          <div style="font-size:56px;color:#0f766e;margin-bottom:12px;"><i class="fa-solid fa-up-right-from-square"></i></div>
-          <h2 style="margin:0 0 10px;font-size:24px;color:#0f172a;">${esc(panel.titulo)}</h2>
-          <p style="margin:0 auto 16px;line-height:1.55;font-weight:800;color:#334155;">
-            Este painel é um Google Apps Script e não pode ser aberto embutido dentro do AgSUS Monitora.
-          </p>
-          <p style="margin:0 auto 22px;line-height:1.55;color:#64748b;font-weight:600;">
-            O Google bloqueia esse carregamento por segurança. Abra o painel em uma nova aba pelo botão abaixo.
-          </p>
-          <a class="btn green" href="${attr(safePanelUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;">
-            <i class="fa-solid fa-up-right-from-square"></i> Abrir painel em nova aba
-          </a>
-        </div>
-      </div>`;
-  }
-
   function buildExternalPanel(holder,panel){
     if(panel.em_manutencao){ holder.innerHTML=`<div class="external-placeholder"><div><div style="font-size:58px;color:#555"><i class="fa-solid fa-screwdriver-wrench"></i></div><h2>${esc(cfgValue("maintenance_title"))}</h2><p>${esc(cfgValue("maintenance_message"))}</p></div></div>`; return; }
     const safePanelUrl = safeUrl(panel.url);
     if(!safePanelUrl){ holder.innerHTML=`<div class="external-placeholder"><div><h2>${esc(panel.titulo)}</h2><p>Cadastre uma URL http(s) válida deste painel em paineis_externos.</p></div></div>`; return; }
 
-    if(isGoogleAppsScriptUrl(safePanelUrl)){
-      renderGoogleAppsScriptBlockedPanel(holder,panel,safePanelUrl);
-      return;
-    }
 
     holder.innerHTML=`<iframe class="external-frame" src="${attr(safePanelUrl)}" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="fullscreen *; clipboard-read *; clipboard-write *; encrypted-media *; geolocation *; display-capture *" allowfullscreen="true"></iframe>`;
   }
