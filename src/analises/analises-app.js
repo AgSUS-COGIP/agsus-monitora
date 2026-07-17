@@ -9,8 +9,9 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
   const APP_VERSION = "institucional-2026-06-09";
   const CACHE_KEY = "agsus_analises_cache_v1";
-  const CACHE_SCHEMA_VERSION = 2;
+  const CACHE_SCHEMA_VERSION = 3;
   const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutos
+  const DASHBOARD_PAYLOAD_TIMEOUT_MS = 12000;
   const ACCESS_HEARTBEAT_MS = 5 * 60 * 1000;
   let sb, session, profile, canReadAnalisesRpc = null;
   let rows = [], editais = [], baseFilteredRows = [], panelRows = [], tableRows = [];
@@ -36,6 +37,13 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   const num = v => { const x = Number(v || 0); return Number.isFinite(x) ? x : 0; };
   const fmt = v => num(v).toLocaleString("pt-BR");
   const fmtNum = fmt;
+  function withTimeout(promise, timeoutMs, label){
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error((label || "Operação") + " excedeu o tempo limite.")), timeoutMs);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
 
   // ---- Escopo do processo seletivo: Ativo, Inativo ou Todos ----
   function currentEditalScope(){
@@ -507,8 +515,19 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   }
 
   async function loadAnalisesPayload(){
-    if(!sb) return null;
-    const { data, error } = await sb.rpc(ANALISES_DASHBOARD_PAYLOAD_RPC, { p_scope: currentEditalScope() });
+    if(!sb || currentEditalScope() !== "ativo") return null;
+    let response;
+    try{
+      response = await withTimeout(
+        sb.rpc(ANALISES_DASHBOARD_PAYLOAD_RPC, { p_scope: currentEditalScope() }),
+        DASHBOARD_PAYLOAD_TIMEOUT_MS,
+        "Cache consolidado de análises"
+      );
+    }catch(error){
+      console.warn("Payload consolidado de análises demorou demais; usando carregamento legado:", error);
+      return null;
+    }
+    const { data, error } = response || {};
     if(error){
       console.warn("Payload consolidado de análises indisponível; usando carregamento legado:", error);
       return null;
@@ -543,7 +562,7 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
         return true;
       }
 
-      setProgress(12,"Cache consolidado indisponível. Consultando Supabase em lotes...");
+      setProgress(12,currentEditalScope() === "ativo" ? "Cache consolidado indisponível. Consultando Supabase em lotes..." : "Consultando Supabase em lotes...");
       const [baseResponse, editaisResponse] = await Promise.all([
         fetchAllSupabaseRows(currentViewName(), "*", [
           { column: "unidade", ascending: true }, { column: "edital", ascending: true },
