@@ -4,7 +4,7 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME_ATIVOS = "vw_analises_dashboard_base";
   const VIEW_NAME_TODOS = "vw_analises_dashboard_base_todos";
-  const ANALISES_DASHBOARD_PAYLOAD_RPC = "get_analises_dashboard_payload";
+  const ANALISES_DASHBOARD_PAYLOAD_RPC = "get_analises_dashboard_payload_v2";
   const THEME_KEY = "agsus_analises_theme_v3";
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
   const APP_VERSION = "institucional-2026-06-09";
@@ -507,8 +507,8 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   }
 
   async function loadAnalisesPayload(){
-    if(!sb || currentEditalScope() !== "ativo") return null;
-    const { data, error } = await sb.rpc(ANALISES_DASHBOARD_PAYLOAD_RPC);
+    if(!sb) return null;
+    const { data, error } = await sb.rpc(ANALISES_DASHBOARD_PAYLOAD_RPC, { p_scope: currentEditalScope() });
     if(error){
       console.warn("Payload consolidado de análises indisponível; usando carregamento legado:", error);
       return null;
@@ -520,9 +520,31 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     if(activeRefreshPromise) return activeRefreshPromise;
     const runId = ++refreshRunCounter;
     activeRefreshPromise = (async () => {
-      showLoading(true); setProgress(12,"Consultando Supabase em lotes...");
-      const [payloadResponse, baseResponse, editaisResponse] = await Promise.all([
-        loadAnalisesPayload(),
+      showLoading(true); setProgress(12,"Consultando cache consolidado...");
+      const payloadResponse = await loadAnalisesPayload();
+      if(runId !== refreshRunCounter) return false;
+      analisesPayload = payloadResponse || null;
+
+      if(analisesPayload && Array.isArray(analisesPayload.rows)){
+        const rawBaseRows = analisesPayload.rows;
+        editais = Array.isArray(analisesPayload.editais) ? analisesPayload.editais : [];
+        setProgress(42,`Montando painel a partir do cache consolidado para ${fmtNum(rawBaseRows.length)} registros...`);
+        writeCache(rawBaseRows, editais, analisesPayload);
+        rows = hydrateRowsWithEditalWindows(rawBaseRows);
+        filterOptionsSignature = "";
+        dataSourceMeta = {
+          source: analisesPayload.cache && analisesPayload.cache.hit ? "supabase-cache" : "supabase-refresh",
+          ts: Date.parse(analisesPayload.cache?.refreshed_at || analisesPayload.generated_at) || Date.now()
+        };
+        analisesDataLoadedAtLeastOnce = true;
+        hydrateFilters(); setProgress(62,"Calculando indicadores..."); currentPage=1; applyFilters(); setUpdatedAt(); setProgress(100,`Painel pronto com ${fmtNum(rows.length)} registros.`);
+        setTimeout(() => showLoading(false), 180);
+        toast(`Dados ${currentEditalScopeLabel().toLowerCase()} atualizados pelo cache consolidado: ${fmtNum(rows.length)} registros.`, "info", 5000);
+        return true;
+      }
+
+      setProgress(12,"Cache consolidado indisponível. Consultando Supabase em lotes...");
+      const [baseResponse, editaisResponse] = await Promise.all([
         fetchAllSupabaseRows(currentViewName(), "*", [
           { column: "unidade", ascending: true }, { column: "edital", ascending: true },
           { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
@@ -532,7 +554,6 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
         ])
       ]);
       if(runId !== refreshRunCounter) return false;
-      analisesPayload = payloadResponse || null;
       if(baseResponse.error){ showAuth("Erro ao carregar o painel: " + baseResponse.error.message); return false; }
       if(editaisResponse.error){
         console.warn("Não foi possível carregar analises_editais:", editaisResponse.error.message);
@@ -668,7 +689,7 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   function kpiStatuses(k){ const m = { total:[], analisado:["Revisar","Aprovado","Reprovado"], pendente:["Pendente"], revisar:["Revisar"], aprovado:["Aprovado"], reprovado:["Reprovado"] }; return m[k] || []; }
   function renderAll(){ renderKpis(); renderContext(); renderWindowMeta(); renderPdfMetrics(); renderResponsavelChart(); renderTrendChart(); renderAttention(); renderTable(); }
   function canUseAnalisesPayload(){
-    if(currentEditalScope() !== "ativo" || !analisesPayload) return false;
+    if(!analisesPayload) return false;
     const hasSelectFilters = FILTER_IDS.some(id => selectedValues(id).length > 0);
     const hasSearch = txt($("fBusca")?.value) || txt($("tableSearch")?.value);
     return !hasSelectFilters && !hasSearch && activeKpi === "total" && !activeResponsavel;
@@ -703,6 +724,10 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     if(dataSourceMeta.source === "cache"){
       const mins = Math.max(0, Math.round((Date.now() - dataSourceMeta.ts) / 60000));
       html += `<span class="meta-chip"><i class="fa-solid fa-database"></i> Cache local: ${fmt(mins)} min</span>`;
+    } else if(dataSourceMeta.source === "supabase-cache" || dataSourceMeta.source === "supabase-refresh"){
+      const mins = Math.max(0, Math.round((Date.now() - dataSourceMeta.ts) / 60000));
+      const label = dataSourceMeta.source === "supabase-cache" ? "Cache Supabase" : "Cache Supabase atualizado";
+      html += `<span class="meta-chip"><i class="fa-solid fa-database"></i> ${label}: ${fmt(mins)} min</span>`;
     }
     $("windowMeta").innerHTML = html;
   }
