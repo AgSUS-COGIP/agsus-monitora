@@ -9,12 +9,15 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
   const APP_VERSION = "institucional-2026-06-09";
   const CACHE_KEY = "agsus_analises_cache_v1";
+  const CACHE_SCHEMA_VERSION = 2;
   const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutos
   const ACCESS_HEARTBEAT_MS = 5 * 60 * 1000;
   let sb, session, profile, canReadAnalisesRpc = null;
   let rows = [], editais = [], baseFilteredRows = [], panelRows = [], tableRows = [];
   let analisesPayload = null;
   let tableRowsDirty = true;
+  let filterOptionsSignature = "";
+  let dataSourceMeta = { source:"none", ts:0 };
   const multiSelectState = {};
   let currentPage = 1, rowsPerPage = 25, activeKpi = "total", activeResponsavel = "";
   let charts = {}, expanded = new Set();
@@ -53,7 +56,8 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   }
 
   function currentCacheKey(){
-    return `${CACHE_KEY}_${currentEditalScope()}`;
+    const userId = txt(session?.user?.id) || "anonymous";
+    return `${CACHE_KEY}_v${CACHE_SCHEMA_VERSION}_${userId}_${currentEditalScope()}`;
   }
 
   function resetDataForScopeChange(){
@@ -64,6 +68,8 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     panelRows = [];
     tableRows = [];
     tableRowsDirty = true;
+    filterOptionsSignature = "";
+    dataSourceMeta = { source:"none", ts:0 };
     expanded.clear();
     currentPage = 1;
     activeKpi = "total";
@@ -163,6 +169,7 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     rows = []; editais = []; baseFilteredRows = []; panelRows = []; tableRows = []; tableRowsDirty = true;
     currentPage = 1; activeKpi = "total"; activeResponsavel = "";
     analisesDataLoadedAtLeastOnce = false;
+    analisesPayload = null; filterOptionsSignature = ""; dataSourceMeta = { source:"none", ts:0 };
     stopAccessHeartbeat(); lastTrackedOpenKey = "";
   }
 
@@ -387,6 +394,8 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
       row.data_validacao_status = validation.status;
       row.data_validacao_label = validation.label;
       row.fora_periodo_analise = validation.outside ? "SIM" : "NAO";
+      row.__filter_search = norm([row.grupo,row.unidade,row.edital,row.codigo_vaga,row.nome_vaga,row.candidato,row.responsavel_analise,row.status_consolidado,row.analise,row.categoria,row.modalidade_concorrencia].join(" "));
+      row.__table_search = norm([row.grupo,row.unidade,row.edital,row.codigo_vaga,row.nome_vaga,row.candidato,row.status_consolidado,row.etapa,row.responsavel_analise,row.analise,row.modalidade_concorrencia].join(" "));
       return row;
     });
   }
@@ -421,13 +430,13 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
       const raw = localStorage.getItem(currentCacheKey());
       if(!raw) return null;
       const parsed = JSON.parse(raw);
-      if(!parsed || !parsed.ts || !Array.isArray(parsed.rows)) return null;
+      if(!parsed || parsed.version !== CACHE_SCHEMA_VERSION || !parsed.ts || !Array.isArray(parsed.rows)) return null;
       return parsed;
     }catch(e){ return null; }
   }
-  function writeCache(rawRows, rawEditais){
+  function writeCache(rawRows, rawEditais, payload){
     try{
-      localStorage.setItem(currentCacheKey(), JSON.stringify({ ts: Date.now(), rows: rawRows, editais: rawEditais }));
+      localStorage.setItem(currentCacheKey(), JSON.stringify({ version:CACHE_SCHEMA_VERSION, ts: Date.now(), rows: rawRows, editais: rawEditais, payload: payload || null }));
     }catch(e){
       console.warn("Não foi possível gravar o cache local:", e);
     }
@@ -447,7 +456,10 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     const cache = readCache();
     if(cache && cacheAgeMs(cache) < CACHE_TTL_MS){
       editais = Array.isArray(cache.editais) ? cache.editais : [];
+      analisesPayload = cache.payload || null;
       rows = hydrateRowsWithEditalWindows(Array.isArray(cache.rows) ? cache.rows : []);
+      filterOptionsSignature = "";
+      dataSourceMeta = { source:"cache", ts:cache.ts };
       hydrateFilters(); currentPage=1; applyFilters();
       analisesDataLoadedAtLeastOnce = true;
       const mins = Math.round(cacheAgeMs(cache) / 60000);
@@ -529,8 +541,10 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
       setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(baseResponse.data.length)} registros...`);
       editais = Array.isArray(editaisResponse.data) ? editaisResponse.data : [];
       const rawBaseRows = Array.isArray(baseResponse.data) ? baseResponse.data : [];
-      writeCache(rawBaseRows, editais);
+      writeCache(rawBaseRows, editais, analisesPayload);
       rows = hydrateRowsWithEditalWindows(rawBaseRows);
+      filterOptionsSignature = "";
+      dataSourceMeta = { source:"supabase", ts:Date.now() };
       analisesDataLoadedAtLeastOnce = true;
       hydrateFilters(); setProgress(62,"Calculando indicadores..."); currentPage=1; applyFilters(); setUpdatedAt(); setProgress(100,`Painel pronto com ${fmtNum(rows.length)} registros.`); setTimeout(() => showLoading(false), 180);
       toast(`Dados ${currentEditalScopeLabel().toLowerCase()} atualizados: ${fmtNum(rows.length)} registros carregados.`, "info", 5000);
@@ -570,7 +584,7 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   }
   function matchesSearch(row){
     const q = norm($("fBusca").value);
-    return !q || norm([row.grupo,row.unidade,row.edital,row.codigo_vaga,row.nome_vaga,row.candidato,row.responsavel_analise,row.status_consolidado,row.analise,row.categoria,row.modalidade_concorrencia].join(" ")).includes(q);
+    return !q || (row.__filter_search || "").includes(q);
   }
   function matchConfiguredFilter(row, id, ignoreId=""){
     if(id === ignoreId) return true;
@@ -588,14 +602,28 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   }
   // Calcula opções de todos os filtros em UMA passada pela base, em vez de N varreduras.
   function refreshFilterOptions(){
-    const ignoreSets = {};
-    FILTER_IDS.forEach(id => { ignoreSets[id] = []; });
+    const selectedByFilter = Object.fromEntries(FILTER_IDS.map(id => [id, selectedValues(id)]));
+    const signature = JSON.stringify({
+      rows: rows.length,
+      scope: currentEditalScope(),
+      selected: selectedByFilter,
+      updated: rows.map(r => r.updated_at || r.ultima_atualizacao).filter(Boolean).slice(-3)
+    });
+    if(signature === filterOptionsSignature) return;
+    filterOptionsSignature = signature;
+
+    const selectedSets = Object.fromEntries(FILTER_IDS.map(id => [id, new Set(selectedByFilter[id].map(norm))]));
+    const ignoreSets = Object.fromEntries(FILTER_IDS.map(id => [id, []]));
     rows.forEach(row => {
+      const passes = {};
       FILTER_IDS.forEach(filterId => {
-        // linha entra na fonte de opções deste filtro se passa em todos os OUTROS filtros
-        if(FILTER_IDS.every(otherId => otherId === filterId || matchConfiguredFilter(row, otherId))){
-          ignoreSets[filterId].push(row);
-        }
+        const selectedSet = selectedSets[filterId];
+        if(!selectedSet.size){ passes[filterId] = true; return; }
+        const rowValues = valuesForFilter(filterId, row);
+        passes[filterId] = rowValues.length > 0 && rowValues.some(value => selectedSet.has(norm(value)));
+      });
+      FILTER_IDS.forEach(filterId => {
+        if(FILTER_IDS.every(otherId => otherId === filterId || passes[otherId])) ignoreSets[filterId].push(row);
       });
     });
     FILTER_CONFIG.forEach(filter => { setOptions(filter.id, optionValues(filter.id, ignoreSets[filter.id]), filter.placeholder); });
@@ -619,6 +647,7 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     FILTER_IDS.forEach(id => { if(multiSelectState[id]){ multiSelectState[id].selected=[]; multiSelectState[id].search=""; renderMultiSelect(id); } if($(id)) $(id).value=""; });
     ["fBusca","tableSearch"].forEach(id => { if($(id)) $(id).value=""; });
     activeKpi="total"; activeResponsavel=""; currentPage=1;
+    filterOptionsSignature = "";
     if(scopeBeforeClear !== "ativo"){
       resetDataForScopeChange();
       loadFromCacheOrPrompt().catch(err => showAuth("Erro ao limpar filtros: " + (err && err.message ? err.message : err)));
@@ -671,6 +700,10 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     let html = ""; if(map.size===1){ const w=[...map.values()][0]; html += `<span class="meta-chip"><i class="fa-solid fa-calendar-days"></i> Janela oficial: ${esc(w.s||"--")} a ${esc(w.e||"--")}</span>`; } else if(map.size>1){ html += `<span class="meta-chip"><i class="fa-solid fa-calendar-days"></i> ${fmt(map.size)} janelas oficiais no recorte</span>`; }
     html += `<span class="meta-chip ${fora?'warning':''}"><i class="fa-solid ${fora?'fa-triangle-exclamation':'fa-circle-check'}"></i> ${fmt(fora)} análise(s) fora do período</span>`;
     if(semJanela) html += `<span class="meta-chip warning"><i class="fa-solid fa-circle-info"></i> ${fmt(semJanela)} sem janela configurada</span>`;
+    if(dataSourceMeta.source === "cache"){
+      const mins = Math.max(0, Math.round((Date.now() - dataSourceMeta.ts) / 60000));
+      html += `<span class="meta-chip"><i class="fa-solid fa-database"></i> Cache local: ${fmt(mins)} min</span>`;
+    }
     $("windowMeta").innerHTML = html;
   }
   function renderPdfMetrics(){ const com=panelRows.filter(r=>txt(r.link_pdf)).length, sem=panelRows.length-com, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, des=panelRows.filter(r=>norm(r.pdf_status)==="desatualizado").length; $("pdfMetrics").innerHTML = `<span class="mini-chip"><i class="fa-solid fa-file-pdf"></i> Com PDF: ${fmt(com)}</span><span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF: ${fmt(sem)}</span><span class="mini-chip"><i class="fa-solid fa-triangle-exclamation"></i> Erro: ${fmt(erro)}</span><span class="mini-chip"><i class="fa-solid fa-clock-rotate-left"></i> Desatualizado: ${fmt(des)}</span>`; }
@@ -752,7 +785,7 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   function getTableRows(){
     if(!tableRowsDirty) return tableRows;
     const q=norm($("tableSearch").value);
-    tableRows = panelRows.filter(r=>!q || norm([r.grupo,r.unidade,r.edital,r.codigo_vaga,r.nome_vaga,r.candidato,r.status_consolidado,r.etapa,r.responsavel_analise,r.analise,r.modalidade_concorrencia].join(" ")).includes(q));
+    tableRows = panelRows.filter(r=>!q || (r.__table_search || "").includes(q));
     tableRowsDirty = false;
     return tableRows;
   }
