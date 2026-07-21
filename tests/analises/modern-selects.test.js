@@ -23,13 +23,9 @@ vi.mock("tom-select", () => ({
       [...this.input.options].forEach(option => { option.selected = selected.has(option.value); });
     }
     refreshOptions(){}
+    close(){}
   }
 }));
-
-const flush = async () => {
-  await Promise.resolve();
-  await new Promise(resolve => setTimeout(resolve, 0));
-};
 
 beforeEach(() => {
   instances.length = 0;
@@ -50,7 +46,7 @@ beforeEach(() => {
   `;
 });
 
-it("oferece busca moderna, seleção em massa e sincroniza opções dinâmicas", async () => {
+it("oferece seleção em massa e sincroniza opções somente por evento explícito", async () => {
   vi.resetModules();
   await import("../../src/analises/analises-modern-selects.js");
   document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -73,7 +69,9 @@ it("oferece busca moderna, seleção em massa e sincroniza opções dinâmicas",
     <option value="22/2026">22/2026</option>
     <option value="23/2026" selected>23/2026</option>
   `;
-  await flush();
+
+  expect(instances[1].options).toEqual([]);
+  editalSelect.dispatchEvent(new CustomEvent("agsus:options-updated"));
 
   expect(instances[1].options.map(option => option.value)).toEqual(["22/2026", "23/2026"]);
   expect([...editalSelect.selectedOptions].map(option => option.value)).toEqual(["23/2026"]);

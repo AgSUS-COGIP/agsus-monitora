@@ -45,6 +45,10 @@ function selectedValues(id){
   return [...element.selectedOptions].map(option => txt(option.value)).filter(Boolean);
 }
 
+function notifyOptionsUpdated(id){
+  document.getElementById(id)?.dispatchEvent(new CustomEvent("agsus:options-updated"));
+}
+
 function queryKey(){
   return JSON.stringify({
     scope: currentScope(),
@@ -178,7 +182,7 @@ function ensureGuard(){
       <div class="scope-guard-field"><label for="scopeGuardEditais">Editais do recorte</label><select id="scopeGuardEditais" multiple aria-label="Editais do recorte"></select></div>
       <button type="button" class="btn" id="scopeGuardLoad"><i class="fa-solid fa-magnifying-glass"></i> Consultar dados</button>
     </div>
-    <div class="scope-guard-status" id="scopeGuardStatus">Selecione uma ou mais opções usando Ctrl ou Shift.</div>
+    <div class="scope-guard-status" id="scopeGuardStatus">Selecione pelo menos uma unidade ou um edital.</div>
   `;
   filtersBody.insertAdjacentElement("afterbegin", guard);
   document.getElementById("scopeGuardLoad")?.addEventListener("click", requestScopedLoad);
@@ -204,6 +208,7 @@ function renderEditalOptions(){
 
   editalSelect.innerHTML = editais.map(value => `<option value="${esc(value)}" ${previous.has(value) ? "selected" : ""}>${esc(value)}</option>`).join("");
   state.selectedEditais = selectedValues("scopeGuardEditais");
+  notifyOptionsUpdated("scopeGuardEditais");
 }
 
 function onUnitsChanged(){
@@ -228,7 +233,10 @@ function renderCatalog(){
   const units = [...new Set(rows.map(row => txt(row.unidade)).filter(Boolean))]
     .sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
   const unitSelect = document.getElementById("scopeGuardUnits");
-  if(unitSelect) unitSelect.innerHTML = units.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
+  if(unitSelect){
+    unitSelect.innerHTML = units.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
+    notifyOptionsUpdated("scopeGuardUnits");
+  }
 
   state.selectedUnits = [];
   state.selectedEditais = [];

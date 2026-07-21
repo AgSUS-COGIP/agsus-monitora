@@ -165,8 +165,7 @@ function createInstance(select){
   };
 
   select.addEventListener("change", syncFromNative);
-
-  const observer = new MutationObserver(() => {
+  select.addEventListener("agsus:options-updated", () => {
     if(syncing) return;
     syncing = true;
     try{
@@ -175,7 +174,6 @@ function createInstance(select){
       syncing = false;
     }
   });
-  observer.observe(select, { childList:true });
 
   return instance;
 }
