@@ -1,18 +1,21 @@
-import { SUPABASE_AUTH_STORAGE_KEY } from "../lib/env.js";
-
 const TARGET_VIEW = "vw_analises_dashboard_base_todos";
+const FILTERED_RPC = "get_analises_dashboard_filtrado";
+const MAX_SCOPED_ROWS = 5000;
 const CACHE_PREFIX = "agsus_analises_cache_v1_";
+
 const state = {
   client: null,
   allowScopeLoad: false,
   selectedUnits: [],
   selectedEditais: [],
   catalog: [],
-  loadingCatalog: false
+  loadingCatalog: false,
+  scopedPayloadKey: "",
+  scopedPayload: null,
+  scopedPayloadPromise: null
 };
 
 const txt = value => String(value ?? "").trim();
-const norm = value => txt(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const esc = value => String(value ?? "")
   .replaceAll("&", "&amp;")
   .replaceAll("<", "&lt;")
@@ -38,10 +41,81 @@ function clearScopeCache(scope){
   }
 }
 
+function clearRpcCache(){
+  state.scopedPayloadKey = "";
+  state.scopedPayload = null;
+  state.scopedPayloadPromise = null;
+}
+
 function selectedValues(id){
   const element = document.getElementById(id);
   if(!element) return [];
   return [...element.selectedOptions].map(option => txt(option.value)).filter(Boolean);
+}
+
+function scopedKey(){
+  return JSON.stringify({
+    scope: currentScope(),
+    unidades: [...state.selectedUnits].sort(),
+    editais: [...state.selectedEditais].sort(),
+    limit: MAX_SCOPED_ROWS
+  });
+}
+
+async function fetchScopedPayload(){
+  const key = scopedKey();
+  if(state.scopedPayload && state.scopedPayloadKey === key) return state.scopedPayload;
+  if(state.scopedPayloadPromise && state.scopedPayloadKey === key) return state.scopedPayloadPromise;
+
+  state.scopedPayloadKey = key;
+  state.scopedPayloadPromise = (async () => {
+    const { data, error } = await state.client.rpc(FILTERED_RPC, {
+      p_scope: currentScope(),
+      p_unidades: state.selectedUnits.length ? state.selectedUnits : null,
+      p_editais: state.selectedEditais.length ? state.selectedEditais : null,
+      p_limit: MAX_SCOPED_ROWS
+    });
+    if(error) throw error;
+    const payload = data && typeof data === "object" ? data : {};
+    payload.rows = Array.isArray(payload.rows) ? payload.rows : [];
+    state.scopedPayload = payload;
+    updatePayloadStatus(payload);
+    return payload;
+  })();
+
+  try{
+    return await state.scopedPayloadPromise;
+  }catch(error){
+    clearRpcCache();
+    throw error;
+  }finally{
+    state.scopedPayloadPromise = null;
+  }
+}
+
+function createRpcBackedBuilder(){
+  let rangeStart = 0;
+  let rangeEnd = 999;
+  const builder = {
+    select(){ return builder; },
+    range(start, end){
+      rangeStart = Number(start) || 0;
+      rangeEnd = Number(end) || rangeStart;
+      return builder;
+    },
+    order(){ return builder; },
+    eq(){ return builder; },
+    in(){ return builder; },
+    then(resolve){
+      return fetchScopedPayload()
+        .then(payload => {
+          const rows = payload.rows.slice(rangeStart, rangeEnd + 1);
+          return resolve({ data: rows, error: null, count: Number(payload.total || rows.length) });
+        })
+        .catch(error => resolve({ data: [], error }));
+    }
+  };
+  return builder;
 }
 
 function patchSupabaseClient(){
@@ -55,20 +129,10 @@ function patchSupabaseClient(){
 
     const originalFrom = client.from.bind(client);
     client.from = tableName => {
-      const builder = originalFrom(tableName);
-      if(tableName !== TARGET_VIEW) return builder;
-
-      const originalSelect = builder.select.bind(builder);
-      builder.select = (...selectArgs) => {
-        let query = originalSelect(...selectArgs);
-        const scope = currentScope();
-        if(scope !== "ativo"){
-          if(state.selectedUnits.length) query = query.in("unidade", state.selectedUnits);
-          if(state.selectedEditais.length) query = query.in("edital", state.selectedEditais);
-        }
-        return query;
-      };
-      return builder;
+      if(tableName === TARGET_VIEW && currentScope() !== "ativo" && state.allowScopeLoad){
+        return createRpcBackedBuilder();
+      }
+      return originalFrom(tableName);
     };
     return client;
   };
@@ -88,6 +152,7 @@ function ensureStyles(){
     .scope-guard-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
     .scope-guard-field{display:grid;gap:6px}.scope-guard-field label{font-size:12px;font-weight:850;color:var(--muted)}
     .scope-guard select[multiple]{min-height:116px;padding:8px}.scope-guard-status{font-size:12px;font-weight:800;color:var(--muted)}
+    .scope-guard-status.is-warning{color:#a05a00}
     @media(max-width:820px){.scope-guard-grid{grid-template-columns:1fr}.scope-guard-grid .btn{width:100%}}
   `;
   document.head.appendChild(style);
@@ -106,7 +171,7 @@ function ensureGuard(){
   guard.innerHTML = `
     <div class="scope-guard-head">
       <i class="fa-solid fa-triangle-exclamation"></i>
-      <div><strong>Defina um recorte antes da consulta</strong><small>Processos inativos e a opção Todos possuem muitos registros. Selecione pelo menos uma unidade ou um edital para evitar uma carga ampla e lenta.</small></div>
+      <div><strong>Defina um recorte antes da consulta</strong><small>Processos inativos e a opção Todos possuem muitos registros. Selecione pelo menos uma unidade ou um edital. A consulta é validada no banco e limitada a ${MAX_SCOPED_ROWS.toLocaleString("pt-BR")} registros.</small></div>
     </div>
     <div class="scope-guard-grid">
       <div class="scope-guard-field"><label for="scopeGuardUnits">Unidades do recorte</label><select id="scopeGuardUnits" multiple aria-label="Unidades do recorte"></select></div>
@@ -125,8 +190,10 @@ function ensureGuard(){
 function syncSelections(){
   state.selectedUnits = selectedValues("scopeGuardUnits");
   state.selectedEditais = selectedValues("scopeGuardEditais");
+  clearRpcCache();
   const status = document.getElementById("scopeGuardStatus");
   if(status){
+    status.classList.remove("is-warning");
     const total = state.selectedUnits.length + state.selectedEditais.length;
     status.textContent = total
       ? `${state.selectedUnits.length} unidade(s) e ${state.selectedEditais.length} edital(is) selecionado(s).`
@@ -134,11 +201,22 @@ function syncSelections(){
   }
 }
 
+function updatePayloadStatus(payload){
+  const status = document.getElementById("scopeGuardStatus");
+  if(!status) return;
+  const total = Number(payload.total || payload.rows?.length || 0);
+  const returned = Array.isArray(payload.rows) ? payload.rows.length : 0;
+  status.classList.toggle("is-warning", Boolean(payload.truncated));
+  status.textContent = payload.truncated
+    ? `Foram encontrados ${total.toLocaleString("pt-BR")} registros. O painel exibiu os primeiros ${returned.toLocaleString("pt-BR")} por segurança; refine o recorte.`
+    : `Consulta concluída: ${returned.toLocaleString("pt-BR")} registro(s).`;
+}
+
 function renderCatalog(){
   const scope = currentScope();
-  const rows = state.catalog.filter(row => scope === "todos" || row.ativo === false);
-  const units = [...new Set(rows.map(row => txt(row.unidade)).filter(Boolean))].sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
-  const editais = [...new Set(rows.map(row => txt(row.edital)).filter(Boolean))].sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
+  const catalogRows = state.catalog.filter(row => scope === "todos" || row.ativo === false);
+  const units = [...new Set(catalogRows.map(row => txt(row.unidade)).filter(Boolean))].sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
+  const editais = [...new Set(catalogRows.map(row => txt(row.edital)).filter(Boolean))].sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
   const unitSelect = document.getElementById("scopeGuardUnits");
   const editalSelect = document.getElementById("scopeGuardEditais");
   if(unitSelect) unitSelect.innerHTML = units.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
@@ -186,14 +264,17 @@ function requestScopedLoad(){
   if(currentScope() === "ativo") return;
   if(!state.selectedUnits.length && !state.selectedEditais.length){
     const status = document.getElementById("scopeGuardStatus");
-    if(status) status.textContent = "Consulta bloqueada: selecione pelo menos uma unidade ou um edital.";
+    if(status){
+      status.classList.add("is-warning");
+      status.textContent = "Consulta bloqueada: selecione pelo menos uma unidade ou um edital.";
+    }
     return;
   }
 
   clearScopeCache(currentScope());
+  clearRpcCache();
   state.allowScopeLoad = true;
   document.getElementById("fSituacaoEdital")?.dispatchEvent(new Event("change", { bubbles:true }));
-  state.allowScopeLoad = false;
 }
 
 function bindGuard(){
