@@ -22,7 +22,8 @@ function selectionKey(){
 }
 
 const state = {
-  authorizedKey: ""
+  authorizedKey: "",
+  queryInFlight: false
 };
 
 function hasHistoricalSelection(){
@@ -47,6 +48,7 @@ function setPending(pending){
 
 function invalidateHistoricalResult(){
   state.authorizedKey = "";
+  state.queryInFlight = false;
   if(currentScope() !== "ativo") setPending(true);
 }
 
@@ -56,9 +58,24 @@ function requestGuardLoad(){
 }
 
 function markQueryComplete(){
-  if(!isAuthorized()) return;
+  if(!state.queryInFlight || !isAuthorized()) return;
+
   const loading = document.getElementById("loading");
   if(loading?.classList.contains("show")) return;
+
+  const authWarning = document.getElementById("authWarning");
+  if(authWarning && !authWarning.hidden && txt(authWarning.textContent)){
+    state.queryInFlight = false;
+    setPending(true);
+    const status = document.getElementById("scopeGuardStatus");
+    if(status){
+      status.classList.add("is-warning");
+      status.textContent = "A consulta não foi concluída. Revise a mensagem de erro e tente novamente.";
+    }
+    return;
+  }
+
+  state.queryInFlight = false;
   setPending(false);
   const status = document.getElementById("scopeGuardStatus");
   if(!status) return;
@@ -151,14 +168,16 @@ function bindSafety(){
   scopeSelect?.addEventListener("change", () => {
     if(currentScope() === "ativo"){
       state.authorizedKey = "";
+      state.queryInFlight = false;
       setPending(false);
       return;
     }
 
     // A consulta histórica autorizada dispara internamente um evento change
-    // no mesmo escopo. Nesse caso, o resultado não pode voltar ao estado pendente.
+    // no mesmo escopo. O evento deve iniciar a carga sem invalidar o recorte.
     if(state.authorizedKey && state.authorizedKey === selectionKey()){
-      setPending(false);
+      state.queryInFlight = true;
+      setPending(true);
       return;
     }
 
@@ -175,7 +194,8 @@ function bindSafety(){
     if(event.target?.closest?.("#scopeGuardLoad")){
       if(hasHistoricalSelection()){
         state.authorizedKey = selectionKey();
-        setPending(false);
+        state.queryInFlight = true;
+        setPending(true);
       }else{
         invalidateHistoricalResult();
       }
@@ -192,7 +212,8 @@ function bindSafety(){
       return;
     }
     state.authorizedKey = selectionKey();
-    setPending(false);
+    state.queryInFlight = true;
+    setPending(true);
     requestGuardLoad();
   }, true);
 
@@ -223,6 +244,7 @@ function bindSafety(){
     setTimeout(() => {
       if(currentScope() === "ativo"){
         state.authorizedKey = "";
+        state.queryInFlight = false;
         setPending(false);
         const guard = document.getElementById("scopeGuard");
         if(guard) guard.hidden = true;
