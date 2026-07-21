@@ -3,6 +3,7 @@ import "tom-select/dist/css/tom-select.css";
 
 const SELECT_IDS = ["scopeGuardUnits", "scopeGuardEditais"];
 const instances = new Map();
+let globalCloseHandlersBound = false;
 
 export function normalizeLabel(value){
   return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -20,13 +21,52 @@ function optionData(select){
   }));
 }
 
+function counterText(select){
+  const selected = selectedValues(select).length;
+  const total = [...select.options].filter(option => !option.disabled).length;
+  return `${selected} de ${total} selecionado(s)`;
+}
+
+function updateCounter(select){
+  const counter = select.closest(".scope-guard-field")?.querySelector(".scope-modern-counter");
+  if(counter) counter.textContent = counterText(select);
+}
+
+function closeInstances(except = null){
+  instances.forEach(instance => {
+    if(instance !== except) instance.close?.();
+  });
+}
+
+function bindGlobalCloseHandlers(){
+  if(globalCloseHandlersBound) return;
+  globalCloseHandlersBound = true;
+
+  document.addEventListener("keydown", event => {
+    if(event.key === "Escape") closeInstances();
+  });
+
+  document.addEventListener("pointerdown", event => {
+    instances.forEach(instance => {
+      const clickedInside = instance.wrapper?.contains(event.target)
+        || instance.dropdown?.contains(event.target);
+      if(!clickedInside) instance.close?.();
+    });
+  }, true);
+
+  window.addEventListener("scroll", () => closeInstances(), { passive:true });
+  window.addEventListener("resize", () => closeInstances(), { passive:true });
+}
+
 function syncTomSelect(select, instance){
   const values = selectedValues(select);
+  instance.close?.();
   instance.clear(true);
   instance.clearOptions();
   instance.addOptions(optionData(select));
   instance.setValue(values, true);
   instance.refreshOptions(false);
+  updateCounter(select);
 }
 
 function dispatchNativeChange(select){
@@ -34,8 +74,11 @@ function dispatchNativeChange(select){
 }
 
 function setAll(select, instance, selected){
-  const values = selected ? [...select.options].filter(option => !option.disabled).map(option => option.value) : [];
+  const values = selected
+    ? [...select.options].filter(option => !option.disabled).map(option => option.value)
+    : [];
   instance.setValue(values, true);
+  instance.close?.();
   dispatchNativeChange(select);
 }
 
@@ -51,15 +94,22 @@ function ensureActions(select, instance){
   allButton.type = "button";
   allButton.className = "scope-modern-action";
   allButton.textContent = "Selecionar tudo";
+  allButton.setAttribute("aria-label", `Selecionar todas as opções de ${label.textContent}`);
   allButton.addEventListener("click", () => setAll(select, instance, true));
 
   const clearButton = document.createElement("button");
   clearButton.type = "button";
   clearButton.className = "scope-modern-action";
   clearButton.textContent = "Limpar";
+  clearButton.setAttribute("aria-label", `Limpar seleção de ${label.textContent}`);
   clearButton.addEventListener("click", () => setAll(select, instance, false));
 
-  actions.append(allButton, clearButton);
+  const counter = document.createElement("span");
+  counter.className = "scope-modern-counter";
+  counter.setAttribute("aria-live", "polite");
+  counter.textContent = counterText(select);
+
+  actions.append(allButton, clearButton, counter);
   label.insertAdjacentElement("afterend", actions);
 }
 
@@ -75,12 +125,20 @@ function createInstance(select){
       remove_button: { title:"Remover" }
     },
     maxItems: null,
+    maxOptions: 250,
     create: false,
     persist: false,
-    closeAfterSelect: false,
-    hideSelected: false,
+    closeAfterSelect: true,
+    hideSelected: true,
+    openOnFocus: false,
     placeholder,
     searchField: ["text"],
+    onDropdownOpen(){
+      closeInstances(this);
+    },
+    onItemAdd(){
+      this.close?.();
+    },
     render: {
       no_results(){
         return '<div class="no-results">Nenhum resultado encontrado</div>';
@@ -90,6 +148,8 @@ function createInstance(select){
 
   instances.set(select.id, instance);
   ensureActions(select, instance);
+  instance.control_input?.setAttribute("aria-label", placeholder);
+  instance.control_input?.setAttribute("autocomplete", "off");
 
   let syncing = false;
   const syncFromNative = () => {
@@ -97,6 +157,8 @@ function createInstance(select){
     syncing = true;
     try{
       instance.setValue(selectedValues(select), true);
+      instance.close?.();
+      updateCounter(select);
     }finally{
       syncing = false;
     }
@@ -123,21 +185,25 @@ function ensureStyles(){
   const style = document.createElement("style");
   style.id = "analisesModernSelectStyles";
   style.textContent = `
-    .scope-modern-actions{display:flex;gap:12px;align-items:center;margin-top:-2px;margin-bottom:2px}
+    .scope-modern-actions{display:flex;gap:12px;align-items:center;margin-top:-2px;margin-bottom:2px;flex-wrap:wrap}
     .scope-modern-action{border:0;background:transparent;color:var(--blue);font:inherit;font-size:12px;font-weight:850;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
     .scope-modern-action:hover{filter:brightness(1.15)}
-    .scope-guard .ts-wrapper{width:100%}
+    .scope-modern-action:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:4px}
+    .scope-modern-counter{margin-left:auto;color:var(--muted);font-size:12px;font-weight:800}
+    .scope-guard .ts-wrapper{width:100%;position:relative}
     .scope-guard .ts-control{min-height:48px;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:var(--card);color:var(--text);padding:8px 10px;box-shadow:none}
     .scope-guard .ts-wrapper.focus .ts-control{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 20%,transparent)}
     .scope-guard .ts-control input{color:var(--text);min-width:180px}
     .scope-guard .ts-control .item{background:color-mix(in srgb,var(--blue) 16%,var(--card));border:1px solid color-mix(in srgb,var(--blue) 35%,transparent);color:var(--strong);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800}
     .scope-guard .ts-control .item .remove{border-left:0;margin-left:6px;padding-left:6px;color:var(--muted)}
-    .scope-guard .ts-dropdown{border:1px solid rgba(148,163,184,.28);border-radius:12px;background:var(--card);color:var(--text);box-shadow:0 18px 45px rgba(2,8,23,.28);overflow:hidden}
+    .scope-guard .ts-dropdown{z-index:80;border:1px solid rgba(148,163,184,.28);border-radius:12px;background:var(--card);color:var(--text);box-shadow:0 18px 45px rgba(2,8,23,.28);overflow:hidden}
+    .scope-guard .ts-dropdown-content{max-height:220px;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
     .scope-guard .ts-dropdown .option{padding:10px 12px}
     .scope-guard .ts-dropdown .option.active{background:color-mix(in srgb,var(--blue) 15%,var(--card));color:var(--strong)}
     .scope-guard .ts-dropdown .selected{background:color-mix(in srgb,var(--green) 12%,var(--card));color:var(--strong)}
     .scope-guard .ts-dropdown .no-results{padding:12px;color:var(--muted);font-size:13px}
     .scope-guard select[multiple]{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important}
+    @media(max-width:640px){.scope-modern-counter{width:100%;margin-left:0}.scope-guard .ts-dropdown-content{max-height:180px}}
   `;
   document.head.appendChild(style);
 }
@@ -155,6 +221,7 @@ function install(){
 
 function start(){
   ensureStyles();
+  bindGlobalCloseHandlers();
   if(install()) return;
 
   const observer = new MutationObserver(() => {
