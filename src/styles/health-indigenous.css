@@ -1,0 +1,217 @@
+#page-dashboard{
+  --health-border: rgba(0,59,112,.12);
+  --health-shadow: 0 10px 28px rgba(15,35,60,.07);
+}
+
+#page-dashboard .filter-card,
+#page-dashboard .kpi,
+#page-dashboard .map-card,
+#page-dashboard .panel-pad,
+#page-dashboard .table-card,
+#page-dashboard .multi-units-card{
+  border-color:var(--health-border);
+  box-shadow:var(--health-shadow);
+}
+
+#page-dashboard .filter-card{
+  position:relative;
+  overflow:visible;
+  background:linear-gradient(180deg,#fff 0%,#fbfdff 100%);
+}
+
+#page-dashboard .filter-head{
+  align-items:center;
+  gap:16px;
+}
+
+#page-dashboard .filter-title{
+  font-size:15px;
+  font-weight:900;
+  color:#10243e;
+}
+
+#page-dashboard .filter-sub{
+  margin-top:4px;
+  color:#60758f;
+  line-height:1.45;
+}
+
+#page-dashboard .filter-body{
+  gap:12px;
+  padding-top:16px;
+  border-top:1px solid rgba(0,59,112,.08);
+}
+
+#page-dashboard .filter-body > div > label{
+  display:block;
+  margin-bottom:6px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#60758f;
+}
+
+#page-dashboard .multi-select-toggle{
+  min-height:42px;
+  border-radius:11px;
+  border-color:rgba(0,59,112,.16);
+  background:#fff;
+}
+
+#page-dashboard .multi-select.open .multi-select-toggle{
+  border-color:#0d6efd;
+  box-shadow:0 0 0 3px rgba(13,110,253,.10);
+}
+
+#page-dashboard .multi-select-menu{
+  border:1px solid rgba(0,59,112,.14);
+  border-radius:14px;
+  box-shadow:0 16px 38px rgba(15,35,60,.16);
+  overflow:hidden;
+}
+
+#page-dashboard .health-unit-search{
+  position:relative;
+  padding:10px;
+  border-bottom:1px solid rgba(0,59,112,.08);
+  background:#fbfdff;
+}
+
+#page-dashboard .health-unit-search i{
+  position:absolute;
+  left:22px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#7890aa;
+  pointer-events:none;
+  font-size:13px;
+}
+
+#page-dashboard .health-unit-search input{
+  width:100%;
+  min-height:38px;
+  padding:8px 10px 8px 34px;
+  border:1px solid rgba(96,117,143,.24);
+  border-radius:10px;
+  background:#fff;
+  color:#10243e;
+  font:inherit;
+  font-size:13px;
+  outline:none;
+}
+
+#page-dashboard .health-unit-search input:focus{
+  border-color:#0d6efd;
+  box-shadow:0 0 0 3px rgba(13,110,253,.10);
+}
+
+#page-dashboard .multi-option[hidden]{display:none!important}
+#page-dashboard .health-unit-search-empty{
+  padding:14px 10px;
+  text-align:center;
+  color:#7890aa;
+  font-size:12px;
+  font-weight:700;
+}
+
+#page-dashboard .kpis-main{
+  gap:14px;
+}
+
+#page-dashboard .kpi{
+  min-height:116px;
+  border-radius:16px;
+  overflow:hidden;
+  isolation:isolate;
+}
+
+#page-dashboard .kpi::after{
+  content:"";
+  position:absolute;
+  right:-12px;
+  bottom:-18px;
+  width:82px;
+  height:82px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:.07;
+  z-index:-1;
+}
+
+#page-dashboard .kpi span{
+  font-size:11px;
+  letter-spacing:.02em;
+}
+
+#page-dashboard .kpi b{
+  font-size:clamp(28px,3vw,38px);
+  font-variant-numeric:tabular-nums;
+}
+
+#page-dashboard .dashboard-grid,
+#page-dashboard .lower-grid{
+  gap:18px;
+}
+
+#page-dashboard .map-card{
+  overflow:hidden;
+  border-radius:16px;
+}
+
+#page-dashboard .panel-pad{
+  border-radius:16px;
+}
+
+#page-dashboard .panel-title{
+  margin-bottom:14px;
+  font-size:14px;
+  color:#10243e;
+}
+
+#page-dashboard .table-card{
+  overflow:clip;
+  border-radius:16px;
+}
+
+#page-dashboard .table-head{
+  background:linear-gradient(135deg,#003b70,#006db8);
+  color:#fff;
+  gap:16px;
+}
+
+#page-dashboard #tableSearch{
+  min-height:42px;
+  border-radius:11px;
+  border-color:rgba(255,255,255,.38);
+}
+
+#page-dashboard .details-table tbody tr:hover td{
+  background:#f5fbff;
+}
+
+#page-dashboard .risk-list > *{
+  border-radius:12px;
+}
+
+body.dark-mode #page-dashboard .filter-card,
+body.dark-mode #page-dashboard .health-unit-search{
+  background:#10243e;
+}
+
+body.dark-mode #page-dashboard .health-unit-search input,
+body.dark-mode #page-dashboard .multi-select-toggle{
+  background:#132b47;
+  color:#e7f0fb;
+}
+
+@media(max-width:900px){
+  #page-dashboard .kpis-main{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #page-dashboard .table-head{align-items:stretch}
+}
+
+@media(max-width:560px){
+  #page-dashboard .kpis-main{grid-template-columns:1fr}
+  #page-dashboard .filter-head{align-items:flex-start}
+  #page-dashboard .filter-head .btn{width:100%}
+}
