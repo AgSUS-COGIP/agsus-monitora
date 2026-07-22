@@ -1,3 +1,4 @@
+import "./analises-consolidated-transport.js";
 import "./analises-scope-safety.js";
 import "./analises-scope-guard.js";
 import "./analises-modern-selects.js";
