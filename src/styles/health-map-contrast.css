@@ -5,14 +5,14 @@
   filter: saturate(.58) brightness(1.06) contrast(.94);
 }
 
-/* Estado(s) atendido(s) pelo DSEI selecionado: roxo, sem confundir com vegetação. */
+/* Estado(s) atendido(s) pelo DSEI selecionado: amarelo de alto contraste. */
 #page-dashboard #map .leaflet-overlay-pane path[fill="#2e8b57"] {
-  fill: #7c3aed !important;
-  fill-opacity: .20 !important;
-  stroke: #5b21b6 !important;
+  fill: #facc15 !important;
+  fill-opacity: .28 !important;
+  stroke: #a16207 !important;
   stroke-opacity: 1 !important;
   stroke-width: 3.2 !important;
-  filter: drop-shadow(0 1px 2px rgba(45, 18, 92, .32));
+  filter: drop-shadow(0 1px 2px rgba(113, 63, 18, .32));
 }
 
 /* DSEI com processo ativo no modo normal. */
@@ -66,6 +66,14 @@
   background: #2563eb !important;
   border-color: #ffffff !important;
   box-shadow: 0 0 0 1px #2563eb;
+}
+
+/* Estado atendido pelo DSEI selecionado. */
+#page-dashboard #mapLegendBox [style*="#2e8b57"],
+#page-dashboard #mapLegendBox [style*="rgb(46, 139, 87)"] {
+  background: #facc15 !important;
+  border-color: #a16207 !important;
+  box-shadow: 0 0 0 1px rgba(161, 98, 7, .35);
 }
 
 /* Controles maiores e mais legíveis para mouse, toque e teclado. */
