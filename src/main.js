@@ -7,6 +7,7 @@ import "./styles/health-reference-kpis.css";
 import "./styles/config-page.css";
 import "./styles/config-governance.css";
 import "./styles/nucleo-cronograma.css";
+import "./styles/nucleo-cronograma-extractor.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -16,6 +17,8 @@ import { initConfigPageEnhancements } from "./modules/config-page-enhancements.j
 import { installConfigGovernanceAuthShim } from "./modules/config-governance-auth-shim.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
+import { initNucleoCronogramaExtractor } from "./modules/nucleo-cronograma-extractor.js";
+import { initNucleoCronogramaExtractorStateFix } from "./modules/nucleo-cronograma-extractor-state-fix.js";
 
 installLeafletMapGuard();
 initVisualPolish();
@@ -24,6 +27,8 @@ initConfigPageEnhancements();
 installConfigGovernanceAuthShim();
 initConfigGovernance();
 initNucleoCronograma();
+initNucleoCronogramaExtractor();
+initNucleoCronogramaExtractorStateFix();
 
 if (!hasSupabaseEnv()) {
   console.warn("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
