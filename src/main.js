@@ -11,12 +11,14 @@ import "./modules/legacy-app.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initHealthIndigenousEnhancements } from "./modules/health-indigenous-enhancements.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
+import { installConfigGovernanceAuthShim } from "./modules/config-governance-auth-shim.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 
 installLeafletMapGuard();
 initVisualPolish();
 initHealthIndigenousEnhancements();
 initConfigPageEnhancements();
+installConfigGovernanceAuthShim();
 initConfigGovernance();
 
 if (!hasSupabaseEnv()) {
