@@ -1,0 +1,143 @@
+/* Visual leve da Saúde Indígena, inspirado no painel AgSUS Monitora Análises. */
+#page-dashboard{
+  --hr-blue:#2563eb;
+  --hr-green:#17a66a;
+  --hr-yellow:#e59b00;
+  --hr-red:#e5484d;
+  --hr-cyan:#1689a7;
+  --hr-text:#111827;
+  --hr-muted:#8090a6;
+  --hr-border:#dfe6ef;
+  --hr-soft:#f6f8fb;
+}
+
+#page-dashboard .filter-card,
+#page-dashboard .kpi,
+#page-dashboard .multi-units-card,
+#page-dashboard .map-card,
+#page-dashboard .panel-pad,
+#page-dashboard .table-card{
+  background:#fff!important;
+  border:1px solid var(--hr-border)!important;
+  border-radius:13px!important;
+  box-shadow:0 2px 6px rgba(15,35,60,.055)!important;
+}
+
+#page-dashboard .filter-card{border-top:3px solid #94a3b8!important}
+#page-dashboard .multi-units-card,
+#page-dashboard .map-card,
+#page-dashboard .table-card{border-top:3px solid var(--hr-blue)!important}
+#page-dashboard .dashboard-grid>.panel-pad{border-top:3px solid var(--hr-green)!important}
+#page-dashboard .lower-grid>.panel-pad:first-child{border-top:3px solid var(--hr-blue)!important}
+#page-dashboard .lower-grid>.panel-pad:last-child{border-top:3px solid var(--hr-red)!important}
+
+#page-dashboard .kpis-main{gap:10px!important}
+#page-dashboard .kpi{
+  min-height:102px!important;
+  padding:14px 15px!important;
+  overflow:visible!important;
+  isolation:auto!important;
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease!important;
+}
+#page-dashboard .kpi:hover{transform:translateY(-1px)!important;box-shadow:0 6px 16px rgba(15,35,60,.08)!important}
+#page-dashboard .kpi::before,#page-dashboard .kpi::after{display:none!important}
+#page-dashboard .kpi.ag-navy,#page-dashboard .kpi.ag-blue{border-top:3px solid var(--hr-blue)!important}
+#page-dashboard .kpi.ag-green{border-top:3px solid var(--hr-green)!important}
+#page-dashboard .kpi.ag-yellow{border-top:3px solid var(--hr-yellow)!important}
+#page-dashboard .kpi.ag-red{border-top:3px solid var(--hr-red)!important}
+#page-dashboard .kpi.ag-cyan{border-top:3px solid var(--hr-cyan)!important}
+
+#page-dashboard .kpi>span{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:30px!important;
+  color:var(--hr-muted)!important;
+  font-size:10px!important;
+  font-weight:700!important;
+  letter-spacing:0!important;
+  line-height:1.25!important;
+}
+#page-dashboard .kpi>span>i{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:32px!important;
+  height:32px!important;
+  flex:0 0 32px!important;
+  margin:0!important;
+  border-radius:9px!important;
+  opacity:1!important;
+}
+#page-dashboard .kpi.ag-navy>span>i,#page-dashboard .kpi.ag-blue>span>i{color:var(--hr-blue)!important;background:#eaf1ff!important}
+#page-dashboard .kpi.ag-green>span>i{color:var(--hr-green)!important;background:#e7f7ef!important}
+#page-dashboard .kpi.ag-yellow>span>i{color:var(--hr-yellow)!important;background:#fff5dd!important}
+#page-dashboard .kpi.ag-red>span>i{color:var(--hr-red)!important;background:#ffebed!important}
+#page-dashboard .kpi.ag-cyan>span>i{color:var(--hr-cyan)!important;background:#e8f7fa!important}
+#page-dashboard .kpi>b{
+  display:block!important;
+  margin-top:5px!important;
+  color:var(--hr-text)!important;
+  font-size:clamp(27px,2.4vw,35px)!important;
+  line-height:1!important;
+  letter-spacing:-.035em!important;
+}
+#page-dashboard .kpi-rate{margin-top:7px!important}
+#page-dashboard .kpi-rate-bar{height:4px!important;background:#e8edf4!important}
+#page-dashboard .kpi-rate-pct{color:#5e6f84!important;font-size:10px!important}
+#page-dashboard #panicChip{margin-left:auto!important;background:#f3f6fa!important;border-color:#dbe3ed!important;color:#65758b!important}
+
+#page-dashboard .filter-card{background:#fff!important}
+#page-dashboard .filter-title,#page-dashboard .multi-units-title,#page-dashboard .panel-title,#page-dashboard .table-head h3{color:var(--hr-text)!important}
+#page-dashboard .filter-sub,#page-dashboard .table-meta{color:var(--hr-muted)!important}
+#page-dashboard .multi-select-toggle,#page-dashboard #tableSearch{
+  background:#f9fbfd!important;
+  border:1px solid var(--hr-border)!important;
+  border-radius:9px!important;
+  box-shadow:none!important;
+}
+#page-dashboard .multi-select.open .multi-select-toggle,#page-dashboard #tableSearch:focus{background:#fff!important;border-color:var(--hr-blue)!important;box-shadow:0 0 0 3px rgba(37,99,235,.10)!important}
+
+#page-dashboard .multi-units-card{background:#fff!important}
+#page-dashboard .multi-unit-chip{background:#fff!important;border-color:#d9e4f2!important;box-shadow:none!important}
+
+#page-dashboard .panel-title::after{display:none!important}
+#page-dashboard .panel-pad{padding:18px 20px!important}
+
+#page-dashboard .table-head{
+  background:#fff!important;
+  color:var(--hr-text)!important;
+  border-bottom:1px solid #edf1f6!important;
+  padding:18px 20px!important;
+}
+#page-dashboard .table-head h3 i{color:var(--hr-blue)!important}
+#page-dashboard .table-head .btn.secondary,#page-dashboard #hideClosedBtn,#page-dashboard #columnsButton{
+  background:#fff!important;
+  color:#475569!important;
+  border:1px solid var(--hr-border)!important;
+  box-shadow:0 1px 2px rgba(15,35,60,.04)!important;
+}
+#page-dashboard .table-meta{background:#fff!important;border-bottom:0!important;padding:10px 20px!important}
+#page-dashboard .table-wrap{margin:0 18px 18px;border:1px solid var(--hr-border);border-radius:10px;overflow:auto}
+#page-dashboard .details-table thead th{background:#f5f7fa!important;color:#78889e!important;border-bottom:1px solid var(--hr-border)!important;font-size:10px!important}
+#page-dashboard .details-table tbody tr:nth-child(even) td{background:#fff!important}
+#page-dashboard .details-table tbody tr:hover td{background:#f7faff!important}
+#page-dashboard .details-table td{border-bottom-color:#e8edf3!important;color:#334155}
+
+body.dark-mode #page-dashboard .filter-card,
+body.dark-mode #page-dashboard .kpi,
+body.dark-mode #page-dashboard .multi-units-card,
+body.dark-mode #page-dashboard .map-card,
+body.dark-mode #page-dashboard .panel-pad,
+body.dark-mode #page-dashboard .table-card,
+body.dark-mode #page-dashboard .table-head,
+body.dark-mode #page-dashboard .table-meta{background:#12263a!important;border-color:#2b4056!important}
+body.dark-mode #page-dashboard .kpi>b,
+body.dark-mode #page-dashboard .filter-title,
+body.dark-mode #page-dashboard .multi-units-title,
+body.dark-mode #page-dashboard .panel-title,
+body.dark-mode #page-dashboard .table-head h3{color:#eef4fa!important}
+
+@media(max-width:1100px){#page-dashboard .kpis-main{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:720px){#page-dashboard .kpis-main{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:460px){#page-dashboard .kpis-main{grid-template-columns:1fr!important}}
