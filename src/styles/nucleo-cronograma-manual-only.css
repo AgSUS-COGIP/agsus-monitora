@@ -1,0 +1,44 @@
+#cronogramaEditor .cronograma-manual-source-grid {
+  grid-template-columns: 1fr;
+}
+
+#cronogramaEditor .cronograma-manual-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px dashed var(--border, #d6e2ef);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface, #fff) 92%, #eaf4ff 8%);
+}
+
+#cronogramaEditor .cronograma-manual-actions .btn {
+  margin: 0;
+}
+
+#cronogramaEditor .cronograma-view-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 11px 13px;
+  border: 1px solid #cfe0f2;
+  border-radius: 12px;
+  background: #f6faff;
+  color: #35506d;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#cronogramaEditor .cronograma-view-hint i {
+  margin-top: 2px;
+  color: #0f6cbd;
+}
+
+body.dark #cronogramaEditor .cronograma-manual-actions,
+body.dark #cronogramaEditor .cronograma-view-hint {
+  background: rgba(15, 39, 65, 0.55);
+  border-color: rgba(130, 172, 214, 0.28);
+  color: #c9d9e9;
+}

@@ -7,8 +7,8 @@ import "./styles/health-reference-kpis.css";
 import "./styles/config-page.css";
 import "./styles/config-governance.css";
 import "./styles/nucleo-cronograma.css";
-import "./styles/nucleo-cronograma-extractor.css";
 import "./styles/nucleo-cronograma-template-helper.css";
+import "./styles/nucleo-cronograma-manual-only.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -18,10 +18,8 @@ import { initConfigPageEnhancements } from "./modules/config-page-enhancements.j
 import { installConfigGovernanceAuthShim } from "./modules/config-governance-auth-shim.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
-import { initNucleoCronogramaExtractor } from "./modules/nucleo-cronograma-extractor.js";
-import { initNucleoCronogramaExtractorStateFix } from "./modules/nucleo-cronograma-extractor-state-fix.js";
-import { initNucleoCronogramaTableExtractor } from "./modules/nucleo-cronograma-table-extractor.js";
 import { initNucleoCronogramaTemplateHelper } from "./modules/nucleo-cronograma-template-helper.js";
+import { initNucleoCronogramaManualOnly } from "./modules/nucleo-cronograma-manual-only.js";
 
 installLeafletMapGuard();
 initVisualPolish();
@@ -30,10 +28,8 @@ initConfigPageEnhancements();
 installConfigGovernanceAuthShim();
 initConfigGovernance();
 initNucleoCronograma();
-initNucleoCronogramaExtractor();
-initNucleoCronogramaExtractorStateFix();
-initNucleoCronogramaTableExtractor();
 initNucleoCronogramaTemplateHelper();
+initNucleoCronogramaManualOnly();
 
 if (!hasSupabaseEnv()) {
   console.warn("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
