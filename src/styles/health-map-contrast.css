@@ -1,0 +1,94 @@
+/* Contraste do mapa da Saúde Indígena.
+   Mantém a lógica Leaflet existente e altera somente a apresentação. */
+
+#page-dashboard #map .leaflet-tile-pane {
+  filter: saturate(.58) brightness(1.06) contrast(.94);
+}
+
+/* Estado(s) atendido(s) pelo DSEI selecionado: roxo, sem confundir com vegetação. */
+#page-dashboard #map .leaflet-overlay-pane path[fill="#2e8b57"] {
+  fill: #7c3aed !important;
+  fill-opacity: .20 !important;
+  stroke: #5b21b6 !important;
+  stroke-opacity: 1 !important;
+  stroke-width: 3.2 !important;
+  filter: drop-shadow(0 1px 2px rgba(45, 18, 92, .32));
+}
+
+/* DSEI com processo ativo no modo normal. */
+#page-dashboard #map .leaflet-overlay-pane path[fill="#0b8f58"] {
+  fill: #2563eb !important;
+  fill-opacity: .88 !important;
+  stroke: #ffffff !important;
+  stroke-opacity: 1 !important;
+  stroke-width: 3.5 !important;
+  filter: drop-shadow(0 2px 4px rgba(15, 35, 60, .38));
+}
+
+/* DSEIs sem processo ativo. */
+#page-dashboard #map .leaflet-overlay-pane path[fill="#5b9bd5"] {
+  fill: #94a3b8 !important;
+  fill-opacity: .72 !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.4 !important;
+}
+
+/* Polos base: azul-marinho com halo branco. */
+#page-dashboard #map .leaflet-overlay-pane path[fill="#1d4e89"] {
+  fill: #0f4c81 !important;
+  fill-opacity: .96 !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 1px 3px rgba(15, 35, 60, .35));
+}
+
+/* Polo em outro estado: laranja mais vivo e legível. */
+#page-dashboard #map .leaflet-overlay-pane path[fill="#e8730c"] {
+  fill: #f97316 !important;
+  fill-opacity: .96 !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.5 !important;
+}
+
+#page-dashboard #map .leaflet-marker-icon > div {
+  box-shadow: 0 0 0 2px #ffffff, 0 3px 8px rgba(15, 35, 60, .42) !important;
+}
+
+#page-dashboard #mapLegendBox {
+  background: rgba(255, 255, 255, .97) !important;
+  border: 1px solid rgba(37, 99, 235, .20) !important;
+  box-shadow: 0 10px 28px rgba(15, 35, 60, .18) !important;
+}
+
+/* Evita o painel lateral esmagar o mapa ou ser comprimido no drill-down. */
+#page-dashboard .dashboard-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(310px, 360px);
+  align-items: stretch;
+}
+
+#page-dashboard .dashboard-grid > * {
+  min-width: 0;
+}
+
+#page-dashboard .dashboard-grid .map-card {
+  min-width: 0;
+}
+
+#page-dashboard .dashboard-grid .panel-pad {
+  min-width: 310px;
+  overflow: auto;
+}
+
+@media (max-width: 1180px) {
+  #page-dashboard .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #page-dashboard .dashboard-grid .panel-pad {
+    min-width: 0;
+  }
+}
+
+body.dark-mode #page-dashboard #map .leaflet-tile-pane {
+  filter: saturate(.48) brightness(.78) contrast(1.08);
+}
