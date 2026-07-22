@@ -1,7 +1,6 @@
 const UNIT_FILTER_ID = "filterUnidade";
 let unitQuery = "";
 let initialized = false;
-let criticalPreviousHideClosed = null;
 
 export function normalizeHealthFilterValue(value){
   return String(value ?? "")
@@ -164,16 +163,11 @@ function exactCriticalRiskSelection(){
   return expected.size > 0 && selected.size === expected.size && [...expected].every(value => selected.has(value));
 }
 
-function hideClosedIsActive(){
-  return document.getElementById("hideClosedBtn")?.getAttribute("aria-pressed") === "true";
-}
-
 function wrapLegacyActions(){
   const originalClear = window.clearFilters;
   if(typeof originalClear === "function" && !originalClear.__healthWrapped){
     const wrappedClear = function(...args){
       resetUnitSearch();
-      criticalPreviousHideClosed = null;
       return originalClear.apply(this, args);
     };
     wrappedClear.__healthWrapped = true;
@@ -184,22 +178,10 @@ function wrapLegacyActions(){
   if(typeof originalCritical === "function" && !originalCritical.__healthWrapped){
     const wrappedCritical = function(...args){
       const exactBefore = exactCriticalRiskSelection();
-      const hiddenBefore = hideClosedIsActive();
+      if(exactBefore) return originalCritical.apply(this, args);
 
-      if(exactBefore){
-        const result = originalCritical.apply(this, args);
-        if(criticalPreviousHideClosed === false && hideClosedIsActive()) window.toggleHideClosed?.();
-        criticalPreviousHideClosed = null;
-        return result;
-      }
-
-      criticalPreviousHideClosed = hiddenBefore;
       let result = originalCritical.apply(this, args);
-
-      // A lógica antiga interpreta apenas "Alto" como conjunto crítico completo e o remove.
-      // Nesse caso, uma segunda chamada aplica corretamente Alto + Médio.
       if(!exactCriticalRiskSelection()) result = originalCritical.apply(this, args);
-      if(!hideClosedIsActive()) window.toggleHideClosed?.();
       return result;
     };
     wrappedCritical.__healthWrapped = true;
