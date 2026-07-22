@@ -19,6 +19,7 @@ import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
 import { initNucleoCronogramaExtractor } from "./modules/nucleo-cronograma-extractor.js";
 import { initNucleoCronogramaExtractorStateFix } from "./modules/nucleo-cronograma-extractor-state-fix.js";
+import { initNucleoCronogramaTableExtractor } from "./modules/nucleo-cronograma-table-extractor.js";
 
 installLeafletMapGuard();
 initVisualPolish();
@@ -29,6 +30,7 @@ initConfigGovernance();
 initNucleoCronograma();
 initNucleoCronogramaExtractor();
 initNucleoCronogramaExtractorStateFix();
+initNucleoCronogramaTableExtractor();
 
 if (!hasSupabaseEnv()) {
   console.warn("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
