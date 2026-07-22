@@ -1,7 +1,9 @@
 const UNIT_FILTER_ID = "filterUnidade";
 let unitQuery = "";
+let initialized = false;
+let criticalPreviousHideClosed = null;
 
-function normalize(value){
+export function normalizeHealthFilterValue(value){
   return String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -10,13 +12,24 @@ function normalize(value){
     .trim();
 }
 
+function visibleUnitOptions(container){
+  return [...container.querySelectorAll(".multi-option:not(.empty)")]
+    .filter(option => !option.hidden && getComputedStyle(option).display !== "none");
+}
+
+function visibleUnitValues(container){
+  return visibleUnitOptions(container)
+    .map(option => option.querySelector("input[data-filter-value]")?.dataset.filterValue || "")
+    .filter(Boolean);
+}
+
 function applyUnitSearch(container, query){
-  const normalizedQuery = normalize(query);
+  const normalizedQuery = normalizeHealthFilterValue(query);
   const options = [...container.querySelectorAll(".multi-option:not(.empty)")];
   let visible = 0;
 
   options.forEach(option => {
-    const matches = !normalizedQuery || normalize(option.textContent).includes(normalizedQuery);
+    const matches = !normalizedQuery || normalizeHealthFilterValue(option.textContent).includes(normalizedQuery);
     option.hidden = !matches;
     if(matches) visible += 1;
   });
@@ -26,6 +39,12 @@ function applyUnitSearch(container, query){
     hint.textContent = normalizedQuery
       ? `${visible} de ${options.length} unidade(s) encontrada(s).`
       : `${options.length} unidade(s) disponível(is).`;
+  }
+
+  const selectVisible = container.querySelector('[data-filter-action="select-all"]');
+  if(selectVisible){
+    selectVisible.textContent = normalizedQuery ? `Selecionar ${visible} visível(is)` : "Selecionar todas";
+    selectVisible.disabled = normalizedQuery.length > 0 && visible === 0;
   }
 
   let empty = container.querySelector(".health-unit-search-empty");
@@ -40,6 +59,14 @@ function applyUnitSearch(container, query){
   }else if(empty){
     empty.hidden = true;
   }
+}
+
+function resetUnitSearch(){
+  unitQuery = "";
+  const container = document.getElementById(UNIT_FILTER_ID);
+  const input = container?.querySelector(".health-unit-search input");
+  if(input) input.value = "";
+  if(container) applyUnitSearch(container, "");
 }
 
 function ensureUnitSearch(container, focus = false){
@@ -70,9 +97,7 @@ function ensureUnitSearch(container, focus = false){
     input.addEventListener("keydown", event => {
       if(event.key !== "Escape") return;
       event.preventDefault();
-      unitQuery = "";
-      input.value = "";
-      applyUnitSearch(container, "");
+      resetUnitSearch();
       container.classList.remove("open");
       container.querySelector(".multi-select-toggle")?.focus();
     });
@@ -93,6 +118,95 @@ function refreshAfterLegacyRender(focus = false){
   }, 0);
 }
 
+async function selectOnlyVisibleUnits(container, values){
+  const clear = window.clearFilterField;
+  if(typeof clear !== "function") return;
+
+  clear("unidade");
+  for(const value of values){
+    await new Promise(resolve => window.setTimeout(resolve, 0));
+    const current = document.getElementById(UNIT_FILTER_ID);
+    const selector = `input[data-filter-field="unidade"][data-filter-value="${CSS.escape(value)}"]`;
+    const input = current?.querySelector(selector);
+    if(input && !input.checked){
+      input.checked = true;
+      input.dispatchEvent(new Event("change", { bubbles:true }));
+    }
+  }
+  refreshAfterLegacyRender(true);
+}
+
+function interceptVisibleSelection(event){
+  const action = event.target.closest?.(`#${UNIT_FILTER_ID} [data-filter-action="select-all"]`);
+  if(!action || !unitQuery.trim()) return;
+
+  const container = document.getElementById(UNIT_FILTER_ID);
+  const values = container ? visibleUnitValues(container) : [];
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  if(values.length) void selectOnlyVisibleUnits(container, values);
+}
+
+function checkedRiskValues(){
+  return [...document.querySelectorAll('#filterRisco input[data-filter-field="risco"]:checked')]
+    .map(input => normalizeHealthFilterValue(input.dataset.filterValue));
+}
+
+function availableCriticalRiskValues(){
+  return [...document.querySelectorAll('#filterRisco input[data-filter-field="risco"]')]
+    .map(input => normalizeHealthFilterValue(input.dataset.filterValue))
+    .filter(value => value === "alto" || value === "medio");
+}
+
+function exactCriticalRiskSelection(){
+  const selected = new Set(checkedRiskValues());
+  const expected = new Set(availableCriticalRiskValues());
+  return expected.size > 0 && selected.size === expected.size && [...expected].every(value => selected.has(value));
+}
+
+function hideClosedIsActive(){
+  return document.getElementById("hideClosedBtn")?.getAttribute("aria-pressed") === "true";
+}
+
+function wrapLegacyActions(){
+  const originalClear = window.clearFilters;
+  if(typeof originalClear === "function" && !originalClear.__healthWrapped){
+    const wrappedClear = function(...args){
+      resetUnitSearch();
+      criticalPreviousHideClosed = null;
+      return originalClear.apply(this, args);
+    };
+    wrappedClear.__healthWrapped = true;
+    window.clearFilters = wrappedClear;
+  }
+
+  const originalCritical = window.toggleCriticalRiskFilter;
+  if(typeof originalCritical === "function" && !originalCritical.__healthWrapped){
+    const wrappedCritical = function(...args){
+      const exactBefore = exactCriticalRiskSelection();
+      const hiddenBefore = hideClosedIsActive();
+
+      if(exactBefore){
+        const result = originalCritical.apply(this, args);
+        if(criticalPreviousHideClosed === false && hideClosedIsActive()) window.toggleHideClosed?.();
+        criticalPreviousHideClosed = null;
+        return result;
+      }
+
+      criticalPreviousHideClosed = hiddenBefore;
+      let result = originalCritical.apply(this, args);
+
+      // A lógica antiga interpreta apenas "Alto" como conjunto crítico completo e o remove.
+      // Nesse caso, uma segunda chamada aplica corretamente Alto + Médio.
+      if(!exactCriticalRiskSelection()) result = originalCritical.apply(this, args);
+      if(!hideClosedIsActive()) window.toggleHideClosed?.();
+      return result;
+    };
+    wrappedCritical.__healthWrapped = true;
+    window.toggleCriticalRiskFilter = wrappedCritical;
+  }
+}
+
 function handleClick(event){
   const toggle = event.target.closest?.(`#${UNIT_FILTER_ID} .multi-select-toggle`);
   if(toggle){
@@ -111,6 +225,10 @@ function handleChange(event){
 }
 
 export function initHealthIndigenousEnhancements(){
+  if(initialized) return;
+  initialized = true;
+  wrapLegacyActions();
+  document.addEventListener("click", interceptVisibleSelection, true);
   document.addEventListener("click", handleClick);
   document.addEventListener("change", handleChange);
 }
