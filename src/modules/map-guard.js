@@ -9,11 +9,17 @@ const BRAZIL_MAX_BOUNDS = [
 ];
 
 const DEFAULT_MAP_OPTIONS = {
-  maxBoundsViscosity: 1,
+  maxBoundsViscosity: 0.82,
   worldCopyJump: false,
   zoomSnap: 0.25,
   zoomDelta: 0.5,
-  wheelPxPerZoomLevel: 100
+  wheelPxPerZoomLevel: 72,
+  scrollWheelZoom: true,
+  doubleClickZoom: true,
+  touchZoom: true,
+  boxZoom: true,
+  keyboard: true,
+  keyboardPanDelta: 80
 };
 
 let installed = false;
@@ -64,7 +70,7 @@ function installMapGuard(L) {
       ...DEFAULT_MAP_OPTIONS,
       ...options,
       maxBounds: toMaxBounds(L),
-      maxBoundsViscosity: 1,
+      maxBoundsViscosity: options.maxBoundsViscosity ?? DEFAULT_MAP_OPTIONS.maxBoundsViscosity,
       worldCopyJump: false
     });
 
@@ -94,10 +100,12 @@ function hardenMapInstance(L, map) {
     return originalSetMaxBounds(nextBounds);
   };
 
+  // O limite abaixo vale apenas para enquadramentos automáticos. Depois disso,
+  // o usuário pode aproximar manualmente até o maxZoom real do mapa.
   map.fitBounds = function fitGuardedBounds(bounds, options = {}) {
     return originalFitBounds(limitBounds(L, bounds, maxBounds), {
       padding: [24, 24],
-      maxZoom: 7,
+      maxZoom: 8,
       animate: false,
       ...options
     });
@@ -107,7 +115,7 @@ function hardenMapInstance(L, map) {
     map.flyToBounds = function flyToGuardedBounds(bounds, options = {}) {
       return originalFlyToBounds(limitBounds(L, bounds, maxBounds), {
         padding: [32, 32],
-        maxZoom: 7,
+        maxZoom: 9,
         duration: 0.35,
         ...options
       });
@@ -136,15 +144,83 @@ function hardenMapInstance(L, map) {
     };
   }
 
+  enhanceMapAccessibility(L, map);
+
   map.whenReady(() => {
     originalSetMaxBounds(maxBounds);
     originalFitBounds(viewBounds, { padding: [20, 20], animate: false });
+    ensureFullManualZoomRange(map);
+    addScaleControl(L, map);
     stabilizeMap(map, maxBounds);
     window.setTimeout(() => stabilizeMap(map, maxBounds), 180);
     window.setTimeout(() => stabilizeMap(map, maxBounds), 600);
   });
 
   map.on("drag move zoomend moveend resize layeradd", () => stabilizeMap(map, maxBounds));
+}
+
+function enhanceMapAccessibility(L, map) {
+  const container = map.getContainer?.();
+  if (!container) return;
+
+  container.tabIndex = 0;
+  container.setAttribute("role", "application");
+  container.setAttribute(
+    "aria-label",
+    "Mapa da Saúde Indígena. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom."
+  );
+  container.title = "Zoom livre: roda do mouse, duplo clique, pinça ou teclas + e -.";
+
+  // Mantém os recursos explicitamente habilitados mesmo em navegadores/dispositivos
+  // que inicializam algum handler como desativado.
+  map.scrollWheelZoom?.enable?.();
+  map.doubleClickZoom?.enable?.();
+  map.touchZoom?.enable?.();
+  map.boxZoom?.enable?.();
+  map.keyboard?.enable?.();
+
+  container.addEventListener("keydown", event => {
+    if (event.key === "+" || event.key === "=") {
+      event.preventDefault();
+      map.zoomIn(1);
+    } else if (event.key === "-" || event.key === "_") {
+      event.preventDefault();
+      map.zoomOut(1);
+    } else if (event.key === "0") {
+      event.preventDefault();
+      map.fitBounds(toViewBounds(L), { padding: [20, 20], animate: false });
+    }
+  });
+}
+
+function ensureFullManualZoomRange(map) {
+  const configuredMax = Number(map.options?.maxZoom);
+  const layerMax = getLayerMaxZoom(map);
+  const maxZoom = Number.isFinite(layerMax)
+    ? layerMax
+    : (Number.isFinite(configuredMax) ? configuredMax : 18);
+
+  map.setMaxZoom?.(Math.max(18, maxZoom));
+}
+
+function getLayerMaxZoom(map) {
+  let maxZoom = Number.NaN;
+  map.eachLayer?.(layer => {
+    const value = Number(layer?.options?.maxZoom);
+    if (Number.isFinite(value)) maxZoom = Number.isFinite(maxZoom) ? Math.max(maxZoom, value) : value;
+  });
+  return maxZoom;
+}
+
+function addScaleControl(L, map) {
+  if (map.__agsusScaleControlAdded || !L.control?.scale) return;
+  L.control.scale({
+    position: "bottomright",
+    imperial: false,
+    metric: true,
+    maxWidth: 130
+  }).addTo(map);
+  map.__agsusScaleControlAdded = true;
 }
 
 function stabilizeMap(map, maxBounds) {
@@ -190,7 +266,9 @@ function clampLatLng(L, center, maxBounds) {
 function clampZoom(map, zoom) {
   const value = Number(zoom ?? map.getZoom?.() ?? 4);
   const min = Number(map.getMinZoom?.() ?? 3);
-  return Math.max(min, Math.min(value, 9));
+  const configuredMax = Number(map.getMaxZoom?.() ?? map.options?.maxZoom ?? 18);
+  const max = Number.isFinite(configuredMax) ? Math.max(configuredMax, 18) : 18;
+  return Math.max(min, Math.min(value, max));
 }
 
 installLeafletMapGuard();
