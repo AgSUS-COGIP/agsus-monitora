@@ -14,7 +14,8 @@ function parseDate(value) {
 
 function captureReviewRows() {
   const review = $("cronogramaExtractReview");
-  if (!review || review.hidden) return;
+  if (!review) return;
+
   const rows = [...review.querySelectorAll("#cronogramaExtractRows tr")].map((tr, index) => {
     const cells = tr.querySelectorAll("td");
     const activity = cells[1]?.childNodes?.[0]?.textContent?.trim() || "";
