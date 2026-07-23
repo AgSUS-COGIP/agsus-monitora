@@ -1,0 +1,50 @@
+#monitorFoot[hidden] {
+  display: none !important;
+}
+
+.health-status-center.is-loading strong {
+  color: #94a3b8;
+}
+
+.health-status-center.is-loading span {
+  opacity: 0.75;
+}
+
+#monitorRows .health-row-operational {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 150px;
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+#monitorRows .health-row-operational span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#monitorRows tr.health-urgency-warning td:first-child,
+#monitorRows tr.health-urgency-danger td:first-child,
+#monitorRows tr.health-urgency-neutral td:first-child {
+  border-left-width: 3px;
+}
+
+.health-details-intro {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.health-details-intro > div:first-child span {
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  #monitorRows .health-row-operational {
+    max-width: 120px;
+  }
+}
