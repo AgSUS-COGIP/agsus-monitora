@@ -7,6 +7,17 @@ function encodedKey(button){
   return match ? match[1] : "";
 }
 
+function decodedKey(encoded){
+  try{return decodeURIComponent(encoded || "");}catch{return encoded || "";}
+}
+
+function pageForKey(encoded){
+  const parts = decodedKey(encoded).split("|");
+  const globalIndex = Number(parts[parts.length - 1]);
+  const rowsPerPage = Number(document.getElementById("rowsPerPage")?.value || 50) || 50;
+  return Number.isFinite(globalIndex) ? Math.floor(globalIndex / rowsPerPage) + 1 : 1;
+}
+
 function findButton(key){
   return [...document.querySelectorAll('#tableBody button[onclick*="toggleDetails"]')]
     .find(button => encodedKey(button) === key) || null;
@@ -115,17 +126,26 @@ function closeDrawer(){
 function openDetail(button){
   const key = encodedKey(button);
   if(!key || typeof window.toggleDetails !== "function") return;
+
   state.activeKey = key;
-  window.toggleDetails(key);
+  const savedTable = window.analisesInfiniteTable?.snapshot?.() || null;
+  const targetPage = pageForKey(key);
+
+  if(typeof window.goPage === "function") window.goPage(targetPage);
   window.setTimeout(() => {
-    const currentButton = findButton(key);
-    const detailRow = currentButton?.closest("tr")?.nextElementSibling;
-    buildDrawerContent(currentButton, detailRow);
     window.toggleDetails(key);
-    const backdrop = ensureDrawer();
-    backdrop.hidden = false;
-    document.body.style.overflow = "hidden";
-    backdrop.querySelector(".analises-drawer-close")?.focus();
+    window.setTimeout(() => {
+      const currentButton = findButton(key);
+      const detailRow = currentButton?.closest("tr")?.nextElementSibling;
+      buildDrawerContent(currentButton, detailRow);
+      window.toggleDetails(key);
+      window.analisesInfiniteTable?.restore?.(savedTable);
+
+      const backdrop = ensureDrawer();
+      backdrop.hidden = false;
+      document.body.style.overflow = "hidden";
+      backdrop.querySelector(".analises-drawer-close")?.focus();
+    }, 0);
   }, 0);
 }
 

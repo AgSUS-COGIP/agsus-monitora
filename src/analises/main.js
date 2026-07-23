@@ -3,6 +3,7 @@ import "./analises-scope-guard.js";
 import "./analises-modern-selects.js";
 import "./analises-runtime-stability.js";
 import "./analises-app.js";
+import "./analises-infinite-table.js";
 import "./analises-detail-drawer-controller.js";
 import "./analises-operational-enhancements.js";
 import "./analises-missing-responsible-filter.js";
