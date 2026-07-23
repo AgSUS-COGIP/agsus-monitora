@@ -31,7 +31,7 @@
         </div>
         <div>
           <h1>AgSUS Monitora Análises</h1>
-          <p class="sub">Monitoramento das Análises Curriculares · Saúde Indígena 2026</p>
+          <p class="sub">Monitoramento das Análises Curriculares · Saúde Indígena</p>
         </div>
       </div>
       <div class="top-actions">
@@ -53,43 +53,32 @@
           <div>
             <span class="eyebrow">Filtros base</span>
             <h2 class="title">Refinar visualização</h2>
-            <p class="hint">Os filtros são locais e não alteram a base no Supabase.</p>
+            <p class="hint">Os filtros são aplicados automaticamente e não alteram a base no Supabase.</p>
           </div>
           <div class="filter-actions">
             <button class="btn secondary" id="advancedBtn"><i class="fa-solid fa-sliders"></i> Mais filtros</button>
             <button class="btn secondary" id="toggleFiltersBtn" type="button" aria-expanded="true" title="Ocultar filtros"><i class="fa-solid fa-eye-slash"></i> <span class="toggle-label">Ocultar filtros</span></button>
-            <button class="btn" id="applyBtn">Aplicar</button>
             <button class="btn secondary" id="clearBtn">Limpar</button>
           </div>
         </div>
 
         <div id="filtersBody" class="filters-body">
           <div class="filter-grid">
-          <div class="field"><label for="fSituacaoEdital">Situação do processo</label><select id="fSituacaoEdital"><option value="ativo" selected>Ativo</option><option value="inativo">Inativo</option><option value="todos">Todos</option></select></div>
-          <div class="field"><label for="fUnidade">Unidade</label><select id="fUnidade"></select></div>
-          <div class="field"><label for="fEdital">Edital</label><select id="fEdital"></select></div>
-          <div class="field"><label for="fVaga">Código da vaga</label><select id="fVaga"></select></div>
-          <div class="field"><label for="fStatus">Status</label><select id="fStatus"></select></div>
-          <div class="field"><label for="fResponsavel">Responsável</label><select id="fResponsavel"></select></div>
-        </div>
-
-        <div id="advancedFilters" class="advanced filter-grid">
-          <div class="field"><label for="fCategoria">Categoria</label><select id="fCategoria"></select></div>
-          <div class="field"><label for="fModalidade">Modalidade de concorrência</label><select id="fModalidade"></select></div>
-          <div class="field"><label for="fPdf">Situação do PDF</label><select id="fPdf"><option value="">Todos</option><option value="COM_PDF">Com PDF</option><option value="SEM_PDF">Sem PDF</option><option value="ERRO">PDF com erro</option></select></div>
-          <div class="field"><label for="fValidacao">Validação da janela</label><select id="fValidacao"><option value="">Todas</option><option value="DENTRO_PERIODO">Dentro do período</option><option value="FORA_PERIODO">Fora do período</option><option value="SEM_DATA">Sem data de análise</option><option value="SEM_JANELA">Sem janela configurada</option></select></div>
-          <div class="field"><label for="fBusca">Busca</label><input id="fBusca" placeholder="Candidato, vaga, edital, responsável..."></div>
-        </div>
-        <div id="filterChips" class="chips"></div>
-
-        <div class="pdf-strip">
-          <div>
-            <span class="eyebrow">Espelhos de nota</span>
-            <strong style="display:block;color:var(--strong);font-size:17px;margin-top:2px">Acompanhamento do recorte atual</strong>
-            <small class="hint">Nesta versão, o painel exibe status e links de PDF já gravados na base. A geração em lote continua no Apps Script.</small>
+            <div class="field"><label for="fSituacaoEdital">Situação do processo</label><select id="fSituacaoEdital"><option value="ativo" selected>Ativo</option><option value="inativo">Inativo</option><option value="todos">Todos</option></select></div>
+            <div class="field"><label for="fUnidade">Unidade</label><select id="fUnidade"></select></div>
+            <div class="field"><label for="fEdital">Edital</label><select id="fEdital"></select></div>
+            <div class="field"><label for="fVaga">Código da vaga</label><select id="fVaga"></select></div>
+            <div class="field"><label for="fStatus">Status</label><select id="fStatus"></select></div>
+            <div class="field"><label for="fResponsavel">Responsável</label><select id="fResponsavel"></select></div>
           </div>
-          <div id="pdfMetrics" class="pdf-metrics"></div>
+
+          <div id="advancedFilters" class="advanced filter-grid">
+            <div class="field"><label for="fCategoria">Categoria</label><select id="fCategoria"></select></div>
+            <div class="field"><label for="fModalidade">Modalidade de concorrência</label><select id="fModalidade"></select></div>
+            <div class="field"><label for="fValidacao">Validação da janela</label><select id="fValidacao"><option value="">Todas</option><option value="DENTRO_PERIODO">Dentro do período</option><option value="FORA_PERIODO">Fora do período</option><option value="SEM_DATA">Sem data de análise</option><option value="SEM_JANELA">Sem janela configurada</option></select></div>
+            <div class="field"><label for="fBusca">Buscar em todo o painel</label><input id="fBusca" placeholder="Candidato, vaga, edital, responsável ou análise"></div>
           </div>
+          <div id="filterChips" class="chips"></div>
         </div>
       </section>
 
@@ -112,13 +101,13 @@
         <article class="panel panel-pad">
           <span class="eyebrow">Carga operacional</span>
           <h2 class="title">Análises por responsável</h2>
-          <p class="hint">Barras empilhadas por status. Clique em um responsável para recortar a fila.</p>
+          <p class="hint">Barras empilhadas por Status. Clique em um responsável para recortar a fila.</p>
           <div class="chart-wrap short"><canvas id="chartResponsavel"></canvas></div>
         </article>
         <article class="panel panel-pad">
           <span class="eyebrow">Ação imediata</span>
           <h2 class="title">Pendências prioritárias</h2>
-          <p class="hint">Atalhos operacionais do recorte ativo.</p>
+          <p class="hint">Clique em um item para aplicar o recorte correspondente na fila.</p>
           <div id="attentionList" class="attention-list"></div>
         </article>
       </section>
@@ -135,10 +124,10 @@
           <div>
             <span class="eyebrow">Detalhes</span>
             <h2 class="title">Fila operacional consolidada</h2>
-            <p class="hint">Use Detalhes para abrir origem, PDF, pontuação e análise completa.</p>
+            <p class="hint">Abra um registro para consultar pontuação, janela oficial, análise e origem.</p>
           </div>
           <div class="table-tools">
-            <input type="search" id="tableSearch" placeholder="Buscar candidato, vaga, edital ou responsável" aria-label="Buscar na fila">
+            <input type="search" id="tableSearch" placeholder="Buscar somente na fila operacional" aria-label="Buscar somente na fila operacional">
             <div class="rows-control"><label for="rowsPerPage">Linhas</label><select id="rowsPerPage"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></div>
           </div>
         </div>
@@ -155,6 +144,13 @@
 
     <footer class="footer"><span>Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde © 2026</span><span><span id="footerUpdated">Atualizado: --</span> <span class="secure">SECURE</span></span></footer>
   </div>
+
+  <div hidden aria-hidden="true">
+    <button id="applyBtn" type="button"></button>
+    <select id="fPdf"><option value=""></option></select>
+    <div id="pdfMetrics"></div>
+  </div>
+
   <script type="module" src="/src/analises/main.js"></script>
 </body>
 </html>
