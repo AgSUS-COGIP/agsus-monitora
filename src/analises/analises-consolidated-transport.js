@@ -5,7 +5,25 @@ const TARGET_VIEWS = new Set([
 
 const RPC_NAME = "get_analises_dashboard_payload_v2";
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const MISSING_RESPONSIBLE_LABEL = "Sem responsável";
+const CLIENT_CACHE_PREFIX = "agsus_analises_cache_v1_v4_";
+const CLIENT_CACHE_MIGRATION_MARKER = "agsus_analises_responsavel_normalizado_v1";
 const payloadCache = new Map();
+
+function normalizeAnaliseRow(row) {
+  if (!row || typeof row !== "object") return row;
+  const responsavel = String(row.responsavel_analise ?? "").trim();
+  if (responsavel) return row;
+  return {
+    ...row,
+    responsavel_analise: MISSING_RESPONSIBLE_LABEL,
+    responsavel_ausente: true
+  };
+}
+
+function normalizeAnaliseRows(rows) {
+  return Array.isArray(rows) ? rows.map(normalizeAnaliseRow) : [];
+}
 
 function decodeRows(payload) {
   if (!payload || !Array.isArray(payload.columns) || !Array.isArray(payload.rows)) {
@@ -18,7 +36,7 @@ function decodeRows(payload) {
     columns.forEach((column, index) => {
       row[column] = Array.isArray(values) ? values[index] : null;
     });
-    return row;
+    return normalizeAnaliseRow(row);
   });
 }
 
@@ -37,6 +55,22 @@ function clearPayloadCache(scope = "") {
     return;
   }
   payloadCache.clear();
+}
+
+function invalidateLegacyClientCache() {
+  try {
+    if (window.localStorage.getItem(CLIENT_CACHE_MIGRATION_MARKER) === "1") return;
+
+    const keysToRemove = [];
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (key?.startsWith(CLIENT_CACHE_PREFIX)) keysToRemove.push(key);
+    }
+    keysToRemove.forEach(key => window.localStorage.removeItem(key));
+    window.localStorage.setItem(CLIENT_CACHE_MIGRATION_MARKER, "1");
+  } catch (error) {
+    console.warn("Não foi possível invalidar o cache local antigo de Análises:", error);
+  }
 }
 
 async function getPayload(client, scope) {
@@ -110,7 +144,11 @@ class ConsolidatedQuery {
       fallback = fallback.order(column, options);
     });
 
-    return fallback;
+    const response = await fallback;
+    return {
+      ...response,
+      data: normalizeAnaliseRows(response?.data)
+    };
   }
 
   async execute() {
@@ -185,5 +223,6 @@ function installTransport() {
   supabaseGlobal.__agsusConsolidatedTransportInstalled = true;
 }
 
+invalidateLegacyClientCache();
 installRefreshInvalidation();
 installTransport();
