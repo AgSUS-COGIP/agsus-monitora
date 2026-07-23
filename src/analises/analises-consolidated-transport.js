@@ -30,6 +30,15 @@ function scopeFor(tableName, filters) {
   return "todos";
 }
 
+function clearPayloadCache(scope = "") {
+  const normalized = String(scope || "").trim().toLowerCase();
+  if (normalized && payloadCache.has(normalized)) {
+    payloadCache.delete(normalized);
+    return;
+  }
+  payloadCache.clear();
+}
+
 async function getPayload(client, scope) {
   const cached = payloadCache.get(scope);
   if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
@@ -150,6 +159,18 @@ function wrapClient(client) {
   return client;
 }
 
+function installRefreshInvalidation() {
+  document.addEventListener("agsus:analises-force-refresh", event => {
+    clearPayloadCache(event.detail?.scope || "");
+  });
+
+  document.addEventListener("click", event => {
+    if (!event.target?.closest?.("#refreshBtn")) return;
+    clearPayloadCache();
+    document.dispatchEvent(new CustomEvent("agsus:analises-cache-cleared"));
+  }, true);
+}
+
 function installTransport() {
   const supabaseGlobal = window.supabase;
   if (!supabaseGlobal || typeof supabaseGlobal.createClient !== "function") {
@@ -164,4 +185,5 @@ function installTransport() {
   supabaseGlobal.__agsusConsolidatedTransportInstalled = true;
 }
 
+installRefreshInvalidation();
 installTransport();

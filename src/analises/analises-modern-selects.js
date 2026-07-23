@@ -4,6 +4,8 @@ import "tom-select/dist/css/tom-select.css";
 const SELECT_IDS = ["scopeGuardUnits", "scopeGuardEditais"];
 const instances = new Map();
 let globalCloseHandlersBound = false;
+let installTimer = 0;
+let installAttempts = 0;
 
 export function normalizeLabel(value){
   return String(value ?? "").trim().replace(/\s+/g, " ");
@@ -217,15 +219,36 @@ function install(){
   return installed === SELECT_IDS.length;
 }
 
+function stopInstallLoop(){
+  window.clearTimeout(installTimer);
+  installTimer = 0;
+  installAttempts = 0;
+}
+
+function installStep(){
+  if(install()){
+    stopInstallLoop();
+    return;
+  }
+  installAttempts += 1;
+  if(installAttempts >= 80){
+    stopInstallLoop();
+    console.warn("Seletores históricos de Análises não ficaram disponíveis no tempo esperado.");
+    return;
+  }
+  installTimer = window.setTimeout(installStep, 100);
+}
+
+function startInstallLoop(){
+  stopInstallLoop();
+  installTimer = window.setTimeout(installStep, 0);
+}
+
 function start(){
   ensureStyles();
   bindGlobalCloseHandlers();
-  if(install()) return;
-
-  const observer = new MutationObserver(() => {
-    if(install()) observer.disconnect();
-  });
-  observer.observe(document.body, { childList:true, subtree:true });
+  startInstallLoop();
+  document.addEventListener("agsus:analises-scope-guard-ready", startInstallLoop);
 }
 
 document.addEventListener("DOMContentLoaded", start, { once:true });

@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, expect, it, vi } from "vitest";
 
 const instances = vi.hoisted(() => []);
 
@@ -28,6 +28,7 @@ vi.mock("tom-select", () => ({
 }));
 
 beforeEach(() => {
+  vi.useFakeTimers();
   instances.length = 0;
   document.body.innerHTML = `
     <div class="scope-guard-field">
@@ -46,10 +47,16 @@ beforeEach(() => {
   `;
 });
 
+afterEach(() => {
+  vi.clearAllTimers();
+  vi.useRealTimers();
+});
+
 it("oferece seleção em massa e sincroniza opções somente por evento explícito", async () => {
   vi.resetModules();
   await import("../../src/analises/analises-modern-selects.js");
   document.dispatchEvent(new Event("DOMContentLoaded"));
+  await vi.runOnlyPendingTimersAsync();
 
   expect(instances).toHaveLength(2);
 
