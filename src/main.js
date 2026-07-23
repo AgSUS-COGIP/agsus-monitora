@@ -11,6 +11,7 @@ import "./styles/nucleo-cronograma.css";
 import "./styles/nucleo-cronograma-template-helper.css";
 import "./styles/nucleo-cronograma-manual-only.css";
 import "./styles/nucleo-operational-enhancements.css";
+import "./styles/nucleo-cronograma-tools.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -23,6 +24,8 @@ import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
 import { initNucleoEditorSafe } from "./modules/nucleo-editor-safe.js";
 import { initNucleoOperationalSafe } from "./modules/nucleo-operational-safe.js";
+import { initNucleoCronogramaTools } from "./modules/nucleo-cronograma-tools.js";
+import { initNucleoCronogramaOpenHook } from "./modules/nucleo-cronograma-open-hook.js";
 
 installLeafletMapGuard();
 initVisualPolish();
@@ -34,6 +37,8 @@ initConfigGovernance();
 initNucleoCronograma();
 initNucleoEditorSafe();
 initNucleoOperationalSafe();
+initNucleoCronogramaTools();
+initNucleoCronogramaOpenHook();
 
 if (!hasSupabaseEnv()) {
   console.warn("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
