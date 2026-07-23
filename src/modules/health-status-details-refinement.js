@@ -87,9 +87,12 @@ function syncChart() {
   chart.data.datasets[0].backgroundColor = entries.map(([label]) => statusColor(label));
   chart.data.datasets[0].borderColor = "#fff";
   chart.data.datasets[0].borderWidth = 3;
+  chart.data.datasets[0].hoverOffset = 6;
   chart.options.animation = false;
   chart.options.cutout = "72%";
   chart.options.plugins.legend.display = false;
+  chart.options.plugins.tooltip.enabled = false;
+  chart.options.interaction = { mode:"nearest", intersect:true };
   chart.update("none");
 
   const center = canvas.closest(".chart-wrap")?.querySelector(".health-status-center");
