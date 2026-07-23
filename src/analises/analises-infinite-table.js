@@ -8,7 +8,7 @@ const state = {
   rowsPerBatch: 50,
   pageFragments: [],
   resetTimer: 0,
-  observer: null
+  scrollBound: false
 };
 
 const $ = id => document.getElementById(id);
@@ -53,14 +53,6 @@ function ensureUi(){
     status.className = "analises-infinite-status";
     card.querySelector(".pagination")?.insertAdjacentElement("beforebegin", status);
   }
-
-  let sentinel = $("analisesInfiniteSentinel");
-  if(!sentinel){
-    sentinel = document.createElement("div");
-    sentinel.id = "analisesInfiniteSentinel";
-    sentinel.className = "analises-infinite-sentinel";
-    status.insertAdjacentElement("afterend", sentinel);
-  }
   return true;
 }
 
@@ -89,7 +81,7 @@ function updateSummary(){
   }else if(state.loadedPages >= state.totalPages){
     setStatus(`Todos os ${state.totalRecords.toLocaleString("pt-BR")} registros do recorte foram exibidos.`);
   }else{
-    setStatus(`${shown.toLocaleString("pt-BR")} registros exibidos. Continue rolando para carregar mais.`);
+    setStatus(`${shown.toLocaleString("pt-BR")} registros exibidos. Role a tabela para carregar mais.`);
   }
 }
 
@@ -162,6 +154,8 @@ function resetFromRenderedPage(){
     state.totalRecords = parseTotalRecords();
     state.pageFragments = [$("tableBody")?.innerHTML || ""];
     combineFragments();
+    const wrap = document.querySelector(".table-wrap");
+    if(wrap) wrap.scrollTop = 0;
     state.resetting = false;
   }, 40);
 }
@@ -190,13 +184,17 @@ function bindResetEvents(){
   document.addEventListener("agsus:analises-cache-cleared", () => scheduleReset(180));
 }
 
-function startObserver(){
-  const sentinel = $("analisesInfiniteSentinel");
-  if(!sentinel || state.observer) return;
-  state.observer = new IntersectionObserver(entries => {
-    if(entries.some(entry => entry.isIntersecting)) loadNextPage();
-  }, { root:null, rootMargin:"700px 0px", threshold:0 });
-  state.observer.observe(sentinel);
+function bindInternalScroll(){
+  if(state.scrollBound) return;
+  const wrap = document.querySelector(".table-wrap");
+  if(!wrap) return;
+
+  state.scrollBound = true;
+  wrap.addEventListener("scroll", () => {
+    if(state.loading || state.resetting || state.loadedPages >= state.totalPages) return;
+    const remaining = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight;
+    if(remaining <= 420) loadNextPage();
+  }, { passive:true });
 }
 
 function snapshot(){
@@ -217,7 +215,7 @@ function restore(saved){
 function initStep(attempt = 0){
   if(ensureUi() && typeof window.goPage === "function" && $("tableBody")?.children.length){
     resetFromRenderedPage();
-    startObserver();
+    bindInternalScroll();
     return;
   }
   if(attempt < 100) window.setTimeout(() => initStep(attempt + 1), 100);
