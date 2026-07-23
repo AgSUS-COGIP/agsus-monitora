@@ -18,6 +18,7 @@ import "./modules/legacy-app.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initHealthIndigenousEnhancements } from "./modules/health-indigenous-enhancements.js";
 import { initHealthDashboardRefinementsSafe } from "./modules/health-dashboard-refinements-safe.js";
+import { initHealthMapLegendCleanup } from "./modules/health-map-legend-cleanup.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { installConfigGovernanceAuthShim } from "./modules/config-governance-auth-shim.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
@@ -26,11 +27,13 @@ import { initNucleoEditorSafe } from "./modules/nucleo-editor-safe.js";
 import { initNucleoOperationalSafe } from "./modules/nucleo-operational-safe.js";
 import { initNucleoCronogramaTools } from "./modules/nucleo-cronograma-tools.js";
 import { initNucleoCronogramaOpenHook } from "./modules/nucleo-cronograma-open-hook.js";
+import { initNucleoInitialRefresh } from "./modules/nucleo-initial-refresh.js";
 
 installLeafletMapGuard();
 initVisualPolish();
 initHealthIndigenousEnhancements();
 initHealthDashboardRefinementsSafe();
+initHealthMapLegendCleanup();
 initConfigPageEnhancements();
 installConfigGovernanceAuthShim();
 initConfigGovernance();
@@ -39,6 +42,7 @@ initNucleoEditorSafe();
 initNucleoOperationalSafe();
 initNucleoCronogramaTools();
 initNucleoCronogramaOpenHook();
+initNucleoInitialRefresh();
 
 if (!hasSupabaseEnv()) {
   console.warn("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
