@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:smoke": "playwright test tests/smoke.spec.js"
+    "test:smoke": "playwright test tests/smoke.spec.js",
+    "check:architecture": "node scripts/check-no-new-mutation-observer.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",

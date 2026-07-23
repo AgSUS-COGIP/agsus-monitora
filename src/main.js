@@ -16,26 +16,24 @@ import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initHealthIndigenousEnhancements } from "./modules/health-indigenous-enhancements.js";
-import { initHealthDashboardRefinements } from "./modules/health-dashboard-refinements.js";
+import { initHealthDashboardRefinementsSafe } from "./modules/health-dashboard-refinements-safe.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { installConfigGovernanceAuthShim } from "./modules/config-governance-auth-shim.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
-import { initNucleoCronogramaTemplateHelper } from "./modules/nucleo-cronograma-template-helper.js";
-import { initNucleoCronogramaManualOnly } from "./modules/nucleo-cronograma-manual-only.js";
-import { initNucleoOperationalEnhancements } from "./modules/nucleo-operational-enhancements.js";
+import { initNucleoEditorSafe } from "./modules/nucleo-editor-safe.js";
+import { initNucleoOperationalSafe } from "./modules/nucleo-operational-safe.js";
 
 installLeafletMapGuard();
 initVisualPolish();
 initHealthIndigenousEnhancements();
-initHealthDashboardRefinements();
+initHealthDashboardRefinementsSafe();
 initConfigPageEnhancements();
 installConfigGovernanceAuthShim();
 initConfigGovernance();
 initNucleoCronograma();
-initNucleoCronogramaTemplateHelper();
-initNucleoCronogramaManualOnly();
-initNucleoOperationalEnhancements();
+initNucleoEditorSafe();
+initNucleoOperationalSafe();
 
 if (!hasSupabaseEnv()) {
   console.warn("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
