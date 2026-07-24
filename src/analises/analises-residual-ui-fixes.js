@@ -97,6 +97,10 @@ function ensureStyles(){
     #scopeGuardEditais[data-scope-compatibility="true"] + .ts-wrapper{
       display:none!important
     }
+    #analisesInfiniteStatusV2,
+    #analisesLoadMoreV2{
+      display:none!important
+    }
     .analises-drawer-backdrop{z-index:2147483000!important}
   `;
   document.head.appendChild(style);
