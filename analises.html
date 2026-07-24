@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/src/analises/analises.css">
   <link rel="stylesheet" href="/src/analises/analises-layout-modern.css">
+  <link rel="stylesheet" href="/src/analises/analises-infinite-table.css?v=20260723-3">
 </head>
 <body>
   <div id="loading" class="loading" aria-live="polite">
@@ -129,17 +130,17 @@
           </div>
           <div class="table-tools">
             <input type="search" id="tableSearch" placeholder="Buscar somente na fila operacional" aria-label="Buscar somente na fila operacional">
-            <div class="rows-control"><label for="rowsPerPage">Linhas</label><select id="rowsPerPage"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></div>
+            <div class="rows-control" hidden aria-hidden="true"><label for="rowsPerPage">Linhas</label><select id="rowsPerPage"><option>10</option><option>25</option><option selected>50</option><option>100</option></select></div>
           </div>
         </div>
-        <div class="table-meta"><span id="tableInfo">Mostrando 0 de 0 registros</span><span id="pageInfo">Página 1 de 1</span></div>
+        <div class="table-meta"><span id="tableInfo">Mostrando 0 de 0 registros</span><span id="pageInfo">Carregamento contínuo</span></div>
         <div class="table-wrap">
           <table>
             <thead><tr><th style="width:12%">Grupo</th><th style="width:14%">Unidade</th><th style="width:8%">Edital</th><th style="width:8%">Código</th><th style="width:23%">Vaga</th><th style="width:18%">Candidato</th><th style="width:9%">Status</th><th style="width:8%">Ações</th></tr></thead>
             <tbody id="tableBody"></tbody>
           </table>
         </div>
-        <div class="pagination"><button class="btn secondary small" id="firstBtn">Primeira</button><button class="btn secondary small" id="prevBtn">Anterior</button><div id="pageNumbers" class="page-numbers"></div><button class="btn secondary small" id="nextBtn">Próxima</button><button class="btn secondary small" id="lastBtn">Última</button></div>
+        <div class="pagination" hidden aria-hidden="true"><button class="btn secondary small" id="firstBtn">Primeira</button><button class="btn secondary small" id="prevBtn">Anterior</button><div id="pageNumbers" class="page-numbers"></div><button class="btn secondary small" id="nextBtn">Próxima</button><button class="btn secondary small" id="lastBtn">Última</button></div>
       </section>
     </main>
 
@@ -152,6 +153,6 @@
     <div id="pdfMetrics"></div>
   </div>
 
-  <script type="module" src="/src/analises/main.js"></script>
+  <script type="module" src="/src/analises/main.js?v=20260723-3"></script>
 </body>
 </html>

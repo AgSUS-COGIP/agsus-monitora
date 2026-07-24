@@ -15,10 +15,10 @@ const $ = id => document.getElementById(id);
 const numberFromPtBr = value => Number(String(value || "0").replace(/\./g, "")) || 0;
 
 function installStylesheet(){
-  if(document.querySelector('link[data-analises-infinite-table]')) return;
+  if(document.querySelector('link[href*="analises-infinite-table.css"]')) return;
   const link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = "/src/analises/analises-infinite-table.css";
+  link.href = "/src/analises/analises-infinite-table.css?v=20260723-3";
   link.dataset.analisesInfiniteTable = "true";
   document.head.appendChild(link);
 }
@@ -42,16 +42,29 @@ function rowCount(){
   return $("tableBody")?.querySelectorAll(":scope > tr:not(.detail-row)").length || 0;
 }
 
+function hideLegacyControls(){
+  const rowsControl = document.querySelector(".table-tools .rows-control");
+  const pagination = document.querySelector(".table-card .pagination");
+  [rowsControl, pagination].forEach(element => {
+    if(!element) return;
+    element.hidden = true;
+    element.setAttribute("aria-hidden", "true");
+    element.style.display = "none";
+  });
+}
+
 function ensureUi(){
   const card = document.querySelector(".table-card");
   if(!card) return false;
+
+  hideLegacyControls();
 
   let status = $("analisesInfiniteStatus");
   if(!status){
     status = document.createElement("div");
     status.id = "analisesInfiniteStatus";
     status.className = "analises-infinite-status";
-    card.querySelector(".pagination")?.insertAdjacentElement("beforebegin", status);
+    card.querySelector(".table-wrap")?.insertAdjacentElement("afterend", status);
   }
   return true;
 }
@@ -131,11 +144,22 @@ async function loadNextPage(){
 function configureBatchSize(){
   const select = $("rowsPerPage");
   if(!select) return;
-  const option = [...select.options].find(item => Number(item.value || item.textContent) === state.rowsPerBatch);
-  if(!option) return;
-  if(Number(select.value) === state.rowsPerBatch) return;
-  select.value = String(state.rowsPerBatch);
-  select.dispatchEvent(new Event("change", { bubbles:true }));
+
+  let option = [...select.options].find(item => Number(item.value || item.textContent) === state.rowsPerBatch);
+  if(!option){
+    option = document.createElement("option");
+    option.value = String(state.rowsPerBatch);
+    option.textContent = String(state.rowsPerBatch);
+    select.appendChild(option);
+  }
+
+  if(Number(select.value) !== state.rowsPerBatch){
+    select.value = String(state.rowsPerBatch);
+    select.dispatchEvent(new Event("change", { bubbles:true }));
+  }
+
+  select.disabled = true;
+  hideLegacyControls();
 }
 
 function resetFromRenderedPage(){
@@ -156,8 +180,9 @@ function resetFromRenderedPage(){
     combineFragments();
     const wrap = document.querySelector(".table-wrap");
     if(wrap) wrap.scrollTop = 0;
+    hideLegacyControls();
     state.resetting = false;
-  }, 40);
+  }, 60);
 }
 
 function scheduleReset(delay = 260){
@@ -210,10 +235,12 @@ function restore(saved){
   if($("tableBody")) $("tableBody").innerHTML = saved.html || "";
   if($("tableInfo")) $("tableInfo").textContent = saved.tableInfo || "";
   if($("pageInfo")) $("pageInfo").textContent = saved.pageInfo || "";
+  hideLegacyControls();
 }
 
 function initStep(attempt = 0){
   if(ensureUi() && typeof window.goPage === "function" && $("tableBody")?.children.length){
+    configureBatchSize();
     resetFromRenderedPage();
     bindInternalScroll();
     return;
@@ -225,6 +252,7 @@ function init(){
   if(state.initialized) return;
   state.initialized = true;
   installStylesheet();
+  hideLegacyControls();
   bindResetEvents();
   initStep();
 }
