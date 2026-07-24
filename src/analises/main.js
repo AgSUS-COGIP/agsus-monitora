@@ -12,3 +12,4 @@ import "./analises-detail-runtime-fix.js";
 import "./analises-operational-enhancements.js";
 import "./analises-missing-responsible-filter.js";
 import "./analises-interface-refinement.js";
+import "./analises-residual-ui-fixes.js";
