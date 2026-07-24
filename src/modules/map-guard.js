@@ -3,9 +3,11 @@ const BRAZIL_VIEW_BOUNDS = [
   [6.4, -33.7]
 ];
 
-const BRAZIL_MAX_BOUNDS = [
-  [-37.2, -78.5],
-  [8.7, -29.0]
+// Mantém o Brasil como enquadramento inicial, mas permite afastar e navegar
+// pelo contexto geográfico da América do Sul.
+const SOUTH_AMERICA_MAX_BOUNDS = [
+  [-58.5, -84.5],
+  [15.5, -27.0]
 ];
 
 const DEFAULT_MAP_OPTIONS = {
@@ -92,13 +94,24 @@ function hardenMapInstance(L, map) {
   const originalFlyTo = map.flyTo?.bind(map);
   const originalSetView = map.setView.bind(map);
   const originalPanTo = map.panTo?.bind(map);
+  const originalSetMinZoom = map.setMinZoom?.bind(map);
 
   map.__agsusMapGuarded = true;
 
-  map.setMaxBounds = function setGuardedMaxBounds(bounds) {
-    const nextBounds = bounds ? limitBounds(L, bounds, maxBounds) : maxBounds;
-    return originalSetMaxBounds(nextBounds);
+  // O código legado recalcula limites muito justos ao redor do Brasil. Aqui
+  // mantemos um limite único da América do Sul para permitir contexto regional.
+  map.setMaxBounds = function setGuardedMaxBounds() {
+    return originalSetMaxBounds(maxBounds);
   };
+
+  if (originalSetMinZoom) {
+    map.setMinZoom = function setGuardedMinZoom(value) {
+      const requested = Number(value);
+      const allowed = Number.isFinite(requested) ? Math.min(requested, 3) : 3;
+      return originalSetMinZoom(allowed);
+    };
+    originalSetMinZoom(3);
+  }
 
   // O limite abaixo vale apenas para enquadramentos automáticos. Depois disso,
   // o usuário pode aproximar manualmente até o maxZoom real do mapa.
@@ -148,6 +161,7 @@ function hardenMapInstance(L, map) {
 
   map.whenReady(() => {
     originalSetMaxBounds(maxBounds);
+    originalSetMinZoom?.(3);
     originalFitBounds(viewBounds, { padding: [20, 20], animate: false });
     ensureFullManualZoomRange(map);
     addScaleControl(L, map);
@@ -167,9 +181,9 @@ function enhanceMapAccessibility(L, map) {
   container.setAttribute("role", "application");
   container.setAttribute(
     "aria-label",
-    "Mapa da Saúde Indígena. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom."
+    "Mapa da Saúde Indígena com foco inicial no Brasil e navegação permitida pela América do Sul. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom."
   );
-  container.title = "Zoom livre: roda do mouse, duplo clique, pinça ou teclas + e -.";
+  container.title = "Brasil em destaque. Afaste o zoom para consultar o contexto da América do Sul.";
 
   // Mantém os recursos explicitamente habilitados mesmo em navegadores/dispositivos
   // que inicializam algum handler como desativado.
@@ -241,7 +255,7 @@ function toViewBounds(L) {
 }
 
 function toMaxBounds(L) {
-  return L.latLngBounds(BRAZIL_MAX_BOUNDS);
+  return L.latLngBounds(SOUTH_AMERICA_MAX_BOUNDS);
 }
 
 function limitBounds(L, bounds, maxBounds) {
