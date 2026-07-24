@@ -6,7 +6,7 @@ import "./analises-modern-selects.js";
 import "./analises-runtime-stability.js";
 import "./analises-app.js";
 import "./analises-filter-layout.js";
-import "./analises-infinite-table.js?v=20260724-2";
+import "./analises-infinite-table-v2.js?v=20260724-1";
 import "./analises-detail-drawer-controller.js";
 import "./analises-detail-runtime-fix.js";
 import "./analises-operational-enhancements.js";
