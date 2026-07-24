@@ -1,7 +1,9 @@
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
+import { createHtmlSecurityPlugin } from "./src/lib/html-security.js";
 
 export default defineConfig({
+  plugins: [createHtmlSecurityPlugin()],
   build: {
     rollupOptions: {
       input: {

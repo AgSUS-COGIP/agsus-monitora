@@ -8,10 +8,18 @@ function collectPageErrors(page) {
   return errors;
 }
 
+async function expectNoSupabaseCdn(request, path) {
+  const response = await request.get(path);
+  expect(response.ok()).toBeTruthy();
+  const html = await response.text();
+  expect(html).not.toContain("cdn.jsdelivr.net/npm/@supabase/supabase-js");
+}
+
 test.describe("AgSUS Monitora smoke", () => {
-  test("abre a aplicação principal sem erro crítico de JavaScript", async ({ page }) => {
+  test("abre a aplicação principal sem erro crítico de JavaScript", async ({ page, request }) => {
     const pageErrors = collectPageErrors(page);
 
+    await expectNoSupabaseCdn(request, "/");
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
     await expect(page).toHaveTitle(/AgSUS Monitora/i);
@@ -22,9 +30,10 @@ test.describe("AgSUS Monitora smoke", () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test("abre o painel de análises sem erro crítico de JavaScript", async ({ page }) => {
+  test("abre o painel de análises sem erro crítico de JavaScript", async ({ page, request }) => {
     const pageErrors = collectPageErrors(page);
 
+    await expectNoSupabaseCdn(request, "/analises.html");
     await page.goto("/analises.html", { waitUntil: "domcontentloaded" });
 
     await expect(page).toHaveTitle(/AgSUS Monitora Análises/i);
@@ -44,5 +53,6 @@ test.describe("AgSUS Monitora smoke", () => {
     expect(html).toContain("Finalizando login Google");
     expect(html).toContain('type="module"');
     expect(html).toMatch(/src="\/assets\/authCallback-[^"]+\.js"/);
+    expect(html).not.toContain("cdn.jsdelivr.net/npm/@supabase/supabase-js");
   });
 });
