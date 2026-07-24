@@ -1,5 +1,6 @@
 import { hasSupabaseEnv } from "./lib/env.js";
 import { installCsvBlobSecurityGuard } from "./lib/csv-security.js";
+import "./lib/supabase-legacy-bridge.js";
 import "./styles/visual-polish.css";
 import "./styles/access-dashboard.css";
 import "./styles/health-indigenous.css";
@@ -25,7 +26,6 @@ import { initHealthMapLegendCleanup } from "./modules/health-map-legend-cleanup.
 import { initHealthStatusDetails } from "./modules/health-status-details.js";
 import { initHealthStatusDetailsRefinement } from "./modules/health-status-details-refinement.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
-import { installConfigGovernanceAuthShim } from "./modules/config-governance-auth-shim.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
 import { initNucleoEditorSafe } from "./modules/nucleo-editor-safe.js";
@@ -43,7 +43,6 @@ initHealthMapLegendCleanup();
 initHealthStatusDetails();
 initHealthStatusDetailsRefinement();
 initConfigPageEnhancements();
-installConfigGovernanceAuthShim();
 initConfigGovernance();
 initNucleoCronograma();
 initNucleoEditorSafe();

@@ -1,4 +1,5 @@
 import { installCsvBlobSecurityGuard } from "../lib/csv-security.js";
+import "../lib/supabase-legacy-bridge.js";
 import "./analises-active-cache-recovery.js";
 import "./analises-consolidated-transport.js";
 import "./analises-scope-guard-safe.js";
