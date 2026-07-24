@@ -1,3 +1,4 @@
+import { installCsvBlobSecurityGuard } from "../lib/csv-security.js";
 import "./analises-active-cache-recovery.js";
 import "./analises-consolidated-transport.js";
 import "./analises-scope-guard-safe.js";
@@ -14,3 +15,5 @@ import "./analises-missing-responsible-filter.js";
 import "./analises-interface-refinement.js";
 import "./analises-residual-ui-fixes.js";
 import "./analises-dark-mode-fix.js";
+
+installCsvBlobSecurityGuard();

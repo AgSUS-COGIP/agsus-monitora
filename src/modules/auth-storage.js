@@ -10,6 +10,13 @@ export function createSafeAuthStorage(storageKey) {
   }
 
   const mem = new Map();
+  const ownedKeys = new Set([
+    storageKey,
+    `${storageKey}-code-verifier`,
+    `${storageKey}-user`,
+    `${storageKey}-session`
+  ]);
+
   return {
     getItem(key) {
       try {
@@ -36,10 +43,7 @@ export function createSafeAuthStorage(storageKey) {
       mem.clear();
       if (!backing) return;
       try {
-        backing.removeItem(storageKey);
-        Object.keys(backing)
-          .filter((key) => key.startsWith("sb-") || key.includes("supabase") || key.includes("agsus-monitora-auth"))
-          .forEach((key) => backing.removeItem(key));
+        ownedKeys.forEach((key) => backing.removeItem(key));
       } catch (_) {}
     }
   };

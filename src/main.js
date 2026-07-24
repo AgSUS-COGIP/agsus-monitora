@@ -1,4 +1,5 @@
 import { hasSupabaseEnv } from "./lib/env.js";
+import { installCsvBlobSecurityGuard } from "./lib/csv-security.js";
 import "./styles/visual-polish.css";
 import "./styles/access-dashboard.css";
 import "./styles/health-indigenous.css";
@@ -33,6 +34,7 @@ import { initNucleoCronogramaTools } from "./modules/nucleo-cronograma-tools.js"
 import { initNucleoCronogramaOpenHook } from "./modules/nucleo-cronograma-open-hook.js";
 import { initNucleoInitialRefresh } from "./modules/nucleo-initial-refresh.js";
 
+installCsvBlobSecurityGuard();
 installLeafletMapGuard();
 initVisualPolish();
 initHealthIndigenousEnhancements();
@@ -51,5 +53,5 @@ initNucleoCronogramaOpenHook();
 initNucleoInitialRefresh();
 
 if (!hasSupabaseEnv()) {
-  console.warn("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
+  console.error("Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.");
 }
