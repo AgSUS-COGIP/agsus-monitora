@@ -1,12 +1,14 @@
 import "./analises-active-cache-recovery.js";
 import "./analises-consolidated-transport.js";
 import "./analises-scope-guard-safe.js";
+import "./analises-scope-runtime-integration.js";
 import "./analises-modern-selects.js";
 import "./analises-runtime-stability.js";
 import "./analises-app.js";
 import "./analises-filter-layout.js";
 import "./analises-infinite-table.js?v=20260724-1";
 import "./analises-detail-drawer-controller.js";
+import "./analises-detail-runtime-fix.js";
 import "./analises-operational-enhancements.js";
 import "./analises-missing-responsible-filter.js";
 import "./analises-interface-refinement.js";
