@@ -1,12 +1,15 @@
-const TARGET_VIEW = "vw_analises_dashboard_base_todos";
+const TARGET_VIEWS = new Set([
+  "vw_analises_dashboard_base",
+  "vw_analises_dashboard_base_todos"
+]);
 const FILTERED_RPC = "get_analises_dashboard_filtrado";
 const RPC_PAGE_SIZE = 1000;
 const CACHE_PREFIX = "agsus_analises_cache_v1_";
 
 const state = {
   client: null,
-  selectedUnits: [],
-  selectedEditais: [],
+  selectedUnit: "",
+  selectedEdital: "",
   catalog: [],
   loadingCatalog: false,
   activeQueryKey: "",
@@ -39,33 +42,27 @@ function clearScopeCache(scope){
   }
 }
 
-function selectedValues(id){
-  const element = document.getElementById(id);
-  if(!element) return [];
-  return [...element.selectedOptions].map(option => txt(option.value)).filter(Boolean);
-}
-
-function notifyOptionsUpdated(id){
-  document.getElementById(id)?.dispatchEvent(new CustomEvent("agsus:options-updated"));
-}
-
 function queryKey(){
   return JSON.stringify({
     scope: currentScope(),
-    unidades: [...state.selectedUnits].sort(),
-    editais: [...state.selectedEditais].sort()
+    unidade: state.selectedUnit,
+    edital: state.selectedEdital
   });
 }
 
 function invalidateQuery(){
   state.activeQueryKey = "";
   state.total = null;
+  document.body.classList.add("analises-awaiting-scope");
 }
 
 function queryIsAuthorized(){
-  return currentScope() !== "ativo"
-    && Boolean(state.activeQueryKey)
-    && state.activeQueryKey === queryKey();
+  return Boolean(
+    state.activeQueryKey
+    && state.selectedUnit
+    && state.selectedEdital
+    && state.activeQueryKey === queryKey()
+  );
 }
 
 function updateStatus(message, warning = false){
@@ -79,8 +76,8 @@ async function fetchRpcPage(offset, limit){
   const includeTotal = offset === 0;
   const { data, error } = await state.client.rpc(FILTERED_RPC, {
     p_scope: currentScope(),
-    p_unidades: state.selectedUnits.length ? state.selectedUnits : null,
-    p_editais: state.selectedEditais.length ? state.selectedEditais : null,
+    p_unidades: [state.selectedUnit],
+    p_editais: [state.selectedEdital],
     p_offset: offset,
     p_limit: Math.min(Math.max(limit, 1), RPC_PAGE_SIZE),
     p_include_total: includeTotal
@@ -95,7 +92,7 @@ async function fetchRpcPage(offset, limit){
 
   const loaded = Math.min(offset + rows.length, state.total ?? offset + rows.length);
   const totalText = state.total === null ? "" : ` de ${state.total.toLocaleString("pt-BR")}`;
-  updateStatus(`Carregando ${loaded.toLocaleString("pt-BR")}${totalText} registro(s)...`);
+  updateStatus(`Carregando ${loaded.toLocaleString("pt-BR")}${totalText} registro(s) de ${state.selectedUnit} · ${state.selectedEdital}...`);
   return { rows, total: state.total };
 }
 
@@ -122,6 +119,21 @@ function createRpcBackedBuilder(){
   return builder;
 }
 
+function createBlockedBuilder(){
+  const builder = {
+    select(){ return builder; },
+    range(){ return builder; },
+    order(){ return builder; },
+    eq(){ return builder; },
+    in(){ return builder; },
+    then(resolve){
+      updateStatus("Escolha uma unidade e um edital para consultar os dados.");
+      return Promise.resolve(resolve({ data: [], error: null, count: 0 }));
+    }
+  };
+  return builder;
+}
+
 function patchSupabaseClient(){
   const supabase = window.supabase;
   if(!supabase?.createClient || supabase.__agsusAnalisesScopePatched) return;
@@ -133,8 +145,8 @@ function patchSupabaseClient(){
 
     const originalFrom = client.from.bind(client);
     client.from = tableName => {
-      if(tableName === TARGET_VIEW && queryIsAuthorized()){
-        return createRpcBackedBuilder();
+      if(TARGET_VIEWS.has(tableName)){
+        return queryIsAuthorized() ? createRpcBackedBuilder() : createBlockedBuilder();
       }
       return originalFrom(tableName);
     };
@@ -149,14 +161,21 @@ function ensureStyles(){
   const style = document.createElement("style");
   style.id = "analisesScopeGuardStyles";
   style.textContent = `
-    .scope-guard{margin:0 0 14px;border:1px solid rgba(226,164,0,.35);border-left:5px solid var(--yellow);border-radius:16px;background:color-mix(in srgb,var(--yellow) 8%,var(--card));padding:14px;display:grid;gap:12px}
-    .scope-guard[hidden]{display:none!important}
-    .scope-guard-head{display:flex;gap:10px;align-items:flex-start;color:var(--text)}
-    .scope-guard-head i{color:var(--yellow);margin-top:3px}.scope-guard-head strong{display:block;color:var(--strong);margin-bottom:4px}.scope-guard-head small{color:var(--muted);line-height:1.45}
-    .scope-guard-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
-    .scope-guard-field{display:grid;gap:6px}.scope-guard-field label{font-size:12px;font-weight:850;color:var(--muted)}
-    .scope-guard select[multiple]{min-height:116px;padding:8px}.scope-guard-status{font-size:12px;font-weight:800;color:var(--muted)}
+    .scope-guard{margin:0 0 14px;border:1px solid color-mix(in srgb,var(--blue2) 22%,var(--line));border-left:5px solid var(--blue2);border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--blue2) 7%,var(--card)),var(--card));padding:15px;display:grid;gap:13px}
+    .scope-guard-head{display:flex;gap:11px;align-items:flex-start;color:var(--text)}
+    .scope-guard-head i{color:var(--blue2);margin-top:3px}.scope-guard-head strong{display:block;color:var(--strong);margin-bottom:4px;font-size:14px}.scope-guard-head small{color:var(--muted);line-height:1.45}
+    .scope-guard-grid{display:grid;grid-template-columns:minmax(230px,1fr) minmax(230px,1fr) auto;gap:12px;align-items:end}
+    .scope-guard-field{display:grid;gap:6px}.scope-guard-field label{font-size:11px;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .scope-guard select{width:100%;min-height:44px;border:1px solid var(--line2);border-radius:12px;background:var(--card);color:var(--text);padding:0 12px;font:inherit;font-weight:700}
+    .scope-guard select:disabled{opacity:.55;cursor:not-allowed;background:var(--card2)}
+    .scope-guard .btn:disabled{opacity:.55;cursor:not-allowed}
+    .scope-guard-status{font-size:12px;font-weight:800;color:var(--muted)}
     .scope-guard-status.is-warning{color:#a05a00}
+    body.analises-awaiting-scope .kpis,
+    body.analises-awaiting-scope .content > .panel.panel-pad,
+    body.analises-awaiting-scope .oper-grid,
+    body.analises-awaiting-scope .trend,
+    body.analises-awaiting-scope .table-card{display:none!important}
     @media(max-width:820px){.scope-guard-grid{grid-template-columns:1fr}.scope-guard-grid .btn{width:100%}}
   `;
   document.head.appendChild(style);
@@ -165,83 +184,94 @@ function ensureStyles(){
 function ensureGuard(){
   let guard = document.getElementById("scopeGuard");
   if(guard) return guard;
-  const filtersBody = document.getElementById("filtersBody");
-  if(!filtersBody) return null;
+  const filterPanel = document.querySelector(".filter-panel");
+  const filterHead = filterPanel?.querySelector(".filter-head");
+  if(!filterPanel || !filterHead) return null;
 
   guard = document.createElement("div");
   guard.id = "scopeGuard";
   guard.className = "scope-guard";
-  guard.hidden = true;
   guard.innerHTML = `
     <div class="scope-guard-head">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      <div><strong>Defina um recorte antes da consulta</strong><small>Selecione pelo menos uma unidade ou um edital. Os registros são carregados em lotes, sem limite total fixo.</small></div>
+      <i class="fa-solid fa-filter-circle-dollar"></i>
+      <div><strong>Escolha o recorte da consulta</strong><small>Selecione primeiro a unidade e depois o edital. O painel carregará somente os registros desse processo seletivo.</small></div>
     </div>
     <div class="scope-guard-grid">
-      <div class="scope-guard-field"><label for="scopeGuardUnits">Unidades do recorte</label><select id="scopeGuardUnits" multiple aria-label="Unidades do recorte"></select></div>
-      <div class="scope-guard-field"><label for="scopeGuardEditais">Editais do recorte</label><select id="scopeGuardEditais" multiple aria-label="Editais do recorte"></select></div>
-      <button type="button" class="btn" id="scopeGuardLoad"><i class="fa-solid fa-magnifying-glass"></i> Consultar dados</button>
+      <div class="scope-guard-field"><label for="scopeGuardUnit">Unidade</label><select id="scopeGuardUnit" aria-label="Unidade do recorte"><option value="">Selecione uma unidade</option></select></div>
+      <div class="scope-guard-field"><label for="scopeGuardEdital">Edital</label><select id="scopeGuardEdital" aria-label="Edital do recorte" disabled><option value="">Selecione primeiro a unidade</option></select></div>
+      <button type="button" class="btn" id="scopeGuardLoad" disabled><i class="fa-solid fa-magnifying-glass"></i> Consultar</button>
     </div>
-    <div class="scope-guard-status" id="scopeGuardStatus">Selecione pelo menos uma unidade ou um edital.</div>
+    <div class="scope-guard-status" id="scopeGuardStatus">Carregando unidades disponíveis...</div>
   `;
-  filtersBody.insertAdjacentElement("afterbegin", guard);
+  filterPanel.insertBefore(guard, filterHead);
   document.getElementById("scopeGuardLoad")?.addEventListener("click", requestScopedLoad);
-  document.getElementById("scopeGuardUnits")?.addEventListener("change", onUnitsChanged);
-  document.getElementById("scopeGuardEditais")?.addEventListener("change", syncSelections);
+  document.getElementById("scopeGuardUnit")?.addEventListener("change", onUnitChanged);
+  document.getElementById("scopeGuardEdital")?.addEventListener("change", onEditalChanged);
   return guard;
 }
 
 function scopeCatalogRows(){
   const scope = currentScope();
-  return state.catalog.filter(row => scope === "todos" || row.ativo === false);
+  if(scope === "todos") return state.catalog;
+  return state.catalog.filter(row => scope === "ativo" ? row.ativo !== false : row.ativo === false);
 }
 
 function renderEditalOptions(){
-  const editalSelect = document.getElementById("scopeGuardEditais");
+  const editalSelect = document.getElementById("scopeGuardEdital");
+  const loadButton = document.getElementById("scopeGuardLoad");
   if(!editalSelect) return;
 
-  const selectedUnitSet = new Set(state.selectedUnits);
-  const previous = new Set(selectedValues("scopeGuardEditais"));
-  const rows = scopeCatalogRows().filter(row => !selectedUnitSet.size || selectedUnitSet.has(txt(row.unidade)));
-  const editais = [...new Set(rows.map(row => txt(row.edital)).filter(Boolean))]
+  if(!state.selectedUnit){
+    editalSelect.disabled = true;
+    editalSelect.innerHTML = '<option value="">Selecione primeiro a unidade</option>';
+    state.selectedEdital = "";
+    if(loadButton) loadButton.disabled = true;
+    return;
+  }
+
+  const editais = [...new Set(scopeCatalogRows()
+    .filter(row => txt(row.unidade) === state.selectedUnit)
+    .map(row => txt(row.edital))
+    .filter(Boolean))]
     .sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
 
-  editalSelect.innerHTML = editais.map(value => `<option value="${esc(value)}" ${previous.has(value) ? "selected" : ""}>${esc(value)}</option>`).join("");
-  state.selectedEditais = selectedValues("scopeGuardEditais");
-  notifyOptionsUpdated("scopeGuardEditais");
+  editalSelect.disabled = false;
+  editalSelect.innerHTML = '<option value="">Selecione um edital</option>'
+    + editais.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
+  state.selectedEdital = "";
+  if(loadButton) loadButton.disabled = true;
 }
 
-function onUnitsChanged(){
-  state.selectedUnits = selectedValues("scopeGuardUnits");
-  renderEditalOptions();
-  syncSelections();
-}
-
-function syncSelections(){
-  state.selectedUnits = selectedValues("scopeGuardUnits");
-  state.selectedEditais = selectedValues("scopeGuardEditais");
+function onUnitChanged(event){
+  state.selectedUnit = txt(event.target.value);
+  state.selectedEdital = "";
   invalidateQuery();
+  renderEditalOptions();
+  updateStatus(state.selectedUnit ? "Agora selecione o edital dessa unidade." : "Selecione uma unidade para continuar.");
+}
 
-  const total = state.selectedUnits.length + state.selectedEditais.length;
-  updateStatus(total
-    ? `${state.selectedUnits.length} unidade(s) e ${state.selectedEditais.length} edital(is) selecionado(s).`
-    : "Selecione pelo menos uma unidade ou um edital.");
+function onEditalChanged(event){
+  state.selectedEdital = txt(event.target.value);
+  invalidateQuery();
+  const loadButton = document.getElementById("scopeGuardLoad");
+  if(loadButton) loadButton.disabled = !(state.selectedUnit && state.selectedEdital);
+  updateStatus(state.selectedEdital
+    ? `Recorte pronto: ${state.selectedUnit} · Edital ${state.selectedEdital}.`
+    : "Selecione um edital para continuar.");
 }
 
 function renderCatalog(){
-  const rows = scopeCatalogRows();
-  const units = [...new Set(rows.map(row => txt(row.unidade)).filter(Boolean))]
+  const units = [...new Set(scopeCatalogRows().map(row => txt(row.unidade)).filter(Boolean))]
     .sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
-  const unitSelect = document.getElementById("scopeGuardUnits");
+  const unitSelect = document.getElementById("scopeGuardUnit");
   if(unitSelect){
-    unitSelect.innerHTML = units.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
-    notifyOptionsUpdated("scopeGuardUnits");
+    unitSelect.innerHTML = '<option value="">Selecione uma unidade</option>'
+      + units.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
   }
-
-  state.selectedUnits = [];
-  state.selectedEditais = [];
+  state.selectedUnit = "";
+  state.selectedEdital = "";
   renderEditalOptions();
-  syncSelections();
+  updateStatus(units.length ? "Selecione uma unidade para iniciar." : "Nenhuma unidade disponível para este escopo.", !units.length);
 }
 
 async function loadCatalog(){
@@ -249,7 +279,7 @@ async function loadCatalog(){
   if(!state.client){ setTimeout(loadCatalog, 120); return; }
 
   state.loadingCatalog = true;
-  updateStatus("Carregando catálogo de editais...");
+  updateStatus("Carregando unidades e editais disponíveis...");
   try{
     const { data, error } = await state.client
       .from("analises_editais")
@@ -261,69 +291,57 @@ async function loadCatalog(){
     renderCatalog();
   }catch(error){
     console.error("Falha ao carregar catálogo de editais:", error);
-    updateStatus("Não foi possível carregar o catálogo de editais.", true);
+    updateStatus("Não foi possível carregar as unidades e editais.", true);
   }finally{
     state.loadingCatalog = false;
   }
 }
 
-function showGuard(preserveSelection = false){
-  const guard = ensureGuard();
-  if(!guard) return;
-  guard.hidden = currentScope() === "ativo";
-  if(guard.hidden) return;
-
-  if(!state.catalog.length){
-    loadCatalog();
-  }else if(!preserveSelection){
-    renderCatalog();
-  }
-}
-
 function requestScopedLoad(){
-  state.selectedUnits = selectedValues("scopeGuardUnits");
-  state.selectedEditais = selectedValues("scopeGuardEditais");
-  if(currentScope() === "ativo") return;
-
-  if(!state.selectedUnits.length && !state.selectedEditais.length){
-    updateStatus("Consulta bloqueada: selecione pelo menos uma unidade ou um edital.", true);
+  if(!state.selectedUnit || !state.selectedEdital){
+    updateStatus("Consulta bloqueada: selecione uma unidade e um edital.", true);
     return;
   }
 
   clearScopeCache(currentScope());
   state.total = null;
   state.activeQueryKey = queryKey();
+  document.body.classList.remove("analises-awaiting-scope");
+  updateStatus(`Consultando ${state.selectedUnit} · Edital ${state.selectedEdital}...`);
   document.getElementById("fSituacaoEdital")?.dispatchEvent(new Event("change", { bubbles:true }));
 }
 
 function bindGuard(){
   ensureStyles();
   ensureGuard();
+  document.body.classList.add("analises-awaiting-scope");
+
   const scopeSelect = document.getElementById("fSituacaoEdital");
-  if(!scopeSelect) return;
-
-  scopeSelect.addEventListener("change", event => {
-    const authorized = queryIsAuthorized();
-    if(!authorized) invalidateQuery();
-    showGuard(authorized);
-
-    if(currentScope() !== "ativo" && !authorized){
+  if(scopeSelect){
+    scopeSelect.addEventListener("change", event => {
+      if(queryIsAuthorized()) return;
       event.stopImmediatePropagation();
       event.preventDefault();
-      const message = "Aguardando seleção de unidade ou edital";
+      state.selectedUnit = "";
+      state.selectedEdital = "";
+      invalidateQuery();
+      renderCatalog();
+      const message = "Aguardando escolha de unidade e edital";
       const updated = document.getElementById("updatedText");
       const footer = document.getElementById("footerUpdated");
       if(updated) updated.textContent = message;
       if(footer) footer.textContent = message;
-    }
-  }, true);
+    }, true);
+  }
 
-  document.getElementById("applyBtn")?.addEventListener("click", event => {
-    if(currentScope() === "ativo") return;
-    event.stopImmediatePropagation();
-    event.preventDefault();
-    requestScopedLoad();
-  }, true);
+  document.addEventListener("agsus:analises-loading-end", () => {
+    if(queryIsAuthorized()){
+      const totalText = state.total === null ? "" : ` · ${state.total.toLocaleString("pt-BR")} registro(s)`;
+      updateStatus(`Recorte carregado: ${state.selectedUnit} · Edital ${state.selectedEdital}${totalText}.`);
+    }
+  });
+
+  loadCatalog();
 }
 
 patchSupabaseClient();
