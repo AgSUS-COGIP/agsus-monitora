@@ -1,4 +1,4 @@
-name: Build e smoke tests
+name: AgSUS Monitora Quality Gate
 
 on:
   pull_request:
@@ -6,9 +6,18 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-smoke:
+  quality-gate:
+    name: Arquitetura, testes, build e smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
       - name: Baixar código
@@ -22,7 +31,10 @@ jobs:
           node-version: 24
 
       - name: Instalar dependências
-        run: npm install
+        run: npm install --no-audit --no-fund
+
+      - name: Verificar workflows
+        run: npm run check:workflows
 
       - name: Verificar arquitetura
         run: npm run check:architecture

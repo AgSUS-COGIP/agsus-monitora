@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test tests/smoke.spec.js",
+    "check:workflows": "node scripts/check-workflow-uniqueness.mjs",
     "check:architecture": "node scripts/check-no-new-mutation-observer.mjs"
   },
   "dependencies": {
