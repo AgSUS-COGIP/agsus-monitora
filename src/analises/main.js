@@ -13,3 +13,4 @@ import "./analises-operational-enhancements.js";
 import "./analises-missing-responsible-filter.js";
 import "./analises-interface-refinement.js";
 import "./analises-residual-ui-fixes.js";
+import "./analises-dark-mode-fix.js";
