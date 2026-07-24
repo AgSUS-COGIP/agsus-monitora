@@ -9,7 +9,9 @@ const state = {
   editais: [],
   activeKey: "",
   total: null,
-  loadingCatalog: false
+  loadingCatalog: false,
+  catalogLoaded: false,
+  catalogRetry: 0
 };
 
 const txt = value => String(value ?? "").trim();
@@ -19,17 +21,22 @@ const esc = value => txt(value)
   .replaceAll(">", "&gt;")
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
+const norm = value => txt(value).toLowerCase();
 const sorted = values => [...new Set([...values].map(txt).filter(Boolean))]
-  .sort((a,b) => a.localeCompare(b, "pt-BR", { numeric:true }));
+  .sort((a, b) => a.localeCompare(b, "pt-BR", { numeric:true }));
 
 function scope(){
-  const value = txt(document.getElementById("fSituacaoEdital")?.value).toLowerCase();
+  const value = norm(document.getElementById("fSituacaoEdital")?.value);
   return ["ativo", "inativo", "todos"].includes(value) ? value : "ativo";
+}
+
+function scopeLabel(){
+  return { ativo:"Ativo", inativo:"Inativo", todos:"Todos" }[scope()] || "Ativo";
 }
 
 function scopedMode(){ return scope() !== "ativo"; }
 function key(){ return JSON.stringify({ scope:scope(), units:sorted(state.units), editais:sorted(state.editais) }); }
-function authorized(){ return scopedMode() && state.activeKey && state.activeKey === key() && state.units.length && state.editais.length; }
+function authorized(){ return Boolean(scopedMode() && state.activeKey && state.activeKey === key() && state.units.length && state.editais.length); }
 
 function setStatus(message, warning = false){
   const el = document.getElementById("scopeGuardStatus");
@@ -47,6 +54,14 @@ function resetSelection(){
 
 function blockResults(block){
   document.body.classList.toggle("analises-awaiting-scope", Boolean(block));
+}
+
+function syncPendingContext(){
+  const context = document.getElementById("contextLine");
+  const chips = document.getElementById("filterChips");
+  const label = scopeLabel();
+  if(context) context.textContent = `Aguardando definição do recorte para processos ${label.toLowerCase()}.`;
+  if(chips) chips.innerHTML = `<span class="chip-filter"><b>Filtro</b>Situação do processo: ${esc(label)}</span>`;
 }
 
 async function rpcPage(offset, limit){
@@ -74,7 +89,9 @@ function rpcBuilder(){
   const builder = {
     select(){ return builder; },
     range(from, to){ start = Math.max(Number(from) || 0, 0); end = Math.max(Number(to) || start, start); return builder; },
-    order(){ return builder; }, eq(){ return builder; }, in(){ return builder; },
+    order(){ return builder; },
+    eq(){ return builder; },
+    in(){ return builder; },
     then(resolve){
       return rpcPage(start, end - start + 1)
         .then(result => resolve({ data:result.rows, error:null, count:result.total }))
@@ -86,7 +103,11 @@ function rpcBuilder(){
 
 function blockedBuilder(){
   const builder = {
-    select(){ return builder; }, range(){ return builder; }, order(){ return builder; }, eq(){ return builder; }, in(){ return builder; },
+    select(){ return builder; },
+    range(){ return builder; },
+    order(){ return builder; },
+    eq(){ return builder; },
+    in(){ return builder; },
     then(resolve){ return Promise.resolve(resolve({ data:[], error:null, count:0 })); }
   };
   return builder;
@@ -104,6 +125,7 @@ function patchClient(){
       if(!TARGET_VIEWS.has(table) || scope() === "ativo") return originalFrom(table);
       return authorized() ? rpcBuilder() : blockedBuilder();
     };
+    queueMicrotask(() => loadCatalog());
     return client;
   };
   supabase.__agsusAnalisesScopeSafe = true;
@@ -142,7 +164,7 @@ function createGuard(){
       <div class="scope-safe-field"><label>Unidades</label><div class="scope-safe-multi"><button type="button" class="scope-safe-trigger" id="scopeUnitsTrigger"><span>Selecione uma ou mais unidades</span><i class="fa-solid fa-chevron-down"></i></button><div class="scope-safe-menu" id="scopeUnitsMenu" hidden><div class="scope-safe-actions"><button data-action="all-units">Selecionar todas</button><button data-action="clear-units">Limpar</button></div><div class="scope-safe-options" id="scopeUnitsOptions"></div></div></div></div>
       <div class="scope-safe-field"><label>Editais</label><div class="scope-safe-multi"><button type="button" class="scope-safe-trigger" id="scopeEditaisTrigger" disabled><span>Selecione primeiro as unidades</span><i class="fa-solid fa-chevron-down"></i></button><div class="scope-safe-menu" id="scopeEditaisMenu" hidden><div class="scope-safe-actions"><button data-action="all-editais">Selecionar todos</button><button data-action="clear-editais">Limpar</button></div><div class="scope-safe-options" id="scopeEditaisOptions"></div></div></div></div>
       <button type="button" class="btn" id="scopeGuardLoad" disabled><i class="fa-solid fa-magnifying-glass"></i> Consultar</button>
-    </div><div class="scope-guard-status" id="scopeGuardStatus">Selecione uma ou mais unidades para continuar.</div>`;
+    </div><div class="scope-guard-status" id="scopeGuardStatus">Carregando unidades disponíveis...</div>`;
   panel.insertBefore(guard, head);
   guard.addEventListener("click", handleClick);
   document.getElementById("scopeGuardLoad")?.addEventListener("click", consult);
@@ -160,22 +182,39 @@ function toggleMenu(prefix, event){
   document.querySelectorAll(".scope-safe-menu:not([hidden])").forEach(item => { if(item !== menu) item.hidden = true; });
   menu.hidden = !menu.hidden;
 }
-function closeMenus(){ document.querySelectorAll(".scope-safe-menu:not([hidden])").forEach(menu => { menu.hidden = true; }); }
 
-function catalogRows(){ return scope() === "todos" ? state.catalog : state.catalog.filter(row => row.ativo === false); }
+function closeMenus(){
+  document.querySelectorAll(".scope-safe-menu:not([hidden])").forEach(menu => { menu.hidden = true; });
+}
+
+function isInactive(row){
+  return row?.ativo === false || ["false", "0", "nao", "não", "inativo"].includes(norm(row?.ativo));
+}
+
+function catalogRows(){
+  return scope() === "todos" ? state.catalog : state.catalog.filter(isInactive);
+}
+
 function availableUnits(){ return sorted(catalogRows().map(row => row.unidade)); }
-function availableEditais(){ const units = new Set(state.units); return sorted(catalogRows().filter(row => units.has(txt(row.unidade))).map(row => row.edital)); }
+function availableEditais(){
+  const units = new Set(state.units);
+  return sorted(catalogRows().filter(row => units.has(txt(row.unidade))).map(row => row.edital));
+}
 
 function renderOptions(id, values, selected, type){
   const target = document.getElementById(id);
   if(!target) return;
   const selectedSet = new Set(selected);
-  target.innerHTML = values.length ? values.map(value => `<label class="scope-safe-option"><input type="checkbox" data-type="${type}" value="${esc(value)}" ${selectedSet.has(value) ? "checked" : ""}><span>${esc(value)}</span></label>`).join("") : '<div class="scope-safe-option">Nenhuma opção disponível.</div>';
+  target.innerHTML = values.length
+    ? values.map(value => `<label class="scope-safe-option"><input type="checkbox" data-type="${type}" value="${esc(value)}" ${selectedSet.has(value) ? "checked" : ""}><span>${esc(value)}</span></label>`).join("")
+    : '<div class="scope-safe-option">Nenhuma opção disponível.</div>';
 }
+
 function updateLabel(prefix, values, empty){
   const label = document.getElementById(`${prefix}Trigger`)?.querySelector("span");
   if(label) label.textContent = values.length ? (values.length <= 2 ? values.join(", ") : `${values.length} opções selecionadas`) : empty;
 }
+
 function syncUi(){
   const unitValues = availableUnits();
   state.units = state.units.filter(value => unitValues.includes(value));
@@ -183,14 +222,20 @@ function syncUi(){
   state.editais = state.editais.filter(value => editalValues.includes(value));
   renderOptions("scopeUnitsOptions", unitValues, state.units, "unit");
   renderOptions("scopeEditaisOptions", editalValues, state.editais, "edital");
-  updateLabel("scopeUnits", state.units, "Selecione uma ou mais unidades");
+  updateLabel("scopeUnits", state.units, state.catalogLoaded ? "Selecione uma ou mais unidades" : "Carregando unidades...");
   updateLabel("scopeEditais", state.editais, state.units.length ? "Selecione um ou mais editais" : "Selecione primeiro as unidades");
+  const unitTrigger = document.getElementById("scopeUnitsTrigger");
+  if(unitTrigger) unitTrigger.disabled = !state.catalogLoaded || !unitValues.length;
   const editalTrigger = document.getElementById("scopeEditaisTrigger");
   if(editalTrigger) editalTrigger.disabled = !state.units.length;
-  const ready = state.units.length && state.editais.length;
+  const ready = Boolean(state.units.length && state.editais.length);
   const load = document.getElementById("scopeGuardLoad");
   if(load) load.disabled = !ready;
-  setStatus(!state.units.length ? "Selecione uma ou mais unidades para continuar." : !state.editais.length ? `${state.units.length} unidade(s) selecionada(s). Agora escolha pelo menos um edital.` : `Recorte pronto: ${state.units.length} unidade(s) e ${state.editais.length} edital(is).`);
+  if(!state.catalogLoaded) setStatus("Carregando unidades e editais disponíveis...");
+  else if(!unitValues.length) setStatus(`Nenhuma unidade disponível para processos ${scopeLabel().toLowerCase()}.`, true);
+  else if(!state.units.length) setStatus("Selecione uma ou mais unidades para continuar.");
+  else if(!state.editais.length) setStatus(`${state.units.length} unidade(s) selecionada(s). Agora escolha pelo menos um edital.`);
+  else setStatus(`Recorte pronto: ${state.units.length} unidade(s) e ${state.editais.length} edital(is).`);
 }
 
 function handleClick(event){
@@ -200,45 +245,86 @@ function handleClick(event){
     const values = input.dataset.type === "unit" ? state.units : state.editais;
     const set = new Set(values);
     input.checked ? set.add(input.value) : set.delete(input.value);
-    if(input.dataset.type === "unit"){ state.units = sorted(set); state.editais = []; }
-    else state.editais = sorted(set);
+    if(input.dataset.type === "unit"){
+      state.units = sorted(set);
+      state.editais = [];
+    }else{
+      state.editais = sorted(set);
+    }
     state.activeKey = "";
     blockResults(true);
+    syncPendingContext();
     syncUi();
     return;
   }
   const action = event.target?.closest?.("[data-action]")?.dataset?.action;
   if(!action) return;
-  event.preventDefault(); event.stopPropagation();
-  if(action === "all-units"){ state.units = availableUnits(); state.editais = []; }
-  if(action === "clear-units"){ state.units = []; state.editais = []; }
+  event.preventDefault();
+  event.stopPropagation();
+  if(action === "all-units"){
+    state.units = availableUnits();
+    state.editais = [];
+  }
+  if(action === "clear-units"){
+    state.units = [];
+    state.editais = [];
+  }
   if(action === "all-editais") state.editais = availableEditais();
   if(action === "clear-editais") state.editais = [];
-  state.activeKey = ""; blockResults(true); syncUi();
+  state.activeKey = "";
+  blockResults(true);
+  syncPendingContext();
+  syncUi();
 }
 
 async function loadCatalog(){
-  if(state.loadingCatalog || !state.client) return;
+  if(state.loadingCatalog || state.catalogLoaded) return;
+  if(!state.client){
+    if(state.catalogRetry < 40){
+      state.catalogRetry += 1;
+      window.setTimeout(loadCatalog, 100);
+    }
+    return;
+  }
   state.loadingCatalog = true;
   try{
-    const { data, error } = await state.client.from("analises_editais").select("grupo,unidade,edital,ativo").order("unidade", { ascending:true }).order("edital", { ascending:true });
+    const { data, error } = await state.client
+      .from("analises_editais")
+      .select("grupo,unidade,edital,ativo")
+      .order("unidade", { ascending:true })
+      .order("edital", { ascending:true });
     if(error) throw error;
     state.catalog = Array.isArray(data) ? data : [];
+    state.catalogLoaded = true;
+    state.catalogRetry = 0;
     if(scopedMode()) syncUi();
-  }catch(error){ console.error(error); setStatus("Não foi possível carregar unidades e editais.", true); }
-  finally{ state.loadingCatalog = false; }
+  }catch(error){
+    console.error(error);
+    setStatus("Não foi possível carregar unidades e editais. Atualize a página e tente novamente.", true);
+  }finally{
+    state.loadingCatalog = false;
+  }
 }
 
 function showGuard(){
   const guard = createGuard();
   if(!guard) return;
   guard.hidden = !scopedMode();
-  if(scopedMode()){ blockResults(true); syncUi(); }
-  else blockResults(false);
+  if(scopedMode()){
+    blockResults(true);
+    syncPendingContext();
+    syncUi();
+    loadCatalog();
+  }else{
+    blockResults(false);
+  }
 }
 
 function consult(){
-  if(!state.units.length || !state.editais.length){ setStatus("Selecione uma ou mais unidades e pelo menos um edital.", true); return; }
+  if(!state.units.length || !state.editais.length){
+    setStatus("Selecione uma ou mais unidades e pelo menos um edital.", true);
+    return;
+  }
   state.total = null;
   state.activeKey = key();
   blockResults(false);
@@ -247,15 +333,21 @@ function consult(){
 }
 
 function init(){
-  ensureStyles(); createGuard(); showGuard();
+  ensureStyles();
+  createGuard();
+  showGuard();
   const scopeSelect = document.getElementById("fSituacaoEdital");
   scopeSelect?.addEventListener("change", event => {
     if(scope() === "ativo"){
-      resetSelection(); showGuard(); return;
+      resetSelection();
+      showGuard();
+      return;
     }
     if(authorized()) return;
-    event.stopImmediatePropagation(); event.preventDefault();
-    resetSelection(); showGuard();
+    event.stopImmediatePropagation();
+    event.preventDefault();
+    resetSelection();
+    showGuard();
     const updated = document.getElementById("updatedText");
     const footer = document.getElementById("footerUpdated");
     if(updated) updated.textContent = "Aguardando definição do recorte";
