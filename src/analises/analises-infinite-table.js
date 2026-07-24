@@ -1,5 +1,6 @@
 const state = {
   initialized: false,
+  ready: false,
   loading: false,
   resetting: false,
   loadedPages: 0,
@@ -8,19 +9,49 @@ const state = {
   rowsPerBatch: 50,
   pageFragments: [],
   resetTimer: 0,
-  scrollBound: false
+  activationTimer: 0,
+  activationAttempts: 0,
+  scrollBound: false,
+  eventsBound: false
 };
 
 const $ = id => document.getElementById(id);
 const numberFromPtBr = value => Number(String(value || "0").replace(/\./g, "")) || 0;
 
 function installStylesheet(){
-  if(document.querySelector('link[href*="analises-infinite-table.css"]')) return;
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = "/src/analises/analises-infinite-table.css?v=20260723-3";
-  link.dataset.analisesInfiniteTable = "true";
-  document.head.appendChild(link);
+  if(!document.querySelector('link[href*="analises-infinite-table.css"]')){
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/src/analises/analises-infinite-table.css?v=20260724-4";
+    link.dataset.analisesInfiniteTable = "true";
+    document.head.appendChild(link);
+  }
+
+  if(document.getElementById("analisesInfiniteRuntimeStyles")) return;
+  const style = document.createElement("style");
+  style.id = "analisesInfiniteRuntimeStyles";
+  style.textContent = `
+    .analises-load-more{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      min-height:42px;
+      padding:8px 14px;
+      border:0;
+      border-top:1px solid var(--line);
+      background:color-mix(in srgb,var(--blue2) 7%,var(--card));
+      color:var(--blue2);
+      font:inherit;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer
+    }
+    .analises-load-more:hover{background:color-mix(in srgb,var(--blue2) 12%,var(--card))}
+    .analises-load-more:disabled{opacity:.58;cursor:wait}
+    .analises-load-more[hidden]{display:none!important}
+  `;
+  document.head.appendChild(style);
 }
 
 function parsePageInfo(){
@@ -29,17 +60,38 @@ function parsePageInfo(){
   return match ? {
     current: numberFromPtBr(match[1]),
     total: Math.max(1, numberFromPtBr(match[2]))
-  } : { current: 1, total: 1 };
+  } : null;
 }
 
 function parseTotalRecords(){
   const text = $("tableInfo")?.textContent || "";
-  const match = text.match(/de\s+([\d.]+)\s+registros/i);
-  return match ? numberFromPtBr(match[1]) : $("tableBody")?.querySelectorAll(":scope > tr:not(.detail-row)").length || 0;
+  const patterns = [
+    /Mostrando\s+[\d.]+(?:-[\d.]+)?\s+de\s+([\d.]+)\s+registros/i,
+    /Exibindo\s+[\d.]+\s+de\s+([\d.]+)\s+registros/i,
+    /\bde\s+([\d.]+)\s+registros/i
+  ];
+  for(const pattern of patterns){
+    const match = text.match(pattern);
+    if(match) return numberFromPtBr(match[1]);
+  }
+  return visibleRowCount();
 }
 
-function rowCount(){
-  return $("tableBody")?.querySelectorAll(":scope > tr:not(.detail-row)").length || 0;
+function visibleRows(){
+  return [...($("tableBody")?.querySelectorAll(":scope > tr:not(.detail-row)") || [])]
+    .filter(row => !row.querySelector("td.empty") && !/Nenhum registro encontrado/i.test(row.textContent || ""));
+}
+
+function visibleRowCount(){
+  return visibleRows().length;
+}
+
+function validFragment(html){
+  if(!html || /Nenhum registro encontrado/i.test(html)) return false;
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  return [...template.content.querySelectorAll(":scope > tr:not(.detail-row)")]
+    .some(row => !row.querySelector("td.empty"));
 }
 
 function hideLegacyControls(){
@@ -55,7 +107,8 @@ function hideLegacyControls(){
 
 function ensureUi(){
   const card = document.querySelector(".table-card");
-  if(!card) return false;
+  const wrap = card?.querySelector(".table-wrap");
+  if(!card || !wrap) return false;
 
   hideLegacyControls();
 
@@ -64,20 +117,50 @@ function ensureUi(){
     status = document.createElement("div");
     status.id = "analisesInfiniteStatus";
     status.className = "analises-infinite-status";
-    card.querySelector(".table-wrap")?.insertAdjacentElement("afterend", status);
+    wrap.insertAdjacentElement("afterend", status);
   }
+  status.dataset.infiniteManaged = "true";
+
+  let loadMore = $("analisesLoadMore");
+  if(!loadMore){
+    loadMore = document.createElement("button");
+    loadMore.type = "button";
+    loadMore.id = "analisesLoadMore";
+    loadMore.className = "analises-load-more";
+    loadMore.innerHTML = '<i class="fa-solid fa-plus"></i> Carregar mais registros';
+    loadMore.hidden = true;
+    status.insertAdjacentElement("afterend", loadMore);
+    loadMore.addEventListener("click", () => loadNextPage());
+  }
+
   return true;
 }
 
-function setStatus(message, loading = false){
+function setStatus(message, { loading = false, canLoadMore = false } = {}){
   const status = $("analisesInfiniteStatus");
-  if(!status) return;
-  status.textContent = message;
-  status.classList.toggle("is-loading", loading);
+  if(status){
+    status.textContent = message;
+    status.classList.toggle("is-loading", loading);
+  }
+
+  const loadMore = $("analisesLoadMore");
+  if(loadMore){
+    loadMore.hidden = !canLoadMore;
+    loadMore.disabled = loading;
+    loadMore.innerHTML = loading
+      ? '<i class="fa-solid fa-spinner fa-spin"></i> Carregando registros...'
+      : '<i class="fa-solid fa-plus"></i> Carregar mais registros';
+  }
+}
+
+function hasMorePages(){
+  return state.ready
+    && state.totalRecords > visibleRowCount()
+    && state.loadedPages < state.totalPages;
 }
 
 function updateSummary(){
-  const shown = rowCount();
+  const shown = visibleRowCount();
   if($("tableInfo")){
     $("tableInfo").textContent = state.totalRecords
       ? `Exibindo ${shown.toLocaleString("pt-BR")} de ${state.totalRecords.toLocaleString("pt-BR")} registros`
@@ -89,31 +172,42 @@ function updateSummary(){
       : "Carregamento contínuo";
   }
 
-  if(!state.totalRecords){
+  if(state.loading){
+    setStatus(`Carregando mais registros (${state.loadedPages + 1}/${state.totalPages})...`, { loading:true });
+  }else if(!state.totalRecords){
     setStatus("Nenhum registro encontrado.");
-  }else if(state.loadedPages >= state.totalPages){
+  }else if(!hasMorePages()){
     setStatus(`Todos os ${state.totalRecords.toLocaleString("pt-BR")} registros do recorte foram exibidos.`);
   }else{
-    setStatus(`${shown.toLocaleString("pt-BR")} registros exibidos. Role a tabela para carregar mais.`);
+    setStatus(`${shown.toLocaleString("pt-BR")} registros exibidos. Role a tabela ou use o botão abaixo para carregar mais.`, { canLoadMore:true });
   }
 }
 
-function combineFragments(){
+function combineFragments({ preserveScroll = true } = {}){
   const body = $("tableBody");
+  const wrap = document.querySelector(".table-wrap");
   if(!body) return;
+
+  const previousScrollTop = preserveScroll ? (wrap?.scrollTop || 0) : 0;
   body.innerHTML = state.pageFragments.join("");
+  if(wrap) wrap.scrollTop = previousScrollTop;
   updateSummary();
 }
 
-function waitForPage(page, attempts = 0){
+function waitForRenderedPage(page, previousHtml, attempts = 0){
   return new Promise(resolve => {
     const check = () => {
-      const info = parsePageInfo();
       const body = $("tableBody");
-      if((info.current === page && body?.children.length) || attempts >= 30){
-        resolve(body?.innerHTML || "");
+      const html = body?.innerHTML || "";
+      const info = parsePageInfo();
+      const changed = html && html !== previousHtml;
+      const expectedPage = info?.current === page;
+
+      if((changed && expectedPage && validFragment(html)) || attempts >= 80){
+        resolve({ html, info });
         return;
       }
+
       attempts += 1;
       window.setTimeout(check, 20);
     };
@@ -122,23 +216,38 @@ function waitForPage(page, attempts = 0){
 }
 
 async function loadNextPage(){
-  if(state.loading || state.resetting || state.loadedPages >= state.totalPages) return;
-  if(typeof window.goPage !== "function") return;
-
-  state.loading = true;
-  const nextPage = state.loadedPages + 1;
-  setStatus(`Carregando mais registros (${nextPage}/${state.totalPages})...`, true);
-
-  window.goPage(nextPage);
-  const fragment = await waitForPage(nextPage);
-
-  if(fragment && !/Nenhum registro encontrado/i.test(fragment)){
-    state.pageFragments.push(fragment);
-    state.loadedPages = nextPage;
+  if(state.loading || state.resetting || !hasMorePages()) return;
+  if(typeof window.goPage !== "function"){
+    setStatus("A navegação da fila ainda não está disponível. Atualize a página e tente novamente.");
+    return;
   }
 
-  combineFragments();
-  state.loading = false;
+  state.loading = true;
+  updateSummary();
+
+  const nextPage = state.loadedPages + 1;
+  const body = $("tableBody");
+  const combinedHtml = body?.innerHTML || "";
+
+  try{
+    window.goPage(nextPage);
+    const result = await waitForRenderedPage(nextPage, combinedHtml);
+    if(!validFragment(result.html)){
+      throw new Error(`A página ${nextPage} não produziu registros válidos.`);
+    }
+
+    state.pageFragments.push(result.html);
+    state.loadedPages = nextPage;
+    if(result.info?.total) state.totalPages = Math.max(state.totalPages, result.info.total);
+    combineFragments({ preserveScroll:true });
+  }catch(error){
+    console.error("Falha ao carregar o próximo lote da fila de análises:", error);
+    if(body) body.innerHTML = combinedHtml;
+    setStatus("Não foi possível carregar o próximo lote. Use o botão para tentar novamente.", { canLoadMore:true });
+  }finally{
+    state.loading = false;
+    updateSummary();
+  }
 }
 
 function configureBatchSize(){
@@ -162,35 +271,69 @@ function configureBatchSize(){
   hideLegacyControls();
 }
 
-function resetFromRenderedPage(){
-  if(state.loading) return;
+async function resetFromRenderedPage(){
+  if(state.loading || state.resetting) return false;
+  if(!ensureUi()) return false;
+  if(typeof window.goPage !== "function") return false;
+
   const body = $("tableBody");
-  if(!body || !body.children.length || typeof window.goPage !== "function") return;
+  if(!body || !visibleRowCount()) return false;
 
   state.resetting = true;
-  configureBatchSize();
-  window.goPage(1);
+  state.ready = false;
 
-  window.setTimeout(() => {
+  try{
+    configureBatchSize();
+    window.goPage(1);
+    await new Promise(resolve => window.setTimeout(resolve, 30));
+
     const page = parsePageInfo();
+    const html = $("tableBody")?.innerHTML || "";
+    const totalRecords = parseTotalRecords();
+    if(!validFragment(html) || !totalRecords) return false;
+
     state.loadedPages = 1;
-    state.totalPages = Math.max(1, page.total);
-    state.totalRecords = parseTotalRecords();
-    state.pageFragments = [$("tableBody")?.innerHTML || ""];
-    combineFragments();
+    state.totalPages = Math.max(1, page?.total || Math.ceil(totalRecords / state.rowsPerBatch));
+    state.totalRecords = totalRecords;
+    state.pageFragments = [html];
+    state.ready = true;
+    state.activationAttempts = 0;
+
+    combineFragments({ preserveScroll:false });
     const wrap = document.querySelector(".table-wrap");
     if(wrap) wrap.scrollTop = 0;
     hideLegacyControls();
+    return true;
+  }finally{
     state.resetting = false;
-  }, 60);
+  }
+}
+
+function scheduleActivation(delay = 120){
+  window.clearTimeout(state.activationTimer);
+  state.activationTimer = window.setTimeout(async () => {
+    if(await resetFromRenderedPage()) return;
+
+    state.activationAttempts += 1;
+    const loadingVisible = $("loading")?.classList.contains("show") === true;
+    if(loadingVisible || state.activationAttempts < 240){
+      scheduleActivation(250);
+    }
+  }, delay);
 }
 
 function scheduleReset(delay = 260){
   window.clearTimeout(state.resetTimer);
-  state.resetTimer = window.setTimeout(resetFromRenderedPage, delay);
+  state.resetTimer = window.setTimeout(() => {
+    state.ready = false;
+    scheduleActivation(0);
+  }, delay);
 }
 
 function bindResetEvents(){
+  if(state.eventsBound) return;
+  state.eventsBound = true;
+
   document.addEventListener("change", event => {
     if(event.target?.closest?.("#rowsPerPage")) return;
     if(event.target?.closest?.(".filter-panel")) scheduleReset(260);
@@ -205,8 +348,13 @@ function bindResetEvents(){
     if(event.target?.closest?.("#clearBtn,[data-kpi],#attentionList .attention-item,#chartResponsavel")) scheduleReset(260);
   }, true);
 
+  document.addEventListener("agsus:analises-loading-start", () => {
+    state.ready = false;
+  });
   document.addEventListener("agsus:analises-loading-end", () => scheduleReset(80));
+  document.addEventListener("agsus:analises-query-complete", () => scheduleReset(80));
   document.addEventListener("agsus:analises-cache-cleared", () => scheduleReset(180));
+  window.addEventListener("load", () => scheduleActivation(0), { once:true });
 }
 
 function bindInternalScroll(){
@@ -216,17 +364,19 @@ function bindInternalScroll(){
 
   state.scrollBound = true;
   wrap.addEventListener("scroll", () => {
-    if(state.loading || state.resetting || state.loadedPages >= state.totalPages) return;
+    if(state.loading || state.resetting || !hasMorePages()) return;
     const remaining = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight;
-    if(remaining <= 420) loadNextPage();
+    if(remaining <= 320) loadNextPage();
   }, { passive:true });
 }
 
 function snapshot(){
+  const wrap = document.querySelector(".table-wrap");
   return {
     html: $("tableBody")?.innerHTML || "",
     tableInfo: $("tableInfo")?.textContent || "",
-    pageInfo: $("pageInfo")?.textContent || ""
+    pageInfo: $("pageInfo")?.textContent || "",
+    scrollTop: wrap?.scrollTop || 0
   };
 }
 
@@ -235,27 +385,24 @@ function restore(saved){
   if($("tableBody")) $("tableBody").innerHTML = saved.html || "";
   if($("tableInfo")) $("tableInfo").textContent = saved.tableInfo || "";
   if($("pageInfo")) $("pageInfo").textContent = saved.pageInfo || "";
+  const wrap = document.querySelector(".table-wrap");
+  if(wrap) wrap.scrollTop = Number(saved.scrollTop) || 0;
   hideLegacyControls();
-}
-
-function initStep(attempt = 0){
-  if(ensureUi() && typeof window.goPage === "function" && $("tableBody")?.children.length){
-    configureBatchSize();
-    resetFromRenderedPage();
-    bindInternalScroll();
-    return;
-  }
-  if(attempt < 100) window.setTimeout(() => initStep(attempt + 1), 100);
+  updateSummary();
 }
 
 function init(){
   if(state.initialized) return;
   state.initialized = true;
   installStylesheet();
+  ensureUi();
   hideLegacyControls();
+  bindInternalScroll();
   bindResetEvents();
-  initStep();
+  scheduleActivation(0);
 }
 
-window.analisesInfiniteTable = { snapshot, restore, scheduleReset };
-init();
+window.analisesInfiniteTable = { snapshot, restore, scheduleReset, loadNextPage };
+
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once:true });
+else init();
