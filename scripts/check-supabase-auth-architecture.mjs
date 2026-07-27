@@ -9,8 +9,7 @@ const PATTERNS = [
   ["url-session", "detecção automática da sessão", /detectSessionInUrl\s*:\s*true/g]
 ];
 
-// Tetos temporários do débito legado conhecido. As chamadas createClient abaixo
-// passam pela fachada de compatibilidade e devolvem o singleton compartilhado.
+// Tetos temporários dos dois débitos legados restantes.
 // Reduções são aceites; aumentos ou ocorrências em novos ficheiros bloqueiam o build.
 const BASELINE = new Map([
   ["src/modules/legacy-app.js", new Map([
@@ -22,13 +21,7 @@ const BASELINE = new Map([
     ["window-client", 1],
     ["implicit-flow", 1],
     ["url-session", 1]
-  ])],
-  ["src/modules/config-governance.js", new Map([["window-client", 1]])],
-  ["src/modules/health-status-details.js", new Map([["window-client", 1]])],
-  ["src/modules/nucleo-cronograma-tools.js", new Map([["window-client", 1]])],
-  ["src/modules/nucleo-cronograma.js", new Map([["window-client", 1]])],
-  ["src/modules/nucleo-operational-enhancements.js", new Map([["window-client", 1]])],
-  ["src/modules/nucleo-operational-safe.js", new Map([["window-client", 1]])]
+  ])]
 ]);
 
 function walk(dir) {

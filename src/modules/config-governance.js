@@ -1,5 +1,4 @@
-import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
-import { createSafeAuthStorage } from "./auth-storage.js";
+import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { collectPanelRows } from "./config-ui.js";
 
 const RPC_SNAPSHOT = "get_configuracoes_snapshot";
@@ -57,15 +56,7 @@ function friendlyError(error) {
 
 function createClient() {
   if (state.client) return state.client;
-  if (!window.supabase?.createClient || !SUPABASE_URL || !SUPABASE_KEY) return null;
-  state.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-      storage: createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY),
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false
-    }
-  });
+  state.client = getSupabaseClient();
   return state.client;
 }
 

@@ -1,5 +1,4 @@
-import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
-import { createSafeAuthStorage } from "./auth-storage.js";
+import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 const RPC_GET = "get_monitoramento_cronograma";
 const RPC_SAVE = "salvar_monitoramento_com_cronograma_v2";
@@ -19,16 +18,7 @@ const esc = value => String(value ?? "").replace(/[&<>"']/g, char => escMap[char
 
 function createClient() {
   if (state.client) return state.client;
-  if (!window.supabase?.createClient || !SUPABASE_URL || !SUPABASE_KEY) return null;
-  state.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-      storage: createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY),
-      storageKey: SUPABASE_AUTH_STORAGE_KEY,
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false
-    }
-  });
+  state.client = getSupabaseClient();
   return state.client;
 }
 
