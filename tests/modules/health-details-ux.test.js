@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { JSDOM } from "jsdom";
 import {
   enhanceHealthDetailsTable,
+  ensureOnly2026Button,
   formatDeadlineLabel,
   installConfirmedLogout
 } from "../../src/modules/health-details-ux.js";
@@ -17,7 +18,7 @@ describe("health details ux", () => {
     const original = vi.fn();
     const target = { logout: original };
 
-    expect(installConfirmedLogout(target, () => false)).toBe(true);
+    expect(installConfirmedLogout(target, async () => false)).toBe(true);
     await expect(target.logout()).resolves.toBe(false);
     expect(original).not.toHaveBeenCalled();
   });
@@ -26,7 +27,7 @@ describe("health details ux", () => {
     const original = vi.fn(async () => "ok");
     const target = { logout: original };
 
-    installConfirmedLogout(target, () => true);
+    installConfirmedLogout(target, async () => true);
     await expect(target.logout("manual")).resolves.toBe("ok");
     expect(original).toHaveBeenCalledWith("manual");
   });
@@ -35,6 +36,8 @@ describe("health details ux", () => {
     const dom = new JSDOM(`
       <section id="page-dashboard">
         <div class="health-details-legend"></div>
+        <div class="table-actions"><div><input id="tableSearch"></div></div>
+        <div id="tableMeta">Exibindo 1 de 1 registros.</div>
         <table class="details-table">
           <thead><tr>
             <th data-sort-field="unidade"></th>
@@ -65,5 +68,34 @@ describe("health details ux", () => {
     expect(operational.textContent).toContain("Cronograma");
     expect(status.getAttribute("aria-label")).toBe("Status operacional: Em andamento");
     expect(dom.window.document.querySelectorAll(".health-operational-copy")).toHaveLength(1);
+  });
+
+  it("filtra rapidamente somente editais de 2026", () => {
+    const dom = new JSDOM(`
+      <section id="page-dashboard">
+        <div class="table-actions"><div><input id="tableSearch"></div></div>
+        <div id="tableMeta">Exibindo 2 de 2 registros.</div>
+        <table class="details-table">
+          <thead><tr>
+            <th data-sort-field="unidade"></th>
+            <th data-sort-field="edital"></th>
+            <th data-sort-field="status"></th>
+            <th data-sort-field="etapa"></th>
+            <th data-sort-field="risco"></th>
+          </tr></thead>
+          <tbody id="monitorRows">
+            <tr><td>A</td><td><a>10/2026</a></td><td><span class="chip">Em andamento</span></td><td>Etapa</td><td>Baixo</td></tr>
+            <tr><td>B</td><td><a>04/2025</a></td><td><span class="chip">Concluído</span></td><td>Final</td><td>Baixo</td></tr>
+          </tbody>
+        </table>
+      </section>`);
+
+    const button = ensureOnly2026Button(dom.window.document);
+    button.click();
+
+    const rows = [...dom.window.document.querySelectorAll("#monitorRows tr")];
+    expect(rows[0].hidden).toBe(false);
+    expect(rows[1].hidden).toBe(true);
+    expect(dom.window.document.getElementById("tableMeta").textContent).toContain("1 edital(is) de 2026");
   });
 });
