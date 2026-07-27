@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:smoke": "playwright test tests/smoke.spec.js",
     "check:workflows": "node scripts/check-workflow-uniqueness.mjs",
-    "check:architecture": "node scripts/check-no-new-mutation-observer.mjs",
+    "check:architecture": "node scripts/check-no-new-mutation-observer.mjs && npm run check:auth-architecture",
+    "check:auth-architecture": "node scripts/check-supabase-auth-architecture.mjs",
     "check:dist-security": "node scripts/check-dist-html-security.mjs"
   },
   "dependencies": {
