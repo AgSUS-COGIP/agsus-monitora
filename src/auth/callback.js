@@ -1,45 +1,65 @@
-import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { hasSupabaseEnv } from "../lib/env.js";
+import { getSupabaseClient } from "../lib/supabaseClient.js";
 
-function redirectHome(params = "") {
-  window.location.replace(`/${params}`);
+export function callbackResultUrl(result) {
+  switch (result) {
+    case "success":
+      return "/?auth=google";
+    case "missing_env":
+      return "/?auth_error=missing_env";
+    case "missing_code":
+      return "/?auth_error=missing_code";
+    case "supabase_unavailable":
+      return "/?auth_error=supabase_unavailable";
+    default:
+      return "/?auth_error=oauth_callback";
+  }
 }
 
-async function finishOAuth() {
-  const search = new URLSearchParams(window.location.search || "");
+function redirectHome(result) {
+  window.location.replace(callbackResultUrl(result));
+}
+
+export async function finishOAuth({
+  locationRef = window.location,
+  sessionStorageRef = window.sessionStorage,
+  resolveClient = getSupabaseClient,
+  redirect = redirectHome
+} = {}) {
+  const search = new URLSearchParams(locationRef.search || "");
   const code = search.get("code");
 
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    redirectHome("?auth_error=missing_env");
-    return;
+  if (!hasSupabaseEnv()) {
+    redirect("missing_env");
+    return false;
   }
 
   if (!code) {
-    redirectHome("?auth_error=missing_code");
-    return;
+    redirect("missing_code");
+    return false;
   }
 
-  if (!window.supabase) {
-    redirectHome("?auth_error=supabase_unavailable");
-    return;
+  const client = resolveClient();
+  if (!client?.auth?.exchangeCodeForSession) {
+    redirect("supabase_unavailable");
+    return false;
   }
 
   try {
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: {
-        storageKey: SUPABASE_AUTH_STORAGE_KEY,
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: false
-      }
-    });
     const { error } = await client.auth.exchangeCodeForSession(code);
     if (error) throw error;
-    try { sessionStorage.setItem("agsus_oauth_callback_ok", String(Date.now())); } catch (_) {}
-    redirectHome("?auth=google");
+    try {
+      sessionStorageRef?.setItem?.("agsus_oauth_callback_ok", String(Date.now()));
+    } catch (_) {}
+    redirect("success");
+    return true;
   } catch (error) {
     console.error("Falha ao finalizar OAuth:", error);
-    redirectHome("?auth_error=oauth_callback");
+    redirect("oauth_callback");
+    return false;
   }
 }
 
-finishOAuth();
+if (typeof window !== "undefined") {
+  finishOAuth();
+}

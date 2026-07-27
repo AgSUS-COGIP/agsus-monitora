@@ -22,8 +22,11 @@ export function getSupabaseClient() {
         storageKey: SUPABASE_AUTH_STORAGE_KEY,
         persistSession: true,
         autoRefreshToken: true,
-        flowType: "implicit",
-        detectSessionInUrl: true
+        flowType: "pkce",
+        // O AgSUS Monitora trata o parâmetro ?code explicitamente no bootstrap
+        // principal e em auth/callback.js. Desativar a deteção automática evita
+        // duas tentativas concorrentes de exchangeCodeForSession.
+        detectSessionInUrl: false
       }
     });
   }
