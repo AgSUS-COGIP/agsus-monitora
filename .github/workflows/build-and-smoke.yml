@@ -23,21 +23,28 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          show-progress: false
 
       - name: Configurar Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Instalar dependências
-        run: npm install --no-audit --no-fund
-
       - name: Verificar workflows
         run: npm run check:workflows
 
-      - name: Verificar arquitetura
-        run: npm run check:architecture
+      - name: Verificar arquitetura Supabase Auth
+        run: npm run check:auth-architecture
+
+      - name: Baixar base da arquitetura DOM
+        run: git fetch --no-tags --depth=1 origin main:refs/remotes/origin/main
+
+      - name: Verificar arquitetura DOM
+        run: node scripts/check-no-new-mutation-observer.mjs
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
 
       - name: Testes unitários
         run: npm run test

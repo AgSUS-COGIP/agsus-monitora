@@ -24,7 +24,9 @@ function resolveBase() {
 }
 
 const base = resolveBase();
-const diff = git(["diff", "--unified=0", `${base}...HEAD`, "--", "src"]);
+// A comparação direta não depende do merge-base e funciona em checkouts rasos
+// do GitHub Actions. Apenas linhas adicionadas no estado atual são inspecionadas.
+const diff = git(["diff", "--unified=0", base, "HEAD", "--", "src"]);
 const violations = diff
   .split(/\r?\n/)
   .filter(line => line.startsWith("+") && !line.startsWith("+++"))
@@ -37,4 +39,4 @@ if (violations.length) {
   process.exit(1);
 }
 
-console.log(`Verificação concluída: nenhum novo MutationObserver em src/ desde ${base}.`);
+console.log(`Verificação concluída: nenhum novo MutationObserver em src/ em relação a ${base}.`);
