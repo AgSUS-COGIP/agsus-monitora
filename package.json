@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
+    "build": "vite build && npm run check:dist-security",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test tests/smoke.spec.js",
     "check:workflows": "node scripts/check-workflow-uniqueness.mjs",
-    "check:architecture": "node scripts/check-no-new-mutation-observer.mjs"
+    "check:architecture": "node scripts/check-no-new-mutation-observer.mjs",
+    "check:dist-security": "node scripts/check-dist-html-security.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
