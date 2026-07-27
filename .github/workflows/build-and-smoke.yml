@@ -15,9 +15,9 @@ concurrency:
 
 jobs:
   quality-gate:
-    name: Arquitetura, testes, build e smoke
+    name: Arquitetura, qualidade, build e smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Baixar código
@@ -37,7 +37,7 @@ jobs:
       - name: Verificar arquitetura Supabase Auth
         run: npm run check:auth-architecture
 
-      - name: Baixar base da arquitetura DOM
+      - name: Baixar base das verificações incrementais
         run: git fetch --no-tags --depth=1 origin main:refs/remotes/origin/main
 
       - name: Verificar arquitetura DOM
@@ -46,8 +46,14 @@ jobs:
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
 
-      - name: Testes unitários
-        run: npm run test
+      - name: Verificar lint
+        run: npm run lint
+
+      - name: Verificar formatação alterada
+        run: npm run format:check
+
+      - name: Testes e cobertura
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build

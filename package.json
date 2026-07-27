@@ -9,8 +9,11 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage.enabled=true --coverage.provider=v8 --coverage.reporter=text --coverage.thresholds.lines=1 --coverage.thresholds.functions=1 --coverage.thresholds.statements=1 --coverage.thresholds.branches=1",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test tests/smoke.spec.js",
+    "lint": "node scripts/check-changed-lint.mjs",
+    "format:check": "node scripts/check-changed-format.mjs",
     "check:workflows": "node scripts/check-workflow-uniqueness.mjs",
     "check:architecture": "node scripts/check-no-new-mutation-observer.mjs && npm run check:auth-architecture",
     "check:auth-architecture": "node scripts/check-supabase-auth-architecture.mjs",
@@ -28,8 +31,13 @@
     "zod": "^4"
   },
   "devDependencies": {
+    "@eslint/js": "^9",
     "@playwright/test": "^1",
+    "@vitest/coverage-v8": "^4",
+    "eslint": "^9",
+    "globals": "^16",
     "jsdom": "^28",
+    "prettier": "^3",
     "vite": "^7.2.7",
     "vitest": "^4"
   }
