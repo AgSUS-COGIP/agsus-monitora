@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "npm run check:auth-architecture && vite build && npm run check:dist-security",
+    "build": "npm run check:auth-architecture && vite build && npm run check:dist-security && npm run check:bundle-size",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,7 +17,8 @@
     "check:workflows": "node scripts/check-workflow-uniqueness.mjs",
     "check:architecture": "node scripts/check-no-new-mutation-observer.mjs && npm run check:auth-architecture",
     "check:auth-architecture": "node scripts/check-supabase-auth-architecture.mjs",
-    "check:dist-security": "node scripts/check-dist-html-security.mjs"
+    "check:dist-security": "node scripts/check-dist-html-security.mjs",
+    "check:bundle-size": "node scripts/check-bundle-size.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
