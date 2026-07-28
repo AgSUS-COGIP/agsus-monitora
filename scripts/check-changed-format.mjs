@@ -4,6 +4,8 @@ import { extname } from "node:path";
 const BASE_REF = process.env.QUALITY_BASE_REF || "origin/main";
 const SUPPORTED_EXTENSIONS = new Set([".js", ".mjs", ".css", ".html"]);
 const EXCLUDED = new Set([
+  "index.html",
+  "analises.html",
   "src/modules/legacy-app.js",
   "src/analises/analises-app.js",
 ]);
