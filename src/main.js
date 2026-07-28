@@ -1,6 +1,8 @@
 import { hasSupabaseEnv } from "./lib/env.js";
 import { installCsvBlobSecurityGuard } from "./lib/csv-security.js";
 import { installSessionLifecycle } from "./lib/session-lifecycle.js";
+import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle.js";
+import "./lib/chartjs-global.js";
 import "./lib/supabase-legacy-bridge.js";
 import "./styles/visual-polish.css";
 import "./styles/access-dashboard.css";
@@ -44,6 +46,7 @@ import { initNucleoInitialRefresh } from "./modules/nucleo-initial-refresh.js";
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
 installSessionLifecycle();
+installBackgroundResourceLifecycle();
 initVisualPolish();
 initHealthIndigenousEnhancements();
 initHealthDashboardRefinementsSafe();

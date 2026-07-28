@@ -213,6 +213,13 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
     return true;
   }
 
+  window.addEventListener("agsus:background-suspend", () => {
+    stopAccessHeartbeat();
+  });
+  window.addEventListener("agsus:background-resume", () => {
+    if(session?.user?.id) startAccessHeartbeat();
+  });
+
   document.addEventListener("DOMContentLoaded", boot);
   async function boot(){
     applyTheme(); setupFixedTopbar(); bindEvents(); setProgress(6,"Preparando sessão..."); showLoading(true);

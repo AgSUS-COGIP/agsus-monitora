@@ -9,8 +9,20 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         analises: resolve(__dirname, "analises.html"),
-        authCallback: resolve(__dirname, "auth/callback.html")
-      }
-    }
-  }
+        authCallback: resolve(__dirname, "auth/callback.html"),
+      },
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("@supabase")) return "vendor-supabase";
+          if (id.includes("chart.js")) return "vendor-charts";
+          if (id.includes("echarts")) return "vendor-echarts";
+          if (id.includes("pdfjs-dist") || id.includes("tesseract.js")) {
+            return "vendor-documents";
+          }
+          return "vendor";
+        },
+      },
+    },
+  },
 });

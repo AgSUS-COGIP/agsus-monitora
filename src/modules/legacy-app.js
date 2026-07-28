@@ -3222,6 +3222,18 @@ function renderAccessUserAdminItem(user){
     }
   }
 
+  window.addEventListener("agsus:background-suspend", () => {
+    stopAccessHeartbeat();
+    stopRealtime();
+    stopAccessDashboardRefresh();
+  });
+  window.addEventListener("agsus:background-resume", () => {
+    if(!currentUser?.id) return;
+    startAccessHeartbeat();
+    startRealtime();
+    if(currentView === "acessos") startAccessDashboardRefresh();
+  });
+
   window.addEventListener("resize",()=>{ clearTimeout(window.__responsiveResize); window.__responsiveResize=setTimeout(()=>{ enforceResponsiveSidebar(); if(currentView==="dashboard") scheduleMapResize(80); },220); });
   window.addEventListener("orientationchange",()=>{ setTimeout(()=>{ enforceResponsiveSidebar(); if(currentView==="dashboard") scheduleMapResize(80); },300); });
 
