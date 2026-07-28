@@ -1,6 +1,7 @@
 import { installCsvBlobSecurityGuard } from "../lib/csv-security.js";
 import { installSessionLifecycle } from "../lib/session-lifecycle.js";
 import { installBackgroundResourceLifecycle } from "../lib/background-resource-lifecycle.js";
+import { installFrontendPerformanceMonitor } from "../lib/frontend-performance-monitor.js";
 import "../lib/chartjs-global.js";
 import "../lib/supabase-legacy-bridge.js";
 import "./analises-active-cache-recovery.js";
@@ -23,3 +24,4 @@ import "./analises-dark-mode-fix.js";
 installCsvBlobSecurityGuard();
 installSessionLifecycle();
 installBackgroundResourceLifecycle();
+installFrontendPerformanceMonitor();
