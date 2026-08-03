@@ -1,5 +1,4 @@
-import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
-import { createSafeAuthStorage } from "../modules/auth-storage.js";
+import { getSupabaseClient } from "../lib/supabaseClient.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME_ATIVOS = "vw_analises_dashboard_base";
@@ -224,18 +223,8 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   async function boot(){
     applyTheme(); setupFixedTopbar(); bindEvents(); setProgress(6,"Preparando sessão..."); showLoading(true);
     try{
-      const authStorage = createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY);
-
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: {
-          storage: authStorage,
-          storageKey: SUPABASE_AUTH_STORAGE_KEY,
-          persistSession: true,
-          autoRefreshToken: true,
-          flowType: "implicit",
-          detectSessionInUrl: true
-        }
-      });
+      sb = getSupabaseClient();
+      if(!sb) throw new Error("Não foi possível iniciar a conexão segura com o Supabase.");
 
       sb.auth.onAuthStateChange((event, nextSession) => {
         if(event === "SIGNED_OUT"){ resetPanelState(); showAuth("Sessão encerrada. Reabra o painel pelo menu do AgSUS Monitora."); return; }
@@ -848,3 +837,4 @@ import { createSafeAuthStorage } from "../modules/auth-storage.js";
   function toggleFullscreen(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
   function exportCSV(){ const source = panelRows; const headers=["edital_status","grupo","unidade","edital","codigo_vaga","nome_vaga","candidato","status_consolidado","etapa","data_analise","responsavel_analise","nota_final_ajustada","modalidade_concorrencia","link_pdf","data_validacao_status","analise"]; const csv=[headers.join(";"), ...source.map(r=>headers.map(h=>String(r[h] ?? "").replaceAll("\n"," ").replaceAll("\r"," ").replaceAll(";"," ").replaceAll('"',"'")).join(";"))].join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="agsus_analises_curriculares_v3.csv"; a.click(); URL.revokeObjectURL(a.href); toast(`Exportados ${fmt(source.length)} registros do recorte atual.`, "info"); }
   window.toggleDetails = toggleDetails; window.goPage = goPage;
+

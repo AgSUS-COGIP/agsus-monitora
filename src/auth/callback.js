@@ -1,4 +1,5 @@
 import { hasSupabaseEnv } from "../lib/env.js";
+import { isUsableSession } from "../lib/auth-flow.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 export function callbackResultUrl(result) {
@@ -24,7 +25,7 @@ export async function finishOAuth({
   locationRef = window.location,
   sessionStorageRef = window.sessionStorage,
   resolveClient = getSupabaseClient,
-  redirect = redirectHome
+  redirect = redirectHome,
 } = {}) {
   const search = new URLSearchParams(locationRef.search || "");
   const code = search.get("code");
@@ -46,10 +47,16 @@ export async function finishOAuth({
   }
 
   try {
-    const { error } = await client.auth.exchangeCodeForSession(code);
+    const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (error) throw error;
+    if (!isUsableSession(data?.session)) {
+      throw new Error("Sessão OAuth sem token de acesso utilizável.");
+    }
     try {
-      sessionStorageRef?.setItem?.("agsus_oauth_callback_ok", String(Date.now()));
+      sessionStorageRef?.setItem?.(
+        "agsus_oauth_callback_ok",
+        String(Date.now()),
+      );
     } catch (_) {}
     redirect("success");
     return true;

@@ -1,5 +1,6 @@
-import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
-import { createSafeAuthStorage } from "./auth-storage.js";
+import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { getOAuthCallbackUrl, isUsableSession } from "../lib/auth-flow.js";
+import { getSupabaseAuthStorage, getSupabaseClient } from "../lib/supabaseClient.js";
 import {
   accessRequestStatusMessage,
   renderAccessPanelChoicesHTML,
@@ -188,6 +189,7 @@ import { createAccessDashboard } from "./access-dashboard.js";
   let manualLogoutInProgress = false;
   let accessHeartbeatHandle = null;
   let activeSessionLoadPromise = null;
+  let oauthExchangeInProgress = false;
   let sessionBootstrappedUserId = "";
   let lastSignedInEventAt = 0;
   let activeLoadDataPromise = null;
@@ -424,23 +426,11 @@ import { createAccessDashboard } from "./access-dashboard.js";
       showAlert("configMsg","Configure SUPABASE_URL e SUPABASE_KEY no arquivo index.html.","error");
       return false;
     }
-    if(!window.supabase){
-      showAlert("configMsg","Não foi possível carregar a biblioteca do Supabase. Verifique a internet.","error");
-      return false;
-    }
-   authStorage = createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY);
-    
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: {
-        storage: authStorage,
-        storageKey: SUPABASE_AUTH_STORAGE_KEY,
-        persistSession: true,
-        autoRefreshToken: true,
-        flowType: "implicit",
-        detectSessionInUrl: true
-      }
-    });
-    return true;
+    authStorage = getSupabaseAuthStorage();
+    sb = getSupabaseClient();
+    if(sb) return true;
+    showAlert("configMsg","Não foi possível iniciar a conexão segura com o Supabase.","error");
+    return false;
   }
 
   function can(perm){
@@ -556,7 +546,7 @@ async function returnToLogin(){
   }
 
   async function handleSignedInSession(nextSession, source="auth"){
-    if(!nextSession?.user || manualLogoutInProgress) return;
+    if(!isUsableSession(nextSession) || manualLogoutInProgress) return;
 
     // O Supabase pode emitir SIGNED_IN novamente quando a aba volta ao foco
     // ou quando a sessão é sincronizada entre abas. Se o app já está aberto
@@ -596,11 +586,14 @@ async function returnToLogin(){
     const code = qs.get("code");
     if(!code) return false;
     loader(true, "Autenticando com Google", "Finalizando acesso seguro...", 18);
+    oauthExchangeInProgress = true;
     try{
       const { data, error } = await sb.auth.exchangeCodeForSession(code);
       if(error) throw error;
-      const session = data?.session || (await sb.auth.getSession()).data?.session;
-      if(session?.user){
+      const session = isUsableSession(data?.session)
+        ? data.session
+        : await waitForAuthSession(data?.user?.id || "");
+      if(isUsableSession(session)){
         await handleSignedInSession(session, "oauth_callback");
         return true;
       }
@@ -612,18 +605,20 @@ async function returnToLogin(){
       document.body.classList.remove("config-loading");
       resetSignedOutState("Não foi possível finalizar o login Google. Tente novamente escolhendo a conta.", "error");
       return true;
+    }finally{
+      oauthExchangeInProgress = false;
     }
   }
 
-  async function waitForAuthSession(maxWaitMs=3500){
+  async function waitForAuthSession(expectedUserId="", maxWaitMs=5000){
     const started = Date.now();
     while(Date.now() - started < maxWaitMs){
       const { data } = await sb.auth.getSession();
-      if(data?.session?.user) return data.session;
+      if(isUsableSession(data?.session, expectedUserId)) return data.session;
       await sleep(150);
     }
     const { data } = await sb.auth.getSession();
-    return data?.session || null;
+    return isUsableSession(data?.session, expectedUserId) ? data.session : null;
   }
 
   async function boot(){
@@ -648,6 +643,7 @@ async function returnToLogin(){
       if(event === "TOKEN_REFRESHED"){ currentUser = session?.user || currentUser; return; }
       if(event === "USER_UPDATED"){ setTimeout(() => refreshProfileAfterSessionUpdate(session), 0); }
       if(event === "SIGNED_IN"){
+        if(oauthExchangeInProgress) return;
         const uid = session?.user?.id || "";
         const now = Date.now();
 
@@ -680,7 +676,7 @@ async function returnToLogin(){
       resetSignedOutState(passwordResetMessage(), "warn");
       return;
     }
-    if(data && data.session){
+    if(isUsableSession(data?.session)){
       await handleSignedInSession(data.session, "boot");
     } else {
       loader(false);
@@ -688,6 +684,8 @@ async function returnToLogin(){
       if(authError){
         showAlert("loginMsg","Não foi possível finalizar o login Google. Tente novamente escolhendo a conta.","error");
         clearOAuthUrl();
+      }else if(data?.session){
+        resetSignedOutState("A sessão não foi concluída. Entre novamente com sua conta Google.", "warn");
       }
     }
   }
@@ -733,9 +731,7 @@ async function returnToLogin(){
     // O Google ainda pode ter conta ativa no navegador; prompt=select_account
     // forca a tela de escolha de conta.
     await clearLocalAuthState();
-    const redirectTo = window.location.origin && window.location.origin !== "null"
-      ? window.location.origin + window.location.pathname
-      : window.location.href.split("#")[0].split("?")[0];
+    const redirectTo = getOAuthCallbackUrl(window.location);
     const domainHint = txt(cfgValue("auth_google_domain_hint"));
     const queryParams = { prompt:"select_account consent", max_age:"0" };
     if(domainHint) queryParams.hd = domainHint;
@@ -3330,3 +3326,4 @@ function renderAccessUserAdminItem(user){
     toggleSidebar
   });
   boot();
+
