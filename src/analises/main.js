@@ -9,6 +9,7 @@ import "./analises-active-cache-recovery.js";
 import "./analises-consolidated-transport.js";
 import "./analises-scope-guard-safe.js";
 import "./analises-scope-runtime-integration.js";
+import "./analises-shared-client-bootstrap.js";
 import "./analises-modern-selects.js";
 import "./analises-runtime-stability.js";
 import "./analises-app.js";
