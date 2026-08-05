@@ -38,19 +38,41 @@ function googleAvatar(user, profile) {
 
 export function resolveAvatarPresentation({ profile, user }) {
   const source = safeText(profile?.avatar_source).toUpperCase() || "INITIALS";
-  const name = safeText(profile?.nome) || safeText(user?.user_metadata?.full_name) || safeText(user?.email);
+  const name =
+    safeText(profile?.nome) ||
+    safeText(user?.user_metadata?.full_name) ||
+    safeText(user?.email);
   const config = normalizeAvatarConfig(profile?.avatar_config, name);
   if (source === "GENERATED") {
-    return { source, name, url: avatarDataUri(config, name), initials: initialsFromName(name), config };
+    return {
+      source,
+      name,
+      url: avatarDataUri(config, name),
+      initials: initialsFromName(name),
+      config,
+    };
   }
   if (source === "GOOGLE") {
     const url = safeText(profile?.avatar_url) || googleAvatar(user, profile);
-    if (url) return { source, name, url, initials: initialsFromName(name), config };
+    if (url)
+      return { source, name, url, initials: initialsFromName(name), config };
   }
   if (source === "UPLOADED" && safeText(profile?.avatar_url)) {
-    return { source, name, url: safeText(profile.avatar_url), initials: initialsFromName(name), config };
+    return {
+      source,
+      name,
+      url: safeText(profile.avatar_url),
+      initials: initialsFromName(name),
+      config,
+    };
   }
-  return { source: "INITIALS", name, url: "", initials: initialsFromName(name), config };
+  return {
+    source: "INITIALS",
+    name,
+    url: "",
+    initials: initialsFromName(name),
+    config,
+  };
 }
 
 function setStatus(message, type = "info") {
@@ -69,13 +91,26 @@ function visualHtml(presentation, className = "") {
 }
 
 function refreshVisuals() {
-  const presentation = resolveAvatarPresentation({ profile: state.profile, user: state.user });
+  const presentation = resolveAvatarPresentation({
+    profile: state.profile,
+    user: state.user,
+  });
   const sidebar = document.getElementById("profileAvatarVisual");
   const preview = document.getElementById("profileAvatarPreview");
-  if (sidebar) sidebar.innerHTML = visualHtml(presentation, "profile-avatar-sidebar-image");
-  if (preview) preview.innerHTML = visualHtml(presentation, "profile-avatar-preview-image");
+  if (sidebar)
+    sidebar.innerHTML = visualHtml(
+      presentation,
+      "profile-avatar-sidebar-image",
+    );
+  if (preview)
+    preview.innerHTML = visualHtml(
+      presentation,
+      "profile-avatar-preview-image",
+    );
   const source = document.getElementById("profileAvatarSourceLabel");
-  if (source) source.textContent = SOURCE_LABELS[presentation.source] || SOURCE_LABELS.INITIALS;
+  if (source)
+    source.textContent =
+      SOURCE_LABELS[presentation.source] || SOURCE_LABELS.INITIALS;
 }
 
 function optionButtons(group, label) {
@@ -201,13 +236,19 @@ function syncEditor() {
   document.querySelectorAll("[data-avatar-group]").forEach((container) => {
     const key = container.dataset.avatarGroup;
     container.querySelectorAll("button").forEach((button) => {
-      button.setAttribute("aria-pressed", String(button.dataset.avatarValue === state.config[key]));
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.avatarValue === state.config[key]),
+      );
     });
   });
   document.querySelectorAll("[data-avatar-color]").forEach((container) => {
     const key = container.dataset.avatarColor;
     container.querySelectorAll("button").forEach((button) => {
-      button.classList.toggle("active", button.dataset.avatarValue === state.config[key]);
+      button.classList.toggle(
+        "active",
+        button.dataset.avatarValue === state.config[key],
+      );
     });
   });
   document.querySelectorAll("[data-avatar-toggle]").forEach((input) => {
@@ -215,7 +256,10 @@ function syncEditor() {
   });
 
   const preview = document.getElementById("profileAvatarPreview");
-  const name = safeText(state.profile?.nome) || safeText(state.user?.user_metadata?.full_name) || safeText(state.user?.email);
+  const name =
+    safeText(state.profile?.nome) ||
+    safeText(state.user?.user_metadata?.full_name) ||
+    safeText(state.user?.email);
   if (preview) {
     preview.innerHTML = `<img class="profile-avatar-preview-image" src="${avatarDataUri(state.config, name)}" alt="Prévia do avatar de ${name.replaceAll('"', "&quot;")}" />`;
   }
@@ -233,15 +277,22 @@ async function loadProfile() {
     return;
   }
   state.profile = Array.isArray(data) ? data[0] || null : data || null;
-  const name = safeText(state.profile?.nome) || safeText(state.user?.user_metadata?.full_name) || safeText(state.user?.email);
-  state.source = safeText(state.profile?.avatar_source).toUpperCase() || "INITIALS";
+  const name =
+    safeText(state.profile?.nome) ||
+    safeText(state.user?.user_metadata?.full_name) ||
+    safeText(state.user?.email);
+  state.source =
+    safeText(state.profile?.avatar_source).toUpperCase() || "INITIALS";
   state.config = normalizeAvatarConfig(state.profile?.avatar_config, name);
   refreshVisuals();
   syncEditor();
   const fields = {
     profileAvatarName: name || "Sua identidade visual",
     profileAvatarDataName: name || "Não informado",
-    profileAvatarDataEmail: safeText(state.profile?.email) || safeText(state.user?.email) || "Não informado",
+    profileAvatarDataEmail:
+      safeText(state.profile?.email) ||
+      safeText(state.user?.email) ||
+      "Não informado",
     profileAvatarDataRole: safeText(state.profile?.perfil) || "Não informado",
   };
   Object.entries(fields).forEach(([id, value]) => {
@@ -249,7 +300,8 @@ async function loadProfile() {
     if (element) element.textContent = value;
   });
   const googleButton = document.getElementById("profileAvatarGoogle");
-  if (googleButton) googleButton.disabled = !googleAvatar(state.user, state.profile);
+  if (googleButton)
+    googleButton.disabled = !googleAvatar(state.user, state.profile);
 }
 
 async function persist(source, url = null, config = state.config) {
@@ -268,11 +320,20 @@ async function persist(source, url = null, config = state.config) {
     const result = Array.isArray(data) ? data[0] || {} : data || {};
     state.profile = { ...state.profile, ...result };
     state.source = source;
-    if (source === "GENERATED") state.config = normalizeAvatarConfig(config, state.profile?.nome);
+    if (source === "GENERATED")
+      state.config = normalizeAvatarConfig(config, state.profile?.nome);
     refreshVisuals();
-    setStatus("Imagem de perfil atualizada em todo o AgSUS Monitora.", "success");
+    setStatus(
+      "Imagem de perfil atualizada em todo o AgSUS Monitora.",
+      "success",
+    );
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Não foi possível atualizar a imagem.", "error");
+    setStatus(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível atualizar a imagem.",
+      "error",
+    );
   } finally {
     state.saving = false;
   }
@@ -295,16 +356,23 @@ async function uploadFile(file) {
     setStatus("Enviando sua foto…");
     const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/profile.${extension}`;
-    const { error } = await client.storage.from("monitora-avatars").upload(path, file, {
-      upsert: true,
-      contentType: file.type,
-      cacheControl: "3600",
-    });
+    const { error } = await client.storage
+      .from("monitora-avatars")
+      .upload(path, file, {
+        upsert: true,
+        contentType: file.type,
+        cacheControl: "3600",
+      });
     if (error) throw error;
     const { data } = client.storage.from("monitora-avatars").getPublicUrl(path);
     await persist("UPLOADED", `${data.publicUrl}?v=${Date.now()}`);
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Não foi possível enviar a foto.", "error");
+    setStatus(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível enviar a foto.",
+      "error",
+    );
   }
 }
 
@@ -326,19 +394,33 @@ function closeDialog() {
 }
 
 function bindEvents() {
-  document.getElementById("profileAvatarButton")?.addEventListener("click", openDialog);
-  document.getElementById("profileAvatarClose")?.addEventListener("click", closeDialog);
-  document.getElementById("profileAvatarBackdrop")?.addEventListener("click", (event) => {
-    if (event.target.id === "profileAvatarBackdrop") closeDialog();
-  });
+  document
+    .getElementById("profileAvatarButton")
+    ?.addEventListener("click", openDialog);
+  document
+    .getElementById("profileAvatarClose")
+    ?.addEventListener("click", closeDialog);
+  document
+    .getElementById("profileAvatarBackdrop")
+    ?.addEventListener("click", (event) => {
+      if (event.target.id === "profileAvatarBackdrop") closeDialog();
+    });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !document.getElementById("profileAvatarBackdrop")?.hidden) closeDialog();
+    if (
+      event.key === "Escape" &&
+      !document.getElementById("profileAvatarBackdrop")?.hidden
+    )
+      closeDialog();
   });
 
   document.querySelectorAll("[data-avatar-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       const tab = button.dataset.avatarTab;
-      document.querySelectorAll("[data-avatar-tab]").forEach((item) => item.setAttribute("aria-selected", String(item === button)));
+      document
+        .querySelectorAll("[data-avatar-tab]")
+        .forEach((item) =>
+          item.setAttribute("aria-selected", String(item === button)),
+        );
       document.querySelectorAll("[data-avatar-panel]").forEach((panel) => {
         panel.hidden = panel.dataset.avatarPanel !== tab;
       });
@@ -360,31 +442,57 @@ function bindEvents() {
   });
   document.querySelectorAll("[data-avatar-toggle]").forEach((input) => {
     input.addEventListener("change", () => {
-      state.config = { ...state.config, [input.dataset.avatarToggle]: input.checked };
+      state.config = {
+        ...state.config,
+        [input.dataset.avatarToggle]: input.checked,
+      };
       syncEditor();
     });
   });
 
-  document.getElementById("profileAvatarRandom")?.addEventListener("click", () => {
-    state.config = randomAvatarConfig(state.profile?.nome || state.user?.email || "");
-    syncEditor();
-  });
-  document.getElementById("profileAvatarReset")?.addEventListener("click", () => {
-    state.config = defaultAvatarConfig(state.profile?.nome || state.user?.email || "");
-    syncEditor();
-  });
-  document.getElementById("profileAvatarSaveGenerated")?.addEventListener("click", () => void persist("GENERATED", null, state.config));
-  document.getElementById("profileAvatarGoogle")?.addEventListener("click", () => {
-    const url = googleAvatar(state.user, state.profile);
-    if (url) void persist("GOOGLE", url);
-  });
-  document.getElementById("profileAvatarInitials")?.addEventListener("click", () => void persist("INITIALS"));
-  document.getElementById("profileAvatarUploadButton")?.addEventListener("click", () => document.getElementById("profileAvatarUpload")?.click());
-  document.getElementById("profileAvatarUpload")?.addEventListener("change", (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    void uploadFile(file);
-  });
+  document
+    .getElementById("profileAvatarRandom")
+    ?.addEventListener("click", () => {
+      state.config = randomAvatarConfig(
+        state.profile?.nome || state.user?.email || "",
+      );
+      syncEditor();
+    });
+  document
+    .getElementById("profileAvatarReset")
+    ?.addEventListener("click", () => {
+      state.config = defaultAvatarConfig(
+        state.profile?.nome || state.user?.email || "",
+      );
+      syncEditor();
+    });
+  document
+    .getElementById("profileAvatarSaveGenerated")
+    ?.addEventListener(
+      "click",
+      () => void persist("GENERATED", null, state.config),
+    );
+  document
+    .getElementById("profileAvatarGoogle")
+    ?.addEventListener("click", () => {
+      const url = googleAvatar(state.user, state.profile);
+      if (url) void persist("GOOGLE", url);
+    });
+  document
+    .getElementById("profileAvatarInitials")
+    ?.addEventListener("click", () => void persist("INITIALS"));
+  document
+    .getElementById("profileAvatarUploadButton")
+    ?.addEventListener("click", () =>
+      document.getElementById("profileAvatarUpload")?.click(),
+    );
+  document
+    .getElementById("profileAvatarUpload")
+    ?.addEventListener("change", (event) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      void uploadFile(file);
+    });
 }
 
 function installSidebarButton() {
@@ -395,7 +503,8 @@ function installSidebarButton() {
   button.type = "button";
   button.className = "profile-avatar-sidebar-button";
   button.setAttribute("aria-label", "Abrir meu perfil");
-  button.innerHTML = '<span id="profileAvatarVisual" class="profile-avatar-sidebar-visual"><span class="profile-avatar-initials">?</span></span><span>Meu perfil</span>';
+  button.innerHTML =
+    '<span id="profileAvatarVisual" class="profile-avatar-sidebar-visual"><span class="profile-avatar-initials">?</span></span><span>Meu perfil</span>';
   container.prepend(button);
 }
 
@@ -408,9 +517,20 @@ export function initProfileAvatar() {
   if (!client) return;
   void loadProfile();
   client.auth.onAuthStateChange((event) => {
-    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") void loadProfile();
+    if (
+      event === "SIGNED_IN" ||
+      event === "TOKEN_REFRESHED" ||
+      event === "USER_UPDATED"
+    )
+      void loadProfile();
     if (event === "SIGNED_OUT") {
-      state = { profile: null, user: null, config: defaultAvatarConfig(""), source: "INITIALS", saving: false };
+      state = {
+        profile: null,
+        user: null,
+        config: defaultAvatarConfig(""),
+        source: "INITIALS",
+        saving: false,
+      };
       refreshVisuals();
       closeDialog();
     }

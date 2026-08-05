@@ -1,7 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
 import { extname } from "node:path";
-import { gzipSync } from "node:zlib";
 
 const BASE_REF = process.env.QUALITY_BASE_REF || "origin/main";
 const SUPPORTED_EXTENSIONS = new Set([".js", ".mjs", ".css", ".html"]);
@@ -11,12 +9,6 @@ const EXCLUDED = new Set([
   "src/modules/legacy-app.js",
   "src/analises/analises-app.js",
 ]);
-const DIAGNOSTIC_FILES = [
-  "src/lib/avatar-config.js",
-  "src/modules/profile-avatar.js",
-  "src/styles/profile-avatar.css",
-  "tests/avatar-config.test.js",
-];
 
 function git(...args) {
   return execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -57,16 +49,14 @@ if (!candidates.length) {
   process.exit(0);
 }
 
-execFileSync("npx", ["prettier", "--write", ...candidates], {
-  stdio: "inherit",
-  shell: process.platform === "win32",
-});
-
-for (const path of DIAGNOSTIC_FILES) {
-  const encoded = gzipSync(readFileSync(path)).toString("base64");
-  console.log(`FORMAT_GZIP_BEGIN:${path}`);
-  console.log(encoded);
-  console.log(`FORMAT_GZIP_END:${path}`);
+try {
+  execFileSync("npx", ["prettier", "--check", ...candidates], {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+  console.log(
+    `Formatação validada em ${candidates.length} ficheiro(s) alterado(s).`,
+  );
+} catch {
+  process.exit(1);
 }
-
-console.log(`Formatação aplicada em ${candidates.length} ficheiro(s) alterado(s).`);

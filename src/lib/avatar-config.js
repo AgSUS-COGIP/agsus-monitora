@@ -1,7 +1,16 @@
 const OPTION_GROUPS = {
   face: ["round", "oval", "square", "soft"],
   nose: ["small", "straight", "round", "wide"],
-  hair: ["short", "classic", "waves", "curls", "coils", "long", "bun", "modern"],
+  hair: [
+    "short",
+    "classic",
+    "waves",
+    "curls",
+    "coils",
+    "long",
+    "bun",
+    "modern",
+  ],
   eyes: ["natural", "happy", "calm", "focused", "expressive"],
   mouth: ["smile", "warm", "confident", "subtle", "serious"],
 };
@@ -75,11 +84,15 @@ function enumValue(value, allowed, fallback) {
 }
 
 export function normalizeAvatarConfig(value, name = "") {
-  const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const source =
+    value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const fallback = defaultAvatarConfig(name);
   return {
     version: 1,
-    seed: typeof source.seed === "string" && source.seed.trim() ? source.seed.slice(0, 120) : fallback.seed,
+    seed:
+      typeof source.seed === "string" && source.seed.trim()
+        ? source.seed.slice(0, 120)
+        : fallback.seed,
     face: enumValue(source.face, OPTION_GROUPS.face, fallback.face),
     nose: enumValue(source.nose, OPTION_GROUPS.nose, fallback.nose),
     hair: enumValue(source.hair, OPTION_GROUPS.hair, fallback.hair),
@@ -89,9 +102,21 @@ export function normalizeAvatarConfig(value, name = "") {
     beard: source.beard === true,
     freckles: source.freckles === true,
     earrings: source.earrings === true,
-    hairColor: enumValue(source.hairColor, avatarColors.hair, fallback.hairColor),
-    skinColor: enumValue(source.skinColor, avatarColors.skin, fallback.skinColor),
-    backgroundColor: enumValue(source.backgroundColor, avatarColors.background, fallback.backgroundColor),
+    hairColor: enumValue(
+      source.hairColor,
+      avatarColors.hair,
+      fallback.hairColor,
+    ),
+    skinColor: enumValue(
+      source.skinColor,
+      avatarColors.skin,
+      fallback.skinColor,
+    ),
+    backgroundColor: enumValue(
+      source.backgroundColor,
+      avatarColors.background,
+      fallback.backgroundColor,
+    ),
   };
 }
 
@@ -105,25 +130,35 @@ export function initialsFromName(name) {
 }
 
 function escapeXml(value) {
-  return String(value).replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&apos;",
-  })[character]);
+  return String(value).replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&apos;",
+      })[character],
+  );
 }
 
 function hairPath(type) {
   const paths = {
-    short: "M70 115C72 57 113 36 160 45c38 7 62 34 65 72-28-22-54-30-79-28-24 2-48 11-76 26Z",
-    classic: "M66 121C67 61 105 35 157 40c48 4 71 38 70 83-27-30-56-37-85-32-25 4-48 14-76 30Z",
-    waves: "M61 127C61 65 99 34 151 38c53 4 81 42 78 91-17-17-31-24-47-27-19-4-30 2-44-4-24-10-45 3-77 29Z",
-    curls: "M58 129c-4-53 26-92 72-99 49-8 93 21 101 76 3 19-3 36-9 50-8-26-24-35-43-32-22 4-33-9-52-7-23 2-38 19-69 12Z",
-    coils: "M55 139c-9-45 7-93 49-112 48-22 105 1 126 48 11 25 8 53-2 78-17-21-33-26-51-20-20 7-34-6-53-2-23 5-37 18-69 8Z",
+    short:
+      "M70 115C72 57 113 36 160 45c38 7 62 34 65 72-28-22-54-30-79-28-24 2-48 11-76 26Z",
+    classic:
+      "M66 121C67 61 105 35 157 40c48 4 71 38 70 83-27-30-56-37-85-32-25 4-48 14-76 30Z",
+    waves:
+      "M61 127C61 65 99 34 151 38c53 4 81 42 78 91-17-17-31-24-47-27-19-4-30 2-44-4-24-10-45 3-77 29Z",
+    curls:
+      "M58 129c-4-53 26-92 72-99 49-8 93 21 101 76 3 19-3 36-9 50-8-26-24-35-43-32-22 4-33-9-52-7-23 2-38 19-69 12Z",
+    coils:
+      "M55 139c-9-45 7-93 49-112 48-22 105 1 126 48 11 25 8 53-2 78-17-21-33-26-51-20-20 7-34-6-53-2-23 5-37 18-69 8Z",
     long: "M64 116c3-55 40-84 91-82 49 2 79 34 80 87l-13 114h-31l8-105c-18-25-44-34-72-27-23 5-37 17-51 33l2 99H48Z",
     bun: "M66 118c1-51 37-80 86-80 48 0 78 29 80 78-25-19-50-27-77-24-28 3-55 13-89 26Zm91-80c-20 0-34-11-34-27s14-27 34-27 34 11 34 27-14 27-34 27Z",
-    modern: "M65 119c1-55 35-83 85-84 53-2 80 33 80 86-23-22-50-31-79-27-25 3-47 14-67 32l-19-7Zm119-76 36-20-13 38Z",
+    modern:
+      "M65 119c1-55 35-83 85-84 53-2 80 33 80 86-23-22-50-31-79-27-25 3-47 14-67 32l-19-7Zm119-76 36-20-13 38Z",
   };
   return paths[type] || paths.short;
 }

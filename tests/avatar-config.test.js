@@ -29,7 +29,9 @@ describe("avatar institucional", () => {
     expect(normalized.face).toBe("round");
     expect(normalized.hair).toBe("modern");
     expect(normalized.glasses).toBe(false);
-    expect(normalized.skinColor).toBe(defaultAvatarConfig("Pessoa Teste").skinColor);
+    expect(normalized.skinColor).toBe(
+      defaultAvatarConfig("Pessoa Teste").skinColor,
+    );
   });
 
   it("gera SVG autocontido e escapa o nome acessível", () => {
