@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isIosLike,
   isStandaloneDisplayMode,
+  shouldCheckForUpdate,
   shouldShowIosInstallGuidance,
 } from "../src/modules/pwa-lifecycle.js";
 
@@ -71,5 +72,34 @@ describe("pwa lifecycle helpers", () => {
         dismissed: true,
       }),
     ).toBe(false);
+  });
+
+  it("verifica atualização somente online, visível e após o intervalo", () => {
+    const base = {
+      now: 1_000_000,
+      lastCheckedAt: 100_000,
+      online: true,
+      visible: true,
+      minimumInterval: 900_000,
+    };
+
+    expect(shouldCheckForUpdate(base)).toBe(true);
+    expect(shouldCheckForUpdate({ ...base, online: false })).toBe(false);
+    expect(shouldCheckForUpdate({ ...base, visible: false })).toBe(false);
+    expect(shouldCheckForUpdate({ ...base, lastCheckedAt: 200_000 })).toBe(
+      false,
+    );
+  });
+
+  it("permite a primeira verificação sem histórico", () => {
+    expect(
+      shouldCheckForUpdate({
+        now: 100,
+        lastCheckedAt: 0,
+        online: true,
+        visible: true,
+        minimumInterval: 900_000,
+      }),
+    ).toBe(true);
   });
 });

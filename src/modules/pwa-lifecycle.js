@@ -1,7 +1,9 @@
 let deferredInstallPrompt = null;
 let refreshingForUpdate = false;
+let lastUpdateCheckAt = 0;
 
 const IOS_GUIDANCE_DISMISSED_KEY = "agsus-pwa-ios-guidance-dismissed";
+const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
 
 export function isIosLike({
   userAgent = "",
@@ -26,6 +28,18 @@ export function shouldShowIosInstallGuidance({
   dismissed,
 }) {
   return Boolean(iosLike && !standalone && !dismissed);
+}
+
+export function shouldCheckForUpdate({
+  now,
+  lastCheckedAt,
+  online,
+  visible,
+  minimumInterval = UPDATE_CHECK_INTERVAL_MS,
+}) {
+  if (!online || !visible) return false;
+  if (!lastCheckedAt) return true;
+  return now - lastCheckedAt >= minimumInterval;
 }
 
 function createActionButton(label, action, secondary = false) {
@@ -152,6 +166,28 @@ function watchRegistration(registration) {
   });
 }
 
+function checkRegistrationForUpdate(registration) {
+  const now = Date.now();
+  const shouldCheck = shouldCheckForUpdate({
+    now,
+    lastCheckedAt: lastUpdateCheckAt,
+    online: navigator.onLine,
+    visible: document.visibilityState === "visible",
+  });
+
+  if (!shouldCheck) return;
+
+  lastUpdateCheckAt = now;
+  registration.update().catch(() => {});
+}
+
+function bindUpdateRefresh(registration) {
+  const requestUpdateCheck = () => checkRegistrationForUpdate(registration);
+
+  document.addEventListener("visibilitychange", requestUpdateCheck);
+  window.addEventListener("online", requestUpdateCheck);
+}
+
 function bindInstallPrompt() {
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
@@ -192,7 +228,13 @@ function bindIosInstallGuidance() {
 function bindServiceWorkerUpdates() {
   if (!("serviceWorker" in navigator)) return;
 
-  navigator.serviceWorker.ready.then(watchRegistration).catch(() => {});
+  navigator.serviceWorker.ready
+    .then((registration) => {
+      watchRegistration(registration);
+      bindUpdateRefresh(registration);
+      lastUpdateCheckAt = Date.now();
+    })
+    .catch(() => {});
 
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (refreshingForUpdate) return;
