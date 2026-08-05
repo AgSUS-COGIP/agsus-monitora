@@ -1,33 +1,20 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Finalizando login - AgSUS Monitora</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root { color-scheme: light; }
-    body { margin:0; min-height:100vh; display:grid; place-items:center; font-family:Inter,system-ui,sans-serif; background:#f3f7fb; color:#10243e; }
-    .card { width:min(420px,calc(100vw - 32px)); background:#fff; border:1px solid #d7e5f2; border-radius:16px; padding:24px; box-shadow:0 16px 40px rgba(15,35,60,.12); }
-    .row { display:flex; gap:14px; align-items:center; }
-    .spin { width:28px; height:28px; border-radius:999px; border:3px solid #d7e5f2; border-top-color:#003b70; animation:spin .8s linear infinite; flex:0 0 auto; }
-    h1 { margin:0; font-size:18px; }
-    p { margin:8px 0 0; color:#63748d; font-weight:700; font-size:13px; line-height:1.45; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-  </style>
-</head>
-<body>
-  <main class="card" role="status" aria-live="polite">
-    <div class="row">
-      <div class="spin" aria-hidden="true"></div>
-      <div>
-        <h1>Finalizando login Google</h1>
-        <p>Validando a sessão com segurança. Você será redirecionado automaticamente.</p>
-      </div>
-    </div>
-  </main>
-  <script type="module" src="/src/auth/callback.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>AgSUS Monitora</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #ffffff;
+      }
+    </style>
+  </head>
+  <body aria-hidden="true">
+    <script type="module" src="/src/auth/callback.js"></script>
+  </body>
 </html>
