@@ -1,0 +1,55 @@
+{
+  "name": "AgSUS Monitora",
+  "short_name": "Monitora",
+  "description": "Painel de monitoramento e análises da AgSUS.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f4f7fa",
+  "theme_color": "#003b70",
+  "lang": "pt-BR",
+  "categories": ["business", "productivity", "medical"],
+  "icons": [
+    {
+      "src": "/icons/agsus-monitora.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/agsus-monitora-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Painel principal",
+      "short_name": "Painel",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icons/agsus-monitora.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Análises",
+      "short_name": "Análises",
+      "url": "/analises.html",
+      "icons": [
+        {
+          "src": "/icons/agsus-monitora.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}
