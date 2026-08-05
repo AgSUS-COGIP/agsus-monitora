@@ -16,7 +16,10 @@ async function expectNoSupabaseCdn(request, path) {
 }
 
 test.describe("AgSUS Monitora smoke", () => {
-  test("abre a aplicação principal sem erro crítico de JavaScript", async ({ page, request }) => {
+  test("abre a aplicação principal sem erro crítico de JavaScript", async ({
+    page,
+    request,
+  }) => {
     const pageErrors = collectPageErrors(page);
 
     await expectNoSupabaseCdn(request, "/");
@@ -30,7 +33,10 @@ test.describe("AgSUS Monitora smoke", () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test("abre o painel de análises sem erro crítico de JavaScript", async ({ page, request }) => {
+  test("abre o painel de análises sem erro crítico de JavaScript", async ({
+    page,
+    request,
+  }) => {
     const pageErrors = collectPageErrors(page);
 
     await expectNoSupabaseCdn(request, "/analises.html");
@@ -45,14 +51,16 @@ test.describe("AgSUS Monitora smoke", () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test("o callback de autenticação é visualmente neutro", async ({ request }) => {
+  test("o callback de autenticação é visualmente neutro", async ({
+    request,
+  }) => {
     const response = await request.get("/auth/callback.html");
     expect(response.ok()).toBeTruthy();
 
     const html = await response.text();
     expect(html).not.toContain("Finalizando login Google");
-    expect(html).not.toContain("class=\"card\"");
-    expect(html).not.toContain("class=\"spin\"");
+    expect(html).not.toContain('class="card"');
+    expect(html).not.toContain('class="spin"');
     expect(html).toContain('aria-hidden="true"');
     expect(html).toContain('type="module"');
     expect(html).toMatch(/src="\/assets\/authCallback-[^"]+\.js"/);
