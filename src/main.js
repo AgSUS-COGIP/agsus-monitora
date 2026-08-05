@@ -25,6 +25,7 @@ import "./styles/nucleo-cronograma-manual-only.css";
 import "./styles/nucleo-operational-enhancements.css";
 import "./styles/nucleo-cronograma-tools.css";
 import "./styles/mobile-app.css";
+import "./styles/mobile-bottom-navigation.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -46,6 +47,7 @@ import { initNucleoCronogramaTools } from "./modules/nucleo-cronograma-tools.js"
 import { initNucleoCronogramaOpenHook } from "./modules/nucleo-cronograma-open-hook.js";
 import { initNucleoInitialRefresh } from "./modules/nucleo-initial-refresh.js";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
+import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -71,6 +73,7 @@ initNucleoCronogramaTools();
 initNucleoCronogramaOpenHook();
 initNucleoInitialRefresh();
 initMobileAppExperience();
+initMobileBottomNavigation();
 
 if (!hasSupabaseEnv()) {
   console.error(

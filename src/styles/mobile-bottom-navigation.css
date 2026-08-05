@@ -1,0 +1,103 @@
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  body.mobile-app {
+    padding-bottom: calc(84px + var(--mobile-safe-bottom));
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    right: max(10px, var(--mobile-safe-right));
+    bottom: max(10px, var(--mobile-safe-bottom));
+    left: max(10px, var(--mobile-safe-left));
+    z-index: 10000;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    min-height: 64px;
+    padding: 6px;
+    border: 1px solid rgba(9, 56, 96, 0.12);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 14px 36px rgba(8, 39, 67, 0.2);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-bottom-nav.hidden {
+    display: none;
+  }
+
+  .mobile-bottom-nav__item {
+    display: inline-flex;
+    min-width: 0;
+    min-height: 52px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 5px 3px;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    color: #36546e;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .mobile-bottom-nav__item i {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .mobile-bottom-nav__item span {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-bottom-nav__item.is-active {
+    background: rgba(0, 89, 153, 0.1);
+    color: #005999;
+  }
+
+  .mobile-bottom-nav__item:focus-visible {
+    outline: 3px solid rgba(0, 89, 153, 0.28);
+    outline-offset: 1px;
+  }
+
+  .toast-box,
+  #toastBox {
+    bottom: calc(88px + var(--mobile-safe-bottom)) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .mobile-bottom-nav {
+    right: max(6px, var(--mobile-safe-right));
+    bottom: max(6px, var(--mobile-safe-bottom));
+    left: max(6px, var(--mobile-safe-left));
+    border-radius: 18px;
+  }
+
+  .mobile-bottom-nav__item {
+    min-height: 50px;
+  }
+
+  .mobile-bottom-nav__item span {
+    font-size: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-bottom-nav,
+  .mobile-bottom-nav__item {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}
