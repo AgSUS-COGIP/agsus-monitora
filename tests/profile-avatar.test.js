@@ -75,5 +75,6 @@ describe("apresentação do avatar do perfil", () => {
     expect(html).not.toContain("profileAvatarDataRole");
     expect(html).not.toContain("<small>E-mail</small>");
     expect(html).not.toContain("<small>Perfil</small>");
+    expect(html).not.toContain("Master");
   });
 });
