@@ -10,8 +10,8 @@
   backdrop-filter: blur(8px) saturate(1.08);
 }
 
-body.config-loading .loader.show {
-  display: grid !important;
+body.config-loading .loader {
+  display: none !important;
 }
 
 .loader-card {
@@ -127,8 +127,7 @@ body.config-loading .loader.show {
 }
 
 @media (max-width: 560px) {
-  .loader-card,
-  body.config-loading .loader-card {
+  .loader-card {
     grid-template-columns: 42px minmax(0, 1fr);
     gap: 12px;
     padding: 20px 18px;

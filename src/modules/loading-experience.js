@@ -64,27 +64,6 @@ function updateLoadingExperience() {
   retry.hidden = !stage.canRetry;
 }
 
-function prepareInitialLoading(loader) {
-  if (!document.body.classList.contains("config-loading")) return;
-
-  const stage = getLoadingStage({ progress: 5 });
-  const title = document.getElementById("loaderTitle");
-  const detail = document.getElementById("loaderSub");
-  const percentage = document.getElementById("loaderPct");
-  const bar = document.getElementById("loaderBar");
-
-  if (title && isGenericLoadingCopy(title.textContent)) {
-    title.textContent = stage.title;
-  }
-  if (detail && isGenericLoadingCopy(detail.textContent)) {
-    detail.textContent = stage.detail;
-  }
-  if (percentage) percentage.textContent = "5%";
-  if (bar) bar.style.width = "5%";
-
-  loader.classList.add("show");
-}
-
 function startTimer() {
   stopTimer();
   loadingStartedAt = Date.now();
@@ -108,7 +87,6 @@ export function initLoadingExperience() {
   loader.setAttribute("role", "status");
   loader.setAttribute("aria-live", "polite");
   loader.setAttribute("aria-atomic", "true");
-  prepareInitialLoading(loader);
 
   let lastActive = null;
   const sync = () => {
