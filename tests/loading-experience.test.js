@@ -18,7 +18,7 @@ beforeEach(() => {
   `;
 });
 
-it("exibe o carregamento inicial com mensagem acessível", async () => {
+it("mantem o login inicial sem overlay de carregamento", async () => {
   vi.resetModules();
   const { initLoadingExperience } =
     await import("../src/modules/loading-experience.js");
@@ -26,8 +26,24 @@ it("exibe o carregamento inicial com mensagem acessível", async () => {
   initLoadingExperience();
 
   const loader = document.getElementById("loader");
-  expect(loader.classList.contains("show")).toBe(true);
+  expect(loader.classList.contains("show")).toBe(false);
   expect(loader.getAttribute("role")).toBe("status");
+  expect(loader.getAttribute("aria-hidden")).toBe("true");
+  expect(document.body.getAttribute("aria-busy")).toBe("false");
+  expect(document.getElementById("loaderMeta")).toBeNull();
+});
+
+it("melhora o carregamento quando ele for ativado apos o login", async () => {
+  vi.setSystemTime(new Date("2026-08-05T13:00:00Z"));
+  vi.resetModules();
+  const { initLoadingExperience } =
+    await import("../src/modules/loading-experience.js");
+
+  initLoadingExperience();
+  document.body.classList.remove("config-loading");
+  document.getElementById("loader").classList.add("show");
+  vi.advanceTimersByTime(250);
+
   expect(document.body.getAttribute("aria-busy")).toBe("true");
   expect(document.getElementById("loaderTitle").textContent).toBe(
     "Preparando o AgSUS Monitora",
@@ -35,15 +51,7 @@ it("exibe o carregamento inicial com mensagem acessível", async () => {
   expect(document.getElementById("loaderMeta").textContent).toContain(
     "Etapa 1",
   );
-});
 
-it("oferece nova tentativa após uma espera prolongada", async () => {
-  vi.setSystemTime(new Date("2026-08-05T13:00:00Z"));
-  vi.resetModules();
-  const { initLoadingExperience } =
-    await import("../src/modules/loading-experience.js");
-
-  initLoadingExperience();
   vi.advanceTimersByTime(25_000);
 
   expect(document.getElementById("loaderRetry").hidden).toBe(false);
