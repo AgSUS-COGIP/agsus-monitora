@@ -52,6 +52,17 @@ jobs:
       - name: Verificar formatação alterada
         run: npm run format:check
 
+      - name: Empacotar formatação canônica
+        uses: actions/upload-artifact@v4
+        with:
+          name: profile-avatar-formatted
+          path: |
+            src/lib/avatar-config.js
+            src/modules/profile-avatar.js
+            src/styles/profile-avatar.css
+            tests/avatar-config.test.js
+          if-no-files-found: error
+
       - name: Testes e cobertura
         run: npm run test:coverage
 
