@@ -15,7 +15,7 @@ describe("loading copy", () => {
   });
 
   it("reconhece mensagens genéricas sem substituir conteúdo específico", () => {
-    expect(isGenericLoadingCopy("Carregando...")) .toBe(true);
+    expect(isGenericLoadingCopy("Carregando...")).toBe(true);
     expect(isGenericLoadingCopy("Preparando dados…")).toBe(true);
     expect(isGenericLoadingCopy("Validando permissões do seu perfil")).toBe(
       false,
