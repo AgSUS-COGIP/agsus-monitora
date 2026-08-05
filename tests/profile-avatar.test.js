@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveAvatarPresentation } from "../src/modules/profile-avatar.js";
+import {
+  profileAvatarDialogHtml,
+  resolveAvatarPresentation,
+} from "../src/modules/profile-avatar.js";
 
 describe("apresentação do avatar do perfil", () => {
   const user = {
@@ -10,7 +13,7 @@ describe("apresentação do avatar do perfil", () => {
     },
   };
 
-  it("gera o personagem a partir da configuração persistida", () => {
+  it("gera o retrato a partir da configuração persistida", () => {
     const presentation = resolveAvatarPresentation({
       user,
       profile: {
@@ -22,6 +25,7 @@ describe("apresentação do avatar do perfil", () => {
 
     expect(presentation.source).toBe("GENERATED");
     expect(presentation.url).toMatch(/^data:image\/svg\+xml/);
+    expect(presentation.config.version).toBe(2);
     expect(presentation.config.hair).toBe("modern");
     expect(presentation.config.glasses).toBe(true);
   });
@@ -59,5 +63,17 @@ describe("apresentação do avatar do perfil", () => {
     expect(presentation.source).toBe("INITIALS");
     expect(presentation.url).toBe("");
     expect(presentation.initials).toBe("PA");
+  });
+
+  it("não exibe e-mail, perfil funcional ou dados institucionais no estúdio", () => {
+    const html = profileAvatarDialogHtml();
+
+    expect(html).toContain("Crie seu retrato institucional");
+    expect(html).toContain("Vestuário");
+    expect(html).not.toContain("Dados institucionais");
+    expect(html).not.toContain("profileAvatarDataEmail");
+    expect(html).not.toContain("profileAvatarDataRole");
+    expect(html).not.toContain("<small>E-mail</small>");
+    expect(html).not.toContain("<small>Perfil</small>");
   });
 });
