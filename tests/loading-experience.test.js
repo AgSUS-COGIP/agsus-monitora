@@ -20,9 +20,8 @@ beforeEach(() => {
 
 it("exibe o carregamento inicial com mensagem acessível", async () => {
   vi.resetModules();
-  const { initLoadingExperience } = await import(
-    "../src/modules/loading-experience.js"
-  );
+  const { initLoadingExperience } =
+    await import("../src/modules/loading-experience.js");
 
   initLoadingExperience();
 
@@ -41,9 +40,8 @@ it("exibe o carregamento inicial com mensagem acessível", async () => {
 it("oferece nova tentativa após uma espera prolongada", async () => {
   vi.setSystemTime(new Date("2026-08-05T13:00:00Z"));
   vi.resetModules();
-  const { initLoadingExperience } = await import(
-    "../src/modules/loading-experience.js"
-  );
+  const { initLoadingExperience } =
+    await import("../src/modules/loading-experience.js");
 
   initLoadingExperience();
   vi.advanceTimersByTime(25_000);
