@@ -1,0 +1,382 @@
+/* Experiência mobile tipo aplicativo para o AgSUS Monitora */
+:root {
+  --mobile-safe-top: env(safe-area-inset-top, 0px);
+  --mobile-safe-right: env(safe-area-inset-right, 0px);
+  --mobile-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mobile-safe-left: env(safe-area-inset-left, 0px);
+  --mobile-touch-size: 44px;
+}
+
+html {
+  min-width: 320px;
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100dvh;
+  padding-left: var(--mobile-safe-left);
+  padding-right: var(--mobile-safe-right);
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+.btn,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+@media (max-width: 900px) {
+  body {
+    background: #f4f7fb;
+    padding-top: var(--mobile-safe-top);
+    padding-bottom: var(--mobile-safe-bottom);
+  }
+
+  button,
+  .btn,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    min-height: var(--mobile-touch-size);
+    font-size: 16px;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .login-screen {
+    min-height: 100dvh;
+    align-items: stretch;
+    padding: max(14px, var(--mobile-safe-top)) 12px
+      max(14px, var(--mobile-safe-bottom));
+    overflow-y: auto;
+  }
+
+  .login-outer {
+    width: 100%;
+    max-width: 520px;
+    margin: auto;
+    border-radius: 22px;
+  }
+
+  .login-card {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .google-login-btn,
+  .access-submit-btn,
+  .access-account-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .access-request-grid,
+  .form-grid,
+  .filter-grid,
+  .filters-grid,
+  .kpi-grid,
+  .cards-grid,
+  .dashboard-grid,
+  .panel-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .app-shell,
+  .layout,
+  .main-layout,
+  .page-shell {
+    min-height: 100dvh;
+  }
+
+  .sidebar,
+  #sidebar {
+    position: fixed !important;
+    inset: var(--mobile-safe-top) auto var(--mobile-safe-bottom) 0;
+    width: min(86vw, 320px) !important;
+    max-width: 320px;
+    height: auto !important;
+    z-index: 10020;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+    box-shadow: 22px 0 48px rgba(15, 35, 60, 0.24);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body:not(.sidebar-collapsed) .sidebar,
+  body:not(.sidebar-collapsed) #sidebar,
+  body.sidebar-open .sidebar,
+  body.sidebar-open #sidebar {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay,
+  #sidebarOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10010;
+    background: rgba(5, 22, 40, 0.48);
+    backdrop-filter: blur(2px);
+  }
+
+  .main,
+  main,
+  .main-content,
+  #conteudoPrincipal,
+  .content-area {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    padding-bottom: calc(20px + var(--mobile-safe-bottom)) !important;
+  }
+
+  .topbar,
+  .header,
+  .page-header,
+  .app-header {
+    position: sticky;
+    top: var(--mobile-safe-top);
+    z-index: 900;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    backdrop-filter: blur(14px);
+  }
+
+  .topbar h1,
+  .header h1,
+  .page-header h1,
+  .app-header h1 {
+    font-size: clamp(1.05rem, 4.5vw, 1.35rem) !important;
+    line-height: 1.2;
+  }
+
+  .topbar-actions,
+  .header-actions,
+  .page-actions,
+  .toolbar,
+  .actions-row {
+    display: flex;
+    gap: 8px;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .topbar-actions::-webkit-scrollbar,
+  .header-actions::-webkit-scrollbar,
+  .page-actions::-webkit-scrollbar,
+  .toolbar::-webkit-scrollbar,
+  .actions-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .topbar-actions > *,
+  .header-actions > *,
+  .page-actions > *,
+  .toolbar > *,
+  .actions-row > * {
+    flex: 0 0 auto;
+  }
+
+  .card,
+  .panel,
+  .widget,
+  .kpi,
+  .kpi-card,
+  .filter-card,
+  .table-card,
+  .chart-card {
+    min-width: 0;
+    border-radius: 16px !important;
+    box-shadow: 0 5px 18px rgba(15, 35, 60, 0.07) !important;
+  }
+
+  .card,
+  .panel,
+  .widget,
+  .filter-card,
+  .table-card,
+  .chart-card {
+    padding: 14px !important;
+  }
+
+  .kpi-grid,
+  .cards-grid {
+    gap: 10px !important;
+  }
+
+  .kpi,
+  .kpi-card {
+    min-height: 112px;
+  }
+
+  .filters,
+  .filter-panel,
+  .filter-card {
+    width: 100%;
+  }
+
+  .filters-actions,
+  .filter-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .filters-actions > *,
+  .filter-actions > * {
+    width: 100%;
+  }
+
+  .table-wrap,
+  .table-container,
+  .data-table-wrap,
+  .responsive-table,
+  .analises-table-wrap {
+    width: 100%;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+  }
+
+  table {
+    min-width: 720px;
+  }
+
+  th,
+  td {
+    padding: 11px 10px !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap;
+  }
+
+  th:first-child,
+  td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: inherit;
+  }
+
+  .modal,
+  .dialog,
+  [role="dialog"] {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-card,
+  .dialog-card,
+  .drawer,
+  .modal-content,
+  [role="dialog"] > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: min(90dvh, 860px) !important;
+    margin: 0 !important;
+    border-radius: 22px 22px 0 0 !important;
+    overflow-y: auto;
+    padding-bottom: calc(18px + var(--mobile-safe-bottom)) !important;
+  }
+
+  .toast-box,
+  #toastBox {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(12px + var(--mobile-safe-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .leaflet-container,
+  #map,
+  #mapa {
+    min-height: 320px;
+    height: min(52dvh, 480px) !important;
+    border-radius: 16px;
+  }
+
+  iframe {
+    max-width: 100%;
+    min-height: 70dvh;
+  }
+
+  .hide-on-mobile,
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .login-screen {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .login-outer {
+    min-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .login-stripe {
+    height: 38px;
+  }
+
+  .main,
+  main,
+  .main-content,
+  #conteudoPrincipal,
+  .content-area {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .card,
+  .panel,
+  .widget,
+  .filter-card,
+  .table-card,
+  .chart-card {
+    border-radius: 14px !important;
+    padding: 12px !important;
+  }
+
+  .filters-actions,
+  .filter-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .btn,
+  button {
+    max-width: 100%;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"] {
+    user-select: text;
+  }
+}
