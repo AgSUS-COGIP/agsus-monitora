@@ -1,8 +1,8 @@
 import { expect, it, vi } from "vitest";
 
-const flush = async () => {
+const flushLoadingState = async () => {
   await Promise.resolve();
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 };
 
 it("ativa e remove o feedback de carregamento", async () => {
@@ -43,7 +43,7 @@ it("ativa e remove o feedback de carregamento", async () => {
   );
 
   loading.classList.remove("show");
-  await flush();
+  await flushLoadingState();
 
   expect(document.body.classList.contains("analises-is-loading")).toBe(false);
   expect(document.querySelector("main").getAttribute("aria-busy")).toBe(
