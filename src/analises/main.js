@@ -12,6 +12,7 @@ import "./analises-scope-runtime-integration.js";
 import "./analises-shared-client-bootstrap.js";
 import "./analises-modern-selects.js";
 import "./analises-runtime-stability.js";
+import "./analises-loading-feedback.js";
 import "./analises-app.js";
 import "./analises-filter-layout.js";
 import "./analises-infinite-table-v2.js?v=20260724-1";
