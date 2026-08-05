@@ -1,6 +1,33 @@
 let deferredInstallPrompt = null;
 let refreshingForUpdate = false;
 
+const IOS_GUIDANCE_DISMISSED_KEY = "agsus-pwa-ios-guidance-dismissed";
+
+export function isIosLike({
+  userAgent = "",
+  platform = "",
+  maxTouchPoints = 0,
+}) {
+  const classicIos = /iPad|iPhone|iPod/i.test(userAgent);
+  const ipadDesktopMode = platform === "MacIntel" && maxTouchPoints > 1;
+  return classicIos || ipadDesktopMode;
+}
+
+export function isStandaloneDisplayMode({
+  standalone = false,
+  matches = false,
+}) {
+  return Boolean(standalone || matches);
+}
+
+export function shouldShowIosInstallGuidance({
+  iosLike,
+  standalone,
+  dismissed,
+}) {
+  return Boolean(iosLike && !standalone && !dismissed);
+}
+
 function createActionButton(label, action, secondary = false) {
   const button = document.createElement("button");
   button.type = "button";
@@ -25,9 +52,10 @@ function ensureNotice() {
   return notice;
 }
 
-function showNotice({ title, message, actions }) {
+function showNotice({ title, message, actions, variant = "default" }) {
   const notice = ensureNotice();
   notice.replaceChildren();
+  notice.dataset.variant = variant;
 
   const content = document.createElement("div");
   content.className = "pwa-notice__content";
@@ -54,6 +82,15 @@ function hideNotice() {
   document.getElementById("pwaLifecycleNotice")?.classList.add("hidden");
 }
 
+function dismissIosGuidance() {
+  try {
+    window.sessionStorage.setItem(IOS_GUIDANCE_DISMISSED_KEY, "1");
+  } catch {
+    // A orientação pode ser dispensada mesmo quando o storage está indisponível.
+  }
+  hideNotice();
+}
+
 async function requestInstallation() {
   if (!deferredInstallPrompt) return;
 
@@ -74,6 +111,16 @@ function showInstallNotice() {
   });
 }
 
+function showIosInstallGuidance() {
+  showNotice({
+    title: "Instalar no iPhone ou iPad",
+    message:
+      "No Safari, toque em Compartilhar e escolha Adicionar à Tela de Início.",
+    actions: [createActionButton("Entendi", dismissIosGuidance)],
+    variant: "ios",
+  });
+}
+
 function activateWaitingWorker(worker) {
   worker.postMessage({ type: "SKIP_WAITING" });
 }
@@ -86,6 +133,7 @@ function showUpdateNotice(worker) {
       createActionButton("Atualizar", () => activateWaitingWorker(worker)),
       createActionButton("Depois", hideNotice, true),
     ],
+    variant: "update",
   });
 }
 
@@ -117,6 +165,30 @@ function bindInstallPrompt() {
   });
 }
 
+function bindIosInstallGuidance() {
+  const iosLike = isIosLike({
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    maxTouchPoints: navigator.maxTouchPoints,
+  });
+  const standalone = isStandaloneDisplayMode({
+    standalone: navigator.standalone,
+    matches: window.matchMedia("(display-mode: standalone)").matches,
+  });
+
+  let dismissed = false;
+  try {
+    dismissed =
+      window.sessionStorage.getItem(IOS_GUIDANCE_DISMISSED_KEY) === "1";
+  } catch {
+    dismissed = false;
+  }
+
+  if (shouldShowIosInstallGuidance({ iosLike, standalone, dismissed })) {
+    window.setTimeout(showIosInstallGuidance, 900);
+  }
+}
+
 function bindServiceWorkerUpdates() {
   if (!("serviceWorker" in navigator)) return;
 
@@ -131,5 +203,6 @@ function bindServiceWorkerUpdates() {
 
 export function initPwaLifecycle() {
   bindInstallPrompt();
+  bindIosInstallGuidance();
   bindServiceWorkerUpdates();
 }
