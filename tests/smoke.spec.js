@@ -45,14 +45,18 @@ test.describe("AgSUS Monitora smoke", () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test("o callback de autenticação está publicado", async ({ request }) => {
+  test("o callback de autenticação é visualmente neutro", async ({ request }) => {
     const response = await request.get("/auth/callback.html");
     expect(response.ok()).toBeTruthy();
 
     const html = await response.text();
-    expect(html).toContain("Finalizando login Google");
+    expect(html).not.toContain("Finalizando login Google");
+    expect(html).not.toContain("class=\"card\"");
+    expect(html).not.toContain("class=\"spin\"");
+    expect(html).toContain('aria-hidden="true"');
     expect(html).toContain('type="module"');
     expect(html).toMatch(/src="\/assets\/authCallback-[^"]+\.js"/);
+    expect(html).not.toContain("fonts.googleapis.com");
     expect(html).not.toContain("cdn.jsdelivr.net/npm/@supabase/supabase-js");
   });
 });
