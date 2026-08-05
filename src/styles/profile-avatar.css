@@ -164,28 +164,25 @@ body.profile-avatar-open {
   color: #fff;
   text-align: center;
   background:
-    radial-gradient(
-      circle at 20% 0%,
-      rgba(103, 232, 249, 0.3),
-      transparent 42%
-    ),
-    linear-gradient(145deg, #073b62, #0b6791 58%, #087a55);
+    linear-gradient(160deg, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(145deg, #123f5a, #0f526b 56%, #0b625d);
 }
 
 .profile-avatar-preview {
-  width: min(230px, 100%);
+  width: min(246px, 100%);
   aspect-ratio: 1;
-  margin: 24px auto 18px;
-  padding: 10px;
+  margin: 24px auto 20px;
+  padding: 8px;
   overflow: hidden;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 20px 38px rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 48px rgba(3, 26, 43, 0.28);
 }
 
 .profile-avatar-preview-image {
-  border-radius: 20px;
-  background: #fff;
+  border-radius: 23px;
+  background: #f8fafc;
 }
 
 .profile-avatar-preview-panel h3 {
@@ -386,8 +383,7 @@ body.profile-avatar-open {
   cursor: pointer;
 }
 
-.profile-avatar-other-options,
-.profile-avatar-data {
+.profile-avatar-other-options {
   margin-top: 18px;
   padding: 20px;
   border: 1px solid #d7e5f2;
@@ -395,15 +391,11 @@ body.profile-avatar-open {
   background: #fff;
 }
 
-.profile-avatar-choice-grid,
-.profile-avatar-data-grid {
+.profile-avatar-choice-grid {
   display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 15px;
-}
-
-.profile-avatar-choice-grid {
-  grid-template-columns: repeat(3, 1fr);
 }
 
 .profile-avatar-choice-grid button {
@@ -441,35 +433,6 @@ body.profile-avatar-open {
   font-size: 10px;
 }
 
-.profile-avatar-data-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.profile-avatar-data-grid div {
-  min-width: 0;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f5f8fc;
-}
-
-.profile-avatar-data-grid small,
-.profile-avatar-data-grid strong {
-  display: block;
-}
-
-.profile-avatar-data-grid small {
-  margin-bottom: 4px;
-  color: #758aa2;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.profile-avatar-data-grid strong {
-  overflow-wrap: anywhere;
-  color: #10243e;
-  font-size: 12px;
-}
-
 .profile-avatar-status {
   margin: 14px 0 0;
   padding: 12px 14px;
@@ -492,8 +455,7 @@ body.profile-avatar-open {
 
 body.dark-mode .profile-avatar-dialog,
 body.dark-mode .profile-avatar-editor,
-body.dark-mode .profile-avatar-other-options,
-body.dark-mode .profile-avatar-data {
+body.dark-mode .profile-avatar-other-options {
   border-color: #29445f;
   background: #10243e;
   color: #e5eef8;
@@ -506,8 +468,7 @@ body.dark-mode .profile-avatar-save-row {
 
 body.dark-mode .profile-avatar-heading h2,
 body.dark-mode .profile-avatar-editor-title h3,
-body.dark-mode .profile-avatar-other-options h3,
-body.dark-mode .profile-avatar-data-grid strong {
+body.dark-mode .profile-avatar-other-options h3 {
   color: #f8fafc;
 }
 
@@ -518,7 +479,6 @@ body.dark-mode .profile-avatar-choice-grid button {
   color: #f8fafc;
 }
 
-body.dark-mode .profile-avatar-data-grid div,
 body.dark-mode .profile-avatar-tabs,
 body.dark-mode .profile-avatar-options button,
 body.dark-mode .profile-avatar-toggles label {
@@ -550,8 +510,7 @@ body.dark-mode .profile-avatar-toggles label {
     width: 180px;
   }
 
-  .profile-avatar-choice-grid,
-  .profile-avatar-data-grid {
+  .profile-avatar-choice-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -577,8 +536,7 @@ body.dark-mode .profile-avatar-toggles label {
     padding: 18px;
   }
 
-  .profile-avatar-choice-grid,
-  .profile-avatar-data-grid {
+  .profile-avatar-choice-grid {
     grid-template-columns: 1fr;
   }
 }
