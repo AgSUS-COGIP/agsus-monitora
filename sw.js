@@ -1,4 +1,6 @@
-const CACHE_VERSION = "agsus-monitora-v2";
+importScripts("/sw-policy.js");
+
+const CACHE_VERSION = "agsus-monitora-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
@@ -7,6 +9,7 @@ const APP_SHELL = [
   "/analises.html",
   OFFLINE_URL,
   "/manifest.webmanifest",
+  "/sw-policy.js",
   "/icons/agsus-monitora.svg",
   "/icons/agsus-monitora-maskable.svg",
 ];
@@ -18,6 +21,8 @@ const BLOCKED_PATH_PREFIXES = [
   "/storage/",
   "/functions/",
 ];
+
+const { getRequestStrategy, isResponseCacheable } = self.AgSUSPwaCachePolicy;
 
 function isCacheableRequest(request, url) {
   if (request.method !== "GET") return false;
@@ -31,25 +36,38 @@ function isCacheableRequest(request, url) {
   return !request.headers.has("authorization");
 }
 
+async function storeResponse(request, response) {
+  if (!isResponseCacheable(response)) return;
+
+  const cache = await caches.open(STATIC_CACHE);
+  await cache.put(request, response.clone());
+}
+
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
 
   const response = await fetch(request);
-  if (response.ok && response.type === "basic") {
-    const cache = await caches.open(STATIC_CACHE);
-    await cache.put(request, response.clone());
-  }
-
+  await storeResponse(request, response);
   return response;
 }
 
-async function networkFirstNavigation(request) {
+async function networkFirst(request, fallbackRequest = request) {
   try {
-    return await fetch(request);
+    const response = await fetch(request);
+    await storeResponse(request, response);
+    return response;
   } catch {
-    return (await caches.match(request)) || (await caches.match(OFFLINE_URL));
+    return caches.match(fallbackRequest);
   }
+}
+
+async function networkFirstNavigation(request) {
+  return (
+    (await networkFirst(request)) ||
+    (await caches.match("/index.html")) ||
+    (await caches.match(OFFLINE_URL))
+  );
 }
 
 self.addEventListener("install", (event) => {
@@ -86,19 +104,18 @@ self.addEventListener("fetch", (event) => {
 
   if (!isCacheableRequest(request, url)) return;
 
-  if (request.mode === "navigate") {
-    event.respondWith(networkFirstNavigation(request));
+  const strategy = getRequestStrategy(request);
+
+  if (strategy === "network-first") {
+    event.respondWith(
+      request.mode === "navigate"
+        ? networkFirstNavigation(request)
+        : networkFirst(request),
+    );
     return;
   }
 
-  const { destination } = request;
-  const isStaticAsset = [
-    "style",
-    "script",
-    "image",
-    "font",
-    "manifest",
-  ].includes(destination);
-
-  if (isStaticAsset) event.respondWith(cacheFirst(request));
+  if (strategy === "cache-first") {
+    event.respondWith(cacheFirst(request));
+  }
 });
