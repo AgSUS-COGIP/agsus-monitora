@@ -12,7 +12,7 @@ import {
 const SOURCE_LABELS = {
   GOOGLE: "Foto do Google",
   UPLOADED: "Foto enviada",
-  GENERATED: "Personagem",
+  GENERATED: "Retrato institucional",
   INITIALS: "Iniciais",
 };
 
@@ -141,33 +141,33 @@ function paletteButtons(group, label, colors) {
   </fieldset>`;
 }
 
-function dialogHtml() {
+export function profileAvatarDialogHtml() {
   return `<div id="profileAvatarBackdrop" class="profile-avatar-backdrop" hidden>
     <section id="profileAvatarDialog" class="profile-avatar-dialog" role="dialog" aria-modal="true" aria-labelledby="profileAvatarTitle">
       <header class="profile-avatar-heading">
         <div>
           <span class="profile-avatar-eyebrow">Identidade institucional</span>
           <h2 id="profileAvatarTitle">Seu perfil no AgSUS Monitora</h2>
-          <p>Personalize como você aparece no sistema. Seus dados de acesso continuam protegidos e somente leitura.</p>
+          <p>Escolha uma foto, use suas iniciais ou crie um retrato vetorial com aparência profissional.</p>
         </div>
         <button id="profileAvatarClose" type="button" class="profile-avatar-close" aria-label="Fechar perfil">×</button>
       </header>
 
       <div class="profile-avatar-studio">
         <aside class="profile-avatar-preview-panel">
-          <span class="profile-avatar-eyebrow light">Estúdio de avatar</span>
+          <span class="profile-avatar-eyebrow light">Estúdio de identidade</span>
           <div id="profileAvatarPreview" class="profile-avatar-preview"></div>
           <h3 id="profileAvatarName">Sua identidade visual</h3>
-          <p>Monte seu personagem escolhendo cada detalhe. A prévia muda na hora.</p>
+          <p>Crie uma composição sóbria para representar sua identidade no sistema.</p>
           <div class="profile-avatar-preview-actions">
-            <button id="profileAvatarRandom" type="button">Surpreenda-me</button>
-            <button id="profileAvatarReset" type="button">Restaurar</button>
+            <button id="profileAvatarRandom" type="button">Nova composição</button>
+            <button id="profileAvatarReset" type="button">Restaurar padrão</button>
           </div>
         </aside>
 
         <div class="profile-avatar-editor">
           <div class="profile-avatar-editor-title">
-            <div><span class="profile-avatar-eyebrow">Personalização completa</span><h3>Crie seu personagem institucional</h3></div>
+            <div><span class="profile-avatar-eyebrow">Personalização completa</span><h3>Crie seu retrato institucional</h3></div>
             <span id="profileAvatarSourceLabel" class="profile-avatar-badge"></span>
           </div>
 
@@ -188,6 +188,7 @@ function dialogHtml() {
             ${optionButtons("mouth", "Boca e expressão")}
           </div>
           <div class="profile-avatar-tab-panel" data-avatar-panel="details" hidden>
+            ${optionButtons("outfit", "Vestuário")}
             <div class="profile-avatar-toggles">
               <label><input type="checkbox" data-avatar-toggle="glasses" /> Óculos</label>
               <label><input type="checkbox" data-avatar-toggle="beard" /> Barba</label>
@@ -199,11 +200,12 @@ function dialogHtml() {
             ${paletteButtons("skinColor", "Tom de pele", avatarColors.skin)}
             ${paletteButtons("hairColor", "Cor do cabelo", avatarColors.hair)}
             ${paletteButtons("backgroundColor", "Cor de fundo", avatarColors.background)}
+            ${paletteButtons("outfitColor", "Cor do vestuário", avatarColors.outfit)}
           </div>
 
           <div class="profile-avatar-save-row">
-            <p>A composição é gerada no navegador e salva com segurança no seu perfil.</p>
-            <button id="profileAvatarSaveGenerated" type="button" class="profile-avatar-primary">Salvar personagem</button>
+            <p>O retrato é gerado no navegador e salvo com segurança no seu perfil.</p>
+            <button id="profileAvatarSaveGenerated" type="button" class="profile-avatar-primary">Salvar retrato</button>
           </div>
         </div>
       </div>
@@ -218,15 +220,6 @@ function dialogHtml() {
         </div>
       </section>
 
-      <section class="profile-avatar-data">
-        <span class="profile-avatar-eyebrow">Dados institucionais</span>
-        <div class="profile-avatar-data-grid">
-          <div><small>Nome</small><strong id="profileAvatarDataName">—</strong></div>
-          <div><small>E-mail</small><strong id="profileAvatarDataEmail">—</strong></div>
-          <div><small>Perfil</small><strong id="profileAvatarDataRole">—</strong></div>
-          <div><small>Status</small><strong>Cadastro validado</strong></div>
-        </div>
-      </section>
       <p id="profileAvatarStatus" class="profile-avatar-status" role="status" aria-live="polite" hidden></p>
     </section>
   </div>`;
@@ -287,13 +280,10 @@ async function loadProfile() {
   refreshVisuals();
   syncEditor();
   const fields = {
-    profileAvatarName: name || "Sua identidade visual",
-    profileAvatarDataName: name || "Não informado",
-    profileAvatarDataEmail:
-      safeText(state.profile?.email) ||
-      safeText(state.user?.email) ||
-      "Não informado",
-    profileAvatarDataRole: safeText(state.profile?.perfil) || "Não informado",
+    profileAvatarName:
+      safeText(state.profile?.nome) ||
+      safeText(state.user?.user_metadata?.full_name) ||
+      "Sua identidade visual",
   };
   Object.entries(fields).forEach(([id, value]) => {
     const element = document.getElementById(id);
@@ -511,7 +501,7 @@ function installSidebarButton() {
 export function initProfileAvatar() {
   if (document.getElementById("profileAvatarBackdrop")) return;
   installSidebarButton();
-  document.body.insertAdjacentHTML("beforeend", dialogHtml());
+  document.body.insertAdjacentHTML("beforeend", profileAvatarDialogHtml());
   bindEvents();
   const client = getSupabaseClient();
   if (!client) return;
