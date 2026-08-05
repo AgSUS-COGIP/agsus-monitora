@@ -37,6 +37,7 @@ jobs:
       - name: Formatar e restaurar workflow
         run: |
           npx prettier --write src/lib/avatar-config.js
+          git fetch --no-tags --depth=1 origin main:refs/remotes/origin/main
           git checkout origin/main -- .github/workflows/build-and-smoke.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
