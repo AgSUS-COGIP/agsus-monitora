@@ -5,6 +5,7 @@ import {
 } from "../lib/loading-copy.js";
 
 const UPDATE_INTERVAL_MS = 1_000;
+const STATE_SYNC_INTERVAL_MS = 250;
 let loadingStartedAt = 0;
 let loadingTimer = null;
 
@@ -106,17 +107,17 @@ export function initLoadingExperience() {
   loader.setAttribute("aria-atomic", "true");
   prepareInitialLoading(loader);
 
+  let lastActive = null;
   const sync = () => {
     const active = loader.classList.contains("show");
+    if (active === lastActive) return;
+    lastActive = active;
     loader.setAttribute("aria-hidden", String(!active));
     document.body.setAttribute("aria-busy", String(active));
-    if (active && !loadingTimer) startTimer();
-    if (!active) stopTimer();
+    if (active) startTimer();
+    else stopTimer();
   };
 
   sync();
-  new MutationObserver(sync).observe(loader, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
+  window.setInterval(sync, STATE_SYNC_INTERVAL_MS);
 }
