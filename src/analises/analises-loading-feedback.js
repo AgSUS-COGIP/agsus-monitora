@@ -6,6 +6,7 @@ import {
 
 const LOADING_CLASS = "analises-is-loading";
 const UPDATE_INTERVAL_MS = 1_000;
+const STATE_SYNC_INTERVAL_MS = 250;
 let loadingStartedAt = 0;
 let loadingTimer = null;
 
@@ -127,21 +128,14 @@ function stopTimer() {
   loadingStartedAt = 0;
 }
 
-function syncLoading(loading) {
-  const active = loading.classList.contains("show");
-  loading.setAttribute("aria-hidden", String(!active));
-  setLoading(active);
-
-  if (active && !loadingTimer) {
-    loadingStartedAt = Date.now();
-    updateCopy(loading);
-    loadingTimer = window.setInterval(
-      () => updateCopy(loading),
-      UPDATE_INTERVAL_MS,
-    );
-  }
-
-  if (!active) stopTimer();
+function startTimer(loading) {
+  stopTimer();
+  loadingStartedAt = Date.now();
+  updateCopy(loading);
+  loadingTimer = window.setInterval(
+    () => updateCopy(loading),
+    UPDATE_INTERVAL_MS,
+  );
 }
 
 function start() {
@@ -153,12 +147,19 @@ function start() {
   loading.setAttribute("aria-live", "polite");
   loading.setAttribute("aria-atomic", "true");
 
-  syncLoading(loading);
-  const observer = new MutationObserver(() => syncLoading(loading));
-  observer.observe(loading, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
+  let lastActive = null;
+  const sync = () => {
+    const active = loading.classList.contains("show");
+    if (active === lastActive) return;
+    lastActive = active;
+    loading.setAttribute("aria-hidden", String(!active));
+    setLoading(active);
+    if (active) startTimer(loading);
+    else stopTimer();
+  };
+
+  sync();
+  window.setInterval(sync, STATE_SYNC_INTERVAL_MS);
 }
 
 document.addEventListener("DOMContentLoaded", start, { once: true });
