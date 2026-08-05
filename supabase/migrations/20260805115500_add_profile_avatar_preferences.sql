@@ -1,3 +1,4 @@
+-- Preferências de identidade visual do próprio usuário autenticado.
 alter table public.perfis_usuarios
   add column if not exists avatar_source text,
   add column if not exists avatar_url text,
