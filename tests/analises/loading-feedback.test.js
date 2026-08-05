@@ -30,9 +30,7 @@ it("ativa e remove o feedback de carregamento", async () => {
 
   expect(document.body.classList.contains("analises-is-loading")).toBe(true);
   expect(loading.getAttribute("role")).toBe("status");
-  expect(document.querySelector("main").getAttribute("aria-busy")).toBe(
-    "true",
-  );
+  expect(document.querySelector("main").getAttribute("aria-busy")).toBe("true");
   expect(refreshButton.getAttribute("aria-busy")).toBe("true");
   expect(refreshButton.disabled).toBe(true);
   expect(document.getElementById("loadingTitle").textContent).toBe(
