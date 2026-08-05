@@ -30,6 +30,7 @@ import "./styles/mobile-bottom-navigation.css";
 import "./styles/mobile-table-cards.css";
 import "./styles/pwa-lifecycle.css";
 import "./styles/connectivity-status.css";
+import "./styles/profile-avatar.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -56,6 +57,7 @@ import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.j
 import { initMobileTableCards } from "./modules/mobile-table-cards.js";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
+import { initProfileAvatar } from "./modules/profile-avatar.js";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -86,6 +88,7 @@ initMobileBottomNavigation();
 initMobileTableCards();
 initPwaLifecycle();
 initConnectivityStatus();
+initProfileAvatar();
 
 if (!hasSupabaseEnv()) {
   console.error(
