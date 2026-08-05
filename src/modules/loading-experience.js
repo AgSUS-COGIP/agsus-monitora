@@ -89,7 +89,10 @@ function startTimer() {
   stopTimer();
   loadingStartedAt = Date.now();
   updateLoadingExperience();
-  loadingTimer = window.setInterval(updateLoadingExperience, UPDATE_INTERVAL_MS);
+  loadingTimer = window.setInterval(
+    updateLoadingExperience,
+    UPDATE_INTERVAL_MS,
+  );
 }
 
 function stopTimer() {
