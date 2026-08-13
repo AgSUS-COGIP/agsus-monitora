@@ -1,3 +1,5 @@
+import "../styles/runtime-critical-fixes.css";
+
 const RECONNECTED_VISIBILITY_MS = 3200;
 let hideHandle = null;
 

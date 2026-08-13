@@ -1,0 +1,126 @@
+/* Correcoes finais carregadas depois dos modulos visuais. */
+#loginScreen #googleLoginBtn {
+  display: flex;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] body.mobile-app {
+  background: #0b1424 !important;
+  color: #dbe7f3;
+}
+
+html[data-theme="dark"] .app {
+  --bg: #0b1424;
+  --card: #111f33;
+  --soft: #16283f;
+  --line: #29405d;
+  color: #dbe7f3;
+}
+
+html[data-theme="dark"] .app .access-monitor-summary > div,
+html[data-theme="dark"] .app .access-monitor-panel,
+html[data-theme="dark"] .app .access-monitor-title,
+html[data-theme="dark"] .app .access-monitor-user-card,
+html[data-theme="dark"] .app .access-monitor-empty,
+html[data-theme="dark"] .app .access-monitor-kpi,
+html[data-theme="dark"] .app .panel-admin-item,
+html[data-theme="dark"] .app .access-request-card,
+html[data-theme="dark"] .app .access-authenticated-user,
+html[data-theme="dark"] .app .panel-check,
+html[data-theme="dark"] .app .permission-check,
+html[data-theme="dark"] .app .cnes-status-grid > div,
+html[data-theme="dark"] .app .access-status,
+html[data-theme="dark"] .app .metric-readonly {
+  background: #111f33 !important;
+  border-color: #29405d !important;
+  color: #dbe7f3 !important;
+}
+
+html[data-theme="dark"] .app .access-monitor-panel-online .access-monitor-title,
+html[data-theme="dark"] .app .multi-select-actions {
+  background: #16283f !important;
+}
+
+html[data-theme="dark"] .app .access-monitor-user-head strong,
+html[data-theme="dark"] .app .access-monitor-user-meta strong,
+html[data-theme="dark"] .app .access-monitor-summary strong,
+html[data-theme="dark"] .app .access-monitor-kpi b,
+html[data-theme="dark"] .app .access-monitor-title h4,
+html[data-theme="dark"] .app .access-monitor-table td,
+html[data-theme="dark"] .app .access-monitor-empty-strong strong,
+html[data-theme="dark"] .app .config-card-title h3,
+html[data-theme="dark"] .app .panel-admin-head span:first-child,
+html[data-theme="dark"] .app .access-authenticated-user strong,
+html[data-theme="dark"] .app .access-admin-head strong,
+html[data-theme="dark"] .app .metric-readonly b,
+html[data-theme="dark"] .app .cnes-status-grid strong {
+  color: #e8f1fb !important;
+}
+
+html[data-theme="dark"] .app .access-monitor-summary span,
+html[data-theme="dark"] .app .access-monitor-user-meta,
+html[data-theme="dark"] .app .access-monitor-email,
+html[data-theme="dark"] .app .access-monitor-title span,
+html[data-theme="dark"] .app .access-monitor-kpi span,
+html[data-theme="dark"] .app .access-monitor-empty,
+html[data-theme="dark"] .app .access-monitor-empty-strong span,
+html[data-theme="dark"] .app .config-help,
+html[data-theme="dark"] .app .config-card-title p,
+html[data-theme="dark"] .app .access-admin-head span,
+html[data-theme="dark"] .app .metric-readonly span,
+html[data-theme="dark"] .app .cnes-status-grid span {
+  color: #9db0c6 !important;
+}
+
+html[data-theme="dark"] .app .access-monitor-screen,
+html[data-theme="dark"] .app .access-monitor-screen-chip,
+html[data-theme="dark"] .app .access-status-pill,
+html[data-theme="dark"] .app .multi-unit-chip {
+  background: #162f4b !important;
+  border-color: #31547a !important;
+  color: #8fd8ff !important;
+}
+
+html[data-theme="dark"] .app input,
+html[data-theme="dark"] .app select,
+html[data-theme="dark"] .app textarea,
+html[data-theme="dark"] .app .multi-select-toggle,
+html[data-theme="dark"] .app .multi-select-menu,
+html[data-theme="dark"] .app .multi-mini-btn {
+  background: #16283f !important;
+  border-color: #31506f !important;
+  color: #e2ecf6 !important;
+  -webkit-text-fill-color: #e2ecf6 !important;
+}
+
+html[data-theme="dark"] .app input::placeholder,
+html[data-theme="dark"] .app textarea::placeholder {
+  color: #8399b1 !important;
+  -webkit-text-fill-color: #8399b1 !important;
+  opacity: 1;
+}
+
+html[data-theme="dark"] .app .table-wrap,
+html[data-theme="dark"] .app .table-meta,
+html[data-theme="dark"] .app .table-card,
+html[data-theme="dark"] .app .modal-card,
+html[data-theme="dark"] .app .modal-head {
+  background: #111f33 !important;
+  border-color: #29405d !important;
+  color: #c8d6e5 !important;
+}
+
+@media (max-width: 900px) {
+  html[data-theme="dark"] body {
+    background: #0b1424 !important;
+  }
+
+  html[data-theme="dark"] .mobile-bottom-nav {
+    background: rgba(10, 22, 39, 0.97) !important;
+    border-color: #29405d !important;
+  }
+}
