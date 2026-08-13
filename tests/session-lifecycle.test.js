@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   SESSION_IDLE_LIMIT_MS,
+  dismissSessionNotice,
   formatSessionRemaining,
   getRemainingSessionMs,
   parseSessionActivityRecord,
@@ -44,5 +45,18 @@ describe("session lifecycle", () => {
     expect(
       parseSessionActivityRecord(JSON.stringify({ userId: "", at: 123456 })),
     ).toBeNull();
+  });
+
+  it("oculta aviso de sessão obsoleto após nova atividade", () => {
+    const notice = document.createElement("div");
+    notice.id = "agsusSessionNotice";
+    notice.hidden = false;
+    notice.dataset.level = "critical";
+    document.body.appendChild(notice);
+
+    expect(dismissSessionNotice()).toBe(true);
+    expect(notice.hidden).toBe(true);
+
+    notice.remove();
   });
 });

@@ -194,6 +194,21 @@ function showNotice(message, level = "warning", durationMs = 12000) {
   }
 }
 
+export function dismissSessionNotice() {
+  window.clearTimeout(showNotice.hideHandle);
+  showNotice.hideHandle = null;
+  const notice = document.getElementById("agsusSessionNotice");
+  if (!notice) return false;
+  notice.hidden = true;
+  return true;
+}
+
+function clearWarningState() {
+  warnedTenMinutes = false;
+  warnedOneMinute = false;
+  dismissSessionNotice();
+}
+
 function hideSessionUi() {
   const timer = document.getElementById("agsusSessionTimer");
   if (timer) timer.hidden = true;
@@ -232,8 +247,7 @@ function persistActivity(at) {
 function registerActivity(at = Date.now(), forcePersist = false) {
   if (!activeUserId || expirationInProgress) return;
   lastActivityAt = Number(at) || Date.now();
-  warnedTenMinutes = false;
-  warnedOneMinute = false;
+  clearWarningState();
 
   if (
     forcePersist ||
@@ -354,8 +368,7 @@ function tickSession() {
   const shared = readSharedActivity(activeUserId);
   if (shared && shared.at > lastActivityAt) {
     lastActivityAt = shared.at;
-    warnedTenMinutes = false;
-    warnedOneMinute = false;
+    clearWarningState();
   }
 
   const remainingMs = getRemainingSessionMs(
@@ -385,8 +398,7 @@ function startActiveSession(session) {
 
   lastActivityAt = sharedBelongsToCurrentLogin ? shared.at : now;
   lastPersistedActivityAt = sharedBelongsToCurrentLogin ? shared.at : 0;
-  warnedTenMinutes = false;
-  warnedOneMinute = false;
+  clearWarningState();
 
   if (!sharedBelongsToCurrentLogin) persistActivity(lastActivityAt);
   if (!tickHandle)
@@ -399,8 +411,7 @@ function stopActiveSession({ clearActivity = true } = {}) {
   activeUserId = "";
   lastActivityAt = 0;
   lastPersistedActivityAt = 0;
-  warnedTenMinutes = false;
-  warnedOneMinute = false;
+  clearWarningState();
   hideSessionUi();
 
   if (tickHandle) {
@@ -420,8 +431,7 @@ function handleBroadcastMessage(message) {
   if (!message || message.userId !== activeUserId) return;
   if (message.type === "activity" && Number(message.at) > lastActivityAt) {
     lastActivityAt = Number(message.at);
-    warnedTenMinutes = false;
-    warnedOneMinute = false;
+    clearWarningState();
   }
   if (message.type === "logout") {
     void expireSession({ broadcast: false });
@@ -433,8 +443,7 @@ function handleStorageEvent(event) {
     const record = parseSessionActivityRecord(event.newValue);
     if (record?.userId === activeUserId && record.at > lastActivityAt) {
       lastActivityAt = record.at;
-      warnedTenMinutes = false;
-      warnedOneMinute = false;
+      clearWarningState();
     }
   }
 
