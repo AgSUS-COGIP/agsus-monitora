@@ -15,6 +15,10 @@
   box-shadow: 0 18px 44px rgba(0, 35, 69, 0.2);
 }
 
+body:has(#loginScreen:not(.hidden)) .pwa-notice {
+  display: none !important;
+}
+
 .pwa-notice[data-variant="ios"] {
   border-color: color-mix(in srgb, #0a84ff 32%, transparent);
   background: color-mix(in srgb, var(--surface, #ffffff) 94%, #0a84ff 6%);
