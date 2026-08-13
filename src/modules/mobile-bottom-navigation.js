@@ -48,9 +48,21 @@ function collectPrimaryItems() {
 }
 
 function setActiveItem(source, navigation) {
+  let matched = false;
+
   navigation.querySelectorAll(".mobile-bottom-nav__item").forEach((item) => {
-    item.classList.toggle("is-active", item.dataset.sourceId === source.id);
+    const active = Boolean(source.id) && item.dataset.sourceId === source.id;
+    item.classList.toggle("is-active", active);
+
+    if (active) {
+      item.setAttribute("aria-current", "page");
+      matched = true;
+    } else {
+      item.removeAttribute("aria-current");
+    }
   });
+
+  return matched;
 }
 
 function createNavigationItem(source, navigation, index) {
@@ -128,8 +140,22 @@ function syncVisibility() {
   navigation.classList.toggle("hidden", isDesktop);
 }
 
+function syncActiveStateFromSidebarClick(event) {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+
+  const source = target.closest(SIDEBAR_ITEM_SELECTOR);
+  if (!(source instanceof HTMLElement)) return;
+
+  const navigation = document.getElementById("mobileBottomNav");
+  if (!navigation) return;
+
+  setActiveItem(source, navigation);
+}
+
 export function initMobileBottomNavigation() {
   scheduleBuild();
+  document.addEventListener("click", syncActiveStateFromSidebarClick);
   window.addEventListener("resize", syncVisibility, { passive: true });
   window.addEventListener("orientationchange", syncVisibility, {
     passive: true,
