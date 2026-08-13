@@ -5,6 +5,7 @@ import { installFrontendPerformanceMonitor } from "../lib/frontend-performance-m
 import { installCspReportMonitor } from "../lib/csp-report-monitor.js";
 import "../lib/chartjs-global.js";
 import "../lib/supabase-legacy-bridge.js";
+import "./analises-responsive-fixes.css";
 import "./analises-active-cache-recovery.js";
 import "./analises-consolidated-transport.js";
 import "./analises-scope-guard-safe.js";
@@ -24,8 +25,23 @@ import "./analises-interface-refinement.js";
 import "./analises-residual-ui-fixes.js";
 import "./analises-dark-mode-fix.js";
 
+function compactAnalisesSessionTimer() {
+  const timer = document.getElementById("agsusSessionTimer");
+  const footerMeta = document.querySelector(".footer > span:last-child");
+  if (!timer || !footerMeta) return;
+
+  timer.classList.add("analises-session-compact");
+  timer.setAttribute("aria-label", "Tempo restante da sessão");
+  timer.title = "Tempo restante até o encerramento da sessão por inatividade.";
+
+  if (timer.parentElement !== footerMeta) {
+    footerMeta.prepend(timer);
+  }
+}
+
 installCsvBlobSecurityGuard();
 installSessionLifecycle();
+compactAnalisesSessionTimer();
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
