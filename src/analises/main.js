@@ -39,9 +39,13 @@ function compactAnalisesSessionTimer() {
   }
 }
 
+const embeddedInParentApp = window.parent !== window;
+
 installCsvBlobSecurityGuard();
-installSessionLifecycle();
-compactAnalisesSessionTimer();
+if (!embeddedInParentApp) {
+  installSessionLifecycle();
+  compactAnalisesSessionTimer();
+}
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();

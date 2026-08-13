@@ -66,6 +66,26 @@
   color: var(--primary, #003b70);
 }
 
+#agsusSessionTimer {
+  right: 8px !important;
+  bottom: 8px !important;
+  gap: 3px !important;
+  padding: 3px 6px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font:
+    700 9px/1 Inter,
+    system-ui,
+    sans-serif !important;
+  backdrop-filter: none !important;
+  opacity: 0.88;
+}
+
+#agsusSessionTimer > span:first-child {
+  font-size: 8px;
+  line-height: 1;
+}
+
 @media (max-width: 640px) {
   .pwa-notice {
     right: 12px;
@@ -81,5 +101,12 @@
 
   .pwa-notice__action {
     flex: 1;
+  }
+
+  #agsusSessionTimer {
+    right: 6px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
+    padding: 3px 5px !important;
+    font-size: 8px !important;
   }
 }
