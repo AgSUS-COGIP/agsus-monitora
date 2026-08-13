@@ -1,7 +1,12 @@
 const RECONNECTED_VISIBILITY_MS = 3200;
+let hideHandle = null;
 
 export function getConnectivityState(online) {
   return online ? "online" : "offline";
+}
+
+export function shouldAutoHideConnectivityNotice(renderedState, currentState) {
+  return renderedState === "online" && currentState === "online";
 }
 
 function ensureConnectivityNotice() {
@@ -27,8 +32,15 @@ function createRetryButton() {
   return button;
 }
 
+function cancelPendingHide() {
+  if (!hideHandle) return;
+  window.clearTimeout(hideHandle);
+  hideHandle = null;
+}
+
 function renderConnectivityNotice(state) {
   const notice = ensureConnectivityNotice();
+  cancelPendingHide();
   notice.replaceChildren();
   notice.dataset.state = state;
 
@@ -57,8 +69,13 @@ function renderConnectivityNotice(state) {
   notice.append(content);
   notice.classList.remove("hidden");
 
-  window.setTimeout(() => {
-    notice.classList.add("hidden");
+  const renderedState = state;
+  hideHandle = window.setTimeout(() => {
+    hideHandle = null;
+    const currentState = notice.dataset.state;
+    if (shouldAutoHideConnectivityNotice(renderedState, currentState)) {
+      notice.classList.add("hidden");
+    }
   }, RECONNECTED_VISIBILITY_MS);
 }
 

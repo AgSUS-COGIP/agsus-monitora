@@ -4,6 +4,11 @@ let lastUpdateCheckAt = 0;
 
 const IOS_GUIDANCE_DISMISSED_KEY = "agsus-pwa-ios-guidance-dismissed";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
+const NOTICE_PRIORITY = {
+  ios: 1,
+  install: 2,
+  update: 3,
+};
 
 export function isIosLike({
   userAgent = "",
@@ -42,6 +47,17 @@ export function shouldCheckForUpdate({
   return now - lastCheckedAt >= minimumInterval;
 }
 
+export function shouldReplacePwaNotice({
+  currentVariant = "",
+  nextVariant = "",
+  currentVisible = false,
+} = {}) {
+  if (!currentVisible || !currentVariant) return true;
+  const currentPriority = NOTICE_PRIORITY[currentVariant] || 0;
+  const nextPriority = NOTICE_PRIORITY[nextVariant] || 0;
+  return nextPriority >= currentPriority;
+}
+
 function createActionButton(label, action, secondary = false) {
   const button = document.createElement("button");
   button.type = "button";
@@ -66,8 +82,15 @@ function ensureNotice() {
   return notice;
 }
 
-function showNotice({ title, message, actions, variant = "default" }) {
+function showNotice({ title, message, actions, variant }) {
   const notice = ensureNotice();
+  const canReplace = shouldReplacePwaNotice({
+    currentVariant: notice.dataset.variant || "",
+    nextVariant: variant,
+    currentVisible: !notice.classList.contains("hidden"),
+  });
+  if (!canReplace) return false;
+
   notice.replaceChildren();
   notice.dataset.variant = variant;
 
@@ -90,10 +113,14 @@ function showNotice({ title, message, actions, variant = "default" }) {
 
   notice.append(content, controls);
   notice.classList.remove("hidden");
+  return true;
 }
 
-function hideNotice() {
-  document.getElementById("pwaLifecycleNotice")?.classList.add("hidden");
+function hideNotice(expectedVariant = "") {
+  const notice = document.getElementById("pwaLifecycleNotice");
+  if (!notice) return;
+  if (expectedVariant && notice.dataset.variant !== expectedVariant) return;
+  notice.classList.add("hidden");
 }
 
 function dismissIosGuidance() {
@@ -102,7 +129,7 @@ function dismissIosGuidance() {
   } catch {
     // A orientação pode ser dispensada mesmo quando o storage está indisponível.
   }
-  hideNotice();
+  hideNotice("ios");
 }
 
 async function requestInstallation() {
@@ -111,7 +138,7 @@ async function requestInstallation() {
   deferredInstallPrompt.prompt();
   await deferredInstallPrompt.userChoice;
   deferredInstallPrompt = null;
-  hideNotice();
+  hideNotice("install");
 }
 
 function showInstallNotice() {
@@ -120,8 +147,9 @@ function showInstallNotice() {
     message: "Abra o sistema como aplicativo para acesso mais rápido.",
     actions: [
       createActionButton("Instalar", requestInstallation),
-      createActionButton("Agora não", hideNotice, true),
+      createActionButton("Agora não", () => hideNotice("install"), true),
     ],
+    variant: "install",
   });
 }
 
@@ -145,7 +173,7 @@ function showUpdateNotice(worker) {
     message: "Atualize quando estiver pronto para usar as melhorias recentes.",
     actions: [
       createActionButton("Atualizar", () => activateWaitingWorker(worker)),
-      createActionButton("Depois", hideNotice, true),
+      createActionButton("Depois", () => hideNotice("update"), true),
     ],
     variant: "update",
   });
@@ -197,7 +225,7 @@ function bindInstallPrompt() {
 
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
-    hideNotice();
+    hideNotice("install");
   });
 }
 

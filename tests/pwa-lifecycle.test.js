@@ -4,6 +4,7 @@ import {
   isIosLike,
   isStandaloneDisplayMode,
   shouldCheckForUpdate,
+  shouldReplacePwaNotice,
   shouldShowIosInstallGuidance,
 } from "../src/modules/pwa-lifecycle.js";
 
@@ -99,6 +100,36 @@ describe("pwa lifecycle helpers", () => {
         online: true,
         visible: true,
         minimumInterval: 900_000,
+      }),
+    ).toBe(true);
+  });
+
+  it("não deixa orientação do iOS sobrescrever uma atualização disponível", () => {
+    expect(
+      shouldReplacePwaNotice({
+        currentVariant: "update",
+        nextVariant: "ios",
+        currentVisible: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("permite que uma atualização substitua avisos de instalação", () => {
+    expect(
+      shouldReplacePwaNotice({
+        currentVariant: "install",
+        nextVariant: "update",
+        currentVisible: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("permite qualquer aviso quando nenhum aviso está visível", () => {
+    expect(
+      shouldReplacePwaNotice({
+        currentVariant: "update",
+        nextVariant: "ios",
+        currentVisible: false,
       }),
     ).toBe(true);
   });
