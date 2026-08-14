@@ -29,8 +29,8 @@ test.describe("AgSUS Monitora smoke", () => {
     await expect(page.locator("#loginScreen")).toBeVisible();
     await expect(page.locator("#googleLoginBtn")).toBeVisible();
     await expect(page.locator("#appScreen")).toBeAttached();
-    await expect(page.locator("#profileAvatarButton")).toBeAttached();
-    await expect(page.locator("#profileAvatarDialog")).toBeAttached();
+    await expect(page.locator("#profileAvatarButton")).toHaveCount(0);
+    await expect(page.locator("#profileAvatarDialog")).toHaveCount(0);
 
     expect(pageErrors).toEqual([]);
   });

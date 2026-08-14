@@ -1,40 +1,66 @@
 const SOURCE_TABLE = "monitoramento_indigena";
 const OPERATIONAL_VIEW = "vw_monitoramento_indigena_operacional";
+const CLIENT_MARKER = "__agsusOperationalTransport";
+const GLOBAL_MARKER = "__agsusOperationalTransportInstalled";
+const DECORATOR_KEY = "__agsusDecorateOperationalClient";
 
-function installOperationalTransport() {
-  const supabaseGlobal = window.supabase;
-  if (!supabaseGlobal || typeof supabaseGlobal.createClient !== "function") return;
-  if (supabaseGlobal.__agsusOperationalTransportInstalled) return;
+export function decorateOperationalClient(client) {
+  if (!client || client[CLIENT_MARKER]) return client;
 
-  const originalCreateClient = supabaseGlobal.createClient.bind(supabaseGlobal);
-  supabaseGlobal.createClient = (...args) => {
-    const client = originalCreateClient(...args);
-    if (!client || client.__agsusOperationalTransport) return client;
+  const originalFrom = client.from.bind(client);
+  client.from = (tableName) => {
+    const originalBuilder = originalFrom(tableName);
+    if (tableName !== SOURCE_TABLE) return originalBuilder;
 
-    const originalFrom = client.from.bind(client);
-    client.from = (tableName) => {
-      const originalBuilder = originalFrom(tableName);
-      if (tableName !== SOURCE_TABLE) return originalBuilder;
-
-      return new Proxy(originalBuilder, {
-        get(target, property, receiver) {
-          if (property === "select") {
-            return (...selectArgs) => originalFrom(OPERATIONAL_VIEW).select(...selectArgs);
-          }
-          const value = Reflect.get(target, property, receiver);
-          return typeof value === "function" ? value.bind(target) : value;
+    return new Proxy(originalBuilder, {
+      get(target, property, receiver) {
+        if (property === "select") {
+          return (...selectArgs) =>
+            originalFrom(OPERATIONAL_VIEW).select(...selectArgs);
         }
-      });
-    };
 
-    Object.defineProperty(client, "__agsusOperationalTransport", {
-      value: true,
-      enumerable: false
+        const value = Reflect.get(target, property, receiver);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
     });
-    return client;
   };
 
-  supabaseGlobal.__agsusOperationalTransportInstalled = true;
+  Object.defineProperty(client, CLIENT_MARKER, {
+    value: true,
+    enumerable: false,
+  });
+
+  return client;
 }
 
-installOperationalTransport();
+export function installOperationalTransport(target = globalThis) {
+  const supabaseGlobal = target?.supabase;
+  if (
+    !target ||
+    !supabaseGlobal ||
+    typeof supabaseGlobal.createClient !== "function"
+  ) {
+    return false;
+  }
+  if (supabaseGlobal[GLOBAL_MARKER]) return true;
+
+  const originalCreateClient = supabaseGlobal.createClient.bind(supabaseGlobal);
+  supabaseGlobal.createClient = (...args) =>
+    decorateOperationalClient(originalCreateClient(...args));
+
+  Object.defineProperty(supabaseGlobal, GLOBAL_MARKER, {
+    value: true,
+    enumerable: false,
+  });
+  Object.defineProperty(target, DECORATOR_KEY, {
+    value: decorateOperationalClient,
+    configurable: true,
+    enumerable: false,
+  });
+
+  return true;
+}
+
+if (typeof window !== "undefined") {
+  installOperationalTransport(window);
+}
