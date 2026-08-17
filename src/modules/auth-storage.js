@@ -9,16 +9,40 @@ function canUseStorage(storage, probeKey) {
   }
 }
 
-// prettier-ignore
-export function createSafeAuthStorage(
-  storageKey,
-  {
-    localStorageRef =
-      typeof window !== "undefined" ? window.localStorage : null,
-    sessionStorageRef =
-      typeof window !== "undefined" ? window.sessionStorage : null,
-  } = {},
-) {
+function getWindowStorage(windowRef, name) {
+  if (!windowRef) return null;
+  try {
+    return windowRef[name] || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function resolveStorageOption(options, optionName, windowRef, storageName) {
+  if (Object.prototype.hasOwnProperty.call(options, optionName)) {
+    return options[optionName];
+  }
+  return getWindowStorage(windowRef, storageName);
+}
+
+export function createSafeAuthStorage(storageKey, options = {}) {
+  const windowRef = Object.prototype.hasOwnProperty.call(options, "windowRef")
+    ? options.windowRef
+    : typeof window !== "undefined"
+      ? window
+      : null;
+  const localStorageRef = resolveStorageOption(
+    options,
+    "localStorageRef",
+    windowRef,
+    "localStorage",
+  );
+  const sessionStorageRef = resolveStorageOption(
+    options,
+    "sessionStorageRef",
+    windowRef,
+    "sessionStorage",
+  );
   const probeKey = `__agsus_probe_${storageKey}__`;
   const localAvailable = canUseStorage(localStorageRef, probeKey);
   const sessionAvailable = canUseStorage(sessionStorageRef, probeKey);
@@ -76,9 +100,6 @@ export function createSafeAuthStorage(
     setItem(key, value) {
       const persisted = write(primary, key, value);
 
-      // O verificador PKCE precisa sobreviver ao redirecionamento OAuth.
-      // Em navegadores mobile com localStorage instável, mantemos também uma
-      // cópia em sessionStorage, que permanece disponível ao voltar na mesma aba.
       if (key === `${storageKey}-code-verifier`) {
         write(fallback, key, value);
       }

@@ -21,13 +21,31 @@ function redirectHome(result) {
   window.location.replace(callbackResultUrl(result));
 }
 
-export async function finishOAuth({
-  locationRef = window.location,
-  sessionStorageRef = window.sessionStorage,
-  resolveClient = getSupabaseClient,
-  redirect = redirectHome,
-} = {}) {
-  const search = new URLSearchParams(locationRef.search || "");
+function safeWindowValue(name) {
+  if (typeof window === "undefined") return null;
+  try {
+    return window[name] || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+export async function finishOAuth(options = {}) {
+  const locationRef = Object.prototype.hasOwnProperty.call(
+    options,
+    "locationRef",
+  )
+    ? options.locationRef
+    : safeWindowValue("location");
+  const sessionStorageRef = Object.prototype.hasOwnProperty.call(
+    options,
+    "sessionStorageRef",
+  )
+    ? options.sessionStorageRef
+    : safeWindowValue("sessionStorage");
+  const resolveClient = options.resolveClient || getSupabaseClient;
+  const redirect = options.redirect || redirectHome;
+  const search = new URLSearchParams(locationRef?.search || "");
   const code = search.get("code");
 
   if (!hasSupabaseEnv()) {

@@ -91,4 +91,32 @@ describe("auth-storage", () => {
     expect(local.getItem(`${storageKey}-code-verifier`)).toBeNull();
     expect(session.getItem(`${storageKey}-code-verifier`)).toBeNull();
   });
+
+  it("nao quebra quando o navegador bloqueia o acesso as propriedades de storage", () => {
+    const storageKey = "agsus-monitora-auth";
+    const restrictedWindow = {};
+
+    Object.defineProperties(restrictedWindow, {
+      localStorage: {
+        get() {
+          throw new DOMException("Bloqueado", "SecurityError");
+        },
+      },
+      sessionStorage: {
+        get() {
+          throw new DOMException("Bloqueado", "SecurityError");
+        },
+      },
+    });
+
+    expect(() =>
+      createSafeAuthStorage(storageKey, { windowRef: restrictedWindow }),
+    ).not.toThrow();
+
+    const storage = createSafeAuthStorage(storageKey, {
+      windowRef: restrictedWindow,
+    });
+    storage.setItem(storageKey, "sessao-em-memoria");
+    expect(storage.getItem(storageKey)).toBe("sessao-em-memoria");
+  });
 });
