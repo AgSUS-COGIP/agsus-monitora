@@ -4,6 +4,7 @@ import {
   isIosLike,
   isStandaloneDisplayMode,
   shouldCheckForUpdate,
+  shouldReloadAfterControllerChange,
   shouldReplacePwaNotice,
   shouldShowIosInstallGuidance,
 } from "../src/modules/pwa-lifecycle.js";
@@ -132,5 +133,29 @@ describe("pwa lifecycle helpers", () => {
         currentVisible: false,
       }),
     ).toBe(true);
+  });
+
+  it("não recarrega em controllerchange não solicitado", () => {
+    expect(
+      shouldReloadAfterControllerChange({
+        updateRequested: false,
+        alreadyReloading: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("recarrega uma única vez após atualização solicitada", () => {
+    expect(
+      shouldReloadAfterControllerChange({
+        updateRequested: true,
+        alreadyReloading: false,
+      }),
+    ).toBe(true);
+    expect(
+      shouldReloadAfterControllerChange({
+        updateRequested: true,
+        alreadyReloading: true,
+      }),
+    ).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 let deferredInstallPrompt = null;
 let refreshingForUpdate = false;
+let updateReloadRequested = false;
 let lastUpdateCheckAt = 0;
 
 const IOS_GUIDANCE_DISMISSED_KEY = "agsus-pwa-ios-guidance-dismissed";
@@ -56,6 +57,13 @@ export function shouldReplacePwaNotice({
   const currentPriority = NOTICE_PRIORITY[currentVariant] || 0;
   const nextPriority = NOTICE_PRIORITY[nextVariant] || 0;
   return nextPriority >= currentPriority;
+}
+
+export function shouldReloadAfterControllerChange({
+  updateRequested,
+  alreadyReloading,
+}) {
+  return Boolean(updateRequested && !alreadyReloading);
 }
 
 function createActionButton(label, action, secondary = false) {
@@ -164,6 +172,7 @@ function showIosInstallGuidance() {
 }
 
 function activateWaitingWorker(worker) {
+  updateReloadRequested = true;
   worker.postMessage({ type: "SKIP_WAITING" });
 }
 
@@ -265,7 +274,13 @@ function bindServiceWorkerUpdates() {
     .catch(() => {});
 
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshingForUpdate) return;
+    const shouldReload = shouldReloadAfterControllerChange({
+      updateRequested: updateReloadRequested,
+      alreadyReloading: refreshingForUpdate,
+    });
+    if (!shouldReload) return;
+
+    updateReloadRequested = false;
     refreshingForUpdate = true;
     window.location.reload();
   });
