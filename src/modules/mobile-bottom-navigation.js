@@ -1,7 +1,6 @@
 const MOBILE_BREAKPOINT = 900;
 const MAX_PRIMARY_ITEMS = 4;
-const SIDEBAR_ITEM_SELECTOR =
-  "#sidebar a, #sidebar button, .sidebar a, .sidebar button";
+const NAV_ITEM_SELECTOR = "#nav a, #nav button";
 const DEFAULT_ICON_CLASS = "fa-solid fa-circle";
 const MORE_BUTTON_HTML =
   '<i class="fa-solid fa-bars" aria-hidden="true"></i><span>Mais</span>';
@@ -31,7 +30,7 @@ function isUsableSidebarItem(element) {
 function collectPrimaryItems() {
   const seen = new Set();
 
-  return Array.from(document.querySelectorAll(SIDEBAR_ITEM_SELECTOR))
+  return Array.from(document.querySelectorAll(NAV_ITEM_SELECTOR))
     .filter(isUsableSidebarItem)
     .filter((element) => {
       const key =
@@ -144,7 +143,7 @@ function syncActiveStateFromSidebarClick(event) {
   const target = event.target;
   if (!(target instanceof Element)) return;
 
-  const source = target.closest(SIDEBAR_ITEM_SELECTOR);
+  const source = target.closest(NAV_ITEM_SELECTOR);
   if (!(source instanceof HTMLElement)) return;
 
   const navigation = document.getElementById("mobileBottomNav");
