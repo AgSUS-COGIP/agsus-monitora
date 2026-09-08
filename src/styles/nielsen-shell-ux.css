@@ -1,0 +1,651 @@
+/*
+ * Camada de usabilidade do shell institucional.
+ * Mantem os contratos legados, mas aplica hierarquia, contraste e feedback
+ * consistentes com os padroes consolidados no AgSUS Pesquisas.
+ */
+
+:root {
+  --ux-focus: #2563eb;
+  --ux-dark-page: #071421;
+  --ux-dark-surface: #0e1e2e;
+  --ux-dark-surface-soft: #14283a;
+  --ux-dark-border: #294158;
+  --ux-dark-text: #edf4fa;
+  --ux-dark-muted: #a8b8c8;
+}
+
+/* Controle de tema: acao global visivel, fora do menu de perfil. */
+.platform-theme-toggle {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--platform-border, #e2e8f0);
+  border-radius: 12px;
+  background: #fff;
+  color: #52657b;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.platform-theme-toggle:hover {
+  border-color: #bfd0e3;
+  background: #f8fafc;
+  color: #003b70;
+}
+
+.platform-theme-toggle:active {
+  transform: translateY(1px);
+}
+
+.platform-theme-toggle i {
+  font-size: 15px;
+}
+
+/* Sair pertence a sidebar: sempre no mesmo lugar, inclusive no modo compacto. */
+.sidebar .side-footer {
+  display: grid;
+  gap: 6px;
+}
+
+.sidebar .side-logout {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sidebar .side-logout:hover {
+  border-color: #e2e8f0;
+  background: #f1f5f9;
+  color: #9f2730;
+}
+
+.sidebar .side-logout i {
+  width: 24px;
+  text-align: center;
+  font-size: 14px;
+}
+
+body.sidebar-collapsed .sidebar .side-logout {
+  justify-content: center;
+  padding-inline: 6px;
+}
+
+body.sidebar-collapsed .sidebar .side-logout span {
+  display: none;
+}
+
+/* O menu de conta vira informativo; preferencias e saida nao ficam escondidas nele. */
+.top-user-popover-actions:empty {
+  display: none;
+}
+
+/* Dialogo de confirmacao e estado de saida. */
+.shell-confirm-layer,
+.shell-signout-busy {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+}
+
+.shell-confirm-layer[hidden],
+.shell-signout-busy[hidden] {
+  display: none !important;
+}
+
+.shell-confirm-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(2px);
+}
+
+.shell-confirm-dialog {
+  position: relative;
+  width: min(430px, calc(100vw - 32px));
+  margin: min(22vh, 180px) auto 0;
+  padding: 22px;
+  border: 1px solid #dbe4ee;
+  border-radius: 18px;
+  background: #fff;
+  color: #142238;
+  box-shadow: 0 30px 80px -30px rgba(15, 23, 42, 0.65);
+}
+
+.shell-confirm-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: #fff0f1;
+  color: #c9323d;
+}
+
+.shell-confirm-dialog h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+
+.shell-confirm-dialog p {
+  margin: 8px 0 0;
+  color: #607287;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.shell-confirm-warning {
+  margin-top: 12px !important;
+  padding: 10px 12px;
+  border: 1px solid #f0c66e;
+  border-radius: 10px;
+  background: #fff8e8;
+  color: #8a5b00 !important;
+  font-weight: 700;
+}
+
+.shell-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.shell-confirm-actions button {
+  min-height: 40px;
+  padding: 0 15px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shell-confirm-cancel {
+  border: 1px solid #dbe4ee;
+  background: #fff;
+  color: #40546b;
+}
+
+.shell-confirm-submit {
+  border: 1px solid #c9323d;
+  background: #c9323d;
+  color: #fff;
+}
+
+.shell-signout-busy {
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(2px);
+  cursor: wait;
+}
+
+.shell-signout-card {
+  width: min(360px, calc(100vw - 32px));
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid #dbe4ee;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.97);
+  color: #142238;
+  text-align: center;
+  box-shadow: 0 24px 70px -30px rgba(15, 23, 42, 0.65);
+}
+
+.shell-signout-spinner {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  border: 3px solid #dbe4ee;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: shell-spin 0.8s linear infinite;
+}
+
+.shell-signout-card strong {
+  font-size: 14px;
+}
+
+.shell-signout-card span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+@keyframes shell-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Presenca: estados reconheciveis em vez de sincronizacao indefinida. */
+.online-presence[data-presence-state="loading"] .online-presence-dot {
+  background: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.14);
+}
+
+.online-presence[data-presence-state="error"] .online-presence-dot {
+  background: #e19a14;
+  box-shadow: 0 0 0 3px rgba(225, 154, 20, 0.15);
+}
+
+.online-presence[data-presence-state="offline"] .online-presence-dot {
+  background: #dc3f49;
+  box-shadow: 0 0 0 3px rgba(220, 63, 73, 0.14);
+}
+
+.online-presence[data-presence-state="error"] .online-presence-button,
+.online-presence[data-presence-state="offline"] .online-presence-button {
+  color: #6b7280;
+}
+
+.online-presence-heading small[hidden] {
+  display: none !important;
+}
+
+.online-presence-list > p {
+  margin: 0;
+  padding: 16px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* KPIs: numero e rotulo com hierarquia mais equilibrada. */
+.kpis-main {
+  gap: 11px;
+}
+
+.kpis-main .kpi {
+  min-width: 0;
+  min-height: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  padding: 12px 13px;
+  text-align: left;
+}
+
+.kpis-main .kpi > span {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: 0.025em;
+}
+
+.kpis-main .kpi > b {
+  margin-top: 9px;
+  font-size: clamp(25px, 2vw, 29px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+/* Configuracoes: menor densidade visual sem reduzir alvo de clique. */
+#page-config .config-workspace-toolbar {
+  padding: 17px 18px 12px;
+}
+
+#page-config .config-workspace-heading h2 {
+  font-size: 20px;
+}
+
+#page-config .config-workspace-heading p {
+  max-width: 720px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#page-config .admin-grid {
+  gap: 12px;
+}
+
+#page-config .admin-card {
+  padding: 14px !important;
+}
+
+#page-config .access-admin-item {
+  padding: 13px !important;
+}
+
+#page-config .access-admin-head {
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+#page-config .access-admin-head strong {
+  font-size: 13px;
+}
+
+#page-config .access-admin-head span {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+#page-config .access-admin-controls {
+  grid-template-columns: minmax(145px, 180px) minmax(0, 1fr);
+  gap: 10px;
+}
+
+#page-config .permission-checks {
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  gap: 6px;
+}
+
+#page-config .permission-check,
+#page-config .panel-check {
+  min-height: 40px;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 11px !important;
+  line-height: 1.25;
+}
+
+#page-config .permission-check input,
+#page-config .panel-check input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+#page-config .access-user-summary .panel-check-list,
+#page-config .access-admin-panels .panel-check-list {
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+#page-config .access-admin-actions {
+  gap: 7px;
+  margin-top: 10px;
+}
+
+#page-config .access-admin-actions .btn {
+  min-height: 38px;
+  padding: 7px 11px;
+  font-size: 11px;
+}
+
+#page-config .section-title-row {
+  margin-bottom: 10px;
+}
+
+#page-config .section-title-row h4 {
+  margin-bottom: 3px;
+  font-size: 14px;
+}
+
+#page-config .section-title-row p {
+  margin: 0;
+  color: var(--config-muted, #74859b);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#page-config .config-sticky-actions {
+  padding: 10px 12px;
+}
+
+#page-config #configStickySaveButton {
+  min-width: 154px;
+  min-height: 40px;
+}
+
+/* Tema escuro: tokens e superficies principais, sem branco residual. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: var(--ux-dark-page);
+  --card: var(--ux-dark-surface);
+  --line: var(--ux-dark-border);
+  --soft: var(--ux-dark-surface-soft);
+  --muted: var(--ux-dark-muted);
+  --platform-border: var(--ux-dark-border);
+  --platform-muted: var(--ux-dark-muted);
+  --platform-hover: #172c40;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] .app,
+html[data-theme="dark"] .main,
+html[data-theme="dark"] .content {
+  background: var(--ux-dark-page) !important;
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] .top {
+  border-color: var(--ux-dark-border) !important;
+  background: rgba(10, 27, 42, 0.96) !important;
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] .page-title h1,
+html[data-theme="dark"] .page-title p,
+html[data-theme="dark"] .top-user-button strong,
+html[data-theme="dark"] .top-user-popover strong {
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] .page-title p,
+html[data-theme="dark"] .top-user-button small,
+html[data-theme="dark"] .top-user-popover small {
+  color: var(--ux-dark-muted) !important;
+}
+
+html[data-theme="dark"] .sidebar {
+  border-color: var(--ux-dark-border) !important;
+  background: #0a1b2a !important;
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] .side-brand,
+html[data-theme="dark"] .side-footer {
+  border-color: var(--ux-dark-border) !important;
+}
+
+html[data-theme="dark"] .side-logo-wrap,
+html[data-theme="dark"] .nav-ico {
+  border-color: var(--ux-dark-border) !important;
+  background: #12283a !important;
+}
+
+html[data-theme="dark"] .side-brand-copy strong,
+html[data-theme="dark"] .nav button {
+  color: #cfdae6;
+}
+
+html[data-theme="dark"] .nav button:hover {
+  background: #142b3e;
+  color: #fff;
+}
+
+html[data-theme="dark"] .nav button.active {
+  background: #07508b;
+  color: #fff;
+}
+
+html[data-theme="dark"] .sidebar .side-logout {
+  color: #aab9c8;
+}
+
+html[data-theme="dark"] .sidebar .side-logout:hover {
+  border-color: var(--ux-dark-border);
+  background: #172c40;
+  color: #ffb4ba;
+}
+
+html[data-theme="dark"] .side-version,
+html[data-theme="dark"] .side-version b {
+  color: #8fa2b5;
+}
+
+html[data-theme="dark"] .platform-theme-toggle,
+html[data-theme="dark"] .online-presence-button,
+html[data-theme="dark"] .top-user-button,
+html[data-theme="dark"] .top-user-popover,
+html[data-theme="dark"] .online-presence-popover {
+  border-color: var(--ux-dark-border) !important;
+  background: var(--ux-dark-surface) !important;
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] .platform-theme-toggle:hover,
+html[data-theme="dark"] .online-presence-button:hover,
+html[data-theme="dark"] .top-user-button:hover {
+  background: var(--ux-dark-surface-soft) !important;
+}
+
+html[data-theme="dark"] .online-presence-heading,
+html[data-theme="dark"] .top-user-popover-actions {
+  border-color: var(--ux-dark-border) !important;
+}
+
+html[data-theme="dark"] .online-presence-list > p {
+  color: var(--ux-dark-muted);
+}
+
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .kpi,
+html[data-theme="dark"] .filter-card,
+html[data-theme="dark"] .table-wrap {
+  border-color: var(--ux-dark-border) !important;
+  background: var(--ux-dark-surface) !important;
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  border-color: var(--ux-dark-border) !important;
+  background: #102436 !important;
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #8799aa !important;
+}
+
+html[data-theme="dark"] #page-config {
+  --config-surface: var(--ux-dark-surface);
+  --config-surface-soft: var(--ux-dark-surface-soft);
+  --config-border: var(--ux-dark-border);
+  --config-border-strong: #3b566f;
+  --config-text: var(--ux-dark-text);
+  --config-muted: var(--ux-dark-muted);
+}
+
+html[data-theme="dark"] #page-config .config-sticky-actions,
+html[data-theme="dark"] #page-config .config-workspace-toolbar,
+html[data-theme="dark"] #page-config .admin-card,
+html[data-theme="dark"] #page-config .access-admin-item,
+html[data-theme="dark"] #page-config .panel-check,
+html[data-theme="dark"] #page-config .permission-check {
+  border-color: var(--ux-dark-border) !important;
+  background: var(--ux-dark-surface) !important;
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] #page-config .access-admin-item,
+html[data-theme="dark"] #page-config .panel-check,
+html[data-theme="dark"] #page-config .permission-check {
+  background: var(--ux-dark-surface-soft) !important;
+}
+
+html[data-theme="dark"] #page-config .access-admin-list label,
+html[data-theme="dark"] #page-config .panel-check-list label,
+html[data-theme="dark"] #page-config .section-title-row h4 {
+  color: var(--ux-dark-text) !important;
+}
+
+html[data-theme="dark"] .shell-confirm-dialog,
+html[data-theme="dark"] .shell-signout-card {
+  border-color: var(--ux-dark-border);
+  background: var(--ux-dark-surface);
+  color: var(--ux-dark-text);
+}
+
+html[data-theme="dark"] .shell-confirm-dialog p,
+html[data-theme="dark"] .shell-signout-card span {
+  color: var(--ux-dark-muted);
+}
+
+html[data-theme="dark"] .shell-confirm-cancel {
+  border-color: var(--ux-dark-border);
+  background: var(--ux-dark-surface-soft);
+  color: var(--ux-dark-text);
+}
+
+@media (max-width: 1220px) {
+  #page-config .permission-checks {
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+  }
+
+  #page-config .access-user-summary .panel-check-list,
+  #page-config .access-admin-panels .panel-check-list {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  #page-config .access-admin-controls,
+  #page-config .permission-checks,
+  #page-config .access-user-summary .panel-check-list,
+  #page-config .access-admin-panels .panel-check-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .kpis-main .kpi {
+    min-height: 78px;
+    padding: 10px;
+  }
+
+  .kpis-main .kpi > b {
+    font-size: 24px;
+  }
+
+  .shell-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .shell-confirm-actions button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-signout-spinner {
+    animation: none;
+  }
+}

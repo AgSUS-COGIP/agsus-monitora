@@ -34,6 +34,7 @@ import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
 import "./styles/health-map-workspace.css";
 import "./styles/system-ui-fixes.css";
+import "./styles/nielsen-shell-ux.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -61,6 +62,7 @@ import { initMobileTableCards } from "./modules/mobile-table-cards.js";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
+import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -92,6 +94,7 @@ initMobileTableCards();
 initPwaLifecycle();
 initConnectivityStatus();
 initGoogleProfilePhoto();
+initNielsenShellUx();
 
 if (!hasSupabaseEnv()) {
   console.warn(
