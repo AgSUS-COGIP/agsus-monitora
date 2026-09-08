@@ -1,5 +1,5 @@
 import { hasSupabaseEnv } from "../lib/env.js";
-import { isUsableSession } from "../lib/auth-flow.js";
+import { isUsableSession, LOGIN_POPUP_MESSAGE } from "../lib/auth-flow.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 export function callbackResultUrl(result) {
@@ -18,6 +18,18 @@ export function callbackResultUrl(result) {
 }
 
 function redirectHome(result) {
+  if (window.opener && !window.opener.closed) {
+    try {
+      window.opener.postMessage(
+        { type: LOGIN_POPUP_MESSAGE, result },
+        window.location.origin,
+      );
+      window.close();
+      return;
+    } catch (_) {
+      // Se o navegador bloquear a comunicação, preserva o retorno tradicional.
+    }
+  }
   window.location.replace(callbackResultUrl(result));
 }
 

@@ -14,8 +14,111 @@
   --config-warning-soft: #fff7e5;
   --config-danger: #dc3f49;
   --config-danger-soft: #fff0f1;
-  --config-shadow: 0 2px 7px rgba(15, 35, 60, .06);
+  --config-shadow: 0 2px 7px rgba(15, 35, 60, 0.06);
   padding-bottom: 92px;
+}
+
+#page-config .access-background-manager {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+}
+
+#page-config .access-background-preview {
+  aspect-ratio: 16 / 9;
+  min-height: 112px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background-color: #4d2270;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 8px 22px rgba(15, 35, 60, 0.1);
+}
+
+#page-config .access-background-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#page-config .access-background-actions small {
+  width: 100%;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+#page-config .access-background-upload {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#page-config .access-background-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#page-config .access-background-gallery {
+  margin-top: 14px;
+}
+
+#page-config .access-background-gallery-title {
+  margin: 0 0 9px;
+  color: var(--strong);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#page-config .access-background-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+}
+
+#page-config .access-background-gallery-item {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  color: var(--agsus-azul);
+  cursor: pointer;
+}
+
+#page-config .access-background-gallery-item span {
+  display: block;
+  aspect-ratio: 16 / 9;
+  background-position: center;
+  background-size: cover;
+}
+
+#page-config .access-background-gallery-item small {
+  display: block;
+  padding: 7px 8px;
+  font-weight: 850;
+}
+
+#page-config .access-background-gallery-item.is-active {
+  border-color: var(--agsus-verde);
+  box-shadow: 0 0 0 2px rgba(11, 143, 88, 0.14);
+  cursor: default;
+}
+
+@media (max-width: 680px) {
+  #page-config .access-background-manager {
+    grid-template-columns: 1fr;
+  }
 }
 
 #page-config .config-workspace-toolbar {
@@ -41,7 +144,7 @@
   color: var(--config-primary);
   font-size: 10px;
   font-weight: 900;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -50,7 +153,7 @@
   color: var(--config-text);
   font-size: 23px;
   line-height: 1.2;
-  letter-spacing: -.025em;
+  letter-spacing: -0.025em;
 }
 
 #page-config .config-workspace-heading p {
@@ -83,13 +186,16 @@
   background: #f9fbfd;
   color: var(--config-text);
   outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 #page-config #configWorkspaceSearch:focus {
   border-color: var(--config-primary);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .11);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.11);
 }
 
 #page-config #configWorkspaceSearchClear {
@@ -135,7 +241,7 @@
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
-  transition: all .15s ease;
+  transition: all 0.15s ease;
 }
 
 #page-config .config-workspace-tab:hover {
@@ -148,7 +254,7 @@
   border-color: #a9c4f5;
   background: var(--config-primary-soft);
   color: #1857b7;
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .08);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
 }
 
 #page-config .config-workspace-meta {
@@ -239,7 +345,7 @@
   margin: 0;
   color: var(--config-text);
   font-size: 16px;
-  letter-spacing: -.015em;
+  letter-spacing: -0.015em;
 }
 
 #page-config .config-card-title p,
@@ -255,7 +361,7 @@
   color: #52667f;
   font-size: 10px;
   font-weight: 900;
-  letter-spacing: .09em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -275,7 +381,10 @@
   background: #f9fbfd;
   color: var(--config-text);
   box-shadow: none;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 #page-config .form-row textarea {
@@ -294,7 +403,7 @@
 #page-config .form-row textarea:focus {
   border-color: var(--config-primary);
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   outline: none;
 }
 
@@ -302,7 +411,7 @@
 #page-config .config-field-invalid:focus {
   border-color: var(--config-danger) !important;
   background: #fff9f9 !important;
-  box-shadow: 0 0 0 3px rgba(220, 63, 73, .1) !important;
+  box-shadow: 0 0 0 3px rgba(220, 63, 73, 0.1) !important;
 }
 
 #page-config details.form-row.full {
@@ -352,8 +461,8 @@
   padding: 12px 14px;
   border: 1px solid var(--config-border);
   border-radius: 13px;
-  background: rgba(255, 255, 255, .96);
-  box-shadow: 0 12px 32px rgba(15, 35, 60, .16);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 32px rgba(15, 35, 60, 0.16);
   backdrop-filter: blur(12px);
 }
 
@@ -447,7 +556,7 @@ body:not(.sidebar-collapsed) #page-config .config-sticky-actions {
 }
 
 #page-config #configStickySaveButton:disabled {
-  opacity: .5;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -463,7 +572,7 @@ html[data-theme="dark"] #page-config {
   --config-success-soft: #143d32;
   --config-warning-soft: #473715;
   --config-danger-soft: #482227;
-  --config-shadow: 0 3px 10px rgba(0, 0, 0, .18);
+  --config-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
 }
 
 body.dark-mode #page-config .config-workspace-toolbar,

@@ -15,7 +15,7 @@ export function getGoogleProfilePhotoUrl(user) {
 
 export function renderGoogleProfilePhoto(user, root = document) {
   const existing = root.getElementById?.(PHOTO_ID) || null;
-  const container = root.querySelector?.(".side-user") || null;
+  const container = root.getElementById?.("topUserAvatar") || null;
   const photoUrl = getGoogleProfilePhotoUrl(user);
 
   if (!container || !photoUrl) {
@@ -32,7 +32,9 @@ export function renderGoogleProfilePhoto(user, root = document) {
   image.decoding = "async";
   image.src = photoUrl;
 
-  if (!existing) container.prepend(image);
+  if (!existing) {
+    container.replaceChildren(image);
+  }
   return image;
 }
 

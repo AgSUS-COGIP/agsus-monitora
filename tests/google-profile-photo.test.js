@@ -5,7 +5,7 @@ import {
 } from "../src/modules/google-profile-photo.js";
 
 function createRoot() {
-  document.body.innerHTML = '<div class="side-user"></div>';
+  document.body.innerHTML = '<div id="topUserAvatar"></div>';
   return document;
 }
 

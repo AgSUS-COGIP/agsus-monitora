@@ -7,15 +7,27 @@ const state = {
   rowsByKey: new Map(),
   loading: false,
   selectedId: "",
-  chartSignature: ""
+  chartSignature: "",
 };
 
-const $ = id => document.getElementById(id);
-const escMap = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" };
-const esc = value => String(value ?? "").replace(/[&<>"']/g, char => escMap[char]);
-const txt = value => String(value ?? "").trim();
-const norm = value => txt(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ");
-const fmt = value => Number(value || 0).toLocaleString("pt-BR");
+const $ = (id) => document.getElementById(id);
+const escMap = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#039;",
+};
+const esc = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => escMap[char]);
+const txt = (value) => String(value ?? "").trim();
+const norm = (value) =>
+  txt(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+const fmt = (value) => Number(value || 0).toLocaleString("pt-BR");
 
 function client() {
   if (state.client) return state.client;
@@ -27,7 +39,8 @@ async function ensureSession() {
   const sb = client();
   if (!sb) throw new Error("Supabase indisponível.");
   const { data, error } = await sb.auth.getSession();
-  if (error || !data?.session?.access_token) throw new Error("Sessão expirada.");
+  if (error || !data?.session?.access_token)
+    throw new Error("Sessão expirada.");
   return sb;
 }
 
@@ -70,13 +83,17 @@ async function loadOperationalRows() {
     const sb = await ensureSession();
     const { data, error } = await sb
       .from("monitoramento_indigena")
-      .select("id,unidade,edital,status,etapa,risco,vagas_total,contratados,vagas_ociosas,inscritos,data_inicio,data_fim,link_edital,observacoes,responsavel,cronograma_automatico,cronograma_percentual,cronograma_atividade_atual,cronograma_proxima_atividade,cronograma_proxima_data,cronograma_dias_para_proxima")
+      .select(
+        "id,unidade,edital,status,etapa,risco,vagas_total,contratados,vagas_ociosas,inscritos,data_inicio,data_fim,link_edital,observacoes,responsavel,cronograma_automatico,cronograma_percentual,cronograma_atividade_atual,cronograma_proxima_atividade,cronograma_proxima_data,cronograma_dias_para_proxima",
+      )
       .eq("ativo", true)
-      .order("unidade", { ascending:true })
-      .order("edital", { ascending:true });
+      .order("unidade", { ascending: true })
+      .order("edital", { ascending: true });
     if (error) throw error;
     state.rows = Array.isArray(data) ? data : [];
-    state.rowsByKey = new Map(state.rows.map(row => [keyOf(row.unidade, row.edital), row]));
+    state.rowsByKey = new Map(
+      state.rows.map((row) => [keyOf(row.unidade, row.edital), row]),
+    );
     enhanceDetails();
   } catch (error) {
     console.error("Erro ao carregar detalhes operacionais:", error);
@@ -93,17 +110,28 @@ function ensureChartLayout() {
 
   card.classList.add("health-status-card");
   if (!card.querySelector(".health-status-subtitle")) {
-    card.querySelector(".panel-title")?.insertAdjacentHTML("afterend", '<p class="health-status-subtitle">Distribuição dos processos por situação operacional. Clique em uma categoria para filtrar.</p>');
+    card
+      .querySelector(".panel-title")
+      ?.insertAdjacentHTML(
+        "afterend",
+        '<p class="health-status-subtitle">Distribuição dos processos por situação operacional. Clique em uma categoria para filtrar.</p>',
+      );
   }
   if (!wrap.parentElement?.classList.contains("health-status-layout")) {
     const layout = document.createElement("div");
     layout.className = "health-status-layout";
     wrap.parentElement.insertBefore(layout, wrap);
     layout.appendChild(wrap);
-    layout.insertAdjacentHTML("beforeend", '<div id="healthStatusLegend" class="health-status-legend"></div>');
+    layout.insertAdjacentHTML(
+      "beforeend",
+      '<div id="healthStatusLegend" class="health-status-legend"></div>',
+    );
   }
   if (!wrap.querySelector(".health-status-center")) {
-    wrap.insertAdjacentHTML("beforeend", '<div class="health-status-center"><strong id="healthStatusTotal">0</strong><span>processos</span></div>');
+    wrap.insertAdjacentHTML(
+      "beforeend",
+      '<div class="health-status-center"><strong id="healthStatusTotal">0</strong><span>processos</span></div>',
+    );
   }
   return canvas;
 }
@@ -111,10 +139,16 @@ function ensureChartLayout() {
 function currentVisibleStatuses() {
   const tableRows = [...document.querySelectorAll("#monitorRows tr")];
   const counts = new Map();
-  tableRows.forEach(tr => {
+  tableRows.forEach((tr) => {
     if (tr.querySelector("td[colspan]")) return;
     const cells = [...tr.querySelectorAll("td")];
-    const statusCell = cells.find(td => td.querySelector(".chip") && /andamento|conclu|cancel|planejad|cronograma|suspens|paralis/i.test(td.textContent));
+    const statusCell = cells.find(
+      (td) =>
+        td.querySelector(".chip") &&
+        /andamento|conclu|cancel|planejad|cronograma|suspens|paralis/i.test(
+          td.textContent,
+        ),
+    );
     const status = canonicalStatus(statusCell?.textContent);
     counts.set(status, (counts.get(status) || 0) + 1);
   });
@@ -127,8 +161,14 @@ function enhanceChart() {
   const entries = currentVisibleStatuses();
   if (!entries.length) return;
 
-  const signature = entries.map(([label, value]) => `${label}:${value}`).join("|");
-  if (signature === state.chartSignature && $("healthStatusLegend")?.children.length) return;
+  const signature = entries
+    .map(([label, value]) => `${label}:${value}`)
+    .join("|");
+  if (
+    signature === state.chartSignature &&
+    $("healthStatusLegend")?.children.length
+  )
+    return;
   state.chartSignature = signature;
 
   const total = entries.reduce((sum, [, value]) => sum + value, 0);
@@ -136,7 +176,9 @@ function enhanceChart() {
   if (chart) {
     chart.data.labels = entries.map(([label]) => label);
     chart.data.datasets[0].data = entries.map(([, value]) => value);
-    chart.data.datasets[0].backgroundColor = entries.map(([label]) => statusColor(label));
+    chart.data.datasets[0].backgroundColor = entries.map(([label]) =>
+      statusColor(label),
+    );
     chart.data.datasets[0].borderColor = "#ffffff";
     chart.data.datasets[0].borderWidth = 3;
     chart.options.cutout = "72%";
@@ -146,7 +188,7 @@ function enhanceChart() {
         const value = Number(context.raw || 0);
         const pct = total ? Math.round((value / total) * 100) : 0;
         return ` ${context.label}: ${value} (${pct}%)`;
-      }
+      },
     };
     chart.update("none");
   }
@@ -154,15 +196,17 @@ function enhanceChart() {
   if ($("healthStatusTotal")) $("healthStatusTotal").textContent = fmt(total);
   const legend = $("healthStatusLegend");
   if (legend) {
-    legend.innerHTML = entries.map(([label, value]) => {
-      const pct = total ? Math.round((value / total) * 100) : 0;
-      return `<button type="button" class="health-status-legend-item" data-health-status="${esc(label)}">
+    legend.innerHTML = entries
+      .map(([label, value]) => {
+        const pct = total ? Math.round((value / total) * 100) : 0;
+        return `<button type="button" class="health-status-legend-item" data-health-status="${esc(label)}">
         <span class="health-status-dot" style="background:${statusColor(label)}"></span>
         <span class="health-status-name">${esc(label)}</span>
         <strong>${fmt(value)}</strong>
         <small>${pct}%</small>
       </button>`;
-    }).join("");
+      })
+      .join("");
   }
 }
 
@@ -170,21 +214,39 @@ function rowData(tr) {
   const cells = [...tr.querySelectorAll("td")];
   if (!cells.length || tr.querySelector("td[colspan]")) return null;
   const unidade = txt(cells[0]?.textContent);
-  const edital = txt(cells[1]?.querySelector("a")?.textContent || cells[1]?.textContent).replace(/↗/g, "").replace(/\b\d+d\b/g, "").trim();
+  const edital = txt(
+    cells[1]?.querySelector("a")?.textContent || cells[1]?.textContent,
+  )
+    .replace(/↗/g, "")
+    .replace(/\b\d+d\b/g, "")
+    .trim();
   return state.rowsByKey.get(keyOf(unidade, edital)) || null;
 }
 
 function urgencyMeta(row) {
-  if (!row) return { tone:"neutral", label:"Dados operacionais indisponíveis" };
+  if (!row)
+    return { tone: "neutral", label: "Dados operacionais indisponíveis" };
   const status = canonicalStatus(row.status);
-  if (["Concluído", "Cancelado"].includes(status)) return { tone:"done", label:status };
-  if (!row.cronograma_automatico) return { tone:"warning", label:"Sem cronograma estruturado" };
+  if (["Concluído", "Cancelado"].includes(status))
+    return { tone: "done", label: status };
+  if (!row.cronograma_automatico)
+    return { tone: "warning", label: "Sem cronograma estruturado" };
   const days = Number(row.cronograma_dias_para_proxima);
-  if (Number.isFinite(days) && days < 0) return { tone:"danger", label:`Etapa atrasada há ${Math.abs(days)} dia(s)` };
-  if (Number.isFinite(days) && days <= 3) return { tone:"danger", label:`Próxima etapa em ${days} dia(s)` };
-  if (Number.isFinite(days) && days <= 7) return { tone:"warning", label:`Próxima etapa em ${days} dia(s)` };
-  if (row.cronograma_proxima_atividade) return { tone:"info", label:`Próxima: ${row.cronograma_proxima_atividade}` };
-  return { tone:"neutral", label:"Sem próxima atividade" };
+  if (Number.isFinite(days) && days < 0)
+    return {
+      tone: "danger",
+      label: `Etapa atrasada há ${Math.abs(days)} dia(s)`,
+    };
+  if (Number.isFinite(days) && days <= 3)
+    return { tone: "danger", label: `Próxima etapa em ${days} dia(s)` };
+  if (Number.isFinite(days) && days <= 7)
+    return { tone: "warning", label: `Próxima etapa em ${days} dia(s)` };
+  if (row.cronograma_proxima_atividade)
+    return {
+      tone: "info",
+      label: `Próxima: ${row.cronograma_proxima_atividade}`,
+    };
+  return { tone: "neutral", label: "Sem próxima atividade" };
 }
 
 function enhanceDetails() {
@@ -195,29 +257,44 @@ function enhanceDetails() {
 
   if (!tableCard.querySelector(".health-details-intro")) {
     const meta = $("tableMeta");
-    meta?.insertAdjacentHTML("beforebegin", `
+    meta?.insertAdjacentHTML(
+      "beforebegin",
+      `
       <div class="health-details-intro">
         <div><strong>Processos seletivos</strong><span>Clique em uma linha para consultar o resumo operacional e o cronograma.</span></div>
         <div class="health-details-legend"><span><i class="dot danger"></i> até 3 dias</span><span><i class="dot warning"></i> até 7 dias</span><span><i class="dot neutral"></i> sem cronograma</span></div>
-      </div>`);
+      </div>`,
+    );
   }
 
-  [...tbody.querySelectorAll("tr")].forEach(tr => {
+  [...tbody.querySelectorAll("tr")].forEach((tr) => {
     const row = rowData(tr);
     if (!row) return;
     tr.dataset.healthDetailId = row.id;
     tr.tabIndex = 0;
     tr.setAttribute("role", "button");
-    tr.setAttribute("aria-label", `Abrir detalhes do edital ${row.edital} da ${row.unidade}`);
+    tr.setAttribute(
+      "aria-label",
+      `Abrir detalhes do edital ${row.edital} da ${row.unidade}`,
+    );
     tr.classList.add("health-detail-row");
 
-    tr.classList.remove("row-ending-critical", "row-ending-soon", "health-urgency-danger", "health-urgency-warning", "health-urgency-neutral");
+    tr.classList.remove(
+      "row-ending-critical",
+      "row-ending-soon",
+      "health-urgency-danger",
+      "health-urgency-warning",
+      "health-urgency-neutral",
+    );
     const urgency = urgencyMeta(row);
     tr.classList.add(`health-urgency-${urgency.tone}`);
 
     const editalCell = tr.querySelector("td:nth-child(2)");
     if (editalCell && !editalCell.querySelector(".health-row-operational")) {
-      editalCell.insertAdjacentHTML("beforeend", `<div class="health-row-operational tone-${urgency.tone}"><i class="fa-solid ${urgency.tone === "danger" ? "fa-triangle-exclamation" : urgency.tone === "warning" ? "fa-clock" : urgency.tone === "done" ? "fa-circle-check" : "fa-calendar"}"></i>${esc(urgency.label)}</div>`);
+      editalCell.insertAdjacentHTML(
+        "beforeend",
+        `<div class="health-row-operational tone-${urgency.tone}"><i class="fa-solid ${urgency.tone === "danger" ? "fa-triangle-exclamation" : urgency.tone === "warning" ? "fa-clock" : urgency.tone === "done" ? "fa-circle-check" : "fa-calendar"}"></i>${esc(urgency.label)}</div>`,
+      );
     }
   });
 
@@ -226,7 +303,9 @@ function enhanceDetails() {
 
 function ensureDrawer() {
   if ($("healthProcessDrawer")) return;
-  document.body.insertAdjacentHTML("beforeend", `
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `
     <div id="healthProcessDrawerBackdrop" class="health-process-drawer-backdrop" hidden></div>
     <aside id="healthProcessDrawer" class="health-process-drawer" aria-hidden="true" aria-labelledby="healthProcessDrawerTitle">
       <div class="health-process-drawer-head">
@@ -234,7 +313,8 @@ function ensureDrawer() {
         <button type="button" id="healthProcessDrawerClose" class="btn outline" aria-label="Fechar detalhes"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div id="healthProcessDrawerBody" class="health-process-drawer-body"></div>
-    </aside>`);
+    </aside>`,
+  );
   $("healthProcessDrawerClose")?.addEventListener("click", closeDrawer);
   $("healthProcessDrawerBackdrop")?.addEventListener("click", closeDrawer);
 }
@@ -242,12 +322,13 @@ function ensureDrawer() {
 function closeDrawer() {
   $("healthProcessDrawer")?.classList.remove("show");
   $("healthProcessDrawer")?.setAttribute("aria-hidden", "true");
-  if ($("healthProcessDrawerBackdrop")) $("healthProcessDrawerBackdrop").hidden = true;
+  if ($("healthProcessDrawerBackdrop"))
+    $("healthProcessDrawerBackdrop").hidden = true;
   state.selectedId = "";
 }
 
 function openDrawer(id) {
-  const row = state.rows.find(item => String(item.id) === String(id));
+  const row = state.rows.find((item) => String(item.id) === String(id));
   if (!row) return;
   ensureDrawer();
   state.selectedId = row.id;
@@ -255,7 +336,8 @@ function openDrawer(id) {
   $("healthProcessDrawerTitle").textContent = row.edital || "Processo seletivo";
   $("healthProcessDrawerSubtitle").textContent = row.unidade || "";
   const body = $("healthProcessDrawerBody");
-  if (body) body.innerHTML = `
+  if (body)
+    body.innerHTML = `
     <section class="health-drawer-status tone-${urgency.tone}">
       <div><span>Status</span><strong>${esc(canonicalStatus(row.status))}</strong></div>
       <div><span>Etapa atual</span><strong>${esc(row.cronograma_atividade_atual || row.etapa || "-")}</strong></div>
@@ -292,14 +374,17 @@ function openDrawer(id) {
     </div>`;
   $("healthProcessDrawer")?.classList.add("show");
   $("healthProcessDrawer")?.setAttribute("aria-hidden", "false");
-  if ($("healthProcessDrawerBackdrop")) $("healthProcessDrawerBackdrop").hidden = false;
+  if ($("healthProcessDrawerBackdrop"))
+    $("healthProcessDrawerBackdrop").hidden = false;
 }
 
 function scheduleEnhancement() {
-  [0, 80, 240].forEach(delay => window.setTimeout(() => {
-    enhanceChart();
-    enhanceDetails();
-  }, delay));
+  [0, 80, 240].forEach((delay) =>
+    window.setTimeout(() => {
+      enhanceChart();
+      enhanceDetails();
+    }, delay),
+  );
 }
 
 function handleDashboardInteraction(event) {
@@ -311,8 +396,11 @@ function handleClick(event) {
   const legend = event.target.closest?.("[data-health-status]");
   if (legend) {
     const label = legend.dataset.healthStatus;
-    const button = [...document.querySelectorAll('#filterStatus input[data-filter-field="status"]')]
-      .find(input => canonicalStatus(input.dataset.filterValue) === label);
+    const button = [
+      ...document.querySelectorAll(
+        '#filterStatus input[data-filter-field="status"]',
+      ),
+    ].find((input) => canonicalStatus(input.dataset.filterValue) === label);
     if (button) button.click();
     return;
   }
@@ -321,7 +409,11 @@ function handleClick(event) {
   if (returnButton) {
     const id = returnButton.dataset.healthScrollRow;
     closeDrawer();
-    document.querySelector(`#monitorRows tr[data-health-detail-id="${CSS.escape(id)}"]`)?.scrollIntoView({ behavior:"smooth", block:"center" });
+    document
+      .querySelector(
+        `#monitorRows tr[data-health-detail-id="${CSS.escape(id)}"]`,
+      )
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
 
@@ -331,8 +423,15 @@ function handleClick(event) {
 }
 
 function handleKeydown(event) {
-  if (event.key === "Escape" && $("healthProcessDrawer")?.classList.contains("show")) closeDrawer();
-  if ((event.key === "Enter" || event.key === " ") && event.target.matches?.("#monitorRows tr[data-health-detail-id]")) {
+  if (
+    event.key === "Escape" &&
+    $("healthProcessDrawer")?.classList.contains("show")
+  )
+    closeDrawer();
+  if (
+    (event.key === "Enter" || event.key === " ") &&
+    event.target.matches?.("#monitorRows tr[data-health-detail-id]")
+  ) {
     event.preventDefault();
     openDrawer(event.target.dataset.healthDetailId);
   }
@@ -342,7 +441,15 @@ export function initHealthStatusDetails() {
   if (state.initialized) return;
   state.initialized = true;
   ensureDrawer();
-  void loadOperationalRows();
+  const sb = client();
+  if (sb) {
+    void sb.auth.getSession().then(({ data }) => {
+      if (data?.session?.user) void loadOperationalRows();
+    });
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) void loadOperationalRows();
+    });
+  }
   scheduleEnhancement();
   document.addEventListener("click", handleClick);
   document.addEventListener("input", handleDashboardInteraction);
@@ -353,6 +460,7 @@ export function initHealthStatusDetails() {
     void loadOperationalRows();
   });
   window.addEventListener("focus", () => {
-    if ($("page-dashboard")?.classList.contains("active")) void loadOperationalRows();
+    if ($("page-dashboard")?.classList.contains("active"))
+      void loadOperationalRows();
   });
 }

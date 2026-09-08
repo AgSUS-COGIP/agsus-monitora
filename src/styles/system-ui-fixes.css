@@ -1,0 +1,132 @@
+/* Ajustes finais do shell: navegação compacta sem colisões e menus acima do conteúdo. */
+@media (min-width: 901px) {
+  .app .hamb {
+    display: grid !important;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    place-items: center;
+    border: 1px solid #d7e5f2;
+    border-radius: 12px;
+    background: #fff;
+    color: #003b70;
+    box-shadow: 0 4px 14px rgba(15, 35, 60, 0.08);
+  }
+
+  .global-side-toggle {
+    display: none !important;
+  }
+
+  .app .top {
+    padding-left: 14px;
+  }
+}
+
+.app .top {
+  z-index: 10010;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.app .actions,
+.app .top-user-menu,
+.app .online-presence {
+  overflow: visible;
+}
+
+.app .top-user-popover,
+.app .online-presence-popover {
+  z-index: 10040;
+}
+
+body.mobile-app .app .top {
+  z-index: 10030;
+}
+
+@media (max-width: 900px) {
+  .app .top {
+    padding-left: 12px !important;
+  }
+
+  .app .hamb {
+    position: static !important;
+    flex: 0 0 44px;
+  }
+}
+
+/* A tabela de Detalhes deve crescer pelo conteúdo das células, nunca pela
+   altura disponível no painel. Regras legadas e o reprocessamento das linhas
+   podiam fazer a primeira linha absorver o espaço livre do tbody. */
+#page-dashboard .table-wrap:has(.details-table) {
+  display: block;
+  height: auto;
+  min-height: 0;
+  max-height: 560px;
+  overflow: auto;
+}
+
+#page-dashboard .details-table,
+#page-dashboard .details-table tbody,
+#page-dashboard #monitorRows {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+#page-dashboard #monitorRows tr,
+#page-dashboard #monitorRows tr.health-detail-row,
+#page-dashboard #monitorRows tr.health-details-row-refined {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  block-size: auto !important;
+}
+
+#page-dashboard #monitorRows td,
+#page-dashboard #monitorRows .health-details-row-refined td {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  block-size: auto !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  vertical-align: middle !important;
+}
+
+#page-dashboard #monitorRows .health-stage-cell {
+  line-height: 1.3;
+}
+
+/* Exportação permanece no menu de ações, sem ocupar o cabeçalho. */
+#exportCsvBtn[hidden] {
+  display: none !important;
+}
+
+/* Fundo neutro durante a recuperação das imagens do mapa. O contorno vetorial
+   do Brasil continua visível mesmo se o provedor principal oscilar. */
+#page-dashboard #map,
+#page-dashboard #detailMap {
+  background: #eaf3f5 !important;
+}
+
+#page-dashboard #map.map-tiles-recovering,
+#page-dashboard #detailMap.map-tiles-recovering {
+  background-image: linear-gradient(135deg, #edf6f7, #dcecef) !important;
+}
+
+/* A marca deve repousar diretamente sobre a sidebar. O contorno anterior
+   parecia um botão e criava a caixa branca apontada na revisão visual. */
+.app .side-logo-wrap,
+[data-theme="dark"] .app .side-logo-wrap {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app .side-logo,
+body.sidebar-collapsed .app .side-logo,
+body.sidebar-locked .app .side-logo {
+  width: 40px;
+  height: 40px;
+}

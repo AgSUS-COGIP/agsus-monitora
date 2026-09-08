@@ -177,15 +177,11 @@ function activateWaitingWorker(worker) {
 }
 
 function showUpdateNotice(worker) {
-  showNotice({
-    title: "Nova versão disponível",
-    message: "Atualize quando estiver pronto para usar as melhorias recentes.",
-    actions: [
-      createActionButton("Atualizar", () => activateWaitingWorker(worker)),
-      createActionButton("Depois", () => hideNotice("update"), true),
-    ],
-    variant: "update",
-  });
+  // Atualiza o service worker em segundo plano. O painel de monitoramento não
+  // deve ser coberto por uma notificação persistente durante o uso operacional.
+  // A página atual continua estável e a nova versão passa a valer na navegação
+  // seguinte, sem recarregamento automático ou perda de filtros.
+  worker.postMessage({ type: "SKIP_WAITING" });
 }
 
 function watchRegistration(registration) {

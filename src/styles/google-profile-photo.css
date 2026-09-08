@@ -1,24 +1,11 @@
 .google-profile-photo {
-  width: 42px;
-  height: 42px;
+  width: 100%;
+  height: 100%;
   display: block;
-  margin: 0 0 10px;
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  border-radius: 50%;
+  margin: 0;
+  border: 0;
+  border-radius: inherit;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-}
-
-body.sidebar-collapsed .google-profile-photo {
-  width: 34px;
-  height: 34px;
-  margin-inline: auto;
-}
-
-@media (max-width: 900px) {
-  .google-profile-photo {
-    width: 38px;
-    height: 38px;
-  }
 }

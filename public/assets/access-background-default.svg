@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Fundo institucional AgSUS Monitora</title>
+  <desc id="desc">Composição abstrata em azul, ciano e verde para a tela de acesso.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#003b70"/>
+      <stop offset="0.58" stop-color="#075b84"/>
+      <stop offset="1" stop-color="#087a71"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="72%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#24d7d0" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#24d7d0" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="48"/></filter>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+  <circle cx="1510" cy="190" r="340" fill="#00a8d6" opacity=".13" filter="url(#blur)"/>
+  <circle cx="1280" cy="900" r="430" fill="#18a76f" opacity=".18" filter="url(#blur)"/>
+  <path d="M820 1080C1010 735 1300 555 1920 520v560z" fill="#fff" opacity=".045"/>
+  <path d="M1040 1080c150-255 412-420 880-475v475z" fill="#00d5c7" opacity=".075"/>
+  <g fill="none" stroke="#fff" opacity=".1">
+    <circle cx="1490" cy="430" r="250" stroke-width="2"/>
+    <circle cx="1490" cy="430" r="330"/>
+    <circle cx="1490" cy="430" r="410"/>
+  </g>
+  <g transform="translate(1150 345)" fill="#fff" opacity=".92">
+    <path d="M170 0h100v130h130v100H270v130H170V230H40V130h130z" opacity=".13"/>
+    <text x="0" y="500" font-family="Arial, sans-serif" font-size="76" font-weight="700" letter-spacing="2">AgSUS Monitora</text>
+    <text x="2" y="555" font-family="Arial, sans-serif" font-size="27" letter-spacing="4" opacity=".72">MONITORAMENTO INSTITUCIONAL</text>
+  </g>
+  <rect y="1073" width="480" height="7" fill="#00a8d6"/>
+  <rect x="480" y="1073" width="480" height="7" fill="#17a567"/>
+  <rect x="960" y="1073" width="480" height="7" fill="#f2b705"/>
+  <rect x="1440" y="1073" width="480" height="7" fill="#e24b55"/>
+</svg>

@@ -31,6 +31,9 @@ import "./styles/mobile-table-cards.css";
 import "./styles/pwa-lifecycle.css";
 import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
+import "./styles/platform-shell.css";
+import "./styles/health-map-workspace.css";
+import "./styles/system-ui-fixes.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -91,7 +94,7 @@ initConnectivityStatus();
 initGoogleProfilePhoto();
 
 if (!hasSupabaseEnv()) {
-  console.error(
+  console.warn(
     "Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no Vercel.",
   );
 }

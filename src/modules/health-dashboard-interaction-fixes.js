@@ -1,6 +1,6 @@
 const state = {
   initialized: false,
-  layoutTimers: new Set()
+  layoutTimers: new Set(),
 };
 
 function eventFrom(documentRef, type, options = {}) {
@@ -19,28 +19,38 @@ function normalize(value) {
 
 function checkedFilterValues(documentRef, field) {
   return new Set(
-    [...documentRef.querySelectorAll?.(`input[data-filter-field="${field}"]:checked`) || []]
-      .map(input => normalize(input.dataset.filterValue))
-      .filter(Boolean)
+    [
+      ...(documentRef.querySelectorAll?.(
+        `input[data-filter-field="${field}"]:checked`,
+      ) || []),
+    ]
+      .map((input) => normalize(input.dataset.filterValue))
+      .filter(Boolean),
   );
 }
 
-export function syncHealthInteractiveFilterStates(documentRef = globalThis.document) {
+export function syncHealthInteractiveFilterStates(
+  documentRef = globalThis.document,
+) {
   if (!documentRef?.querySelectorAll) return false;
 
   const selectedStages = checkedFilterValues(documentRef, "etapa");
   const selectedStatuses = checkedFilterValues(documentRef, "status");
 
-  documentRef.querySelectorAll('#statusSummary [data-etapa-toggle="true"]').forEach(item => {
-    const label = normalize(item.querySelector("b")?.textContent || item.textContent);
-    const active = selectedStages.has(label);
-    item.classList.toggle("is-filter-active", active);
-    item.setAttribute("aria-pressed", String(active));
-  });
+  documentRef
+    .querySelectorAll('#statusSummary [data-etapa-toggle="true"]')
+    .forEach((item) => {
+      const label = normalize(
+        item.querySelector("b")?.textContent || item.textContent,
+      );
+      const active = selectedStages.has(label);
+      item.classList.toggle("is-filter-active", active);
+      item.setAttribute("aria-pressed", String(active));
+    });
 
-  documentRef.querySelectorAll("[data-health-status]").forEach(item => {
+  documentRef.querySelectorAll("[data-health-status]").forEach((item) => {
     const label = normalize(item.dataset.healthStatus);
-    const active = [...selectedStatuses].some(value => {
+    const active = [...selectedStatuses].some((value) => {
       if (label.includes("conclu")) return value.includes("conclu");
       if (label.includes("cancel")) return value.includes("cancel");
       if (label.includes("andamento")) return value.includes("andamento");
@@ -56,7 +66,7 @@ export function syncHealthInteractiveFilterStates(documentRef = globalThis.docum
 
 export function syncHealthDarkModeClass(
   root = globalThis.document?.documentElement,
-  body = globalThis.document?.body
+  body = globalThis.document?.body,
 ) {
   if (!root || !body) return false;
   const dark = root.getAttribute("data-theme") === "dark";
@@ -64,7 +74,9 @@ export function syncHealthDarkModeClass(
   return dark;
 }
 
-export function notifyHealthDashboardFiltersChanged(documentRef = globalThis.document) {
+export function notifyHealthDashboardFiltersChanged(
+  documentRef = globalThis.document,
+) {
   const dashboard = documentRef?.getElementById?.("page-dashboard");
   if (!dashboard) return false;
 
@@ -82,7 +94,7 @@ export function notifyHealthDashboardFiltersChanged(documentRef = globalThis.doc
 
 export function refreshHealthDashboardLayout(
   windowRef = globalThis.window,
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 ) {
   if (!windowRef || !documentRef) return false;
 
@@ -103,11 +115,11 @@ export function refreshHealthDashboardLayout(
 export function scheduleHealthDashboardLayoutRefresh(
   windowRef = globalThis.window,
   documentRef = globalThis.document,
-  delays = [0, 120, 320]
+  delays = [0, 120, 320],
 ) {
   if (!windowRef?.setTimeout) return [];
 
-  const timers = delays.map(delay => {
+  const timers = delays.map((delay) => {
     const timer = windowRef.setTimeout(() => {
       state.layoutTimers.delete(timer);
       refreshHealthDashboardLayout(windowRef, documentRef);
@@ -121,9 +133,10 @@ export function scheduleHealthDashboardLayoutRefresh(
 
 function wrapWindowAction(windowRef, name, after) {
   const original = windowRef?.[name];
-  if (typeof original !== "function" || original.__healthInteractionWrapped) return false;
+  if (typeof original !== "function" || original.__healthInteractionWrapped)
+    return false;
 
-  const wrapped = function(...args) {
+  const wrapped = function (...args) {
     const result = original.apply(this, args);
     after?.(args, result);
     return result;
@@ -140,32 +153,52 @@ function installExplicitActionHooks(windowRef, documentRef) {
     scheduleHealthDashboardLayoutRefresh(windowRef, documentRef);
   });
 
-  wrapWindowAction(windowRef, "toggleExecutiveMode", () => {
-    scheduleHealthDashboardLayoutRefresh(windowRef, documentRef);
-  });
-
-  ["toggleSelectFilter", "toggleCriticalRiskFilter", "clearFilterField", "clearFilters"].forEach(name => {
+  [
+    "toggleSelectFilter",
+    "toggleCriticalRiskFilter",
+    "clearFilterField",
+    "clearFilters",
+  ].forEach((name) => {
     wrapWindowAction(windowRef, name, () => {
-      windowRef.setTimeout(() => notifyHealthDashboardFiltersChanged(documentRef), 0);
+      windowRef.setTimeout(
+        () => notifyHealthDashboardFiltersChanged(documentRef),
+        0,
+      );
     });
   });
 }
 
 function installNativeFilterHooks(windowRef, documentRef) {
-  documentRef.addEventListener("change", event => {
-    if (!event.target?.matches?.("#page-dashboard input[data-filter-field]")) return;
-    windowRef.setTimeout(() => notifyHealthDashboardFiltersChanged(documentRef), 0);
+  documentRef.addEventListener("change", (event) => {
+    if (!event.target?.matches?.("#page-dashboard input[data-filter-field]"))
+      return;
+    windowRef.setTimeout(
+      () => notifyHealthDashboardFiltersChanged(documentRef),
+      0,
+    );
   });
 
-  documentRef.addEventListener("click", event => {
-    if (!event.target?.closest?.("#statusSummary [data-etapa-toggle='true'], [data-health-status]")) return;
-    windowRef.setTimeout(() => notifyHealthDashboardFiltersChanged(documentRef), 0);
-  }, true);
+  documentRef.addEventListener(
+    "click",
+    (event) => {
+      if (
+        !event.target?.closest?.(
+          "#statusSummary [data-etapa-toggle='true'], [data-health-status]",
+        )
+      )
+        return;
+      windowRef.setTimeout(
+        () => notifyHealthDashboardFiltersChanged(documentRef),
+        0,
+      );
+    },
+    true,
+  );
 }
 
 export function initHealthDashboardInteractionFixes(
   windowRef = globalThis.window,
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 ) {
   if (state.initialized || !windowRef || !documentRef) return;
   state.initialized = true;
