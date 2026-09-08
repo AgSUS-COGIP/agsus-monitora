@@ -8,15 +8,31 @@
 }
 
 /* Login */
+/*
+  Sem arte configurada, fundo institucional liso — e isso é decisão.
+
+  A alternativa do `var()` era `access-background-default.svg`. Como esta é uma
+  aplicação de página única servida estaticamente, a configuração só chega depois
+  de uma consulta ao Supabase; até lá, toda visita começava exibindo aquela arte.
+  A tela trocava de aparência no meio do carregamento — e, quando a consulta
+  falhava (um 401 bastava), **permanecia** ali, apresentando como institucional
+  uma identidade que ninguém havia escolhido.
+
+  Agora a alternativa é `none`. Quem já acessou recebe a arte certa antes da
+  primeira pintura, vinda de `access-branding-cache.js`; quem nunca acessou vê o
+  fundo liso até a configuração responder. Meio segundo mais sóbrio vale mais que
+  meio segundo mostrando a marca errada.
+
+  `access-background-default.svg` continua no repositório: ele segue sendo o
+  padrão de `DEFAULT_ACCESS_BRANDING`, aplicado quando a configuração responde
+  **sem** arte — situação diferente de configuração ainda não respondida.
+*/
 .login-screen {
   isolation: isolate;
   align-items: center;
   justify-content: flex-start;
   background-color: #4d2270;
-  background-image: var(
-    --login-background-image,
-    url("/assets/access-background-default.svg")
-  );
+  background-image: var(--login-background-image, none);
   background-size: cover;
   background-position: center;
   padding: clamp(28px, 5vh, 64px) clamp(24px, 3.2vw, 64px);
@@ -926,4 +942,47 @@ body.sidebar-locked .side-logout {
   .login-product-mark strong {
     font-size: 20px;
   }
+}
+
+/*
+  Faixa do aviso global.
+
+  Fica em fluxo, entre o cabeçalho e o conteúdo, e não fixa no topo como a barra
+  de offline — se as duas fossem fixas, uma cobriria a outra justamente na hora
+  em que as duas importam. Assim empilham naturalmente, sem coordenar `z-index`
+  nem o `padding-top` que a barra de offline aplica no `body`.
+
+  A aparência vem de `.alert`, que já resolve as três variantes e o modo escuro.
+  Aqui só o posicionamento — e o `[hidden]`, explícito porque a regra do
+  navegador perde para qualquer `display` que uma folha posterior venha a impor.
+*/
+.broadcast-bar {
+  margin: 14px 10px 0;
+}
+.broadcast-bar[hidden] {
+  display: none;
+}
+
+/*
+  Gravidade do aviso no modo escuro.
+
+  A regra `[data-theme="dark"] .app .alert` pinta todo `.alert` com o mesmo azul
+  escuro e usa `!important`. Para os avisos em linha isso é acertado — mas para
+  esta faixa apaga a única diferença entre "Info", "Alerta" e "Crítico": alguém
+  publicaria um aviso crítico e, no tema escuro, ele sairia com a mesma cara de
+  um recado corriqueiro.
+
+  Só aqui, portanto, as variantes voltam a se distinguir. Precisa de `!important`
+  para alcançar a regra anterior; a especificidade maior (a classe da faixa e a
+  variante) é o que garante que esta venha depois na disputa.
+*/
+[data-theme="dark"] .app .broadcast-bar.warn {
+  background: #2a2008 !important;
+  border-color: #5c4506 !important;
+  color: #fbbf24 !important;
+}
+[data-theme="dark"] .app .broadcast-bar.error {
+  background: #2b1114 !important;
+  border-color: #5c1a22 !important;
+  color: #fca5a5 !important;
 }

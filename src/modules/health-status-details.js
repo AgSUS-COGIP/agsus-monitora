@@ -1,3 +1,4 @@
+import { exigirSessao } from "../lib/sessao.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 const state = {
@@ -38,9 +39,7 @@ function client() {
 async function ensureSession() {
   const sb = client();
   if (!sb) throw new Error("Supabase indisponível.");
-  const { data, error } = await sb.auth.getSession();
-  if (error || !data?.session?.access_token)
-    throw new Error("Sessão expirada.");
+  await exigirSessao(sb);
   return sb;
 }
 

@@ -1,3 +1,4 @@
+import { exigirSessao } from "../lib/sessao.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 const RPC_GET = "get_monitoramento_cronograma";
@@ -9,13 +10,20 @@ const state = {
   catalog: [],
   currentId: "",
   loadingCatalog: false,
-  copying: false
+  copying: false,
 };
 
-const $ = id => document.getElementById(id);
-const txt = value => String(value ?? "").trim();
-const escMap = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" };
-const esc = value => String(value ?? "").replace(/[&<>"']/g, char => escMap[char]);
+const $ = (id) => document.getElementById(id);
+const txt = (value) => String(value ?? "").trim();
+const escMap = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#039;",
+};
+const esc = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => escMap[char]);
 
 function client() {
   if (state.client) return state.client;
@@ -26,8 +34,7 @@ function client() {
 async function ensureSession() {
   const sb = client();
   if (!sb) throw new Error("Supabase indisponível.");
-  const { data, error } = await sb.auth.getSession();
-  if (error || !data?.session?.access_token) throw new Error("Sessão expirada. Faça login novamente.");
+  await exigirSessao(sb);
   return sb;
 }
 
@@ -42,9 +49,9 @@ function formatDateTime(value) {
   if (!value) return "-";
   try {
     return new Intl.DateTimeFormat("pt-BR", {
-      dateStyle:"short",
-      timeStyle:"short",
-      timeZone:"America/Sao_Paulo"
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "America/Sao_Paulo",
     }).format(new Date(value));
   } catch {
     return String(value);
@@ -56,14 +63,18 @@ function stageState(row, index, rows, today) {
   const end = String(row.data_fim || start);
   if (end && today > end) return "done";
   if (start && end && today >= start && today <= end) return "current";
-  const firstFuture = rows.findIndex(item => String(item.data_inicio || "") > today);
+  const firstFuture = rows.findIndex(
+    (item) => String(item.data_inicio || "") > today,
+  );
   if (index === firstFuture) return "next";
   return "future";
 }
 
 function ensureTimelineModal() {
   if ($("nucleoTimelineModal")) return;
-  document.body.insertAdjacentHTML("beforeend", `
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `
     <div id="nucleoTimelineModal" class="modal nucleo-timeline-modal" aria-hidden="true">
       <div class="modal-card nucleo-timeline-card" role="dialog" aria-modal="true" aria-labelledby="nucleoTimelineTitle">
         <div class="modal-header">
@@ -76,10 +87,11 @@ function ensureTimelineModal() {
         </div>
         <div id="nucleoTimelineContent" class="nucleo-timeline-content"></div>
       </div>
-    </div>`);
+    </div>`,
+  );
 
   $("closeNucleoTimeline")?.addEventListener("click", closeTimeline);
-  $("nucleoTimelineModal")?.addEventListener("click", event => {
+  $("nucleoTimelineModal")?.addEventListener("click", (event) => {
     if (event.target === $("nucleoTimelineModal")) closeTimeline();
   });
 }
@@ -96,13 +108,14 @@ function renderTimeline(data) {
   const rows = Array.isArray(data?.etapas) ? data.etapas : [];
   const history = Array.isArray(data?.historico) ? data.historico : [];
   const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone:"America/Sao_Paulo",
-    year:"numeric",
-    month:"2-digit",
-    day:"2-digit"
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).format(new Date());
 
-  $("nucleoTimelineTitle").textContent = monitor.edital || "Cronograma do edital";
+  $("nucleoTimelineTitle").textContent =
+    monitor.edital || "Cronograma do edital";
   $("nucleoTimelineSubtitle").textContent = monitor.unidade || "";
 
   const content = $("nucleoTimelineContent");
@@ -114,7 +127,9 @@ function renderTimeline(data) {
       <div><span>Próxima atividade</span><strong>${esc(current.proxima_atividade || "-")}</strong></div>
       <div><span>Progresso</span><strong>${Number(current.percentual || 0)}%</strong></div>
     </div>
-    ${monitor.status_override ? `
+    ${
+      monitor.status_override
+        ? `
       <div class="nucleo-timeline-exception">
         <i class="fa-solid fa-circle-exclamation"></i>
         <div>
@@ -122,15 +137,32 @@ function renderTimeline(data) {
           <p>${esc(monitor.status_override_motivo || "Motivo não informado")}</p>
           <small>Decisão: ${formatDate(monitor.status_override_data)}${monitor.status_override_previsao_retomada ? ` · Retomada prevista: ${formatDate(monitor.status_override_previsao_retomada)}` : ""}</small>
         </div>
-      </div>` : ""}
+      </div>`
+        : ""
+    }
     <section class="nucleo-timeline-section">
       <div class="nucleo-timeline-section-title"><span>Linha do tempo</span><strong>${rows.length} etapa(s)</strong></div>
       <div class="nucleo-timeline-list">
-        ${rows.length ? rows.map((row, index) => {
-          const status = stageState(row, index, rows, today);
-          const labels = { done:"Concluída", current:"Em andamento", next:"Próxima", future:"Futura" };
-          const icon = status === "done" ? "fa-check" : status === "current" ? "fa-play" : status === "next" ? "fa-clock" : "fa-circle";
-          return `
+        ${
+          rows.length
+            ? rows
+                .map((row, index) => {
+                  const status = stageState(row, index, rows, today);
+                  const labels = {
+                    done: "Concluída",
+                    current: "Em andamento",
+                    next: "Próxima",
+                    future: "Futura",
+                  };
+                  const icon =
+                    status === "done"
+                      ? "fa-check"
+                      : status === "current"
+                        ? "fa-play"
+                        : status === "next"
+                          ? "fa-clock"
+                          : "fa-circle";
+                  return `
             <article class="nucleo-timeline-item is-${status}">
               <span class="nucleo-timeline-dot"><i class="fa-solid ${icon}"></i></span>
               <div>
@@ -139,13 +171,20 @@ function renderTimeline(data) {
                 ${row.observacao ? `<small>${esc(row.observacao)}</small>` : ""}
               </div>
             </article>`;
-        }).join("") : '<div class="nucleo-timeline-empty">Nenhuma etapa cadastrada para este edital.</div>'}
+                })
+                .join("")
+            : '<div class="nucleo-timeline-empty">Nenhuma etapa cadastrada para este edital.</div>'
+        }
       </div>
     </section>
     <section class="nucleo-timeline-section">
       <div class="nucleo-timeline-section-title"><span>Histórico e erratas</span><strong>${history.length} registro(s)</strong></div>
       <div class="nucleo-timeline-history">
-        ${history.length ? history.map(item => `
+        ${
+          history.length
+            ? history
+                .map(
+                  (item) => `
           <article>
             <i class="fa-solid ${item.acao === "errata" ? "fa-file-pen" : "fa-clock-rotate-left"}"></i>
             <div>
@@ -153,7 +192,11 @@ function renderTimeline(data) {
               <p>${esc(item.motivo || "Sem motivo informado")}</p>
               <small>${esc(item.created_by_email || "Usuário autenticado")} · ${Number(item.total_alteracoes || 0)} alteração(ões)</small>
             </div>
-          </article>`).join("") : '<div class="nucleo-timeline-empty">Nenhuma alteração auditada.</div>'}
+          </article>`,
+                )
+                .join("")
+            : '<div class="nucleo-timeline-empty">Nenhuma alteração auditada.</div>'
+        }
       </div>
     </section>`;
 }
@@ -164,15 +207,18 @@ async function openTimeline(id) {
   const content = $("nucleoTimelineContent");
   modal?.classList.add("show");
   modal?.setAttribute("aria-hidden", "false");
-  if (content) content.innerHTML = '<div class="nucleo-timeline-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando cronograma...</div>';
+  if (content)
+    content.innerHTML =
+      '<div class="nucleo-timeline-loading"><i class="fa-solid fa-spinner fa-spin"></i> Carregando cronograma...</div>';
 
   try {
     const sb = await ensureSession();
-    const { data, error } = await sb.rpc(RPC_GET, { p_monitoramento_id:id });
+    const { data, error } = await sb.rpc(RPC_GET, { p_monitoramento_id: id });
     if (error) throw error;
     renderTimeline(data);
   } catch (error) {
-    if (content) content.innerHTML = `<div class="nucleo-timeline-error">Erro ao carregar cronograma: ${esc(error?.message || error)}</div>`;
+    if (content)
+      content.innerHTML = `<div class="nucleo-timeline-error">Erro ao carregar cronograma: ${esc(error?.message || error)}</div>`;
   }
 }
 
@@ -226,15 +272,34 @@ function renderCopyCatalog() {
   const select = $("cronogramaCopySource");
   if (!select) return;
   const options = state.catalog
-    .filter(item => String(item.id) !== String(state.currentId) && Number(item.cronograma_total || 0) > 0)
-    .sort((a, b) => `${a.unidade} ${a.edital}`.localeCompare(`${b.unidade} ${b.edital}`, "pt-BR", { numeric:true }));
+    .filter(
+      (item) =>
+        String(item.id) !== String(state.currentId) &&
+        Number(item.cronograma_total || 0) > 0,
+    )
+    .sort((a, b) =>
+      `${a.unidade} ${a.edital}`.localeCompare(
+        `${b.unidade} ${b.edital}`,
+        "pt-BR",
+        { numeric: true },
+      ),
+    );
 
-  select.innerHTML = '<option value="">Selecione um edital com cronograma...</option>' + options.map(item =>
-    `<option value="${esc(item.id)}">${esc(item.unidade || "Unidade não informada")} — ${esc(item.edital || "Edital sem número")} (${Number(item.cronograma_total || 0)} etapas)</option>`
-  ).join("");
+  select.innerHTML =
+    '<option value="">Selecione um edital com cronograma...</option>' +
+    options
+      .map(
+        (item) =>
+          `<option value="${esc(item.id)}">${esc(item.unidade || "Unidade não informada")} — ${esc(item.edital || "Edital sem número")} (${Number(item.cronograma_total || 0)} etapas)</option>`,
+      )
+      .join("");
   const button = $("cronogramaCopyApply");
   if (button) button.disabled = true;
-  if (!options.length) setCopyFeedback("Nenhum outro edital possui cronograma cadastrado.", "warning");
+  if (!options.length)
+    setCopyFeedback(
+      "Nenhum outro edital possui cronograma cadastrado.",
+      "warning",
+    );
 }
 
 async function loadCopyCatalog() {
@@ -247,7 +312,10 @@ async function loadCopyCatalog() {
     state.catalog = Array.isArray(data) ? data : [];
     renderCopyCatalog();
   } catch (error) {
-    setCopyFeedback(`Não foi possível carregar os editais de origem: ${error?.message || error}`, "error");
+    setCopyFeedback(
+      `Não foi possível carregar os editais de origem: ${error?.message || error}`,
+      "error",
+    );
   } finally {
     state.loadingCatalog = false;
   }
@@ -266,8 +334,8 @@ function removeCurrentRows() {
 function setInput(input, value) {
   if (!input) return;
   input.value = value || "";
-  input.dispatchEvent(new Event("input", { bubbles:true }));
-  input.dispatchEvent(new Event("change", { bubbles:true }));
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function importRowsThroughEditor(rows) {
@@ -275,12 +343,15 @@ function importRowsThroughEditor(rows) {
   const add = $("cronogramaAddRow");
   if (!add) throw new Error("Editor de cronograma indisponível.");
 
-  rows.forEach(row => {
+  rows.forEach((row) => {
     add.click();
     const tr = document.querySelector("#cronogramaRows tr:last-child");
     setInput(tr?.querySelector('[data-field="atividade"]'), row.atividade);
     setInput(tr?.querySelector('[data-field="data_inicio"]'), row.data_inicio);
-    setInput(tr?.querySelector('[data-field="data_fim"]'), row.data_fim || row.data_inicio);
+    setInput(
+      tr?.querySelector('[data-field="data_fim"]'),
+      row.data_fim || row.data_inicio,
+    );
   });
 }
 
@@ -289,34 +360,60 @@ async function copySelectedCronograma() {
   const sourceId = txt($("cronogramaCopySource")?.value);
   if (!sourceId) return;
 
-  const source = state.catalog.find(item => String(item.id) === sourceId);
-  if (!window.confirm(`Substituir o cronograma atual pelas etapas de ${source?.edital || "outro edital"}?`)) return;
+  const source = state.catalog.find((item) => String(item.id) === sourceId);
+  if (
+    !window.confirm(
+      `Substituir o cronograma atual pelas etapas de ${source?.edital || "outro edital"}?`,
+    )
+  )
+    return;
 
   const button = $("cronogramaCopyApply");
   try {
     state.copying = true;
-    if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Copiando...'; }
+    if (button) {
+      button.disabled = true;
+      button.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i> Copiando...';
+    }
     const sb = await ensureSession();
-    const { data, error } = await sb.rpc(RPC_GET, { p_monitoramento_id:sourceId });
+    const { data, error } = await sb.rpc(RPC_GET, {
+      p_monitoramento_id: sourceId,
+    });
     if (error) throw error;
     const rows = Array.isArray(data?.etapas) ? data.etapas : [];
-    if (!rows.length) throw new Error("O edital selecionado não possui etapas cadastradas.");
+    if (!rows.length)
+      throw new Error("O edital selecionado não possui etapas cadastradas.");
 
     importRowsThroughEditor(rows);
     if ($("mCronogramaAutomatico")) {
       $("mCronogramaAutomatico").checked = true;
-      $("mCronogramaAutomatico").dispatchEvent(new Event("change", { bubbles:true }));
+      $("mCronogramaAutomatico").dispatchEvent(
+        new Event("change", { bubbles: true }),
+      );
     }
     if ($("mCronogramaMotivo") && !txt($("mCronogramaMotivo").value)) {
-      $("mCronogramaMotivo").value = `Cronograma copiado do edital ${source?.edital || "selecionado"} — ${source?.unidade || ""}`.trim();
-      $("mCronogramaMotivo").dispatchEvent(new Event("input", { bubbles:true }));
+      $("mCronogramaMotivo").value =
+        `Cronograma copiado do edital ${source?.edital || "selecionado"} — ${source?.unidade || ""}`.trim();
+      $("mCronogramaMotivo").dispatchEvent(
+        new Event("input", { bubbles: true }),
+      );
     }
-    setCopyFeedback(`${rows.length} etapas copiadas. Revise as datas e salve o edital de destino.`, "success");
+    setCopyFeedback(
+      `${rows.length} etapas copiadas. Revise as datas e salve o edital de destino.`,
+      "success",
+    );
   } catch (error) {
-    setCopyFeedback(`Erro ao copiar cronograma: ${error?.message || error}`, "error");
+    setCopyFeedback(
+      `Erro ao copiar cronograma: ${error?.message || error}`,
+      "error",
+    );
   } finally {
     state.copying = false;
-    if (button) { button.disabled = !txt($("cronogramaCopySource")?.value); button.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar etapas'; }
+    if (button) {
+      button.disabled = !txt($("cronogramaCopySource")?.value);
+      button.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar etapas';
+    }
   }
 }
 
@@ -343,8 +440,15 @@ export function initNucleoCronogramaTools() {
   state.initialized = true;
   ensureTimelineModal();
   document.addEventListener("click", interceptTimelineClick, true);
-  document.addEventListener("agsus:nucleo-cronograma-loaded", handleCronogramaLoaded);
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && $("nucleoTimelineModal")?.classList.contains("show")) closeTimeline();
+  document.addEventListener(
+    "agsus:nucleo-cronograma-loaded",
+    handleCronogramaLoaded,
+  );
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Escape" &&
+      $("nucleoTimelineModal")?.classList.contains("show")
+    )
+      closeTimeline();
   });
 }

@@ -1,4 +1,6 @@
 import { hasSupabaseEnv } from "./lib/env.js";
+// Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
+import "./lib/access-branding-boot.js";
 import { installCsvBlobSecurityGuard } from "./lib/csv-security.js";
 import { installSessionLifecycle } from "./lib/session-lifecycle.js";
 import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle.js";
@@ -42,7 +44,7 @@ import "./modules/legacy-app.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initHealthIndigenousEnhancements } from "./modules/health-indigenous-enhancements.js";
-import { initHealthDashboardRefinementsSafe } from "./modules/health-dashboard-refinements-safe.js";
+import { initHealthDashboardRefinementsSafe } from "./modules/health-dashboard-refinements.js";
 import { initHealthDashboardInteractionFixes } from "./modules/health-dashboard-interaction-fixes.js";
 import { initHealthMapLegendCleanup } from "./modules/health-map-legend-cleanup.js";
 import { initHealthStatusDetails } from "./modules/health-status-details.js";
@@ -52,8 +54,8 @@ import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fi
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
-import { initNucleoEditorSafe } from "./modules/nucleo-editor-safe.js";
-import { initNucleoOperationalSafe } from "./modules/nucleo-operational-safe.js";
+import { initNucleoEditorSafe } from "./modules/nucleo-editor.js";
+import { initNucleoOperationalSafe } from "./modules/nucleo-operational.js";
 import { initNucleoCronogramaTools } from "./modules/nucleo-cronograma-tools.js";
 import { initNucleoCronogramaOpenHook } from "./modules/nucleo-cronograma-open-hook.js";
 import { initNucleoInitialRefresh } from "./modules/nucleo-initial-refresh.js";

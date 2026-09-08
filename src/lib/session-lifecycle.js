@@ -23,6 +23,25 @@ let expirationInProgress = false;
 let warnedTenMinutes = false;
 let warnedOneMinute = false;
 let currentIdleLimitMs = SESSION_IDLE_LIMIT_MS;
+/*
+  Encerramento automático por inatividade — desligado em 08/09/2026, a pedido.
+
+  O contador continua correndo e o relógio da interface continua mostrando o
+  tempo restante; o que deixa de acontecer é o `signOut` ao chegar a zero. A
+  pessoa permanece autenticada até o token do Supabase expirar por conta própria
+  ou até sair pelo botão.
+
+  **A troca é de segurança por conveniência, e foi consciente.** Antes, um
+  navegador esquecido aberto numa estação compartilhada perdia a sessão sozinho
+  em uma hora; agora não perde. Se essa exposição voltar a incomodar, religar é
+  uma linha: `installSessionLifecycle({ encerrarPorInatividade: true })` em
+  `src/main.js`.
+
+  A mecânica foi mantida inteira de propósito — avisos, auditoria, sincronização
+  entre abas. Arrancá-la exigiria desfazer a integração com o registro de
+  auditoria, e reconstruir isso custaria muito mais do que a bandeira custa.
+*/
+let encerrarPorInatividadeAtivo = false;
 
 export function formatSessionRemaining(milliseconds) {
   const totalSeconds = Math.max(0, Math.ceil(Number(milliseconds || 0) / 1000));
@@ -379,7 +398,9 @@ function tickSession() {
   updateTimerUi(remainingMs);
   warnWhenNeeded(remainingMs);
 
-  if (remainingMs <= 0) {
+  // Com o encerramento desligado o relógio chega a zero e para por ali: continua
+  // informando há quanto tempo não há atividade, sem desconectar ninguém.
+  if (remainingMs <= 0 && encerrarPorInatividadeAtivo) {
     void expireSession();
   }
 }
@@ -461,10 +482,13 @@ function handleVisibilityChange() {
 
 export function installSessionLifecycle({
   idleLimitMs = SESSION_IDLE_LIMIT_MS,
+  // Padrão desligado desde 08/09/2026. Ver a nota no topo do arquivo.
+  encerrarPorInatividade = false,
 } = {}) {
   if (installed || typeof window === "undefined") return;
   installed = true;
   currentIdleLimitMs = Math.max(60 * 1000, Number(idleLimitMs));
+  encerrarPorInatividadeAtivo = Boolean(encerrarPorInatividade);
   ensureSessionUi();
 
   for (const eventName of ACTIVITY_EVENTS) {

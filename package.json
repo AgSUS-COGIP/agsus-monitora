@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "npm run check:auth-architecture && vite build && npm run check:dist-security && npm run check:bundle-size",
+    "build": "npm run check:auth-architecture && npm run check:rpc-contract && vite build && npm run check:dist-security && npm run check:bundle-size",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -15,10 +15,14 @@
     "lint": "node scripts/check-changed-lint.mjs",
     "format:check": "node scripts/check-changed-format.mjs",
     "check:workflows": "node scripts/check-workflow-uniqueness.mjs",
-    "check:architecture": "node scripts/check-no-new-mutation-observer.mjs && npm run check:auth-architecture",
+    "check:architecture": "node scripts/check-no-new-mutation-observer.mjs && npm run check:auth-architecture && npm run check:rpc-contract",
     "check:auth-architecture": "node scripts/check-supabase-auth-architecture.mjs",
     "check:dist-security": "node scripts/check-dist-html-security.mjs",
-    "check:bundle-size": "node scripts/check-bundle-size.mjs"
+    "check:bundle-size": "node scripts/check-bundle-size.mjs",
+    "check:rpc-contract": "node scripts/check-rpc-contract.mjs",
+    "check:rpc-contract:db": "node scripts/check-rpc-contract-db.mjs",
+    "db:validar-recusar": "node scripts/validar-migration-recusar.mjs",
+    "db:capturar-baseline": "node scripts/capturar-baseline-rpcs.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
@@ -39,6 +43,7 @@
     "eslint": "^9",
     "globals": "^16",
     "jsdom": "^28",
+    "pg": "^8.23.0",
     "prettier": "^3",
     "vite": "^7.2.7",
     "vitest": "^4"

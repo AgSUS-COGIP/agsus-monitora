@@ -1,57 +1,106 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 
-const ROOT = "src";
-const EXTENSIONS = new Set([".js", ".mjs", ".ts", ".html"]);
-const PATTERNS = [
-  ["window-client", "cliente via window.supabase", /window\.supabase\.createClient\s*\(/g],
-  ["implicit-flow", "fluxo OAuth implícito", /flowType\s*:\s*["']implicit["']/g],
-  ["url-session", "detecção automática da sessão", /detectSessionInUrl\s*:\s*true/g]
-];
+/*
+  Portão de arquitetura do Supabase Auth.
 
-// Tetos temporários dos dois débitos legados restantes.
-// Reduções são aceites; aumentos ou ocorrências em novos ficheiros bloqueiam o build.
-const BASELINE = new Map([
-  ["src/modules/legacy-app.js", new Map([
-    ["window-client", 1],
-    ["implicit-flow", 1],
-    ["url-session", 1]
-  ])],
-  ["src/analises/analises-app.js", new Map([
-    ["window-client", 1],
-    ["implicit-flow", 1],
-    ["url-session", 1]
-  ])]
+  Até 08/09/2026 este script varria apenas `src/`. Foi por isso que uma cópia
+  esquecida de `legacy-app.js` na raiz do repositório — com cliente próprio,
+  `flowType: "implicit"` e `detectSessionInUrl: true` — sobreviveu dois meses sem
+  aparecer em nenhum relatório: o arquivo estava morto, mas o portão dizia que a
+  dívida era do `src/modules/legacy-app.js`, onde ela já não existia.
+
+  Agora a varredura cobre o repositório inteiro, e a lista de tetos está vazia:
+  não há nenhuma ocorrência legada restante. Qualquer reaparecimento bloqueia o
+  build, em qualquer diretório.
+*/
+
+const RAIZES = ["."];
+const IGNORAR = new Set([
+  "node_modules",
+  "dist",
+  ".git",
+  "coverage",
+  "test-results",
+  "playwright-report",
+  ".vercel",
+  // Os testes citam estes padrões para afirmar que não existem em produção.
+  "tests",
 ]);
 
-function walk(dir) {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    return statSync(path).isDirectory() ? walk(path) : [path];
+// O próprio verificador contém os padrões que procura.
+const ESTE_FICHEIRO = "scripts/check-supabase-auth-architecture.mjs";
+const EXTENSOES = new Set([".js", ".mjs", ".ts", ".html"]);
+
+const PADROES = [
+  [
+    "window-client",
+    "cliente via window.supabase",
+    /window\.supabase\.createClient\s*\(/g,
+  ],
+  [
+    "implicit-flow",
+    "fluxo OAuth implícito",
+    /flowType\s*:\s*["']implicit["']/g,
+  ],
+  [
+    "url-session",
+    "detecção automática da sessão",
+    /detectSessionInUrl\s*:\s*true/g,
+  ],
+  [
+    "extra-client",
+    "cliente Supabase fora de lib/supabaseClient.js",
+    /import\s*\{[^}]*\bcreateClient\b[^}]*\}\s*from\s*["']@supabase\/supabase-js["']/g,
+  ],
+];
+
+/*
+  O único ficheiro autorizado a instanciar o cliente. Não é um teto legado a
+  reduzir: é a fronteira desejada, e deve continuar valendo.
+*/
+const FONTE_UNICA = new Map([
+  ["src/lib/supabaseClient.js", new Map([["extra-client", 1]])],
+]);
+
+function percorrer(dir) {
+  return readdirSync(dir).flatMap((nome) => {
+    if (IGNORAR.has(nome)) return [];
+    const caminho = join(dir, nome);
+    return statSync(caminho).isDirectory() ? percorrer(caminho) : [caminho];
   });
 }
 
-const violations = [];
+const violacoes = [];
 
-for (const file of walk(ROOT).filter((path) => EXTENSIONS.has(extname(path)))) {
-  const path = relative(".", file).replaceAll("\\", "/");
-  const content = readFileSync(file, "utf8");
+for (const raiz of RAIZES) {
+  for (const ficheiro of percorrer(raiz).filter((p) =>
+    EXTENSOES.has(extname(p)),
+  )) {
+    const caminho = relative(".", ficheiro).replaceAll("\\", "/");
+    if (caminho === ESTE_FICHEIRO) continue;
+    const conteudo = readFileSync(ficheiro, "utf8");
 
-  for (const [id, label, pattern] of PATTERNS) {
-    const count = [...content.matchAll(pattern)].length;
-    if (!count) continue;
+    for (const [id, rotulo, padrao] of PADROES) {
+      const total = [...conteudo.matchAll(padrao)].length;
+      if (!total) continue;
 
-    const allowed = BASELINE.get(path)?.get(id) || 0;
-    if (count > allowed) {
-      violations.push(`${path}: ${label} tem ${count} ocorrência(s); máximo permitido: ${allowed}`);
+      const permitido = FONTE_UNICA.get(caminho)?.get(id) || 0;
+      if (total > permitido) {
+        violacoes.push(
+          `${caminho}: ${rotulo} tem ${total} ocorrência(s); máximo permitido: ${permitido}`,
+        );
+      }
     }
   }
 }
 
-if (violations.length) {
+if (violacoes.length) {
   console.error("Regressões na arquitetura Supabase Auth:");
-  violations.forEach((item) => console.error(`- ${item}`));
+  violacoes.forEach((item) => console.error(`- ${item}`));
   process.exit(1);
 }
 
-console.log("Arquitetura Supabase Auth validada: nenhuma ocorrência excede os tetos legados.");
+console.log(
+  "Arquitetura Supabase Auth validada: um único cliente, sem fluxo implícito.",
+);

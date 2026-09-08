@@ -324,7 +324,11 @@
                 <i class="fa-solid fa-user-group" aria-hidden="true"></i>
                 <span id="onlinePresenceLabel">Sincronizando</span>
               </button>
-              <div id="onlinePresencePopover" class="online-presence-popover" hidden>
+              <div
+                id="onlinePresencePopover"
+                class="online-presence-popover"
+                hidden
+              >
                 <div class="online-presence-heading">
                   <strong>Pessoas online</strong>
                   <small>Ativas no AgSUS Monitora agora</small>
@@ -333,15 +337,28 @@
               </div>
             </div>
             <details id="topUserMenu" class="top-user-menu">
-              <summary class="top-user-button" aria-label="Abrir perfil do usuário">
-                <span id="topUserAvatar" class="top-user-avatar" aria-hidden="true">
+              <summary
+                class="top-user-button"
+                aria-label="Abrir perfil do usuário"
+              >
+                <span
+                  id="topUserAvatar"
+                  class="top-user-avatar"
+                  aria-hidden="true"
+                >
                   <i class="fa-solid fa-user"></i>
                 </span>
                 <span class="top-user-compact-copy">
                   <strong id="userName">-</strong>
-                  <small id="userProfileBadge" class="user-profile-badge"></small>
+                  <small
+                    id="userProfileBadge"
+                    class="user-profile-badge"
+                  ></small>
                 </span>
-                <i class="fa-solid fa-chevron-down top-user-chevron" aria-hidden="true"></i>
+                <i
+                  class="fa-solid fa-chevron-down top-user-chevron"
+                  aria-hidden="true"
+                ></i>
               </summary>
               <div class="top-user-popover">
                 <strong id="topUserPopoverName">-</strong>
@@ -353,7 +370,10 @@
                     <span>Alternar modo escuro</span>
                   </button>
                   <button type="button" onclick="logout()">
-                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                    <i
+                      class="fa-solid fa-right-from-bracket"
+                      aria-hidden="true"
+                    ></i>
                     <span>Sair do sistema</span>
                   </button>
                 </div>
@@ -484,6 +504,13 @@
             </div>
           </div>
         </header>
+
+        <div
+          id="broadcastBar"
+          class="alert broadcast-bar"
+          role="status"
+          hidden
+        ></div>
 
         <div class="content">
           <section id="page-dashboard" class="page active">
@@ -623,14 +650,22 @@
               </div>
             </div>
             <div id="multiUnitsCard" class="multi-units-card card hidden"></div>
-            <div class="health-map-workspace" aria-label="Mapas da rede de saúde indígena">
+            <div
+              class="health-map-workspace"
+              aria-label="Mapas da rede de saúde indígena"
+            >
               <section class="card health-map-pane health-map-pane--master">
                 <header class="health-map-pane__header">
                   <div>
-                    <span class="health-map-pane__eyebrow"><i class="fa-solid fa-earth-americas"></i> Visão nacional</span>
+                    <span class="health-map-pane__eyebrow"
+                      ><i class="fa-solid fa-earth-americas"></i> Visão
+                      nacional</span
+                    >
                     <h3>DSEIs / CASAIs do Brasil</h3>
                   </div>
-                  <span class="health-map-pane__count" id="masterMapCount">Brasil</span>
+                  <span class="health-map-pane__count" id="masterMapCount"
+                    >Brasil</span
+                  >
                 </header>
                 <div
                   id="map"
@@ -649,40 +684,75 @@
               <section class="card health-map-pane health-map-pane--detail">
                 <header class="health-map-pane__header">
                   <div>
-                    <span class="health-map-pane__eyebrow"><i class="fa-solid fa-location-dot"></i> Detalhamento territorial</span>
+                    <span class="health-map-pane__eyebrow"
+                      ><i class="fa-solid fa-location-dot"></i> Detalhamento
+                      territorial</span
+                    >
                     <h3 id="detailMapTitle">Mapa do Brasil</h3>
                   </div>
-                  <button id="detailMapReset" class="health-map-reset hidden" type="button" onclick="resetDetailMap()">
+                  <button
+                    id="detailMapReset"
+                    class="health-map-reset hidden"
+                    type="button"
+                    onclick="resetDetailMap()"
+                  >
                     <i class="fa-solid fa-arrow-left"></i> Brasil
                   </button>
                 </header>
                 <div class="health-map-detail-layout">
-                  <div id="detailMap" role="img" aria-label="Mapa detalhado dos polos e unidades do DSEI selecionado"></div>
-                  <aside class="health-map-units" aria-label="Polos e unidades do território selecionado">
+                  <div
+                    id="detailMap"
+                    role="img"
+                    aria-label="Mapa detalhado dos polos e unidades do DSEI selecionado"
+                  ></div>
+                  <aside
+                    class="health-map-units"
+                    aria-label="Polos e unidades do território selecionado"
+                  >
                     <div class="health-map-units__header">
-                      <span><i class="fa-solid fa-house-medical"></i> Polos e unidades</span>
+                      <span
+                        ><i class="fa-solid fa-house-medical"></i> Polos e
+                        unidades</span
+                      >
                       <b id="detailUnitCount">0</b>
                     </div>
                     <div id="detailUnitList" class="health-map-units__list">
                       <div class="health-map-empty">
                         <i class="fa-solid fa-map-location-dot"></i>
                         <strong>Selecione um DSEI</strong>
-                        <span>Os polos, CASAIs e unidades aparecerão aqui.</span>
+                        <span
+                          >Os polos, CASAIs e unidades aparecerão aqui.</span
+                        >
                       </div>
                     </div>
                   </aside>
                 </div>
-                <footer class="health-map-detail-legend" aria-label="Legenda do mapa detalhado">
-                  <span><i class="health-map-dot health-map-dot--casai"></i> CASAI</span>
-                  <span><i class="health-map-dot health-map-dot--polo"></i> Polo base</span>
-                  <span><i class="health-map-dot health-map-dot--ubsi"></i> UBSI</span>
-                  <span><i class="health-map-dot health-map-dot--unit"></i> Unidade de saúde</span>
+                <footer
+                  class="health-map-detail-legend"
+                  aria-label="Legenda do mapa detalhado"
+                >
+                  <span
+                    ><i class="health-map-dot health-map-dot--casai"></i>
+                    CASAI</span
+                  >
+                  <span
+                    ><i class="health-map-dot health-map-dot--polo"></i> Polo
+                    base</span
+                  >
+                  <span
+                    ><i class="health-map-dot health-map-dot--ubsi"></i>
+                    UBSI</span
+                  >
+                  <span
+                    ><i class="health-map-dot health-map-dot--unit"></i> Unidade
+                    de saúde</span
+                  >
                 </footer>
               </section>
             </div>
             <div class="card panel-pad health-status-summary-card">
-                <h3 id="statusSummaryTitle" class="panel-title"></h3>
-                <div id="statusSummary"></div>
+              <h3 id="statusSummaryTitle" class="panel-title"></h3>
+              <div id="statusSummary"></div>
             </div>
             <div class="lower-grid">
               <div class="card panel-pad">
@@ -1113,7 +1183,12 @@
                             id="cfgAccessBackgroundFile"
                             type="file"
                             accept="image/jpeg,image/png,image/webp"
-                            onchange="uploadAccessBackground(this.files && this.files[0]); this.value = '';"
+                            onchange="
+                              uploadAccessBackground(
+                                this.files && this.files[0],
+                              );
+                              this.value = '';
+                            "
                           />
                         </label>
                         <button
@@ -1132,7 +1207,10 @@
                     </div>
                     <input id="cfgAccessBackgroundUrl" type="hidden" />
                     <input id="cfgAccessBackgroundPath" type="hidden" />
-                    <div id="cfgAccessBackgroundGallery" class="access-background-gallery"></div>
+                    <div
+                      id="cfgAccessBackgroundGallery"
+                      class="access-background-gallery"
+                    ></div>
                   </div>
                   <div class="form-row full">
                     <label>Logo da AgSUS no acesso</label

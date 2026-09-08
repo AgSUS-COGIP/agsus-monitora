@@ -1,3 +1,29 @@
+import {
+  isValidAnalisesRowsFragment,
+  numberFromPtBr,
+} from "./analises-infinite-table-utils.js";
+/*
+  O CSS entra por `import`, e não por um `<link>` montado em runtime.
+
+  Havia uma injeção apontando para `/src/analises/analises-infinite-table.css` —
+  caminho que existe apenas durante o `vite dev`. Publicado, o servidor respondia
+  com o `index.html` e `Content-Type: text/plain`, e o navegador recusava:
+
+      Refused to apply style from '…analises-infinite-table.css' because its MIME
+      type ('text/plain') is not a supported stylesheet MIME type
+
+  A tabela de análises ficou sem esses estilos em produção, e o único sinal era
+  essa linha no console. Pelo `import`, o Vite resolve o arquivo na compilação e
+  o publica junto do bundle, com nome versionado por hash.
+
+  Ao mexer aqui: não volte a montar `<link>` para caminho iniciado por `/src/`.
+  Esse diretório não é publicado, e a falha só aparece depois do deploy.
+*/
+import "./analises-infinite-table.css";
+
+const BATCH_SIZE = 50;
+const MAX_ACTIVATION_ATTEMPTS = 240;
+
 const state = {
   initialized: false,
   ready: false,
@@ -6,32 +32,23 @@ const state = {
   loadedPages: 0,
   totalPages: 1,
   totalRecords: 0,
-  rowsPerBatch: 50,
   pageFragments: [],
   resetTimer: 0,
   activationTimer: 0,
   activationAttempts: 0,
   scrollBound: false,
-  eventsBound: false
+  eventsBound: false,
 };
 
-const $ = id => document.getElementById(id);
-const numberFromPtBr = value => Number(String(value || "0").replace(/\./g, "")) || 0;
+const $ = (id) => document.getElementById(id);
 
-function installStylesheet(){
-  if(!document.querySelector('link[href*="analises-infinite-table.css"]')){
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "/src/analises/analises-infinite-table.css?v=20260724-4";
-    link.dataset.analisesInfiniteTable = "true";
-    document.head.appendChild(link);
-  }
-
-  if(document.getElementById("analisesInfiniteRuntimeStyles")) return;
+function installStylesheet() {
+  if (document.getElementById("analisesInfiniteV2Styles")) return;
   const style = document.createElement("style");
-  style.id = "analisesInfiniteRuntimeStyles";
+  style.id = "analisesInfiniteV2Styles";
   style.textContent = `
-    .analises-load-more{
+    #analisesInfiniteStatus,#analisesLoadMore{display:none!important}
+    .analises-load-more-v2{
       display:flex;
       align-items:center;
       justify-content:center;
@@ -47,87 +64,98 @@ function installStylesheet(){
       font-weight:900;
       cursor:pointer
     }
-    .analises-load-more:hover{background:color-mix(in srgb,var(--blue2) 12%,var(--card))}
-    .analises-load-more:disabled{opacity:.58;cursor:wait}
-    .analises-load-more[hidden]{display:none!important}
+    .analises-load-more-v2:hover{background:color-mix(in srgb,var(--blue2) 12%,var(--card))}
+    .analises-load-more-v2:disabled{opacity:.58;cursor:wait}
+    .analises-load-more-v2[hidden]{display:none!important}
   `;
   document.head.appendChild(style);
 }
 
-function parsePageInfo(){
+function parsePageInfo() {
   const text = $("pageInfo")?.textContent || "";
   const match = text.match(/Página\s+([\d.]+)\s+de\s+([\d.]+)/i);
-  return match ? {
-    current: numberFromPtBr(match[1]),
-    total: Math.max(1, numberFromPtBr(match[2]))
-  } : null;
+  return match
+    ? {
+        current: numberFromPtBr(match[1]),
+        total: Math.max(1, numberFromPtBr(match[2])),
+      }
+    : null;
 }
 
-function parseTotalRecords(){
-  const text = $("tableInfo")?.textContent || "";
-  const patterns = [
+function parseTotalRecords() {
+  const tableInfo = $("tableInfo")?.textContent || "";
+  const pageInfo = $("pageInfo")?.textContent || "";
+  const candidates = [];
+
+  [
     /Mostrando\s+[\d.]+(?:-[\d.]+)?\s+de\s+([\d.]+)\s+registros/i,
     /Exibindo\s+[\d.]+\s+de\s+([\d.]+)\s+registros/i,
-    /\bde\s+([\d.]+)\s+registros/i
-  ];
-  for(const pattern of patterns){
-    const match = text.match(pattern);
-    if(match) return numberFromPtBr(match[1]);
-  }
-  return visibleRowCount();
+    /\bde\s+([\d.]+)\s+registros/i,
+  ].forEach((pattern) => {
+    const match = tableInfo.match(pattern);
+    if (match) candidates.push(numberFromPtBr(match[1]));
+  });
+
+  const recorte = pageInfo.match(/Recorte atual:\s*([\d.]+)/i);
+  if (recorte) candidates.push(numberFromPtBr(recorte[1]));
+
+  const continuo = pageInfo.match(
+    /Carregamento contínuo\s*·\s*[\d.]+\s+de\s+([\d.]+)/i,
+  );
+  if (continuo) candidates.push(numberFromPtBr(continuo[1]));
+
+  return Math.max(visibleRowCount(), ...candidates, 0);
 }
 
-function visibleRows(){
-  return [...($("tableBody")?.querySelectorAll(":scope > tr:not(.detail-row)") || [])]
-    .filter(row => !row.querySelector("td.empty") && !/Nenhum registro encontrado/i.test(row.textContent || ""));
+function visibleRows() {
+  return [
+    ...($("tableBody")?.querySelectorAll(":scope > tr:not(.detail-row)") || []),
+  ].filter(
+    (row) =>
+      !row.querySelector("td.empty") &&
+      !/Nenhum registro encontrado/i.test(row.textContent || ""),
+  );
 }
 
-function visibleRowCount(){
+function visibleRowCount() {
   return visibleRows().length;
 }
 
-function validFragment(html){
-  if(!html || /Nenhum registro encontrado/i.test(html)) return false;
-  const template = document.createElement("template");
-  template.innerHTML = html;
-  return [...template.content.querySelectorAll(":scope > tr:not(.detail-row)")]
-    .some(row => !row.querySelector("td.empty"));
-}
-
-function hideLegacyControls(){
+function hideLegacyControls() {
   const rowsControl = document.querySelector(".table-tools .rows-control");
   const pagination = document.querySelector(".table-card .pagination");
-  [rowsControl, pagination].forEach(element => {
-    if(!element) return;
+  [rowsControl, pagination].forEach((element) => {
+    if (!element) return;
     element.hidden = true;
     element.setAttribute("aria-hidden", "true");
     element.style.display = "none";
   });
 }
 
-function ensureUi(){
+function ensureUi() {
   const card = document.querySelector(".table-card");
   const wrap = card?.querySelector(".table-wrap");
-  if(!card || !wrap) return false;
+  if (!card || !wrap) return false;
 
   hideLegacyControls();
 
-  let status = $("analisesInfiniteStatus");
-  if(!status){
+  let status = $("analisesInfiniteStatusV2");
+  if (!status) {
     status = document.createElement("div");
-    status.id = "analisesInfiniteStatus";
+    status.id = "analisesInfiniteStatusV2";
     status.className = "analises-infinite-status";
+    status.dataset.infiniteManaged = "v2";
     wrap.insertAdjacentElement("afterend", status);
   }
-  status.dataset.infiniteManaged = "true";
 
-  let loadMore = $("analisesLoadMore");
-  if(!loadMore){
+  let loadMore = $("analisesLoadMoreV2");
+  if (!loadMore) {
     loadMore = document.createElement("button");
     loadMore.type = "button";
-    loadMore.id = "analisesLoadMore";
-    loadMore.className = "analises-load-more";
-    loadMore.innerHTML = '<i class="fa-solid fa-plus"></i> Carregar mais registros';
+    loadMore.id = "analisesLoadMoreV2";
+    loadMore.className = "analises-load-more-v2";
+    loadMore.innerHTML =
+      '<i class="fa-solid fa-plus"></i> Carregar mais registros';
     loadMore.hidden = true;
     status.insertAdjacentElement("afterend", loadMore);
     loadMore.addEventListener("click", () => loadNextPage());
@@ -136,15 +164,15 @@ function ensureUi(){
   return true;
 }
 
-function setStatus(message, { loading = false, canLoadMore = false } = {}){
-  const status = $("analisesInfiniteStatus");
-  if(status){
+function setStatus(message, { loading = false, canLoadMore = false } = {}) {
+  const status = $("analisesInfiniteStatusV2");
+  if (status) {
     status.textContent = message;
     status.classList.toggle("is-loading", loading);
   }
 
-  const loadMore = $("analisesLoadMore");
-  if(loadMore){
+  const loadMore = $("analisesLoadMoreV2");
+  if (loadMore) {
     loadMore.hidden = !canLoadMore;
     loadMore.disabled = loading;
     loadMore.innerHTML = loading
@@ -153,57 +181,104 @@ function setStatus(message, { loading = false, canLoadMore = false } = {}){
   }
 }
 
-function hasMorePages(){
-  return state.ready
-    && state.totalRecords > visibleRowCount()
-    && state.loadedPages < state.totalPages;
+function hasMorePages() {
+  return (
+    state.ready &&
+    state.totalRecords > visibleRowCount() &&
+    state.loadedPages < state.totalPages
+  );
 }
 
-function updateSummary(){
+function updateSummary() {
   const shown = visibleRowCount();
-  if($("tableInfo")){
+
+  if ($("tableInfo")) {
     $("tableInfo").textContent = state.totalRecords
       ? `Exibindo ${shown.toLocaleString("pt-BR")} de ${state.totalRecords.toLocaleString("pt-BR")} registros`
       : "Nenhum registro encontrado";
   }
-  if($("pageInfo")){
+
+  if ($("pageInfo")) {
     $("pageInfo").textContent = state.totalRecords
       ? `Carregamento contínuo · ${shown.toLocaleString("pt-BR")} de ${state.totalRecords.toLocaleString("pt-BR")}`
       : "Carregamento contínuo";
   }
 
-  if(state.loading){
-    setStatus(`Carregando mais registros (${state.loadedPages + 1}/${state.totalPages})...`, { loading:true });
-  }else if(!state.totalRecords){
+  if (state.loading) {
+    setStatus(
+      `Carregando mais registros (${state.loadedPages + 1}/${state.totalPages})...`,
+      { loading: true },
+    );
+  } else if (!state.totalRecords) {
     setStatus("Nenhum registro encontrado.");
-  }else if(!hasMorePages()){
-    setStatus(`Todos os ${state.totalRecords.toLocaleString("pt-BR")} registros do recorte foram exibidos.`);
-  }else{
-    setStatus(`${shown.toLocaleString("pt-BR")} registros exibidos. Role a tabela ou use o botão abaixo para carregar mais.`, { canLoadMore:true });
+  } else if (!hasMorePages()) {
+    setStatus(
+      `Todos os ${state.totalRecords.toLocaleString("pt-BR")} registros do recorte foram exibidos.`,
+    );
+  } else {
+    setStatus(
+      `${shown.toLocaleString("pt-BR")} registros exibidos. Role a tabela ou use o botão abaixo para carregar mais.`,
+      { canLoadMore: true },
+    );
   }
 }
 
-function combineFragments({ preserveScroll = true } = {}){
+function combineFragments({ preserveScroll = true } = {}) {
   const body = $("tableBody");
   const wrap = document.querySelector(".table-wrap");
-  if(!body) return;
+  if (!body) return;
 
-  const previousScrollTop = preserveScroll ? (wrap?.scrollTop || 0) : 0;
+  const previousScrollTop = preserveScroll ? wrap?.scrollTop || 0 : 0;
   body.innerHTML = state.pageFragments.join("");
-  if(wrap) wrap.scrollTop = previousScrollTop;
+  if (wrap) wrap.scrollTop = previousScrollTop;
   updateSummary();
 }
 
-function waitForRenderedPage(page, previousHtml, attempts = 0){
-  return new Promise(resolve => {
+function ensureBatchSize() {
+  const select = $("rowsPerPage");
+  if (!select) return false;
+
+  let option = [...select.options].find(
+    (item) => Number(item.value || item.textContent) === BATCH_SIZE,
+  );
+  if (!option) {
+    option = document.createElement("option");
+    option.value = String(BATCH_SIZE);
+    option.textContent = String(BATCH_SIZE);
+    select.appendChild(option);
+  }
+
+  const synchronized = select.dataset.infiniteBatchSize === String(BATCH_SIZE);
+  const valueMatches = Number(select.value) === BATCH_SIZE;
+  select.value = String(BATCH_SIZE);
+
+  if (!synchronized || !valueMatches) {
+    select.dataset.infiniteBatchSize = String(BATCH_SIZE);
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  select.disabled = true;
+  hideLegacyControls();
+  return true;
+}
+
+function waitForRenderedPage(
+  page,
+  previousHtml = "",
+  { allowSameHtml = false, attempts = 0 } = {},
+) {
+  return new Promise((resolve) => {
     const check = () => {
       const body = $("tableBody");
       const html = body?.innerHTML || "";
       const info = parsePageInfo();
-      const changed = html && html !== previousHtml;
+      const changed = allowSameHtml || (html && html !== previousHtml);
       const expectedPage = info?.current === page;
 
-      if((changed && expectedPage && validFragment(html)) || attempts >= 80){
+      if (
+        (changed && expectedPage && isValidAnalisesRowsFragment(html)) ||
+        attempts >= 100
+      ) {
         resolve({ html, info });
         return;
       }
@@ -215,10 +290,56 @@ function waitForRenderedPage(page, previousHtml, attempts = 0){
   });
 }
 
-async function loadNextPage(){
-  if(state.loading || state.resetting || !hasMorePages()) return;
-  if(typeof window.goPage !== "function"){
-    setStatus("A navegação da fila ainda não está disponível. Atualize a página e tente novamente.");
+async function resetFromRenderedPage() {
+  if (state.loading || state.resetting) return false;
+  if (!ensureUi() || typeof window.goPage !== "function") return false;
+
+  const body = $("tableBody");
+  if (!body || !visibleRowCount()) return false;
+
+  state.resetting = true;
+  state.ready = false;
+
+  try {
+    const totalBefore = parseTotalRecords();
+    ensureBatchSize();
+    window.goPage(1);
+
+    const result = await waitForRenderedPage(1, "", { allowSameHtml: true });
+    const totalRecords = Math.max(
+      totalBefore,
+      parseTotalRecords(),
+      visibleRowCount(),
+    );
+    if (!isValidAnalisesRowsFragment(result.html) || !totalRecords)
+      return false;
+
+    state.loadedPages = 1;
+    state.totalPages = Math.max(
+      1,
+      result.info?.total || Math.ceil(totalRecords / BATCH_SIZE),
+    );
+    state.totalRecords = totalRecords;
+    state.pageFragments = [result.html];
+    state.ready = true;
+    state.activationAttempts = 0;
+
+    combineFragments({ preserveScroll: false });
+    const wrap = document.querySelector(".table-wrap");
+    if (wrap) wrap.scrollTop = 0;
+    return true;
+  } finally {
+    state.resetting = false;
+  }
+}
+
+async function loadNextPage() {
+  if (state.loading || state.resetting || !hasMorePages()) return;
+  if (typeof window.goPage !== "function") {
+    setStatus(
+      "A navegação da fila ainda não está disponível. Atualize a página e tente novamente.",
+      { canLoadMore: true },
+    );
     return;
   }
 
@@ -229,170 +350,150 @@ async function loadNextPage(){
   const body = $("tableBody");
   const combinedHtml = body?.innerHTML || "";
 
-  try{
+  try {
     window.goPage(nextPage);
     const result = await waitForRenderedPage(nextPage, combinedHtml);
-    if(!validFragment(result.html)){
+    if (!isValidAnalisesRowsFragment(result.html)) {
       throw new Error(`A página ${nextPage} não produziu registros válidos.`);
     }
 
     state.pageFragments.push(result.html);
     state.loadedPages = nextPage;
-    if(result.info?.total) state.totalPages = Math.max(state.totalPages, result.info.total);
-    combineFragments({ preserveScroll:true });
-  }catch(error){
-    console.error("Falha ao carregar o próximo lote da fila de análises:", error);
-    if(body) body.innerHTML = combinedHtml;
-    setStatus("Não foi possível carregar o próximo lote. Use o botão para tentar novamente.", { canLoadMore:true });
-  }finally{
+    if (result.info?.total)
+      state.totalPages = Math.max(state.totalPages, result.info.total);
+    combineFragments({ preserveScroll: true });
+  } catch (error) {
+    console.error(
+      "Falha ao carregar o próximo lote da fila de análises:",
+      error,
+    );
+    if (body) body.innerHTML = combinedHtml;
+    setStatus(
+      "Não foi possível carregar o próximo lote. Use o botão para tentar novamente.",
+      { canLoadMore: true },
+    );
+  } finally {
     state.loading = false;
     updateSummary();
   }
 }
 
-function configureBatchSize(){
-  const select = $("rowsPerPage");
-  if(!select) return;
-
-  let option = [...select.options].find(item => Number(item.value || item.textContent) === state.rowsPerBatch);
-  if(!option){
-    option = document.createElement("option");
-    option.value = String(state.rowsPerBatch);
-    option.textContent = String(state.rowsPerBatch);
-    select.appendChild(option);
-  }
-
-  if(Number(select.value) !== state.rowsPerBatch){
-    select.value = String(state.rowsPerBatch);
-    select.dispatchEvent(new Event("change", { bubbles:true }));
-  }
-
-  select.disabled = true;
-  hideLegacyControls();
-}
-
-async function resetFromRenderedPage(){
-  if(state.loading || state.resetting) return false;
-  if(!ensureUi()) return false;
-  if(typeof window.goPage !== "function") return false;
-
-  const body = $("tableBody");
-  if(!body || !visibleRowCount()) return false;
-
-  state.resetting = true;
-  state.ready = false;
-
-  try{
-    configureBatchSize();
-    window.goPage(1);
-    await new Promise(resolve => window.setTimeout(resolve, 30));
-
-    const page = parsePageInfo();
-    const html = $("tableBody")?.innerHTML || "";
-    const totalRecords = parseTotalRecords();
-    if(!validFragment(html) || !totalRecords) return false;
-
-    state.loadedPages = 1;
-    state.totalPages = Math.max(1, page?.total || Math.ceil(totalRecords / state.rowsPerBatch));
-    state.totalRecords = totalRecords;
-    state.pageFragments = [html];
-    state.ready = true;
-    state.activationAttempts = 0;
-
-    combineFragments({ preserveScroll:false });
-    const wrap = document.querySelector(".table-wrap");
-    if(wrap) wrap.scrollTop = 0;
-    hideLegacyControls();
-    return true;
-  }finally{
-    state.resetting = false;
-  }
-}
-
-function scheduleActivation(delay = 120){
+function scheduleActivation(delay = 120) {
   window.clearTimeout(state.activationTimer);
   state.activationTimer = window.setTimeout(async () => {
-    if(await resetFromRenderedPage()) return;
+    if (await resetFromRenderedPage()) return;
 
     state.activationAttempts += 1;
     const loadingVisible = $("loading")?.classList.contains("show") === true;
-    if(loadingVisible || state.activationAttempts < 240){
+    if (loadingVisible || state.activationAttempts < MAX_ACTIVATION_ATTEMPTS) {
       scheduleActivation(250);
     }
   }, delay);
 }
 
-function scheduleReset(delay = 260){
+function scheduleReset(delay = 260) {
   window.clearTimeout(state.resetTimer);
   state.resetTimer = window.setTimeout(() => {
     state.ready = false;
+    state.pageFragments = [];
+    state.loadedPages = 0;
     scheduleActivation(0);
   }, delay);
 }
 
-function bindResetEvents(){
-  if(state.eventsBound) return;
+function bindResetEvents() {
+  if (state.eventsBound) return;
   state.eventsBound = true;
 
-  document.addEventListener("change", event => {
-    if(event.target?.closest?.("#rowsPerPage")) return;
-    if(event.target?.closest?.(".filter-panel")) scheduleReset(260);
-  }, true);
+  document.addEventListener(
+    "change",
+    (event) => {
+      if (event.target?.closest?.("#rowsPerPage")) return;
+      if (event.target?.closest?.(".filter-panel")) scheduleReset(260);
+    },
+    true,
+  );
 
-  document.addEventListener("input", event => {
-    if(event.target?.matches?.("#fBusca,#tableSearch")) scheduleReset(360);
-  }, true);
+  document.addEventListener(
+    "input",
+    (event) => {
+      if (event.target?.matches?.("#fBusca,#tableSearch")) scheduleReset(360);
+    },
+    true,
+  );
 
-  document.addEventListener("click", event => {
-    if(event.target?.closest?.('#tableBody button[onclick*="toggleDetails"]')) return;
-    if(event.target?.closest?.("#clearBtn,[data-kpi],#attentionList .attention-item,#chartResponsavel")) scheduleReset(260);
-  }, true);
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (
+        event.target?.closest?.('#tableBody button[onclick*="toggleDetails"]')
+      )
+        return;
+      if (
+        event.target?.closest?.(
+          "#clearBtn,[data-kpi],#attentionList .attention-item,#chartResponsavel",
+        )
+      )
+        scheduleReset(260);
+    },
+    true,
+  );
 
   document.addEventListener("agsus:analises-loading-start", () => {
     state.ready = false;
   });
-  document.addEventListener("agsus:analises-loading-end", () => scheduleReset(80));
-  document.addEventListener("agsus:analises-query-complete", () => scheduleReset(80));
-  document.addEventListener("agsus:analises-cache-cleared", () => scheduleReset(180));
-  window.addEventListener("load", () => scheduleActivation(0), { once:true });
+  document.addEventListener("agsus:analises-loading-end", () =>
+    scheduleReset(80),
+  );
+  document.addEventListener("agsus:analises-query-complete", () =>
+    scheduleReset(80),
+  );
+  document.addEventListener("agsus:analises-cache-cleared", () =>
+    scheduleReset(180),
+  );
+  window.addEventListener("load", () => scheduleActivation(0), { once: true });
 }
 
-function bindInternalScroll(){
-  if(state.scrollBound) return;
+function bindInternalScroll() {
+  if (state.scrollBound) return;
   const wrap = document.querySelector(".table-wrap");
-  if(!wrap) return;
+  if (!wrap) return;
 
   state.scrollBound = true;
-  wrap.addEventListener("scroll", () => {
-    if(state.loading || state.resetting || !hasMorePages()) return;
-    const remaining = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight;
-    if(remaining <= 320) loadNextPage();
-  }, { passive:true });
+  wrap.addEventListener(
+    "scroll",
+    () => {
+      if (state.loading || state.resetting || !hasMorePages()) return;
+      const remaining = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight;
+      if (remaining <= 320) loadNextPage();
+    },
+    { passive: true },
+  );
 }
 
-function snapshot(){
+function snapshot() {
   const wrap = document.querySelector(".table-wrap");
   return {
     html: $("tableBody")?.innerHTML || "",
     tableInfo: $("tableInfo")?.textContent || "",
     pageInfo: $("pageInfo")?.textContent || "",
-    scrollTop: wrap?.scrollTop || 0
+    scrollTop: wrap?.scrollTop || 0,
   };
 }
 
-function restore(saved){
-  if(!saved) return;
-  if($("tableBody")) $("tableBody").innerHTML = saved.html || "";
-  if($("tableInfo")) $("tableInfo").textContent = saved.tableInfo || "";
-  if($("pageInfo")) $("pageInfo").textContent = saved.pageInfo || "";
+function restore(saved) {
+  if (!saved) return;
+  if ($("tableBody")) $("tableBody").innerHTML = saved.html || "";
+  if ($("tableInfo")) $("tableInfo").textContent = saved.tableInfo || "";
+  if ($("pageInfo")) $("pageInfo").textContent = saved.pageInfo || "";
   const wrap = document.querySelector(".table-wrap");
-  if(wrap) wrap.scrollTop = Number(saved.scrollTop) || 0;
+  if (wrap) wrap.scrollTop = Number(saved.scrollTop) || 0;
   hideLegacyControls();
   updateSummary();
 }
 
-function init(){
-  if(state.initialized) return;
+function init() {
+  if (state.initialized) return;
   state.initialized = true;
   installStylesheet();
   ensureUi();
@@ -402,7 +503,13 @@ function init(){
   scheduleActivation(0);
 }
 
-window.analisesInfiniteTable = { snapshot, restore, scheduleReset, loadNextPage };
+window.analisesInfiniteTable = {
+  snapshot,
+  restore,
+  scheduleReset,
+  loadNextPage,
+};
 
-if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once:true });
+if (document.readyState === "loading")
+  document.addEventListener("DOMContentLoaded", init, { once: true });
 else init();

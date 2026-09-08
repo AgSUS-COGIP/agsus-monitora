@@ -1,348 +1,490 @@
 const TARGET_VIEWS = new Set([
   "vw_analises_dashboard_base",
-  "vw_analises_dashboard_base_todos"
+  "vw_analises_dashboard_base_todos",
 ]);
-const FILTERED_RPC = "get_analises_dashboard_filtrado";
-const RPC_PAGE_SIZE = 1000;
-const CACHE_PREFIX = "agsus_analises_cache_v1_";
+const RPC = "get_analises_dashboard_filtrado";
+const PAGE_SIZE = 1000;
 
 const state = {
   client: null,
-  selectedUnit: "",
-  selectedEdital: "",
   catalog: [],
+  units: [],
+  editais: [],
+  activeKey: "",
+  total: null,
   loadingCatalog: false,
-  activeQueryKey: "",
-  total: null
+  catalogLoaded: false,
+  catalogRetry: 0,
 };
 
-const txt = value => String(value ?? "").trim();
-const esc = value => String(value ?? "")
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;")
-  .replaceAll("'", "&#039;");
+const txt = (value) => String(value ?? "").trim();
+const esc = (value) =>
+  txt(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+const norm = (value) => txt(value).toLowerCase();
+const sorted = (values) =>
+  [...new Set([...values].map(txt).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, "pt-BR", { numeric: true }),
+  );
 
-function currentScope(){
-  const value = txt(document.getElementById("fSituacaoEdital")?.value).toLowerCase();
+function scope() {
+  const value = norm(document.getElementById("fSituacaoEdital")?.value);
   return ["ativo", "inativo", "todos"].includes(value) ? value : "ativo";
 }
 
-function clearScopeCache(scope){
-  try{
-    for(let index = localStorage.length - 1; index >= 0; index--){
-      const key = localStorage.key(index);
-      if(key && key.startsWith(CACHE_PREFIX) && key.endsWith(`_${scope}`)){
-        localStorage.removeItem(key);
-      }
-    }
-  }catch(error){
-    console.warn("Não foi possível limpar o cache do recorte de análises:", error);
-  }
-}
-
-function queryKey(){
-  return JSON.stringify({
-    scope: currentScope(),
-    unidade: state.selectedUnit,
-    edital: state.selectedEdital
-  });
-}
-
-function invalidateQuery(){
-  state.activeQueryKey = "";
-  state.total = null;
-  document.body.classList.add("analises-awaiting-scope");
-}
-
-function queryIsAuthorized(){
-  return Boolean(
-    state.activeQueryKey
-    && state.selectedUnit
-    && state.selectedEdital
-    && state.activeQueryKey === queryKey()
+function scopeLabel() {
+  return (
+    { ativo: "Ativo", inativo: "Inativo", todos: "Todos" }[scope()] || "Ativo"
   );
 }
 
-function updateStatus(message, warning = false){
-  const status = document.getElementById("scopeGuardStatus");
-  if(!status) return;
-  status.classList.toggle("is-warning", warning);
-  status.textContent = message;
+function scopedMode() {
+  return scope() !== "ativo";
+}
+function key() {
+  return JSON.stringify({
+    scope: scope(),
+    units: sorted(state.units),
+    editais: sorted(state.editais),
+  });
+}
+function authorized() {
+  return Boolean(
+    scopedMode() &&
+    state.activeKey &&
+    state.activeKey === key() &&
+    state.units.length &&
+    state.editais.length,
+  );
 }
 
-async function fetchRpcPage(offset, limit){
-  const includeTotal = offset === 0;
-  const { data, error } = await state.client.rpc(FILTERED_RPC, {
-    p_scope: currentScope(),
-    p_unidades: [state.selectedUnit],
-    p_editais: [state.selectedEdital],
-    p_offset: offset,
-    p_limit: Math.min(Math.max(limit, 1), RPC_PAGE_SIZE),
-    p_include_total: includeTotal
-  });
-  if(error) throw error;
+function setStatus(message, warning = false) {
+  const el = document.getElementById("scopeGuardStatus");
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle("is-warning", warning);
+}
 
+function resetSelection() {
+  state.units = [];
+  state.editais = [];
+  state.activeKey = "";
+  state.total = null;
+}
+
+function blockResults(block) {
+  document.body.classList.toggle("analises-awaiting-scope", Boolean(block));
+}
+
+function syncPendingContext() {
+  const context = document.getElementById("contextLine");
+  const chips = document.getElementById("filterChips");
+  const label = scopeLabel();
+  if (context)
+    context.textContent = `Aguardando definição do recorte para processos ${label.toLowerCase()}.`;
+  if (chips)
+    chips.innerHTML = `<span class="chip-filter"><b>Filtro</b>Situação do processo: ${esc(label)}</span>`;
+}
+
+async function rpcPage(offset, limit) {
+  const includeTotal = offset === 0;
+  const { data, error } = await state.client.rpc(RPC, {
+    p_scope: scope(),
+    p_unidades: state.units,
+    p_editais: state.editais,
+    p_offset: offset,
+    p_limit: Math.min(Math.max(limit, 1), PAGE_SIZE),
+    p_include_total: includeTotal,
+  });
+  if (error) throw error;
   const payload = data && typeof data === "object" ? data : {};
   const rows = Array.isArray(payload.rows) ? payload.rows : [];
-  if(includeTotal && payload.total !== null && payload.total !== undefined){
+  if (includeTotal && payload.total !== undefined && payload.total !== null)
     state.total = Number(payload.total || 0);
-  }
-
-  const loaded = Math.min(offset + rows.length, state.total ?? offset + rows.length);
-  const totalText = state.total === null ? "" : ` de ${state.total.toLocaleString("pt-BR")}`;
-  updateStatus(`Carregando ${loaded.toLocaleString("pt-BR")}${totalText} registro(s) de ${state.selectedUnit} · ${state.selectedEdital}...`);
+  const loaded = Math.min(
+    offset + rows.length,
+    state.total ?? offset + rows.length,
+  );
+  setStatus(
+    `Carregando ${loaded.toLocaleString("pt-BR")}${state.total === null ? "" : ` de ${state.total.toLocaleString("pt-BR")}`} registro(s)...`,
+  );
   return { rows, total: state.total };
 }
 
-function createRpcBackedBuilder(){
-  let rangeStart = 0;
-  let rangeEnd = RPC_PAGE_SIZE - 1;
+function rpcBuilder() {
+  let start = 0;
+  let end = PAGE_SIZE - 1;
   const builder = {
-    select(){ return builder; },
-    range(start, end){
-      rangeStart = Math.max(Number(start) || 0, 0);
-      rangeEnd = Math.max(Number(end) || rangeStart, rangeStart);
+    select() {
       return builder;
     },
-    order(){ return builder; },
-    eq(){ return builder; },
-    in(){ return builder; },
-    then(resolve){
-      const requested = rangeEnd - rangeStart + 1;
-      return fetchRpcPage(rangeStart, requested)
-        .then(result => resolve({ data: result.rows, error: null, count: result.total }))
-        .catch(error => resolve({ data: [], error }));
-    }
+    range(from, to) {
+      start = Math.max(Number(from) || 0, 0);
+      end = Math.max(Number(to) || start, start);
+      return builder;
+    },
+    order() {
+      return builder;
+    },
+    eq() {
+      return builder;
+    },
+    in() {
+      return builder;
+    },
+    then(resolve) {
+      return rpcPage(start, end - start + 1)
+        .then((result) =>
+          resolve({ data: result.rows, error: null, count: result.total }),
+        )
+        .catch((error) => resolve({ data: [], error }));
+    },
   };
   return builder;
 }
 
-function createBlockedBuilder(){
+function blockedBuilder() {
   const builder = {
-    select(){ return builder; },
-    range(){ return builder; },
-    order(){ return builder; },
-    eq(){ return builder; },
-    in(){ return builder; },
-    then(resolve){
-      updateStatus("Escolha uma unidade e um edital para consultar os dados.");
+    select() {
+      return builder;
+    },
+    range() {
+      return builder;
+    },
+    order() {
+      return builder;
+    },
+    eq() {
+      return builder;
+    },
+    in() {
+      return builder;
+    },
+    then(resolve) {
       return Promise.resolve(resolve({ data: [], error: null, count: 0 }));
-    }
+    },
   };
   return builder;
 }
 
-function patchSupabaseClient(){
+function patchClient() {
   const supabase = window.supabase;
-  if(!supabase?.createClient || supabase.__agsusAnalisesScopePatched) return;
-
-  const originalCreateClient = supabase.createClient.bind(supabase);
+  if (!supabase?.createClient || supabase.__agsusAnalisesScopeSafe) return;
+  const originalCreate = supabase.createClient.bind(supabase);
   supabase.createClient = (...args) => {
-    const client = originalCreateClient(...args);
+    const client = originalCreate(...args);
     state.client = client;
-
     const originalFrom = client.from.bind(client);
-    client.from = tableName => {
-      if(TARGET_VIEWS.has(tableName)){
-        return queryIsAuthorized() ? createRpcBackedBuilder() : createBlockedBuilder();
-      }
-      return originalFrom(tableName);
+    client.from = (table) => {
+      if (!TARGET_VIEWS.has(table) || scope() === "ativo")
+        return originalFrom(table);
+      return authorized() ? rpcBuilder() : blockedBuilder();
     };
+    queueMicrotask(() => loadCatalog());
     return client;
   };
-
-  supabase.__agsusAnalisesScopePatched = true;
+  supabase.__agsusAnalisesScopeSafe = true;
 }
 
-function ensureStyles(){
-  if(document.getElementById("analisesScopeGuardStyles")) return;
+function ensureStyles() {
+  if (document.getElementById("analisesScopeSafeStyles")) return;
   const style = document.createElement("style");
-  style.id = "analisesScopeGuardStyles";
+  style.id = "analisesScopeSafeStyles";
   style.textContent = `
-    .scope-guard{margin:0 0 14px;border:1px solid color-mix(in srgb,var(--blue2) 22%,var(--line));border-left:5px solid var(--blue2);border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--blue2) 7%,var(--card)),var(--card));padding:15px;display:grid;gap:13px}
-    .scope-guard-head{display:flex;gap:11px;align-items:flex-start;color:var(--text)}
-    .scope-guard-head i{color:var(--blue2);margin-top:3px}.scope-guard-head strong{display:block;color:var(--strong);margin-bottom:4px;font-size:14px}.scope-guard-head small{color:var(--muted);line-height:1.45}
-    .scope-guard-grid{display:grid;grid-template-columns:minmax(230px,1fr) minmax(230px,1fr) auto;gap:12px;align-items:end}
-    .scope-guard-field{display:grid;gap:6px}.scope-guard-field label{font-size:11px;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-    .scope-guard select{width:100%;min-height:44px;border:1px solid var(--line2);border-radius:12px;background:var(--card);color:var(--text);padding:0 12px;font:inherit;font-weight:700}
-    .scope-guard select:disabled{opacity:.55;cursor:not-allowed;background:var(--card2)}
-    .scope-guard .btn:disabled{opacity:.55;cursor:not-allowed}
-    .scope-guard-status{font-size:12px;font-weight:800;color:var(--muted)}
-    .scope-guard-status.is-warning{color:#a05a00}
-    body.analises-awaiting-scope .kpis,
-    body.analises-awaiting-scope .content > .panel.panel-pad,
-    body.analises-awaiting-scope .oper-grid,
-    body.analises-awaiting-scope .trend,
-    body.analises-awaiting-scope .table-card{display:none!important}
-    @media(max-width:820px){.scope-guard-grid{grid-template-columns:1fr}.scope-guard-grid .btn{width:100%}}
+    .scope-safe{margin:0 0 14px;padding:15px;border:1px solid color-mix(in srgb,var(--blue2) 22%,var(--line));border-left:5px solid var(--blue2);border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--blue2) 7%,var(--card)),var(--card));display:grid;gap:13px}
+    .scope-safe[hidden]{display:none!important}.scope-safe-head{display:flex;gap:11px;align-items:flex-start}.scope-safe-head i{color:var(--blue2);margin-top:3px}.scope-safe-head strong{display:block;color:var(--strong);margin-bottom:4px}.scope-safe-head small{color:var(--muted);line-height:1.45}
+    .scope-safe-grid{display:grid;grid-template-columns:minmax(230px,1fr) minmax(230px,1fr) auto;gap:12px;align-items:end}.scope-safe-field{display:grid;gap:6px;min-width:0}.scope-safe-field>label{font-size:11px;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+    .scope-safe-multi{position:relative}.scope-safe-trigger{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--line2);border-radius:12px;background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:10px;font:inherit;font-weight:750;cursor:pointer}.scope-safe-trigger:disabled{opacity:.55;cursor:not-allowed}.scope-safe-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scope-safe-menu{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:90;max-height:290px;overflow:auto;padding:8px;border:1px solid var(--line2);border-radius:13px;background:var(--card);box-shadow:0 18px 45px rgba(15,23,42,.18)}.scope-safe-menu[hidden]{display:none!important}
+    .scope-safe-actions{display:flex;justify-content:space-between;padding:4px 4px 8px;border-bottom:1px solid var(--line)}.scope-safe-actions button{border:0;background:transparent;color:var(--blue2);font-size:11px;font-weight:850;cursor:pointer}.scope-safe-options{display:grid;gap:2px;padding-top:6px}.scope-safe-option{display:flex;gap:8px;padding:8px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer}.scope-safe-option:hover{background:color-mix(in srgb,var(--blue2) 7%,var(--card))}.scope-safe-option input{accent-color:var(--blue2)}
+    .scope-guard-status{font-size:12px;font-weight:800;color:var(--muted)}.scope-guard-status.is-warning{color:#a05a00}.scope-safe .btn:disabled{opacity:.55;cursor:not-allowed}
+    body.analises-awaiting-scope .kpis,body.analises-awaiting-scope .content>.panel.panel-pad,body.analises-awaiting-scope .oper-grid,body.analises-awaiting-scope .trend,body.analises-awaiting-scope .table-card{display:none!important}
+    @media(max-width:820px){.scope-safe-grid{grid-template-columns:1fr}.scope-safe-grid .btn{width:100%}}
   `;
   document.head.appendChild(style);
 }
 
-function ensureGuard(){
-  let guard = document.getElementById("scopeGuard");
-  if(guard) return guard;
-  const filterPanel = document.querySelector(".filter-panel");
-  const filterHead = filterPanel?.querySelector(".filter-head");
-  if(!filterPanel || !filterHead) return null;
-
+function createGuard() {
+  let guard = document.getElementById("scopeGuardSafe");
+  if (guard) return guard;
+  const panel = document.querySelector(".filter-panel");
+  const head = panel?.querySelector(".filter-head");
+  if (!panel || !head) return null;
   guard = document.createElement("div");
-  guard.id = "scopeGuard";
-  guard.className = "scope-guard";
+  guard.id = "scopeGuardSafe";
+  guard.className = "scope-safe";
+  guard.hidden = true;
   guard.innerHTML = `
-    <div class="scope-guard-head">
-      <i class="fa-solid fa-filter-circle-dollar"></i>
-      <div><strong>Escolha o recorte da consulta</strong><small>Selecione primeiro a unidade e depois o edital. O painel carregará somente os registros desse processo seletivo.</small></div>
-    </div>
-    <div class="scope-guard-grid">
-      <div class="scope-guard-field"><label for="scopeGuardUnit">Unidade</label><select id="scopeGuardUnit" aria-label="Unidade do recorte"><option value="">Selecione uma unidade</option></select></div>
-      <div class="scope-guard-field"><label for="scopeGuardEdital">Edital</label><select id="scopeGuardEdital" aria-label="Edital do recorte" disabled><option value="">Selecione primeiro a unidade</option></select></div>
+    <div class="scope-safe-head"><i class="fa-solid fa-filter-circle-dollar"></i><div><strong>Defina o recorte da consulta</strong><small>Para processos inativos ou para a visão completa, selecione uma ou mais unidades e depois um ou mais editais.</small></div></div>
+    <div class="scope-safe-grid">
+      <div class="scope-safe-field"><label>Unidades</label><div class="scope-safe-multi"><button type="button" class="scope-safe-trigger" id="scopeUnitsTrigger"><span>Selecione uma ou mais unidades</span><i class="fa-solid fa-chevron-down"></i></button><div class="scope-safe-menu" id="scopeUnitsMenu" hidden><div class="scope-safe-actions"><button data-action="all-units">Selecionar todas</button><button data-action="clear-units">Limpar</button></div><div class="scope-safe-options" id="scopeUnitsOptions"></div></div></div></div>
+      <div class="scope-safe-field"><label>Editais</label><div class="scope-safe-multi"><button type="button" class="scope-safe-trigger" id="scopeEditaisTrigger" disabled><span>Selecione primeiro as unidades</span><i class="fa-solid fa-chevron-down"></i></button><div class="scope-safe-menu" id="scopeEditaisMenu" hidden><div class="scope-safe-actions"><button data-action="all-editais">Selecionar todos</button><button data-action="clear-editais">Limpar</button></div><div class="scope-safe-options" id="scopeEditaisOptions"></div></div></div></div>
       <button type="button" class="btn" id="scopeGuardLoad" disabled><i class="fa-solid fa-magnifying-glass"></i> Consultar</button>
-    </div>
-    <div class="scope-guard-status" id="scopeGuardStatus">Carregando unidades disponíveis...</div>
-  `;
-  filterPanel.insertBefore(guard, filterHead);
-  document.getElementById("scopeGuardLoad")?.addEventListener("click", requestScopedLoad);
-  document.getElementById("scopeGuardUnit")?.addEventListener("change", onUnitChanged);
-  document.getElementById("scopeGuardEdital")?.addEventListener("change", onEditalChanged);
+    </div><div class="scope-guard-status" id="scopeGuardStatus">Carregando unidades disponíveis...</div>`;
+  panel.insertBefore(guard, head);
+  guard.addEventListener("click", handleClick);
+  document.getElementById("scopeGuardLoad")?.addEventListener("click", consult);
+  document
+    .getElementById("scopeUnitsTrigger")
+    ?.addEventListener("click", (event) => toggleMenu("scopeUnits", event));
+  document
+    .getElementById("scopeEditaisTrigger")
+    ?.addEventListener("click", (event) => toggleMenu("scopeEditais", event));
+  document.addEventListener("click", (event) => {
+    if (!event.target?.closest?.(".scope-safe-multi")) closeMenus();
+  });
   return guard;
 }
 
-function scopeCatalogRows(){
-  const scope = currentScope();
-  if(scope === "todos") return state.catalog;
-  return state.catalog.filter(row => scope === "ativo" ? row.ativo !== false : row.ativo === false);
+function toggleMenu(prefix, event) {
+  event.stopPropagation();
+  const trigger = document.getElementById(`${prefix}Trigger`);
+  const menu = document.getElementById(`${prefix}Menu`);
+  if (!trigger || !menu || trigger.disabled) return;
+  document
+    .querySelectorAll(".scope-safe-menu:not([hidden])")
+    .forEach((item) => {
+      if (item !== menu) item.hidden = true;
+    });
+  menu.hidden = !menu.hidden;
 }
 
-function renderEditalOptions(){
-  const editalSelect = document.getElementById("scopeGuardEdital");
-  const loadButton = document.getElementById("scopeGuardLoad");
-  if(!editalSelect) return;
+function closeMenus() {
+  document
+    .querySelectorAll(".scope-safe-menu:not([hidden])")
+    .forEach((menu) => {
+      menu.hidden = true;
+    });
+}
 
-  if(!state.selectedUnit){
-    editalSelect.disabled = true;
-    editalSelect.innerHTML = '<option value="">Selecione primeiro a unidade</option>';
-    state.selectedEdital = "";
-    if(loadButton) loadButton.disabled = true;
+function isInactive(row) {
+  return (
+    row?.ativo === false ||
+    ["false", "0", "nao", "não", "inativo"].includes(norm(row?.ativo))
+  );
+}
+
+function catalogRows() {
+  return scope() === "todos" ? state.catalog : state.catalog.filter(isInactive);
+}
+
+function availableUnits() {
+  return sorted(catalogRows().map((row) => row.unidade));
+}
+function availableEditais() {
+  const units = new Set(state.units);
+  return sorted(
+    catalogRows()
+      .filter((row) => units.has(txt(row.unidade)))
+      .map((row) => row.edital),
+  );
+}
+
+function renderOptions(id, values, selected, type) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  const selectedSet = new Set(selected);
+  target.innerHTML = values.length
+    ? values
+        .map(
+          (value) =>
+            `<label class="scope-safe-option"><input type="checkbox" data-type="${type}" value="${esc(value)}" ${selectedSet.has(value) ? "checked" : ""}><span>${esc(value)}</span></label>`,
+        )
+        .join("")
+    : '<div class="scope-safe-option">Nenhuma opção disponível.</div>';
+}
+
+function updateLabel(prefix, values, empty) {
+  const label = document
+    .getElementById(`${prefix}Trigger`)
+    ?.querySelector("span");
+  if (label)
+    label.textContent = values.length
+      ? values.length <= 2
+        ? values.join(", ")
+        : `${values.length} opções selecionadas`
+      : empty;
+}
+
+function syncUi() {
+  const unitValues = availableUnits();
+  state.units = state.units.filter((value) => unitValues.includes(value));
+  const editalValues = availableEditais();
+  state.editais = state.editais.filter((value) => editalValues.includes(value));
+  renderOptions("scopeUnitsOptions", unitValues, state.units, "unit");
+  renderOptions("scopeEditaisOptions", editalValues, state.editais, "edital");
+  updateLabel(
+    "scopeUnits",
+    state.units,
+    state.catalogLoaded
+      ? "Selecione uma ou mais unidades"
+      : "Carregando unidades...",
+  );
+  updateLabel(
+    "scopeEditais",
+    state.editais,
+    state.units.length
+      ? "Selecione um ou mais editais"
+      : "Selecione primeiro as unidades",
+  );
+  const unitTrigger = document.getElementById("scopeUnitsTrigger");
+  if (unitTrigger)
+    unitTrigger.disabled = !state.catalogLoaded || !unitValues.length;
+  const editalTrigger = document.getElementById("scopeEditaisTrigger");
+  if (editalTrigger) editalTrigger.disabled = !state.units.length;
+  const ready = Boolean(state.units.length && state.editais.length);
+  const load = document.getElementById("scopeGuardLoad");
+  if (load) load.disabled = !ready;
+  if (!state.catalogLoaded)
+    setStatus("Carregando unidades e editais disponíveis...");
+  else if (!unitValues.length)
+    setStatus(
+      `Nenhuma unidade disponível para processos ${scopeLabel().toLowerCase()}.`,
+      true,
+    );
+  else if (!state.units.length)
+    setStatus("Selecione uma ou mais unidades para continuar.");
+  else if (!state.editais.length)
+    setStatus(
+      `${state.units.length} unidade(s) selecionada(s). Agora escolha pelo menos um edital.`,
+    );
+  else
+    setStatus(
+      `Recorte pronto: ${state.units.length} unidade(s) e ${state.editais.length} edital(is).`,
+    );
+}
+
+function handleClick(event) {
+  const input = event.target?.closest?.("input[data-type]");
+  if (input) {
+    event.stopPropagation();
+    const values = input.dataset.type === "unit" ? state.units : state.editais;
+    const set = new Set(values);
+    input.checked ? set.add(input.value) : set.delete(input.value);
+    if (input.dataset.type === "unit") {
+      state.units = sorted(set);
+      state.editais = [];
+    } else {
+      state.editais = sorted(set);
+    }
+    state.activeKey = "";
+    blockResults(true);
+    syncPendingContext();
+    syncUi();
     return;
   }
-
-  const editais = [...new Set(scopeCatalogRows()
-    .filter(row => txt(row.unidade) === state.selectedUnit)
-    .map(row => txt(row.edital))
-    .filter(Boolean))]
-    .sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
-
-  editalSelect.disabled = false;
-  editalSelect.innerHTML = '<option value="">Selecione um edital</option>'
-    + editais.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
-  state.selectedEdital = "";
-  if(loadButton) loadButton.disabled = true;
-}
-
-function onUnitChanged(event){
-  state.selectedUnit = txt(event.target.value);
-  state.selectedEdital = "";
-  invalidateQuery();
-  renderEditalOptions();
-  updateStatus(state.selectedUnit ? "Agora selecione o edital dessa unidade." : "Selecione uma unidade para continuar.");
-}
-
-function onEditalChanged(event){
-  state.selectedEdital = txt(event.target.value);
-  invalidateQuery();
-  const loadButton = document.getElementById("scopeGuardLoad");
-  if(loadButton) loadButton.disabled = !(state.selectedUnit && state.selectedEdital);
-  updateStatus(state.selectedEdital
-    ? `Recorte pronto: ${state.selectedUnit} · Edital ${state.selectedEdital}.`
-    : "Selecione um edital para continuar.");
-}
-
-function renderCatalog(){
-  const units = [...new Set(scopeCatalogRows().map(row => txt(row.unidade)).filter(Boolean))]
-    .sort((a,b) => a.localeCompare(b,"pt-BR",{numeric:true}));
-  const unitSelect = document.getElementById("scopeGuardUnit");
-  if(unitSelect){
-    unitSelect.innerHTML = '<option value="">Selecione uma unidade</option>'
-      + units.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join("");
+  const action = event.target?.closest?.("[data-action]")?.dataset?.action;
+  if (!action) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (action === "all-units") {
+    state.units = availableUnits();
+    state.editais = [];
   }
-  state.selectedUnit = "";
-  state.selectedEdital = "";
-  renderEditalOptions();
-  updateStatus(units.length ? "Selecione uma unidade para iniciar." : "Nenhuma unidade disponível para este escopo.", !units.length);
+  if (action === "clear-units") {
+    state.units = [];
+    state.editais = [];
+  }
+  if (action === "all-editais") state.editais = availableEditais();
+  if (action === "clear-editais") state.editais = [];
+  state.activeKey = "";
+  blockResults(true);
+  syncPendingContext();
+  syncUi();
 }
 
-async function loadCatalog(){
-  if(state.loadingCatalog) return;
-  if(!state.client){ setTimeout(loadCatalog, 120); return; }
-
+async function loadCatalog() {
+  if (state.loadingCatalog || state.catalogLoaded) return;
+  if (!state.client) {
+    if (state.catalogRetry < 40) {
+      state.catalogRetry += 1;
+      window.setTimeout(loadCatalog, 100);
+    }
+    return;
+  }
   state.loadingCatalog = true;
-  updateStatus("Carregando unidades e editais disponíveis...");
-  try{
+  try {
     const { data, error } = await state.client
       .from("analises_editais")
       .select("grupo,unidade,edital,ativo")
-      .order("unidade", { ascending:true })
-      .order("edital", { ascending:true });
-    if(error) throw error;
+      .order("unidade", { ascending: true })
+      .order("edital", { ascending: true });
+    if (error) throw error;
     state.catalog = Array.isArray(data) ? data : [];
-    renderCatalog();
-  }catch(error){
-    console.error("Falha ao carregar catálogo de editais:", error);
-    updateStatus("Não foi possível carregar as unidades e editais.", true);
-  }finally{
+    state.catalogLoaded = true;
+    state.catalogRetry = 0;
+    if (scopedMode()) syncUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      "Não foi possível carregar unidades e editais. Atualize a página e tente novamente.",
+      true,
+    );
+  } finally {
     state.loadingCatalog = false;
   }
 }
 
-function requestScopedLoad(){
-  if(!state.selectedUnit || !state.selectedEdital){
-    updateStatus("Consulta bloqueada: selecione uma unidade e um edital.", true);
-    return;
+function showGuard() {
+  const guard = createGuard();
+  if (!guard) return;
+  guard.hidden = !scopedMode();
+  if (scopedMode()) {
+    blockResults(true);
+    syncPendingContext();
+    syncUi();
+    loadCatalog();
+  } else {
+    blockResults(false);
   }
-
-  clearScopeCache(currentScope());
-  state.total = null;
-  state.activeQueryKey = queryKey();
-  document.body.classList.remove("analises-awaiting-scope");
-  updateStatus(`Consultando ${state.selectedUnit} · Edital ${state.selectedEdital}...`);
-  document.getElementById("fSituacaoEdital")?.dispatchEvent(new Event("change", { bubbles:true }));
 }
 
-function bindGuard(){
-  ensureStyles();
-  ensureGuard();
-  document.body.classList.add("analises-awaiting-scope");
+function consult() {
+  if (!state.units.length || !state.editais.length) {
+    setStatus("Selecione uma ou mais unidades e pelo menos um edital.", true);
+    return;
+  }
+  state.total = null;
+  state.activeKey = key();
+  blockResults(false);
+  setStatus(
+    `Consultando ${state.units.length} unidade(s) e ${state.editais.length} edital(is)...`,
+  );
+  document
+    .getElementById("fSituacaoEdital")
+    ?.dispatchEvent(new Event("change", { bubbles: true }));
+}
 
+function init() {
+  ensureStyles();
+  createGuard();
+  showGuard();
   const scopeSelect = document.getElementById("fSituacaoEdital");
-  if(scopeSelect){
-    scopeSelect.addEventListener("change", event => {
-      if(queryIsAuthorized()) return;
+  scopeSelect?.addEventListener(
+    "change",
+    (event) => {
+      if (scope() === "ativo") {
+        resetSelection();
+        showGuard();
+        return;
+      }
+      if (authorized()) return;
       event.stopImmediatePropagation();
       event.preventDefault();
-      state.selectedUnit = "";
-      state.selectedEdital = "";
-      invalidateQuery();
-      renderCatalog();
-      const message = "Aguardando escolha de unidade e edital";
+      resetSelection();
+      showGuard();
       const updated = document.getElementById("updatedText");
       const footer = document.getElementById("footerUpdated");
-      if(updated) updated.textContent = message;
-      if(footer) footer.textContent = message;
-    }, true);
-  }
-
-  document.addEventListener("agsus:analises-loading-end", () => {
-    if(queryIsAuthorized()){
-      const totalText = state.total === null ? "" : ` · ${state.total.toLocaleString("pt-BR")} registro(s)`;
-      updateStatus(`Recorte carregado: ${state.selectedUnit} · Edital ${state.selectedEdital}${totalText}.`);
-    }
-  });
-
+      if (updated) updated.textContent = "Aguardando definição do recorte";
+      if (footer) footer.textContent = "Aguardando definição do recorte";
+    },
+    true,
+  );
   loadCatalog();
 }
 
-patchSupabaseClient();
-document.addEventListener("DOMContentLoaded", bindGuard, { once:true });
+patchClient();
+document.addEventListener("DOMContentLoaded", init, { once: true });

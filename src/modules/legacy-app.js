@@ -38,6 +38,9 @@ import {
   createAccessBackgroundPath,
   validateAccessBackgroundFile,
 } from "../lib/access-background-storage.js";
+import { guardarMarca } from "../lib/access-branding-cache.js";
+import { avisoGlobal } from "../lib/aviso-global.js";
+import { ehFalhaTransitoria, ehSessaoEncerrada } from "../lib/sessao.js";
 
 // ============================================================
 // AgSUS Monitora Web V2.9.35
@@ -55,6 +58,7 @@ const RPC_SAVE_MONITORAMENTO = "salvar_monitoramento_indigena";
 const RPC_SAVE_CONFIG = "salvar_configuracoes_e_paineis";
 const RPC_ACCESS_LOG = "registrar_evento_acesso";
 const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
+const RPC_DENY_ACCESS_REQUEST = "recusar_solicitacao_acesso";
 const RPC_UPDATE_USER_ACCESS = "atualizar_acesso_usuario";
 const RPC_REVOKE_USER_PANELS = "revogar_paineis_usuario";
 const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
@@ -1120,7 +1124,9 @@ async function loginWithGoogle() {
     options,
   });
   if (error) {
-    try { popup?.close(); } catch (_) {}
+    try {
+      popup?.close();
+    } catch (_) {}
     if (btn) {
       btn.disabled = false;
       btn.removeAttribute("aria-busy");
@@ -1174,7 +1180,11 @@ window.addEventListener("message", async (event) => {
     await handleSignedInSession(session, "oauth_popup");
   } else {
     resetGoogleLoginButton();
-    showAlert("loginMsg", "Não foi possível concluir o acesso Google.", "error");
+    showAlert(
+      "loginMsg",
+      "Não foi possível concluir o acesso Google.",
+      "error",
+    );
   }
 });
 
@@ -1596,6 +1606,30 @@ async function loadConfig(options = {}) {
   return true;
 }
 
+/*
+  Aviso global — a mensagem de topo definida em Configurações.
+
+  O cartão "Aviso global" existia inteiro: os dois campos, a gravação e a
+  releitura de volta para o formulário. Faltava a última etapa. Quem escrevesse
+  um aviso e salvasse via "Configurações salvas.", reabrisse a tela e encontrasse
+  o texto lá — e mesmo assim nada aparecia em lugar nenhum do sistema, porque não
+  havia elemento no HTML para recebê-lo.
+
+  A decisão de aparência está em `lib/aviso-global.js`; aqui só a escrita no DOM.
+*/
+function aplicarAvisoGlobal() {
+  const barra = $("broadcastBar");
+  if (!barra) return;
+  const aviso = avisoGlobal({
+    mensagem: cfgValue("broadcast_msg"),
+    tipo: cfgValue("broadcast_type"),
+  });
+  // `textContent`, não `innerHTML`: o texto vem do banco e não é marcação.
+  barra.textContent = aviso.mensagem;
+  barra.className = aviso.classe;
+  barra.hidden = !aviso.visivel;
+}
+
 function applyConfigToUi() {
   // Títulos e slogan
   document.title = appVersion() || "AgSUS Monitora";
@@ -1626,6 +1660,16 @@ function applyConfigToUi() {
       needsLightForeground(accessPanelColor),
     );
   }
+  /*
+    Guarda a marca que acabou de ser aplicada, para a próxima visita já abrir
+    pintada. É aqui, e não em `loadConfig`, porque neste ponto os valores já
+    passaram pela normalização — guardar antes salvaria dados que a tela recusaria
+    depois. Ver `access-branding-cache.js` para o motivo de tudo isto existir.
+  */
+  guardarMarca({
+    backgroundUrl: accessBackgroundUrl,
+    panelColor: accessPanelColor,
+  });
   setImg(
     "loginLogo",
     normalizeAccessLogoUrl(cfgValue("auth_access_logo_url")),
@@ -1703,6 +1747,7 @@ function applyConfigToUi() {
   setAttr("moreActionsBtn", "aria-label", cfgValue("action_more_label"));
   syncFilterToggleText();
   syncHideClosedBtn();
+  aplicarAvisoGlobal();
   // COGIP rodapé
   const cogipBlock = document.querySelector(".login-cogip");
   const cogipParts = [
@@ -9120,12 +9165,32 @@ function drawDetailBrazilBase(ufs = []) {
 function detailUnitType(name) {
   const normalized = txt(name).toUpperCase();
   if (/CASAI|CASA DE SAUDE|CASA DE SAÚDE/.test(normalized))
-    return { key: "casai", label: "CASAI", color: "#d92d3a", icon: "fa-house-medical" };
+    return {
+      key: "casai",
+      label: "CASAI",
+      color: "#d92d3a",
+      icon: "fa-house-medical",
+    };
   if (/POLO/.test(normalized))
-    return { key: "polo", label: "Polo base", color: "#e49a1b", icon: "fa-location-dot" };
+    return {
+      key: "polo",
+      label: "Polo base",
+      color: "#e49a1b",
+      icon: "fa-location-dot",
+    };
   if (/UBSI|UNIDADE BASICA|UNIDADE BÁSICA/.test(normalized))
-    return { key: "ubsi", label: "UBSI", color: "#189b63", icon: "fa-staff-snake" };
-  return { key: "unit", label: "Unidade", color: "#0d8192", icon: "fa-hospital" };
+    return {
+      key: "ubsi",
+      label: "UBSI",
+      color: "#189b63",
+      icon: "fa-staff-snake",
+    };
+  return {
+    key: "unit",
+    label: "Unidade",
+    color: "#0d8192",
+    icon: "fa-hospital",
+  };
 }
 
 function detailRecordsForDsei(d) {
@@ -9137,7 +9202,12 @@ function detailRecordsForDsei(d) {
     lon: p.lon,
     city: p.mun_cnes || p.n,
     uf: p.uf_cnes || p.uf || d.sedeuf,
-    type: { key: "polo", label: "Polo base", color: "#e49a1b", icon: "fa-location-dot" },
+    type: {
+      key: "polo",
+      label: "Polo base",
+      color: "#e49a1b",
+      icon: "fa-location-dot",
+    },
   }));
   const facilities = [
     ...(rede.c || []).map((item) => ({ item, forcedType: "casai" })),
@@ -9145,7 +9215,12 @@ function detailRecordsForDsei(d) {
   ].map(({ item, forcedType }) => {
     const unpacked = _unpackEstab(item);
     const inferred = forcedType
-      ? { key: "casai", label: "CASAI", color: "#d92d3a", icon: "fa-house-medical" }
+      ? {
+          key: "casai",
+          label: "CASAI",
+          color: "#d92d3a",
+          icon: "fa-house-medical",
+        }
       : detailUnitType(unpacked.n);
     return {
       name: unpacked.n,
@@ -9177,7 +9252,9 @@ function renderDetailUnitList(records) {
   }
   list.innerHTML = records
     .map(
-      (record) => `<button class="health-map-unit" type="button" data-map-unit data-lat="${record.lat}" data-lon="${record.lon}" aria-label="Localizar ${esc(record.name)} no mapa">
+      (
+        record,
+      ) => `<button class="health-map-unit" type="button" data-map-unit data-lat="${record.lat}" data-lon="${record.lon}" aria-label="Localizar ${esc(record.name)} no mapa">
         <span class="health-map-unit__icon" style="color:${record.type.color};background:${record.type.color}18"><i class="fa-solid ${record.type.icon}"></i></span>
         <span><strong title="${esc(record.name)}">${esc(record.name)}</strong><small>${esc(record.city || "Localidade não informada")}${record.uf ? " · " + esc(record.uf) : ""}</small></span>
         <span class="health-map-unit__type">${esc(record.type.label)}</span>
@@ -9399,7 +9476,12 @@ function drawDSEIBubbles() {
         if (_b) _b.style.display = "inline-flex";
       }
       const ufTxt = d.ufs && d.ufs.length ? " (" + d.ufs.join(", ") + ")" : "";
-      toast("DSEI " + d.n + ufTxt + ": polos e unidades exibidos no mapa detalhado.");
+      toast(
+        "DSEI " +
+          d.n +
+          ufTxt +
+          ": polos e unidades exibidos no mapa detalhado.",
+      );
     });
     _layerDSEI.addLayer(m);
   });
@@ -10558,12 +10640,17 @@ function renderConfigForm() {
   renderPanelAdmin();
 }
 
-function renderAccessBackgroundPreview(url = $("cfgAccessBackgroundUrl")?.value) {
+function renderAccessBackgroundPreview(
+  url = $("cfgAccessBackgroundUrl")?.value,
+) {
   const preview = $("cfgAccessBackgroundPreview");
   if (!preview) return;
   const safeUrl = normalizeAccessBackgroundUrl(url || "");
   preview.style.backgroundImage = `url("${safeUrl.replace(/["\\]/g, "")}")`;
-  preview.setAttribute("aria-label", "Prévia da arte configurada na tela de acesso");
+  preview.setAttribute(
+    "aria-label",
+    "Prévia da arte configurada na tela de acesso",
+  );
 }
 
 async function persistAccessBackground(url, path) {
@@ -10615,7 +10702,10 @@ async function uploadAccessBackground(file) {
     await loadAccessBackgroundGallery();
     toast("Imagem guardada e aplicada à tela de acesso.");
   } catch (error) {
-    toast("Não foi possível guardar a imagem: " + friendlyError(error), "error");
+    toast(
+      "Não foi possível guardar a imagem: " + friendlyError(error),
+      "error",
+    );
   } finally {
     if (input) input.disabled = false;
     loader(false);
@@ -10631,7 +10721,10 @@ async function restoreAccessBackground() {
     await loadAccessBackgroundGallery();
     toast("Arte institucional padrão restaurada.");
   } catch (error) {
-    toast("Não foi possível restaurar a arte: " + friendlyError(error), "error");
+    toast(
+      "Não foi possível restaurar a arte: " + friendlyError(error),
+      "error",
+    );
   } finally {
     loader(false);
   }
@@ -10693,8 +10786,9 @@ async function loadAccessBackgroundGallery() {
     label.textContent = path === currentPath ? "Em uso" : "Usar";
     button.append(image, label);
     if (path !== currentPath)
-      button.addEventListener("click", () =>
-        void useStoredAccessBackground(path, url),
+      button.addEventListener(
+        "click",
+        () => void useStoredAccessBackground(path, url),
       );
     list.appendChild(button);
   });
@@ -10914,15 +11008,16 @@ async function deactivateUserAccess(id) {
 async function denyAccessRequest(id) {
   const req = accessRequestById(id);
   if (!req) return toast("Solicitação não encontrada.", "warn");
-  const { error } = await sb
-    .from("solicitacoes_acesso")
-    .update({
-      status: "recusado",
-      avaliado_por: currentUser?.id || null,
-      avaliado_em: new Date().toISOString(),
-      observacao_admin: txt($("accessObs" + id)?.value),
-    })
-    .eq("id", id);
+  /*
+    Recusar passou a ser RPC, como aprovar, atualizar e desativar já eram. Antes,
+    esta era a única decisão de acesso que o navegador gravava direto na tabela —
+    escolhendo `status`, `avaliado_por` e `avaliado_em` por conta própria. A
+    autorização da mesma decisão vivia, portanto, em dois lugares.
+  */
+  const { error } = await sb.rpc(RPC_DENY_ACCESS_REQUEST, {
+    p_solicitacao_id: id,
+    p_observacao_admin: txt($("accessObs" + id)?.value),
+  });
   if (error)
     return toast(
       "Erro ao recusar solicitação: " + friendlyError(error),
@@ -11356,8 +11451,28 @@ function exportPDF() {
   );
 }
 
+/*
+  Traduz o erro numa frase útil — e, acima de tudo, não inventa expiração.
+
+  A linha `msg.includes("JWT") || msg.includes("session")` era a maior fonte de
+  "Sessão expirada" falsa do sistema. Qualquer resposta que contivesse essas
+  letras mandava a pessoa entrar de novo — inclusive
+  `Could not find the function public.registrar_evento_acesso(p_client_session_id, …)`,
+  que é função ausente no banco e não tem nada a ver com a sessão de quem está
+  usando o sistema.
+
+  A classificação agora vem do objeto de erro — código, status, tipo — e não do
+  texto. Ver `lib/sessao.js`. As regras por mensagem que sobraram tratam de
+  erros que as nossas próprias RPCs emitem com texto que nós mesmos escrevemos.
+*/
 function friendlyError(error) {
   const msg = error?.message || String(error || "Erro desconhecido");
+
+  if (error?.sessaoEncerrada || ehSessaoEncerrada(error))
+    return "Sessão expirada. Faça login novamente.";
+  if (error?.falhaTransitoria || ehFalhaTransitoria(error))
+    return "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.";
+
   if (msg.includes("vagas_ociosas"))
     return "Campo calculado protegido pelo banco. Atualize a página e tente novamente.";
   if (msg.includes(RPC_SAVE_MONITORAMENTO) || msg.includes(RPC_SAVE_CONFIG))
@@ -11371,8 +11486,9 @@ function friendlyError(error) {
     msg.includes("violates row-level security")
   )
     return "Permissão insuficiente para esta ação. Verifique o perfil do usuário e as políticas RLS.";
-  if (msg.includes("JWT") || msg.includes("session"))
-    return "Sessão expirada. Faça login novamente.";
+  // PGRST202: função ausente no schema. Não é permissão nem sessão.
+  if (error?.code === "PGRST202")
+    return "Esta operação depende de uma função que ainda não está publicada no banco. Avise a equipe técnica.";
   return msg;
 }
 
