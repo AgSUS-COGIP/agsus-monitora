@@ -8,18 +8,33 @@ export const DEFAULT_ACCESS_BRANDING = Object.freeze({
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
+function resolveLocalAssetUrl(url) {
+  if (!url.startsWith("/")) return url;
+  try {
+    const origin = globalThis?.location?.origin;
+    if (origin && /^https:\/\//i.test(origin)) {
+      return new URL(url, origin).href;
+    }
+  } catch (error) {
+    return url;
+  }
+  return url;
+}
+
 export function normalizeAccessBackgroundUrl(value) {
   const url = String(value || "").trim();
-  if (!url) return DEFAULT_ACCESS_BRANDING.backgroundUrl;
-  if (url.startsWith("/") || url.startsWith("https://")) return url;
-  return DEFAULT_ACCESS_BRANDING.backgroundUrl;
+  if (!url) return resolveLocalAssetUrl(DEFAULT_ACCESS_BRANDING.backgroundUrl);
+  if (url.startsWith("/")) return resolveLocalAssetUrl(url);
+  if (url.startsWith("https://")) return url;
+  return resolveLocalAssetUrl(DEFAULT_ACCESS_BRANDING.backgroundUrl);
 }
 
 export function normalizeAccessLogoUrl(value) {
   const url = String(value || "").trim();
-  if (!url) return DEFAULT_ACCESS_BRANDING.logoUrl;
-  if (url.startsWith("/") || url.startsWith("https://")) return url;
-  return DEFAULT_ACCESS_BRANDING.logoUrl;
+  if (!url) return resolveLocalAssetUrl(DEFAULT_ACCESS_BRANDING.logoUrl);
+  if (url.startsWith("/")) return resolveLocalAssetUrl(url);
+  if (url.startsWith("https://")) return url;
+  return resolveLocalAssetUrl(DEFAULT_ACCESS_BRANDING.logoUrl);
 }
 
 export function normalizeAccessPanelColor(value) {
