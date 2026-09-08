@@ -35,6 +35,7 @@ import "./styles/platform-shell.css";
 import "./styles/health-map-workspace.css";
 import "./styles/system-ui-fixes.css";
 import "./styles/nielsen-shell-ux.css";
+import "./styles/post-152-regression-fixes.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";

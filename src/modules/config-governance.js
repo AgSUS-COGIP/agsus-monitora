@@ -1,3 +1,4 @@
+import { isValidAccessAssetUrl } from "../lib/config-validation.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { collectPanelRows } from "./config-ui.js";
 
@@ -25,6 +26,37 @@ const FIELD_MAP = [
     "cfgGoogleDomainHint",
     "auth_google_domain_hint",
     "Domínio sugerido no login Google",
+  ],
+  [
+    "cfgGoogleAllowedDomains",
+    "auth_google_allowed_domains",
+    "Domínios institucionais autorizados",
+  ],
+  [
+    "cfgAccessBackgroundUrl",
+    "auth_access_background_url",
+    "Arte institucional da tela de acesso",
+  ],
+  [
+    "cfgAccessBackgroundPath",
+    "auth_access_background_path",
+    "Caminho da arte institucional da tela de acesso",
+  ],
+  [
+    "cfgAccessLogoUrl",
+    "auth_access_logo_url",
+    "Logo da AgSUS na tela de acesso",
+  ],
+  [
+    "cfgAccessPanelColor",
+    "auth_access_panel_color",
+    "Cor do painel da tela de acesso",
+  ],
+  ["cfgAccessGreeting", "auth_access_greeting", "Saudação da tela de acesso"],
+  [
+    "cfgAccessInstruction",
+    "auth_access_instruction",
+    "Instrução da tela de acesso",
   ],
   ["cfgFilterTitle", "filter_title", "Título dos filtros"],
   ["cfgFilterSubtitle", "filter_subtitle", "Subtítulo dos filtros"],
@@ -171,8 +203,12 @@ function validateCurrentConfiguration() {
     errors.push("O heartbeat deve estar entre 1 e 60 minutos.");
   }
 
+  const accessLogo = $("cfgAccessLogoUrl");
+  if (accessLogo && !isValidAccessAssetUrl(accessLogo.value)) {
+    errors.push("URL inválida no campo Logo da AgSUS no acesso.");
+  }
+
   const urls = [
-    $("cfgAccessLogoUrl"),
     $("cfgCogipLogo"),
     ...document.querySelectorAll('[id^="panelUrl"]'),
   ].filter(Boolean);

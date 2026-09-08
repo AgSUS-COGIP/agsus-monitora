@@ -1,0 +1,86 @@
+/* Correções de regressão após a revisão de shell do PR #152.
+   Mantém a estrutura existente e aplica contraste apenas onde a própria
+   configuração já informa que a superfície é escura. */
+
+#loginScreen .login-card {
+  background: var(--login-panel-color, #ffffff) !important;
+}
+
+#loginScreen.login-panel-dark .login-card,
+#loginScreen.login-panel-dark .login-card h1,
+#loginScreen.login-panel-dark .login-card p,
+#loginScreen.login-panel-dark .login-card strong,
+#loginScreen.login-panel-dark .login-card small,
+#loginScreen.login-panel-dark .login-subtitle,
+#loginScreen.login-panel-dark .login-subtitle2,
+#loginScreen.login-panel-dark .login-organization-mark,
+#loginScreen.login-panel-dark .login-product-mark {
+  color: #f7fbff !important;
+}
+
+#loginScreen.login-panel-dark .login-card p,
+#loginScreen.login-panel-dark .login-subtitle {
+  color: rgba(247, 251, 255, 0.82) !important;
+}
+
+#loginScreen.login-panel-dark .login-subtitle2 {
+  color: #9ff3cf !important;
+}
+
+#loginScreen.login-panel-dark .login-brand-divider {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* A marca acompanha o contraste da superfície, como no AgSUS Pesquisas.
+   O filtro é restrito ao logotipo institucional; fotos e imagens de conteúdo
+   não são alteradas. */
+#loginScreen.login-panel-dark #loginLogo,
+html[data-theme="dark"] .app #sideLogo,
+html[data-theme="dark"] .app .side-logo {
+  filter: brightness(0) invert(0.96) !important;
+}
+
+#loginScreen.login-panel-dark .login-product-mark i {
+  color: #8ff3d0 !important;
+}
+
+#loginScreen.login-panel-dark .login-security-note,
+#loginScreen.login-panel-dark .login-secure-note {
+  color: rgba(247, 251, 255, 0.78) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* O alerta de sessão encerrada precisa continuar legível mesmo quando o cartão
+   de acesso estiver configurado com uma cor escura. */
+#loginScreen.login-panel-dark #loginMsg.alert,
+#loginScreen.login-panel-dark .alert.warn,
+#loginScreen.login-panel-dark .alert.warning {
+  background: #fff8e6 !important;
+  border-color: #f1c75b !important;
+  color: #7c3b08 !important;
+}
+
+/* Tema escuro: cobre textos auxiliares que ainda herdavam tons próprios do
+   tema claro e ficavam com contraste insuficiente. */
+html[data-theme="dark"] .app .muted,
+html[data-theme="dark"] .app .hint,
+html[data-theme="dark"] .app .small,
+html[data-theme="dark"] .app small,
+html[data-theme="dark"] #page-config .form-row label,
+html[data-theme="dark"] #page-config .config-card-title h3,
+html[data-theme="dark"] #page-config .config-workspace-heading h2,
+html[data-theme="dark"] #page-config .config-sticky-status strong {
+  color: #edf5ff !important;
+}
+
+html[data-theme="dark"] #page-config .form-row small,
+html[data-theme="dark"] #page-config .config-card-title p,
+html[data-theme="dark"] #page-config .config-workspace-heading p,
+html[data-theme="dark"] #page-config .config-sticky-status span {
+  color: #aab9c8 !important;
+}
+
+html[data-theme="dark"] #page-config option {
+  background: #102436;
+  color: #edf5ff;
+}

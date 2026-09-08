@@ -8,6 +8,8 @@ let presenceObservedText = "";
 let presenceObservedAt = 0;
 let logoutConfirmationResolver = null;
 let logoutPreviousFocus = null;
+let logoutAction = null;
+let logoutRunning = false;
 
 function text(value) {
   return String(value ?? "").trim();
@@ -243,6 +245,38 @@ function reportSignoutFailure() {
   window.alert(message);
 }
 
+async function performExplicitLogout() {
+  if (logoutRunning) return false;
+  if (typeof logoutAction !== "function") {
+    reportSignoutFailure();
+    return false;
+  }
+
+  const discardUnsaved = hasUnsavedConfiguration();
+  const confirmed = await requestLogoutConfirmation();
+  if (!confirmed) return false;
+
+  logoutRunning = true;
+  document.getElementById("topUserMenu")?.removeAttribute("open");
+  window.dispatchEvent(
+    new CustomEvent("agsus:logout-confirmed", {
+      detail: { discardUnsaved },
+    }),
+  );
+  setSignoutBusy(true);
+
+  try {
+    return await logoutAction();
+  } catch (error) {
+    console.error("Falha ao encerrar a sessão:", error);
+    reportSignoutFailure();
+    return false;
+  } finally {
+    logoutRunning = false;
+    setSignoutBusy(false);
+  }
+}
+
 function installLogoutFlow() {
   if (!document.getElementById("shellLogoutDialog")) {
     document.body.insertAdjacentHTML("beforeend", logoutDialogHTML());
@@ -265,34 +299,7 @@ function installLogoutFlow() {
     }
   });
 
-  const originalLogout = window.logout;
-  if (
-    typeof originalLogout !== "function" ||
-    originalLogout.__nielsenUxWrapped
-  ) {
-    return;
-  }
-
-  const wrappedLogout = async (...args) => {
-    const confirmed = await requestLogoutConfirmation();
-    if (!confirmed) return false;
-
-    document.getElementById("topUserMenu")?.removeAttribute("open");
-    setSignoutBusy(true);
-    try {
-      return await originalLogout(...args);
-    } catch (error) {
-      console.error("Falha ao encerrar a sessão:", error);
-      reportSignoutFailure();
-      return false;
-    } finally {
-      setSignoutBusy(false);
-    }
-  };
-
-  wrappedLogout.__nielsenUxWrapped = true;
-  wrappedLogout.__original = originalLogout;
-  window.logout = wrappedLogout;
+  logoutAction = typeof window.logout === "function" ? window.logout : null;
 }
 
 function installSidebarLogout() {
@@ -307,7 +314,12 @@ function installSidebarLogout() {
   button.setAttribute("aria-label", "Sair da sessão atual");
   button.innerHTML =
     '<i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>Sair</span>';
-  button.addEventListener("click", () => window.logout?.());
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    performExplicitLogout();
+  });
 
   const version = footer.querySelector(".side-version");
   footer.insertBefore(button, version || null);
