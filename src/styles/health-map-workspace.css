@@ -97,6 +97,27 @@
   display: none;
 }
 
+/*
+  Na visão Brasil o mapa não ocupa toda a largura, e isso é deliberado.
+
+  Em Web Mercator o Brasil é 1.01:1 — praticamente quadrado. O card, esticado,
+  fica 3.09:1. Como o enquadramento é limitado pela **altura**, alargar o card
+  não aumenta o país: aumenta o oceano. Medido a 1600x518: o card exibia 140.6°
+  de longitude para um país de 41.6°, e o `maxBounds` da navegação (57.5°) ainda
+  prendia o centro no meio dele — o Brasil encostava à esquerda com um vazio à
+  direita.
+
+  Limitando a largura a 1.25x a altura, o card mostra 57.0° de longitude e o
+  país passa a ocupar cerca de 73% dela, centrado, com contexto suficiente para
+  se reconhecer o continente. Com DSEI selecionado a regra não vale: ali o
+  enquadramento é dos pontos do território, de proporção variável, e a coluna de
+  polos volta a ocupar a largura.
+*/
+.health-map-detail-layout.sem-selecao #detailMap {
+  max-width: calc(var(--health-map-height) * 1.25);
+  margin-inline: auto;
+}
+
 .health-map-units {
   min-width: 0;
   border-left: 1px solid #dce8ef;

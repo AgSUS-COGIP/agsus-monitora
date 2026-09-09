@@ -55,6 +55,7 @@ import {
   linhasDeConfiguracaoDaSidebar,
   reaplicarSidebarAposSalvar,
 } from "./sidebar-branding.js";
+import { classificarVinculoTerritorial } from "../lib/uf-ibge.js";
 import {
   ESTILO_DA_LINHA,
   TOOLTIP_DA_LINHA,
@@ -9555,7 +9556,12 @@ function definirSelecaoDoMapaDetalhado(temSelecao) {
   if (!mudou) return;
   requestAnimationFrame(() => {
     try {
-      _detailLeaflet?.invalidateSize?.({ animate: false, pan: false });
+      /*
+        Sem `pan: false`: com ele o Leaflet mantém o canto superior esquerdo e a
+        largura nova entra toda à direita, empurrando o país para o lado. O
+        padrão preserva o centro, e o reenquadramento em seguida acerta o resto.
+      */
+      _detailLeaflet?.invalidateSize?.({ animate: false });
     } catch (e) {}
   });
 }
@@ -9899,7 +9905,16 @@ function drawPolos(d) {
   _layerPolos.clearLayers();
   drawRedeAssistencial(d);
   const polosBase = polosCorrigidosPorCnes(d);
-  const sede = polosBase.find((p) => !p.fora) || polosBase[0];
+  /*
+    A sede de referencia da linha e um polo dentro da abrangencia do DSEI, pela
+    mesma regra — nao pelo campo `fora` do payload.
+  */
+  const sede =
+    polosBase.find(
+      (p) =>
+        classificarVinculoTerritorial(p.uf_cnes ?? p.uf, d.ufs).vinculo !==
+        "externo",
+    ) || polosBase[0];
   // desempilhar polos na mesma coordenada (vários polos no mesmo município)
   const seen = {};
   const polos = polosBase.map((p) => {
@@ -9916,32 +9931,53 @@ function drawPolos(d) {
     } else seen[key] = 1;
     return Object.assign({}, p, { _lat: lat, _lon: lon });
   });
+  /*
+    O campo `fora` que vem do payload significa "fora da UF da **sede**", e não
+    "fora da abrangência do DSEI" — coisas diferentes em 12 dos 34 DSEIs, que
+    cobrem mais de uma UF legitimamente.
+
+    Conferido contra os dados reais: dos 381 polos, 58 chegam com `fora: true`,
+    e **todos os 58** estão numa UF que consta do próprio `ufs` do DSEI. Boca do
+    Acre (AM) no Alto Rio Purus, que cobre AC, AM e RO; Passo Fundo (RS) no
+    Interior Sul, que cobre RS e SC. Eram 58 linhas pontilhadas afirmando uma
+    anomalia territorial inexistente, com o texto "em outro estado".
+
+    Vale aqui a mesma regra do mapa detalhado: o CNES decide a UF da unidade, e
+    ela é comparada com a abrangência declarada do DSEI.
+  */
   polos.forEach((p) => {
-    if (p.fora && sede) {
+    const vinculo = classificarVinculoTerritorial(p.uf_cnes ?? p.uf, d.ufs);
+    const externo = vinculo.vinculo === "externo";
+    if (externo && sede) {
       L.polyline(
         [
           [sede.lat, sede.lon],
           [p._lat, p._lon],
         ],
         { color: "#e8730c", weight: 1.6, dashArray: "6,5", opacity: 0.8 },
-      ).addTo(_layerPolos);
+      )
+        .bindTooltip(TOOLTIP_DA_LINHA, { sticky: true })
+        .addTo(_layerPolos);
     }
     const mk = L.circleMarker([p._lat, p._lon], {
-      radius: p.fora ? 6 : 5,
+      radius: externo ? 6 : 5,
       color: "#fff",
       weight: 1.5,
-      fillColor: p.fora ? "#e8730c" : "#1d4e89",
+      fillColor: externo ? "#e8730c" : "#1d4e89",
       fillOpacity: 0.95,
     });
     mk.bindTooltip(
-      esc(p.n) + (p.fora ? ` <i>(${p.uf}, fora da sede)</i>` : ""),
+      esc(p.n) +
+        (externo
+          ? ` <i>(${esc(vinculo.uf || "")}, fora das UFs do DSEI)</i>`
+          : ""),
       { direction: "top" },
     );
     const fonte = p.coord_oficial
       ? `📍 coordenada oficial do CNES<br>CNES: ${esc(p.cnes || "-")}${p.coord_nome ? `<br>Registro: ${esc(p.coord_nome)}` : ""}`
       : "≈ posição aproximada (centro do município)";
     mk.bindPopup(
-      `<b>Polo base: ${esc(p.n)}</b><br>UF: ${p.uf}<br>População do polo: ${fmt(p.p)} indígenas${p.fora ? "<br><i>Pertence ao DSEI " + esc(d.n) + ", em outro estado</i>" : ""}<br><span style="font-size:10px;color:#6b7d92">${fonte}</span>`,
+      `<b>Polo base: ${esc(p.n)}</b><br>UF: ${p.uf}<br>População do polo: ${fmt(p.p)} indígenas${externo ? "<br><i>Vinculado ao DSEI " + esc(d.n) + ", fora das UFs de abrangência</i>" : ""}<br><span style="font-size:10px;color:#6b7d92">${fonte}</span>`,
     );
     _layerPolos.addLayer(mk);
   });
@@ -10187,13 +10223,13 @@ function syncMapLevelUI() {
     const quadUF =
       '<span style="width:12px;height:12px;background:#2e8b57;opacity:.45;border:1.5px solid #1f6f4a;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
     box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo em outro estado<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}ligação ao DSEI<br>${quadUF}estado atendido`
+      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}ligação ao DSEI<br>${quadUF}estado atendido`
       : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${losango("#7b2ff7")}CASAI Nacional`;
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei)
     lgDsei.innerHTML = showingPolos
-      ? '<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base &nbsp; <span style="width:11px;height:11px;border-radius:50%;background:#e8730c;display:inline-block;"></span> polo em outro estado'
+      ? '<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base &nbsp; <span style="width:11px;height:11px;border-radius:50%;background:#e8730c;display:inline-block;"></span> polo fora das UFs do DSEI'
       : '<span style="width:11px;height:11px;border-radius:50%;background:#5b9bd5;display:inline-block;"></span> DSEI &nbsp; <span style="width:11px;height:11px;border-radius:50%;background:#0b8f58;display:inline-block;"></span> com processo';
 }
 

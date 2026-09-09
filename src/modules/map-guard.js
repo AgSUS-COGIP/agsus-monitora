@@ -120,29 +120,45 @@ function hardenMapInstance(L, map) {
     espaço disponível sem recortar o país. Seleções territoriais continuam livres
     para aproximar além disso.
   */
+  /*
+    A bandeira é gravada DEPOIS do enquadramento, e isso não é estilo.
+
+    O `fitBounds` do Leaflet termina chamando `this.setView(...)` — que aqui é o
+    `setGuardedView` logo abaixo, e que zera `__agsusOverviewMode` para detectar
+    quando a pessoa move o mapa. Gravando antes, todo `fitBounds` ligava a
+    bandeira e o próprio `fitBounds` a desligava em seguida: ela era **sempre**
+    falsa. Com isso `emOverview()` nunca era verdadeiro, o `ResizeObserver` se
+    desconectava na primeira observação e o mapa nunca voltava a enquadrar
+    depois de o card mudar de largura — o Brasil ficava encostado à esquerda com
+    um vazio à direita.
+  */
   map.fitBounds = function fitGuardedBounds(bounds, options = {}) {
     const limited = limitBounds(L, bounds, maxBounds);
     const overview = isBrazilOverviewBounds(L, limited);
-    map.__agsusOverviewMode = overview;
     const requestedMax = Number(options.maxZoom);
     const maxZoom = overview
       ? Math.min(Number.isFinite(requestedMax) ? requestedMax : 4, 4)
       : Number.isFinite(requestedMax)
         ? requestedMax
         : 8;
-    return originalFitBounds(limited, {
+    const resultado = originalFitBounds(limited, {
       padding: overview ? [10, 10] : [24, 24],
       animate: false,
       ...options,
       maxZoom,
     });
+    map.__agsusOverviewMode = overview;
+    return resultado;
   };
 
   if (originalFlyToBounds) {
     map.flyToBounds = function flyToGuardedBounds(bounds, options = {}) {
       const limited = limitBounds(L, bounds, maxBounds);
       const overview = isBrazilOverviewBounds(L, limited);
-      map.__agsusOverviewMode = overview;
+      /* Mesma razão do `fitBounds`: a animação termina em `setView`. */
+      window.setTimeout(() => {
+        map.__agsusOverviewMode = overview;
+      }, 0);
       return originalFlyToBounds(limited, {
         padding: overview ? [10, 10] : [32, 32],
         duration: 0.35,
@@ -191,12 +207,13 @@ function hardenMapInstance(L, map) {
   const fitBrazilOverview = () => {
     try {
       map.invalidateSize({ animate: false, pan: false });
-      map.__agsusOverviewMode = true;
       originalFitBounds(viewBounds, {
         padding: [10, 10],
         maxZoom: 4,
         animate: false,
       });
+      /* Depois do fit, pela mesma razão explicada em `fitGuardedBounds`. */
+      map.__agsusOverviewMode = true;
     } catch (error) {
       console.warn("Nao foi possivel reenquadrar o Brasil:", error);
     }
