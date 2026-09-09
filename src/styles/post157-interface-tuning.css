@@ -1,0 +1,156 @@
+/* Ajustes pós-#157: primeiro paint neutro, dashboard mais compacto e sidebar configurável. */
+
+/*
+ * O branding real entra pelo cache/RPC. O fallback não pode pintar a identidade
+ * roxa legada antes do JavaScript aplicar a configuração atual.
+ */
+.login-screen {
+  background-color: #eef4f8;
+}
+
+.login-outer {
+  background: var(--login-panel-color, #ffffff);
+}
+
+/* Densidade do dashboard Saúde Indígena sem usar zoom/scale. */
+body:has(#page-dashboard.active) .page-title h1 {
+  font-size: 26px;
+}
+
+body:has(#page-dashboard.active) .page-title p {
+  font-size: 12px;
+}
+
+#page-dashboard .kpis {
+  gap: 8px;
+}
+
+#page-dashboard .kpi {
+  min-height: 72px;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+#page-dashboard .kpi::before {
+  height: 3px;
+}
+
+#page-dashboard .kpi span {
+  font-size: 11px;
+}
+
+#page-dashboard .kpi b {
+  margin-top: 4px;
+  font-size: 26px;
+  line-height: 1;
+}
+
+#page-dashboard .kpi .kpi-note,
+#page-dashboard .kpi-rate-pct {
+  font-size: 10px;
+}
+
+/* Sidebar configurável. A classe de contraste é derivada em JS da cor escolhida. */
+.sidebar {
+  background: var(--sidebar-custom-bg, #ffffff);
+}
+
+/* A imagem real do <img> continua no DOM para semântica, mas a apresentação usa
+ * uma variável independente para que applyConfigToUi() não recoloque a logo do login. */
+.side-logo-wrap {
+  background-color: #ffffff;
+  background-image: var(--sidebar-logo-image, url("/assets/agsus-logo.webp"));
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 36px 36px;
+}
+
+.side-logo-wrap .side-logo {
+  opacity: 0;
+}
+
+body.sidebar-theme-dark .sidebar {
+  color: #ffffff;
+  border-right-color: rgba(255, 255, 255, 0.2);
+}
+
+body.sidebar-theme-dark .side-brand,
+body.sidebar-theme-dark .side-footer {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.sidebar-theme-dark .side-logo-wrap {
+  border-color: rgba(255, 255, 255, 0.35);
+  background-color: rgba(255, 255, 255, 0.96);
+}
+
+body.sidebar-theme-dark .nav button,
+body.sidebar-theme-dark .side-user,
+body.sidebar-theme-dark .side-user-copy strong,
+body.sidebar-theme-dark .side-user-copy small,
+body.sidebar-theme-dark .side-version,
+body.sidebar-theme-dark .side-version b,
+body.sidebar-theme-dark .side-theme-row,
+body.sidebar-theme-dark .side-logout,
+body.sidebar-theme-dark .nav-group > p {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+body.sidebar-theme-dark .side-user {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.sidebar-theme-dark .nav-ico {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+body.sidebar-theme-dark .nav button:hover,
+body.sidebar-theme-dark .side-logout:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+body.sidebar-theme-dark .nav button:hover .nav-ico,
+body.sidebar-theme-dark .nav button.active .nav-ico {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.sidebar-theme-dark .nav button.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+body.sidebar-theme-dark .side-brand-copy strong,
+body.sidebar-theme-dark .side-brand-copy small {
+  color: #ffffff;
+}
+
+.sidebar-branding-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.sidebar-branding-preview img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border: 1px solid #d7e5f2;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 4px;
+}
+
+@media (max-width: 900px) {
+  body:has(#page-dashboard.active) .page-title h1 {
+    font-size: 22px;
+  }
+
+  #page-dashboard .kpi b {
+    font-size: 24px;
+  }
+}

@@ -38,6 +38,7 @@ import "./styles/health-map-workspace.css";
 import "./styles/system-ui-fixes.css";
 import "./styles/nielsen-shell-ux.css";
 import "./styles/post-152-regression-fixes.css";
+import "./styles/post157-interface-tuning.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -51,6 +52,7 @@ import { initHealthStatusDetails } from "./modules/health-status-details.js";
 import { initHealthStatusDetailsRefinement } from "./modules/health-status-details-refinement.js";
 import { initHealthDetailsUx } from "./modules/health-details-ux.js";
 import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fix.js";
+import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
@@ -83,6 +85,9 @@ initHealthStatusDetails();
 initHealthStatusDetailsRefinement();
 initHealthDetailsUx();
 initHealthDetailsRuntimeFix();
+// Instala antes do guard de Configurações para que o botão global salve também
+// as duas chaves independentes da sidebar usando a RPC existente.
+initSidebarBranding();
 initConfigPageEnhancements();
 initConfigGovernance();
 initNucleoCronograma();

@@ -52,6 +52,10 @@ import {
 import { avisoGlobal } from "../lib/aviso-global.js";
 import { aplicarCorDoPainel } from "../lib/access-branding-boot.js";
 import {
+  linhasDeConfiguracaoDaSidebar,
+  reaplicarSidebarAposSalvar,
+} from "./sidebar-branding.js";
+import {
   SESSAO_ATIVA,
   ehFalhaTransitoria,
   ehSessaoEncerrada,
@@ -11411,8 +11415,18 @@ async function saveAdminSettings() {
 
   const panelRows = collectPanelRows(panels);
 
+  /*
+    As chaves da barra lateral viajam no mesmo `p_config_rows`. Uma chamada, uma
+    transação: ou tudo é gravado, ou nada é — sem salvamento parcial e sem
+    depender de deduzir sucesso pela mensagem que apareceu na tela.
+  */
+  const linhasDeConfiguracao = [
+    ...configRows,
+    ...linhasDeConfiguracaoDaSidebar(),
+  ];
+
   const { error: cfgErr } = await sb.rpc(RPC_SAVE_CONFIG, {
-    p_config_rows: configRows,
+    p_config_rows: linhasDeConfiguracao,
     p_paineis: panelRows,
   });
   if (cfgErr) {
@@ -11425,6 +11439,7 @@ async function saveAdminSettings() {
 
   await loadConfig();
   await loadPanels();
+  reaplicarSidebarAposSalvar();
   if (currentUser?.id) {
     startAccessHeartbeat();
     startOnlinePresence();
