@@ -253,27 +253,25 @@
   font-weight: 800;
 }
 
-.health-map-dot {
-  width: 9px;
-  height: 9px;
-  display: inline-block;
+/*
+  A legenda usa as MESMAS formas dos marcadores — círculo, casa, cruz, losango —
+  geradas por `svgDaForma()`. As bolinhas redondas que viviam aqui descreviam um
+  mapa que não existe mais desde que os marcadores ganharam forma própria.
+*/
+.health-map-legenda-forma {
+  display: inline-flex;
   margin-right: 4px;
-  border: 1px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(15, 35, 60, 0.16);
+  line-height: 0;
+  vertical-align: -2px;
 }
 
-.health-map-dot--casai {
-  background: #d92d3a;
-}
-.health-map-dot--polo {
-  background: #e49a1b;
-}
-.health-map-dot--ubsi {
-  background: #189b63;
-}
-.health-map-dot--unit {
-  background: #0d8192;
+.health-map-legenda-linha {
+  width: 18px;
+  height: 0;
+  display: inline-block;
+  margin-right: 5px;
+  border-top: 2px dashed rgba(74, 107, 128, 0.75);
+  vertical-align: 3px;
 }
 
 .health-status-summary-card {

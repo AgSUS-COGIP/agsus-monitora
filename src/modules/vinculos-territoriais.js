@@ -22,11 +22,30 @@ import {
   círculo de losango de triângulo — a cor vira reforço, não a única informação.
 */
 const FORMAS = Object.freeze({
-  polo: { forma: "circulo", rotulo: "Polo base" },
-  casai: { forma: "casa", rotulo: "CASAI" },
-  ubsi: { forma: "cruz", rotulo: "UBSI" },
-  unit: { forma: "losango", rotulo: "Unidade" },
+  polo: { forma: "circulo", rotulo: "Polo base", cor: "#e49a1b" },
+  casai: { forma: "casa", rotulo: "CASAI", cor: "#d92d3a" },
+  ubsi: { forma: "cruz", rotulo: "UBSI", cor: "#189b63" },
+  unit: { forma: "losango", rotulo: "Unidade de saúde", cor: "#0d8192" },
 });
+
+/*
+  A legenda sai daqui, da mesma tabela que decide a forma e a cor de cada
+  marcador — e não de HTML escrito à mão.
+
+  Ela estava errada: desde que os marcadores passaram a ter forma própria
+  (círculo, casa, cruz, losango), a legenda continuou desenhando uma bolinha
+  redonda para os quatro tipos, distinguindo-os só pela cor. Além de não
+  descrever mais o mapa, isso devolvia à cor o papel de única informação — o
+  contrário do que as formas existem para resolver.
+
+  A ordem segue a do mapa: os pontos que mais aparecem primeiro.
+*/
+export const TIPOS_DA_LEGENDA = Object.freeze([
+  "polo",
+  "casai",
+  "ubsi",
+  "unit",
+]);
 
 export const ESTILO_DA_LINHA = Object.freeze({
   dashArray: "6 7",
@@ -129,6 +148,35 @@ export function tooltipDoRegistro(registro, dsei) {
 }
 
 export const TOOLTIP_DA_LINHA = "Vínculo territorial — não representa trajeto";
+
+/*
+  A linha pontilhada também entra na legenda: ela aparece no mapa e, sem
+  explicação, é fácil lê-la como rota.
+*/
+export function htmlDaLegenda() {
+  const tipos = TIPOS_DA_LEGENDA.map((chave) => {
+    const { forma, rotulo, cor } = FORMAS[chave];
+    return (
+      `<span><i class="health-map-legenda-forma" aria-hidden="true">` +
+      `<svg viewBox="0 0 18 18" width="14" height="14">${svgDaForma(forma, cor)}</svg>` +
+      `</i>${escapar(rotulo)}</span>`
+    );
+  });
+
+  tipos.push(
+    `<span><i class="health-map-legenda-linha" aria-hidden="true"></i>` +
+      `vínculo fora das UFs do DSEI</span>`,
+  );
+
+  return tipos.join("");
+}
+
+export function aplicarLegendaDoMapaDetalhado(documento = globalThis.document) {
+  const alvo = documento?.querySelector?.(".health-map-detail-legend");
+  if (!alvo) return false;
+  alvo.innerHTML = htmlDaLegenda();
+  return true;
+}
 
 export function textoDoChip(quantidade) {
   if (!quantidade) return "";

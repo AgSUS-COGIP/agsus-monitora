@@ -53,6 +53,7 @@ import { initHealthStatusDetailsRefinement } from "./modules/health-status-detai
 import { initHealthDetailsUx } from "./modules/health-details-ux.js";
 import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fix.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
+import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
@@ -82,6 +83,7 @@ initHealthDashboardRefinementsSafe();
 initHealthDashboardInteractionFixes();
 initHealthMapLegendCleanup();
 initHealthStatusDetails();
+aplicarLegendaDoMapaDetalhado();
 initHealthStatusDetailsRefinement();
 initHealthDetailsUx();
 initHealthDetailsRuntimeFix();

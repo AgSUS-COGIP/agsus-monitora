@@ -179,3 +179,64 @@ describe("o mapa nacional usa a mesma regra do detalhado", () => {
     expect(codigo).toContain("fora das UFs de abrang");
   });
 });
+
+/*
+  A legenda do mapa detalhado descrevia bolinhas redondas para os quatro tipos,
+  distinguindo-os só pela cor — enquanto os marcadores já eram círculo, casa,
+  cruz e losango desde que ganharam forma própria. Além de não descrever o mapa,
+  devolvia à cor o papel de única informação.
+*/
+describe("a legenda descreve os marcadores que existem", () => {
+  const modulo = readFileSync("src/modules/vinculos-territoriais.js", "utf8");
+  const main = readFileSync("src/main.js", "utf8");
+  const html = readFileSync("index.html", "utf8");
+
+  it("as bolinhas redondas saíram do HTML e do CSS", () => {
+    expect(html).not.toContain("health-map-dot");
+    expect(css).not.toContain("health-map-dot");
+  });
+
+  it("a legenda é gerada pela mesma função que desenha os marcadores", () => {
+    const fn = modulo.slice(
+      modulo.indexOf("export function htmlDaLegenda"),
+      modulo.indexOf("export function aplicarLegendaDoMapaDetalhado"),
+    );
+    expect(fn).toContain("svgDaForma(forma, cor)");
+    expect(fn).toContain("TIPOS_DA_LEGENDA");
+  });
+
+  it("cobre os quatro tipos, cada um com forma própria", () => {
+    const tipos = modulo
+      .slice(
+        modulo.indexOf("export const TIPOS_DA_LEGENDA"),
+        modulo.indexOf("export const ESTILO_DA_LINHA"),
+      )
+      .match(/"(\w+)"/g);
+    expect(tipos).toEqual(['"polo"', '"casai"', '"ubsi"', '"unit"']);
+  });
+
+  /*
+    As cores da legenda têm de ser as mesmas que `detailUnitType` dá aos
+    marcadores; se uma das duas mudar sozinha, a legenda passa a mentir.
+  */
+  it("as cores batem com as dos marcadores", () => {
+    const tipoDoMarcador = app.slice(
+      app.indexOf("function detailUnitType"),
+      app.indexOf("function detailRecordsForDsei"),
+    );
+    for (const cor of ["#d92d3a", "#e49a1b", "#189b63", "#0d8192"]) {
+      expect(tipoDoMarcador, `${cor} sumiu dos marcadores`).toContain(cor);
+      expect(modulo, `${cor} sumiu da legenda`).toContain(cor);
+    }
+  });
+
+  it("a linha pontilhada é explicada", () => {
+    const fn = modulo.slice(modulo.indexOf("export function htmlDaLegenda"));
+    expect(fn).toContain("vínculo fora das UFs do DSEI");
+    expect(css).toContain(".health-map-legenda-linha");
+  });
+
+  it("é aplicada no arranque", () => {
+    expect(main).toContain("aplicarLegendaDoMapaDetalhado()");
+  });
+});
