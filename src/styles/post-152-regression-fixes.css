@@ -33,10 +33,21 @@
 
 /* A marca acompanha o contraste da superfície, como no AgSUS Pesquisas.
    O filtro é restrito ao logotipo institucional; fotos e imagens de conteúdo
-   não são alteradas. */
+   não são alteradas.
+
+   `body.sidebar-theme-dark` entra aqui porque a cor da barra lateral é
+   escolhida em Configurações e é **independente do tema do app**: dava para ter
+   uma barra escura com o tema claro, e aí a logo escura ficava sobre fundo
+   escuro. O tema escuro já era tratado; a cor escolhida, não.
+
+   Um lembrete de que o fundo branco por trás da logo não salva: `.side-logo-wrap`
+   tem `background: transparent !important` em system-ui-fixes.css, então a
+   imagem repousa direto sobre a cor da barra. */
 #loginScreen.login-panel-dark #loginLogo,
 html[data-theme="dark"] .app #sideLogo,
-html[data-theme="dark"] .app .side-logo {
+html[data-theme="dark"] .app .side-logo,
+body.sidebar-theme-dark .app #sideLogo,
+body.sidebar-theme-dark .app .side-logo {
   filter: brightness(0) invert(0.96) !important;
 }
 
