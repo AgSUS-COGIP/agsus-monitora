@@ -2,18 +2,21 @@ const state = {
   initialized: false,
   refreshTimer: 0,
   only2026: false,
-  logoutResolve: null
+  logoutResolve: null,
 };
 
-const normalize = value => String(value ?? "")
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .toLowerCase()
-  .replace(/\s+/g, " ")
-  .trim();
+const normalize = (value) =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 
 export function formatDeadlineLabel(value) {
-  const text = String(value ?? "").replace(/\s+/g, " ").trim();
+  const text = String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
   const days = text.match(/(\d+)\s*d(?:ia)?s?/i);
   if (days) {
     const count = Number(days[1]);
@@ -49,7 +52,7 @@ function ensureLogoutModal(documentRef = globalThis.document) {
     </div>`;
   documentRef.body.appendChild(modal);
 
-  const finish = confirmed => {
+  const finish = (confirmed) => {
     modal.hidden = true;
     documentRef.body.classList.remove("health-logout-open");
     const resolve = state.logoutResolve;
@@ -57,12 +60,13 @@ function ensureLogoutModal(documentRef = globalThis.document) {
     resolve?.(confirmed);
   };
 
-  modal.addEventListener("click", event => {
-    const action = event.target.closest?.("[data-health-logout]")?.dataset.healthLogout;
+  modal.addEventListener("click", (event) => {
+    const action = event.target.closest?.("[data-health-logout]")?.dataset
+      .healthLogout;
     if (action === "confirm") finish(true);
     if (action === "cancel" || event.target === modal) finish(false);
   });
-  documentRef.addEventListener("keydown", event => {
+  documentRef.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !modal.hidden) finish(false);
   });
   return modal;
@@ -75,37 +79,32 @@ export function openLogoutConfirmation(documentRef = globalThis.document) {
 
   modal.hidden = false;
   documentRef.body.classList.add("health-logout-open");
-  requestAnimationFrame(() => modal.querySelector('[data-health-logout="cancel"]')?.focus());
-  return new Promise(resolve => { state.logoutResolve = resolve; });
-}
-
-export function installConfirmedLogout(
-  windowRef = globalThis.window,
-  confirmFn = () => openLogoutConfirmation(windowRef?.document || globalThis.document)
-) {
-  const original = windowRef?.logout;
-  if (typeof original !== "function" || original.__agsusConfirmedLogout) return false;
-
-  const wrapped = async function(...args) {
-    const confirmed = await Promise.resolve(confirmFn("Deseja realmente sair do AgSUS Monitora?"));
-    if (!confirmed) return false;
-    return original.apply(this, args);
-  };
-
-  wrapped.__agsusConfirmedLogout = true;
-  wrapped.__agsusOriginalLogout = original;
-  windowRef.logout = wrapped;
-  return true;
+  requestAnimationFrame(() =>
+    modal.querySelector('[data-health-logout="cancel"]')?.focus(),
+  );
+  return new Promise((resolve) => {
+    state.logoutResolve = resolve;
+  });
 }
 
 function columnIndexes(documentRef) {
-  const headers = [...documentRef.querySelectorAll("#page-dashboard .details-table thead th[data-sort-field]")];
-  return Object.fromEntries(headers.map((header, index) => [header.dataset.sortField, index]));
+  const headers = [
+    ...documentRef.querySelectorAll(
+      "#page-dashboard .details-table thead th[data-sort-field]",
+    ),
+  ];
+  return Object.fromEntries(
+    headers.map((header, index) => [header.dataset.sortField, index]),
+  );
 }
 
 function editalYearFromRow(row, editalIndex) {
   const cells = [...row.querySelectorAll("td")];
-  const text = String(cells[editalIndex]?.querySelector("a")?.textContent || cells[editalIndex]?.textContent || "");
+  const text = String(
+    cells[editalIndex]?.querySelector("a")?.textContent ||
+      cells[editalIndex]?.textContent ||
+      "",
+  );
   return text.match(/\/(20\d{2})\b/)?.[1] || "";
 }
 
@@ -117,11 +116,17 @@ function updateQuickFilterButton(documentRef) {
   button.innerHTML = `<i class="fa-solid fa-calendar-check"></i><span>${state.only2026 ? "Mostrando editais 2026" : "Editais 2026"}</span>`;
 }
 
-function applyOnly2026Filter(documentRef, indexes = columnIndexes(documentRef)) {
-  const rows = [...documentRef.querySelectorAll("#monitorRows tr")].filter(row => !row.querySelector("td[colspan]"));
+function applyOnly2026Filter(
+  documentRef,
+  indexes = columnIndexes(documentRef),
+) {
+  const rows = [...documentRef.querySelectorAll("#monitorRows tr")].filter(
+    (row) => !row.querySelector("td[colspan]"),
+  );
   let visible = 0;
-  rows.forEach(row => {
-    const show = !state.only2026 || editalYearFromRow(row, indexes.edital) === "2026";
+  rows.forEach((row) => {
+    const show =
+      !state.only2026 || editalYearFromRow(row, indexes.edital) === "2026";
     row.hidden = !show;
     row.classList.toggle("health-filtered-out", !show);
     if (show) visible += 1;
@@ -129,9 +134,12 @@ function applyOnly2026Filter(documentRef, indexes = columnIndexes(documentRef)) 
 
   const meta = documentRef.getElementById("tableMeta");
   if (meta) {
-    if (!meta.dataset.healthOriginalText) meta.dataset.healthOriginalText = meta.textContent || "";
-    if (state.only2026) meta.textContent = `Exibindo ${visible} edital(is) de 2026. Clique nos cabeçalhos para ordenar.`;
-    else if (meta.dataset.healthOriginalText) meta.textContent = meta.dataset.healthOriginalText;
+    if (!meta.dataset.healthOriginalText)
+      meta.dataset.healthOriginalText = meta.textContent || "";
+    if (state.only2026)
+      meta.textContent = `Exibindo ${visible} edital(is) de 2026. Clique nos cabeçalhos para ordenar.`;
+    else if (meta.dataset.healthOriginalText)
+      meta.textContent = meta.dataset.healthOriginalText;
   }
   updateQuickFilterButton(documentRef);
   return visible;
@@ -143,7 +151,10 @@ export function ensureOnly2026Button(documentRef = globalThis.document) {
   if (button) return button;
 
   const search = documentRef.getElementById("tableSearch");
-  const host = search?.closest(".table-actions, .details-actions") || search?.parentElement?.parentElement || search?.parentElement;
+  const host =
+    search?.closest(".table-actions, .details-actions") ||
+    search?.parentElement?.parentElement ||
+    search?.parentElement;
   if (!host) return null;
 
   button = documentRef.createElement("button");
@@ -158,7 +169,8 @@ export function ensureOnly2026Button(documentRef = globalThis.document) {
   });
 
   const searchWrap = search?.parentElement;
-  if (searchWrap && searchWrap.parentElement === host) host.insertBefore(button, searchWrap);
+  if (searchWrap && searchWrap.parentElement === host)
+    host.insertBefore(button, searchWrap);
   else host.insertBefore(button, host.firstChild);
   updateQuickFilterButton(documentRef);
   return button;
@@ -171,24 +183,32 @@ function decorateExpiryBadge(badge) {
   badge.classList.add("health-deadline-badge");
   badge.title = label;
   badge.setAttribute("aria-label", label);
-  const icon = badge.querySelector("i")?.outerHTML || '<i class="fa-solid fa-calendar-days" aria-hidden="true"></i>';
+  const icon =
+    badge.querySelector("i")?.outerHTML ||
+    '<i class="fa-solid fa-calendar-days" aria-hidden="true"></i>';
   badge.innerHTML = `${icon}<span>${label}</span>`;
 }
 
 function decorateOperationalBadge(badge) {
   if (!badge || badge.dataset.healthOperationalReady === "1") return;
-  const text = String(badge.textContent || "").replace(/\s+/g, " ").trim();
+  const text = String(badge.textContent || "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!text) return;
   badge.dataset.healthOperationalReady = "1";
   badge.classList.add("health-operational-badge");
   badge.title = `Cronograma: ${text}`;
   badge.setAttribute("aria-label", `Cronograma: ${text}`);
-  const icon = badge.querySelector("i")?.outerHTML || '<i class="fa-solid fa-route" aria-hidden="true"></i>';
+  const icon =
+    badge.querySelector("i")?.outerHTML ||
+    '<i class="fa-solid fa-route" aria-hidden="true"></i>';
   badge.innerHTML = `${icon}<span class="health-operational-copy"><small>Cronograma</small><strong>${text}</strong></span>`;
 }
 
 function ensureDeadlineLegend(documentRef) {
-  const legend = documentRef.querySelector("#page-dashboard .health-details-legend");
+  const legend = documentRef.querySelector(
+    "#page-dashboard .health-details-legend",
+  );
   if (!legend || legend.dataset.healthLegendReady === "1") return;
   legend.dataset.healthLegendReady = "1";
   legend.innerHTML = `
@@ -205,7 +225,7 @@ export function enhanceHealthDetailsTable(documentRef = globalThis.document) {
   ensureOnly2026Button(documentRef);
   ensureDeadlineLegend(documentRef);
 
-  documentRef.querySelectorAll("#monitorRows tr").forEach(row => {
+  documentRef.querySelectorAll("#monitorRows tr").forEach((row) => {
     if (row.querySelector("td[colspan]")) return;
     const cells = [...row.querySelectorAll("td")];
     if (!cells.length) return;
@@ -224,11 +244,15 @@ export function enhanceHealthDetailsTable(documentRef = globalThis.document) {
     riscoCell?.classList.add("health-risk-cell");
 
     editalCell?.querySelectorAll(".expiry-badge").forEach(decorateExpiryBadge);
-    editalCell?.querySelectorAll(".health-row-operational").forEach(decorateOperationalBadge);
+    editalCell
+      ?.querySelectorAll(".health-row-operational")
+      .forEach(decorateOperationalBadge);
 
     const statusChip = statusCell?.querySelector(".chip");
     if (statusChip) {
-      const status = String(statusChip.textContent || "").replace(/\s+/g, " ").trim();
+      const status = String(statusChip.textContent || "")
+        .replace(/\s+/g, " ")
+        .trim();
       statusChip.classList.add("health-status-chip");
       statusChip.title = `Status operacional: ${status}`;
       statusChip.setAttribute("aria-label", `Status operacional: ${status}`);
@@ -242,13 +266,16 @@ export function enhanceHealthDetailsTable(documentRef = globalThis.document) {
 
 function scheduleEnhancement(windowRef, documentRef, delay = 0) {
   windowRef.clearTimeout(state.refreshTimer);
-  state.refreshTimer = windowRef.setTimeout(() => enhanceHealthDetailsTable(documentRef), delay);
+  state.refreshTimer = windowRef.setTimeout(
+    () => enhanceHealthDetailsTable(documentRef),
+    delay,
+  );
 }
 
 function wrapRenderAction(windowRef, documentRef, name, delay = 0) {
   const original = windowRef?.[name];
   if (typeof original !== "function" || original.__healthDetailsWrapped) return;
-  const wrapped = function(...args) {
+  const wrapped = function (...args) {
     const result = original.apply(this, args);
     scheduleEnhancement(windowRef, documentRef, delay);
     return result;
@@ -260,30 +287,53 @@ function wrapRenderAction(windowRef, documentRef, name, delay = 0) {
 
 export function initHealthDetailsUx(
   windowRef = globalThis.window,
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 ) {
   if (state.initialized || !windowRef || !documentRef) return;
   state.initialized = true;
 
-  installConfirmedLogout(windowRef);
+  /*
+    O embrulho de `window.logout` foi retirado em 09/09/2026.
+
+    Este módulo instalava a sua própria confirmação por cima de `window.logout`,
+    e `nielsen-shell-ux` — carregado depois — capturava a versão **já
+    embrulhada** e somava o seu modal. Quem clicava em Sair via dois diálogos
+    seguidos, cada um pedindo a mesma coisa.
+
+    O diálogo do shell fica: tem `role="dialog"`, gestão de foco e Escape. Este
+    sai, e com ele o segundo dono da mesma transição.
+  */
   ensureLogoutModal(documentRef);
   ensureOnly2026Button(documentRef);
   enhanceHealthDetailsTable(documentRef);
 
-  ["sortDetails", "toggleHideClosed", "toggleSelectFilter", "clearFilterField", "clearFilters"].forEach(name => {
+  [
+    "sortDetails",
+    "toggleHideClosed",
+    "toggleSelectFilter",
+    "clearFilterField",
+    "clearFilters",
+  ].forEach((name) => {
     wrapRenderAction(windowRef, documentRef, name, 0);
   });
   wrapRenderAction(windowRef, documentRef, "debouncedSearch", 330);
 
-  documentRef.addEventListener("click", event => {
-    if (event.target?.closest?.("#page-dashboard, [data-view='dashboard']")) scheduleEnhancement(windowRef, documentRef, 0);
+  documentRef.addEventListener("click", (event) => {
+    if (event.target?.closest?.("#page-dashboard, [data-view='dashboard']"))
+      scheduleEnhancement(windowRef, documentRef, 0);
   });
-  documentRef.addEventListener("change", event => {
-    if (event.target?.closest?.("#page-dashboard")) scheduleEnhancement(windowRef, documentRef, 0);
+  documentRef.addEventListener("change", (event) => {
+    if (event.target?.closest?.("#page-dashboard"))
+      scheduleEnhancement(windowRef, documentRef, 0);
   });
-  documentRef.addEventListener("input", event => {
-    if (event.target?.closest?.("#page-dashboard")) scheduleEnhancement(windowRef, documentRef, 330);
+  documentRef.addEventListener("input", (event) => {
+    if (event.target?.closest?.("#page-dashboard"))
+      scheduleEnhancement(windowRef, documentRef, 330);
   });
-  documentRef.addEventListener("agsus:dashboard-rendered", () => scheduleEnhancement(windowRef, documentRef, 0));
-  windowRef.addEventListener("focus", () => scheduleEnhancement(windowRef, documentRef, 0));
+  documentRef.addEventListener("agsus:dashboard-rendered", () =>
+    scheduleEnhancement(windowRef, documentRef, 0),
+  );
+  windowRef.addEventListener("focus", () =>
+    scheduleEnhancement(windowRef, documentRef, 0),
+  );
 }

@@ -4,7 +4,6 @@ import {
   enhanceHealthDetailsTable,
   ensureOnly2026Button,
   formatDeadlineLabel,
-  installConfirmedLogout
 } from "../../src/modules/health-details-ux.js";
 
 describe("health details ux", () => {
@@ -14,23 +13,11 @@ describe("health details ux", () => {
     expect(formatDeadlineLabel("Encerrado")).toBe("Prazo do edital encerrado");
   });
 
-  it("cancela o logout quando o usuario nao confirma", async () => {
-    const original = vi.fn();
-    const target = { logout: original };
-
-    expect(installConfirmedLogout(target, async () => false)).toBe(true);
-    await expect(target.logout()).resolves.toBe(false);
-    expect(original).not.toHaveBeenCalled();
-  });
-
-  it("executa o logout depois da confirmacao", async () => {
-    const original = vi.fn(async () => "ok");
-    const target = { logout: original };
-
-    installConfirmedLogout(target, async () => true);
-    await expect(target.logout("manual")).resolves.toBe("ok");
-    expect(original).toHaveBeenCalledWith("manual");
-  });
+  /*
+    Os testes do embrulho de `window.logout` saíram com ele em 09/09/2026: os
+    dois módulos somavam dois diálogos seguidos, e a confirmação de saída passou
+    a ter um dono só — o modal acessível do shell.
+  */
 
   it("refina status e alertas da tabela sem duplicar decoracoes", () => {
     const dom = new JSDOM(`
@@ -60,14 +47,22 @@ describe("health details ux", () => {
     expect(enhanceHealthDetailsTable(dom.window.document)).toBe(1);
     expect(enhanceHealthDetailsTable(dom.window.document)).toBe(1);
 
-    const deadline = dom.window.document.querySelector(".health-deadline-badge");
-    const operational = dom.window.document.querySelector(".health-operational-badge");
+    const deadline = dom.window.document.querySelector(
+      ".health-deadline-badge",
+    );
+    const operational = dom.window.document.querySelector(
+      ".health-operational-badge",
+    );
     const status = dom.window.document.querySelector(".health-status-chip");
 
     expect(deadline.textContent).toContain("Edital encerra em 5 dias");
     expect(operational.textContent).toContain("Cronograma");
-    expect(status.getAttribute("aria-label")).toBe("Status operacional: Em andamento");
-    expect(dom.window.document.querySelectorAll(".health-operational-copy")).toHaveLength(1);
+    expect(status.getAttribute("aria-label")).toBe(
+      "Status operacional: Em andamento",
+    );
+    expect(
+      dom.window.document.querySelectorAll(".health-operational-copy"),
+    ).toHaveLength(1);
   });
 
   it("filtra rapidamente somente editais de 2026", () => {
@@ -96,6 +91,8 @@ describe("health details ux", () => {
     const rows = [...dom.window.document.querySelectorAll("#monitorRows tr")];
     expect(rows[0].hidden).toBe(false);
     expect(rows[1].hidden).toBe(true);
-    expect(dom.window.document.getElementById("tableMeta").textContent).toContain("1 edital(is) de 2026");
+    expect(
+      dom.window.document.getElementById("tableMeta").textContent,
+    ).toContain("1 edital(is) de 2026");
   });
 });

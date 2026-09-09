@@ -24,7 +24,7 @@ describe("access background storage", () => {
         type: "image/png",
         size: ACCESS_BACKGROUND_MAX_BYTES + 1,
       }),
-    ).toContain("2 MB");
+    ).toContain("6 MB");
   });
 
   it("creates immutable branding paths to avoid stale CDN content", () => {

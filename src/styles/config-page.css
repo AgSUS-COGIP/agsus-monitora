@@ -651,3 +651,31 @@ html[data-theme="dark"] #page-config .config-workspace-tab.is-active {
     width: 100%;
   }
 }
+
+/* Galeria de artes: cada cartão traz Usar e, quando não está em uso, Apagar. */
+.access-background-gallery-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.access-background-gallery-delete {
+  border: 1px solid var(--config-danger, #be123c);
+  background: transparent;
+  color: var(--config-danger, #be123c);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.access-background-gallery-delete:hover {
+  background: var(--config-danger-soft, #fff1f2);
+}
+
+.access-background-gallery-hint {
+  color: var(--config-muted, #64748b);
+  font-size: 11px;
+  line-height: 1.3;
+}

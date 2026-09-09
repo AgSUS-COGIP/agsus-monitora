@@ -23,10 +23,31 @@
 
 import { guardarMarca, lerMarcaGuardada } from "./access-branding-cache.js";
 import { buscarMarcaPublica } from "./access-branding-publico.js";
+import { needsLightForeground } from "./access-branding.js";
 
 /** `url("…")` seguro: aspas e barras invertidas quebrariam a declaração CSS. */
 function comoUrlCss(valor) {
   return `url("${String(valor).replace(/["\\]/g, "")}")`;
+}
+
+/*
+  Aplicar a cor do painel é, sempre, aplicar também o contraste.
+
+  Antes havia duas implementações independentes da mesma identidade:
+  `applyConfigToUi()` definia `--login-panel-color` **e** alternava
+  `login-panel-dark`; este módulo definia só a cor. O resultado aparecia na tela
+  de acesso não autenticada — onde `applyConfigToUi()` nem chega a tocar na
+  identidade, porque `anon` não recebe `auth_access_panel_color` — com painel
+  escuro e texto escuro por cima. Ilegível, e permanente, não por um quadro.
+
+  A classe não é guardada em lado nenhum: é **derivada** da cor, toda vez que a
+  cor é aplicada. `panelColor` é a única fonte de verdade.
+*/
+export function aplicarCorDoPainel(tela, cor) {
+  if (!tela || !cor) return false;
+  tela.style.setProperty("--login-panel-color", cor);
+  tela.classList.toggle("login-panel-dark", needsLightForeground(cor));
+  return true;
 }
 
 /**
@@ -45,9 +66,7 @@ export function aplicarMarcaNaTela(marca, documento = globalThis.document) {
       comoUrlCss(marca.backgroundUrl),
     );
   }
-  if (marca.panelColor) {
-    tela.style.setProperty("--login-panel-color", marca.panelColor);
-  }
+  aplicarCorDoPainel(tela, marca.panelColor);
 
   /*
     Os campos entram juntos. Aplicar só a arte e a cor produzia tela híbrida: o

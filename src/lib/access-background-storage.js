@@ -1,6 +1,6 @@
 export const ACCESS_BACKGROUND_BUCKET = "platform-assets";
 export const ACCESS_BACKGROUND_FOLDER = "branding";
-export const ACCESS_BACKGROUND_MAX_BYTES = 2 * 1024 * 1024;
+export const ACCESS_BACKGROUND_MAX_BYTES = 6 * 1024 * 1024;
 export const ACCESS_BACKGROUND_MIME_TYPES = Object.freeze([
   "image/jpeg",
   "image/png",
@@ -19,7 +19,7 @@ export function validateAccessBackgroundFile(file) {
     return "Use uma imagem JPG, PNG ou WEBP.";
   }
   if (file.size > ACCESS_BACKGROUND_MAX_BYTES) {
-    return "A imagem precisa ter até 2 MB.";
+    return "A imagem precisa ter até 6 MB.";
   }
   return "";
 }

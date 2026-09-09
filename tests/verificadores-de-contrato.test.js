@@ -214,3 +214,31 @@ describe("reutilização de servidor no Playwright", () => {
     );
   });
 });
+
+/*
+  A suíte não pode voltar a depender da ausência de ambiente para não falar com
+  produção. Foi assim que um teste começou a chamar o Supabase real: bastou
+  existir um `.env.local`, porque o Vitest carrega as variáveis pelo Vite.
+*/
+describe("segurança dos testes", () => {
+  const configVitest = readFileSync("vitest.config.js", "utf8");
+  const guarda = readFileSync("tests/setup/rede-bloqueada.js", "utf8");
+
+  it("a rede é bloqueada por omissão em toda a suíte", () => {
+    expect(configVitest).toContain("setupFiles");
+    expect(configVitest).toContain("tests/setup/rede-bloqueada.js");
+  });
+
+  it("o bloqueio nomeia a URL em vez de falhar em silêncio", () => {
+    expect(guarda).toContain("Teste tentou falar com a rede");
+    expect(guarda).toContain("beforeEach");
+    expect(guarda).toContain("afterEach");
+  });
+
+  it("nenhum ficheiro de ambiente está versionado", () => {
+    const rastreados = readdirSync(".").filter(
+      (nome) => /^\.env/.test(nome) && nome !== ".env.example",
+    );
+    expect(rastreados).toEqual([]);
+  });
+});

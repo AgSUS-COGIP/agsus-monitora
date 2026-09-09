@@ -986,3 +986,34 @@ body.sidebar-locked .side-logout {
   border-color: #5c1a22 !important;
   color: #fca5a5 !important;
 }
+
+/*
+  Painel externo: um cabeçalho só.
+
+  O painel embarcado traz o seu próprio cabeçalho. Somado ao do Monitora, a
+  pessoa via dois títulos empilhados dizendo a mesma coisa — e o espaço do
+  cabeçalho de cima ainda comprimia o iframe.
+
+  Este estado esconde **apenas** o cabeçalho superior. Não é o antigo
+  `external-clean`, que também escondia a navegação lateral: a sidebar fica, é
+  por ela que se volta.
+*/
+body.external-panel-mode .main > header.top {
+  display: none;
+}
+
+/*
+  Com o cabeçalho fora, a altura que ele ocupava volta para o conteúdo. Sem isto
+  sobraria uma faixa branca do tamanho de um cabeçalho que já não existe.
+*/
+body.external-panel-mode .content {
+  padding-top: 0;
+  min-height: 100dvh;
+}
+
+body.external-panel-mode #page-external,
+body.external-panel-mode #page-external .external-panel,
+body.external-panel-mode #page-external iframe {
+  height: 100%;
+  min-height: 100dvh;
+}

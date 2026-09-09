@@ -43,7 +43,19 @@ const MENSAGENS = {
   [SAIDA_MANUAL]: "",
   [SAIDA_EXPIRADA]: "Sessão encerrada. Faça login novamente.",
   [SAIDA_REVOGADA]: "Seu acesso foi encerrado. Fale com a administração.",
-  [SAIDA_DESCONHECIDA]: "Sessão encerrada. Faça login novamente.",
+  /*
+    **Silêncio.** `unknown` não é `expired`.
+
+    Mapear os dois para a mesma frase foi um erro conceitual: um `SIGNED_OUT`
+    pode vir de outra aba, da sincronização do cliente, de um `signOut` local ou
+    do próprio arranque depois de uma saída — e nenhum desses casos é expiração.
+    Anunciar "Sessão encerrada" a quem acabou de sair pelo botão transforma um
+    sucesso em aparência de falha.
+
+    A causa não se adivinha. Só `SAIDA_EXPIRADA` — declarada com prova pelo
+    classificador de `lib/sessao.js` — produz a mensagem de expiração.
+  */
+  [SAIDA_DESCONHECIDA]: "",
 };
 
 let causaAtual = SAIDA_DESCONHECIDA;

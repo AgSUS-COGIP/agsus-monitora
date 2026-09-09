@@ -50,7 +50,13 @@ import {
   reivindicarSaida,
 } from "../lib/estado-de-saida.js";
 import { avisoGlobal } from "../lib/aviso-global.js";
-import { ehFalhaTransitoria, ehSessaoEncerrada } from "../lib/sessao.js";
+import { aplicarCorDoPainel } from "../lib/access-branding-boot.js";
+import {
+  SESSAO_ATIVA,
+  ehFalhaTransitoria,
+  ehSessaoEncerrada,
+  estadoDaSessao,
+} from "../lib/sessao.js";
 
 // ============================================================
 // AgSUS Monitora Web V2.9.35
@@ -1193,6 +1199,37 @@ function resetGoogleLoginButton() {
   setText("googleLoginText", "Entrar com Google institucional");
 }
 
+/*
+  Devolve o botão de acesso quando a pessoa volta do Google sem concluir.
+
+  Abaixo de 768 px não há popup — `supportsLoginPopup` exige essa largura — e o
+  login é um redirecionamento de página inteira. Se a pessoa cancela ou usa o
+  botão Voltar, o navegador restaura esta página, muitas vezes do bfcache, com o
+  DOM exatamente como ficou: botão `disabled` e "Entrando no sistema…".
+
+  Nada o restaurava. `resetGoogleLoginButton()` só era chamado ao deslogar, no
+  monitor do popup e na mensagem do callback — nenhum deles dispara nesse
+  retorno. O botão ficava travado até um recarregamento forçado.
+
+  O listener é registado uma única vez, no carregamento do módulo, e só age
+  quando não há sessão: se o login deu certo, quem manda é o fluxo autenticado.
+*/
+window.addEventListener("pageshow", (event) => {
+  const restauradaDoCache = event.persisted;
+  const veioDoHistorico =
+    performance.getEntriesByType?.("navigation")?.[0]?.type === "back_forward";
+  if (!restauradaDoCache && !veioDoHistorico) return;
+
+  const botao = $("googleLoginBtn");
+  if (!botao?.disabled) return;
+
+  void (async () => {
+    const { estado } = await estadoDaSessao(sb);
+    if (estado === SESSAO_ATIVA) return;
+    resetGoogleLoginButton();
+  })();
+});
+
 function monitorLoginPopup(popup) {
   const timer = window.setInterval(async () => {
     if (!popup.closed) return;
@@ -1726,8 +1763,8 @@ function applyConfigToUi() {
 
   if (loginScreen && painelDoBanco !== null) {
     const cor = normalizeAccessPanelColor(painelDoBanco);
-    loginScreen.style.setProperty("--login-panel-color", cor);
-    loginScreen.classList.toggle("login-panel-dark", needsLightForeground(cor));
+    // Cor e contraste juntos, pela mesma função que o arranque usa.
+    aplicarCorDoPainel(loginScreen, cor);
     marcaParaGuardar.panelColor = cor;
   }
 
@@ -2330,6 +2367,7 @@ function navigate(view) {
   }
 
   document.body.classList.remove("external-clean");
+  document.body.classList.remove("external-panel-mode");
   currentView = requestedView;
   rememberView(requestedView);
   if (!requestedView.startsWith("panel:")) currentPanel = null;
@@ -10546,9 +10584,16 @@ function openPanel(code) {
     return;
   }
   const safePanelUrl = safeUrl(panel.url);
-  // Todos os painéis, inclusive os internos, permanecem dentro do shell.
-  // Assim a navegação lateral e o cabeçalho nunca desaparecem.
+  /*
+    O painel externo traz o seu próprio cabeçalho. Somado ao do Monitora, a
+    pessoa via dois títulos empilhados dizendo a mesma coisa.
+
+    `external-panel-mode` esconde **apenas** o cabeçalho superior. Não é o antigo
+    `external-clean`, que também escondia a navegação lateral — a sidebar fica,
+    porque é por ela que se volta.
+  */
   document.body.classList.remove("external-clean");
+  document.body.classList.add("external-panel-mode");
   currentPanel = panel;
   currentView = "panel:" + code;
   rememberView(currentView);
@@ -10816,6 +10861,45 @@ async function useStoredAccessBackground(path, url) {
   }
 }
 
+/*
+  Apaga uma arte guardada. Só as que não estão em uso chegam aqui — a galeria não
+  oferece o botão para a ativa, e esta função recusa por garantia, para o caso de
+  a interface e o estado divergirem por um instante.
+*/
+async function deleteStoredAccessBackground(path, nome) {
+  if (!can("config"))
+    return toast("Sem permissão para alterar a arte de acesso.", "warn");
+
+  const emUso = txt(cfgValue("auth_access_background_path"));
+  if (emUso && emUso === path) {
+    return toast(
+      "Esta arte está em uso. Escolha outra ou restaure o padrão antes de apagar.",
+      "warn",
+    );
+  }
+
+  if (
+    !window.confirm(
+      `Apagar definitivamente a arte "${nome}"? Esta ação não pode ser desfeita.`,
+    )
+  )
+    return;
+
+  loader(true, "Apagando arte", "Removendo a imagem do armazenamento...", 60);
+  try {
+    const { error } = await sb.storage
+      .from(ACCESS_BACKGROUND_BUCKET)
+      .remove([path]);
+    if (error) throw error;
+    await loadAccessBackgroundGallery();
+    toast("Arte apagada.");
+  } catch (error) {
+    toast("Não foi possível apagar a arte: " + friendlyError(error), "error");
+  } finally {
+    loader(false);
+  }
+}
+
 async function loadAccessBackgroundGallery() {
   const gallery = $("cfgAccessBackgroundGallery");
   if (!gallery || !sb || !currentUser || !can("config")) return;
@@ -10845,24 +10929,57 @@ async function loadAccessBackgroundGallery() {
     const path = `${ACCESS_BACKGROUND_FOLDER}/${item.name}`;
     const url = sb.storage.from(ACCESS_BACKGROUND_BUCKET).getPublicUrl(path)
       .data.publicUrl;
+    const emUso = path === currentPath;
+
+    const cartao = document.createElement("div");
+    cartao.className = `access-background-gallery-card${emUso ? " is-active" : ""}`;
+
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `access-background-gallery-item${path === currentPath ? " is-active" : ""}`;
+    button.className = `access-background-gallery-item${emUso ? " is-active" : ""}`;
     button.setAttribute(
       "aria-label",
-      path === currentPath ? "Arte atualmente em uso" : "Usar esta arte",
+      emUso ? "Arte atualmente em uso" : "Usar esta arte",
     );
     const image = document.createElement("span");
     image.style.backgroundImage = `url("${url.replace(/["\\]/g, "")}")`;
     const label = document.createElement("small");
-    label.textContent = path === currentPath ? "Em uso" : "Usar";
+    label.textContent = emUso ? "Em uso" : "Usar";
     button.append(image, label);
-    if (path !== currentPath)
+    if (!emUso)
       button.addEventListener(
         "click",
         () => void useStoredAccessBackground(path, url),
       );
-    list.appendChild(button);
+    cartao.appendChild(button);
+
+    /*
+      A arte em uso não ganha botão de apagar. Apagá-la deixaria
+      `auth_access_background_url` a apontar para um objeto inexistente — e o
+      cache de marca, guardado no navegador de cada pessoa, continuaria a pedir
+      essa imagem por tempo indeterminado. Para remover a atual, troca-se por
+      outra ou restaura-se o padrão primeiro.
+    */
+    if (emUso) {
+      const aviso = document.createElement("small");
+      aviso.className = "access-background-gallery-hint";
+      aviso.textContent =
+        "Para apagar, escolha outra arte ou restaure o padrão.";
+      cartao.appendChild(aviso);
+    } else {
+      const apagar = document.createElement("button");
+      apagar.type = "button";
+      apagar.className = "access-background-gallery-delete";
+      apagar.textContent = "Apagar";
+      apagar.setAttribute("aria-label", `Apagar a arte ${item.name}`);
+      apagar.addEventListener(
+        "click",
+        () => void deleteStoredAccessBackground(path, item.name),
+      );
+      cartao.appendChild(apagar);
+    }
+
+    list.appendChild(cartao);
   });
   gallery.appendChild(list);
 }
@@ -11348,6 +11465,7 @@ function exitExternalPanel() {
   if (document.body.classList.contains("app-fullscreen-fallback"))
     toggleAppFullscreenFallback(false);
   document.body.classList.remove("external-clean");
+  document.body.classList.remove("external-panel-mode");
   currentPanel = null;
   navigate(systemHomeView());
 }

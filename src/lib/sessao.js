@@ -28,6 +28,7 @@ import {
   isAuthRetryableFetchError,
   isAuthSessionMissingError,
 } from "@supabase/supabase-js";
+import { SAIDA_EXPIRADA, declararSaida } from "./estado-de-saida.js";
 
 export const SESSAO_ATIVA = "ativa";
 export const SESSAO_ENCERRADA = "encerrada";
@@ -155,6 +156,14 @@ export async function estadoDaSessao(client) {
 export async function exigirSessao(client) {
   const { estado, sessao, erro } = await estadoDaSessao(client);
   if (estado === SESSAO_ATIVA) return sessao;
-  if (estado === SESSAO_ENCERRADA) throw new SessaoEncerrada();
+  if (estado === SESSAO_ENCERRADA) {
+    /*
+      Aqui, e só aqui, há prova: a leitura funcionou e não há sessão guardada, ou
+      o servidor recusou o token. É o único ponto autorizado a declarar
+      expiração — o resto do sistema não adivinha a causa de um `SIGNED_OUT`.
+    */
+    declararSaida(SAIDA_EXPIRADA);
+    throw new SessaoEncerrada();
+  }
   throw new FalhaDeConexao(undefined, erro);
 }

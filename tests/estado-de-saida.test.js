@@ -38,7 +38,29 @@ describe("causa da saída", () => {
   it("causa inválida cai em desconhecida, nunca em manual", () => {
     declararSaida("qualquer-coisa");
     expect(causaDaSaida()).toBe(SAIDA_DESCONHECIDA);
-    expect(mensagemDaSaida()).toContain("Sessão encerrada");
+  });
+
+  /*
+    `unknown` não é `expired`. Um `SIGNED_OUT` pode vir de outra aba, da
+    sincronização do cliente, de um `signOut` local ou do arranque depois de uma
+    saída — nada disso é expiração, e anunciá-la transforma um sucesso em falha
+    aparente. Só a causa declarada com prova fala.
+  */
+  it("causa desconhecida é silêncio, nunca expiração", () => {
+    declararSaida(SAIDA_DESCONHECIDA);
+    expect(mensagemDaSaida()).toBe("");
+    declararSaida("valor-que-nao-existe");
+    expect(mensagemDaSaida()).toBe("");
+  });
+
+  it("somente expired produz a mensagem de expiração", () => {
+    const comMensagemDeExpiracao = [
+      SAIDA_MANUAL,
+      SAIDA_EXPIRADA,
+      SAIDA_REVOGADA,
+      SAIDA_DESCONHECIDA,
+    ].filter((causa) => mensagemDaSaida(causa).includes("Sessão encerrada"));
+    expect(comMensagemDeExpiracao).toEqual([SAIDA_EXPIRADA]);
   });
 });
 

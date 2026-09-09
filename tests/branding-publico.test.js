@@ -1,9 +1,11 @@
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buscarMarcaPublica,
   mapearBrandingPublico,
 } from "../src/lib/access-branding-publico.js";
 import {
+  aplicarCorDoPainel,
   aplicarMarcaGuardadaNoArranque,
   aplicarMarcaNaTela,
   atualizarMarcaComBrandingPublico,
@@ -373,10 +375,130 @@ describe("cache antigo é substituído pela identidade atual", () => {
     });
   });
 
+  /*
+    O `fetch` é substituído explicitamente. Sem isso, o teste dependeria de o
+    ambiente **não** ter as variáveis do Supabase — e passaria a fazer chamada
+    real assim que alguém criasse um `.env.local`. Foi exatamente o que
+    aconteceu durante a validação do preview: a suíte começou a falar com
+    produção e a gravar a marca verdadeira no cache.
+  */
   it("uma falha não escreve no cache", async () => {
     guardarMarca(IDENTIDADE_ATUAL);
     const antes = lerMarcaGuardada();
-    await atualizarMarcaComBrandingPublico(document);
+
+    const original = globalThis.fetch;
+    globalThis.fetch = async () => {
+      throw new TypeError("Failed to fetch");
+    };
+    try {
+      await atualizarMarcaComBrandingPublico(document);
+    } finally {
+      globalThis.fetch = original;
+    }
+
     expect(lerMarcaGuardada()).toEqual(antes);
+  });
+});
+
+/*
+  O contraste é derivado da cor, sempre, em qualquer caminho que a aplique.
+
+  Antes havia duas implementações da mesma identidade: `applyConfigToUi()`
+  aplicava cor **e** classe; o arranque aplicava só a cor. Na tela de acesso não
+  autenticada — onde `applyConfigToUi()` nem toca na identidade, porque `anon`
+  não recebe `auth_access_panel_color` — o resultado era painel escuro com texto
+  escuro. Ilegível, e permanente.
+
+  A classe nunca é guardada: `panelColor` é a única fonte de verdade.
+*/
+describe("cor do painel e contraste são atómicos", () => {
+  const tela = () => document.getElementById("loginScreen");
+
+  it("cor clara não recebe a classe escura", () => {
+    for (const clara of ["#ffffff", "#f2f2f2", "#e1e4e5", "#c296eb"]) {
+      tela().classList.add("login-panel-dark");
+      aplicarCorDoPainel(tela(), clara);
+      expect(tela().classList.contains("login-panel-dark"), clara).toBe(false);
+      expect(tela().style.getPropertyValue("--login-panel-color")).toBe(clara);
+    }
+  });
+
+  it("cor escura recebe a classe escura", () => {
+    for (const escura of ["#0b2c4d", "#000000", "#102a43", "#1f2937"]) {
+      tela().classList.remove("login-panel-dark");
+      aplicarCorDoPainel(tela(), escura);
+      expect(tela().classList.contains("login-panel-dark"), escura).toBe(true);
+      expect(tela().style.getPropertyValue("--login-panel-color")).toBe(escura);
+    }
+  });
+
+  it("alternar claro → escuro → claro acerta os dois sentidos", () => {
+    aplicarCorDoPainel(tela(), "#ffffff");
+    expect(tela().classList.contains("login-panel-dark")).toBe(false);
+    aplicarCorDoPainel(tela(), "#0b2c4d");
+    expect(tela().classList.contains("login-panel-dark")).toBe(true);
+    aplicarCorDoPainel(tela(), "#ffffff");
+    expect(tela().classList.contains("login-panel-dark")).toBe(false);
+  });
+
+  /*
+    A regressão do print: F5 com cache de painel escuro abria com texto escuro,
+    porque só a cor era restaurada.
+  */
+  it("cache com painel escuro já pinta com a classe no primeiro passo", () => {
+    guardarMarca({ ...IDENTIDADE_ATUAL, panelColor: "#0b2c4d" });
+    aplicarMarcaGuardadaNoArranque(document);
+    expect(tela().style.getPropertyValue("--login-panel-color")).toBe(
+      "#0b2c4d",
+    );
+    expect(tela().classList.contains("login-panel-dark")).toBe(true);
+  });
+
+  it("cache com painel claro não deixa a classe presa", () => {
+    tela().classList.add("login-panel-dark");
+    guardarMarca({ ...IDENTIDADE_ATUAL, panelColor: "#ffffff" });
+    aplicarMarcaGuardadaNoArranque(document);
+    expect(tela().classList.contains("login-panel-dark")).toBe(false);
+  });
+
+  it("marca vinda da RPC com painel escuro também aplica a classe", async () => {
+    const buscar = fetchQue(
+      respostaOk({ ...RESPOSTA_DA_RPC, auth_access_panel_color: "#0b2c4d" }),
+    );
+    const marca = await buscarCom(buscar);
+    aplicarMarcaNaTela(marca, document);
+    expect(tela().classList.contains("login-panel-dark")).toBe(true);
+  });
+
+  it("sem cor, nada é tocado", () => {
+    tela().classList.remove("login-panel-dark");
+    expect(aplicarCorDoPainel(tela(), "")).toBe(false);
+    expect(aplicarCorDoPainel(null, "#0b2c4d")).toBe(false);
+    expect(tela().classList.contains("login-panel-dark")).toBe(false);
+  });
+
+  /*
+    O contrato que impede a regressão voltar: quem aplica a identidade não pode
+    escrever a variável de cor sem passar por aqui.
+  */
+  it("nenhum módulo aplica a cor sem derivar o contraste", () => {
+    const semComentarios = (f) =>
+      readFileSync(f, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
+    for (const ficheiro of [
+      "src/modules/legacy-app.js",
+      "src/lib/access-branding-boot.js",
+    ]) {
+      const codigo = semComentarios(ficheiro);
+      const escritas = (
+        codigo.match(/setProperty\(\s*"--login-panel-color"/g) || []
+      ).length;
+      const esperado = ficheiro.endsWith("access-branding-boot.js") ? 1 : 0;
+      expect(
+        escritas,
+        `${ficheiro} escreve a cor fora da função partilhada`,
+      ).toBe(esperado);
+    }
   });
 });
