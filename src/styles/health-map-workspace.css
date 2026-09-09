@@ -82,6 +82,21 @@
   min-height: var(--health-map-height);
 }
 
+/*
+  Sem DSEI escolhido, "Polos e unidades" só tem a frase que pede para escolher um
+  — e mesmo assim reservava 27% da largura, ou no mínimo 210 px, tirados do mapa.
+  Enquanto não há o que listar, a coluna sai e o mapa ocupa a linha inteira. Quem
+  alterna a classe é `definirSelecaoDoMapaDetalhado()`, que logo depois manda o
+  Leaflet remedir — sem isso o mapa continuaria desenhado na largura antiga.
+*/
+.health-map-detail-layout.sem-selecao {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.health-map-detail-layout.sem-selecao .health-map-units {
+  display: none;
+}
+
 .health-map-units {
   min-width: 0;
   border-left: 1px solid #dce8ef;
@@ -299,4 +314,87 @@
 }
 [data-theme="dark"] .health-map-unit:hover {
   background: #1a2d47;
+}
+
+/*
+  Marcadores por forma, não só por cor: círculo (polo), casa (CASAI), cruz
+  (UBSI) e losango (demais). Quem não distingue as cores continua distinguindo
+  as formas.
+*/
+.mapa-marcador-wrap {
+  background: none;
+  border: 0;
+}
+
+.mapa-marcador {
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 1px 2px rgba(15, 35, 60, 0.35));
+}
+
+/* A unidade externa mantém o ícone do seu tipo; o anel só a destaca. */
+.mapa-marcador--externo svg {
+  outline: 2px dashed rgba(74, 107, 128, 0.75);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.health-map-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.health-map-external-chip {
+  padding: 3px 9px;
+  border: 1px solid #c6d6e2;
+  border-radius: 999px;
+  background: #eef4f8;
+  color: #34556b;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.health-map-external-toggle {
+  padding: 4px 10px;
+  border: 1px solid #c6d6e2;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f4258;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.health-map-external-toggle:hover {
+  border-color: #7fa3bb;
+  background: #f4f9fc;
+}
+
+.health-map-external-toggle:focus-visible {
+  outline: 2px solid #1769aa;
+  outline-offset: 2px;
+}
+
+html[data-theme="dark"] .health-map-external-chip {
+  border-color: #2f4457;
+  background: #14293a;
+  color: #b9cfe0;
+}
+
+html[data-theme="dark"] .health-map-external-toggle {
+  border-color: #2f4457;
+  background: #102436;
+  color: #cfe2f0;
+}
+
+.health-map-unit__externo {
+  color: #b25a12;
+  font-weight: 900;
+}
+
+html[data-theme="dark"] .health-map-unit__externo {
+  color: #e9a45c;
 }

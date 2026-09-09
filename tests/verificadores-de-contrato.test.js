@@ -91,6 +91,7 @@ describe("scripts que falam com o banco", () => {
     "scripts/check-rpc-contract-db.mjs",
     "scripts/validar-migration-recusar.mjs",
     "scripts/capturar-baseline-rpcs.mjs",
+    "scripts/medir-cronograma.mjs",
   ];
 
   it("nenhum lê variável VITE_", () => {

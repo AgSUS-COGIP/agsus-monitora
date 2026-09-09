@@ -1,6 +1,7 @@
 import { isValidAccessAssetUrl } from "../lib/config-validation.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { collectPanelRows } from "./config-ui.js";
+import { linhasDeConfiguracaoDaSidebar } from "./sidebar-branding.js";
 
 const RPC_SNAPSHOT = "get_configuracoes_snapshot";
 const RPC_SAVE_V2 = "salvar_configuracoes_e_paineis_v2";
@@ -161,12 +162,26 @@ function setSaving(saving) {
     : '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Salvar alterações</span>';
 }
 
+/*
+  `installSaveOverride()` troca `window.saveAdminSettings` por `reviewAndPublish`,
+  de modo que o botão Salvar publica por aqui — e não pela função de
+  `legacy-app.js`. As chaves da barra lateral tinham sido acrescentadas só lá,
+  então nunca chegavam ao banco: `collectConfigRows()` não as conhecia,
+  `buildChanges()` não via diferença e mudar apenas a cor caía em
+  "Nada para publicar".
+
+  A lista vem da mesma função que o caminho de contingência usa, para os dois
+  não voltarem a divergir. Ela devolve `[]` quando os campos não estão no DOM —
+  sem isso, um salvamento feito com a secção ausente gravaria os valores padrão
+  por cima de uma personalização existente.
+*/
 function collectConfigRows() {
-  return FIELD_MAP.map(([id, chave, descricao, fallback = ""]) => ({
+  const campos = FIELD_MAP.map(([id, chave, descricao, fallback = ""]) => ({
     chave,
     valor: txt($(id)?.value ?? fallback),
     descricao,
   }));
+  return [...campos, ...linhasDeConfiguracaoDaSidebar()];
 }
 
 function currentPanels() {

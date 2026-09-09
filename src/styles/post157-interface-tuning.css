@@ -76,18 +76,12 @@ body:has(#page-dashboard.active) .page-title p {
   background: var(--sidebar-custom-bg, #ffffff);
 }
 
-/* A imagem real do <img> continua no DOM para semântica, mas a apresentação usa
- * uma variável independente para que applyConfigToUi() não recoloque a logo do login. */
-.side-logo-wrap {
-  background-color: #ffffff;
-  background-image: var(--sidebar-logo-image, url("/assets/agsus-logo.webp"));
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 36px 36px;
-}
-
+/* A logo da barra lateral é o próprio <img id="sideLogo">, cujo `src` vem de
+ * sidebar-branding.js. A apresentação por `background-image` foi removida: ela
+ * nunca chegava a desenhar, porque system-ui-fixes.css zera o fundo deste
+ * elemento com `background: transparent !important`. */
 .side-logo-wrap .side-logo {
-  opacity: 0;
+  object-fit: contain;
 }
 
 body.sidebar-theme-dark .sidebar {

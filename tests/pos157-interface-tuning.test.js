@@ -136,13 +136,28 @@ describe("branding independente da sidebar", () => {
 });
 
 describe("o reenquadramento não descarta o zoom da pessoa", () => {
+  /*
+    A verificação continua existindo, mas mudou de lugar: saiu de dentro do
+    handler de `resize` e virou `emOverview()`, porque o `ResizeObserver` que
+    passou a decidir o enquadramento inicial precisa fazer a mesma pergunta.
+    Uma função, dois chamadores.
+  */
   it("confere o zoom corrente, não só a bandeira", () => {
+    const derivado = mapGuard.slice(
+      mapGuard.indexOf("function emOverview"),
+      mapGuard.indexOf("function observarTamanhoDoCard"),
+    );
+    expect(derivado).toContain("map.__agsusOverviewMode");
+    expect(derivado).toContain("getZoom");
+    expect(derivado).toMatch(/<=\s*4/);
+  });
+
+  it("o handler de resize consulta esse estado derivado", () => {
     const handler = mapGuard.slice(
       mapGuard.indexOf('map.on("resize"'),
       mapGuard.indexOf('map.on("drag move zoomend'),
     );
-    expect(handler).toContain("getZoom");
-    expect(handler).toMatch(/<=\s*4/);
+    expect(handler).toContain("if (!emOverview(map)) return;");
   });
 });
 

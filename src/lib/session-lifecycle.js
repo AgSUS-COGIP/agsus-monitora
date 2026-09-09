@@ -185,8 +185,15 @@ function updateTimerUi(remainingMs) {
   const text = document.getElementById("agsusSessionTimerText");
   if (!timer || !text) return;
 
-  timer.hidden = !activeUserId;
-  if (!activeUserId) return;
+  /*
+    Com o encerramento desligado, a contagem regressiva anunciava uma expulsão
+    que nunca chega: "Sessão: 01:00:00" descendo até zero sem nada acontecer.
+    Um relógio que mede uma ação inexistente não informa — assusta. O contador
+    interno continua correndo (a auditoria e a sincronização entre abas usam
+    `lastActivityAt`); o que some é a exibição.
+  */
+  timer.hidden = !activeUserId || !encerrarPorInatividadeAtivo;
+  if (timer.hidden) return;
 
   text.textContent = `Sessão: ${formatSessionRemaining(remainingMs)}`;
   timer.dataset.level =
@@ -362,6 +369,13 @@ async function expireSession({ broadcast = true } = {}) {
 }
 
 function warnWhenNeeded(remainingMs) {
+  /*
+    Os dois avisos afirmam que a sessão "será encerrada por inatividade". Com a
+    bandeira desligada isso é falso, e um alerta falso custa mais do que
+    silêncio. Se o encerramento voltar, os avisos voltam com ele.
+  */
+  if (!encerrarPorInatividadeAtivo) return;
+
   if (remainingMs <= SESSION_CRITICAL_MS && !warnedOneMinute) {
     warnedOneMinute = true;
     showNotice(

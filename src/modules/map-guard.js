@@ -1,14 +1,14 @@
-const BRAZIL_VIEW_BOUNDS = [
-  [-34.9, -74.2],
-  [6.4, -33.7],
-];
+import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.js";
+
+/*
+  Os limites agora vêm do contorno real do país, não de um retângulo estimado.
+  Ver `src/lib/brasil-bounds.js` para a medição e para o que a diferença custava.
+*/
+const BRAZIL_VIEW_BOUNDS = BRASIL_BOUNDS;
 
 // Mantém o Brasil como enquadramento inicial, mas permite navegar pelo contexto
 // geográfico da América do Sul sem criar cópias laterais do mapa.
-const SOUTH_AMERICA_MAX_BOUNDS = [
-  [-58.5, -84.5],
-  [15.5, -27.0],
-];
+const SOUTH_AMERICA_MAX_BOUNDS = NAVEGACAO_BOUNDS;
 
 const DEFAULT_MAP_OPTIONS = {
   maxBoundsViscosity: 0.82,
@@ -202,6 +202,19 @@ function hardenMapInstance(L, map) {
     }
   };
 
+  /*
+    Um dono só para o enquadramento inicial.
+
+    Antes havia disparos a esmo: um em `whenReady`, outro em 120 ms, outro em
+    420 ms, mais o `resize`. Nenhum sabia se o card já tinha chegado ao tamanho
+    final — os prazos eram chutes, e quando o card demorava mais que 420 ms o
+    mapa ficava enquadrado para uma medida que já não existia.
+
+    Quem sabe o tamanho final é o próprio elemento. O `ResizeObserver` observa o
+    container e reenquadra quando as medidas param de mudar; enquanto estiver em
+    overview e ninguém tiver aproximado, o enquadramento acompanha. Ao primeiro
+    gesto de zoom da pessoa, `__agsusOverviewMode` cai e o observador se cala.
+  */
   map.whenReady(() => {
     originalSetMaxBounds(maxBounds);
     originalSetMinZoom?.(3);
@@ -209,22 +222,62 @@ function hardenMapInstance(L, map) {
     ensureFullManualZoomRange(map);
     addScaleControl(L, map);
     stabilizeMap(map, maxBounds);
-    window.setTimeout(fitBrazilOverview, 120);
-    window.setTimeout(fitBrazilOverview, 420);
+    observarTamanhoDoCard(map, fitBrazilOverview);
   });
 
   // Se o card muda de tamanho ainda em overview, recalcula com o tamanho final.
   // Se a pessoa já aproximou o mapa, o enquadramento manual é preservado.
   map.on("resize", () => {
     stabilizeMap(map, maxBounds);
-    const aindaEmOverview =
-      map.__agsusOverviewMode && Number(map.getZoom?.() ?? 0) <= 4;
-    if (!aindaEmOverview) return;
+    if (!emOverview(map)) return;
     window.requestAnimationFrame(fitBrazilOverview);
   });
   map.on("drag move zoomend moveend layeradd", () =>
     stabilizeMap(map, maxBounds),
   );
+}
+
+/*
+  Overview é estado derivado, não guardado: a bandeira sozinha mentiria depois de
+  um zoom por pinça, que não passa por `setView` nem por `flyTo`. O zoom corrente
+  é a prova.
+*/
+function emOverview(map) {
+  return Boolean(map.__agsusOverviewMode) && Number(map.getZoom?.() ?? 0) <= 4;
+}
+
+function observarTamanhoDoCard(map, reenquadrar) {
+  const container = map.getContainer?.();
+  if (!container || typeof ResizeObserver === "undefined") return;
+
+  let ultimaLargura = 0;
+  let ultimaAltura = 0;
+  let pendente = 0;
+
+  const observador = new ResizeObserver((entradas) => {
+    const caixa = entradas[entradas.length - 1]?.contentRect;
+    if (!caixa || caixa.width === 0 || caixa.height === 0) return;
+    if (caixa.width === ultimaLargura && caixa.height === ultimaAltura) return;
+    ultimaLargura = caixa.width;
+    ultimaAltura = caixa.height;
+
+    if (!emOverview(map)) {
+      observador.disconnect();
+      return;
+    }
+
+    // Reenquadra só depois de as medidas assentarem, para não fazer o trabalho
+    // uma vez por quadro durante uma animação de layout.
+    window.clearTimeout(pendente);
+    pendente = window.setTimeout(reenquadrar, 60);
+  });
+
+  observador.observe(container);
+  map.__agsusResizeObserver = observador;
+  map.on("unload", () => {
+    window.clearTimeout(pendente);
+    observador.disconnect();
+  });
 }
 
 function enhanceMapAccessibility(L, map) {

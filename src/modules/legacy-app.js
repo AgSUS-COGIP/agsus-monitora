@@ -56,6 +56,16 @@ import {
   reaplicarSidebarAposSalvar,
 } from "./sidebar-branding.js";
 import {
+  ESTILO_DA_LINHA,
+  TOOLTIP_DA_LINHA,
+  classificarRegistros,
+  htmlDoMarcador,
+  registrosExternos,
+  registrosLocais,
+  textoDoChip,
+  tooltipDoRegistro,
+} from "./vinculos-territoriais.js";
+import {
   SESSAO_ATIVA,
   ehFalhaTransitoria,
   ehSessaoEncerrada,
@@ -1885,12 +1895,13 @@ function applyConfigToUi() {
   const cogipVer = $("loginVersion");
   if (cogipVer) cogipVer.textContent = cfgValue("cogip_versao");
   setImg("loginCogipLogo", cfgValue("cogip_logo_url"), cfgValue("cogip_nome"));
-  // Imagens
-  setImg(
-    "sideLogo",
-    normalizeAccessLogoUrl(cfgValue("auth_access_logo_url")),
-    "AgSUS",
-  );
+  /*
+    `#sideLogo` não entra mais aqui. A logo da barra lateral tem chave própria
+    (`ui_sidebar_logo_url`) e um único dono: `sidebar-branding.js`. Enquanto esta
+    função a sobrescrevia com `auth_access_logo_url` — a marca da tela de
+    **login** —, escolher uma logo para a barra lateral não sobrevivia ao
+    carregamento das configurações.
+  */
 }
 
 function normalizeUnitName(value) {
@@ -2185,8 +2196,17 @@ async function loadData(options = {}) {
       loadMonitoramentoPayload(),
       sb
         .from("monitoramento_indigena")
+        /*
+          As seis colunas `cronograma_*` entram aqui de proposito.
+        
+          `health-status-details.js` fazia uma **segunda leitura completa** da
+          mesma view so para obte-las: 21 colunas, das quais 15 eram copia exata
+          desta requisicao. Enquanto essa segunda chamada nao voltava, cada linha
+          ficava com "Carregando cronograma...", porque o badge so existe quando
+          o dado do cronograma chega. Uma requisicao, um conjunto de linhas.
+        */
         .select(
-          "aprovados_analise,aprovados_prova,aptos_analise,ativo,cancelados,cargos,ciclo,contratados,data_fim,data_inicio,edital,eliminados_nota,entrevistados,etapa,id,id_unidade,inscritos,link_edital,observacoes,observacoes_internas,processo,reprovados_analise,responsavel,risco,sigla_unidade,status,tipo_unidade,total_eliminados,uf,unidade,vagas_ociosas,vagas_total",
+          "aprovados_analise,aprovados_prova,aptos_analise,ativo,cancelados,cargos,ciclo,contratados,cronograma_atividade_atual,cronograma_automatico,cronograma_dias_para_proxima,cronograma_percentual,cronograma_proxima_atividade,cronograma_proxima_data,data_fim,data_inicio,edital,eliminados_nota,entrevistados,etapa,id,id_unidade,inscritos,link_edital,observacoes,observacoes_internas,processo,reprovados_analise,responsavel,risco,sigla_unidade,status,tipo_unidade,total_eliminados,uf,unidade,vagas_ociosas,vagas_total",
         )
         .eq("ativo", true)
         .order("unidade", { ascending: true })
@@ -2202,6 +2222,14 @@ async function loadData(options = {}) {
     }
     rows = Array.isArray(data) ? data : [];
     dataLoadedAtLeastOnce = true;
+    /*
+      Quem precisa destas linhas escuta, em vez de ir buscá-las de novo. O
+      evento carrega os dados: sem ele, `health-status-details.js` repetia a
+      leitura inteira da view para obter seis colunas.
+    */
+    window.dispatchEvent(
+      new CustomEvent("agsus:monitoramento-carregado", { detail: { rows } }),
+    );
     lastMapUfKey = null; // invalida cache do mapa ao recarregar dados
     populateModalUnidades();
     populateFilters();
@@ -8814,6 +8842,9 @@ let _detailLeaflet = null,
   _detailBaseLayer = null,
   _detailUnitLayer = null,
   _detailMapInited = false;
+/* Os dois enquadramentos do mapa detalhado e qual deles está em vigor. */
+let _detailBounds = null;
+let _detailEscopo = "territorio";
 const _mapResizeObservers = [];
 
 function addResilientMapTiles(map, element) {
@@ -9370,7 +9401,7 @@ function renderDetailUnitList(records) {
         record,
       ) => `<button class="health-map-unit" type="button" data-map-unit data-lat="${record.lat}" data-lon="${record.lon}" aria-label="Localizar ${esc(record.name)} no mapa">
         <span class="health-map-unit__icon" style="color:${record.type.color};background:${record.type.color}18"><i class="fa-solid ${record.type.icon}"></i></span>
-        <span><strong title="${esc(record.name)}">${esc(record.name)}</strong><small>${esc(record.city || "Localidade não informada")}${record.uf ? " · " + esc(record.uf) : ""}</small></span>
+        <span><strong title="${esc(record.name)}">${esc(record.name)}</strong><small>${esc(record.city || "Localidade não informada")}${record.ufAdministrativa ? " · " + esc(record.ufAdministrativa) : ""}${record.vinculo === "externo" ? " · <b class='health-map-unit__externo'>fora da área</b>" : ""}</small></span>
         <span class="health-map-unit__type">${esc(record.type.label)}</span>
       </button>`,
     )
@@ -9385,24 +9416,54 @@ function renderDetailMap(d) {
   const reset = $("detailMapReset");
   if (title) title.textContent = `Mapa do DSEI ${d.n}`;
   reset?.classList.remove("hidden");
+  definirSelecaoDoMapaDetalhado(true);
   drawDetailBrazilBase(d.ufs || [d.sedeuf]);
   _detailUnitLayer.clearLayers();
 
-  const points = [[d.lat, d.lon]];
-  records.forEach((record) => {
-    points.push([record.lat, record.lon]);
-    const marker = L.circleMarker([record.lat, record.lon], {
-      radius: record.type.key === "polo" ? 6 : 5,
-      color: "#fff",
-      weight: 1.7,
-      fillColor: record.type.color,
-      fillOpacity: 0.96,
+  /*
+    A UF administrativa vem do CNES; a coordenada só diz onde desenhar. Uma
+    unidade fora das UFs do DSEI fica no lugar verdadeiro e ganha uma linha
+    pontilhada até a sede — vínculo, não trajeto.
+  */
+  const classificados = classificarRegistros(records, d);
+  const locais = registrosLocais(classificados);
+  const externos = registrosExternos(classificados);
+
+  const desenharMarcador = (record) => {
+    const marker = L.marker([record.lat, record.lon], {
+      icon: L.divIcon({
+        className: "mapa-marcador-wrap",
+        html: htmlDoMarcador(record),
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      }),
+      keyboard: true,
+      title: record.name,
     });
     marker.bindPopup(
-      `<b>${esc(record.type.label)}</b><br>${esc(record.name)}<br>${esc(record.city || "")}${record.uf ? " – " + esc(record.uf) : ""}${record.cnes ? `<br>CNES: ${esc(record.cnes)}` : ""}`,
+      `<b>${esc(record.type.label)}</b><br>${esc(record.name)}<br>${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}${record.cnes ? `<br>CNES: ${esc(record.cnes)}` : ""}`,
     );
-    marker.bindTooltip(esc(record.name), { direction: "top" });
+    marker.bindTooltip(tooltipDoRegistro(record, d), {
+      direction: "top",
+      opacity: 0.96,
+    });
     _detailUnitLayer.addLayer(marker);
+  };
+
+  locais.forEach(desenharMarcador);
+  externos.forEach((record) => {
+    _detailUnitLayer.addLayer(
+      L.polyline(
+        [
+          [d.lat, d.lon],
+          [record.lat, record.lon],
+        ],
+        {
+          ...ESTILO_DA_LINHA,
+        },
+      ).bindTooltip(TOOLTIP_DA_LINHA, { sticky: true }),
+    );
+    desenharMarcador(record);
   });
 
   L.circleMarker([d.lat, d.lon], {
@@ -9415,17 +9476,88 @@ function renderDetailMap(d) {
     .bindPopup(`<b>DSEI ${esc(d.n)}</b><br>Sede territorial`)
     .addTo(_detailUnitLayer);
 
-  renderDetailUnitList(records);
+  renderDetailUnitList(classificados);
+
+  /*
+    O enquadramento inicial usa só a sede e as unidades locais. No DSEI Ceará,
+    incluir a unidade de Uruçuí — 773 km — amplia a caixa de 3.01 x 2.75 para
+    4.31 x 6.28 graus e encolhe o território principal a ponto de o mapa deixar
+    de ser legível. Quem quiser ver os vínculos externos pede por eles.
+  */
+  _detailBounds = {
+    territorio: [[d.lat, d.lon], ...locais.map((r) => [r.lat, r.lon])],
+    completo: [[d.lat, d.lon], ...classificados.map((r) => [r.lat, r.lon])],
+  };
+  atualizarChipDeVinculos(externos.length);
+  enquadrarDetalhe("territorio");
+  setTimeout(() => _detailLeaflet?.invalidateSize?.({ animate: false }), 40);
+}
+
+/*
+  Dois enquadramentos nomeados em vez de um cálculo espalhado: "territorio" é o
+  estado normal, "completo" inclui as unidades externas. O botão alterna entre
+  os dois, e nenhum dos dois recalcula bounds a partir do que está na tela.
+*/
+function enquadrarDetalhe(escopo, { animar = false } = {}) {
+  if (!_detailLeaflet || !_detailBounds) return;
+  const pontos = _detailBounds[escopo] || _detailBounds.territorio;
+  if (!pontos?.length) return;
+  _detailEscopo = escopo;
   try {
-    _detailLeaflet.fitBounds(L.latLngBounds(points), {
+    _detailLeaflet.fitBounds(L.latLngBounds(pontos), {
       padding: [34, 34],
       maxZoom: 9,
-      animate: false,
+      animate: animar,
     });
   } catch (e) {
-    _detailLeaflet.setView([d.lat, d.lon], 7);
+    _detailLeaflet.setView(pontos[0], 7);
   }
-  setTimeout(() => _detailLeaflet?.invalidateSize?.({ animate: false }), 40);
+  const alternar = $("detailExternalToggle");
+  if (alternar) {
+    alternar.textContent =
+      escopo === "completo"
+        ? "Voltar ao território"
+        : "Mostrar vínculos externos";
+  }
+}
+
+function atualizarChipDeVinculos(quantidade) {
+  const chip = $("detailExternalChip");
+  const alternar = $("detailExternalToggle");
+  const texto = textoDoChip(quantidade);
+  if (chip) {
+    chip.textContent = texto;
+    chip.hidden = !quantidade;
+  }
+  if (alternar) {
+    alternar.hidden = !quantidade;
+    alternar.textContent = "Mostrar vínculos externos";
+  }
+}
+
+function toggleVinculosExternos() {
+  enquadrarDetalhe(_detailEscopo === "completo" ? "territorio" : "completo", {
+    animar: true,
+  });
+}
+
+/*
+  A largura do mapa detalhado depende de haver ou não um DSEI escolhido. Trocar a
+  classe muda a grade; o Leaflet, porém, guarda o tamanho que mediu por último e
+  continuaria desenhando na largura antiga. Por isso o `invalidateSize` vem
+  depois de o navegador aplicar o novo layout, e não junto com a troca de classe.
+*/
+function definirSelecaoDoMapaDetalhado(temSelecao) {
+  const layout = document.querySelector(".health-map-detail-layout");
+  if (!layout) return;
+  const mudou = layout.classList.contains("sem-selecao") === temSelecao;
+  layout.classList.toggle("sem-selecao", !temSelecao);
+  if (!mudou) return;
+  requestAnimationFrame(() => {
+    try {
+      _detailLeaflet?.invalidateSize?.({ animate: false, pan: false });
+    } catch (e) {}
+  });
 }
 
 function resetDetailMap({ silent = false } = {}) {
@@ -9437,6 +9569,11 @@ function resetDetailMap({ silent = false } = {}) {
   const list = $("detailUnitList");
   if (title) title.textContent = "Mapa do Brasil";
   reset?.classList.add("hidden");
+  definirSelecaoDoMapaDetalhado(false);
+  /* Volta ao Brasil: não há mais DSEI de referência, logo não há vínculo externo. */
+  _detailBounds = null;
+  _detailEscopo = "territorio";
+  atualizarChipDeVinculos(0);
   if (count) count.textContent = "0";
   if (list)
     list.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-map-location-dot"></i><strong>Selecione um DSEI</strong><span>Os polos, CASAIs e unidades aparecerão aqui.</span></div>`;
@@ -12066,5 +12203,6 @@ Object.assign(window, {
   toggleSidebar,
   toggleOnlinePresence,
   resetDetailMap,
+  toggleVinculosExternos,
 });
 boot();

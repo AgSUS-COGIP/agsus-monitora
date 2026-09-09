@@ -280,9 +280,8 @@
             ><img
               id="sideLogo"
               class="side-logo"
-              src="https://i.postimg.cc/HsbLdZ5q/Gemini-Generated-Image-usyawvusyawvusya-Photoroom.png"
-              alt=""
-              onerror="this.style.display = 'none'"
+              src="/assets/agsus-logo.webp"
+              alt="AgSUS"
           /></span>
           <span class="side-brand-copy"><strong>AgSUS Monitora</strong></span>
         </div>
@@ -690,16 +689,37 @@
                     >
                     <h3 id="detailMapTitle">Mapa do Brasil</h3>
                   </div>
-                  <button
-                    id="detailMapReset"
-                    class="health-map-reset hidden"
-                    type="button"
-                    onclick="resetDetailMap()"
-                  >
-                    <i class="fa-solid fa-arrow-left"></i> Brasil
-                  </button>
+                  <div class="health-map-detail-actions">
+                    <!-- O chip só aparece quando há vínculo fora da abrangência
+                         do DSEI; o botão alterna entre o enquadramento do
+                         território e o que inclui as unidades externas. -->
+                    <span
+                      id="detailExternalChip"
+                      class="health-map-external-chip"
+                      hidden
+                    ></span>
+                    <button
+                      id="detailExternalToggle"
+                      class="health-map-external-toggle"
+                      type="button"
+                      onclick="toggleVinculosExternos()"
+                      hidden
+                    >
+                      Mostrar vínculos externos
+                    </button>
+                    <button
+                      id="detailMapReset"
+                      class="health-map-reset hidden"
+                      type="button"
+                      onclick="resetDetailMap()"
+                    >
+                      <i class="fa-solid fa-arrow-left"></i> Brasil
+                    </button>
+                  </div>
                 </header>
-                <div class="health-map-detail-layout">
+                <!-- Nasce sem seleção: a coluna de polos só entra quando houver
+                     um DSEI escolhido, para não piscar largura no primeiro paint. -->
+                <div class="health-map-detail-layout sem-selecao">
                   <div
                     id="detailMap"
                     role="img"

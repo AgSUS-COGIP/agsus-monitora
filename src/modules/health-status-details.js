@@ -9,6 +9,8 @@ const state = {
   loading: false,
   selectedId: "",
   chartSignature: "",
+  /* Verdadeiro assim que as linhas chegam pela carga principal. */
+  recebeuPorEvento: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -75,6 +77,32 @@ function keyOf(unidade, edital) {
   return `${norm(unidade)}|${norm(edital)}`;
 }
 
+/*
+  Consome as linhas que `legacy-app.js` já carregou.
+
+  Antes, este módulo abria a sua própria leitura completa de
+  `vw_monitoramento_indigena_operacional` — 21 colunas, das quais 15 eram cópia
+  exata da requisição que a tabela principal já tinha feito, e só 6 eram novas
+  (as `cronograma_*`). Essas seis passaram para a requisição principal, e o que
+  sobra aqui é escutar.
+
+  O placeholder "Carregando cronograma..." vivia exatamente nessa janela: a
+  tabela era desenhada pela primeira requisição, que não trazia cronograma, e o
+  badge só nascia quando a segunda voltava.
+*/
+function aplicarLinhasDeMonitoramento(linhas) {
+  state.rows = Array.isArray(linhas) ? linhas : [];
+  state.rowsByKey = new Map(
+    state.rows.map((row) => [keyOf(row.unidade, row.edital), row]),
+  );
+  enhanceDetails();
+}
+
+/*
+  Contingência: se o evento não vier — outra página, ou um erro na carga
+  principal — a leitura própria continua disponível. Ela não roda no caminho
+  normal.
+*/
 async function loadOperationalRows() {
   if (state.loading) return;
   state.loading = true;
@@ -89,11 +117,7 @@ async function loadOperationalRows() {
       .order("unidade", { ascending: true })
       .order("edital", { ascending: true });
     if (error) throw error;
-    state.rows = Array.isArray(data) ? data : [];
-    state.rowsByKey = new Map(
-      state.rows.map((row) => [keyOf(row.unidade, row.edital), row]),
-    );
-    enhanceDetails();
+    aplicarLinhasDeMonitoramento(data);
   } catch (error) {
     console.error("Erro ao carregar detalhes operacionais:", error);
   } finally {
@@ -440,13 +464,28 @@ export function initHealthStatusDetails() {
   if (state.initialized) return;
   state.initialized = true;
   ensureDrawer();
+  /*
+    O caminho normal é este: as linhas chegam pelo evento da carga principal,
+    sem nenhuma requisição adicional.
+  */
+  window.addEventListener("agsus:monitoramento-carregado", (event) => {
+    const linhas = event?.detail?.rows;
+    if (!Array.isArray(linhas)) return;
+    state.recebeuPorEvento = true;
+    aplicarLinhasDeMonitoramento(linhas);
+  });
+
   const sb = client();
   if (sb) {
+    /*
+      A leitura própria só acontece se, passado o arranque, nada tiver chegado
+      pelo evento — por exemplo numa página que não roda a carga principal.
+    */
     void sb.auth.getSession().then(({ data }) => {
-      if (data?.session?.user) void loadOperationalRows();
-    });
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) void loadOperationalRows();
+      if (!data?.session?.user) return;
+      window.setTimeout(() => {
+        if (!state.recebeuPorEvento) void loadOperationalRows();
+      }, 4000);
     });
   }
   scheduleEnhancement();
@@ -454,12 +493,21 @@ export function initHealthStatusDetails() {
   document.addEventListener("input", handleDashboardInteraction);
   document.addEventListener("change", handleDashboardInteraction);
   document.addEventListener("keydown", handleKeydown);
+  /*
+    Depois de salvar um cronograma o dado mudou de verdade, e a carga principal
+    não é refeita nesse fluxo — então esta releitura fica. É uma requisição, por
+    ação explícita da pessoa, e não no caminho de arranque.
+  */
   document.addEventListener("agsus:nucleo-cronograma-saved", () => {
     state.chartSignature = "";
     void loadOperationalRows();
   });
-  window.addEventListener("focus", () => {
-    if ($("page-dashboard")?.classList.contains("active"))
-      void loadOperationalRows();
-  });
+  /*
+    O refetch a cada foco da janela saiu.
+
+    Ele relia a view inteira — 94 linhas — toda vez que a pessoa voltava para a
+    aba, e durante essa releitura os badges sumiam e o "Carregando cronograma..."
+    reaparecia sem que nada tivesse mudado. Quem decide quando os dados estão
+    velhos é a carga principal, e o evento traz o resultado dela.
+  */
 }

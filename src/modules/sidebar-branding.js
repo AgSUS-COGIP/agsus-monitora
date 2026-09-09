@@ -40,8 +40,34 @@ function safeColor(value) {
   return HEX_COLOR.test(raw) ? raw : DEFAULT_COLOR;
 }
 
-function cssUrl(value) {
-  return `url("${String(value).replace(/["\\]/g, "")}")`;
+/*
+  A logo volta a ser o `<img id="sideLogo">`, e não um `background-image` numa
+  variável CSS.
+
+  A apresentação por variável dependia de `.side-logo-wrap { background-image }`,
+  que `system-ui-fixes.css` já anulava com `background: transparent !important` —
+  o atalho `background` zera `background-image`, e o `!important` ganha da regra
+  normal. Com o `<img>` em `opacity: 0` por baixo, não sobrava nada para ver:
+  o topo da barra lateral ficava branco.
+
+  Aqui há um elemento só, com um dono só. Se a URL escolhida não carregar, o
+  `onerror` devolve o padrão em vez de esconder a imagem — uma logo tem de
+  aparecer mesmo quando a leitura do banco falha.
+*/
+function aplicarLogoNaBarraLateral(logo) {
+  const img = document.getElementById("sideLogo");
+  if (!img) return false;
+
+  img.onerror = () => {
+    img.onerror = null;
+    if (img.getAttribute("src") !== DEFAULT_LOGO) {
+      img.setAttribute("src", DEFAULT_LOGO);
+    }
+  };
+  if (img.getAttribute("src") !== logo) img.setAttribute("src", logo);
+  img.alt = "AgSUS";
+  img.style.removeProperty("display");
+  return true;
 }
 
 function errorMessage(error) {
@@ -89,10 +115,7 @@ function applySidebarBranding({
     "--sidebar-custom-bg",
     currentColor,
   );
-  document.documentElement.style.setProperty(
-    "--sidebar-logo-image",
-    cssUrl(currentLogo),
-  );
+  aplicarLogoNaBarraLateral(currentLogo);
   document.body?.classList.toggle(
     "sidebar-theme-dark",
     needsLightForeground(currentColor),
