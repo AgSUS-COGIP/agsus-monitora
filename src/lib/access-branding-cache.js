@@ -42,6 +42,8 @@ const CAMPOS = [
   "logoUrl",
   "greeting",
   "instruction",
+  // Texto do botão do Google: evita que o rótulo padrão pisque antes da RPC.
+  "buttonText",
 ];
 
 function texto(valor) {

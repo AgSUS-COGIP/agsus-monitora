@@ -10,11 +10,22 @@
   Este ficheiro é a fonte de verdade. `scripts/check-rpc-contract.mjs` verifica
   duas coisas contra ele:
 
-  1. Estático, em todo build: nenhuma chamada `.rpc("…")` usa nome que não esteja
-     declarado aqui. O mapa não pode ficar desatualizado em silêncio.
-  2. Contra o banco, quando há credenciais: cada função existe e aceita os
-     parâmetros declarados, lendo a especificação OpenAPI que o PostgREST publica.
-     É leitura pura — não chama nenhuma função, não produz efeito nenhum.
+  1. Estático, em todo build: nenhuma chamada usa nome que não esteja declarado
+     aqui, e nenhuma entrada daqui fica sem quem a chame. O mapa não pode ficar
+     desatualizado em silêncio. Conta como chamada tanto `.rpc("…")` pelo cliente
+     Supabase como uma constante `RPC_*` que nomeia uma função do contrato — é
+     assim que `obter_branding_acesso_publico` é pedida, por `fetch` direto, para
+     não herdar a sessão do utilizador.
+  2. Contra o banco, em job próprio (`check:rpc-contract:db`), quando há
+     credencial de servidor: cada função existe e aceita os parâmetros
+     declarados, lendo `pg_proc` — o catálogo do PostgreSQL — em sessão
+     somente-leitura. Nenhuma função é chamada.
+
+     Não é a especificação OpenAPI do PostgREST, e a distinção custou um erro:
+     aquela especificação reflete os privilégios da role que pergunta, de modo
+     que com `anon` as funções de `authenticated` ficam invisíveis e passariam
+     por inexistentes. O catálogo mostra o que existe, independentemente de quem
+     pode executar.
 
   `critica: true` marca as funções sem as quais a tela correspondente não
   funciona. São as que fazem a verificação falhar; as demais apenas avisam.
@@ -34,6 +45,12 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: true,
     resumo: "Contexto unificado de acesso: perfil, permissões e painéis.",
+  },
+  obter_branding_acesso_publico: {
+    argumentos: [],
+    critica: true,
+    resumo:
+      "Identidade da tela de acesso, antes de autenticar. Só as seis chaves públicas de branding.",
   },
   usuario_pode_ler_analises: {
     argumentos: [],

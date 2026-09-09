@@ -43,13 +43,29 @@ for (const ficheiro of percorrer(RAIZ_FONTE).filter((p) => p.endsWith(".js"))) {
     constantes.set(m[1], m[2]);
   }
 
+  const registar = (nome) => {
+    if (!nome) return;
+    if (!usadas.has(nome)) usadas.set(nome, new Set());
+    usadas.get(nome).add(caminho);
+  };
+
   for (const m of fonte.matchAll(
     /\.rpc\(\s*(?:"([a-z0-9_]+)"|(RPC_[A-Z_0-9]+))/g,
   )) {
-    const nome = m[1] || constantes.get(m[2]);
-    if (!nome) continue;
-    if (!usadas.has(nome)) usadas.set(nome, new Set());
-    usadas.get(nome).add(caminho);
+    registar(m[1] || constantes.get(m[2]));
+  }
+
+  /*
+    Nem toda RPC passa pelo cliente Supabase. `obter_branding_acesso_publico` é
+    pedida por `fetch` direto, de propósito, para não herdar a sessão do
+    utilizador — e nem por isso deixa de ser dependência do frontend.
+
+    Uma constante `RPC_*` cujo valor nomeia uma função do contrato conta, por
+    isso, como uso: é dela que a URL é montada. Sem esta regra, a verificação
+    acusaria como órfã uma função de que a tela de acesso depende.
+  */
+  for (const nome of constantes.values()) {
+    if (CONTRATO_RPC[nome]) registar(nome);
   }
 }
 

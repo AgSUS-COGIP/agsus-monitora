@@ -39,6 +39,16 @@ import {
   validateAccessBackgroundFile,
 } from "../lib/access-background-storage.js";
 import { guardarMarca } from "../lib/access-branding-cache.js";
+import {
+  SAIDA_DESCONHECIDA,
+  SAIDA_MANUAL,
+  SAIDA_REVOGADA,
+  causaDaSaida,
+  declararSaida,
+  encerrarTransicaoDeSaida,
+  mensagemDaSaida,
+  reivindicarSaida,
+} from "../lib/estado-de-saida.js";
 import { avisoGlobal } from "../lib/aviso-global.js";
 import { ehFalhaTransitoria, ehSessaoEncerrada } from "../lib/sessao.js";
 
@@ -237,7 +247,25 @@ let statusChart = null;
 let chartsReady = false;
 let dataLoadedAtLeastOnce = false;
 let externalPanelsWarmed = false;
-let manualLogoutInProgress = false;
+/*
+  Dono único da transição para o estado deslogado.
+
+  Antes eram dois — `logout()` e o listener de `onAuthStateChange` — e um
+  booleano consumido no primeiro evento. `reivindicarSaida()` garante que a
+  transição só é aplicada uma vez; a causa, essa, dura até um novo `SIGNED_IN`.
+*/
+function aplicarSaida(opcoes = {}) {
+  if (opcoes.causa) declararSaida(opcoes.causa);
+  if (!reivindicarSaida()) return;
+  const mensagem =
+    opcoes.mensagem !== undefined ? opcoes.mensagem : mensagemDaSaida();
+  resetSignedOutState(mensagem, opcoes.tipo || "warn");
+}
+
+/** Há uma saída em curso? Enquanto houver, um `SIGNED_IN` não reabre o sistema. */
+function saidaEmCurso() {
+  return causaDaSaida() !== SAIDA_DESCONHECIDA;
+}
 let accessHeartbeatHandle = null;
 let onlinePresenceHandle = null;
 let activeSessionLoadPromise = null;
@@ -790,9 +818,9 @@ async function clearLocalAuthState() {
 }
 async function returnToLogin() {
   await clearLocalAuthState();
-  manualLogoutInProgress = true;
+  declararSaida(SAIDA_MANUAL);
   if (sb) await sb.auth.signOut();
-  resetSignedOutState("", "");
+  aplicarSaida({ mensagem: "" });
   const emailInput = $("loginEmail");
   if (emailInput) emailInput.value = "";
   const passwordInput = $("loginPassword");
@@ -829,20 +857,20 @@ function appAlreadyLoadedForSession(session) {
 }
 
 async function handleSignedInSession(nextSession, source = "auth") {
-  if (!isUsableSession(nextSession) || manualLogoutInProgress) return;
+  if (!isUsableSession(nextSession) || saidaEmCurso()) return;
 
   const allowedDomains = normalizeAllowedDomains(
     cfgValue("auth_google_allowed_domains"),
   );
   if (!isAllowedInstitutionalEmail(nextSession.user?.email, allowedDomains)) {
-    manualLogoutInProgress = true;
+    declararSaida(SAIDA_REVOGADA);
     try {
       await sb.auth.signOut({ scope: "local" });
     } catch (e) {}
-    resetSignedOutState(
-      `Use uma conta institucional (${allowedDomains.map((domain) => `@${domain}`).join(" ou ")}).`,
-      "error",
-    );
+    aplicarSaida({
+      mensagem: `Use uma conta institucional (${allowedDomains.map((domain) => `@${domain}`).join(" ou ")}).`,
+      tipo: "error",
+    });
     const googleBtn = $("googleLoginBtn");
     if (googleBtn) {
       googleBtn.disabled = false;
@@ -946,18 +974,24 @@ async function boot() {
   sb.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
       currentUser = null;
-      manualLogoutInProgress = true;
       if (sb) sb.auth.signOut();
       clearRecoveryUrl();
-      resetSignedOutState(passwordResetMessage(), "warn");
+      // Causa manual: o `SIGNED_OUT` que vem a seguir não é expiração.
+      aplicarSaida({
+        causa: SAIDA_MANUAL,
+        mensagem: passwordResetMessage(),
+        tipo: "warn",
+      });
       return;
     }
     if (event === "SIGNED_OUT") {
-      const message = manualLogoutInProgress
-        ? ""
-        : "Sessão encerrada. Faça login novamente.";
-      manualLogoutInProgress = false;
-      resetSignedOutState(message);
+      /*
+        A causa não é consumida aqui. Antes era: o booleano zerava no primeiro
+        evento, e um segundo `SIGNED_OUT` — que o Supabase emite em mais de uma
+        situação — passava a ser lido como expiração. Era essa a mensagem
+        amarela que aparecia depois de sair pelo botão.
+      */
+      aplicarSaida();
       return;
     }
     if (event === "TOKEN_REFRESHED") {
@@ -968,6 +1002,8 @@ async function boot() {
       setTimeout(() => refreshProfileAfterSessionUpdate(session), 0);
     }
     if (event === "SIGNED_IN") {
+      // Entrar encerra a transição: daqui em diante um SIGNED_OUT é evento novo.
+      encerrarTransicaoDeSaida();
       if (oauthExchangeInProgress) return;
       const uid = session?.user?.id || "";
       const now = Date.now();
@@ -997,10 +1033,13 @@ async function boot() {
     : await sb.auth.getSession();
   if (hasPasswordRecoveryParams()) {
     currentUser = null;
-    manualLogoutInProgress = true;
     if (sb) await sb.auth.signOut();
     clearRecoveryUrl();
-    resetSignedOutState(passwordResetMessage(), "warn");
+    aplicarSaida({
+      causa: SAIDA_MANUAL,
+      mensagem: passwordResetMessage(),
+      tipo: "warn",
+    });
     return;
   }
   if (isUsableSession(data?.session)) {
@@ -1188,12 +1227,18 @@ window.addEventListener("message", async (event) => {
   }
 });
 
+/*
+  Saída voluntária. Declara a causa e pede o `signOut()`; quem transforma a
+  aplicação em estado deslogado é o listener de `onAuthStateChange`, dono único
+  dessa transição. A chamada final é rede de segurança, não segundo dono: só
+  age se o evento não tiver chegado, e nunca mostra mensagem.
+*/
 async function logout() {
   await trackAccess("logout", { detalhes: { current_view: currentView } });
   stopRealtime();
-  manualLogoutInProgress = true;
+  declararSaida(SAIDA_MANUAL);
   if (sb) await sb.auth.signOut();
-  resetSignedOutState("", "");
+  aplicarSaida();
 }
 
 function openApp(user) {
@@ -1642,47 +1687,74 @@ function applyConfigToUi() {
   setText("skipLink", cfgValue("skip_link_text"));
   setText("offlineBar", cfgValue("offline_message"));
   setLoginButtonReady();
+  /*
+    A identidade da tela de acesso só é tocada quando veio do banco.
+
+    Antes, esta secção corria sempre — inclusive pelo caminho de erro de
+    `loadConfig()`, que chama `applyConfigToUi()` com `appConfig` vazio. Os
+    normalizadores devolviam os valores padrão, e `guardarMarca()` gravava-os no
+    cache como se fossem a identidade da instituição. Bastava uma visita não
+    autenticada para contaminar a próxima inicialização: a tela abria com a arte
+    antiga, e só depois do login — quando a configuração real finalmente
+    carregava — é que a identidade correta aparecia.
+
+    Agora exige-se prova dupla: a configuração carregou (`configLoadOk`) **e** a
+    chave em questão veio mesmo na resposta (`loadedConfigKeys`). Sem isso, a
+    tela fica como o arranque a deixou — a última marca válida, se existir, ou
+    neutra. Nunca a identidade antiga apresentada como institucional.
+  */
+  const marcaDoBanco = (chave) =>
+    configLoadOk && loadedConfigKeys.has(chave) ? cfgValue(chave) : null;
+
+  const fundoDoBanco = marcaDoBanco("auth_access_background_url");
+  const painelDoBanco = marcaDoBanco("auth_access_panel_color");
+  const logoDoBanco = marcaDoBanco("auth_access_logo_url");
+  const saudacaoDoBanco = marcaDoBanco("auth_access_greeting");
+  const instrucaoDoBanco = marcaDoBanco("auth_access_instruction");
+
   const loginScreen = $("loginScreen");
-  const accessBackgroundUrl = normalizeAccessBackgroundUrl(
-    cfgValue("auth_access_background_url"),
-  );
-  const accessPanelColor = normalizeAccessPanelColor(
-    cfgValue("auth_access_panel_color"),
-  );
-  if (loginScreen) {
+  const marcaParaGuardar = {};
+
+  if (loginScreen && fundoDoBanco !== null) {
+    const url = normalizeAccessBackgroundUrl(fundoDoBanco);
     loginScreen.style.setProperty(
       "--login-background-image",
-      `url("${accessBackgroundUrl.replace(/["\\]/g, "")}")`,
+      `url("${url.replace(/["\\]/g, "")}")`,
     );
-    loginScreen.style.setProperty("--login-panel-color", accessPanelColor);
-    loginScreen.classList.toggle(
-      "login-panel-dark",
-      needsLightForeground(accessPanelColor),
-    );
+    marcaParaGuardar.backgroundUrl = url;
   }
+
+  if (loginScreen && painelDoBanco !== null) {
+    const cor = normalizeAccessPanelColor(painelDoBanco);
+    loginScreen.style.setProperty("--login-panel-color", cor);
+    loginScreen.classList.toggle("login-panel-dark", needsLightForeground(cor));
+    marcaParaGuardar.panelColor = cor;
+  }
+
+  if (logoDoBanco !== null) {
+    const logo = normalizeAccessLogoUrl(logoDoBanco);
+    setImg("loginLogo", logo, "AgSUS");
+    marcaParaGuardar.logoUrl = logo;
+  }
+
+  if (saudacaoDoBanco !== null) {
+    const saudacao = saudacaoDoBanco || DEFAULT_ACCESS_BRANDING.greeting;
+    setText("loginGreeting", saudacao);
+    marcaParaGuardar.greeting = saudacao;
+  }
+
+  if (instrucaoDoBanco !== null) {
+    const instrucao = instrucaoDoBanco || DEFAULT_ACCESS_BRANDING.instruction;
+    setText("loginDescription", instrucao);
+    marcaParaGuardar.instruction = instrucao;
+  }
+
   /*
-    Guarda a marca que acabou de ser aplicada, para a próxima visita já abrir
-    pintada. É aqui, e não em `loadConfig`, porque neste ponto os valores já
-    passaram pela normalização — guardar antes salvaria dados que a tela recusaria
-    depois. Ver `access-branding-cache.js` para o motivo de tudo isto existir.
+    Guarda os cinco campos juntos, e só os que vieram do banco. Guardar apenas
+    fundo e cor — como antes — produzia tela híbrida: arte de uma configuração
+    com saudação de outra.
   */
-  guardarMarca({
-    backgroundUrl: accessBackgroundUrl,
-    panelColor: accessPanelColor,
-  });
-  setImg(
-    "loginLogo",
-    normalizeAccessLogoUrl(cfgValue("auth_access_logo_url")),
-    "AgSUS",
-  );
-  setText(
-    "loginGreeting",
-    cfgValue("auth_access_greeting") || DEFAULT_ACCESS_BRANDING.greeting,
-  );
-  setText(
-    "loginDescription",
-    cfgValue("auth_access_instruction") || DEFAULT_ACCESS_BRANDING.instruction,
-  );
+  if (Object.keys(marcaParaGuardar).length) guardarMarca(marcaParaGuardar);
   const googleBtn = $("googleLoginBtn");
   if (googleBtn) {
     const enabled = cfgBool("auth_google_enabled", true);

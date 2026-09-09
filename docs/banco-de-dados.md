@@ -157,7 +157,39 @@ fixado é o vetor clássico de escalada de privilégio em PostgreSQL, e **nenhum
 das 30 funções está nessa condição**. É um ponto forte da base atual, não uma
 pendência.
 
-### 4.1 Seis tabelas com RLS e sem policy — não mexer
+### 4.1 O acesso de `anon` a `configuracoes`
+
+Conferido no banco principal em 09/09/2026, e registado aqui porque uma versão
+anterior deste documento afirmava o contrário.
+
+**`anon` tem `select` em `public.configuracoes`.** A RLS está ligada e a policy
+`config_select_anon_safe` limita a leitura a dez chaves inócuas:
+
+`app_version_current`, `footer_text`, `cogip_nome`, `cogip_funcao`,
+`cogip_versao`, `cogip_dept`, `cogip_logo_url`, `auth_google_enabled`,
+`auth_google_button_text`, `auth_google_domain_hint`.
+
+Nenhuma delas é a arte de fundo, o logotipo, a cor do painel, a saudação ou a
+instrução — que é por isso que a tela de acesso precisou de
+`obter_branding_acesso_publico()` para as cinco que faltam.
+
+**Não revogar este grant.** Ele é anterior a este trabalho e há consumidores
+legítimos; qualquer redução pertence à etapa de saneamento de grants, depois do
+inventário completo.
+
+Medição que importa para o diagnóstico, feita no banco real:
+
+| `Authorization` enviado        | `GET /configuracoes` | `POST /rpc/…`                              |
+| ------------------------------ | -------------------- | ------------------------------------------ |
+| chave publicável (role `anon`) | **200**, 10 chaves   | 404 `PGRST202` (função ainda não aplicada) |
+| JWT expirado / indecifrável    | **401** `PGRST301`   | **401** `PGRST301`                         |
+
+A segunda linha é a razão de a chamada pública de branding não usar o cliente
+compartilhado: uma sessão corrompida no armazenamento faria a requisição falhar
+com 401 **mesmo tendo `anon` o `execute` concedido**. Ver
+`src/lib/access-branding-publico.js`.
+
+### 4.2 Seis tabelas com RLS e sem policy — não mexer
 
 Existem seis tabelas com RLS ativa e nenhuma política definida. Com RLS ligada e
 sem policy, a tabela nega tudo para roles comuns.
@@ -171,7 +203,7 @@ alguém fechou de propósito — o oposto do princípio deste documento.
 Antes de qualquer mudança nelas, responder: quem lê e quem escreve hoje, e por
 qual caminho. Só então decidir entre manter fechada, criar RPC ou abrir policy.
 
-### 4.2 O que ainda não foi levantado
+### 4.3 O que ainda não foi levantado
 
 | Item                           | Como levantar                                                 |
 | ------------------------------ | ------------------------------------------------------------- |
@@ -186,7 +218,7 @@ Só depois desse levantamento faz sentido a etapa seguinte do item 7: **propor a
 redução dos grants de `authenticated` e `anon`**. Reduzir agora, sem saber quem
 consome o quê no banco, quebraria consumidores invisíveis a partir do repositório.
 
-### 4.3 Verificação automatizada do contrato
+### 4.4 Verificação automatizada do contrato
 
 `npm run check:rpc-contract:db` consulta `pg_proc` por conexão direta e compara
 com [`src/lib/rpc-contrato.js`](../src/lib/rpc-contrato.js): quais funções
@@ -208,7 +240,7 @@ A sessão é aberta como somente-leitura.
 Rodar primeiro contra um Supabase de desenvolvimento ou branch; só depois contra
 produção.
 
-### 4.4 Validação da migration de recusa
+### 4.5 Validação da migration de recusa
 
 `npm run db:validar-recusar -- --antes` confere os pré-requisitos estruturais:
 `private.is_master()`, as colunas de `solicitacoes_acesso`, o gatilho

@@ -1,33 +1,39 @@
 /*
-  Pinta a tela de acesso com a marca da visita anterior, antes de qualquer rede.
+  Pinta a tela de acesso com a identidade da instituição, o mais cedo possível.
 
   Importado cedo em `main.js`, este módulo roda enquanto o restante da aplicação
-  ainda está sendo avaliado — antes, portanto, da consulta que traz a
-  configuração do Supabase. É o mais próximo que uma página única servida
+  ainda está sendo avaliado. É o mais próximo que uma página única servida
   estaticamente chega do que o SIGAV faz no servidor: entregar a tela já pintada.
 
-  Aplica só as duas propriedades que mudam a aparência do primeiro quadro — a
-  arte de fundo e a cor do painel. O resto da marca (saudação, instrução,
-  logotipo) é texto e imagem dentro do cartão, que já nasce com o conteúdo do
-  HTML e não passa pelo estado intermediário.
+  ORDEM DE CARREGAMENTO
+    1. primeiro quadro — a marca guardada da visita anterior, sem rede;
+    2. em paralelo — `obter_branding_acesso_publico()`, que traz a identidade
+       atual e não exige autenticação;
+    3. se a RPC respondeu, o cache é atualizado e os campos reaplicados;
+    4. depois do login, `applyConfigToUi()` cuida da configuração completa.
 
-  Quando a configuração real chega, `applyConfigToUi()` sobrescreve estes valores
-  e chama `guardarMarca()`. Se a configuração divergir do que estava guardado, a
-  troca acontece — mas entre duas configurações legítimas, não entre um padrão
-  alheio e a identidade da instituição.
+  O passo 2 existe porque o cache resolve a segunda visita, não a primeira.
+  Navegador novo, aba anónima ou armazenamento limpo não têm o que aplicar no
+  passo 1 — e é justamente aí que a tela precisa mostrar a identidade certa.
+
+  O que uma falha **não** pode fazer: trocar uma identidade correta por outra.
+  Se a RPC não responder, fica o que estava; se nada estava, a tela fica neutra.
+  Nunca a arte padrão apresentada como se fosse escolha da instituição.
 */
 
-import { lerMarcaGuardada } from "./access-branding-cache.js";
+import { guardarMarca, lerMarcaGuardada } from "./access-branding-cache.js";
+import { buscarMarcaPublica } from "./access-branding-publico.js";
 
 /** `url("…")` seguro: aspas e barras invertidas quebrariam a declaração CSS. */
 function comoUrlCss(valor) {
   return `url("${String(valor).replace(/["\\]/g, "")}")`;
 }
 
-export function aplicarMarcaGuardadaNoArranque(
-  documento = globalThis.document,
-) {
-  const marca = lerMarcaGuardada();
+/**
+ * Escreve uma marca na tela. Cada campo é opcional; o que falta fica como está.
+ * @returns {boolean} `true` se algo chegou a ser aplicado.
+ */
+export function aplicarMarcaNaTela(marca, documento = globalThis.document) {
   if (!marca) return false;
 
   const tela = documento?.getElementById?.("loginScreen");
@@ -43,7 +49,46 @@ export function aplicarMarcaGuardadaNoArranque(
     tela.style.setProperty("--login-panel-color", marca.panelColor);
   }
 
+  /*
+    Os campos entram juntos. Aplicar só a arte e a cor produzia tela híbrida: o
+    fundo de uma configuração com a saudação e o logotipo de outra — o pior dos
+    dois mundos, porque parece uma identidade que ninguém escolheu.
+  */
+  const logo = documento?.getElementById?.("loginLogo");
+  if (logo && marca.logoUrl) logo.setAttribute("src", marca.logoUrl);
+
+  const saudacao = documento?.getElementById?.("loginGreeting");
+  if (saudacao && marca.greeting) saudacao.textContent = marca.greeting;
+
+  const instrucao = documento?.getElementById?.("loginDescription");
+  if (instrucao && marca.instruction) instrucao.textContent = marca.instruction;
+
+  const textoDoBotao = documento?.getElementById?.("googleLoginText");
+  if (textoDoBotao && marca.buttonText) {
+    textoDoBotao.textContent = marca.buttonText;
+  }
+
   return true;
+}
+
+export function aplicarMarcaGuardadaNoArranque(
+  documento = globalThis.document,
+) {
+  return aplicarMarcaNaTela(lerMarcaGuardada(), documento);
+}
+
+/**
+ * Busca a identidade atual e aplica-a, guardando-a para a próxima visita.
+ * Falhar aqui é inofensivo por construção: nada é aplicado e nada é guardado.
+ */
+export async function atualizarMarcaComBrandingPublico(
+  documento = globalThis.document,
+) {
+  const marca = await buscarMarcaPublica();
+  if (!marca) return false;
+
+  guardarMarca(marca);
+  return aplicarMarcaNaTela(marca, documento);
 }
 
 /*
@@ -59,4 +104,11 @@ if (typeof document !== "undefined") {
       { once: true },
     );
   }
+
+  /*
+    A busca não é aguardada: o primeiro quadro já foi pintado com o que havia, e
+    esta chamada apenas o corrige quando a resposta chega. `void` deixa explícito
+    que a promessa é deliberadamente ignorada — falhar aqui não interrompe nada.
+  */
+  void atualizarMarcaComBrandingPublico();
 }
