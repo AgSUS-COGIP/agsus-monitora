@@ -12,42 +12,63 @@
   background: var(--login-panel-color, #ffffff);
 }
 
-/* Densidade do dashboard Saúde Indígena sem usar zoom/scale. */
+/*
+ * Densidade do dashboard Saúde Indígena. As regras de health-reference-kpis.css
+ * usam !important; estes ajustes precisam da mesma prioridade porque este ficheiro
+ * é carregado depois e representa a decisão visual mais recente.
+ */
 body:has(#page-dashboard.active) .page-title h1 {
-  font-size: 26px;
+  font-size: 22px !important;
 }
 
 body:has(#page-dashboard.active) .page-title p {
-  font-size: 12px;
+  font-size: 11px !important;
 }
 
-#page-dashboard .kpis {
-  gap: 8px;
+#page-dashboard .kpis-main {
+  gap: 7px !important;
 }
 
 #page-dashboard .kpi {
-  min-height: 72px;
-  padding: 8px 10px;
-  border-radius: 12px;
+  min-height: 78px !important;
+  padding: 9px 11px !important;
+  border-radius: 11px !important;
 }
 
-#page-dashboard .kpi::before {
-  height: 3px;
+#page-dashboard .kpi > span {
+  min-height: 24px !important;
+  gap: 6px !important;
+  font-size: 9px !important;
+  line-height: 1.15 !important;
 }
 
-#page-dashboard .kpi span {
-  font-size: 11px;
+#page-dashboard .kpi > span > i {
+  width: 26px !important;
+  height: 26px !important;
+  flex-basis: 26px !important;
+  border-radius: 8px !important;
+  font-size: 11px !important;
 }
 
-#page-dashboard .kpi b {
-  margin-top: 4px;
-  font-size: 26px;
-  line-height: 1;
+#page-dashboard .kpi > b {
+  margin-top: 3px !important;
+  font-size: clamp(22px, 1.7vw, 28px) !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.03em !important;
 }
 
-#page-dashboard .kpi .kpi-note,
-#page-dashboard .kpi-rate-pct {
-  font-size: 10px;
+#page-dashboard .kpi-rate {
+  margin-top: 4px !important;
+}
+
+#page-dashboard .kpi-rate-pct,
+#page-dashboard .kpi .kpi-note {
+  font-size: 8.5px !important;
+}
+
+#page-dashboard #panicChip {
+  padding: 3px 7px !important;
+  font-size: 8px !important;
 }
 
 /* Sidebar configurável. A classe de contraste é derivada em JS da cor escolhida. */
@@ -128,29 +149,164 @@ body.sidebar-theme-dark .side-brand-copy small {
   color: #ffffff;
 }
 
-.sidebar-branding-preview {
-  display: flex;
+.sidebar-logo-manager {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #d7e5f2;
+  border-radius: 12px;
+  background: #fbfdff;
 }
 
-.sidebar-branding-preview img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
+.sidebar-branding-preview {
+  width: 92px;
+  height: 72px;
+  display: grid;
+  place-items: center;
   border: 1px solid #d7e5f2;
   border-radius: 10px;
   background: #ffffff;
-  padding: 4px;
+}
+
+.sidebar-branding-preview img {
+  max-width: 72px;
+  max-height: 52px;
+  object-fit: contain;
+}
+
+.sidebar-logo-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sidebar-logo-actions small {
+  flex-basis: 100%;
+  color: #60758f;
+  font-size: 11px;
+}
+
+.sidebar-logo-actions small[data-tone="error"] {
+  color: #b42318;
+}
+
+.sidebar-logo-actions small[data-tone="success"] {
+  color: #067647;
+}
+
+.sidebar-logo-upload {
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-logo-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-logo-gallery {
+  margin-top: 10px;
+}
+
+.sidebar-logo-gallery-title {
+  margin: 0 0 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #526780;
+}
+
+.sidebar-logo-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.sidebar-logo-gallery-card {
+  padding: 7px;
+  border: 1px solid #d7e5f2;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.sidebar-logo-gallery-card.is-active {
+  border-color: #1689a7;
+  box-shadow: 0 0 0 2px rgba(22, 137, 167, 0.1);
+}
+
+.sidebar-logo-gallery-item {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.sidebar-logo-gallery-item:disabled {
+  cursor: default;
+}
+
+.sidebar-logo-gallery-item img {
+  width: 58px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.sidebar-logo-gallery-item small {
+  font-size: 9px;
+  font-weight: 800;
+  color: #526780;
+}
+
+.sidebar-logo-gallery-delete {
+  width: 100%;
+  margin-top: 5px;
+  padding: 5px 7px;
+  border: 1px solid #f0b4b4;
+  border-radius: 7px;
+  background: #fff7f7;
+  color: #b42318;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sidebar-color-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sidebar-color-control input[type="color"] {
+  width: 52px;
+  height: 36px;
+  padding: 2px;
+}
+
+.sidebar-color-control span {
+  color: #526780;
+  font-size: 11px;
 }
 
 @media (max-width: 900px) {
   body:has(#page-dashboard.active) .page-title h1 {
-    font-size: 22px;
+    font-size: 20px !important;
   }
 
-  #page-dashboard .kpi b {
-    font-size: 24px;
+  #page-dashboard .kpi > b {
+    font-size: 22px !important;
+  }
+
+  .sidebar-logo-manager {
+    grid-template-columns: 1fr;
   }
 }

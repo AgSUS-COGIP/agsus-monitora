@@ -3,8 +3,8 @@ const BRAZIL_VIEW_BOUNDS = [
   [6.4, -33.7],
 ];
 
-// Mantém o Brasil como enquadramento inicial, mas permite afastar e navegar
-// pelo contexto geográfico da América do Sul.
+// Mantém o Brasil como enquadramento inicial, mas permite navegar pelo contexto
+// geográfico da América do Sul sem criar cópias laterais do mapa.
 const SOUTH_AMERICA_MAX_BOUNDS = [
   [-58.5, -84.5],
   [15.5, -27.0],
@@ -100,8 +100,6 @@ function hardenMapInstance(L, map) {
   map.__agsusMapGuarded = true;
   map.__agsusOverviewMode = true;
 
-  // O código legado recalcula limites muito justos ao redor do Brasil. Aqui
-  // mantemos um limite único da América do Sul para permitir contexto regional.
   map.setMaxBounds = function setGuardedMaxBounds() {
     return originalSetMaxBounds(maxBounds);
   };
@@ -115,21 +113,25 @@ function hardenMapInstance(L, map) {
     originalSetMinZoom(3);
   }
 
-  // O limite abaixo vale apenas para enquadramentos automáticos. O overview do
-  // Brasil não passa de zoom 3: em cards baixos/largos, zoom 4 cortava o país no
-  // primeiro quadro. Seleções e filtros continuam podendo aproximar mais.
+  /*
+    No overview, quem decide o zoom é o tamanho REAL do card. O limite fixo em 3
+    deixava Brasil pequeno e desperdiçava quase metade da área útil em monitores
+    largos. Depois de invalidateSize(), fitBounds pode usar até zoom 4 e ocupar o
+    espaço disponível sem recortar o país. Seleções territoriais continuam livres
+    para aproximar além disso.
+  */
   map.fitBounds = function fitGuardedBounds(bounds, options = {}) {
     const limited = limitBounds(L, bounds, maxBounds);
     const overview = isBrazilOverviewBounds(L, limited);
     map.__agsusOverviewMode = overview;
     const requestedMax = Number(options.maxZoom);
     const maxZoom = overview
-      ? Math.min(Number.isFinite(requestedMax) ? requestedMax : 3, 3)
+      ? Math.min(Number.isFinite(requestedMax) ? requestedMax : 4, 4)
       : Number.isFinite(requestedMax)
         ? requestedMax
         : 8;
     return originalFitBounds(limited, {
-      padding: overview ? [20, 20] : [24, 24],
+      padding: overview ? [10, 10] : [24, 24],
       animate: false,
       ...options,
       maxZoom,
@@ -142,10 +144,12 @@ function hardenMapInstance(L, map) {
       const overview = isBrazilOverviewBounds(L, limited);
       map.__agsusOverviewMode = overview;
       return originalFlyToBounds(limited, {
-        padding: overview ? [20, 20] : [32, 32],
+        padding: overview ? [10, 10] : [32, 32],
         duration: 0.35,
         ...options,
-        maxZoom: overview ? 3 : (options.maxZoom ?? 9),
+        maxZoom: overview
+          ? Math.min(options.maxZoom ?? 4, 4)
+          : (options.maxZoom ?? 9),
       });
     };
   }
@@ -184,49 +188,39 @@ function hardenMapInstance(L, map) {
 
   enhanceMapAccessibility(L, map);
 
+  const fitBrazilOverview = () => {
+    try {
+      map.invalidateSize({ animate: false, pan: false });
+      map.__agsusOverviewMode = true;
+      originalFitBounds(viewBounds, {
+        padding: [10, 10],
+        maxZoom: 4,
+        animate: false,
+      });
+    } catch (error) {
+      console.warn("Nao foi possivel reenquadrar o Brasil:", error);
+    }
+  };
+
   map.whenReady(() => {
     originalSetMaxBounds(maxBounds);
     originalSetMinZoom?.(3);
-    map.__agsusOverviewMode = true;
-    originalFitBounds(viewBounds, {
-      padding: [20, 20],
-      maxZoom: 3,
-      animate: false,
-    });
+    fitBrazilOverview();
     ensureFullManualZoomRange(map);
     addScaleControl(L, map);
     stabilizeMap(map, maxBounds);
-    window.setTimeout(() => stabilizeMap(map, maxBounds), 180);
-    window.setTimeout(() => stabilizeMap(map, maxBounds), 600);
+    window.setTimeout(fitBrazilOverview, 120);
+    window.setTimeout(fitBrazilOverview, 420);
   });
 
-  // Quando o card ganha a dimensão final, recalcula o overview. Antes havia
-  // apenas invalidateSize(), mantendo o zoom calculado para uma dimensão antiga.
+  // Se o card muda de tamanho ainda em overview, recalcula com o tamanho final.
+  // Se a pessoa já aproximou o mapa, o enquadramento manual é preservado.
   map.on("resize", () => {
     stabilizeMap(map, maxBounds);
-    /*
-      A bandeira sozinha não basta: o zoom por pinça no telemóvel não passa por
-      `setView` nem por `flyTo`, então ela continuaria `true` depois de a pessoa
-      aproximar. Um `resize` seguinte — rodar o aparelho, abrir a barra lateral,
-      entrar em ecrã inteiro — devolveria o mapa ao Brasil, descartando o que ela
-      tinha enquadrado.
-
-      O zoom corrente é a prova: só reenquadra quem ainda está na visão geral.
-    */
     const aindaEmOverview =
-      map.__agsusOverviewMode && Number(map.getZoom?.() ?? 0) <= 3;
+      map.__agsusOverviewMode && Number(map.getZoom?.() ?? 0) <= 4;
     if (!aindaEmOverview) return;
-    window.requestAnimationFrame(() => {
-      try {
-        originalFitBounds(viewBounds, {
-          padding: [20, 20],
-          maxZoom: 3,
-          animate: false,
-        });
-      } catch (error) {
-        console.warn("Nao foi possivel reenquadrar o Brasil:", error);
-      }
-    });
+    window.requestAnimationFrame(fitBrazilOverview);
   });
   map.on("drag move zoomend moveend layeradd", () =>
     stabilizeMap(map, maxBounds),
@@ -246,8 +240,6 @@ function enhanceMapAccessibility(L, map) {
   container.title =
     "Brasil em destaque. Afaste o zoom para consultar o contexto da América do Sul.";
 
-  // Mantém os recursos explicitamente habilitados mesmo em navegadores/dispositivos
-  // que inicializam algum handler como desativado.
   map.scrollWheelZoom?.enable?.();
   map.doubleClickZoom?.enable?.();
   map.touchZoom?.enable?.();
@@ -264,8 +256,8 @@ function enhanceMapAccessibility(L, map) {
     } else if (event.key === "0") {
       event.preventDefault();
       map.fitBounds(toViewBounds(L), {
-        padding: [20, 20],
-        maxZoom: 3,
+        padding: [10, 10],
+        maxZoom: 4,
         animate: false,
       });
     }

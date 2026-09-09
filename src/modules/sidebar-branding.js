@@ -1,4 +1,9 @@
 import { needsLightForeground } from "../lib/access-branding.js";
+import {
+  ACCESS_BACKGROUND_BUCKET,
+  ACCESS_BACKGROUND_FOLDER,
+  validateAccessBackgroundFile,
+} from "../lib/access-background-storage.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 const KEY_LOGO = "ui_sidebar_logo_url";
@@ -6,11 +11,19 @@ const KEY_COLOR = "ui_sidebar_background_color";
 const DEFAULT_LOGO = "/assets/agsus-logo.webp";
 const DEFAULT_COLOR = "#ffffff";
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+const SIDEBAR_LOGO_FOLDER = `${ACCESS_BACKGROUND_FOLDER}/sidebar`;
+const SIDEBAR_LOGO_PREFIX = "logo-";
+const EXTENSION_BY_MIME = Object.freeze({
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+});
 
 let initialized = false;
 let client = null;
 let currentLogo = DEFAULT_LOGO;
 let currentColor = DEFAULT_COLOR;
+let logoUploadBusy = false;
 
 function safeLogo(value) {
   const raw = String(value || "").trim();
@@ -29,6 +42,40 @@ function safeColor(value) {
 
 function cssUrl(value) {
   return `url("${String(value).replace(/["\\]/g, "")}")`;
+}
+
+function errorMessage(error) {
+  return String(error?.message || error || "Erro desconhecido.");
+}
+
+function createSidebarLogoPath(file) {
+  const extension = EXTENSION_BY_MIME[file?.type] || "png";
+  const id =
+    globalThis.crypto?.randomUUID?.() ||
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${SIDEBAR_LOGO_FOLDER}/${SIDEBAR_LOGO_PREFIX}${id}.${extension}`;
+}
+
+function setSidebarLogoStatus(message, tone = "neutral") {
+  const status = document.getElementById("cfgSidebarLogoStatus");
+  if (!status) return;
+  status.textContent = message;
+  status.dataset.tone = tone;
+}
+
+function setSidebarLogoBusy(busy) {
+  logoUploadBusy = Boolean(busy);
+  const fileInput = document.getElementById("cfgSidebarLogoFile");
+  const restoreButton = document.getElementById("cfgSidebarLogoRestore");
+  if (fileInput) fileInput.disabled = logoUploadBusy;
+  if (restoreButton) restoreButton.disabled = logoUploadBusy;
+}
+
+function signalSidebarLogoChanged() {
+  const logoInput = document.getElementById("cfgSidebarLogoUrl");
+  if (!logoInput) return;
+  logoInput.dispatchEvent(new Event("input", { bubbles: true }));
+  logoInput.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function applySidebarBranding({
@@ -54,14 +101,191 @@ function applySidebarBranding({
   const logoInput = document.getElementById("cfgSidebarLogoUrl");
   const colorInput = document.getElementById("cfgSidebarBackgroundColor");
   const preview = document.getElementById("cfgSidebarLogoPreview");
-  if (logoInput && logoInput.value !== currentLogo)
+  if (logoInput && logoInput.value !== currentLogo) {
     logoInput.value = currentLogo;
+  }
   if (colorInput && colorInput.value !== currentColor) {
     colorInput.value = currentColor;
   }
   if (preview && preview.getAttribute("src") !== currentLogo) {
     preview.setAttribute("src", currentLogo);
   }
+}
+
+function chooseSidebarLogo(url, { dirty = true } = {}) {
+  currentLogo = safeLogo(url);
+  applySidebarBranding();
+  if (dirty) signalSidebarLogoChanged();
+}
+
+async function uploadSidebarLogo(file) {
+  if (logoUploadBusy) return false;
+  const validationError = validateAccessBackgroundFile(file);
+  if (validationError) {
+    setSidebarLogoStatus(validationError, "error");
+    return false;
+  }
+  if (!client) {
+    setSidebarLogoStatus(
+      "Não foi possível conectar ao armazenamento para enviar a logo.",
+      "error",
+    );
+    return false;
+  }
+
+  setSidebarLogoBusy(true);
+  setSidebarLogoStatus("Enviando logo...", "busy");
+  const path = createSidebarLogoPath(file);
+
+  try {
+    const { error: uploadError } = await client.storage
+      .from(ACCESS_BACKGROUND_BUCKET)
+      .upload(path, file, {
+        cacheControl: "31536000",
+        contentType: file.type,
+        upsert: false,
+      });
+    if (uploadError) throw uploadError;
+
+    const { data } = client.storage
+      .from(ACCESS_BACKGROUND_BUCKET)
+      .getPublicUrl(path);
+    chooseSidebarLogo(data.publicUrl);
+    await loadSidebarLogoGallery();
+    setSidebarLogoStatus(
+      "Logo enviada. Clique em Salvar alterações para publicar a escolha.",
+      "success",
+    );
+    return true;
+  } catch (error) {
+    setSidebarLogoStatus(
+      `Não foi possível enviar a logo: ${errorMessage(error)}`,
+      "error",
+    );
+    return false;
+  } finally {
+    setSidebarLogoBusy(false);
+  }
+}
+
+async function deleteStoredSidebarLogo(path, name) {
+  if (!client || logoUploadBusy) return false;
+  const url = client.storage.from(ACCESS_BACKGROUND_BUCKET).getPublicUrl(path)
+    .data.publicUrl;
+  if (safeLogo(url) === currentLogo) {
+    setSidebarLogoStatus(
+      "Esta logo está selecionada. Escolha outra ou restaure o padrão antes de apagar.",
+      "error",
+    );
+    return false;
+  }
+  if (!window.confirm(`Apagar definitivamente a logo "${name}"?`)) return false;
+
+  setSidebarLogoBusy(true);
+  setSidebarLogoStatus("Apagando logo...", "busy");
+  try {
+    const { error } = await client.storage
+      .from(ACCESS_BACKGROUND_BUCKET)
+      .remove([path]);
+    if (error) throw error;
+    await loadSidebarLogoGallery();
+    setSidebarLogoStatus("Logo apagada do armazenamento.", "success");
+    return true;
+  } catch (error) {
+    setSidebarLogoStatus(
+      `Não foi possível apagar a logo: ${errorMessage(error)}`,
+      "error",
+    );
+    return false;
+  } finally {
+    setSidebarLogoBusy(false);
+  }
+}
+
+async function loadSidebarLogoGallery() {
+  const gallery = document.getElementById("cfgSidebarLogoGallery");
+  if (!gallery || !client) return false;
+
+  const { data, error } = await client.storage
+    .from(ACCESS_BACKGROUND_BUCKET)
+    .list(SIDEBAR_LOGO_FOLDER, {
+      limit: 60,
+      sortBy: { column: "created_at", order: "desc" },
+    });
+
+  gallery.replaceChildren();
+  if (error) return false;
+
+  const items = (data || []).filter(
+    (item) =>
+      item.name?.startsWith(SIDEBAR_LOGO_PREFIX) &&
+      /\.(?:jpe?g|png|webp)$/i.test(item.name),
+  );
+  if (!items.length) return true;
+
+  const heading = document.createElement("p");
+  heading.className = "sidebar-logo-gallery-title";
+  heading.textContent = "Logos enviadas";
+  gallery.appendChild(heading);
+
+  const list = document.createElement("div");
+  list.className = "sidebar-logo-gallery-grid";
+
+  items.forEach((item) => {
+    const path = `${SIDEBAR_LOGO_FOLDER}/${item.name}`;
+    const url = client.storage.from(ACCESS_BACKGROUND_BUCKET).getPublicUrl(path)
+      .data.publicUrl;
+    const active = safeLogo(url) === currentLogo;
+
+    const card = document.createElement("div");
+    card.className = `sidebar-logo-gallery-card${active ? " is-active" : ""}`;
+
+    const chooseButton = document.createElement("button");
+    chooseButton.type = "button";
+    chooseButton.className = "sidebar-logo-gallery-item";
+    chooseButton.disabled = active;
+    chooseButton.setAttribute(
+      "aria-label",
+      active
+        ? "Logo atualmente selecionada"
+        : "Usar esta logo na barra lateral",
+    );
+
+    const image = document.createElement("img");
+    image.src = url;
+    image.alt = "";
+    const label = document.createElement("small");
+    label.textContent = active ? "Selecionada" : "Usar";
+    chooseButton.append(image, label);
+    if (!active) {
+      chooseButton.addEventListener("click", () => {
+        chooseSidebarLogo(url);
+        void loadSidebarLogoGallery();
+        setSidebarLogoStatus(
+          "Logo selecionada. Clique em Salvar alterações para publicar.",
+          "success",
+        );
+      });
+    }
+    card.appendChild(chooseButton);
+
+    if (!active) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "sidebar-logo-gallery-delete";
+      deleteButton.textContent = "Apagar";
+      deleteButton.addEventListener(
+        "click",
+        () => void deleteStoredSidebarLogo(path, item.name),
+      );
+      card.appendChild(deleteButton);
+    }
+
+    list.appendChild(card);
+  });
+
+  gallery.appendChild(list);
+  return true;
 }
 
 function ensureConfigFields() {
@@ -80,10 +304,23 @@ function ensureConfigFields() {
   logoRow.className = "form-row full";
   logoRow.dataset.sidebarBrandingConfig = "true";
   logoRow.innerHTML = `
-    <label for="cfgSidebarLogoUrl">Logo da barra lateral</label>
-    <input id="cfgSidebarLogoUrl" placeholder="/assets/agsus-logo.webp" />
-    <small>Use um caminho local ou uma URL HTTPS. Esta logo é independente da tela de login.</small>
-    <div class="sidebar-branding-preview"><img id="cfgSidebarLogoPreview" alt="Prévia da logo da barra lateral" /></div>
+    <label>Logo da barra lateral</label>
+    <div class="sidebar-logo-manager">
+      <div class="sidebar-branding-preview">
+        <img id="cfgSidebarLogoPreview" alt="Prévia da logo da barra lateral" />
+      </div>
+      <div class="sidebar-logo-actions">
+        <label class="btn sidebar-logo-upload">
+          <i class="fa-solid fa-image" aria-hidden="true"></i>
+          <span>Escolher imagem</span>
+          <input id="cfgSidebarLogoFile" type="file" accept="image/jpeg,image/png,image/webp" />
+        </label>
+        <button id="cfgSidebarLogoRestore" type="button" class="btn secondary">Restaurar padrão</button>
+        <small id="cfgSidebarLogoStatus" data-tone="neutral">JPG, PNG ou WEBP, até 6 MB. A escolha fica pendente até Salvar alterações.</small>
+      </div>
+    </div>
+    <input id="cfgSidebarLogoUrl" type="hidden" />
+    <div id="cfgSidebarLogoGallery" class="sidebar-logo-gallery"></div>
   `;
 
   const colorRow = document.createElement("div");
@@ -91,23 +328,38 @@ function ensureConfigFields() {
   colorRow.dataset.sidebarBrandingConfig = "true";
   colorRow.innerHTML = `
     <label for="cfgSidebarBackgroundColor">Cor da barra lateral</label>
-    <input id="cfgSidebarBackgroundColor" type="color" value="#ffffff" />
+    <div class="sidebar-color-control">
+      <input id="cfgSidebarBackgroundColor" type="color" value="#ffffff" />
+      <span>Escolha a cor de fundo</span>
+    </div>
     <small>Textos e ícones mudam automaticamente para preservar contraste.</small>
   `;
 
   fragment.append(title, logoRow, colorRow);
   formGrid.appendChild(fragment);
 
-  const logoInput = document.getElementById("cfgSidebarLogoUrl");
+  const fileInput = document.getElementById("cfgSidebarLogoFile");
+  const restoreButton = document.getElementById("cfgSidebarLogoRestore");
   const colorInput = document.getElementById("cfgSidebarBackgroundColor");
-  logoInput?.addEventListener("input", () => {
-    currentLogo = safeLogo(logoInput.value);
-    applySidebarBranding();
+
+  fileInput?.addEventListener("change", () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = "";
+    void uploadSidebarLogo(file);
+  });
+  restoreButton?.addEventListener("click", () => {
+    chooseSidebarLogo(DEFAULT_LOGO);
+    void loadSidebarLogoGallery();
+    setSidebarLogoStatus(
+      "Logo padrão selecionada. Clique em Salvar alterações para publicar.",
+      "success",
+    );
   });
   colorInput?.addEventListener("input", () => {
     currentColor = safeColor(colorInput.value);
     applySidebarBranding();
   });
+
   applySidebarBranding();
 }
 
@@ -132,23 +384,6 @@ async function readSidebarBranding() {
 /*
   As duas chaves da barra lateral entram no **mesmo** `p_config_rows` que o botão
   Salvar já envia. Uma chamada, uma transação, um resultado.
-
-  A primeira versão embrulhava `window.saveAdminSettings`, esperava o salvamento
-  principal terminar e disparava uma segunda chamada à mesma RPC. Três problemas
-  vinham juntos:
-
-  - **Terceiro embrulho do mesmo global.** `config-governance` e
-    `config-page-enhancements` já embrulham `window.saveAdminSettings`. Foi
-    exatamente essa cadeia que produziu os dois modais de saída corrigidos no
-    #157, agora repetida no botão Salvar.
-  - **Sucesso deduzido do toast.** Lia `toastBox.textContent` à procura de
-    "configurações salvas". Os toasts empilham e só somem por temporizador, de
-    modo que a mensagem de um salvamento anterior fazia a segunda gravação
-    acontecer mesmo depois de uma falha.
-  - **Salvamento parcial.** Duas chamadas separadas: a primeira podia gravar e a
-    segunda falhar, deixando metade da configuração aplicada.
-
-  Nada disso existe quando as linhas viajam juntas.
 */
 export function linhasDeConfiguracaoDaSidebar() {
   const logoInput = document.getElementById("cfgSidebarLogoUrl");
@@ -176,6 +411,7 @@ export function linhasDeConfiguracaoDaSidebar() {
 export function reaplicarSidebarAposSalvar() {
   applySidebarBranding();
 }
+
 export function initSidebarBranding() {
   if (initialized || typeof document === "undefined") return;
   initialized = true;
@@ -183,7 +419,8 @@ export function initSidebarBranding() {
 
   const boot = async () => {
     ensureConfigFields();
-    await readSidebarBranding();
+    const loaded = await readSidebarBranding();
+    if (loaded) await loadSidebarLogoGallery();
   };
 
   if (document.readyState === "loading") {
@@ -194,20 +431,13 @@ export function initSidebarBranding() {
     void boot();
   }
 
-  /*
-    `getSupabaseClient()` devolve `null` quando não há configuração do Supabase
-    no ambiente — é o caso de qualquer build sem `.env`, incluindo o do CI. Sem
-    esta guarda, o arranque quebrava com
-    `Cannot read properties of null (reading 'auth')`, derrubando o smoke e
-    interrompendo os módulos carregados depois deste.
-
-    As outras funções do ficheiro já se protegiam; só esta não.
-  */
   if (!client) return;
 
   client.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-      void readSidebarBranding();
+      void readSidebarBranding().then((loaded) => {
+        if (loaded) void loadSidebarLogoGallery();
+      });
     }
   });
 }

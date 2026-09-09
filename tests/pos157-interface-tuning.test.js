@@ -21,24 +21,36 @@ describe("primeiro paint da tela de login", () => {
 });
 
 describe("densidade do dashboard Saúde Indígena", () => {
-  it("reduz KPI sem usar zoom ou scale", () => {
-    expect(css).toContain("#page-dashboard .kpi");
-    expect(css).toContain("font-size: 26px");
+  it("vence as regras antigas com important e reduz o KPI sem zoom ou scale", () => {
+    expect(css).toContain("#page-dashboard .kpi > b");
+    expect(css).toContain("clamp(22px, 1.7vw, 28px) !important");
+    expect(css).toContain("min-height: 78px !important");
+    expect(css).toContain("width: 26px !important");
     expect(css).not.toMatch(/\bzoom\s*:/);
     expect(css).not.toMatch(/transform:\s*scale\(/);
   });
 });
 
 describe("overview inicial dos mapas", () => {
-  it("limita a visão Brasil a zoom 3", () => {
+  it("usa o tamanho real do card e pode chegar a zoom 4", () => {
     expect(mapGuard).toContain("map.__agsusOverviewMode = true");
-    expect(mapGuard).toContain("maxZoom: 3");
+    expect(mapGuard).toContain("maxZoom: 4");
+    expect(mapGuard).toContain("padding: [10, 10]");
     expect(mapGuard).toContain("isBrazilOverviewBounds");
+  });
+
+  it("invalida o tamanho antes de reenquadrar o Brasil", () => {
+    const fit = mapGuard.slice(
+      mapGuard.indexOf("const fitBrazilOverview"),
+      mapGuard.indexOf('map.on("resize"'),
+    );
+    expect(fit).toContain("invalidateSize");
+    expect(fit).toContain("originalFitBounds(viewBounds");
   });
 
   it("recalcula o enquadramento quando o card muda de tamanho", () => {
     expect(mapGuard).toContain('map.on("resize"');
-    expect(mapGuard).toContain("originalFitBounds(viewBounds");
+    expect(mapGuard).toContain("requestAnimationFrame(fitBrazilOverview)");
   });
 });
 
@@ -53,22 +65,33 @@ describe("branding independente da sidebar", () => {
     expect(sidebar).toContain("sidebar-theme-dark");
   });
 
-  /*
-    As duas chaves viajam no mesmo `p_config_rows` do botão Salvar. Uma chamada,
-    uma transação.
+  it("oferece upload de logo como o gestor de fundo do login", () => {
+    expect(sidebar).toContain('type="file"');
+    expect(sidebar).toContain("Escolher imagem");
+    expect(sidebar).toContain("validateAccessBackgroundFile");
+    expect(sidebar).toContain("client.storage");
+    expect(sidebar).toContain("SIDEBAR_LOGO_FOLDER");
+    expect(sidebar).toContain("loadSidebarLogoGallery");
+  });
 
-    A primeira versão embrulhava `window.saveAdminSettings`, deduzia sucesso lendo
-    o texto do `toastBox` e disparava uma segunda chamada à mesma RPC. Os toasts
-    empilham e só somem por temporizador, de modo que a mensagem de um salvamento
-    anterior fazia a segunda gravação acontecer mesmo depois de uma falha — e duas
-    chamadas separadas permitem salvamento parcial.
-  */
+  it("mantém upload da logo dentro da pasta branding já autorizada", () => {
+    expect(sidebar).toContain(
+      "const SIDEBAR_LOGO_FOLDER = `${ACCESS_BACKGROUND_FOLDER}/sidebar`",
+    );
+    expect(sidebar).toContain("ACCESS_BACKGROUND_BUCKET");
+  });
+
+  it("permite restaurar padrão e apagar logos não selecionadas", () => {
+    expect(sidebar).toContain("cfgSidebarLogoRestore");
+    expect(sidebar).toContain("deleteStoredSidebarLogo");
+    expect(sidebar).toContain("Restaurar padrão");
+  });
+
   it("não embrulha window.saveAdminSettings", () => {
     expect(sidebar).not.toMatch(/window\.saveAdminSettings\s*=/);
   });
 
   it("não deduz sucesso pelo texto do toast", () => {
-    // O comentário do módulo cita `toastBox` ao explicar o defeito corrigido.
     const codigo = sidebar
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "");
@@ -94,11 +117,6 @@ describe("branding independente da sidebar", () => {
     expect(chamada).toContain("...linhasDeConfiguracaoDaSidebar()");
   });
 
-  /*
-    `getSupabaseClient()` devolve `null` sem configuração de ambiente — o caso do
-    CI. Sem guarda, o arranque quebrava com
-    `Cannot read properties of null (reading 'auth')` e derrubava o smoke.
-  */
   it("não desreferencia o cliente quando não há ambiente", () => {
     const init = sidebar.slice(
       sidebar.indexOf("export function initSidebarBranding"),
@@ -117,11 +135,6 @@ describe("branding independente da sidebar", () => {
   });
 });
 
-/*
-  O zoom por pinça não passa por `setView` nem `flyTo`, então a bandeira de visão
-  geral continuaria ligada depois de a pessoa aproximar. Um `resize` seguinte
-  devolveria o mapa ao Brasil, descartando o enquadramento dela.
-*/
 describe("o reenquadramento não descarta o zoom da pessoa", () => {
   it("confere o zoom corrente, não só a bandeira", () => {
     const handler = mapGuard.slice(
@@ -129,7 +142,7 @@ describe("o reenquadramento não descarta o zoom da pessoa", () => {
       mapGuard.indexOf('map.on("drag move zoomend'),
     );
     expect(handler).toContain("getZoom");
-    expect(handler).toMatch(/<=\s*3/);
+    expect(handler).toMatch(/<=\s*4/);
   });
 });
 
