@@ -19,12 +19,24 @@ import {
 
 /*
   Forma além de cor. Quem não distingue vermelho de verde continua distinguindo
-  círculo de losango de triângulo — a cor vira reforço, não a única informação.
+  círculo de casa de cruz de losango — a cor é reforço, nunca a única informação.
+
+  As cores foram medidas contra os tiles reais do OSM, não escolhidas de olho.
+  Amostrando a área do DSEI Potiguara: terra #f2efe9 (86.2% dos pixels),
+  vegetação #add19e (2.2%), água #aad3df (1%).
+
+  O UBSI era #189b63 — verde sobre verde. Dava 2.10:1 de contraste contra a
+  vegetação, abaixo do mínimo de 3:1 que a WCAG pede para elementos gráficos, e
+  ficava a apenas 52° de matiz dela: o marcador se dissolvia no mapa. O violeta
+  #6d28d9 sobe para 4.19:1 e 161°, quase complementar.
+
+  Os quatro matizes ficam separados entre si — 38°, 355°, 263° e 188°, com o par
+  mais próximo a 43°.
 */
 const FORMAS = Object.freeze({
   polo: { forma: "circulo", rotulo: "Polo base", cor: "#e49a1b" },
   casai: { forma: "casa", rotulo: "CASAI", cor: "#d92d3a" },
-  ubsi: { forma: "cruz", rotulo: "UBSI", cor: "#189b63" },
+  ubsi: { forma: "cruz", rotulo: "UBSI", cor: "#6d28d9" },
   unit: { forma: "losango", rotulo: "Unidade de saúde", cor: "#0d8192" },
 });
 

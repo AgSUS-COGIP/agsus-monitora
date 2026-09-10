@@ -219,14 +219,22 @@ describe("a legenda descreve os marcadores que existem", () => {
     As cores da legenda têm de ser as mesmas que `detailUnitType` dá aos
     marcadores; se uma das duas mudar sozinha, a legenda passa a mentir.
   */
+  /*
+    A lista sai do próprio módulo em vez de ser fixada aqui: escrita à mão, ela
+    quebrava a cada troca de cor sem que nada estivesse errado — foi o que
+    aconteceu ao substituir o verde do UBSI.
+  */
   it("as cores batem com as dos marcadores", () => {
     const tipoDoMarcador = app.slice(
       app.indexOf("function detailUnitType"),
       app.indexOf("function detailRecordsForDsei"),
     );
-    for (const cor of ["#d92d3a", "#e49a1b", "#189b63", "#0d8192"]) {
+    const cores = [...modulo.matchAll(/cor: "(#[0-9a-f]{6})"/g)].map(
+      (m) => m[1],
+    );
+    expect(cores).toHaveLength(4);
+    for (const cor of cores) {
       expect(tipoDoMarcador, `${cor} sumiu dos marcadores`).toContain(cor);
-      expect(modulo, `${cor} sumiu da legenda`).toContain(cor);
     }
   });
 
@@ -238,5 +246,95 @@ describe("a legenda descreve os marcadores que existem", () => {
 
   it("é aplicada no arranque", () => {
     expect(main).toContain("aplicarLegendaDoMapaDetalhado()");
+  });
+});
+
+/*
+  A cor do UBSI competia com o mapa.
+
+  Amostrando os tiles reais do OSM sobre a área do DSEI Potiguara: terra
+  #f2efe9 (86.2% dos pixels), vegetação #add19e (2.2%), água #aad3df (1%).
+
+  O verde #189b63 dava 2.10:1 de contraste contra a vegetação — abaixo do
+  mínimo de 3:1 da WCAG para elementos gráficos — e ficava a 52° de matiz dela.
+  O violeta #6d28d9 dá 4.19:1 e 161°.
+*/
+describe("as cores dos marcadores se separam do mapa", () => {
+  const modulo = readFileSync("src/modules/vinculos-territoriais.js", "utf8");
+
+  const canal = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const linear = (v) => {
+    const x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  };
+  const luminancia = (h) => {
+    const [r, g, b] = canal(h);
+    return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+  };
+  const contraste = (a, b) => {
+    const [x, y] = [luminancia(a), luminancia(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const matiz = (h) => {
+    const [r, g, b] = canal(h).map((v) => v / 255);
+    const mx = Math.max(r, g, b);
+    const d = mx - Math.min(r, g, b);
+    if (!d) return 0;
+    const t =
+      mx === r
+        ? ((g - b) / d) % 6
+        : mx === g
+          ? (b - r) / d + 2
+          : (r - g) / d + 4;
+    return (t * 60 + 360) % 360;
+  };
+  const distanciaDeMatiz = (a, b) => {
+    const d = Math.abs(matiz(a) - matiz(b));
+    return Math.min(d, 360 - d);
+  };
+
+  const VEGETACAO = "#add19e";
+  const cores = [...modulo.matchAll(/cor: "(#[0-9a-f]{6})"/g)].map((m) => m[1]);
+
+  it("o verde que se dissolvia na vegetação saiu", () => {
+    expect(cores).not.toContain("#189b63");
+    expect(cores).toContain("#6d28d9");
+  });
+
+  it("o UBSI passa do mínimo de 3:1 contra a vegetação", () => {
+    expect(contraste("#6d28d9", VEGETACAO)).toBeGreaterThan(3);
+    // O verde antigo não passava, e é por isso que ele saiu.
+    expect(contraste("#189b63", VEGETACAO)).toBeLessThan(3);
+  });
+
+  it("nenhum marcador fica perto do matiz da vegetação", () => {
+    for (const cor of cores) {
+      expect(
+        distanciaDeMatiz(cor, VEGETACAO),
+        `${cor} está perto do verde do mapa`,
+      ).toBeGreaterThan(60);
+    }
+  });
+
+  it("os quatro se distinguem entre si", () => {
+    expect(cores).toHaveLength(4);
+    for (let i = 0; i < cores.length; i += 1) {
+      for (let j = i + 1; j < cores.length; j += 1) {
+        expect(
+          distanciaDeMatiz(cores[i], cores[j]),
+          `${cores[i]} e ${cores[j]} têm matizes próximos`,
+        ).toBeGreaterThan(40);
+      }
+    }
+  });
+
+  it("a cor da legenda e a do marcador continuam a mesma", () => {
+    const tipoDoMarcador = app.slice(
+      app.indexOf("function detailUnitType"),
+      app.indexOf("function detailRecordsForDsei"),
+    );
+    for (const cor of cores) {
+      expect(tipoDoMarcador, `${cor} não está nos marcadores`).toContain(cor);
+    }
   });
 });

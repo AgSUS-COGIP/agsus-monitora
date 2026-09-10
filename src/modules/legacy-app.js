@@ -9328,7 +9328,7 @@ function detailUnitType(name) {
     return {
       key: "ubsi",
       label: "UBSI",
-      color: "#189b63",
+      color: "#6d28d9",
       icon: "fa-staff-snake",
     };
   return {
