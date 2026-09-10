@@ -74,6 +74,7 @@ import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
+import { initColapsarNoPainelExterno } from "./modules/colapsar-no-painel-externo.js";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -117,6 +118,7 @@ initPwaLifecycle();
 initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
+initColapsarNoPainelExterno();
 
 if (!hasSupabaseEnv()) {
   console.warn(

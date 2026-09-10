@@ -1017,3 +1017,79 @@ body.external-panel-mode #page-external iframe {
   height: 100%;
   min-height: 100dvh;
 }
+
+/*
+  Duas barras de rolagem no painel externo.
+
+  Medido no preview em 10/09/2026, com o painel de Análises embarcado: a 1440x900
+  o documento externo tinha `scrollHeight` 934 contra `clientHeight` 900; a
+  800x900, 948 contra 900. Uma barra que não rola para lugar nenhum, ao lado da
+  barra legítima do painel.
+
+  A causa não é um espaçamento isolado — são vários, somados. A regra acima trava
+  o quadro em `min-height: 100dvh`, uma tela inteira, e cada caixa no caminho
+  acrescenta o seu espaçamento por cima:
+
+    iframe             900   (uma tela cheia, por min-height)
+    .table-card      + 14    espaçamento inferior, só no estreito
+    .content         + 34    espaçamento inferior, no largo
+    .main            + 20    espaçamento inferior, só no estreito
+
+  Zerar um de cada vez seria enxugar gelo: qualquer espaçamento novo em qualquer
+  caixa da cadeia devolve a segunda barra. No painel externo o quadro é a tela
+  inteira e não há nada em volta dele para respirar, então a cadeia toda vai a
+  zero — e o `overflow` travado garante a invariante mesmo que alguém acrescente
+  um espaçamento aqui amanhã. Nada é cortado: com a cadeia zerada o quadro cabe
+  exatamente na tela.
+
+  Os `!important` não são preferência de estilo: no estreito, `mobile-app.css`
+  declara esses mesmos espaçamentos com `!important`, e `!important` vence
+  especificidade. Sem eles a correção valia só no largo — foi o que a medição a
+  800x900 mostrou, com o transbordo teimando em 48px.
+
+  E `#conteudoPrincipal` aparece aqui porque a regra concorrente alcança o mesmo
+  elemento por id. Entre duas declarações `!important`, quem decide é a
+  especificidade, e um id vence qualquer número de classes — com `.main` sozinho
+  o espaçamento inferior continuava de pé, em 20px.
+*/
+body.external-panel-mode .main,
+body.external-panel-mode #conteudoPrincipal,
+body.external-panel-mode #page-external .table-card {
+  padding: 0 !important;
+}
+
+body.external-panel-mode .content {
+  padding-bottom: 0 !important;
+}
+
+body.external-panel-mode .app {
+  overflow: hidden;
+}
+
+/*
+  O botão de recolher, dentro da barra lateral.
+
+  Ver `src/modules/colapsar-no-painel-externo.js`: `external-panel-mode` esconde
+  o cabeçalho e, com ele, o hambúrguer que é o controle do desktop. O botão
+  flutuante fica escondido por `system-ui-fixes.css` em `@media (min-width:
+  901px)`, de modo que não sobrava nenhum.
+
+  O módulo move o botão para dentro da barra lateral no arranque. Fora do painel
+  externo ele continua `display:none` e `position: fixed`, então nada muda de
+  lugar. Aqui, e só aqui, ele entra no fluxo da barra.
+
+  Só no largo. No estreito a barra lateral é uma gaveta fora da tela, e um botão
+  dentro dela não teria como ser alcançado — esse caso continua em aberto.
+
+  Precisa de `!important` para alcançar o `display: none !important` de
+  `system-ui-fixes.css`; a especificidade maior é o que garante que esta regra
+  vença a disputa.
+*/
+@media (min-width: 901px) {
+  body.external-panel-mode .sidebar .global-side-toggle {
+    display: grid !important;
+    position: static;
+    margin: 0 auto 10px;
+    flex: 0 0 auto;
+  }
+}
