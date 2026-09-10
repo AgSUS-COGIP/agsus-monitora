@@ -244,8 +244,9 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
 
   function bindEvents(){
     $("themeBtn").onclick = toggleTheme; $("fullBtn").onclick = toggleFullscreen; $("refreshBtn").onclick = manualRefresh; $("exportBtn").onclick = exportCSV;
-    $("advancedBtn").onclick = () => { $("advancedFilters").classList.toggle("show"); $("advancedBtn").innerHTML = $("advancedFilters").classList.contains("show") ? '<i class="fa-solid fa-sliders"></i> Ocultar filtros' : '<i class="fa-solid fa-sliders"></i> Mais filtros'; };
-    bindFiltersVisibilityToggle();
+    // A visibilidade dos filtros e o botão Mais opções pertencem apenas a
+    // analises-filter-layout.js. Ter dois donos deixava o painel incoerente no
+    // carregamento: o corpo abria aqui, mas o botão continuava escondido lá.
     $("applyBtn").onclick = applyFilters; $("clearBtn").onclick = clearFilters;
     $("fSituacaoEdital")?.addEventListener("change", () => {
       resetDataForScopeChange();
@@ -262,36 +263,6 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
     document.addEventListener("click", event => { document.querySelectorAll(".multi-select-menu:not([hidden])").forEach(menu => { const root = menu.closest(".multi-select"); if(root && !root.contains(event.target)) closeMultiSelect(root.dataset.sourceId); }); });
     document.addEventListener("keydown", event => { if(event.key === "Escape"){ document.querySelectorAll(".multi-select-menu:not([hidden])").forEach(menu => { const root = menu.closest(".multi-select"); if(root){ closeMultiSelect(root.dataset.sourceId); const trg = $(`ms-trigger-${root.dataset.sourceId}`); if(trg) trg.focus(); } }); } });
     window.addEventListener("resize", setupFixedTopbar);
-  }
-
-  function bindFiltersVisibilityToggle(){
-    const toggleBtn = $("toggleFiltersBtn");
-    const filtersBody = $("filtersBody");
-
-    if(!toggleBtn || !filtersBody) return;
-
-    const icon = toggleBtn.querySelector("i");
-    const label = toggleBtn.querySelector(".toggle-label");
-
-    function setCollapsed(collapsed){
-      filtersBody.hidden = collapsed;
-      toggleBtn.setAttribute("aria-expanded", String(!collapsed));
-      toggleBtn.title = collapsed ? "Mostrar filtros" : "Ocultar filtros";
-
-      if(icon){
-        icon.className = collapsed ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
-      }
-
-      if(label){
-        label.textContent = collapsed ? "Mostrar filtros" : "Ocultar filtros";
-      }
-    }
-
-    setCollapsed(false);
-
-    toggleBtn.addEventListener("click", () => {
-      setCollapsed(!filtersBody.hidden);
-    });
   }
 
   async function loadProfile(){
