@@ -55,6 +55,7 @@ import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fi
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
 import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
+import { organizarConfiguracoesEmSecoes } from "./modules/config-secoes.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
@@ -92,6 +93,11 @@ initHealthDetailsRuntimeFix();
 // Instala antes do guard de Configurações para que o botão global salve também
 // as duas chaves independentes da sidebar usando a RPC existente.
 initSidebarBranding();
+/*
+  Depois da sidebar: ela injeta os proprios campos em Configuracoes, e so
+  existe o que organizar quando eles ja estao no DOM.
+*/
+organizarConfiguracoesEmSecoes();
 initConfigPageEnhancements();
 initConfigGovernance();
 initNucleoCronograma();
