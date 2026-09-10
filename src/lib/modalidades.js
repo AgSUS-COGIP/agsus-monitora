@@ -7,22 +7,23 @@
   filtros — e quem procurasse "Indígenas" não achava a vaga que também era
   indígena.
 
-  Medido no export de 09/09/2026, 3561 linhas do recorte Ativo:
+  Medido em `vw_analises_dashboard_base` no principal, 10/09/2026: 4073
+  registros ativos, 10 valores brutos distintos. Além das cinco canônicas:
 
-     2424  "Ampla concorrência"
-      584  "Pretos e pardos"
-      447  "Indígenas"
-       94  "Pessoas com deficiência (PCD)"
-        7  "Quilombolas"
-        3  "Ampla concorrência', 'Indígenas"
-        1  "Ampla concorrência', 'Pretos e pardos"
-        1  "Pessoas com deficiência (PCD)  Indígenas"
+      Ampla concorrência" "Indígenas
+      Ampla concorrência", "Indígenas
+      Ampla concorrência", "Pretos e pardos
+      Indígenas" "Pessoas com deficiência (PCD)
+      Pessoas com deficiência (PCD); Indígenas
 
-  Cinco linhas combinadas, em duas formas diferentes: separador `', '` — restos
-  de uma lista serializada como texto, com os colchetes e as aspas externas
-  perdidos pelo caminho — e separador de dois espaços. Como as formas divergem,
-  procurar separador seria adivinhar. Procuram-se as modalidades canônicas
-  dentro da célula, o que atravessa qualquer separador presente ou futuro.
+  Um dia antes, o export de 09/09 trazia outras três combinações, com separador
+  `', '` e com dois espaços — restos de listas serializadas como texto, com
+  colchetes e aspas externas perdidos por caminhos diferentes. Nenhuma delas
+  sobreviveu ao retrato seguinte.
+
+  Cinco formas de separador em dois retratos com um dia de diferença. É por isso
+  que aqui não se procura separador nenhum: procuram-se as modalidades canônicas
+  dentro da célula, o que atravessa a forma de ontem, a de hoje e a de amanhã.
 
   O que não casa com nenhuma canônica é devolvido como está. Um valor
   desconhecido tem de continuar filtrável e visível — sumir da lista seria pior
