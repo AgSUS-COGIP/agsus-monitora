@@ -51,6 +51,7 @@ import {
 } from "../lib/estado-de-saida.js";
 import { avisoGlobal } from "../lib/aviso-global.js";
 import { aplicarCorDoPainel } from "../lib/access-branding-boot.js";
+import { normalizarModo } from "../lib/contraste.js";
 import {
   linhasDeConfiguracaoDaSidebar,
   reaplicarSidebarAposSalvar,
@@ -1778,9 +1779,11 @@ function applyConfigToUi() {
 
   if (loginScreen && painelDoBanco !== null) {
     const cor = normalizeAccessPanelColor(painelDoBanco);
-    // Cor e contraste juntos, pela mesma função que o arranque usa.
-    aplicarCorDoPainel(loginScreen, cor);
+    const modo = normalizarModo(cfgValue("auth_access_texto_modo"));
+    // Cor, modo e contraste juntos, pela mesma função que o arranque usa.
+    aplicarCorDoPainel(loginScreen, cor, modo);
     marcaParaGuardar.panelColor = cor;
+    marcaParaGuardar.textoModo = modo;
   }
 
   if (logoDoBanco !== null) {
@@ -10877,6 +10880,13 @@ function renderConfigForm() {
     ($("cfgAccessPanelColor").value = normalizeAccessPanelColor(
       cfgValue("auth_access_panel_color"),
     ));
+  if ($("cfgAccessTextoModo")) {
+    $("cfgAccessTextoModo").value = normalizarModo(
+      cfgValue("auth_access_texto_modo"),
+    );
+    // O aviso de contraste tem de refletir o modo carregado, não só a cor.
+    $("cfgAccessPanelColor")?.dispatchEvent(new Event("input"));
+  }
   $("cfgAccessGreeting") &&
     ($("cfgAccessGreeting").value =
       cfgValue("auth_access_greeting") || DEFAULT_ACCESS_BRANDING.greeting);
@@ -11457,6 +11467,12 @@ async function saveAdminSettings() {
       valor: normalizeAccessPanelColor($("cfgAccessPanelColor")?.value || ""),
       descricao: "Cor do painel da tela de acesso",
     },
+    {
+      chave: "auth_access_texto_modo",
+      valor: txt($("cfgAccessTextoModo")?.value || "auto"),
+      descricao: "Texto sobre o painel de acesso: auto, claro ou escuro",
+    },
+
     {
       chave: "auth_access_greeting",
       valor: txt(

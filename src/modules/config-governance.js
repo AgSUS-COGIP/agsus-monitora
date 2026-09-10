@@ -53,6 +53,13 @@ const FIELD_MAP = [
     "auth_access_panel_color",
     "Cor do painel da tela de acesso",
   ],
+  [
+    "cfgAccessTextoModo",
+    "auth_access_texto_modo",
+    "Texto sobre o painel de acesso",
+    "auto",
+  ],
+
   ["cfgAccessGreeting", "auth_access_greeting", "Saudação da tela de acesso"],
   [
     "cfgAccessInstruction",

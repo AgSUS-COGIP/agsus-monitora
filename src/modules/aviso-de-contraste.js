@@ -38,7 +38,7 @@ export function htmlDaPrevia(avaliacao, { comBotao = true } = {}) {
 
 export function aplicarAviso(container, cor, opcoes = {}) {
   if (!container) return null;
-  const avaliacao = avaliarCor(cor);
+  const avaliacao = avaliarCor(cor, opcoes.modo);
 
   if (!avaliacao) {
     container.innerHTML = "";
@@ -63,9 +63,20 @@ export function ligarAvisoDeContraste(entrada, container, opcoes = {}) {
   if (entrada.dataset.avisoDeContraste === "1") return true;
   entrada.dataset.avisoDeContraste = "1";
 
-  const atualizar = () => aplicarAviso(container, entrada.value, opcoes);
+  /*
+    Quando há seletor de modo, o aviso precisa reagir aos dois campos: trocar de
+    "automático" para "sempre claro" muda o número sem a cor ter mudado.
+  */
+  const seletorDeModo = opcoes.seletorDeModo || null;
+  const atualizar = () =>
+    aplicarAviso(container, entrada.value, {
+      ...opcoes,
+      modo: seletorDeModo ? seletorDeModo.value : opcoes.modo,
+    });
+
   entrada.addEventListener("input", atualizar);
   entrada.addEventListener("change", atualizar);
+  seletorDeModo?.addEventListener("change", atualizar);
   atualizar();
   return true;
 }
@@ -83,7 +94,18 @@ export function instalarAvisoDoPainelDeAcesso(documento = globalThis.document) {
     container = documento.createElement("div");
     container.id = "cfgAccessPanelColorAviso";
     container.className = "contraste-bloco";
-    entrada.insertAdjacentElement("afterend", container);
+    /*
+      No fim da linha do formulário, e não logo depois do `<input>`: o aviso
+      descreve o resultado da cor **e** do modo, então precisa vir depois dos
+      dois campos. Colado ao input, ele aparecia acima do seletor de modo e
+      parecia falar só da cor.
+    */
+    (entrada.closest(".form-row") || entrada.parentElement).appendChild(
+      container,
+    );
   }
-  return ligarAvisoDeContraste(entrada, container, { comBotao: true });
+  return ligarAvisoDeContraste(entrada, container, {
+    comBotao: true,
+    seletorDeModo: documento.getElementById("cfgAccessTextoModo"),
+  });
 }

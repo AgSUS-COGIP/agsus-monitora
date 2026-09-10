@@ -23,7 +23,7 @@
 
 import { guardarMarca, lerMarcaGuardada } from "./access-branding-cache.js";
 import { buscarMarcaPublica } from "./access-branding-publico.js";
-import { needsLightForeground } from "./access-branding.js";
+import { MODO_AUTO, TEXTO_CLARO, corDoTextoPara } from "./contraste.js";
 
 /** `url("…")` seguro: aspas e barras invertidas quebrariam a declaração CSS. */
 function comoUrlCss(valor) {
@@ -40,13 +40,23 @@ function comoUrlCss(valor) {
   identidade, porque `anon` não recebe `auth_access_panel_color` — com painel
   escuro e texto escuro por cima. Ilegível, e permanente, não por um quadro.
 
-  A classe não é guardada em lado nenhum: é **derivada** da cor, toda vez que a
-  cor é aplicada. `panelColor` é a única fonte de verdade.
+  A classe continua sem ser guardada: ela sai de `corDoTextoPara(cor, modo)`
+  toda vez que a cor é aplicada. O que mudou é que a fonte de verdade passou a
+  ser o par — `panelColor` mais `textoModo`. Com `auto`, que é o padrão, o
+  resultado é exatamente o de antes: a luminância decide.
 */
-export function aplicarCorDoPainel(tela, cor) {
+export function aplicarCorDoPainel(tela, cor, modo = MODO_AUTO) {
   if (!tela || !cor) return false;
   tela.style.setProperty("--login-panel-color", cor);
-  tela.classList.toggle("login-panel-dark", needsLightForeground(cor));
+  /*
+    O modo decide entre derivar da luminância e impor um dos dois. Impor pode
+    reprovar a WCAG — é uma escolha de identidade, e quem escolhe vê o número
+    na Configurações antes de salvar.
+  */
+  tela.classList.toggle(
+    "login-panel-dark",
+    corDoTextoPara(cor, modo) === TEXTO_CLARO,
+  );
   return true;
 }
 
@@ -66,7 +76,7 @@ export function aplicarMarcaNaTela(marca, documento = globalThis.document) {
       comoUrlCss(marca.backgroundUrl),
     );
   }
-  aplicarCorDoPainel(tela, marca.panelColor);
+  aplicarCorDoPainel(tela, marca.panelColor, marca.textoModo);
 
   /*
     Os campos entram juntos. Aplicar só a arte e a cor produzia tela híbrida: o

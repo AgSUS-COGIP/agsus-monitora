@@ -68,8 +68,20 @@
               por post-152. Fica guardada aqui e um script logo depois do
               elemento a aplica — assim nenhum seletor precisa ser duplicado.
             */
+            /*
+              O modo guardado tem precedência sobre a luminância: "claro" e
+              "escuro" são escolha de identidade, "auto" volta a derivar.
+            */
+            var modo =
+              typeof marca.textoModo === "string"
+                ? marca.textoModo.trim().toLowerCase()
+                : "auto";
             window.__agsusPainelEscuro =
-              (r * 299 + g * 587 + b * 114) / 1000 < 145;
+              modo === "claro"
+                ? true
+                : modo === "escuro"
+                  ? false
+                  : (r * 299 + g * 587 + b * 114) / 1000 < 145;
           }
 
           var arte =
@@ -1318,6 +1330,20 @@
                       type="color"
                       value="#c296eb"
                     />
+                    <!-- "Automático" deriva o texto da luminância da cor.
+                         Impor claro ou escuro é escolha de identidade: pode
+                         reprovar a WCAG, e o aviso abaixo diz exatamente
+                         quanto. Quem decide é quem configura. -->
+                    <label for="cfgAccessTextoModo" class="form-sublabel"
+                      >Texto sobre o painel</label
+                    >
+                    <select id="cfgAccessTextoModo">
+                      <option value="auto">
+                        Automático — segue o contraste
+                      </option>
+                      <option value="claro">Sempre claro</option>
+                      <option value="escuro">Sempre escuro</option>
+                    </select>
                   </div>
                   <div class="form-row">
                     <label>Saudação do acesso</label

@@ -44,6 +44,8 @@ const CAMPOS = [
   "instruction",
   // Texto do botão do Google: evita que o rótulo padrão pisque antes da RPC.
   "buttonText",
+  // Modo do texto sobre o painel: auto, claro ou escuro.
+  "textoModo",
 ];
 
 function texto(valor) {

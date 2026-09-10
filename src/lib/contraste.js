@@ -54,13 +54,40 @@ export function razaoDeContraste(uma, outra) {
   clarear faz o escuro passar. Por isso a frase não manda escurecer: manda sair
   do meio.
 */
-export function avaliarCor(cor) {
+/*
+  Modos do texto sobre o painel.
+
+  `auto` deriva da luminância, que é o comportamento histórico e o padrão. Os
+  outros dois existem porque a decisão é de identidade visual, não só de
+  contraste: uma instituição pode querer a marca clara sobre um lilás claro
+  mesmo sabendo que aquilo reprova. O papel do sistema aí é **avisar**, com o
+  número na tela, e não decidir sozinho.
+*/
+export const MODO_AUTO = "auto";
+export const MODO_CLARO = "claro";
+export const MODO_ESCURO = "escuro";
+const MODOS = new Set([MODO_AUTO, MODO_CLARO, MODO_ESCURO]);
+
+export function normalizarModo(valor) {
+  const bruto = String(valor ?? "")
+    .trim()
+    .toLowerCase();
+  return MODOS.has(bruto) ? bruto : MODO_AUTO;
+}
+
+/** O primeiro plano que a tela vai usar, já considerando o modo escolhido. */
+export function corDoTextoPara(cor, modo = MODO_AUTO) {
+  const escolhido = normalizarModo(modo);
+  if (escolhido === MODO_CLARO) return TEXTO_CLARO;
+  if (escolhido === MODO_ESCURO) return TEXTO_ESCURO;
+  return needsLightForeground(cor) ? TEXTO_CLARO : TEXTO_ESCURO;
+}
+
+export function avaliarCor(cor, modo = MODO_AUTO) {
   if (typeof cor !== "string" || !HEX.test(cor.trim())) return null;
 
   const normalizada = cor.trim().toLowerCase();
-  const corDoTexto = needsLightForeground(normalizada)
-    ? TEXTO_CLARO
-    : TEXTO_ESCURO;
+  const corDoTexto = corDoTextoPara(normalizada, modo);
   const razao = razaoDeContraste(corDoTexto, normalizada);
   const passa = razao >= MINIMO_AA;
 
