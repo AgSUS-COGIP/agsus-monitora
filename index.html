@@ -101,12 +101,15 @@
     </script>
     <title>AgSUS Monitora</title>
     <meta name="description" content="" />
-    <link
-      id="appFavicon"
-      rel="icon"
-      type="image/png"
-      href="https://i.postimg.cc/7PztC6jq/79255fad-06f0-4963-81f5-1fa4a116475e.png"
-    />
+    <!--
+      Ícone local, nas três tags que o SIGAV também usa. Antes isto apontava
+      para uma imagem em i.postimg.cc — host de terceiros — e nenhum código
+      chegava a atualizá-la. `identidade-da-aba.js` troca por logo institucional
+      configurada depois que ela carrega, e volta para cá se falhar.
+    -->
+    <link id="appFavicon" rel="icon" href="/assets/agsus-logo.webp" />
+    <link rel="shortcut icon" href="/assets/agsus-logo.webp" />
+    <link rel="apple-touch-icon" href="/assets/agsus-logo.webp" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -53,6 +53,11 @@ import { avisoGlobal } from "../lib/aviso-global.js";
 import { aplicarCorDoPainel } from "../lib/access-branding-boot.js";
 import { normalizarModo } from "../lib/contraste.js";
 import {
+  aplicarFaviconDaMarca,
+  definirPaginaDaAba,
+  definirSistemaDaAba,
+} from "../lib/identidade-da-aba.js";
+import {
   linhasDeConfiguracaoDaSidebar,
   reaplicarSidebarAposSalvar,
 } from "./sidebar-branding.js";
@@ -1729,8 +1734,22 @@ function aplicarAvisoGlobal() {
 }
 
 function applyConfigToUi() {
-  // Títulos e slogan
-  document.title = appVersion() || "AgSUS Monitora";
+  /*
+    O nome da aba não é mais escrito aqui.
+
+    Esta linha fazia `document.title = appVersion()` — a **versão publicada**,
+    algo como "AgSUS Monitora Web V2.9.35" — e apagava o nome da página que
+    `setPageTitle()` acabara de compor. Era o motivo de o título "voltar" em vez
+    de acompanhar a aba.
+
+    Agora entra só a metade que a configuração de facto conhece: o nome do
+    sistema. A metade da página fica com quem navega, e o módulo recompõe as
+    duas.
+  */
+  definirSistemaDaAba(cfgValue("app_title") || "AgSUS Monitora");
+  void aplicarFaviconDaMarca(
+    normalizeAccessLogoUrl(cfgValue("auth_access_logo_url")),
+  );
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc)
     metaDesc.setAttribute(
@@ -2456,7 +2475,8 @@ function navigate(view) {
 function setPageTitle(title, sub) {
   $("pageTitle").textContent = title;
   $("pageSubtitle").textContent = sub;
-  document.title = [title, cfgValue("app_title")].filter(Boolean).join(" - ");
+  // O nome da aba tem um dono só; aqui entra apenas a metade da página.
+  definirPaginaDaAba(title);
 }
 
 function isSidebarLockedViewport() {
