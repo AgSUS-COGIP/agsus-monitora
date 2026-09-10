@@ -73,27 +73,27 @@ describe("a marca acompanha o contraste da barra lateral", () => {
 });
 
 /*
-  O botão de acesso era fixo em #101c2a — azul quase preto — para qualquer
-  identidade escolhida. Medido contra as cores em uso:
+  O botão de acesso, claro como no SIGAV.
 
-    painel #6c009e (o de hoje)  botão escuro 1.74:1   botão claro  9.85:1
-    painel #c898eb (o do SIGAV) botão escuro 7.49:1   botão claro  2.30:1
+  Ele era fixo em #101c2a — azul quase preto. O SIGAV usa
+  `bg-white text-[#003b70] shadow-lg hover:bg-slate-100`, e é essa a aparência
+  pedida.
 
-  Num painel escuro ele quase desaparecia, bem abaixo do mínimo de 3:1 que a
-  WCAG pede para a superfície de um componente. Num painel claro o escuro é
-  justamente o que funciona — por isso o botão inverte com o painel, em vez de
-  ficar fixo numa das duas opções.
+  Medido contra os painéis reais:
 
-  Confirmado na build de produção, com as transições assentadas:
+    branco sobre #c090eb (o atual)   2.49:1
+    branco sobre #c898eb (o SIGAV)   2.30:1
+    branco sobre #6c009e (escuro)    9.85:1
+    texto #003b70 sobre branco      11.29:1
+    borda #003b70 sobre #c090eb      4.53:1
 
-    #6c009e -> botão branco,  9.85:1 contra o painel, texto 17.19:1
-    #c898eb -> botão escuro,  7.49:1
-    #052029 -> botão branco, 16.87:1
-    #ffffff -> botão escuro, 17.19:1
+  O preenchimento branco fica abaixo de 3:1 num painel claro — no SIGAV também.
+  A WCAG pede que a **borda do componente** seja perceptível, e é a borda que
+  garante isso aqui.
 */
-describe("o botão de acesso acompanha a cor do painel", () => {
+describe("o botão de acesso é claro, como no SIGAV", () => {
   const regra = post152.slice(
-    post152.indexOf("#loginScreen.login-panel-dark .google-login-btn {"),
+    post152.indexOf("#loginScreen .google-login-btn {"),
   );
 
   const canal = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -110,45 +110,56 @@ describe("o botão de acesso acompanha a cor do painel", () => {
     return (x + 0.05) / (y + 0.05);
   };
 
-  it("num painel escuro o botão vira claro", () => {
+  it("usa as cores do SIGAV", () => {
     expect(regra).toContain("background: #ffffff");
-    expect(regra).toContain("color: #101c2a");
+    expect(regra).toContain("color: #003b70");
   });
 
-  it("o hover continua claro, sem sumir com o texto", () => {
+  it("o hover é o slate-100 do SIGAV", () => {
     const hover = post152.slice(
-      post152.indexOf(
-        "#loginScreen.login-panel-dark .google-login-btn:hover {",
-      ),
+      post152.indexOf("#loginScreen .google-login-btn:hover {"),
     );
-    expect(hover).toContain("background: #eef4fb");
-    // O texto do botão claro é escuro; o hover não pode escurecer o fundo.
-    expect(contraste("#eef4fb", "#101c2a")).toBeGreaterThan(4.5);
+    expect(hover).toContain("background: #f1f5f9");
+    // O texto é escuro; o hover clareia, então continua legível.
+    expect(contraste("#f1f5f9", "#003b70")).toBeGreaterThan(4.5);
   });
 
   /*
-    Sobre um botão claro, o disco branco do "G" desapareceria sem contorno.
+    Sem a borda, a aresta do botão mede 2.49:1 contra o painel atual — é o que
+    acontece no SIGAV. Com ela, 4.53:1.
   */
-  it("a marca do Google ganha contorno no botão claro", () => {
+  it("a borda torna a aresta perceptível onde o preenchimento não basta", () => {
+    expect(regra).toContain("border: 1px solid #003b70");
+    expect(contraste("#ffffff", "#c090eb")).toBeLessThan(3);
+    expect(contraste("#003b70", "#c090eb")).toBeGreaterThan(3);
+    expect(contraste("#003b70", "#c898eb")).toBeGreaterThan(3);
+  });
+
+  it("o texto sobre o botão tem folga larga", () => {
+    expect(contraste("#003b70", "#ffffff")).toBeGreaterThan(7);
+  });
+
+  /*
+    Num painel escuro o branco sozinho já resolve — a borda some no fundo e não
+    faz falta.
+  */
+  it("num painel escuro o botão claro tem contraste de sobra", () => {
+    expect(contraste("#ffffff", "#6c009e")).toBeGreaterThan(7);
+  });
+
+  it("o disco branco do G ganha anel para não sumir", () => {
     const gmark = post152.slice(
-      post152.indexOf(
-        "#loginScreen.login-panel-dark .google-login-btn .gmark {",
-      ),
+      post152.indexOf("#loginScreen .google-login-btn .gmark {"),
     );
-    expect(gmark).toContain("box-shadow: inset 0 0 0 1px");
+    expect(gmark).toContain("box-shadow: inset 0 0 0 1px #dadce0");
   });
 
-  it("as duas escolhas passam do mínimo de 3:1 contra os painéis reais", () => {
-    // Painel escuro em uso hoje: o botão claro é o que funciona.
-    expect(contraste("#ffffff", "#6c009e")).toBeGreaterThan(3);
-    expect(contraste("#101c2a", "#6c009e")).toBeLessThan(3);
-    // Painel claro do SIGAV: o escuro é que funciona.
-    expect(contraste("#101c2a", "#c898eb")).toBeGreaterThan(3);
-    expect(contraste("#ffffff", "#c898eb")).toBeLessThan(3);
-  });
-
-  it("é a mesma classe que já governa texto e logo", () => {
-    expect(regra).toContain("#loginScreen.login-panel-dark");
-    expect(post152).toContain("#loginScreen.login-panel-dark #loginLogo");
+  /*
+    Escopado ao `#loginScreen`: a regra vale para o botão principal e para o de
+    trocar de conta, e não escapa para outras telas.
+  */
+  it("vale só na tela de acesso", () => {
+    expect(regra).toContain("#loginScreen .google-login-btn");
+    expect(post152).not.toMatch(/^\.google-login-btn\s*\{/m);
   });
 });

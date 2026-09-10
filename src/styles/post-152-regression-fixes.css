@@ -97,34 +97,45 @@ html[data-theme="dark"] #page-config option {
 }
 
 /*
-  O botão de acesso acompanha a cor do painel, como o texto já acompanha.
+  O botão de acesso, claro como no SIGAV.
 
-  Ele era fixo em `#101c2a` — azul quase preto — para qualquer identidade
-  escolhida. Medido contra as cores reais em uso:
+  Ele era fixo em #101c2a — azul quase preto — para qualquer identidade
+  escolhida. Com o painel atual (#c090eb) isso é legível, mas destoa do SIGAV,
+  cujo botão é branco com texto azul-escuro e sombra forte:
+  `bg-white text-[#003b70] shadow-lg hover:bg-slate-100`.
 
-    painel #6c009e (o atual)   botão escuro 1.74:1   botão claro 9.85:1
-    painel #c898eb (o SIGAV)   botão escuro 7.49:1   botão claro 2.30:1
+  Medido contra os painéis em uso:
 
-  Num painel escuro o botão quase desaparecia: 1.74:1, bem abaixo do mínimo de
-  3:1 que a WCAG pede para a superfície de um componente. Num painel claro o
-  escuro é justamente o que funciona — por isso a regra inverte com o painel em
-  vez de fixar uma das duas.
+    branco sobre #c090eb (atual)   2.49:1
+    branco sobre #c898eb (SIGAV)   2.30:1
+    branco sobre #6c009e (escuro)  9.85:1
+    texto #003b70 sobre branco    11.29:1
 
-  Quem decide continua sendo `needsLightForeground()`, a mesma função que já
-  governa texto, logo e ícones. Nenhuma segunda regra de contraste.
+  O preenchimento branco fica abaixo do mínimo de 3:1 num painel claro — é assim
+  no SIGAV também. A WCAG, porém, pede que a **borda do componente** seja
+  perceptível, não necessariamente o preenchimento: a borda #003b70 dá 4.53:1
+  contra o painel atual e 4.92:1 contra o do SIGAV. O SIGAV não tem essa borda e
+  se apoia só na sombra; ela é a única diferença deliberada, e sai numa linha se
+  a paridade exata for preferível.
+
+  Num painel escuro o branco sozinho já dá 9.85:1 — a borda some no fundo, e não
+  faz falta.
+
+  Vale para os dois botões da tela de acesso: o principal e o de trocar de conta.
 */
-#loginScreen.login-panel-dark .google-login-btn {
+#loginScreen .google-login-btn {
+  border: 1px solid #003b70;
   background: #ffffff;
-  color: #101c2a;
-  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.55);
+  color: #003b70;
+  box-shadow: 0 12px 26px -14px rgba(15, 23, 42, 0.5);
 }
 
-#loginScreen.login-panel-dark .google-login-btn:hover {
-  background: #eef4fb;
+#loginScreen .google-login-btn:hover {
+  background: #f1f5f9;
 }
 
-/* Sobre um botão claro, o disco branco do "G" sumiria: vira um contorno. */
-#loginScreen.login-panel-dark .google-login-btn .gmark {
+/* Sobre um botão branco o disco branco do "G" sumiria: fica só o anel. */
+#loginScreen .google-login-btn .gmark {
   background: #ffffff;
-  box-shadow: inset 0 0 0 1px #d7e5f2;
+  box-shadow: inset 0 0 0 1px #dadce0;
 }
