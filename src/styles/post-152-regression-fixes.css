@@ -95,3 +95,36 @@ html[data-theme="dark"] #page-config option {
   background: #102436;
   color: #edf5ff;
 }
+
+/*
+  O botão de acesso acompanha a cor do painel, como o texto já acompanha.
+
+  Ele era fixo em `#101c2a` — azul quase preto — para qualquer identidade
+  escolhida. Medido contra as cores reais em uso:
+
+    painel #6c009e (o atual)   botão escuro 1.74:1   botão claro 9.85:1
+    painel #c898eb (o SIGAV)   botão escuro 7.49:1   botão claro 2.30:1
+
+  Num painel escuro o botão quase desaparecia: 1.74:1, bem abaixo do mínimo de
+  3:1 que a WCAG pede para a superfície de um componente. Num painel claro o
+  escuro é justamente o que funciona — por isso a regra inverte com o painel em
+  vez de fixar uma das duas.
+
+  Quem decide continua sendo `needsLightForeground()`, a mesma função que já
+  governa texto, logo e ícones. Nenhuma segunda regra de contraste.
+*/
+#loginScreen.login-panel-dark .google-login-btn {
+  background: #ffffff;
+  color: #101c2a;
+  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.55);
+}
+
+#loginScreen.login-panel-dark .google-login-btn:hover {
+  background: #eef4fb;
+}
+
+/* Sobre um botão claro, o disco branco do "G" sumiria: vira um contorno. */
+#loginScreen.login-panel-dark .google-login-btn .gmark {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #d7e5f2;
+}
