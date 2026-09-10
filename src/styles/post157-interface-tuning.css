@@ -304,3 +304,69 @@ body.sidebar-theme-dark .side-brand-copy small {
     grid-template-columns: 1fr;
   }
 }
+
+/*
+  Prévia e aviso de contraste dos seletores de cor em Configurações.
+  O aviso muda de tom conforme o resultado: informativo quando passa a WCAG AA,
+  de atenção quando reprova — nunca só cor, sempre com o número escrito.
+*/
+.contraste-bloco {
+  margin-top: 8px;
+  display: grid;
+  gap: 7px;
+}
+
+.contraste-previa {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid rgba(15, 35, 60, 0.14);
+  border-radius: 12px;
+}
+
+.contraste-previa strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.contraste-previa__botao {
+  padding: 8px 14px;
+  border: 1px solid #003b70;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #003b70;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.contraste-aviso {
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #cfe1eb;
+  border-radius: 10px;
+  background: #f2f8fb;
+  color: #24506b;
+  font-size: 11.5px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.contraste-aviso[data-nivel="alerta"] {
+  border-color: #e6c98a;
+  background: #fdf6e6;
+  color: #7a5410;
+}
+
+html[data-theme="dark"] .contraste-aviso {
+  border-color: #2f4457;
+  background: #14293a;
+  color: #b9cfe0;
+}
+
+html[data-theme="dark"] .contraste-aviso[data-nivel="alerta"] {
+  border-color: #6b5522;
+  background: #33280f;
+  color: #f0d9a4;
+}

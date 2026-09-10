@@ -5,6 +5,7 @@ import {
   validateAccessBackgroundFile,
 } from "../lib/access-background-storage.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { ligarAvisoDeContraste } from "./aviso-de-contraste.js";
 
 const KEY_LOGO = "ui_sidebar_logo_url";
 const KEY_COLOR = "ui_sidebar_background_color";
@@ -356,6 +357,7 @@ function ensureConfigFields() {
       <span>Escolha a cor de fundo</span>
     </div>
     <small>Textos e ícones mudam automaticamente para preservar contraste.</small>
+    <div id="cfgSidebarColorAviso" class="contraste-bloco"></div>
   `;
 
   fragment.append(title, logoRow, colorRow);
@@ -378,6 +380,16 @@ function ensureConfigFields() {
       "success",
     );
   });
+  /*
+    A barra lateral nao tem botao de acesso; a previa mostra so a superficie e o
+    texto, que e o que ela de facto pinta.
+  */
+  ligarAvisoDeContraste(
+    colorInput,
+    document.getElementById("cfgSidebarColorAviso"),
+    { comBotao: false },
+  );
+
   colorInput?.addEventListener("input", () => {
     currentColor = safeColor(colorInput.value);
     applySidebarBranding();
