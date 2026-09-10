@@ -1,0 +1,1 @@
+{"version":"0.0.1","configurations":[{"name":"prod","runtimeExecutable":"npm","runtimeArgs":["run","preview","--","--port","4186"],"port":4186}]}

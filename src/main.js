@@ -55,7 +55,10 @@ import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fi
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
 import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
-import { organizarConfiguracoesEmSecoes } from "./modules/config-secoes.js";
+import {
+  organizarConfiguracoesEmSecoes,
+  removerNavegadorAntigo,
+} from "./modules/config-secoes.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
@@ -100,6 +103,7 @@ initSidebarBranding();
 organizarConfiguracoesEmSecoes();
 initConfigPageEnhancements();
 initConfigGovernance();
+removerNavegadorAntigo();
 initNucleoCronograma();
 initNucleoEditorSafe();
 initNucleoOperationalSafe();

@@ -6,6 +6,7 @@ import {
   SECAO_POR_CAMPO,
   SECOES,
   organizarConfiguracoesEmSecoes,
+  removerNavegadorAntigo,
   secaoDoCampo,
 } from "../src/modules/config-secoes.js";
 
@@ -280,5 +281,86 @@ describe("integração no arranque", () => {
   it("o módulo não reescreve markup, move nós", () => {
     expect(modulo).toContain("appendChild");
     expect(modulo).not.toMatch(/innerHTML\s*=\s*""/);
+  });
+});
+
+/*
+  Regressão introduzida pelo #170: `config-page-enhancements.js` já montava a
+  sua própria barra — cinco abas, um campo de busca e um contador — e eu
+  acrescentei o navegador do SIGAV sem remover aquilo.
+
+  Medido em produção: 5 abas antigas, duas buscas e dois contadores que se
+  contradiziam, "1 seção disponível" no topo contra "7 seções disponíveis" ao
+  lado. O "1" vinha de o filtro antigo classificar os `.admin-card` originais,
+  que agora estão vazios e ocultos.
+*/
+describe("um navegador só", () => {
+  const montarComBarraAntiga = () => {
+    document.body.innerHTML = `
+      <section id="page-config">
+        <section id="configWorkspaceToolbar">
+          <div class="config-workspace-heading">
+            <h2>Configurações</h2>
+            <div class="config-search-wrap"><input id="configWorkspaceSearch" /></div>
+          </div>
+          <div class="config-workspace-tabs">
+            <button data-config-tab="all">Tudo</button>
+            <button data-config-tab="access">Acessos</button>
+          </div>
+          <div class="config-workspace-meta">
+            <span id="configWorkspaceResultCount">1 seção disponível</span>
+            <span id="configWorkspaceDirtyTop" hidden>Alterações não salvas</span>
+          </div>
+          <div id="configValidationSummary" hidden></div>
+        </section>
+        <div class="admin-grid"><div class="admin-card"><div class="form-grid">
+          <div class="form-row"><label>Título</label><input id="cfgTitle" /></div>
+        </div></div></div>
+      </section>`;
+  };
+
+  beforeEach(montarComBarraAntiga);
+
+  it("remove abas, busca e contador antigos", () => {
+    expect(removerNavegadorAntigo(document)).toBe(true);
+    expect(document.querySelectorAll("[data-config-tab]")).toHaveLength(0);
+    expect(document.getElementById("configWorkspaceSearch")).toBeNull();
+    expect(document.getElementById("configWorkspaceResultCount")).toBeNull();
+  });
+
+  /*
+    O que a barra antiga tem de único não pode ir junto: ela continua sendo a
+    única dona do indicador de alterações e do resumo de validação.
+  */
+  it("preserva o que só a barra antiga oferece", () => {
+    removerNavegadorAntigo(document);
+    expect(document.querySelector(".config-workspace-heading")).toBeTruthy();
+    expect(document.getElementById("configWorkspaceDirtyTop")).toBeTruthy();
+    expect(document.getElementById("configValidationSummary")).toBeTruthy();
+  });
+
+  it("é inofensivo quando a barra antiga não existe", () => {
+    document.body.innerHTML = '<section id="page-config"></section>';
+    expect(removerNavegadorAntigo(document)).toBe(false);
+  });
+
+  it("sobra um contador só, o novo", () => {
+    organizarConfiguracoesEmSecoes(document);
+    removerNavegadorAntigo(document);
+    const contadores = document.querySelectorAll(
+      "#configWorkspaceResultCount, #configContagemSecoes",
+    );
+    expect(contadores).toHaveLength(1);
+    expect(contadores[0].id).toBe("configContagemSecoes");
+  });
+
+  /*
+    A barra antiga só existe depois de `initConfigPageEnhancements()` montá-la.
+    Remover antes disso não encontraria nada — e ela voltaria em seguida.
+  */
+  it("a remoção corre depois de quem monta a barra antiga", () => {
+    expect(main.indexOf("removerNavegadorAntigo()")).toBeGreaterThan(
+      main.indexOf("initConfigPageEnhancements()"),
+    );
   });
 });

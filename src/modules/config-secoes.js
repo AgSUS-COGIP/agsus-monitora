@@ -307,3 +307,38 @@ export function organizarConfiguracoesEmSecoes(
   ligarFiltro(documento, layout);
   return movidos > 0;
 }
+
+/*
+  Um navegador só.
+
+  `config-page-enhancements.js` já montava a sua própria barra: cinco abas
+  (Tudo, Acessos, Sistema, Painéis, Técnico), um campo de busca e um contador
+  de seções. Ao acrescentar o navegador do SIGAV eu não removi aquilo, e a
+  página passou a ter dois filtros, duas buscas e dois contadores que se
+  contradiziam — "1 seção disponível" no topo, "7 seções disponíveis" ao lado.
+  Medido no navegador: 5 abas antigas, duas buscas, dois contadores.
+
+  O filtro antigo classificava os `.admin-card` originais, que agora estão
+  vazios e ocultos — por isso o "1". Ele não tem mais o que filtrar.
+
+  O que fica da barra antiga: o cabeçalho, o indicador de alterações não salvas
+  e o resumo de validação, que continuam sendo os únicos donos dessas
+  informações. Sai apenas o que duplica o navegador novo.
+*/
+export function removerNavegadorAntigo(documento = globalThis.document) {
+  const barra = documento?.getElementById?.("configWorkspaceToolbar");
+  if (!barra) return false;
+
+  let removidos = 0;
+  for (const seletor of [
+    ".config-workspace-tabs",
+    ".config-search-wrap",
+    "#configWorkspaceResultCount",
+  ]) {
+    const alvo = barra.querySelector(seletor);
+    if (!alvo) continue;
+    alvo.remove();
+    removidos += 1;
+  }
+  return removidos > 0;
+}
