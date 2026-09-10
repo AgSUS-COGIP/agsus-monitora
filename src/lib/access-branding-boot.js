@@ -116,8 +116,14 @@ export async function atualizarMarcaComBrandingPublico(
   const marca = await buscarMarcaPublica();
   if (!marca) return false;
 
-  guardarMarca(marca);
-  return aplicarMarcaNaTela(marca, documento);
+  /*
+    Aplica o resultado da mescla, não a resposta crua. A resposta pública não
+    carrega todos os campos que a tela conhece — aplicar só ela reverteria os
+    ausentes para o padrão, que é o mesmo efeito que a mescla no cache existe
+    para evitar.
+  */
+  const completa = guardarMarca(marca) || marca;
+  return aplicarMarcaNaTela(completa, documento);
 }
 
 /*

@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  guardarMarca,
+  lerMarcaGuardada,
+  limparMarcaGuardada,
+} from "../src/lib/access-branding-cache.js";
 import { needsLightForeground } from "../src/lib/access-branding.js";
 
 const html = readFileSync("index.html", "utf8");
@@ -157,5 +162,52 @@ describe("os estados que a medição no navegador confirmou", () => {
   */
   it("a URL da arte é higienizada antes de virar url()", () => {
     expect(scriptDoHead()).toContain('replace(/["\\\\]/g, "")');
+  });
+});
+
+/*
+  O modo do texto não sobrevivia a um F5.
+
+  Sequência medida: o carregamento autenticado guardava `textoModo` no cache; o
+  pré-paint o aplicava; e então `obter_branding_acesso_publico()` respondia com
+  a sua lista fixa de seis chaves, `guardarMarca` **substituía** o cache inteiro
+  por essa resposta, e o campo desaparecia — a tela revertia para o padrão no
+  mesmo carregamento, e o F5 seguinte já nascia sem ele.
+
+  Substituir contradizia a regra que o próprio módulo declara: uma resposta
+  incompleta não pode trocar uma identidade correta por outra.
+*/
+describe("uma resposta parcial não apaga o cache", () => {
+  beforeEach(() => {
+    limparMarcaGuardada();
+  });
+
+  it("mescla em vez de substituir", () => {
+    guardarMarca({ panelColor: "#c090eb", textoModo: "claro" });
+    // A RPC pública responde sem o modo, como faz hoje.
+    guardarMarca({ panelColor: "#c090eb", greeting: "Olá" });
+
+    const guardada = lerMarcaGuardada();
+    expect(guardada.textoModo).toBe("claro");
+    expect(guardada.greeting).toBe("Olá");
+  });
+
+  it("devolve a marca completa, para quem aplica não usar a resposta crua", () => {
+    guardarMarca({ panelColor: "#c090eb", textoModo: "claro" });
+    const completa = guardarMarca({ greeting: "Olá" });
+    expect(completa.textoModo).toBe("claro");
+    expect(completa.panelColor).toBe("#c090eb");
+  });
+
+  it("o que a resposta traz continua vencendo o que estava guardado", () => {
+    guardarMarca({ panelColor: "#c090eb" });
+    guardarMarca({ panelColor: "#6c009e" });
+    expect(lerMarcaGuardada().panelColor).toBe("#6c009e");
+  });
+
+  it("quem aplica usa o resultado da mescla", () => {
+    const boot = readFileSync("src/lib/access-branding-boot.js", "utf8");
+    expect(boot).toContain("const completa = guardarMarca(marca) || marca");
+    expect(boot).toContain("aplicarMarcaNaTela(completa, documento)");
   });
 });

@@ -87,19 +87,41 @@ export function lerMarcaGuardada() {
  * visita apenas volta a começar pelo fundo neutro.
  */
 export function guardarMarca(marca) {
-  if (!marca || typeof marca !== "object") return;
+  if (!marca || typeof marca !== "object") return null;
 
   try {
-    const guardar = {};
+    /*
+      Mescla, não substitui.
+
+      Antes, guardar uma marca **apagava** do cache todo campo ausente dela. E
+      `obter_branding_acesso_publico()` devolve só a sua lista fixa de chaves —
+      então, a cada carregamento, a resposta pública apagava do cache o que ela
+      não sabe trazer, e a tela revertia para o padrão no mesmo instante em que
+      a resposta chegava. Era isso que fazia o modo do texto não sobreviver a um
+      F5, mesmo depois de escolhido e salvo.
+
+      Substituir contradizia a regra que este módulo já declarava: uma resposta
+      incompleta não pode trocar uma identidade correta por outra.
+
+      O preço, dito com todas as letras: um campo **esvaziado** na Configuração
+      deixa de chegar na resposta pública, e o valor antigo sobrevive no cache
+      até o próximo carregamento autenticado — que grava o conjunto inteiro por
+      `applyConfigToUi()` e corrige. Preferi um valor velho por alguns minutos a
+      uma identidade que se desfaz sozinha a cada F5.
+    */
+    const guardado = lerMarcaGuardada() || {};
+    const guardar = { ...guardado };
     for (const campo of CAMPOS) {
       const valor = texto(marca[campo]);
       if (valor) guardar[campo] = valor;
     }
-    if (!Object.keys(guardar).length) return;
+    if (!Object.keys(guardar).length) return null;
 
     globalThis.localStorage?.setItem(CHAVE, JSON.stringify(guardar));
+    return guardar;
   } catch (erro) {
     // Silêncio proposital: ver o comentário acima.
+    return null;
   }
 }
 
