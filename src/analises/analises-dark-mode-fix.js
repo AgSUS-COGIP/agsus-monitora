@@ -1,7 +1,7 @@
 const THEME_STORAGE_KEY = "agsus_analises_theme_v3";
 
-function ensureDarkModeStyles(){
-  if(document.getElementById("analisesDarkModeFixStyles")) return;
+function ensureDarkModeStyles() {
+  if (document.getElementById("analisesDarkModeFixStyles")) return;
 
   const style = document.createElement("style");
   style.id = "analisesDarkModeFixStyles";
@@ -33,7 +33,6 @@ function ensureDarkModeStyles(){
       box-shadow:0 4px 18px rgba(0,0,0,.35)!important;
     }
 
-    html[data-theme="dark"] .logo,
     html[data-theme="dark"] .panel,
     html[data-theme="dark"] .kpi,
     html[data-theme="dark"] .status-pill,
@@ -158,9 +157,9 @@ function ensureDarkModeStyles(){
   document.head.appendChild(style);
 }
 
-function updateThemeButton(){
+function updateThemeButton() {
   const button = document.getElementById("themeBtn");
-  if(!button) return;
+  if (!button) return;
 
   const dark = document.documentElement.dataset.theme === "dark";
   button.title = dark ? "Usar tema claro" : "Usar tema escuro";
@@ -170,36 +169,48 @@ function updateThemeButton(){
     : '<i class="fa-solid fa-moon"></i>';
 }
 
-function normalizeStoredTheme(){
-  try{
+function normalizeStoredTheme() {
+  try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    if(saved === "dark") document.documentElement.dataset.theme = "dark";
-    else if(document.documentElement.dataset.theme !== "dark") delete document.documentElement.dataset.theme;
-  }catch(error){
+    if (saved === "dark") document.documentElement.dataset.theme = "dark";
+    else if (document.documentElement.dataset.theme !== "dark")
+      delete document.documentElement.dataset.theme;
+  } catch (error) {
     console.warn("Não foi possível restaurar o tema de Análises:", error);
   }
 }
 
-function init(){
+function init() {
   ensureDarkModeStyles();
   normalizeStoredTheme();
   updateThemeButton();
 
-  const observer = new MutationObserver(mutations => {
-    if(mutations.some(item => item.type === "attributes" && item.attributeName === "data-theme")){
+  const observer = new MutationObserver((mutations) => {
+    if (
+      mutations.some(
+        (item) =>
+          item.type === "attributes" && item.attributeName === "data-theme",
+      )
+    ) {
       updateThemeButton();
     }
   });
 
   observer.observe(document.documentElement, {
-    attributes:true,
-    attributeFilter:["data-theme"]
+    attributes: true,
+    attributeFilter: ["data-theme"],
   });
 
-  document.addEventListener("click", event => {
-    if(event.target?.closest?.("#themeBtn")) window.setTimeout(updateThemeButton, 0);
-  }, true);
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (event.target?.closest?.("#themeBtn"))
+        window.setTimeout(updateThemeButton, 0);
+    },
+    true,
+  );
 }
 
-if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once:true });
+if (document.readyState === "loading")
+  document.addEventListener("DOMContentLoaded", init, { once: true });
 else init();

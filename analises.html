@@ -1,156 +1,339 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AgSUS Monitora Análises</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="/src/analises/analises.css">
-  <link rel="stylesheet" href="/src/analises/analises-layout-modern.css">
-  <link rel="stylesheet" href="/src/analises/analises-infinite-table.css?v=20260723-3">
-</head>
-<body>
-  <div id="loading" class="loading" aria-live="polite">
-    <div class="loading-card">
-      <div class="loading-head"><div class="spin"></div><div><div id="loadingTitle">Carregando painel</div><small id="loadingText" style="color:var(--muted)">Preparando dados...</small></div></div>
-      <div class="progress"><div id="progressBar" class="bar"></div></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AgSUS Monitora Análises</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/src/analises/analises.css" />
+    <link rel="stylesheet" href="/src/analises/analises-layout-modern.css" />
+    <link
+      rel="stylesheet"
+      href="/src/analises/analises-infinite-table.css?v=20260723-3"
+    />
+  </head>
+  <body>
+    <div id="loading" class="loading" aria-live="polite">
+      <div class="loading-card">
+        <div class="loading-head">
+          <div class="spin"></div>
+          <div>
+            <div id="loadingTitle">Carregando painel</div>
+            <small id="loadingText" style="color: var(--muted)"
+              >Preparando dados...</small
+            >
+          </div>
+        </div>
+        <div class="progress"><div id="progressBar" class="bar"></div></div>
+      </div>
     </div>
-  </div>
 
-  <div class="toast-host" id="toastHost" aria-live="polite" aria-atomic="false"></div>
+    <div
+      class="toast-host"
+      id="toastHost"
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
 
-  <div class="shell">
-    <header class="topbar" id="topbar">
-      <div class="brand">
-        <div class="logo" id="brandLogo">
-          <img src="https://i.postimg.cc/7PztC6jq/79255fad-06f0-4963-81f5-1fa4a116475e.png" alt="AgSUS" onerror="document.getElementById('brandLogo').classList.add('logo-error')">
-          <span class="logo-fallback"><i class="fa-solid fa-chart-line"></i></span>
-        </div>
-        <div>
-          <h1>AgSUS Monitora Análises</h1>
-          <p class="sub">Monitoramento das Análises Curriculares · Saúde Indígena</p>
-        </div>
-      </div>
-      <div class="top-actions">
-        <span class="status-pill"><span class="dot"></span><span id="updatedText">Aguardando dados</span></span>
-        <button class="btn secondary icon" id="themeBtn" title="Alternar tema" aria-label="Alternar tema claro/escuro"><i class="fa-solid fa-moon"></i></button>
-        <button class="btn secondary icon" id="fullBtn" title="Tela cheia" aria-label="Alternar tela cheia"><i class="fa-solid fa-expand"></i></button>
-        <button class="btn" id="refreshBtn"><i class="fa-solid fa-rotate"></i> Atualizar</button>
-        <button class="btn green" id="exportBtn"><i class="fa-solid fa-download"></i> Exportar</button>
-      </div>
-    </header>
-
-    <main class="content">
-      <section id="authWarning" class="auth-warning" hidden>
-        Sessão não localizada. Abra este painel pelo menu do AgSUS Monitora para compartilhar a sessão do Supabase Auth.
-      </section>
-
-      <section class="panel filter-panel">
-        <div class="filter-head">
+    <div class="shell">
+      <header class="topbar" id="topbar">
+        <div class="brand">
           <div>
-            <span class="eyebrow">Filtros base</span>
-            <h2 class="title">Refinar visualização</h2>
-            <p class="hint">Os filtros são aplicados automaticamente e não alteram a base no Supabase.</p>
-          </div>
-          <div class="filter-actions">
-            <button class="btn secondary" id="advancedBtn"><i class="fa-solid fa-sliders"></i> Mais filtros</button>
-            <button class="btn secondary" id="toggleFiltersBtn" type="button" aria-expanded="true" title="Ocultar filtros"><i class="fa-solid fa-eye-slash"></i> <span class="toggle-label">Ocultar filtros</span></button>
-            <button class="btn secondary" id="clearBtn">Limpar</button>
+            <h1>AgSUS Monitora Análises</h1>
+            <p class="sub">
+              Monitoramento das Análises Curriculares · Saúde Indígena
+            </p>
           </div>
         </div>
-
-        <div id="filtersBody" class="filters-body">
-          <div class="filter-grid">
-            <div class="field"><label for="fSituacaoEdital">Situação do processo</label><select id="fSituacaoEdital"><option value="ativo" selected>Ativo</option><option value="inativo">Inativo</option><option value="todos">Todos</option></select></div>
-            <div class="field"><label for="fUnidade">Unidade</label><select id="fUnidade"></select></div>
-            <div class="field"><label for="fEdital">Edital</label><select id="fEdital"></select></div>
-            <div class="field"><label for="fVaga">Código da vaga</label><select id="fVaga"></select></div>
-            <div class="field"><label for="fStatus">Status</label><select id="fStatus"></select></div>
-            <div class="field"><label for="fResponsavel">Responsável</label><select id="fResponsavel"></select></div>
-          </div>
-
-          <div id="advancedFilters" class="advanced filter-grid">
-            <div class="field"><label for="fCategoria">Categoria</label><select id="fCategoria"></select></div>
-            <div class="field"><label for="fModalidade">Modalidade de concorrência</label><select id="fModalidade"></select></div>
-            <div class="field"><label for="fValidacao">Validação da janela</label><select id="fValidacao"><option value="">Todas</option><option value="DENTRO_PERIODO">Dentro do período</option><option value="FORA_PERIODO">Fora do período</option><option value="SEM_DATA">Sem data de análise</option><option value="SEM_JANELA">Sem janela configurada</option></select></div>
-            <div class="field"><label for="fBusca">Buscar em todo o painel</label><input id="fBusca" placeholder="Candidato, vaga, edital, responsável ou análise"></div>
-          </div>
-          <div id="filterChips" class="chips"></div>
+        <div class="top-actions">
+          <span class="status-pill"
+            ><span class="dot"></span
+            ><span id="updatedText">Aguardando dados</span></span
+          >
+          <button
+            class="btn secondary icon"
+            id="themeBtn"
+            title="Alternar tema"
+            aria-label="Alternar tema claro/escuro"
+          >
+            <i class="fa-solid fa-moon"></i>
+          </button>
+          <button
+            class="btn secondary icon"
+            id="fullBtn"
+            title="Tela cheia"
+            aria-label="Alternar tela cheia"
+          >
+            <i class="fa-solid fa-expand"></i>
+          </button>
+          <button class="btn" id="refreshBtn">
+            <i class="fa-solid fa-rotate"></i> Atualizar
+          </button>
+          <button class="btn green" id="exportBtn">
+            <i class="fa-solid fa-download"></i> Exportar
+          </button>
         </div>
-      </section>
+      </header>
 
-      <section class="kpis" id="kpiGrid">
-        <article class="kpi k-cyan" data-kpi="total"><button aria-pressed="false"><span>Total de aptos p/ análise</span><b id="kTotal">0</b></button></article>
-        <article class="kpi k-green" data-kpi="analisado"><button aria-pressed="false"><span>Análises realizadas</span><b id="kAnalisado">0</b></button></article>
-        <article class="kpi k-yellow" data-kpi="pendente"><button aria-pressed="false"><span>Pendentes</span><b id="kPendente">0</b></button></article>
-        <article class="kpi k-purple" data-kpi="revisar"><button aria-pressed="false"><span>Em revisão</span><b id="kRevisar">0</b></button></article>
-        <article class="kpi k-green" data-kpi="aprovado"><button aria-pressed="false"><span>Aprovados</span><b id="kAprovado">0</b></button></article>
-        <article class="kpi k-red" data-kpi="reprovado"><button aria-pressed="false"><span>Reprovados</span><b id="kReprovado">0</b></button></article>
-        <article class="kpi"><span>Taxa de conclusão</span><b id="kTaxa">0%</b></article>
-      </section>
+      <main class="content">
+        <section id="authWarning" class="auth-warning" hidden>
+          Sessão não localizada. Abra este painel pelo menu do AgSUS Monitora
+          para compartilhar a sessão do Supabase Auth.
+        </section>
 
-      <section class="panel panel-pad">
-        <div id="contextLine" class="context-line">Sem filtros aplicados. Recorte base: toda a carteira carregada.</div>
-        <div id="windowMeta" class="meta-line"></div>
-      </section>
-
-      <section class="oper-grid">
-        <article class="panel panel-pad">
-          <span class="eyebrow">Carga operacional</span>
-          <h2 class="title">Análises por responsável</h2>
-          <p class="hint">Barras empilhadas por Status. Clique em um responsável para recortar a fila.</p>
-          <div class="chart-wrap short"><canvas id="chartResponsavel"></canvas></div>
-        </article>
-        <article class="panel panel-pad">
-          <span class="eyebrow">Ação imediata</span>
-          <h2 class="title">Pendências prioritárias</h2>
-          <p class="hint">Clique em um item para aplicar o recorte correspondente na fila.</p>
-          <div id="attentionList" class="attention-list"></div>
-        </article>
-      </section>
-
-      <section class="panel panel-pad trend">
-        <span class="eyebrow">Evolução</span>
-        <h2 class="title">Análises por data</h2>
-        <p class="hint">Tendência diária do recorte ativo. Pontos fora da janela oficial aparecem em vermelho.</p>
-        <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
-      </section>
-
-      <section class="panel table-card">
-        <div class="table-head">
-          <div>
-            <span class="eyebrow">Detalhes</span>
-            <h2 class="title">Fila operacional consolidada</h2>
-            <p class="hint">Abra um registro para consultar pontuação, janela oficial, análise e origem.</p>
+        <section class="panel filter-panel">
+          <div class="filter-head">
+            <div>
+              <span class="eyebrow">Filtros base</span>
+              <h2 class="title">Refinar visualização</h2>
+              <p class="hint">
+                Os filtros são aplicados automaticamente e não alteram a base no
+                Supabase.
+              </p>
+            </div>
+            <div class="filter-actions">
+              <button class="btn secondary" id="advancedBtn">
+                <i class="fa-solid fa-sliders"></i> Mais filtros
+              </button>
+              <button
+                class="btn secondary"
+                id="toggleFiltersBtn"
+                type="button"
+                aria-expanded="true"
+                title="Ocultar filtros"
+              >
+                <i class="fa-solid fa-eye-slash"></i>
+                <span class="toggle-label">Ocultar filtros</span>
+              </button>
+              <button class="btn secondary" id="clearBtn">Limpar</button>
+            </div>
           </div>
-          <div class="table-tools">
-            <input type="search" id="tableSearch" placeholder="Buscar somente na fila operacional" aria-label="Buscar somente na fila operacional">
-            <div class="rows-control" hidden aria-hidden="true"><label for="rowsPerPage">Linhas</label><select id="rowsPerPage"><option>10</option><option>25</option><option selected>50</option><option>100</option></select></div>
+
+          <div id="filtersBody" class="filters-body">
+            <div class="filter-grid">
+              <div class="field">
+                <label for="fSituacaoEdital">Situação do processo</label
+                ><select id="fSituacaoEdital">
+                  <option value="ativo" selected>Ativo</option>
+                  <option value="inativo">Inativo</option>
+                  <option value="todos">Todos</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="fUnidade">Unidade</label
+                ><select id="fUnidade"></select>
+              </div>
+              <div class="field">
+                <label for="fEdital">Edital</label
+                ><select id="fEdital"></select>
+              </div>
+              <div class="field">
+                <label for="fVaga">Código da vaga</label
+                ><select id="fVaga"></select>
+              </div>
+              <div class="field">
+                <label for="fStatus">Status</label
+                ><select id="fStatus"></select>
+              </div>
+              <div class="field">
+                <label for="fResponsavel">Responsável</label
+                ><select id="fResponsavel"></select>
+              </div>
+            </div>
+
+            <div id="advancedFilters" class="advanced filter-grid">
+              <div class="field">
+                <label for="fCategoria">Categoria</label
+                ><select id="fCategoria"></select>
+              </div>
+              <div class="field">
+                <label for="fModalidade">Modalidade de concorrência</label
+                ><select id="fModalidade"></select>
+              </div>
+              <div class="field">
+                <label for="fValidacao">Validação da janela</label
+                ><select id="fValidacao">
+                  <option value="">Todas</option>
+                  <option value="DENTRO_PERIODO">Dentro do período</option>
+                  <option value="FORA_PERIODO">Fora do período</option>
+                  <option value="SEM_DATA">Sem data de análise</option>
+                  <option value="SEM_JANELA">Sem janela configurada</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="fBusca">Buscar em todo o painel</label
+                ><input
+                  id="fBusca"
+                  placeholder="Candidato, vaga, edital, responsável ou análise"
+                />
+              </div>
+            </div>
+            <div id="filterChips" class="chips"></div>
           </div>
-        </div>
-        <div class="table-meta"><span id="tableInfo">Mostrando 0 de 0 registros</span><span id="pageInfo">Carregamento contínuo</span></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th style="width:12%">Grupo</th><th style="width:14%">Unidade</th><th style="width:8%">Edital</th><th style="width:8%">Código</th><th style="width:23%">Vaga</th><th style="width:18%">Candidato</th><th style="width:9%">Status</th><th style="width:8%">Ações</th></tr></thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination" hidden aria-hidden="true"><button class="btn secondary small" id="firstBtn">Primeira</button><button class="btn secondary small" id="prevBtn">Anterior</button><div id="pageNumbers" class="page-numbers"></div><button class="btn secondary small" id="nextBtn">Próxima</button><button class="btn secondary small" id="lastBtn">Última</button></div>
-      </section>
-    </main>
+        </section>
 
-    <footer class="footer"><span>Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde © 2026</span><span><span id="footerUpdated">Atualizado: --</span> <span class="secure">SECURE</span></span></footer>
-  </div>
+        <section class="kpis" id="kpiGrid">
+          <article class="kpi k-cyan" data-kpi="total">
+            <button aria-pressed="false">
+              <span>Total de aptos p/ análise</span><b id="kTotal">0</b>
+            </button>
+          </article>
+          <article class="kpi k-green" data-kpi="analisado">
+            <button aria-pressed="false">
+              <span>Análises realizadas</span><b id="kAnalisado">0</b>
+            </button>
+          </article>
+          <article class="kpi k-yellow" data-kpi="pendente">
+            <button aria-pressed="false">
+              <span>Pendentes</span><b id="kPendente">0</b>
+            </button>
+          </article>
+          <article class="kpi k-purple" data-kpi="revisar">
+            <button aria-pressed="false">
+              <span>Em revisão</span><b id="kRevisar">0</b>
+            </button>
+          </article>
+          <article class="kpi k-green" data-kpi="aprovado">
+            <button aria-pressed="false">
+              <span>Aprovados</span><b id="kAprovado">0</b>
+            </button>
+          </article>
+          <article class="kpi k-red" data-kpi="reprovado">
+            <button aria-pressed="false">
+              <span>Reprovados</span><b id="kReprovado">0</b>
+            </button>
+          </article>
+          <article class="kpi">
+            <span>Taxa de conclusão</span><b id="kTaxa">0%</b>
+          </article>
+        </section>
 
-  <div hidden aria-hidden="true">
-    <button id="applyBtn" type="button"></button>
-    <select id="fPdf"><option value=""></option></select>
-    <div id="pdfMetrics"></div>
-  </div>
+        <section class="panel panel-pad">
+          <div id="contextLine" class="context-line">
+            Sem filtros aplicados. Recorte base: toda a carteira carregada.
+          </div>
+          <div id="windowMeta" class="meta-line"></div>
+        </section>
 
-  <script type="module" src="/src/analises/main.js?v=20260723-3"></script>
-</body>
+        <section class="oper-grid">
+          <article class="panel panel-pad">
+            <span class="eyebrow">Carga operacional</span>
+            <h2 class="title">Análises por responsável</h2>
+            <p class="hint">
+              Barras empilhadas por Status. Clique em um responsável para
+              recortar a fila.
+            </p>
+            <div class="chart-wrap short">
+              <canvas id="chartResponsavel"></canvas>
+            </div>
+          </article>
+          <article class="panel panel-pad">
+            <span class="eyebrow">Ação imediata</span>
+            <h2 class="title">Pendências prioritárias</h2>
+            <p class="hint">
+              Clique em um item para aplicar o recorte correspondente na fila.
+            </p>
+            <div id="attentionList" class="attention-list"></div>
+          </article>
+        </section>
+
+        <section class="panel panel-pad trend">
+          <span class="eyebrow">Evolução</span>
+          <h2 class="title">Análises por data</h2>
+          <p class="hint">
+            Tendência diária do recorte ativo. Pontos fora da janela oficial
+            aparecem em vermelho.
+          </p>
+          <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+        </section>
+
+        <section class="panel table-card">
+          <div class="table-head">
+            <div>
+              <span class="eyebrow">Detalhes</span>
+              <h2 class="title">Fila operacional consolidada</h2>
+              <p class="hint">
+                Abra um registro para consultar pontuação, janela oficial,
+                análise e origem.
+              </p>
+            </div>
+            <div class="table-tools">
+              <input
+                type="search"
+                id="tableSearch"
+                placeholder="Buscar somente na fila operacional"
+                aria-label="Buscar somente na fila operacional"
+              />
+              <div class="rows-control" hidden aria-hidden="true">
+                <label for="rowsPerPage">Linhas</label
+                ><select id="rowsPerPage">
+                  <option>10</option>
+                  <option>25</option>
+                  <option selected>50</option>
+                  <option>100</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="table-meta">
+            <span id="tableInfo">Mostrando 0 de 0 registros</span
+            ><span id="pageInfo">Carregamento contínuo</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 12%">Grupo</th>
+                  <th style="width: 14%">Unidade</th>
+                  <th style="width: 8%">Edital</th>
+                  <th style="width: 8%">Código</th>
+                  <th style="width: 23%">Vaga</th>
+                  <th style="width: 18%">Candidato</th>
+                  <th style="width: 9%">Status</th>
+                  <th style="width: 8%">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" hidden aria-hidden="true">
+            <button class="btn secondary small" id="firstBtn">Primeira</button
+            ><button class="btn secondary small" id="prevBtn">Anterior</button>
+            <div id="pageNumbers" class="page-numbers"></div>
+            <button class="btn secondary small" id="nextBtn">Próxima</button
+            ><button class="btn secondary small" id="lastBtn">Última</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span
+          >Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde ©
+          2026</span
+        ><span
+          ><span id="footerUpdated">Atualizado: --</span>
+          <span class="secure">SECURE</span></span
+        >
+      </footer>
+    </div>
+
+    <div hidden aria-hidden="true">
+      <button id="applyBtn" type="button"></button>
+      <select id="fPdf">
+        <option value=""></option>
+      </select>
+      <div id="pdfMetrics"></div>
+    </div>
+
+    <script type="module" src="/src/analises/main.js?v=20260723-3"></script>
+  </body>
 </html>

@@ -159,10 +159,6 @@ html body #analisesLoadMoreV2:not([hidden]) {
   .kpis {
     grid-template-columns: 1fr !important;
   }
-  .brand .logo {
-    width: 42px !important;
-    height: 42px !important;
-  }
   .brand h1 {
     font-size: 20px !important;
   }
