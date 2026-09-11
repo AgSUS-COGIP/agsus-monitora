@@ -205,6 +205,84 @@ describe("o que não é canônico não desaparece", () => {
   });
 });
 
+/*
+  Conter a palavra não basta.
+
+  Procurar as canônicas dentro da célula resolve o separador que muda, mas abre
+  um risco próprio: `Não indígenas` contém `indígenas`. A correção no produtor
+  (`normalizeModalidadeConcorrenciaText_`, no Apps Script) fechou esse buraco lá;
+  sem a mesma guarda aqui, o consumidor o reintroduziria na leitura — e o efeito
+  visível seria o pior possível, uma linha filtrada como o oposto do que diz.
+
+  As duas pontas usam a mesma semântica: fronteira lexical e negação.
+*/
+describe("negação e fronteira: o oposto não pode virar o valor", () => {
+  it("uma negação antes da canônica descarta aquela ocorrência", () => {
+    expect(modalidadesDe("Não indígenas")).toEqual(["Não indígenas"]);
+    expect(modalidadesDe("Nao indigenas")).toEqual(["Nao indigenas"]);
+    expect(modalidadesDe("NÃO INDÍGENAS")).toEqual(["NÃO INDÍGENAS"]);
+  });
+
+  it("a canônica dentro de outra palavra não conta", () => {
+    expect(modalidadesDe("Reindígenas")).toEqual(["Reindígenas"]);
+    expect(modalidadesDe("Indígenasx")).toEqual(["Indígenasx"]);
+    expect(modalidadesDe("xIndígenas")).toEqual(["xIndígenas"]);
+  });
+
+  /*
+    A negação atinge só a modalidade negada. Uma vaga de ampla concorrência que
+    exclui indígenas continua sendo de ampla concorrência.
+  */
+  it("a negação não contamina as outras modalidades do mesmo texto", () => {
+    expect(modalidadesDe("Ampla concorrência, exceto indígenas")).toEqual([
+      "Ampla concorrência",
+    ]);
+  });
+
+  it("as outras formas de negação também bloqueiam", () => {
+    for (const texto of [
+      "Exceto indígenas",
+      "Sem indígenas",
+      "Nem quilombolas",
+      "Salvo pretos e pardos",
+      "Excluindo indígenas",
+    ]) {
+      expect(modalidadesDe(texto), texto).toEqual([texto]);
+    }
+  });
+
+  /*
+    O reconhecimento legítimo não pode ser afetado pelas guardas: as dez formas
+    do principal continuam resolvendo, inclusive a que termina em parêntese —
+    `Pessoas com deficiência (PCD)` não tem letra no fim, e exigir separador
+    depois do parêntese a rejeitaria.
+  */
+  it("as guardas não quebram nenhum reconhecimento legítimo", () => {
+    for (const bruto of BRUTOS_NO_PRINCIPAL) {
+      const encontradas = modalidadesDe(bruto);
+      expect(encontradas.length, `${bruto} deixou de resolver`).toBeGreaterThan(
+        0,
+      );
+      for (const m of encontradas) {
+        expect(MODALIDADES, `${bruto} devolveu não canônico`).toContain(m);
+      }
+    }
+    expect(modalidadesDe('Indígenas" "Pessoas com deficiência (PCD)')).toEqual([
+      "Indígenas",
+      "Pessoas com deficiência (PCD)",
+    ]);
+  });
+
+  it("produtor e consumidor combinam a mesma guarda", () => {
+    const fonte = readFileSync("src/lib/modalidades.js", "utf8");
+    const codigo = fonte
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    expect(codigo).not.toContain("alvo.includes(m.chave)");
+    expect(codigo).toContain("ocorreSemNegacao(alvo, m.chave)");
+  });
+});
+
 describe("o efeito no filtro", () => {
   it("a linha combinada é achada pelas duas modalidades", () => {
     const linha = 'Ampla concorrência", "Indígenas';

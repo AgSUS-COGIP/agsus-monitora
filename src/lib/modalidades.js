@@ -53,6 +53,70 @@ const CANONICAS = MODALIDADES.map((rotulo) => ({
 }));
 
 /*
+  Conter a palavra não basta.
+
+  A primeira versão perguntava `alvo.includes(chave)`. Isso classifica
+  `Não indígenas` como `Indígenas`, porque a string contém a palavra — e
+  `Reindígenas` também, porque contém a sequência de letras. Seriam duas linhas
+  filtradas como o oposto do que dizem.
+
+  Duas guardas resolvem. Fronteira lexical: a canônica só conta como palavra
+  inteira, não como pedaço de outra. E negação: uma ocorrência precedida de
+  `não`, `exceto`, `sem` e afins é descartada — mas só ela, porque
+  `Ampla concorrência, exceto indígenas` continua sendo ampla concorrência.
+
+  Esta é a mesma semântica do produtor, em `normalizeModalidadeConcorrenciaText_`
+  no Apps Script. As duas pontas precisam concordar: de nada adianta o produtor
+  parar de criar o falso positivo se o consumidor o reintroduz na leitura.
+*/
+const NEGACOES = Object.freeze([
+  "nao",
+  "nem",
+  "sem",
+  "exceto",
+  "salvo",
+  "excluindo",
+  "excluido",
+  "excluida",
+  "fora",
+  "menos",
+  "nenhum",
+  "nenhuma",
+  "diferente",
+]);
+
+const escaparRegex = (texto) =>
+  String(texto).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const terminaEmNegacao = (trechoAnterior) => {
+  const palavras = String(trechoAnterior)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/);
+  return NEGACOES.includes(palavras[palavras.length - 1] || "");
+};
+
+/*
+  A fronteira só é exigida do lado em que a própria canônica termina em
+  caractere alfanumérico: `pessoas com deficiencia (pcd)` acaba em ")", e exigir
+  um separador depois do parêntese rejeitaria a forma legítima.
+*/
+const ocorreSemNegacao = (alvo, chaveCanonica) => {
+  const antes = /^[a-z0-9]/.test(chaveCanonica) ? "(^|[^a-z0-9])" : "()";
+  const depois = /[a-z0-9]$/.test(chaveCanonica) ? "($|[^a-z0-9])" : "()";
+  const padrao = new RegExp(antes + escaparRegex(chaveCanonica) + depois, "g");
+
+  let achado = padrao.exec(alvo);
+  while (achado !== null) {
+    const fimDoPrefixo = achado.index + (achado[1] ? achado[1].length : 0);
+    if (!terminaEmNegacao(alvo.slice(0, fimDoPrefixo))) return true;
+    padrao.lastIndex = achado.index + 1;
+    achado = padrao.exec(alvo);
+  }
+  return false;
+};
+
+/*
   Devolve sempre na ordem de `MODALIDADES`, não na ordem em que aparecem na
   célula: a lista de filtros precisa ser estável, e a mesma combinação escrita
   em ordens diferentes é a mesma combinação.
@@ -61,7 +125,7 @@ export function modalidadesDe(valor) {
   const bruto = String(valor ?? "").trim();
   if (!bruto) return [];
   const alvo = chave(bruto);
-  const achadas = CANONICAS.filter((m) => alvo.includes(m.chave)).map(
+  const achadas = CANONICAS.filter((m) => ocorreSemNegacao(alvo, m.chave)).map(
     (m) => m.rotulo,
   );
   return achadas.length ? achadas : [bruto];
