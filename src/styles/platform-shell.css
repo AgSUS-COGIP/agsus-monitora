@@ -1065,31 +1065,3 @@ body.external-panel-mode .content {
 body.external-panel-mode .app {
   overflow: hidden;
 }
-
-/*
-  O botão de recolher, dentro da barra lateral.
-
-  Ver `src/modules/colapsar-no-painel-externo.js`: `external-panel-mode` esconde
-  o cabeçalho e, com ele, o hambúrguer que é o controle do desktop. O botão
-  flutuante fica escondido por `system-ui-fixes.css` em `@media (min-width:
-  901px)`, de modo que não sobrava nenhum.
-
-  O módulo move o botão para dentro da barra lateral no arranque. Fora do painel
-  externo ele continua `display:none` e `position: fixed`, então nada muda de
-  lugar. Aqui, e só aqui, ele entra no fluxo da barra.
-
-  Só no largo. No estreito a barra lateral é uma gaveta fora da tela, e um botão
-  dentro dela não teria como ser alcançado — esse caso continua em aberto.
-
-  Precisa de `!important` para alcançar o `display: none !important` de
-  `system-ui-fixes.css`; a especificidade maior é o que garante que esta regra
-  vença a disputa.
-*/
-@media (min-width: 901px) {
-  body.external-panel-mode .sidebar .global-side-toggle {
-    display: grid !important;
-    position: static;
-    margin: 0 auto 10px;
-    flex: 0 0 auto;
-  }
-}

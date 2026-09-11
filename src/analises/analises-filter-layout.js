@@ -149,7 +149,7 @@ function ensureStructure() {
   if (title) title.textContent = "Refinar resultados";
   if (hint)
     hint.textContent =
-      "Use estes filtros somente para reduzir o recorte já carregado. A base do Supabase não é alterada.";
+      "Use os filtros para refinar as análises exibidas. Indicadores, gráficos e a fila são atualizados conforme o recorte selecionado.";
 
   let summary = document.getElementById("filterSummary");
   if (!summary) {

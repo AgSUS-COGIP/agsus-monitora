@@ -1,0 +1,49 @@
+/*
+  Um dono só para recolher a barra lateral.
+
+  Ver `src/modules/colapsar-a-sidebar.js` para o porquê de o botão mudar de lugar
+  conforme a largura. Aqui ficam as duas decisões visuais que sustentam isso:
+  o hambúrguer sai de cena, e o botão único aparece em toda largura e todo modo.
+
+  Os seletores usam `#appScreen` porque as regras concorrentes são muitas e
+  usam `!important`: `system-ui-fixes.css` esconde o flutuante acima de 901px,
+  `platform-shell.css` o esconde abaixo de 900px, e `app.css` esconde os dois em
+  `body.sidebar-locked`. Entre declarações `!important`, quem decide é a
+  especificidade — e um id resolve de uma vez, sem escalada de classes.
+*/
+
+/*
+  O hambúrguer do cabeçalho sai de cena. Não é escondido "por enquanto": ele
+  deixa de ser um controle, e o markup permanece só para não quebrar quem o
+  referencia por id (`updateConfig` escreve título e rótulo nele).
+*/
+#hambToggle {
+  display: none !important;
+}
+
+/* O botão único aparece sempre, em qualquer largura e em qualquer modo. */
+#appScreen .global-side-toggle {
+  display: grid !important;
+}
+
+/*
+  Dentro da barra lateral: no fluxo, logo abaixo da marca. `position: static`
+  desfaz o `fixed` do estado flutuante — é o mesmo elemento nos dois casos.
+*/
+#appScreen .sidebar > .global-side-toggle {
+  position: static;
+  margin: 0 auto 10px;
+  flex: 0 0 auto;
+}
+
+/*
+  No cabeçalho, quando a barra é uma gaveta fora da tela: no fluxo, na vaga que
+  o hambúrguer deixou. Flutuar aqui não serve — `.top` tem `z-index: 10030` e as
+  ações dele ocupam o canto superior esquerdo, então um botão fixo nasceria
+  coberto.
+*/
+#appScreen .title-row > .global-side-toggle {
+  position: static;
+  margin: 0;
+  flex: 0 0 auto;
+}

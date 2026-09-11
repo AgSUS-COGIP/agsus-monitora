@@ -39,6 +39,7 @@ import "./styles/system-ui-fixes.css";
 import "./styles/nielsen-shell-ux.css";
 import "./styles/post-152-regression-fixes.css";
 import "./styles/post157-interface-tuning.css";
+import "./styles/colapsar-a-sidebar.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import "./modules/monitoramento-operational-transport.js";
 import "./modules/legacy-app.js";
@@ -74,7 +75,7 @@ import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
-import { initColapsarNoPainelExterno } from "./modules/colapsar-no-painel-externo.js";
+import { initColapsarDaSidebar } from "./modules/colapsar-a-sidebar.js";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -118,7 +119,7 @@ initPwaLifecycle();
 initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
-initColapsarNoPainelExterno();
+initColapsarDaSidebar();
 
 if (!hasSupabaseEnv()) {
   console.warn(
