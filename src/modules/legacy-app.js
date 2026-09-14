@@ -36,6 +36,7 @@ import { reconciliarDsei } from "../lib/reconciliacao-unidades.js";
 import {
   agruparPorCelula,
   criarRegistroDeDescarte,
+  grupoCoincidente,
   posicoesSpiderfy,
   raioDaBolha,
 } from "../lib/mapa-render.js";
@@ -8874,7 +8875,7 @@ let _detailLeaflet = null,
   _detailUnitLayer = null,
   _descarteDoDetalhe = criarRegistroDeDescarte(),
   _leque = null,
-  _lequeAberto = "",
+  _lequePolos = null,
   _detailMapInited = false;
 /* Os dois enquadramentos do mapa detalhado e qual deles está em vigor. */
 let _detailBounds = null;
@@ -9226,6 +9227,7 @@ function initLeaflet() {
   _layerUF = L.layerGroup().addTo(_leaflet); // estados destacados
   _layerDSEI = L.layerGroup().addTo(_leaflet);
   _layerPolos = L.layerGroup().addTo(_leaflet);
+  _lequePolos = criarLeque(_leaflet);
   _layerCasaiLocal = L.layerGroup().addTo(_leaflet); // CASAIs do DSEI/locais (drill-down)
   _layerUbsi = L.layerGroup().addTo(_leaflet); // UBSIs (drill-down)
   _layerCasai = L.layerGroup().addTo(_leaflet); // CASAI Nacional (sempre)
@@ -9298,8 +9300,7 @@ function initDetailLeaflet() {
   observeLeafletSize(_detailLeaflet, el);
   _detailBaseLayer = L.layerGroup().addTo(_detailLeaflet);
   _detailUnitLayer = L.layerGroup().addTo(_detailLeaflet);
-  // Camada própria do leque: recolher é esvaziá-la, sem tocar nas outras.
-  _leque = L.layerGroup();
+  _leque = criarLeque(_detailLeaflet);
 
   const list = $("detailUnitList");
   list?.addEventListener("click", (event) => {
@@ -9619,11 +9620,7 @@ function renderDetailMap(d) {
         de `4.596,-60.168` continuariam empilhados no zoom máximo, com 56 deles
         inalcançáveis. Esses expandem-se em leque, e o leque é em pixels.
       */
-      const coincidente = grupo.registros.every(
-        (r) =>
-          r.lat.toFixed(5) === grupo.registros[0].lat.toFixed(5) &&
-          r.lon.toFixed(5) === grupo.registros[0].lon.toFixed(5),
-      );
+      const coincidente = grupoCoincidente(grupo.registros);
 
       const badge = L.marker([grupo.lat, grupo.lon], {
         icon: L.divIcon({
@@ -9649,7 +9646,7 @@ function renderDetailMap(d) {
           );
           return;
         }
-        if (_lequeAberto === grupo.chave) recolherLeque();
+        if (_leque.aberto === grupo.chave) recolherLeque();
         else abrirLeque(grupo);
       };
 
@@ -9683,47 +9680,20 @@ function renderDetailMap(d) {
     });
 
     // Um leque aberto não sobrevive a um redesenho da camada.
-    if (_lequeAberto) recolherLeque();
+    if (_leque.aberto) recolherLeque();
   };
 
-  /*
-    LEQUE (spiderfy) — expansão só de desenho.
-
-    Os deslocamentos vêm de `posicoesSpiderfy`, em PIXELS, e são convertidos em
-    coordenada com o zoom corrente. `lat`/`lon` dos registos não são tocados: o
-    que muda é onde o marcador é pintado, e volta ao lugar ao recolher.
-  */
+  // Usa a primitiva partilhada; a cópia local desta lógica saiu daqui.
   const abrirLeque = (grupo) => {
-    recolherLeque();
-    _lequeAberto = grupo.chave;
-    const centro = _detailLeaflet.latLngToLayerPoint([grupo.lat, grupo.lon]);
-    const posicoes = posicoesSpiderfy(grupo.quantidade);
-
-    grupo.registros.forEach((record, i) => {
-      const ponto = centro.add(L.point(posicoes[i].x, posicoes[i].y));
-      const destino = _detailLeaflet.layerPointToLatLng(ponto);
-      _leque.addLayer(
-        L.polyline([[grupo.lat, grupo.lon], destino], {
-          color: "#4a6b80",
-          weight: 1.2,
-          opacity: 0.6,
-          interactive: false,
-        }),
-      );
-      _leque.addLayer(marcadorDeRegistro(record, destino));
-    });
-
-    _leque.addTo(_detailLeaflet);
+    _leque.abrir(grupo, (record, destino) =>
+      marcadorDeRegistro(record, destino),
+    );
     toast(
       `${grupo.quantidade} unidades na mesma coordenada, abertas em leque. Clique no número para recolher.`,
     );
   };
 
-  const recolherLeque = () => {
-    _leque.clearLayers();
-    if (_detailLeaflet?.hasLayer?.(_leque)) _detailLeaflet.removeLayer(_leque);
-    _lequeAberto = "";
-  };
+  const recolherLeque = () => _leque.recolher();
 
   desenharCamadaDeUnidades();
   // Reagrupar ao mudar o zoom: a célula é de pixels, e o que cabe nela muda.
@@ -10199,6 +10169,61 @@ function _spread(items) {
   contagem. Quem chama decide o marcador — o que muda entre polos e CASAIs é a
   forma, não a regra de agrupamento.
 */
+/*
+  LEQUE (spiderfy) — primitiva única, usada pelo mapa detalhado e pelos polos.
+
+  Os deslocamentos vêm de `posicoesSpiderfy`, em PIXELS, e são convertidos em
+  coordenada com o zoom corrente. `lat`/`lon` dos registos não são tocados: o
+  que muda é onde o marcador é pintado, e recolher devolve tudo ao lugar.
+
+  Isto vivia dentro do mapa detalhado. Passou a primitiva partilhada porque os
+  polos precisavam exactamente do mesmo, e duas cópias de uma regra destas
+  divergem. Nos polos ela nem chegava a existir: grupos coincidentes só sabiam
+  aproximar, e no zoom máximo continuavam num selo só — medido na base real,
+  9 grupos e 40 polos, o maior com 19 no Alto Rio Negro.
+*/
+function criarLeque(mapa) {
+  const camada = L.layerGroup();
+  let aberto = "";
+
+  const recolher = () => {
+    camada.clearLayers();
+    if (mapa?.hasLayer?.(camada)) mapa.removeLayer(camada);
+    aberto = "";
+  };
+
+  return {
+    get aberto() {
+      return aberto;
+    },
+    recolher,
+    /**
+     * @param grupo      grupo devolvido por `agruparPorCelula`
+     * @param marcadorDe (registo, posicao) => marcador do Leaflet
+     */
+    abrir(grupo, marcadorDe) {
+      recolher();
+      aberto = grupo.chave;
+      const centro = mapa.latLngToLayerPoint([grupo.lat, grupo.lon]);
+      posicoesSpiderfy(grupo.quantidade).forEach((pos, i) => {
+        const destino = mapa.layerPointToLatLng(
+          centro.add(L.point(pos.x, pos.y)),
+        );
+        camada.addLayer(
+          L.polyline([[grupo.lat, grupo.lon], destino], {
+            color: "#4a6b80",
+            weight: 1.2,
+            opacity: 0.6,
+            interactive: false,
+          }),
+        );
+        camada.addLayer(marcadorDe(grupo.registros[i], destino));
+      });
+      camada.addTo(mapa);
+    },
+  };
+}
+
 function desenharComAgrupamento(
   mapa,
   registros,
@@ -10259,6 +10284,7 @@ function drawRedeAssistencial(d) {
 // Nível 2: polos base de um DSEI
 function drawPolos(d) {
   if (!_leaflet) return;
+  _lequePolos?.recolher();
   _layerPolos.clearLayers();
   drawRedeAssistencial(d);
   const polosBase = polosCorrigidosPorCnes(d);
@@ -10315,10 +10341,11 @@ function drawPolos(d) {
     }
   });
 
-  const marcadorDoPolo = (p) => {
+  /* `posicao` só é dada pelo leque: é o destino em pixels convertido. */
+  const marcadorDoPolo = (p, posicao) => {
     const vinculo = classificarVinculoTerritorial(p.uf_cnes ?? p.uf, d.ufs);
     const externo = vinculo.vinculo === "externo";
-    const mk = L.circleMarker([p._lat, p._lon], {
+    const mk = L.circleMarker(posicao || [p._lat, p._lon], {
       radius: externo ? 6 : 5,
       color: "#fff",
       weight: 1.5,
@@ -10352,32 +10379,70 @@ function drawPolos(d) {
     polos,
     (p) => _layerPolos.addLayer(marcadorDoPolo(p)),
     (grupo) => {
+      /*
+        A mesma distinção do mapa detalhado, que faltava aqui. Aproximar só
+        resolve quem está perto; quem partilha a coordenada continuaria num selo
+        só no zoom máximo — 19 polos do Alto Rio Negro num ponto, 5 do Yanomami
+        noutro, e em cada grupo todos menos um inalcançáveis.
+      */
+      const coincidente = grupoCoincidente(
+        grupo.registros.map((r) => ({ lat: r._lat, lon: r._lon })),
+      );
+
       const badge = L.marker([grupo.lat, grupo.lon], {
         icon: L.divIcon({
-          className: "mapa-cluster",
+          className: coincidente
+            ? "mapa-cluster mapa-cluster--leque"
+            : "mapa-cluster",
           html: `<span>${grupo.quantidade}</span>`,
           iconSize: [24, 24],
           iconAnchor: [12, 12],
         }),
         keyboard: true,
-        title: `${grupo.quantidade} polos base nesta área`,
+        title: coincidente
+          ? `${grupo.quantidade} polos base na mesma coordenada — abrir em leque`
+          : `${grupo.quantidade} polos base nesta área — aproximar`,
       });
       badge.bindTooltip(
         `<b>${grupo.quantidade} polos base</b><br>${grupo.registros
           .slice(0, 8)
           .map((r) => esc(r.n))
-          .join(
-            "<br>",
-          )}${grupo.quantidade > 8 ? "<br>…" : ""}<br><i>clique para aproximar</i>`,
+          .join("<br>")}${grupo.quantidade > 8 ? "<br>…" : ""}<br><i>${
+          coincidente
+            ? "mesma coordenada — clique para abrir em leque"
+            : "clique para aproximar"
+        }</i>`,
         { direction: "top" },
       );
-      badge.on("click", () =>
-        _leaflet.setView(
-          [grupo.lat, grupo.lon],
-          Math.min(_leaflet.getZoom() + 3, 12),
-          { animate: true },
-        ),
-      );
+
+      const acionar = () => {
+        if (!coincidente) {
+          _leaflet.setView(
+            [grupo.lat, grupo.lon],
+            Math.min(_leaflet.getZoom() + 3, 12),
+            { animate: true },
+          );
+          return;
+        }
+        if (_lequePolos.aberto === grupo.chave) _lequePolos.recolher();
+        else {
+          _lequePolos.abrir(grupo, (polo, destino) =>
+            marcadorDoPolo(polo, destino),
+          );
+          toast(
+            `${grupo.quantidade} polos base na mesma coordenada, abertos em leque. Clique no número para recolher.`,
+          );
+        }
+      };
+
+      badge.on("click", acionar);
+      // O Leaflet dá Enter ao marcador; o Espaço é o que se espera de um botão.
+      badge.on("keypress", (e) => {
+        if (e.originalEvent?.key === " ") {
+          e.originalEvent.preventDefault();
+          acionar();
+        }
+      });
       _layerPolos.addLayer(badge);
     },
   );
