@@ -16,6 +16,7 @@ import {
   VINCULO_INDETERMINADO,
   classificarVinculoTerritorial,
 } from "../lib/uf-ibge.js";
+import { DIVERGENCIA } from "../lib/reconciliacao-unidades.js";
 
 /*
   Forma além de cor. Quem não distingue vermelho de verde continua distinguindo
@@ -156,7 +157,36 @@ export function tooltipDoRegistro(registro, dsei) {
     linhas.push("<i>UF não informada no CNES — vínculo não classificado</i>");
   }
 
+  linhas.push(...linhasDaReconciliacao(registro));
+
   return linhas.join("<br>");
+}
+
+/*
+  Quando um marcador representa a mesma estrutura vinda das duas fontes, quem
+  olha o mapa tem de saber disso — e sobretudo tem de saber quando as duas
+  discordam. Um ponto desenhado sem ressalva é lido como localização apurada.
+*/
+export function linhasDaReconciliacao(registro) {
+  const origens = Array.isArray(registro?.origens) ? registro.origens : [];
+  if (origens.length < 2) return [];
+
+  const linhas = ["<i>Registo unificado: lmap + CNES</i>"];
+  const km = registro?.distancia_entre_fontes_km;
+
+  if (registro?.divergencia === DIVERGENCIA.PENDENTE) {
+    linhas.push(
+      km == null
+        ? "<b>Localização pendente de validação</b>"
+        : `<b>Localização pendente de validação</b> — as fontes divergem ${km} km`,
+    );
+  } else if (registro?.divergencia === DIVERGENCIA.DIVERGENTE) {
+    linhas.push(`Fontes divergem ${km} km — exibida a coordenada do CNES`);
+  } else if (km != null) {
+    linhas.push(`Fontes concordam (${km} km de diferença)`);
+  }
+
+  return linhas;
 }
 
 export const TOOLTIP_DA_LINHA = "Vínculo territorial — não representa trajeto";
