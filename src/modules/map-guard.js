@@ -49,10 +49,28 @@ function installTileLayerGuard(L) {
 
   const originalTileLayer = L.tileLayer;
 
+  /*
+    O recorte dos azulejos era a origem do vazio dentro do card.
+
+    `bounds: toMaxBounds(L)` mandava o Leaflet não pedir azulejo nenhum fora de
+    NAVEGACAO_BOUNDS, que tem 57.5° de longitude. Só que o enquadramento do
+    Brasil é decidido pela latitude: 39.0° em 480 px dão zoom 3.75, e a esse
+    zoom cabem 9.57 px por grau. Um card de 1642 px precisa então de 171.6° de
+    longitude — 114° para os quais, por causa do recorte, não existia azulejo.
+    Medido no protótipo: **33% da área do card tinha mapa**; os outros 67%
+    eram o fundo cinzento do container.
+
+    Era esse vazio que a regra `max-width: altura * 1.25` tentava esconder
+    encolhendo o `#detailMap` — e que, ao encolher, virava faixa branca do card.
+
+    `noWrap: true` continua a impedir as cópias laterais do mundo, que é o que
+    o recorte defendia de facto. O que se perde é só o recorte do desenho; quem
+    limita a navegação continua a ser o `maxBounds` do mapa, intacto logo
+    abaixo.
+  */
   L.tileLayer = function guardedTileLayer(urlTemplate, options = {}) {
     return originalTileLayer.call(this, urlTemplate, {
       ...options,
-      bounds: toMaxBounds(L),
       noWrap: true,
       updateWhenIdle: true,
       keepBuffer: 2,

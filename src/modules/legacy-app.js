@@ -9492,13 +9492,43 @@ function detailRecordsForDsei(d) {
   });
 }
 
+/*
+  FILTROS POR TIPO.
+
+  Um DSEI grande traz polo base, CASAI, UBSI e "unidade" na mesma lista e no
+  mesmo mapa — no Yanomami são 1462 registos. Procurar a CASAI entre eles era
+  percorrer a lista inteira. Os tipos são os de `detailUnitType()`, e os chips
+  nascem só para os tipos que aquele território tem: um botão "CASAI" num DSEI
+  sem CASAI seria um filtro que nunca muda nada.
+
+  O conjunto guarda os tipos OCULTOS, não os visíveis: assim um DSEI que traga
+  um tipo novo aparece por inteiro, em vez de nascer escondido.
+*/
+const _detailTiposOcultos = new Set();
+
+function _tiposDoTerritorio(registos) {
+  const mapa = new Map();
+  registos.forEach((r) => {
+    const atual = mapa.get(r.type.key);
+    if (atual) atual.quantidade += 1;
+    else mapa.set(r.type.key, { tipo: r.type, quantidade: 1 });
+  });
+  return [...mapa.values()].sort((x, y) => y.quantidade - x.quantidade);
+}
+
 function renderDetailUnitList(records) {
   const list = $("detailUnitList");
   const count = $("detailUnitCount");
   if (count) count.textContent = fmt(records.length);
   if (!list) return;
   if (!records.length) {
-    list.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-map-location-dot"></i><strong>Nenhuma unidade georreferenciada</strong><span>O território está selecionado, mas não há coordenadas disponíveis.</span></div>`;
+    /*
+      Lista vazia por filtro e lista vazia por falta de dados pedem respostas
+      diferentes: uma resolve-se ligando um chip, a outra não se resolve aqui.
+    */
+    list.innerHTML = _detailTiposOcultos.size
+      ? `<div class="health-map-empty"><i class="fa-solid fa-filter-circle-xmark"></i><strong>Nada a mostrar com estes filtros</strong><span>Ligue um dos tipos acima para ver as unidades.</span></div>`
+      : `<div class="health-map-empty"><i class="fa-solid fa-map-location-dot"></i><strong>Nenhuma unidade georreferenciada</strong><span>O território está selecionado, mas não há coordenadas disponíveis.</span></div>`;
     return;
   }
   list.innerHTML = records
@@ -9514,13 +9544,51 @@ function renderDetailUnitList(records) {
     .join("");
 }
 
+/*
+  Os chips ficam dentro do painel, por cima da lista que filtram — o controlo
+  ao lado do que ele muda, não num canto do cabeçalho.
+
+  `aria-pressed` porque são interruptores, não navegação: o leitor de ecrã
+  anuncia "ativado/desativado" em vez de só ler o rótulo.
+*/
+function renderDetailFiltros(registos, aoMudar) {
+  const caixa = $("detailFiltros");
+  if (!caixa) return;
+  const tipos = _tiposDoTerritorio(registos);
+  if (tipos.length < 2) {
+    /* Um tipo só não é filtro: seria um botão que ou mostra tudo ou nada. */
+    caixa.hidden = true;
+    caixa.innerHTML = "";
+    return;
+  }
+  caixa.hidden = false;
+  caixa.innerHTML = tipos
+    .map(
+      ({ tipo, quantidade }) =>
+        `<button type="button" data-tipo="${esc(tipo.key)}" aria-pressed="true">${esc(tipo.label)} <b>${fmt(quantidade)}</b></button>`,
+    )
+    .join("");
+  caixa.querySelectorAll("button").forEach((botao) => {
+    botao.addEventListener("click", () => {
+      const chave = botao.dataset.tipo;
+      const oculto = _detailTiposOcultos.has(chave);
+      if (oculto) _detailTiposOcultos.delete(chave);
+      else _detailTiposOcultos.add(chave);
+      botao.setAttribute("aria-pressed", oculto ? "true" : "false");
+      aoMudar();
+    });
+  });
+}
+
 function renderDetailMap(d) {
   initDetailLeaflet();
   if (!_detailLeaflet || !_detailUnitLayer) return;
   const records = detailRecordsForDsei(d);
   const title = $("detailMapTitle");
+  const trilho = $("detailBreadcrumbDsei");
   const reset = $("detailMapReset");
   if (title) title.textContent = `Mapa do DSEI ${d.n}`;
+  if (trilho) trilho.textContent = `DSEI ${d.n}`;
   reset?.classList.remove("hidden");
   definirSelecaoDoMapaDetalhado(true);
   drawDetailBrazilBase(d.ufs || [d.sedeuf]);
@@ -9534,6 +9602,14 @@ function renderDetailMap(d) {
   const classificados = classificarRegistros(records, d);
   const locais = registrosLocais(classificados);
   const externos = registrosExternos(classificados);
+
+  /*
+    Um território novo começa sem nada escondido. Sem isto, filtrar UBSI num
+    DSEI e abrir o seguinte mostrava o seguinte já incompleto, sem dizer porquê.
+  */
+  _detailTiposOcultos.clear();
+  const visiveis = (lista) =>
+    lista.filter((r) => !_detailTiposOcultos.has(r.type.key));
 
   /*
     O popup e o tooltip deixam de ser construídos no `bind` e passam a nascer no
@@ -9583,7 +9659,7 @@ function renderDetailMap(d) {
     _detailUnitLayer.clearLayers();
 
     // As linhas de vínculo continuam a sair da sede, agrupadas ou não.
-    externos.forEach((record) => {
+    visiveis(externos).forEach((record) => {
       _detailUnitLayer.addLayer(
         L.polyline(
           [
@@ -9595,7 +9671,7 @@ function renderDetailMap(d) {
       );
     });
 
-    const grupos = agruparPorCelula(classificados, (r) =>
+    const grupos = agruparPorCelula(visiveis(classificados), (r) =>
       _detailLeaflet.latLngToContainerPoint([r.lat, r.lon]),
     );
 
@@ -9714,7 +9790,12 @@ function renderDetailMap(d) {
     .bindPopup(`<b>DSEI ${esc(d.n)}</b><br>Sede territorial`)
     .addTo(_detailUnitLayer);
 
-  renderDetailUnitList(classificados);
+  const redesenharPorFiltro = () => {
+    desenharCamadaDeUnidades();
+    renderDetailUnitList(visiveis(classificados));
+  };
+  renderDetailFiltros(classificados, redesenharPorFiltro);
+  renderDetailUnitList(visiveis(classificados));
 
   /*
     O enquadramento inicial usa só a sede e as unidades locais. No DSEI Ceará,
@@ -9780,16 +9861,25 @@ function toggleVinculosExternos() {
 }
 
 /*
-  A largura do mapa detalhado depende de haver ou não um DSEI escolhido. Trocar a
-  classe muda a grade; o Leaflet, porém, guarda o tamanho que mediu por último e
-  continuaria desenhando na largura antiga. Por isso o `invalidateSize` vem
-  depois de o navegador aplicar o novo layout, e não junto com a troca de classe.
+  UM MAPA PRINCIPAL DE CADA VEZ.
+
+  A classe `com-dsei` no workspace é o único interruptor: sem ela vê-se a visão
+  nacional a toda a largura, com ela vê-se o território e o painel de unidades.
+
+  A `sem-selecao` que vivia aqui não fazia isso: colapsava a coluna de polos
+  dentro de um card que continuava visível ao lado do mapa nacional. Não havia
+  estado — havia dois mapas, e antes de escolher um DSEI o segundo mostrava um
+  segundo Brasil.
+
+  O `invalidateSize` é indispensável e vem DEPOIS de o navegador aplicar o novo
+  layout: o Leaflet guarda a última medida que fez, e um mapa que estava
+  escondido nasce com tamanho zero.
 */
 function definirSelecaoDoMapaDetalhado(temSelecao) {
-  const layout = document.querySelector(".health-map-detail-layout");
-  if (!layout) return;
-  const mudou = layout.classList.contains("sem-selecao") === temSelecao;
-  layout.classList.toggle("sem-selecao", !temSelecao);
+  const workspace = document.querySelector(".health-map-workspace");
+  if (!workspace) return;
+  const mudou = workspace.classList.contains("com-dsei") !== temSelecao;
+  workspace.classList.toggle("com-dsei", temSelecao);
   if (!mudou) return;
   requestAnimationFrame(() => {
     try {
@@ -9799,6 +9889,7 @@ function definirSelecaoDoMapaDetalhado(temSelecao) {
         padrão preserva o centro, e o reenquadramento em seguida acerta o resto.
       */
       _detailLeaflet?.invalidateSize?.({ animate: false });
+      _leaflet?.invalidateSize?.({ animate: false });
     } catch (e) {}
   });
 }
@@ -9807,10 +9898,18 @@ function resetDetailMap({ silent = false } = {}) {
   initDetailLeaflet();
   if (!_detailLeaflet) return;
   const title = $("detailMapTitle");
+  const trilho = $("detailBreadcrumbDsei");
   const reset = $("detailMapReset");
   const count = $("detailUnitCount");
   const list = $("detailUnitList");
   if (title) title.textContent = "Mapa do Brasil";
+  if (trilho) trilho.textContent = "território";
+  _detailTiposOcultos.clear();
+  const filtros = $("detailFiltros");
+  if (filtros) {
+    filtros.hidden = true;
+    filtros.innerHTML = "";
+  }
   reset?.classList.add("hidden");
   definirSelecaoDoMapaDetalhado(false);
   /* Volta ao Brasil: não há mais DSEI de referência, logo não há vínculo externo. */

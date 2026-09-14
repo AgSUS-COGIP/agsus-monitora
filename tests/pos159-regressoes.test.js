@@ -198,18 +198,32 @@ describe("um dono só para o enquadramento inicial", () => {
   });
 });
 
-describe("a coluna de polos não ocupa largura enquanto está vazia", () => {
-  it("a grade colapsa para uma coluna sem seleção", () => {
-    expect(workspace).toContain(".health-map-detail-layout.sem-selecao");
+describe("um mapa principal de cada vez", () => {
+  /*
+    Antes o card de detalhe ficava sempre visível ao lado do nacional e, sem
+    seleção, mostrava **outro Brasil**. A `sem-selecao` só colapsava a coluna
+    de polos dentro dele: continuavam a ser dois mapas a dividir a largura.
+  */
+  it("o card de detalhe não existe até haver DSEI", () => {
     const regra = workspace.slice(
-      workspace.indexOf(".health-map-detail-layout.sem-selecao"),
+      workspace.indexOf(".health-map-workspace .health-map-pane--detail"),
+      workspace.indexOf(".health-map-pane {"),
     );
-    expect(regra).toContain("grid-template-columns: minmax(0, 1fr)");
     expect(regra).toContain("display: none");
+    expect(regra).toContain(
+      ".health-map-workspace.com-dsei .health-map-pane--master",
+    );
   });
 
-  it("o layout nasce sem seleção no HTML", () => {
-    expect(html).toContain('class="health-map-detail-layout sem-selecao"');
+  it("a classe morta saiu do HTML e do JS", () => {
+    expect(html).toContain('class="health-map-detail-layout"');
+    expect(html).not.toContain("sem-selecao");
+    expect(
+      app.slice(
+        app.indexOf("function definirSelecaoDoMapaDetalhado"),
+        app.indexOf("function definirSelecaoDoMapaDetalhado") + 700,
+      ),
+    ).not.toContain('classList.toggle("sem-selecao"');
   });
 
   it("os dois caminhos de seleção avisam o layout", () => {
