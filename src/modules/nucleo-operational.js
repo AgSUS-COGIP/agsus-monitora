@@ -1,12 +1,17 @@
-import { exigirSessao } from "../lib/sessao.js";
-import { getSupabaseClient } from "../lib/supabaseClient.js";
+import {
+  getNucleoSummary,
+  invalidateNucleoSummary,
+} from "./nucleo-summary-store.js";
 
 const state = {
-  client: null,
   summary: [],
+  summaryByKey: new Map(),
   activeFilter: "todos",
   initialized: false,
   decorating: false,
+  decorationQueued: false,
+  loadToken: 0,
+  kpiSignature: "",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -27,21 +32,18 @@ const norm = (value) =>
     .replace(/\s+/g, " ")
     .trim();
 
-function client() {
-  if (state.client) return state.client;
-  state.client = getSupabaseClient();
-  return state.client;
-}
-
-async function ensureSession() {
-  const sb = client();
-  if (!sb) throw new Error("Supabase indisponível.");
-  await exigirSessao(sb);
-  return sb;
-}
-
 function keyOf(unidade, edital) {
   return `${norm(unidade)}|${norm(edital)}`;
+}
+
+function isNucleoActive() {
+  return document.getElementById("page-nucleo")?.classList.contains("active");
+}
+
+function rebuildSummaryIndex() {
+  state.summaryByKey = new Map(
+    state.summary.map((item) => [keyOf(item.unidade, item.edital), item]),
+  );
 }
 
 function alertMeta(type) {
@@ -99,9 +101,9 @@ function ensureKpis() {
       <div id="nucleoActiveAlertFilter" class="nucleo-active-alert-filter" hidden></div>
     </section>`,
   );
-  $("nucleoOperationalRefresh")?.addEventListener("click", () =>
-    loadSummary(true),
-  );
+  $("nucleoOperationalRefresh")?.addEventListener("click", () => {
+    void loadSummary({ force: true });
+  });
   return true;
 }
 
@@ -165,6 +167,13 @@ function cardsData() {
 function renderKpis() {
   if (!ensureKpis()) return;
   const cards = cardsData();
+  const signature = JSON.stringify({
+    active: state.activeFilter,
+    values: cards.map(({ key, value }) => [key, value]),
+  });
+  if (signature === state.kpiSignature) return;
+  state.kpiSignature = signature;
+
   const grid = $("nucleoKpiGrid");
   if (grid)
     grid.innerHTML = cards
@@ -180,7 +189,7 @@ function renderKpis() {
     button.addEventListener("click", () => {
       state.activeFilter = button.dataset.alertFilter || "todos";
       renderKpis();
-      decorateRows();
+      queueDecoration();
     }),
   );
   const active = $("nucleoActiveAlertFilter");
@@ -193,17 +202,15 @@ function renderKpis() {
     $("clearNucleoAlertFilter")?.addEventListener("click", () => {
       state.activeFilter = "todos";
       renderKpis();
-      decorateRows();
+      queueDecoration();
     });
   }
 }
 
 function summaryForRow(tr) {
   const cells = tr.querySelectorAll("td");
-  return state.summary.find(
-    (item) =>
-      keyOf(item.unidade, item.edital) ===
-      keyOf(cells[0]?.textContent, cells[1]?.textContent),
+  return state.summaryByKey.get(
+    keyOf(cells[0]?.textContent, cells[1]?.textContent),
   );
 }
 
@@ -224,7 +231,10 @@ function decorateRows() {
   try {
     [...body.querySelectorAll("tr")].forEach((tr) => {
       const item = summaryForRow(tr);
-      if (!item) return;
+      if (!item) {
+        tr.hidden = state.activeFilter !== "todos";
+        return;
+      }
       tr.dataset.monitoramentoId = item.id;
       tr.dataset.alertType = item.alerta_tipo;
       tr.hidden = !matchesFilter(item);
@@ -238,8 +248,13 @@ function decorateRows() {
         badge.className = `nucleo-row-alert tone-${meta.tone}`;
         tr.querySelector("td:nth-child(4)")?.appendChild(badge);
       }
-      if (badge)
-        badge.innerHTML = `<i class="fa-solid ${meta.icon}"></i><span>${esc(meta.label)}</span>`;
+      if (badge) {
+        if (item.alerta_tipo === "ok") badge.remove();
+        else {
+          badge.className = `nucleo-row-alert tone-${meta.tone}`;
+          badge.innerHTML = `<i class="fa-solid ${meta.icon}"></i><span>${esc(meta.label)}</span>`;
+        }
+      }
       if (!actions.querySelector(".nucleo-view-timeline")) {
         const button = document.createElement("button");
         button.type = "button";
@@ -260,60 +275,73 @@ function decorateRows() {
   return true;
 }
 
-function scheduleDecoration() {
-  [0, 100, 350, 900].forEach((delay) =>
-    window.setTimeout(() => {
-      ensureKpis();
-      renderKpis();
-      decorateRows();
-    }, delay),
-  );
+function queueDecoration() {
+  if (state.decorationQueued) return;
+  state.decorationQueued = true;
+  const run = () => {
+    state.decorationQueued = false;
+    ensureKpis();
+    renderKpis();
+    decorateRows();
+  };
+  if (typeof window.requestAnimationFrame === "function")
+    window.requestAnimationFrame(run);
+  else queueMicrotask(run);
 }
 
-async function loadSummary() {
+async function loadSummary({ force = false, invalidate = false } = {}) {
   ensureKpis();
+  if (invalidate) invalidateNucleoSummary();
+  const token = ++state.loadToken;
   const button = $("nucleoOperationalRefresh");
   if (button) button.disabled = true;
   try {
-    const sb = await ensureSession();
-    const { data, error } = await sb.rpc("get_nucleo_cronograma_resumo");
-    if (error) throw error;
+    const data = await getNucleoSummary({ force });
+    if (token !== state.loadToken) return data;
     state.summary = Array.isArray(data) ? data : [];
+    rebuildSummaryIndex();
+    state.kpiSignature = "";
     renderKpis();
-    scheduleDecoration();
+    queueDecoration();
+    return data;
   } catch (error) {
     console.error("Erro ao carregar resumo da Equipe Núcleo:", error);
     const grid = $("nucleoKpiGrid");
     if (grid)
       grid.innerHTML = `<div class="nucleo-summary-error">Não foi possível carregar os alertas: ${esc(error?.message || error)}</div>`;
+    throw error;
   } finally {
-    if (button) button.disabled = false;
+    if (token === state.loadToken && button) button.disabled = false;
   }
+}
+
+function refreshWhenNucleoIsVisible() {
+  if (!isNucleoActive()) return;
+  void loadSummary().catch(() => {});
+  queueDecoration();
 }
 
 export function initNucleoOperationalSafe() {
   if (state.initialized) return;
   state.initialized = true;
-  scheduleDecoration();
-  const sb = client();
-  if (sb) {
-    void sb.auth.getSession().then(({ data }) => {
-      if (data?.session?.user) void loadSummary();
-    });
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) void loadSummary();
-    });
-  }
-  document.addEventListener("agsus:nucleo-cronograma-saved", () =>
-    loadSummary(true),
-  );
-  document.addEventListener("agsus:nucleo-rendered", scheduleDecoration);
+  ensureKpis();
+
   document.addEventListener("click", (event) => {
-    if (
-      event.target?.closest?.(
-        '[data-view="nucleo"], [onclick*="nucleo"], #nucleoOperationalRefresh',
-      )
-    )
-      scheduleDecoration();
+    if (event.target?.closest?.('[data-view="nucleo"]'))
+      queueMicrotask(refreshWhenNucleoIsVisible);
   });
+
+  document.addEventListener("input", (event) => {
+    if (event.target?.id !== "nucleoSearch") return;
+    window.setTimeout(queueDecoration, 275);
+  });
+
+  document.addEventListener("agsus:nucleo-cronograma-saved", () => {
+    void loadSummary({ force: true, invalidate: true }).catch(() => {});
+  });
+
+  document.addEventListener("agsus:nucleo-rendered", queueDecoration);
+
+  // Caso a Equipe Núcleo já esteja ativa quando este módulo inicializar.
+  queueMicrotask(refreshWhenNucleoIsVisible);
 }
