@@ -7,19 +7,19 @@
   Medido em 14/09/2026, com os volumes reais (1081 estabelecimentos + 381
   polos), mediana de três corridas num container de 1100x520:
 
-    padrão atual (divIcon + SVG + bindPopup + bindTooltip)
-        criação 179,6 ms   até layout 230,3 ms   5848 nós de DOM
+    A.  antes: divIcon + SVG + popup + tooltip    65,6 ms   96,4 ms   5848 nós
+    A2. o mesmo, sem os bind prévios              54,4 ms   77,9 ms   5848 nós
+    B.  circleMarker em canvas                     7,3 ms    7,6 ms      1 nó
+    D.  polígono em canvas, forma preservada      10,2 ms   10,4 ms      1 nó
+    E.  depois: cluster por célula + divIcon       1,8 ms    2,8 ms    160 nós
 
-    circleMarker em canvas, sem bind prévio
-        criação  14,2 ms   até layout  14,5 ms      1 nó de DOM
-
-  12,6 vezes mais rápido, e quatro nós de DOM por marcador passam a nenhum. Os
-  230 ms são *long task* pela definição do Chrome, que é 50 ms — e isso num
-  desktop rápido, sem os tiles a competir.
+  36 vezes mais rápido na criação, 34 até o layout, e 5848 nós de DOM passam a
+  160. Os 96 ms eram *long task* pela definição do Chrome, que é 50 ms; 2,8 ms
+  não são — e isso num desktop rápido, sem os tiles a competir.
 
   O ensaio que produziu estes números está versionado em
-  `scripts/bench-mapa-render.mjs`, para que o antes e o depois sejam
-  reproduzíveis por quem revê.
+  `bench/mapa-render.html`, para que o antes e o depois sejam reproduzíveis por
+  quem revê.
 */
 
 /*

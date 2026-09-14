@@ -503,3 +503,18 @@ html[data-theme="dark"] .health-map-unit__externo {
   border-color: #17253d;
   background: #2f6fb5;
 }
+
+/* Selo de sede partilhada: mais discreto que o agrupador de unidades. */
+.mapa-cluster--sede {
+  width: 22px;
+  height: 22px;
+  background: #0f5ea8;
+  font-size: 10px;
+}
+
+/* O agrupador que abre em leque avisa que é outra coisa: anel duplo. */
+.mapa-cluster--leque {
+  box-shadow:
+    0 0 0 3px rgba(29, 78, 137, 0.28),
+    0 1px 4px rgba(15, 35, 60, 0.4);
+}
