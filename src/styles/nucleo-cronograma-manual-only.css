@@ -36,8 +36,8 @@
   color: #0f6cbd;
 }
 
-body.dark #cronogramaEditor .cronograma-manual-actions,
-body.dark #cronogramaEditor .cronograma-view-hint {
+html[data-theme="dark"] #cronogramaEditor .cronograma-manual-actions,
+html[data-theme="dark"] #cronogramaEditor .cronograma-view-hint {
   background: rgba(15, 39, 65, 0.55);
   border-color: rgba(130, 172, 214, 0.28);
   color: #c9d9e9;

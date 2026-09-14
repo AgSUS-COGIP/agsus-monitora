@@ -1,1 +1,112 @@
-#cronogramaEditor .cronograma-bulk-dates{margin:14px 0;padding:16px;border:1px solid #bfdbfe;border-radius:14px;background:linear-gradient(180deg,#eff6ff 0%,#fff 100%)}#cronogramaEditor .cronograma-bulk-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:12px}#cronogramaEditor .cronograma-bulk-head h5{margin:2px 0 4px;font-size:16px;color:#0f172a}#cronogramaEditor .cronograma-bulk-head p{margin:0;color:#64748b;font-size:13px}#cronogramaEditor #cronogramaBulkInput{width:100%;min-height:150px;resize:vertical;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font:500 13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;background:#fff;color:#0f172a}#cronogramaEditor .cronograma-bulk-actions{display:flex;justify-content:flex-end;margin-top:12px}#cronogramaEditor .cronograma-bulk-feedback{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:13px;font-weight:600}#cronogramaEditor .cronograma-bulk-feedback.is-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}#cronogramaEditor .cronograma-bulk-feedback.is-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}#cronogramaEditor .cronograma-bulk-feedback.is-success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}#cronogramaEditor .cronograma-recommended-badge,#cronogramaEditor .cronograma-experimental-badge{display:inline-flex;align-items:center;margin-left:7px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}#cronogramaEditor .cronograma-recommended-badge{background:#dcfce7;color:#166534}#cronogramaEditor .cronograma-experimental-badge{background:#fef3c7;color:#92400e}html.dark #cronogramaEditor .cronograma-bulk-dates{background:#0f172a;border-color:#1e3a5f}html.dark #cronogramaEditor .cronograma-bulk-head h5{color:#f8fafc}html.dark #cronogramaEditor .cronograma-bulk-head p{color:#94a3b8}html.dark #cronogramaEditor #cronogramaBulkInput{background:#111827;color:#f8fafc;border-color:#334155}@media(max-width:760px){#cronogramaEditor .cronograma-bulk-head{flex-direction:column}#cronogramaEditor .cronograma-bulk-actions{justify-content:stretch}#cronogramaEditor .cronograma-bulk-actions .btn{width:100%}}
+#cronogramaEditor .cronograma-bulk-dates {
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #eff6ff 0%, #fff 100%);
+}
+#cronogramaEditor .cronograma-bulk-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+#cronogramaEditor .cronograma-bulk-head h5 {
+  margin: 2px 0 4px;
+  font-size: 16px;
+  color: #0f172a;
+}
+#cronogramaEditor .cronograma-bulk-head p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+#cronogramaEditor #cronogramaBulkInput {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px;
+  font:
+    500 13px/1.55 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+  background: #fff;
+  color: #0f172a;
+}
+#cronogramaEditor .cronograma-bulk-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+#cronogramaEditor .cronograma-bulk-feedback {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+}
+#cronogramaEditor .cronograma-bulk-feedback.is-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+#cronogramaEditor .cronograma-bulk-feedback.is-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+#cronogramaEditor .cronograma-bulk-feedback.is-success {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+#cronogramaEditor .cronograma-recommended-badge,
+#cronogramaEditor .cronograma-experimental-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 7px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+#cronogramaEditor .cronograma-recommended-badge {
+  background: #dcfce7;
+  color: #166534;
+}
+#cronogramaEditor .cronograma-experimental-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+html[data-theme="dark"] #cronogramaEditor .cronograma-bulk-dates {
+  background: #0f172a;
+  border-color: #1e3a5f;
+}
+html[data-theme="dark"] #cronogramaEditor .cronograma-bulk-head h5 {
+  color: #f8fafc;
+}
+html[data-theme="dark"] #cronogramaEditor .cronograma-bulk-head p {
+  color: #94a3b8;
+}
+html[data-theme="dark"] #cronogramaEditor #cronogramaBulkInput {
+  background: #111827;
+  color: #f8fafc;
+  border-color: #334155;
+}
+@media (max-width: 760px) {
+  #cronogramaEditor .cronograma-bulk-head {
+    flex-direction: column;
+  }
+  #cronogramaEditor .cronograma-bulk-actions {
+    justify-content: stretch;
+  }
+  #cronogramaEditor .cronograma-bulk-actions .btn {
+    width: 100%;
+  }
+}

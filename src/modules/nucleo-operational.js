@@ -6,6 +6,7 @@ import {
 const state = {
   summary: [],
   summaryByKey: new Map(),
+  status: "idle",
   activeFilter: "todos",
   initialized: false,
   decorating: false,
@@ -95,14 +96,14 @@ function ensureKpis() {
     <section id="nucleoOperationalKpis" class="nucleo-operational-panel">
       <div class="nucleo-operational-heading">
         <div><span>Acompanhamento operacional</span><h3>Cronogramas e alertas</h3><p>Clique nos indicadores para filtrar a fila da Equipe Núcleo.</p></div>
-        <button id="nucleoOperationalRefresh" type="button" class="btn outline"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+        <button id="nucleoOperationalRefresh" type="button" class="btn outline"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Atualizar</button>
       </div>
       <div id="nucleoKpiGrid" class="nucleo-kpi-grid"></div>
-      <div id="nucleoActiveAlertFilter" class="nucleo-active-alert-filter" hidden></div>
+      <div id="nucleoActiveAlertFilter" class="nucleo-active-alert-filter" role="status" hidden></div>
     </section>`,
   );
   $("nucleoOperationalRefresh")?.addEventListener("click", () => {
-    void loadSummary({ force: true });
+    void loadSummary({ force: true }).catch(() => {});
   });
   return true;
 }
@@ -164,8 +165,86 @@ function cardsData() {
   ];
 }
 
+const ESTADOS = {
+  loading: {
+    classe: "nucleo-summary-loading",
+    icone: "fa-spinner fa-spin",
+    titulo: "Carregando os alertas da Equipe Núcleo",
+    texto: "Os indicadores aparecem assim que o resumo chegar.",
+  },
+  empty: {
+    classe: "nucleo-summary-empty",
+    icone: "fa-folder-open",
+    titulo: "Nenhum edital ativo na Equipe Núcleo",
+    texto:
+      "Quando um edital for cadastrado, os indicadores e os alertas de cronograma aparecem aqui.",
+  },
+  error: {
+    classe: "nucleo-summary-error",
+    icone: "fa-triangle-exclamation",
+    titulo: "Não foi possível carregar os alertas",
+    texto: "Verifique a conexão e tente novamente.",
+    repetir: true,
+  },
+};
+
+function renderEstado(grid, chave) {
+  const estado = ESTADOS[chave];
+  const repetir = estado.repetir
+    ? '<button type="button" class="nucleo-summary-retry" id="nucleoSummaryRetry">Tentar de novo</button>'
+    : "";
+  grid.innerHTML = `
+    <div class="${estado.classe}" role="status">
+      <i class="fa-solid ${estado.icone}" aria-hidden="true"></i>
+      <span class="nucleo-summary-text"><strong>${esc(estado.titulo)}</strong>${esc(estado.texto)}</span>
+      ${repetir}
+    </div>`;
+  if (estado.repetir)
+    $("nucleoSummaryRetry")?.addEventListener("click", () => {
+      void loadSummary({ force: true }).catch(() => {});
+    });
+}
+
+function renderFiltroAtivo(cards) {
+  const active = $("nucleoActiveAlertFilter");
+  if (!active) return;
+  active.hidden = !cards || state.activeFilter === "todos";
+  if (active.hidden) {
+    active.innerHTML = "";
+    return;
+  }
+  const rotulo =
+    cards.find((card) => card.key === state.activeFilter)?.label ||
+    state.activeFilter;
+  active.innerHTML = `<span>Filtro operacional ativo: <strong>${esc(rotulo)}</strong></span><button type="button" id="clearNucleoAlertFilter">Limpar</button>`;
+  $("clearNucleoAlertFilter")?.addEventListener("click", () => {
+    state.activeFilter = "todos";
+    state.kpiSignature = "";
+    renderKpis();
+    queueDecoration();
+  });
+}
+
 function renderKpis() {
   if (!ensureKpis()) return;
+  const grid = $("nucleoKpiGrid");
+  if (!grid) return;
+
+  if (state.status === "error") {
+    state.kpiSignature = "";
+    renderEstado(grid, "error");
+    renderFiltroAtivo(null);
+    return;
+  }
+
+  if (!state.summary.length) {
+    state.kpiSignature = "";
+    if (state.status === "idle") grid.innerHTML = "";
+    else renderEstado(grid, state.status === "loading" ? "loading" : "empty");
+    renderFiltroAtivo(null);
+    return;
+  }
+
   const cards = cardsData();
   const signature = JSON.stringify({
     active: state.activeFilter,
@@ -174,37 +253,25 @@ function renderKpis() {
   if (signature === state.kpiSignature) return;
   state.kpiSignature = signature;
 
-  const grid = $("nucleoKpiGrid");
-  if (grid)
-    grid.innerHTML = cards
-      .map(
-        (card) => `
-    <button type="button" class="nucleo-kpi-card tone-${card.tone}${state.activeFilter === card.key ? " is-active" : ""}" data-alert-filter="${card.key}">
-      <span class="nucleo-kpi-icon"><i class="fa-solid ${card.icon}"></i></span>
+  grid.innerHTML = cards
+    .map(
+      (card) => `
+    <button type="button" class="nucleo-kpi-card tone-${card.tone}${state.activeFilter === card.key ? " is-active" : ""}" data-alert-filter="${card.key}" aria-pressed="${state.activeFilter === card.key}">
+      <span class="nucleo-kpi-icon"><i class="fa-solid ${card.icon}" aria-hidden="true"></i></span>
       <span><small>${esc(card.label)}</small><strong>${card.value.toLocaleString("pt-BR")}</strong></span>
     </button>`,
-      )
-      .join("");
-  grid?.querySelectorAll("[data-alert-filter]").forEach((button) =>
+    )
+    .join("");
+
+  grid.querySelectorAll("[data-alert-filter]").forEach((button) =>
     button.addEventListener("click", () => {
       state.activeFilter = button.dataset.alertFilter || "todos";
+      state.kpiSignature = "";
       renderKpis();
       queueDecoration();
     }),
   );
-  const active = $("nucleoActiveAlertFilter");
-  if (active) {
-    active.hidden = state.activeFilter === "todos";
-    active.innerHTML =
-      state.activeFilter === "todos"
-        ? ""
-        : `<span>Filtro operacional ativo: <strong>${esc(cards.find((card) => card.key === state.activeFilter)?.label || state.activeFilter)}</strong></span><button type="button" id="clearNucleoAlertFilter">Limpar</button>`;
-    $("clearNucleoAlertFilter")?.addEventListener("click", () => {
-      state.activeFilter = "todos";
-      renderKpis();
-      queueDecoration();
-    });
-  }
+  renderFiltroAtivo(cards);
 }
 
 function summaryForRow(tr) {
@@ -252,7 +319,7 @@ function decorateRows() {
         if (item.alerta_tipo === "ok") badge.remove();
         else {
           badge.className = `nucleo-row-alert tone-${meta.tone}`;
-          badge.innerHTML = `<i class="fa-solid ${meta.icon}"></i><span>${esc(meta.label)}</span>`;
+          badge.innerHTML = `<i class="fa-solid ${meta.icon}" aria-hidden="true"></i><span>${esc(meta.label)}</span>`;
         }
       }
       if (!actions.querySelector(".nucleo-view-timeline")) {
@@ -264,7 +331,8 @@ function decorateRows() {
           "aria-label",
           `Ver cronograma ${item.edital || ""}`,
         );
-        button.innerHTML = '<i class="fa-solid fa-timeline"></i>';
+        button.innerHTML =
+          '<i class="fa-solid fa-timeline" aria-hidden="true"></i>';
         button.addEventListener("click", () => window.openEditModal?.(item.id));
         actions.insertBefore(button, actions.firstChild);
       }
@@ -295,20 +363,24 @@ async function loadSummary({ force = false, invalidate = false } = {}) {
   const token = ++state.loadToken;
   const button = $("nucleoOperationalRefresh");
   if (button) button.disabled = true;
+  state.status = "loading";
+  renderKpis();
   try {
     const data = await getNucleoSummary({ force });
     if (token !== state.loadToken) return data;
     state.summary = Array.isArray(data) ? data : [];
+    state.status = "ready";
     rebuildSummaryIndex();
     state.kpiSignature = "";
     renderKpis();
     queueDecoration();
     return data;
   } catch (error) {
+    if (token !== state.loadToken) throw error;
     console.error("Erro ao carregar resumo da Equipe Núcleo:", error);
-    const grid = $("nucleoKpiGrid");
-    if (grid)
-      grid.innerHTML = `<div class="nucleo-summary-error">Não foi possível carregar os alertas: ${esc(error?.message || error)}</div>`;
+    state.status = "error";
+    state.kpiSignature = "";
+    renderKpis();
     throw error;
   } finally {
     if (token === state.loadToken && button) button.disabled = false;
@@ -342,6 +414,5 @@ export function initNucleoOperationalSafe() {
 
   document.addEventListener("agsus:nucleo-rendered", queueDecoration);
 
-  // Caso a Equipe Núcleo já esteja ativa quando este módulo inicializar.
   queueMicrotask(refreshWhenNucleoIsVisible);
 }

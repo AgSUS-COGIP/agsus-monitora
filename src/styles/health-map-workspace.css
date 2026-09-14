@@ -32,7 +32,7 @@
 
 .health-map-pane__eyebrow {
   color: #0d8192;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -71,7 +71,7 @@
   padding: 7px 13px;
   border-top: 1px solid #dce8ef;
   color: #64748b;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 650;
 }
 
@@ -133,7 +133,7 @@
   padding: 9px 10px;
   border-bottom: 1px solid #dce8ef;
   color: #0d8192;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -195,23 +195,30 @@
   text-overflow: ellipsis;
 }
 
+/*
+  A lista de unidades é o índice do mapa: é por ela que se encontra um polo
+  ou uma CASAI. O nome vinha a 10px e o tipo, em maiúsculas, a 8px — tamanhos
+  em que a lista deixa de ser consultável.
+*/
 .health-map-unit strong {
-  font-size: 10px;
-  line-height: 1.15;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .health-map-unit small {
   margin-top: 3px;
-  color: #6b7d92;
-  font-size: 8px;
+  color: #5f7288;
+  font-size: 10px;
   font-weight: 750;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .health-map-unit__type {
   color: #0d8192;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -223,7 +230,8 @@
   justify-items: center;
   gap: 7px;
   padding: 20px 12px;
-  color: #718096;
+  /* #718096 dava 4.02:1 sobre o branco, abaixo do mínimo AA. */
+  color: #5f7288;
   text-align: center;
 }
 
@@ -236,9 +244,9 @@
   font-size: 12px;
 }
 .health-map-empty span {
-  max-width: 150px;
-  font-size: 10px;
-  line-height: 1.4;
+  max-width: 210px;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .health-map-detail-legend {
@@ -249,7 +257,8 @@
   padding: 7px 13px;
   border-top: 1px solid #dce8ef;
   color: #526780;
-  font-size: 9px;
+  /* A legenda é o que explica o mapa; a 9px ela não era legível. */
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -333,6 +342,37 @@
 }
 [data-theme="dark"] .health-map-unit:hover {
   background: #1a2d47;
+}
+/*
+  O tema escuro destes painéis tratava fundo e borda, nunca a cor do texto.
+  Sobre o cartão escuro, o que sobrava do tema claro reprovava contraste: a
+  legenda dava 2.64:1, a tarja de seção 3.34:1, a dica do painel 3.22:1 e o
+  tipo da unidade 3.5:1. A pílula de contagem, além disso, continuava clara
+  dentro de um cabeçalho escuro.
+*/
+[data-theme="dark"] .health-map-pane__eyebrow,
+[data-theme="dark"] .health-map-units__header {
+  color: #5fd0e3;
+}
+/*
+  O tipo da unidade fica de fora: no escuro quem manda nele é o
+  `html[data-theme="dark"] .app small` de `config-page.css`, com `!important`
+  — 13.96:1 sobre este painel, verificado no navegador. Listá-lo aqui seria
+  escrever uma regra que nunca vale.
+*/
+[data-theme="dark"] .health-map-pane__hint,
+[data-theme="dark"] .health-map-detail-legend,
+[data-theme="dark"] .health-map-empty {
+  color: #9fb4c9;
+}
+[data-theme="dark"] .health-map-pane__count,
+[data-theme="dark"] .health-map-reset {
+  border-color: #2f4a6b;
+  background: #1a2d47;
+  color: #a9d9e6;
+}
+[data-theme="dark"] .health-map-unit__type {
+  color: #5fd0e3;
 }
 
 /*

@@ -1,7 +1,125 @@
-.cronograma-copy-box{margin:12px 0;padding:14px;border:1px solid #d7e4f1;border-left:4px solid #286ff0;border-radius:13px;background:linear-gradient(135deg,#f7fbff,#eef6ff)}
-.cronograma-copy-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:11px}.cronograma-copy-heading span{display:block;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#3974a8}.cronograma-copy-heading strong{display:block;margin:2px 0 3px;color:#173b60}.cronograma-copy-heading small{display:block;color:#6f8296;line-height:1.4}
-.cronograma-copy-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}.cronograma-copy-controls select{width:100%;min-height:42px;border:1px solid #cbd9e7;border-radius:10px;background:#fff;color:#17324d;padding:8px 10px}.cronograma-copy-controls .btn{min-height:42px;white-space:nowrap}.cronograma-copy-controls .btn:disabled{opacity:.55;cursor:not-allowed}
-.cronograma-copy-feedback{margin-top:10px;padding:9px 11px;border-radius:9px;font-size:12px;font-weight:750}.cronograma-copy-feedback.is-info{background:#edf5ff;color:#285f93}.cronograma-copy-feedback.is-success{background:#e4f7ed;color:#167c50}.cronograma-copy-feedback.is-warning{background:#fff4d6;color:#856000}.cronograma-copy-feedback.is-error{background:#ffeded;color:#aa2f2f}
-.nucleo-timeline-modal.show{display:flex!important;align-items:center;justify-content:center}.nucleo-timeline-modal .modal-card{display:flex;flex-direction:column}.nucleo-timeline-content{min-height:180px}.nucleo-timeline-item.is-future .nucleo-timeline-dot{background:#e7edf3;color:#8293a4}.nucleo-timeline-item.is-future>div>div span{color:#71849a}
-html.dark .cronograma-copy-box{background:linear-gradient(135deg,#102438,#142b41);border-color:#2d4d68}html.dark .cronograma-copy-heading strong{color:#edf6ff}html.dark .cronograma-copy-heading small{color:#9fb2c4}html.dark .cronograma-copy-controls select{background:#0d2032;color:#eaf3fb;border-color:#35516a}html.dark .cronograma-copy-feedback.is-info{background:#17324b;color:#b8ddff}
-@media(max-width:720px){.cronograma-copy-controls{grid-template-columns:1fr}.cronograma-copy-controls .btn{width:100%}}
+.cronograma-copy-box {
+  margin: 12px 0;
+  padding: 14px;
+  border: 1px solid #d7e4f1;
+  border-left: 4px solid #286ff0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f7fbff, #eef6ff);
+}
+.cronograma-copy-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+.cronograma-copy-heading span {
+  display: block;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #3974a8;
+}
+.cronograma-copy-heading strong {
+  display: block;
+  margin: 2px 0 3px;
+  color: #173b60;
+}
+.cronograma-copy-heading small {
+  display: block;
+  color: #6f8296;
+  line-height: 1.4;
+}
+.cronograma-copy-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.cronograma-copy-controls select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #cbd9e7;
+  border-radius: 10px;
+  background: #fff;
+  color: #17324d;
+  padding: 8px 10px;
+}
+.cronograma-copy-controls .btn {
+  min-height: 42px;
+  white-space: nowrap;
+}
+.cronograma-copy-controls .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.cronograma-copy-feedback {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.cronograma-copy-feedback.is-info {
+  background: #edf5ff;
+  color: #285f93;
+}
+.cronograma-copy-feedback.is-success {
+  background: #e4f7ed;
+  color: #167c50;
+}
+.cronograma-copy-feedback.is-warning {
+  background: #fff4d6;
+  color: #856000;
+}
+.cronograma-copy-feedback.is-error {
+  background: #ffeded;
+  color: #aa2f2f;
+}
+.nucleo-timeline-modal.show {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+.nucleo-timeline-modal .modal-card {
+  display: flex;
+  flex-direction: column;
+}
+.nucleo-timeline-content {
+  min-height: 180px;
+}
+.nucleo-timeline-item.is-future .nucleo-timeline-dot {
+  background: #e7edf3;
+  color: #8293a4;
+}
+.nucleo-timeline-item.is-future > div > div span {
+  color: #71849a;
+}
+html[data-theme="dark"] .cronograma-copy-box {
+  background: linear-gradient(135deg, #102438, #142b41);
+  border-color: #2d4d68;
+}
+html[data-theme="dark"] .cronograma-copy-heading strong {
+  color: #edf6ff;
+}
+html[data-theme="dark"] .cronograma-copy-heading small {
+  color: #9fb2c4;
+}
+html[data-theme="dark"] .cronograma-copy-controls select {
+  background: #0d2032;
+  color: #eaf3fb;
+  border-color: #35516a;
+}
+html[data-theme="dark"] .cronograma-copy-feedback.is-info {
+  background: #17324b;
+  color: #b8ddff;
+}
+@media (max-width: 720px) {
+  .cronograma-copy-controls {
+    grid-template-columns: 1fr;
+  }
+  .cronograma-copy-controls .btn {
+    width: 100%;
+  }
+}
