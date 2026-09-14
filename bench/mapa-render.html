@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Banco de ensaio — renderização do mapa</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+      integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <style>
+      body {
+        margin: 0;
+        font:
+          13px system-ui,
+          sans-serif;
+      }
+      #map {
+        width: 1100px;
+        height: 520px;
+      }
+      #saida {
+        padding: 12px;
+        white-space: pre;
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="saida">a medir…</div>
+    <script>
+      /*
+        Replica o padrão de marcador que `legacy-app.js` usa hoje — divIcon com
+        SVG embutido, mais bindPopup e bindTooltip por marcador — e mede-o
+        contra duas alternativas, nos volumes reais: 1081 estabelecimentos e
+        381 polos.
+      */
+      const N_ESTAB = 1081;
+      const N_POLOS = 381;
+      const N_TOTAL = N_ESTAB + N_POLOS;
+
+      const map = L.map("map", { preferCanvas: false }).setView([-10, -55], 4);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+      }).addTo(map);
+
+      // Pontos espalhados pelo Brasil, com a concentração real: 57 no mesmo ponto.
+      const pontos = [];
+      for (let i = 0; i < N_TOTAL; i++) {
+        if (i < 57) pontos.push([4.596, -60.168]);
+        else if (i < 72) pontos.push([2.98, -61.292]);
+        else pontos.push([-33 + Math.random() * 38, -73 + Math.random() * 40]);
+      }
+
+      const svgMarcador = (cor) =>
+        `<span class="mapa-marcador"><svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="6.4" fill="${cor}" stroke="#ffffff" stroke-width="1.6"/></svg></span>`;
+
+      const contarNos = () => document.querySelectorAll("*").length;
+      const memoria = () =>
+        performance.memory
+          ? (performance.memory.usedJSHeapSize / 1048576).toFixed(1)
+          : "n/d";
+
+      function medir(nome, montar) {
+        const camada = L.layerGroup().addTo(map);
+        const nosAntes = contarNos();
+        const memAntes = memoria();
+        const t0 = performance.now();
+        montar(camada);
+        const tCriacao = performance.now() - t0;
+        // Força layout/paint para que o custo de DOM entre na conta.
+        void document.body.offsetHeight;
+        const tTotal = performance.now() - t0;
+        const nosDepois = contarNos();
+        const memDepois = memoria();
+        const r = {
+          nome,
+          criacao_ms: +tCriacao.toFixed(1),
+          ate_layout_ms: +tTotal.toFixed(1),
+          nos_dom: nosDepois - nosAntes,
+          heap_mb: memAntes === "n/d" ? "n/d" : `${memAntes}→${memDepois}`,
+        };
+        map.removeLayer(camada);
+        camada.clearLayers();
+        return r;
+      }
+
+      window.__map = map;
+      window.__pontos = pontos;
+      // O Leaflet guarda o tamanho medido na criação; sem isto o container
+      // ainda vale 0 e getBounds devolve uma caixa vazia.
+      map.invalidateSize({ animate: false });
+
+      const mediana = (a) => {
+        const s = [...a].sort((x, y) => x - y);
+        return s[Math.floor(s.length / 2)];
+      };
+      const medir3 = (nome, montar) => {
+        const r = [
+          medir(nome, montar),
+          medir(nome, montar),
+          medir(nome, montar),
+        ];
+        return {
+          nome,
+          criacao_ms: mediana(r.map((x) => x.criacao_ms)),
+          ate_layout_ms: mediana(r.map((x) => x.ate_layout_ms)),
+          nos_dom: r[0].nos_dom,
+          heap_mb: r[0].heap_mb,
+        };
+      };
+
+      const resultados = [];
+
+      // A — o padrão de hoje: divIcon + SVG + popup + tooltip por marcador.
+      resultados.push(
+        medir3("A. atual (divIcon+SVG+popup+tooltip)", (camada) => {
+          pontos.forEach((p, i) => {
+            const m = L.marker(p, {
+              icon: L.divIcon({
+                className: "",
+                html: svgMarcador("#e49a1b"),
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+              }),
+            });
+            m.bindPopup(`<b>Unidade ${i}</b><br>Município<br>CNES: 123456`);
+            m.bindTooltip(`Polo base Unidade ${i}<br>Vinculado ao DSEI X`);
+            camada.addLayer(m);
+          });
+        }),
+      );
+
+      // B — circleMarker em canvas, sem popup/tooltip pré-ligados.
+      resultados.push(
+        medir3("B. circleMarker em canvas, sem bind prévio", (camada) => {
+          const renderer = L.canvas({ padding: 0.5 });
+          pontos.forEach((p) => {
+            camada.addLayer(
+              L.circleMarker(p, {
+                renderer,
+                radius: 5,
+                color: "#fff",
+                weight: 1.5,
+                fillColor: "#e49a1b",
+                fillOpacity: 0.95,
+              }),
+            );
+          });
+        }),
+      );
+
+      // C — só o que cabe no enquadramento atual, como faria um viewport cull.
+      resultados.push(
+        medir3("C. canvas + recorte pelo enquadramento", (camada) => {
+          const renderer = L.canvas({ padding: 0.5 });
+          const limites = map.getBounds();
+          let desenhados = 0;
+          pontos.forEach((p) => {
+            if (!limites.contains(p)) return;
+            desenhados++;
+            camada.addLayer(
+              L.circleMarker(p, {
+                renderer,
+                radius: 5,
+                fillColor: "#e49a1b",
+                fillOpacity: 0.95,
+                weight: 1.5,
+                color: "#fff",
+              }),
+            );
+          });
+          window.__desenhadosC = desenhados;
+        }),
+      );
+
+      // A2 — divIcon com SVG, SEM popup/tooltip pré-ligados.
+      resultados.push(
+        medir3("A2. divIcon+SVG, sem bind prévio", (camada) => {
+          pontos.forEach((p) => {
+            camada.addLayer(
+              L.marker(p, {
+                icon: L.divIcon({
+                  className: "",
+                  html: svgMarcador("#e49a1b"),
+                  iconSize: [18, 18],
+                  iconAnchor: [9, 9],
+                }),
+              }),
+            );
+          });
+        }),
+      );
+
+      // D — polígono em canvas: mantém a FORMA (acessibilidade) sem DOM.
+      resultados.push(
+        medir3("D. polígono em canvas (forma preservada)", (camada) => {
+          const renderer = L.canvas({ padding: 0.5 });
+          pontos.forEach((p) => {
+            const d = 0.35;
+            camada.addLayer(
+              L.polygon(
+                [
+                  [p[0] + d, p[1]],
+                  [p[0], p[1] + d],
+                  [p[0] - d, p[1]],
+                  [p[0], p[1] - d],
+                ],
+                {
+                  renderer,
+                  color: "#fff",
+                  weight: 1.2,
+                  fillColor: "#0d8192",
+                  fillOpacity: 0.95,
+                },
+              ),
+            );
+          });
+        }),
+      );
+
+      // E — agrupamento por célula de pixel: mantém o divIcon (e a FORMA) mas
+      // desenha um marcador por grupo em vez de um por ponto.
+      resultados.push(
+        medir3(
+          "E. cluster por célula + divIcon (forma preservada)",
+          (camada) => {
+            const CELULA = 60;
+            const grupos = new Map();
+            pontos.forEach((p) => {
+              const pt = map.latLngToContainerPoint(p);
+              const chave =
+                Math.floor(pt.x / CELULA) + ":" + Math.floor(pt.y / CELULA);
+              if (!grupos.has(chave)) grupos.set(chave, { p, n: 0 });
+              grupos.get(chave).n++;
+            });
+            window.__nGrupos = grupos.size;
+            grupos.forEach((g) => {
+              const html =
+                g.n > 1 ? `<span>${g.n}</span>` : svgMarcador("#0d8192");
+              camada.addLayer(
+                L.marker(g.p, {
+                  icon: L.divIcon({
+                    className: "",
+                    html,
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11],
+                  }),
+                }),
+              );
+            });
+          },
+        ),
+      );
+
+      const linhas = [
+        `Volume: ${N_TOTAL} pontos (${N_ESTAB} estabelecimentos + ${N_POLOS} polos)`,
+        `Concentração real reproduzida: 57 pontos em 4.596,-60.168 e 15 em 2.98,-61.292`,
+        "",
+      ];
+      resultados.forEach((r) => {
+        linhas.push(
+          `${r.nome}\n   criação ${String(r.criacao_ms).padStart(8)} ms   até layout ${String(r.ate_layout_ms).padStart(8)} ms   nós DOM ${String(r.nos_dom).padStart(6)}   heap ${r.heap_mb} MB`,
+        );
+      });
+      linhas.push("");
+      linhas.push(`E reduziu 1462 pontos a ${window.__nGrupos} marcadores.`);
+      linhas.push(`C desenhou ${window.__desenhadosC} de ${N_TOTAL} pontos.`);
+      document.getElementById("saida").textContent = linhas.join("\n");
+      window.__resultados = resultados;
+    </script>
+  </body>
+</html>
