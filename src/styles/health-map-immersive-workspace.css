@@ -1,0 +1,137 @@
+body.health-map-immersive-open {
+  overflow: hidden;
+}
+
+.health-map-immersive-toggle {
+  flex: 0 0 auto;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid #c8dbe8;
+  border-radius: 10px;
+  background: #f7fbfd;
+  color: #174e68;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.health-map-immersive-toggle:hover {
+  border-color: #7da9bd;
+  background: #eef8fb;
+}
+
+.health-map-immersive-toggle:focus-visible {
+  outline: 3px solid rgba(23, 105, 170, 0.35);
+  outline-offset: 2px;
+}
+
+.health-map-pane.is-immersive {
+  --health-map-height: calc(100dvh - 126px);
+  position: fixed;
+  inset: 12px;
+  z-index: 12050;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 1px solid #b9ceda;
+  border-top: 3px solid #0f8f98;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(4, 29, 48, 0.28);
+  overflow: hidden;
+}
+
+.health-map-pane.is-immersive::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(5, 18, 31, 0.58);
+  backdrop-filter: blur(6px);
+}
+
+.health-map-pane.is-immersive .health-map-pane__header {
+  min-height: 64px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 0 rgba(15, 51, 73, 0.08);
+}
+
+.health-map-pane.is-immersive .health-map-pane__header h3 {
+  font-size: 17px;
+}
+
+.health-map-pane.is-immersive #map,
+.health-map-pane.is-immersive #detailMap,
+.health-map-pane.is-immersive .health-map-detail-layout {
+  height: var(--health-map-height) !important;
+  min-height: var(--health-map-height) !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
+.health-map-pane.is-immersive .health-map-detail-layout {
+  flex: 1 1 auto;
+}
+
+.health-map-pane.is-immersive .health-map-units__list {
+  height: calc(var(--health-map-height) - 42px);
+}
+
+.health-map-pane.is-immersive .health-map-pane__hint,
+.health-map-pane.is-immersive .health-map-detail-legend {
+  flex: 0 0 auto;
+  min-height: 38px;
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.health-map-pane.is-immersive .leaflet-control-zoom,
+.health-map-pane.is-immersive .agsus-basemap-switcher {
+  box-shadow: 0 8px 24px rgba(10, 35, 54, 0.22);
+}
+
+[data-theme="dark"] .health-map-immersive-toggle {
+  border-color: #35516d;
+  background: #172d45;
+  color: #d9edf6;
+}
+
+[data-theme="dark"] .health-map-immersive-toggle:hover {
+  border-color: #5e89a7;
+  background: #1d3854;
+}
+
+[data-theme="dark"] .health-map-pane.is-immersive,
+[data-theme="dark"] .health-map-pane.is-immersive .health-map-pane__header,
+[data-theme="dark"] .health-map-pane.is-immersive .health-map-pane__hint,
+[data-theme="dark"] .health-map-pane.is-immersive .health-map-detail-legend {
+  background: #132238;
+}
+
+@media (max-width: 820px) {
+  .health-map-immersive-toggle span {
+    display: none;
+  }
+
+  .health-map-pane.is-immersive {
+    --health-map-height: calc(100dvh - 104px);
+    inset: 6px;
+    border-radius: 12px;
+  }
+
+  .health-map-pane.is-immersive .health-map-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .health-map-pane.is-immersive .health-map-units {
+    display: none;
+  }
+}
