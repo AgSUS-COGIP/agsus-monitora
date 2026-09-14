@@ -1,0 +1,91 @@
+.agsus-basemap-switcher {
+  display: inline-flex;
+  overflow: hidden;
+  margin-top: 8px !important;
+  border: 1px solid rgba(15, 42, 67, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 14px rgba(15, 42, 67, 0.14);
+  backdrop-filter: blur(8px);
+}
+
+.agsus-basemap-switcher__button {
+  appearance: none;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 0;
+  border-right: 1px solid rgba(15, 42, 67, 0.14);
+  background: transparent;
+  color: #17324d;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.agsus-basemap-switcher__button:last-child {
+  border-right: 0;
+}
+
+.agsus-basemap-switcher__button:hover {
+  background: #edf5ff;
+}
+
+.agsus-basemap-switcher__button.is-active,
+.agsus-basemap-switcher__button[aria-pressed="true"] {
+  background: #0f5ea8;
+  color: #ffffff;
+}
+
+.agsus-basemap-switcher__button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid #ffca28;
+  outline-offset: -3px;
+}
+
+[data-theme="dark"] .agsus-basemap-switcher {
+  border-color: rgba(218, 232, 247, 0.22);
+  background: rgba(16, 42, 67, 0.96);
+}
+
+[data-theme="dark"] .agsus-basemap-switcher__button {
+  border-right-color: rgba(218, 232, 247, 0.18);
+  color: #edf5ff;
+}
+
+[data-theme="dark"] .agsus-basemap-switcher__button:hover {
+  background: #173b5d;
+}
+
+[data-theme="dark"] .agsus-basemap-switcher__button.is-active,
+[data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"] {
+  background: #2f86db;
+  color: #ffffff;
+}
+
+.map-satellite-fallback .agsus-basemap-switcher {
+  animation: agsus-basemap-fallback-pulse 0.45s ease-out;
+}
+
+@keyframes agsus-basemap-fallback-pulse {
+  from {
+    box-shadow: 0 0 0 4px rgba(207, 48, 48, 0.28);
+  }
+  to {
+    box-shadow: 0 4px 14px rgba(15, 42, 67, 0.14);
+  }
+}
+
+@media (max-width: 700px) {
+  .agsus-basemap-switcher {
+    margin-top: 6px !important;
+  }
+
+  .agsus-basemap-switcher__button {
+    min-height: 32px;
+    padding: 0 9px;
+    font-size: 10px;
+  }
+}

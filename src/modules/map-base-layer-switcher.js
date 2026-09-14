@@ -1,0 +1,272 @@
+const STORAGE_KEY = "agsus_map_base_layer_v1";
+const MODE_MAP = "map";
+const MODE_SATELLITE = "satellite";
+const SATELLITE_ERROR_LIMIT = 4;
+
+const SATELLITE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const SATELLITE_ATTRIBUTION =
+  "Tiles © Esri — Sources: Esri, Maxar, Earthstar Geographics, and the GIS User Community";
+
+const CARTOGRAPHIC_HOSTS = ["tile.openstreetmap.org", "basemaps.cartocdn.com"];
+
+let installed = false;
+
+export function installMapBaseLayerSwitcher() {
+  if (installed) return true;
+
+  const L = window.L;
+  if (!L?.map || !L.tileLayer || !L.control || !L.DomUtil || !L.DomEvent)
+    return false;
+  if (L.__agsusBaseLayerSwitcherInstalled) {
+    installed = true;
+    return true;
+  }
+
+  const guardedTileLayer = L.tileLayer;
+  L.tileLayer = function agsusTaggedTileLayer(urlTemplate, options = {}) {
+    const layer = guardedTileLayer.call(this, urlTemplate, options);
+    layer.__agsusTileUrlTemplate = String(urlTemplate || "");
+    layer.__agsusBaseMapKind = classifyBaseLayerUrl(urlTemplate);
+    return layer;
+  };
+
+  const guardedMap = L.map;
+  L.map = function agsusMapWithBaseLayerSwitcher(element, options = {}) {
+    const map = guardedMap.call(this, element, options);
+    enhanceMap(L, map);
+    return map;
+  };
+
+  L.__agsusBaseLayerSwitcherInstalled = true;
+  installed = true;
+  return true;
+}
+
+export function classifyBaseLayerUrl(urlTemplate) {
+  const url = String(urlTemplate || "").toLowerCase();
+  if (url.includes("world_imagery/mapserver")) return MODE_SATELLITE;
+  if (CARTOGRAPHIC_HOSTS.some((host) => url.includes(host))) return MODE_MAP;
+  return null;
+}
+
+function enhanceMap(L, map) {
+  if (!map || map.__agsusBaseLayerSwitcherReady) return;
+  map.__agsusBaseLayerSwitcherReady = true;
+  map.__agsusBaseMapMode = MODE_MAP;
+  map.__agsusDesiredBaseMapMode = readStoredMode();
+  map.__agsusStoredMapLayers = [];
+  map.__agsusSatelliteLayer = null;
+  map.__agsusSatelliteErrors = 0;
+  map.__agsusSwitchingBaseLayer = false;
+
+  map.on("layeradd", (event) => {
+    const layer = event?.layer;
+    if (!layer || map.__agsusSwitchingBaseLayer) return;
+
+    if (layer.__agsusBaseMapKind === MODE_MAP) {
+      rememberMapLayer(map, layer);
+      if (map.__agsusDesiredBaseMapMode === MODE_SATELLITE) {
+        queueMicrotask(() => setBaseMapMode(L, map, MODE_SATELLITE));
+      }
+    }
+  });
+
+  addSwitcherControl(L, map);
+
+  map.whenReady(() => {
+    queueMicrotask(() => {
+      findLayers(map, MODE_MAP).forEach((layer) =>
+        rememberMapLayer(map, layer),
+      );
+      if (map.__agsusDesiredBaseMapMode === MODE_SATELLITE) {
+        setBaseMapMode(L, map, MODE_SATELLITE);
+      } else {
+        syncControl(map);
+      }
+    });
+  });
+}
+
+function addSwitcherControl(L, map) {
+  if (map.__agsusBaseLayerControl) return;
+
+  const control = L.control({ position: "topleft" });
+  control.onAdd = () => {
+    const container = L.DomUtil.create(
+      "div",
+      "leaflet-control agsus-basemap-switcher",
+    );
+    container.setAttribute("role", "group");
+    container.setAttribute("aria-label", "Camada de fundo do mapa");
+
+    const mapButton = createButton(L, MODE_MAP, "Mapa");
+    const satelliteButton = createButton(L, MODE_SATELLITE, "Satélite");
+    container.append(mapButton, satelliteButton);
+
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+
+    mapButton.addEventListener("click", () => {
+      map.__agsusDesiredBaseMapMode = MODE_MAP;
+      setBaseMapMode(L, map, MODE_MAP, { persist: true });
+    });
+    satelliteButton.addEventListener("click", () => {
+      map.__agsusDesiredBaseMapMode = MODE_SATELLITE;
+      setBaseMapMode(L, map, MODE_SATELLITE, { persist: true });
+    });
+
+    map.__agsusBaseLayerControlElement = container;
+    syncControl(map);
+    return container;
+  };
+
+  control.addTo(map);
+  map.__agsusBaseLayerControl = control;
+}
+
+function createButton(L, mode, label) {
+  const button = L.DomUtil.create("button", "agsus-basemap-switcher__button");
+  button.type = "button";
+  button.dataset.mapMode = mode;
+  button.textContent = label;
+  button.setAttribute("aria-pressed", "false");
+  return button;
+}
+
+function setBaseMapMode(L, map, requestedMode, { persist = false } = {}) {
+  const mode = requestedMode === MODE_SATELLITE ? MODE_SATELLITE : MODE_MAP;
+  if (!map || map.__agsusSwitchingBaseLayer) return false;
+
+  if (mode === MODE_SATELLITE) {
+    const currentMapLayers = findLayers(map, MODE_MAP);
+    currentMapLayers.forEach((layer) => rememberMapLayer(map, layer));
+    if (!map.__agsusStoredMapLayers.length) return false;
+  }
+
+  map.__agsusSwitchingBaseLayer = true;
+  try {
+    if (mode === MODE_SATELLITE) {
+      findLayers(map, MODE_MAP).forEach((layer) => map.removeLayer(layer));
+      const satelliteLayer = getSatelliteLayer(L, map);
+      if (!map.hasLayer(satelliteLayer)) satelliteLayer.addTo(map);
+      satelliteLayer.bringToBack?.();
+    } else {
+      if (
+        map.__agsusSatelliteLayer &&
+        map.hasLayer(map.__agsusSatelliteLayer)
+      ) {
+        map.removeLayer(map.__agsusSatelliteLayer);
+      }
+      map.__agsusStoredMapLayers.forEach((layer) => {
+        if (!map.hasLayer(layer)) layer.addTo(map);
+        layer.bringToBack?.();
+      });
+    }
+
+    map.__agsusBaseMapMode = mode;
+    map.__agsusDesiredBaseMapMode = mode;
+    if (persist) storeMode(mode);
+    syncControl(map);
+    dispatchModeChange(map, mode);
+    return true;
+  } finally {
+    map.__agsusSwitchingBaseLayer = false;
+  }
+}
+
+function getSatelliteLayer(L, map) {
+  if (map.__agsusSatelliteLayer) return map.__agsusSatelliteLayer;
+
+  const layer = L.tileLayer(SATELLITE_URL, {
+    maxZoom: 19,
+    attribution: SATELLITE_ATTRIBUTION,
+    crossOrigin: true,
+    updateWhenIdle: true,
+    keepBuffer: 2,
+  });
+  layer.__agsusBaseMapKind = MODE_SATELLITE;
+
+  layer.on("tileload", () => {
+    map.__agsusSatelliteErrors = 0;
+    map.getContainer?.().classList.remove("map-satellite-fallback");
+  });
+
+  layer.on("tileerror", () => {
+    map.__agsusSatelliteErrors += 1;
+    if (
+      map.__agsusSatelliteErrors < SATELLITE_ERROR_LIMIT ||
+      map.__agsusBaseMapMode !== MODE_SATELLITE
+    )
+      return;
+
+    map.getContainer?.().classList.add("map-satellite-fallback");
+    map.__agsusDesiredBaseMapMode = MODE_MAP;
+    setBaseMapMode(L, map, MODE_MAP, { persist: true });
+    dispatchFallback(map);
+  });
+
+  map.__agsusSatelliteLayer = layer;
+  return layer;
+}
+
+function rememberMapLayer(map, layer) {
+  if (!layer || layer.__agsusBaseMapKind !== MODE_MAP) return;
+  if (!map.__agsusStoredMapLayers.includes(layer)) {
+    map.__agsusStoredMapLayers.push(layer);
+  }
+}
+
+function findLayers(map, kind) {
+  const layers = [];
+  map.eachLayer?.((layer) => {
+    if (layer?.__agsusBaseMapKind === kind) layers.push(layer);
+  });
+  return layers;
+}
+
+function syncControl(map) {
+  const root = map.__agsusBaseLayerControlElement;
+  if (!root) return;
+  root.querySelectorAll("[data-map-mode]").forEach((button) => {
+    const active = button.dataset.mapMode === map.__agsusBaseMapMode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function dispatchModeChange(map, mode) {
+  map.getContainer?.().dispatchEvent(
+    new CustomEvent("agsus:map-base-layer-changed", {
+      bubbles: true,
+      detail: { mode },
+    }),
+  );
+}
+
+function dispatchFallback(map) {
+  map.getContainer?.().dispatchEvent(
+    new CustomEvent("agsus:map-satellite-fallback", {
+      bubbles: true,
+      detail: { mode: MODE_MAP, reason: "tileerror" },
+    }),
+  );
+}
+
+function readStoredMode() {
+  try {
+    return localStorage.getItem(STORAGE_KEY) === MODE_SATELLITE
+      ? MODE_SATELLITE
+      : MODE_MAP;
+  } catch {
+    return MODE_MAP;
+  }
+}
+
+function storeMode(mode) {
+  try {
+    localStorage.setItem(STORAGE_KEY, mode);
+  } catch {
+    // A preferência é opcional; o mapa continua funcional sem storage.
+  }
+}
