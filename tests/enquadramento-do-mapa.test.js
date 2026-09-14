@@ -139,7 +139,9 @@ describe("os dois estados do workspace", () => {
       css.indexOf(".health-map-pane {"),
     );
     expect(regra).toContain("display: none");
-    expect(regra).toContain(".health-map-workspace.com-dsei .health-map-pane--master");
+    expect(regra).toContain(
+      ".health-map-workspace.com-dsei .health-map-pane--master",
+    );
   });
 
   it("o workspace é uma coluna só, não dois mapas lado a lado", () => {
