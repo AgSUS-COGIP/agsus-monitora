@@ -38,11 +38,33 @@
   color: #ffffff;
 }
 
+/*
+  Este bloco existia e não valia. `app.css` aplica
+  `button:focus-visible { outline: 3px solid #1f8fff !important; outline-offset: 2px !important }`
+  a todo botão, e o `!important` vencia o amarelo escrito aqui. O que se via
+  era o anel azul global — e ele falhava de duas maneiras ao mesmo tempo:
+
+  1. Com deslocamento positivo, o anel é desenhado FORA do botão. Como o
+     container recorta (`overflow: hidden`) e os botões encostam nas suas
+     bordas, ele saía cortado em três lados — topo, direita e base, medido.
+  2. A parte que escapasse ao recorte cairia sobre os ladrilhos do mapa, cuja
+     cor ninguém controla: 2.58:1 sobre um mapa claro, abaixo dos 3:1 que a
+     WCAG 1.4.11 pede a um indicador não textual.
+
+  O amarelo original também não servia como está: 1.52:1 sobre o botão
+  inativo no tema claro.
+
+  `currentColor` resolve os dois casos de uma vez. O anel passa a ser a cor do
+  próprio texto do botão, que já é obrigada a contrastar com o fundo desse
+  botão — 13.02:1 e 6.59:1 no claro, 13.32:1 e 5.83:1 no escuro — e o
+  deslocamento negativo mantém-no dentro do botão, longe do recorte e dos
+  ladrilhos. O `!important` é o mínimo para desfazer o do `app.css`.
+*/
 .agsus-basemap-switcher__button:focus-visible {
   position: relative;
   z-index: 1;
-  outline: 3px solid #ffca28;
-  outline-offset: -3px;
+  outline: 3px solid currentColor !important;
+  outline-offset: -3px !important;
 }
 
 [data-theme="dark"] .agsus-basemap-switcher {
@@ -59,9 +81,17 @@
   background: #173b5d;
 }
 
+/*
+  #2f86db dava 3.78:1 com o texto branco — abaixo do mínimo AA de 4.5:1, e
+  logo no botão selecionado, que é justamente o que precisa de se ler. Pior,
+  o anel de foco amarelo caía a 2.47:1 sobre ele, abaixo dos 3:1 que a WCAG
+  pede para indicador não textual: quem navega por teclado perdia o foco ao
+  chegar ao botão ativo. #1f66b2 dá 5.83:1 ao texto e 3.81:1 ao anel, e
+  continua mais claro do que o painel escuro por trás.
+*/
 [data-theme="dark"] .agsus-basemap-switcher__button.is-active,
 [data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"] {
-  background: #2f86db;
+  background: #1f66b2;
   color: #ffffff;
 }
 

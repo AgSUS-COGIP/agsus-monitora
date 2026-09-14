@@ -72,11 +72,21 @@ a grade fica vazia — nunca zerada.
 
 ### Mapa e Satélite
 
-Hoje a aplicação tem **apenas a vista de mapa**. A alternância para satélite
-ainda não existe na interface; quando existir, será documentada aqui.
+No canto superior esquerdo de cada mapa há dois botões, **Mapa** e **Satélite**.
 
-O que já existe são dois fornecedores da mesma vista de mapa, usados em
-sequência para resistir a falha de rede — ver _Fallback de camada_, abaixo.
+- **Mapa** é a vista cartográfica: fronteiras, nomes e estradas desenhados. Serve
+  para localizar e para ler rótulos.
+- **Satélite** é imagem aérea real, do World Imagery da Esri. Serve para ver o
+  terreno — vegetação, rios, estradas de terra, o que existe de fato em volta de
+  um polo.
+
+A escolha fica guardada no navegador e vale para a próxima visita. Ela é uma só
+para a aplicação inteira, mas aplica-se a cada mapa no momento em que ele é
+criado: trocar a camada num mapa já aberto não troca a de outro que já estava na
+tela — ao recarregar, ambos abrem na camada escolhida.
+
+O botão selecionado fica marcado também para leitores de tela, e o par de botões
+é anunciado como um grupo chamado "Camada de fundo do mapa".
 
 ### Significado dos marcadores
 
@@ -101,17 +111,25 @@ vértices do país e não de um retângulo escrito à mão.
 Arrastar o mapa mostra o contexto sul-americano em volta, mas não permite sair
 para o oceano aberto nem criar cópias laterais do mundo.
 
-O zoom máximo depende do fornecedor em uso: 18 níveis no principal, 19 no de
-recurso.
+O zoom máximo depende da camada em uso: 18 níveis no OpenStreetMap, 19 no CARTO
+e 19 no satélite.
 
 ### Fallback de camada
 
-O fornecedor principal dos ladrilhos é o OpenStreetMap. Quando quatro ladrilhos
-seguidos falham, a aplicação troca para o CARTO e continua a desenhar o mapa.
+Há duas quedas automáticas, e elas são independentes.
 
-Durante a recuperação o painel recebe um estado visual próprio. Se o mapa ficar
-cinzento e não recuperar, o problema está na rede ou no acesso a esses dois
-domínios — não nos dados da aplicação.
+**Dentro da vista de mapa.** O fornecedor principal dos ladrilhos é o
+OpenStreetMap. Quando quatro ladrilhos seguidos falham, a aplicação troca para o
+CARTO e continua a desenhar o mapa.
+
+**Do satélite para o mapa.** Quando quatro ladrilhos de satélite seguidos falham,
+a aplicação volta sozinha à vista de mapa e grava essa volta como preferência —
+para não reabrir num satélite que não carrega. O seletor pisca uma vez para
+avisar que a troca não foi pedida por quem está a usar. Um ladrilho que carregue
+zera a contagem, de modo que uma falha isolada não derruba a camada.
+
+Se o mapa ficar cinzento e não recuperar em nenhuma das camadas, o problema está
+na rede ou no acesso aos domínios dos fornecedores — não nos dados da aplicação.
 
 ### Lista de unidades
 

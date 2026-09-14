@@ -17,6 +17,9 @@ const mapaCss = semComentarios(
   readFileSync("src/styles/health-map-workspace.css", "utf8"),
 );
 const nucleoJs = readFileSync("src/modules/nucleo-operational.js", "utf8");
+const seletorCss = semComentarios(
+  readFileSync("src/styles/map-base-layer-switcher.css", "utf8"),
+);
 
 /*
   Corpos de TODOS os blocos cujo grupo de seletores contém exatamente
@@ -164,6 +167,74 @@ describe("legibilidade e contraste dos mapas", () => {
       "background",
     );
     expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+  });
+});
+
+describe("seletor de camada Mapa/Satélite", () => {
+  /*
+    O botão selecionado é o que mais precisa de se ler, e o anel de foco é o
+    que diz a quem navega por teclado onde está. Os dois falhavam no escuro:
+    3.78:1 no texto e 2.47:1 no anel.
+  */
+  const ativoEscuro = () =>
+    valor(
+      seletorCss,
+      '[data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"]',
+      "background",
+    );
+
+  it("o botão ativo passa o AA no tema escuro", () => {
+    const cor = valor(
+      seletorCss,
+      '[data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"]',
+      "color",
+    );
+    expect(contraste(cor, ativoEscuro())).toBeGreaterThanOrEqual(AA);
+  });
+
+  it("o botão ativo passa o AA no tema claro", () => {
+    const fundo = valor(
+      seletorCss,
+      '.agsus-basemap-switcher__button[aria-pressed="true"]',
+      "background",
+    );
+    const cor = valor(
+      seletorCss,
+      '.agsus-basemap-switcher__button[aria-pressed="true"]',
+      "color",
+    );
+    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+  });
+
+  /*
+    O anel de foco não é verificável por uma cor fixa: quem o governa é o
+    `!important` de `app.css`, e a cor que este ficheiro escrevesse ficaria
+    inerte. As três propriedades abaixo são o que de facto o torna visível.
+
+    `currentColor` amarra o anel à cor do texto do botão, que os dois testes
+    acima já obrigam a passar o AA contra o fundo desse botão — não há como o
+    anel ficar invisível sem que o rótulo fique primeiro.
+
+    O deslocamento negativo mantém o anel dentro do botão. Com deslocamento
+    positivo ele é recortado pelo `overflow: hidden` do container e o que
+    sobra cai sobre os ladrilhos do mapa, cuja cor ninguém controla.
+  */
+  it("o anel de foco herda a cor do texto e fica dentro do botão", () => {
+    const regra = blocos(
+      seletorCss,
+      ".agsus-basemap-switcher__button:focus-visible",
+    ).join(" ");
+    expect(regra).toMatch(/outline:[^;]*currentColor/);
+    expect(regra).toMatch(/outline-offset:\s*-\d/);
+  });
+
+  it("o anel de foco vence o !important global de app.css", () => {
+    const regra = blocos(
+      seletorCss,
+      ".agsus-basemap-switcher__button:focus-visible",
+    ).join(" ");
+    expect(regra).toMatch(/outline:[^;]*!important/);
+    expect(regra).toMatch(/outline-offset:[^;]*!important/);
   });
 });
 
