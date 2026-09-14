@@ -752,6 +752,8 @@ export {
   casarPoloComCnes,
   classificar,
   coordenadaQuebrada,
+  lerDoArquivo,
+  lerDoBanco,
   mapNameKey,
   montarRegistros,
 };

@@ -413,3 +413,93 @@ Duas cautelas registadas para quem continuar:
   Carregar a base de sedes transforma `possivel_sede_municipal` em
   `aproximada_municipio` com fonte declarada, e é o passo que falta para a
   Tarefa 3 fechar por completo.
+
+## 9. Reconciliação — a mesma estrutura nas duas fontes
+
+O que as seções anteriores descreveram como "duas fontes que nunca se tocam"
+tem uma consequência que só aparece no mapa: **a mesma estrutura desenhada duas
+vezes**. `XITEI` vem do `lmap`, `POLO BASE XITEI` vem do `rede_cnes`, e são o
+mesmo polo.
+
+Medido em 14/09/2026: **166 pares** com o mesmo nome canónico dentro do mesmo
+DSEI, dos quais **163 são polo contra polo**. A distância entre as duas fontes,
+nesses pares:
+
+| Faixa         | Pares  |
+| ------------- | ------ |
+| menos de 5 km | 20     |
+| 5 a 50 km     | 57     |
+| mais de 50 km | **89** |
+
+A deduplicação que existia em `detailRecordsForDsei` era por `nome|lat|lon`, e
+**nenhuma das duas partes dessa chave casava**: os nomes diferem por construção,
+e nenhum polo do `lmap` tem coordenada igual à do CNES. Por isso nunca eliminou
+nada.
+
+### O que a reconciliação junta, e o que recusa
+
+O módulo é [`src/lib/reconciliacao-unidades.js`](../src/lib/reconciliacao-unidades.js).
+Junta quando há, ao mesmo tempo: **mesmo DSEI**, **nome canónico igual por
+inteiro** e **tipo compatível**. Recusa-se a:
+
+- cruzar DSEIs — `SANTA MARIA`, `SÃO FRANCISCO` e `TUCUMÃ` existem em vários
+  distritos, e casar por nome globalmente juntaria lugares a milhares de
+  quilómetros. A função recebe um DSEI de cada vez e não tem como ver outro;
+- fundir polo base com UBSI ou posto, mesmo com nome idêntico — foi assim que a
+  lógica antiga colou um polo sobre uma unidade que apenas o atende;
+- casar por substring — `ANTA` está dentro de `CANTAGALO`;
+- adivinhar entre candidatos empatados. Dois `POLO BASE SANTA MARIA` no mesmo
+  DSEI vão para a lista de **ambíguos**, e continuam a ser desenhados como dois
+  registos até alguém decidir.
+
+### O que fica preservado
+
+Nada se perde na junção: o CNES, o `cod` do `lmap`, o nome original de cada
+fonte, **as duas coordenadas** e a distância entre elas. O registo unificado
+declara `origens: ["lmap", "rede_cnes"]`.
+
+### A coordenada exibida, e por que essa
+
+Vence sempre a do `rede_cnes` — não por ser mais exata, que ninguém verificou,
+mas por ser **a única das duas com procedência declarada**. A do `lmap` entrou
+no sistema por fora da aplicação (§3) e não há registo de quem a pôs lá. Entre
+uma coordenada rastreável e uma anónima, exibir a rastreável é a escolha
+defensável; a outra fica guardada no próprio registo, para auditoria.
+
+### Os limiares, e o que eles não são
+
+**5 km tem justificação.** Uma coordenada com duas casas decimais carrega erro
+de arredondamento até cerca de 1,57 km na diagonal. Cinco quilómetros são mais
+de três vezes isso, e ainda absorvem a diferença habitual entre a aldeia e a
+sede do município que a atende. Abaixo disso, a divergência não distingue duas
+localizações — distingue duas maneiras de arredondar a mesma.
+
+**50 km não tem justificação física, e seria desonesto fingir que tem.** A
+distribuição real é praticamente plana (20/57/89) e não oferece corte natural.
+É um limiar de **priorização**: acima dele, a hipótese de as duas fontes
+descreverem o mesmo sítio deixa de ser sustentável sem alguém olhar. Os 89 pares
+nessa faixa são fila de trabalho, não veredito — e no mapa aparecem como
+**localização pendente de validação**.
+
+Os dois valores são constantes exportadas. Quem quiser outro corte muda ali, e
+o relatório recalcula.
+
+### O caso que NÃO se funde
+
+Estabelecimentos genuinamente diferentes na mesma coordenada — os 57 num só
+ponto, de §2 — **não são duplicação de entidade**. Fundi-los apagaria unidades
+de saúde do mapa. Isso resolve-se no desenho, com agrupamento, e a função
+`agruparPorPontoDeRender` devolve os pontos e quem está em cada um sem tocar em
+coordenada nenhuma.
+
+Distinguir os dois casos é o ponto inteiro deste módulo.
+
+### Relatório dos pares
+
+```bash
+node scripts/relatorio-reconciliacao.mjs --arquivo export.json --csv pares.csv
+```
+
+Corre a mesma função que o mapa usa e devolve quatro listas: reconciliados
+automaticamente (com a faixa de divergência), ambíguos, rejeitados por tipo
+incompatível e polos sem par no DSEI. Não escreve nada.

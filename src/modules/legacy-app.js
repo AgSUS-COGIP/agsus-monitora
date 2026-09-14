@@ -32,6 +32,7 @@ import {
   normalizeAccessPanelColor,
 } from "../lib/access-branding.js";
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
+import { reconciliarDsei } from "../lib/reconciliacao-unidades.js";
 import {
   ACCESS_BACKGROUND_BUCKET,
   ACCESS_BACKGROUND_FOLDER,
@@ -9362,47 +9363,116 @@ function detailUnitType(name) {
   };
 }
 
+const TIPO_POLO = {
+  key: "polo",
+  label: "Polo base",
+  color: "#e49a1b",
+  icon: "fa-location-dot",
+};
+const TIPO_CASAI = {
+  key: "casai",
+  label: "CASAI",
+  color: "#d92d3a",
+  icon: "fa-house-medical",
+};
+
+/*
+  A mesma estrutura existe nas duas fontes com nomes diferentes — `XITEI` no
+  `lmap`, `POLO BASE XITEI` no `rede_cnes` —, e a deduplicação que vivia aqui
+  era por `nome|lat|lon`. Nenhuma das duas partes dessa chave casava: os nomes
+  diferem por construção, e nenhum polo do `lmap` tem coordenada igual à do
+  CNES. Resultado: 166 estruturas desenhadas duas vezes, 89 delas com os dois
+  marcadores a mais de 50 km um do outro.
+
+  A reconciliação vive em `src/lib/reconciliacao-unidades.js` e só junta dentro
+  do mesmo DSEI, por nome canónico inteiro e com tipo compatível. O que ela não
+  consegue decidir não é adivinhado: fica em `ambiguos` e continua a ser
+  desenhado como dois registos, que é o comportamento seguro.
+
+  Repare-se que o polo entra aqui com a coordenada CRUA do `lmap`, não com a que
+  `polosCorrigidosPorCnes` substitui. É o que permite medir a distância entre as
+  duas fontes; deixar a substituição acontecer antes zeraria essa medida.
+*/
 function detailRecordsForDsei(d) {
   const rede = REDE_CNES.rede[d.k] || { u: [], c: [] };
-  const polos = polosCorrigidosPorCnes(d).map((p) => ({
-    name: p.n,
-    cnes: p.cnes || "",
-    lat: p.lat,
-    lon: p.lon,
-    city: p.mun_cnes || p.n,
-    uf: p.uf_cnes || p.uf || d.sedeuf,
-    type: {
-      key: "polo",
-      label: "Polo base",
-      color: "#e49a1b",
-      icon: "fa-location-dot",
-    },
-  }));
-  const facilities = [
-    ...(rede.c || []).map((item) => ({ item, forcedType: "casai" })),
-    ...(rede.u || []).map((item) => ({ item })),
-  ].map(({ item, forcedType }) => {
-    const unpacked = _unpackEstab(item);
-    const inferred = forcedType
-      ? {
-          key: "casai",
-          label: "CASAI",
-          color: "#d92d3a",
-          icon: "fa-house-medical",
-        }
-      : detailUnitType(unpacked.n);
+
+  const estabelecimentos = [
+    ...(rede.c || []).map((item) => ({ item, forcado: TIPO_CASAI })),
+    ...(rede.u || []).map((item) => ({ item, forcado: null })),
+  ].map(({ item, forcado }) => {
+    const e = _unpackEstab(item);
     return {
-      name: unpacked.n,
-      cnes: unpacked.cnes,
-      lat: unpacked.lat,
-      lon: unpacked.lon,
-      city: unpacked.mun,
-      uf: unpacked.uf,
-      type: inferred,
+      nome: e.n,
+      cnes: e.cnes,
+      chave: e.cnes || `${e.n}|${e.lat}|${e.lon}`,
+      lat: e.lat,
+      lon: e.lon,
+      municipio: e.mun,
+      uf: e.uf,
+      _tipoVisual: forcado || detailUnitType(e.n),
     };
   });
+
+  const { reconciliados, estabelecimentosUsados } = reconciliarDsei({
+    dseiChave: d.k,
+    polos: (d.polos || []).map((p) => ({
+      nome: p.n,
+      lat: p.lat,
+      lon: p.lon,
+      uf: p.uf,
+      cod: p.cod ?? null,
+      tipo: "polo",
+    })),
+    estabelecimentos,
+  });
+
+  const unificados = reconciliados.map((u) => ({
+    name: u.nome_exibicao,
+    cnes: u.cnes,
+    lat: u.lat,
+    lon: u.lon,
+    city: u.municipio,
+    uf: u.uf || d.sedeuf,
+    type: TIPO_POLO,
+    origens: u.origens,
+    nomes: u.nomes,
+    cod: u.cod,
+    coordenadas: u.coordenadas,
+    distancia_entre_fontes_km: u.distancia_entre_fontes_km,
+    divergencia: u.divergencia,
+  }));
+
+  // Polos que a reconciliação não casou continuam a existir, como sempre.
+  const canonicosUnificados = new Set(reconciliados.map((u) => u.nomes.lmap));
+  const polosSoltos = (d.polos || [])
+    .filter((p) => !canonicosUnificados.has(p.n))
+    .map((p) => ({
+      name: p.n,
+      cnes: "",
+      lat: p.lat,
+      lon: p.lon,
+      city: p.n,
+      uf: p.uf || d.sedeuf,
+      type: TIPO_POLO,
+      origens: ["lmap"],
+    }));
+
+  // Estabelecimentos que não foram absorvidos por nenhuma reconciliação.
+  const soltos = estabelecimentos
+    .filter((e) => !estabelecimentosUsados.has(e.chave))
+    .map((e) => ({
+      name: e.nome,
+      cnes: e.cnes,
+      lat: e.lat,
+      lon: e.lon,
+      city: e.municipio,
+      uf: e.uf,
+      type: e._tipoVisual,
+      origens: ["rede_cnes"],
+    }));
+
   const seen = new Set();
-  return [...polos, ...facilities].filter((record) => {
+  return [...unificados, ...polosSoltos, ...soltos].filter((record) => {
     const key = [record.name, record.lat, record.lon].join("|");
     if (seen.has(key)) return false;
     seen.add(key);
