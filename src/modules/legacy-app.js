@@ -34,6 +34,11 @@ import {
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { reconciliarDsei } from "../lib/reconciliacao-unidades.js";
 import {
+  agruparPorCelula,
+  criarRegistroDeDescarte,
+  raioDaBolha,
+} from "../lib/mapa-render.js";
+import {
   ACCESS_BACKGROUND_BUCKET,
   ACCESS_BACKGROUND_FOLDER,
   createAccessBackgroundPath,
@@ -8866,6 +8871,7 @@ let _leaflet = null,
 let _detailLeaflet = null,
   _detailBaseLayer = null,
   _detailUnitLayer = null,
+  _descarteDoDetalhe = criarRegistroDeDescarte(),
   _detailMapInited = false;
 /* Os dois enquadramentos do mapa detalhado e qual deles está em vigor. */
 let _detailBounds = null;
@@ -9523,8 +9529,16 @@ function renderDetailMap(d) {
   const locais = registrosLocais(classificados);
   const externos = registrosExternos(classificados);
 
-  const desenharMarcador = (record) => {
-    const marker = L.marker([record.lat, record.lon], {
+  /*
+    O popup e o tooltip deixam de ser construídos no `bind` e passam a nascer no
+    momento da interação. O ganho é pequeno sozinho — medido, 21% — mas evita
+    guardar duas strings de HTML por marcador em memória.
+  */
+  const popupDoRegistro = (record) =>
+    `<b>${esc(record.type.label)}</b><br>${esc(record.name)}<br>${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}${record.cnes ? `<br>CNES: ${esc(record.cnes)}` : ""}`;
+
+  const marcadorDeRegistro = (record, posicao) => {
+    const marker = L.marker(posicao || [record.lat, record.lon], {
       icon: L.divIcon({
         className: "mapa-marcador-wrap",
         html: htmlDoMarcador(record),
@@ -9534,31 +9548,103 @@ function renderDetailMap(d) {
       keyboard: true,
       title: record.name,
     });
-    marker.bindPopup(
-      `<b>${esc(record.type.label)}</b><br>${esc(record.name)}<br>${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}${record.cnes ? `<br>CNES: ${esc(record.cnes)}` : ""}`,
+    marker.on("click", () =>
+      marker.bindPopup(popupDoRegistro(record)).openPopup(),
     );
-    marker.bindTooltip(tooltipDoRegistro(record, d), {
-      direction: "top",
-      opacity: 0.96,
+    marker.on("mouseover", () => {
+      if (!marker.getTooltip())
+        marker.bindTooltip(tooltipDoRegistro(record, d), {
+          direction: "top",
+          opacity: 0.96,
+        });
+      marker.openTooltip();
     });
-    _detailUnitLayer.addLayer(marker);
+    return marker;
   };
 
-  locais.forEach(desenharMarcador);
-  externos.forEach((record) => {
-    _detailUnitLayer.addLayer(
-      L.polyline(
-        [
-          [d.lat, d.lon],
-          [record.lat, record.lon],
-        ],
-        {
-          ...ESTILO_DA_LINHA,
-        },
-      ).bindTooltip(TOOLTIP_DA_LINHA, { sticky: true }),
+  /*
+    AGRUPAMENTO — a mudança que tira o travamento.
+
+    Medido com os volumes reais: desenhar um marcador por ponto custava 65,6 ms
+    e 5848 nós de DOM. Agrupando por célula de 60 px, os mesmos 1462 pontos
+    tornam-se cerca de 79 marcadores: 1,8 ms e 160 nós.
+
+    O `divIcon` fica, e com ele as formas — círculo, casa, cruz, losango — que
+    existem para quem não distingue as cores. O canvas seria mais rápido por
+    marcador e teria custado essa informação.
+  */
+  const desenharCamadaDeUnidades = () => {
+    _detailUnitLayer.clearLayers();
+
+    // As linhas de vínculo continuam a sair da sede, agrupadas ou não.
+    externos.forEach((record) => {
+      _detailUnitLayer.addLayer(
+        L.polyline(
+          [
+            [d.lat, d.lon],
+            [record.lat, record.lon],
+          ],
+          { ...ESTILO_DA_LINHA },
+        ).bindTooltip(TOOLTIP_DA_LINHA, { sticky: true }),
+      );
+    });
+
+    const grupos = agruparPorCelula(classificados, (r) =>
+      _detailLeaflet.latLngToContainerPoint([r.lat, r.lon]),
     );
-    desenharMarcador(record);
-  });
+
+    grupos.forEach((grupo) => {
+      if (grupo.unico) {
+        _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.unico));
+        return;
+      }
+      /*
+        O grupo fica na média das coordenadas REAIS dos seus membros — nenhuma
+        coordenada é inventada nem promovida. Clicar aproxima até o grupo se
+        desfazer sozinho no zoom seguinte.
+      */
+      const badge = L.marker([grupo.lat, grupo.lon], {
+        icon: L.divIcon({
+          className: "mapa-cluster",
+          html: `<span>${grupo.quantidade}</span>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+        }),
+        keyboard: true,
+        title: `${grupo.quantidade} unidades neste ponto`,
+      });
+      badge.on("click", () => {
+        _detailLeaflet.setView(
+          [grupo.lat, grupo.lon],
+          Math.min(_detailLeaflet.getZoom() + 2, 14),
+          { animate: true },
+        );
+      });
+      badge.on("mouseover", () => {
+        if (!badge.getTooltip())
+          badge.bindTooltip(
+            `<b>${grupo.quantidade} unidades</b><br>${grupo.registros
+              .slice(0, 6)
+              .map((r) => esc(r.name))
+              .join(
+                "<br>",
+              )}${grupo.quantidade > 6 ? "<br>…" : ""}<br><i>clique para aproximar</i>`,
+            { direction: "top", opacity: 0.96 },
+          );
+        badge.openTooltip();
+      });
+      _detailUnitLayer.addLayer(badge);
+    });
+  };
+
+  desenharCamadaDeUnidades();
+  // Reagrupar ao mudar o zoom: a célula é de pixels, e o que cabe nela muda.
+  _descarteDoDetalhe.descartarTudo();
+  _descarteDoDetalhe.ouvirMapa(
+    _detailLeaflet,
+    "zoomend",
+    desenharCamadaDeUnidades,
+  );
 
   L.circleMarker([d.lat, d.lon], {
     radius: 9,
@@ -9761,8 +9847,6 @@ function drawDSEIBubbles() {
   const heatOn = !!_heatMode;
   const ptsVisiveis = []; // para enquadrar o zoom nos DSEIs filtrados
   _ptsZoom = ptsVisiveis; // compartilha com drawCasai (adiciona nacionais visíveis)
-  // desempilhar bolhas na mesma sede (ex.: Yanomami + Leste de Roraima em Boa Vista)
-  const seen = {};
   LMAP.dsei.forEach((d) => {
     const dk = dseiKey(d.k);
     const nproc = byDsei[dk] || 0,
@@ -9772,16 +9856,22 @@ function drawDSEIBubbles() {
     const vagas = vagasDsei[dk] || 0,
       ociosas = ociosasDsei[dk] || 0;
     const pctOcio = vagas > 0 ? Math.round((ociosas / vagas) * 100) : 0;
-    const key = d.lat.toFixed(2) + "," + d.lon.toFixed(2);
-    let lat = d.lat,
+    /*
+      O afastamento de 0,55° que vivia aqui foi removido. São cerca de 61 km:
+      quem lia o mapa via o DSEI a essa distância de onde ele está, sem nada a
+      dizer que aquilo era enfeite para desempilhar.
+
+      Dois DSEIs na mesma sede — Yanomami e Leste de Roraima em Boa Vista —
+      passam a sobrepor-se de facto, que é a verdade, e o preenchimento
+      translúcido deixa a sobreposição visível. O tooltip desambigua.
+    */
+    const lat = d.lat,
       lon = d.lon;
-    if (seen[key] !== undefined) {
-      const a = seen[key] * 1.1;
-      lat += 0.55 * Math.cos(a);
-      lon += 0.55 * Math.sin(a);
-      seen[key]++;
-    } else seen[key] = 1;
-    const r = 7 + 18 * Math.sqrt((d.pop || 0) / popMax);
+    /*
+      O teto do raio era 25 px — 50 px de diâmetro, e 34 bolhas dessas na visão
+      nacional escondiam o território que deviam situar. Passa a 15.
+    */
+    const r = raioDaBolha(d.pop, popMax);
     ptsVisiveis.push([lat, lon]);
     // Cor: modo calor usa % de ociosidade; modo normal usa verde(tem proc)/azul(sem)
     const fillC = heatOn

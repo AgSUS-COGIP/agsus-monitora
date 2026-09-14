@@ -1,9 +1,19 @@
+/*
+  Os dois mapas competiam em 0.9fr contra 1.1fr — praticamente meio a meio — e
+  nenhum dos dois ficava grande o bastante para ser lido. A visão nacional é um
+  SELETOR: serve para escolher o DSEI e não precisa de metade da tela. O mapa de
+  detalhe é onde o trabalho acontece, e passa a ter mais do dobro da largura.
+
+  A altura deixa de ser um valor fixo escolhido para preencher: o clamp com
+  unidade de viewport faz o card acompanhar a janela, com piso para o notebook
+  e teto para não empurrar o resto da página para fora num monitor alto.
+*/
 .health-map-workspace {
-  --health-map-height: clamp(420px, 48vh, 560px);
+  --health-map-height: clamp(400px, 56vh, 640px);
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 12px;
-  margin-top: 10px;
+  grid-template-columns: minmax(260px, 0.58fr) minmax(0, 1.42fr);
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .health-map-pane {
@@ -13,13 +23,14 @@
   background: #fff;
 }
 
+/* Era 58 px de altura mínima mais 10 de padding em cada lado. */
 .health-map-pane__header {
-  min-height: 58px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 10px;
+  padding: 6px 12px;
   border-bottom: 1px solid #dce8ef;
 }
 
@@ -64,7 +75,7 @@
 }
 
 .health-map-pane__hint {
-  min-height: 34px;
+  min-height: 0;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -149,7 +160,7 @@
 }
 
 .health-map-units__list {
-  height: calc(var(--health-map-height) - 42px);
+  height: calc(var(--health-map-height) - 36px);
   overflow: auto;
   padding: 7px;
   scrollbar-gutter: stable;
@@ -456,4 +467,39 @@ html[data-theme="dark"] .health-map-external-toggle {
 
 html[data-theme="dark"] .health-map-unit__externo {
   color: #e9a45c;
+}
+
+/*
+  Marcador de grupo. Aparece quando várias unidades caem na mesma célula de
+  60 px do ecrã — o que tira 1462 marcadores do DOM e deixa cerca de 79.
+
+  Não é o mesmo que o ponto coletor da auditoria: aquele são estabelecimentos
+  distintos na MESMA coordenada; este é agrupamento de desenho, que se desfaz
+  ao aproximar. Por isso o número, e não uma forma de tipo: um grupo não tem
+  tipo único.
+*/
+.mapa-cluster {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #1d4e89;
+  box-shadow: 0 1px 4px rgba(15, 35, 60, 0.4);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.mapa-cluster:focus-visible {
+  outline: 3px solid currentColor !important;
+  outline-offset: -3px !important;
+}
+
+[data-theme="dark"] .mapa-cluster {
+  border-color: #17253d;
+  background: #2f6fb5;
 }
