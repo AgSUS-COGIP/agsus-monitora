@@ -3,6 +3,12 @@ const MODE_MAP = "map";
 const MODE_SATELLITE = "satellite";
 const SATELLITE_ERROR_LIMIT = 4;
 
+// Faixa pedida para o workspace cartográfico:
+// - zoom 5: limite de afastamento nacional, régua na faixa de 500 km;
+// - zoom 19: aproximação na faixa de dezenas de metros.
+export const MAP_MIN_ZOOM = 5;
+export const MAP_MAX_ZOOM = 19;
+
 const SATELLITE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const SATELLITE_ATTRIBUTION =
@@ -25,15 +31,18 @@ export function installMapBaseLayerSwitcher() {
 
   const guardedTileLayer = L.tileLayer;
   L.tileLayer = function agsusTaggedTileLayer(urlTemplate, options = {}) {
-    const layer = guardedTileLayer.call(this, urlTemplate, options);
+    const kind = classifyBaseLayerUrl(urlTemplate);
+    const tileOptions = normalizeTileZoomOptions(kind, options);
+    const layer = guardedTileLayer.call(this, urlTemplate, tileOptions);
     layer.__agsusTileUrlTemplate = String(urlTemplate || "");
-    layer.__agsusBaseMapKind = classifyBaseLayerUrl(urlTemplate);
+    layer.__agsusBaseMapKind = kind;
     return layer;
   };
 
   const guardedMap = L.map;
   L.map = function agsusMapWithBaseLayerSwitcher(element, options = {}) {
-    const map = guardedMap.call(this, element, options);
+    const map = guardedMap.call(this, element, normalizeMapZoomOptions(element, options));
+    enforceMapZoomRange(map, element);
     enhanceMap(L, map);
     return map;
   };
@@ -41,6 +50,53 @@ export function installMapBaseLayerSwitcher() {
   L.__agsusBaseLayerSwitcherInstalled = true;
   installed = true;
   return true;
+}
+
+function healthMapElementId(element) {
+  if (typeof element === "string") return element;
+  return String(element?.id || "");
+}
+
+function isHealthMapElement(element) {
+  const id = healthMapElementId(element);
+  return id === "map" || id === "detailMap";
+}
+
+export function normalizeMapZoomOptions(element, options = {}) {
+  if (!isHealthMapElement(element)) return { ...options };
+  return {
+    ...options,
+    minZoom: MAP_MIN_ZOOM,
+    maxZoom: MAP_MAX_ZOOM,
+  };
+}
+
+function enforceMapZoomRange(map, element) {
+  if (!map || !isHealthMapElement(element)) return;
+  map.setMinZoom?.(MAP_MIN_ZOOM);
+  map.setMaxZoom?.(MAP_MAX_ZOOM);
+}
+
+function normalizeTileZoomOptions(kind, options = {}) {
+  if (!kind) return { ...options };
+
+  const nativeZoom = Number(options.maxNativeZoom ?? options.maxZoom);
+  const normalized = {
+    ...options,
+    maxZoom: MAP_MAX_ZOOM,
+  };
+
+  // O OSM usado pelo legado entrega tiles nativos até 18. No nível 19 o Leaflet
+  // pode ampliar o último tile nativo em vez de deixar o fundo vazio.
+  if (
+    Number.isFinite(nativeZoom) &&
+    nativeZoom > 0 &&
+    nativeZoom < MAP_MAX_ZOOM
+  ) {
+    normalized.maxNativeZoom = nativeZoom;
+  }
+
+  return normalized;
 }
 
 export function classifyBaseLayerUrl(urlTemplate) {
@@ -179,7 +235,7 @@ function getSatelliteLayer(L, map) {
   if (map.__agsusSatelliteLayer) return map.__agsusSatelliteLayer;
 
   const layer = L.tileLayer(SATELLITE_URL, {
-    maxZoom: 19,
+    maxZoom: MAP_MAX_ZOOM,
     attribution: SATELLITE_ATTRIBUTION,
     crossOrigin: true,
     updateWhenIdle: true,
