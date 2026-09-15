@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { modalidadesDe } from "../lib/modalidades.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME_ATIVOS = "vw_analises_dashboard_base";
@@ -551,7 +552,7 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
     { id:"fStatus", placeholder:"Todos os status", getValues: row => [txt(row.status_consolidado)] },
     { id:"fResponsavel", placeholder:"Todos os responsáveis", getValues: row => [txt(row.responsavel_analise)] },
     { id:"fCategoria", placeholder:"Todas as categorias", getValues: row => [txt(row.categoria)] },
-    { id:"fModalidade", placeholder:"Todas as modalidades", getValues: row => [txt(row.modalidade_concorrencia)] },
+    { id:"fModalidade", placeholder:"Todas as modalidades", getValues: row => modalidadesDe(row.modalidade_concorrencia) },
     { id:"fPdf", placeholder:"Todas", getValues: row => {
         const values = []; const status = txt(row.pdf_status).toUpperCase();
         values.push(txt(row.link_pdf) ? "COM_PDF" : "SEM_PDF");
