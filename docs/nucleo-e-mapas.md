@@ -37,8 +37,11 @@ O botão **Atualizar**, no canto do painel, relê o resumo. Enquanto o pedido
 corre, o botão fica desativado e os indicadores atuais permanecem na tela — a
 grade não pisca nem se esvazia.
 
-O resumo também é relido sozinho em duas situações: ao entrar na aplicação e
-depois de gravar um cronograma.
+Ao abrir a Equipe Núcleo, o resumo é reutilizado por até 30 segundos. Se o
+cache estiver vencido, a tela busca uma atualização; o catálogo de cópia de
+cronogramas compartilha essa mesma carga. Depois de gravar um cronograma, o
+cache é invalidado e a tela aberta busca os dados novos. Se já houver uma
+consulta anterior em andamento, a atualização espera sua conclusão.
 
 ### Os alertas na fila
 

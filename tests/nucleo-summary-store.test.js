@@ -12,6 +12,21 @@ function deferred() {
 }
 
 describe("Núcleo summary store", () => {
+  it("cache vazio é válido e consulta ativa prevalece sobre cache anterior", async () => {
+    const pending = deferred();
+    const loader = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockReturnValueOnce(pending.promise);
+    const store = createNucleoSummaryStore({ loader });
+    await store.get();
+    await store.get();
+    expect(loader).toHaveBeenCalledTimes(1);
+    const refreshing = store.get({ force: true });
+    expect(store.get()).toBe(refreshing);
+    pending.resolve([{ id: "new" }]);
+    expect(await refreshing).toEqual([{ id: "new" }]);
+  });
   it("compartilha uma única carga entre chamadas concorrentes", async () => {
     const pending = deferred();
     const loader = vi.fn(() => pending.promise);
@@ -20,6 +35,8 @@ describe("Núcleo summary store", () => {
     const first = store.get();
     const second = store.get();
     const third = store.get({ force: true });
+    expect(first).toBe(second);
+    expect(first).toBe(third);
 
     await Promise.resolve();
     expect(loader).toHaveBeenCalledTimes(1);

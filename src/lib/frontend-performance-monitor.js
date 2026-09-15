@@ -15,6 +15,16 @@ let requestStarted = 0;
 let requestCompleted = 0;
 let requestFailed = 0;
 let observer = null;
+const nucleoMetrics = [];
+
+export function getNucleoPerformanceMetrics() {
+  return nucleoMetrics.map((metric) => ({ ...metric }));
+}
+
+function collectNucleoMetric(event) {
+  nucleoMetrics.push({ ...event.detail, capturedAt: Date.now() });
+  if (nucleoMetrics.length > 100) nucleoMetrics.shift();
+}
 
 export function roundMetric(value) {
   const number = Number(value || 0);
@@ -218,12 +228,15 @@ function scheduleReport() {
 export function installFrontendPerformanceMonitor() {
   if (installed || typeof window === "undefined") return;
   installed = true;
+  document.addEventListener("agsus:nucleo-metric", collectNucleoMetric);
   installFetchMetrics();
   installLongTaskObserver();
   scheduleReport();
 }
 
 export function resetFrontendPerformanceMonitorForTests() {
+  document.removeEventListener("agsus:nucleo-metric", collectNucleoMetric);
+  nucleoMetrics.length = 0;
   window.clearTimeout(reportHandle);
   reportHandle = null;
   observer?.disconnect?.();
