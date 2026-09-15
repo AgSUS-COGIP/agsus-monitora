@@ -12,8 +12,10 @@ ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
 RUN npm run build && node scripts/package-laravel.mjs
 
 FROM php:8.5-apache AS runtime
-RUN apt-get update && apt-get install -y --no-install-recommends libonig-dev libzip-dev unzip \
-    && docker-php-ext-install mbstring zip opcache \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libzip-dev unzip \
+    && docker-php-ext-install zip \
+    && php -r 'if (!function_exists("mb_strlen") || !class_exists("ZipArchive") || !function_exists("opcache_get_status")) { fwrite(STDERR, "Required PHP extension missing\n"); exit(1); }' \
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite headers
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
