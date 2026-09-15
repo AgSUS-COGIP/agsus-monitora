@@ -1,0 +1,58 @@
+name: Patch analyses row cleanup
+
+on:
+  push:
+    branches:
+      - fix/analises-remover-categoria-redundante
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/analises-remover-categoria-redundante
+          fetch-depth: 0
+
+      - name: Remove redundant category subtitle from operational queue
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('src/analises/analises-app.js')
+          text = path.read_text()
+          old = '<td><div class="primary-text">${esc(r.nome_vaga||\'-\')}</div><span class="secondary-text">${esc(r.categoria||\'Sem categoria\')}</span></td>'
+          new = '<td><div class="primary-text">${esc(r.nome_vaga||\'-\')}</div></td>'
+          if old not in text:
+              raise SystemExit('rowHtml category subtitle pattern not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+
+          test = Path('tests/analises-fila-visual.test.js')
+          test.write_text('''import { readFileSync } from "node:fs";\nimport { describe, expect, it } from "vitest";\n\nconst app = readFileSync("src/analises/analises-app.js", "utf8");\n\ndescribe("fila operacional de Analises", () => {\n  it("nao repete categoria/unidade truncada abaixo do nome da vaga", () => {\n    const inicio = app.indexOf("function rowHtml");\n    const fim = app.indexOf("function detailHtml", inicio);\n    const rowHtml = app.slice(inicio, fim);\n\n    expect(rowHtml).toContain("r.nome_vaga");\n    expect(rowHtml).not.toContain("r.categoria");\n    expect(rowHtml).not.toContain("Sem categoria");\n  });\n\n  it("preserva categoria para filtros e dados internos", () => {\n    expect(app).toContain('{ id:\"fCategoria\"');\n    expect(app).toContain("row.categoria");\n  });\n});\n''')
+          PY
+
+          npm install --no-audit --no-fund
+          npx prettier --write src/analises/analises-app.js tests/analises-fila-visual.test.js
+          npx vitest run tests/analises-fila-visual.test.js
+          git diff --check
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/analises/analises-app.js tests/analises-fila-visual.test.js
+          if git diff --cached --quiet; then
+            echo "Patch already applied."
+            exit 0
+          fi
+          git commit -m "fix(analises): remover categoria redundante da fila"
+          git push origin HEAD:fix/analises-remover-categoria-redundante
