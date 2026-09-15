@@ -254,10 +254,23 @@ test.describe("workspace cartográfico com sessão", () => {
   });
 
   /*
-    O cartão que a regressão empurrava para fora da dobra. É o sintoma que a
-    pessoa vê primeiro, e por isso vale um teste próprio.
+    O cartão que a regressão empurrava para longe. É o sintoma que a pessoa vê
+    primeiro, e por isso vale um teste próprio — mas com o número certo.
+
+    Escrevi antes que ele voltava "para dentro da dobra" a 1366x768. Isso saiu
+    do protótipo, que não tinha toda a moldura da página. Medido na aplicação
+    com sessão, a 1366x768, ele começa em y=932 — ou 853 quando o cartão
+    condicional "Unidades com mais de um processo seletivo" não aparece. Fora da
+    dobra nos dois casos: acima do mapa há 380px de mapa mais 302px de filtros,
+    tarja, KPIs e esse cartão, e não há altura que chegue.
+
+    O que a correção fez foi devolver cerca de 510px: com os dois mapas
+    empilhados — que é o que o breakpoint de 1380px produzia — o cartão caía por
+    volta de y=1440. O teto de 1100 abaixo fica no meio dos dois: qualquer
+    regresso ao layout de dois mapas passa dele, e a folga não é tão apertada
+    que uma linha a mais no cabeçalho a rompa.
   */
-  test("o Resumo por etapa continua na dobra no notebook de 1366x768", async ({
+  test("o Resumo por etapa não é empurrado para longe a 1366x768", async ({
     page,
   }) => {
     await page.setViewportSize(MEDIDAS[2]);
@@ -269,7 +282,7 @@ test.describe("workspace cartográfico com sessão", () => {
           .querySelector(".health-status-summary-card")
           ?.getBoundingClientRect().top ?? Infinity,
     );
-    expect(topo).toBeLessThan(768);
+    expect(topo).toBeLessThan(1100);
   });
 
   test("no telemóvel nada transborda na horizontal", async ({ page }) => {

@@ -26,9 +26,16 @@
 
     O piso é 380 e não 400 por causa do notebook de 1366x768, onde 48vh dá 369.
     Havia ali um `@media (max-width: 1380px)` que FIXAVA 430px — mais alto do
-    que a própria conta pedia, justamente no ecrã com menos altura. Medido no
-    protótipo com a página completa, a 1366x768: com 430px o "Resumo por etapa"
-    começava em y=739, a 29px da dobra; com 380px começa em y=689.
+    que a própria conta pedia, justamente no ecrã com menos altura.
+
+    Medido na aplicação com sessão, a 1366x768: acima do mapa há 302px de
+    filtros, tarja de seção, KPIs e o cartão condicional de unidades, e o
+    "Resumo por etapa" começa em y=932. **Não cabe na dobra** — dizer o
+    contrário foi um erro meu, tirado de um protótipo sem toda essa moldura.
+    Cada pixel poupado aqui é um pixel a menos de rolagem, e os 50 que o piso
+    devolve são o que se consegue sem tornar o mapa pequeno demais para ler.
+    Com os dois mapas empilhados, que era o que o breakpoint produzia, o mesmo
+    cartão caía por volta de y=1440.
   */
   --health-map-height: clamp(380px, 48vh, 540px);
   --health-map-painel: clamp(280px, 24%, 340px);
