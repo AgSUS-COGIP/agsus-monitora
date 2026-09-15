@@ -4,10 +4,11 @@ const MODE_SATELLITE = "satellite";
 const SATELLITE_ERROR_LIMIT = 4;
 
 // Faixa pedida para o workspace cartográfico:
-// - zoom 5: limite de afastamento nacional, régua na faixa de 500 km;
+// - zoom 4.5: limite de afastamento nacional, régua na faixa de 500 km;
 // - zoom 19: aproximação na faixa de dezenas de metros.
-export const MAP_MIN_ZOOM = 5;
+export const MAP_MIN_ZOOM = 4.5;
 export const MAP_MAX_ZOOM = 19;
+const SATELLITE_MAX_NATIVE_ZOOM = 17;
 
 const SATELLITE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -240,6 +241,7 @@ function getSatelliteLayer(L, map) {
 
   const layer = L.tileLayer(SATELLITE_URL, {
     maxZoom: MAP_MAX_ZOOM,
+    maxNativeZoom: SATELLITE_MAX_NATIVE_ZOOM,
     attribution: SATELLITE_ATTRIBUTION,
     crossOrigin: true,
     updateWhenIdle: true,
