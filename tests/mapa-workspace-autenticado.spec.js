@@ -103,15 +103,6 @@ test.describe("workspace cartográfico com sessão", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    // Mede layout com tiles sintéticos, sem gerar tráfego automatizado nos provedores.
-    await page.route(
-      /(?:tile\.openstreetmap\.org|basemaps\.cartocdn\.com|server\.arcgisonline\.com)\//,
-      (route) =>
-        route.fulfill({
-          contentType: "image/svg+xml",
-          body: '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#e1e9e5"/></svg>',
-        }),
-    );
     await page.addInitScript(
       ({ key, value }) => {
         localStorage.setItem(key, value);

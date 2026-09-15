@@ -1,6 +1,5 @@
-import { addResilientBaseLayer } from "./map-base-layer-switcher.js";
+import { renderNucleoTable } from "../lib/nucleo-table-render.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
-import { updateAraraGuide } from "./arara-guide.js";
 import {
   getOAuthCallbackUrl,
   isUsableSession,
@@ -1756,7 +1755,7 @@ function applyConfigToUi() {
     sistema. A metade da página fica com quem navega, e o módulo recompõe as
     duas.
   */
-  definirSistemaDaAba("MONITORA");
+  definirSistemaDaAba(cfgValue("app_title") || "AgSUS Monitora");
   void aplicarFaviconDaMarca(
     normalizeAccessLogoUrl(cfgValue("auth_access_logo_url")),
   );
@@ -2145,6 +2144,11 @@ async function saveMapaConfigToSupabase(options = {}) {
   const silent = options.silent === true;
   const rowsToSave = [
     {
+      chave: "lmap",
+      payload: LMAP,
+      descricao: "Mapa dos DSEIs e polos base usado pelo dashboard",
+    },
+    {
       chave: "rede_cnes",
       payload: REDE_CNES,
       descricao: "Rede assistencial CNES/UBSI/CASAI usada pelo mapa",
@@ -2162,7 +2166,7 @@ async function saveMapaConfigToSupabase(options = {}) {
     return false;
   }
   mapConfigLoadOk = true;
-  if (!silent) toast("Rede assistencial salva no Supabase.");
+  if (!silent) toast("Mapa e rede assistencial salvos no Supabase.");
   return true;
 }
 
@@ -2482,11 +2486,6 @@ function setPageTitle(title, sub) {
   $("pageSubtitle").textContent = sub;
   // O nome da aba tem um dono só; aqui entra apenas a metade da página.
   definirPaginaDaAba(title);
-  updateAraraGuide(
-    currentView,
-    title,
-    document.getElementById("araraGuideHost"),
-  );
 }
 
 function isSidebarLockedViewport() {
@@ -8886,7 +8885,63 @@ const _mapResizeObservers = [];
 
 function addResilientMapTiles(map, element) {
   if (!map || !element || typeof L === "undefined") return null;
-  return addResilientBaseLayer(L, map);
+  /*
+    A CARTO saiu daqui, e o motivo é que ela não falha — ela mente.
+
+    `basemaps.cartocdn.com` sem chave devolve **HTTP 200 com um PNG de 10KB**:
+    o azulejo com "API KEY REQUIRED" escrito por cima. Para o Leaflet o recurso
+    funcionou, nenhum `tileerror` dispara, e o mapa fica coberto de avisos de
+    chave em falta até alguém recarregar a página. Medido em produção a
+    15/09/2026, e é o que se via na tela.
+
+    O recurso passa a ser a imagem de satélite que a aplicação já serve na
+    camada "Satélite" — nenhuma dependência nova, e responde anónima. Um mapa
+    de satélite no lugar do mapa de ruas é uma mudança visível, mas é um mapa;
+    o anterior era um aviso de erro em forma de mapa.
+  */
+  const providers = [
+    {
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      options: { maxZoom: 18, attribution: "© OpenStreetMap" },
+    },
+    {
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      options: {
+        maxZoom: 19,
+        attribution: "© Esri, Maxar, Earthstar Geographics",
+      },
+    },
+  ];
+  let providerIndex = 0;
+  let consecutiveErrors = 0;
+  let activeLayer = null;
+
+  const mountProvider = () => {
+    const provider = providers[providerIndex];
+    activeLayer = L.tileLayer(provider.url, {
+      ...provider.options,
+      crossOrigin: true,
+      updateWhenIdle: false,
+      keepBuffer: 3,
+    });
+    activeLayer.on("tileload", () => {
+      consecutiveErrors = 0;
+      element.classList.remove("map-tiles-recovering");
+    });
+    activeLayer.on("tileerror", () => {
+      consecutiveErrors += 1;
+      if (consecutiveErrors < 4 || providerIndex >= providers.length - 1)
+        return;
+      element.classList.add("map-tiles-recovering");
+      map.removeLayer(activeLayer);
+      providerIndex += 1;
+      consecutiveErrors = 0;
+      mountProvider().addTo(map);
+    });
+    return activeLayer;
+  };
+
+  return mountProvider().addTo(map);
 }
 
 function observeLeafletSize(map, element) {
@@ -11140,6 +11195,7 @@ function debouncedNucleo() {
   nucleoDebounce = setTimeout(renderNucleo, 250);
 }
 function renderNucleo() {
+  const started = performance.now();
   const q = low($("nucleoSearch").value);
   const data = rows
     .filter(
@@ -11151,10 +11207,10 @@ function renderNucleo() {
           .includes(q),
     )
     .sort(compareRows);
-  $("nucleoRows").innerHTML =
+  const markup =
     data
       .map(
-        (r) => `<tr>
+        (r) => `<tr data-record-id="${attr(r.id)}">
       <td>${esc(r.unidade)}</td>
       <td>${safeUrl(r.link_edital) ? `<a class="link" href="${attr(safeUrl(r.link_edital))}" target="_blank" rel="noopener">${esc(r.edital || "-")}</a>` : esc(r.edital || "-")}</td>
       <td>${statusChip(r.status)}</td>
@@ -11172,6 +11228,11 @@ function renderNucleo() {
       )
       .join("") ||
     `<tr><td colspan="9" style="text-align:center;padding:22px">Nenhum registro encontrado.</td></tr>`;
+  renderNucleoTable($("nucleoRows"), markup);
+  document.dispatchEvent(new CustomEvent("agsus:nucleo-rendered"));
+  document.dispatchEvent(new CustomEvent("agsus:nucleo-metric", { detail: {
+    name: "table-render", durationMs: performance.now() - started, rows: data.length,
+  } }));
 }
 
 function setFieldValue(id, value) {
