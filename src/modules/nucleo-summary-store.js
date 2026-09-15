@@ -13,7 +13,18 @@ async function loadSummaryFromSupabase() {
   try {
     const { data, error } = await sb.rpc(RPC_SUMMARY);
     if (error) throw error;
-    return Array.isArray(data) ? data : [];
+    const rows = Array.isArray(data) ? data : [];
+    document.dispatchEvent(
+      new CustomEvent("agsus:nucleo-metric", {
+        detail: {
+          name: "summary-rpc",
+          durationMs: performance.now() - startedAt,
+          rows: rows.length,
+          payloadBytes: new TextEncoder().encode(JSON.stringify(rows)).length,
+        },
+      }),
+    );
+    return rows;
   } finally {
     if (Number.isFinite(startedAt) && globalThis.performance?.measure) {
       const duration = globalThis.performance.now() - startedAt;
@@ -46,9 +57,7 @@ export function createNucleoSummaryStore({
   const hasFreshCache = () =>
     Array.isArray(cache) && Number(now()) < Number(expiresAt);
 
-  async function get({ force = false } = {}) {
-    if (!force && hasFreshCache()) return cache;
-
+  function get({ force = false } = {}) {
     if (inFlight) {
       const active = inFlight;
 
@@ -58,13 +67,12 @@ export function createNucleoSummaryStore({
       // O cache foi invalidado durante uma carga antiga (por exemplo, após
       // salvar um cronograma). Espera a requisição antiga terminar para manter
       // no máximo uma RPC ativa e, só depois, busca a geração nova.
-      try {
-        await active.promise;
-      } catch {
-        // A falha da geração antiga não impede a tentativa da geração atual.
-      }
-      return get({ force: true });
+      return active.promise
+        .catch(() => undefined)
+        .then(() => get({ force: true }));
     }
+
+    if (!force && hasFreshCache()) return Promise.resolve(cache);
 
     const requestGeneration = generation;
     requestCount += 1;

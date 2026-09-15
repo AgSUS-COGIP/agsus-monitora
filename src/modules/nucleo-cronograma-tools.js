@@ -1,8 +1,8 @@
+import { getNucleoSummary } from "./nucleo-summary-store.js";
 import { exigirSessao } from "../lib/sessao.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 
 const RPC_GET = "get_monitoramento_cronograma";
-const RPC_SUMMARY = "get_nucleo_cronograma_resumo";
 
 const state = {
   initialized: false,
@@ -10,6 +10,7 @@ const state = {
   catalog: [],
   currentId: "",
   loadingCatalog: false,
+  catalogVersion: 0,
   copying: false,
 };
 
@@ -305,19 +306,20 @@ function renderCopyCatalog() {
 async function loadCopyCatalog() {
   if (state.loadingCatalog) return;
   state.loadingCatalog = true;
+  const version = state.catalogVersion;
   try {
-    const sb = await ensureSession();
-    const { data, error } = await sb.rpc(RPC_SUMMARY);
-    if (error) throw error;
-    state.catalog = Array.isArray(data) ? data : [];
+    const catalog = await getNucleoSummary();
+    if (version !== state.catalogVersion) return;
+    state.catalog = catalog;
     renderCopyCatalog();
   } catch (error) {
+    if (version !== state.catalogVersion) return;
     setCopyFeedback(
       `Não foi possível carregar os editais de origem: ${error?.message || error}`,
       "error",
     );
   } finally {
-    state.loadingCatalog = false;
+    if (version === state.catalogVersion) state.loadingCatalog = false;
   }
 }
 
@@ -438,6 +440,13 @@ function handleCronogramaLoaded(event) {
 export function initNucleoCronogramaTools() {
   if (state.initialized) return;
   state.initialized = true;
+  document.addEventListener("agsus:nucleo-summary-reset", () => {
+    state.catalogVersion += 1;
+    state.catalog = [];
+    state.currentId = "";
+    state.loadingCatalog = false;
+    renderCopyCatalog();
+  });
   ensureTimelineModal();
   document.addEventListener("click", interceptTimelineClick, true);
   document.addEventListener(

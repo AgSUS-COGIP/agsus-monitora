@@ -1,3 +1,4 @@
+import { getSupabaseClient } from "../lib/supabaseClient.js";
 import {
   getNucleoSummary,
   invalidateNucleoSummary,
@@ -13,6 +14,11 @@ const state = {
   decorationQueued: false,
   loadToken: 0,
   kpiSignature: "",
+  sourcePromise: null,
+  pending: null,
+  identity: undefined,
+  rowSignatures: new WeakMap(),
+  uiState: "",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -43,7 +49,10 @@ function isNucleoActive() {
 
 function rebuildSummaryIndex() {
   state.summaryByKey = new Map(
-    state.summary.map((item) => [keyOf(item.unidade, item.edital), item]),
+    state.summary.flatMap((item) => [
+      [String(item.id), item],
+      [keyOf(item.unidade, item.edital), item],
+    ]),
   );
 }
 
@@ -189,6 +198,8 @@ const ESTADOS = {
 };
 
 function renderEstado(grid, chave) {
+  if (state.uiState === chave && grid.firstElementChild) return;
+  state.uiState = chave;
   const estado = ESTADOS[chave];
   const repetir = estado.repetir
     ? '<button type="button" class="nucleo-summary-retry" id="nucleoSummaryRetry">Tentar de novo</button>'
@@ -252,6 +263,7 @@ function renderKpis() {
   });
   if (signature === state.kpiSignature) return;
   state.kpiSignature = signature;
+  state.uiState = "cards";
 
   grid.innerHTML = cards
     .map(
@@ -276,8 +288,9 @@ function renderKpis() {
 
 function summaryForRow(tr) {
   const cells = tr.querySelectorAll("td");
-  return state.summaryByKey.get(
-    keyOf(cells[0]?.textContent, cells[1]?.textContent),
+  return (
+    state.summaryByKey.get(tr.dataset.recordId) ||
+    state.summaryByKey.get(keyOf(cells[0]?.textContent, cells[1]?.textContent))
   );
 }
 
@@ -298,8 +311,21 @@ function decorateRows() {
   try {
     [...body.querySelectorAll("tr")].forEach((tr) => {
       const item = summaryForRow(tr);
+      const signature = JSON.stringify([
+        item?.id,
+        item?.edital,
+        item?.alerta_tipo,
+        item?.status,
+        state.activeFilter,
+      ]);
+      if (state.rowSignatures.get(tr) === signature) return;
+      state.rowSignatures.set(tr, signature);
       if (!item) {
         tr.hidden = state.activeFilter !== "todos";
+        delete tr.dataset.monitoramentoId;
+        delete tr.dataset.alertType;
+        tr.querySelector(".nucleo-row-alert")?.remove();
+        tr.querySelector(".nucleo-view-timeline")?.remove();
         return;
       }
       tr.dataset.monitoramentoId = item.id;
@@ -322,7 +348,13 @@ function decorateRows() {
           badge.innerHTML = `<i class="fa-solid ${meta.icon}" aria-hidden="true"></i><span>${esc(meta.label)}</span>`;
         }
       }
-      if (!actions.querySelector(".nucleo-view-timeline")) {
+      const existingButton = actions.querySelector(".nucleo-view-timeline");
+      if (existingButton)
+        existingButton.setAttribute(
+          "aria-label",
+          `Ver cronograma ${item.edital || ""}`,
+        );
+      if (!existingButton) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "btn icon outline nucleo-view-timeline";
@@ -333,7 +365,9 @@ function decorateRows() {
         );
         button.innerHTML =
           '<i class="fa-solid fa-timeline" aria-hidden="true"></i>';
-        button.addEventListener("click", () => window.openEditModal?.(item.id));
+        button.addEventListener("click", () =>
+          window.openEditModal?.(tr.dataset.monitoramentoId),
+        );
         actions.insertBefore(button, actions.firstChild);
       }
     });
@@ -348,49 +382,79 @@ function queueDecoration() {
   state.decorationQueued = true;
   const run = () => {
     state.decorationQueued = false;
+    const started = performance.now();
     ensureKpis();
     renderKpis();
     decorateRows();
+    document.dispatchEvent(
+      new CustomEvent("agsus:nucleo-metric", {
+        detail: {
+          name: "operational-render",
+          durationMs: performance.now() - started,
+        },
+      }),
+    );
   };
   if (typeof window.requestAnimationFrame === "function")
     window.requestAnimationFrame(run);
   else queueMicrotask(run);
 }
 
-async function loadSummary({ force = false, invalidate = false } = {}) {
+export function loadSummary({ force = false, invalidate = false } = {}) {
   ensureKpis();
   if (invalidate) invalidateNucleoSummary();
+  const request = getNucleoSummary({ force });
+  if (state.sourcePromise === request) return state.pending;
+  state.sourcePromise = request;
   const token = ++state.loadToken;
+  const started = performance.now();
   const button = $("nucleoOperationalRefresh");
   if (button) button.disabled = true;
-  state.status = "loading";
-  renderKpis();
-  try {
-    const data = await getNucleoSummary({ force });
-    if (token !== state.loadToken) return data;
-    state.summary = Array.isArray(data) ? data : [];
-    state.status = "ready";
-    rebuildSummaryIndex();
-    state.kpiSignature = "";
+  if (state.status !== "ready") {
+    state.status = "loading";
     renderKpis();
-    queueDecoration();
-    return data;
-  } catch (error) {
-    if (token !== state.loadToken) throw error;
-    console.error("Erro ao carregar resumo da Equipe Núcleo:", error);
-    state.status = "error";
-    state.kpiSignature = "";
-    renderKpis();
-    throw error;
-  } finally {
-    if (token === state.loadToken && button) button.disabled = false;
   }
+  state.pending = request
+    .then((data) => {
+      if (token !== state.loadToken) return data;
+      if (state.summary !== data) {
+        state.summary = Array.isArray(data) ? data : [];
+        rebuildSummaryIndex();
+      }
+      state.status = "ready";
+      renderKpis();
+      queueDecoration();
+      document.dispatchEvent(
+        new CustomEvent("agsus:nucleo-metric", {
+          detail: {
+            name: "summary-ready",
+            durationMs: performance.now() - started,
+          },
+        }),
+      );
+      return data;
+    })
+    .catch((error) => {
+      if (token !== state.loadToken) throw error;
+      console.error("Erro ao carregar resumo da Equipe Núcleo:", error);
+      state.status = "error";
+      state.kpiSignature = "";
+      renderKpis();
+      throw error;
+    })
+    .finally(() => {
+      if (token === state.loadToken) {
+        if (button) button.disabled = false;
+        state.pending = null;
+        state.sourcePromise = null;
+      }
+    });
+  return state.pending;
 }
 
 function refreshWhenNucleoIsVisible() {
   if (!isNucleoActive()) return;
   void loadSummary().catch(() => {});
-  queueDecoration();
 }
 
 export function initNucleoOperationalSafe() {
@@ -398,21 +462,39 @@ export function initNucleoOperationalSafe() {
   state.initialized = true;
   ensureKpis();
 
-  document.addEventListener("click", (event) => {
-    if (event.target?.closest?.('[data-view="nucleo"]'))
-      queueMicrotask(refreshWhenNucleoIsVisible);
-  });
-
-  document.addEventListener("input", (event) => {
-    if (event.target?.id !== "nucleoSearch") return;
-    window.setTimeout(queueDecoration, 275);
+  getSupabaseClient()?.auth.onAuthStateChange((_event, session) => {
+    const identity = session?.user?.id || null;
+    if (identity === state.identity) return;
+    if (state.identity !== undefined || !identity) {
+      invalidateNucleoSummary();
+      state.loadToken += 1;
+      state.sourcePromise = null;
+      state.pending = null;
+      state.summary = [];
+      state.summaryByKey.clear();
+      state.status = "idle";
+      state.activeFilter = "todos";
+      state.kpiSignature = "";
+      state.uiState = "";
+      const button = $("nucleoOperationalRefresh");
+      if (button) button.disabled = false;
+      document.dispatchEvent(new Event("agsus:nucleo-summary-reset"));
+      // No auth call inside its callback: only clear local UI/cache state.
+      queueDecoration();
+    }
+    state.identity = identity;
   });
 
   document.addEventListener("agsus:nucleo-cronograma-saved", () => {
-    void loadSummary({ force: true, invalidate: true }).catch(() => {});
+    if (isNucleoActive())
+      void loadSummary({ force: true, invalidate: true }).catch(() => {});
+    else invalidateNucleoSummary();
   });
 
-  document.addEventListener("agsus:nucleo-rendered", queueDecoration);
+  document.addEventListener(
+    "agsus:nucleo-rendered",
+    refreshWhenNucleoIsVisible,
+  );
 
   queueMicrotask(refreshWhenNucleoIsVisible);
 }

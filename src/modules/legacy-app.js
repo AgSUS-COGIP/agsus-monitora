@@ -1,3 +1,4 @@
+import { renderNucleoTable } from "../lib/nucleo-table-render.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import {
   getOAuthCallbackUrl,
@@ -11194,6 +11195,7 @@ function debouncedNucleo() {
   nucleoDebounce = setTimeout(renderNucleo, 250);
 }
 function renderNucleo() {
+  const started = performance.now();
   const q = low($("nucleoSearch").value);
   const data = rows
     .filter(
@@ -11205,10 +11207,10 @@ function renderNucleo() {
           .includes(q),
     )
     .sort(compareRows);
-  $("nucleoRows").innerHTML =
+  const markup =
     data
       .map(
-        (r) => `<tr>
+        (r) => `<tr data-record-id="${attr(r.id)}">
       <td>${esc(r.unidade)}</td>
       <td>${safeUrl(r.link_edital) ? `<a class="link" href="${attr(safeUrl(r.link_edital))}" target="_blank" rel="noopener">${esc(r.edital || "-")}</a>` : esc(r.edital || "-")}</td>
       <td>${statusChip(r.status)}</td>
@@ -11226,6 +11228,11 @@ function renderNucleo() {
       )
       .join("") ||
     `<tr><td colspan="9" style="text-align:center;padding:22px">Nenhum registro encontrado.</td></tr>`;
+  renderNucleoTable($("nucleoRows"), markup);
+  document.dispatchEvent(new CustomEvent("agsus:nucleo-rendered"));
+  document.dispatchEvent(new CustomEvent("agsus:nucleo-metric", { detail: {
+    name: "table-render", durationMs: performance.now() - started, rows: data.length,
+  } }));
 }
 
 function setFieldValue(id, value) {
