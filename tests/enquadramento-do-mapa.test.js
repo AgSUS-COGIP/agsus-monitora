@@ -73,40 +73,184 @@ describe("a bandeira de visão geral sobrevive ao próprio enquadramento", () =>
 });
 
 /*
-  Medido no navegador, num card de 1600x518 com a visão Brasil:
+  O `max-width: altura * 1.25` que vivia aqui encolhia o `#detailMap` dentro de
+  um card que continuava largo. Em produção, a 1920, sobravam cerca de 310px de
+  card branco à esquerda do mapa — a faixa que motivou esta branch.
 
-    largura cheia      140.6° de longitude visíveis — o país (41.6°) ocupa 30%
-    max-width h*1.60    72.9°                                        57%
-    max-width h*1.25    57.0°                                        73%
-    max-width h*1.05    47.8°                                        87%
+  Ele existia para esconder outro problema, que não era de CSS: o `map-guard`
+  recortava os azulejos a NAVEGACAO_BOUNDS (57.5° de longitude), e um card de
+  1642x480 precisa de 171.6° para enquadrar os 39° de latitude do Brasil.
+  Medido em `bench/prototipo-workspace.html`, contando os `<img>` no DOM:
 
-  O enquadramento é limitado pela altura, então alargar o card não aumenta o
-  país: aumenta o oceano. Pior: com 140.6° visíveis contra um `maxBounds` de
-  57.5°, o Leaflet prendia o centro no meio do `maxBounds` (-55.75) e o Brasil
-  encostava à esquerda.
+    com o recorte, card a toda a largura ....... 33% da área com azulejo
+    com o recorte, mapa a 696px + painel ....... 79%
+    sem o recorte (só `noWrap`) ................ 100%
+
+  Com o recorte fora, o container pode preencher o card: o enquadramento volta
+  a ser trabalho do `fitBounds`, com padding e `maxZoom`, que é onde pertence.
 */
-describe("a visão Brasil não estica o mapa além do que ele usa", () => {
-  it("o mapa tem largura limitada quando não há DSEI selecionado", () => {
-    const regra = css.slice(
-      css.indexOf(".health-map-detail-layout.sem-selecao #detailMap"),
-    );
-    expect(regra).toContain("max-width: calc(var(--health-map-height) * 1.25)");
-    expect(regra).toContain("margin-inline: auto");
+describe("o container do mapa preenche o card", () => {
+  it("nenhum dos mapas é limitado por max-width", () => {
+    /* Sem comentários: o cabeçalho do ficheiro cita as regras que removeu. */
+    const regras = semComentarios(css);
+    expect(regras).not.toMatch(/#(detailMap|map)[^{]*\{[^}]*max-width:\s*calc/);
+    expect(regras).not.toContain("margin-inline: auto");
   });
 
-  it("a limitação vale só sem seleção", () => {
-    expect(css).not.toMatch(
-      /^\.health-map-detail-layout #detailMap\s*\{[^}]*max-width/m,
+  it("os dois mapas ocupam a largura toda do painel", () => {
+    const regra = css.slice(
+      css.indexOf("#page-dashboard .health-map-pane--master #map"),
+      css.indexOf(".health-map-pane__hint {"),
     );
+    expect(regra).toContain("width: 100%");
+    expect(regra).toContain("height: var(--health-map-height) !important");
   });
 
   it("não usa zoom nem transform para caber", () => {
     const bloco = css.slice(
-      css.indexOf(".health-map-detail-layout.sem-selecao"),
+      css.indexOf(".health-map-workspace {"),
       css.indexOf(".health-map-units {"),
     );
     expect(bloco).not.toMatch(/\bzoom\s*:/);
     expect(bloco).not.toMatch(/transform:\s*scale\(/);
+  });
+
+  /*
+    O recorte era invisível: não dá erro, não aparece no console — só deixa o
+    card cinzento. Só um teste o impede de voltar.
+  */
+  it("a camada de azulejos não é recortada", () => {
+    const fn = guard.slice(
+      guard.indexOf("L.tileLayer = function guardedTileLayer"),
+      guard.indexOf("L.__agsusTileLayerGuardInstalled = true"),
+    );
+    expect(fn).toContain("noWrap: true");
+    expect(fn).not.toContain("bounds:");
+  });
+});
+
+/*
+  Um mapa principal de cada vez: a classe `com-dsei` é o único interruptor.
+*/
+describe("os dois estados do workspace", () => {
+  it("sem DSEI, o painel de detalhe não ocupa espaço", () => {
+    const regra = css.slice(
+      css.indexOf(".health-map-workspace .health-map-pane--detail"),
+      css.indexOf(".health-map-pane {"),
+    );
+    expect(regra).toContain("display: none");
+    expect(regra).toContain(
+      ".health-map-workspace.com-dsei .health-map-pane--master",
+    );
+  });
+
+  it("o workspace é uma coluna só, não dois mapas lado a lado", () => {
+    const regra = css.slice(
+      css.indexOf(".health-map-workspace {"),
+      css.indexOf(".health-map-workspace .health-map-pane--detail"),
+    );
+    expect(regra).toContain("grid-template-columns: minmax(0, 1fr)");
+    expect(regra).not.toMatch(/0\.58fr|1\.42fr/);
+  });
+
+  it("quem alterna é definirSelecaoDoMapaDetalhado", () => {
+    const codigo = semComentarios(app);
+    const fn = codigo.slice(
+      codigo.indexOf("function definirSelecaoDoMapaDetalhado"),
+      codigo.indexOf("function resetDetailMap"),
+    );
+    expect(fn).toContain('classList.toggle("com-dsei", temSelecao)');
+    expect(fn).not.toContain("sem-selecao");
+  });
+
+  /*
+    Sem o mapa nacional ao lado, quem entra num território perde a âncora. O
+    trilho é o que a devolve — e só serve se disser o território em que se
+    está, em vez de um rótulo fixo.
+  */
+  it("o trilho nomeia o território escolhido e volta atrás", () => {
+    const html = readFileSync("index.html", "utf8");
+    expect(html).toContain('class="health-map-breadcrumb"');
+    expect(html).toContain('id="detailBreadcrumbDsei"');
+    expect(html).toMatch(
+      /health-map-breadcrumb__voltar[\s\S]{0,80}onclick="resetDetailMap\(\)"/,
+    );
+
+    const codigo = semComentarios(app);
+    const render = codigo.slice(
+      codigo.indexOf("function renderDetailMap"),
+      codigo.indexOf("function renderDetailMap") + 700,
+    );
+    expect(render).toContain("trilho.textContent = `DSEI ${d.n}`");
+  });
+});
+
+/*
+  Os filtros por tipo.
+
+  A lista do painel junta polo base, CASAI, UBSI e "unidade" — 1462 registos no
+  Yanomami. Sem filtro, achar a CASAI era percorrer tudo.
+*/
+describe("os filtros por tipo do painel", () => {
+  const codigo = semComentarios(app);
+
+  it("os chips nascem dos tipos que aquele território tem", () => {
+    const fn = codigo.slice(
+      codigo.indexOf("function renderDetailFiltros"),
+      codigo.indexOf("function renderDetailMap"),
+    );
+    expect(fn).toContain("_tiposDoTerritorio(registos)");
+    expect(fn).toContain('aria-pressed="true"');
+    /* Um tipo só não é filtro: seria um botão que mostra tudo ou nada. */
+    expect(fn).toContain("tipos.length < 2");
+  });
+
+  it("o mapa e a lista mostram o mesmo recorte", () => {
+    const fn = codigo.slice(
+      codigo.indexOf("function renderDetailMap"),
+      codigo.indexOf("function enquadrarDetalhe"),
+    );
+    expect(fn).toContain("agruparPorCelula(visiveis(classificados)");
+    expect(fn).toContain("visiveis(externos).forEach");
+    expect(fn).toContain("renderDetailUnitList(visiveis(classificados))");
+  });
+
+  /*
+    O conjunto guarda os OCULTOS. Guardar os visíveis faria um tipo novo nascer
+    escondido — e ninguém saberia que ele existe.
+  */
+  it("o estado guarda o que está escondido, não o que está visível", () => {
+    expect(codigo).toContain("const _detailTiposOcultos = new Set()");
+    expect(codigo).toContain(
+      "lista.filter((r) => !_detailTiposOcultos.has(r.type.key))",
+    );
+  });
+
+  it("trocar de território limpa os filtros", () => {
+    const render = codigo.slice(
+      codigo.indexOf("function renderDetailMap"),
+      codigo.indexOf("function enquadrarDetalhe"),
+    );
+    expect(render).toContain("_detailTiposOcultos.clear()");
+    const reset = codigo.slice(
+      codigo.indexOf("function resetDetailMap"),
+      codigo.indexOf("function scheduleMapResize"),
+    );
+    expect(reset).toContain("_detailTiposOcultos.clear()");
+  });
+
+  /*
+    Lista vazia por filtro e lista vazia por falta de dados pedem respostas
+    diferentes: uma resolve-se ligando um chip, a outra não se resolve ali.
+  */
+  it("o vazio por filtro diz o que fazer", () => {
+    const fn = codigo.slice(
+      codigo.indexOf("function renderDetailUnitList"),
+      codigo.indexOf("function renderDetailFiltros"),
+    );
+    expect(fn).toContain("_detailTiposOcultos.size");
+    expect(fn).toContain("Nada a mostrar com estes filtros");
+    expect(fn).toContain("Nenhuma unidade georreferenciada");
   });
 });
 

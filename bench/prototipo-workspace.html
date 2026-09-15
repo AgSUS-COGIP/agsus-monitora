@@ -1,0 +1,570 @@
+<!doctype html>
+<!--
+  PROTÓTIPO DO WORKSPACE CARTOGRÁFICO — não faz parte da aplicação.
+
+  Existe por causa de um erro de método. O ensaio anterior
+  (`bench/mapa-render.html`) media renderização com os cards do mapa isolados, e
+  por isso não mostrou o que só aparece na composição da tela: o mapa nacional
+  espremido, o card de detalhe gigante e as faixas brancas dentro dele.
+
+  Por isso este ficheiro reconstitui a moldura toda — a grade `.app` com a
+  sidebar na largura real, `.main > .content > #page-dashboard`, a faixa de
+  indicadores e o cartão de situação por baixo — e usa o markup REAL dos dois
+  painéis, copiado do `index.html`, com a MESMA cascata de CSS que o
+  `src/main.js` monta. Sem isso os seletores `#page-dashboard ...` nem sequer
+  se aplicariam e o protótipo mediria outra coisa.
+
+  Foi aqui que apareceu a causa real do vazio, que não era o CSS: o
+  `map-guard` recortava os azulejos a NAVEGACAO_BOUNDS (57.5° de longitude),
+  mas um card de 1642x480 precisa de 171.6° para enquadrar os 39° de latitude
+  do Brasil. Medido neste ficheiro, com contagem dos <img> no DOM:
+
+    recorte a 57.5°, card a toda a largura ...... 33% da área com azulejo
+    recorte a 57.5°, mapa a 696 px + painel ..... 79%
+    sem recorte (só `noWrap`), a toda a largura . 100%
+
+  Corre no servidor de desenvolvimento, que é quem resolve `/src/...`:
+
+    npx vite --port 4207
+
+  e abrir http://127.0.0.1:4207/bench/prototipo-workspace.html
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Protótipo — workspace cartográfico</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+      integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <!-- Mesma folha que o index.html liga no `<head>`, e na mesma posição. -->
+    <link rel="stylesheet" href="/src/styles/app.css" />
+    <!-- Depois dela, a mesma sequência que o `src/main.js` importa. -->
+    <script type="module">
+      import "/src/styles/visual-polish.css";
+      import "/src/styles/loading-experience.css";
+      import "/src/styles/access-dashboard.css";
+      import "/src/styles/health-indigenous.css";
+      import "/src/styles/health-map-contrast.css";
+      import "/src/styles/health-reference-kpis.css";
+      import "/src/styles/health-dashboard-refinements.css";
+      import "/src/styles/health-dashboard-interaction-fixes.css";
+      import "/src/styles/health-status-details.css";
+      import "/src/styles/health-status-details-refinement.css";
+      import "/src/styles/health-details-ux.css";
+      import "/src/styles/health-details-runtime-fix.css";
+      import "/src/styles/config-page.css";
+      import "/src/styles/config-governance.css";
+      import "/src/styles/nucleo-cronograma.css";
+      import "/src/styles/nucleo-cronograma-template-helper.css";
+      import "/src/styles/nucleo-cronograma-manual-only.css";
+      import "/src/styles/nucleo-operational-enhancements.css";
+      import "/src/styles/nucleo-cronograma-tools.css";
+      import "/src/styles/mobile-app.css";
+      import "/src/styles/mobile-bottom-navigation.css";
+      import "/src/styles/mobile-table-cards.css";
+      import "/src/styles/pwa-lifecycle.css";
+      import "/src/styles/connectivity-status.css";
+      import "/src/styles/google-profile-photo.css";
+      import "/src/styles/platform-shell.css";
+      import "/src/styles/health-map-workspace.css";
+      import "/src/styles/health-map-immersive-workspace.css";
+      import "/src/styles/map-base-layer-switcher.css";
+      import "/src/styles/system-ui-fixes.css";
+      import "/src/styles/nielsen-shell-ux.css";
+      import "/src/styles/post-152-regression-fixes.css";
+      import "/src/styles/post157-interface-tuning.css";
+      import "/src/styles/colapsar-a-sidebar.css";
+      window.__estilosProntos = true;
+    </script>
+    <style>
+      /* Só do protótipo: a barra de controlo e a leitura das medidas. */
+      .proto-barra {
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        z-index: 9999;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        max-width: 60vw;
+        padding: 8px;
+        border-radius: 10px;
+        background: #0f2031;
+        box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
+      }
+      .proto-barra button {
+        padding: 6px 10px;
+        border: 1px solid #3a5a7a;
+        border-radius: 8px;
+        background: #17324b;
+        color: #fff;
+        font:
+          700 12px system-ui,
+          sans-serif;
+        cursor: pointer;
+      }
+      .proto-barra button[aria-pressed="true"] {
+        border-color: #2f86db;
+        background: #2f86db;
+      }
+      .proto-medida {
+        pointer-events: none;
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        z-index: 9999;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: #0f2031;
+        color: #d9e8f5;
+        font:
+          11px/1.5 ui-monospace,
+          Consolas,
+          monospace;
+        white-space: pre;
+      }
+      .proto-medida b {
+        color: #7ee2a8;
+      }
+      .proto-medida b.mau {
+        color: #ff8f8f;
+      }
+      /* Sidebar só como ocupante da largura real da grade. */
+      .proto-sidebar {
+        background: linear-gradient(180deg, #032f5a, #022947);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar proto-sidebar" aria-hidden="true"></aside>
+      <main class="main">
+        <div class="content">
+          <section id="page-dashboard" class="page active">
+            <!--
+              O que vem ACIMA dos mapas conta para a dobra tanto quanto os
+              mapas. Sem o cartão de filtros e a tarja de seção, o protótipo
+              media 90px a mais de folga do que a página tem, e uma altura de
+              mapa escolhida aqui empurraria o "Resumo por etapa" para fora da
+              dobra na aplicação.
+            -->
+            <div class="filter-card card">
+              <div class="filter-head">
+                <div>
+                  <div class="filter-title">Processos seletivos</div>
+                  <p class="filter-sub">Sem filtros aplicados</p>
+                </div>
+                <button class="btn secondary" type="button">Filtros</button>
+              </div>
+            </div>
+            <div class="section-label section-label-primary">
+              Processos seletivos
+            </div>
+            <div class="kpis kpis-main">
+              <div class="kpi ag-navy"><span>Processos</span><b>94</b></div>
+              <div class="kpi ag-blue"><span>Vagas</span><b>2.066</b></div>
+              <div class="kpi ag-green">
+                <span>Contratações</span><b>1.285</b>
+              </div>
+              <div class="kpi ag-red"><span>Ociosas</span><b>1.183</b></div>
+              <div class="kpi ag-yellow"><span>Críticos</span><b>12</b></div>
+              <div class="kpi ag-cyan">
+                <span>Inscritos</span><b>137.697</b>
+              </div>
+            </div>
+
+            <!-- Markup real, copiado do index.html. -->
+            <div
+              class="health-map-workspace"
+              id="workspace"
+              aria-label="Mapas da rede de saúde indígena"
+            >
+              <section class="card health-map-pane health-map-pane--master">
+                <header class="health-map-pane__header">
+                  <div>
+                    <span class="health-map-pane__eyebrow">Visão nacional</span>
+                    <h3>DSEIs / CASAIs do Brasil</h3>
+                  </div>
+                  <span class="health-map-pane__count" id="masterMapCount"
+                    >Brasil</span
+                  >
+                </header>
+                <div id="map" role="img" aria-label="Mapa do Brasil"></div>
+                <footer class="health-map-pane__hint">
+                  Selecione um DSEI para explorar polos e unidades.
+                </footer>
+              </section>
+              <section class="card health-map-pane health-map-pane--detail">
+                <header class="health-map-pane__header">
+                  <div>
+                    <nav class="health-map-breadcrumb" aria-label="Onde estou">
+                      <button
+                        type="button"
+                        class="health-map-breadcrumb__voltar"
+                      >
+                        Brasil
+                      </button>
+                      <span aria-hidden="true">›</span>
+                      <span id="detailBreadcrumbDsei">DSEI Yanomami</span>
+                    </nav>
+                    <h3 id="detailMapTitle">DSEI Yanomami</h3>
+                  </div>
+                  <div class="health-map-detail-actions">
+                    <button
+                      id="detailMapReset"
+                      class="health-map-reset"
+                      type="button"
+                    >
+                      Voltar à visão nacional
+                    </button>
+                  </div>
+                </header>
+                <div class="health-map-detail-layout">
+                  <div
+                    id="detailMap"
+                    role="img"
+                    aria-label="Mapa do DSEI"
+                  ></div>
+                  <aside class="health-map-units">
+                    <div class="health-map-units__header">
+                      <span>Polos e unidades</span
+                      ><b id="detailUnitCount">42</b>
+                    </div>
+                    <div
+                      id="detailFiltros"
+                      class="health-map-filtros"
+                      role="group"
+                      aria-label="Filtrar as unidades por tipo"
+                    ></div>
+                    <div
+                      id="detailUnitList"
+                      class="health-map-units__list"
+                    ></div>
+                  </aside>
+                </div>
+                <footer class="health-map-detail-legend"></footer>
+              </section>
+            </div>
+
+            <div class="card panel-pad health-status-summary-card">
+              <h3 class="panel-title">Resumo por etapa</h3>
+              <div>
+                Cartão que vinha logo abaixo dos mapas e era empurrado para fora
+                da dobra.
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="proto-barra">
+      <button id="btBrasil" aria-pressed="true">1 — Brasil</button>
+      <button id="btDsei" aria-pressed="false">2 — DSEI</button>
+      <button id="btTema">Tema</button>
+    </div>
+    <div class="proto-medida" id="medida"></div>
+
+    <script type="module">
+      import { raioDaBolha, agruparPorCelula } from "/src/lib/mapa-render.js";
+      import { htmlDaLegenda } from "/src/modules/vinculos-territoriais.js";
+      import { installLeafletMapGuard } from "/src/modules/map-guard.js";
+      import { initHealthMapImmersiveWorkspace } from "/src/modules/health-map-immersive-workspace.js";
+      import { installMapBaseLayerSwitcher } from "/src/modules/map-base-layer-switcher.js";
+      import { BRASIL_BOUNDS } from "/src/lib/brasil-bounds.js";
+
+      /*
+        O guard é quem decide zoomSnap, minZoom e maxBounds na aplicação. Sem
+        ele o protótipo mediria outro mapa: com o zoomSnap inteiro do Leaflet o
+        Brasil ficava em 49% da altura do card; com o guard, em 82%.
+      */
+      installLeafletMapGuard();
+      /* Os controlos do estado 1 — "Expandir" e Mapa|Satélite — já existem na
+         aplicação; o protótipo monta-os para os medir na composição real. */
+      installMapBaseLayerSwitcher();
+
+      document.querySelector(".health-map-detail-legend").innerHTML =
+        htmlDaLegenda();
+
+      document.getElementById("detailFiltros").innerHTML = [
+        ["Polo base", 28],
+        ["UBSI", 11],
+        ["CASAI", 3],
+      ]
+        .map(
+          ([r, q]) =>
+            `<button type="button" aria-pressed="true">${r} <b>${q}</b></button>`,
+        )
+        .join("");
+
+      const lista = document.getElementById("detailUnitList");
+      const exemplos = [
+        ["●", "Polo Base Xitei", "Polo base"],
+        ["⌂", "CASAI Boa Vista", "Casa de saúde indígena"],
+        ["✚", "UBSI Rio Negro", "Unidade básica indígena"],
+        ["●", "Polo Base Auaris", "Polo base"],
+        ["●", "Polo Base Surucucu", "Polo base"],
+        ["✚", "UBSI Palimiú", "Unidade básica indígena"],
+        ["●", "Polo Base Homoxi", "Polo base"],
+        ["✚", "UBSI Waikás", "Unidade básica indígena"],
+      ];
+      lista.innerHTML = exemplos
+        .map(
+          ([i, n, t]) =>
+            `<button type="button" class="health-map-unit"><span class="health-map-unit__icon">${i}</span><span><strong>${n}</strong><small>${t}</small></span></button>`,
+        )
+        .join("");
+
+      const tiles = () =>
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+        });
+
+      const BRASIL = L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]);
+
+      /* As mesmas opções que `initLeaflet()` passa em legacy-app.js. */
+      const nac = L.map("map", {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        attributionControl: true,
+        minZoom: 4,
+        maxZoom: 18,
+        maxBoundsViscosity: 1.0,
+        worldCopyJump: false,
+      });
+      nac.fitBounds(BRASIL);
+      tiles().addTo(nac);
+      const dseis = [
+        { n: "Yanomami", lat: 2.82, lon: -60.67, pop: 30000 },
+        { n: "Leste de Roraima", lat: 2.82, lon: -60.67, pop: 18000 },
+        { n: "Alto Rio Purus", lat: -9.02, lon: -68.66, pop: 12000 },
+        { n: "Kaiapó do MT", lat: -11.8, lon: -53.3, pop: 9000 },
+        { n: "Potiguara", lat: -6.9, lon: -35.1, pop: 2000 },
+        { n: "Interior Sul", lat: -27.1, lon: -52.6, pop: 7000 },
+        { n: "Alto Rio Negro", lat: 0.33, lon: -68.09, pop: 21000 },
+        { n: "Xingu", lat: -12.0, lon: -53.1, pop: 6000 },
+        { n: "Maranhão", lat: -4.9, lon: -45.3, pop: 14000 },
+        { n: "Bahia", lat: -13.4, lon: -40.1, pop: 11000 },
+      ];
+      const popMax = Math.max(...dseis.map((d) => d.pop));
+      [...dseis]
+        .sort((a, b) => raioDaBolha(b.pop, popMax) - raioDaBolha(a.pop, popMax))
+        .forEach((d) =>
+          L.circleMarker([d.lat, d.lon], {
+            radius: raioDaBolha(d.pop, popMax),
+            color: "#1f6f4a",
+            weight: 1.5,
+            fillColor: "#0b8f58",
+            fillOpacity: 0.7,
+          })
+            .bindTooltip(`<b>DSEI ${d.n}</b>`)
+            .addTo(nac),
+        );
+
+      /* As mesmas opções que `initDetailLeaflet()` passa. */
+      const det = L.map("detailMap", {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        attributionControl: true,
+        minZoom: 4,
+        maxZoom: 18,
+        worldCopyJump: false,
+      }).setView([2.6, -62.5], 6);
+      tiles().addTo(det);
+      const pontos = [];
+      for (let i = 0; i < 40; i++)
+        pontos.push({
+          lat: 1.6 + Math.random() * 2.6,
+          lon: -64 + Math.random() * 3.2,
+        });
+      for (let i = 0; i < 19; i++) pontos.push({ lat: 0.3318, lon: -68.0903 });
+      agruparPorCelula(pontos, (r) =>
+        det.latLngToContainerPoint([r.lat, r.lon]),
+      ).forEach((g) => {
+        const html =
+          g.quantidade > 1
+            ? `<span>${g.quantidade}</span>`
+            : `<span class="mapa-marcador"><svg viewBox="0 0 18 18" width="18" height="18"><circle cx="9" cy="9" r="6.4" fill="#e49a1b" stroke="#fff" stroke-width="1.6"/></svg></span>`;
+        L.marker([g.lat, g.lon], {
+          icon: L.divIcon({
+            className: g.quantidade > 1 ? "mapa-cluster" : "mapa-marcador-wrap",
+            html,
+            iconSize: [g.quantidade > 1 ? 26 : 18, g.quantidade > 1 ? 26 : 18],
+            iconAnchor: [g.quantidade > 1 ? 13 : 9, g.quantidade > 1 ? 13 : 9],
+          }),
+          keyboard: true,
+        }).addTo(det);
+      });
+
+      /* ---- alternância dos dois estados ---- */
+      const ws = document.getElementById("workspace");
+      const btB = document.getElementById("btBrasil");
+      const btD = document.getElementById("btDsei");
+
+      /* Mede o vazio dentro do card, de cada lado do mapa. */
+      function folga(idMapa, seletorCard) {
+        const el = document.getElementById(idMapa);
+        const card = el?.closest(seletorCard);
+        if (!el || !card || !el.offsetParent) return null;
+        const m = el.getBoundingClientRect();
+        const c = card.getBoundingClientRect();
+        /*
+          Uma faixa branca é espaço vazio ASSIMÉTRICO ou grande dentro do card —
+          foi isso que apareceu em produção, 310px só do lado esquerdo. O padding
+          simétrico que o `.card` ganha no telemóvel não é a mesma coisa, por
+          isso mede-se cada lado em vez de somar os dois.
+          O painel de unidades é conteúdo: desconta-se do lado direito.
+        */
+        const painel = card.querySelector(".health-map-units");
+        const pr = painel?.offsetParent ? painel.getBoundingClientRect() : null;
+        const direita = pr && pr.top < m.bottom - 1 ? pr.left : c.right;
+        return {
+          largura: Math.round(m.width),
+          altura: Math.round(m.height),
+          esquerda: Math.round(m.left - c.left),
+          direita: Math.round(direita - m.right),
+        };
+      }
+
+      /*
+        A medida decisiva: quanto da área do card está mesmo coberto por
+        azulejos. Não se deduz do `maxBounds` — mede-se nos <img> que o Leaflet
+        pôs no DOM, unidos e recortados ao container. É o vazio que a faixa
+        branca apenas tornava visível.
+      */
+      function cobertura(el) {
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) return 0;
+        const passo = 8;
+        let dentro = 0;
+        let total = 0;
+        const azulejos = [...el.querySelectorAll("img.leaflet-tile")]
+          .filter((t) => t.complete && t.naturalWidth > 0)
+          .map((t) => t.getBoundingClientRect());
+        for (let y = r.top + 2; y < r.bottom - 2; y += passo)
+          for (let x = r.left + 2; x < r.right - 2; x += passo) {
+            total += 1;
+            if (
+              azulejos.some(
+                (a) => x >= a.left && x < a.right && y >= a.top && y < a.bottom,
+              )
+            )
+              dentro += 1;
+          }
+        return total ? Math.round((dentro / total) * 100) : 0;
+      }
+
+      function medir() {
+        const comDsei = ws.classList.contains("com-dsei");
+        const alvo = comDsei
+          ? folga("detailMap", ".health-map-detail-layout")
+          : folga("map", ".health-map-pane--master");
+        const transbordo =
+          document.documentElement.scrollWidth >
+          document.documentElement.clientWidth;
+        const resumo = document
+          .querySelector(".health-status-summary-card")
+          .getBoundingClientRect();
+        const cob = cobertura(
+          document.getElementById(comDsei ? "detailMap" : "map"),
+        );
+        const marca = (ok, txt) => `<b class="${ok ? "" : "mau"}">${txt}</b>`;
+        document.getElementById("medida").innerHTML =
+          `viewport ${innerWidth}x${innerHeight}  estado ${comDsei ? "DSEI" : "Brasil"}\n` +
+          `mapa principal ${alvo ? alvo.largura + "x" + alvo.altura : "?"}   vazio no card ${marca(
+            alvo &&
+              Math.abs(alvo.esquerda - alvo.direita) <= 2 &&
+              alvo.esquerda <= 14,
+            alvo ? alvo.esquerda + "px | " + alvo.direita + "px" : "?",
+          )}\n` +
+          `mapas visíveis ${marca(
+            [
+              document.getElementById("map"),
+              document.getElementById("detailMap"),
+            ].filter((e) => e.offsetParent).length === 1,
+            [
+              document.getElementById("map"),
+              document.getElementById("detailMap"),
+            ].filter((e) => e.offsetParent).length,
+          )}   transbordo horizontal ${marca(!transbordo, transbordo)}\n` +
+          `"Resumo por etapa" começa em y=${Math.round(resumo.top)} ${marca(resumo.top < innerHeight, resumo.top < innerHeight ? "na dobra" : "fora da dobra")}
+` +
+          `área do mapa com azulejo ${marca(cob >= 99, cob + "%")}`;
+      }
+
+      function estado(comDsei) {
+        ws.classList.toggle("com-dsei", comDsei);
+        btB.setAttribute("aria-pressed", String(!comDsei));
+        btD.setAttribute("aria-pressed", String(comDsei));
+        window.__pronto = false;
+        requestAnimationFrame(() => {
+          nac.invalidateSize({ animate: false });
+          det.invalidateSize({ animate: false });
+          /* O enquadramento é do fitBounds com padding e maxZoom, não do
+             tamanho do container. */
+          if (!comDsei)
+            nac.fitBounds(BRASIL, {
+              padding: [10, 10],
+              maxZoom: 4,
+              animate: false,
+            });
+          else
+            det.fitBounds(L.latLngBounds(pontos.map((p) => [p.lat, p.lon])), {
+              padding: [34, 34],
+              maxZoom: 9,
+              animate: false,
+            });
+          setTimeout(() => {
+            medir();
+            window.__pronto = true;
+          }, 260);
+        });
+      }
+
+      btB.onclick = () => estado(false);
+      btD.onclick = () => estado(true);
+      document.getElementById("btTema").onclick = () => {
+        const escuro =
+          document.documentElement.getAttribute("data-theme") === "dark";
+        document.documentElement.setAttribute(
+          "data-theme",
+          escuro ? "light" : "dark",
+        );
+        document.body.classList.toggle("dark-mode", !escuro);
+        setTimeout(medir, 60);
+      };
+      /*
+        No telemóvel a sidebar é uma gaveta fixa: sem a classe que a aplicação
+        põe no body ela fica aberta por cima do conteúdo e tapa o workspace.
+        Não é defeito do workspace — é moldura, e o protótipo tem de a imitar.
+      */
+      const gaveta = () =>
+        document.body.classList.toggle("sidebar-collapsed", innerWidth <= 900);
+      gaveta();
+
+      addEventListener("resize", () => {
+        gaveta();
+        nac.invalidateSize({ animate: false });
+        det.invalidateSize({ animate: false });
+        medir();
+      });
+      initHealthMapImmersiveWorkspace();
+      window.__estado = estado;
+      window.__nac = nac;
+      window.__det = det;
+      window.__BRASIL = BRASIL;
+      estado(false);
+    </script>
+  </body>
+</html>

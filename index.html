@@ -771,7 +771,7 @@
                 ></div>
                 <footer class="health-map-pane__hint">
                   <i class="fa-solid fa-arrow-pointer"></i>
-                  Clique em um DSEI no mapa para abrir os polos e as unidades.
+                  Selecione um DSEI para explorar polos e unidades.
                 </footer>
                 <span id="mapLegendMin" class="hidden">0</span>
                 <span id="mapLegendMax" class="hidden"></span>
@@ -781,10 +781,19 @@
               <section class="card health-map-pane health-map-pane--detail">
                 <header class="health-map-pane__header">
                   <div>
-                    <span class="health-map-pane__eyebrow"
-                      ><i class="fa-solid fa-location-dot"></i> Detalhamento
-                      territorial</span
-                    >
+                    <!-- O trilho guarda a referência nacional sem gastar um
+                         mapa inteiro a repetir o Brasil ao lado. -->
+                    <nav class="health-map-breadcrumb" aria-label="Onde estou">
+                      <button
+                        type="button"
+                        class="health-map-breadcrumb__voltar"
+                        onclick="resetDetailMap()"
+                      >
+                        Brasil
+                      </button>
+                      <span aria-hidden="true">›</span>
+                      <span id="detailBreadcrumbDsei">território</span>
+                    </nav>
                     <h3 id="detailMapTitle">Mapa do Brasil</h3>
                   </div>
                   <div class="health-map-detail-actions">
@@ -811,13 +820,14 @@
                       type="button"
                       onclick="resetDetailMap()"
                     >
-                      <i class="fa-solid fa-arrow-left"></i> Brasil
+                      <i class="fa-solid fa-arrow-left"></i> Voltar à visão
+                      nacional
                     </button>
                   </div>
                 </header>
-                <!-- Nasce sem seleção: a coluna de polos só entra quando houver
-                     um DSEI escolhido, para não piscar largura no primeiro paint. -->
-                <div class="health-map-detail-layout sem-selecao">
+                <!-- Território à esquerda, painel de unidades à direita. O card
+                     inteiro só aparece quando houver um DSEI escolhido. -->
+                <div class="health-map-detail-layout">
                   <div
                     id="detailMap"
                     role="img"
@@ -834,6 +844,13 @@
                       >
                       <b id="detailUnitCount">0</b>
                     </div>
+                    <div
+                      id="detailFiltros"
+                      class="health-map-filtros"
+                      role="group"
+                      aria-label="Filtrar as unidades por tipo"
+                      hidden
+                    ></div>
                     <div id="detailUnitList" class="health-map-units__list">
                       <div class="health-map-empty">
                         <i class="fa-solid fa-map-location-dot"></i>

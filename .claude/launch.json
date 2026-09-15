@@ -1,1 +1,30 @@
-{"version":"0.0.1","configurations":[{"name":"prod","runtimeExecutable":"npm","runtimeArgs":["run","preview","--","--port","4186"],"port":4186}]}
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "4186"
+      ],
+      "port": 4186
+    },
+    {
+      "name": "proto",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "4207",
+        "--strictPort"
+      ],
+      "port": 4207
+    }
+  ]
+}

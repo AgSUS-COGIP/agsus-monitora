@@ -1,19 +1,55 @@
 /*
-  Os dois mapas competiam em 0.9fr contra 1.1fr — praticamente meio a meio — e
-  nenhum dos dois ficava grande o bastante para ser lido. A visão nacional é um
-  SELETOR: serve para escolher o DSEI e não precisa de metade da tela. O mapa de
-  detalhe é onde o trabalho acontece, e passa a ter mais do dobro da largura.
+  UM MAPA PRINCIPAL DE CADA VEZ.
 
-  A altura deixa de ser um valor fixo escolhido para preencher: o clamp com
-  unidade de viewport faz o card acompanhar a janela, com piso para o notebook
-  e teto para não empurrar o resto da página para fora num monitor alto.
+  O que havia antes eram dois mapas a competir — 0.58fr contra 1.42fr — e, antes
+  de escolher um DSEI, o segundo mostrava **outro Brasil**, sem acrescentar
+  informação nenhuma. Pior: o `#detailMap` era limitado a `altura x 1.25` e
+  centrado com `margin-inline: auto`, de modo que sobravam faixas brancas de
+  centenas de pixels dentro do próprio card — na tela de produção, a 1920, a
+  faixa à esquerda media cerca de 310 px.
+
+  O workspace passa a ter dois estados, e mostra um mapa de cada vez:
+
+    sem DSEI  ->  só a visão nacional, a toda a largura útil
+    com DSEI  ->  só o território, com o painel de unidades ao lado
+
+  Quem alterna a classe `com-dsei` é `definirSelecaoDoMapaDetalhado()`.
+
+  O enquadramento geográfico deixa de ser resolvido encolhendo o container: o
+  container preenche o card, e quem enquadra é o `fitBounds` com padding e
+  `maxZoom`, que é onde esse problema pertence.
 */
 .health-map-workspace {
-  --health-map-height: clamp(400px, 56vh, 640px);
+  /*
+    48vh em vez de 56vh, com teto de 540 px: a altura anterior empurrava o
+    "Resumo por etapa" para fora da dobra em qualquer notebook.
+
+    O piso é 380 e não 400 por causa do notebook de 1366x768, onde 48vh dá 369.
+    Havia ali um `@media (max-width: 1380px)` que FIXAVA 430px — mais alto do
+    que a própria conta pedia, justamente no ecrã com menos altura. Medido no
+    protótipo com a página completa, a 1366x768: com 430px o "Resumo por etapa"
+    começava em y=739, a 29px da dobra; com 380px começa em y=689.
+  */
+  --health-map-height: clamp(380px, 48vh, 540px);
+  --health-map-painel: clamp(280px, 24%, 340px);
   display: grid;
-  grid-template-columns: minmax(260px, 0.58fr) minmax(0, 1.42fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin-top: 8px;
+}
+
+/* Estado 1 — Brasil. O painel de detalhe nem ocupa espaço. */
+.health-map-workspace .health-map-pane--detail {
+  display: none;
+}
+
+/* Estado 2 — DSEI. O mapa nacional sai; o trilho guarda a referência. */
+.health-map-workspace.com-dsei .health-map-pane--master {
+  display: none;
+}
+
+.health-map-workspace.com-dsei .health-map-pane--detail {
+  display: block;
 }
 
 .health-map-pane {
@@ -23,15 +59,24 @@
   background: #fff;
 }
 
-/* Era 58 px de altura mínima mais 10 de padding em cada lado. */
+/*
+  `space-between` só funciona com dois filhos, e o cabeçalho ganha um terceiro
+  em tempo de execução: o "Expandir" que `health-map-immersive-workspace.js`
+  acrescenta. Com três, o botão ficava sozinho a meio. A margem automática
+  depois do bloco do título empurra tudo o resto para a direita, quantos
+  controlos venham a existir.
+*/
 .health-map-pane__header {
   min-height: 42px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   padding: 6px 12px;
   border-bottom: 1px solid #dce8ef;
+}
+
+.health-map-pane__header > :first-child {
+  margin-inline-end: auto;
 }
 
 .health-map-pane__header h3 {
@@ -47,6 +92,34 @@
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.health-map-pane__acoes,
+.health-map-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Trilho: guarda a referência nacional sem gastar um mapa inteiro nela. */
+.health-map-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #5f7288;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.health-map-breadcrumb__voltar {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #0d6ba8;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .health-map-pane__count,
@@ -66,6 +139,10 @@
   cursor: pointer;
 }
 
+/*
+  O mapa preenche a área que o card oferece — largura inteira, sem `max-width`
+  e sem centragem. Era daí que vinham as faixas brancas.
+*/
 #page-dashboard .health-map-pane--master #map,
 #page-dashboard .health-map-pane--detail #detailMap {
   width: 100%;
@@ -86,56 +163,57 @@
   font-weight: 650;
 }
 
+/* Território à esquerda, unidades à direita — entre 280 e 340 px. */
 .health-map-detail-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(210px, 27%);
+  grid-template-columns: minmax(0, 1fr) var(--health-map-painel);
   height: var(--health-map-height);
   min-height: var(--health-map-height);
 }
 
+/* Filtros por tipo, dentro do painel. */
+.health-map-filtros {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #dce8ef;
+}
+
+.health-map-filtros button {
+  padding: 4px 9px;
+  border: 1px solid #cfe1eb;
+  border-radius: 999px;
+  background: #fff;
+  color: #17607b;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.health-map-filtros button[aria-pressed="true"] {
+  border-color: #0f5ea8;
+  background: #0f5ea8;
+  color: #fff;
+}
+
 /*
-  Sem DSEI escolhido, "Polos e unidades" só tem a frase que pede para escolher um
-  — e mesmo assim reservava 27% da largura, ou no mínimo 210 px, tirados do mapa.
-  Enquanto não há o que listar, a coluna sai e o mapa ocupa a linha inteira. Quem
-  alterna a classe é `definirSelecaoDoMapaDetalhado()`, que logo depois manda o
-  Leaflet remedir — sem isso o mapa continuaria desenhado na largura antiga.
+  Coluna em flex: o cabeçalho e os filtros ocupam o que precisam e a lista fica
+  com o resto. Antes a altura da lista era `altura - 36px`, uma conta que já não
+  fecha desde que o cabeçalho passou a 42px — e que voltaria a não fechar com os
+  filtros por cima.
 */
-.health-map-detail-layout.sem-selecao {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.health-map-detail-layout.sem-selecao .health-map-units {
-  display: none;
-}
-
-/*
-  Na visão Brasil o mapa não ocupa toda a largura, e isso é deliberado.
-
-  Em Web Mercator o Brasil é 1.01:1 — praticamente quadrado. O card, esticado,
-  fica 3.09:1. Como o enquadramento é limitado pela **altura**, alargar o card
-  não aumenta o país: aumenta o oceano. Medido a 1600x518: o card exibia 140.6°
-  de longitude para um país de 41.6°, e o `maxBounds` da navegação (57.5°) ainda
-  prendia o centro no meio dele — o Brasil encostava à esquerda com um vazio à
-  direita.
-
-  Limitando a largura a 1.25x a altura, o card mostra 57.0° de longitude e o
-  país passa a ocupar cerca de 73% dela, centrado, com contexto suficiente para
-  se reconhecer o continente. Com DSEI selecionado a regra não vale: ali o
-  enquadramento é dos pontos do território, de proporção variável, e a coluna de
-  polos volta a ocupar a largura.
-*/
-.health-map-detail-layout.sem-selecao #detailMap {
-  max-width: calc(var(--health-map-height) * 1.25);
-  margin-inline: auto;
-}
-
 .health-map-units {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
   border-left: 1px solid #dce8ef;
   background: #fbfdfe;
 }
 
 .health-map-units__header {
+  flex: none;
   min-height: 42px;
   display: flex;
   align-items: center;
@@ -160,7 +238,8 @@
 }
 
 .health-map-units__list {
-  height: calc(var(--health-map-height) - 36px);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 7px;
   scrollbar-gutter: stable;
@@ -305,13 +384,6 @@
   gap: 8px;
 }
 
-@media (max-width: 1380px) {
-  .health-map-workspace {
-    --health-map-height: 430px;
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 820px) {
   .health-map-workspace {
     --health-map-height: 360px;
@@ -326,7 +398,7 @@
     border-top: 1px solid #dce8ef;
   }
   .health-map-units__list {
-    height: auto;
+    flex: 0 0 auto;
     max-height: 340px;
   }
   .health-status-summary-card #statusSummary {
@@ -384,6 +456,18 @@
 }
 [data-theme="dark"] .health-map-unit__type {
   color: #5fd0e3;
+}
+/*
+  O trilho é novo e nasceu com as cores do tema claro. Medido no protótipo
+  sobre o cabeçalho escuro: o "Brasil" dava 2.96:1 e o nome do território
+  3.42:1 — ambos abaixo dos 4.5:1 de texto. Com os valores abaixo passam a
+  8.83:1 e 7.92:1, medidos no navegador (no tema claro dão 5.70:1 e 4.94:1).
+*/
+[data-theme="dark"] .health-map-breadcrumb {
+  color: #9fb4c9;
+}
+[data-theme="dark"] .health-map-breadcrumb__voltar {
+  color: #7fc4ea;
 }
 
 /*
