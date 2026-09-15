@@ -9,8 +9,9 @@ const DEFAULT_OAUTH_TIMEOUT_MS = 8000;
 export function isMobileOAuthContext({
   userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "",
   platform = typeof navigator !== "undefined" ? navigator.platform : "",
-  maxTouchPoints =
-    typeof navigator !== "undefined" ? navigator.maxTouchPoints || 0 : 0,
+  maxTouchPoints = typeof navigator !== "undefined"
+    ? navigator.maxTouchPoints || 0
+    : 0,
 } = {}) {
   if (/Android|iPhone|iPad|iPod/i.test(userAgent)) return true;
   return platform === "MacIntel" && maxTouchPoints > 1;
@@ -25,7 +26,9 @@ function safeSessionMarkerClear(sessionStorageRef) {
 function timeoutAfter(timeoutMs) {
   return new Promise((_, reject) => {
     setTimeout(() => {
-      reject(new Error("O login Google demorou para iniciar. Tente novamente."));
+      reject(
+        new Error("O login Google demorou para iniciar. Tente novamente."),
+      );
     }, timeoutMs);
   });
 }
@@ -34,16 +37,15 @@ export async function startMobileGoogleOAuth({
   client = getSupabaseClient(),
   authStorage = getSupabaseAuthStorage(),
   locationRef = typeof window !== "undefined" ? window.location : null,
-  sessionStorageRef =
-    typeof window !== "undefined"
-      ? (() => {
-          try {
-            return window.sessionStorage;
-          } catch (_) {
-            return null;
-          }
-        })()
-      : null,
+  sessionStorageRef = typeof window !== "undefined"
+    ? (() => {
+        try {
+          return window.sessionStorage;
+        } catch (_) {
+          return null;
+        }
+      })()
+    : null,
   timeoutMs = DEFAULT_OAUTH_TIMEOUT_MS,
 } = {}) {
   if (!client?.auth?.signInWithOAuth) {
@@ -110,7 +112,8 @@ export function initMobileGoogleOAuth({
         button.disabled = false;
         showLoginError(
           root,
-          error?.message || "Não foi possível abrir o login Google. Tente novamente.",
+          error?.message ||
+            "Não foi possível abrir o login Google. Tente novamente.",
         );
       }
     },

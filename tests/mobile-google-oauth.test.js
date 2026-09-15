@@ -16,7 +16,10 @@ beforeEach(() => {
 describe("mobile Google OAuth", () => {
   it("detecta navegadores mobile e iPad com user agent de desktop", () => {
     expect(
-      isMobileOAuthContext({ userAgent: "Mozilla/5.0 (iPhone)", platform: "iPhone" }),
+      isMobileOAuthContext({
+        userAgent: "Mozilla/5.0 (iPhone)",
+        platform: "iPhone",
+      }),
     ).toBe(true);
     expect(
       isMobileOAuthContext({
@@ -63,9 +66,11 @@ describe("mobile Google OAuth", () => {
       initMobileGoogleOAuth({ root: document, mobile: true, startOAuth }),
     ).toBe(true);
 
-    document.getElementById("googleLoginBtn").dispatchEvent(
-      new MouseEvent("click", { bubbles: true, cancelable: true }),
-    );
+    document
+      .getElementById("googleLoginBtn")
+      .dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true }),
+      );
     await Promise.resolve();
 
     expect(startOAuth).toHaveBeenCalledTimes(1);
@@ -73,11 +78,15 @@ describe("mobile Google OAuth", () => {
   });
 
   it("reativa o botão e informa erro quando OAuth não inicia", async () => {
-    const startOAuth = vi.fn().mockRejectedValue(new Error("OAuth indisponível"));
+    const startOAuth = vi
+      .fn()
+      .mockRejectedValue(new Error("OAuth indisponível"));
     initMobileGoogleOAuth({ root: document, mobile: true, startOAuth });
 
     const button = document.getElementById("googleLoginBtn");
-    button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    button.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true }),
+    );
     await Promise.resolve();
     await Promise.resolve();
 
