@@ -8884,14 +8884,31 @@ const _mapResizeObservers = [];
 
 function addResilientMapTiles(map, element) {
   if (!map || !element || typeof L === "undefined") return null;
+  /*
+    A CARTO saiu daqui, e o motivo é que ela não falha — ela mente.
+
+    `basemaps.cartocdn.com` sem chave devolve **HTTP 200 com um PNG de 10KB**:
+    o azulejo com "API KEY REQUIRED" escrito por cima. Para o Leaflet o recurso
+    funcionou, nenhum `tileerror` dispara, e o mapa fica coberto de avisos de
+    chave em falta até alguém recarregar a página. Medido em produção a
+    15/09/2026, e é o que se via na tela.
+
+    O recurso passa a ser a imagem de satélite que a aplicação já serve na
+    camada "Satélite" — nenhuma dependência nova, e responde anónima. Um mapa
+    de satélite no lugar do mapa de ruas é uma mudança visível, mas é um mapa;
+    o anterior era um aviso de erro em forma de mapa.
+  */
   const providers = [
     {
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       options: { maxZoom: 18, attribution: "© OpenStreetMap" },
     },
     {
-      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      options: { maxZoom: 19, attribution: "© OpenStreetMap © CARTO" },
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      options: {
+        maxZoom: 19,
+        attribution: "© Esri, Maxar, Earthstar Geographics",
+      },
     },
   ];
   let providerIndex = 0;
@@ -9990,6 +10007,66 @@ function highlightUFs(ufs) {
   } catch (e) {}
 }
 
+/*
+  Entrar num território é a mesma coisa venha do mapa ou da lista ao lado dele.
+  Estava escrita dentro do `on("click")` da bolha, e por isso a lista teria de
+  a copiar — duas cópias que divergiriam na primeira mudança.
+*/
+function entrarNoTerritorio(d) {
+  const campo = $("tableSearch");
+  if (campo) campo.value = d.n;
+  applyFilters();
+  renderDetailMap(d);
+  flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]));
+  const voltar = $("drillBackBtn");
+  if (voltar) voltar.style.display = "inline-flex";
+  const ufTxt = d.ufs && d.ufs.length ? " (" + d.ufs.join(", ") + ")" : "";
+  toast(
+    "DSEI " + d.n + ufTxt + ": polos e unidades exibidos no mapa detalhado.",
+  );
+}
+
+/*
+  A LISTA NACIONAL, ao lado do mapa do Brasil.
+
+  O mapa nacional ocupava a largura toda do card, e isso custava caro de duas
+  maneiras. O Brasil é praticamente quadrado em Mercator, por isso num card de
+  3.8:1 ele ficava em 24% da largura e o resto era oceano e África. E, medido na
+  aplicação a 1920, eram **27 azulejos pedidos ao OpenStreetMap contra os 9** que
+  o Brasil precisa — 18 pedidos por vista que não mostravam nada, numa fonte que
+  limita este uso e cujo recurso, a CARTO anónima, passou a devolver imagem
+  marcada.
+
+  O mapa passa a ter a proporção que o país preenche e a largura que sobra leva
+  informação: os territórios ordenados por vagas. Mesma leitura do painel do
+  estado 2, e a mesma porta de entrada — clicar aqui é clicar na bolha.
+*/
+function renderPainelNacional(linhas) {
+  const lista = $("brasilDseiList");
+  const conta = $("brasilDseiCount");
+  if (conta) conta.textContent = fmt(linhas.length);
+  if (!lista) return;
+  if (!linhas.length) {
+    lista.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-filter-circle-xmark"></i><strong>Nenhum território no recorte</strong><span>Os filtros ativos não deixaram nenhum DSEI no resultado.</span></div>`;
+    return;
+  }
+  lista.innerHTML = linhas
+    .map(
+      ({ d, vagas, ociosas, nproc }, i) =>
+        `<button class="health-map-unit" type="button" data-dsei="${i}" aria-label="Abrir o DSEI ${esc(d.n)}">
+        <span class="health-map-unit__icon"><i class="fa-solid fa-location-dot"></i></span>
+        <span><strong title="${esc(d.n)}">DSEI ${esc(d.n)}</strong><small>${fmt(vagas)} vagas · ${fmt(ociosas)} ociosas${nproc ? " · " + fmt(nproc) + " processo" + (nproc > 1 ? "s" : "") : ""}</small></span>
+        <span class="health-map-unit__type">${fmt(d.pop || 0)}</span>
+      </button>`,
+    )
+    .join("");
+  lista.querySelectorAll("[data-dsei]").forEach((botao) => {
+    botao.addEventListener("click", () =>
+      entrarNoTerritorio(linhas[Number(botao.dataset.dsei)].d),
+    );
+  });
+}
+
 // Nível 1: bolhas dos DSEIs
 function drawDSEIBubbles() {
   if (!_leaflet) return;
@@ -10003,6 +10080,8 @@ function drawDSEIBubbles() {
   const filtroAtivo = hasActiveFilter();
   const heatOn = !!_heatMode;
   const ptsVisiveis = []; // para enquadrar o zoom nos DSEIs filtrados
+  /* A lista ao lado mostra exactamente os DSEIs que o mapa desenhou. */
+  const noRecorte = [];
   _ptsZoom = ptsVisiveis; // compartilha com drawCasai (adiciona nacionais visíveis)
   /*
     DSEIS QUE PARTILHAM A SEDE
@@ -10051,6 +10130,7 @@ function drawDSEIBubbles() {
     */
       const r = raioDaBolha(d.pop, popMax);
       ptsVisiveis.push([lat, lon]);
+      noRecorte.push({ d, vagas, ociosas, nproc });
       // Cor: modo calor usa % de ociosidade; modo normal usa verde(tem proc)/azul(sem)
       const fillC = heatOn
         ? hp
@@ -10083,25 +10163,7 @@ function drawDSEIBubbles() {
         `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>Polos base: ${(d.polos || []).length}<br>Estados: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para ver os polos base</i>`,
         { direction: "top" },
       );
-      m.on("click", () => {
-        const s = $("tableSearch");
-        if (s) s.value = d.n;
-        applyFilters();
-        renderDetailMap(d);
-        flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]));
-        {
-          const _b = $("drillBackBtn");
-          if (_b) _b.style.display = "inline-flex";
-        }
-        const ufTxt =
-          d.ufs && d.ufs.length ? " (" + d.ufs.join(", ") + ")" : "";
-        toast(
-          "DSEI " +
-            d.n +
-            ufTxt +
-            ": polos e unidades exibidos no mapa detalhado.",
-        );
-      });
+      m.on("click", () => entrarNoTerritorio(d));
       _layerDSEI.addLayer(m);
     });
 
@@ -10116,17 +10178,29 @@ function drawDSEIBubbles() {
       ? lista.filter((d) => (byDsei[dseiKey(d.k)] || 0) > 0)
       : lista;
     if (visiveis.length < 2) return;
-    const centro = _leaflet.latLngToLayerPoint([
-      visiveis[0].lat,
-      visiveis[0].lon,
-    ]);
-    const posicao = _leaflet.layerPointToLatLng(centro.add(L.point(18, -18)));
-    const selo = L.marker(posicao, {
+    /*
+      O SELO FICA NA SEDE. O DESVIO É DE DESENHO, NÃO DE COORDENADA.
+
+      Isto convertia 18px numa latitude e numa longitude e punha o marcador
+      nesse ponto inventado. Na visão nacional o mapa tem 9.57px por grau, então
+      os 18px viravam **1.88° ≈ 209 km**: o selo dos dois DSEIs de Boa Vista
+      (2.8563, -60.6527, em Roraima) era desenhado em 4.4209, -59.0849 — dentro
+      da Guiana. Medido na aplicação a 15/09/2026.
+
+      E era pior do que parece: o desvio em graus muda de tamanho com o zoom,
+      porque 18px valem cada vez menos território à medida que se aproxima.
+
+      Agora o marcador está na coordenada verdadeira e quem desloca é o
+      `iconAnchor`: o ponto do ícone que corresponde à posição passa a ser
+      (11-18, 11+18), de modo que o desenho sai 18px à direita e acima. Fica
+      igual em todos os zooms, e nada no mapa afirma um lugar que não existe.
+    */
+    const selo = L.marker([visiveis[0].lat, visiveis[0].lon], {
       icon: L.divIcon({
         className: "mapa-cluster mapa-cluster--sede",
         html: `<span>${visiveis.length}</span>`,
         iconSize: [22, 22],
-        iconAnchor: [11, 11],
+        iconAnchor: [-7, 29],
       }),
       keyboard: true,
       title: `${visiveis.length} DSEIs com a mesma sede`,
@@ -10141,6 +10215,14 @@ function drawDSEIBubbles() {
     );
     _layerDSEI.addLayer(selo);
   });
+
+  /*
+    Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
+    e ordenar por população repetiria o que o tamanho da bolha já diz.
+  */
+  renderPainelNacional(
+    noRecorte.sort((a, b) => b.vagas - a.vagas || b.d.pop - a.d.pop),
+  );
 
   drawCasai();
   {
