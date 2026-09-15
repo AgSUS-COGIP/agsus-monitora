@@ -32,9 +32,10 @@ describe("densidade do dashboard Saúde Indígena", () => {
 });
 
 describe("overview inicial dos mapas", () => {
-  it("usa o tamanho real do card e pode chegar a zoom 4", () => {
+  it("usa o tamanho real do card e respeita o limite nacional de 500 km", () => {
     expect(mapGuard).toContain("map.__agsusOverviewMode = true");
-    expect(mapGuard).toContain("maxZoom: 4");
+    expect(mapGuard).toContain("HEALTH_MAP_OVERVIEW_MAX_ZOOM = 4.5");
+    expect(mapGuard).toContain("maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM");
     expect(mapGuard).toContain("padding: [10, 10]");
     expect(mapGuard).toContain("isBrazilOverviewBounds");
   });
@@ -149,7 +150,7 @@ describe("o reenquadramento não descarta o zoom da pessoa", () => {
     );
     expect(derivado).toContain("map.__agsusOverviewMode");
     expect(derivado).toContain("getZoom");
-    expect(derivado).toMatch(/<=\s*4/);
+    expect(derivado).toContain("HEALTH_MAP_OVERVIEW_MAX_ZOOM");
   });
 
   it("o handler de resize consulta esse estado derivado", () => {
