@@ -1,7 +1,8 @@
-# AgSUS Monitora 
+# MONITORA
 
-Aplicacao web do AgSUS Monitora, organizada em uma versao modular com Vite para deploy no Vercel e integracao com Supabase.
-
+Aplicação de monitoramento com servidor Laravel/PHP, cliente modular Vite e
+integração com Supabase. Veja [como executar, testar e implantar em Laravel](docs/monitora-laravel.md).
+O build estático anterior continua disponível para compatibilidade durante a homologação.
 
 ## Visao geral
 
@@ -169,7 +170,6 @@ Nao coloque chaves secretas, tokens, senhas ou credenciais no repositorio.
 ## Como baixar o projeto inteiro para outra coordenacao
 
 Ha duas formas recomendadas.
-
 
 a. Clonar o repositorio com:
 
