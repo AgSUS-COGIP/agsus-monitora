@@ -200,6 +200,18 @@
   height: var(--health-map-height);
 }
 
+/*
+  Item de grade nasce com `min-height: auto`, e por isso não encolhe abaixo do
+  conteúdo: com 34 territórios na lista, a coluna crescia para 1892px e puxava
+  a linha inteira com ela — o mapa ficava com a altura certa e o card três
+  vezes mais alto. Com `min-height: 0` a coluna aceita a altura da linha e a
+  lista rola dentro de si, que é o que o `overflow: auto` dela já pedia.
+*/
+.health-map-brasil-layout > *,
+.health-map-detail-layout > * {
+  min-height: 0;
+}
+
 /* Território à esquerda, unidades à direita — entre 280 e 340 px. */
 .health-map-detail-layout {
   display: grid;
