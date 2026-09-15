@@ -128,7 +128,12 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+      integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <link rel="stylesheet" href="/src/styles/app.css" />
   </head>
 
@@ -764,11 +769,34 @@
                     >Brasil</span
                   >
                 </header>
-                <div
-                  id="map"
-                  role="img"
-                  aria-label="Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI"
-                ></div>
+                <!-- O mapa fica na proporção que o Brasil preenche; a largura
+                     que sobra leva a lista dos territórios, não oceano. -->
+                <div class="health-map-brasil-layout">
+                  <div
+                    id="map"
+                    role="img"
+                    aria-label="Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI"
+                  ></div>
+                  <aside
+                    class="health-map-units health-map-brasil-painel"
+                    aria-label="Territórios por vagas"
+                  >
+                    <div class="health-map-units__header">
+                      <span
+                        ><i class="fa-solid fa-ranking-star"></i> Territórios
+                        por vagas</span
+                      >
+                      <b id="brasilDseiCount">0</b>
+                    </div>
+                    <div id="brasilDseiList" class="health-map-units__list">
+                      <div class="health-map-empty">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <strong>Carregando os territórios</strong>
+                        <span>A lista acompanha os filtros da página.</span>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
                 <footer class="health-map-pane__hint">
                   <i class="fa-solid fa-arrow-pointer"></i>
                   Selecione um DSEI para explorar polos e unidades.

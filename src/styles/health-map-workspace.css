@@ -21,16 +21,26 @@
 */
 .health-map-workspace {
   /*
-    48vh em vez de 56vh, com teto de 540 px: a altura anterior empurrava o
-    "Resumo por etapa" para fora da dobra em qualquer notebook.
+    A ALTURA É O QUE DÁ TAMANHO AO BRASIL.
 
-    O piso é 380 e não 400 por causa do notebook de 1366x768, onde 48vh dá 369.
-    Havia ali um `@media (max-width: 1380px)` que FIXAVA 430px — mais alto do
-    que a própria conta pedia, justamente no ecrã com menos altura. Medido no
-    protótipo com a página completa, a 1366x768: com 430px o "Resumo por etapa"
-    começava em y=739, a 29px da dobra; com 380px começa em y=689.
+    Em Mercator o país é 1.010:1 e o `fitBounds` é sempre limitado pela altura —
+    alargar o card não aumenta o desenho, só o que está em volta. Quem manda no
+    tamanho do Brasil na tela é esta variável, e só ela.
+
+    Estava em `clamp(380px, 48vh, 540px)`, escolhido para poupar rolagem. Era a
+    prioridade errada: a 1920 o mapa ficava com 480px e o país pequeno no meio
+    de oceano. O pedido passou a ser o contrário — dar ênfase ao mapa e aceitar
+    que a página cresça para baixo.
+
+    Com 64vh, a 1920x1000 o mapa passa de 480 para 640px: **33% mais Brasil**.
+    O "Resumo por etapa" desce na mesma medida, o que é a troca aceite. Ele já
+    não cabia na dobra a 1366 de qualquer maneira: acima do mapa há 302px de
+    filtros, tarja, KPIs e o cartão condicional de unidades.
+
+    Saiu daqui um `@media (max-width: 1380px)` que FIXAVA 430px — mais alto do
+    que a conta pedia, justamente no ecrã com menos altura.
   */
-  --health-map-height: clamp(380px, 48vh, 540px);
+  --health-map-height: clamp(460px, 64vh, 760px);
   --health-map-painel: clamp(280px, 24%, 340px);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -161,6 +171,45 @@
   color: #64748b;
   font-size: 11px;
   font-weight: 650;
+}
+
+/*
+  O MAPA DO BRASIL NÃO QUER A LARGURA TODA.
+
+  Em Mercator o Brasil é praticamente quadrado. Num card de 3.8:1 ele ficava em
+  24% da largura e o resto era oceano e África — e cada vista custava 27
+  azulejos ao OpenStreetMap contra os 9 que o país precisa, medido na aplicação
+  a 1920. Dezoito pedidos por vista que não mostravam nada, numa fonte que
+  limita este uso e cujo recurso, a CARTO anónima, passou a devolver um azulejo
+  escrito "API KEY REQUIRED".
+
+  O container passa a ter a proporção que o país preenche, com uma folga: 1.45
+  em vez do 1.15 que encheria o mosaico exactamente, para o Brasil respirar nos
+  lados sem chegar ao limite do recorte.
+
+  Isto NÃO é a regra que esta branch removeu. Aquela punha `max-width` no mapa
+  dentro de um card que continuava largo, e sobrava card branco. Aqui é uma
+  coluna da grade: ao lado do mapa há um painel com os territórios. O espaço é
+  conteúdo, não vazio.
+*/
+.health-map-brasil-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, calc(var(--health-map-height) * 1.45))
+    minmax(0, 1fr);
+  height: var(--health-map-height);
+}
+
+/*
+  Item de grade nasce com `min-height: auto`, e por isso não encolhe abaixo do
+  conteúdo: com 34 territórios na lista, a coluna crescia para 1892px e puxava
+  a linha inteira com ela — o mapa ficava com a altura certa e o card três
+  vezes mais alto. Com `min-height: 0` a coluna aceita a altura da linha e a
+  lista rola dentro de si, que é o que o `overflow: auto` dela já pedia.
+*/
+.health-map-brasil-layout > *,
+.health-map-detail-layout > * {
+  min-height: 0;
 }
 
 /* Território à esquerda, unidades à direita — entre 280 e 340 px. */
@@ -388,7 +437,8 @@
   .health-map-workspace {
     --health-map-height: 360px;
   }
-  .health-map-detail-layout {
+  .health-map-detail-layout,
+  .health-map-brasil-layout {
     height: auto;
     min-height: 0;
     grid-template-columns: 1fr;
@@ -396,6 +446,10 @@
   .health-map-units {
     border-left: 0;
     border-top: 1px solid #dce8ef;
+  }
+  /* Empilhado, o painel nacional rola dentro de si em vez de esticar a pagina. */
+  .health-map-brasil-painel .health-map-units__list {
+    max-height: 300px;
   }
   .health-map-units__list {
     flex: 0 0 auto;
