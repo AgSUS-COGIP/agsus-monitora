@@ -99,7 +99,7 @@
         }
       })();
     </script>
-    <title>AgSUS Monitora</title>
+    <title>MONITORA</title>
     <meta name="description" content="" />
     <!--
       Ícone local, nas três tags que o SIGAV também usa. Antes isto apontava
@@ -128,7 +128,12 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+      integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <link rel="stylesheet" href="/src/styles/app.css" />
   </head>
 
@@ -207,7 +212,7 @@
       </script>
       <div class="login-outer">
         <div class="login-card">
-          <div class="login-brand-lockup" aria-label="AgSUS Monitora">
+          <div class="login-brand-lockup" aria-label="MONITORA">
             <div class="login-organization-mark">
               <img
                 id="loginLogo"
@@ -381,7 +386,7 @@
               src="/assets/agsus-logo.webp"
               alt="AgSUS"
           /></span>
-          <span class="side-brand-copy"><strong>AgSUS Monitora</strong></span>
+          <span class="side-brand-copy"><strong>MONITORA</strong></span>
         </div>
         <div class="side-navigation"><nav id="nav" class="nav"></nav></div>
         <div class="side-footer">
@@ -428,7 +433,7 @@
               >
                 <div class="online-presence-heading">
                   <strong>Pessoas online</strong>
-                  <small>Ativas no AgSUS Monitora agora</small>
+                  <small>Ativas no MONITORA agora</small>
                 </div>
                 <div id="onlinePresenceList" class="online-presence-list"></div>
               </div>
@@ -601,6 +606,7 @@
             </div>
           </div>
         </header>
+        <div id="araraGuideHost"></div>
 
         <div
           id="broadcastBar"
@@ -764,11 +770,34 @@
                     >Brasil</span
                   >
                 </header>
-                <div
-                  id="map"
-                  role="img"
-                  aria-label="Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI"
-                ></div>
+                <!-- O mapa fica na proporção que o Brasil preenche; a largura
+                     que sobra leva a lista dos territórios, não oceano. -->
+                <div class="health-map-brasil-layout">
+                  <div
+                    id="map"
+                    role="img"
+                    aria-label="Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI"
+                  ></div>
+                  <aside
+                    class="health-map-units health-map-brasil-painel"
+                    aria-label="Territórios por vagas"
+                  >
+                    <div class="health-map-units__header">
+                      <span
+                        ><i class="fa-solid fa-ranking-star"></i> Territórios
+                        por vagas</span
+                      >
+                      <b id="brasilDseiCount">0</b>
+                    </div>
+                    <div id="brasilDseiList" class="health-map-units__list">
+                      <div class="health-map-empty">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <strong>Carregando os territórios</strong>
+                        <span>A lista acompanha os filtros da página.</span>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
                 <footer class="health-map-pane__hint">
                   <i class="fa-solid fa-arrow-pointer"></i>
                   Selecione um DSEI para explorar polos e unidades.
@@ -1494,7 +1523,7 @@
                     <label>Versão publicada</label
                     ><input
                       id="cfgAppVersionCurrent"
-                      placeholder="Ex: AgSUS Monitora Web V2.9.35"
+                      placeholder="Ex: MONITORA Web V2.9.35"
                     />
                   </div>
                   <div class="form-row full">

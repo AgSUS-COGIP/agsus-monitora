@@ -12,6 +12,35 @@ const CARTOGRAPHIC_HOSTS = ["tile.openstreetmap.org", "basemaps.cartocdn.com"];
 
 let installed = false;
 
+export function addResilientBaseLayer(L, map) {
+  enhanceMap(L, map);
+  const layer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+    crossOrigin: true,
+    updateWhenIdle: true,
+    keepBuffer: 2,
+  });
+  layer.__agsusBaseMapKind = MODE_MAP;
+  let errors = 0;
+  layer.on("tileload", () => {
+    if (!map.hasLayer(layer)) return;
+    errors = 0;
+    map.__agsusFailedBaseModes.delete(MODE_MAP);
+  });
+  layer.on("tileerror", () => {
+    if (!map.hasLayer(layer) || map.__agsusBaseMapMode !== MODE_MAP) return;
+    errors += 1;
+    if (errors < SATELLITE_ERROR_LIMIT) return;
+    map.__agsusFailedBaseModes.add(MODE_MAP);
+    if (!map.__agsusFailedBaseModes.has(MODE_SATELLITE)) {
+      setBaseMapMode(L, map, MODE_SATELLITE);
+    }
+  });
+  return layer.addTo(map);
+}
+
 export function installMapBaseLayerSwitcher() {
   if (installed) return true;
 
@@ -58,6 +87,7 @@ function enhanceMap(L, map) {
   map.__agsusStoredMapLayers = [];
   map.__agsusSatelliteLayer = null;
   map.__agsusSatelliteErrors = 0;
+  map.__agsusFailedBaseModes = new Set();
   map.__agsusSwitchingBaseLayer = false;
 
   map.on("layeradd", (event) => {
@@ -188,11 +218,14 @@ function getSatelliteLayer(L, map) {
   layer.__agsusBaseMapKind = MODE_SATELLITE;
 
   layer.on("tileload", () => {
+    if (!map.hasLayer(layer)) return;
     map.__agsusSatelliteErrors = 0;
+    map.__agsusFailedBaseModes.delete(MODE_SATELLITE);
     map.getContainer?.().classList.remove("map-satellite-fallback");
   });
 
   layer.on("tileerror", () => {
+    if (!map.hasLayer(layer)) return;
     map.__agsusSatelliteErrors += 1;
     if (
       map.__agsusSatelliteErrors < SATELLITE_ERROR_LIMIT ||
@@ -200,7 +233,9 @@ function getSatelliteLayer(L, map) {
     )
       return;
 
+    map.__agsusFailedBaseModes.add(MODE_SATELLITE);
     map.getContainer?.().classList.add("map-satellite-fallback");
+    if (map.__agsusFailedBaseModes.has(MODE_MAP)) return;
     map.__agsusDesiredBaseMapMode = MODE_MAP;
     setBaseMapMode(L, map, MODE_MAP, { persist: true });
     dispatchFallback(map);

@@ -1,4 +1,6 @@
+import { addResilientBaseLayer } from "./map-base-layer-switcher.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { updateAraraGuide } from "./arara-guide.js";
 import {
   getOAuthCallbackUrl,
   isUsableSession,
@@ -1754,7 +1756,7 @@ function applyConfigToUi() {
     sistema. A metade da página fica com quem navega, e o módulo recompõe as
     duas.
   */
-  definirSistemaDaAba(cfgValue("app_title") || "AgSUS Monitora");
+  definirSistemaDaAba("MONITORA");
   void aplicarFaviconDaMarca(
     normalizeAccessLogoUrl(cfgValue("auth_access_logo_url")),
   );
@@ -2143,11 +2145,6 @@ async function saveMapaConfigToSupabase(options = {}) {
   const silent = options.silent === true;
   const rowsToSave = [
     {
-      chave: "lmap",
-      payload: LMAP,
-      descricao: "Mapa dos DSEIs e polos base usado pelo dashboard",
-    },
-    {
       chave: "rede_cnes",
       payload: REDE_CNES,
       descricao: "Rede assistencial CNES/UBSI/CASAI usada pelo mapa",
@@ -2165,7 +2162,7 @@ async function saveMapaConfigToSupabase(options = {}) {
     return false;
   }
   mapConfigLoadOk = true;
-  if (!silent) toast("Mapa e rede assistencial salvos no Supabase.");
+  if (!silent) toast("Rede assistencial salva no Supabase.");
   return true;
 }
 
@@ -2485,6 +2482,11 @@ function setPageTitle(title, sub) {
   $("pageSubtitle").textContent = sub;
   // O nome da aba tem um dono só; aqui entra apenas a metade da página.
   definirPaginaDaAba(title);
+  updateAraraGuide(
+    currentView,
+    title,
+    document.getElementById("araraGuideHost"),
+  );
 }
 
 function isSidebarLockedViewport() {
@@ -8884,46 +8886,7 @@ const _mapResizeObservers = [];
 
 function addResilientMapTiles(map, element) {
   if (!map || !element || typeof L === "undefined") return null;
-  const providers = [
-    {
-      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      options: { maxZoom: 18, attribution: "© OpenStreetMap" },
-    },
-    {
-      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      options: { maxZoom: 19, attribution: "© OpenStreetMap © CARTO" },
-    },
-  ];
-  let providerIndex = 0;
-  let consecutiveErrors = 0;
-  let activeLayer = null;
-
-  const mountProvider = () => {
-    const provider = providers[providerIndex];
-    activeLayer = L.tileLayer(provider.url, {
-      ...provider.options,
-      crossOrigin: true,
-      updateWhenIdle: false,
-      keepBuffer: 3,
-    });
-    activeLayer.on("tileload", () => {
-      consecutiveErrors = 0;
-      element.classList.remove("map-tiles-recovering");
-    });
-    activeLayer.on("tileerror", () => {
-      consecutiveErrors += 1;
-      if (consecutiveErrors < 4 || providerIndex >= providers.length - 1)
-        return;
-      element.classList.add("map-tiles-recovering");
-      map.removeLayer(activeLayer);
-      providerIndex += 1;
-      consecutiveErrors = 0;
-      mountProvider().addTo(map);
-    });
-    return activeLayer;
-  };
-
-  return mountProvider().addTo(map);
+  return addResilientBaseLayer(L, map);
 }
 
 function observeLeafletSize(map, element) {
@@ -9990,6 +9953,66 @@ function highlightUFs(ufs) {
   } catch (e) {}
 }
 
+/*
+  Entrar num território é a mesma coisa venha do mapa ou da lista ao lado dele.
+  Estava escrita dentro do `on("click")` da bolha, e por isso a lista teria de
+  a copiar — duas cópias que divergiriam na primeira mudança.
+*/
+function entrarNoTerritorio(d) {
+  const campo = $("tableSearch");
+  if (campo) campo.value = d.n;
+  applyFilters();
+  renderDetailMap(d);
+  flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]));
+  const voltar = $("drillBackBtn");
+  if (voltar) voltar.style.display = "inline-flex";
+  const ufTxt = d.ufs && d.ufs.length ? " (" + d.ufs.join(", ") + ")" : "";
+  toast(
+    "DSEI " + d.n + ufTxt + ": polos e unidades exibidos no mapa detalhado.",
+  );
+}
+
+/*
+  A LISTA NACIONAL, ao lado do mapa do Brasil.
+
+  O mapa nacional ocupava a largura toda do card, e isso custava caro de duas
+  maneiras. O Brasil é praticamente quadrado em Mercator, por isso num card de
+  3.8:1 ele ficava em 24% da largura e o resto era oceano e África. E, medido na
+  aplicação a 1920, eram **27 azulejos pedidos ao OpenStreetMap contra os 9** que
+  o Brasil precisa — 18 pedidos por vista que não mostravam nada, numa fonte que
+  limita este uso e cujo recurso, a CARTO anónima, passou a devolver imagem
+  marcada.
+
+  O mapa passa a ter a proporção que o país preenche e a largura que sobra leva
+  informação: os territórios ordenados por vagas. Mesma leitura do painel do
+  estado 2, e a mesma porta de entrada — clicar aqui é clicar na bolha.
+*/
+function renderPainelNacional(linhas) {
+  const lista = $("brasilDseiList");
+  const conta = $("brasilDseiCount");
+  if (conta) conta.textContent = fmt(linhas.length);
+  if (!lista) return;
+  if (!linhas.length) {
+    lista.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-filter-circle-xmark"></i><strong>Nenhum território no recorte</strong><span>Os filtros ativos não deixaram nenhum DSEI no resultado.</span></div>`;
+    return;
+  }
+  lista.innerHTML = linhas
+    .map(
+      ({ d, vagas, ociosas, nproc }, i) =>
+        `<button class="health-map-unit" type="button" data-dsei="${i}" aria-label="Abrir o DSEI ${esc(d.n)}">
+        <span class="health-map-unit__icon"><i class="fa-solid fa-location-dot"></i></span>
+        <span><strong title="${esc(d.n)}">DSEI ${esc(d.n)}</strong><small>${fmt(vagas)} vagas · ${fmt(ociosas)} ociosas${nproc ? " · " + fmt(nproc) + " processo" + (nproc > 1 ? "s" : "") : ""}</small></span>
+        <span class="health-map-unit__type">${fmt(d.pop || 0)}</span>
+      </button>`,
+    )
+    .join("");
+  lista.querySelectorAll("[data-dsei]").forEach((botao) => {
+    botao.addEventListener("click", () =>
+      entrarNoTerritorio(linhas[Number(botao.dataset.dsei)].d),
+    );
+  });
+}
+
 // Nível 1: bolhas dos DSEIs
 function drawDSEIBubbles() {
   if (!_leaflet) return;
@@ -10003,6 +10026,8 @@ function drawDSEIBubbles() {
   const filtroAtivo = hasActiveFilter();
   const heatOn = !!_heatMode;
   const ptsVisiveis = []; // para enquadrar o zoom nos DSEIs filtrados
+  /* A lista ao lado mostra exactamente os DSEIs que o mapa desenhou. */
+  const noRecorte = [];
   _ptsZoom = ptsVisiveis; // compartilha com drawCasai (adiciona nacionais visíveis)
   /*
     DSEIS QUE PARTILHAM A SEDE
@@ -10051,6 +10076,7 @@ function drawDSEIBubbles() {
     */
       const r = raioDaBolha(d.pop, popMax);
       ptsVisiveis.push([lat, lon]);
+      noRecorte.push({ d, vagas, ociosas, nproc });
       // Cor: modo calor usa % de ociosidade; modo normal usa verde(tem proc)/azul(sem)
       const fillC = heatOn
         ? hp
@@ -10083,25 +10109,7 @@ function drawDSEIBubbles() {
         `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>Polos base: ${(d.polos || []).length}<br>Estados: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para ver os polos base</i>`,
         { direction: "top" },
       );
-      m.on("click", () => {
-        const s = $("tableSearch");
-        if (s) s.value = d.n;
-        applyFilters();
-        renderDetailMap(d);
-        flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]));
-        {
-          const _b = $("drillBackBtn");
-          if (_b) _b.style.display = "inline-flex";
-        }
-        const ufTxt =
-          d.ufs && d.ufs.length ? " (" + d.ufs.join(", ") + ")" : "";
-        toast(
-          "DSEI " +
-            d.n +
-            ufTxt +
-            ": polos e unidades exibidos no mapa detalhado.",
-        );
-      });
+      m.on("click", () => entrarNoTerritorio(d));
       _layerDSEI.addLayer(m);
     });
 
@@ -10116,12 +10124,32 @@ function drawDSEIBubbles() {
       ? lista.filter((d) => (byDsei[dseiKey(d.k)] || 0) > 0)
       : lista;
     if (visiveis.length < 2) return;
-    const centro = _leaflet.latLngToLayerPoint([
-      visiveis[0].lat,
-      visiveis[0].lon,
-    ]);
-    const posicao = _leaflet.layerPointToLatLng(centro.add(L.point(18, -18)));
-    const selo = L.marker(posicao, {
+    /*
+      O SELO FICA EM CIMA DA SEDE, SEM DESVIO NENHUM.
+
+      Isto convertia 18px numa latitude e numa longitude — `layerPointToLatLng`
+      sobre `centro.add(L.point(18, -18))` — e punha o marcador nesse ponto
+      inventado. Na visão nacional o mapa tem 9.57px por grau, portanto os 18px
+      viravam **1.88° ≈ 209 km**: o selo dos dois DSEIs de Boa Vista
+      (2.8563, -60.6527, em Roraima) era desenhado em 4.4209, -59.0849 — dentro
+      da Guiana. Medido na aplicação a 15/09/2026.
+
+      A primeira correção passou o desvio para o `iconAnchor`, o que torna a
+      coordenada honesta mas não muda **nada do que se vê**: o selo continuava
+      desenhado sobre a Guiana. Quem lê o mapa lê pixels, não a coordenada do
+      marcador.
+
+      Então o desvio sai. O selo é uma contagem do que está debaixo dele, e o
+      lugar de uma contagem é em cima do que ela conta — é assim que os outros
+      agrupamentos deste mapa já se desenham. A bolha maior continua a aparecer
+      como anel em volta, e o tooltip nomeia os dois distritos.
+
+      Regra que fica: nenhum desenho deste mapa inventa coordenada. Quando for
+      preciso afastar alguma coisa do seu lugar — o leque, por exemplo — que
+      haja uma linha ligando ao ponto verdadeiro, dizendo que aquilo é um
+      chamamento e não um sítio.
+    */
+    const selo = L.marker([visiveis[0].lat, visiveis[0].lon], {
       icon: L.divIcon({
         className: "mapa-cluster mapa-cluster--sede",
         html: `<span>${visiveis.length}</span>`,
@@ -10141,6 +10169,14 @@ function drawDSEIBubbles() {
     );
     _layerDSEI.addLayer(selo);
   });
+
+  /*
+    Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
+    e ordenar por população repetiria o que o tamanho da bolha já diz.
+  */
+  renderPainelNacional(
+    noRecorte.sort((a, b) => b.vagas - a.vagas || b.d.pop - a.d.pop),
+  );
 
   drawCasai();
   {

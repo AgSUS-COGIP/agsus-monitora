@@ -64,6 +64,28 @@ jobs:
       - name: Smoke tests
         run: npm run test:smoke
 
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: mbstring, xml, curl, zip
+          coverage: none
+
+      - name: Instalar Laravel
+        run: composer --working-dir=laravel install --no-interaction --prefer-dist
+
+      - name: Preparar páginas e assets do Laravel
+        run: node scripts/package-laravel.mjs
+
+      - name: Testes das rotas PHP
+        run: npm run test:php
+
+      - name: Smoke no servidor Laravel
+        run: npm run test:smoke:laravel
+
+      - name: Verificar imagem de implantação PHP
+        run: docker build -t monitora-laravel:ci .
+
   contrato-rpc-banco:
     name: Contrato de RPC contra o banco de desenvolvimento
     runs-on: ubuntu-latest
