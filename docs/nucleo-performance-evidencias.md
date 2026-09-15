@@ -94,3 +94,18 @@ document.removeEventListener("agsus:nucleo-metric", collect);
   a antiga e a atualização posterior. Nunca duas ativas ao mesmo tempo.
 - Mapas e OAuth permanecem fora desta alteração. O handoff de mapas do PR #10
   foi lido e fica para uma etapa separada.
+
+## Validação desta branch
+
+- `npm run check:architecture`: aprovado.
+- `npm run lint`: aprovado nos nove arquivos JavaScript elegíveis alterados.
+- `npm run format:check`: aprovado.
+- `npm test`: 641 testes aprovados; um benchmark histórico opcional desativado.
+- `npm run build`: aprovado, incluindo segurança do HTML e orçamento de bundles.
+- `npm run test:smoke`: três testes aprovados no Chromium 153 / Playwright 1243.
+
+No Windows local, teste/build usaram o carregador nativo de configuração do
+Vite/Vitest por meio de um adaptador fora do repositório. Nenhuma etapa do build
+foi omitida. O smoke reutilizou explicitamente o preview recém-iniciado deste
+build, depois de encerrar o preview da base anterior. O smoke cobre páginas sem
+sessão; não substitui a medição autenticada descrita acima.
