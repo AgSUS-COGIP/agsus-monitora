@@ -43,6 +43,20 @@ describe("seletor Mapa | Satélite", () => {
     expect(source).toContain('aria-label", "Camada de fundo do mapa"');
   });
 
+  it("limita o mapa entre a escala nacional de 500 km e a aproximação de dezenas de metros", () => {
+    expect(source).toContain("export const MAP_MIN_ZOOM = 5");
+    expect(source).toContain("export const MAP_MAX_ZOOM = 19");
+    expect(source).toContain("minZoom: MAP_MIN_ZOOM");
+    expect(source).toContain("maxZoom: MAP_MAX_ZOOM");
+    expect(source).toContain("map.setMinZoom?.(MAP_MIN_ZOOM)");
+    expect(source).toContain("map.setMaxZoom?.(MAP_MAX_ZOOM)");
+  });
+
+  it("mantém fundo cartográfico disponível no zoom 19 mesmo quando o tile nativo termina em 18", () => {
+    expect(source).toContain("normalized.maxNativeZoom = nativeZoom");
+    expect(source).toContain("maxZoom: MAP_MAX_ZOOM");
+  });
+
   it("é instalado depois do guard do Leaflet e carrega o CSS próprio", () => {
     const guardCall = main.indexOf("installLeafletMapGuard();");
     const switcherCall = main.indexOf("installMapBaseLayerSwitcher();");
