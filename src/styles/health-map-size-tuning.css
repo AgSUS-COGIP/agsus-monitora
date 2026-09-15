@@ -1,0 +1,42 @@
+/*
+  Ajuste posterior ao workspace cartográfico.
+
+  O mapa é o elemento principal desta tela. A altura anterior (64vh, teto 760px)
+  ainda deixava pouco território visível em notebooks e desktops altos. Aumentar
+  a altura também aumenta o Brasil renderizado pelo fitBounds, sem inventar
+  coordenadas nem alterar o recorte geográfico.
+
+  Na visão Brasil, o mapa recebe uma fração maior da largura e a lista de DSEIs
+  continua com espaço suficiente e rolagem própria. Em telas estreitas, o layout
+  responsivo existente continua prevalecendo.
+*/
+#page-dashboard .health-map-workspace {
+  --health-map-height: clamp(520px, 70vh, 840px);
+}
+
+#page-dashboard .health-map-brasil-layout {
+  grid-template-columns:
+    minmax(0, calc(var(--health-map-height) * 1.55))
+    minmax(340px, 1fr);
+}
+
+@media (max-width: 1180px) {
+  #page-dashboard .health-map-workspace {
+    --health-map-height: clamp(500px, 66vh, 720px);
+  }
+
+  #page-dashboard .health-map-brasil-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.85fr);
+  }
+}
+
+@media (max-width: 900px) {
+  #page-dashboard .health-map-workspace {
+    --health-map-height: clamp(460px, 62vh, 620px);
+  }
+
+  #page-dashboard .health-map-brasil-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+}
