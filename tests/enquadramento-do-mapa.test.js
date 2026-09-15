@@ -482,3 +482,42 @@ describe("as cores dos marcadores se separam do mapa", () => {
     }
   });
 });
+
+/*
+  NENHUM DESENHO INVENTA COORDENADA.
+
+  O selo dos DSEIs que partilham sede era posto com
+  `layerPointToLatLng(centro.add(L.point(18, -18)))`. Converter 18px em graus dá
+  1.88° na visão nacional — 209 km — e o selo dos dois distritos de Boa Vista
+  (2.8563, -60.6527, Roraima) aparecia em 4.4209, -59.0849, dentro da Guiana.
+  Medido na aplicação a 15/09/2026.
+
+  O leque é a única exceção, e é uma exceção declarada: ele afasta em pixels
+  mas desenha uma linha até à coordenada verdadeira, dizendo que aquilo é um
+  chamamento e não um sítio.
+*/
+describe("o mapa não inventa coordenadas", () => {
+  const codigo = semComentarios(app);
+
+  it("o selo da sede partilhada fica na própria sede", () => {
+    const bloco = codigo.slice(
+      codigo.indexOf("const selo = L.marker"),
+      codigo.indexOf("_layerDSEI.addLayer(selo)"),
+    );
+    expect(bloco).toContain("L.marker([visiveis[0].lat, visiveis[0].lon]");
+    expect(bloco).not.toContain("layerPointToLatLng");
+    /* Centrado: metade dos 22px do ícone, nos dois eixos. */
+    expect(bloco).toContain("iconAnchor: [11, 11]");
+  });
+
+  it("o único deslocamento que sobra é o do leque, e ele desenha a linha", () => {
+    const usos = codigo.match(/layerPointToLatLng/g) || [];
+    expect(usos).toHaveLength(1);
+    const leque = codigo.slice(
+      codigo.indexOf("function criarLeque"),
+      codigo.indexOf("function criarLeque") + 1400,
+    );
+    expect(leque).toContain("layerPointToLatLng");
+    expect(leque).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
+  });
+});

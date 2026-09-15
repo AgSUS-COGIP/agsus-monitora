@@ -10179,28 +10179,36 @@ function drawDSEIBubbles() {
       : lista;
     if (visiveis.length < 2) return;
     /*
-      O SELO FICA NA SEDE. O DESVIO É DE DESENHO, NÃO DE COORDENADA.
+      O SELO FICA EM CIMA DA SEDE, SEM DESVIO NENHUM.
 
-      Isto convertia 18px numa latitude e numa longitude e punha o marcador
-      nesse ponto inventado. Na visão nacional o mapa tem 9.57px por grau, então
-      os 18px viravam **1.88° ≈ 209 km**: o selo dos dois DSEIs de Boa Vista
+      Isto convertia 18px numa latitude e numa longitude — `layerPointToLatLng`
+      sobre `centro.add(L.point(18, -18))` — e punha o marcador nesse ponto
+      inventado. Na visão nacional o mapa tem 9.57px por grau, portanto os 18px
+      viravam **1.88° ≈ 209 km**: o selo dos dois DSEIs de Boa Vista
       (2.8563, -60.6527, em Roraima) era desenhado em 4.4209, -59.0849 — dentro
       da Guiana. Medido na aplicação a 15/09/2026.
 
-      E era pior do que parece: o desvio em graus muda de tamanho com o zoom,
-      porque 18px valem cada vez menos território à medida que se aproxima.
+      A primeira correção passou o desvio para o `iconAnchor`, o que torna a
+      coordenada honesta mas não muda **nada do que se vê**: o selo continuava
+      desenhado sobre a Guiana. Quem lê o mapa lê pixels, não a coordenada do
+      marcador.
 
-      Agora o marcador está na coordenada verdadeira e quem desloca é o
-      `iconAnchor`: o ponto do ícone que corresponde à posição passa a ser
-      (11-18, 11+18), de modo que o desenho sai 18px à direita e acima. Fica
-      igual em todos os zooms, e nada no mapa afirma um lugar que não existe.
+      Então o desvio sai. O selo é uma contagem do que está debaixo dele, e o
+      lugar de uma contagem é em cima do que ela conta — é assim que os outros
+      agrupamentos deste mapa já se desenham. A bolha maior continua a aparecer
+      como anel em volta, e o tooltip nomeia os dois distritos.
+
+      Regra que fica: nenhum desenho deste mapa inventa coordenada. Quando for
+      preciso afastar alguma coisa do seu lugar — o leque, por exemplo — que
+      haja uma linha ligando ao ponto verdadeiro, dizendo que aquilo é um
+      chamamento e não um sítio.
     */
     const selo = L.marker([visiveis[0].lat, visiveis[0].lon], {
       icon: L.divIcon({
         className: "mapa-cluster mapa-cluster--sede",
         html: `<span>${visiveis.length}</span>`,
         iconSize: [22, 22],
-        iconAnchor: [-7, 29],
+        iconAnchor: [11, 11],
       }),
       keyboard: true,
       title: `${visiveis.length} DSEIs com a mesma sede`,
