@@ -7,8 +7,9 @@ const app = readFileSync("src/analises/analises-app.js", "utf8");
 describe("fila operacional de Analises", () => {
   it("oculta o subtitulo redundante da coluna Vaga", () => {
     expect(css).toContain(
-      ".table-wrap tbody tr:not(.detail-row)>td:nth-child(5) .secondary-text{display:none!important}",
+      ".table-wrap tbody tr:not(.detail-row) > td:nth-child(5) .secondary-text",
     );
+    expect(css).toContain("display: none !important");
   });
 
   it("preserva categoria para filtros e dados internos", () => {
