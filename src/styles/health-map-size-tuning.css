@@ -1,0 +1,68 @@
+/*
+  Ajuste fino do workspace cartografico.
+
+  O mapa e a superficie principal desta tela: ele cresce para baixo e fica com
+  a maior parte da largura. A lista nacional continua presente, mas passa a ser
+  um indice compacto, com rolagem propria.
+*/
+#page-dashboard .health-map-workspace {
+  --health-map-height: clamp(600px, 76vh, 920px);
+  --health-map-painel: clamp(260px, 22%, 320px);
+}
+
+#page-dashboard .health-map-brasil-layout {
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 29%, 440px);
+}
+
+/* A lista ocupa menos largura e mostra mais territorios sem dominar o mapa. */
+#page-dashboard .health-map-units__list {
+  padding: 6px;
+}
+
+#page-dashboard .health-map-unit {
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding: 6px 7px;
+  border-radius: 9px;
+}
+
+#page-dashboard .health-map-unit__icon {
+  width: 26px;
+  height: 26px;
+}
+
+#page-dashboard .health-map-unit strong {
+  font-size: 12px;
+}
+
+#page-dashboard .health-map-unit small,
+#page-dashboard .health-map-unit__type {
+  font-size: 9px;
+}
+
+@media (max-width: 1180px) {
+  #page-dashboard .health-map-workspace {
+    --health-map-height: clamp(560px, 72vh, 780px);
+    --health-map-painel: clamp(250px, 24%, 300px);
+  }
+
+  #page-dashboard .health-map-brasil-layout {
+    grid-template-columns: minmax(0, 1fr) clamp(290px, 31%, 360px);
+  }
+}
+
+@media (max-width: 900px) {
+  #page-dashboard .health-map-workspace {
+    --health-map-height: clamp(500px, 66vh, 680px);
+  }
+
+  #page-dashboard .health-map-brasil-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  #page-dashboard .health-map-units {
+    max-height: 420px;
+  }
+}
