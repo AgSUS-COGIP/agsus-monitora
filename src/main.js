@@ -35,6 +35,7 @@ import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
 import "./styles/health-map-workspace.css";
+import "./styles/health-map-size-tuning.css";
 import "./styles/health-map-immersive-workspace.css";
 import "./styles/map-base-layer-switcher.css";
 import "./styles/system-ui-fixes.css";
