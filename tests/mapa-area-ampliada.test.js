@@ -7,7 +7,9 @@ const css = readFileSync("src/styles/health-map-size-tuning.css", "utf8");
 describe("área ampliada do mapa", () => {
   it("carrega o ajuste depois do workspace base", () => {
     const base = main.indexOf('import "./styles/health-map-workspace.css";');
-    const tuning = main.indexOf('import "./styles/health-map-size-tuning.css";');
+    const tuning = main.indexOf(
+      'import "./styles/health-map-size-tuning.css";',
+    );
     const immersive = main.indexOf(
       'import "./styles/health-map-immersive-workspace.css";',
     );
