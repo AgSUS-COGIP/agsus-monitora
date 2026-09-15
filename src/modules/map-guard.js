@@ -9,6 +9,8 @@ const BRAZIL_VIEW_BOUNDS = BRASIL_BOUNDS;
 // Mantém o Brasil como enquadramento inicial, mas permite navegar pelo contexto
 // geográfico da América do Sul sem criar cópias laterais do mapa.
 const SOUTH_AMERICA_MAX_BOUNDS = NAVEGACAO_BOUNDS;
+const HEALTH_MAP_MIN_ZOOM = 4.5;
+const HEALTH_MAP_OVERVIEW_MAX_ZOOM = 4.5;
 
 const DEFAULT_MAP_OPTIONS = {
   maxBoundsViscosity: 0.82,
@@ -125,10 +127,12 @@ function hardenMapInstance(L, map) {
   if (originalSetMinZoom) {
     map.setMinZoom = function setGuardedMinZoom(value) {
       const requested = Number(value);
-      const allowed = Number.isFinite(requested) ? Math.min(requested, 3) : 3;
+      const allowed = Number.isFinite(requested)
+        ? Math.max(requested, HEALTH_MAP_MIN_ZOOM)
+        : HEALTH_MAP_MIN_ZOOM;
       return originalSetMinZoom(allowed);
     };
-    originalSetMinZoom(3);
+    originalSetMinZoom(HEALTH_MAP_MIN_ZOOM);
   }
 
   /*
@@ -155,7 +159,12 @@ function hardenMapInstance(L, map) {
     const overview = isBrazilOverviewBounds(L, limited);
     const requestedMax = Number(options.maxZoom);
     const maxZoom = overview
-      ? Math.min(Number.isFinite(requestedMax) ? requestedMax : 4, 4)
+      ? Math.min(
+          Number.isFinite(requestedMax)
+            ? requestedMax
+            : HEALTH_MAP_OVERVIEW_MAX_ZOOM,
+          HEALTH_MAP_OVERVIEW_MAX_ZOOM,
+        )
       : Number.isFinite(requestedMax)
         ? requestedMax
         : 8;
@@ -182,7 +191,10 @@ function hardenMapInstance(L, map) {
         duration: 0.35,
         ...options,
         maxZoom: overview
-          ? Math.min(options.maxZoom ?? 4, 4)
+          ? Math.min(
+              options.maxZoom ?? HEALTH_MAP_OVERVIEW_MAX_ZOOM,
+              HEALTH_MAP_OVERVIEW_MAX_ZOOM,
+            )
           : (options.maxZoom ?? 9),
       });
     };
@@ -227,7 +239,7 @@ function hardenMapInstance(L, map) {
       map.invalidateSize({ animate: false, pan: false });
       originalFitBounds(viewBounds, {
         padding: [10, 10],
-        maxZoom: 4,
+        maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM,
         animate: false,
       });
       /* Depois do fit, pela mesma razão explicada em `fitGuardedBounds`. */
@@ -252,7 +264,7 @@ function hardenMapInstance(L, map) {
   */
   map.whenReady(() => {
     originalSetMaxBounds(maxBounds);
-    originalSetMinZoom?.(3);
+    originalSetMinZoom?.(HEALTH_MAP_MIN_ZOOM);
     fitBrazilOverview();
     ensureFullManualZoomRange(map);
     addScaleControl(L, map);
@@ -278,7 +290,10 @@ function hardenMapInstance(L, map) {
   é a prova.
 */
 function emOverview(map) {
-  return Boolean(map.__agsusOverviewMode) && Number(map.getZoom?.() ?? 0) <= 4;
+  return (
+    Boolean(map.__agsusOverviewMode) &&
+    Number(map.getZoom?.() ?? 0) <= HEALTH_MAP_OVERVIEW_MAX_ZOOM
+  );
 }
 
 function observarTamanhoDoCard(map, reenquadrar) {
@@ -345,7 +360,7 @@ function enhanceMapAccessibility(L, map) {
       event.preventDefault();
       map.fitBounds(toViewBounds(L), {
         padding: [10, 10],
-        maxZoom: 4,
+        maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM,
         animate: false,
       });
     }
