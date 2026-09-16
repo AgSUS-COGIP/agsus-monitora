@@ -40,7 +40,12 @@
   width: clamp(92px, 8vw, 112px);
   height: clamp(92px, 8vw, 112px);
   object-fit: contain;
+  transform-origin: 52% 80%;
   filter: drop-shadow(0 8px 12px rgba(15, 74, 132, 0.2));
+}
+
+.arara-assistant.is-speaking .arara-assistant__avatar {
+  animation: araraSpeaking 0.85s ease-in-out infinite alternate;
 }
 
 .arara-assistant__heading {
@@ -186,6 +191,7 @@
 }
 
 .arara-message {
+  position: relative;
   max-width: 92%;
   padding: 8px 10px;
   border-radius: 12px;
@@ -195,8 +201,22 @@
 
 .arara-message--assistant {
   align-self: flex-start;
+  margin-left: 7px;
   background: var(--card, #fff);
   border: 1px solid var(--line, #dbe6ef);
+}
+
+.arara-message--assistant::before {
+  position: absolute;
+  top: 13px;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-bottom: 1px solid var(--line, #dbe6ef);
+  border-left: 1px solid var(--line, #dbe6ef);
+  background: var(--card, #fff);
+  content: "";
+  transform: rotate(45deg);
 }
 
 .arara-message--user {
@@ -214,6 +234,36 @@
 
 .arara-message__body {
   margin: 0;
+}
+
+.arara-message__body--typing::after {
+  display: inline-block;
+  width: 5px;
+  height: 12px;
+  margin-left: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  content: "";
+  vertical-align: -2px;
+  animation: araraCaret 0.7s steps(1) infinite;
+}
+
+.arara-speaking-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 1px 0 5px;
+  color: var(--blue2, #2563eb);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.arara-speaking-status::after {
+  width: 18px;
+  overflow: hidden;
+  content: "•••";
+  letter-spacing: 1px;
+  animation: araraDots 1s steps(4, end) infinite;
 }
 
 .arara-assistant__form {
@@ -297,6 +347,35 @@
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
+}
+
+@keyframes araraSpeaking {
+  from {
+    transform: translateY(0) rotate(-1deg) scale(1);
+  }
+  to {
+    transform: translateY(-3px) rotate(1.5deg) scale(1.025);
+  }
+}
+
+@keyframes araraCaret {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes araraDots {
+  from {
+    width: 0;
+  }
+  to {
+    width: 18px;
+  }
 }
 
 html[data-theme="dark"] .arara-assistant__header {

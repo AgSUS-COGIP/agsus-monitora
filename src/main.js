@@ -31,7 +31,6 @@ import "./styles/nucleo-cronograma-tools.css";
 import "./styles/mobile-app.css";
 import "./styles/mobile-bottom-navigation.css";
 import "./styles/mobile-table-cards.css";
-import "./styles/pwa-lifecycle.css";
 import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
@@ -61,6 +60,7 @@ import { initHealthStatusDetailsRefinement } from "./modules/health-status-detai
 import { initHealthDetailsUx } from "./modules/health-details-ux.js";
 import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fix.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
+import { initAraraSpeakingEffects } from "./modules/arara-speaking-effects.js";
 import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
 import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
 import {
@@ -93,6 +93,7 @@ installFrontendPerformanceMonitor();
 installCspReportMonitor();
 initLoadingExperience();
 initVisualPolish();
+initAraraSpeakingEffects();
 initHealthIndigenousEnhancements();
 initHealthDashboardRefinementsSafe();
 initHealthDashboardInteractionFixes();
