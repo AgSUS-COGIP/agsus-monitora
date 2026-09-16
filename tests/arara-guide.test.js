@@ -5,7 +5,7 @@ import {
   updateAraraGuide,
 } from "../src/modules/arara-guide.js";
 
-describe("assistente Nina", () => {
+describe("assistente Aya", () => {
   beforeEach(() => {
     document.body.innerHTML = '<div id="host"></div>';
     window.localStorage.clear();
@@ -28,11 +28,11 @@ describe("assistente Nina", () => {
     expect(guide.textContent).toContain("DSEI");
   });
 
-  it("usa a primeira fala para apresentar a Nina e a seção", () => {
+  it("usa a primeira fala para apresentar a Aya e a seção", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
 
-    expect(guide.textContent).toContain("Eu sou a Nina");
+    expect(guide.textContent).toContain("Eu sou a Aya");
     expect(guide.textContent).toContain("Saúde Indígena");
     expect(guide.querySelector(".arara-assistant__header")).toBeNull();
     expect(guide.querySelector(".arara-stepper")).toBeNull();
@@ -47,7 +47,7 @@ describe("assistente Nina", () => {
     expect(guide.textContent).not.toContain("não altera registros");
   });
 
-  it("marca a própria Nina como alça para mover o painel", () => {
+  it("marca a própria Aya como alça para mover o painel", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "", host);
 

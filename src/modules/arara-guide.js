@@ -25,7 +25,7 @@ const GUIDES = Object.freeze({
   dashboard: {
     title: "Saúde Indígena",
     intro:
-      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você na Saúde Indígena e posso conversar sobre editais, DSEIs, CASAIs, mapa, filtros, indicadores e territórios. O que você quer saber?",
+      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você na Saúde Indígena e posso conversar sobre editais, DSEIs, CASAIs, mapa, filtros, indicadores e territórios. O que você quer saber?",
     topics: [
       {
         label: "Mapa",
@@ -64,7 +64,7 @@ const GUIDES = Object.freeze({
   nucleo: {
     title: "Equipe Núcleo",
     intro:
-      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você na Equipe Núcleo e posso ajudar a localizar editais, entender etapas, cronogramas e ações disponíveis. O que você quer saber?",
+      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você na Equipe Núcleo e posso ajudar a localizar editais, entender etapas, cronogramas e ações disponíveis. O que você quer saber?",
     topics: [
       {
         label: "Processos",
@@ -83,7 +83,7 @@ const GUIDES = Object.freeze({
   config: {
     title: "Configurações",
     intro:
-      "Olá! Eu sou a Nina, assistente do MONITORA. Nesta área posso explicar acessos, identidade visual e ajustes administrativos disponíveis para o seu perfil. O que você quer fazer?",
+      "Olá! Eu sou a Aya, assistente do MONITORA. Nesta área posso explicar acessos, identidade visual e ajustes administrativos disponíveis para o seu perfil. O que você quer fazer?",
     topics: [
       {
         label: "Acessos",
@@ -109,7 +109,7 @@ const GUIDES = Object.freeze({
   analises: {
     title: "Análises",
     intro:
-      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você em Análises curriculares e posso ajudar com filtros, gráfico, fila operacional e leitura do recorte atual. O que você quer entender?",
+      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você em Análises curriculares e posso ajudar com filtros, gráfico, fila operacional e leitura do recorte atual. O que você quer entender?",
     topics: [
       {
         label: "Fila",
@@ -150,7 +150,7 @@ function genericGuide(title) {
   const sectionTitle = title || "esta seção";
   return {
     title: sectionTitle,
-    intro: `Olá! Eu sou a Nina, assistente do MONITORA. Estou com você em ${sectionTitle} e posso explicar o que estiver disponível nesta tela. O que você quer saber?`,
+    intro: `Olá! Eu sou a Aya, assistente do MONITORA. Estou com você em ${sectionTitle} e posso explicar o que estiver disponível nesta tela. O que você quer saber?`,
     topics: [
       {
         label: "Ajuda",
@@ -185,7 +185,7 @@ function scoreTopic(question, topic) {
 export function answerAraraQuestion(section, title, question) {
   const content = guideForSection(section, title);
   const normalized = normalizeText(question);
-  if (!normalized) return "Escreva sua pergunta para a Nina.";
+  if (!normalized) return "Escreva sua pergunta para a Aya.";
 
   const topics = [...content.topics, ...GLOBAL_TOPICS];
   const best = topics
@@ -230,7 +230,7 @@ function appendMessage(state, role, text) {
     state.doc,
     "strong",
     "arara-message__author",
-    role === "user" ? "Você" : "Nina",
+    role === "user" ? "Você" : "Aya",
   );
   const body = element(state.doc, "p", "arara-message__body", text);
   message.append(author, body);
@@ -268,7 +268,7 @@ function createAssistant(host) {
   const win = doc.defaultView || window;
   const root = element(doc, "section", "arara-assistant");
   root.dataset.araraGuide = "";
-  root.setAttribute("aria-label", "Assistente Nina");
+  root.setAttribute("aria-label", "Assistente Aya");
 
   const panel = element(doc, "div", "arara-assistant__panel");
   const body = element(doc, "div", "arara-assistant__body");
@@ -282,16 +282,16 @@ function createAssistant(host) {
     doc,
     "button",
     "arara-assistant__hide",
-    "Ocultar Nina",
+    "Ocultar Aya",
   );
   hideButton.type = "button";
-  hideButton.setAttribute("aria-label", "Ocultar Nina");
+  hideButton.setAttribute("aria-label", "Ocultar Aya");
 
   const scene = element(doc, "div", "arara-assistant__scene");
   const avatar = doc.createElement("img");
   avatar.className = "arara-assistant__avatar";
   avatar.src = "/assets/arara-azul-monitora.png";
-  avatar.alt = "Nina, assistente do MONITORA";
+  avatar.alt = "Aya, assistente do MONITORA";
   avatar.width = 220;
   avatar.height = 250;
   avatar.dataset.ninaDragHandle = "";
@@ -307,12 +307,12 @@ function createAssistant(host) {
     doc,
     "label",
     "arara-visually-hidden",
-    "Pergunta para a Nina",
+    "Pergunta para a Aya",
   );
   const input = doc.createElement("input");
   input.className = "arara-assistant__input";
   input.type = "text";
-  input.placeholder = "Pergunte para a Nina...";
+  input.placeholder = "Pergunte para a Aya...";
   input.autocomplete = "off";
   inputLabel.htmlFor = "araraAssistantInput";
   input.id = "araraAssistantInput";
@@ -335,14 +335,14 @@ function createAssistant(host) {
 
   const launcher = element(doc, "button", "arara-assistant__launcher");
   launcher.type = "button";
-  launcher.setAttribute("aria-label", "Mostrar Nina");
+  launcher.setAttribute("aria-label", "Mostrar Aya");
   launcher.dataset.araraShow = "";
   const launcherAvatar = doc.createElement("img");
   launcherAvatar.src = "/assets/arara-azul-monitora.png";
   launcherAvatar.alt = "";
   launcherAvatar.width = 56;
   launcherAvatar.height = 56;
-  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Nina"));
+  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Aya"));
 
   root.append(panel, launcher);
   host.append(root);

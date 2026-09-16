@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import {
-  answerNinaInstitutionalQuestion,
+  answerAyaInstitutionalQuestion,
   araraAssistantName,
   araraOpeningMessage,
   araraSpeechDuration,
@@ -12,7 +12,7 @@ import {
 const source = readFileSync("src/modules/arara-speaking-effects.js", "utf8");
 const css = readFileSync("src/styles/arara-guide.css", "utf8");
 
-describe("efeito de fala da Nina", () => {
+describe("efeito de fala da Aya", () => {
   it("usa duração curta mas perceptível e limita respostas longas", () => {
     expect(araraSpeechDuration("Oi")).toBe(650);
     expect(araraSpeechDuration("a".repeat(400))).toBe(3400);
@@ -27,16 +27,16 @@ describe("efeito de fala da Nina", () => {
     ).toBe(false);
   });
 
-  it("usa Nina como nome único da assistente", () => {
-    expect(araraAssistantName()).toBe("Nina");
-    expect(source).toContain('const ASSISTANT_NAME = "Nina"');
+  it("usa Aya como nome único da assistente", () => {
+    expect(araraAssistantName()).toBe("Aya");
+    expect(source).toContain('const ASSISTANT_NAME = "Aya"');
     expect(source).toContain("${ASSISTANT_NAME} está falando");
   });
 
   it("abre Saúde Indígena como conversa e se apresenta pelo nome", () => {
     const opening = araraOpeningMessage("dashboard", "Saúde Indígena");
     expect(opening).toContain("Olá!");
-    expect(opening).toContain("Eu sou a Nina");
+    expect(opening).toContain("Eu sou a Aya");
     expect(opening).toContain("Você está em Saúde Indígena");
     expect(opening).toContain("O que você quer ver primeiro?");
     expect(opening).not.toContain("Aqui você acompanha processos seletivos");
@@ -53,7 +53,7 @@ describe("efeito de fala da Nina", () => {
   });
 
   it("explica Terra Indígena sem confundir com DSEI", () => {
-    const answer = answerNinaInstitutionalQuestion(
+    const answer = answerAyaInstitutionalQuestion(
       "Qual a diferença entre Terra Indígena e DSEI?",
     );
     expect(answer).toContain("não é a mesma coisa que um DSEI");
@@ -61,10 +61,10 @@ describe("efeito de fala da Nina", () => {
   });
 
   it("explica DSEI e CASAI", () => {
-    expect(answerNinaInstitutionalQuestion("O que é DSEI?")).toContain(
+    expect(answerAyaInstitutionalQuestion("O que é DSEI?")).toContain(
       "Distrito Sanitário Especial Indígena",
     );
-    expect(answerNinaInstitutionalQuestion("O que é CASAI?")).toContain(
+    expect(answerAyaInstitutionalQuestion("O que é CASAI?")).toContain(
       "Casa de Saúde Indígena",
     );
   });
@@ -79,7 +79,7 @@ describe("efeito de fala da Nina", () => {
         </tr>
       </tbody></table>
     `);
-    const answer = answerNinaInstitutionalQuestion(
+    const answer = answerAyaInstitutionalQuestion(
       "Quais editais aparecem aqui?",
       dom.window.document,
     );
@@ -94,7 +94,7 @@ describe("efeito de fala da Nina", () => {
         <small>10 vagas · 2 ociosas</small>
       </button>
     `);
-    const answer = answerNinaInstitutionalQuestion(
+    const answer = answerAyaInstitutionalQuestion(
       "Quais DSEIs aparecem no mapa?",
       dom.window.document,
     );
@@ -108,7 +108,7 @@ describe("efeito de fala da Nina", () => {
     expect(source).toContain("pointermove");
     expect(source).toContain("LAUNCHER_POSITION_STORAGE_KEY");
     expect(source).toContain("writeLauncherPosition");
-    expect(source).toContain("Clique para abrir a Nina ou arraste para mover");
+    expect(source).toContain("Clique para abrir a Aya ou arraste para mover");
   });
 
   it("mostra estado de fala e revela texto progressivamente", () => {
