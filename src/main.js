@@ -62,6 +62,7 @@ import { initHealthDetailsUx } from "./modules/health-details-ux.js";
 import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fix.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import { initAraraSpeakingEffects } from "./modules/arara-speaking-effects.js";
+import { initNinaPanelDrag } from "./modules/nina-panel-drag.js";
 import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
 import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
 import {
@@ -96,6 +97,7 @@ installCspReportMonitor();
 initLoadingExperience();
 initVisualPolish();
 initAraraSpeakingEffects();
+initNinaPanelDrag();
 initHealthIndigenousEnhancements();
 initHealthDashboardRefinementsSafe();
 initHealthDashboardInteractionFixes();
