@@ -2,8 +2,7 @@ const PANEL_POSITION_STORAGE_KEY = "agsus_monitora_nina_panel_position_v1";
 
 const INTERACTIVE_SELECTOR =
   'button, input, textarea, select, a, [contenteditable="true"], .arara-assistant__messages';
-const OPEN_DRAG_SELECTOR =
-  "[data-nina-drag-handle], .arara-assistant__panel";
+const OPEN_DRAG_SELECTOR = "[data-nina-drag-handle], .arara-assistant__panel";
 const LAUNCHER_SELECTOR = ".arara-assistant__launcher";
 const DRAG_THRESHOLD_PX = 4;
 
