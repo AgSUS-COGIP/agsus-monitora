@@ -31,7 +31,6 @@ import "./styles/nucleo-cronograma-tools.css";
 import "./styles/mobile-app.css";
 import "./styles/mobile-bottom-navigation.css";
 import "./styles/mobile-table-cards.css";
-import "./styles/pwa-lifecycle.css";
 import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
