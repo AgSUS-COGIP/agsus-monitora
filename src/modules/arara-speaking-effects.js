@@ -4,7 +4,8 @@ const conversationMemory = new WeakMap();
 const draggableLaunchers = new WeakSet();
 
 const ASSISTANT_NAME = "Nina";
-const LAUNCHER_POSITION_STORAGE_KEY = "agsus_monitora_nina_launcher_position_v1";
+const LAUNCHER_POSITION_STORAGE_KEY =
+  "agsus_monitora_nina_launcher_position_v1";
 const MIN_DURATION_MS = 650;
 const MAX_DURATION_MS = 3400;
 const MS_PER_CHARACTER = 18;
@@ -275,11 +276,7 @@ function readLauncherPosition(win) {
     const parsed = JSON.parse(
       win.localStorage.getItem(LAUNCHER_POSITION_STORAGE_KEY) || "null",
     );
-    if (
-      parsed &&
-      Number.isFinite(parsed.left) &&
-      Number.isFinite(parsed.top)
-    ) {
+    if (parsed && Number.isFinite(parsed.left) && Number.isFinite(parsed.top)) {
       return parsed;
     }
   } catch {
