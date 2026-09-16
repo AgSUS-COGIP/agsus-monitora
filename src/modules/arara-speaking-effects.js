@@ -5,6 +5,17 @@ const MIN_DURATION_MS = 650;
 const MAX_DURATION_MS = 3400;
 const MS_PER_CHARACTER = 18;
 
+const OPENING_MESSAGES = Object.freeze({
+  dashboard:
+    "Olá! Você está em Saúde Indígena. Posso te ajudar a entender o mapa, os filtros ou os indicadores. O que você quer ver primeiro?",
+  nucleo:
+    "Olá! Você está em Equipe Núcleo. Posso te ajudar a localizar um processo, entender o cronograma ou orientar uma edição. Por onde começamos?",
+  config:
+    "Olá! Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
+  analises:
+    "Olá! Você está em Análises. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
+});
+
 export function araraSpeechDuration(text) {
   const length = String(text || "").trim().length;
   if (!length) return 0;
@@ -16,6 +27,16 @@ export function araraSpeechDuration(text) {
 
 export function shouldAnimateAraraSpeech({ text = "", reducedMotion = false }) {
   return Boolean(String(text).trim()) && !reducedMotion;
+}
+
+export function araraOpeningMessage(section, title = "") {
+  if (section === "analises" || /an[aá]lises/i.test(title)) {
+    return OPENING_MESSAGES.analises;
+  }
+  if (OPENING_MESSAGES[section]) return OPENING_MESSAGES[section];
+
+  const sectionName = String(title || "esta seção").trim() || "esta seção";
+  return `Olá! Você está em ${sectionName}. Posso explicar os recursos desta tela e te orientar no próximo passo. O que você quer fazer?`;
 }
 
 function prefersReducedMotion(win) {
@@ -43,10 +64,31 @@ function cancelActiveAnimation(root, reveal = true) {
   activeAnimations.delete(root);
 }
 
+function isOpeningMessage(root, body) {
+  const message = body.closest(".arara-message--assistant");
+  const messages = message?.parentElement;
+  if (!message || !messages) return false;
+
+  return (
+    messages.querySelector(".arara-message--assistant") === message &&
+    !messages.querySelector(".arara-message--user")
+  );
+}
+
+function assistantText(root, body) {
+  if (isOpeningMessage(root, body)) {
+    const section = root.dataset.section || "";
+    const title = root.querySelector(".arara-assistant__section")?.textContent || "";
+    return araraOpeningMessage(section, title);
+  }
+  return String(body.textContent || "").trim();
+}
+
 function animateAssistantBody(root, body) {
   if (body.dataset.araraSpeechEnhanced === "1") return;
 
-  const fullText = String(body.textContent || "").trim();
+  const fullText = assistantText(root, body);
+  body.textContent = fullText;
   body.dataset.araraSpeechEnhanced = "1";
   const win = body.ownerDocument.defaultView || window;
 
@@ -67,7 +109,7 @@ function animateAssistantBody(root, body) {
   const status = body.ownerDocument.createElement("span");
   status.className = "arara-speaking-status";
   status.setAttribute("aria-hidden", "true");
-  status.textContent = "Arara está respondendo";
+  status.textContent = "Arara está falando";
   message.insertBefore(status, body);
 
   body.textContent = "";
