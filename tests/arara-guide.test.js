@@ -5,6 +5,7 @@ import {
   updateAraraGuide,
 } from "../src/modules/arara-guide.js";
 
+// Mantém a experiência da Arara coberta por regressões de interação e segurança.
 describe("assistente Arara Azul", () => {
   beforeEach(() => {
     document.body.innerHTML = '<div id="host"></div>';
