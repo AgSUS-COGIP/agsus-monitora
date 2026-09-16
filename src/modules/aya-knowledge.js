@@ -110,8 +110,8 @@ function compactList(values, limit = 10, maxLength = 180) {
 export function sanitizeAyaContext(rawContext = {}) {
   return {
     pathname: String(rawContext.pathname || "").slice(0, 160),
-    dseis: compactList(rawContext.dseis, 12),
-    editais: compactList(rawContext.editais, 12),
+    dseis: compactList(rawContext.dseis, 10),
+    editais: compactList(rawContext.editais, 10),
   };
 }
 
