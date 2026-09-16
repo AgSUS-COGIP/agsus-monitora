@@ -109,13 +109,13 @@ const GUIDES = Object.freeze({
   analises: {
     title: "Análises",
     intro:
-      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você em Análises e posso ajudar com filtros, gráfico, fila operacional e leitura do recorte atual. O que você quer entender?",
+      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você em Análises curriculares e posso ajudar com filtros, gráfico, fila operacional e leitura do recorte atual. O que você quer entender?",
     topics: [
       {
         label: "Fila",
         keywords: ["fila", "candidato", "status", "detalhes", "registro"],
         answer:
-          "Use a busca para localizar um registro e abra Detalhes quando precisar conferir as informações completas. Interprete o status sempre dentro dos filtros ativos.",
+          "Na fila operacional, use a busca para localizar um registro e abra Detalhes quando precisar conferir as informações completas. Interprete o status sempre dentro dos filtros ativos.",
       },
       {
         label: "Gráfico",
