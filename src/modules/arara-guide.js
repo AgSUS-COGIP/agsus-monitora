@@ -41,7 +41,14 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Como usar o mapa?",
-        keywords: ["mapa", "dsei", "territorio", "zoom", "satélite", "satelite"],
+        keywords: [
+          "mapa",
+          "dsei",
+          "territorio",
+          "zoom",
+          "satélite",
+          "satelite",
+        ],
         answer:
           "Na visão nacional, clique em um DSEI para abrir seus polos e unidades. Use Mapa/Satélite apenas para trocar o fundo cartográfico. O zoom muda a escala, mas não altera a coordenada real das sedes. Para comparar outro território, volte à visão Brasil.",
       },
@@ -53,7 +60,14 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Como interpretar os indicadores?",
-        keywords: ["indicador", "kpi", "vagas", "ociosas", "contratados", "criticos"],
+        keywords: [
+          "indicador",
+          "kpi",
+          "vagas",
+          "ociosas",
+          "contratados",
+          "criticos",
+        ],
         answer:
           "Os KPIs resumem o recorte atual: processos, vagas previstas, contratações, vagas ociosas, processos críticos e inscritos. Eles devem ser lidos junto com os filtros e com a lista detalhada, não isoladamente.",
       },
@@ -103,7 +117,14 @@ const GUIDES = Object.freeze({
     topics: [
       {
         label: "O que posso configurar?",
-        keywords: ["configurar", "configuracao", "configuração", "alterar", "opcoes", "opções"],
+        keywords: [
+          "configurar",
+          "configuracao",
+          "configuração",
+          "alterar",
+          "opcoes",
+          "opções",
+        ],
         answer:
           "As configurações controlam textos, identidade visual, avisos, parâmetros de acesso e outros ajustes administrativos. O que aparece para você depende do seu perfil.",
       },
@@ -115,7 +136,14 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Como funcionam os acessos?",
-        keywords: ["acesso", "usuario", "usuário", "permissao", "permissão", "painel"],
+        keywords: [
+          "acesso",
+          "usuario",
+          "usuário",
+          "permissao",
+          "permissão",
+          "painel",
+        ],
         answer:
           "Os acessos são administrados conforme o perfil do usuário e os painéis permitidos. Antes de aprovar ou revogar algo, confirme a pessoa, o perfil e os painéis envolvidos.",
       },
@@ -146,13 +174,27 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Como usar os filtros?",
-        keywords: ["filtro", "edital", "unidade", "status", "periodo", "período"],
+        keywords: [
+          "filtro",
+          "edital",
+          "unidade",
+          "status",
+          "periodo",
+          "período",
+        ],
         answer:
           "Use os filtros para reduzir o universo analisado antes de comparar resultados. Depois confira o contador de registros pesquisados e a data de atualização para saber exatamente qual recorte está na tela.",
       },
       {
         label: "O que o gráfico mostra?",
-        keywords: ["grafico", "gráfico", "linha", "tempo", "evolucao", "evolução"],
+        keywords: [
+          "grafico",
+          "gráfico",
+          "linha",
+          "tempo",
+          "evolucao",
+          "evolução",
+        ],
         answer:
           "O gráfico mostra a evolução do volume de registros ao longo do tempo no recorte atual. Use-o para perceber picos e quedas; para explicar um ponto específico, confirme os filtros e consulte os registros daquele período.",
       },
@@ -195,8 +237,9 @@ function genericGuide(title) {
 }
 
 export function guideForSection(section, title = "") {
-  if (section.startsWith("panel:") && /an[aá]lises/i.test(title))
+  if (section.startsWith("panel:") && /an[aá]lises/i.test(title)) {
     return GUIDES.analises;
+  }
   return GUIDES[section] || genericGuide(title);
 }
 
@@ -351,7 +394,12 @@ function createAssistant(host) {
     "arara-assistant__eyebrow",
     "Assistente do MONITORA",
   );
-  const titleNode = element(doc, "strong", "arara-assistant__title", "Arara Azul");
+  const titleNode = element(
+    doc,
+    "strong",
+    "arara-assistant__title",
+    "Arara Azul",
+  );
   const sectionBadge = element(doc, "span", "arara-assistant__section");
   heading.append(eyebrow, titleNode, sectionBadge);
 
@@ -407,7 +455,12 @@ function createAssistant(host) {
   input.autocomplete = "off";
   inputLabel.htmlFor = "araraAssistantInput";
   input.id = "araraAssistantInput";
-  const sendButton = element(doc, "button", "arara-assistant__send", "Enviar");
+  const sendButton = element(
+    doc,
+    "button",
+    "arara-assistant__send",
+    "Enviar",
+  );
   sendButton.type = "submit";
   form.append(inputLabel, input, sendButton);
 
@@ -442,7 +495,10 @@ function createAssistant(host) {
   launcherAvatar.alt = "";
   launcherAvatar.width = 56;
   launcherAvatar.height = 56;
-  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Arara"));
+  launcher.append(
+    launcherAvatar,
+    element(doc, "span", "", "Mostrar Arara"),
+  );
 
   root.append(panel, launcher);
   host.append(root);
