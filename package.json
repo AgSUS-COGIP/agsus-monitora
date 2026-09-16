@@ -24,7 +24,10 @@
     "db:validar-recusar": "node scripts/validar-migration-recusar.mjs",
     "db:capturar-baseline": "node scripts/capturar-baseline-rpcs.mjs",
     "db:validar-branding": "node scripts/validar-migration-branding.mjs",
-    "medir:cronograma": "node scripts/medir-cronograma.mjs"
+    "medir:cronograma": "node scripts/medir-cronograma.mjs",
+    "build:laravel": "npm run build && node scripts/package-laravel.mjs",
+    "test:php": "composer --working-dir=laravel test",
+    "test:smoke:laravel": "node scripts/test-laravel-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",

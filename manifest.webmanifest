@@ -1,6 +1,6 @@
 {
-  "name": "AgSUS Monitora",
-  "short_name": "Monitora",
+  "name": "MONITORA",
+  "short_name": "MONITORA",
   "description": "Painel de monitoramento e análises da AgSUS.",
   "id": "/",
   "start_url": "/",
