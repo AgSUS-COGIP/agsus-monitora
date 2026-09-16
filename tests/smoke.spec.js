@@ -25,7 +25,7 @@ test.describe("AgSUS Monitora smoke", () => {
     await expectNoSupabaseCdn(request, "/");
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveTitle(/MONITORA/);
+    await expect(page).toHaveTitle("MONITORA");
     await expect(page.locator("#loginScreen")).toBeVisible();
     await expect(page.locator("#googleLoginBtn")).toBeVisible();
     await expect(page.locator("#appScreen")).toBeAttached();
@@ -44,7 +44,7 @@ test.describe("AgSUS Monitora smoke", () => {
     await expectNoSupabaseCdn(request, "/analises.html");
     await page.goto("/analises.html", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveTitle(/MONITORA Análises/);
+    await expect(page).toHaveTitle("MONITORA");
     await expect(page.locator("h1")).toContainText("MONITORA Análises");
     const guide = page.locator("[data-arara-guide]");
     await expect(guide).toHaveCount(1);

@@ -3,11 +3,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   FAVICON_PADRAO,
   aplicarFaviconDaMarca,
-  comporTitulo,
   definirPaginaDaAba,
   definirSistemaDaAba,
   escreverFavicon,
-  reiniciarIdentidadeDaAba,
 } from "../src/lib/identidade-da-aba.js";
 
 const html = readFileSync("index.html", "utf8");
@@ -27,53 +25,14 @@ const semComentarios = (fonte) =>
   publicada**. A cada aplicação da configuração o nome da página virava uma
   string de versão. Era isso que fazia o título "voltar".
 */
-describe("o nome da aba", () => {
-  beforeEach(() => {
-    reiniciarIdentidadeDaAba();
-    document.title = "";
-  });
-
-  it("junta página e sistema, descartando o que falta", () => {
-    expect(comporTitulo("Saúde Indígena", "AgSUS Monitora")).toBe(
-      "Saúde Indígena - AgSUS Monitora",
-    );
-    expect(comporTitulo("Saúde Indígena", "")).toBe("Saúde Indígena");
-    expect(comporTitulo("", "AgSUS Monitora")).toBe("AgSUS Monitora");
-    expect(comporTitulo("  ", null)).toBe("");
-  });
-
-  /*
-    O caso que estava quebrado: a configuração chega DEPOIS da primeira
-    navegação. Antes, ela sobrescrevia o título inteiro; agora troca só a
-    metade dela e a página sobrevive.
-  */
-  it("a configuração que chega depois não apaga o nome da página", () => {
-    definirPaginaDaAba("Saúde Indígena");
-    expect(document.title).toBe("Saúde Indígena");
-
-    definirSistemaDaAba("AgSUS Monitora");
-    expect(document.title).toBe("Saúde Indígena - AgSUS Monitora");
-  });
-
-  it("navegar depois da configuração também compõe as duas metades", () => {
-    definirSistemaDaAba("AgSUS Monitora");
-    definirPaginaDaAba("Configurações");
-    expect(document.title).toBe("Configurações - AgSUS Monitora");
-  });
-
-  it("mudar de página troca só a metade da página", () => {
-    definirSistemaDaAba("AgSUS Monitora");
-    definirPaginaDaAba("Saúde Indígena");
-    definirPaginaDaAba("Análises");
-    expect(document.title).toBe("Análises - AgSUS Monitora");
-  });
-
-  it("nunca escreve um título vazio por cima do que existe", () => {
-    definirPaginaDaAba("Saúde Indígena");
-    definirSistemaDaAba("AgSUS Monitora");
-    reiniciarIdentidadeDaAba();
-    definirPaginaDaAba("");
-    expect(document.title).toBe("Saúde Indígena - AgSUS Monitora");
+describe("a aba identifica MONITORA", () => {
+  it("mantém a marca ao navegar e receber configuração antiga", () => {
+    for (const section of ["Saúde Indígena", "Equipe Núcleo", "Configurações", "Análises", ""]) {
+      definirPaginaDaAba(section);
+      expect(document.title).toBe("MONITORA");
+      definirSistemaDaAba("AgSUS Monitora Web V2.9.35");
+      expect(document.title).toBe("MONITORA");
+    }
   });
 });
 

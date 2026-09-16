@@ -23,6 +23,19 @@ npm run build:laravel
 php laravel/artisan serve --host=127.0.0.1 --port=8000
 ```
 
+`npm run dev` é o caminho padrão: compila e inicia o Laravel em `localhost:8000`.
+Depois de editar o cliente, repita o build. `npm run dev:frontend` mantém o Vite
+isolado para trabalho visual; esse modo não valida PHP.
+
+Com Docker, `docker compose up --build -d` inicia o sistema completo no servidor
+PHP/Apache em `localhost:8000`, com verificação de saúde. A porta fica restrita
+ao computador local até que seja definida a hospedagem e o proxy HTTPS.
+As variáveis públicas Supabase são lidas do ambiente ou do `.env` local no build.
+Não use chave administrativa nesse arquivo. `docker compose down` encerra o serviço.
+
+O CI também inicia a imagem e executa o smoke contra PHP/Apache, para não confundir
+aprovação do preview estático com execução do Laravel.
+
 Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` no ambiente do
 build, como antes. Sem essas variáveis a interface informa que a conexão não está
 configurada. O arquivo `laravel/.env.example` documenta a configuração PHP; copie

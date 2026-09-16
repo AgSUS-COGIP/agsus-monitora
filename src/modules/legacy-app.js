@@ -1,5 +1,6 @@
 import { renderNucleoTable } from "../lib/nucleo-table-render.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { updateAraraGuide } from "./arara-guide.js";
 import {
   getOAuthCallbackUrl,
   isUsableSession,
@@ -2486,6 +2487,7 @@ function setPageTitle(title, sub) {
   $("pageSubtitle").textContent = sub;
   // O nome da aba tem um dono só; aqui entra apenas a metade da página.
   definirPaginaDaAba(title);
+  updateAraraGuide(currentView, title, document.getElementById("araraGuideHost"));
 }
 
 function isSidebarLockedViewport() {
