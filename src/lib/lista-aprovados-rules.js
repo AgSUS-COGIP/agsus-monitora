@@ -60,3 +60,4 @@ export function uniqueCandidateCargos(rows) {
   return [...new Set((rows || []).map((row) => text(row.cargo)).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
+
