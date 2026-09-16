@@ -1,5 +1,12 @@
 const PANEL_POSITION_STORAGE_KEY = "agsus_monitora_nina_panel_position_v1";
 
+const INTERACTIVE_SELECTOR =
+  'button, input, textarea, select, a, [contenteditable="true"], .arara-assistant__messages';
+const OPEN_DRAG_SELECTOR =
+  "[data-nina-drag-handle], .arara-assistant__panel";
+const LAUNCHER_SELECTOR = ".arara-assistant__launcher";
+const DRAG_THRESHOLD_PX = 4;
+
 function readPosition(win) {
   try {
     const parsed = JSON.parse(
@@ -45,43 +52,85 @@ function applyPosition(win, host, position) {
   host.style.bottom = "auto";
 }
 
+function keepInsideViewport(win, host, persist = true) {
+  if (!host) return;
+  const rect = host.getBoundingClientRect();
+  const position = clampPosition(win, host, rect.left, rect.top);
+  applyPosition(win, host, position);
+  if (persist) writePosition(win, position);
+}
+
+function resolveDragTarget(event, doc) {
+  const target = event.target;
+  if (!(target instanceof doc.defaultView.Element)) return null;
+
+  const launcher = target.closest(LAUNCHER_SELECTOR);
+  if (launcher) {
+    return { handle: launcher, launcher: true };
+  }
+
+  if (target.closest(INTERACTIVE_SELECTOR)) return null;
+
+  const handle = target.closest(OPEN_DRAG_SELECTOR);
+  if (!handle) return null;
+  return { handle, launcher: false };
+}
+
 export function initNinaPanelDrag(doc = document) {
   const win = doc.defaultView || window;
   let drag = null;
+  let suppressLauncherClickUntil = 0;
 
   const initialHost = doc.getElementById("araraGuideHost");
   if (initialHost) applyPosition(win, initialHost, readPosition(win));
 
   doc.addEventListener("pointerdown", (event) => {
-    const handle = event.target.closest?.("[data-nina-drag-handle]");
-    if (!handle || event.button !== 0) return;
+    if (event.button !== 0) return;
+
+    const dragTarget = resolveDragTarget(event, doc);
+    if (!dragTarget) return;
 
     const host =
-      handle.closest("#araraGuideHost") || doc.getElementById("araraGuideHost");
-    const root = handle.closest("[data-arara-guide]");
-    if (!host || !root || root.classList.contains("is-hidden")) return;
+      dragTarget.handle.closest("#araraGuideHost") ||
+      doc.getElementById("araraGuideHost");
+    const root =
+      dragTarget.handle.closest("[data-arara-guide]") ||
+      host?.querySelector("[data-arara-guide]");
+    if (!host || !root) return;
+    if (root.classList.contains("is-hidden") && !dragTarget.launcher) return;
 
     const rect = host.getBoundingClientRect();
     drag = {
       host,
+      root,
+      handle: dragTarget.handle,
+      launcher: dragTarget.launcher,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
       startLeft: rect.left,
       startTop: rect.top,
+      moved: false,
     };
-    handle.setPointerCapture?.(event.pointerId);
+    dragTarget.handle.setPointerCapture?.(event.pointerId);
     root.classList.add("is-panel-dragging");
     event.preventDefault();
   });
 
   doc.addEventListener("pointermove", (event) => {
     if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    if (Math.hypot(deltaX, deltaY) >= DRAG_THRESHOLD_PX) {
+      drag.moved = true;
+    }
+
     const position = clampPosition(
       win,
       drag.host,
-      drag.startLeft + event.clientX - drag.startX,
-      drag.startTop + event.clientY - drag.startY,
+      drag.startLeft + deltaX,
+      drag.startTop + deltaY,
     );
     applyPosition(win, drag.host, position);
     event.preventDefault();
@@ -89,25 +138,50 @@ export function initNinaPanelDrag(doc = document) {
 
   const finish = (event) => {
     if (!drag || drag.pointerId !== event.pointerId) return;
-    const root = drag.host.querySelector("[data-arara-guide]");
-    root?.classList.remove("is-panel-dragging");
-    const rect = drag.host.getBoundingClientRect();
-    const position = clampPosition(win, drag.host, rect.left, rect.top);
-    applyPosition(win, drag.host, position);
-    writePosition(win, position);
+
+    drag.root.classList.remove("is-panel-dragging");
+    drag.handle.releasePointerCapture?.(event.pointerId);
+    keepInsideViewport(win, drag.host, true);
+
+    if (drag.launcher && drag.moved) {
+      suppressLauncherClickUntil = Date.now() + 500;
+    }
     drag = null;
   };
 
   doc.addEventListener("pointerup", finish);
   doc.addEventListener("pointercancel", finish);
 
+  doc.addEventListener(
+    "click",
+    (event) => {
+      if (Date.now() > suppressLauncherClickUntil) return;
+      if (!event.target.closest?.(LAUNCHER_SELECTOR)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    },
+    true,
+  );
+
+  doc.addEventListener("click", (event) => {
+    if (
+      !event.target.closest?.(
+        ".arara-assistant__launcher, .arara-assistant__hide",
+      )
+    ) {
+      return;
+    }
+
+    win.requestAnimationFrame(() => {
+      const host = doc.getElementById("araraGuideHost");
+      keepInsideViewport(win, host, true);
+    });
+  });
+
   win.addEventListener("resize", () => {
     const host = doc.getElementById("araraGuideHost");
     if (!host || host.style.left === "") return;
-    const rect = host.getBoundingClientRect();
-    const position = clampPosition(win, host, rect.left, rect.top);
-    applyPosition(win, host, position);
-    writePosition(win, position);
+    keepInsideViewport(win, host, true);
   });
 }
 
