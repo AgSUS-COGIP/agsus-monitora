@@ -1,0 +1,55 @@
+name: Temp Fix Aya Smoke
+
+on:
+  push:
+    branches:
+      - feat/aya-livre-fontes-oficiais
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar branch
+        uses: actions/checkout@v7
+        with:
+          ref: feat/aya-livre-fontes-oficiais
+          fetch-depth: 1
+
+      - name: Configurar Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Corrigir capitalização da fala
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'src/modules/arara-speaking-effects.js';
+          let source = fs.readFileSync(path, 'utf8');
+          const before = 'Você está em Análises curriculares.';
+          const after = 'Você está em análises curriculares.';
+          if (!source.includes(before)) {
+            throw new Error('Texto esperado não encontrado em arara-speaking-effects.js');
+          }
+          source = source.replace(before, after);
+          fs.writeFileSync(path, source);
+          NODE
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Teste direcionado
+        run: npx vitest run tests/arara-speaking-effects.test.js
+
+      - name: Remover workflow temporário e commitar
+        run: |
+          rm .github/workflows/tmp-fix-aya-smoke.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/modules/arara-speaking-effects.js .github/workflows/tmp-fix-aya-smoke.yml
+          git commit -m "fix(aya): alinhar capitalização no smoke"
+          git push origin HEAD:feat/aya-livre-fontes-oficiais
