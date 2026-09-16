@@ -3,9 +3,12 @@ import { parseAccessRequest, parsePanelList } from "../../src/lib/schemas.js";
 
 describe("schemas", () => {
   it("valida solicitacao de acesso", () => {
-    const parsed = parseAccessRequest({ nome: "Usuario Teste", email: "usuario@agenciasus.org.br" });
+    const parsed = parseAccessRequest({
+      nome: "Usuario Teste",
+      email: "usuario@agenciasus.org.br",
+    });
     expect(parsed.status).toBe("pendente");
-    expect(parsed.perfil_solicitado).toBe("leitor");
+    expect(parsed.perfil_solicitado).toBe("usuario");
   });
 
   it("normaliza lista de paineis", () => {
