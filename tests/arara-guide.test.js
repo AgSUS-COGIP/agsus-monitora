@@ -15,6 +15,7 @@ describe("assistente Arara Azul", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
     const input = guide.querySelector("input");
+
     input.value = "Como uso o mapa?";
     guide
       .querySelector("form")
@@ -30,8 +31,8 @@ describe("assistente Arara Azul", () => {
   it("troca o contexto e reinicia o passo a passo ao navegar", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "", host);
-    guide.querySelector(".arara-stepper__actions button:last-child").click();
 
+    guide.querySelector(".arara-stepper__actions button:last-child").click();
     updateAraraGuide("nucleo", "", host);
 
     expect(guide.textContent).toContain("Equipe Núcleo");
@@ -60,7 +61,11 @@ describe("assistente Arara Azul", () => {
       "DSEI",
     );
     expect(
-      answerAraraQuestion("analises", "", "Como encontro um candidato na fila?"),
+      answerAraraQuestion(
+        "analises",
+        "",
+        "Como encontro um candidato na fila?",
+      ),
     ).toContain("fila");
   });
 
@@ -72,7 +77,12 @@ describe("assistente Arara Azul", () => {
 
   it("trata títulos personalizados como texto, sem executar marcação", () => {
     const host = document.getElementById("host");
-    updateAraraGuide("panel:custom", '<img src=x onerror="alert(1)">', host);
+
+    updateAraraGuide(
+      "panel:custom",
+      '<img src=x onerror="alert(1)">',
+      host,
+    );
 
     expect(host.querySelector('img[src="x"]')).toBeNull();
     expect(host.textContent).toContain("<img");
