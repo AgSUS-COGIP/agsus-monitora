@@ -1,0 +1,51 @@
+name: Temp Rename Aya
+
+on:
+  push:
+    branches:
+      - feat/nina-livre-fontes-oficiais
+
+permissions:
+  contents: write
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: feat/nina-livre-fontes-oficiais
+      - name: Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Dependencias
+        run: npm install --no-audit --no-fund
+      - name: Renomear Nina para Aya
+        run: |
+          files=$(grep -RIl --exclude-dir=node_modules --exclude='*.snap' 'Nina' src tests || true)
+          if [ -n "$files" ]; then
+            printf '%s\n' "$files" | while IFS= read -r file; do
+              sed -i 's/Nina/Aya/g' "$file"
+            done
+          fi
+          if grep -RIn --exclude-dir=node_modules --exclude='*.snap' 'Nina' src tests; then
+            echo 'Ainda existem ocorrencias visiveis de Nina em src/tests.'
+            exit 1
+          fi
+      - name: Prettier
+        run: npx prettier --write src tests
+      - name: Testes direcionados
+        run: npx vitest run tests/arara-guide.test.js tests/section-guide-integration.test.js tests/arara-speaking-effects.test.js tests/nina-panel-drag.test.js
+      - name: Remover workflows temporarios
+        run: |
+          rm -f .github/workflows/tmp-fix-nina-copy.yml
+          rm -f .github/workflows/tmp-rename-aya.yml
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src tests .github/workflows
+          git commit -m "feat(aya): renomear assistente de Arara Azul"
+          git push origin HEAD:feat/nina-livre-fontes-oficiais
