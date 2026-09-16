@@ -1,0 +1,244 @@
+name: Temp Wire Aya AI
+
+on:
+  push:
+    branches:
+      - feat/aya-ia-fontes-oficiais
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: feat/aya-ia-fontes-oficiais
+          fetch-depth: 1
+
+      - name: Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Integrar conversa com IA
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'src/modules/arara-guide.js';
+          let source = fs.readFileSync(path, 'utf8');
+
+          if (!source.includes('from "./aya-ai-client.js"')) {
+            source = `import { askAyaAi, shouldAskAyaAi } from "./aya-ai-client.js";\n\n${source}`;
+          }
+
+          const oldAnswer = `export function answerAraraQuestion(section, title, question) {
+            const content = guideForSection(section, title);
+            const normalized = normalizeText(question);
+            if (!normalized) return "Escreva sua pergunta para a Aya.";
+
+            const topics = [...content.topics, ...GLOBAL_TOPICS];
+            const best = topics
+              .map((topic) => ({ topic, score: scoreTopic(question, topic) }))
+              .sort((a, b) => b.score - a.score)[0];
+
+            if (best?.score > 0) return best.topic.answer;
+
+            return \`Posso conversar com você sobre \${content.title}. Quando a resposta depender de um dado específico, eu uso apenas o que estiver disponível no MONITORA ou uma referência institucional segura.\`;
+          }`;
+
+          const newAnswer = `function localAraraAnswer(section, title, question) {
+            const content = guideForSection(section, title);
+            const normalized = normalizeText(question);
+            if (!normalized) {
+              return { answer: "Escreva sua pergunta para a Aya.", matched: true };
+            }
+
+            const topics = [...content.topics, ...GLOBAL_TOPICS];
+            const best = topics
+              .map((topic) => ({ topic, score: scoreTopic(question, topic) }))
+              .sort((a, b) => b.score - a.score)[0];
+
+            if (best?.score > 0) return { answer: best.topic.answer, matched: true };
+
+            return {
+              answer: \`Posso conversar com você sobre \${content.title}. Quando a resposta depender de um dado específico, eu uso apenas o que estiver disponível no MONITORA ou uma referência institucional segura.\`,
+              matched: false,
+            };
+          }
+
+          export function answerAraraQuestion(section, title, question) {
+            return localAraraAnswer(section, title, question).answer;
+          }`;
+
+          if (source.includes(oldAnswer)) {
+            source = source.replace(oldAnswer, newAnswer);
+          } else if (!source.includes('function localAraraAnswer(')) {
+            throw new Error('Bloco answerAraraQuestion esperado não encontrado');
+          }
+
+          const oldMessages = `function appendMessage(state, role, text) {
+            const message = element(
+              state.doc,
+              "div",
+              \`arara-message arara-message--\${role}\`,
+            );
+            const author = element(
+              state.doc,
+              "strong",
+              "arara-message__author",
+              role === "user" ? "Você" : "Aya",
+            );
+            const body = element(state.doc, "p", "arara-message__body", text);
+            message.append(author, body);
+            state.messages.append(message);
+            state.messages.scrollTop = state.messages.scrollHeight;
+          }
+
+          function resetConversation(state) {
+            state.messages.replaceChildren();
+            appendMessage(state, "assistant", state.content.intro);
+          }
+
+          function ask(state, question) {
+            const cleanQuestion = String(question || "").trim();
+            if (!cleanQuestion) return;
+            appendMessage(state, "user", cleanQuestion);
+            appendMessage(
+              state,
+              "assistant",
+              answerAraraQuestion(state.section, state.title, cleanQuestion),
+            );
+            state.input.value = "";
+          }`;
+
+          const newMessages = `function appendMessage(state, role, text, options = {}) {
+            const message = element(
+              state.doc,
+              "div",
+              \`arara-message arara-message--\${role}\`,
+            );
+            const author = element(
+              state.doc,
+              "strong",
+              "arara-message__author",
+              role === "user" ? "Você" : "Aya",
+            );
+            const body = element(state.doc, "p", "arara-message__body", text);
+            message.append(author, body);
+
+            const sources = Array.isArray(options.sources) ? options.sources : [];
+            if (role === "assistant" && sources.length) {
+              const sourceList = element(
+                state.doc,
+                "div",
+                "arara-message__sources",
+                "Fontes: ",
+              );
+              sources.forEach((source, index) => {
+                if (index) sourceList.append(state.doc.createTextNode(" · "));
+                const link = state.doc.createElement("a");
+                link.href = String(source.url || "#");
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = String(source.label || "Fonte oficial");
+                sourceList.append(link);
+              });
+              message.append(sourceList);
+            }
+
+            state.messages.append(message);
+            if (options.track !== false) {
+              state.history.push({ role, content: String(text || "") });
+            }
+            state.messages.scrollTop = state.messages.scrollHeight;
+            return message;
+          }
+
+          function setThinking(state, active) {
+            state.busy = Boolean(active);
+            state.input.disabled = state.busy;
+            state.sendButton.disabled = state.busy;
+            if (state.thinking?.isConnected) state.thinking.remove();
+            state.thinking = null;
+            if (!state.busy) return;
+            state.thinking = element(
+              state.doc,
+              "div",
+              "arara-assistant__thinking",
+              "Aya está pensando…",
+            );
+            state.thinking.setAttribute("role", "status");
+            state.messages.append(state.thinking);
+            state.messages.scrollTop = state.messages.scrollHeight;
+          }
+
+          function resetConversation(state) {
+            state.messages.replaceChildren();
+            state.history = [];
+            setThinking(state, false);
+            appendMessage(state, "assistant", state.content.intro);
+          }
+
+          async function ask(state, question) {
+            const cleanQuestion = String(question || "").trim();
+            if (!cleanQuestion || state.busy) return;
+
+            const local = localAraraAnswer(state.section, state.title, cleanQuestion);
+            appendMessage(state, "user", cleanQuestion);
+            state.input.value = "";
+
+            if (!shouldAskAyaAi(cleanQuestion, local.matched)) {
+              appendMessage(state, "assistant", local.answer);
+              return;
+            }
+
+            setThinking(state, true);
+            const result = await askAyaAi({
+              question: cleanQuestion,
+              section: state.section,
+              title: state.title,
+              history: state.history.slice(0, -1),
+              doc: state.doc,
+            });
+            setThinking(state, false);
+            appendMessage(state, "assistant", result.answer || local.answer, {
+              sources: result.sources,
+            });
+            state.input.focus();
+          }`;
+
+          if (source.includes(oldMessages)) {
+            source = source.replace(oldMessages, newMessages);
+          } else if (!source.includes('function setThinking(')) {
+            throw new Error('Bloco de mensagens esperado não encontrado');
+          }
+
+          source = source.replace(
+            `    input,\n    resetButton,\n    section: "",`,
+            `    input,\n    sendButton,\n    resetButton,\n    history: [],\n    busy: false,\n    thinking: null,\n    section: "",`,
+          );
+
+          fs.writeFileSync(path, source);
+          NODE
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Formatar arquivos da Aya
+        run: npx prettier --write src/modules/arara-guide.js src/modules/aya-ai-client.js src/modules/aya-knowledge.js api/aya.js
+
+      - name: Testes direcionados
+        run: npx vitest run tests/arara-guide.test.js tests/arara-speaking-effects.test.js tests/section-guide-integration.test.js
+
+      - name: Remover workflow temporário e commitar
+        run: |
+          rm .github/workflows/tmp-wire-aya-ai.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/modules/arara-guide.js src/modules/aya-ai-client.js src/modules/aya-knowledge.js api/aya.js .github/workflows/tmp-wire-aya-ai.yml
+          git commit -m "feat(aya): conectar conversa à IA segura"
+          git push origin HEAD:feat/aya-ia-fontes-oficiais
