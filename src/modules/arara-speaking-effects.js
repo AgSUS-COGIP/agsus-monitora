@@ -18,7 +18,7 @@ const OPENING_MESSAGES = Object.freeze({
   config:
     "Olá! Eu sou a Aya. Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
   analises:
-    "Olá! Eu sou a Aya. Você está em Análises curriculares. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
+    "Olá! Eu sou a Aya. Você está em análises curriculares. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
 });
 
 const TOPIC_PATTERNS = Object.freeze({
