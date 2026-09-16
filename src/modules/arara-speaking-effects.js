@@ -2,19 +2,20 @@ const hostObservers = new WeakMap();
 const activeAnimations = new WeakMap();
 const conversationMemory = new WeakMap();
 
+const ASSISTANT_NAME = "Nina";
 const MIN_DURATION_MS = 650;
 const MAX_DURATION_MS = 3400;
 const MS_PER_CHARACTER = 18;
 
 const OPENING_MESSAGES = Object.freeze({
   dashboard:
-    "Olá! Você está em Saúde Indígena. Posso te ajudar a entender o mapa, os filtros ou os indicadores. O que você quer ver primeiro?",
+    "Olá! Eu sou a Nina. Você está em Saúde Indígena. Posso te ajudar a entender o mapa, os filtros ou os indicadores. O que você quer ver primeiro?",
   nucleo:
-    "Olá! Você está em Equipe Núcleo. Posso te ajudar a localizar um processo, entender o cronograma ou orientar uma edição. Por onde começamos?",
+    "Olá! Eu sou a Nina. Você está em Equipe Núcleo. Posso te ajudar a localizar um processo, entender o cronograma ou orientar uma edição. Por onde começamos?",
   config:
-    "Olá! Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
+    "Olá! Eu sou a Nina. Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
   analises:
-    "Olá! Você está em Análises. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
+    "Olá! Eu sou a Nina. Você está em Análises. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
 });
 
 const TOPIC_PATTERNS = Object.freeze({
@@ -68,6 +69,10 @@ const CONTINUATIONS = Object.freeze({
   },
 });
 
+export function araraAssistantName() {
+  return ASSISTANT_NAME;
+}
+
 export function araraSpeechDuration(text) {
   const length = String(text || "").trim().length;
   if (!length) return 0;
@@ -88,7 +93,7 @@ export function araraOpeningMessage(section, title = "") {
   if (OPENING_MESSAGES[section]) return OPENING_MESSAGES[section];
 
   const sectionName = String(title || "esta seção").trim() || "esta seção";
-  return `Olá! Você está em ${sectionName}. Posso explicar os recursos desta tela e te orientar no próximo passo. O que você quer fazer?`;
+  return `Olá! Eu sou a ${ASSISTANT_NAME}. Você está em ${sectionName}. Posso explicar os recursos desta tela e te orientar no próximo passo. O que você quer fazer?`;
 }
 
 function prefersReducedMotion(win) {
@@ -153,6 +158,42 @@ function removeFixedTutorial(root) {
   root.querySelector(".arara-stepper")?.remove();
 }
 
+function updateAssistantIdentity(root) {
+  root.setAttribute("aria-label", `Assistente ${ASSISTANT_NAME}`);
+
+  const title = root.querySelector(".arara-assistant__title");
+  if (title) title.textContent = ASSISTANT_NAME;
+
+  root
+    .querySelectorAll(".arara-message--assistant .arara-message__author")
+    .forEach((author) => {
+      author.textContent = ASSISTANT_NAME;
+    });
+
+  const suggestionLabel = root.querySelector(
+    ".arara-assistant__suggestion-label",
+  );
+  if (suggestionLabel) {
+    suggestionLabel.textContent = `Pergunte para a ${ASSISTANT_NAME}`;
+  }
+
+  const hideButton = root.querySelector(".arara-assistant__hide");
+  if (hideButton) {
+    hideButton.textContent = `Ocultar ${ASSISTANT_NAME}`;
+    hideButton.setAttribute("aria-label", `Ocultar ${ASSISTANT_NAME}`);
+  }
+
+  const launcher = root.querySelector("[data-arara-show]");
+  if (launcher) {
+    launcher.setAttribute("aria-label", `Mostrar ${ASSISTANT_NAME}`);
+    const launcherLabel = launcher.querySelector("span");
+    if (launcherLabel) launcherLabel.textContent = `Mostrar ${ASSISTANT_NAME}`;
+  }
+
+  const inputLabel = root.querySelector('label[for="araraAssistantInput"]');
+  if (inputLabel) inputLabel.textContent = `Pergunta para a ${ASSISTANT_NAME}`;
+}
+
 function cancelActiveAnimation(root, reveal = true) {
   const active = activeAnimations.get(root);
   if (!active) return;
@@ -196,6 +237,7 @@ function animateAssistantBody(root, body) {
   if (body.dataset.araraSpeechEnhanced === "1") return;
 
   removeFixedTutorial(root);
+  updateAssistantIdentity(root);
   const fullText = assistantText(root, body);
   body.textContent = fullText;
   body.dataset.araraSpeechEnhanced = "1";
@@ -218,7 +260,7 @@ function animateAssistantBody(root, body) {
   const status = body.ownerDocument.createElement("span");
   status.className = "arara-speaking-status";
   status.setAttribute("aria-hidden", "true");
-  status.textContent = "Arara está falando";
+  status.textContent = `${ASSISTANT_NAME} está falando`;
   message.insertBefore(status, body);
 
   body.textContent = "";
@@ -268,7 +310,10 @@ function animateAssistantBody(root, body) {
 }
 
 function processAssistantMessages(host) {
-  host.querySelectorAll("[data-arara-guide]").forEach(removeFixedTutorial);
+  host.querySelectorAll("[data-arara-guide]").forEach((root) => {
+    removeFixedTutorial(root);
+    updateAssistantIdentity(root);
+  });
   host
     .querySelectorAll(
       "[data-arara-guide] .arara-message--assistant .arara-message__body",
