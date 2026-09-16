@@ -7,7 +7,10 @@ import {
 } from "../src/modules/pwa-lifecycle.js";
 
 const lifecycleSource = readFileSync("src/modules/pwa-lifecycle.js", "utf8");
-const mobileSource = readFileSync("src/modules/mobile-app-experience.js", "utf8");
+const mobileSource = readFileSync(
+  "src/modules/mobile-app-experience.js",
+  "utf8",
+);
 
 describe("ciclo web sem oferta de instalação", () => {
   it("não registra prompt nem orientação de instalação", () => {
@@ -25,7 +28,9 @@ describe("ciclo web sem oferta de instalação", () => {
   });
 
   it("preserva o service worker para atualização e operação offline", () => {
-    expect(mobileSource).toContain('navigator.serviceWorker.register("/sw.js")');
+    expect(mobileSource).toContain(
+      'navigator.serviceWorker.register("/sw.js")',
+    );
     expect(lifecycleSource).toContain("navigator.serviceWorker.ready");
     expect(lifecycleSource).toContain("SKIP_WAITING");
   });
