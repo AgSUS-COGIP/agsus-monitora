@@ -91,11 +91,6 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Desativa o acesso de um usuário.",
   },
-  revogar_paineis_usuario: {
-    argumentos: ["p_perfil_usuario_id", "p_paineis", "p_motivo"],
-    critica: true,
-    resumo: "Revoga painéis externos de um usuário.",
-  },
   get_acessos_config_master: {
     argumentos: ["p_days", "p_online_minutes", "p_recent_limit"],
     critica: false,
@@ -154,6 +149,55 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo: "Resumo dos cronogramas da Equipe Núcleo.",
+  },
+
+  // ── Lista de Aprovados ─────────────────────────────────────────────────
+  listar_listas_aprovados: {
+    argumentos: [],
+    critica: true,
+    resumo: "Lista as listas vigentes de aprovados vinculadas aos editais.",
+  },
+  listar_candidatos_aprovados: {
+    argumentos: [],
+    critica: true,
+    resumo: "Lista os candidatos vigentes das listas de aprovados.",
+  },
+  importar_lista_aprovados: {
+    argumentos: [
+      "p_edital_id",
+      "p_ativo",
+      "p_arquivo_nome",
+      "p_arquivo_path",
+      "p_candidatos",
+      "p_substituir",
+    ],
+    critica: true,
+    resumo: "Importa ou substitui a lista XLSX de aprovados de um edital.",
+  },
+  definir_lista_aprovados_ativa: {
+    argumentos: ["p_lista_id", "p_ativo"],
+    critica: true,
+    resumo: "Ativa ou inativa uma lista vigente de aprovados.",
+  },
+  remover_lista_aprovados: {
+    argumentos: ["p_lista_id"],
+    critica: true,
+    resumo: "Arquiva a lista vigente de aprovados preservando o histórico.",
+  },
+  alterar_status_candidato_aprovado: {
+    argumentos: ["p_candidato_id", "p_status", "p_processo_sei", "p_matricula"],
+    critica: true,
+    resumo: "Altera o status de um candidato e registra processo SEI e matrícula quando informados.",
+  },
+  incluir_sub_judice: {
+    argumentos: ["p_edital_id", "p_cargo", "p_nome", "p_nota"],
+    critica: true,
+    resumo: "Inclui manualmente um candidato sub judice na lista vigente do edital.",
+  },
+  remover_sub_judice: {
+    argumentos: ["p_candidato_id"],
+    critica: true,
+    resumo: "Remove logicamente um candidato sub judice preservando o histórico.",
   },
 
   // ── Análises ────────────────────────────────────────────────────────────
