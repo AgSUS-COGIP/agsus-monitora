@@ -98,7 +98,7 @@ jobs:
 
       - name: Smoke contra PHP e Apache do container
         env:
-          PLAYWRIGHT_REUSE_SERVER: '1'
+          PLAYWRIGHT_REUSE_SERVER: "1"
         run: npm run test:smoke:laravel
 
       - name: Encerrar container de teste

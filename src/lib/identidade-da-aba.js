@@ -10,7 +10,6 @@ export const FAVICON_PADRAO = "/assets/agsus-logo.webp";
 */
 const RELACOES = Object.freeze(["icon", "shortcut icon", "apple-touch-icon"]);
 
-
 function ehUrlUsavel(valor) {
   const bruto = String(valor || "").trim();
   if (!bruto) return "";

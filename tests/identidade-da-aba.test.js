@@ -27,7 +27,13 @@ const semComentarios = (fonte) =>
 */
 describe("a aba identifica MONITORA", () => {
   it("mantém a marca ao navegar e receber configuração antiga", () => {
-    for (const section of ["Saúde Indígena", "Equipe Núcleo", "Configurações", "Análises", ""]) {
+    for (const section of [
+      "Saúde Indígena",
+      "Equipe Núcleo",
+      "Configurações",
+      "Análises",
+      "",
+    ]) {
       definirPaginaDaAba(section);
       expect(document.title).toBe("MONITORA");
       definirSistemaDaAba("AgSUS Monitora Web V2.9.35");

@@ -2487,7 +2487,11 @@ function setPageTitle(title, sub) {
   $("pageSubtitle").textContent = sub;
   // O nome da aba tem um dono só; aqui entra apenas a metade da página.
   definirPaginaDaAba(title);
-  updateAraraGuide(currentView, title, document.getElementById("araraGuideHost"));
+  updateAraraGuide(
+    currentView,
+    title,
+    document.getElementById("araraGuideHost"),
+  );
 }
 
 function isSidebarLockedViewport() {
@@ -11232,9 +11236,15 @@ function renderNucleo() {
     `<tr><td colspan="9" style="text-align:center;padding:22px">Nenhum registro encontrado.</td></tr>`;
   renderNucleoTable($("nucleoRows"), markup);
   document.dispatchEvent(new CustomEvent("agsus:nucleo-rendered"));
-  document.dispatchEvent(new CustomEvent("agsus:nucleo-metric", { detail: {
-    name: "table-render", durationMs: performance.now() - started, rows: data.length,
-  } }));
+  document.dispatchEvent(
+    new CustomEvent("agsus:nucleo-metric", {
+      detail: {
+        name: "table-render",
+        durationMs: performance.now() - started,
+        rows: data.length,
+      },
+    }),
+  );
 }
 
 function setFieldValue(id, value) {

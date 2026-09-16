@@ -14,20 +14,29 @@ describe("título e guia conectados à navegação real", () => {
     ["nucleo", "Equipe Núcleo", "cronograma"],
     ["config", "Configurações", "permissões"],
     ["panel:analises", "Análises", "curriculares"],
-  ])("atualiza a orientação de %s sem renomear a aba", (view, title, instruction) => {
-    document.body.innerHTML = '<h1 id="pageTitle"></h1><p id="pageSubtitle"></p><div id="araraGuideHost"></div>';
-    const setPageTitle = runInNewContext(`${app.slice(start, end)}; setPageTitle`, {
-      document,
-      $: (id) => document.getElementById(id),
-      currentView: view,
-      updateAraraGuide,
-      definirPaginaDaAba,
-    });
-    setPageTitle(title, "Orientações da seção");
-    setPageTitle(title, "Orientações da seção");
-    expect(document.title).toBe("MONITORA");
-    expect(document.getElementById("pageTitle").textContent).toBe(title);
-    expect(document.querySelectorAll("[data-arara-guide]")).toHaveLength(1);
-    expect(document.getElementById("araraGuideHost").textContent).toContain(instruction);
-  });
+  ])(
+    "atualiza a orientação de %s sem renomear a aba",
+    (view, title, instruction) => {
+      document.body.innerHTML =
+        '<h1 id="pageTitle"></h1><p id="pageSubtitle"></p><div id="araraGuideHost"></div>';
+      const setPageTitle = runInNewContext(
+        `${app.slice(start, end)}; setPageTitle`,
+        {
+          document,
+          $: (id) => document.getElementById(id),
+          currentView: view,
+          updateAraraGuide,
+          definirPaginaDaAba,
+        },
+      );
+      setPageTitle(title, "Orientações da seção");
+      setPageTitle(title, "Orientações da seção");
+      expect(document.title).toBe("MONITORA");
+      expect(document.getElementById("pageTitle").textContent).toBe(title);
+      expect(document.querySelectorAll("[data-arara-guide]")).toHaveLength(1);
+      expect(document.getElementById("araraGuideHost").textContent).toContain(
+        instruction,
+      );
+    },
+  );
 });
