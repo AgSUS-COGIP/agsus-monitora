@@ -78,11 +78,7 @@ describe("assistente Arara Azul", () => {
   it("trata títulos personalizados como texto, sem executar marcação", () => {
     const host = document.getElementById("host");
 
-    updateAraraGuide(
-      "panel:custom",
-      '<img src=x onerror="alert(1)">',
-      host,
-    );
+    updateAraraGuide("panel:custom", '<img src=x onerror="alert(1)">', host);
 
     expect(host.querySelector('img[src="x"]')).toBeNull();
     expect(host.textContent).toContain("<img");

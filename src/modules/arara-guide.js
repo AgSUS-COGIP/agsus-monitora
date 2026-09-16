@@ -272,7 +272,9 @@ export function answerAraraQuestion(section, title, question) {
 
   return `Posso orientar você sobre ${content.title}, principalmente sobre ${content.topics
     .map((topic) => topic.label.toLowerCase())
-    .join(", ")}. Não consulto registros individuais nem invento respostas sobre dados que não estão nesta orientação.`;
+    .join(
+      ", ",
+    )}. Não consulto registros individuais nem invento respostas sobre dados que não estão nesta orientação.`;
 }
 
 function readHiddenPreference(win) {
@@ -455,12 +457,7 @@ function createAssistant(host) {
   input.autocomplete = "off";
   inputLabel.htmlFor = "araraAssistantInput";
   input.id = "araraAssistantInput";
-  const sendButton = element(
-    doc,
-    "button",
-    "arara-assistant__send",
-    "Enviar",
-  );
+  const sendButton = element(doc, "button", "arara-assistant__send", "Enviar");
   sendButton.type = "submit";
   form.append(inputLabel, input, sendButton);
 
@@ -495,10 +492,7 @@ function createAssistant(host) {
   launcherAvatar.alt = "";
   launcherAvatar.width = 56;
   launcherAvatar.height = 56;
-  launcher.append(
-    launcherAvatar,
-    element(doc, "span", "", "Mostrar Arara"),
-  );
+  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Arara"));
 
   root.append(panel, launcher);
   host.append(root);
