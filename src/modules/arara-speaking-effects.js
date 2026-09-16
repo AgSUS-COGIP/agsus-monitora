@@ -658,10 +658,17 @@ function observeHost(host) {
   const Observer = win.MutationObserver;
   if (!Observer) return;
 
-  const observer = new Observer(() => processAssistantMessages(host));
-  observer.observe(host, { childList: true, subtree: true });
+  const observeOptions = { childList: true, subtree: true };
+  let observer;
+  const processWithoutSelfObservation = () => {
+    observer.disconnect();
+    processAssistantMessages(host);
+    observer.observe(host, observeOptions);
+  };
+
+  observer = new Observer(processWithoutSelfObservation);
   hostObservers.set(host, observer);
-  processAssistantMessages(host);
+  processWithoutSelfObservation();
 }
 
 export function initAraraSpeakingEffects(doc = document) {
