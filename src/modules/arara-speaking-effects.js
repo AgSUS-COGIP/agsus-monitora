@@ -14,16 +14,15 @@ export function araraSpeechDuration(text) {
   );
 }
 
-export function shouldAnimateAraraSpeech({
-  text = "",
-  reducedMotion = false,
-}) {
+export function shouldAnimateAraraSpeech({ text = "", reducedMotion = false }) {
   return Boolean(String(text).trim()) && !reducedMotion;
 }
 
 function prefersReducedMotion(win) {
   try {
-    return Boolean(win.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+    return Boolean(
+      win.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+    );
   } catch {
     return false;
   }
