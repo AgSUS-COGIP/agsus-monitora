@@ -1,0 +1,39 @@
+name: Format Arara Once
+
+on:
+  push:
+    branches:
+      - feat/arara-assistente-flutuante
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/arara-assistente-flutuante
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Format changed Arara files
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npx prettier --write src/modules/arara-guide.js tests/arara-guide.test.js
+          rm .github/workflows/format-arara-once.yml
+
+      - name: Commit formatted files
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/modules/arara-guide.js tests/arara-guide.test.js .github/workflows/format-arara-once.yml
+          git commit -m "style(arara): aplicar Prettier do projeto"
+          git push origin HEAD:feat/arara-assistente-flutuante
