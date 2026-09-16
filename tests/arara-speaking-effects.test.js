@@ -31,7 +31,9 @@ describe("efeito de fala da Arara Azul", () => {
   });
 
   it("anima avatar e balão sem ignorar reduced motion", () => {
-    expect(css).toContain(".arara-assistant.is-speaking .arara-assistant__avatar");
+    expect(css).toContain(
+      ".arara-assistant.is-speaking .arara-assistant__avatar",
+    );
     expect(css).toContain("@keyframes araraSpeaking");
     expect(css).toContain(".arara-message--assistant::before");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
