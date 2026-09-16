@@ -3,7 +3,7 @@ const activeAnimations = new WeakMap();
 const conversationMemory = new WeakMap();
 const draggableLaunchers = new WeakSet();
 
-const ASSISTANT_NAME = "Nina";
+const ASSISTANT_NAME = "Aya";
 const LAUNCHER_POSITION_STORAGE_KEY =
   "agsus_monitora_nina_launcher_position_v1";
 const MIN_DURATION_MS = 650;
@@ -12,13 +12,13 @@ const MS_PER_CHARACTER = 18;
 
 const OPENING_MESSAGES = Object.freeze({
   dashboard:
-    "Olá! Eu sou a Nina. Você está em Saúde Indígena. Posso te ajudar a entender o mapa, os editais, os DSEIs, os filtros ou os indicadores. O que você quer ver primeiro?",
+    "Olá! Eu sou a Aya. Você está em Saúde Indígena. Posso te ajudar a entender o mapa, os editais, os DSEIs, os filtros ou os indicadores. O que você quer ver primeiro?",
   nucleo:
-    "Olá! Eu sou a Nina. Você está em Equipe Núcleo. Posso te ajudar a localizar um processo, entender um edital, o cronograma ou orientar uma edição. Por onde começamos?",
+    "Olá! Eu sou a Aya. Você está em Equipe Núcleo. Posso te ajudar a localizar um processo, entender um edital, o cronograma ou orientar uma edição. Por onde começamos?",
   config:
-    "Olá! Eu sou a Nina. Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
+    "Olá! Eu sou a Aya. Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
   analises:
-    "Olá! Eu sou a Nina. Você está em Análises. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
+    "Olá! Eu sou a Aya. Você está em análises curriculares. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
 });
 
 const TOPIC_PATTERNS = Object.freeze({
@@ -229,7 +229,7 @@ function findVisibleMatch(question, items) {
   );
 }
 
-export function answerNinaInstitutionalQuestion(question, doc = document) {
+export function answerAyaInstitutionalQuestion(question, doc = document) {
   const normalized = normalizeKnowledgeText(question);
   if (!normalized) return "";
 
@@ -329,7 +329,7 @@ function enhanceDraggableLauncher(root, launcher) {
 
   const win = root.ownerDocument.defaultView || window;
   launcher.style.touchAction = "none";
-  launcher.title = "Clique para abrir a Nina ou arraste para mover";
+  launcher.title = "Clique para abrir a Aya ou arraste para mover";
   applyLauncherPosition(win, launcher, readLauncherPosition(win));
 
   let pointerId = null;
@@ -549,7 +549,7 @@ function assistantText(root, body) {
   }
 
   const question = latestUserText(root);
-  const institutionalAnswer = answerNinaInstitutionalQuestion(
+  const institutionalAnswer = answerAyaInstitutionalQuestion(
     question,
     root.ownerDocument,
   );
