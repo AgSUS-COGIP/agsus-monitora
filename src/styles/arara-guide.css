@@ -97,23 +97,64 @@
 }
 
 .arara-assistant__body {
+  display: flex;
   overflow-y: auto;
+  flex-direction: column;
   padding: 14px;
   overscroll-behavior: contain;
 }
 
 .arara-assistant__context {
-  margin: 0 0 12px;
-  color: var(--text, #17324d);
-  font-size: 13px;
-  line-height: 1.55;
+  display: none;
+}
+
+.arara-assistant__messages {
+  order: 1;
+  display: flex;
+  max-height: 230px;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--line, #dbe6ef);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card2, #f8fbff) 72%, var(--card, #fff));
+}
+
+.arara-assistant__suggestion-label {
+  order: 2;
+  display: block;
+  margin: 12px 0 7px;
+  font-size: 11px;
+}
+
+.arara-assistant__suggestions {
+  order: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.arara-assistant__form {
+  order: 4;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  margin-top: 10px;
 }
 
 .arara-stepper {
+  order: 5;
+  margin-top: 12px;
   padding: 12px;
   border: 1px solid var(--line, #dbe6ef);
   border-radius: 14px;
   background: color-mix(in srgb, var(--card2, #f8fbff) 78%, var(--card, #fff));
+}
+
+.arara-assistant__footer {
+  order: 6;
 }
 
 .arara-stepper__header,
@@ -153,18 +194,6 @@
   cursor: default;
 }
 
-.arara-assistant__suggestion-label {
-  display: block;
-  margin: 14px 0 7px;
-  font-size: 11px;
-}
-
-.arara-assistant__suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .arara-suggestion {
   padding: 7px 9px;
   border: 1px solid color-mix(in srgb, var(--blue2, #2563eb) 24%, #dbeafe);
@@ -175,19 +204,6 @@
   font-size: 10px;
   font-weight: 800;
   cursor: pointer;
-}
-
-.arara-assistant__messages {
-  display: flex;
-  max-height: 210px;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  margin-top: 12px;
-  padding: 10px;
-  border: 1px solid var(--line, #dbe6ef);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--card2, #f8fbff) 72%, var(--card, #fff));
 }
 
 .arara-message {
@@ -264,13 +280,6 @@
   content: "•••";
   letter-spacing: 1px;
   animation: araraDots 1s steps(4, end) infinite;
-}
-
-.arara-assistant__form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 7px;
-  margin-top: 9px;
 }
 
 .arara-assistant__input {
@@ -422,7 +431,7 @@ html[data-theme="dark"] .arara-assistant__launcher {
   }
 
   .arara-assistant__messages {
-    max-height: 160px;
+    max-height: 180px;
   }
 }
 
