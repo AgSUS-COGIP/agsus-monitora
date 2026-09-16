@@ -1,5 +1,6 @@
 import { installCsvBlobSecurityGuard } from "../lib/csv-security.js";
 import { updateAraraGuide } from "../modules/arara-guide.js";
+import { initAraraSpeakingEffects } from "../modules/arara-speaking-effects.js";
 import "../styles/arara-guide.css";
 import { installSessionLifecycle } from "../lib/session-lifecycle.js";
 import { installBackgroundResourceLifecycle } from "../lib/background-resource-lifecycle.js";
@@ -43,6 +44,7 @@ function compactAnalisesSessionTimer() {
 
 const embeddedInParentApp = window.parent !== window;
 if (!embeddedInParentApp) {
+  initAraraSpeakingEffects();
   updateAraraGuide(
     "analises",
     "Análises",
