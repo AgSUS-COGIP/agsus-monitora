@@ -12,7 +12,7 @@ describe("título e guia conectados à navegação real", () => {
   it.each([
     ["dashboard", "Saúde Indígena", "território"],
     ["nucleo", "Equipe Núcleo", "cronograma"],
-    ["config", "Configurações", "permissões"],
+    ["config", "Configurações", "acessos"],
     ["panel:analises", "Análises", "curriculares"],
   ])(
     "atualiza a orientação de %s sem renomear a aba",
