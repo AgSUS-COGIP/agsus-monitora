@@ -16,7 +16,10 @@ function readPosition(win) {
 
 function writePosition(win, position) {
   try {
-    win.localStorage.setItem(PANEL_POSITION_STORAGE_KEY, JSON.stringify(position));
+    win.localStorage.setItem(
+      PANEL_POSITION_STORAGE_KEY,
+      JSON.stringify(position),
+    );
   } catch {
     // O movimento continua funcionando mesmo sem persistência local.
   }
@@ -53,7 +56,8 @@ export function initNinaPanelDrag(doc = document) {
     const handle = event.target.closest?.("[data-nina-drag-handle]");
     if (!handle || event.button !== 0) return;
 
-    const host = handle.closest("#araraGuideHost") || doc.getElementById("araraGuideHost");
+    const host =
+      handle.closest("#araraGuideHost") || doc.getElementById("araraGuideHost");
     const root = handle.closest("[data-arara-guide]");
     if (!host || !root || root.classList.contains("is-hidden")) return;
 

@@ -29,7 +29,14 @@ const GUIDES = Object.freeze({
     topics: [
       {
         label: "Mapa",
-        keywords: ["mapa", "dsei", "territorio", "zoom", "satélite", "satelite"],
+        keywords: [
+          "mapa",
+          "dsei",
+          "territorio",
+          "zoom",
+          "satélite",
+          "satelite",
+        ],
         answer:
           "Na visão nacional, selecione um DSEI para aprofundar o território. O fundo Mapa/Satélite muda apenas a cartografia; o recorte de dados continua definido pelos filtros e pelo território selecionado.",
       },
@@ -41,7 +48,14 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Indicadores",
-        keywords: ["indicador", "kpi", "vagas", "ociosas", "contratados", "criticos"],
+        keywords: [
+          "indicador",
+          "kpi",
+          "vagas",
+          "ociosas",
+          "contratados",
+          "criticos",
+        ],
         answer:
           "Os indicadores resumem o recorte atual. Use-os como sinal de onde investigar e confirme o detalhe na lista ou no território antes de tirar uma conclusão.",
       },
@@ -73,7 +87,14 @@ const GUIDES = Object.freeze({
     topics: [
       {
         label: "Acessos",
-        keywords: ["acesso", "usuario", "usuário", "permissao", "permissão", "painel"],
+        keywords: [
+          "acesso",
+          "usuario",
+          "usuário",
+          "permissao",
+          "permissão",
+          "painel",
+        ],
         answer:
           "Os acessos seguem o perfil do usuário. Antes de aprovar ou alterar algo, confirme a pessoa, o perfil atual e o impacto esperado.",
       },
@@ -98,7 +119,14 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Gráfico",
-        keywords: ["grafico", "gráfico", "linha", "tempo", "evolucao", "evolução"],
+        keywords: [
+          "grafico",
+          "gráfico",
+          "linha",
+          "tempo",
+          "evolucao",
+          "evolução",
+        ],
         answer:
           "O gráfico mostra a evolução do volume no recorte atual. Se houver pico ou queda, confirme o período e depois consulte os registros daquele trecho.",
       },
@@ -293,7 +321,12 @@ function createAssistant(host) {
   form.append(inputLabel, input, sendButton);
 
   const actions = element(doc, "div", "arara-assistant__actions");
-  const resetButton = element(doc, "button", "arara-assistant__reset", "Recomeçar");
+  const resetButton = element(
+    doc,
+    "button",
+    "arara-assistant__reset",
+    "Recomeçar",
+  );
   resetButton.type = "button";
   actions.append(resetButton);
 
