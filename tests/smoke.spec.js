@@ -46,13 +46,22 @@ test.describe("AgSUS Monitora smoke", () => {
 
     await expect(page).toHaveTitle("MONITORA");
     await expect(page.locator("h1")).toContainText("MONITORA Análises");
+
     const guide = page.locator("[data-arara-guide]");
+    const panel = guide.locator(".arara-assistant__panel");
+    const launcher = guide.locator("[data-arara-show]");
+
     await expect(guide).toHaveCount(1);
-    await guide.locator("summary").click();
-    await expect(guide.locator("ol")).toBeVisible();
+    await expect(panel).toBeVisible();
     await expect(guide).toContainText("análises curriculares");
-    await guide.locator("summary").click();
-    await expect(guide.locator("ol")).not.toBeVisible();
+
+    await guide.locator(".arara-assistant__hide").click();
+    await expect(panel).not.toBeVisible();
+    await expect(launcher).toBeVisible();
+
+    await launcher.click();
+    await expect(panel).toBeVisible();
+
     await expect(page.locator("#authWarning")).toBeAttached();
     await expect(page.locator("#refreshBtn")).toBeVisible();
     await expect(page.locator("#exportBtn")).toBeVisible();
