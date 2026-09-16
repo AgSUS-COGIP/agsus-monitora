@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  araraAssistantName,
   araraOpeningMessage,
   araraSpeechDuration,
   shouldAnimateAraraSpeech,
@@ -9,7 +10,7 @@ import {
 const source = readFileSync("src/modules/arara-speaking-effects.js", "utf8");
 const css = readFileSync("src/styles/arara-guide.css", "utf8");
 
-describe("efeito de fala da Arara Azul", () => {
+describe("efeito de fala da Nina", () => {
   it("usa duração curta mas perceptível e limita respostas longas", () => {
     expect(araraSpeechDuration("Oi")).toBe(650);
     expect(araraSpeechDuration("a".repeat(400))).toBe(3400);
@@ -24,9 +25,16 @@ describe("efeito de fala da Arara Azul", () => {
     ).toBe(false);
   });
 
-  it("abre Saúde Indígena como conversa e não como texto institucional", () => {
+  it("usa Nina como nome único da assistente", () => {
+    expect(araraAssistantName()).toBe("Nina");
+    expect(source).toContain('const ASSISTANT_NAME = "Nina"');
+    expect(source).toContain("Nina está falando");
+  });
+
+  it("abre Saúde Indígena como conversa e se apresenta pelo nome", () => {
     const opening = araraOpeningMessage("dashboard", "Saúde Indígena");
     expect(opening).toContain("Olá!");
+    expect(opening).toContain("Eu sou a Nina");
     expect(opening).toContain("Você está em Saúde Indígena");
     expect(opening).toContain("O que você quer ver primeiro?");
     expect(opening).not.toContain("Aqui você acompanha processos seletivos");
@@ -43,7 +51,7 @@ describe("efeito de fala da Arara Azul", () => {
   });
 
   it("mostra estado de fala e revela texto progressivamente", () => {
-    expect(source).toContain("Arara está falando");
+    expect(source).toContain("está falando");
     expect(source).toContain("requestAnimationFrame");
     expect(source).toContain('root.classList.add("is-speaking")');
     expect(source).toContain("fullText.slice(0, visibleCharacters)");
