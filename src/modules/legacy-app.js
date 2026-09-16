@@ -12,10 +12,8 @@ import {
 } from "../lib/supabaseClient.js";
 import {
   accessRequestStatusMessage,
-  renderAccessPanelChoicesHTML,
   renderAccessRequestAdminItemHTML,
   renderAccessUserAdminItemHTML,
-  selectedPanelIdsFromForm,
 } from "./access-request-ui.js";
 import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
 import { createAccessDashboard } from "./access-dashboard.js";
@@ -87,6 +85,15 @@ import {
   ehSessaoEncerrada,
   estadoDaSessao,
 } from "../lib/sessao.js";
+import {
+  canViewCore,
+  canManageEditais,
+  canManageSettings,
+  canImportApprovedList,
+  isOwnAccessProfile,
+  normalizeRole,
+  roleLabel,
+} from "../lib/access-roles.js";
 
 // ============================================================
 // AgSUS Monitora Web V2.9.35
@@ -106,7 +113,6 @@ const RPC_ACCESS_LOG = "registrar_evento_acesso";
 const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
 const RPC_DENY_ACCESS_REQUEST = "recusar_solicitacao_acesso";
 const RPC_UPDATE_USER_ACCESS = "atualizar_acesso_usuario";
-const RPC_REVOKE_USER_PANELS = "revogar_paineis_usuario";
 const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
 const RPC_PLATFORM_CONTEXT = "obter_contexto_monitora";
 const RPC_REGISTER_ONLINE_PRESENCE = "registrar_presenca_monitora";
@@ -657,12 +663,16 @@ function initSupabase() {
 
 function can(perm) {
   if (!profile) return false;
-  if (low(profile.perfil) === "master") return true;
+  const role = normalizeRole(profile);
+  if (role) {
+    if (["ind", "cores", "paineis"].includes(perm)) return canViewCore(profile);
+    if (["config", "admin"].includes(perm)) return canManageSettings(profile);
+  }
   return profile["p_" + perm] === true;
 }
 
 function isMasterProfile() {
-  return low(profile?.perfil) === "master";
+  return canManageSettings(profile);
 }
 
 function getClientSessionId() {
@@ -1408,6 +1418,7 @@ function isViewAllowed(view) {
   if (!view) return false;
   if (view === "dashboard") return can("ind");
   if (view === "nucleo") return can("cores");
+  if (view === "approved") return canViewCore(profile);
   if (view === "config") return can("config");
   if (view.startsWith("panel:")) {
     const code = view.split(":")[1];
@@ -1482,12 +1493,14 @@ async function loadProfile() {
   setText("userEmail", currentUser?.email || profile?.email || "-");
   const badge = $("userProfileBadge");
   if (badge && profile.perfil) {
-    const label =
-      low(profile.perfil) === "master" ? "Master" : txt(profile.perfil);
+    const label = roleLabel(profile);
     badge.textContent = label;
     badge.style.display = "inline-block";
     setText("topUserPopoverProfile", label);
   }
+  const newEditalButton = $("newEditalBtn");
+  if (newEditalButton)
+    newEditalButton.classList.toggle("hidden", !canManageEditais(profile));
   return true;
 }
 
@@ -1520,7 +1533,6 @@ async function showAccessRequestState() {
   if (card) card.classList.remove("hidden");
   const nome = $("accessReqNome");
   if (nome && !txt(nome.value)) nome.value = userDisplayName();
-  renderAccessPanelChoices();
   try {
     await loadMyAccessRequest();
   } catch (error) {
@@ -1553,16 +1565,10 @@ function forceAccessRequestFallback(message) {
   $("accessRequestCard")?.classList.remove("hidden");
   const nome = $("accessReqNome");
   if (nome && !txt(nome.value)) nome.value = userDisplayName();
-  renderAccessPanelChoices();
   const btn = $("accessRequestBtn");
   if (btn) btn.disabled = false;
 }
 
-function renderAccessPanelChoices(selectedIds = []) {
-  const box = $("accessPanelChoices");
-  if (!box) return;
-  box.innerHTML = renderAccessPanelChoicesHTML(panels, selectedIds);
-}
 
 function setAccessRequestFormLocked(locked) {
   ["accessReqNome", "accessReqSetor", "accessReqJustificativa"].forEach(
@@ -1571,18 +1577,13 @@ function setAccessRequestFormLocked(locked) {
       if (el) el.disabled = !!locked;
     },
   );
-  document.querySelectorAll(".access-panel-choice").forEach((el) => {
-    el.disabled = !!locked;
-  });
 }
 
 async function loadMyAccessRequest() {
   if (!currentUser?.id) return null;
   const { data, error } = await sb
     .from("solicitacoes_acesso")
-    .select(
-      "id,status,observacao_admin,created_at,solicitacoes_acesso_paineis(painel_id)",
-    )
+.select("id,status,observacao_admin,created_at")
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false })
     .limit(1);
@@ -1605,10 +1606,6 @@ async function loadMyAccessRequest() {
     setAccessRequestFormLocked(false);
     return null;
   }
-  const panelIds = (req.solicitacoes_acesso_paineis || [])
-    .map((r) => r.painel_id)
-    .filter(Boolean);
-  renderAccessPanelChoices(panelIds);
   if (status) {
     status.classList.remove("hidden");
     status.classList.toggle("success", req.status === "aprovado");
@@ -1635,7 +1632,6 @@ async function submitAccessRequest() {
   const nome = txt($("accessReqNome")?.value) || userDisplayName();
   const setor = txt($("accessReqSetor")?.value);
   const justificativa = txt($("accessReqJustificativa")?.value);
-  const selectedPanels = selectedPanelIdsFromForm();
   if (!nome || !justificativa) {
     if (btn) btn.disabled = false;
     return showAlert(
@@ -1652,7 +1648,7 @@ async function submitAccessRequest() {
       nome,
       setor,
       justificativa,
-      perfil_solicitado: "leitor",
+      perfil_solicitado: "usuario",
       status: "pendente",
     })
     .select("id")
@@ -1664,21 +1660,6 @@ async function submitAccessRequest() {
       "Não foi possível enviar a solicitação: " + friendlyError(error),
       "error",
     );
-  }
-  if (selectedPanels.length) {
-    const panelRows = selectedPanels.map((painel_id) => ({
-      solicitacao_id: data.id,
-      painel_id,
-    }));
-    const { error: panelErr } = await sb
-      .from("solicitacoes_acesso_paineis")
-      .insert(panelRows);
-    if (panelErr)
-      toast(
-        "Solicitação enviada, mas houve erro ao registrar os painéis solicitados: " +
-          friendlyError(panelErr),
-        "warn",
-      );
   }
   showAlert(
     "loginMsg",
@@ -2099,40 +2080,17 @@ async function loadPanels() {
 
 async function loadPanelPermissions() {
   if (!profile?.id || !can("paineis")) return true;
-  if (low(profile.perfil) === "master") {
-    allowedPanelIds = new Set();
-    panels
-      .filter((p) => p.ativo !== false)
-      .forEach((p) => {
-        if (p.id) allowedPanelIds.add(p.id);
-      });
-    return true;
-  }
-  if (platformContextLoaded) return true;
   allowedPanelIds = new Set();
-  const { data, error } = await sb
-    .from("perfis_paineis_externos")
-    .select("painel_id,ativo")
-    .eq("perfil_usuario_id", profile.id)
-    .eq("ativo", true);
-  if (error) {
-    toast(
-      "Não foi possível carregar permissões dos painéis externos: " +
-        friendlyError(error),
-      "warn",
-    );
-    return false;
-  }
-  (data || []).forEach((r) => {
-    if (r.painel_id) allowedPanelIds.add(r.painel_id);
-  });
+  panels
+    .filter((panel) => panel.ativo !== false)
+    .forEach((panel) => {
+      if (panel.id) allowedPanelIds.add(panel.id);
+    });
   return true;
 }
 
 function panelAllowed(panel) {
-  if (!panel || panel.ativo === false || !can("paineis")) return false;
-  if (low(profile?.perfil) === "master") return true;
-  return !!panel.id && allowedPanelIds.has(panel.id);
+  return !!panel && panel.ativo !== false && can("paineis");
 }
 
 function canAccessPanelCode(code) {
@@ -2354,6 +2312,10 @@ function buildNav() {
     principal.push(
       navButton("nucleo", cfgValue("nucleo_nav_title"), "fa-people-group"),
     );
+  if (canViewCore(profile))
+    principal.push(
+      navButton("approved", "Lista de Aprovados", "fa-user-check"),
+    );
   if (can("paineis"))
     panels
       .filter(panelAllowed)
@@ -2414,6 +2376,10 @@ function navigate(view) {
     toast("Sem permissão para Equipe Núcleo.", "warn");
     return;
   }
+  if (requestedView === "approved" && !canViewCore(profile)) {
+    toast("Sem permissão para Lista de Aprovados.", "warn");
+    return;
+  }
   if (requestedView === "config" && !can("config")) {
     toast("Sem permissão para Configurações.", "warn");
     return;
@@ -2457,6 +2423,14 @@ function navigate(view) {
       cfgValue("nucleo_page_subtitle"),
     );
     renderNucleo();
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "approved") {
+    $("page-approved").classList.add("active");
+    setPageTitle("Lista de Aprovados", "Acompanhe candidatos, contratações e situações dos editais.");
+    void window.aprovadosController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -11196,6 +11170,8 @@ function debouncedNucleo() {
 }
 function renderNucleo() {
   const started = performance.now();
+  const newButton = $("newEditalBtn");
+  if (newButton) newButton.classList.toggle("hidden", !canManageEditais(profile));
   const q = low($("nucleoSearch").value);
   const data = rows
     .filter(
@@ -11220,9 +11196,11 @@ function renderNucleo() {
       <td class="num red-text">${fmt(r.vagas_ociosas)}</td>
       <td>${riscoChip(r.risco)}</td>
       <td style="text-align:center">
-        <button class="btn icon outline" onclick="openEditModal('${attr(r.id)}')" title="Editar registro" aria-label="Editar ${esc(r.edital || r.unidade)}">
-          <i class="fa-solid fa-pen-to-square"></i>
-        </button>
+        <div class="nucleo-row-actions">
+          ${canManageEditais(profile) ? `<button class="btn icon outline" onclick="openEditModal('${attr(r.id)}')" title="Editar registro" aria-label="Editar ${esc(r.edital || r.unidade)}"><i class="fa-solid fa-pen-to-square"></i></button>` : ""}
+          ${canImportApprovedList(profile) ? `<button class="btn icon outline" onclick="openApprovedListImport('${attr(r.id)}')" title="Lista de aprovados" aria-label="Lista de aprovados de ${esc(r.edital || r.unidade)}"><i class="fa-solid fa-file-arrow-up"></i></button>` : ""}
+          ${!canManageEditais(profile) && !canImportApprovedList(profile) ? '<span class="approved-no-action">—</span>' : ""}
+        </div>
       </td>
     </tr>`,
       )
@@ -11233,6 +11211,17 @@ function renderNucleo() {
   document.dispatchEvent(new CustomEvent("agsus:nucleo-metric", { detail: {
     name: "table-render", durationMs: performance.now() - started, rows: data.length,
   } }));
+}
+
+function openApprovedListImport(id) {
+  if (!canImportApprovedList(profile))
+    return toast("Sem permissão para gerir listas de aprovados.", "warn");
+  const row = rows.find((item) => String(item.id) === String(id));
+  if (!row) return toast("Edital não encontrado.", "warn");
+  const label = [row.edital, row.unidade].filter(Boolean).join(" · ");
+  if (!window.aprovadosController)
+    return toast("O módulo Lista de Aprovados ainda está carregando.", "warn");
+  void window.aprovadosController.openImportModal(row.id, label);
 }
 
 function setFieldValue(id, value) {
@@ -11249,8 +11238,8 @@ function dateOrNull(id) {
 }
 
 function openEditModal(id) {
-  if (!can("cores"))
-    return toast("Sem permissão para editar registros.", "warn");
+  if (!canManageEditais(profile))
+    return toast("Seu perfil pode consultar a Equipe Núcleo, mas não editar editais.", "warn");
   const r = id ? rows.find((x) => String(x.id) === String(id)) : {};
   $("editModalTitle").textContent = id ? "Editar edital" : "Novo edital";
   setFieldValue("mId", r?.id || "");
@@ -11302,8 +11291,8 @@ function closeEditModal() {
 }
 
 async function saveEdital() {
-  if (!can("cores"))
-    return toast("Sem permissão para salvar registros.", "warn");
+  if (!canManageEditais(profile))
+    return toast("Sem permissão para salvar editais.", "warn");
   const id = txt($("mId").value);
   const unit = selectedModalUnidade();
   const payload = {
@@ -11835,6 +11824,10 @@ function renderPanelAdmin() {
   box.innerHTML = renderPanelAdminHTML(panels);
 }
 
+async function loadAccessManagement() {
+  return renderAccessRequestsAdmin();
+}
+
 async function renderAccessRequestsAdmin() {
   const card = $("accessRequestsAdminCard");
   const box = $("accessRequestsAdmin");
@@ -11847,7 +11840,7 @@ async function renderAccessRequestsAdmin() {
     sb
       .from("solicitacoes_acesso")
       .select(
-        "id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at,solicitacoes_acesso_paineis(painel_id)",
+        "id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at",
       )
       .eq("status", "pendente")
       .order("created_at", { ascending: false })
@@ -11855,10 +11848,9 @@ async function renderAccessRequestsAdmin() {
     sb
       .from("perfis_usuarios")
       .select(
-        "id,email,nome,perfil,ativo,p_ind,p_cores,p_paineis,p_config,p_admin,updated_at,perfis_paineis_externos(painel_id,ativo)",
+        "id,user_id,email,nome,perfil,ativo,updated_at",
       )
       .eq("ativo", true)
-      .neq("perfil", "master")
       .order("updated_at", { ascending: false })
       .limit(80),
   ]);
@@ -11894,7 +11886,7 @@ async function renderAccessRequestsAdmin() {
         <div class="section-title-row">
           <div>
             <h4>Usuários ativos</h4>
-            <p>Ajuste perfil, permissões, painéis ou desative o acesso sem apagar histórico.</p>
+            <p>Ajuste o perfil ou desative o acesso sem apagar o histórico.</p>
           </div>
           <span class="chip green">${fmt(accessProfiles.length)}</span>
         </div>
@@ -11904,58 +11896,39 @@ async function renderAccessRequestsAdmin() {
 }
 
 function renderAccessRequestAdminItem(req) {
-  return renderAccessRequestAdminItemHTML(req, panels);
+  return renderAccessRequestAdminItemHTML(req);
 }
 
 function renderAccessUserAdminItem(user) {
-  return renderAccessUserAdminItemHTML(user, panels);
+  return renderAccessUserAdminItemHTML(user, { currentUser });
 }
 
 function accessRequestById(id) {
   return accessRequests.find((r) => String(r.id) === String(id));
 }
 
-function selectedAdminPanelIds(id) {
-  return Array.from(document.querySelectorAll("[data-access-panel]:checked"))
-    .filter((el) => String(el.getAttribute("data-access-panel")) === String(id))
-    .map((el) => txt(el.value))
-    .filter(Boolean);
-}
 
-function selectedUserPanelIds(id) {
-  return Array.from(document.querySelectorAll("[data-user-panel]:checked"))
-    .filter((el) => String(el.getAttribute("data-user-panel")) === String(id))
-    .map((el) => txt(el.value))
-    .filter(Boolean);
-}
 
 async function updateUserAccess(id) {
   const user = accessProfiles.find((r) => String(r.id) === String(id));
   if (!user) return toast("Usuário não encontrado.", "warn");
-  const perfil = txt($("userPerfil" + id)?.value) || "leitor";
-  const p_paineis = $("userPerm_paineis_" + id)?.checked === true;
-  const selectedPanels = selectedUserPanelIds(id);
-  const p_permissoes = {
-    p_ind: $("userPerm_ind_" + id)?.checked === true,
-    p_cores: $("userPerm_cores_" + id)?.checked === true,
-    p_paineis,
-    p_config: $("userPerm_config_" + id)?.checked === true,
-    p_admin: $("userPerm_admin_" + id)?.checked === true,
-  };
+  if (isOwnAccessProfile(currentUser, user))
+    return toast("Sua própria permissão deve ser alterada por outro administrador.", "warn");
+  const perfil = txt($("userPerfil" + id)?.value) || "usuario";
   const label = user.email || user.nome || "este usuário";
   if (!window.confirm(`Salvar alterações de acesso para ${label}?`)) return;
   const motivo = window.prompt("Motivo da alteração (opcional):", "") || "";
   loader(
     true,
     "Salvando acesso",
-    "Atualizando perfil, permissões e painéis em uma transação...",
+    "Atualizando o perfil de acesso...",
     55,
   );
   const { error } = await sb.rpc(RPC_UPDATE_USER_ACCESS, {
     p_perfil_usuario_id: id,
     p_perfil: perfil,
-    p_permissoes,
-    p_paineis: p_paineis ? selectedPanels : [],
+    p_permissoes: {},
+    p_paineis: [],
     p_motivo: motivo,
   });
   loader(false);
@@ -11968,27 +11941,18 @@ async function updateUserAccess(id) {
 async function approveAccessRequest(id) {
   const req = accessRequestById(id);
   if (!req) return toast("Solicitação não encontrada.", "warn");
-  const perfil = txt($("accessPerfil" + id)?.value) || "leitor";
-  const p_paineis = $("accessPerm_paineis_" + id)?.checked === true;
-  const selectedPanels = selectedAdminPanelIds(id);
-  const p_permissoes = {
-    p_ind: $("accessPerm_ind_" + id)?.checked === true,
-    p_cores: $("accessPerm_cores_" + id)?.checked === true,
-    p_paineis,
-    p_config: $("accessPerm_config_" + id)?.checked === true,
-    p_admin: $("accessPerm_admin_" + id)?.checked === true,
-  };
+  const perfil = txt($("accessPerfil" + id)?.value) || "usuario";
   loader(
     true,
     "Aprovando acesso",
-    "Salvando perfil e permissões em uma transação...",
+    "Salvando o perfil de acesso...",
     55,
   );
   const { error: reqErr } = await sb.rpc(RPC_APPROVE_ACCESS_REQUEST, {
     p_solicitacao_id: id,
     p_perfil: perfil,
-    p_permissoes,
-    p_paineis: p_paineis ? selectedPanels : [],
+    p_permissoes: {},
+    p_paineis: [],
     p_observacao_admin: txt($("accessObs" + id)?.value),
   });
   loader(false);
@@ -11998,30 +11962,13 @@ async function approveAccessRequest(id) {
   await renderAccessRequestsAdmin();
 }
 
-async function revokeUserPanels(id) {
-  const selectedPanels = selectedUserPanelIds(id);
-  const allPanels = selectedPanels.length === 0;
-  const message = allPanels
-    ? "Nenhum painel marcado. Revogar TODOS os painéis externos deste usuário?"
-    : `Revogar ${selectedPanels.length} painel(is) marcado(s) deste usuário?`;
-  if (!window.confirm(message)) return;
-  const motivo = window.prompt("Motivo da revogação (opcional):", "") || "";
-  loader(true, "Revogando painéis", "Atualizando permissões externas...", 45);
-  const { error } = await sb.rpc(RPC_REVOKE_USER_PANELS, {
-    p_perfil_usuario_id: id,
-    p_paineis: allPanels ? null : selectedPanels,
-    p_motivo: motivo,
-  });
-  loader(false);
-  if (error)
-    return toast("Erro ao revogar painéis: " + friendlyError(error), "error");
-  toast("Painéis revogados.");
-  await renderAccessRequestsAdmin();
-}
 
 async function deactivateUserAccess(id) {
   const user = accessProfiles.find((r) => String(r.id) === String(id));
-  const label = user?.email || "este usuário";
+  if (!user) return toast("Usuário não encontrado.", "warn");
+  if (isOwnAccessProfile(currentUser, user))
+    return toast("Você não pode desativar o próprio acesso.", "warn");
+  const label = user.email || "este usuário";
   if (
     !window.confirm(`Desativar o acesso de ${label}? O histórico será mantido.`)
   )
@@ -12859,6 +12806,9 @@ Object.defineProperty(window, "searchIdx", {
 });
 Object.assign(window, {
   $,
+  getMonitoraProfile: () => profile,
+  monitoraToast: toast,
+  monitoraLoader: loader,
   aplicarCnesCoords,
   approveAccessRequest,
   clearFilters,
@@ -12877,17 +12827,18 @@ Object.assign(window, {
   highlightSearchItems,
   login,
   loadAccessDashboard,
+  loadAccessManagement,
   loginWithGoogle,
   logout,
   navigate,
   openEditModal,
+  openApprovedListImport,
   previewCnesCoords,
   previewImg,
   refreshData,
   reloadExternal,
   returnToLogin,
   removeFilterPill,
-  revokeUserPanels,
   runGlobalSearch,
   saveAdminSettings,
   restoreAccessBackground,

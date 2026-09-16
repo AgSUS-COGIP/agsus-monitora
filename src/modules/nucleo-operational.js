@@ -348,7 +348,9 @@ function decorateRows() {
           badge.innerHTML = `<i class="fa-solid ${meta.icon}" aria-hidden="true"></i><span>${esc(meta.label)}</span>`;
         }
       }
-      const existingButton = actions.querySelector(".nucleo-view-timeline");
+      const actionGroup = actions.querySelector(".nucleo-row-actions") || actions;
+      actionGroup.querySelector(".approved-no-action")?.remove();
+      const existingButton = actionGroup.querySelector(".nucleo-view-timeline");
       if (existingButton)
         existingButton.setAttribute(
           "aria-label",
@@ -368,7 +370,8 @@ function decorateRows() {
         button.addEventListener("click", () =>
           window.openEditModal?.(tr.dataset.monitoramentoId),
         );
-        actions.insertBefore(button, actions.firstChild);
+        const editButton = actionGroup.querySelector(".nucleo-edit-action");
+        actionGroup.insertBefore(button, editButton || null);
       }
     });
   } finally {

@@ -261,6 +261,9 @@ function ligarFiltro(documento, raiz) {
     botao.addEventListener("click", () => {
       escolhida = botao.dataset.secao;
       aplicar();
+      if (escolhida === "acessos") {
+        void documento.defaultView?.loadAccessManagement?.();
+      }
     });
   }
   busca?.addEventListener("input", aplicar);

@@ -1,3 +1,5 @@
+import { ACCESS_ROLES, isOwnAccessProfile, normalizeRole } from "../lib/access-roles.js";
+
 const ESC_MAP = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" };
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ESC_MAP[char]);
 const attr = (value) => esc(value).replaceAll("`", "&#096;");
@@ -14,6 +16,8 @@ export function accessRequestStatusMessage(req) {
   return req.observacao_admin ? `${base} Observação: ${req.observacao_admin}` : base;
 }
 
+// Mantidos por compatibilidade com a tela de solicitação de acesso. A gestão
+// administrativa de permissões não depende mais de painéis/checkboxes.
 export function renderAccessPanelChoicesHTML(panels, selectedIds = [], locked = false) {
   const activePanels = (panels || []).filter((panel) => panel.ativo !== false);
   if (!activePanels.length) {
@@ -35,18 +39,16 @@ export function selectedPanelIdsFromForm() {
     .filter(Boolean);
 }
 
-export function renderAccessRequestAdminItemHTML(req, panels) {
-  const selectedPanels = new Set((req.solicitacoes_acesso_paineis || []).map((row) => String(row.painel_id)));
-  const profileValue = ["leitor", "editor", "admin"].includes(req.perfil_solicitado) ? req.perfil_solicitado : "leitor";
+function profileOptionsHTML(value) {
+  const normalized = normalizeRole({ perfil: value, ativo: true }) || "usuario";
+  return ACCESS_ROLES.map((role) => (
+    `<option value="${attr(role.value)}" ${normalized === role.value ? "selected" : ""}>${esc(role.label)}</option>`
+  )).join("");
+}
+
+export function renderAccessRequestAdminItemHTML(req) {
   const editable = req.status === "pendente";
   const disabled = editable ? "" : "disabled";
-
-  const painelChecks = (panels || []).filter((panel) => panel.ativo !== false).map((panel) => `
-    <label class="panel-check">
-      <input type="checkbox" data-access-panel="${attr(req.id)}" value="${attr(panel.id || "")}" ${selectedPanels.has(String(panel.id)) ? "checked" : ""} ${disabled}>
-      <span>${esc(panel.titulo || panel.codigo)}</span>
-    </label>
-  `).join("") || `<div class="access-status">Nenhum painel externo ativo.</div>`;
 
   return `<div class="access-admin-item" data-access-request="${attr(req.id)}">
     <div class="access-admin-head">
@@ -57,32 +59,16 @@ export function renderAccessRequestAdminItemHTML(req, panels) {
       </div>
       <div class="access-status-pill ${attr(req.status)}">${esc(req.status)}</div>
     </div>
-    <div class="access-admin-controls">
+    <div class="access-admin-controls access-admin-controls--profile-only">
       <div class="form-row">
-        <label>Perfil</label>
+        <label for="accessPerfil${attr(req.id)}">Perfil</label>
         <select id="accessPerfil${attr(req.id)}" ${disabled}>
-          <option value="leitor" ${profileValue === "leitor" ? "selected" : ""}>Leitor</option>
-          <option value="editor" ${profileValue === "editor" ? "selected" : ""}>Editor</option>
-          <option value="admin" ${profileValue === "admin" ? "selected" : ""}>Admin</option>
+          ${profileOptionsHTML(req.perfil_solicitado)}
         </select>
       </div>
-      <div>
-        <label>Permissões internas</label>
-        <div class="permission-checks">
-          ${permissionCheckHTML(req.id, "ind", "Saúde Indígena", true, disabled)}
-          ${permissionCheckHTML(req.id, "cores", "Núcleo", false, disabled)}
-          ${permissionCheckHTML(req.id, "paineis", "Painéis", true, disabled)}
-          ${permissionCheckHTML(req.id, "config", "Config", false, disabled)}
-          ${permissionCheckHTML(req.id, "admin", "Admin", false, disabled)}
-        </div>
-      </div>
-    </div>
-    <div class="access-admin-panels">
-      <label>Painéis externos liberados</label>
-      <div class="panel-check-list">${painelChecks}</div>
     </div>
     <div class="form-row access-admin-observation">
-      <label>Observação administrativa</label>
+      <label for="accessObs${attr(req.id)}">Observação administrativa</label>
       <input id="accessObs${attr(req.id)}" value="${attr(req.observacao_admin || "")}" placeholder="Opcional" ${disabled}>
     </div>
     <div class="access-admin-actions">
@@ -92,64 +78,35 @@ export function renderAccessRequestAdminItemHTML(req, panels) {
   </div>`;
 }
 
-export function renderAccessUserAdminItemHTML(user, panels) {
-  const activePanelIds = new Set((user.perfis_paineis_externos || [])
-    .filter((row) => row.ativo !== false)
-    .map((row) => String(row.painel_id)));
-  const panelChecks = (panels || []).filter((panel) => panel.ativo !== false).map((panel) => {
-    const checked = activePanelIds.has(String(panel.id));
-    return `
-      <label class="panel-check ${checked ? "" : "muted"}">
-        <input type="checkbox" data-user-panel="${attr(user.id)}" value="${attr(panel.id || "")}" ${checked ? "checked" : ""}>
-        <span>${esc(panel.titulo || panel.codigo)}</span>
-      </label>
-    `;
-  }).join("") || `<div class="access-status">Nenhum painel externo ativo.</div>`;
+export function renderAccessUserAdminItemHTML(user, options = {}) {
+  const ownAccount = isOwnAccessProfile(options.currentUser, user);
+  const ownBadge = ownAccount
+    ? `<span class="chip blue" title="Sua própria conta não pode ter o perfil alterado por esta tela.">Sua conta</span>`
+    : "";
 
-  const profileValue = ["leitor", "editor", "admin"].includes(user.perfil) ? user.perfil : "leitor";
-
-  return `<div class="access-admin-item access-user-item" data-access-user="${attr(user.id)}">
+  return `<div class="access-admin-item access-user-item${ownAccount ? " is-own-account" : ""}" data-access-user="${attr(user.id)}">
     <div class="access-admin-head">
       <div>
         <strong>${esc(user.nome || user.email)}</strong>
-        <span>${esc(user.email)} · ${esc(user.perfil || "leitor")}</span>
+        <span>${esc(user.email)} · ${esc(normalizeRole(user) || "usuario")}</span>
       </div>
-      <div class="access-status-pill ${user.ativo ? "aprovado" : "recusado"}">${user.ativo ? "ativo" : "inativo"}</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${ownBadge}
+        <div class="access-status-pill ${user.ativo ? "aprovado" : "recusado"}">${user.ativo ? "ativo" : "inativo"}</div>
+      </div>
     </div>
-    <div class="access-admin-controls">
+    <div class="access-admin-controls access-admin-controls--profile-only">
       <div class="form-row">
-        <label>Perfil</label>
-        <select id="userPerfil${attr(user.id)}">
-          <option value="leitor" ${profileValue === "leitor" ? "selected" : ""}>Leitor</option>
-          <option value="editor" ${profileValue === "editor" ? "selected" : ""}>Editor</option>
-          <option value="admin" ${profileValue === "admin" ? "selected" : ""}>Admin</option>
+        <label for="userPerfil${attr(user.id)}">Perfil</label>
+        <select id="userPerfil${attr(user.id)}" ${ownAccount ? "disabled" : ""} aria-disabled="${ownAccount ? "true" : "false"}">
+          ${profileOptionsHTML(user.perfil)}
         </select>
-      </div>
-      <div>
-        <label>Permissões internas</label>
-        <div class="permission-checks">
-          ${permissionCheckHTML(user.id, "ind", "Saúde Indígena", user.p_ind === true, "", "userPerm")}
-          ${permissionCheckHTML(user.id, "cores", "Núcleo", user.p_cores === true, "", "userPerm")}
-          ${permissionCheckHTML(user.id, "paineis", "Painéis", user.p_paineis === true, "", "userPerm")}
-          ${permissionCheckHTML(user.id, "config", "Config", user.p_config === true, "", "userPerm")}
-          ${permissionCheckHTML(user.id, "admin", "Admin", user.p_admin === true, "", "userPerm")}
-        </div>
+        ${ownAccount ? `<small>Para evitar perda acidental de acesso administrativo, sua própria permissão só pode ser alterada por outro administrador.</small>` : ""}
       </div>
     </div>
-    <div class="access-user-summary">
-      <div>
-        <label>Painéis externos liberados</label>
-        <div class="panel-check-list">${panelChecks}</div>
-      </div>
-    </div>
-    <div class="access-admin-actions">
+    ${ownAccount ? "" : `<div class="access-admin-actions">
       <button class="btn green" type="button" onclick="updateUserAccess('${attr(user.id)}')"><i class="fa-solid fa-floppy-disk"></i> Salvar alterações</button>
-      <button class="btn outline" type="button" onclick="revokeUserPanels('${attr(user.id)}')"><i class="fa-solid fa-eye-slash"></i> Revogar painéis marcados</button>
       <button class="btn red" type="button" onclick="deactivateUserAccess('${attr(user.id)}')"><i class="fa-solid fa-user-slash"></i> Desativar acesso</button>
-    </div>
+    </div>`}
   </div>`;
-}
-
-function permissionCheckHTML(id, key, label, checked, disabled, prefix = "accessPerm") {
-  return `<label class="permission-check"><input type="checkbox" id="${attr(prefix)}_${attr(key)}_${attr(id)}" ${checked ? "checked" : ""} ${disabled}><span>${esc(label)}</span></label>`;
 }

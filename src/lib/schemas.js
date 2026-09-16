@@ -1,6 +1,19 @@
 import { z } from "zod";
+import {
+  PERFIL_PADRAO,
+  PERFIS_VALIDOS,
+  perfilParaGravar,
+} from "./perfis-de-acesso.js";
 
-export const accessProfileSchema = z.enum(["leitor", "editor", "admin", "master"]);
+/*
+  Traduz antes de validar: linhas gravadas com os perfis antigos ("leitor",
+  "editor", "master") continuam a ser lidas, já no vocabulário atual, em vez de
+  fazerem o parse inteiro falhar.
+*/
+export const accessProfileSchema = z.preprocess(
+  (valor) => (valor === undefined ? undefined : perfilParaGravar(valor)),
+  z.enum(PERFIS_VALIDOS),
+);
 
 export const accessRequestSchema = z.object({
   id: z.union([z.string(), z.number()]).optional(),
@@ -8,7 +21,7 @@ export const accessRequestSchema = z.object({
   email: z.string().trim().email("Informe um e-mail valido."),
   setor: z.string().trim().optional().default(""),
   justificativa: z.string().trim().optional().default(""),
-  perfil_solicitado: accessProfileSchema.default("leitor"),
+  perfil_solicitado: accessProfileSchema.default(PERFIL_PADRAO),
   status: z.enum(["pendente", "aprovado", "recusado"]).default("pendente"),
   observacao_admin: z.string().trim().optional().default("")
 });

@@ -43,6 +43,7 @@ import "./styles/nielsen-shell-ux.css";
 import "./styles/post-152-regression-fixes.css";
 import "./styles/post157-interface-tuning.css";
 import "./styles/colapsar-a-sidebar.css";
+import "./styles/lista-aprovados.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -81,6 +82,7 @@ import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { initColapsarDaSidebar } from "./modules/colapsar-a-sidebar.js";
+import { createListaAprovadosController } from "./modules/lista-aprovados.js";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -127,6 +129,12 @@ initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
 initColapsarDaSidebar();
+
+window.aprovadosController = createListaAprovadosController({
+  toast: window.monitoraToast,
+  loader: window.monitoraLoader,
+  getProfile: window.getMonitoraProfile,
+});
 
 if (!hasSupabaseEnv()) {
   console.warn(

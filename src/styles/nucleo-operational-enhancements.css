@@ -184,6 +184,14 @@
 #nucleoRows td:last-child {
   white-space: nowrap;
 }
+.nucleo-row-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
 #nucleoRows td:last-child .btn {
   margin: 0 2px;
 }
