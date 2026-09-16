@@ -58,20 +58,5 @@ try {
     `Formatação validada em ${candidates.length} ficheiro(s) alterado(s).`,
   );
 } catch {
-  try {
-    const formatted = execFileSync(
-      "npx",
-      ["prettier", "src/modules/nina-panel-drag.js"],
-      {
-        encoding: "utf8",
-        shell: process.platform === "win32",
-      },
-    );
-    console.error("--- PRETTIER NINA PANEL DRAG ---");
-    console.error(formatted);
-    console.error("--- FIM PRETTIER NINA PANEL DRAG ---");
-  } catch {
-    // Mantém a falha original do gate.
-  }
   process.exit(1);
 }
