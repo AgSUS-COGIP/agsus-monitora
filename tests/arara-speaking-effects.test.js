@@ -30,7 +30,7 @@ describe("efeito de fala da Nina", () => {
   it("usa Nina como nome único da assistente", () => {
     expect(araraAssistantName()).toBe("Nina");
     expect(source).toContain('const ASSISTANT_NAME = "Nina"');
-    expect(source).toContain("Nina está falando");
+    expect(source).toContain("${ASSISTANT_NAME} está falando");
   });
 
   it("abre Saúde Indígena como conversa e se apresenta pelo nome", () => {
@@ -100,6 +100,15 @@ describe("efeito de fala da Nina", () => {
     );
     expect(answer).toContain("DSEI Xingu");
     expect(answer).toContain("10 vagas");
+  });
+
+  it("permite mover o launcher e preserva a posição", () => {
+    expect(source).toContain("enhanceDraggableLauncher");
+    expect(source).toContain("pointerdown");
+    expect(source).toContain("pointermove");
+    expect(source).toContain("LAUNCHER_POSITION_STORAGE_KEY");
+    expect(source).toContain("writeLauncherPosition");
+    expect(source).toContain("Clique para abrir a Nina ou arraste para mover");
   });
 
   it("mostra estado de fala e revela texto progressivamente", () => {
