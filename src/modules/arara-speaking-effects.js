@@ -1,5 +1,6 @@
 const hostObservers = new WeakMap();
 const activeAnimations = new WeakMap();
+const conversationMemory = new WeakMap();
 
 const MIN_DURATION_MS = 650;
 const MAX_DURATION_MS = 3400;
@@ -14,6 +15,57 @@ const OPENING_MESSAGES = Object.freeze({
     "Olá! Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
   analises:
     "Olá! Você está em Análises. Posso te ajudar com os filtros, o gráfico ou a fila operacional. O que você quer entender primeiro?",
+});
+
+const TOPIC_PATTERNS = Object.freeze({
+  mapa: /\b(mapa|dsei|territ[oó]rio|satelite|satélite|zoom)\b/i,
+  filtros: /\b(filtro|filtrar|uf|edital|etapa|status|risco|per[ií]odo)\b/i,
+  indicadores: /\b(indicador|kpi|vaga|ociosa|contrata|inscrito|cr[ií]tico)\b/i,
+  processo: /\b(processo|edital|buscar|pesquisar|localizar)\b/i,
+  cronograma: /\b(cronograma|prazo|data|etapa)\b/i,
+  edicao: /\b(editar|salvar|altera|permiss[aã]o|perfil)\b/i,
+  acessos: /\b(acesso|usu[aá]rio|perfil|permiss[aã]o|painel)\b/i,
+  configuracao: /\b(configura|ajuste|identidade|texto|par[aâ]metro)\b/i,
+  fila: /\b(fila|candidato|registro|detalhe)\b/i,
+  grafico: /\b(gr[aá]fico|linha|evolu[cç][aã]o|tempo|volume)\b/i,
+});
+
+const FOLLOW_UP_PATTERN =
+  /^(e\s+(agora|depois|aqui|isso|esse|essa)|como assim|por que|porque|qual deles|qual delas|me explica melhor|e se|entendi|certo)[?!.\s]*$/i;
+
+const CONTINUATIONS = Object.freeze({
+  dashboard: {
+    mapa:
+      "No mapa, o próximo passo é escolher um DSEI. Depois disso, use o detalhamento para ver polos e unidades. Se quiser comparar territórios, volte à visão Brasil antes de selecionar outro DSEI.",
+    filtros:
+      "Depois de ajustar os filtros, confira os indicadores antes de abrir o mapa. Assim você confirma se o recorte realmente mudou e evita comparar números de contextos diferentes.",
+    indicadores:
+      "Use o indicador como sinal de onde olhar, não como conclusão isolada. Se algum número chamar atenção, confira os filtros ativos e depois abra o território ou a lista relacionada para entender o detalhe.",
+  },
+  nucleo: {
+    processo:
+      "Depois de localizar o processo, abra o registro e confira etapa, cronograma e situação antes de editar qualquer campo.",
+    cronograma:
+      "No cronograma, compare primeiro a sequência das etapas e as datas. Se precisar editar, confirme que está no processo correto antes de salvar.",
+    edicao:
+      "Se a edição estiver disponível para o seu perfil, altere apenas o campo necessário, revise o registro e salve uma vez. Depois confira a confirmação do sistema.",
+  },
+  config: {
+    acessos:
+      "Antes de mudar um acesso, confirme a pessoa, o perfil atual e os painéis envolvidos. Depois da alteração, valide se o resultado corresponde exatamente ao que você pretendia.",
+    configuracao:
+      "Faça uma alteração por vez. Isso facilita conferir o efeito da mudança e evita misturar ajustes diferentes na mesma validação.",
+    edicao:
+      "Antes de salvar, releia o valor atual e o novo valor. Depois do salvamento, confira a mensagem do sistema e valide a área afetada.",
+  },
+  analises: {
+    filtros:
+      "Depois de aplicar os filtros, confira o contador de registros e a data de atualização. Só então compare o gráfico ou a fila operacional.",
+    fila:
+      "Na fila, use a busca para localizar o registro e abra Detalhes quando precisar conferir todas as informações. O status da linha deve ser lido dentro do recorte dos filtros ativos.",
+    grafico:
+      "Se aparecer um pico ou uma queda no gráfico, confirme o período e os filtros e depois consulte os registros daquele trecho na fila operacional.",
+  },
 });
 
 export function araraSpeechDuration(text) {
@@ -49,6 +101,58 @@ function prefersReducedMotion(win) {
   }
 }
 
+function normalizeSection(root) {
+  const section = root.dataset.section || "";
+  const title = root.querySelector(".arara-assistant__section")?.textContent || "";
+  if (section === "analises" || /an[aá]lises/i.test(title)) return "analises";
+  return section;
+}
+
+function detectTopic(text) {
+  const value = String(text || "").trim();
+  return (
+    Object.entries(TOPIC_PATTERNS).find(([, pattern]) => pattern.test(value))?.[0] ||
+    ""
+  );
+}
+
+function conversationContext(root) {
+  let memory = conversationMemory.get(root);
+  if (!memory) {
+    memory = { lastTopic: "" };
+    conversationMemory.set(root, memory);
+  }
+  return memory;
+}
+
+function latestUserText(root) {
+  const users = root.querySelectorAll(
+    ".arara-message--user .arara-message__body",
+  );
+  return users[users.length - 1]?.textContent?.trim() || "";
+}
+
+function contextualContinuation(root) {
+  const question = latestUserText(root);
+  if (!question) return "";
+
+  const memory = conversationContext(root);
+  const explicitTopic = detectTopic(question);
+  if (explicitTopic) {
+    memory.lastTopic = explicitTopic;
+    return "";
+  }
+
+  if (!memory.lastTopic || !FOLLOW_UP_PATTERN.test(question)) return "";
+
+  const section = normalizeSection(root);
+  return CONTINUATIONS[section]?.[memory.lastTopic] || "";
+}
+
+function removeFixedTutorial(root) {
+  root.querySelector(".arara-stepper")?.remove();
+}
+
 function cancelActiveAnimation(root, reveal = true) {
   const active = activeAnimations.get(root);
   if (!active) return;
@@ -82,12 +186,16 @@ function assistantText(root, body) {
       root.querySelector(".arara-assistant__section")?.textContent || "";
     return araraOpeningMessage(section, title);
   }
+
+  const continuation = contextualContinuation(root);
+  if (continuation) return continuation;
   return String(body.textContent || "").trim();
 }
 
 function animateAssistantBody(root, body) {
   if (body.dataset.araraSpeechEnhanced === "1") return;
 
+  removeFixedTutorial(root);
   const fullText = assistantText(root, body);
   body.textContent = fullText;
   body.dataset.araraSpeechEnhanced = "1";
@@ -160,6 +268,7 @@ function animateAssistantBody(root, body) {
 }
 
 function processAssistantMessages(host) {
+  host.querySelectorAll("[data-arara-guide]").forEach(removeFixedTutorial);
   host
     .querySelectorAll(
       "[data-arara-guide] .arara-message--assistant .arara-message__body",
