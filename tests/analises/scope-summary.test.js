@@ -2,7 +2,7 @@ import { expect, it, vi } from "vitest";
 
 const flushMutations = async () => {
   await Promise.resolve();
-  await new Promise(resolve => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
 it("recolhe o recorte após sucesso e reabre para alteração", async () => {
@@ -39,7 +39,9 @@ it("recolhe o recorte após sucesso e reabre para alteração", async () => {
 
   expect(guard.classList.contains("scope-guard--collapsed")).toBe(true);
   expect(summary.hidden).toBe(false);
-  expect(summary.textContent).toContain("Inativo · 2 unidade(s) · 2 edital(is) · 10.743 registro(s)");
+  expect(summary.textContent).toContain(
+    "Inativo · 2 unidade(s) · 2 edital(is) · 10.743 registro(s)",
+  );
 
   document.getElementById("scopeGuardChange").click();
   expect(guard.classList.contains("scope-guard--collapsed")).toBe(false);
@@ -47,7 +49,9 @@ it("recolhe o recorte após sucesso e reabre para alteração", async () => {
 
   status.textContent = "Consulta concluída: 10.743 registro(s) no recorte.";
   await flushMutations();
-  document.getElementById("scopeGuardUnits").dispatchEvent(new Event("change", { bubbles:true }));
+  document
+    .getElementById("scopeGuardUnits")
+    .dispatchEvent(new Event("change", { bubbles: true }));
   expect(guard.classList.contains("scope-guard--collapsed")).toBe(false);
 
   status.classList.add("is-warning");

@@ -69,8 +69,14 @@ export function validateApprovedRows(inputRows) {
 
     if (rowIsEmpty(row)) return;
 
-    const missing = ["codigo_vaga", "cargo", "classificacao", "nota", "nome", "modalidade"]
-      .filter((key) => !cleanText(row[key]));
+    const missing = [
+      "codigo_vaga",
+      "cargo",
+      "classificacao",
+      "nota",
+      "nome",
+      "modalidade",
+    ].filter((key) => !cleanText(row[key]));
     const classificationNumber = parseBrazilianNumber(row.classificacao);
     const scoreNumber = parseBrazilianNumber(row.nota);
     const rowErrors = [];
@@ -105,8 +111,12 @@ export function validateApprovedRows(inputRows) {
 
 function decodeXml(value) {
   return String(value ?? "")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#([0-9]+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCodePoint(parseInt(hex, 16)),
+    )
+    .replace(/&#([0-9]+);/g, (_, dec) =>
+      String.fromCodePoint(parseInt(dec, 10)),
+    )
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
@@ -124,9 +134,13 @@ function readUint32(view, offset) {
 
 async function inflateRaw(bytes) {
   if (typeof DecompressionStream === "undefined") {
-    throw new Error("Seu navegador não oferece suporte à descompactação necessária para arquivos XLSX.");
+    throw new Error(
+      "Seu navegador não oferece suporte à descompactação necessária para arquivos XLSX.",
+    );
   }
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  const stream = new Blob([bytes])
+    .stream()
+    .pipeThrough(new DecompressionStream("deflate-raw"));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
@@ -143,7 +157,8 @@ async function unzip(arrayBuffer) {
       break;
     }
   }
-  if (eocd < 0) throw new Error("O arquivo não parece ser um XLSX válido (ZIP inválido).");
+  if (eocd < 0)
+    throw new Error("O arquivo não parece ser um XLSX válido (ZIP inválido).");
 
   const entryCount = readUint16(view, eocd + 10);
   let offset = readUint32(view, eocd + 16);
@@ -159,10 +174,14 @@ async function unzip(arrayBuffer) {
     const extraLength = readUint16(view, offset + 30);
     const commentLength = readUint16(view, offset + 32);
     const localOffset = readUint32(view, offset + 42);
-    const fileName = decoder.decode(bytes.slice(offset + 46, offset + 46 + fileNameLength));
+    const fileName = decoder.decode(
+      bytes.slice(offset + 46, offset + 46 + fileNameLength),
+    );
 
     if (readUint32(view, localOffset) !== 0x04034b50) {
-      throw new Error("Estrutura interna do XLSX inválida (arquivo ZIP local).");
+      throw new Error(
+        "Estrutura interna do XLSX inválida (arquivo ZIP local).",
+      );
     }
     const localNameLength = readUint16(view, localOffset + 26);
     const localExtraLength = readUint16(view, localOffset + 28);
@@ -171,7 +190,10 @@ async function unzip(arrayBuffer) {
     let content;
     if (compression === 0) content = compressed;
     else if (compression === 8) content = await inflateRaw(compressed);
-    else throw new Error(`Método de compactação XLSX não suportado: ${compression}.`);
+    else
+      throw new Error(
+        `Método de compactação XLSX não suportado: ${compression}.`,
+      );
 
     files.set(fileName.replace(/^\//, ""), content);
     offset += 46 + fileNameLength + extraLength + commentLength;
@@ -190,8 +212,9 @@ function parseSharedStrings(xml) {
   if (!xml) return [];
   const values = [];
   for (const match of xml.matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/gi)) {
-    const texts = [...match[1].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/gi)]
-      .map((part) => decodeXml(part[1]));
+    const texts = [...match[1].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/gi)].map(
+      (part) => decodeXml(part[1]),
+    );
     values.push(texts.join(""));
   }
   return values;
@@ -200,26 +223,41 @@ function parseSharedStrings(xml) {
 function firstWorksheetPath(files) {
   const workbook = xmlText(files, "xl/workbook.xml");
   const relationships = xmlText(files, "xl/_rels/workbook.xml.rels");
-  const sheetMatch = workbook.match(/<sheet\b[^>]*\br:id=["']([^"']+)["'][^>]*>/i);
+  const sheetMatch = workbook.match(
+    /<sheet\b[^>]*\br:id=["']([^"']+)["'][^>]*>/i,
+  );
   const relationshipId = sheetMatch?.[1];
   if (relationshipId && relationships) {
     const escaped = relationshipId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const relMatch = relationships.match(new RegExp(`<Relationship\\b[^>]*\\bId=["']${escaped}["'][^>]*\\bTarget=["']([^"']+)["'][^>]*/?>`, "i"));
+    const relMatch = relationships.match(
+      new RegExp(
+        `<Relationship\\b[^>]*\\bId=["']${escaped}["'][^>]*\\bTarget=["']([^"']+)["'][^>]*/?>`,
+        "i",
+      ),
+    );
     if (relMatch?.[1]) {
       const target = relMatch[1].replace(/^\//, "");
-      return target.startsWith("xl/") ? target : `xl/${target.replace(/^\.\//, "")}`;
+      return target.startsWith("xl/")
+        ? target
+        : `xl/${target.replace(/^\.\//, "")}`;
     }
   }
   if (files.has("xl/worksheets/sheet1.xml")) return "xl/worksheets/sheet1.xml";
-  const fallback = [...files.keys()].find((path) => /^xl\/worksheets\/sheet\d+\.xml$/i.test(path));
+  const fallback = [...files.keys()].find((path) =>
+    /^xl\/worksheets\/sheet\d+\.xml$/i.test(path),
+  );
   if (fallback) return fallback;
   throw new Error("Nenhuma planilha foi encontrada no XLSX.");
 }
 
 function columnIndex(reference) {
-  const letters = String(reference || "").match(/^[A-Z]+/i)?.[0]?.toUpperCase() || "A";
+  const letters =
+    String(reference || "")
+      .match(/^[A-Z]+/i)?.[0]
+      ?.toUpperCase() || "A";
   let result = 0;
-  for (const letter of letters) result = result * 26 + (letter.charCodeAt(0) - 64);
+  for (const letter of letters)
+    result = result * 26 + (letter.charCodeAt(0) - 64);
   return result - 1;
 }
 
@@ -239,7 +277,9 @@ function parseWorksheet(xml, sharedStrings) {
   const rows = [];
   for (const rowMatch of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/gi)) {
     const cells = [];
-    for (const cellMatch of rowMatch[1].matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>/gi)) {
+    for (const cellMatch of rowMatch[1].matchAll(
+      /<c\b([^>]*)>([\s\S]*?)<\/c>/gi,
+    )) {
       const attrs = cellMatch[1];
       const ref = attrs.match(/\br=["']([^"']+)["']/i)?.[1] || "A1";
       const type = attrs.match(/\bt=["']([^"']+)["']/i)?.[1] || "";
@@ -259,18 +299,25 @@ export async function readApprovedWorkbook(file) {
   }
 
   const files = await unzip(await file.arrayBuffer());
-  const sharedStrings = parseSharedStrings(xmlText(files, "xl/sharedStrings.xml"));
+  const sharedStrings = parseSharedStrings(
+    xmlText(files, "xl/sharedStrings.xml"),
+  );
   const worksheetPath = firstWorksheetPath(files);
   const worksheet = xmlText(files, worksheetPath);
-  if (!worksheet) throw new Error("Não foi possível ler a primeira planilha do XLSX.");
+  if (!worksheet)
+    throw new Error("Não foi possível ler a primeira planilha do XLSX.");
 
   const matrix = parseWorksheet(worksheet, sharedStrings);
   if (!matrix.length) throw new Error("A planilha está vazia.");
 
   const headers = normalizeApprovedHeaders(matrix[0]);
-  const missingColumns = REQUIRED_APPROVED_COLUMNS.filter((column) => !headers.includes(column));
+  const missingColumns = REQUIRED_APPROVED_COLUMNS.filter(
+    (column) => !headers.includes(column),
+  );
   if (missingColumns.length) {
-    throw new Error(`Colunas obrigatórias ausentes: ${missingColumns.join(", ")}.`);
+    throw new Error(
+      `Colunas obrigatórias ausentes: ${missingColumns.join(", ")}.`,
+    );
   }
 
   const dataRows = matrix.slice(1).map((values) => {
@@ -283,9 +330,13 @@ export async function readApprovedWorkbook(file) {
   const validated = validateApprovedRows(dataRows);
   if (validated.errors.length) {
     const preview = validated.errors.slice(0, 12).join("\n");
-    const suffix = validated.errors.length > 12 ? `\n... e mais ${validated.errors.length - 12} erro(s).` : "";
+    const suffix =
+      validated.errors.length > 12
+        ? `\n... e mais ${validated.errors.length - 12} erro(s).`
+        : "";
     throw new Error(`${preview}${suffix}`);
   }
-  if (!validated.rows.length) throw new Error("Nenhum candidato válido foi encontrado no XLSX.");
+  if (!validated.rows.length)
+    throw new Error("Nenhum candidato válido foi encontrado no XLSX.");
   return validated.rows;
 }

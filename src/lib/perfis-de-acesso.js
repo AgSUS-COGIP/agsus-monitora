@@ -80,7 +80,8 @@ export function normalizarPerfil(valor) {
     .trim()
     .toLowerCase();
   if (!bruto) return "";
-  if (PERFIS_VALIDOS.includes(bruto)) return /** @type {PerfilDeAcesso} */ (bruto);
+  if (PERFIS_VALIDOS.includes(bruto))
+    return /** @type {PerfilDeAcesso} */ (bruto);
   return PERFIS_LEGADOS[bruto] || PERFIL_PADRAO;
 }
 
@@ -96,7 +97,9 @@ export function rotuloDoPerfil(valor) {
 
 export function descricaoDoPerfil(valor) {
   const perfil = normalizarPerfil(valor);
-  return PERFIS_DE_ACESSO.find((item) => item.valor === perfil)?.descricao || "";
+  return (
+    PERFIS_DE_ACESSO.find((item) => item.valor === perfil)?.descricao || ""
+  );
 }
 
 export function ehAdmin(valor) {

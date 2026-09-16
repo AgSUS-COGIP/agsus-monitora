@@ -2,7 +2,7 @@ import { expect, it, vi } from "vitest";
 
 const flushMutations = async () => {
   await Promise.resolve();
-  await new Promise(resolve => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
 it("libera os KPIs após a consulta e mantém os controles de filtros independentes", async () => {
@@ -60,32 +60,48 @@ it("libera os KPIs após a consulta e mantém os controles de filtros independen
   expect(toggleBtn.textContent).toContain("Ocultar filtros");
 
   document.getElementById("scopeGuardLoad").click();
-  document.getElementById("fSituacaoEdital").dispatchEvent(new Event("change", { bubbles:true }));
-  expect(document.body.classList.contains("historical-scope-pending")).toBe(true);
+  document
+    .getElementById("fSituacaoEdital")
+    .dispatchEvent(new Event("change", { bubbles: true }));
+  expect(document.body.classList.contains("historical-scope-pending")).toBe(
+    true,
+  );
   expect(document.getElementById("exportBtn").disabled).toBe(true);
 
   document.getElementById("loading").classList.remove("show");
   await flushMutations();
 
-  expect(document.body.classList.contains("historical-scope-pending")).toBe(false);
+  expect(document.body.classList.contains("historical-scope-pending")).toBe(
+    false,
+  );
   expect(document.getElementById("exportBtn").disabled).toBe(false);
-  expect(document.getElementById("scopeGuardStatus").textContent).toContain("Consulta concluída: 1.422");
+  expect(document.getElementById("scopeGuardStatus").textContent).toContain(
+    "Consulta concluída: 1.422",
+  );
 
   const editalSelect = document.getElementById("scopeGuardEditais");
   editalSelect.options[0].selected = false;
   editalSelect.options[1].selected = true;
-  editalSelect.dispatchEvent(new Event("change", { bubbles:true }));
-  expect(document.body.classList.contains("historical-scope-pending")).toBe(true);
+  editalSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  expect(document.body.classList.contains("historical-scope-pending")).toBe(
+    true,
+  );
 
   document.getElementById("loading").classList.add("show");
   document.getElementById("scopeGuardLoad").click();
-  document.getElementById("fSituacaoEdital").dispatchEvent(new Event("change", { bubbles:true }));
+  document
+    .getElementById("fSituacaoEdital")
+    .dispatchEvent(new Event("change", { bubbles: true }));
   const authWarning = document.getElementById("authWarning");
   authWarning.hidden = false;
   authWarning.textContent = "Falha ao carregar o painel";
   document.getElementById("loading").classList.remove("show");
   await flushMutations();
 
-  expect(document.body.classList.contains("historical-scope-pending")).toBe(true);
-  expect(document.getElementById("scopeGuardStatus").textContent).toContain("não foi concluída");
+  expect(document.body.classList.contains("historical-scope-pending")).toBe(
+    true,
+  );
+  expect(document.getElementById("scopeGuardStatus").textContent).toContain(
+    "não foi concluída",
+  );
 });

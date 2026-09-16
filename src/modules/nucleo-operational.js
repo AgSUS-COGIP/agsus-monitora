@@ -348,7 +348,8 @@ function decorateRows() {
           badge.innerHTML = `<i class="fa-solid ${meta.icon}" aria-hidden="true"></i><span>${esc(meta.label)}</span>`;
         }
       }
-      const actionGroup = actions.querySelector(".nucleo-row-actions") || actions;
+      const actionGroup =
+        actions.querySelector(".nucleo-row-actions") || actions;
       actionGroup.querySelector(".approved-no-action")?.remove();
       const existingButton = actionGroup.querySelector(".nucleo-view-timeline");
       if (existingButton)

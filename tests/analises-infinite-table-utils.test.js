@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isValidAnalisesRowsFragment,
   numberFromPtBr,
-  parseAnalisesRowsFragment
+  parseAnalisesRowsFragment,
 } from "../src/analises/analises-infinite-table-utils.js";
 
 describe("analises-infinite-table-utils", () => {
@@ -32,6 +32,10 @@ describe("analises-infinite-table-utils", () => {
 
   it("rejeita fragmentos vazios ou com mensagem de ausência", () => {
     expect(isValidAnalisesRowsFragment("")).toBe(false);
-    expect(isValidAnalisesRowsFragment('<tr><td class="empty">Nenhum registro encontrado.</td></tr>')).toBe(false);
+    expect(
+      isValidAnalisesRowsFragment(
+        '<tr><td class="empty">Nenhum registro encontrado.</td></tr>',
+      ),
+    ).toBe(false);
   });
 });

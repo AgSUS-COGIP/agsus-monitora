@@ -4,27 +4,31 @@ const instances = vi.hoisted(() => []);
 
 vi.mock("tom-select", () => ({
   default: class TomSelectMock {
-    constructor(select){
+    constructor(select) {
       this.input = select;
       this.options = [];
       instances.push(this);
     }
-    clear(){
-      [...this.input.options].forEach(option => { option.selected = false; });
+    clear() {
+      [...this.input.options].forEach((option) => {
+        option.selected = false;
+      });
     }
-    clearOptions(){
+    clearOptions() {
       this.options = [];
     }
-    addOptions(options){
+    addOptions(options) {
       this.options = options;
     }
-    setValue(values){
+    setValue(values) {
       const selected = new Set(Array.isArray(values) ? values : [values]);
-      [...this.input.options].forEach(option => { option.selected = selected.has(option.value); });
+      [...this.input.options].forEach((option) => {
+        option.selected = selected.has(option.value);
+      });
     }
-    refreshOptions(){}
-    close(){}
-  }
+    refreshOptions() {}
+    close() {}
+  },
 }));
 
 beforeEach(() => {
@@ -60,16 +64,27 @@ it("oferece seleção em massa e sincroniza opções somente por evento explíci
 
   expect(instances).toHaveLength(2);
 
-  const unitField = document.getElementById("scopeGuardUnits").closest(".scope-guard-field");
-  const selectAll = [...unitField.querySelectorAll("button")].find(button => button.textContent === "Selecionar tudo");
-  const clear = [...unitField.querySelectorAll("button")].find(button => button.textContent === "Limpar");
+  const unitField = document
+    .getElementById("scopeGuardUnits")
+    .closest(".scope-guard-field");
+  const selectAll = [...unitField.querySelectorAll("button")].find(
+    (button) => button.textContent === "Selecionar tudo",
+  );
+  const clear = [...unitField.querySelectorAll("button")].find(
+    (button) => button.textContent === "Limpar",
+  );
 
   selectAll.click();
-  expect([...document.getElementById("scopeGuardUnits").selectedOptions].map(option => option.value))
-    .toEqual(["DSEI  Parintins", "DSEI Pernambuco"]);
+  expect(
+    [...document.getElementById("scopeGuardUnits").selectedOptions].map(
+      (option) => option.value,
+    ),
+  ).toEqual(["DSEI  Parintins", "DSEI Pernambuco"]);
 
   clear.click();
-  expect(document.getElementById("scopeGuardUnits").selectedOptions).toHaveLength(0);
+  expect(
+    document.getElementById("scopeGuardUnits").selectedOptions,
+  ).toHaveLength(0);
 
   const editalSelect = document.getElementById("scopeGuardEditais");
   editalSelect.innerHTML = `
@@ -80,6 +95,11 @@ it("oferece seleção em massa e sincroniza opções somente por evento explíci
   expect(instances[1].options).toEqual([]);
   editalSelect.dispatchEvent(new CustomEvent("agsus:options-updated"));
 
-  expect(instances[1].options.map(option => option.value)).toEqual(["22/2026", "23/2026"]);
-  expect([...editalSelect.selectedOptions].map(option => option.value)).toEqual(["23/2026"]);
+  expect(instances[1].options.map((option) => option.value)).toEqual([
+    "22/2026",
+    "23/2026",
+  ]);
+  expect(
+    [...editalSelect.selectedOptions].map((option) => option.value),
+  ).toEqual(["23/2026"]);
 });

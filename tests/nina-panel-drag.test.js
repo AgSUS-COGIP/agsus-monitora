@@ -4,7 +4,7 @@ import { PANEL_POSITION_STORAGE_KEY } from "../src/modules/nina-panel-drag.js";
 
 const source = readFileSync("src/modules/nina-panel-drag.js", "utf8");
 
-describe("movimento do painel da Nina", () => {
+describe("movimento do painel da Aya", () => {
   it("persiste a posição do painel aberto", () => {
     expect(PANEL_POSITION_STORAGE_KEY).toBe(
       "agsus_monitora_nina_panel_position_v1",
@@ -14,7 +14,7 @@ describe("movimento do painel da Nina", () => {
     expect(source).toContain("writePosition");
   });
 
-  it("usa a própria Nina como alça de movimento", () => {
+  it("usa a própria Aya como alça de movimento", () => {
     expect(source).toContain("[data-nina-drag-handle]");
     expect(source).toContain("is-panel-dragging");
   });

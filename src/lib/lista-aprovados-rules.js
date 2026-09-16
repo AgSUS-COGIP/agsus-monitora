@@ -15,7 +15,10 @@ export function canEditCandidateStatus(profile, candidate) {
 }
 
 export function canEditSubJudice(profile, candidate) {
-  return Boolean(candidate?.lista_ativa && candidate?.sub_judice) && canManageSubJudice(profile);
+  return (
+    Boolean(candidate?.lista_ativa && candidate?.sub_judice) &&
+    canManageSubJudice(profile)
+  );
 }
 
 export function filterApprovedCandidates(rows, filters = {}) {
@@ -27,10 +30,17 @@ export function filterApprovedCandidates(rows, filters = {}) {
     if (editalId && String(row.edital_id) !== editalId) return false;
     if (cargo && text(row.cargo) !== cargo) return false;
     if (status === "__sem_status__" && text(row.status)) return false;
-    if (status && status !== "__sem_status__" && text(row.status) !== status) return false;
+    if (status && status !== "__sem_status__" && text(row.status) !== status)
+      return false;
     if (!query) return true;
-    return [row.nome, row.cargo, row.edital, row.unidade, row.modalidade, row.matricula]
-      .some((value) => low(value).includes(query));
+    return [
+      row.nome,
+      row.cargo,
+      row.edital,
+      row.unidade,
+      row.modalidade,
+      row.matricula,
+    ].some((value) => low(value).includes(query));
   });
 }
 
@@ -57,7 +67,7 @@ export function summarizeApprovedCandidates(rows, filters = {}) {
 }
 
 export function uniqueCandidateCargos(rows) {
-  return [...new Set((rows || []).map((row) => text(row.cargo)).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return [
+    ...new Set((rows || []).map((row) => text(row.cargo)).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
-

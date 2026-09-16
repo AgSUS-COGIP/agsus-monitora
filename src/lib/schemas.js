@@ -23,7 +23,7 @@ export const accessRequestSchema = z.object({
   justificativa: z.string().trim().optional().default(""),
   perfil_solicitado: accessProfileSchema.default(PERFIL_PADRAO),
   status: z.enum(["pendente", "aprovado", "recusado"]).default("pendente"),
-  observacao_admin: z.string().trim().optional().default("")
+  observacao_admin: z.string().trim().optional().default(""),
 });
 
 export const panelSchema = z.object({
@@ -31,7 +31,7 @@ export const panelSchema = z.object({
   codigo: z.string().trim().optional().default(""),
   titulo: z.string().trim().optional().default(""),
   url: z.string().trim().optional().default(""),
-  ativo: z.boolean().optional().default(true)
+  ativo: z.boolean().optional().default(true),
 });
 
 export const dashboardRowSchema = z.record(z.string(), z.unknown());

@@ -8,14 +8,16 @@ function loadConfig() {
 }
 
 function headersForSource(config, source) {
-  const rule = config.headers?.find(item => item.source === source);
-  return new Map((rule?.headers || []).map(header => [header.key, header.value]));
+  const rule = config.headers?.find((item) => item.source === source);
+  return new Map(
+    (rule?.headers || []).map((header) => [header.key, header.value]),
+  );
 }
 
 function effectiveHeaders(config, pathname) {
   return new Map([
     ...headersForSource(config, "/(.*)"),
-    ...headersForSource(config, pathname)
+    ...headersForSource(config, pathname),
   ]);
 }
 
@@ -24,16 +26,21 @@ describe("cabeçalhos HTTP de segurança", () => {
     const config = loadConfig();
     const headers = headersForSource(config, "/(.*)");
 
-    expect(headers.get("Strict-Transport-Security")).toMatch(/max-age=31536000/);
+    expect(headers.get("Strict-Transport-Security")).toMatch(
+      /max-age=31536000/,
+    );
     expect(headers.get("X-Content-Type-Options")).toBe("nosniff");
-    expect(headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+    expect(headers.get("Referrer-Policy")).toBe(
+      "strict-origin-when-cross-origin",
+    );
     expect(headers.get("X-Permitted-Cross-Domain-Policies")).toBe("none");
     expect(headers.get("X-XSS-Protection")).toBe("0");
   });
 
   it("desabilita recursos de navegador não utilizados", () => {
     const config = loadConfig();
-    const permissions = headersForSource(config, "/(.*)").get("Permissions-Policy") || "";
+    const permissions =
+      headersForSource(config, "/(.*)").get("Permissions-Policy") || "";
 
     for (const directive of [
       "camera=()",
@@ -41,7 +48,7 @@ describe("cabeçalhos HTTP de segurança", () => {
       "geolocation=()",
       "payment=()",
       "usb=()",
-      "browsing-topics=()"
+      "browsing-topics=()",
     ]) {
       expect(permissions).toContain(directive);
     }
@@ -54,6 +61,8 @@ describe("cabeçalhos HTTP de segurança", () => {
     expect(headers.get("Cache-Control")).toContain("no-store");
     expect(headers.get("Pragma")).toBe("no-cache");
     expect(headers.get("X-Content-Type-Options")).toBe("nosniff");
-    expect(headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+    expect(headers.get("Referrer-Policy")).toBe(
+      "strict-origin-when-cross-origin",
+    );
   });
 });

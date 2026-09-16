@@ -45,7 +45,7 @@ function applyPosition(win, host, position) {
   host.style.bottom = "auto";
 }
 
-export function initNinaPanelDrag(doc = document) {
+export function initAyaPanelDrag(doc = document) {
   const win = doc.defaultView || window;
   let drag = null;
 

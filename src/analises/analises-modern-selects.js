@@ -7,60 +7,71 @@ let globalCloseHandlersBound = false;
 let installTimer = 0;
 let installAttempts = 0;
 
-export function normalizeLabel(value){
-  return String(value ?? "").trim().replace(/\s+/g, " ");
+export function normalizeLabel(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
-export function selectedValues(select){
-  return [...select.selectedOptions].map(option => option.value).filter(Boolean);
+export function selectedValues(select) {
+  return [...select.selectedOptions]
+    .map((option) => option.value)
+    .filter(Boolean);
 }
 
-function optionData(select){
-  return [...select.options].map(option => ({
+function optionData(select) {
+  return [...select.options].map((option) => ({
     value: option.value,
     text: normalizeLabel(option.textContent),
-    disabled: option.disabled
+    disabled: option.disabled,
   }));
 }
 
-function counterText(select){
+function counterText(select) {
   const selected = selectedValues(select).length;
-  const total = [...select.options].filter(option => !option.disabled).length;
+  const total = [...select.options].filter((option) => !option.disabled).length;
   return `${selected} de ${total} selecionado(s)`;
 }
 
-function updateCounter(select){
-  const counter = select.closest(".scope-guard-field")?.querySelector(".scope-modern-counter");
-  if(counter) counter.textContent = counterText(select);
+function updateCounter(select) {
+  const counter = select
+    .closest(".scope-guard-field")
+    ?.querySelector(".scope-modern-counter");
+  if (counter) counter.textContent = counterText(select);
 }
 
-function closeInstances(except = null){
-  instances.forEach(instance => {
-    if(instance !== except) instance.close?.();
+function closeInstances(except = null) {
+  instances.forEach((instance) => {
+    if (instance !== except) instance.close?.();
   });
 }
 
-function bindGlobalCloseHandlers(){
-  if(globalCloseHandlersBound) return;
+function bindGlobalCloseHandlers() {
+  if (globalCloseHandlersBound) return;
   globalCloseHandlersBound = true;
 
-  document.addEventListener("keydown", event => {
-    if(event.key === "Escape") closeInstances();
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeInstances();
   });
 
-  document.addEventListener("pointerdown", event => {
-    instances.forEach(instance => {
-      const clickedInside = instance.wrapper?.contains(event.target)
-        || instance.dropdown?.contains(event.target);
-      if(!clickedInside) instance.close?.();
-    });
-  }, true);
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      instances.forEach((instance) => {
+        const clickedInside =
+          instance.wrapper?.contains(event.target) ||
+          instance.dropdown?.contains(event.target);
+        if (!clickedInside) instance.close?.();
+      });
+    },
+    true,
+  );
 
-  window.addEventListener("scroll", () => closeInstances(), { passive:true });
-  window.addEventListener("resize", () => closeInstances(), { passive:true });
+  window.addEventListener("scroll", () => closeInstances(), { passive: true });
+  window.addEventListener("resize", () => closeInstances(), { passive: true });
 }
 
-function syncTomSelect(select, instance){
+function syncTomSelect(select, instance) {
   const values = selectedValues(select);
   instance.close?.();
   instance.clear(true);
@@ -71,23 +82,25 @@ function syncTomSelect(select, instance){
   updateCounter(select);
 }
 
-function dispatchNativeChange(select){
-  select.dispatchEvent(new Event("change", { bubbles:true }));
+function dispatchNativeChange(select) {
+  select.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
-function setAll(select, instance, selected){
+function setAll(select, instance, selected) {
   const values = selected
-    ? [...select.options].filter(option => !option.disabled).map(option => option.value)
+    ? [...select.options]
+        .filter((option) => !option.disabled)
+        .map((option) => option.value)
     : [];
   instance.setValue(values, true);
   instance.close?.();
   dispatchNativeChange(select);
 }
 
-function ensureActions(select, instance){
+function ensureActions(select, instance) {
   const field = select.closest(".scope-guard-field");
   const label = field?.querySelector("label");
-  if(!field || !label || field.querySelector(".scope-modern-actions")) return;
+  if (!field || !label || field.querySelector(".scope-modern-actions")) return;
 
   const actions = document.createElement("div");
   actions.className = "scope-modern-actions";
@@ -96,14 +109,20 @@ function ensureActions(select, instance){
   allButton.type = "button";
   allButton.className = "scope-modern-action";
   allButton.textContent = "Selecionar tudo";
-  allButton.setAttribute("aria-label", `Selecionar todas as opções de ${label.textContent}`);
+  allButton.setAttribute(
+    "aria-label",
+    `Selecionar todas as opções de ${label.textContent}`,
+  );
   allButton.addEventListener("click", () => setAll(select, instance, true));
 
   const clearButton = document.createElement("button");
   clearButton.type = "button";
   clearButton.className = "scope-modern-action";
   clearButton.textContent = "Limpar";
-  clearButton.setAttribute("aria-label", `Limpar seleção de ${label.textContent}`);
+  clearButton.setAttribute(
+    "aria-label",
+    `Limpar seleção de ${label.textContent}`,
+  );
   clearButton.addEventListener("click", () => setAll(select, instance, false));
 
   const counter = document.createElement("span");
@@ -115,16 +134,17 @@ function ensureActions(select, instance){
   label.insertAdjacentElement("afterend", actions);
 }
 
-function createInstance(select){
-  if(instances.has(select.id)) return instances.get(select.id);
+function createInstance(select) {
+  if (instances.has(select.id)) return instances.get(select.id);
 
-  const placeholder = select.id === "scopeGuardUnits"
-    ? "Pesquise e selecione unidades"
-    : "Pesquise e selecione editais";
+  const placeholder =
+    select.id === "scopeGuardUnits"
+      ? "Pesquise e selecione unidades"
+      : "Pesquise e selecione editais";
 
   const instance = new TomSelect(select, {
     plugins: {
-      remove_button: { title:"Remover" }
+      remove_button: { title: "Remover" },
     },
     maxItems: null,
     maxOptions: 250,
@@ -135,17 +155,17 @@ function createInstance(select){
     openOnFocus: false,
     placeholder,
     searchField: ["text"],
-    onDropdownOpen(){
+    onDropdownOpen() {
       closeInstances(this);
     },
-    onItemAdd(){
+    onItemAdd() {
       this.close?.();
     },
     render: {
-      no_results(){
+      no_results() {
         return '<div class="no-results">Nenhum resultado encontrado</div>';
-      }
-    }
+      },
+    },
   });
 
   instances.set(select.id, instance);
@@ -155,24 +175,24 @@ function createInstance(select){
 
   let syncing = false;
   const syncFromNative = () => {
-    if(syncing) return;
+    if (syncing) return;
     syncing = true;
-    try{
+    try {
       instance.setValue(selectedValues(select), true);
       instance.close?.();
       updateCounter(select);
-    }finally{
+    } finally {
       syncing = false;
     }
   };
 
   select.addEventListener("change", syncFromNative);
   select.addEventListener("agsus:options-updated", () => {
-    if(syncing) return;
+    if (syncing) return;
     syncing = true;
-    try{
+    try {
       syncTomSelect(select, instance);
-    }finally{
+    } finally {
       syncing = false;
     }
   });
@@ -180,8 +200,8 @@ function createInstance(select){
   return instance;
 }
 
-function ensureStyles(){
-  if(document.getElementById("analisesModernSelectStyles")) return;
+function ensureStyles() {
+  if (document.getElementById("analisesModernSelectStyles")) return;
   const style = document.createElement("style");
   style.id = "analisesModernSelectStyles";
   style.textContent = `
@@ -208,47 +228,52 @@ function ensureStyles(){
   document.head.appendChild(style);
 }
 
-function install(){
+function install() {
   let installed = 0;
-  SELECT_IDS.forEach(id => {
+  SELECT_IDS.forEach((id) => {
     const select = document.getElementById(id);
-    if(!select) return;
+    if (!select) return;
     createInstance(select);
     installed += 1;
   });
   return installed === SELECT_IDS.length;
 }
 
-function stopInstallLoop(){
+function stopInstallLoop() {
   window.clearTimeout(installTimer);
   installTimer = 0;
   installAttempts = 0;
 }
 
-function installStep(){
-  if(install()){
+function installStep() {
+  if (install()) {
     stopInstallLoop();
     return;
   }
   installAttempts += 1;
-  if(installAttempts >= 80){
+  if (installAttempts >= 80) {
     stopInstallLoop();
-    console.warn("Seletores históricos de Análises não ficaram disponíveis no tempo esperado.");
+    console.warn(
+      "Seletores históricos de Análises não ficaram disponíveis no tempo esperado.",
+    );
     return;
   }
   installTimer = window.setTimeout(installStep, 100);
 }
 
-function startInstallLoop(){
+function startInstallLoop() {
   stopInstallLoop();
   installTimer = window.setTimeout(installStep, 0);
 }
 
-function start(){
+function start() {
   ensureStyles();
   bindGlobalCloseHandlers();
   startInstallLoop();
-  document.addEventListener("agsus:analises-scope-guard-ready", startInstallLoop);
+  document.addEventListener(
+    "agsus:analises-scope-guard-ready",
+    startInstallLoop,
+  );
 }
 
-document.addEventListener("DOMContentLoaded", start, { once:true });
+document.addEventListener("DOMContentLoaded", start, { once: true });
