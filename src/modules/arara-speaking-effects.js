@@ -1,8 +1,10 @@
 const hostObservers = new WeakMap();
 const activeAnimations = new WeakMap();
 const conversationMemory = new WeakMap();
+const draggableLaunchers = new WeakSet();
 
 const ASSISTANT_NAME = "Nina";
+const LAUNCHER_POSITION_STORAGE_KEY = "agsus_monitora_nina_launcher_position_v1";
 const MIN_DURATION_MS = 650;
 const MAX_DURATION_MS = 3400;
 const MS_PER_CHARACTER = 18;
@@ -19,7 +21,7 @@ const OPENING_MESSAGES = Object.freeze({
 });
 
 const TOPIC_PATTERNS = Object.freeze({
-  mapa: /\b(mapa|dsei|territ[oó]rio|satelite|satélite|zoom)\b/i,
+  mapa: /\b(mapa|dseis?|territ[oó]rio|satelite|satélite|zoom)\b/i,
   filtros: /\b(filtro|filtrar|uf|edital|etapa|status|risco|per[ií]odo)\b/i,
   indicadores: /\b(indicador|kpi|vaga|ociosa|contrata|inscrito|cr[ií]tico)\b/i,
   processo: /\b(processo|edital|buscar|pesquisar|localizar)\b/i,
@@ -155,7 +157,10 @@ function visibleEditalSummaries(doc) {
         cells[0]?.querySelector("a")?.textContent || cells[0]?.textContent;
       const unit = cells[1]?.textContent || "";
       const stage = cells[2]?.textContent || "";
-      return [edital, unit, stage].map(compactText).filter(Boolean).join(" — ");
+      return [edital, unit, stage]
+        .map((value) => compactText(value))
+        .filter(Boolean)
+        .join(" — ");
     }),
     8,
   );
@@ -177,7 +182,7 @@ function visibleNucleoEditalSummaries(doc) {
       const status = cells[2]?.textContent || "";
       const stage = cells[3]?.textContent || "";
       return [edital, unit, status, stage]
-        .map(compactText)
+        .map((value) => compactText(value))
         .filter(Boolean)
         .join(" — ");
     }),
@@ -235,7 +240,7 @@ export function answerNinaInstitutionalQuestion(question, doc = document) {
     return "CASAI significa Casa de Saúde Indígena e integra a rede de atenção à saúde indígena. No MONITORA, as CASAIs aparecem como parte da rede territorial quando esses dados estão carregados. Se você perguntar por uma unidade específica, eu só afirmo o que estiver disponível na tela ou na base carregada.";
   }
 
-  if (/\bdsei\b|distrito sanitario especial indigena/.test(normalized)) {
+  if (/\bdseis?\b|distrito sanitario especial indigena/.test(normalized)) {
     const dseis = visibleDseiSummaries(doc);
     const match = findVisibleMatch(question, dseis);
     if (match) {
@@ -263,6 +268,149 @@ export function answerNinaInstitutionalQuestion(question, doc = document) {
   }
 
   return "";
+}
+
+function readLauncherPosition(win) {
+  try {
+    const parsed = JSON.parse(
+      win.localStorage.getItem(LAUNCHER_POSITION_STORAGE_KEY) || "null",
+    );
+    if (
+      parsed &&
+      Number.isFinite(parsed.left) &&
+      Number.isFinite(parsed.top)
+    ) {
+      return parsed;
+    }
+  } catch {
+    // Mantém a posição padrão quando o armazenamento não está disponível.
+  }
+  return null;
+}
+
+function writeLauncherPosition(win, position) {
+  try {
+    win.localStorage.setItem(
+      LAUNCHER_POSITION_STORAGE_KEY,
+      JSON.stringify(position),
+    );
+  } catch {
+    // O arraste continua funcionando mesmo sem persistência local.
+  }
+}
+
+function clampLauncherPosition(win, launcher, left, top) {
+  const rect = launcher.getBoundingClientRect();
+  const margin = 8;
+  const maxLeft = Math.max(margin, win.innerWidth - rect.width - margin);
+  const maxTop = Math.max(margin, win.innerHeight - rect.height - margin);
+  return {
+    left: Math.min(Math.max(margin, left), maxLeft),
+    top: Math.min(Math.max(margin, top), maxTop),
+  };
+}
+
+function applyLauncherPosition(win, launcher, position) {
+  if (!position) return;
+  const safe = clampLauncherPosition(
+    win,
+    launcher,
+    position.left,
+    position.top,
+  );
+  launcher.style.position = "fixed";
+  launcher.style.left = `${safe.left}px`;
+  launcher.style.top = `${safe.top}px`;
+  launcher.style.right = "auto";
+  launcher.style.bottom = "auto";
+  launcher.style.margin = "0";
+}
+
+function enhanceDraggableLauncher(root, launcher) {
+  if (!launcher || draggableLaunchers.has(launcher)) return;
+  draggableLaunchers.add(launcher);
+
+  const win = root.ownerDocument.defaultView || window;
+  launcher.style.touchAction = "none";
+  launcher.title = "Clique para abrir a Nina ou arraste para mover";
+  applyLauncherPosition(win, launcher, readLauncherPosition(win));
+
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+  let moved = false;
+  let suppressClick = false;
+
+  launcher.addEventListener("pointerdown", (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    const rect = launcher.getBoundingClientRect();
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startY = event.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+    moved = false;
+    launcher.setPointerCapture?.(event.pointerId);
+    applyLauncherPosition(win, launcher, {
+      left: rect.left,
+      top: rect.top,
+    });
+    launcher.classList.add("is-dragging");
+  });
+
+  launcher.addEventListener("pointermove", (event) => {
+    if (pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - startX;
+    const deltaY = event.clientY - startY;
+    if (Math.hypot(deltaX, deltaY) > 4) moved = true;
+    if (!moved) return;
+
+    event.preventDefault();
+    const position = clampLauncherPosition(
+      win,
+      launcher,
+      startLeft + deltaX,
+      startTop + deltaY,
+    );
+    applyLauncherPosition(win, launcher, position);
+  });
+
+  const finishDrag = (event) => {
+    if (pointerId !== event.pointerId) return;
+    launcher.releasePointerCapture?.(event.pointerId);
+    launcher.classList.remove("is-dragging");
+    pointerId = null;
+
+    if (!moved) return;
+    const rect = launcher.getBoundingClientRect();
+    const position = clampLauncherPosition(win, launcher, rect.left, rect.top);
+    applyLauncherPosition(win, launcher, position);
+    writeLauncherPosition(win, position);
+    suppressClick = true;
+  };
+
+  launcher.addEventListener("pointerup", finishDrag);
+  launcher.addEventListener("pointercancel", finishDrag);
+  launcher.addEventListener(
+    "click",
+    (event) => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    },
+    true,
+  );
+
+  win.addEventListener("resize", () => {
+    if (launcher.style.position !== "fixed") return;
+    const rect = launcher.getBoundingClientRect();
+    const position = clampLauncherPosition(win, launcher, rect.left, rect.top);
+    applyLauncherPosition(win, launcher, position);
+    writeLauncherPosition(win, position);
+  });
 }
 
 function prefersReducedMotion(win) {
@@ -359,6 +507,7 @@ function updateAssistantIdentity(root) {
     launcher.setAttribute("aria-label", `Mostrar ${ASSISTANT_NAME}`);
     const launcherLabel = launcher.querySelector("span");
     if (launcherLabel) launcherLabel.textContent = `Mostrar ${ASSISTANT_NAME}`;
+    enhanceDraggableLauncher(root, launcher);
   }
 
   const inputLabel = root.querySelector('label[for="araraAssistantInput"]');
