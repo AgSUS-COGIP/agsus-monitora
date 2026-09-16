@@ -14,7 +14,10 @@ export function araraSpeechDuration(text) {
   );
 }
 
-export function shouldAnimateAraraSpeech({ text = "", reducedMotion = false }) {
+export function shouldAnimateAraraSpeech({
+  text = "",
+  reducedMotion = false,
+}) {
   return Boolean(String(text).trim()) && !reducedMotion;
 }
 
