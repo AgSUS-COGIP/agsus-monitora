@@ -11,7 +11,9 @@ describe("base institucional da Aya", () => {
   it("associa CASAI às fontes do Ministério da Saúde", () => {
     const sources = officialSourcesForQuestion("O que é CASAI?");
     expect(sources.map((source) => source.id)).toEqual(["casai", "sesai"]);
-    expect(sources[0].url).toMatch(/^https:\/\/.*gov\.br|^https:\/\/bvsms\.saude\.gov\.br/);
+    expect(sources[0].url).toMatch(
+      /^https:\/\/.*gov\.br|^https:\/\/bvsms\.saude\.gov\.br/,
+    );
   });
 
   it("associa aldeias e Terras Indígenas à Funai", () => {
