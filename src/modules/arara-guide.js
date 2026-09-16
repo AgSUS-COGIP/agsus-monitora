@@ -5,19 +5,19 @@ const GLOBAL_TOPICS = Object.freeze([
     label: "O que você consegue fazer?",
     keywords: ["o que voce faz", "o que consegue", "ajuda", "pode fazer"],
     answer:
-      "Eu explico a seção atual, os controles da tela e o caminho mais seguro para concluir uma tarefa. Não altero registros, não concedo permissões e não consulto dados fora do que já está visível para você.",
+      "Eu explico a seção atual, os controles da tela e o caminho mais seguro para concluir uma tarefa. Também consigo interpretar o que já está visível no MONITORA e explicar conceitos institucionais de saúde indígena quando tenho uma fonte oficial segura.",
   },
   {
     label: "Você consulta meus dados?",
     keywords: ["dados", "privacidade", "registro", "consulta", "informacao"],
     answer:
-      "Não. Esta versão da Arara funciona localmente no navegador e usa apenas orientações cadastradas no MONITORA. Ela não envia perguntas para um serviço externo e não consulta registros individuais.",
+      "Eu uso somente o que já está disponível para você no MONITORA e não amplio seu acesso. Quando uma resposta exigir dado que não esteja carregado, eu digo isso em vez de inventar.",
   },
   {
     label: "Você pode alterar algo por mim?",
     keywords: ["alterar", "editar", "salvar", "apagar", "excluir"],
     answer:
-      "Não diretamente. Eu posso explicar onde fica cada ação e quais cuidados tomar, mas a confirmação e qualquer alteração continuam sob seu controle.",
+      "Eu posso orientar a ação, mas a confirmação e qualquer alteração continuam sob seu controle.",
   },
 ]);
 
@@ -25,22 +25,10 @@ const GUIDES = Object.freeze({
   dashboard: {
     title: "Saúde Indígena",
     intro:
-      "Aqui você acompanha processos seletivos, indicadores e a distribuição territorial dos DSEIs e CASAIs.",
-    steps: [
-      "Confira os filtros ativos antes de comparar números ou territórios.",
-      "Use os indicadores para localizar situações que merecem atenção.",
-      "No mapa, selecione um DSEI para abrir o detalhamento de polos e unidades.",
-      "Volte à visão nacional quando quiser comparar outro território.",
-    ],
+      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você na Saúde Indígena e posso conversar sobre editais, DSEIs, CASAIs, mapa, filtros, indicadores e territórios. O que você quer saber?",
     topics: [
       {
-        label: "Como começo?",
-        keywords: ["comeco", "comecar", "inicio", "primeiro passo"],
-        answer:
-          "Comece pelos filtros no topo. Depois confira os KPIs e use o mapa para localizar o território que deseja aprofundar. Antes de interpretar qualquer número, confirme se os filtros ativos representam o recorte que você quer analisar.",
-      },
-      {
-        label: "Como usar o mapa?",
+        label: "Mapa",
         keywords: [
           "mapa",
           "dsei",
@@ -50,16 +38,16 @@ const GUIDES = Object.freeze({
           "satelite",
         ],
         answer:
-          "Na visão nacional, clique em um DSEI para abrir seus polos e unidades. Use Mapa/Satélite apenas para trocar o fundo cartográfico. O zoom muda a escala, mas não altera a coordenada real das sedes. Para comparar outro território, volte à visão Brasil.",
+          "Na visão nacional, selecione um DSEI para aprofundar o território. O fundo Mapa/Satélite muda apenas a cartografia; o recorte de dados continua definido pelos filtros e pelo território selecionado.",
       },
       {
-        label: "Como usar os filtros?",
+        label: "Filtros",
         keywords: ["filtro", "filtrar", "uf", "edital", "status", "risco"],
         answer:
-          "Os filtros refinam todos os indicadores da página. Use Unidade, Edital, Etapa, Status, Risco e UF para montar o recorte. Se um resultado parecer estranho, confira primeiro os filtros ativos e a informação de atualização.",
+          "Os filtros refinam os indicadores da página. Antes de comparar números, confira Unidade, Edital, Etapa, Status, Risco e UF para garantir que o recorte está correto.",
       },
       {
-        label: "Como interpretar os indicadores?",
+        label: "Indicadores",
         keywords: [
           "indicador",
           "kpi",
@@ -69,73 +57,36 @@ const GUIDES = Object.freeze({
           "criticos",
         ],
         answer:
-          "Os KPIs resumem o recorte atual: processos, vagas previstas, contratações, vagas ociosas, processos críticos e inscritos. Eles devem ser lidos junto com os filtros e com a lista detalhada, não isoladamente.",
+          "Os indicadores resumem o recorte atual. Use-os como sinal de onde investigar e confirme o detalhe na lista ou no território antes de tirar uma conclusão.",
       },
     ],
   },
   nucleo: {
     title: "Equipe Núcleo",
     intro:
-      "Esta seção organiza o acompanhamento operacional dos editais, etapas e cronogramas da Equipe Núcleo.",
-    steps: [
-      "Pesquise ou filtre o processo que deseja acompanhar.",
-      "Abra o processo para consultar etapas, cronograma e informações operacionais.",
-      "Revise os campos antes de qualquer salvamento.",
-      "Use as ações de edição somente quando seu perfil tiver permissão.",
-    ],
+      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você na Equipe Núcleo e posso ajudar a localizar editais, entender etapas, cronogramas e ações disponíveis. O que você quer saber?",
     topics: [
       {
-        label: "Como localizar um processo?",
+        label: "Processos",
         keywords: ["localizar", "buscar", "pesquisar", "processo", "edital"],
         answer:
-          "Use a busca da Equipe Núcleo para procurar por edital, unidade ou situação. Depois abra o registro correspondente para ver o cronograma e as informações operacionais.",
+          "Use a busca da Equipe Núcleo para localizar por edital, unidade ou situação. Depois abra o registro correspondente para conferir cronograma e informações operacionais.",
       },
       {
-        label: "Como funciona o cronograma?",
+        label: "Cronograma",
         keywords: ["cronograma", "etapa", "prazo", "data"],
         answer:
-          "O cronograma apresenta as etapas e datas associadas ao processo. Use-o para acompanhar sequência e prazo. Antes de editar, confirme o processo selecionado e os dados que já estão salvos.",
-      },
-      {
-        label: "Posso editar?",
-        keywords: ["editar", "salvar", "permissao", "permissão", "perfil"],
-        answer:
-          "A edição depende do seu perfil. Quando a ação estiver disponível, revise o registro completo antes de salvar. Campos calculados pelo sistema devem ser tratados como referência, não como campos manuais.",
+          "O cronograma apresenta as etapas e datas do processo. Antes de editar, confirme o processo selecionado e os dados já salvos.",
       },
     ],
   },
   config: {
     title: "Configurações",
     intro:
-      "Aqui ficam identidade visual, textos, acessos e parâmetros administrativos do MONITORA.",
-    steps: [
-      "Entre somente na seção de configuração que pretende alterar.",
-      "Revise o valor atual antes de editar.",
-      "Confirme o impacto da mudança e salve apenas quando estiver seguro.",
-      "Depois do salvamento, confira a mensagem de resultado e a tela afetada.",
-    ],
+      "Olá! Eu sou a Nina, assistente do MONITORA. Nesta área posso explicar acessos, identidade visual e ajustes administrativos disponíveis para o seu perfil. O que você quer fazer?",
     topics: [
       {
-        label: "O que posso configurar?",
-        keywords: [
-          "configurar",
-          "configuracao",
-          "configuração",
-          "alterar",
-          "opcoes",
-          "opções",
-        ],
-        answer:
-          "As configurações controlam textos, identidade visual, avisos, parâmetros de acesso e outros ajustes administrativos. O que aparece para você depende do seu perfil.",
-      },
-      {
-        label: "Como salvar com segurança?",
-        keywords: ["salvar", "seguranca", "segurança", "confirmar"],
-        answer:
-          "Mude apenas o campo necessário, releia o valor e salve uma vez. Depois confira a confirmação exibida pelo sistema e valide visualmente a área afetada antes de fazer outra alteração.",
-      },
-      {
-        label: "Como funcionam os acessos?",
+        label: "Acessos",
         keywords: [
           "acesso",
           "usuario",
@@ -145,48 +96,29 @@ const GUIDES = Object.freeze({
           "painel",
         ],
         answer:
-          "Os acessos são administrados conforme o perfil do usuário e os painéis permitidos. Antes de aprovar ou revogar algo, confirme a pessoa, o perfil e os painéis envolvidos.",
+          "Os acessos seguem o perfil do usuário. Antes de aprovar ou alterar algo, confirme a pessoa, o perfil atual e o impacto esperado.",
+      },
+      {
+        label: "Salvar",
+        keywords: ["salvar", "seguranca", "segurança", "confirmar"],
+        answer:
+          "Faça uma alteração por vez, releia o valor e salve uma única vez. Depois confira a confirmação do sistema antes de seguir para outra mudança.",
       },
     ],
   },
   analises: {
     title: "Análises",
     intro:
-      "Esta seção consolida indicadores e a fila operacional das análises curriculares.",
-    steps: [
-      "Confirme o período e os filtros que definem o recorte.",
-      "Leia o gráfico para entender a evolução do volume de registros.",
-      "Use a fila operacional para consultar cada candidato e seu status.",
-      "Abra Detalhes quando precisar conferir o registro completo.",
-    ],
+      "Olá! Eu sou a Nina, assistente do MONITORA. Estou com você em Análises curriculares e posso ajudar com filtros, gráfico, fila operacional e leitura do recorte atual. O que você quer entender?",
     topics: [
       {
-        label: "Como começo a análise?",
-        keywords: ["comeco", "comecar", "analise", "análise", "primeiro"],
-        answer:
-          "Comece confirmando o recorte dos filtros. Depois observe o gráfico para entender o volume ao longo do tempo e use a fila operacional para verificar os registros individuais.",
-      },
-      {
-        label: "Como ler a fila operacional?",
+        label: "Fila",
         keywords: ["fila", "candidato", "status", "detalhes", "registro"],
         answer:
-          "A fila mostra grupo, unidade, edital, código, vaga, candidato, status e ações. Use a busca para localizar um registro e o botão Detalhes para abrir as informações completas sem depender de textos truncados na linha.",
+          "Na fila operacional, use a busca para localizar um registro e abra Detalhes quando precisar conferir as informações completas. Interprete o status sempre dentro dos filtros ativos.",
       },
       {
-        label: "Como usar os filtros?",
-        keywords: [
-          "filtro",
-          "edital",
-          "unidade",
-          "status",
-          "periodo",
-          "período",
-        ],
-        answer:
-          "Use os filtros para reduzir o universo analisado antes de comparar resultados. Depois confira o contador de registros pesquisados e a data de atualização para saber exatamente qual recorte está na tela.",
-      },
-      {
-        label: "O que o gráfico mostra?",
+        label: "Gráfico",
         keywords: [
           "grafico",
           "gráfico",
@@ -196,7 +128,7 @@ const GUIDES = Object.freeze({
           "evolução",
         ],
         answer:
-          "O gráfico mostra a evolução do volume de registros ao longo do tempo no recorte atual. Use-o para perceber picos e quedas; para explicar um ponto específico, confirme os filtros e consulte os registros daquele período.",
+          "O gráfico mostra a evolução do volume no recorte atual. Se houver pico ou queda, confirme o período e depois consulte os registros daquele trecho.",
       },
     ],
   },
@@ -215,22 +147,16 @@ function normalizeText(value) {
 }
 
 function genericGuide(title) {
+  const sectionTitle = title || "esta seção";
   return {
-    title: title || "Painel",
-    intro:
-      "Esta área apresenta recursos específicos do painel selecionado no MONITORA.",
-    steps: [
-      "Identifique o objetivo e os controles disponíveis nesta tela.",
-      "Aplique filtros antes de comparar resultados, quando eles estiverem disponíveis.",
-      "Abra detalhes somente quando precisar aprofundar uma informação.",
-      "Se uma função não estiver disponível, confira seu perfil de acesso.",
-    ],
+    title: sectionTitle,
+    intro: `Olá! Eu sou a Nina, assistente do MONITORA. Estou com você em ${sectionTitle} e posso explicar o que estiver disponível nesta tela. O que você quer saber?`,
     topics: [
       {
-        label: "Como usar esta seção?",
+        label: "Ajuda",
         keywords: ["como usar", "secao", "seção", "painel", "ajuda"],
         answer:
-          "Comece identificando os filtros e ações disponíveis nesta seção. Faça um recorte simples, confira o resultado e só depois aprofunde em detalhes. Se algum controle não aparecer, ele pode depender do seu perfil de acesso.",
+          "Posso explicar os controles visíveis desta seção e orientar o próximo passo sem ampliar seu acesso ou inventar dados.",
       },
     ],
   };
@@ -259,9 +185,7 @@ function scoreTopic(question, topic) {
 export function answerAraraQuestion(section, title, question) {
   const content = guideForSection(section, title);
   const normalized = normalizeText(question);
-  if (!normalized) {
-    return "Escreva uma pergunta sobre esta tela ou escolha uma das sugestões.";
-  }
+  if (!normalized) return "Escreva sua pergunta para a Nina.";
 
   const topics = [...content.topics, ...GLOBAL_TOPICS];
   const best = topics
@@ -270,11 +194,7 @@ export function answerAraraQuestion(section, title, question) {
 
   if (best?.score > 0) return best.topic.answer;
 
-  return `Posso orientar você sobre ${content.title}, principalmente sobre ${content.topics
-    .map((topic) => topic.label.toLowerCase())
-    .join(
-      ", ",
-    )}. Não consulto registros individuais nem invento respostas sobre dados que não estão nesta orientação.`;
+  return `Posso conversar com você sobre ${content.title}. Quando a resposta depender de um dado específico, eu uso apenas o que estiver disponível no MONITORA ou uma referência institucional segura.`;
 }
 
 function readHiddenPreference(win) {
@@ -289,7 +209,7 @@ function writeHiddenPreference(win, hidden) {
   try {
     win.localStorage.setItem(ARARA_VISIBILITY_STORAGE_KEY, hidden ? "1" : "0");
   } catch {
-    // A assistente continua funcional mesmo quando o armazenamento é bloqueado.
+    // Mantém a assistente funcional mesmo sem armazenamento local.
   }
 }
 
@@ -310,7 +230,7 @@ function appendMessage(state, role, text) {
     state.doc,
     "strong",
     "arara-message__author",
-    role === "user" ? "Você" : "Arara",
+    role === "user" ? "Você" : "Nina",
   );
   const body = element(state.doc, "p", "arara-message__body", text);
   message.append(author, body);
@@ -320,21 +240,7 @@ function appendMessage(state, role, text) {
 
 function resetConversation(state) {
   state.messages.replaceChildren();
-  appendMessage(
-    state,
-    "assistant",
-    `${state.content.intro} Posso explicar esta tela e orientar seus próximos passos.`,
-  );
-}
-
-function renderStep(state) {
-  const steps = state.content.steps;
-  const lastIndex = Math.max(steps.length - 1, 0);
-  state.stepIndex = Math.min(Math.max(state.stepIndex, 0), lastIndex);
-  state.stepCounter.textContent = `Passo ${state.stepIndex + 1} de ${steps.length}`;
-  state.stepText.textContent = steps[state.stepIndex] || "";
-  state.previousButton.disabled = state.stepIndex === 0;
-  state.nextButton.disabled = state.stepIndex >= lastIndex;
+  appendMessage(state, "assistant", state.content.intro);
 }
 
 function ask(state, question) {
@@ -347,22 +253,6 @@ function ask(state, question) {
     answerAraraQuestion(state.section, state.title, cleanQuestion),
   );
   state.input.value = "";
-}
-
-function renderSuggestions(state) {
-  state.suggestions.replaceChildren(
-    ...state.content.topics.slice(0, 4).map((topic) => {
-      const button = element(
-        state.doc,
-        "button",
-        "arara-suggestion",
-        topic.label,
-      );
-      button.type = "button";
-      button.addEventListener("click", () => ask(state, topic.label));
-      return button;
-    }),
-  );
 }
 
 function setHidden(state, hidden, persist = true) {
@@ -378,82 +268,51 @@ function createAssistant(host) {
   const win = doc.defaultView || window;
   const root = element(doc, "section", "arara-assistant");
   root.dataset.araraGuide = "";
-  root.setAttribute("aria-label", "Assistente Arara Azul");
+  root.setAttribute("aria-label", "Assistente Nina");
 
   const panel = element(doc, "div", "arara-assistant__panel");
-  const header = element(doc, "header", "arara-assistant__header");
-  const avatar = doc.createElement("img");
-  avatar.className = "arara-assistant__avatar";
-  avatar.src = "/assets/arara-azul-monitora.png";
-  avatar.alt = "";
-  avatar.width = 112;
-  avatar.height = 112;
-
-  const heading = element(doc, "div", "arara-assistant__heading");
-  const eyebrow = element(
+  const body = element(doc, "div", "arara-assistant__body");
+  const sectionBadge = element(
     doc,
     "span",
-    "arara-assistant__eyebrow",
-    "Assistente do MONITORA",
+    "arara-assistant__section arara-visually-hidden",
   );
-  const titleNode = element(
-    doc,
-    "strong",
-    "arara-assistant__title",
-    "Arara Azul",
-  );
-  const sectionBadge = element(doc, "span", "arara-assistant__section");
-  heading.append(eyebrow, titleNode, sectionBadge);
 
   const hideButton = element(
     doc,
     "button",
     "arara-assistant__hide",
-    "Ocultar Arara",
+    "Ocultar Nina",
   );
   hideButton.type = "button";
-  hideButton.setAttribute("aria-label", "Ocultar a Arara Azul");
-  header.append(avatar, heading, hideButton);
+  hideButton.setAttribute("aria-label", "Ocultar Nina");
 
-  const body = element(doc, "div", "arara-assistant__body");
-  const context = element(doc, "p", "arara-assistant__context");
-  const stepper = element(doc, "section", "arara-stepper");
-  const stepHeader = element(doc, "div", "arara-stepper__header");
-  const stepLabel = element(doc, "strong", "", "Passo a passo");
-  const stepCounter = element(doc, "span", "arara-stepper__counter");
-  stepHeader.append(stepLabel, stepCounter);
-  const stepText = element(doc, "p", "arara-stepper__text");
-  const stepActions = element(doc, "div", "arara-stepper__actions");
-  const previousButton = element(doc, "button", "", "Anterior");
-  previousButton.type = "button";
-  const nextButton = element(doc, "button", "", "Próximo");
-  nextButton.type = "button";
-  stepActions.append(previousButton, nextButton);
-  stepper.append(stepHeader, stepText, stepActions);
+  const scene = element(doc, "div", "arara-assistant__scene");
+  const avatar = doc.createElement("img");
+  avatar.className = "arara-assistant__avatar";
+  avatar.src = "/assets/arara-azul-monitora.png";
+  avatar.alt = "Nina, assistente do MONITORA";
+  avatar.width = 220;
+  avatar.height = 250;
+  avatar.dataset.ninaDragHandle = "";
 
-  const suggestionLabel = element(
-    doc,
-    "strong",
-    "arara-assistant__suggestion-label",
-    "Pergunte para a Arara",
-  );
-  const suggestions = element(doc, "div", "arara-assistant__suggestions");
   const messages = element(doc, "div", "arara-assistant__messages");
   messages.setAttribute("role", "log");
   messages.setAttribute("aria-live", "polite");
   messages.setAttribute("aria-relevant", "additions");
+  scene.append(avatar, messages);
 
   const form = element(doc, "form", "arara-assistant__form");
   const inputLabel = element(
     doc,
     "label",
     "arara-visually-hidden",
-    "Pergunta para a Arara Azul",
+    "Pergunta para a Nina",
   );
   const input = doc.createElement("input");
   input.className = "arara-assistant__input";
   input.type = "text";
-  input.placeholder = "Ex.: como uso o mapa?";
+  input.placeholder = "Pergunte para a Nina...";
   input.autocomplete = "off";
   inputLabel.htmlFor = "araraAssistantInput";
   input.id = "araraAssistantInput";
@@ -461,38 +320,29 @@ function createAssistant(host) {
   sendButton.type = "submit";
   form.append(inputLabel, input, sendButton);
 
-  const footer = element(doc, "footer", "arara-assistant__footer");
-  const scope = element(
+  const actions = element(doc, "div", "arara-assistant__actions");
+  const resetButton = element(
     doc,
-    "span",
-    "",
-    "Orientação local · não altera registros",
+    "button",
+    "arara-assistant__reset",
+    "Recomeçar",
   );
-  const resetButton = element(doc, "button", "", "Recomeçar");
   resetButton.type = "button";
-  footer.append(scope, resetButton);
+  actions.append(resetButton);
 
-  body.append(
-    context,
-    stepper,
-    suggestionLabel,
-    suggestions,
-    messages,
-    form,
-    footer,
-  );
-  panel.append(header, body);
+  body.append(sectionBadge, hideButton, scene, form, actions);
+  panel.append(body);
 
   const launcher = element(doc, "button", "arara-assistant__launcher");
   launcher.type = "button";
-  launcher.setAttribute("aria-label", "Mostrar a Arara Azul");
+  launcher.setAttribute("aria-label", "Mostrar Nina");
   launcher.dataset.araraShow = "";
   const launcherAvatar = doc.createElement("img");
   launcherAvatar.src = "/assets/arara-azul-monitora.png";
   launcherAvatar.alt = "";
   launcherAvatar.width = 56;
   launcherAvatar.height = 56;
-  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Arara"));
+  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Nina"));
 
   root.append(panel, launcher);
   host.append(root);
@@ -504,17 +354,10 @@ function createAssistant(host) {
     panel,
     launcher,
     sectionBadge,
-    context,
-    stepCounter,
-    stepText,
-    previousButton,
-    nextButton,
-    suggestions,
     messages,
     form,
     input,
     resetButton,
-    stepIndex: 0,
     section: "",
     title: "",
     content: genericGuide("Painel"),
@@ -529,21 +372,11 @@ function createAssistant(host) {
     setHidden(state, false);
     input.focus();
   });
-  previousButton.addEventListener("click", () => {
-    state.stepIndex -= 1;
-    renderStep(state);
-  });
-  nextButton.addEventListener("click", () => {
-    state.stepIndex += 1;
-    renderStep(state);
-  });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     ask(state, input.value);
   });
   resetButton.addEventListener("click", () => {
-    state.stepIndex = 0;
-    renderStep(state);
     resetConversation(state);
     input.focus();
   });
@@ -553,10 +386,6 @@ function createAssistant(host) {
   return root;
 }
 
-/**
- * Mantém uma única Arara por página e atualiza o conteúdo ao navegar.
- * A conversa é local: não usa RPC, timers nem chamadas de rede.
- */
 export function updateAraraGuide(section, title, host) {
   if (!host) return null;
 
@@ -577,11 +406,7 @@ export function updateAraraGuide(section, title, host) {
   state.section = section;
   state.title = title;
   state.content = content;
-  state.stepIndex = 0;
   state.sectionBadge.textContent = content.title;
-  state.context.textContent = content.intro;
-  renderStep(state);
-  renderSuggestions(state);
   resetConversation(state);
   return root;
 }

@@ -5,8 +5,7 @@ import {
   updateAraraGuide,
 } from "../src/modules/arara-guide.js";
 
-// Mantém a experiência da Arara coberta por regressões de interação e segurança.
-describe("assistente Arara Azul", () => {
+describe("assistente Nina", () => {
   beforeEach(() => {
     document.body.innerHTML = '<div id="host"></div>';
     window.localStorage.clear();
@@ -29,16 +28,30 @@ describe("assistente Arara Azul", () => {
     expect(guide.textContent).toContain("DSEI");
   });
 
-  it("troca o contexto e reinicia o passo a passo ao navegar", () => {
+  it("usa a primeira fala para apresentar a Nina e a seção", () => {
+    const host = document.getElementById("host");
+    const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
+
+    expect(guide.textContent).toContain("Eu sou a Nina");
+    expect(guide.textContent).toContain("Saúde Indígena");
+    expect(guide.querySelector(".arara-assistant__header")).toBeNull();
+    expect(guide.querySelector(".arara-stepper")).toBeNull();
+    expect(guide.querySelector(".arara-assistant__suggestions")).toBeNull();
+  });
+
+  it("não mostra a antiga mensagem de orientação local", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "", host);
 
-    guide.querySelector(".arara-stepper__actions button:last-child").click();
-    updateAraraGuide("nucleo", "", host);
+    expect(guide.textContent).not.toContain("Orientação local");
+    expect(guide.textContent).not.toContain("não altera registros");
+  });
 
-    expect(guide.textContent).toContain("Equipe Núcleo");
-    expect(guide.textContent).toContain("Passo 1 de 4");
-    expect(guide.textContent).toContain("cronograma");
+  it("marca a própria Nina como alça para mover o painel", () => {
+    const host = document.getElementById("host");
+    const guide = updateAraraGuide("dashboard", "", host);
+
+    expect(guide.querySelector("[data-nina-drag-handle]")).not.toBeNull();
   });
 
   it("oculta, reabre e preserva a preferência entre seções", () => {
@@ -70,10 +83,10 @@ describe("assistente Arara Azul", () => {
     ).toContain("fila");
   });
 
-  it("explica seus limites quando não reconhece a pergunta", () => {
+  it("não inventa uma resposta quando não reconhece a pergunta", () => {
     expect(
       answerAraraQuestion("dashboard", "", "qual é a previsão para amanhã?"),
-    ).toContain("Não consulto registros individuais");
+    ).toContain("referência institucional segura");
   });
 
   it("trata títulos personalizados como texto, sem executar marcação", () => {
