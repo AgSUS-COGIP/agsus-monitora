@@ -80,10 +80,13 @@ export function officialSourcesForQuestion(question) {
 export function questionNeedsAyaAi(question, localMatched = false) {
   const normalized = normalizeText(question);
   if (!normalized) return false;
-  const institutional = SOURCE_RULES.some(([pattern]) => pattern.test(question));
-  const contextual = /\b(edital|editais|vaga|vagas|processo seletivo|processos seletivos|territ[oó]rio|territ[oó]rios)\b/i.test(
-    question,
+  const institutional = SOURCE_RULES.some(([pattern]) =>
+    pattern.test(question),
   );
+  const contextual =
+    /\b(edital|editais|vaga|vagas|processo seletivo|processos seletivos|territ[oó]rio|territ[oó]rios)\b/i.test(
+      question,
+    );
   return institutional || contextual || !localMatched;
 }
 
@@ -112,7 +115,11 @@ export function sanitizeAyaContext(rawContext = {}) {
   };
 }
 
-export function buildAyaSystemPrompt({ section = "", title = "", context = {} } = {}) {
+export function buildAyaSystemPrompt({
+  section = "",
+  title = "",
+  context = {},
+} = {}) {
   const safeContext = sanitizeAyaContext(context);
   const facts = INSTITUTIONAL_FACTS.map((fact) => `- ${fact}`).join("\n");
   const dseis = safeContext.dseis.length

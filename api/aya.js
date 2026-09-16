@@ -13,7 +13,9 @@ const MAX_HISTORY_CONTENT = 1200;
 const REQUEST_TIMEOUT_MS = 15000;
 
 function json(res, status, payload) {
-  res.status(status).setHeader("Content-Type", "application/json; charset=utf-8");
+  res
+    .status(status)
+    .setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store, max-age=0");
   res.end(JSON.stringify(payload));
 }
@@ -36,7 +38,10 @@ function safeHistory(rawHistory) {
 }
 
 async function validateSupabaseSession(accessToken) {
-  const baseUrl = String(process.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
+  const baseUrl = String(process.env.VITE_SUPABASE_URL || "").replace(
+    /\/$/,
+    "",
+  );
   const publishableKey = String(
     process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
       process.env.VITE_SUPABASE_ANON_KEY ||
@@ -86,7 +91,8 @@ export default async function handler(req, res) {
   const section = String(req.body?.section || "").slice(0, 80);
   const title = String(req.body?.title || "").slice(0, 120);
   const history = safeHistory(req.body?.history);
-  const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
+  const apiKey =
+    process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
 
   if (!apiKey) {
     return json(res, 503, {

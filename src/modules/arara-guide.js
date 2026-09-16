@@ -1,3 +1,5 @@
+import { askAyaAi, shouldAskAyaAi } from "./aya-ai-client.js";
+
 const ARARA_VISIBILITY_STORAGE_KEY = "agsus_monitora_arara_oculta_v1";
 
 const GLOBAL_TOPICS = Object.freeze([
@@ -182,19 +184,28 @@ function scoreTopic(question, topic) {
   return score;
 }
 
-export function answerAraraQuestion(section, title, question) {
+function localAraraAnswer(section, title, question) {
   const content = guideForSection(section, title);
   const normalized = normalizeText(question);
-  if (!normalized) return "Escreva sua pergunta para a Aya.";
+  if (!normalized) {
+    return { answer: "Escreva sua pergunta para a Aya.", matched: true };
+  }
 
   const topics = [...content.topics, ...GLOBAL_TOPICS];
   const best = topics
     .map((topic) => ({ topic, score: scoreTopic(question, topic) }))
     .sort((a, b) => b.score - a.score)[0];
 
-  if (best?.score > 0) return best.topic.answer;
+  if (best?.score > 0) return { answer: best.topic.answer, matched: true };
 
-  return `Posso conversar com você sobre ${content.title}. Quando a resposta depender de um dado específico, eu uso apenas o que estiver disponível no MONITORA ou uma referência institucional segura.`;
+  return {
+    answer: `Posso conversar com você sobre ${content.title}. Quando a resposta depender de um dado específico, eu uso apenas o que estiver disponível no MONITORA ou uma referência institucional segura.`,
+    matched: false,
+  };
+}
+
+export function answerAraraQuestion(section, title, question) {
+  return localAraraAnswer(section, title, question).answer;
 }
 
 function readHiddenPreference(win) {
@@ -220,7 +231,7 @@ function element(doc, tag, className, text = "") {
   return node;
 }
 
-function appendMessage(state, role, text) {
+function appendMessage(state, role, text, options = {}) {
   const message = element(
     state.doc,
     "div",
@@ -234,25 +245,86 @@ function appendMessage(state, role, text) {
   );
   const body = element(state.doc, "p", "arara-message__body", text);
   message.append(author, body);
+
+  const sources = Array.isArray(options.sources) ? options.sources : [];
+  if (role === "assistant" && sources.length) {
+    const sourceList = element(
+      state.doc,
+      "div",
+      "arara-message__sources",
+      "Fontes: ",
+    );
+    sources.forEach((source, index) => {
+      if (index) sourceList.append(state.doc.createTextNode(" · "));
+      const link = state.doc.createElement("a");
+      link.href = String(source.url || "#");
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = String(source.label || "Fonte oficial");
+      sourceList.append(link);
+    });
+    message.append(sourceList);
+  }
+
   state.messages.append(message);
+  if (options.track !== false) {
+    state.history.push({ role, content: String(text || "") });
+  }
+  state.messages.scrollTop = state.messages.scrollHeight;
+  return message;
+}
+
+function setThinking(state, active) {
+  state.busy = Boolean(active);
+  state.input.disabled = state.busy;
+  state.sendButton.disabled = state.busy;
+  if (state.thinking?.isConnected) state.thinking.remove();
+  state.thinking = null;
+  if (!state.busy) return;
+  state.thinking = element(
+    state.doc,
+    "div",
+    "arara-assistant__thinking",
+    "Aya está pensando…",
+  );
+  state.thinking.setAttribute("role", "status");
+  state.messages.append(state.thinking);
   state.messages.scrollTop = state.messages.scrollHeight;
 }
 
 function resetConversation(state) {
   state.messages.replaceChildren();
+  state.history = [];
+  setThinking(state, false);
   appendMessage(state, "assistant", state.content.intro);
 }
 
-function ask(state, question) {
+async function ask(state, question) {
   const cleanQuestion = String(question || "").trim();
-  if (!cleanQuestion) return;
+  if (!cleanQuestion || state.busy) return;
+
+  const local = localAraraAnswer(state.section, state.title, cleanQuestion);
   appendMessage(state, "user", cleanQuestion);
-  appendMessage(
-    state,
-    "assistant",
-    answerAraraQuestion(state.section, state.title, cleanQuestion),
-  );
   state.input.value = "";
+
+  if (!shouldAskAyaAi(cleanQuestion, local.matched)) {
+    appendMessage(state, "assistant", local.answer);
+    return;
+  }
+
+  setThinking(state, true);
+  const result = await askAyaAi({
+    question: cleanQuestion,
+    section: state.section,
+    title: state.title,
+    history: state.history.slice(0, -1),
+    doc: state.doc,
+  });
+  setThinking(state, false);
+  appendMessage(state, "assistant", result.answer || local.answer, {
+    sources: result.sources,
+  });
+  state.input.focus();
 }
 
 function setHidden(state, hidden, persist = true) {
@@ -357,7 +429,11 @@ function createAssistant(host) {
     messages,
     form,
     input,
+    sendButton,
     resetButton,
+    history: [],
+    busy: false,
+    thinking: null,
     section: "",
     title: "",
     content: genericGuide("Painel"),
