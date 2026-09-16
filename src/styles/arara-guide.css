@@ -1,44 +1,364 @@
 #araraGuideHost {
-  margin-inline: clamp(0.75rem, 2vw, 1.5rem);
+  position: fixed;
+  right: clamp(12px, 2vw, 24px);
+  bottom: clamp(14px, 2vw, 24px);
+  z-index: 1250;
+  width: min(460px, calc(100vw - 24px));
   min-width: 0;
+  pointer-events: none;
 }
-.arara-guide {
-  margin-block: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid var(--border, #cbd5e1);
+
+.arara-assistant {
+  width: 100%;
+  color: var(--text, #17324d);
+  pointer-events: auto;
+}
+
+.arara-assistant__panel {
+  display: flex;
+  max-height: min(78vh, 720px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--blue2, #2563eb) 26%, #dbeafe);
+  border-radius: 22px;
+  background: var(--card, #fff);
+  box-shadow: 0 22px 60px rgba(15, 35, 60, 0.24);
+}
+
+.arara-assistant__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 112px;
+  padding: 10px 12px 10px 8px;
+  background: linear-gradient(135deg, #eaf4ff 0%, #effcff 58%, #f8fbff 100%);
+  border-bottom: 1px solid var(--line, #dbe6ef);
+}
+
+.arara-assistant__avatar {
+  width: clamp(92px, 8vw, 112px);
+  height: clamp(92px, 8vw, 112px);
+  object-fit: contain;
+  filter: drop-shadow(0 8px 12px rgba(15, 74, 132, 0.2));
+}
+
+.arara-assistant__heading {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.arara-assistant__eyebrow {
+  color: var(--muted, #60758f);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arara-assistant__title {
+  color: var(--strong, #10243e);
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.arara-assistant__section {
+  overflow: hidden;
+  color: var(--blue2, #2563eb);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arara-assistant__hide,
+.arara-stepper button,
+.arara-assistant__footer button {
+  border: 1px solid var(--line2, #cbd8e6);
+  border-radius: 999px;
+  background: var(--card, #fff);
+  color: var(--strong, #10243e);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.arara-assistant__hide {
+  padding: 8px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.arara-assistant__body {
+  overflow-y: auto;
+  padding: 14px;
+  overscroll-behavior: contain;
+}
+
+.arara-assistant__context {
+  margin: 0 0 12px;
+  color: var(--text, #17324d);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.arara-stepper {
+  padding: 12px;
+  border: 1px solid var(--line, #dbe6ef);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card2, #f8fbff) 78%, var(--card, #fff));
+}
+
+.arara-stepper__header,
+.arara-stepper__actions,
+.arara-assistant__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.arara-stepper__header strong {
+  font-size: 12px;
+}
+
+.arara-stepper__counter {
+  color: var(--muted, #60758f);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.arara-stepper__text {
+  min-height: 42px;
+  margin: 8px 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.arara-stepper button,
+.arara-assistant__footer button {
+  padding: 6px 10px;
+  font-size: 10px;
+}
+
+.arara-stepper button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.arara-assistant__suggestion-label {
+  display: block;
+  margin: 14px 0 7px;
+  font-size: 11px;
+}
+
+.arara-assistant__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.arara-suggestion {
+  padding: 7px 9px;
+  border: 1px solid color-mix(in srgb, var(--blue2, #2563eb) 24%, #dbeafe);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--blue2, #2563eb) 6%, var(--card, #fff));
+  color: var(--blue2, #1d4ed8);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.arara-assistant__messages {
+  display: flex;
+  max-height: 210px;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--line, #dbe6ef);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card2, #f8fbff) 72%, var(--card, #fff));
+}
+
+.arara-message {
+  max-width: 92%;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.arara-message--assistant {
+  align-self: flex-start;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #dbe6ef);
+}
+
+.arara-message--user {
+  align-self: flex-end;
+  background: var(--blue2, #2563eb);
+  color: #fff;
+}
+
+.arara-message__author {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+.arara-message__body {
+  margin: 0;
+}
+
+.arara-assistant__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.arara-assistant__input {
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line2, #cbd8e6);
   border-radius: 12px;
   background: var(--card, #fff);
   color: var(--text, #17324d);
-  font-size: 0.875rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 12px;
 }
-.arara-guide summary {
+
+.arara-assistant__send {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blue2, #2563eb);
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
   cursor: pointer;
-  font-weight: 600;
 }
-.arara-guide summary:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 4px;
+
+.arara-assistant__footer {
+  margin-top: 9px;
+  color: var(--muted, #60758f);
+  font-size: 9px;
 }
-.arara-guide img {
-  display: inline-block;
+
+.arara-assistant__launcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid color-mix(in srgb, var(--blue2, #2563eb) 24%, #dbeafe);
+  border-radius: 999px;
+  background: var(--card, #fff);
+  color: var(--strong, #10243e);
+  box-shadow: 0 14px 36px rgba(15, 35, 60, 0.22);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.arara-assistant__launcher img {
+  width: 56px;
+  height: 56px;
   object-fit: contain;
-  vertical-align: middle;
-  margin-inline: 0.25rem 0.5rem;
 }
-.arara-guide p {
-  margin-block: 0.75rem 0.25rem;
+
+.arara-assistant:not(.is-hidden) .arara-assistant__launcher,
+.arara-assistant.is-hidden .arara-assistant__panel {
+  display: none;
 }
-.arara-guide ol {
-  padding-inline-start: 1.5rem;
-  margin-block: 0.25rem 0.75rem;
+
+.arara-assistant button:focus-visible,
+.arara-assistant input:focus-visible {
+  outline: 3px solid color-mix(in srgb, #2563eb 58%, #fff);
+  outline-offset: 2px;
 }
-.arara-guide li + li {
-  margin-top: 0.4rem;
+
+.arara-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
+
+html[data-theme="dark"] .arara-assistant__header {
+  background: linear-gradient(135deg, #17243a 0%, #12314a 100%);
+}
+
+html[data-theme="dark"] .arara-assistant__title,
+html[data-theme="dark"] .arara-assistant__hide,
+html[data-theme="dark"] .arara-assistant__launcher {
+  color: var(--text, #e5eef8);
+}
+
+@media (max-width: 700px) {
+  #araraGuideHost {
+    right: 8px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    left: 8px;
+    width: auto;
+  }
+
+  .arara-assistant__panel {
+    max-height: min(72vh, 660px);
+    border-radius: 18px;
+  }
+
+  .arara-assistant__header {
+    grid-template-columns: auto minmax(0, 1fr);
+    min-height: 86px;
+  }
+
+  .arara-assistant__avatar {
+    width: 78px;
+    height: 78px;
+  }
+
+  .arara-assistant__hide {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-top: -6px;
+  }
+
+  .arara-assistant__body {
+    padding: 12px;
+  }
+
+  .arara-assistant__messages {
+    max-height: 160px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arara-assistant *,
+  .arara-assistant *::before,
+  .arara-assistant *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
 @media print {
-  .arara-guide {
-    display: none;
+  #araraGuideHost {
+    display: none !important;
   }
 }
