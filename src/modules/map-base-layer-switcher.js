@@ -4,10 +4,11 @@ const MODE_SATELLITE = "satellite";
 const SATELLITE_ERROR_LIMIT = 4;
 
 // Faixa pedida para o workspace cartográfico:
-// - zoom 5: limite de afastamento nacional, régua na faixa de 500 km;
+// - zoom 4.5: limite de afastamento nacional, régua na faixa de 500 km;
 // - zoom 19: aproximação na faixa de dezenas de metros.
-export const MAP_MIN_ZOOM = 5;
+export const MAP_MIN_ZOOM = 4.5;
 export const MAP_MAX_ZOOM = 19;
+const SATELLITE_MAX_NATIVE_ZOOM = 17;
 
 const SATELLITE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -17,6 +18,35 @@ const SATELLITE_ATTRIBUTION =
 const CARTOGRAPHIC_HOSTS = ["tile.openstreetmap.org", "basemaps.cartocdn.com"];
 
 let installed = false;
+
+export function addResilientBaseLayer(L, map) {
+  enhanceMap(L, map);
+  const layer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+    crossOrigin: true,
+    updateWhenIdle: true,
+    keepBuffer: 2,
+  });
+  layer.__agsusBaseMapKind = MODE_MAP;
+  let errors = 0;
+  layer.on("tileload", () => {
+    if (!map.hasLayer(layer)) return;
+    errors = 0;
+    map.__agsusFailedBaseModes.delete(MODE_MAP);
+  });
+  layer.on("tileerror", () => {
+    if (!map.hasLayer(layer) || map.__agsusBaseMapMode !== MODE_MAP) return;
+    errors += 1;
+    if (errors < SATELLITE_ERROR_LIMIT) return;
+    map.__agsusFailedBaseModes.add(MODE_MAP);
+    if (!map.__agsusFailedBaseModes.has(MODE_SATELLITE)) {
+      setBaseMapMode(L, map, MODE_SATELLITE);
+    }
+  });
+  return layer.addTo(map);
+}
 
 export function installMapBaseLayerSwitcher() {
   if (installed) return true;
@@ -118,6 +148,7 @@ function enhanceMap(L, map) {
   map.__agsusStoredMapLayers = [];
   map.__agsusSatelliteLayer = null;
   map.__agsusSatelliteErrors = 0;
+  map.__agsusFailedBaseModes = new Set();
   map.__agsusSwitchingBaseLayer = false;
 
   map.on("layeradd", (event) => {
@@ -240,6 +271,7 @@ function getSatelliteLayer(L, map) {
 
   const layer = L.tileLayer(SATELLITE_URL, {
     maxZoom: MAP_MAX_ZOOM,
+    maxNativeZoom: SATELLITE_MAX_NATIVE_ZOOM,
     attribution: SATELLITE_ATTRIBUTION,
     crossOrigin: true,
     updateWhenIdle: true,
@@ -248,11 +280,14 @@ function getSatelliteLayer(L, map) {
   layer.__agsusBaseMapKind = MODE_SATELLITE;
 
   layer.on("tileload", () => {
+    if (!map.hasLayer(layer)) return;
     map.__agsusSatelliteErrors = 0;
+    map.__agsusFailedBaseModes.delete(MODE_SATELLITE);
     map.getContainer?.().classList.remove("map-satellite-fallback");
   });
 
   layer.on("tileerror", () => {
+    if (!map.hasLayer(layer)) return;
     map.__agsusSatelliteErrors += 1;
     if (
       map.__agsusSatelliteErrors < SATELLITE_ERROR_LIMIT ||
@@ -260,7 +295,9 @@ function getSatelliteLayer(L, map) {
     )
       return;
 
+    map.__agsusFailedBaseModes.add(MODE_SATELLITE);
     map.getContainer?.().classList.add("map-satellite-fallback");
+    if (map.__agsusFailedBaseModes.has(MODE_MAP)) return;
     map.__agsusDesiredBaseMapMode = MODE_MAP;
     setBaseMapMode(L, map, MODE_MAP, { persist: true });
     dispatchFallback(map);

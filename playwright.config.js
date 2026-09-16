@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const laravel = process.env.PLAYWRIGHT_TARGET === "laravel";
+const baseURL = laravel ? "http://127.0.0.1:8000" : "http://127.0.0.1:4173";
+
 export default defineConfig({
   testDir: "./tests",
   /*
@@ -18,7 +21,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -29,8 +32,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build && npm run preview -- --host 127.0.0.1",
-    url: "http://127.0.0.1:4173",
+    command: laravel
+      ? "npm run build:laravel && php laravel/artisan serve --host=127.0.0.1 --port=8000 --no-reload"
+      : "npm run build && npm run preview -- --host 127.0.0.1",
+    url: baseURL,
     /*
       Reutilizar servidor já em execução foi o que produziu um verde falso em
       08/09/2026: um preview antigo continuava na porta 4173 servindo build

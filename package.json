@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "npm run build:laravel && php laravel/artisan serve --host=127.0.0.1 --port=8000",
     "build": "npm run check:auth-architecture && npm run check:rpc-contract && vite build && npm run check:dist-security && npm run check:bundle-size",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
@@ -24,7 +24,11 @@
     "db:validar-recusar": "node scripts/validar-migration-recusar.mjs",
     "db:capturar-baseline": "node scripts/capturar-baseline-rpcs.mjs",
     "db:validar-branding": "node scripts/validar-migration-branding.mjs",
-    "medir:cronograma": "node scripts/medir-cronograma.mjs"
+    "medir:cronograma": "node scripts/medir-cronograma.mjs",
+    "build:laravel": "npm run build && node scripts/package-laravel.mjs",
+    "test:php": "composer --working-dir=laravel test",
+    "test:smoke:laravel": "node scripts/test-laravel-smoke.mjs",
+    "dev:frontend": "vite --host 0.0.0.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",

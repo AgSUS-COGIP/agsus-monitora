@@ -1,40 +1,8 @@
-let deferredInstallPrompt = null;
 let refreshingForUpdate = false;
 let updateReloadRequested = false;
 let lastUpdateCheckAt = 0;
 
-const IOS_GUIDANCE_DISMISSED_KEY = "agsus-pwa-ios-guidance-dismissed";
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
-const NOTICE_PRIORITY = {
-  ios: 1,
-  install: 2,
-  update: 3,
-};
-
-export function isIosLike({
-  userAgent = "",
-  platform = "",
-  maxTouchPoints = 0,
-}) {
-  const classicIos = /iPad|iPhone|iPod/i.test(userAgent);
-  const ipadDesktopMode = platform === "MacIntel" && maxTouchPoints > 1;
-  return classicIos || ipadDesktopMode;
-}
-
-export function isStandaloneDisplayMode({
-  standalone = false,
-  matches = false,
-}) {
-  return Boolean(standalone || matches);
-}
-
-export function shouldShowIosInstallGuidance({
-  iosLike,
-  standalone,
-  dismissed,
-}) {
-  return Boolean(iosLike && !standalone && !dismissed);
-}
 
 export function shouldCheckForUpdate({
   now,
@@ -48,17 +16,6 @@ export function shouldCheckForUpdate({
   return now - lastCheckedAt >= minimumInterval;
 }
 
-export function shouldReplacePwaNotice({
-  currentVariant = "",
-  nextVariant = "",
-  currentVisible = false,
-} = {}) {
-  if (!currentVisible || !currentVariant) return true;
-  const currentPriority = NOTICE_PRIORITY[currentVariant] || 0;
-  const nextPriority = NOTICE_PRIORITY[nextVariant] || 0;
-  return nextPriority >= currentPriority;
-}
-
 export function shouldReloadAfterControllerChange({
   updateRequested,
   alreadyReloading,
@@ -66,121 +23,10 @@ export function shouldReloadAfterControllerChange({
   return Boolean(updateRequested && !alreadyReloading);
 }
 
-function createActionButton(label, action, secondary = false) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = secondary
-    ? "pwa-notice__action pwa-notice__action--secondary"
-    : "pwa-notice__action";
-  button.textContent = label;
-  button.addEventListener("click", action);
-  return button;
-}
-
-function ensureNotice() {
-  let notice = document.getElementById("pwaLifecycleNotice");
-  if (notice) return notice;
-
-  notice = document.createElement("aside");
-  notice.id = "pwaLifecycleNotice";
-  notice.className = "pwa-notice hidden";
-  notice.setAttribute("role", "status");
-  notice.setAttribute("aria-live", "polite");
-  document.body.appendChild(notice);
-  return notice;
-}
-
-function showNotice({ title, message, actions, variant }) {
-  const notice = ensureNotice();
-  const canReplace = shouldReplacePwaNotice({
-    currentVariant: notice.dataset.variant || "",
-    nextVariant: variant,
-    currentVisible: !notice.classList.contains("hidden"),
-  });
-  if (!canReplace) return false;
-
-  notice.replaceChildren();
-  notice.dataset.variant = variant;
-
-  const content = document.createElement("div");
-  content.className = "pwa-notice__content";
-
-  const heading = document.createElement("strong");
-  heading.className = "pwa-notice__title";
-  heading.textContent = title;
-
-  const description = document.createElement("span");
-  description.className = "pwa-notice__message";
-  description.textContent = message;
-
-  content.append(heading, description);
-
-  const controls = document.createElement("div");
-  controls.className = "pwa-notice__actions";
-  actions.forEach((action) => controls.appendChild(action));
-
-  notice.append(content, controls);
-  notice.classList.remove("hidden");
-  return true;
-}
-
-function hideNotice(expectedVariant = "") {
-  const notice = document.getElementById("pwaLifecycleNotice");
-  if (!notice) return;
-  if (expectedVariant && notice.dataset.variant !== expectedVariant) return;
-  notice.classList.add("hidden");
-}
-
-function dismissIosGuidance() {
-  try {
-    window.sessionStorage.setItem(IOS_GUIDANCE_DISMISSED_KEY, "1");
-  } catch {
-    // A orientação pode ser dispensada mesmo quando o storage está indisponível.
-  }
-  hideNotice("ios");
-}
-
-async function requestInstallation() {
-  if (!deferredInstallPrompt) return;
-
-  deferredInstallPrompt.prompt();
-  await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt = null;
-  hideNotice("install");
-}
-
-function showInstallNotice() {
-  showNotice({
-    title: "Instalar AgSUS Monitora",
-    message: "Abra o sistema como aplicativo para acesso mais rápido.",
-    actions: [
-      createActionButton("Instalar", requestInstallation),
-      createActionButton("Agora não", () => hideNotice("install"), true),
-    ],
-    variant: "install",
-  });
-}
-
-function showIosInstallGuidance() {
-  showNotice({
-    title: "Instalar no iPhone ou iPad",
-    message:
-      "No Safari, toque em Compartilhar e escolha Adicionar à Tela de Início.",
-    actions: [createActionButton("Entendi", dismissIosGuidance)],
-    variant: "ios",
-  });
-}
-
-function activateWaitingWorker(worker) {
-  updateReloadRequested = true;
-  worker.postMessage({ type: "SKIP_WAITING" });
-}
-
 function showUpdateNotice(worker) {
-  // Atualiza o service worker em segundo plano. O painel de monitoramento não
-  // deve ser coberto por uma notificação persistente durante o uso operacional.
-  // A página atual continua estável e a nova versão passa a valer na navegação
-  // seguinte, sem recarregamento automático ou perda de filtros.
+  // Atualiza o service worker em segundo plano. O MONITORA continua sendo
+  // uma aplicação web: não há prompt, banner nem orientação de instalação.
+  updateReloadRequested = true;
   worker.postMessage({ type: "SKIP_WAITING" });
 }
 
@@ -221,43 +67,6 @@ function bindUpdateRefresh(registration) {
   window.addEventListener("online", requestUpdateCheck);
 }
 
-function bindInstallPrompt() {
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredInstallPrompt = event;
-    showInstallNotice();
-  });
-
-  window.addEventListener("appinstalled", () => {
-    deferredInstallPrompt = null;
-    hideNotice("install");
-  });
-}
-
-function bindIosInstallGuidance() {
-  const iosLike = isIosLike({
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    maxTouchPoints: navigator.maxTouchPoints,
-  });
-  const standalone = isStandaloneDisplayMode({
-    standalone: navigator.standalone,
-    matches: window.matchMedia("(display-mode: standalone)").matches,
-  });
-
-  let dismissed = false;
-  try {
-    dismissed =
-      window.sessionStorage.getItem(IOS_GUIDANCE_DISMISSED_KEY) === "1";
-  } catch {
-    dismissed = false;
-  }
-
-  if (shouldShowIosInstallGuidance({ iosLike, standalone, dismissed })) {
-    window.setTimeout(showIosInstallGuidance, 900);
-  }
-}
-
 function bindServiceWorkerUpdates() {
   if (!("serviceWorker" in navigator)) return;
 
@@ -283,7 +92,5 @@ function bindServiceWorkerUpdates() {
 }
 
 export function initPwaLifecycle() {
-  bindInstallPrompt();
-  bindIosInstallGuidance();
   bindServiceWorkerUpdates();
 }

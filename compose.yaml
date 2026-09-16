@@ -1,0 +1,28 @@
+services:
+  monitora:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
+    ports:
+      - "127.0.0.1:8000:80"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_NAME: MONITORA
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      APP_KEY: ${APP_KEY:-}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "php",
+          "-r",
+          "exit(@file_get_contents('http://127.0.0.1/up') === false ? 1 : 0);",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

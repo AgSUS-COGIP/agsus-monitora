@@ -1,79 +1,38 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
-  isIosLike,
-  isStandaloneDisplayMode,
   shouldCheckForUpdate,
   shouldReloadAfterControllerChange,
-  shouldReplacePwaNotice,
-  shouldShowIosInstallGuidance,
 } from "../src/modules/pwa-lifecycle.js";
 
-describe("pwa lifecycle helpers", () => {
-  it("detecta iPhone pelo user agent", () => {
-    expect(
-      isIosLike({
-        userAgent:
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
-        platform: "iPhone",
-        maxTouchPoints: 5,
-      }),
-    ).toBe(true);
+const lifecycleSource = readFileSync("src/modules/pwa-lifecycle.js", "utf8");
+const mobileSource = readFileSync(
+  "src/modules/mobile-app-experience.js",
+  "utf8",
+);
+
+describe("ciclo web sem oferta de instalação", () => {
+  it("não registra prompt nem orientação de instalação", () => {
+    expect(lifecycleSource).not.toContain("beforeinstallprompt");
+    expect(lifecycleSource).not.toContain("appinstalled");
+    expect(lifecycleSource).not.toContain("Instalar AgSUS Monitora");
+    expect(lifecycleSource).not.toContain("Instalar no iPhone ou iPad");
+    expect(lifecycleSource).not.toContain("Adicionar à Tela de Início");
   });
 
-  it("detecta iPad em modo desktop", () => {
-    expect(
-      isIosLike({
-        userAgent:
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15",
-        platform: "MacIntel",
-        maxTouchPoints: 5,
-      }),
-    ).toBe(true);
+  it("não injeta manifest nem meta tags de app instalável", () => {
+    expect(mobileSource).not.toContain("manifest.webmanifest");
+    expect(mobileSource).not.toContain("mobile-web-app-capable");
+    expect(mobileSource).not.toContain("apple-mobile-web-app-capable");
   });
 
-  it("não classifica Android como iOS", () => {
-    expect(
-      isIosLike({
-        userAgent:
-          "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36",
-        platform: "Linux armv8l",
-        maxTouchPoints: 5,
-      }),
-    ).toBe(false);
-  });
-
-  it("reconhece execução standalone", () => {
-    expect(isStandaloneDisplayMode({ standalone: true, matches: false })).toBe(
-      true,
+  it("preserva o service worker para atualização e operação offline", () => {
+    expect(mobileSource).toContain(
+      'navigator.serviceWorker.register("/sw.js")',
     );
-    expect(isStandaloneDisplayMode({ standalone: false, matches: true })).toBe(
-      true,
-    );
-  });
-
-  it("exibe orientação somente em iOS não instalado e não dispensado", () => {
-    expect(
-      shouldShowIosInstallGuidance({
-        iosLike: true,
-        standalone: false,
-        dismissed: false,
-      }),
-    ).toBe(true);
-    expect(
-      shouldShowIosInstallGuidance({
-        iosLike: true,
-        standalone: true,
-        dismissed: false,
-      }),
-    ).toBe(false);
-    expect(
-      shouldShowIosInstallGuidance({
-        iosLike: true,
-        standalone: false,
-        dismissed: true,
-      }),
-    ).toBe(false);
+    expect(lifecycleSource).toContain("navigator.serviceWorker.ready");
+    expect(lifecycleSource).toContain("SKIP_WAITING");
   });
 
   it("verifica atualização somente online, visível e após o intervalo", () => {
@@ -101,36 +60,6 @@ describe("pwa lifecycle helpers", () => {
         online: true,
         visible: true,
         minimumInterval: 900_000,
-      }),
-    ).toBe(true);
-  });
-
-  it("não deixa orientação do iOS sobrescrever uma atualização disponível", () => {
-    expect(
-      shouldReplacePwaNotice({
-        currentVariant: "update",
-        nextVariant: "ios",
-        currentVisible: true,
-      }),
-    ).toBe(false);
-  });
-
-  it("permite que uma atualização substitua avisos de instalação", () => {
-    expect(
-      shouldReplacePwaNotice({
-        currentVariant: "install",
-        nextVariant: "update",
-        currentVisible: true,
-      }),
-    ).toBe(true);
-  });
-
-  it("permite qualquer aviso quando nenhum aviso está visível", () => {
-    expect(
-      shouldReplacePwaNotice({
-        currentVariant: "update",
-        nextVariant: "ios",
-        currentVisible: false,
       }),
     ).toBe(true);
   });

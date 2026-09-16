@@ -64,6 +64,47 @@ jobs:
       - name: Smoke tests
         run: npm run test:smoke
 
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: mbstring, xml, curl, zip
+          coverage: none
+
+      - name: Instalar Laravel
+        run: composer --working-dir=laravel install --no-interaction --prefer-dist
+
+      - name: Preparar páginas e assets do Laravel
+        run: node scripts/package-laravel.mjs
+
+      - name: Testes das rotas PHP
+        run: npm run test:php
+
+      - name: Smoke no servidor Laravel
+        run: npm run test:smoke:laravel
+
+      - name: Verificar imagem de implantação PHP
+        run: docker build -t monitora-laravel:ci .
+
+      - name: Executar aplicação no container PHP
+        run: |
+          docker run -d --name monitora-ci -p 8000:80 monitora-laravel:ci
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8000/up > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          docker logs monitora-ci
+          exit 1
+
+      - name: Smoke contra PHP e Apache do container
+        env:
+          PLAYWRIGHT_REUSE_SERVER: "1"
+        run: npm run test:smoke:laravel
+
+      - name: Encerrar container de teste
+        if: always()
+        run: docker rm -f monitora-ci || true
+
   contrato-rpc-banco:
     name: Contrato de RPC contra o banco de desenvolvimento
     runs-on: ubuntu-latest

@@ -25,7 +25,7 @@ test.describe("AgSUS Monitora smoke", () => {
     await expectNoSupabaseCdn(request, "/");
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveTitle(/AgSUS Monitora/i);
+    await expect(page).toHaveTitle("MONITORA");
     await expect(page.locator("#loginScreen")).toBeVisible();
     await expect(page.locator("#googleLoginBtn")).toBeVisible();
     await expect(page.locator("#appScreen")).toBeAttached();
@@ -44,8 +44,24 @@ test.describe("AgSUS Monitora smoke", () => {
     await expectNoSupabaseCdn(request, "/analises.html");
     await page.goto("/analises.html", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveTitle(/AgSUS Monitora Análises/i);
-    await expect(page.locator("h1")).toContainText("AgSUS Monitora Análises");
+    await expect(page).toHaveTitle("MONITORA");
+    await expect(page.locator("h1")).toContainText("MONITORA Análises");
+
+    const guide = page.locator("[data-arara-guide]");
+    const panel = guide.locator(".arara-assistant__panel");
+    const launcher = guide.locator("[data-arara-show]");
+
+    await expect(guide).toHaveCount(1);
+    await expect(panel).toBeVisible();
+    await expect(guide).toContainText("análises curriculares");
+
+    await guide.locator(".arara-assistant__hide").click();
+    await expect(panel).not.toBeVisible();
+    await expect(launcher).toBeVisible();
+
+    await launcher.click();
+    await expect(panel).toBeVisible();
+
     await expect(page.locator("#authWarning")).toBeAttached();
     await expect(page.locator("#refreshBtn")).toBeVisible();
     await expect(page.locator("#exportBtn")).toBeVisible();

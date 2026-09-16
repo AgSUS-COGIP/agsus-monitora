@@ -1,7 +1,8 @@
-# AgSUS Monitora 
+# MONITORA
 
-Aplicacao web do AgSUS Monitora, organizada em uma versao modular com Vite para deploy no Vercel e integracao com Supabase.
-
+Aplicação de monitoramento com servidor Laravel/PHP, cliente modular Vite e
+integração com Supabase. Veja [como executar, testar e implantar em Laravel](docs/monitora-laravel.md).
+O build estático anterior continua disponível para compatibilidade durante a homologação.
 
 ## Visao geral
 
@@ -90,13 +91,23 @@ O nome recomendado para novos ambientes e `VITE_SUPABASE_PUBLISHABLE_KEY`.
 
 ## Comandos disponiveis
 
-Rodar em desenvolvimento:
+Rodar com Laravel (PHP 8.5 e Composer no PATH), em `http://127.0.0.1:8000`:
 
 ```bash
+composer --working-dir=laravel install
 npm run dev
 ```
 
-Gerar build de producao:
+Gerar o pacote PHP de produção:
+
+```bash
+npm run build:laravel
+```
+
+Para executar com PHP/Apache em container: `docker compose up --build -d`.
+O Vite isolado continua disponível em `npm run dev:frontend`.
+
+Gerar o build estático de compatibilidade:
 
 ```bash
 npm run build
@@ -169,7 +180,6 @@ Nao coloque chaves secretas, tokens, senhas ou credenciais no repositorio.
 ## Como baixar o projeto inteiro para outra coordenacao
 
 Ha duas formas recomendadas.
-
 
 a. Clonar o repositorio com:
 

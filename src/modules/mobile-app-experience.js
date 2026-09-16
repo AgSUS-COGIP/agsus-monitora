@@ -4,33 +4,6 @@ const SIDEBAR_SELECTOR =
 const SERVICE_WORKER_WARNING =
   "Service worker do AgSUS Monitora não foi registrado:";
 
-function ensureMeta(name, content) {
-  let element = document.querySelector(`meta[name="${name}"]`);
-
-  if (!element) {
-    element = document.createElement("meta");
-    element.name = name;
-    document.head.appendChild(element);
-  }
-
-  element.content = content;
-}
-
-function ensureManifest() {
-  if (!document.querySelector('link[rel="manifest"]')) {
-    const link = document.createElement("link");
-    link.rel = "manifest";
-    link.href = "/manifest.webmanifest";
-    document.head.appendChild(link);
-  }
-
-  ensureMeta("theme-color", "#003b70");
-  ensureMeta("mobile-web-app-capable", "yes");
-  ensureMeta("apple-mobile-web-app-capable", "yes");
-  ensureMeta("apple-mobile-web-app-status-bar-style", "default");
-  ensureMeta("apple-mobile-web-app-title", "AgSUS Monitora");
-}
-
 function closeMobileSidebar() {
   document.body.classList.add("sidebar-collapsed");
   document.body.classList.remove("sidebar-open");
@@ -101,7 +74,6 @@ function registerServiceWorker() {
 }
 
 export function initMobileAppExperience() {
-  ensureManifest();
   ensureSidebarOverlay();
   syncMobileState();
   bindMobileInteractions();
