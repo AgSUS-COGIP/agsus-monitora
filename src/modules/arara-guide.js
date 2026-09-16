@@ -31,14 +31,7 @@ const GUIDES = Object.freeze({
     topics: [
       {
         label: "Mapa",
-        keywords: [
-          "mapa",
-          "dsei",
-          "territorio",
-          "zoom",
-          "satélite",
-          "satelite",
-        ],
+        keywords: ["mapa", "dsei", "territorio", "zoom", "satélite", "satelite"],
         answer:
           "Na visão nacional, selecione um DSEI para aprofundar o território. O fundo Mapa/Satélite muda apenas a cartografia; o recorte de dados continua definido pelos filtros e pelo território selecionado.",
       },
@@ -50,14 +43,7 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Indicadores",
-        keywords: [
-          "indicador",
-          "kpi",
-          "vagas",
-          "ociosas",
-          "contratados",
-          "criticos",
-        ],
+        keywords: ["indicador", "kpi", "vagas", "ociosas", "contratados", "criticos"],
         answer:
           "Os indicadores resumem o recorte atual. Use-os como sinal de onde investigar e confirme o detalhe na lista ou no território antes de tirar uma conclusão.",
       },
@@ -89,14 +75,7 @@ const GUIDES = Object.freeze({
     topics: [
       {
         label: "Acessos",
-        keywords: [
-          "acesso",
-          "usuario",
-          "usuário",
-          "permissao",
-          "permissão",
-          "painel",
-        ],
+        keywords: ["acesso", "usuario", "usuário", "permissao", "permissão", "painel"],
         answer:
           "Os acessos seguem o perfil do usuário. Antes de aprovar ou alterar algo, confirme a pessoa, o perfil atual e o impacto esperado.",
       },
@@ -121,14 +100,7 @@ const GUIDES = Object.freeze({
       },
       {
         label: "Gráfico",
-        keywords: [
-          "grafico",
-          "gráfico",
-          "linha",
-          "tempo",
-          "evolucao",
-          "evolução",
-        ],
+        keywords: ["grafico", "gráfico", "linha", "tempo", "evolucao", "evolução"],
         answer:
           "O gráfico mostra a evolução do volume no recorte atual. Se houver pico ou queda, confirme o período e depois consulte os registros daquele trecho.",
       },
@@ -165,9 +137,7 @@ function genericGuide(title) {
 }
 
 export function guideForSection(section, title = "") {
-  if (section.startsWith("panel:") && /an[aá]lises/i.test(title)) {
-    return GUIDES.analises;
-  }
+  if (section.startsWith("panel:") && /an[aá]lises/i.test(title)) return GUIDES.analises;
   return GUIDES[section] || genericGuide(title);
 }
 
@@ -177,9 +147,7 @@ function scoreTopic(question, topic) {
   let score = normalized === label ? 10 : 0;
   for (const keyword of topic.keywords || []) {
     const normalizedKeyword = normalizeText(keyword);
-    if (normalizedKeyword && normalized.includes(normalizedKeyword)) {
-      score += normalizedKeyword.includes(" ") ? 4 : 2;
-    }
+    if (normalizedKeyword && normalized.includes(normalizedKeyword)) score += normalizedKeyword.includes(" ") ? 4 : 2;
   }
   return score;
 }
@@ -187,15 +155,12 @@ function scoreTopic(question, topic) {
 function localAraraAnswer(section, title, question) {
   const content = guideForSection(section, title);
   const normalized = normalizeText(question);
-  if (!normalized) {
-    return { answer: "Escreva sua pergunta para a Aya.", matched: true };
-  }
+  if (!normalized) return { answer: "Escreva sua pergunta para a Aya.", matched: true };
 
   const topics = [...content.topics, ...GLOBAL_TOPICS];
   const best = topics
     .map((topic) => ({ topic, score: scoreTopic(question, topic) }))
     .sort((a, b) => b.score - a.score)[0];
-
   if (best?.score > 0) return { answer: best.topic.answer, matched: true };
 
   return {
@@ -232,28 +197,14 @@ function element(doc, tag, className, text = "") {
 }
 
 function appendMessage(state, role, text, options = {}) {
-  const message = element(
-    state.doc,
-    "div",
-    `arara-message arara-message--${role}`,
-  );
-  const author = element(
-    state.doc,
-    "strong",
-    "arara-message__author",
-    role === "user" ? "Você" : "Aya",
-  );
+  const message = element(state.doc, "div", `arara-message arara-message--${role}`);
+  const author = element(state.doc, "strong", "arara-message__author", role === "user" ? "Você" : "Aya");
   const body = element(state.doc, "p", "arara-message__body", text);
   message.append(author, body);
 
   const sources = Array.isArray(options.sources) ? options.sources : [];
   if (role === "assistant" && sources.length) {
-    const sourceList = element(
-      state.doc,
-      "div",
-      "arara-message__sources",
-      "Fontes: ",
-    );
+    const sourceList = element(state.doc, "div", "arara-message__sources", "Fontes: ");
     sources.forEach((source, index) => {
       if (index) sourceList.append(state.doc.createTextNode(" · "));
       const link = state.doc.createElement("a");
@@ -267,9 +218,7 @@ function appendMessage(state, role, text, options = {}) {
   }
 
   state.messages.append(message);
-  if (options.track !== false) {
-    state.history.push({ role, content: String(text || "") });
-  }
+  if (options.track !== false) state.history.push({ role, content: String(text || "") });
   state.messages.scrollTop = state.messages.scrollHeight;
   return message;
 }
@@ -281,12 +230,7 @@ function setThinking(state, active) {
   if (state.thinking?.isConnected) state.thinking.remove();
   state.thinking = null;
   if (!state.busy) return;
-  state.thinking = element(
-    state.doc,
-    "div",
-    "arara-assistant__thinking",
-    "Aya está pensando…",
-  );
+  state.thinking = element(state.doc, "div", "arara-assistant__thinking", "Aya está pensando…");
   state.thinking.setAttribute("role", "status");
   state.messages.append(state.thinking);
   state.messages.scrollTop = state.messages.scrollHeight;
@@ -302,11 +246,9 @@ function resetConversation(state) {
 async function ask(state, question) {
   const cleanQuestion = String(question || "").trim();
   if (!cleanQuestion || state.busy) return;
-
   const local = localAraraAnswer(state.section, state.title, cleanQuestion);
   appendMessage(state, "user", cleanQuestion);
   state.input.value = "";
-
   if (!shouldAskAyaAi(cleanQuestion, local.matched)) {
     appendMessage(state, "assistant", local.answer);
     return;
@@ -321,9 +263,7 @@ async function ask(state, question) {
     doc: state.doc,
   });
   setThinking(state, false);
-  appendMessage(state, "assistant", result.answer || local.answer, {
-    sources: result.sources,
-  });
+  appendMessage(state, "assistant", result.answer || local.answer, { sources: result.sources });
   state.input.focus();
 }
 
@@ -343,19 +283,11 @@ function createAssistant(host) {
   root.setAttribute("aria-label", "Assistente Aya");
 
   const panel = element(doc, "div", "arara-assistant__panel");
+  panel.dataset.ninaDragHandle = "";
   const body = element(doc, "div", "arara-assistant__body");
-  const sectionBadge = element(
-    doc,
-    "span",
-    "arara-assistant__section arara-visually-hidden",
-  );
+  const sectionBadge = element(doc, "span", "arara-assistant__section arara-visually-hidden");
 
-  const hideButton = element(
-    doc,
-    "button",
-    "arara-assistant__hide",
-    "Ocultar Aya",
-  );
+  const hideButton = element(doc, "button", "arara-assistant__hide", "Ocultar Aya");
   hideButton.type = "button";
   hideButton.setAttribute("aria-label", "Ocultar Aya");
 
@@ -375,12 +307,7 @@ function createAssistant(host) {
   scene.append(avatar, messages);
 
   const form = element(doc, "form", "arara-assistant__form");
-  const inputLabel = element(
-    doc,
-    "label",
-    "arara-visually-hidden",
-    "Pergunta para a Aya",
-  );
+  const inputLabel = element(doc, "label", "arara-visually-hidden", "Pergunta para a Aya");
   const input = doc.createElement("input");
   input.className = "arara-assistant__input";
   input.type = "text";
@@ -393,12 +320,7 @@ function createAssistant(host) {
   form.append(inputLabel, input, sendButton);
 
   const actions = element(doc, "div", "arara-assistant__actions");
-  const resetButton = element(
-    doc,
-    "button",
-    "arara-assistant__reset",
-    "Recomeçar",
-  );
+  const resetButton = element(doc, "button", "arara-assistant__reset", "Recomeçar");
   resetButton.type = "button";
   actions.append(resetButton);
 
@@ -407,14 +329,15 @@ function createAssistant(host) {
 
   const launcher = element(doc, "button", "arara-assistant__launcher");
   launcher.type = "button";
-  launcher.setAttribute("aria-label", "Mostrar Aya");
+  launcher.setAttribute("aria-label", "Aya");
+  launcher.title = "Abrir Aya";
   launcher.dataset.araraShow = "";
   const launcherAvatar = doc.createElement("img");
   launcherAvatar.src = "/assets/arara-azul-monitora.png";
   launcherAvatar.alt = "";
   launcherAvatar.width = 56;
   launcherAvatar.height = 56;
-  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Aya"));
+  launcher.append(launcherAvatar, element(doc, "span", "", "Aya"));
 
   root.append(panel, launcher);
   host.append(root);
@@ -464,7 +387,6 @@ function createAssistant(host) {
 
 export function updateAraraGuide(section, title, host) {
   if (!host) return null;
-
   let root = host.querySelector("[data-arara-guide]");
   let state = root ? assistantState.get(root) : null;
   if (!root || !state) {
