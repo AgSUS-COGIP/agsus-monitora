@@ -109,7 +109,7 @@ const GUIDES = Object.freeze({
   analises: {
     title: "Análises",
     intro:
-      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você em Análises curriculares e posso ajudar com filtros, gráfico, fila operacional e leitura do recorte atual. O que você quer entender?",
+      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você em análises curriculares e posso ajudar com filtros, gráfico, fila operacional e leitura do recorte atual. O que você quer entender?",
     topics: [
       {
         label: "Fila",
