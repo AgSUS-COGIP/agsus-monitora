@@ -34,13 +34,33 @@ describe("movimento do painel da Aya", () => {
     expect(source).toContain("keepInsideViewport");
   });
 
-  it("mantém a Aya acima do painel e com fundo translúcido", () => {
-    expect(styles).toContain("z-index: 10000");
-    expect(styles).toContain("backdrop-filter: blur(18px)");
-    expect(styles).toContain("background: rgba(248, 252, 255, 0.78)");
+  it("mantém a Aya acima do restante da interface", () => {
+    expect(styles).toContain("z-index: 2147483000");
   });
 
-  it('mostra apenas "Aya" no launcher', () => {
-    expect(styles).toContain('content: "Aya"');
+  it("remove o cartão opaco externo do painel", () => {
+    expect(styles).toMatch(
+      /\.arara-assistant__panel\s*\{[\s\S]*?background:\s*transparent;/,
+    );
+    expect(styles).toMatch(
+      /\.arara-assistant__panel\s*\{[\s\S]*?box-shadow:\s*none;/,
+    );
+    expect(styles).toMatch(/\.arara-assistant__panel\s*\{[\s\S]*?border:\s*0;/);
+  });
+
+  it("mantém apenas o conteúdo da conversa translúcido", () => {
+    expect(styles).toContain("background: rgba(248, 251, 255, 0.82)");
+    expect(styles).toContain("backdrop-filter: blur(12px)");
+  });
+
+  it("deixa o launcher maior, transparente e sem rótulo visual", () => {
+    expect(styles).toContain("width: 104px");
+    expect(styles).toContain("height: 104px");
+    expect(styles).toMatch(
+      /\.arara-assistant__launcher\s*\{[\s\S]*?background:\s*transparent;/,
+    );
+    expect(styles).toMatch(
+      /\.arara-assistant__launcher span\s*\{[\s\S]*?display:\s*none;/,
+    );
   });
 });
