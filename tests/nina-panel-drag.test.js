@@ -45,9 +45,7 @@ describe("movimento do painel da Aya", () => {
     expect(styles).toMatch(
       /\.arara-assistant__panel\s*\{[\s\S]*?box-shadow:\s*none;/,
     );
-    expect(styles).toMatch(
-      /\.arara-assistant__panel\s*\{[\s\S]*?border:\s*0;/,
-    );
+    expect(styles).toMatch(/\.arara-assistant__panel\s*\{[\s\S]*?border:\s*0;/);
   });
 
   it("mantém apenas o conteúdo da conversa translúcido", () => {
