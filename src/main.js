@@ -10,6 +10,7 @@ import "./lib/chartjs-global.js";
 import "./lib/supabase-legacy-bridge.js";
 import "./styles/visual-polish.css";
 import "./styles/arara-guide.css";
+import "./styles/nina-conversation.css";
 import "./styles/loading-experience.css";
 import "./styles/access-dashboard.css";
 import "./styles/health-indigenous.css";
