@@ -78,7 +78,8 @@ function isOpeningMessage(root, body) {
 function assistantText(root, body) {
   if (isOpeningMessage(root, body)) {
     const section = root.dataset.section || "";
-    const title = root.querySelector(".arara-assistant__section")?.textContent || "";
+    const title =
+      root.querySelector(".arara-assistant__section")?.textContent || "";
     return araraOpeningMessage(section, title);
   }
   return String(body.textContent || "").trim();

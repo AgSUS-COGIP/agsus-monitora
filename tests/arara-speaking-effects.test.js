@@ -36,9 +36,7 @@ describe("efeito de fala da Arara Azul", () => {
     expect(araraOpeningMessage("nucleo", "Equipe Núcleo")).toContain(
       "cronograma",
     );
-    expect(araraOpeningMessage("config", "Configurações")).toContain(
-      "acessos",
-    );
+    expect(araraOpeningMessage("config", "Configurações")).toContain("acessos");
     expect(araraOpeningMessage("analises", "Análises")).toContain(
       "fila operacional",
     );
