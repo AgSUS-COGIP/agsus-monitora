@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
+import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import {
+  answerNinaInstitutionalQuestion,
   araraAssistantName,
   araraOpeningMessage,
   araraSpeechDuration,
@@ -48,6 +50,56 @@ describe("efeito de fala da Nina", () => {
     expect(araraOpeningMessage("analises", "Análises")).toContain(
       "fila operacional",
     );
+  });
+
+  it("explica Terra Indígena sem confundir com DSEI", () => {
+    const answer = answerNinaInstitutionalQuestion(
+      "Qual a diferença entre Terra Indígena e DSEI?",
+    );
+    expect(answer).toContain("não é a mesma coisa que um DSEI");
+    expect(answer).toContain("Funai");
+  });
+
+  it("explica DSEI e CASAI", () => {
+    expect(answerNinaInstitutionalQuestion("O que é DSEI?")).toContain(
+      "Distrito Sanitário Especial Indígena",
+    );
+    expect(answerNinaInstitutionalQuestion("O que é CASAI?")).toContain(
+      "Casa de Saúde Indígena",
+    );
+  });
+
+  it("lê editais visíveis sem consultar uma nova fonte", () => {
+    const dom = new JSDOM(`
+      <table><tbody id="monitorRows">
+        <tr>
+          <td><a>Edital 12/2026</a></td>
+          <td>DSEI Xingu</td>
+          <td>Inscrições</td>
+        </tr>
+      </tbody></table>
+    `);
+    const answer = answerNinaInstitutionalQuestion(
+      "Quais editais aparecem aqui?",
+      dom.window.document,
+    );
+    expect(answer).toContain("Edital 12/2026");
+    expect(answer).toContain("DSEI Xingu");
+  });
+
+  it("lê DSEIs visíveis no mapa", () => {
+    const dom = new JSDOM(`
+      <button class="health-map-unit">
+        <strong>DSEI Xingu</strong>
+        <small>10 vagas · 2 ociosas</small>
+      </button>
+    `);
+    const answer = answerNinaInstitutionalQuestion(
+      "Quais DSEIs aparecem no mapa?",
+      dom.window.document,
+    );
+    expect(answer).toContain("DSEI Xingu");
+    expect(answer).toContain("10 vagas");
   });
 
   it("mostra estado de fala e revela texto progressivamente", () => {
