@@ -58,12 +58,15 @@ describe("efeito de fala da Arara Azul", () => {
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });
 
-  it("prioriza o chat e esconde o texto introdutório duplicado", () => {
-    expect(css).toContain(".arara-assistant__context");
-    expect(css).toContain("display: none");
-    expect(css).toContain(".arara-assistant__messages");
-    expect(css).toContain("order: 1");
-    expect(css).toContain(".arara-stepper");
-    expect(css).toContain("order: 5");
+  it("remove o passo a passo fixo da interface", () => {
+    expect(source).toContain("removeFixedTutorial");
+    expect(source).toContain('root.querySelector(".arara-stepper")?.remove()');
+  });
+
+  it("mantém memória curta do último assunto para perguntas de continuação", () => {
+    expect(source).toContain("conversationMemory");
+    expect(source).toContain("FOLLOW_UP_PATTERN");
+    expect(source).toContain("CONTINUATIONS");
+    expect(source).toContain("memory.lastTopic");
   });
 });
