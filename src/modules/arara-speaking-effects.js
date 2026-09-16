@@ -38,8 +38,7 @@ const FOLLOW_UP_PATTERN =
 
 const CONTINUATIONS = Object.freeze({
   dashboard: {
-    mapa:
-      "No mapa, o próximo passo é escolher um DSEI. Depois disso, use o detalhamento para ver polos e unidades. Se quiser comparar territórios, volte à visão Brasil antes de selecionar outro DSEI.",
+    mapa: "No mapa, o próximo passo é escolher um DSEI. Depois disso, use o detalhamento para ver polos e unidades. Se quiser comparar territórios, volte à visão Brasil antes de selecionar outro DSEI.",
     filtros:
       "Depois de ajustar os filtros, confira os indicadores antes de abrir o mapa. Assim você confirma se o recorte realmente mudou e evita comparar números de contextos diferentes.",
     indicadores:
@@ -70,8 +69,7 @@ const CONTINUATIONS = Object.freeze({
   analises: {
     filtros:
       "Depois de aplicar os filtros, confira o contador de registros e a data de atualização. Só então compare o gráfico ou a fila operacional.",
-    fila:
-      "Na fila, use a busca para localizar o registro e abra Detalhes quando precisar conferir todas as informações. O status da linha deve ser lido dentro do recorte dos filtros ativos.",
+    fila: "Na fila, use a busca para localizar o registro e abra Detalhes quando precisar conferir todas as informações. O status da linha deve ser lido dentro do recorte dos filtros ativos.",
     grafico:
       "Se aparecer um pico ou uma queda no gráfico, confirme o período e os filtros e depois consulte os registros daquele trecho na fila operacional.",
   },
@@ -114,7 +112,9 @@ function normalizeKnowledgeText(value) {
 }
 
 function compactText(value, maxLength = 220) {
-  const text = String(value || "").replace(/\s+/g, " ").trim();
+  const text = String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength - 1).trimEnd()}…`;
 }
@@ -151,7 +151,8 @@ function visibleEditalSummaries(doc) {
     rows.map((row) => {
       const cells = Array.from(row.querySelectorAll("td"));
       if (!cells.length) return "";
-      const edital = cells[0]?.querySelector("a")?.textContent || cells[0]?.textContent;
+      const edital =
+        cells[0]?.querySelector("a")?.textContent || cells[0]?.textContent;
       const unit = cells[1]?.textContent || "";
       const stage = cells[2]?.textContent || "";
       return [edital, unit, stage].map(compactText).filter(Boolean).join(" — ");
@@ -163,7 +164,9 @@ function visibleEditalSummaries(doc) {
 function visibleNucleoEditalSummaries(doc) {
   if (!doc?.querySelectorAll) return [];
   const rows = Array.from(
-    doc.querySelectorAll("#nucleoTableBody tr, #nucleoRows tr, .nucleo-table tbody tr"),
+    doc.querySelectorAll(
+      "#nucleoTableBody tr, #nucleoRows tr, .nucleo-table tbody tr",
+    ),
   );
   return uniqueTexts(
     rows.map((row) => {
@@ -238,7 +241,10 @@ export function answerNinaInstitutionalQuestion(question, doc = document) {
     if (match) {
       return `No mapa atual encontrei este território: ${match}. Esses números refletem o recorte que está visível no MONITORA.`;
     }
-    if (/\b(quais|lista|listar|aparecem|mapa)\b/.test(normalized) && dseis.length) {
+    if (
+      /\b(quais|lista|listar|aparecem|mapa)\b/.test(normalized) &&
+      dseis.length
+    ) {
       return `No mapa atual aparecem, entre outros: ${dseis.join("; ")}. Estou lendo somente o que está carregado nesta tela.`;
     }
     return "DSEI é o Distrito Sanitário Especial Indígena, uma unidade territorial e de gestão da atenção à saúde indígena vinculada à SESAI. Ele organiza serviços e ações de saúde em um espaço geográfico, populacional e etnocultural próprio; não deve ser confundido com os limites jurídicos de uma Terra Indígena.";
@@ -271,7 +277,8 @@ function prefersReducedMotion(win) {
 
 function normalizeSection(root) {
   const section = root.dataset.section || "";
-  const title = root.querySelector(".arara-assistant__section")?.textContent || "";
+  const title =
+    root.querySelector(".arara-assistant__section")?.textContent || "";
   if (section === "analises" || /an[aá]lises/i.test(title)) return "analises";
   return section;
 }
@@ -279,8 +286,9 @@ function normalizeSection(root) {
 function detectTopic(text) {
   const value = String(text || "").trim();
   return (
-    Object.entries(TOPIC_PATTERNS).find(([, pattern]) => pattern.test(value))?.[0] ||
-    ""
+    Object.entries(TOPIC_PATTERNS).find(([, pattern]) =>
+      pattern.test(value),
+    )?.[0] || ""
   );
 }
 
