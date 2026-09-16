@@ -14,6 +14,7 @@ import {
   filterApprovedCandidates,
   summarizeApprovedCandidates,
   uniqueCandidateCargos,
+  candidateCargosForEdital,
 } from "../lib/lista-aprovados-rules.js";
 
 const BUCKET = "listas-aprovados";
@@ -93,7 +94,7 @@ export function createListaAprovadosController(options = {}) {
       .map((row) => `<option value="${attr(row.edital_id)}">${esc(row.edital || "Edital")} · ${esc(row.unidade || "")}</option>`)
       .join("")}`;
     if ([...edital.options].some((option) => option.value === editalValue)) edital.value = editalValue;
-    cargo.innerHTML = `<option value="">Todos os cargos</option>${uniqueCandidateCargos(state.candidates)
+    cargo.innerHTML = `<option value="">Todos os cargos</option>${candidateCargosForEdital(state.candidates, editalValue)
       .map((value) => `<option value="${attr(value)}">${esc(value)}</option>`)
       .join("")}`;
     if ([...cargo.options].some((option) => option.value === cargoValue)) cargo.value = cargoValue;
@@ -324,9 +325,30 @@ export function createListaAprovadosController(options = {}) {
     const fileInput = document.getElementById("approvedImportFile");
     if (fileInput) fileInput.value = "";
     if (activeSelect) activeSelect.value = list?.ativo === false ? "false" : "true";
-    if (stateText) stateText.innerHTML = list
-      ? `<span class="approved-status ${list.ativo ? "success" : "neutral"}">${list.ativo ? "Lista ativa" : "Lista inativa"}</span><span>${esc(list.arquivo_nome || "Arquivo importado")}</span><span>${esc(String(list.total_candidatos ?? 0))} candidato(s)</span>`
-      : `<span class="approved-status neutral">Sem lista importada</span>`;
+    if (stateText) {
+      stateText.classList.toggle("has-list", Boolean(list));
+      stateText.innerHTML = list
+        ? `<div class="approved-import-summary-head">
+            <span class="approved-import-summary-icon" aria-hidden="true"><i class="fa-solid fa-file-circle-check"></i></span>
+            <div class="approved-import-summary-copy">
+              <strong class="approved-import-summary-title">Lista atual cadastrada</strong>
+              <span>Este edital já possui uma lista de aprovados importada.</span>
+            </div>
+            <span class="approved-status ${list.ativo ? "success" : "neutral"}">${list.ativo ? "Lista ativa" : "Lista inativa"}</span>
+          </div>
+          <div class="approved-import-summary-details">
+            <div class="approved-import-summary-detail">
+              <span>Arquivo atual</span>
+              <strong>${esc(list.arquivo_nome || "Arquivo importado")}</strong>
+            </div>
+            <div class="approved-import-summary-detail compact">
+              <span>Candidatos</span>
+              <strong>${esc(String(list.total_candidatos ?? 0))} candidatos</strong>
+            </div>
+          </div>
+          ${canReplace ? `<div class="approved-import-replace-warning"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>Atenção: enviar um novo XLSX substituirá a lista atual.</span></div>` : ""}`
+        : `<span class="approved-status neutral">Sem lista importada</span>`;
+    }
     if (fileRow) fileRow.classList.toggle("hidden", Boolean(list && !canReplace));
     if (importButton) {
       importButton.classList.toggle("hidden", !canImport || Boolean(list && !canReplace));
@@ -441,7 +463,11 @@ export function createListaAprovadosController(options = {}) {
       renderRows();
     };
     document.getElementById("approvedSearch")?.addEventListener("input", renderFilteredView);
-    ["approvedFilterEdital", "approvedFilterCargo", "approvedFilterStatus"].forEach((id) => {
+    document.getElementById("approvedFilterEdital")?.addEventListener("change", () => {
+      fillFilters();
+      renderFilteredView();
+    });
+    ["approvedFilterCargo", "approvedFilterStatus"].forEach((id) => {
       document.getElementById(id)?.addEventListener("change", renderFilteredView);
     });
     document.getElementById("approvedRows")?.addEventListener("click", (event) => {
@@ -482,5 +508,3 @@ export function createListaAprovadosController(options = {}) {
     modelUrl: MODEL_URL,
   };
 }
-
-

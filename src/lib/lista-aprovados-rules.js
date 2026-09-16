@@ -61,3 +61,10 @@ export function uniqueCandidateCargos(rows) {
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
+export function candidateCargosForEdital(rows, editalId) {
+  const selectedEditalId = text(editalId);
+  const scopedRows = selectedEditalId
+    ? (rows || []).filter((row) => String(row.edital_id) === selectedEditalId)
+    : rows || [];
+  return uniqueCandidateCargos(scopedRows);
+}
