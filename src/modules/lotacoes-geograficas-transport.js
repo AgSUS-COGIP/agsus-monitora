@@ -245,11 +245,17 @@ export function decorateLotacoesClient(
 }
 
 export function installLotacoesTransport(target = globalThis) {
-  const previous = target?.[DECORATOR_KEY];
-  target[DECORATOR_KEY] = (client) =>
-    decorateLotacoesClient(
-      typeof previous === "function" ? previous(client) : client,
-    );
+  if (!target) return false;
+  const previous = target[DECORATOR_KEY];
+  Object.defineProperty(target, DECORATOR_KEY, {
+    value: (client) =>
+      decorateLotacoesClient(
+        typeof previous === "function" ? previous(client) : client,
+      ),
+    configurable: true,
+    enumerable: false,
+  });
+  return true;
 }
 
 installLotacoesTransport(globalThis);
