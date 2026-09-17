@@ -19,14 +19,26 @@ describe("lotações geográficas", () => {
 
     expect(records).toHaveLength(598);
     expect(records.filter((record) => record[0] === "SEDE")).toHaveLength(34);
-    expect(records.filter((record) => record[0] === "POLO BASE")).toHaveLength(403);
+    expect(records.filter((record) => record[0] === "POLO BASE")).toHaveLength(
+      403,
+    );
     expect(records.filter((record) => record[0] === "CASAI")).toHaveLength(79);
     expect(
-      records.filter((record) => ["UNIDADE DE LOTAÇÃO", "ROTA"].includes(record[0])),
+      records.filter((record) =>
+        ["UNIDADE DE LOTAÇÃO", "ROTA"].includes(record[0]),
+      ),
     ).toHaveLength(82);
-    expect(records.every((record) => Number.isFinite(record[2]) && Number.isFinite(record[3]))).toBe(true);
-    expect(records.every((record) => record[2] >= -90 && record[2] <= 90)).toBe(true);
-    expect(records.every((record) => record[3] >= -180 && record[3] <= 180)).toBe(true);
+    expect(
+      records.every(
+        (record) => Number.isFinite(record[2]) && Number.isFinite(record[3]),
+      ),
+    ).toBe(true);
+    expect(records.every((record) => record[2] >= -90 && record[2] <= 90)).toBe(
+      true,
+    );
+    expect(
+      records.every((record) => record[3] >= -180 && record[3] <= 180),
+    ).toBe(true);
   });
 
   it("substitui sede e polo por coordenadas da planilha e preserva a estrutura existente", () => {
@@ -49,9 +61,36 @@ describe("lotações geográficas", () => {
     ];
     const dataset = {
       "ALAGOAS E SERGIPE": [
-        ["SEDE", "SEDE DSEI", -9.60197359211841, -35.748154999352536, "MACEIO", "AL", "Muito acessível", ""],
-        ["POLO BASE", "PB ACONÃ", -9.971, -37.003, "TRAIPU", "AL", "Muito acessível", "Terrestre/Fluvial"],
-        ["UNIDADE DE LOTAÇÃO", "UBSI TESTE", -9.8, -37.1, "TRAIPU", "AL", "Acessível", "Terrestre"],
+        [
+          "SEDE",
+          "SEDE DSEI",
+          -9.60197359211841,
+          -35.748154999352536,
+          "MACEIO",
+          "AL",
+          "Muito acessível",
+          "",
+        ],
+        [
+          "POLO BASE",
+          "PB ACONÃ",
+          -9.971,
+          -37.003,
+          "TRAIPU",
+          "AL",
+          "Muito acessível",
+          "Terrestre/Fluvial",
+        ],
+        [
+          "UNIDADE DE LOTAÇÃO",
+          "UBSI TESTE",
+          -9.8,
+          -37.1,
+          "TRAIPU",
+          "AL",
+          "Acessível",
+          "Terrestre",
+        ],
       ],
     };
 
@@ -83,7 +122,16 @@ describe("lotações geográficas", () => {
     ];
     const dataset = {
       "CASAI DF": [
-        ["CASAI", "CASAI DF", -15.7432639227901, -47.713302417615324, "BRASILIA", "DF", "Muito acessível", "Terrestre"],
+        [
+          "CASAI",
+          "CASAI DF",
+          -15.7432639227901,
+          -47.713302417615324,
+          "BRASILIA",
+          "DF",
+          "Muito acessível",
+          "Terrestre",
+        ],
       ],
     };
 

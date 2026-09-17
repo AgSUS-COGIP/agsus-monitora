@@ -4,7 +4,8 @@ const CLIENT_MARKER = "__agsusLotacoesGeograficas";
 const SOURCE = "Lotações, Meios de Acesso/Polo Base";
 const DATA_FILES = Array.from(
   { length: 8 },
-  (_, index) => `/data/lotacoes-geograficas-${String(index + 1).padStart(2, "0")}.json`,
+  (_, index) =>
+    `/data/lotacoes-geograficas-${String(index + 1).padStart(2, "0")}.json`,
 );
 
 let datasetPromise = null;
@@ -15,7 +16,10 @@ function normalize(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase()
     .replace(/\([^)]*\)/g, " ")
-    .replace(/\b(DISTRITO|SANITARIO|ESPECIAL|INDIGENA|SAUDE|DE|DO|DA|DOS|DAS|E|TIPO|I|II|III|IV)\b/g, " ")
+    .replace(
+      /\b(DISTRITO|SANITARIO|ESPECIAL|INDIGENA|SAUDE|DE|DO|DA|DOS|DAS|E|TIPO|I|II|III|IV)\b/g,
+      " ",
+    )
     .replace(/\b(PB|POLO|BASE|DSEI|UBSI|UBS|UN|UNIDADE|BASICA|POSTO)\b/g, " ")
     .replace(/[^A-Z0-9]+/g, " ")
     .replace(/\s+/g, " ")
@@ -27,7 +31,8 @@ function clone(value) {
 }
 
 function compactRecord(row) {
-  const [type, name, lat, lon, municipality, uf, accessibility, accessMode] = row;
+  const [type, name, lat, lon, municipality, uf, accessibility, accessMode] =
+    row;
   return { type, name, lat, lon, municipality, uf, accessibility, accessMode };
 }
 
@@ -36,7 +41,8 @@ export async function loadLotacoesGeograficas(fetchImpl = globalThis.fetch) {
   const task = Promise.all(
     DATA_FILES.map(async (file) => {
       const response = await fetchImpl(file, { cache: "force-cache" });
-      if (!response.ok) throw new Error(`Falha ao carregar ${file}: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`Falha ao carregar ${file}: ${response.status}`);
       return response.json();
     }),
   ).then((chunks) => Object.assign({}, ...chunks));
@@ -81,9 +87,18 @@ function mergeNetworkRecord(list, record) {
 function applyNationalCasai(redePayload, record) {
   redePayload.nac ||= [];
   const targetName = /DF|BRASIL/i.test(record.name) ? "BRASIL" : "SAO PAULO";
-  let existing = redePayload.nac.find((item) => normalize(item?.[0]).includes(targetName));
+  let existing = redePayload.nac.find((item) =>
+    normalize(item?.[0]).includes(targetName),
+  );
   if (!existing) {
-    existing = [record.name, "", record.lat, record.lon, record.municipality, record.uf];
+    existing = [
+      record.name,
+      "",
+      record.lat,
+      record.lon,
+      record.municipality,
+      record.uf,
+    ];
     redePayload.nac.push(existing);
   }
   existing[2] = record.lat;
@@ -101,13 +116,17 @@ export function applyLotacoesGeograficas(rows, dataset) {
   const redeRow = output.find((row) => row?.chave === "rede_cnes");
   if (!lmapRow?.payload || !redeRow?.payload || !dataset) return output;
 
-  const dseiByKey = new Map((lmapRow.payload.dsei || []).map((dsei) => [dsei.k, dsei]));
+  const dseiByKey = new Map(
+    (lmapRow.payload.dsei || []).map((dsei) => [dsei.k, dsei]),
+  );
   redeRow.payload.rede ||= {};
 
   Object.entries(dataset).forEach(([dseiKey, rawRecords]) => {
     const records = (rawRecords || []).map(compactRecord);
     if (dseiKey === "CASAI DF" || dseiKey === "CASAI SÃO PAULO") {
-      records.filter((record) => record.type === "CASAI").forEach((record) => applyNationalCasai(redeRow.payload, record));
+      records
+        .filter((record) => record.type === "CASAI")
+        .forEach((record) => applyNationalCasai(redeRow.payload, record));
       return;
     }
 
@@ -180,9 +199,15 @@ function wrapBuilder(builder, datasetLoader) {
               if (result?.error || !Array.isArray(result?.data)) return result;
               try {
                 const dataset = await datasetLoader();
-                return { ...result, data: applyLotacoesGeograficas(result.data, dataset) };
+                return {
+                  ...result,
+                  data: applyLotacoesGeograficas(result.data, dataset),
+                };
               } catch (error) {
-                console.warn("Lotações geográficas indisponíveis; mantendo mapa persistido.", error);
+                console.warn(
+                  "Lotações geográficas indisponíveis; mantendo mapa persistido.",
+                  error,
+                );
                 return result;
               }
             })
@@ -192,27 +217,39 @@ function wrapBuilder(builder, datasetLoader) {
       if (typeof value !== "function") return value;
       return (...args) => {
         const next = value.apply(target, args);
-        return next && typeof next === "object" ? wrapBuilder(next, datasetLoader) : next;
+        return next && typeof next === "object"
+          ? wrapBuilder(next, datasetLoader)
+          : next;
       };
     },
   });
 }
 
-export function decorateLotacoesClient(client, datasetLoader = loadLotacoesGeograficas) {
+export function decorateLotacoesClient(
+  client,
+  datasetLoader = loadLotacoesGeograficas,
+) {
   if (!client || client[CLIENT_MARKER]) return client;
   const originalFrom = client.from.bind(client);
   client.from = (tableName) => {
     const builder = originalFrom(tableName);
-    return tableName === MAP_TABLE ? wrapBuilder(builder, datasetLoader) : builder;
+    return tableName === MAP_TABLE
+      ? wrapBuilder(builder, datasetLoader)
+      : builder;
   };
-  Object.defineProperty(client, CLIENT_MARKER, { value: true, enumerable: false });
+  Object.defineProperty(client, CLIENT_MARKER, {
+    value: true,
+    enumerable: false,
+  });
   return client;
 }
 
 export function installLotacoesTransport(target = globalThis) {
   const previous = target?.[DECORATOR_KEY];
   target[DECORATOR_KEY] = (client) =>
-    decorateLotacoesClient(typeof previous === "function" ? previous(client) : client);
+    decorateLotacoesClient(
+      typeof previous === "function" ? previous(client) : client,
+    );
 }
 
 installLotacoesTransport(globalThis);

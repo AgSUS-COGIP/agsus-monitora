@@ -1,1 +1,662 @@
-{"ALAGOAS E SERGIPE":[["CASAI","CASAI DSEI AL/SE",-9.62718,-35.73629,"MACEIO","AL","Muito acessível","Terrestre"],["POLO BASE","PB ACONÃ",-9.971,-37.003,"TRAIPU","AL","Muito acessível","Terrestre/Fluvial"],["POLO BASE","PB JERIPANKÓ",-9.220965,-38.024643,"PARICONHA","AL","Muito acessível","Terrestre"],["POLO BASE","PB KALANKÓ",-9.262,-37.938,"AGUA BRANCA","AL","Acessível","Terrestre"],["POLO BASE","PB KARAPOTÓ PLAKI-Ô",-10.0097628893109,-36.6232681274414,"SAO SEBASTIAO","AL","Muito acessível","Terrestre"],["POLO BASE","PB KARAPOTÓ TERRA NOVA",-9.97487,-36.58539,"SAO SEBASTIAO","AL","Muito acessível","Terrestre"],["POLO BASE","PB KARIRI XOKÓ",-10.186,-36.84,"PORTO REAL DO COLEGIO","AL","Muito acessível","Terrestre"],["POLO BASE","PB KARUAZU",-9.220965,-38.024643,"PARICONHA","AL","Muito acessível","Terrestre"],["POLO BASE","PB KATOKINN",-9.2539149784064,-38.0058288574218,"PARICONHA","AL","Muito acessível","Terrestre"],["POLO BASE","PB KOIUPANKÁ",-9.21570705645276,-37.7555680274963,"INHAPI","AL","Acessível","Terrestre"],["POLO BASE","PB TINGUI BOTÓ",-9.9,-36.678,"FEIRA GRANDE","AL","Muito acessível","Terrestre"],["POLO BASE","PB WASSU COCAL",-9.13328334418606,-35.7477951049804,"JOAQUIM GOMES","AL","Muito acessível","Terrestre"],["POLO BASE","PB XOKÓ",-9.897030800702408,-37.26286961238476,"PORTO DA FOLHA","SE","Acessível","Terrestre/Fluvial"],["POLO BASE","PB XUCURU KARIRI",-9.408696,-36.650698,"PALMEIRA DOS INDIOS","AL","Muito acessível","Terrestre"],["SEDE","SEDE DSEI",-9.60197359211841,-35.748154999352536,"MACEIO","AL","Muito acessível",""]],"ALTAMIRA":[["ROTA","ALTAMIRA (ROTA VOLTA GRANDE DO XINGU)",-3.6028265712055565,-51.68184039941289,"SENADOR JOSE PORFIRIO","PA","Remoto",""],["ROTA","ALTAMRIRA VOLTA IRIRI",-4.534233680961165,-54.26069477971007,"ALTAMIRA","PA","Muito acessível",""],["CASAI","CASAI ALTAMIRA",-3.13708802691122,-52.2650527954101,"ALTAMIRA","PA","Muito acessível","Terrestre"],["ROTA","PB ALTAMIRA (ROTA DO BAGAJÁ)",-4.913642364906081,-51.43007496665711,"SENADOR JOSE PORFIRIO","PA","Remoto",""],["SEDE","SEDE DSEI",-3.2069964938696316,-52.22057055931702,"ALTAMIRA","PA","Muito acessível",""]],"ALTO RIO JURUA":[["CASAI","CASAI MANCIO LIMA",-7.62907621196714,-72.8818416595459,"MANCIO LIMA","AC","Muito acessível","Terrestre/Fluvial"],["POLO BASE","PB CRUZEIRO DO SUL",-7.773180556,-72.201275,"CRUZEIRO DO SUL","AC","Muito acessível","Terrestre"],["POLO BASE","PB FEIJÓ",-8.163479073782538,-70.35170424367702,"FEIJO","AC","Remoto","Terrestre"],["POLO BASE","PB JORDÃO",-9.190899690450477,-71.94807250588143,"JORDAO","AC","Remoto","Terrestre/Fluvial"],["POLO BASE","PB MÂNCIO LIMA",-7.607083160184301,-72.90750880401959,"MANCIO LIMA","AC","Muito acessível","Terrestre/Fluvial"],["POLO BASE","PB MARECHARL THAUMATURGO",-8.945787958152682,-72.78808273329692,"MARECHAL THAUMATURGO","AC","Remoto","Terrestre/Fluvial/Aéreo"],["POLO BASE","PB PORTO WALTER",-8.264050093966846,-72.74380445480347,"PORTO WALTER","AC","Remoto","Terrestre/Fluvial/Aéreo"],["POLO BASE","PB TARAUACÁ",-8.161278,-70.766278,"TARAUACA","AC","Remoto","Terrestre/Fluvial"],["SEDE","SEDE DSEI",-7.613159291230691,-72.68326249705089,"CRUZEIRO DO SUL","AC","Muito acessível",""]],"ALTO RIO NEGRO":[["CASAI","CASAI SÃO GABRIEL DA CACHOEIRA",-0.11930457076894,-67.0944446325302,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Terrestre"],["POLO BASE","PB BALAIO",0.388471,-66.649625,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Terrestre"],["POLO BASE","PB CAMARÃO",0.623204,-67.449075,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial"],["POLO BASE","PB CANADÁ",1.208707,-69.015192,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial"],["POLO BASE","PB CARURU - TIQUIÉ",0.274833,-69.928333,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB CARURU - WAUPÉS",0.274833,-69.928333,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB CAUBURIS",-1.174596,-62.510309,"BARCELOS","AM","Muito remoto","Fluvial"],["POLO BASE","PB CUCUÍ",1.188613,-66.838784,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB CUMARÚ",-0.602377,-63.384451,"BARCELOS","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB ILHA DAS FLORES",0.028941,-67.270814,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial"],["POLO BASE","PB ITAPERERA",-0.373542,-66.287972,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial"],["POLO BASE","PB JURUTI",0.626337,-67.248812,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial"],["POLO BASE","PB MARABITANA DO WAUPES",0.433502,-68.83436,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB MASSARABÍ",-0.317395,-65.915991,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB NAZARÉ DO ENUIXÍ",-0.5259630718092625,-65.08026123046875,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB PARI-CACHOEIRA",0.252809,-69.789256,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB SÃO GABRIEL DO PAPURI",0.642913,-69.586285,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB SÃO JOAQUIM",1.702476,-69.38528,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB SÃO JOSÉ II",0.221,-69.6075,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB SERRINHA",-0.48205,-64.828019,"SANTA ISABEL DO RIO NEGRO","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB TAPERA",-0.9656332,-62.9344264,"BARCELOS","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB TARACUÁ",0.129495,-68.542017,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial"],["POLO BASE","PB TUCUMÃ",1.489717,-68.6452,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB TUNUÍ-CACHOEIRA",1.386071,-68.069831,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB VILA NOVA",1.340072,-67.240069,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial"],["POLO BASE","PB YAUARETÊ",0.608455,-69.195496,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto","Fluvial/Aéreo"],["SEDE","SEDE DSEI",-0.13517460686530877,-67.08034522403914,"SAO GABRIEL DA CACHOEIRA","AM","Muito remoto",""]],"ALTO RIO PURUS":[["CASAI","CASAI RIO BRANCO",-10.00508,-67.844343,"RIO BRANCO","AC","Muito acessível","Terrestre"],["POLO BASE","PB ASSIS BRASIL",-10.93755,-69.56661111,"ASSIS BRASIL","AC","Remoto","Terrestre"],["POLO BASE","PB BOCA DO ACRE",-8.775694444,-67.32931667,"BOCA DO ACRE","AM","Remoto","Terrestre"],["POLO BASE","PB EXTREMA",-9.769305556,-66.35729444,"PORTO VELHO","RO","Muito acessível","Terrestre"],["POLO BASE","PB MANOEL URBANO",-8.837527778,-69.26233611,"MANOEL URBANO","AC","Remoto","Terrestre"],["POLO BASE","PB PAUINI",-7.70883,-66.998142,"PAUINI","AM","Remoto","Terrestre/Fluvial/Aéreo"],["POLO BASE","PB SANTA ROSA DO PURUS",-9.443455556,-70.48535,"SANTA ROSA DO PURUS","AC","Remoto","Terrestre/Fluvial/Aéreo"],["POLO BASE","PB SENA MADUREIRA",-9.0665,-68.65514722,"SENA MADUREIRA","AC","Acessível","Terrestre"],["SEDE","SEDE DSEI",-9.972900365221053,-67.82561356792914,"RIO BRANCO","AC","Muito acessível",""]]}
+{
+  "ALAGOAS E SERGIPE": [
+    [
+      "CASAI",
+      "CASAI DSEI AL/SE",
+      -9.62718,
+      -35.73629,
+      "MACEIO",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ACONÃ",
+      -9.971,
+      -37.003,
+      "TRAIPU",
+      "AL",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB JERIPANKÓ",
+      -9.220965,
+      -38.024643,
+      "PARICONHA",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB KALANKÓ",
+      -9.262,
+      -37.938,
+      "AGUA BRANCA",
+      "AL",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB KARAPOTÓ PLAKI-Ô",
+      -10.0097628893109,
+      -36.6232681274414,
+      "SAO SEBASTIAO",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB KARAPOTÓ TERRA NOVA",
+      -9.97487,
+      -36.58539,
+      "SAO SEBASTIAO",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB KARIRI XOKÓ",
+      -10.186,
+      -36.84,
+      "PORTO REAL DO COLEGIO",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB KARUAZU",
+      -9.220965,
+      -38.024643,
+      "PARICONHA",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB KATOKINN",
+      -9.2539149784064,
+      -38.0058288574218,
+      "PARICONHA",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB KOIUPANKÁ",
+      -9.21570705645276,
+      -37.7555680274963,
+      "INHAPI",
+      "AL",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TINGUI BOTÓ",
+      -9.9,
+      -36.678,
+      "FEIRA GRANDE",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB WASSU COCAL",
+      -9.13328334418606,
+      -35.7477951049804,
+      "JOAQUIM GOMES",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB XOKÓ",
+      -9.897030800702408,
+      -37.26286961238476,
+      "PORTO DA FOLHA",
+      "SE",
+      "Acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB XUCURU KARIRI",
+      -9.408696,
+      -36.650698,
+      "PALMEIRA DOS INDIOS",
+      "AL",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -9.60197359211841,
+      -35.748154999352536,
+      "MACEIO",
+      "AL",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "ALTAMIRA": [
+    [
+      "ROTA",
+      "ALTAMIRA (ROTA VOLTA GRANDE DO XINGU)",
+      -3.6028265712055565,
+      -51.68184039941289,
+      "SENADOR JOSE PORFIRIO",
+      "PA",
+      "Remoto",
+      ""
+    ],
+    [
+      "ROTA",
+      "ALTAMRIRA VOLTA IRIRI",
+      -4.534233680961165,
+      -54.26069477971007,
+      "ALTAMIRA",
+      "PA",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "CASAI",
+      "CASAI ALTAMIRA",
+      -3.13708802691122,
+      -52.2650527954101,
+      "ALTAMIRA",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "ROTA",
+      "PB ALTAMIRA (ROTA DO BAGAJÁ)",
+      -4.913642364906081,
+      -51.43007496665711,
+      "SENADOR JOSE PORFIRIO",
+      "PA",
+      "Remoto",
+      ""
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -3.2069964938696316,
+      -52.22057055931702,
+      "ALTAMIRA",
+      "PA",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "ALTO RIO JURUA": [
+    [
+      "CASAI",
+      "CASAI MANCIO LIMA",
+      -7.62907621196714,
+      -72.8818416595459,
+      "MANCIO LIMA",
+      "AC",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CRUZEIRO DO SUL",
+      -7.773180556,
+      -72.201275,
+      "CRUZEIRO DO SUL",
+      "AC",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB FEIJÓ",
+      -8.163479073782538,
+      -70.35170424367702,
+      "FEIJO",
+      "AC",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB JORDÃO",
+      -9.190899690450477,
+      -71.94807250588143,
+      "JORDAO",
+      "AC",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MÂNCIO LIMA",
+      -7.607083160184301,
+      -72.90750880401959,
+      "MANCIO LIMA",
+      "AC",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MARECHARL THAUMATURGO",
+      -8.945787958152682,
+      -72.78808273329692,
+      "MARECHAL THAUMATURGO",
+      "AC",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PORTO WALTER",
+      -8.264050093966846,
+      -72.74380445480347,
+      "PORTO WALTER",
+      "AC",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB TARAUACÁ",
+      -8.161278,
+      -70.766278,
+      "TARAUACA",
+      "AC",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -7.613159291230691,
+      -72.68326249705089,
+      "CRUZEIRO DO SUL",
+      "AC",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "ALTO RIO NEGRO": [
+    [
+      "CASAI",
+      "CASAI SÃO GABRIEL DA CACHOEIRA",
+      -0.11930457076894,
+      -67.0944446325302,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BALAIO",
+      0.388471,
+      -66.649625,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAMARÃO",
+      0.623204,
+      -67.449075,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CANADÁ",
+      1.208707,
+      -69.015192,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CARURU - TIQUIÉ",
+      0.274833,
+      -69.928333,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CARURU - WAUPÉS",
+      0.274833,
+      -69.928333,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CAUBURIS",
+      -1.174596,
+      -62.510309,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CUCUÍ",
+      1.188613,
+      -66.838784,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CUMARÚ",
+      -0.602377,
+      -63.384451,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ILHA DAS FLORES",
+      0.028941,
+      -67.270814,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB ITAPERERA",
+      -0.373542,
+      -66.287972,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB JURUTI",
+      0.626337,
+      -67.248812,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MARABITANA DO WAUPES",
+      0.433502,
+      -68.83436,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MASSARABÍ",
+      -0.317395,
+      -65.915991,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB NAZARÉ DO ENUIXÍ",
+      -0.5259630718092625,
+      -65.08026123046875,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PARI-CACHOEIRA",
+      0.252809,
+      -69.789256,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO GABRIEL DO PAPURI",
+      0.642913,
+      -69.586285,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO JOAQUIM",
+      1.702476,
+      -69.38528,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO JOSÉ II",
+      0.221,
+      -69.6075,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SERRINHA",
+      -0.48205,
+      -64.828019,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB TAPERA",
+      -0.9656332,
+      -62.9344264,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB TARACUÁ",
+      0.129495,
+      -68.542017,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB TUCUMÃ",
+      1.489717,
+      -68.6452,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB TUNUÍ-CACHOEIRA",
+      1.386071,
+      -68.069831,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB VILA NOVA",
+      1.340072,
+      -67.240069,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB YAUARETÊ",
+      0.608455,
+      -69.195496,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -0.13517460686530877,
+      -67.08034522403914,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      ""
+    ]
+  ],
+  "ALTO RIO PURUS": [
+    [
+      "CASAI",
+      "CASAI RIO BRANCO",
+      -10.00508,
+      -67.844343,
+      "RIO BRANCO",
+      "AC",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ASSIS BRASIL",
+      -10.93755,
+      -69.56661111,
+      "ASSIS BRASIL",
+      "AC",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BOCA DO ACRE",
+      -8.775694444,
+      -67.32931667,
+      "BOCA DO ACRE",
+      "AM",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB EXTREMA",
+      -9.769305556,
+      -66.35729444,
+      "PORTO VELHO",
+      "RO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MANOEL URBANO",
+      -8.837527778,
+      -69.26233611,
+      "MANOEL URBANO",
+      "AC",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PAUINI",
+      -7.70883,
+      -66.998142,
+      "PAUINI",
+      "AM",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA ROSA DO PURUS",
+      -9.443455556,
+      -70.48535,
+      "SANTA ROSA DO PURUS",
+      "AC",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SENA MADUREIRA",
+      -9.0665,
+      -68.65514722,
+      "SENA MADUREIRA",
+      "AC",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -9.972900365221053,
+      -67.82561356792914,
+      "RIO BRANCO",
+      "AC",
+      "Muito acessível",
+      ""
+    ]
+  ]
+}

@@ -1,1 +1,992 @@
-{"MARANHAO":[["CASAI","CASAI IMPERATRIZ",-5.53574,-47.47763,"IMPERATRIZ","MA","Muito acessível","Terrestre"],["CASAI","CASAI SÃO LUÍS",-2.485134,-44.226353,"SAO LUIS","MA","Muito acessível","Terrestre"],["CASAI","CASAI TERESINA",-5.0695446,-42.7868174,"TERESINA","PI","Muito acessível","Terrestre"],["POLO BASE","PB AMARANTE",-5.566135,-46.743112,"AMARANTE DO MARANHAO","MA","Acessível","Terrestre"],["POLO BASE","PB ARAME",-4.884560738,-46.00669225,"ARAME","MA","Remoto","Terrestre"],["POLO BASE","PB BARRA DO CORDA",-5.509477036,-45.24672339,"BARRA DO CORDA","MA","Acessível","Terrestre"],["POLO BASE","PB GRAJAÚ",-5.818644343,-46.14200698,"GRAJAU","MA","Acessível","Terrestre"],["POLO BASE","PB SANTA INÊS",-3.65853,-45.38107,"SANTA INES","MA","Muito acessível","Terrestre/Fluvial"],["POLO BASE","PB ZÉ DOCA",-3.273201008,-45.65743336,"ZE DOCA","MA","Muito acessível","Terrestre"],["SEDE","SEDE DSEI",-2.734,-44.1075,"SAO LUIS","MA","Muito acessível","Terrestre"]],"MATO GROSSO DO SUL":[["CASAI","CASAI AMAMBAI",-23.104266339863,-55.23339764907566,"AMAMBAI","MS","Acessível","Terrestre"],["CASAI","CASAI CAMPO GRANDE",-20.485493,-54.6418881,"CAMPO GRANDE","MS","Muito acessível","Terrestre"],["CASAI","CASAI DOURADOS",-22.2134238,-54.8011152,"DOURADOS","MS","Muito acessível","Terrestre"],["POLO BASE","PB AMAMBAI",-23.104379534717,-55.23349096874243,"AMAMBAI","MS","Acessível","Terrestre"],["POLO BASE","PB ANTÔNIO JOÃO",-22.19405556,-55.94291667,"ANTONIO JOAO","MS","Acessível","Terrestre"],["POLO BASE","PB AQUIDAUANA",-20.47653333,-55.79712222,"AQUIDAUANA","MS","Acessível","Terrestre"],["POLO BASE","PB BODOQUENA",-20.54929444,-56.67371111,"BODOQUENA","MS","Remoto","Terrestre"],["POLO BASE","PB BONITO",-21.12757222,-56.49268056,"BONITO","MS","Remoto","Terrestre"],["POLO BASE","PB BRASILÂNDIA",-21.24852222,-52.13355278,"BRASILANDIA","MS","Acessível","Terrestre"],["POLO BASE","PB CAARAPÓ",-22.62929444,-54.82706111,"CAARAPO","MS","Muito acessível","Terrestre"],["POLO BASE","PB CORUMBÁ",-19.00311667,-57.64822778,"CORUMBA","MS","Muito acessível","Terrestre"],["POLO BASE","PB DOURADOS",-22.22041667,-54.82494444,"DOURADOS","MS","Muito acessível","Terrestre"],["POLO BASE","PB JAPORÃ",-23.77148056,-54.59544167,"JAPORA","MS","Acessível","Terrestre"],["POLO BASE","PB MIRANDA",-20.23750278,-56.38675278,"MIRANDA","MS","Remoto","Terrestre"],["POLO BASE","PB PARANHOS",-23.888125,-55.42906389,"PARANHOS","MS","Remoto","Terrestre"],["POLO BASE","PB SAMUI DOURADOS",-22.1962535971281,-54.7875210292295,"DOURADOS","MS","Muito acessível","Terrestre"],["POLO BASE","PB SIDROLÂNDIA",-20.93269167,-54.96178611,"SIDROLANDIA","MS","Muito acessível","Terrestre"],["POLO BASE","PB TACURU",-23.64082222,-55.02179444,"CAMPO GRANDE","MS","Muito acessível","Terrestre"],["SEDE","SEDE DSEI",-20.4841594,-54.6421798,"DOURADOS","MS","Muito acessível",""]],"MEDIO RIO PURUS":[["CASAI","CASAI LÁBREA",-7.27009878597126,-64.7866559028625,"LABREA","AM","Remoto","Fluvial"],["CASAI","CASAI TAPAUA",-5.6256114242485,-63.1892963857958,"TAPAUA","AM","Muito remoto","Fluvial"],["POLO BASE","PB ABAQUADI/PAJÉ SAWÊ",-5.895716667,-64.64216667,"TAPAUA","AM","Muito remoto","Fluvial"],["POLO BASE","PB CASA NOVA",-7.3055,-65.2605,"LABREA","AM","Remoto","Fluvial"],["POLO BASE","PB CHICO CAMILO",-7.279063889,-64.79751667,"LABREA","AM","Remoto","Fluvial"],["POLO BASE","PB CRISPIM",-7.511380556,-65.26513056,"LABREA","AM","Remoto","Fluvial"],["POLO BASE","PB FUNAI/MPI",-7.25947,-64.7977,"LABREA","AM","Remoto","Terrestre/Fluvial"],["POLO BASE","PB IMINAÃ",-7.326627778,-64.93121111,"LABREA","AM","Remoto","Fluvial"],["POLO BASE","PB JAPIIM",-7.691330556,-64.65723056,"LABREA","AM","Remoto","Terrestre/Fluvial"],["POLO BASE","PB MARRECÃO/SURUWAHÁ SESAI",-6.810694444,-66.93311389,"ITAMARATI","AM","Remoto","Fluvial"],["POLO BASE","PB SÃO FRANCISCO",-7.26095,-65.36055556,"LABREA","AM","Remoto","Terrestre/Fluvial"],["POLO BASE","PB SÃO PEDRO",-7.917119444,-65.73713611,"LABREA","AM","Remoto","Fluvial"],["POLO BASE","PB TAWAMIRIM",-5.89697480803206,-64.6415664798626,"TAPAUA","AM","Muito remoto","Terrestre/Fluvial"],["POLO BASE","PB TUMIÃ",-7.653369444,-65.90955833,"LABREA","AM","Remoto","Fluvial"],["SEDE","SEDE DSEI",-7.26209438007533,-64.8007065565003,"LABREA","AM","Remoto",""],["UNIDADE DE LOTAÇÃO","UN FUNAI/MPI",-7.2595250820418595,-64.79763467226603,"LABREA","AM","Remoto",""],["UNIDADE DE LOTAÇÃO","UN SURUWAHA/SESAI/DSEIPRP",-6.9522040013241035,-66.31453725659746,"TAPAUA","AM","Muito remoto",""]],"MEDIO RIO SOLIMOES E AFLUENTES":[["CASAI","CASAI EIRUNEPÉ",-6.660597,-69.867774,"EIRUNEPE","AM","Muito remoto","Aéreo"],["CASAI","CASAI TEFÉ",-3.364958,-64.718544,"TEFE","AM","Muito acessível","Terrestre"],["POLO BASE","PB BARREIRA DA MISSÃO",-3.396611111,-64.63169444,"TEFE","AM","Muito acessível","Terrestre/Fluvial"],["POLO BASE","PB BIÁ",-3.8909,-67.51329722,"JUTAI","AM","Muito remoto","Fluvial"],["POLO BASE","PB BUÁ-BUÁ",-1.72005,-66.88786667,"JAPURA","AM","Muito remoto","Fluvial"],["POLO BASE","PB BUGAIO",-2.821636111,-66.89895,"JUTAI","AM","Muito remoto","Fluvial"],["POLO BASE","PB CARAUARI",-4.933527778,-66.92902778,"CARAUARI","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB COARI",-4.0833,-63.142875,"COARI","AM","Muito remoto","Fluvial/Aéreo"],["POLO BASE","PB CUIÚ-CUIÚ",-2.345361111,-65.13016667,"MARAA","AM","Muito remoto","Fluvial"],["POLO BASE","PB EIRUNEPÉ",-6.650722222,-69.56247222,"EIRUNEPE","AM","Muito remoto","Aéreo"],["POLO BASE","PB ENVIRA",-7.690277778,-70.61747222,"ENVIRA","AM","Muito remoto","Aéreo"],["POLO BASE","PB IPIXUNA",-7.053137,-71.69384,"IPIXUNA","AM","Muito remoto","Aéreo"],["POLO BASE","PB KUMARÚ",-2.916991667,-65.80511111,"JURUA","AM","Muito remoto","Fluvial"],["POLO BASE","PB MARAJAÍ",-7.689144444,-70.62026389,"ALVARAES","AM","Acessível","Fluvial"],["POLO BASE","PB MORADA NOVA",-3.178502778,-64.82821389,"ALVARAES","AM","Acessível","Fluvial/Aéreo"],["POLO BASE","PB MUCURA",-6.354972222,-67.87460833,"ITAMARATI","AM","Remoto","Fluvial"],["POLO BASE","PB UARINI",-2.896972222,-65.155,"UARINI","AM","Muito remoto","Fluvial"],["SEDE","SEDE DSEI",-3.34748637958214,-64.7086036205292,"TEFE","AM","Muito acessível",""]],"MINAS GERAIS E ESPIRITO SANTO":[["CASAI","CASAI BELO HORIZONTE",-19.9366450210165,-43.9518396621028,"BELO HORIZONTE","MG","Muito acessível","Terrestre"],["CASAI","CASAI GOVERNADOR VALADARES",-18.883034,-41.991902,"GOVERNADOR VALADARES","MG","Muito acessível","Terrestre"],["CASAI","CASAI MONTES CLAROS",-16.724071,-43.871062,"MONTES CLAROS","MG","Muito acessível","Terrestre"],["POLO BASE","PB ÁGUA BOA",-18.86863889,-41.94441667,"SANTA HELENA DE MINAS","MG","Acessível","Fluvial/Aéreo"],["POLO BASE","PB ARAÇUAÍ",-16.84586111,-42.06436111,"ARAÇUAI","MG","Acessível","Terrestre"],["POLO BASE","PB BARREIRO",-14.8763888888889,-44.2763888888889,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB BELA VISTA",-21.94258333,-46.33505556,"CALDAS","MG","Muito acessível","Terrestre"],["POLO BASE","PB BOA ESPERANÇA",-19.9469646,-40.1562368,"ARACRUZ","ES","Muito acessível","Terrestre"],["POLO BASE","PB BREJO MATA FOME",-14.840816646917368,-44.2064463987742,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB CAIEIRAS VELHA",-19.92402778,-40.17147222,"ARACRUZ","ES","Muito acessível","Terrestre"],["POLO BASE","PB CAMPANÁRIO",-18.22511111,-41.67280556,"CAMPANARIO","MG","Muito acessível","Terrestre"],["POLO BASE","PB CAPÃO DO ZEZINHO",-19.34136111,-45.07233333,"MARTINHO CAMPOS","MG","Muito acessível","Terrestre/Fluvial"],["POLO BASE","PB CARMÉSIA",-19.04341667,-43.11844444,"CARMESIA","MG","Muito acessível","Terrestre"],["POLO BASE","PB COMBOIOS",-19.74496667,-40.00923333,"ARACRUZ","ES","Muito acessível","Terrestre/Fluvial"],["POLO BASE","PB IRAJÁ",-19.9046586,-40.2210009,"ARACRUZ","ES","Muito acessível","Terrestre"],["POLO BASE","PB ITAPECERICA",-20.46902778,-45.04291667,"ITAPECERICA","MG","Muito acessível","Terrestre"],["POLO BASE","PB ITAPICURU",-14.79058333,-44.24502778,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB LADAINHA",-17.65002778,-41.66725,"LADAINHA","MG","Muito acessível","Terrestre"],["POLO BASE","PB MACHACALIS",-17.07813889,-40.71663889,"MACHACALIS","MG","Acessível","Fluvial/Aéreo"],["POLO BASE","PB PAU BRASIL",-15.4639239126568,-39.652879830667,"ARACRUZ","ES","Muito acessível","Terrestre"],["POLO BASE","PB PINDAÍBA",-14.87979,-44.36389,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB PRADINHO",-16.87676668811006,-40.60460537396967,"BERTOPOLIS","MG","Acessível","Terrestre"],["POLO BASE","PB PRATA",-14.880610066097345,-44.16397034750513,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB RANCHARIA",-14.94635833,-44.06706667,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB RESPLENDOR",-19.22618056,-41.31959722,"RESPLENDOR","MG","Acessível","Fluvial/Aéreo"],["POLO BASE","PB SANTA CRUZ",-14.851089604822164,-44.228920291679856,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB SÃO JOÃO DAS MISSÕES",-14.883642,-44.081474,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB SUMARÉ",-14.89915,-44.26831667,"SAO JOAO DAS MISSOES","MG","Remoto","Terrestre"],["POLO BASE","PB SUMARÉ III",-14.883649346726113,-44.09105408226041,"TEOFILO OTONI","MG","Muito acessível","Terrestre"],["POLO BASE","PB TEÓFILO OTONI",-17.8711388,-41.5127239,"TEOFILO OTONI","MG","Muito acessível","Terrestre"],["POLO BASE","PB TOPÁZIO",-17.649324558815323,-41.38749985408807,"TEOFILO OTONI","MG","Muito acessível","Terrestre"],["POLO BASE","PB VÁRZEA GRANDE",-15.102641,-44.093185,"ITACARAMBI","MG","Remoto","Terrestre"],["SEDE","SEDE DSEI",-18.8701485480371,-41.9458866119385,"GOVERNADOR VALADARES","MG","Muito acessível",""],["POLO BASE","UN ARACRUZ (SEDE)",-19.924546272057274,-40.171384123379326,"ARACRUZ","ES","Muito acessível","Terrestre"]]}
+{
+  "MARANHAO": [
+    [
+      "CASAI",
+      "CASAI IMPERATRIZ",
+      -5.53574,
+      -47.47763,
+      "IMPERATRIZ",
+      "MA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI SÃO LUÍS",
+      -2.485134,
+      -44.226353,
+      "SAO LUIS",
+      "MA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI TERESINA",
+      -5.0695446,
+      -42.7868174,
+      "TERESINA",
+      "PI",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB AMARANTE",
+      -5.566135,
+      -46.743112,
+      "AMARANTE DO MARANHAO",
+      "MA",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ARAME",
+      -4.884560738,
+      -46.00669225,
+      "ARAME",
+      "MA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BARRA DO CORDA",
+      -5.509477036,
+      -45.24672339,
+      "BARRA DO CORDA",
+      "MA",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB GRAJAÚ",
+      -5.818644343,
+      -46.14200698,
+      "GRAJAU",
+      "MA",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA INÊS",
+      -3.65853,
+      -45.38107,
+      "SANTA INES",
+      "MA",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB ZÉ DOCA",
+      -3.273201008,
+      -45.65743336,
+      "ZE DOCA",
+      "MA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -2.734,
+      -44.1075,
+      "SAO LUIS",
+      "MA",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "MATO GROSSO DO SUL": [
+    [
+      "CASAI",
+      "CASAI AMAMBAI",
+      -23.104266339863,
+      -55.23339764907566,
+      "AMAMBAI",
+      "MS",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI CAMPO GRANDE",
+      -20.485493,
+      -54.6418881,
+      "CAMPO GRANDE",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI DOURADOS",
+      -22.2134238,
+      -54.8011152,
+      "DOURADOS",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB AMAMBAI",
+      -23.104379534717,
+      -55.23349096874243,
+      "AMAMBAI",
+      "MS",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ANTÔNIO JOÃO",
+      -22.19405556,
+      -55.94291667,
+      "ANTONIO JOAO",
+      "MS",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB AQUIDAUANA",
+      -20.47653333,
+      -55.79712222,
+      "AQUIDAUANA",
+      "MS",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BODOQUENA",
+      -20.54929444,
+      -56.67371111,
+      "BODOQUENA",
+      "MS",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BONITO",
+      -21.12757222,
+      -56.49268056,
+      "BONITO",
+      "MS",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BRASILÂNDIA",
+      -21.24852222,
+      -52.13355278,
+      "BRASILANDIA",
+      "MS",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAARAPÓ",
+      -22.62929444,
+      -54.82706111,
+      "CAARAPO",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CORUMBÁ",
+      -19.00311667,
+      -57.64822778,
+      "CORUMBA",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB DOURADOS",
+      -22.22041667,
+      -54.82494444,
+      "DOURADOS",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB JAPORÃ",
+      -23.77148056,
+      -54.59544167,
+      "JAPORA",
+      "MS",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MIRANDA",
+      -20.23750278,
+      -56.38675278,
+      "MIRANDA",
+      "MS",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PARANHOS",
+      -23.888125,
+      -55.42906389,
+      "PARANHOS",
+      "MS",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SAMUI DOURADOS",
+      -22.1962535971281,
+      -54.7875210292295,
+      "DOURADOS",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SIDROLÂNDIA",
+      -20.93269167,
+      -54.96178611,
+      "SIDROLANDIA",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TACURU",
+      -23.64082222,
+      -55.02179444,
+      "CAMPO GRANDE",
+      "MS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -20.4841594,
+      -54.6421798,
+      "DOURADOS",
+      "MS",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "MEDIO RIO PURUS": [
+    [
+      "CASAI",
+      "CASAI LÁBREA",
+      -7.27009878597126,
+      -64.7866559028625,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "CASAI",
+      "CASAI TAPAUA",
+      -5.6256114242485,
+      -63.1892963857958,
+      "TAPAUA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB ABAQUADI/PAJÉ SAWÊ",
+      -5.895716667,
+      -64.64216667,
+      "TAPAUA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CASA NOVA",
+      -7.3055,
+      -65.2605,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CHICO CAMILO",
+      -7.279063889,
+      -64.79751667,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CRISPIM",
+      -7.511380556,
+      -65.26513056,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB FUNAI/MPI",
+      -7.25947,
+      -64.7977,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB IMINAÃ",
+      -7.326627778,
+      -64.93121111,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB JAPIIM",
+      -7.691330556,
+      -64.65723056,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MARRECÃO/SURUWAHÁ SESAI",
+      -6.810694444,
+      -66.93311389,
+      "ITAMARATI",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO FRANCISCO",
+      -7.26095,
+      -65.36055556,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO PEDRO",
+      -7.917119444,
+      -65.73713611,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB TAWAMIRIM",
+      -5.89697480803206,
+      -64.6415664798626,
+      "TAPAUA",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB TUMIÃ",
+      -7.653369444,
+      -65.90955833,
+      "LABREA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -7.26209438007533,
+      -64.8007065565003,
+      "LABREA",
+      "AM",
+      "Remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN FUNAI/MPI",
+      -7.2595250820418595,
+      -64.79763467226603,
+      "LABREA",
+      "AM",
+      "Remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN SURUWAHA/SESAI/DSEIPRP",
+      -6.9522040013241035,
+      -66.31453725659746,
+      "TAPAUA",
+      "AM",
+      "Muito remoto",
+      ""
+    ]
+  ],
+  "MEDIO RIO SOLIMOES E AFLUENTES": [
+    [
+      "CASAI",
+      "CASAI EIRUNEPÉ",
+      -6.660597,
+      -69.867774,
+      "EIRUNEPE",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "CASAI",
+      "CASAI TEFÉ",
+      -3.364958,
+      -64.718544,
+      "TEFE",
+      "AM",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BARREIRA DA MISSÃO",
+      -3.396611111,
+      -64.63169444,
+      "TEFE",
+      "AM",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BIÁ",
+      -3.8909,
+      -67.51329722,
+      "JUTAI",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BUÁ-BUÁ",
+      -1.72005,
+      -66.88786667,
+      "JAPURA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BUGAIO",
+      -2.821636111,
+      -66.89895,
+      "JUTAI",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CARAUARI",
+      -4.933527778,
+      -66.92902778,
+      "CARAUARI",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB COARI",
+      -4.0833,
+      -63.142875,
+      "COARI",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CUIÚ-CUIÚ",
+      -2.345361111,
+      -65.13016667,
+      "MARAA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB EIRUNEPÉ",
+      -6.650722222,
+      -69.56247222,
+      "EIRUNEPE",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ENVIRA",
+      -7.690277778,
+      -70.61747222,
+      "ENVIRA",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB IPIXUNA",
+      -7.053137,
+      -71.69384,
+      "IPIXUNA",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB KUMARÚ",
+      -2.916991667,
+      -65.80511111,
+      "JURUA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MARAJAÍ",
+      -7.689144444,
+      -70.62026389,
+      "ALVARAES",
+      "AM",
+      "Acessível",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MORADA NOVA",
+      -3.178502778,
+      -64.82821389,
+      "ALVARAES",
+      "AM",
+      "Acessível",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MUCURA",
+      -6.354972222,
+      -67.87460833,
+      "ITAMARATI",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB UARINI",
+      -2.896972222,
+      -65.155,
+      "UARINI",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -3.34748637958214,
+      -64.7086036205292,
+      "TEFE",
+      "AM",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "MINAS GERAIS E ESPIRITO SANTO": [
+    [
+      "CASAI",
+      "CASAI BELO HORIZONTE",
+      -19.9366450210165,
+      -43.9518396621028,
+      "BELO HORIZONTE",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI GOVERNADOR VALADARES",
+      -18.883034,
+      -41.991902,
+      "GOVERNADOR VALADARES",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI MONTES CLAROS",
+      -16.724071,
+      -43.871062,
+      "MONTES CLAROS",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ÁGUA BOA",
+      -18.86863889,
+      -41.94441667,
+      "SANTA HELENA DE MINAS",
+      "MG",
+      "Acessível",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ARAÇUAÍ",
+      -16.84586111,
+      -42.06436111,
+      "ARAÇUAI",
+      "MG",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BARREIRO",
+      -14.8763888888889,
+      -44.2763888888889,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BELA VISTA",
+      -21.94258333,
+      -46.33505556,
+      "CALDAS",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BOA ESPERANÇA",
+      -19.9469646,
+      -40.1562368,
+      "ARACRUZ",
+      "ES",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BREJO MATA FOME",
+      -14.840816646917368,
+      -44.2064463987742,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAIEIRAS VELHA",
+      -19.92402778,
+      -40.17147222,
+      "ARACRUZ",
+      "ES",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAMPANÁRIO",
+      -18.22511111,
+      -41.67280556,
+      "CAMPANARIO",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAPÃO DO ZEZINHO",
+      -19.34136111,
+      -45.07233333,
+      "MARTINHO CAMPOS",
+      "MG",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CARMÉSIA",
+      -19.04341667,
+      -43.11844444,
+      "CARMESIA",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB COMBOIOS",
+      -19.74496667,
+      -40.00923333,
+      "ARACRUZ",
+      "ES",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB IRAJÁ",
+      -19.9046586,
+      -40.2210009,
+      "ARACRUZ",
+      "ES",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ITAPECERICA",
+      -20.46902778,
+      -45.04291667,
+      "ITAPECERICA",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ITAPICURU",
+      -14.79058333,
+      -44.24502778,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB LADAINHA",
+      -17.65002778,
+      -41.66725,
+      "LADAINHA",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MACHACALIS",
+      -17.07813889,
+      -40.71663889,
+      "MACHACALIS",
+      "MG",
+      "Acessível",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PAU BRASIL",
+      -15.4639239126568,
+      -39.652879830667,
+      "ARACRUZ",
+      "ES",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PINDAÍBA",
+      -14.87979,
+      -44.36389,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PRADINHO",
+      -16.87676668811006,
+      -40.60460537396967,
+      "BERTOPOLIS",
+      "MG",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PRATA",
+      -14.880610066097345,
+      -44.16397034750513,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB RANCHARIA",
+      -14.94635833,
+      -44.06706667,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB RESPLENDOR",
+      -19.22618056,
+      -41.31959722,
+      "RESPLENDOR",
+      "MG",
+      "Acessível",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA CRUZ",
+      -14.851089604822164,
+      -44.228920291679856,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO JOÃO DAS MISSÕES",
+      -14.883642,
+      -44.081474,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SUMARÉ",
+      -14.89915,
+      -44.26831667,
+      "SAO JOAO DAS MISSOES",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SUMARÉ III",
+      -14.883649346726113,
+      -44.09105408226041,
+      "TEOFILO OTONI",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TEÓFILO OTONI",
+      -17.8711388,
+      -41.5127239,
+      "TEOFILO OTONI",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TOPÁZIO",
+      -17.649324558815323,
+      -41.38749985408807,
+      "TEOFILO OTONI",
+      "MG",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB VÁRZEA GRANDE",
+      -15.102641,
+      -44.093185,
+      "ITACARAMBI",
+      "MG",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -18.8701485480371,
+      -41.9458866119385,
+      "GOVERNADOR VALADARES",
+      "MG",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "POLO BASE",
+      "UN ARACRUZ (SEDE)",
+      -19.924546272057274,
+      -40.171384123379326,
+      "ARACRUZ",
+      "ES",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ]
+}
