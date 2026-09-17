@@ -89,6 +89,24 @@ const INSTITUTIONAL_FACTS = Object.freeze([
   "O Censo 2022 do IBGE registrou quase 1,7 milhão de pessoas indígenas no Brasil, equivalentes a 0,83% da população do país naquele levantamento; dados censitários devem ser apresentados com a referência temporal de 2022.",
 ]);
 
+// Glossário da própria interface do MONITORA. Descreve o que a tela mostra,
+// sem afirmar regra de negócio que não esteja visível no sistema.
+const MONITORA_GLOSSARY = Object.freeze([
+  "MONITORA é o nome do sistema de monitoramento da AgSUS. O nome não é uma sigla e não deve ser expandido em palavras.",
+  "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. Não use nenhum outro nome para essa sigla.",
+  "A AgSUS assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI. É por isso que o MONITORA acompanha vagas, contratações e ociosidade por território.",
+  "SESAI é a Secretaria Especial de Saúde Indígena, do Ministério da Saúde, criada em 2010. Não é secretaria estadual nem agência reguladora.",
+  "SIASI é o Sistema de Informação da Atenção à Saúde Indígena, do Ministério da Saúde, gerido pela SESAI, e reúne dados dos 34 DSEIs. O SIASI não pertence à ANS nem a qualquer agência reguladora.",
+  "SasiSUS é o Subsistema de Atenção à Saúde Indígena, gerido pela SESAI. Não confunda SasiSUS com SIASI: o primeiro é o subsistema de atenção, o segundo é o sistema de informação.",
+  "No MONITORA, cada linha de acompanhamento traz três colunas numéricas lado a lado: Vagas, Contratados e Ociosas.",
+  "Vagas é o total de vagas previstas na linha; Contratados é quanto desse total já foi preenchido por contratação; Ociosas é a parcela das vagas que permanece sem contratação.",
+  "A taxa de ociosidade exibida pelo MONITORA é calculada como Ociosas dividido por Vagas, apresentada em porcentagem.",
+  "O MONITORA destaca Contratados em verde e Ociosas em vermelho, porque ociosidade alta indica vaga prevista que ainda não virou contratação.",
+  "O mapa de calor do MONITORA colore os territórios pelo percentual de vagas ociosas.",
+  "Edital, no MONITORA, é o instrumento ao qual as vagas estão vinculadas; cada linha registra o edital, as datas de início e fim, a situação e a etapa.",
+  "O MONITORA organiza esses números por território, permitindo comparar DSEIs pelo total de vagas, contratações e ociosidade.",
+]);
+
 function normalizeText(value) {
   return String(value || "")
     .normalize("NFD")
@@ -117,6 +135,37 @@ export function curatedAnswerForQuestion(question) {
       normalized,
     );
   const asksKariri = /\bkariri[\s-]?xoco\b/i.test(normalized);
+
+  // Termos da própria interface: respondidos sem passar pelo modelo, porque
+  // um modelo pequeno tende a deduzi-los pelo sentido comum da palavra.
+  const defineTerm =
+    /\b(?:o que (?:e|significa|sao)|que (?:e|significa)|defina|definicao de|significado de)\b/.test(
+      normalized,
+    );
+  const asksAcronym = /\bsigla\b/.test(normalized);
+  if ((defineTerm || asksAcronym) && /\bmonitora\b/.test(normalized)) {
+    return "MONITORA é o nome do sistema de monitoramento da AgSUS. Não é uma sigla: o nome não se abre em palavras. Ele acompanha, por território, as vagas previstas, as contratações realizadas e as vagas que permanecem ociosas.";
+  }
+  if (defineTerm || asksAcronym) {
+    if (/\bagsus\b/.test(normalized)) {
+      return "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. Ela assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI, e é por isso que o MONITORA acompanha vagas, contratações e ociosidade por território.";
+    }
+    if (/\bsesai\b/.test(normalized)) {
+      return "SESAI é a Secretaria Especial de Saúde Indígena, do Ministério da Saúde, criada em 2010. Ela coordena, supervisiona, monitora e avalia as ações de atenção integral à saúde indígena no SasiSUS, o Subsistema de Atenção à Saúde Indígena.";
+    }
+    if (/\bsiasi\b/.test(normalized)) {
+      return "SIASI é o Sistema de Informação da Atenção à Saúde Indígena, do Ministério da Saúde, gerido pela SESAI, e reúne dados dos 34 DSEIs. Não confunda com o SasiSUS, que é o Subsistema de Atenção à Saúde Indígena: o SIASI é o sistema de informação, o SasiSUS é o subsistema de atenção.";
+    }
+  }
+  if (defineTerm && /\bocios[ao]s?\b/.test(normalized)) {
+    return "No MONITORA, vaga ociosa é a parcela das vagas previstas que permanece sem contratação. Cada linha de acompanhamento mostra três números lado a lado: Vagas (o total previsto), Contratados (quanto já foi preenchido) e Ociosas (o que sobrou sem contratação). A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e é ela que colore o mapa de calor por território.";
+  }
+  if (defineTerm && /\bcontratad[ao]s?\b/.test(normalized)) {
+    return "No MONITORA, Contratados é a quantidade de vagas de uma linha que já foi preenchida por contratação. Ela aparece entre Vagas, que é o total previsto, e Ociosas, que é o que permanece sem contratação.";
+  }
+  if (defineTerm && /\btaxa de ociosidade|ociosidade\b/.test(normalized)) {
+    return "A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. É esse percentual que define a cor de cada território no mapa de calor.";
+  }
 
   if (!isAlSe && !asksKariri) return "";
 
@@ -220,7 +269,9 @@ export function buildAyaSystemPrompt({
   context = {},
 } = {}) {
   const safeContext = sanitizeAyaContext(context);
-  const facts = INSTITUTIONAL_FACTS.map((fact) => `- ${fact}`).join("\n");
+  const facts = [...INSTITUTIONAL_FACTS, ...MONITORA_GLOSSARY]
+    .map((fact) => `- ${fact}`)
+    .join("\n");
   const pageContext = formatAyaPageContext(section, title);
   const curatedFacts = curatedKnowledgeForQuestion(question);
   const curated = listOrEmpty(
@@ -278,6 +329,9 @@ PRIORIDADE DO CONTEXTO DA TELA
 
 REGRAS DE CONFIABILIDADE
 - Nunca invente aldeias, Terras Indígenas, limites territoriais, situação demarcatória, editais, regras de edital, números, candidatos ou registros.
+- Nunca invente siglas, nomes de sistemas, painéis ou programas. Use apenas as siglas que aparecem nesta base institucional ou no contexto da tela. Se não souber o nome de um sistema, escreva o nome por extenso ou omita, em vez de criar uma sigla.
+- Ao definir um termo do MONITORA, use exatamente a definição do glossário desta base. Se o termo perguntado não estiver no glossário nem no contexto da tela, diga que não tem essa definição registrada, em vez de deduzir pelo significado comum da palavra.
+- Não se contradiga dentro da mesma resposta: se afirmar que um dado não está disponível, não descreva esse mesmo dado em seguida.
 - Use o CONHECIMENTO CURADO ESPECÍFICO quando ele contiver a resposta e mantenha o ano/base temporal informado.
 - Diferencie claramente dado do MONITORA, conhecimento institucional e dado histórico.
 - Se a pergunta exigir uma lista completa ou um dado atual que não esteja no contexto nem no conhecimento curado, diga exatamente qual dado não está disponível e indique a fonte oficial adequada.
