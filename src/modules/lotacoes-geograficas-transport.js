@@ -60,22 +60,50 @@ function compatibleRow(record, row, listKind) {
   return candidate !== "polo" && candidate !== "casai";
 }
 
+function nearestUniqueCandidate(candidates, record, maxDistanceKm = 5) {
+  const byDistance = candidates
+    .map((row) => ({
+      row,
+      km: distanciaKm(
+        Number(record.lat),
+        Number(record.lon),
+        Number(row?.[2]),
+        Number(row?.[3]),
+      ),
+    }))
+    .filter((item) => Number.isFinite(item.km))
+    .sort((a, b) => a.km - b.km);
+
+  if (!byDistance.length || byDistance[0].km > maxDistanceKm) return null;
+  if (byDistance.length > 1 && byDistance[1].km - byDistance[0].km < 1)
+    return null;
+  return byDistance[0].row;
+}
+
 function findNetworkMatch(list, record, listKind = "u") {
   const canonical = nomeCanonico(record.name);
   if (!canonicoUtilizavel(canonical)) return null;
 
-  let candidates = list.filter(
-    (row) =>
-      nomeCanonico(row?.[0]) === canonical &&
-      compatibleRow(record, row, listKind),
+  const compatible = list.filter((row) => compatibleRow(record, row, listKind));
+  let candidates = compatible.filter(
+    (row) => nomeCanonico(row?.[0]) === canonical,
   );
+  const municipality = normalizePlace(record.municipality);
+
+  if (!candidates.length && municipality) {
+    const sameMunicipality = compatible.filter(
+      (row) => normalizePlace(row?.[4]) === municipality,
+    );
+    const spatial = nearestUniqueCandidate(sameMunicipality, record);
+    if (spatial) return spatial;
+  }
+
   if (!candidates.length) return null;
 
   const withCnes = candidates.filter((row) => String(row?.[1] || "").trim());
   if (withCnes.length === 1) return withCnes[0];
   if (withCnes.length > 1) candidates = withCnes;
 
-  const municipality = normalizePlace(record.municipality);
   if (municipality) {
     const sameMunicipality = candidates.filter(
       (row) => normalizePlace(row?.[4]) === municipality,
@@ -85,24 +113,7 @@ function findNetworkMatch(list, record, listKind = "u") {
   }
 
   if (candidates.length === 1) return candidates[0];
-
-  const byDistance = candidates
-    .map((row) => ({
-      row,
-      km: distanciaKm(
-        record.lat,
-        record.lon,
-        Number(row?.[2]),
-        Number(row?.[3]),
-      ),
-    }))
-    .filter((item) => Number.isFinite(item.km))
-    .sort((a, b) => a.km - b.km);
-
-  if (!byDistance.length || byDistance[0].km > 5) return null;
-  if (byDistance.length > 1 && byDistance[1].km - byDistance[0].km < 1)
-    return null;
-  return byDistance[0].row;
+  return nearestUniqueCandidate(candidates, record);
 }
 
 function annotateNetworkRecord(existing, record) {
@@ -114,9 +125,6 @@ function annotateNetworkRecord(existing, record) {
     ? distanciaKm(cnesLat, cnesLon, record.lat, record.lon)
     : null;
 
-  // CNES identifica o estabelecimento e, quando traz coordenadas, continua sendo
-  // a coordenada exibida. A planilha entra como segunda fonte para comparação,
-  // meio de acesso e acessibilidade, sem deslocar silenciosamente o CNES.
   if (!hasCnesCoord) {
     existing[2] = record.lat;
     existing[3] = record.lon;
@@ -317,8 +325,6 @@ export function applyLotacoesGeograficas(rows, dataset) {
         polo.coord_oficial = true;
         polo.coord_fonte = SOURCE;
 
-        // Polo já existe no lmap. A rede CNES serve para identificar e conferir
-        // a localização; nunca criamos uma segunda cópia do mesmo polo em u[].
         const networkRow = findNetworkMatch(network.u, record, "u");
         if (networkRow) {
           annotateNetworkRecord(networkRow, record);
@@ -332,9 +338,6 @@ export function applyLotacoesGeograficas(rows, dataset) {
         return;
       }
 
-      // Rotas são apoio operacional, não estabelecimentos CNES. Não entram como
-      // uma UBSI fictícia no mapa. Unidades de lotação entram apenas se não há
-      // um estabelecimento CNES canonicamente correspondente.
       mergeNetworkRecord(network.u, record, "u");
     });
 
