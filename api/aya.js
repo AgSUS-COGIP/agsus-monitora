@@ -128,7 +128,12 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content: buildAyaSystemPrompt({ section, title, question, context }),
+            content: buildAyaSystemPrompt({
+              section,
+              title,
+              question,
+              context,
+            }),
           },
           ...history,
           { role: "user", content: question },

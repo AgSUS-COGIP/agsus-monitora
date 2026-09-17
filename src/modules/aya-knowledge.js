@@ -153,7 +153,9 @@ export function officialSourcesForQuestion(question) {
 export function questionNeedsAyaAi(question, localMatched = false) {
   const normalized = normalizeText(question);
   if (!normalized) return false;
-  const institutional = SOURCE_RULES.some(([pattern]) => pattern.test(question));
+  const institutional = SOURCE_RULES.some(([pattern]) =>
+    pattern.test(question),
+  );
   const contextual =
     /\b(edital|editais|vaga|vagas|processo seletivo|processos seletivos|territ[oó]rio|territ[oó]rios|filtro|filtros|indicador|indicadores|kpi|ociosa|ociosas|contratado|contratados)\b/i.test(
       question,

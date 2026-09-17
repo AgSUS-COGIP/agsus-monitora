@@ -45,7 +45,8 @@ describe("contexto da tela para a Aya", () => {
       "beforeend",
       Array.from(
         { length: 33 },
-        (_, index) => `<div class="health-map-unit" data-dsei="${index + 1}"><strong>DSEI ${index + 2}</strong></div>`,
+        (_, index) =>
+          `<div class="health-map-unit" data-dsei="${index + 1}"><strong>DSEI ${index + 2}</strong></div>`,
       ).join(""),
     );
 
