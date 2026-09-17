@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  ayaFailureMessage,
   collectAyaPageContext,
   contextualAyaAnswer,
 } from "../src/modules/aya-ai-client.js";
@@ -38,6 +39,13 @@ describe("contexto da tela para a Aya", () => {
     expect(context.editais[0]).toContain("Edital 01/2026");
   });
 
+  it("responde a própria identidade sem depender do Ollama", () => {
+    expect(contextualAyaAnswer("qual é seu nome?", {})).toBe(
+      "Eu sou a Aya, assistente do MONITORA da AgSUS.",
+    );
+    expect(contextualAyaAnswer("Quem é você?", {})).toContain("Aya");
+  });
+
   it("responde a contagem de DSEIs pela lista de DSEIs, não pelo total de pontos", () => {
     document.querySelector("#activeFiltersBar").textContent = "";
     document.querySelector("#masterMapCount").textContent = "36 pontos";
@@ -67,5 +75,26 @@ describe("contexto da tela para a Aya", () => {
 
     expect(answer).toContain("2 DSEIs");
     expect(answer).toContain("filtros ativos");
+  });
+});
+
+describe("mensagens de falha da Aya", () => {
+  it("distingue cada causa de indisponibilidade", () => {
+    expect(ayaFailureMessage("local_ai_not_configured")).toContain(
+      "AYA_LOCAL_BRIDGE_URL",
+    );
+    expect(ayaFailureMessage("local_ai_unavailable")).toContain("túnel");
+    expect(ayaFailureMessage("timeout")).toContain("25 segundos");
+    expect(ayaFailureMessage("http_404")).toContain("/api/aya");
+    expect(ayaFailureMessage("sessao_expirada")).toContain("sessão expirou");
+  });
+
+  it("cai numa mensagem genérica para causa desconhecida", () => {
+    expect(ayaFailureMessage("causa_nova")).toBe(
+      "A IA da Aya está temporariamente indisponível.",
+    );
+    expect(ayaFailureMessage()).toBe(
+      "A IA da Aya está temporariamente indisponível.",
+    );
   });
 });

@@ -9,11 +9,16 @@ const OLLAMA_URL = String(
 const BRIDGE_KEY = String(process.env.AYA_LOCAL_BRIDGE_KEY || "");
 const MAX_BODY_BYTES = 256 * 1024;
 const ALLOWED_MODELS = new Set(
-  String(process.env.AYA_ALLOWED_MODELS || "qwen3:8b,qwen3:4b")
+  String(process.env.AYA_ALLOWED_MODELS || "qwen3:1.7b,qwen3:4b,qwen3:8b")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean),
 );
+// Mantém o modelo residente na memória. Sem isso o Ollama o descarrega após
+// 5 minutos ocioso e a primeira pergunta seguinte paga ~19s de recarga, acima
+// do limite de tempo do navegador.
+const KEEP_ALIVE = process.env.AYA_KEEP_ALIVE || -1;
+const WARMUP_MODEL = "qwen3:1.7b";
 
 if (!BRIDGE_KEY || BRIDGE_KEY.length < 24) {
   console.error("Defina AYA_LOCAL_BRIDGE_KEY com pelo menos 24 caracteres.");
@@ -81,11 +86,12 @@ const server = http.createServer(async (req, res) => {
         })),
         stream: false,
         think: false,
+        keep_alive: KEEP_ALIVE,
         options: {
           temperature: Number(payload?.options?.temperature ?? 0.2),
           num_predict: Math.min(
             800,
-            Number(payload?.options?.num_predict ?? 500),
+            Number(payload?.options?.num_predict ?? 140),
           ),
         },
       }),
@@ -114,8 +120,41 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+// Carrega o modelo padrão antes da primeira pergunta real. Sem isso a primeira
+// pessoa a usar a Aya depois de subir o bridge espera cerca de 39s, contra os
+// 12s de uma pergunta com o modelo já residente.
+async function aquecerModelo() {
+  const model = String(process.env.AYA_LOCAL_MODEL || WARMUP_MODEL).trim();
+  if (!ALLOWED_MODELS.has(model)) return;
+  const inicio = Date.now();
+  try {
+    const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: "ok" }],
+        stream: false,
+        think: false,
+        keep_alive: KEEP_ALIVE,
+        options: { num_predict: 1 },
+      }),
+      signal: AbortSignal.timeout(180000),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const segundos = ((Date.now() - inicio) / 1000).toFixed(1);
+    console.log(`Modelo ${model} aquecido e residente em ${segundos}s.`);
+  } catch (error) {
+    console.warn(
+      `Não foi possível aquecer ${model}: ${error?.message || error}. A primeira pergunta será mais lenta.`,
+    );
+  }
+}
+
 server.listen(PORT, HOST, () => {
   console.log(`Aya Local Bridge em http://${HOST}:${PORT}`);
   console.log(`Ollama: ${OLLAMA_URL}`);
   console.log(`Modelos permitidos: ${[...ALLOWED_MODELS].join(", ")}`);
+  console.log(`keep_alive: ${KEEP_ALIVE}`);
+  aquecerModelo();
 });

@@ -9,7 +9,10 @@ const MAX_QUESTION_LENGTH = 1200;
 const MAX_HISTORY_MESSAGES = 8;
 const MAX_HISTORY_CONTENT = 1200;
 const REQUEST_TIMEOUT_MS = 30000;
-const DEFAULT_MODEL = "qwen3:8b";
+const DEFAULT_MODEL = "qwen3:1.7b";
+// 140 tokens cabem em ~11s de geração no hardware local medido. Com 180 o pior
+// caso chega a 19s e estoura o limite de tempo do navegador.
+const MAX_ANSWER_TOKENS = 140;
 
 function json(res, status, payload) {
   res
@@ -140,7 +143,7 @@ export default async function handler(req, res) {
         ],
         options: {
           temperature: 0.2,
-          num_predict: 500,
+          num_predict: MAX_ANSWER_TOKENS,
         },
       }),
       signal: controller.signal,

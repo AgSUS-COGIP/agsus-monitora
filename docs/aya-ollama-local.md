@@ -17,11 +17,12 @@ Instale o Ollama para Windows pelo site oficial.
 Depois, no PowerShell:
 
 ```powershell
-ollama pull qwen3:8b
-ollama run qwen3:8b
+ollama pull qwen3:1.7b
 ```
 
-Se o computador tiver pouca memória, use `qwen3:4b` e configure `AYA_LOCAL_MODEL=qwen3:4b` no ambiente do MONITORA.
+O modelo padrão é `qwen3:1.7b`, escolhido por medição: em máquina sem GPU dedicada ele gera a ~13 tokens/s, o que mantém a resposta em torno de 12s. Modelos maiores (`qwen3:4b`, `qwen3:8b`) continuam permitidos, mas só valem em máquina com GPU: o `qwen3:8b` medido em CPU levou 97s e estourava todos os limites de tempo.
+
+O bridge mantém o modelo residente na memória (`keep_alive: -1`) e o aquece ao iniciar. Sem isso o Ollama o descarrega após 5 minutos ocioso e a pergunta seguinte paga a recarga.
 
 ## 2. Preparar o repositório no computador
 
@@ -54,7 +55,7 @@ A URL HTTPS resultante será configurada no ambiente do MONITORA como:
 ```text
 AYA_LOCAL_BRIDGE_URL=https://SEU-ENDERECO-HTTPS
 AYA_LOCAL_BRIDGE_KEY=a-mesma-chave-do-computador
-AYA_LOCAL_MODEL=qwen3:8b
+AYA_LOCAL_MODEL=qwen3:1.7b
 ```
 
 ## 4. Segurança
