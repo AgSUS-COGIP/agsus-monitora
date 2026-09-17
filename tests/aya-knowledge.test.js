@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AYA_SOURCE_CATALOG,
   buildAyaSystemPrompt,
+  curatedAnswerForQuestion,
   officialSourcesForQuestion,
   questionNeedsAyaAi,
   sanitizeAyaContext,
@@ -26,6 +27,30 @@ describe("base institucional da Aya", () => {
     expect(terras).toContainEqual(AYA_SOURCE_CATALOG.funai);
   });
 
+  it("responde diretamente sobre DSEI AL/SE e Kariri-Xocó", () => {
+    const answer = curatedAnswerForQuestion(
+      "Quantas aldeias tem no DSEI Alagoas? Diga mais sobre o povo Kariri-Xocó",
+    );
+
+    expect(answer).toContain("30 aldeias");
+    expect(answer).toContain("base de 2023");
+    expect(answer).toContain("2.509 pessoas");
+    expect(answer).toContain("Ouricuri");
+  });
+
+  it("anexa PDSI AL/SE e Funai às perguntas específicas", () => {
+    const sources = officialSourcesForQuestion(
+      "Quantas aldeias tem no DSEI Alagoas e quem são os Kariri-Xocó?",
+    );
+    const ids = sources.map((source) => source.id);
+
+    expect(ids).toContain("pdsi-al-se");
+    expect(ids).toContain("funai-kariri-xoco");
+    expect(ids).toContain("dsei");
+    expect(ids).toContain("sesai");
+    expect(ids).toContain("funai");
+  });
+
   it("encaminha perguntas institucionais e contextuais para IA", () => {
     expect(questionNeedsAyaAi("O que é DSEI?", true)).toBe(true);
     expect(questionNeedsAyaAi("Quantas vagas o painel mostra?", true)).toBe(
@@ -39,7 +64,7 @@ describe("base institucional da Aya", () => {
     const context = sanitizeAyaContext({
       pathname: "/".repeat(300),
       pageTitle: "Saúde Indígena",
-      mapSummary: "34 territórios",
+      mapSummary: "34 DSEIs · 2 CASAIs",
       activeFilters: ["UF: AM", "Edital: 01/2026"],
       search: "xavante",
       kpis: ["Vagas 120", "Ociosas 35"],
@@ -50,7 +75,7 @@ describe("base institucional da Aya", () => {
     });
 
     expect(context.pathname.length).toBeLessThanOrEqual(160);
-    expect(context.mapSummary).toBe("34 territórios");
+    expect(context.mapSummary).toBe("34 DSEIs · 2 CASAIs");
     expect(context.activeFilters).toEqual(["UF: AM", "Edital: 01/2026"]);
     expect(context.kpis).toContain("Vagas 120");
     expect(context.territories).toHaveLength(34);
@@ -63,8 +88,9 @@ describe("base institucional da Aya", () => {
     const prompt = buildAyaSystemPrompt({
       section: "dashboard",
       title: "Saúde Indígena",
+      question: "Quantas aldeias tem no DSEI Alagoas?",
       context: {
-        mapSummary: "34 territórios",
+        mapSummary: "34 DSEIs · 2 CASAIs",
         activeFilters: ["UF: AM"],
         kpis: ["Vagas 120", "Ociosas 35"],
         dseis: ["DSEI Xavante — 10 vagas"],
@@ -74,10 +100,9 @@ describe("base institucional da Aya", () => {
     });
 
     expect(prompt).toContain("Nunca invente aldeias");
-    expect(prompt).toContain("34 territórios");
-    expect(prompt).toContain("UF: AM");
-    expect(prompt).toContain("Vagas 120");
-    expect(prompt).toContain("DSEI Xavante");
+    expect(prompt).toContain("34 DSEIs · 2 CASAIs");
+    expect(prompt).toContain("30 aldeias atendidas");
+    expect(prompt).toContain("não 36 DSEIs");
     expect(prompt).toContain("Não substitua uma pergunta factual");
     expect(prompt).toContain("Funai");
     expect(prompt).toContain("Não escreva URLs");
