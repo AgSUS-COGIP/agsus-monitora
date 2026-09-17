@@ -1,0 +1,53 @@
+name: Temporary lotacoes formatter
+
+on:
+  push:
+    branches:
+      - feat/mapa-lotacoes-precisas
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v7
+
+      - name: Configurar Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Formatar arquivos
+        run: >-
+          npx prettier --write
+          src/main.js
+          src/modules/lotacoes-geograficas-transport.js
+          tests/lotacoes-geograficas.test.js
+          public/data/lotacoes-geograficas-01.json
+          public/data/lotacoes-geograficas-02.json
+          public/data/lotacoes-geograficas-03.json
+          public/data/lotacoes-geograficas-04.json
+          public/data/lotacoes-geograficas-05.json
+          public/data/lotacoes-geograficas-06.json
+          public/data/lotacoes-geograficas-07.json
+          public/data/lotacoes-geograficas-08.json
+
+      - name: Commitar formatacao
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Nenhuma alteracao de formatacao necessaria."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.js src/modules/lotacoes-geograficas-transport.js tests/lotacoes-geograficas.test.js public/data/lotacoes-geograficas-*.json
+          git commit -m "style(mapa): formatar integração geográfica"
+          git push
