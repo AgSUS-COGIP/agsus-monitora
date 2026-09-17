@@ -39,6 +39,7 @@ describe("contexto da tela para a Aya", () => {
   });
 
   it("responde a contagem de DSEIs diretamente do mapa", () => {
+    document.querySelector("#activeFiltersBar").textContent = "";
     const context = collectAyaPageContext(document);
     const answer = contextualAyaAnswer("Quantos DSEIs tem no Brasil?", context);
 
