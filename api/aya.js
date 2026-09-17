@@ -11,7 +11,9 @@ const REQUEST_TIMEOUT_MS = 30000;
 const DEFAULT_MODEL = "qwen3:8b";
 
 function json(res, status, payload) {
-  res.status(status).setHeader("Content-Type", "application/json; charset=utf-8");
+  res
+    .status(status)
+    .setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store, max-age=0");
   res.end(JSON.stringify(payload));
 }
@@ -34,7 +36,10 @@ function safeHistory(rawHistory) {
 }
 
 async function validateSupabaseSession(accessToken) {
-  const baseUrl = String(process.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
+  const baseUrl = String(process.env.VITE_SUPABASE_URL || "").replace(
+    /\/$/,
+    "",
+  );
   const publishableKey = String(
     process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
       process.env.VITE_SUPABASE_ANON_KEY ||
@@ -149,7 +154,10 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     return json(res, error?.name === "AbortError" ? 504 : 502, {
-      error: error?.name === "AbortError" ? "local_ai_timeout" : "local_ai_unavailable",
+      error:
+        error?.name === "AbortError"
+          ? "local_ai_timeout"
+          : "local_ai_unavailable",
       sources: safeSources(question),
     });
   } finally {

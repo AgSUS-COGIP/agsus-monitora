@@ -40,10 +40,7 @@ describe("contexto da tela para a Aya", () => {
 
   it("responde a contagem de DSEIs diretamente do mapa", () => {
     const context = collectAyaPageContext(document);
-    const answer = contextualAyaAnswer(
-      "Quantos DSEIs tem no Brasil?",
-      context,
-    );
+    const answer = contextualAyaAnswer("Quantos DSEIs tem no Brasil?", context);
 
     expect(answer).toContain("34 DSEIs");
     expect(answer).toContain("visão atual do mapa");

@@ -98,7 +98,12 @@ export function collectAyaPageContext(doc = document) {
   const activeFilters = uniqueTexts(
     [
       textOf(doc, "#activeFiltersBar", 500),
-      ...visibleTextList(doc, ".active-filters-bar .pill, .filter-chip", 12, 120),
+      ...visibleTextList(
+        doc,
+        ".active-filters-bar .pill, .filter-chip",
+        12,
+        120,
+      ),
     ],
     12,
     180,

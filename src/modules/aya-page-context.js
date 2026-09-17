@@ -95,7 +95,7 @@ export function ayaPageContextFor(section = "", title = "") {
   }
   if (
     sectionKey === "analises" ||
-    sectionKey.startsWith("panel:") && /analise/.test(titleKey) ||
+    (sectionKey.startsWith("panel:") && /analise/.test(titleKey)) ||
     /analise/.test(titleKey)
   ) {
     return PAGE_CONTEXTS.analises;
