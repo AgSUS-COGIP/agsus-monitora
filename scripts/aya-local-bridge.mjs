@@ -3,7 +3,9 @@ import { timingSafeEqual } from "node:crypto";
 
 const HOST = process.env.AYA_BRIDGE_HOST || "127.0.0.1";
 const PORT = Number(process.env.AYA_BRIDGE_PORT || 8787);
-const OLLAMA_URL = String(process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
+const OLLAMA_URL = String(
+  process.env.OLLAMA_URL || "http://127.0.0.1:11434",
+).replace(/\/$/, "");
 const BRIDGE_KEY = String(process.env.AYA_LOCAL_BRIDGE_KEY || "");
 const MAX_BODY_BYTES = 256 * 1024;
 const ALLOWED_MODELS = new Set(
@@ -78,9 +80,13 @@ const server = http.createServer(async (req, res) => {
           content: String(item?.content || "").slice(0, 12000),
         })),
         stream: false,
+        think: false,
         options: {
           temperature: Number(payload?.options?.temperature ?? 0.2),
-          num_predict: Math.min(800, Number(payload?.options?.num_predict ?? 500)),
+          num_predict: Math.min(
+            800,
+            Number(payload?.options?.num_predict ?? 500),
+          ),
         },
       }),
       signal: AbortSignal.timeout(120000),
@@ -102,7 +108,8 @@ const server = http.createServer(async (req, res) => {
     });
   } catch (error) {
     return send(res, error?.message === "body_too_large" ? 413 : 500, {
-      error: error?.message === "body_too_large" ? "body_too_large" : "bridge_error",
+      error:
+        error?.message === "body_too_large" ? "body_too_large" : "bridge_error",
     });
   }
 });
