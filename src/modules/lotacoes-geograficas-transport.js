@@ -89,7 +89,12 @@ function findNetworkMatch(list, record, listKind = "u") {
   const byDistance = candidates
     .map((row) => ({
       row,
-      km: distanciaKm(record.lat, record.lon, Number(row?.[2]), Number(row?.[3])),
+      km: distanciaKm(
+        record.lat,
+        record.lon,
+        Number(row?.[2]),
+        Number(row?.[3]),
+      ),
     }))
     .filter((item) => Number.isFinite(item.km))
     .sort((a, b) => a.km - b.km);

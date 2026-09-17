@@ -19,7 +19,9 @@ describe("lotações geográficas", () => {
 
     expect(records).toHaveLength(598);
     expect(records.filter((record) => record[0] === "SEDE")).toHaveLength(34);
-    expect(records.filter((record) => record[0] === "POLO BASE")).toHaveLength(403);
+    expect(records.filter((record) => record[0] === "POLO BASE")).toHaveLength(
+      403,
+    );
     expect(records.filter((record) => record[0] === "CASAI")).toHaveLength(79);
     expect(
       records.filter((record) =>
@@ -64,7 +66,16 @@ describe("lotações geográficas", () => {
     ];
     const dataset = {
       "ALAGOAS E SERGIPE": [
-        ["POLO BASE", "PB ACONÃ", -9.971, -37.003, "TRAIPU", "AL", "Muito acessível", "Terrestre/Fluvial"],
+        [
+          "POLO BASE",
+          "PB ACONÃ",
+          -9.971,
+          -37.003,
+          "TRAIPU",
+          "AL",
+          "Muito acessível",
+          "Terrestre/Fluvial",
+        ],
       ],
     };
 
@@ -92,7 +103,16 @@ describe("lotações geográficas", () => {
         payload: {
           rede: {
             CEARA: {
-              u: [["UBSI MONGUBA POVO PITAGUARY", "7216262", -3.984098, -38.617984, "PACATUBA", 23]],
+              u: [
+                [
+                  "UBSI MONGUBA POVO PITAGUARY",
+                  "7216262",
+                  -3.984098,
+                  -38.617984,
+                  "PACATUBA",
+                  23,
+                ],
+              ],
               c: [],
             },
           },
@@ -102,7 +122,16 @@ describe("lotações geográficas", () => {
     ];
     const dataset = {
       CEARA: [
-        ["UNIDADE DE LOTAÇÃO", "UBSI MONGUBA POVO PITAGUARY", -3.98, -38.62, "PACATUBA", "CE", "Acessível", "Terrestre"],
+        [
+          "UNIDADE DE LOTAÇÃO",
+          "UBSI MONGUBA POVO PITAGUARY",
+          -3.98,
+          -38.62,
+          "PACATUBA",
+          "CE",
+          "Acessível",
+          "Terrestre",
+        ],
       ],
     };
 
@@ -123,11 +152,23 @@ describe("lotações geográficas", () => {
         chave: "lmap",
         payload: { dsei: [{ k: "CEARA", n: "Ceará", polos: [] }] },
       },
-      { chave: "rede_cnes", payload: { rede: { CEARA: { u: [], c: [] } }, nac: [] } },
+      {
+        chave: "rede_cnes",
+        payload: { rede: { CEARA: { u: [], c: [] } }, nac: [] },
+      },
     ];
     const dataset = {
       CEARA: [
-        ["UNIDADE DE LOTAÇÃO", "UBSI NOVA", -4, -39, "CAUCAIA", "CE", "Acessível", "Terrestre"],
+        [
+          "UNIDADE DE LOTAÇÃO",
+          "UBSI NOVA",
+          -4,
+          -39,
+          "CAUCAIA",
+          "CE",
+          "Acessível",
+          "Terrestre",
+        ],
       ],
     };
 
@@ -146,10 +187,24 @@ describe("lotações geográficas", () => {
         chave: "lmap",
         payload: { dsei: [{ k: "ALTAMIRA", n: "Altamira", polos: [] }] },
       },
-      { chave: "rede_cnes", payload: { rede: { ALTAMIRA: { u: [], c: [] } }, nac: [] } },
+      {
+        chave: "rede_cnes",
+        payload: { rede: { ALTAMIRA: { u: [], c: [] } }, nac: [] },
+      },
     ];
     const dataset = {
-      ALTAMIRA: [["ROTA", "ROTA VOLTA GRANDE", -3.6, -51.6, "ALTAMIRA", "PA", "Remoto", "Fluvial"]],
+      ALTAMIRA: [
+        [
+          "ROTA",
+          "ROTA VOLTA GRANDE",
+          -3.6,
+          -51.6,
+          "ALTAMIRA",
+          "PA",
+          "Remoto",
+          "Fluvial",
+        ],
+      ],
     };
 
     const result = applyLotacoesGeograficas(rows, dataset);
@@ -200,7 +255,16 @@ describe("lotações geográficas", () => {
     ];
     const dataset = {
       "CASAI DF": [
-        ["CASAI", "CASAI DF", -15.7432639227901, -47.713302417615324, "BRASILIA", "DF", "Muito acessível", "Terrestre"],
+        [
+          "CASAI",
+          "CASAI DF",
+          -15.7432639227901,
+          -47.713302417615324,
+          "BRASILIA",
+          "DF",
+          "Muito acessível",
+          "Terrestre",
+        ],
       ],
     };
 
