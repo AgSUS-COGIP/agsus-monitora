@@ -37,7 +37,7 @@
     "dompurify": "^3",
     "echarts": "^6",
     "lucide": "^0.577.0",
-    "pdfjs-dist": "^5.4.149",
+    "pdfjs-dist": "^6.2.108",
     "tesseract.js": "^6.0.1",
     "tom-select": "^2.4.3",
     "zod": "^4"
