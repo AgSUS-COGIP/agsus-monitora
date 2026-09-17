@@ -1,6 +1,7 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { exigirSessao } from "../lib/sessao.js";
 import {
+  curatedAnswerForQuestion,
   officialSourcesForQuestion,
   questionNeedsAyaAi,
 } from "./aya-knowledge.js";
@@ -122,27 +123,25 @@ export function collectAyaPageContext(doc = document) {
   };
 }
 
-function countFromMapSummary(context) {
-  const match = String(context?.mapSummary || "").match(/\b(\d{1,3})\b/);
-  if (match) return Number(match[1]);
+function countDseisFromContext(context) {
   if (Array.isArray(context?.territories) && context.territories.length) {
     return context.territories.length;
   }
-  return null;
+  const summary = String(context?.mapSummary || "");
+  const explicitDsei = summary.match(/\b(\d{1,3})\s*DSEI/i);
+  if (explicitDsei) return Number(explicitDsei[1]);
+  const match = summary.match(/\b(\d{1,3})\b/);
+  return match ? Number(match[1]) : null;
 }
 
 export function contextualAyaAnswer(question, context = {}) {
   const cleanQuestion = String(question || "");
   const asksDseiCount =
-    /\bquant(?:o|os|a|as)\b[\s\S]*\b(?:dsei|dseis|territ[oó]rio|territ[oó]rios)\b/i.test(
-      cleanQuestion,
-    ) ||
-    /\b(?:dsei|dseis|territ[oó]rio|territ[oó]rios)\b[\s\S]*\bquant(?:o|os|a|as)\b/i.test(
-      cleanQuestion,
-    );
+    /\bquant(?:o|os|a|as)\b[\s\S]*\b(?:dsei|dseis)\b/i.test(cleanQuestion) ||
+    /\b(?:dsei|dseis)\b[\s\S]*\bquant(?:o|os|a|as)\b/i.test(cleanQuestion);
 
   if (asksDseiCount) {
-    const count = countFromMapSummary(context);
+    const count = countDseisFromContext(context);
     if (Number.isFinite(count)) {
       const filterNote = context.activeFilters?.length
         ? " no recorte dos filtros ativos"
@@ -161,6 +160,7 @@ export function contextualAyaAnswer(question, context = {}) {
 
 function unavailableAnswer(question, context) {
   return (
+    curatedAnswerForQuestion(question) ||
     contextualAyaAnswer(question, context) ||
     "A IA da Aya está temporariamente indisponível. Posso responder ao que estiver carregado nesta tela, mas não vou inventar uma resposta genérica para o que depende da IA."
   );
@@ -178,6 +178,16 @@ export async function askAyaAi({
   doc = document,
 } = {}) {
   const context = collectAyaPageContext(doc);
+  const curated = curatedAnswerForQuestion(question);
+  if (curated) {
+    return {
+      answer: curated,
+      sources: officialSourcesForQuestion(question),
+      unavailable: false,
+      provider: "curated-official",
+    };
+  }
+
   const client = getSupabaseClient();
   if (!client) {
     return {
