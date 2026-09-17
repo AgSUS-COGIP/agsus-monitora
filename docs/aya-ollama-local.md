@@ -8,6 +8,8 @@ MONITORA (Vercel) -> /api/aya -> bridge HTTPS -> computador local -> Ollama -> m
 
 O Ollama nunca deve ser exposto diretamente à internet. O processo `scripts/aya-local-bridge.mjs` escuta apenas em `127.0.0.1` por padrão e exige uma chave compartilhada em todas as chamadas de chat.
 
+Antes de consultar o modelo, a Aya combina o contexto fixo da página atual com o contexto vivo permitido da interface, como filtros, indicadores, DSEIs, territórios, editais e processos visíveis. O contexto enviado ao modelo deve continuar limitado ao que o usuário autenticado já pode acessar no MONITORA.
+
 ## 1. Instalar Ollama
 
 Instale o Ollama para Windows pelo site oficial.
@@ -62,11 +64,8 @@ AYA_LOCAL_MODEL=qwen3:8b
 - O Ollama permanece acessível apenas pelo próprio computador.
 - A chave não deve ser colocada no código ou em arquivo versionado.
 - Não use `0.0.0.0` para o Ollama nem abra a porta 11434 na internet.
+- O contexto da Aya deve respeitar as mesmas permissões do usuário no MONITORA.
 
 ## 5. Disponibilidade
 
 Se o computador reiniciar, Ollama, bridge e túnel precisam iniciar novamente. Para uso permanente, configure os três processos para iniciar com o Windows e desative suspensão automática da máquina.
-
-## Claude
-
-Claude não é usado automaticamente nesta arquitetura. Encaminhar perguntas para a API do Claude gera custo de API. Se for desejado usar uma assinatura Claude existente sem API paga, o caminho seguro é um fluxo manual de copiar/exportar a pergunta e o contexto, sem enviar dados automaticamente a terceiros.
