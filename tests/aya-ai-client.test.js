@@ -38,6 +38,13 @@ describe("contexto da tela para a Aya", () => {
     expect(context.editais[0]).toContain("Edital 01/2026");
   });
 
+  it("responde a própria identidade sem depender do Ollama", () => {
+    expect(contextualAyaAnswer("qual é seu nome?", {})).toBe(
+      "Eu sou a Aya, assistente do MONITORA da AgSUS.",
+    );
+    expect(contextualAyaAnswer("Quem é você?", {})).toContain("Aya");
+  });
+
   it("responde a contagem de DSEIs pela lista de DSEIs, não pelo total de pontos", () => {
     document.querySelector("#activeFiltersBar").textContent = "";
     document.querySelector("#masterMapCount").textContent = "36 pontos";
