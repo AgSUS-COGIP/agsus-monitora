@@ -28,7 +28,8 @@
     "build:laravel": "npm run build && node scripts/package-laravel.mjs",
     "test:php": "composer --working-dir=laravel test",
     "test:smoke:laravel": "node scripts/test-laravel-smoke.mjs",
-    "dev:frontend": "vite --host 0.0.0.0"
+    "dev:frontend": "vite --host 0.0.0.0",
+    "aya:bridge": "node scripts/aya-local-bridge.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",

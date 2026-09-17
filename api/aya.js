@@ -1,16 +1,14 @@
 import {
-  AYA_SOURCE_CATALOG,
   buildAyaSystemPrompt,
   officialSourcesForQuestion,
   sanitizeAyaContext,
 } from "../src/modules/aya-knowledge.js";
 
-const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-5.6-sol";
 const MAX_QUESTION_LENGTH = 1200;
 const MAX_HISTORY_MESSAGES = 8;
 const MAX_HISTORY_CONTENT = 1200;
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 30000;
+const DEFAULT_MODEL = "qwen3:8b";
 
 function json(res, status, payload) {
   res
@@ -87,32 +85,35 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "invalid_question" });
   }
 
+  const bridgeUrl = String(process.env.AYA_LOCAL_BRIDGE_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+  const bridgeKey = String(process.env.AYA_LOCAL_BRIDGE_KEY || "").trim();
+  if (!bridgeUrl || !bridgeKey) {
+    return json(res, 503, {
+      error: "local_ai_not_configured",
+      sources: safeSources(question),
+    });
+  }
+
   const context = sanitizeAyaContext(req.body?.context || {});
   const section = String(req.body?.section || "").slice(0, 80);
   const title = String(req.body?.title || "").slice(0, 120);
   const history = safeHistory(req.body?.history);
-  const apiKey =
-    process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
-
-  if (!apiKey) {
-    return json(res, 503, {
-      error: "ai_not_configured",
-      sources: safeSources(question),
-    });
-  }
+  const model = String(process.env.AYA_LOCAL_MODEL || DEFAULT_MODEL).trim();
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(GATEWAY_URL, {
+    const response = await fetch(`${bridgeUrl}/chat`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "X-Aya-Bridge-Key": bridgeKey,
       },
       body: JSON.stringify({
-        model: process.env.AYA_AI_MODEL || DEFAULT_MODEL,
+        model,
         messages: [
           {
             role: "system",
@@ -121,21 +122,23 @@ export default async function handler(req, res) {
           ...history,
           { role: "user", content: question },
         ],
-        temperature: 0.2,
-        max_tokens: 500,
+        options: {
+          temperature: 0.2,
+          num_predict: 500,
+        },
       }),
       signal: controller.signal,
     });
 
+    const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       return json(res, 502, {
-        error: "ai_gateway_error",
+        error: String(payload?.error || "local_ai_error"),
         sources: safeSources(question),
       });
     }
 
-    const payload = await response.json();
-    const answer = String(payload?.choices?.[0]?.message?.content || "").trim();
+    const answer = String(payload?.answer || "").trim();
     if (!answer) {
       return json(res, 502, {
         error: "empty_ai_response",
@@ -146,11 +149,15 @@ export default async function handler(req, res) {
     return json(res, 200, {
       answer,
       sources: safeSources(question),
-      model: payload?.model || process.env.AYA_AI_MODEL || DEFAULT_MODEL,
+      model: String(payload?.model || model),
+      provider: "ollama-local",
     });
   } catch (error) {
     return json(res, error?.name === "AbortError" ? 504 : 502, {
-      error: error?.name === "AbortError" ? "ai_timeout" : "ai_unavailable",
+      error:
+        error?.name === "AbortError"
+          ? "local_ai_timeout"
+          : "local_ai_unavailable",
       sources: safeSources(question),
     });
   } finally {
