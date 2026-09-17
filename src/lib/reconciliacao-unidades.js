@@ -87,12 +87,16 @@ const semAcento = (s) =>
   Nome canónico: tira o que descreve o TIPO e mantém o que nomeia o LUGAR.
   `POLO BASE XITEI` e `XITEI` convergem; `CASA NOVA` e `POLO BASE CASA NOVA`
   também.
+
+  `PB` é a abreviação de POLO BASE usada na planilha de lotações, onde nomeia
+  403 dos 598 registros. Sem removê-la, `PB ACONÃ` não converge para `ACONÃ` e
+  o polo é duplicado em vez de reconciliado.
 */
 export function nomeCanonico(nome) {
   let u = semAcento(nome).toUpperCase();
   u = u.replace(/\([^)]*\)/g, " ");
   u = u.replace(
-    /\b(POLO|POLOS|BASE|DSEI|DISTRITO|SANITARIO|ESPECIAL|INDIGENA|UBSI|UBS|CASAI|CASA|SAUDE|POSTO|UNIDADE|BASICA|APOIO|TIPO)\b/g,
+    /\b(POLO|POLOS|PB|BASE|DSEI|DISTRITO|SANITARIO|ESPECIAL|INDIGENA|UBSI|UBS|CASAI|CASA|SAUDE|POSTO|UNIDADE|BASICA|APOIO|TIPO)\b/g,
     " ",
   );
   u = u.replace(/\b(DE|DO|DA|DOS|DAS|E)\b/g, " ");
