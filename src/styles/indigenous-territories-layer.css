@@ -1,0 +1,59 @@
+.agsus-indigenous-territories-control {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+  overflow: hidden;
+}
+
+.agsus-indigenous-territories-control__button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #0f172a;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 10px;
+}
+
+.agsus-indigenous-territories-control__button:hover,
+.agsus-indigenous-territories-control__button:focus-visible {
+  background: rgba(15, 118, 110, 0.08);
+  outline: none;
+}
+
+.agsus-indigenous-territories-control__button.is-active {
+  background: rgba(15, 118, 110, 0.12);
+  color: #115e59;
+}
+
+.agsus-indigenous-territories-control__swatch {
+  background: rgba(13, 148, 136, 0.26);
+  border: 2px solid rgba(13, 148, 136, 0.92);
+  border-radius: 3px;
+  box-sizing: border-box;
+  display: inline-block;
+  height: 14px;
+  width: 18px;
+}
+
+.map-satellite-mode .agsus-indigenous-territories-control,
+.leaflet-container .agsus-indigenous-territories-control {
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 720px) {
+  .agsus-indigenous-territories-control__button span:last-child {
+    display: none;
+  }
+
+  .agsus-indigenous-territories-control__button {
+    min-width: 38px;
+    justify-content: center;
+  }
+}
