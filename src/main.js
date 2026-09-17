@@ -49,6 +49,7 @@ import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import "./modules/monitoramento-operational-transport.js";
+import "./modules/lotacoes-geograficas-transport.js";
 import "./modules/legacy-app.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
 import { initVisualPolish } from "./modules/visual-polish.js";

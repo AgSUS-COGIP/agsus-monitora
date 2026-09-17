@@ -1,0 +1,864 @@
+{
+  "YANOMAMI": [
+    [
+      "CASAI",
+      "CASAI YANOMAMI",
+      2.7766518,
+      -60.7133239,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB AJARANI",
+      2.007344356,
+      -61.47284048,
+      "CARACARAI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB AJURICABA",
+      0.881619444,
+      -62.62414722,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ALTO CATRIMANI",
+      2.381389,
+      -63.013889,
+      "MUCAJAI",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ALTO MUCAJAI",
+      2.757694444,
+      -62.22280556,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB APIAU",
+      2.501394013,
+      -61.76590534,
+      "MUCAJAI",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ARACÁ",
+      1.17168,
+      -63.593365,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ARATHAÚ",
+      3.1969231135171015,
+      -63.739022160858305,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB AUARIS",
+      4.002748,
+      -64.489705,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB BAIXO CATRIMANI",
+      1.066627778,
+      -62.27253611,
+      "CARACARAI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB BAIXO MUCAJAI",
+      2.734866667,
+      -62.01693611,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB BALAWAU",
+      1.806242,
+      -63.785042,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CACHOEIRA DO ARACÁ",
+      1.13,
+      -63.977,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB DEMINI",
+      1.515158,
+      -62.820995,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ERICÓ",
+      3.635572,
+      -62.398357,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB HAKOMA",
+      2.72264,
+      -63.578594,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB HAXIU",
+      2.673529,
+      -63.746468,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB HOMOXI",
+      2.49753,
+      -63.73008,
+      "IRACEMA",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB INAMBU",
+      0.104749985,
+      -66.34105562,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MAIA",
+      0.499941465,
+      -65.82556464,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MALOCA PAAPIÚ",
+      2.660192406543749,
+      -63.15640837472682,
+      "IRACEMA",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MARARI",
+      1.075277778,
+      -64.73638889,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MARAUIÁ",
+      0.451748056,
+      -65.07197111,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MATURACÁ",
+      0.628667,
+      -66.136472,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MÉDIO PADAUIRI/ PAHANA",
+      1.1725,
+      -64.415278,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MISSÃO CATRIMANI",
+      1.7355,
+      -62.28491667,
+      "CARACARAI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB NOVO DEMINI",
+      1.615676,
+      -63.653362,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PAAPIU",
+      2.666944444,
+      -63.16055556,
+      "IRACEMA",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PALIMIU",
+      3.333769,
+      -62.971695,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PARAFURI",
+      3.283678,
+      -63.850677,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SAÚBA",
+      3.86347,
+      -62.581188,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SURUCUCU",
+      2.836666667,
+      -63.64194444,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB TOOTOTOBI",
+      1.765114,
+      -63.618835,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB URARICOERA",
+      3.162639,
+      -62.186694,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB WAHARO/ALTO PADAUIRI",
+      -0.97331610642654,
+      -62.9242587089538,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB WAIKÁS",
+      3.554944,
+      -63.169121,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB WAPUTHA",
+      2.9915,
+      -63.70983,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB XITEI",
+      2.607076,
+      -63.873974,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      2.81377691558084,
+      -60.6703689694405,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN ARIABU (ALDEIA)",
+      0.3436467353056749,
+      -65.90551884286903,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN AYARI (UBSI)",
+      -0.061547,
+      -66.128051,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN BALAIO (UBSI)",
+      -0.414,
+      -65.019,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN BANDEIRA BRANCA (UBSI)",
+      0.853028,
+      -64.44925,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN BARCELOS (Município)",
+      -0.9734589653674655,
+      -62.92585134802515,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN BICHO AÇU (UBSI)",
+      -0.31385,
+      -65.11888,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN BUDU-U (UBSI)",
+      3.318617,
+      -63.247879,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN CURUÁ",
+      -0.213861,
+      -65.076477,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN HALIKATHO-U (UBSI)",
+      3.22393,
+      -63.20255,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN HEMARIPIWEI (Aldeia)",
+      1.07943,
+      -62.829636,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN HOKOLASSIMU (UBSI)",
+      3.8707,
+      -64.44593,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN IXIMA (UBSI)",
+      0.57211,
+      -65.06349,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN JUTAÍ (Município)",
+      0.08468,
+      -65.04989,
+      "JUTAI",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KALISSI (UBSI)",
+      4.078082,
+      -64.397902,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KATANA (Aldeia)",
+      3.649646765708783,
+      -61.372684059846165,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KATAROA",
+      2.89915269850431,
+      -62.215576171875,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KAYANAU",
+      2.75794,
+      -62.906551,
+      "MUCAJAI",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KETAA (UBSI)",
+      2.535555556,
+      -63.926,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KOHEREPI (UBSI)",
+      1.758159,
+      -63.923161,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KOLULU",
+      3.651959,
+      -61.37098,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KOREKOREMA",
+      3.24091,
+      -62.5997,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN KURATANHA",
+      3.765567,
+      -63.9882,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN LAHAKA (UBSI)",
+      1.316111,
+      -64.4625,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN MARAXI-U (UBSI)",
+      2.73588,
+      -63.453553,
+      "IRACEMA",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN MAXAPAPI (Aldeia)",
+      1.57114,
+      -63.95844,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN NAZARÉ (UBSI)",
+      0.266667,
+      -66.437778,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN NOVA ESPERANÇA (UBSI)",
+      0.477766,
+      -64.566908,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN OLOMAI",
+      3.92783,
+      -64.18632,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN ONKIOLA",
+      3.71261,
+      -64.16177,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN PARIMA (UBSI)",
+      3.1969231135171015,
+      -63.739022160858305,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN PEWA-Ú (UBSI)",
+      2.7847222,
+      -62.40636111,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN POHOROA (UBSI)",
+      0.571014,
+      -65.248591,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN Pukima Cachoeira",
+      0.78575,
+      -65.24673,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN PUKIMA-BEIRA (UBSI)",
+      -0.3686253316398824,
+      -65.22055600930787,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN SANINAU - HOKOMAWEN (Aldeia)",
+      2.7728047942212704,
+      -63.2293252637467,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN SANTA ISABEL DO RIO NEGRO",
+      -0.40957095079622957,
+      -65.01525312024695,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN SÃO GABRIEL DA CACHOEIRA",
+      -0.11930457076893519,
+      -67.09444463253021,
+      "SAO GABRIEL DA CACHOEIRA",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN SERRINHO (Aldeia)",
+      -0.339200899431459,
+      -65.1509857177734,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN TARACUÁ (Aldeia)",
+      -0.071855,
+      -65.125795,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN UXIÚ (UBSI)",
+      3.140516103983248,
+      -62.1221923828125,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN WAHARO (UBSI)",
+      1.313065,
+      -64.208908,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN XAMAKORONA (UBSI)",
+      1.01541,
+      -65.05313,
+      "SANTA ISABEL DO RIO NEGRO",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN XAMANI (UBSI)",
+      1.486111,
+      -63.3775,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN XEXENA",
+      2.01041,
+      -61.862396,
+      "IRACEMA",
+      "RR",
+      "Muito acessível",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN XIHOPI (Aldeia)",
+      1.519942,
+      -63.448037,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN XIROXIROPIU",
+      1.950584,
+      -63.734844,
+      "BARCELOS",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN YEKUANA (UBSI)",
+      3.99188,
+      -64.491,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Terrestre/Aéreo"
+    ]
+  ]
+}
