@@ -6,7 +6,7 @@ import {
   questionNeedsAyaAi,
 } from "./aya-knowledge.js";
 
-const AI_TIMEOUT_MS = 17000;
+const AI_TIMEOUT_MS = 25000;
 
 function compactText(value, maxLength = 180) {
   return String(value || "")
@@ -158,15 +158,11 @@ export function contextualAyaAnswer(question, context = {}) {
   }
 
   const asksDseiCount =
-    /\bquant(?:o|os)\b[\s\S]{0,40}\b(?:dsei|dseis)\b/i.test(
-      cleanQuestion,
-    ) ||
+    /\bquant(?:o|os)\b[\s\S]{0,40}\b(?:dsei|dseis)\b/i.test(cleanQuestion) ||
     /\b(?:quantidade|numero|número)\b[\s\S]{0,40}\b(?:dsei|dseis)\b/i.test(
       cleanQuestion,
     ) ||
-    /\b(?:dsei|dseis)\b[\s\S]{0,40}\bquant(?:o|os)\b/i.test(
-      cleanQuestion,
-    );
+    /\b(?:dsei|dseis)\b[\s\S]{0,40}\bquant(?:o|os)\b/i.test(cleanQuestion);
 
   if (asksDseiCount) {
     const count = countDseisFromContext(context);
@@ -186,11 +182,45 @@ export function contextualAyaAnswer(question, context = {}) {
   return "";
 }
 
-function unavailableAnswer(question, context) {
+const FAILURE_MESSAGES = {
+  sem_conexao:
+    "A conexão com o Supabase não está configurada nesta instalação, então não consigo autenticar a pergunta antes de consultar a IA.",
+  sessao_expirada:
+    "Sua sessão expirou. Entre novamente no MONITORA para que eu possa consultar a IA.",
+  unauthorized:
+    "A IA recusou a pergunta porque a sessão não foi aceita. Entre novamente no MONITORA.",
+  auth_unavailable:
+    "Não consegui validar sua sessão no Supabase agora, então a pergunta não chegou à IA.",
+  local_ai_not_configured:
+    "A IA local ainda não está configurada no ambiente do MONITORA: faltam AYA_LOCAL_BRIDGE_URL e AYA_LOCAL_BRIDGE_KEY.",
+  local_ai_unavailable:
+    "O computador que hospeda a IA local não respondeu. Verifique se o Ollama, o bridge e o túnel HTTPS estão no ar e se a URL do túnel continua válida.",
+  local_ai_timeout:
+    "A IA local demorou mais do que o limite do servidor do MONITORA para responder.",
+  local_ai_error:
+    "A IA local respondeu com erro. Verifique o modelo configurado em AYA_LOCAL_MODEL.",
+  empty_ai_response: "A IA local respondeu vazio.",
+  invalid_question:
+    "A pergunta ficou fora do tamanho aceito. Tente reescrevê-la de forma mais curta.",
+  timeout:
+    "A IA demorou mais de 25 segundos e a pergunta foi cancelada pelo navegador.",
+  network_error:
+    "Não consegui falar com o servidor do MONITORA para enviar a pergunta à IA.",
+  http_404:
+    "O endereço /api/aya não existe neste ambiente. Ele é publicado apenas na implantação Vercel, não no servidor Laravel.",
+};
+
+const GENERIC_FAILURE = "A IA da Aya está temporariamente indisponível.";
+
+export function ayaFailureMessage(reason) {
+  return FAILURE_MESSAGES[String(reason || "")] || GENERIC_FAILURE;
+}
+
+function unavailableAnswer(question, context, reason) {
   return (
     curatedAnswerForQuestion(question) ||
     contextualAyaAnswer(question, context) ||
-    "A IA da Aya está temporariamente indisponível. Posso responder ao que estiver carregado nesta tela, mas não vou inventar uma resposta genérica para o que depende da IA."
+    `${ayaFailureMessage(reason)} Posso responder ao que estiver carregado nesta tela, mas não vou inventar uma resposta para o que depende da IA.`
   );
 }
 
@@ -229,9 +259,10 @@ export async function askAyaAi({
   const client = getSupabaseClient();
   if (!client) {
     return {
-      answer: unavailableAnswer(question, context),
+      answer: unavailableAnswer(question, context, "sem_conexao"),
       sources: officialSourcesForQuestion(question),
       unavailable: true,
+      error: "sem_conexao",
     };
   }
 
@@ -240,9 +271,10 @@ export async function askAyaAi({
     session = await exigirSessao(client);
   } catch {
     return {
-      answer: unavailableAnswer(question, context),
+      answer: unavailableAnswer(question, context, "sessao_expirada"),
       sources: officialSourcesForQuestion(question),
       unavailable: true,
+      error: "sessao_expirada",
     };
   }
 
@@ -268,14 +300,15 @@ export async function askAyaAi({
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || !payload?.answer) {
+      const reason = String(payload?.error || `http_${response.status}`);
       return {
-        answer: unavailableAnswer(question, context),
+        answer: unavailableAnswer(question, context, reason),
         sources:
           Array.isArray(payload?.sources) && payload.sources.length
             ? payload.sources
             : officialSourcesForQuestion(question),
         unavailable: true,
-        error: String(payload?.error || `http_${response.status}`),
+        error: reason,
       };
     }
 
@@ -285,11 +318,12 @@ export async function askAyaAi({
       unavailable: false,
     };
   } catch (error) {
+    const reason = error?.name === "AbortError" ? "timeout" : "network_error";
     return {
-      answer: unavailableAnswer(question, context),
+      answer: unavailableAnswer(question, context, reason),
       sources: officialSourcesForQuestion(question),
       unavailable: true,
-      error: error?.name === "AbortError" ? "timeout" : "network_error",
+      error: reason,
     };
   } finally {
     clearTimeout(timeout);
