@@ -43,6 +43,16 @@ function visibleTextList(doc, selector, limit = 10, maxLength = 220) {
   );
 }
 
+function normalizeQuestion(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function collectAyaPageContext(doc = document) {
   const territories = uniqueTexts(
     Array.from(doc.querySelectorAll(".health-map-unit[data-dsei]")).map(
@@ -136,9 +146,27 @@ function countDseisFromContext(context) {
 
 export function contextualAyaAnswer(question, context = {}) {
   const cleanQuestion = String(question || "");
+  const normalized = normalizeQuestion(cleanQuestion);
+  const asksIdentity =
+    /\bqual(?: e)? (?:o )?seu nome\b/.test(normalized) ||
+    /\bcomo voce se chama\b/.test(normalized) ||
+    /\bquem e voce\b/.test(normalized) ||
+    /\bquem voce e\b/.test(normalized);
+
+  if (asksIdentity) {
+    return "Eu sou a Aya, assistente do MONITORA da AgSUS.";
+  }
+
   const asksDseiCount =
-    /\bquant(?:o|os|a|as)\b[\s\S]*\b(?:dsei|dseis)\b/i.test(cleanQuestion) ||
-    /\b(?:dsei|dseis)\b[\s\S]*\bquant(?:o|os|a|as)\b/i.test(cleanQuestion);
+    /\bquant(?:o|os)\b[\s\S]{0,40}\b(?:dsei|dseis)\b/i.test(
+      cleanQuestion,
+    ) ||
+    /\b(?:quantidade|numero|número)\b[\s\S]{0,40}\b(?:dsei|dseis)\b/i.test(
+      cleanQuestion,
+    ) ||
+    /\b(?:dsei|dseis)\b[\s\S]{0,40}\bquant(?:o|os)\b/i.test(
+      cleanQuestion,
+    );
 
   if (asksDseiCount) {
     const count = countDseisFromContext(context);
@@ -185,6 +213,16 @@ export async function askAyaAi({
       sources: officialSourcesForQuestion(question),
       unavailable: false,
       provider: "curated-official",
+    };
+  }
+
+  const contextual = contextualAyaAnswer(question, context);
+  if (contextual) {
+    return {
+      answer: contextual,
+      sources: officialSourcesForQuestion(question),
+      unavailable: false,
+      provider: "monitora-local-context",
     };
   }
 
