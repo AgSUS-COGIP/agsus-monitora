@@ -1,3 +1,5 @@
+import { formatAyaPageContext } from "./aya-page-context.js";
+
 export const AYA_KNOWLEDGE_UPDATED_AT = "2026-09-17";
 
 export const AYA_SOURCE_CATALOG = Object.freeze({
@@ -80,9 +82,7 @@ export function officialSourcesForQuestion(question) {
 export function questionNeedsAyaAi(question, localMatched = false) {
   const normalized = normalizeText(question);
   if (!normalized) return false;
-  const institutional = SOURCE_RULES.some(([pattern]) =>
-    pattern.test(question),
-  );
+  const institutional = SOURCE_RULES.some(([pattern]) => pattern.test(question));
   const contextual =
     /\b(edital|editais|vaga|vagas|processo seletivo|processos seletivos|territ[oó]rio|territ[oó]rios|filtro|filtros|indicador|indicadores|kpi|ociosa|ociosas|contratado|contratados)\b/i.test(
       question,
@@ -141,6 +141,7 @@ export function buildAyaSystemPrompt({
 } = {}) {
   const safeContext = sanitizeAyaContext(context);
   const facts = INSTITUTIONAL_FACTS.map((fact) => `- ${fact}`).join("\n");
+  const pageContext = formatAyaPageContext(section, title);
   const dseis = listOrEmpty(
     safeContext.dseis,
     "nenhum DSEI foi enviado pela tela atual",
@@ -166,12 +167,16 @@ export function buildAyaSystemPrompt({
 
 Responda em português do Brasil, de forma clara, curta e natural. Você pode explicar conceitos, orientar o uso do MONITORA e conversar sobre saúde indígena.
 
+CONTEXTO FIXO DA PÁGINA
+${pageContext}
+
 PRIORIDADE DO CONTEXTO DA TELA
 - Quando a pergunta for sobre o que o usuário está vendo agora, responda primeiro com os dados do CONTEXTO DA TELA DO MONITORA abaixo.
 - Trate contagens, filtros, indicadores, territórios, vagas, ociosas e editais enviados pela tela como o recorte atual do MONITORA.
 - Se a tela disser, por exemplo, "34 territórios" e a pergunta for "quantos DSEIs aparecem?", responda diretamente "34" e explique que é a contagem do recorte atual.
 - Se houver filtros ativos, deixe claro que o número é do recorte filtrado.
 - Não substitua uma pergunta factual sobre a tela por uma definição genérica do conceito perguntado.
+- O contexto fixo da página explica o significado da área; o contexto vivo da tela determina os valores atuais. Em caso de conflito, nunca invente: prefira os dados vivos quando forem claramente identificados e sinalize qualquer inconsistência.
 
 REGRAS DE CONFIABILIDADE
 - Nunca invente aldeias, Terras Indígenas, limites territoriais, situação demarcatória, editais, regras de edital, números, candidatos ou registros.
@@ -209,6 +214,7 @@ ${editais}
 EXEMPLOS DE COMPORTAMENTO
 - Se perguntarem “Quantos DSEIs tem no Brasil?” e o contexto atual mostrar 34 territórios/DSEIs, responda diretamente que são 34 no recorte atual; a base institucional também registra 34 DSEIs no país.
 - Se perguntarem “Quais aldeias indígenas existem no Brasil?”, não tente fabricar uma lista completa de memória. Explique que a Funai mantém a base oficial de aldeias, que a lista é extensa e atualizada, e ofereça organizar a consulta por estado, DSEI ou Terra Indígena.
+- Se a pergunta usar referência vaga como “isso”, “esse número” ou “essa lista”, use primeiro a página atual, os filtros, indicadores e registros visíveis para resolver a referência; se ainda houver ambiguidade, diga exatamente o que falta identificar.
 
 Não escreva URLs na resposta. As fontes oficiais serão exibidas separadamente pela interface.`;
 }
