@@ -39,6 +39,10 @@ function safeHistory(rawHistory) {
     .filter((item) => item.content.trim());
 }
 
+// Uma resposta false não dizia se faltava configuração no servidor, se a chave
+// do Supabase era inválida ou se o token do usuário tinha expirado. As três
+// viravam "unauthorized", e o sistema mandava o usuário entrar de novo mesmo
+// quando entrar de novo não resolveria nada.
 async function validateSupabaseSession(accessToken) {
   const baseUrl = String(process.env.VITE_SUPABASE_URL || "").replace(
     /\/$/,
@@ -49,7 +53,14 @@ async function validateSupabaseSession(accessToken) {
       process.env.VITE_SUPABASE_ANON_KEY ||
       "",
   );
-  if (!baseUrl || !publishableKey || !accessToken) return false;
+
+  const missing = [];
+  if (!baseUrl) missing.push("VITE_SUPABASE_URL");
+  if (!publishableKey) missing.push("VITE_SUPABASE_PUBLISHABLE_KEY");
+  if (missing.length) {
+    return { status: "auth_not_configured", missing };
+  }
+  if (!accessToken) return { status: "unauthorized", reason: "sem_token" };
 
   const response = await fetch(`${baseUrl}/auth/v1/user`, {
     headers: {
@@ -58,7 +69,31 @@ async function validateSupabaseSession(accessToken) {
     },
     signal: AbortSignal.timeout(5000),
   });
-  return response.ok;
+  if (response.ok) return { status: "ok" };
+
+  // O Supabase responde 401 tanto para chave inválida quanto para token
+  // expirado. Só a mensagem dele separa as duas.
+  const body = await response.json().catch(() => ({}));
+  const upstreamMessage = String(body?.message || body?.msg || "").slice(
+    0,
+    120,
+  );
+  const invalidKey = /api key/i.test(upstreamMessage);
+  if (invalidKey) {
+    return {
+      status: "auth_not_configured",
+      upstream: response.status,
+      detail: upstreamMessage,
+    };
+  }
+  if (response.status === 401 || response.status === 403) {
+    return {
+      status: "unauthorized",
+      upstream: response.status,
+      detail: upstreamMessage,
+    };
+  }
+  return { status: "auth_unavailable", upstream: response.status };
 }
 
 function safeSources(question) {
@@ -77,8 +112,19 @@ export default async function handler(req, res) {
 
   const token = bearerToken(req);
   try {
-    if (!(await validateSupabaseSession(token))) {
-      return json(res, 401, { error: "unauthorized" });
+    const auth = await validateSupabaseSession(token);
+    if (auth.status === "auth_not_configured") {
+      return json(res, 503, {
+        error: "auth_not_configured",
+        missing: auth.missing,
+        detail: auth.detail,
+      });
+    }
+    if (auth.status === "auth_unavailable") {
+      return json(res, 503, { error: "auth_unavailable" });
+    }
+    if (auth.status !== "ok") {
+      return json(res, 401, { error: "unauthorized", detail: auth.detail });
     }
   } catch {
     return json(res, 503, { error: "auth_unavailable" });

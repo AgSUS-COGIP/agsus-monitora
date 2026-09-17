@@ -98,3 +98,17 @@ describe("mensagens de falha da Aya", () => {
     );
   });
 });
+
+describe("falha de autenticação do servidor", () => {
+  it("separa configuração do servidor de sessão do usuário", () => {
+    expect(ayaFailureMessage("auth_not_configured")).toContain(
+      "configuração do ambiente",
+    );
+    expect(ayaFailureMessage("auth_not_configured")).toContain(
+      "entrar novamente não resolve",
+    );
+    expect(ayaFailureMessage("unauthorized")).toContain(
+      "Entre novamente no MONITORA",
+    );
+  });
+});
