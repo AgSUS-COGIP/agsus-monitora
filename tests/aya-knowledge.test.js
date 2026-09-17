@@ -26,35 +26,59 @@ describe("base institucional da Aya", () => {
     expect(terras).toContainEqual(AYA_SOURCE_CATALOG.funai);
   });
 
-  it("encaminha perguntas institucionais e desconhecidas para IA", () => {
+  it("encaminha perguntas institucionais e contextuais para IA", () => {
     expect(questionNeedsAyaAi("O que é DSEI?", true)).toBe(true);
+    expect(questionNeedsAyaAi("Quantas vagas o painel mostra?", true)).toBe(
+      true,
+    );
     expect(questionNeedsAyaAi("Quais aldeias existem?", false)).toBe(true);
     expect(questionNeedsAyaAi("Como uso o mapa?", true)).toBe(false);
   });
 
-  it("limita o contexto enviado pelo navegador", () => {
+  it("limita e preserva o contexto útil enviado pelo navegador", () => {
     const context = sanitizeAyaContext({
       pathname: "/".repeat(300),
-      dseis: Array.from({ length: 30 }, (_, index) => `DSEI ${index}`),
+      pageTitle: "Saúde Indígena",
+      mapSummary: "34 territórios",
+      activeFilters: ["UF: AM", "Edital: 01/2026"],
+      search: "xavante",
+      kpis: ["Vagas 120", "Ociosas 35"],
+      territories: Array.from({ length: 40 }, (_, index) => `DSEI ${index}`),
+      dseis: Array.from({ length: 40 }, (_, index) => `DSEI ${index}`),
       editais: Array.from({ length: 30 }, (_, index) => `Edital ${index}`),
       segredo: "não deve sair",
     });
 
     expect(context.pathname.length).toBeLessThanOrEqual(160);
-    expect(context.dseis).toHaveLength(10);
-    expect(context.editais).toHaveLength(10);
+    expect(context.mapSummary).toBe("34 territórios");
+    expect(context.activeFilters).toEqual(["UF: AM", "Edital: 01/2026"]);
+    expect(context.kpis).toContain("Vagas 120");
+    expect(context.territories).toHaveLength(34);
+    expect(context.dseis).toHaveLength(34);
+    expect(context.editais).toHaveLength(12);
     expect(context).not.toHaveProperty("segredo");
   });
 
-  it("instrui o modelo a não inventar listas de aldeias", () => {
+  it("prioriza o estado atual do MONITORA no prompt", () => {
     const prompt = buildAyaSystemPrompt({
       section: "dashboard",
       title: "Saúde Indígena",
-      context: { dseis: ["DSEI Xavante"], editais: ["Edital 1"] },
+      context: {
+        mapSummary: "34 territórios",
+        activeFilters: ["UF: AM"],
+        kpis: ["Vagas 120", "Ociosas 35"],
+        dseis: ["DSEI Xavante — 10 vagas"],
+        territories: ["DSEI Xavante — 10 vagas"],
+        editais: ["Edital 1"],
+      },
     });
 
     expect(prompt).toContain("Nunca invente aldeias");
+    expect(prompt).toContain("34 territórios");
+    expect(prompt).toContain("UF: AM");
+    expect(prompt).toContain("Vagas 120");
     expect(prompt).toContain("DSEI Xavante");
+    expect(prompt).toContain("Não substitua uma pergunta factual");
     expect(prompt).toContain("Funai");
     expect(prompt).toContain("Não escreva URLs");
   });
