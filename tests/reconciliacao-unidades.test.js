@@ -276,3 +276,18 @@ describe("distância", () => {
     expect(distanciaKm(null, -60, -3, -60)).toBeNull();
   });
 });
+
+describe("prefixo PB da planilha de lotações", () => {
+  it("converge PB para o mesmo canônico de POLO BASE e do nome puro", () => {
+    expect(nomeCanonico("PB ACONÃ")).toBe("ACONA");
+    expect(nomeCanonico("POLO BASE ACONA")).toBe("ACONA");
+    expect(nomeCanonico("Aconã")).toBe("ACONA");
+  });
+
+  it("não encurta nomes a ponto de inviabilizar o pareamento", () => {
+    expect(canonicoUtilizavel(nomeCanonico("PB KARAPOTÓ TERRA NOVA"))).toBe(
+      true,
+    );
+    expect(nomeCanonico("PB KARAPOTÓ TERRA NOVA")).toBe("KARAPOTO TERRA NOVA");
+  });
+});
