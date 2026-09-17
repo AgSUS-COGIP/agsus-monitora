@@ -28,6 +28,16 @@ export const AYA_SOURCE_CATALOG = Object.freeze({
     label: "IBGE — Censo 2022",
     url: "https://educa.ibge.gov.br/criancas/brasil/2848-nosso-povo/22324-os-indigenas-no-censo-2022.html",
   }),
+  pdsiAlSe: Object.freeze({
+    id: "pdsi-al-se",
+    label: "Ministério da Saúde — PDSI Alagoas e Sergipe 2024–2027",
+    url: "https://www.gov.br/saude/pt-br/composicao/sesai/planos-distritais-2024-2027/plano-distrital-alagoas-e-sergipe",
+  }),
+  funaiKaririXoco: Object.freeze({
+    id: "funai-kariri-xoco",
+    label: "Funai — Kariri-Xocó",
+    url: "https://www.gov.br/funai/pt-br/assuntos/noticias/2017/kariri-xoco-desenvolvem-projeto-educacional-para-preservar-historia-e-cultura",
+  }),
 });
 
 const SOURCE_RULES = Object.freeze([
@@ -49,9 +59,29 @@ const SOURCE_RULES = Object.freeze([
   ],
 ]);
 
+const CURATED_KNOWLEDGE = Object.freeze([
+  Object.freeze({
+    id: "dsei-al-se",
+    pattern:
+      /\b(?:dsei\s+(?:de\s+)?alagoas|alagoas\s+e\s+sergipe|dsei\s+al\/?se|al\/?se|kariri[-\s]?xoc[oó])\b/i,
+    sourceIds: Object.freeze(["pdsiAlSe", "funaiKaririXoco"]),
+    facts: Object.freeze([
+      "O nome oficial é DSEI Alagoas e Sergipe (DSEI AL/SE), com sede em Maceió.",
+      "O PDSI 2024–2027 do DSEI AL/SE registra, com base de 2023, 30 aldeias atendidas.",
+      "Na caracterização de 2023, o DSEI AL/SE registra 13 Polos Base Tipo I, 4 casas de apoio, 12 UBSIs e 1 CASAI.",
+      "O Painel SIASI de 2023 registra população total de 13.480 pessoas no DSEI AL/SE.",
+      "No DSEI AL/SE, o polo/comunidade Kariri Xocó fica em Porto Real do Colégio (AL), com 1 aldeia e população de 2.509 pessoas no Painel SIASI de 2023, equivalente a 18,61% do total do distrito naquele ano.",
+      "O PDSI descreve a denominação Kariri-Xocó como resultado da fusão histórica, ocorrida há cerca de 200 anos, entre os Kariri de Porto Real do Colégio e parte dos Xocó da ilha de São Pedro, em Sergipe.",
+      "Entre as práticas culturais citadas no PDSI para o povo Kariri-Xocó está o ritual Ouricuri, praticado desde a infância.",
+      "Porto Real do Colégio está na região ribeirinha do rio São Francisco; o PDSI relaciona essa proximidade às atividades pesqueiras e à agricultura local.",
+    ]),
+  }),
+]);
+
 const INSTITUTIONAL_FACTS = Object.freeze([
   "A SESAI coordena, supervisiona, monitora e avalia ações de atenção integral à saúde indígena no Subsistema de Atenção à Saúde Indígena.",
   "O Plano Nacional de Saúde 2024-2027 registra 34 Distritos Sanitários Especiais Indígenas (DSEIs).",
+  "Na visão nacional do MONITORA, os 34 DSEIs são distintos das 2 CASAIs nacionais; quando ambos estiverem desenhados no mapa, são 36 pontos, não 36 DSEIs.",
   "DSEI é uma unidade territorial e de gestão da atenção à saúde indígena; seus limites são definidos por critérios geográficos, demográficos, culturais e sanitários e não precisam coincidir com limites estaduais, municipais ou de Terras Indígenas.",
   "CASAI é um estabelecimento de apoio, acolhimento e assistência a pessoas indígenas referenciadas a outros serviços do SUS, inclusive para atenção especializada, e pode acolher acompanhantes quando necessário.",
   "A Funai mantém base geoespacial oficial de Terras Indígenas, aldeias, áreas de atuação e sedes de DSEIs. A página informa atualização mensal dos dados geoespaciais.",
@@ -68,8 +98,49 @@ function normalizeText(value) {
     .trim();
 }
 
+export function curatedKnowledgeForQuestion(question) {
+  const text = String(question || "");
+  const matches = CURATED_KNOWLEDGE.filter((entry) => entry.pattern.test(text));
+  return matches.flatMap((entry) => entry.facts);
+}
+
+export function curatedAnswerForQuestion(question) {
+  const normalized = normalizeText(question);
+  if (!normalized) return "";
+
+  const isAlSe =
+    /\b(?:dsei\s+(?:de\s+)?alagoas|alagoas\s+e\s+sergipe|dsei\s+al\/?se|al\/?se)\b/i.test(
+      normalized,
+    );
+  const asksVillageCount =
+    /\bquant(?:a|as|o|os)\b[\s\S]*\baldeia|\baldeia[\s\S]*\bquant(?:a|as|o|os)\b/i.test(
+      normalized,
+    );
+  const asksKariri = /\bkariri[\s-]?xoco\b/i.test(normalized);
+
+  if (!isAlSe && !asksKariri) return "";
+
+  const parts = [];
+  if (isAlSe && asksVillageCount) {
+    parts.push(
+      "O DSEI Alagoas e Sergipe (AL/SE) registra 30 aldeias atendidas na caracterização oficial com base de 2023 do PDSI 2024–2027.",
+    );
+  }
+  if (asksKariri) {
+    parts.push(
+      "Sobre o povo Kariri-Xocó: no DSEI AL/SE, a comunidade está em Porto Real do Colégio (AL) e aparece com 1 aldeia e 2.509 pessoas no Painel SIASI de 2023, correspondendo a 18,61% da população do distrito naquele ano. O PDSI descreve a denominação Kariri-Xocó como resultado da fusão histórica entre os Kariri de Porto Real do Colégio e parte dos Xocó da ilha de São Pedro, em Sergipe, e cita o ritual Ouricuri entre suas práticas culturais. A comunidade vive na região ribeirinha do rio São Francisco, onde pesca e agricultura têm importância local.",
+    );
+  }
+
+  return parts.join("\n\n");
+}
+
 export function officialSourcesForQuestion(question) {
   const sourceIds = new Set();
+  for (const entry of CURATED_KNOWLEDGE) {
+    if (!entry.pattern.test(String(question || ""))) continue;
+    entry.sourceIds.forEach((id) => sourceIds.add(id));
+  }
   for (const [pattern, ids] of SOURCE_RULES) {
     if (!pattern.test(String(question || ""))) continue;
     ids.forEach((id) => sourceIds.add(id));
@@ -136,29 +207,50 @@ function listOrEmpty(values, emptyText) {
     : `- ${emptyText}`;
 }
 
+function questionUsesLiveScreen(question) {
+  return /\b(?:tela|aqui|agora|aparece|aparecem|vis[ií]vel|vis[ií]veis|mapa|filtro|filtros|vaga|vagas|ociosa|ociosas|processo|processos|edital|editais|indicador|indicadores|kpi)\b/i.test(
+    String(question || ""),
+  );
+}
+
 export function buildAyaSystemPrompt({
   section = "",
   title = "",
+  question = "",
   context = {},
 } = {}) {
   const safeContext = sanitizeAyaContext(context);
   const facts = INSTITUTIONAL_FACTS.map((fact) => `- ${fact}`).join("\n");
   const pageContext = formatAyaPageContext(section, title);
+  const curatedFacts = curatedKnowledgeForQuestion(question);
+  const curated = listOrEmpty(
+    curatedFacts,
+    "nenhum bloco específico foi selecionado para esta pergunta",
+  );
+  const includeLiveLists = questionUsesLiveScreen(question);
   const dseis = listOrEmpty(
-    safeContext.dseis,
-    "nenhum DSEI foi enviado pela tela atual",
+    includeLiveLists ? safeContext.dseis : [],
+    includeLiveLists
+      ? "nenhum DSEI foi enviado pela tela atual"
+      : "lista omitida porque a pergunta não depende da tela atual",
   );
   const territories = listOrEmpty(
-    safeContext.territories,
-    "nenhum território detalhado foi enviado pela tela atual",
+    includeLiveLists ? safeContext.territories : [],
+    includeLiveLists
+      ? "nenhum território detalhado foi enviado pela tela atual"
+      : "lista omitida porque a pergunta não depende da tela atual",
   );
   const editais = listOrEmpty(
-    safeContext.editais,
-    "nenhum edital foi enviado pela tela atual",
+    includeLiveLists ? safeContext.editais : [],
+    includeLiveLists
+      ? "nenhum edital foi enviado pela tela atual"
+      : "lista omitida porque a pergunta não depende da tela atual",
   );
   const kpis = listOrEmpty(
-    safeContext.kpis,
-    "nenhum indicador foi enviado pela tela atual",
+    includeLiveLists ? safeContext.kpis : [],
+    includeLiveLists
+      ? "nenhum indicador foi enviado pela tela atual"
+      : "lista omitida porque a pergunta não depende da tela atual",
   );
   const activeFilters = listOrEmpty(
     safeContext.activeFilters,
@@ -172,18 +264,23 @@ Responda em português do Brasil, de forma clara, curta e natural. Você pode ex
 CONTEXTO FIXO DA PÁGINA
 ${pageContext}
 
+CONHECIMENTO CURADO ESPECÍFICO PARA A PERGUNTA
+${curated}
+
 PRIORIDADE DO CONTEXTO DA TELA
 - Quando a pergunta for sobre o que o usuário está vendo agora, responda primeiro com os dados do CONTEXTO DA TELA DO MONITORA abaixo.
 - Trate contagens, filtros, indicadores, territórios, vagas, ociosas e editais enviados pela tela como o recorte atual do MONITORA.
-- Se a tela disser, por exemplo, "34 territórios" e a pergunta for "quantos DSEIs aparecem?", responda diretamente "34" e explique que é a contagem do recorte atual.
+- Na visão nacional, 34 DSEIs + 2 CASAIs nacionais são 36 pontos no mapa; nunca chame esses 36 pontos de 36 DSEIs.
 - Se houver filtros ativos, deixe claro que o número é do recorte filtrado.
-- Não substitua uma pergunta factual sobre a tela por uma definição genérica do conceito perguntado.
+- Não substitua uma pergunta factual específica por uma definição genérica do conceito perguntado.
+- Se a pergunta tiver dois ou mais pedidos, responda a todos, na mesma ordem em que foram feitos.
 - O contexto fixo da página explica o significado da área; o contexto vivo da tela determina os valores atuais. Em caso de conflito, nunca invente: prefira os dados vivos quando forem claramente identificados e sinalize qualquer inconsistência.
 
 REGRAS DE CONFIABILIDADE
 - Nunca invente aldeias, Terras Indígenas, limites territoriais, situação demarcatória, editais, regras de edital, números, candidatos ou registros.
+- Use o CONHECIMENTO CURADO ESPECÍFICO quando ele contiver a resposta e mantenha o ano/base temporal informado.
 - Diferencie claramente dado do MONITORA, conhecimento institucional e dado histórico.
-- Se a pergunta exigir uma lista completa ou um dado atual que não esteja no contexto fornecido, diga que você não tem essa lista carregada e indique a fonte oficial adequada.
+- Se a pergunta exigir uma lista completa ou um dado atual que não esteja no contexto nem no conhecimento curado, diga exatamente qual dado não está disponível e indique a fonte oficial adequada.
 - Para aldeias e Terras Indígenas, a fonte oficial é a Funai. A base geoespacial da Funai é a referência para listas e limites.
 - Para DSEI, CASAI, SESAI, polos base e organização da saúde indígena, priorize Ministério da Saúde / SESAI.
 - Para população indígena e Censo, use IBGE e sempre informe o ano do levantamento.
@@ -214,7 +311,9 @@ Editais/processos visíveis:
 ${editais}
 
 EXEMPLOS DE COMPORTAMENTO
-- Se perguntarem “Quantos DSEIs tem no Brasil?” e o contexto atual mostrar 34 territórios/DSEIs, responda diretamente que são 34 no recorte atual; a base institucional também registra 34 DSEIs no país.
+- Se perguntarem “Quantos DSEIs tem no Brasil?”, responda 34 DSEIs. Se o mapa também mostrar as duas CASAIs nacionais, explique que são 36 pontos no total, mas continuam sendo 34 DSEIs.
+- Se perguntarem “Quantas aldeias tem no DSEI Alagoas?”, use o bloco específico do DSEI AL/SE e responda 30 aldeias, com base de 2023, em vez de explicar apenas o que é DSEI.
+- Se a mesma pergunta também pedir informações sobre Kariri-Xocó, responda a contagem primeiro e depois explique o povo usando os fatos curados.
 - Se perguntarem “Quais aldeias indígenas existem no Brasil?”, não tente fabricar uma lista completa de memória. Explique que a Funai mantém a base oficial de aldeias, que a lista é extensa e atualizada, e ofereça organizar a consulta por estado, DSEI ou Terra Indígena.
 - Se a pergunta usar referência vaga como “isso”, “esse número” ou “essa lista”, use primeiro a página atual, os filtros, indicadores e registros visíveis para resolver a referência; se ainda houver ambiguidade, diga exatamente o que falta identificar.
 

@@ -7,7 +7,7 @@ import {
 describe("contexto da tela para a Aya", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <div id="masterMapCount">34 territórios</div>
+      <div id="masterMapCount">34 DSEIs · 2 CASAIs</div>
       <div id="activeFiltersBar">UF: AM · Edital: 01/2026</div>
       <div class="kpis kpis-main">
         <div class="kpi">Vagas 120</div>
@@ -29,7 +29,7 @@ describe("contexto da tela para a Aya", () => {
   it("coleta mapa, filtros, indicadores, territórios e editais", () => {
     const context = collectAyaPageContext(document);
 
-    expect(context.mapSummary).toBe("34 territórios");
+    expect(context.mapSummary).toBe("34 DSEIs · 2 CASAIs");
     expect(context.activeFilters.join(" ")).toContain("UF: AM");
     expect(context.kpis).toEqual(["Vagas 120", "Ociosas 35"]);
     expect(context.search).toBe("Xavante");
@@ -38,23 +38,34 @@ describe("contexto da tela para a Aya", () => {
     expect(context.editais[0]).toContain("Edital 01/2026");
   });
 
-  it("responde a contagem de DSEIs diretamente do mapa", () => {
+  it("responde a contagem de DSEIs pela lista de DSEIs, não pelo total de pontos", () => {
     document.querySelector("#activeFiltersBar").textContent = "";
+    document.querySelector("#masterMapCount").textContent = "36 pontos";
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      Array.from(
+        { length: 33 },
+        (_, index) =>
+          `<div class="health-map-unit" data-dsei="${index + 1}"><strong>DSEI ${index + 2}</strong></div>`,
+      ).join(""),
+    );
+
     const context = collectAyaPageContext(document);
     const answer = contextualAyaAnswer("Quantos DSEIs tem no Brasil?", context);
 
+    expect(context.territories).toHaveLength(34);
     expect(answer).toContain("34 DSEIs");
-    expect(answer).toContain("visão atual do mapa");
+    expect(answer).not.toContain("36 DSEIs");
   });
 
-  it("explicita quando a contagem corresponde a filtros ativos", () => {
-    const answer = contextualAyaAnswer("Quantos territórios aparecem?", {
-      mapSummary: "8 territórios",
+  it("explicita quando a contagem de DSEIs corresponde a filtros ativos", () => {
+    const answer = contextualAyaAnswer("Quantos DSEIs aparecem?", {
+      mapSummary: "8 pontos",
       activeFilters: ["UF: AM"],
-      territories: [],
+      territories: ["DSEI Alto Rio Negro", "DSEI Manaus"],
     });
 
-    expect(answer).toContain("8 DSEIs");
+    expect(answer).toContain("2 DSEIs");
     expect(answer).toContain("filtros ativos");
   });
 });

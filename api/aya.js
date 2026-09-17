@@ -1,5 +1,6 @@
 import {
   buildAyaSystemPrompt,
+  curatedAnswerForQuestion,
   officialSourcesForQuestion,
   sanitizeAyaContext,
 } from "../src/modules/aya-knowledge.js";
@@ -85,6 +86,16 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "invalid_question" });
   }
 
+  const curated = curatedAnswerForQuestion(question);
+  if (curated) {
+    return json(res, 200, {
+      answer: curated,
+      sources: safeSources(question),
+      model: "curated-official",
+      provider: "curated-official",
+    });
+  }
+
   const bridgeUrl = String(process.env.AYA_LOCAL_BRIDGE_URL || "")
     .trim()
     .replace(/\/$/, "");
@@ -117,7 +128,12 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content: buildAyaSystemPrompt({ section, title, context }),
+            content: buildAyaSystemPrompt({
+              section,
+              title,
+              question,
+              context,
+            }),
           },
           ...history,
           { role: "user", content: question },
