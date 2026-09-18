@@ -211,8 +211,9 @@ describe("os filtros por tipo do painel", () => {
       codigo.indexOf("function enquadrarDetalhe"),
     );
     expect(fn).toContain("const visiveisAgora = visiveis(classificados)");
-    expect(fn).toContain("agruparCoincidentes(polosVisiveis)");
-    expect(fn).toContain("agruparPorCelula(demaisVisiveis");
+    expect(fn).toContain("agruparCoincidentes(visiveisAgora)");
+    expect(fn).toContain("posicoesSpiderfy(grupo.registros.length)");
+    expect(fn).not.toContain("mapa-cluster");
     expect(fn).toContain("visiveis(externos).forEach");
     expect(fn).toContain("renderDetailUnitList(visiveis(classificados))");
   });
@@ -226,6 +227,25 @@ describe("os filtros por tipo do painel", () => {
     expect(codigo).toContain(
       "lista.filter((r) => !_detailTiposOcultos.has(r.type.key))",
     );
+  });
+
+  it("não pinta UFs inteiras como se fossem a abrangência do DSEI", () => {
+    const fn = codigo.slice(
+      codigo.indexOf("function drawDetailBrazilBase"),
+      codigo.indexOf("function detailUnitType"),
+    );
+    expect(fn).not.toContain("const selected = ufs.includes");
+    expect(fn).not.toContain('fillColor: selected ? "#71cbd0"');
+    expect(codigo).toContain("__agsusSetDseiCoverage?.(d.n)");
+  });
+
+  it("enquadra o território pela área oficial quando ela está disponível", () => {
+    const fn = codigo.slice(
+      codigo.indexOf("function enquadrarDetalhe"),
+      codigo.indexOf("function atualizarChipDeVinculos"),
+    );
+    expect(fn).toContain("__agsusDseiCoverageBounds");
+    expect(fn).toContain("abrangenciaOficial?.isValid?.()");
   });
 
   it("trocar de território limpa os filtros", () => {
