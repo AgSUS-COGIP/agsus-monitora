@@ -108,3 +108,58 @@ describe("base institucional da Aya", () => {
     expect(prompt).toContain("Não escreva URLs");
   });
 });
+
+describe("glossário do MONITORA", () => {
+  it("define vaga ociosa sem depender do modelo", () => {
+    const answer = curatedAnswerForQuestion("O que significa uma vaga ociosa?");
+    expect(answer).toContain("sem contratação");
+    expect(answer).toContain("Ociosas dividido por Vagas");
+  });
+
+  it("define contratados e taxa de ociosidade", () => {
+    expect(curatedAnswerForQuestion("o que é contratados?")).toContain(
+      "preenchida por contratação",
+    );
+    expect(curatedAnswerForQuestion("o que é taxa de ociosidade?")).toContain(
+      "porcentagem",
+    );
+  });
+
+  it("não sequestra perguntas que apenas citam o termo", () => {
+    expect(curatedAnswerForQuestion("quantas vagas ociosas o DSEI tem?")).toBe(
+      "",
+    );
+  });
+
+  it("leva o glossário ao prompt do modelo", () => {
+    const prompt = buildAyaSystemPrompt({ section: "saude-indigena" });
+    expect(prompt).toContain("Vagas, Contratados e Ociosas");
+    expect(prompt).toContain("Nunca invente siglas");
+  });
+});
+
+describe("siglas institucionais respondidas sem o modelo", () => {
+  it("nega que MONITORA seja sigla, sem contradição", () => {
+    const answer = curatedAnswerForQuestion(
+      "O que significa MONITORA? É uma sigla?",
+    );
+    expect(answer).toContain("Não é uma sigla");
+    expect(answer).not.toMatch(/É uma sigla que/);
+  });
+
+  it("expande AgSUS, SESAI e SIASI corretamente", () => {
+    expect(curatedAnswerForQuestion("o que é a AgSUS?")).toContain(
+      "Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde",
+    );
+    expect(curatedAnswerForQuestion("o que é SESAI?")).toContain(
+      "Secretaria Especial de Saúde Indígena",
+    );
+    expect(curatedAnswerForQuestion("o que é o SIASI?")).toContain(
+      "Sistema de Informação da Atenção à Saúde Indígena",
+    );
+  });
+
+  it("não confunde SIASI com SasiSUS", () => {
+    expect(curatedAnswerForQuestion("o que é o SIASI?")).toContain("SasiSUS");
+  });
+});
