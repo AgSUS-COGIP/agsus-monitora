@@ -5,7 +5,6 @@ export const FUNAI_TERRITORIES_WMS =
 export const FUNAI_TERRITORIES_WFS =
   "https://geoserver.funai.gov.br/geoserver/Funai/ows";
 export const FUNAI_TERRITORIES_LAYER = "Funai:tis_poligonais";
-export const FUNAI_DSEI_LAYER = "Funai:areas_dsei";
 
 export const FUNAI_PROXY_WMS = "/api/funai-wms";
 export const FUNAI_PROXY_GEOJSON = "/api/funai-geodata";
