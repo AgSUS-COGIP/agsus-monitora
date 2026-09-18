@@ -34,6 +34,7 @@ import {
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { reconciliarDsei } from "../lib/reconciliacao-unidades.js";
 import {
+  agruparCoincidentes,
   agruparPorCelula,
   criarRegistroDeDescarte,
   grupoCoincidente,
@@ -9428,11 +9429,12 @@ function detailRecordsForDsei(d) {
     polos: (d.polos || []).map((p) => ({
       nome: p.n,
       cnes: p.cnes || "",
-      // Para medir divergência entre as fontes, usa a coordenada original da
-      // planilha quando ela foi preservada pelo transporte. A coordenada de
-      // exibição continua sendo a do CNES depois da reconciliação.
-      lat: Number(p.coord_lotacoes?.lat ?? p.lat),
-      lon: Number(p.coord_lotacoes?.lon ?? p.lon),
+      // O enriquecimento preserva três fontes. Para a posição do polo usa a
+      // coordenada que já existia no lmap; Lotações e CNES ficam como
+      // comparação até validação independente.
+      lat: Number(p.coord_lmap?.lat ?? p.lat),
+      lon: Number(p.coord_lmap?.lon ?? p.lon),
+      coord_lotacoes: p.coord_lotacoes || null,
       uf: p.uf,
       mun_lotacao: p.mun_lotacao || "",
       cod: p.cod ?? null,
@@ -9453,6 +9455,7 @@ function detailRecordsForDsei(d) {
     nomes: u.nomes,
     cod: u.cod,
     coordenadas: u.coordenadas,
+    coordenada_exibida: u.coordenada_exibida,
     distancia_entre_fontes_km: u.distancia_entre_fontes_km,
     divergencia: u.divergencia,
   }));
@@ -9619,8 +9622,29 @@ function renderDetailMap(d) {
     momento da interação. O ganho é pequeno sozinho — medido, 21% — mas evita
     guardar duas strings de HTML por marcador em memória.
   */
-  const popupDoRegistro = (record) =>
-    `<b>${esc(record.type.label)}</b><br>${esc(record.name)}<br>${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}${record.cnes ? `<br>CNES: ${esc(record.cnes)}` : ""}`;
+  const popupDoRegistro = (record) => {
+    const fontes = record.coordenadas;
+    const linhas = [
+      `<b>${esc(record.type.label)}</b>`,
+      esc(record.name),
+      `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
+    ];
+    if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
+    if (fontes?.lmap && fontes?.rede_cnes) {
+      linhas.push("<b>Localização em validação</b>");
+      linhas.push(
+        `Mapa anterior: ${Number(fontes.lmap.lat).toFixed(5)}, ${Number(fontes.lmap.lon).toFixed(5)}`,
+      );
+      if (fontes.lotacoes)
+        linhas.push(
+          `Lotações: ${Number(fontes.lotacoes.lat).toFixed(5)}, ${Number(fontes.lotacoes.lon).toFixed(5)}`,
+        );
+      linhas.push(
+        `CNES: ${Number(fontes.rede_cnes.lat).toFixed(5)}, ${Number(fontes.rede_cnes.lon).toFixed(5)}`,
+      );
+    }
+    return linhas.join("<br>");
+  };
 
   const marcadorDeRegistro = (record, posicao) => {
     const marker = L.marker(posicao || [record.lat, record.lon], {
@@ -9674,7 +9698,54 @@ function renderDetailMap(d) {
       );
     });
 
-    const grupos = agruparPorCelula(visiveis(classificados), (r) =>
+    const visiveisAgora = visiveis(classificados);
+    const polosVisiveis = visiveisAgora.filter((r) => r.type.key === "polo");
+    const demaisVisiveis = visiveisAgora.filter((r) => r.type.key !== "polo");
+
+    /*
+      Polo Base é uma camada operacional pequena e precisa permanecer legível.
+      O agrupamento por célula de 60 px escondia polos próximos no enquadramento
+      inicial e dava a impressão de que tinham sumido. Polos só são agrupados
+      quando têm exatamente a mesma coordenada; nesse caso o clique abre o leque.
+    */
+    agruparCoincidentes(polosVisiveis).forEach((grupo) => {
+      if (grupo.registros.length === 1) {
+        _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.registros[0]));
+        return;
+      }
+
+      const badge = L.marker([grupo.lat, grupo.lon], {
+        icon: L.divIcon({
+          className: "mapa-cluster mapa-cluster--leque",
+          html: `<span>${grupo.registros.length}</span>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+        }),
+        keyboard: true,
+        title: `${grupo.registros.length} polos na mesma coordenada — abrir em leque`,
+      });
+
+      const grupoDoLeque = {
+        ...grupo,
+        quantidade: grupo.registros.length,
+      };
+      const acionar = () => {
+        if (_leque.aberto === grupo.chave) recolherLeque();
+        else abrirLeque(grupoDoLeque);
+      };
+      badge.on("click", acionar);
+      badge.on("keypress", (e) => {
+        if (e.originalEvent?.key === " ") {
+          e.originalEvent.preventDefault();
+          acionar();
+        }
+      });
+      _detailUnitLayer.addLayer(badge);
+    });
+
+    // UBSI/CASAI/unidades podem ser numerosas; nelas permanece o agrupamento
+    // por célula para evitar milhares de nós de DOM.
+    const grupos = agruparPorCelula(demaisVisiveis, (r) =>
       _detailLeaflet.latLngToContainerPoint([r.lat, r.lon]),
     );
 
@@ -9683,22 +9754,7 @@ function renderDetailMap(d) {
         _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.unico));
         return;
       }
-      /*
-        O grupo fica na média das coordenadas REAIS dos seus membros — nenhuma
-        coordenada é inventada nem promovida. Clicar aproxima até o grupo se
-        desfazer sozinho no zoom seguinte.
-      */
-      /*
-        Um grupo pode juntar-se por duas razões diferentes, e a saída não é a
-        mesma.
 
-        Se os membros só caem na mesma célula de 60 px, aproximar separa-os — e
-        é isso que o clique faz.
-
-        Se partilham a MESMA coordenada, aproximar nunca separa: os 57 registos
-        de `4.596,-60.168` continuariam empilhados no zoom máximo, com 56 deles
-        inalcançáveis. Esses expandem-se em leque, e o leque é em pixels.
-      */
       const coincidente = grupoCoincidente(grupo.registros);
 
       const badge = L.marker([grupo.lat, grupo.lon], {
@@ -9730,10 +9786,6 @@ function renderDetailMap(d) {
       };
 
       badge.on("click", acionar);
-      /*
-        O Leaflet dá `keyboard: true` ao marcador, que responde a Enter. O
-        Espaço não vem de série, e é o que se espera de um botão.
-      */
       badge.on("keypress", (e) => {
         if (e.originalEvent?.key === " ") {
           e.originalEvent.preventDefault();
