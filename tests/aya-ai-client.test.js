@@ -84,7 +84,10 @@ describe("mensagens de falha da Aya", () => {
       "AYA_LOCAL_BRIDGE_URL",
     );
     expect(ayaFailureMessage("local_ai_unavailable")).toContain("túnel");
-    expect(ayaFailureMessage("timeout")).toContain("25 segundos");
+    // Sem número fixo: a mensagem não deve repetir AI_TIMEOUT_MS, senão as duas
+    // divergem no primeiro ajuste de limite.
+    expect(ayaFailureMessage("timeout")).toContain("cancelada pelo navegador");
+    expect(ayaFailureMessage("timeout")).not.toMatch(/d+ segundos/);
     expect(ayaFailureMessage("http_404")).toContain("/api/aya");
     expect(ayaFailureMessage("sessao_expirada")).toContain("sessão expirou");
   });
