@@ -342,7 +342,7 @@ describe("o mapa nacional usa a mesma regra do detalhado", () => {
 
   it("o texto não afirma mais 'em outro estado'", () => {
     expect(codigo).not.toContain("em outro estado");
-    expect(codigo).toContain("fora das UFs de abrang");
+    expect(codigo).toContain("fora das UFs administrativas do DSEI");
   });
 });
 
@@ -521,25 +521,28 @@ describe("as cores dos marcadores se separam do mapa", () => {
 describe("o mapa não inventa coordenadas", () => {
   const codigo = semComentarios(app);
 
-  it("o selo da sede partilhada fica na própria sede", () => {
-    const bloco = codigo.slice(
-      codigo.indexOf("const selo = L.marker"),
-      codigo.indexOf("_layerDSEI.addLayer(selo)"),
-    );
-    expect(bloco).toContain("L.marker([visiveis[0].lat, visiveis[0].lon]");
-    expect(bloco).not.toContain("layerPointToLatLng");
-    /* Centrado: metade dos 22px do ícone, nos dois eixos. */
-    expect(bloco).toContain("iconAnchor: [11, 11]");
+  it("não cria selo numérico para DSEIs que compartilham sede", () => {
+    expect(codigo).not.toContain("mapa-cluster--sede");
+    expect(codigo).not.toContain("DSEIs com a mesma sede");
   });
 
-  it("o único deslocamento que sobra é o do leque, e ele desenha a linha", () => {
+  it("todo deslocamento visual preserva uma linha até a coordenada real", () => {
     const usos = codigo.match(/layerPointToLatLng/g) || [];
-    expect(usos).toHaveLength(1);
-    const leque = codigo.slice(
-      codigo.indexOf("function criarLeque"),
-      codigo.indexOf("function criarLeque") + 1400,
+    expect(usos).toHaveLength(2);
+
+    const detalhe = codigo.slice(
+      codigo.indexOf("agruparCoincidentes(visiveisAgora)"),
+      codigo.indexOf("_descarteDoDetalhe.descartarTudo()"),
     );
-    expect(leque).toContain("layerPointToLatLng");
-    expect(leque).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
+    expect(detalhe).toContain("layerPointToLatLng");
+    expect(detalhe).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
+
+    const polos = codigo.slice(
+      codigo.indexOf("agruparCoincidentes(", codigo.indexOf("function drawPolos")),
+      codigo.indexOf("syncMapLevelUI();", codigo.indexOf("function drawPolos")),
+    );
+    expect(polos).toContain("layerPointToLatLng");
+    expect(polos).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
+    expect(codigo).not.toContain("mapa-cluster");
   });
 });
