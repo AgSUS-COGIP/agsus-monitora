@@ -14,6 +14,7 @@
 */
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import prettier from "prettier";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -99,7 +100,13 @@ export function compilarVerbetes() {
   return { verbetes, problemas };
 }
 
-export function gerarModulo({ verbetes }) {
+/*
+  A saída passa pelo Prettier com a configuração do repositório. Sem isso o
+  arquivo gerado reprova em `format:check` a cada verbete novo, e quem escreveu
+  o verbete — que não abriu nenhum JavaScript — recebe um erro de formatação
+  num arquivo que nem sabia existir.
+*/
+export async function gerarModulo({ verbetes }) {
   const corpo = verbetes.map((verbete) => ({
     titulo: verbete.titulo,
     perguntas: verbete.perguntas,
@@ -108,20 +115,18 @@ export function gerarModulo({ verbetes }) {
     fonte: verbete.fonte,
   }));
 
-  return `/*
+  const bruto = `/*
   ARQUIVO GERADO. Não edite à mão.
 
   Origem: docs/aya/*.md
   Gere de novo com: npm run aya:conhecimento
 */
 
-export const VERBETES_AYA = Object.freeze(
-${JSON.stringify(corpo, null, 2)
-  .split("\n")
-  .map((linha) => `  ${linha}`)
-  .join("\n")},
-);
+export const VERBETES_AYA = Object.freeze(${JSON.stringify(corpo)});
 `;
+
+  const opcoes = (await prettier.resolveConfig(DESTINO)) || {};
+  return prettier.format(bruto, { ...opcoes, filepath: DESTINO });
 }
 
 // Comparar strings montadas à mão erra no Windows, onde o caminho vem com
@@ -144,7 +149,7 @@ if (executadoDiretamente()) {
     for (const problema of problemas) console.error(`  - ${problema}`);
     process.exit(1);
   }
-  writeFileSync(DESTINO, gerarModulo({ verbetes }));
+  writeFileSync(DESTINO, await gerarModulo({ verbetes }));
   const comResposta = verbetes.filter((v) => v.resposta).length;
   const comFato = verbetes.filter((v) => v.fato).length;
   console.log(

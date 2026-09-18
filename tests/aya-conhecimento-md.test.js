@@ -21,9 +21,9 @@ describe("base de conhecimento em docs/aya", () => {
     `npm run aya:conhecimento`, a Aya responde com a base velha e nada avisa.
     Este teste é o aviso.
   */
-  it("o módulo gerado está em dia com os .md", () => {
+  it("o módulo gerado está em dia com os .md", async () => {
     const { verbetes } = compilarVerbetes();
-    const esperado = gerarModulo({ verbetes });
+    const esperado = await gerarModulo({ verbetes });
     const atual = readFileSync(
       "src/modules/aya-conhecimento-gerado.js",
       "utf8",
