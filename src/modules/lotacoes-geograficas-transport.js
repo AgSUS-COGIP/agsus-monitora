@@ -241,25 +241,57 @@ function annotatePoloFromCnes(polo, networkRow, record) {
   if (!networkRow) return;
   const cnesLat = Number(networkRow?.[2]);
   const cnesLon = Number(networkRow?.[3]);
-  polo.cnes = String(networkRow?.[1] || polo.cnes || "");
-  polo.coord_lotacoes = { lat: record.lat, lon: record.lon };
-  polo.coord_cnes = { lat: cnesLat, lon: cnesLon };
-  const km = distanciaKm(cnesLat, cnesLon, record.lat, record.lon);
-  polo.coord_diferenca_km = km == null ? null : Number(km.toFixed(1));
-  polo.coord_divergencia = classificarDivergencia(km);
+  const hasCnesCoord = Number.isFinite(cnesLat) && Number.isFinite(cnesLon);
+  const lotacoes = { lat: Number(record.lat), lon: Number(record.lon) };
+  const lmap =
+    polo.coord_lmap &&
+    Number.isFinite(Number(polo.coord_lmap.lat)) &&
+    Number.isFinite(Number(polo.coord_lmap.lon))
+      ? {
+          lat: Number(polo.coord_lmap.lat),
+          lon: Number(polo.coord_lmap.lon),
+        }
+      : null;
+  const cnes = hasCnesCoord ? { lat: cnesLat, lon: cnesLon } : null;
 
-  // Depois que a identidade foi confirmada contra o CNES, todos os consumidores
-  // do mapa passam a usar a coordenada cadastrada no CNES. A coordenada da
-  // planilha continua preservada em coord_lotacoes para auditoria.
-  if (Number.isFinite(cnesLat) && Number.isFinite(cnesLon)) {
-    polo.lat = cnesLat;
-    polo.lon = cnesLon;
-    polo.coord_oficial = true;
-    polo.coord_fonte = "CNES";
-    polo.coord_nome = networkRow?.[0] || "";
-    polo.mun_cnes = networkRow?.[4] || "";
-    polo.uf_cnes = networkRow?.[5] || "";
-  }
+  polo.cnes = String(networkRow?.[1] || polo.cnes || "");
+  polo.coord_lotacoes = lotacoes;
+  polo.coord_cnes = cnes;
+
+  const lmapCnes =
+    lmap && cnes
+      ? distanciaKm(lmap.lat, lmap.lon, cnes.lat, cnes.lon)
+      : null;
+  const lotacoesCnes = cnes
+    ? distanciaKm(lotacoes.lat, lotacoes.lon, cnes.lat, cnes.lon)
+    : null;
+  const lmapLotacoes = lmap
+    ? distanciaKm(lmap.lat, lmap.lon, lotacoes.lat, lotacoes.lon)
+    : null;
+
+  const arredondar = (km) => (km == null ? null : Number(km.toFixed(1)));
+  polo.coord_diferencas_km = {
+    lmap_cnes: arredondar(lmapCnes),
+    lotacoes_cnes: arredondar(lotacoesCnes),
+    lmap_lotacoes: arredondar(lmapLotacoes),
+  };
+
+  // Compatibilidade com consumidores antigos: quando existe coordenada original
+  // do lmap, a divergência principal é lmap x CNES. Sem lmap, usa a planilha.
+  const kmPrincipal = lmapCnes ?? lotacoesCnes;
+  polo.coord_diferenca_km = arredondar(kmPrincipal);
+  polo.coord_divergencia = classificarDivergencia(kmPrincipal);
+  polo.coord_nome = networkRow?.[0] || "";
+  polo.mun_cnes = networkRow?.[4] || "";
+  polo.uf_cnes = networkRow?.[5] || "";
+
+  /*
+    Identidade CNES não é prova de coordenada correta. O caso Kariri-Xokó mostra
+    por quê: Lotações e CNES repetem a mesma coordenada, enquanto o lmap guarda
+    outra. Não se apaga mais a terceira fonte nem se promove CNES a "oficial".
+  */
+  polo.coord_oficial = false;
+  polo.coord_validacao = "pendente";
 }
 
 export async function loadLotacoesGeograficas(fetchImpl = globalThis.fetch) {
@@ -320,18 +352,35 @@ export function applyLotacoesGeograficas(rows, dataset) {
         let polo = dsei.polos.find(
           (item) => nomeCanonico(item?.n) === canonical,
         );
+        const jaExistiaNoLmap = Boolean(polo);
         if (!polo) {
           polo = { n: record.name.replace(/^PB\s+/i, ""), p: 0 };
           dsei.polos.push(polo);
+        } else if (
+          !polo.coord_lmap &&
+          Number.isFinite(Number(polo.lat)) &&
+          Number.isFinite(Number(polo.lon))
+        ) {
+          // Guarda a coordenada que já existia no banco ANTES de enriquecer
+          // o registo com Lotações ou CNES. Esta era a fonte apagada pelo PR #44.
+          polo.coord_lmap = { lat: Number(polo.lat), lon: Number(polo.lon) };
         }
-        polo.lat = record.lat;
-        polo.lon = record.lon;
+
+        polo.coord_lotacoes = { lat: record.lat, lon: record.lon };
+        polo.nome_lotacoes = record.name;
+        if (!jaExistiaNoLmap) {
+          // Polo novo, inexistente no lmap: a planilha é a única coordenada
+          // disponível até que haja validação independente.
+          polo.lat = record.lat;
+          polo.lon = record.lon;
+        }
         polo.uf = record.uf || polo.uf || "";
         polo.mun_lotacao = record.municipality || "";
         polo.acessibilidade = record.accessibility || "";
         polo.meio_acesso = record.accessMode || "";
-        polo.coord_oficial = true;
-        polo.coord_fonte = SOURCE;
+        polo.coord_oficial = false;
+        polo.coord_validacao = "pendente";
+        polo.coord_fonte = jaExistiaNoLmap ? "lmap" : SOURCE;
 
         const networkRow = findNetworkMatch(network.u, record, "u");
         if (networkRow) {
@@ -359,7 +408,7 @@ export function applyLotacoesGeograficas(rows, dataset) {
     reconciliada_com: "CNES",
     criterio_identidade:
       "CNES > tipo > nome canônico > município > proximidade conservadora",
-    coordenada_preferida: "CNES quando identificada; lotações como comparação",
+    coordenada_preferida:\n      "lmap preservado quando existente; Lotações e CNES mantidos para comparação; validação independente antes de substituir",
     registros: 598,
     sedes: 34,
     polos: 403,
