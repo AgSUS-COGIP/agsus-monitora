@@ -183,7 +183,9 @@ export function linhasDaReconciliacao(registro) {
   } else if (registro?.divergencia === DIVERGENCIA.DIVERGENTE) {
     linhas.push(`Fontes divergem ${km} km — exibida a coordenada do CNES`);
   } else if (km != null) {
-    linhas.push(`Fontes concordam (${km} km de diferença)`);
+    linhas.push(
+      `Diferença entre mapa anterior e CNES: ${km} km — proximidade não equivale a validação`,
+    );
   }
 
   return linhas;
