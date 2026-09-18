@@ -1569,7 +1569,6 @@ function forceAccessRequestFallback(message) {
   if (btn) btn.disabled = false;
 }
 
-
 function setAccessRequestFormLocked(locked) {
   ["accessReqNome", "accessReqSetor", "accessReqJustificativa"].forEach(
     (id) => {
@@ -1583,7 +1582,7 @@ async function loadMyAccessRequest() {
   if (!currentUser?.id) return null;
   const { data, error } = await sb
     .from("solicitacoes_acesso")
-.select("id,status,observacao_admin,created_at")
+    .select("id,status,observacao_admin,created_at")
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false })
     .limit(1);
@@ -2429,7 +2428,10 @@ function navigate(view) {
   }
   if (requestedView === "approved") {
     $("page-approved").classList.add("active");
-    setPageTitle("Lista de Aprovados", "Acompanhe candidatos, contratações e situações dos editais.");
+    setPageTitle(
+      "Lista de Aprovados",
+      "Acompanhe candidatos, contratações e situações dos editais.",
+    );
     void window.aprovadosController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
@@ -9739,10 +9741,7 @@ function renderDetailMap(d) {
         return;
       }
 
-      const centro = _detailLeaflet.latLngToLayerPoint([
-        grupo.lat,
-        grupo.lon,
-      ]);
+      const centro = _detailLeaflet.latLngToLayerPoint([grupo.lat, grupo.lon]);
       posicoesSpiderfy(grupo.registros.length).forEach((pos, index) => {
         const destino = _detailLeaflet.layerPointToLatLng(
           centro.add(L.point(pos.x, pos.y)),
@@ -9760,7 +9759,6 @@ function renderDetailMap(d) {
         );
       });
     });
-
   };
 
   desenharCamadaDeUnidades();
@@ -9835,9 +9833,7 @@ function enquadrarDetalhe(escopo, { animar = false } = {}) {
   _detailEscopo = escopo;
 
   const abrangenciaOficial =
-    escopo === "territorio"
-      ? _detailLeaflet.__agsusDseiCoverageBounds
-      : null;
+    escopo === "territorio" ? _detailLeaflet.__agsusDseiCoverageBounds : null;
   const bounds =
     abrangenciaOficial?.isValid?.() === true
       ? abrangenciaOficial
@@ -10155,7 +10151,6 @@ function drawDSEIBubbles() {
     e não substitui as bolhas: elas continuam no seu lugar, clicáveis.
   */
 
-
   /*
     Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
     e ordenar por população repetiria o que o tamanho da bolha já diz.
@@ -10241,7 +10236,8 @@ function drawCasai() {
       }),
     });
     if (
-      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches === true
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true
     ) {
       mk.bindTooltip(
         `<b>${esc(c.n)}</b><br>${esc(c.cidade)} – ${c.uf}<br>Processos seletivos: ${nproc}<br><i>clique para filtrar</i>`,
@@ -10309,7 +10305,8 @@ function drawRedeAssistencial(d) {
       }),
     });
     if (
-      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches === true
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true
     ) {
       mk.bindTooltip(
         `<b>CASAI</b> ${esc(c.n)}<br>${esc(c.mun || "")}${c.uf ? " – " + c.uf : ""}<br><i>clique para filtrar processos</i>`,
@@ -10422,7 +10419,8 @@ function drawPolos(d) {
       mk.on("popupopen", () => mk.closeTooltip());
     }
     const diferenca =
-      Number.isFinite(Number(p.coord_diferenca_km)) && p.coord_diferenca_km != null
+      Number.isFinite(Number(p.coord_diferenca_km)) &&
+      p.coord_diferenca_km != null
         ? `<br>Diferença entre fontes: ${esc(p.coord_diferenca_km)} km`
         : "";
     const fonte =
@@ -11028,7 +11026,8 @@ function debouncedNucleo() {
 function renderNucleo() {
   const started = performance.now();
   const newButton = $("newEditalBtn");
-  if (newButton) newButton.classList.toggle("hidden", !canManageEditais(profile));
+  if (newButton)
+    newButton.classList.toggle("hidden", !canManageEditais(profile));
   const q = low($("nucleoSearch").value);
   const data = rows
     .filter(
@@ -11102,7 +11101,10 @@ function dateOrNull(id) {
 
 function openEditModal(id) {
   if (!canManageEditais(profile))
-    return toast("Seu perfil pode consultar a Equipe Núcleo, mas não editar editais.", "warn");
+    return toast(
+      "Seu perfil pode consultar a Equipe Núcleo, mas não editar editais.",
+      "warn",
+    );
   const r = id ? rows.find((x) => String(x.id) === String(id)) : {};
   $("editModalTitle").textContent = id ? "Editar edital" : "Novo edital";
   setFieldValue("mId", r?.id || "");
@@ -11710,9 +11712,7 @@ async function renderAccessRequestsAdmin() {
       .limit(50),
     sb
       .from("perfis_usuarios")
-      .select(
-        "id,user_id,email,nome,perfil,ativo,updated_at",
-      )
+      .select("id,user_id,email,nome,perfil,ativo,updated_at")
       .eq("ativo", true)
       .order("updated_at", { ascending: false })
       .limit(80),
@@ -11770,23 +11770,19 @@ function accessRequestById(id) {
   return accessRequests.find((r) => String(r.id) === String(id));
 }
 
-
-
 async function updateUserAccess(id) {
   const user = accessProfiles.find((r) => String(r.id) === String(id));
   if (!user) return toast("Usuário não encontrado.", "warn");
   if (isOwnAccessProfile(currentUser, user))
-    return toast("Sua própria permissão deve ser alterada por outro administrador.", "warn");
+    return toast(
+      "Sua própria permissão deve ser alterada por outro administrador.",
+      "warn",
+    );
   const perfil = txt($("userPerfil" + id)?.value) || "usuario";
   const label = user.email || user.nome || "este usuário";
   if (!window.confirm(`Salvar alterações de acesso para ${label}?`)) return;
   const motivo = window.prompt("Motivo da alteração (opcional):", "") || "";
-  loader(
-    true,
-    "Salvando acesso",
-    "Atualizando o perfil de acesso...",
-    55,
-  );
+  loader(true, "Salvando acesso", "Atualizando o perfil de acesso...", 55);
   const { error } = await sb.rpc(RPC_UPDATE_USER_ACCESS, {
     p_perfil_usuario_id: id,
     p_perfil: perfil,
@@ -11805,12 +11801,7 @@ async function approveAccessRequest(id) {
   const req = accessRequestById(id);
   if (!req) return toast("Solicitação não encontrada.", "warn");
   const perfil = txt($("accessPerfil" + id)?.value) || "usuario";
-  loader(
-    true,
-    "Aprovando acesso",
-    "Salvando o perfil de acesso...",
-    55,
-  );
+  loader(true, "Aprovando acesso", "Salvando o perfil de acesso...", 55);
   const { error: reqErr } = await sb.rpc(RPC_APPROVE_ACCESS_REQUEST, {
     p_solicitacao_id: id,
     p_perfil: perfil,
@@ -11824,7 +11815,6 @@ async function approveAccessRequest(id) {
   toast("Acesso aprovado. Oriente o usuário a sair e entrar novamente.");
   await renderAccessRequestsAdmin();
 }
-
 
 async function deactivateUserAccess(id) {
   const user = accessProfiles.find((r) => String(r.id) === String(id));
