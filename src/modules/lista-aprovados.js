@@ -19,6 +19,7 @@ import {
 
 const BUCKET = "listas-aprovados";
 const MODEL_URL = "/modelos/modelo-importacao-lista-aprovados.xlsx";
+const CANDIDATES_PAGE_SIZE = 1000;
 
 const escMap = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => escMap[char]);
@@ -88,8 +89,12 @@ export function createListaAprovadosController(options = {}) {
     if (!edital || !cargo) return;
     const editalValue = edital.value;
     const cargoValue = cargo.value;
-    const editais = [...new Map(state.candidates.map((row) => [String(row.edital_id), row])).values()]
-      .sort((a, b) => text(a.edital).localeCompare(text(b.edital), "pt-BR"));
+    const editais = [...new Map(state.lists.map((row) => [String(row.edital_id), row])).values()]
+      .sort((a, b) => {
+        const editalOrder = text(a.edital).localeCompare(text(b.edital), "pt-BR");
+        if (editalOrder !== 0) return editalOrder;
+        return text(a.unidade).localeCompare(text(b.unidade), "pt-BR");
+      });
     edital.innerHTML = `<option value="">Todos os editais</option>${editais
       .map((row) => `<option value="${attr(row.edital_id)}">${esc(row.edital || "Edital")} · ${esc(row.unidade || "")}</option>`)
       .join("")}`;
@@ -174,12 +179,31 @@ export function createListaAprovadosController(options = {}) {
     renderRows();
   }
 
+  async function fetchAllCandidates() {
+    const rows = [];
+    let from = 0;
+
+    while (true) {
+      const result = await sb
+        .rpc("listar_candidatos_aprovados")
+        .range(from, from + CANDIDATES_PAGE_SIZE - 1);
+      if (result.error) return { data: rows, error: result.error };
+
+      const batch = Array.isArray(result.data) ? result.data : [];
+      rows.push(...batch);
+      if (batch.length < CANDIDATES_PAGE_SIZE) break;
+      from += CANDIDATES_PAGE_SIZE;
+    }
+
+    return { data: rows, error: null };
+  }
+
   async function refresh(options = {}) {
     if (!sb) return false;
     if (options.loader !== false) loader(true, "Lista de aprovados", "Carregando candidatos...", 55);
     const [listsResult, candidatesResult] = await Promise.all([
       sb.rpc("listar_listas_aprovados"),
-      sb.rpc("listar_candidatos_aprovados"),
+      fetchAllCandidates(),
     ]);
     if (options.loader !== false) loader(false);
     const error = listsResult.error || candidatesResult.error;
