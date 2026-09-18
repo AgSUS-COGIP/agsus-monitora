@@ -10082,12 +10082,8 @@ function drawDSEIBubbles() {
     a maior continua a aparecer como anel em volta da menor. E onde a sede é
     exactamente a mesma entra um selo com a contagem, que nomeia os distritos.
   */
-  const sedesPartilhadas = new Map();
-  LMAP.dsei.forEach((d) => {
-    const chave = `${Number(d.lat).toFixed(4)},${Number(d.lon).toFixed(4)}`;
-    if (!sedesPartilhadas.has(chave)) sedesPartilhadas.set(chave, []);
-    sedesPartilhadas.get(chave).push(d);
-  });
+  // DSEIs com a mesma sede permanecem sobrepostos no ponto verdadeiro.
+  // A ordenação por raio mantém a bolha menor clicável sem selo numérico.
 
   [...LMAP.dsei]
     .sort((a, b) => raioDaBolha(b.pop, popMax) - raioDaBolha(a.pop, popMax))
@@ -10159,57 +10155,7 @@ function drawDSEIBubbles() {
     Fica ao lado do centro — deslocado em PIXELS, convertidos no zoom corrente —
     e não substitui as bolhas: elas continuam no seu lugar, clicáveis.
   */
-  sedesPartilhadas.forEach((lista) => {
-    if (lista.length < 2) return;
-    const visiveis = filtroAtivo
-      ? lista.filter((d) => (byDsei[dseiKey(d.k)] || 0) > 0)
-      : lista;
-    if (visiveis.length < 2) return;
-    /*
-      O SELO FICA EM CIMA DA SEDE, SEM DESVIO NENHUM.
 
-      Isto convertia 18px numa latitude e numa longitude — `layerPointToLatLng`
-      sobre `centro.add(L.point(18, -18))` — e punha o marcador nesse ponto
-      inventado. Na visão nacional o mapa tem 9.57px por grau, portanto os 18px
-      viravam **1.88° ≈ 209 km**: o selo dos dois DSEIs de Boa Vista
-      (2.8563, -60.6527, em Roraima) era desenhado em 4.4209, -59.0849 — dentro
-      da Guiana. Medido na aplicação a 15/09/2026.
-
-      A primeira correção passou o desvio para o `iconAnchor`, o que torna a
-      coordenada honesta mas não muda **nada do que se vê**: o selo continuava
-      desenhado sobre a Guiana. Quem lê o mapa lê pixels, não a coordenada do
-      marcador.
-
-      Então o desvio sai. O selo é uma contagem do que está debaixo dele, e o
-      lugar de uma contagem é em cima do que ela conta — é assim que os outros
-      agrupamentos deste mapa já se desenham. A bolha maior continua a aparecer
-      como anel em volta, e o tooltip nomeia os dois distritos.
-
-      Regra que fica: nenhum desenho deste mapa inventa coordenada. Quando for
-      preciso afastar alguma coisa do seu lugar — o leque, por exemplo — que
-      haja uma linha ligando ao ponto verdadeiro, dizendo que aquilo é um
-      chamamento e não um sítio.
-    */
-    const selo = L.marker([visiveis[0].lat, visiveis[0].lon], {
-      icon: L.divIcon({
-        className: "mapa-cluster mapa-cluster--sede",
-        html: `<span>${visiveis.length}</span>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11],
-      }),
-      keyboard: true,
-      title: `${visiveis.length} DSEIs com a mesma sede`,
-    });
-    selo.bindTooltip(
-      `<b>${visiveis.length} DSEIs nesta sede</b><br>${visiveis
-        .map((d) => esc(d.n))
-        .join(
-          "<br>",
-        )}<br><i>as bolhas estão sobrepostas; a menor fica por cima</i>`,
-      { direction: "top" },
-    );
-    _layerDSEI.addLayer(selo);
-  });
 
   /*
     Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
@@ -10539,13 +10485,19 @@ function drawPolos(d) {
       fillColor: externo ? "#e8730c" : "#1d4e89",
       fillOpacity: 0.95,
     });
-    mk.bindTooltip(
-      esc(p.n) +
-        (externo
-          ? ` <i>(${esc(vinculo.uf || "")}, fora das UFs do DSEI)</i>`
-          : ""),
-      { direction: "top" },
-    );
+    const hoverDisponivel =
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true;
+    if (hoverDisponivel) {
+      mk.bindTooltip(
+        esc(p.n) +
+          (externo
+            ? ` <i>(${esc(vinculo.uf || "")}, fora das UFs do DSEI)</i>`
+            : ""),
+        { direction: "top" },
+      );
+      mk.on("popupopen", () => mk.closeTooltip());
+    }
     const diferenca =
       Number.isFinite(Number(p.coord_diferenca_km)) && p.coord_diferenca_km != null
         ? `<br>Diferença entre fontes: ${esc(p.coord_diferenca_km)} km`
@@ -10566,78 +10518,31 @@ function drawPolos(d) {
     marcador com a contagem; aproximar separa-os, e o que continuar coincidente
     lista os nomes no tooltip.
   */
-  desenharComAgrupamento(
-    _leaflet,
-    polos,
-    (p) => _layerPolos.addLayer(marcadorDoPolo(p)),
-    (grupo) => {
-      /*
-        A mesma distinção do mapa detalhado, que faltava aqui. Aproximar só
-        resolve quem está perto; quem partilha a coordenada continuaria num selo
-        só no zoom máximo — 19 polos do Alto Rio Negro num ponto, 5 do Yanomami
-        noutro, e em cada grupo todos menos um inalcançáveis.
-      */
-      const coincidente = grupoCoincidente(
-        grupo.registros.map((r) => ({ lat: r._lat, lon: r._lon })),
-      );
+  agruparCoincidentes(
+    polos.map((p) => ({ ...p, lat: p._lat, lon: p._lon })),
+  ).forEach((grupo) => {
+    if (grupo.registros.length === 1) {
+      _layerPolos.addLayer(marcadorDoPolo(grupo.registros[0]));
+      return;
+    }
 
-      const badge = L.marker([grupo.lat, grupo.lon], {
-        icon: L.divIcon({
-          className: coincidente
-            ? "mapa-cluster mapa-cluster--leque"
-            : "mapa-cluster",
-          html: `<span>${grupo.quantidade}</span>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
+    const centro = _leaflet.latLngToLayerPoint([grupo.lat, grupo.lon]);
+    posicoesSpiderfy(grupo.registros.length).forEach((pos, index) => {
+      const destino = _leaflet.layerPointToLatLng(
+        centro.add(L.point(pos.x, pos.y)),
+      );
+      _layerPolos.addLayer(
+        L.polyline([[grupo.lat, grupo.lon], destino], {
+          color: "#4a6b80",
+          weight: 1.1,
+          opacity: 0.55,
+          interactive: false,
         }),
-        keyboard: true,
-        title: coincidente
-          ? `${grupo.quantidade} polos base na mesma coordenada — abrir em leque`
-          : `${grupo.quantidade} polos base nesta área — aproximar`,
-      });
-      badge.bindTooltip(
-        `<b>${grupo.quantidade} polos base</b><br>${grupo.registros
-          .slice(0, 8)
-          .map((r) => esc(r.n))
-          .join("<br>")}${grupo.quantidade > 8 ? "<br>…" : ""}<br><i>${
-          coincidente
-            ? "mesma coordenada — clique para abrir em leque"
-            : "clique para aproximar"
-        }</i>`,
-        { direction: "top" },
       );
+      _layerPolos.addLayer(marcadorDoPolo(grupo.registros[index], destino));
+    });
+  });
 
-      const acionar = () => {
-        if (!coincidente) {
-          _leaflet.setView(
-            [grupo.lat, grupo.lon],
-            Math.min(_leaflet.getZoom() + 3, 12),
-            { animate: true },
-          );
-          return;
-        }
-        if (_lequePolos.aberto === grupo.chave) _lequePolos.recolher();
-        else {
-          _lequePolos.abrir(grupo, (polo, destino) =>
-            marcadorDoPolo(polo, destino),
-          );
-          toast(
-            `${grupo.quantidade} polos base na mesma coordenada, abertos em leque. Clique no número para recolher.`,
-          );
-        }
-      };
-
-      badge.on("click", acionar);
-      // O Leaflet dá Enter ao marcador; o Espaço é o que se espera de um botão.
-      badge.on("keypress", (e) => {
-        if (e.originalEvent?.key === " ") {
-          e.originalEvent.preventDefault();
-          acionar();
-        }
-      });
-      _layerPolos.addLayer(badge);
-    },
-  );
   syncMapLevelUI();
 }
 
