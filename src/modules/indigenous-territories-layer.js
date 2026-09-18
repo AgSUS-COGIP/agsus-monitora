@@ -166,7 +166,7 @@ function enhanceMap(L, map) {
       });
       if (!response.ok) throw new Error(`FUNAI WFS HTTP ${response.status}`);
       const geojson = await response.json();
-      if (!Array.isArray(geojson?.features)) throw new Error("GeoJSON inválido");
+      if (!Array.isArray(geojson?.features))\n        throw new Error("GeoJSON inválido");
 
       vectorLayer.clearLayers();
       vectorLayer.addData(geojson);
