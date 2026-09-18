@@ -76,7 +76,9 @@ export function dseiFeatureMatches(feature, dseiName) {
     [
       dseiFeatureName(properties),
       ...Object.entries(properties)
-        .filter(([key, value]) => /(dsei|nome|name)/i.test(key) && value != null)
+        .filter(
+          ([key, value]) => /(dsei|nome|name)/i.test(key) && value != null,
+        )
         .map(([, value]) => String(value)),
     ]
       .map(normalizeText)
@@ -180,7 +182,8 @@ function enhanceMap(L, map) {
   }
 
   const dseiPaneName = "agsus-dsei-coverage";
-  const dseiPane = map.getPane?.(dseiPaneName) || map.createPane?.(dseiPaneName);
+  const dseiPane =
+    map.getPane?.(dseiPaneName) || map.createPane?.(dseiPaneName);
   if (dseiPane?.style) {
     dseiPane.style.zIndex = "253";
     dseiPane.style.pointerEvents = supportsHover() ? "auto" : "none";
@@ -258,7 +261,9 @@ function enhanceMap(L, map) {
     let features = dseiGeojson.features;
     if (mapElementId === "detailMap") {
       features = selectedDsei
-        ? features.filter((feature) => dseiFeatureMatches(feature, selectedDsei))
+        ? features.filter((feature) =>
+            dseiFeatureMatches(feature, selectedDsei),
+          )
         : [];
     }
 
