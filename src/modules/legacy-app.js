@@ -9309,21 +9309,24 @@ function initDetailLeaflet() {
   });
 }
 
-function drawDetailBrazilBase(ufs = []) {
+function drawDetailBrazilBase() {
   if (!_detailLeaflet || !_detailBaseLayer) return;
   _detailBaseLayer.clearLayers();
   try {
+    /*
+      UF não é abrangência de DSEI. Antes, selecionar Alagoas e Sergipe pintava
+      os dois estados inteiros, embora o distrito atenda um recorte territorial
+      próprio. As UFs ficam apenas como referência cartográfica neutra; a área
+      do DSEI é desenhada pela camada oficial Funai:areas_dsei.
+    */
     L.geoJSON(UF_GEO, {
-      style: (feature) => {
-        const selected = ufs.includes(feature.properties.uf);
-        return {
-          color: selected ? "#0d8192" : "#7798ad",
-          weight: selected ? 2 : 0.65,
-          opacity: selected ? 0.95 : 0.45,
-          fillColor: selected ? "#71cbd0" : "#dce9ee",
-          fillOpacity: selected ? 0.18 : 0.04,
-          interactive: false,
-        };
+      style: {
+        color: "#7798ad",
+        weight: 0.65,
+        opacity: 0.45,
+        fillColor: "#dce9ee",
+        fillOpacity: 0.025,
+        interactive: false,
       },
     }).addTo(_detailBaseLayer);
     L.geoJSON(BR_OUTLINE, {
@@ -9606,7 +9609,8 @@ function renderDetailMap(d) {
   if (trilho) trilho.textContent = `DSEI ${d.n}`;
   reset?.classList.remove("hidden");
   definirSelecaoDoMapaDetalhado(true);
-  drawDetailBrazilBase(d.ufs || [d.sedeuf]);
+  drawDetailBrazilBase();
+  _detailLeaflet.__agsusSetDseiCoverage?.(d.n);
   _detailUnitLayer.clearLayers();
 
   /*
@@ -9674,17 +9678,17 @@ function renderDetailMap(d) {
       keyboard: true,
       title: record.name,
     });
-    marker.on("click", () =>
-      marker.bindPopup(popupDoRegistro(record)).openPopup(),
-    );
-    marker.on("mouseover", () => {
-      if (!marker.getTooltip())
-        marker.bindTooltip(tooltipDoRegistro(record, d), {
-          direction: "top",
-          opacity: 0.96,
-        });
-      marker.openTooltip();
-    });
+    marker.bindPopup(popupDoRegistro(record));
+    const hoverDisponivel =
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true;
+    if (hoverDisponivel) {
+      marker.bindTooltip(tooltipDoRegistro(record, d), {
+        direction: "top",
+        opacity: 0.96,
+      });
+      marker.on("popupopen", () => marker.closeTooltip());
+    }
     return marker;
   };
 
@@ -9716,132 +9720,43 @@ function renderDetailMap(d) {
     });
 
     const visiveisAgora = visiveis(classificados);
-    const polosVisiveis = visiveisAgora.filter((r) => r.type.key === "polo");
-    const demaisVisiveis = visiveisAgora.filter((r) => r.type.key !== "polo");
 
     /*
-      Polo Base é uma camada operacional pequena e precisa permanecer legível.
-      O agrupamento por célula de 60 px escondia polos próximos no enquadramento
-      inicial e dava a impressão de que tinham sumido. Polos só são agrupados
-      quando têm exatamente a mesma coordenada; nesse caso o clique abre o leque.
+      Não há marcadores de contagem no mapa. Cada unidade aparece como unidade.
+      Pontos exatamente coincidentes são apenas deslocados em pixels, com uma
+      linha até a coordenada verdadeira; a geometria do dado nunca é alterada.
     */
-    agruparCoincidentes(polosVisiveis).forEach((grupo) => {
+    agruparCoincidentes(visiveisAgora).forEach((grupo) => {
       if (grupo.registros.length === 1) {
         _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.registros[0]));
         return;
       }
 
-      const badge = L.marker([grupo.lat, grupo.lon], {
-        icon: L.divIcon({
-          className: "mapa-cluster mapa-cluster--leque",
-          html: `<span>${grupo.registros.length}</span>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-        }),
-        keyboard: true,
-        title: `${grupo.registros.length} polos na mesma coordenada — abrir em leque`,
+      const centro = _detailLeaflet.latLngToLayerPoint([
+        grupo.lat,
+        grupo.lon,
+      ]);
+      posicoesSpiderfy(grupo.registros.length).forEach((pos, index) => {
+        const destino = _detailLeaflet.layerPointToLatLng(
+          centro.add(L.point(pos.x, pos.y)),
+        );
+        _detailUnitLayer.addLayer(
+          L.polyline([[grupo.lat, grupo.lon], destino], {
+            color: "#4a6b80",
+            weight: 1.1,
+            opacity: 0.55,
+            interactive: false,
+          }),
+        );
+        _detailUnitLayer.addLayer(
+          marcadorDeRegistro(grupo.registros[index], destino),
+        );
       });
-
-      const grupoDoLeque = {
-        ...grupo,
-        quantidade: grupo.registros.length,
-      };
-      const acionar = () => {
-        if (_leque.aberto === grupo.chave) recolherLeque();
-        else abrirLeque(grupoDoLeque);
-      };
-      badge.on("click", acionar);
-      badge.on("keypress", (e) => {
-        if (e.originalEvent?.key === " ") {
-          e.originalEvent.preventDefault();
-          acionar();
-        }
-      });
-      _detailUnitLayer.addLayer(badge);
-    });
-
-    // UBSI/CASAI/unidades podem ser numerosas; nelas permanece o agrupamento
-    // por célula para evitar milhares de nós de DOM.
-    const grupos = agruparPorCelula(demaisVisiveis, (r) =>
-      _detailLeaflet.latLngToContainerPoint([r.lat, r.lon]),
-    );
-
-    grupos.forEach((grupo) => {
-      if (grupo.unico) {
-        _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.unico));
-        return;
-      }
-
-      const coincidente = grupoCoincidente(grupo.registros);
-
-      const badge = L.marker([grupo.lat, grupo.lon], {
-        icon: L.divIcon({
-          className: coincidente
-            ? "mapa-cluster mapa-cluster--leque"
-            : "mapa-cluster",
-          html: `<span>${grupo.quantidade}</span>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-        }),
-        keyboard: true,
-        title: coincidente
-          ? `${grupo.quantidade} unidades na mesma coordenada — abrir em leque`
-          : `${grupo.quantidade} unidades nesta área — aproximar`,
-      });
-
-      const acionar = () => {
-        if (!coincidente) {
-          _detailLeaflet.setView(
-            [grupo.lat, grupo.lon],
-            Math.min(_detailLeaflet.getZoom() + 2, 14),
-            { animate: true },
-          );
-          return;
-        }
-        if (_leque.aberto === grupo.chave) recolherLeque();
-        else abrirLeque(grupo);
-      };
-
-      badge.on("click", acionar);
-      badge.on("keypress", (e) => {
-        if (e.originalEvent?.key === " ") {
-          e.originalEvent.preventDefault();
-          acionar();
-        }
-      });
-      badge.on("mouseover", () => {
-        if (!badge.getTooltip())
-          badge.bindTooltip(
-            `<b>${grupo.quantidade} unidades</b><br>${grupo.registros
-              .slice(0, 6)
-              .map((r) => esc(r.name))
-              .join("<br>")}${grupo.quantidade > 6 ? "<br>…" : ""}<br><i>${
-              coincidente
-                ? "mesma coordenada — clique para abrir em leque"
-                : "clique para aproximar"
-            }</i>`,
-            { direction: "top", opacity: 0.96 },
-          );
-        badge.openTooltip();
-      });
-      _detailUnitLayer.addLayer(badge);
     });
 
     // Um leque aberto não sobrevive a um redesenho da camada.
     if (_leque.aberto) recolherLeque();
   };
-
-  // Usa a primitiva partilhada; a cópia local desta lógica saiu daqui.
-  const abrirLeque = (grupo) => {
-    _leque.abrir(grupo, (record, destino) =>
-      marcadorDeRegistro(record, destino),
-    );
-    toast(
-      `${grupo.quantidade} unidades na mesma coordenada, abertas em leque. Clique no número para recolher.`,
-    );
-  };
-
-  const recolherLeque = () => _leque.recolher();
 
   desenharCamadaDeUnidades();
   // Reagrupar ao mudar o zoom: a célula é de pixels, e o que cabe nela muda.
@@ -10011,6 +9926,7 @@ function resetDetailMap({ silent = false } = {}) {
   if (list)
     list.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-map-location-dot"></i><strong>Selecione um DSEI</strong><span>Os polos, CASAIs e unidades aparecerão aqui.</span></div>`;
   _detailUnitLayer?.clearLayers();
+  _detailLeaflet.__agsusSetDseiCoverage?.("");
   drawDetailBrazilBase();
   try {
     _detailLeaflet.fitBounds(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]), {
@@ -10094,10 +10010,7 @@ function entrarNoTerritorio(d) {
   flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]));
   const voltar = $("drillBackBtn");
   if (voltar) voltar.style.display = "inline-flex";
-  const ufTxt = d.ufs && d.ufs.length ? " (" + d.ufs.join(", ") + ")" : "";
-  toast(
-    "DSEI " + d.n + ufTxt + ": polos e unidades exibidos no mapa detalhado.",
-  );
+  // A troca de mapa já é o feedback da ação; não duplica com uma notificação.
 }
 
 /*
