@@ -63,7 +63,7 @@ describe("lotações geográficas", () => {
           "SEDE",
           "SEDE DSEI",
           -3.75,
-          -38.50,
+          -38.5,
           "FORTALEZA",
           "CE",
           "Muito acessível",
@@ -395,6 +395,7 @@ describe("lotações geográficas", () => {
     expect(nac[0][9].validacao_coordenada).toBe("pendente");
     expect(nac[0][9].confirmacao_independente).toBe(false);
   });
+
   it("sinaliza coordenada CNES compartilhada sem tratá-la como validação", () => {
     const rows = [
       {
@@ -409,7 +410,14 @@ describe("lotações geográficas", () => {
               u: [
                 ["POLO BASE XITEI", "1", 2.98, -61.292, "ALTO ALEGRE", 14],
                 ["POLO BASE HAXIU", "2", 2.98, -61.292, "ALTO ALEGRE", 14],
-                ["POLO BASE ALTO MUCAJAI", "3", 2.98, -61.292, "ALTO ALEGRE", 14],
+                [
+                  "POLO BASE ALTO MUCAJAI",
+                  "3",
+                  2.98,
+                  -61.292,
+                  "ALTO ALEGRE",
+                  14,
+                ],
               ],
               c: [],
             },
@@ -429,5 +437,4 @@ describe("lotações geográficas", () => {
       expect(row[9].validacao_coordenada).toBe("pendente");
     });
   });
-
 });
