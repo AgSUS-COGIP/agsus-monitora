@@ -47,7 +47,7 @@ function recordExpectedType(record) {
 }
 
 function canonicalForMatch(name, expectedType) {
-  const canonical = nomeCanonico(name);
+  let canonical = nomeCanonico(name);
   if (expectedType !== "polo") return canonical;
 
   /*
@@ -55,7 +55,14 @@ function canonicalForMatch(name, expectedType) {
     "POLO BASE II XUCURU KARIRI" e "PB XUCURU KARIRI" são a mesma identidade.
     Só removemos ordinal no INÍCIO do canónico; "SÃO JOSÉ II" continua intacto.
   */
-  return canonical.replace(/^(?:I|II|III|IV|V)\s+/, "");
+  canonical = canonical.replace(/^(?:I|II|III|IV|V)\s+/, "");
+
+  /*
+    Xocó/Xokó é uma variação ortográfica real do mesmo etnónimo. O CNES usa
+    "KARIRI XOCO", enquanto Lotações/lmap usam "KARIRI XOKÓ". Normalizamos
+    apenas este token para evitar voltar ao matching inseguro por proximidade.
+  */
+  return canonical.replace(/\bXOCO\b/g, "XOKO");
 }
 
 function rowType(row, listKind) {
