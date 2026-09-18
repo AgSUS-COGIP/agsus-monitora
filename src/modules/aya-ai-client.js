@@ -6,7 +6,10 @@ import {
   questionNeedsAyaAi,
 } from "./aya-knowledge.js";
 
-const AI_TIMEOUT_MS = 25000;
+// Medido pelo túnel com o prompt real: 22,4s na primeira pergunta depois de
+// um tempo parado, 14,1s nas seguintes. A primeira paga a avaliação do prompt
+// sem cache. Com 25s ela estourava; 40s cobre a pior medição com folga.
+const AI_TIMEOUT_MS = 40000;
 
 function compactText(value, maxLength = 180) {
   return String(value || "")
@@ -209,7 +212,7 @@ const FAILURE_MESSAGES = {
   invalid_question:
     "A pergunta ficou fora do tamanho aceito. Tente reescrevê-la de forma mais curta.",
   timeout:
-    "A IA demorou mais de 25 segundos e a pergunta foi cancelada pelo navegador.",
+    "A IA local demorou demais e a pergunta foi cancelada pelo navegador. Perguntas longas em máquina sem GPU podem passar do limite.",
   network_error:
     "Não consegui falar com o servidor do MONITORA para enviar a pergunta à IA.",
   http_404:

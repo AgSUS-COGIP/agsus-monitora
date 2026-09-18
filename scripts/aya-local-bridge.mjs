@@ -120,20 +120,42 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Carrega o modelo padrão antes da primeira pergunta real. Sem isso a primeira
-// pessoa a usar a Aya depois de subir o bridge espera cerca de 39s, contra os
-// 12s de uma pergunta com o modelo já residente.
+/*
+  Aquece duas coisas, não uma.
+
+  O modelo, para não pagar a carga do disco na primeira pergunta.
+
+  E o prefixo estático do prompt. Numa máquina sem GPU, avaliar os cerca de
+  3.000 tokens de regras, glossário e exemplos custa mais de 30 segundos. O
+  llama.cpp guarda esse trabalho em cache por prefixo comum, então mandar o
+  mesmo texto aqui faz a primeira pergunta real custar apenas a parte variável,
+  que é curta. Sem isto, a primeira pessoa do dia espera quase 47 segundos e
+  estoura o limite do navegador.
+*/
 async function aquecerModelo() {
   const model = String(process.env.AYA_LOCAL_MODEL || WARMUP_MODEL).trim();
   if (!ALLOWED_MODELS.has(model)) return;
   const inicio = Date.now();
+
+  let prefixo = "ok";
+  try {
+    const { buildAyaSystemPrompt } =
+      await import("../src/modules/aya-knowledge.js");
+    prefixo = buildAyaSystemPrompt({});
+  } catch {
+    // Sem o prefixo, o aquecimento ainda vale pela carga do modelo.
+  }
+
   try {
     const response = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: "ok" }],
+        messages: [
+          { role: "system", content: prefixo },
+          { role: "user", content: "ok" },
+        ],
         stream: false,
         think: false,
         keep_alive: KEEP_ALIVE,

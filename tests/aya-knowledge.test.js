@@ -113,7 +113,10 @@ describe("glossário do MONITORA", () => {
   it("define vaga ociosa sem depender do modelo", () => {
     const answer = curatedAnswerForQuestion("O que significa uma vaga ociosa?");
     expect(answer).toContain("sem contratação");
-    expect(answer).toContain("Ociosas dividido por Vagas");
+    expect(answer).toContain("Vagas, que é o total previsto");
+    expect(curatedAnswerForQuestion("o que é taxa de ociosidade?")).toContain(
+      "Ociosas dividido pelo total de Vagas",
+    );
   });
 
   it("define contratados e taxa de ociosidade", () => {
@@ -161,5 +164,68 @@ describe("siglas institucionais respondidas sem o modelo", () => {
 
   it("não confunde SIASI com SasiSUS", () => {
     expect(curatedAnswerForQuestion("o que é o SIASI?")).toContain("SasiSUS");
+  });
+});
+
+describe("siglas do SUS respondidas sem o modelo", () => {
+  it("responde SUS corretamente, sem 'Sistema Universo'", () => {
+    const answer = curatedAnswerForQuestion("o que é o SUS ?");
+    expect(answer).toContain("Sistema Único de Saúde");
+    expect(answer).toContain("1988");
+    expect(answer).not.toMatch(/Universo/i);
+  });
+
+  it("não confunde SUS com AgSUS nem com SasiSUS", () => {
+    expect(curatedAnswerForQuestion("O que é a AgSUS?")).toContain("Agência");
+    expect(curatedAnswerForQuestion("o que é o SasiSUS?")).toContain(
+      "Subsistema",
+    );
+  });
+
+  it("deixa pergunta factual seguir para o caminho normal", () => {
+    expect(curatedAnswerForQuestion("quantas vagas o SUS tem aqui?")).toBe("");
+  });
+});
+
+describe("ordem do prompt e cache de prefixo", () => {
+  it("mantém o conteúdo estático antes do variável", () => {
+    const prompt = buildAyaSystemPrompt({
+      section: "saude-indigena",
+      question: "o que é DSEI?",
+      context: { mapSummary: "34 territórios" },
+    });
+    // Os títulos abrem linha. Buscar sem âncora pegaria as citações que as
+    // próprias regras fazem a essas seções.
+    const secao = (titulo) => prompt.indexOf(`\n${titulo}`);
+    const regras = secao("REGRAS DE CONFIABILIDADE");
+    const base = secao("BASE INSTITUCIONAL CURADA");
+    const exemplos = secao("EXEMPLOS DE COMPORTAMENTO");
+    const pagina = secao("CONTEXTO FIXO DA PÁGINA");
+    const curado = secao("CONHECIMENTO CURADO ESPECÍFICO");
+    const tela = secao("CONTEXTO DA TELA DO MONITORA");
+
+    // Tudo que não muda vem primeiro: é esse prefixo que o llama.cpp reaproveita
+    // entre perguntas. Inverter a ordem custa mais de 20s por pergunta.
+    expect(regras).toBeGreaterThan(-1);
+    expect(base).toBeGreaterThan(regras);
+    expect(exemplos).toBeGreaterThan(base);
+    expect(pagina).toBeGreaterThan(exemplos);
+    expect(curado).toBeGreaterThan(pagina);
+    expect(tela).toBeGreaterThan(curado);
+  });
+
+  it("dois prompts diferentes compartilham o mesmo prefixo estático", () => {
+    const a = buildAyaSystemPrompt({
+      question: "o que é DSEI?",
+      context: { mapSummary: "34 territórios" },
+    });
+    const b = buildAyaSystemPrompt({
+      question: "quantas vagas?",
+      context: { mapSummary: "7 territórios", activeFilters: ["UF: AL"] },
+    });
+    const prefixoA = a.slice(0, a.indexOf("\nCONTEXTO FIXO DA PÁGINA"));
+    const prefixoB = b.slice(0, b.indexOf("\nCONTEXTO FIXO DA PÁGINA"));
+    expect(prefixoA).toBe(prefixoB);
+    expect(prefixoA.length).toBeGreaterThan(2000);
   });
 });
