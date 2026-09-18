@@ -96,6 +96,51 @@ async function validateSupabaseSession(accessToken) {
   return { status: "auth_unavailable", upstream: response.status };
 }
 
+/*
+  O endereço do bridge é anunciado pelo próprio bridge, porque sem domínio
+  próprio o túnel recebe um hostname novo a cada execução. Quando o anúncio não
+  estiver disponível — banco fora, segredo ainda não definido, registro nunca
+  escrito — vale a variável de ambiente, que é como funcionava antes.
+*/
+const IDADE_MAXIMA_REGISTRO_S = 30 * 60;
+
+async function bridgeAnunciado(accessToken) {
+  const baseUrl = String(process.env.VITE_SUPABASE_URL || "").replace(
+    /\/$/,
+    "",
+  );
+  const publishableKey = String(
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.VITE_SUPABASE_ANON_KEY ||
+      "",
+  );
+  if (!baseUrl || !publishableKey || !accessToken) return null;
+
+  try {
+    const response = await fetch(`${baseUrl}/rest/v1/rpc/obter_bridge_aya`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: publishableKey,
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: "{}",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return null;
+    const dados = await response.json().catch(() => null);
+    const url = String(dados?.url || "").trim();
+    if (!url) return null;
+    const idade = Number(dados?.idade_segundos);
+    return {
+      url: url.replace(/\/$/, ""),
+      idade: Number.isFinite(idade) ? idade : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function safeSources(question) {
   return officialSourcesForQuestion(question).map(({ id, label, url }) => ({
     id,
@@ -145,13 +190,30 @@ export default async function handler(req, res) {
     });
   }
 
-  const bridgeUrl = String(process.env.AYA_LOCAL_BRIDGE_URL || "")
-    .trim()
-    .replace(/\/$/, "");
+  const anunciado = await bridgeAnunciado(token);
+  const bridgeUrl =
+    anunciado?.url ||
+    String(process.env.AYA_LOCAL_BRIDGE_URL || "")
+      .trim()
+      .replace(/\/$/, "");
   const bridgeKey = String(process.env.AYA_LOCAL_BRIDGE_KEY || "").trim();
   if (!bridgeUrl || !bridgeKey) {
     return json(res, 503, {
       error: "local_ai_not_configured",
+      sources: safeSources(question),
+    });
+  }
+
+  // Registro velho significa que a máquina parou de dar sinal. Dizer isso é
+  // mais útil do que tentar o endereço antigo e devolver um erro de rede.
+  if (
+    anunciado &&
+    Number.isFinite(anunciado.idade) &&
+    anunciado.idade > IDADE_MAXIMA_REGISTRO_S
+  ) {
+    return json(res, 503, {
+      error: "local_ai_offline",
+      minutos_sem_sinal: Math.round(anunciado.idade / 60),
       sources: safeSources(question),
     });
   }

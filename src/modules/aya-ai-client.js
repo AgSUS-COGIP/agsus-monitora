@@ -195,6 +195,8 @@ const FAILURE_MESSAGES = {
     "A validação de sessão do servidor está mal configurada: a chave do Supabase usada pelo MONITORA não foi aceita. Isso é configuração do ambiente, não da sua conta — entrar novamente não resolve.",
   local_ai_not_configured:
     "A IA local ainda não está configurada no ambiente do MONITORA: faltam AYA_LOCAL_BRIDGE_URL e AYA_LOCAL_BRIDGE_KEY.",
+  local_ai_offline:
+    "O computador que hospeda a IA local está sem dar sinal há um tempo. Provavelmente foi desligado ou reiniciado e o serviço da Aya não subiu de volta.",
   local_ai_unavailable:
     "O computador que hospeda a IA local não respondeu. Verifique se o Ollama, o bridge e o túnel HTTPS estão no ar e se a URL do túnel continua válida.",
   local_ai_timeout:

@@ -70,3 +70,53 @@ AYA_LOCAL_MODEL=qwen3:1.7b
 ## 5. Disponibilidade
 
 Se o computador reiniciar, Ollama, bridge e túnel precisam iniciar novamente. Para uso permanente, configure os três processos para iniciar com o Windows e desative suspensão automática da máquina.
+
+## 6. Subir sozinho e anunciar o próprio endereço
+
+Sem domínio próprio, o túnel é um quick tunnel e recebe hostname novo a cada
+execução. Manter isso numa variável da Vercel obrigava a reconfigurar e
+redeployar a cada reinício da máquina, e a Aya ficava sem IA no meio-tempo.
+
+Duas peças resolvem isso.
+
+`npm run aya:servico` sobe o bridge, sobe o túnel, anuncia o endereço no banco
+e reinicia o que cair. Um túnel novo tem hostname novo, então todo reinício do
+túnel é seguido de novo anúncio. A cada cinco minutos o serviço renova a marca
+de presença, que é como a `/api/aya` distingue máquina ligada de registro velho.
+
+Para subir junto com o Windows, uma vez:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\aya-instalar-servico.ps1
+```
+
+A tarefa roda no logon do usuário, sem privilégio de administrador e sem senha
+guardada. Para remover, o mesmo comando com `-Remover`.
+
+### Ativação no banco, uma única vez
+
+A migration `20260918120000_registro_do_bridge_da_aya.sql` cria a tabela e as
+funções, mas nasce inerte: enquanto o segredo de escrita não for definido,
+nenhum anúncio é aceito e a `/api/aya` continua usando `AYA_LOCAL_BRIDGE_URL`.
+
+Para ativar, no editor SQL do projeto, com a mesma chave do bridge:
+
+```sql
+select public.definir_segredo_bridge_aya('<a mesma chave do AYA_LOCAL_BRIDGE_KEY>');
+```
+
+O segredo não é gravado: guarda-se apenas o sha256 dele. A chamada recusa a
+troca silenciosa — para trocar a chave depois é preciso limpar `chave_sha256`
+deliberadamente.
+
+Feito isso, `AYA_LOCAL_BRIDGE_URL` deixa de ser necessária na Vercel. Ela
+continua sendo lida como alternativa, então pode ficar onde está sem prejuízo.
+
+### Requisitos locais
+
+O serviço lê `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` do ambiente
+ou do `.env.local`, e `AYA_LOCAL_BRIDGE_KEY` do ambiente do Windows:
+
+```powershell
+setx AYA_LOCAL_BRIDGE_KEY "<chave>"
+```

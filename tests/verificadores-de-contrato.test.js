@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -236,10 +237,25 @@ describe("segurança dos testes", () => {
     expect(guarda).toContain("afterEach");
   });
 
+  /*
+    O que importa é o que o git carrega, não o que existe no disco. A versão
+    anterior listava o diretório, então punia quem seguisse o README — que manda
+    criar `.env.local` — mesmo com o ficheiro devidamente ignorado. Perguntar ao
+    git verifica a promessa que o nome do teste faz.
+  */
   it("nenhum ficheiro de ambiente está versionado", () => {
-    const rastreados = readdirSync(".").filter(
-      (nome) => /^\.env/.test(nome) && nome !== ".env.example",
-    );
+    const rastreados = execFileSync("git", ["ls-files", "-z"], {
+      encoding: "utf8",
+    })
+      .split("\0")
+      .filter((nome) => /^\.env/.test(nome) && nome !== ".env.example");
     expect(rastreados).toEqual([]);
+  });
+
+  it("o .gitignore cobre os ficheiros de ambiente locais", () => {
+    const ignorados = readFileSync(".gitignore", "utf8");
+    expect(ignorados).toMatch(/^\.env$/m);
+    expect(ignorados).toMatch(/^\.env\.\*$/m);
+    expect(ignorados).toMatch(/^!\.env\.example$/m);
   });
 });
