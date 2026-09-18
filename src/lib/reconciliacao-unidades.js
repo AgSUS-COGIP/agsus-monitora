@@ -217,6 +217,8 @@ function registrarReconciliacao({
     },
     distancia_entre_fontes_km: km == null ? null : Number(km.toFixed(1)),
     divergencia: classificarDivergencia(km),
+    validacao_coordenada: polo.coord_validacao || "pendente",
+    confirmacao_independente: polo.confirmacao_independente === true,
     municipio: estab.municipio || polo.mun_lotacao || "",
     uf: estab.uf || polo.uf || "",
     reconciliacao: RECONCILIACAO.AUTOMATICA,
