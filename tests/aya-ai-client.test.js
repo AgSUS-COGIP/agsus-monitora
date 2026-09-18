@@ -120,3 +120,23 @@ describe("máquina que hospeda a IA fora do ar", () => {
     expect(ayaFailureMessage("local_ai_unavailable")).toContain("túnel");
   });
 });
+
+describe("detalhe técnico da falha", () => {
+  it("acrescenta a razão informada pelo servidor", () => {
+    const msg = ayaFailureMessage("unauthorized", "token is expired");
+    expect(msg).toContain("Entre novamente no MONITORA");
+    expect(msg).toContain("Detalhe técnico: token is expired");
+  });
+
+  it("não inventa nota quando o servidor não mandou razão", () => {
+    expect(ayaFailureMessage("unauthorized")).not.toContain("Detalhe técnico");
+    expect(ayaFailureMessage("unauthorized", "   ")).not.toContain(
+      "Detalhe técnico",
+    );
+  });
+
+  it("trunca detalhe longo em vez de despejar na tela", () => {
+    const msg = ayaFailureMessage("unauthorized", "x".repeat(500));
+    expect(msg.length).toBeLessThan(400);
+  });
+});

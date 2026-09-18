@@ -216,16 +216,35 @@ const FAILURE_MESSAGES = {
 
 const GENERIC_FAILURE = "A IA da Aya está temporariamente indisponível.";
 
-export function ayaFailureMessage(reason) {
-  return FAILURE_MESSAGES[String(reason || "")] || GENERIC_FAILURE;
+const COMPLEMENTO_LOCAL =
+  "Posso responder ao que estiver carregado nesta tela, mas não vou inventar uma resposta para o que depende da IA.";
+
+/*
+  O servidor já sabe por que a autenticação falhou — o Supabase distingue token
+  expirado de assinatura inválida —, mas essa razão morria no JSON da resposta.
+  Sem ela na tela, cada diagnóstico exigia um deploy só para enxergar. A nota
+  fecha a mensagem, depois da orientação ao usuário.
+*/
+function notaTecnica(detalhe) {
+  const tecnico = String(detalhe || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+  return tecnico ? `\n\nDetalhe técnico: ${tecnico}` : "";
 }
 
-function unavailableAnswer(question, context, reason) {
-  return (
+export function ayaFailureMessage(reason, detalhe) {
+  const base = FAILURE_MESSAGES[String(reason || "")] || GENERIC_FAILURE;
+  return `${base}${notaTecnica(detalhe)}`;
+}
+
+function unavailableAnswer(question, context, reason, detalhe) {
+  const local =
     curatedAnswerForQuestion(question) ||
-    contextualAyaAnswer(question, context) ||
-    `${ayaFailureMessage(reason)} Posso responder ao que estiver carregado nesta tela, mas não vou inventar uma resposta para o que depende da IA.`
-  );
+    contextualAyaAnswer(question, context);
+  if (local) return local;
+  const base = FAILURE_MESSAGES[String(reason || "")] || GENERIC_FAILURE;
+  return `${base} ${COMPLEMENTO_LOCAL}${notaTecnica(detalhe)}`;
 }
 
 export function shouldAskAyaAi(question, localMatched = false) {
@@ -306,7 +325,7 @@ export async function askAyaAi({
     if (!response.ok || !payload?.answer) {
       const reason = String(payload?.error || `http_${response.status}`);
       return {
-        answer: unavailableAnswer(question, context, reason),
+        answer: unavailableAnswer(question, context, reason, payload?.detail),
         sources:
           Array.isArray(payload?.sources) && payload.sources.length
             ? payload.sources
