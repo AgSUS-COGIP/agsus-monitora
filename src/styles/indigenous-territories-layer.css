@@ -81,7 +81,6 @@
   border-color: #ff4d3d;
 }
 
-
 /* O limite do DSEI é uma camada cartográfica, não um marcador interativo no
    toque. No desktop o tooltip ajuda a identificar o polígono sem competir com
    os popups das unidades. */
