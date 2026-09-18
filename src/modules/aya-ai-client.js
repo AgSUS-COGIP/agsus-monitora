@@ -191,6 +191,8 @@ const FAILURE_MESSAGES = {
     "A IA recusou a pergunta porque a sessão não foi aceita. Entre novamente no MONITORA.",
   auth_unavailable:
     "Não consegui validar sua sessão no Supabase agora, então a pergunta não chegou à IA.",
+  auth_not_configured:
+    "A validação de sessão do servidor está mal configurada: a chave do Supabase usada pelo MONITORA não foi aceita. Isso é configuração do ambiente, não da sua conta — entrar novamente não resolve.",
   local_ai_not_configured:
     "A IA local ainda não está configurada no ambiente do MONITORA: faltam AYA_LOCAL_BRIDGE_URL e AYA_LOCAL_BRIDGE_KEY.",
   local_ai_unavailable:
