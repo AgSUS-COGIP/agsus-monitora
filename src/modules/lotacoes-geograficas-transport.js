@@ -239,19 +239,27 @@ function dedupeNetworkList(list, listKind = "u") {
 
 function annotatePoloFromCnes(polo, networkRow, record) {
   if (!networkRow) return;
+  const cnesLat = Number(networkRow?.[2]);
+  const cnesLon = Number(networkRow?.[3]);
   polo.cnes = String(networkRow?.[1] || polo.cnes || "");
-  polo.coord_cnes = {
-    lat: Number(networkRow?.[2]),
-    lon: Number(networkRow?.[3]),
-  };
-  const km = distanciaKm(
-    Number(networkRow?.[2]),
-    Number(networkRow?.[3]),
-    record.lat,
-    record.lon,
-  );
+  polo.coord_lotacoes = { lat: record.lat, lon: record.lon };
+  polo.coord_cnes = { lat: cnesLat, lon: cnesLon };
+  const km = distanciaKm(cnesLat, cnesLon, record.lat, record.lon);
   polo.coord_diferenca_km = km == null ? null : Number(km.toFixed(1));
   polo.coord_divergencia = classificarDivergencia(km);
+
+  // Depois que a identidade foi confirmada contra o CNES, todos os consumidores
+  // do mapa passam a usar a coordenada cadastrada no CNES. A coordenada da
+  // planilha continua preservada em coord_lotacoes para auditoria.
+  if (Number.isFinite(cnesLat) && Number.isFinite(cnesLon)) {
+    polo.lat = cnesLat;
+    polo.lon = cnesLon;
+    polo.coord_oficial = true;
+    polo.coord_fonte = "CNES";
+    polo.coord_nome = networkRow?.[0] || "";
+    polo.mun_cnes = networkRow?.[4] || "";
+    polo.uf_cnes = networkRow?.[5] || "";
+  }
 }
 
 export async function loadLotacoesGeograficas(fetchImpl = globalThis.fetch) {
