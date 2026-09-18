@@ -155,18 +155,21 @@ export function classificarDivergencia(km) {
 }
 
 /*
-  A COORDENADA DE EXIBIÇÃO — REGRA EXPLÍCITA
+  A COORDENADA DE EXIBIÇÃO — REGRA CONSERVADORA
 
-  Vence sempre a do `rede_cnes`. Não porque seja mais exata — ninguém verificou
-  isso —, mas porque é a única das duas com procedência declarada: veio de um
-  ficheiro do CNES, com código de estabelecimento. A do `lmap` entrou no sistema
-  por fora da aplicação e não há registo de quem a pôs lá nem de que fonte.
+  O CNES confirma a IDENTIDADE do estabelecimento, mas isso não prova que a
+  latitude/longitude cadastrada seja a posição física exata do Polo Base.
+  Em vários casos a coordenada da planilha de Lotações coincide com a do CNES,
+  portanto as duas não são confirmação independente.
 
-  Entre uma coordenada rastreável e uma anónima, exibir a rastreável é a escolha
-  defensável. A outra não se perde: fica em `coordenadas.lmap`, e a distância
-  entre as duas fica no próprio registo.
+  Quando o polo já existia no lmap, preserva-se a posição que estava sendo
+  exibida antes do enriquecimento e mantêm-se CNES/Lotações como fontes de
+  comparação. Só uma validação independente deve substituir a posição.
 */
 function coordenadaDeExibicao(polo, estab) {
+  if (Number.isFinite(polo?.lat) && Number.isFinite(polo?.lon)) {
+    return { lat: polo.lat, lon: polo.lon, fonte: "lmap" };
+  }
   return { lat: estab.lat, lon: estab.lon, fonte: "rede_cnes" };
 }
 
@@ -201,6 +204,15 @@ function registrarReconciliacao({
     coordenada_exibida: exibicao.fonte,
     coordenadas: {
       lmap: { lat: polo.lat, lon: polo.lon },
+      lotacoes:
+        polo.coord_lotacoes &&
+        Number.isFinite(Number(polo.coord_lotacoes.lat)) &&
+        Number.isFinite(Number(polo.coord_lotacoes.lon))
+          ? {
+              lat: Number(polo.coord_lotacoes.lat),
+              lon: Number(polo.coord_lotacoes.lon),
+            }
+          : null,
       rede_cnes: { lat: estab.lat, lon: estab.lon },
     },
     distancia_entre_fontes_km: km == null ? null : Number(km.toFixed(1)),
