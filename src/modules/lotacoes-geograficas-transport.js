@@ -408,7 +408,8 @@ export function applyLotacoesGeograficas(rows, dataset) {
     reconciliada_com: "CNES",
     criterio_identidade:
       "CNES > tipo > nome canônico > município > proximidade conservadora",
-    coordenada_preferida:\n      "lmap preservado quando existente; Lotações e CNES mantidos para comparação; validação independente antes de substituir",
+    coordenada_preferida:
+      "lmap preservado quando existente; Lotações e CNES mantidos para comparação; validação independente antes de substituir",
     registros: 598,
     sedes: 34,
     polos: 403,
