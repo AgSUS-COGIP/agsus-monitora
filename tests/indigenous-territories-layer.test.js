@@ -12,6 +12,7 @@ import {
   funaiViewportUrl,
   isHealthMapElementId,
   povosDaTerraIndigena,
+  rotuloDaTerraIndigena,
   tooltipDaTerraIndigena,
 } from "../src/modules/indigenous-territories-layer.js";
 
@@ -145,6 +146,39 @@ describe("marcação da Terra Indígena no mapa", () => {
     expect(
       tooltipDaTerraIndigena({ etnia_nome: "<img src=x onerror=alert(1)>" }),
     ).not.toContain("<img");
+  });
+});
+
+describe("rótulo desenhado sobre a Terra Indígena", () => {
+  it("escreve o povo, não o nome da terra", () => {
+    expect(
+      rotuloDaTerraIndigena({
+        etnia_nome: "Potiguara",
+        terrai_nome: "Potiguara de Monte-Mór",
+      }),
+    ).toBe("Potiguara");
+  });
+
+  it("escreve dois povos por extenso", () => {
+    expect(rotuloDaTerraIndigena({ etnia_nome: "Guaraní e Kaingang" })).toBe(
+      "Guaraní, Kaingang",
+    );
+  });
+
+  it("a partir do terceiro povo, conta em vez de escrever", () => {
+    expect(
+      rotuloDaTerraIndigena({ etnia_nome: "Guaraní e Kaingang e Xetá" }),
+    ).toBe("Guaraní, Kaingang +1");
+  });
+
+  it("sem etnia declarada, cai para o nome da terra", () => {
+    expect(rotuloDaTerraIndigena({ terrai_nome: "Acapuri de Cima" })).toBe(
+      "Acapuri de Cima",
+    );
+  });
+
+  it("não devolve rótulo quando não há nome nenhum", () => {
+    expect(rotuloDaTerraIndigena({ gid: 3 })).toBe("");
   });
 });
 
