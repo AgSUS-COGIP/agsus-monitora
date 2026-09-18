@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  FUNAI_DSEI_LAYER,
   FUNAI_PROXY_GEOJSON,
   FUNAI_PROXY_WMS,
   FUNAI_TERRITORIES_LAYER,
@@ -36,8 +35,7 @@ describe("camada de Terras Indígenas", () => {
     expect(url).toContain("bbox=-40%2C-12%2C-35%2C-8");
   });
 
-  it("usa a área oficial dos DSEIs da Funai", () => {
-    expect(FUNAI_DSEI_LAYER).toBe("Funai:areas_dsei");
+  it("busca a área oficial dos DSEIs pelo proxy do catálogo atual da Funai", () => {
     expect(funaiDseiUrl()).toBe("/api/funai-geodata?dataset=dsei");
   });
 
