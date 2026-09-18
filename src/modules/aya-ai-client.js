@@ -185,6 +185,31 @@ export function contextualAyaAnswer(question, context = {}) {
   return "";
 }
 
+/*
+  "Diga mais sobre esse DSEI" não diz qual, e a busca por conhecimento só
+  enxergava a pergunta atual. O usuário recebia a definição genérica logo depois
+  de ter nomeado o distrito, e repetir a pergunta não adiantava.
+
+  A referência é resolvida juntando a última pergunta do usuário à atual, e só
+  quando a atual é anafórica de fato. Fazer isso sempre arrastaria o assunto
+  anterior para perguntas que já têm assunto próprio: depois de falar de
+  Alagoas, "o que é CASAI?" voltaria a falar de Alagoas.
+*/
+const REFERENCIA_VAGA =
+  /\b(?:esse|essa|este|esta|desse|dessa|deste|desta|nele|nela|dele|dela|isso|disso|o mesmo|a mesma)\b/i;
+
+export function resolverReferencia(question, history = []) {
+  const atual = String(question || "");
+  if (!REFERENCIA_VAGA.test(atual)) return atual;
+
+  const anterior = [...history]
+    .reverse()
+    .find((item) => item?.role === "user" && String(item.content || "").trim());
+  if (!anterior) return atual;
+
+  return `${String(anterior.content).slice(0, 300)} ${atual}`;
+}
+
 const FAILURE_MESSAGES = {
   sem_conexao:
     "A conexão com o Supabase não está configurada nesta instalação, então não consigo autenticar a pergunta antes de consultar a IA.",
@@ -264,11 +289,12 @@ export async function askAyaAi({
   doc = document,
 } = {}) {
   const context = collectAyaPageContext(doc);
-  const curated = curatedAnswerForQuestion(question);
+  const pergunta = resolverReferencia(question, history);
+  const curated = curatedAnswerForQuestion(pergunta);
   if (curated) {
     return {
       answer: curated,
-      sources: officialSourcesForQuestion(question),
+      sources: officialSourcesForQuestion(pergunta),
       unavailable: false,
       provider: "curated-official",
     };
@@ -318,6 +344,9 @@ export async function askAyaAi({
       },
       body: JSON.stringify({
         question,
+        // A pergunta com a referência resolvida serve para escolher o
+        // conhecimento; `question` continua sendo o que a pessoa escreveu.
+        referencia: pergunta === question ? undefined : pergunta,
         section,
         title,
         history: history.slice(-8),

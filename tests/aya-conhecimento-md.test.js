@@ -85,3 +85,25 @@ describe("quando o verbete dispensa o verbo de definição", () => {
     expect(curatedAnswerForQuestion("me mostre as vagas ociosas")).toBe("");
   });
 });
+
+describe("perfil do DSEI quando o nome é dito", () => {
+  it("responde o distrito, não a definição genérica de DSEI", () => {
+    for (const pergunta of [
+      "Dsei alagoas",
+      "Diga mais sobre o DSEI Alagoas",
+      "dsei al/se",
+    ]) {
+      const resposta = curatedAnswerForQuestion(pergunta);
+      expect(resposta).toContain("Maceió");
+      expect(resposta).toContain("13.480");
+    }
+  });
+
+  it("mantém a resposta composta quando há duas perguntas juntas", () => {
+    const resposta = curatedAnswerForQuestion(
+      "Quantas aldeias tem no DSEI Alagoas? Diga mais sobre o povo Kariri-Xocó",
+    );
+    expect(resposta).toContain("30 aldeias");
+    expect(resposta).toContain("Ouricuri");
+  });
+});

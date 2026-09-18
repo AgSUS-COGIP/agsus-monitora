@@ -143,7 +143,7 @@ async function bridgeAnunciado(accessToken) {
   }
 }
 
-function safeSources(question) {
+function safeSources(paraConhecimento) {
   return officialSourcesForQuestion(question).map(({ id, label, url }) => ({
     id,
     label,
@@ -182,11 +182,22 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "invalid_question" });
   }
 
-  const curated = curatedAnswerForQuestion(question);
+  /*
+    Quando a pergunta é anafórica — "diga mais sobre esse DSEI" —, o cliente
+    manda também a versão com a referência resolvida. Ela serve só para escolher
+    conhecimento e fontes; o que segue para o modelo continua sendo o que a
+    pessoa escreveu.
+  */
+  const referencia = String(req.body?.referencia || "")
+    .trim()
+    .slice(0, MAX_QUESTION_LENGTH);
+  const paraConhecimento = referencia || question;
+
+  const curated = curatedAnswerForQuestion(paraConhecimento);
   if (curated) {
     return json(res, 200, {
       answer: curated,
-      sources: safeSources(question),
+      sources: safeSources(paraConhecimento),
       model: "curated-official",
       provider: "curated-official",
     });
@@ -202,7 +213,7 @@ export default async function handler(req, res) {
   if (!bridgeUrl || !bridgeKey) {
     return json(res, 503, {
       error: "local_ai_not_configured",
-      sources: safeSources(question),
+      sources: safeSources(paraConhecimento),
     });
   }
 
@@ -216,7 +227,7 @@ export default async function handler(req, res) {
     return json(res, 503, {
       error: "local_ai_offline",
       minutos_sem_sinal: Math.round(anunciado.idade / 60),
-      sources: safeSources(question),
+      sources: safeSources(paraConhecimento),
     });
   }
 
@@ -244,7 +255,7 @@ export default async function handler(req, res) {
             content: buildAyaSystemPrompt({
               section,
               title,
-              question,
+              question: paraConhecimento,
               context,
             }),
           },
@@ -275,7 +286,7 @@ export default async function handler(req, res) {
           : erroDoBridge || "local_ai_error";
       return json(res, 502, {
         error: motivo,
-        sources: safeSources(question),
+        sources: safeSources(paraConhecimento),
       });
     }
 
@@ -283,13 +294,13 @@ export default async function handler(req, res) {
     if (!answer) {
       return json(res, 502, {
         error: "empty_ai_response",
-        sources: safeSources(question),
+        sources: safeSources(paraConhecimento),
       });
     }
 
     return json(res, 200, {
       answer,
-      sources: safeSources(question),
+      sources: safeSources(paraConhecimento),
       model: String(payload?.model || model),
       provider: "ollama-local",
     });
@@ -299,7 +310,7 @@ export default async function handler(req, res) {
         error?.name === "AbortError"
           ? "local_ai_timeout"
           : "local_ai_unavailable",
-      sources: safeSources(question),
+      sources: safeSources(paraConhecimento),
     });
   } finally {
     clearTimeout(timeout);

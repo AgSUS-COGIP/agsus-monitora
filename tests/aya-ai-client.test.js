@@ -3,6 +3,7 @@ import {
   ayaFailureMessage,
   collectAyaPageContext,
   contextualAyaAnswer,
+  resolverReferencia,
 } from "../src/modules/aya-ai-client.js";
 
 describe("contexto da tela para a Aya", () => {
@@ -150,5 +151,35 @@ describe("chave do bridge divergente", () => {
     expect(msg).toContain("AYA_LOCAL_BRIDGE_KEY");
     expect(msg).toContain("não da sua conta");
     expect(msg).not.toContain("Entre novamente no MONITORA.");
+  });
+});
+
+describe("referência a um turno anterior", () => {
+  it("resolve pronome usando a última pergunta do usuário", () => {
+    const history = [
+      { role: "user", content: "Dsei alagoas" },
+      { role: "assistant", content: "..." },
+    ];
+    const resolvida = resolverReferencia("Diga mais sobre esse DSEI", history);
+    expect(resolvida).toContain("Dsei alagoas");
+    expect(resolvida).toContain("esse DSEI");
+  });
+
+  it("não arrasta assunto anterior para pergunta que já tem o seu", () => {
+    const history = [{ role: "user", content: "Dsei alagoas" }];
+    expect(resolverReferencia("o que é CASAI?", history)).toBe(
+      "o que é CASAI?",
+    );
+  });
+
+  it("aguenta histórico vazio ou só do assistente", () => {
+    expect(resolverReferencia("diga mais sobre isso", [])).toBe(
+      "diga mais sobre isso",
+    );
+    expect(
+      resolverReferencia("diga mais sobre isso", [
+        { role: "assistant", content: "x" },
+      ]),
+    ).toBe("diga mais sobre isso");
   });
 });
