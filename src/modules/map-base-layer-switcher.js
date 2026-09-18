@@ -8,7 +8,7 @@ const SATELLITE_ERROR_LIMIT = 4;
 // - zoom 19: aproximação na faixa de dezenas de metros.
 export const MAP_MIN_ZOOM = 4.5;
 export const MAP_MAX_ZOOM = 19;
-const SATELLITE_MAX_NATIVE_ZOOM = 17;
+const SATELLITE_MAX_NATIVE_ZOOM = 19;
 
 const SATELLITE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -22,12 +22,12 @@ let installed = false;
 export function addResilientBaseLayer(L, map) {
   enhanceMap(L, map);
   const layer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
+    maxZoom: MAP_MAX_ZOOM,
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
     crossOrigin: true,
-    updateWhenIdle: true,
-    keepBuffer: 2,
+    updateWhenIdle: false,
+    keepBuffer: 3,
   });
   layer.__agsusBaseMapKind = MODE_MAP;
   let errors = 0;
@@ -274,8 +274,8 @@ function getSatelliteLayer(L, map) {
     maxNativeZoom: SATELLITE_MAX_NATIVE_ZOOM,
     attribution: SATELLITE_ATTRIBUTION,
     crossOrigin: true,
-    updateWhenIdle: true,
-    keepBuffer: 2,
+    updateWhenIdle: false,
+    keepBuffer: 3,
   });
   layer.__agsusBaseMapKind = MODE_SATELLITE;
 
@@ -333,6 +333,9 @@ function syncControl(map) {
 }
 
 function dispatchModeChange(map, mode) {
+  map
+    .getContainer?.()
+    .classList.toggle("map-satellite-mode", mode === MODE_SATELLITE);
   map.getContainer?.().dispatchEvent(
     new CustomEvent("agsus:map-base-layer-changed", {
       bubbles: true,

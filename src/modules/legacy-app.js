@@ -8882,7 +8882,7 @@ function addResilientMapTiles(map, element) {
   const providers = [
     {
       url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      options: { maxZoom: 18, attribution: "© OpenStreetMap" },
+      options: { maxZoom: 19, attribution: "© OpenStreetMap" },
     },
     {
       url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
