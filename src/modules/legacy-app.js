@@ -74,6 +74,8 @@ import {
   TOOLTIP_DA_LINHA,
   classificarRegistros,
   htmlDoMarcador,
+  linhasDaReconciliacao,
+  linhasDasCoordenadas,
   registrosExternos,
   registrosLocais,
   textoDoChip,
@@ -9669,7 +9671,12 @@ function renderDetailMap(d) {
       esc(record.name),
       `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
     ];
-    if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
+    /*
+      "Código CNES", e não "CNES": logo abaixo vinham as coordenadas, uma delas
+      também rotulada "CNES". O mesmo rótulo para um código de estabelecimento
+      e para um par de coordenadas obrigava quem lia a adivinhar qual era qual.
+    */
+    if (record.cnes) linhas.push(`Código CNES: ${esc(record.cnes)}`);
     if (record.validacao_coordenada === "validada") {
       linhas.push("<b>Localização validada por fonte independente</b>");
     } else if (record.coordenada_compartilhada_qtd > 1) {
@@ -9679,16 +9686,18 @@ function renderDetailMap(d) {
     } else {
       linhas.push("<b>Localização em validação</b>");
     }
-    if (fontes?.lmap && fontes?.rede_cnes) {
+
+    /*
+      A explicação da reconciliação vivia no tooltip e as coordenadas aqui —
+      dois textos sobre o mesmo assunto, visíveis ao mesmo tempo. Ficam juntas:
+      a frase que diz que as fontes divergem, e logo em seguida os pontos que
+      provam a divergência.
+    */
+    linhas.push(...linhasDaReconciliacao(record));
+    const coordenadas = linhasDasCoordenadas(fontes);
+    if (coordenadas.length) {
       linhas.push(
-        `Mapa anterior: ${Number(fontes.lmap.lat).toFixed(5)}, ${Number(fontes.lmap.lon).toFixed(5)}`,
-      );
-      if (fontes.lotacoes)
-        linhas.push(
-          `Lotações: ${Number(fontes.lotacoes.lat).toFixed(5)}, ${Number(fontes.lotacoes.lon).toFixed(5)}`,
-        );
-      linhas.push(
-        `CNES: ${Number(fontes.rede_cnes.lat).toFixed(5)}, ${Number(fontes.rede_cnes.lon).toFixed(5)}`,
+        `<span style="color:#6b7d92">${coordenadas.map(esc).join("<br>")}</span>`,
       );
     }
     return linhas.join("<br>");
@@ -9714,7 +9723,16 @@ function renderDetailMap(d) {
         direction: "top",
         opacity: 0.96,
       });
+      /*
+        Fechar no `popupopen` não bastava: o popup abre, o mapa faz autopan, o
+        marcador volta a passar sob o cursor parado e o Leaflet reabre o
+        tooltip. Recusar a abertura enquanto o popup está aberto cobre também
+        esse segundo caminho.
+      */
       marker.on("popupopen", () => marker.closeTooltip());
+      marker.on("tooltipopen", () => {
+        if (marker.isPopupOpen?.()) marker.closeTooltip();
+      });
     }
     return marker;
   };
@@ -10262,6 +10280,11 @@ function drawCasai() {
         { direction: "top" },
       );
       mk.on("popupopen", () => mk.closeTooltip());
+      // O autopan do popup traz o marcador de volta sob o cursor e reabriria o
+      // tooltip; enquanto o popup estiver aberto, o tooltip não abre.
+      mk.on("tooltipopen", () => {
+        if (mk.isPopupOpen?.()) mk.closeTooltip();
+      });
     }
     mk.bindPopup(
       `<b>${esc(c.n)}</b><br>Casa de Saúde Indígena (referência nacional)<br>${esc(c.cidade)} – ${c.uf}<br>Processos seletivos: ${nproc}<br><span style="font-size:10px;color:#6b7d92">${fonteCoord}</span>`,
@@ -10331,6 +10354,11 @@ function drawRedeAssistencial(d) {
         { direction: "top" },
       );
       mk.on("popupopen", () => mk.closeTooltip());
+      // O autopan do popup traz o marcador de volta sob o cursor e reabriria o
+      // tooltip; enquanto o popup estiver aberto, o tooltip não abre.
+      mk.on("tooltipopen", () => {
+        if (mk.isPopupOpen?.()) mk.closeTooltip();
+      });
     }
     const compartilhada = Number(c.meta?.coordenada_compartilhada_qtd || 0);
     const fonte =
@@ -10435,6 +10463,11 @@ function drawPolos(d) {
         { direction: "top" },
       );
       mk.on("popupopen", () => mk.closeTooltip());
+      // O autopan do popup traz o marcador de volta sob o cursor e reabriria o
+      // tooltip; enquanto o popup estiver aberto, o tooltip não abre.
+      mk.on("tooltipopen", () => {
+        if (mk.isPopupOpen?.()) mk.closeTooltip();
+      });
     }
     const diferenca =
       Number.isFinite(Number(p.coord_diferenca_km)) &&
