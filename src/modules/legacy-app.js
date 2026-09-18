@@ -1420,6 +1420,7 @@ function isViewAllowed(view) {
   if (!view) return false;
   if (view === "dashboard") return can("ind");
   if (view === "nucleo") return can("cores");
+  if (view === "calendario") return can("cores");
   if (view === "approved") return canViewCore(profile);
   if (view === "config") return can("config");
   if (view.startsWith("panel:")) {
@@ -2314,6 +2315,10 @@ function buildNav() {
     principal.push(
       navButton("nucleo", cfgValue("nucleo_nav_title"), "fa-people-group"),
     );
+  if (can("cores"))
+    principal.push(
+      navButton("calendario", "Cronograma", "fa-calendar-days"),
+    );
   if (canViewCore(profile))
     principal.push(
       navButton("approved", "Lista de Aprovados", "fa-user-check"),
@@ -2378,6 +2383,10 @@ function navigate(view) {
     toast("Sem permissão para Equipe Núcleo.", "warn");
     return;
   }
+  if (requestedView === "calendario" && !can("cores")) {
+    toast("Sem permissão para o Cronograma.", "warn");
+    return;
+  }
   if (requestedView === "approved" && !canViewCore(profile)) {
     toast("Sem permissão para Lista de Aprovados.", "warn");
     return;
@@ -2425,6 +2434,17 @@ function navigate(view) {
       cfgValue("nucleo_page_subtitle"),
     );
     renderNucleo();
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "calendario") {
+    $("page-calendario").classList.add("active");
+    setPageTitle(
+      "Cronograma",
+      "Etapas dos editais organizadas por data, a partir dos cronogramas da Equipe Núcleo.",
+    );
+    void window.calendarioEditaisController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;

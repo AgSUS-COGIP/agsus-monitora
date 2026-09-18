@@ -407,6 +407,14 @@ async function loadCatalog() {
   }
   state.loadingCatalog = true;
   try {
+    /*
+      A normalização do banco renomeou as tabelas para o padrão MAD e repôs os
+      nomes antigos como views de compatibilidade — `configuracoes`,
+      `monitoramento_indigena`, `paineis_externos` e as outras continuam a
+      funcionar por isso. `analises_editais` foi a única que ficou sem essa view,
+      então aqui é preciso nomear a tabela nova. Quando a view existir, esta
+      linha volta a `analises_editais` e fica igual às restantes.
+    */
     const { data, error } = await state.client
       .from("TB_EDITAL_ANALISE")
       .select("grupo,unidade,edital,ativo")

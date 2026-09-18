@@ -1160,6 +1160,63 @@
           </section>
 
 
+          <section id="page-calendario" class="page">
+            <div class="table-card card cal-card">
+              <div class="cal-barra">
+                <span class="cal-nav">
+                  <button id="calMesAnterior" type="button" aria-label="Mês anterior" title="Mês anterior">
+                    <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                  </button>
+                  <button id="calMesSeguinte" type="button" aria-label="Próximo mês" title="Próximo mês">
+                    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                  </button>
+                </span>
+                <h3 id="calMesTitulo" aria-live="polite">Calendário</h3>
+                <button id="calHoje" class="btn secondary" type="button">Hoje</button>
+                <span id="calContador" class="chip blue">0 etapas</span>
+
+                <div class="cal-filtros">
+                  <label class="sr-only" for="calBusca">Pesquisar etapa, edital ou unidade</label>
+                  <input id="calBusca" class="cal-busca" type="search" autocomplete="off"
+                         placeholder="Pesquisar etapa, edital ou unidade..."
+                         title="Pesquisar etapa, edital ou unidade">
+                  <label class="sr-only" for="calUnidade">Unidade</label>
+                  <select id="calUnidade" title="Unidade"></select>
+                  <label class="sr-only" for="calEdital">Edital</label>
+                  <select id="calEdital" title="Edital"></select>
+                  <label class="sr-only" for="calTipo">Tipo de etapa</label>
+                  <select id="calTipo" title="Tipo de etapa"></select>
+                  <label class="cal-caixa">
+                    <input id="calOcultarConcluidas" type="checkbox" checked>
+                    Ocultar concluídas
+                  </label>
+                  <button id="calLimparFiltros" class="btn secondary" type="button">Limpar</button>
+                </div>
+              </div>
+
+              <div id="calLegenda" class="cal-legenda"></div>
+              <div id="calGrade"></div>
+            </div>
+
+            <div class="cal-inferior">
+              <div class="table-card card">
+                <div class="table-head">
+                  <h3><i class="fa-solid fa-list-check" aria-hidden="true"></i> Próximas etapas</h3>
+                </div>
+                <div id="calProximas"></div>
+              </div>
+
+              <div class="table-card card">
+                <div class="table-head">
+                  <h3><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Linha do tempo do edital</h3>
+                  <label class="sr-only" for="calTimelineEdital">Edital da linha do tempo</label>
+                  <select id="calTimelineEdital"></select>
+                </div>
+                <ol id="calTimeline" class="cal-timeline"></ol>
+              </div>
+            </div>
+          </section>
+
           <section id="page-approved" class="page">
             <div class="table-card card approved-page-card">
               <div class="table-head approved-page-head">
@@ -1910,6 +1967,18 @@
       </div>
     </div>
 
+
+    <div id="calDiaModal" class="modal cal-modal" role="dialog" aria-modal="true" aria-labelledby="calDiaTitulo">
+      <div class="modal-card cal-modal-card">
+        <div class="modal-head">
+          <h3 id="calDiaTitulo">Etapas do dia</h3>
+          <button id="calDiaFechar" class="btn secondary" type="button">Fechar</button>
+        </div>
+        <div class="modal-body">
+          <div id="calDiaLista"></div>
+        </div>
+      </div>
+    </div>
 
     <div id="approvedStatusModal" class="modal approved-modal" role="dialog" aria-modal="true" aria-labelledby="approvedStatusTitle">
       <div class="modal-card approved-modal-card">

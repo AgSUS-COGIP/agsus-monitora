@@ -25,6 +25,7 @@ import "./styles/health-details-runtime-fix.css";
 import "./styles/config-page.css";
 import "./styles/config-governance.css";
 import "./styles/nucleo-cronograma.css";
+import "./styles/calendario-editais.css";
 import "./styles/nucleo-cronograma-template-helper.css";
 import "./styles/nucleo-cronograma-manual-only.css";
 import "./styles/nucleo-operational-enhancements.css";
@@ -89,6 +90,7 @@ import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { initColapsarDaSidebar } from "./modules/colapsar-a-sidebar.js";
 import { createListaAprovadosController } from "./modules/lista-aprovados.js";
+import { createCalendarioEditaisController } from "./modules/calendario-editais.js";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -143,6 +145,11 @@ window.aprovadosController = createListaAprovadosController({
   toast: window.monitoraToast,
   loader: window.monitoraLoader,
   getProfile: window.getMonitoraProfile,
+});
+
+window.calendarioEditaisController = createCalendarioEditaisController({
+  toast: window.monitoraToast,
+  loader: window.monitoraLoader,
 });
 
 if (!hasSupabaseEnv()) {
