@@ -1,3 +1,5 @@
+import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.js";
+
 const FUNAI_OWS_ENDPOINTS = [
   "https://geoserver.funai.gov.br/geoserver/Funai/ows",
   "https://geoserver.funai.gov.br/geoserver/ows",
@@ -19,6 +21,13 @@ const STATIC_DATASETS = {
 const DSEI_KNOWN_TYPE_NAMES = ["Funai:areas_dsei"];
 
 let resolvedDseiSource = null;
+/*
+  Sem esta trava, várias requisições simultâneas em instância fria refaziam a
+  descoberta inteira cada uma — até seis chamadas ao GeoServer por requisição.
+  Sob carga isso martela a Funai, que é justamente quem não podemos irritar.
+  Guardar a promessa em andamento faz as concorrentes esperarem a primeira.
+*/
+let descobertaEmCurso = null;
 
 function first(value) {
   return Array.isArray(value) ? value[0] : value;
@@ -167,7 +176,14 @@ async function requestFeatureCollection(endpoint, typeName, extra = {}) {
 
 async function resolveDseiSource() {
   if (resolvedDseiSource) return resolvedDseiSource;
+  if (descobertaEmCurso) return descobertaEmCurso;
+  descobertaEmCurso = descobrirFonteDsei().finally(() => {
+    descobertaEmCurso = null;
+  });
+  return descobertaEmCurso;
+}
 
+async function descobrirFonteDsei() {
   for (const endpoint of FUNAI_OWS_ENDPOINTS) {
     for (const typeName of DSEI_KNOWN_TYPE_NAMES) {
       const body = await requestFeatureCollection(endpoint, typeName, {
@@ -214,6 +230,10 @@ export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return json(res, 405, { error: "method_not_allowed" });
+  }
+
+  if (origemDeTerceiro(req)) {
+    return json(res, 403, { error: "origem_nao_permitida" });
   }
 
   const dataset = String(first(req.query?.dataset) || "");
@@ -269,9 +289,9 @@ export default async function handler(req, res) {
     );
     res.end(body);
   } catch (error) {
-    return json(res, 502, {
-      error: "funai_unavailable",
-      detail: String(error?.message || error).slice(0, 180),
-    });
+    // A mensagem do erro fica no log do servidor, não na resposta pública:
+    // ela pode carregar endereço interno ou detalhe de infraestrutura.
+    console.error("funai-geodata:", error);
+    return json(res, 502, { error: "funai_unavailable", dataset });
   }
 }
