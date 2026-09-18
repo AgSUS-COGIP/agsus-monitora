@@ -10704,17 +10704,19 @@ function syncMapLevelUI() {
       `<span style="width:11px;height:11px;background:${c};border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.2);display:inline-block;transform:rotate(45deg);vertical-align:middle;margin-right:7px;margin-left:1px;"></span>`;
     const tracejado =
       '<span style="border-top:2.5px dashed #e8730c;width:18px;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
-    const quadUF =
-      '<span style="width:12px;height:12px;background:#2e8b57;opacity:.45;border:1.5px solid #1f6f4a;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const limiteDsei =
+      '<span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const terraIndigena =
+      '<span style="width:16px;height:11px;background:rgba(20,184,166,.12);border:2px solid #0f766e;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
     box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}ligação ao DSEI<br>${quadUF}estado atendido`
-      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${losango("#7b2ff7")}CASAI Nacional`;
+      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terra Indígena (Funai)`
+      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terras Indígenas (Funai)<br>${losango("#7b2ff7")}CASAI Nacional`;
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei)
     lgDsei.innerHTML = showingPolos
-      ? '<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base &nbsp; <span style="width:11px;height:11px;border-radius:50%;background:#e8730c;display:inline-block;"></span> polo fora das UFs administrativas do DSEI'
-      : '<span style="width:11px;height:11px;border-radius:50%;background:#5b9bd5;display:inline-block;"></span> DSEI &nbsp; <span style="width:11px;height:11px;border-radius:50%;background:#0b8f58;display:inline-block;"></span> com processo';
+      ? '<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base &nbsp; <span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;"></span> abrangência oficial'
+      : '<span style="width:11px;height:11px;border-radius:50%;background:#5b9bd5;display:inline-block;"></span> sede DSEI &nbsp; <span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;"></span> abrangência oficial';
 }
 
 function renderRisks() {
