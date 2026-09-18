@@ -83,6 +83,7 @@ import { initNucleoCronogramaTools } from "./modules/nucleo-cronograma-tools.js"
 import { initNucleoCronogramaOpenHook } from "./modules/nucleo-cronograma-open-hook.js";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
+import { initMobileGoogleOAuth } from "./modules/mobile-google-oauth.js";
 import { initMobileTableCards } from "./modules/mobile-table-cards.js";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
@@ -134,6 +135,7 @@ initNucleoCronogramaTools();
 initNucleoCronogramaOpenHook();
 initMobileAppExperience();
 initMobileBottomNavigation();
+initMobileGoogleOAuth();
 initMobileTableCards();
 initPwaLifecycle();
 initConnectivityStatus();
