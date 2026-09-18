@@ -259,8 +259,20 @@ export default async function handler(req, res) {
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
+      /*
+        O bridge também responde "unauthorized" — dele, quer dizer chave
+        X-Aya-Bridge-Key errada. Repassar esse texto sem traduzir fazia a tela
+        mostrar a mensagem de sessão inválida e mandar o usuário entrar de novo,
+        para um problema que é de configuração do servidor e que login nenhum
+        resolve. Código de terceiro não entra no nosso espaço de nomes.
+      */
+      const erroDoBridge = String(payload?.error || "");
+      const motivo =
+        response.status === 401 || erroDoBridge === "unauthorized"
+          ? "local_ai_key_mismatch"
+          : erroDoBridge || "local_ai_error";
       return json(res, 502, {
-        error: String(payload?.error || "local_ai_error"),
+        error: motivo,
         sources: safeSources(question),
       });
     }

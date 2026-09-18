@@ -140,3 +140,12 @@ describe("detalhe técnico da falha", () => {
     expect(msg.length).toBeLessThan(400);
   });
 });
+
+describe("chave do bridge divergente", () => {
+  it("não culpa a sessão do usuário por erro de configuração", () => {
+    const msg = ayaFailureMessage("local_ai_key_mismatch");
+    expect(msg).toContain("AYA_LOCAL_BRIDGE_KEY");
+    expect(msg).toContain("não da sua conta");
+    expect(msg).not.toContain("Entre novamente no MONITORA.");
+  });
+});
