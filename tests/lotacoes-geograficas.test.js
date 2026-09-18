@@ -35,6 +35,54 @@ describe("lotações geográficas", () => {
     ).toBe(true);
   });
 
+  it("preserva a sede DSEI existente e guarda Lotações como comparação", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: {
+          dsei: [
+            {
+              k: "CEARA",
+              n: "Ceará",
+              lat: -3.73,
+              lon: -38.52,
+              sedeuf: "CE",
+              polos: [],
+            },
+          ],
+        },
+      },
+      {
+        chave: "rede_cnes",
+        payload: { rede: { CEARA: { u: [], c: [] } }, nac: [] },
+      },
+    ];
+    const dataset = {
+      CEARA: [
+        [
+          "SEDE",
+          "SEDE DSEI",
+          -3.75,
+          -38.50,
+          "FORTALEZA",
+          "CE",
+          "Muito acessível",
+          "Terrestre",
+        ],
+      ],
+    };
+
+    const result = applyLotacoesGeograficas(rows, dataset);
+    const dsei = result[0].payload.dsei[0];
+
+    expect(dsei.lat).toBe(-3.73);
+    expect(dsei.lon).toBe(-38.52);
+    expect(dsei.sede_coord_lmap).toEqual({ lat: -3.73, lon: -38.52 });
+    expect(dsei.sede_coord_lotacoes).toEqual({ lat: -3.75, lon: -38.5 });
+    expect(dsei.coord_fonte).toBe("lmap");
+    expect(dsei.coord_validacao).toBe("pendente");
+  });
+
   it("preserva polo no lmap e não cria cópia do polo dentro da rede", () => {
     const rows = [
       {
@@ -283,5 +331,42 @@ describe("lotações geográficas", () => {
     expect(nac[0][2]).toBe(-15.72);
     expect(nac[0][3]).toBe(-47.79);
     expect(nac[0][9].coordenadas.lotacoes.lat).toBe(-15.7432639227901);
+    expect(nac[0][9].validacao_coordenada).toBe("pendente");
+    expect(nac[0][9].confirmacao_independente).toBe(false);
   });
+  it("sinaliza coordenada CNES compartilhada sem tratá-la como validação", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: { dsei: [{ k: "YANOMAMI", n: "Yanomami", polos: [] }] },
+      },
+      {
+        chave: "rede_cnes",
+        payload: {
+          rede: {
+            YANOMAMI: {
+              u: [
+                ["POLO BASE XITEI", "1", 2.98, -61.292, "ALTO ALEGRE", 14],
+                ["POLO BASE HAXIU", "2", 2.98, -61.292, "ALTO ALEGRE", 14],
+                ["POLO BASE ALTO MUCAJAI", "3", 2.98, -61.292, "ALTO ALEGRE", 14],
+              ],
+              c: [],
+            },
+          },
+          nac: [],
+        },
+      },
+    ];
+
+    const result = applyLotacoesGeograficas(rows, { YANOMAMI: [] });
+    const rede = result[1].payload.rede.YANOMAMI.u;
+
+    expect(rede).toHaveLength(3);
+    rede.forEach((row) => {
+      expect(row[9].coordenada_compartilhada).toBe(true);
+      expect(row[9].coordenada_compartilhada_qtd).toBe(3);
+      expect(row[9].validacao_coordenada).toBe("pendente");
+    });
+  });
+
 });
