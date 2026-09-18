@@ -8,11 +8,13 @@ import {
 const MAX_QUESTION_LENGTH = 1200;
 const MAX_HISTORY_MESSAGES = 8;
 const MAX_HISTORY_CONTENT = 1200;
-const REQUEST_TIMEOUT_MS = 30000;
+// Acima do limite do navegador, para que quem corte primeiro seja o cliente e
+// a causa apareça como cancelamento, não como erro do servidor.
+const REQUEST_TIMEOUT_MS = 50000;
 const DEFAULT_MODEL = "qwen3:1.7b";
 // 140 tokens cabem em ~11s de geração no hardware local medido. Com 180 o pior
 // caso chega a 19s e estoura o limite de tempo do navegador.
-const MAX_ANSWER_TOKENS = 140;
+const MAX_ANSWER_TOKENS = 120;
 
 function json(res, status, payload) {
   res

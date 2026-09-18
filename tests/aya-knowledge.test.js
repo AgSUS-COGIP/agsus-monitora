@@ -163,3 +163,23 @@ describe("siglas institucionais respondidas sem o modelo", () => {
     expect(curatedAnswerForQuestion("o que é o SIASI?")).toContain("SasiSUS");
   });
 });
+
+describe("siglas do SUS respondidas sem o modelo", () => {
+  it("responde SUS corretamente, sem 'Sistema Universo'", () => {
+    const answer = curatedAnswerForQuestion("o que é o SUS ?");
+    expect(answer).toContain("Sistema Único de Saúde");
+    expect(answer).toContain("1988");
+    expect(answer).not.toMatch(/Universo/i);
+  });
+
+  it("não confunde SUS com AgSUS nem com SasiSUS", () => {
+    expect(curatedAnswerForQuestion("O que é a AgSUS?")).toContain("Agência");
+    expect(curatedAnswerForQuestion("o que é o SasiSUS?")).toContain(
+      "Subsistema",
+    );
+  });
+
+  it("deixa pergunta factual seguir para o caminho normal", () => {
+    expect(curatedAnswerForQuestion("quantas vagas o SUS tem aqui?")).toBe("");
+  });
+});

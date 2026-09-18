@@ -147,6 +147,8 @@ export function curatedAnswerForQuestion(question) {
     return "MONITORA é o nome do sistema de monitoramento da AgSUS. Não é uma sigla: o nome não se abre em palavras. Ele acompanha, por território, as vagas previstas, as contratações realizadas e as vagas que permanecem ociosas.";
   }
   if (defineTerm || asksAcronym) {
+    // `agsus` contém `sus`, então o teste do SUS precisa vir depois e exigir a
+    // sigla isolada, senão "o que é a AgSUS" cairia aqui.
     if (/\bagsus\b/.test(normalized)) {
       return "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. Ela assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI, e é por isso que o MONITORA acompanha vagas, contratações e ociosidade por território.";
     }
@@ -155,6 +157,12 @@ export function curatedAnswerForQuestion(question) {
     }
     if (/\bsiasi\b/.test(normalized)) {
       return "SIASI é o Sistema de Informação da Atenção à Saúde Indígena, do Ministério da Saúde, gerido pela SESAI, e reúne dados dos 34 DSEIs. Não confunda com o SasiSUS, que é o Subsistema de Atenção à Saúde Indígena: o SIASI é o sistema de informação, o SasiSUS é o subsistema de atenção.";
+    }
+    if (/\bsasisus\b/.test(normalized)) {
+      return "SasiSUS é o Subsistema de Atenção à Saúde Indígena, gerido pela SESAI dentro do SUS. É por meio dele que a atenção à saúde indígena é organizada nos 34 DSEIs.";
+    }
+    if (/\bsus\b/.test(normalized)) {
+      return "SUS é o Sistema Único de Saúde, a política pública de saúde do Brasil, criada pela Constituição de 1988 e regulamentada pela Lei 8.080/1990. Atende de forma universal e gratuita. A atenção à saúde indígena acontece dentro dele, pelo SasiSUS, o Subsistema de Atenção à Saúde Indígena, sob coordenação da SESAI.";
     }
   }
   if (defineTerm && /\bocios[ao]s?\b/.test(normalized)) {
