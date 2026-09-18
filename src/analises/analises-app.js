@@ -518,7 +518,7 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
           { column: "unidade", ascending: true }, { column: "edital", ascending: true },
           { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
         ], currentScopeQueryOptions()),
-        fetchAllSupabaseRows("analises_editais", "grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise", [
+        fetchAllSupabaseRows("TB_EDITAL_ANALISE", "grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise", [
           { column: "unidade", ascending: true }, { column: "edital", ascending: true }
         ])
       ]);

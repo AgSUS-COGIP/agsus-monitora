@@ -408,7 +408,7 @@ async function loadCatalog() {
   state.loadingCatalog = true;
   try {
     const { data, error } = await state.client
-      .from("analises_editais")
+      .from("TB_EDITAL_ANALISE")
       .select("grupo,unidade,edital,ativo")
       .order("unidade", { ascending: true })
       .order("edital", { ascending: true });

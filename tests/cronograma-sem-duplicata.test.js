@@ -17,7 +17,7 @@ const CRONOGRAMA = [
 ];
 
 function colunasDoSelect(fonte) {
-  const i = fonte.indexOf('.from("monitoramento_indigena")');
+  const i = fonte.indexOf('.from("TB_MONITORAMENTO_INDIGENA")');
   if (i < 0) return [];
   const sel = fonte.indexOf(".select(", i);
   const a = fonte.indexOf('"', sel);

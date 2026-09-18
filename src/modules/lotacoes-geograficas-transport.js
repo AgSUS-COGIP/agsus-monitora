@@ -6,7 +6,7 @@ import {
   tipoDeclarado,
 } from "../lib/reconciliacao-unidades.js";
 
-const MAP_TABLE = "mapa_saude_indigena_config";
+const MAP_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
 const DECORATOR_KEY = "__agsusDecorateOperationalClient";
 const CLIENT_MARKER = "__agsusLotacoesGeograficas";
 const SOURCE = "Lotações, Meios de Acesso/Polo Base";

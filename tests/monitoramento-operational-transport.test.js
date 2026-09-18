@@ -22,7 +22,7 @@ describe("monitoramento operational transport", () => {
     });
 
     const client = decorateOperationalClient({ from });
-    const source = client.from("monitoramento_indigena");
+    const source = client.from("TB_MONITORAMENTO_INDIGENA");
 
     source.select("id,etapa,status");
     source.update({ etapa: "Etapa manual" });
@@ -31,7 +31,7 @@ describe("monitoramento operational transport", () => {
     expect(
       builders.get("vw_monitoramento_indigena_operacional").select,
     ).toHaveBeenCalledWith("id,etapa,status");
-    expect(builders.get("monitoramento_indigena").update).toHaveBeenCalledWith({
+    expect(builders.get("TB_MONITORAMENTO_INDIGENA").update).toHaveBeenCalledWith({
       etapa: "Etapa manual",
     });
   });
@@ -57,7 +57,7 @@ describe("monitoramento operational transport", () => {
       client,
     );
 
-    client.from("configuracoes").select("*");
+    client.from("TB_CONFIGURACAO").select("*");
     expect(other.select).toHaveBeenCalledWith("*");
   });
 });

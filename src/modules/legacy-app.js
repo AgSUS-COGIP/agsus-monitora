@@ -121,7 +121,7 @@ const RPC_REGISTER_ONLINE_PRESENCE = "registrar_presenca_monitora";
 const RPC_LIST_ONLINE_PRESENCE = "listar_presenca_online_monitora";
 const MONITORAMENTO_DASHBOARD_PAYLOAD_RPC =
   "get_monitoramento_dashboard_payload";
-const MAPA_CONFIG_TABLE = "mapa_saude_indigena_config";
+const MAPA_CONFIG_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
 const DEFAULT_ACCESS_HEARTBEAT_MINUTES = 5;
 const DETAILS_TABLE_SOURCE_MODE = "client";
 const PASSWORD_RESET_ADMIN_MESSAGE_FALLBACK = "";
@@ -1584,7 +1584,7 @@ function setAccessRequestFormLocked(locked) {
 async function loadMyAccessRequest() {
   if (!currentUser?.id) return null;
   const { data, error } = await sb
-    .from("solicitacoes_acesso")
+    .from("TB_SOLICITACAO_ACESSO")
 .select("id,status,observacao_admin,created_at")
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false })
@@ -1643,7 +1643,7 @@ async function submitAccessRequest() {
     );
   }
   const { data, error } = await sb
-    .from("solicitacoes_acesso")
+    .from("TB_SOLICITACAO_ACESSO")
     .insert({
       user_id: currentUser.id,
       email: currentUser.email,
@@ -1677,7 +1677,7 @@ async function loadConfig(options = {}) {
   loadedConfigKeys = new Set();
   configLoadOk = false;
   const { data, error } = await sb
-    .from("configuracoes")
+    .from("TB_CONFIGURACAO")
     .select("chave,valor,descricao");
   if (error) {
     if (!silent)
@@ -1944,7 +1944,7 @@ async function loadUnidades() {
     return false;
   }
   const { data, error } = await sb
-    .from("dim_unidades")
+    .from("TD_UNIDADE")
     .select("id_unidade,sigla,nome_oficial,tipo,uf_sede,ativo")
     .eq("ativo", true)
     .order("tipo", { ascending: true })
@@ -2070,7 +2070,7 @@ function onModalUnidadeChange() {
 
 async function loadPanels() {
   const { data, error } = await sb
-    .from("paineis_externos")
+    .from("TB_PAINEL_EXTERNO")
     .select(
       "id,codigo,titulo,icone,url,ordem,ativo,em_manutencao,tipo_abertura",
     )
@@ -2187,7 +2187,7 @@ async function loadData(options = {}) {
     const [payloadResponse, tableResponse] = await Promise.all([
       loadMonitoramentoPayload(),
       sb
-        .from("monitoramento_indigena")
+        .from("TB_MONITORAMENTO_INDIGENA")
         /*
           As seis colunas `cronograma_*` entram aqui de proposito.
         
@@ -11959,7 +11959,7 @@ async function renderAccessRequestsAdmin() {
   box.innerHTML = `<div class="access-status">Carregando acessos...</div>`;
   const [requestsResponse, profilesResponse] = await Promise.all([
     sb
-      .from("solicitacoes_acesso")
+      .from("TB_SOLICITACAO_ACESSO")
       .select(
         "id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at",
       )
@@ -11967,7 +11967,7 @@ async function renderAccessRequestsAdmin() {
       .order("created_at", { ascending: false })
       .limit(50),
     sb
-      .from("perfis_usuarios")
+      .from("TB_PERFIL_USUARIO")
       .select(
         "id,user_id,email,nome,perfil,ativo,updated_at",
       )
@@ -12811,7 +12811,7 @@ function startRealtime() {
       .channel("monitoramento_changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "monitoramento_indigena" },
+        { event: "*", schema: "public", table: "TB_MONITORAMENTO_INDIGENA" },
         () => {
           // Debounce: evita múltiplas chamadas em rajada
           clearTimeout(window.__realtimeDebounce);

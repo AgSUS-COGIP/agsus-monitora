@@ -29,7 +29,7 @@ if (!URL_DO_BANCO) {
 
 const VIEW = "vw_monitoramento_indigena_operacional";
 const FUNCAO = "get_monitoramento_cronograma_estado";
-const TABELA = "monitoramento_indigena_cronograma";
+const TABELA = "TB_CRONOGRAMA_MONIT_INDIG";
 const DESTINO = process.argv[2] || "docs/medicoes";
 const ROTULO = process.env.ROTULO_DA_MEDICAO || "antes";
 const REPETICOES = Number(process.env.REPETICOES || 3);
