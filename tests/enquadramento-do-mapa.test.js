@@ -538,7 +538,10 @@ describe("o mapa não inventa coordenadas", () => {
     expect(detalhe).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
 
     const polos = codigo.slice(
-      codigo.indexOf("agruparCoincidentes(", codigo.indexOf("function drawPolos")),
+      codigo.indexOf(
+        "agruparCoincidentes(",
+        codigo.indexOf("function drawPolos"),
+      ),
       codigo.indexOf("syncMapLevelUI();", codigo.indexOf("function drawPolos")),
     );
     expect(polos).toContain("layerPointToLatLng");
