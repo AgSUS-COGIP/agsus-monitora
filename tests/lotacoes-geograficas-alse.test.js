@@ -174,16 +174,7 @@ describe("deduplicação real de Alagoas e Sergipe", () => {
         payload: {
           rede: {
             D: {
-              u: [
-                [
-                  "POLO BASE OUTRO POVO",
-                  "1",
-                  -9.001,
-                  -37,
-                  "MUNICIPIO",
-                  27,
-                ],
-              ],
+              u: [["POLO BASE OUTRO POVO", "1", -9.001, -37, "MUNICIPIO", 27]],
               c: [],
             },
           },
