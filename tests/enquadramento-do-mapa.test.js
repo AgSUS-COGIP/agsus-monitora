@@ -410,6 +410,16 @@ describe("a legenda descreve os marcadores que existem", () => {
     expect(css).toContain(".health-map-legenda-linha");
   });
 
+  /*
+    A mancha das Terras Indígenas ganhou destaque no mapa; era a única coisa
+    desenhada que a legenda não explicava.
+  */
+  it("a mancha das Terras Indígenas é explicada", () => {
+    const fn = modulo.slice(modulo.indexOf("export function htmlDaLegenda"));
+    expect(fn).toContain("Terra Indígena (Funai)");
+    expect(css).toContain(".health-map-legenda-terra");
+  });
+
   it("é aplicada no arranque", () => {
     expect(main).toContain("aplicarLegendaDoMapaDetalhado()");
   });

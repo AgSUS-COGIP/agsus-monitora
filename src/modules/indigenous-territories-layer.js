@@ -13,6 +13,14 @@ const VECTOR_MIN_ZOOM = 7;
 const VECTOR_MAX_FEATURES = 250;
 const VECTOR_REFRESH_DELAY_MS = 220;
 
+/*
+  Acima disto o mapa deixa de ganhar com os rótulos e passa a perder: nomes
+  sobrepostos escondem o traçado das próprias terras e as unidades de saúde.
+  Numa vista de DSEI as terras cabem bem abaixo do limite; numa vista ampla do
+  Amazonas não cabem, e aí o nome volta a ser só no ponteiro.
+*/
+const LIMITE_DE_ROTULOS_NO_MAPA = 40;
+
 let installed = false;
 let dseiFeaturesPromise = null;
 
@@ -106,6 +114,19 @@ export function tooltipDaTerraIndigena(properties = {}) {
   if (uf) linhas.push(escaparHtml(uf));
 
   return linhas.join("<br>");
+}
+
+/*
+  O rótulo desenhado sobre o polígono, ao contrário do tooltip, compete por
+  espaço com tudo o resto no mapa. Leva o povo — que é o que se quer ver — e
+  cala o resto. Com muitos povos na mesma terra, dois e a contagem do que
+  sobra; escrever cinco nomes numa linha ocuparia meio estado.
+*/
+export function rotuloDaTerraIndigena(properties = {}) {
+  const povos = povosDaTerraIndigena(properties);
+  if (!povos.length) return funaiFeatureName(properties);
+  if (povos.length <= 2) return povos.join(", ");
+  return `${povos.slice(0, 2).join(", ")} +${povos.length - 2}`;
 }
 
 function normalizeText(value) {
@@ -273,6 +294,20 @@ function enhanceMap(L, map) {
   }
 
   /*
+    Os rótulos ficam acima do traçado das terras e abaixo dos marcadores das
+    unidades — o painel do MONITORA é de saúde, e um nome de povo não pode
+    tapar um polo base. Sem eventos de ponteiro: o rótulo não intercepta nem o
+    clique no marcador nem o hover no polígono que ele cobre.
+  */
+  const rotulosPaneName = "agsus-indigenous-territories-labels";
+  const rotulosPane =
+    map.getPane?.(rotulosPaneName) || map.createPane?.(rotulosPaneName);
+  if (rotulosPane?.style) {
+    rotulosPane.style.zIndex = "256";
+    rotulosPane.style.pointerEvents = "none";
+  }
+
+  /*
     O GeoServer oficial da Funai bloqueia requisições de navegador com Origin.
     O raster e o WFS passam por endpoints same-origin estreitos e allowlisted.
     Assim a camada nacional deixa de depender de CORS, sem copiar a base oficial
@@ -283,7 +318,9 @@ function enhanceMap(L, map) {
     format: "image/png",
     transparent: true,
     version: "1.1.1",
-    opacity: 0.34,
+    // Abaixo do zoom 7 este raster é a única representação das terras. Em 0.34
+    // ele lia-se como sombra do mapa base; acompanha o destaque do vetorial.
+    opacity: 0.52,
     pane: rasterPaneName,
     attribution: "Terras Indígenas: Funai",
     updateWhenIdle: false,
@@ -309,6 +346,13 @@ function enhanceMap(L, map) {
     },
   });
   map.__agsusIndigenousTerritoriesVectorLayer = vectorLayer;
+
+  const rotulosLayer = L.layerGroup([], { pane: rotulosPaneName });
+  map.__agsusIndigenousTerritoriesLabelsLayer = rotulosLayer;
+  const limparRotulos = () => {
+    rotulosLayer.clearLayers();
+    if (map.hasLayer(rotulosLayer)) map.removeLayer(rotulosLayer);
+  };
 
   let selectedDsei = "";
   let dseiGeojson = null;
@@ -397,6 +441,39 @@ function enhanceMap(L, map) {
   const clearVector = () => {
     vectorLayer.clearLayers();
     if (map.hasLayer(vectorLayer)) map.removeLayer(vectorLayer);
+    limparRotulos();
+  };
+
+  /*
+    O rótulo não vai como tooltip do polígono: o polígono já usa o seu tooltip
+    para o detalhe no ponteiro, e um layer do Leaflet só tem um. Vai como
+    marcador sem interação, no centro da caixa da terra, numa camada própria
+    acima do traçado e abaixo das unidades de saúde.
+  */
+  const desenharRotulos = (quantidade) => {
+    limparRotulos();
+    if (quantidade > LIMITE_DE_ROTULOS_NO_MAPA) return;
+
+    vectorLayer.eachLayer?.((camada) => {
+      const texto = rotuloDaTerraIndigena(camada?.feature?.properties);
+      if (!texto) return;
+      const centro = camada.getBounds?.()?.getCenter?.();
+      if (!centro) return;
+      rotulosLayer.addLayer(
+        L.marker(centro, {
+          pane: rotulosPaneName,
+          interactive: false,
+          keyboard: false,
+          icon: L.divIcon({
+            className: "agsus-ti-rotulo",
+            html: `<span class="agsus-ti-rotulo__texto">${escaparHtml(texto)}</span>`,
+            iconSize: [0, 0],
+          }),
+        }),
+      );
+    });
+
+    if (!map.hasLayer(rotulosLayer)) rotulosLayer.addTo(map);
   };
 
   const refreshVector = async () => {
@@ -433,6 +510,7 @@ function enhanceMap(L, map) {
       vectorLayer.setStyle?.(() => vectorStyle(map));
       if (!map.hasLayer(vectorLayer)) vectorLayer.addTo(map);
       if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
+      desenharRotulos(geojson.features.length);
     } catch (error) {
       if (error?.name === "AbortError") return;
       console.warn(
@@ -463,18 +541,36 @@ function enhanceMap(L, map) {
     rasterLayer.addTo(map);
     map.whenReady?.(scheduleRefresh);
   }
-  addControl(L, map, rasterLayer, vectorLayer, desired, scheduleRefresh);
+  addControl(L, map, rasterLayer, vectorLayer, desired, scheduleRefresh, () => {
+    limparRotulos();
+    lastViewportKey = "";
+  });
 }
 
+/*
+  DESTAQUE DAS TERRAS INDÍGENAS
+
+  O preenchimento era 0.08 sobre o mapa base. O polígono estava lá e era
+  desenhado, mas na prática desaparecia contra o relevo e as áreas verdes do
+  próprio mapa — quem abria um DSEI não via terra indígena nenhuma.
+
+  Sobre o mapa comum o preenchimento sobe para 0.26 e o traço engrossa: a
+  terra passa a ler-se como área, não como risco. Sobre satélite continua
+  contido, em 0.16 — ali o preenchimento tapa a imagem, que é justamente o que
+  se foi ver, e o traço tracejado já separa o polígono do terreno.
+
+  Nada disto cobre os marcadores das unidades: as terras ficam no z-index 255 e
+  os marcadores do Leaflet em 600.
+*/
 function vectorStyle(map) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
   return {
-    color: satellite ? "#ff4d3d" : "#0f766e",
-    weight: satellite ? 2.4 : 2,
-    opacity: 0.96,
+    color: satellite ? "#ff4d3d" : "#0b6b5f",
+    weight: satellite ? 2.6 : 2.4,
+    opacity: 1,
     dashArray: satellite ? "5 4" : null,
     fillColor: satellite ? "#ef4444" : "#14b8a6",
-    fillOpacity: satellite ? 0.1 : 0.08,
+    fillOpacity: satellite ? 0.16 : 0.26,
   };
 }
 
@@ -507,6 +603,7 @@ function addControl(
   vectorLayer,
   initialVisible,
   scheduleRefresh,
+  aoOcultar,
 ) {
   if (map.__agsusIndigenousTerritoriesControl) return;
   const control = L.control({ position: "topright" });
@@ -536,6 +633,13 @@ function addControl(
     button.addEventListener("click", () => {
       const next = !(map.__agsusIndigenousTerritoriesVisible !== false);
       map.__agsusIndigenousTerritoriesVisible = next;
+      /*
+        `aoOcultar` também zera a chave do último enquadramento. Sem isso,
+        reativar a camada sem mexer no mapa caía no atalho de "mesmo
+        enquadramento, nada a fazer" do `refreshVector`: o botão acendia e os
+        polígonos não voltavam até alguém arrastar o mapa.
+      */
+      aoOcultar?.();
       if (!next) {
         map.removeLayer(rasterLayer);
         map.removeLayer(vectorLayer);

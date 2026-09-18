@@ -272,6 +272,16 @@ export function htmlDaLegenda() {
       `vínculo fora das UFs do DSEI</span>`,
   );
 
+  /*
+    A mancha das Terras Indígenas ganhou destaque no mapa e passou a ser a
+    única coisa desenhada que a legenda não explicava. Quem não conhece a cor
+    lia a área como sombra do mapa base.
+  */
+  tipos.push(
+    `<span><i class="health-map-legenda-terra" aria-hidden="true"></i>` +
+      `Terra Indígena (Funai)</span>`,
+  );
+
   return tipos.join("");
 }
 

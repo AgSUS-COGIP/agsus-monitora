@@ -91,6 +91,48 @@
   font-weight: 800;
 }
 
+/* ROTULO DO POVO SOBRE O POLIGONO
+
+   O nome é desenhado sobre o mapa, onde não há fundo previsível: pode calhar
+   sobre verde, sobre água, sobre uma mancha urbana. O contorno claro em volta
+   da letra escura resolve isso sem caixa opaca — uma caixa por terra encheria
+   o mapa de retângulos e esconderia o traçado que se quer justamente mostrar.
+
+   `pointer-events: none` repete o que o pane já faz, para o caso de o rótulo
+   ser reaproveitado noutro pane: ele nunca deve roubar o clique de um polo. */
+.agsus-ti-rotulo {
+  background: none;
+  border: 0;
+  pointer-events: none;
+}
+
+.agsus-ti-rotulo__texto {
+  color: #0b3c35;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  left: 0;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  position: absolute;
+  text-shadow:
+    0 0 3px #fff,
+    0 0 3px #fff,
+    0 1px 2px rgba(255, 255, 255, 0.95);
+  top: 0;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+/* Sobre satélite a mesma letra escura desaparece. Inverte-se o par. */
+.map-satellite-mode .agsus-ti-rotulo__texto {
+  color: #fff;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 0.95),
+    0 0 3px rgba(0, 0, 0, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
 .map-satellite-mode .agsus-indigenous-territories-control__swatch {
   background: rgba(239, 68, 68, 0.18);
   border-color: #ff4d3d;

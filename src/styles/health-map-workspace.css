@@ -422,6 +422,25 @@
   vertical-align: 3px;
 }
 
+/* Mesma cor e mesmo preenchimento do polígono desenhado no mapa, para a
+   legenda poder ser lida por comparação direta com a mancha. */
+.health-map-legenda-terra {
+  background: rgba(20, 184, 166, 0.26);
+  border: 2px solid #0b6b5f;
+  border-radius: 3px;
+  box-sizing: border-box;
+  display: inline-block;
+  height: 11px;
+  margin-right: 5px;
+  vertical-align: -1px;
+  width: 16px;
+}
+
+.map-satellite-mode .health-map-legenda-terra {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: #ff4d3d;
+}
+
 .health-status-summary-card {
   margin-top: 10px;
   overflow: visible !important;
