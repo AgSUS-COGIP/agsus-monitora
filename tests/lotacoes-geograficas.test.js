@@ -201,6 +201,67 @@ describe("lotações geográficas", () => {
     expect(row[9].coordenadas.lotacoes).toEqual({ lat: -3.98, lon: -38.62 });
   });
 
+  it("polo novo com planilha deslocada usa CNES como fallback, mas continua pendente", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: { dsei: [{ k: "PERNAMBUCO", n: "Pernambuco", polos: [] }] },
+      },
+      {
+        chave: "rede_cnes",
+        payload: {
+          rede: {
+            PERNAMBUCO: {
+              u: [
+                [
+                  "POLO BASE TUXI",
+                  "9629262",
+                  -8.647553,
+                  -39.246597,
+                  "BELEM DO SAO FRANCISCO",
+                  26,
+                ],
+              ],
+              c: [],
+            },
+          },
+          nac: [],
+        },
+      },
+    ];
+    const dataset = {
+      PERNAMBUCO: [
+        [
+          "POLO BASE",
+          "PB TUXI",
+          -23.01578,
+          -44.536191,
+          "BELEM DO SAO FRANCISCO",
+          "PE",
+          "Acessível",
+          "Terrestre",
+        ],
+      ],
+    };
+
+    const result = applyLotacoesGeograficas(rows, dataset);
+    const polo = result[0].payload.dsei[0].polos[0];
+
+    expect(polo.lat).toBe(-8.647553);
+    expect(polo.lon).toBe(-39.246597);
+    expect(polo.coord_lotacoes).toEqual({
+      lat: -23.01578,
+      lon: -44.536191,
+    });
+    expect(polo.coord_cnes).toEqual({
+      lat: -8.647553,
+      lon: -39.246597,
+    });
+    expect(polo.coord_fonte).toBe("CNES");
+    expect(polo.coord_oficial).toBe(false);
+    expect(polo.coord_validacao).toBe("pendente");
+  });
+
   it("mantém unidade sem CNES quando não existe correspondência confiável", () => {
     const rows = [
       {
