@@ -72,6 +72,41 @@ export const VERBETES_AYA = Object.freeze(
       "fonte": "https://educa.ibge.gov.br/criancas/brasil/2848-nosso-povo/22324-os-indigenas-no-censo-2022.html"
     },
     {
+      "titulo": "Povos e línguas indígenas",
+      "perguntas": [
+        "quantos povos indigenas",
+        "quantas etnias",
+        "quantas linguas indigenas",
+        "etnias e linguas"
+      ],
+      "resposta": "O Censo 2022 do IBGE identificou 391 povos indígenas e 295 línguas indígenas no Brasil. Os números atualizam o Censo 2010, que registrava 305 povos e 274 línguas. As três línguas com mais falantes são Tikuna, Guarani Kaiowá e Guajajara.",
+      "fato": "O Censo 2022 do IBGE identificou 391 povos indígenas e 295 línguas indígenas. Não confunda com os números do Censo 2010, que eram 305 povos e 274 línguas.",
+      "fonte": "https://www.gov.br/funai/pt-br/assuntos/noticias/2025/censo-2022-identifica-391-povos-e-295-linguas-indigenas-e-reforca-necessidade-de-atuacao-integrada-entre-os-entes-federados"
+    },
+    {
+      "titulo": "Terra Indígena",
+      "perguntas": [
+        "terra indigena",
+        "terras indigenas",
+        "o que e terra indigena",
+        "demarcacao"
+      ],
+      "resposta": "Terras Indígenas são os territórios tradicionalmente ocupados pelos povos indígenas, protegidos pelo artigo 231 da Constituição Federal de 1988. A instrução dos processos de demarcação e a proteção dessas terras cabem à Funai, a Fundação Nacional dos Povos Indígenas, vinculada ao Ministério dos Povos Indígenas.",
+      "fato": "Terra Indígena é território tradicionalmente ocupado, protegido pelo artigo 231 da Constituição de 1988. A demarcação cabe à Funai, Fundação Nacional dos Povos Indígenas, vinculada ao Ministério dos Povos Indígenas.",
+      "fonte": "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas"
+    },
+    {
+      "titulo": "Indígenas em contexto urbano",
+      "perguntas": [
+        "indigena na cidade",
+        "indigena em contexto urbano",
+        "quem atende indigena fora da aldeia"
+      ],
+      "resposta": "A atuação direta do SasiSUS e das Equipes Multidisciplinares de Saúde Indígena se concentra nas aldeias em terras indígenas. Pessoas indígenas que vivem em contexto urbano são atendidas pela rede de atenção à saúde do SUS do município, com articulação das CASAIs quando referenciadas.",
+      "fato": "O SasiSUS atua nas aldeias em terras indígenas. Pessoas indígenas em contexto urbano são atendidas pela rede municipal do SUS, com articulação das CASAIs quando referenciadas.",
+      "fonte": "https://www.gov.br/funai/pt-br/atuacao/povos-indigenas/direitos-sociais/saude"
+    },
+    {
       "titulo": "DSEI",
       "perguntas": [
         "dsei",
@@ -189,9 +224,9 @@ export const VERBETES_AYA = Object.freeze(
         "agsus",
         "agencia brasileira de apoio a gestao do sus"
       ],
-      "resposta": "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. Ela assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI, e é por isso que o MONITORA acompanha vagas, contratações e ociosidade por território.",
-      "fato": "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde, e assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI. Não use outro nome para essa sigla.",
-      "fonte": "https://www.gov.br/conselho-nacional-de-saude/pt-br/assuntos/noticias/2024/marco/agsus-garante-so-assume-saude-indigena-apos-amplo-debate"
+      "resposta": "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. É um serviço social autônomo, instituído como pessoa jurídica de direito privado sem fins lucrativos, de interesse coletivo e utilidade pública. Foi criada pela transformação da Adaps, na Lei 14.621/2023, a partir da autorização da Lei 13.958/2019. Atua sob orientação técnica e supervisão do Ministério da Saúde, e uma de suas finalidades é executar políticas de atenção à saúde indígena. É por isso que a AgSUS assumiu a gestão da força de trabalho dos 34 DSEIs e que o MONITORA acompanha vagas, contratações e ociosidade por território.",
+      "fato": "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde, serviço social autônomo criado pela Lei 14.621/2023. Assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI. Não use outro nome para essa sigla.",
+      "fonte": "http://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14621.htm"
     },
     {
       "titulo": "SUS",

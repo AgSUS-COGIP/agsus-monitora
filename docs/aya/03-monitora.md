@@ -12,9 +12,9 @@ Termos da própria interface e das instituições que a Aya representa.
 ## AgSUS
 
 **perguntas:** agsus | agencia brasileira de apoio a gestao do sus
-**resposta:** AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. Ela assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI, e é por isso que o MONITORA acompanha vagas, contratações e ociosidade por território.
-**fato:** AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde, e assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI. Não use outro nome para essa sigla.
-**fonte:** https://www.gov.br/conselho-nacional-de-saude/pt-br/assuntos/noticias/2024/marco/agsus-garante-so-assume-saude-indigena-apos-amplo-debate
+**resposta:** AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. É um serviço social autônomo, instituído como pessoa jurídica de direito privado sem fins lucrativos, de interesse coletivo e utilidade pública. Foi criada pela transformação da Adaps, na Lei 14.621/2023, a partir da autorização da Lei 13.958/2019. Atua sob orientação técnica e supervisão do Ministério da Saúde, e uma de suas finalidades é executar políticas de atenção à saúde indígena. É por isso que a AgSUS assumiu a gestão da força de trabalho dos 34 DSEIs e que o MONITORA acompanha vagas, contratações e ociosidade por território.
+**fato:** AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde, serviço social autônomo criado pela Lei 14.621/2023. Assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI. Não use outro nome para essa sigla.
+**fonte:** http://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14621.htm
 
 ## SUS
 
