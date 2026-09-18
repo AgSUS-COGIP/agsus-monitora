@@ -16,9 +16,24 @@ const CRONOGRAMA = [
   "cronograma_dias_para_proxima",
 ];
 
+/*
+  `monitoramento_indigena` é uma view: junta a tabela base com o estado calculado
+  do cronograma. As seis colunas de `CRONOGRAMA` só existem aí, não na tabela.
+  Apontar esta consulta para a tabela base compila, passa no lint e só quebra em
+  produção, com "column ... does not exist".
+
+  O `throw` existe por isso. Antes, se o nome não fosse encontrado, a busca
+  devolvia uma lista vazia em silêncio e o teste acusava "faltam as seis colunas
+  de cronograma" — mandando quem investiga para o lado errado.
+*/
+const TABELA_MONITORAMENTO = '.from("monitoramento_indigena")';
+
 function colunasDoSelect(fonte) {
-  const i = fonte.indexOf('.from("monitoramento_indigena")');
-  if (i < 0) return [];
+  const i = fonte.indexOf(TABELA_MONITORAMENTO);
+  if (i < 0)
+    throw new Error(
+      `Consulta ${TABELA_MONITORAMENTO} não encontrada na fonte. A tabela foi renomeada?`,
+    );
   const sel = fonte.indexOf(".select(", i);
   const a = fonte.indexOf('"', sel);
   const b = fonte.indexOf('"', a + 1);

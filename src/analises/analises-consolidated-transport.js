@@ -1,6 +1,6 @@
 const TARGET_VIEWS = new Set([
-  "vw_analises_dashboard_base",
-  "vw_analises_dashboard_base_todos"
+  "VW_ANALISES_DASHBOARD_BASE",
+  "VW_ANALISES_DASHBOARD_BASE_TODOS"
 ]);
 
 const RPC_NAME = "get_analises_dashboard_payload_v2";
@@ -41,7 +41,7 @@ function decodeRows(payload) {
 }
 
 function scopeFor(tableName, filters) {
-  if (tableName === "vw_analises_dashboard_base") return "ativo";
+  if (tableName === "VW_ANALISES_DASHBOARD_BASE") return "ativo";
   const editalAtivo = filters.get("edital_ativo");
   if (editalAtivo === false) return "inativo";
   if (editalAtivo === true) return "ativo";

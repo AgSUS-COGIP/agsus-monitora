@@ -403,7 +403,7 @@ async function readSidebarBranding() {
   const { data: sessionData } = await client.auth.getSession();
   if (!sessionData?.session) return false;
   const { data, error } = await client
-    .from("configuracoes")
+    .from("TB_CONFIGURACAO")
     .select("chave,valor")
     .in("chave", [KEY_LOGO, KEY_COLOR]);
   if (error) return false;
