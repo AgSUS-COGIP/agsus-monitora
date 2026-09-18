@@ -113,7 +113,10 @@ describe("glossário do MONITORA", () => {
   it("define vaga ociosa sem depender do modelo", () => {
     const answer = curatedAnswerForQuestion("O que significa uma vaga ociosa?");
     expect(answer).toContain("sem contratação");
-    expect(answer).toContain("Ociosas dividido por Vagas");
+    expect(answer).toContain("Vagas, que é o total previsto");
+    expect(curatedAnswerForQuestion("o que é taxa de ociosidade?")).toContain(
+      "Ociosas dividido pelo total de Vagas",
+    );
   });
 
   it("define contratados e taxa de ociosidade", () => {
