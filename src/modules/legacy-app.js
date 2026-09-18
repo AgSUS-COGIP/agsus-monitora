@@ -9415,6 +9415,11 @@ function detailRecordsForDsei(d) {
       lon: e.lon,
       municipio: e.mun,
       uf: e.uf,
+      validacao_coordenada: e.meta?.validacao_coordenada || "pendente",
+      confirmacao_independente: e.meta?.confirmacao_independente === true,
+      coordenada_compartilhada_qtd: Number(
+        e.meta?.coordenada_compartilhada_qtd || 0,
+      ),
       _tipoVisual: forcado || detailUnitType(e.n),
     };
   });
@@ -9430,6 +9435,8 @@ function detailRecordsForDsei(d) {
       lat: Number(p.coord_lmap?.lat ?? p.lat),
       lon: Number(p.coord_lmap?.lon ?? p.lon),
       coord_lotacoes: p.coord_lotacoes || null,
+      coord_validacao: p.coord_validacao || "pendente",
+      confirmacao_independente: p.confirmacao_independente === true,
       uf: p.uf,
       mun_lotacao: p.mun_lotacao || "",
       cod: p.cod ?? null,
@@ -9453,6 +9460,8 @@ function detailRecordsForDsei(d) {
     coordenada_exibida: u.coordenada_exibida,
     distancia_entre_fontes_km: u.distancia_entre_fontes_km,
     divergencia: u.divergencia,
+    validacao_coordenada: u.validacao_coordenada || "pendente",
+    confirmacao_independente: u.confirmacao_independente === true,
   }));
 
   // Polos que a reconciliação não casou continuam a existir, como sempre.
@@ -9468,6 +9477,8 @@ function detailRecordsForDsei(d) {
       uf: p.uf || d.sedeuf,
       type: TIPO_POLO,
       origens: ["lmap"],
+      validacao_coordenada: p.coord_validacao || "pendente",
+      confirmacao_independente: p.confirmacao_independente === true,
     }));
 
   // Estabelecimentos que não foram absorvidos por nenhuma reconciliação.
@@ -9482,6 +9493,9 @@ function detailRecordsForDsei(d) {
       uf: e.uf,
       type: e._tipoVisual,
       origens: ["rede_cnes"],
+      validacao_coordenada: e.validacao_coordenada || "pendente",
+      confirmacao_independente: e.confirmacao_independente === true,
+      coordenada_compartilhada_qtd: e.coordenada_compartilhada_qtd || 0,
     }));
 
   const seen = new Set();
@@ -9625,8 +9639,16 @@ function renderDetailMap(d) {
       `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
     ];
     if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
-    if (fontes?.lmap && fontes?.rede_cnes) {
+    if (record.validacao_coordenada === "validada") {
+      linhas.push("<b>Localização validada por fonte independente</b>");
+    } else if (record.coordenada_compartilhada_qtd > 1) {
+      linhas.push(
+        `<b>Localização em validação</b> — ${record.coordenada_compartilhada_qtd} estabelecimentos usam este ponto`,
+      );
+    } else {
       linhas.push("<b>Localização em validação</b>");
+    }
+    if (fontes?.lmap && fontes?.rede_cnes) {
       linhas.push(
         `Mapa anterior: ${Number(fontes.lmap.lat).toFixed(5)}, ${Number(fontes.lmap.lon).toFixed(5)}`,
       );
