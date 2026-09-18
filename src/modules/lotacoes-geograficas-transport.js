@@ -46,6 +46,18 @@ function recordExpectedType(record) {
   return "unidade";
 }
 
+function canonicalForMatch(name, expectedType) {
+  const canonical = nomeCanonico(name);
+  if (expectedType !== "polo") return canonical;
+
+  /*
+    Ordinal cadastral depois de "POLO BASE" descreve o equipamento, não o lugar:
+    "POLO BASE II XUCURU KARIRI" e "PB XUCURU KARIRI" são a mesma identidade.
+    Só removemos ordinal no INÍCIO do canónico; "SÃO JOSÉ II" continua intacto.
+  */
+  return canonical.replace(/^(?:I|II|III|IV|V)\s+/, "");
+}
+
 function rowType(row, listKind) {
   if (listKind === "c") return "casai";
   return tipoDeclarado(row?.[0]);
@@ -81,16 +93,24 @@ function nearestUniqueCandidate(candidates, record, maxDistanceKm = 5) {
 }
 
 function findNetworkMatch(list, record, listKind = "u") {
-  const canonical = nomeCanonico(record.name);
+  const expected = recordExpectedType(record);
+  const canonical = canonicalForMatch(record.name, expected);
   if (!canonicoUtilizavel(canonical)) return null;
 
   const compatible = list.filter((row) => compatibleRow(record, row, listKind));
   let candidates = compatible.filter(
-    (row) => nomeCanonico(row?.[0]) === canonical,
+    (row) => canonicalForMatch(row?.[0], expected) === canonical,
   );
   const municipality = normalizePlace(record.municipality);
 
-  if (!candidates.length && municipality) {
+  /*
+    Para Polo Base, município + proximidade NÃO estabelece identidade. Dois
+    polos diferentes podem ficar no mesmo município e até na mesma aldeia.
+    A auditoria nacional mostrou que esse fallback era capaz de colar uma
+    planilha errada ao estabelecimento errado. Polo exige identidade nominal
+    (ou CNES já conhecido em outra etapa), nunca só proximidade.
+  */
+  if (!candidates.length && expected !== "polo" && municipality) {
     const sameMunicipality = compatible.filter(
       (row) => normalizePlace(row?.[4]) === municipality,
     );
