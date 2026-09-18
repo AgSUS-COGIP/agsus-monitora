@@ -148,16 +148,45 @@ describe("reconciliação dentro do DSEI", () => {
     expect(u.divergencia).toBe(DIVERGENCIA.PROXIMA);
   });
 
-  it("exibe sempre a coordenada do CNES, e diz que foi essa", () => {
+  it("preserva a coordenada do mapa anterior até validação independente", () => {
     const r = reconciliarDsei({
       dseiChave: "Yanomami",
       polos: [polo("XITEI", 2.5, -63.5)],
       estabelecimentos: [estab("POLO BASE XITEI", "1", -5.9, -67.9)],
     });
     const u = r.reconciliados[0];
-    expect(u.lat).toBe(-5.9);
-    expect(u.lon).toBe(-67.9);
-    expect(u.coordenada_exibida).toBe("rede_cnes");
+    expect(u.lat).toBe(2.5);
+    expect(u.lon).toBe(-63.5);
+    expect(u.coordenada_exibida).toBe("lmap");
+    expect(u.coordenadas.rede_cnes).toEqual({ lat: -5.9, lon: -67.9 });
+  });
+
+  it("preserva também a coordenada de Lotações quando há três fontes", () => {
+    const r = reconciliarDsei({
+      dseiChave: "ALAGOAS E SERGIPE",
+      polos: [
+        polo("KARIRI-XOKÓ", -10.1744, -36.8367, {
+          cnes: "9982787",
+          coord_lotacoes: { lat: -10.186, lon: -36.84 },
+        }),
+      ],
+      estabelecimentos: [
+        estab(
+          "POLO BASE INDIGENA KARIRI XOCO",
+          "9982787",
+          -10.186,
+          -36.84,
+          "PORTO REAL DO COLEGIO",
+          "27",
+        ),
+      ],
+    });
+    const u = r.reconciliados[0];
+    expect(u.coordenadas.lmap).toEqual({ lat: -10.1744, lon: -36.8367 });
+    expect(u.coordenadas.lotacoes).toEqual({ lat: -10.186, lon: -36.84 });
+    expect(u.coordenadas.rede_cnes).toEqual({ lat: -10.186, lon: -36.84 });
+    expect(u.lat).toBe(-10.1744);
+    expect(u.lon).toBe(-36.8367);
   });
 
   it("marca como pendente quando as fontes discordam muito", () => {
