@@ -34,6 +34,7 @@ import {
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { reconciliarDsei } from "../lib/reconciliacao-unidades.js";
 import {
+  agruparCoincidentes,
   agruparPorCelula,
   criarRegistroDeDescarte,
   grupoCoincidente,
@@ -8841,7 +8842,15 @@ const BR_OUTLINE = {
 // Formato compacto por estabelecimento: [nome, cnes, lat, lon, municipio, uf]
 let REDE_CNES = { rede: {}, nac: [] };
 function _unpackEstab(a) {
-  return { n: a[0], cnes: a[1], lat: a[2], lon: a[3], mun: a[4], uf: a[5] };
+  return {
+    n: a[0],
+    cnes: a[1],
+    lat: a[2],
+    lon: a[3],
+    mun: a[4],
+    uf: a[5],
+    meta: a[9] && typeof a[9] === "object" ? a[9] : null,
+  };
 }
 
 let _leaflet = null,
@@ -9101,66 +9110,53 @@ function _strongNameMatch(nk, pk) {
   if (shorter.length < 5) return false; // tokens curtos só casam se idênticos
   return _wordContains(nk, pk) || _wordContains(pk, nk);
 }
-function findOfficialPoloCoord(d, p) {
+function findCnesPoloRecord(d, p) {
   const rede = REDE_CNES.rede[d.k];
   if (!rede) return null;
   const poloKey = mapNameKey(p.n);
   const poloUf = txt(p.uf).toUpperCase();
-  // 1ª passada: registros que são "POLO BASE" no CNES (mais confiável)
-  const candidates = (rede.u || [])
+
+  const candidatos = (rede.u || [])
     .filter((a) => /\bPOLO\b/i.test(txt(a[0])))
-    .map((a) => {
+    .filter((a) => {
       const nameKey = mapNameKey(a[0]);
-      const munKey = mapNameKey(a[4]);
+      if (!_strongNameMatch(nameKey, poloKey)) return false;
       const uf = txt(a[5]).toUpperCase();
-      let score = 0;
-      if (
-        nameKey &&
-        poloKey &&
-        (nameKey.includes(poloKey) || poloKey.includes(nameKey))
-      )
-        score += 100;
-      if (
-        munKey &&
-        poloKey &&
-        (munKey.includes(poloKey) || poloKey.includes(munKey))
-      )
-        score += 60;
-      if (poloUf && uf && poloUf === uf) score += 10;
-      return { a, nameKey, munKey, score };
-    })
-    .filter((x) => x.score >= 70)
-    .sort((a, b) => b.score - a.score);
-  if (candidates[0]) return candidates[0].a;
-  // 2ª passada (fallback): qualquer estabelecimento (UBSI/POSTO) cujo NOME bate forte
-  // com o nome do polo. Usa a coordenada da unidade que atende o polo quando não há
-  // um "POLO BASE" cadastrado. Regra estrita p/ não casar nomes parecidos por acaso.
-  if (!poloKey) return null;
-  const fb = (rede.u || [])
-    .map((a) => {
-      const nameKey = mapNameKey(a[0]);
-      const uf = txt(a[5]).toUpperCase();
-      let score = _strongNameMatch(nameKey, poloKey) ? 100 : 0;
-      if (score && poloUf && uf && poloUf === uf) score += 10;
-      return { a, score };
-    })
-    .filter((x) => x.score >= 100)
-    .sort((a, b) => b.score - a.score);
-  return fb[0]?.a || null;
+      return !poloUf || !uf || poloUf === uf;
+    });
+
+  return candidatos.length === 1 ? candidatos[0] : null;
 }
+
+/*
+  Compatibilidade com a camada nacional antiga.
+
+  A função tinha o nome "polosCorrigidosPorCnes" e substituía a latitude e a
+  longitude do polo pela coordenada de um registo CNES. A auditoria nacional
+  mostrou que isso é inseguro: há coordenadas coletoras no CNES (vários polos
+  distintos no mesmo ponto) e há planilhas com linhas deslocadas entre locais.
+
+  Agora ela só ENRIQUECE o polo com a identidade CNES quando o casamento é
+  inequívoco. A coordenada desenhada permanece a do lmap/posição preservada.
+*/
 function polosCorrigidosPorCnes(d) {
   return (d.polos || []).map((p) => {
-    const oficial = findOfficialPoloCoord(d, p);
-    if (!oficial) return p;
+    if (p.coord_cnes || p.cnes) return Object.assign({}, p);
+
+    const cnesRow = findCnesPoloRecord(d, p);
+    if (!cnesRow) return Object.assign({}, p);
+
+    const lat = Number(cnesRow[2]);
+    const lon = Number(cnesRow[3]);
     return Object.assign({}, p, {
-      lat: oficial[2],
-      lon: oficial[3],
-      coord_oficial: true,
-      coord_fonte: "CNES",
-      coord_nome: oficial[0],
-      cnes: oficial[1],
-      mun_cnes: oficial[4],
-      uf_cnes: oficial[5],
+      cnes: cnesRow[1],
+      coord_cnes:
+        Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null,
+      coord_nome: cnesRow[0],
+      mun_cnes: cnesRow[4],
+      uf_cnes: cnesRow[5],
+      coord_oficial: false,
+      coord_validacao: "pendente",
     });
   });
 }
@@ -9419,6 +9415,11 @@ function detailRecordsForDsei(d) {
       lon: e.lon,
       municipio: e.mun,
       uf: e.uf,
+      validacao_coordenada: e.meta?.validacao_coordenada || "pendente",
+      confirmacao_independente: e.meta?.confirmacao_independente === true,
+      coordenada_compartilhada_qtd: Number(
+        e.meta?.coordenada_compartilhada_qtd || 0,
+      ),
       _tipoVisual: forcado || detailUnitType(e.n),
     };
   });
@@ -9428,11 +9429,14 @@ function detailRecordsForDsei(d) {
     polos: (d.polos || []).map((p) => ({
       nome: p.n,
       cnes: p.cnes || "",
-      // Para medir divergência entre as fontes, usa a coordenada original da
-      // planilha quando ela foi preservada pelo transporte. A coordenada de
-      // exibição continua sendo a do CNES depois da reconciliação.
-      lat: Number(p.coord_lotacoes?.lat ?? p.lat),
-      lon: Number(p.coord_lotacoes?.lon ?? p.lon),
+      // O enriquecimento preserva três fontes. Para a posição do polo usa a
+      // coordenada que já existia no lmap; Lotações e CNES ficam como
+      // comparação até validação independente.
+      lat: Number(p.coord_lmap?.lat ?? p.lat),
+      lon: Number(p.coord_lmap?.lon ?? p.lon),
+      coord_lotacoes: p.coord_lotacoes || null,
+      coord_validacao: p.coord_validacao || "pendente",
+      confirmacao_independente: p.confirmacao_independente === true,
       uf: p.uf,
       mun_lotacao: p.mun_lotacao || "",
       cod: p.cod ?? null,
@@ -9453,8 +9457,11 @@ function detailRecordsForDsei(d) {
     nomes: u.nomes,
     cod: u.cod,
     coordenadas: u.coordenadas,
+    coordenada_exibida: u.coordenada_exibida,
     distancia_entre_fontes_km: u.distancia_entre_fontes_km,
     divergencia: u.divergencia,
+    validacao_coordenada: u.validacao_coordenada || "pendente",
+    confirmacao_independente: u.confirmacao_independente === true,
   }));
 
   // Polos que a reconciliação não casou continuam a existir, como sempre.
@@ -9470,6 +9477,8 @@ function detailRecordsForDsei(d) {
       uf: p.uf || d.sedeuf,
       type: TIPO_POLO,
       origens: ["lmap"],
+      validacao_coordenada: p.coord_validacao || "pendente",
+      confirmacao_independente: p.confirmacao_independente === true,
     }));
 
   // Estabelecimentos que não foram absorvidos por nenhuma reconciliação.
@@ -9484,6 +9493,9 @@ function detailRecordsForDsei(d) {
       uf: e.uf,
       type: e._tipoVisual,
       origens: ["rede_cnes"],
+      validacao_coordenada: e.validacao_coordenada || "pendente",
+      confirmacao_independente: e.confirmacao_independente === true,
+      coordenada_compartilhada_qtd: e.coordenada_compartilhada_qtd || 0,
     }));
 
   const seen = new Set();
@@ -9619,8 +9631,37 @@ function renderDetailMap(d) {
     momento da interação. O ganho é pequeno sozinho — medido, 21% — mas evita
     guardar duas strings de HTML por marcador em memória.
   */
-  const popupDoRegistro = (record) =>
-    `<b>${esc(record.type.label)}</b><br>${esc(record.name)}<br>${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}${record.cnes ? `<br>CNES: ${esc(record.cnes)}` : ""}`;
+  const popupDoRegistro = (record) => {
+    const fontes = record.coordenadas;
+    const linhas = [
+      `<b>${esc(record.type.label)}</b>`,
+      esc(record.name),
+      `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
+    ];
+    if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
+    if (record.validacao_coordenada === "validada") {
+      linhas.push("<b>Localização validada por fonte independente</b>");
+    } else if (record.coordenada_compartilhada_qtd > 1) {
+      linhas.push(
+        `<b>Localização em validação</b> — ${record.coordenada_compartilhada_qtd} estabelecimentos usam este ponto`,
+      );
+    } else {
+      linhas.push("<b>Localização em validação</b>");
+    }
+    if (fontes?.lmap && fontes?.rede_cnes) {
+      linhas.push(
+        `Mapa anterior: ${Number(fontes.lmap.lat).toFixed(5)}, ${Number(fontes.lmap.lon).toFixed(5)}`,
+      );
+      if (fontes.lotacoes)
+        linhas.push(
+          `Lotações: ${Number(fontes.lotacoes.lat).toFixed(5)}, ${Number(fontes.lotacoes.lon).toFixed(5)}`,
+        );
+      linhas.push(
+        `CNES: ${Number(fontes.rede_cnes.lat).toFixed(5)}, ${Number(fontes.rede_cnes.lon).toFixed(5)}`,
+      );
+    }
+    return linhas.join("<br>");
+  };
 
   const marcadorDeRegistro = (record, posicao) => {
     const marker = L.marker(posicao || [record.lat, record.lon], {
@@ -9674,7 +9715,54 @@ function renderDetailMap(d) {
       );
     });
 
-    const grupos = agruparPorCelula(visiveis(classificados), (r) =>
+    const visiveisAgora = visiveis(classificados);
+    const polosVisiveis = visiveisAgora.filter((r) => r.type.key === "polo");
+    const demaisVisiveis = visiveisAgora.filter((r) => r.type.key !== "polo");
+
+    /*
+      Polo Base é uma camada operacional pequena e precisa permanecer legível.
+      O agrupamento por célula de 60 px escondia polos próximos no enquadramento
+      inicial e dava a impressão de que tinham sumido. Polos só são agrupados
+      quando têm exatamente a mesma coordenada; nesse caso o clique abre o leque.
+    */
+    agruparCoincidentes(polosVisiveis).forEach((grupo) => {
+      if (grupo.registros.length === 1) {
+        _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.registros[0]));
+        return;
+      }
+
+      const badge = L.marker([grupo.lat, grupo.lon], {
+        icon: L.divIcon({
+          className: "mapa-cluster mapa-cluster--leque",
+          html: `<span>${grupo.registros.length}</span>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+        }),
+        keyboard: true,
+        title: `${grupo.registros.length} polos na mesma coordenada — abrir em leque`,
+      });
+
+      const grupoDoLeque = {
+        ...grupo,
+        quantidade: grupo.registros.length,
+      };
+      const acionar = () => {
+        if (_leque.aberto === grupo.chave) recolherLeque();
+        else abrirLeque(grupoDoLeque);
+      };
+      badge.on("click", acionar);
+      badge.on("keypress", (e) => {
+        if (e.originalEvent?.key === " ") {
+          e.originalEvent.preventDefault();
+          acionar();
+        }
+      });
+      _detailUnitLayer.addLayer(badge);
+    });
+
+    // UBSI/CASAI/unidades podem ser numerosas; nelas permanece o agrupamento
+    // por célula para evitar milhares de nós de DOM.
+    const grupos = agruparPorCelula(demaisVisiveis, (r) =>
       _detailLeaflet.latLngToContainerPoint([r.lat, r.lon]),
     );
 
@@ -9683,22 +9771,7 @@ function renderDetailMap(d) {
         _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.unico));
         return;
       }
-      /*
-        O grupo fica na média das coordenadas REAIS dos seus membros — nenhuma
-        coordenada é inventada nem promovida. Clicar aproxima até o grupo se
-        desfazer sozinho no zoom seguinte.
-      */
-      /*
-        Um grupo pode juntar-se por duas razões diferentes, e a saída não é a
-        mesma.
 
-        Se os membros só caem na mesma célula de 60 px, aproximar separa-os — e
-        é isso que o clique faz.
-
-        Se partilham a MESMA coordenada, aproximar nunca separa: os 57 registos
-        de `4.596,-60.168` continuariam empilhados no zoom máximo, com 56 deles
-        inalcançáveis. Esses expandem-se em leque, e o leque é em pixels.
-      */
       const coincidente = grupoCoincidente(grupo.registros);
 
       const badge = L.marker([grupo.lat, grupo.lon], {
@@ -9730,10 +9803,6 @@ function renderDetailMap(d) {
       };
 
       badge.on("click", acionar);
-      /*
-        O Leaflet dá `keyboard: true` ao marcador, que responde a Enter. O
-        Espaço não vem de série, e é o que se espera de um botão.
-      */
       badge.on("keypress", (e) => {
         if (e.originalEvent?.key === " ") {
           e.originalEvent.preventDefault();
@@ -10297,10 +10366,14 @@ function drawCasai() {
     if (filtroAtivoC && nproc === 0) return;
     // adiciona ao enquadramento do zoom (quando filtrado)
     if (_ptsZoom) _ptsZoom.push([lat, lon]);
-    const aprox = /≈|aproxim|por endere/i.test(nome);
-    const fonteCoord = aprox
-      ? "≈ posição aproximada por endereço"
-      : "📍 coordenada oficial do CNES";
+    const meta = a[9] && typeof a[9] === "object" ? a[9] : null;
+    const compartilhada = Number(meta?.coordenada_compartilhada_qtd || 0);
+    const fonteCoord =
+      meta?.confirmacao_independente === true
+        ? "Localização validada por fonte independente"
+        : compartilhada > 1
+          ? `Localização em validação · ${compartilhada} estabelecimentos usam este ponto`
+          : "Localização em validação · coordenada cadastral CNES";
     const mk = L.marker([lat, lon], {
       icon: L.divIcon({
         className: "",
@@ -10460,8 +10533,15 @@ function drawRedeAssistencial(d) {
       `<b>CASAI</b> ${esc(c.n)}<br>${esc(c.mun || "")}${c.uf ? " – " + c.uf : ""}<br><i>clique para filtrar processos</i>`,
       { direction: "top" },
     );
+    const compartilhada = Number(c.meta?.coordenada_compartilhada_qtd || 0);
+    const fonte =
+      c.meta?.confirmacao_independente === true
+        ? "Localização validada por fonte independente"
+        : compartilhada > 1
+          ? `Localização em validação · ${compartilhada} estabelecimentos usam este ponto`
+          : "Localização em validação · coordenada cadastral CNES";
     mk.bindPopup(
-      `<b>CASAI — Casa de Saúde Indígena</b><br>${esc(c.n)}<br>${esc(c.mun || "")}${c.uf ? " – " + c.uf : ""}<br>CNES: ${esc(c.cnes || "-")}<br><span style="font-size:10px;color:#6b7d92">📍 coordenada oficial do CNES</span>`,
+      `<b>CASAI — Casa de Saúde Indígena</b><br>${esc(c.n)}<br>${esc(c.mun || "")}${c.uf ? " – " + c.uf : ""}<br>CNES: ${esc(c.cnes || "-")}<br><span style="font-size:10px;color:#6b7d92">${esc(fonte)}</span>`,
     );
     mk.on("click", () => {
       const s = $("tableSearch");
@@ -10553,9 +10633,14 @@ function drawPolos(d) {
           : ""),
       { direction: "top" },
     );
-    const fonte = p.coord_oficial
-      ? `📍 coordenada oficial do CNES<br>CNES: ${esc(p.cnes || "-")}${p.coord_nome ? `<br>Registro: ${esc(p.coord_nome)}` : ""}`
-      : "≈ posição aproximada (centro do município)";
+    const diferenca =
+      Number.isFinite(Number(p.coord_diferenca_km)) && p.coord_diferenca_km != null
+        ? `<br>Diferença entre fontes: ${esc(p.coord_diferenca_km)} km`
+        : "";
+    const fonte =
+      p.coord_validacao === "validada"
+        ? `Localização validada${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}`
+        : `Localização em validação${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}${p.coord_nome ? `<br>Registro CNES: ${esc(p.coord_nome)}` : ""}${diferenca}`;
     mk.bindPopup(
       `<b>Polo base: ${esc(p.n)}</b><br>UF: ${p.uf}<br>População do polo: ${fmt(p.p)} indígenas${externo ? "<br><i>Vinculado ao DSEI " + esc(d.n) + ", fora das UFs de abrangência</i>" : ""}<br><span style="font-size:10px;color:#6b7d92">${fonte}</span>`,
     );

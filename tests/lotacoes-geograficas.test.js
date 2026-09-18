@@ -35,6 +35,54 @@ describe("lotações geográficas", () => {
     ).toBe(true);
   });
 
+  it("preserva a sede DSEI existente e guarda Lotações como comparação", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: {
+          dsei: [
+            {
+              k: "CEARA",
+              n: "Ceará",
+              lat: -3.73,
+              lon: -38.52,
+              sedeuf: "CE",
+              polos: [],
+            },
+          ],
+        },
+      },
+      {
+        chave: "rede_cnes",
+        payload: { rede: { CEARA: { u: [], c: [] } }, nac: [] },
+      },
+    ];
+    const dataset = {
+      CEARA: [
+        [
+          "SEDE",
+          "SEDE DSEI",
+          -3.75,
+          -38.5,
+          "FORTALEZA",
+          "CE",
+          "Muito acessível",
+          "Terrestre",
+        ],
+      ],
+    };
+
+    const result = applyLotacoesGeograficas(rows, dataset);
+    const dsei = result[0].payload.dsei[0];
+
+    expect(dsei.lat).toBe(-3.73);
+    expect(dsei.lon).toBe(-38.52);
+    expect(dsei.sede_coord_lmap).toEqual({ lat: -3.73, lon: -38.52 });
+    expect(dsei.sede_coord_lotacoes).toEqual({ lat: -3.75, lon: -38.5 });
+    expect(dsei.coord_fonte).toBe("lmap");
+    expect(dsei.coord_validacao).toBe("pendente");
+  });
+
   it("preserva polo no lmap e não cria cópia do polo dentro da rede", () => {
     const rows = [
       {
@@ -85,10 +133,14 @@ describe("lotações geográficas", () => {
 
     expect(dsei.polos).toHaveLength(1);
     expect(dsei.polos[0].cnes).toBe("1234567");
-    expect(dsei.polos[0].lat).toBe(-9.95);
-    expect(dsei.polos[0].lon).toBe(-37.01);
-    expect(dsei.polos[0].coord_fonte).toBe("CNES");
+    expect(dsei.polos[0].lat).toBe(-9);
+    expect(dsei.polos[0].lon).toBe(-37);
+    expect(dsei.polos[0].coord_fonte).toBe("lmap");
+    expect(dsei.polos[0].coord_lmap).toEqual({ lat: -9, lon: -37 });
     expect(dsei.polos[0].coord_lotacoes).toEqual({ lat: -9.971, lon: -37.003 });
+    expect(dsei.polos[0].coord_cnes).toEqual({ lat: -9.95, lon: -37.01 });
+    expect(dsei.polos[0].coord_oficial).toBe(false);
+    expect(dsei.polos[0].coord_validacao).toBe("pendente");
     expect(network.u).toHaveLength(1);
     expect(network.u[0][1]).toBe("1234567");
     expect(network.u[0][8]).toContain("CNES");
@@ -147,6 +199,67 @@ describe("lotações geográficas", () => {
     expect(row[3]).toBe(-38.617984);
     expect(row[7]).toBe("Terrestre");
     expect(row[9].coordenadas.lotacoes).toEqual({ lat: -3.98, lon: -38.62 });
+  });
+
+  it("polo novo com planilha deslocada usa CNES como fallback, mas continua pendente", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: { dsei: [{ k: "PERNAMBUCO", n: "Pernambuco", polos: [] }] },
+      },
+      {
+        chave: "rede_cnes",
+        payload: {
+          rede: {
+            PERNAMBUCO: {
+              u: [
+                [
+                  "POLO BASE TUXI",
+                  "9629262",
+                  -8.647553,
+                  -39.246597,
+                  "BELEM DO SAO FRANCISCO",
+                  26,
+                ],
+              ],
+              c: [],
+            },
+          },
+          nac: [],
+        },
+      },
+    ];
+    const dataset = {
+      PERNAMBUCO: [
+        [
+          "POLO BASE",
+          "PB TUXI",
+          -23.01578,
+          -44.536191,
+          "BELEM DO SAO FRANCISCO",
+          "PE",
+          "Acessível",
+          "Terrestre",
+        ],
+      ],
+    };
+
+    const result = applyLotacoesGeograficas(rows, dataset);
+    const polo = result[0].payload.dsei[0].polos[0];
+
+    expect(polo.lat).toBe(-8.647553);
+    expect(polo.lon).toBe(-39.246597);
+    expect(polo.coord_lotacoes).toEqual({
+      lat: -23.01578,
+      lon: -44.536191,
+    });
+    expect(polo.coord_cnes).toEqual({
+      lat: -8.647553,
+      lon: -39.246597,
+    });
+    expect(polo.coord_fonte).toBe("CNES");
+    expect(polo.coord_oficial).toBe(false);
+    expect(polo.coord_validacao).toBe("pendente");
   });
 
   it("mantém unidade sem CNES quando não existe correspondência confiável", () => {
@@ -279,5 +392,49 @@ describe("lotações geográficas", () => {
     expect(nac[0][2]).toBe(-15.72);
     expect(nac[0][3]).toBe(-47.79);
     expect(nac[0][9].coordenadas.lotacoes.lat).toBe(-15.7432639227901);
+    expect(nac[0][9].validacao_coordenada).toBe("pendente");
+    expect(nac[0][9].confirmacao_independente).toBe(false);
+  });
+
+  it("sinaliza coordenada CNES compartilhada sem tratá-la como validação", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: { dsei: [{ k: "YANOMAMI", n: "Yanomami", polos: [] }] },
+      },
+      {
+        chave: "rede_cnes",
+        payload: {
+          rede: {
+            YANOMAMI: {
+              u: [
+                ["POLO BASE XITEI", "1", 2.98, -61.292, "ALTO ALEGRE", 14],
+                ["POLO BASE HAXIU", "2", 2.98, -61.292, "ALTO ALEGRE", 14],
+                [
+                  "POLO BASE ALTO MUCAJAI",
+                  "3",
+                  2.98,
+                  -61.292,
+                  "ALTO ALEGRE",
+                  14,
+                ],
+              ],
+              c: [],
+            },
+          },
+          nac: [],
+        },
+      },
+    ];
+
+    const result = applyLotacoesGeograficas(rows, { YANOMAMI: [] });
+    const rede = result[1].payload.rede.YANOMAMI.u;
+
+    expect(rede).toHaveLength(3);
+    rede.forEach((row) => {
+      expect(row[9].coordenada_compartilhada).toBe(true);
+      expect(row[9].coordenada_compartilhada_qtd).toBe(3);
+      expect(row[9].validacao_coordenada).toBe("pendente");
+    });
   });
 });
