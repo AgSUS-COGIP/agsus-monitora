@@ -112,3 +112,11 @@ describe("falha de autenticação do servidor", () => {
     );
   });
 });
+
+describe("máquina que hospeda a IA fora do ar", () => {
+  it("distingue serviço não subiu de túnel quebrado", () => {
+    expect(ayaFailureMessage("local_ai_offline")).toContain("sem dar sinal");
+    expect(ayaFailureMessage("local_ai_offline")).toContain("reiniciado");
+    expect(ayaFailureMessage("local_ai_unavailable")).toContain("túnel");
+  });
+});
