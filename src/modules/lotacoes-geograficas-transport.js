@@ -315,9 +315,7 @@ function annotatePoloFromCnes(polo, networkRow, record) {
   polo.coord_cnes = cnes;
 
   const lmapCnes =
-    lmap && cnes
-      ? distanciaKm(lmap.lat, lmap.lon, cnes.lat, cnes.lon)
-      : null;
+    lmap && cnes ? distanciaKm(lmap.lat, lmap.lon, cnes.lat, cnes.lon) : null;
   const lotacoesCnes = cnes
     ? distanciaKm(lotacoes.lat, lotacoes.lon, cnes.lat, cnes.lon)
     : null;
@@ -394,7 +392,8 @@ export function applyLotacoesGeograficas(rows, dataset) {
     records.forEach((record) => {
       if (record.type === "SEDE") {
         const tinhaCoordenada =
-          Number.isFinite(Number(dsei.lat)) && Number.isFinite(Number(dsei.lon));
+          Number.isFinite(Number(dsei.lat)) &&
+          Number.isFinite(Number(dsei.lon));
         if (tinhaCoordenada && !dsei.sede_coord_lmap) {
           dsei.sede_coord_lmap = {
             lat: Number(dsei.lat),
