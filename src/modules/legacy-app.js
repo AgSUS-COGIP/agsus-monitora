@@ -9290,6 +9290,19 @@ function initDetailLeaflet() {
   _detailBaseLayer = L.layerGroup().addTo(_detailLeaflet);
   _detailUnitLayer = L.layerGroup().addTo(_detailLeaflet);
 
+  _detailLeaflet.on("agsus:dsei-coverage-ready", (event) => {
+    if (_detailEscopo !== "territorio") return;
+    const bounds = event?.bounds;
+    if (bounds?.isValid?.() !== true) return;
+    try {
+      _detailLeaflet.fitBounds(bounds, {
+        padding: [34, 34],
+        maxZoom: 9,
+        animate: false,
+      });
+    } catch (e) {}
+  });
+
   const list = $("detailUnitList");
   list?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-map-unit]");
@@ -9820,8 +9833,18 @@ function enquadrarDetalhe(escopo, { animar = false } = {}) {
   const pontos = _detailBounds[escopo] || _detailBounds.territorio;
   if (!pontos?.length) return;
   _detailEscopo = escopo;
+
+  const abrangenciaOficial =
+    escopo === "territorio"
+      ? _detailLeaflet.__agsusDseiCoverageBounds
+      : null;
+  const bounds =
+    abrangenciaOficial?.isValid?.() === true
+      ? abrangenciaOficial
+      : L.latLngBounds(pontos);
+
   try {
-    _detailLeaflet.fitBounds(L.latLngBounds(pontos), {
+    _detailLeaflet.fitBounds(bounds, {
       padding: [34, 34],
       maxZoom: 9,
       animate: animar,
@@ -10257,9 +10280,9 @@ function polosBounds(d) {
   `_lat`/`_lon`, mas o marcador era desenhado a 5,5 km do sítio, e nada na tela
   dizia isso a quem olhava.
 
-  O afastamento em graus saiu. O que resolve a sobreposição agora é o
-  agrupamento com contagem, em `desenharComAgrupamento`, que é de desenho e
-  reversível: aproximar ou abrir o leque devolve cada unidade ao seu lugar.
+  O afastamento em graus saiu. Quando dois pontos coincidem, o desenho os
+  separa apenas em pixels e liga cada marcador à coordenada real. Não existe
+  mais selo numérico nem alteração da geometria do dado.
 */
 function _spread(items) {
   return items.map((it) =>
@@ -10267,14 +10290,6 @@ function _spread(items) {
   );
 }
 
-/*
-  Agrupamento com contagem para as camadas da visão nacional.
-
-  Recebe registos já com `_lat`/`_lon` iguais aos reais, agrupa por célula de
-  pixel e devolve o que desenhar: ou o registo sozinho, ou um grupo com a sua
-  contagem. Quem chama decide o marcador — o que muda entre polos e CASAIs é a
-  forma, não a regra de agrupamento.
-*/
 function drawRedeAssistencial(d) {
   if (!_leaflet) return;
   if (_layerUbsi) _layerUbsi.clearLayers();
