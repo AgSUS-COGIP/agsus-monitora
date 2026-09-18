@@ -375,6 +375,35 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
     });
   }
   function editalKey(grupo, unidade, edital){ return [norm(grupo), norm(unidade), norm(edital)].join("|"); }
+  function buildEditaisFromRows(sourceRows){
+    const map = new Map();
+    (sourceRows || []).forEach(row => {
+      const grupo = txt(row.grupo);
+      const unidade = txt(row.unidade);
+      const edital = txt(row.edital);
+      if(!unidade || !edital) return;
+      const key = editalKey(grupo, unidade, edital);
+      const ativoRaw = row.edital_ativo ?? row.ativo;
+      const ativo = typeof ativoRaw === "boolean" ? ativoRaw : ["sim","s","ativo","1","true","x"].includes(norm(ativoRaw));
+      const next = {
+        grupo: grupo || null,
+        unidade,
+        edital,
+        ativo,
+        data_inicio_analise: txt(row.data_inicio_analise) || null,
+        data_fim_analise: txt(row.data_fim_analise) || null
+      };
+      const current = map.get(key);
+      if(!current){
+        map.set(key, next);
+        return;
+      }
+      if(!current.data_inicio_analise && next.data_inicio_analise) current.data_inicio_analise = next.data_inicio_analise;
+      if(!current.data_fim_analise && next.data_fim_analise) current.data_fim_analise = next.data_fim_analise;
+      current.ativo = current.ativo || next.ativo;
+    });
+    return [...map.values()];
+  }
   function isActiveEdital(meta){ return ["sim","s","ativo","1","true","x"].includes(norm(meta && meta.ativo)); }
   function resolveEditalMeta(row){
     const list = editais || [];
@@ -496,7 +525,9 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
 
       if(analisesPayload && Array.isArray(analisesPayload.rows)){
         const rawBaseRows = analisesPayload.rows;
-        editais = Array.isArray(analisesPayload.editais) ? analisesPayload.editais : [];
+        editais = Array.isArray(analisesPayload.editais) && analisesPayload.editais.length
+          ? analisesPayload.editais
+          : buildEditaisFromRows(rawBaseRows);
         setProgress(42,`Montando painel a partir do cache consolidado para ${fmtNum(rawBaseRows.length)} registros...`);
         writeCache(rawBaseRows, editais, analisesPayload);
         rows = hydrateRowsWithEditalWindows(rawBaseRows);
@@ -513,24 +544,15 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
       }
 
       setProgress(12,currentEditalScope() === "ativo" ? "Cache consolidado indisponível. Consultando Supabase em lotes..." : "Consultando Supabase em lotes...");
-      const [baseResponse, editaisResponse] = await Promise.all([
-        fetchAllSupabaseRows(currentViewName(), "*", [
-          { column: "unidade", ascending: true }, { column: "edital", ascending: true },
-          { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
-        ], currentScopeQueryOptions()),
-        fetchAllSupabaseRows("TB_EDITAL_ANALISE", "grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise", [
-          { column: "unidade", ascending: true }, { column: "edital", ascending: true }
-        ])
-      ]);
+      const baseResponse = await fetchAllSupabaseRows(currentViewName(), "*", [
+        { column: "unidade", ascending: true }, { column: "edital", ascending: true },
+        { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
+      ], currentScopeQueryOptions());
       if(runId !== refreshRunCounter) return false;
       if(baseResponse.error){ showAuth("Erro ao carregar o painel: " + baseResponse.error.message); return false; }
-      if(editaisResponse.error){
-        console.warn("Não foi possível carregar analises_editais:", editaisResponse.error.message);
-        toast("Janelas oficiais dos editais não puderam ser carregadas. A validação de período pode ficar incompleta.", "warn", 7000);
-      }
-      setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(baseResponse.data.length)} registros...`);
-      editais = Array.isArray(editaisResponse.data) ? editaisResponse.data : [];
       const rawBaseRows = Array.isArray(baseResponse.data) ? baseResponse.data : [];
+      editais = buildEditaisFromRows(rawBaseRows);
+      setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(rawBaseRows.length)} registros...`);
       writeCache(rawBaseRows, editais, analisesPayload);
       rows = hydrateRowsWithEditalWindows(rawBaseRows);
       filterOptionsSignature = "";
