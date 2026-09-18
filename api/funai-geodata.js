@@ -1,10 +1,24 @@
-const FUNAI_OWS = "https://geoserver.funai.gov.br/geoserver/Funai/ows";
+const FUNAI_OWS_ENDPOINTS = [
+  "https://geoserver.funai.gov.br/geoserver/Funai/ows",
+  "https://geoserver.funai.gov.br/geoserver/ows",
+];
 
 const STATIC_DATASETS = {
-  territories: "Funai:tis_poligonais",
+  territories: {
+    endpoint: FUNAI_OWS_ENDPOINTS[0],
+    typeName: "Funai:tis_poligonais",
+  },
 };
 
-let resolvedDseiTypeName = "";
+/*
+  A camada Funai:areas_dsei é a identificação histórica publicada para a área
+  dos DSEIs. O catálogo atual pode omitir a camada no workspace específico,
+  então ela é testada primeiro e o GetCapabilities fica como descoberta de
+  contingência. Nenhum nome é aceito sem devolver GeoJSON poligonal válido.
+*/
+const DSEI_KNOWN_TYPE_NAMES = ["Funai:areas_dsei"];
+
+let resolvedDseiSource = null;
 
 function first(value) {
   return Array.isArray(value) ? value[0] : value;
@@ -23,16 +37,26 @@ function normalizeLabel(value) {
 
 export function featureTypesFromCapabilities(xml) {
   const source = String(xml || "");
-  const blocks = source.match(/<FeatureType\b[\s\S]*?<\/FeatureType>/gi) || [];
+  const blocks =
+    source.match(
+      /<(?:[A-Za-z0-9_-]+:)?FeatureType\b[\s\S]*?<\/(?:[A-Za-z0-9_-]+:)?FeatureType>/gi,
+    ) || [];
+
+  const tagValue = (block, tag) =>
+    block
+      .match(
+        new RegExp(
+          `<(?:[A-Za-z0-9_-]+:)?${tag}\\b[^>]*>([\\s\\S]*?)<\\/(?:[A-Za-z0-9_-]+:)?${tag}>`,
+          "i",
+        ),
+      )?.[1]
+      ?.trim() || "";
 
   return blocks
-    .map((block) => {
-      const name =
-        block.match(/<Name\b[^>]*>([\s\S]*?)<\/Name>/i)?.[1]?.trim() || "";
-      const title =
-        block.match(/<Title\b[^>]*>([\s\S]*?)<\/Title>/i)?.[1]?.trim() || "";
-      return { name, title };
-    })
+    .map((block) => ({
+      name: tagValue(block, "Name"),
+      title: tagValue(block, "Title"),
+    }))
     .filter((item) => item.name);
 }
 
@@ -67,34 +91,6 @@ export function chooseDseiFeatureType(featureTypes = []) {
   return best && best.score >= 0 ? best.name : "";
 }
 
-async function resolveDseiTypeName() {
-  if (resolvedDseiTypeName) return resolvedDseiTypeName;
-
-  const params = new URLSearchParams({
-    service: "WFS",
-    version: "1.0.0",
-    request: "GetCapabilities",
-  });
-  const response = await fetch(`${FUNAI_OWS}?${params.toString()}`, {
-    headers: { Accept: "application/xml,text/xml,*/*" },
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!response.ok) {
-    throw new Error(`FUNAI capabilities HTTP ${response.status}`);
-  }
-
-  const xml = await response.text();
-  const typeName = chooseDseiFeatureType(featureTypesFromCapabilities(xml));
-  if (!typeName) {
-    throw new Error(
-      "Camada poligonal de DSEI não encontrada no catálogo da Funai",
-    );
-  }
-
-  resolvedDseiTypeName = typeName;
-  return typeName;
-}
-
 function safeBbox(value) {
   const raw = String(first(value) || "").trim();
   if (!raw) return "";
@@ -124,17 +120,94 @@ function json(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function isGeoJsonBody(body) {
+function parseGeoJson(body) {
   const source = String(body || "").trim();
-  if (!source.startsWith("{")) return false;
+  if (!source.startsWith("{")) return null;
   try {
     const parsed = JSON.parse(source);
-    return (
-      parsed?.type === "FeatureCollection" && Array.isArray(parsed.features)
-    );
+    return parsed?.type === "FeatureCollection" &&
+      Array.isArray(parsed.features)
+      ? parsed
+      : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function isPolygonGeoJsonBody(body) {
+  const parsed = parseGeoJson(body);
+  if (!parsed || !parsed.features.length) return false;
+  return parsed.features.some((feature) =>
+    ["Polygon", "MultiPolygon"].includes(String(feature?.geometry?.type || "")),
+  );
+}
+
+function featureParams(typeName, extra = {}) {
+  return new URLSearchParams({
+    service: "WFS",
+    version: "1.0.0",
+    request: "GetFeature",
+    typeName,
+    outputFormat: "application/json",
+    srsName: "EPSG:4326",
+    ...extra,
+  });
+}
+
+async function requestFeatureCollection(endpoint, typeName, extra = {}) {
+  const params = featureParams(typeName, extra);
+  const response = await fetch(`${endpoint}?${params.toString()}`, {
+    headers: { Accept: "application/geo+json,application/json" },
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!response.ok) return null;
+  const body = await response.text();
+  return parseGeoJson(body) ? body : null;
+}
+
+async function resolveDseiSource() {
+  if (resolvedDseiSource) return resolvedDseiSource;
+
+  for (const endpoint of FUNAI_OWS_ENDPOINTS) {
+    for (const typeName of DSEI_KNOWN_TYPE_NAMES) {
+      const body = await requestFeatureCollection(endpoint, typeName, {
+        maxFeatures: "100",
+      }).catch(() => null);
+      if (isPolygonGeoJsonBody(body)) {
+        resolvedDseiSource = { endpoint, typeName };
+        return resolvedDseiSource;
+      }
+    }
+  }
+
+  for (const endpoint of FUNAI_OWS_ENDPOINTS) {
+    const params = new URLSearchParams({
+      service: "WFS",
+      version: "1.0.0",
+      request: "GetCapabilities",
+    });
+    const response = await fetch(`${endpoint}?${params.toString()}`, {
+      headers: { Accept: "application/xml,text/xml,*/*" },
+      signal: AbortSignal.timeout(12000),
+    }).catch(() => null);
+    if (!response?.ok) continue;
+
+    const xml = await response.text();
+    const typeName = chooseDseiFeatureType(featureTypesFromCapabilities(xml));
+    if (!typeName) continue;
+
+    const body = await requestFeatureCollection(endpoint, typeName, {
+      maxFeatures: "100",
+    }).catch(() => null);
+    if (!isPolygonGeoJsonBody(body)) continue;
+
+    resolvedDseiSource = { endpoint, typeName };
+    return resolvedDseiSource;
+  }
+
+  throw new Error(
+    "Camada poligonal de DSEI não encontrada ou indisponível na Funai",
+  );
 }
 
 export default async function handler(req, res) {
@@ -149,20 +222,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const typeName =
+    const source =
       dataset === "dsei"
-        ? await resolveDseiTypeName()
+        ? await resolveDseiSource()
         : STATIC_DATASETS.territories;
 
-    const params = new URLSearchParams({
-      service: "WFS",
-      version: "1.0.0",
-      request: "GetFeature",
-      typeName,
-      outputFormat: "application/json",
-      srsName: "EPSG:4326",
-    });
-
+    const extra = {};
     if (dataset === "territories") {
       const bbox = safeBbox(req.query?.bbox);
       if (!bbox) return json(res, 400, { error: "invalid_bbox" });
@@ -170,27 +235,24 @@ export default async function handler(req, res) {
       const maxFeatures = Number.isFinite(requested)
         ? Math.max(1, Math.min(500, Math.round(requested)))
         : 250;
-      params.set("maxFeatures", String(maxFeatures));
-      params.set("bbox", `${bbox},EPSG:4326`);
+      extra.maxFeatures = String(maxFeatures);
+      extra.bbox = `${bbox},EPSG:4326`;
     } else {
-      params.set("maxFeatures", "100");
+      extra.maxFeatures = "100";
     }
 
-    const upstream = await fetch(`${FUNAI_OWS}?${params.toString()}`, {
-      headers: { Accept: "application/geo+json,application/json" },
-      signal: AbortSignal.timeout(12000),
-    });
+    const body = await requestFeatureCollection(
+      source.endpoint,
+      source.typeName,
+      extra,
+    );
+    const valid =
+      dataset === "dsei"
+        ? isPolygonGeoJsonBody(body)
+        : Boolean(parseGeoJson(body));
 
-    if (!upstream.ok) {
-      return json(res, 502, {
-        error: "funai_upstream_error",
-        status: upstream.status,
-      });
-    }
-
-    const body = await upstream.text();
-    if (!isGeoJsonBody(body)) {
-      if (dataset === "dsei") resolvedDseiTypeName = "";
+    if (!valid) {
+      if (dataset === "dsei") resolvedDseiSource = null;
       return json(res, 502, {
         error: "funai_invalid_geojson",
         dataset,
