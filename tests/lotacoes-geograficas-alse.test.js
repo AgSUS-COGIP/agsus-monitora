@@ -155,6 +155,58 @@ describe("deduplicação real de Alagoas e Sergipe", () => {
     expect(polo.coord_validacao).toBe("pendente");
   });
 
+  it("não identifica polo diferente só porque está perto no mesmo município", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: {
+          dsei: [
+            {
+              k: "D",
+              n: "D",
+              polos: [{ n: "POVO", lat: -9, lon: -37 }],
+            },
+          ],
+        },
+      },
+      {
+        chave: "rede_cnes",
+        payload: {
+          rede: {
+            D: {
+              u: [
+                ["POLO BASE OUTRO POVO", "1", -9.001, -37, "MUNICIPIO", 27],
+              ],
+              c: [],
+            },
+          },
+          nac: [],
+        },
+      },
+    ];
+    const dataset = {
+      D: [
+        [
+          "POLO BASE",
+          "PB POVO",
+          -9,
+          -37,
+          "MUNICIPIO",
+          "AL",
+          "Acessível",
+          "Terrestre",
+        ],
+      ],
+    };
+
+    const result = applyLotacoesGeograficas(rows, dataset);
+    const polo = result[0].payload.dsei[0].polos[0];
+
+    expect(polo.cnes).toBeUndefined();
+    expect(polo.lat).toBe(-9);
+    expect(polo.lon).toBe(-37);
+  });
+
   it("não escolhe candidato quando duas unidades ficam espacialmente empatadas", () => {
     const rows = [
       {
