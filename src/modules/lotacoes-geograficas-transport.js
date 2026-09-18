@@ -469,7 +469,8 @@ export function applyLotacoesGeograficas(rows, dataset) {
 
         if (
           !jaExistiaNoLmap &&
-          (!Number.isFinite(Number(polo.lat)) || !Number.isFinite(Number(polo.lon)))
+          (!Number.isFinite(Number(polo.lat)) ||
+            !Number.isFinite(Number(polo.lon)))
         ) {
           polo.lat = record.lat;
           polo.lon = record.lon;
@@ -486,12 +487,8 @@ export function applyLotacoesGeograficas(rows, dataset) {
       mergeNetworkRecord(network.u, record, "u");
     });
 
-    network.u = annotateSharedCoordinates(
-      dedupeNetworkList(network.u, "u"),
-    );
-    network.c = annotateSharedCoordinates(
-      dedupeNetworkList(network.c, "c"),
-    );
+    network.u = annotateSharedCoordinates(dedupeNetworkList(network.u, "u"));
+    network.c = annotateSharedCoordinates(dedupeNetworkList(network.c, "c"));
   });
 
   redeRow.payload.nac = annotateSharedCoordinates(
