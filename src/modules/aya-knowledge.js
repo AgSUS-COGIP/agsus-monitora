@@ -110,12 +110,23 @@ const GATILHO_INTERROGATIVO =
   perder para "ociosidade", e a comparação é por palavra inteira, para "sus"
   não casar dentro de "agsus".
 */
+/*
+  Nomear um distrito já é perguntar por ele: "dsei vale do javari" é uma
+  pergunta completa na prática. Exige o nome depois da sigla — o gatilho "dsei"
+  sozinho continua precisando de verbo, senão "quantos DSEIs aparecem na tela?"
+  devolveria a definição em vez de ler a tela.
+*/
+const GATILHO_NOMEIA_DISTRITO = /^dsei\s+\S/;
+
 function verbeteParaPergunta(normalized, defineTerm, asksAcronym) {
   let melhor = null;
   for (const verbete of VERBETES_AYA) {
     if (!verbete.resposta) continue;
     for (const termo of verbete.perguntas) {
-      if (!defineTerm && !asksAcronym && !GATILHO_INTERROGATIVO.test(termo)) {
+      const dispensaVerbo =
+        GATILHO_INTERROGATIVO.test(termo) ||
+        GATILHO_NOMEIA_DISTRITO.test(termo);
+      if (!defineTerm && !asksAcronym && !dispensaVerbo) {
         continue;
       }
       const limite = new RegExp(

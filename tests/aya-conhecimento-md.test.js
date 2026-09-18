@@ -107,3 +107,52 @@ describe("perfil do DSEI quando o nome é dito", () => {
     expect(resposta).toContain("Ouricuri");
   });
 });
+
+describe("política e controle social", () => {
+  it("responde PNASPI, CONDISI e as três instâncias", () => {
+    expect(curatedAnswerForQuestion("o que é a PNASPI?")).toContain(
+      "Portaria 254",
+    );
+    expect(curatedAnswerForQuestion("o que é CONDISI?")).toContain("paritária");
+    expect(
+      curatedAnswerForQuestion("quais são os conselhos da saúde indígena?"),
+    ).toContain("FPCONDISI");
+  });
+
+  it("não confunde conselho local com distrital", () => {
+    expect(curatedAnswerForQuestion("o que é conselho local?")).toContain(
+      "consultivo",
+    );
+    expect(curatedAnswerForQuestion("o que é CONDISI?")).toContain(
+      "deliberativo",
+    );
+  });
+});
+
+describe("lista dos 34 DSEIs", () => {
+  it("responde a lista completa sem passar pelo modelo", () => {
+    const resposta = curatedAnswerForQuestion("quais são os 34 DSEIs?");
+    for (const nome of ["Yanomami", "Vale do Javari", "Parintins", "Xavante"]) {
+      expect(resposta).toContain(nome);
+    }
+  });
+
+  /*
+    A lista tem 34 nomes e não ajuda o modelo a redigir nada. Deixá-la fora do
+    prompt mantém o prefixo estático enxuto — é para isso que `resposta` e
+    `fato` são campos separados.
+  */
+  it("mantém a lista fora do prompt", () => {
+    const prompt = buildAyaSystemPrompt({ section: "saude-indigena" });
+    expect(prompt).not.toContain("Parintins");
+  });
+
+  it("nomear um distrito dispensa o verbo de definição", () => {
+    expect(curatedAnswerForQuestion("dsei vale do javari")).toContain(
+      "Atalaia do Norte",
+    );
+    expect(curatedAnswerForQuestion("quantos DSEIs aparecem na tela?")).toBe(
+      "",
+    );
+  });
+});
