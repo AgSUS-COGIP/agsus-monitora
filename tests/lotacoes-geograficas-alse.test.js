@@ -68,6 +68,13 @@ describe("deduplicação real de Alagoas e Sergipe", () => {
     expect(result[0].payload.dsei[0].polos).toHaveLength(1);
     expect(polo.cnes).toBe("2010674");
     expect(polo.mun_lotacao).toBe("PALMEIRA DOS INDIOS");
+    expect(polo.lat).toBe(-9.417027);
+    expect(polo.lon).toBe(-36.632751);
+    expect(polo.coord_fonte).toBe("CNES");
+    expect(polo.coord_lotacoes).toEqual({
+      lat: -9.408696,
+      lon: -36.650698,
+    });
     expect(rede.u).toHaveLength(1);
     expect(rede.u[0][1]).toBe("2010674");
   });
