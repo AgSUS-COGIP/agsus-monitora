@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const DATE_RE = /\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4}\b/g;
+const DATE_RE = /\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/g;
 let initialized = false;
 
 function toIso(day, month, year) {
@@ -17,7 +17,7 @@ function toIso(day, month, year) {
 
 function parseDateToken(token) {
   const match = String(token || "").match(
-    /(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/,
+    /(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/,
   );
   return match ? toIso(match[1], match[2], match[3]) : "";
 }
@@ -33,7 +33,7 @@ function parseDateLine(line) {
   if (dates.length === 1) return { start: dates[0], end: dates[0] };
 
   const shortRange = normalized.match(
-    /\b(\d{1,2})\s*(?:a|até|ate|-)\s*(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})\b/i,
+    /\b(\d{1,2})\s*(?:a|até|ate|-)\s*(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/i,
   );
   if (!shortRange) return null;
   return {
