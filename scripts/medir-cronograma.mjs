@@ -27,7 +27,7 @@ if (!URL_DO_BANCO) {
   process.exit(1);
 }
 
-const VIEW = "vw_monitoramento_indigena_operacional";
+const VIEW = "VW_MONITORAMENTO_INDIGENA_OPERACIONAL";
 const FUNCAO = "get_monitoramento_cronograma_estado";
 const TABELA = "TB_CRONOGRAMA_MONIT_INDIG";
 const DESTINO = process.argv[2] || "docs/medicoes";

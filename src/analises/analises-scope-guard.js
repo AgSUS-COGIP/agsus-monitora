@@ -1,6 +1,6 @@
 const TARGET_VIEWS = new Set([
-  "vw_analises_dashboard_base",
-  "vw_analises_dashboard_base_todos",
+  "VW_ANALISES_DASHBOARD_BASE",
+  "VW_ANALISES_DASHBOARD_BASE_TODOS",
 ]);
 const RPC = "get_analises_dashboard_filtrado";
 const PAGE_SIZE = 1000;

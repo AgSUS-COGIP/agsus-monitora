@@ -27,9 +27,9 @@ describe("monitoramento operational transport", () => {
     source.select("id,etapa,status");
     source.update({ etapa: "Etapa manual" });
 
-    expect(from).toHaveBeenCalledWith("vw_monitoramento_indigena_operacional");
+    expect(from).toHaveBeenCalledWith("VW_MONITORAMENTO_INDIGENA_OPERACIONAL");
     expect(
-      builders.get("vw_monitoramento_indigena_operacional").select,
+      builders.get("VW_MONITORAMENTO_INDIGENA_OPERACIONAL").select,
     ).toHaveBeenCalledWith("id,etapa,status");
     expect(builders.get("TB_MONITORAMENTO_INDIGENA").update).toHaveBeenCalledWith({
       etapa: "Etapa manual",

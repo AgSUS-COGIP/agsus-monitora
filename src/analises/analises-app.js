@@ -1,8 +1,8 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
-  const VIEW_NAME_ATIVOS = "vw_analises_dashboard_base";
-  const VIEW_NAME_TODOS = "vw_analises_dashboard_base_todos";
+  const VIEW_NAME_ATIVOS = "VW_ANALISES_DASHBOARD_BASE";
+  const VIEW_NAME_TODOS = "VW_ANALISES_DASHBOARD_BASE_TODOS";
   const ANALISES_DASHBOARD_PAYLOAD_RPC = "get_analises_dashboard_payload_v2";
   const THEME_KEY = "agsus_analises_theme_v3";
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
