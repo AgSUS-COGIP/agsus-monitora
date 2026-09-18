@@ -24,6 +24,24 @@ describe("catálogo geoespacial da Funai", () => {
     );
   });
 
+  it("lê capabilities com prefixo de namespace WFS", () => {
+    const xml = `<wfs:WFS_Capabilities>
+      <wfs:FeatureTypeList>
+        <wfs:FeatureType>
+          <wfs:Name>Funai:atuacao_dsei</wfs:Name>
+          <wfs:Title>Área de Atuação do Distrito Sanitário Especial Indígena - DSEI</wfs:Title>
+        </wfs:FeatureType>
+      </wfs:FeatureTypeList>
+    </wfs:WFS_Capabilities>`;
+
+    expect(featureTypesFromCapabilities(xml)).toEqual([
+      {
+        name: "Funai:atuacao_dsei",
+        title: "Área de Atuação do Distrito Sanitário Especial Indígena - DSEI",
+      },
+    ]);
+  });
+
   it("não escolhe a camada de sede quando não existe polígono de atuação", () => {
     const xml = `<WFS_Capabilities>
       <FeatureTypeList>
