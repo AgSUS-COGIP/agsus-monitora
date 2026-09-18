@@ -99,15 +99,24 @@ A migration `20260918120000_registro_do_bridge_da_aya.sql` cria a tabela e as
 funções, mas nasce inerte: enquanto o segredo de escrita não for definido,
 nenhum anúncio é aceito e a `/api/aya` continua usando `AYA_LOCAL_BRIDGE_URL`.
 
-Para ativar, no editor SQL do projeto, com a mesma chave do bridge:
+Para ativar, gere o hash na própria máquina e cole apenas o hash no editor SQL
+do projeto. O hash é irreversível, então não é segredo e pode ser copiado sem
+cuidado especial:
 
-```sql
-select public.definir_segredo_bridge_aya('<a mesma chave do AYA_LOCAL_BRIDGE_KEY>');
+```powershell
+$k = [Environment]::GetEnvironmentVariable("AYA_LOCAL_BRIDGE_KEY","User")
+$sha = [System.Security.Cryptography.SHA256]::Create()
+$hash = ($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($k)) | ForEach-Object { $_.ToString("x2") }) -join ""
+Write-Output "update public.aya_bridge set chave_sha256 = '$hash' where id;"
 ```
 
-O segredo não é gravado: guarda-se apenas o sha256 dele. A chamada recusa a
-troca silenciosa — para trocar a chave depois é preciso limpar `chave_sha256`
-deliberadamente.
+Rode no SQL o comando que sair daí.
+
+Existe também `definir_segredo_bridge_aya('<chave>')`, que recebe a chave em
+texto e calcula o hash. Evite: copiar 48 caracteres à mão erra, e o erro só
+aparece depois, como `chave_invalida` no anúncio. A função ainda recusa
+sobrescrever um segredo já definido, então corrigir exige o `update` acima de
+qualquer forma.
 
 Feito isso, `AYA_LOCAL_BRIDGE_URL` deixa de ser necessária na Vercel. Ela
 continua sendo lida como alternativa, então pode ficar onde está sem prejuízo.
