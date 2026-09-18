@@ -17,16 +17,20 @@ const CRONOGRAMA = [
 ];
 
 /*
-  `monitoramento_indigena` é uma view: junta a tabela base com o estado calculado
-  do cronograma. As seis colunas de `CRONOGRAMA` só existem aí, não na tabela.
-  Apontar esta consulta para a tabela base compila, passa no lint e só quebra em
-  produção, com "column ... does not exist".
+  A consulta nomeia a TABELA, mas quem responde é a view.
 
-  O `throw` existe por isso. Antes, se o nome não fosse encontrado, a busca
-  devolvia uma lista vazia em silêncio e o teste acusava "faltam as seis colunas
-  de cronograma" — mandando quem investiga para o lado errado.
+  As seis colunas de `CRONOGRAMA` não existem em `TB_MONITORAMENTO_INDIGENA` —
+  são calculadas em `VW_MONITORAMENTO_INDIGENA_OPERACIONAL`. O que faz isto
+  funcionar é `monitoramento-operational-transport.js`, que intercepta o cliente
+  Supabase e desvia os `select` da tabela para a view, deixando as escritas na
+  tabela. Ler o `.from()` aqui e concluir que falta coluna é o erro natural, e a
+  razão de este comentário existir.
+
+  O `throw` abaixo veio do mesmo episódio: quando o nome não era encontrado, a
+  busca devolvia uma lista vazia em silêncio e o teste acusava "faltam as seis
+  colunas de cronograma" — mandando quem investiga para o lado errado.
 */
-const TABELA_MONITORAMENTO = '.from("monitoramento_indigena")';
+const TABELA_MONITORAMENTO = '.from("TB_MONITORAMENTO_INDIGENA")';
 
 function colunasDoSelect(fonte) {
   const i = fonte.indexOf(TABELA_MONITORAMENTO);

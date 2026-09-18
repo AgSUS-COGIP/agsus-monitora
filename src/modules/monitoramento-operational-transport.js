@@ -1,4 +1,4 @@
-const SOURCE_TABLE = "monitoramento_indigena";
+const SOURCE_TABLE = "TB_MONITORAMENTO_INDIGENA";
 const OPERATIONAL_VIEW = "VW_MONITORAMENTO_INDIGENA_OPERACIONAL";
 const CLIENT_MARKER = "__agsusOperationalTransport";
 const GLOBAL_MARKER = "__agsusOperationalTransportInstalled";

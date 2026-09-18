@@ -22,7 +22,7 @@ describe("monitoramento operational transport", () => {
     });
 
     const client = decorateOperationalClient({ from });
-    const source = client.from("monitoramento_indigena");
+    const source = client.from("TB_MONITORAMENTO_INDIGENA");
 
     source.select("id,etapa,status");
     source.update({ etapa: "Etapa manual" });
@@ -31,7 +31,9 @@ describe("monitoramento operational transport", () => {
     expect(
       builders.get("VW_MONITORAMENTO_INDIGENA_OPERACIONAL").select,
     ).toHaveBeenCalledWith("id,etapa,status");
-    expect(builders.get("monitoramento_indigena").update).toHaveBeenCalledWith({
+    expect(
+      builders.get("TB_MONITORAMENTO_INDIGENA").update,
+    ).toHaveBeenCalledWith({
       etapa: "Etapa manual",
     });
   });

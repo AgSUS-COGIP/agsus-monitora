@@ -2187,7 +2187,7 @@ async function loadData(options = {}) {
     const [payloadResponse, tableResponse] = await Promise.all([
       loadMonitoramentoPayload(),
       sb
-        .from("monitoramento_indigena")
+        .from("TB_MONITORAMENTO_INDIGENA")
         /*
           As seis colunas `cronograma_*` entram aqui de proposito.
         
@@ -12722,7 +12722,7 @@ function startRealtime() {
       .channel("monitoramento_changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "monitoramento_indigena" },
+        { event: "*", schema: "public", table: "TB_MONITORAMENTO_INDIGENA" },
         () => {
           // Debounce: evita múltiplas chamadas em rajada
           clearTimeout(window.__realtimeDebounce);
