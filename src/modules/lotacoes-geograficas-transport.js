@@ -145,6 +145,10 @@ function annotateNetworkRecord(existing, record) {
     distancia_entre_fontes_km:
       km == null ? null : Number(Number(km).toFixed(1)),
     divergencia: classificarDivergencia(km),
+    validacao_coordenada: "pendente",
+    confirmacao_independente: false,
+    fontes_coincidem:
+      km != null && Number.isFinite(Number(km)) ? Number(km) < 0.05 : false,
   };
   return existing;
 }
@@ -169,6 +173,9 @@ function planilhaNetworkRow(record) {
       },
       distancia_entre_fontes_km: null,
       divergencia: "sem_cnes",
+      validacao_coordenada: "pendente",
+      confirmacao_independente: false,
+      fontes_coincidem: false,
     },
   ];
 }
@@ -234,6 +241,35 @@ function dedupeNetworkList(list, listKind = "u") {
     if (seenPlanilha.has(key)) return false;
     seenPlanilha.add(key);
     return true;
+  });
+}
+
+function annotateSharedCoordinates(list) {
+  const counts = new Map();
+
+  (list || []).forEach((row) => {
+    const lat = Number(row?.[2]);
+    const lon = Number(row?.[3]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  return (list || []).map((row) => {
+    const lat = Number(row?.[2]);
+    const lon = Number(row?.[3]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return row;
+    const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+    const quantity = counts.get(key) || 1;
+    if (quantity <= 1) return row;
+
+    row[9] = {
+      ...(row[9] && typeof row[9] === "object" ? row[9] : {}),
+      coordenada_compartilhada_qtd: quantity,
+      coordenada_compartilhada: true,
+      validacao_coordenada: "pendente",
+    };
+    return row;
   });
 }
 
@@ -398,11 +434,17 @@ export function applyLotacoesGeograficas(rows, dataset) {
       mergeNetworkRecord(network.u, record, "u");
     });
 
-    network.u = dedupeNetworkList(network.u, "u");
-    network.c = dedupeNetworkList(network.c, "c");
+    network.u = annotateSharedCoordinates(
+      dedupeNetworkList(network.u, "u"),
+    );
+    network.c = annotateSharedCoordinates(
+      dedupeNetworkList(network.c, "c"),
+    );
   });
 
-  redeRow.payload.nac = dedupeNetworkList(redeRow.payload.nac || [], "c");
+  redeRow.payload.nac = annotateSharedCoordinates(
+    dedupeNetworkList(redeRow.payload.nac || [], "c"),
+  );
   lmapRow.payload.lotacoes_geograficas = {
     fonte: SOURCE,
     reconciliada_com: "CNES",
@@ -410,6 +452,8 @@ export function applyLotacoesGeograficas(rows, dataset) {
       "CNES > tipo > nome canônico > município > proximidade conservadora",
     coordenada_preferida:
       "lmap preservado quando existente; Lotações e CNES mantidos para comparação; validação independente antes de substituir",
+    regra_de_confianca:
+      "coincidência entre Lotações e CNES não valida a posição; coordenadas compartilhadas por vários estabelecimentos são sinalizadas",
     registros: 598,
     sedes: 34,
     polos: 403,
