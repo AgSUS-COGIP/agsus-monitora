@@ -84,7 +84,10 @@ export function createSafeAuthStorage(storageKey, options = {}) {
     if (!storage) return;
     try {
       storage.removeItem(key);
-    } catch (_) {}
+    } catch {
+      // Armazenamento bloqueado ou cota estourada: a limpeza é melhor
+      // esforço e não deve derrubar quem chamou.
+    }
   }
 
   return {
