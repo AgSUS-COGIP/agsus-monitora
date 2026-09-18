@@ -419,12 +419,6 @@ export function applyLotacoesGeograficas(rows, dataset) {
 
         polo.coord_lotacoes = { lat: record.lat, lon: record.lon };
         polo.nome_lotacoes = record.name;
-        if (!jaExistiaNoLmap) {
-          // Polo novo, inexistente no lmap: a planilha é a única coordenada
-          // disponível até que haja validação independente.
-          polo.lat = record.lat;
-          polo.lon = record.lon;
-        }
         polo.uf = record.uf || polo.uf || "";
         polo.mun_lotacao = record.municipality || "";
         polo.acessibilidade = record.accessibility || "";
@@ -437,6 +431,29 @@ export function applyLotacoesGeograficas(rows, dataset) {
         if (networkRow) {
           annotateNetworkRecord(networkRow, record);
           annotatePoloFromCnes(polo, networkRow, record);
+
+          /*
+            Polo ausente do lmap: a planilha pode ter linha deslocada para outro
+            estado (Tuxi, Guaíra, Angra dos Reis são casos reais da auditoria).
+            Quando há um registo CNES inequívoco da MESMA estrutura, usamos a
+            coordenada cadastral CNES como fallback de exibição — ainda
+            PENDENTE, nunca "oficial". Para polos que já existiam no lmap, não
+            mexemos na posição histórica.
+          */
+          if (!jaExistiaNoLmap && polo.coord_cnes) {
+            polo.lat = polo.coord_cnes.lat;
+            polo.lon = polo.coord_cnes.lon;
+            polo.coord_fonte = "CNES";
+          }
+        }
+
+        if (
+          !jaExistiaNoLmap &&
+          (!Number.isFinite(Number(polo.lat)) || !Number.isFinite(Number(polo.lon)))
+        ) {
+          polo.lat = record.lat;
+          polo.lon = record.lon;
+          polo.coord_fonte = SOURCE;
         }
         return;
       }
