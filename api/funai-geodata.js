@@ -86,7 +86,9 @@ async function resolveDseiTypeName() {
   const xml = await response.text();
   const typeName = chooseDseiFeatureType(featureTypesFromCapabilities(xml));
   if (!typeName) {
-    throw new Error("Camada poligonal de DSEI não encontrada no catálogo da Funai");
+    throw new Error(
+      "Camada poligonal de DSEI não encontrada no catálogo da Funai",
+    );
   }
 
   resolvedDseiTypeName = typeName;
@@ -127,7 +129,9 @@ function isGeoJsonBody(body) {
   if (!source.startsWith("{")) return false;
   try {
     const parsed = JSON.parse(source);
-    return parsed?.type === "FeatureCollection" && Array.isArray(parsed.features);
+    return (
+      parsed?.type === "FeatureCollection" && Array.isArray(parsed.features)
+    );
   } catch {
     return false;
   }
