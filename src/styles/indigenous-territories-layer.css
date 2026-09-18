@@ -76,6 +76,21 @@
   border-top-color: rgba(15, 23, 42, 0.9) !important;
 }
 
+/* O tooltip da Terra Indígena passou a ter mais de uma linha — o povo em
+   destaque, a terra e a UF abaixo. Com tudo em 800 nada se destacava; o peso
+   base cede e o <b> volta a significar ênfase. A largura máxima existe porque
+   há terras com vários povos declarados no mesmo campo. */
+.agsus-ti-tooltip {
+  font-weight: 500;
+  line-height: 1.45;
+  max-width: 260px;
+  white-space: normal;
+}
+
+.agsus-ti-tooltip b {
+  font-weight: 800;
+}
+
 .map-satellite-mode .agsus-indigenous-territories-control__swatch {
   background: rgba(239, 68, 68, 0.18);
   border-color: #ff4d3d;

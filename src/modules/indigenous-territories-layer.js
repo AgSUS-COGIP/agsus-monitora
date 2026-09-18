@@ -21,15 +21,91 @@ export function isHealthMapElementId(value) {
   return id === "map" || id === "detailMap";
 }
 
+/*
+  `terrai_nome` é o nome que a Funai publica hoje em `Funai:tis_poligonais`.
+  Consultado o DescribeFeatureType do GeoServer, os atributos são: gid,
+  terrai_codigo, terrai_nome, etnia_nome, municipio_nome, uf_sigla,
+  superficie_perimetro_ha, fase_ti, modalidade_ti, reestudo_ti, cr,
+  faixa_fronteira, undadm_codigo, undadm_nome, undadm_sigla, the_geom,
+  dominio_uniao, data_atualizacao, epsg.
+
+  A lista abaixo começava em `terrai_nom` — sem o "e" final, como o shapefile
+  trunca — e nenhum dos outros nomes existe na camada. O resultado era string
+  vazia para todo polígono, e o tooltip da Terra Indígena nunca aparecia. Os
+  nomes antigos ficam como reserva, caso a Funai republique com o esquema de
+  shapefile.
+*/
 export function funaiFeatureName(properties = {}) {
   return String(
-    properties.terrai_nom ||
+    properties.terrai_nome ||
+      properties.terrai_nom ||
       properties.terra_nome ||
       properties.ti_nome ||
       properties.nome ||
       properties.name ||
       "",
   ).trim();
+}
+
+/*
+  Quem olha o mapa do DSEI quer saber que povos ele atende — não o nome
+  cartorial do polígono. A Funai declara isso em `etnia_nome`, num só campo de
+  texto e com separador inconsistente: "Pataxó, Pataxo Há-Há-Há" numa linha,
+  "Guaraní e Kaingang e Xetá" noutra. Os dois casos são reais e foram vistos na
+  camada publicada.
+
+  Nada é inferido: se o campo vier vazio, a lista vem vazia e o mapa não afirma
+  povo nenhum.
+*/
+export function povosDaTerraIndigena(properties = {}) {
+  const bruto = String(
+    properties.etnia_nome || properties.etnias || properties.etnia || "",
+  );
+
+  const vistos = new Set();
+  const povos = [];
+  for (const parte of bruto.split(/\s*(?:,|;|\/|\se\s)\s*/i)) {
+    const nome = parte.trim();
+    if (!nome) continue;
+    const chave = nome.toLocaleLowerCase("pt-BR");
+    if (vistos.has(chave)) continue;
+    vistos.add(chave);
+    povos.push(nome);
+  }
+  return povos;
+}
+
+const escaparHtml = (valor) =>
+  String(valor ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+/*
+  O povo vem primeiro e em destaque; a Terra Indígena, que é o recorte
+  fundiário, vem abaixo. Sem `etnia_nome` o polígono continua identificado pelo
+  nome da terra — é melhor do que não dizer nada, e não inventa atendimento.
+*/
+export function tooltipDaTerraIndigena(properties = {}) {
+  const povos = povosDaTerraIndigena(properties);
+  const nome = funaiFeatureName(properties);
+  const uf = String(properties?.uf_sigla || "").trim();
+
+  const linhas = [];
+  if (povos.length) {
+    linhas.push(
+      `<b>${escaparHtml(povos.length === 1 ? "Povo" : "Povos")}: ${escaparHtml(povos.join(", "))}</b>`,
+    );
+  }
+  if (nome) {
+    linhas.push(
+      `${povos.length ? "" : "<b>"}Terra Indígena ${escaparHtml(nome)}${povos.length ? "" : "</b>"}`,
+    );
+  }
+  if (uf) linhas.push(escaparHtml(uf));
+
+  return linhas.join("<br>");
 }
 
 function normalizeText(value) {
@@ -223,9 +299,9 @@ function enhanceMap(L, map) {
     style: () => vectorStyle(map),
     onEachFeature: (feature, layer) => {
       if (!supportsHover()) return;
-      const nome = funaiFeatureName(feature?.properties);
-      if (!nome) return;
-      layer.bindTooltip(nome, {
+      const texto = tooltipDaTerraIndigena(feature?.properties);
+      if (!texto) return;
+      layer.bindTooltip(texto, {
         sticky: true,
         direction: "top",
         className: "agsus-ti-tooltip",

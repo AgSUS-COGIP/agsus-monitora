@@ -135,9 +135,18 @@ const escapar = (valor) =>
     .replace(/"/g, "&quot;");
 
 /*
-  O tooltip nomeia o tipo, o DSEI e a UF real, e só afirma "fora das UFs de
-  abrangência" quando a classificação provou isso. Para `indeterminado` a
-  localização aparece sem veredito.
+  O tooltip identifica; o popup explica.
+
+  Antes o tooltip também contava a reconciliação — origem do registro e
+  divergência entre fontes — e o popup repetia a mesma história com outras
+  palavras, acrescentando as coordenadas. Como abrir um popup desloca o mapa, o
+  marcador volta a passar sob o cursor, o tooltip reabre, e quem clicava ficava
+  com os dois textos lado a lado dizendo o mesmo.
+
+  Agora o tooltip nomeia o tipo, o DSEI e a UF real, e só afirma "fora das UFs
+  de abrangência" quando a classificação provou isso. Para `indeterminado` a
+  localização aparece sem veredito. A reconciliação está no popup, junto dos
+  números que a sustentam.
 */
 export function tooltipDoRegistro(registro, dsei) {
   const rotulo =
@@ -157,8 +166,6 @@ export function tooltipDoRegistro(registro, dsei) {
     linhas.push("<i>UF não informada no CNES — vínculo não classificado</i>");
   }
 
-  linhas.push(...linhasDaReconciliacao(registro));
-
   return linhas.join("<br>");
 }
 
@@ -173,8 +180,8 @@ export function linhasDaReconciliacao(registro) {
 
   const linhas = [
     registro?.coordenadas?.lotacoes
-      ? "<i>Registo unificado: mapa anterior + Lotações + CNES</i>"
-      : "<i>Registo unificado: mapa anterior + CNES</i>",
+      ? "<i>Registro unificado: mapa anterior + Lotações + CNES</i>"
+      : "<i>Registro unificado: mapa anterior + CNES</i>",
   ];
   const km = registro?.distancia_entre_fontes_km;
 
@@ -195,6 +202,53 @@ export function linhasDaReconciliacao(registro) {
   }
 
   return linhas;
+}
+
+const ROTULOS_DE_FONTE = [
+  ["lmap", "mapa anterior"],
+  ["lotacoes", "Lotações"],
+  ["rede_cnes", "CNES"],
+];
+
+function listaEmPortugues(itens) {
+  if (itens.length <= 1) return itens.join("");
+  return `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}`;
+}
+
+/*
+  Uma linha por coordenada distinta, não por fonte.
+
+  Em POLO BASE JOAO CAMARA as Lotações e o CNES dão exatamente o mesmo ponto, e
+  o popup imprimia as duas linhas idênticas uma sob a outra. Lido de fora, isso
+  parece um defeito do registro. Agrupar por coordenada mostra o que de facto
+  interessa: quantos pontos diferentes existem, e quais fontes sustentam cada
+  um. Uma única coordenada distinta significa que as fontes concordam.
+
+  Cinco casas decimais são cerca de um metro — mais do que a precisão de
+  qualquer destes cadastros, e o suficiente para não juntar pontos distintos.
+*/
+export function linhasDasCoordenadas(coordenadas) {
+  const porPonto = new Map();
+
+  for (const [chave, rotulo] of ROTULOS_DE_FONTE) {
+    const lat = Number(coordenadas?.[chave]?.lat);
+    const lon = Number(coordenadas?.[chave]?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const ponto = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    if (!porPonto.has(ponto)) porPonto.set(ponto, []);
+    porPonto.get(ponto).push(rotulo);
+  }
+
+  // Com uma fonte só não há o que comparar, e a coordenada já está no mapa.
+  const fontes = [...porPonto.values()].reduce(
+    (total, rotulos) => total + rotulos.length,
+    0,
+  );
+  if (fontes < 2) return [];
+
+  return [...porPonto.entries()].map(
+    ([ponto, rotulos]) => `${listaEmPortugues(rotulos)}: ${ponto}`,
+  );
 }
 
 export const TOOLTIP_DA_LINHA = "Vínculo territorial — não representa trajeto";

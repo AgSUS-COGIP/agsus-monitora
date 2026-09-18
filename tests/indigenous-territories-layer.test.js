@@ -11,6 +11,8 @@ import {
   funaiFeatureName,
   funaiViewportUrl,
   isHealthMapElementId,
+  povosDaTerraIndigena,
+  tooltipDaTerraIndigena,
 } from "../src/modules/indigenous-territories-layer.js";
 
 describe("camada de Terras Indígenas", () => {
@@ -52,11 +54,101 @@ describe("camada de Terras Indígenas", () => {
     ).toBe(true);
   });
 
-  it("lê nomes conhecidos sem depender de um único campo do GeoServer", () => {
+  it("lê o nome no atributo que a Funai publica hoje", () => {
+    // `terrai_nome` é o que o DescribeFeatureType de Funai:tis_poligonais lista.
+    expect(funaiFeatureName({ terrai_nome: "Potiguara" })).toBe("Potiguara");
+  });
+
+  it("mantém os nomes antigos como reserva", () => {
     expect(funaiFeatureName({ terrai_nom: "Kariri-Xocó" })).toBe("Kariri-Xocó");
     expect(funaiFeatureName({ nome: "Munduruku" })).toBe("Munduruku");
   });
 
+  it("não inventa nome quando a camada não traz nenhum", () => {
+    expect(funaiFeatureName({ gid: 12 })).toBe("");
+  });
+});
+
+describe("povos declarados na Terra Indígena", () => {
+  it("lê um povo único", () => {
+    expect(povosDaTerraIndigena({ etnia_nome: "Kokama" })).toEqual(["Kokama"]);
+  });
+
+  it("separa por vírgula, como em Aldeia Katurama", () => {
+    expect(
+      povosDaTerraIndigena({ etnia_nome: "Pataxó, Pataxo Há-Há-Há" }),
+    ).toEqual(["Pataxó", "Pataxo Há-Há-Há"]);
+  });
+
+  it("separa por ' e ', como em São Jeronimo", () => {
+    expect(
+      povosDaTerraIndigena({ etnia_nome: "Guaraní e Kaingang e Xetá" }),
+    ).toEqual(["Guaraní", "Kaingang", "Xetá"]);
+  });
+
+  it("não parte nomes que contêm a letra e sem espaços em volta", () => {
+    expect(povosDaTerraIndigena({ etnia_nome: "Tenetehara" })).toEqual([
+      "Tenetehara",
+    ]);
+    expect(povosDaTerraIndigena({ etnia_nome: "Guarani Kaiowá" })).toEqual([
+      "Guarani Kaiowá",
+    ]);
+  });
+
+  it("descarta repetição e sobras de separador", () => {
+    expect(
+      povosDaTerraIndigena({ etnia_nome: "Kaingang, kaingang, , Xokleng" }),
+    ).toEqual(["Kaingang", "Xokleng"]);
+  });
+
+  it("devolve lista vazia quando a Funai não declara etnia", () => {
+    expect(povosDaTerraIndigena({ terrai_nome: "Sem etnia" })).toEqual([]);
+    expect(povosDaTerraIndigena()).toEqual([]);
+  });
+});
+
+describe("marcação da Terra Indígena no mapa", () => {
+  it("põe o povo em primeiro lugar, e a terra abaixo", () => {
+    const texto = tooltipDaTerraIndigena({
+      etnia_nome: "Potiguara",
+      terrai_nome: "Potiguara de Monte-Mór",
+      uf_sigla: "PB",
+    });
+    expect(texto).toBe(
+      "<b>Povo: Potiguara</b><br>Terra Indígena Potiguara de Monte-Mór<br>PB",
+    );
+  });
+
+  it("diz 'Povos' no plural quando há mais de um", () => {
+    expect(
+      tooltipDaTerraIndigena({
+        etnia_nome: "Guaraní e Kaingang",
+        terrai_nome: "São Jeronimo",
+      }),
+    ).toContain("<b>Povos: Guaraní, Kaingang</b>");
+  });
+
+  it("sem etnia declarada, identifica pela terra e não afirma povo", () => {
+    const texto = tooltipDaTerraIndigena({
+      terrai_nome: "Acapuri de Cima",
+      uf_sigla: "AM",
+    });
+    expect(texto).toBe("<b>Terra Indígena Acapuri de Cima</b><br>AM");
+    expect(texto).not.toContain("Povo");
+  });
+
+  it("não devolve marcação quando não há nada a dizer", () => {
+    expect(tooltipDaTerraIndigena({ gid: 9 })).toBe("");
+  });
+
+  it("escapa o que vem da Funai antes de virar HTML", () => {
+    expect(
+      tooltipDaTerraIndigena({ etnia_nome: "<img src=x onerror=alert(1)>" }),
+    ).not.toContain("<img");
+  });
+});
+
+describe("instalação da camada", () => {
   it("só se instala nos dois mapas de Saúde Indígena", () => {
     expect(isHealthMapElementId("map")).toBe(true);
     expect(isHealthMapElementId("detailMap")).toBe(true);
