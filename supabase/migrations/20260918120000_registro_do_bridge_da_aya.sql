@@ -67,11 +67,6 @@ begin;
 --   alternativa e nunca deixou de funcionar.
 -- ---------------------------------------------------------------------------
 
--- `digest` vem do pgcrypto. No Supabase ele costuma ja estar no schema
--- `extensions`, mas declarar a dependencia evita uma migration que falha em
--- projeto novo.
-create extension if not exists pgcrypto with schema extensions;
-
 create table if not exists public.aya_bridge (
   id boolean primary key default true,
   url text,
@@ -116,7 +111,7 @@ begin
   end if;
 
   update public.aya_bridge
-     set chave_sha256 = encode(extensions.digest(p_chave, 'sha256'), 'hex')
+     set chave_sha256 = encode(sha256(convert_to(p_chave, 'UTF8')), 'hex')
    where id;
 
   return 'definido';
@@ -149,7 +144,7 @@ begin
   end if;
 
   if p_chave is null
-     or encode(extensions.digest(p_chave, 'sha256'), 'hex') is distinct from v_hash then
+     or encode(sha256(convert_to(p_chave, 'UTF8')), 'hex') is distinct from v_hash then
     return 'chave_invalida';
   end if;
 
