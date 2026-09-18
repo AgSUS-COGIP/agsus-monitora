@@ -68,15 +68,91 @@ describe("deduplicação real de Alagoas e Sergipe", () => {
     expect(result[0].payload.dsei[0].polos).toHaveLength(1);
     expect(polo.cnes).toBe("2010674");
     expect(polo.mun_lotacao).toBe("PALMEIRA DOS INDIOS");
-    expect(polo.lat).toBe(-9.417027);
-    expect(polo.lon).toBe(-36.632751);
-    expect(polo.coord_fonte).toBe("CNES");
+    expect(polo.lat).toBe(-9.3884);
+    expect(polo.lon).toBe(-36.6218);
+    expect(polo.coord_fonte).toBe("lmap");
+    expect(polo.coord_lmap).toEqual({ lat: -9.3884, lon: -36.6218 });
     expect(polo.coord_lotacoes).toEqual({
       lat: -9.408696,
       lon: -36.650698,
     });
+    expect(polo.coord_cnes).toEqual({
+      lat: -9.417027,
+      lon: -36.632751,
+    });
     expect(rede.u).toHaveLength(1);
     expect(rede.u[0][1]).toBe("2010674");
+  });
+
+  it("Kariri-Xokó mantém as três fontes sem tratar CNES e Lotações como validação independente", () => {
+    const rows = [
+      {
+        chave: "lmap",
+        payload: {
+          dsei: [
+            {
+              k: "ALAGOAS E SERGIPE",
+              n: "Alagoas e Sergipe",
+              polos: [
+                {
+                  n: "KARIRI-XOKÓ",
+                  lat: -10.1744,
+                  lon: -36.8367,
+                  uf: "AL",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        chave: "rede_cnes",
+        payload: {
+          rede: {
+            "ALAGOAS E SERGIPE": {
+              u: [
+                [
+                  "POLO BASE INDIGENA KARIRI XOCO",
+                  "9982787",
+                  -10.186,
+                  -36.84,
+                  "PORTO REAL DO COLEGIO",
+                  27,
+                ],
+              ],
+              c: [],
+            },
+          },
+          nac: [],
+        },
+      },
+    ];
+
+    const dataset = {
+      "ALAGOAS E SERGIPE": [
+        [
+          "POLO BASE",
+          "PB KARIRI XOKÓ",
+          -10.186,
+          -36.84,
+          "PORTO REAL DO COLEGIO",
+          "AL",
+          "Muito acessível",
+          "Terrestre",
+        ],
+      ],
+    };
+
+    const result = applyLotacoesGeograficas(rows, dataset);
+    const polo = result[0].payload.dsei[0].polos[0];
+
+    expect(polo.cnes).toBe("9982787");
+    expect(polo.lat).toBe(-10.1744);
+    expect(polo.lon).toBe(-36.8367);
+    expect(polo.coord_lmap).toEqual({ lat: -10.1744, lon: -36.8367 });
+    expect(polo.coord_lotacoes).toEqual({ lat: -10.186, lon: -36.84 });
+    expect(polo.coord_cnes).toEqual({ lat: -10.186, lon: -36.84 });
+    expect(polo.coord_validacao).toBe("pendente");
   });
 
   it("não escolhe candidato quando duas unidades ficam espacialmente empatadas", () => {
