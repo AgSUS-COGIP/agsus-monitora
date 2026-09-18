@@ -19,9 +19,9 @@ describe("catálogo geoespacial da Funai", () => {
       </FeatureTypeList>
     </WFS_Capabilities>`;
 
-    expect(
-      chooseDseiFeatureType(featureTypesFromCapabilities(xml)),
-    ).toBe("Funai:atuacao_dsei_2026");
+    expect(chooseDseiFeatureType(featureTypesFromCapabilities(xml))).toBe(
+      "Funai:atuacao_dsei_2026",
+    );
   });
 
   it("não escolhe a camada de sede quando não existe polígono de atuação", () => {
