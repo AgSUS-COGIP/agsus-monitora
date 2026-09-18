@@ -152,12 +152,16 @@ export function curatedAnswerForQuestion(question) {
     );
   const asksAcronym = /\bsigla\b/.test(normalized);
 
-  // Os blocos de DSEI AL/SE e Kariri-Xocó vêm antes: são respostas compostas,
-  // que dependem de duas perguntas combinadas, e não cabem num verbete simples.
-  if (!isAlSe && !asksKariri) {
-    return verbeteParaPergunta(normalized, defineTerm, asksAcronym);
-  }
+  /*
+    A resposta composta vem antes porque "quantas aldeias tem no DSEI Alagoas e
+    quem são os Kariri-Xocó?" são duas perguntas num enunciado só, e um verbete
+    responde uma coisa.
 
+    Quando nenhuma das duas casa — "Dsei alagoas", "diga mais sobre o DSEI
+    Alagoas" —, a busca segue para os verbetes. Antes ela devolvia vazio e a
+    pergunta ia para o modelo, que respondia a definição genérica de DSEI
+    ignorando os fatos do distrito que estavam no próprio prompt.
+  */
   const parts = [];
   if (isAlSe && asksVillageCount) {
     parts.push(
@@ -169,8 +173,19 @@ export function curatedAnswerForQuestion(question) {
       "Sobre o povo Kariri-Xocó: no DSEI AL/SE, a comunidade está em Porto Real do Colégio (AL) e aparece com 1 aldeia e 2.509 pessoas no Painel SIASI de 2023, correspondendo a 18,61% da população do distrito naquele ano. O PDSI descreve a denominação Kariri-Xocó como resultado da fusão histórica entre os Kariri de Porto Real do Colégio e parte dos Xocó da ilha de São Pedro, em Sergipe, e cita o ritual Ouricuri entre suas práticas culturais. A comunidade vive na região ribeirinha do rio São Francisco, onde pesca e agricultura têm importância local.",
     );
   }
+  if (parts.length) return parts.join("\n\n");
 
-  return parts.join("\n\n");
+  /*
+    Perguntar por um distrito pelo nome já é pedir para saber dele. Não exigir
+    verbo de definição aqui é deliberado: "Dsei alagoas" é uma pergunta
+    completa na prática.
+  */
+  const nomeiaDistrito = isAlSe || asksKariri;
+  return verbeteParaPergunta(
+    normalized,
+    defineTerm || nomeiaDistrito,
+    asksAcronym,
+  );
 }
 
 export function officialSourcesForQuestion(question) {
