@@ -41,8 +41,11 @@ if ($Remover) {
 
 $repo = Split-Path -Parent $PSScriptRoot
 $servico = Join-Path $repo "scripts\aya-servico.mjs"
-if (-not (Test-Path $servico)) {
-    throw "Nao encontrei $servico. Rode a partir do repositorio."
+$oculto = Join-Path $repo "scripts\aya-servico-oculto.vbs"
+foreach ($arquivo in @($servico, $oculto)) {
+    if (-not (Test-Path $arquivo)) {
+        throw "Nao encontrei $arquivo. Rode a partir do repositorio."
+    }
 }
 
 $node = (Get-Command node -ErrorAction SilentlyContinue).Source
@@ -57,7 +60,9 @@ if (-not $chave) {
     throw "AYA_LOCAL_BRIDGE_KEY nao esta no ambiente do Usuario. Defina uma vez com: setx AYA_LOCAL_BRIDGE_KEY `"<chave>`""
 }
 
-$acao = New-ScheduledTaskAction -Execute $node -Argument "`"$servico`"" -WorkingDirectory $repo
+# O wscript inicia o node com janela oculta. Chamar o node direto abria um
+# console preto a cada logon, que o usuario fecha sem querer e derruba a Aya.
+$acao = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "//B `"$oculto`"" -WorkingDirectory $repo
 $gatilho = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 
 # Sem limite de duracao: e um servico, nao um lote. E sem exigir energia da
@@ -83,3 +88,6 @@ Write-Output "Ela roda no logon de $env:USERNAME."
 Write-Output ""
 Write-Output "Para iniciar agora, sem reiniciar:"
 Write-Output "  Start-ScheduledTask -TaskName `"$nomeTarefa`""
+Write-Output ""
+Write-Output "O servico roda sem janela. O log fica em:"
+Write-Output ("  " + (Join-Path $env:LOCALAPPDATA "AgSUS-MONITORA\aya-servico.log"))
