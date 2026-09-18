@@ -1,0 +1,1082 @@
+{
+  "KAIAPO DO MATO GROSSO": [
+    [
+      "CASAI",
+      "CASAI COLÍDER",
+      -10.797054349706,
+      -55.4722023010253,
+      "COLIDER",
+      "MT",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "CASAI",
+      "CASAI JUARA",
+      -11.232886,
+      -57.510579,
+      "JUARA",
+      "MT",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "CASAI",
+      "CASAI PEIXOTO DE AZEVEDO",
+      -10.242268375847,
+      -54.9990177154541,
+      "PEIXOTO DE AZEVEDO",
+      "MT",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB COLÍDER",
+      -10.797026,
+      -55.471501,
+      "COLIDER",
+      "MT",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB POLO DE JUARA",
+      -11.23257,
+      -57.51039,
+      "JUARA",
+      "MT",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB POLO PEIXOTO DE AZEVEDO",
+      -10.242268375847,
+      -54.99901772,
+      "PEIXOTO DE AZEVEDO",
+      "MT",
+      "Remoto",
+      "Terrestre/Fluvial/Aéreo"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -10.81325110444983,
+      -55.46131058514347,
+      "COLIDER",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ]
+  ],
+  "KAIAPO DO PARA": [
+    [
+      "CASAI",
+      "CASAI OURILÂNDIA",
+      -6.76074,
+      -51.07041,
+      "OURILANDIA DO NORTE",
+      "PA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI REDENÇÃO",
+      -8.037522,
+      -50.038827,
+      "REDENÇAO",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI SÃO FÉLIX DO XINGU",
+      -6.65062624981266,
+      -51.9849014282226,
+      "SAO FELIX DO XINGU",
+      "PA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI TUCUMÃ",
+      -6.75991,
+      -51.157327,
+      "TUCUMA",
+      "PA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB OURILÂNDIA",
+      -6.76380796746851,
+      -51.0653328895568,
+      "OURILANDIA DO NORTE",
+      "PA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB REDENÇÃO",
+      -8.039057,
+      -50.039049,
+      "REDENÇao",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO FÉLIX DO XINGU",
+      -6.639175,
+      -51.986657,
+      "SAO FELIX DO XINGU",
+      "PA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TUCUMÃ",
+      -6.75982329353133,
+      -51.15717172622681,
+      "TUCUMA",
+      "PA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -8.02247281452236,
+      -50.0441408157349,
+      "REDENÇAO",
+      "PA",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "LESTE DE RORAIMA": [
+    [
+      "CASAI",
+      "CASAI LESTE",
+      2.77686541288064,
+      -60.713517665863,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "FLEXAL (SUBPOLO - CARACANÃ)",
+      4.66671111,
+      -60.28818889,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "MONTE MORIA (ALDEIA EM WILLIMON)",
+      4.634742670296112,
+      -60.17576720683966,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "NAPOLEÃO (SUBPOLO DE RAPOSA)",
+      3.918749181,
+      -60.02370865,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ARAÇA",
+      3.5851,
+      -61.113801,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BARRO",
+      4.195152,
+      -60.791582,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB BOQUEIRÃO",
+      3.288276,
+      -61.288272,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAMARÁ",
+      3.995637,
+      -60.174124,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAMPO FORMOSO",
+      4.721755556,
+      -60.7741944,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CANTAGALO",
+      4.18825,
+      -60.546244,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CARACANÃ",
+      4.698469,
+      -60.26562,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CARAPARU I",
+      4.549857,
+      -60.462798,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB FLEXAL",
+      4.66671111,
+      -60.28818889,
+      "UIRAMUTa",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB JACAMIM",
+      2.160913889,
+      -59.77198611,
+      "BONFIM",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB JACAREZINHO",
+      3.796111,
+      -59.733944,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB JATAPUZINHO",
+      0.600452,
+      -59.221123,
+      "CAROEBE",
+      "RR",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MALACACHETA",
+      2.667753,
+      -60.454419,
+      "CANTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MANOÁ",
+      2.99060298526176,
+      -60.104715968708156,
+      "BONFIM",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MATIRI",
+      4.029086,
+      -59.923303,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MATURUCA",
+      4.467512,
+      -60.09917,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MILHO",
+      3.387844,
+      -60.412717,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MORRO",
+      4.358795,
+      -59.971578,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PEDRA BRANCA",
+      4.443456,
+      -60.263596,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PEDRA PRETA",
+      4.711858,
+      -60.475235,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PEDREIRA",
+      4.427024,
+      -60.824472,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PIUM",
+      3.412003,
+      -61.099024,
+      "ALTO ALEGRE",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB RAPOSA I",
+      3.81186,
+      -60.089363,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ROÇA",
+      4.002397,
+      -60.783803,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA CRUZ",
+      3.933332,
+      -59.596058,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA INÊS",
+      4.138387,
+      -61.34202,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA MARIA",
+      4.172316,
+      -60.133453,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO FRANCISCO",
+      3.958945,
+      -60.441636,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SERRA DO SOL",
+      4.942925,
+      -60.470214,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB SERRA DO TRUARUM",
+      3.271527,
+      -60.673329,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SOROCAIMA II",
+      4.414163,
+      -61.161105,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TESO DO GAVIÃO",
+      4.121462,
+      -60.36156,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TRÊS CORAÇÕES",
+      3.645812,
+      -60.977257,
+      "AMAJARI",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB VISTA ALEGRE",
+      3.112527,
+      -60.500891,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB WILLIMON",
+      4.632894,
+      -60.142528,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "PIUM DO MANOA (SUBPOLO/ALDEIA EM MANOA)",
+      2.9640949933234846,
+      -59.976415611834845,
+      "BONFIM",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "PIUM SERRA DA LUA (SUBPOLO/EQUIPE ATUANDO EM MANOA)",
+      2.991548241525565,
+      -60.104500442251286,
+      "BONFIM",
+      "RR",
+      "Acessível",
+      ""
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      2.8072758333285615,
+      -60.685052614689596,
+      "BOA VISTA",
+      "RR",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "TABALASCADA (ALDEIA EM MALACACHETA)",
+      2.673693060608773,
+      -60.58481186628342,
+      "CANTA",
+      "RR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN GUARIBA (SUBPOLO  DE JACAREZINHO)",
+      3.855683,
+      -59.92395,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN MANALAI (EQUIPE ATUANDO EM SERRA DO SOL)",
+      5.081808333,
+      -60.37995833,
+      "UIRAMUTA",
+      "RR",
+      "Remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN MOSCOU (EQUIPE ATUANDO EM MALACACHETA OU MANOA)",
+      2.754113,
+      -60.187702,
+      "BONFIM",
+      "RR",
+      "Acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN NOVA ESPERANÇA (SUBPOLO/ALDEIA DO PB SOROCAIMA)",
+      4.430802890387411,
+      -61.14513874027349,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      ""
+    ]
+  ],
+  "LITORAL SUL": [
+    [
+      "CASAI",
+      "CASAI CURITIBA",
+      -23.318611,
+      -47.445388,
+      "CURITIBA",
+      "PR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ANGRA DOS REIS",
+      -23.31842,
+      -51.15423,
+      "ANGRA DOS REIS",
+      "RJ",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BAURU",
+      -24.285596,
+      -47.451826,
+      "BAURU",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB GUAÍRA",
+      -24.0927,
+      -46.62651,
+      "GUAIRA",
+      "",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB GUARAPUAVA",
+      -25.51495,
+      -48.49901,
+      "GUARAPUAVA",
+      "PR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ITAPORANGA",
+      -24.322774,
+      -47.841983,
+      "ITAPORANGA",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB LONDRINA",
+      -24.50831,
+      -47.84629,
+      "LONDRINA",
+      "PR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MIRACATU",
+      -23.72985,
+      -45.81451,
+      "MIRACATU",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MONGAGUÁ",
+      -24.09264925444476,
+      -46.62654754149458,
+      "MONGAGUA",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PARANAGUÁ",
+      -23.43955,
+      -45.08137,
+      "PARANAGUA",
+      "PR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PERUÍBE",
+      -25.46175824238328,
+      -49.297334291489186,
+      "PERUIBE",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB REGISTRO",
+      -24.508480707048523,
+      -47.84628510475159,
+      "REGISTRO",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB RIO SILVEIRA",
+      -16.88522222,
+      -40.54375,
+      "BERTOPOLIS",
+      "MG",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA HELENA",
+      -24.944351307348732,
+      -54.31022644042969,
+      "SANTA HELENA",
+      "PR",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO PAULO (UNIDADE BASICA DE SAUDE - JARAGUA)",
+      -23.50325973603594,
+      -46.41093818182536,
+      "GUARULHOS",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO PAULO (UNIDADE BASICA DE SAUDE - JARDIM CABUCU)",
+      -25.380228,
+      -51.154263,
+      "SAO PAULO",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB UBATUBA",
+      -23.434278945062275,
+      -45.08082032203674,
+      "UBATUBA",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -25.4621997,
+      -49.2955737,
+      "CURITIBA",
+      "PR",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "MANAUS": [
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "CAPANÃ GRANDE",
+      -5.98376,
+      -61.82122,
+      "MANICORE",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "CASAI",
+      "CASAI MANAUS",
+      -2.913961,
+      -59.992568,
+      "MANAUS",
+      "AM",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI NOVA OLINDA",
+      -2.694217,
+      -59.699288,
+      "NOVA OLINDA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "MAICI/MARMELOS",
+      -7.505663108,
+      -63.02105427,
+      "HUMAITA",
+      "AM",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "MANICORE",
+      -5.80035470839224,
+      -61.2841803538484,
+      "MANICORE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ABACAXIS",
+      -3.820083333,
+      -60.36783333,
+      "RIO PRETO DA EVA",
+      "AM",
+      "Muito acessível",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB ANAMÃ",
+      -4.394666667,
+      -59.59455556,
+      "BORBA",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BEIJA FLOR",
+      2.195085,
+      -59.782764,
+      "BONFIM",
+      "AM",
+      "Acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BERURI",
+      -3.116944444,
+      -58.88547222,
+      "ITACOATIARA",
+      "AM",
+      "Acessível",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BOCA DO JAUARI",
+      -5.809,
+      -61.3,
+      "MANICORE",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CAREIRO CASTANHO",
+      -3.8204294931835348,
+      -60.36738395690918,
+      "CAREIRO",
+      "AM",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB IGAPÓ AÇU",
+      -3.375805556,
+      -59.25325,
+      "BORBA",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB KWATA",
+      -4.388,
+      -59.594,
+      "BORBA",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB LARANJAL",
+      -4.388,
+      -59.59,
+      "BORBA",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MAKIRA",
+      -2.6238475706032247,
+      -60.94487901167521,
+      "MANACAPURU",
+      "AM",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MANACAPURU",
+      -3.29576387106998,
+      -60.6246399879455,
+      "MANACAPURU",
+      "AM",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MANAQUIRI",
+      -5.550638889,
+      -60.78552778,
+      "AUTAZES",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB MURUTINGA",
+      -2.693805556,
+      -59.69972222,
+      "MANAUS",
+      "AM",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB NOSSA SENHORA DA SAÚDE",
+      -2.78475265,
+      -60.451786240856414,
+      "MANAUS",
+      "AM",
+      "Muito acessível",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB NOVO AIRÃO",
+      2.80718125988885,
+      -60.6852686405182,
+      "AUTAZES",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB PANTALEÃO",
+      4.41342043271163,
+      -61.1619186401367,
+      "PACARAIMA",
+      "RR",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB PONTA NATAL",
+      -5.5523468498446045,
+      -60.78807682698145,
+      "MANICORE",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB RIO PRETO DA EVA",
+      -2.69559069494774,
+      -59.70095157623291,
+      "RIO PRETO DA EVA",
+      "AM",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SILVES",
+      -2.8301365523816564,
+      -58.17575211661794,
+      "SILVES",
+      "AM",
+      "Acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB URUCARÁ",
+      -2.5356997498981535,
+      -57.761610295628714,
+      "URUCARA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -3.0963572996134117,
+      -60.022558149543535,
+      "MANAUS",
+      "AM",
+      "Muito acessível",
+      ""
+    ]
+  ]
+}

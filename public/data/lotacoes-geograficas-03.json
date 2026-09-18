@@ -1,0 +1,632 @@
+{
+  "CASAI SÃO PAULO": [
+    [
+      "CASAI",
+      "CASAI SÃO PAULO",
+      -23.582090755549572,
+      -46.61359146018692,
+      "SAO PAULO",
+      "SP",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "CEARA": [
+    [
+      "CASAI",
+      "CASAI FORTALEZA",
+      -3.7498524,
+      -38.5132688,
+      "FORTALEZA",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ANACÉ",
+      -3.73643402790658,
+      -38.6640214920043,
+      "CAUCAIA",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB AQUIRAZ",
+      -3.968722222,
+      -38.28308333,
+      "CAMPOS SALES",
+      "CE",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ARATUBA",
+      -4.40554,
+      -39.07221,
+      "ARATUBA",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CRATEÚS",
+      -5.17691672751023,
+      -40.6684738397598,
+      "CRATEUS",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ITAREMA",
+      -2.981694444,
+      -39.81377778,
+      "ITAREMA",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MARACANAÚ",
+      -3.934305556,
+      -38.63272222,
+      "MARACANAU",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MONSENHOR TABOSA",
+      -4.829777778,
+      -40.07275,
+      "MONSENHOR TABOSA",
+      "CE",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PIAUÍ ÁREA II",
+      -7.2295033,
+      -44.560255,
+      "URUÇUI",
+      "PI",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PORANGA",
+      -4.743499,
+      -40.938922,
+      "PORANGA",
+      "CE",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB POTYRÔ TAPEBA/CAUCAIA",
+      -3.72959,
+      -38.68339,
+      "CAUCAIA",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO BENEDITO",
+      -4.09069,
+      -40.91612,
+      "SAO BENEDITO",
+      "CE",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TERESINA (SEDE)",
+      -5.07992,
+      -42.78681,
+      "TERESINA",
+      "PI",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -3.746772,
+      -38.503357,
+      "FORTALEZA",
+      "CE",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN TERESINA (SEDE)",
+      -5.07992,
+      -42.78681,
+      "TERESINA",
+      "PI",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "CUIABA": [
+    [
+      "CASAI",
+      "CASAI BRASNORTE",
+      -12.124268,
+      -57.99974,
+      "BRASNORTE",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI CUIABÁ",
+      -15.7402902706943,
+      -56.0589751059074,
+      "CUIABA",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI RONDONÓPOLIS",
+      -16.479336,
+      -54.57371,
+      "CONQUISTA D'OESTE",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI TANGARA DA SERRA",
+      -14.6060514828047,
+      -57.4722075462341,
+      "TANGARA DA SERRA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BACAVAL",
+      -13.64225,
+      -58.28869444,
+      "PARANATINGA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB BRASNORTE",
+      -12.124210072046537,
+      -57.99966854623833,
+      "BRASNORTE",
+      "MT",
+      "Remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CHIQUITANO",
+      -16.23894722,
+      -59.44876667,
+      "PORTO ESPERIDIAO",
+      "MT",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB COMODORO",
+      -14.53153333,
+      -59.05931667,
+      "VALE DE SAO DOMINGOS",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CUIABÁ",
+      -15.59717,
+      -56.10513,
+      "CUIABA",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MERURI",
+      -15.551411,
+      -53.079042,
+      "GENERAL CARNEIRO",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PAKUERA",
+      -14.316225,
+      -54.68395833,
+      "BRASNORTE",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB RIO VERDE",
+      -14.38126389,
+      -58.23611944,
+      "TANGARA DA SERRA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB RONDONÓPOLIS",
+      -16.479132,
+      -54.573788,
+      "RONDONOPOLIS",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TANGARÁ DA SERRA",
+      -14.629933,
+      -57.502559,
+      "TANGARA DA SERRA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TRÊS LAGOAS",
+      -14.547773,
+      -59.178069,
+      "CONQUISTA D'OESTE",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -15.59717,
+      -56.10513,
+      "CUIABA",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "GUAMA-TOCANTINS": [
+    [
+      "CASAI",
+      "CASAI ICOARACI",
+      -1.29454,
+      -48.46274,
+      "BELEM",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI MARABÁ",
+      -5.34717,
+      -49.10677,
+      "MARABA",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI ORIXIMINÁ",
+      -1.77649,
+      -55.86286,
+      "ORIXIMINA",
+      "PA",
+      "Muito remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "CASAI",
+      "CASAI PARAGOMINAS",
+      -2.98068,
+      -47.356151,
+      "PARAGOMINAS",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI SANTAREM",
+      -2.4182303,
+      -54.7101195,
+      "SANTAREM",
+      "PA",
+      "Muito acessível",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB CAPITÃO-POÇO",
+      -1.74598,
+      -47.0589416,
+      "CAPITAO POÇO",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MARABÁ",
+      -5.3470583,
+      -49.106794,
+      "MARABA",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MARABA/XIKRIN",
+      -5.34651761269863,
+      -49.1064664057511,
+      "MARABA",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ORIXIMINÁ",
+      -1.456027,
+      -48.478138,
+      "ORIXIMINA",
+      "PA",
+      "Muito remoto",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB PARAGOMINAS",
+      -2.9795,
+      -47.35482,
+      "PARAGOMINAS",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA LUZIA",
+      -1.8,
+      -46.97583,
+      "SANTA LUZIA DO PARA",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA MARIA",
+      -3.926837,
+      -57.148512,
+      "MAUES",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTARÉM",
+      -2.4340861,
+      -54.7092972,
+      "SANTAREM",
+      "PA",
+      "Muito acessível",
+      "Terrestre/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB TOMÉ-AÇU",
+      -2.4236,
+      -48.2501,
+      "TOME-AÇU",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TUCURUÍ",
+      -3.765526,
+      -49.678184,
+      "TUCURUI",
+      "PA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -1.456,
+      -48.486,
+      "BELEM",
+      "PA",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UN SANTA MARIA (SUBPOLO - SANTA LUZIA)",
+      -3.766967094534875,
+      -57.205810546875,
+      "MAUES",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ]
+  ],
+  "INTERIOR SUL": [
+    [
+      "POLO BASE",
+      "PB ARAQUARI",
+      -26.369973,
+      -48.723295,
+      "BARRA DO RIBEIRO",
+      "RS",
+      "Muito acessível",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BARRA DO RIBEIRO",
+      -30.420693,
+      -51.454742,
+      "CHAPECO",
+      "SC",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CHAPECÓ",
+      -27.107706,
+      -52.608306,
+      "BIGUAÇU",
+      "SC",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB FLORIANÓPOLIS",
+      -27.515608,
+      -48.646136,
+      "TENENTE PORTELA",
+      "RS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB GUARITA",
+      -27.373392,
+      -53.757147,
+      "IPUAÇU",
+      "SC",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB IPUAÇU",
+      -26.636269,
+      -52.452628,
+      "JOSE BOITEUX",
+      "SC",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB JOSÉ BOITEUX",
+      -26.46365,
+      -52.32506,
+      "NONOAI",
+      "RS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB NONOAI",
+      -27.363411,
+      -52.774625,
+      "OSORIO",
+      "RS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB OSÓRIO",
+      -29.89225,
+      -50.273653,
+      "PASSO FUNDO",
+      "RS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PASSO FUNDO",
+      -28.255022,
+      -52.399223,
+      "PORTO ALEGRE",
+      "RS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PORTO ALEGRE",
+      -30.020025,
+      -51.20672,
+      "ARAQUARI",
+      "SC",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB VIAMÃO",
+      -30.092386,
+      -51.070525,
+      "VIAMAO",
+      "RS",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -27.574152334739697,
+      -48.60965514477404,
+      "SAO JOSE",
+      "SC",
+      "Muito acessível",
+      ""
+    ]
+  ]
+}

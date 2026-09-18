@@ -68,10 +68,10 @@ try {
   if (modo === "antes") {
     const tabela = await umaLinha(
       `select count(*)::int as total from information_schema.columns
-       where table_schema = 'public' and table_name = 'configuracoes'
+       where table_schema = 'public' and table_name = 'TB_CONFIGURACAO'
          and column_name in ('chave', 'valor')`,
     );
-    registrar(tabela.total === 2, "configuracoes tem chave e valor");
+    registrar(tabela.total === 2, "TB_CONFIGURACAO tem chave e valor");
     registrar(
       existe.total === 0,
       "obter_branding_acesso_publico ainda não existe",
