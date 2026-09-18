@@ -268,6 +268,18 @@ function enhanceMap(L, map) {
     );
     if (features.length && !map.hasLayer(dseiLayer)) dseiLayer.addTo(map);
     if (!features.length && map.hasLayer(dseiLayer)) map.removeLayer(dseiLayer);
+
+    if (mapElementId === "detailMap") {
+      const bounds = features.length ? dseiLayer.getBounds?.() : null;
+      map.__agsusDseiCoverageBounds =
+        bounds?.isValid?.() === true ? bounds : null;
+      if (map.__agsusDseiCoverageBounds) {
+        map.fire?.("agsus:dsei-coverage-ready", {
+          dsei: selectedDsei,
+          bounds: map.__agsusDseiCoverageBounds,
+        });
+      }
+    }
   };
 
   const ensureDseiCoverage = async () => {
@@ -284,6 +296,7 @@ function enhanceMap(L, map) {
 
   map.__agsusSetDseiCoverage = (name = "") => {
     selectedDsei = String(name || "").trim();
+    if (!selectedDsei) map.__agsusDseiCoverageBounds = null;
     if (dseiGeojson) renderDseiCoverage();
     else void ensureDseiCoverage();
   };
