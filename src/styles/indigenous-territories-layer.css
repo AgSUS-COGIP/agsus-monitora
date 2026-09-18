@@ -58,7 +58,8 @@
   }
 }
 
-.agsus-ti-tooltip {
+.agsus-ti-tooltip,
+.agsus-dsei-tooltip {
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 7px;
@@ -70,11 +71,23 @@
   padding: 5px 7px;
 }
 
-.agsus-ti-tooltip::before {
+.agsus-ti-tooltip::before,
+.agsus-dsei-tooltip::before {
   border-top-color: rgba(15, 23, 42, 0.9) !important;
 }
 
 .map-satellite-mode .agsus-indigenous-territories-control__swatch {
   background: rgba(239, 68, 68, 0.18);
   border-color: #ff4d3d;
+}
+
+/* O limite do DSEI é uma camada cartográfica, não um marcador interativo no
+   toque. No desktop o tooltip ajuda a identificar o polígono sem competir com
+   os popups das unidades. */
+.agsus-dsei-tooltip {
+  background: rgba(11, 95, 165, 0.94);
+}
+
+.agsus-dsei-tooltip::before {
+  border-top-color: rgba(11, 95, 165, 0.94) !important;
 }
