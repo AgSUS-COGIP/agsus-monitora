@@ -85,7 +85,10 @@ describe("lotações geográficas", () => {
 
     expect(dsei.polos).toHaveLength(1);
     expect(dsei.polos[0].cnes).toBe("1234567");
-    expect(dsei.polos[0].lat).toBe(-9.971);
+    expect(dsei.polos[0].lat).toBe(-9.95);
+    expect(dsei.polos[0].lon).toBe(-37.01);
+    expect(dsei.polos[0].coord_fonte).toBe("CNES");
+    expect(dsei.polos[0].coord_lotacoes).toEqual({ lat: -9.971, lon: -37.003 });
     expect(network.u).toHaveLength(1);
     expect(network.u[0][1]).toBe("1234567");
     expect(network.u[0][8]).toContain("CNES");
