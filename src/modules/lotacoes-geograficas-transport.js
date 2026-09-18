@@ -373,13 +373,28 @@ export function applyLotacoesGeograficas(rows, dataset) {
 
     records.forEach((record) => {
       if (record.type === "SEDE") {
-        dsei.lat = record.lat;
-        dsei.lon = record.lon;
+        const tinhaCoordenada =
+          Number.isFinite(Number(dsei.lat)) && Number.isFinite(Number(dsei.lon));
+        if (tinhaCoordenada && !dsei.sede_coord_lmap) {
+          dsei.sede_coord_lmap = {
+            lat: Number(dsei.lat),
+            lon: Number(dsei.lon),
+          };
+        }
+        dsei.sede_coord_lotacoes = {
+          lat: Number(record.lat),
+          lon: Number(record.lon),
+        };
+        if (!tinhaCoordenada) {
+          dsei.lat = record.lat;
+          dsei.lon = record.lon;
+        }
         dsei.sede_municipio = record.municipality || "";
         dsei.sede_uf = record.uf || dsei.sedeuf || "";
         dsei.sede_acessibilidade = record.accessibility || "";
         dsei.sede_meio_acesso = record.accessMode || "";
-        dsei.coord_fonte = SOURCE;
+        dsei.coord_fonte = tinhaCoordenada ? "lmap" : SOURCE;
+        dsei.coord_validacao = "pendente";
         return;
       }
 
