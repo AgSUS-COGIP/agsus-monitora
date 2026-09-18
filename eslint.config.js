@@ -12,8 +12,17 @@ export default [
     ],
   },
   {
+    /*
+      `api/**` e `src/modules/**` ficaram de fora desta lista por muito tempo, e
+      `npx eslint api/aya.js` passava sem rodar regra nenhuma — nenhuma
+      configuração casava com o arquivo. Foi assim que uma substituição em massa
+      renomeou o parâmetro de uma função sem renomear o uso dentro dela: o
+      `no-undef` teria apontado na hora, mas não estava ligado ali.
+    */
     files: [
+      "api/**/*.js",
       "src/lib/**/*.js",
+      "src/modules/**/*.js",
       "scripts/**/*.mjs",
       "tests/**/*.js",
       "vite.config.js",

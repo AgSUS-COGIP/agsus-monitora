@@ -143,7 +143,48 @@ async function bridgeAnunciado(accessToken) {
   }
 }
 
-function safeSources(paraConhecimento) {
+/*
+  Número inventado é o erro mais perigoso deste modelo: sai com a mesma
+  confiança de um dado real e com cara de oficial. Medido — perguntado sobre o
+  DSEI Alagoas, com os fatos corretos no próprio prompt, ele acertou a sede e
+  emendou "área de aproximadamente 1.200 km²", que não existe em lugar nenhum
+  da base.
+
+  A checagem é conservadora: todo número de dois dígitos ou mais que apareça na
+  resposta precisa estar no material que a Aya recebeu — prompt, pergunta ou
+  contexto da tela. Um dígito sozinho passa, porque "os 3 conselhos" é contagem
+  legítima de uma lista que o próprio texto traz. Pontuação é ignorada, então
+  "13.480" no prompt cobre "13480" na resposta.
+*/
+function apenasDigitos(texto) {
+  return String(texto).replace(/[.,\s]/g, "");
+}
+
+export function numerosSemLastro(answer, materialRecebido) {
+  const lastro = new Set();
+  for (const achado of String(materialRecebido).matchAll(/\d[\d.,]*/g)) {
+    lastro.add(apenasDigitos(achado[0]));
+  }
+
+  const semLastro = new Set();
+  for (const achado of String(answer).matchAll(/\d[\d.,]*/g)) {
+    const limpo = apenasDigitos(achado[0]);
+    if (limpo.length < 2 || lastro.has(limpo)) continue;
+    // Um número pode existir no material dentro de outro maior: "2024" está em
+    // "20242027", vindo de "2024-2027". Isso conta como lastro.
+    let contido = false;
+    for (const conhecido of lastro) {
+      if (conhecido.includes(limpo)) {
+        contido = true;
+        break;
+      }
+    }
+    if (!contido) semLastro.add(achado[0]);
+  }
+  return [...semLastro];
+}
+
+function safeSources(question) {
   return officialSourcesForQuestion(question).map(({ id, label, url }) => ({
     id,
     label,
@@ -237,6 +278,20 @@ export default async function handler(req, res) {
   const history = safeHistory(req.body?.history);
   const model = String(process.env.AYA_LOCAL_MODEL || DEFAULT_MODEL).trim();
 
+  const systemPrompt = buildAyaSystemPrompt({
+    section,
+    title,
+    question: paraConhecimento,
+    context,
+  });
+  // Todo material que a Aya recebeu. É contra isto que os números da resposta
+  // são conferidos.
+  const materialRecebido = [
+    systemPrompt,
+    paraConhecimento,
+    history.map((item) => item.content).join(" "),
+  ].join("\n");
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -252,12 +307,7 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content: buildAyaSystemPrompt({
-              section,
-              title,
-              question: paraConhecimento,
-              context,
-            }),
+            content: systemPrompt,
           },
           ...history,
           { role: "user", content: question },
@@ -295,6 +345,22 @@ export default async function handler(req, res) {
       return json(res, 502, {
         error: "empty_ai_response",
         sources: safeSources(paraConhecimento),
+      });
+    }
+
+    /*
+      Resposta com número que a Aya não recebeu não vai para a tela. Num sistema
+      público, um dado inventado com cara de oficial é pior do que não responder:
+      quem lê não tem como distinguir, e pode levar o número adiante.
+    */
+    const inventados = numerosSemLastro(answer, materialRecebido);
+    if (inventados.length) {
+      return json(res, 200, {
+        answer:
+          "Não vou afirmar isso: a resposta que eu montei trazia número que não está na minha base nem nos dados desta tela, e não tenho como confirmá-lo. Posso responder o que estiver carregado aqui, e para dados de um distrito a fonte é o Plano Distrital de Saúde Indígena correspondente.",
+        sources: safeSources(paraConhecimento),
+        provider: "recusa-por-numero-sem-lastro",
+        numeros_descartados: inventados.slice(0, 5),
       });
     }
 
