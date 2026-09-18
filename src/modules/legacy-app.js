@@ -9427,9 +9427,14 @@ function detailRecordsForDsei(d) {
     dseiChave: d.k,
     polos: (d.polos || []).map((p) => ({
       nome: p.n,
-      lat: p.lat,
-      lon: p.lon,
+      cnes: p.cnes || "",
+      // Para medir divergência entre as fontes, usa a coordenada original da
+      // planilha quando ela foi preservada pelo transporte. A coordenada de
+      // exibição continua sendo a do CNES depois da reconciliação.
+      lat: Number(p.coord_lotacoes?.lat ?? p.lat),
+      lon: Number(p.coord_lotacoes?.lon ?? p.lon),
       uf: p.uf,
+      mun_lotacao: p.mun_lotacao || "",
       cod: p.cod ?? null,
       tipo: "polo",
     })),
@@ -9807,7 +9812,26 @@ function renderDetailMap(d) {
   };
   atualizarChipDeVinculos(externos.length);
   enquadrarDetalhe("territorio");
-  setTimeout(() => _detailLeaflet?.invalidateSize?.({ animate: false }), 40);
+
+  /*
+    A troca para o workspace com DSEI altera a largura do mapa. Se o fitBounds
+    roda antes do navegador terminar esse layout, o Leaflet calcula o zoom com
+    um tamanho antigo (ou quase zero) e pode abrir o território em nível de rua.
+    Revalida o tamanho e reaplica o enquadramento depois do layout, sem alterar
+    nenhuma coordenada.
+  */
+  requestAnimationFrame(() => {
+    try {
+      _detailLeaflet?.invalidateSize?.({ animate: false });
+      enquadrarDetalhe("territorio");
+    } catch (e) {}
+    setTimeout(() => {
+      try {
+        _detailLeaflet?.invalidateSize?.({ animate: false });
+        enquadrarDetalhe("territorio");
+      } catch (e) {}
+    }, 80);
+  });
 }
 
 /*
