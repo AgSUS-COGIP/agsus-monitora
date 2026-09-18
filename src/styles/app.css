@@ -538,14 +538,18 @@ textarea:focus-visible,
 
 .toast-box {
   position: fixed;
-  top: 18px;
-  right: 18px;
-  z-index: 1200;
+  top: max(78px, calc(env(safe-area-inset-top, 0px) + 18px));
+  right: max(18px, env(safe-area-inset-right, 0px));
+  z-index: 20050;
   display: grid;
   gap: 10px;
   width: min(390px, calc(100vw - 30px));
+  max-height: calc(100dvh - 96px);
+  overflow: visible;
+  pointer-events: none;
 }
 .toast {
+  pointer-events: auto;
   border-radius: 14px;
   padding: 14px 16px;
   background: #fff;
@@ -578,6 +582,14 @@ textarea:focus-visible,
   color: inherit;
   font-weight: 900;
   cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .toast-box {
+    top: max(68px, calc(env(safe-area-inset-top, 0px) + 12px));
+    right: 10px;
+    width: calc(100vw - 20px);
+  }
 }
 
 .loader {
@@ -720,7 +732,7 @@ body.app-fullscreen-fallback .app {
   background: var(--bg);
 }
 body.app-fullscreen-fallback .toast-box {
-  z-index: 10000;
+  z-index: 20050;
 }
 body.app-fullscreen-fallback .global-side-toggle {
   top: 16px;
