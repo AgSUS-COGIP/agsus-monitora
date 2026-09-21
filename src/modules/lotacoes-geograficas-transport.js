@@ -1,9 +1,11 @@
 import {
+  LIMIAR_MESMO_PONTO_KM,
   canonicoUtilizavel,
   classificarDivergencia,
   distanciaKm,
   nomeCanonico,
   tipoDeclarado,
+  unidadeDeLotacaoEhOPolo,
 } from "../lib/reconciliacao-unidades.js";
 import {
   coordenadaValidada,
@@ -41,6 +43,42 @@ function compactRecord(row) {
   const [type, name, lat, lon, municipality, uf, accessibility, accessMode] =
     row;
   return { type, name, lat, lon, municipality, uf, accessibility, accessMode };
+}
+
+/*
+  A LINHA "UNIDADE DE LOTAÇÃO" QUE REPETE UM POLO BASE
+
+  O DSEI Ceará mostrava Teresina duas vezes: `PB TERESINA (SEDE)` e
+  `UN TERESINA (SEDE)`, na mesma coordenada, vindos de duas linhas da planilha.
+  A primeira vira polo; a segunda caía no ramo final e virava unidade da rede.
+  Nada as comparava, porque a reconciliação só aproxima tipos compatíveis e
+  "unidade de lotação" não é tipo nenhum — fica `outro`, que não casa com nada.
+
+  A comparação é feita entre linhas da planilha, antes de as duas seguirem
+  caminhos diferentes, porque é ali que a duplicação existe. Das 79 unidades de
+  lotação, duas são apanhadas por este crivo; as outras 77 são subpolos,
+  aldeias e UBSIs, e continuam no mapa como equipamento próprio.
+*/
+function unidadesQueRepetemOPolo(records) {
+  const polos = records.filter((record) => record.type === "POLO BASE");
+  const repetidas = new Set();
+
+  for (const record of records) {
+    if (record.type !== "UNIDADE DE LOTAÇÃO") continue;
+    const repete = polos.some((polo) => {
+      if (!unidadeDeLotacaoEhOPolo(record.name, polo.name)) return false;
+      const km = distanciaKm(
+        Number(record.lat),
+        Number(record.lon),
+        Number(polo.lat),
+        Number(polo.lon),
+      );
+      return km != null && km <= LIMIAR_MESMO_PONTO_KM;
+    });
+    if (repete) repetidas.add(record);
+  }
+
+  return repetidas;
 }
 
 function recordExpectedType(record) {
@@ -400,7 +438,12 @@ export function applyLotacoesGeograficas(rows, dataset) {
     network.u ||= [];
     network.c ||= [];
 
+    const repetemOPolo = unidadesQueRepetemOPolo(records);
+
     records.forEach((record) => {
+      // A linha que apenas repete um polo base não entra como equipamento.
+      if (repetemOPolo.has(record)) return;
+
       if (record.type === "SEDE") {
         const tinhaCoordenada =
           Number.isFinite(Number(dsei.lat)) &&
