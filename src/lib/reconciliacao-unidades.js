@@ -589,3 +589,46 @@ export function unirEstabelecimentosRepetidos(estabelecimentos = []) {
 
   return { estabelecimentos: [...resultado, ...soltos], unidos };
 }
+
+/*
+  A UNIDADE DE LOTAÇÃO QUE É O PRÓPRIO POLO
+
+  A planilha de Lotações traz 79 linhas do tipo "UNIDADE DE LOTAÇÃO". Setenta e
+  cinco delas são subpolos, aldeias e UBSIs — equipamento próprio, que o mapa
+  deve continuar a mostrar. Quatro repetem o nome de um polo base do mesmo
+  DSEI, e três estão em cima dele:
+
+      CEARÁ             UN TERESINA (SEDE)          = PB TERESINA (SEDE)   0 m
+      MÉDIO RIO PURUS   UN FUNAI/MPI                = PB FUNAI/MPI         9 m
+      LESTE DE RORAIMA  FLEXAL (SUBPOLO - CARACANÃ) = PB FLEXAL            0 m
+
+  Os dois primeiros são o mesmo equipamento escrito duas vezes — foi este o
+  segundo ponto de Teresina que aparecia na lista do DSEI Ceará. O terceiro
+  não: o parêntese diz "subpolo de Caracanã", outra estrutura que herdou a
+  coordenada do polo. E o quarto, UN SANTA MARIA no Guamá, está a 18,9 km do
+  PB SANTA MARIA — outro lugar com o mesmo nome.
+
+  Daí as duas exigências: o qualificador entre parênteses tem de ser o mesmo —
+  é ele que separa o duplicado do vizinho — e os dois pontos têm de coincidir.
+*/
+const PREFIXO_DE_LOTACAO = /^\s*UN\s+/i;
+
+function baseDoNomeDeLotacao(nome) {
+  return nomeCanonico(String(nome ?? "").replace(PREFIXO_DE_LOTACAO, ""));
+}
+
+function qualificadorDoNome(nome) {
+  const partes = String(nome ?? "").match(/\(([^)]*)\)/g) || [];
+  return partes
+    .map((p) => nomeCanonico(p.slice(1, -1)))
+    .filter(Boolean)
+    .sort()
+    .join("|");
+}
+
+export function unidadeDeLotacaoEhOPolo(nomeDaUnidade, nomeDoPolo) {
+  const base = baseDoNomeDeLotacao(nomeDaUnidade);
+  if (!canonicoUtilizavel(base)) return false;
+  if (base !== baseDoNomeDeLotacao(nomeDoPolo)) return false;
+  return qualificadorDoNome(nomeDaUnidade) === qualificadorDoNome(nomeDoPolo);
+}
