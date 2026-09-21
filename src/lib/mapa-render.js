@@ -101,6 +101,75 @@ export function agruparCoincidentes(registros, casas = 5) {
 }
 
 /*
+  QUANDO DOIS PONTOS DIFERENTES SÃO O MESMO PIXEL
+
+  `agruparCoincidentes` junta o que partilha a coordenada até à quinta casa —
+  cerca de um metro. Dois registos a dez metros passam por ele e ficam um em
+  cima do outro no ecrã, sem leque e sem forma de clicar no de baixo. Quem
+  olha vê uma marcação onde há duas.
+
+  É real e é comum. No DSEI Ceará, dois pares:
+
+      440205  UBSI Guiomar Alves Julião, Rua Santa Rosa
+      9566201 UBSI Reserva Taba Anacé, CE-085 km 13
+              endereços diferentes no CNES, coordenadas a 10 m
+
+      9565302 Polo Base Potyró, BR-222 Jandaiguaba
+      9566171 UBSI Victor Tapeba, BR-222 Capuan
+              endereços diferentes no CNES, coordenadas a 10 m
+
+  O cadastro é que dá quase o mesmo ponto a endereços distintos. O mapa não
+  pode consertar isso — mas pode parar de esconder um atrás do outro.
+
+  A tolerância é em PIXELS, não em metros, porque quem decide se dois pontos se
+  sobrepõem é o zoom. Dez metros a ver o distrito inteiro são o mesmo pixel; a
+  ver a rua, são um quarteirão, e aí têm de aparecer separados de facto.
+*/
+export const SOBREPOSICAO_EM_PIXELS = 14;
+
+export function agruparPorProximidadeNaTela(
+  registros,
+  projetar,
+  toleranciaPx = SOBREPOSICAO_EM_PIXELS,
+) {
+  if (typeof projetar !== "function") return agruparCoincidentes(registros);
+
+  const pontos = [];
+  for (const r of registros || []) {
+    if (!Number.isFinite(r?.lat) || !Number.isFinite(r?.lon)) continue;
+    const tela = projetar(r);
+    if (!Number.isFinite(tela?.x) || !Number.isFinite(tela?.y)) continue;
+    pontos.push({ registro: r, x: tela.x, y: tela.y });
+  }
+
+  const grupos = [];
+  for (const ponto of pontos) {
+    const perto = grupos.find(
+      (g) => Math.hypot(g.x - ponto.x, g.y - ponto.y) <= toleranciaPx,
+    );
+    if (perto) {
+      perto.registros.push(ponto.registro);
+      continue;
+    }
+    // O grupo fica ancorado no primeiro ponto: a coordenada é real, não média.
+    grupos.push({
+      chave: `${ponto.registro.lat},${ponto.registro.lon}`,
+      lat: ponto.registro.lat,
+      lon: ponto.registro.lon,
+      x: ponto.x,
+      y: ponto.y,
+      registros: [ponto.registro],
+    });
+  }
+  return grupos.map(({ chave, lat, lon, registros: rs }) => ({
+    chave,
+    lat,
+    lon,
+    registros: rs,
+  }));
+}
+
+/*
   CICLO DE VIDA
 
   Contado no `legacy-app.js`: 8 `.on(` do Leaflet contra zero `.off(`, e 23

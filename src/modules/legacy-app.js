@@ -38,6 +38,7 @@ import {
 } from "../lib/reconciliacao-unidades.js";
 import {
   agruparCoincidentes,
+  agruparPorProximidadeNaTela,
   criarRegistroDeDescarte,
   posicoesSpiderfy,
   raioDaBolha,
@@ -9784,10 +9785,18 @@ function renderDetailMap(d) {
 
     /*
       Não há marcadores de contagem no mapa. Cada unidade aparece como unidade.
-      Pontos exatamente coincidentes são apenas deslocados em pixels, com uma
+      Pontos que se sobrepõem no ecrã são apenas deslocados em pixels, com uma
       linha até a coordenada verdadeira; a geometria do dado nunca é alterada.
+
+      O agrupamento passou a ser por PROXIMIDADE NA TELA, não por coordenada
+      idêntica. No DSEI Ceará há dois pares a dez metros — o CNES dá quase o
+      mesmo ponto a endereços diferentes — e eles ficavam um escondido atrás do
+      outro, sem leque e sem forma de clicar no de baixo. Quem olhava via uma
+      marcação onde havia duas.
     */
-    agruparCoincidentes(visiveisAgora).forEach((grupo) => {
+    agruparPorProximidadeNaTela(visiveisAgora, (r) =>
+      _detailLeaflet.latLngToLayerPoint([r.lat, r.lon]),
+    ).forEach((grupo) => {
       if (grupo.registros.length === 1) {
         _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.registros[0]));
         return;

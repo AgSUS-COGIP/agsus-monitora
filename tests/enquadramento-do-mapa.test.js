@@ -213,7 +213,12 @@ describe("os filtros por tipo do painel", () => {
       codigo.indexOf("function enquadrarDetalhe"),
     );
     expect(fn).toContain("const visiveisAgora = visiveis(classificados)");
-    expect(fn).toContain("agruparCoincidentes(visiveisAgora)");
+    /*
+      O agrupamento deixou de ser por coordenada idêntica e passou a ser por
+      proximidade na tela: dois registos a dez metros são o mesmo pixel à
+      escala do distrito, e ficavam um escondido atrás do outro.
+    */
+    expect(fn).toContain("agruparPorProximidadeNaTela(visiveisAgora");
     expect(fn).toContain("posicoesSpiderfy(grupo.registros.length)");
     expect(fn).not.toContain("mapa-cluster");
     expect(fn).toContain("visiveis(externos).forEach");
@@ -548,7 +553,7 @@ describe("o mapa não inventa coordenadas", () => {
     expect(usos).toHaveLength(2);
 
     const detalhe = codigo.slice(
-      codigo.indexOf("agruparCoincidentes(visiveisAgora)"),
+      codigo.indexOf("agruparPorProximidadeNaTela(visiveisAgora"),
       codigo.indexOf("_descarteDoDetalhe.descartarTudo()"),
     );
     expect(detalhe).toContain("layerPointToLatLng");
