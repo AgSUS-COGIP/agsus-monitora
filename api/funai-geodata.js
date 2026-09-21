@@ -10,6 +10,24 @@ const STATIC_DATASETS = {
     endpoint: FUNAI_OWS_ENDPOINTS[0],
     typeName: "Funai:tis_poligonais",
   },
+  /*
+    AS TERRAS QUE AINDA NÃO TÊM LIMITE DESENHADO
+
+    `tis_poligonais` traz seis fases — Regularizada, Declarada, Delimitada,
+    Encaminhada RI, Homologada e Em Estudo —, mas só quem já tem polígono. As
+    163 terras em estudo sem limite definido vivem noutra camada, e existem
+    apenas como ponto.
+
+    Sem elas o mapa mostrava polos base aparentemente fora de qualquer terra
+    indígena. Medido: dos 146 polos fora de polígono, nove estão a menos de
+    5 km de uma terra em estudo, e o de João Câmara está a 60 metros da TI
+    Mendonça do Amarelão. Eles atendem terra indígena — é a terra que ainda
+    não tem limite publicado.
+  */
+  estudo: {
+    endpoint: FUNAI_OWS_ENDPOINTS[0],
+    typeName: "Funai:tis_pontos",
+  },
 };
 
 /*
@@ -237,15 +255,13 @@ export default async function handler(req, res) {
   }
 
   const dataset = String(first(req.query?.dataset) || "");
-  if (dataset !== "territories" && dataset !== "dsei") {
+  if (!["territories", "dsei", "estudo"].includes(dataset)) {
     return json(res, 400, { error: "invalid_dataset" });
   }
 
   try {
     const source =
-      dataset === "dsei"
-        ? await resolveDseiSource()
-        : STATIC_DATASETS.territories;
+      dataset === "dsei" ? await resolveDseiSource() : STATIC_DATASETS[dataset];
 
     const extra = {};
     if (dataset === "territories") {
@@ -257,6 +273,12 @@ export default async function handler(req, res) {
         : 250;
       extra.maxFeatures = String(maxFeatures);
       extra.bbox = `${bbox},EPSG:4326`;
+    } else if (dataset === "estudo") {
+      /*
+        São 163 pontos no país inteiro, sem geometria de área — cabem num
+        pedido só, e não vale a pena recortar por enquadramento.
+      */
+      extra.maxFeatures = "500";
     } else {
       extra.maxFeatures = "100";
     }

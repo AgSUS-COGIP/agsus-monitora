@@ -453,6 +453,51 @@ export function funaiDseiUrl() {
   return `${FUNAI_PROXY_GEOJSON}?dataset=dsei`;
 }
 
+export function funaiEstudoUrl() {
+  return `${FUNAI_PROXY_GEOJSON}?dataset=estudo`;
+}
+
+/*
+  AS TERRAS QUE AINDA NÃO TÊM LIMITE
+
+  A camada de polígonos traz seis fases — Regularizada, Declarada, Delimitada,
+  Encaminhada RI, Homologada e Em Estudo —, mas só quem já tem limite
+  desenhado. As 163 terras em estudo sem limite definido existem apenas como
+  ponto, noutra camada.
+
+  Sem elas o mapa mostrava polos base aparentemente fora de qualquer terra
+  indígena. Medido: dos 146 polos fora de polígono, nove estão a menos de 5 km
+  de uma terra em estudo, e o polo de João Câmara está a 60 metros da TI
+  Mendonça do Amarelão. Esses polos atendem terra indígena — é a terra que
+  ainda não tem limite publicado.
+
+  O DESENHO TEM DE DIZER QUE NÃO É LIMITE
+
+  Um círculo tracejado, oco, do tamanho de um marcador. Não é a área da terra,
+  porque a área não existe ainda: é a posição que a Funai regista enquanto o
+  estudo corre. Preenchê-lo ou desenhá-lo como polígono seria afirmar uma
+  extensão que nenhum documento sustenta.
+*/
+export const AVISO_DE_ESTUDO =
+  "<i>Terra Indígena em estudo — sem limite publicado; o círculo marca a posição</i>";
+
+export function tooltipDaTerraEmEstudo(properties = {}) {
+  const povos = povosDaTerraIndigena(properties);
+  const nome = funaiFeatureName(properties);
+  const uf = String(properties?.uf_sigla || "").trim();
+
+  const linhas = [];
+  if (povos.length) {
+    linhas.push(
+      `<b>${escaparHtml(povos.length === 1 ? "Povo" : "Povos")}: ${escaparHtml(povos.join(", "))}</b>`,
+    );
+  }
+  if (nome) linhas.push(`Terra Indígena ${escaparHtml(nome)}`);
+  if (uf) linhas.push(escaparHtml(uf));
+  linhas.push(AVISO_DE_ESTUDO);
+  return linhas.join("<br>");
+}
+
 function supportsHover() {
   try {
     return window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches;
@@ -593,6 +638,84 @@ function enhanceMap(L, map) {
   const simbolosLayer = L.layerGroup([], { pane: vectorPaneName });
   map.__agsusIndigenousTerritoriesSymbolsLayer = simbolosLayer;
 
+  /*
+    As terras em estudo são 163 pontos no país e não mudam com o enquadramento:
+    carregam-se uma vez, ficam em memória, e cada mapa desenha as suas.
+  */
+  const estudoLayer = L.layerGroup([], { pane: vectorPaneName });
+  map.__agsusTerrasEmEstudoLayer = estudoLayer;
+  let estudoGeojson = null;
+
+  const desenharEstudo = () => {
+    estudoLayer.clearLayers();
+    if (!estudoGeojson?.features || !visible()) {
+      if (map.hasLayer(estudoLayer)) map.removeLayer(estudoLayer);
+      return;
+    }
+
+    const doDistrito = unidadesDoDsei.length
+      ? estudoGeojson.features.filter((f) =>
+          terraPertenceAoDsei(
+            {
+              ...f,
+              geometry: {
+                type: "Polygon",
+                coordinates: [[f.geometry?.coordinates || [0, 0]]],
+              },
+            },
+            unidadesDoDsei,
+            ufsDoDsei,
+          ),
+        )
+      : estudoGeojson.features;
+
+    for (const f of doDistrito) {
+      const [lon, lat] = f.geometry?.coordinates || [];
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      const marca = L.circleMarker([lat, lon], {
+        pane: vectorPaneName,
+        radius: RAIO_DO_SIMBOLO_PX,
+        interactive: supportsHover(),
+        color: COR_DA_TERRA,
+        weight: 2.2,
+        opacity: 1,
+        // Oco e tracejado: não há área, e o desenho não pode sugerir uma.
+        fill: false,
+        dashArray: "4 3",
+      });
+      if (supportsHover()) {
+        marca.bindTooltip(tooltipDaTerraEmEstudo(f.properties), {
+          direction: "top",
+          className: "agsus-ti-tooltip",
+        });
+      }
+      estudoLayer.addLayer(marca);
+    }
+
+    if (estudoLayer.getLayers().length && !map.hasLayer(estudoLayer)) {
+      estudoLayer.addTo(map);
+    }
+  };
+
+  const carregarEstudo = async () => {
+    if (estudoGeojson) return desenharEstudo();
+    try {
+      const resposta = await fetch(funaiEstudoUrl(), {
+        cache: "force-cache",
+        headers: { Accept: "application/geo+json,application/json" },
+      });
+      if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+      const corpo = await resposta.json();
+      if (!Array.isArray(corpo?.features)) throw new Error("GeoJSON inválido");
+      estudoGeojson = corpo;
+      desenharEstudo();
+    } catch (error) {
+      // A ausência é honesta: sem esta camada o mapa continua correto, só menos
+      // completo. Não se inventa ponto nenhum.
+      console.warn("Terras Indígenas em estudo indisponíveis.", error);
+    }
+  };
+
   const limparRotulos = () => {
     rotulosLayer.clearLayers();
     if (map.hasLayer(rotulosLayer)) map.removeLayer(rotulosLayer);
@@ -681,10 +804,16 @@ function enhanceMap(L, map) {
     if (!selectedDsei) map.__agsusDseiCoverageBounds = null;
     if (dseiGeojson) renderDseiCoverage();
     else void ensureDseiCoverage();
+    void carregarEstudo();
     scheduleRefresh();
   };
 
-  if (mapElementId === "map") map.whenReady?.(() => void ensureDseiCoverage());
+  if (mapElementId === "map") {
+    map.whenReady?.(() => {
+      void ensureDseiCoverage();
+      void carregarEstudo();
+    });
+  }
 
   let requestController = null;
   let refreshTimer = 0;
