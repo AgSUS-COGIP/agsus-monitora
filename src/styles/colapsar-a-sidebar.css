@@ -27,13 +27,33 @@
 }
 
 /*
-  Dentro da barra lateral: no fluxo, logo abaixo da marca. `position: static`
-  desfaz o `fixed` do estado flutuante — é o mesmo elemento nos dois casos.
+  Dentro da barra lateral: no fluxo, na própria linha da marca, à direita do
+  nome. `position: static` desfaz o `fixed` do estado flutuante — é o mesmo
+  elemento nos dois casos.
+
+  O seletor mira `.side-brand >` porque o botão agora é filho da marca
+  (`colapsar-a-sidebar.js` o insere com `append`). A regra antiga usava
+  `.sidebar > ` e centralizava com `margin: 0 auto`, o que hoje empurraria o
+  botão para o meio de uma faixa que não existe mais.
 */
-#appScreen .sidebar > .global-side-toggle {
+#appScreen .sidebar .side-brand > .global-side-toggle {
   position: static;
-  margin: 0 auto 10px;
+  margin: 0;
+  margin-inline-start: auto;
   flex: 0 0 auto;
+}
+
+/*
+  Recolhida, a marca empilha em coluna e o botão volta ao centro — o `auto`
+  acima só faz sentido quando há um nome à esquerda para empurrar.
+
+  O seletor repete `#appScreen` porque é disso que a regra acima tira a força:
+  entre um id e qualquer número de classes, o id vence. A versão em
+  `platform-shell.css` usava só classes e era descartada em silêncio.
+*/
+body.sidebar-collapsed #appScreen .sidebar .side-brand > .global-side-toggle,
+body.sidebar-locked #appScreen .sidebar .side-brand > .global-side-toggle {
+  margin-inline-start: 0;
 }
 
 /*

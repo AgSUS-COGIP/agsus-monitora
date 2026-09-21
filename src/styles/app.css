@@ -804,15 +804,19 @@ body.sidebar-locked .side-logo {
   width: 44px;
   height: 44px;
 }
+/*
+  `.nav-text` saiu desta lista: quem o recolhe agora é `platform-shell.css`, com
+  `opacity`/`transform`, para que o rótulo possa ser animado. `display: none` não
+  interpola e venceria a transição, deixando o texto piscar para fora no
+  primeiro frame.
+*/
 body.sidebar-collapsed .side-brand h2,
 body.sidebar-collapsed .side-brand small,
-body.sidebar-collapsed .nav-text,
 body.sidebar-collapsed .side-user,
 body.sidebar-collapsed .side-version,
 body.sidebar-collapsed .side-logout span,
 body.sidebar-locked .side-brand h2,
 body.sidebar-locked .side-brand small,
-body.sidebar-locked .nav-text,
 body.sidebar-locked .side-user,
 body.sidebar-locked .side-version,
 body.sidebar-locked .side-logout span {

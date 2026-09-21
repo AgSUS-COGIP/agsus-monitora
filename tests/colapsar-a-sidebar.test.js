@@ -64,11 +64,12 @@ describe("o botão único, em todos os modos", () => {
 
   beforeEach(montar);
 
-  it("no desktop entra na barra, logo depois da marca", () => {
+  it("no desktop entra na barra, dentro da marca", () => {
     expect(posicionarColapsarDaSidebar(document, 1440)).toBe(DESTINO_BARRA);
     const botao = document.getElementById("globalSidebarToggle");
     expect(botao.closest(".sidebar")).not.toBeNull();
-    expect(botao.previousElementSibling.className).toBe("side-brand");
+    expect(botao.parentElement.className).toBe("side-brand");
+    expect(botao.parentElement.lastElementChild).toBe(botao);
   });
 
   /*
@@ -151,7 +152,9 @@ describe("a duplicidade visual acabou", () => {
     expect(regras).toMatch(
       /#appScreen \.global-side-toggle\s*\{\s*display:\s*grid\s*!important/,
     );
-    expect(regras).toContain("#appScreen .sidebar > .global-side-toggle");
+    expect(regras).toContain(
+      "#appScreen .sidebar .side-brand > .global-side-toggle",
+    );
     expect(regras).toContain("#appScreen .title-row > .global-side-toggle");
   });
 
@@ -165,9 +168,9 @@ describe("a duplicidade visual acabou", () => {
       const i = regras.indexOf(seletor);
       return i < 0 ? "" : regras.slice(i, regras.indexOf("}", i));
     };
-    expect(bloco("#appScreen .sidebar > .global-side-toggle")).toContain(
-      "position: static",
-    );
+    expect(
+      bloco("#appScreen .sidebar .side-brand > .global-side-toggle"),
+    ).toContain("position: static");
     expect(bloco("#appScreen .title-row > .global-side-toggle")).toContain(
       "position: static",
     );
