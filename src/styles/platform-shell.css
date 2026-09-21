@@ -196,8 +196,23 @@
 }
 
 /* Shell e navegação lateral */
-.app {
-  transition: grid-template-columns 0.25s ease;
+/*
+  A largura da coluna troca sem transição, de propósito.
+
+  Antes havia `transition: grid-template-columns 0.25s ease`. Animar uma trilha
+  de grid obriga o navegador a refazer o layout a cada frame — reflow não sobe
+  para a GPU — e, pior, o conteúdo interno sumia por `display: none`, que não é
+  animável. Os rótulos desapareciam no primeiro frame enquanto a coluna ainda
+  levava 250ms para encolher: o descasamento era o "engasgo" percebido.
+
+  Agora a coluna chega ao tamanho final de imediato e quem anima é o conteúdo,
+  com `opacity` e `transform` — ambos compostos, sem reflow. A percepção de
+  movimento vem de `--sidebar-fade` e `--sidebar-slide` abaixo.
+*/
+:root {
+  --sidebar-fade: 140ms;
+  --sidebar-slide: 220ms;
+  --sidebar-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .sidebar {
   display: flex;
@@ -449,6 +464,37 @@ body.sidebar-locked .side-logo {
 .global-side-toggle i {
   font-size: 16px;
   transform: none !important;
+}
+
+/*
+  Na linha da marca o botão deixa de ser um disco flutuante: sem sombra, sem
+  borda e um pouco menor, para não competir com a logo ao lado. O realce fica
+  para o hover, onde ele é pedido.
+
+  `.side-collapse-toggle` é a classe que `colapsar-a-sidebar.js` aplica ao nó,
+  então estas regras valem nas duas casas (marca e cabeçalho) sem repetir
+  seletor.
+*/
+.side-brand > .side-collapse-toggle {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #94a3b8;
+  transition:
+    background var(--sidebar-fade) var(--sidebar-ease),
+    color var(--sidebar-fade) var(--sidebar-ease);
+}
+.side-brand > .side-collapse-toggle:hover {
+  background: var(--platform-hover);
+  color: #003b70;
+}
+.side-brand > .side-collapse-toggle:focus-visible {
+  outline: 2px solid #003b70;
+  outline-offset: 2px;
 }
 
 @media (max-width: 1360px) and (min-width: 901px) {
@@ -740,20 +786,91 @@ body.sidebar-locked .side-logo {
   color: #0f172a;
 }
 
+/*
+  Recolhida, a barra tem 58px — não cabem logo e botão lado a lado, então a
+  marca empilha em coluna: a logo no topo, o botão abaixo, ambos centrados.
+
+  `align-items: center` é o que centra na horizontal quando a direção é coluna
+  (`justify-content` passa a reger o eixo vertical), e o `padding-inline: 0`
+  remove os 14px herdados da regra base — com 58px de barra, 14px de cada lado
+  não deixam folga para centrar nada.
+
+  A logo permanece visível de propósito: o projeto já a mantinha a 36px neste
+  estado, e esconder a marca institucional para abrir espaço a um controle seria
+  uma troca de identidade, não de layout.
+*/
 body.sidebar-collapsed .side-brand,
 body.sidebar-locked .side-brand {
   min-height: 72px;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 6px;
   margin: 0;
-  padding-inline: 10px;
+  padding: 10px 0;
+}
+/*
+  O `margin-inline-start: 0` do estado recolhido vive em
+  `colapsar-a-sidebar.css`: a regra que ele precisa vencer usa `#appScreen`, e
+  daqui, só com classes, a declaração era descartada em silêncio.
+*/
+/*
+  Os rótulos saem por `opacity` + `transform`, não por `display: none`.
+
+  `display` não interpola, então o texto piscava para fora no frame 1. Aqui ele
+  desliza para a esquerda e desaparece; `visibility: hidden` no fim do fade tira
+  o elemento do foco e do leitor de tela, e é interpolável em degrau — some ao
+  terminar a transição, não antes. A largura zerada evita que o texto force a
+  barra a 58px a crescer.
+*/
+.side-brand-copy,
+.nav-group > p,
+.nav-text,
+.side-theme-row {
+  transition:
+    opacity var(--sidebar-fade) var(--sidebar-ease),
+    transform var(--sidebar-slide) var(--sidebar-ease);
 }
 body.sidebar-collapsed .side-brand-copy,
 body.sidebar-locked .side-brand-copy,
 body.sidebar-collapsed .nav-group > p,
 body.sidebar-locked .nav-group > p,
+body.sidebar-collapsed .nav-text,
+body.sidebar-locked .nav-text,
 body.sidebar-collapsed .side-theme-row,
 body.sidebar-locked .side-theme-row {
-  display: none;
+  opacity: 0;
+  transform: translateX(-6px);
+  visibility: hidden;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/*
+  Os ícones acompanham com um deslize curto. Eles permanecem visíveis nos dois
+  estados, então aqui o movimento é só de acomodação: ao recolher, cada ícone
+  escorrega para o centro da barra estreita.
+*/
+.nav-ico {
+  transition: transform var(--sidebar-slide) var(--sidebar-ease);
+}
+
+/*
+  Quem pediu menos movimento recebe a troca sem animação alguma. O estado final
+  é idêntico — só o caminho até ele desaparece.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .side-brand-copy,
+  .nav-group > p,
+  .nav-text,
+  .side-theme-row,
+  .nav-ico,
+  .side-collapse-toggle {
+    transition: none;
+  }
 }
 body.sidebar-collapsed .side-navigation,
 body.sidebar-locked .side-navigation {
