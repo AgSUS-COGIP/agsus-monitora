@@ -78,6 +78,49 @@ export const DIVERGENCIA = Object.freeze({
 export const LIMIAR_PROXIMA_KM = 5;
 export const LIMIAR_PENDENTE_KM = 50;
 
+/*
+  Distância abaixo da qual dois registos do mesmo tipo, no mesmo distrito, são
+  tomados como o mesmo estabelecimento. Duzentos metros é a escala do terreno
+  de um equipamento, e absorve a diferença entre um ponto tomado no portão e
+  outro no edifício. Acima disso deixa de ser imprecisão de registo e passa a
+  ser palpite. Ver a última passagem de `reconciliarDsei`.
+*/
+export const LIMIAR_MESMO_PONTO_KM = 0.2;
+
+/*
+  A coordenada sozinha não chega.
+
+  Coordenadas de preenchimento existem nestes cadastros — o POLO BASE CUCUI
+  tinha latitude exatamente 1.000000 — e dois registos diferentes podem cair no
+  mesmo ponto por descuido, não por serem o mesmo sítio. Exige-se também uma
+  palavra inteira em comum, de quatro letras ou mais.
+
+  É o que separa os casos reais do falso positivo:
+
+      "MACHACALIS"     e "II MACHACALIS"        partilham MACHACALIS  -> une
+      "PIAUI AREA II"  e "SAUDE URUCUI AREA II" partilham AREA        -> une
+      "ANTA"           e "CANTAGALO"            nada em comum         -> não
+
+  "ANTA" é subcadeia de "CANTAGALO" e não é palavra dela. Comparar por palavra
+  inteira, e não por subcadeia, é o que impede esse casamento.
+*/
+const MIN_PALAVRA = 4;
+
+function partilhamPalavra(nomeA, nomeB) {
+  const palavras = (nome) =>
+    new Set(
+      nomeCanonico(nome)
+        .split(" ")
+        .filter((palavra) => palavra.length >= MIN_PALAVRA),
+    );
+  const deA = palavras(nomeA);
+  if (!deA.size) return false;
+  for (const palavra of palavras(nomeB)) {
+    if (deA.has(palavra)) return true;
+  }
+  return false;
+}
+
 const semAcento = (s) =>
   String(s ?? "")
     .normalize("NFD")
@@ -349,6 +392,66 @@ export function reconciliarDsei({
       estabelecimentosUsados,
     });
   });
+
+  /*
+    ÚLTIMA PASSAGEM: A COORDENADA COMO PROVA DE IDENTIDADE
+
+    Sobram polos sem par por causa do NOME, não por serem outra coisa. Medido
+    sobre os dados reais, depois da fusão com a planilha de Lotações: 36 pares
+    de polo e unidade no mesmo ponto que o nome não junta. No DSEI Ceará o
+    mapa mostra dois marcadores para o mesmo polo:
+
+        polo    "PIAUÍ ÁREA II"
+        unidade "SAUDE INDIGENA DE URUCUI POLO BASE AREA II"    a 0 metros
+
+    Em Minas Gerais são três:
+
+        "MACHACALIS"           vs "POLO BASE TIPO II MACHACALIS"
+        "SÃO JOÃO DAS MISSÕES" vs "POLO BASE TIPO II SAO JOAO DAS MISSOES"
+        "TEÓFILO OTONI"        vs "POLO BASE TIPO II TEOFILO OTONI"
+
+    O canónico tira POLO, BASE e TIPO, mas fica com o "II" — e "II MACHACALIS"
+    não é "MACHACALIS".
+
+    O TIPO CONTINUA A MANDAR. Dos 36 pares, só 17 são polo com polo. Os outros
+    19 são polo com CASAI, com UBSI, com posto — equipamentos diferentes no
+    mesmo endereço, e uni-los apagaria um do mapa. A CASAI de Marabá está a
+    zero metros do polo de Marabá e continua a ser outra coisa.
+
+    O limiar é 200 m: é a escala do terreno de um equipamento, e absorve a
+    diferença entre um ponto tomado no portão e outro no edifício. Acima disso
+    deixa de ser imprecisão de registo e passa a ser palpite.
+
+    Mais de um candidato não é prova, é ambiguidade — e não se arbitra.
+  */
+  const semParPorNome = polosSemPar.splice(0, polosSemPar.length);
+  for (const pendente of semParPorNome) {
+    const p = pendente.polo;
+    const tipoP = p.tipo || "polo";
+    const proximos = estabelecimentos.filter((e) => {
+      const chave = identificadorCnes(e.chave || e.cnes);
+      if (chave && estabelecimentosUsados.has(chave)) return false;
+      if (!tiposCompativeis(tipoP, tipoDeclarado(e.nome))) return false;
+      if (!partilhamPalavra(p.nome, e.nome)) return false;
+      const km = distanciaKm(p.lat, p.lon, e.lat, e.lon);
+      return km != null && km <= LIMIAR_MESMO_PONTO_KM;
+    });
+
+    if (proximos.length !== 1) {
+      polosSemPar.push(pendente);
+      continue;
+    }
+
+    registrarReconciliacao({
+      dseiChave,
+      polo: p,
+      estab: proximos[0],
+      canonico: nomeCanonico(p.nome),
+      tipoP,
+      reconciliados,
+      estabelecimentosUsados,
+    });
+  }
 
   return {
     reconciliados,
