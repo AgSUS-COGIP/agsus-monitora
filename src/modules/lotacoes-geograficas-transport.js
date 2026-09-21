@@ -5,6 +5,10 @@ import {
   nomeCanonico,
   tipoDeclarado,
 } from "../lib/reconciliacao-unidades.js";
+import {
+  coordenadaValidada,
+  veredictoDaUnidade,
+} from "../lib/localizacoes-validadas.js";
 
 const MAP_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
 const DECORATOR_KEY = "__agsusDecorateOperationalClient";
@@ -481,6 +485,35 @@ export function applyLotacoesGeograficas(rows, dataset) {
           polo.lat = record.lat;
           polo.lon = record.lon;
           polo.coord_fonte = SOURCE;
+        }
+
+        /*
+          O VEREDITO DA VALIDAÇÃO, E POR QUE ELE VEM NO FIM.
+
+          O comentário acima já nomeava Tuxi, Guaíra e Angra dos Reis como
+          linhas com o estado trocado. Faltava o árbitro: nada aqui sabia dizer
+          qual das fontes estava certa, e por isso tudo ficava "pendente".
+
+          `scripts/validar-localizacoes.mjs` cruza a planilha, o CNES e as
+          malhas das UFs do IBGE. Um ponto fora do estado que o próprio registro
+          declara está errado, e a fonte que fica dentro ganha. Onde as duas
+          fontes concordam a menos de 5 km e ambas caem na UF, a posição está
+          confirmada por duas fontes independentes — que é o que "validada"
+          sempre quis dizer.
+
+          Vem no fim de propósito: acima há três caminhos que escrevem
+          `polo.lat`, e o veredito só é veredito se for o último a falar.
+        */
+        const veredicto = veredictoDaUnidade(dseiKey, record.name);
+        const apurada = coordenadaValidada(veredicto);
+        if (apurada) {
+          polo.lat = apurada.lat;
+          polo.lon = apurada.lon;
+          polo.coord_validacao = "validada";
+          polo.coord_fonte = "validacao";
+        } else if (veredicto?.estado === "erro") {
+          // Sem substituto apurado, o mapa não esconde que a posição é suspeita.
+          polo.coord_validacao = "fora_da_uf";
         }
         return;
       }

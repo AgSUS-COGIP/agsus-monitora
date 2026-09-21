@@ -11,3 +11,4 @@ playwright-report/
 
 # Estado local da CLI do Supabase (contem string de conexao)
 supabase/.temp/
+.cache/

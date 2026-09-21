@@ -257,9 +257,23 @@ describe("lotações geográficas", () => {
       lat: -8.647553,
       lon: -39.246597,
     });
-    expect(polo.coord_fonte).toBe("CNES");
+    /*
+      O TUXI DEIXOU DE SER "PENDENTE", E É ISSO QUE MUDOU.
+
+      Este caso existia como exemplo de linha deslocada: a planilha põe o polo,
+      declarado em Belém do São Francisco (PE), na coordenada de Angra dos Reis
+      (RJ). O código já preferia o CNES, mas não sabia dizer porquê — e por isso
+      o veredito ficava "pendente", à espera de uma validação independente que
+      não existia.
+
+      `scripts/validar-localizacoes.mjs` fez essa validação: a coordenada da
+      planilha cai fora da malha de PE, a do CNES cai dentro, e a malha do IBGE
+      é independente das duas fontes. A posição é a mesma de antes — o que
+      mudou foi passar a haver prova de qual delas está certa.
+    */
+    expect(polo.coord_fonte).toBe("validacao");
     expect(polo.coord_oficial).toBe(false);
-    expect(polo.coord_validacao).toBe("pendente");
+    expect(polo.coord_validacao).toBe("validada");
   });
 
   it("mantém unidade sem CNES quando não existe correspondência confiável", () => {
