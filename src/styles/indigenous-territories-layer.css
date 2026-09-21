@@ -133,10 +133,13 @@
     0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
-.map-satellite-mode .agsus-indigenous-territories-control__swatch {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: #ff4d3d;
-}
+/* O quadrado do botão não muda com o mapa base.
+
+   Ele ficava vermelho sobre satélite, mas a cor vermelha só existia no desenho
+   vetorial — e na visão nacional quem desenha as terras é o raster da Funai,
+   que vem verde. O botão prometia uma cor que o mapa não tinha. O WMS da Funai
+   publica dois estilos para `tis_poligonais`, `terras_indigenas` e `polygon`, e
+   nenhum é vermelho: alinha-se pelo que a fonte desenha. */
 
 /* O limite do DSEI é uma camada cartográfica, não um marcador interativo no
    toque. No desktop o tooltip ajuda a identificar o polígono sem competir com
