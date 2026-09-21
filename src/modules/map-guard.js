@@ -79,6 +79,25 @@ function installTileLayerGuard(L) {
     });
   };
 
+  /*
+    A FÁBRICA DO LEAFLET NÃO É SÓ UMA FUNÇÃO.
+
+    `L.tileLayer` carrega `L.tileLayer.wms` pendurado nela. Substituir a função
+    por um invólucro sem copiar o que estava pendurado apagava o `.wms` do
+    namespace — silenciosamente, porque nada aqui o usa.
+
+    Quem usava era a camada de Terras Indígenas: `installIndigenousTerritoriesLayer`
+    verifica `L.tileLayer?.wms` antes de se instalar, e devolvia false. O efeito
+    era a camada inteira nunca chegar a existir em produção — sem polígono, sem
+    rótulo, sem botão e sem erro no console. Foram três correções de aparência
+    publicadas sobre código que não corria.
+
+    O `.wms` é copiado tal e qual, sem invólucro: a camada WMS da Funai declara
+    `updateWhenIdle: false` e `keepBuffer: 3` de propósito, e envolvê-la aqui
+    sobreporia ambos.
+  */
+  Object.assign(L.tileLayer, originalTileLayer);
+
   L.__agsusTileLayerGuardInstalled = true;
 }
 
