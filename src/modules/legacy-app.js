@@ -32,7 +32,10 @@ import {
   normalizeAccessPanelColor,
 } from "../lib/access-branding.js";
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
-import { reconciliarDsei } from "../lib/reconciliacao-unidades.js";
+import {
+  reconciliarDsei,
+  unirEstabelecimentosRepetidos,
+} from "../lib/reconciliacao-unidades.js";
 import {
   agruparCoincidentes,
   criarRegistroDeDescarte,
@@ -9454,6 +9457,17 @@ function detailRecordsForDsei(d) {
     };
   });
 
+  /*
+    Antes de reconciliar contra os polos, é preciso o CNES não se repetir a si
+    próprio. O POLO BASE JAPIIM aparecia duas vezes na lista do DSEI porque tem
+    dois registos no cadastro — códigos diferentes, mesmo nome, mesma
+    coordenada, um marcado "(em atualização cadastral)". A reconciliação nunca
+    os via: ela compara polo do lmap contra estabelecimento, e nada comparava
+    estabelecimentos entre si.
+  */
+  const { estabelecimentos: estabelecimentosUnicos } =
+    unirEstabelecimentosRepetidos(estabelecimentos);
+
   const { reconciliados, estabelecimentosUsados } = reconciliarDsei({
     dseiChave: d.k,
     polos: (d.polos || []).map((p) => ({
@@ -9472,7 +9486,7 @@ function detailRecordsForDsei(d) {
       cod: p.cod ?? null,
       tipo: "polo",
     })),
-    estabelecimentos,
+    estabelecimentos: estabelecimentosUnicos,
   });
 
   const unificados = reconciliados.map((u) => ({
@@ -9512,7 +9526,7 @@ function detailRecordsForDsei(d) {
     }));
 
   // Estabelecimentos que não foram absorvidos por nenhuma reconciliação.
-  const soltos = estabelecimentos
+  const soltos = estabelecimentosUnicos
     .filter((e) => !estabelecimentosUsados.has(e.chave))
     .map((e) => ({
       name: e.nome,
