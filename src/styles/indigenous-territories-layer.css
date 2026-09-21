@@ -23,18 +23,20 @@
 
 .agsus-indigenous-territories-control__button:hover,
 .agsus-indigenous-territories-control__button:focus-visible {
-  background: rgba(15, 118, 110, 0.08);
+  background: rgba(224, 48, 166, 0.08);
   outline: none;
 }
 
 .agsus-indigenous-territories-control__button.is-active {
-  background: rgba(15, 118, 110, 0.12);
-  color: #115e59;
+  background: rgba(224, 48, 166, 0.12);
+  color: #a3116f;
 }
 
+/* Mesmo magenta do polígono: o quadrado do botão tem de ser a mancha que o
+   mapa desenha, senão ensina a procurar a coisa errada. */
 .agsus-indigenous-territories-control__swatch {
-  background: rgba(13, 148, 136, 0.26);
-  border: 2px solid rgba(13, 148, 136, 0.92);
+  background: rgba(244, 114, 208, 0.3);
+  border: 2px solid rgba(224, 48, 166, 0.95);
   border-radius: 3px;
   box-sizing: border-box;
   display: inline-block;

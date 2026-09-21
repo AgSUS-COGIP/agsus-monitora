@@ -560,6 +560,8 @@ function enhanceMap(L, map) {
   if (rasterPane?.style) {
     rasterPane.style.zIndex = "250";
     rasterPane.style.pointerEvents = "none";
+    // O raster vem verde da Funai. Ver o comentário de FILTRO_DO_RASTER.
+    rasterPane.style.filter = FILTRO_DO_RASTER;
   }
 
   const dseiPaneName = "agsus-dsei-coverage";
@@ -1042,26 +1044,36 @@ function enhanceMap(L, map) {
   os marcadores do Leaflet em 600.
 */
 /*
-  UMA COR SÓ PARA A TERRA INDÍGENA, NOS DOIS MAPAS BASE
+  UMA COR SÓ PARA A TERRA INDÍGENA, NOS DOIS MAPAS BASE — E QUE NÃO SEJA VERDE
 
-  A camada tinha duas cores: verde-azulada sobre o mapa comum e vermelha sobre
-  satélite. Só que a cor vermelha vivia apenas no desenho vetorial, e o
-  vetorial só existe a partir do zoom 7. Na visão nacional quem desenha é o
-  raster WMS da Funai — e o raster vem com a simbologia dela, que é verde.
+  A camada teve três cores, nesta ordem. Primeiro duas ao mesmo tempo:
+  verde-azulada sobre o mapa comum e vermelha sobre satélite. A vermelha vivia
+  só no desenho vetorial, e o vetorial só existe a partir do zoom 7 — na visão
+  nacional quem desenha é o raster WMS da Funai, com a simbologia dela. O botão
+  e a legenda mostravam vermelho enquanto o mapa desenhava verde.
 
-  O resultado era o botão "Terras Indígenas" e a legenda a mostrarem um
-  quadrado vermelho enquanto o mapa desenhava verde. Legenda que não descreve
-  o desenho é pior do que legenda nenhuma: ensina a procurar a coisa errada.
+  Alinhou-se então tudo pelo verde da fonte. Mas o verde da Funai, medido no
+  próprio raster, é #4daf4a — hsl(118, 41%, 49%), verde de folha. Sobre imagem
+  de satélite ele desaparece dentro da floresta, que é exatamente onde quase
+  toda a terra indígena está. A cor certa da fonte era a cor errada do mapa.
 
-  Não dá para alinhar pelo vermelho. O WMS da Funai publica dois estilos para
-  `tis_poligonais` — `terras_indigenas` e `polygon` — e nenhum é vermelho.
-  Alinha-se pelo verde, que é o que a fonte desenha.
+  A saída é magenta: nada na paisagem é magenta, e ele também não colide com o
+  azul da camada de DSEI. O vetorial é nosso e muda numa constante; o raster
+  vem pronto da Funai e só muda com um filtro CSS.
 
-  O contraste sobre satélite passa a vir do traço, não da cor: mais grosso e
-  com o preenchimento mais discreto, para não tapar a imagem que se foi ver.
+  Por isso as duas coisas têm de ser calculadas juntas. `hue-rotate` do CSS não
+  roda a matiz de HSL — é uma aproximação linear em RGB, definida na
+  especificação de filtros —, de modo que o resultado não se adivinha. Aplicada
+  a #4daf4a, a cadeia em FILTRO_DO_RASTER dá #e030a6, e é esse valor, e não um
+  magenta escolhido à parte, que COR_DA_TERRA usa. Assim o traço não muda de
+  cor quando o mapa troca o raster pelo vetorial, no zoom 7.
+
+  O contraste sobre satélite continua a vir também do traço, mais grosso, com
+  o preenchimento discreto para não tapar a imagem que se foi ver.
 */
-const COR_DA_TERRA = "#0b6b5f";
-const PREENCHIMENTO_DA_TERRA = "#14b8a6";
+const FILTRO_DO_RASTER = "hue-rotate(218deg) saturate(3) brightness(0.88)";
+const COR_DA_TERRA = "#e030a6";
+const PREENCHIMENTO_DA_TERRA = "#f472d0";
 
 function estiloDoSimbolo(map) {
   const satellite = map?.__agsusBaseMapMode === "satellite";

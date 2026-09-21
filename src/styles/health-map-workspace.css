@@ -425,8 +425,8 @@
 /* Mesma cor e mesmo preenchimento do polígono desenhado no mapa, para a
    legenda poder ser lida por comparação direta com a mancha. */
 .health-map-legenda-terra {
-  background: rgba(20, 184, 166, 0.26);
-  border: 2px solid #0b6b5f;
+  background: rgba(244, 114, 208, 0.3);
+  border: 2px solid #e030a6;
   border-radius: 3px;
   box-sizing: border-box;
   display: inline-block;
