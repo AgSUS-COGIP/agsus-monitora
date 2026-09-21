@@ -9666,7 +9666,7 @@ function renderDetailMap(d) {
       .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
       .map((r) => ({ lat: r.lat, lon: r.lon })),
   ];
-  _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito);
+  _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito, d.ufs || []);
   _detailUnitLayer.clearLayers();
 
   /*

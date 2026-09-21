@@ -261,6 +261,7 @@ export function pontoEmPoligonos(ponto, poligonos) {
 export function terraPertenceAoDsei(
   terra,
   unidadesDoDsei,
+  ufsDoDsei = [],
   raioKm = RAIO_DE_ATENDIMENTO_KM,
 ) {
   const unidades = (unidadesDoDsei || []).filter(
@@ -271,6 +272,39 @@ export function terraPertenceAoDsei(
 
   const poligonos = poligonosDaFeature(terra);
   if (!poligonos.length) return false;
+
+  /*
+    A UF É UM SEGUNDO CRIVO, E SEM ELE O RAIO VAZA.
+
+    O raio de 50 km em volta de cada unidade não conhece fronteira. No DSEI
+    Bahia entravam 8 terras de outros estados, puxadas por unidades do São
+    Francisco que estão mesmo a menos de 50 km de terras de Pernambuco. Medido
+    sobre os dados reais: 41 terras estranhas, em 16 distritos.
+
+    O distrito declara as UFs que atende, e a Funai declara a UF de cada terra.
+    Quando os dois dizem, e não se cruzam, a terra não é daqui — por mais perto
+    que esteja. Uma terra que atravessa estados traz as duas siglas
+    ("AM,PA" e mais treze combinações na camada), e basta uma bater.
+
+    Sem UF declarada de um dos lados, o crivo não se aplica: ausência de dado
+    não é motivo para esconder.
+  */
+  const ufs = new Set(
+    (ufsDoDsei || [])
+      .map((u) =>
+        String(u || "")
+          .trim()
+          .toUpperCase(),
+      )
+      .filter(Boolean),
+  );
+  if (ufs.size) {
+    const daTerra = String(terra?.properties?.uf_sigla || "")
+      .toUpperCase()
+      .split(/[^A-Z]+/)
+      .filter(Boolean);
+    if (daTerra.length && !daTerra.some((u) => ufs.has(u))) return false;
+  }
 
   const caixa = caixaDeCoordenadas(poligonos);
   // Um grau de latitude são cerca de 111 km; a folga em graus sobredimensiona
@@ -569,6 +603,7 @@ function enhanceMap(L, map) {
   let selectedDsei = "";
   let dseiGeojson = null;
   let unidadesDoDsei = [];
+  let ufsDoDsei = [];
   const dseiLayer = L.geoJSON([], {
     pane: dseiPaneName,
     interactive: supportsHover(),
@@ -637,9 +672,10 @@ function enhanceMap(L, map) {
     a Funai deixou de publicar a abrangência. Quem chama passa o que já tem em
     mãos; sem lista, não se filtra nada.
   */
-  map.__agsusSetDseiCoverage = (name = "", unidades = []) => {
+  map.__agsusSetDseiCoverage = (name = "", unidades = [], ufs = []) => {
     selectedDsei = String(name || "").trim();
     unidadesDoDsei = selectedDsei && Array.isArray(unidades) ? unidades : [];
+    ufsDoDsei = selectedDsei && Array.isArray(ufs) ? ufs : [];
     // O enquadramento não mudou, mas o conjunto de terras a mostrar mudou.
     lastViewportKey = "";
     if (!selectedDsei) map.__agsusDseiCoverageBounds = null;
@@ -792,7 +828,9 @@ function enhanceMap(L, map) {
         distritos, e quem olhava não tinha como saber a diferença.
       */
       const doDistrito = unidadesDoDsei.length
-        ? geojson.features.filter((f) => terraPertenceAoDsei(f, unidadesDoDsei))
+        ? geojson.features.filter((f) =>
+            terraPertenceAoDsei(f, unidadesDoDsei, ufsDoDsei),
+          )
         : geojson.features;
 
       vectorLayer.clearLayers();
