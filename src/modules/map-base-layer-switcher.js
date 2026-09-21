@@ -1,3 +1,5 @@
+import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
+
 const STORAGE_KEY = "agsus_map_base_layer_v1";
 const MODE_MAP = "map";
 const MODE_SATELLITE = "satellite";
@@ -60,14 +62,19 @@ export function installMapBaseLayerSwitcher() {
   }
 
   const guardedTileLayer = L.tileLayer;
-  L.tileLayer = function agsusTaggedTileLayer(urlTemplate, options = {}) {
-    const kind = classifyBaseLayerUrl(urlTemplate);
-    const tileOptions = normalizeTileZoomOptions(kind, options);
-    const layer = guardedTileLayer.call(this, urlTemplate, tileOptions);
-    layer.__agsusTileUrlTemplate = String(urlTemplate || "");
-    layer.__agsusBaseMapKind = kind;
-    return layer;
-  };
+  // `envolverFabricaDoLeaflet` preserva o que está pendurado na fábrica —
+  // nomeadamente `L.tileLayer.wms`. Ver `src/lib/fabrica-do-leaflet.js`.
+  L.tileLayer = envolverFabricaDoLeaflet(
+    guardedTileLayer,
+    function agsusTaggedTileLayer(urlTemplate, options = {}) {
+      const kind = classifyBaseLayerUrl(urlTemplate);
+      const tileOptions = normalizeTileZoomOptions(kind, options);
+      const layer = guardedTileLayer.call(this, urlTemplate, tileOptions);
+      layer.__agsusTileUrlTemplate = String(urlTemplate || "");
+      layer.__agsusBaseMapKind = kind;
+      return layer;
+    },
+  );
 
   const guardedMap = L.map;
   L.map = function agsusMapWithBaseLayerSwitcher(element, options = {}) {

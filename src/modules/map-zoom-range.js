@@ -1,3 +1,5 @@
+import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
+
 const MIN_ZOOM = 4;
 const MAX_ZOOM = 19;
 
@@ -23,15 +25,17 @@ export function installMapZoomRange() {
   };
 
   const originalTileLayer = L.tileLayer;
-  L.tileLayer = function agsusTileLayerWithZoomRange(
-    urlTemplate,
-    options = {},
-  ) {
-    return originalTileLayer.call(this, urlTemplate, {
-      ...options,
-      maxZoom: Math.max(Number(options.maxZoom) || 0, MAX_ZOOM),
-    });
-  };
+  // `envolverFabricaDoLeaflet` preserva o que está pendurado na fábrica —
+  // nomeadamente `L.tileLayer.wms`. Ver `src/lib/fabrica-do-leaflet.js`.
+  L.tileLayer = envolverFabricaDoLeaflet(
+    originalTileLayer,
+    function agsusTileLayerWithZoomRange(urlTemplate, options = {}) {
+      return originalTileLayer.call(this, urlTemplate, {
+        ...options,
+        maxZoom: Math.max(Number(options.maxZoom) || 0, MAX_ZOOM),
+      });
+    },
+  );
 
   L.__agsusZoomRangeInstalled = true;
   installed = true;
