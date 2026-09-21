@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   DISTANCIA_MINIMA_ENTRE_ROTULOS_PX,
@@ -26,6 +27,47 @@ const terraEm = (lat, lon, lado = 0.2) => ({
       ],
     ],
   },
+});
+
+/*
+  O botão "Terras Indígenas" mostrava um quadrado vermelho sobre satélite e o
+  mapa desenhava verde. A cor vermelha só existia no desenho vetorial, e na
+  visão nacional quem desenha é o raster da Funai, com a simbologia dela.
+
+  O WMS da Funai publica dois estilos para `tis_poligonais` — `terras_indigenas`
+  e `polygon` — e nenhum é vermelho. Não há como alinhar pelo vermelho, só pelo
+  verde. Estes casos impedem a segunda cor de voltar.
+*/
+describe("uma cor só para a Terra Indígena", () => {
+  const modulo = readFileSync(
+    "src/modules/indigenous-territories-layer.js",
+    "utf8",
+  );
+  const css = readFileSync(
+    "src/styles/indigenous-territories-layer.css",
+    "utf8",
+  );
+  const cssLegenda = readFileSync(
+    "src/styles/health-map-workspace.css",
+    "utf8",
+  );
+
+  it("o vermelho não volta ao estilo da camada", () => {
+    expect(modulo).not.toContain("#ff4d3d");
+    expect(modulo).not.toContain("#ef4444");
+  });
+
+  it("o quadrado do botão não muda com o mapa base", () => {
+    expect(css).not.toContain(
+      ".map-satellite-mode .agsus-indigenous-territories-control__swatch {",
+    );
+  });
+
+  it("o quadrado da legenda não muda com o mapa base", () => {
+    expect(cssLegenda).not.toContain(
+      ".map-satellite-mode .health-map-legenda-terra {",
+    );
+  });
 });
 
 describe("geometria de apoio", () => {

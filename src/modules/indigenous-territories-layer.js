@@ -856,18 +856,34 @@ function enhanceMap(L, map) {
   os marcadores do Leaflet em 600.
 */
 /*
-  O símbolo usa a cor da terra, mas mais opaco e com traço mais forte: ele não
-  é uma área, é um marcador, e tem de se ler como marcador a oito pixels de
-  raio. Não herda o tracejado do modo satélite — a oito pixels o tracejado
-  vira ruído.
+  UMA COR SÓ PARA A TERRA INDÍGENA, NOS DOIS MAPAS BASE
+
+  A camada tinha duas cores: verde-azulada sobre o mapa comum e vermelha sobre
+  satélite. Só que a cor vermelha vivia apenas no desenho vetorial, e o
+  vetorial só existe a partir do zoom 7. Na visão nacional quem desenha é o
+  raster WMS da Funai — e o raster vem com a simbologia dela, que é verde.
+
+  O resultado era o botão "Terras Indígenas" e a legenda a mostrarem um
+  quadrado vermelho enquanto o mapa desenhava verde. Legenda que não descreve
+  o desenho é pior do que legenda nenhuma: ensina a procurar a coisa errada.
+
+  Não dá para alinhar pelo vermelho. O WMS da Funai publica dois estilos para
+  `tis_poligonais` — `terras_indigenas` e `polygon` — e nenhum é vermelho.
+  Alinha-se pelo verde, que é o que a fonte desenha.
+
+  O contraste sobre satélite passa a vir do traço, não da cor: mais grosso e
+  com o preenchimento mais discreto, para não tapar a imagem que se foi ver.
 */
+const COR_DA_TERRA = "#0b6b5f";
+const PREENCHIMENTO_DA_TERRA = "#14b8a6";
+
 function estiloDoSimbolo(map) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
   return {
-    color: satellite ? "#ff4d3d" : "#0b6b5f",
-    weight: 2.2,
+    color: COR_DA_TERRA,
+    weight: satellite ? 2.8 : 2.2,
     opacity: 1,
-    fillColor: satellite ? "#ef4444" : "#14b8a6",
+    fillColor: PREENCHIMENTO_DA_TERRA,
     fillOpacity: 0.45,
   };
 }
@@ -875,12 +891,11 @@ function estiloDoSimbolo(map) {
 function vectorStyle(map) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
   return {
-    color: satellite ? "#ff4d3d" : "#0b6b5f",
-    weight: satellite ? 2.6 : 2.4,
+    color: COR_DA_TERRA,
+    weight: satellite ? 3.2 : 2.4,
     opacity: 1,
-    dashArray: satellite ? "5 4" : null,
-    fillColor: satellite ? "#ef4444" : "#14b8a6",
-    fillOpacity: satellite ? 0.16 : 0.26,
+    fillColor: PREENCHIMENTO_DA_TERRA,
+    fillOpacity: satellite ? 0.18 : 0.26,
   };
 }
 
