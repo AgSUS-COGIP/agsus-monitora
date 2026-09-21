@@ -1,0 +1,622 @@
+{
+  "ALTO RIO SOLIMOES": [
+    [
+      "CASAI",
+      "CASAI AMATURÁ",
+      -3.36174,
+      -68.19626,
+      "AMATURA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI BENJAMIN CONSTANT",
+      -4.38091,
+      -70.02983,
+      "BENJAMIN CONSTANT",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI SANTO ANTÔNIO DO IÇÁ",
+      -3.1003534,
+      -67.9438409,
+      "SANTO ANTONIO DO IÇA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI SÃO PAULO DE OLIVEIRA",
+      -3.469568,
+      -68.9525047,
+      "SAO PAULO DE OLIVENÇA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI TABATINGA",
+      -4.2397503,
+      -69.9349995,
+      "TABATINGA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI TONANTINS",
+      -2.86234571912703,
+      -67.7764928340911,
+      "TONANTINS",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "NOVO DIA",
+      -2.872613,
+      -68.477273,
+      "SANTO ANTONIO DO IÇA",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB BELÉM DO SOLIMÕES",
+      -4.041388889,
+      -69.52438889,
+      "TABATINGA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB BETÂNIA",
+      -3.07538,
+      -68.06696,
+      "SANTO ANTONIO DO IÇA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB CAMPO ALEGRE",
+      -3.58908,
+      -69.38498,
+      "SAO PAULO DE OLIVENÇA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB FEIJOAL/ SÃO LEOPOLDO",
+      -4.29659,
+      -69.53812,
+      "BENJAMIN CONSTANT",
+      "AM",
+      "Muito remoto",
+      "Terrestre/Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB FILADÉLFIA",
+      -4.38342,
+      -69.9941,
+      "BENJAMIN CONSTANT",
+      "AM",
+      "",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB NOVA ITÁLIA",
+      -3.40891,
+      -68.2249,
+      "AMATURA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO FRANCISCO DO CANIMARI",
+      -3.385277778,
+      -68.35236111,
+      "AMATURA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO PAULO DE OLIVENÇA SEDE",
+      -3.48189418756108,
+      -68.9543151855468,
+      "SAO PAULO DE OLIVENÇA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO SEBASTIÃO",
+      -2.7535,
+      -67.59203,
+      "TONANTINS",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB UMARIAÇU 1",
+      -4.261777778,
+      -69.94430556,
+      "TABATINGA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB UMARIAÇU 2",
+      -4.2694,
+      -69.9365,
+      "TABATINGA",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB VENDAVAL",
+      -3.711361111,
+      -69.44705556,
+      "SAO PAULO DE OLIVENÇA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB VILA BITENCOURT",
+      -1.83440332449351,
+      -67.203369140625,
+      "JAPURA",
+      "AM",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "SAPOTAL",
+      -4.265791,
+      -69.52073,
+      "TABATINGA",
+      "AM",
+      "Muito remoto",
+      "Fluvial"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -4.219834201274759,
+      -69.93411393041362,
+      "TABATINGA",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI BANANAL",
+      -20.252701,
+      -56.067352,
+      "AQUIDAUANA",
+      "MS",
+      "Acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI BOM CAMINHO",
+      -4.382944018458484,
+      -69.98750208808559,
+      "BENJAMIN CONSTANT",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI GUANABARA 3",
+      -4.40349352957325,
+      -69.9263477325439,
+      "BENJAMIN CONSTANT",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI LAGO GRANDE",
+      -6.7674459819956585,
+      -35.02434095974431,
+      "MARCAÇAO",
+      "PB",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI MARI MARI",
+      3.9917318763235308,
+      -60.049540147614394,
+      "NORMANDIA",
+      "RR",
+      "Acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI NOSSA SENHORA DE NAZARÉ",
+      -3.548311605481682,
+      -69.14951361743492,
+      "SAO PAULO DE OLIVENÇA",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI NOVA ESPERANÇA",
+      -3.72311562482279,
+      -57.4873352050781,
+      "MAUES",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI NOVA EXTREMA",
+      -8.66791800236311,
+      -63.984375,
+      "PORTO VELHO",
+      "RO",
+      "Muito acessível",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI PORTO CORDEIRINHO",
+      -4.3860506987135635,
+      -69.99985916543541,
+      "BENJAMIN CONSTANT",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI PORTO ESPIRITUAL",
+      -4.406114350174754,
+      -69.86465689972181,
+      "BENJAMIN CONSTANT",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI TORRE DA MISSÃO",
+      -3.0443555243203253,
+      -69.09695863041804,
+      "SAO PAULO DE OLIVENÇA",
+      "AM",
+      "Muito remoto",
+      ""
+    ],
+    [
+      "UNIDADE DE LOTAÇÃO",
+      "UBSI TUPI 2",
+      -4.217820870304729,
+      -69.40941614622596,
+      "SAO PAULO DE OLIVENÇA",
+      "AM",
+      "Muito remoto",
+      ""
+    ]
+  ],
+  "AMAPA E NORTE DO PARA": [
+    [
+      "CASAI",
+      "CASAI MACAPÁ",
+      0.03896712956437,
+      -51.0571146011352,
+      "MACAPA",
+      "AP",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI OIAPOQUE",
+      3.84642082443493,
+      -51.8353629112243,
+      "OIAPOQUE",
+      "AP",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ARAMIRÃ",
+      1.111388889,
+      -52.58055556,
+      "PEDRA BRANCA DO AMAPARI",
+      "AP",
+      "Remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB BONA",
+      1.217222222,
+      -54.65777778,
+      "ALMEIRIM",
+      "PA",
+      "Remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB KUMARUMÃ",
+      3.4875,
+      -51.48583333,
+      "OIAPOQUE",
+      "AP",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB KUMENÊ",
+      3.726111111,
+      -51.72472222,
+      "OIAPOQUE",
+      "AP",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MANGA",
+      2.230833333,
+      -55.96111111,
+      "OIAPOQUE",
+      "AP",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MISSÃO TIRIYÓ",
+      -1.9152607985396,
+      -55.5140769481658,
+      "OBIDOS",
+      "PA",
+      "Muito remoto",
+      "Aéreo"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      0.02990692952192278,
+      -51.06331033583885,
+      "MACAPA",
+      "AP",
+      "Muito acessível",
+      ""
+    ]
+  ],
+  "ARAGUAIA": [
+    [
+      "CASAI",
+      "CASAI GOIÂNIA",
+      -16.73315,
+      -49.24091,
+      "GOIANIA",
+      "GO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CONFRESA",
+      -10.64604,
+      -51.57545,
+      "CONFRESA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB GOIÁS/PB ARUANÃ",
+      -14.904812,
+      -51.074744,
+      "ARUANA",
+      "GO",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA TEREZINHA",
+      -10.47552778,
+      -50.50849444,
+      "SAO FELIX DO ARAGUAIA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO FÉLIX DO ARAGUAIA",
+      -11.61605556,
+      -50.66209444,
+      "SANTA TEREZINHA",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -11.6162240784462,
+      -50.6628942489624,
+      "SAO FELIX DO ARAGUAIA",
+      "MT",
+      "Remoto",
+      ""
+    ]
+  ],
+  "BAHIA": [
+    [
+      "CASAI",
+      "CASAI SALVADOR",
+      -12.95136,
+      -38.35426,
+      "SALVADOR",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB EUCLIDES DA CUNHA",
+      -10.5035531,
+      -39.023534,
+      "EUCLIDES DA CUNHA",
+      "BA",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB IBOTIRAMA",
+      -12.184145,
+      -43.215175,
+      "IBOTIRAMA",
+      "BA",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ILHÉUS",
+      -14.78698333,
+      -39.04609722,
+      "ILHEUS",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ITAMARAJU",
+      -17.03997778,
+      -39.52715833,
+      "ITAMARAJU",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB JUAZEIRO",
+      -9.412677778,
+      -40.51094722,
+      "JUAZEIRO",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PAU BRASIL",
+      -15.4639239126568,
+      -39.652879830667,
+      "PAU BRASIL",
+      "BA",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PAULO AFONSO",
+      -9.395836,
+      -38.233296,
+      "PAULO AFONSO",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PORTO SEGURO",
+      -16.4085254963297,
+      -39.092423915863,
+      "PORTO SEGURO",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB RIBEIRA DO POMBAL",
+      -10.83164167,
+      -38.54421389,
+      "RIBEIRA DO POMBAL",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -12.9978957,
+      -38.4595756,
+      "SALVADOR",
+      "BA",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "CASAI DF": [
+    [
+      "CASAI",
+      "CASAI DF",
+      -15.7432639227901,
+      -47.713302417615324,
+      "BRASILIA",
+      "DF",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ]
+}

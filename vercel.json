@@ -1,6 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
+  "functions": {
+    "api/aya.js": {
+      "maxDuration": 60
+    }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "fix/aya-overlay-drag-v2": false,
+      "fix/aya-launcher-overlay-transparent": false
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",

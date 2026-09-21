@@ -8,3 +8,6 @@ dist/
 # Artefatos das corridas do Playwright
 test-results/
 playwright-report/
+
+# Estado local da CLI do Supabase (contem string de conexao)
+supabase/.temp/

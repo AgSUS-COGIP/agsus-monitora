@@ -1,0 +1,492 @@
+{
+  "TOCANTINS": [
+    [
+      "CASAI",
+      "CASAI ARAGUAINA",
+      -7.182592441223484,
+      -48.19367838117815,
+      "ARAGUAINA",
+      "TO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI GURUPI",
+      -11.7272703,
+      -49.0943091,
+      "GURUPI",
+      "TO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB FORMOSO DO ARAGUAIA",
+      -11.79694,
+      -49.53083,
+      "FORMOSO DO ARAGUAIA",
+      "TO",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB GOIATINS",
+      -7.71139,
+      -47.30861,
+      "GOIATINS",
+      "TO",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ITACAJÁ",
+      -8.39167,
+      -47.77083,
+      "ITACAJA",
+      "TO",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB LAGOA DA CONFUSÃO",
+      -10.7863182,
+      -49.6219327,
+      "LAGOA DA CONFUSAO",
+      "TO",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANTA FÉ DO ARAGUAIA",
+      -7.125905556,
+      -49.17856944,
+      "SANTA FE DO ARAGUAIA",
+      "TO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TOCANTÍNIA",
+      -9.56528,
+      -48.3775,
+      "TOCANTINIA",
+      "TO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB TOCANTINÓPOLIS",
+      -6.32408537675657,
+      -47.4363040924072,
+      "TOCANTINOPOLIS",
+      "TO",
+      "Acessível",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -10.1883461,
+      -48.33911617,
+      "PALMAS",
+      "TO",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "VALE DO JAVARI": [
+    [
+      "CASAI",
+      "CASAI ATALAIA DO NORTE",
+      -4.36911204796386,
+      -70.1874661445617,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ALTO CURUÇÁ",
+      -6.583111944,
+      -72.70581889,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ALTO ITUÍ",
+      -6.893434444,
+      -72.17023694,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB ITACOAI",
+      -5.718295556,
+      -70.48759694,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB JAQUIRANA",
+      -4.46895728696118,
+      -70.4415893554687,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MÉDIO CURUÇA",
+      -5.827889722,
+      -72.08263806,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MÉDIO ITUÍ",
+      -6.335683611,
+      -71.66646694,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB MÉDIO JAVARI",
+      -4.47169551343413,
+      -70.4470825195312,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Fluvial/Aéreo"
+    ],
+    [
+      "POLO BASE",
+      "PB RIO BRANCO",
+      -5.914413611,
+      -71.06257306,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -4.36997208825632,
+      -70.19271035192554,
+      "ATALAIA DO NORTE",
+      "AM",
+      "Muito remoto",
+      ""
+    ]
+  ],
+  "VILHENA": [
+    [
+      "CASAI",
+      "CASAI ARIPUANÃ",
+      -10.169621937242,
+      -59.4573640823364,
+      "ARIPUANA",
+      "MT",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI CACOAL",
+      -11.440940675824,
+      -61.4330685138702,
+      "CACOAL",
+      "RO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI JUINA",
+      -11.4434118429631,
+      -58.7822413444519,
+      "JUINA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI VILHENA",
+      -12.741663,
+      -60.146573,
+      "VILHENA",
+      "RO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ARIPUANÂ",
+      -10.180566747206212,
+      -59.44512740556085,
+      "ARIPUANA",
+      "MT",
+      "Muito remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CACOAL",
+      -11.431633002166945,
+      -61.45043000216203,
+      "CACOAL",
+      "RO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB JUINA",
+      -11.441720785228897,
+      -58.78158229819583,
+      "JUINA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB VILHENA",
+      -12.74554123347327,
+      -60.147435209782245,
+      "VILHENA",
+      "RO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -11.4368079949224,
+      -61.453742980957,
+      "VILHENA",
+      "RO",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "XAVANTE": [
+    [
+      "CASAI",
+      "CASAI ARAGARÇAS",
+      -15.9050137,
+      -52.2494463,
+      "ARAGARÇAS",
+      "GO",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI BARRA DO GARÇA",
+      -15.865746198905,
+      -52.3082256317138,
+      "BARRA DO GARÇAS",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI CAMPINÓPOLIS",
+      -14.54377778,
+      -52.80327778,
+      "CAMPINAPOLIS",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB ÁGUA BOA",
+      -14.05487222,
+      -52.15732778,
+      "AGUA BOA",
+      "MT",
+      "Acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB CAMPINÁPOLIS",
+      -14.54377778,
+      -52.80327778,
+      "CAMPINAPOLIS",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB MARÃIWATSÉDÉ",
+      -11.897986,
+      -51.682922,
+      "ALTO BOA VISTA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB PARANATINGA/ ALDEIA PAKUERA",
+      -14.29896,
+      -54.61886,
+      "PARANATINGA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SANGRADOURO",
+      -15.64715,
+      -53.905789,
+      "GENERAL CARNEIRO",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB SÃO MARCOS",
+      -15.377086,
+      -52.903214,
+      "BARRA DO GARÇAS",
+      "MT",
+      "Muito acessível",
+      "Fluvial"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -15.8924155,
+      -52.2631636,
+      "BARRA DO GARÇAS",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ]
+  ],
+  "XINGU": [
+    [
+      "CASAI",
+      "CASAI CANARANA",
+      -13.54515,
+      -52.27691,
+      "CANARANA",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI GAUCHA DO NORTE",
+      -13.1875026,
+      -53.2588101,
+      "GAUCHA DO NORTE",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI QUERÊNCIA",
+      -12.5858718675765,
+      -52.2183525450592,
+      "QUERENCIA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "CASAI",
+      "CASAI SINOP",
+      -11.8122,
+      -55.60924,
+      "SINOP",
+      "MT",
+      "Muito acessível",
+      "Terrestre"
+    ],
+    [
+      "POLO BASE",
+      "PB DIAUARUM",
+      -11.099229,
+      -50.409163,
+      "SAO FELIX DO ARAGUAIA",
+      "MT",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB LEONARDO VILLAS BÔAS",
+      -12.2006,
+      -53.37778,
+      "GAUCHA DO NORTE",
+      "MT",
+      "Remoto",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB PAVURU",
+      -12.386,
+      -54.92,
+      "FELIZ NATAL",
+      "MT",
+      "Acessível",
+      "Fluvial"
+    ],
+    [
+      "POLO BASE",
+      "PB WAWI",
+      -11.524433115006,
+      -53.0694580078125,
+      "QUERENCIA",
+      "MT",
+      "Remoto",
+      "Terrestre"
+    ],
+    [
+      "SEDE",
+      "SEDE DSEI",
+      -13.5495059589519,
+      -52.2740006446838,
+      "CANARANA",
+      "MT",
+      "Muito acessível",
+      ""
+    ]
+  ]
+}

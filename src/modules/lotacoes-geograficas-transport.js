@@ -1,0 +1,591 @@
+import {
+  canonicoUtilizavel,
+  classificarDivergencia,
+  distanciaKm,
+  nomeCanonico,
+  tipoDeclarado,
+} from "../lib/reconciliacao-unidades.js";
+
+const MAP_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
+const DECORATOR_KEY = "__agsusDecorateOperationalClient";
+const CLIENT_MARKER = "__agsusLotacoesGeograficas";
+const SOURCE = "Lotações, Meios de Acesso/Polo Base";
+const RECONCILED_SOURCE = `CNES + ${SOURCE}`;
+const DATA_FILES = Array.from(
+  { length: 8 },
+  (_, index) =>
+    `/data/lotacoes-geograficas-${String(index + 1).padStart(2, "0")}.json`,
+);
+
+let datasetPromise = null;
+
+function normalizePlace(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function clone(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function compactRecord(row) {
+  const [type, name, lat, lon, municipality, uf, accessibility, accessMode] =
+    row;
+  return { type, name, lat, lon, municipality, uf, accessibility, accessMode };
+}
+
+function recordExpectedType(record) {
+  if (record.type === "POLO BASE") return "polo";
+  if (record.type === "CASAI") return "casai";
+  if (record.type === "ROTA") return "rota";
+  return "unidade";
+}
+
+function canonicalForMatch(name, expectedType) {
+  let canonical = nomeCanonico(name);
+  if (expectedType !== "polo") return canonical;
+
+  /*
+    Ordinal cadastral depois de "POLO BASE" descreve o equipamento, não o lugar:
+    "POLO BASE II XUCURU KARIRI" e "PB XUCURU KARIRI" são a mesma identidade.
+    Só removemos ordinal no INÍCIO do canónico; "SÃO JOSÉ II" continua intacto.
+  */
+  canonical = canonical.replace(/^(?:I|II|III|IV|V)\s+/, "");
+
+  /*
+    Xocó/Xokó é uma variação ortográfica real do mesmo etnónimo. O CNES usa
+    "KARIRI XOCO", enquanto Lotações/lmap usam "KARIRI XOKÓ". Normalizamos
+    apenas este token para evitar voltar ao matching inseguro por proximidade.
+  */
+  return canonical.replace(/\bXOCO\b/g, "XOKO");
+}
+
+function rowType(row, listKind) {
+  if (listKind === "c") return "casai";
+  return tipoDeclarado(row?.[0]);
+}
+
+function compatibleRow(record, row, listKind) {
+  const expected = recordExpectedType(record);
+  const candidate = rowType(row, listKind);
+  if (expected === "polo") return candidate === "polo";
+  if (expected === "casai") return candidate === "casai";
+  if (expected === "rota") return false;
+  return candidate !== "polo" && candidate !== "casai";
+}
+
+function nearestUniqueCandidate(candidates, record, maxDistanceKm = 5) {
+  const byDistance = candidates
+    .map((row) => ({
+      row,
+      km: distanciaKm(
+        Number(record.lat),
+        Number(record.lon),
+        Number(row?.[2]),
+        Number(row?.[3]),
+      ),
+    }))
+    .filter((item) => Number.isFinite(item.km))
+    .sort((a, b) => a.km - b.km);
+
+  if (!byDistance.length || byDistance[0].km > maxDistanceKm) return null;
+  if (byDistance.length > 1 && byDistance[1].km - byDistance[0].km < 1)
+    return null;
+  return byDistance[0].row;
+}
+
+function findNetworkMatch(list, record, listKind = "u") {
+  const expected = recordExpectedType(record);
+  const canonical = canonicalForMatch(record.name, expected);
+  if (!canonicoUtilizavel(canonical)) return null;
+
+  const compatible = list.filter((row) => compatibleRow(record, row, listKind));
+  let candidates = compatible.filter(
+    (row) => canonicalForMatch(row?.[0], expected) === canonical,
+  );
+  const municipality = normalizePlace(record.municipality);
+
+  /*
+    Para Polo Base, município + proximidade NÃO estabelece identidade. Dois
+    polos diferentes podem ficar no mesmo município e até na mesma aldeia.
+    A auditoria nacional mostrou que esse fallback era capaz de colar uma
+    planilha errada ao estabelecimento errado. Polo exige identidade nominal
+    (ou CNES já conhecido em outra etapa), nunca só proximidade.
+  */
+  if (!candidates.length && expected !== "polo" && municipality) {
+    const sameMunicipality = compatible.filter(
+      (row) => normalizePlace(row?.[4]) === municipality,
+    );
+    const spatial = nearestUniqueCandidate(sameMunicipality, record);
+    if (spatial) return spatial;
+  }
+
+  if (!candidates.length) return null;
+
+  const withCnes = candidates.filter((row) => String(row?.[1] || "").trim());
+  if (withCnes.length === 1) return withCnes[0];
+  if (withCnes.length > 1) candidates = withCnes;
+
+  if (municipality) {
+    const sameMunicipality = candidates.filter(
+      (row) => normalizePlace(row?.[4]) === municipality,
+    );
+    if (sameMunicipality.length === 1) return sameMunicipality[0];
+    if (sameMunicipality.length > 1) candidates = sameMunicipality;
+  }
+
+  if (candidates.length === 1) return candidates[0];
+  return nearestUniqueCandidate(candidates, record);
+}
+
+function annotateNetworkRecord(existing, record) {
+  const hasCnes = Boolean(String(existing?.[1] || "").trim());
+  const cnesLat = Number(existing?.[2]);
+  const cnesLon = Number(existing?.[3]);
+  const hasCnesCoord = Number.isFinite(cnesLat) && Number.isFinite(cnesLon);
+  const km = hasCnesCoord
+    ? distanciaKm(cnesLat, cnesLon, record.lat, record.lon)
+    : null;
+
+  if (!hasCnesCoord) {
+    existing[2] = record.lat;
+    existing[3] = record.lon;
+  }
+  if (!existing[4] && record.municipality) existing[4] = record.municipality;
+  if (!existing[5] && record.uf) existing[5] = record.uf;
+  existing[6] = record.accessibility || existing[6] || "";
+  existing[7] = record.accessMode || existing[7] || "";
+  existing[8] = hasCnes ? RECONCILED_SOURCE : SOURCE;
+  existing[9] = {
+    ...(existing[9] && typeof existing[9] === "object" ? existing[9] : {}),
+    fonte_lotacoes: SOURCE,
+    coordenada_exibida: hasCnesCoord ? "CNES" : SOURCE,
+    coordenadas: {
+      cnes: hasCnesCoord ? { lat: cnesLat, lon: cnesLon } : null,
+      lotacoes: { lat: record.lat, lon: record.lon },
+    },
+    distancia_entre_fontes_km:
+      km == null ? null : Number(Number(km).toFixed(1)),
+    divergencia: classificarDivergencia(km),
+    validacao_coordenada: "pendente",
+    confirmacao_independente: false,
+    fontes_coincidem:
+      km != null && Number.isFinite(Number(km)) ? Number(km) < 0.05 : false,
+  };
+  return existing;
+}
+
+function planilhaNetworkRow(record) {
+  return [
+    record.name,
+    "",
+    record.lat,
+    record.lon,
+    record.municipality || "",
+    record.uf || "",
+    record.accessibility || "",
+    record.accessMode || "",
+    SOURCE,
+    {
+      fonte_lotacoes: SOURCE,
+      coordenada_exibida: SOURCE,
+      coordenadas: {
+        cnes: null,
+        lotacoes: { lat: record.lat, lon: record.lon },
+      },
+      distancia_entre_fontes_km: null,
+      divergencia: "sem_cnes",
+      validacao_coordenada: "pendente",
+      confirmacao_independente: false,
+      fontes_coincidem: false,
+    },
+  ];
+}
+
+function mergeNetworkRecord(list, record, listKind = "u") {
+  const existing = findNetworkMatch(list, record, listKind);
+  if (existing) {
+    annotateNetworkRecord(existing, record);
+    return { row: existing, created: false };
+  }
+  if (record.type === "ROTA" || record.type === "POLO BASE") {
+    return { row: null, created: false };
+  }
+  const created = planilhaNetworkRow(record);
+  list.push(created);
+  return { row: created, created: true };
+}
+
+function mergeNationalCasai(redePayload, record) {
+  redePayload.nac ||= [];
+  const municipality = normalizePlace(record.municipality);
+  let existing = redePayload.nac.find(
+    (row) =>
+      rowType(row, "c") === "casai" &&
+      municipality &&
+      normalizePlace(row?.[4]) === municipality,
+  );
+
+  if (!existing) {
+    const targetName = /DF|BRASIL/i.test(record.name) ? "BRASIL" : "SAO PAULO";
+    existing = redePayload.nac.find((row) =>
+      normalizePlace(row?.[0]).includes(targetName),
+    );
+  }
+
+  if (existing) {
+    annotateNetworkRecord(existing, record);
+    return existing;
+  }
+
+  const created = planilhaNetworkRow(record);
+  redePayload.nac.push(created);
+  return created;
+}
+
+function dedupeNetworkList(list, listKind = "u") {
+  const seenCnes = new Set();
+  const seenPlanilha = new Set();
+  return list.filter((row) => {
+    const cnes = String(row?.[1] || "").trim();
+    if (cnes) {
+      if (seenCnes.has(cnes)) return false;
+      seenCnes.add(cnes);
+      return true;
+    }
+
+    if (row?.[8] !== SOURCE) return true;
+    const key = [
+      rowType(row, listKind),
+      nomeCanonico(row?.[0]),
+      normalizePlace(row?.[4]),
+    ].join("|");
+    if (seenPlanilha.has(key)) return false;
+    seenPlanilha.add(key);
+    return true;
+  });
+}
+
+function annotateSharedCoordinates(list) {
+  const counts = new Map();
+
+  (list || []).forEach((row) => {
+    const lat = Number(row?.[2]);
+    const lon = Number(row?.[3]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  return (list || []).map((row) => {
+    const lat = Number(row?.[2]);
+    const lon = Number(row?.[3]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return row;
+    const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+    const quantity = counts.get(key) || 1;
+    if (quantity <= 1) return row;
+
+    row[9] = {
+      ...(row[9] && typeof row[9] === "object" ? row[9] : {}),
+      coordenada_compartilhada_qtd: quantity,
+      coordenada_compartilhada: true,
+      validacao_coordenada: "pendente",
+    };
+    return row;
+  });
+}
+
+function annotatePoloFromCnes(polo, networkRow, record) {
+  if (!networkRow) return;
+  const cnesLat = Number(networkRow?.[2]);
+  const cnesLon = Number(networkRow?.[3]);
+  const hasCnesCoord = Number.isFinite(cnesLat) && Number.isFinite(cnesLon);
+  const lotacoes = { lat: Number(record.lat), lon: Number(record.lon) };
+  const lmap =
+    polo.coord_lmap &&
+    Number.isFinite(Number(polo.coord_lmap.lat)) &&
+    Number.isFinite(Number(polo.coord_lmap.lon))
+      ? {
+          lat: Number(polo.coord_lmap.lat),
+          lon: Number(polo.coord_lmap.lon),
+        }
+      : null;
+  const cnes = hasCnesCoord ? { lat: cnesLat, lon: cnesLon } : null;
+
+  polo.cnes = String(networkRow?.[1] || polo.cnes || "");
+  polo.coord_lotacoes = lotacoes;
+  polo.coord_cnes = cnes;
+
+  const lmapCnes =
+    lmap && cnes ? distanciaKm(lmap.lat, lmap.lon, cnes.lat, cnes.lon) : null;
+  const lotacoesCnes = cnes
+    ? distanciaKm(lotacoes.lat, lotacoes.lon, cnes.lat, cnes.lon)
+    : null;
+  const lmapLotacoes = lmap
+    ? distanciaKm(lmap.lat, lmap.lon, lotacoes.lat, lotacoes.lon)
+    : null;
+
+  const arredondar = (km) => (km == null ? null : Number(km.toFixed(1)));
+  polo.coord_diferencas_km = {
+    lmap_cnes: arredondar(lmapCnes),
+    lotacoes_cnes: arredondar(lotacoesCnes),
+    lmap_lotacoes: arredondar(lmapLotacoes),
+  };
+
+  // Compatibilidade com consumidores antigos: quando existe coordenada original
+  // do lmap, a divergência principal é lmap x CNES. Sem lmap, usa a planilha.
+  const kmPrincipal = lmapCnes ?? lotacoesCnes;
+  polo.coord_diferenca_km = arredondar(kmPrincipal);
+  polo.coord_divergencia = classificarDivergencia(kmPrincipal);
+  polo.coord_nome = networkRow?.[0] || "";
+  polo.mun_cnes = networkRow?.[4] || "";
+  polo.uf_cnes = networkRow?.[5] || "";
+
+  /*
+    Identidade CNES não é prova de coordenada correta. O caso Kariri-Xokó mostra
+    por quê: Lotações e CNES repetem a mesma coordenada, enquanto o lmap guarda
+    outra. Não se apaga mais a terceira fonte nem se promove CNES a "oficial".
+  */
+  polo.coord_oficial = false;
+  polo.coord_validacao = "pendente";
+}
+
+export async function loadLotacoesGeograficas(fetchImpl = globalThis.fetch) {
+  if (fetchImpl === globalThis.fetch && datasetPromise) return datasetPromise;
+  const task = Promise.all(
+    DATA_FILES.map(async (file) => {
+      const response = await fetchImpl(file, { cache: "force-cache" });
+      if (!response.ok)
+        throw new Error(`Falha ao carregar ${file}: ${response.status}`);
+      return response.json();
+    }),
+  ).then((chunks) => Object.assign({}, ...chunks));
+  if (fetchImpl === globalThis.fetch) datasetPromise = task;
+  return task;
+}
+
+export function applyLotacoesGeograficas(rows, dataset) {
+  const output = clone(rows || []);
+  const lmapRow = output.find((row) => row?.chave === "lmap");
+  const redeRow = output.find((row) => row?.chave === "rede_cnes");
+  if (!lmapRow?.payload || !redeRow?.payload || !dataset) return output;
+
+  const dseiByKey = new Map(
+    (lmapRow.payload.dsei || []).map((dsei) => [dsei.k, dsei]),
+  );
+  redeRow.payload.rede ||= {};
+
+  Object.entries(dataset).forEach(([dseiKey, rawRecords]) => {
+    const records = (rawRecords || []).map(compactRecord);
+    if (dseiKey === "CASAI DF" || dseiKey === "CASAI SÃO PAULO") {
+      records
+        .filter((record) => record.type === "CASAI")
+        .forEach((record) => mergeNationalCasai(redeRow.payload, record));
+      return;
+    }
+
+    const dsei = dseiByKey.get(dseiKey);
+    if (!dsei) return;
+    dsei.polos ||= [];
+    const network = (redeRow.payload.rede[dseiKey] ||= { u: [], c: [] });
+    network.u ||= [];
+    network.c ||= [];
+
+    records.forEach((record) => {
+      if (record.type === "SEDE") {
+        const tinhaCoordenada =
+          Number.isFinite(Number(dsei.lat)) &&
+          Number.isFinite(Number(dsei.lon));
+        if (tinhaCoordenada && !dsei.sede_coord_lmap) {
+          dsei.sede_coord_lmap = {
+            lat: Number(dsei.lat),
+            lon: Number(dsei.lon),
+          };
+        }
+        dsei.sede_coord_lotacoes = {
+          lat: Number(record.lat),
+          lon: Number(record.lon),
+        };
+        if (!tinhaCoordenada) {
+          dsei.lat = record.lat;
+          dsei.lon = record.lon;
+        }
+        dsei.sede_municipio = record.municipality || "";
+        dsei.sede_uf = record.uf || dsei.sedeuf || "";
+        dsei.sede_acessibilidade = record.accessibility || "";
+        dsei.sede_meio_acesso = record.accessMode || "";
+        dsei.coord_fonte = tinhaCoordenada ? "lmap" : SOURCE;
+        dsei.coord_validacao = "pendente";
+        return;
+      }
+
+      if (record.type === "POLO BASE") {
+        const canonical = nomeCanonico(record.name);
+        let polo = dsei.polos.find(
+          (item) => nomeCanonico(item?.n) === canonical,
+        );
+        const jaExistiaNoLmap = Boolean(polo);
+        if (!polo) {
+          polo = { n: record.name.replace(/^PB\s+/i, ""), p: 0 };
+          dsei.polos.push(polo);
+        } else if (
+          !polo.coord_lmap &&
+          Number.isFinite(Number(polo.lat)) &&
+          Number.isFinite(Number(polo.lon))
+        ) {
+          // Guarda a coordenada que já existia no banco ANTES de enriquecer
+          // o registo com Lotações ou CNES. Esta era a fonte apagada pelo PR #44.
+          polo.coord_lmap = { lat: Number(polo.lat), lon: Number(polo.lon) };
+        }
+
+        polo.coord_lotacoes = { lat: record.lat, lon: record.lon };
+        polo.nome_lotacoes = record.name;
+        polo.uf = record.uf || polo.uf || "";
+        polo.mun_lotacao = record.municipality || "";
+        polo.acessibilidade = record.accessibility || "";
+        polo.meio_acesso = record.accessMode || "";
+        polo.coord_oficial = false;
+        polo.coord_validacao = "pendente";
+        polo.coord_fonte = jaExistiaNoLmap ? "lmap" : SOURCE;
+
+        const networkRow = findNetworkMatch(network.u, record, "u");
+        if (networkRow) {
+          annotateNetworkRecord(networkRow, record);
+          annotatePoloFromCnes(polo, networkRow, record);
+
+          /*
+            Polo ausente do lmap: a planilha pode ter linha deslocada para outro
+            estado (Tuxi, Guaíra, Angra dos Reis são casos reais da auditoria).
+            Quando há um registo CNES inequívoco da MESMA estrutura, usamos a
+            coordenada cadastral CNES como fallback de exibição — ainda
+            PENDENTE, nunca "oficial". Para polos que já existiam no lmap, não
+            mexemos na posição histórica.
+          */
+          if (!jaExistiaNoLmap && polo.coord_cnes) {
+            polo.lat = polo.coord_cnes.lat;
+            polo.lon = polo.coord_cnes.lon;
+            polo.coord_fonte = "CNES";
+          }
+        }
+
+        if (
+          !jaExistiaNoLmap &&
+          (!Number.isFinite(Number(polo.lat)) ||
+            !Number.isFinite(Number(polo.lon)))
+        ) {
+          polo.lat = record.lat;
+          polo.lon = record.lon;
+          polo.coord_fonte = SOURCE;
+        }
+        return;
+      }
+
+      if (record.type === "CASAI") {
+        mergeNetworkRecord(network.c, record, "c");
+        return;
+      }
+
+      mergeNetworkRecord(network.u, record, "u");
+    });
+
+    network.u = annotateSharedCoordinates(dedupeNetworkList(network.u, "u"));
+    network.c = annotateSharedCoordinates(dedupeNetworkList(network.c, "c"));
+  });
+
+  redeRow.payload.nac = annotateSharedCoordinates(
+    dedupeNetworkList(redeRow.payload.nac || [], "c"),
+  );
+  lmapRow.payload.lotacoes_geograficas = {
+    fonte: SOURCE,
+    reconciliada_com: "CNES",
+    criterio_identidade:
+      "CNES > tipo > nome canônico > município > proximidade conservadora",
+    coordenada_preferida:
+      "lmap preservado quando existente; Lotações e CNES mantidos para comparação; validação independente antes de substituir",
+    regra_de_confianca:
+      "coincidência entre Lotações e CNES não valida a posição; coordenadas compartilhadas por vários estabelecimentos são sinalizadas",
+    registros: 598,
+    sedes: 34,
+    polos: 403,
+    casais: 79,
+    unidades_rotas: 82,
+    excluidos: 13,
+  };
+  return output;
+}
+
+function wrapBuilder(builder, datasetLoader) {
+  return new Proxy(builder, {
+    get(target, property, receiver) {
+      if (property === "then") {
+        return (resolve, reject) =>
+          Promise.resolve(target)
+            .then(async (result) => {
+              if (result?.error || !Array.isArray(result?.data)) return result;
+              try {
+                const dataset = await datasetLoader();
+                return {
+                  ...result,
+                  data: applyLotacoesGeograficas(result.data, dataset),
+                };
+              } catch (error) {
+                console.warn(
+                  "Lotações geográficas indisponíveis; mantendo mapa persistido.",
+                  error,
+                );
+                return result;
+              }
+            })
+            .then(resolve, reject);
+      }
+      const value = Reflect.get(target, property, receiver);
+      if (typeof value !== "function") return value;
+      return (...args) => {
+        const next = value.apply(target, args);
+        return next && typeof next === "object"
+          ? wrapBuilder(next, datasetLoader)
+          : next;
+      };
+    },
+  });
+}
+
+export function decorateLotacoesClient(
+  client,
+  datasetLoader = loadLotacoesGeograficas,
+) {
+  if (!client || client[CLIENT_MARKER]) return client;
+  const originalFrom = client.from.bind(client);
+  client.from = (tableName) => {
+    const builder = originalFrom(tableName);
+    return tableName === MAP_TABLE
+      ? wrapBuilder(builder, datasetLoader)
+      : builder;
+  };
+  Object.defineProperty(client, CLIENT_MARKER, {
+    value: true,
+    enumerable: false,
+  });
+  return client;
+}
+
+export function installLotacoesTransport(target = globalThis) {
+  if (!target) return false;
+  const previous = target[DECORATOR_KEY];
+  Object.defineProperty(target, DECORATOR_KEY, {
+    value: (client) =>
+      decorateLotacoesClient(
+        typeof previous === "function" ? previous(client) : client,
+      ),
+    configurable: true,
+    enumerable: false,
+  });
+  return true;
+}
+
+installLotacoesTransport(globalThis);

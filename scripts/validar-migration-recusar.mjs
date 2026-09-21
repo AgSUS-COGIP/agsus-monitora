@@ -70,7 +70,7 @@ try {
     const colunas = await umaLinha(
       `select array_agg(column_name::text order by column_name) as nomes
        from information_schema.columns
-       where table_schema = 'public' and table_name = 'solicitacoes_acesso'`,
+       where table_schema = 'public' and table_name = 'TB_SOLICITACAO_ACESSO'`,
     );
     const necessarias = [
       "avaliado_em",

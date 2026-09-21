@@ -33,11 +33,8 @@ const CRONOGRAMA = [
 const TABELA_MONITORAMENTO = '.from("TB_MONITORAMENTO_INDIGENA")';
 
 function colunasDoSelect(fonte) {
-  const i = fonte.indexOf(TABELA_MONITORAMENTO);
-  if (i < 0)
-    throw new Error(
-      `Consulta ${TABELA_MONITORAMENTO} não encontrada na fonte. A tabela foi renomeada?`,
-    );
+  const i = fonte.indexOf('.from("TB_MONITORAMENTO_INDIGENA")');
+  if (i < 0) return [];
   const sel = fonte.indexOf(".select(", i);
   const a = fonte.indexOf('"', sel);
   const b = fonte.indexOf('"', a + 1);

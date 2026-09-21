@@ -210,7 +210,9 @@ describe("os filtros por tipo do painel", () => {
       codigo.indexOf("function renderDetailMap"),
       codigo.indexOf("function enquadrarDetalhe"),
     );
-    expect(fn).toContain("agruparPorCelula(visiveis(classificados)");
+    expect(fn).toContain("const visiveisAgora = visiveis(classificados)");
+    expect(fn).toContain("agruparCoincidentes(polosVisiveis)");
+    expect(fn).toContain("agruparPorCelula(demaisVisiveis");
     expect(fn).toContain("visiveis(externos).forEach");
     expect(fn).toContain("renderDetailUnitList(visiveis(classificados))");
   });

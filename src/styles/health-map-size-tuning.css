@@ -6,49 +6,50 @@
   um indice compacto, com rolagem propria.
 */
 #page-dashboard .health-map-workspace {
-  --health-map-height: clamp(600px, 76vh, 920px);
-  --health-map-painel: clamp(260px, 22%, 320px);
+  --health-map-height: clamp(640px, 80vh, 960px);
+  --health-map-painel: clamp(250px, 20%, 300px);
 }
 
 #page-dashboard .health-map-brasil-layout {
-  grid-template-columns: minmax(0, 1fr) clamp(300px, 29%, 440px);
+  grid-template-columns: minmax(0, 1fr) clamp(280px, 22%, 330px);
 }
 
 /* A lista ocupa menos largura e mostra mais territorios sem dominar o mapa. */
 #page-dashboard .health-map-units__list {
-  padding: 6px;
+  padding: 5px;
 }
 
 #page-dashboard .health-map-unit {
-  grid-template-columns: 26px minmax(0, 1fr) auto;
-  gap: 6px;
-  margin-bottom: 4px;
-  padding: 6px 7px;
-  border-radius: 9px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 5px;
+  margin-bottom: 3px;
+  padding: 5px 6px;
+  border-radius: 8px;
 }
 
 #page-dashboard .health-map-unit__icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
 }
 
 #page-dashboard .health-map-unit strong {
-  font-size: 12px;
+  font-size: 11.5px;
+  line-height: 1.15;
 }
 
 #page-dashboard .health-map-unit small,
 #page-dashboard .health-map-unit__type {
-  font-size: 9px;
+  font-size: 8.5px;
 }
 
 @media (max-width: 1180px) {
   #page-dashboard .health-map-workspace {
-    --health-map-height: clamp(560px, 72vh, 780px);
-    --health-map-painel: clamp(250px, 24%, 300px);
+    --health-map-height: clamp(580px, 74vh, 820px);
+    --health-map-painel: clamp(240px, 22%, 285px);
   }
 
   #page-dashboard .health-map-brasil-layout {
-    grid-template-columns: minmax(0, 1fr) clamp(290px, 31%, 360px);
+    grid-template-columns: minmax(0, 1fr) clamp(270px, 25%, 310px);
   }
 }
 

@@ -52,10 +52,10 @@ describe("seletor Mapa | Satélite", () => {
     expect(source).toContain("map.setMaxZoom?.(MAP_MAX_ZOOM)");
   });
 
-  it("mantém fundo cartográfico disponível no zoom 19 mesmo quando o tile nativo termina em 18", () => {
+  it("mantém fundo cartográfico e satélite nativos até o zoom 19", () => {
     expect(source).toContain("normalized.maxNativeZoom = nativeZoom");
     expect(source).toContain("maxZoom: MAP_MAX_ZOOM");
-    expect(source).toContain("SATELLITE_MAX_NATIVE_ZOOM = 17");
+    expect(source).toContain("SATELLITE_MAX_NATIVE_ZOOM = 19");
     expect(source).toContain("maxNativeZoom: SATELLITE_MAX_NATIVE_ZOOM");
   });
 

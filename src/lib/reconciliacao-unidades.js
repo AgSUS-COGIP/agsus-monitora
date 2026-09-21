@@ -85,14 +85,14 @@ const semAcento = (s) =>
 
 /*
   Nome canónico: tira o que descreve o TIPO e mantém o que nomeia o LUGAR.
-  `POLO BASE XITEI` e `XITEI` convergem; `CASA NOVA` e `POLO BASE CASA NOVA`
-  também.
+  `POLO BASE XITEI`, `PB XITEI` e `XITEI` convergem; `CASA NOVA` e
+  `POLO BASE CASA NOVA` também.
 */
 export function nomeCanonico(nome) {
   let u = semAcento(nome).toUpperCase();
   u = u.replace(/\([^)]*\)/g, " ");
   u = u.replace(
-    /\b(POLO|POLOS|BASE|DSEI|DISTRITO|SANITARIO|ESPECIAL|INDIGENA|UBSI|UBS|CASAI|CASA|SAUDE|POSTO|UNIDADE|BASICA|APOIO|TIPO)\b/g,
+    /\b(PB|POLO|POLOS|BASE|DSEI|DISTRITO|SANITARIO|ESPECIAL|INDIGENA|UBSI|UBS|CASAI|CASA|SAUDE|POSTO|UNIDADE|BASICA|APOIO|TIPO)\b/g,
     " ",
   );
   u = u.replace(/\b(DE|DO|DA|DOS|DAS|E)\b/g, " ");
@@ -117,7 +117,7 @@ export const canonicoUtilizavel = (c) => Boolean(c) && c.length >= MIN_CANONICO;
 export function tipoDeclarado(nome) {
   const u = semAcento(nome).toUpperCase();
   if (/\bCASAI\b|CASA DE SAUDE/.test(u)) return "casai";
-  if (/\bPOLO\b/.test(u)) return "polo";
+  if (/\bPOLO\b|^\s*PB\b/.test(u)) return "polo";
   if (/\bUBSI\b|UNIDADE BASICA/.test(u)) return "ubsi";
   if (/\bPOSTO\b/.test(u)) return "posto";
   return "outro";
@@ -155,19 +155,74 @@ export function classificarDivergencia(km) {
 }
 
 /*
-  A COORDENADA DE EXIBIÇÃO — REGRA EXPLÍCITA
+  A COORDENADA DE EXIBIÇÃO — REGRA CONSERVADORA
 
-  Vence sempre a do `rede_cnes`. Não porque seja mais exata — ninguém verificou
-  isso —, mas porque é a única das duas com procedência declarada: veio de um
-  ficheiro do CNES, com código de estabelecimento. A do `lmap` entrou no sistema
-  por fora da aplicação e não há registo de quem a pôs lá nem de que fonte.
+  O CNES confirma a IDENTIDADE do estabelecimento, mas isso não prova que a
+  latitude/longitude cadastrada seja a posição física exata do Polo Base.
+  Em vários casos a coordenada da planilha de Lotações coincide com a do CNES,
+  portanto as duas não são confirmação independente.
 
-  Entre uma coordenada rastreável e uma anónima, exibir a rastreável é a escolha
-  defensável. A outra não se perde: fica em `coordenadas.lmap`, e a distância
-  entre as duas fica no próprio registo.
+  Quando o polo já existia no lmap, preserva-se a posição que estava sendo
+  exibida antes do enriquecimento e mantêm-se CNES/Lotações como fontes de
+  comparação. Só uma validação independente deve substituir a posição.
 */
 function coordenadaDeExibicao(polo, estab) {
+  if (Number.isFinite(polo?.lat) && Number.isFinite(polo?.lon)) {
+    return { lat: polo.lat, lon: polo.lon, fonte: "lmap" };
+  }
   return { lat: estab.lat, lon: estab.lon, fonte: "rede_cnes" };
+}
+
+function identificadorCnes(valor) {
+  return String(valor ?? "").trim();
+}
+
+function registrarReconciliacao({
+  dseiChave,
+  polo,
+  estab,
+  canonico,
+  tipoP,
+  reconciliados,
+  estabelecimentosUsados,
+}) {
+  const km = distanciaKm(polo.lat, polo.lon, estab.lat, estab.lon);
+  const exibicao = coordenadaDeExibicao(polo, estab);
+  const chave = estab.chave || estab.cnes;
+  if (chave) estabelecimentosUsados.add(chave);
+  reconciliados.push({
+    dsei: dseiChave,
+    canonico,
+    tipo: tipoP,
+    nome_exibicao: estab.nome || polo.nome,
+    nomes: { lmap: polo.nome, rede_cnes: estab.nome },
+    cnes: estab.cnes || polo.cnes || "",
+    cod: polo.cod ?? null,
+    origens: ["lmap", "rede_cnes"],
+    lat: exibicao.lat,
+    lon: exibicao.lon,
+    coordenada_exibida: exibicao.fonte,
+    coordenadas: {
+      lmap: { lat: polo.lat, lon: polo.lon },
+      lotacoes:
+        polo.coord_lotacoes &&
+        Number.isFinite(Number(polo.coord_lotacoes.lat)) &&
+        Number.isFinite(Number(polo.coord_lotacoes.lon))
+          ? {
+              lat: Number(polo.coord_lotacoes.lat),
+              lon: Number(polo.coord_lotacoes.lon),
+            }
+          : null,
+      rede_cnes: { lat: estab.lat, lon: estab.lon },
+    },
+    distancia_entre_fontes_km: km == null ? null : Number(km.toFixed(1)),
+    divergencia: classificarDivergencia(km),
+    validacao_coordenada: polo.coord_validacao || "pendente",
+    confirmacao_independente: polo.confirmacao_independente === true,
+    municipio: estab.municipio || polo.mun_lotacao || "",
+    uf: estab.uf || polo.uf || "",
+    reconciliacao: RECONCILIACAO.AUTOMATICA,
+  });
 }
 
 /**
@@ -194,18 +249,58 @@ export function reconciliarDsei({
   const polosSemPar = [];
   const estabelecimentosUsados = new Set();
 
-  // Índice por nome canónico, dentro deste DSEI e só dele.
   const porCanonico = new Map();
+  const porCnes = new Map();
   estabelecimentos.forEach((e) => {
     const c = nomeCanonico(e.nome);
-    if (!canonicoUtilizavel(c)) return;
-    if (!porCanonico.has(c)) porCanonico.set(c, []);
-    porCanonico.get(c).push(e);
+    if (canonicoUtilizavel(c)) {
+      if (!porCanonico.has(c)) porCanonico.set(c, []);
+      porCanonico.get(c).push(e);
+    }
+
+    const cnes = identificadorCnes(e.cnes || e.chave);
+    if (!cnes) return;
+    if (!porCnes.has(cnes)) porCnes.set(cnes, []);
+    porCnes.get(cnes).push(e);
   });
 
   polos.forEach((p) => {
     const canonico = nomeCanonico(p.nome);
     const tipoP = p.tipo || "polo";
+    const poloCnes = identificadorCnes(p.cnes);
+
+    // Quando o transporte CNES × Lotações já identificou o estabelecimento,
+    // o código CNES é a identidade mais forte. O nome pode conter ordinal,
+    // nome histórico ou razão cadastral diferente sem voltar a duplicar o ponto.
+    if (poloCnes && porCnes.has(poloCnes)) {
+      const mesmosCnes = porCnes
+        .get(poloCnes)
+        .filter((e) => tiposCompativeis(tipoP, tipoDeclarado(e.nome)));
+
+      if (mesmosCnes.length === 1) {
+        registrarReconciliacao({
+          dseiChave,
+          polo: p,
+          estab: mesmosCnes[0],
+          canonico,
+          tipoP,
+          reconciliados,
+          estabelecimentosUsados,
+        });
+        return;
+      }
+
+      if (mesmosCnes.length > 1) {
+        ambiguos.push({
+          dsei: dseiChave,
+          canonico,
+          polo: p,
+          candidatos: mesmosCnes,
+          motivo: `${mesmosCnes.length} estabelecimentos com o mesmo CNES no DSEI`,
+        });
+        return;
+      }
+    }
 
     if (!canonicoUtilizavel(canonico)) {
       polosSemPar.push({ polo: p, motivo: "nome canónico curto demais" });
@@ -244,32 +339,14 @@ export function reconciliarDsei({
       return;
     }
 
-    const e = compativeis[0];
-    const km = distanciaKm(p.lat, p.lon, e.lat, e.lon);
-    const exibicao = coordenadaDeExibicao(p, e);
-
-    estabelecimentosUsados.add(e.chave);
-    reconciliados.push({
-      dsei: dseiChave,
+    registrarReconciliacao({
+      dseiChave,
+      polo: p,
+      estab: compativeis[0],
       canonico,
-      tipo: tipoP,
-      nome_exibicao: e.nome || p.nome,
-      nomes: { lmap: p.nome, rede_cnes: e.nome },
-      cnes: e.cnes || "",
-      cod: p.cod ?? null,
-      origens: ["lmap", "rede_cnes"],
-      lat: exibicao.lat,
-      lon: exibicao.lon,
-      coordenada_exibida: exibicao.fonte,
-      coordenadas: {
-        lmap: { lat: p.lat, lon: p.lon },
-        rede_cnes: { lat: e.lat, lon: e.lon },
-      },
-      distancia_entre_fontes_km: km == null ? null : Number(km.toFixed(1)),
-      divergencia: classificarDivergencia(km),
-      municipio: e.municipio || "",
-      uf: e.uf || p.uf || "",
-      reconciliacao: RECONCILIACAO.AUTOMATICA,
+      tipoP,
+      reconciliados,
+      estabelecimentosUsados,
     });
   });
 

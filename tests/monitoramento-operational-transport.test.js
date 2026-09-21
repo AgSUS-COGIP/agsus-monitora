@@ -31,9 +31,7 @@ describe("monitoramento operational transport", () => {
     expect(
       builders.get("VW_MONITORAMENTO_INDIGENA_OPERACIONAL").select,
     ).toHaveBeenCalledWith("id,etapa,status");
-    expect(
-      builders.get("TB_MONITORAMENTO_INDIGENA").update,
-    ).toHaveBeenCalledWith({
+    expect(builders.get("TB_MONITORAMENTO_INDIGENA").update).toHaveBeenCalledWith({
       etapa: "Etapa manual",
     });
   });
@@ -59,7 +57,7 @@ describe("monitoramento operational transport", () => {
       client,
     );
 
-    client.from("configuracoes").select("*");
+    client.from("TB_CONFIGURACAO").select("*");
     expect(other.select).toHaveBeenCalledWith("*");
   });
 });

@@ -171,7 +171,11 @@ export function linhasDaReconciliacao(registro) {
   const origens = Array.isArray(registro?.origens) ? registro.origens : [];
   if (origens.length < 2) return [];
 
-  const linhas = ["<i>Registo unificado: lmap + CNES</i>"];
+  const linhas = [
+    registro?.coordenadas?.lotacoes
+      ? "<i>Registo unificado: mapa anterior + Lotações + CNES</i>"
+      : "<i>Registo unificado: mapa anterior + CNES</i>",
+  ];
   const km = registro?.distancia_entre_fontes_km;
 
   if (registro?.divergencia === DIVERGENCIA.PENDENTE) {
@@ -181,9 +185,13 @@ export function linhasDaReconciliacao(registro) {
         : `<b>Localização pendente de validação</b> — as fontes divergem ${km} km`,
     );
   } else if (registro?.divergencia === DIVERGENCIA.DIVERGENTE) {
-    linhas.push(`Fontes divergem ${km} km — exibida a coordenada do CNES`);
+    linhas.push(
+      `Fontes divergem ${km} km — preservada a coordenada anterior até validação independente`,
+    );
   } else if (km != null) {
-    linhas.push(`Fontes concordam (${km} km de diferença)`);
+    linhas.push(
+      `Diferença entre mapa anterior e CNES: ${km} km — proximidade não equivale a validação`,
+    );
   }
 
   return linhas;

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "npm run build:laravel && php laravel/artisan serve --host=127.0.0.1 --port=8000",
-    "build": "npm run check:auth-architecture && npm run check:rpc-contract && vite build && npm run check:dist-security && npm run check:bundle-size",
+    "build": "npm run aya:conhecimento && npm run check:auth-architecture && npm run check:rpc-contract && vite build && npm run check:dist-security && npm run check:bundle-size",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -28,7 +28,10 @@
     "build:laravel": "npm run build && node scripts/package-laravel.mjs",
     "test:php": "composer --working-dir=laravel test",
     "test:smoke:laravel": "node scripts/test-laravel-smoke.mjs",
-    "dev:frontend": "vite --host 0.0.0.0"
+    "dev:frontend": "vite --host 0.0.0.0",
+    "aya:bridge": "node scripts/aya-local-bridge.mjs",
+    "aya:servico": "node scripts/aya-servico.mjs",
+    "aya:conhecimento": "node scripts/compilar-conhecimento-aya.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
@@ -37,7 +40,7 @@
     "dompurify": "^3",
     "echarts": "^6",
     "lucide": "^0.577.0",
-    "pdfjs-dist": "^5.4.149",
+    "pdfjs-dist": "^6.2.108",
     "tesseract.js": "^6.0.1",
     "tom-select": "^2.4.3",
     "zod": "^4"

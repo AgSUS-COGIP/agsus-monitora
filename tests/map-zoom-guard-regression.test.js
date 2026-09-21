@@ -13,8 +13,8 @@ describe("faixa de zoom do mapa de Saude Indigena", () => {
     expect(guard).not.toContain("Math.min(requested, 3)");
   });
 
-  it("nao pede imagem de satelite nativa acima do nivel estavel", () => {
-    expect(switcher).toContain("SATELLITE_MAX_NATIVE_ZOOM = 17");
+  it("pede imagem de satelite nativa ate o limite visual do mapa", () => {
+    expect(switcher).toContain("SATELLITE_MAX_NATIVE_ZOOM = 19");
     expect(switcher).toContain("maxNativeZoom: SATELLITE_MAX_NATIVE_ZOOM");
     expect(switcher).toContain("MAP_MAX_ZOOM = 19");
   });

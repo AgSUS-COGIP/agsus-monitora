@@ -55,7 +55,7 @@ describe("fronteira de dados na administração de acesso", () => {
       app.indexOf("async function denyAccessRequest(id) {") + 900,
     );
     expect(fn).toContain("RPC_DENY_ACCESS_REQUEST");
-    expect(fn).not.toMatch(/\.from\("solicitacoes_acesso"\)/);
+    expect(fn).not.toMatch(/\.from\("TB_SOLICITACAO_ACESSO"\)/);
   });
 
   it("nenhuma decisão de acesso é gravada direto na tabela", () => {
