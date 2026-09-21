@@ -15,7 +15,10 @@ export function canEditCandidateStatus(profile, candidate) {
 }
 
 export function canEditSubJudice(profile, candidate) {
-  return Boolean(candidate?.lista_ativa && candidate?.sub_judice) && canManageSubJudice(profile);
+  return (
+    Boolean(candidate?.lista_ativa && candidate?.sub_judice) &&
+    canManageSubJudice(profile)
+  );
 }
 
 export function filterApprovedCandidates(rows, filters = {}) {
@@ -27,10 +30,17 @@ export function filterApprovedCandidates(rows, filters = {}) {
     if (editalId && String(row.edital_id) !== editalId) return false;
     if (cargo && text(row.cargo) !== cargo) return false;
     if (status === "__sem_status__" && text(row.status)) return false;
-    if (status && status !== "__sem_status__" && text(row.status) !== status) return false;
+    if (status && status !== "__sem_status__" && text(row.status) !== status)
+      return false;
     if (!query) return true;
-    return [row.nome, row.cargo, row.edital, row.unidade, row.modalidade, row.matricula]
-      .some((value) => low(value).includes(query));
+    return [
+      row.nome,
+      row.cargo,
+      row.edital,
+      row.unidade,
+      row.modalidade,
+      row.matricula,
+    ].some((value) => low(value).includes(query));
   });
 }
 
@@ -57,8 +67,9 @@ export function summarizeApprovedCandidates(rows, filters = {}) {
 }
 
 export function uniqueCandidateCargos(rows) {
-  return [...new Set((rows || []).map((row) => text(row.cargo)).filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return [
+    ...new Set((rows || []).map((row) => text(row.cargo)).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
 export function candidateCargosForEdital(rows, editalId) {
@@ -67,4 +78,36 @@ export function candidateCargosForEdital(rows, editalId) {
     ? (rows || []).filter((row) => String(row.edital_id) === selectedEditalId)
     : rows || [];
   return uniqueCandidateCargos(scopedRows);
+}
+
+/*
+  Paginação da tabela de aprovados.
+
+  A lista inteira continua em memória — paginar aqui não poupa rede, poupa o
+  desenho. Antes, cada filtragem montava uma string HTML com TODAS as linhas e a
+  atribuía de uma vez ao `innerHTML`; com milhares de candidatos isso trava o
+  navegador, e acontecia a cada tecla digitada na busca.
+
+  A função corrige a página em vez de confiar em quem chama: filtrar reduz o
+  total e a página aberta pode deixar de existir. Devolver uma fatia vazia nesse
+  caso faria a tabela parecer sem resultados quando há.
+*/
+export function paginateApprovedCandidates(rows, page = 1, pageSize = 50) {
+  const todas = Array.isArray(rows) ? rows : [];
+  const tamanho =
+    Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 50;
+  const totalPages = Math.max(1, Math.ceil(todas.length / tamanho));
+  const pedida = Number.isFinite(page) ? Math.floor(page) : 1;
+  const current = Math.min(Math.max(1, pedida), totalPages);
+  const start = (current - 1) * tamanho;
+  const pageRows = todas.slice(start, start + tamanho);
+  return {
+    rows: pageRows,
+    page: current,
+    totalPages,
+    total: todas.length,
+    // 1-indexados e para leitura humana; `to` é 0 quando não há nada.
+    from: pageRows.length ? start + 1 : 0,
+    to: start + pageRows.length,
+  };
 }

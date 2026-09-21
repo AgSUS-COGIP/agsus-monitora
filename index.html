@@ -1296,6 +1296,27 @@
                   </tbody>
                 </table>
               </div>
+              <div class="approved-paginacao" id="approvedPaginacao" hidden>
+                <span class="approved-paginacao-info" id="approvedPaginacaoInfo" aria-live="polite"></span>
+                <span class="approved-paginacao-controles">
+                  <label class="approved-paginacao-tamanho" for="approvedPageSize">
+                    Por página
+                    <select id="approvedPageSize">
+                      <option value="25">25</option>
+                      <option value="50" selected>50</option>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                    </select>
+                  </label>
+                  <button id="approvedPagePrev" class="btn secondary" type="button">
+                    <i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior
+                  </button>
+                  <span id="approvedPaginaAtual" class="approved-paginacao-pagina"></span>
+                  <button id="approvedPageNext" class="btn secondary" type="button">
+                    Próxima <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                  </button>
+                </span>
+              </div>
             </div>
           </section>
 
