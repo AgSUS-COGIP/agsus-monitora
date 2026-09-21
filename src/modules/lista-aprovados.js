@@ -15,14 +15,25 @@ import {
   summarizeApprovedCandidates,
   uniqueCandidateCargos,
   candidateCargosForEdital,
+  paginateApprovedCandidates,
 } from "../lib/lista-aprovados-rules.js";
 
 const BUCKET = "listas-aprovados";
 const MODEL_URL = "/modelos/modelo-importacao-lista-aprovados.xlsx";
 const CANDIDATES_PAGE_SIZE = 1000;
 
-const escMap = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
-const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => escMap[char]);
+/** Linhas por página da tabela. Tem de existir como opção em `#approvedPageSize`. */
+const DEFAULT_PAGE_SIZE = 50;
+
+const escMap = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#039;",
+};
+const esc = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => escMap[char]);
 const attr = (value) => esc(value).replaceAll("`", "&#096;");
 const text = (value) => String(value ?? "").trim();
 const low = (value) => text(value).toLocaleLowerCase("pt-BR");
@@ -30,22 +41,27 @@ const low = (value) => text(value).toLocaleLowerCase("pt-BR");
 function formatScore(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return "-";
-  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(number);
+  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(
+    number,
+  );
 }
 
 function statusClass(status) {
   if (status === "Contratado") return "success";
-  if (status === "Desistente" || status === "Documentação Rejeitada") return "danger";
+  if (status === "Desistente" || status === "Documentação Rejeitada")
+    return "danger";
   if (status === "Migração") return "info";
   return "neutral";
 }
 
 function safeFileName(name) {
-  return text(name)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "lista-aprovados.xlsx";
+  return (
+    text(name)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "lista-aprovados.xlsx"
+  );
 }
 
 function uuid() {
@@ -65,6 +81,15 @@ export function createListaAprovadosController(options = {}) {
     currentStatusCandidateId: "",
     currentImportEditalId: "",
     currentImportEditalLabel: "",
+    /*
+      Página da tabela, começando em 1. A lista inteira continua em memória — o
+      que a paginação corta é o custo de DESENHAR: antes cada filtragem montava
+      uma string HTML com todas as linhas e a atribuía de uma vez ao `innerHTML`.
+      Com milhares de candidatos isso trava o navegador, e acontecia a cada tecla
+      digitada na busca, que escuta o evento `input`.
+    */
+    page: 1,
+    pageSize: DEFAULT_PAGE_SIZE,
   };
 
   function profile() {
@@ -72,11 +97,15 @@ export function createListaAprovadosController(options = {}) {
   }
 
   function byId(id) {
-    return state.candidates.find((row) => String(row.candidato_id) === String(id));
+    return state.candidates.find(
+      (row) => String(row.candidato_id) === String(id),
+    );
   }
 
   function listByEdital(editalId) {
-    return state.lists.find((row) => String(row.edital_id) === String(editalId));
+    return state.lists.find(
+      (row) => String(row.edital_id) === String(editalId),
+    );
   }
 
   function showModal(id, show = true) {
@@ -89,20 +118,31 @@ export function createListaAprovadosController(options = {}) {
     if (!edital || !cargo) return;
     const editalValue = edital.value;
     const cargoValue = cargo.value;
-    const editais = [...new Map(state.lists.map((row) => [String(row.edital_id), row])).values()]
-      .sort((a, b) => {
-        const editalOrder = text(a.edital).localeCompare(text(b.edital), "pt-BR");
-        if (editalOrder !== 0) return editalOrder;
-        return text(a.unidade).localeCompare(text(b.unidade), "pt-BR");
-      });
+    const editais = [
+      ...new Map(
+        state.lists.map((row) => [String(row.edital_id), row]),
+      ).values(),
+    ].sort((a, b) => {
+      const editalOrder = text(a.edital).localeCompare(text(b.edital), "pt-BR");
+      if (editalOrder !== 0) return editalOrder;
+      return text(a.unidade).localeCompare(text(b.unidade), "pt-BR");
+    });
     edital.innerHTML = `<option value="">Todos os editais</option>${editais
-      .map((row) => `<option value="${attr(row.edital_id)}">${esc(row.edital || "Edital")} · ${esc(row.unidade || "")}</option>`)
+      .map(
+        (row) =>
+          `<option value="${attr(row.edital_id)}">${esc(row.edital || "Edital")} · ${esc(row.unidade || "")}</option>`,
+      )
       .join("")}`;
-    if ([...edital.options].some((option) => option.value === editalValue)) edital.value = editalValue;
-    cargo.innerHTML = `<option value="">Todos os cargos</option>${candidateCargosForEdital(state.candidates, editalValue)
+    if ([...edital.options].some((option) => option.value === editalValue))
+      edital.value = editalValue;
+    cargo.innerHTML = `<option value="">Todos os cargos</option>${candidateCargosForEdital(
+      state.candidates,
+      editalValue,
+    )
       .map((value) => `<option value="${attr(value)}">${esc(value)}</option>`)
       .join("")}`;
-    if ([...cargo.options].some((option) => option.value === cargoValue)) cargo.value = cargoValue;
+    if ([...cargo.options].some((option) => option.value === cargoValue))
+      cargo.value = cargoValue;
   }
 
   function currentFilters() {
@@ -115,7 +155,10 @@ export function createListaAprovadosController(options = {}) {
   }
 
   function renderKpis() {
-    const summary = summarizeApprovedCandidates(state.candidates, currentFilters());
+    const summary = summarizeApprovedCandidates(
+      state.candidates,
+      currentFilters(),
+    );
     const values = {
       approvedKpiTotal: summary.total,
       approvedKpiContratado: summary.contratado,
@@ -130,27 +173,66 @@ export function createListaAprovadosController(options = {}) {
     });
   }
 
+  /*
+    Atualiza a barra de paginação a partir do resultado de
+    `paginateApprovedCandidates`. Some quando tudo cabe numa página: com 30
+    candidatos, controlos de página são ruído.
+  */
+  function renderPaginacao({ total, page, totalPages, from, to }) {
+    const barra = document.getElementById("approvedPaginacao");
+    if (!barra) return;
+    barra.hidden = totalPages <= 1;
+    if (barra.hidden) return;
+
+    const info = document.getElementById("approvedPaginacaoInfo");
+    if (info)
+      info.textContent = `Mostrando ${from}–${to} de ${total} candidatos`;
+    const atual = document.getElementById("approvedPaginaAtual");
+    if (atual) atual.textContent = `Página ${page} de ${totalPages}`;
+    const anterior = document.getElementById("approvedPagePrev");
+    if (anterior) anterior.disabled = page <= 1;
+    const proxima = document.getElementById("approvedPageNext");
+    if (proxima) proxima.disabled = page >= totalPages;
+    const tamanho = document.getElementById("approvedPageSize");
+    if (tamanho && Number(tamanho.value) !== state.pageSize)
+      tamanho.value = String(state.pageSize);
+  }
+
   function renderRows() {
     const body = document.getElementById("approvedRows");
     const count = document.getElementById("approvedCount");
     if (!body) return;
-    const rows = filterApprovedCandidates(state.candidates, currentFilters());
-    if (count) count.textContent = `${rows.length} candidato${rows.length === 1 ? "" : "s"}`;
+    const todas = filterApprovedCandidates(state.candidates, currentFilters());
+    if (count)
+      count.textContent = `${todas.length} candidato${todas.length === 1 ? "" : "s"}`;
+
+    // `paginate` corrige a página: filtrar pode ter encurtado a lista para
+    // aquém da que estava aberta.
+    const pagina = paginateApprovedCandidates(
+      todas,
+      state.page,
+      state.pageSize,
+    );
+    state.page = pagina.page;
+    const rows = pagina.rows;
+    renderPaginacao(pagina);
+
     body.innerHTML = rows.length
-      ? rows.map((row) => {
-          const canStatus = canEditCandidateStatus(profile(), row);
-          const canRemove = canEditSubJudice(profile(), row);
-          const inactive = !row.lista_ativa;
-          const status = text(row.status);
-          const action = canStatus
-            ? `<button class="btn icon outline" type="button" data-approved-action="status" data-candidate-id="${attr(row.candidato_id)}" title="Alterar status"><i class="fa-solid fa-pen"></i></button>`
-            : inactive && canChangeCandidateStatus(profile())
-              ? `<button class="btn icon outline" type="button" disabled title="Lista inativa"><i class="fa-solid fa-lock"></i></button>`
-              : `<span class="approved-no-action">—</span>`;
-          const remove = canRemove
-            ? `<button class="btn icon red" type="button" data-approved-action="remove-subjudice" data-candidate-id="${attr(row.candidato_id)}" title="Remover sub judice"><i class="fa-solid fa-user-minus"></i></button>`
-            : "";
-          return `<tr>
+      ? rows
+          .map((row) => {
+            const canStatus = canEditCandidateStatus(profile(), row);
+            const canRemove = canEditSubJudice(profile(), row);
+            const inactive = !row.lista_ativa;
+            const status = text(row.status);
+            const action = canStatus
+              ? `<button class="btn icon outline" type="button" data-approved-action="status" data-candidate-id="${attr(row.candidato_id)}" title="Alterar status"><i class="fa-solid fa-pen"></i></button>`
+              : inactive && canChangeCandidateStatus(profile())
+                ? `<button class="btn icon outline" type="button" disabled title="Lista inativa"><i class="fa-solid fa-lock"></i></button>`
+                : `<span class="approved-no-action">—</span>`;
+            const remove = canRemove
+              ? `<button class="btn icon red" type="button" data-approved-action="remove-subjudice" data-candidate-id="${attr(row.candidato_id)}" title="Remover sub judice"><i class="fa-solid fa-user-minus"></i></button>`
+              : "";
+            return `<tr>
             <td>${esc(row.cargo || "-")}</td>
             <td class="num">${row.classificacao ?? "-"}</td>
             <td class="num">${esc(formatScore(row.nota))}</td>
@@ -158,7 +240,8 @@ export function createListaAprovadosController(options = {}) {
             <td><span class="approved-status ${statusClass(status)}">${esc(status || "Sem status")}</span></td>
             <td class="approved-actions">${action}${remove}</td>
           </tr>`;
-        }).join("")
+          })
+          .join("")
       : `<tr><td colspan="6" class="approved-empty">Nenhum candidato encontrado para os filtros selecionados.</td></tr>`;
   }
 
@@ -169,7 +252,9 @@ export function createListaAprovadosController(options = {}) {
     button.classList.toggle("hidden", !allowed);
     const hasActiveList = state.lists.some((item) => item.ativo);
     button.disabled = allowed && !hasActiveList;
-    button.title = hasActiveList ? "Incluir candidato sub judice" : "É necessário ter uma lista ativa";
+    button.title = hasActiveList
+      ? "Incluir candidato sub judice"
+      : "É necessário ter uma lista ativa";
   }
 
   function render() {
@@ -200,7 +285,8 @@ export function createListaAprovadosController(options = {}) {
 
   async function refresh(options = {}) {
     if (!sb) return false;
-    if (options.loader !== false) loader(true, "Lista de aprovados", "Carregando candidatos...", 55);
+    if (options.loader !== false)
+      loader(true, "Lista de aprovados", "Carregando candidatos...", 55);
     const [listsResult, candidatesResult] = await Promise.all([
       sb.rpc("listar_listas_aprovados"),
       fetchAllCandidates(),
@@ -208,14 +294,23 @@ export function createListaAprovadosController(options = {}) {
     if (options.loader !== false) loader(false);
     const error = listsResult.error || candidatesResult.error;
     if (error) {
-      toast(`Erro ao carregar lista de aprovados: ${error.message || error}`, "error");
+      toast(
+        `Erro ao carregar lista de aprovados: ${error.message || error}`,
+        "error",
+      );
       return false;
     }
     state.lists = Array.isArray(listsResult.data) ? listsResult.data : [];
-    state.candidates = Array.isArray(candidatesResult.data) ? candidatesResult.data : [];
+    state.candidates = Array.isArray(candidatesResult.data)
+      ? candidatesResult.data
+      : [];
     state.loaded = true;
     render();
-    document.dispatchEvent(new CustomEvent("agsus:listas-aprovados-loaded", { detail: { lists: state.lists } }));
+    document.dispatchEvent(
+      new CustomEvent("agsus:listas-aprovados-loaded", {
+        detail: { lists: state.lists },
+      }),
+    );
     return true;
   }
 
@@ -227,13 +322,22 @@ export function createListaAprovadosController(options = {}) {
   function openStatusModal(candidateId) {
     const candidate = byId(candidateId);
     if (!candidate || !canEditCandidateStatus(profile(), candidate)) {
-      return toast(candidate?.lista_ativa === false ? "A lista está inativa." : "Sem permissão para alterar o status.", "warn");
+      return toast(
+        candidate?.lista_ativa === false
+          ? "A lista está inativa."
+          : "Sem permissão para alterar o status.",
+        "warn",
+      );
     }
     state.currentStatusCandidateId = String(candidateId);
-    document.getElementById("approvedStatusCandidate").textContent = `${candidate.nome} · ${candidate.cargo}`;
-    document.getElementById("approvedStatusSelect").value = candidate.status || "";
-    document.getElementById("approvedStatusSei").value = candidate.processo_sei || "";
-    document.getElementById("approvedStatusMatricula").value = candidate.matricula || "";
+    document.getElementById("approvedStatusCandidate").textContent =
+      `${candidate.nome} · ${candidate.cargo}`;
+    document.getElementById("approvedStatusSelect").value =
+      candidate.status || "";
+    document.getElementById("approvedStatusSei").value =
+      candidate.processo_sei || "";
+    document.getElementById("approvedStatusMatricula").value =
+      candidate.matricula || "";
     updateStatusRequirement();
     showModal("approvedStatusModal", true);
   }
@@ -244,7 +348,10 @@ export function createListaAprovadosController(options = {}) {
     const hint = document.getElementById("approvedMatriculaHint");
     const required = statusNeedsMatricula(select?.value || "");
     if (input) input.required = required;
-    if (hint) hint.textContent = required ? "Obrigatória para este status." : "Opcional para este status.";
+    if (hint)
+      hint.textContent = required
+        ? "Obrigatória para este status."
+        : "Opcional para este status.";
   }
 
   async function saveCandidateStatus() {
@@ -252,7 +359,9 @@ export function createListaAprovadosController(options = {}) {
     if (!candidate || !canEditCandidateStatus(profile(), candidate)) return;
     const status = text(document.getElementById("approvedStatusSelect")?.value);
     const processo = text(document.getElementById("approvedStatusSei")?.value);
-    const matricula = text(document.getElementById("approvedStatusMatricula")?.value);
+    const matricula = text(
+      document.getElementById("approvedStatusMatricula")?.value,
+    );
     if (statusNeedsMatricula(status) && !matricula) {
       return toast("Informe a matrícula para Contratado ou Migração.", "warn");
     }
@@ -264,7 +373,11 @@ export function createListaAprovadosController(options = {}) {
       p_matricula: matricula || null,
     });
     loader(false);
-    if (error) return toast(`Erro ao alterar status: ${error.message || error}`, "error");
+    if (error)
+      return toast(
+        `Erro ao alterar status: ${error.message || error}`,
+        "error",
+      );
     showModal("approvedStatusModal", false);
     toast("Status do candidato atualizado.");
     await refresh({ loader: false });
@@ -277,7 +390,12 @@ export function createListaAprovadosController(options = {}) {
   function populateSubJudiceEditais() {
     const select = document.getElementById("subJudiceEdital");
     if (!select) return;
-    select.innerHTML = activeLists().map((item) => `<option value="${attr(item.edital_id)}">${esc(item.edital || "Edital")} · ${esc(item.unidade || "")}</option>`).join("");
+    select.innerHTML = activeLists()
+      .map(
+        (item) =>
+          `<option value="${attr(item.edital_id)}">${esc(item.edital || "Edital")} · ${esc(item.unidade || "")}</option>`,
+      )
+      .join("");
     populateSubJudiceCargos();
   }
 
@@ -285,13 +403,21 @@ export function createListaAprovadosController(options = {}) {
     const editalId = document.getElementById("subJudiceEdital")?.value || "";
     const select = document.getElementById("subJudiceCargo");
     if (!select) return;
-    const cargos = uniqueCandidateCargos(state.candidates.filter((row) => String(row.edital_id) === String(editalId)));
-    select.innerHTML = cargos.map((cargo) => `<option value="${attr(cargo)}">${esc(cargo)}</option>`).join("");
+    const cargos = uniqueCandidateCargos(
+      state.candidates.filter(
+        (row) => String(row.edital_id) === String(editalId),
+      ),
+    );
+    select.innerHTML = cargos
+      .map((cargo) => `<option value="${attr(cargo)}">${esc(cargo)}</option>`)
+      .join("");
   }
 
   function openSubJudiceModal() {
-    if (!canManageSubJudice(profile())) return toast("Sem permissão para incluir sub judice.", "warn");
-    if (!activeLists().length) return toast("Não há lista ativa para receber sub judice.", "warn");
+    if (!canManageSubJudice(profile()))
+      return toast("Sem permissão para incluir sub judice.", "warn");
+    if (!activeLists().length)
+      return toast("Não há lista ativa para receber sub judice.", "warn");
     document.getElementById("subJudiceNome").value = "";
     document.getElementById("subJudiceNota").value = "";
     populateSubJudiceEditais();
@@ -302,7 +428,9 @@ export function createListaAprovadosController(options = {}) {
     const editalId = text(document.getElementById("subJudiceEdital")?.value);
     const cargo = text(document.getElementById("subJudiceCargo")?.value);
     const nome = text(document.getElementById("subJudiceNome")?.value);
-    const notaRaw = text(document.getElementById("subJudiceNota")?.value).replace(",", ".");
+    const notaRaw = text(
+      document.getElementById("subJudiceNota")?.value,
+    ).replace(",", ".");
     const nota = Number(notaRaw);
     if (!editalId || !cargo || !nome || !Number.isFinite(nota) || nota < 0) {
       return toast("Preencha edital, cargo, nome e uma nota válida.", "warn");
@@ -315,7 +443,11 @@ export function createListaAprovadosController(options = {}) {
       p_nota: nota,
     });
     loader(false);
-    if (error) return toast(`Erro ao incluir sub judice: ${error.message || error}`, "error");
+    if (error)
+      return toast(
+        `Erro ao incluir sub judice: ${error.message || error}`,
+        "error",
+      );
     showModal("subJudiceModal", false);
     toast("Candidato sub judice incluído.");
     await refresh({ loader: false });
@@ -324,11 +456,22 @@ export function createListaAprovadosController(options = {}) {
   async function removeSubJudice(candidateId) {
     const candidate = byId(candidateId);
     if (!candidate || !canEditSubJudice(profile(), candidate)) return;
-    if (!window.confirm(`Remover ${candidate.nome} da lista como sub judice? O histórico será preservado.`)) return;
+    if (
+      !window.confirm(
+        `Remover ${candidate.nome} da lista como sub judice? O histórico será preservado.`,
+      )
+    )
+      return;
     loader(true, "Sub judice", "Removendo candidato...", 60);
-    const { error } = await sb.rpc("remover_sub_judice", { p_candidato_id: candidate.candidato_id });
+    const { error } = await sb.rpc("remover_sub_judice", {
+      p_candidato_id: candidate.candidato_id,
+    });
     loader(false);
-    if (error) return toast(`Erro ao remover sub judice: ${error.message || error}`, "error");
+    if (error)
+      return toast(
+        `Erro ao remover sub judice: ${error.message || error}`,
+        "error",
+      );
     toast("Sub judice removido da lista vigente.");
     await refresh({ loader: false });
   }
@@ -339,16 +482,20 @@ export function createListaAprovadosController(options = {}) {
     const role = normalizeRole(profile());
     const canImport = canImportApprovedList(profile());
     const canReplace = canReplaceApprovedList(profile());
-    document.getElementById("approvedImportEdital").textContent = state.currentImportEditalLabel || "Edital";
+    document.getElementById("approvedImportEdital").textContent =
+      state.currentImportEditalLabel || "Edital";
     const stateText = document.getElementById("approvedImportCurrentState");
     const fileRow = document.getElementById("approvedImportFileRow");
     const importButton = document.getElementById("approvedImportSubmit");
     const removeButton = document.getElementById("approvedImportRemove");
-    const downloadCurrent = document.getElementById("approvedImportDownloadCurrent");
+    const downloadCurrent = document.getElementById(
+      "approvedImportDownloadCurrent",
+    );
     const activeSelect = document.getElementById("approvedImportActive");
     const fileInput = document.getElementById("approvedImportFile");
     if (fileInput) fileInput.value = "";
-    if (activeSelect) activeSelect.value = list?.ativo === false ? "false" : "true";
+    if (activeSelect)
+      activeSelect.value = list?.ativo === false ? "false" : "true";
     if (stateText) {
       stateText.classList.toggle("has-list", Boolean(list));
       stateText.innerHTML = list
@@ -373,25 +520,35 @@ export function createListaAprovadosController(options = {}) {
           ${canReplace ? `<div class="approved-import-replace-warning"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>Atenção: enviar um novo XLSX substituirá a lista atual.</span></div>` : ""}`
         : `<span class="approved-status neutral">Sem lista importada</span>`;
     }
-    if (fileRow) fileRow.classList.toggle("hidden", Boolean(list && !canReplace));
+    if (fileRow)
+      fileRow.classList.toggle("hidden", Boolean(list && !canReplace));
     if (importButton) {
-      importButton.classList.toggle("hidden", !canImport || Boolean(list && !canReplace));
-      importButton.innerHTML = list ? '<i class="fa-solid fa-rotate"></i> Substituir XLSX' : '<i class="fa-solid fa-file-import"></i> Importar lista';
+      importButton.classList.toggle(
+        "hidden",
+        !canImport || Boolean(list && !canReplace),
+      );
+      importButton.innerHTML = list
+        ? '<i class="fa-solid fa-rotate"></i> Substituir XLSX'
+        : '<i class="fa-solid fa-file-import"></i> Importar lista';
     }
-    if (removeButton) removeButton.classList.toggle("hidden", !list || !canReplace);
+    if (removeButton)
+      removeButton.classList.toggle("hidden", !list || !canReplace);
     if (downloadCurrent) downloadCurrent.classList.toggle("hidden", !list);
     const toggleButton = document.getElementById("approvedImportToggleActive");
-    if (toggleButton) toggleButton.classList.toggle("hidden", !list || !canImport);
+    if (toggleButton)
+      toggleButton.classList.toggle("hidden", !list || !canImport);
     const note = document.getElementById("approvedImportPermissionNote");
     if (note) {
-      note.textContent = list && !canReplace
-        ? `A lista já foi importada. O perfil ${role || "atual"} pode ativar/inativar, mas somente admin pode substituir ou remover o XLSX.`
-        : "A importação cria candidatos vinculados a este edital pelo ID do registro da Equipe Núcleo.";
+      note.textContent =
+        list && !canReplace
+          ? `A lista já foi importada. O perfil ${role || "atual"} pode ativar/inativar, mas somente admin pode substituir ou remover o XLSX.`
+          : "A importação cria candidatos vinculados a este edital pelo ID do registro da Equipe Núcleo.";
     }
   }
 
   async function openImportModal(editalId, editalLabel = "") {
-    if (!canImportApprovedList(profile())) return toast("Sem permissão para gerir lista de aprovados.", "warn");
+    if (!canImportApprovedList(profile()))
+      return toast("Sem permissão para gerir lista de aprovados.", "warn");
     if (!state.loaded) await refresh({ loader: false });
     state.currentImportEditalId = String(editalId || "");
     state.currentImportEditalLabel = editalLabel;
@@ -402,11 +559,17 @@ export function createListaAprovadosController(options = {}) {
   async function importList() {
     const editalId = state.currentImportEditalId;
     const current = listByEdital(editalId);
-    if (current && !canReplaceApprovedList(profile())) return toast("Somente admin pode substituir uma lista existente.", "warn");
+    if (current && !canReplaceApprovedList(profile()))
+      return toast(
+        "Somente admin pode substituir uma lista existente.",
+        "warn",
+      );
     const file = document.getElementById("approvedImportFile")?.files?.[0];
     if (!file) return toast("Selecione o arquivo XLSX.", "warn");
-    if (file.size > 10 * 1024 * 1024) return toast("O XLSX deve ter no máximo 10 MB.", "warn");
-    const active = document.getElementById("approvedImportActive")?.value !== "false";
+    if (file.size > 10 * 1024 * 1024)
+      return toast("O XLSX deve ter no máximo 10 MB.", "warn");
+    const active =
+      document.getElementById("approvedImportActive")?.value !== "false";
     let candidates;
     try {
       loader(true, "Lista de aprovados", "Validando o XLSX...", 25);
@@ -416,14 +579,23 @@ export function createListaAprovadosController(options = {}) {
       return toast(`Arquivo inválido: ${error.message || error}`, "error");
     }
     const path = `${editalId}/${Date.now()}-${uuid()}-${safeFileName(file.name)}`;
-    loader(true, "Lista de aprovados", `Enviando ${candidates.length} candidato(s)...`, 55);
+    loader(
+      true,
+      "Lista de aprovados",
+      `Enviando ${candidates.length} candidato(s)...`,
+      55,
+    );
     const upload = await sb.storage.from(BUCKET).upload(path, file, {
-      contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      contentType:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       upsert: false,
     });
     if (upload.error) {
       loader(false);
-      return toast(`Erro ao anexar XLSX: ${upload.error.message || upload.error}`, "error");
+      return toast(
+        `Erro ao anexar XLSX: ${upload.error.message || upload.error}`,
+        "error",
+      );
     }
     const result = await sb.rpc("importar_lista_aprovados", {
       p_edital_id: editalId,
@@ -434,7 +606,11 @@ export function createListaAprovadosController(options = {}) {
       p_substituir: Boolean(current),
     });
     loader(false);
-    if (result.error) return toast(`Erro ao importar lista: ${result.error.message || result.error}`, "error");
+    if (result.error)
+      return toast(
+        `Erro ao importar lista: ${result.error.message || result.error}`,
+        "error",
+      );
     showModal("approvedImportModal", false);
     toast(`${candidates.length} candidato(s) importados com sucesso.`);
     await refresh({ loader: false });
@@ -444,12 +620,29 @@ export function createListaAprovadosController(options = {}) {
   async function toggleActiveList() {
     const list = listByEdital(state.currentImportEditalId);
     if (!list) return;
-    const active = document.getElementById("approvedImportActive")?.value !== "false";
-    loader(true, "Lista de aprovados", active ? "Ativando lista..." : "Inativando lista...", 60);
-    const { error } = await sb.rpc("definir_lista_aprovados_ativa", { p_lista_id: list.lista_id, p_ativo: active });
+    const active =
+      document.getElementById("approvedImportActive")?.value !== "false";
+    loader(
+      true,
+      "Lista de aprovados",
+      active ? "Ativando lista..." : "Inativando lista...",
+      60,
+    );
+    const { error } = await sb.rpc("definir_lista_aprovados_ativa", {
+      p_lista_id: list.lista_id,
+      p_ativo: active,
+    });
     loader(false);
-    if (error) return toast(`Erro ao alterar a lista: ${error.message || error}`, "error");
-    toast(active ? "Lista ativada." : "Lista inativada. Os candidatos ficaram bloqueados para alteração.");
+    if (error)
+      return toast(
+        `Erro ao alterar a lista: ${error.message || error}`,
+        "error",
+      );
+    toast(
+      active
+        ? "Lista ativada."
+        : "Lista inativada. Os candidatos ficaram bloqueados para alteração.",
+    );
     await refresh({ loader: false });
     renderImportModal();
   }
@@ -457,11 +650,19 @@ export function createListaAprovadosController(options = {}) {
   async function removeList() {
     const list = listByEdital(state.currentImportEditalId);
     if (!list || !canReplaceApprovedList(profile())) return;
-    if (!window.confirm("Remover a lista vigente deste edital? Os dados permanecerão preservados no histórico.")) return;
+    if (
+      !window.confirm(
+        "Remover a lista vigente deste edital? Os dados permanecerão preservados no histórico.",
+      )
+    )
+      return;
     loader(true, "Lista de aprovados", "Arquivando lista vigente...", 60);
-    const { error } = await sb.rpc("remover_lista_aprovados", { p_lista_id: list.lista_id });
+    const { error } = await sb.rpc("remover_lista_aprovados", {
+      p_lista_id: list.lista_id,
+    });
     loader(false);
-    if (error) return toast(`Erro ao remover lista: ${error.message || error}`, "error");
+    if (error)
+      return toast(`Erro ao remover lista: ${error.message || error}`, "error");
     toast("Lista removida da visão vigente. O histórico foi preservado.");
     await refresh({ loader: false });
     renderImportModal();
@@ -471,8 +672,11 @@ export function createListaAprovadosController(options = {}) {
   async function downloadCurrentFile() {
     const list = listByEdital(state.currentImportEditalId);
     if (!list?.arquivo_path) return;
-    const { data, error } = await sb.storage.from(BUCKET).download(list.arquivo_path);
-    if (error) return toast(`Erro ao baixar XLSX: ${error.message || error}`, "error");
+    const { data, error } = await sb.storage
+      .from(BUCKET)
+      .download(list.arquivo_path);
+    if (error)
+      return toast(`Erro ao baixar XLSX: ${error.message || error}`, "error");
     const url = URL.createObjectURL(data);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -482,41 +686,117 @@ export function createListaAprovadosController(options = {}) {
   }
 
   function bind() {
+    /*
+      Sempre volta à primeira página. Filtrar estando na página 7 e continuar na
+      7 mostra uma tabela vazia, ou um pedaço do meio do resultado — nos dois
+      casos parece que a busca não encontrou nada.
+    */
     const renderFilteredView = () => {
+      state.page = 1;
       renderKpis();
       renderRows();
     };
-    document.getElementById("approvedSearch")?.addEventListener("input", renderFilteredView);
-    document.getElementById("approvedFilterEdital")?.addEventListener("change", () => {
-      fillFilters();
-      renderFilteredView();
-    });
-    ["approvedFilterCargo", "approvedFilterStatus"].forEach((id) => {
-      document.getElementById(id)?.addEventListener("change", renderFilteredView);
-    });
-    document.getElementById("approvedRows")?.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-approved-action]");
-      if (!button) return;
-      if (button.dataset.approvedAction === "status") openStatusModal(button.dataset.candidateId);
-      if (button.dataset.approvedAction === "remove-subjudice") void removeSubJudice(button.dataset.candidateId);
-    });
-    document.getElementById("approvedAddSubJudiceBtn")?.addEventListener("click", openSubJudiceModal);
-    document.getElementById("subJudiceEdital")?.addEventListener("change", populateSubJudiceCargos);
-    document.getElementById("subJudiceSave")?.addEventListener("click", () => void saveSubJudice());
-    document.getElementById("approvedStatusSelect")?.addEventListener("change", updateStatusRequirement);
-    document.getElementById("approvedStatusSave")?.addEventListener("click", () => void saveCandidateStatus());
-    document.getElementById("approvedImportSubmit")?.addEventListener("click", () => void importList());
-    document.getElementById("approvedImportToggleActive")?.addEventListener("click", () => void toggleActiveList());
-    document.getElementById("approvedImportRemove")?.addEventListener("click", () => void removeList());
-    document.getElementById("approvedImportDownloadCurrent")?.addEventListener("click", () => void downloadCurrentFile());
-    document.querySelectorAll("[data-close-approved-modal]").forEach((button) => {
-      button.addEventListener("click", () => showModal(button.dataset.closeApprovedModal, false));
-    });
-    ["approvedStatusModal", "subJudiceModal", "approvedImportModal"].forEach((id) => {
-      document.getElementById(id)?.addEventListener("click", (event) => {
-        if (event.target.id === id) showModal(id, false);
+
+    const irParaPagina = (destino) => {
+      const todas = filterApprovedCandidates(
+        state.candidates,
+        currentFilters(),
+      );
+      const alvo = paginateApprovedCandidates(
+        todas,
+        destino,
+        state.pageSize,
+      ).page;
+      if (alvo === state.page) return;
+      state.page = alvo;
+      renderRows();
+      // Trocar de página com a tabela rolada deixaria a pessoa a meio da lista.
+      document
+        .getElementById("approvedRows")
+        ?.closest(".table-wrap")
+        ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    };
+
+    document
+      .getElementById("approvedPagePrev")
+      ?.addEventListener("click", () => irParaPagina(state.page - 1));
+    document
+      .getElementById("approvedPageNext")
+      ?.addEventListener("click", () => irParaPagina(state.page + 1));
+    document
+      .getElementById("approvedPageSize")
+      ?.addEventListener("change", (evento) => {
+        const valor = Number(evento.target.value);
+        if (!Number.isFinite(valor) || valor <= 0) return;
+        state.pageSize = valor;
+        state.page = 1;
+        renderRows();
       });
+    document
+      .getElementById("approvedSearch")
+      ?.addEventListener("input", renderFilteredView);
+    document
+      .getElementById("approvedFilterEdital")
+      ?.addEventListener("change", () => {
+        fillFilters();
+        renderFilteredView();
+      });
+    ["approvedFilterCargo", "approvedFilterStatus"].forEach((id) => {
+      document
+        .getElementById(id)
+        ?.addEventListener("change", renderFilteredView);
     });
+    document
+      .getElementById("approvedRows")
+      ?.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-approved-action]");
+        if (!button) return;
+        if (button.dataset.approvedAction === "status")
+          openStatusModal(button.dataset.candidateId);
+        if (button.dataset.approvedAction === "remove-subjudice")
+          void removeSubJudice(button.dataset.candidateId);
+      });
+    document
+      .getElementById("approvedAddSubJudiceBtn")
+      ?.addEventListener("click", openSubJudiceModal);
+    document
+      .getElementById("subJudiceEdital")
+      ?.addEventListener("change", populateSubJudiceCargos);
+    document
+      .getElementById("subJudiceSave")
+      ?.addEventListener("click", () => void saveSubJudice());
+    document
+      .getElementById("approvedStatusSelect")
+      ?.addEventListener("change", updateStatusRequirement);
+    document
+      .getElementById("approvedStatusSave")
+      ?.addEventListener("click", () => void saveCandidateStatus());
+    document
+      .getElementById("approvedImportSubmit")
+      ?.addEventListener("click", () => void importList());
+    document
+      .getElementById("approvedImportToggleActive")
+      ?.addEventListener("click", () => void toggleActiveList());
+    document
+      .getElementById("approvedImportRemove")
+      ?.addEventListener("click", () => void removeList());
+    document
+      .getElementById("approvedImportDownloadCurrent")
+      ?.addEventListener("click", () => void downloadCurrentFile());
+    document
+      .querySelectorAll("[data-close-approved-modal]")
+      .forEach((button) => {
+        button.addEventListener("click", () =>
+          showModal(button.dataset.closeApprovedModal, false),
+        );
+      });
+    ["approvedStatusModal", "subJudiceModal", "approvedImportModal"].forEach(
+      (id) => {
+        document.getElementById(id)?.addEventListener("click", (event) => {
+          if (event.target.id === id) showModal(id, false);
+        });
+      },
+    );
   }
 
   bind();

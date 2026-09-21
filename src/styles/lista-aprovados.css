@@ -21,3 +21,18 @@
 .approved-import-replace-warning i{color:#d38800}
 @media(max-width:700px){.approved-import-summary-head{align-items:flex-start;flex-wrap:wrap}.approved-import-summary-copy{min-width:calc(100% - 54px)}.approved-import-summary-head>.approved-status{margin-left:52px}.approved-import-summary-details{grid-template-columns:1fr}.approved-import-summary-detail.compact{min-width:0}}
 [data-theme="dark"] .approved-import-state.has-list{border-color:#205d4b;background:linear-gradient(135deg,rgba(13,67,51,.72),rgba(15,23,42,.88));box-shadow:none}[data-theme="dark"] .approved-import-summary-icon{background:#164f3c;color:#7ee1b5}[data-theme="dark"] .approved-import-summary-title,[data-theme="dark"] .approved-import-summary-detail>strong{color:#e6eef7}[data-theme="dark"] .approved-import-summary-copy>span,[data-theme="dark"] .approved-import-summary-detail>span{color:#a8b4c4}[data-theme="dark"] .approved-import-replace-warning{background:#4a3616;color:#ffd98b}
+
+/* Paginação da tabela. Só aparece quando há mais de uma página — ver renderPaginacao. */
+.approved-paginacao{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--border,#e3e9ef)}
+.approved-paginacao[hidden]{display:none}
+.approved-paginacao-info{color:#607080;font-size:12px;font-weight:600}
+.approved-paginacao-controles{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.approved-paginacao-tamanho{display:inline-flex;align-items:center;gap:6px;color:#607080;font-size:12px;font-weight:600}
+.approved-paginacao-tamanho select{padding:5px 8px;border:1px solid var(--border,#dbe6f1);border-radius:8px;background:#fff;color:#13233a;font-size:12px}
+.approved-paginacao-pagina{min-width:132px;color:#253b53;font-size:12px;font-weight:800;text-align:center}
+.approved-paginacao .btn{padding:6px 12px;font-size:12px}
+.approved-paginacao .btn:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){.approved-paginacao{justify-content:center}.approved-paginacao-controles{justify-content:center;width:100%}.approved-paginacao-info{width:100%;text-align:center}}
+[data-theme="dark"] .approved-paginacao-info,[data-theme="dark"] .approved-paginacao-tamanho{color:#a8b4c4}
+[data-theme="dark"] .approved-paginacao-pagina{color:#e6eef7}
+[data-theme="dark"] .approved-paginacao-tamanho select{background:#111c2d;border-color:#2b3a50;color:#e6eef7}
