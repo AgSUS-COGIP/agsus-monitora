@@ -94,6 +94,27 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
   });
 
   /*
+    O recorte por `bounds` era a origem do card cinzento: o Leaflet deixava de
+    pedir azulejos fora da caixa e dois terços do card ficavam por desenhar. É
+    invisível — não dá erro nem aviso. Só um teste o impede de voltar.
+
+    Estava verificado por fatia de texto em `enquadramento-do-mapa.test.js`, e
+    quebrou assim que o guarda mudou de forma. Aqui olha-se para o que o guarda
+    entrega à fábrica, que é o que de facto decide o recorte.
+  */
+  it("o guarda não recorta os azulejos por bounds", async () => {
+    const { installLeafletMapGuard } =
+      await import("../src/modules/map-guard.js");
+    const original = window.L.tileLayer;
+    installLeafletMapGuard();
+
+    window.L.tileLayer("https://exemplo/{z}/{x}/{y}.png");
+
+    const opcoes = original.mock.calls.at(-1)[1];
+    expect(Object.keys(opcoes)).not.toContain("bounds");
+  });
+
+  /*
     A camada WMS da Funai declara `updateWhenIdle: false` e `keepBuffer: 3` de
     propósito, para o raster acompanhar o arrasto. Envolver o `.wms` no guarda
     sobreporia os dois sem ninguém dar por isso.
@@ -108,18 +129,55 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
   });
 
   /*
-    O teste que teria apanhado o defeito: a ordem real do arranque.
+    A SEQUÊNCIA REAL DO ARRANQUE, E POR QUE ELA É A ÚNICA QUE CONTA.
+
+    A primeira versão deste teste instalava só o `map-guard` e dava verde — e a
+    camada continuou a não existir em produção. Faltavam dois: o switcher de
+    base e o zoom-range também envolvem `L.tileLayer`, e ambos correm DEPOIS do
+    guarda em `src/main.js`. O que o guarda restaurava, eles voltavam a apagar.
+
+    Esta ordem é a de `src/main.js` e tem de continuar a sê-lo. Um teste que
+    instale um instalador só volta a dar verde sobre uma aplicação partida.
   */
-  it("a camada de Terras Indígenas instala-se depois dos guardas", async () => {
+  const arrancarComoAAplicacao = async () => {
     const { installLeafletMapGuard } =
       await import("../src/modules/map-guard.js");
+    const { installMapBaseLayerSwitcher } =
+      await import("../src/modules/map-base-layer-switcher.js");
+    const { installMapZoomRange } =
+      await import("../src/modules/map-zoom-range.js");
     const { installIndigenousTerritoriesLayer } =
       await import("../src/modules/indigenous-territories-layer.js");
 
-    expect(installLeafletMapGuard()).toBe(true);
+    return {
+      guarda: installLeafletMapGuard(),
+      switcher: installMapBaseLayerSwitcher(),
+      zoom: installMapZoomRange(),
+      terras: installIndigenousTerritoriesLayer(),
+    };
+  };
+
+  it("o .wms sobrevive aos três invólucros, não só ao primeiro", async () => {
+    const wmsOriginal = window.L.tileLayer.wms;
+    await arrancarComoAAplicacao();
+
     expect(
-      installIndigenousTerritoriesLayer(),
+      typeof window.L.tileLayer.wms,
+      "algum dos invólucros apagou L.tileLayer.wms",
+    ).toBe("function");
+    expect(window.L.tileLayer.wms).toBe(wmsOriginal);
+  });
+
+  it("a camada de Terras Indígenas instala-se no fim da sequência", async () => {
+    const resultado = await arrancarComoAAplicacao();
+
+    expect(resultado.guarda).toBe(true);
+    expect(resultado.switcher).toBe(true);
+    expect(resultado.zoom).toBe(true);
+    expect(
+      resultado.terras,
       "a camada desistiu porque o namespace do Leaflet chegou mutilado",
     ).toBe(true);
+    expect(window.L.__agsusIndigenousTerritoriesInstalled).toBe(true);
   });
 });

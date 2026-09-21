@@ -116,17 +116,19 @@ describe("o container do mapa preenche o card", () => {
   });
 
   /*
-    O recorte era invisível: não dá erro, não aparece no console — só deixa o
-    card cinzento. Só um teste o impede de voltar.
+    O recorte dos azulejos — que deixava o card cinzento — é agora verificado
+    pelo comportamento, em `guardas-preservam-o-namespace-do-leaflet.test.js`:
+    instala-se o guarda num Leaflet de mentira e olha-se para as opções que ele
+    entrega à fábrica.
+
+    Este teste vivia aqui e fatiava o texto de `map-guard.js` entre dois
+    literais. Quando o guarda passou a usar `envolverFabricaDoLeaflet`, o
+    primeiro literal deixou de existir, o `indexOf` devolveu -1 e a fatia veio
+    vazia. Um teste que lê o ficheiro em vez de o correr quebra quando o código
+    muda de forma sem mudar de comportamento — e, pior, dá verde quando o
+    comportamento muda sem o texto mudar. Foi assim que `L.tileLayer.wms`
+    passou despercebido.
   */
-  it("a camada de azulejos não é recortada", () => {
-    const fn = guard.slice(
-      guard.indexOf("L.tileLayer = function guardedTileLayer"),
-      guard.indexOf("L.__agsusTileLayerGuardInstalled = true"),
-    );
-    expect(fn).toContain("noWrap: true");
-    expect(fn).not.toContain("bounds:");
-  });
 });
 
 /*

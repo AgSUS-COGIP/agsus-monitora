@@ -74,8 +74,6 @@ import {
   TOOLTIP_DA_LINHA,
   classificarRegistros,
   htmlDoMarcador,
-  linhasDaReconciliacao,
-  linhasDasCoordenadas,
   registrosExternos,
   registrosLocais,
   textoDoChip,
@@ -9664,42 +9662,31 @@ function renderDetailMap(d) {
     momento da interação. O ganho é pequeno sozinho — medido, 21% — mas evita
     guardar duas strings de HTML por marcador em memória.
   */
+  /*
+    O POPUP DIZ O QUE A UNIDADE É, NÃO COMO O REGISTRO FOI MONTADO.
+
+    Estava com oito linhas, cinco delas sobre a procedência da coordenada:
+    "Registro unificado: mapa anterior + Lotações + CNES", a distância entre as
+    fontes, e as três coordenadas uma a uma. Quem abre o popup quer saber que
+    unidade é aquela — a montagem do registro é assunto de quem cura o dado,
+    não de quem consulta o mapa.
+
+    Fica uma linha sobre a coordenada, e só porque sem ela o mapa passaria a
+    afirmar como apurada uma posição que ainda não foi conferida contra fonte
+    independente. É o mínimo que impede o ponto de ser lido como validado.
+  */
   const popupDoRegistro = (record) => {
-    const fontes = record.coordenadas;
     const linhas = [
       `<b>${esc(record.type.label)}</b>`,
       esc(record.name),
       `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
     ];
-    /*
-      "Código CNES", e não "CNES": logo abaixo vinham as coordenadas, uma delas
-      também rotulada "CNES". O mesmo rótulo para um código de estabelecimento
-      e para um par de coordenadas obrigava quem lia a adivinhar qual era qual.
-    */
-    if (record.cnes) linhas.push(`Código CNES: ${esc(record.cnes)}`);
-    if (record.validacao_coordenada === "validada") {
-      linhas.push("<b>Localização validada por fonte independente</b>");
-    } else if (record.coordenada_compartilhada_qtd > 1) {
-      linhas.push(
-        `<b>Localização em validação</b> — ${record.coordenada_compartilhada_qtd} estabelecimentos usam este ponto`,
-      );
-    } else {
-      linhas.push("<b>Localização em validação</b>");
-    }
-
-    /*
-      A explicação da reconciliação vivia no tooltip e as coordenadas aqui —
-      dois textos sobre o mesmo assunto, visíveis ao mesmo tempo. Ficam juntas:
-      a frase que diz que as fontes divergem, e logo em seguida os pontos que
-      provam a divergência.
-    */
-    linhas.push(...linhasDaReconciliacao(record));
-    const coordenadas = linhasDasCoordenadas(fontes);
-    if (coordenadas.length) {
-      linhas.push(
-        `<span style="color:#6b7d92">${coordenadas.map(esc).join("<br>")}</span>`,
-      );
-    }
+    if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
+    linhas.push(
+      record.validacao_coordenada === "validada"
+        ? `<span style="font-size:11px;color:#6b7d92">Localização validada</span>`
+        : `<span style="font-size:11px;color:#6b7d92">Localização em validação</span>`,
+    );
     return linhas.join("<br>");
   };
 

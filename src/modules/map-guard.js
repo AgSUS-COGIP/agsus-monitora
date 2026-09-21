@@ -1,4 +1,5 @@
 import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.js";
+import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
 
 /*
   Os limites agora vêm do contorno real do país, não de um retângulo estimado.
@@ -70,33 +71,17 @@ function installTileLayerGuard(L) {
     limita a navegação continua a ser o `maxBounds` do mapa, intacto logo
     abaixo.
   */
-  L.tileLayer = function guardedTileLayer(urlTemplate, options = {}) {
-    return originalTileLayer.call(this, urlTemplate, {
-      ...options,
-      noWrap: true,
-      updateWhenIdle: true,
-      keepBuffer: 2,
-    });
-  };
-
-  /*
-    A FÁBRICA DO LEAFLET NÃO É SÓ UMA FUNÇÃO.
-
-    `L.tileLayer` carrega `L.tileLayer.wms` pendurado nela. Substituir a função
-    por um invólucro sem copiar o que estava pendurado apagava o `.wms` do
-    namespace — silenciosamente, porque nada aqui o usa.
-
-    Quem usava era a camada de Terras Indígenas: `installIndigenousTerritoriesLayer`
-    verifica `L.tileLayer?.wms` antes de se instalar, e devolvia false. O efeito
-    era a camada inteira nunca chegar a existir em produção — sem polígono, sem
-    rótulo, sem botão e sem erro no console. Foram três correções de aparência
-    publicadas sobre código que não corria.
-
-    O `.wms` é copiado tal e qual, sem invólucro: a camada WMS da Funai declara
-    `updateWhenIdle: false` e `keepBuffer: 3` de propósito, e envolvê-la aqui
-    sobreporia ambos.
-  */
-  Object.assign(L.tileLayer, originalTileLayer);
+  L.tileLayer = envolverFabricaDoLeaflet(
+    originalTileLayer,
+    function guardedTileLayer(urlTemplate, options = {}) {
+      return originalTileLayer.call(this, urlTemplate, {
+        ...options,
+        noWrap: true,
+        updateWhenIdle: true,
+        keepBuffer: 2,
+      });
+    },
+  );
 
   L.__agsusTileLayerGuardInstalled = true;
 }
