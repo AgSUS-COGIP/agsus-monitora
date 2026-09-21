@@ -185,6 +185,44 @@ function findNetworkMatch(list, record, listKind = "u") {
   return nearestUniqueCandidate(candidates, record);
 }
 
+/*
+  A MESMA LINHA, MAS CONTRA O QUE JÁ ESTÁ NA REDE
+
+  O crivo acima compara a unidade de lotação com os polos da própria planilha.
+  Faltava o caso em que o polo não está na planilha e sim só no CNES: em
+  Manaus, a linha `MANICORE` cai exatamente sobre o `POLO BASE MANICORE`
+  (CNES 9423370), e `findNetworkMatch` não a via porque recusa candidatas do
+  tipo polo quando o registo não é polo.
+
+  No Yanomami o motivo é outro e o efeito o mesmo: `UN KATAROA` e
+  `POLO BASE KATAROA` têm canónicos diferentes, porque o `UN` da planilha não
+  é reconhecido como marca de tipo e fica dentro do nome. São cinco casos:
+
+      MANAUS    MANICORE               = POLO BASE MANICORE          0 m
+      YANOMAMI  UN KATAROA             = POLO BASE KATAROA           0 m
+      YANOMAMI  UN UXIÚ (UBSI)         = POLO BASE UXIU              0 m
+      YANOMAMI  UN KOLULU              = UBSI KOLULU                 0 m
+      YANOMAMI  UN PUKIMA-BEIRA (UBSI) = UBSI PUKIMA BEIRA          91 m
+
+  Mais de uma candidata seria ambiguidade, e ambiguidade não é prova: nesse
+  caso a linha segue o caminho normal e entra como registo próprio.
+*/
+function unidadeJaNaRede(network, record) {
+  const candidatas = [...(network.u || []), ...(network.c || [])].filter(
+    (row) => {
+      if (!unidadeDeLotacaoEhOPolo(record.name, row?.[0])) return false;
+      const km = distanciaKm(
+        Number(record.lat),
+        Number(record.lon),
+        Number(row?.[2]),
+        Number(row?.[3]),
+      );
+      return km != null && km <= LIMIAR_MESMO_PONTO_KM;
+    },
+  );
+  return candidatas.length === 1 ? candidatas[0] : null;
+}
+
 function annotateNetworkRecord(existing, record) {
   const hasCnes = Boolean(String(existing?.[1] || "").trim());
   const cnesLat = Number(existing?.[2]);
@@ -564,6 +602,14 @@ export function applyLotacoesGeograficas(rows, dataset) {
       if (record.type === "CASAI") {
         mergeNetworkRecord(network.c, record, "c");
         return;
+      }
+
+      if (record.type === "UNIDADE DE LOTAÇÃO") {
+        const jaNaRede = unidadeJaNaRede(network, record);
+        if (jaNaRede) {
+          annotateNetworkRecord(jaNaRede, record);
+          return;
+        }
       }
 
       mergeNetworkRecord(network.u, record, "u");
