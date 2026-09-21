@@ -138,12 +138,6 @@ export function tooltipDaTerraIndigena(properties = {}) {
 }
 
 /*
-  O rótulo desenhado sobre o polígono, ao contrário do tooltip, compete por
-  espaço com tudo o resto no mapa. Leva o povo — que é o que se quer ver — e
-  cala o resto. Com muitos povos na mesma terra, dois e a contagem do que
-  sobra; escrever cinco nomes numa linha ocuparia meio estado.
-*/
-/*
   Quanto ocupa a terra no ecrã, em pixels, na sua maior dimensão. `projetar`
   é a projeção do mapa; separá-la daqui é o que torna isto verificável sem
   Leaflet nem navegador.
@@ -159,11 +153,186 @@ export function terraPrecisaDeSimbolo(tamanhoEmPixels) {
   return Number(tamanhoEmPixels) < SIMBOLO_ABAIXO_DE_PX;
 }
 
+/*
+  O rótulo desenhado sobre o polígono, ao contrário do tooltip, compete por
+  espaço com tudo o resto no mapa. Leva o povo — que é o que se quer ver — e
+  cala o resto. Com muitos povos na mesma terra, dois e a contagem do que
+  sobra; escrever cinco nomes numa linha ocuparia meio estado.
+*/
 export function rotuloDaTerraIndigena(properties = {}) {
   const povos = povosDaTerraIndigena(properties);
   if (!povos.length) return funaiFeatureName(properties);
   if (povos.length <= 2) return povos.join(", ");
   return `${povos.slice(0, 2).join(", ")} +${povos.length - 2}`;
+}
+
+/*
+  QUE TERRAS SÃO DESTE DSEI
+
+  O mapa do DSEI Bahia mostrava Xerente, Ava-Canoeiro e Xacriabá. Nenhuma é da
+  Bahia: a camada pedia à Funai tudo o que cabia no enquadramento e desenhava
+  tudo, sem perguntar se o distrito aberto tinha alguma relação com aquilo.
+  Quem abria um DSEI via o vizinho junto.
+
+  O CAMINHO QUE NÃO EXISTE MAIS
+
+  O natural seria cruzar com a abrangência oficial do DSEI. A Funai deixou de
+  publicá-la: o GetCapabilities do GeoServer lista hoje `tis_poligonais`,
+  `tis_pontos`, `tis_cr`, `aldeias_pontos` e mais três — nenhuma de DSEI. O
+  pedido a `Funai:areas_dsei` responde "Feature type unknown", e é por isso que
+  `/api/funai-geodata?dataset=dsei` devolve 502 em produção.
+
+  O QUE SE USA EM VEZ DISSO, E QUANTO ISSO VALE
+
+  As unidades de saúde do próprio distrito, que o MONITORA já conhece. Uma
+  terra é deste DSEI se ele tem unidade dentro dela, ou unidade perto dela.
+
+  A primeira metade é observação. A segunda é inferência, e foi medida antes de
+  ser usada: das 665 terras do país, 239 têm alguma unidade dentro; em 227
+  delas — 95% — a unidade mais próxima do centro da terra é do mesmo DSEI que
+  tem unidade lá dentro. É essa concordância que autoriza a segunda regra a
+  estender a primeira.
+
+  O raio é 50 km. A distância de uma terra à unidade mais próxima tem mediana
+  de 17 km e terceiro quartil de 40 km; 50 km cobre a folga sem puxar terras
+  do distrito vizinho. Xerente fica a mais de 500 km de qualquer unidade da
+  Bahia, e sai.
+
+  Isto é atribuição inferida, não cadastro. Se a Funai voltar a publicar a
+  abrangência, é esta função que deve ser substituída por ela.
+*/
+export const RAIO_DE_ATENDIMENTO_KM = 50;
+
+const RAIO_DA_TERRA_KM = 6371;
+
+function distanciaEmKm(latA, lonA, latB, lonB) {
+  const rad = (grau) => (grau * Math.PI) / 180;
+  const dLat = rad(latB - latA);
+  const dLon = rad(lonB - lonA);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(latA)) * Math.cos(rad(latB)) * Math.sin(dLon / 2) ** 2;
+  return 2 * RAIO_DA_TERRA_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+export function caixaDeCoordenadas(poligonos) {
+  let oeste = 180;
+  let leste = -180;
+  let sul = 90;
+  let norte = -90;
+  for (const poligono of poligonos || []) {
+    for (const [x, y] of poligono[0] || []) {
+      if (x < oeste) oeste = x;
+      if (x > leste) leste = x;
+      if (y < sul) sul = y;
+      if (y > norte) norte = y;
+    }
+  }
+  return { oeste, leste, sul, norte };
+}
+
+export function poligonosDaFeature(feature) {
+  const tipo = feature?.geometry?.type;
+  if (tipo === "Polygon") return [feature.geometry.coordinates];
+  if (tipo === "MultiPolygon") return feature.geometry.coordinates;
+  return [];
+}
+
+function pontoEmAnel(ponto, anel) {
+  const [x, y] = ponto;
+  let dentro = false;
+  for (let i = 0, j = anel.length - 1; i < anel.length; j = i, i += 1) {
+    const [xi, yi] = anel[i];
+    const [xj, yj] = anel[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      dentro = !dentro;
+    }
+  }
+  return dentro;
+}
+
+export function pontoEmPoligonos(ponto, poligonos) {
+  return (poligonos || []).some(
+    (poligono) =>
+      pontoEmAnel(ponto, poligono[0] || []) &&
+      !poligono.slice(1).some((buraco) => pontoEmAnel(ponto, buraco)),
+  );
+}
+
+export function terraPertenceAoDsei(
+  terra,
+  unidadesDoDsei,
+  raioKm = RAIO_DE_ATENDIMENTO_KM,
+) {
+  const unidades = (unidadesDoDsei || []).filter(
+    (u) => Number.isFinite(Number(u?.lat)) && Number.isFinite(Number(u?.lon)),
+  );
+  // Sem unidades não se filtra: é a visão nacional, ou um distrito sem dados.
+  if (!unidades.length) return true;
+
+  const poligonos = poligonosDaFeature(terra);
+  if (!poligonos.length) return false;
+
+  const caixa = caixaDeCoordenadas(poligonos);
+  // Um grau de latitude são cerca de 111 km; a folga em graus sobredimensiona
+  // de propósito, porque a caixa só serve para descartar o que está longe.
+  const folga = raioKm / 111;
+
+  for (const unidade of unidades) {
+    const lat = Number(unidade.lat);
+    const lon = Number(unidade.lon);
+    if (
+      lon < caixa.oeste - folga ||
+      lon > caixa.leste + folga ||
+      lat < caixa.sul - folga ||
+      lat > caixa.norte + folga
+    ) {
+      continue;
+    }
+    if (pontoEmPoligonos([lon, lat], poligonos)) return true;
+    if (
+      distanciaEmKm(
+        lat,
+        lon,
+        (caixa.sul + caixa.norte) / 2,
+        (caixa.oeste + caixa.leste) / 2,
+      ) <= raioKm
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/*
+  Rótulos que não se pisam.
+
+  No DSEI Bahia os nomes saíam uns por cima dos outros — "Tuxá", "Pankarú" e
+  "Kiriri" sobrepostos no mesmo punhado de pixels, ilegíveis os três. A terra
+  maior fica com o rótulo; as que caem perto demais dele ficam sem, e continuam
+  a ter o nome no ponteiro.
+
+  Trabalha em pixels de ecrã porque é isso que decide a leitura, e recebe as
+  posições já projetadas para poder ser verificada sem mapa nenhum.
+*/
+export const DISTANCIA_MINIMA_ENTRE_ROTULOS_PX = 64;
+
+export function rotulosSemColisao(
+  candidatos,
+  distanciaMinima = DISTANCIA_MINIMA_ENTRE_ROTULOS_PX,
+) {
+  const aceites = [];
+  const ordenados = [...(candidatos || [])].sort(
+    (a, b) => (b.peso ?? 0) - (a.peso ?? 0),
+  );
+  for (const candidato of ordenados) {
+    const { x, y } = candidato;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    const colide = aceites.some(
+      (aceite) => Math.hypot(aceite.x - x, aceite.y - y) < distanciaMinima,
+    );
+    if (!colide) aceites.push(candidato);
+  }
+  return aceites;
 }
 
 function normalizeText(value) {
@@ -399,6 +568,7 @@ function enhanceMap(L, map) {
 
   let selectedDsei = "";
   let dseiGeojson = null;
+  let unidadesDoDsei = [];
   const dseiLayer = L.geoJSON([], {
     pane: dseiPaneName,
     interactive: supportsHover(),
@@ -461,11 +631,21 @@ function enhanceMap(L, map) {
     }
   };
 
-  map.__agsusSetDseiCoverage = (name = "") => {
+  /*
+    `unidades` são os pontos de saúde do distrito aberto — polos, UBSI, CASAI.
+    É com eles que se decide que Terras Indígenas pertencem a este DSEI, já que
+    a Funai deixou de publicar a abrangência. Quem chama passa o que já tem em
+    mãos; sem lista, não se filtra nada.
+  */
+  map.__agsusSetDseiCoverage = (name = "", unidades = []) => {
     selectedDsei = String(name || "").trim();
+    unidadesDoDsei = selectedDsei && Array.isArray(unidades) ? unidades : [];
+    // O enquadramento não mudou, mas o conjunto de terras a mostrar mudou.
+    lastViewportKey = "";
     if (!selectedDsei) map.__agsusDseiCoverageBounds = null;
     if (dseiGeojson) renderDseiCoverage();
     else void ensureDseiCoverage();
+    scheduleRefresh();
   };
 
   if (mapElementId === "map") map.whenReady?.(() => void ensureDseiCoverage());
@@ -478,6 +658,16 @@ function enhanceMap(L, map) {
 
   const useRasterFallback = () => {
     if (!visible()) return;
+    /*
+      O raster da Funai é uma imagem do país inteiro: não sabe o que é deste
+      distrito e o que é do vizinho. Com um DSEI aberto ele desfaria o filtro
+      que acabámos de aplicar às terras, e voltaria a pintar Xerente no mapa da
+      Bahia. Antes nada: a ausência é honesta, a imagem errada não.
+    */
+    if (unidadesDoDsei.length) {
+      if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
+      return;
+    }
     if (!map.hasLayer(rasterLayer)) rasterLayer.addTo(map);
   };
 
@@ -503,6 +693,7 @@ function enhanceMap(L, map) {
     limparRotulos();
     const comRotulo = quantidade <= LIMITE_DE_ROTULOS_NO_MAPA;
     const projetar = (ponto) => map.latLngToLayerPoint(ponto);
+    const candidatos = [];
 
     vectorLayer.eachLayer?.((camada) => {
       const propriedades = camada?.feature?.properties;
@@ -532,19 +723,31 @@ function enhanceMap(L, map) {
       if (!comRotulo) return;
       const texto = rotuloDaTerraIndigena(propriedades);
       if (!texto) return;
+      const ponto = projetar(centro);
+      candidatos.push({
+        x: ponto?.x,
+        y: ponto?.y,
+        centro,
+        texto,
+        // A terra maior ganha o rótulo quando dois disputam o mesmo espaço.
+        peso: tamanhoNaTelaEmPixels(limites, projetar),
+      });
+    });
+
+    for (const rotulo of rotulosSemColisao(candidatos)) {
       rotulosLayer.addLayer(
-        L.marker(centro, {
+        L.marker(rotulo.centro, {
           pane: rotulosPaneName,
           interactive: false,
           keyboard: false,
           icon: L.divIcon({
             className: "agsus-ti-rotulo",
-            html: `<span class="agsus-ti-rotulo__texto">${escaparHtml(texto)}</span>`,
+            html: `<span class="agsus-ti-rotulo__texto">${escaparHtml(rotulo.texto)}</span>`,
             iconSize: [0, 0],
           }),
         }),
       );
-    });
+    }
 
     if (simbolosLayer.getLayers().length && !map.hasLayer(simbolosLayer)) {
       simbolosLayer.addTo(map);
@@ -583,12 +786,21 @@ function enhanceMap(L, map) {
       if (!Array.isArray(geojson?.features))
         throw new Error("GeoJSON inválido");
 
+      /*
+        Com um DSEI aberto, só entram as terras que tocam a abrangência dele.
+        Sem isso o mapa da Bahia mostrava Xerente e Xacriabá, que são de outros
+        distritos, e quem olhava não tinha como saber a diferença.
+      */
+      const doDistrito = unidadesDoDsei.length
+        ? geojson.features.filter((f) => terraPertenceAoDsei(f, unidadesDoDsei))
+        : geojson.features;
+
       vectorLayer.clearLayers();
-      vectorLayer.addData(geojson);
+      vectorLayer.addData({ type: "FeatureCollection", features: doDistrito });
       vectorLayer.setStyle?.(() => vectorStyle(map));
       if (!map.hasLayer(vectorLayer)) vectorLayer.addTo(map);
       if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
-      desenharApoios(geojson.features.length);
+      desenharApoios(doDistrito.length);
     } catch (error) {
       if (error?.name === "AbortError") return;
       console.warn(

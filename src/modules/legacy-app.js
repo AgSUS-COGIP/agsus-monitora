@@ -9651,7 +9651,22 @@ function renderDetailMap(d) {
   reset?.classList.remove("hidden");
   definirSelecaoDoMapaDetalhado(true);
   drawDetailBrazilBase();
-  _detailLeaflet.__agsusSetDseiCoverage?.(d.n);
+  /*
+    As unidades do distrito vão junto porque é com elas que a camada decide
+    que Terras Indígenas mostrar. A Funai deixou de publicar a abrangência do
+    DSEI, e sem esse recorte o mapa da Bahia desenhava Xerente e Xacriabá, que
+    são de outros distritos. A sede entra na lista: em DSEIs pequenos ela é o
+    ponto mais próximo de várias terras.
+  */
+  const pontosDoDistrito = [
+    ...(Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lon))
+      ? [{ lat: Number(d.lat), lon: Number(d.lon) }]
+      : []),
+    ...records
+      .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
+      .map((r) => ({ lat: r.lat, lon: r.lon })),
+  ];
+  _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito);
   _detailUnitLayer.clearLayers();
 
   /*
@@ -10528,10 +10543,30 @@ function renderMap() {
 }
 
 function mapVoltar() {
+  /*
+    "Voltar à visão do Brasil" limpa TODOS os filtros, não só a UF.
+
+    Antes zerava `filterState.uf` e a busca, e deixava de pé edital, etapa,
+    status e risco. O mapa voltava para o país inteiro enquanto os cartões e a
+    tabela continuavam a mostrar um recorte — duas leituras do mesmo ecrã a
+    discordar, sem nada a dizer porquê.
+
+    É a mesma limpeza do botão "Limpar todos" da barra de filtros, incluindo o
+    "Ocultar encerrados": voltar ao Brasil é voltar ao princípio.
+  */
   const s = $("tableSearch");
   if (s) s.value = "";
-  filterState.uf = new Set();
+  filterState = Object.fromEntries(
+    FILTER_CONFIG.map((f) => [f.field, new Set()]),
+  );
+  hideClosed = false;
+  try {
+    localStorage.setItem("agsus_hide_closed_v1", "0");
+  } catch (e) {}
+  syncHideClosedBtn();
   lastMapUfKey = null;
+  saveFilterState();
+  renderFilterControls();
   applyFilters();
   if (_leaflet) {
     _layerPolos.clearLayers();

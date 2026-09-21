@@ -238,7 +238,12 @@ describe("os filtros por tipo do painel", () => {
     );
     expect(fn).not.toContain("const selected = ufs.includes");
     expect(fn).not.toContain('fillColor: selected ? "#71cbd0"');
-    expect(codigo).toContain("__agsusSetDseiCoverage?.(d.n)");
+    /*
+      Só o nome da chamada, não a lista de argumentos: ela ganhou as unidades
+      do distrito quando a Funai deixou de publicar a abrangência, e um teste
+      preso à assinatura quebra a cada mudança que não é a que ele vigia.
+    */
+    expect(codigo).toContain("__agsusSetDseiCoverage?.(d.n");
   });
 
   it("enquadra o território pela área oficial quando ela está disponível", () => {
