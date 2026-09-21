@@ -71,7 +71,7 @@ import {
   linhasDeConfiguracaoDaSidebar,
   reaplicarSidebarAposSalvar,
 } from "./sidebar-branding.js";
-import { classificarVinculoTerritorial } from "../lib/uf-ibge.js";
+import { classificarVinculoTerritorial, siglaDaUf } from "../lib/uf-ibge.js";
 import {
   ESTILO_DA_LINHA,
   TOOLTIP_DA_LINHA,
@@ -9666,7 +9666,53 @@ function renderDetailMap(d) {
       .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
       .map((r) => ({ lat: r.lat, lon: r.lon })),
   ];
-  _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito, d.ufs || []);
+  /*
+    AS UFs SÃO AS DECLARADAS MAIS AQUELAS ONDE O DISTRITO DE FACTO ESTÁ.
+
+    `d.ufs` é a abrangência declarada, e ela está incompleta. O DSEI Ceará
+    declara só CE, e a planilha de Lotações dá-lhe cinco polos no Piauí — PB
+    PIAUÍ ÁREA I a IV e PB TERESINA (SEDE). O DSEI Maranhão declara só MA e
+    tem a CASAI Teresina, que fica no Piauí. São lotações oficiais, não erros.
+
+    Filtrar as terras só pelas UFs declaradas esconderia as do Piauí no mapa do
+    Ceará — exatamente onde o distrito trabalha.
+
+    MAS UMA UNIDADE SOLTA NÃO REDESENHA UM DISTRITO.
+
+    A planilha lota quatro unidades no DSEI Alto Rio Solimões que estão em
+    Aquidauana/MS, Marcação/PB, Normandia/RR e Porto Velho/RO — a milhares de
+    quilómetros do Alto Solimões, e pertencendo de facto a outros distritos.
+    Aceitar a UF de cada uma abriria o filtro do Alto Solimões a quatro estados
+    e traria doze terras alheias.
+
+    Por isso exigem-se DUAS unidades na mesma UF. Cinco polos no Piauí, como no
+    Ceará, são um padrão; uma unidade perdida em Mato Grosso do Sul é um erro
+    de lotação. O corte não é elegante, mas é o que separa um do outro sem
+    inventar critério.
+
+    O preço: a CASAI Teresina é a única unidade do DSEI Maranhão no Piauí, e o
+    Piauí não entra para o Maranhão. Nenhuma terra indígena fica a menos de
+    50 km dela, portanto isso não esconde nada hoje — mas esconderia se ficasse.
+  */
+  const ufsDoDistrito = new Set(
+    (d.ufs || []).map((uf) =>
+      String(uf || "")
+        .trim()
+        .toUpperCase(),
+    ),
+  );
+  const unidadesPorUf = new Map();
+  for (const r of records) {
+    const sigla = siglaDaUf(r.uf ?? r.ufAdministrativa);
+    if (sigla) unidadesPorUf.set(sigla, (unidadesPorUf.get(sigla) || 0) + 1);
+  }
+  for (const [sigla, quantas] of unidadesPorUf) {
+    if (quantas >= 2) ufsDoDistrito.add(sigla);
+  }
+
+  _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito, [
+    ...ufsDoDistrito,
+  ]);
   _detailUnitLayer.clearLayers();
 
   /*
