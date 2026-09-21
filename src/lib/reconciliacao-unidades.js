@@ -381,3 +381,108 @@ export function agruparPorPontoDeRender(registros, casasDecimais = 5) {
   });
   return [...pontos.values()];
 }
+
+/*
+  DOIS REGISTOS CNES PARA O MESMO ESTABELECIMENTO
+
+  O painel do DSEI listava o POLO BASE JAPIIM duas vezes. Não era defeito do
+  desenho nem da reconciliação: são dois registos no CNES, com códigos
+  diferentes, mesmo nome, mesmo tipo e a MESMA coordenada, um deles marcado
+  "(em atualização cadastral)". A reconciliação nunca os viu porque só compara
+  polo do lmap contra estabelecimento do CNES — nada comparava estabelecimentos
+  entre si.
+
+  São quatro pares em Médio Rio Purus, todos a 0,00 km:
+
+      4206991 / 9425616   POLO BASE JAPIIM
+      4207017 / 9425721   UBSI ÁGUA BRANCA
+      4207025 / 9427104   UBSI IRMÃ CLEUSA
+      4207033 / 9427015   UBSI CURRIÁ
+
+  O QUE ESTA FUNÇÃO NÃO UNE
+
+  Há outros cinco pares com o mesmo nome e o mesmo tipo, a 222, 224, 305, 472 e
+  598 km um do outro — Aldeia São Luiz, Tocantins, Litoral Sul, Alto Rio Negro,
+  Interior Sul. Nome igual a essa distância não é o mesmo sítio: ou são
+  unidades distintas com nome genérico, ou é um problema de cadastro. Uni-los
+  faria o mapa apagar um ponto real. Ficam como estão, os dois visíveis.
+
+  O limiar é 500 m. Cinco casas decimais valem cerca de um metro, e a distância
+  entre dois registos do mesmo estabelecimento, quando existe, é do tamanho do
+  arredondamento — não de meio quilómetro.
+
+  `CASAI TUCUMÃ` e `POLO BASE TUCUMÃ` partilham o nome do lugar e continuam
+  dois registos: o tipo declarado difere, e são mesmo dois equipamentos.
+*/
+export const LIMIAR_MESMO_ESTABELECIMENTO_KM = 0.5;
+
+const EM_ATUALIZACAO = /\(\s*em\s+atualiza[cç][aã]o\s+cadastral\s*\)/i;
+
+/*
+  Entre dois registos do mesmo estabelecimento, fica o que NÃO está marcado
+  como em atualização cadastral: é o registo corrente, e é o nome que quem
+  procura a unidade no CNES vai encontrar.
+*/
+function preferido(a, b) {
+  const aEmAtualizacao = EM_ATUALIZACAO.test(String(a?.nome ?? ""));
+  const bEmAtualizacao = EM_ATUALIZACAO.test(String(b?.nome ?? ""));
+  if (aEmAtualizacao !== bEmAtualizacao) return aEmAtualizacao ? b : a;
+  return a;
+}
+
+export function unirEstabelecimentosRepetidos(estabelecimentos = []) {
+  const lista = Array.isArray(estabelecimentos) ? estabelecimentos : [];
+  const grupos = new Map();
+  const soltos = [];
+
+  for (const estabelecimento of lista) {
+    const canonico = nomeCanonico(estabelecimento?.nome);
+    const tipo = tipoDeclarado(estabelecimento?.nome);
+    if (!canonicoUtilizavel(canonico)) {
+      // Sem nome que identifique, não se afirma que dois registos são um só.
+      soltos.push(estabelecimento);
+      continue;
+    }
+    const chave = `${canonico}|${tipo}`;
+    if (!grupos.has(chave)) grupos.set(chave, []);
+    grupos.get(chave).push(estabelecimento);
+  }
+
+  const resultado = [];
+  const unidos = [];
+
+  for (const grupo of grupos.values()) {
+    const pendentes = [...grupo];
+    while (pendentes.length) {
+      let atual = pendentes.shift();
+      const absorvidos = [];
+
+      for (let i = pendentes.length - 1; i >= 0; i -= 1) {
+        const km = distanciaKm(
+          Number(atual.lat),
+          Number(atual.lon),
+          Number(pendentes[i].lat),
+          Number(pendentes[i].lon),
+        );
+        if (km == null || km > LIMIAR_MESMO_ESTABELECIMENTO_KM) continue;
+        absorvidos.push(pendentes[i]);
+        atual = preferido(atual, pendentes[i]);
+        pendentes.splice(i, 1);
+      }
+
+      if (!absorvidos.length) {
+        resultado.push(atual);
+        continue;
+      }
+
+      const outros = absorvidos
+        .map((e) => identificadorCnes(e.cnes))
+        .filter((cnes) => cnes && cnes !== identificadorCnes(atual.cnes));
+      const unido = { ...atual, cnes_absorvidos: outros };
+      resultado.push(unido);
+      unidos.push({ mantido: atual, absorvidos });
+    }
+  }
+
+  return { estabelecimentos: [...resultado, ...soltos], unidos };
+}
