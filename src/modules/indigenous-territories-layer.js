@@ -796,7 +796,26 @@ function enhanceMap(L, map) {
   const refreshVector = async () => {
     if (!visible()) return;
     const zoom = Number(map.getZoom?.());
-    if (!Number.isFinite(zoom) || zoom < VECTOR_MIN_ZOOM) {
+
+    /*
+      COM UM DISTRITO ABERTO NÃO HÁ PISO DE ZOOM.
+
+      O piso de 7 existe para a visão nacional: abaixo dele o pedido à Funai
+      traria o país inteiro, e por isso o raster toma conta. Mas ao abrir um
+      DSEI o raster foi desligado — ele é uma imagem do Brasil todo e não sabe
+      o que é deste distrito.
+
+      As duas regras juntas produziam o pior dos casos: Ceará e Maranhão são
+      largos e abrem abaixo do zoom 7, logo o vetorial não carregava e o raster
+      estava desligado. Não se desenhava terra nenhuma. Foi regressão
+      introduzida ao filtrar as terras por distrito.
+
+      Com distrito aberto o pedido é seguro: o enquadramento é o do distrito,
+      o pedido continua limitado a 250 polígonos, e o que volta ainda passa
+      pelo filtro das unidades e da UF.
+    */
+    const piso = unidadesDoDsei.length ? 0 : VECTOR_MIN_ZOOM;
+    if (!Number.isFinite(zoom) || zoom < piso) {
       clearVector();
       useRasterFallback();
       return;
