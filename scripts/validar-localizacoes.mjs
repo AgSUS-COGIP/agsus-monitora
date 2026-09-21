@@ -11,13 +11,26 @@
 
     Lotações   planilha oficial, uma linha por lotação, com latitude/longitude
     CNES       cadastro nacional dos estabelecimentos, com coordenada própria
-    Malhas     limites das 27 UFs, da API de malhas territoriais do IBGE
+    Malhas     limites das 27 UFs, da API de malhas territoriais do IBGE,
+               em qualidade MÁXIMA — ver a nota sobre a divisa, abaixo
 
   O ÁRBITRO É A MALHA DA UF. Duas fontes que discordam não decidem nada entre
   si — uma terceira, independente das duas, decide. Um ponto que cai fora do
   estado que o próprio registro declara está errado, seja qual for a fonte que
   o afirme. Foi assim que se apurou que o PB TUXI, declarado em Belém do São
   Francisco (PE), tinha na planilha a coordenada de Angra dos Reis (RJ).
+
+  POR QUE A MALHA TEM DE SER A DETALHADA
+
+  A primeira passagem usou `qualidade=minima`. Com ela, o PB TELES PIRES, em
+  Jacareacanga (PA), aparecia com a coordenada do CNES fora do estado — e a
+  conclusão teria sido mandar sobrepor um dado oficial que estava certo. Na
+  malha detalhada o mesmo ponto cai dentro do Pará.
+
+  A simplificação corta os recortes da divisa, e é exatamente na divisa que
+  estas unidades ficam. Para separar "está no estado" de "está a mil
+  quilómetros dali" a malha grosseira chegava; para dizer a alguém que apague
+  uma coordenada do cadastro, não chega.
 
   O QUE NÃO SE FAZ AQUI
 
@@ -30,7 +43,7 @@
 
     node scripts/validar-localizacoes.mjs <lotacoes.xlsx> <rede_cnes.json>
 
-  As malhas do IBGE ficam em cache em `.cache/malhas-ibge/`. O resultado vai
+  As malhas do IBGE ficam em cache em `.cache/malhas-ibge-maxima/`. O resultado vai
   para `public/data/localizacoes-validadas.json`.
 */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -46,7 +59,7 @@ import {
 } from "../src/lib/reconciliacao-unidades.js";
 import { siglaDaUf } from "../src/lib/uf-ibge.js";
 
-const CACHE = ".cache/malhas-ibge";
+const CACHE = ".cache/malhas-ibge-maxima";
 const SAIDA = "public/data/localizacoes-validadas.json";
 
 const UFS = {
@@ -103,7 +116,7 @@ async function garantirMalhas() {
   for (const [codigo, sigla] of Object.entries(UFS)) {
     await baixar(
       `https://servicodados.ibge.gov.br/api/v3/malhas/estados/${codigo}` +
-        "?formato=application/vnd.geo+json&qualidade=minima",
+        "?formato=application/vnd.geo+json&qualidade=maxima",
       join(CACHE, `uf-${sigla}.json`),
     );
   }

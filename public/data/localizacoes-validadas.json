@@ -7,11 +7,11 @@
  },
  "limiar_concordancia_km": 5,
  "contagem": {
-  "coerente": 315,
+  "coerente": 318,
   "indeterminado": 75,
-  "conflito": 118,
-  "validada": 81,
-  "erro": 17
+  "conflito": 119,
+  "validada": 80,
+  "erro": 14
  },
  "registros": [
   {
@@ -1631,12 +1631,12 @@
    "tipo": "outro",
    "municipio": "SAO FELIX DO ARAGUAIA",
    "uf": "MT",
-   "estado": "erro",
-   "motivo": "fonte_unica_fora_da_uf",
+   "estado": "coerente",
+   "motivo": "fonte_unica_na_uf",
    "km": null,
    "cnes": null,
-   "lat": null,
-   "lon": null
+   "lat": -11.616224,
+   "lon": -50.662894
   },
   {
    "dsei": "BAHIA",
@@ -1645,12 +1645,12 @@
    "tipo": "casai",
    "municipio": "SALVADOR",
    "uf": "BA",
-   "estado": "erro",
-   "motivo": "fonte_unica_fora_da_uf",
+   "estado": "coerente",
+   "motivo": "fonte_unica_na_uf",
    "km": null,
    "cnes": null,
-   "lat": null,
-   "lon": null
+   "lat": -12.95136,
+   "lon": -38.35426
   },
   {
    "dsei": "BAHIA",
@@ -5621,12 +5621,12 @@
    "tipo": "casai",
    "municipio": "NHAMUNDA",
    "uf": "AM",
-   "estado": "erro",
-   "motivo": "fonte_unica_fora_da_uf",
+   "estado": "coerente",
+   "motivo": "fonte_unica_na_uf",
    "km": null,
    "cnes": null,
-   "lat": null,
-   "lon": null
+   "lat": -2.191172,
+   "lon": -56.714018
   },
   {
    "dsei": "PARINTINS",
@@ -6573,12 +6573,12 @@
    "tipo": "polo",
    "municipio": "JACAREACANGA",
    "uf": "PA",
-   "estado": "validada",
-   "motivo": "arbitrada_pela_uf_lotacoes",
+   "estado": "conflito",
+   "motivo": "duas_fontes_discordam_na_uf",
    "km": 175.126,
    "cnes": "7597355",
-   "lat": -8.3909,
-   "lon": -57.673775
+   "lat": null,
+   "lon": null
   },
   {
    "dsei": "RIO TAPAJOS",

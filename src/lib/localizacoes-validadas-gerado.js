@@ -1,7 +1,7 @@
 /*
   GERADO por scripts/validar-localizacoes.mjs. Não editar à mão.
 
-  98 vereditos que mudam o que o mapa mostra, de
+  94 vereditos que mudam o que o mapa mostra, de
   606 lotações com coordenada. Os restantes mantêm-se
   como estavam e não viajam no pacote.
 
@@ -149,18 +149,6 @@ export const LOCALIZACOES_VALIDADAS = [
     motivo: "duas_fontes_concordam",
     lat: -16.731646,
     lon: -49.231904,
-  },
-  {
-    dsei: "ARAGUAIA",
-    canonico: "SEDE",
-    estado: "erro",
-    motivo: "fonte_unica_fora_da_uf",
-  },
-  {
-    dsei: "BAHIA",
-    canonico: "SALVADOR",
-    estado: "erro",
-    motivo: "fonte_unica_fora_da_uf",
   },
   {
     dsei: "BAHIA",
@@ -570,12 +558,6 @@ export const LOCALIZACOES_VALIDADAS = [
   },
   {
     dsei: "PARINTINS",
-    canonico: "NHAMUNDA",
-    estado: "erro",
-    motivo: "fonte_unica_fora_da_uf",
-  },
-  {
-    dsei: "PARINTINS",
     canonico: "PARINTINS",
     estado: "validada",
     motivo: "duas_fontes_concordam",
@@ -689,14 +671,6 @@ export const LOCALIZACOES_VALIDADAS = [
     motivo: "arbitrada_pela_uf_lotacoes",
     lat: -6.646461,
     lon: -57.629369,
-  },
-  {
-    dsei: "RIO TAPAJOS",
-    canonico: "TELES PIRES",
-    estado: "validada",
-    motivo: "arbitrada_pela_uf_lotacoes",
-    lat: -8.3909,
-    lon: -57.673775,
   },
   {
     dsei: "TOCANTINS",
