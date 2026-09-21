@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AVISO_DO_SIMBOLO,
   FUNAI_PROXY_GEOJSON,
   FUNAI_PROXY_WMS,
   FUNAI_TERRITORIES_LAYER,
@@ -13,8 +14,27 @@ import {
   isHealthMapElementId,
   povosDaTerraIndigena,
   rotuloDaTerraIndigena,
+  tamanhoNaTelaEmPixels,
+  terraPrecisaDeSimbolo,
   tooltipDaTerraIndigena,
 } from "../src/modules/indigenous-territories-layer.js";
+
+/*
+  Bordas reais das terras do DSEI Alagoas e Sergipe, medidas na camada
+  publicada pela Funai. São a razão de o símbolo existir: no zoom em que cabe
+  o distrito inteiro, 1 pixel vale 600 m.
+*/
+const limitesDe = (oesteLat, oesteLon, lesteLat, lesteLon) => ({
+  isValid: () => true,
+  getNorthEast: () => ({ lat: lesteLat, lng: lesteLon }),
+  getSouthWest: () => ({ lat: oesteLat, lng: oesteLon }),
+});
+
+// Projeção do Leaflet no zoom 8: 1 px = 0,60 km à latitude de Alagoas.
+const projetarNoZoom8 = (ponto) => ({
+  x: (ponto.lng * 111 * Math.cos((-9.8 * Math.PI) / 180)) / 0.6,
+  y: (-ponto.lat * 111) / 0.6,
+});
 
 describe("camada de Terras Indígenas", () => {
   it("usa a camada oficial de polígonos da Funai", () => {
@@ -179,6 +199,64 @@ describe("rótulo desenhado sobre a Terra Indígena", () => {
 
   it("não devolve rótulo quando não há nome nenhum", () => {
     expect(rotuloDaTerraIndigena({ gid: 3 })).toBe("");
+  });
+});
+
+/*
+  A opacidade do preenchimento resolvia terras grandes e não resolvia nada em
+  Alagoas e Sergipe: das 21 terras daquele enquadramento, 14 ficam abaixo de
+  20 px. O que decide se uma área se lê não é a área em km², é o tamanho dela
+  no monitor — e isso muda a cada zoom.
+*/
+describe("terras pequenas demais para se verem", () => {
+  it("mede a maior dimensão em pixels, não em graus", () => {
+    // 1 grau de latitude = 111 km = 185 px nesta projeção.
+    const tamanho = tamanhoNaTelaEmPixels(
+      limitesDe(-10, -37, -9, -37),
+      projetarNoZoom8,
+    );
+    expect(tamanho).toBeCloseTo(185, 0);
+  });
+
+  it("Pankararé, a maior do DSEI, dispensa símbolo", () => {
+    // 25,6 km na maior dimensão — cerca de 43 px.
+    const tamanho = tamanhoNaTelaEmPixels(
+      limitesDe(-9.6, -38.3, -9.37, -38.3),
+      projetarNoZoom8,
+    );
+    expect(tamanho).toBeGreaterThan(40);
+    expect(terraPrecisaDeSimbolo(tamanho)).toBe(false);
+  });
+
+  it("a menor Xucuru-Kariri, de 800 m, precisa de símbolo", () => {
+    // 0,8 km — cerca de 1,4 px, invisível a qualquer opacidade.
+    const tamanho = tamanhoNaTelaEmPixels(
+      limitesDe(-9.4, -36.6, -9.3928, -36.6),
+      projetarNoZoom8,
+    );
+    expect(tamanho).toBeLessThan(2);
+    expect(terraPrecisaDeSimbolo(tamanho)).toBe(true);
+  });
+
+  it("o limiar é 20 px, e é fechado em cima", () => {
+    expect(terraPrecisaDeSimbolo(19.9)).toBe(true);
+    expect(terraPrecisaDeSimbolo(20)).toBe(false);
+  });
+
+  it("não devolve tamanho quando a projeção falha", () => {
+    expect(
+      tamanhoNaTelaEmPixels(limitesDe(-10, -37, -9, -36), () => ({})),
+    ).toBe(0);
+    expect(terraPrecisaDeSimbolo(0)).toBe(true);
+  });
+
+  /*
+    Um círculo de oito pixels sobre uma terra de 800 m é um marcador de
+    posição, não o limite dela. Se alguém o ler como limite, o mapa passou a
+    afirmar uma extensão que não tem.
+  */
+  it("o símbolo diz que não é o limite da terra", () => {
+    expect(AVISO_DO_SIMBOLO).toContain("não o limite");
   });
 });
 

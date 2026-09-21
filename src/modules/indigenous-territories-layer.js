@@ -21,6 +21,27 @@ const VECTOR_REFRESH_DELAY_MS = 220;
 */
 const LIMITE_DE_ROTULOS_NO_MAPA = 40;
 
+/*
+  TERRAS PEQUENAS DEMAIS PARA SEREM VISTAS
+
+  Aumentar o preenchimento resolvia terras grandes. No DSEI Alagoas e Sergipe
+  não resolvia nada, e a razão é aritmética: no zoom em que cabe o distrito
+  inteiro, 1 pixel vale 600 metros. Medidas as 21 terras desse enquadramento,
+  a maior — Pankararé, 25,6 km — dá 43 px, e a menor — uma das Xucuru-Kariri,
+  800 m — dá 1,4 px. Catorze das 21 ficam abaixo de 20 px. Nenhuma opacidade
+  faz uma mancha de três pixels ler-se como área.
+
+  Abaixo deste limiar a terra ganha um símbolo de posição no centro. É prática
+  cartográfica corrente: à escala pequena, a área vira ponto. O símbolo diz
+  onde a terra está; a partir daí o zoom mostra o limite verdadeiro, e o
+  tooltip avisa que o círculo não é o limite — para ninguém o ler como tal.
+*/
+const SIMBOLO_ABAIXO_DE_PX = 20;
+const RAIO_DO_SIMBOLO_PX = 8;
+
+export const AVISO_DO_SIMBOLO =
+  "<i>Área pequena nesta escala — o círculo marca a posição, não o limite</i>";
+
 let installed = false;
 let dseiFeaturesPromise = null;
 
@@ -122,6 +143,22 @@ export function tooltipDaTerraIndigena(properties = {}) {
   cala o resto. Com muitos povos na mesma terra, dois e a contagem do que
   sobra; escrever cinco nomes numa linha ocuparia meio estado.
 */
+/*
+  Quanto ocupa a terra no ecrã, em pixels, na sua maior dimensão. `projetar`
+  é a projeção do mapa; separá-la daqui é o que torna isto verificável sem
+  Leaflet nem navegador.
+*/
+export function tamanhoNaTelaEmPixels(limites, projetar) {
+  const ne = projetar(limites.getNorthEast());
+  const sw = projetar(limites.getSouthWest());
+  if (![ne?.x, ne?.y, sw?.x, sw?.y].every(Number.isFinite)) return 0;
+  return Math.max(Math.abs(ne.x - sw.x), Math.abs(ne.y - sw.y));
+}
+
+export function terraPrecisaDeSimbolo(tamanhoEmPixels) {
+  return Number(tamanhoEmPixels) < SIMBOLO_ABAIXO_DE_PX;
+}
+
 export function rotuloDaTerraIndigena(properties = {}) {
   const povos = povosDaTerraIndigena(properties);
   if (!povos.length) return funaiFeatureName(properties);
@@ -349,9 +386,15 @@ function enhanceMap(L, map) {
 
   const rotulosLayer = L.layerGroup([], { pane: rotulosPaneName });
   map.__agsusIndigenousTerritoriesLabelsLayer = rotulosLayer;
+
+  const simbolosLayer = L.layerGroup([], { pane: vectorPaneName });
+  map.__agsusIndigenousTerritoriesSymbolsLayer = simbolosLayer;
+
   const limparRotulos = () => {
     rotulosLayer.clearLayers();
     if (map.hasLayer(rotulosLayer)) map.removeLayer(rotulosLayer);
+    simbolosLayer.clearLayers();
+    if (map.hasLayer(simbolosLayer)) map.removeLayer(simbolosLayer);
   };
 
   let selectedDsei = "";
@@ -445,20 +488,50 @@ function enhanceMap(L, map) {
   };
 
   /*
-    O rótulo não vai como tooltip do polígono: o polígono já usa o seu tooltip
-    para o detalhe no ponteiro, e um layer do Leaflet só tem um. Vai como
-    marcador sem interação, no centro da caixa da terra, numa camada própria
-    acima do traçado e abaixo das unidades de saúde.
+    Uma passagem por todas as terras desenhadas, que decide duas coisas.
+
+    O SÍMBOLO, para a terra pequena demais para se ver nesta escala. Medido em
+    pixels no ecrã, não em quilómetros: o que decide se uma área se lê é o
+    tamanho que ela tem no monitor, e isso muda a cada zoom.
+
+    O RÓTULO, que não vai como tooltip do polígono — o polígono já usa o seu
+    tooltip para o detalhe no ponteiro, e um layer do Leaflet só tem um. Vai
+    como marcador sem interação, numa camada acima do traçado e abaixo das
+    unidades de saúde.
   */
-  const desenharRotulos = (quantidade) => {
+  const desenharApoios = (quantidade) => {
     limparRotulos();
-    if (quantidade > LIMITE_DE_ROTULOS_NO_MAPA) return;
+    const comRotulo = quantidade <= LIMITE_DE_ROTULOS_NO_MAPA;
+    const projetar = (ponto) => map.latLngToLayerPoint(ponto);
 
     vectorLayer.eachLayer?.((camada) => {
-      const texto = rotuloDaTerraIndigena(camada?.feature?.properties);
+      const propriedades = camada?.feature?.properties;
+      const limites = camada.getBounds?.();
+      if (!limites?.isValid?.()) return;
+      const centro = limites.getCenter();
+
+      if (terraPrecisaDeSimbolo(tamanhoNaTelaEmPixels(limites, projetar))) {
+        const simbolo = L.circleMarker(centro, {
+          pane: vectorPaneName,
+          radius: RAIO_DO_SIMBOLO_PX,
+          interactive: supportsHover(),
+          ...estiloDoSimbolo(map),
+        });
+        if (supportsHover()) {
+          const detalhe = tooltipDaTerraIndigena(propriedades);
+          if (detalhe) {
+            simbolo.bindTooltip(`${detalhe}<br>${AVISO_DO_SIMBOLO}`, {
+              direction: "top",
+              className: "agsus-ti-tooltip",
+            });
+          }
+        }
+        simbolosLayer.addLayer(simbolo);
+      }
+
+      if (!comRotulo) return;
+      const texto = rotuloDaTerraIndigena(propriedades);
       if (!texto) return;
-      const centro = camada.getBounds?.()?.getCenter?.();
-      if (!centro) return;
       rotulosLayer.addLayer(
         L.marker(centro, {
           pane: rotulosPaneName,
@@ -473,7 +546,12 @@ function enhanceMap(L, map) {
       );
     });
 
-    if (!map.hasLayer(rotulosLayer)) rotulosLayer.addTo(map);
+    if (simbolosLayer.getLayers().length && !map.hasLayer(simbolosLayer)) {
+      simbolosLayer.addTo(map);
+    }
+    if (rotulosLayer.getLayers().length && !map.hasLayer(rotulosLayer)) {
+      rotulosLayer.addTo(map);
+    }
   };
 
   const refreshVector = async () => {
@@ -510,7 +588,7 @@ function enhanceMap(L, map) {
       vectorLayer.setStyle?.(() => vectorStyle(map));
       if (!map.hasLayer(vectorLayer)) vectorLayer.addTo(map);
       if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
-      desenharRotulos(geojson.features.length);
+      desenharApoios(geojson.features.length);
     } catch (error) {
       if (error?.name === "AbortError") return;
       console.warn(
@@ -530,6 +608,9 @@ function enhanceMap(L, map) {
   map.on("moveend zoomend", scheduleRefresh);
   map.getContainer?.().addEventListener("agsus:map-base-layer-changed", () => {
     vectorLayer.setStyle?.(() => vectorStyle(map));
+    simbolosLayer.eachLayer?.((simbolo) =>
+      simbolo.setStyle?.(estiloDoSimbolo(map)),
+    );
     dseiLayer.setStyle?.((feature) =>
       dseiStyle(mapElementId, feature, selectedDsei),
     );
@@ -562,6 +643,23 @@ function enhanceMap(L, map) {
   Nada disto cobre os marcadores das unidades: as terras ficam no z-index 255 e
   os marcadores do Leaflet em 600.
 */
+/*
+  O símbolo usa a cor da terra, mas mais opaco e com traço mais forte: ele não
+  é uma área, é um marcador, e tem de se ler como marcador a oito pixels de
+  raio. Não herda o tracejado do modo satélite — a oito pixels o tracejado
+  vira ruído.
+*/
+function estiloDoSimbolo(map) {
+  const satellite = map?.__agsusBaseMapMode === "satellite";
+  return {
+    color: satellite ? "#ff4d3d" : "#0b6b5f",
+    weight: 2.2,
+    opacity: 1,
+    fillColor: satellite ? "#ef4444" : "#14b8a6",
+    fillOpacity: 0.45,
+  };
+}
+
 function vectorStyle(map) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
   return {
