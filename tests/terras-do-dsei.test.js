@@ -147,6 +147,64 @@ describe("que terras são deste DSEI", () => {
 });
 
 /*
+  O CRIVO DA UF
+
+  O raio não conhece fronteira. No DSEI Bahia entravam 8 terras de outros
+  estados, puxadas por unidades do São Francisco que estão mesmo a menos de
+  50 km de terras de Pernambuco. Medido sobre os dados reais: 25 terras de UF
+  alheia, em 7 distritos. Com o crivo, zero.
+*/
+describe("a UF declarada como segundo crivo", () => {
+  const perto = [{ lat: -12, lon: -38 }];
+  const terraEmBahia = {
+    ...terraEm(-12, -38),
+    properties: { uf_sigla: "BA" },
+  };
+  const terraEmPernambuco = {
+    ...terraEm(-12, -38),
+    properties: { uf_sigla: "PE" },
+  };
+
+  it("a terra do estado que o distrito atende entra", () => {
+    expect(terraPertenceAoDsei(terraEmBahia, perto, ["BA"])).toBe(true);
+  });
+
+  it("a terra de outro estado fica de fora, mesmo estando perto", () => {
+    expect(terraPertenceAoDsei(terraEmPernambuco, perto, ["BA"])).toBe(false);
+  });
+
+  /*
+    Catorze combinações de duas UFs aparecem na camada da Funai — "AM,PA",
+    "PR,SC", "MT,RO". Uma terra que atravessa estados é atendida pelos dois
+    lados, e basta uma sigla bater.
+  */
+  it("a terra que atravessa estados entra por qualquer um deles", () => {
+    const atravessa = {
+      ...terraEm(-12, -38),
+      properties: { uf_sigla: "AM,PA" },
+    };
+    expect(terraPertenceAoDsei(atravessa, perto, ["PA"])).toBe(true);
+    expect(terraPertenceAoDsei(atravessa, perto, ["AM"])).toBe(true);
+    expect(terraPertenceAoDsei(atravessa, perto, ["BA"])).toBe(false);
+  });
+
+  it("sem UF de um dos lados, o crivo não se aplica", () => {
+    expect(terraPertenceAoDsei(terraEmBahia, perto, [])).toBe(true);
+    expect(terraPertenceAoDsei(terraEm(-12, -38), perto, ["BA"])).toBe(true);
+  });
+
+  it("não se deixa enganar por caixa ou espaço", () => {
+    expect(terraPertenceAoDsei(terraEmBahia, perto, [" ba "])).toBe(true);
+  });
+
+  it("o crivo da UF não salva quem está longe", () => {
+    expect(
+      terraPertenceAoDsei(terraEmBahia, [{ lat: -5, lon: -38 }], ["BA"]),
+    ).toBe(false);
+  });
+});
+
+/*
   No DSEI Bahia os nomes saíam uns por cima dos outros — "Tuxá", "Pankarú" e
   "Kiriri" no mesmo punhado de pixels, ilegíveis os três.
 */
