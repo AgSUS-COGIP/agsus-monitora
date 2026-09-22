@@ -118,10 +118,15 @@ describe("o que o mapa mostra", () => {
     expect(rotulo).not.toContain("validada");
   });
 
-  it("diz quando não havia o que verificar", () => {
-    expect(rotuloDaLocalizacao({ estado: "indeterminado" })).toContain(
-      "não foi possível verificar",
-    );
+  /*
+    A frase dizia "Sem UF ou sem coordenada" e afirmava a ausência errada:
+    `uf_indeterminada` acontece quase sempre COM coordenada, e o mapa mostrava
+    isso em cima de marcadores desenhados. Ver `tests/terra-indigena-verifica`.
+  */
+  it("diz o que faltou, e é a UF", () => {
+    const rotulo = rotuloDaLocalizacao({ estado: "indeterminado" });
+    expect(rotulo).toContain("UF não determinada");
+    expect(rotulo).not.toContain("sem coordenada");
   });
 
   it("sem veredito nenhum, continua em validação", () => {

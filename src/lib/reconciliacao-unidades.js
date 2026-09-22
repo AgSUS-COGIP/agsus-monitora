@@ -43,6 +43,8 @@
   com agrupamento. Ver `agruparPorPontoDeRender` no fim deste ficheiro.
 */
 
+import { veredictoQuePrevalece } from "./forca-do-veredito.js";
+
 export const RECONCILIACAO = Object.freeze({
   AUTOMATICA: "automatica",
   AMBIGUA: "ambigua",
@@ -238,11 +240,14 @@ function registrarReconciliacao({
     canonico,
     tipo: tipoP,
     /*
-      O veredito da auditoria de localização é do POLO, não do estabelecimento:
-      foi sobre as lotações que ela correu. Quando os dois viram um ponto só,
-      é o do polo que o popup mostra.
+      Dois vereditos, um popup. Assumir o do polo escolhia a pior das duas
+      respostas — ver `veredictoQuePrevalece`, e o caso do KARAPOTÓ TERRA NOVA
+      que o obrigou a existir.
     */
-    veredicto: polo.veredicto_localizacao || null,
+    veredicto: veredictoQuePrevalece(
+      polo.veredicto_localizacao || null,
+      estab.veredicto_localizacao || null,
+    ),
     nome_exibicao: estab.nome || polo.nome,
     nomes: { lmap: polo.nome, rede_cnes: estab.nome },
     cnes: estab.cnes || polo.cnes || "",

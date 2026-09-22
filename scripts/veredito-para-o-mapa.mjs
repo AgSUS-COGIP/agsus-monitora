@@ -41,6 +41,13 @@ export function vereditoParaOMapa(registro) {
     como o tipo inteiro, porque é só isto que a chave precisa de saber.
   */
   if (registro.tipo === "casai") saida.casai = true;
+
+  /*
+    O nome da terra, quando foi ela que confirmou. Sem ele a frase diz apenas
+    "dentro de Terra Indígena" e cala justamente a informação que se apurou —
+    QUAL terra. Só viaja no veredito que a usa.
+  */
+  if (registro.terra) saida.terra = registro.terra;
   // A distância entre fontes é o que dá tamanho ao conflito. Sem ela, "as duas
   // fontes discordam" não diz se são 5 km ou 800.
   if (Number.isFinite(Number(registro.km))) {
