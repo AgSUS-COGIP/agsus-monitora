@@ -2153,6 +2153,8 @@ async function loadMapaConfig() {
   );
   if (byKey.lmap && Array.isArray(byKey.lmap.dsei)) LMAP = byKey.lmap;
   if (byKey.rede_cnes && byKey.rede_cnes.rede) REDE_CNES = byKey.rede_cnes;
+  // Dados novos, contagem nova. Ver `resumoDaRedeDoDsei`.
+  esquecerResumoDaRede();
   rebuildDseiIndex();
   mapConfigLoadOk = !!(byKey.lmap && byKey.rede_cnes);
   if (!mapConfigLoadOk && can("config"))
@@ -10241,7 +10243,7 @@ function drawDSEIBubbles() {
         true
       ) {
         m.bindTooltip(
-          `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>${esc(resumoDaRedeDoDsei(d))}<br>Estados administrativos: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para abrir o território</i>`,
+          `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>${resumoDaRedeDoDsei(d)}<br>Estados administrativos: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para abrir o território</i>`,
           { direction: "top" },
         );
       }
@@ -10595,25 +10597,81 @@ function renderMap() {
 }
 
 /*
-  O QUE O MAPA DESENHA, E NÃO SÓ OS POLOS
+  DUAS PERGUNTAS DIFERENTES, DUAS LINHAS
 
-  A dica dizia "Polos base: 6" para o DSEI Maranhão, e o mapa do distrito
-  desenha 71 marcadores: 6 polos, 62 unidades e 3 CASAIs. Os dois números
-  estavam certos e a leitura não: quem via 71 pontos com "6" escrito ao lado
-  concluía que o mapa estava errado.
+  A dica dizia "Polos base: 6" no DSEI Maranhão e o mapa desenhava 71
+  marcadores. Trocou-se por três números somando as listas cruas — e isso
+  estava errado de outra maneira: em Alagoas e Sergipe dava "13 polos · 14
+  unidades · 1 CASAI", vinte e oito, quando o mapa desenha vinte e um. Doze
+  daquelas catorze "unidades" chamam-se POLO BASE ALGUMA COISA no CNES: são os
+  mesmos polos, cadastrados. Medido nos 34 distritos, somar as listas prometia
+  1578 pontos onde o mapa desenha 1328.
 
-  Agora a dica enumera o que existe. Só aparece o que tem contagem — um DSEI
-  sem CASAI não ganha "CASAIs: 0".
+  Mas contar o que o mapa desenha também não responde sozinho. Alagoas e
+  Sergipe tem TREZE polos base na planilha de lotações, e o mapa desenha
+  DEZOITO marcadores de polo, porque cinco deles saem duas vezes — o polo da
+  planilha e o registo do CNES que é o mesmo polo, que a reconciliação não
+  casou. São 40 casos assim no país.
+
+  Esconder uma das duas seria escolher qual mentir. Por isso a dica diz as
+  duas: quantos polos o distrito TEM, e quantos pontos o mapa MOSTRA. Enquanto
+  os números divergirem, a divergência fica à vista de quem monitoriza — que é
+  para isso que este painel existe.
+*/
+let _resumoDaRedePorDsei = null;
+
+function esquecerResumoDaRede() {
+  _resumoDaRedePorDsei = null;
+}
+
+/*
+  Contar o que o mapa desenha é o mesmo trabalho que desenhar, e
+  `detailRecordsForDsei` já o faz inteiro: une os registos repetidos do CNES,
+  reconcilia polo com estabelecimento e devolve o que sobra. A contagem sai
+  dali para que os dois não possam divergir. Custa 11 ms para os 34 distritos,
+  medido, e fica guardada.
 */
 function resumoDaRedeDoDsei(d) {
-  const grupo = (REDE_CNES?.rede || {})[d?.k] || {};
-  const partes = [
-    ["Polos base", (d?.polos || []).length],
-    ["Unidades de saúde", (grupo.u || []).length],
-    ["CASAIs", (grupo.c || []).length],
-  ].filter(([, n]) => n > 0);
-  if (!partes.length) return "Sem unidades cadastradas";
-  return partes.map(([rotulo, n]) => `${rotulo}: ${n}`).join(" · ");
+  if (!d?.k) return "Sem unidades cadastradas";
+  if (!_resumoDaRedePorDsei) _resumoDaRedePorDsei = new Map();
+
+  if (!_resumoDaRedePorDsei.has(d.k)) {
+    const desenhados = { polo: 0, casai: 0, outros: 0 };
+    let total = 0;
+    for (const registo of detailRecordsForDsei(d)) {
+      total += 1;
+      const chave = registo?.type?.key;
+      if (chave === "polo") desenhados.polo += 1;
+      else if (chave === "casai") desenhados.casai += 1;
+      else desenhados.outros += 1;
+    }
+
+    const noMapa = [
+      ["polos", desenhados.polo],
+      ["unidades", desenhados.outros],
+      ["CASAIs", desenhados.casai],
+      // Só aparece o que existe: um distrito sem CASAI não ganha "CASAIs: 0".
+    ]
+      .filter(([, n]) => n > 0)
+      .map(([rotulo, n]) => `${n} ${rotulo}`)
+      .join(", ");
+
+    const polosDaLotacao = (d.polos || []).length;
+    const linhas = [];
+    if (polosDaLotacao) linhas.push(`Polos base: ${polosDaLotacao}`);
+    if (total) {
+      linhas.push(
+        `No mapa: ${total} ${total === 1 ? "ponto" : "pontos"} (${noMapa})`,
+      );
+    }
+
+    _resumoDaRedePorDsei.set(
+      d.k,
+      linhas.length ? linhas.join("<br>") : "Sem unidades cadastradas",
+    );
+  }
+
+  return _resumoDaRedePorDsei.get(d.k);
 }
 
 function mapVoltar() {
