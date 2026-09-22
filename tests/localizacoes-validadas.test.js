@@ -4,6 +4,7 @@ import {
   coordenadaValidada,
   indexarVereditos,
   rotuloDaLocalizacao,
+  severidadeDaLocalizacao,
   veredictoDaUnidade,
 } from "../src/lib/localizacoes-validadas.js";
 import { LOCALIZACOES_VALIDADAS } from "../src/lib/localizacoes-validadas-gerado.js";
@@ -59,12 +60,73 @@ describe("índice de vereditos", () => {
   });
 });
 
+/*
+  Havia dois rótulos para cinco vereditos: `validada` e `erro` tinham o seu, e
+  os outros 512 de 606 caíam em "Localização em validação" — a frase de quem
+  ainda não olhou. Entre eles estavam 119 conflitos, com mediana de 101 km.
+*/
 describe("o que o mapa mostra", () => {
-  it("só diz validada quando houve prova", () => {
-    expect(rotuloDaLocalizacao({ estado: "validada" })).toBe(
-      "Localização validada",
+  it("só diz validada quando houve prova, e diz qual", () => {
+    expect(
+      rotuloDaLocalizacao({
+        estado: "validada",
+        motivo: "duas_fontes_concordam",
+      }),
+    ).toBe("Localização validada — duas fontes concordam");
+    expect(
+      rotuloDaLocalizacao({
+        estado: "validada",
+        motivo: "arbitrada_pela_uf_cnes",
+      }),
+    ).toContain("arbitrada pela UF");
+  });
+
+  /*
+    O caso que faltava, e o mais importante: 119 unidades em que a planilha e o
+    CNES discordam. Dizer "em validação" sobre isto é esconder o achado.
+  */
+  it("diz que as fontes discordam, e em quanto", () => {
+    expect(
+      rotuloDaLocalizacao({
+        estado: "conflito",
+        motivo: "duas_fontes_discordam_na_uf",
+        km: 101.4,
+      }),
+    ).toBe("Fontes discordam em 101 km — localização não apurada");
+  });
+
+  it("abaixo de dez quilómetros a casa decimal ainda diz alguma coisa", () => {
+    expect(rotuloDaLocalizacao({ estado: "conflito", km: 5.13 })).toContain(
+      "5.1 km",
     );
-    expect(rotuloDaLocalizacao({ estado: "coerente" })).toBe(
+  });
+
+  it("conflito sem distância continua a ser conflito", () => {
+    expect(rotuloDaLocalizacao({ estado: "conflito" })).toContain("discordam");
+  });
+
+  /*
+    Uma fonte só a cair na UF certa não é confirmação: é ausência de
+    contradição. O rótulo tem de dizer isso, senão vira carimbo.
+  */
+  it("não carimba de validada o que tem fonte única", () => {
+    const rotulo = rotuloDaLocalizacao({
+      estado: "coerente",
+      motivo: "fonte_unica_na_uf",
+    });
+    expect(rotulo).toContain("Fonte única");
+    expect(rotulo).not.toContain("validada");
+  });
+
+  it("diz quando não havia o que verificar", () => {
+    expect(rotuloDaLocalizacao({ estado: "indeterminado" })).toContain(
+      "não foi possível verificar",
+    );
+  });
+
+  it("sem veredito nenhum, continua em validação", () => {
+    expect(rotuloDaLocalizacao(null)).toBe("Localização em validação");
+    expect(rotuloDaLocalizacao({ estado: "coisa nova" })).toBe(
       "Localização em validação",
     );
   });
@@ -73,6 +135,20 @@ describe("o que o mapa mostra", () => {
     expect(rotuloDaLocalizacao({ estado: "erro" })).toContain(
       "fora da UF declarada",
     );
+  });
+
+  /*
+    Quem desenha precisa de separar o que pede atenção do que está resolvido,
+    sem repetir a tabela de estados em cada sítio que desenha.
+  */
+  it("separa por severidade, para quem desenha", () => {
+    expect(severidadeDaLocalizacao({ estado: "validada" })).toBe("confirmada");
+    expect(severidadeDaLocalizacao({ estado: "conflito" })).toBe("divergente");
+    expect(severidadeDaLocalizacao({ estado: "erro" })).toBe("divergente");
+    expect(severidadeDaLocalizacao({ estado: "coerente" })).toBe(
+      "sem_contradicao",
+    );
+    expect(severidadeDaLocalizacao(null)).toBe("sem_veredito");
   });
 
   it("só substitui a coordenada quando o veredito é validada", () => {
@@ -97,9 +173,47 @@ describe("o que o mapa mostra", () => {
   desenha. Estes casos travam uma regeneração que saia deformada.
 */
 describe("o ficheiro gerado", () => {
-  it("só traz vereditos que mudam alguma coisa", () => {
+  /*
+    Antes só viajavam `validada` e `erro` — 94 de 606 —, com o argumento de que
+    os outros não mudavam nada. Mudavam: 119 deles são conflito, e o mapa
+    escrevia "Localização em validação" por cima. Viajam todos.
+  */
+  it("traz os cinco vereditos, e não só os dois que trocam a coordenada", () => {
     const estados = new Set(LOCALIZACOES_VALIDADAS.map((r) => r.estado));
-    expect([...estados].sort()).toEqual(["erro", "validada"]);
+    expect([...estados].sort()).toEqual([
+      "coerente",
+      "conflito",
+      "erro",
+      "indeterminado",
+      "validada",
+    ]);
+  });
+
+  it("o conflito viaja com a distância entre as fontes", () => {
+    const conflitos = LOCALIZACOES_VALIDADAS.filter(
+      (r) => r.estado === "conflito",
+    );
+    expect(conflitos.length).toBeGreaterThan(100);
+    for (const r of conflitos) {
+      expect(Number.isFinite(r.km), `${r.canonico} sem distância`).toBe(true);
+      expect(r.km, `${r.canonico}`).toBeGreaterThan(0);
+    }
+  });
+
+  /*
+    Coordenada só nos `validada`, que são os únicos em que o mapa a usa. Levá-la
+    nos outros seria carregar um número que ninguém pode usar — e que alguém
+    acabaria por usar.
+  */
+  it("só o veredito validada carrega coordenada", () => {
+    for (const r of LOCALIZACOES_VALIDADAS) {
+      if (r.estado === "validada") continue;
+      expect(
+        r.lat,
+        `${r.canonico} não devia trazer coordenada`,
+      ).toBeUndefined();
+      expect(r.lon).toBeUndefined();
+    }
   });
 
   it("todo veredito validada traz coordenada utilizável", () => {

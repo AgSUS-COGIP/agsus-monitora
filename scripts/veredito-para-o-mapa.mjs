@@ -1,0 +1,72 @@
+/*
+  O QUE DE CADA VEREDITO VIAJA NO PACOTE
+
+  Este módulo é partilhado por quem faz a auditoria — `validar-localizacoes.mjs`,
+  que fala com o CNES e com o IBGE e demora — e por quem só recompila o
+  ficheiro do pacote a partir do JSON já auditado, sem rede. Enquanto a forma
+  estiver escrita nos dois sítios, os dois divergem.
+
+  ANTES SÓ VIAJAVAM 94 DOS 606
+
+  O critério era "só os vereditos que mudam alguma coisa": os `validada`, que
+  trocam o rótulo e passam a mandar na coordenada, e os `erro`. Os outros 512
+  ficavam de fora com o argumento de que seriam peso morto.
+
+  Não eram. Dos 512, **119 são conflito** — as duas fontes discordam, mediana
+  de 101 km, máximo de 821 —, e o mapa escrevia "Localização em validação" em
+  cima de todos. Essa é a frase de quem ainda não olhou. Tinha-se olhado, e
+  tinha-se encontrado exatamente aquilo que o painel existe para mostrar.
+
+  Passa tudo. São ~90 KB antes de compressão, e valem mais do que pesam.
+*/
+export function vereditoParaOMapa(registro) {
+  const saida = {
+    dsei: registro.dsei,
+    canonico: registro.canonico,
+    estado: registro.estado,
+    motivo: registro.motivo,
+  };
+  // A distância entre fontes é o que dá tamanho ao conflito. Sem ela, "as duas
+  // fontes discordam" não diz se são 5 km ou 800.
+  if (Number.isFinite(Number(registro.km))) {
+    saida.km = Number(Number(registro.km).toFixed(1));
+  }
+  /*
+    A coordenada só vai nos `validada`, porque só neles o mapa a usa para
+    substituir a que lá está. Levá-la nos outros seria carregar um número que
+    ninguém pode usar e que alguém acabaria por usar.
+  */
+  if (registro.estado === "validada" && registro.lat != null) {
+    saida.lat = registro.lat;
+    saida.lon = registro.lon;
+  }
+  return saida;
+}
+
+export function ficheiroDosVereditos(registros) {
+  const paraOMapa = registros.map(vereditoParaOMapa);
+  const porEstado = new Map();
+  for (const r of paraOMapa)
+    porEstado.set(r.estado, (porEstado.get(r.estado) || 0) + 1);
+  const resumo = [...porEstado]
+    .sort((a, b) => b[1] - a[1])
+    .map(([estado, n]) => `  ${String(n).padStart(4)}  ${estado}`);
+
+  return [
+    "/*",
+    "  GERADO por scripts/validar-localizacoes.mjs. Não editar à mão.",
+    "",
+    `  ${paraOMapa.length} vereditos de localização:`,
+    "",
+    ...resumo,
+    "",
+    "  Viajam todos, e não só os que trocam a coordenada. Um conflito entre as",
+    "  duas fontes é resultado de auditoria tanto quanto uma validação, e o mapa",
+    "  não tem como o dizer se ele ficar aqui de fora.",
+    "",
+    "  A prova de cada veredito está em public/data/localizacoes-validadas.json.",
+    "*/",
+    `export const LOCALIZACOES_VALIDADAS = ${JSON.stringify(paraOMapa, null, 2)};`,
+    "",
+  ].join("\n");
+}

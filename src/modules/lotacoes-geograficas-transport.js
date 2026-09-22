@@ -81,6 +81,35 @@ function unidadesQueRepetemOPolo(records) {
   return repetidas;
 }
 
+/*
+  O VEREDITO TAMBÉM PERTENCE AO ESTABELECIMENTO
+
+  A auditoria foi feita sobre as lotações, e o veredito ficava a viver só no
+  polo. Mas o mapa desenha 1146 estabelecimentos do CNES, e o popup deles dizia
+  sempre "Localização em validação".
+
+  A chave é a mesma da reconciliação — DSEI mais nome canónico —, e ela casa:
+  `POLO BASE ACONA` do CNES e `ACONÃ` da planilha reduzem-se ambos a `ACONA`.
+  Medido, 317 dos 1146 estabelecimentos encontram assim o seu veredito, dos
+  quais 115 são conflito.
+
+  Os outros 829 não casam com lotação nenhuma e continuam sem veredito — o que
+  é verdade, e é diferente de "em validação" por omissão de quem procura.
+*/
+function anotarVereditos(dseiKey, network) {
+  for (const lista of ["u", "c"]) {
+    for (const linha of network[lista] || []) {
+      const veredicto = veredictoDaUnidade(dseiKey, linha?.[0]);
+      if (!veredicto) continue;
+      linha[9] = linha[9] && typeof linha[9] === "object" ? linha[9] : {};
+      linha[9].veredicto_localizacao = veredicto;
+      if (veredicto.estado === "validada") {
+        linha[9].validacao_coordenada = "validada";
+      }
+    }
+  }
+}
+
 function recordExpectedType(record) {
   if (record.type === "POLO BASE") return "polo";
   if (record.type === "CASAI") return "casai";
@@ -586,6 +615,14 @@ export function applyLotacoesGeograficas(rows, dataset) {
           `polo.lat`, e o veredito só é veredito se for o último a falar.
         */
         const veredicto = veredictoDaUnidade(dseiKey, record.name);
+        /*
+          O veredito inteiro, e não só um "validada"/"pendente". São cinco
+          estados, e três deles — conflito, coerente, indeterminado — diziam
+          todos "Localização em validação" no ecrã, que é a frase de quem ainda
+          não olhou. Quem desenha precisa do estado e do motivo para dizer o
+          que a auditoria de facto apurou.
+        */
+        polo.veredicto_localizacao = veredicto || null;
         const apurada = coordenadaValidada(veredicto);
         if (apurada) {
           polo.lat = apurada.lat;
@@ -617,6 +654,7 @@ export function applyLotacoesGeograficas(rows, dataset) {
 
     network.u = annotateSharedCoordinates(dedupeNetworkList(network.u, "u"));
     network.c = annotateSharedCoordinates(dedupeNetworkList(network.c, "c"));
+    anotarVereditos(dseiKey, network);
   });
 
   redeRow.payload.nac = annotateSharedCoordinates(

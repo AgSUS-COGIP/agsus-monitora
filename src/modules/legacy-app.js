@@ -32,6 +32,7 @@ import {
   normalizeAccessPanelColor,
 } from "../lib/access-branding.js";
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
+import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
 import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
@@ -9458,6 +9459,7 @@ function detailRecordsForDsei(d) {
       municipio: e.mun,
       uf: e.uf,
       validacao_coordenada: e.meta?.validacao_coordenada || "pendente",
+      veredicto: e.meta?.veredicto_localizacao || null,
       confirmacao_independente: e.meta?.confirmacao_independente === true,
       coordenada_compartilhada_qtd: Number(
         e.meta?.coordenada_compartilhada_qtd || 0,
@@ -9489,6 +9491,9 @@ function detailRecordsForDsei(d) {
       lon: Number(p.coord_lmap?.lon ?? p.lon),
       coord_lotacoes: p.coord_lotacoes || null,
       coord_validacao: p.coord_validacao || "pendente",
+      // O veredito viaja com o polo para sobreviver à reconciliação: quando o
+      // polo e o registo do CNES viram um ponto só, é o do polo que vale.
+      veredicto_localizacao: p.veredicto_localizacao || null,
       confirmacao_independente: p.confirmacao_independente === true,
       uf: p.uf,
       mun_lotacao: p.mun_lotacao || "",
@@ -9506,6 +9511,7 @@ function detailRecordsForDsei(d) {
     city: u.municipio,
     uf: u.uf || d.sedeuf,
     type: TIPO_POLO,
+    veredicto: u.veredicto || null,
     origens: u.origens,
     nomes: u.nomes,
     cod: u.cod,
@@ -9529,6 +9535,7 @@ function detailRecordsForDsei(d) {
       city: p.n,
       uf: p.uf || d.sedeuf,
       type: TIPO_POLO,
+      veredicto: p.veredicto_localizacao || null,
       origens: ["lmap"],
       validacao_coordenada: p.coord_validacao || "pendente",
       confirmacao_independente: p.confirmacao_independente === true,
@@ -9545,6 +9552,7 @@ function detailRecordsForDsei(d) {
       city: e.municipio,
       uf: e.uf,
       type: e._tipoVisual,
+      veredicto: e.veredicto || null,
       origens: ["rede_cnes"],
       validacao_coordenada: e.validacao_coordenada || "pendente",
       confirmacao_independente: e.confirmacao_independente === true,
@@ -9756,10 +9764,13 @@ function renderDetailMap(d) {
       `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
     ];
     if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
+    /*
+      Cinco vereditos, cinco frases. Antes eram duas, e "Localização em
+      validação" cobria 512 dos 606 — incluindo 119 conflitos entre a planilha
+      e o CNES, com mediana de 101 km. Ver `rotuloDaLocalizacao`.
+    */
     linhas.push(
-      record.validacao_coordenada === "validada"
-        ? `<span style="font-size:11px;color:#6b7d92">Localização validada</span>`
-        : `<span style="font-size:11px;color:#6b7d92">Localização em validação</span>`,
+      `<span style="font-size:11px;color:#6b7d92">${esc(rotuloDaLocalizacao(record.veredicto))}</span>`,
     );
     return linhas.join("<br>");
   };
@@ -10544,10 +10555,15 @@ function drawPolos(d) {
       p.coord_diferenca_km != null
         ? `<br>Diferença entre fontes: ${esc(p.coord_diferenca_km)} km`
         : "";
-    const fonte =
-      p.coord_validacao === "validada"
-        ? `Localização validada${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}`
-        : `Localização em validação${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}${p.coord_nome ? `<br>Registro CNES: ${esc(p.coord_nome)}` : ""}${diferenca}`;
+    const fonte = [
+      esc(rotuloDaLocalizacao(p.veredicto_localizacao)),
+      p.cnes ? `CNES: ${esc(p.cnes)}` : "",
+      p.coord_nome ? `Registro CNES: ${esc(p.coord_nome)}` : "",
+      // A diferença entre fontes já está dita no rótulo quando há conflito.
+      p.veredicto_localizacao?.estado === "conflito" ? "" : diferenca.replace(/^<br>/, ""),
+    ]
+      .filter(Boolean)
+      .join("<br>");
     mk.bindPopup(
       `<b>Polo base: ${esc(p.n)}</b><br>UF: ${p.uf}<br>População do polo: ${fmt(p.p)} indígenas${externo ? "<br><i>Vinculado ao DSEI " + esc(d.n) + ", fora das UFs administrativas do DSEI</i>" : ""}<br><span style="font-size:10px;color:#6b7d92">${fonte}</span>`,
     );

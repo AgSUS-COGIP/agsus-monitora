@@ -47,6 +47,7 @@
   para `public/data/localizacoes-validadas.json`.
 */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { ficheiroDosVereditos } from "./veredito-para-o-mapa.mjs";
 import { join } from "node:path";
 import { lerPlanilhaXlsx } from "./ler-planilha-xlsx.mjs";
 import { carregarUf, dentroDaUf } from "./malhas-das-ufs.mjs";
@@ -335,38 +336,14 @@ async function principal() {
   );
 
   /*
-    O JSON acima é o registro auditável e fica fora do pacote. Para o mapa só
-    interessam os vereditos que MUDAM alguma coisa: os validados, que trocam o
-    rótulo e passam a mandar na coordenada, e os errados, que deixam de ser
-    desenhados como se estivessem apurados. Os `coerente`, `conflito` e
-    `indeterminado` continuam a ser o que já eram e não precisam de viajar no
-    pacote — seriam 508 registos de peso morto.
+    O JSON acima é o registro auditável e fica fora do pacote. O que vai no
+    pacote é agora TUDO, e a razão está em `veredito-para-o-mapa.mjs`: o
+    critério antigo — "só os que mudam alguma coisa" — deixava de fora 119
+    conflitos, e o mapa escrevia "Localização em validação" em cima deles.
   */
-  const paraOMapa = registros
-    .filter((r) => r.estado === "validada" || r.estado === "erro")
-    .map((r) => ({
-      dsei: r.dsei,
-      canonico: r.canonico,
-      estado: r.estado,
-      motivo: r.motivo,
-      ...(r.lat == null ? {} : { lat: r.lat, lon: r.lon }),
-    }));
-
   writeFileSync(
     "src/lib/localizacoes-validadas-gerado.js",
-    [
-      "/*",
-      "  GERADO por scripts/validar-localizacoes.mjs. Não editar à mão.",
-      "",
-      `  ${paraOMapa.length} vereditos que mudam o que o mapa mostra, de`,
-      `  ${registros.length} lotações com coordenada. Os restantes mantêm-se`,
-      "  como estavam e não viajam no pacote.",
-      "",
-      "  A prova de cada veredito está em public/data/localizacoes-validadas.json.",
-      "*/",
-      `export const LOCALIZACOES_VALIDADAS = ${JSON.stringify(paraOMapa, null, 2)};`,
-      "",
-    ].join("\n"),
+    ficheiroDosVereditos(registros),
   );
 
   console.log(`${registros.length} lotações com coordenada`);

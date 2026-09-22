@@ -237,6 +237,12 @@ function registrarReconciliacao({
     dsei: dseiChave,
     canonico,
     tipo: tipoP,
+    /*
+      O veredito da auditoria de localização é do POLO, não do estabelecimento:
+      foi sobre as lotações que ela correu. Quando os dois viram um ponto só,
+      é o do polo que o popup mostra.
+    */
+    veredicto: polo.veredicto_localizacao || null,
     nome_exibicao: estab.nome || polo.nome,
     nomes: { lmap: polo.nome, rede_cnes: estab.nome },
     cnes: estab.cnes || polo.cnes || "",
