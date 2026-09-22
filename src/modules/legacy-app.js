@@ -10940,17 +10940,28 @@ function syncMapLevelUI() {
     const limiteDsei =
       '<span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
     /*
-      Mesma cor do polígono, que é #e030a6 com preenchimento #f472d0. Este
-      quadrado tinha ficado no verde-azulado antigo quando a camada passou a
-      magenta: legenda que não descreve o desenho ensina a procurar a coisa
-      errada. As outras duas amostras vivem no CSS e têm teste; esta é HTML
-      aqui dentro, e foi por isso que escapou.
+      TRÊS AMOSTRAS, PORQUE O MAPA DESENHA TRÊS COISAS
+
+      A camada separa as terras pela fase do processo: 511 com limite
+      definitivo (Regularizada, Homologada), 146 ainda em processo (Declarada,
+      Delimitada, Encaminhada RI) e as que estão em estudo, sem limite nenhum.
+
+      Cada uma tem o seu desenho — cheia, tracejada, círculo tracejado —, e uma
+      legenda com um quadrado só voltaria ao problema de antes: descrever
+      menos do que o mapa mostra é ensinar a procurar a coisa errada.
+
+      Os valores são os mesmos de `estiloDaFase`, no módulo da camada.
     */
     const terraIndigena =
       '<span style="width:16px;height:11px;background:rgba(244,114,208,.3);border:2px solid #e030a6;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const terraEmProcesso =
+      '<span style="width:16px;height:11px;background:rgba(249,168,212,.22);border:2px dashed #f9a8d4;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const terraEmEstudo =
+      '<span style="width:12px;height:12px;border:2px dashed #e030a6;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:8px;margin-left:2px;"></span>';
+    const terras = `${terraIndigena}Terra Indígena homologada ou regularizada<br>${terraEmProcesso}Terra Indígena em processo (declarada, delimitada)<br>${terraEmEstudo}Terra Indígena em estudo — sem limite publicado`;
     box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terra Indígena (Funai)`
-      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terras Indígenas (Funai)<br>${losango("#7b2ff7")}CASAI Nacional`;
+      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}`
+      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}<br>${losango("#7b2ff7")}CASAI Nacional`;
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei)
