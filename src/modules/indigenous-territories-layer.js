@@ -797,7 +797,7 @@ function enhanceMap(L, map) {
   const vectorLayer = L.geoJSON([], {
     pane: vectorPaneName,
     interactive: supportsHover(),
-    style: () => vectorStyle(map),
+    style: (feature) => vectorStyle(map, feature),
     onEachFeature: (feature, layer) => {
       if (!supportsHover()) return;
       const texto = tooltipDaTerraIndigena(feature?.properties);
@@ -1167,15 +1167,33 @@ function enhanceMap(L, map) {
         )
       : doEnquadramento;
 
+    /*
+      A LISTA É DO DISTRITO, O DESENHO É DO ENQUADRAMENTO
+
+      A lista saía de `doDistrito`, que já passou pelo recorte do ecrã. Quem
+      aproximasse o mapa num posto de saúde via "Terras Indígenas e povos: 0"
+      num distrito que tem dezenas delas — o painel respondia à pergunta
+      "o que cabe no ecrã", e a pergunta é "o que este DSEI atende".
+
+      O recorte do enquadramento continua a existir, e tem de continuar: são
+      665 terras, e o Leaflet paga por cada traçado. Mas ele é sobre o desenho,
+      não sobre a lista.
+    */
+    if (catalogo) {
+      const doDistritoInteiro = unidadesDoDsei.length
+        ? catalogo.features.filter((f) =>
+            terraPertenceAoDsei(f, unidadesDoDsei, ufsDoDsei),
+          )
+        : doDistrito;
+      map.__agsusAoMudarTerras?.(resumoDasTerras(doDistritoInteiro));
+    }
+
     vectorLayer.clearLayers();
     vectorLayer.addData({ type: "FeatureCollection", features: doDistrito });
-    vectorLayer.setStyle?.(() => vectorStyle(map));
+    vectorLayer.setStyle?.((feature) => vectorStyle(map, feature));
     if (!map.hasLayer(vectorLayer)) vectorLayer.addTo(map);
     if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
     desenharApoios(doDistrito.length);
-    // Quem desenha a lista não tem como saber que terras sobreviveram ao
-    // filtro do distrito. É a camada que sabe, e é ela que avisa.
-    map.__agsusAoMudarTerras?.(resumoDasTerras(doDistrito));
   };
 
   /*
@@ -1216,7 +1234,7 @@ function enhanceMap(L, map) {
 
   map.on("moveend zoomend", scheduleRefresh);
   map.getContainer?.().addEventListener("agsus:map-base-layer-changed", () => {
-    vectorLayer.setStyle?.(() => vectorStyle(map));
+    vectorLayer.setStyle?.((feature) => vectorStyle(map, feature));
     simbolosLayer.eachLayer?.((simbolo) =>
       simbolo.setStyle?.(estiloDoSimbolo(map)),
     );
@@ -1284,6 +1302,72 @@ const FILTRO_DO_RASTER = "hue-rotate(218deg) saturate(3) brightness(0.88)";
 const COR_DA_TERRA = "#e030a6";
 const PREENCHIMENTO_DA_TERRA = "#f472d0";
 
+/*
+  UMA TERRA HOMOLOGADA E UMA EM PROCESSO NÃO SÃO A MESMA COISA
+
+  O mapa pintava as 665 com a mesma cor. Mas a fase é o estado jurídico da
+  terra, e no catálogo da Funai elas repartem-se assim:
+
+      494  Regularizada      limite definitivo, registrada em cartório
+       17  Homologada        limite definitivo, homologado por decreto
+       73  Declarada         limite definido; o processo continua
+       45  Delimitada        idem
+       28  Encaminhada RI    idem
+        8  Em Estudo         sem limite definido
+
+  As duas primeiras somam 511 terras com limite definitivo. As três seguintes
+  são 146 terras em processo, e para quem planeia atendimento isso muda tudo:
+  um limite que ainda pode mudar não é o mesmo que um limite que não muda mais.
+
+  A cor separa as duas famílias, e a terceira — em estudo — já tinha o seu
+  desenho próprio, o círculo tracejado, porque dela não há sequer limite.
+
+  Mantém-se a matiz: as duas são magenta, pela mesma razão de antes (nada na
+  paisagem é magenta, e não colide com o azul do DSEI). O que muda é o valor —
+  a definitiva é cheia e escura, a que está em processo é clara e tracejada.
+  Tracejado, porque uma linha interrompida é como um limite provisório se
+  desenha em cartografia desde sempre.
+*/
+const FASES_DEFINITIVAS = new Set(["REGULARIZADA", "HOMOLOGADA"]);
+
+export function faseDaTerra(propriedades) {
+  const fase = String(propriedades?.fase_ti ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .trim();
+  if (!fase) return "desconhecida";
+  if (FASES_DEFINITIVAS.has(fase)) return "definitiva";
+  if (fase.includes("ESTUDO")) return "em_estudo";
+  return "em_processo";
+}
+
+const COR_EM_PROCESSO = "#f9a8d4";
+
+/*
+  Sem fase declarada desenha-se como definitiva, e não como provisória: dizer
+  "ainda em processo" sobre uma terra que talvez esteja regularizada é afirmar
+  mais do que se sabe, e na direção que pesa contra quem lá vive.
+*/
+export function estiloDaFase(fase, satellite) {
+  if (fase === "em_processo") {
+    return {
+      color: COR_EM_PROCESSO,
+      weight: satellite ? 3 : 2.4,
+      dashArray: "7 5",
+      fillColor: COR_EM_PROCESSO,
+      fillOpacity: satellite ? 0.1 : 0.14,
+    };
+  }
+  return {
+    color: COR_DA_TERRA,
+    weight: satellite ? 3.2 : 2.4,
+    dashArray: null,
+    fillColor: PREENCHIMENTO_DA_TERRA,
+    fillOpacity: satellite ? 0.18 : 0.26,
+  };
+}
+
 function estiloDoSimbolo(map) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
   return {
@@ -1295,14 +1379,11 @@ function estiloDoSimbolo(map) {
   };
 }
 
-function vectorStyle(map) {
+function vectorStyle(map, feature) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
   return {
-    color: COR_DA_TERRA,
-    weight: satellite ? 3.2 : 2.4,
     opacity: 1,
-    fillColor: PREENCHIMENTO_DA_TERRA,
-    fillOpacity: satellite ? 0.18 : 0.26,
+    ...estiloDaFase(faseDaTerra(feature?.properties), satellite),
   };
 }
 

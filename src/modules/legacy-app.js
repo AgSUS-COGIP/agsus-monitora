@@ -32,6 +32,7 @@ import {
   normalizeAccessPanelColor,
 } from "../lib/access-branding.js";
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
+import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
 import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
@@ -77,6 +78,7 @@ import {
   ESTILO_DA_LINHA,
   TOOLTIP_DA_LINHA,
   classificarRegistros,
+  formaDoTipo,
   htmlDoMarcador,
   registrosExternos,
   registrosLocais,
@@ -2153,6 +2155,8 @@ async function loadMapaConfig() {
   );
   if (byKey.lmap && Array.isArray(byKey.lmap.dsei)) LMAP = byKey.lmap;
   if (byKey.rede_cnes && byKey.rede_cnes.rede) REDE_CNES = byKey.rede_cnes;
+  // Dados novos, contagem nova. Ver `resumoDaRedeDoDsei`.
+  esquecerResumoDaRede();
   rebuildDseiIndex();
   mapConfigLoadOk = !!(byKey.lmap && byKey.rede_cnes);
   if (!mapConfigLoadOk && can("config"))
@@ -9409,6 +9413,17 @@ function detailUnitType(name) {
   };
 }
 
+/*
+  A sede do distrito. Forma e cor saem de `FORMAS`, como os outros tipos, para
+  que a legenda a descreva sem ninguém a escrever à mão outra vez.
+*/
+const TIPO_SEDE = {
+  key: "sede",
+  label: "Sede do DSEI",
+  color: formaDoTipo("sede").cor,
+  icon: "fa-star",
+};
+
 const TIPO_POLO = {
   key: "polo",
   label: "Polo base",
@@ -9456,6 +9471,7 @@ function detailRecordsForDsei(d) {
       municipio: e.mun,
       uf: e.uf,
       validacao_coordenada: e.meta?.validacao_coordenada || "pendente",
+      veredicto: e.meta?.veredicto_localizacao || null,
       confirmacao_independente: e.meta?.confirmacao_independente === true,
       coordenada_compartilhada_qtd: Number(
         e.meta?.coordenada_compartilhada_qtd || 0,
@@ -9487,6 +9503,9 @@ function detailRecordsForDsei(d) {
       lon: Number(p.coord_lmap?.lon ?? p.lon),
       coord_lotacoes: p.coord_lotacoes || null,
       coord_validacao: p.coord_validacao || "pendente",
+      // O veredito viaja com o polo para sobreviver à reconciliação: quando o
+      // polo e o registo do CNES viram um ponto só, é o do polo que vale.
+      veredicto_localizacao: p.veredicto_localizacao || null,
       confirmacao_independente: p.confirmacao_independente === true,
       uf: p.uf,
       mun_lotacao: p.mun_lotacao || "",
@@ -9504,6 +9523,7 @@ function detailRecordsForDsei(d) {
     city: u.municipio,
     uf: u.uf || d.sedeuf,
     type: TIPO_POLO,
+    veredicto: u.veredicto || null,
     origens: u.origens,
     nomes: u.nomes,
     cod: u.cod,
@@ -9527,6 +9547,7 @@ function detailRecordsForDsei(d) {
       city: p.n,
       uf: p.uf || d.sedeuf,
       type: TIPO_POLO,
+      veredicto: p.veredicto_localizacao || null,
       origens: ["lmap"],
       validacao_coordenada: p.coord_validacao || "pendente",
       confirmacao_independente: p.confirmacao_independente === true,
@@ -9543,6 +9564,7 @@ function detailRecordsForDsei(d) {
       city: e.municipio,
       uf: e.uf,
       type: e._tipoVisual,
+      veredicto: e.veredicto || null,
       origens: ["rede_cnes"],
       validacao_coordenada: e.validacao_coordenada || "pendente",
       confirmacao_independente: e.confirmacao_independente === true,
@@ -9754,10 +9776,13 @@ function renderDetailMap(d) {
       `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
     ];
     if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
+    /*
+      Cinco vereditos, cinco frases. Antes eram duas, e "Localização em
+      validação" cobria 512 dos 606 — incluindo 119 conflitos entre a planilha
+      e o CNES, com mediana de 101 km. Ver `rotuloDaLocalizacao`.
+    */
     linhas.push(
-      record.validacao_coordenada === "validada"
-        ? `<span style="font-size:11px;color:#6b7d92">Localização validada</span>`
-        : `<span style="font-size:11px;color:#6b7d92">Localização em validação</span>`,
+      `<span style="font-size:11px;color:#6b7d92">${esc(rotuloDaLocalizacao(record.veredicto))}</span>`,
     );
     return linhas.join("<br>");
   };
@@ -9873,14 +9898,43 @@ function renderDetailMap(d) {
     desenharCamadaDeUnidades,
   );
 
-  L.circleMarker([d.lat, d.lon], {
-    radius: 9,
-    color: "#fff",
-    weight: 2,
-    fillColor: "#1769aa",
-    fillOpacity: 1,
+  /*
+    A SEDE PASSA PELO MESMO CAMINHO QUE OS OUTROS MARCADORES
+
+    Era um `circleMarker` azul escrito à mão, fora da tabela de formas: não
+    entrava na legenda, não tinha forma própria e não se distinguia de um polo
+    base para quem só via dois círculos. Agora é uma estrela, vinda de
+    `FORMAS`, e a legenda passa a nomeá-la porque sai da mesma tabela.
+
+    Não entra em `detailRecordsForDsei`: a sede não é unidade de saúde, e
+    contá-la ali mudaria os totais e os filtros por tipo.
+  */
+  const registoDaSede = {
+    name: `Sede do DSEI ${d.n}`,
+    lat: d.lat,
+    lon: d.lon,
+    city: d.sede_municipio || "",
+    uf: d.sede_uf || d.sedeuf || "",
+    cnes: "",
+    type: TIPO_SEDE,
+    veredicto: null,
+  };
+  const ufDaSede = d.sede_uf || d.sedeuf || "";
+  L.marker([d.lat, d.lon], {
+    icon: L.divIcon({
+      className: "mapa-marcador-wrap",
+      html: htmlDoMarcador(registoDaSede),
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    }),
+    keyboard: true,
+    title: registoDaSede.name,
+    // Acima das unidades: é o ponto que ancora o território inteiro.
+    zIndexOffset: 400,
   })
-    .bindPopup(`<b>DSEI ${esc(d.n)}</b><br>Sede territorial`)
+    .bindPopup(
+      `<b>Sede do DSEI ${esc(d.n)}</b><br>${esc(d.sede_municipio || "")}${ufDaSede ? " – " + esc(ufDaSede) : ""}`,
+    )
     .addTo(_detailUnitLayer);
 
   const redesenharPorFiltro = () => {
@@ -10241,7 +10295,7 @@ function drawDSEIBubbles() {
         true
       ) {
         m.bindTooltip(
-          `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>${esc(resumoDaRedeDoDsei(d))}<br>Estados administrativos: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para abrir o território</i>`,
+          `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>${resumoDaRedeDoDsei(d)}<br>Estados administrativos: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para abrir o território</i>`,
           { direction: "top" },
         );
       }
@@ -10542,10 +10596,15 @@ function drawPolos(d) {
       p.coord_diferenca_km != null
         ? `<br>Diferença entre fontes: ${esc(p.coord_diferenca_km)} km`
         : "";
-    const fonte =
-      p.coord_validacao === "validada"
-        ? `Localização validada${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}`
-        : `Localização em validação${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}${p.coord_nome ? `<br>Registro CNES: ${esc(p.coord_nome)}` : ""}${diferenca}`;
+    const fonte = [
+      esc(rotuloDaLocalizacao(p.veredicto_localizacao)),
+      p.cnes ? `CNES: ${esc(p.cnes)}` : "",
+      p.coord_nome ? `Registro CNES: ${esc(p.coord_nome)}` : "",
+      // A diferença entre fontes já está dita no rótulo quando há conflito.
+      p.veredicto_localizacao?.estado === "conflito" ? "" : diferenca.replace(/^<br>/, ""),
+    ]
+      .filter(Boolean)
+      .join("<br>");
     mk.bindPopup(
       `<b>Polo base: ${esc(p.n)}</b><br>UF: ${p.uf}<br>População do polo: ${fmt(p.p)} indígenas${externo ? "<br><i>Vinculado ao DSEI " + esc(d.n) + ", fora das UFs administrativas do DSEI</i>" : ""}<br><span style="font-size:10px;color:#6b7d92">${fonte}</span>`,
     );
@@ -10595,25 +10654,81 @@ function renderMap() {
 }
 
 /*
-  O QUE O MAPA DESENHA, E NÃO SÓ OS POLOS
+  DUAS PERGUNTAS DIFERENTES, DUAS LINHAS
 
-  A dica dizia "Polos base: 6" para o DSEI Maranhão, e o mapa do distrito
-  desenha 71 marcadores: 6 polos, 62 unidades e 3 CASAIs. Os dois números
-  estavam certos e a leitura não: quem via 71 pontos com "6" escrito ao lado
-  concluía que o mapa estava errado.
+  A dica dizia "Polos base: 6" no DSEI Maranhão e o mapa desenhava 71
+  marcadores. Trocou-se por três números somando as listas cruas — e isso
+  estava errado de outra maneira: em Alagoas e Sergipe dava "13 polos · 14
+  unidades · 1 CASAI", vinte e oito, quando o mapa desenha vinte e um. Doze
+  daquelas catorze "unidades" chamam-se POLO BASE ALGUMA COISA no CNES: são os
+  mesmos polos, cadastrados. Medido nos 34 distritos, somar as listas prometia
+  1578 pontos onde o mapa desenha 1328.
 
-  Agora a dica enumera o que existe. Só aparece o que tem contagem — um DSEI
-  sem CASAI não ganha "CASAIs: 0".
+  Mas contar o que o mapa desenha também não responde sozinho. Alagoas e
+  Sergipe tem TREZE polos base na planilha de lotações, e o mapa desenha
+  DEZOITO marcadores de polo, porque cinco deles saem duas vezes — o polo da
+  planilha e o registo do CNES que é o mesmo polo, que a reconciliação não
+  casou. São 40 casos assim no país.
+
+  Esconder uma das duas seria escolher qual mentir. Por isso a dica diz as
+  duas: quantos polos o distrito TEM, e quantos pontos o mapa MOSTRA. Enquanto
+  os números divergirem, a divergência fica à vista de quem monitoriza — que é
+  para isso que este painel existe.
+*/
+let _resumoDaRedePorDsei = null;
+
+function esquecerResumoDaRede() {
+  _resumoDaRedePorDsei = null;
+}
+
+/*
+  Contar o que o mapa desenha é o mesmo trabalho que desenhar, e
+  `detailRecordsForDsei` já o faz inteiro: une os registos repetidos do CNES,
+  reconcilia polo com estabelecimento e devolve o que sobra. A contagem sai
+  dali para que os dois não possam divergir. Custa 11 ms para os 34 distritos,
+  medido, e fica guardada.
 */
 function resumoDaRedeDoDsei(d) {
-  const grupo = (REDE_CNES?.rede || {})[d?.k] || {};
-  const partes = [
-    ["Polos base", (d?.polos || []).length],
-    ["Unidades de saúde", (grupo.u || []).length],
-    ["CASAIs", (grupo.c || []).length],
-  ].filter(([, n]) => n > 0);
-  if (!partes.length) return "Sem unidades cadastradas";
-  return partes.map(([rotulo, n]) => `${rotulo}: ${n}`).join(" · ");
+  if (!d?.k) return "Sem unidades cadastradas";
+  if (!_resumoDaRedePorDsei) _resumoDaRedePorDsei = new Map();
+
+  if (!_resumoDaRedePorDsei.has(d.k)) {
+    const desenhados = { polo: 0, casai: 0, outros: 0 };
+    let total = 0;
+    for (const registo of detailRecordsForDsei(d)) {
+      total += 1;
+      const chave = registo?.type?.key;
+      if (chave === "polo") desenhados.polo += 1;
+      else if (chave === "casai") desenhados.casai += 1;
+      else desenhados.outros += 1;
+    }
+
+    const noMapa = [
+      ["polos", desenhados.polo],
+      ["unidades", desenhados.outros],
+      ["CASAIs", desenhados.casai],
+      // Só aparece o que existe: um distrito sem CASAI não ganha "CASAIs: 0".
+    ]
+      .filter(([, n]) => n > 0)
+      .map(([rotulo, n]) => `${n} ${rotulo}`)
+      .join(", ");
+
+    const polosDaLotacao = (d.polos || []).length;
+    const linhas = [];
+    if (polosDaLotacao) linhas.push(`Polos base: ${polosDaLotacao}`);
+    if (total) {
+      linhas.push(
+        `No mapa: ${total} ${total === 1 ? "ponto" : "pontos"} (${noMapa})`,
+      );
+    }
+
+    _resumoDaRedePorDsei.set(
+      d.k,
+      linhas.length ? linhas.join("<br>") : "Sem unidades cadastradas",
+    );
+  }
+
+  return _resumoDaRedePorDsei.get(d.k);
 }
 
 function mapVoltar() {
@@ -10866,17 +10981,28 @@ function syncMapLevelUI() {
     const limiteDsei =
       '<span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
     /*
-      Mesma cor do polígono, que é #e030a6 com preenchimento #f472d0. Este
-      quadrado tinha ficado no verde-azulado antigo quando a camada passou a
-      magenta: legenda que não descreve o desenho ensina a procurar a coisa
-      errada. As outras duas amostras vivem no CSS e têm teste; esta é HTML
-      aqui dentro, e foi por isso que escapou.
+      TRÊS AMOSTRAS, PORQUE O MAPA DESENHA TRÊS COISAS
+
+      A camada separa as terras pela fase do processo: 511 com limite
+      definitivo (Regularizada, Homologada), 146 ainda em processo (Declarada,
+      Delimitada, Encaminhada RI) e as que estão em estudo, sem limite nenhum.
+
+      Cada uma tem o seu desenho — cheia, tracejada, círculo tracejado —, e uma
+      legenda com um quadrado só voltaria ao problema de antes: descrever
+      menos do que o mapa mostra é ensinar a procurar a coisa errada.
+
+      Os valores são os mesmos de `estiloDaFase`, no módulo da camada.
     */
     const terraIndigena =
       '<span style="width:16px;height:11px;background:rgba(244,114,208,.3);border:2px solid #e030a6;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const terraEmProcesso =
+      '<span style="width:16px;height:11px;background:rgba(249,168,212,.22);border:2px dashed #f9a8d4;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const terraEmEstudo =
+      '<span style="width:12px;height:12px;border:2px dashed #e030a6;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:8px;margin-left:2px;"></span>';
+    const terras = `${terraIndigena}Terra Indígena homologada ou regularizada<br>${terraEmProcesso}Terra Indígena em processo (declarada, delimitada)<br>${terraEmEstudo}Terra Indígena em estudo — sem limite publicado`;
     box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terra Indígena (Funai)`
-      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terras Indígenas (Funai)<br>${losango("#7b2ff7")}CASAI Nacional`;
+      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}`
+      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}<br>${losango("#7b2ff7")}CASAI Nacional`;
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei)

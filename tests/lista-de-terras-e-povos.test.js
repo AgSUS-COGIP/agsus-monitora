@@ -160,9 +160,27 @@ describe("o painel está ligado", () => {
 
   it("a camada avisa quem desenha", () => {
     expect(camada).toContain(
-      "__agsusAoMudarTerras?.(resumoDasTerras(doDistrito))",
+      "__agsusAoMudarTerras?.(resumoDasTerras(doDistritoInteiro))",
     );
     expect(app).toContain("__agsusAoMudarTerras = renderDetailTerraList");
+  });
+
+  /*
+    A LISTA É DO DISTRITO, O DESENHO É DO ENQUADRAMENTO
+
+    A lista saía do recorte do ecrã. Quem aproximasse o mapa num posto de saúde
+    via "Terras Indígenas e povos: 0" num distrito que tem dezenas — o painel
+    respondia a "o que cabe no ecrã" e a pergunta é "o que este DSEI atende".
+
+    O recorte continua a existir para o desenho, e tem de continuar: são 665
+    terras, e o Leaflet paga por cada traçado.
+  */
+  it("a lista não é recortada pelo enquadramento", () => {
+    expect(camada).toContain("const doDistritoInteiro = unidadesDoDsei.length");
+    expect(camada).toContain("catalogo.features.filter((f) =>");
+    expect(camada).not.toMatch(
+      /__agsusAoMudarTerras\?\.\(resumoDasTerras\(doDistrito\)\)/,
+    );
   });
 
   it("voltar ao Brasil esvazia a lista", () => {
