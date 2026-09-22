@@ -26,6 +26,20 @@
   --radius: 18px;
   --sidebar: 224px;
   --sidebar-mini: 58px;
+
+  /* Camadas acima do shell. O cabeçalho (.app .top) usa z-index 10010 e
+     isola o próprio contexto de empilhamento, então todo overlay precisa
+     ficar acima dele para não ser encoberto. A ordem entre eles: o loader
+     cobre os modais porque bloqueia a tela inteira, e o toast cobre tudo
+     porque é o único que avisa do resultado da ação.
+
+     A faixa é a dos 20 mil porque foi a que o toast passou a usar na `main`.
+     Ficar aqui em cima também põe os modais acima dos dois painelões que
+     vivem no meio do caminho: o mapa imersivo (12050) e o diálogo de saída
+     da Saúde Indígena (15000). */
+  --z-overlay: 20000;
+  --z-loader: 20025;
+  --z-toast: 20050;
 }
 
 *,
@@ -540,7 +554,7 @@ textarea:focus-visible,
   position: fixed;
   top: max(78px, calc(env(safe-area-inset-top, 0px) + 18px));
   right: max(18px, env(safe-area-inset-right, 0px));
-  z-index: 20050;
+  z-index: var(--z-toast);
   display: grid;
   gap: 10px;
   width: min(390px, calc(100vw - 30px));
@@ -597,7 +611,7 @@ textarea:focus-visible,
   inset: 0;
   display: none;
   place-items: center;
-  z-index: 1000;
+  z-index: var(--z-loader);
   background: rgba(2, 8, 23, 0.52);
   backdrop-filter: blur(2px);
 }
@@ -732,7 +746,7 @@ body.app-fullscreen-fallback .app {
   background: var(--bg);
 }
 body.app-fullscreen-fallback .toast-box {
-  z-index: 20050;
+  z-index: var(--z-toast);
 }
 body.app-fullscreen-fallback .global-side-toggle {
   top: 16px;
@@ -2864,7 +2878,7 @@ th.sorted-desc .sort-icon::before {
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 1100;
+  z-index: var(--z-overlay);
   display: none;
   place-items: center;
   padding: 20px;

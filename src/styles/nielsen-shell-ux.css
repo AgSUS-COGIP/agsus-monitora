@@ -108,7 +108,7 @@ body.sidebar-collapsed .sidebar .side-logout span {
 .shell-signout-busy {
   position: fixed;
   inset: 0;
-  z-index: 5000;
+  z-index: var(--z-overlay);
 }
 
 .shell-confirm-layer[hidden],

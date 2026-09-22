@@ -1,4 +1,9 @@
 import { renderNucleoTable } from "../lib/nucleo-table-render.js";
+import {
+  ehResponsavelCores,
+  normalizarResponsavel,
+  unidadesDoResponsavel,
+} from "../lib/responsavel-do-edital.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import { updateAraraGuide } from "./arara-guide.js";
 import {
@@ -1986,6 +1991,11 @@ function fallbackUnitsFromRows() {
   return Array.from(map.values()).sort(sortUnits);
 }
 
+/** Responsável escolhido no modal. Decide de onde vem a lista de unidades. */
+function modalResponsavel() {
+  return normalizarResponsavel($("mResponsavel")?.value);
+}
+
 function unidadesForModal() {
   const primary = unidadesCatalog.length ? unidadesCatalog : [];
   const byName = new Map(
@@ -2034,7 +2044,11 @@ function populateModalUnidades(selectedValue = "") {
   const select = $("mUnidade");
   if (!select) return;
   const current = selectedValue || select.value;
-  const units = unidadesForModal();
+  /*
+    As unidades do CORES vêm sem UF, então o rótulo sai só com o nome e o
+    valor da opção cai no nome — `unidadeOptionValue` usa o id quando existe.
+  */
+  const units = unidadesDoResponsavel(modalResponsavel(), unidadesForModal());
   select.innerHTML =
     `<option value="">Selecione a unidade</option>` +
     units
@@ -2051,8 +2065,14 @@ function populateModalUnidades(selectedValue = "") {
 function selectedModalUnidade() {
   const select = $("mUnidade");
   if (!select) return null;
-  const unit = findUnitByValue(select.value);
-  if (unit) return unit;
+  /*
+    No CORES a opção é só um nome. Procurar no catálogo daria o registro errado
+    se algum DSEI tivesse nome parecido, por isso nem se tenta.
+  */
+  if (!ehResponsavelCores(modalResponsavel())) {
+    const unit = findUnitByValue(select.value);
+    if (unit) return unit;
+  }
   const opt = select.options[select.selectedIndex];
   if (!opt || !txt(opt.value)) return null;
   return {
@@ -2070,6 +2090,17 @@ function onModalUnidadeChange() {
   setFieldValue("mSiglaUnidade", unit?.sigla || "");
   setFieldValue("mTipoUnidade", unit?.tipo || "");
   setFieldValue("mUf", txt(unit?.uf_sede).toUpperCase());
+}
+
+/*
+  Trocar de responsável troca o catálogo de unidades, e a unidade que estava
+  escolhida não existe na outra lista. Limpar é mais honesto do que deixar um
+  nome que o select já não oferece.
+*/
+function onModalResponsavelChange() {
+  setFieldValue("mUnidade", "");
+  populateModalUnidades();
+  onModalUnidadeChange();
 }
 
 async function loadPanels() {
@@ -11404,11 +11435,23 @@ function openEditModal(id) {
   setFieldValue("mId", r?.id || "");
   setFieldValue("mProcesso", r?.processo || "");
   setFieldValue("mEdital", r?.edital || "");
-  const rowUnit = findUnitForRow(r);
-  const unitValue = rowUnit ? unidadeOptionValue(rowUnit) : "";
+  /*
+    O responsável decide de que catálogo vêm as unidades, por isso entra antes
+    delas. Editais gravados antes deste campo virar seleção têm um nome de
+    pessoa em `responsavel`; esse valor não é USI nem CORES, então o select
+    abre vazio e só é substituído quando o edital for salvo de novo.
+  */
+  setFieldValue("mResponsavel", normalizarResponsavel(r?.responsavel));
+  const doCores = ehResponsavelCores(modalResponsavel());
+  const rowUnit = doCores ? null : findUnitForRow(r);
+  const unitValue = doCores
+    ? txt(r?.unidade)
+    : rowUnit
+      ? unidadeOptionValue(rowUnit)
+      : "";
   populateModalUnidades(unitValue);
   setFieldValue("mUnidade", unitValue);
-  if (rowUnit) {
+  if (rowUnit || doCores) {
     onModalUnidadeChange();
   } else {
     setFieldValue("mIdUnidade", r?.id_unidade || "");
@@ -11424,7 +11467,6 @@ function openEditModal(id) {
   setFieldValue("mStatus", r?.status || "");
   setFieldValue("mEtapa", r?.etapa || "");
   setFieldValue("mRisco", r?.risco || "Baixo");
-  setFieldValue("mResponsavel", r?.responsavel || "");
   setFieldValue("mObs", r?.observacoes || "");
   setFieldValue("mObsInternas", r?.observacoes_internas || "");
   setMetricValue("mAutoInscritos", r?.inscritos);
@@ -12978,6 +13020,8 @@ Object.assign(window, {
   loginWithGoogle,
   logout,
   navigate,
+  onModalResponsavelChange,
+  onModalUnidadeChange,
   openEditModal,
   openApprovedListImport,
   previewCnesCoords,
