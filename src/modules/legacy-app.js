@@ -2786,13 +2786,19 @@ function clearFilters() {
   saveFilterState();
   renderFilterControls();
   applyFilters();
-  // mapa volta à visão Brasil (sem polos nem estado destacado)
-  if (_leaflet) {
-    if (_layerPolos) _layerPolos.clearLayers();
-    if (_layerUF) _layerUF.clearLayers();
-    $("drillBackBtn") && ($("drillBackBtn").style.display = "none");
-    drawDSEIBubbles();
-  }
+  /*
+    "LIMPAR TODOS" DIZIA QUE VOLTAVA AO BRASIL E NÃO VOLTAVA.
+
+    Limpava as camadas e redesenhava as bolhas, mas não mexia na câmara nem no
+    mapa detalhado. Quem limpasse os filtros com um DSEI aberto ficava com o
+    enquadramento daquele DSEI, com o detalhado ainda preso a ele e — pior —
+    com a camada de Terras Indígenas ainda filtrada por um distrito que já não
+    estava selecionado em lado nenhum.
+
+    É a mesma limpeza do botão "Voltar ao Brasil", e agora é literalmente o
+    mesmo caminho: `mapVoltar` faz tudo isto e mais o que já se fazia aqui.
+  */
+  mapVoltar();
 }
 
 function applyFilters() {
@@ -9576,6 +9582,41 @@ function _tiposDoTerritorio(registos) {
   return [...mapa.values()].sort((x, y) => y.quantidade - x.quantidade);
 }
 
+/*
+  A LISTA DAS TERRAS INDÍGENAS E DOS POVOS
+
+  Quem chama não é o código do painel: é a camada de Terras Indígenas, por
+  `__agsusAoMudarTerras`, porque é ela que sabe que terras sobreviveram ao
+  filtro do distrito depois de recortar o enquadramento.
+
+  A lista chega já ordenada e sem repetição — a mesma terra aparece várias vezes
+  na Funai quando o limite dela é feito de vários polígonos.
+*/
+function renderDetailTerraList(terras) {
+  const lista = $("detailTerraList");
+  const contagem = $("detailTerraCount");
+  const linhas = Array.isArray(terras) ? terras : [];
+  if (contagem) contagem.textContent = fmt(linhas.length);
+  if (!lista) return;
+
+  if (!linhas.length) {
+    lista.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-mountain-sun"></i><strong>Nenhuma Terra Indígena no recorte</strong><span>Nenhuma terra publicada pela Funai cai na abrangência deste território.</span></div>`;
+    return;
+  }
+
+  lista.innerHTML = linhas
+    .map((t) => {
+      // Povo desconhecido diz-se, não se inventa nem se esconde.
+      const povos = t.povos?.length
+        ? esc(t.povos.join(", "))
+        : '<i>povo não declarado pela Funai</i>';
+      const ufs = t.ufs?.length ? ` · ${esc(t.ufs.join(", "))}` : "";
+      const fase = t.fase ? ` · ${esc(t.fase)}` : "";
+      return `<div class="health-map-terra"><b class="health-map-terra__nome">${esc(t.nome)}</b><span class="health-map-terra__povos">${povos}</span><span class="health-map-terra__meta">${ufs}${fase}</span></div>`;
+    })
+    .join("");
+}
+
 function renderDetailUnitList(records) {
   const list = $("detailUnitList");
   const count = $("detailUnitCount");
@@ -9667,6 +9708,7 @@ function renderDetailMap(d) {
       .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
       .map((r) => ({ lat: r.lat, lon: r.lon })),
   ];
+  _detailLeaflet.__agsusAoMudarTerras = renderDetailTerraList;
   _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito, d.ufs || []);
   _detailUnitLayer.clearLayers();
 
@@ -9998,6 +10040,7 @@ function resetDetailMap({ silent = false } = {}) {
   if (list)
     list.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-map-location-dot"></i><strong>Selecione um DSEI</strong><span>Os polos, CASAIs e unidades aparecerão aqui.</span></div>`;
   _detailUnitLayer?.clearLayers();
+  renderDetailTerraList([]);
   _detailLeaflet.__agsusSetDseiCoverage?.("");
   drawDetailBrazilBase();
   try {
@@ -10198,7 +10241,7 @@ function drawDSEIBubbles() {
         true
       ) {
         m.bindTooltip(
-          `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>Polos base: ${(d.polos || []).length}<br>Estados administrativos: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para abrir o território</i>`,
+          `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>${esc(resumoDaRedeDoDsei(d))}<br>Estados administrativos: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para abrir o território</i>`,
           { direction: "top" },
         );
       }
@@ -10551,6 +10594,28 @@ function renderMap() {
   drawDSEIBubbles();
 }
 
+/*
+  O QUE O MAPA DESENHA, E NÃO SÓ OS POLOS
+
+  A dica dizia "Polos base: 6" para o DSEI Maranhão, e o mapa do distrito
+  desenha 71 marcadores: 6 polos, 62 unidades e 3 CASAIs. Os dois números
+  estavam certos e a leitura não: quem via 71 pontos com "6" escrito ao lado
+  concluía que o mapa estava errado.
+
+  Agora a dica enumera o que existe. Só aparece o que tem contagem — um DSEI
+  sem CASAI não ganha "CASAIs: 0".
+*/
+function resumoDaRedeDoDsei(d) {
+  const grupo = (REDE_CNES?.rede || {})[d?.k] || {};
+  const partes = [
+    ["Polos base", (d?.polos || []).length],
+    ["Unidades de saúde", (grupo.u || []).length],
+    ["CASAIs", (grupo.c || []).length],
+  ].filter(([, n]) => n > 0);
+  if (!partes.length) return "Sem unidades cadastradas";
+  return partes.map(([rotulo, n]) => `${rotulo}: ${n}`).join(" · ");
+}
+
 function mapVoltar() {
   /*
     "Voltar à visão do Brasil" limpa TODOS os filtros, não só a UF.
@@ -10800,8 +10865,15 @@ function syncMapLevelUI() {
       '<span style="border-top:2.5px dashed #e8730c;width:18px;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
     const limiteDsei =
       '<span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    /*
+      Mesma cor do polígono, que é #e030a6 com preenchimento #f472d0. Este
+      quadrado tinha ficado no verde-azulado antigo quando a camada passou a
+      magenta: legenda que não descreve o desenho ensina a procurar a coisa
+      errada. As outras duas amostras vivem no CSS e têm teste; esta é HTML
+      aqui dentro, e foi por isso que escapou.
+    */
     const terraIndigena =
-      '<span style="width:16px;height:11px;background:rgba(20,184,166,.12);border:2px solid #0f766e;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+      '<span style="width:16px;height:11px;background:rgba(244,114,208,.3);border:2px solid #e030a6;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
     box.innerHTML = showingPolos
       ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terra Indígena (Funai)`
       : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terraIndigena}Terras Indígenas (Funai)<br>${losango("#7b2ff7")}CASAI Nacional`;

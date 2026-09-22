@@ -9,6 +9,76 @@ export const FUNAI_TERRITORIES_LAYER = "Funai:tis_poligonais";
 export const FUNAI_PROXY_WMS = "/api/funai-wms";
 export const FUNAI_PROXY_GEOJSON = "/api/funai-geodata";
 
+/*
+  O CATÁLOGO LOCAL, E POR QUE ELE EXISTE
+
+  O mapa pedia a geometria à Funai a cada movimento. O enquadramento vira um
+  bbox de floats crus, dois arrastos seguidos nunca partilham URL, e por isso
+  nenhuma cache acertava. Medido contra o GeoServer:
+
+      um enquadramento (250 polígonos no máximo)   677 ms   23 terras   1,22 MB
+      o mesmo enquadramento, um pixel ao lado      507 ms   23 terras   1,22 MB
+
+  Meio segundo por arrasto, e 1,22 MB para desenhar 23 terras.
+
+  `scripts/compilar-terras-indigenas.mjs` traz as 665 de uma vez, simplifica a
+  111 metros e guarda 2,2 MB — 0,61 MB comprimido, menos de metade do que
+  custava UM enquadramento. Carrega-se uma vez, fica em memória, e a partir daí
+  enquadrar, filtrar por distrito e limpar o filtro não tocam na rede.
+
+  Isto também remove um teto que estragava o filtro: com o distrito aberto
+  pedia-se o enquadramento inteiro limitado a 250 polígonos e só depois se
+  descartava o que não era dali — gastando o teto com terras a deitar fora.
+  Agora filtra-se primeiro, sobre as 665.
+
+  A Funai continua a ser a fonte, e continua a ser o recurso quando o catálogo
+  não carrega.
+*/
+export const CATALOGO_DE_TERRAS = "/data/terras-indigenas.json";
+export const CATALOGO_DE_TERRAS_EM_ESTUDO =
+  "/data/terras-indigenas-em-estudo.json";
+
+/*
+  Um pedido só para a aplicação inteira: o mapa nacional e o do território
+  partilham a mesma promessa. Falha guarda `null` e não volta a tentar em
+  cascata — quem chamar a seguir recebe o mesmo `null` e usa o recurso.
+*/
+let catalogoEmCurso = null;
+
+export function carregarCatalogo(url, buscar) {
+  const fonte = typeof buscar === "function" ? buscar : globalThis.fetch;
+  if (typeof fonte !== "function") return Promise.resolve(null);
+  // `Promise.resolve().then` porque um fetch que ATIRA — em vez de rejeitar —
+  // escapava ao catch abaixo e partia o mapa em vez de cair no recurso.
+  return Promise.resolve()
+    .then(() =>
+      fonte(url, {
+        cache: "force-cache",
+        headers: { Accept: "application/geo+json,application/json" },
+      }),
+    )
+    .then((resposta) => {
+      if (!resposta?.ok) throw new Error(`HTTP ${resposta?.status}`);
+      return resposta.json();
+    })
+    .then((corpo) => (Array.isArray(corpo?.features) ? corpo : null))
+    .catch((erro) => {
+      console.warn("Catálogo de Terras Indígenas indisponível.", erro);
+      return null;
+    });
+}
+
+export function reiniciarCatalogo() {
+  catalogoEmCurso = null;
+}
+
+function obterCatalogo(buscar) {
+  if (!catalogoEmCurso) {
+    catalogoEmCurso = carregarCatalogo(CATALOGO_DE_TERRAS, buscar);
+  }
+  return catalogoEmCurso;
+}
+
 const VECTOR_MIN_ZOOM = 7;
 const VECTOR_MAX_FEATURES = 250;
 const VECTOR_REFRESH_DELAY_MS = 220;
@@ -227,6 +297,113 @@ export function caixaDeCoordenadas(poligonos) {
       if (y > norte) norte = y;
     }
   }
+  return { oeste, leste, sul, norte };
+}
+
+/*
+  A caixa de uma terra não muda, e calculá-la percorre todos os vértices dela.
+  Com 665 terras a cada movimento do mapa isso seria o novo gargalo, depois de
+  se ter tirado a rede do caminho. Fica guardada na própria feature.
+*/
+const CAIXA = Symbol.for("agsus.caixaDaTerra");
+
+export function caixaDaFeature(feature) {
+  if (!feature || typeof feature !== "object") return null;
+  if (feature[CAIXA]) return feature[CAIXA];
+  const poligonos = poligonosDaFeature(feature);
+  if (!poligonos.length) return null;
+  const caixa = caixaDeCoordenadas(poligonos);
+  try {
+    Object.defineProperty(feature, CAIXA, { value: caixa, enumerable: false });
+  } catch {
+    // Feature congelada: recalcula-se, que é correto, só mais lento.
+  }
+  return caixa;
+}
+
+/*
+  A LISTA DAS TERRAS E DOS POVOS
+
+  O mapa mostrava as terras e não as nomeava em lugar nenhum: para saber quais
+  eram e que povos vivem nelas, era preciso passar o ponteiro por cima de cada
+  uma, uma a uma. Num DSEI com trinta terras isso não é consulta, é garimpo.
+
+  A Funai declara os povos num campo só, separados por vírgula — "Kaingang,
+  Guarani" —, e a mesma terra aparece repetida quando o limite dela é feito de
+  vários polígonos. Aqui os polígonos colapsam por nome e os povos saem em
+  lista, ordenados por nome da terra.
+*/
+export function povosDaFeature(propriedades) {
+  return String(propriedades?.etnia_nome ?? "")
+    .split(/\s*[,;/]\s*/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+export function resumoDasTerras(features = []) {
+  const porNome = new Map();
+
+  for (const f of Array.isArray(features) ? features : []) {
+    const nome = String(f?.properties?.terrai_nome ?? "").trim();
+    if (!nome) continue;
+    if (!porNome.has(nome)) {
+      porNome.set(nome, {
+        nome,
+        povos: [],
+        ufs: [],
+        fase: String(f?.properties?.fase_ti ?? "").trim(),
+      });
+    }
+    const terra = porNome.get(nome);
+    for (const povo of povosDaFeature(f?.properties)) {
+      if (!terra.povos.includes(povo)) terra.povos.push(povo);
+    }
+    for (const uf of String(f?.properties?.uf_sigla ?? "")
+      .split(/\s*[,;/]\s*/)
+      .map((u) => u.trim())
+      .filter(Boolean)) {
+      if (!terra.ufs.includes(uf)) terra.ufs.push(uf);
+    }
+  }
+
+  for (const terra of porNome.values()) {
+    terra.povos.sort((a, b) => a.localeCompare(b, "pt-BR"));
+    terra.ufs.sort();
+  }
+
+  return [...porNome.values()].sort((a, b) =>
+    a.nome.localeCompare(b.nome, "pt-BR"),
+  );
+}
+
+export function caixasSeIntersectam(a, b) {
+  if (!a || !b) return false;
+  return !(
+    a.leste < b.oeste ||
+    a.oeste > b.leste ||
+    a.norte < b.sul ||
+    a.sul > b.norte
+  );
+}
+
+/*
+  O que cabe no ecrã. Sem isto, mudar de enquadramento redesenharia as 665
+  terras, e o Leaflet paga por cada traçado que cria.
+*/
+export function terrasNoEnquadramento(features, caixaDoMapa) {
+  if (!Array.isArray(features)) return [];
+  if (!caixaDoMapa) return features;
+  return features.filter((f) =>
+    caixasSeIntersectam(caixaDaFeature(f), caixaDoMapa),
+  );
+}
+
+export function caixaDoMapa(bounds) {
+  const oeste = Number(bounds?.getWest?.());
+  const leste = Number(bounds?.getEast?.());
+  const sul = Number(bounds?.getSouth?.());
+  const norte = Number(bounds?.getNorth?.());
+  if (![oeste, leste, sul, norte].every(Number.isFinite)) return null;
   return { oeste, leste, sul, norte };
 }
 
@@ -701,21 +878,16 @@ function enhanceMap(L, map) {
 
   const carregarEstudo = async () => {
     if (estudoGeojson) return desenharEstudo();
-    try {
-      const resposta = await fetch(funaiEstudoUrl(), {
-        cache: "force-cache",
-        headers: { Accept: "application/geo+json,application/json" },
-      });
-      if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-      const corpo = await resposta.json();
-      if (!Array.isArray(corpo?.features)) throw new Error("GeoJSON inválido");
-      estudoGeojson = corpo;
-      desenharEstudo();
-    } catch (error) {
+    // O catálogo local primeiro; a Funai fica como recurso.
+    estudoGeojson =
+      (await carregarCatalogo(CATALOGO_DE_TERRAS_EM_ESTUDO)) ||
+      (await carregarCatalogo(funaiEstudoUrl()));
+    if (!estudoGeojson) {
       // A ausência é honesta: sem esta camada o mapa continua correto, só menos
       // completo. Não se inventa ponto nenhum.
-      console.warn("Terras Indígenas em estudo indisponíveis.", error);
+      return;
     }
+    desenharEstudo();
   };
 
   const limparRotulos = () => {
@@ -953,12 +1125,67 @@ function enhanceMap(L, map) {
     }
 
     const bounds = map.getBounds?.();
-    const url = funaiViewportUrl(bounds);
-    if (!url) return;
-    const key = `${zoom.toFixed(1)}|${url}`;
+    const caixa = caixaDoMapa(bounds);
+    if (!caixa) return;
+
+    /*
+      A chave mudou de propósito. Antes era a URL do pedido — floats crus, nunca
+      repetidos, o que forçava um pedido novo a cada pixel arrastado. Agora é o
+      enquadramento arredondado mais o distrito aberto: arrastos pequenos dentro
+      da mesma casa decimal não redesenham nada, e mudar de distrito redesenha
+      sempre, mesmo sem mexer a câmara.
+    */
+    const key = [
+      zoom.toFixed(1),
+      caixa.oeste.toFixed(2),
+      caixa.sul.toFixed(2),
+      caixa.leste.toFixed(2),
+      caixa.norte.toFixed(2),
+      selectedDsei || "",
+    ].join("|");
     if (key === lastViewportKey) return;
     lastViewportKey = key;
 
+    const catalogo = await obterCatalogo();
+    const doEnquadramento = catalogo
+      ? terrasNoEnquadramento(catalogo.features, caixa)
+      : await terrasDaFunai(bounds);
+    if (!doEnquadramento) {
+      clearVector();
+      useRasterFallback();
+      return;
+    }
+
+    /*
+      Com um DSEI aberto, só entram as terras que tocam a abrangência dele. Sem
+      isso o mapa da Bahia mostrava Xerente e Xacriabá, que são de outros
+      distritos, e quem olhava não tinha como saber a diferença.
+    */
+    const doDistrito = unidadesDoDsei.length
+      ? doEnquadramento.filter((f) =>
+          terraPertenceAoDsei(f, unidadesDoDsei, ufsDoDsei),
+        )
+      : doEnquadramento;
+
+    vectorLayer.clearLayers();
+    vectorLayer.addData({ type: "FeatureCollection", features: doDistrito });
+    vectorLayer.setStyle?.(() => vectorStyle(map));
+    if (!map.hasLayer(vectorLayer)) vectorLayer.addTo(map);
+    if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
+    desenharApoios(doDistrito.length);
+    // Quem desenha a lista não tem como saber que terras sobreviveram ao
+    // filtro do distrito. É a camada que sabe, e é ela que avisa.
+    map.__agsusAoMudarTerras?.(resumoDasTerras(doDistrito));
+  };
+
+  /*
+    O caminho antigo, agora só como recurso: se o catálogo local não carregar,
+    volta-se a pedir à Funai por enquadramento. Devolve `null` quando também
+    isso falha, e aí o raster toma conta.
+  */
+  const terrasDaFunai = async (bounds) => {
+    const url = funaiViewportUrl(bounds);
+    if (!url) return null;
     requestController?.abort?.();
     requestController = new AbortController();
     try {
@@ -971,32 +1198,14 @@ function enhanceMap(L, map) {
       const geojson = await response.json();
       if (!Array.isArray(geojson?.features))
         throw new Error("GeoJSON inválido");
-
-      /*
-        Com um DSEI aberto, só entram as terras que tocam a abrangência dele.
-        Sem isso o mapa da Bahia mostrava Xerente e Xacriabá, que são de outros
-        distritos, e quem olhava não tinha como saber a diferença.
-      */
-      const doDistrito = unidadesDoDsei.length
-        ? geojson.features.filter((f) =>
-            terraPertenceAoDsei(f, unidadesDoDsei, ufsDoDsei),
-          )
-        : geojson.features;
-
-      vectorLayer.clearLayers();
-      vectorLayer.addData({ type: "FeatureCollection", features: doDistrito });
-      vectorLayer.setStyle?.(() => vectorStyle(map));
-      if (!map.hasLayer(vectorLayer)) vectorLayer.addTo(map);
-      if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
-      desenharApoios(doDistrito.length);
+      return geojson.features;
     } catch (error) {
-      if (error?.name === "AbortError") return;
+      if (error?.name === "AbortError") return null;
       console.warn(
         "Camada vetorial de Terras Indígenas indisponível; usando WMS da Funai.",
         error,
       );
-      clearVector();
-      useRasterFallback();
+      return null;
     }
   };
 
