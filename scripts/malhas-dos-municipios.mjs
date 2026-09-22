@@ -102,3 +102,61 @@ export function dentroDoMunicipio(porCodigo, codigo, lat, lon) {
   }
   return false;
 }
+
+/*
+  QUÃO FORA, E NÃO SÓ SE FORA
+
+  Dos 52 pontos que caíam fora do município declarado, VINTE estavam a menos de
+  2 km da divisa — vários a cem metros. Chamar erro a isso é arrogância: são
+  dois campos administrativos a discordar numa linha, e a linha do IBGE não é a
+  cerca que o posto de saúde vê.
+
+  Só seis estavam a mais de 30 km dentro do vizinho. Esses são erro.
+
+  A distância é ponto-a-segmento, e não ponto-a-vértice. Entre dois vértices
+  distantes a fronteira passa muito mais perto do que qualquer um deles, e medir
+  pelo vértice inflaria a distância justamente onde a malha é grosseira.
+*/
+const RAIO_DA_TERRA_KM = 6371;
+const rad = (g) => (g * Math.PI) / 180;
+
+function kmEntre(lat1, lon1, lat2, lon2) {
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * RAIO_DA_TERRA_KM * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/*
+  Projeção local: perto o suficiente da esfera para distâncias de quilómetros, e
+  é o que permite tratar o segmento como recta.
+*/
+function kmAteOSegmento(lat, lon, [x1, y1], [x2, y2]) {
+  const kmPorGrauLat = 111.32;
+  const kmPorGrauLon = 111.32 * Math.cos(rad(lat));
+  const px = (lon - x1) * kmPorGrauLon;
+  const py = (lat - y1) * kmPorGrauLat;
+  const dx = (x2 - x1) * kmPorGrauLon;
+  const dy = (y2 - y1) * kmPorGrauLat;
+  const comprimento = dx * dx + dy * dy;
+  if (comprimento === 0) return kmEntre(lat, lon, y1, x1);
+  const t = Math.max(0, Math.min(1, (px * dx + py * dy) / comprimento));
+  return Math.hypot(px - t * dx, py - t * dy);
+}
+
+export function kmAteAFronteira(porCodigo, codigo, lat, lon) {
+  const geometria = porCodigo.get(String(codigo));
+  if (!geometria || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  let melhor = Infinity;
+  for (const poligono of aneisDe(geometria)) {
+    for (const anel of poligono) {
+      for (let i = 1; i < anel.length; i += 1) {
+        const km = kmAteOSegmento(lat, lon, anel[i - 1], anel[i]);
+        if (km < melhor) melhor = km;
+      }
+    }
+  }
+  return melhor === Infinity ? null : melhor;
+}

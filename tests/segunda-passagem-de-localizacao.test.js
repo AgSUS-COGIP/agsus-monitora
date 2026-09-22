@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { decidirLocalizacao } from "../scripts/decidir-localizacao.mjs";
+import {
+  MARGEM_DA_DIVISA_KM,
+  decidirLocalizacao,
+} from "../scripts/decidir-localizacao.mjs";
 import { rotuloDaLocalizacao } from "../src/lib/localizacoes-validadas.js";
 import { LOCALIZACOES_VALIDADAS } from "../src/lib/localizacoes-validadas-gerado.js";
 
@@ -95,6 +98,40 @@ describe("uma fonte só", () => {
     expect(d.motivo).toBe("fonte_unica_fora_do_municipio");
   });
 
+  /*
+    Vinte dos 52 pontos que caíam fora do município estavam a menos de 2 km da
+    divisa, vários a cem metros. Acusar o cadastro por isso é acusar por uma
+    linha que nem o IBGE desenha com essa precisão. Com a margem, 53 erros
+    passaram a 31.
+  */
+  it("cem metros para lá da divisa não é erro", () => {
+    // O município vai até à latitude -14; este ponto está 0,001° a norte dela,
+    // uns cento e dez metros para fora.
+    const d = decidirLocalizacao({
+      primeira: ponto(-13.999, -35),
+      uf: "XX",
+      malha: malhaQuadrada,
+      municipios,
+      codigoMunicipio: "1234567",
+    });
+    expect(d.estado).toBe("coerente");
+    expect(d.motivo).toBe("fonte_unica_na_divisa");
+  });
+
+  it("bem lá dentro do vizinho continua a ser erro", () => {
+    const d = decidirLocalizacao({
+      primeira: ponto(-12, -38),
+      uf: "XX",
+      malha: malhaQuadrada,
+      municipios,
+      codigoMunicipio: "1234567",
+    });
+    expect(d.motivo).toBe("fonte_unica_fora_do_municipio");
+  });
+
+  it("a margem é de dois quilómetros", () => {
+    expect(MARGEM_DA_DIVISA_KM).toBe(2);
+  });
   it("sem malha do município, a UF é o que resta — e diz-se qual foi", () => {
     const d = decidirLocalizacao({
       primeira: ponto(-15, -35),

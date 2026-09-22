@@ -1,5 +1,8 @@
 import { dentroDaUf } from "./malhas-das-ufs.mjs";
-import { dentroDoMunicipio } from "./malhas-dos-municipios.mjs";
+import {
+  dentroDoMunicipio,
+  kmAteAFronteira,
+} from "./malhas-dos-municipios.mjs";
 import {
   distanciaKm,
   LIMIAR_PROXIMA_KM,
@@ -32,7 +35,23 @@ import {
   Medido em 745 unidades de fonte única: a malha da UF acusou UMA, a malha
   municipal acusou CINQUENTA E DUAS. Por isso o município vem primeiro, e o
   motivo diz qual das duas respondeu — é o que dá a medida do "coerente".
+
+  MAS "FORA" NÃO É UMA PERGUNTA DE SIM OU NÃO
+
+  Dessas 52, VINTE estavam a menos de 2 km da divisa, e várias a cem metros.
+  Acusar o cadastro por isso é arrogância: são dois campos administrativos a
+  discordar numa linha, e a linha do IBGE não é a cerca que o posto de saúde vê.
+  Só seis estavam a mais de 30 km dentro do vizinho.
+
+  Por isso o veredito de erro exige margem. Dentro da margem o registro fica
+  `coerente / fonte_unica_na_divisa`, que diz o que se viu sem acusar ninguém.
 */
+
+/*
+  Dois quilómetros. Abaixo disso a discordância entre a coordenada e o nome do
+  município não distingue erro de fronteira, e o mapa não tem como saber qual é.
+*/
+export const MARGEM_DA_DIVISA_KM = 2;
 
 /*
   Uma coordenada "copiada" — as duas fontes a dar exatamente o mesmo ponto —
@@ -46,14 +65,22 @@ export const COPIA_KM = 0.0005;
   fora". Acusar aí seria acusar o cadastro por falha nossa.
 */
 function ondeCai({ lat, lon, malha, municipios, codigoMunicipio }) {
-  if (!malha) return { naUf: null, noMunicipio: null };
+  if (!malha) return { naUf: null, noMunicipio: null, naDivisa: false };
   const naUf = dentroDaUf(malha, lat, lon);
-  if (!naUf) return { naUf: false, noMunicipio: null };
+  if (!naUf) return { naUf: false, noMunicipio: null, naDivisa: false };
+
   const noMunicipio =
     municipios && codigoMunicipio
       ? dentroDoMunicipio(municipios, codigoMunicipio, lat, lon)
       : null;
-  return { naUf: true, noMunicipio };
+
+  // Fora, mas quão fora. Ver MARGEM_DA_DIVISA_KM.
+  const naDivisa =
+    noMunicipio === false &&
+    (kmAteAFronteira(municipios, codigoMunicipio, lat, lon) ?? Infinity) <
+      MARGEM_DA_DIVISA_KM;
+
+  return { naUf: true, noMunicipio, naDivisa };
 }
 
 export function decidirLocalizacao({
@@ -123,14 +150,23 @@ export function decidirLocalizacao({
     dentroCnes: b.naUf,
     noMunicipioLot: a.noMunicipio,
     noMunicipioCnes: b.noMunicipio,
+    naDivisa: a.naDivisa,
   };
 
   if (!temSegunda) {
     if (!a.naUf) {
       return { estado: "erro", motivo: "fonte_unica_fora_da_uf", prova };
     }
-    if (a.noMunicipio === false) {
+    if (a.noMunicipio === false && !a.naDivisa) {
       return { estado: "erro", motivo: "fonte_unica_fora_do_municipio", prova };
+    }
+    if (a.naDivisa) {
+      return {
+        estado: "coerente",
+        motivo: "fonte_unica_na_divisa",
+        ponto: primeira,
+        prova,
+      };
     }
     return {
       estado: "coerente",

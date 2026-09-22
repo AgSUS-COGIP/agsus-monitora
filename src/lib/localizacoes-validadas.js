@@ -117,6 +117,15 @@ export function rotuloDaLocalizacao(veredicto) {
     Dizer qual delas respondeu é dizer quanto vale o "coerente".
   */
   if (estado === "coerente") {
+    if (veredicto.motivo === "fonte_unica_na_divisa") {
+      /*
+        Vinte dos 52 pontos que caíam fora do município estavam a menos de 2 km
+        da divisa, vários a cem metros. Dizer que o cadastro está errado por
+        isso seria acusar por uma linha que nem o IBGE desenha com essa
+        precisão. Diz-se o que se viu.
+      */
+      return "Fonte única, sobre a divisa do município declarado";
+    }
     if (veredicto.motivo === "fonte_unica_no_municipio") {
       return "Fonte única, dentro do município declarado — sem segunda fonte para conferir";
     }

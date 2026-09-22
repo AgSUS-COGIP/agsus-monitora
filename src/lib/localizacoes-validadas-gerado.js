@@ -3,11 +3,11 @@
 
   1366 vereditos de localização:
 
-  1014  coerente
+  1036  coerente
    125  conflito
     85  validada
     75  indeterminado
-    67  erro
+    45  erro
 
   Viajam todos, e não só os que trocam a coordenada. Um conflito entre as
   duas fontes é resultado de auditoria tanto quanto uma validação, e o mapa
@@ -4645,15 +4645,15 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "ALTAMIRA",
     "canonico": "ALDEIA BAKAJA",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
     "dsei": "ALTAMIRA",
     "canonico": "ALDEIA KENKUDJOY",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -5435,8 +5435,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "CEARA",
     "canonico": "CARNAUBA SAO BENEDITO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -5484,8 +5484,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "CEARA",
     "canonico": "DONA JOAQUINA VIEIRA PITAGUARY",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -5638,8 +5638,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "GUAMA-TOCANTINS",
     "canonico": "ALDEIA ITAHY",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -5946,8 +5946,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "INTERIOR SUL",
     "canonico": "SAO JOAO IRAPUA",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -6907,8 +6907,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "LESTE DE RORAIMA",
     "canonico": "WAPUM",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -7026,8 +7026,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "LITORAL SUL",
     "canonico": "USFI RIO SILVEIRA",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -7159,8 +7159,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "LITORAL SUL",
     "canonico": "RESERVA",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -7173,8 +7173,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "LITORAL SUL",
     "canonico": "TERRA APUCARANINHA MARIA VAGANH",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -7257,8 +7257,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "MARANHAO",
     "canonico": "ALDEIA ANGICO TORTO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -7488,8 +7488,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "MARANHAO",
     "canonico": "ALDEIA PRESIDIO ZUTIUA",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -7502,8 +7502,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "MARANHAO",
     "canonico": "ALDEIA BEIRA RIO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -7880,8 +7880,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "MINAS GERAIS E ESPIRITO SANTO",
     "canonico": "ALDEIA PRADINHO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -8246,8 +8246,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "PORTO VELHO",
     "canonico": "ALDEIA TRINCHEIRA",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -8470,8 +8470,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "POTIGUARA",
     "canonico": "ALDEIA AKAJUTIBIRO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -8498,8 +8498,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "POTIGUARA",
     "canonico": "CACIQUE MANUEL FRANCISCO INACIO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -8540,8 +8540,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "POTIGUARA",
     "canonico": "ALDEIA YBYKUARA",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -8834,15 +8834,15 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "TOCANTINS",
     "canonico": "INDIGINA RIO SONO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
     "dsei": "TOCANTINS",
     "canonico": "INDIGINA FUNIL",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -8855,8 +8855,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "TOCANTINS",
     "canonico": "INDIGINA BREJO CUMPRIDO",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
@@ -9513,8 +9513,8 @@ export const LOCALIZACOES_VALIDADAS = [
   {
     "dsei": "YANOMAMI",
     "canonico": "HEMARIPIWEI",
-    "estado": "erro",
-    "motivo": "fonte_unica_fora_do_municipio",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_divisa",
     "km": 0
   },
   {
