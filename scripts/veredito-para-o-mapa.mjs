@@ -26,6 +26,21 @@ export function vereditoParaOMapa(registro) {
     estado: registro.estado,
     motivo: registro.motivo,
   };
+  /*
+    A CASAI DE ALTAMIRA E O POLO DE ALTAMIRA NÃO SÃO A MESMA COISA
+
+    O nome canónico de "CASA DE SAUDE INDIGENA DE ALTAMIRA" reduz-se a
+    ALTAMIRA, e o do polo da mesma cidade também. A chave de leitura era
+    DSEI + canónico, portanto as duas colidiam — e chave repetida é ambiguidade,
+    que faz o índice descartar AS DUAS. Trinta e três das 34 colisões medidas
+    eram exatamente isto, e por causa delas 30 das 83 CASAIs do mapa diziam
+    "Localização em validação" tendo veredito.
+
+    Basta distinguir CASAI do resto: é a única fronteira onde o nome de cidade
+    se repete entre equipamentos com endereços diferentes. Vai como marca, e não
+    como o tipo inteiro, porque é só isto que a chave precisa de saber.
+  */
+  if (registro.tipo === "casai") saida.casai = true;
   // A distância entre fontes é o que dá tamanho ao conflito. Sem ela, "as duas
   // fontes discordam" não diz se são 5 km ou 800.
   if (Number.isFinite(Number(registro.km))) {

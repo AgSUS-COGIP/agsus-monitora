@@ -21,6 +21,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "AL SE",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -147,6 +148,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ALTAMIRA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -168,6 +170,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "MANCIO LIMA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -235,6 +238,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SAO GABRIEL CACHOEIRA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -430,6 +434,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "RIO BRANCO",
     "estado": "conflito",
     "motivo": "duas_fontes_discordam_na_uf",
+    "casai": true,
     "km": 5.1
   },
   {
@@ -503,6 +508,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "AMATURA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -510,6 +516,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "BENJAMIN CONSTANT",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.3,
     "lat": -4.379967,
     "lon": -70.026888
@@ -519,6 +526,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SANTO ANTONIO ICA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -526,6 +534,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SAO PAULO OLIVEIRA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -533,6 +542,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "TABATINGA",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -540,6 +550,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "TONANTINS",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -760,6 +771,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "MACAPA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -767,6 +779,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "OIAPOQUE",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -823,6 +836,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "GOIANIA",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 1,
     "lat": -16.731646,
     "lon": -49.231904
@@ -867,6 +881,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SALVADOR",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -954,6 +969,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "DF",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -961,6 +977,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SAO PAULO",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -968,6 +985,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "FORTALEZA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1094,6 +1112,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "BRASNORTE",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.1,
     "lat": -12.123712,
     "lon": -58.000753
@@ -1103,6 +1122,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "CUIABA",
     "estado": "conflito",
     "motivo": "duas_fontes_discordam_na_uf",
+    "casai": true,
     "km": 16.8
   },
   {
@@ -1110,6 +1130,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "RONDONOPOLIS",
     "estado": "conflito",
     "motivo": "duas_fontes_discordam_na_uf",
+    "casai": true,
     "km": 19.2
   },
   {
@@ -1117,6 +1138,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "TANGARA SERRA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1208,6 +1230,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ICOARACI",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.3,
     "lat": -1.294001,
     "lon": -48.465366
@@ -1217,6 +1240,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "MARABA",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.1,
     "lat": -5.346517,
     "lon": -49.106466
@@ -1226,6 +1250,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ORIXIMINA",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.2,
     "lat": -1.774952,
     "lon": -55.862067
@@ -1235,6 +1260,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "PARAGOMINAS",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.1,
     "lat": -2.98121,
     "lon": -47.35657
@@ -1244,6 +1270,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SANTAREM",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -1440,6 +1467,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "COLIDER",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1447,6 +1475,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "JUARA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1454,6 +1483,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "PEIXOTO AZEVEDO",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1489,6 +1519,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "OURILANDIA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1496,6 +1527,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "REDENCAO",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1503,6 +1535,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SAO FELIX XINGU",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -1510,6 +1543,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "TUCUMA",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0,
     "lat": -6.76001,
     "lon": -51.157286
@@ -1556,6 +1590,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "LESTE",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -1906,6 +1941,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "CURITIBA",
     "estado": "validada",
     "motivo": "arbitrada_pela_uf_cnes",
+    "casai": true,
     "km": 303.3,
     "lat": -25.461846,
     "lon": -49.29824
@@ -2045,6 +2081,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "MANAUS",
     "estado": "conflito",
     "motivo": "duas_fontes_discordam_na_uf",
+    "casai": true,
     "km": 20.5
   },
   {
@@ -2052,6 +2089,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "NOVA OLINDA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2230,6 +2268,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "IMPERATRIZ",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2237,6 +2276,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SAO LUIS",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.3,
     "lat": -2.484552,
     "lon": -44.223618
@@ -2246,6 +2286,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "TERESINA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2312,6 +2353,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "AMAMBAI",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2319,6 +2361,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "CAMPO GRANDE",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -2326,6 +2369,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "DOURADOS",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2445,6 +2489,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "LABREA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2452,6 +2497,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "TAPAUA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2564,6 +2610,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "EIRUNEPE",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2571,6 +2618,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "TEFE",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2696,6 +2744,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "BELO HORIZONTE",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2703,6 +2752,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "GOVERNADOR VALADARES",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2710,6 +2760,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "MONTES CLAROS",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.5,
     "lat": -16.71983,
     "lon": -43.872356
@@ -2936,6 +2987,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "MAUES",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2943,6 +2995,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "NHAMUNDA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -2950,6 +3003,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "PARINTINS",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 0.1,
     "lat": -2.622542,
     "lon": -56.731896
@@ -3063,6 +3117,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "CAMARAGIBE",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3206,6 +3261,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ALTA FLORESTA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3213,6 +3269,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "GUAJARA MIRIM",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3220,6 +3277,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "HUMAITA",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -3227,6 +3285,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "JARU",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3234,6 +3293,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "JI PARANA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3241,6 +3301,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "PORTO VELHO",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 4.8,
     "lat": -8.751616,
     "lon": -63.890569
@@ -3350,6 +3411,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SANTAREM RIO TAPAJOS",
     "estado": "erro",
     "motivo": "fonte_unica_fora_da_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3357,6 +3419,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ITAITUBA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3364,6 +3427,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "JACAREACANGA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3371,6 +3435,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "NOVO PROGRESSO",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3466,6 +3531,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "UN LOCAL CASTELO SONHOS",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3473,6 +3539,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ARAGUAINA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3480,6 +3547,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "GURUPI",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3547,6 +3615,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ATALAIA NORTE",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3617,6 +3686,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ARIPUANA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3624,6 +3694,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "CACOAL",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3631,6 +3702,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "JUINA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3638,6 +3710,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "VILHENA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3682,6 +3755,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "ARAGARCAS",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -3689,6 +3763,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "BARRA GARCA",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3696,6 +3771,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "CAMPINOPOLIS",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3752,6 +3828,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "CANARANA",
     "estado": "validada",
     "motivo": "duas_fontes_concordam",
+    "casai": true,
     "km": 1.6,
     "lat": -13.559414,
     "lon": -52.274752
@@ -3761,6 +3838,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "GAUCHA NORTE",
     "estado": "conflito",
     "motivo": "duas_fontes_discordam_na_uf",
+    "casai": true,
     "km": 19.4
   },
   {
@@ -3768,6 +3846,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "QUERENCIA",
     "estado": "coerente",
     "motivo": "copia_entre_fontes_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3775,6 +3854,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "SINOP",
     "estado": "coerente",
     "motivo": "fonte_unica_na_uf",
+    "casai": true,
     "km": 0
   },
   {
@@ -3817,6 +3897,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "YANOMAMI",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "casai": true,
     "km": 0
   },
   {
@@ -4465,6 +4546,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "MACEIO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -4912,6 +4994,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A LOCAL AMATURA",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -4919,6 +5002,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "LOCAL SPO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -4926,6 +5010,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "LOCAL TONANTINS",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -5822,6 +5907,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A SANTAREM",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -5997,6 +6083,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "INDIO COLIDER",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -6004,6 +6091,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "INDIO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -6011,6 +6099,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "INDIO PEIXOTO AZEVEDO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -7203,6 +7292,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A MANAUS",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -7210,6 +7300,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "NOVA OLINDA NORTE",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -7602,6 +7693,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A IMPERATRIZ",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -7749,6 +7841,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A EIRUNEPE",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -7756,6 +7849,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "INDIO TEFE",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -7938,6 +8032,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A INDIO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8220,6 +8315,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A PERNAMBUCO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8402,6 +8498,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A ALTA FLORESTA",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8409,6 +8506,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A GUAJARA MIRIM RO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8416,6 +8514,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A JI PARANA",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8423,6 +8522,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A PORTO VELHO",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8738,6 +8838,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A ITAITUBA",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8745,6 +8846,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A JACAREACANGA",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8752,6 +8854,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A RIO TAPAJOS SANTAREM",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -8955,6 +9058,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A ARAGUAINA AUX",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -9270,6 +9374,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A CACOAL",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -9347,6 +9452,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "BARRA GARCAS MT",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -9354,6 +9460,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A POPULACAO CAMPINAPOLIS",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {
@@ -9368,6 +9475,7 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "A SINOP",
     "estado": "coerente",
     "motivo": "fonte_unica_no_municipio",
+    "casai": true,
     "km": 0
   },
   {

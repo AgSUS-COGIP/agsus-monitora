@@ -14,7 +14,7 @@
   maioria: 508 das 606 lotações com coordenada. Ausência de veredito não é
   veredito negativo.
 */
-import { nomeCanonico } from "./reconciliacao-unidades.js";
+import { nomeCanonico, tipoDeclarado } from "./reconciliacao-unidades.js";
 import { LOCALIZACOES_VALIDADAS } from "./localizacoes-validadas-gerado.js";
 
 const semAcento = (valor) =>
@@ -25,17 +25,25 @@ const semAcento = (valor) =>
     .replace(/[^A-Z0-9]+/g, " ")
     .trim();
 
+/*
+  A chave separa CASAI do resto. Ver o comentário em
+  `scripts/veredito-para-o-mapa.mjs`: sem isto, a CASAI de Altamira e o polo de
+  Altamira partilham a chave, o índice descarta as duas por ambiguidade, e 30
+  das 83 CASAIs do mapa ficam sem o veredito que têm.
+*/
+const marcaDoTipo = (ehCasai) => (ehCasai ? "|C" : "|X");
+
 export function chaveDaUnidade(dsei, nome) {
   const canonico = nomeCanonico(nome);
   if (!canonico) return "";
-  return `${semAcento(dsei)}|${canonico}`;
+  return `${semAcento(dsei)}|${canonico}${marcaDoTipo(tipoDeclarado(nome) === "casai")}`;
 }
 
 export function indexarVereditos(lista = LOCALIZACOES_VALIDADAS) {
   const indice = new Map();
   for (const item of Array.isArray(lista) ? lista : []) {
-    const chave = `${semAcento(item?.dsei)}|${String(item?.canonico ?? "")}`;
-    if (!item?.estado || chave === "|") continue;
+    const chave = `${semAcento(item?.dsei)}|${String(item?.canonico ?? "")}${marcaDoTipo(item?.casai === true)}`;
+    if (!item?.estado || !String(item?.canonico ?? "")) continue;
     // Chave repetida é ambiguidade, e ambiguidade não decide nada: cai fora.
     if (indice.has(chave)) {
       indice.set(chave, null);

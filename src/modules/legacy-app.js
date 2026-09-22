@@ -78,6 +78,7 @@ import {
   ESTILO_DA_LINHA,
   TOOLTIP_DA_LINHA,
   classificarRegistros,
+  formaDoTipo,
   htmlDoMarcador,
   registrosExternos,
   registrosLocais,
@@ -9412,6 +9413,17 @@ function detailUnitType(name) {
   };
 }
 
+/*
+  A sede do distrito. Forma e cor saem de `FORMAS`, como os outros tipos, para
+  que a legenda a descreva sem ninguém a escrever à mão outra vez.
+*/
+const TIPO_SEDE = {
+  key: "sede",
+  label: "Sede do DSEI",
+  color: formaDoTipo("sede").cor,
+  icon: "fa-star",
+};
+
 const TIPO_POLO = {
   key: "polo",
   label: "Polo base",
@@ -9886,14 +9898,43 @@ function renderDetailMap(d) {
     desenharCamadaDeUnidades,
   );
 
-  L.circleMarker([d.lat, d.lon], {
-    radius: 9,
-    color: "#fff",
-    weight: 2,
-    fillColor: "#1769aa",
-    fillOpacity: 1,
+  /*
+    A SEDE PASSA PELO MESMO CAMINHO QUE OS OUTROS MARCADORES
+
+    Era um `circleMarker` azul escrito à mão, fora da tabela de formas: não
+    entrava na legenda, não tinha forma própria e não se distinguia de um polo
+    base para quem só via dois círculos. Agora é uma estrela, vinda de
+    `FORMAS`, e a legenda passa a nomeá-la porque sai da mesma tabela.
+
+    Não entra em `detailRecordsForDsei`: a sede não é unidade de saúde, e
+    contá-la ali mudaria os totais e os filtros por tipo.
+  */
+  const registoDaSede = {
+    name: `Sede do DSEI ${d.n}`,
+    lat: d.lat,
+    lon: d.lon,
+    city: d.sede_municipio || "",
+    uf: d.sede_uf || d.sedeuf || "",
+    cnes: "",
+    type: TIPO_SEDE,
+    veredicto: null,
+  };
+  const ufDaSede = d.sede_uf || d.sedeuf || "";
+  L.marker([d.lat, d.lon], {
+    icon: L.divIcon({
+      className: "mapa-marcador-wrap",
+      html: htmlDoMarcador(registoDaSede),
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    }),
+    keyboard: true,
+    title: registoDaSede.name,
+    // Acima das unidades: é o ponto que ancora o território inteiro.
+    zIndexOffset: 400,
   })
-    .bindPopup(`<b>DSEI ${esc(d.n)}</b><br>Sede territorial`)
+    .bindPopup(
+      `<b>Sede do DSEI ${esc(d.n)}</b><br>${esc(d.sede_municipio || "")}${ufDaSede ? " – " + esc(ufDaSede) : ""}`,
+    )
     .addTo(_detailUnitLayer);
 
   const redesenharPorFiltro = () => {

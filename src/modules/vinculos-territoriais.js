@@ -34,7 +34,25 @@ import { DIVERGENCIA } from "../lib/reconciliacao-unidades.js";
   Os quatro matizes ficam separados entre si — 38°, 355°, 263° e 188°, com o par
   mais próximo a 43°.
 */
+/*
+  A SEDE DO DSEI NÃO TINHA FORMA NENHUMA
+
+  Ela era desenhada, mas como um círculo azul solto, fora desta tabela: sem
+  entrar na legenda, sem forma própria, indistinguível de um polo base para
+  quem só vê dois círculos. É o ponto administrativo do distrito inteiro, e era
+  o único que o mapa não sabia nomear.
+
+  Estrela, porque é o símbolo de sede em cartografia desde sempre — capital num
+  mapa político é estrela, e ninguém precisa de aprender isso.
+
+  Grafite, e não uma quinta matiz. Os quatro matizes existentes estão em 38°,
+  355°, 263° e 188°, com o par mais próximo a 43° — encaixar mais um sem
+  colidir obrigaria a ir ao verde, que é onde a vegetação do mapa já está. A
+  sede fica como o único marcador sem cor, que a distingue de todos os outros
+  sem disputar espaço com nenhum.
+*/
 const FORMAS = Object.freeze({
+  sede: { forma: "estrela", rotulo: "Sede do DSEI", cor: "#1f2937" },
   polo: { forma: "circulo", rotulo: "Polo base", cor: "#e49a1b" },
   casai: { forma: "casa", rotulo: "CASAI", cor: "#d92d3a" },
   ubsi: { forma: "cruz", rotulo: "UBSI", cor: "#6d28d9" },
@@ -54,6 +72,7 @@ const FORMAS = Object.freeze({
   A ordem segue a do mapa: os pontos que mais aparecem primeiro.
 */
 export const TIPOS_DA_LEGENDA = Object.freeze([
+  "sede",
   "polo",
   "casai",
   "ubsi",
@@ -105,6 +124,8 @@ export function registrosLocais(registros) {
 export function svgDaForma(forma, cor) {
   const traco = '#ffffff" stroke-width="1.6';
   switch (forma) {
+    case "estrela":
+      return `<path d="M9 1.9 11.2 6.7 16.4 7.3 12.6 10.9 13.6 16.1 9 13.6 4.4 16.1 5.4 10.9 1.6 7.3 6.8 6.7Z" fill="${cor}" stroke="${traco}" stroke-linejoin="round"/>`;
     case "circulo":
       return `<circle cx="9" cy="9" r="6.4" fill="${cor}" stroke="${traco}"/>`;
     case "casa":
