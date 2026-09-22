@@ -1,10 +1,16 @@
 import {
+  LIMIAR_MESMO_PONTO_KM,
   canonicoUtilizavel,
   classificarDivergencia,
   distanciaKm,
   nomeCanonico,
   tipoDeclarado,
+  unidadeDeLotacaoEhOPolo,
 } from "../lib/reconciliacao-unidades.js";
+import {
+  coordenadaValidada,
+  veredictoDaUnidade,
+} from "../lib/localizacoes-validadas.js";
 
 const MAP_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
 const DECORATOR_KEY = "__agsusDecorateOperationalClient";
@@ -37,6 +43,82 @@ function compactRecord(row) {
   const [type, name, lat, lon, municipality, uf, accessibility, accessMode] =
     row;
   return { type, name, lat, lon, municipality, uf, accessibility, accessMode };
+}
+
+/*
+  A LINHA "UNIDADE DE LOTAÇÃO" QUE REPETE UM POLO BASE
+
+  O DSEI Ceará mostrava Teresina duas vezes: `PB TERESINA (SEDE)` e
+  `UN TERESINA (SEDE)`, na mesma coordenada, vindos de duas linhas da planilha.
+  A primeira vira polo; a segunda caía no ramo final e virava unidade da rede.
+  Nada as comparava, porque a reconciliação só aproxima tipos compatíveis e
+  "unidade de lotação" não é tipo nenhum — fica `outro`, que não casa com nada.
+
+  A comparação é feita entre linhas da planilha, antes de as duas seguirem
+  caminhos diferentes, porque é ali que a duplicação existe. Das 79 unidades de
+  lotação, duas são apanhadas por este crivo; as outras 77 são subpolos,
+  aldeias e UBSIs, e continuam no mapa como equipamento próprio.
+*/
+function unidadesQueRepetemOPolo(records) {
+  const polos = records.filter((record) => record.type === "POLO BASE");
+  const repetidas = new Set();
+
+  for (const record of records) {
+    if (record.type !== "UNIDADE DE LOTAÇÃO") continue;
+    const repete = polos.some((polo) => {
+      if (!unidadeDeLotacaoEhOPolo(record.name, polo.name)) return false;
+      const km = distanciaKm(
+        Number(record.lat),
+        Number(record.lon),
+        Number(polo.lat),
+        Number(polo.lon),
+      );
+      return km != null && km <= LIMIAR_MESMO_PONTO_KM;
+    });
+    if (repete) repetidas.add(record);
+  }
+
+  return repetidas;
+}
+
+/*
+  O VEREDITO TAMBÉM PERTENCE AO ESTABELECIMENTO
+
+  A auditoria foi feita sobre as lotações, e o veredito ficava a viver só no
+  polo. Mas o mapa desenha 1146 estabelecimentos do CNES, e o popup deles dizia
+  sempre "Localização em validação".
+
+  A chave é a mesma da reconciliação — DSEI mais nome canónico —, e ela casa:
+  `POLO BASE ACONA` do CNES e `ACONÃ` da planilha reduzem-se ambos a `ACONA`.
+  Medido, 317 dos 1146 estabelecimentos encontram assim o seu veredito, dos
+  quais 115 são conflito.
+
+  Os outros 829 não casam com lotação nenhuma e continuam sem veredito — o que
+  é verdade, e é diferente de "em validação" por omissão de quem procura.
+*/
+function anotarVereditos(dseiKey, network, dsei) {
+  /*
+    E os polos do banco que a planilha não tem. O laço acima só olha para os
+    registos da planilha, e por isso um polo que exista só no banco — ,
+    que a planilha traz partido em I e II — nunca passava pela consulta. O
+    popup dele dizia "em validação" mesmo depois de a auditoria o ter julgado.
+  */
+  for (const polo of dsei?.polos || []) {
+    if (polo.veredicto_localizacao) continue;
+    polo.veredicto_localizacao = veredictoDaUnidade(dseiKey, polo.n) || null;
+  }
+
+  for (const lista of ["u", "c"]) {
+    for (const linha of network[lista] || []) {
+      const veredicto = veredictoDaUnidade(dseiKey, linha?.[0]);
+      if (!veredicto) continue;
+      linha[9] = linha[9] && typeof linha[9] === "object" ? linha[9] : {};
+      linha[9].veredicto_localizacao = veredicto;
+      if (veredicto.estado === "validada") {
+        linha[9].validacao_coordenada = "validada";
+      }
+    }
+  }
 }
 
 function recordExpectedType(record) {
@@ -141,6 +223,44 @@ function findNetworkMatch(list, record, listKind = "u") {
 
   if (candidates.length === 1) return candidates[0];
   return nearestUniqueCandidate(candidates, record);
+}
+
+/*
+  A MESMA LINHA, MAS CONTRA O QUE JÁ ESTÁ NA REDE
+
+  O crivo acima compara a unidade de lotação com os polos da própria planilha.
+  Faltava o caso em que o polo não está na planilha e sim só no CNES: em
+  Manaus, a linha `MANICORE` cai exatamente sobre o `POLO BASE MANICORE`
+  (CNES 9423370), e `findNetworkMatch` não a via porque recusa candidatas do
+  tipo polo quando o registo não é polo.
+
+  No Yanomami o motivo é outro e o efeito o mesmo: `UN KATAROA` e
+  `POLO BASE KATAROA` têm canónicos diferentes, porque o `UN` da planilha não
+  é reconhecido como marca de tipo e fica dentro do nome. São cinco casos:
+
+      MANAUS    MANICORE               = POLO BASE MANICORE          0 m
+      YANOMAMI  UN KATAROA             = POLO BASE KATAROA           0 m
+      YANOMAMI  UN UXIÚ (UBSI)         = POLO BASE UXIU              0 m
+      YANOMAMI  UN KOLULU              = UBSI KOLULU                 0 m
+      YANOMAMI  UN PUKIMA-BEIRA (UBSI) = UBSI PUKIMA BEIRA          91 m
+
+  Mais de uma candidata seria ambiguidade, e ambiguidade não é prova: nesse
+  caso a linha segue o caminho normal e entra como registo próprio.
+*/
+function unidadeJaNaRede(network, record) {
+  const candidatas = [...(network.u || []), ...(network.c || [])].filter(
+    (row) => {
+      if (!unidadeDeLotacaoEhOPolo(record.name, row?.[0])) return false;
+      const km = distanciaKm(
+        Number(record.lat),
+        Number(record.lon),
+        Number(row?.[2]),
+        Number(row?.[3]),
+      );
+      return km != null && km <= LIMIAR_MESMO_PONTO_KM;
+    },
+  );
+  return candidatas.length === 1 ? candidatas[0] : null;
 }
 
 function annotateNetworkRecord(existing, record) {
@@ -396,7 +516,12 @@ export function applyLotacoesGeograficas(rows, dataset) {
     network.u ||= [];
     network.c ||= [];
 
+    const repetemOPolo = unidadesQueRepetemOPolo(records);
+
     records.forEach((record) => {
+      // A linha que apenas repete um polo base não entra como equipamento.
+      if (repetemOPolo.has(record)) return;
+
       if (record.type === "SEDE") {
         const tinhaCoordenada =
           Number.isFinite(Number(dsei.lat)) &&
@@ -482,6 +607,43 @@ export function applyLotacoesGeograficas(rows, dataset) {
           polo.lon = record.lon;
           polo.coord_fonte = SOURCE;
         }
+
+        /*
+          O VEREDITO DA VALIDAÇÃO, E POR QUE ELE VEM NO FIM.
+
+          O comentário acima já nomeava Tuxi, Guaíra e Angra dos Reis como
+          linhas com o estado trocado. Faltava o árbitro: nada aqui sabia dizer
+          qual das fontes estava certa, e por isso tudo ficava "pendente".
+
+          `scripts/validar-localizacoes.mjs` cruza a planilha, o CNES e as
+          malhas das UFs do IBGE. Um ponto fora do estado que o próprio registro
+          declara está errado, e a fonte que fica dentro ganha. Onde as duas
+          fontes concordam a menos de 5 km e ambas caem na UF, a posição está
+          confirmada por duas fontes independentes — que é o que "validada"
+          sempre quis dizer.
+
+          Vem no fim de propósito: acima há três caminhos que escrevem
+          `polo.lat`, e o veredito só é veredito se for o último a falar.
+        */
+        const veredicto = veredictoDaUnidade(dseiKey, record.name);
+        /*
+          O veredito inteiro, e não só um "validada"/"pendente". São cinco
+          estados, e três deles — conflito, coerente, indeterminado — diziam
+          todos "Localização em validação" no ecrã, que é a frase de quem ainda
+          não olhou. Quem desenha precisa do estado e do motivo para dizer o
+          que a auditoria de facto apurou.
+        */
+        polo.veredicto_localizacao = veredicto || null;
+        const apurada = coordenadaValidada(veredicto);
+        if (apurada) {
+          polo.lat = apurada.lat;
+          polo.lon = apurada.lon;
+          polo.coord_validacao = "validada";
+          polo.coord_fonte = "validacao";
+        } else if (veredicto?.estado === "erro") {
+          // Sem substituto apurado, o mapa não esconde que a posição é suspeita.
+          polo.coord_validacao = "fora_da_uf";
+        }
         return;
       }
 
@@ -490,11 +652,20 @@ export function applyLotacoesGeograficas(rows, dataset) {
         return;
       }
 
+      if (record.type === "UNIDADE DE LOTAÇÃO") {
+        const jaNaRede = unidadeJaNaRede(network, record);
+        if (jaNaRede) {
+          annotateNetworkRecord(jaNaRede, record);
+          return;
+        }
+      }
+
       mergeNetworkRecord(network.u, record, "u");
     });
 
     network.u = annotateSharedCoordinates(dedupeNetworkList(network.u, "u"));
     network.c = annotateSharedCoordinates(dedupeNetworkList(network.c, "c"));
+    anotarVereditos(dseiKey, network, dsei);
   });
 
   redeRow.payload.nac = annotateSharedCoordinates(

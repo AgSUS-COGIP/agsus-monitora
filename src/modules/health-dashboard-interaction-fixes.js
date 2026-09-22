@@ -103,7 +103,10 @@ export function refreshHealthDashboardLayout(
   try {
     chart?.resize?.();
     chart?.update?.("none");
-  } catch (_) {}
+  } catch {
+    // Gráfico já desmontado ou sem suporte a resize. Redimensionar é
+    // cosmético e não justifica interromper o restante do ajuste.
+  }
 
   // O listener de resize já existente invalida o tamanho do Leaflet de forma
   // centralizada, sem acessar a instância privada do mapa por outro módulo.

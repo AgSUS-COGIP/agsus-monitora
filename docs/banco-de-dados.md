@@ -32,6 +32,50 @@ já foram aplicados, e renomear quebraria o histórico de quem os aplicou:
 | `add_update_user_access_rpc.sql`                     | sem timestamp |
 | `restrict_access_management_to_master.sql`           | sem timestamp |
 
+### 1.1 O registro do que já foi aplicado
+
+O parágrafo acima dizia que renomear esses três ficheiros "quebraria o histórico
+de quem os aplicou". Esse histórico não existia em lado nenhum além das pessoas.
+
+Agora existe, em `public.migracoes_aplicadas`: caminho do ficheiro, **sha256 do
+conteúdo**, origem e data. A ideia é do SIGAV, que mantém
+`sigav."TB_MIGRACAO"` desde agosto de 2026.
+
+```
+npm run db:estado                       # o que falta aplicar
+npm run db:estado -- --registrar=<caminho>
+npm run db:estado -- --registrar-todas-pendentes
+```
+
+O script lê `supabase/migrations/` e `supabase/correcoes/` e responde quatro
+coisas:
+
+| Estado          | O que significa                                        |
+| --------------- | ------------------------------------------------------ |
+| **aplicado**    | caminho e hash batem com o registro                    |
+| **pendente**    | está no disco e não no banco                           |
+| **divergente**  | foi aplicado e o ficheiro **mudou depois**             |
+| **órfão**       | está registado e o ficheiro já não existe no disco     |
+
+A divergência é o que só o hash encontra, e é a mais perigosa: alguém corrige um
+erro de digitação numa migration já aplicada, o Git fica coerente, o banco não, e
+ninguém descobre até um ambiente novo nascer diferente.
+
+**Por que não há modo `--aplicar`.** O SIGAV tem; aqui não. Neste projeto quem
+executa SQL no banco é a equipa, e o que faltava era saber o estado — não
+automatizar a escrita. `--registrar` marca como aplicado **sem executar nada**,
+que é o caso de tudo o que já estava no banco antes desta tabela existir.
+
+**Credencial.** `SUPABASE_DB_URL`, a mesma de `check:rpc-contract:db`. A tabela
+tem RLS ligada e nenhuma policy: nem `anon` nem `authenticated` a alcançam. É
+ferramenta de operação, não superfície da aplicação.
+
+**Carga inicial.** Depois de aplicar
+`20260922144500_criar_registro_de_migracoes_aplicadas.sql`, correr
+`--registrar-todas-pendentes` uma vez marca tudo o que já está no banco. A
+partir daí, marcar uma a uma — marcar sem ter aplicado é a única forma de este
+registro passar a mentir.
+
 ## 2. Fronteira de dados: o que o frontend acessa
 
 ### 2.1 Acesso direto a tabelas

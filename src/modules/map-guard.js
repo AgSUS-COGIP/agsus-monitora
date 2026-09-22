@@ -1,4 +1,5 @@
 import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.js";
+import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
 
 /*
   Os limites agora vêm do contorno real do país, não de um retângulo estimado.
@@ -70,14 +71,17 @@ function installTileLayerGuard(L) {
     limita a navegação continua a ser o `maxBounds` do mapa, intacto logo
     abaixo.
   */
-  L.tileLayer = function guardedTileLayer(urlTemplate, options = {}) {
-    return originalTileLayer.call(this, urlTemplate, {
-      ...options,
-      noWrap: true,
-      updateWhenIdle: true,
-      keepBuffer: 2,
-    });
-  };
+  L.tileLayer = envolverFabricaDoLeaflet(
+    originalTileLayer,
+    function guardedTileLayer(urlTemplate, options = {}) {
+      return originalTileLayer.call(this, urlTemplate, {
+        ...options,
+        noWrap: true,
+        updateWhenIdle: true,
+        keepBuffer: 2,
+      });
+    },
+  );
 
   L.__agsusTileLayerGuardInstalled = true;
 }

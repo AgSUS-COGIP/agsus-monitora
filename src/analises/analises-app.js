@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { editaisDasLinhas } from "../lib/editais-das-linhas.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME_ATIVOS = "VW_ANALISES_DASHBOARD_BASE";
@@ -496,7 +497,9 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
 
       if(analisesPayload && Array.isArray(analisesPayload.rows)){
         const rawBaseRows = analisesPayload.rows;
-        editais = Array.isArray(analisesPayload.editais) ? analisesPayload.editais : [];
+        editais = Array.isArray(analisesPayload.editais) && analisesPayload.editais.length
+          ? analisesPayload.editais
+          : editaisDasLinhas(rawBaseRows);
         setProgress(42,`Montando painel a partir do cache consolidado para ${fmtNum(rawBaseRows.length)} registros...`);
         writeCache(rawBaseRows, editais, analisesPayload);
         rows = hydrateRowsWithEditalWindows(rawBaseRows);
@@ -513,24 +516,15 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
       }
 
       setProgress(12,currentEditalScope() === "ativo" ? "Cache consolidado indisponível. Consultando Supabase em lotes..." : "Consultando Supabase em lotes...");
-      const [baseResponse, editaisResponse] = await Promise.all([
-        fetchAllSupabaseRows(currentViewName(), "*", [
-          { column: "unidade", ascending: true }, { column: "edital", ascending: true },
-          { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
-        ], currentScopeQueryOptions()),
-        fetchAllSupabaseRows("TB_EDITAL_ANALISE", "grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise", [
-          { column: "unidade", ascending: true }, { column: "edital", ascending: true }
-        ])
-      ]);
+      const baseResponse = await fetchAllSupabaseRows(currentViewName(), "*", [
+        { column: "unidade", ascending: true }, { column: "edital", ascending: true },
+        { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
+      ], currentScopeQueryOptions());
       if(runId !== refreshRunCounter) return false;
       if(baseResponse.error){ showAuth("Erro ao carregar o painel: " + baseResponse.error.message); return false; }
-      if(editaisResponse.error){
-        console.warn("Não foi possível carregar analises_editais:", editaisResponse.error.message);
-        toast("Janelas oficiais dos editais não puderam ser carregadas. A validação de período pode ficar incompleta.", "warn", 7000);
-      }
-      setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(baseResponse.data.length)} registros...`);
-      editais = Array.isArray(editaisResponse.data) ? editaisResponse.data : [];
       const rawBaseRows = Array.isArray(baseResponse.data) ? baseResponse.data : [];
+      editais = editaisDasLinhas(rawBaseRows);
+      setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(rawBaseRows.length)} registros...`);
       writeCache(rawBaseRows, editais, analisesPayload);
       rows = hydrateRowsWithEditalWindows(rawBaseRows);
       filterOptionsSignature = "";

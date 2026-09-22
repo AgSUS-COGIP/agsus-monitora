@@ -23,18 +23,20 @@
 
 .agsus-indigenous-territories-control__button:hover,
 .agsus-indigenous-territories-control__button:focus-visible {
-  background: rgba(15, 118, 110, 0.08);
+  background: rgba(224, 48, 166, 0.08);
   outline: none;
 }
 
 .agsus-indigenous-territories-control__button.is-active {
-  background: rgba(15, 118, 110, 0.12);
-  color: #115e59;
+  background: rgba(224, 48, 166, 0.12);
+  color: #a3116f;
 }
 
+/* Mesmo magenta do polígono: o quadrado do botão tem de ser a mancha que o
+   mapa desenha, senão ensina a procurar a coisa errada. */
 .agsus-indigenous-territories-control__swatch {
-  background: rgba(13, 148, 136, 0.26);
-  border: 2px solid rgba(13, 148, 136, 0.92);
+  background: rgba(244, 114, 208, 0.3);
+  border: 2px solid rgba(224, 48, 166, 0.95);
   border-radius: 3px;
   box-sizing: border-box;
   display: inline-block;
@@ -58,7 +60,8 @@
   }
 }
 
-.agsus-ti-tooltip {
+.agsus-ti-tooltip,
+.agsus-dsei-tooltip {
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 7px;
@@ -70,11 +73,83 @@
   padding: 5px 7px;
 }
 
-.agsus-ti-tooltip::before {
+.agsus-ti-tooltip::before,
+.agsus-dsei-tooltip::before {
   border-top-color: rgba(15, 23, 42, 0.9) !important;
 }
 
-.map-satellite-mode .agsus-indigenous-territories-control__swatch {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: #ff4d3d;
+/* O tooltip da Terra Indígena passou a ter mais de uma linha — o povo em
+   destaque, a terra e a UF abaixo. Com tudo em 800 nada se destacava; o peso
+   base cede e o <b> volta a significar ênfase. A largura máxima existe porque
+   há terras com vários povos declarados no mesmo campo. */
+.agsus-ti-tooltip {
+  font-weight: 500;
+  line-height: 1.45;
+  max-width: 260px;
+  white-space: normal;
+}
+
+.agsus-ti-tooltip b {
+  font-weight: 800;
+}
+
+/* ROTULO DO POVO SOBRE O POLIGONO
+
+   O nome é desenhado sobre o mapa, onde não há fundo previsível: pode calhar
+   sobre verde, sobre água, sobre uma mancha urbana. O contorno claro em volta
+   da letra escura resolve isso sem caixa opaca — uma caixa por terra encheria
+   o mapa de retângulos e esconderia o traçado que se quer justamente mostrar.
+
+   `pointer-events: none` repete o que o pane já faz, para o caso de o rótulo
+   ser reaproveitado noutro pane: ele nunca deve roubar o clique de um polo. */
+.agsus-ti-rotulo {
+  background: none;
+  border: 0;
+  pointer-events: none;
+}
+
+.agsus-ti-rotulo__texto {
+  color: #0b3c35;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  left: 0;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  position: absolute;
+  text-shadow:
+    0 0 3px #fff,
+    0 0 3px #fff,
+    0 1px 2px rgba(255, 255, 255, 0.95);
+  top: 0;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+/* Sobre satélite a mesma letra escura desaparece. Inverte-se o par. */
+.map-satellite-mode .agsus-ti-rotulo__texto {
+  color: #fff;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 0.95),
+    0 0 3px rgba(0, 0, 0, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* O quadrado do botão não muda com o mapa base.
+
+   Ele ficava vermelho sobre satélite, mas a cor vermelha só existia no desenho
+   vetorial — e na visão nacional quem desenha as terras é o raster da Funai,
+   que vem verde. O botão prometia uma cor que o mapa não tinha. O WMS da Funai
+   publica dois estilos para `tis_poligonais`, `terras_indigenas` e `polygon`, e
+   nenhum é vermelho: alinha-se pelo que a fonte desenha. */
+
+/* O limite do DSEI é uma camada cartográfica, não um marcador interativo no
+   toque. No desktop o tooltip ajuda a identificar o polígono sem competir com
+   os popups das unidades. */
+.agsus-dsei-tooltip {
+  background: rgba(11, 95, 165, 0.94);
+}
+
+.agsus-dsei-tooltip::before {
+  border-top-color: rgba(11, 95, 165, 0.94) !important;
 }

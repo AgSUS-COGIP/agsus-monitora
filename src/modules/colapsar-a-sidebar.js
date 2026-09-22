@@ -14,7 +14,11 @@
   `id` e não se importa com onde ele está.
 
   Onde ele fica depende da largura, e isso não é preferência estética: é física
-  de layout. Medido no preview em 11/09/2026, a 390x844, a barra lateral é
+  de layout. Dentro da barra ele vive na própria linha da marca, à direita do
+  nome — antes ocupava uma faixa inteira abaixo dela, roubando altura do menu
+  para exibir um só controle.
+
+  Medido no preview em 11/09/2026, a 390x844, a barra lateral é
   `position: fixed` com `transform: translateX(-105%)` — fora da tela. Um
   `transform` faz do elemento o bloco de contenção dos descendentes fixos, então
   um botão dentro da barra sai da tela junto com ela e fica inalcançável
@@ -22,7 +26,7 @@
 
   Por isso o nó é movido, não duplicado:
 
-    largura > 900   -> dentro da barra, logo abaixo da marca
+    largura > 900   -> dentro da marca, à direita do nome
     largura <= 900  -> dentro do `.title-row`, na vaga que o hambúrguer deixou
 
   No estreito não vale flutuar sobre o cabeçalho: medido, `.top` tem
@@ -67,7 +71,7 @@ export function posicionarColapsarDaSidebar(
 
   if (destino === DESTINO_BARRA) {
     const marca = barra.querySelector(".side-brand");
-    if (marca) marca.after(botao);
+    if (marca) marca.append(botao);
     else barra.prepend(botao);
     return destino;
   }

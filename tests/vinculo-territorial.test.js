@@ -15,6 +15,8 @@ import {
   classificarRegistros,
   formaDoTipo,
   htmlDoMarcador,
+  linhasDaReconciliacao,
+  linhasDasCoordenadas,
   registrosExternos,
   registrosLocais,
   textoDoChip,
@@ -235,10 +237,105 @@ describe("apresentação", () => {
     expect(texto).not.toContain("Fora das UFs");
   });
 
+  /*
+    POLO BASE JOAO CAMARA, DSEI Potiguara: o tooltip contava a reconciliação e
+    o popup repetia-a com as coordenadas. Como o autopan do popup reabre o
+    tooltip, os dois ficavam visíveis dizendo o mesmo. A repartição é esta.
+  */
+  it("o tooltip não repete o que o popup vai explicar", () => {
+    const [registro] = classificarRegistros(
+      [
+        {
+          name: "POLO BASE JOAO CAMARA",
+          uf: 24,
+          type: { key: "polo", label: "Polo base" },
+          origens: ["lmap", "rede_cnes"],
+          divergencia: "divergente",
+          distancia_entre_fontes_km: 10.4,
+          coordenadas: {
+            lmap: { lat: -5.514, lon: -35.9042 },
+            rede_cnes: { lat: -5.53222, lon: -35.81213 },
+          },
+        },
+      ],
+      { n: "Potiguara", ufs: ["PB", "RN"] },
+    );
+
+    const texto = tooltipDoRegistro(registro, { n: "Potiguara" });
+    expect(texto).toContain("Polo base POLO BASE JOAO CAMARA");
+    expect(texto).toContain("Localização: RN");
+    expect(texto).not.toContain("Fontes divergem");
+    expect(texto).not.toContain("Registro unificado");
+
+    // O popup é quem herda a explicação.
+    expect(linhasDaReconciliacao(registro).join(" ")).toContain(
+      "Fontes divergem 10.4 km",
+    );
+  });
+
+  it("escreve Registro, não Registo", () => {
+    const linhas = linhasDaReconciliacao({
+      origens: ["lmap", "rede_cnes"],
+      coordenadas: { lotacoes: { lat: -5, lon: -35 } },
+    });
+    expect(linhas[0]).toContain("Registro unificado");
+  });
+
   it("a linha avisa que não é trajeto", () => {
     expect(TOOLTIP_DA_LINHA).toBe(
       "Vínculo territorial — não representa trajeto",
     );
+  });
+
+  /*
+    O popup de POLO BASE JOAO CAMARA imprimia três linhas de coordenada e duas
+    eram idênticas — Lotações e CNES no mesmo ponto. Lido de fora, parecia
+    defeito do registro.
+  */
+  it("agrupa fontes que apontam a mesma coordenada numa linha só", () => {
+    expect(
+      linhasDasCoordenadas({
+        lmap: { lat: -5.514, lon: -35.9042 },
+        lotacoes: { lat: -5.53222, lon: -35.81213 },
+        rede_cnes: { lat: -5.53222, lon: -35.81213 },
+      }),
+    ).toEqual([
+      "mapa anterior: -5.51400, -35.90420",
+      "Lotações e CNES: -5.53222, -35.81213",
+    ]);
+  });
+
+  it("junta as três quando todas concordam", () => {
+    expect(
+      linhasDasCoordenadas({
+        lmap: { lat: -7.1, lon: -34.9 },
+        lotacoes: { lat: -7.1, lon: -34.9 },
+        rede_cnes: { lat: -7.1, lon: -34.9 },
+      }),
+    ).toEqual(["mapa anterior, Lotações e CNES: -7.10000, -34.90000"]);
+  });
+
+  it("mantém linhas separadas quando as fontes discordam", () => {
+    expect(
+      linhasDasCoordenadas({
+        lmap: { lat: -1, lon: -2 },
+        rede_cnes: { lat: -3, lon: -4 },
+      }),
+    ).toHaveLength(2);
+  });
+
+  it("não lista coordenada quando só há uma fonte", () => {
+    expect(linhasDasCoordenadas({ lmap: { lat: -1, lon: -2 } })).toEqual([]);
+    expect(linhasDasCoordenadas()).toEqual([]);
+  });
+
+  it("ignora coordenada que não é número", () => {
+    expect(
+      linhasDasCoordenadas({
+        lmap: { lat: "sem valor", lon: -2 },
+        rede_cnes: { lat: -3, lon: -4 },
+      }),
+    ).toEqual([]);
   });
 
   it("a linha é visualmente secundária, como especificado", () => {

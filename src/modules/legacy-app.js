@@ -37,12 +37,15 @@ import {
   normalizeAccessPanelColor,
 } from "../lib/access-branding.js";
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
-import { reconciliarDsei } from "../lib/reconciliacao-unidades.js";
+import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
+import {
+  reconciliarDsei,
+  unirEstabelecimentosRepetidos,
+} from "../lib/reconciliacao-unidades.js";
 import {
   agruparCoincidentes,
-  agruparPorCelula,
+  agruparPorProximidadeNaTela,
   criarRegistroDeDescarte,
-  grupoCoincidente,
   posicoesSpiderfy,
   raioDaBolha,
 } from "../lib/mapa-render.js";
@@ -80,6 +83,7 @@ import {
   ESTILO_DA_LINHA,
   TOOLTIP_DA_LINHA,
   classificarRegistros,
+  formaDoTipo,
   htmlDoMarcador,
   registrosExternos,
   registrosLocais,
@@ -1577,7 +1581,6 @@ function forceAccessRequestFallback(message) {
   if (btn) btn.disabled = false;
 }
 
-
 function setAccessRequestFormLocked(locked) {
   ["accessReqNome", "accessReqSetor", "accessReqJustificativa"].forEach(
     (id) => {
@@ -1591,7 +1594,7 @@ async function loadMyAccessRequest() {
   if (!currentUser?.id) return null;
   const { data, error } = await sb
     .from("TB_SOLICITACAO_ACESSO")
-.select("id,status,observacao_admin,created_at")
+    .select("id,status,observacao_admin,created_at")
     .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false })
     .limit(1);
@@ -2183,6 +2186,8 @@ async function loadMapaConfig() {
   );
   if (byKey.lmap && Array.isArray(byKey.lmap.dsei)) LMAP = byKey.lmap;
   if (byKey.rede_cnes && byKey.rede_cnes.rede) REDE_CNES = byKey.rede_cnes;
+  // Dados novos, contagem nova. Ver `resumoDaRedeDoDsei`.
+  esquecerResumoDaRede();
   rebuildDseiIndex();
   mapConfigLoadOk = !!(byKey.lmap && byKey.rede_cnes);
   if (!mapConfigLoadOk && can("config"))
@@ -2347,9 +2352,7 @@ function buildNav() {
       navButton("nucleo", cfgValue("nucleo_nav_title"), "fa-people-group"),
     );
   if (can("cores"))
-    principal.push(
-      navButton("calendario", "Cronograma", "fa-calendar-days"),
-    );
+    principal.push(navButton("calendario", "Cronograma", "fa-calendar-days"));
   if (canViewCore(profile))
     principal.push(
       navButton("approved", "Lista de Aprovados", "fa-user-check"),
@@ -2482,7 +2485,10 @@ function navigate(view) {
   }
   if (requestedView === "approved") {
     $("page-approved").classList.add("active");
-    setPageTitle("Lista de Aprovados", "Acompanhe candidatos, contratações e situações dos editais.");
+    setPageTitle(
+      "Lista de Aprovados",
+      "Acompanhe candidatos, contratações e situações dos editais.",
+    );
     void window.aprovadosController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
@@ -2815,13 +2821,19 @@ function clearFilters() {
   saveFilterState();
   renderFilterControls();
   applyFilters();
-  // mapa volta à visão Brasil (sem polos nem estado destacado)
-  if (_leaflet) {
-    if (_layerPolos) _layerPolos.clearLayers();
-    if (_layerUF) _layerUF.clearLayers();
-    $("drillBackBtn") && ($("drillBackBtn").style.display = "none");
-    drawDSEIBubbles();
-  }
+  /*
+    "LIMPAR TODOS" DIZIA QUE VOLTAVA AO BRASIL E NÃO VOLTAVA.
+
+    Limpava as camadas e redesenhava as bolhas, mas não mexia na câmara nem no
+    mapa detalhado. Quem limpasse os filtros com um DSEI aberto ficava com o
+    enquadramento daquele DSEI, com o detalhado ainda preso a ele e — pior —
+    com a camada de Terras Indígenas ainda filtrada por um distrito que já não
+    estava selecionado em lado nenhum.
+
+    É a mesma limpeza do botão "Voltar ao Brasil", e agora é literalmente o
+    mesmo caminho: `mapVoltar` faz tudo isto e mais o que já se fazia aqui.
+  */
+  mapVoltar();
 }
 
 function applyFilters() {
@@ -8915,8 +8927,6 @@ let _detailLeaflet = null,
   _detailBaseLayer = null,
   _detailUnitLayer = null,
   _descarteDoDetalhe = criarRegistroDeDescarte(),
-  _leque = null,
-  _lequePolos = null,
   _detailMapInited = false;
 /* Os dois enquadramentos do mapa detalhado e qual deles está em vigor. */
 let _detailBounds = null;
@@ -9272,7 +9282,6 @@ function initLeaflet() {
   _layerUF = L.layerGroup().addTo(_leaflet); // estados destacados
   _layerDSEI = L.layerGroup().addTo(_leaflet);
   _layerPolos = L.layerGroup().addTo(_leaflet);
-  _lequePolos = criarLeque(_leaflet);
   _layerCasaiLocal = L.layerGroup().addTo(_leaflet); // CASAIs do DSEI/locais (drill-down)
   _layerUbsi = L.layerGroup().addTo(_leaflet); // UBSIs (drill-down)
   _layerCasai = L.layerGroup().addTo(_leaflet); // CASAI Nacional (sempre)
@@ -9345,7 +9354,19 @@ function initDetailLeaflet() {
   observeLeafletSize(_detailLeaflet, el);
   _detailBaseLayer = L.layerGroup().addTo(_detailLeaflet);
   _detailUnitLayer = L.layerGroup().addTo(_detailLeaflet);
-  _leque = criarLeque(_detailLeaflet);
+
+  _detailLeaflet.on("agsus:dsei-coverage-ready", (event) => {
+    if (_detailEscopo !== "territorio") return;
+    const bounds = event?.bounds;
+    if (bounds?.isValid?.() !== true) return;
+    try {
+      _detailLeaflet.fitBounds(bounds, {
+        padding: [34, 34],
+        maxZoom: 9,
+        animate: false,
+      });
+    } catch (e) {}
+  });
 
   const list = $("detailUnitList");
   list?.addEventListener("click", (event) => {
@@ -9360,21 +9381,24 @@ function initDetailLeaflet() {
   });
 }
 
-function drawDetailBrazilBase(ufs = []) {
+function drawDetailBrazilBase() {
   if (!_detailLeaflet || !_detailBaseLayer) return;
   _detailBaseLayer.clearLayers();
   try {
+    /*
+      UF não é abrangência de DSEI. Antes, selecionar Alagoas e Sergipe pintava
+      os dois estados inteiros, embora o distrito atenda um recorte territorial
+      próprio. As UFs ficam apenas como referência cartográfica neutra; a área
+      do DSEI é desenhada pela camada oficial Funai:areas_dsei.
+    */
     L.geoJSON(UF_GEO, {
-      style: (feature) => {
-        const selected = ufs.includes(feature.properties.uf);
-        return {
-          color: selected ? "#0d8192" : "#7798ad",
-          weight: selected ? 2 : 0.65,
-          opacity: selected ? 0.95 : 0.45,
-          fillColor: selected ? "#71cbd0" : "#dce9ee",
-          fillOpacity: selected ? 0.18 : 0.04,
-          interactive: false,
-        };
+      style: {
+        color: "#7798ad",
+        weight: 0.65,
+        opacity: 0.45,
+        fillColor: "#dce9ee",
+        fillOpacity: 0.025,
+        interactive: false,
       },
     }).addTo(_detailBaseLayer);
     L.geoJSON(BR_OUTLINE, {
@@ -9419,6 +9443,17 @@ function detailUnitType(name) {
     icon: "fa-hospital",
   };
 }
+
+/*
+  A sede do distrito. Forma e cor saem de `FORMAS`, como os outros tipos, para
+  que a legenda a descreva sem ninguém a escrever à mão outra vez.
+*/
+const TIPO_SEDE = {
+  key: "sede",
+  label: "Sede do DSEI",
+  color: formaDoTipo("sede").cor,
+  icon: "fa-star",
+};
 
 const TIPO_POLO = {
   key: "polo",
@@ -9467,6 +9502,7 @@ function detailRecordsForDsei(d) {
       municipio: e.mun,
       uf: e.uf,
       validacao_coordenada: e.meta?.validacao_coordenada || "pendente",
+      veredicto: e.meta?.veredicto_localizacao || null,
       confirmacao_independente: e.meta?.confirmacao_independente === true,
       coordenada_compartilhada_qtd: Number(
         e.meta?.coordenada_compartilhada_qtd || 0,
@@ -9474,6 +9510,17 @@ function detailRecordsForDsei(d) {
       _tipoVisual: forcado || detailUnitType(e.n),
     };
   });
+
+  /*
+    Antes de reconciliar contra os polos, é preciso o CNES não se repetir a si
+    próprio. O POLO BASE JAPIIM aparecia duas vezes na lista do DSEI porque tem
+    dois registos no cadastro — códigos diferentes, mesmo nome, mesma
+    coordenada, um marcado "(em atualização cadastral)". A reconciliação nunca
+    os via: ela compara polo do lmap contra estabelecimento, e nada comparava
+    estabelecimentos entre si.
+  */
+  const { estabelecimentos: estabelecimentosUnicos } =
+    unirEstabelecimentosRepetidos(estabelecimentos);
 
   const { reconciliados, estabelecimentosUsados } = reconciliarDsei({
     dseiChave: d.k,
@@ -9487,13 +9534,16 @@ function detailRecordsForDsei(d) {
       lon: Number(p.coord_lmap?.lon ?? p.lon),
       coord_lotacoes: p.coord_lotacoes || null,
       coord_validacao: p.coord_validacao || "pendente",
+      // O veredito viaja com o polo para sobreviver à reconciliação: quando o
+      // polo e o registo do CNES viram um ponto só, é o do polo que vale.
+      veredicto_localizacao: p.veredicto_localizacao || null,
       confirmacao_independente: p.confirmacao_independente === true,
       uf: p.uf,
       mun_lotacao: p.mun_lotacao || "",
       cod: p.cod ?? null,
       tipo: "polo",
     })),
-    estabelecimentos,
+    estabelecimentos: estabelecimentosUnicos,
   });
 
   const unificados = reconciliados.map((u) => ({
@@ -9504,6 +9554,7 @@ function detailRecordsForDsei(d) {
     city: u.municipio,
     uf: u.uf || d.sedeuf,
     type: TIPO_POLO,
+    veredicto: u.veredicto || null,
     origens: u.origens,
     nomes: u.nomes,
     cod: u.cod,
@@ -9527,13 +9578,14 @@ function detailRecordsForDsei(d) {
       city: p.n,
       uf: p.uf || d.sedeuf,
       type: TIPO_POLO,
+      veredicto: p.veredicto_localizacao || null,
       origens: ["lmap"],
       validacao_coordenada: p.coord_validacao || "pendente",
       confirmacao_independente: p.confirmacao_independente === true,
     }));
 
   // Estabelecimentos que não foram absorvidos por nenhuma reconciliação.
-  const soltos = estabelecimentos
+  const soltos = estabelecimentosUnicos
     .filter((e) => !estabelecimentosUsados.has(e.chave))
     .map((e) => ({
       name: e.nome,
@@ -9543,6 +9595,7 @@ function detailRecordsForDsei(d) {
       city: e.municipio,
       uf: e.uf,
       type: e._tipoVisual,
+      veredicto: e.veredicto || null,
       origens: ["rede_cnes"],
       validacao_coordenada: e.validacao_coordenada || "pendente",
       confirmacao_independente: e.confirmacao_independente === true,
@@ -9580,6 +9633,41 @@ function _tiposDoTerritorio(registos) {
     else mapa.set(r.type.key, { tipo: r.type, quantidade: 1 });
   });
   return [...mapa.values()].sort((x, y) => y.quantidade - x.quantidade);
+}
+
+/*
+  A LISTA DAS TERRAS INDÍGENAS E DOS POVOS
+
+  Quem chama não é o código do painel: é a camada de Terras Indígenas, por
+  `__agsusAoMudarTerras`, porque é ela que sabe que terras sobreviveram ao
+  filtro do distrito depois de recortar o enquadramento.
+
+  A lista chega já ordenada e sem repetição — a mesma terra aparece várias vezes
+  na Funai quando o limite dela é feito de vários polígonos.
+*/
+function renderDetailTerraList(terras) {
+  const lista = $("detailTerraList");
+  const contagem = $("detailTerraCount");
+  const linhas = Array.isArray(terras) ? terras : [];
+  if (contagem) contagem.textContent = fmt(linhas.length);
+  if (!lista) return;
+
+  if (!linhas.length) {
+    lista.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-mountain-sun"></i><strong>Nenhuma Terra Indígena no recorte</strong><span>Nenhuma terra publicada pela Funai cai na abrangência deste território.</span></div>`;
+    return;
+  }
+
+  lista.innerHTML = linhas
+    .map((t) => {
+      // Povo desconhecido diz-se, não se inventa nem se esconde.
+      const povos = t.povos?.length
+        ? esc(t.povos.join(", "))
+        : '<i>povo não declarado pela Funai</i>';
+      const ufs = t.ufs?.length ? ` · ${esc(t.ufs.join(", "))}` : "";
+      const fase = t.fase ? ` · ${esc(t.fase)}` : "";
+      return `<div class="health-map-terra"><b class="health-map-terra__nome">${esc(t.nome)}</b><span class="health-map-terra__povos">${povos}</span><span class="health-map-terra__meta">${ufs}${fase}</span></div>`;
+    })
+    .join("");
 }
 
 function renderDetailUnitList(records) {
@@ -9657,12 +9745,29 @@ function renderDetailMap(d) {
   if (trilho) trilho.textContent = `DSEI ${d.n}`;
   reset?.classList.remove("hidden");
   definirSelecaoDoMapaDetalhado(true);
-  drawDetailBrazilBase(d.ufs || [d.sedeuf]);
+  drawDetailBrazilBase();
+  /*
+    As unidades do distrito vão junto porque é com elas que a camada decide
+    que Terras Indígenas mostrar. A Funai deixou de publicar a abrangência do
+    DSEI, e sem esse recorte o mapa da Bahia desenhava Xerente e Xacriabá, que
+    são de outros distritos. A sede entra na lista: em DSEIs pequenos ela é o
+    ponto mais próximo de várias terras.
+  */
+  const pontosDoDistrito = [
+    ...(Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lon))
+      ? [{ lat: Number(d.lat), lon: Number(d.lon) }]
+      : []),
+    ...records
+      .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
+      .map((r) => ({ lat: r.lat, lon: r.lon })),
+  ];
+  _detailLeaflet.__agsusAoMudarTerras = renderDetailTerraList;
+  _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito, d.ufs || []);
   _detailUnitLayer.clearLayers();
 
   /*
     A UF administrativa vem do CNES; a coordenada só diz onde desenhar. Uma
-    unidade fora das UFs do DSEI fica no lugar verdadeiro e ganha uma linha
+    unidade fora das UFs administrativas do DSEI fica no lugar verdadeiro e ganha uma linha
     pontilhada até a sede — vínculo, não trajeto.
   */
   const classificados = classificarRegistros(records, d);
@@ -9682,35 +9787,34 @@ function renderDetailMap(d) {
     momento da interação. O ganho é pequeno sozinho — medido, 21% — mas evita
     guardar duas strings de HTML por marcador em memória.
   */
+  /*
+    O POPUP DIZ O QUE A UNIDADE É, NÃO COMO O REGISTRO FOI MONTADO.
+
+    Estava com oito linhas, cinco delas sobre a procedência da coordenada:
+    "Registro unificado: mapa anterior + Lotações + CNES", a distância entre as
+    fontes, e as três coordenadas uma a uma. Quem abre o popup quer saber que
+    unidade é aquela — a montagem do registro é assunto de quem cura o dado,
+    não de quem consulta o mapa.
+
+    Fica uma linha sobre a coordenada, e só porque sem ela o mapa passaria a
+    afirmar como apurada uma posição que ainda não foi conferida contra fonte
+    independente. É o mínimo que impede o ponto de ser lido como validado.
+  */
   const popupDoRegistro = (record) => {
-    const fontes = record.coordenadas;
     const linhas = [
       `<b>${esc(record.type.label)}</b>`,
       esc(record.name),
       `${esc(record.city || "")}${record.ufAdministrativa ? " – " + esc(record.ufAdministrativa) : ""}`,
     ];
     if (record.cnes) linhas.push(`CNES: ${esc(record.cnes)}`);
-    if (record.validacao_coordenada === "validada") {
-      linhas.push("<b>Localização validada por fonte independente</b>");
-    } else if (record.coordenada_compartilhada_qtd > 1) {
-      linhas.push(
-        `<b>Localização em validação</b> — ${record.coordenada_compartilhada_qtd} estabelecimentos usam este ponto`,
-      );
-    } else {
-      linhas.push("<b>Localização em validação</b>");
-    }
-    if (fontes?.lmap && fontes?.rede_cnes) {
-      linhas.push(
-        `Mapa anterior: ${Number(fontes.lmap.lat).toFixed(5)}, ${Number(fontes.lmap.lon).toFixed(5)}`,
-      );
-      if (fontes.lotacoes)
-        linhas.push(
-          `Lotações: ${Number(fontes.lotacoes.lat).toFixed(5)}, ${Number(fontes.lotacoes.lon).toFixed(5)}`,
-        );
-      linhas.push(
-        `CNES: ${Number(fontes.rede_cnes.lat).toFixed(5)}, ${Number(fontes.rede_cnes.lon).toFixed(5)}`,
-      );
-    }
+    /*
+      Cinco vereditos, cinco frases. Antes eram duas, e "Localização em
+      validação" cobria 512 dos 606 — incluindo 119 conflitos entre a planilha
+      e o CNES, com mediana de 101 km. Ver `rotuloDaLocalizacao`.
+    */
+    linhas.push(
+      `<span style="font-size:11px;color:#6b7d92">${esc(rotuloDaLocalizacao(record.veredicto))}</span>`,
+    );
     return linhas.join("<br>");
   };
 
@@ -9725,17 +9829,26 @@ function renderDetailMap(d) {
       keyboard: true,
       title: record.name,
     });
-    marker.on("click", () =>
-      marker.bindPopup(popupDoRegistro(record)).openPopup(),
-    );
-    marker.on("mouseover", () => {
-      if (!marker.getTooltip())
-        marker.bindTooltip(tooltipDoRegistro(record, d), {
-          direction: "top",
-          opacity: 0.96,
-        });
-      marker.openTooltip();
-    });
+    marker.bindPopup(popupDoRegistro(record));
+    const hoverDisponivel =
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true;
+    if (hoverDisponivel) {
+      marker.bindTooltip(tooltipDoRegistro(record, d), {
+        direction: "top",
+        opacity: 0.96,
+      });
+      /*
+        Fechar no `popupopen` não bastava: o popup abre, o mapa faz autopan, o
+        marcador volta a passar sob o cursor parado e o Leaflet reabre o
+        tooltip. Recusar a abertura enquanto o popup está aberto cobre também
+        esse segundo caminho.
+      */
+      marker.on("popupopen", () => marker.closeTooltip());
+      marker.on("tooltipopen", () => {
+        if (marker.isPopupOpen?.()) marker.closeTooltip();
+      });
+    }
     return marker;
   };
 
@@ -9767,132 +9880,45 @@ function renderDetailMap(d) {
     });
 
     const visiveisAgora = visiveis(classificados);
-    const polosVisiveis = visiveisAgora.filter((r) => r.type.key === "polo");
-    const demaisVisiveis = visiveisAgora.filter((r) => r.type.key !== "polo");
 
     /*
-      Polo Base é uma camada operacional pequena e precisa permanecer legível.
-      O agrupamento por célula de 60 px escondia polos próximos no enquadramento
-      inicial e dava a impressão de que tinham sumido. Polos só são agrupados
-      quando têm exatamente a mesma coordenada; nesse caso o clique abre o leque.
+      Não há marcadores de contagem no mapa. Cada unidade aparece como unidade.
+      Pontos que se sobrepõem no ecrã são apenas deslocados em pixels, com uma
+      linha até a coordenada verdadeira; a geometria do dado nunca é alterada.
+
+      O agrupamento passou a ser por PROXIMIDADE NA TELA, não por coordenada
+      idêntica. No DSEI Ceará há dois pares a dez metros — o CNES dá quase o
+      mesmo ponto a endereços diferentes — e eles ficavam um escondido atrás do
+      outro, sem leque e sem forma de clicar no de baixo. Quem olhava via uma
+      marcação onde havia duas.
     */
-    agruparCoincidentes(polosVisiveis).forEach((grupo) => {
+    agruparPorProximidadeNaTela(visiveisAgora, (r) =>
+      _detailLeaflet.latLngToLayerPoint([r.lat, r.lon]),
+    ).forEach((grupo) => {
       if (grupo.registros.length === 1) {
         _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.registros[0]));
         return;
       }
 
-      const badge = L.marker([grupo.lat, grupo.lon], {
-        icon: L.divIcon({
-          className: "mapa-cluster mapa-cluster--leque",
-          html: `<span>${grupo.registros.length}</span>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-        }),
-        keyboard: true,
-        title: `${grupo.registros.length} polos na mesma coordenada — abrir em leque`,
+      const centro = _detailLeaflet.latLngToLayerPoint([grupo.lat, grupo.lon]);
+      posicoesSpiderfy(grupo.registros.length).forEach((pos, index) => {
+        const destino = _detailLeaflet.layerPointToLatLng(
+          centro.add(L.point(pos.x, pos.y)),
+        );
+        _detailUnitLayer.addLayer(
+          L.polyline([[grupo.lat, grupo.lon], destino], {
+            color: "#4a6b80",
+            weight: 1.1,
+            opacity: 0.55,
+            interactive: false,
+          }),
+        );
+        _detailUnitLayer.addLayer(
+          marcadorDeRegistro(grupo.registros[index], destino),
+        );
       });
-
-      const grupoDoLeque = {
-        ...grupo,
-        quantidade: grupo.registros.length,
-      };
-      const acionar = () => {
-        if (_leque.aberto === grupo.chave) recolherLeque();
-        else abrirLeque(grupoDoLeque);
-      };
-      badge.on("click", acionar);
-      badge.on("keypress", (e) => {
-        if (e.originalEvent?.key === " ") {
-          e.originalEvent.preventDefault();
-          acionar();
-        }
-      });
-      _detailUnitLayer.addLayer(badge);
     });
-
-    // UBSI/CASAI/unidades podem ser numerosas; nelas permanece o agrupamento
-    // por célula para evitar milhares de nós de DOM.
-    const grupos = agruparPorCelula(demaisVisiveis, (r) =>
-      _detailLeaflet.latLngToContainerPoint([r.lat, r.lon]),
-    );
-
-    grupos.forEach((grupo) => {
-      if (grupo.unico) {
-        _detailUnitLayer.addLayer(marcadorDeRegistro(grupo.unico));
-        return;
-      }
-
-      const coincidente = grupoCoincidente(grupo.registros);
-
-      const badge = L.marker([grupo.lat, grupo.lon], {
-        icon: L.divIcon({
-          className: coincidente
-            ? "mapa-cluster mapa-cluster--leque"
-            : "mapa-cluster",
-          html: `<span>${grupo.quantidade}</span>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-        }),
-        keyboard: true,
-        title: coincidente
-          ? `${grupo.quantidade} unidades na mesma coordenada — abrir em leque`
-          : `${grupo.quantidade} unidades nesta área — aproximar`,
-      });
-
-      const acionar = () => {
-        if (!coincidente) {
-          _detailLeaflet.setView(
-            [grupo.lat, grupo.lon],
-            Math.min(_detailLeaflet.getZoom() + 2, 14),
-            { animate: true },
-          );
-          return;
-        }
-        if (_leque.aberto === grupo.chave) recolherLeque();
-        else abrirLeque(grupo);
-      };
-
-      badge.on("click", acionar);
-      badge.on("keypress", (e) => {
-        if (e.originalEvent?.key === " ") {
-          e.originalEvent.preventDefault();
-          acionar();
-        }
-      });
-      badge.on("mouseover", () => {
-        if (!badge.getTooltip())
-          badge.bindTooltip(
-            `<b>${grupo.quantidade} unidades</b><br>${grupo.registros
-              .slice(0, 6)
-              .map((r) => esc(r.name))
-              .join("<br>")}${grupo.quantidade > 6 ? "<br>…" : ""}<br><i>${
-              coincidente
-                ? "mesma coordenada — clique para abrir em leque"
-                : "clique para aproximar"
-            }</i>`,
-            { direction: "top", opacity: 0.96 },
-          );
-        badge.openTooltip();
-      });
-      _detailUnitLayer.addLayer(badge);
-    });
-
-    // Um leque aberto não sobrevive a um redesenho da camada.
-    if (_leque.aberto) recolherLeque();
   };
-
-  // Usa a primitiva partilhada; a cópia local desta lógica saiu daqui.
-  const abrirLeque = (grupo) => {
-    _leque.abrir(grupo, (record, destino) =>
-      marcadorDeRegistro(record, destino),
-    );
-    toast(
-      `${grupo.quantidade} unidades na mesma coordenada, abertas em leque. Clique no número para recolher.`,
-    );
-  };
-
-  const recolherLeque = () => _leque.recolher();
 
   desenharCamadaDeUnidades();
   // Reagrupar ao mudar o zoom: a célula é de pixels, e o que cabe nela muda.
@@ -9903,14 +9929,43 @@ function renderDetailMap(d) {
     desenharCamadaDeUnidades,
   );
 
-  L.circleMarker([d.lat, d.lon], {
-    radius: 9,
-    color: "#fff",
-    weight: 2,
-    fillColor: "#1769aa",
-    fillOpacity: 1,
+  /*
+    A SEDE PASSA PELO MESMO CAMINHO QUE OS OUTROS MARCADORES
+
+    Era um `circleMarker` azul escrito à mão, fora da tabela de formas: não
+    entrava na legenda, não tinha forma própria e não se distinguia de um polo
+    base para quem só via dois círculos. Agora é uma estrela, vinda de
+    `FORMAS`, e a legenda passa a nomeá-la porque sai da mesma tabela.
+
+    Não entra em `detailRecordsForDsei`: a sede não é unidade de saúde, e
+    contá-la ali mudaria os totais e os filtros por tipo.
+  */
+  const registoDaSede = {
+    name: `Sede do DSEI ${d.n}`,
+    lat: d.lat,
+    lon: d.lon,
+    city: d.sede_municipio || "",
+    uf: d.sede_uf || d.sedeuf || "",
+    cnes: "",
+    type: TIPO_SEDE,
+    veredicto: null,
+  };
+  const ufDaSede = d.sede_uf || d.sedeuf || "";
+  L.marker([d.lat, d.lon], {
+    icon: L.divIcon({
+      className: "mapa-marcador-wrap",
+      html: htmlDoMarcador(registoDaSede),
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    }),
+    keyboard: true,
+    title: registoDaSede.name,
+    // Acima das unidades: é o ponto que ancora o território inteiro.
+    zIndexOffset: 400,
   })
-    .bindPopup(`<b>DSEI ${esc(d.n)}</b><br>Sede territorial`)
+    .bindPopup(
+      `<b>Sede do DSEI ${esc(d.n)}</b><br>${esc(d.sede_municipio || "")}${ufDaSede ? " – " + esc(ufDaSede) : ""}`,
+    )
     .addTo(_detailUnitLayer);
 
   const redesenharPorFiltro = () => {
@@ -9964,8 +10019,16 @@ function enquadrarDetalhe(escopo, { animar = false } = {}) {
   const pontos = _detailBounds[escopo] || _detailBounds.territorio;
   if (!pontos?.length) return;
   _detailEscopo = escopo;
+
+  const abrangenciaOficial =
+    escopo === "territorio" ? _detailLeaflet.__agsusDseiCoverageBounds : null;
+  const bounds =
+    abrangenciaOficial?.isValid?.() === true
+      ? abrangenciaOficial
+      : L.latLngBounds(pontos);
+
   try {
-    _detailLeaflet.fitBounds(L.latLngBounds(pontos), {
+    _detailLeaflet.fitBounds(bounds, {
       padding: [34, 34],
       maxZoom: 9,
       animate: animar,
@@ -10062,6 +10125,8 @@ function resetDetailMap({ silent = false } = {}) {
   if (list)
     list.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-map-location-dot"></i><strong>Selecione um DSEI</strong><span>Os polos, CASAIs e unidades aparecerão aqui.</span></div>`;
   _detailUnitLayer?.clearLayers();
+  renderDetailTerraList([]);
+  _detailLeaflet.__agsusSetDseiCoverage?.("");
   drawDetailBrazilBase();
   try {
     _detailLeaflet.fitBounds(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]), {
@@ -10111,27 +10176,6 @@ function drawBrasilOutline() {
   } catch (e) {}
 }
 
-// Destacar os estados contemplados por um DSEI (preenchimento leve + borda)
-function highlightUFs(ufs) {
-  if (!_leaflet || !_layerUF) return;
-  _layerUF.clearLayers();
-  if (!ufs || !ufs.length) return;
-  const set = new Set(ufs);
-  try {
-    L.geoJSON(UF_GEO, {
-      filter: (f) => set.has(f.properties.uf),
-      style: {
-        color: "#1f6f4a",
-        weight: 2,
-        opacity: 0.9,
-        fillColor: "#2e8b57",
-        fillOpacity: 0.18,
-        interactive: false,
-      },
-    }).addTo(_layerUF);
-  } catch (e) {}
-}
-
 /*
   Entrar num território é a mesma coisa venha do mapa ou da lista ao lado dele.
   Estava escrita dentro do `on("click")` da bolha, e por isso a lista teria de
@@ -10145,10 +10189,7 @@ function entrarNoTerritorio(d) {
   flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]));
   const voltar = $("drillBackBtn");
   if (voltar) voltar.style.display = "inline-flex";
-  const ufTxt = d.ufs && d.ufs.length ? " (" + d.ufs.join(", ") + ")" : "";
-  toast(
-    "DSEI " + d.n + ufTxt + ": polos e unidades exibidos no mapa detalhado.",
-  );
+  // A troca de mapa já é o feedback da ação; não duplica com uma notificação.
 }
 
 /*
@@ -10220,12 +10261,8 @@ function drawDSEIBubbles() {
     a maior continua a aparecer como anel em volta da menor. E onde a sede é
     exactamente a mesma entra um selo com a contagem, que nomeia os distritos.
   */
-  const sedesPartilhadas = new Map();
-  LMAP.dsei.forEach((d) => {
-    const chave = `${Number(d.lat).toFixed(4)},${Number(d.lon).toFixed(4)}`;
-    if (!sedesPartilhadas.has(chave)) sedesPartilhadas.set(chave, []);
-    sedesPartilhadas.get(chave).push(d);
-  });
+  // DSEIs com a mesma sede permanecem sobrepostos no ponto verdadeiro.
+  // A ordenação por raio mantém a bolha menor clicável sem selo numérico.
 
   [...LMAP.dsei]
     .sort((a, b) => raioDaBolha(b.pop, popMax) - raioDaBolha(a.pop, popMax))
@@ -10284,10 +10321,15 @@ function drawDSEIBubbles() {
           : hp
             ? `<br>Vagas ociosas: ${fmt(ociosas)} de ${fmt(vagas)}`
             : "";
-      m.bindTooltip(
-        `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>Polos base: ${(d.polos || []).length}<br>Estados: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para ver os polos base</i>`,
-        { direction: "top" },
-      );
+      if (
+        window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+        true
+      ) {
+        m.bindTooltip(
+          `<b>DSEI ${esc(d.n)}</b><br>População do DSEI: ${fmt(d.pop)} indígenas<br>${resumoDaRedeDoDsei(d)}<br>Estados administrativos: ${(d.ufs || [d.sedeuf]).join(", ")}<br>Processos seletivos: ${nproc}${heatLine}<br><i>clique para abrir o território</i>`,
+          { direction: "top" },
+        );
+      }
       m.on("click", () => entrarNoTerritorio(d));
       _layerDSEI.addLayer(m);
     });
@@ -10297,57 +10339,6 @@ function drawDSEIBubbles() {
     Fica ao lado do centro — deslocado em PIXELS, convertidos no zoom corrente —
     e não substitui as bolhas: elas continuam no seu lugar, clicáveis.
   */
-  sedesPartilhadas.forEach((lista) => {
-    if (lista.length < 2) return;
-    const visiveis = filtroAtivo
-      ? lista.filter((d) => (byDsei[dseiKey(d.k)] || 0) > 0)
-      : lista;
-    if (visiveis.length < 2) return;
-    /*
-      O SELO FICA EM CIMA DA SEDE, SEM DESVIO NENHUM.
-
-      Isto convertia 18px numa latitude e numa longitude — `layerPointToLatLng`
-      sobre `centro.add(L.point(18, -18))` — e punha o marcador nesse ponto
-      inventado. Na visão nacional o mapa tem 9.57px por grau, portanto os 18px
-      viravam **1.88° ≈ 209 km**: o selo dos dois DSEIs de Boa Vista
-      (2.8563, -60.6527, em Roraima) era desenhado em 4.4209, -59.0849 — dentro
-      da Guiana. Medido na aplicação a 15/09/2026.
-
-      A primeira correção passou o desvio para o `iconAnchor`, o que torna a
-      coordenada honesta mas não muda **nada do que se vê**: o selo continuava
-      desenhado sobre a Guiana. Quem lê o mapa lê pixels, não a coordenada do
-      marcador.
-
-      Então o desvio sai. O selo é uma contagem do que está debaixo dele, e o
-      lugar de uma contagem é em cima do que ela conta — é assim que os outros
-      agrupamentos deste mapa já se desenham. A bolha maior continua a aparecer
-      como anel em volta, e o tooltip nomeia os dois distritos.
-
-      Regra que fica: nenhum desenho deste mapa inventa coordenada. Quando for
-      preciso afastar alguma coisa do seu lugar — o leque, por exemplo — que
-      haja uma linha ligando ao ponto verdadeiro, dizendo que aquilo é um
-      chamamento e não um sítio.
-    */
-    const selo = L.marker([visiveis[0].lat, visiveis[0].lon], {
-      icon: L.divIcon({
-        className: "mapa-cluster mapa-cluster--sede",
-        html: `<span>${visiveis.length}</span>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11],
-      }),
-      keyboard: true,
-      title: `${visiveis.length} DSEIs com a mesma sede`,
-    });
-    selo.bindTooltip(
-      `<b>${visiveis.length} DSEIs nesta sede</b><br>${visiveis
-        .map((d) => esc(d.n))
-        .join(
-          "<br>",
-        )}<br><i>as bolhas estão sobrepostas; a menor fica por cima</i>`,
-      { direction: "top" },
-    );
-    _layerDSEI.addLayer(selo);
-  });
 
   /*
     Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
@@ -10433,10 +10424,21 @@ function drawCasai() {
         iconAnchor: [8, 8],
       }),
     });
-    mk.bindTooltip(
-      `<b>${esc(c.n)}</b><br>${esc(c.cidade)} – ${c.uf}<br>Processos seletivos: ${nproc}<br><i>clique para filtrar</i>`,
-      { direction: "top" },
-    );
+    if (
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true
+    ) {
+      mk.bindTooltip(
+        `<b>${esc(c.n)}</b><br>${esc(c.cidade)} – ${c.uf}<br>Processos seletivos: ${nproc}<br><i>clique para filtrar</i>`,
+        { direction: "top" },
+      );
+      mk.on("popupopen", () => mk.closeTooltip());
+      // O autopan do popup traz o marcador de volta sob o cursor e reabriria o
+      // tooltip; enquanto o popup estiver aberto, o tooltip não abre.
+      mk.on("tooltipopen", () => {
+        if (mk.isPopupOpen?.()) mk.closeTooltip();
+      });
+    }
     mk.bindPopup(
       `<b>${esc(c.n)}</b><br>Casa de Saúde Indígena (referência nacional)<br>${esc(c.cidade)} – ${c.uf}<br>Processos seletivos: ${nproc}<br><span style="font-size:10px;color:#6b7d92">${fonteCoord}</span>`,
     );
@@ -10445,7 +10447,6 @@ function drawCasai() {
       const s = $("tableSearch");
       if (s) s.value = termo;
       applyFilters();
-      toast(esc(c.n) + ": " + nproc + " processo(s).");
     });
     _layerCasai.addLayer(mk);
   });
@@ -10469,9 +10470,9 @@ function polosBounds(d) {
   `_lat`/`_lon`, mas o marcador era desenhado a 5,5 km do sítio, e nada na tela
   dizia isso a quem olhava.
 
-  O afastamento em graus saiu. O que resolve a sobreposição agora é o
-  agrupamento com contagem, em `desenharComAgrupamento`, que é de desenho e
-  reversível: aproximar ou abrir o leque devolve cada unidade ao seu lugar.
+  O afastamento em graus saiu. Quando dois pontos coincidem, o desenho os
+  separa apenas em pixels e liga cada marcador à coordenada real. Não existe
+  mais selo numérico nem alteração da geometria do dado.
 */
 function _spread(items) {
   return items.map((it) =>
@@ -10479,89 +10480,6 @@ function _spread(items) {
   );
 }
 
-/*
-  Agrupamento com contagem para as camadas da visão nacional.
-
-  Recebe registos já com `_lat`/`_lon` iguais aos reais, agrupa por célula de
-  pixel e devolve o que desenhar: ou o registo sozinho, ou um grupo com a sua
-  contagem. Quem chama decide o marcador — o que muda entre polos e CASAIs é a
-  forma, não a regra de agrupamento.
-*/
-/*
-  LEQUE (spiderfy) — primitiva única, usada pelo mapa detalhado e pelos polos.
-
-  Os deslocamentos vêm de `posicoesSpiderfy`, em PIXELS, e são convertidos em
-  coordenada com o zoom corrente. `lat`/`lon` dos registos não são tocados: o
-  que muda é onde o marcador é pintado, e recolher devolve tudo ao lugar.
-
-  Isto vivia dentro do mapa detalhado. Passou a primitiva partilhada porque os
-  polos precisavam exactamente do mesmo, e duas cópias de uma regra destas
-  divergem. Nos polos ela nem chegava a existir: grupos coincidentes só sabiam
-  aproximar, e no zoom máximo continuavam num selo só — medido na base real,
-  9 grupos e 40 polos, o maior com 19 no Alto Rio Negro.
-*/
-function criarLeque(mapa) {
-  const camada = L.layerGroup();
-  let aberto = "";
-
-  const recolher = () => {
-    camada.clearLayers();
-    if (mapa?.hasLayer?.(camada)) mapa.removeLayer(camada);
-    aberto = "";
-  };
-
-  return {
-    get aberto() {
-      return aberto;
-    },
-    recolher,
-    /**
-     * @param grupo      grupo devolvido por `agruparPorCelula`
-     * @param marcadorDe (registo, posicao) => marcador do Leaflet
-     */
-    abrir(grupo, marcadorDe) {
-      recolher();
-      aberto = grupo.chave;
-      const centro = mapa.latLngToLayerPoint([grupo.lat, grupo.lon]);
-      posicoesSpiderfy(grupo.quantidade).forEach((pos, i) => {
-        const destino = mapa.layerPointToLatLng(
-          centro.add(L.point(pos.x, pos.y)),
-        );
-        camada.addLayer(
-          L.polyline([[grupo.lat, grupo.lon], destino], {
-            color: "#4a6b80",
-            weight: 1.2,
-            opacity: 0.6,
-            interactive: false,
-          }),
-        );
-        camada.addLayer(marcadorDe(grupo.registros[i], destino));
-      });
-      camada.addTo(mapa);
-    },
-  };
-}
-
-function desenharComAgrupamento(
-  mapa,
-  registros,
-  aoDesenharUm,
-  aoDesenharGrupo,
-) {
-  const grupos = agruparPorCelula(
-    registros.map((r) => ({
-      ...r,
-      lat: r._lat ?? r.lat,
-      lon: r._lon ?? r.lon,
-    })),
-    (r) => mapa.latLngToContainerPoint([r.lat, r.lon]),
-  );
-  grupos.forEach((grupo) => {
-    if (grupo.unico) aoDesenharUm(grupo.unico);
-    else aoDesenharGrupo(grupo);
-  });
-  return grupos;
-}
 function drawRedeAssistencial(d) {
   if (!_leaflet) return;
   if (_layerUbsi) _layerUbsi.clearLayers();
@@ -10580,10 +10498,21 @@ function drawRedeAssistencial(d) {
         iconAnchor: [7, 7],
       }),
     });
-    mk.bindTooltip(
-      `<b>CASAI</b> ${esc(c.n)}<br>${esc(c.mun || "")}${c.uf ? " – " + c.uf : ""}<br><i>clique para filtrar processos</i>`,
-      { direction: "top" },
-    );
+    if (
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true
+    ) {
+      mk.bindTooltip(
+        `<b>CASAI</b> ${esc(c.n)}<br>${esc(c.mun || "")}${c.uf ? " – " + c.uf : ""}<br><i>clique para filtrar processos</i>`,
+        { direction: "top" },
+      );
+      mk.on("popupopen", () => mk.closeTooltip());
+      // O autopan do popup traz o marcador de volta sob o cursor e reabriria o
+      // tooltip; enquanto o popup estiver aberto, o tooltip não abre.
+      mk.on("tooltipopen", () => {
+        if (mk.isPopupOpen?.()) mk.closeTooltip();
+      });
+    }
     const compartilhada = Number(c.meta?.coordenada_compartilhada_qtd || 0);
     const fonte =
       c.meta?.confirmacao_independente === true
@@ -10600,7 +10529,6 @@ function drawRedeAssistencial(d) {
         s.value = d.n;
         applyFilters();
       }
-      toast("Filtrando processos do DSEI " + d.n + ".");
     });
     _layerCasaiLocal.addLayer(mk);
   });
@@ -10609,7 +10537,6 @@ function drawRedeAssistencial(d) {
 // Nível 2: polos base de um DSEI
 function drawPolos(d) {
   if (!_leaflet) return;
-  _lequePolos?.recolher();
   _layerPolos.clearLayers();
   drawRedeAssistencial(d);
   const polosBase = polosCorrigidosPorCnes(d);
@@ -10677,105 +10604,74 @@ function drawPolos(d) {
       fillColor: externo ? "#e8730c" : "#1d4e89",
       fillOpacity: 0.95,
     });
-    mk.bindTooltip(
-      esc(p.n) +
-        (externo
-          ? ` <i>(${esc(vinculo.uf || "")}, fora das UFs do DSEI)</i>`
-          : ""),
-      { direction: "top" },
-    );
+    const hoverDisponivel =
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true;
+    if (hoverDisponivel) {
+      mk.bindTooltip(
+        esc(p.n) +
+          (externo
+            ? ` <i>(${esc(vinculo.uf || "")}, fora das UFs administrativas do DSEI)</i>`
+            : ""),
+        { direction: "top" },
+      );
+      mk.on("popupopen", () => mk.closeTooltip());
+      // O autopan do popup traz o marcador de volta sob o cursor e reabriria o
+      // tooltip; enquanto o popup estiver aberto, o tooltip não abre.
+      mk.on("tooltipopen", () => {
+        if (mk.isPopupOpen?.()) mk.closeTooltip();
+      });
+    }
     const diferenca =
-      Number.isFinite(Number(p.coord_diferenca_km)) && p.coord_diferenca_km != null
+      Number.isFinite(Number(p.coord_diferenca_km)) &&
+      p.coord_diferenca_km != null
         ? `<br>Diferença entre fontes: ${esc(p.coord_diferenca_km)} km`
         : "";
-    const fonte =
-      p.coord_validacao === "validada"
-        ? `Localização validada${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}`
-        : `Localização em validação${p.cnes ? `<br>CNES: ${esc(p.cnes)}` : ""}${p.coord_nome ? `<br>Registro CNES: ${esc(p.coord_nome)}` : ""}${diferenca}`;
+    const fonte = [
+      esc(rotuloDaLocalizacao(p.veredicto_localizacao)),
+      p.cnes ? `CNES: ${esc(p.cnes)}` : "",
+      p.coord_nome ? `Registro CNES: ${esc(p.coord_nome)}` : "",
+      // A diferença entre fontes já está dita no rótulo quando há conflito.
+      p.veredicto_localizacao?.estado === "conflito" ? "" : diferenca.replace(/^<br>/, ""),
+    ]
+      .filter(Boolean)
+      .join("<br>");
     mk.bindPopup(
-      `<b>Polo base: ${esc(p.n)}</b><br>UF: ${p.uf}<br>População do polo: ${fmt(p.p)} indígenas${externo ? "<br><i>Vinculado ao DSEI " + esc(d.n) + ", fora das UFs de abrangência</i>" : ""}<br><span style="font-size:10px;color:#6b7d92">${fonte}</span>`,
+      `<b>Polo base: ${esc(p.n)}</b><br>UF: ${p.uf}<br>População do polo: ${fmt(p.p)} indígenas${externo ? "<br><i>Vinculado ao DSEI " + esc(d.n) + ", fora das UFs administrativas do DSEI</i>" : ""}<br><span style="font-size:10px;color:#6b7d92">${fonte}</span>`,
     );
     return mk;
   };
 
   /*
-    Com o afastamento em graus removido, polos no mesmo município ficariam um
-    por cima do outro e o de baixo seria inalcançável. O agrupamento devolve um
-    marcador com a contagem; aproximar separa-os, e o que continuar coincidente
-    lista os nomes no tooltip.
+    Polos com a mesma coordenada continuam individualmente acessíveis: o
+    deslocamento é apenas visual, em pixels, e uma linha aponta para o ponto
+    geográfico verdadeiro. Não há selo numérico nem coordenada inventada.
   */
-  desenharComAgrupamento(
-    _leaflet,
-    polos,
-    (p) => _layerPolos.addLayer(marcadorDoPolo(p)),
-    (grupo) => {
-      /*
-        A mesma distinção do mapa detalhado, que faltava aqui. Aproximar só
-        resolve quem está perto; quem partilha a coordenada continuaria num selo
-        só no zoom máximo — 19 polos do Alto Rio Negro num ponto, 5 do Yanomami
-        noutro, e em cada grupo todos menos um inalcançáveis.
-      */
-      const coincidente = grupoCoincidente(
-        grupo.registros.map((r) => ({ lat: r._lat, lon: r._lon })),
-      );
+  agruparCoincidentes(
+    polos.map((p) => ({ ...p, lat: p._lat, lon: p._lon })),
+  ).forEach((grupo) => {
+    if (grupo.registros.length === 1) {
+      _layerPolos.addLayer(marcadorDoPolo(grupo.registros[0]));
+      return;
+    }
 
-      const badge = L.marker([grupo.lat, grupo.lon], {
-        icon: L.divIcon({
-          className: coincidente
-            ? "mapa-cluster mapa-cluster--leque"
-            : "mapa-cluster",
-          html: `<span>${grupo.quantidade}</span>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
+    const centro = _leaflet.latLngToLayerPoint([grupo.lat, grupo.lon]);
+    posicoesSpiderfy(grupo.registros.length).forEach((pos, index) => {
+      const destino = _leaflet.layerPointToLatLng(
+        centro.add(L.point(pos.x, pos.y)),
+      );
+      _layerPolos.addLayer(
+        L.polyline([[grupo.lat, grupo.lon], destino], {
+          color: "#4a6b80",
+          weight: 1.1,
+          opacity: 0.55,
+          interactive: false,
         }),
-        keyboard: true,
-        title: coincidente
-          ? `${grupo.quantidade} polos base na mesma coordenada — abrir em leque`
-          : `${grupo.quantidade} polos base nesta área — aproximar`,
-      });
-      badge.bindTooltip(
-        `<b>${grupo.quantidade} polos base</b><br>${grupo.registros
-          .slice(0, 8)
-          .map((r) => esc(r.n))
-          .join("<br>")}${grupo.quantidade > 8 ? "<br>…" : ""}<br><i>${
-          coincidente
-            ? "mesma coordenada — clique para abrir em leque"
-            : "clique para aproximar"
-        }</i>`,
-        { direction: "top" },
       );
+      _layerPolos.addLayer(marcadorDoPolo(grupo.registros[index], destino));
+    });
+  });
 
-      const acionar = () => {
-        if (!coincidente) {
-          _leaflet.setView(
-            [grupo.lat, grupo.lon],
-            Math.min(_leaflet.getZoom() + 3, 12),
-            { animate: true },
-          );
-          return;
-        }
-        if (_lequePolos.aberto === grupo.chave) _lequePolos.recolher();
-        else {
-          _lequePolos.abrir(grupo, (polo, destino) =>
-            marcadorDoPolo(polo, destino),
-          );
-          toast(
-            `${grupo.quantidade} polos base na mesma coordenada, abertos em leque. Clique no número para recolher.`,
-          );
-        }
-      };
-
-      badge.on("click", acionar);
-      // O Leaflet dá Enter ao marcador; o Espaço é o que se espera de um botão.
-      badge.on("keypress", (e) => {
-        if (e.originalEvent?.key === " ") {
-          e.originalEvent.preventDefault();
-          acionar();
-        }
-      });
-      _layerPolos.addLayer(badge);
-    },
-  );
   syncMapLevelUI();
 }
 
@@ -10788,11 +10684,109 @@ function renderMap() {
   drawDSEIBubbles();
 }
 
+/*
+  DUAS PERGUNTAS DIFERENTES, DUAS LINHAS
+
+  A dica dizia "Polos base: 6" no DSEI Maranhão e o mapa desenhava 71
+  marcadores. Trocou-se por três números somando as listas cruas — e isso
+  estava errado de outra maneira: em Alagoas e Sergipe dava "13 polos · 14
+  unidades · 1 CASAI", vinte e oito, quando o mapa desenha vinte e um. Doze
+  daquelas catorze "unidades" chamam-se POLO BASE ALGUMA COISA no CNES: são os
+  mesmos polos, cadastrados. Medido nos 34 distritos, somar as listas prometia
+  1578 pontos onde o mapa desenha 1328.
+
+  Mas contar o que o mapa desenha também não responde sozinho. Alagoas e
+  Sergipe tem TREZE polos base na planilha de lotações, e o mapa desenha
+  DEZOITO marcadores de polo, porque cinco deles saem duas vezes — o polo da
+  planilha e o registo do CNES que é o mesmo polo, que a reconciliação não
+  casou. São 40 casos assim no país.
+
+  Esconder uma das duas seria escolher qual mentir. Por isso a dica diz as
+  duas: quantos polos o distrito TEM, e quantos pontos o mapa MOSTRA. Enquanto
+  os números divergirem, a divergência fica à vista de quem monitoriza — que é
+  para isso que este painel existe.
+*/
+let _resumoDaRedePorDsei = null;
+
+function esquecerResumoDaRede() {
+  _resumoDaRedePorDsei = null;
+}
+
+/*
+  Contar o que o mapa desenha é o mesmo trabalho que desenhar, e
+  `detailRecordsForDsei` já o faz inteiro: une os registos repetidos do CNES,
+  reconcilia polo com estabelecimento e devolve o que sobra. A contagem sai
+  dali para que os dois não possam divergir. Custa 11 ms para os 34 distritos,
+  medido, e fica guardada.
+*/
+function resumoDaRedeDoDsei(d) {
+  if (!d?.k) return "Sem unidades cadastradas";
+  if (!_resumoDaRedePorDsei) _resumoDaRedePorDsei = new Map();
+
+  if (!_resumoDaRedePorDsei.has(d.k)) {
+    const desenhados = { polo: 0, casai: 0, outros: 0 };
+    let total = 0;
+    for (const registo of detailRecordsForDsei(d)) {
+      total += 1;
+      const chave = registo?.type?.key;
+      if (chave === "polo") desenhados.polo += 1;
+      else if (chave === "casai") desenhados.casai += 1;
+      else desenhados.outros += 1;
+    }
+
+    const noMapa = [
+      ["polos", desenhados.polo],
+      ["unidades", desenhados.outros],
+      ["CASAIs", desenhados.casai],
+      // Só aparece o que existe: um distrito sem CASAI não ganha "CASAIs: 0".
+    ]
+      .filter(([, n]) => n > 0)
+      .map(([rotulo, n]) => `${n} ${rotulo}`)
+      .join(", ");
+
+    const polosDaLotacao = (d.polos || []).length;
+    const linhas = [];
+    if (polosDaLotacao) linhas.push(`Polos base: ${polosDaLotacao}`);
+    if (total) {
+      linhas.push(
+        `No mapa: ${total} ${total === 1 ? "ponto" : "pontos"} (${noMapa})`,
+      );
+    }
+
+    _resumoDaRedePorDsei.set(
+      d.k,
+      linhas.length ? linhas.join("<br>") : "Sem unidades cadastradas",
+    );
+  }
+
+  return _resumoDaRedePorDsei.get(d.k);
+}
+
 function mapVoltar() {
+  /*
+    "Voltar à visão do Brasil" limpa TODOS os filtros, não só a UF.
+
+    Antes zerava `filterState.uf` e a busca, e deixava de pé edital, etapa,
+    status e risco. O mapa voltava para o país inteiro enquanto os cartões e a
+    tabela continuavam a mostrar um recorte — duas leituras do mesmo ecrã a
+    discordar, sem nada a dizer porquê.
+
+    É a mesma limpeza do botão "Limpar todos" da barra de filtros, incluindo o
+    "Ocultar encerrados": voltar ao Brasil é voltar ao princípio.
+  */
   const s = $("tableSearch");
   if (s) s.value = "";
-  filterState.uf = new Set();
+  filterState = Object.fromEntries(
+    FILTER_CONFIG.map((f) => [f.field, new Set()]),
+  );
+  hideClosed = false;
+  try {
+    localStorage.setItem("agsus_hide_closed_v1", "0");
+  } catch (e) {}
+  syncHideClosedBtn();
   lastMapUfKey = null;
+  saveFilterState();
+  renderFilterControls();
   applyFilters();
   if (_leaflet) {
     _layerPolos.clearLayers();
@@ -11015,17 +11009,37 @@ function syncMapLevelUI() {
       `<span style="width:11px;height:11px;background:${c};border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.2);display:inline-block;transform:rotate(45deg);vertical-align:middle;margin-right:7px;margin-left:1px;"></span>`;
     const tracejado =
       '<span style="border-top:2.5px dashed #e8730c;width:18px;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
-    const quadUF =
-      '<span style="width:12px;height:12px;background:#2e8b57;opacity:.45;border:1.5px solid #1f6f4a;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const limiteDsei =
+      '<span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    /*
+      TRÊS AMOSTRAS, PORQUE O MAPA DESENHA TRÊS COISAS
+
+      A camada separa as terras pela fase do processo: 511 com limite
+      definitivo (Regularizada, Homologada), 146 ainda em processo (Declarada,
+      Delimitada, Encaminhada RI) e as que estão em estudo, sem limite nenhum.
+
+      Cada uma tem o seu desenho — cheia, tracejada, círculo tracejado —, e uma
+      legenda com um quadrado só voltaria ao problema de antes: descrever
+      menos do que o mapa mostra é ensinar a procurar a coisa errada.
+
+      Os valores são os mesmos de `estiloDaFase`, no módulo da camada.
+    */
+    const terraIndigena =
+      '<span style="width:16px;height:11px;background:rgba(244,114,208,.3);border:2px solid #e030a6;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const terraEmProcesso =
+      '<span style="width:16px;height:11px;background:rgba(249,168,212,.22);border:2px dashed #f9a8d4;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
+    const terraEmEstudo =
+      '<span style="width:12px;height:12px;border:2px dashed #e030a6;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:8px;margin-left:2px;"></span>';
+    const terras = `${terraIndigena}Terra Indígena homologada ou regularizada<br>${terraEmProcesso}Terra Indígena em processo (declarada, delimitada)<br>${terraEmEstudo}Terra Indígena em estudo — sem limite publicado`;
     box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}ligação ao DSEI<br>${quadUF}estado atendido`
-      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${losango("#7b2ff7")}CASAI Nacional`;
+      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}`
+      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}<br>${losango("#7b2ff7")}CASAI Nacional`;
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei)
     lgDsei.innerHTML = showingPolos
-      ? '<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base &nbsp; <span style="width:11px;height:11px;border-radius:50%;background:#e8730c;display:inline-block;"></span> polo fora das UFs do DSEI'
-      : '<span style="width:11px;height:11px;border-radius:50%;background:#5b9bd5;display:inline-block;"></span> DSEI &nbsp; <span style="width:11px;height:11px;border-radius:50%;background:#0b8f58;display:inline-block;"></span> com processo';
+      ? '<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base &nbsp; <span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;"></span> abrangência oficial'
+      : '<span style="width:11px;height:11px;border-radius:50%;background:#5b9bd5;display:inline-block;"></span> sede DSEI &nbsp; <span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;"></span> abrangência oficial';
 }
 
 function renderRisks() {
@@ -11337,7 +11351,8 @@ function debouncedNucleo() {
 function renderNucleo() {
   const started = performance.now();
   const newButton = $("newEditalBtn");
-  if (newButton) newButton.classList.toggle("hidden", !canManageEditais(profile));
+  if (newButton)
+    newButton.classList.toggle("hidden", !canManageEditais(profile));
   const q = low($("nucleoSearch").value);
   const data = rows
     .filter(
@@ -11411,7 +11426,10 @@ function dateOrNull(id) {
 
 function openEditModal(id) {
   if (!canManageEditais(profile))
-    return toast("Seu perfil pode consultar a Equipe Núcleo, mas não editar editais.", "warn");
+    return toast(
+      "Seu perfil pode consultar a Equipe Núcleo, mas não editar editais.",
+      "warn",
+    );
   const r = id ? rows.find((x) => String(x.id) === String(id)) : {};
   $("editModalTitle").textContent = id ? "Editar edital" : "Novo edital";
   setFieldValue("mId", r?.id || "");
@@ -12030,9 +12048,7 @@ async function renderAccessRequestsAdmin() {
       .limit(50),
     sb
       .from("TB_PERFIL_USUARIO")
-      .select(
-        "id,user_id,email,nome,perfil,ativo,updated_at",
-      )
+      .select("id,user_id,email,nome,perfil,ativo,updated_at")
       .eq("ativo", true)
       .order("updated_at", { ascending: false })
       .limit(80),
@@ -12090,23 +12106,19 @@ function accessRequestById(id) {
   return accessRequests.find((r) => String(r.id) === String(id));
 }
 
-
-
 async function updateUserAccess(id) {
   const user = accessProfiles.find((r) => String(r.id) === String(id));
   if (!user) return toast("Usuário não encontrado.", "warn");
   if (isOwnAccessProfile(currentUser, user))
-    return toast("Sua própria permissão deve ser alterada por outro administrador.", "warn");
+    return toast(
+      "Sua própria permissão deve ser alterada por outro administrador.",
+      "warn",
+    );
   const perfil = txt($("userPerfil" + id)?.value) || "usuario";
   const label = user.email || user.nome || "este usuário";
   if (!window.confirm(`Salvar alterações de acesso para ${label}?`)) return;
   const motivo = window.prompt("Motivo da alteração (opcional):", "") || "";
-  loader(
-    true,
-    "Salvando acesso",
-    "Atualizando o perfil de acesso...",
-    55,
-  );
+  loader(true, "Salvando acesso", "Atualizando o perfil de acesso...", 55);
   const { error } = await sb.rpc(RPC_UPDATE_USER_ACCESS, {
     p_perfil_usuario_id: id,
     p_perfil: perfil,
@@ -12125,12 +12137,7 @@ async function approveAccessRequest(id) {
   const req = accessRequestById(id);
   if (!req) return toast("Solicitação não encontrada.", "warn");
   const perfil = txt($("accessPerfil" + id)?.value) || "usuario";
-  loader(
-    true,
-    "Aprovando acesso",
-    "Salvando o perfil de acesso...",
-    55,
-  );
+  loader(true, "Aprovando acesso", "Salvando o perfil de acesso...", 55);
   const { error: reqErr } = await sb.rpc(RPC_APPROVE_ACCESS_REQUEST, {
     p_solicitacao_id: id,
     p_perfil: perfil,
@@ -12144,7 +12151,6 @@ async function approveAccessRequest(id) {
   toast("Acesso aprovado. Oriente o usuário a sair e entrar novamente.");
   await renderAccessRequestsAdmin();
 }
-
 
 async function deactivateUserAccess(id) {
   const user = accessProfiles.find((r) => String(r.id) === String(id));

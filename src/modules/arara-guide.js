@@ -1,4 +1,9 @@
 import { askAyaAi, shouldAskAyaAi } from "./aya-ai-client.js";
+import {
+  esquecerConversa,
+  lerConversa,
+  salvarConversa,
+} from "./aya-memoria.js";
 
 const ARARA_VISIBILITY_STORAGE_KEY = "agsus_monitora_arara_oculta_v1";
 
@@ -269,6 +274,7 @@ function appendMessage(state, role, text, options = {}) {
   state.messages.append(message);
   if (options.track !== false) {
     state.history.push({ role, content: String(text || "") });
+    salvarConversa(state.history, state.win);
   }
   state.messages.scrollTop = state.messages.scrollHeight;
   return message;
@@ -295,8 +301,34 @@ function setThinking(state, active) {
 function resetConversation(state) {
   state.messages.replaceChildren();
   state.history = [];
+  esquecerConversa(state.win);
   setThinking(state, false);
   appendMessage(state, "assistant", state.content.intro);
+}
+
+/*
+  Abre o painel com a conversa que estava em andamento. Sem isto, recarregar a
+  página apagava tudo — inclusive o distrito que a pessoa acabara de nomear, o
+  que obrigava a repetir a pergunta inteira.
+
+  As mensagens restauradas entram com `track: false`: elas já estão no
+  histórico que veio do armazenamento, e registrá-las de novo duplicaria cada
+  turno a cada recarregamento.
+*/
+function restaurarConversa(state) {
+  const guardada = lerConversa(state.win);
+  if (!guardada.length) {
+    resetConversation(state);
+    return;
+  }
+
+  state.messages.replaceChildren();
+  state.history = guardada;
+  setThinking(state, false);
+  appendMessage(state, "assistant", state.content.intro, { track: false });
+  for (const turno of guardada) {
+    appendMessage(state, turno.role, turno.content, { track: false });
+  }
 }
 
 async function ask(state, question) {
@@ -483,7 +515,7 @@ export function updateAraraGuide(section, title, host) {
   state.title = title;
   state.content = content;
   state.sectionBadge.textContent = content.title;
-  resetConversation(state);
+  restaurarConversa(state);
   return root;
 }
 

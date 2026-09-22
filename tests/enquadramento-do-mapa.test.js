@@ -116,17 +116,19 @@ describe("o container do mapa preenche o card", () => {
   });
 
   /*
-    O recorte era invisível: não dá erro, não aparece no console — só deixa o
-    card cinzento. Só um teste o impede de voltar.
+    O recorte dos azulejos — que deixava o card cinzento — é agora verificado
+    pelo comportamento, em `guardas-preservam-o-namespace-do-leaflet.test.js`:
+    instala-se o guarda num Leaflet de mentira e olha-se para as opções que ele
+    entrega à fábrica.
+
+    Este teste vivia aqui e fatiava o texto de `map-guard.js` entre dois
+    literais. Quando o guarda passou a usar `envolverFabricaDoLeaflet`, o
+    primeiro literal deixou de existir, o `indexOf` devolveu -1 e a fatia veio
+    vazia. Um teste que lê o ficheiro em vez de o correr quebra quando o código
+    muda de forma sem mudar de comportamento — e, pior, dá verde quando o
+    comportamento muda sem o texto mudar. Foi assim que `L.tileLayer.wms`
+    passou despercebido.
   */
-  it("a camada de azulejos não é recortada", () => {
-    const fn = guard.slice(
-      guard.indexOf("L.tileLayer = function guardedTileLayer"),
-      guard.indexOf("L.__agsusTileLayerGuardInstalled = true"),
-    );
-    expect(fn).toContain("noWrap: true");
-    expect(fn).not.toContain("bounds:");
-  });
 });
 
 /*
@@ -211,8 +213,14 @@ describe("os filtros por tipo do painel", () => {
       codigo.indexOf("function enquadrarDetalhe"),
     );
     expect(fn).toContain("const visiveisAgora = visiveis(classificados)");
-    expect(fn).toContain("agruparCoincidentes(polosVisiveis)");
-    expect(fn).toContain("agruparPorCelula(demaisVisiveis");
+    /*
+      O agrupamento deixou de ser por coordenada idêntica e passou a ser por
+      proximidade na tela: dois registos a dez metros são o mesmo pixel à
+      escala do distrito, e ficavam um escondido atrás do outro.
+    */
+    expect(fn).toContain("agruparPorProximidadeNaTela(visiveisAgora");
+    expect(fn).toContain("posicoesSpiderfy(grupo.registros.length)");
+    expect(fn).not.toContain("mapa-cluster");
     expect(fn).toContain("visiveis(externos).forEach");
     expect(fn).toContain("renderDetailUnitList(visiveis(classificados))");
   });
@@ -226,6 +234,30 @@ describe("os filtros por tipo do painel", () => {
     expect(codigo).toContain(
       "lista.filter((r) => !_detailTiposOcultos.has(r.type.key))",
     );
+  });
+
+  it("não pinta UFs inteiras como se fossem a abrangência do DSEI", () => {
+    const fn = codigo.slice(
+      codigo.indexOf("function drawDetailBrazilBase"),
+      codigo.indexOf("function detailUnitType"),
+    );
+    expect(fn).not.toContain("const selected = ufs.includes");
+    expect(fn).not.toContain('fillColor: selected ? "#71cbd0"');
+    /*
+      Só o nome da chamada, não a lista de argumentos: ela ganhou as unidades
+      do distrito quando a Funai deixou de publicar a abrangência, e um teste
+      preso à assinatura quebra a cada mudança que não é a que ele vigia.
+    */
+    expect(codigo).toContain("__agsusSetDseiCoverage?.(d.n");
+  });
+
+  it("enquadra o território pela área oficial quando ela está disponível", () => {
+    const fn = codigo.slice(
+      codigo.indexOf("function enquadrarDetalhe"),
+      codigo.indexOf("function atualizarChipDeVinculos"),
+    );
+    expect(fn).toContain("__agsusDseiCoverageBounds");
+    expect(fn).toContain("abrangenciaOficial?.isValid?.()");
   });
 
   it("trocar de território limpa os filtros", () => {
@@ -322,7 +354,7 @@ describe("o mapa nacional usa a mesma regra do detalhado", () => {
 
   it("o texto não afirma mais 'em outro estado'", () => {
     expect(codigo).not.toContain("em outro estado");
-    expect(codigo).toContain("fora das UFs de abrang");
+    expect(codigo).toContain("fora das UFs administrativas do DSEI");
   });
 });
 
@@ -351,14 +383,19 @@ describe("a legenda descreve os marcadores que existem", () => {
     expect(fn).toContain("TIPOS_DA_LEGENDA");
   });
 
-  it("cobre os quatro tipos, cada um com forma própria", () => {
+  /*
+    A sede entrou depois dos outros quatro: era desenhada como um círculo azul
+    escrito à mão, fora da tabela de formas, e por isso não aparecia na legenda
+    nem se distinguia de um polo base.
+  */
+  it("cobre os cinco tipos, cada um com forma própria", () => {
     const tipos = modulo
       .slice(
         modulo.indexOf("export const TIPOS_DA_LEGENDA"),
         modulo.indexOf("export const ESTILO_DA_LINHA"),
       )
       .match(/"(\w+)"/g);
-    expect(tipos).toEqual(['"polo"', '"casai"', '"ubsi"', '"unit"']);
+    expect(tipos).toEqual(['"sede"', '"polo"', '"casai"', '"ubsi"', '"unit"']);
   });
 
   /*
@@ -370,6 +407,8 @@ describe("a legenda descreve os marcadores que existem", () => {
     quebrava a cada troca de cor sem que nada estivesse errado — foi o que
     aconteceu ao substituir o verde do UBSI.
   */
+  const CINZA_DA_SEDE = "#1f2937";
+
   it("as cores batem com as dos marcadores", () => {
     const tipoDoMarcador = app.slice(
       app.indexOf("function detailUnitType"),
@@ -378,8 +417,15 @@ describe("a legenda descreve os marcadores que existem", () => {
     const cores = [...modulo.matchAll(/cor: "(#[0-9a-f]{6})"/g)].map(
       (m) => m[1],
     );
-    expect(cores).toHaveLength(4);
-    for (const cor of cores) {
+    expect(cores).toHaveLength(5);
+    /*
+      A sede é a exceção, e por bom motivo: `TIPO_SEDE` lê a cor de
+      `formaDoTipo("sede").cor` em vez de a repetir. Onde a cor tem uma fonte
+      só, não há o que manter em sincronia — que é justamente o que este caso
+      existe para garantir nos outros quatro.
+    */
+    expect(tipoDoMarcador).toContain('formaDoTipo("sede").cor');
+    for (const cor of cores.filter((c) => c !== CINZA_DA_SEDE)) {
       expect(tipoDoMarcador, `${cor} sumiu dos marcadores`).toContain(cor);
     }
   });
@@ -388,6 +434,16 @@ describe("a legenda descreve os marcadores que existem", () => {
     const fn = modulo.slice(modulo.indexOf("export function htmlDaLegenda"));
     expect(fn).toContain("vínculo fora das UFs do DSEI");
     expect(css).toContain(".health-map-legenda-linha");
+  });
+
+  /*
+    A mancha das Terras Indígenas ganhou destaque no mapa; era a única coisa
+    desenhada que a legenda não explicava.
+  */
+  it("a mancha das Terras Indígenas é explicada", () => {
+    const fn = modulo.slice(modulo.indexOf("export function htmlDaLegenda"));
+    expect(fn).toContain("Terra Indígena (Funai)");
+    expect(css).toContain(".health-map-legenda-terra");
   });
 
   it("é aplicada no arranque", () => {
@@ -440,6 +496,8 @@ describe("as cores dos marcadores se separam do mapa", () => {
   };
 
   const VEGETACAO = "#add19e";
+  // A sede não tem matiz para comparar. Ver os dois casos no fim deste bloco.
+  const CINZA_DA_SEDE = "#1f2937";
   const cores = [...modulo.matchAll(/cor: "(#[0-9a-f]{6})"/g)].map((m) => m[1]);
 
   it("o verde que se dissolvia na vegetação saiu", () => {
@@ -462,15 +520,38 @@ describe("as cores dos marcadores se separam do mapa", () => {
     }
   });
 
-  it("os quatro se distinguem entre si", () => {
-    expect(cores).toHaveLength(4);
-    for (let i = 0; i < cores.length; i += 1) {
-      for (let j = i + 1; j < cores.length; j += 1) {
+  /*
+    O grafite da sede fica de fora desta conta, e não por conveniência: ele
+    quase não tem croma, e distância de matiz entre um cinzento e uma cor não
+    mede nada. O que o distingue é outra coisa — ser o único marcador sem cor —,
+    e isso é medido no caso seguinte.
+  */
+  it("as quatro cores se distinguem entre si", () => {
+    const coloridas = cores.filter((c) => c !== CINZA_DA_SEDE);
+    expect(coloridas).toHaveLength(4);
+    for (let i = 0; i < coloridas.length; i += 1) {
+      for (let j = i + 1; j < coloridas.length; j += 1) {
         expect(
-          distanciaDeMatiz(cores[i], cores[j]),
-          `${cores[i]} e ${cores[j]} têm matizes próximos`,
+          distanciaDeMatiz(coloridas[i], coloridas[j]),
+          `${coloridas[i]} e ${coloridas[j]} têm matizes próximos`,
         ).toBeGreaterThan(40);
       }
+    }
+  });
+
+  /*
+    Os quatro matizes existentes estão em 38°, 355°, 263° e 188°, com o par mais
+    próximo a 43°. Encaixar um quinto sem colidir obrigaria a ir ao verde, que é
+    onde a vegetação do mapa já está. A sede resolve isso não tendo cor.
+  */
+  it("a sede é o único marcador sem cor, e é assim que se distingue", () => {
+    const croma = (hex) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      return (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
+    };
+    expect(croma(CINZA_DA_SEDE)).toBeLessThan(0.1);
+    for (const cor of cores.filter((c) => c !== CINZA_DA_SEDE)) {
+      expect(croma(cor), `${cor} devia ser uma cor`).toBeGreaterThan(0.4);
     }
   });
 
@@ -479,7 +560,7 @@ describe("as cores dos marcadores se separam do mapa", () => {
       app.indexOf("function detailUnitType"),
       app.indexOf("function detailRecordsForDsei"),
     );
-    for (const cor of cores) {
+    for (const cor of cores.filter((c) => c !== CINZA_DA_SEDE)) {
       expect(tipoDoMarcador, `${cor} não está nos marcadores`).toContain(cor);
     }
   });
@@ -501,25 +582,31 @@ describe("as cores dos marcadores se separam do mapa", () => {
 describe("o mapa não inventa coordenadas", () => {
   const codigo = semComentarios(app);
 
-  it("o selo da sede partilhada fica na própria sede", () => {
-    const bloco = codigo.slice(
-      codigo.indexOf("const selo = L.marker"),
-      codigo.indexOf("_layerDSEI.addLayer(selo)"),
-    );
-    expect(bloco).toContain("L.marker([visiveis[0].lat, visiveis[0].lon]");
-    expect(bloco).not.toContain("layerPointToLatLng");
-    /* Centrado: metade dos 22px do ícone, nos dois eixos. */
-    expect(bloco).toContain("iconAnchor: [11, 11]");
+  it("não cria selo numérico para DSEIs que compartilham sede", () => {
+    expect(codigo).not.toContain("mapa-cluster--sede");
+    expect(codigo).not.toContain("DSEIs com a mesma sede");
   });
 
-  it("o único deslocamento que sobra é o do leque, e ele desenha a linha", () => {
+  it("todo deslocamento visual preserva uma linha até a coordenada real", () => {
     const usos = codigo.match(/layerPointToLatLng/g) || [];
-    expect(usos).toHaveLength(1);
-    const leque = codigo.slice(
-      codigo.indexOf("function criarLeque"),
-      codigo.indexOf("function criarLeque") + 1400,
+    expect(usos).toHaveLength(2);
+
+    const detalhe = codigo.slice(
+      codigo.indexOf("agruparPorProximidadeNaTela(visiveisAgora"),
+      codigo.indexOf("_descarteDoDetalhe.descartarTudo()"),
     );
-    expect(leque).toContain("layerPointToLatLng");
-    expect(leque).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
+    expect(detalhe).toContain("layerPointToLatLng");
+    expect(detalhe).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
+
+    const polos = codigo.slice(
+      codigo.indexOf(
+        "agruparCoincidentes(",
+        codigo.indexOf("function drawPolos"),
+      ),
+      codigo.indexOf("syncMapLevelUI();", codigo.indexOf("function drawPolos")),
+    );
+    expect(polos).toContain("layerPointToLatLng");
+    expect(polos).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
+    expect(codigo).not.toContain("mapa-cluster");
   });
 });

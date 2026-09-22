@@ -31,10 +31,15 @@
      isola o próprio contexto de empilhamento, então todo overlay precisa
      ficar acima dele para não ser encoberto. A ordem entre eles: o loader
      cobre os modais porque bloqueia a tela inteira, e o toast cobre tudo
-     porque é o único que avisa do resultado da ação. */
-  --z-overlay: 12000;
-  --z-loader: 13000;
-  --z-toast: 14000;
+     porque é o único que avisa do resultado da ação.
+
+     A faixa é a dos 20 mil porque foi a que o toast passou a usar na `main`.
+     Ficar aqui em cima também põe os modais acima dos dois painelões que
+     vivem no meio do caminho: o mapa imersivo (12050) e o diálogo de saída
+     da Saúde Indígena (15000). */
+  --z-overlay: 20000;
+  --z-loader: 20025;
+  --z-toast: 20050;
 }
 
 *,
@@ -547,14 +552,18 @@ textarea:focus-visible,
 
 .toast-box {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  top: max(78px, calc(env(safe-area-inset-top, 0px) + 18px));
+  right: max(18px, env(safe-area-inset-right, 0px));
   z-index: var(--z-toast);
   display: grid;
   gap: 10px;
   width: min(390px, calc(100vw - 30px));
+  max-height: calc(100dvh - 96px);
+  overflow: visible;
+  pointer-events: none;
 }
 .toast {
+  pointer-events: auto;
   border-radius: 14px;
   padding: 14px 16px;
   background: #fff;
@@ -587,6 +596,14 @@ textarea:focus-visible,
   color: inherit;
   font-weight: 900;
   cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .toast-box {
+    top: max(68px, calc(env(safe-area-inset-top, 0px) + 12px));
+    right: 10px;
+    width: calc(100vw - 20px);
+  }
 }
 
 .loader {
@@ -729,7 +746,7 @@ body.app-fullscreen-fallback .app {
   background: var(--bg);
 }
 body.app-fullscreen-fallback .toast-box {
-  z-index: 10000;
+  z-index: var(--z-toast);
 }
 body.app-fullscreen-fallback .global-side-toggle {
   top: 16px;
@@ -801,15 +818,19 @@ body.sidebar-locked .side-logo {
   width: 44px;
   height: 44px;
 }
+/*
+  `.nav-text` saiu desta lista: quem o recolhe agora é `platform-shell.css`, com
+  `opacity`/`transform`, para que o rótulo possa ser animado. `display: none` não
+  interpola e venceria a transição, deixando o texto piscar para fora no
+  primeiro frame.
+*/
 body.sidebar-collapsed .side-brand h2,
 body.sidebar-collapsed .side-brand small,
-body.sidebar-collapsed .nav-text,
 body.sidebar-collapsed .side-user,
 body.sidebar-collapsed .side-version,
 body.sidebar-collapsed .side-logout span,
 body.sidebar-locked .side-brand h2,
 body.sidebar-locked .side-brand small,
-body.sidebar-locked .nav-text,
 body.sidebar-locked .side-user,
 body.sidebar-locked .side-version,
 body.sidebar-locked .side-logout span {

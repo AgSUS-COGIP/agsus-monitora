@@ -34,7 +34,25 @@ import { DIVERGENCIA } from "../lib/reconciliacao-unidades.js";
   Os quatro matizes ficam separados entre si — 38°, 355°, 263° e 188°, com o par
   mais próximo a 43°.
 */
+/*
+  A SEDE DO DSEI NÃO TINHA FORMA NENHUMA
+
+  Ela era desenhada, mas como um círculo azul solto, fora desta tabela: sem
+  entrar na legenda, sem forma própria, indistinguível de um polo base para
+  quem só vê dois círculos. É o ponto administrativo do distrito inteiro, e era
+  o único que o mapa não sabia nomear.
+
+  Estrela, porque é o símbolo de sede em cartografia desde sempre — capital num
+  mapa político é estrela, e ninguém precisa de aprender isso.
+
+  Grafite, e não uma quinta matiz. Os quatro matizes existentes estão em 38°,
+  355°, 263° e 188°, com o par mais próximo a 43° — encaixar mais um sem
+  colidir obrigaria a ir ao verde, que é onde a vegetação do mapa já está. A
+  sede fica como o único marcador sem cor, que a distingue de todos os outros
+  sem disputar espaço com nenhum.
+*/
 const FORMAS = Object.freeze({
+  sede: { forma: "estrela", rotulo: "Sede do DSEI", cor: "#1f2937" },
   polo: { forma: "circulo", rotulo: "Polo base", cor: "#e49a1b" },
   casai: { forma: "casa", rotulo: "CASAI", cor: "#d92d3a" },
   ubsi: { forma: "cruz", rotulo: "UBSI", cor: "#6d28d9" },
@@ -54,6 +72,7 @@ const FORMAS = Object.freeze({
   A ordem segue a do mapa: os pontos que mais aparecem primeiro.
 */
 export const TIPOS_DA_LEGENDA = Object.freeze([
+  "sede",
   "polo",
   "casai",
   "ubsi",
@@ -105,6 +124,8 @@ export function registrosLocais(registros) {
 export function svgDaForma(forma, cor) {
   const traco = '#ffffff" stroke-width="1.6';
   switch (forma) {
+    case "estrela":
+      return `<path d="M9 1.9 11.2 6.7 16.4 7.3 12.6 10.9 13.6 16.1 9 13.6 4.4 16.1 5.4 10.9 1.6 7.3 6.8 6.7Z" fill="${cor}" stroke="${traco}" stroke-linejoin="round"/>`;
     case "circulo":
       return `<circle cx="9" cy="9" r="6.4" fill="${cor}" stroke="${traco}"/>`;
     case "casa":
@@ -135,9 +156,18 @@ const escapar = (valor) =>
     .replace(/"/g, "&quot;");
 
 /*
-  O tooltip nomeia o tipo, o DSEI e a UF real, e só afirma "fora das UFs de
-  abrangência" quando a classificação provou isso. Para `indeterminado` a
-  localização aparece sem veredito.
+  O tooltip identifica; o popup explica.
+
+  Antes o tooltip também contava a reconciliação — origem do registro e
+  divergência entre fontes — e o popup repetia a mesma história com outras
+  palavras, acrescentando as coordenadas. Como abrir um popup desloca o mapa, o
+  marcador volta a passar sob o cursor, o tooltip reabre, e quem clicava ficava
+  com os dois textos lado a lado dizendo o mesmo.
+
+  Agora o tooltip nomeia o tipo, o DSEI e a UF real, e só afirma "fora das UFs
+  de abrangência" quando a classificação provou isso. Para `indeterminado` a
+  localização aparece sem veredito. A reconciliação está no popup, junto dos
+  números que a sustentam.
 */
 export function tooltipDoRegistro(registro, dsei) {
   const rotulo =
@@ -157,8 +187,6 @@ export function tooltipDoRegistro(registro, dsei) {
     linhas.push("<i>UF não informada no CNES — vínculo não classificado</i>");
   }
 
-  linhas.push(...linhasDaReconciliacao(registro));
-
   return linhas.join("<br>");
 }
 
@@ -173,8 +201,8 @@ export function linhasDaReconciliacao(registro) {
 
   const linhas = [
     registro?.coordenadas?.lotacoes
-      ? "<i>Registo unificado: mapa anterior + Lotações + CNES</i>"
-      : "<i>Registo unificado: mapa anterior + CNES</i>",
+      ? "<i>Registro unificado: mapa anterior + Lotações + CNES</i>"
+      : "<i>Registro unificado: mapa anterior + CNES</i>",
   ];
   const km = registro?.distancia_entre_fontes_km;
 
@@ -197,6 +225,53 @@ export function linhasDaReconciliacao(registro) {
   return linhas;
 }
 
+const ROTULOS_DE_FONTE = [
+  ["lmap", "mapa anterior"],
+  ["lotacoes", "Lotações"],
+  ["rede_cnes", "CNES"],
+];
+
+function listaEmPortugues(itens) {
+  if (itens.length <= 1) return itens.join("");
+  return `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}`;
+}
+
+/*
+  Uma linha por coordenada distinta, não por fonte.
+
+  Em POLO BASE JOAO CAMARA as Lotações e o CNES dão exatamente o mesmo ponto, e
+  o popup imprimia as duas linhas idênticas uma sob a outra. Lido de fora, isso
+  parece um defeito do registro. Agrupar por coordenada mostra o que de facto
+  interessa: quantos pontos diferentes existem, e quais fontes sustentam cada
+  um. Uma única coordenada distinta significa que as fontes concordam.
+
+  Cinco casas decimais são cerca de um metro — mais do que a precisão de
+  qualquer destes cadastros, e o suficiente para não juntar pontos distintos.
+*/
+export function linhasDasCoordenadas(coordenadas) {
+  const porPonto = new Map();
+
+  for (const [chave, rotulo] of ROTULOS_DE_FONTE) {
+    const lat = Number(coordenadas?.[chave]?.lat);
+    const lon = Number(coordenadas?.[chave]?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    const ponto = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    if (!porPonto.has(ponto)) porPonto.set(ponto, []);
+    porPonto.get(ponto).push(rotulo);
+  }
+
+  // Com uma fonte só não há o que comparar, e a coordenada já está no mapa.
+  const fontes = [...porPonto.values()].reduce(
+    (total, rotulos) => total + rotulos.length,
+    0,
+  );
+  if (fontes < 2) return [];
+
+  return [...porPonto.entries()].map(
+    ([ponto, rotulos]) => `${listaEmPortugues(rotulos)}: ${ponto}`,
+  );
+}
+
 export const TOOLTIP_DA_LINHA = "Vínculo territorial — não representa trajeto";
 
 /*
@@ -216,6 +291,16 @@ export function htmlDaLegenda() {
   tipos.push(
     `<span><i class="health-map-legenda-linha" aria-hidden="true"></i>` +
       `vínculo fora das UFs do DSEI</span>`,
+  );
+
+  /*
+    A mancha das Terras Indígenas ganhou destaque no mapa e passou a ser a
+    única coisa desenhada que a legenda não explicava. Quem não conhece a cor
+    lia a área como sombra do mapa base.
+  */
+  tipos.push(
+    `<span><i class="health-map-legenda-terra" aria-hidden="true"></i>` +
+      `Terra Indígena (Funai)</span>`,
   );
 
   return tipos.join("");
