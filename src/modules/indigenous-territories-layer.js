@@ -35,15 +35,49 @@ export const FUNAI_PROXY_GEOJSON = "/api/funai-geodata";
   não carrega.
 */
 export const CATALOGO_DE_TERRAS = "/data/terras-indigenas.json";
+
+/*
+  O CATÁLOGO LARGO, E POR QUE SÃO DOIS
+
+  A visão nacional desenhava o raster da Funai — uma imagem só, recolorida por
+  inteiro. Uma imagem não sabe distinguir fase: a legenda prometia terra
+  homologada, terra em processo e terra em estudo, e o mapa do Brasil mostrava
+  tudo da mesma cor.
+
+  O piso de zoom que mandava no raster existia porque, antes do catálogo, pedir
+  a geometria abaixo dele traria o país inteiro da Funai. Esse motivo morreu: o
+  catálogo JÁ é o país inteiro, e está em memória.
+
+  O que sobra é o custo de desenhar. No zoom 4 um pixel vale ~9,8 km, e os
+  113.864 vértices do catálogo fino desenham detalhe que o ecrã não resolve
+  enquanto o Leaflet paga por cada um. O largo, simplificado a 1113 metros —
+  pouco mais de um décimo de pixel nessa escala —, tem 17.598 vértices e 0,43 MB.
+
+  Carrega primeiro, e é o que a visão nacional usa.
+*/
+export const CATALOGO_DE_TERRAS_LARGO = "/data/terras-indigenas-largo.json";
+
+/*
+  Onde se troca um pelo outro. A 1113 metros de tolerância, o desvio passa a
+  valer um pixel por volta do zoom 7 — que é também onde se deixa de ver o país
+  e se passa a ver um distrito.
+*/
+export const ZOOM_DO_CATALOGO_FINO = 7;
+
+export function catalogoParaOZoom(zoom) {
+  return Number(zoom) >= ZOOM_DO_CATALOGO_FINO
+    ? CATALOGO_DE_TERRAS
+    : CATALOGO_DE_TERRAS_LARGO;
+}
 export const CATALOGO_DE_TERRAS_EM_ESTUDO =
   "/data/terras-indigenas-em-estudo.json";
 
 /*
-  Um pedido só para a aplicação inteira: o mapa nacional e o do território
-  partilham a mesma promessa. Falha guarda `null` e não volta a tentar em
-  cascata — quem chamar a seguir recebe o mesmo `null` e usa o recurso.
+  Um pedido só por catálogo, para a aplicação inteira: o mapa nacional e o do
+  território partilham as mesmas promessas. Falha guarda `null` e não volta a
+  tentar em cascata — quem chamar a seguir recebe o mesmo `null` e usa o recurso.
 */
-let catalogoEmCurso = null;
+const catalogosEmCurso = new Map();
 
 export function carregarCatalogo(url, buscar) {
   const fonte = typeof buscar === "function" ? buscar : globalThis.fetch;
@@ -69,17 +103,16 @@ export function carregarCatalogo(url, buscar) {
 }
 
 export function reiniciarCatalogo() {
-  catalogoEmCurso = null;
+  catalogosEmCurso.clear();
 }
 
-function obterCatalogo(buscar) {
-  if (!catalogoEmCurso) {
-    catalogoEmCurso = carregarCatalogo(CATALOGO_DE_TERRAS, buscar);
+function obterCatalogo(url, buscar) {
+  if (!catalogosEmCurso.has(url)) {
+    catalogosEmCurso.set(url, carregarCatalogo(url, buscar));
   }
-  return catalogoEmCurso;
+  return catalogosEmCurso.get(url);
 }
 
-const VECTOR_MIN_ZOOM = 7;
 const VECTOR_MAX_FEATURES = 250;
 const VECTOR_REFRESH_DELAY_MS = 220;
 
@@ -1101,24 +1134,19 @@ function enhanceMap(L, map) {
     const zoom = Number(map.getZoom?.());
 
     /*
-      COM UM DISTRITO ABERTO NÃO HÁ PISO DE ZOOM.
+      NÃO HÁ MAIS PISO DE ZOOM.
 
-      O piso de 7 existe para a visão nacional: abaixo dele o pedido à Funai
-      traria o país inteiro, e por isso o raster toma conta. Mas ao abrir um
-      DSEI o raster foi desligado — ele é uma imagem do Brasil todo e não sabe
-      o que é deste distrito.
+      Havia um, de 7, e abaixo dele o raster da Funai tomava conta. A razão era
+      que, sem catálogo, pedir a geometria nessa escala traria o país inteiro —
+      e essa razão morreu quando o catálogo chegou: ele JÁ é o país inteiro.
 
-      As duas regras juntas produziam o pior dos casos: Ceará e Maranhão são
-      largos e abrem abaixo do zoom 7, logo o vetorial não carregava e o raster
-      estava desligado. Não se desenhava terra nenhuma. Foi regressão
-      introduzida ao filtrar as terras por distrito.
-
-      Com distrito aberto o pedido é seguro: o enquadramento é o do distrito,
-      o pedido continua limitado a 250 polígonos, e o que volta ainda passa
-      pelo filtro das unidades e da UF.
+      O que ficava no lugar era pior do que lento: o raster é uma imagem só,
+      recolorida por inteiro, e não sabe distinguir fase. A legenda prometia
+      três coisas e o mapa nacional mostrava uma. Agora quem desenha é sempre o
+      vetorial — largo abaixo do zoom 7, fino a partir dele — e o raster passa a
+      ser só o recurso de quando o catálogo não carrega.
     */
-    const piso = unidadesDoDsei.length ? 0 : VECTOR_MIN_ZOOM;
-    if (!Number.isFinite(zoom) || zoom < piso) {
+    if (!Number.isFinite(zoom)) {
       clearVector();
       useRasterFallback();
       return;
@@ -1135,7 +1163,14 @@ function enhanceMap(L, map) {
       da mesma casa decimal não redesenham nada, e mudar de distrito redesenha
       sempre, mesmo sem mexer a câmara.
     */
+    const urlDoCatalogo = catalogoParaOZoom(zoom);
+
+    /*
+      O catálogo entra na chave: cruzar o zoom 7 troca de ficheiro, e sem isso o
+      mapa ficaria com o traçado largo depois de aproximar.
+    */
     const key = [
+      urlDoCatalogo,
       zoom.toFixed(1),
       caixa.oeste.toFixed(2),
       caixa.sul.toFixed(2),
@@ -1146,7 +1181,7 @@ function enhanceMap(L, map) {
     if (key === lastViewportKey) return;
     lastViewportKey = key;
 
-    const catalogo = await obterCatalogo();
+    const catalogo = await obterCatalogo(urlDoCatalogo);
     const doEnquadramento = catalogo
       ? terrasNoEnquadramento(catalogo.features, caixa)
       : await terrasDaFunai(bounds);

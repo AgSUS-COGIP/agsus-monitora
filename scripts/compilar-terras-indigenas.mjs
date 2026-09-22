@@ -52,6 +52,27 @@ const RAIZ = fileURLToPath(new URL("../", import.meta.url));
 const OWS = "https://geoserver.funai.gov.br/geoserver/Funai/ows";
 const TOLERANCIA_GRAUS = 0.001;
 const CASAS_DECIMAIS = 4; // 11 metros; abaixo da tolerância, não perde nada
+
+/*
+  DOIS CATÁLOGOS, PORQUE A VISÃO NACIONAL TEM OUTRA PERGUNTA
+
+  O catálogo fino existe para quando se olha um distrito. Na visão do Brasil
+  inteiro ele é excessivo: no zoom 4 um pixel vale ~9,8 km, e os 113.864
+  vértices desenham detalhe que o ecrã não resolve — enquanto o Leaflet paga por
+  cada um deles.
+
+  Até aqui a visão nacional escapava disso desenhando o raster da Funai, uma
+  imagem só. Mas uma imagem não sabe distinguir fase: a legenda prometia terra
+  homologada, terra em processo e terra em estudo, e o mapa nacional mostrava
+  tudo da mesma cor. Foi esse o defeito.
+
+  O catálogo largo resolve os dois lados. A 0,01° — 1113 metros, pouco mais de
+  um décimo de pixel no zoom 4 — ficam 17.598 vértices e 0,40 MB, 0,10 MB
+  comprimido. É quatro vezes menor do que o fino, carrega primeiro, e leva a
+  fase de cada terra consigo.
+*/
+const TOLERANCIA_LARGA_GRAUS = 0.01;
+const CASAS_DECIMAIS_LARGAS = 3; // 111 metros; abaixo da tolerância larga
 const TEMPO_LIMITE_MS = 180000;
 
 async function pedir(typeName, maxFeatures) {
@@ -116,8 +137,22 @@ function simplificarAnel(pontos, tolerancia) {
     }
   }
   const saida = pontos.filter((_, i) => manter[i]);
-  // Um anel precisa de quatro pontos para continuar a fechar um polígono.
-  if (saida.length < 4) return pontos.slice(0, 4);
+  /*
+    ANEL QUE COLAPSA FICA COMO ESTAVA, E NÃO CORTADO NOS QUATRO PRIMEIROS
+
+    Um anel precisa de quatro pontos para fechar um polígono. A primeira versão
+    devolvia  quando a simplificação deixava menos — e isso
+    não é uma versão simplificada do anel: são os quatro primeiros vértices do
+    contorno, uma lasca arbitrária dele.
+
+    Medido: a TI Aconã, em Alagoas, saía 3,8 km deslocada por causa disto, com
+    uma tolerância de 1113 metros. Um teste que compara a caixa das duas versões
+    apanhou-o.
+
+    Devolver o anel original é o certo: um anel que a simplificação reduz a três
+    pontos é minúsculo, e a geometria inteira dele não custa nada.
+  */
+  if (saida.length < 4) return pontos;
   const primeiro = saida[0];
   const ultimo = saida[saida.length - 1];
   if (primeiro[0] !== ultimo[0] || primeiro[1] !== ultimo[1])
@@ -126,15 +161,15 @@ function simplificarAnel(pontos, tolerancia) {
 }
 
 const arredondar = (v) => Number(v.toFixed(CASAS_DECIMAIS));
+const arredondarLargo = (v) => Number(v.toFixed(CASAS_DECIMAIS_LARGAS));
 
-function simplificarGeometria(geometria) {
+function simplificarGeometria(geometria, larga = false) {
+  const tolerancia = larga ? TOLERANCIA_LARGA_GRAUS : TOLERANCIA_GRAUS;
+  const casas = larga ? arredondarLargo : arredondar;
   const trata = (poligono) =>
     poligono
       .map((anel) =>
-        simplificarAnel(anel, TOLERANCIA_GRAUS).map(([x, y]) => [
-          arredondar(x),
-          arredondar(y),
-        ]),
+        simplificarAnel(anel, tolerancia).map(([x, y]) => [casas(x), casas(y)]),
       )
       .filter((anel) => anel.length >= 4);
 
@@ -189,16 +224,29 @@ console.log(
 );
 
 const simplificadas = [];
+const largas = [];
 for (const f of poligonais) {
+  const propriedades = propriedadesUteis(f.properties);
   const geometry = simplificarGeometria(f.geometry);
-  if (!geometry) continue;
-  simplificadas.push({
-    type: "Feature",
-    geometry,
-    properties: propriedadesUteis(f.properties),
-  });
+  if (geometry)
+    simplificadas.push({ type: "Feature", geometry, properties: propriedades });
+
+  /*
+    Uma terra pequena pode desaparecer por inteiro na tolerância larga — e
+    desaparecer é pior do que ficar tosca, porque a lista do distrito continua
+    a nomeá-la. Quando isso acontece, fica a versão fina: são poucas, e o custo
+    é desprezível ao lado de uma terra sumir do mapa nacional.
+  */
+  const largaGeometry = simplificarGeometria(f.geometry, true) || geometry;
+  if (largaGeometry)
+    largas.push({
+      type: "Feature",
+      geometry: largaGeometry,
+      properties: propriedades,
+    });
 }
 const verticesDepois = contarVertices(simplificadas);
+const verticesLargos = contarVertices(largas);
 
 console.log("Pedindo as terras em estudo, que só existem como ponto...");
 const pontos = await pedir("Funai:tis_pontos", 500);
@@ -227,17 +275,32 @@ const colecaoEstudo = {
     })),
 };
 
+const colecaoLarga = {
+  type: "FeatureCollection",
+  gerado_em: new Date().toISOString().slice(0, 10),
+  fonte: "Funai — Funai:tis_poligonais",
+  tolerancia_graus: TOLERANCIA_LARGA_GRAUS,
+  features: largas,
+};
+
+const destinoLargo = join(RAIZ, "public/data/terras-indigenas-largo.json");
 const destinoPoligonos = join(RAIZ, "public/data/terras-indigenas.json");
 const destinoEstudo = join(RAIZ, "public/data/terras-indigenas-em-estudo.json");
 const textoPoligonos = JSON.stringify(colecaoPoligonos);
 const textoEstudo = JSON.stringify(colecaoEstudo);
+const textoLargo = JSON.stringify(colecaoLarga);
+writeFileSync(destinoLargo, textoLargo);
 writeFileSync(destinoPoligonos, textoPoligonos);
 writeFileSync(destinoEstudo, textoEstudo);
 
 const queda = ((1 - verticesDepois / verticesAntes) * 100).toFixed(1);
 console.log("");
+const quedaLarga = ((1 - verticesLargos / verticesAntes) * 100).toFixed(1);
 console.log(
   `terras-indigenas.json           ${String(simplificadas.length).padStart(4)} terras  ${mb(textoPoligonos).padStart(6)} MB  ${verticesDepois.toLocaleString("pt-BR")} vértices (-${queda}%)`,
+);
+console.log(
+  `terras-indigenas-largo.json     ${String(largas.length).padStart(4)} terras  ${mb(textoLargo).padStart(6)} MB  ${verticesLargos.toLocaleString("pt-BR")} vértices (-${quedaLarga}%)`,
 );
 console.log(
   `terras-indigenas-em-estudo.json ${String(colecaoEstudo.features.length).padStart(4)} pontos  ${mb(textoEstudo).padStart(6)} MB`,
