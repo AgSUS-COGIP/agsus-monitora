@@ -271,7 +271,7 @@ async function principal() {
   */
   writeFileSync(
     "src/lib/localizacoes-validadas-gerado.js",
-    ficheiroDosVereditos(registros),
+    await ficheiroDosVereditos(registros),
   );
 
   console.log(`${registros.length} lotações com coordenada`);

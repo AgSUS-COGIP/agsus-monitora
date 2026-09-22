@@ -24,7 +24,7 @@ if (!Array.isArray(registros) || !registros.length) {
 }
 
 const destino = "src/lib/localizacoes-validadas-gerado.js";
-const texto = ficheiroDosVereditos(registros);
+const texto = await ficheiroDosVereditos(registros);
 writeFileSync(destino, texto);
 
 const porEstado = new Map();

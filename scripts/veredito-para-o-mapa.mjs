@@ -58,7 +58,18 @@ export function vereditoParaOMapa(registro) {
   return saida;
 }
 
-export function ficheiroDosVereditos(registros) {
+/*
+  O FICHEIRO SAI JÁ FORMATADO
+
+  `JSON.stringify(..., null, 2)` não é o que o Prettier escreveria, e o
+  verificador de formatação do CI reprova o ficheiro gerado — um trabalho de
+  dados a falhar por um espaço em branco.
+
+  Formatar aqui, com o próprio Prettier do repositório, é melhor do que pedir a
+  quem correr o script que se lembre de fazê-lo a seguir: um passo que depende
+  de memória é um passo que se esquece.
+*/
+export async function ficheiroDosVereditos(registros) {
   const paraOMapa = registros.map(vereditoParaOMapa);
   const porEstado = new Map();
   for (const r of paraOMapa)
@@ -67,7 +78,7 @@ export function ficheiroDosVereditos(registros) {
     .sort((a, b) => b[1] - a[1])
     .map(([estado, n]) => `  ${String(n).padStart(4)}  ${estado}`);
 
-  return [
+  const texto = [
     "/*",
     "  GERADO por scripts/validar-localizacoes.mjs. Não editar à mão.",
     "",
@@ -84,4 +95,10 @@ export function ficheiroDosVereditos(registros) {
     `export const LOCALIZACOES_VALIDADAS = ${JSON.stringify(paraOMapa, null, 2)};`,
     "",
   ].join("\n");
+
+  const { format } = await import("prettier");
+  return format(texto, {
+    parser: "babel",
+    filepath: "localizacoes-validadas-gerado.js",
+  });
 }
