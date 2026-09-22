@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npm run build:laravel && php laravel/artisan serve --host=127.0.0.1 --port=8000",
-    "build": "npm run aya:conhecimento && npm run check:auth-architecture && npm run check:rpc-contract && vite build && npm run check:dist-security && npm run check:bundle-size",
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run aya:conhecimento && npm run typecheck && npm run check:auth-architecture && npm run check:rpc-contract && vite build && npm run check:dist-security && npm run check:bundle-size",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -26,13 +26,13 @@
     "db:capturar-baseline": "node scripts/capturar-baseline-rpcs.mjs",
     "db:validar-branding": "node scripts/validar-migration-branding.mjs",
     "medir:cronograma": "node scripts/medir-cronograma.mjs",
-    "build:laravel": "npm run build && node scripts/package-laravel.mjs",
-    "test:php": "composer --working-dir=laravel test",
-    "test:smoke:laravel": "node scripts/test-laravel-smoke.mjs",
     "dev:frontend": "vite --host 0.0.0.0",
     "aya:bridge": "node scripts/aya-local-bridge.mjs",
     "aya:servico": "node scripts/aya-servico.mjs",
-    "aya:conhecimento": "node scripts/compilar-conhecimento-aya.mjs"
+    "aya:conhecimento": "node scripts/compilar-conhecimento-aya.mjs",
+    "start": "node server/servidor.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:smoke:servidor": "node scripts/test-servidor-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
@@ -49,12 +49,14 @@
   "devDependencies": {
     "@eslint/js": "^9",
     "@playwright/test": "^1",
+    "@types/node": "^24.13.6",
     "@vitest/coverage-v8": "^4",
     "eslint": "^9",
     "globals": "^16",
     "jsdom": "^28",
     "pg": "^8.23.0",
     "prettier": "^3",
+    "typescript": "^5.9.3",
     "vite": "^7.2.7",
     "vitest": "^4"
   }

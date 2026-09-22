@@ -64,31 +64,15 @@ jobs:
       - name: Smoke tests
         run: npm run test:smoke
 
-      - name: Configurar PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.5"
-          extensions: mbstring, xml, curl, zip
-          coverage: none
+      - name: Smoke no servidor TypeScript
+        run: npm run test:smoke:servidor
 
-      - name: Instalar Laravel
-        run: composer --working-dir=laravel install --no-interaction --prefer-dist
+      - name: Verificar imagem de implantação
+        run: docker build -t monitora:ci .
 
-      - name: Preparar páginas e assets do Laravel
-        run: node scripts/package-laravel.mjs
-
-      - name: Testes das rotas PHP
-        run: npm run test:php
-
-      - name: Smoke no servidor Laravel
-        run: npm run test:smoke:laravel
-
-      - name: Verificar imagem de implantação PHP
-        run: docker build -t monitora-laravel:ci .
-
-      - name: Executar aplicação no container PHP
+      - name: Executar aplicação no container
         run: |
-          docker run -d --name monitora-ci -p 8000:80 monitora-laravel:ci
+          docker run -d --name monitora-ci -p 8000:8000 monitora:ci
           for attempt in $(seq 1 20); do
             if curl --fail --silent http://127.0.0.1:8000/up > /dev/null; then exit 0; fi
             sleep 1
@@ -96,10 +80,10 @@ jobs:
           docker logs monitora-ci
           exit 1
 
-      - name: Smoke contra PHP e Apache do container
+      - name: Smoke contra o container
         env:
           PLAYWRIGHT_REUSE_SERVER: "1"
-        run: npm run test:smoke:laravel
+        run: npm run test:smoke:servidor
 
       - name: Encerrar container de teste
         if: always()

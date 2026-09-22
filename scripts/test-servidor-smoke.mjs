@@ -12,7 +12,7 @@ const result = spawnSync(
   ],
   {
     stdio: "inherit",
-    env: { ...process.env, PLAYWRIGHT_TARGET: "laravel" },
+    env: { ...process.env, PLAYWRIGHT_TARGET: "servidor" },
   },
 );
 if (result.error) console.error(result.error.message);

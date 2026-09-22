@@ -241,7 +241,7 @@ const FAILURE_MESSAGES = {
   network_error:
     "Não consegui falar com o servidor do MONITORA para enviar a pergunta à IA.",
   http_404:
-    "O endereço /api/aya não existe neste ambiente. Ele é publicado apenas na implantação Vercel, não no servidor Laravel.",
+    "O endereço /api/aya não existe neste ambiente. Ele é publicado apenas na implantação Vercel, não no servidor Node do MONITORA.",
 };
 
 const GENERIC_FAILURE = "A IA da Aya está temporariamente indisponível.";
