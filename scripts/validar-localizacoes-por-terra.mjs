@@ -91,7 +91,8 @@ function terraQueContem(terras, lat, lon) {
     const c = t.caixa;
     if (!c) continue;
     // A caixa descarta quase tudo antes do teste caro de ponto-em-polígono.
-    if (lat < c.sul || lat > c.norte || lon < c.oeste || lon > c.leste) continue;
+    if (lat < c.sul || lat > c.norte || lon < c.oeste || lon > c.leste)
+      continue;
     if (pontoEmPoligonos([lon, lat], t.poligonos)) return t;
   }
   return null;
@@ -117,7 +118,13 @@ function pontosDoMapa(caminhoLmap, caminhoRede) {
   const pontos = [];
   for (const d of lmap.dsei || []) {
     for (const p of d.polos || []) {
-      pontos.push({ dsei: d.k, nome: p.n, lat: Number(p.lat), lon: Number(p.lon), casai: false });
+      pontos.push({
+        dsei: d.k,
+        nome: p.n,
+        lat: Number(p.lat),
+        lon: Number(p.lon),
+        casai: false,
+      });
     }
     const g = rede.rede?.[d.k] || { u: [], c: [] };
     for (const lista of ["u", "c"]) {
@@ -164,7 +171,8 @@ async function principal() {
     if (!porChave.has(chave)) porChave.set(chave, { terra, conflito: false });
     else {
       const atual = porChave.get(chave);
-      if ((atual.terra?.nome ?? null) !== (terra?.nome ?? null)) atual.conflito = true;
+      if ((atual.terra?.nome ?? null) !== (terra?.nome ?? null))
+        atual.conflito = true;
     }
   }
 
@@ -228,8 +236,12 @@ async function principal() {
   console.log(`pontos do mapa com coordenada: ${pontos.length}`);
   console.log("");
   console.log(`  promovidos a "dentro de Terra Indígena": ${subiram}`);
-  console.log(`  dentro de terra, mas já confirmados por outra via: ${jaConfirmados}`);
-  console.log(`  descartados por respostas divergentes na mesma chave: ${ambiguos}`);
+  console.log(
+    `  dentro de terra, mas já confirmados por outra via: ${jaConfirmados}`,
+  );
+  console.log(
+    `  descartados por respostas divergentes na mesma chave: ${ambiguos}`,
+  );
 }
 
 await principal();
