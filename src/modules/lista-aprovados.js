@@ -15,8 +15,10 @@ import {
   summarizeApprovedCandidates,
   uniqueCandidateCargos,
   candidateCargosForEdital,
+  candidateModalidadesForEdital,
   paginateApprovedCandidates,
 } from "../lib/lista-aprovados-rules.js";
+import { ativarMultiSelectBusca } from "./multi-select-busca.js";
 
 const BUCKET = "listas-aprovados";
 const MODEL_URL = "/modelos/modelo-importacao-lista-aprovados.xlsx";
@@ -112,12 +114,61 @@ export function createListaAprovadosController(options = {}) {
     document.getElementById(id)?.classList.toggle("show", show);
   }
 
+  /*
+    Sempre volta à primeira página. Filtrar estando na página 7 e continuar na
+    7 mostra uma tabela vazia, ou um pedaço do meio do resultado — nos dois
+    casos parece que a busca não encontrou nada.
+  */
+  const renderFilteredView = () => {
+    state.page = 1;
+    renderKpis();
+    renderRows();
+  };
+
+  /*
+    Os três filtros são campos de escolha múltipla com busca. Os controladores
+    ficam guardados porque `fillFilters` volta a correr a cada carregamento e
+    recriar o componente ali apagaria a seleção de quem está a consultar.
+  */
+  const filtros = {
+    edital: null,
+    cargo: null,
+    modalidade: null,
+    status: null,
+  };
+  let filtrosProntos = false;
+
+  function ensureFilterControls() {
+    if (filtrosProntos) return filtros;
+    // Sem os campos na tela não há o que ativar; tenta outra vez na próxima vez.
+    if (!document.getElementById("approvedFilterEdital")) return filtros;
+    filtrosProntos = true;
+    filtros.edital = ativarMultiSelectBusca("approvedFilterEdital", {
+      placeholder: "Todos os editais",
+      // Trocar de edital muda quais cargos existem, daí repovoar antes de desenhar.
+      onChange: () => {
+        fillFilters();
+        renderFilteredView();
+      },
+    });
+    filtros.cargo = ativarMultiSelectBusca("approvedFilterCargo", {
+      placeholder: "Todos os cargos",
+      onChange: renderFilteredView,
+    });
+    filtros.modalidade = ativarMultiSelectBusca("approvedFilterModalidade", {
+      placeholder: "Todas as modalidades",
+      onChange: renderFilteredView,
+    });
+    filtros.status = ativarMultiSelectBusca("approvedFilterStatus", {
+      placeholder: "Todos os status",
+      onChange: renderFilteredView,
+    });
+    return filtros;
+  }
+
   function fillFilters() {
-    const edital = document.getElementById("approvedFilterEdital");
-    const cargo = document.getElementById("approvedFilterCargo");
-    if (!edital || !cargo) return;
-    const editalValue = edital.value;
-    const cargoValue = cargo.value;
+    const controles = ensureFilterControls();
+    if (!controles.edital || !controles.cargo) return;
     const editais = [
       ...new Map(
         state.lists.map((row) => [String(row.edital_id), row]),
@@ -127,30 +178,30 @@ export function createListaAprovadosController(options = {}) {
       if (editalOrder !== 0) return editalOrder;
       return text(a.unidade).localeCompare(text(b.unidade), "pt-BR");
     });
-    edital.innerHTML = `<option value="">Todos os editais</option>${editais
-      .map(
-        (row) =>
-          `<option value="${attr(row.edital_id)}">${esc(row.edital || "Edital")} · ${esc(row.unidade || "")}</option>`,
-      )
-      .join("")}`;
-    if ([...edital.options].some((option) => option.value === editalValue))
-      edital.value = editalValue;
-    cargo.innerHTML = `<option value="">Todos os cargos</option>${candidateCargosForEdital(
-      state.candidates,
-      editalValue,
-    )
-      .map((value) => `<option value="${attr(value)}">${esc(value)}</option>`)
-      .join("")}`;
-    if ([...cargo.options].some((option) => option.value === cargoValue))
-      cargo.value = cargoValue;
+    controles.edital.definirOpcoes(
+      editais.map((row) => ({
+        value: String(row.edital_id),
+        label: [text(row.edital) || "Edital", text(row.unidade)]
+          .filter(Boolean)
+          .join(" · "),
+      })),
+    );
+    const editaisEscolhidos = controles.edital.obterSelecionados();
+    controles.cargo.definirOpcoes(
+      candidateCargosForEdital(state.candidates, editaisEscolhidos),
+    );
+    controles.modalidade?.definirOpcoes(
+      candidateModalidadesForEdital(state.candidates, editaisEscolhidos),
+    );
   }
 
   function currentFilters() {
+    const controles = ensureFilterControls();
     return {
-      query: document.getElementById("approvedSearch")?.value || "",
-      editalId: document.getElementById("approvedFilterEdital")?.value || "",
-      cargo: document.getElementById("approvedFilterCargo")?.value || "",
-      status: document.getElementById("approvedFilterStatus")?.value || "",
+      editalId: controles.edital?.obterSelecionados() || [],
+      cargo: controles.cargo?.obterSelecionados() || [],
+      modalidade: controles.modalidade?.obterSelecionados() || [],
+      status: controles.status?.obterSelecionados() || [],
     };
   }
 
@@ -234,15 +285,16 @@ export function createListaAprovadosController(options = {}) {
               : "";
             return `<tr>
             <td>${esc(row.cargo || "-")}</td>
+            <td>${esc(row.modalidade || "-")}</td>
             <td class="num">${row.classificacao ?? "-"}</td>
             <td class="num">${esc(formatScore(row.nota))}</td>
-            <td><div class="approved-name"><strong>${esc(row.nome)}</strong>${row.sub_judice ? '<span class="approved-tag subjudice">SUB JUDICE</span>' : ""}<small>${esc(row.edital || "")}${row.modalidade ? ` · ${esc(row.modalidade)}` : ""}${inactive ? " · Lista inativa" : ""}</small></div></td>
+            <td><div class="approved-name"><strong>${esc(row.nome)}</strong>${row.sub_judice ? '<span class="approved-tag subjudice">SUB JUDICE</span>' : ""}<small>${esc(row.edital || "")}${inactive ? " · Lista inativa" : ""}</small></div></td>
             <td><span class="approved-status ${statusClass(status)}">${esc(status || "Sem status")}</span></td>
             <td class="approved-actions">${action}${remove}</td>
           </tr>`;
           })
           .join("")
-      : `<tr><td colspan="6" class="approved-empty">Nenhum candidato encontrado para os filtros selecionados.</td></tr>`;
+      : `<tr><td colspan="7" class="approved-empty">Nenhum candidato encontrado para os filtros selecionados.</td></tr>`;
   }
 
   function renderToolbar() {
@@ -686,16 +738,7 @@ export function createListaAprovadosController(options = {}) {
   }
 
   function bind() {
-    /*
-      Sempre volta à primeira página. Filtrar estando na página 7 e continuar na
-      7 mostra uma tabela vazia, ou um pedaço do meio do resultado — nos dois
-      casos parece que a busca não encontrou nada.
-    */
-    const renderFilteredView = () => {
-      state.page = 1;
-      renderKpis();
-      renderRows();
-    };
+    ensureFilterControls();
 
     const irParaPagina = (destino) => {
       const todas = filterApprovedCandidates(
@@ -732,20 +775,6 @@ export function createListaAprovadosController(options = {}) {
         state.page = 1;
         renderRows();
       });
-    document
-      .getElementById("approvedSearch")
-      ?.addEventListener("input", renderFilteredView);
-    document
-      .getElementById("approvedFilterEdital")
-      ?.addEventListener("change", () => {
-        fillFilters();
-        renderFilteredView();
-      });
-    ["approvedFilterCargo", "approvedFilterStatus"].forEach((id) => {
-      document
-        .getElementById(id)
-        ?.addEventListener("change", renderFilteredView);
-    });
     document
       .getElementById("approvedRows")
       ?.addEventListener("click", (event) => {

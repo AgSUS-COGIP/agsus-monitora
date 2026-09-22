@@ -26,6 +26,15 @@
   --radius: 18px;
   --sidebar: 224px;
   --sidebar-mini: 58px;
+
+  /* Camadas acima do shell. O cabeçalho (.app .top) usa z-index 10010 e
+     isola o próprio contexto de empilhamento, então todo overlay precisa
+     ficar acima dele para não ser encoberto. A ordem entre eles: o loader
+     cobre os modais porque bloqueia a tela inteira, e o toast cobre tudo
+     porque é o único que avisa do resultado da ação. */
+  --z-overlay: 12000;
+  --z-loader: 13000;
+  --z-toast: 14000;
 }
 
 *,
@@ -540,7 +549,7 @@ textarea:focus-visible,
   position: fixed;
   top: 18px;
   right: 18px;
-  z-index: 1200;
+  z-index: var(--z-toast);
   display: grid;
   gap: 10px;
   width: min(390px, calc(100vw - 30px));
@@ -585,7 +594,7 @@ textarea:focus-visible,
   inset: 0;
   display: none;
   place-items: center;
-  z-index: 1000;
+  z-index: var(--z-loader);
   background: rgba(2, 8, 23, 0.52);
   backdrop-filter: blur(2px);
 }
@@ -2848,7 +2857,7 @@ th.sorted-desc .sort-icon::before {
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 1100;
+  z-index: var(--z-overlay);
   display: none;
   place-items: center;
   padding: 20px;

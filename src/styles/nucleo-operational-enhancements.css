@@ -221,9 +221,6 @@
   background: #e2f7ed;
   color: #168454;
 }
-.nucleo-timeline-modal {
-  z-index: 11000;
-}
 .nucleo-timeline-card {
   width: min(920px, 94vw);
   max-height: 90vh;

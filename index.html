@@ -1254,10 +1254,6 @@
                 </div>
               </div>
               <div class="approved-filters">
-                <div class="form-row approved-search-row">
-                  <label>Pesquisar</label>
-                  <input id="approvedSearch" placeholder="Nome, cargo, edital, modalidade ou matrícula..." />
-                </div>
                 <div class="form-row">
                   <label>Edital</label>
                   <select id="approvedFilterEdital"><option value="">Todos os editais</option></select>
@@ -1265,6 +1261,10 @@
                 <div class="form-row">
                   <label>Cargo</label>
                   <select id="approvedFilterCargo"><option value="">Todos os cargos</option></select>
+                </div>
+                <div class="form-row">
+                  <label>Modalidade</label>
+                  <select id="approvedFilterModalidade"><option value="">Todas as modalidades</option></select>
                 </div>
                 <div class="form-row">
                   <label>Status</label>
@@ -1284,6 +1284,7 @@
                   <thead>
                     <tr>
                       <th>Cargo</th>
+                      <th>Modalidade</th>
                       <th class="num">Classificação</th>
                       <th class="num">Nota</th>
                       <th>Nome</th>
@@ -1292,7 +1293,7 @@
                     </tr>
                   </thead>
                   <tbody id="approvedRows">
-                    <tr><td colspan="6" class="approved-empty">Carregando lista de aprovados...</td></tr>
+                    <tr><td colspan="7" class="approved-empty">Carregando lista de aprovados...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1843,6 +1844,12 @@
             <input type="hidden" id="mIdUnidade" />
             <input type="hidden" id="mSiglaUnidade" />
             <input type="hidden" id="mTipoUnidade" />
+            <!--
+              O ciclo saiu do formulário, mas a coluna continua no banco e há
+              editais com valor gravado. Guardar aqui devolve o mesmo valor ao
+              salvar, em vez de apagá-lo em toda edição.
+            -->
+            <input type="hidden" id="mCiclo" />
             <div class="subsection">Identificação do edital</div>
             <div class="form-row">
               <label>Processo</label
@@ -1851,6 +1858,14 @@
             <div class="form-row">
               <label>Edital</label
               ><input id="mEdital" placeholder="Número do edital" />
+            </div>
+            <div class="form-row">
+              <label>Responsável</label
+              ><select id="mResponsavel" onchange="onModalResponsavelChange()">
+                <option value="">Selecione o responsável</option>
+                <option value="USI">USI</option>
+                <option value="CORES">CORES</option>
+              </select>
             </div>
             <div class="form-row">
               <label>Unidade</label
@@ -1867,9 +1882,6 @@
                 readonly
                 title="Preenchida automaticamente pela unidade selecionada"
               />
-            </div>
-            <div class="form-row">
-              <label>Ciclo</label><input id="mCiclo" placeholder="Ciclo" />
             </div>
             <div class="form-row">
               <label>Link do edital</label
@@ -1903,13 +1915,6 @@
                 <option>Médio</option>
                 <option>Alto</option>
               </select>
-            </div>
-            <div class="form-row full">
-              <label>Responsável</label
-              ><input
-                id="mResponsavel"
-                placeholder="Responsável pelo acompanhamento"
-              />
             </div>
             <div class="subsection">Indicadores automáticos</div>
             <p class="modal-note">

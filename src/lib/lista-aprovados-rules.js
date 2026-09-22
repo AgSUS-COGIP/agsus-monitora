@@ -6,6 +6,23 @@ import {
 const text = (value) => String(value ?? "").trim();
 const low = (value) => text(value).toLocaleLowerCase("pt-BR");
 
+/*
+  Os filtros da tela aceitam várias escolhas por campo. Aceitar também a forma
+  antiga (uma string) evita quebrar quem ainda chame com um valor só — e é o que
+  `summarizeApprovedCandidates` faz ao zerar o status.
+*/
+const multi = (value) =>
+  (Array.isArray(value) ? value : [value]).map(text).filter(Boolean);
+
+const SEM_STATUS = "__sem_status__";
+
+function matchStatus(escolhidos, row) {
+  const status = text(row.status);
+  return escolhidos.some((escolha) =>
+    escolha === SEM_STATUS ? !status : escolha === status,
+  );
+}
+
 export function statusNeedsMatricula(status) {
   return status === "Contratado" || status === "Migração";
 }
@@ -23,15 +40,17 @@ export function canEditSubJudice(profile, candidate) {
 
 export function filterApprovedCandidates(rows, filters = {}) {
   const query = low(filters.query);
-  const editalId = text(filters.editalId);
-  const cargo = text(filters.cargo);
-  const status = text(filters.status);
+  const editalIds = multi(filters.editalId);
+  const cargos = multi(filters.cargo);
+  const modalidades = multi(filters.modalidade);
+  const statuses = multi(filters.status);
   return (rows || []).filter((row) => {
-    if (editalId && String(row.edital_id) !== editalId) return false;
-    if (cargo && text(row.cargo) !== cargo) return false;
-    if (status === "__sem_status__" && text(row.status)) return false;
-    if (status && status !== "__sem_status__" && text(row.status) !== status)
+    if (editalIds.length && !editalIds.includes(String(row.edital_id)))
       return false;
+    if (cargos.length && !cargos.includes(text(row.cargo))) return false;
+    if (modalidades.length && !modalidades.includes(text(row.modalidade)))
+      return false;
+    if (statuses.length && !matchStatus(statuses, row)) return false;
     if (!query) return true;
     return [
       row.nome,
@@ -66,18 +85,34 @@ export function summarizeApprovedCandidates(rows, filters = {}) {
   return summary;
 }
 
-export function uniqueCandidateCargos(rows) {
+function valoresUnicos(rows, campo) {
   return [
-    ...new Set((rows || []).map((row) => text(row.cargo)).filter(Boolean)),
+    ...new Set((rows || []).map((row) => text(row[campo])).filter(Boolean)),
   ].sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
+/*
+  Cargo e modalidade só oferecem o que existe nos editais escolhidos. Listar
+  tudo daria opções que não devolvem candidato nenhum.
+*/
+function noEscopoDosEditais(rows, editalId) {
+  const selectedEditalIds = multi(editalId);
+  if (!selectedEditalIds.length) return rows || [];
+  return (rows || []).filter((row) =>
+    selectedEditalIds.includes(String(row.edital_id)),
+  );
+}
+
+export function uniqueCandidateCargos(rows) {
+  return valoresUnicos(rows, "cargo");
+}
+
 export function candidateCargosForEdital(rows, editalId) {
-  const selectedEditalId = text(editalId);
-  const scopedRows = selectedEditalId
-    ? (rows || []).filter((row) => String(row.edital_id) === selectedEditalId)
-    : rows || [];
-  return uniqueCandidateCargos(scopedRows);
+  return valoresUnicos(noEscopoDosEditais(rows, editalId), "cargo");
+}
+
+export function candidateModalidadesForEdital(rows, editalId) {
+  return valoresUnicos(noEscopoDosEditais(rows, editalId), "modalidade");
 }
 
 /*
