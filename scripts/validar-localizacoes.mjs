@@ -50,7 +50,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { ficheiroDosVereditos } from "./veredito-para-o-mapa.mjs";
 import { join } from "node:path";
 import { lerPlanilhaXlsx } from "./ler-planilha-xlsx.mjs";
-import { carregarUf, dentroDaUf } from "./malhas-das-ufs.mjs";
+import { carregarUf } from "./malhas-das-ufs.mjs";
+import { decidirLocalizacao } from "./decidir-localizacao.mjs";
 import {
   nomeCanonico,
   canonicoUtilizavel,
@@ -154,84 +155,6 @@ function lerCnes(caminho) {
   }));
 }
 
-/*
-  Uma coordenada "copiada" — as duas fontes a dar exatamente o mesmo ponto —
-  não é confirmação: é a mesma origem vista duas vezes. Meio metro é a folga
-  para o arredondamento das casas decimais.
-*/
-const COPIA_KM = 0.0005;
-
-function decidir({ lotacao, estabelecimento, uf, malha }) {
-  const dentroLot = malha ? dentroDaUf(malha, lotacao.lat, lotacao.lon) : null;
-  const dentroCnes =
-    estabelecimento && malha
-      ? dentroDaUf(malha, estabelecimento.lat, estabelecimento.lon)
-      : null;
-  const km = estabelecimento
-    ? distanciaKm(
-        lotacao.lat,
-        lotacao.lon,
-        estabelecimento.lat,
-        estabelecimento.lon,
-      )
-    : null;
-
-  const prova = { uf, km, dentroLot, dentroCnes };
-
-  if (!uf)
-    return { estado: "indeterminado", motivo: "uf_indeterminada", prova };
-
-  if (!estabelecimento) {
-    return dentroLot
-      ? {
-          estado: "coerente",
-          motivo: "fonte_unica_na_uf",
-          ponto: lotacao,
-          prova,
-        }
-      : { estado: "erro", motivo: "fonte_unica_fora_da_uf", prova };
-  }
-
-  if (km < COPIA_KM) {
-    return dentroLot
-      ? {
-          estado: "coerente",
-          motivo: "copia_entre_fontes_na_uf",
-          ponto: lotacao,
-          prova,
-        }
-      : { estado: "erro", motivo: "copia_fora_da_uf", prova };
-  }
-
-  if (dentroLot && dentroCnes) {
-    return km <= LIMIAR_PROXIMA_KM
-      ? {
-          estado: "validada",
-          motivo: "duas_fontes_concordam",
-          ponto: estabelecimento,
-          prova,
-        }
-      : { estado: "conflito", motivo: "duas_fontes_discordam_na_uf", prova };
-  }
-  if (dentroCnes) {
-    return {
-      estado: "validada",
-      motivo: "arbitrada_pela_uf_cnes",
-      ponto: estabelecimento,
-      prova,
-    };
-  }
-  if (dentroLot) {
-    return {
-      estado: "validada",
-      motivo: "arbitrada_pela_uf_lotacoes",
-      ponto: lotacao,
-      prova,
-    };
-  }
-  return { estado: "erro", motivo: "ambas_fora_da_uf", prova };
-}
-
 async function principal() {
   const [caminhoLotacoes, caminhoCnes] = process.argv.slice(2);
   if (!caminhoLotacoes || !caminhoCnes) {
@@ -290,9 +213,14 @@ async function principal() {
         ? [...ufsPorMunicipio.get(lotacao.municipio)][0]
         : null);
 
-    const decisao = decidir({
-      lotacao,
-      estabelecimento,
+    /*
+      A decisão vive em `decidir-localizacao.mjs`, partilhada com a segunda
+      passagem. Duas cópias da mesma regra divergem, e dois vereditos com o
+      mesmo nome passariam a querer dizer coisas diferentes.
+    */
+    const decisao = decidirLocalizacao({
+      primeira: lotacao,
+      segunda: estabelecimento,
       uf,
       malha: uf ? malhas.get(uf) : null,
     });

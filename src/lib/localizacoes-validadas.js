@@ -105,10 +105,21 @@ export function rotuloDaLocalizacao(veredicto) {
   }
 
   if (estado === "erro") {
-    return "Coordenada fora da UF declarada — não confirmada";
+    return veredicto.motivo === "fonte_unica_fora_do_municipio"
+      ? "Coordenada fora do município declarado — não confirmada"
+      : "Coordenada fora da UF declarada — não confirmada";
   }
 
+  /*
+    Três graus de , do mais forte para o mais fraco. O município é
+    uma pergunta muito mais estreita do que a UF: nas 745 unidades de fonte
+    única, a malha da UF acusou UMA e a municipal acusou cinquenta e duas.
+    Dizer qual delas respondeu é dizer quanto vale o "coerente".
+  */
   if (estado === "coerente") {
+    if (veredicto.motivo === "fonte_unica_no_municipio") {
+      return "Fonte única, dentro do município declarado — sem segunda fonte para conferir";
+    }
     return veredicto.motivo === "copia_entre_fontes_na_uf"
       ? "Fonte única (as duas bases repetem a mesma coordenada), dentro da UF"
       : "Fonte única, dentro da UF declarada — sem segunda fonte para conferir";

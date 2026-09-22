@@ -1,13 +1,13 @@
 /*
   GERADO por scripts/validar-localizacoes.mjs. Não editar à mão.
 
-  606 vereditos de localização:
+  1366 vereditos de localização:
 
-   318  coerente
-   119  conflito
-    80  validada
+  1014  coerente
+   125  conflito
+    85  validada
     75  indeterminado
-    14  erro
+    67  erro
 
   Viajam todos, e não só os que trocam a coordenada. Um conflito entre as
   duas fontes é resultado de auditoria tanto quanto uma validação, e o mapa
@@ -4416,6 +4416,5336 @@ export const LOCALIZACOES_VALIDADAS = [
     "canonico": "UN YEKUANA",
     "estado": "indeterminado",
     "motivo": "uf_indeterminada",
+    "km": 0
+  },
+  {
+    "dsei": "ALAGOAS E SERGIPE",
+    "canonico": "KARIRI XOCO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALAGOAS E SERGIPE",
+    "canonico": "II XUCURU KARIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALAGOAS E SERGIPE",
+    "canonico": "I KARAPOTO PLAKI O",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALAGOAS E SERGIPE",
+    "canonico": "ATENCAO A KOIUPANKA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALAGOAS E SERGIPE",
+    "canonico": "I KARAPOTO TERRA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALAGOAS E SERGIPE",
+    "canonico": "MARIA SAO PEDRO CORREIA KATOKINN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALAGOAS E SERGIPE",
+    "canonico": "MACEIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA PYTOTKO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ARADYTI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ARARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA IRINAPAIN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "IRIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ITAAKA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "JURUATI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "KARARAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "KURUATXE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "KWATINEMU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "PAKANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "PARATATIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "TA AKATI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "INDGENA TUKAMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "TUKAYA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "CUJUBIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA CURUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "IPIXUNA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "PAQUICAMBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "FURO SECO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "BOA VISTA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "MIRATU",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "PYKAJAKA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "KAMOKTIKO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA MROTDJAN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA BAKAJA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA KENKUDJOY",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA POTIKRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ALDEIA KRANH",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "INDIGINA TERRA WANGA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTAMIRA",
+    "canonico": "ATENDIMENTO VITORIA XINGU",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO JURUA",
+    "canonico": "MARECHAL THAUMATURGO",
+    "estado": "conflito",
+    "motivo": "duas_fontes_discordam_na_uf",
+    "km": 32.4
+  },
+  {
+    "dsei": "ALTO RIO JURUA",
+    "canonico": "NUKINI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO JURUA",
+    "canonico": "CAUCHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO JURUA",
+    "canonico": "ASSISTENCIAL A TARAUACA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO JURUA",
+    "canonico": "HASHEME KAMANAWA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO JURUA",
+    "canonico": "ALTO RIO JURUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO NEGRO",
+    "canonico": "CARURU UAUPES",
+    "estado": "conflito",
+    "motivo": "duas_fontes_discordam_na_uf",
+    "km": 17.7
+  },
+  {
+    "dsei": "ALTO RIO NEGRO",
+    "canonico": "TAPERERA",
+    "estado": "conflito",
+    "motivo": "duas_fontes_discordam_na_uf",
+    "km": 222.1
+  },
+  {
+    "dsei": "ALTO RIO NEGRO",
+    "canonico": "NAZARE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO NEGRO",
+    "canonico": "SANTA ISABEL RIO NEGRO ARN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO NEGRO",
+    "canonico": "IAUARETE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "SANTA ROSA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "PAXIUBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "BARRINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "MARMELINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "PEDREIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "BUACU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "NOVA FRONTEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "MARONAWA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "BUENOS AIRES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO PURUS",
+    "canonico": "ALTO RIO PURUS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "UMARIACU II",
+    "estado": "validada",
+    "motivo": "duas_fontes_concordam",
+    "km": 4.3,
+    "lat": -4.259,
+    "lon": -69.939
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "SAO PAULO OLIVENCA",
+    "estado": "validada",
+    "motivo": "duas_fontes_concordam",
+    "km": 3.1,
+    "lat": -3.481894,
+    "lon": -68.954315
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "UMARIACU I",
+    "estado": "conflito",
+    "motivo": "duas_fontes_discordam_na_uf",
+    "km": 29.4
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "FEIJOAL",
+    "estado": "validada",
+    "motivo": "duas_fontes_concordam",
+    "km": 0.7,
+    "lat": -4.300532,
+    "lon": -69.541252
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "ALTO SOLIMOES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "GUANABARA III",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "SAO PEDRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "VILA BITTENCOURT",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "TUPI II",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "DECU RU ME TCHIQUE CU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "A LOCAL AMATURA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "LOCAL SPO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ALTO RIO SOLIMOES",
+    "canonico": "LOCAL TONANTINS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "PURURE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP MISSAO TIRIYOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "BONA APALAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "I SANTO ANTONIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "I BOCA MARAPI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "PEDRA ONCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "KUXARE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "URUNAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "YAWA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "I MARITEPU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "MATAWARE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP NORTE PARA I XUIXUIMENE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP ARAMIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP ESPIRITO SANTO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP KUMENE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP KUMARUMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP ESTRELA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP MANGA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP KUNANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP SANTA IZABEL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP ITUWASU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP MARYRY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP TUKAY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP GALIBY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP ACAIZAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP FLEXA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP CTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP JACAREKAGOKA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "AP YVYRARETA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "AMAPA E NORTE DO PARA",
+    "canonico": "ESP AMAPA NORTE PARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "ARAGUAIA",
+    "canonico": "SANTA ISABEL MORRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ARAGUAIA",
+    "canonico": "FONTOURA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ARAGUAIA",
+    "canonico": "INDIGINA IBUTUNA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ARAGUAIA",
+    "canonico": "BISSOHANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "ARAGUAIA",
+    "canonico": "ALDEIA MACAUBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "MARIA CARMINDA SANTOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "TUMBALALA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "USFI PANKARARE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "USFI KANTARURE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "USFI BATIDA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "CARAMURU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "TUXA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "II IMBIRIBA ALDEIA VELHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "ALDEIA TUXA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "I BARRA VELHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "FUNASA FAMILIA ARACAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "ACUIPE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "EQUIPE MULTIDISCIPLINAR",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "USFI XUCURU KARIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "VILA SANTANINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "TUMBALALA ALONSO JOSE SILVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "TUPA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "BAHIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "III BOCA MATA MEIO MATA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "PSI TRIBO TRUKA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "ATIKUM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "USI ATIKUM NOVA VIDA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "FAMILIA ALBERTO GONCALVES TEIXEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "IV JUERANA JAQUEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "BAHIA",
+    "canonico": "ALDEIA VARGEM ALEGRE SERRA RAMALHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "POTYRO TAPEBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "URUCUI AREA II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "EQUIPE LAGOA SAO FRANCISCO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "MARIA GOMES FERREIRA ANACE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "ALMOFALA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "SAO JOSE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "GUIOMAR ALVES JULIAO CAUCAIA ANACE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "VILA FERNANDES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "VARJOTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "PITAGUARY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "INDIGINA GAMELEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "JENIPAPO KANIDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "CARNAUBA SAO BENEDITO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "CEARA CE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "NOVO ORIENTE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "MONGUBA POVO PITAGUARY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "TABAJARA KALABASSA PORANGA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "ITAPIPOCA TREMEMBE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "QUITERIANOPOLIS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "DONA JOAQUINA VIEIRA PITAGUARY",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "MONSENHOR TABOSA EQUIPE 1",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "INDIGINA QUEIMADAS ACARAU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "MONSENHOR TABOSA EQUIPE 3",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "MONSENHOR TABOSA EQUIPE 2",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "EQUIPE CRATEUS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "TAMBORIL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "POTYRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "GERALDO TAPEBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "VICTOR TAPEBA CAUCAIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "CEARA",
+    "canonico": "UNID RESERVA TABA ANACE CAUCAIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "SANTA LUZIA PARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "TAWANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "INAJA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "KWANAMARI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA TOME ACU II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "INDIGNA ALDEIA ACARA MIRIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "PSI ALDEIA CAJUEIRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "PSI ALDEIA BARRERINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA SEDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "FLONA TAPAJOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "MAPUERA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA ITAHY",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA DJUDJEKO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA KATETE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA OODJA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "XARAIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "MAROXEWARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "PS NOVA JACUNDA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA GUAJANAIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA OROROBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "CUXIU MIRIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA TAQUARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA TROCARA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "GUAMA TOCANTINS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "MOJU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "GOIANESIA PARA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA TEKENAY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "MARABA II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA SORORO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "PSI TEKOHAW",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "MAE MARIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "AUDEIA KRIKATEJE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "PSI ALDEIA CANIDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA SAO PEDRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA FRASQUEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "ALDEIA CUMINAPANEMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "PSI ALDEIA XIEPIHURENA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "GUAMA-TOCANTINS",
+    "canonico": "A SANTAREM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "RESERVA MANGUEIRINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "I ALDEIA PLIPATOL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "I ALDEIA KOPLANG",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "I ALDEIA BUGIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "I ALDEIA PALMEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "I ALDEIA TOLDO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "I ALDEIA SEDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "I ALDEIA PAVAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "ESPACO ALDEIA BUGIO GUARANI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "INTERIOR SUL COQUEIRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "TEKOA MARANGATU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "TOLDO IMBU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "ALDEIA TOLDO PINHAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "INTERIOR SUL IPUACU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "REGIAO 20 YYNN MOROTI WHERA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "CENTRO ALDEIA CONDA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "CENTRO TOLDO XIMBANGUE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "SAO JOAO IRAPUA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "ALTO RECREIO RONDA ALTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "AREA SEDE CAMPO VERDE CACIQUE DOBLE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "ALDEIA VTOURO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "LIGEIRO CHARRUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "INTERIOR SUL",
+    "canonico": "RESERVA INHACORA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO MATO GROSSO",
+    "canonico": "SEDE KAIAPO MT",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO MATO GROSSO",
+    "canonico": "INDIO COLIDER",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO MATO GROSSO",
+    "canonico": "INDIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO MATO GROSSO",
+    "canonico": "INDIO PEIXOTO AZEVEDO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA MOIKARAKO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA APEXTI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA MOMOKRE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "KWARAYA PYA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "APYTEREWA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "PARANOPIONA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "XINGU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "KAIAPO PARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA TUREDJAN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "IDIGENA ALDEIA KUBENKRANKENH",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "INDEGENA ALDEIA KIKRETUM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA AUKRE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA GOROTIRE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "SAUD ALDEIA KRANH APARI",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA LAS CASAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA PYKARARANKRE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA KENDJAN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA KOKRAIMORO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "KAIAPO DO PARA",
+    "canonico": "ALDEIA KRINY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "WILIMON",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SERRA TRUARU",
+    "estado": "validada",
+    "motivo": "duas_fontes_concordam",
+    "km": 4,
+    "lat": 3.271527,
+    "lon": -60.673329
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CANTA GALO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "COBRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "LARANJINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MAKARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAMAUMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SOMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "NOVA UNIAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MURIRU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "DALVA OLIVEIRA SOUZA COM IND MOSCOU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MUTAMBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SUCUBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "PONTA SERRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TAXI I",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANINGAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "LEAO OURO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "RAIMUNDAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "NOVA ESPERANCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CARAPARU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "LIVRAMENTO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANAUA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "XAARI",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "BISMARK",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CONSTANTINO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "BARREIRINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "IGARAPE GALO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "NOVA ALIANCA I",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "NOVA ALIANCA II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SANTA LIBERDADE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAO FELIPE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TABATINGA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TRIUNFO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CANAWAPAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CAXIRIMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "KUMAPAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "LAGE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MONTE MORIA I",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MONTE MORIA II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "POPO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "PROTOTO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAO GABRIEL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "AREA UNICA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "AWENDEI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "KUMAIPA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MANALAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MAPAE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "PAMAK",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "PARANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "PIPI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAUPARU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "BANANEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CAMARAREM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "FLEXALZINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "LILAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "NOVA JERUSALEM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SOCO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TICOCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANGICAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ARAMU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CUTIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MARACANA I",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MARACANA II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MUTUM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "WARAPATA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "UIRAMUTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "URINDUK",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANDORINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ARAPA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MACUQUEM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MONTE SIAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "NOVA VIDA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SALVADOR",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SANTA CREUZA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "WARONKAYEN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "AGUA FRIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CARAPARU III",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CARAPARU IV",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ESTEVAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MANAPARU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MUDUBIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAO LUIS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SOL NASCENTE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TABOCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TAMANDUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "WAROMADA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "PERDIZ",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANTA II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "BARATA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ARAPUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "RAIMUNDAO II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANANAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "GARAGEM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "VIDA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ANARO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "JURACI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "OURO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "URUCURI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CACHOEIRA SAPO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CUMARU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "JABUTI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "NOVO PARAISO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAO JOAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "AGUA BOA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MARUPA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAO DOMINGOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "WAPUM",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "LAGO GRANDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TRES IRMAOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MORCEGO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SERRA MOCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "TRUARU CABECEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "AAKAN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CAMPO ALEGRE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "DARORA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "ILHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "MAUIXE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "SAO MARCOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "VISTA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CANAUANIN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LESTE DE RORAIMA",
+    "canonico": "CAMPINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ALDEIA SAPUKAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ALDEIA PARATY MIRIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "USFI RIO SILVEIRA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "KRUKUTU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "VERA POTY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "LITORAL SUL ITAP",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "PERUIBE ITARIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "AMBULATORIO ATENCAO ESPECIALIZADA A PESSOA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "INDIGINA AVAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ALDEIA JARAGUA KWARAY DJEKUPE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ALDEIA BOA VISTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "RESERVA PINHALZINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "FAXINAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ATENCAO A MOCOCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ATENCAO A QUEIMADAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "AREA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "AVA GUARANI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "IVAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "PIN RIO COBRAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ALDEIA VELHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "ALDEIA MARRECAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "RESERVA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "AREA PALMAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "TERRA APUCARANINHA MARIA VAGANH",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "LITORAL SUL",
+    "canonico": "PINHAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MANAUS",
+    "canonico": "MUNICIPIO BERURI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "MANAUS",
+    "canonico": "IGARAPE PRETO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MANAUS",
+    "canonico": "A MANAUS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MANAUS",
+    "canonico": "NOVA OLINDA NORTE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "INIDIGENA ALDEIA FELIPE BONE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "CACIQUE IRACI AMORIM SOARES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ABRAAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA PORQUINHOS",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA ESCALVADO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ARARIBOIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA ANGICO TORTO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA NOVO PLANETA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "LAGO BRANCO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA RIO CORDA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ZE GURUPI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "AUGUSTO MOREIRA GAVIAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "CANUDAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "LAGOA COMPRIDA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "JUCARAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "RIACHINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "SARDINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA MAINUMY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "COLONIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "CACHOEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "MARECHICO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "KRIKATI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "EL BETEL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA CANA BRAVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA COCALINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA COQUINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA CACIMBA VELHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA SAO PEDRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ATENCAO A PIN JURITI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "GUAJA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "TURIZINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "AMARANTE 2",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA NOVA VIANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA SIBIRINO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "XIMBORENDA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "BACURIZINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "BANANAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "GUARUHU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "MARANHAO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_da_uf",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA PRESIDIO ZUTIUA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "INDIGINA AXINGUIRENDA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA BEIRA RIO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA BAIXAO PEIXE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA CHUPE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA AWA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA MACARANDUBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "PICARRA PRETA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA TIRACAMBU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA JANUARIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA TRES IRMAOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA KWARAHY",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA VILA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA JATOBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "ALDEIA JENIPAPO RIBEIROS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MARANHAO",
+    "canonico": "A IMPERATRIZ",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MATO GROSSO DO SUL",
+    "canonico": "DOIS IRMAOS BURITI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "MARRECAO",
+    "estado": "coerente",
+    "motivo": "copia_entre_fontes_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "ABAQUADI",
+    "estado": "conflito",
+    "motivo": "duas_fontes_discordam_na_uf",
+    "km": 56.8
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "IINDIGENA ESCONDIDO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "ILHA ONCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "KANACURI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "NOVA FORTALEZA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "PAUZINHO NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "SAUBINHA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "INDINA BOA ESPERANCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "TRES BOCAS SAO PEDRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "SEDE ANEXO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "CUJUBIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "MEDIO PURUS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "IINDIGENA ESCONDICO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "CASTANHEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO PURUS",
+    "canonico": "PARAIBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO SOLIMOES E AFLUENTES",
+    "canonico": "ADMINISTRATIVO IPIXUNA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO SOLIMOES E AFLUENTES",
+    "canonico": "CENTRO MAXIMO MAIA SILVA O CORUJA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO SOLIMOES E AFLUENTES",
+    "canonico": "MEDIO SOLIMOES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO SOLIMOES E AFLUENTES",
+    "canonico": "A EIRUNEPE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MEDIO RIO SOLIMOES E AFLUENTES",
+    "canonico": "INDIO TEFE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "CAIERAS VELHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA RENASCER WAKONA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "I ALDEIA IBIRAMA KIRIRI ACRE KARIRI WAKONA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA CORREGO PEZINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA ESCOLA FLORESTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA CACHOEIRINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA RIACHO BREJO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "I ALDEIA XUCURU KARIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA PINDAIBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA ITAPICURU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA SUMARE III",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA PRATA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "MGES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA BARREIRO PRETO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "KRENAK",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "KAXIXO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA MUA MIMATXI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA PRADINHO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA VERDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ALDEIA AGUA BOA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "II SAO JOAO MISSOES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ATENCAO A BELO HORIZONTE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "II TEOFILO OTONI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "II MACHACALIS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "ESCRITORIO LOCAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "MINAS GERAIS E ESPIRITO SANTO",
+    "canonico": "A INDIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PARINTINS",
+    "canonico": "CENTRAL ABASTECIMENTO FARMACEUTICO SESAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PARINTINS",
+    "canonico": "ADMINISTRATIVO II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PARINTINS",
+    "canonico": "INDIGINA PAUINI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "FULNI O",
+    "estado": "validada",
+    "motivo": "duas_fontes_concordam",
+    "km": 3.6,
+    "lat": -9.111,
+    "lon": -37.123
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "PANKARURU ENTRE SERRAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "PIPIPAN",
+    "estado": "conflito",
+    "motivo": "duas_fontes_discordam_na_uf",
+    "km": 29.4
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ATENCAO A ALDEIA BAIXA D ALEXANDRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ATENCAO A ALDEIA PEREIROS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ALDEIA CANA BRAVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ALDEIA VILA CIMBRES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "SERROTE CAMPOS",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "TRAVESSAO OURO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ALDEIA SAO JOSE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ALDEIA FULNIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "MINA GRANDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ALDEIA NAZARIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "CALDEIRAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ITACURUBA ADPF",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "MUNDO NOVO TEREZA A CARVALHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "SABONETE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "PIN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "PERNAMBUCO PE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "PONTA VARZEA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "KAMBIWA IBIMIRIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "BREJO PADRES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "BAIXA LERO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "MULUNGU",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ALDEIA XIXIAKLA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ANTONIO CAXIADO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "ALMIRA ROSA MENEZES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "OLHO DAGUA PADRE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "FAVELEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "CARAIBAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "MACACO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "CAJUEIRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "VILA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "CAATINGUINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "CAITITU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "JIBOIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PERNAMBUCO",
+    "canonico": "A PERNAMBUCO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "COSTA MARQUES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA ALTO JARU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA 623",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA TRINCHEIRA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA LAGE VELHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA LAGE NOVO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA RIBEIRAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "GUAJARA MIRIM RO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALTA FLORESTA DOESTE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "1 JI PARANA RO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA KARITIANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA KARIPUNA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA RIO NEGRO OCAIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA LINHA 10",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "INDIGINA ALDEIA ITERAP",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "INDIGINA ALDEIA CASTANHEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "INDIGINA IKOLEN",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "INDIGINA ALDEIA PAYGAP",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA TRINDADE",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA COLORADO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "PALHAU",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "CAJUI I",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "JARU RO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA MARMELO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "ALDEIA FORQUILHA GRANDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "A ALTA FLORESTA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "A GUAJARA MIRIM RO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "A JI PARANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "PORTO VELHO",
+    "canonico": "A PORTO VELHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "GOIANINHA",
+    "estado": "coerente",
+    "motivo": "copia_entre_fontes_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "CACIQUE ANIBAL CORDEIRO CAMPOS ALDEIA JARAGUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "MARIA HILARIA CONCEICAO ALDEIA SILVA BELEM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "INDIO JURANDIR ALVES BARBOSA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "PEDRO GOMES SANTOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "JACARE SAO DOMINGOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA AKAJUTIBIRO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "JOSE ALFREDO CANDIDO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA TRAMATAIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "CESAR SOARES LIMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "CACIQUE MANUEL FRANCISCO INACIO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA CARNEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA BREJINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "DOMINGO BARBOSA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA LAGOA GRANDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "JURANDIR ALVES BARBOSA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA YBYKUARA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA COQUEIRINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "POTIGUARA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "RIO TINTO ALDEIA MONT MOR",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "BAIA TRAICAO ALDEIA FORTE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "JOAO OLIVEIRA MELO ALDEIA SAO MIGUEL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "JOAO FRANCISCO SANTOS ALDEIA SILVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "MANUEL HIGINO SILVA ALDEIA TRACOEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALEXANDRINA MARIA CONCEICAO ALDEIA LAGOA MATO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "MIGUEL BENTO AZEVEDO ALDEIA BENTO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "JOSE ROBERTO PEREIRA ALDEIA CUMARU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ARTUR LOURENCO ALDEIA LARANJEIRAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "MARIA AUGUSTO BARBOSA ALDEIA SANTA RITA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "ALDEIA ALTO TAMBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "POTIGUARA",
+    "canonico": "JOSE DOMINGOS SILVA ALDEIA SAO FRANCISCO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "KARAPANATUBA",
+    "estado": "coerente",
+    "motivo": "copia_entre_fontes_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "RIO TAPAJOS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "WARO APOMPO MUNDURUKU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "PRAINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "CAROCAL RTP",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "PRAIA INDIO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "SAWRE MUYBU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "WARITODI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "SAO JOAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "MISSAO VELHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "CAROCAL RIO CURURU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "JACAREACANGA II",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "BIRIBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "A ITAITUBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "A JACAREACANGA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "RIO TAPAJOS",
+    "canonico": "A RIO TAPAJOS SANTAREM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA XAMBIOA SANTA FE ARAGUAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA SANTA FE ARAGUAIA TOCANTINS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "ALDEIA SAO JOAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "CANUANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "TXUIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "ALDEIA CACHOEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "RIO VERMELHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "ALDEIA NOVA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "MANGABEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA PORTEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA SALTO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA RIO SONO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA FUNIL",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA BRUPRE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "INDIGINA BREJO CUMPRIDO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "SAO JOSE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "MARIAZINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "SANTA CRUZ",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "MORRO BOI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "GALHEIRO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "SERRA GRANDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "TOCANTINS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "UNIDADA PEDRA BRANCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "BONITO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "UNIADE PATIZAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "BOTICA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "ALDEIA LANKRARE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "ALDEIA WARI WARI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "TOCANTINS",
+    "canonico": "A ARAGUAINA AUX",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "LAR FELIZ",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "PARAISO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA TXECHE WASSA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA SOLES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA LOBO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA VOLTA GRANDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA NOVA ESPERANCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA RIO NOVO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA BANANEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA HOBANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ACAMPAMENTO COARI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA ALEGRIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA NUNTEWA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA LAGO GRANDE RIO JAVARI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA TERRINHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA PARANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA REMANSINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA PENTIAQUINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA FLORES",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ITUI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA JARINAL NOVO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "ALDEIA FRUTA PAO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VALE DO JAVARI",
+    "canonico": "SEDE JAVARI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA CAPITAO CARDOSO SAPECADO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA AKUNTSU OMERE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA TUBARAO RIO OURO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA GLEBA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA TENENTE MARQUES JOAO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA CAPITAO CARDOSO TONHAO",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA 14 ABRIL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA ROOSEVELT CENTRAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ROOSEVELT MAWANAT",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA LINHA 07 PAYAMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "BAIXA VERDE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 10 CENTRAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 11 LAPETANHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 11 LOBO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 14 GAMIR",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 11 AMARAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 09 CENTRAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 12 ANINE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "LINHA 14 PLACA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA SOWAINTE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "ALDEIA FURQUIM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "VILHENA",
+    "canonico": "A CACOAL",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "PARANATINGA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "NOSSA SENHORA FATIMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "NOSSA SENHORA GUARDALUPE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "NOSSA SENHORA GUIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "ALDEONA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "ALDEIA BELEM",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "ALDEIA CACULA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "ALDEIA TANGURO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "ALDEIA CAMPINAS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "ALDEIA SAO PEDRO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "BARRA GARCAS MT",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XAVANTE",
+    "canonico": "A POPULACAO CAMPINAPOLIS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "XINGU",
+    "canonico": "LEONARDO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "XINGU",
+    "canonico": "A SINOP",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "ARATHA U",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "ALTO PADAUIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "MEDIO PADAUIRI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KAYANAU",
+    "estado": "coerente",
+    "motivo": "copia_entre_fontes_na_uf",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "SERRINHO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "JUTAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "MISSAO MARAUIA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "IXIMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "PUKIMA BEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "NOVA ESPERANCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "CAUBURIS",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "RAITA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "XAMAKORONA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "POHOROA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "NAZARE",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "ADMINISTRATIVO SAO GABRIEL CACHOEIRA YANOMAMI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "BICHO ACU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "MAXAPAPI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "TAPERA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "CUMARU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "HEMARIPIWEI",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "BANDEIRA BRANCA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KOHEREPI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "ADMINISTRATIVO BARCELOS YANOMAMI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "XAMANI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "LAHAKA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "CURUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "TARACUA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "PUKIMA CACHOEIRA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "WAHARO",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "PAHANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "ADMINISTRATIVO SANTA ISABEL RIO NEGRO YANOMAMI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "XIHUPI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "XIROXIROPIU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "PEWAU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "HALIKATO U",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "XEXENA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KETAA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "BUDU U",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "UXIU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KATAROA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KATANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "SANINAU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KOREKOREMA",
+    "estado": "erro",
+    "motivo": "fonte_unica_fora_do_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "MARAXIU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "ARATHAU PARIMA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "ONKIOLA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "YEKWANA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "POOLASAI TIROPEI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "HOKOLASIMU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KURATANHA",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "OLOMAI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KOLULU",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
+    "km": 0
+  },
+  {
+    "dsei": "YANOMAMI",
+    "canonico": "KALISSI",
+    "estado": "coerente",
+    "motivo": "fonte_unica_no_municipio",
     "km": 0
   }
 ];

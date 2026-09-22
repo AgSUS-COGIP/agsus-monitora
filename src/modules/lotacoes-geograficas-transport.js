@@ -96,7 +96,18 @@ function unidadesQueRepetemOPolo(records) {
   Os outros 829 não casam com lotação nenhuma e continuam sem veredito — o que
   é verdade, e é diferente de "em validação" por omissão de quem procura.
 */
-function anotarVereditos(dseiKey, network) {
+function anotarVereditos(dseiKey, network, dsei) {
+  /*
+    E os polos do banco que a planilha não tem. O laço acima só olha para os
+    registos da planilha, e por isso um polo que exista só no banco — ,
+    que a planilha traz partido em I e II — nunca passava pela consulta. O
+    popup dele dizia "em validação" mesmo depois de a auditoria o ter julgado.
+  */
+  for (const polo of dsei?.polos || []) {
+    if (polo.veredicto_localizacao) continue;
+    polo.veredicto_localizacao = veredictoDaUnidade(dseiKey, polo.n) || null;
+  }
+
   for (const lista of ["u", "c"]) {
     for (const linha of network[lista] || []) {
       const veredicto = veredictoDaUnidade(dseiKey, linha?.[0]);
@@ -654,7 +665,7 @@ export function applyLotacoesGeograficas(rows, dataset) {
 
     network.u = annotateSharedCoordinates(dedupeNetworkList(network.u, "u"));
     network.c = annotateSharedCoordinates(dedupeNetworkList(network.c, "c"));
-    anotarVereditos(dseiKey, network);
+    anotarVereditos(dseiKey, network, dsei);
   });
 
   redeRow.payload.nac = annotateSharedCoordinates(
