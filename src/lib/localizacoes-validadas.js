@@ -125,6 +125,22 @@ export function rotuloDaLocalizacao(veredicto) {
     Dizer qual delas respondeu é dizer quanto vale o "coerente".
   */
   if (estado === "coerente") {
+    /*
+      A TERCEIRA PASSAGEM: A PRÓPRIA TERRA INDÍGENA
+
+      O ponto cai dentro de uma terra publicada pela Funai — confirmação de uma
+      fonte independente da planilha e do CNES, e a mais direta que este mapa
+      tem: um polo base de saúde indígena normalmente fica na terra que atende.
+
+      Não vira `validada` de propósito. Estar dentro da terra confirma que o
+      ponto está num lugar coerente com o que a unidade faz; não confirma o
+      ponto exato. A distinção importa, e a frase diz qual das duas se apurou.
+    */
+    if (veredicto.motivo === "dentro_de_terra_indigena") {
+      return veredicto.terra
+        ? `Dentro da Terra Indígena ${veredicto.terra} (Funai)`
+        : "Dentro de Terra Indígena (Funai)";
+    }
     if (veredicto.motivo === "fonte_unica_na_divisa") {
       /*
         Vinte dos 52 pontos que caíam fora do município estavam a menos de 2 km
@@ -142,8 +158,19 @@ export function rotuloDaLocalizacao(veredicto) {
       : "Fonte única, dentro da UF declarada — sem segunda fonte para conferir";
   }
 
+  /*
+    A FRASE DIZIA "SEM COORDENADA" SOBRE PONTOS QUE ESTÃO NO MAPA
+
+    `uf_indeterminada` é o veredito de quando não se conseguiu decidir a UF do
+    registo, e isso acontece quase sempre COM coordenada presente: é o município
+    que não se reconhece, ou que existe em mais de um estado.
+
+    A frase antiga juntava as duas ausências numa só e afirmava a errada. Quem
+    via "sem coordenada" num marcador desenhado a 3 km de uma Terra Indígena
+    concluía, com razão, que o painel não sabia o que estava a dizer.
+  */
   if (estado === "indeterminado") {
-    return "Sem UF ou sem coordenada — não foi possível verificar";
+    return "UF não determinada — não foi possível conferir a posição";
   }
 
   return "Localização em validação";
