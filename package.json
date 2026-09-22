@@ -22,6 +22,7 @@
     "check:rpc-contract": "node scripts/check-rpc-contract.mjs",
     "check:rpc-contract:db": "node scripts/check-rpc-contract-db.mjs",
     "db:validar-recusar": "node scripts/validar-migration-recusar.mjs",
+    "db:estado": "node scripts/estado-das-migrations.mjs",
     "db:capturar-baseline": "node scripts/capturar-baseline-rpcs.mjs",
     "db:validar-branding": "node scripts/validar-migration-branding.mjs",
     "medir:cronograma": "node scripts/medir-cronograma.mjs",
