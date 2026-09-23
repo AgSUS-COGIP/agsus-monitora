@@ -431,7 +431,7 @@ function resetConversation(state) {
   state.history = [];
   esquecerConversa(state.win);
   setThinking(state, false);
-  appendMessage(state, "assistant", state.content.intro);
+  appendMessage(state, "assistant", state.content.intro, { track: false });
 }
 
 /*
@@ -443,8 +443,23 @@ function resetConversation(state) {
   histórico que veio do armazenamento, e registrá-las de novo duplicaria cada
   turno a cada recarregamento.
 */
+function isStoredIntroduction(turno) {
+  return (
+    turno?.role === "assistant" &&
+    /^ol[aá]! eu sou a aya\b/i.test(String(turno.content || "").trim())
+  );
+}
+
 function restaurarConversa(state) {
-  const guardada = lerConversa(state.win);
+  const armazenada = lerConversa(state.win);
+  const guardada = armazenada.filter((turno) => !isStoredIntroduction(turno));
+
+  // Versões anteriores salvaram a apresentação no histórico. Remove essa
+  // duplicata também do sessionStorage para que ela não volte no próximo reload.
+  if (guardada.length !== armazenada.length) {
+    salvarConversa(guardada, state.win);
+  }
+
   if (!guardada.length) {
     resetConversation(state);
     return;
@@ -548,7 +563,7 @@ function createAssistant(host) {
     doc,
     "button",
     "arara-assistant__reset",
-    "Limpar",
+    "Limpar conversa",
   );
   resetButton.type = "button";
   resetButton.title = "Limpar conversa";
@@ -561,7 +576,7 @@ function createAssistant(host) {
   );
   hideButton.type = "button";
   hideButton.setAttribute("aria-label", "Minimizar Aya");
-  headerActions.append(resetButton, hideButton);
+  headerActions.append(hideButton);
   header.append(heading, headerActions);
 
   const body = element(doc, "div", "arara-assistant__body");
@@ -587,6 +602,16 @@ function createAssistant(host) {
     "Perguntas rápidas",
   );
   const suggestions = element(doc, "div", "arara-assistant__suggestions");
+
+  const conversationTools = element(
+    doc,
+    "div",
+    "arara-assistant__conversation-tools",
+  );
+  conversationTools.append(
+    element(doc, "span", "arara-assistant__conversation-label", "Conversa"),
+    resetButton,
+  );
 
   const form = element(doc, "form", "arara-assistant__form");
   const inputLabel = element(
@@ -623,7 +648,14 @@ function createAssistant(host) {
     "Enter envia · Shift+Enter quebra linha",
   );
 
-  body.append(scene, suggestionLabel, suggestions, form, composerHint);
+  body.append(
+    scene,
+    conversationTools,
+    suggestionLabel,
+    suggestions,
+    form,
+    composerHint,
+  );
   panel.append(header, body);
 
   const launcher = element(doc, "button", "arara-assistant__launcher");
@@ -662,6 +694,7 @@ function createAssistant(host) {
     title: "",
     content: genericGuide("Painel"),
     hidden: false,
+    initialized: false,
   };
 
   hideButton.addEventListener("click", () => {
@@ -729,7 +762,14 @@ export function updateAraraGuide(section, title, host) {
   state.content = content;
   state.sectionBadge.textContent = content.title;
   renderQuickSuggestions(state);
-  restaurarConversa(state);
+
+  // A conversa é restaurada uma única vez. Trocar de seção atualiza o contexto
+  // da Aya, mas não reconstrói a thread nem cria uma nova apresentação.
+  if (!state.initialized) {
+    restaurarConversa(state);
+    state.initialized = true;
+  }
+
   return root;
 }
 
