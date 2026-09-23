@@ -10028,7 +10028,18 @@ function renderDetailMap(d) {
         // Acima das unidades: é o ponto que ancora o território inteiro.
         zIndexOffset: 400,
       }).bindPopup(
-        `<b>Sede do DSEI ${esc(d.n)}</b><br>${esc(d.sede_municipio || "")}${ufDaSede ? " – " + esc(ufDaSede) : ""}`,
+        /*
+          O endereço e a origem do ponto vêm da correção das sedes
+          (`scripts/localizar-sedes-dos-dsei.mjs`). Sem eles, o popup dizia só a
+          UF — e quem via a estrela no centro da cidade não tinha como saber
+          que ela não estava no prédio.
+        */
+        `<b>Sede do DSEI ${esc(d.n)}</b>` +
+          (d.sede_endereco ? `<br>${esc(d.sede_endereco)}` : "") +
+          `<br>${[d.sede_municipio, ufDaSede].filter(Boolean).map(esc).join(" – ")}` +
+          (d.sede_cnes
+            ? `<br><span style="font-size:10px;color:#6b7d92">Endereço do CNES ${esc(d.sede_cnes)}</span>`
+            : ""),
       )
     : null;
 
