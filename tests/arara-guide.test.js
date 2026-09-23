@@ -14,7 +14,7 @@ describe("assistente Aya", () => {
   it("mantém uma única assistente e preserva a conversa na mesma seção", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
-    const input = guide.querySelector("input");
+    const input = guide.querySelector("textarea");
 
     input.value = "Como uso o mapa?";
     guide
@@ -34,9 +34,16 @@ describe("assistente Aya", () => {
 
     expect(guide.textContent).toContain("Eu sou a Aya");
     expect(guide.textContent).toContain("Saúde Indígena");
-    expect(guide.querySelector(".arara-assistant__header")).toBeNull();
+    expect(guide.querySelector(".arara-assistant__header")).not.toBeNull();
+    expect(guide.querySelector(".arara-assistant__title")?.textContent).toBe("Aya");
+    expect(guide.querySelector(".arara-assistant__status-text")?.textContent).toBe(
+      "Pronta",
+    );
     expect(guide.querySelector(".arara-stepper")).toBeNull();
-    expect(guide.querySelector(".arara-assistant__suggestions")).toBeNull();
+    expect(
+      guide.querySelectorAll(".arara-assistant__suggestions .arara-suggestion")
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it("não mostra a antiga mensagem de orientação local", () => {
@@ -68,6 +75,29 @@ describe("assistente Aya", () => {
     guide.querySelector("[data-arara-show]").click();
     expect(guide.classList.contains("is-hidden")).toBe(false);
     expect(window.localStorage.getItem(ARARA_VISIBILITY_STORAGE_KEY)).toBe("0");
+  });
+
+  it("usa textarea expansível e atalhos de teclado no composer", () => {
+    const host = document.getElementById("host");
+    const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
+    const input = guide.querySelector(".arara-assistant__input");
+
+    expect(input?.tagName).toBe("TEXTAREA");
+    expect(input?.getAttribute("maxlength")).toBe("1200");
+    expect(guide.textContent).toContain("Enter envia");
+    expect(guide.textContent).toContain("Shift+Enter");
+  });
+
+  it("mostra perguntas rápidas adequadas à seção", () => {
+    const host = document.getElementById("host");
+    const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
+
+    const suggestions = Array.from(
+      guide.querySelectorAll(".arara-suggestion"),
+      (button) => button.textContent,
+    );
+    expect(suggestions).toContain("Como uso o mapa?");
+    expect(suggestions).toContain("Quais DSEIs aparecem aqui?");
   });
 
   it("responde perguntas livres com orientação contextual", () => {
