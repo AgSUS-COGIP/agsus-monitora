@@ -120,12 +120,12 @@ describe("assistente Aya", () => {
     const hideButton = guide.querySelector(".arara-assistant__hide");
 
     expect(scene).not.toBeNull();
-    expect(scene?.contains(guide.querySelector(".arara-assistant__messages"))).toBe(
-      true,
-    );
-    expect(scene?.contains(guide.querySelector(".arara-assistant__suggestions"))).toBe(
-      true,
-    );
+    expect(
+      scene?.contains(guide.querySelector(".arara-assistant__messages")),
+    ).toBe(true);
+    expect(
+      scene?.contains(guide.querySelector(".arara-assistant__suggestions")),
+    ).toBe(true);
     expect(scene?.contains(guide.querySelector(".arara-assistant__form"))).toBe(
       true,
     );
