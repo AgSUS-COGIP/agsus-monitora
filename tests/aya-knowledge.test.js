@@ -120,6 +120,52 @@ describe("base institucional da Aya", () => {
   });
 });
 
+describe("assuntos gerais da Aya", () => {
+  it("aceita conversar além do MONITORA", () => {
+    const answer = curatedAnswerForQuestion(
+      "Pode falar de outros assuntos?",
+    );
+    expect(answer).toContain("plantas");
+    expect(answer).toContain("carros");
+    expect(answer).toContain("futebol");
+  });
+
+  it("responde noções gerais de plantas, carros e futebol", () => {
+    expect(curatedAnswerForQuestion("Como cuidar de plantas?")).toContain(
+      "drenagem",
+    );
+    expect(curatedAnswerForQuestion("Como cuidar do carro?")).toContain(
+      "manual",
+    );
+    expect(
+      curatedAnswerForQuestion("O que é impedimento no futebol?"),
+    ).toContain("participação ativa");
+  });
+
+  it("mantém medicamentos em nível educativo e com fonte da Anvisa", () => {
+    const answer = curatedAnswerForQuestion("O que é medicamento?");
+    const sources = officialSourcesForQuestion("O que é medicamento?");
+
+    expect(answer).toContain("bula");
+    expect(sources).toContainEqual(AYA_SOURCE_CATALOG.anvisaMedicamentos);
+  });
+
+  it("não inventa futebol em tempo real", () => {
+    expect(curatedAnswerForQuestion("Jogos de hoje")).toContain(
+      "fonte atual",
+    );
+  });
+
+  it("leva o escopo geral e as regras de segurança ao prompt", () => {
+    const prompt = buildAyaSystemPrompt({ question: "Como cuidar de uma planta?" });
+
+    expect(prompt).toContain("assuntos gerais");
+    expect(prompt).toContain("plantas, carros, futebol");
+    expect(prompt).toContain("não faça diagnóstico");
+    expect(prompt).toContain("Não invente placares");
+  });
+});
+
 describe("glossário do MONITORA", () => {
   it("define vaga ociosa sem depender do modelo", () => {
     const answer = curatedAnswerForQuestion("O que significa uma vaga ociosa?");
