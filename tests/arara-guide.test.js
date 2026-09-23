@@ -28,6 +28,55 @@ describe("assistente Aya", () => {
     expect(guide.textContent).toContain("DSEI");
   });
 
+  it("não duplica a apresentação quando muda de seção", () => {
+    const host = document.getElementById("host");
+    const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
+    const input = guide.querySelector("textarea");
+
+    input.value = "Como uso o mapa?";
+    guide
+      .querySelector("form")
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    updateAraraGuide("analises", "Análises", host);
+
+    const apresentacoes = Array.from(
+      guide.querySelectorAll(".arara-message--assistant .arara-message__body"),
+      (node) => node.textContent,
+    ).filter((texto) => /eu sou a aya/i.test(texto));
+
+    expect(apresentacoes).toHaveLength(1);
+    expect(guide.textContent).toContain("Como uso o mapa?");
+    expect(guide.querySelector(".arara-assistant__section")?.textContent).toBe(
+      "Análises",
+    );
+  });
+
+  it("limpar conversa apaga a thread e deixa uma única apresentação", () => {
+    const host = document.getElementById("host");
+    const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
+    const input = guide.querySelector("textarea");
+
+    input.value = "Como uso o mapa?";
+    guide
+      .querySelector("form")
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    guide.querySelector(".arara-assistant__reset").click();
+
+    expect(guide.textContent).not.toContain("Como uso o mapa?");
+    expect(guide.querySelectorAll(".arara-message--user")).toHaveLength(0);
+    expect(guide.querySelectorAll(".arara-message--assistant")).toHaveLength(1);
+    expect(
+      guide
+        .querySelector(".arara-message--assistant .arara-message__body")
+        ?.textContent,
+    ).toContain("Eu sou a Aya");
+    expect(
+      guide.querySelector(".arara-assistant__conversation-tools"),
+    ).not.toBeNull();
+  });
+
   it("usa a primeira fala para apresentar a Aya e a seção", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
