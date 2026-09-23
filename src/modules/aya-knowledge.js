@@ -125,7 +125,10 @@ export function curatedKnowledgeForQuestion(question) {
   factuais que precisam ler a tela.
 */
 const GATILHO_INTERROGATIVO =
-  /^(?:quem|quantos?|quantas?|qual|quais|como|onde|quando|em que ano|diferenca)\b/;
+  /^(?:quem|quantos?|quantas?|qual|quais|como|onde|quando|em que ano|diferenca|pode)\b/;
+
+const GATILHO_TEMPO_REAL =
+  /^(?:jogos de hoje|placar de hoje|resultado de futebol de hoje|quem ganhou hoje no futebol)\b/;
 
 /*
   Procura um verbete de `docs/aya/*.md`. Um termo solto exige verbo de
@@ -149,7 +152,8 @@ function verbeteParaPergunta(normalized, defineTerm, asksAcronym) {
     for (const termo of verbete.perguntas) {
       const dispensaVerbo =
         GATILHO_INTERROGATIVO.test(termo) ||
-        GATILHO_NOMEIA_DISTRITO.test(termo);
+        GATILHO_NOMEIA_DISTRITO.test(termo) ||
+        GATILHO_TEMPO_REAL.test(termo);
       if (!defineTerm && !asksAcronym && !dispensaVerbo) {
         continue;
       }
