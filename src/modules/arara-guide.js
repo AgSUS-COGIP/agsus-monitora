@@ -549,7 +549,9 @@ function createAssistant(host) {
   subtitle.append(status, sectionBadge);
   heading.append(eyebrow, assistantTitle, subtitle);
 
-  const headerActions = element(doc, "div", "arara-assistant__header-actions");
+  header.dataset.ninaDragHandle = "";
+  header.append(heading);
+
   const resetButton = element(
     doc,
     "button",
@@ -563,28 +565,18 @@ function createAssistant(host) {
     doc,
     "button",
     "arara-assistant__hide",
-    "Minimizar",
+    "Ocultar Aya",
   );
   hideButton.type = "button";
-  hideButton.setAttribute("aria-label", "Minimizar Aya");
-  headerActions.append(hideButton);
-  header.append(heading, headerActions);
+  hideButton.setAttribute("aria-label", "Ocultar Aya");
 
   const body = element(doc, "div", "arara-assistant__body");
   const scene = element(doc, "div", "arara-assistant__scene");
-  const avatar = doc.createElement("img");
-  avatar.className = "arara-assistant__avatar";
-  avatar.src = "/assets/arara-azul-monitora.png";
-  avatar.alt = "Aya, assistente do MONITORA";
-  avatar.width = 220;
-  avatar.height = 250;
-  avatar.dataset.ninaDragHandle = "";
 
   const messages = element(doc, "div", "arara-assistant__messages");
   messages.setAttribute("role", "log");
   messages.setAttribute("aria-live", "polite");
   messages.setAttribute("aria-relevant", "additions");
-  scene.append(avatar, messages);
 
   const suggestionLabel = element(
     doc,
@@ -599,8 +591,7 @@ function createAssistant(host) {
     "div",
     "arara-assistant__conversation-tools",
   );
-  conversationTools.append(resetButton);
-  scene.insertBefore(conversationTools, messages);
+  conversationTools.append(resetButton, hideButton);
 
   const form = element(doc, "form", "arara-assistant__form");
   const inputLabel = element(
@@ -632,7 +623,15 @@ function createAssistant(host) {
     "Enter envia · Shift+Enter quebra linha",
   );
 
-  body.append(scene, suggestionLabel, suggestions, form, composerHint);
+  scene.append(
+    conversationTools,
+    messages,
+    suggestionLabel,
+    suggestions,
+    form,
+    composerHint,
+  );
+  body.append(scene);
   panel.append(header, body);
 
   const launcher = element(doc, "button", "arara-assistant__launcher");
