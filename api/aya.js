@@ -357,7 +357,7 @@ export default async function handler(req, res) {
     if (inventados.length) {
       return json(res, 200, {
         answer:
-          "Não vou afirmar isso: a resposta que eu montei trazia número que não está na minha base nem nos dados desta tela, e não tenho como confirmá-lo. Posso responder o que estiver carregado aqui, e para dados de um distrito a fonte é o Plano Distrital de Saúde Indígena correspondente.",
+          "Não vou afirmar esse número sem uma referência confiável. Posso responder sem esse dado exato ou, quando houver uma fonte adequada disponível, usar o valor confirmado. Para informações atuais, como placares, preços ou notícias, preciso de uma fonte atual.",
         sources: safeSources(paraConhecimento),
         provider: "recusa-por-numero-sem-lastro",
         numeros_descartados: inventados.slice(0, 5),
