@@ -1,7 +1,7 @@
 import { formatAyaPageContext } from "./aya-page-context.js";
 import { VERBETES_AYA } from "./aya-conhecimento-gerado.js";
 
-export const AYA_KNOWLEDGE_UPDATED_AT = "2026-09-17";
+export const AYA_KNOWLEDGE_UPDATED_AT = "2026-09-23";
 
 export const AYA_SOURCE_CATALOG = Object.freeze({
   sesai: Object.freeze({
@@ -23,6 +23,11 @@ export const AYA_SOURCE_CATALOG = Object.freeze({
     id: "funai",
     label: "Funai — Terras Indígenas e aldeias",
     url: "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
+  }),
+  funaiInstitucional: Object.freeze({
+    id: "funai-institucional",
+    label: "Funai — Institucional",
+    url: "https://www.gov.br/funai/pt-br/acesso-a-informacao/institucional/Institucional",
   }),
   ibge: Object.freeze({
     id: "ibge",
@@ -50,8 +55,9 @@ const SOURCE_RULES = Object.freeze([
     /\b(dsei|dseis|distrito sanit[aá]rio especial ind[ií]gena|polo base|sesai|sasisus|sa[uú]de ind[ií]gena)\b/i,
     ["dsei", "sesai"],
   ],
+  [/\bfunai\b/i, ["funaiInstitucional"]],
   [
-    /\b(aldeia|aldeias|terra ind[ií]gena|terras ind[ií]genas|demarca[cç][aã]o|funai)\b/i,
+    /\b(aldeia|aldeias|terra ind[ií]gena|terras ind[ií]genas|demarca[cç][aã]o)\b/i,
     ["funai"],
   ],
   [
@@ -101,7 +107,7 @@ export function curatedKnowledgeForQuestion(question) {
   factuais que precisam ler a tela.
 */
 const GATILHO_INTERROGATIVO =
-  /^(?:quem|quantos?|quantas?|qual|quais|como|onde|diferenca)\b/;
+  /^(?:quem|quantos?|quantas?|qual|quais|como|onde|quando|em que ano|diferenca)\b/;
 
 /*
   Procura um verbete de `docs/aya/*.md`. Um termo solto exige verbo de
