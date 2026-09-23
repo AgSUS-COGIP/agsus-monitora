@@ -119,19 +119,12 @@
 }
 
 .arara-assistant__conversation-tools {
+  position: absolute;
+  z-index: 6;
+  top: 10px;
+  right: 10px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 8px 2px 0;
-}
-
-.arara-assistant__conversation-label {
-  color: var(--muted, #60758f);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .arara-assistant__hide,
@@ -785,10 +778,6 @@ html[data-theme="dark"] .arara-assistant__launcher {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .arara-assistant__reset {
-    display: none;
-  }
-
   .arara-assistant__section {
     max-width: 110px;
   }
@@ -801,6 +790,7 @@ html[data-theme="dark"] .arara-assistant__launcher {
 
   .arara-assistant__messages {
     min-height: 158px;
+    padding-top: 46px;
     padding-left: 84px;
   }
 
