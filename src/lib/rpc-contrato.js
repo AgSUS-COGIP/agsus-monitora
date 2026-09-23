@@ -203,6 +203,39 @@ export const CONTRATO_RPC = {
       "Remove logicamente um candidato sub judice preservando o histórico.",
   },
 
+  // ── Lista de convocação ─────────────────────────────────────────────────
+  listar_modelos_convocacao: {
+    argumentos: [],
+    critica: true,
+    resumo: "Lista os modelos de regras disponíveis para convocação.",
+  },
+  listar_configuracao_convocacao: {
+    argumentos: [],
+    critica: true,
+    resumo: "Lista a configuração de convocação dos editais.",
+  },
+  salvar_modelo_convocacao: {
+    argumentos: ["p_modelo"],
+    critica: true,
+    resumo: "Cria ou atualiza um modelo de regras de convocação.",
+  },
+  remover_modelo_convocacao: {
+    argumentos: ["p_modelo_id"],
+    critica: true,
+    resumo: "Remove um modelo de convocação quando não está em uso.",
+  },
+  salvar_configuracao_convocacao: {
+    argumentos: [
+      "p_edital_id",
+      "p_proporcionalidade",
+      "p_modelo_id",
+      "p_padrao_imediata",
+      "p_vagas",
+    ],
+    critica: true,
+    resumo: "Grava modelo, proporcionalidade e vagas imediatas de um edital.",
+  },
+
   // ── Análises ────────────────────────────────────────────────────────────
   get_analises_dashboard_payload_v2: {
     argumentos: ["p_scope"],
