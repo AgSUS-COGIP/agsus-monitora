@@ -41,6 +41,20 @@ function fixture() {
           return L.tileLayer(url, options);
         },
     },
+    /*
+      Os nomes por cima do satélite (o "híbrido") são um grupo de camadas. Não
+      é fundo: os casos abaixo contam fundos, e separam-no com `ehRotulo`.
+    */
+    layerGroup(camadas) {
+      return {
+        ehRotulo: true,
+        camadas,
+        addTo() {
+          layers.add(this);
+          return this;
+        },
+      };
+    },
     tileLayer(url, options) {
       const events = {};
       return {
@@ -64,6 +78,8 @@ function fixture() {
   return { map, base, layers, element };
 }
 
+const semRotulos = (layers) => [...layers].filter((l) => !l.ehRotulo);
+
 describe("recuperação das camadas do mapa", () => {
   it("troca a camada e o estado do botão juntos, preservando os pontos", () => {
     const { map, base, layers, element } = fixture();
@@ -71,7 +87,7 @@ describe("recuperação das camadas do mapa", () => {
     layers.add(marker);
     for (let i = 0; i < 4; i++) base.fire("tileerror");
     expect(map.hasLayer(base)).toBe(false);
-    expect(layers.size).toBe(2);
+    expect(semRotulos(layers)).toHaveLength(2);
     expect(layers.has(marker)).toBe(true);
     expect(
       element
@@ -87,7 +103,7 @@ describe("recuperação das camadas do mapa", () => {
       base.fire("tileerror");
       satellite.fire("tileerror");
     }
-    expect([...layers]).toEqual([satellite]);
+    expect(semRotulos(layers)).toEqual([satellite]);
     expect(map.__agsusBaseMapMode).toBe("satellite");
   });
   it("permite tentar novamente pelo botão sem acumular fundos", () => {
@@ -97,6 +113,15 @@ describe("recuperação das camadas do mapa", () => {
     expect([...layers]).toEqual([base]);
     base.fire("tileload");
     element.querySelector('[data-map-mode="satellite"]').click();
-    expect(layers.size).toBe(1);
+    expect(semRotulos(layers)).toHaveLength(1);
+  });
+
+  // O "híbrido": os nomes entram com a foto e saem com ela.
+  it("os nomes acompanham o satélite, e só ele", () => {
+    const { layers, element } = fixture();
+    element.querySelector('[data-map-mode="satellite"]').click();
+    expect([...layers].some((l) => l.ehRotulo)).toBe(true);
+    element.querySelector('[data-map-mode="map"]').click();
+    expect([...layers].some((l) => l.ehRotulo)).toBe(false);
   });
 });

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Bancada do mapa vetorial</title>
+    <!--
+      O seletor Mapa/Satélite de verdade, sem login: `npm run dev:frontend` e
+      abrir /bench/mapa-vetorial-na-bancada.html. O mapa tem id "map", como o
+      nacional, para receber o vetorial.
+    -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <link rel="stylesheet" href="/src/styles/map-base-layer-switcher.css" />
+    <style>
+      :root {
+        --line: #d7e5f2;
+        --card: #ffffff;
+        --muted: #5f6f86;
+        --radius: 18px;
+        --shadow: 0 4px 14px rgba(15, 35, 60, 0.06);
+      }
+      html,
+      body,
+      #map {
+        height: 100%;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script type="module">
+      import { installMapBaseLayerSwitcher } from "/src/modules/map-base-layer-switcher.js";
+
+      installMapBaseLayerSwitcher();
+      const mapa = L.map("map", { zoomSnap: 0.25, zoomDelta: 0.5 });
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "© OpenStreetMap",
+      }).addTo(mapa);
+      // A sede do DSEI Xingu, em Canarana.
+      mapa.setView([-13.549506, -52.274001], 16);
+      L.marker([-13.549506, -52.274001]).addTo(mapa);
+      window.__bancada = { mapa };
+    </script>
+  </body>
+</html>
