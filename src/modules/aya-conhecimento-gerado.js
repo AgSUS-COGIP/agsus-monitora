@@ -421,7 +421,8 @@ export const VERBETES_AYA = Object.freeze([
       "São três, da aldeia para cima: o Conselho Local de Saúde Indígena (CLSI), consultivo, com representantes eleitos pelas comunidades; o Conselho Distrital de Saúde Indígena (CONDISI), um por DSEI, deliberativo e de composição paritária; e o Fórum de Presidentes dos CONDISI (FPCONDISI), consultivo, que reúne os 34 presidentes e assessora a SESAI.",
     fato: "O controle social da saúde indígena tem três instâncias: CLSI na aldeia, CONDISI no distrito e FPCONDISI no âmbito nacional.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
-  },  {
+  },
+  {
     titulo: "Assuntos gerais",
     perguntas: [
       "assuntos gerais",
@@ -550,5 +551,4 @@ export const VERBETES_AYA = Object.freeze([
     fato: "Fotossíntese é a conversão de energia luminosa em energia química por plantas, algas e alguns microrganismos, com uso de água e dióxido de carbono e liberação de oxigênio.",
     fonte: "conhecimento geral",
   },
-
 ]);
