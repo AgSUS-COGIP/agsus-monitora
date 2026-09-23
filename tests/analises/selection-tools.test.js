@@ -28,15 +28,17 @@ it("seleciona e limpa todas as unidades e editais", async () => {
   await import("../../src/analises/analises-selection-tools.js");
   document.dispatchEvent(new Event("DOMContentLoaded"));
 
-  const unitActions = units.closest(".scope-guard-field").querySelectorAll(".scope-guard-link");
+  const unitActions = units
+    .closest(".scope-guard-field")
+    .querySelectorAll(".scope-guard-link");
   expect(unitActions).toHaveLength(2);
   expect(units.options[0].textContent).toBe("DSEI Parintins");
 
   unitActions[0].click();
-  expect([...units.options].every(option => option.selected)).toBe(true);
+  expect([...units.options].every((option) => option.selected)).toBe(true);
   expect(changeSpy).toHaveBeenCalledTimes(1);
 
   unitActions[1].click();
-  expect([...units.options].every(option => !option.selected)).toBe(true);
+  expect([...units.options].every((option) => !option.selected)).toBe(true);
   expect(changeSpy).toHaveBeenCalledTimes(2);
 });

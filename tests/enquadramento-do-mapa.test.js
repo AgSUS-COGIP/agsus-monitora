@@ -438,12 +438,17 @@ describe("a legenda descreve os marcadores que existem", () => {
 
   /*
     A mancha das Terras Indígenas ganhou destaque no mapa; era a única coisa
-    desenhada que a legenda não explicava.
+    desenhada que a legenda não explicava. Hoje são três fases, e quem as
+    desenha é `legenda-das-terras.js`; aqui fica o ponto onde ela é montada,
+    com o título a valer de texto até o mapa existir.
   */
   it("a mancha das Terras Indígenas é explicada", () => {
     const fn = modulo.slice(modulo.indexOf("export function htmlDaLegenda"));
-    expect(fn).toContain("Terra Indígena (Funai)");
-    expect(css).toContain(".health-map-legenda-terra");
+    expect(fn).toContain("data-legenda-das-terras");
+    expect(fn).toContain("TITULO_DA_LEGENDA");
+    expect(readFileSync("src/styles/legenda-das-terras.css", "utf8")).toContain(
+      ".legenda-terra__amostra--definitiva",
+    );
   });
 
   it("é aplicada no arranque", () => {

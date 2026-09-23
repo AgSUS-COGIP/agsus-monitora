@@ -11,9 +11,9 @@ describe("contexto fixo da Aya por página", () => {
     expect(profile.purpose).toContain("DSEIs/CASAIs");
   });
 
-  it("reconhece Equipe Núcleo e Análises", () => {
-    expect(ayaPageContextFor("nucleo", "Equipe Núcleo").name).toBe(
-      "Equipe Núcleo",
+  it("reconhece Editais e Análises", () => {
+    expect(ayaPageContextFor("nucleo", "Editais").name).toBe(
+      "Editais",
     );
     expect(ayaPageContextFor("panel:analises", "Análises").name).toBe(
       "Análises",

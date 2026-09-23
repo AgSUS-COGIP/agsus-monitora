@@ -69,15 +69,15 @@ const GUIDES = Object.freeze({
     ],
   },
   nucleo: {
-    title: "Equipe Núcleo",
+    title: "Editais",
     intro:
-      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você na Equipe Núcleo e posso ajudar a localizar editais, entender etapas, cronogramas e ações disponíveis. O que você quer saber?",
+      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você em Editais e posso ajudar a localizar processos seletivos, entender etapas, cronogramas e ações disponíveis. O que você quer saber?",
     topics: [
       {
         label: "Processos",
         keywords: ["localizar", "buscar", "pesquisar", "processo", "edital"],
         answer:
-          "Use a busca da Equipe Núcleo para localizar por edital, unidade ou situação. Depois abra o registro correspondente para conferir cronograma e informações operacionais.",
+          "Use a busca de Editais para localizar por edital, unidade ou situação. Depois abra o registro correspondente para conferir cronograma e informações operacionais.",
       },
       {
         label: "Cronograma",
@@ -141,6 +141,43 @@ const GUIDES = Object.freeze({
   },
 });
 
+const QUICK_SUGGESTIONS = Object.freeze({
+  dashboard: Object.freeze([
+    "Como uso o mapa?",
+    "Quais DSEIs aparecem aqui?",
+    "Explique os filtros ativos",
+  ]),
+  nucleo: Object.freeze([
+    "Quais editais aparecem aqui?",
+    "Explique o cronograma",
+    "Como localizo um processo?",
+  ]),
+  config: Object.freeze([
+    "Explique os acessos",
+    "O que posso alterar aqui?",
+    "Como salvar com segurança?",
+  ]),
+  analises: Object.freeze([
+    "Como encontro um registro na fila?",
+    "Explique os filtros ativos",
+    "Como leio este gráfico?",
+  ]),
+  generic: Object.freeze([
+    "O que você consegue fazer?",
+    "Explique esta tela",
+    "Como começo?",
+  ]),
+});
+
+const PROVIDER_LABELS = Object.freeze({
+  "curated-official": "Fonte oficial",
+  "monitora-local-context": "Dados desta tela",
+  "ollama-local": "IA local",
+  "recusa-por-numero-sem-lastro": "Validação de segurança",
+  "orientacao-local": "Orientação do MONITORA",
+  "local-fallback": "Apoio local",
+});
+
 const assistantState = new WeakMap();
 
 function normalizeText(value) {
@@ -174,6 +211,13 @@ export function guideForSection(section, title = "") {
     return GUIDES.analises;
   }
   return GUIDES[section] || genericGuide(title);
+}
+
+function quickSuggestionsForSection(section, title = "") {
+  if (section.startsWith("panel:") && /an[aá]lises/i.test(title)) {
+    return QUICK_SUGGESTIONS.analises;
+  }
+  return QUICK_SUGGESTIONS[section] || QUICK_SUGGESTIONS.generic;
 }
 
 function scoreTopic(question, topic) {
@@ -236,6 +280,10 @@ function element(doc, tag, className, text = "") {
   return node;
 }
 
+function providerLabel(provider) {
+  return PROVIDER_LABELS[String(provider || "")] || "";
+}
+
 function appendMessage(state, role, text, options = {}) {
   const message = element(
     state.doc,
@@ -250,6 +298,13 @@ function appendMessage(state, role, text, options = {}) {
   );
   const body = element(state.doc, "p", "arara-message__body", text);
   message.append(author, body);
+
+  const origin = role === "assistant" ? providerLabel(options.provider) : "";
+  if (origin) {
+    const meta = element(state.doc, "div", "arara-message__meta");
+    meta.append(element(state.doc, "span", "arara-message__origin", origin));
+    message.append(meta);
+  }
 
   const sources = Array.isArray(options.sources) ? options.sources : [];
   if (role === "assistant" && sources.length) {
@@ -280,22 +335,95 @@ function appendMessage(state, role, text, options = {}) {
   return message;
 }
 
+function setStatus(state, status = "ready") {
+  const labels = {
+    ready: "Pronta",
+    thinking: "Pensando",
+    limited: "Apoio local",
+  };
+  const safeStatus = labels[status] ? status : "ready";
+  state.root.dataset.status = safeStatus;
+  if (state.statusText) state.statusText.textContent = labels[safeStatus];
+}
+
+function resizeComposer(state) {
+  if (!state?.input) return;
+  const minHeight = 56;
+  const maxHeight = 132;
+  state.input.style.height = "auto";
+  const measured = Number(state.input.scrollHeight) || minHeight;
+  state.input.style.height = `${Math.min(
+    maxHeight,
+    Math.max(minHeight, measured),
+  )}px`;
+  state.input.style.overflowY = measured > maxHeight ? "auto" : "hidden";
+}
+
 function setThinking(state, active) {
   state.busy = Boolean(active);
   state.input.disabled = state.busy;
   state.sendButton.disabled = state.busy;
+  state.root.classList.toggle("is-thinking", state.busy);
+
   if (state.thinking?.isConnected) state.thinking.remove();
   state.thinking = null;
-  if (!state.busy) return;
+
+  if (!state.busy) {
+    state.root.removeAttribute("aria-busy");
+    if (state.root.dataset.status === "thinking") setStatus(state, "ready");
+    state.sendButton.setAttribute("aria-label", "Enviar pergunta");
+    return;
+  }
+
+  setStatus(state, "thinking");
+  state.root.setAttribute("aria-busy", "true");
+  state.sendButton.setAttribute("aria-label", "Aya está pensando");
+
   state.thinking = element(
     state.doc,
     "div",
     "arara-assistant__thinking",
-    "Aya está pensando…",
   );
   state.thinking.setAttribute("role", "status");
+  state.thinking.setAttribute("aria-live", "polite");
+  state.thinking.append(
+    element(
+      state.doc,
+      "span",
+      "arara-assistant__thinking-label",
+      "Aya está analisando sua pergunta",
+    ),
+  );
+  const dots = element(state.doc, "span", "arara-assistant__thinking-dots");
+  dots.setAttribute("aria-hidden", "true");
+  dots.append(
+    element(state.doc, "i", ""),
+    element(state.doc, "i", ""),
+    element(state.doc, "i", ""),
+  );
+  state.thinking.append(dots);
   state.messages.append(state.thinking);
   state.messages.scrollTop = state.messages.scrollHeight;
+}
+
+function renderQuickSuggestions(state) {
+  const suggestions = quickSuggestionsForSection(state.section, state.title);
+  state.suggestions.replaceChildren();
+  state.suggestionLabel.hidden = !suggestions.length;
+
+  for (const suggestion of suggestions) {
+    const button = element(
+      state.doc,
+      "button",
+      "arara-suggestion",
+      suggestion,
+    );
+    button.type = "button";
+    button.addEventListener("click", () => {
+      if (!state.busy) ask(state, suggestion);
+    });
+    state.suggestions.append(button);
+  }
 }
 
 function resetConversation(state) {
@@ -338,9 +466,14 @@ async function ask(state, question) {
   const local = localAraraAnswer(state.section, state.title, cleanQuestion);
   appendMessage(state, "user", cleanQuestion);
   state.input.value = "";
+  resizeComposer(state);
 
   if (!shouldAskAyaAi(cleanQuestion, local.matched)) {
-    appendMessage(state, "assistant", local.answer);
+    appendMessage(state, "assistant", local.answer, {
+      provider: "orientacao-local",
+    });
+    setStatus(state, "ready");
+    state.input.focus();
     return;
   }
 
@@ -353,9 +486,14 @@ async function ask(state, question) {
     doc: state.doc,
   });
   setThinking(state, false);
+
   appendMessage(state, "assistant", result.answer || local.answer, {
     sources: result.sources,
+    provider:
+      result.provider ||
+      (result.unavailable ? "local-fallback" : "ollama-local"),
   });
+  setStatus(state, result.unavailable ? "limited" : "ready");
   state.input.focus();
 }
 
@@ -363,6 +501,7 @@ function setHidden(state, hidden, persist = true) {
   state.hidden = Boolean(hidden);
   state.root.classList.toggle("is-hidden", state.hidden);
   state.panel.hidden = state.hidden;
+  state.panel.setAttribute("aria-hidden", state.hidden ? "true" : "false");
   state.launcher.hidden = !state.hidden;
   if (persist) writeHiddenPreference(state.win, state.hidden);
 }
@@ -372,25 +511,60 @@ function createAssistant(host) {
   const win = doc.defaultView || window;
   const root = element(doc, "section", "arara-assistant");
   root.dataset.araraGuide = "";
+  root.dataset.status = "ready";
   root.setAttribute("aria-label", "Assistente Aya");
 
   const panel = element(doc, "div", "arara-assistant__panel");
-  const body = element(doc, "div", "arara-assistant__body");
+
+  const header = element(doc, "div", "arara-assistant__header");
+  const heading = element(doc, "div", "arara-assistant__heading");
+  const eyebrow = element(doc, "span", "arara-assistant__eyebrow", "MONITORA");
+  const assistantTitle = element(
+    doc,
+    "strong",
+    "arara-assistant__title",
+    "Aya",
+  );
+  const subtitle = element(doc, "div", "arara-assistant__subtitle");
+  const status = element(doc, "span", "arara-assistant__status");
+  const statusText = element(
+    doc,
+    "span",
+    "arara-assistant__status-text",
+    "Pronta",
+  );
+  status.append(statusText);
   const sectionBadge = element(
     doc,
     "span",
-    "arara-assistant__section arara-visually-hidden",
+    "arara-assistant__section",
+    "Painel",
   );
+  subtitle.append(status, sectionBadge);
+  heading.append(eyebrow, assistantTitle, subtitle);
+
+  const headerActions = element(doc, "div", "arara-assistant__header-actions");
+  const resetButton = element(
+    doc,
+    "button",
+    "arara-assistant__reset",
+    "Limpar",
+  );
+  resetButton.type = "button";
+  resetButton.title = "Limpar conversa";
 
   const hideButton = element(
     doc,
     "button",
     "arara-assistant__hide",
-    "Ocultar Aya",
+    "Minimizar",
   );
   hideButton.type = "button";
-  hideButton.setAttribute("aria-label", "Ocultar Aya");
+  hideButton.setAttribute("aria-label", "Minimizar Aya");
+  headerActions.append(resetButton, hideButton);
+  header.append(heading, headerActions);
 
+  const body = element(doc, "div", "arara-assistant__body");
   const scene = element(doc, "div", "arara-assistant__scene");
   const avatar = doc.createElement("img");
   avatar.className = "arara-assistant__avatar";
@@ -406,6 +580,14 @@ function createAssistant(host) {
   messages.setAttribute("aria-relevant", "additions");
   scene.append(avatar, messages);
 
+  const suggestionLabel = element(
+    doc,
+    "span",
+    "arara-assistant__quick-label",
+    "Perguntas rápidas",
+  );
+  const suggestions = element(doc, "div", "arara-assistant__suggestions");
+
   const form = element(doc, "form", "arara-assistant__form");
   const inputLabel = element(
     doc,
@@ -413,29 +595,36 @@ function createAssistant(host) {
     "arara-visually-hidden",
     "Pergunta para a Aya",
   );
-  const input = doc.createElement("input");
+  const input = doc.createElement("textarea");
   input.className = "arara-assistant__input";
-  input.type = "text";
-  input.placeholder = "Pergunte para a Aya...";
+  input.rows = 1;
+  input.maxLength = 1200;
+  input.placeholder =
+    "Pergunte sobre a tela, editais, vagas, DSEIs ou saúde indígena…";
   input.autocomplete = "off";
+  input.dataset.ayaPlaceholderManaged = "1";
   inputLabel.htmlFor = "araraAssistantInput";
   input.id = "araraAssistantInput";
-  const sendButton = element(doc, "button", "arara-assistant__send", "Enviar");
-  sendButton.type = "submit";
-  form.append(inputLabel, input, sendButton);
 
-  const actions = element(doc, "div", "arara-assistant__actions");
-  const resetButton = element(
+  const sendButton = element(
     doc,
     "button",
-    "arara-assistant__reset",
-    "Recomeçar",
+    "arara-assistant__send",
+    "Enviar",
   );
-  resetButton.type = "button";
-  actions.append(resetButton);
+  sendButton.type = "submit";
+  sendButton.setAttribute("aria-label", "Enviar pergunta");
+  form.append(inputLabel, input, sendButton);
 
-  body.append(sectionBadge, hideButton, scene, form, actions);
-  panel.append(body);
+  const composerHint = element(
+    doc,
+    "div",
+    "arara-assistant__composer-hint",
+    "Enter envia · Shift+Enter quebra linha",
+  );
+
+  body.append(scene, suggestionLabel, suggestions, form, composerHint);
+  panel.append(header, body);
 
   const launcher = element(doc, "button", "arara-assistant__launcher");
   launcher.type = "button";
@@ -458,7 +647,10 @@ function createAssistant(host) {
     panel,
     launcher,
     sectionBadge,
+    statusText,
     messages,
+    suggestionLabel,
+    suggestions,
     form,
     input,
     sendButton,
@@ -484,12 +676,33 @@ function createAssistant(host) {
     event.preventDefault();
     ask(state, input.value);
   });
+  input.addEventListener("input", () => resizeComposer(state));
+  input.addEventListener("keydown", (event) => {
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey ||
+      event.isComposing ||
+      state.busy
+    ) {
+      return;
+    }
+    event.preventDefault();
+    if (typeof form.requestSubmit === "function") {
+      form.requestSubmit();
+    } else {
+      form.dispatchEvent(
+        new win.Event("submit", { bubbles: true, cancelable: true }),
+      );
+    }
+  });
   resetButton.addEventListener("click", () => {
     resetConversation(state);
     input.focus();
   });
 
   assistantState.set(root, state);
+  setStatus(state, "ready");
+  resizeComposer(state);
   setHidden(state, readHiddenPreference(win), false);
   return root;
 }
@@ -515,6 +728,7 @@ export function updateAraraGuide(section, title, host) {
   state.title = title;
   state.content = content;
   state.sectionBadge.textContent = content.title;
+  renderQuickSuggestions(state);
   restaurarConversa(state);
   return root;
 }

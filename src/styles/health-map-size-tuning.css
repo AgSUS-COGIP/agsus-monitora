@@ -10,16 +10,18 @@
   --health-map-painel: clamp(250px, 20%, 300px);
 }
 
-#page-dashboard .health-map-brasil-layout {
-  grid-template-columns: minmax(0, 1fr) clamp(280px, 22%, 330px);
-}
-
-/* A lista ocupa menos largura e mostra mais territorios sem dominar o mapa. */
+/*
+  Densidade da lista de unidades do painel de detalhe. A lista nacional
+  ("Territórios por vagas") fica de fora: a largura dela vem da regra de
+  origem em health-map-workspace.css e a linha é .health-map-unit--ranking.
+*/
 #page-dashboard .health-map-units__list {
   padding: 5px;
 }
 
-#page-dashboard .health-map-unit {
+#page-dashboard
+  .health-map-units:not(.health-map-brasil-painel)
+  .health-map-unit {
   grid-template-columns: 24px minmax(0, 1fr) auto;
   gap: 5px;
   margin-bottom: 3px;
@@ -27,18 +29,28 @@
   border-radius: 8px;
 }
 
-#page-dashboard .health-map-unit__icon {
+#page-dashboard
+  .health-map-units:not(.health-map-brasil-painel)
+  .health-map-unit__icon {
   width: 24px;
   height: 24px;
 }
 
-#page-dashboard .health-map-unit strong {
+#page-dashboard
+  .health-map-units:not(.health-map-brasil-painel)
+  .health-map-unit
+  strong {
   font-size: 11.5px;
   line-height: 1.15;
 }
 
-#page-dashboard .health-map-unit small,
-#page-dashboard .health-map-unit__type {
+#page-dashboard
+  .health-map-units:not(.health-map-brasil-painel)
+  .health-map-unit
+  small,
+#page-dashboard
+  .health-map-units:not(.health-map-brasil-painel)
+  .health-map-unit__type {
   font-size: 8.5px;
 }
 
@@ -47,20 +59,11 @@
     --health-map-height: clamp(580px, 74vh, 820px);
     --health-map-painel: clamp(240px, 22%, 285px);
   }
-
-  #page-dashboard .health-map-brasil-layout {
-    grid-template-columns: minmax(0, 1fr) clamp(270px, 25%, 310px);
-  }
 }
 
 @media (max-width: 900px) {
   #page-dashboard .health-map-workspace {
     --health-map-height: clamp(500px, 66vh, 680px);
-  }
-
-  #page-dashboard .health-map-brasil-layout {
-    grid-template-columns: minmax(0, 1fr);
-    height: auto;
   }
 
   #page-dashboard .health-map-units {

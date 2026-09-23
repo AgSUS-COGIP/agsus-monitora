@@ -3,13 +3,6 @@
 .env.*
 node_modules
 dist
+.cache
 test-results
 playwright-report
-laravel/.env
-laravel/.env.*
-laravel/vendor
-laravel/resources/frontend
-laravel/public/assets
-laravel/public/icons
-laravel/storage/logs/*
-laravel/bootstrap/cache/*.php

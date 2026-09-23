@@ -19,10 +19,10 @@ import {
   paginateApprovedCandidates,
 } from "../lib/lista-aprovados-rules.js";
 import { ativarMultiSelectBusca } from "./multi-select-busca.js";
-import { createListaConvocacaoController } from "./lista-convocacao.js";
+import { PLANILHAS } from "../lib/planilhas.js";
 
-const BUCKET = "listas-aprovados";
-const MODEL_URL = "/modelos/modelo-importacao-lista-aprovados.xlsx";
+const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;
+const MODEL_URL = PLANILHAS.modeloListaAprovados.url;
 const CANDIDATES_PAGE_SIZE = 1000;
 
 /** Linhas por página da tabela. Tem de existir como opção em `#approvedPageSize`. */
@@ -840,6 +840,11 @@ export function createListaAprovadosController(options = {}) {
     document
       .getElementById("approvedImportDownloadCurrent")
       ?.addEventListener("click", () => void downloadCurrentFile());
+    const modelLink = document.getElementById("approvedImportModelLink");
+    if (modelLink) {
+      modelLink.href = MODEL_URL;
+      modelLink.download = PLANILHAS.modeloListaAprovados.nomeDoArquivo;
+    }
     document
       .querySelectorAll("[data-close-approved-modal]")
       .forEach((button) => {

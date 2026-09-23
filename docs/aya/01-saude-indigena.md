@@ -51,6 +51,13 @@ Como a atenção à saúde dos povos indígenas está organizada no Brasil.
 **fato:** O Censo 2022 do IBGE identificou 391 povos indígenas e 295 línguas indígenas. Não confunda com os números do Censo 2010, que eram 305 povos e 274 línguas.
 **fonte:** https://www.gov.br/funai/pt-br/assuntos/noticias/2025/censo-2022-identifica-391-povos-e-295-linguas-indigenas-e-reforca-necessidade-de-atuacao-integrada-entre-os-entes-federados
 
+## Criação da Funai
+
+**perguntas:** quando criou a funai | quando foi criada a funai | quando a funai foi criada | em que ano foi criada a funai
+**resposta:** A Funai foi criada pela Lei nº 5.371, de 5 de dezembro de 1967. A fundação é o órgão indigenista oficial do Estado brasileiro.
+**fato:** A Funai foi criada pela Lei nº 5.371, de 5 de dezembro de 1967.
+**fonte:** https://www.gov.br/funai/pt-br/acesso-a-informacao/institucional/Institucional
+
 ## Terra Indígena
 
 **perguntas:** terra indigena | terras indigenas | o que e terra indigena | demarcacao

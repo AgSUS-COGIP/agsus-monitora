@@ -43,7 +43,7 @@ describe("efeito de fala da Aya", () => {
   });
 
   it("adapta a abertura à seção atual", () => {
-    expect(araraOpeningMessage("nucleo", "Equipe Núcleo")).toContain(
+    expect(araraOpeningMessage("nucleo", "Editais")).toContain(
       "cronograma",
     );
     expect(araraOpeningMessage("config", "Configurações")).toContain("acessos");

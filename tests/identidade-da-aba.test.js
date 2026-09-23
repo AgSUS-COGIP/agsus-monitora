@@ -29,7 +29,7 @@ describe("a aba identifica MONITORA", () => {
   it("mantém a marca ao navegar e receber configuração antiga", () => {
     for (const section of [
       "Saúde Indígena",
-      "Equipe Núcleo",
+      "Editais",
       "Configurações",
       "Análises",
       "",

@@ -30,12 +30,6 @@ const IGNORAR = new Set([
 
 // O próprio verificador contém os padrões que procura.
 const ESTE_FICHEIRO = "scripts/check-supabase-auth-architecture.mjs";
-// Cópias do build já verificado e dependências Composer, equivalentes a dist/node_modules.
-const GERADOS_LARAVEL = new Set([
-  "laravel/public/assets",
-  "laravel/resources/frontend",
-  "laravel/vendor",
-]);
 const EXTENSOES = new Set([".js", ".mjs", ".ts", ".html"]);
 
 const PADROES = [
@@ -73,8 +67,6 @@ function percorrer(dir) {
   return readdirSync(dir).flatMap((nome) => {
     if (IGNORAR.has(nome)) return [];
     const caminho = join(dir, nome);
-    if (GERADOS_LARAVEL.has(relative(".", caminho).replaceAll("\\", "/")))
-      return [];
     return statSync(caminho).isDirectory() ? percorrer(caminho) : [caminho];
   });
 }

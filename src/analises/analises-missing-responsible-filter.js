@@ -1,12 +1,13 @@
 const FILTER_VALUE = "Sem responsável";
 const ACTIVE_CLASS = "is-active";
 
-const txt = value => String(value ?? "").trim();
-const norm = value => txt(value)
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .toLowerCase()
-  .replace(/\s+/g, " ");
+const txt = (value) => String(value ?? "").trim();
+const norm = (value) =>
+  txt(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 
 function isMissingResponsibleItem(element) {
   return norm(element?.querySelector("b")?.textContent) === "sem responsavel";
@@ -14,7 +15,7 @@ function isMissingResponsibleItem(element) {
 
 function filterInput() {
   return document.querySelector(
-    `#ms-options-fResponsavel input[value="${CSS.escape(FILTER_VALUE)}"]`
+    `#ms-options-fResponsavel input[value="${CSS.escape(FILTER_VALUE)}"]`,
   );
 }
 
@@ -23,16 +24,18 @@ function clearButton() {
 }
 
 function syncCardState() {
-  document.querySelectorAll("#attentionList .attention-item").forEach(item => {
-    if (!isMissingResponsibleItem(item)) return;
+  document
+    .querySelectorAll("#attentionList .attention-item")
+    .forEach((item) => {
+      if (!isMissingResponsibleItem(item)) return;
 
-    const input = filterInput();
-    item.dataset.missingResponsibleFilter = "true";
-    item.tabIndex = 0;
-    item.setAttribute("role", "button");
-    item.setAttribute("aria-label", "Filtrar análises sem responsável");
-    item.classList.toggle(ACTIVE_CLASS, Boolean(input?.checked));
-  });
+      const input = filterInput();
+      item.dataset.missingResponsibleFilter = "true";
+      item.tabIndex = 0;
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-label", "Filtrar análises sem responsável");
+      item.classList.toggle(ACTIVE_CLASS, Boolean(input?.checked));
+    });
 }
 
 function toggleMissingResponsibleFilter() {
@@ -79,21 +82,25 @@ function installStyles() {
 }
 
 function bindEvents() {
-  document.addEventListener("click", event => {
-    const item = event.target?.closest?.(
-      '#attentionList .attention-item[data-missing-responsible-filter="true"]'
-    );
-    if (!item) return;
+  document.addEventListener(
+    "click",
+    (event) => {
+      const item = event.target?.closest?.(
+        '#attentionList .attention-item[data-missing-responsible-filter="true"]',
+      );
+      if (!item) return;
 
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    toggleMissingResponsibleFilter();
-  }, true);
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleMissingResponsibleFilter();
+    },
+    true,
+  );
 
-  document.addEventListener("keydown", event => {
+  document.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     const item = event.target?.closest?.(
-      '#attentionList .attention-item[data-missing-responsible-filter="true"]'
+      '#attentionList .attention-item[data-missing-responsible-filter="true"]',
     );
     if (!item) return;
 
@@ -101,13 +108,15 @@ function bindEvents() {
     toggleMissingResponsibleFilter();
   });
 
-  document.addEventListener("click", event => {
-    if (event.target?.closest?.("#attentionList, #ms-fResponsavel, #clearBtn")) {
+  document.addEventListener("click", (event) => {
+    if (
+      event.target?.closest?.("#attentionList, #ms-fResponsavel, #clearBtn")
+    ) {
       window.setTimeout(syncCardState, 0);
     }
   });
 
-  document.addEventListener("change", event => {
+  document.addEventListener("change", (event) => {
     if (event.target?.closest?.("#ms-options-fResponsavel")) {
       window.setTimeout(syncCardState, 0);
     }

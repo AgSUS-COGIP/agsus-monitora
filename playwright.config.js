@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const laravel = process.env.PLAYWRIGHT_TARGET === "laravel";
-const baseURL = laravel ? "http://127.0.0.1:8000" : "http://127.0.0.1:4173";
+// "servidor" roda a suíte contra o servidor TypeScript (server/servidor.ts), como em produção.
+const servidor = process.env.PLAYWRIGHT_TARGET === "servidor";
+const baseURL = servidor ? "http://127.0.0.1:8000" : "http://127.0.0.1:4173";
 
 export default defineConfig({
   testDir: "./tests",
@@ -32,8 +33,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: laravel
-      ? "npm run build:laravel && php laravel/artisan serve --host=127.0.0.1 --port=8000 --no-reload"
+    command: servidor
+      ? "npm run build && npm start"
       : "npm run build && npm run preview -- --host 127.0.0.1",
     url: baseURL,
     /*

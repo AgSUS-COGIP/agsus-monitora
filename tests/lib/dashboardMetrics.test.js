@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { hasMeaningfulMetrics, parseMetricNumber, readDashboardKpiSeries } from "../../src/lib/dashboardMetrics.js";
+import {
+  hasMeaningfulMetrics,
+  parseMetricNumber,
+  readDashboardKpiSeries,
+} from "../../src/lib/dashboardMetrics.js";
 
 describe("dashboardMetrics", () => {
   it("converte numeros formatados em pt-BR", () => {

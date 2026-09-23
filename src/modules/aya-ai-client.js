@@ -62,9 +62,16 @@ export function collectAyaPageContext(doc = document) {
       (item) => {
         const name = item.querySelector("strong")?.textContent || "";
         const detail = item.querySelector("small")?.textContent || "";
+        const vacancies =
+          item.querySelector(".health-map-unit__vagas")?.textContent || "";
         const population =
           item.querySelector(".health-map-unit__type")?.textContent || "";
-        return [name, detail, population ? `população ${population}` : ""]
+        return [
+          name,
+          vacancies,
+          detail,
+          population ? `população ${population}` : "",
+        ]
           .filter(Boolean)
           .join(" — ");
       },
@@ -241,7 +248,7 @@ const FAILURE_MESSAGES = {
   network_error:
     "Não consegui falar com o servidor do MONITORA para enviar a pergunta à IA.",
   http_404:
-    "O endereço /api/aya não existe neste ambiente. Ele é publicado apenas na implantação Vercel, não no servidor Laravel.",
+    "O endereço /api/aya não existe neste ambiente. Ele é publicado apenas na implantação Vercel, não no servidor Node do MONITORA.",
 };
 
 const GENERIC_FAILURE = "A IA da Aya está temporariamente indisponível.";
@@ -373,6 +380,7 @@ export async function askAyaAi({
       answer: String(payload.answer).trim(),
       sources: Array.isArray(payload.sources) ? payload.sources : [],
       unavailable: false,
+      provider: String(payload.provider || "ollama-local"),
     };
   } catch (error) {
     const reason = error?.name === "AbortError" ? "timeout" : "network_error";

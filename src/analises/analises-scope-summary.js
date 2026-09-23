@@ -1,43 +1,43 @@
-const txt = value => String(value ?? "").trim();
+const txt = (value) => String(value ?? "").trim();
 
-function selectedCount(id){
+function selectedCount(id) {
   const select = document.getElementById(id);
   return select ? [...select.selectedOptions].length : 0;
 }
 
-function currentScopeLabel(){
+function currentScopeLabel() {
   const select = document.getElementById("fSituacaoEdital");
   const option = select?.selectedOptions?.[0];
   return txt(option?.textContent || select?.value || "Recorte");
 }
 
-function currentTotal(){
+function currentTotal() {
   return txt(document.getElementById("kTotal")?.textContent) || "0";
 }
 
-function buildSummaryText(){
+function buildSummaryText() {
   const units = selectedCount("scopeGuardUnits");
   const editais = selectedCount("scopeGuardEditais");
   return `${currentScopeLabel()} · ${units} unidade(s) · ${editais} edital(is) · ${currentTotal()} registro(s)`;
 }
 
-function setCollapsed(collapsed){
+function setCollapsed(collapsed) {
   const guard = document.getElementById("scopeGuard");
   const summary = document.getElementById("scopeGuardSummary");
-  if(!guard || !summary) return;
+  if (!guard || !summary) return;
 
   guard.classList.toggle("scope-guard--collapsed", collapsed);
   summary.hidden = !collapsed;
-  if(collapsed){
+  if (collapsed) {
     const text = summary.querySelector(".scope-guard-summary-text");
-    if(text) text.textContent = buildSummaryText();
+    if (text) text.textContent = buildSummaryText();
   }
 }
 
-function ensureSummary(){
+function ensureSummary() {
   const guard = document.getElementById("scopeGuard");
-  if(!guard) return false;
-  if(document.getElementById("scopeGuardSummary")) return true;
+  if (!guard) return false;
+  if (document.getElementById("scopeGuardSummary")) return true;
 
   const summary = document.createElement("div");
   summary.id = "scopeGuardSummary";
@@ -57,12 +57,14 @@ function ensureSummary(){
   `;
 
   guard.insertAdjacentElement("afterbegin", summary);
-  document.getElementById("scopeGuardChange")?.addEventListener("click", () => setCollapsed(false));
+  document
+    .getElementById("scopeGuardChange")
+    ?.addEventListener("click", () => setCollapsed(false));
   return true;
 }
 
-function ensureStyles(){
-  if(document.getElementById("analisesScopeSummaryStyles")) return;
+function ensureStyles() {
+  if (document.getElementById("analisesScopeSummaryStyles")) return;
   const style = document.createElement("style");
   style.id = "analisesScopeSummaryStyles";
   style.textContent = `
@@ -82,32 +84,43 @@ function ensureStyles(){
   document.head.appendChild(style);
 }
 
-function start(){
+function start() {
   ensureStyles();
 
   const install = () => {
-    if(!ensureSummary()) return false;
+    if (!ensureSummary()) return false;
 
     const status = document.getElementById("scopeGuardStatus");
     const scope = document.getElementById("fSituacaoEdital");
     const units = document.getElementById("scopeGuardUnits");
     const editais = document.getElementById("scopeGuardEditais");
 
-    if(status && status.dataset.summaryObserver !== "1"){
+    if (status && status.dataset.summaryObserver !== "1") {
       status.dataset.summaryObserver = "1";
       const evaluate = () => {
         const message = txt(status.textContent).toLowerCase();
         const success = message.startsWith("consulta concluída:");
         const warning = status.classList.contains("is-warning");
-        if(success && !warning) setCollapsed(true);
-        if(warning || message.startsWith("consulta bloqueada") || message.includes("não foi possível")) setCollapsed(false);
+        if (success && !warning) setCollapsed(true);
+        if (
+          warning ||
+          message.startsWith("consulta bloqueada") ||
+          message.includes("não foi possível")
+        )
+          setCollapsed(false);
       };
-      new MutationObserver(evaluate).observe(status, { childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:["class"] });
+      new MutationObserver(evaluate).observe(status, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ["class"],
+      });
       evaluate();
     }
 
-    [scope, units, editais].forEach(element => {
-      if(!element || element.dataset.summaryBound === "1") return;
+    [scope, units, editais].forEach((element) => {
+      if (!element || element.dataset.summaryBound === "1") return;
       element.dataset.summaryBound = "1";
       element.addEventListener("change", () => setCollapsed(false), true);
     });
@@ -115,11 +128,11 @@ function start(){
     return true;
   };
 
-  if(install()) return;
+  if (install()) return;
   const observer = new MutationObserver(() => {
-    if(install()) observer.disconnect();
+    if (install()) observer.disconnect();
   });
-  observer.observe(document.body, { childList:true, subtree:true });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
-document.addEventListener("DOMContentLoaded", start, { once:true });
+document.addEventListener("DOMContentLoaded", start, { once: true });
