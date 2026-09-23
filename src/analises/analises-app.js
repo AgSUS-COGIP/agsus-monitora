@@ -1,6 +1,7 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { editaisDasLinhas } from "../lib/editais-das-linhas.js";
 import { urlDaPlanilhaGoogle } from "../lib/planilhas.js";
+import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME_ATIVOS = "VW_ANALISES_DASHBOARD_BASE";
@@ -546,7 +547,7 @@ import { urlDaPlanilhaGoogle } from "../lib/planilhas.js";
     { id:"fStatus", placeholder:"Todos os status", getValues: row => [txt(row.status_consolidado)] },
     { id:"fResponsavel", placeholder:"Todos os responsáveis", getValues: row => [txt(row.responsavel_analise)] },
     { id:"fCategoria", placeholder:"Todas as categorias", getValues: row => [txt(row.categoria)] },
-    { id:"fModalidade", placeholder:"Todas as modalidades", getValues: row => [txt(row.modalidade_concorrencia)] },
+    { id:"fModalidade", placeholder:"Todas as modalidades", getValues: row => modalidadesDaConcorrencia(row.modalidade_concorrencia) },
     { id:"fPdf", placeholder:"Todas", getValues: row => {
         const values = []; const status = txt(row.pdf_status).toUpperCase();
         values.push(txt(row.link_pdf) ? "COM_PDF" : "SEM_PDF");
