@@ -608,10 +608,8 @@ function createAssistant(host) {
     "div",
     "arara-assistant__conversation-tools",
   );
-  conversationTools.append(
-    element(doc, "span", "arara-assistant__conversation-label", "Conversa"),
-    resetButton,
-  );
+  conversationTools.append(resetButton);
+  scene.insertBefore(conversationTools, messages);
 
   const form = element(doc, "form", "arara-assistant__form");
   const inputLabel = element(
@@ -648,14 +646,7 @@ function createAssistant(host) {
     "Enter envia · Shift+Enter quebra linha",
   );
 
-  body.append(
-    scene,
-    conversationTools,
-    suggestionLabel,
-    suggestions,
-    form,
-    composerHint,
-  );
+  body.append(scene, suggestionLabel, suggestions, form, composerHint);
   panel.append(header, body);
 
   const launcher = element(doc, "button", "arara-assistant__launcher");
