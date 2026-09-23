@@ -41,6 +41,7 @@ import "./styles/health-map-size-tuning.css";
 import "./styles/health-map-immersive-workspace.css";
 import "./styles/map-base-layer-switcher.css";
 import "./styles/indigenous-territories-layer.css";
+import "./styles/legenda-das-terras.css";
 import "./styles/system-ui-fixes.css";
 import "./styles/nielsen-shell-ux.css";
 import "./styles/post-152-regression-fixes.css";
