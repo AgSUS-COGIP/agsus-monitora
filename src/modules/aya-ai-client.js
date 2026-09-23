@@ -380,6 +380,7 @@ export async function askAyaAi({
       answer: String(payload.answer).trim(),
       sources: Array.isArray(payload.sources) ? payload.sources : [],
       unavailable: false,
+      provider: String(payload.provider || "ollama-local"),
     };
   } catch (error) {
     const reason = error?.name === "AbortError" ? "timeout" : "network_error";
