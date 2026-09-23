@@ -118,6 +118,15 @@
   gap: 6px;
 }
 
+.arara-assistant__conversation-tools {
+  position: absolute;
+  z-index: 6;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+}
+
 .arara-assistant__hide,
 .arara-assistant__reset {
   min-height: 34px;
@@ -135,6 +144,12 @@
     border-color 140ms ease,
     background 140ms ease,
     transform 140ms ease;
+}
+
+.arara-assistant__reset {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 9px;
 }
 
 .arara-assistant__hide:hover,
@@ -688,10 +703,15 @@ html[data-theme="dark"] .arara-assistant__launcher {
     gap: 4px;
   }
 
-  .arara-assistant__hide,
-  .arara-assistant__reset {
+  .arara-assistant__hide {
     min-height: 30px;
     padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  .arara-assistant__reset {
+    min-height: 28px;
+    padding: 5px 8px;
     font-size: 9px;
   }
 
@@ -758,10 +778,6 @@ html[data-theme="dark"] .arara-assistant__launcher {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .arara-assistant__reset {
-    display: none;
-  }
-
   .arara-assistant__section {
     max-width: 110px;
   }
@@ -774,6 +790,7 @@ html[data-theme="dark"] .arara-assistant__launcher {
 
   .arara-assistant__messages {
     min-height: 158px;
+    padding-top: 46px;
     padding-left: 84px;
   }
 
