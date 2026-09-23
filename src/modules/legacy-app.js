@@ -9689,13 +9689,18 @@ function renderDetailTerraList(terras) {
       // Povo desconhecido diz-se, não se inventa nem se esconde.
       const povos = t.povos?.length
         ? esc(t.povos.join(", "))
-        : '<i>povo não declarado pela Funai</i>';
-      const ufs = t.ufs?.length ? ` · ${esc(t.ufs.join(", "))}` : "";
-      const fase = t.fase ? ` · ${esc(t.fase)}` : "";
+        : "<i>povo não declarado pela Funai</i>";
+      // O separador vai entre as partes, não à frente: saía "· AL · Regularizada".
+      const meta = [
+        t.ufs?.length ? esc(t.ufs.join(", ")) : "",
+        t.fase ? esc(t.fase) : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
       // Botão: clicar leva o mapa até a terra (ver o ouvinte em initDetailLeaflet).
       const c = t.caixa;
       const caixa = c ? [c.oeste, c.sul, c.leste, c.norte].join(",") : "";
-      return `<button type="button" class="health-map-terra" data-map-terra data-nome="${attr(t.nome)}" data-caixa="${attr(caixa)}" aria-label="Localizar a Terra Indígena ${attr(t.nome)} no mapa"><b class="health-map-terra__nome">${esc(t.nome)}</b><span class="health-map-terra__povos">${povos}</span><span class="health-map-terra__meta">${ufs}${fase}</span></button>`;
+      return `<button type="button" class="health-map-terra" data-map-terra data-nome="${attr(t.nome)}" data-caixa="${attr(caixa)}" aria-label="Localizar a Terra Indígena ${attr(t.nome)} no mapa"><b class="health-map-terra__nome">${esc(t.nome)}</b><span class="health-map-terra__povos">${povos}</span><span class="health-map-terra__meta">${meta}</span></button>`;
     })
     .join("");
 }
@@ -9794,7 +9799,9 @@ function renderDetailMap(d) {
   _detailLeaflet.__agsusAoMudarTerras = renderDetailTerraList;
   _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito, d.ufs || []);
   montarLegendaDasTerras(
-    document.querySelector(".health-map-detail-legend [data-legenda-das-terras]"),
+    document.querySelector(
+      ".health-map-detail-legend [data-legenda-das-terras]",
+    ),
     _detailLeaflet,
   );
   _detailUnitLayer.clearLayers();
@@ -9918,7 +9925,8 @@ function renderDetailMap(d) {
     veredicto: null,
   };
   const ufDaSede = d.sede_uf || d.sedeuf || "";
-  const temSede = Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lon));
+  const temSede =
+    Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lon));
   const marcadorDaSede = temSede
     ? L.marker([d.lat, d.lon], {
         icon: L.divIcon({
@@ -10679,7 +10687,9 @@ function drawPolos(d) {
       p.cnes ? `CNES: ${esc(p.cnes)}` : "",
       p.coord_nome ? `Registro CNES: ${esc(p.coord_nome)}` : "",
       // A diferença entre fontes já está dita no rótulo quando há conflito.
-      p.veredicto_localizacao?.estado === "conflito" ? "" : diferenca.replace(/^<br>/, ""),
+      p.veredicto_localizacao?.estado === "conflito"
+        ? ""
+        : diferenca.replace(/^<br>/, ""),
     ]
       .filter(Boolean)
       .join("<br>");
