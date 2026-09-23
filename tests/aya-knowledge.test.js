@@ -27,6 +27,17 @@ describe("base institucional da Aya", () => {
     expect(terras).toContainEqual(AYA_SOURCE_CATALOG.funai);
   });
 
+  it("responde a criação da Funai sem cair na recusa por número sem lastro", () => {
+    const pergunta = "Quando Criou a Funai ?";
+    const answer = curatedAnswerForQuestion(pergunta);
+    const sources = officialSourcesForQuestion(pergunta);
+
+    expect(answer).toContain("5 de dezembro de 1967");
+    expect(answer).toContain("Lei nº 5.371");
+    expect(sources).toContainEqual(AYA_SOURCE_CATALOG.funaiInstitucional);
+    expect(sources).not.toContainEqual(AYA_SOURCE_CATALOG.funai);
+  });
+
   it("responde diretamente sobre DSEI AL/SE e Kariri-Xocó", () => {
     const answer = curatedAnswerForQuestion(
       "Quantas aldeias tem no DSEI Alagoas? Diga mais sobre o povo Kariri-Xocó",
