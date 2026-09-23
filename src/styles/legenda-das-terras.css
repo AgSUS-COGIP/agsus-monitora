@@ -1,0 +1,106 @@
+/*
+  Legenda das Terras Indígenas — `src/modules/legenda-das-terras.js`.
+
+  As três cores são do domínio, não da paleta geral (ver DESIGN.md, 3.1): são
+  as mesmas constantes de `indigenous-territories-layer.js`, e
+  `tests/cor-da-terra-indigena.test.js` falha se as duas se separarem. Moram
+  aqui como token para que o botão da camada e as duas legendas leiam do mesmo
+  sítio.
+*/
+:root {
+  --terra-definitiva: #7a4a1f;
+  --terra-fundo: #d6b07a;
+  --terra-em-processo: #c8520f;
+}
+
+.legenda-das-terras {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+
+/* Dentro da caixa estreita do mapa nacional, um item por linha. */
+.legenda-das-terras--coluna {
+  align-items: flex-start;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.legenda-das-terras__titulo {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.legenda-terra {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  gap: 6px;
+  line-height: 1.2;
+  padding: 3px 9px 3px 7px;
+  text-align: left;
+  transition: opacity 0.15s ease;
+}
+
+.legenda-terra:hover:not(:disabled) {
+  background: var(--card);
+}
+
+.legenda-terra:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.legenda-terra:disabled {
+  cursor: default;
+}
+
+/*
+  Desligado não se diz só com cor (DESIGN.md, princípio 4): o item esmaece, o
+  texto é riscado e a amostra perde o fundo.
+*/
+.legenda-terra[aria-pressed="false"] {
+  opacity: 0.55;
+}
+
+.legenda-terra[aria-pressed="false"] span {
+  text-decoration: line-through;
+}
+
+.legenda-terra__amostra {
+  border-radius: 3px;
+  box-sizing: border-box;
+  display: inline-block;
+  flex: none;
+  height: 11px;
+  width: 16px;
+}
+
+.legenda-terra__amostra--definitiva {
+  background: color-mix(in srgb, var(--terra-fundo) 60%, transparent);
+  border: 2px solid var(--terra-definitiva);
+}
+
+.legenda-terra__amostra--em_processo {
+  background: transparent;
+  border: 2px dashed var(--terra-em-processo);
+}
+
+.legenda-terra__amostra--em_estudo {
+  border: 2px dashed var(--terra-em-processo);
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+}
+
+.legenda-terra[aria-pressed="false"] .legenda-terra__amostra {
+  background: transparent;
+}
