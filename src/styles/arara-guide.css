@@ -125,6 +125,7 @@
   right: 10px;
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 
 .arara-assistant__hide,
@@ -176,7 +177,14 @@
 
 .arara-assistant__scene {
   position: relative;
+  display: flex;
   min-height: 0;
+  flex-direction: column;
+  padding: 48px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--line, #dbe6ef) 88%, #fff);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--card2, #f8fbff) 82%, var(--card, #fff));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .arara-assistant__avatar {
@@ -203,16 +211,12 @@
 
 .arara-assistant__messages {
   display: flex;
-  min-height: 238px;
+  min-height: 180px;
   max-height: 330px;
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  padding: 20px 16px 18px 154px;
-  border: 1px solid color-mix(in srgb, var(--line, #dbe6ef) 88%, #fff);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--card2, #f8fbff) 82%, var(--card, #fff));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  padding: 2px 4px 4px;
   scroll-behavior: smooth;
 }
 
@@ -727,11 +731,15 @@ html[data-theme="dark"] .arara-assistant__launcher {
     height: 144px;
   }
 
+  .arara-assistant__scene {
+    padding: 44px 10px 10px;
+    border-radius: 16px;
+  }
+
   .arara-assistant__messages {
     min-height: 172px;
     max-height: 255px;
-    padding: 16px 10px 12px 96px;
-    border-radius: 16px;
+    padding: 2px;
   }
 
   .arara-message {
@@ -790,8 +798,7 @@ html[data-theme="dark"] .arara-assistant__launcher {
 
   .arara-assistant__messages {
     min-height: 158px;
-    padding-top: 46px;
-    padding-left: 84px;
+    padding: 2px;
   }
 
   .arara-assistant__form {
