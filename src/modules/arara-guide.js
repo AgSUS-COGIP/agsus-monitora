@@ -352,7 +352,10 @@ function resizeComposer(state) {
   const maxHeight = 132;
   state.input.style.height = "auto";
   const measured = Number(state.input.scrollHeight) || minHeight;
-  state.input.style.height = `${Math.min(maxHeight, Math.max(minHeight, measured))}px`;
+  state.input.style.height = `${Math.min(
+    maxHeight,
+    Math.max(minHeight, measured),
+  )}px`;
   state.input.style.overflowY = measured > maxHeight ? "auto" : "hidden";
 }
 
@@ -384,7 +387,12 @@ function setThinking(state, active) {
   state.thinking.setAttribute("role", "status");
   state.thinking.setAttribute("aria-live", "polite");
   state.thinking.append(
-    element(state.doc, "span", "arara-assistant__thinking-label", "Aya está analisando sua pergunta"),
+    element(
+      state.doc,
+      "span",
+      "arara-assistant__thinking-label",
+      "Aya está analisando sua pergunta",
+    ),
   );
   const dots = element(state.doc, "span", "arara-assistant__thinking-dots");
   dots.setAttribute("aria-hidden", "true");
@@ -511,10 +519,20 @@ function createAssistant(host) {
   const header = element(doc, "div", "arara-assistant__header");
   const heading = element(doc, "div", "arara-assistant__heading");
   const eyebrow = element(doc, "span", "arara-assistant__eyebrow", "MONITORA");
-  const assistantTitle = element(doc, "strong", "arara-assistant__title", "Aya");
+  const assistantTitle = element(
+    doc,
+    "strong",
+    "arara-assistant__title",
+    "Aya",
+  );
   const subtitle = element(doc, "div", "arara-assistant__subtitle");
   const status = element(doc, "span", "arara-assistant__status");
-  const statusText = element(doc, "span", "arara-assistant__status-text", "Pronta");
+  const statusText = element(
+    doc,
+    "span",
+    "arara-assistant__status-text",
+    "Pronta",
+  );
   status.append(statusText);
   const sectionBadge = element(
     doc,
