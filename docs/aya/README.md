@@ -3,6 +3,25 @@
 Os arquivos desta pasta alimentam a Aya. Editar um `.md` aqui muda o que ela
 sabe, sem mexer em código.
 
+## Especialidade principal
+
+A Aya é uma assistente de escopo amplo, mas sua **especialidade principal** é:
+
+- Saúde Indígena e SasiSUS;
+- povos indígenas, Terras Indígenas, aldeias e Funai;
+- SESAI, DSEIs, Polos Base, UBSIs, CASAIs e EMSIs;
+- SUS, AgSUS e sua relação com a saúde indígena;
+- PNASPI, controle social e organização da política;
+- MONITORA, editais, vagas, contratações e ociosidade.
+
+Os arquivos `01` a `05`, `07` e `08` formam a base especializada. O
+arquivo `06-assuntos-gerais.md` é complementar: permite que a Aya converse
+sobre outros temas, mas essas respostas são identificadas para a pessoa como
+**“Assunto geral — fora do foco principal da Aya”**.
+
+Quando houver conflito entre conhecimento geral e um verbete especializado, o
+verbete especializado e sua fonte oficial têm prioridade.
+
 ## Como usar
 
 Escreva um verbete por assunto, no formato abaixo. A ordem dos campos não
