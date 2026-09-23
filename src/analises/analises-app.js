@@ -11,7 +11,7 @@ import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
   const APP_VERSION = "institucional-2026-06-09";
   const CACHE_KEY = "agsus_analises_cache_v1";
-  const CACHE_SCHEMA_VERSION = 4;
+  const CACHE_SCHEMA_VERSION = 5;
   const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutos
   const DASHBOARD_PAYLOAD_TIMEOUT_MS = 12000;
   const ACCESS_HEARTBEAT_MS = 5 * 60 * 1000;
