@@ -123,6 +123,8 @@
 }
 .approved-filters .form-row {
   margin: 0;
+  /* Permite que a coluna do grid encolha mesmo com cargos de nome longo. */
+  min-width: 0;
 }
 .approved-table td {
   vertical-align: middle;

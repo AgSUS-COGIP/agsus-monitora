@@ -79,6 +79,11 @@ for (const raiz of RAIZES) {
   )) {
     const caminho = relative(".", ficheiro).replaceAll("\\", "/");
     if (caminho === ESTE_FICHEIRO) continue;
+    // Saída compilada do frontend Laravel/Vite. Assim como `dist/`, contém
+    // dependências empacotadas (inclusive internals do Supabase) e não é fonte
+    // de arquitetura da aplicação. O código-fonte em `laravel/resources/`
+    // continua sendo verificado normalmente.
+    if (caminho.startsWith("laravel/public/assets/")) continue;
     const conteudo = readFileSync(ficheiro, "utf8");
 
     for (const [id, rotulo, padrao] of PADROES) {

@@ -37,7 +37,8 @@ const candidates = changedFiles.filter((path) => {
   if (
     path.startsWith("dist/") ||
     path.startsWith("coverage/") ||
-    path.startsWith("node_modules/")
+    path.startsWith("node_modules/") ||
+    path.startsWith("laravel/public/assets/")
   ) {
     return false;
   }
