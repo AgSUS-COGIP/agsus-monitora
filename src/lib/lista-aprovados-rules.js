@@ -72,6 +72,7 @@ export function summarizeApprovedCandidates(rows, filters = {}) {
     desistente: 0,
     migracao: 0,
     documentacaoRejeitada: 0,
+    fimDeFila: 0,
   };
 
   filtered.forEach((row) => {
@@ -80,6 +81,7 @@ export function summarizeApprovedCandidates(rows, filters = {}) {
     if (status === "Desistente") summary.desistente += 1;
     if (status === "Migração") summary.migracao += 1;
     if (status === "Documentação Rejeitada") summary.documentacaoRejeitada += 1;
+    if (status === "Fim de Fila") summary.fimDeFila += 1;
   });
 
   return summary;

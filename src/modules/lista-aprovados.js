@@ -19,6 +19,7 @@ import {
   paginateApprovedCandidates,
 } from "../lib/lista-aprovados-rules.js";
 import { ativarMultiSelectBusca } from "./multi-select-busca.js";
+import { createListaConvocacaoController } from "./lista-convocacao.js";
 
 const BUCKET = "listas-aprovados";
 const MODEL_URL = "/modelos/modelo-importacao-lista-aprovados.xlsx";
@@ -53,6 +54,7 @@ function statusClass(status) {
   if (status === "Desistente" || status === "Documentação Rejeitada")
     return "danger";
   if (status === "Migração") return "info";
+  if (status === "Fim de Fila") return "warning";
   return "neutral";
 }
 
@@ -216,6 +218,7 @@ export function createListaAprovadosController(options = {}) {
       approvedKpiDesistente: summary.desistente,
       approvedKpiMigracao: summary.migracao,
       approvedKpiDocumentacaoRejeitada: summary.documentacaoRejeitada,
+      approvedKpiFimDeFila: summary.fimDeFila,
     };
 
     Object.entries(values).forEach(([id, value]) => {
@@ -314,6 +317,7 @@ export function createListaAprovadosController(options = {}) {
     renderToolbar();
     renderKpis();
     renderRows();
+    convocacao.render();
   }
 
   async function fetchAllCandidates() {
@@ -339,9 +343,15 @@ export function createListaAprovadosController(options = {}) {
     if (!sb) return false;
     if (options.loader !== false)
       loader(true, "Lista de aprovados", "Carregando candidatos...", 55);
+    /*
+      A configuração de convocação vai no mesmo lote: ela é lida a cada desenho
+      da aba e pedi-la à parte adiaria a primeira ordem de convocação por uma
+      ida à rede, com a tabela já na tela a dizer "cadastro de reserva".
+    */
     const [listsResult, candidatesResult] = await Promise.all([
       sb.rpc("listar_listas_aprovados"),
       fetchAllCandidates(),
+      convocacao.carregarConfiguracoes(),
     ]);
     if (options.loader !== false) loader(false);
     const error = listsResult.error || candidatesResult.error;
@@ -605,6 +615,7 @@ export function createListaAprovadosController(options = {}) {
     state.currentImportEditalId = String(editalId || "");
     state.currentImportEditalLabel = editalLabel;
     renderImportModal();
+    convocacao.abrirFormulario(state.currentImportEditalId);
     showModal("approvedImportModal", true);
   }
 
@@ -737,6 +748,23 @@ export function createListaAprovadosController(options = {}) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  /*
+    O controlador da convocação nasce aqui, e não em `main.js`, porque depende
+    do que só existe dentro deste: os candidatos em memória, o modal de status e
+    o `refresh` que redesenha as duas abas. Instanciá-lo fora obrigaria a
+    publicar esse estado.
+  */
+  const convocacao = createListaConvocacaoController({
+    supabase: sb,
+    toast,
+    loader,
+    getProfile,
+    getCandidates: () => state.candidates,
+    getLists: () => state.lists,
+    openStatusModal: (candidateId) => openStatusModal(candidateId),
+    onSaved: () => refresh({ loader: false }),
+  });
+
   function bind() {
     ensureFilterControls();
 
@@ -838,6 +866,7 @@ export function createListaAprovadosController(options = {}) {
     openSubJudiceModal,
     openImportModal,
     closeImportModal: () => showModal("approvedImportModal", false),
+    convocacao,
     modelUrl: MODEL_URL,
   };
 }
