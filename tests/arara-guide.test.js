@@ -35,10 +35,12 @@ describe("assistente Aya", () => {
     expect(guide.textContent).toContain("Eu sou a Aya");
     expect(guide.textContent).toContain("Saúde Indígena");
     expect(guide.querySelector(".arara-assistant__header")).not.toBeNull();
-    expect(guide.querySelector(".arara-assistant__title")?.textContent).toBe("Aya");
-    expect(guide.querySelector(".arara-assistant__status-text")?.textContent).toBe(
-      "Pronta",
-    );
+    expect(
+      guide.querySelector(".arara-assistant__title")?.textContent,
+    ).toBe("Aya");
+    expect(
+      guide.querySelector(".arara-assistant__status-text")?.textContent,
+    ).toBe("Pronta");
     expect(guide.querySelector(".arara-stepper")).toBeNull();
     expect(
       guide.querySelectorAll(".arara-assistant__suggestions .arara-suggestion")
