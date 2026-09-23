@@ -82,6 +82,13 @@ import {
 } from "./sidebar-branding.js";
 import { classificarVinculoTerritorial } from "../lib/uf-ibge.js";
 import {
+  chaveDeFiltro,
+  chaveDeRenderDoMapa,
+  linhaAtende,
+  opcoesDoCampo,
+  podarSelecoes,
+} from "../lib/filtros-do-mapa.js";
+import {
   ESTILO_DA_LINHA,
   TOOLTIP_DA_LINHA,
   classificarRegistros,
@@ -269,6 +276,16 @@ const FILTER_ID_TO_FIELD = Object.fromEntries(
 let filterState = Object.fromEntries(
   FILTER_CONFIG.map((f) => [f.field, new Set()]),
 );
+const FILTER_FIELDS = FILTER_CONFIG.map((f) => f.field);
+/*
+  DSEI aberto no mapa detalhado. É um filtro próprio, por chave do mapa
+  (`dseiKey`), e não mais o nome escrito na busca da tabela: a busca por texto
+  errava grafias ("Kaiapó do/de Mato Grosso") e ninguém a limpava ao voltar.
+*/
+let dseiSelecionado = "";
+let dseiSelecionadoNome = "";
+/* Texto digitado na busca de cada menu de filtro; sobrevive ao re-render. */
+const buscaDoMenu = {};
 const FILTER_STORAGE_KEY = "agsus_monitora_filters_v1";
 function saveFilterState() {
   try {
@@ -351,7 +368,7 @@ function hasActiveFilter() {
     typeof FILTER_CONFIG !== "undefined" &&
     FILTER_CONFIG.some((cfg) => (filterState[cfg.field] || new Set()).size > 0);
   const qt = ($("tableSearch")?.value || "").trim();
-  return anySelect || qt.length > 0;
+  return anySelect || qt.length > 0 || !!dseiSelecionado;
 }
 let hideClosed = false; // toggle "Ocultar encerrados" da tabela de detalhes
 function toggleHideClosed() {
@@ -360,7 +377,8 @@ function toggleHideClosed() {
     localStorage.setItem("agsus_hide_closed_v1", hideClosed ? "1" : "0");
   } catch (e) {}
   syncHideClosedBtn();
-  applyFilters();
+  // Ocultar encerrados muda as opções de Status: poda e redesenha os menus.
+  applyFilterStateChange();
   toast(
     hideClosed
       ? "Ocultando processos cancelados e concluídos."
@@ -2604,17 +2622,20 @@ function toggleFilters() {
 function selectedValues(field) {
   return Array.from(filterState[field] || []);
 }
-function rowValue(r, field) {
-  return txt(r[field]);
+/* Opções comuns às funções de `filtros-do-mapa.js`. */
+function opcoesDeFiltro(extra = {}) {
+  return {
+    campos: FILTER_FIELDS,
+    excluir: hideClosed ? isEncerrado : null, // toggle "Ocultar encerrados"
+    ...extra,
+  };
 }
 function rowMatchesFilterState(r, ignoreField = "") {
-  if (hideClosed && isEncerrado(r)) return false; // toggle "Ocultar encerrados"
-  return FILTER_CONFIG.every((cfg) => {
-    if (cfg.field === ignoreField) return true;
-    const selected = filterState[cfg.field];
-    if (!selected || selected.size === 0) return true;
-    return selected.has(rowValue(r, cfg.field));
-  });
+  return linhaAtende(
+    r,
+    filterState,
+    opcoesDeFiltro({ ignorarCampo: ignoreField }),
+  );
 }
 function normalizeForSort(value) {
   return txt(value)
@@ -2685,28 +2706,20 @@ function compareFilterValues(field, a, b) {
   });
 }
 function optionValuesFor(field) {
-  const values = new Set();
-  rows.forEach((r) => {
-    if (rowMatchesFilterState(r, field)) {
-      const value = rowValue(r, field);
-      if (value) values.add(value);
-    }
-  });
-  return Array.from(values).sort((a, b) => compareFilterValues(field, a, b));
+  return opcoesDoCampo(
+    rows,
+    filterState,
+    field,
+    opcoesDeFiltro({ comparar: (a, b) => compareFilterValues(field, a, b) }),
+  );
 }
 function pruneFilterSelections() {
-  let changed = false;
-  FILTER_CONFIG.forEach((cfg) => {
-    const allowed = new Set(optionValuesFor(cfg.field));
-    const selected = filterState[cfg.field] || new Set();
-    Array.from(selected).forEach((value) => {
-      if (!allowed.has(value)) {
-        selected.delete(value);
-        changed = true;
-      }
-    });
-  });
-  return changed;
+  return podarSelecoes(rows, filterState, opcoesDeFiltro());
+}
+/* A opção aparece com a busca do menu? (sem acento, sem caixa) */
+function opcaoCasaComBusca(field, value) {
+  const busca = chaveDeFiltro(buscaDoMenu[field]);
+  return !busca || chaveDeFiltro(value).includes(busca);
 }
 function filterLabel(cfg) {
   const selected = selectedValues(cfg.field);
@@ -2726,17 +2739,53 @@ function renderFilterControls() {
       ? values
           .map(
             (value) =>
-              `<label class="multi-option" title="${attr(value)}"><input type="checkbox" data-filter-field="${attr(cfg.field)}" data-filter-value="${attr(value)}" ${selected.has(value) ? "checked" : ""}><span>${esc(value)}</span></label>`,
+              `<label class="multi-option" title="${attr(value)}"${opcaoCasaComBusca(cfg.field, value) ? "" : " hidden"}><input type="checkbox" data-filter-field="${attr(cfg.field)}" data-filter-value="${attr(value)}" ${selected.has(value) ? "checked" : ""}><span>${esc(value)}</span></label>`,
           )
           .join("")
       : `<div class="multi-option empty">Nenhuma opção disponível</div>`;
-    el.innerHTML = `<button type="button" class="multi-select-toggle" onclick="toggleFilterMenu('${attr(cfg.id)}')" title="${attr(label)}"><span class="multi-label">${esc(label)}</span><span class="multi-caret">▾</span></button><div class="multi-select-menu"><div class="multi-select-actions"><button type="button" class="multi-mini-btn" data-filter-action="select-all" data-filter-field="${attr(cfg.field)}">Selecionar visíveis</button><button type="button" class="multi-mini-btn" data-filter-action="clear" data-filter-field="${attr(cfg.field)}">Limpar</button></div><div class="multi-options">${options}</div><div class="multi-hint">${values.length} opção(ões) disponível(is).</div></div>`;
+    const nome = cfg.label.toLowerCase();
+    el.innerHTML = `<button type="button" class="multi-select-toggle" onclick="toggleFilterMenu('${attr(cfg.id)}')" title="${attr(label)}"><span class="multi-label">${esc(label)}</span><span class="multi-caret">▾</span></button><div class="multi-select-menu"><div class="multi-select-actions"><button type="button" class="multi-mini-btn" data-filter-action="select-all" data-filter-field="${attr(cfg.field)}">Selecionar visíveis</button><button type="button" class="multi-mini-btn" data-filter-action="clear" data-filter-field="${attr(cfg.field)}">Limpar</button></div><label class="health-filter-menu-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" autocomplete="off" data-filter-busca="${attr(cfg.field)}" value="${attr(buscaDoMenu[cfg.field] || "")}" placeholder="Buscar ${attr(nome)}" aria-label="Buscar ${attr(nome)}"></label><div class="multi-options">${options}</div><div class="multi-hint"></div></div>`;
+    atualizarBuscaDoMenu(el, cfg.field);
   });
+}
+/* Mostra/oculta as opções pela busca e atualiza a dica e o "Selecionar visíveis". */
+function atualizarBuscaDoMenu(el, field) {
+  const opcoes = Array.from(
+    el.querySelectorAll(".multi-option input[data-filter-value]"),
+  );
+  let visiveis = 0;
+  opcoes.forEach((input) => {
+    const casa = opcaoCasaComBusca(field, input.dataset.filterValue);
+    input.closest(".multi-option").hidden = !casa;
+    if (casa) visiveis += 1;
+  });
+  const buscando = !!chaveDeFiltro(buscaDoMenu[field]);
+  const dica = el.querySelector(".multi-hint");
+  if (dica)
+    dica.textContent = buscando
+      ? `${visiveis} de ${opcoes.length} opção(ões).`
+      : `${opcoes.length} opção(ões) disponível(is).`;
+  const botao = el.querySelector('[data-filter-action="select-all"]');
+  if (botao) {
+    botao.textContent = buscando
+      ? `Selecionar ${visiveis} visível(is)`
+      : "Selecionar todos";
+    botao.disabled = visiveis === 0;
+  }
 }
 
 function closeFilterMenus(exceptId = "") {
   document.querySelectorAll(".multi-select.open").forEach((el) => {
-    if (!exceptId || el.id !== exceptId) el.classList.remove("open");
+    if (exceptId && el.id === exceptId) return;
+    el.classList.remove("open");
+    // Menu fechado esquece a busca: ao reabrir, todas as opções aparecem.
+    const field = FILTER_ID_TO_FIELD[el.id];
+    if (field && buscaDoMenu[field]) {
+      buscaDoMenu[field] = "";
+      const campo = el.querySelector("input[data-filter-busca]");
+      if (campo) campo.value = "";
+      atualizarBuscaDoMenu(el, field);
+    }
   });
 }
 function toggleFilterMenu(id) {
@@ -2763,16 +2812,55 @@ function toggleFilterValue(field, value, options = {}) {
   filterState[field] = selected;
   applyFilterStateChange(options);
 }
+/* "Selecionar visíveis": soma à seleção as opções que a busca do menu mostra. */
 function selectAllFilterValues(field) {
-  filterState[field] = new Set(optionValuesFor(field));
+  const selected = new Set(filterState[field] || []);
+  optionValuesFor(field)
+    .filter((value) => opcaoCasaComBusca(field, value))
+    .forEach((value) => selected.add(value));
+  filterState[field] = selected;
   applyFilterStateChange({ keepOpen: true });
 }
 function clearFilterField(field) {
   filterState[field] = new Set();
   applyFilterStateChange({ keepOpen: true });
 }
+/*
+  Troca a seleção inteira de um campo numa única mudança de estado (um render).
+  Usado pelos atalhos ("Editais 2026", "Em andamento"), que antes simulavam um
+  clique por valor e redesenhavam a página a cada um.
+*/
+function definirSelecaoDeFiltro(field, values = []) {
+  if (!FILTER_FIELDS.includes(field)) return [];
+  filterState[field] = new Set(
+    (values || []).map((v) => txt(v)).filter(Boolean),
+  );
+  applyFilterStateChange();
+  return selectedValues(field);
+}
 function initFilterControls() {
+  document.addEventListener("input", (ev) => {
+    const campo = ev.target.closest?.("input[data-filter-busca]");
+    if (!campo) return;
+    const field = campo.dataset.filterBusca;
+    buscaDoMenu[field] = campo.value;
+    const el = campo.closest(".multi-select");
+    if (el) atualizarBuscaDoMenu(el, field);
+  });
+  document.addEventListener("keydown", (ev) => {
+    const campo = ev.target.closest?.("input[data-filter-busca]");
+    if (!campo || ev.key !== "Escape") return;
+    ev.preventDefault();
+    const el = campo.closest(".multi-select");
+    closeFilterMenus();
+    el?.querySelector(".multi-select-toggle")?.focus();
+  });
   document.addEventListener("click", (ev) => {
+    const pilula = ev.target.closest?.("[data-pilula-acao]");
+    if (pilula) {
+      removerPilula(pilula.dataset.pilulaAcao, pilula);
+      return;
+    }
     const actionBtn = ev.target.closest?.("[data-filter-action]");
     if (actionBtn) {
       ev.preventDefault();
@@ -2807,40 +2895,32 @@ function populateFilters() {
   pruneFilterSelections();
   renderFilterControls();
 }
+/*
+  "LIMPAR FILTROS" — O ÚNICO CAMINHO QUE APAGA O RECORTE.
+
+  Zera os seis campos, a busca, o DSEI aberto e o "Ocultar encerrados", volta
+  o mapa ao Brasil e aplica UMA vez. Voltar do DSEI (breadcrumb, botão Brasil)
+  não apaga nada: só sai do território.
+*/
 function clearFilters() {
   hideClosed = false;
   try {
     localStorage.setItem("agsus_hide_closed_v1", "0");
   } catch (e) {}
   syncHideClosedBtn();
-  filterState = Object.fromEntries(
-    FILTER_CONFIG.map((f) => [f.field, new Set()]),
-  );
-  ["tableSearch"].forEach((id) => {
-    const el = $(id);
-    if (el) el.value = "";
-  });
+  filterState = Object.fromEntries(FILTER_FIELDS.map((f) => [f, new Set()]));
+  Object.keys(buscaDoMenu).forEach((f) => (buscaDoMenu[f] = ""));
+  const busca = $("tableSearch");
+  if (busca) busca.value = "";
   saveFilterState();
   renderFilterControls();
-  applyFilters();
-  /*
-    "LIMPAR TODOS" DIZIA QUE VOLTAVA AO BRASIL E NÃO VOLTAVA.
-
-    Limpava as camadas e redesenhava as bolhas, mas não mexia na câmara nem no
-    mapa detalhado. Quem limpasse os filtros com um DSEI aberto ficava com o
-    enquadramento daquele DSEI, com o detalhado ainda preso a ele e — pior —
-    com a camada de Terras Indígenas ainda filtrada por um distrito que já não
-    estava selecionado em lado nenhum.
-
-    É a mesma limpeza do botão "Voltar ao Brasil", e agora é literalmente o
-    mesmo caminho: `mapVoltar` faz tudo isto e mais o que já se fazia aqui.
-  */
-  mapVoltar();
+  voltarAoBrasil({ mensagem: "Filtros limpos." });
 }
 
 function applyFilters() {
   ensureSearchInputTextColor();
   const qt = normalizeForSort($("tableSearch")?.value);
+  const chaveDaLinha = (r) => dseiKey(r.unidade);
   filtered = rows
     .filter((r) => {
       const hay = [
@@ -2860,24 +2940,21 @@ function applyFilters() {
       ]
         .map(normalizeForSort)
         .join(" | ");
-      return rowMatchesFilterState(r) && (!qt || hay.includes(qt));
+      return (
+        rowMatchesFilterState(r) &&
+        (!dseiSelecionado || chaveDaLinha(r) === dseiSelecionado) &&
+        (!qt || hay.includes(qt))
+      );
     })
     .sort(compareRowsForTable);
 
-  // A chave do mapa precisa considerar UF e quantidade.
-  // Antes era apenas a lista de UFs; quando a busca mudava a quantidade,
-  // mas mantinha as mesmas UFs, o mapa ficava visualmente desatualizado.
-  const mapCounts = {};
-  filtered.forEach((r) => {
-    const k = dseiKey(r.unidade);
-    if (k) mapCounts[k] = (mapCounts[k] || 0) + 1;
-  });
-  const newUfKey =
-    (hasActiveFilter() ? "F|" : "A|") +
-    Object.entries(mapCounts)
-      .sort((a, b) => a[0].localeCompare(b[0], "pt-BR"))
-      .map(([k, count]) => `${k}:${count}`)
-      .join("|");
+  // O mapa só é redesenhado quando muda o que ele mostra: processos, vagas
+  // e ociosas por DSEI (contar só linhas deixava vagas antigas nas bolhas).
+  const newUfKey = chaveDeRenderDoMapa(
+    filtered,
+    chaveDaLinha,
+    hasActiveFilter() ? "F|" : "A|",
+  );
   const mapChanged = newUfKey !== lastMapUfKey;
   lastMapUfKey = newUfKey;
 
@@ -2887,9 +2964,14 @@ function applyFilters() {
   renderChart();
   if (mapChanged) renderMap();
   renderRisks();
-  renderActiveFilters();
-  renderTable();
+  renderTable(); // já desenha as pílulas de filtros ativos
   if (currentView === "nucleo") renderNucleo();
+  // Um aviso único para quem mostra estado dos filtros (contador, atalhos).
+  document.dispatchEvent(
+    new CustomEvent("agsus:filtros-alterados", {
+      detail: { total: filtered.length, dsei: dseiSelecionado },
+    }),
+  );
 }
 
 function toggleSelectFilter(selectId, value, label) {
@@ -10161,8 +10243,13 @@ function definirSelecaoDoMapaDetalhado(temSelecao) {
 }
 
 function resetDetailMap({ silent = false } = {}) {
+  // Voltar do território tira só o DSEI do recorte; os filtros continuam.
+  const saiuDoTerritorio = sairDoTerritorio();
   initDetailLeaflet();
-  if (!_detailLeaflet) return;
+  if (!_detailLeaflet) {
+    if (saiuDoTerritorio) applyFilters();
+    return;
+  }
   const title = $("detailMapTitle");
   const trilho = $("detailBreadcrumbDsei");
   const reset = $("detailMapReset");
@@ -10178,6 +10265,7 @@ function resetDetailMap({ silent = false } = {}) {
   }
   reset?.classList.add("hidden");
   definirSelecaoDoMapaDetalhado(false);
+  if (saiuDoTerritorio) applyFilters();
   /* Volta ao Brasil: não há mais DSEI de referência, logo não há vínculo externo. */
   _detailBounds = null;
   _detailEscopo = "territorio";
@@ -10243,14 +10331,19 @@ function drawBrasilOutline() {
   a copiar — duas cópias que divergiriam na primeira mudança.
 */
 function entrarNoTerritorio(d) {
-  const campo = $("tableSearch");
-  if (campo) campo.value = d.n;
+  dseiSelecionado = dseiKey(d.k);
+  dseiSelecionadoNome = d.n;
   applyFilters();
   renderDetailMap(d);
   flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]));
-  const voltar = $("drillBackBtn");
-  if (voltar) voltar.style.display = "inline-flex";
   // A troca de mapa já é o feedback da ação; não duplica com uma notificação.
+}
+/* Sai do DSEI aberto sem mexer nos outros filtros. Devolve se havia um. */
+function sairDoTerritorio() {
+  const havia = !!dseiSelecionado;
+  dseiSelecionado = "";
+  dseiSelecionadoNome = "";
+  return havia;
 }
 
 /*
@@ -10271,21 +10364,51 @@ function entrarNoTerritorio(d) {
 function renderPainelNacional(linhas) {
   const lista = $("brasilDseiList");
   const conta = $("brasilDseiCount");
-  if (conta) conta.textContent = fmt(linhas.length);
+  if (conta) {
+    conta.textContent = fmt(linhas.length);
+    conta.removeAttribute("aria-label");
+  }
   if (!lista) return;
   if (!linhas.length) {
     lista.innerHTML = `<div class="health-map-empty"><i class="fa-solid fa-filter-circle-xmark"></i><strong>Nenhum território no recorte</strong><span>Os filtros ativos não deixaram nenhum DSEI no resultado.</span></div>`;
     return;
   }
+  /*
+    Linha de ranking: posição, nome inteiro (quebra em vez de reticências),
+    vagas em destaque à direita e uma barra proporcional ao maior da lista.
+    Ociosas, processos e população vão na segunda linha, que também quebra.
+  */
   lista.innerHTML = linhas
-    .map(
-      ({ d, vagas, ociosas, nproc }, i) =>
-        `<button class="health-map-unit" type="button" data-dsei="${i}" aria-label="Abrir o DSEI ${esc(d.n)}">
-        <span class="health-map-unit__icon"><i class="fa-solid fa-location-dot"></i></span>
-        <span><strong title="${esc(d.n)}">DSEI ${esc(d.n)}</strong><small>${fmt(vagas)} vagas · ${fmt(ociosas)} ociosas${nproc ? " · " + fmt(nproc) + " processo" + (nproc > 1 ? "s" : "") : ""}</small></span>
-        <span class="health-map-unit__type">${fmt(d.pop || 0)}</span>
-      </button>`,
-    )
+    .map(({ d, vagas, ociosas, nproc }, i) => {
+      const meta = [
+        `${fmt(ociosas)} ociosa${ociosas === 1 ? "" : "s"}`,
+        nproc ? `${fmt(nproc)} processo${nproc > 1 ? "s" : ""}` : "",
+        d.pop ? `${fmt(d.pop)} hab.` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      /*
+        A barra é o preenchimento das vagas do DSEI: (vagas − ociosas) ÷ vagas.
+        As faixas de cor são as do modo calor (`heatColor`), lidas pelo avesso:
+        ociosidade abaixo de 20% é ok, até 60% pede atenção, acima é crítica.
+      */
+      const pct = vagas
+        ? Math.round((Math.max(0, vagas - ociosas) / vagas) * 100)
+        : 0;
+      const estado = pct > 80 ? "ok" : pct > 40 ? "atencao" : "critico";
+      const preenchimento = vagas
+        ? `<span class="health-map-unit__preench is-${estado}"><span class="health-map-unit__barra" aria-hidden="true"><i style="width:${pct}%"></i></span><span class="health-map-unit__pct">${pct}% preenchidas</span></span>`
+        : "";
+      return `<button class="health-map-unit health-map-unit--ranking${vagas ? "" : " is-sem-vagas"}" type="button" data-dsei="${i}" aria-label="Abrir o DSEI ${attr(d.n)}: ${fmt(vagas)} vagas${vagas ? `, ${pct}% preenchidas` : ""}">
+        <span class="health-map-unit__rank" aria-hidden="true">${i + 1}</span>
+        <span class="health-map-unit__corpo">
+          <strong>${esc(d.n)}</strong>
+          <small>${meta}</small>
+          ${preenchimento}
+        </span>
+        <span class="health-map-unit__vagas"><b>${fmt(vagas)}</b> vaga${vagas === 1 ? "" : "s"}</span>
+      </button>`;
+    })
     .join("");
   lista.querySelectorAll("[data-dsei]").forEach((botao) => {
     botao.addEventListener("click", () =>
@@ -10410,10 +10533,6 @@ function drawDSEIBubbles() {
   );
 
   drawCasai();
-  {
-    const _b = $("drillBackBtn");
-    if (_b) _b.style.display = "none";
-  }
   // Zoom automático: com filtro ativo, enquadra apenas os DSEIs/CASAIs filtrados.
   // Sem filtro, volta para a visão geral do Brasil.
   const autoFitKey =
@@ -10825,68 +10944,41 @@ function resumoDaRedeDoDsei(d) {
   return _resumoDaRedePorDsei.get(d.k);
 }
 
-function mapVoltar() {
-  /*
-    "Voltar à visão do Brasil" limpa TODOS os filtros, não só a UF.
+/*
+  VOLTAR AO BRASIL — SAI DO DSEI, MANTÉM OS FILTROS.
 
-    Antes zerava `filterState.uf` e a busca, e deixava de pé edital, etapa,
-    status e risco. O mapa voltava para o país inteiro enquanto os cartões e a
-    tabela continuavam a mostrar um recorte — duas leituras do mesmo ecrã a
-    discordar, sem nada a dizer porquê.
-
-    É a mesma limpeza do botão "Limpar todos" da barra de filtros, incluindo o
-    "Ocultar encerrados": voltar ao Brasil é voltar ao princípio.
-  */
-  const s = $("tableSearch");
-  if (s) s.value = "";
-  filterState = Object.fromEntries(
-    FILTER_CONFIG.map((f) => [f.field, new Set()]),
-  );
-  hideClosed = false;
-  try {
-    localStorage.setItem("agsus_hide_closed_v1", "0");
-  } catch (e) {}
-  syncHideClosedBtn();
+  Antes, o botão "🗺️ Brasil" apagava todos os filtros (e sem passar pelos
+  módulos que mostram o contador), enquanto o breadcrumb não apagava nada —
+  nem o nome do DSEI que ficava escondido na busca. Agora os dois só saem do
+  território; apagar o recorte é trabalho do "Limpar filtros" (`clearFilters`),
+  que também termina aqui.
+*/
+function voltarAoBrasil({
+  mensagem = "Visão do Brasil. Os filtros continuam valendo.",
+} = {}) {
+  sairDoTerritorio();
   lastMapUfKey = null;
-  saveFilterState();
-  renderFilterControls();
-  applyFilters();
   if (_leaflet) {
     _layerPolos.clearLayers();
     if (_layerUbsi) _layerUbsi.clearLayers();
     if (_layerCasaiLocal) _layerCasaiLocal.clearLayers();
     if (_layerUF) _layerUF.clearLayers();
-    flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]), {
-      duration: 0.6,
-    });
   }
-  {
-    const _b = $("drillBackBtn");
-    if (_b) _b.style.display = "none";
-  }
-  _suppressAutoFit = true; // a câmera é controlada pelo flyToBrasil acima
+  resetDetailMap({ silent: true });
+  _suppressAutoFit = true; // a câmera é controlada pelo flyToBrasil abaixo
   try {
-    drawDSEIBubbles();
+    applyFilters();
   } finally {
     _suppressAutoFit = false;
   }
-  resetDetailMap({ silent: true });
-  toast("Visão geral do Brasil.");
-}
-
-// Botão dentro do mapa: enquadra TODOS os DSEIs (Brasil inteiro), sem mexer nos filtros
-function mapVerBrasil() {
-  if (!_leaflet) return;
-  const pts = LMAP.dsei
-    .map((d) => [d.lat, d.lon])
-    .concat((REDE_CNES.nac || []).map((a) => [a[2], a[3]]));
-  try {
-    flyToBrasil(L.latLngBounds(pts), { padding: [30, 30], duration: 0.6 });
-  } catch (e) {
+  if (_leaflet)
     flyToBrasil(L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]), {
       duration: 0.6,
     });
-  }
+  toast(mensagem);
+}
+function mapVoltar() {
+  voltarAoBrasil();
 }
 
 // ===== IMPORTAÇÃO DA REDE ASSISTENCIAL (UBSI + CASAI) DO JSON v4 =====
@@ -11290,21 +11382,30 @@ function renderActiveFilters() {
   if (!bar) return;
   const searchQ = txt($("tableSearch")?.value);
   const pills = [];
+  /*
+    Os botões levam o valor em data-*, lido por um listener delegado
+    (`initFilterControls`). Antes o valor ia interpolado num onclick: um
+    apóstrofo quebrava o botão, e um valor montado de propósito executava código.
+  */
+  if (dseiSelecionado)
+    pills.push(
+      `<span class="filter-pill"><i class="fa-solid fa-location-dot" style="font-size:10px;"></i> DSEI ${esc(dseiSelecionadoNome)}<button type="button" data-pilula-acao="dsei" title="Voltar à visão do Brasil" aria-label="Sair do DSEI ${attr(dseiSelecionadoNome)}">×</button></span>`,
+    );
   FILTER_CONFIG.forEach((cfg) => {
     const selected = Array.from(filterState[cfg.field] || []);
     selected.forEach((v) => {
       pills.push(
-        `<span class="filter-pill">${esc(cfg.label)}: ${esc(v)}<button onclick="removeFilterPill('${attr(cfg.field)}','${attr(v)}')" title="Remover filtro" aria-label="Remover ${esc(v)}">×</button></span>`,
+        `<span class="filter-pill">${esc(cfg.label)}: ${esc(v)}<button type="button" data-pilula-acao="filtro" data-pilula-campo="${attr(cfg.field)}" data-pilula-valor="${attr(v)}" title="Remover filtro" aria-label="Remover ${attr(v)}">×</button></span>`,
       );
     });
   });
   if (searchQ)
     pills.push(
-      `<span class="filter-pill"><i class="fa-solid fa-magnifying-glass" style="font-size:10px;"></i> "${esc(searchQ)}"<button onclick="clearSearchPill()" title="Limpar busca">×</button></span>`,
+      `<span class="filter-pill"><i class="fa-solid fa-magnifying-glass" style="font-size:10px;"></i> "${esc(searchQ)}"<button type="button" data-pilula-acao="busca" title="Limpar busca">×</button></span>`,
     );
   if (hideClosed)
     pills.push(
-      `<span class="filter-pill" style="background:#eef2f7;border-color:#d5dfec;color:#334155"><i class="fa-solid fa-eye-slash" style="font-size:10px;"></i> Encerrados ocultos<button onclick="toggleHideClosed()" title="Mostrar encerrados">×</button></span>`,
+      `<span class="filter-pill" style="background:#eef2f7;border-color:#d5dfec;color:#334155"><i class="fa-solid fa-eye-slash" style="font-size:10px;"></i> Encerrados ocultos<button type="button" data-pilula-acao="encerrados" title="Mostrar encerrados">×</button></span>`,
     );
   if (!pills.length) {
     bar.classList.add("hidden");
@@ -11314,7 +11415,7 @@ function renderActiveFilters() {
   bar.classList.remove("hidden");
   bar.innerHTML =
     pills.join("") +
-    `<button class="filters-clear-all" onclick="clearFilters()"><i class="fa-solid fa-xmark"></i> Limpar todos</button>`;
+    `<button class="filters-clear-all" onclick="clearFilters()"><i class="fa-solid fa-xmark"></i> Limpar filtros</button>`;
 }
 
 function removeFilterPill(field, value) {
@@ -11328,6 +11429,15 @@ function clearSearchPill() {
   const el = $("tableSearch");
   if (el) el.value = "";
   applyFilters();
+}
+
+/* Listener delegado do "×" das pílulas (ver `renderActiveFilters`). */
+function removerPilula(acao, botao) {
+  if (acao === "dsei") voltarAoBrasil();
+  else if (acao === "filtro")
+    removeFilterPill(botao.dataset.pilulaCampo, botao.dataset.pilulaValor);
+  else if (acao === "busca") clearSearchPill();
+  else if (acao === "encerrados") toggleHideClosed();
 }
 
 function renderTable() {
@@ -13079,6 +13189,7 @@ Object.assign(window, {
   clearFilters,
   clearFilterField,
   clearSearchPill,
+  definirSelecaoDeFiltro,
   closeEditModal,
   closeMoreActions,
   closeSearchModal,

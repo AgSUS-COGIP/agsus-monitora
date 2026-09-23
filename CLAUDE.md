@@ -37,6 +37,7 @@ bench/                  protótipos HTML isolados (fora do build)
 | Permissões e perfis | `src/lib/perfis-de-acesso.js`, `access-roles.js` |
 | Contrato de RPC | `src/lib/rpc-contrato.js` + `scripts/check-rpc-contract.mjs` |
 | Mapa (Leaflet) | `src/lib/fabrica-do-leaflet.js`, `mapa-render.js`, `brasil-bounds.js`, `src/modules/map-*.js` |
+| Filtros do mapa/tabela | `src/lib/filtros-do-mapa.js` (lógica pura) · estado em `legacy-app.js` (`filterState`, `dseiSelecionado`, `applyFilters`) · evento `agsus:filtros-alterados` |
 | Terras indígenas | `src/modules/indigenous-territories-layer.js`, `api/funai-*.js`, `scripts/compilar-terras-indigenas.mjs` |
 | Coordenadas / lotação | `src/lib/localizacoes-validadas.js`, `reconciliacao-unidades.js`, `src/modules/lotacoes-geograficas-transport.js`, `docs/auditoria-geografica.md` |
 | Editais / cronograma | `src/lib/etapas-de-edital.js`, `editais-das-linhas.js`, `responsavel-do-edital.js`, `src/modules/nucleo-cronograma*.js`, `calendario-editais.js` |
