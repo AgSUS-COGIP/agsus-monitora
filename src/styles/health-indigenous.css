@@ -103,41 +103,6 @@
   font-weight:800;
 }
 
-#page-dashboard .health-unit-search{
-  position:relative;
-  padding:10px;
-  border-bottom:1px solid rgba(24,78,119,.08);
-  background:#f8fbfe;
-}
-
-#page-dashboard .health-unit-search i{
-  position:absolute;
-  left:22px;
-  top:50%;
-  transform:translateY(-50%);
-  color:#7890a6;
-  pointer-events:none;
-  font-size:13px;
-}
-
-#page-dashboard .health-unit-search input{
-  width:100%;
-  min-height:38px;
-  padding:8px 10px 8px 34px;
-  border:1px solid rgba(96,117,143,.24);
-  border-radius:10px;
-  background:#fff;
-  color:var(--health-text);
-  font:inherit;
-  font-size:13px;
-  outline:none;
-}
-
-#page-dashboard .health-unit-search input:focus{
-  border-color:var(--health-blue);
-  box-shadow:0 0 0 3px rgba(23,105,170,.11);
-}
-
 #page-dashboard .multi-option{
   transition:background .15s ease;
 }

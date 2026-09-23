@@ -13,6 +13,8 @@ Arquivos que exigem cuidado:
 - `reconciliacao-unidades.js`, `uf-ibge.js`, `brasil-bounds.js` — referência geográfica usada pelos
   scripts de auditoria; mudar aqui muda o veredito das coordenadas.
 - `fabrica-do-leaflet.js` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
+- `filtros-do-mapa.js` — regra dos filtros da página do mapa: comparação sem acento, opções sem
+  duplicata, poda até estabilizar. O `legacy-app.js` só guarda o estado e delega para cá.
 - `planilhas.js` — **catálogo de todas as planilhas** (modelo de aprovados, bucket da lista importada,
   link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
 - `formatters.js` — `formatNumberBR`, `formatDateBR`: use em vez de `toLocaleString` solto.

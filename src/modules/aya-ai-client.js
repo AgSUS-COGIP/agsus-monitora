@@ -62,9 +62,16 @@ export function collectAyaPageContext(doc = document) {
       (item) => {
         const name = item.querySelector("strong")?.textContent || "";
         const detail = item.querySelector("small")?.textContent || "";
+        const vacancies =
+          item.querySelector(".health-map-unit__vagas")?.textContent || "";
         const population =
           item.querySelector(".health-map-unit__type")?.textContent || "";
-        return [name, detail, population ? `população ${population}` : ""]
+        return [
+          name,
+          vacancies,
+          detail,
+          population ? `população ${population}` : "",
+        ]
           .filter(Boolean)
           .join(" — ");
       },

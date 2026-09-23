@@ -102,8 +102,12 @@ function isOnly2026Selection(documentRef) {
   return target.every(value => selectedSet.has(value));
 }
 
-function setFilterFieldSelection(documentRef, field, desiredValues) {
+function setFilterFieldSelection(documentRef, field, desiredValues, windowRef = null) {
   const desired = new Set((desiredValues || []).map(value => String(value).trim()).filter(Boolean));
+  // Uma mudança de estado só (um render), quando o app oferece o atalho.
+  if (typeof windowRef?.definirSelecaoDeFiltro === "function") {
+    return windowRef.definirSelecaoDeFiltro(field, [...desired]);
+  }
   const knownValues = allFilterValues(documentRef, field);
 
   knownValues.forEach(value => {
@@ -122,12 +126,12 @@ function toggle2026(windowRef, documentRef) {
   if (!isOnly2026Selection(documentRef)) {
     state.previousEditalSelection = selectedFilterValues(documentRef, "edital");
     state.only2026 = true;
-    setFilterFieldSelection(documentRef, "edital", target);
+    setFilterFieldSelection(documentRef, "edital", target, windowRef);
   } else {
     const restore = state.only2026 ? state.previousEditalSelection : [];
     state.only2026 = false;
     state.previousEditalSelection = [];
-    setFilterFieldSelection(documentRef, "edital", restore);
+    setFilterFieldSelection(documentRef, "edital", restore, windowRef);
   }
 
   windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
@@ -266,9 +270,14 @@ export function ensureTopFilterToolbar(
     icon: "fa-play",
     label: "Em andamento",
     onClick: () => {
-      const input = findFilterInput(documentRef, "status", value => value.includes("andamento"));
-      if (input && typeof windowRef?.toggleSelectFilter === "function") {
-        windowRef.toggleSelectFilter("filterStatus", input.dataset.filterValue, "Status");
+      // Todas as grafias de "andamento" entram; clicar de novo tira o filtro.
+      const emAndamento = allFilterValues(documentRef, "status")
+        .filter(value => normalize(value).includes("andamento"));
+      if (typeof windowRef?.definirSelecaoDeFiltro === "function") {
+        windowRef.definirSelecaoDeFiltro("status", isProgressActive(documentRef) ? [] : emAndamento);
+      } else {
+        const input = findFilterInput(documentRef, "status", value => value.includes("andamento"));
+        if (input) windowRef?.toggleSelectFilter?.("filterStatus", input.dataset.filterValue, "Status");
       }
       windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
     }
@@ -327,7 +336,7 @@ function decorateFilterFields(documentRef) {
   [...body.children].forEach(child => {
     if (child.tagName === "BUTTON") {
       child.classList.add("health-filter-clear-body");
-      child.innerHTML = '<i class="fa-solid fa-eraser" aria-hidden="true"></i> Limpar todos';
+      child.innerHTML = '<i class="fa-solid fa-eraser" aria-hidden="true"></i> Limpar filtros';
       return;
     }
 
@@ -344,47 +353,9 @@ function decorateFilterFields(documentRef) {
   });
 }
 
-function filterMenuOptions(menu, query) {
-  const normalizedQuery = normalize(query);
-  const options = [...menu.querySelectorAll(".multi-option")].filter(option => !option.classList.contains("empty"));
-  let visible = 0;
-  options.forEach(option => {
-    const show = !normalizedQuery || normalize(option.textContent).includes(normalizedQuery);
-    option.hidden = !show;
-    if (show) visible += 1;
-  });
-  const hint = menu.querySelector(".multi-hint");
-  if (hint) hint.textContent = normalizedQuery
-    ? `${visible} de ${options.length} opção(ões).`
-    : `${options.length} opção(ões) disponível(is).`;
-  return visible;
-}
-
-function ensureFilterMenuSearches(documentRef) {
-  documentRef.querySelectorAll("#filterBody .multi-select").forEach(select => {
-    const menu = select.querySelector(".multi-select-menu");
-    const actions = menu?.querySelector(".multi-select-actions");
-    if (!menu || !actions) return;
-
-    const selectAll = actions.querySelector('[data-filter-action="select-all"]');
-    if (selectAll) selectAll.textContent = "Selecionar todos";
-
-    if (menu.querySelector(".health-filter-menu-search")) return;
-    const fieldLabel = select.closest(".health-filter-field")?.querySelector("label span")?.textContent || "opções";
-    const wrap = documentRef.createElement("label");
-    wrap.className = "health-filter-menu-search";
-    wrap.innerHTML = `
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-      <input type="search" autocomplete="off" placeholder="Buscar em ${fieldLabel}" aria-label="Buscar em ${fieldLabel}">`;
-    actions.insertAdjacentElement("afterend", wrap);
-    wrap.querySelector("input")?.addEventListener("input", event => filterMenuOptions(menu, event.target.value));
-  });
-}
-
 function ensureFilterExperience(windowRef, documentRef) {
   ensureTopFilterToolbar(windowRef, documentRef);
   decorateFilterFields(documentRef);
-  ensureFilterMenuSearches(documentRef);
   syncFilterToolbar(windowRef, documentRef);
 }
 
@@ -500,6 +471,11 @@ export function initHealthDetailsRuntimeFix(
   documentRef.addEventListener("change", event => {
     if (!event.target?.closest?.("#page-dashboard")) return;
     windowRef.setTimeout(() => ensureFilterExperience(windowRef, documentRef), 0);
+  });
+
+  // Aviso único do app a cada aplicação de filtros (ver applyFilters).
+  documentRef.addEventListener("agsus:filtros-alterados", () => {
+    syncFilterToolbar(windowRef, documentRef);
   });
 
   documentRef.addEventListener("agsus:dashboard-rendered", () => {
