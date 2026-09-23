@@ -507,22 +507,22 @@
   height: 72px;
   place-items: center;
   margin-left: auto;
-  padding: 4px;
-  border: 1px solid color-mix(in srgb, var(--blue2, #2563eb) 24%, #dbeafe);
-  border-radius: 999px;
-  background: var(--card, #fff);
-  color: var(--strong, #10243e);
-  box-shadow: 0 14px 36px rgba(15, 35, 60, 0.22);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
   font: inherit;
-  font-size: 12px;
-  font-weight: 900;
   cursor: pointer;
   animation: ayaLauncherIn 180ms ease-out;
 }
 
 .arara-assistant__launcher img {
-  width: 62px;
-  height: 62px;
+  display: block;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 
