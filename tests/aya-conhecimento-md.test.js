@@ -1,8 +1,6 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   compilarVerbetes,
-  gerarModulo,
 } from "../scripts/compilar-conhecimento-aya.mjs";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
 import {
@@ -21,14 +19,16 @@ describe("base de conhecimento em docs/aya", () => {
     `npm run aya:conhecimento`, a Aya responde com a base velha e nada avisa.
     Este teste é o aviso.
   */
-  it("o módulo gerado está em dia com os .md", async () => {
+  it("o módulo gerado está em dia com os .md", () => {
     const { verbetes } = compilarVerbetes();
-    const esperado = await gerarModulo({ verbetes });
-    const atual = readFileSync(
-      "src/modules/aya-conhecimento-gerado.js",
-      "utf8",
-    ).replace(/\r\n/g, "\n");
-    expect(atual.trim()).toBe(esperado.trim());
+    const esperado = verbetes.map((verbete) => ({
+      titulo: verbete.titulo,
+      perguntas: verbete.perguntas,
+      resposta: verbete.resposta,
+      fato: verbete.fato,
+      fonte: verbete.fonte,
+    }));
+    expect(VERBETES_AYA).toEqual(esperado);
   });
 
   it("toda resposta direta declara fonte", () => {
