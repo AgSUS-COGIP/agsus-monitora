@@ -1,6 +1,7 @@
 import {
   buildAyaSystemPrompt,
   curatedAnswerForQuestion,
+  formatAyaAnswerForScope,
   officialSourcesForQuestion,
   sanitizeAyaContext,
 } from "../src/modules/aya-knowledge.js";
@@ -237,7 +238,7 @@ export default async function handler(req, res) {
   const curated = curatedAnswerForQuestion(paraConhecimento);
   if (curated) {
     return json(res, 200, {
-      answer: curated,
+      answer: formatAyaAnswerForScope(paraConhecimento, curated),
       sources: safeSources(paraConhecimento),
       model: "curated-official",
       provider: "curated-official",
@@ -356,8 +357,10 @@ export default async function handler(req, res) {
     const inventados = numerosSemLastro(answer, materialRecebido);
     if (inventados.length) {
       return json(res, 200, {
-        answer:
-          "Não vou afirmar isso: a resposta que eu montei trazia número que não está na minha base nem nos dados desta tela, e não tenho como confirmá-lo. Posso responder o que estiver carregado aqui, e para dados de um distrito a fonte é o Plano Distrital de Saúde Indígena correspondente.",
+        answer: formatAyaAnswerForScope(
+          paraConhecimento,
+          "Não vou afirmar esse número sem uma referência confiável. Posso responder sem esse dado exato ou, quando houver uma fonte adequada disponível, usar o valor confirmado. Para informações atuais, como placares, preços ou notícias, preciso de uma fonte atual.",
+        ),
         sources: safeSources(paraConhecimento),
         provider: "recusa-por-numero-sem-lastro",
         numeros_descartados: inventados.slice(0, 5),
@@ -365,7 +368,7 @@ export default async function handler(req, res) {
     }
 
     return json(res, 200, {
-      answer,
+      answer: formatAyaAnswerForScope(paraConhecimento, answer),
       sources: safeSources(paraConhecimento),
       model: String(payload?.model || model),
       provider: "ollama-local",
