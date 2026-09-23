@@ -130,8 +130,10 @@ describe("assistente Aya", () => {
       true,
     );
     expect(scene?.contains(hideButton)).toBe(true);
-    expect(hideButton?.textContent).toBe("Ocultar Aya");
-    expect(guide.querySelector(".arara-assistant__avatar")).toBeNull();
+    expect(hideButton?.textContent).toBe("Minimizar");
+    expect(
+      scene?.contains(guide.querySelector(".arara-assistant__avatar")),
+    ).toBe(true);
   });
 
   it("oculta, reabre e preserva a preferência entre seções", () => {
@@ -140,6 +142,9 @@ describe("assistente Aya", () => {
 
     guide.querySelector(".arara-assistant__hide").click();
     expect(guide.classList.contains("is-hidden")).toBe(true);
+    expect(guide.querySelector(".arara-assistant__panel")?.hidden).toBe(true);
+    expect(guide.querySelector("[data-arara-show]")?.hidden).toBe(false);
+    expect(guide.querySelector("[data-arara-show]")?.textContent).toBe("");
     expect(window.localStorage.getItem(ARARA_VISIBILITY_STORAGE_KEY)).toBe("1");
 
     updateAraraGuide("analises", "Análises", host);

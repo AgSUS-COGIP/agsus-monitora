@@ -565,13 +565,23 @@ function createAssistant(host) {
     doc,
     "button",
     "arara-assistant__hide",
-    "Ocultar Aya",
+    "Minimizar",
   );
   hideButton.type = "button";
-  hideButton.setAttribute("aria-label", "Ocultar Aya");
+  hideButton.setAttribute("aria-label", "Minimizar Aya");
 
   const body = element(doc, "div", "arara-assistant__body");
   const scene = element(doc, "div", "arara-assistant__scene");
+
+  const avatar = doc.createElement("img");
+  avatar.className = "arara-assistant__avatar";
+  avatar.src = "/assets/arara-azul-monitora.png";
+  avatar.alt = "Aya, assistente do MONITORA";
+  avatar.width = 170;
+  avatar.height = 194;
+  avatar.dataset.ninaDragHandle = "";
+
+  const conversation = element(doc, "div", "arara-assistant__conversation");
 
   const messages = element(doc, "div", "arara-assistant__messages");
   messages.setAttribute("role", "log");
@@ -623,7 +633,7 @@ function createAssistant(host) {
     "Enter envia · Shift+Enter quebra linha",
   );
 
-  scene.append(
+  conversation.append(
     conversationTools,
     messages,
     suggestionLabel,
@@ -631,6 +641,7 @@ function createAssistant(host) {
     form,
     composerHint,
   );
+  scene.append(avatar, conversation);
   body.append(scene);
   panel.append(header, body);
 
@@ -643,7 +654,7 @@ function createAssistant(host) {
   launcherAvatar.alt = "";
   launcherAvatar.width = 56;
   launcherAvatar.height = 56;
-  launcher.append(launcherAvatar, element(doc, "span", "", "Mostrar Aya"));
+  launcher.append(launcherAvatar);
 
   root.append(panel, launcher);
   host.append(root);
