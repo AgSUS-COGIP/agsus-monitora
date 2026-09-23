@@ -56,8 +56,8 @@ export const MODULOS = Object.freeze([
   {
     id: "nucleo",
     pagina: "page-nucleo",
-    rotulo: "Equipe Núcleo",
-    descricao: "Quadro da equipe do núcleo.",
+    rotulo: "Editais",
+    descricao: "Editais, etapas e cronogramas de processos seletivos.",
   },
   {
     id: "calendario",

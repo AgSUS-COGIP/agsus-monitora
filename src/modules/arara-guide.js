@@ -69,15 +69,15 @@ const GUIDES = Object.freeze({
     ],
   },
   nucleo: {
-    title: "Equipe Núcleo",
+    title: "Editais",
     intro:
-      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você na Equipe Núcleo e posso ajudar a localizar editais, entender etapas, cronogramas e ações disponíveis. O que você quer saber?",
+      "Olá! Eu sou a Aya, assistente do MONITORA. Estou com você em Editais e posso ajudar a localizar processos seletivos, entender etapas, cronogramas e ações disponíveis. O que você quer saber?",
     topics: [
       {
         label: "Processos",
         keywords: ["localizar", "buscar", "pesquisar", "processo", "edital"],
         answer:
-          "Use a busca da Equipe Núcleo para localizar por edital, unidade ou situação. Depois abra o registro correspondente para conferir cronograma e informações operacionais.",
+          "Use a busca de Editais para localizar por edital, unidade ou situação. Depois abra o registro correspondente para conferir cronograma e informações operacionais.",
       },
       {
         label: "Cronograma",

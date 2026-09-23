@@ -2369,7 +2369,7 @@ function buildNav() {
     );
   if (can("cores"))
     principal.push(
-      navButton("nucleo", cfgValue("nucleo_nav_title"), "fa-people-group"),
+      navButton("nucleo", "Editais", "fa-file-signature"),
     );
   if (can("cores"))
     principal.push(navButton("calendario", "Cronograma", "fa-calendar-days"));
@@ -2434,7 +2434,7 @@ function navigate(view) {
     return;
   }
   if (requestedView === "nucleo" && !can("cores")) {
-    toast("Sem permissão para Equipe Núcleo.", "warn");
+    toast("Sem permissão para Editais.", "warn");
     return;
   }
   if (requestedView === "calendario" && !can("cores")) {
@@ -2484,7 +2484,7 @@ function navigate(view) {
   if (requestedView === "nucleo") {
     $("page-nucleo").classList.add("active");
     setPageTitle(
-      cfgValue("nucleo_nav_title"),
+      "Editais",
       cfgValue("nucleo_page_subtitle"),
     );
     renderNucleo();
@@ -11624,7 +11624,7 @@ function dateOrNull(id) {
 function openEditModal(id) {
   if (!canManageEditais(profile))
     return toast(
-      "Seu perfil pode consultar a Equipe Núcleo, mas não editar editais.",
+      "Seu perfil pode consultar Editais, mas não editar editais.",
       "warn",
     );
   const r = id ? rows.find((x) => String(x.id) === String(id)) : {};
@@ -11733,7 +11733,7 @@ async function saveEdital() {
   const btn = $("saveEditalBtn");
   btn.disabled = true;
   btn.textContent = "Salvando...";
-  loader(true, "Equipe Núcleo", "Salvando no Supabase...", 70);
+  loader(true, "Editais", "Salvando no Supabase...", 70);
   const result = await sb.rpc(RPC_SAVE_MONITORAMENTO, { p_payload: payload });
   btn.disabled = false;
   btn.textContent = "Salvar";
@@ -11746,7 +11746,7 @@ async function saveEdital() {
   if (!saved || !saved.id) {
     loader(false);
     toast(
-      "Não foi possível confirmar o salvamento. Verifique as permissões da Equipe Núcleo.",
+      "Não foi possível confirmar o salvamento. Verifique as permissões de Editais.",
       "error",
     );
     return;
@@ -12863,7 +12863,7 @@ function friendlyError(error) {
   if (msg.includes(RPC_SAVE_MONITORAMENTO) || msg.includes(RPC_SAVE_CONFIG))
     return "As funções RPC necessárias ainda não estão disponíveis. Aplique o script SQL institucional no Supabase.";
   if (msg.includes("Sem permissão para salvar monitoramento indígena"))
-    return "Seu usuário não tem permissão para salvar registros da Equipe Núcleo.";
+    return "Seu usuário não tem permissão para salvar registros de Editais.";
   if (msg.includes("Sem permissão para salvar configurações"))
     return "Seu usuário não tem permissão para alterar configurações do sistema.";
   if (
