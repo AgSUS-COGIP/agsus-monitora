@@ -45,9 +45,7 @@ describe("movimento do painel da Aya", () => {
     expect(styles).not.toMatch(
       /\.arara-assistant__panel\s*\{[\s\S]*?box-shadow:/,
     );
-    expect(styles).not.toMatch(
-      /\.arara-assistant__panel\s*\{[\s\S]*?border:/,
-    );
+    expect(styles).not.toMatch(/\.arara-assistant__panel\s*\{[\s\S]*?border:/);
   });
 
   it("não redefine mensagens nem controles da conversa", () => {
