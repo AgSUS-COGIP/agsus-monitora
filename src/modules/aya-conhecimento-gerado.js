@@ -84,6 +84,20 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/assuntos/noticias/2025/censo-2022-identifica-391-povos-e-295-linguas-indigenas-e-reforca-necessidade-de-atuacao-integrada-entre-os-entes-federados",
   },
   {
+    titulo: "Criação da Funai",
+    perguntas: [
+      "quando criou a funai",
+      "quando foi criada a funai",
+      "quando a funai foi criada",
+      "em que ano foi criada a funai",
+    ],
+    resposta:
+      "A Funai foi criada pela Lei nº 5.371, de 5 de dezembro de 1967. A fundação é o órgão indigenista oficial do Estado brasileiro.",
+    fato: "A Funai foi criada pela Lei nº 5.371, de 5 de dezembro de 1967.",
+    fonte:
+      "https://www.gov.br/funai/pt-br/acesso-a-informacao/institucional/Institucional",
+  },
+  {
     titulo: "Terra Indígena",
     perguntas: [
       "terra indigena",
