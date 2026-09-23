@@ -118,6 +118,22 @@
   gap: 6px;
 }
 
+.arara-assistant__conversation-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 2px 0;
+}
+
+.arara-assistant__conversation-label {
+  color: var(--muted, #60758f);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .arara-assistant__hide,
 .arara-assistant__reset {
   min-height: 34px;
@@ -135,6 +151,12 @@
     border-color 140ms ease,
     background 140ms ease,
     transform 140ms ease;
+}
+
+.arara-assistant__reset {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 9px;
 }
 
 .arara-assistant__hide:hover,
@@ -688,10 +710,15 @@ html[data-theme="dark"] .arara-assistant__launcher {
     gap: 4px;
   }
 
-  .arara-assistant__hide,
-  .arara-assistant__reset {
+  .arara-assistant__hide {
     min-height: 30px;
     padding: 6px 8px;
+    font-size: 9px;
+  }
+
+  .arara-assistant__reset {
+    min-height: 28px;
+    padding: 5px 8px;
     font-size: 9px;
   }
 
