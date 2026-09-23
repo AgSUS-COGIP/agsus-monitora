@@ -3,6 +3,8 @@ import {
   AYA_SOURCE_CATALOG,
   buildAyaSystemPrompt,
   curatedAnswerForQuestion,
+  formatAyaAnswerForScope,
+  isAyaCoreDomain,
   officialSourcesForQuestion,
   questionNeedsAyaAi,
   sanitizeAyaContext,
@@ -117,6 +119,96 @@ describe("base institucional da Aya", () => {
     expect(prompt).toContain("Não substitua uma pergunta factual");
     expect(prompt).toContain("Funai");
     expect(prompt).toContain("Não escreva URLs");
+  });
+});
+
+describe("especialidade principal da Aya", () => {
+  it("reconhece Saúde Indígena, Terras Indígenas, SUS e AgSUS como núcleo", () => {
+    for (const pergunta of [
+      "O que é Saúde Indígena?",
+      "Como funciona um DSEI?",
+      "O que é Terra Indígena?",
+      "Qual o papel da Funai?",
+      "Como funciona o SUS?",
+      "O que é a AgSUS?",
+    ]) {
+      expect(isAyaCoreDomain(pergunta)).toBe(true);
+    }
+  });
+
+  it("marca assuntos gerais sem impedir a resposta", () => {
+    expect(isAyaCoreDomain("Como cuidar de uma samambaia?")).toBe(false);
+    expect(
+      formatAyaAnswerForScope(
+        "Como cuidar de uma samambaia?",
+        "Observe luz e umidade.",
+      ),
+    ).toBe(
+      "Assunto geral — fora do foco principal da Aya.\n\nObserve luz e umidade.",
+    );
+  });
+
+  it("não marca respostas da especialidade principal", () => {
+    expect(
+      formatAyaAnswerForScope(
+        "O que é um DSEI?",
+        "DSEI é uma unidade territorial de gestão.",
+      ),
+    ).toBe("DSEI é uma unidade territorial de gestão.");
+  });
+
+  it("responde conhecimento especializado dos novos MDs", () => {
+    expect(curatedAnswerForQuestion("O que faz a Funai?")).toContain(
+      "órgão indigenista oficial",
+    );
+    expect(
+      curatedAnswerForQuestion("Qual a diferença entre Terra Indígena e aldeia?"),
+    ).toContain("não são sinônimos");
+    expect(curatedAnswerForQuestion("Quais são os princípios do SUS?")).toContain(
+      "universalidade",
+    );
+    expect(curatedAnswerForQuestion("Qual a natureza da AgSUS?")).toContain(
+      "serviço social autônomo",
+    );
+  });
+
+  it("declara a especialidade no prompt sem bloquear assuntos gerais", () => {
+    const prompt = buildAyaSystemPrompt({
+      question: "Como cuidar de uma planta?",
+    });
+
+    expect(prompt).toContain("ESPECIALIDADE DA AYA");
+    expect(prompt).toContain("Saúde Indígena");
+    expect(prompt).toContain("Terras Indígenas");
+    expect(prompt).toContain("SUS, AgSUS");
+    expect(prompt).toContain("assuntos gerais");
+  });
+});
+
+describe("assuntos gerais da Aya", () => {
+  it("permite conversar sobre outros temas", () => {
+    expect(
+      curatedAnswerForQuestion("Pode falar de outros assuntos?"),
+    ).toContain("Meu foco principal");
+    expect(curatedAnswerForQuestion("Como cuidar de plantas?")).toContain(
+      "drenagem",
+    );
+    expect(
+      curatedAnswerForQuestion("O que é impedimento no futebol?"),
+    ).toContain("participação ativa");
+  });
+
+  it("usa fontes apropriadas para medicamento e futebol", () => {
+    expect(
+      officialSourcesForQuestion("O que é medicamento?"),
+    ).toContainEqual(AYA_SOURCE_CATALOG.anvisaMedicamentos);
+    expect(
+      officialSourcesForQuestion("O que é impedimento no futebol?"),
+    ).toContainEqual(AYA_SOURCE_CATALOG.ifab);
+  });
+
+  it("não inventa informação atual de futebol", () => {
+    expect(curatedAnswerForQuestion("Jogos de hoje")).toContain("fonte atual");
   });
 });
 
