@@ -24,10 +24,14 @@
 .multi-select {
   position: relative;
   width: 100%;
+  /* Evita que o texto selecionado imponha uma largura minima ao grid. */
+  min-width: 0;
 }
 
 .multi-select-trigger {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
   border-radius: 14px;

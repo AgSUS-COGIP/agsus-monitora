@@ -1,7 +1,6 @@
 .approved-kpis {
   display: grid;
-  /* Seis: total, contratados, desistentes, migração, doc. rejeitada, fim de fila. */
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   padding: 16px 18px;
   background: var(--surface, #fff);
@@ -35,14 +34,6 @@
 .approved-kpi[data-tone="warning"] {
   --kpi-accent: #b66a00;
   --kpi-soft: #fff1da;
-}
-/*
-  Fim de fila não é sucesso nem falha: a pessoa continua na lista, só que
-  depois de todos. Daí o tom próprio, entre o neutro e o de alerta.
-*/
-.approved-kpi[data-tone="fila"] {
-  --kpi-accent: #6b4fbb;
-  --kpi-soft: #efeaff;
 }
 .approved-kpi-icon {
   display: grid;
@@ -132,6 +123,8 @@
 }
 .approved-filters .form-row {
   margin: 0;
+  /* Permite que a coluna do grid encolha mesmo com cargos de nome longo. */
+  min-width: 0;
 }
 .approved-table td {
   vertical-align: middle;
@@ -184,10 +177,6 @@
 .approved-status.info {
   background: #e6f4fb;
   color: #176a8f;
-}
-.approved-status.warning {
-  background: #efeaff;
-  color: #4a337f;
 }
 .approved-status.neutral {
   background: #eef2f6;
@@ -294,10 +283,6 @@
 [data-theme="dark"] .approved-modal-subtitle,
 [data-theme="dark"] .approved-field-hint {
   color: #a8b4c4;
-}
-[data-theme="dark"] .approved-status.warning {
-  background: #33275c;
-  color: #d5c9ff;
 }
 [data-theme="dark"] .approved-status.neutral {
   background: #273449;
