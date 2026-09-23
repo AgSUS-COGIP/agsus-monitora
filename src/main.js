@@ -48,6 +48,7 @@ import "./styles/post-152-regression-fixes.css";
 import "./styles/post157-interface-tuning.css";
 import "./styles/colapsar-a-sidebar.css";
 import "./styles/lista-aprovados.css";
+import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
