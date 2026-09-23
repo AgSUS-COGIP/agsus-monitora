@@ -108,48 +108,6 @@
   }
 }
 
-/*
-  O fundo vetorial (MapLibre) dentro do painel de azulejos do Leaflet.
-
-  O CSS do MapLibre põe `position: relative` em `.maplibregl-map`, e o fundo
-  tem de ficar em `absolute` para o Leaflet o posicionar: por isso as duas
-  classes, que ganham à dele por especificidade, carregue ele antes ou depois.
-  `z-index: 0` põe-no por baixo do raster do OSM (as camadas de azulejos do
-  Leaflet ficam em 1) enquanto o vetorial ainda carrega.
-*/
-.agsus-mapa-vetorial,
-.agsus-mapa-vetorial.maplibregl-map {
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  top: 0;
-  z-index: 0;
-}
-
-/*
-  "Aqui não há foto de satélite mais detalhada." Dentro do mapa, ao nível dos
-  controlos do Leaflet (1000, a escala interna do mapa — não a da página).
-*/
-.agsus-aviso-do-satelite {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  bottom: 40px;
-  box-shadow: var(--shadow);
-  color: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  left: 50%;
-  line-height: 1.35;
-  max-width: min(380px, calc(100% - 32px));
-  padding: 8px 14px;
-  pointer-events: none;
-  position: absolute;
-  text-align: center;
-  transform: translateX(-50%);
-  z-index: 1000;
-}
-
 @media (max-width: 700px) {
   .agsus-basemap-switcher {
     margin-top: 6px !important;
