@@ -197,6 +197,22 @@ export function funaiFeatureName(properties = {}) {
   Nada é inferido: se o campo vier vazio, a lista vem vazia e o mapa não afirma
   povo nenhum.
 */
+/*
+  O PREENCHIMENTO DA FUNAI NÃO É NOME DE POVO
+
+  Em 32 das 163 terras em estudo o campo de povo vem "Não especificada". O
+  balão dizia "Povo: Não especificada", como se fosse o nome de um povo. É a
+  ausência do dado, escrita pela fonte, e é tratada como ausência.
+*/
+const PREENCHIMENTO_SEM_POVO =
+  /^(n[ãa]o\s+(especificad[ao]s?|informad[ao]s?|identificad[ao]s?|declarad[ao]s?)|sem\s+informa[çc][ãa]o)$/i;
+
+export function ehPreenchimentoSemPovo(nome) {
+  return PREENCHIMENTO_SEM_POVO.test(String(nome ?? "").trim());
+}
+
+export const SEM_POVO_DECLARADO = "Povo não declarado pela Funai";
+
 export function povosDaTerraIndigena(properties = {}) {
   const bruto = String(
     properties.etnia_nome || properties.etnias || properties.etnia || "",
@@ -206,7 +222,7 @@ export function povosDaTerraIndigena(properties = {}) {
   const povos = [];
   for (const parte of bruto.split(/\s*(?:,|;|\/|\se\s)\s*/i)) {
     const nome = parte.trim();
-    if (!nome) continue;
+    if (!nome || ehPreenchimentoSemPovo(nome)) continue;
     const chave = nome.toLocaleLowerCase("pt-BR");
     if (vistos.has(chave)) continue;
     vistos.add(chave);
@@ -243,6 +259,8 @@ export function tooltipDaTerraIndigena(properties = {}) {
       `${povos.length ? "" : "<b>"}Terra Indígena ${escaparHtml(nome)}${povos.length ? "" : "</b>"}`,
     );
   }
+  // Povo desconhecido diz-se, como na lista do painel; não se inventa nem se esconde.
+  if (!povos.length && nome) linhas.push(`<i>${SEM_POVO_DECLARADO}</i>`);
   if (uf) linhas.push(escaparHtml(uf));
 
   return linhas.join("<br>");
@@ -378,7 +396,7 @@ export function povosDaFeature(propriedades) {
   return String(propriedades?.etnia_nome ?? "")
     .split(/\s*[,;/]\s*/)
     .map((p) => p.trim())
-    .filter(Boolean);
+    .filter((p) => p && !ehPreenchimentoSemPovo(p));
 }
 
 export function resumoDasTerras(features = []) {
@@ -726,7 +744,12 @@ export function tooltipDaTerraEmEstudo(properties = {}) {
       `<b>${escaparHtml(povos.length === 1 ? "Povo" : "Povos")}: ${escaparHtml(povos.join(", "))}</b>`,
     );
   }
-  if (nome) linhas.push(`Terra Indígena ${escaparHtml(nome)}`);
+  if (nome) {
+    linhas.push(
+      `${povos.length ? "" : "<b>"}Terra Indígena ${escaparHtml(nome)}${povos.length ? "" : "</b>"}`,
+    );
+  }
+  if (!povos.length) linhas.push(`<i>${SEM_POVO_DECLARADO}</i>`);
   if (uf) linhas.push(escaparHtml(uf));
   linhas.push(AVISO_DE_ESTUDO);
   return linhas.join("<br>");
@@ -740,6 +763,17 @@ function supportsHover() {
   }
 }
 
+/*
+  A FALHA TAMBÉM SE GUARDA
+
+  A Funai deixou de publicar `areas_dsei`, e o proxy responde 502. Em caso de
+  falha a promessa voltava a `null`, e cada DSEI aberto pedia outra vez: no
+  painel, um 502 a cada clique, cada um uma chamada à função da Vercel.
+
+  Agora a resposta — boa ou má — vale para a página inteira. Não se desliga o
+  pedido de vez: se a Funai voltar a publicar a camada, o próximo carregamento
+  desenha-a sem mudar uma linha.
+*/
 async function loadDseiFeatures() {
   if (dseiFeaturesPromise) return dseiFeaturesPromise;
   dseiFeaturesPromise = fetch(funaiDseiUrl(), {
@@ -754,8 +788,11 @@ async function loadDseiFeatures() {
       return geojson;
     })
     .catch((error) => {
-      dseiFeaturesPromise = null;
-      throw error;
+      console.warn(
+        "Abrangência oficial dos DSEIs indisponível na Funai; não se tenta de novo até recarregar.",
+        error,
+      );
+      return null;
     });
   return dseiFeaturesPromise;
 }
@@ -1406,7 +1443,7 @@ function enhanceMap(L, map) {
       estudoLayer.clearLayers();
       if (map.hasLayer(estudoLayer)) map.removeLayer(estudoLayer);
     } else {
-      rasterLayer.addTo(map);
+      // O raster não entra aqui: só `useRasterFallback`, se o catálogo falhar.
       scheduleRefresh();
       desenharEstudo();
     }
@@ -1448,12 +1485,22 @@ function enhanceMap(L, map) {
   map.__agsusFaseDaTerraVisivel = (fase) =>
     visible() && !fasesOcultas.has(faseDaLegenda(fase));
 
+  /*
+    O RASTER DA FUNAI ERA BAIXADO SEM NUNCA APARECER
+
+    Entrava no mapa ao iniciar e a cada vez que as terras eram religadas, "até
+    o vetorial carregar" — e o vetorial vem do catálogo local em 40 a 200 ms.
+    Nesse intervalo o Leaflet já tinha pedido o país inteiro em tiles: medido
+    no painel, 91 pedidos a `/api/funai-wms`, 40 s de rede somados, cada um uma
+    chamada à função da Vercel, para uma imagem que era tirada do mapa antes de
+    se ver.
+
+    O raster passa a ser o que diz ser: o recurso de quando o catálogo e a Funai
+    falham. Só `useRasterFallback` o põe no mapa.
+  */
   const desired = readStoredVisibility();
   map.__agsusIndigenousTerritoriesVisible = desired;
-  if (desired) {
-    rasterLayer.addTo(map);
-    map.whenReady?.(scheduleRefresh);
-  }
+  if (desired) map.whenReady?.(scheduleRefresh);
   addControl(L, map, desired, definirVisibilidade);
 }
 

@@ -1,4 +1,9 @@
 import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
+import {
+  azulejoDoRecuo,
+  podeRecuar,
+  semAzulejoDeAviso,
+} from "../lib/recuo-de-azulejo.js";
 
 const STORAGE_KEY = "agsus_map_base_layer_v1";
 const MODE_MAP = "map";
@@ -273,10 +278,99 @@ function setBaseMapMode(L, map, requestedMode, { persist = false } = {}) {
   }
 }
 
+/*
+  A CAMADA DE SATÉLITE QUE NÃO QUEBRA AO APROXIMAR
+
+  Ver `src/lib/recuo-de-azulejo.js`: acima do zoom 17, nos territórios
+  indígenas, a Esri não tem foto e devolvia um aviso em forma de imagem.
+
+  O recuo tem de acontecer DENTRO do azulejo, antes de o erro chegar ao
+  Leaflet: esta camada conta `tileerror` e, ao quarto, troca o satélite pelo
+  mapa comum (`SATELLITE_ERROR_LIMIT`). Com `blankTile=false` cada azulejo em
+  falta é um 404 — sem o recuo, aproximar no Xingu desligaria o satélite.
+
+  Por isso cada azulejo é uma caixa com `overflow: hidden` e a imagem dentro:
+  quando o nível pedido falha, a imagem passa a ser a do nível de cima,
+  ampliada e deslocada até o quadrante certo. Só se o recuo inteiro falhar é
+  que o erro sobe.
+*/
+export function criarCamadaComRecuo(L, url, options) {
+  const Camada = L.TileLayer.extend({
+    createTile(coords, done) {
+      const tamanho = this.getTileSize();
+      const caixa = document.createElement("div");
+      caixa.style.overflow = "hidden";
+      // O Leaflet lê `complete` para decidir se aborta o azulejo ao mudar de zoom.
+      caixa.complete = false;
+
+      const img = document.createElement("img");
+      img.alt = "";
+      img.setAttribute("role", "presentation");
+      img.style.display = "block";
+      img.style.maxWidth = "none";
+      img.style.maxHeight = "none";
+      if (this.options.crossOrigin || this.options.crossOrigin === "") {
+        img.crossOrigin =
+          this.options.crossOrigin === true ? "" : this.options.crossOrigin;
+      }
+
+      let niveis = 0;
+      const pedir = () => {
+        const alvo = azulejoDoRecuo(coords, niveis);
+        img.style.width = `${tamanho.x * alvo.escala}px`;
+        img.style.height = `${tamanho.y * alvo.escala}px`;
+        img.style.transform = niveis
+          ? `translate(${-alvo.dx * tamanho.x}px, ${-alvo.dy * tamanho.y}px)`
+          : "";
+        img.src = semAzulejoDeAviso(
+          L.Util.template(
+            this._url,
+            L.Util.extend({ s: "" }, this.options, {
+              x: alvo.x,
+              y: alvo.y,
+              z: alvo.z,
+            }),
+          ),
+        );
+      };
+
+      img.onload = () => {
+        caixa.complete = true;
+        done(null, caixa);
+      };
+      img.onerror = () => {
+        if (podeRecuar(coords, niveis, this.options.minZoom ?? 0)) {
+          niveis += 1;
+          pedir();
+          return;
+        }
+        caixa.complete = true;
+        done(new Error("Azulejo de satélite sem imagem"), caixa);
+      };
+
+      caixa.appendChild(img);
+      pedir();
+      return caixa;
+    },
+
+    // O Leaflet cancela o pedido pondo `src` vazio no azulejo; aqui ele é a caixa.
+    _removeTile(key) {
+      const img = this._tiles[key]?.el?.firstChild;
+      if (img?.tagName === "IMG") {
+        img.onload = null;
+        img.onerror = null;
+        img.src = L.Util.emptyImageUrl;
+      }
+      return L.TileLayer.prototype._removeTile.call(this, key);
+    },
+  });
+  return new Camada(url, options);
+}
+
 function getSatelliteLayer(L, map) {
   if (map.__agsusSatelliteLayer) return map.__agsusSatelliteLayer;
 
-  const layer = L.tileLayer(SATELLITE_URL, {
+  const layer = criarCamadaComRecuo(L, SATELLITE_URL, {
     maxZoom: MAP_MAX_ZOOM,
     maxNativeZoom: SATELLITE_MAX_NATIVE_ZOOM,
     attribution: SATELLITE_ATTRIBUTION,
