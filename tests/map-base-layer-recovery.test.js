@@ -29,6 +29,18 @@ function fixture() {
       },
     },
     DomEvent: { disableClickPropagation() {}, disableScrollPropagation() {} },
+    /*
+      O satélite passou a ser `criarCamadaComRecuo`, que estende `L.TileLayer`.
+      Aqui a extensão devolve a mesma camada de mentira de `tileLayer`: o que
+      estes casos medem é a troca entre fundos, não o recuo de azulejo — esse
+      tem teste próprio em `tests/recuo-de-azulejo.test.js`.
+    */
+    TileLayer: {
+      extend: () =>
+        function CamadaDeMentira(url, options) {
+          return L.tileLayer(url, options);
+        },
+    },
     tileLayer(url, options) {
       const events = {};
       return {

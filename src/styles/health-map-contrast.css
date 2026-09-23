@@ -2,33 +2,33 @@
    Mantém a lógica Leaflet existente e altera somente a apresentação. */
 
 #page-dashboard #map .leaflet-tile-pane {
-  filter: saturate(.58) brightness(1.06) contrast(.94);
+  filter: saturate(0.58) brightness(1.06) contrast(0.94);
 }
 
 /* Estado(s) atendido(s) pelo DSEI selecionado: amarelo de alto contraste. */
 #page-dashboard #map .leaflet-overlay-pane path[fill="#2e8b57"] {
   fill: #facc15 !important;
-  fill-opacity: .28 !important;
+  fill-opacity: 0.28 !important;
   stroke: #a16207 !important;
   stroke-opacity: 1 !important;
   stroke-width: 3.2 !important;
-  filter: drop-shadow(0 1px 2px rgba(113, 63, 18, .32));
+  filter: drop-shadow(0 1px 2px rgba(113, 63, 18, 0.32));
 }
 
 /* DSEI com processo ativo no modo normal. */
 #page-dashboard #map .leaflet-overlay-pane path[fill="#0b8f58"] {
   fill: #2563eb !important;
-  fill-opacity: .88 !important;
+  fill-opacity: 0.88 !important;
   stroke: #ffffff !important;
   stroke-opacity: 1 !important;
   stroke-width: 3.5 !important;
-  filter: drop-shadow(0 2px 4px rgba(15, 35, 60, .38));
+  filter: drop-shadow(0 2px 4px rgba(15, 35, 60, 0.38));
 }
 
 /* DSEIs sem processo ativo. */
 #page-dashboard #map .leaflet-overlay-pane path[fill="#5b9bd5"] {
   fill: #94a3b8 !important;
-  fill-opacity: .72 !important;
+  fill-opacity: 0.72 !important;
   stroke: #ffffff !important;
   stroke-width: 2.4 !important;
 }
@@ -36,28 +36,30 @@
 /* Polos base: azul-marinho com halo branco. */
 #page-dashboard #map .leaflet-overlay-pane path[fill="#1d4e89"] {
   fill: #0f4c81 !important;
-  fill-opacity: .96 !important;
+  fill-opacity: 0.96 !important;
   stroke: #ffffff !important;
   stroke-width: 2.5 !important;
-  filter: drop-shadow(0 1px 3px rgba(15, 35, 60, .35));
+  filter: drop-shadow(0 1px 3px rgba(15, 35, 60, 0.35));
 }
 
 /* Polo em outro estado: laranja mais vivo e legível. */
 #page-dashboard #map .leaflet-overlay-pane path[fill="#e8730c"] {
   fill: #f97316 !important;
-  fill-opacity: .96 !important;
+  fill-opacity: 0.96 !important;
   stroke: #ffffff !important;
   stroke-width: 2.5 !important;
 }
 
 #page-dashboard #map .leaflet-marker-icon > div {
-  box-shadow: 0 0 0 2px #ffffff, 0 3px 8px rgba(15, 35, 60, .42) !important;
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 3px 8px rgba(15, 35, 60, 0.42) !important;
 }
 
 #page-dashboard #mapLegendBox {
-  background: rgba(255, 255, 255, .97) !important;
-  border: 1px solid rgba(37, 99, 235, .20) !important;
-  box-shadow: 0 10px 28px rgba(15, 35, 60, .18) !important;
+  background: rgba(255, 255, 255, 0.97) !important;
+  border: 1px solid rgba(37, 99, 235, 0.2) !important;
+  box-shadow: 0 10px 28px rgba(15, 35, 60, 0.18) !important;
 }
 
 /* A legenda antiga ainda desenhava o DSEI ativo em verde. */
@@ -73,7 +75,7 @@
 #page-dashboard #mapLegendBox [style*="rgb(46, 139, 87)"] {
   background: #facc15 !important;
   border-color: #a16207 !important;
-  box-shadow: 0 0 0 1px rgba(161, 98, 7, .35);
+  box-shadow: 0 0 0 1px rgba(161, 98, 7, 0.35);
 }
 
 /* Controles maiores e mais legíveis para mouse, toque e teclado. */
@@ -81,7 +83,7 @@
   border: 0;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 7px 20px rgba(15, 35, 60, .20);
+  box-shadow: 0 7px 20px rgba(15, 35, 60, 0.2);
 }
 
 #page-dashboard #map .leaflet-control-zoom a {
@@ -101,7 +103,7 @@
 
 #page-dashboard #map .leaflet-control-zoom a:focus-visible,
 #page-dashboard #map:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, .38) !important;
+  outline: 3px solid rgba(37, 99, 235, 0.38) !important;
   outline-offset: 2px;
 }
 
@@ -121,11 +123,11 @@
 #page-dashboard #map .leaflet-control-scale-line {
   border-color: #334155;
   border-top: 0;
-  background: rgba(255, 255, 255, .92);
+  background: rgba(255, 255, 255, 0.92);
   color: #1e293b;
   font-size: 10px;
   font-weight: 700;
-  box-shadow: 0 2px 7px rgba(15, 35, 60, .12);
+  box-shadow: 0 2px 7px rgba(15, 35, 60, 0.12);
 }
 
 /* Evita o painel lateral esmagar o mapa ou ser comprimido no drill-down. */
@@ -158,11 +160,11 @@
 }
 
 body.dark-mode #page-dashboard #map .leaflet-tile-pane {
-  filter: saturate(.48) brightness(.78) contrast(1.08);
+  filter: saturate(0.48) brightness(0.78) contrast(1.08);
 }
 
 body.dark-mode #page-dashboard #map .leaflet-control-scale-line {
-  background: rgba(17, 36, 55, .92);
+  background: rgba(17, 36, 55, 0.92);
   color: #e5eef7;
   border-color: #cbd5e1;
 }

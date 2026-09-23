@@ -203,48 +203,6 @@ export const CONTRATO_RPC = {
       "Remove logicamente um candidato sub judice preservando o histórico.",
   },
 
-  // ── Lista de convocação ─────────────────────────────────────────────────
-  /*
-    Não são críticas: sem elas a aba de convocação fica sem modelo de regras e
-    mostra tudo como cadastro de reserva, mas a lista de aprovados — que é a
-    razão da tela existir — continua de pé.
-  */
-  listar_modelos_convocacao: {
-    argumentos: [],
-    critica: false,
-    resumo:
-      "Modelos de regras de convocação, com as categorias e quantos editais usam cada um.",
-  },
-  salvar_modelo_convocacao: {
-    argumentos: ["p_modelo"],
-    critica: false,
-    resumo:
-      "Grava um modelo de convocação e as suas categorias numa chamada só.",
-  },
-  remover_modelo_convocacao: {
-    argumentos: ["p_modelo_id"],
-    critica: false,
-    resumo:
-      "Remove um modelo de convocação; os editais que o usavam ficam sem regra.",
-  },
-  listar_configuracao_convocacao: {
-    argumentos: [],
-    critica: false,
-    resumo: "Modelo escolhido e vagas imediatas de cada edital.",
-  },
-  salvar_configuracao_convocacao: {
-    argumentos: [
-      "p_edital_id",
-      "p_proporcionalidade",
-      "p_modelo_id",
-      "p_padrao_imediata",
-      "p_vagas",
-    ],
-    critica: false,
-    resumo:
-      "Grava de uma vez o tipo de convocação, o modelo do edital e as vagas imediatas de cada vaga.",
-  },
-
   // ── Análises ────────────────────────────────────────────────────────────
   get_analises_dashboard_payload_v2: {
     argumentos: ["p_scope"],

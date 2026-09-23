@@ -7,43 +7,51 @@ const state = {
   loadingWasVisible: false,
   pollTimer: 0,
   pollAttempts: 0,
-  initialized: false
+  initialized: false,
 };
 
-const txt = value => String(value ?? "").trim();
+const txt = (value) => String(value ?? "").trim();
 
-function currentScope(){
-  const value = txt(document.getElementById("fSituacaoEdital")?.value).toLowerCase();
+function currentScope() {
+  const value = txt(
+    document.getElementById("fSituacaoEdital")?.value,
+  ).toLowerCase();
   return ["ativo", "inativo", "todos"].includes(value) ? value : "ativo";
 }
 
-function selectedValues(id){
+function selectedValues(id) {
   const element = document.getElementById(id);
-  if(!element) return [];
-  return [...element.selectedOptions].map(option => txt(option.value)).filter(Boolean);
+  if (!element) return [];
+  return [...element.selectedOptions]
+    .map((option) => txt(option.value))
+    .filter(Boolean);
 }
 
-function selectionKey(){
+function selectionKey() {
   return JSON.stringify({
     scope: currentScope(),
     unidades: selectedValues("scopeGuardUnits").sort(),
-    editais: selectedValues("scopeGuardEditais").sort()
+    editais: selectedValues("scopeGuardEditais").sort(),
   });
 }
 
-function hasHistoricalSelection(){
-  return selectedValues("scopeGuardUnits").length > 0
-    || selectedValues("scopeGuardEditais").length > 0;
+function hasHistoricalSelection() {
+  return (
+    selectedValues("scopeGuardUnits").length > 0 ||
+    selectedValues("scopeGuardEditais").length > 0
+  );
 }
 
-function isAuthorized(){
-  return currentScope() !== "ativo"
-    && Boolean(state.authorizedKey)
-    && state.authorizedKey === selectionKey();
+function isAuthorized() {
+  return (
+    currentScope() !== "ativo" &&
+    Boolean(state.authorizedKey) &&
+    state.authorizedKey === selectionKey()
+  );
 }
 
-function ensureStyles(){
-  if(document.getElementById("analisesRuntimeStabilityStyles")) return;
+function ensureStyles() {
+  if (document.getElementById("analisesRuntimeStabilityStyles")) return;
   const style = document.createElement("style");
   style.id = "analisesRuntimeStabilityStyles";
   style.textContent = `
@@ -81,25 +89,27 @@ function ensureStyles(){
   document.head.appendChild(style);
 }
 
-function currentScopeLabel(){
+function currentScopeLabel() {
   const select = document.getElementById("fSituacaoEdital");
-  return txt(select?.selectedOptions?.[0]?.textContent || select?.value || "Recorte");
+  return txt(
+    select?.selectedOptions?.[0]?.textContent || select?.value || "Recorte",
+  );
 }
 
-function currentTotal(){
+function currentTotal() {
   return txt(document.getElementById("kTotal")?.textContent) || "0";
 }
 
-function buildSummaryText(){
+function buildSummaryText() {
   const units = selectedValues("scopeGuardUnits").length;
   const editais = selectedValues("scopeGuardEditais").length;
   return `${currentScopeLabel()} · ${units} unidade(s) · ${editais} edital(is) · ${currentTotal()} registro(s)`;
 }
 
-function ensureSummary(){
+function ensureSummary() {
   const guard = document.getElementById("scopeGuard");
-  if(!guard) return false;
-  if(document.getElementById("scopeGuardSummary")) return true;
+  if (!guard) return false;
+  if (document.getElementById("scopeGuardSummary")) return true;
 
   const summary = document.createElement("div");
   summary.id = "scopeGuardSummary";
@@ -114,55 +124,61 @@ function ensureSummary(){
       <i class="fa-solid fa-pen-to-square"></i> Alterar recorte
     </button>`;
   guard.insertAdjacentElement("afterbegin", summary);
-  document.getElementById("scopeGuardChange")?.addEventListener("click", () => setSummaryCollapsed(false));
+  document
+    .getElementById("scopeGuardChange")
+    ?.addEventListener("click", () => setSummaryCollapsed(false));
   return true;
 }
 
-function setSummaryCollapsed(collapsed){
+function setSummaryCollapsed(collapsed) {
   const guard = document.getElementById("scopeGuard");
   const summary = document.getElementById("scopeGuardSummary");
-  if(!guard || !summary) return;
+  if (!guard || !summary) return;
   guard.classList.toggle("scope-guard--collapsed", collapsed);
   summary.hidden = !collapsed;
-  if(collapsed){
+  if (collapsed) {
     const label = summary.querySelector(".scope-guard-summary-text");
-    if(label) label.textContent = buildSummaryText();
+    if (label) label.textContent = buildSummaryText();
   }
 }
 
-function setLoading(active){
+function setLoading(active) {
   document.body.classList.toggle(LOADING_CLASS, active);
-  document.querySelector("main.content")?.setAttribute("aria-busy", String(active));
-  ["refreshBtn", "applyBtn", "scopeGuardLoad"].forEach(id => {
+  document
+    .querySelector("main.content")
+    ?.setAttribute("aria-busy", String(active));
+  ["refreshBtn", "applyBtn", "scopeGuardLoad"].forEach((id) => {
     document.getElementById(id)?.setAttribute("aria-busy", String(active));
   });
 }
 
-function setPending(pending){
+function setPending(pending) {
   document.body.classList.toggle(PENDING_CLASS, pending);
   const exportButton = document.getElementById("exportBtn");
-  if(exportButton){
+  if (exportButton) {
     exportButton.disabled = pending;
-    exportButton.title = pending ? "Consulte uma unidade ou edital antes de exportar" : "";
+    exportButton.title = pending
+      ? "Consulte uma unidade ou edital antes de exportar"
+      : "";
   }
 }
 
-function updateStatus(message, warning = false){
+function updateStatus(message, warning = false) {
   const status = document.getElementById("scopeGuardStatus");
-  if(!status) return;
+  if (!status) return;
   status.classList.toggle("is-warning", warning);
   status.textContent = message;
 }
 
-function invalidateHistoricalResult(){
+function invalidateHistoricalResult() {
   state.authorizedKey = "";
   state.queryInFlight = false;
   setSummaryCollapsed(false);
-  if(currentScope() !== "ativo") setPending(true);
+  if (currentScope() !== "ativo") setPending(true);
 }
 
-function authorizeAndStart(){
-  if(!hasHistoricalSelection()){
+function authorizeAndStart() {
+  if (!hasHistoricalSelection()) {
     invalidateHistoricalResult();
     return false;
   }
@@ -175,13 +191,16 @@ function authorizeAndStart(){
   return true;
 }
 
-function finishHistoricalQuery(){
-  if(!state.queryInFlight || !isAuthorized()) return;
+function finishHistoricalQuery() {
+  if (!state.queryInFlight || !isAuthorized()) return;
   const authWarning = document.getElementById("authWarning");
-  if(authWarning && !authWarning.hidden && txt(authWarning.textContent)){
+  if (authWarning && !authWarning.hidden && txt(authWarning.textContent)) {
     state.queryInFlight = false;
     setPending(true);
-    updateStatus("A consulta não foi concluída. Revise a mensagem de erro e tente novamente.", true);
+    updateStatus(
+      "A consulta não foi concluída. Revise a mensagem de erro e tente novamente.",
+      true,
+    );
     return;
   }
   state.queryInFlight = false;
@@ -189,142 +208,187 @@ function finishHistoricalQuery(){
   updateStatus(`Consulta concluída: ${currentTotal()} registro(s) no recorte.`);
   ensureSummary();
   setSummaryCollapsed(true);
-  document.dispatchEvent(new CustomEvent("agsus:analises-query-complete", { detail:{ total:currentTotal() } }));
+  document.dispatchEvent(
+    new CustomEvent("agsus:analises-query-complete", {
+      detail: { total: currentTotal() },
+    }),
+  );
 }
 
-function stopCompletionPolling(){
+function stopCompletionPolling() {
   window.clearTimeout(state.pollTimer);
   state.pollTimer = 0;
   state.pollAttempts = 0;
   state.loadingWasVisible = false;
 }
 
-function completionStep(){
-  if(!state.queryInFlight){
+function completionStep() {
+  if (!state.queryInFlight) {
     stopCompletionPolling();
     return;
   }
-  const loadingVisible = document.getElementById("loading")?.classList.contains("show") === true;
+  const loadingVisible =
+    document.getElementById("loading")?.classList.contains("show") === true;
   setLoading(loadingVisible);
-  if(loadingVisible) state.loadingWasVisible = true;
-  if(!loadingVisible && state.loadingWasVisible){
+  if (loadingVisible) state.loadingWasVisible = true;
+  if (!loadingVisible && state.loadingWasVisible) {
     finishHistoricalQuery();
     stopCompletionPolling();
     return;
   }
   state.pollAttempts += 1;
-  if(state.pollAttempts >= 600){
+  if (state.pollAttempts >= 600) {
     state.queryInFlight = false;
     setPending(true);
-    updateStatus("A consulta excedeu o tempo esperado. Tente atualizar novamente.", true);
+    updateStatus(
+      "A consulta excedeu o tempo esperado. Tente atualizar novamente.",
+      true,
+    );
     stopCompletionPolling();
     return;
   }
   state.pollTimer = window.setTimeout(completionStep, 100);
 }
 
-function startCompletionPolling(){
+function startCompletionPolling() {
   stopCompletionPolling();
   state.queryInFlight = true;
   state.pollTimer = window.setTimeout(completionStep, 0);
 }
 
-function syncLoadingBriefly(){
+function syncLoadingBriefly() {
   let attempts = 0;
   const step = () => {
-    const active = document.getElementById("loading")?.classList.contains("show") === true;
+    const active =
+      document.getElementById("loading")?.classList.contains("show") === true;
     setLoading(active);
     attempts += 1;
-    if(active || attempts < 20) window.setTimeout(step, 100);
+    if (active || attempts < 20) window.setTimeout(step, 100);
   };
   step();
 }
 
-function requestGuardLoad(){
+function requestGuardLoad() {
   document.getElementById("scopeGuardLoad")?.click();
 }
 
-function bindEvents(){
-  document.getElementById("fSituacaoEdital")?.addEventListener("change", () => {
-    if(currentScope() === "ativo"){
-      state.authorizedKey = "";
-      state.queryInFlight = false;
-      setPending(false);
-      setSummaryCollapsed(false);
-      return;
-    }
-    if(state.authorizedKey === selectionKey()){
-      state.queryInFlight = true;
-      setPending(true);
-      startCompletionPolling();
-      return;
-    }
-    invalidateHistoricalResult();
-  }, true);
+function bindEvents() {
+  document.getElementById("fSituacaoEdital")?.addEventListener(
+    "change",
+    () => {
+      if (currentScope() === "ativo") {
+        state.authorizedKey = "";
+        state.queryInFlight = false;
+        setPending(false);
+        setSummaryCollapsed(false);
+        return;
+      }
+      if (state.authorizedKey === selectionKey()) {
+        state.queryInFlight = true;
+        setPending(true);
+        startCompletionPolling();
+        return;
+      }
+      invalidateHistoricalResult();
+    },
+    true,
+  );
 
-  document.addEventListener("change", event => {
-    if(event.target?.id === "scopeGuardUnits" || event.target?.id === "scopeGuardEditais") invalidateHistoricalResult();
-  }, true);
+  document.addEventListener(
+    "change",
+    (event) => {
+      if (
+        event.target?.id === "scopeGuardUnits" ||
+        event.target?.id === "scopeGuardEditais"
+      )
+        invalidateHistoricalResult();
+    },
+    true,
+  );
 
-  document.addEventListener("click", event => {
-    if(event.target?.closest?.("#scopeGuardLoad")){
-      if(authorizeAndStart()) syncLoadingBriefly();
-      return;
-    }
-    if(event.target?.closest?.("#refreshBtn")){
-      syncLoadingBriefly();
-      if(currentScope() !== "ativo"){
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (event.target?.closest?.("#scopeGuardLoad")) {
+        if (authorizeAndStart()) syncLoadingBriefly();
+        return;
+      }
+      if (event.target?.closest?.("#refreshBtn")) {
+        syncLoadingBriefly();
+        if (currentScope() !== "ativo") {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (!authorizeAndStart()) {
+            requestGuardLoad();
+            return;
+          }
+          document.dispatchEvent(
+            new CustomEvent("agsus:analises-force-refresh", {
+              detail: { scope: currentScope() },
+            }),
+          );
+          requestGuardLoad();
+        }
+        return;
+      }
+      if (
+        event.target?.closest?.("#exportBtn") &&
+        currentScope() !== "ativo" &&
+        !isAuthorized()
+      ) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if(!authorizeAndStart()){
-          requestGuardLoad();
-          return;
-        }
-        document.dispatchEvent(new CustomEvent("agsus:analises-force-refresh", { detail:{ scope:currentScope() } }));
+        invalidateHistoricalResult();
+        requestGuardLoad();
+        return;
+      }
+      if (
+        event.target?.closest?.("#applyBtn") &&
+        currentScope() !== "ativo" &&
+        !isAuthorized()
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
         requestGuardLoad();
       }
-      return;
-    }
-    if(event.target?.closest?.("#exportBtn") && currentScope() !== "ativo" && !isAuthorized()){
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      invalidateHistoricalResult();
-      requestGuardLoad();
-      return;
-    }
-    if(event.target?.closest?.("#applyBtn") && currentScope() !== "ativo" && !isAuthorized()){
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      requestGuardLoad();
-    }
-  }, true);
+    },
+    true,
+  );
 
   document.addEventListener("agsus:analises-scope-guard-ready", () => {
     ensureSummary();
     setPending(currentScope() !== "ativo" && !isAuthorized());
   });
 
-  document.addEventListener("agsus:analises-loading-start", () => setLoading(true));
-  document.addEventListener("agsus:analises-loading-end", () => setLoading(false));
+  document.addEventListener("agsus:analises-loading-start", () =>
+    setLoading(true),
+  );
+  document.addEventListener("agsus:analises-loading-end", () =>
+    setLoading(false),
+  );
 }
 
-function installStep(attempt = 0){
+function installStep(attempt = 0) {
   ensureSummary();
-  const ready = document.getElementById("loading") && document.getElementById("fSituacaoEdital");
-  if(ready){
+  const ready =
+    document.getElementById("loading") &&
+    document.getElementById("fSituacaoEdital");
+  if (ready) {
     bindEvents();
-    setLoading(document.getElementById("loading")?.classList.contains("show") === true);
+    setLoading(
+      document.getElementById("loading")?.classList.contains("show") === true,
+    );
     setPending(currentScope() !== "ativo" && !isAuthorized());
     return;
   }
-  if(attempt < 80) window.setTimeout(() => installStep(attempt + 1), 100);
+  if (attempt < 80) window.setTimeout(() => installStep(attempt + 1), 100);
 }
 
-function start(){
-  if(state.initialized) return;
+function start() {
+  if (state.initialized) return;
   state.initialized = true;
   ensureStyles();
   installStep();
 }
 
-document.addEventListener("DOMContentLoaded", start, { once:true });
+document.addEventListener("DOMContentLoaded", start, { once: true });

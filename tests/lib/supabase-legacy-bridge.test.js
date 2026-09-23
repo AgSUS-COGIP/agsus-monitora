@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   createSupabaseLegacyFacade,
-  installSupabaseLegacyBridge
+  installSupabaseLegacyBridge,
 } from "../../src/lib/supabase-legacy-bridge.js";
 
 describe("supabase legacy bridge", () => {
@@ -11,7 +11,9 @@ describe("supabase legacy bridge", () => {
     const facade = createSupabaseLegacyFacade(resolveClient);
 
     expect(facade.createClient("url-a", "key-a")).toBe(sharedClient);
-    expect(facade.createClient("url-b", "key-b", { auth: {} })).toBe(sharedClient);
+    expect(facade.createClient("url-b", "key-b", { auth: {} })).toBe(
+      sharedClient,
+    );
     expect(resolveClient).toHaveBeenCalledTimes(2);
   });
 

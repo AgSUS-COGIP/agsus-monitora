@@ -149,13 +149,42 @@ describe("marcação da Terra Indígena no mapa", () => {
     ).toContain("<b>Povos: Guaraní, Kaingang</b>");
   });
 
+  /*
+    Não afirma povo nenhum — e diz que a Funai não o declarou, como a lista do
+    painel já dizia. Antes o balão simplesmente calava, e a ausência lia-se
+    como esquecimento do painel.
+  */
   it("sem etnia declarada, identifica pela terra e não afirma povo", () => {
     const texto = tooltipDaTerraIndigena({
       terrai_nome: "Acapuri de Cima",
       uf_sigla: "AM",
     });
-    expect(texto).toBe("<b>Terra Indígena Acapuri de Cima</b><br>AM");
-    expect(texto).not.toContain("Povo");
+    expect(texto).toBe(
+      "<b>Terra Indígena Acapuri de Cima</b><br><i>Povo não declarado pela Funai</i><br>AM",
+    );
+    expect(texto).not.toContain("Povo:");
+  });
+
+  /*
+    Em 32 das 163 terras em estudo o campo vem "Não especificada", e o balão
+    dizia "Povo: Não especificada" — a ausência do dado a passar por nome.
+  */
+  it("o preenchimento da Funai não vira nome de povo", () => {
+    for (const valor of [
+      "Não especificada",
+      "não especificado",
+      "Nao informado",
+      "Sem informação",
+    ]) {
+      expect(povosDaTerraIndigena({ etnia_nome: valor }), valor).toEqual([]);
+    }
+    expect(
+      povosDaTerraIndigena({ etnia_nome: "Kaingang, Não especificada" }),
+    ).toEqual(["Kaingang"]);
+    // E não apaga um povo cujo nome só começa parecido.
+    expect(povosDaTerraIndigena({ etnia_nome: "Nambikwara" })).toEqual([
+      "Nambikwara",
+    ]);
   });
 
   it("não devolve marcação quando não há nada a dizer", () => {

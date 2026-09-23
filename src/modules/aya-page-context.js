@@ -26,9 +26,9 @@ const PAGE_CONTEXTS = Object.freeze({
     ]),
   }),
   nucleo: Object.freeze({
-    name: "Equipe Núcleo",
+    name: "Editais",
     purpose:
-      "Acompanhar processos seletivos da Equipe Núcleo, com editais, etapas, cronogramas, situação operacional e registros disponíveis ao usuário autenticado.",
+      "Acompanhar processos seletivos em Editais, com etapas, cronogramas, situação operacional e registros disponíveis ao usuário autenticado.",
     concepts: Object.freeze([
       "Edital identifica o processo seletivo e deve ser distinguido de etapa, status e cronograma.",
       "Cronograma reúne etapas e datas do processo selecionado; uma data só deve ser afirmada quando estiver carregada na tela ou em contexto autorizado.",

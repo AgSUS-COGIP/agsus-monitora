@@ -5,7 +5,7 @@ const state = {
   watchTimer: 0,
   lastSignature: "",
   only2026: false,
-  previousEditalSelection: []
+  previousEditalSelection: [],
 };
 
 const FILTER_FIELDS = ["unidade", "edital", "etapa", "status", "risco", "uf"];
@@ -15,18 +15,20 @@ const FILTER_ICONS = {
   filterEtapa: "fa-list-check",
   filterStatus: "fa-signal",
   filterRisco: "fa-triangle-exclamation",
-  filterUf: "fa-map-location-dot"
+  filterUf: "fa-map-location-dot",
 };
 
 const $ = (documentRef, id) => documentRef?.getElementById?.(id) || null;
-const normalize = value => String(value ?? "")
-  .normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .toLowerCase()
-  .replace(/\s+/g, " ")
-  .trim();
-const rawFilterValue = input => String(input?.dataset?.filterValue ?? input?.value ?? "").trim();
-const is2026Edital = value => /\/2026(?:\D|$)/.test(String(value ?? ""));
+const normalize = (value) =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+const rawFilterValue = (input) =>
+  String(input?.dataset?.filterValue ?? input?.value ?? "").trim();
+const is2026Edital = (value) => /\/2026(?:\D|$)/.test(String(value ?? ""));
 
 function ensureIntro(documentRef) {
   const tableCard = documentRef.querySelector?.("#page-dashboard .table-card");
@@ -74,20 +76,20 @@ function hideDuplicateClosedButton(documentRef) {
 }
 
 function filterInputs(documentRef, field) {
-  return [...documentRef.querySelectorAll(`input[data-filter-field="${field}"]`)];
+  return [
+    ...documentRef.querySelectorAll(`input[data-filter-field="${field}"]`),
+  ];
 }
 
 function selectedFilterValues(documentRef, field) {
   return filterInputs(documentRef, field)
-    .filter(input => input.checked)
+    .filter((input) => input.checked)
     .map(rawFilterValue)
     .filter(Boolean);
 }
 
 function allFilterValues(documentRef, field) {
-  return filterInputs(documentRef, field)
-    .map(rawFilterValue)
-    .filter(Boolean);
+  return filterInputs(documentRef, field).map(rawFilterValue).filter(Boolean);
 }
 
 function edital2026Values(documentRef) {
@@ -99,15 +101,28 @@ function isOnly2026Selection(documentRef) {
   const selected = selectedFilterValues(documentRef, "edital");
   if (!target.length || selected.length !== target.length) return false;
   const selectedSet = new Set(selected);
-  return target.every(value => selectedSet.has(value));
+  return target.every((value) => selectedSet.has(value));
 }
 
-function setFilterFieldSelection(documentRef, field, desiredValues) {
-  const desired = new Set((desiredValues || []).map(value => String(value).trim()).filter(Boolean));
+function setFilterFieldSelection(
+  documentRef,
+  field,
+  desiredValues,
+  windowRef = null,
+) {
+  const desired = new Set(
+    (desiredValues || []).map((value) => String(value).trim()).filter(Boolean),
+  );
+  // Uma mudança de estado só (um render), quando o app oferece o atalho.
+  if (typeof windowRef?.definirSelecaoDeFiltro === "function") {
+    return windowRef.definirSelecaoDeFiltro(field, [...desired]);
+  }
   const knownValues = allFilterValues(documentRef, field);
 
-  knownValues.forEach(value => {
-    const input = filterInputs(documentRef, field).find(candidate => rawFilterValue(candidate) === value);
+  knownValues.forEach((value) => {
+    const input = filterInputs(documentRef, field).find(
+      (candidate) => rawFilterValue(candidate) === value,
+    );
     if (!input || input.checked === desired.has(value)) return;
     input.click();
   });
@@ -122,12 +137,12 @@ function toggle2026(windowRef, documentRef) {
   if (!isOnly2026Selection(documentRef)) {
     state.previousEditalSelection = selectedFilterValues(documentRef, "edital");
     state.only2026 = true;
-    setFilterFieldSelection(documentRef, "edital", target);
+    setFilterFieldSelection(documentRef, "edital", target, windowRef);
   } else {
     const restore = state.only2026 ? state.previousEditalSelection : [];
     state.only2026 = false;
     state.previousEditalSelection = [];
-    setFilterFieldSelection(documentRef, "edital", restore);
+    setFilterFieldSelection(documentRef, "edital", restore, windowRef);
   }
 
   windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
@@ -135,30 +150,49 @@ function toggle2026(windowRef, documentRef) {
 }
 
 function findFilterInput(documentRef, field, predicate) {
-  return filterInputs(documentRef, field)
-    .find(input => predicate(normalize(rawFilterValue(input) || input.parentElement?.textContent)));
+  return filterInputs(documentRef, field).find((input) =>
+    predicate(
+      normalize(rawFilterValue(input) || input.parentElement?.textContent),
+    ),
+  );
 }
 
 function selectedFieldValues(documentRef, field) {
-  return selectedFilterValues(documentRef, field).map(normalize).filter(Boolean);
+  return selectedFilterValues(documentRef, field)
+    .map(normalize)
+    .filter(Boolean);
 }
 
 function isProgressActive(documentRef) {
-  return selectedFieldValues(documentRef, "status").some(value => value.includes("andamento"));
+  return selectedFieldValues(documentRef, "status").some((value) =>
+    value.includes("andamento"),
+  );
 }
 
 function isRiskActive(documentRef) {
   const values = selectedFieldValues(documentRef, "risco");
-  return values.length > 0 && values.every(value => value === "alto" || value === "medio" || value === "médio");
+  return (
+    values.length > 0 &&
+    values.every(
+      (value) => value === "alto" || value === "medio" || value === "médio",
+    )
+  );
 }
 
 function isHideClosedActive(documentRef) {
-  return $(documentRef, "hideClosedBtn")?.getAttribute("aria-pressed") === "true";
+  return (
+    $(documentRef, "hideClosedBtn")?.getAttribute("aria-pressed") === "true"
+  );
 }
 
 function activeFilterCount(documentRef) {
   let count = FILTER_FIELDS.reduce((total, field) => {
-    return total + (documentRef.querySelector(`input[data-filter-field="${field}"]:checked`) ? 1 : 0);
+    return (
+      total +
+      (documentRef.querySelector(`input[data-filter-field="${field}"]:checked`)
+        ? 1
+        : 0)
+    );
   }, 0);
   if (String($(documentRef, "tableSearch")?.value || "").trim()) count += 1;
   if (isHideClosedActive(documentRef)) count += 1;
@@ -189,7 +223,7 @@ function syncFilterToggle(documentRef, count) {
 
 export function syncFilterToolbar(
   windowRef = globalThis.window,
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 ) {
   const exact2026Selection = isOnly2026Selection(documentRef);
   if (exact2026Selection && !state.only2026) {
@@ -201,9 +235,21 @@ export function syncFilterToolbar(
   }
 
   setQuickButtonState(documentRef, "healthQuick2026Btn", exact2026Selection);
-  setQuickButtonState(documentRef, "healthQuickProgressBtn", isProgressActive(documentRef));
-  setQuickButtonState(documentRef, "healthQuickRiskBtn", isRiskActive(documentRef));
-  setQuickButtonState(documentRef, "healthQuickClosedBtn", isHideClosedActive(documentRef));
+  setQuickButtonState(
+    documentRef,
+    "healthQuickProgressBtn",
+    isProgressActive(documentRef),
+  );
+  setQuickButtonState(
+    documentRef,
+    "healthQuickRiskBtn",
+    isRiskActive(documentRef),
+  );
+  setQuickButtonState(
+    documentRef,
+    "healthQuickClosedBtn",
+    isHideClosedActive(documentRef),
+  );
 
   const count = activeFilterCount(documentRef);
   const clear = $(documentRef, "healthQuickClearBtn");
@@ -228,7 +274,7 @@ function makeQuickButton(documentRef, { id, icon, label, title, onClick }) {
 
 export function ensureTopFilterToolbar(
   windowRef = globalThis.window,
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 ) {
   const head = documentRef.querySelector?.("#page-dashboard .filter-head");
   const toggle = $(documentRef, "filterToggleBtn");
@@ -258,7 +304,7 @@ export function ensureTopFilterToolbar(
     icon: "fa-calendar-check",
     label: "Editais 2026",
     title: "Selecionar somente os valores de Edital terminados em /2026",
-    onClick: () => toggle2026(windowRef, documentRef)
+    onClick: () => toggle2026(windowRef, documentRef),
   });
 
   const quickProgress = makeQuickButton(documentRef, {
@@ -266,12 +312,28 @@ export function ensureTopFilterToolbar(
     icon: "fa-play",
     label: "Em andamento",
     onClick: () => {
-      const input = findFilterInput(documentRef, "status", value => value.includes("andamento"));
-      if (input && typeof windowRef?.toggleSelectFilter === "function") {
-        windowRef.toggleSelectFilter("filterStatus", input.dataset.filterValue, "Status");
+      // Todas as grafias de "andamento" entram; clicar de novo tira o filtro.
+      const emAndamento = allFilterValues(documentRef, "status").filter(
+        (value) => normalize(value).includes("andamento"),
+      );
+      if (typeof windowRef?.definirSelecaoDeFiltro === "function") {
+        windowRef.definirSelecaoDeFiltro(
+          "status",
+          isProgressActive(documentRef) ? [] : emAndamento,
+        );
+      } else {
+        const input = findFilterInput(documentRef, "status", (value) =>
+          value.includes("andamento"),
+        );
+        if (input)
+          windowRef?.toggleSelectFilter?.(
+            "filterStatus",
+            input.dataset.filterValue,
+            "Status",
+          );
       }
       windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    }
+    },
   });
 
   const quickRisk = makeQuickButton(documentRef, {
@@ -281,7 +343,7 @@ export function ensureTopFilterToolbar(
     onClick: () => {
       windowRef?.toggleCriticalRiskFilter?.();
       windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    }
+    },
   });
 
   const quickClosed = makeQuickButton(documentRef, {
@@ -291,10 +353,10 @@ export function ensureTopFilterToolbar(
     onClick: () => {
       windowRef?.toggleHideClosed?.();
       windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    }
+    },
   });
 
-  [quick2026, quickProgress, quickRisk, quickClosed].forEach(button => {
+  [quick2026, quickProgress, quickRisk, quickClosed].forEach((button) => {
     if (button.parentElement !== quickGroup) quickGroup.appendChild(button);
   });
 
@@ -305,7 +367,8 @@ export function ensureTopFilterToolbar(
     clear.type = "button";
     clear.className = "health-filter-clear-top";
     clear.title = "Limpar todos os filtros";
-    clear.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Limpar</span>';
+    clear.innerHTML =
+      '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Limpar</span>';
     clear.addEventListener("click", () => {
       state.only2026 = false;
       state.previousEditalSelection = [];
@@ -324,10 +387,11 @@ function decorateFilterFields(documentRef) {
   const body = $(documentRef, "filterBody");
   if (!body) return;
 
-  [...body.children].forEach(child => {
+  [...body.children].forEach((child) => {
     if (child.tagName === "BUTTON") {
       child.classList.add("health-filter-clear-body");
-      child.innerHTML = '<i class="fa-solid fa-eraser" aria-hidden="true"></i> Limpar todos';
+      child.innerHTML =
+        '<i class="fa-solid fa-eraser" aria-hidden="true"></i> Limpar filtros';
       return;
     }
 
@@ -344,57 +408,25 @@ function decorateFilterFields(documentRef) {
   });
 }
 
-function filterMenuOptions(menu, query) {
-  const normalizedQuery = normalize(query);
-  const options = [...menu.querySelectorAll(".multi-option")].filter(option => !option.classList.contains("empty"));
-  let visible = 0;
-  options.forEach(option => {
-    const show = !normalizedQuery || normalize(option.textContent).includes(normalizedQuery);
-    option.hidden = !show;
-    if (show) visible += 1;
-  });
-  const hint = menu.querySelector(".multi-hint");
-  if (hint) hint.textContent = normalizedQuery
-    ? `${visible} de ${options.length} opção(ões).`
-    : `${options.length} opção(ões) disponível(is).`;
-  return visible;
-}
-
-function ensureFilterMenuSearches(documentRef) {
-  documentRef.querySelectorAll("#filterBody .multi-select").forEach(select => {
-    const menu = select.querySelector(".multi-select-menu");
-    const actions = menu?.querySelector(".multi-select-actions");
-    if (!menu || !actions) return;
-
-    const selectAll = actions.querySelector('[data-filter-action="select-all"]');
-    if (selectAll) selectAll.textContent = "Selecionar todos";
-
-    if (menu.querySelector(".health-filter-menu-search")) return;
-    const fieldLabel = select.closest(".health-filter-field")?.querySelector("label span")?.textContent || "opções";
-    const wrap = documentRef.createElement("label");
-    wrap.className = "health-filter-menu-search";
-    wrap.innerHTML = `
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-      <input type="search" autocomplete="off" placeholder="Buscar em ${fieldLabel}" aria-label="Buscar em ${fieldLabel}">`;
-    actions.insertAdjacentElement("afterend", wrap);
-    wrap.querySelector("input")?.addEventListener("input", event => filterMenuOptions(menu, event.target.value));
-  });
-}
-
 function ensureFilterExperience(windowRef, documentRef) {
   ensureTopFilterToolbar(windowRef, documentRef);
   decorateFilterFields(documentRef);
-  ensureFilterMenuSearches(documentRef);
   syncFilterToolbar(windowRef, documentRef);
 }
 
 function ensureOperationalPlaceholders(documentRef) {
-  const headers = [...documentRef.querySelectorAll("#page-dashboard .details-table thead th[data-sort-field]")];
-  const editalIndex = headers.findIndex(header => header.dataset.sortField === "edital");
+  const headers = [
+    ...documentRef.querySelectorAll(
+      "#page-dashboard .details-table thead th[data-sort-field]",
+    ),
+  ];
+  const editalIndex = headers.findIndex(
+    (header) => header.dataset.sortField === "edital",
+  );
   if (editalIndex < 0) return 0;
 
   let inserted = 0;
-  documentRef.querySelectorAll("#monitorRows tr").forEach(row => {
+  documentRef.querySelectorAll("#monitorRows tr").forEach((row) => {
     if (row.querySelector("td[colspan]")) return;
     const cell = row.querySelectorAll("td")[editalIndex];
     if (!cell) return;
@@ -407,11 +439,14 @@ function ensureOperationalPlaceholders(documentRef) {
     }
     if (placeholder) return;
 
-    cell.insertAdjacentHTML("beforeend", `
+    cell.insertAdjacentHTML(
+      "beforeend",
+      `
       <div class="health-operational-loading tone-neutral" aria-label="Carregando cronograma">
         <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
         <span>Carregando cronograma...</span>
-      </div>`);
+      </div>`,
+    );
     inserted += 1;
   });
   return inserted;
@@ -425,7 +460,7 @@ function rowSignature(documentRef) {
     tbody.querySelectorAll(".expiry-badge,.health-deadline-badge").length,
     tbody.querySelectorAll(".health-row-operational").length,
     tbody.querySelectorAll(".health-operational-loading").length,
-    tbody.textContent.length
+    tbody.textContent.length,
   ].join("|");
 }
 
@@ -439,7 +474,7 @@ function applyImmediateEnhancement(documentRef) {
 export function startTableRenderWatch(
   windowRef = globalThis.window,
   documentRef = globalThis.document,
-  options = {}
+  options = {},
 ) {
   const interval = Number(options.interval || 40);
   const maxAttempts = Number(options.maxAttempts || 200);
@@ -461,7 +496,9 @@ export function startTableRenderWatch(
     }
 
     const hasRows = !!$(documentRef, "monitorRows")?.querySelector("tr");
-    const loading = !!$(documentRef, "monitorRows")?.querySelector(".health-operational-loading");
+    const loading = !!$(documentRef, "monitorRows")?.querySelector(
+      ".health-operational-loading",
+    );
     const canStop = hasRows && !loading && stableChecks >= 8;
 
     if (!canStop && attempts < maxAttempts) {
@@ -474,7 +511,7 @@ export function startTableRenderWatch(
 
 export function initHealthDetailsRuntimeFix(
   windowRef = globalThis.window,
-  documentRef = globalThis.document
+  documentRef = globalThis.document,
 ) {
   if (state.initialized || !windowRef || !documentRef) return;
   state.initialized = true;
@@ -483,13 +520,13 @@ export function initHealthDetailsRuntimeFix(
   ensureIntro(documentRef);
   startTableRenderWatch(windowRef, documentRef);
 
-  documentRef.addEventListener("input", event => {
+  documentRef.addEventListener("input", (event) => {
     if (event.target?.id === "tableSearch") {
       windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
     }
   });
 
-  documentRef.addEventListener("click", event => {
+  documentRef.addEventListener("click", (event) => {
     if (!event.target?.closest?.("#page-dashboard")) return;
     windowRef.setTimeout(() => {
       ensureFilterExperience(windowRef, documentRef);
@@ -497,9 +534,17 @@ export function initHealthDetailsRuntimeFix(
     }, 0);
   });
 
-  documentRef.addEventListener("change", event => {
+  documentRef.addEventListener("change", (event) => {
     if (!event.target?.closest?.("#page-dashboard")) return;
-    windowRef.setTimeout(() => ensureFilterExperience(windowRef, documentRef), 0);
+    windowRef.setTimeout(
+      () => ensureFilterExperience(windowRef, documentRef),
+      0,
+    );
+  });
+
+  // Aviso único do app a cada aplicação de filtros (ver applyFilters).
+  documentRef.addEventListener("agsus:filtros-alterados", () => {
+    syncFilterToolbar(windowRef, documentRef);
   });
 
   documentRef.addEventListener("agsus:dashboard-rendered", () => {

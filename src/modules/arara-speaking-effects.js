@@ -14,7 +14,7 @@ const OPENING_MESSAGES = Object.freeze({
   dashboard:
     "Olá! Eu sou a Aya. Você está em Saúde Indígena. Posso te ajudar a entender o mapa, os editais, os DSEIs, os filtros ou os indicadores. O que você quer ver primeiro?",
   nucleo:
-    "Olá! Eu sou a Aya. Você está em Equipe Núcleo. Posso te ajudar a localizar um processo, entender um edital, o cronograma ou orientar uma edição. Por onde começamos?",
+    "Olá! Eu sou a Aya. Você está em Editais. Posso te ajudar a localizar um processo, entender um edital, o cronograma ou orientar uma edição. Por onde começamos?",
   config:
     "Olá! Eu sou a Aya. Você está em Configurações. Posso explicar os acessos, os ajustes disponíveis ou como salvar uma mudança com segurança. O que você precisa fazer?",
   analises:
@@ -265,7 +265,7 @@ export function answerAyaInstitutionalQuestion(question, doc = document) {
     if (editais.length) {
       return `No recorte atual encontrei estes editais/processos visíveis: ${editais.join("; ")}. Se você me disser qual deles quer entender, eu continuo por ele.`;
     }
-    return "Posso explicar os editais que estiverem carregados no MONITORA. Nesta tela eu ainda não encontrei linhas de edital disponíveis; abra Saúde Indígena ou Equipe Núcleo, aplique o recorte desejado e me pergunte novamente.";
+    return "Posso explicar os editais que estiverem carregados no MONITORA. Nesta tela eu ainda não encontrei linhas de edital disponíveis; abra Saúde Indígena ou Editais, aplique o recorte desejado e me pergunte novamente.";
   }
 
   return "";
@@ -495,8 +495,8 @@ function updateAssistantIdentity(root) {
 
   const hideButton = root.querySelector(".arara-assistant__hide");
   if (hideButton) {
-    hideButton.textContent = `Ocultar ${ASSISTANT_NAME}`;
-    hideButton.setAttribute("aria-label", `Ocultar ${ASSISTANT_NAME}`);
+    hideButton.textContent = "Minimizar";
+    hideButton.setAttribute("aria-label", `Minimizar ${ASSISTANT_NAME}`);
   }
 
   const launcher = root.querySelector("[data-arara-show]");
@@ -511,7 +511,9 @@ function updateAssistantIdentity(root) {
   if (inputLabel) inputLabel.textContent = `Pergunta para a ${ASSISTANT_NAME}`;
 
   const input = root.querySelector(".arara-assistant__input");
-  if (input) input.placeholder = "Ex.: quais editais aparecem aqui?";
+  if (input && input.dataset.ayaPlaceholderManaged !== "1") {
+    input.placeholder = "Ex.: quais editais aparecem aqui?";
+  }
 }
 
 function cancelActiveAnimation(root, reveal = true) {

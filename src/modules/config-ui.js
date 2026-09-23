@@ -1,20 +1,29 @@
-const ESC_MAP = { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" };
-const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ESC_MAP[char]);
+const ESC_MAP = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#039;",
+};
+const esc = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => ESC_MAP[char]);
 const attr = (value) => esc(value).replaceAll("`", "&#096;");
 const txt = (value) => String(value ?? "").trim();
 
 export function renderPanelAdminHTML(panels) {
-  const rows = (panels || []).map((panel, index) => {
-    const hasUrl = !!txt(panel.url);
-    const status = panel.ativo === false
-      ? statusPill("Inativo", "danger")
-      : panel.em_manutencao
-        ? statusPill("Manutenção", "warn")
-        : hasUrl
-          ? statusPill("Ativo", "ok")
-          : statusPill("Sem URL", "neutral");
+  const rows = (panels || [])
+    .map((panel, index) => {
+      const hasUrl = !!txt(panel.url);
+      const status =
+        panel.ativo === false
+          ? statusPill("Inativo", "danger")
+          : panel.em_manutencao
+            ? statusPill("Manutenção", "warn")
+            : hasUrl
+              ? statusPill("Ativo", "ok")
+              : statusPill("Sem URL", "neutral");
 
-    return `<div class="panel-admin-item">
+      return `<div class="panel-admin-item">
       <div class="panel-admin-head">
         <span>${esc(panel.titulo || panel.codigo)}</span>
         ${status}
@@ -28,7 +37,8 @@ export function renderPanelAdminHTML(panels) {
         <div class="form-row"><label>Manutenção</label><select id="panelManut${index}"><option value="false" ${!panel.em_manutencao ? "selected" : ""}>Não</option><option value="true" ${panel.em_manutencao ? "selected" : ""}>Sim</option></select></div>
       </div>
     </div>`;
-  }).join("");
+    })
+    .join("");
 
   return `<div class="config-card-title">
     <div>
@@ -42,13 +52,19 @@ export function renderPanelAdminHTML(panels) {
 
 export function collectPanelRows(panels) {
   return (panels || [])
-    .map((panel, index) => panel.id ? {
-      id: txt(panel.id),
-      titulo: txt(document.getElementById(`panelTitulo${index}`)?.value),
-      url: txt(document.getElementById(`panelUrl${index}`)?.value),
-      ativo: document.getElementById(`panelAtivo${index}`)?.value === "true",
-      em_manutencao: document.getElementById(`panelManut${index}`)?.value === "true"
-    } : null)
+    .map((panel, index) =>
+      panel.id
+        ? {
+            id: txt(panel.id),
+            titulo: txt(document.getElementById(`panelTitulo${index}`)?.value),
+            url: txt(document.getElementById(`panelUrl${index}`)?.value),
+            ativo:
+              document.getElementById(`panelAtivo${index}`)?.value === "true",
+            em_manutencao:
+              document.getElementById(`panelManut${index}`)?.value === "true",
+          }
+        : null,
+    )
     .filter(Boolean);
 }
 

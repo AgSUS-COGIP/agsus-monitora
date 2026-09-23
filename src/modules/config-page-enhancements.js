@@ -5,7 +5,7 @@ const SECTION_DEFINITIONS = [
   { id: "access", label: "Acessos", icon: "fa-user-shield" },
   { id: "system", label: "Sistema", icon: "fa-sliders" },
   { id: "panels", label: "Painéis", icon: "fa-table-columns" },
-  { id: "technical", label: "Técnico", icon: "fa-screwdriver-wrench" }
+  { id: "technical", label: "Técnico", icon: "fa-screwdriver-wrench" },
 ];
 
 const state = {
@@ -13,7 +13,7 @@ const state = {
   section: "all",
   query: "",
   dirty: false,
-  saving: false
+  saving: false,
 };
 
 function normalize(value) {
@@ -36,21 +36,25 @@ function configCards(root = configRoot()) {
 
 function categoryForCard(card) {
   if (!card) return "system";
-  if (["accessRequestsAdminCard", "accessMonitorCard"].includes(card.id)) return "access";
+  if (["accessRequestsAdminCard", "accessMonitorCard"].includes(card.id))
+    return "access";
   if (card.classList.contains("cnes-status-card")) return "technical";
   if (card.querySelector("#panelAdmin")) return "panels";
   return "system";
 }
 
 function sectionTitle(section) {
-  return SECTION_DEFINITIONS.find(item => item.id === section)?.label || "Tudo";
+  return (
+    SECTION_DEFINITIONS.find((item) => item.id === section)?.label || "Tudo"
+  );
 }
 
 function decorateCards(root) {
-  configCards(root).forEach(card => {
+  configCards(root).forEach((card) => {
     const section = categoryForCard(card);
     card.dataset.configSection = section;
-    const title = card.querySelector("h3")?.textContent?.trim() || "Configuração";
+    const title =
+      card.querySelector("h3")?.textContent?.trim() || "Configuração";
     card.setAttribute("aria-label", title);
   });
 }
@@ -73,12 +77,14 @@ function toolbarHTML() {
         </div>
       </div>
       <div class="config-workspace-tabs" role="tablist" aria-label="Categorias de configuração">
-        ${SECTION_DEFINITIONS.map((item, index) => `
+        ${SECTION_DEFINITIONS.map(
+          (item, index) => `
           <button type="button" class="config-workspace-tab${index === 0 ? " is-active" : ""}" data-config-tab="${item.id}" role="tab" aria-selected="${index === 0 ? "true" : "false"}">
             <i class="fa-solid ${item.icon}" aria-hidden="true"></i>
             <span>${item.label}</span>
           </button>
-        `).join("")}
+        `,
+        ).join("")}
       </div>
       <div class="config-workspace-meta">
         <span id="configWorkspaceResultCount">0 seções disponíveis</span>
@@ -118,7 +124,9 @@ function ensureWorkspace(root) {
     root.insertAdjacentHTML("beforeend", stickyActionsHTML());
   }
 
-  const originalSave = root.querySelector('.btn.green[onclick="saveAdminSettings()"]');
+  const originalSave = root.querySelector(
+    '.btn.green[onclick="saveAdminSettings()"]',
+  );
   if (originalSave) {
     originalSave.classList.add("config-original-save-hidden");
     originalSave.setAttribute("aria-hidden", "true");
@@ -131,8 +139,9 @@ function applyWorkspaceFilter(root = configRoot()) {
   const query = normalize(state.query);
   let visibleCount = 0;
 
-  configCards(root).forEach(card => {
-    const categoryMatches = state.section === "all" || card.dataset.configSection === state.section;
+  configCards(root).forEach((card) => {
+    const categoryMatches =
+      state.section === "all" || card.dataset.configSection === state.section;
     const searchMatches = !query || normalize(card.textContent).includes(query);
     const visible = categoryMatches && searchMatches;
     card.classList.toggle("config-filter-hidden", !visible);
@@ -141,11 +150,12 @@ function applyWorkspaceFilter(root = configRoot()) {
 
   const result = root.querySelector("#configWorkspaceResultCount");
   if (result) {
-    const category = state.section === "all" ? "" : ` em ${sectionTitle(state.section)}`;
+    const category =
+      state.section === "all" ? "" : ` em ${sectionTitle(state.section)}`;
     result.textContent = `${visibleCount} ${visibleCount === 1 ? "seção disponível" : "seções disponíveis"}${category}`;
   }
 
-  root.querySelectorAll("[data-config-tab]").forEach(button => {
+  root.querySelectorAll("[data-config-tab]").forEach((button) => {
     const active = button.dataset.configTab === state.section;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", String(active));
@@ -170,10 +180,14 @@ function setDirty(root, dirty) {
     icon.className = `config-status-icon ${state.dirty ? "is-dirty" : "is-clean"}`;
     icon.innerHTML = `<i class="fa-solid ${state.dirty ? "fa-pen" : "fa-check"}" aria-hidden="true"></i>`;
   }
-  if (title) title.textContent = state.dirty ? "Existem alterações não salvas" : "Nenhuma alteração pendente";
-  if (text) text.textContent = state.dirty
-    ? "Revise os campos e salve antes de sair desta página."
-    : "As configurações carregadas estão preservadas.";
+  if (title)
+    title.textContent = state.dirty
+      ? "Existem alterações não salvas"
+      : "Nenhuma alteração pendente";
+  if (text)
+    text.textContent = state.dirty
+      ? "Revise os campos e salve antes de sair desta página."
+      : "As configurações carregadas estão preservadas.";
 }
 
 function setSaving(root, saving) {
@@ -194,7 +208,8 @@ function setSaving(root, saving) {
     if (text) text.textContent = "Aguarde a confirmação do Supabase.";
     if (icon) {
       icon.className = "config-status-icon is-saving";
-      icon.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
+      icon.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
     }
   } else {
     setDirty(root, state.dirty);
@@ -202,7 +217,7 @@ function setSaving(root, saving) {
 }
 
 function clearValidation(root) {
-  root.querySelectorAll(".config-field-invalid").forEach(field => {
+  root.querySelectorAll(".config-field-invalid").forEach((field) => {
     field.classList.remove("config-field-invalid");
     field.removeAttribute("aria-invalid");
   });
@@ -252,30 +267,36 @@ function validateConfiguration(root) {
 
   const domain = root.querySelector("#cfgGoogleDomainHint");
   if (domain && !validDomain(domain.value)) {
-    addError(domain, "O domínio Google deve ter formato semelhante a agenciasus.org.br, sem https://, @ ou barras.");
+    addError(
+      domain,
+      "O domínio Google deve ter formato semelhante a agenciasus.org.br, sem https://, @ ou barras.",
+    );
   }
 
   const heartbeat = root.querySelector("#cfgAccessHeartbeatMinutos");
   if (heartbeat) {
     const value = Number(heartbeat.value);
     if (!Number.isInteger(value) || value < 1 || value > 60) {
-      addError(heartbeat, "O heartbeat deve ser um número inteiro entre 1 e 60 minutos.");
+      addError(
+        heartbeat,
+        "O heartbeat deve ser um número inteiro entre 1 e 60 minutos.",
+      );
     }
   }
 
   const urlFields = [
     root.querySelector("#cfgMascot"),
     root.querySelector("#cfgCogipLogo"),
-    ...root.querySelectorAll('[id^="panelUrl"]')
+    ...root.querySelectorAll('[id^="panelUrl"]'),
   ].filter(Boolean);
 
-  urlFields.forEach(field => {
+  urlFields.forEach((field) => {
     if (!validHttpUrl(field.value)) {
       addError(field, "Use uma URL completa iniciada por https:// ou http://.");
     }
   });
 
-  root.querySelectorAll('[id^="panelAtivo"]').forEach(activeField => {
+  root.querySelectorAll('[id^="panelAtivo"]').forEach((activeField) => {
     if (activeField.value !== "true") return;
     const index = activeField.id.replace("panelAtivo", "");
     const urlField = root.querySelector(`#panelUrl${CSS.escape(index)}`);
@@ -289,7 +310,7 @@ function validateConfiguration(root) {
     summary.hidden = false;
     summary.innerHTML = `
       <div><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>Revise ${errors.length} ${errors.length === 1 ? "campo" : "campos"} antes de salvar.</strong></div>
-      <ul>${errors.map(item => `<li>${item.message}</li>`).join("")}</ul>
+      <ul>${errors.map((item) => `<li>${item.message}</li>`).join("")}</ul>
     `;
   }
 
@@ -308,17 +329,19 @@ function saveSucceeded() {
 
 function installSaveGuard(root) {
   const originalSave = window.saveAdminSettings;
-  if (typeof originalSave !== "function" || originalSave.__configGuardWrapped) return;
+  if (typeof originalSave !== "function" || originalSave.__configGuardWrapped)
+    return;
 
   const guardedSave = async (...args) => {
     if (state.saving) return false;
     const errors = validateConfiguration(root);
     if (errors.length) return false;
 
-    const googleEnabled = root.querySelector("#cfgGoogleEnabled")?.value !== "false";
+    const googleEnabled =
+      root.querySelector("#cfgGoogleEnabled")?.value !== "false";
     if (!googleEnabled) {
       const confirmed = window.confirm(
-        "O login Google será desativado. Como este é o acesso institucional principal, usuários podem ficar sem conseguir entrar. Deseja salvar mesmo assim?"
+        "O login Google será desativado. Como este é o acesso institucional principal, usuários podem ficar sem conseguir entrar. Deseja salvar mesmo assim?",
       );
       if (!confirmed) return false;
     }
@@ -326,7 +349,7 @@ function installSaveGuard(root) {
     setSaving(root, true);
     try {
       const result = await originalSave(...args);
-      await new Promise(resolve => window.setTimeout(resolve, 250));
+      await new Promise((resolve) => window.setTimeout(resolve, 250));
       if (saveSucceeded()) {
         setDirty(root, false);
         clearValidation(root);
@@ -343,7 +366,9 @@ function installSaveGuard(root) {
 }
 
 function installAccessRefreshGuard(root) {
-  const button = root.querySelector('#accessMonitorCard button[onclick*="loadAccessDashboard"]');
+  const button = root.querySelector(
+    '#accessMonitorCard button[onclick*="loadAccessDashboard"]',
+  );
   if (!button || button.dataset.safeRefreshInstalled === "true") return;
   const originalLoad = window.loadAccessDashboard;
   if (typeof originalLoad !== "function") return;
@@ -354,7 +379,8 @@ function installAccessRefreshGuard(root) {
     if (button.disabled) return;
     const original = button.innerHTML;
     button.disabled = true;
-    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Atualizando';
+    button.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Atualizando';
     try {
       await originalLoad(true);
     } finally {
@@ -365,7 +391,7 @@ function installAccessRefreshGuard(root) {
 }
 
 function bindWorkspaceEvents(root) {
-  root.querySelectorAll("[data-config-tab]").forEach(button => {
+  root.querySelectorAll("[data-config-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       state.section = button.dataset.configTab || "all";
       applyWorkspaceFilter(root);
@@ -385,9 +411,14 @@ function bindWorkspaceEvents(root) {
     search?.focus();
   });
 
-  root.addEventListener("input", event => {
+  root.addEventListener("input", (event) => {
     const target = event.target;
-    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return;
+    if (!(
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement
+    ))
+      return;
     if (target.closest("#configWorkspaceToolbar")) return;
     setDirty(root, true);
     if (target.classList.contains("config-field-invalid")) {
@@ -396,25 +427,33 @@ function bindWorkspaceEvents(root) {
     }
   });
 
-  root.addEventListener("change", event => {
+  root.addEventListener("change", (event) => {
     const target = event.target;
-    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return;
+    if (!(
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement
+    ))
+      return;
     if (target.closest("#configWorkspaceToolbar")) return;
     setDirty(root, true);
   });
 
-  root.querySelector("#configStickySaveButton")?.addEventListener("click", () => {
-    window.saveAdminSettings?.();
-  });
+  root
+    .querySelector("#configStickySaveButton")
+    ?.addEventListener("click", () => {
+      window.saveAdminSettings?.();
+    });
 
-  document.addEventListener("keydown", event => {
-    if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s") return;
+  document.addEventListener("keydown", (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s")
+      return;
     if (!root.classList.contains("active")) return;
     event.preventDefault();
     if (state.dirty && !state.saving) window.saveAdminSettings?.();
   });
 
-  window.addEventListener("beforeunload", event => {
+  window.addEventListener("beforeunload", (event) => {
     if (!state.dirty) return;
     event.preventDefault();
     event.returnValue = "";

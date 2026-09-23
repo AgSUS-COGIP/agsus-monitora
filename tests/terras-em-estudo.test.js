@@ -51,8 +51,20 @@ describe("o que o ponto diz de si", () => {
 
   it("não inventa povo quando a Funai não declara", () => {
     const texto = tooltipDaTerraEmEstudo({ terrai_nome: "Katokinn" });
-    expect(texto).not.toContain("Povo");
+    expect(texto).not.toContain("Povo:");
+    expect(texto).toContain("Povo não declarado pela Funai");
     expect(texto).toContain("Terra Indígena Katokinn");
+  });
+
+  // O caso real do print: Karuazu, em Alagoas, com "Não especificada".
+  it("'Não especificada' diz-se como ausência, não como povo", () => {
+    const texto = tooltipDaTerraEmEstudo({
+      terrai_nome: "Karuazu",
+      etnia_nome: "Não especificada",
+      uf_sigla: "AL",
+    });
+    expect(texto).not.toContain("Povo: Não especificada");
+    expect(texto).toContain("Povo não declarado pela Funai");
   });
 
   it("escapa o que vem da Funai antes de virar HTML", () => {

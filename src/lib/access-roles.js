@@ -44,8 +44,12 @@ export function isOwnAccessProfile(currentUser, targetProfile) {
   ).trim();
   if (currentId && targetUserId && currentId === targetUserId) return true;
 
-  const currentEmail = String(currentUser.email ?? "").trim().toLowerCase();
-  const targetEmail = String(targetProfile.email ?? "").trim().toLowerCase();
+  const currentEmail = String(currentUser.email ?? "")
+    .trim()
+    .toLowerCase();
+  const targetEmail = String(targetProfile.email ?? "")
+    .trim()
+    .toLowerCase();
   return Boolean(currentEmail && targetEmail && currentEmail === targetEmail);
 }
 

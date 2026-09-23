@@ -1,4 +1,12 @@
 const STORAGE_KEY = "agsus_map_terras_indigenas_v1";
+const STORAGE_KEY_FASES = "agsus_map_terras_fases_ocultas_v1";
+
+/*
+  Disparado no mapa sempre que muda o que as terras mostram — o interruptor
+  geral ou uma fase. O botão e a legenda escutam o mesmo evento e por isso não
+  podem discordar entre si.
+*/
+export const EVENTO_DAS_TERRAS = "agsus:terras-mudaram";
 
 export const FUNAI_TERRITORIES_WMS =
   "https://geoserver.funai.gov.br/geoserver/Funai/wms";
@@ -189,6 +197,22 @@ export function funaiFeatureName(properties = {}) {
   Nada é inferido: se o campo vier vazio, a lista vem vazia e o mapa não afirma
   povo nenhum.
 */
+/*
+  O PREENCHIMENTO DA FUNAI NÃO É NOME DE POVO
+
+  Em 32 das 163 terras em estudo o campo de povo vem "Não especificada". O
+  balão dizia "Povo: Não especificada", como se fosse o nome de um povo. É a
+  ausência do dado, escrita pela fonte, e é tratada como ausência.
+*/
+const PREENCHIMENTO_SEM_POVO =
+  /^(n[ãa]o\s+(especificad[ao]s?|informad[ao]s?|identificad[ao]s?|declarad[ao]s?)|sem\s+informa[çc][ãa]o)$/i;
+
+export function ehPreenchimentoSemPovo(nome) {
+  return PREENCHIMENTO_SEM_POVO.test(String(nome ?? "").trim());
+}
+
+export const SEM_POVO_DECLARADO = "Povo não declarado pela Funai";
+
 export function povosDaTerraIndigena(properties = {}) {
   const bruto = String(
     properties.etnia_nome || properties.etnias || properties.etnia || "",
@@ -198,7 +222,7 @@ export function povosDaTerraIndigena(properties = {}) {
   const povos = [];
   for (const parte of bruto.split(/\s*(?:,|;|\/|\se\s)\s*/i)) {
     const nome = parte.trim();
-    if (!nome) continue;
+    if (!nome || ehPreenchimentoSemPovo(nome)) continue;
     const chave = nome.toLocaleLowerCase("pt-BR");
     if (vistos.has(chave)) continue;
     vistos.add(chave);
@@ -235,6 +259,8 @@ export function tooltipDaTerraIndigena(properties = {}) {
       `${povos.length ? "" : "<b>"}Terra Indígena ${escaparHtml(nome)}${povos.length ? "" : "</b>"}`,
     );
   }
+  // Povo desconhecido diz-se, como na lista do painel; não se inventa nem se esconde.
+  if (!povos.length && nome) linhas.push(`<i>${SEM_POVO_DECLARADO}</i>`);
   if (uf) linhas.push(escaparHtml(uf));
 
   return linhas.join("<br>");
@@ -370,7 +396,7 @@ export function povosDaFeature(propriedades) {
   return String(propriedades?.etnia_nome ?? "")
     .split(/\s*[,;/]\s*/)
     .map((p) => p.trim())
-    .filter(Boolean);
+    .filter((p) => p && !ehPreenchimentoSemPovo(p));
 }
 
 export function resumoDasTerras(features = []) {
@@ -385,9 +411,25 @@ export function resumoDasTerras(features = []) {
         povos: [],
         ufs: [],
         fase: String(f?.properties?.fase_ti ?? "").trim(),
+        caixa: null,
       });
     }
     const terra = porNome.get(nome);
+    /*
+      A caixa da terra inteira, para a lista poder levar o mapa até ela. Uma
+      terra feita de vários polígonos soma as caixas de todos.
+    */
+    const caixa = caixaDaFeature(f);
+    if (caixa) {
+      terra.caixa = terra.caixa
+        ? {
+            oeste: Math.min(terra.caixa.oeste, caixa.oeste),
+            sul: Math.min(terra.caixa.sul, caixa.sul),
+            leste: Math.max(terra.caixa.leste, caixa.leste),
+            norte: Math.max(terra.caixa.norte, caixa.norte),
+          }
+        : { ...caixa };
+    }
     for (const povo of povosDaFeature(f?.properties)) {
       if (!terra.povos.includes(povo)) terra.povos.push(povo);
     }
@@ -702,7 +744,12 @@ export function tooltipDaTerraEmEstudo(properties = {}) {
       `<b>${escaparHtml(povos.length === 1 ? "Povo" : "Povos")}: ${escaparHtml(povos.join(", "))}</b>`,
     );
   }
-  if (nome) linhas.push(`Terra Indígena ${escaparHtml(nome)}`);
+  if (nome) {
+    linhas.push(
+      `${povos.length ? "" : "<b>"}Terra Indígena ${escaparHtml(nome)}${povos.length ? "" : "</b>"}`,
+    );
+  }
+  if (!povos.length) linhas.push(`<i>${SEM_POVO_DECLARADO}</i>`);
   if (uf) linhas.push(escaparHtml(uf));
   linhas.push(AVISO_DE_ESTUDO);
   return linhas.join("<br>");
@@ -716,6 +763,17 @@ function supportsHover() {
   }
 }
 
+/*
+  A FALHA TAMBÉM SE GUARDA
+
+  A Funai deixou de publicar `areas_dsei`, e o proxy responde 502. Em caso de
+  falha a promessa voltava a `null`, e cada DSEI aberto pedia outra vez: no
+  painel, um 502 a cada clique, cada um uma chamada à função da Vercel.
+
+  Agora a resposta — boa ou má — vale para a página inteira. Não se desliga o
+  pedido de vez: se a Funai voltar a publicar a camada, o próximo carregamento
+  desenha-a sem mudar uma linha.
+*/
 async function loadDseiFeatures() {
   if (dseiFeaturesPromise) return dseiFeaturesPromise;
   dseiFeaturesPromise = fetch(funaiDseiUrl(), {
@@ -730,8 +788,11 @@ async function loadDseiFeatures() {
       return geojson;
     })
     .catch((error) => {
-      dseiFeaturesPromise = null;
-      throw error;
+      console.warn(
+        "Abrangência oficial dos DSEIs indisponível na Funai; não se tenta de novo até recarregar.",
+        error,
+      );
+      return null;
     });
   return dseiFeaturesPromise;
 }
@@ -858,9 +919,29 @@ function enhanceMap(L, map) {
   map.__agsusTerrasEmEstudoLayer = estudoLayer;
   let estudoGeojson = null;
 
+  // As fases que a legenda escondeu. Ver `alternarFase`, no fim deste bloco.
+  const fasesOcultas = readStoredFases();
+
+  /*
+    A cor das provisórias: sem limite publicado, é a menos definitiva. Oco,
+    porque não há área e o desenho não pode sugerir uma; tracejado de perto e
+    liso no país, onde a 3 px o tracejado já não se vê.
+  */
+  const estiloDoEstudo = () => ({
+    color: COR_EM_PROCESSO,
+    weight: Number(map.getZoom?.()) < ZOOM_DO_PAIS ? 1.2 : 2.2,
+    opacity: 1,
+    fill: false,
+    dashArray: Number(map.getZoom?.()) < ZOOM_DO_PAIS ? null : "4 3",
+  });
+
   const desenharEstudo = () => {
     estudoLayer.clearLayers();
-    if (!estudoGeojson?.features || !visible()) {
+    if (
+      !estudoGeojson?.features ||
+      !visible() ||
+      fasesOcultas.has("em_estudo")
+    ) {
       if (map.hasLayer(estudoLayer)) map.removeLayer(estudoLayer);
       return;
     }
@@ -886,14 +967,9 @@ function enhanceMap(L, map) {
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
       const marca = L.circleMarker([lat, lon], {
         pane: vectorPaneName,
-        radius: RAIO_DO_SIMBOLO_PX,
+        radius: raioDoSimbolo(Number(map.getZoom?.())),
         interactive: supportsHover(),
-        color: COR_DA_TERRA,
-        weight: 2.2,
-        opacity: 1,
-        // Oco e tracejado: não há área, e o desenho não pode sugerir uma.
-        fill: false,
-        dashArray: "4 3",
+        ...estiloDoEstudo(),
       });
       if (supportsHover()) {
         marca.bindTooltip(tooltipDaTerraEmEstudo(f.properties), {
@@ -1074,12 +1150,14 @@ function enhanceMap(L, map) {
       const centro = limites.getCenter();
 
       if (terraPrecisaDeSimbolo(tamanhoNaTelaEmPixels(limites, projetar))) {
+        const fase = faseDaTerra(propriedades);
         const simbolo = L.circleMarker(centro, {
           pane: vectorPaneName,
-          radius: RAIO_DO_SIMBOLO_PX,
+          radius: raioDoSimbolo(Number(map.getZoom?.())),
           interactive: supportsHover(),
-          ...estiloDoSimbolo(map),
+          ...estiloDoSimbolo(map, fase),
         });
+        simbolo.__agsusFase = fase;
         if (supportsHover()) {
           const detalhe = tooltipDaTerraIndigena(propriedades);
           if (detalhe) {
@@ -1177,6 +1255,8 @@ function enhanceMap(L, map) {
       caixa.leste.toFixed(2),
       caixa.norte.toFixed(2),
       selectedDsei || "",
+      // Esconder uma fase na legenda muda o desenho sem mexer a câmara.
+      [...fasesOcultas].sort().join(","),
     ].join("|");
     if (key === lastViewportKey) return;
     lastViewportKey = key;
@@ -1223,12 +1303,62 @@ function enhanceMap(L, map) {
       map.__agsusAoMudarTerras?.(resumoDasTerras(doDistritoInteiro));
     }
 
+    /*
+      Os interruptores da legenda recortam o DESENHO, não a lista: a lista
+      responde "que terras este DSEI atende", e esconder as regularizadas no
+      mapa para ver as que estão em processo não muda essa resposta.
+    */
+    const desenhadas = terrasDasFasesVisiveis(doDistrito, fasesOcultas);
+
     vectorLayer.clearLayers();
-    vectorLayer.addData({ type: "FeatureCollection", features: doDistrito });
-    vectorLayer.setStyle?.((feature) => vectorStyle(map, feature));
+    vectorLayer.addData({ type: "FeatureCollection", features: desenhadas });
+    vectorLayer.setStyle?.((feature) => estiloComDestaque(feature));
     if (!map.hasLayer(vectorLayer)) vectorLayer.addTo(map);
     if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
-    desenharApoios(doDistrito.length);
+    desenharApoios(desenhadas.length);
+  };
+
+  /*
+    A terra escolhida na lista do painel. O mapa vai até ela e ela engrossa o
+    traço por alguns segundos — sem isso, num distrito com trinta terras
+    vizinhas, enquadrar não diz qual das trinta é a que se pediu.
+  */
+  let terraEmDestaque = "";
+  let fimDoDestaque = 0;
+  const estiloComDestaque = (feature) => {
+    const base = vectorStyle(map, feature);
+    if (!terraEmDestaque) return base;
+    const nome = String(feature?.properties?.terrai_nome ?? "").trim();
+    if (nome !== terraEmDestaque) return base;
+    return {
+      ...base,
+      weight: base.weight + 2.5,
+      fillOpacity: Math.max(base.fillOpacity, 0.4),
+    };
+  };
+
+  map.__agsusEnquadrarTerra = (nome, caixa) => {
+    const alvo = String(nome ?? "").trim();
+    if (!alvo || !caixa) return false;
+    const { oeste, sul, leste, norte } = caixa;
+    if (![oeste, sul, leste, norte].every(Number.isFinite)) return false;
+    // Esconder a fase da terra pedida seria enquadrar um vazio.
+    if (!visible()) definirVisibilidade(true);
+    terraEmDestaque = alvo;
+    clearTimeout(fimDoDestaque);
+    fimDoDestaque = setTimeout(() => {
+      terraEmDestaque = "";
+      vectorLayer.setStyle?.((feature) => estiloComDestaque(feature));
+    }, 4000);
+    map.fitBounds?.(
+      [
+        [sul, oeste],
+        [norte, leste],
+      ],
+      { padding: [40, 40], maxZoom: 11 },
+    );
+    vectorLayer.setStyle?.((feature) => estiloComDestaque(feature));
+    return true;
   };
 
   /*
@@ -1268,26 +1398,110 @@ function enhanceMap(L, map) {
   };
 
   map.on("moveend zoomend", scheduleRefresh);
+  // As terras em estudo não se redesenham com o enquadramento: ajustam-se.
+  map.on("zoomend", () => {
+    const raio = raioDoSimbolo(Number(map.getZoom?.()));
+    estudoLayer.eachLayer?.((marca) => {
+      marca.setRadius?.(raio);
+      marca.setStyle?.(estiloDoEstudo());
+    });
+  });
   map.getContainer?.().addEventListener("agsus:map-base-layer-changed", () => {
-    vectorLayer.setStyle?.((feature) => vectorStyle(map, feature));
+    vectorLayer.setStyle?.((feature) => estiloComDestaque(feature));
     simbolosLayer.eachLayer?.((simbolo) =>
-      simbolo.setStyle?.(estiloDoSimbolo(map)),
+      simbolo.setStyle?.(estiloDoSimbolo(map, simbolo.__agsusFase)),
     );
     dseiLayer.setStyle?.((feature) =>
       dseiStyle(mapElementId, feature, selectedDsei),
     );
   });
 
+  const avisar = () =>
+    map.fire?.(EVENTO_DAS_TERRAS, {
+      visivel: visible(),
+      fasesOcultas: [...fasesOcultas],
+    });
+
+  /*
+    O INTERRUPTOR GERAL — tudo o que é terra sai ou volta junto
+
+    São cinco camadas: o raster de recurso, o vetorial, os símbolos das terras
+    pequenas, os rótulos e os círculos das terras em estudo. O botão antigo
+    tirava as duas primeiras e deixava as outras três no mapa.
+
+    Zerar `lastViewportKey` é o que faz o vetorial voltar sem ninguém arrastar
+    o mapa: sem isso o `refreshVector` achava "mesmo enquadramento, nada a
+    fazer" e o botão acendia sobre um mapa vazio.
+  */
+  const definirVisibilidade = (proxima) => {
+    const alvo = Boolean(proxima);
+    map.__agsusIndigenousTerritoriesVisible = alvo;
+    lastViewportKey = "";
+    if (!alvo) {
+      if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
+      clearVector();
+      estudoLayer.clearLayers();
+      if (map.hasLayer(estudoLayer)) map.removeLayer(estudoLayer);
+    } else {
+      // O raster não entra aqui: só `useRasterFallback`, se o catálogo falhar.
+      scheduleRefresh();
+      desenharEstudo();
+    }
+    storeVisibility(alvo);
+    avisar();
+  };
+
+  /*
+    UM INTERRUPTOR POR FASE
+
+    Pedido de quem usa: esconder as terras já regularizadas e ficar só com as
+    que estão em processo — são essas que ainda podem mudar de limite, e as
+    que pedem atenção de quem planeia atendimento.
+
+    Ligar uma fase com a camada inteira desligada liga a camada: quem clica
+    em "em processo" quer ver as terras em processo, não um interruptor que
+    muda de estado sobre um mapa vazio.
+  */
+  const alternarFase = (fase) => {
+    if (!FASES_DAS_TERRAS.some((f) => f.fase === fase)) return false;
+    if (!visible()) {
+      fasesOcultas.delete(fase);
+      storeFases(fasesOcultas);
+      definirVisibilidade(true);
+      return true;
+    }
+    if (fasesOcultas.has(fase)) fasesOcultas.delete(fase);
+    else fasesOcultas.add(fase);
+    storeFases(fasesOcultas);
+    lastViewportKey = "";
+    scheduleRefresh();
+    desenharEstudo();
+    avisar();
+    return true;
+  };
+
+  map.__agsusDefinirTerrasVisiveis = definirVisibilidade;
+  map.__agsusAlternarFaseDaTerra = alternarFase;
+  map.__agsusFaseDaTerraVisivel = (fase) =>
+    visible() && !fasesOcultas.has(faseDaLegenda(fase));
+
+  /*
+    O RASTER DA FUNAI ERA BAIXADO SEM NUNCA APARECER
+
+    Entrava no mapa ao iniciar e a cada vez que as terras eram religadas, "até
+    o vetorial carregar" — e o vetorial vem do catálogo local em 40 a 200 ms.
+    Nesse intervalo o Leaflet já tinha pedido o país inteiro em tiles: medido
+    no painel, 91 pedidos a `/api/funai-wms`, 40 s de rede somados, cada um uma
+    chamada à função da Vercel, para uma imagem que era tirada do mapa antes de
+    se ver.
+
+    O raster passa a ser o que diz ser: o recurso de quando o catálogo e a Funai
+    falham. Só `useRasterFallback` o põe no mapa.
+  */
   const desired = readStoredVisibility();
   map.__agsusIndigenousTerritoriesVisible = desired;
-  if (desired) {
-    rasterLayer.addTo(map);
-    map.whenReady?.(scheduleRefresh);
-  }
-  addControl(L, map, rasterLayer, vectorLayer, desired, scheduleRefresh, () => {
-    limparRotulos();
-    lastViewportKey = "";
-  });
+  if (desired) map.whenReady?.(scheduleRefresh);
+  addControl(L, map, desired, definirVisibilidade);
 }
 
 /*
@@ -1325,17 +1539,39 @@ function enhanceMap(L, map) {
 
   Por isso as duas coisas têm de ser calculadas juntas. `hue-rotate` do CSS não
   roda a matiz de HSL — é uma aproximação linear em RGB, definida na
-  especificação de filtros —, de modo que o resultado não se adivinha. Aplicada
-  a #4daf4a, a cadeia em FILTRO_DO_RASTER dá #e030a6, e é esse valor, e não um
-  magenta escolhido à parte, que COR_DA_TERRA usa. Assim o traço não muda de
-  cor quando o mapa troca o raster pelo vetorial, no zoom 7.
+  especificação de filtros —, de modo que o resultado não se adivinha. A cor do
+  vetorial é sempre o que a cadeia do filtro dá quando aplicada a #4daf4a, e
+  não uma cor escolhida à parte. Assim a camada não muda de cor quando o mapa
+  troca o raster pelo vetorial.
 
   O contraste sobre satélite continua a vir também do traço, mais grosso, com
   o preenchimento discreto para não tapar a imagem que se foi ver.
+
+  E O MAGENTA VIROU O PROBLEMA SEGUINTE
+
+  Nada na paisagem era magenta — e na visão nacional, com 665 terras cheias,
+  o Brasil inteiro ficava rosa. A Amazônia é quase toda terra indígena. Quem
+  abria o painel via uma mancha, não um mapa.
+
+  O magenta tinha sido escolhido por um teste que media a distância só pelo
+  MATIZ, e exigia 90° do verde e 60° do azul. Feita a conta, as únicas cores
+  que passavam eram rosa, magenta e vermelho: o critério escolhia a cor antes
+  de alguém a escolher. Matiz sozinho não diz se duas cores se confundem — o
+  marrom tem matiz de laranja e ninguém o toma por verde-claro. A medida certa
+  é a diferença perceptual (ΔE, em CIELAB), que conta também claridade e
+  saturação.
+
+  A cor passa a ser a da terra: marrom no traço, areia no fundo. É como os
+  mapas do ISA desenham terra indígena, e fica longe de tudo o que o mapa já
+  usa — ΔE 59 da vegetação, 108 do azul do DSEI, 49 do âmbar do polo base, 82
+  do rosa que sai. Contra o fundo do mapa, 6,47:1 (WCAG 1.4.11 pede 3:1).
+
+  O filtro abaixo leva o verde da Funai exatamente a esse marrom, calculado
+  pela mesma matriz da especificação que o teste usa.
 */
-const FILTRO_DO_RASTER = "hue-rotate(218deg) saturate(3) brightness(0.88)";
-const COR_DA_TERRA = "#e030a6";
-const PREENCHIMENTO_DA_TERRA = "#f472d0";
+const FILTRO_DO_RASTER = "hue-rotate(-83deg) saturate(1.15) brightness(0.55)";
+const COR_DA_TERRA = "#7a4a1f";
+const PREENCHIMENTO_DA_TERRA = "#d6b07a";
 
 /*
   UMA TERRA HOMOLOGADA E UMA EM PROCESSO NÃO SÃO A MESMA COISA
@@ -1357,11 +1593,16 @@ const PREENCHIMENTO_DA_TERRA = "#f472d0";
   A cor separa as duas famílias, e a terceira — em estudo — já tinha o seu
   desenho próprio, o círculo tracejado, porque dela não há sequer limite.
 
-  Mantém-se a matiz: as duas são magenta, pela mesma razão de antes (nada na
-  paisagem é magenta, e não colide com o azul do DSEI). O que muda é o valor —
-  a definitiva é cheia e escura, a que está em processo é clara e tracejada.
-  Tracejado, porque uma linha interrompida é como um limite provisório se
-  desenha em cartografia desde sempre.
+  As duas eram magenta, uma escura e cheia, outra clara e tracejada — e quem
+  olhava via duas tonalidades da mesma cor e perguntava qual era qual. Passam
+  a ser DUAS CORES: marrom para a definitiva, terracota para a que está em
+  processo (ΔE 39 entre elas). E a diferença não fica só na cor, para quem não
+  as distingue: a definitiva tem traço contínuo e fundo; a em processo tem
+  traço tracejado e quase nenhum fundo — uma linha interrompida é como um
+  limite provisório se desenha em cartografia desde sempre.
+
+  A em estudo, sem limite nenhum, é um círculo tracejado na cor da em processo:
+  as duas são provisórias, e a forma diz qual das duas é.
 */
 const FASES_DEFINITIVAS = new Set(["REGULARIZADA", "HOMOLOGADA"]);
 
@@ -1377,40 +1618,129 @@ export function faseDaTerra(propriedades) {
   return "em_processo";
 }
 
-const COR_EM_PROCESSO = "#f9a8d4";
+const COR_EM_PROCESSO = "#c8520f";
+
+/*
+  O que a legenda nomeia, na ordem em que o mapa desenha. `desconhecida` não
+  entra: desenha-se como definitiva (ver `estiloDaFase`) e liga e desliga com
+  ela.
+*/
+export const FASES_DAS_TERRAS = Object.freeze([
+  { fase: "definitiva", rotulo: "Homologada ou regularizada" },
+  { fase: "em_processo", rotulo: "Em processo (declarada, delimitada)" },
+  { fase: "em_estudo", rotulo: "Em estudo — sem limite publicado" },
+]);
+
+/*
+  O BRASIL INTEIRO NÃO É UM MAPA DE TERRAS
+
+  Abaixo deste zoom o mapa é o país, e o que se foi ver são os distritos e as
+  unidades. As terras recuam: traço fino, fundo quase transparente. Continuam
+  lá — a forma do território indígena do país é informação —, mas deixam de
+  ser a coisa mais forte do ecrã. Ao aproximar, voltam a ler-se como área.
+*/
+export const ZOOM_DO_PAIS = 6;
+
+/*
+  O SÍMBOLO TAMBÉM RECUA
+
+  A primeira versão do recuo só afinava os polígonos. Na bancada, o Brasil
+  continuava coberto: 410 das 665 terras são pequenas demais para se ver nesta
+  escala e viravam cada uma um círculo de 8 px com fundo a 45% — mais as 163 em
+  estudo, com outro círculo cada. Eram eles, e não os polígonos, que pintavam o
+  país. No país o símbolo é um ponto de 3 px.
+*/
+const RAIO_DO_SIMBOLO_NO_PAIS_PX = 3;
+
+export function raioDoSimbolo(zoom) {
+  return Number.isFinite(zoom) && zoom < ZOOM_DO_PAIS
+    ? RAIO_DO_SIMBOLO_NO_PAIS_PX
+    : RAIO_DO_SIMBOLO_PX;
+}
 
 /*
   Sem fase declarada desenha-se como definitiva, e não como provisória: dizer
   "ainda em processo" sobre uma terra que talvez esteja regularizada é afirmar
   mais do que se sabe, e na direção que pesa contra quem lá vive.
+
+  `zoom` é opcional: sem ele vale o desenho de perto, que é o que os testes e
+  quem chama sem mapa esperam.
 */
-export function estiloDaFase(fase, satellite) {
-  if (fase === "em_processo") {
+export function estiloDaFase(fase, satellite, zoom) {
+  const pais = Number.isFinite(zoom) && zoom < ZOOM_DO_PAIS;
+  /*
+    Oito terras do catálogo têm polígono E fase "Em Estudo". Só `em_processo`
+    era provisória aqui, e essas oito desenhavam-se com o traço cheio da
+    regularizada — uma terra sem limite definido a passar por definitiva.
+  */
+  if (fase === "em_processo" || fase === "em_estudo") {
+    if (pais) {
+      return {
+        color: COR_EM_PROCESSO,
+        weight: satellite ? 1.6 : 1.2,
+        dashArray: "4 3",
+        fillColor: COR_EM_PROCESSO,
+        fillOpacity: satellite ? 0.02 : 0.03,
+      };
+    }
     return {
       color: COR_EM_PROCESSO,
       weight: satellite ? 3 : 2.4,
       dashArray: "7 5",
       fillColor: COR_EM_PROCESSO,
-      fillOpacity: satellite ? 0.1 : 0.14,
+      // Quase nada de fundo: sem ele o polígono não recebe o ponteiro.
+      fillOpacity: satellite ? 0.04 : 0.06,
+    };
+  }
+  if (pais) {
+    return {
+      color: COR_DA_TERRA,
+      weight: satellite ? 1.4 : 1,
+      dashArray: null,
+      fillColor: PREENCHIMENTO_DA_TERRA,
+      fillOpacity: satellite ? 0.08 : 0.12,
     };
   }
   return {
     color: COR_DA_TERRA,
-    weight: satellite ? 3.2 : 2.4,
+    weight: satellite ? 3.2 : 2.2,
     dashArray: null,
     fillColor: PREENCHIMENTO_DA_TERRA,
-    fillOpacity: satellite ? 0.18 : 0.26,
+    fillOpacity: satellite ? 0.2 : 0.32,
   };
 }
 
-function estiloDoSimbolo(map) {
+/*
+  A terra pequena demais para se ver vira um círculo — e o círculo segue a fase
+  dela. Antes era sempre da cor da definitiva, e uma terra em processo que só
+  aparecia como símbolo passava por regularizada.
+*/
+export function estiloDoSimbolo(map, fase) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
+  // Idem a `estiloDaFase`: a em estudo é provisória, não definitiva.
+  const emProcesso = fase === "em_processo" || fase === "em_estudo";
+  if (Number(map?.getZoom?.()) < ZOOM_DO_PAIS) {
+    /*
+      No país, o símbolo é um ponto. Cheio para a definitiva, vazado para a em
+      processo: a 3 px um tracejado não se vê, e a diferença tem de continuar
+      a existir para quem não distingue as duas cores.
+    */
+    return {
+      color: emProcesso ? COR_EM_PROCESSO : COR_DA_TERRA,
+      weight: emProcesso ? 1.2 : 0.8,
+      opacity: 1,
+      dashArray: null,
+      fillColor: emProcesso ? COR_EM_PROCESSO : COR_DA_TERRA,
+      fillOpacity: emProcesso ? 0 : satellite ? 0.85 : 0.7,
+    };
+  }
   return {
-    color: COR_DA_TERRA,
+    color: emProcesso ? COR_EM_PROCESSO : COR_DA_TERRA,
     weight: satellite ? 2.8 : 2.2,
     opacity: 1,
-    fillColor: PREENCHIMENTO_DA_TERRA,
-    fillOpacity: 0.45,
+    dashArray: emProcesso ? "4 3" : null,
+    fillColor: emProcesso ? COR_EM_PROCESSO : PREENCHIMENTO_DA_TERRA,
+    fillOpacity: emProcesso ? 0.12 : 0.45,
   };
 }
 
@@ -1418,8 +1748,33 @@ function vectorStyle(map, feature) {
   const satellite = map?.__agsusBaseMapMode === "satellite";
   return {
     opacity: 1,
-    ...estiloDaFase(faseDaTerra(feature?.properties), satellite),
+    ...estiloDaFase(
+      faseDaTerra(feature?.properties),
+      satellite,
+      Number(map?.getZoom?.()),
+    ),
   };
+}
+
+/*
+  Qual interruptor da legenda comanda a terra. A `desconhecida` desenha-se
+  como definitiva, e por isso some e volta com ela.
+*/
+export function faseDaLegenda(fase) {
+  return fase === "desconhecida" ? "definitiva" : fase;
+}
+
+/*
+  O que fica desenhado depois dos interruptores da legenda. Função pura para
+  poder ser testada sem Leaflet: é aqui que "esconder as regularizadas e ficar
+  só com as que estão em processo" acontece.
+*/
+export function terrasDasFasesVisiveis(features, fasesOcultas) {
+  if (!Array.isArray(features)) return [];
+  if (!fasesOcultas?.size) return features;
+  return features.filter(
+    (f) => !fasesOcultas.has(faseDaLegenda(faseDaTerra(f?.properties))),
+  );
 }
 
 function dseiStyle(mapElementId, feature, selectedDsei) {
@@ -1444,15 +1799,14 @@ function dseiStyle(mapElementId, feature, selectedDsei) {
   };
 }
 
-function addControl(
-  L,
-  map,
-  rasterLayer,
-  vectorLayer,
-  initialVisible,
-  scheduleRefresh,
-  aoOcultar,
-) {
+/*
+  O botão não liga nem desliga camada nenhuma por conta própria. Chama
+  `definirVisibilidade`, a mesma função que a legenda usa — antes ele tirava do
+  mapa o raster e o vetorial e deixava para trás os círculos das terras em
+  estudo, os símbolos e os rótulos, e quem desligava as terras continuava a
+  ver terras.
+*/
+function addControl(L, map, initialVisible, definirVisibilidade) {
   if (map.__agsusIndigenousTerritoriesControl) return;
   const control = L.control({ position: "topright" });
   control.onAdd = () => {
@@ -1479,25 +1833,9 @@ function addControl(
     };
 
     button.addEventListener("click", () => {
-      const next = !(map.__agsusIndigenousTerritoriesVisible !== false);
-      map.__agsusIndigenousTerritoriesVisible = next;
-      /*
-        `aoOcultar` também zera a chave do último enquadramento. Sem isso,
-        reativar a camada sem mexer no mapa caía no atalho de "mesmo
-        enquadramento, nada a fazer" do `refreshVector`: o botão acendia e os
-        polígonos não voltavam até alguém arrastar o mapa.
-      */
-      aoOcultar?.();
-      if (!next) {
-        map.removeLayer(rasterLayer);
-        map.removeLayer(vectorLayer);
-      } else {
-        rasterLayer.addTo(map);
-        scheduleRefresh();
-      }
-      storeVisibility(next);
-      sync();
+      definirVisibilidade(!(map.__agsusIndigenousTerritoriesVisible !== false));
     });
+    map.on?.(EVENTO_DAS_TERRAS, sync);
 
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
@@ -1523,5 +1861,38 @@ function storeVisibility(visible) {
     localStorage.setItem(STORAGE_KEY, visible ? "1" : "0");
   } catch {
     // O mapa continua funcional mesmo sem armazenamento local.
+  }
+}
+
+/*
+  As fases que a pessoa escondeu na legenda. Só se aceita o que a legenda
+  oferece: um valor antigo ou estranho no armazenamento não pode esconder uma
+  fase que o ecrã nem mostra como interruptor.
+*/
+export function lerFasesOcultas(bruto) {
+  const validas = new Set(FASES_DAS_TERRAS.map((f) => f.fase));
+  try {
+    const lista = JSON.parse(bruto ?? "[]");
+    return new Set(
+      (Array.isArray(lista) ? lista : []).filter((f) => validas.has(f)),
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function readStoredFases() {
+  try {
+    return lerFasesOcultas(localStorage.getItem(STORAGE_KEY_FASES));
+  } catch {
+    return new Set();
+  }
+}
+
+function storeFases(ocultas) {
+  try {
+    localStorage.setItem(STORAGE_KEY_FASES, JSON.stringify([...ocultas]));
+  } catch {
+    // Idem: sem armazenamento, a escolha vale só até recarregar.
   }
 }

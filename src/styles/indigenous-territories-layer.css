@@ -21,22 +21,28 @@
   padding: 8px 10px;
 }
 
-.agsus-indigenous-territories-control__button:hover,
+.agsus-indigenous-territories-control__button:hover {
+  background: color-mix(in srgb, var(--terra-definitiva) 8%, transparent);
+}
+
+/* Havia `outline: none` aqui: quem navega por teclado perdia o foco de vista. */
 .agsus-indigenous-territories-control__button:focus-visible {
-  background: rgba(224, 48, 166, 0.08);
-  outline: none;
+  background: color-mix(in srgb, var(--terra-definitiva) 8%, transparent);
+  outline: 2px solid var(--terra-definitiva);
+  outline-offset: -2px;
 }
 
 .agsus-indigenous-territories-control__button.is-active {
-  background: rgba(224, 48, 166, 0.12);
-  color: #a3116f;
+  background: color-mix(in srgb, var(--terra-definitiva) 12%, transparent);
+  color: var(--terra-definitiva);
 }
 
-/* Mesmo magenta do polígono: o quadrado do botão tem de ser a mancha que o
-   mapa desenha, senão ensina a procurar a coisa errada. */
+/* A mesma amostra das legendas (tokens em `legenda-das-terras.css`): o
+   quadrado do botão tem de ser a mancha que o mapa desenha, senão ensina a
+   procurar a coisa errada. */
 .agsus-indigenous-territories-control__swatch {
-  background: rgba(244, 114, 208, 0.3);
-  border: 2px solid rgba(224, 48, 166, 0.95);
+  background: color-mix(in srgb, var(--terra-fundo) 60%, transparent);
+  border: 2px solid var(--terra-definitiva);
   border-radius: 3px;
   box-sizing: border-box;
   display: inline-block;
@@ -67,8 +73,9 @@
   border-radius: 7px;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
   color: #fff;
-  font-size: 11px;
-  font-weight: 800;
+  /* 12px é o mínimo do DESIGN.md; 800 não está na escala de pesos. */
+  font-size: 12px;
+  font-weight: 700;
   letter-spacing: 0.01em;
   padding: 5px 7px;
 }
@@ -81,16 +88,26 @@
 /* O tooltip da Terra Indígena passou a ter mais de uma linha — o povo em
    destaque, a terra e a UF abaixo. Com tudo em 800 nada se destacava; o peso
    base cede e o <b> volta a significar ênfase. A largura máxima existe porque
-   há terras com vários povos declarados no mesmo campo. */
+   há terras com vários povos declarados no mesmo campo.
+
+   O BALÃO VIRAVA UMA TORRE
+
+   Com `white-space: normal` e sem largura, o navegador encolhia o balão até à
+   palavra mais comprida: o Leaflet põe os tooltips numa camada de largura
+   zero, e é essa largura que o texto tinha para se acomodar. Medido no
+   painel: 60 px de largura por 302 de altura, uma palavra por linha, maior
+   do que o espaço acima do ponto e cortado pelo topo do mapa. `max-content`
+   deixa o texto ocupar a linha inteira até aos 260 px, e só então quebra. */
 .agsus-ti-tooltip {
   font-weight: 500;
   line-height: 1.45;
   max-width: 260px;
   white-space: normal;
+  width: max-content;
 }
 
 .agsus-ti-tooltip b {
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /* ROTULO DO POVO SOBRE O POLIGONO

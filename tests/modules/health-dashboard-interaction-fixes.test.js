@@ -4,11 +4,12 @@ import {
   notifyHealthDashboardFiltersChanged,
   refreshHealthDashboardLayout,
   syncHealthDarkModeClass,
-  syncHealthInteractiveFilterStates
+  syncHealthInteractiveFilterStates,
 } from "../../src/modules/health-dashboard-interaction-fixes.js";
 
 function createDom() {
-  return new JSDOM(`<!doctype html><html><body>
+  return new JSDOM(
+    `<!doctype html><html><body>
     <section id="page-dashboard">
       <div id="statusSummary">
         <div data-etapa-toggle="true"><b>Resultado final do Processo Seletivo</b></div>
@@ -20,7 +21,9 @@ function createDom() {
       <button data-health-status="Em andamento"></button>
       <canvas id="statusChart"></canvas>
     </section>
-  </body></html>`, { url:"https://agsus.example" });
+  </body></html>`,
+    { url: "https://agsus.example" },
+  );
 }
 
 describe("correções integradas do dashboard indígena", () => {
@@ -29,11 +32,15 @@ describe("correções integradas do dashboard indígena", () => {
     const { document } = dom.window;
 
     document.documentElement.setAttribute("data-theme", "dark");
-    expect(syncHealthDarkModeClass(document.documentElement, document.body)).toBe(true);
+    expect(
+      syncHealthDarkModeClass(document.documentElement, document.body),
+    ).toBe(true);
     expect(document.body.classList.contains("dark-mode")).toBe(true);
 
     document.documentElement.setAttribute("data-theme", "");
-    expect(syncHealthDarkModeClass(document.documentElement, document.body)).toBe(false);
+    expect(
+      syncHealthDarkModeClass(document.documentElement, document.body),
+    ).toBe(false);
     expect(document.body.classList.contains("dark-mode")).toBe(false);
   });
 
@@ -59,7 +66,9 @@ describe("correções integradas do dashboard indígena", () => {
     const dashboardChange = vi.fn();
     const rendered = vi.fn();
 
-    document.getElementById("page-dashboard").addEventListener("change", dashboardChange);
+    document
+      .getElementById("page-dashboard")
+      .addEventListener("change", dashboardChange);
     document.addEventListener("agsus:dashboard-rendered", rendered);
 
     expect(notifyHealthDashboardFiltersChanged(document)).toBe(true);
@@ -70,10 +79,10 @@ describe("correções integradas do dashboard indígena", () => {
   it("redimensiona gráfico e dispara resize para o Leaflet", () => {
     const dom = createDom();
     const { window } = dom;
-    const chart = { resize:vi.fn(), update:vi.fn() };
+    const chart = { resize: vi.fn(), update: vi.fn() };
     const resizeListener = vi.fn();
 
-    window.Chart = { getChart:vi.fn(() => chart) };
+    window.Chart = { getChart: vi.fn(() => chart) };
     window.addEventListener("resize", resizeListener);
 
     expect(refreshHealthDashboardLayout(window, window.document)).toBe(true);

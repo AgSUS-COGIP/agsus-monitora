@@ -11,7 +11,7 @@ const end = app.indexOf("function isSidebarLockedViewport(", start);
 describe("título e guia conectados à navegação real", () => {
   it.each([
     ["dashboard", "Saúde Indígena", "território"],
-    ["nucleo", "Equipe Núcleo", "cronograma"],
+    ["nucleo", "Editais", "cronograma"],
     ["config", "Configurações", "acessos"],
     ["panel:analises", "Análises", "curriculares"],
   ])(

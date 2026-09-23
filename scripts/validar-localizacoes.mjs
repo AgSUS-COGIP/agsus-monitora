@@ -42,6 +42,10 @@
   COMO CORRER
 
     node scripts/validar-localizacoes.mjs <lotacoes.xlsx> <rede_cnes.json>
+    node scripts/validar-localizacoes.mjs <rede_cnes.json>
+
+  Sem o .xlsx, a planilha de Lotações é baixada do Google Sheets definido em
+  `src/lib/planilhas.js` (`PLANILHAS.lotacoes.idGoogle`).
 
   As malhas do IBGE ficam em cache em `.cache/malhas-ibge-maxima/`. O resultado vai
   para `public/data/localizacoes-validadas.json`.
@@ -50,6 +54,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { ficheiroDosVereditos } from "./veredito-para-o-mapa.mjs";
 import { join } from "node:path";
 import { lerPlanilhaXlsx } from "./ler-planilha-xlsx.mjs";
+import { PLANILHAS, urlDeExportacaoXlsx } from "../src/lib/planilhas.js";
 import { carregarUf } from "./malhas-das-ufs.mjs";
 import { decidirLocalizacao } from "./decidir-localizacao.mjs";
 import {
@@ -124,6 +129,29 @@ async function garantirMalhas() {
   }
 }
 
+/*
+  Baixa a planilha de Lotações indicada no catálogo. Devolve "" quando o catálogo
+  ainda não tem o id. Um xlsx é um zip, e todo zip começa com "PK": se a resposta
+  não começa assim, o Google devolveu a página de login, ou seja, a planilha não
+  está acessível por link.
+*/
+async function baixarLotacoesDoCatalogo() {
+  const url = urlDeExportacaoXlsx(PLANILHAS.lotacoes.idGoogle);
+  if (!url) return "";
+  const resposta = await fetch(url, { redirect: "follow" });
+  const corpo = Buffer.from(await resposta.arrayBuffer());
+  if (!resposta.ok || corpo.subarray(0, 2).toString("latin1") !== "PK") {
+    throw new Error(
+      `Não foi possível baixar a planilha de Lotações do catálogo (HTTP ${resposta.status}). ` +
+        "Ela precisa estar compartilhada para quem tem o link.",
+    );
+  }
+  mkdirSync(".cache", { recursive: true });
+  const destino = join(".cache", "lotacoes.xlsx");
+  writeFileSync(destino, corpo);
+  return destino;
+}
+
 function lerLotacoes(caminho) {
   const folhas = lerPlanilhaXlsx(caminho);
   const primeira = Object.keys(folhas).sort()[0];
@@ -156,10 +184,16 @@ function lerCnes(caminho) {
 }
 
 async function principal() {
-  const [caminhoLotacoes, caminhoCnes] = process.argv.slice(2);
+  const argumentos = process.argv.slice(2);
+  let [caminhoLotacoes, caminhoCnes] =
+    argumentos.length === 1 ? [null, argumentos[0]] : argumentos;
+  if (!caminhoLotacoes && caminhoCnes) {
+    caminhoLotacoes = await baixarLotacoesDoCatalogo();
+  }
   if (!caminhoLotacoes || !caminhoCnes) {
     console.error(
-      "uso: node scripts/validar-localizacoes.mjs <lotacoes.xlsx> <rede_cnes.json>",
+      "uso: node scripts/validar-localizacoes.mjs [lotacoes.xlsx] <rede_cnes.json>\n" +
+        "  sem o .xlsx, preencha PLANILHAS.lotacoes.idGoogle em src/lib/planilhas.js",
     );
     process.exitCode = 1;
     return;

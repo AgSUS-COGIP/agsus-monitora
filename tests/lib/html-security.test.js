@@ -3,7 +3,7 @@ import {
   createHtmlSecurityPlugin,
   sanitizeAnalyticsPageLocation,
   secureHtmlDocument,
-  stripSupabaseCdnScripts
+  stripSupabaseCdnScripts,
 } from "../../src/lib/html-security.js";
 
 describe("html security", () => {
@@ -20,7 +20,8 @@ describe("html security", () => {
   });
 
   it("remove variantes com aspas simples e versão específica", () => {
-    const html = "<script defer src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1'></script>";
+    const html =
+      "<script defer src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1'></script>";
 
     expect(stripSupabaseCdnScripts(html)).not.toContain("supabase-js");
   });
@@ -33,7 +34,9 @@ describe("html security", () => {
 
     const result = sanitizeAnalyticsPageLocation(html);
 
-    expect(result).toContain("page_location: window.location.origin + window.location.pathname");
+    expect(result).toContain(
+      "page_location: window.location.origin + window.location.pathname",
+    );
     expect(result).not.toContain("window.location.href");
   });
 
@@ -46,12 +49,15 @@ describe("html security", () => {
 
     expect(result).not.toContain("@supabase/supabase-js");
     expect(result).not.toContain("window.location.href");
-    expect(result).toContain("window.location.origin + window.location.pathname");
+    expect(result).toContain(
+      "window.location.origin + window.location.pathname",
+    );
   });
 
   it("expõe a transformação como plugin do Vite", () => {
     const plugin = createHtmlSecurityPlugin();
-    const html = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>';
+    const html =
+      '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>';
 
     expect(plugin.name).toBe("agsus-html-security");
     expect(plugin.enforce).toBe("pre");

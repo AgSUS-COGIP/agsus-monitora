@@ -3,7 +3,7 @@ export const DASHBOARD_KPI_CONFIG = [
   { id: "kContratados", label: "Contratados", color: "#0b8f58" },
   { id: "kOciosas", label: "Ociosas", color: "#d92d3a" },
   { id: "kCriticos", label: "Críticos", color: "#f2b705" },
-  { id: "kInscritos", label: "Inscritos", color: "#00a8d6" }
+  { id: "kInscritos", label: "Inscritos", color: "#00a8d6" },
 ];
 
 export function parseMetricNumber(value) {
@@ -20,7 +20,7 @@ export function readDashboardKpiSeries(root = document) {
     const element = root.getElementById?.(item.id);
     return {
       ...item,
-      value: parseMetricNumber(element?.textContent)
+      value: parseMetricNumber(element?.textContent),
     };
   });
 }

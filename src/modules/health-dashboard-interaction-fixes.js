@@ -156,47 +156,15 @@ function installExplicitActionHooks(windowRef, documentRef) {
     scheduleHealthDashboardLayoutRefresh(windowRef, documentRef);
   });
 
-  [
-    "toggleSelectFilter",
-    "toggleCriticalRiskFilter",
-    "clearFilterField",
-    "clearFilters",
-  ].forEach((name) => {
-    wrapWindowAction(windowRef, name, () => {
-      windowRef.setTimeout(
-        () => notifyHealthDashboardFiltersChanged(documentRef),
-        0,
-      );
-    });
+  /*
+    O app avisa cada aplicação de filtros com `agsus:filtros-alterados`
+    (applyFilters). Antes este módulo embrulhava quatro funções de window e
+    escutava cliques e changes para adivinhar a mesma coisa — e perdia os
+    caminhos que o legado chamava por dentro.
+  */
+  documentRef.addEventListener("agsus:filtros-alterados", () => {
+    notifyHealthDashboardFiltersChanged(documentRef);
   });
-}
-
-function installNativeFilterHooks(windowRef, documentRef) {
-  documentRef.addEventListener("change", (event) => {
-    if (!event.target?.matches?.("#page-dashboard input[data-filter-field]"))
-      return;
-    windowRef.setTimeout(
-      () => notifyHealthDashboardFiltersChanged(documentRef),
-      0,
-    );
-  });
-
-  documentRef.addEventListener(
-    "click",
-    (event) => {
-      if (
-        !event.target?.closest?.(
-          "#statusSummary [data-etapa-toggle='true'], [data-health-status]",
-        )
-      )
-        return;
-      windowRef.setTimeout(
-        () => notifyHealthDashboardFiltersChanged(documentRef),
-        0,
-      );
-    },
-    true,
-  );
 }
 
 export function initHealthDashboardInteractionFixes(
@@ -209,7 +177,6 @@ export function initHealthDashboardInteractionFixes(
   syncHealthDarkModeClass(documentRef.documentElement, documentRef.body);
   syncHealthInteractiveFilterStates(documentRef);
   installExplicitActionHooks(windowRef, documentRef);
-  installNativeFilterHooks(windowRef, documentRef);
 
   windowRef.addEventListener("orientationchange", () => {
     scheduleHealthDashboardLayoutRefresh(windowRef, documentRef, [80, 260]);
