@@ -131,9 +131,9 @@ describe("assistente Aya", () => {
     );
     expect(scene?.contains(hideButton)).toBe(true);
     expect(hideButton?.textContent).toBe("Minimizar");
-    expect(scene?.contains(guide.querySelector(".arara-assistant__avatar"))).toBe(
-      true,
-    );
+    expect(
+      scene?.contains(guide.querySelector(".arara-assistant__avatar")),
+    ).toBe(true);
   });
 
   it("oculta, reabre e preserva a preferência entre seções", () => {

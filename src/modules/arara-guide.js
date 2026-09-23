@@ -581,11 +581,7 @@ function createAssistant(host) {
   avatar.height = 194;
   avatar.dataset.ninaDragHandle = "";
 
-  const conversation = element(
-    doc,
-    "div",
-    "arara-assistant__conversation",
-  );
+  const conversation = element(doc, "div", "arara-assistant__conversation");
 
   const messages = element(doc, "div", "arara-assistant__messages");
   messages.setAttribute("role", "log");
