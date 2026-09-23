@@ -23,7 +23,7 @@ const modulo = readFileSync(
   "utf8",
 );
 const css = readFileSync("src/styles/indigenous-territories-layer.css", "utf8");
-const cssLegenda = readFileSync("src/styles/health-map-workspace.css", "utf8");
+const cssLegenda = readFileSync("src/styles/legenda-das-terras.css", "utf8");
 
 const VERDE_DA_FUNAI = [0x4d, 0xaf, 0x4a];
 const VEGETACAO = "#add19e";
@@ -73,18 +73,58 @@ const hex = (cor) =>
   "#" + cor.map((v) => v.toString(16).padStart(2, "0")).join("");
 
 const canal = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-const matiz = (h) => {
-  const [r, g, b] = canal(h).map((v) => v / 255);
-  const mx = Math.max(r, g, b);
-  const d = mx - Math.min(r, g, b);
-  if (!d) return 0;
-  const t =
-    mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-  return (t * 60 + 360) % 360;
+
+/*
+  DIFERENÇA PERCEPTUAL, E NÃO SÓ MATIZ
+
+  O critério antigo media a distância apenas pelo matiz, e exigia 90° do verde
+  e 60° do azul. Feita a conta, as únicas cores que passavam eram rosa, magenta
+  e vermelho — o teste escolhia a cor antes de alguém a escolher, e o Brasil
+  ficou rosa. Matiz sozinho não diz se duas cores se confundem: o marrom tem
+  matiz de laranja e ninguém o toma por verde-claro.
+
+  ΔE (CIE76, em CIELAB) conta matiz, claridade e saturação juntos. ΔE 2,3 é o
+  limiar em que a diferença começa a ser percebida; acima de 20 são cores com
+  nomes diferentes.
+*/
+function lab(h) {
+  const [r, g, b] = canal(h).map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  const x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+  const y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+  const z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+  const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
+}
+const deltaE = (a, b) => {
+  const [l1, a1, b1] = lab(a);
+  const [l2, a2, b2] = lab(b);
+  return Math.hypot(l1 - l2, a1 - a2, b1 - b2);
 };
-const distanciaDeMatiz = (a, b) => {
-  const d = Math.abs(matiz(a) - matiz(b));
-  return Math.min(d, 360 - d);
+
+// Razão de contraste da WCAG, para o traço contra o fundo do mapa.
+const luminancia = (h) => {
+  const [r, g, b] = canal(h).map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contraste = (a, b) => {
+  const [claro, escuro] = [luminancia(a), luminancia(b)].sort((p, q) => q - p);
+  return (claro + 0.05) / (escuro + 0.05);
+};
+
+const FUNDO_DO_MAPA = "#f2efe9";
+const ROSA_QUE_SAIU = "#e030a6";
+const AZUL_DO_DSEI = "#2563eb";
+const MARCADORES = {
+  "polo base": "#e49a1b",
+  CASAI: "#d92d3a",
+  UBSI: "#6d28d9",
+  "unidade de saúde": "#0d8192",
 };
 
 const corDeclarada = (nome) =>
@@ -116,27 +156,37 @@ describe("o raster e o vetorial desenham a mesma cor", () => {
 });
 
 describe("a cor sai de cima da vegetação", () => {
-  it("o traço fica longe do matiz do verde do mapa", () => {
+  it("o traço não se confunde com o verde do mapa", () => {
     expect(
-      distanciaDeMatiz(corDeclarada("COR_DA_TERRA"), VEGETACAO),
+      deltaE(corDeclarada("COR_DA_TERRA"), VEGETACAO),
       "o traço voltou para perto do verde",
-    ).toBeGreaterThan(90);
+    ).toBeGreaterThan(40);
   });
 
-  it("o preenchimento também", () => {
+  it("nem o traço da terra em processo", () => {
+    expect(deltaE(corDeclarada("COR_EM_PROCESSO"), VEGETACAO)).toBeGreaterThan(
+      40,
+    );
+  });
+
+  // O fundo é desenhado com pouca opacidade; basta ser outra cor.
+  it("o preenchimento também é outra cor", () => {
     expect(
-      distanciaDeMatiz(corDeclarada("PREENCHIMENTO_DA_TERRA"), VEGETACAO),
-    ).toBeGreaterThan(90);
+      deltaE(corDeclarada("PREENCHIMENTO_DA_TERRA"), VEGETACAO),
+    ).toBeGreaterThan(20);
   });
 
   /*
     O azul é da camada de DSEI, que se desenha por baixo desta. Duas camadas
-    com matiz vizinho no mesmo mapa leem-se como uma só.
+    com cor vizinha no mesmo mapa leem-se como uma só.
   */
   it("e não colide com o azul do DSEI", () => {
+    expect(deltaE(corDeclarada("COR_DA_TERRA"), AZUL_DO_DSEI)).toBeGreaterThan(
+      40,
+    );
     expect(
-      distanciaDeMatiz(corDeclarada("COR_DA_TERRA"), "#2563eb"),
-    ).toBeGreaterThan(60);
+      deltaE(corDeclarada("COR_EM_PROCESSO"), AZUL_DO_DSEI),
+    ).toBeGreaterThan(40);
   });
 
   it("o verde da Funai não volta como cor do vetorial", () => {
@@ -147,20 +197,85 @@ describe("a cor sai de cima da vegetação", () => {
 });
 
 /*
+  "ESTÁ TUDO ROSA"
+
+  Com 665 terras cheias de magenta, o Brasil inteiro ficava rosa. O pedido foi
+  mudar a cor; estes casos impedem que ela volte por outro caminho.
+*/
+describe("o rosa saiu", () => {
+  it("nenhuma das cores da terra é rosa", () => {
+    for (const nome of [
+      "COR_DA_TERRA",
+      "PREENCHIMENTO_DA_TERRA",
+      "COR_EM_PROCESSO",
+    ]) {
+      expect(
+        deltaE(corDeclarada(nome), ROSA_QUE_SAIU),
+        `${nome} voltou para perto do rosa`,
+      ).toBeGreaterThan(40);
+    }
+  });
+
+  it("nem sobra rosa no CSS da camada e das legendas", () => {
+    for (const texto of [css, cssLegenda]) {
+      expect(texto).not.toContain("224, 48, 166");
+      expect(texto).not.toContain("244, 114, 208");
+      expect(texto).not.toContain("#a3116f");
+    }
+  });
+});
+
+/*
+  A terra é contexto; os marcadores são o dado. A cor da terra não pode ser
+  confundida com a de nenhum tipo de unidade — senão um polo base dentro de
+  uma terra some dentro dela.
+*/
+describe("a terra não disputa com os marcadores", () => {
+  for (const [nome, cor] of Object.entries(MARCADORES)) {
+    it(`fica longe da cor de ${nome}`, () => {
+      expect(deltaE(corDeclarada("COR_DA_TERRA"), cor)).toBeGreaterThan(25);
+      expect(deltaE(corDeclarada("COR_EM_PROCESSO"), cor)).toBeGreaterThan(25);
+    });
+  }
+});
+
+// WCAG 1.4.11: componente gráfico que carrega informação pede 3:1.
+describe("o traço lê-se contra o mapa", () => {
+  it("as duas fases passam de 3:1 contra o fundo do mapa", () => {
+    expect(
+      contraste(corDeclarada("COR_DA_TERRA"), FUNDO_DO_MAPA),
+    ).toBeGreaterThanOrEqual(3);
+    expect(
+      contraste(corDeclarada("COR_EM_PROCESSO"), FUNDO_DO_MAPA),
+    ).toBeGreaterThanOrEqual(3);
+  });
+});
+
+/*
   Legenda que não descreve o desenho é pior do que legenda nenhuma: ensina a
   procurar a coisa errada. Foi assim que o quadrado ficou vermelho enquanto o
-  mapa desenhava verde.
+  mapa desenhava verde, e depois magenta enquanto o mapa mudava.
+
+  As amostras leem de três tokens; os tokens têm de ser as constantes da camada.
 */
 describe("os quadrados da legenda acompanham", () => {
-  it("o botão da camada usa o traço do polígono", () => {
-    expect(css).toContain("rgba(224, 48, 166, 0.95)");
+  const token = (nome) =>
+    cssLegenda.match(new RegExp(`--${nome}:\\s*(#[0-9a-f]{6})`))?.[1] || "";
+
+  it("os tokens são as constantes da camada", () => {
+    expect(token("terra-definitiva")).toBe(corDeclarada("COR_DA_TERRA"));
+    expect(token("terra-fundo")).toBe(corDeclarada("PREENCHIMENTO_DA_TERRA"));
+    expect(token("terra-em-processo")).toBe(corDeclarada("COR_EM_PROCESSO"));
+  });
+
+  it("o botão da camada usa os tokens", () => {
+    expect(css).toContain("border: 2px solid var(--terra-definitiva)");
     expect(css).not.toContain("rgba(13, 148, 136, 0.92)");
   });
 
-  it("a legenda do mapa detalhado usa o traço do polígono", () => {
-    expect(cssLegenda).toContain(
-      `border: 2px solid ${corDeclarada("COR_DA_TERRA")}`,
-    );
-    expect(cssLegenda).not.toContain("#0b6b5f");
+  it("cada fase tem a sua amostra, com o traço da sua fase", () => {
+    expect(cssLegenda).toContain("border: 2px solid var(--terra-definitiva)");
+    expect(cssLegenda).toContain("border: 2px dashed var(--terra-em-processo)");
+    expect(cssLegenda).toContain(".legenda-terra__amostra--em_estudo");
   });
 });

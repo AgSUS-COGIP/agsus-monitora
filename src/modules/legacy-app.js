@@ -38,6 +38,7 @@ import {
 } from "../lib/access-branding.js";
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
+import { montarLegendaDasTerras } from "./legenda-das-terras.js";
 import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
@@ -9258,12 +9259,20 @@ function initLeaflet() {
   // Limites de navegação derivados da própria vista do Brasil (ver setBrazilMaxBounds).
   // Não se define maxBounds na construção para não atrapalhar o enquadramento inicial.
   const BRASIL_BOUNDS = L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]);
+  /*
+    `zoomSnap` fracionado é o que faz o Brasil encher o mapa. Com o padrão, 1,
+    o `fitBounds` só aceita zoom inteiro: num mapa de 800 px de altura o país
+    cabia no zoom 4 ocupando uns 480 px — 60% da moldura, com faixas vazias —,
+    e no zoom 5 já não cabia. Em quartos de nível ele encaixa perto de 4,75.
+  */
   _leaflet = L.map(el, {
     zoomControl: true,
     scrollWheelZoom: true,
     attributionControl: true,
     minZoom: 4,
     maxZoom: 18,
+    zoomSnap: 0.25,
+    zoomDelta: 0.5,
     maxBoundsViscosity: 1.0,
     worldCopyJump: false,
   });
@@ -9348,6 +9357,9 @@ function initDetailLeaflet() {
     attributionControl: true,
     minZoom: 4,
     maxZoom: 18,
+    // Idem ao mapa nacional: o território do DSEI enche a moldura.
+    zoomSnap: 0.25,
+    zoomDelta: 0.5,
     worldCopyJump: false,
   });
   addResilientMapTiles(_detailLeaflet, el);
@@ -9377,6 +9389,21 @@ function initDetailLeaflet() {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
     _detailLeaflet.flyTo([lat, lon], Math.max(_detailLeaflet.getZoom(), 11), {
       duration: 0.45,
+    });
+  });
+
+  // A lista de terras faz o mesmo que a de unidades: leva o mapa até a terra.
+  $("detailTerraList")?.addEventListener("click", (event) => {
+    const botao = event.target.closest("[data-map-terra]");
+    if (!botao || !_detailLeaflet) return;
+    const [oeste, sul, leste, norte] = String(botao.dataset.caixa || "")
+      .split(",")
+      .map(Number);
+    _detailLeaflet.__agsusEnquadrarTerra?.(botao.dataset.nome, {
+      oeste,
+      sul,
+      leste,
+      norte,
     });
   });
 }
@@ -9665,7 +9692,10 @@ function renderDetailTerraList(terras) {
         : '<i>povo não declarado pela Funai</i>';
       const ufs = t.ufs?.length ? ` · ${esc(t.ufs.join(", "))}` : "";
       const fase = t.fase ? ` · ${esc(t.fase)}` : "";
-      return `<div class="health-map-terra"><b class="health-map-terra__nome">${esc(t.nome)}</b><span class="health-map-terra__povos">${povos}</span><span class="health-map-terra__meta">${ufs}${fase}</span></div>`;
+      // Botão: clicar leva o mapa até a terra (ver o ouvinte em initDetailLeaflet).
+      const c = t.caixa;
+      const caixa = c ? [c.oeste, c.sul, c.leste, c.norte].join(",") : "";
+      return `<button type="button" class="health-map-terra" data-map-terra data-nome="${attr(t.nome)}" data-caixa="${attr(caixa)}" aria-label="Localizar a Terra Indígena ${attr(t.nome)} no mapa"><b class="health-map-terra__nome">${esc(t.nome)}</b><span class="health-map-terra__povos">${povos}</span><span class="health-map-terra__meta">${ufs}${fase}</span></button>`;
     })
     .join("");
 }
@@ -9763,6 +9793,10 @@ function renderDetailMap(d) {
   ];
   _detailLeaflet.__agsusAoMudarTerras = renderDetailTerraList;
   _detailLeaflet.__agsusSetDseiCoverage?.(d.n, pontosDoDistrito, d.ufs || []);
+  montarLegendaDasTerras(
+    document.querySelector(".health-map-detail-legend [data-legenda-das-terras]"),
+    _detailLeaflet,
+  );
   _detailUnitLayer.clearLayers();
 
   /*
@@ -9853,6 +9887,56 @@ function renderDetailMap(d) {
   };
 
   /*
+    A SEDE PASSA PELO MESMO CAMINHO QUE OS OUTROS MARCADORES
+
+    Era um `circleMarker` azul escrito à mão, fora da tabela de formas: não
+    entrava na legenda, não tinha forma própria e não se distinguia de um polo
+    base para quem só via dois círculos. Agora é uma estrela, vinda de
+    `FORMAS`, e a legenda passa a nomeá-la porque sai da mesma tabela.
+
+    Não entra em `detailRecordsForDsei`: a sede não é unidade de saúde, e
+    contá-la ali mudaria os totais e os filtros por tipo.
+
+    E A ESTRELA MORRIA NO PRIMEIRO ZOOM
+
+    Ela era criada uma vez e posta em `_detailUnitLayer` — a mesma camada que
+    `desenharCamadaDeUnidades` esvazia com `clearLayers()` a cada `zoomend`. E o
+    próprio `enquadrarDetalhe("territorio")`, logo a seguir, faz um `fitBounds`,
+    que dispara `zoomend`. A sede era desenhada e apagada no mesmo instante em
+    que o DSEI abria: quem clicava no distrito nunca a via.
+
+    Agora é criada antes e reposta a cada redesenho, junto com as unidades.
+  */
+  const registoDaSede = {
+    name: `Sede do DSEI ${d.n}`,
+    lat: d.lat,
+    lon: d.lon,
+    city: d.sede_municipio || "",
+    uf: d.sede_uf || d.sedeuf || "",
+    cnes: "",
+    type: TIPO_SEDE,
+    veredicto: null,
+  };
+  const ufDaSede = d.sede_uf || d.sedeuf || "";
+  const temSede = Number.isFinite(Number(d.lat)) && Number.isFinite(Number(d.lon));
+  const marcadorDaSede = temSede
+    ? L.marker([d.lat, d.lon], {
+        icon: L.divIcon({
+          className: "mapa-marcador-wrap",
+          html: htmlDoMarcador(registoDaSede),
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+        }),
+        keyboard: true,
+        title: registoDaSede.name,
+        // Acima das unidades: é o ponto que ancora o território inteiro.
+        zIndexOffset: 400,
+      }).bindPopup(
+        `<b>Sede do DSEI ${esc(d.n)}</b><br>${esc(d.sede_municipio || "")}${ufDaSede ? " – " + esc(ufDaSede) : ""}`,
+      )
+    : null;
+
+  /*
     AGRUPAMENTO — a mudança que tira o travamento.
 
     Medido com os volumes reais: desenhar um marcador por ponto custava 65,6 ms
@@ -9865,6 +9949,8 @@ function renderDetailMap(d) {
   */
   const desenharCamadaDeUnidades = () => {
     _detailUnitLayer.clearLayers();
+    // A sede volta a cada redesenho — ver o comentário de `marcadorDaSede`.
+    if (marcadorDaSede) _detailUnitLayer.addLayer(marcadorDaSede);
 
     // As linhas de vínculo continuam a sair da sede, agrupadas ou não.
     visiveis(externos).forEach((record) => {
@@ -9928,45 +10014,6 @@ function renderDetailMap(d) {
     "zoomend",
     desenharCamadaDeUnidades,
   );
-
-  /*
-    A SEDE PASSA PELO MESMO CAMINHO QUE OS OUTROS MARCADORES
-
-    Era um `circleMarker` azul escrito à mão, fora da tabela de formas: não
-    entrava na legenda, não tinha forma própria e não se distinguia de um polo
-    base para quem só via dois círculos. Agora é uma estrela, vinda de
-    `FORMAS`, e a legenda passa a nomeá-la porque sai da mesma tabela.
-
-    Não entra em `detailRecordsForDsei`: a sede não é unidade de saúde, e
-    contá-la ali mudaria os totais e os filtros por tipo.
-  */
-  const registoDaSede = {
-    name: `Sede do DSEI ${d.n}`,
-    lat: d.lat,
-    lon: d.lon,
-    city: d.sede_municipio || "",
-    uf: d.sede_uf || d.sedeuf || "",
-    cnes: "",
-    type: TIPO_SEDE,
-    veredicto: null,
-  };
-  const ufDaSede = d.sede_uf || d.sedeuf || "";
-  L.marker([d.lat, d.lon], {
-    icon: L.divIcon({
-      className: "mapa-marcador-wrap",
-      html: htmlDoMarcador(registoDaSede),
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-    }),
-    keyboard: true,
-    title: registoDaSede.name,
-    // Acima das unidades: é o ponto que ancora o território inteiro.
-    zIndexOffset: 400,
-  })
-    .bindPopup(
-      `<b>Sede do DSEI ${esc(d.n)}</b><br>${esc(d.sede_municipio || "")}${ufDaSede ? " – " + esc(ufDaSede) : ""}`,
-    )
-    .addTo(_detailUnitLayer);
 
   const redesenharPorFiltro = () => {
     desenharCamadaDeUnidades();
@@ -11012,34 +11059,47 @@ function syncMapLevelUI() {
     const limiteDsei =
       '<span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
     /*
-      TRÊS AMOSTRAS, PORQUE O MAPA DESENHA TRÊS COISAS
+      AS TERRAS NÃO SE ESCREVEM MAIS AQUI
 
-      A camada separa as terras pela fase do processo: 511 com limite
-      definitivo (Regularizada, Homologada), 146 ainda em processo (Declarada,
-      Delimitada, Encaminhada RI) e as que estão em estudo, sem limite nenhum.
-
-      Cada uma tem o seu desenho — cheia, tracejada, círculo tracejado —, e uma
-      legenda com um quadrado só voltaria ao problema de antes: descrever
-      menos do que o mapa mostra é ensinar a procurar a coisa errada.
-
-      Os valores são os mesmos de `estiloDaFase`, no módulo da camada.
+      Eram três amostras em `style` inline, com os hex copiados da camada — e
+      ficaram magenta quando a camada deixou de ser. Quem desenha a parte das
+      terras é `legenda-das-terras.js`, a mesma do mapa do DSEI, e cada fase é
+      um interruptor: esconder as regularizadas e ficar com as em processo.
     */
-    const terraIndigena =
-      '<span style="width:16px;height:11px;background:rgba(244,114,208,.3);border:2px solid #e030a6;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
-    const terraEmProcesso =
-      '<span style="width:16px;height:11px;background:rgba(249,168,212,.22);border:2px dashed #f9a8d4;display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
-    const terraEmEstudo =
-      '<span style="width:12px;height:12px;border:2px dashed #e030a6;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:8px;margin-left:2px;"></span>';
-    const terras = `${terraIndigena}Terra Indígena homologada ou regularizada<br>${terraEmProcesso}Terra Indígena em processo (declarada, delimitada)<br>${terraEmEstudo}Terra Indígena em estudo — sem limite publicado`;
+    const terras =
+      '<div class="legenda-das-terras--coluna" data-legenda-das-terras></div>';
+
+    /*
+      "ABRANGÊNCIA OFICIAL DO DSEI" SÓ QUANDO ELA ESTÁ DESENHADA
+
+      A Funai deixou de publicar `areas_dsei`: o pedido falha e a camada fica
+      vazia. A legenda continuava a prometer a linha azul que o mapa não tinha
+      — e quem a procurava achava que o painel estava partido.
+    */
+    const temAbrangencia =
+      (_leaflet?.__agsusDseiCoverageLayer?.getLayers?.().length ?? 0) > 0;
+    const abrangencia = temAbrangencia
+      ? `${limiteDsei}abrangência oficial do DSEI<br>`
+      : "";
     box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}`
-      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${limiteDsei}abrangência oficial do DSEI<br>${terras}<br>${losango("#7b2ff7")}CASAI Nacional`;
+      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${abrangencia}${terras}`
+      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${abrangencia}${losango("#7b2ff7")}CASAI Nacional${terras}`;
+    montarLegendaDasTerras(
+      box.querySelector("[data-legenda-das-terras]"),
+      _leaflet,
+    );
   }
   const lgDsei = $("mapLegendDsei");
-  if (lgDsei)
+  if (lgDsei) {
+    const temAbrangencia =
+      (_leaflet?.__agsusDseiCoverageLayer?.getLayers?.().length ?? 0) > 0;
+    const linhaDaAbrangencia = temAbrangencia
+      ? ' &nbsp; <span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;"></span> abrangência oficial'
+      : "";
     lgDsei.innerHTML = showingPolos
-      ? '<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base &nbsp; <span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;"></span> abrangência oficial'
-      : '<span style="width:11px;height:11px;border-radius:50%;background:#5b9bd5;display:inline-block;"></span> sede DSEI &nbsp; <span style="width:18px;border-top:3px solid #0b5fa5;display:inline-block;"></span> abrangência oficial';
+      ? `<span style="width:11px;height:11px;border-radius:50%;background:#1d4e89;display:inline-block;"></span> polo base${linhaDaAbrangencia}`
+      : `<span style="width:11px;height:11px;border-radius:50%;background:#5b9bd5;display:inline-block;"></span> sede DSEI${linhaDaAbrangencia}`;
+  }
 }
 
 function renderRisks() {

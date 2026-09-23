@@ -17,6 +17,7 @@ import {
   classificarVinculoTerritorial,
 } from "../lib/uf-ibge.js";
 import { DIVERGENCIA } from "../lib/reconciliacao-unidades.js";
+import { TITULO_DA_LEGENDA } from "./legenda-das-terras.js";
 
 /*
   Forma além de cor. Quem não distingue vermelho de verde continua distinguindo
@@ -294,13 +295,13 @@ export function htmlDaLegenda() {
   );
 
   /*
-    A mancha das Terras Indígenas ganhou destaque no mapa e passou a ser a
-    única coisa desenhada que a legenda não explicava. Quem não conhece a cor
-    lia a área como sombra do mapa base.
+    As Terras Indígenas não são um item: são três, uma por fase, e cada uma é
+    um interruptor. Quem as desenha é `legenda-das-terras.js`, montado pelo
+    mapa do DSEI quando ele existe — este texto é só o que se lê até lá.
   */
   tipos.push(
-    `<span><i class="health-map-legenda-terra" aria-hidden="true"></i>` +
-      `Terra Indígena (Funai)</span>`,
+    `<span class="legenda-das-terras" data-legenda-das-terras>` +
+      `${escapar(TITULO_DA_LEGENDA)}</span>`,
   );
 
   return tipos.join("");

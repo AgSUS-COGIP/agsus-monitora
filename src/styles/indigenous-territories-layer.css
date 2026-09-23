@@ -21,22 +21,28 @@
   padding: 8px 10px;
 }
 
-.agsus-indigenous-territories-control__button:hover,
+.agsus-indigenous-territories-control__button:hover {
+  background: color-mix(in srgb, var(--terra-definitiva) 8%, transparent);
+}
+
+/* Havia `outline: none` aqui: quem navega por teclado perdia o foco de vista. */
 .agsus-indigenous-territories-control__button:focus-visible {
-  background: rgba(224, 48, 166, 0.08);
-  outline: none;
+  background: color-mix(in srgb, var(--terra-definitiva) 8%, transparent);
+  outline: 2px solid var(--terra-definitiva);
+  outline-offset: -2px;
 }
 
 .agsus-indigenous-territories-control__button.is-active {
-  background: rgba(224, 48, 166, 0.12);
-  color: #a3116f;
+  background: color-mix(in srgb, var(--terra-definitiva) 12%, transparent);
+  color: var(--terra-definitiva);
 }
 
-/* Mesmo magenta do polígono: o quadrado do botão tem de ser a mancha que o
-   mapa desenha, senão ensina a procurar a coisa errada. */
+/* A mesma amostra das legendas (tokens em `legenda-das-terras.css`): o
+   quadrado do botão tem de ser a mancha que o mapa desenha, senão ensina a
+   procurar a coisa errada. */
 .agsus-indigenous-territories-control__swatch {
-  background: rgba(244, 114, 208, 0.3);
-  border: 2px solid rgba(224, 48, 166, 0.95);
+  background: color-mix(in srgb, var(--terra-fundo) 60%, transparent);
+  border: 2px solid var(--terra-definitiva);
   border-radius: 3px;
   box-sizing: border-box;
   display: inline-block;
