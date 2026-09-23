@@ -19,6 +19,7 @@ import {
   paginateApprovedCandidates,
 } from "../lib/lista-aprovados-rules.js";
 import { ativarMultiSelectBusca } from "./multi-select-busca.js";
+import { createListaConvocacaoController } from "./lista-convocacao.js";
 import { PLANILHAS } from "../lib/planilhas.js";
 
 const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;

@@ -379,11 +379,7 @@ function setThinking(state, active) {
   state.root.setAttribute("aria-busy", "true");
   state.sendButton.setAttribute("aria-label", "Aya está pensando");
 
-  state.thinking = element(
-    state.doc,
-    "div",
-    "arara-assistant__thinking",
-  );
+  state.thinking = element(state.doc, "div", "arara-assistant__thinking");
   state.thinking.setAttribute("role", "status");
   state.thinking.setAttribute("aria-live", "polite");
   state.thinking.append(
@@ -412,12 +408,7 @@ function renderQuickSuggestions(state) {
   state.suggestionLabel.hidden = !suggestions.length;
 
   for (const suggestion of suggestions) {
-    const button = element(
-      state.doc,
-      "button",
-      "arara-suggestion",
-      suggestion,
-    );
+    const button = element(state.doc, "button", "arara-suggestion", suggestion);
     button.type = "button";
     button.addEventListener("click", () => {
       if (!state.busy) ask(state, suggestion);
@@ -431,7 +422,7 @@ function resetConversation(state) {
   state.history = [];
   esquecerConversa(state.win);
   setThinking(state, false);
-  appendMessage(state, "assistant", state.content.intro);
+  appendMessage(state, "assistant", state.content.intro, { track: false });
 }
 
 /*
@@ -443,8 +434,23 @@ function resetConversation(state) {
   histórico que veio do armazenamento, e registrá-las de novo duplicaria cada
   turno a cada recarregamento.
 */
+function isStoredIntroduction(turno) {
+  return (
+    turno?.role === "assistant" &&
+    /^ol[aá]! eu sou a aya\b/i.test(String(turno.content || "").trim())
+  );
+}
+
 function restaurarConversa(state) {
-  const guardada = lerConversa(state.win);
+  const armazenada = lerConversa(state.win);
+  const guardada = armazenada.filter((turno) => !isStoredIntroduction(turno));
+
+  // Versões anteriores salvaram a apresentação no histórico. Remover daqui e
+  // do sessionStorage evita que a duplicata reapareça depois do deploy.
+  if (guardada.length !== armazenada.length) {
+    salvarConversa(guardada, state.win);
+  }
+
   if (!guardada.length) {
     resetConversation(state);
     return;
@@ -548,7 +554,7 @@ function createAssistant(host) {
     doc,
     "button",
     "arara-assistant__reset",
-    "Limpar",
+    "Limpar conversa",
   );
   resetButton.type = "button";
   resetButton.title = "Limpar conversa";
@@ -561,7 +567,7 @@ function createAssistant(host) {
   );
   hideButton.type = "button";
   hideButton.setAttribute("aria-label", "Minimizar Aya");
-  headerActions.append(resetButton, hideButton);
+  headerActions.append(hideButton);
   header.append(heading, headerActions);
 
   const body = element(doc, "div", "arara-assistant__body");
@@ -588,6 +594,14 @@ function createAssistant(host) {
   );
   const suggestions = element(doc, "div", "arara-assistant__suggestions");
 
+  const conversationTools = element(
+    doc,
+    "div",
+    "arara-assistant__conversation-tools",
+  );
+  conversationTools.append(resetButton);
+  scene.insertBefore(conversationTools, messages);
+
   const form = element(doc, "form", "arara-assistant__form");
   const inputLabel = element(
     doc,
@@ -606,12 +620,7 @@ function createAssistant(host) {
   inputLabel.htmlFor = "araraAssistantInput";
   input.id = "araraAssistantInput";
 
-  const sendButton = element(
-    doc,
-    "button",
-    "arara-assistant__send",
-    "Enviar",
-  );
+  const sendButton = element(doc, "button", "arara-assistant__send", "Enviar");
   sendButton.type = "submit";
   sendButton.setAttribute("aria-label", "Enviar pergunta");
   form.append(inputLabel, input, sendButton);
@@ -662,6 +671,7 @@ function createAssistant(host) {
     title: "",
     content: genericGuide("Painel"),
     hidden: false,
+    initialized: false,
   };
 
   hideButton.addEventListener("click", () => {
@@ -729,7 +739,14 @@ export function updateAraraGuide(section, title, host) {
   state.content = content;
   state.sectionBadge.textContent = content.title;
   renderQuickSuggestions(state);
-  restaurarConversa(state);
+
+  // A conversa é restaurada apenas na primeira montagem. Trocar de seção muda
+  // o contexto da Aya, mas mantém a mesma thread e não cria outra apresentação.
+  if (!state.initialized) {
+    restaurarConversa(state);
+    state.initialized = true;
+  }
+
   return root;
 }
 
