@@ -421,5 +421,278 @@ export const VERBETES_AYA = Object.freeze([
       "São três, da aldeia para cima: o Conselho Local de Saúde Indígena (CLSI), consultivo, com representantes eleitos pelas comunidades; o Conselho Distrital de Saúde Indígena (CONDISI), um por DSEI, deliberativo e de composição paritária; e o Fórum de Presidentes dos CONDISI (FPCONDISI), consultivo, que reúne os 34 presidentes e assessora a SESAI.",
     fato: "O controle social da saúde indígena tem três instâncias: CLSI na aldeia, CONDISI no distrito e FPCONDISI no âmbito nacional.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
+  },  {
+    titulo: "Assuntos gerais",
+    perguntas: [
+      "assuntos gerais",
+      "pode falar de outros assuntos",
+      "pode falar de qualquer assunto",
+    ],
+    resposta:
+      "Sim. Posso conversar sobre assuntos gerais, como plantas, carros, futebol, ciência, tecnologia, história e temas do dia a dia. Meu foco principal, porém, é Saúde Indígena, povos e Terras Indígenas, SUS, AgSUS, SESAI, Funai, DSEIs e o MONITORA.",
+    fato: "",
+    fonte: "comportamento da Aya",
   },
+  {
+    titulo: "Cuidados gerais com plantas",
+    perguntas: [
+      "como cuidar de plantas",
+      "cuidados com plantas",
+      "como cuidar de uma planta",
+    ],
+    resposta:
+      "Para cuidar de uma planta, observe principalmente luz, rega, drenagem, tipo de substrato, ventilação e sinais da própria espécie. A necessidade muda bastante entre espécies; por isso, quando você disser qual planta é, a orientação pode ser mais específica. Evite regar apenas por calendário: confira a umidade do substrato e as condições do ambiente.",
+    fato: "",
+    fonte: "conhecimento geral",
+  },
+  {
+    titulo: "Plantas e ingestão",
+    perguntas: [
+      "planta pode ser toxica",
+      "planta e venenosa",
+      "posso comer uma planta",
+    ],
+    resposta:
+      "Não é seguro concluir que uma planta pode ser ingerida apenas pela aparência ou por um nome popular. Espécies parecidas podem ter riscos diferentes. Para ingestão, uso medicinal ou suspeita de intoxicação, a espécie precisa estar identificada com segurança e a orientação deve vir de fonte especializada.",
+    fato: "",
+    fonte: "conhecimento geral",
+  },
+  {
+    titulo: "Medicamentos",
+    perguntas: [
+      "o que e medicamento",
+      "o que sao medicamentos",
+      "diferenca entre remedio e medicamento",
+    ],
+    resposta:
+      "Medicamento é um produto usado com finalidade de prevenção, diagnóstico, tratamento ou alívio de condições de saúde. A palavra “remédio” é mais ampla no uso cotidiano. Para uso específico, dose, combinação, interação ou duração, consulte a bula e orientação profissional adequada.",
+    fato: "",
+    fonte: "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos",
+  },
+  {
+    titulo: "Uso seguro de medicamentos",
+    perguntas: [
+      "como usar remedio com seguranca",
+      "como usar medicamento com seguranca",
+      "uso seguro de medicamentos",
+    ],
+    resposta:
+      "Use medicamentos conforme a bula e a orientação profissional quando indicada. Não altere dose, intervalo, combinação ou duração por conta própria. Em caso de reação importante, suspeita de intoxicação, uso acidental ou dúvida sobre interação, procure orientação profissional adequada.",
+    fato: "",
+    fonte: "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos",
+  },
+  {
+    titulo: "Manutenção preventiva do carro",
+    perguntas: [
+      "como cuidar do carro",
+      "manutencao preventiva do carro",
+      "cuidados com o carro",
+    ],
+    resposta:
+      "A manutenção preventiva inclui acompanhar pneus, freios, fluidos, iluminação, bateria, filtros e os itens previstos no manual do veículo. Intervalos e especificações variam por modelo, versão, uso e mercado; para valores exatos, siga o manual do proprietário ou a documentação técnica do fabricante.",
+    fato: "",
+    fonte: "manual do veículo",
+  },
+  {
+    titulo: "Segurança automotiva",
+    perguntas: [
+      "problema no freio do carro",
+      "luz de airbag acesa",
+      "carro com falha de freio",
+    ],
+    resposta:
+      "Falhas em freios, direção, pneus, combustível, airbag ou outros sistemas de segurança exigem cautela. Posso explicar o significado geral de sintomas e alertas, mas uma avaliação à distância não substitui inspeção técnica.",
+    fato: "",
+    fonte: "manual do veículo",
+  },
+  {
+    titulo: "Impedimento no futebol",
+    perguntas: [
+      "o que e impedimento no futebol",
+      "como funciona o impedimento",
+      "regra do impedimento",
+    ],
+    resposta:
+      "Em termos simples, um jogador pode estar em posição de impedimento quando, no momento em que um companheiro toca ou joga a bola, ele está no campo adversário e mais perto da linha de gol do que a bola e o penúltimo adversário. Estar nessa posição, sozinho, não basta: a infração depende de participação ativa na jogada.",
+    fato: "",
+    fonte: "https://www.theifab.com/laws/latest/offside/",
+  },
+  {
+    titulo: "Jogadores no futebol",
+    perguntas: [
+      "quantos jogadores tem um time de futebol",
+      "quantos jogadores jogam futebol",
+      "numero de jogadores no futebol",
+    ],
+    resposta:
+      "Uma equipe começa uma partida de futebol com até 11 jogadores em campo, incluindo o goleiro. Regras de substituição e número mínimo para a partida continuar dependem da competição e das Leis do Jogo aplicáveis.",
+    fato: "",
+    fonte: "https://www.theifab.com/laws/latest/the-players/",
+  },
+  {
+    titulo: "Futebol atual",
+    perguntas: [
+      "resultado de futebol de hoje",
+      "jogos de hoje",
+      "placar de hoje",
+      "quem ganhou hoje no futebol",
+    ],
+    resposta:
+      "Para placares, jogos do dia, classificação, transferências e notícias recentes, preciso de uma fonte atual. Não devo inventar informação em tempo real quando ela não estiver disponível.",
+    fato: "",
+    fonte: "comportamento da Aya",
+  },
+  {
+    titulo: "Fotossíntese",
+    perguntas: ["o que e fotossintese", "como funciona a fotossintese"],
+    resposta:
+      "Fotossíntese é o processo pelo qual plantas, algas e alguns microrganismos usam energia da luz para produzir matéria orgânica a partir de água e dióxido de carbono, liberando oxigênio como parte do processo.",
+    fato: "",
+    fonte: "conhecimento geral",
+  },
+  {
+    titulo: "Funai",
+    perguntas: ["o que e a funai", "o que faz a funai", "qual o papel da funai"],
+    resposta:
+      "A Funai é a Fundação Nacional dos Povos Indígenas, o órgão indigenista oficial do Estado brasileiro. Entre suas atribuições estão proteger e promover os direitos dos povos indígenas e atuar nos procedimentos relacionados à identificação, delimitação, demarcação e proteção das Terras Indígenas, conforme a legislação aplicável.",
+    fato: "A Funai é o órgão indigenista oficial do Estado brasileiro e atua na proteção e promoção dos direitos dos povos indígenas e nos procedimentos relativos às Terras Indígenas.",
+    fonte:
+      "https://www.gov.br/funai/pt-br/acesso-a-informacao/institucional/Institucional",
+  },
+  {
+    titulo: "Terra Indígena e aldeia",
+    perguntas: [
+      "diferenca entre terra indigena e aldeia",
+      "terra indigena e aldeia sao a mesma coisa",
+      "o que e aldeia indigena",
+    ],
+    resposta:
+      "Terra Indígena e aldeia não são sinônimos. Terra Indígena é uma categoria territorial e jurídica protegida pela Constituição e submetida a procedimento próprio de reconhecimento. Aldeia é uma comunidade ou local de ocupação e vida coletiva de um povo indígena; uma mesma Terra Indígena pode reunir mais de uma aldeia.",
+    fato: "",
+    fonte: "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas",
+  },
+  {
+    titulo: "Direitos territoriais indígenas",
+    perguntas: [
+      "quais sao os direitos territoriais indigenas",
+      "artigo 231 terras indigenas",
+      "o que diz o artigo 231",
+    ],
+    resposta:
+      "O artigo 231 da Constituição reconhece aos povos indígenas sua organização social, costumes, línguas, crenças e tradições e os direitos originários sobre as terras que tradicionalmente ocupam. Esses direitos territoriais não nascem da demarcação; a demarcação é o procedimento estatal de reconhecimento e delimitação.",
+    fato: "A Constituição de 1988 reconhece direitos originários dos povos indígenas sobre as terras que tradicionalmente ocupam.",
+    fonte:
+      "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+  },
+  {
+    titulo: "Demarcação de Terra Indígena",
+    perguntas: [
+      "como funciona a demarcacao de terra indigena",
+      "etapas da demarcacao indigena",
+      "quem demarca terra indigena",
+    ],
+    resposta:
+      "A demarcação é um procedimento administrativo com etapas de estudos de identificação e delimitação, análise administrativa, declaração, demarcação física, homologação e registros. A Funai conduz as etapas técnicas sob sua atribuição; outras autoridades federais participam das fases previstas em lei. Para saber a situação atual de uma área específica, use a base oficial da Funai.",
+    fato: "",
+    fonte:
+      "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/demarcacao-de-terras-indigenas",
+  },
+  {
+    titulo: "Usufruto das Terras Indígenas",
+    perguntas: [
+      "o que e usufruto indigena",
+      "usufruto exclusivo terra indigena",
+      "quem pode usar terra indigena",
+    ],
+    resposta:
+      "A Constituição assegura aos povos indígenas a posse permanente das terras tradicionalmente ocupadas e o usufruto exclusivo das riquezas do solo, dos rios e dos lagos nelas existentes, nos termos constitucionais. Isso não significa propriedade privada individual da terra.",
+    fato: "",
+    fonte:
+      "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+  },
+  {
+    titulo: "Base oficial de Terras Indígenas",
+    perguntas: [
+      "onde consultar terras indigenas",
+      "mapa oficial de terras indigenas",
+      "base de terras indigenas",
+    ],
+    resposta:
+      "Para limites, localização, fase do processo e consulta geográfica de Terras Indígenas, a referência é a base geoespacial oficial da Funai. A Aya não deve reconstruir limites territoriais de memória.",
+    fato: "",
+    fonte:
+      "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
+  },
+  {
+    titulo: "Princípios do SUS",
+    perguntas: [
+      "quais sao os principios do sus",
+      "principios do sus",
+      "universalidade integralidade equidade",
+    ],
+    resposta:
+      "Os princípios doutrinários mais usados para explicar o SUS são universalidade, integralidade e equidade. Universalidade significa acesso à saúde como direito de todos; integralidade considera as necessidades de saúde de forma ampla e articulada; equidade orienta tratar necessidades diferentes de forma proporcional para reduzir desigualdades.",
+    fato: "Universalidade, integralidade e equidade são princípios centrais do SUS.",
+    fonte: "https://www.gov.br/saude/pt-br/sus",
+  },
+  {
+    titulo: "Organização do SUS",
+    perguntas: ["como o sus se organiza", "organizacao do sus", "como funciona o sus"],
+    resposta:
+      "O SUS é organizado de forma descentralizada, com responsabilidades compartilhadas entre União, estados, Distrito Federal e municípios, e com organização regionalizada e hierarquizada da rede de serviços. A participação social ocorre por instâncias como conselhos e conferências de saúde.",
+    fato: "",
+    fonte: "https://www.planalto.gov.br/ccivil_03/leis/l8080.htm",
+  },
+  {
+    titulo: "Relação entre SUS e SasiSUS",
+    perguntas: [
+      "relacao entre sus e sasisus",
+      "sasisus faz parte do sus",
+      "saude indigena faz parte do sus",
+    ],
+    resposta:
+      "Sim. O SasiSUS é o Subsistema de Atenção à Saúde Indígena e integra o SUS. Ele foi instituído pela Lei 9.836/1999 para organizar a atenção à saúde dos povos indígenas dentro do Sistema Único de Saúde.",
+    fato: "",
+    fonte: "https://www.planalto.gov.br/ccivil_03/leis/l9836.htm",
+  },
+  {
+    titulo: "Natureza da AgSUS",
+    perguntas: [
+      "o que e a agsus",
+      "qual a natureza da agsus",
+      "agsus e publica ou privada",
+    ],
+    resposta:
+      "A AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. É um serviço social autônomo, pessoa jurídica de direito privado sem fins lucrativos, de interesse coletivo e utilidade pública, que atua sob orientação técnica e supervisão do Ministério da Saúde nos termos legais.",
+    fato: "A AgSUS é serviço social autônomo, pessoa jurídica de direito privado sem fins lucrativos, de interesse coletivo e utilidade pública.",
+    fonte:
+      "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14621.htm",
+  },
+  {
+    titulo: "Adaps e AgSUS",
+    perguntas: [
+      "diferenca entre adaps e agsus",
+      "adaps virou agsus",
+      "transformacao da adaps",
+    ],
+    resposta:
+      "A AgSUS surgiu da transformação da Agência para o Desenvolvimento da Atenção Primária à Saúde (Adaps), formalizada pela Lei 14.621/2023. Por isso documentos anteriores podem usar a denominação Adaps para estruturas e atividades que depois passaram à AgSUS.",
+    fato: "",
+    fonte:
+      "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14621.htm",
+  },
+  {
+    titulo: "AgSUS e saúde indígena",
+    perguntas: [
+      "qual o papel da agsus na saude indigena",
+      "agsus e saude indigena",
+      "agsus dsei",
+    ],
+    resposta:
+      "Na saúde indígena, a AgSUS atua na execução de atividades e apoio à gestão vinculados às políticas do Ministério da Saúde, em articulação com a SESAI. No contexto do MONITORA, isso inclui o acompanhamento da força de trabalho e das vagas nos DSEIs. A formulação e coordenação da política de saúde indígena permanecem no âmbito do Ministério da Saúde e da SESAI.",
+    fato: "",
+    fonte:
+      "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14621.htm",
+  },
+
 ]);
