@@ -132,6 +132,31 @@ describe("filterApprovedCandidates com escolha múltipla", () => {
 });
 
 describe("summarizeApprovedCandidates com escolha múltipla", () => {
+  /*
+    Fim de fila é estado próprio, e não uma variação de desistência: quem o
+    pediu continua na lista e será chamado depois de todos. O resumo tem de os
+    contar à parte para a equipa saber quantos são.
+  */
+  it("conta o fim de fila à parte, sem o somar a desistente", () => {
+    const resumo = summarizeApprovedCandidates(
+      [
+        ...candidatos,
+        {
+          candidato_id: "99",
+          nome: "Elza Martins",
+          modalidade: "Ampla concorrência",
+          cargo: "Enfermeiro",
+          edital_id: "10",
+          edital: "03/2025",
+          status: "Fim de Fila",
+        },
+      ],
+      {},
+    );
+    expect(resumo.fimDeFila).toBe(1);
+    expect(resumo.desistente).toBe(1);
+  });
+
   it("conta dentro dos editais escolhidos, ignorando o filtro de status", () => {
     const resumo = summarizeApprovedCandidates(candidatos, {
       editalId: ["10", "20"],

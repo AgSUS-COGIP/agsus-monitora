@@ -1247,13 +1247,22 @@
                   <h3><i class="fa-solid fa-user-check"></i> Lista de Aprovados</h3>
                   <p class="approved-page-subtitle">Consulte candidatos por edital e acompanhe a situação de contratação.</p>
                 </div>
-                <div class="approved-head-actions">
+                <div class="approved-head-actions" id="approvedHeadActions">
                   <span id="approvedCount" class="chip blue">0 candidatos</span>
                   <button id="approvedAddSubJudiceBtn" class="btn green hidden" type="button">
                     <i class="fa-solid fa-user-plus"></i> Incluir sub judice
                   </button>
                 </div>
               </div>
+              <div class="approved-tabs" role="tablist" aria-label="Visões da lista do edital">
+                <button id="approvedTabAprovados" class="approved-tab active" type="button" role="tab" aria-selected="true" aria-controls="approvedPanelAprovados" data-approved-tab="aprovados">
+                  <i class="fa-solid fa-user-check" aria-hidden="true"></i> Lista de aprovados
+                </button>
+                <button id="approvedTabConvocacao" class="approved-tab" type="button" role="tab" aria-selected="false" aria-controls="approvedPanelConvocacao" data-approved-tab="convocacao">
+                  <i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Lista de convocação
+                </button>
+              </div>
+              <div id="approvedPanelAprovados" class="approved-tabpanel" role="tabpanel" aria-labelledby="approvedTabAprovados">
               <div class="approved-kpis" aria-label="Resumo da lista de aprovados">
                 <div class="approved-kpi" data-tone="total">
                   <span class="approved-kpi-icon"><i class="fa-solid fa-users"></i></span>
@@ -1274,6 +1283,10 @@
                 <div class="approved-kpi" data-tone="warning">
                   <span class="approved-kpi-icon"><i class="fa-solid fa-file-circle-xmark"></i></span>
                   <div><span class="approved-kpi-label">Documentação rejeitada</span><strong id="approvedKpiDocumentacaoRejeitada">0</strong></div>
+                </div>
+                <div class="approved-kpi" data-tone="fila">
+                  <span class="approved-kpi-icon"><i class="fa-solid fa-arrow-turn-down"></i></span>
+                  <div><span class="approved-kpi-label">Fim de fila</span><strong id="approvedKpiFimDeFila">0</strong></div>
                 </div>
               </div>
               <div class="approved-filters">
@@ -1298,6 +1311,7 @@
                     <option value="Desistente">Desistente</option>
                     <option value="Migração">Migração</option>
                     <option value="Documentação Rejeitada">Documentação Rejeitada</option>
+                    <option value="Fim de Fila">Fim de Fila</option>
                   </select>
                 </div>
               </div>
@@ -1340,6 +1354,80 @@
                     Próxima <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                   </button>
                 </span>
+              </div>
+              </div>
+              <div id="approvedPanelConvocacao" class="approved-tabpanel hidden" role="tabpanel" aria-labelledby="approvedTabConvocacao">
+                <div class="approved-kpis" aria-label="Resumo da lista de convocação">
+                  <div class="approved-kpi" data-tone="total">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-list-ol"></i></span>
+                    <div><span class="approved-kpi-label">Vagas na lista</span><strong id="convocacaoKpiVagas">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="info">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-bullseye"></i></span>
+                    <div><span class="approved-kpi-label">Vagas imediatas</span><strong id="convocacaoKpiImediatas">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="success">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-bell"></i></span>
+                    <div><span class="approved-kpi-label">Convocáveis agora</span><strong id="convocacaoKpiConvocaveis">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="warning">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-user-clock"></i></span>
+                    <div><span class="approved-kpi-label">Cadastro de reserva</span><strong id="convocacaoKpiReserva">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="danger">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-user-xmark"></i></span>
+                    <div><span class="approved-kpi-label">Fora da fila</span><strong id="convocacaoKpiForaDaFila">0</strong></div>
+                  </div>
+                </div>
+                <div class="approved-filters convocacao-filters">
+                  <div class="form-row">
+                    <label>Edital</label>
+                    <select id="convocacaoFilterEdital"><option value="">Todos os editais</option></select>
+                  </div>
+                  <div class="form-row">
+                    <label>Cargo</label>
+                    <select id="convocacaoFilterCargo"><option value="">Todos os cargos</option></select>
+                  </div>
+                  <div class="form-row">
+                    <label>Status</label>
+                    <select id="convocacaoFilterStatus">
+                    <option value="">Todos os status</option>
+                    <option value="__sem_status__">Sem status</option>
+                    <option value="Contratado">Contratado</option>
+                    <option value="Desistente">Desistente</option>
+                    <option value="Migração">Migração</option>
+                    <option value="Documentação Rejeitada">Documentação Rejeitada</option>
+                    <option value="Fim de Fila">Fim de Fila</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="table-meta" id="convocacaoAviso">A ordem vem do quadro de vagas de cada edital, configurado no formulário da lista de aprovados.</div>
+                <div class="table-wrap">
+                  <div id="convocacaoRows" class="convocacao-grupos">
+                    <p class="approved-empty">Carregando lista de convocação...</p>
+                  </div>
+                </div>
+                <div class="approved-paginacao" id="convocacaoPaginacao" hidden>
+                  <span class="approved-paginacao-info" id="convocacaoPaginacaoInfo" aria-live="polite"></span>
+                  <span class="approved-paginacao-controles">
+                    <label class="approved-paginacao-tamanho" for="convocacaoPageSize">
+                      Por página
+                      <select id="convocacaoPageSize">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                      </select>
+                    </label>
+                    <button id="convocacaoPagePrev" class="btn secondary" type="button">
+                      <i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior
+                    </button>
+                    <span id="convocacaoPaginaAtual" class="approved-paginacao-pagina"></span>
+                    <button id="convocacaoPageNext" class="btn secondary" type="button">
+                      Próxima <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </span>
+                </div>
               </div>
             </div>
           </section>
@@ -2048,6 +2136,7 @@
                 <option value="Desistente">Desistente</option>
                 <option value="Migração">Migração</option>
                 <option value="Documentação Rejeitada">Documentação Rejeitada</option>
+                <option value="Fim de Fila">Fim de Fila</option>
               </select>
             </div>
             <div class="form-row full">
@@ -2108,12 +2197,21 @@
       <div class="modal-card approved-modal-card approved-import-card">
         <div class="modal-head">
           <div>
-            <h3 id="approvedImportTitle">Lista de aprovados do edital</h3>
+            <h3 id="approvedImportTitle">Listas do edital</h3>
             <p id="approvedImportEdital" class="approved-modal-subtitle"></p>
           </div>
           <button class="btn secondary" type="button" data-close-approved-modal="approvedImportModal">Fechar</button>
         </div>
         <div class="modal-body">
+          <div class="approved-tabs approved-tabs-modal" role="tablist" aria-label="Seções do formulário do edital">
+            <button id="approvedImportTabArquivo" class="approved-tab active" type="button" role="tab" aria-selected="true" aria-controls="approvedImportPanelArquivo" data-import-tab="arquivo">
+              <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> Lista de aprovados
+            </button>
+            <button id="approvedImportTabConvocacao" class="approved-tab" type="button" role="tab" aria-selected="false" aria-controls="approvedImportPanelConvocacao" data-import-tab="convocacao">
+              <i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Lista de convocação
+            </button>
+          </div>
+          <div id="approvedImportPanelArquivo" class="approved-tabpanel" role="tabpanel" aria-labelledby="approvedImportTabArquivo">
           <div id="approvedImportCurrentState" class="approved-import-state"></div>
           <p id="approvedImportPermissionNote" class="modal-note"></p>
           <div class="form-grid">
@@ -2143,6 +2241,75 @@
             <span class="approved-action-spacer"></span>
             <button id="approvedImportToggleActive" class="btn secondary hidden" type="button"><i class="fa-solid fa-power-off"></i> Aplicar situação</button>
             <button id="approvedImportSubmit" class="btn green" type="button"><i class="fa-solid fa-file-import"></i> Importar lista</button>
+          </div>
+          </div>
+          <div id="approvedImportPanelConvocacao" class="approved-tabpanel hidden" role="tabpanel" aria-labelledby="approvedImportTabConvocacao">
+            <fieldset class="convocacao-tipo">
+              <legend>Tipo de convocação</legend>
+              <label class="convocacao-tipo-card">
+                <input type="radio" name="convocacaoTipo" value="com" checked />
+                <span class="convocacao-tipo-copy">
+                  <strong>Com proporcionalidade</strong>
+                  <small>As vagas de cota entram intercaladas às de ampla ao longo da convocação.</small>
+                </span>
+              </label>
+              <label class="convocacao-tipo-card">
+                <input type="radio" name="convocacaoTipo" value="sem" />
+                <span class="convocacao-tipo-copy">
+                  <strong>Sem proporcionalidade</strong>
+                  <small>A convocação segue a lista de aprovados, pela classificação.</small>
+                </span>
+              </label>
+            </fieldset>
+            <div id="convocacaoQuadro" class="convocacao-quadro">
+              <div class="convocacao-bloco-head">
+                <div>
+                  <strong>Modelo de regras</strong>
+                  <small>As regras de reserva deste edital: categorias, percentuais, arredondamento e cascata.</small>
+                </div>
+                <div class="convocacao-bloco-acoes">
+                  <select id="convocacaoModelo" class="convocacao-modelo-select"></select>
+                  <button id="convocacaoEditarModelo" class="btn outline" type="button">
+                    <i class="fa-solid fa-sliders" aria-hidden="true"></i> Editar
+                  </button>
+                  <button id="convocacaoNovoModelo" class="btn outline" type="button">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Novo
+                  </button>
+                </div>
+              </div>
+              <p id="convocacaoModeloResumo" class="convocacao-modelo-resumo"></p>
+              <div id="convocacaoEditorModelo" class="convocacao-editor hidden"></div>
+              <p id="convocacaoVagasBloqueadas" class="convocacao-vagas-bloqueadas hidden"></p>
+              <div id="convocacaoVagasBloco">
+              <div class="convocacao-bloco-head">
+                <div>
+                  <strong>Vagas do edital</strong>
+                  <small>Informe quantas vagas imediatas cada uma tem. Zero vira cadastro de reserva.</small>
+                </div>
+                <div class="convocacao-bloco-acoes">
+                  <label class="convocacao-padrao-campo" for="convocacaoPadraoImediata">
+                    Padrão
+                    <input id="convocacaoPadraoImediata" type="number" min="0" step="1" inputmode="numeric" value="0" />
+                  </label>
+                  <button id="convocacaoAplicarPadrao" class="btn outline" type="button">
+                    <i class="fa-solid fa-arrow-down-1-9" aria-hidden="true"></i> Aplicar a todas
+                  </button>
+                  <span id="convocacaoVagasResumo" class="chip blue">0 vagas</span>
+                </div>
+              </div>
+              <div class="table-wrap convocacao-vagas-wrap">
+                <table class="approved-table convocacao-vagas-table">
+                  <thead id="convocacaoVagasHead"></thead>
+                  <tbody id="convocacaoVagasRows"></tbody>
+                </table>
+              </div>
+              </div>
+            </div>
+            <p id="convocacaoPermissionNote" class="modal-note"></p>
+            <div class="approved-modal-actions approved-import-actions">
+              <span class="approved-action-spacer"></span>
+              <button id="convocacaoSalvar" class="btn green" type="button"><i class="fa-solid fa-floppy-disk"></i> Salvar convocação</button>
+            </div>
           </div>
         </div>
       </div>

@@ -495,8 +495,8 @@ function updateAssistantIdentity(root) {
 
   const hideButton = root.querySelector(".arara-assistant__hide");
   if (hideButton) {
-    hideButton.textContent = `Ocultar ${ASSISTANT_NAME}`;
-    hideButton.setAttribute("aria-label", `Ocultar ${ASSISTANT_NAME}`);
+    hideButton.textContent = "Minimizar";
+    hideButton.setAttribute("aria-label", `Minimizar ${ASSISTANT_NAME}`);
   }
 
   const launcher = root.querySelector("[data-arara-show]");
@@ -511,7 +511,9 @@ function updateAssistantIdentity(root) {
   if (inputLabel) inputLabel.textContent = `Pergunta para a ${ASSISTANT_NAME}`;
 
   const input = root.querySelector(".arara-assistant__input");
-  if (input) input.placeholder = "Ex.: quais editais aparecem aqui?";
+  if (input && input.dataset.ayaPlaceholderManaged !== "1") {
+    input.placeholder = "Ex.: quais editais aparecem aqui?";
+  }
 }
 
 function cancelActiveAnimation(root, reveal = true) {
