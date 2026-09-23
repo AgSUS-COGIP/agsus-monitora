@@ -1,0 +1,2358 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <!-- Google tag (gtag.js) - GA4 -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-RKWLZJ2RZX"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        window.dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-RKWLZJ2RZX", {
+        page_title: document.title,
+        page_location: window.location.origin + window.location.pathname,
+      });
+    </script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!--
+      Marca da tela de acesso, aplicada ANTES do primeiro paint.
+
+      `main.js` é `type="module"`, portanto adiado: ele só roda depois de o HTML
+      ser analisado, quando o navegador já pintou a tela com os padrões neutros
+      do CSS. Aplicar a marca guardada ali produzia uma piscada visível a cada
+      recarga — claro e neutro primeiro, escuro e institucional logo depois.
+
+      Este script é síncrono e clássico de propósito: roda aqui, antes de o
+      `<body>` existir. Por isso escreve as variáveis em `documentElement` e não
+      em `#loginScreen`, que ainda não foi criado — variáveis CSS são herdadas,
+      então `#loginScreen .login-card` já as resolve.
+
+      A classe de contraste não pode vir daqui: `post-152-regression-fixes.css`
+      a exige no próprio elemento, em `#loginScreen.login-panel-dark`. Ela fica
+      decidida nesta bandeira e é aplicada por um segundo script, logo depois do
+      elemento — assim nenhum dos seletores existentes precisa ser duplicado.
+
+      A chave, os nomes das variáveis e o limiar de luminância são os mesmos de
+      `access-branding-cache.js` e `access-branding.js`. `tests/piscada-do-login.test.js`
+      falha se as duas cópias se separarem.
+    -->
+    <script>
+      (function aplicarMarcaAntesDoPrimeiroPaint() {
+        try {
+          var bruto = localStorage.getItem("agsus_monitora_access_branding_v1");
+          if (!bruto) return;
+          var marca = JSON.parse(bruto);
+          if (!marca || typeof marca !== "object") return;
+
+          var raiz = document.documentElement;
+          var cor =
+            typeof marca.panelColor === "string" ? marca.panelColor.trim() : "";
+          if (/^#[0-9a-f]{6}$/i.test(cor)) {
+            /*
+              A variável vai na raiz porque é herdada: `#loginScreen .login-card`
+              já a resolve, sem precisar da classe nem do elemento.
+            */
+            raiz.style.setProperty("--login-panel-color", cor);
+            var r = parseInt(cor.slice(1, 3), 16);
+            var g = parseInt(cor.slice(3, 5), 16);
+            var b = parseInt(cor.slice(5, 7), 16);
+            /*
+              A classe, ao contrário, é exigida em `#loginScreen.login-panel-dark`
+              por post-152. Fica guardada aqui e um script logo depois do
+              elemento a aplica — assim nenhum seletor precisa ser duplicado.
+            */
+            /*
+              O modo guardado tem precedência sobre a luminância: "claro" e
+              "escuro" são escolha de identidade, "auto" volta a derivar.
+            */
+            var modo =
+              typeof marca.textoModo === "string"
+                ? marca.textoModo.trim().toLowerCase()
+                : "auto";
+            window.__agsusPainelEscuro =
+              modo === "claro"
+                ? true
+                : modo === "escuro"
+                  ? false
+                  : (r * 299 + g * 587 + b * 114) / 1000 < 145;
+          }
+
+          var arte =
+            typeof marca.backgroundUrl === "string"
+              ? marca.backgroundUrl.trim()
+              : "";
+          if (arte) {
+            raiz.style.setProperty(
+              "--login-background-image",
+              'url("' + arte.replace(/["\\]/g, "") + '")',
+            );
+          }
+        } catch (erro) {
+          /* Armazenamento bloqueado ou conteúdo inválido: fica o fundo neutro. */
+        }
+      })();
+    </script>
+    <title>MONITORA</title>
+    <meta name="description" content="" />
+    <!--
+      Ícone local, nas três tags que o SIGAV também usa. Antes isto apontava
+      para uma imagem em i.postimg.cc — host de terceiros — e nenhum código
+      chegava a atualizá-la. `identidade-da-aba.js` troca por logo institucional
+      configurada depois que ela carrega, e volta para cá se falhar.
+    -->
+    <link id="appFavicon" rel="icon" href="/assets/agsus-logo.webp" />
+    <link rel="shortcut icon" href="/assets/agsus-logo.webp" />
+    <link rel="apple-touch-icon" href="/assets/agsus-logo.webp" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
+      integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script type="module" crossorigin src="/assets/main-Rlhm1nOg.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-BHwCKVD0.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-DAqalwtj.js">
+    <link rel="modulepreload" crossorigin href="/assets/supabaseClient-BrJ2gl0i.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-charts-Bups-KSN.js">
+    <link rel="modulepreload" crossorigin href="/assets/loading-copy-BxJKfO1b.js">
+    <link rel="modulepreload" crossorigin href="/assets/auth-flow-r_ACYfzy.js">
+    <link rel="stylesheet" crossorigin href="/assets/vendor-C5R4WAJZ.css">
+    <link rel="stylesheet" crossorigin href="/assets/loading-copy-TOb_NdAb.css">
+    <link rel="stylesheet" crossorigin href="/assets/main-CG7TnU_Y.css">
+  </head>
+
+  <body class="sidebar-collapsed config-loading">
+    <a id="skipLink" href="#conteudoPrincipal" class="skip-link"></a>
+    <div
+      id="offlineBar"
+      role="alert"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9998;
+        background: #7a3a00;
+        color: #fff;
+        text-align: center;
+        padding: 7px 12px;
+        font-size: 13px;
+        font-weight: 600;
+      "
+    ></div>
+    <div
+      id="toastBox"
+      class="toast-box"
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
+
+    <div id="loader" class="loader">
+      <div class="loader-card">
+        <div class="loader-brand" aria-hidden="true">
+          <img src="/assets/agsus-logo.webp" alt="" />
+          <span></span>
+          <div>
+            <strong>MONITORA</strong>
+            <small>Ambiente institucional AgSUS</small>
+          </div>
+        </div>
+        <div class="loader-status">
+          <div class="loader-spin"></div>
+          <div class="loader-copy">
+            <div id="loaderTitle" class="loader-title"></div>
+            <div id="loaderSub" class="loader-sub"></div>
+          </div>
+          <div id="loaderPct" class="loader-pct">0%</div>
+        </div>
+        <div class="loader-bar"><span id="loaderBar"></span></div>
+        <div class="loader-safe">
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+          Carregamento seguro dos painéis autorizados
+        </div>
+      </div>
+    </div>
+
+    <!--
+      O script abaixo aplica a classe de contraste no próprio `#loginScreen`,
+      logo depois de o elemento existir e antes de ele ser pintado. É o que
+      permite reaproveitar os seletores `#loginScreen.login-panel-dark` que já
+      existem, sem duplicar nenhum deles.
+    -->
+    <section
+      id="loginScreen"
+      class="login-screen"
+      aria-labelledby="loginGreeting"
+      aria-describedby="loginDescription"
+    >
+      <script>
+        if (window.__agsusPainelEscuro) {
+          document
+            .getElementById("loginScreen")
+            .classList.add("login-panel-dark");
+        }
+      </script>
+      <div class="login-outer">
+        <div class="login-card">
+          <div class="login-brand-lockup" aria-label="MONITORA">
+            <div class="login-organization-mark">
+              <img
+                id="loginLogo"
+                src="/assets/agsus-logo.webp"
+                alt=""
+                onerror="this.style.display = 'none'"
+              />
+              <strong>AgSUS</strong>
+            </div>
+            <span class="login-brand-divider" aria-hidden="true"></span>
+            <div class="login-product-mark">
+              <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+              <strong id="loginTitle">MONITORA</strong>
+            </div>
+          </div>
+          <p class="login-subtitle" id="loginSubtitle">
+            Monitoramento de Processos Seletivos
+          </p>
+          <h1 id="loginGreeting">Seja bem-vindo(a) à AgSUS</h1>
+          <p id="loginDescription" class="login-description">
+            Acesse com sua conta institucional.
+          </p>
+          <div id="configMsg" class="alert error hidden"></div>
+          <div id="loginMsg" class="alert hidden"></div>
+          <div class="login-form google-only-login">
+            <button
+              id="googleLoginBtn"
+              type="button"
+              class="google-login-btn"
+              onclick="loginWithGoogle()"
+            >
+              <span class="gmark">G</span
+              ><span id="googleLoginText">Entrar com Google institucional</span>
+            </button>
+            <div class="login-security" id="loginSecurity">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <span
+                >Acesso seguro e exclusivo para contas institucionais
+                AgSUS.</span
+              >
+            </div>
+            <div id="accessRequestCard" class="access-request-card hidden">
+              <div class="access-request-head compact">
+                <div>
+                  <h2>Solicitar acesso</h2>
+                  <p>
+                    Preencha os dados para que um administrador libere seu
+                    perfil de acesso.
+                  </p>
+                </div>
+              </div>
+
+              <div class="access-authenticated-user">
+                <span>E-mail autenticado</span>
+                <strong id="accessReqEmail">-</strong>
+              </div>
+
+              <div class="access-request-grid">
+                <div class="form-row">
+                  <label for="accessReqNome">Nome</label>
+                  <input id="accessReqNome" type="text" autocomplete="name" />
+                </div>
+
+                <div class="form-row">
+                  <label for="accessReqSetor">Área / setor</label>
+                  <input
+                    id="accessReqSetor"
+                    type="text"
+                    placeholder="Ex: COGIP, DSEI, gestão"
+                  />
+                </div>
+
+                <div class="form-row full">
+                  <label for="accessReqJustificativa">Justificativa</label>
+                  <textarea
+                    id="accessReqJustificativa"
+                    rows="2"
+                    placeholder="Explique brevemente por que precisa acessar o sistema"
+                  ></textarea>
+                </div>
+
+              </div>
+
+              <div id="accessRequestStatus" class="access-status hidden"></div>
+
+              <button
+                id="accessRequestBtn"
+                type="button"
+                class="btn green access-submit-btn"
+                onclick="submitAccessRequest()"
+              >
+                <i class="fa-solid fa-paper-plane"></i> Enviar solicitação
+              </button>
+
+              <div class="access-account-actions">
+                <button
+                  id="accessSwitchAccountBtn"
+                  type="button"
+                  class="google-login-btn"
+                  onclick="loginWithGoogle()"
+                >
+                  <span class="gmark">G</span
+                  ><span>Usar outra conta Google</span>
+                </button>
+                <button
+                  id="accessReturnLoginBtn"
+                  type="button"
+                  class="btn secondary"
+                  onclick="returnToLogin()"
+                >
+                  <i class="fa-solid fa-arrow-right-from-bracket"></i> Voltar ao
+                  login
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="login-cogip">
+            <img
+              class="login-cogip-logo"
+              id="loginCogipLogo"
+              src=""
+              alt=""
+              onerror="this.style.display = 'none'"
+              style="display: none"
+            />
+            <div class="login-cogip-info">
+              <div class="login-cogip-name" id="loginCogipName"></div>
+              <div class="login-cogip-role" id="loginCogipRole">
+                <span id="loginVersion"></span>
+              </div>
+              <div class="login-cogip-dept" id="loginFoot"></div>
+            </div>
+          </div>
+        </div>
+        <div class="login-stripe" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section id="appScreen" class="app hidden">
+      <button
+        id="globalSidebarToggle"
+        class="global-side-toggle"
+        onclick="toggleSidebar()"
+        title=""
+        aria-label=""
+      >
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+      <div id="externalReturnBar">
+        <button
+          id="externalBackBtn"
+          type="button"
+          onclick="exitExternalPanel()"
+          title=""
+          aria-label=""
+        >
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          <span id="externalBackText"></span>
+        </button>
+      </div>
+      <aside class="sidebar" aria-label="Navegação principal">
+        <div class="side-brand">
+          <span class="side-logo-wrap"
+            ><img
+              id="sideLogo"
+              class="side-logo"
+              src="/assets/agsus-logo.webp"
+              alt="AgSUS"
+          /></span>
+          <span class="side-brand-copy"><strong>MONITORA</strong></span>
+        </div>
+        <div class="side-navigation"><nav id="nav" class="nav"></nav></div>
+        <div class="side-footer">
+          <div class="side-version">
+            <span id="sidebarVersionLabel"></span><b id="sidebarVersion"></b>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main" id="conteudoPrincipal" tabindex="-1">
+        <header class="top">
+          <div class="title-row">
+            <button
+              id="hambToggle"
+              class="hamb"
+              onclick="toggleSidebar()"
+              title=""
+            >
+              ☰
+            </button>
+            <div class="page-title">
+              <h1 id="pageTitle"></h1>
+              <p id="pageSubtitle"></p>
+            </div>
+          </div>
+          <div class="actions">
+            <div id="onlinePresence" class="online-presence hidden">
+              <button
+                id="onlinePresenceBtn"
+                class="online-presence-button"
+                type="button"
+                onclick="toggleOnlinePresence()"
+                aria-expanded="false"
+                aria-controls="onlinePresencePopover"
+              >
+                <span id="onlinePresenceDot" class="online-presence-dot"></span>
+                <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+                <span id="onlinePresenceLabel">Sincronizando</span>
+              </button>
+              <div
+                id="onlinePresencePopover"
+                class="online-presence-popover"
+                hidden
+              >
+                <div class="online-presence-heading">
+                  <strong>Pessoas online</strong>
+                  <small>Ativas no MONITORA agora</small>
+                </div>
+                <div id="onlinePresenceList" class="online-presence-list"></div>
+              </div>
+            </div>
+            <details id="topUserMenu" class="top-user-menu">
+              <summary
+                class="top-user-button"
+                aria-label="Abrir perfil do usuário"
+              >
+                <span
+                  id="topUserAvatar"
+                  class="top-user-avatar"
+                  aria-hidden="true"
+                >
+                  <i class="fa-solid fa-user"></i>
+                </span>
+                <span class="top-user-compact-copy">
+                  <strong id="userName">-</strong>
+                  <small
+                    id="userProfileBadge"
+                    class="user-profile-badge"
+                  ></small>
+                </span>
+                <i
+                  class="fa-solid fa-chevron-down top-user-chevron"
+                  aria-hidden="true"
+                ></i>
+              </summary>
+              <div class="top-user-popover">
+                <strong id="topUserPopoverName">-</strong>
+                <small id="userEmail">-</small>
+                <span id="topUserPopoverProfile"></span>
+                <div class="top-user-popover-actions">
+                  <button type="button" onclick="toggleDarkMode()">
+                    <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                    <span>Alternar modo escuro</span>
+                  </button>
+                  <button type="button" onclick="logout()">
+                    <i
+                      class="fa-solid fa-right-from-bracket"
+                      aria-hidden="true"
+                    ></i>
+                    <span>Sair do sistema</span>
+                  </button>
+                </div>
+              </div>
+            </details>
+            <button
+              id="exportCsvBtn"
+              class="btn green"
+              type="button"
+              onclick="exportCSV()"
+              hidden
+            >
+              <i class="fa-solid fa-download"></i>
+              <span id="exportCsvText"></span>
+            </button>
+            <div style="position: relative" id="moreActionsWrap">
+              <button
+                class="btn outline"
+                type="button"
+                onclick="toggleMoreActions()"
+                id="moreActionsBtn"
+                title=""
+                aria-label=""
+                aria-expanded="false"
+              >
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+              </button>
+              <div
+                id="moreActionsMenu"
+                hidden
+                style="
+                  position: absolute;
+                  right: 0;
+                  top: calc(100% + 6px);
+                  background: #fff;
+                  border: 1px solid #d7e5f2;
+                  border-radius: 14px;
+                  box-shadow: 0 14px 34px rgba(15, 35, 60, 0.14);
+                  min-width: 180px;
+                  z-index: 200;
+                  overflow: hidden;
+                "
+              >
+                <button
+                  type="button"
+                  onclick="
+                    closeMoreActions();
+                    toggleBrowserFullscreen();
+                  "
+                  style="
+                    width: 100%;
+                    border: 0;
+                    background: transparent;
+                    padding: 11px 16px;
+                    text-align: left;
+                    cursor: pointer;
+                    font: inherit;
+                    font-weight: 700;
+                    font-size: 13px;
+                    color: #10243e;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                  "
+                >
+                  <i
+                    class="fa-solid fa-expand"
+                    style="width: 16px; text-align: center; color: #60758f"
+                  ></i>
+                  <span id="fullscreenActionText"></span>
+                </button>
+                <button
+                  type="button"
+                  onclick="
+                    refreshData();
+                    closeMoreActions();
+                  "
+                  style="
+                    width: 100%;
+                    border: 0;
+                    background: transparent;
+                    padding: 11px 16px;
+                    text-align: left;
+                    cursor: pointer;
+                    font: inherit;
+                    font-weight: 700;
+                    font-size: 13px;
+                    color: #10243e;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    border-top: 1px solid #edf3f9;
+                  "
+                >
+                  <i
+                    class="fa-solid fa-rotate-right"
+                    style="width: 16px; text-align: center; color: #60758f"
+                  ></i>
+                  <span id="refreshActionText"></span>
+                </button>
+                <button
+                  type="button"
+                  onclick="exportPDF()"
+                  style="
+                    width: 100%;
+                    border: 0;
+                    background: transparent;
+                    padding: 11px 16px;
+                    text-align: left;
+                    cursor: pointer;
+                    font: inherit;
+                    font-weight: 600;
+                    font-size: 13px;
+                    color: #10243e;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    border-top: 1px solid #edf3f9;
+                  "
+                >
+                  <i
+                    class="fa-solid fa-file-pdf"
+                    style="width: 16px; text-align: center; color: #d92d3a"
+                  ></i>
+                  <span id="exportPdfActionText"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div id="araraGuideHost"></div>
+
+        <div
+          id="broadcastBar"
+          class="alert broadcast-bar"
+          role="status"
+          hidden
+        ></div>
+
+        <div class="content">
+          <section id="page-dashboard" class="page active">
+            <div class="filter-card card">
+              <div class="filter-head">
+                <div>
+                  <div id="filterTitle" class="filter-title"></div>
+                  <p id="filterSubtitle" class="filter-sub"></p>
+                </div>
+                <button
+                  id="filterToggleBtn"
+                  class="btn secondary"
+                  onclick="toggleFilters()"
+                ></button>
+              </div>
+              <div id="filterBody" class="filter-body hidden">
+                <div>
+                  <label>Unidade</label>
+                  <div
+                    id="filterUnidade"
+                    class="multi-select"
+                    data-filter="unidade"
+                  ></div>
+                </div>
+                <div>
+                  <label>Edital</label>
+                  <div
+                    id="filterEdital"
+                    class="multi-select"
+                    data-filter="edital"
+                  ></div>
+                </div>
+                <div>
+                  <label>Etapa</label>
+                  <div
+                    id="filterEtapa"
+                    class="multi-select"
+                    data-filter="etapa"
+                  ></div>
+                </div>
+                <div>
+                  <label>Status</label>
+                  <div
+                    id="filterStatus"
+                    class="multi-select"
+                    data-filter="status"
+                  ></div>
+                </div>
+                <div>
+                  <label>Risco</label>
+                  <div
+                    id="filterRisco"
+                    class="multi-select"
+                    data-filter="risco"
+                  ></div>
+                </div>
+                <div>
+                  <label>UF</label>
+                  <div
+                    id="filterUf"
+                    class="multi-select"
+                    data-filter="uf"
+                  ></div>
+                </div>
+                <button class="btn secondary" onclick="clearFilters()">
+                  Limpar
+                </button>
+              </div>
+            </div>
+            <div id="activeFiltersBar" class="active-filters-bar hidden"></div>
+            <div
+              id="dashboardSectionProcessos"
+              class="section-label section-label-primary"
+            ></div>
+            <div class="kpis kpis-main">
+              <div class="kpi ag-navy">
+                <span
+                  ><i
+                    class="fa-solid fa-folder-open"
+                    style="margin-right: 5px; opacity: 0.7"
+                  ></i
+                  ><span id="kpiProcessosLabel"></span></span
+                ><b id="kProcessos">0</b>
+              </div>
+              <div class="kpi ag-blue">
+                <span
+                  ><i
+                    class="fa-solid fa-briefcase"
+                    style="margin-right: 5px; opacity: 0.7"
+                  ></i
+                  ><span id="kpiVagasLabel"></span></span
+                ><b id="kVagas">0</b>
+              </div>
+              <div class="kpi ag-green">
+                <span
+                  ><i
+                    class="fa-solid fa-user-check"
+                    style="margin-right: 5px; opacity: 0.7"
+                  ></i
+                  ><span id="kpiContratadosLabel"></span></span
+                ><b id="kContratados">0</b>
+              </div>
+              <div class="kpi ag-red">
+                <span
+                  ><i
+                    class="fa-solid fa-triangle-exclamation"
+                    style="margin-right: 5px; opacity: 0.7"
+                  ></i
+                  ><span id="kpiOciosasLabel"></span></span
+                ><b id="kOciosas">0</b>
+              </div>
+              <button
+                type="button"
+                id="kpiCriticosCard"
+                class="kpi kpi-clickable ag-yellow"
+                onclick="toggleCriticalRiskFilter()"
+                title="Filtrar por risco Médio e Alto"
+              >
+                <span
+                  ><i
+                    class="fa-solid fa-circle-exclamation"
+                    style="margin-right: 5px; opacity: 0.7"
+                  ></i
+                  ><span id="kpiCriticosLabel"></span>
+                  <span id="panicChip" class="chip gray"></span
+                ></span>
+                <b id="kCriticos">0</b>
+              </button>
+              <div class="kpi ag-cyan">
+                <span
+                  ><i
+                    class="fa-solid fa-users"
+                    style="margin-right: 5px; opacity: 0.7"
+                  ></i
+                  ><span id="kpiInscritosLabel"></span></span
+                ><b id="kInscritos">0</b>
+              </div>
+            </div>
+            <div id="multiUnitsCard" class="multi-units-card card hidden"></div>
+            <div
+              class="health-map-workspace"
+              aria-label="Mapas da rede de saúde indígena"
+            >
+              <section class="card health-map-pane health-map-pane--master">
+                <header class="health-map-pane__header">
+                  <div>
+                    <span class="health-map-pane__eyebrow"
+                      ><i class="fa-solid fa-earth-americas"></i> Visão
+                      nacional</span
+                    >
+                    <h3>DSEIs / CASAIs do Brasil</h3>
+                  </div>
+                  <span class="health-map-pane__count" id="masterMapCount"
+                    >Brasil</span
+                  >
+                </header>
+                <!-- O mapa fica na proporção que o Brasil preenche; a largura
+                     que sobra leva a lista dos territórios, não oceano. -->
+                <div class="health-map-brasil-layout">
+                  <div
+                    id="map"
+                    role="img"
+                    aria-label="Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI"
+                  ></div>
+                  <aside
+                    class="health-map-units health-map-brasil-painel"
+                    aria-label="Territórios por vagas"
+                  >
+                    <div class="health-map-units__header">
+                      <span
+                        ><i class="fa-solid fa-ranking-star"></i> Territórios
+                        por vagas</span
+                      >
+                      <b id="brasilDseiCount">0</b>
+                    </div>
+                    <div id="brasilDseiList" class="health-map-units__list">
+                      <div class="health-map-empty">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <strong>Carregando os territórios</strong>
+                        <span>A lista acompanha os filtros da página.</span>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+                <footer class="health-map-pane__hint">
+                  <i class="fa-solid fa-arrow-pointer"></i>
+                  Selecione um DSEI para explorar polos e unidades.
+                </footer>
+                <span id="mapLegendMin" class="hidden">0</span>
+                <span id="mapLegendMax" class="hidden"></span>
+                <span id="mapLegendScale" class="hidden"></span>
+                <span id="mapLegendDsei" class="hidden"></span>
+              </section>
+              <section class="card health-map-pane health-map-pane--detail">
+                <header class="health-map-pane__header">
+                  <div>
+                    <!-- O trilho guarda a referência nacional sem gastar um
+                         mapa inteiro a repetir o Brasil ao lado. -->
+                    <nav class="health-map-breadcrumb" aria-label="Onde estou">
+                      <button
+                        type="button"
+                        class="health-map-breadcrumb__voltar"
+                        onclick="resetDetailMap()"
+                      >
+                        Brasil
+                      </button>
+                      <span aria-hidden="true">›</span>
+                      <span id="detailBreadcrumbDsei">território</span>
+                    </nav>
+                    <h3 id="detailMapTitle">Mapa do Brasil</h3>
+                  </div>
+                  <div class="health-map-detail-actions">
+                    <!-- O chip só aparece quando há vínculo fora da abrangência
+                         do DSEI; o botão alterna entre o enquadramento do
+                         território e o que inclui as unidades externas. -->
+                    <span
+                      id="detailExternalChip"
+                      class="health-map-external-chip"
+                      hidden
+                    ></span>
+                    <button
+                      id="detailExternalToggle"
+                      class="health-map-external-toggle"
+                      type="button"
+                      onclick="toggleVinculosExternos()"
+                      hidden
+                    >
+                      Mostrar vínculos externos
+                    </button>
+                    <button
+                      id="detailMapReset"
+                      class="health-map-reset hidden"
+                      type="button"
+                      onclick="resetDetailMap()"
+                    >
+                      <i class="fa-solid fa-arrow-left"></i> Voltar à visão
+                      nacional
+                    </button>
+                  </div>
+                </header>
+                <!-- Território à esquerda, painel de unidades à direita. O card
+                     inteiro só aparece quando houver um DSEI escolhido. -->
+                <div class="health-map-detail-layout">
+                  <div
+                    id="detailMap"
+                    role="img"
+                    aria-label="Mapa detalhado dos polos e unidades do DSEI selecionado"
+                  ></div>
+                  <aside
+                    class="health-map-units"
+                    aria-label="Polos e unidades do território selecionado"
+                  >
+                    <div class="health-map-units__header">
+                      <span
+                        ><i class="fa-solid fa-house-medical"></i> Polos e
+                        unidades</span
+                      >
+                      <b id="detailUnitCount">0</b>
+                    </div>
+                    <div
+                      id="detailFiltros"
+                      class="health-map-filtros"
+                      role="group"
+                      aria-label="Filtrar as unidades por tipo"
+                      hidden
+                    ></div>
+                    <div id="detailUnitList" class="health-map-units__list">
+                      <div class="health-map-empty">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <strong>Selecione um DSEI</strong>
+                        <span
+                          >Os polos, CASAIs e unidades aparecerão aqui.</span
+                        >
+                      </div>
+                    </div>
+                    <!--
+                      O mapa desenhava as terras e não as nomeava em lugar
+                      nenhum: para saber quais eram e que povos vivem nelas era
+                      preciso passar o ponteiro por cima de cada uma, uma a uma.
+                      Esta lista é preenchida pela própria camada, com as terras
+                      que sobreviveram ao filtro do distrito.
+                    -->
+                    <div class="health-map-units__header">
+                      <span
+                        ><i class="fa-solid fa-mountain-sun"></i> Terras
+                        Indígenas e povos</span
+                      >
+                      <b id="detailTerraCount">0</b>
+                    </div>
+                    <div id="detailTerraList" class="health-map-units__list">
+                      <div class="health-map-empty">
+                        <i class="fa-solid fa-mountain-sun"></i>
+                        <strong>Selecione um DSEI</strong>
+                        <span
+                          >As Terras Indígenas atendidas aparecerão aqui.</span
+                        >
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+                <!--
+                  Preenchida por `aplicarLegendaDoMapaDetalhado()`, a partir da
+                  mesma tabela que decide a forma e a cor de cada marcador.
+                  Escrita à mão, ela ficou descrevendo bolinhas redondas
+                  enquanto o mapa já desenhava círculo, casa, cruz e losango.
+                -->
+                <footer
+                  class="health-map-detail-legend"
+                  aria-label="Legenda do mapa detalhado"
+                ></footer>
+              </section>
+            </div>
+            <div class="card panel-pad health-status-summary-card">
+              <h3 id="statusSummaryTitle" class="panel-title"></h3>
+              <div id="statusSummary"></div>
+            </div>
+            <div class="lower-grid">
+              <div class="card panel-pad">
+                <h3 id="operationalStatusTitle" class="panel-title"></h3>
+                <div class="chart-wrap">
+                  <canvas id="statusChart" role="img" aria-label=""></canvas>
+                </div>
+              </div>
+              <div class="card panel-pad">
+                <h3
+                  id="attentionTitle"
+                  class="panel-title"
+                  style="color: var(--red)"
+                ></h3>
+                <div id="riskList" class="risk-list"></div>
+              </div>
+            </div>
+            <div class="table-card card">
+              <div class="table-head">
+                <h3>
+                  <i class="fa-solid fa-table-list"></i>
+                  <span id="detailsTitle"></span>
+                </h3>
+                <div
+                  style="
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    flex: 1;
+                    justify-content: flex-end;
+                  "
+                >
+                  <div style="position: relative; flex: 1; max-width: 390px">
+                    <input
+                      id="tableSearch"
+                      placeholder=""
+                      aria-label=""
+                      oninput="debouncedSearch()"
+                      style="width: 100%; padding-right: 36px"
+                    />
+                    <i
+                      class="fa-solid fa-magnifying-glass"
+                      style="
+                        position: absolute;
+                        right: 12px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        color: #b0c4da;
+                        font-size: 13px;
+                        pointer-events: none;
+                      "
+                    ></i>
+                  </div>
+                  <button
+                    id="hideClosedBtn"
+                    class="btn secondary"
+                    onclick="toggleHideClosed()"
+                    title=""
+                    aria-pressed="false"
+                    style="min-height: 38px; padding: 0 12px; gap: 6px"
+                  >
+                    <i class="fa-solid fa-eye"></i>
+                    <span id="hideClosedLabel"></span>
+                  </button>
+                  <div class="col-toggle-wrap">
+                    <button
+                      id="columnsButton"
+                      class="btn secondary"
+                      onclick="toggleColMenu()"
+                      title=""
+                      style="min-height: 38px; padding: 0 12px; gap: 6px"
+                    >
+                      <i class="fa-solid fa-table-columns"></i>
+                      <span id="columnsButtonText"></span>
+                    </button>
+                    <div id="colToggleMenu" class="col-toggle-menu" role="menu">
+                      <div
+                        id="columnsMenuTitle"
+                        style="
+                          padding: 8px 16px 6px;
+                          font-size: 11px;
+                          font-weight: 900;
+                          color: #60758f;
+                          text-transform: uppercase;
+                          letter-spacing: 0.06em;
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="table-meta" id="tableMeta"></div>
+              <div
+                style="
+                  padding: 5px 14px 0;
+                  font-size: 11px;
+                  color: #9fb3c8;
+                  font-weight: 700;
+                "
+              >
+                <i class="fa-solid fa-keyboard" style="margin-right: 4px"></i>
+                <span id="keyboardHint"></span>
+              </div>
+              <div class="table-wrap">
+                <table class="details-table">
+                  <thead>
+                    <tr>
+                      <th data-sort-field="unidade">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('unidade')"
+                        >
+                          Unidade <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th data-sort-field="edital">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('edital')"
+                        >
+                          Edital <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th data-sort-field="data_inicio">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('data_inicio')"
+                        >
+                          Início <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th data-sort-field="data_fim">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('data_fim')"
+                        >
+                          Encerramento <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th class="num" data-sort-field="vagas_total">
+                        <button
+                          type="button"
+                          class="sort-th sort-num"
+                          onclick="sortDetails('vagas_total')"
+                        >
+                          Vagas <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th class="num" data-sort-field="contratados">
+                        <button
+                          type="button"
+                          class="sort-th sort-num"
+                          onclick="sortDetails('contratados')"
+                        >
+                          Contratados <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th class="num" data-sort-field="vagas_ociosas">
+                        <button
+                          type="button"
+                          class="sort-th sort-num"
+                          onclick="sortDetails('vagas_ociosas')"
+                        >
+                          Ociosas <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th data-sort-field="status">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('status')"
+                        >
+                          Status <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th data-sort-field="etapa">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('etapa')"
+                        >
+                          Etapa <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th data-sort-field="risco">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('risco')"
+                        >
+                          Risco <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                      <th class="obs-col" data-sort-field="observacoes">
+                        <button
+                          type="button"
+                          class="sort-th"
+                          onclick="sortDetails('observacoes')"
+                        >
+                          Observações <span class="sort-icon">↕</span>
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="monitorRows"></tbody>
+                  <tfoot id="monitorFoot"></tfoot>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-nucleo" class="page">
+            <div class="table-card card wide-table">
+              <div class="table-head">
+                <h3>
+                  <i class="fa-solid fa-pen-to-square"></i> Controle do Núcleo
+                </h3>
+                <div style="display: flex; gap: 10px; align-items: center">
+                  <input
+                    id="nucleoSearch"
+                    placeholder="Pesquisar edital, unidade, status..."
+                    oninput="debouncedNucleo()"
+                  />
+                  <button id="newEditalBtn" class="btn green hidden" onclick="openEditModal()">
+                    + Novo
+                  </button>
+                </div>
+              </div>
+              <div class="table-meta">
+                Equipe Núcleo: editar e salvar registros permitidos. Campos
+                calculados pelo banco são apenas leitura.
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Unidade</th>
+                      <th>Edital</th>
+                      <th>Status</th>
+                      <th>Etapa</th>
+                      <th class="num">Vagas</th>
+                      <th class="num">Contratados</th>
+                      <th class="num">Ociosas</th>
+                      <th>Risco</th>
+                      <th style="text-align: center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="nucleoRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+
+          <section id="page-calendario" class="page">
+            <div class="table-card card cal-card">
+              <div class="cal-barra">
+                <span class="cal-nav">
+                  <button id="calMesAnterior" type="button" aria-label="Mês anterior" title="Mês anterior">
+                    <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                  </button>
+                  <button id="calMesSeguinte" type="button" aria-label="Próximo mês" title="Próximo mês">
+                    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                  </button>
+                </span>
+                <h3 id="calMesTitulo" aria-live="polite">Calendário</h3>
+                <button id="calHoje" class="btn secondary" type="button">Hoje</button>
+                <span id="calContador" class="chip blue">0 etapas</span>
+
+                <div class="cal-filtros">
+                  <label class="sr-only" for="calBusca">Pesquisar etapa, edital ou unidade</label>
+                  <input id="calBusca" class="cal-busca" type="search" autocomplete="off"
+                         placeholder="Pesquisar etapa, edital ou unidade..."
+                         title="Pesquisar etapa, edital ou unidade">
+                  <label class="sr-only" for="calUnidade">Unidade</label>
+                  <select id="calUnidade" title="Unidade"></select>
+                  <label class="sr-only" for="calEdital">Edital</label>
+                  <select id="calEdital" title="Edital"></select>
+                  <label class="sr-only" for="calTipo">Tipo de etapa</label>
+                  <select id="calTipo" title="Tipo de etapa"></select>
+                  <label class="cal-caixa">
+                    <input id="calOcultarConcluidas" type="checkbox" checked>
+                    Ocultar concluídas
+                  </label>
+                  <button id="calLimparFiltros" class="btn secondary" type="button">Limpar</button>
+                </div>
+              </div>
+
+              <div id="calLegenda" class="cal-legenda"></div>
+              <div id="calGrade"></div>
+            </div>
+
+            <div class="cal-inferior">
+              <div class="table-card card">
+                <div class="table-head">
+                  <h3><i class="fa-solid fa-list-check" aria-hidden="true"></i> Próximas etapas</h3>
+                </div>
+                <div id="calProximas"></div>
+              </div>
+
+              <div class="table-card card">
+                <div class="table-head">
+                  <h3><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Linha do tempo do edital</h3>
+                  <label class="sr-only" for="calTimelineEdital">Edital da linha do tempo</label>
+                  <select id="calTimelineEdital"></select>
+                </div>
+                <ol id="calTimeline" class="cal-timeline"></ol>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-approved" class="page">
+            <div class="table-card card approved-page-card">
+              <div class="table-head approved-page-head">
+                <div>
+                  <h3><i class="fa-solid fa-user-check"></i> Lista de Aprovados</h3>
+                  <p class="approved-page-subtitle">Consulte candidatos por edital e acompanhe a situação de contratação.</p>
+                </div>
+                <div class="approved-head-actions" id="approvedHeadActions">
+                  <span id="approvedCount" class="chip blue">0 candidatos</span>
+                  <button id="approvedAddSubJudiceBtn" class="btn green hidden" type="button">
+                    <i class="fa-solid fa-user-plus"></i> Incluir sub judice
+                  </button>
+                </div>
+              </div>
+              <div class="approved-tabs" role="tablist" aria-label="Visões da lista do edital">
+                <button id="approvedTabAprovados" class="approved-tab active" type="button" role="tab" aria-selected="true" aria-controls="approvedPanelAprovados" data-approved-tab="aprovados">
+                  <i class="fa-solid fa-user-check" aria-hidden="true"></i> Lista de aprovados
+                </button>
+                <button id="approvedTabConvocacao" class="approved-tab" type="button" role="tab" aria-selected="false" aria-controls="approvedPanelConvocacao" data-approved-tab="convocacao">
+                  <i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Lista de convocação
+                </button>
+              </div>
+              <div id="approvedPanelAprovados" class="approved-tabpanel" role="tabpanel" aria-labelledby="approvedTabAprovados">
+              <div class="approved-kpis" aria-label="Resumo da lista de aprovados">
+                <div class="approved-kpi" data-tone="total">
+                  <span class="approved-kpi-icon"><i class="fa-solid fa-users"></i></span>
+                  <div><span class="approved-kpi-label">Total de aprovados</span><strong id="approvedKpiTotal">0</strong></div>
+                </div>
+                <div class="approved-kpi" data-tone="success">
+                  <span class="approved-kpi-icon"><i class="fa-solid fa-user-check"></i></span>
+                  <div><span class="approved-kpi-label">Contratados</span><strong id="approvedKpiContratado">0</strong></div>
+                </div>
+                <div class="approved-kpi" data-tone="danger">
+                  <span class="approved-kpi-icon"><i class="fa-solid fa-user-xmark"></i></span>
+                  <div><span class="approved-kpi-label">Desistentes</span><strong id="approvedKpiDesistente">0</strong></div>
+                </div>
+                <div class="approved-kpi" data-tone="info">
+                  <span class="approved-kpi-icon"><i class="fa-solid fa-right-left"></i></span>
+                  <div><span class="approved-kpi-label">Migração</span><strong id="approvedKpiMigracao">0</strong></div>
+                </div>
+                <div class="approved-kpi" data-tone="warning">
+                  <span class="approved-kpi-icon"><i class="fa-solid fa-file-circle-xmark"></i></span>
+                  <div><span class="approved-kpi-label">Documentação rejeitada</span><strong id="approvedKpiDocumentacaoRejeitada">0</strong></div>
+                </div>
+                <div class="approved-kpi" data-tone="fila">
+                  <span class="approved-kpi-icon"><i class="fa-solid fa-arrow-turn-down"></i></span>
+                  <div><span class="approved-kpi-label">Fim de fila</span><strong id="approvedKpiFimDeFila">0</strong></div>
+                </div>
+              </div>
+              <div class="approved-filters">
+                <div class="form-row">
+                  <label>Edital</label>
+                  <select id="approvedFilterEdital"><option value="">Todos os editais</option></select>
+                </div>
+                <div class="form-row">
+                  <label>Cargo</label>
+                  <select id="approvedFilterCargo"><option value="">Todos os cargos</option></select>
+                </div>
+                <div class="form-row">
+                  <label>Modalidade</label>
+                  <select id="approvedFilterModalidade"><option value="">Todas as modalidades</option></select>
+                </div>
+                <div class="form-row">
+                  <label>Status</label>
+                  <select id="approvedFilterStatus">
+                    <option value="">Todos os status</option>
+                    <option value="__sem_status__">Sem status</option>
+                    <option value="Contratado">Contratado</option>
+                    <option value="Desistente">Desistente</option>
+                    <option value="Migração">Migração</option>
+                    <option value="Documentação Rejeitada">Documentação Rejeitada</option>
+                    <option value="Fim de Fila">Fim de Fila</option>
+                  </select>
+                </div>
+              </div>
+              <div class="table-meta">Listas inativas permanecem consultáveis, mas seus candidatos não podem ser alterados.</div>
+              <div class="table-wrap">
+                <table class="approved-table">
+                  <thead>
+                    <tr>
+                      <th>Cargo</th>
+                      <th>Modalidade</th>
+                      <th class="num">Classificação</th>
+                      <th class="num">Nota</th>
+                      <th>Nome</th>
+                      <th>Status</th>
+                      <th style="text-align:center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="approvedRows">
+                    <tr><td colspan="7" class="approved-empty">Carregando lista de aprovados...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="approved-paginacao" id="approvedPaginacao" hidden>
+                <span class="approved-paginacao-info" id="approvedPaginacaoInfo" aria-live="polite"></span>
+                <span class="approved-paginacao-controles">
+                  <label class="approved-paginacao-tamanho" for="approvedPageSize">
+                    Por página
+                    <select id="approvedPageSize">
+                      <option value="25">25</option>
+                      <option value="50" selected>50</option>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                    </select>
+                  </label>
+                  <button id="approvedPagePrev" class="btn secondary" type="button">
+                    <i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior
+                  </button>
+                  <span id="approvedPaginaAtual" class="approved-paginacao-pagina"></span>
+                  <button id="approvedPageNext" class="btn secondary" type="button">
+                    Próxima <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                  </button>
+                </span>
+              </div>
+              </div>
+              <div id="approvedPanelConvocacao" class="approved-tabpanel hidden" role="tabpanel" aria-labelledby="approvedTabConvocacao">
+                <div class="approved-kpis" aria-label="Resumo da lista de convocação">
+                  <div class="approved-kpi" data-tone="total">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-list-ol"></i></span>
+                    <div><span class="approved-kpi-label">Vagas na lista</span><strong id="convocacaoKpiVagas">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="info">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-bullseye"></i></span>
+                    <div><span class="approved-kpi-label">Vagas imediatas</span><strong id="convocacaoKpiImediatas">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="success">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-bell"></i></span>
+                    <div><span class="approved-kpi-label">Convocáveis agora</span><strong id="convocacaoKpiConvocaveis">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="warning">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-user-clock"></i></span>
+                    <div><span class="approved-kpi-label">Cadastro de reserva</span><strong id="convocacaoKpiReserva">0</strong></div>
+                  </div>
+                  <div class="approved-kpi" data-tone="danger">
+                    <span class="approved-kpi-icon"><i class="fa-solid fa-user-xmark"></i></span>
+                    <div><span class="approved-kpi-label">Fora da fila</span><strong id="convocacaoKpiForaDaFila">0</strong></div>
+                  </div>
+                </div>
+                <div class="approved-filters convocacao-filters">
+                  <div class="form-row">
+                    <label>Edital</label>
+                    <select id="convocacaoFilterEdital"><option value="">Todos os editais</option></select>
+                  </div>
+                  <div class="form-row">
+                    <label>Cargo</label>
+                    <select id="convocacaoFilterCargo"><option value="">Todos os cargos</option></select>
+                  </div>
+                  <div class="form-row">
+                    <label>Status</label>
+                    <select id="convocacaoFilterStatus">
+                    <option value="">Todos os status</option>
+                    <option value="__sem_status__">Sem status</option>
+                    <option value="Contratado">Contratado</option>
+                    <option value="Desistente">Desistente</option>
+                    <option value="Migração">Migração</option>
+                    <option value="Documentação Rejeitada">Documentação Rejeitada</option>
+                    <option value="Fim de Fila">Fim de Fila</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="table-meta" id="convocacaoAviso">A ordem vem do quadro de vagas de cada edital, configurado no formulário da lista de aprovados.</div>
+                <div class="table-wrap">
+                  <div id="convocacaoRows" class="convocacao-grupos">
+                    <p class="approved-empty">Carregando lista de convocação...</p>
+                  </div>
+                </div>
+                <div class="approved-paginacao" id="convocacaoPaginacao" hidden>
+                  <span class="approved-paginacao-info" id="convocacaoPaginacaoInfo" aria-live="polite"></span>
+                  <span class="approved-paginacao-controles">
+                    <label class="approved-paginacao-tamanho" for="convocacaoPageSize">
+                      Por página
+                      <select id="convocacaoPageSize">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                      </select>
+                    </label>
+                    <button id="convocacaoPagePrev" class="btn secondary" type="button">
+                      <i class="fa-solid fa-chevron-left" aria-hidden="true"></i> Anterior
+                    </button>
+                    <span id="convocacaoPaginaAtual" class="approved-paginacao-pagina"></span>
+                    <button id="convocacaoPageNext" class="btn secondary" type="button">
+                      Próxima <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-external" class="page">
+            <div class="table-card card">
+              <div class="table-head">
+                <h3 id="externalTitle"></h3>
+                <div style="display: flex; gap: 8px; align-items: center">
+                  <button
+                    id="externalRefreshBtn"
+                    class="btn secondary"
+                    onclick="reloadExternal()"
+                  >
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span id="externalRefreshText"></span>
+                  </button>
+                  <a
+                    id="externalOpen"
+                    class="btn green"
+                    target="_blank"
+                    rel="noopener"
+                  ></a>
+                </div>
+              </div>
+              <div id="externalMount" class="external-placeholder"></div>
+            </div>
+          </section>
+
+          <section id="page-config" class="page">
+            <div class="admin-grid">
+              <div
+                id="accessRequestsAdminCard"
+                class="admin-card card full hidden"
+              >
+                <h3>Solicitações de acesso</h3>
+                <div id="accessRequestsAdmin" class="access-admin-list"></div>
+              </div>
+
+              <div
+                id="accessMonitorCard"
+                class="admin-card card full access-monitor-card hidden"
+              >
+                <div class="config-card-title">
+                  <div>
+                    <h3>Acessos e usuários online</h3>
+                    <p>
+                      Visível apenas para perfil admin. Online considera
+                      atividade registrada nos últimos 15 minutos.
+                    </p>
+                  </div>
+                  <button
+                    class="btn secondary"
+                    type="button"
+                    onclick="loadAccessDashboard(true)"
+                  >
+                    <i class="fa-solid fa-rotate-right"></i> Atualizar
+                  </button>
+                </div>
+                <div id="accessMonitorBody" class="access-monitor-empty">
+                  Carregando acessos...
+                </div>
+              </div>
+
+              <div class="admin-card card config-main-card">
+                <div class="config-card-title">
+                  <div>
+                    <h3>Configuração do sistema</h3>
+                    <p>
+                      Ajustes principais da tela inicial, autenticação e rótulos
+                      do dashboard.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="form-grid">
+                  <div class="form-row" style="display: none">
+                    <label>ID / referência da base</label
+                    ><input id="cfgMonitId" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Título do sistema</label><input id="cfgTitle" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Subtítulo do login</label><input id="cfgSubtitle" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Slogan / área</label><input id="cfgSlogan" />
+                  </div>
+
+                  <div class="form-row">
+                    <label>Título da página inicial</label
+                    ><input
+                      id="cfgPageTitle"
+                      placeholder="Ex: Saúde Indígena"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label>Subtítulo da página inicial</label
+                    ><input
+                      id="cfgPageSubtitle"
+                      placeholder="Ex: Monitoramento DSEI/CASAI"
+                    />
+                  </div>
+
+                  <div class="form-row" style="display: none">
+                    <label>Texto superior do login</label
+                    ><input id="cfgLoginEyebrow" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Label do e-mail</label
+                    ><input id="cfgLoginEmailLabel" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Placeholder do e-mail</label
+                    ><input id="cfgLoginEmailPlaceholder" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Label da senha</label
+                    ><input id="cfgLoginPasswordLabel" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Placeholder da senha</label
+                    ><input id="cfgLoginPasswordPlaceholder" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Texto do botão entrar</label
+                    ><input id="cfgLoginButtonText" />
+                  </div>
+                  <div class="form-row" style="display: none">
+                    <label>Ajuda de senha</label
+                    ><input id="cfgPasswordResetMessage" />
+                  </div>
+
+                  <div class="config-section-title">Autenticação Google</div>
+                  <div class="form-row">
+                    <label>Login Google</label
+                    ><select id="cfgGoogleEnabled">
+                      <option value="false">Inativo</option>
+                      <option value="true">Ativo</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label>Texto do botão Google</label
+                    ><input id="cfgGoogleButtonText" />
+                  </div>
+                  <div class="form-row">
+                    <label>Domínio sugerido</label
+                    ><input
+                      id="cfgGoogleDomainHint"
+                      placeholder="agenciasus.org.br"
+                    />
+                  </div>
+                  <div class="form-row full">
+                    <label>Domínios institucionais permitidos</label
+                    ><input
+                      id="cfgGoogleAllowedDomains"
+                      placeholder="agenciasus.org.br,agsus.org.br"
+                    /><small>Separe mais de um domínio por vírgula.</small>
+                  </div>
+                  <div class="form-row full">
+                    <label>Imagem de fundo do acesso</label>
+                    <div class="access-background-manager">
+                      <div
+                        id="cfgAccessBackgroundPreview"
+                        class="access-background-preview"
+                        role="img"
+                        aria-label="Prévia da imagem de fundo"
+                      ></div>
+                      <div class="access-background-actions">
+                        <label class="btn access-background-upload">
+                          <i class="fa-solid fa-image" aria-hidden="true"></i>
+                          <span>Escolher imagem</span>
+                          <input
+                            id="cfgAccessBackgroundFile"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onchange="
+                              uploadAccessBackground(
+                                this.files && this.files[0],
+                              );
+                              this.value = '';
+                            "
+                          />
+                        </label>
+                        <button
+                          id="cfgAccessBackgroundRestore"
+                          type="button"
+                          class="btn secondary"
+                          onclick="restoreAccessBackground()"
+                        >
+                          Restaurar padrão
+                        </button>
+                        <small id="cfgAccessBackgroundStatus"
+                          >Arte 16:9, JPG, PNG ou WEBP, até 6 MB. A imagem fica
+                          guardada para reutilização.</small
+                        >
+                      </div>
+                    </div>
+                    <input id="cfgAccessBackgroundUrl" type="hidden" />
+                    <input id="cfgAccessBackgroundPath" type="hidden" />
+                    <div
+                      id="cfgAccessBackgroundGallery"
+                      class="access-background-gallery"
+                    ></div>
+                  </div>
+                  <div class="form-row full">
+                    <label>Logo da AgSUS no acesso</label
+                    ><input
+                      id="cfgAccessLogoUrl"
+                      placeholder="/assets/agsus-logo.webp"
+                    /><small
+                      >Aceita um caminho local ou uma URL HTTPS da identidade
+                      institucional.</small
+                    >
+                  </div>
+                  <div class="form-row">
+                    <label>Cor do painel de acesso</label
+                    ><input
+                      id="cfgAccessPanelColor"
+                      type="color"
+                      value="#c296eb"
+                    />
+                    <!-- "Automático" deriva o texto da luminância da cor.
+                         Impor claro ou escuro é escolha de identidade: pode
+                         reprovar a WCAG, e o aviso abaixo diz exatamente
+                         quanto. Quem decide é quem configura. -->
+                    <label for="cfgAccessTextoModo" class="form-sublabel"
+                      >Texto sobre o painel</label
+                    >
+                    <select id="cfgAccessTextoModo">
+                      <option value="auto">
+                        Automático — segue o contraste
+                      </option>
+                      <option value="claro">Sempre claro</option>
+                      <option value="escuro">Sempre escuro</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label>Saudação do acesso</label
+                    ><input
+                      id="cfgAccessGreeting"
+                      placeholder="Seja bem-vindo(a) à AgSUS"
+                    />
+                  </div>
+                  <div class="form-row full">
+                    <label>Instrução do acesso</label
+                    ><input
+                      id="cfgAccessInstruction"
+                      placeholder="Acesse com sua conta institucional."
+                    />
+                  </div>
+
+                  <div class="config-section-title">Textos do dashboard</div>
+                  <div class="form-row">
+                    <label>Título dos filtros</label
+                    ><input id="cfgFilterTitle" />
+                  </div>
+                  <div class="form-row">
+                    <label>Subtítulo dos filtros</label
+                    ><input id="cfgFilterSubtitle" />
+                  </div>
+                  <div class="form-row">
+                    <label>Mostrar filtros</label
+                    ><input id="cfgFilterToggleShow" />
+                  </div>
+                  <div class="form-row">
+                    <label>Ocultar filtros</label
+                    ><input id="cfgFilterToggleHide" />
+                  </div>
+                  <div class="form-row">
+                    <label>KPI processos</label><input id="cfgKpiProcessos" />
+                  </div>
+                  <div class="form-row">
+                    <label>KPI vagas</label><input id="cfgKpiVagas" />
+                  </div>
+                  <div class="form-row">
+                    <label>KPI contratações</label
+                    ><input id="cfgKpiContratados" />
+                  </div>
+                  <div class="form-row">
+                    <label>KPI ociosas</label><input id="cfgKpiOciosas" />
+                  </div>
+                  <div class="form-row">
+                    <label>KPI críticos</label><input id="cfgKpiCriticos" />
+                  </div>
+                  <div class="form-row">
+                    <label>KPI inscritos</label><input id="cfgKpiInscritos" />
+                  </div>
+
+                  <div class="form-row full" style="display: none">
+                    <label>Logo da tela de login</label>
+                    <input
+                      id="cfgLoginLogo"
+                      oninput="previewImg('cfgLoginLogo', 'prevLoginLogo')"
+                    />
+                    <img
+                      id="prevLoginLogo"
+                      src=""
+                      alt=""
+                      style="
+                        display: none;
+                        height: 52px;
+                        width: 52px;
+                        object-fit: contain;
+                        border-radius: 10px;
+                        border: 1px solid var(--line);
+                        margin-top: 6px;
+                        background: #f4f8fc;
+                      "
+                    />
+                  </div>
+
+                  <div class="form-row full" style="display: none">
+                    <label>Imagem de fundo do login</label>
+                    <input
+                      id="cfgLoginBg"
+                      oninput="previewImg('cfgLoginBg', 'prevLoginBg')"
+                    />
+                    <img
+                      id="prevLoginBg"
+                      src=""
+                      alt=""
+                      style="
+                        display: none;
+                        height: 52px;
+                        width: 120px;
+                        object-fit: cover;
+                        border-radius: 10px;
+                        border: 1px solid var(--line);
+                        margin-top: 6px;
+                      "
+                    />
+                  </div>
+
+                  <div class="config-section-title">
+                    Rodapé institucional (COGIP)
+                  </div>
+                  <div class="form-row">
+                    <label>Nome da equipe</label
+                    ><input id="cfgCogipNome" placeholder="Ex: COGIP" />
+                  </div>
+                  <div class="form-row">
+                    <label>Função / área</label
+                    ><input
+                      id="cfgCogipFuncao"
+                      placeholder="Ex: Desenvolvimento e sustentação"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label>Versão do sistema</label
+                    ><input id="cfgCogipVersao" placeholder="Ex: V.2.7.3" />
+                  </div>
+                  <div class="form-row">
+                    <label>Texto institucional</label
+                    ><input
+                      id="cfgCogipDept"
+                      placeholder="Ex: Gestão da Informação de Pessoal"
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label>Versão publicada</label
+                    ><input
+                      id="cfgAppVersionCurrent"
+                      placeholder="Ex: MONITORA Web V2.9.35"
+                    />
+                  </div>
+                  <div class="form-row full">
+                    <label>Logo da equipe (URL)</label>
+                    <input
+                      id="cfgCogipLogo"
+                      oninput="previewImg('cfgCogipLogo', 'prevCogipLogo')"
+                    />
+                    <img
+                      id="prevCogipLogo"
+                      src=""
+                      alt=""
+                      style="
+                        display: none;
+                        height: 40px;
+                        width: 40px;
+                        object-fit: cover;
+                        border-radius: 50%;
+                        border: 1px solid var(--line);
+                        margin-top: 6px;
+                      "
+                    />
+                  </div>
+                  <div class="form-row">
+                    <label>Rodapé</label><input id="cfgFooter" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-card card config-main-card">
+                <div class="config-card-title">
+                  <div>
+                    <h3>Aviso global</h3>
+                    <p>
+                      Mensagem de topo e recursos operacionais do dashboard.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="form-grid">
+                  <div class="form-row">
+                    <label>Tipo do aviso</label
+                    ><select id="cfgBroadcastType">
+                      <option value="info">Info</option>
+                      <option value="warning">Alerta</option>
+                      <option value="danger">Crítico</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label>Mensagem</label
+                    ><input
+                      id="cfgBroadcastMsg"
+                      placeholder="Mensagem global"
+                    />
+                  </div>
+
+                  <details
+                    class="form-row full"
+                    style="
+                      grid-column: 1/-1;
+                      border: 1px solid var(--line);
+                      border-radius: 8px;
+                      padding: 10px;
+                      background: #fafcff;
+                    "
+                  >
+                    <summary
+                      style="
+                        font-weight: 900;
+                        color: var(--agsus-azul);
+                        cursor: pointer;
+                      "
+                    >
+                      Avançado técnico
+                    </summary>
+                    <div class="form-grid" style="margin-top: 10px">
+                      <div class="form-row">
+                        <label>Realtime do monitoramento</label
+                        ><select id="cfgRealtimeEnabled">
+                          <option value="true">Ativo</option>
+                          <option value="false">Inativo</option>
+                        </select>
+                      </div>
+                      <div class="form-row">
+                        <label>Heartbeat de auditoria (min)</label
+                        ><input
+                          id="cfgAccessHeartbeatMinutos"
+                          type="number"
+                          min="1"
+                          step="1"
+                          placeholder="5"
+                        />
+                      </div>
+                    </div>
+                  </details>
+                </div>
+
+                <div id="panelAdmin" class="config-subpanel"></div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: flex-end;
+                    margin-top: 16px;
+                  "
+                >
+                  <button class="btn green" onclick="saveAdminSettings()">
+                    Salvar configurações
+                  </button>
+                </div>
+              </div>
+
+              <div class="admin-card card cnes-status-card">
+                <div class="config-card-title">
+                  <div>
+                    <h3>Rede assistencial do CNES</h3>
+                    <p>
+                      UBSI / CASAI agora são carregadas do Supabase para reduzir
+                      edição manual e risco de quebrar o mapa.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="cnes-status-grid">
+                  <div><span>Fonte atual</span><strong>Supabase</strong></div>
+                  <div>
+                    <span>Uso no sistema</span
+                    ><strong>Mapa e drill-down</strong>
+                  </div>
+                  <div>
+                    <span>Edição manual</span
+                    ><strong>Desativada na rotina</strong>
+                  </div>
+                </div>
+
+                <p class="config-help">
+                  Quando precisar atualizar a base CNES, faça por
+                  migração/rotina controlada no Supabase, não colando JSON nesta
+                  tela.
+                </p>
+                <textarea id="cfgCnesJson" class="hidden" rows="1"></textarea>
+                <div id="cnesImportResumo" class="hidden"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </section>
+
+    <div id="editModal" class="modal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3 id="editModalTitle">Editar edital</h3>
+          <button class="btn secondary" onclick="closeEditModal()">
+            Fechar
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <input type="hidden" id="mId" />
+            <input type="hidden" id="mIdUnidade" />
+            <input type="hidden" id="mSiglaUnidade" />
+            <input type="hidden" id="mTipoUnidade" />
+            <!--
+              O ciclo saiu do formulário, mas a coluna continua no banco e há
+              editais com valor gravado. Guardar aqui devolve o mesmo valor ao
+              salvar, em vez de apagá-lo em toda edição.
+            -->
+            <input type="hidden" id="mCiclo" />
+            <div class="subsection">Identificação do edital</div>
+            <div class="form-row">
+              <label>Processo</label
+              ><input id="mProcesso" placeholder="Processo SEI" />
+            </div>
+            <div class="form-row">
+              <label>Edital</label
+              ><input id="mEdital" placeholder="Número do edital" />
+            </div>
+            <div class="form-row">
+              <label>Responsável</label
+              ><select id="mResponsavel" onchange="onModalResponsavelChange()">
+                <option value="">Selecione o responsável</option>
+                <option value="USI">USI</option>
+                <option value="CORES">CORES</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Unidade</label
+              ><select id="mUnidade" onchange="onModalUnidadeChange()">
+                <option value="">Carregando unidades...</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>UF</label
+              ><input
+                id="mUf"
+                maxlength="2"
+                placeholder="UF"
+                readonly
+                title="Preenchida automaticamente pela unidade selecionada"
+              />
+            </div>
+            <div class="form-row">
+              <label>Link do edital</label
+              ><input id="mLink" placeholder="https://..." />
+            </div>
+            <div class="subsection">Situação operacional</div>
+            <div class="form-row">
+              <label>Vagas previstas</label
+              ><input id="mVagas" type="number" min="0" />
+            </div>
+            <div class="form-row">
+              <label>Data de início</label
+              ><input id="mDataInicio" type="date" />
+            </div>
+            <div class="form-row">
+              <label>Data de encerramento</label
+              ><input id="mDataFim" type="date" />
+            </div>
+            <div class="form-row">
+              <label>Status</label
+              ><input id="mStatus" placeholder="Ex.: Em andamento, Concluído" />
+            </div>
+            <div class="form-row">
+              <label>Etapa</label
+              ><input id="mEtapa" placeholder="Ex.: Análise Curricular" />
+            </div>
+            <div class="form-row">
+              <label>Risco</label
+              ><select id="mRisco">
+                <option>Baixo</option>
+                <option>Médio</option>
+                <option>Alto</option>
+              </select>
+            </div>
+            <div class="subsection">Indicadores automáticos</div>
+            <p class="modal-note">
+              Campos calculados ou sincronizados automaticamente. Eles aparecem
+              para conferência, mas não são alterados por este formulário.
+            </p>
+            <div class="readonly-metrics full">
+              <div class="metric-readonly">
+                <span>Inscritos</span><b id="mAutoInscritos">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Aptos análise</span><b id="mAutoAptosAnalise">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Cancelados</span><b id="mAutoCancelados">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Eliminados nota</span><b id="mAutoEliminadosNota">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Reprovados análise</span
+                ><b id="mAutoReprovadosAnalise">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Total eliminados</span><b id="mAutoTotalEliminados">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Aprovados análise</span
+                ><b id="mAutoAprovadosAnalise">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Aprovados prova</span><b id="mAutoAprovadosProva">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Entrevistados</span><b id="mAutoEntrevistados">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Contratados</span><b id="mAutoContratados">0</b>
+              </div>
+              <div class="metric-readonly">
+                <span>Vagas ociosas</span><b id="mAutoOciosas">0</b>
+              </div>
+            </div>
+            <div class="subsection">Observações</div>
+            <div class="form-row full">
+              <label>Observações gerenciais</label
+              ><textarea
+                id="mObs"
+                placeholder="Resumo visível no painel"
+              ></textarea>
+            </div>
+            <div class="form-row full">
+              <label>Observações internas</label
+              ><textarea
+                id="mObsInternas"
+                placeholder="Notas internas da equipe"
+              ></textarea>
+            </div>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              gap: 10px;
+              margin-top: 18px;
+            "
+          >
+            <button class="btn secondary" onclick="closeEditModal()">
+              Cancelar
+            </button>
+            <button id="saveEditalBtn" class="btn green" onclick="saveEdital()">
+              Salvar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="calDiaModal" class="modal cal-modal" role="dialog" aria-modal="true" aria-labelledby="calDiaTitulo">
+      <div class="modal-card cal-modal-card">
+        <div class="modal-head">
+          <h3 id="calDiaTitulo">Etapas do dia</h3>
+          <button id="calDiaFechar" class="btn secondary" type="button">Fechar</button>
+        </div>
+        <div class="modal-body">
+          <div id="calDiaLista"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="approvedStatusModal" class="modal approved-modal" role="dialog" aria-modal="true" aria-labelledby="approvedStatusTitle">
+      <div class="modal-card approved-modal-card">
+        <div class="modal-head">
+          <div>
+            <h3 id="approvedStatusTitle">Alterar status do candidato</h3>
+            <p id="approvedStatusCandidate" class="approved-modal-subtitle"></p>
+          </div>
+          <button class="btn secondary" type="button" data-close-approved-modal="approvedStatusModal">Fechar</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-row full">
+              <label>Status</label>
+              <select id="approvedStatusSelect">
+                <option value="">Sem status</option>
+                <option value="Contratado">Contratado</option>
+                <option value="Desistente">Desistente</option>
+                <option value="Migração">Migração</option>
+                <option value="Documentação Rejeitada">Documentação Rejeitada</option>
+                <option value="Fim de Fila">Fim de Fila</option>
+              </select>
+            </div>
+            <div class="form-row full">
+              <label>Processo SEI <small>(opcional)</small></label>
+              <input id="approvedStatusSei" placeholder="Ex.: 00700.000000/2026-00" />
+            </div>
+            <div class="form-row full">
+              <label>Matrícula</label>
+              <input id="approvedStatusMatricula" placeholder="Informe quando o status exigir" />
+              <small id="approvedMatriculaHint" class="approved-field-hint">Opcional para este status.</small>
+            </div>
+          </div>
+          <div class="approved-modal-actions">
+            <button class="btn secondary" type="button" data-close-approved-modal="approvedStatusModal">Cancelar</button>
+            <button id="approvedStatusSave" class="btn green" type="button"><i class="fa-solid fa-floppy-disk"></i> Salvar status</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="subJudiceModal" class="modal approved-modal" role="dialog" aria-modal="true" aria-labelledby="subJudiceTitle">
+      <div class="modal-card approved-modal-card">
+        <div class="modal-head">
+          <div>
+            <h3 id="subJudiceTitle">Incluir candidato sub judice</h3>
+            <p class="approved-modal-subtitle">O candidato será identificado como sub judice e ficará vinculado à lista vigente do edital.</p>
+          </div>
+          <button class="btn secondary" type="button" data-close-approved-modal="subJudiceModal">Fechar</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-row full">
+              <label>Nome do candidato</label>
+              <input id="subJudiceNome" placeholder="Nome completo" />
+            </div>
+            <div class="form-row">
+              <label>Edital</label>
+              <select id="subJudiceEdital"></select>
+            </div>
+            <div class="form-row">
+              <label>Cargo</label>
+              <select id="subJudiceCargo"></select>
+            </div>
+            <div class="form-row full">
+              <label>Nota</label>
+              <input id="subJudiceNota" inputmode="decimal" placeholder="Ex.: 87,50" />
+            </div>
+          </div>
+          <div class="approved-modal-actions">
+            <button class="btn secondary" type="button" data-close-approved-modal="subJudiceModal">Cancelar</button>
+            <button id="subJudiceSave" class="btn green" type="button"><i class="fa-solid fa-user-plus"></i> Incluir sub judice</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="approvedImportModal" class="modal approved-modal" role="dialog" aria-modal="true" aria-labelledby="approvedImportTitle">
+      <div class="modal-card approved-modal-card approved-import-card">
+        <div class="modal-head">
+          <div>
+            <h3 id="approvedImportTitle">Listas do edital</h3>
+            <p id="approvedImportEdital" class="approved-modal-subtitle"></p>
+          </div>
+          <button class="btn secondary" type="button" data-close-approved-modal="approvedImportModal">Fechar</button>
+        </div>
+        <div class="modal-body">
+          <div class="approved-tabs approved-tabs-modal" role="tablist" aria-label="Seções do formulário do edital">
+            <button id="approvedImportTabArquivo" class="approved-tab active" type="button" role="tab" aria-selected="true" aria-controls="approvedImportPanelArquivo" data-import-tab="arquivo">
+              <i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> Lista de aprovados
+            </button>
+            <button id="approvedImportTabConvocacao" class="approved-tab" type="button" role="tab" aria-selected="false" aria-controls="approvedImportPanelConvocacao" data-import-tab="convocacao">
+              <i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Lista de convocação
+            </button>
+          </div>
+          <div id="approvedImportPanelArquivo" class="approved-tabpanel" role="tabpanel" aria-labelledby="approvedImportTabArquivo">
+          <div id="approvedImportCurrentState" class="approved-import-state"></div>
+          <p id="approvedImportPermissionNote" class="modal-note"></p>
+          <div class="form-grid">
+            <div id="approvedImportFileRow" class="form-row full">
+              <label>Arquivo XLSX</label>
+              <input id="approvedImportFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+              <small class="approved-field-hint">Colunas obrigatórias: codigo_vaga, cargo, classificacao, nota, nome e modalidade.</small>
+            </div>
+            <div class="form-row full">
+              <label>Situação da lista</label>
+              <select id="approvedImportActive">
+                <option value="true">Ativa — permite alterar candidatos</option>
+                <option value="false">Inativa — somente consulta</option>
+              </select>
+            </div>
+          </div>
+          <div class="approved-import-links">
+            <a class="btn outline" href="/modelos/modelo-importacao-lista-aprovados.xlsx" download>
+              <i class="fa-solid fa-download"></i> Baixar modelo de importação
+            </a>
+            <button id="approvedImportDownloadCurrent" class="btn outline hidden" type="button">
+              <i class="fa-solid fa-file-excel"></i> Baixar XLSX atual
+            </button>
+          </div>
+          <div class="approved-modal-actions approved-import-actions">
+            <button id="approvedImportRemove" class="btn red hidden" type="button"><i class="fa-solid fa-trash"></i> Remover lista</button>
+            <span class="approved-action-spacer"></span>
+            <button id="approvedImportToggleActive" class="btn secondary hidden" type="button"><i class="fa-solid fa-power-off"></i> Aplicar situação</button>
+            <button id="approvedImportSubmit" class="btn green" type="button"><i class="fa-solid fa-file-import"></i> Importar lista</button>
+          </div>
+          </div>
+          <div id="approvedImportPanelConvocacao" class="approved-tabpanel hidden" role="tabpanel" aria-labelledby="approvedImportTabConvocacao">
+            <fieldset class="convocacao-tipo">
+              <legend>Tipo de convocação</legend>
+              <label class="convocacao-tipo-card">
+                <input type="radio" name="convocacaoTipo" value="com" checked />
+                <span class="convocacao-tipo-copy">
+                  <strong>Com proporcionalidade</strong>
+                  <small>As vagas de cota entram intercaladas às de ampla ao longo da convocação.</small>
+                </span>
+              </label>
+              <label class="convocacao-tipo-card">
+                <input type="radio" name="convocacaoTipo" value="sem" />
+                <span class="convocacao-tipo-copy">
+                  <strong>Sem proporcionalidade</strong>
+                  <small>A convocação segue a lista de aprovados, pela classificação.</small>
+                </span>
+              </label>
+            </fieldset>
+            <div id="convocacaoQuadro" class="convocacao-quadro">
+              <div class="convocacao-bloco-head">
+                <div>
+                  <strong>Modelo de regras</strong>
+                  <small>As regras de reserva deste edital: categorias, percentuais, arredondamento e cascata.</small>
+                </div>
+                <div class="convocacao-bloco-acoes">
+                  <select id="convocacaoModelo" class="convocacao-modelo-select"></select>
+                  <button id="convocacaoEditarModelo" class="btn outline" type="button">
+                    <i class="fa-solid fa-sliders" aria-hidden="true"></i> Editar
+                  </button>
+                  <button id="convocacaoNovoModelo" class="btn outline" type="button">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Novo
+                  </button>
+                </div>
+              </div>
+              <p id="convocacaoModeloResumo" class="convocacao-modelo-resumo"></p>
+              <div id="convocacaoEditorModelo" class="convocacao-editor hidden"></div>
+              <p id="convocacaoVagasBloqueadas" class="convocacao-vagas-bloqueadas hidden"></p>
+              <div id="convocacaoVagasBloco">
+              <div class="convocacao-bloco-head">
+                <div>
+                  <strong>Vagas do edital</strong>
+                  <small>Informe quantas vagas imediatas cada uma tem. Zero vira cadastro de reserva.</small>
+                </div>
+                <div class="convocacao-bloco-acoes">
+                  <label class="convocacao-padrao-campo" for="convocacaoPadraoImediata">
+                    Padrão
+                    <input id="convocacaoPadraoImediata" type="number" min="0" step="1" inputmode="numeric" value="0" />
+                  </label>
+                  <button id="convocacaoAplicarPadrao" class="btn outline" type="button">
+                    <i class="fa-solid fa-arrow-down-1-9" aria-hidden="true"></i> Aplicar a todas
+                  </button>
+                  <span id="convocacaoVagasResumo" class="chip blue">0 vagas</span>
+                </div>
+              </div>
+              <div class="table-wrap convocacao-vagas-wrap">
+                <table class="approved-table convocacao-vagas-table">
+                  <thead id="convocacaoVagasHead"></thead>
+                  <tbody id="convocacaoVagasRows"></tbody>
+                </table>
+              </div>
+              </div>
+            </div>
+            <p id="convocacaoPermissionNote" class="modal-note"></p>
+            <div class="approved-modal-actions approved-import-actions">
+              <span class="approved-action-spacer"></span>
+              <button id="convocacaoSalvar" class="btn green" type="button"><i class="fa-solid fa-floppy-disk"></i> Salvar convocação</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="searchModal"
+      class="search-modal"
+      role="dialog"
+      aria-label="Busca global"
+      aria-modal="true"
+    >
+      <div class="search-modal-card">
+        <div class="search-modal-input-wrap">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input
+            id="searchModalInput"
+            type="text"
+            placeholder="Buscar edital, unidade, etapa, UF..."
+            autocomplete="off"
+            oninput="runGlobalSearch(this.value)"
+            onkeydown="searchModalKey(event)"
+            aria-label="Campo de busca global"
+          />
+          <kbd onclick="closeSearchModal()">Esc</kbd>
+        </div>
+        <div id="searchResults" class="search-results"></div>
+        <div class="search-footer">
+          <span><kbd>↑↓</kbd> navegar</span>
+          <span><kbd>↵</kbd> selecionar</span>
+          <span><kbd>Esc</kbd> fechar</span>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
