@@ -41,13 +41,6 @@ function dashboardDom() {
     </body>`);
 }
 
-function installDelegatedFilterToggle(dom) {
-  dom.window.document.addEventListener("change", (event) => {
-    if (!event.target.matches("input[data-filter-field]")) return;
-    event.target.checked = event.target.checked;
-  });
-}
-
 function nextUiCycle(dom) {
   return new Promise((resolve) => dom.window.setTimeout(resolve, 0));
 }
@@ -55,7 +48,6 @@ function nextUiCycle(dom) {
 describe("health details runtime fix", () => {
   it("coloca Editais 2026 no topo e seleciona somente valores da coluna Edital", async () => {
     const dom = dashboardDom();
-    installDelegatedFilterToggle(dom);
     dom.window.toggleSelectFilter = vi.fn();
     dom.window.toggleCriticalRiskFilter = vi.fn();
     dom.window.toggleHideClosed = vi.fn();

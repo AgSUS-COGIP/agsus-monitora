@@ -18,7 +18,7 @@ for (const file of files) {
   }
 
   const name = match[1]
-    .replace(/^['\"]|['\"]$/g, "")
+    .replace(/^['"]|['"]$/g, "")
     .trim()
     .toLowerCase();
   const previous = names.get(name);
