@@ -38,29 +38,37 @@ describe("movimento do painel da Aya", () => {
     expect(styles).toContain("z-index: 2147483000");
   });
 
-  it("remove o cartão opaco externo do painel", () => {
-    expect(styles).toMatch(
-      /\.arara-assistant__panel\s*\{[\s\S]*?background:\s*transparent;/,
+  it("não sobrescreve o visual do painel definido por arara-guide.css", () => {
+    expect(styles).not.toMatch(
+      /\.arara-assistant__panel\s*\{[\s\S]*?background:/,
     );
-    expect(styles).toMatch(
-      /\.arara-assistant__panel\s*\{[\s\S]*?box-shadow:\s*none;/,
+    expect(styles).not.toMatch(
+      /\.arara-assistant__panel\s*\{[\s\S]*?box-shadow:/,
     );
-    expect(styles).toMatch(/\.arara-assistant__panel\s*\{[\s\S]*?border:\s*0;/);
+    expect(styles).not.toMatch(
+      /\.arara-assistant__panel\s*\{[\s\S]*?border:/,
+    );
   });
 
-  it("mantém apenas o conteúdo da conversa translúcido", () => {
-    expect(styles).toContain("background: rgba(248, 251, 255, 0.82)");
-    expect(styles).toContain("backdrop-filter: blur(12px)");
+  it("não redefine mensagens nem controles da conversa", () => {
+    expect(styles).not.toContain(".arara-assistant__messages");
+    expect(styles).not.toContain(".arara-assistant__hide");
+    expect(styles).not.toContain(".arara-assistant__reset");
+    expect(styles).not.toContain(".arara-assistant__conversation-tools");
   });
 
-  it("deixa o launcher maior, transparente e sem rótulo visual", () => {
-    expect(styles).toContain("width: 104px");
-    expect(styles).toContain("height: 104px");
-    expect(styles).toMatch(
-      /\.arara-assistant__launcher\s*\{[\s\S]*?background:\s*transparent;/,
+  it("mantém no launcher somente as regras necessárias ao arraste", () => {
+    expect(styles).toContain(".arara-assistant__launcher");
+    expect(styles).toContain("touch-action: none");
+    expect(styles).toContain("cursor: grab");
+    expect(styles).not.toMatch(
+      /\.arara-assistant__launcher\s*\{[\s\S]*?width:/,
     );
-    expect(styles).toMatch(
-      /\.arara-assistant__launcher span\s*\{[\s\S]*?display:\s*none;/,
+    expect(styles).not.toMatch(
+      /\.arara-assistant__launcher\s*\{[\s\S]*?height:/,
+    );
+    expect(styles).not.toMatch(
+      /\.arara-assistant__launcher\s*\{[\s\S]*?background:/,
     );
   });
 });
