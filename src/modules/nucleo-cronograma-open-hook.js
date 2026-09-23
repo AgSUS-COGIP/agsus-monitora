@@ -5,14 +5,19 @@ export function initNucleoCronogramaOpenHook() {
   initialized = true;
 
   const original = window.openEditModal;
-  if (typeof original !== "function" || original.__cronogramaToolsOpenHook) return;
+  if (typeof original !== "function" || original.__cronogramaToolsOpenHook)
+    return;
 
   const wrapped = (...args) => {
     const result = original(...args);
-    const id = String(args[0] || document.getElementById("mId")?.value || "").trim();
-    document.dispatchEvent(new CustomEvent("agsus:nucleo-cronograma-loaded", {
-      detail: { id, source:"open-hook" }
-    }));
+    const id = String(
+      args[0] || document.getElementById("mId")?.value || "",
+    ).trim();
+    document.dispatchEvent(
+      new CustomEvent("agsus:nucleo-cronograma-loaded", {
+        detail: { id, source: "open-hook" },
+      }),
+    );
     return result;
   };
 

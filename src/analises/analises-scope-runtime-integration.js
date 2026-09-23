@@ -4,22 +4,28 @@ const LEGACY_EDITAL_ID = "scopeGuardEditais";
 
 let syncingLegacySelections = false;
 
-const txt = value => String(value ?? "").trim();
+const txt = (value) => String(value ?? "").trim();
 const currentScope = () => {
-  const value = txt(document.getElementById("fSituacaoEdital")?.value).toLowerCase();
+  const value = txt(
+    document.getElementById("fSituacaoEdital")?.value,
+  ).toLowerCase();
   return ["ativo", "inativo", "todos"].includes(value) ? value : "ativo";
 };
 
-function checkedValues(type){
-  return [...document.querySelectorAll(`#scopeGuardSafe input[data-type="${type}"]:checked`)]
-    .map(input => txt(input.value))
+function checkedValues(type) {
+  return [
+    ...document.querySelectorAll(
+      `#scopeGuardSafe input[data-type="${type}"]:checked`,
+    ),
+  ]
+    .map((input) => txt(input.value))
     .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b, "pt-BR", { numeric:true }));
+    .sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
 }
 
-function ensureLegacySelect(id){
+function ensureLegacySelect(id) {
   let select = document.getElementById(id);
-  if(select) return select;
+  if (select) return select;
   select = document.createElement("select");
   select.id = id;
   select.multiple = true;
@@ -31,65 +37,78 @@ function ensureLegacySelect(id){
   return select;
 }
 
-function replaceSelectedOptions(select, values){
+function replaceSelectedOptions(select, values) {
   const signature = JSON.stringify(values);
-  if(select.dataset.selectionSignature === signature) return false;
+  if (select.dataset.selectionSignature === signature) return false;
   select.dataset.selectionSignature = signature;
-  select.replaceChildren(...values.map(value => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = value;
-    option.selected = true;
-    return option;
-  }));
+  select.replaceChildren(
+    ...values.map((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      option.selected = true;
+      return option;
+    }),
+  );
   return true;
 }
 
-function syncLegacySelections({ notify = true } = {}){
-  if(syncingLegacySelections || !document.body) return;
+function syncLegacySelections({ notify = true } = {}) {
+  if (syncingLegacySelections || !document.body) return;
   syncingLegacySelections = true;
-  try{
+  try {
     const units = ensureLegacySelect(LEGACY_UNIT_ID);
     const editais = ensureLegacySelect(LEGACY_EDITAL_ID);
     const changedUnits = replaceSelectedOptions(units, checkedValues("unit"));
-    const changedEditais = replaceSelectedOptions(editais, checkedValues("edital"));
-    if(notify && (changedUnits || changedEditais)){
-      if(changedUnits) units.dispatchEvent(new Event("change", { bubbles:true }));
-      if(changedEditais) editais.dispatchEvent(new Event("change", { bubbles:true }));
+    const changedEditais = replaceSelectedOptions(
+      editais,
+      checkedValues("edital"),
+    );
+    if (notify && (changedUnits || changedEditais)) {
+      if (changedUnits)
+        units.dispatchEvent(new Event("change", { bubbles: true }));
+      if (changedEditais)
+        editais.dispatchEvent(new Event("change", { bubbles: true }));
     }
-  }finally{
+  } finally {
     syncingLegacySelections = false;
   }
 }
 
-function hasCompleteSelection(){
+function hasCompleteSelection() {
   return checkedValues("unit").length > 0 && checkedValues("edital").length > 0;
 }
 
-function clearScopedCache(){
+function clearScopedCache() {
   const scope = currentScope();
-  if(scope === "ativo") return;
-  try{
+  if (scope === "ativo") return;
+  try {
     const suffix = `_${scope}`;
     const keys = [];
-    for(let index = 0; index < localStorage.length; index += 1){
+    for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index);
-      if(key?.startsWith(CACHE_PREFIX) && key.endsWith(suffix)) keys.push(key);
+      if (key?.startsWith(CACHE_PREFIX) && key.endsWith(suffix)) keys.push(key);
     }
-    keys.forEach(key => localStorage.removeItem(key));
-  }catch(error){
-    console.warn("Não foi possível limpar o cache do recorte de análises:", error);
+    keys.forEach((key) => localStorage.removeItem(key));
+  } catch (error) {
+    console.warn(
+      "Não foi possível limpar o cache do recorte de análises:",
+      error,
+    );
   }
 }
 
-function clearObsoletePendingClass(){
-  if(currentScope() === "ativo" || !document.body.classList.contains("analises-awaiting-scope")){
+function clearObsoletePendingClass() {
+  if (
+    currentScope() === "ativo" ||
+    !document.body.classList.contains("analises-awaiting-scope")
+  ) {
     document.body.classList.remove("historical-scope-pending");
   }
 }
 
-function ensureStyles(){
-  if(document.getElementById("analisesScopeRuntimeIntegrationStyles")) return;
+function ensureStyles() {
+  if (document.getElementById("analisesScopeRuntimeIntegrationStyles")) return;
   const style = document.createElement("style");
   style.id = "analisesScopeRuntimeIntegrationStyles";
   style.textContent = `
@@ -131,49 +150,67 @@ function ensureStyles(){
   document.head.appendChild(style);
 }
 
-function scheduleSync(){
+function scheduleSync() {
   window.setTimeout(() => {
     syncLegacySelections();
     clearObsoletePendingClass();
   }, 0);
 }
 
-function init(){
+function init() {
   ensureStyles();
-  syncLegacySelections({ notify:false });
+  syncLegacySelections({ notify: false });
   clearObsoletePendingClass();
 
-  window.addEventListener("click", event => {
-    const consult = event.target?.closest?.("#scopeGuardLoad");
-    if(!consult) return;
-    syncLegacySelections();
-    if(hasCompleteSelection()) clearScopedCache();
-  }, true);
+  window.addEventListener(
+    "click",
+    (event) => {
+      const consult = event.target?.closest?.("#scopeGuardLoad");
+      if (!consult) return;
+      syncLegacySelections();
+      if (hasCompleteSelection()) clearScopedCache();
+    },
+    true,
+  );
 
-  window.addEventListener("change", event => {
-    if(event.target?.id === "fSituacaoEdital") syncLegacySelections();
-  }, true);
+  window.addEventListener(
+    "change",
+    (event) => {
+      if (event.target?.id === "fSituacaoEdital") syncLegacySelections();
+    },
+    true,
+  );
 
-  document.addEventListener("click", event => {
-    if(event.target?.closest?.("#scopeGuardSafe")) scheduleSync();
+  document.addEventListener("click", (event) => {
+    if (event.target?.closest?.("#scopeGuardSafe")) scheduleSync();
   });
 
-  document.addEventListener("change", event => {
-    if(event.target?.matches?.("#scopeGuardSafe input[data-type]")) scheduleSync();
+  document.addEventListener("change", (event) => {
+    if (event.target?.matches?.("#scopeGuardSafe input[data-type]"))
+      scheduleSync();
   });
 
   document.addEventListener("agsus:analises-loading-end", () => {
     clearObsoletePendingClass();
     const status = document.getElementById("scopeGuardStatus");
     const total = txt(document.getElementById("kTotal")?.textContent);
-    if(status && currentScope() !== "ativo" && hasCompleteSelection() && total){
+    if (
+      status &&
+      currentScope() !== "ativo" &&
+      hasCompleteSelection() &&
+      total
+    ) {
       status.textContent = `Consulta concluída: ${total} registro(s) no recorte.`;
       status.classList.remove("is-warning");
     }
   });
 
-  document.addEventListener("agsus:analises-query-complete", clearObsoletePendingClass);
+  document.addEventListener(
+    "agsus:analises-query-complete",
+    clearObsoletePendingClass,
+  );
 }
 
-if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once:true });
+if (document.readyState === "loading")
+  document.addEventListener("DOMContentLoaded", init, { once: true });
 else init();

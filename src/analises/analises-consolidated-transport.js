@@ -1,13 +1,14 @@
 const TARGET_VIEWS = new Set([
   "VW_ANALISES_DASHBOARD_BASE",
-  "VW_ANALISES_DASHBOARD_BASE_TODOS"
+  "VW_ANALISES_DASHBOARD_BASE_TODOS",
 ]);
 
 const RPC_NAME = "get_analises_dashboard_payload_v2";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const MISSING_RESPONSIBLE_LABEL = "Sem responsável";
 const CLIENT_CACHE_PREFIX = "agsus_analises_cache_v1_v4_";
-const CLIENT_CACHE_MIGRATION_MARKER = "agsus_analises_responsavel_normalizado_v1";
+const CLIENT_CACHE_MIGRATION_MARKER =
+  "agsus_analises_responsavel_normalizado_v1";
 const payloadCache = new Map();
 
 function normalizeAnaliseRow(row) {
@@ -17,7 +18,7 @@ function normalizeAnaliseRow(row) {
   return {
     ...row,
     responsavel_analise: MISSING_RESPONSIBLE_LABEL,
-    responsavel_ausente: true
+    responsavel_ausente: true,
   };
 }
 
@@ -26,7 +27,11 @@ function normalizeAnaliseRows(rows) {
 }
 
 function decodeRows(payload) {
-  if (!payload || !Array.isArray(payload.columns) || !Array.isArray(payload.rows)) {
+  if (
+    !payload ||
+    !Array.isArray(payload.columns) ||
+    !Array.isArray(payload.rows)
+  ) {
     throw new Error("Payload consolidado de Análises inválido.");
   }
 
@@ -49,7 +54,9 @@ function scopeFor(tableName, filters) {
 }
 
 function clearPayloadCache(scope = "") {
-  const normalized = String(scope || "").trim().toLowerCase();
+  const normalized = String(scope || "")
+    .trim()
+    .toLowerCase();
   if (normalized && payloadCache.has(normalized)) {
     payloadCache.delete(normalized);
     return;
@@ -59,17 +66,21 @@ function clearPayloadCache(scope = "") {
 
 function invalidateLegacyClientCache() {
   try {
-    if (window.localStorage.getItem(CLIENT_CACHE_MIGRATION_MARKER) === "1") return;
+    if (window.localStorage.getItem(CLIENT_CACHE_MIGRATION_MARKER) === "1")
+      return;
 
     const keysToRemove = [];
     for (let index = 0; index < window.localStorage.length; index += 1) {
       const key = window.localStorage.key(index);
       if (key?.startsWith(CLIENT_CACHE_PREFIX)) keysToRemove.push(key);
     }
-    keysToRemove.forEach(key => window.localStorage.removeItem(key));
+    keysToRemove.forEach((key) => window.localStorage.removeItem(key));
     window.localStorage.setItem(CLIENT_CACHE_MIGRATION_MARKER, "1");
   } catch (error) {
-    console.warn("Não foi possível invalidar o cache local antigo de Análises:", error);
+    console.warn(
+      "Não foi possível invalidar o cache local antigo de Análises:",
+      error,
+    );
   }
 }
 
@@ -85,7 +96,7 @@ async function getPayload(client, scope) {
     const payload = Array.isArray(data) ? data[0] : data;
     return {
       payload,
-      rows: decodeRows(payload)
+      rows: decodeRows(payload),
     };
   })();
 
@@ -132,7 +143,8 @@ class ConsolidatedQuery {
   }
 
   async executeFallback() {
-    let fallback = this.client.__agsusOriginalFrom(this.tableName)
+    let fallback = this.client
+      .__agsusOriginalFrom(this.tableName)
       .select(this.columns)
       .range(this.from, this.to);
 
@@ -147,7 +159,7 @@ class ConsolidatedQuery {
     const response = await fallback;
     return {
       ...response,
-      data: normalizeAnaliseRows(response?.data)
+      data: normalizeAnaliseRows(response?.data),
     };
   }
 
@@ -160,10 +172,13 @@ class ConsolidatedQuery {
         error: null,
         count: rows.length,
         status: 200,
-        statusText: "OK"
+        statusText: "OK",
       };
     } catch (error) {
-      console.warn("Carga consolidada indisponível; usando fallback do Supabase:", error);
+      console.warn(
+        "Carga consolidada indisponível; usando fallback do Supabase:",
+        error,
+      );
       return this.executeFallback();
     }
   }
@@ -179,7 +194,7 @@ function wrapClient(client) {
   const originalFrom = client.from.bind(client);
   Object.defineProperty(client, "__agsusOriginalFrom", {
     value: originalFrom,
-    enumerable: false
+    enumerable: false,
   });
 
   client.from = (tableName) => {
@@ -191,35 +206,42 @@ function wrapClient(client) {
 
   Object.defineProperty(client, "__agsusConsolidatedTransport", {
     value: true,
-    enumerable: false
+    enumerable: false,
   });
 
   return client;
 }
 
 function installRefreshInvalidation() {
-  document.addEventListener("agsus:analises-force-refresh", event => {
+  document.addEventListener("agsus:analises-force-refresh", (event) => {
     clearPayloadCache(event.detail?.scope || "");
   });
 
-  document.addEventListener("click", event => {
-    if (!event.target?.closest?.("#refreshBtn")) return;
-    clearPayloadCache();
-    document.dispatchEvent(new CustomEvent("agsus:analises-cache-cleared"));
-  }, true);
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (!event.target?.closest?.("#refreshBtn")) return;
+      clearPayloadCache();
+      document.dispatchEvent(new CustomEvent("agsus:analises-cache-cleared"));
+    },
+    true,
+  );
 }
 
 function installTransport() {
   const supabaseGlobal = window.supabase;
   if (!supabaseGlobal || typeof supabaseGlobal.createClient !== "function") {
-    console.warn("Supabase ainda não disponível para instalar transporte consolidado.");
+    console.warn(
+      "Supabase ainda não disponível para instalar transporte consolidado.",
+    );
     return;
   }
 
   if (supabaseGlobal.__agsusConsolidatedTransportInstalled) return;
 
   const originalCreateClient = supabaseGlobal.createClient.bind(supabaseGlobal);
-  supabaseGlobal.createClient = (...args) => wrapClient(originalCreateClient(...args));
+  supabaseGlobal.createClient = (...args) =>
+    wrapClient(originalCreateClient(...args));
   supabaseGlobal.__agsusConsolidatedTransportInstalled = true;
 }
 

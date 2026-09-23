@@ -187,17 +187,20 @@ export const CONTRATO_RPC = {
   alterar_status_candidato_aprovado: {
     argumentos: ["p_candidato_id", "p_status", "p_processo_sei", "p_matricula"],
     critica: true,
-    resumo: "Altera o status de um candidato e registra processo SEI e matrícula quando informados.",
+    resumo:
+      "Altera o status de um candidato e registra processo SEI e matrícula quando informados.",
   },
   incluir_sub_judice: {
     argumentos: ["p_edital_id", "p_cargo", "p_nome", "p_nota"],
     critica: true,
-    resumo: "Inclui manualmente um candidato sub judice na lista vigente do edital.",
+    resumo:
+      "Inclui manualmente um candidato sub judice na lista vigente do edital.",
   },
   remover_sub_judice: {
     argumentos: ["p_candidato_id"],
     critica: true,
-    resumo: "Remove logicamente um candidato sub judice preservando o histórico.",
+    resumo:
+      "Remove logicamente um candidato sub judice preservando o histórico.",
   },
 
   // ── Análises ────────────────────────────────────────────────────────────

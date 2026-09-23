@@ -21,7 +21,12 @@ body {
 }
 
 body {
-  background: linear-gradient(180deg, #f8fafc 0, #f1f5f9 34%, #eef2f7 100%) !important;
+  background: linear-gradient(
+    180deg,
+    #f8fafc 0,
+    #f1f5f9 34%,
+    #eef2f7 100%
+  ) !important;
 }
 
 .shell {
@@ -43,7 +48,7 @@ body {
 }
 
 .panel {
-  box-shadow: 0 4px 18px rgba(15, 23, 42, .045) !important;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.045) !important;
 }
 
 .kpi {
@@ -76,8 +81,8 @@ body {
 }
 
 .kpi.is-active {
-  border-color: rgba(37, 99, 235, .48) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, .1) !important;
+  border-color: rgba(37, 99, 235, 0.48) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
 }
 
 .meta-chip {
@@ -151,15 +156,19 @@ body {
   z-index: 20 !important;
   background: #f8fafc !important;
   color: #475569 !important;
-  box-shadow: 0 1px 0 var(--line), 0 8px 18px rgba(15, 23, 42, .05);
+  box-shadow:
+    0 1px 0 var(--line),
+    0 8px 18px rgba(15, 23, 42, 0.05);
 }
 
 .table-wrap td {
-  transition: background-color .16s ease, color .16s ease;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .table-wrap tbody tr:nth-child(even) td {
-  background: rgba(248, 250, 252, .52);
+  background: rgba(248, 250, 252, 0.52);
 }
 
 .table-wrap tbody tr:hover td {
@@ -245,7 +254,7 @@ body {
   padding: 0 8px !important;
   border-radius: 999px !important;
   font-size: 9px !important;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 820px) {

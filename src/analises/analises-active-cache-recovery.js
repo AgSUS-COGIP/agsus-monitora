@@ -9,17 +9,21 @@ function clearInvalidActiveCaches() {
       if (key && ACTIVE_CACHE_KEY_PATTERN.test(key)) keys.push(key);
     }
 
-    keys.forEach(key => {
+    keys.forEach((key) => {
       try {
         const cached = JSON.parse(localStorage.getItem(key) || "null");
-        const hasRows = cached && Array.isArray(cached.rows) && cached.rows.length > 0;
+        const hasRows =
+          cached && Array.isArray(cached.rows) && cached.rows.length > 0;
         if (!hasRows) localStorage.removeItem(key);
       } catch (error) {
         localStorage.removeItem(key);
       }
     });
   } catch (error) {
-    console.warn("Não foi possível validar o cache local de Análises Ativas:", error);
+    console.warn(
+      "Não foi possível validar o cache local de Análises Ativas:",
+      error,
+    );
   }
 }
 

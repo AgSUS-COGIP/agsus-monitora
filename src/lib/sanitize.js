@@ -4,8 +4,8 @@ const ESCAPE_MAP = {
   "&": "&amp;",
   "<": "&lt;",
   ">": "&gt;",
-  "\"": "&quot;",
-  "'": "&#039;"
+  '"': "&quot;",
+  "'": "&#039;",
 };
 
 export function escapeHtml(value) {

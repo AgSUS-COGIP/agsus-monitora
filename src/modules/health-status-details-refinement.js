@@ -2,8 +2,14 @@ let initialized = false;
 let timer = 0;
 let attempts = 0;
 
-const $ = id => document.getElementById(id);
-const norm = value => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+const $ = (id) => document.getElementById(id);
+const norm = (value) =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
 
 function canonicalStatus(value) {
   const key = norm(value);
@@ -28,7 +34,17 @@ function statusColor(label) {
 }
 
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      })[c],
+  );
 }
 
 function ensureLayout() {
@@ -38,17 +54,28 @@ function ensureLayout() {
   if (!canvas || !wrap || !card) return null;
 
   if (!card.querySelector(".health-status-subtitle")) {
-    card.querySelector(".panel-title")?.insertAdjacentHTML("afterend", '<p class="health-status-subtitle">Distribuição dos processos por situação operacional. Clique em uma categoria para filtrar.</p>');
+    card
+      .querySelector(".panel-title")
+      ?.insertAdjacentHTML(
+        "afterend",
+        '<p class="health-status-subtitle">Distribuição dos processos por situação operacional. Clique em uma categoria para filtrar.</p>',
+      );
   }
   if (!wrap.parentElement?.classList.contains("health-status-layout")) {
     const layout = document.createElement("div");
     layout.className = "health-status-layout";
     wrap.parentElement.insertBefore(layout, wrap);
     layout.appendChild(wrap);
-    layout.insertAdjacentHTML("beforeend", '<div id="healthStatusLegend" class="health-status-legend"></div>');
+    layout.insertAdjacentHTML(
+      "beforeend",
+      '<div id="healthStatusLegend" class="health-status-legend"></div>',
+    );
   }
   if (!wrap.querySelector(".health-status-center")) {
-    wrap.insertAdjacentHTML("beforeend", '<div class="health-status-center is-loading"><strong id="healthStatusTotal">—</strong><span>processos</span></div>');
+    wrap.insertAdjacentHTML(
+      "beforeend",
+      '<div class="health-status-center is-loading"><strong id="healthStatusTotal">—</strong><span>processos</span></div>',
+    );
   }
   return canvas;
 }
@@ -61,9 +88,17 @@ function addCount(map, label, value) {
 
 function collectEntries(chart) {
   const counts = new Map();
-  const tableRows = [...document.querySelectorAll("#monitorRows tr")].filter(row => !row.querySelector("td[colspan]"));
-  tableRows.forEach(row => {
-    const statusCell = [...row.querySelectorAll("td")].find(cell => cell.querySelector(".chip") && /andamento|conclu|cancel|planejad|cronograma|suspens|paralis/i.test(cell.textContent));
+  const tableRows = [...document.querySelectorAll("#monitorRows tr")].filter(
+    (row) => !row.querySelector("td[colspan]"),
+  );
+  tableRows.forEach((row) => {
+    const statusCell = [...row.querySelectorAll("td")].find(
+      (cell) =>
+        cell.querySelector(".chip") &&
+        /andamento|conclu|cancel|planejad|cronograma|suspens|paralis/i.test(
+          cell.textContent,
+        ),
+    );
     if (statusCell) addCount(counts, statusCell.textContent, 1);
   });
   if (!counts.size) {
@@ -84,7 +119,9 @@ function syncChart() {
   const total = entries.reduce((sum, [, value]) => sum + Number(value || 0), 0);
   chart.data.labels = entries.map(([label]) => label);
   chart.data.datasets[0].data = entries.map(([, value]) => value);
-  chart.data.datasets[0].backgroundColor = entries.map(([label]) => statusColor(label));
+  chart.data.datasets[0].backgroundColor = entries.map(([label]) =>
+    statusColor(label),
+  );
   chart.data.datasets[0].borderColor = "#fff";
   chart.data.datasets[0].borderWidth = 3;
   chart.data.datasets[0].hoverOffset = 6;
@@ -92,18 +129,24 @@ function syncChart() {
   chart.options.cutout = "72%";
   chart.options.plugins.legend.display = false;
   chart.options.plugins.tooltip.enabled = false;
-  chart.options.interaction = { mode:"nearest", intersect:true };
+  chart.options.interaction = { mode: "nearest", intersect: true };
   chart.update("none");
 
-  const center = canvas.closest(".chart-wrap")?.querySelector(".health-status-center");
+  const center = canvas
+    .closest(".chart-wrap")
+    ?.querySelector(".health-status-center");
   center?.classList.remove("is-loading");
-  if ($("healthStatusTotal")) $("healthStatusTotal").textContent = total.toLocaleString("pt-BR");
+  if ($("healthStatusTotal"))
+    $("healthStatusTotal").textContent = total.toLocaleString("pt-BR");
 
   const legend = $("healthStatusLegend");
-  if (legend) legend.innerHTML = entries.map(([label, value]) => {
-    const pct = total ? Math.round((value / total) * 100) : 0;
-    return `<button type="button" class="health-status-legend-item" data-health-status="${escapeHtml(label)}"><span class="health-status-dot" style="background:${statusColor(label)}"></span><span class="health-status-name">${escapeHtml(label)}</span><strong>${Number(value).toLocaleString("pt-BR")}</strong><small>${pct}%</small></button>`;
-  }).join("");
+  if (legend)
+    legend.innerHTML = entries
+      .map(([label, value]) => {
+        const pct = total ? Math.round((value / total) * 100) : 0;
+        return `<button type="button" class="health-status-legend-item" data-health-status="${escapeHtml(label)}"><span class="health-status-dot" style="background:${statusColor(label)}"></span><span class="health-status-name">${escapeHtml(label)}</span><strong>${Number(value).toLocaleString("pt-BR")}</strong><small>${pct}%</small></button>`;
+      })
+      .join("");
   return true;
 }
 
@@ -113,17 +156,20 @@ function compactDetails() {
     foot.hidden = true;
     foot.innerHTML = "";
   }
-  document.querySelectorAll("#monitorRows .health-row-operational").forEach(badge => {
-    const value = norm(badge.textContent);
-    if (value.includes("concluido") || value.includes("cancelado")) {
-      badge.remove();
-      return;
-    }
-    if (value.includes("sem cronograma estruturado")) {
-      badge.title = "Cronograma ainda não estruturado na Equipe Núcleo";
-      badge.innerHTML = '<i class="fa-solid fa-calendar-xmark"></i><span>Sem cronograma</span>';
-    }
-  });
+  document
+    .querySelectorAll("#monitorRows .health-row-operational")
+    .forEach((badge) => {
+      const value = norm(badge.textContent);
+      if (value.includes("concluido") || value.includes("cancelado")) {
+        badge.remove();
+        return;
+      }
+      if (value.includes("sem cronograma estruturado")) {
+        badge.title = "Cronograma ainda não estruturado na Equipe Núcleo";
+        badge.innerHTML =
+          '<i class="fa-solid fa-calendar-xmark"></i><span>Sem cronograma</span>';
+      }
+    });
 }
 
 function sync() {
@@ -157,12 +203,18 @@ export function initHealthStatusDetailsRefinement() {
   if (initialized) return;
   initialized = true;
   startLoop();
-  document.addEventListener("click", event => {
+  document.addEventListener("click", (event) => {
     if (event.target?.closest?.('[data-view="dashboard"]')) startLoop();
     if (event.target?.closest?.("#page-dashboard")) setTimeout(sync, 40);
   });
-  document.addEventListener("input", event => { if (event.target?.closest?.("#page-dashboard")) setTimeout(sync, 40); });
-  document.addEventListener("change", event => { if (event.target?.closest?.("#page-dashboard")) setTimeout(sync, 40); });
+  document.addEventListener("input", (event) => {
+    if (event.target?.closest?.("#page-dashboard")) setTimeout(sync, 40);
+  });
+  document.addEventListener("change", (event) => {
+    if (event.target?.closest?.("#page-dashboard")) setTimeout(sync, 40);
+  });
   document.addEventListener("agsus:nucleo-cronograma-saved", startLoop);
-  window.addEventListener("focus", () => { if ($("page-dashboard")?.classList.contains("active")) startLoop(); });
+  window.addEventListener("focus", () => {
+    if ($("page-dashboard")?.classList.contains("active")) startLoop();
+  });
 }

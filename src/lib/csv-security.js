@@ -26,7 +26,9 @@ export function installCsvBlobSecurityGuard() {
     constructor(parts = [], options = {}) {
       const type = String(options?.type || "").toLowerCase();
       const securedParts = type.includes("text/csv")
-        ? parts.map((part) => typeof part === "string" ? sanitizeCsvDocument(part) : part)
+        ? parts.map((part) =>
+            typeof part === "string" ? sanitizeCsvDocument(part) : part,
+          )
         : parts;
       super(securedParts, options);
     }

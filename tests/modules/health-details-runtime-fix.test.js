@@ -3,7 +3,7 @@ import { JSDOM } from "jsdom";
 import {
   ensureTopFilterToolbar,
   startTableRenderWatch,
-  syncFilterToolbar
+  syncFilterToolbar,
 } from "../../src/modules/health-details-runtime-fix.js";
 
 function dashboardDom() {
@@ -42,14 +42,14 @@ function dashboardDom() {
 }
 
 function installDelegatedFilterToggle(dom) {
-  dom.window.document.addEventListener("change", event => {
-    if (!event.target.matches('input[data-filter-field]')) return;
+  dom.window.document.addEventListener("change", (event) => {
+    if (!event.target.matches("input[data-filter-field]")) return;
     event.target.checked = event.target.checked;
   });
 }
 
 function nextUiCycle(dom) {
-  return new Promise(resolve => dom.window.setTimeout(resolve, 0));
+  return new Promise((resolve) => dom.window.setTimeout(resolve, 0));
 }
 
 describe("health details runtime fix", () => {
@@ -61,7 +61,9 @@ describe("health details runtime fix", () => {
     dom.window.toggleHideClosed = vi.fn();
     dom.window.clearFilters = vi.fn();
 
-    const previous = dom.window.document.querySelector('input[data-filter-value="03/2025"]');
+    const previous = dom.window.document.querySelector(
+      'input[data-filter-value="03/2025"]',
+    );
     previous.click();
 
     const toolbar = ensureTopFilterToolbar(dom.window, dom.window.document);
@@ -69,51 +71,84 @@ describe("health details runtime fix", () => {
 
     expect(toolbar).not.toBeNull();
     expect(button?.closest(".filter-head")).not.toBeNull();
-    expect(dom.window.document.getElementById("healthOnly2026Btn").hidden).toBe(true);
-    expect(dom.window.document.getElementById("hideClosedBtn").hidden).toBe(true);
+    expect(dom.window.document.getElementById("healthOnly2026Btn").hidden).toBe(
+      true,
+    );
+    expect(dom.window.document.getElementById("hideClosedBtn").hidden).toBe(
+      true,
+    );
 
     button.click();
     await nextUiCycle(dom);
 
-    const selected = [...dom.window.document.querySelectorAll('input[data-filter-field="edital"]:checked')]
-      .map(input => input.dataset.filterValue);
+    const selected = [
+      ...dom.window.document.querySelectorAll(
+        'input[data-filter-field="edital"]:checked',
+      ),
+    ].map((input) => input.dataset.filterValue);
     expect(selected).toEqual(["01/2026", "02/2026"]);
     expect(dom.window.document.getElementById("tableSearch").value).toBe("");
     expect(button.getAttribute("aria-pressed")).toBe("true");
 
     button.click();
     await nextUiCycle(dom);
-    const restored = [...dom.window.document.querySelectorAll('input[data-filter-field="edital"]:checked')]
-      .map(input => input.dataset.filterValue);
+    const restored = [
+      ...dom.window.document.querySelectorAll(
+        'input[data-filter-field="edital"]:checked',
+      ),
+    ].map((input) => input.dataset.filterValue);
     expect(restored).toEqual(["03/2025"]);
   });
 
   it("mostra contador no botão de filtros quando há seleção ativa", () => {
     const dom = dashboardDom();
-    const status = dom.window.document.querySelector('input[data-filter-field="status"]');
+    const status = dom.window.document.querySelector(
+      'input[data-filter-field="status"]',
+    );
     status.checked = true;
 
     ensureTopFilterToolbar(dom.window, dom.window.document);
     expect(syncFilterToolbar(dom.window, dom.window.document)).toBe(1);
-    expect(dom.window.document.getElementById("filterToggleBtn").textContent).toContain("1");
-    expect(dom.window.document.getElementById("healthQuickProgressBtn").getAttribute("aria-pressed")).toBe("true");
+    expect(
+      dom.window.document.getElementById("filterToggleBtn").textContent,
+    ).toContain("1");
+    expect(
+      dom.window.document
+        .getElementById("healthQuickProgressBtn")
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 
   it("aplica placeholder de cronograma imediatamente e o remove quando chega o dado real", () => {
     vi.useFakeTimers();
     const dom = dashboardDom();
-    dom.window.document.getElementById("monitorRows").innerHTML = '<tr><td>DSEI</td><td><a>01/2026</a></td></tr>';
+    dom.window.document.getElementById("monitorRows").innerHTML =
+      "<tr><td>DSEI</td><td><a>01/2026</a></td></tr>";
 
-    startTableRenderWatch(dom.window, dom.window.document, { interval: 10, maxAttempts: 20 });
+    startTableRenderWatch(dom.window, dom.window.document, {
+      interval: 10,
+      maxAttempts: 20,
+    });
     vi.advanceTimersByTime(20);
-    expect(dom.window.document.querySelector(".health-operational-loading")).not.toBeNull();
+    expect(
+      dom.window.document.querySelector(".health-operational-loading"),
+    ).not.toBeNull();
 
-    const editalCell = dom.window.document.querySelector("#monitorRows td:nth-child(2)");
-    editalCell.insertAdjacentHTML("beforeend", '<div class="health-row-operational">Próxima etapa em 3 dias</div>');
+    const editalCell = dom.window.document.querySelector(
+      "#monitorRows td:nth-child(2)",
+    );
+    editalCell.insertAdjacentHTML(
+      "beforeend",
+      '<div class="health-row-operational">Próxima etapa em 3 dias</div>',
+    );
     vi.advanceTimersByTime(30);
 
-    expect(dom.window.document.querySelector(".health-operational-loading")).toBeNull();
-    expect(dom.window.document.querySelector(".health-row-operational")?.textContent).toContain("Próxima etapa");
+    expect(
+      dom.window.document.querySelector(".health-operational-loading"),
+    ).toBeNull();
+    expect(
+      dom.window.document.querySelector(".health-row-operational")?.textContent,
+    ).toContain("Próxima etapa");
     vi.useRealTimers();
   });
 });

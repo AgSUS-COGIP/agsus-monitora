@@ -7,17 +7,19 @@ export function createSupabaseLegacyFacade(resolveClient = getSupabaseClient) {
     createClient() {
       const client = resolveClient();
       if (!client) {
-        throw new Error("Supabase indisponível. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.");
+        throw new Error(
+          "Supabase indisponível. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY.",
+        );
       }
       return client;
-    }
+    },
   };
 
   Object.defineProperty(facade, BRIDGE_MARKER, {
     value: true,
     enumerable: false,
     configurable: false,
-    writable: false
+    writable: false,
   });
 
   // A fachada precisa continuar extensível durante a migração. Os transportes
@@ -26,7 +28,10 @@ export function createSupabaseLegacyFacade(resolveClient = getSupabaseClient) {
   return facade;
 }
 
-export function installSupabaseLegacyBridge(target = globalThis, resolveClient = getSupabaseClient) {
+export function installSupabaseLegacyBridge(
+  target = globalThis,
+  resolveClient = getSupabaseClient,
+) {
   if (!target) return null;
   if (target.supabase?.[BRIDGE_MARKER]) return target.supabase;
 
@@ -37,7 +42,7 @@ export function installSupabaseLegacyBridge(target = globalThis, resolveClient =
       value: facade,
       enumerable: true,
       configurable: true,
-      writable: false
+      writable: false,
     });
   } catch (_) {
     target.supabase = facade;
