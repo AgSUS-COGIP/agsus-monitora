@@ -68,8 +68,7 @@ describe("assistente Aya", () => {
     expect(guide.querySelectorAll(".arara-message--user")).toHaveLength(0);
     expect(guide.querySelectorAll(".arara-message--assistant")).toHaveLength(1);
     expect(
-      guide
-        .querySelector(".arara-message--assistant .arara-message__body")
+      guide.querySelector(".arara-message--assistant .arara-message__body")
         ?.textContent,
     ).toContain("Eu sou a Aya");
     expect(
@@ -84,9 +83,9 @@ describe("assistente Aya", () => {
     expect(guide.textContent).toContain("Eu sou a Aya");
     expect(guide.textContent).toContain("Saúde Indígena");
     expect(guide.querySelector(".arara-assistant__header")).not.toBeNull();
-    expect(
-      guide.querySelector(".arara-assistant__title")?.textContent,
-    ).toBe("Aya");
+    expect(guide.querySelector(".arara-assistant__title")?.textContent).toBe(
+      "Aya",
+    );
     expect(
       guide.querySelector(".arara-assistant__status-text")?.textContent,
     ).toBe("Pronta");

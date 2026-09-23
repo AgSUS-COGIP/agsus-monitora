@@ -379,11 +379,7 @@ function setThinking(state, active) {
   state.root.setAttribute("aria-busy", "true");
   state.sendButton.setAttribute("aria-label", "Aya está pensando");
 
-  state.thinking = element(
-    state.doc,
-    "div",
-    "arara-assistant__thinking",
-  );
+  state.thinking = element(state.doc, "div", "arara-assistant__thinking");
   state.thinking.setAttribute("role", "status");
   state.thinking.setAttribute("aria-live", "polite");
   state.thinking.append(
@@ -412,12 +408,7 @@ function renderQuickSuggestions(state) {
   state.suggestionLabel.hidden = !suggestions.length;
 
   for (const suggestion of suggestions) {
-    const button = element(
-      state.doc,
-      "button",
-      "arara-suggestion",
-      suggestion,
-    );
+    const button = element(state.doc, "button", "arara-suggestion", suggestion);
     button.type = "button";
     button.addEventListener("click", () => {
       if (!state.busy) ask(state, suggestion);
@@ -629,12 +620,7 @@ function createAssistant(host) {
   inputLabel.htmlFor = "araraAssistantInput";
   input.id = "araraAssistantInput";
 
-  const sendButton = element(
-    doc,
-    "button",
-    "arara-assistant__send",
-    "Enviar",
-  );
+  const sendButton = element(doc, "button", "arara-assistant__send", "Enviar");
   sendButton.type = "submit";
   sendButton.setAttribute("aria-label", "Enviar pergunta");
   form.append(inputLabel, input, sendButton);
