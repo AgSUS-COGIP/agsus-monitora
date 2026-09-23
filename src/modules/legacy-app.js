@@ -39,6 +39,7 @@ import {
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
 import { montarLegendaDasTerras } from "./legenda-das-terras.js";
+import { criarCamadaComRecuo } from "./map-base-layer-switcher.js";
 import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
@@ -8961,6 +8962,8 @@ function addResilientMapTiles(map, element) {
         maxZoom: 19,
         attribution: "© Esri, Maxar, Earthstar Geographics",
       },
+      // Sem foto acima do zoom 17 nos territórios: ver `criarCamadaComRecuo`.
+      recuo: true,
     },
   ];
   let providerIndex = 0;
@@ -8969,12 +8972,15 @@ function addResilientMapTiles(map, element) {
 
   const mountProvider = () => {
     const provider = providers[providerIndex];
-    activeLayer = L.tileLayer(provider.url, {
+    const opcoes = {
       ...provider.options,
       crossOrigin: true,
       updateWhenIdle: false,
       keepBuffer: 3,
-    });
+    };
+    activeLayer = provider.recuo
+      ? criarCamadaComRecuo(L, provider.url, opcoes)
+      : L.tileLayer(provider.url, opcoes);
     activeLayer.on("tileload", () => {
       consecutiveErrors = 0;
       element.classList.remove("map-tiles-recovering");
