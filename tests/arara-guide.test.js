@@ -64,9 +64,9 @@ describe("assistente Aya", () => {
 
     guide.querySelector(".arara-assistant__reset").click();
 
-    expect(guide.querySelector(".arara-assistant__messages")?.textContent).not.toContain(
-      "Como uso o mapa?",
-    );
+    expect(
+      guide.querySelector(".arara-assistant__messages")?.textContent,
+    ).not.toContain("Como uso o mapa?");
     expect(guide.querySelectorAll(".arara-message--user")).toHaveLength(0);
     expect(guide.querySelectorAll(".arara-message--assistant")).toHaveLength(1);
     expect(
