@@ -113,6 +113,27 @@ describe("assistente Aya", () => {
     expect(guide.querySelector("[data-nina-drag-handle]")).not.toBeNull();
   });
 
+  it("mantém conversa, controles e composer dentro do mesmo quadro", () => {
+    const host = document.getElementById("host");
+    const guide = updateAraraGuide("dashboard", "Saúde Indígena", host);
+    const scene = guide.querySelector(".arara-assistant__scene");
+    const hideButton = guide.querySelector(".arara-assistant__hide");
+
+    expect(scene).not.toBeNull();
+    expect(scene?.contains(guide.querySelector(".arara-assistant__messages"))).toBe(
+      true,
+    );
+    expect(scene?.contains(guide.querySelector(".arara-assistant__suggestions"))).toBe(
+      true,
+    );
+    expect(scene?.contains(guide.querySelector(".arara-assistant__form"))).toBe(
+      true,
+    );
+    expect(scene?.contains(hideButton)).toBe(true);
+    expect(hideButton?.textContent).toBe("Ocultar Aya");
+    expect(guide.querySelector(".arara-assistant__avatar")).toBeNull();
+  });
+
   it("oculta, reabre e preserva a preferência entre seções", () => {
     const host = document.getElementById("host");
     const guide = updateAraraGuide("dashboard", "", host);
