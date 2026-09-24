@@ -1359,30 +1359,11 @@
                 <div id="accessRequestsAdmin" class="access-admin-list"></div>
               </div>
 
-              <div
-                id="accessMonitorCard"
-                class="admin-card card full access-monitor-card hidden"
-              >
-                <div class="config-card-title">
-                  <div>
-                    <h3>Acessos e usuários online</h3>
-                    <p>
-                      Visível apenas para perfil admin. Online considera
-                      atividade registrada nos últimos 15 minutos.
-                    </p>
-                  </div>
-                  <button
-                    class="btn secondary"
-                    type="button"
-                    onclick="loadAccessDashboard(true)"
-                  >
-                    <i class="fa-solid fa-rotate-right"></i> Atualizar
-                  </button>
-                </div>
-                <div id="accessMonitorBody" class="access-monitor-empty">
-                  Carregando acessos...
-                </div>
-              </div>
+              <!--
+                O card "Acessos e usuários online" saiu a pedido: a seção de Acessos
+                fica para a matriz de permissões. Sem o card, access-dashboard.js não
+                consulta o banco nem liga o temporizador.
+              -->
 
               <div class="admin-card card config-main-card">
                 <div class="config-card-title">

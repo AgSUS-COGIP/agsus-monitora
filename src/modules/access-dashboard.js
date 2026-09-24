@@ -317,7 +317,8 @@ export function createAccessDashboard(deps) {
 
   function startRefresh() {
     stopRefresh();
-    if (!isMasterProfile()) return;
+    // Sem o card na página não há o que atualizar; nem liga o temporizador.
+    if (!$("accessMonitorCard") || !isMasterProfile()) return;
     load();
     refreshHandle = setInterval(() => {
       if (getCurrentView() === "config") load();

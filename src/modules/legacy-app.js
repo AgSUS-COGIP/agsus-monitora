@@ -12304,12 +12304,20 @@ async function renderAccessRequestsAdmin() {
         ${pendingHTML}
       </div>
     `;
+  /*
+    Ordem da seção: histórico e solicitações em cima (curtos), matriz embaixo
+    com a altura livre para a tabela, que é o que se usa todo dia.
+  */
+  const historicoRoot = document.createElement("div");
+  historicoRoot.className = "access-admin-section access-history-section";
+  box.prepend(historicoRoot);
   const matrixRoot = document.createElement("div");
   matrixRoot.className = "access-admin-section";
-  box.prepend(matrixRoot);
+  box.append(matrixRoot);
   disposeAccessMatrix = await mountAccessMatrix(matrixRoot, {
     sb,
     currentUser,
+    historicoRoot,
     onManageAccount(user) {
       accessProfiles = [user];
       abrirGestaoConta(user, {
