@@ -10,7 +10,10 @@ import { escapeHtml as escape, sanitizeHtml } from "../lib/sanitize.js";
 const label = (level) =>
   LEVELS.find(([value]) => value === level)?.[1] || "Sem acesso";
 
-export async function mountAccessMatrix(root, { sb, currentUser }) {
+export async function mountAccessMatrix(
+  root,
+  { sb, currentUser, onManageAccount },
+) {
   let data = { usuarios: [], paineis: [], historico: [], total: 0 };
   let offset = 0;
   let search = "";
@@ -47,7 +50,7 @@ export async function mountAccessMatrix(root, { sb, currentUser }) {
           data.usuarios
             .map(
               (u) =>
-                `<tr><th scope="row"><strong>${escape(u.nome || u.email)}</strong><small>${escape(u.email)}</small>${isOwnAccessProfile(currentUser, u) ? "<small>Seu acesso: outro administrador deve alterar.</small>" : ""}</th>${resources()
+                `<tr><th scope="row"><strong>${escape(u.nome || u.email)}</strong><small>${escape(u.email)}</small>${isOwnAccessProfile(currentUser, u) ? "<small>Seu acesso: outro administrador deve alterar.</small>" : onManageAccount ? `<button type="button" class="btn outline permission-account-button" data-manage-account="${escape(u.id)}" aria-label="Gerenciar conta de ${escape(u.nome || u.email)}" ${busy || changes.length ? "disabled" : ""}>Gerenciar conta</button>` : ""}</th>${resources()
                   .map(([id, title]) => {
                     const cell = u.permissoes[id] || {
                       nivel: "sem_acesso",
@@ -109,6 +112,15 @@ export async function mountAccessMatrix(root, { sb, currentUser }) {
   };
   root.onclick = async (event) => {
     if (busy) return;
+    const account = event.target.closest("[data-manage-account]");
+    if (account && !draft.size) {
+      const user = data.usuarios.find(
+        (u) => u.id === account.dataset.manageAccount,
+      );
+      if (user && !isOwnAccessProfile(currentUser, user))
+        onManageAccount?.(user);
+      return;
+    }
     if (event.target.closest("[data-retry]")) await load();
     if (event.target.closest("[data-discard]")) {
       draft.clear();

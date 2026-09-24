@@ -139,6 +139,36 @@
   outline: 3px solid var(--permission-brand);
   outline-offset: 3px;
 }
+.permission-account-button {
+  margin-top: var(--space-2, 8px);
+}
+.permission-account-dialog {
+  width: min(560px, 90vw);
+  max-height: 85vh;
+  overflow: auto;
+  padding: var(--space-6, 24px);
+  border: 1px solid var(--border-control, var(--line));
+  border-radius: var(--radius-md, 12px);
+  background: var(--surface-card, var(--card));
+  color: var(--text-primary, var(--ink));
+}
+.permission-account-dialog p {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.permission-account-dialog label {
+  display: grid;
+  gap: var(--space-2, 8px);
+}
+.permission-account-dialog select {
+  min-height: 44px;
+  font: inherit;
+  color: inherit;
+  background: var(--surface-card, var(--card));
+  border: 1px solid var(--border-control, var(--line));
+  border-radius: var(--radius-sm, 8px);
+  padding: var(--space-2, 8px);
+}
 @media (max-width: 640px) {
   .permission-scroll tbody th {
     min-width: 160px;
