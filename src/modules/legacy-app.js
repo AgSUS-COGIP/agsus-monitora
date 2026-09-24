@@ -1,6 +1,10 @@
 import { renderNucleoTable } from "../lib/nucleo-table-render.js";
 import { mountAccessMatrix } from "./matriz-acessos.js";
 import { abrirGestaoConta } from "./gestao-conta.js";
+import {
+  montarSubmenuConfiguracoes,
+  sincronizarSubmenuConfiguracoes,
+} from "./config-secoes.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
 import {
   ehResponsavelCores,
@@ -2440,6 +2444,10 @@ function buildNav() {
   nav.innerHTML =
     html ||
     `<div class="alert warn">${esc(cfgValue("permissions_empty_text"))}</div>`;
+  montarSubmenuConfiguracoes(document, {
+    navegar: navigate,
+    alternarBarra: toggleSidebar,
+  });
   setActiveNav(currentView);
 }
 
@@ -2456,8 +2464,9 @@ function navButton(view, label, ico) {
 }
 function setActiveNav(view) {
   document
-    .querySelectorAll("#nav button")
+    .querySelectorAll("#nav button[data-view]")
     .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  sincronizarSubmenuConfiguracoes(document, view);
 }
 
 function navigate(view) {

@@ -378,88 +378,37 @@ html[data-theme="dark"] .contraste-aviso[data-nivel="alerta"] {
 */
 .config-layout {
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4, 16px);
   align-items: start;
 }
-
-.config-nav {
-  position: sticky;
-  top: 12px;
+.config-submenu:not([hidden]) {
   display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid #dce8ef;
-  border-radius: 14px;
-  background: #ffffff;
+  gap: var(--space-1, 4px);
+  margin-inline-start: var(--space-4, 16px);
+  padding-inline-start: var(--space-2, 8px);
+  border-inline-start: 1px solid currentColor;
 }
-
-.config-nav__busca {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid #dce8ef;
-  border-radius: 10px;
-  background: #f7fbfd;
-  color: #6b7d92;
+.nav .config-submenu__item {
+  font-size: var(--text-sm, 13px);
+  font-weight: 500;
+  min-height: 44px;
+  padding: var(--space-2, 8px);
 }
-
-.config-nav__busca input {
-  min-width: 0;
-  flex: 1;
-  border: 0;
-  background: transparent;
-  font-size: 12px;
-  outline: none;
+.config-submenu__item i {
+  width: 16px;
 }
-
-.config-nav__lista {
-  display: grid;
-  gap: 3px;
+.config-submenu-seta {
+  margin-inline-start: auto;
 }
-
-.config-nav__item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: #33506b;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
+[aria-expanded="false"] > .config-submenu-seta {
+  transform: rotate(-90deg);
 }
-
-.config-nav__item i {
-  width: 15px;
-  color: #6b8aa3;
-  font-size: 11px;
-}
-
-.config-nav__item:hover {
-  background: #f1f7fb;
-}
-
-.config-nav__item.is-active {
-  background: #e7f2f9;
-  color: #10456b;
-}
-
-.config-nav__item.is-active i {
-  color: #10456b;
-}
-
-.config-nav__contagem {
-  margin: 2px 0 0;
-  padding-top: 9px;
-  border-top: 1px solid #eaf1f6;
-  color: #7b8da0;
-  font-size: 10.5px;
-  font-weight: 700;
+body.sidebar-collapsed .config-submenu,
+body.sidebar-collapsed .config-submenu-seta,
+body.sidebar-locked .config-submenu,
+body.sidebar-locked .config-submenu-seta {
+  display: none;
 }
 
 .config-painel {
@@ -515,39 +464,9 @@ html[data-theme="dark"] .contraste-aviso[data-nivel="alerta"] {
   display: none;
 }
 
-@media (max-width: 1024px) {
-  .config-layout {
-    grid-template-columns: 1fr;
-  }
-  .config-nav {
-    position: static;
-  }
-  .config-nav__lista {
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    overflow-x: auto;
-  }
-}
-
-html[data-theme="dark"] .config-nav,
 html[data-theme="dark"] .config-secao {
   border-color: #253a56;
   background: #17253d;
-}
-
-html[data-theme="dark"] .config-nav__busca {
-  border-color: #253a56;
-  background: #102436;
-}
-
-html[data-theme="dark"] .config-nav__item {
-  color: #cfe2f0;
-}
-
-html[data-theme="dark"] .config-nav__item.is-active,
-html[data-theme="dark"] .config-nav__item:hover {
-  background: #1d3350;
-  color: #eaf4ff;
 }
 
 html[data-theme="dark"] .config-secao__cabecalho {

@@ -6,6 +6,8 @@ import {
   SECAO_POR_CAMPO,
   SECOES,
   organizarConfiguracoesEmSecoes,
+  montarSubmenuConfiguracoes,
+  sincronizarSubmenuConfiguracoes,
   removerNavegadorAntigo,
   secaoDoCampo,
 } from "../src/modules/config-secoes.js";
@@ -202,67 +204,74 @@ describe("organizar move sem destruir", () => {
   });
 });
 
-describe("navegador e busca", () => {
+describe("subgrupos no menu principal", () => {
+  let navegacoes;
   beforeEach(() => {
-    document.body.innerHTML = `
-      <section id="page-config">
-        <div class="admin-grid"><div class="admin-card"><div class="form-grid">
-          <div class="form-row"><label>Título</label><input id="cfgTitle" /></div>
-          <div class="form-row"><label>Heartbeat de auditoria</label><input id="cfgAccessHeartbeatMinutos" /></div>
-        </div></div></div>
-      </section>`;
+    navegacoes = 0;
+    document.body.className = "";
+    document.body.innerHTML =
+      '<nav id="nav"><button data-view="config">Configurações</button></nav><section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgTitle" value="AgSUS"></div></div></section>';
     organizarConfiguracoesEmSecoes(document);
+    montarSubmenuConfiguracoes(document, {
+      navegar: () => {
+        navegacoes++;
+        document.getElementById("page-config").classList.add("active");
+      },
+      alternarBarra: () =>
+        document.body.classList.remove("sidebar-collapsed", "sidebar-open"),
+    });
   });
-
-  const visiveis = () =>
-    [...document.querySelectorAll(".config-secao")]
-      .filter((s) => !s.hidden)
-      .map((s) => s.dataset.secao);
-
-  it("mostra tudo por padrão", () => {
-    expect(visiveis()).toHaveLength(7);
-    expect(document.getElementById("configContagemSecoes").textContent).toBe(
-      "7 seções disponíveis",
-    );
-  });
-
-  it("filtra por seção e concorda em número", () => {
-    document.querySelector('[data-secao="marca"]').click();
-    expect(visiveis()).toEqual(["marca"]);
-    expect(document.getElementById("configContagemSecoes").textContent).toBe(
-      "1 seção disponível",
-    );
-  });
-
-  it("volta a mostrar tudo", () => {
-    document.querySelector('[data-secao="marca"]').click();
-    document.querySelector('[data-secao="tudo"]').click();
-    expect(visiveis()).toHaveLength(7);
-  });
-
-  /*
-    A busca olha o conteúdo da seção, não só o nome dela: procurar "heartbeat"
-    tem de achar Operação, onde o campo está.
-  */
-  it("a busca encontra pelo conteúdo, não só pelo título", () => {
-    const busca = document.getElementById("configBuscaSecao");
-    busca.value = "heartbeat";
-    busca.dispatchEvent(new Event("input"));
-    expect(visiveis()).toEqual(["operacao"]);
-  });
-
-  it("o botão ativo acompanha a escolha", () => {
-    document.querySelector('[data-secao="acessos"]').click();
+  const escolher = (id) =>
+    document.querySelector('.config-submenu [data-secao="' + id + '"]').click();
+  it("substitui a coluna interna por sete subgrupos no menu", () => {
+    expect(document.querySelector(".config-nav")).toBeNull();
+    expect(document.getElementById("configBuscaSecao")).toBeNull();
     expect(
-      document
-        .querySelector('[data-secao="acessos"]')
-        .classList.contains("is-active"),
-    ).toBe(true);
+      document.querySelectorAll("#nav .config-submenu__item"),
+    ).toHaveLength(7);
+    expect(document.getElementById("configSubmenu").hidden).toBe(true);
+  });
+  it("abre Configurações, expande a barra recolhida e alterna o submenu", () => {
+    document.body.classList.add("sidebar-collapsed");
+    const botao = document.querySelector('[data-view="config"]');
+    botao.click();
+    expect(navegacoes).toBe(1);
+    expect(document.body.classList.contains("sidebar-collapsed")).toBe(false);
+    expect(botao.getAttribute("aria-expanded")).toBe("true");
+    botao.click();
+    expect(botao.getAttribute("aria-expanded")).toBe("false");
+    expect(navegacoes).toBe(1);
+  });
+  it("troca o subgrupo sem recriar campos nem perder valores pendentes", () => {
+    document.querySelector('[data-view="config"]').click();
+    const campo = document.getElementById("cfgTitle");
+    campo.value = "Rascunho";
+    escolher("acessos");
     expect(
-      document
-        .querySelector('[data-secao="tudo"]')
-        .classList.contains("is-active"),
+      document.querySelector('.config-secao[data-secao="acessos"]').hidden,
     ).toBe(false);
+    expect(
+      document.querySelector('.config-secao[data-secao="marca"]').hidden,
+    ).toBe(true);
+    escolher("marca");
+    expect(document.getElementById("cfgTitle")).toBe(campo);
+    expect(campo.value).toBe("Rascunho");
+    expect(navegacoes).toBe(1);
+    expect(
+      document
+        .querySelector('.config-submenu [data-secao="marca"]')
+        .getAttribute("aria-current"),
+    ).toBe("page");
+  });
+  it("recolhe a gaveta móvel ao selecionar e oculta os subgrupos em outra página", () => {
+    document.querySelector('[data-view="config"]').click();
+    document.body.classList.add("sidebar-open");
+    escolher("operacao");
+    expect(document.body.classList.contains("sidebar-open")).toBe(false);
+    sincronizarSubmenuConfiguracoes(document, "dashboard");
+    expect(document.getElementById("configSubmenu").hidden).toBe(true);
+    sincronizarSubmenuConfiguracoes(document, "config");
+    expect(document.getElementById("configSubmenu").hidden).toBe(false);
   });
 });
 
@@ -344,14 +353,13 @@ describe("um navegador só", () => {
     expect(removerNavegadorAntigo(document)).toBe(false);
   });
 
-  it("sobra um contador só, o novo", () => {
+  it("remove os contadores da navegação interna", () => {
     organizarConfiguracoesEmSecoes(document);
     removerNavegadorAntigo(document);
     const contadores = document.querySelectorAll(
       "#configWorkspaceResultCount, #configContagemSecoes",
     );
-    expect(contadores).toHaveLength(1);
-    expect(contadores[0].id).toBe("configContagemSecoes");
+    expect(contadores).toHaveLength(0);
   });
 
   /*

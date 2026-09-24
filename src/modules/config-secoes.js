@@ -1,3 +1,5 @@
+import { sanitizeHtml } from "../lib/sanitize.js";
+
 /*
   Configurações organizada em seções, como no SIGAV.
 
@@ -155,27 +157,18 @@ const escapar = (valor) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-function htmlDoNavegador() {
+function htmlDoSubmenu() {
   const itens = SECOES.map(
     (s) =>
-      `<button type="button" class="config-nav__item" data-secao="${s.id}">` +
+      `<button type="button" class="config-submenu__item" data-secao="${s.id}">` +
       `<i class="fa-solid ${escapar(s.icone)}" aria-hidden="true"></i>` +
       `<span>${escapar(s.rotulo)}</span></button>`,
   ).join("");
 
   return (
-    `<nav class="config-nav" aria-label="Seções das configurações">` +
-    `<label class="config-nav__busca">` +
-    `<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>` +
-    `<input id="configBuscaSecao" type="search" placeholder="Buscar seção..." autocomplete="off" />` +
-    `</label>` +
-    `<div class="config-nav__lista">` +
-    `<button type="button" class="config-nav__item is-active" data-secao="tudo">` +
-    `<i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Tudo</span></button>` +
+    `<div id="configSubmenu" class="config-submenu" role="group" aria-label="Configurações" hidden>` +
     itens +
-    `</div>` +
-    `<p class="config-nav__contagem" id="configContagemSecoes">${SECOES.length} seções disponíveis</p>` +
-    `</nav>`
+    `</div>`
   );
 }
 
@@ -223,52 +216,71 @@ function distribuir(documento, corpos) {
   return movidos;
 }
 
-function ligarFiltro(documento, raiz) {
-  const busca = documento.getElementById("configBuscaSecao");
-  const botoes = [...raiz.querySelectorAll(".config-nav__item")];
-  const secoes = [...raiz.querySelectorAll(".config-secao")];
-  const contagem = documento.getElementById("configContagemSecoes");
-
-  let escolhida = "tudo";
-
-  const aplicar = () => {
-    const termo = (busca?.value || "").trim().toLowerCase();
-    let visiveis = 0;
-
-    for (const artigo of secoes) {
-      const id = artigo.dataset.secao;
-      const porSecao = escolhida === "tudo" || escolhida === id;
-      const porTermo =
-        !termo || artigo.textContent.toLowerCase().includes(termo);
-      const mostrar = porSecao && porTermo;
-      artigo.hidden = !mostrar;
-      if (mostrar) visiveis += 1;
-    }
-
-    for (const botao of botoes) {
-      botao.classList.toggle("is-active", botao.dataset.secao === escolhida);
-    }
-
-    if (contagem) {
-      contagem.textContent =
-        visiveis === 1
-          ? "1 seção disponível"
-          : `${visiveis} seções disponíveis`;
-    }
-  };
-
-  for (const botao of botoes) {
-    botao.addEventListener("click", () => {
-      escolhida = botao.dataset.secao;
-      aplicar();
-      if (escolhida === "acessos") {
-        void documento.defaultView?.loadAccessManagement?.();
-      }
-    });
+function selecionarSubgrupo(documento, secao) {
+  const pagina = documento.getElementById("page-config");
+  if (!pagina) return;
+  pagina.dataset.subgrupo = secao;
+  for (const artigo of pagina.querySelectorAll(".config-secao")) {
+    artigo.hidden = artigo.dataset.secao !== secao;
   }
-  busca?.addEventListener("input", aplicar);
-  aplicar();
-  return aplicar;
+  for (const botao of documento.querySelectorAll(".config-submenu__item")) {
+    const ativo = botao.dataset.secao === secao;
+    botao.classList.toggle("is-active", ativo);
+    botao.classList.toggle("active", ativo);
+    if (ativo) botao.setAttribute("aria-current", "page");
+    else botao.removeAttribute("aria-current");
+  }
+}
+
+export function sincronizarSubmenuConfiguracoes(documento, view) {
+  const botao = documento.querySelector('[data-view="config"]');
+  const submenu = documento.getElementById("configSubmenu");
+  if (!botao || !submenu) return;
+  submenu.hidden = view !== "config";
+  botao.setAttribute("aria-expanded", String(!submenu.hidden));
+}
+
+export function montarSubmenuConfiguracoes(
+  documento,
+  { navegar, alternarBarra },
+) {
+  const botao = documento.querySelector('[data-view="config"]');
+  if (!botao || documento.getElementById("configSubmenu")) return;
+  botao.insertAdjacentHTML("afterend", sanitizeHtml(htmlDoSubmenu()));
+  const submenu = documento.getElementById("configSubmenu");
+  botao.setAttribute("aria-controls", "configSubmenu");
+  botao.setAttribute("aria-expanded", "false");
+  botao.removeAttribute("onclick");
+  const seta = documento.createElement("span");
+  seta.className = "config-submenu-seta";
+  seta.setAttribute("aria-hidden", "true");
+  seta.textContent = "▾";
+  botao.append(seta);
+  botao.addEventListener("click", () => {
+    const recolhida = documento.body.classList.contains("sidebar-collapsed");
+    const pagina = documento.getElementById("page-config");
+    const ativa = pagina?.classList.contains("active");
+    const abrir = !ativa || submenu.hidden || recolhida;
+    if (!ativa) navegar("config");
+    if (!pagina?.classList.contains("active")) return;
+    if (recolhida) alternarBarra();
+    submenu.hidden = !abrir;
+    botao.setAttribute("aria-expanded", String(abrir));
+    if (abrir) submenu.scrollIntoView?.({ block: "nearest" });
+  });
+  submenu.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-secao]");
+    if (!item) return;
+    selecionarSubgrupo(documento, item.dataset.secao);
+    if (item.dataset.secao === "acessos") {
+      void documento.defaultView?.loadAccessManagement?.();
+    }
+    if (documento.body.classList.contains("sidebar-open")) alternarBarra();
+  });
+  selecionarSubgrupo(
+    documento,
+    documento.getElementById("page-config")?.dataset.subgrupo || "marca",
+  );
 }
 
 export function organizarConfiguracoesEmSecoes(
@@ -283,7 +295,6 @@ export function organizarConfiguracoesEmSecoes(
 
   const layout = documento.createElement("div");
   layout.className = "config-layout";
-  layout.innerHTML = htmlDoNavegador();
 
   const painel = documento.createElement("div");
   painel.className = "config-painel";
@@ -307,7 +318,7 @@ export function organizarConfiguracoesEmSecoes(
     grade.hidden = true;
   }
 
-  ligarFiltro(documento, layout);
+  selecionarSubgrupo(documento, pagina.dataset.subgrupo || "marca");
   return movidos > 0;
 }
 
