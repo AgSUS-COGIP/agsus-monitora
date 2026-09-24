@@ -1,4 +1,6 @@
 import { renderNucleoTable } from "../lib/nucleo-table-render.js";
+import { mountAccessMatrix } from "./matriz-acessos.js";
+import { hasResource } from "../lib/permissoes-recursos.js";
 import {
   ehResponsavelCores,
   normalizarResponsavel,
@@ -109,6 +111,7 @@ import {
   canViewCore,
   canManageEditais,
   canManageSettings,
+  canManageAccess,
   canImportApprovedList,
   isOwnAccessProfile,
   normalizeRole,
@@ -694,6 +697,17 @@ function initSupabase() {
 
 function can(perm) {
   if (!profile) return false;
+  if (profile.permissoes) {
+    if (perm === "admin") return canManageAccess(profile);
+    const resource = {
+      ind: "dashboard",
+      cores: "nucleo",
+      calendario: "calendario",
+      paineis: "paineis",
+      config: "configuracoes",
+    }[perm];
+    return hasResource(profile, resource, perm === "config" ? 2 : 1);
+  }
   const role = normalizeRole(profile);
   if (role) {
     if (["ind", "cores", "paineis"].includes(perm)) return canViewCore(profile);
@@ -703,7 +717,7 @@ function can(perm) {
 }
 
 function isMasterProfile() {
-  return canManageSettings(profile);
+  return canManageAccess(profile);
 }
 
 function getClientSessionId() {
@@ -1449,7 +1463,8 @@ function isViewAllowed(view) {
   if (!view) return false;
   if (view === "dashboard") return can("ind");
   if (view === "nucleo") return can("cores");
-  if (view === "calendario") return can("cores");
+  if (view === "calendario")
+    return profile?.permissoes ? can("calendario") : can("cores");
   if (view === "approved") return canViewCore(profile);
   if (view === "config") return can("config");
   if (view.startsWith("panel:")) {
@@ -1475,10 +1490,12 @@ function systemHomeView() {
   // Tela inicial do SISTEMA (nunca um painel externo).
   if (can("ind")) return "dashboard";
   if (can("cores")) return "nucleo";
+  if (can("calendario")) return "calendario";
+  if (canViewCore(profile)) return "approved";
   if (can("config")) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
-  return "dashboard";
+  return "sem-acesso";
 }
 function startView() {
   // Restaura a última tela — EXCETO painéis externos, para o app nunca abrir
@@ -1494,6 +1511,16 @@ async function loadProfile() {
   const { data: contextData, error: contextError } =
     await sb.rpc(RPC_PLATFORM_CONTEXT);
   const context = !contextError ? normalizePlatformContext(contextData) : null;
+  if (contextError) {
+    profile = null;
+    allowedPanelIds = new Set();
+    platformContextLoaded = false;
+    toast(
+      "Não foi possível verificar suas permissões. Tente novamente.",
+      "error",
+    );
+    return false;
+  }
   if (context) {
     profile = context.profile;
     allowedPanelIds = new Set(context.panelIds);
@@ -1517,7 +1544,8 @@ async function loadProfile() {
       platformContextLoaded = false;
       return false;
     }
-    profile = { ...row, ativo: true };
+    // A missing context cannot revive a disabled profile or legacy broad flags.
+    profile = { ...row, ativo: row.ativo !== false, permissoes: {} };
     platformContextLoaded = false;
   }
   setText("userName", profileDisplayName(profile, currentUser));
@@ -2136,6 +2164,7 @@ async function loadPanels() {
 }
 
 async function loadPanelPermissions() {
+  if (profile?.permissoes) return true;
   if (!profile?.id || !can("paineis")) return true;
   allowedPanelIds = new Set();
   panels
@@ -2147,7 +2176,12 @@ async function loadPanelPermissions() {
 }
 
 function panelAllowed(panel) {
-  return !!panel && panel.ativo !== false && can("paineis");
+  return (
+    !!panel &&
+    panel.ativo !== false &&
+    can("paineis") &&
+    (!profile?.permissoes || allowedPanelIds.has(String(panel.id)))
+  );
 }
 
 function canAccessPanelCode(code) {
@@ -2233,7 +2267,13 @@ async function loadData(options = {}) {
   const showOwnLoader = options.showLoader !== false;
   const runId = ++loadDataRunCounter;
   activeLoadDataPromise = (async () => {
-    if (!can("ind") && !can("cores")) {
+    if (
+      !can("ind") &&
+      !can("cores") &&
+      !can("calendario") &&
+      !canViewCore(profile) &&
+      !canImportApprovedList(profile)
+    ) {
       rows = [];
       filtered = [];
       buildNav();
@@ -2368,10 +2408,8 @@ function buildNav() {
       navButton("dashboard", cfgValue("page_title"), "fa-chart-line"),
     );
   if (can("cores"))
-    principal.push(
-      navButton("nucleo", "Editais", "fa-file-signature"),
-    );
-  if (can("cores"))
+    principal.push(navButton("nucleo", "Editais", "fa-file-signature"));
+  if (can("calendario") || (!profile?.permissoes && can("cores")))
     principal.push(navButton("calendario", "Cronograma", "fa-calendar-days"));
   if (canViewCore(profile))
     principal.push(
@@ -2425,6 +2463,15 @@ function setActiveNav(view) {
 function navigate(view) {
   const previousView = currentView;
   const requestedView = txt(view) || startView();
+  const pendingPermissions = document.querySelector(
+    "#accessRequestsAdmin [data-pending-count]",
+  );
+  if (
+    requestedView !== currentView &&
+    Number(pendingPermissions?.dataset.pendingCount) > 0 &&
+    !window.confirm("Existem permissões ainda não salvas. Sair desta tela?")
+  )
+    return;
 
   // Valida permissão antes de alterar currentView e antes de esconder páginas.
   // A versão anterior mudava o estado primeiro; se a permissão falhasse,
@@ -2437,7 +2484,10 @@ function navigate(view) {
     toast("Sem permissão para Editais.", "warn");
     return;
   }
-  if (requestedView === "calendario" && !can("cores")) {
+  if (
+    requestedView === "calendario" &&
+    !(profile?.permissoes ? can("calendario") : can("cores"))
+  ) {
     toast("Sem permissão para o Cronograma.", "warn");
     return;
   }
@@ -2473,6 +2523,24 @@ function navigate(view) {
     .querySelectorAll(".page")
     .forEach((p) => p.classList.remove("active"));
 
+  if (requestedView === "sem-acesso") {
+    let empty = $("page-sem-acesso");
+    if (!empty) {
+      empty = document.createElement("section");
+      empty.id = "page-sem-acesso";
+      empty.className = "page";
+      empty.innerHTML =
+        '<div class="alert warn">Seu usuário ainda não tem módulos liberados. Solicite a liberação a um administrador.</div>';
+      $("page-dashboard").parentElement.append(empty);
+    }
+    empty.classList.add("active");
+    setPageTitle(
+      "Acesso aos módulos",
+      "Nenhum módulo disponível para seu perfil.",
+    );
+    return;
+  }
+
   if (requestedView === "dashboard") {
     $("page-dashboard").classList.add("active");
     setPageTitle(cfgValue("page_title"), cfgValue("page_subtitle"));
@@ -2483,10 +2551,7 @@ function navigate(view) {
   }
   if (requestedView === "nucleo") {
     $("page-nucleo").classList.add("active");
-    setPageTitle(
-      "Editais",
-      cfgValue("nucleo_page_subtitle"),
-    );
+    setPageTitle("Editais", cfgValue("nucleo_page_subtitle"));
     renderNucleo();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
@@ -12226,6 +12291,7 @@ async function loadAccessManagement() {
   return renderAccessRequestsAdmin();
 }
 
+let disposeAccessMatrix = null;
 async function renderAccessRequestsAdmin() {
   const card = $("accessRequestsAdminCard");
   const box = $("accessRequestsAdmin");
@@ -12233,6 +12299,11 @@ async function renderAccessRequestsAdmin() {
   const allowed = isMasterProfile();
   card.classList.toggle("hidden", !allowed);
   if (!allowed) return;
+  if (
+    Number(box.querySelector("[data-pending-count]")?.dataset.pendingCount) > 0
+  )
+    return;
+  disposeAccessMatrix?.();
   box.innerHTML = `<div class="access-status">Carregando acessos...</div>`;
   const [requestsResponse, profilesResponse] = await Promise.all([
     sb
@@ -12281,14 +12352,21 @@ async function renderAccessRequestsAdmin() {
       <div class="access-admin-section">
         <div class="section-title-row">
           <div>
-            <h4>Usuários ativos</h4>
-            <p>Ajuste o perfil ou desative o acesso sem apagar o histórico.</p>
+            <h4>Perfil global e desativação</h4>
+            <p>O perfil define as permissões padrão. Alterações individuais na matriz prevalecem sobre esses padrões. Admin também permite gerenciar usuários.</p>
           </div>
           <span class="chip green">${fmt(accessProfiles.length)}</span>
         </div>
         ${usersHTML}
       </div>
     `;
+  const matrixRoot = document.createElement("div");
+  matrixRoot.className = "access-admin-section";
+  box.prepend(matrixRoot);
+  disposeAccessMatrix = await mountAccessMatrix(matrixRoot, {
+    sb,
+    currentUser,
+  });
 }
 
 function renderAccessRequestAdminItem(req) {

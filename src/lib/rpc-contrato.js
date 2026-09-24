@@ -35,6 +35,17 @@
 
 /** @type {Record<string, ContratoRpc>} */
 export const CONTRATO_RPC = {
+  obter_matriz_acessos: {
+    argumentos: ["p_busca", "p_offset"],
+    critica: true,
+    resumo: "Matriz paginada de permissões por módulo e painel com histórico.",
+  },
+  salvar_matriz_acessos: {
+    argumentos: ["p_alteracoes", "p_motivo"],
+    critica: true,
+    resumo:
+      "Salva alterações de acesso com auditoria e controle de concorrência.",
+  },
   // ── Identidade e autorização ────────────────────────────────────────────
   meu_usuario: {
     argumentos: [],

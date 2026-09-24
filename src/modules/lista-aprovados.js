@@ -2,6 +2,7 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { readApprovedWorkbook } from "../lib/aprovados-import.js";
 import {
   canChangeCandidateStatus,
+  canViewCore,
   canImportApprovedList,
   canManageSubJudice,
   canReplaceApprovedList,
@@ -351,7 +352,9 @@ export function createListaAprovadosController(options = {}) {
     */
     const [listsResult, candidatesResult] = await Promise.all([
       sb.rpc("listar_listas_aprovados"),
-      fetchAllCandidates(),
+      canViewCore(profile())
+        ? fetchAllCandidates()
+        : Promise.resolve({ data: [], error: null }),
       convocacao.carregarConfiguracoes(),
     ]);
     if (options.loader !== false) loader(false);

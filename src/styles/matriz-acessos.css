@@ -1,0 +1,150 @@
+.permission-matrix {
+  --permission-surface: var(--surface-card, var(--card));
+  --permission-soft: var(--surface-raised, var(--soft));
+  --permission-text: var(--text-primary, var(--ink));
+  --permission-brand: var(--brand-primary, var(--navy));
+  --permission-on-brand: var(--text-inverse, #fff);
+  --permission-divider: var(--border-subtle, #d7e5f2);
+  --permission-control: var(--border-control, #7d8fa5);
+  --permission-danger: var(--state-danger, #c02634);
+  --permission-danger-soft: var(--state-danger-soft, #fdecee);
+  --permission-info-soft: var(--state-info-soft, #e8f1fc);
+  --permission-success-soft: var(--state-success-soft, #e7f5ee);
+  --permission-warning: var(--state-warning, #8a5a00);
+  --permission-sticky-row: 1;
+  --permission-sticky-head: 2;
+  --permission-sticky-corner: 3;
+  min-width: 0;
+  padding: var(--space-4, 16px);
+}
+.permission-matrix > p {
+  max-width: 100ch;
+  line-height: 1.5;
+}
+.permission-scroll {
+  isolation: isolate;
+  max-width: 100%;
+  max-height: 62vh;
+  overflow: auto;
+  border: 1px solid var(--permission-divider);
+  border-radius: var(--radius-md, 12px);
+  margin: var(--space-4, 16px) 0;
+}
+.permission-scroll table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 13px;
+}
+.permission-scroll th,
+.permission-scroll td {
+  font-size: var(--text-sm, 13px);
+  text-transform: none;
+  padding: var(--space-3, 12px);
+  border-bottom: 1px solid var(--permission-divider);
+  text-align: left;
+  min-width: 160px;
+  background: var(--permission-surface);
+  color: var(--permission-text);
+}
+.permission-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--permission-sticky-head);
+  background: var(--permission-brand);
+  color: var(--permission-on-brand);
+}
+.permission-scroll tbody th {
+  position: sticky;
+  left: 0;
+  z-index: var(--permission-sticky-row);
+  min-width: 230px;
+  max-width: 280px;
+  overflow-wrap: anywhere;
+  background: var(--permission-soft);
+}
+.permission-scroll thead th:first-child {
+  left: 0;
+  z-index: var(--permission-sticky-corner);
+}
+.permission-scroll select {
+  width: 160px;
+  padding: var(--space-2, 8px);
+  border: 1px solid var(--permission-control);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--permission-surface);
+  color: var(--permission-text);
+  font: inherit;
+}
+.permission-scroll select[data-level="sem_acesso"] {
+  border-color: var(--permission-danger);
+  background: var(--permission-danger-soft);
+}
+.permission-scroll select[data-level="editor"] {
+  background: var(--permission-info-soft);
+}
+.permission-scroll select[data-level="admin"] {
+  background: var(--permission-success-soft);
+}
+.permission-scroll select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.permission-scroll small {
+  font-size: var(--text-xs, 12px);
+  display: block;
+  margin-top: var(--space-1, 4px);
+  font-weight: normal;
+}
+.permission-changed {
+  color: var(--permission-warning);
+}
+.permission-toolbar {
+  display: flex;
+  gap: var(--space-3, 12px);
+  align-items: end;
+  flex-wrap: wrap;
+  margin: var(--space-4, 16px) 0;
+}
+.permission-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+  flex: 1;
+  min-width: 220px;
+}
+.permission-toolbar input {
+  min-height: 40px;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border: 1px solid var(--permission-control);
+  border-radius: var(--radius-sm, 8px);
+  font: inherit;
+}
+[data-theme="dark"] .permission-matrix {
+  --permission-danger-soft: var(--soft);
+  --permission-info-soft: var(--soft);
+  --permission-success-soft: var(--soft);
+  --permission-warning: var(--text-primary, #edf4fa);
+}
+.permission-matrix summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: var(--space-3, 12px) 0;
+}
+.permission-matrix [data-pending] li {
+  margin: var(--space-2, 8px) 0;
+  overflow-wrap: anywhere;
+}
+.permission-matrix :focus-visible {
+  outline: 3px solid var(--permission-brand);
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .permission-scroll tbody th {
+    min-width: 160px;
+    max-width: 180px;
+  }
+  .permission-toolbar .btn {
+    min-height: 44px;
+  }
+}
