@@ -50,7 +50,7 @@ describe("health details runtime fix", () => {
     "Editais 2026" (ano fixo no botão) virou o seletor Ano, com os anos dos
     próprios editais; "Em andamento" virou uma opção do seletor Situação.
   */
-  it("seletor Ano fica no topo e seleciona só os editais do ano escolhido", async () => {
+  it("campo Ano fica no painel de filtros e seleciona só os editais do ano", async () => {
     const dom = dashboardDom();
     dom.window.toggleSelectFilter = vi.fn();
     dom.window.toggleCriticalRiskFilter = vi.fn();
@@ -64,7 +64,8 @@ describe("health details runtime fix", () => {
     const ano = doc.getElementById("healthFiltroAno");
 
     expect(toolbar).not.toBeNull();
-    expect(ano?.closest(".filter-head")).not.toBeNull();
+    expect(ano?.closest("#filterBody")).not.toBeNull();
+    expect(doc.getElementById("healthFiltroSituacao")).toBeNull();
     expect([...ano.options].map((o) => o.value)).toEqual(["", "2026", "2025"]);
     expect(ano.value).toBe("2025");
     expect(doc.getElementById("healthOnly2026Btn").hidden).toBe(true);
@@ -89,7 +90,7 @@ describe("health details runtime fix", () => {
     expect(marcados()).toEqual([]);
   });
 
-  it("mostra contador no botão de filtros e marca a situação em andamento", () => {
+  it("mostra contador no botão de filtros quando há seleção ativa", () => {
     const dom = dashboardDom();
     const status = dom.window.document.querySelector(
       'input[data-filter-field="status"]',
@@ -101,11 +102,6 @@ describe("health details runtime fix", () => {
     expect(
       dom.window.document.getElementById("filterToggleBtn").textContent,
     ).toContain("1");
-    expect(
-      dom.window.document
-        .querySelector('#healthFiltroSituacao [data-situacao="andamento"]')
-        .getAttribute("aria-checked"),
-    ).toBe("true");
   });
 
   it("aplica placeholder de cronograma imediatamente e o remove quando chega o dado real", () => {

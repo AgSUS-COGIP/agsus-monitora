@@ -2,9 +2,6 @@ import {
   anoDaSelecao,
   anosDosEditais,
   editaisDoAno,
-  SITUACOES,
-  situacaoDaSelecao,
-  statusDaSituacao,
 } from "../lib/atalhos-de-filtro.js";
 import { enhanceHealthDetailsTable } from "./health-details-ux.js";
 
@@ -208,101 +205,61 @@ export function syncFilterToolbar(
 }
 
 /*
-  Ano ▾ e Situação (Todos · Em andamento · Encerrados), no lugar dos botões
-  "Editais 2026", "Em andamento", "Risco médio/alto" e "Ocultar encerrados".
-  Lógica em src/lib/atalhos-de-filtro.js; aqui só o DOM e os filtros do app.
+  Campo Ano dentro do painel de filtros ("Mostrar filtros"), o primeiro, com os
+  anos lidos dos próprios editais (src/lib/atalhos-de-filtro.js). Substitui os
+  botões "Editais 2026", "Em andamento", "Risco médio/alto" e "Ocultar
+  encerrados" que ficavam no topo do card.
 */
-function montarAtalhos(windowRef, documentRef, grupo) {
-  if (!$(documentRef, "healthFiltroAno")) {
-    const campo = documentRef.createElement("label");
-    campo.className = "health-filtro-ano";
-    campo.innerHTML =
-      '<span>Ano</span><select id="healthFiltroAno" aria-label="Ano do edital"></select>';
-    campo.querySelector("select").addEventListener("change", (evento) => {
-      const ano = evento.target.value;
-      if (ano === "personalizado") return;
-      const editais = allFilterValues(documentRef, "edital");
-      state.only2026 = false;
-      state.previousEditalSelection = [];
-      setFilterFieldSelection(
-        documentRef,
-        "edital",
-        ano ? editaisDoAno(editais, ano) : [],
-        windowRef,
-      );
-      windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    });
-    grupo.appendChild(campo);
-  }
+function montarCampoAno(windowRef, documentRef) {
+  const corpo = $(documentRef, "filterBody");
+  if (!corpo || $(documentRef, "healthFiltroAno")) return;
+  const campo = documentRef.createElement("div");
+  campo.className = "health-filter-field health-filtro-ano";
+  campo.innerHTML =
+    '<label for="healthFiltroAno"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span>Ano</span></label>' +
+    '<select id="healthFiltroAno"></select>';
+  campo.querySelector("select").addEventListener("change", (evento) => {
+    const ano = evento.target.value;
+    if (ano === "personalizado") return;
+    state.only2026 = false;
+    state.previousEditalSelection = [];
+    setFilterFieldSelection(
+      documentRef,
+      "edital",
+      ano ? editaisDoAno(allFilterValues(documentRef, "edital"), ano) : [],
+      windowRef,
+    );
+    windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
+  });
+  corpo.prepend(campo);
 
-  if (!$(documentRef, "healthFiltroSituacao")) {
-    const seletor = documentRef.createElement("div");
-    seletor.id = "healthFiltroSituacao";
-    seletor.className = "health-filtro-situacao";
-    seletor.setAttribute("role", "radiogroup");
-    seletor.setAttribute("aria-label", "Situação do processo");
-    seletor.innerHTML = SITUACOES.map(
-      ({ id, rotulo }) =>
-        `<button type="button" role="radio" aria-checked="false" data-situacao="${id}">${rotulo}</button>`,
-    ).join("");
-    seletor.addEventListener("click", (evento) => {
-      const botao = evento.target.closest("[data-situacao]");
-      if (!botao) return;
-      // "Ocultar encerrados" deixou de ter botão: se estava ligado, desliga,
-      // senão ninguém mais conseguiria tirar esse filtro.
-      if (isHideClosedActive(documentRef)) windowRef?.toggleHideClosed?.();
-      const alvo = statusDaSituacao(
-        botao.dataset.situacao,
-        allFilterValues(documentRef, "status"),
-      );
-      setFilterFieldSelection(documentRef, "status", alvo, windowRef);
-      windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    });
-    grupo.appendChild(seletor);
-  }
-
-  // Preferência antiga de "Ocultar encerrados" salva no navegador, sem botão.
+  // "Ocultar encerrados" não tem mais botão: preferência antiga salva no
+  // navegador seria um filtro que ninguém consegue desligar.
   if (isHideClosedActive(documentRef)) windowRef?.toggleHideClosed?.();
 }
 
 function sincronizarAtalhos(documentRef) {
   const select = $(documentRef, "healthFiltroAno");
-  if (select) {
-    const editais = allFilterValues(documentRef, "edital");
-    const atual = anoDaSelecao(
-      selectedFilterValues(documentRef, "edital"),
-      editais,
-    );
-    const opcoes = [
-      '<option value="">Todos os anos</option>',
-      ...anosDosEditais(editais).map(
-        (ano) => `<option value="${ano}">${ano}</option>`,
-      ),
-      atual === "personalizado"
-        ? '<option value="personalizado" disabled>Seleção própria</option>'
-        : "",
-    ].join("");
-    if (select.dataset.opcoes !== opcoes) {
-      select.innerHTML = opcoes;
-      select.dataset.opcoes = opcoes;
-    }
-    select.value = atual;
-    select.closest("label")?.classList.toggle("is-active", atual !== "");
+  if (!select) return;
+  const editais = allFilterValues(documentRef, "edital");
+  const atual = anoDaSelecao(
+    selectedFilterValues(documentRef, "edital"),
+    editais,
+  );
+  const opcoes = [
+    '<option value="">Todos os anos</option>',
+    ...anosDosEditais(editais).map(
+      (ano) => `<option value="${ano}">${ano}</option>`,
+    ),
+    atual === "personalizado"
+      ? '<option value="personalizado" disabled>Seleção própria</option>'
+      : "",
+  ].join("");
+  if (select.dataset.opcoes !== opcoes) {
+    select.innerHTML = opcoes;
+    select.dataset.opcoes = opcoes;
   }
-
-  const seletor = $(documentRef, "healthFiltroSituacao");
-  if (seletor) {
-    const situacao = situacaoDaSelecao(
-      selectedFilterValues(documentRef, "status"),
-      allFilterValues(documentRef, "status"),
-    );
-    seletor.querySelectorAll("[data-situacao]").forEach((botao) => {
-      botao.setAttribute(
-        "aria-checked",
-        String(botao.dataset.situacao === situacao),
-      );
-    });
-  }
+  select.value = atual;
 }
 
 export function ensureTopFilterToolbar(
@@ -325,14 +282,7 @@ export function ensureTopFilterToolbar(
     head.appendChild(actions);
   }
 
-  let quickGroup = actions.querySelector(".health-filter-quick-group");
-  if (!quickGroup) {
-    quickGroup = documentRef.createElement("div");
-    quickGroup.className = "health-filter-quick-group";
-    actions.appendChild(quickGroup);
-  }
-
-  montarAtalhos(windowRef, documentRef, quickGroup);
+  montarCampoAno(windowRef, documentRef);
 
   let clear = $(documentRef, "healthQuickClearBtn");
   if (!clear) {

@@ -1,20 +1,11 @@
 /*
-  Atalhos de filtro da Saúde Indígena: Ano e Situação.
+  Campo Ano do painel de filtros da Saúde Indígena.
 
-  Substituem quatro botões ("Editais 2026", "Em andamento", "Risco médio/alto",
-  "Ocultar encerrados"): o ano estava fixo no botão e envelheceria em janeiro;
-  "Em andamento" e "Ocultar encerrados" filtravam a mesma coisa por caminhos
-  diferentes; e o risco já tem o KPI "Processos Críticos" e o filtro de Risco.
+  Substitui o botão "Editais 2026", que tinha o ano fixo e envelheceria em
+  janeiro: os anos saem dos próprios números de edital ("11/2026").
 
   Tudo aqui é sobre listas de valores dos filtros (texto), sem DOM.
 */
-
-const normalizar = (valor) =>
-  String(valor ?? "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
 
 /** "11/2026", "Edital 3/2025 - DSEI X" → 2026, 2025. Sem ano → null. */
 export function anoDoEdital(edital) {
@@ -44,31 +35,4 @@ export function anoDaSelecao(selecionados, editais) {
     if (doAno.length && mesmoConjunto(selecionados, doAno)) return String(ano);
   }
   return "personalizado";
-}
-
-export const SITUACOES = Object.freeze([
-  { id: "todos", rotulo: "Todos" },
-  { id: "andamento", rotulo: "Em andamento" },
-  { id: "encerrados", rotulo: "Encerrados" },
-]);
-
-const ehAndamento = (status) => normalizar(status).includes("andamento");
-const ehEncerrado = (status) =>
-  /conclu|cancel|encerr|finaliz/.test(normalizar(status));
-
-/** Valores de Status que cada situação seleciona. "todos" = nenhum filtro. */
-export function statusDaSituacao(situacao, todosOsStatus) {
-  if (situacao === "andamento") return todosOsStatus.filter(ehAndamento);
-  if (situacao === "encerrados") return todosOsStatus.filter(ehEncerrado);
-  return [];
-}
-
-/** Que situação a seleção de Status representa; "" quando é outra combinação. */
-export function situacaoDaSelecao(selecionados, todosOsStatus) {
-  if (!selecionados.length) return "todos";
-  for (const { id } of SITUACOES.slice(1)) {
-    const alvo = statusDaSituacao(id, todosOsStatus);
-    if (alvo.length && mesmoConjunto(selecionados, alvo)) return id;
-  }
-  return "";
 }
