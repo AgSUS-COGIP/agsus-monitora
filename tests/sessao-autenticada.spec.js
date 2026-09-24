@@ -68,7 +68,9 @@ test.describe("sessão autenticada", () => {
     page,
   }) => {
     await abrirApp(page);
-    await page.locator("#logoutBtn, .side-logout").first().click();
+    await page.locator(".sidebar .side-logout").click();
+    // O Sair pede confirmação (nielsen-shell-ux.js) antes de encerrar.
+    await page.locator("[data-shell-logout-confirm]").click();
     await expect(page.locator("#loginScreen")).toBeVisible({ timeout: 30_000 });
     const guardado = await page.evaluate(
       (chave) => localStorage.getItem(chave),
@@ -132,11 +134,12 @@ test.describe("sessão autenticada", () => {
     await page.route("**/rest/v1/**", (rota) => rota.abort("failed"));
     await page.route("**/auth/v1/token**", (rota) => rota.abort("failed"));
 
-    // Uma navegação interna basta para disparar leituras contra o banco.
+    // Uma navegação interna basta para disparar leituras contra o banco. Só um
+    // item visível: as páginas de uma área fechada do menu ficam ocultas.
     await page
-      .locator("#navMonitoramento, [data-view]")
+      .locator("#nav [data-view]:visible")
       .first()
-      .click({ trial: false })
+      .click({ timeout: 5_000 })
       .catch(() => {});
     await page.waitForTimeout(5_000);
 

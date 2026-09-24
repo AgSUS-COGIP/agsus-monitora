@@ -1,5 +1,3 @@
-import { sanitizeHtml } from "../lib/sanitize.js";
-
 /*
   Configurações organizada em seções, como no SIGAV.
 
@@ -157,21 +155,6 @@ const escapar = (valor) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-function htmlDoSubmenu() {
-  const itens = SECOES.map(
-    (s) =>
-      `<button type="button" class="config-submenu__item" data-secao="${s.id}">` +
-      `<i class="fa-solid ${escapar(s.icone)}" aria-hidden="true"></i>` +
-      `<span>${escapar(s.rotulo)}</span></button>`,
-  ).join("");
-
-  return (
-    `<div id="configSubmenu" class="config-submenu" role="group" aria-label="Configurações" hidden>` +
-    itens +
-    `</div>`
-  );
-}
-
 function criarCartaoDaSecao(documento, secao) {
   const artigo = documento.createElement("article");
   artigo.className = "config-secao";
@@ -223,64 +206,26 @@ function selecionarSubgrupo(documento, secao) {
   for (const artigo of pagina.querySelectorAll(".config-secao")) {
     artigo.hidden = artigo.dataset.secao !== secao;
   }
-  for (const botao of documento.querySelectorAll(".config-submenu__item")) {
-    const ativo = botao.dataset.secao === secao;
-    botao.classList.toggle("is-active", ativo);
-    botao.classList.toggle("active", ativo);
-    if (ativo) botao.setAttribute("aria-current", "page");
-    else botao.removeAttribute("aria-current");
-  }
 }
 
-export function sincronizarSubmenuConfiguracoes(documento, view) {
-  const botao = documento.querySelector('[data-view="config"]');
-  const submenu = documento.getElementById("configSubmenu");
-  if (!botao || !submenu) return;
-  submenu.hidden = view !== "config";
-  botao.setAttribute("aria-expanded", String(!submenu.hidden));
-}
-
-export function montarSubmenuConfiguracoes(
-  documento,
-  { navegar, alternarBarra },
-) {
-  const botao = documento.querySelector('[data-view="config"]');
-  if (!botao || documento.getElementById("configSubmenu")) return;
-  botao.insertAdjacentHTML("afterend", sanitizeHtml(htmlDoSubmenu()));
-  const submenu = documento.getElementById("configSubmenu");
-  botao.setAttribute("aria-controls", "configSubmenu");
-  botao.setAttribute("aria-expanded", "false");
-  botao.removeAttribute("onclick");
-  const seta = documento.createElement("span");
-  seta.className = "config-submenu-seta";
-  seta.setAttribute("aria-hidden", "true");
-  seta.textContent = "▾";
-  botao.append(seta);
-  botao.addEventListener("click", () => {
-    const recolhida = documento.body.classList.contains("sidebar-collapsed");
-    const pagina = documento.getElementById("page-config");
-    const ativa = pagina?.classList.contains("active");
-    const abrir = !ativa || submenu.hidden || recolhida;
-    if (!ativa) navegar("config");
-    if (!pagina?.classList.contains("active")) return;
-    if (recolhida) alternarBarra();
-    submenu.hidden = !abrir;
-    botao.setAttribute("aria-expanded", String(abrir));
-    if (abrir) submenu.scrollIntoView?.({ block: "nearest" });
-  });
-  submenu.addEventListener("click", (event) => {
-    const item = event.target.closest("[data-secao]");
-    if (!item) return;
-    selecionarSubgrupo(documento, item.dataset.secao);
-    if (item.dataset.secao === "acessos") {
-      void documento.defaultView?.loadAccessManagement?.();
-    }
-    if (documento.body.classList.contains("sidebar-open")) alternarBarra();
-  });
-  selecionarSubgrupo(
-    documento,
-    documento.getElementById("page-config")?.dataset.subgrupo || "marca",
+/*
+  As seções são as páginas da área Administração do menu lateral
+  (`src/lib/menu-lateral.js`). O menu navega até Configurações e chama esta
+  função com a seção escolhida; quem marca o item ativo é o próprio menu.
+*/
+export function secaoAtualDeConfiguracao(documento = globalThis.document) {
+  return (
+    documento?.getElementById?.("page-config")?.dataset.subgrupo || SECOES[0].id
   );
+}
+
+export function abrirSecaoDeConfiguracao(documento, secao) {
+  if (!SECOES.some((s) => s.id === secao)) return false;
+  selecionarSubgrupo(documento, secao);
+  if (secao === "acessos") {
+    void documento.defaultView?.loadAccessManagement?.();
+  }
+  return true;
 }
 
 export function organizarConfiguracoesEmSecoes(

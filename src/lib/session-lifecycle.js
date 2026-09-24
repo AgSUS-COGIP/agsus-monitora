@@ -118,7 +118,7 @@ function ensureSessionUi() {
         background: rgba(255, 255, 255, .96);
         color: #0f172a;
         box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
-        font: 700 12px/1.2 Inter, system-ui, sans-serif;
+        font: 700 12px/1.2 var(--font-sans, "Geist", system-ui, sans-serif);
         backdrop-filter: blur(10px);
       }
       #agsusSessionTimer[hidden] { display: none !important; }
@@ -136,7 +136,7 @@ function ensureSessionUi() {
         position: fixed;
         top: 16px;
         left: 50%;
-        z-index: 10001;
+        z-index: var(--z-toast, 20050);
         width: min(92vw, 620px);
         transform: translateX(-50%);
         padding: 12px 16px;
@@ -145,7 +145,7 @@ function ensureSessionUi() {
         color: #78350f;
         border: 1px solid #f59e0b;
         box-shadow: 0 12px 32px rgba(15, 23, 42, .2);
-        font: 700 14px/1.4 Inter, system-ui, sans-serif;
+        font: 700 14px/1.4 var(--font-sans, "Geist", system-ui, sans-serif);
         text-align: center;
       }
       #agsusSessionNotice[data-level="critical"] {

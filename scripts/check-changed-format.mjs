@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { extname } from "node:path";
 
 const BASE_REF = process.env.QUALITY_BASE_REF || "origin/main";
-const SUPPORTED_EXTENSIONS = new Set([".js", ".mjs", ".css", ".html"]);
+const SUPPORTED_EXTENSIONS = new Set([".js", ".jsx", ".mjs", ".css", ".html"]);
 const EXCLUDED = new Set([
   "index.html",
   "analises.html",

@@ -2,7 +2,7 @@
   position: fixed;
   left: 50%;
   bottom: calc(20px + env(safe-area-inset-bottom));
-  z-index: 1290;
+  z-index: var(--z-toast);
   display: flex;
   width: min(560px, calc(100vw - 40px));
   gap: 16px;

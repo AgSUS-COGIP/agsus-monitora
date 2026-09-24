@@ -24,8 +24,6 @@
   --soft: #f6f9fc;
   --shadow: 0 4px 14px rgba(15, 35, 60, 0.06);
   --radius: 18px;
-  --sidebar: 224px;
-  --sidebar-mini: 58px;
 
   /* Camadas acima do shell. O cabeçalho (.app .top) usa z-index 10010 e
      isola o próprio contexto de empilhamento, então todo overlay precisa
@@ -40,6 +38,14 @@
   --z-overlay: 20000;
   --z-loader: 20025;
   --z-toast: 20050;
+
+  /* Abaixo dos overlays: o cabeçalho, a barra lateral logo acima dele (a alça
+     de recolher e o painel flutuante do menu passam por cima do cabeçalho) e
+     os popovers do cabeçalho. Quem precisa ficar acima da barra usa um dos
+     três de cima — busca, link de pular, aviso de sessão, faixa offline. */
+  --z-header: 10010;
+  --z-sidebar: 10020;
+  --z-popover: 10040;
 }
 
 *,
@@ -53,7 +59,7 @@ body {
 }
 body {
   margin: 0;
-  font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: var(--font-sans, "Geist", "Segoe UI", Roboto, Arial, sans-serif);
   font-weight: 500;
   color: #10243e;
   background: var(--bg);
@@ -85,7 +91,7 @@ body {
   position: absolute;
   left: 8px;
   top: -44px;
-  z-index: 9999;
+  z-index: var(--z-toast);
   background: var(--agsus-azul);
   color: #fff;
   padding: 10px 16px;
@@ -748,21 +754,29 @@ body.app-fullscreen-fallback .app {
 body.app-fullscreen-fallback .toast-box {
   z-index: var(--z-toast);
 }
-body.app-fullscreen-fallback .global-side-toggle {
-  top: 16px;
-}
 
-@media (min-width: 1481px) {
+/*
+  A barra é fixa em todo o desktop, acima do corte da gaveta (900px, o mesmo de
+  `usar-ambiente.js`, da barra em React). Antes só valia acima de 1480px: entre
+  901 e 1480 ela era item de grid e esticava até a altura da página, levando o
+  rodapé — e o "Sair" — para o fim do documento em qualquer página longa.
+
+  Ela fica acima do cabeçalho (`--z-sidebar`) e não recorta nada
+  (`overflow: visible`): a alça de recolher sai meio para fora da borda, e
+  quem rola é só `.side-navigation`. Em janela muito baixa, onde nem marca e
+  rodapé cabem, a barra inteira volta a rolar.
+*/
+@media (min-width: 901px) {
   .sidebar {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
+    z-index: var(--z-sidebar);
     width: var(--sidebar);
     height: 100vh;
     height: 100dvh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: visible;
   }
   body.sidebar-collapsed .sidebar {
     width: var(--sidebar-mini);
@@ -772,189 +786,13 @@ body.app-fullscreen-fallback .global-side-toggle {
     min-width: 0;
   }
 }
-
-.sidebar {
-  background: linear-gradient(
-    180deg,
-    #032f5a 0%,
-    var(--navy) 58%,
-    #022947 100%
-  );
-  color: #fff;
-  min-height: 100vh;
-  padding: 10px 8px 12px;
-  z-index: 20;
-  box-shadow: 10px 0 24px rgba(0, 36, 72, 0.16);
-  overflow-x: hidden;
-}
-.side-brand {
-  min-height: 172px;
-  margin: 0 0 12px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: 0;
-  overflow: visible;
-}
-.side-logo {
-  width: 168px;
-  height: 168px;
-  margin: 0 auto;
-  object-fit: contain;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.18));
-}
-body.sidebar-collapsed .side-brand,
-body.sidebar-locked .side-brand {
-  min-height: 48px;
-  margin-bottom: 8px;
-}
-body.sidebar-collapsed .side-logo,
-body.sidebar-locked .side-logo {
-  width: 44px;
-  height: 44px;
-}
-/*
-  `.nav-text` saiu desta lista: quem o recolhe agora é `platform-shell.css`, com
-  `opacity`/`transform`, para que o rótulo possa ser animado. `display: none` não
-  interpola e venceria a transição, deixando o texto piscar para fora no
-  primeiro frame.
-*/
-body.sidebar-collapsed .side-brand h2,
-body.sidebar-collapsed .side-brand small,
-body.sidebar-collapsed .side-user,
-body.sidebar-collapsed .side-version,
-body.sidebar-collapsed .side-logout span,
-body.sidebar-locked .side-brand h2,
-body.sidebar-locked .side-brand small,
-body.sidebar-locked .side-user,
-body.sidebar-locked .side-version,
-body.sidebar-locked .side-logout span {
-  display: none;
+@media (min-width: 901px) and (max-height: 420px) {
+  .sidebar {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }
 
-.nav {
-  display: grid;
-  gap: 6px;
-}
-.nav button {
-  min-height: 46px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #d7e8ff;
-  border-radius: 10px;
-  padding: 0 10px;
-  text-align: left;
-  font: inherit;
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 0;
-  cursor: pointer;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease;
-}
-.nav button.active,
-.nav button:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border-color: rgba(0, 212, 255, 0.22);
-}
-body.sidebar-collapsed .nav,
-body.sidebar-locked .nav {
-  grid-template-columns: 1fr;
-}
-body.sidebar-collapsed .nav button,
-body.sidebar-locked .nav button {
-  justify-content: center;
-  padding: 0;
-  min-height: 44px;
-}
-.nav-ico {
-  width: 22px;
-  text-align: center;
-  font-size: 16px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  line-height: 1;
-}
-.nav-ico i {
-  font-size: 16px;
-  width: 18px;
-  text-align: center;
-}
-.side-user,
-.side-version {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  font-size: 12px;
-  color: #c7ddf7;
-}
-.side-user b,
-.side-version b {
-  color: #fff;
-  display: block;
-  word-break: break-all;
-  margin-top: 7px;
-}
-.side-logout {
-  width: 100%;
-  margin-top: 10px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  color: #fff;
-  border-radius: 10px;
-  padding: 10px 8px;
-  cursor: pointer;
-  font-weight: 900;
-}
-
-.global-side-toggle {
-  position: fixed;
-  top: 82px;
-  left: calc(var(--sidebar) - 15px);
-  z-index: 120;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 212, 255, 0.42);
-  background: rgba(255, 255, 255, 0.82);
-  color: #005b9f;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(0, 36, 72, 0.16);
-  backdrop-filter: blur(10px);
-  transition: left 0.2s ease;
-}
-.global-side-toggle:hover {
-  background: #ffffff;
-}
-.global-side-toggle i {
-  font-size: 11px;
-  transition: transform 0.18s ease;
-}
-body:not(.sidebar-collapsed) .global-side-toggle i {
-  transform: rotate(180deg);
-}
-body.sidebar-collapsed .global-side-toggle {
-  left: calc(var(--sidebar-mini) - 15px);
-}
-body.external-clean .global-side-toggle {
-  top: 16px;
-}
-body.sidebar-locked .global-side-toggle {
-  left: calc(var(--sidebar-mini) - 15px);
-}
 /* Barra superior fixa para sair de um painel externo e voltar ao sistema.
    Em modo external-clean a sidebar/topo somem; esta barra RESERVA espaço próprio
    acima do painel (o painel é empurrado para baixo), então o botão nunca cobre o
@@ -1293,7 +1131,7 @@ body.external-clean #externalReturnBar {
 .search-modal {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--z-overlay);
   display: none;
   place-items: start center;
   padding-top: 12vh;
@@ -1480,14 +1318,6 @@ body.external-clean #externalReturnBar {
 [data-theme="dark"] .app {
   color: #e2eaf4;
 }
-[data-theme="dark"] .app .sidebar {
-  background: linear-gradient(
-    180deg,
-    #0a1628 0%,
-    #0d1f3c 58%,
-    #0a1628 100%
-  ) !important;
-}
 [data-theme="dark"] .app .top {
   background: #111f36 !important;
   border-color: #1e3050 !important;
@@ -1576,9 +1406,6 @@ body.external-clean #externalReturnBar {
   border-color: #1e3050 !important;
   color: #b8d0e8 !important;
 }
-[data-theme="dark"] .app .side-logout {
-  border-color: rgba(125, 211, 252, 0.4) !important;
-}
 [data-theme="dark"] .app #moreActionsMenu {
   background: #17253d !important;
   border-color: #1e3050 !important;
@@ -1614,16 +1441,6 @@ body.external-clean #externalReturnBar {
   background: rgba(23, 37, 61, 0.92) !important;
   border-color: #1e3050 !important;
   color: #b8d0e8 !important;
-}
-/* Sidebar: perfil do usuário */
-[data-theme="dark"] .app .side-user,
-[data-theme="dark"] .app .side-version {
-  border-color: #1e3050 !important;
-  color: #7a9bbf !important;
-}
-[data-theme="dark"] .app .side-user b,
-[data-theme="dark"] .app .side-version b {
-  color: #d0e4f5 !important;
 }
 /* Chips no dark mode */
 [data-theme="dark"] .app .chip.gray {
@@ -2974,9 +2791,6 @@ body.system-fullscreen-mode.external-clean .external-frame,
   min-height: 100vh !important;
   border-radius: 0 !important;
 }
-body.system-fullscreen-mode.external-clean .global-side-toggle {
-  top: 12px;
-}
 /* Em tela cheia a barra some e o painel ocupa 100% (sem o recuo de 46px). */
 body.system-fullscreen-mode #externalReturnBar {
   display: none !important;
@@ -3000,20 +2814,6 @@ body.sidebar-locked .app {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-}
-body.sidebar-locked .sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: var(--sidebar-mini);
-  height: 100vh;
-  height: 100dvh;
-  z-index: 60;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-left: 6px;
-  padding-right: 6px;
 }
 body.sidebar-locked .main {
   grid-column: 2;
@@ -3055,18 +2855,11 @@ body.sidebar-locked #page-dashboard .details-table {
   .readonly-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .side-logo {
-    width: 142px;
-    height: 142px;
-  }
   .access-monitor-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .access-monitor-layout {
     grid-template-columns: 1fr;
-  }
-  .side-brand {
-    min-height: 146px;
   }
 }
 @media (max-width: 980px) {
@@ -3106,19 +2899,6 @@ body.sidebar-locked #page-dashboard .details-table {
   .hamb {
     display: grid !important;
   }
-  .sidebar {
-    position: relative;
-    min-height: auto;
-  }
-  .side-brand {
-    min-height: 76px;
-    justify-content: start;
-  }
-  .side-logo {
-    width: 72px;
-    height: 72px;
-    margin: 0;
-  }
   .kpis-main,
   .kpis-funil {
     grid-template-columns: 1fr 1fr;
@@ -3130,10 +2910,6 @@ body.sidebar-locked #page-dashboard .details-table {
   }
   .actions {
     justify-content: flex-start;
-  }
-  .global-side-toggle {
-    top: 14px;
-    left: 14px !important;
   }
   .map-card,
   #map {
@@ -3164,13 +2940,6 @@ body.sidebar-locked #page-dashboard .details-table {
   }
 }
 @media (max-width: 560px) {
-  body.sidebar-locked .side-brand {
-    min-height: 88px;
-  }
-  body.sidebar-locked .side-logo {
-    width: 58px;
-    height: 58px;
-  }
   body.sidebar-locked .page-title h1 {
     font-size: 20px;
   }
@@ -3188,8 +2957,7 @@ body.sidebar-locked #page-dashboard .details-table {
   }
 }
 @media (max-width: 540px) {
-  .kpis-main,
-  .nav {
+  .kpis-main {
     grid-template-columns: 1fr;
   }
   .page-title h1 {

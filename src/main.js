@@ -8,6 +8,7 @@ import { installFrontendPerformanceMonitor } from "./lib/frontend-performance-mo
 import { installCspReportMonitor } from "./lib/csp-report-monitor.js";
 import "./lib/chartjs-global.js";
 import "./lib/supabase-legacy-bridge.js";
+import "./styles/tokens.css";
 import "./styles/visual-polish.css";
 import "./styles/arara-guide.css";
 import "./styles/nina-conversation.css";
@@ -46,7 +47,7 @@ import "./styles/system-ui-fixes.css";
 import "./styles/nielsen-shell-ux.css";
 import "./styles/post-152-regression-fixes.css";
 import "./styles/post157-interface-tuning.css";
-import "./styles/colapsar-a-sidebar.css";
+import "./styles/barra-lateral.css";
 import "./styles/lista-aprovados.css";
 import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
@@ -91,7 +92,7 @@ import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
-import { initColapsarDaSidebar } from "./modules/colapsar-a-sidebar.js";
+import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
 import { createListaAprovadosController } from "./modules/lista-aprovados.js";
 import { createCalendarioEditaisController } from "./modules/calendario-editais.js";
 
@@ -104,6 +105,11 @@ installSessionLifecycle();
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
+/*
+  A barra lateral é React e monta primeiro, de forma síncrona: o branding, o
+  legado e o menu do celular a encontram no DOM quando rodam.
+*/
+montarBarraLateral();
 initLoadingExperience();
 initVisualPolish();
 initAraraSpeakingEffects();
@@ -142,7 +148,6 @@ initPwaLifecycle();
 initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
-initColapsarDaSidebar();
 
 window.aprovadosController = createListaAprovadosController({
   toast: window.monitoraToast,

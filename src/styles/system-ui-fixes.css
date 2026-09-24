@@ -17,8 +17,9 @@
     display: none !important;
   }
 
+  /* Folga para a metade da alça de recolher, que sai 12px da barra. */
   .app .top {
-    padding-left: 14px;
+    padding-left: var(--space-6);
   }
 }
 
@@ -124,9 +125,4 @@ body.mobile-app .app .top {
   box-shadow: none !important;
 }
 
-.app .side-logo,
-body.sidebar-collapsed .app .side-logo,
-body.sidebar-locked .app .side-logo {
-  width: 40px;
-  height: 40px;
-}
+/* O tamanho da logo (32px) é de platform-shell.css, dono da barra. */

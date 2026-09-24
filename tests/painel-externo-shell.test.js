@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 /*
   Este ficheiro cobria também o botão de recolher, que no #176 só existia dentro
   do painel externo. O botão passou a ser o controle único do sistema inteiro, e
-  a cobertura dele mudou de casa: `tests/colapsar-a-sidebar.test.js`. Aqui ficam
+  a cobertura dele mudou de casa: `tests/componentes/barra-lateral.test.js`. Aqui ficam
   as barras de rolagem, que continuam sendo um problema só do painel externo.
 */
 const css = readFileSync("src/styles/platform-shell.css", "utf8");

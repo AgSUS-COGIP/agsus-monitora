@@ -1,0 +1,59 @@
+/*
+  Tokens do MONITORA (DESIGN.md, seção 3).
+
+  Importado antes de qualquer outro CSS em `src/main.js` e em
+  `src/analises/main.js`. O `app.css` entra antes, pelo `<link>` do
+  `index.html`, mas isso não pesa: `var()` resolve no valor computado, com a
+  cascata inteira já montada.
+
+  Só entra aqui o que não muda nada do que já existe. Nenhum destes nomes era
+  definido antes, e as reservas que o código já escrevia (`var(--space-2,
+  8px)`, `var(--radius-sm, 8px)`…) têm os mesmos valores. As cores de texto e
+  de superfície (`--text-primary`, `--surface-card`…) ficam de fora: as
+  reservas espalhadas pelo código divergem entre si, e defini-las agora
+  repintaria componentes que ninguém está revisando.
+
+  As camadas (`--z-*`) continuam em `app.css`, junto das que já existiam.
+*/
+:root {
+  /* Tipografia: Geist, carregada como fonte variável (um arquivo, 400–900). */
+  --font-sans: "Geist", "Segoe UI", Roboto, Arial, sans-serif;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-base: 14px;
+
+  /* Espaçamento, base de 4px. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Raio. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Sombra de popover, painel flutuante e gaveta. */
+  --shadow-overlay: 0 24px 64px -16px rgba(15, 35, 60, 0.32);
+
+  /* Movimento: os valores do colapso da barra lateral, generalizados. */
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /*
+    Texto sobre fundo escuro. Sem variação no tema escuro: quem usa são
+    superfícies que continuam escuras nos dois temas (pílula de dica, barra
+    lateral com cor configurada escura, botão primário).
+  */
+  --text-inverse: #ffffff;
+}
+
+html[data-theme="dark"] {
+  --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+}

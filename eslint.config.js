@@ -23,6 +23,7 @@ export default [
       "api/**/*.js",
       "src/lib/**/*.js",
       "src/modules/**/*.js",
+      "src/componentes/**/*.{js,jsx}",
       "scripts/**/*.mjs",
       "tests/**/*.js",
       "vite.config.js",
@@ -30,6 +31,8 @@ export default [
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
+      // JSX dos componentes React (src/componentes/).
+      parserOptions: { ecmaFeatures: { jsx: true } },
       globals: {
         ...globals.browser,
         ...globals.node,

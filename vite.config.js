@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 import { cp, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,7 +40,8 @@ function copyProgressiveWebAppAssets() {
 }
 
 export default defineConfig({
-  plugins: [createHtmlSecurityPlugin(), copyProgressiveWebAppAssets()],
+  // React entra pela barra lateral (src/componentes/); o resto do front migra aos poucos.
+  plugins: [react(), createHtmlSecurityPlugin(), copyProgressiveWebAppAssets()],
   build: {
     rollupOptions: {
       input: {
@@ -51,6 +53,11 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
           if (id.includes("@supabase")) return "vendor-supabase";
+          // Só a página principal usa React (a barra lateral); Análises não baixa.
+          // O Vite normaliza o id com "/", também no Windows.
+          if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
+            return "vendor-react";
+          }
           if (id.includes("chart.js")) return "vendor-charts";
           if (id.includes("echarts")) return "vendor-echarts";
           if (id.includes("pdfjs-dist") || id.includes("tesseract.js")) {

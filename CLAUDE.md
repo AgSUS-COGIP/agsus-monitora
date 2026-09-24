@@ -1,8 +1,9 @@
 # MONITORA (`agsus-monitora/`)
 
 App de monitoramento: mapas da saúde indígena, editais, análises e lista de aprovados.
-Vite + JavaScript modular (sem framework) + Supabase (RPC) + servidor web em TypeScript (`server/`).
-Front em JavaScript, sem React; só o servidor é TypeScript. **Português** em nomes de arquivo, funções e commits.
+Vite + JavaScript modular + React (migração em andamento, começou pela barra lateral) + Supabase
+(RPC) + servidor web em TypeScript (`server/`). Front em JavaScript — JSX nos componentes React de
+`src/componentes/`; só o servidor é TypeScript. **Português** em nomes de arquivo, funções e commits.
 
 Cada diretório relevante tem o próprio `CLAUDE.md`. Leia o do diretório onde vai
 trabalhar; **não rode `find`/`ls`/`tree` para descobrir a estrutura** — ela está aqui.
@@ -16,6 +17,7 @@ auth/callback.html      callback OAuth (JS em src/auth/callback.js)
 DESIGN.md               guia de interface: tokens, componentes, contraste, plano de migração
 api/                    funções serverless Vercel (proxy FUNAI, AYA)          → api/CLAUDE.md
 src/lib/                lógica pura e testável                                → src/lib/CLAUDE.md
+src/componentes/        componentes React (hoje: a barra lateral)             → src/componentes/CLAUDE.md
 src/modules/            features de UI, 1 arquivo por feature                 → src/modules/CLAUDE.md
 src/styles/             CSS do app principal (ordem de import em main.js)     → src/styles/CLAUDE.md
 src/analises/           app de análises, JS + CSS próprios                    → src/analises/CLAUDE.md
@@ -44,8 +46,10 @@ bench/                  protótipos HTML isolados (fora do build)
 | Lista de aprovados | `src/lib/lista-aprovados-rules.js`, `aprovados-import.js`, `src/modules/lista-aprovados.js`, `multi-select-busca.js` |
 | Assistente AYA | `src/modules/aya-*.js`, `api/aya.js`, `docs/aya/`, `scripts/aya-*.mjs` |
 | Branding / acesso | `src/lib/access-branding*.js`, `src/modules/sidebar-branding.js`, `access-request-ui.js` |
+| **Barra lateral** (React: áreas, trilho, rodapé) | `src/componentes/barra-lateral/`, `src/lib/menu-lateral.js` (catálogo e estado do flutuante), `src/lib/eventos-da-barra-lateral.js`, `src/styles/barra-lateral.css`; o legado alimenta por `buildNav`/`setActiveNav` |
+| Ícones (Lucide) | `src/modules/icones.js` (registro único) e `src/componentes/icone.jsx`; o resto do app ainda usa Font Awesome |
 | **Planilhas** (links, modelo, bucket) | **`src/lib/planilhas.js`** — único lugar com endereço de planilha |
-| Visual / CSS | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/CLAUDE.md` |
+| Visual / CSS | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/tokens.css`, `src/styles/CLAUDE.md` |
 | Análises | `src/analises/main.js` → `analises-*.js` |
 
 ## Não ler por inteiro (grep -n → sed -n 'A,Bp')
@@ -85,6 +89,9 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - Nenhum `MutationObserver` novo (`check-no-new-mutation-observer.mjs`).
 - HTML dinâmico passa por `src/lib/sanitize.js` / `html-security.js`. Nunca `innerHTML` cru.
 - Feature nova = arquivo novo em `src/modules/` (+ lógica em `src/lib/` + teste). Não crescer `legacy-app.js`.
+- O front está migrando para React, por componente, com pedido. Componente React mora em
+  `src/componentes/` (lógica pura segue em `src/lib/`); o legado fala com ele por estado externo e
+  eventos, nunca pelo DOM dele (ver `src/componentes/CLAUDE.md`).
 - Arquivo gerado se edita **na fonte** e se regenera com o script (ver `scripts/CLAUDE.md`).
 - Link, caminho ou bucket de planilha só em `src/lib/planilhas.js`; o consumidor importa de lá
   (`tests/planilhas.test.js` falha se aparecer em outro arquivo).
@@ -94,5 +101,5 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 ## Não fazer
 
 Não commitar `.env`/`.env.local`. Não editar `dist/`. Não adicionar dependência sem
-necessidade (`check:bundle-size`). Não converter o front para TypeScript/React sem pedido explícito.
+necessidade (`check:bundle-size`). Não converter o front para TypeScript sem pedido explícito.
 **Nada em `public/` que não deva ser publicado**: tudo ali vai para o site (e para a Vercel).

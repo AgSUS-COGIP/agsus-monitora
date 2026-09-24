@@ -2,9 +2,20 @@ import { renderNucleoTable } from "../lib/nucleo-table-render.js";
 import { mountAccessMatrix } from "./matriz-acessos.js";
 import { abrirGestaoConta } from "./gestao-conta.js";
 import {
-  montarSubmenuConfiguracoes,
-  sincronizarSubmenuConfiguracoes,
+  abrirSecaoDeConfiguracao,
+  SECOES,
+  secaoAtualDeConfiguracao,
 } from "./config-secoes.js";
+import {
+  atualizarMenuLateral,
+  marcarItemAtivoNoMenu,
+} from "../componentes/barra-lateral/estado.js";
+import { montarArvoreDoMenu } from "../lib/menu-lateral.js";
+import {
+  avisar,
+  EVENTO_BARRA_ALTERNADA,
+  EVENTO_TEMA_ALTERADO,
+} from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
 import {
   ehResponsavelCores,
@@ -1934,7 +1945,8 @@ function applyConfigToUi() {
     );
     ensureSearchInputTextColor();
   }
-  ["globalSidebarToggle", "hambToggle"].forEach((id) => {
+  // O botão de recolher da barra lateral é React e tem rótulo próprio (recolher/expandir).
+  ["hambToggle"].forEach((id) => {
     setAttr(id, "title", cfgValue("sidebar_toggle_label"));
     setAttr(id, "aria-label", cfgValue("sidebar_toggle_label"));
   });
@@ -2402,71 +2414,33 @@ async function refreshData() {
   }
 }
 
+/*
+  A barra lateral é React (`src/componentes/barra-lateral/`). Aqui só se decide
+  o que o perfil vê; a árvore vai para o estado da barra, que desenha o menu.
+*/
 function buildNav() {
-  const nav = $("nav");
-  const principal = [];
-  const external = [];
-  const administration = [];
-  if (can("ind"))
-    principal.push(
-      navButton("dashboard", cfgValue("page_title"), "fa-chart-line"),
-    );
-  if (can("cores"))
-    principal.push(navButton("nucleo", "Editais", "fa-file-signature"));
-  if (can("calendario") || (!profile?.permissoes && can("cores")))
-    principal.push(navButton("calendario", "Cronograma", "fa-calendar-days"));
-  if (canViewCore(profile))
-    principal.push(
-      navButton("approved", "Lista de Aprovados", "fa-user-check"),
-    );
-  if (can("paineis"))
-    panels
-      .filter(panelAllowed)
-      .sort((a, b) => n(a.ordem) - n(b.ordem))
-      .forEach((p) => {
-        external.push(
-          navButton(
-            "panel:" + p.codigo,
-            p.titulo,
-            p.icone || "fa-arrow-up-right-from-square",
-          ),
-        );
-      });
-  if (can("config"))
-    administration.push(
-      navButton("config", cfgValue("config_nav_title"), "fa-gear"),
-    );
-  const html = [
-    navGroup("Principal", principal),
-    navGroup("Painéis", external),
-    navGroup("Administração", administration),
-  ].join("");
-  nav.innerHTML =
-    html ||
-    `<div class="alert warn">${esc(cfgValue("permissions_empty_text"))}</div>`;
-  montarSubmenuConfiguracoes(document, {
-    navegar: navigate,
-    alternarBarra: toggleSidebar,
-  });
+  const permitidas = {
+    dashboard: can("ind"),
+    nucleo: can("cores"),
+    calendario: can("calendario") || (!profile?.permissoes && can("cores")),
+    approved: canViewCore(profile),
+    config: can("config"),
+  };
+  const paineis = can("paineis")
+    ? panels.filter(panelAllowed).sort((a, b) => n(a.ordem) - n(b.ordem))
+    : [];
+  atualizarMenuLateral(
+    montarArvoreDoMenu({ permitidas, paineis, secoesDeConfiguracao: SECOES }),
+    {
+      aoAbrirSecao: (_view, secao) => abrirSecaoDeConfiguracao(document, secao),
+      textoVazio: cfgValue("permissions_empty_text"),
+    },
+  );
   setActiveNav(currentView);
 }
 
-function navGroup(title, items) {
-  return items.length
-    ? `<section class="nav-group"><p>${esc(title)}</p><div>${items.join("")}</div></section>`
-    : "";
-}
-function navIconHTML(ico) {
-  return `<i class="fa-solid ${attr(/^fa-/.test(String(ico || "")) ? ico : "fa-circle")}" aria-hidden="true"></i>`;
-}
-function navButton(view, label, ico) {
-  return `<button data-view="${attr(view)}" onclick="navigate('${attr(view)}')" aria-label="${attr(label)}" title="${attr(label)}"><span class="nav-ico">${navIconHTML(ico)}</span><span class="nav-text">${esc(label)}</span></button>`;
-}
 function setActiveNav(view) {
-  document
-    .querySelectorAll("#nav button[data-view]")
-    .forEach((b) => b.classList.toggle("active", b.dataset.view === view));
-  sincronizarSubmenuConfiguracoes(document, view);
+  marcarItemAtivoNoMenu(view, secaoAtualDeConfiguracao(document));
 }
 
 function navigate(view) {
@@ -2639,16 +2613,12 @@ function enforceResponsiveSidebar() {
   syncSidebarToggle();
 }
 
+/*
+  A barra lateral (React) lê a classe de `body` e desenha o botão de recolher,
+  com rótulo e `aria-expanded`; aqui só se avisa que ela mudou.
+*/
 function syncSidebarToggle() {
-  const button = $("globalSidebarToggle");
-  const icon = button?.querySelector("i");
-  if (!button || !icon) return;
-  const collapsed = document.body.classList.contains("sidebar-collapsed");
-  const label = collapsed ? "Expandir menu lateral" : "Recolher menu lateral";
-  icon.className = "fa-solid fa-bars";
-  button.title = label;
-  button.setAttribute("aria-label", label);
-  button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  avisar(EVENTO_BARRA_ALTERNADA);
 }
 
 function toggleSidebar() {
@@ -12949,6 +12919,7 @@ function friendlyError(error) {
 // ── Dark mode ───────────────────────────────────────────────────────────
 function applyDarkMode(dark) {
   document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
+  avisar(EVENTO_TEMA_ALTERADO);
   const thumb = $("darkModeThumb");
   const track = $("darkModeToggle");
   if (thumb)

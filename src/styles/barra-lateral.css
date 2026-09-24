@@ -1,0 +1,477 @@
+/*
+  Barra lateral — o CSS dos componentes React de `src/componentes/barra-lateral/`:
+  a alça de recolher (`alca-de-recolher.jsx`), o menu em áreas
+  (`menu-de-areas.jsx`) e os controles do rodapé (`rodape.jsx`).
+
+  O contêiner da barra (largura, marca, navegação, rodapé, trilho recolhido e os
+  tokens de componente `--menu-*`) é de `platform-shell.css`. Aqui ficam só as
+  peças que os componentes desenham. Seletores só com classe, salvo os dois de
+  `#appScreen` herdados do controle único de recolher, explicados abaixo.
+*/
+
+/* ── Alça de recolher ─────────────────────────────────────────────────────── */
+
+/*
+  Os seletores usam `#appScreen` porque as regras concorrentes usam
+  `!important`: `system-ui-fixes.css` esconde o botão acima de 901px e `app.css`
+  esconde os dois em `body.sidebar-locked`. Entre declarações `!important`, quem
+  decide é a especificidade — e um id resolve de uma vez, sem escalada de
+  classes.
+*/
+
+/*
+  O hambúrguer do cabeçalho sai de cena. Não é escondido "por enquanto": ele
+  deixa de ser um controle, e o markup permanece só para não quebrar quem o
+  referencia por id (`applyConfigToUi` escreve título e rótulo nele).
+*/
+#hambToggle {
+  display: none !important;
+}
+
+/* O botão único aparece sempre, em qualquer largura e em qualquer modo. */
+#appScreen .global-side-toggle {
+  display: grid !important;
+}
+
+/*
+  Dentro da barra lateral: uma alça redonda de 24px na borda direita, na altura
+  da marca, metade para fora. É o mesmo lugar com a barra expandida ou
+  recolhida; só a seta gira. O bloco de contenção é `.side-brand`
+  (`position: relative`, em `platform-shell.css`), e a barra fica acima do
+  cabeçalho (`--z-sidebar`, em `app.css`) para a metade de fora aparecer.
+
+  `top`, `right` e `left: auto` vão explícitos porque este botão já foi
+  flutuante, com `left` calculado: com `absolute`, um `left` esquecido em outra
+  regra venceria o `right`. O seletor mira `.side-brand >` porque o botão é
+  filho da marca (`alca-de-recolher.jsx`).
+*/
+#appScreen .sidebar .side-brand > .global-side-toggle {
+  position: absolute;
+  top: 50%;
+  right: -12px;
+  left: auto;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--platform-border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--platform-muted);
+  box-shadow: var(--shadow);
+  backdrop-filter: none;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+/* O desenho tem 24px; o alvo de toque, 40px. */
+.side-brand > .global-side-toggle::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+}
+
+.side-brand > .global-side-toggle:hover {
+  color: var(--navy);
+}
+
+/*
+  Cada lugar mostra o seu ícone: a alça, a seta; o cabeçalho, o hambúrguer da
+  gaveta. A seta aponta para onde a barra vai — recolhida, gira para a direita.
+*/
+.side-brand > .global-side-toggle .icone-menu,
+.title-row > .global-side-toggle .icone-recolher {
+  display: none;
+}
+
+.side-brand > .global-side-toggle .icone-recolher {
+  transition: transform var(--motion-base) var(--ease-standard);
+}
+
+body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
+  transform: rotate(180deg);
+}
+
+/*
+  No cabeçalho, quando a barra é uma gaveta fora da tela: no fluxo, na vaga que
+  o hambúrguer deixou. O React o põe no `.title-row` por portal, que acrescenta
+  no fim; `order: -1` o leva para antes do título. Flutuar aqui não serve —
+  `.top` tem `z-index: 10030` e as ações dele ocupam o canto superior esquerdo,
+  então um botão fixo nasceria coberto.
+*/
+#appScreen .title-row > .global-side-toggle {
+  position: static;
+  order: -1;
+  margin: 0;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--platform-border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--slate);
+  cursor: pointer;
+}
+
+/* ── Menu em áreas ────────────────────────────────────────────────────────── */
+
+.menu-lateral {
+  /* Tem de bater com ALTURA_DA_PILULA em src/lib/menu-lateral.js. */
+  --menu-pilula-altura: 28px;
+  --menu-icone: 18px;
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.menu-area {
+  min-width: 0;
+}
+
+.menu-area__cabecalho,
+.menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--menu-texto);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-area__cabecalho {
+  min-height: 36px;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+}
+
+.menu-area__cabecalho:hover,
+.menu-item:hover {
+  background: var(--menu-fundo-hover);
+}
+
+.menu-area__icone,
+.menu-area__seta {
+  flex: 0 0 auto;
+  color: var(--menu-texto-suave);
+}
+
+.menu-area__rotulo,
+.menu-item__rotulo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-area__rotulo {
+  flex: 1;
+}
+
+.menu-area__seta {
+  transition: transform var(--motion-base) var(--ease-standard);
+}
+
+.menu-area--aberta .menu-area__seta {
+  transform: rotate(180deg);
+}
+
+/* A área da página aberta: ícone e nome em destaque. */
+.menu-area--atual > .menu-area__cabecalho {
+  color: var(--menu-realce);
+  font-weight: 600;
+}
+
+.menu-area--atual .menu-area__icone {
+  color: var(--menu-realce);
+}
+
+/* Link direto (área de uma página só): o próprio cabeçalho é o item ativo. */
+.menu-area--link > .menu-area__cabecalho.active {
+  background: var(--menu-fundo-ativo);
+}
+
+/*
+  Acordeão: o painel só aparece com a área aberta, sem animar a altura. A
+  pílula com o nome é só do trilho recolhido.
+*/
+.menu-area__painel,
+.menu-area__pilula {
+  display: none;
+}
+
+.menu-area--aberta > .menu-area__painel {
+  display: block;
+}
+
+/* Os itens penduram numa linha-guia alinhada ao centro do ícone da área. */
+.menu-area__itens {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 var(--space-1);
+  margin-inline-start: calc(var(--space-2) + var(--menu-icone) / 2);
+  padding: 0 0 0 var(--space-2);
+  border-inline-start: 1px solid var(--menu-borda);
+  list-style: none;
+}
+
+.menu-item {
+  min-height: 32px;
+  padding: 0 var(--space-2);
+}
+
+.menu-item.active {
+  background: var(--menu-fundo-ativo);
+  color: var(--menu-realce);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .menu-area__cabecalho,
+  .menu-item {
+    min-height: var(--mobile-touch-size, 44px);
+  }
+}
+
+/*
+  Barra recolhida (acima de 900px): cada área é um ícone de 36px, e o painel
+  dela vira o flutuante — `position: fixed` ao lado do trilho, na altura que o
+  JS grava em `--menu-flutuante-topo`. Quem abre e fecha é o estado em
+  `menu-de-areas.jsx` (`.menu-area--flutuante`), não `:hover`: assim o `Esc`
+  fecha, um clique não prende o painel aberto e só um abre por vez.
+*/
+@media (min-width: 901px) {
+  body.sidebar-collapsed .menu-lateral {
+    justify-items: center;
+    gap: var(--space-1);
+  }
+
+  body.sidebar-collapsed .menu-area__cabecalho {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  /* O nome sai de vista, mas continua sendo o nome do botão para o leitor de tela. */
+  body.sidebar-collapsed .menu-area__rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  body.sidebar-collapsed .menu-area__seta {
+    display: none;
+  }
+
+  body.sidebar-collapsed .menu-area--atual > .menu-area__cabecalho,
+  body.sidebar-collapsed .menu-area--flutuante > .menu-area__cabecalho {
+    background: var(--menu-fundo-ativo);
+  }
+
+  body.sidebar-collapsed .menu-area__painel {
+    position: fixed;
+    top: var(--menu-flutuante-topo, var(--space-2));
+    left: calc(var(--sidebar-mini) + var(--space-2));
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    max-height: calc(100vh - 2 * var(--space-2));
+    color: var(--menu-flutuante-texto);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-4px);
+    transition:
+      opacity var(--motion-fast) var(--ease-standard),
+      transform var(--motion-fast) var(--ease-standard),
+      visibility 0s linear var(--motion-fast);
+  }
+
+  body.sidebar-collapsed .menu-area--flutuante > .menu-area__painel {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition-delay: 0s;
+  }
+
+  /* Ponte invisível sobre o vão até o ícone: o ponteiro atravessa sem sair da área. */
+  body.sidebar-collapsed .menu-area__painel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: calc(var(--space-2) + var(--space-3));
+    height: 100%;
+  }
+
+  body.sidebar-collapsed .menu-area__pilula {
+    display: block;
+    height: var(--menu-pilula-altura);
+    margin: 0;
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--menu-pilula-fundo);
+    color: var(--text-inverse);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: var(--menu-pilula-altura);
+    white-space: nowrap;
+    box-shadow: var(--shadow-overlay);
+  }
+
+  body.sidebar-collapsed .menu-area__itens {
+    min-width: 200px;
+    max-width: 280px;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    padding: var(--space-1);
+    border: 1px solid var(--menu-flutuante-borda);
+    border-radius: var(--radius-md);
+    background: var(--menu-flutuante-fundo);
+    box-shadow: var(--shadow-overlay);
+  }
+
+  body.sidebar-collapsed .menu-area__itens .menu-item {
+    padding: 0 var(--space-3);
+    color: var(--menu-flutuante-texto);
+  }
+}
+
+/* ── Rodapé: tema e Sair ──────────────────────────────────────────────────── */
+
+/*
+  Rodapé da barra lateral: o seletor de tema e o Sair (`rodape.jsx`). O
+  contêiner é de `platform-shell.css`; as cores
+  vêm dos tokens `--menu-*` da barra, então seguem o tema escuro e a cor
+  configurada sem regra própria. O segmento ativo é um cartão da página
+  (`--menu-flutuante-*`), legível em qualquer cor de barra.
+*/
+.side-tema__opcoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background: var(--menu-fundo-hover);
+}
+
+.side-tema__opcao {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--menu-texto-suave);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.side-tema__opcao:hover {
+  color: var(--menu-texto);
+}
+
+.side-tema__opcao[aria-pressed="true"] {
+  background: var(--menu-flutuante-fundo);
+  color: var(--menu-flutuante-texto);
+  box-shadow: var(--shadow);
+  font-weight: 600;
+}
+
+.sidebar .side-logout,
+.side-tema__alternar {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--menu-texto-suave);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sidebar .side-logout:hover,
+.side-tema__alternar:hover {
+  background: var(--menu-fundo-hover);
+  color: var(--menu-texto);
+}
+
+/* O botão único de tema só existe no trilho recolhido. */
+.side-tema__alternar {
+  display: none;
+}
+
+/* Na gaveta do celular, alvo de toque de 44px (o seletor soma 2px de cada lado). */
+@media (max-width: 900px) {
+  .side-tema__opcao {
+    min-height: calc(var(--mobile-touch-size, 44px) - 4px);
+  }
+
+  .sidebar .side-logout {
+    min-height: var(--mobile-touch-size, 44px);
+  }
+}
+
+/*
+  Recolhida (acima de 900px): os dois segmentos dão lugar ao botão único, que
+  alterna, e o Sair vira ícone. Os rótulos saem com o padrão de texto só para
+  leitor de tela; os dois botões também têm `aria-label`.
+*/
+@media (min-width: 901px) {
+  body.sidebar-collapsed .side-tema__opcoes {
+    display: none;
+  }
+
+  body.sidebar-collapsed .side-tema__alternar,
+  body.sidebar-collapsed .sidebar .side-logout {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+
+  body.sidebar-collapsed .sidebar .side-logout span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

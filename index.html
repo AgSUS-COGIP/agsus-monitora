@@ -114,7 +114,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -148,7 +148,7 @@
         top: 0;
         left: 0;
         right: 0;
-        z-index: 9998;
+        z-index: var(--z-toast, 20050);
         background: #7a3a00;
         color: #fff;
         text-align: center;
@@ -352,15 +352,6 @@
     </section>
 
     <section id="appScreen" class="app hidden">
-      <button
-        id="globalSidebarToggle"
-        class="global-side-toggle"
-        onclick="toggleSidebar()"
-        title=""
-        aria-label=""
-      >
-        <i class="fa-solid fa-bars" aria-hidden="true"></i>
-      </button>
       <div id="externalReturnBar">
         <button
           id="externalBackBtn"
@@ -373,24 +364,11 @@
           <span id="externalBackText"></span>
         </button>
       </div>
-      <aside class="sidebar" aria-label="Navegação principal">
-        <div class="side-brand">
-          <span class="side-logo-wrap"
-            ><img
-              id="sideLogo"
-              class="side-logo"
-              src="/assets/agsus-logo.webp"
-              alt="AgSUS"
-          /></span>
-          <span class="side-brand-copy"><strong>MONITORA</strong></span>
-        </div>
-        <div class="side-navigation"><nav id="nav" class="nav"></nav></div>
-        <div class="side-footer">
-          <div class="side-version">
-            <span id="sidebarVersionLabel"></span><b id="sidebarVersion"></b>
-          </div>
-        </div>
-      </aside>
+      <!--
+        Barra lateral em React (src/componentes/barra-lateral/): o conteúdo
+        inteiro, e o botão de recolher, são montados por montarBarraLateral().
+      -->
+      <aside class="sidebar" aria-label="Navegação principal"></aside>
 
       <main class="main" id="conteudoPrincipal" tabindex="-1">
         <header class="top">

@@ -277,7 +277,7 @@
   display: block;
   margin-top: 3px;
   color: #26364a;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-sans, "Geist", system-ui, sans-serif);
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
