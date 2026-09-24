@@ -11,8 +11,9 @@ a lógica pura correspondente mora em `src/lib/`. O CSS da feature fica em `src/
 
 Grupos: `aya-*` (assistente) · `map-*`, `health-*`, `indigenous-*`, `vinculos-territoriais.js`,
 `lotacoes-geograficas-transport.js` (mapa e Saúde Indígena) · `nucleo-*` (cronograma e operação) ·
-`config-*` (configurações) · `mobile-*`, `nielsen-shell-ux.js`, `colapsar-a-sidebar.js` (shell e
-responsivo) · `access-*`, `sidebar-branding.js` (acesso e marca) · `lista-aprovados.js`,
+`config-*` (configurações) · `icones.js` (registro único de ícones Lucide, usado também pelo
+React), `mobile-*`, `nielsen-shell-ux.js` (shell e responsivo; tema, logout e presença) · a barra
+lateral é React, em `src/componentes/barra-lateral/` · `access-*`, `sidebar-branding.js` (acesso e marca) · `lista-aprovados.js`,
 `multi-select-busca.js` (aprovados) · `arara-*`, `nina-panel-drag.js` (guia interativo).
 
 Regras: sem `innerHTML` cru (use `src/lib/sanitize.js`). Nenhum `MutationObserver` novo.

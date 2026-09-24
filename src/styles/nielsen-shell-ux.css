@@ -14,90 +14,6 @@
   --ux-dark-muted: #a8b8c8;
 }
 
-/* Controle de tema: acao global visivel, fora do menu de perfil. */
-.platform-theme-toggle {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  display: inline-grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--platform-border, #e2e8f0);
-  border-radius: 12px;
-  background: #fff;
-  color: #52657b;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    transform 0.15s ease;
-}
-
-.platform-theme-toggle:hover {
-  border-color: #bfd0e3;
-  background: #f8fafc;
-  color: #003b70;
-}
-
-.platform-theme-toggle:active {
-  transform: translateY(1px);
-}
-
-.platform-theme-toggle i {
-  font-size: 15px;
-}
-
-/* Sair pertence a sidebar: sempre no mesmo lugar, inclusive no modo compacto. */
-.sidebar .side-footer {
-  display: grid;
-  gap: 6px;
-}
-
-.sidebar .side-logout {
-  width: 100%;
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  margin: 0;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 11px;
-  background: transparent;
-  color: #64748b;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.sidebar .side-logout:hover {
-  border-color: #e2e8f0;
-  background: #f1f5f9;
-  color: #9f2730;
-}
-
-.sidebar .side-logout i {
-  width: 24px;
-  text-align: center;
-  font-size: 14px;
-}
-
-body.sidebar-collapsed .sidebar .side-logout {
-  justify-content: center;
-  padding-inline: 6px;
-}
-
-body.sidebar-collapsed .sidebar .side-logout span {
-  display: none;
-}
-
 /* O menu de conta vira informativo; preferencias e saida nao ficam escondidas nele. */
 .top-user-popover-actions:empty {
   display: none;
@@ -461,53 +377,6 @@ html[data-theme="dark"] .top-user-popover small {
   color: var(--ux-dark-muted) !important;
 }
 
-html[data-theme="dark"] .sidebar {
-  border-color: var(--ux-dark-border) !important;
-  background: #0a1b2a !important;
-  color: var(--ux-dark-text) !important;
-}
-
-html[data-theme="dark"] .side-brand,
-html[data-theme="dark"] .side-footer {
-  border-color: var(--ux-dark-border) !important;
-}
-
-html[data-theme="dark"] .side-logo-wrap {
-  border-color: var(--ux-dark-border) !important;
-  background: #12283a !important;
-}
-
-html[data-theme="dark"] .side-brand-copy strong,
-html[data-theme="dark"] .nav button {
-  color: #cfdae6;
-}
-
-html[data-theme="dark"] .nav button:hover {
-  background: #142b3e;
-  color: #fff;
-}
-
-html[data-theme="dark"] .nav button.active {
-  background: #07508b;
-  color: #fff;
-}
-
-html[data-theme="dark"] .sidebar .side-logout {
-  color: #aab9c8;
-}
-
-html[data-theme="dark"] .sidebar .side-logout:hover {
-  border-color: var(--ux-dark-border);
-  background: #172c40;
-  color: #ffb4ba;
-}
-
-html[data-theme="dark"] .side-version,
-html[data-theme="dark"] .side-version b {
-  color: #8fa2b5;
-}
-
-html[data-theme="dark"] .platform-theme-toggle,
 html[data-theme="dark"] .online-presence-button,
 html[data-theme="dark"] .top-user-button,
 html[data-theme="dark"] .top-user-popover,
@@ -517,7 +386,6 @@ html[data-theme="dark"] .online-presence-popover {
   color: var(--ux-dark-text) !important;
 }
 
-html[data-theme="dark"] .platform-theme-toggle:hover,
 html[data-theme="dark"] .online-presence-button:hover,
 html[data-theme="dark"] .top-user-button:hover {
   background: var(--ux-dark-surface-soft) !important;

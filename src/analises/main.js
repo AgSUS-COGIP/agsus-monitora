@@ -1,8 +1,8 @@
-import "../styles/tokens.css";
-import "../styles/icones-lucide.css";
 import { installCsvBlobSecurityGuard } from "../lib/csv-security.js";
 import { updateAraraGuide } from "../modules/arara-guide.js";
 import { initAraraSpeakingEffects } from "../modules/arara-speaking-effects.js";
+import "../styles/tokens.css";
+import "../styles/icones-lucide.css";
 import "../styles/arara-guide.css";
 import { installSessionLifecycle } from "../lib/session-lifecycle.js";
 import { installBackgroundResourceLifecycle } from "../lib/background-resource-lifecycle.js";

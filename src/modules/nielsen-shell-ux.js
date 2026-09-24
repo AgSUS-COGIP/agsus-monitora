@@ -1,4 +1,8 @@
-import { iconeDeSair } from "../lib/icones-da-navegacao.js";
+import {
+  avisar,
+  EVENTO_TEMA_ALTERADO,
+} from "../lib/eventos-da-barra-lateral.js";
+
 const THEME_STORAGE_KEY = "agsus_dark_mode_v1";
 const PRESENCE_SYNC_GRACE_MS = 12000;
 const PRESENCE_WATCHDOG_MS = 5000;
@@ -16,16 +20,34 @@ function text(value) {
   return String(value ?? "").trim();
 }
 
+/*
+  Tema: o seletor Claro/Escuro mora no rodapé da barra lateral, junto do Sair
+  (`src/componentes/barra-lateral/rodape.jsx`). É o único controle de tema — o
+  botão que ficava no cabeçalho saiu. Daqui saem o estado e a regra que o
+  rodapé usa; este módulo só mantém o tema em dia e avisa quando ele troca.
+*/
+export const OPCOES_DE_TEMA = Object.freeze([
+  Object.freeze({ tema: "claro", rotulo: "Claro", icone: "sun" }),
+  Object.freeze({ tema: "escuro", rotulo: "Escuro", icone: "moon" }),
+]);
+
+/* O segmento já ativo não inverte o tema: só o que pede o tema que não vale. */
+export function deveAlternarTema(temaPedido, escuroAtivo) {
+  return (temaPedido === "escuro") !== Boolean(escuroAtivo);
+}
+
 export function themeControlState(isDark) {
   return isDark
     ? {
-        icon: "fa-moon",
+        tema: "escuro",
+        icon: "moon",
         label: "Tema escuro ativo. Alternar para tema claro.",
         title: "Tema escuro",
         pressed: "true",
       }
     : {
-        icon: "fa-sun",
+        tema: "claro",
+        icon: "sun",
         label: "Tema claro ativo. Alternar para tema escuro.",
         title: "Tema claro",
         pressed: "false",
@@ -88,38 +110,21 @@ function isDarkTheme() {
   return document.documentElement.getAttribute("data-theme") === "dark";
 }
 
-function syncThemeControl() {
-  const isDark = isDarkTheme();
-  const state = themeControlState(isDark);
-  const button = document.getElementById("platformThemeToggle");
-  const icon = button?.querySelector("i");
-
-  document.documentElement.style.colorScheme = isDark ? "dark" : "light";
-  if (!button) return;
-
-  button.setAttribute("aria-label", state.label);
-  button.setAttribute("aria-pressed", state.pressed);
-  button.title = state.title;
-  button.dataset.theme = isDark ? "dark" : "light";
-  if (icon) icon.className = `fa-solid ${state.icon}`;
+/*
+  Mantém `color-scheme` em dia e avisa a barra lateral (React), que lê o tema
+  de `html[data-theme]`.
+*/
+function syncThemeState() {
+  document.documentElement.style.colorScheme = isDarkTheme() ? "dark" : "light";
+  avisar(EVENTO_TEMA_ALTERADO);
 }
 
-function installThemeControl() {
-  const actions = document.querySelector(".top .actions");
-  const userMenu = document.getElementById("topUserMenu");
-  if (!actions || !userMenu) return;
-
-  let button = document.getElementById("platformThemeToggle");
-  if (!button) {
-    button = document.createElement("button");
-    button.id = "platformThemeToggle";
-    button.type = "button";
-    button.className = "platform-theme-toggle";
-    button.innerHTML =
-      '<i class="fa-solid fa-sun" aria-hidden="true"></i><span class="sr-only">Alternar tema</span>';
-    actions.insertBefore(button, userMenu);
-  }
-
+/*
+  `toggleDarkMode` (legado) inverte o tema. Embrulhada aqui, avisa depois de
+  cada troca; o embrulho de `health-dashboard-interaction-fixes.js` mantém o
+  espelho `body.dark-mode`. A troca feita em outra aba chega pelo `storage`.
+*/
+function installThemeSync() {
   const originalToggle = window.toggleDarkMode;
   if (
     typeof originalToggle === "function" &&
@@ -127,15 +132,13 @@ function installThemeControl() {
   ) {
     const wrappedToggle = (...args) => {
       const result = originalToggle(...args);
-      window.setTimeout(syncThemeControl, 0);
+      window.setTimeout(syncThemeState, 0);
       return result;
     };
     wrappedToggle.__nielsenUxWrapped = true;
     wrappedToggle.__original = originalToggle;
     window.toggleDarkMode = wrappedToggle;
   }
-
-  button.addEventListener("click", () => window.toggleDarkMode?.());
 
   window.addEventListener("storage", (event) => {
     if (event.key && event.key !== THEME_STORAGE_KEY) return;
@@ -144,11 +147,10 @@ function installThemeControl() {
       "data-theme",
       event.newValue === "1" ? "dark" : "",
     );
-    syncThemeControl();
+    syncThemeState();
   });
 
-  syncThemeControl();
-  window.setTimeout(syncThemeControl, 250);
+  syncThemeState();
 }
 
 function removeLegacyAccountActions() {
@@ -246,7 +248,8 @@ function reportSignoutFailure() {
   window.alert(message);
 }
 
-async function performExplicitLogout() {
+/* O Sair da barra lateral (React) chama esta função: confirma, e só então encerra. */
+export async function performExplicitLogout() {
   if (logoutRunning) return false;
   if (typeof logoutAction !== "function") {
     reportSignoutFailure();
@@ -301,29 +304,6 @@ function installLogoutFlow() {
   });
 
   logoutAction = typeof window.logout === "function" ? window.logout : null;
-}
-
-function installSidebarLogout() {
-  const footer = document.querySelector(".sidebar .side-footer");
-  if (!footer || document.getElementById("sidebarLogoutBtn")) return;
-
-  const button = document.createElement("button");
-  button.id = "sidebarLogoutBtn";
-  button.type = "button";
-  button.className = "side-logout";
-  button.title = "Sair da sessão atual";
-  button.setAttribute("aria-label", "Sair da sessão atual");
-  // Mesmo traço dos ícones da barra lateral (src/lib/icones-da-navegacao.js).
-  button.innerHTML = `${iconeDeSair()}<span>Sair</span>`;
-  button.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    performExplicitLogout();
-  });
-
-  const version = footer.querySelector(".side-version");
-  footer.insertBefore(button, version || null);
 }
 
 function setPresenceMessage(message) {
@@ -468,9 +448,8 @@ export function initNielsenShellUx() {
   initialized = true;
 
   removeLegacyAccountActions();
-  installThemeControl();
+  installThemeSync();
   installLogoutFlow();
-  installSidebarLogout();
   startPresenceWatchdog();
   installNavigationRefinement();
   scheduleConfigurationRefinement();

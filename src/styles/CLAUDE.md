@@ -9,8 +9,8 @@
 - Os demais são importados por `src/main.js`, **em ordem**. Em empate de especificidade, vence o último.
 - `runtime-critical-fixes.css` é importado por `src/modules/connectivity-status.js`, não pelo `main.js`.
 - `pwa-lifecycle.css` não é importado por ninguém (possível órfão).
-- `health-reference-kpis.css` domina `#page-dashboard` com `#id … !important`. `colapsar-a-sidebar.css`
-  usa `#appScreen` de propósito. Regra com só classe perde **em silêncio** para eles.
+- `health-reference-kpis.css` domina `#page-dashboard` com `#id … !important`. `barra-lateral.css`
+  usa `#appScreen` de propósito (botão de recolher). Regra com só classe perde **em silêncio** para eles.
 
 ## Antes de escrever
 
@@ -31,8 +31,10 @@ Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
 
 ## Mapa rápido
 
-`platform-shell.css` (shell institucional, sidebar, login) · `nielsen-shell-ux.css` (tema, foco,
-feedback) · `mobile-*.css` · `health-*.css` (Saúde Indígena e mapa) · `nucleo-*.css` ·
+`tokens.css` (tokens do `DESIGN.md` §3, primeiro import dos dois `main.js`) · `platform-shell.css`
+(shell institucional, contêiner da barra lateral e tokens `--menu-*`, login) · `barra-lateral.css`
+(peças dos componentes React da barra: alça de recolher, menu em áreas, tema e Sair) ·
+`nielsen-shell-ux.css` (tema da página, foco, feedback) · `mobile-*.css` · `health-*.css` (Saúde Indígena e mapa) · `nucleo-*.css` ·
 `config-*.css` · `lista-aprovados.css` · `multi-select-busca.css` · `arara-guide.css`,
 `nina-conversation.css` (guia) · `system-ui-fixes.css`, `post-152-regression-fixes.css`,
 `post157-interface-tuning.css` (dívida, a dissolver — `DESIGN.md` seção 8, fase 5).

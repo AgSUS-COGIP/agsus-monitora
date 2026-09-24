@@ -38,7 +38,7 @@
 }
 .permission-scroll th,
 .permission-scroll td {
-  font-size: var(--text-sm, 13px);
+  font-size: var(--text-md, 13px);
   text-transform: none;
   padding: var(--space-3, 12px);
   border-bottom: 1px solid var(--permission-divider);

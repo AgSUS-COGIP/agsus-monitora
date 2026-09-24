@@ -8,6 +8,11 @@ const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const lifecycle = readFileSync("src/lib/session-lifecycle.js", "utf8");
 const html = readFileSync("index.html", "utf8");
+// A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
+const barraLateral = readFileSync(
+  "src/componentes/barra-lateral/barra-lateral.jsx",
+  "utf8",
+);
 const tuning = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const workspace = readFileSync("src/styles/health-map-workspace.css", "utf8");
 
@@ -104,12 +109,15 @@ describe("a logo da barra lateral é o <img> real", () => {
     para terceiros e mesmo se a leitura do banco falhar.
   */
   it("o <img> da barra lateral nasce com a logo local, sem host externo", () => {
-    const marca = html.indexOf('id="sideLogo"');
+    const marca = barraLateral.indexOf('id="sideLogo"');
     expect(marca).toBeGreaterThan(-1);
-    const tag = html.slice(marca, html.indexOf(">", html.indexOf("/>", marca)));
+    const tag = barraLateral.slice(
+      marca,
+      barraLateral.indexOf(">", barraLateral.indexOf("/>", marca)),
+    );
     expect(tag).toContain('src="/assets/agsus-logo.webp"');
     expect(tag).not.toContain("postimg.cc");
-    expect(tag).not.toContain("onerror");
+    expect(tag).not.toMatch(/onerror/i);
   });
 
   it("applyConfigToUi não sobrescreve mais a logo da barra lateral", () => {

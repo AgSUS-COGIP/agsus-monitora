@@ -43,6 +43,8 @@
     "echarts": "^6",
     "lucide": "^0.577.0",
     "pdfjs-dist": "^6.2.108",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tesseract.js": "^6.0.1",
     "tom-select": "^2.4.3",
     "zod": "^4"
@@ -51,6 +53,7 @@
     "@eslint/js": "^9",
     "@playwright/test": "^1",
     "@types/node": "^24.13.6",
+    "@vitejs/plugin-react": "^5.2.0",
     "@vitest/coverage-v8": "^4",
     "eslint": "^9",
     "globals": "^16",

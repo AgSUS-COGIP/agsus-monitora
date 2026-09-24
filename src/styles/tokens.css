@@ -1,33 +1,83 @@
 /*
-  Tokens do MONITORA — DESIGN.md, seção 3.
+  Tokens do MONITORA (DESIGN.md, seção 3).
 
-  Um só lugar para cor, tipografia, espaçamento, raio, sombra, movimento e
-  camadas. O nome diz o papel (`--text-secondary`), não a cor, para o tema
-  escuro trocar o valor sem trocar o nome. Os números entre parênteses são a
-  razão de contraste sobre `--surface-card`, medida (não estimada).
+  Importado antes de qualquer outro CSS em `src/main.js` e em
+  `src/analises/main.js`. O `app.css` entra antes, pelo `<link>` do
+  `index.html`, mas isso não pesa: `var()` resolve no valor computado, com a
+  cascata inteira já montada.
 
-  Importado antes de qualquer outro CSS em `src/main.js` e `src/analises/main.js`.
-  Os nomes legados (`--navy`, `--muted`, `--line`…) ainda moram em app.css e
-  analises.css; viram alias destes na fase 1 do plano de migração.
+  Primeira parte (fonte, espaçamento, raio, movimento, sombra de popover):
+  nomes que não existiam antes e cujas reservas no código (`var(--space-2,
+  8px)`, `var(--radius-sm, 8px)`…) têm os mesmos valores.
+
+  Segunda parte (cor de marca, superfície, texto, borda, estado, séries,
+  tipografia e sombras de card): usada pelos componentes revisados — KPIs e
+  cards da Saúde Indígena, Editais e Lista de Aprovados, notificações,
+  cabeçalhos de tabela. Só pinta quem usa o token; os componentes ainda não
+  revisados continuam com as cores chumbadas de antes.
+
+  As camadas (`--z-*`) continuam em `app.css`, junto das que já existiam.
 */
 :root {
-  /* Marca */
+  /* Tipografia: Geist, carregada como fonte variável (um arquivo, 400–900). */
+  --font-sans: "Geist", "Segoe UI", Roboto, Arial, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-kpi: clamp(24px, 1.9vw, 30px);
+
+  /* Espaçamento, base de 4px. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Raio. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Sombra: repouso, destaque (hover) e popover/painel flutuante/gaveta. */
+  --shadow-card: 0 1px 2px rgba(15, 35, 60, 0.04);
+  --shadow-raised:
+    0 1px 2px rgba(15, 35, 60, 0.03), 0 12px 32px -24px rgba(15, 35, 60, 0.28);
+  --shadow-overlay: 0 24px 64px -16px rgba(15, 35, 60, 0.32);
+
+  /* Movimento: os valores do colapso da barra lateral, generalizados. */
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /*
+    Texto sobre fundo escuro. Sem variação no tema escuro: quem usa são
+    superfícies que continuam escuras nos dois temas (pílula de dica, barra
+    lateral com cor configurada escura, botão primário).
+  */
+  --text-inverse: #ffffff;
+
+  /* Marca. Os números são a razão de contraste sobre --surface-card. */
   --brand-primary: #003b70; /* 11,29 */
   --brand-primary-strong: #002b54;
   --brand-accent: #00a8d6; /* só preenchimento decorativo; nunca texto (2,77) */
-  --brand-secondary: #0b8f58;
 
   /* Superfícies */
   --surface-page: #f3f7fb;
   --surface-card: #ffffff;
   --surface-raised: #f6f9fc;
   --surface-hover: #f1f5f9;
-  --surface-inverse: #003b70;
 
   /* Texto */
   --text-primary: #10243e; /* 15,63 */
   --text-secondary: #5f6f86; /* 5,12 no card, 4,75 na página */
-  --text-inverse: #ffffff;
 
   /* Bordas e foco */
   --border-subtle: #dfe7f0;
@@ -37,10 +87,8 @@
   /* Estado: texto/ícone | fundo suave */
   --state-success: #087a4b;
   --state-success-soft: #e7f5ee;
-  --state-success-strong: #087a4b;
   --state-warning: #8a5a00;
   --state-warning-soft: #fdf4d8;
-  --state-warning-fill: #f2b705;
   --state-danger: #c02634;
   --state-danger-soft: #fdecee;
   --state-info: #0f5db7;
@@ -55,56 +103,13 @@
   --series-4: #6d5efc;
   --series-5: #d55181;
   --series-6: #8a6d00;
-
-  /* Tipografia */
-  --font-sans: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
-  --text-xs: 11px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-base: 14px;
-  --text-lg: 16px;
-  --text-xl: 18px;
-  --text-2xl: 22px;
-  --text-kpi: clamp(24px, 1.9vw, 30px);
-
-  /* Espaçamento (base 4px) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-
-  /* Raio */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 999px;
-
-  /* Sombra */
-  --shadow-card: 0 1px 2px rgba(15, 35, 60, 0.04);
-  --shadow-raised:
-    0 1px 2px rgba(15, 35, 60, 0.03), 0 12px 32px -24px rgba(15, 35, 60, 0.28);
-  --shadow-overlay: 0 24px 64px -16px rgba(15, 35, 60, 0.32);
-
-  /* Movimento */
-  --motion-fast: 140ms;
-  --motion-base: 220ms;
-  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
-
-  /* Camadas */
-  --z-sticky: 100;
-  --z-header: 10010;
-  --z-map-immersive: 12050;
-  --z-exit-dialog: 15000;
-  --z-overlay: 20000;
-  --z-loader: 20025;
-  --z-toast: 20050;
 }
 
-:root[data-theme="dark"] {
+html[data-theme="dark"] {
+  --shadow-card: none;
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.38);
+  --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+
   --brand-primary: #70cfff; /* 9,69 */
   --brand-primary-strong: #b5e5ff;
   --brand-accent: #4fdcff;
@@ -112,10 +117,8 @@
   --surface-card: #0e1e2e;
   --surface-raised: #14283a;
   --surface-hover: #1a3146;
-  --surface-inverse: #10273f;
   --text-primary: #edf4fa; /* 15,21 */
   --text-secondary: #a8b8c8; /* 8,33 */
-  --text-inverse: #071421;
   --border-subtle: #294158;
   --border-control: #6a829a;
   --focus-ring: #7dd3fc;
@@ -134,7 +137,4 @@
   --series-3: #1a9fc8;
   --series-4: #8e6cf2;
   --series-6: #a8861a;
-  --shadow-card: none;
-  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.38);
-  --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
 }

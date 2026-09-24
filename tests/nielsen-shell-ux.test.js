@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  deveAlternarTema,
+  OPCOES_DE_TEMA,
   presenceStateFromUi,
   themeControlState,
 } from "../src/modules/nielsen-shell-ux.js";
@@ -7,15 +9,32 @@ import {
 describe("Nielsen shell UX", () => {
   it("expõe o estado e a próxima ação do tema", () => {
     expect(themeControlState(false)).toMatchObject({
-      icon: "fa-sun",
+      tema: "claro",
+      icon: "sun",
       pressed: "false",
       title: "Tema claro",
     });
     expect(themeControlState(true)).toMatchObject({
-      icon: "fa-moon",
+      tema: "escuro",
+      icon: "moon",
       pressed: "true",
       title: "Tema escuro",
     });
+  });
+
+  /*
+    O seletor Claro/Escuro mora no rodapé da barra. `toggleDarkMode` inverte o
+    tema, então clicar no segmento que já vale não pode chamá-lo.
+  */
+  it("o seletor de tema tem Claro e Escuro, e o segmento ativo não inverte", () => {
+    expect(OPCOES_DE_TEMA.map((opcao) => opcao.rotulo)).toEqual([
+      "Claro",
+      "Escuro",
+    ]);
+    expect(deveAlternarTema("escuro", false)).toBe(true);
+    expect(deveAlternarTema("claro", true)).toBe(true);
+    expect(deveAlternarTema("claro", false)).toBe(false);
+    expect(deveAlternarTema("escuro", true)).toBe(false);
   });
 
   it("distingue presença pronta, carregando e indisponível", () => {

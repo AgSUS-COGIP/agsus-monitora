@@ -19,6 +19,10 @@ Arquivos que exigem cuidado:
   link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
 - `formatters.js` — `formatNumberBR`, `formatDateBR`: use em vez de `toLocaleString` solto.
 - `contraste.js` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
+- `menu-lateral.js` — **catálogo das áreas do menu lateral** (Saúde indígena, Recrutamento e seleção,
+  Administração), árvore por permissão, página ativa, áreas abertas por padrão e estado do painel
+  flutuante. Área ou página nova entra aqui; o desenho é de `src/componentes/barra-lateral/`.
+- `eventos-da-barra-lateral.js` — nomes dos eventos entre o legado e a barra lateral (React).
 - `env.js` — leitura de variáveis; nunca hardcode de chave.
 
 Arquivo novo: nome em português, kebab-case, com teste junto.

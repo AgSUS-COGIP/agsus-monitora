@@ -1,7 +1,8 @@
 /* Camada institucional compartilhada com o padrão visual do AgSUS Pesquisas. */
 :root {
-  --sidebar: 256px;
-  --sidebar-mini: 68px;
+  /* Barra lateral: 240px expandida, 60px recolhida (trilho de ícones). */
+  --sidebar: 240px;
+  --sidebar-mini: 60px;
   --platform-border: #e2e8f0;
   --platform-muted: #64748b;
   --platform-hover: #f1f5f9;
@@ -201,180 +202,112 @@
 
   Antes havia `transition: grid-template-columns 0.25s ease`. Animar uma trilha
   de grid obriga o navegador a refazer o layout a cada frame — reflow não sobe
-  para a GPU — e, pior, o conteúdo interno sumia por `display: none`, que não é
-  animável. Os rótulos desapareciam no primeiro frame enquanto a coluna ainda
-  levava 250ms para encolher: o descasamento era o "engasgo" percebido.
+  para a GPU. A coluna chega ao tamanho final de imediato; o que anima é só o
+  que é composto (`opacity`, `transform`): a seta das áreas, a alça de
+  recolher, o painel flutuante do menu.
 
-  Agora a coluna chega ao tamanho final de imediato e quem anima é o conteúdo,
-  com `opacity` e `transform` — ambos compostos, sem reflow. A percepção de
-  movimento vem de `--sidebar-fade` e `--sidebar-slide` abaixo.
+  Cores da barra: tokens de componente (`--menu-*`), que o tema escuro da
+  página e a barra com cor configurada escura (`body.sidebar-theme-dark`, de
+  `sidebar-branding.js`) trocam num lugar só. O fundo configurável vem de
+  `post157-interface-tuning.css` (`--sidebar-custom-bg`). Hover, ativo e
+  divisórias são o próprio texto em baixa opacidade (`color-mix` com
+  `currentColor`), então servem em qualquer cor de barra sem um valor por tema.
+  O painel flutuante do menu é um cartão da página, não da barra: tem tokens
+  próprios (`--menu-flutuante-*`, `--menu-pilula-fundo`), que a cor configurada
+  não toca.
 */
-:root {
-  --sidebar-fade: 140ms;
-  --sidebar-slide: 220ms;
-  --sidebar-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-}
 .sidebar {
+  --menu-texto: var(--slate);
+  --menu-texto-suave: var(--platform-muted);
+  --menu-realce: var(--navy);
+  --menu-fundo-hover: color-mix(in srgb, currentColor 7%, transparent);
+  --menu-fundo-ativo: color-mix(in srgb, currentColor 11%, transparent);
+  --menu-borda: color-mix(in srgb, currentColor 12%, transparent);
+  --menu-flutuante-fundo: var(--card);
+  --menu-flutuante-texto: var(--slate);
+  --menu-flutuante-borda: var(--platform-border);
+  --menu-pilula-fundo: var(--slate);
   display: flex;
   flex-direction: column;
   padding: 0;
-  background: #fff;
-  color: #0f172a;
-  border-right: 1px solid var(--platform-border);
-  box-shadow: 12px 0 35px -28px rgba(15, 23, 42, 0.35);
+  background: var(--card);
+  color: var(--menu-texto);
+  border-right: 1px solid var(--menu-borda);
+}
+body.sidebar-theme-dark .sidebar {
+  --menu-texto: var(--text-inverse);
+  --menu-texto-suave: color-mix(in srgb, var(--text-inverse) 80%, transparent);
+  --menu-realce: var(--text-inverse);
+}
+/* O tema escuro da página vale sobre a cor configurada: vem depois, empata e vence. */
+html[data-theme="dark"] .sidebar {
+  --menu-texto: var(--ux-dark-text);
+  --menu-texto-suave: var(--ux-dark-muted);
+  --menu-realce: var(--ux-dark-text);
+  --menu-flutuante-texto: var(--ux-dark-text);
+  --menu-pilula-fundo: var(--ux-dark-surface-soft);
+  background: var(--ux-dark-surface);
 }
 .side-brand {
-  min-height: 72px;
+  position: relative;
+  min-height: 56px;
   margin: 0;
-  padding: 12px 14px;
+  padding: 0 var(--space-3);
   display: flex;
-  place-items: initial;
   align-items: center;
-  gap: 11px;
-  border-bottom: 1px solid var(--platform-border);
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--menu-borda);
 }
 .side-logo-wrap {
   display: grid;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 13px;
-  background: #fff;
 }
-.side-logo,
-body.sidebar-collapsed .side-logo,
-body.sidebar-locked .side-logo {
-  width: 36px;
-  height: 36px;
+.sidebar .side-logo {
+  width: 32px;
+  height: 32px;
   margin: 0;
-  filter: none;
 }
 .side-brand-copy {
   min-width: 0;
 }
-.side-brand-copy small {
-  display: block;
-  overflow: hidden;
-  color: #0b8f58;
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
 .side-brand-copy strong {
   display: block;
-  margin-top: 0;
-  color: #003b70;
-  font-size: 15px;
-  letter-spacing: -0.02em;
+  overflow: hidden;
+  color: var(--menu-realce);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .side-navigation {
   min-height: 0;
   flex: 1;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 12px 10px 20px;
-}
-.nav {
-  display: block;
-}
-.nav-group {
-  margin-top: 18px;
-}
-.nav-group:first-child {
-  margin-top: 0;
-}
-.nav-group > p {
-  margin: 0 0 7px;
-  padding: 0 10px;
-  color: #94a3b8;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-.nav-group > div {
-  display: grid;
-  gap: 6px;
-}
-.nav button {
-  width: 100%;
-  min-height: 44px;
-  gap: 10px;
-  border: 0;
-  border-radius: 12px;
-  color: #475569;
-  padding: 5px 8px;
-  font-size: var(--text-md);
-  font-weight: 600;
-}
-.nav button:hover {
-  color: #003b70;
-  background: var(--platform-hover);
-}
-.nav button.active {
-  color: #fff;
-  background: #003b70;
-  box-shadow: 0 10px 24px -18px rgba(0, 59, 112, 0.95);
-}
-/*
-  Ícone de traço (Lucide, src/lib/icones-da-navegacao.js) sem quadrado de
-  fundo: herda a cor do item. O estado fica na linha (hover e ativo) e, com a
-  barra recolhida, no quadrado de 40px das regras mais abaixo.
-*/
-.nav-ico {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border-radius: 10px;
-  background: transparent;
-  color: inherit;
+  padding: var(--space-2);
 }
 .side-footer {
   flex: 0 0 auto;
-  padding: 10px;
-  border-top: 1px solid var(--platform-border);
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-top: 1px solid var(--menu-borda);
 }
-.side-user,
 .side-version {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
   margin: 0;
-  padding: 0;
-  border: 0;
-  color: #64748b;
+  padding: var(--space-1) var(--space-2) 0;
+  color: var(--menu-texto-suave);
+  font-size: var(--text-sm);
 }
-.side-user {
-  position: relative;
-  padding: 8px;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-.side-user-copy {
-  display: block;
-  min-width: 0;
-}
-.side-user-copy > span {
-  display: none;
-}
-.side-user-copy strong {
-  display: block;
-  overflow: hidden;
-  color: #0f172a;
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.side-user-copy small {
-  display: block;
-  overflow: hidden;
-  margin-top: 2px;
-  color: #64748b;
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.side-version b {
+  font-weight: 600;
 }
 .user-profile-badge {
   display: inline-flex;
@@ -387,111 +320,6 @@ body.sidebar-locked .side-logo {
   font-weight: 900;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-.side-version {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 8px 0;
-  font-size: 9px;
-}
-.side-version b {
-  display: inline;
-  margin: 0;
-  color: #64748b;
-  word-break: normal;
-}
-.side-theme-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 8px;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-}
-.side-theme-row i {
-  width: 20px;
-  margin-right: 6px;
-  text-align: center;
-}
-.side-theme-toggle {
-  position: relative;
-  width: 40px;
-  min-height: 22px;
-  height: 22px;
-  flex: 0 0 40px;
-  border: 0;
-  border-radius: 999px;
-  background: #cbd5e1;
-  cursor: pointer;
-}
-.side-theme-toggle span {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.2s ease;
-}
-.side-logout {
-  min-height: 42px;
-  margin-top: 4px;
-  border: 0;
-  color: #64748b;
-  text-align: center;
-}
-.side-logout:hover {
-  color: #0f172a;
-  background: #f1f5f9;
-}
-.global-side-toggle {
-  top: 18px;
-  width: 40px;
-  height: 40px;
-  border-color: #e2e8f0;
-  background: #fff;
-  color: #64748b;
-  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.12);
-}
-.global-side-toggle i {
-  font-size: 16px;
-  transform: none !important;
-}
-
-/*
-  Na linha da marca o botão deixa de ser um disco flutuante: sem sombra, sem
-  borda e um pouco menor, para não competir com a logo ao lado. O realce fica
-  para o hover, onde ele é pedido.
-
-  `.side-collapse-toggle` é a classe que `colapsar-a-sidebar.js` aplica ao nó,
-  então estas regras valem nas duas casas (marca e cabeçalho) sem repetir
-  seletor.
-*/
-.side-brand > .side-collapse-toggle {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  place-items: center;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: #94a3b8;
-  transition:
-    background var(--sidebar-fade) var(--sidebar-ease),
-    color var(--sidebar-fade) var(--sidebar-ease);
-}
-.side-brand > .side-collapse-toggle:hover {
-  background: var(--platform-hover);
-  color: #003b70;
-}
-.side-brand > .side-collapse-toggle:focus-visible {
-  outline: 2px solid #003b70;
-  outline-offset: 2px;
 }
 
 @media (max-width: 1360px) and (min-width: 901px) {
@@ -784,303 +612,53 @@ body.sidebar-locked .side-logo {
 }
 
 /*
-  Recolhida, a barra tem 58px — não cabem logo e botão lado a lado, então a
-  marca empilha em coluna: a logo no topo, o botão abaixo, ambos centrados.
+  Barra recolhida — só acima de 900px. Abaixo, `sidebar-collapsed` quer dizer
+  gaveta fechada, e a gaveta desliza na forma expandida; regra de trilho ali
+  redesenharia a gaveta no meio da animação.
 
-  `align-items: center` é o que centra na horizontal quando a direção é coluna
-  (`justify-content` passa a reger o eixo vertical), e o `padding-inline: 0`
-  remove os 14px herdados da regra base — com 58px de barra, 14px de cada lado
-  não deixam folga para centrar nada.
+  Trilho de 60px: a marca fica só com a logo, o menu e o rodapé viram ícones
+  (`barra-lateral.css`) e a versão sai. O nome da marca sai com o padrão de texto só para leitor de
+  tela, não com `display: none`.
 
-  A logo permanece visível de propósito: o projeto já a mantinha a 36px neste
-  estado, e esconder a marca institucional para abrir espaço a um controle seria
-  uma troca de identidade, não de layout.
+  Recolhida, a navegação só rola quando os ícones não cabem. Sem rolagem, a
+  navegação que não cabe transborda por cima do rodapé e cobre o "Sair". Um
+  `max-height: 620px` tentava prever isso, mas a altura depende de quantas
+  áreas o perfil vê. Agora o menu (`menu-de-areas.jsx`) mede e marca `.transborda`;
+  aí a navegação, e só ela, rola. O painel flutuante das áreas é
+  `position: fixed` e não é recortado pela rolagem. O `padding-inline` menor
+  abre espaço para a barra de rolagem fina sem espremer os ícones de 36px.
 */
-body.sidebar-collapsed .side-brand,
-body.sidebar-locked .side-brand {
-  min-height: 72px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 0;
-  padding: 10px 0;
-}
-/*
-  O `margin-inline-start: 0` do estado recolhido vive em
-  `colapsar-a-sidebar.css`: a regra que ele precisa vencer usa `#appScreen`, e
-  daqui, só com classes, a declaração era descartada em silêncio.
-*/
-/*
-  Os rótulos saem por `opacity` + `transform`, não por `display: none`.
-
-  `display` não interpola, então o texto piscava para fora no frame 1. Aqui ele
-  desliza para a esquerda e desaparece; `visibility: hidden` no fim do fade tira
-  o elemento do foco e do leitor de tela, e é interpolável em degrau — some ao
-  terminar a transição, não antes. A largura zerada evita que o texto force a
-  barra a 58px a crescer.
-*/
-.side-brand-copy,
-.nav-group > p,
-.nav-text,
-.side-theme-row {
-  transition:
-    opacity var(--sidebar-fade) var(--sidebar-ease),
-    transform var(--sidebar-slide) var(--sidebar-ease);
-}
-body.sidebar-collapsed .side-brand-copy,
-body.sidebar-locked .side-brand-copy,
-body.sidebar-collapsed .nav-group > p,
-body.sidebar-locked .nav-group > p,
-body.sidebar-collapsed .nav-text,
-body.sidebar-locked .nav-text,
-body.sidebar-collapsed .side-theme-row,
-body.sidebar-locked .side-theme-row {
-  opacity: 0;
-  transform: translateX(-6px);
-  visibility: hidden;
-  width: 0;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-/*
-  Os ícones acompanham com um deslize curto. Eles permanecem visíveis nos dois
-  estados, então aqui o movimento é só de acomodação: ao recolher, cada ícone
-  escorrega para o centro da barra estreita.
-*/
-.nav-ico {
-  transition: transform var(--sidebar-slide) var(--sidebar-ease);
-}
-
-/*
-  Quem pediu menos movimento recebe a troca sem animação alguma. O estado final
-  é idêntico — só o caminho até ele desaparece.
-*/
-@media (prefers-reduced-motion: reduce) {
-  .side-brand-copy,
-  .nav-group > p,
-  .nav-text,
-  .side-theme-row,
-  .nav-ico,
-  .side-collapse-toggle {
-    transition: none;
+@media (min-width: 901px) {
+  body.sidebar-collapsed .side-brand {
+    justify-content: center;
+    padding: 0;
   }
-}
-body.sidebar-collapsed .side-navigation,
-body.sidebar-locked .side-navigation {
-  padding-inline: 10px;
-}
-/*
-  Recolhida, o alvo visível é só o contorno do ícone.
-
-  A primeira versão desta regra tentava apagar o fundo do botão e deixar o
-  `.nav-ico` desenhar o estado. Funcionava no tema branco e falhava no azul:
-  `post157-interface-tuning.css` pinta `body.sidebar-theme-dark .nav
-  button.active` com branco a 20%, vem depois na cascata, e o retângulo de 54px
-  voltava a aparecer em volta do quadrado de 34px do ícone.
-
-  Agora a abordagem é geométrica, não cromática: o botão passa a ter exatamente
-  o tamanho do ícone (40×40). Seja qual for o tema que pinte o fundo do botão
-  ou do ícone, o contorno visível é sempre o mesmo quadrado, centrado na barra.
-  O `#appScreen` no seletor garante que nenhuma regra de tema, escrita só com
-  classes, consiga alargar o botão de novo.
-*/
-body.sidebar-collapsed #appScreen .nav button,
-body.sidebar-locked #appScreen .nav button {
-  width: 40px;
-  min-height: 40px;
-  height: 40px;
-  margin: 0 auto;
-  padding: 0;
-  gap: 0;
-  display: grid;
-  place-items: center;
-  justify-content: center;
-  border-radius: 11px;
-  background: transparent;
-  box-shadow: none;
-}
-body.sidebar-collapsed #appScreen .nav button.active,
-body.sidebar-locked #appScreen .nav button.active {
-  background: transparent;
-  box-shadow: none;
-}
-body.sidebar-collapsed #appScreen .nav button .nav-ico,
-body.sidebar-locked #appScreen .nav button .nav-ico {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  border-radius: 11px;
-  font-size: 16px;
-}
-body.sidebar-collapsed #appScreen .nav-group > div,
-body.sidebar-locked #appScreen .nav-group > div {
-  justify-items: center;
-}
-
-/*
-  O quadrado do ícone carrega o estado. No tema branco, ativo ganha o azul
-  institucional; no tema azul (`sidebar-theme-dark`), ganha branco translúcido
-  forte o bastante para ler como "selecionado" sobre o fundo azul.
-*/
-body.sidebar-collapsed #appScreen .nav button.active .nav-ico,
-body.sidebar-locked #appScreen .nav button.active .nav-ico {
-  background: #003b70;
-  color: #fff;
-  box-shadow: 0 10px 24px -18px rgba(0, 59, 112, 0.95);
-}
-body.sidebar-collapsed #appScreen .nav button:hover .nav-ico,
-body.sidebar-locked #appScreen .nav button:hover .nav-ico {
-  background: var(--platform-hover);
-  color: #003b70;
-}
-body.sidebar-collapsed #appScreen .nav button.active:hover .nav-ico,
-body.sidebar-locked #appScreen .nav button.active:hover .nav-ico {
-  background: #00509e;
-  color: #fff;
-}
-/* Recolhida no tema azul: ícone solto; só o hover e o ativo ganham quadrado. */
-body.sidebar-theme-dark.sidebar-collapsed #appScreen .nav button .nav-ico,
-body.sidebar-theme-dark.sidebar-locked #appScreen .nav button .nav-ico {
-  background: transparent;
-  color: #fff;
-}
-body.sidebar-theme-dark.sidebar-collapsed #appScreen .nav button:hover .nav-ico,
-body.sidebar-theme-dark.sidebar-locked #appScreen .nav button:hover .nav-ico {
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-}
-body.sidebar-theme-dark.sidebar-collapsed
-  #appScreen
-  .nav
-  button.active
-  .nav-ico,
-body.sidebar-theme-dark.sidebar-locked #appScreen .nav button.active .nav-ico {
-  background: rgba(255, 255, 255, 0.28);
-  color: #fff;
-  box-shadow: none;
-}
-
-/*
-  Tooltip do item recolhido.
-
-  O rótulo vem do `title` que `legacy-app.js` já escreve em cada botão
-  (`renderNavButton`), então não há texto duplicado para manter em sincronia:
-  `content: attr(title)` lê o mesmo atributo. O `title` nativo continua lá e
-  serve de reserva — se este CSS falhar, a dica ainda aparece, só mais devagar.
-
-  `.nav button` tem `overflow: hidden` herdado em nenhum ponto, mas a barra tem
-  `overflow-x: hidden`; por isso o balão é `position: fixed` — assim ele escapa
-  do recorte da barra em vez de ser cortado nos 68px. O `left` é calculado a
-  partir da largura da barra recolhida.
-*/
-body.sidebar-collapsed #appScreen .nav button,
-body.sidebar-locked #appScreen .nav button {
-  position: relative;
-}
-body.sidebar-collapsed .nav button::after,
-body.sidebar-locked .nav button::after {
-  content: attr(title);
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
-  transform: translateY(-50%) translateX(-4px);
-  z-index: 10040;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #0f172a;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 650;
-  line-height: 1.3;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.5);
-  transition:
-    opacity var(--sidebar-fade) var(--sidebar-ease),
-    transform var(--sidebar-fade) var(--sidebar-ease);
-}
-body.sidebar-collapsed .nav button:hover::after,
-body.sidebar-locked .nav button:hover::after,
-body.sidebar-collapsed .nav button:focus-visible::after,
-body.sidebar-locked .nav button:focus-visible::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(-50%) translateX(0);
-}
-/*
-  A barra recorta o que passa dos 68px (`overflow-x: hidden` em `app.css`). O
-  balão do tooltip precisa escapar disso, então, recolhida, a barra deixa de
-  recortar nos dois eixos.
-
-  Tem de ser nos dois: quando um eixo é `visible` e o outro não, o CSS converte
-  o `visible` em `auto` — foi assim que uma versão anterior, com `overflow-x:
-  visible; overflow-y: auto`, produziu uma barra de rolagem horizontal. Não há
-  meio-termo: ou a barra é um contêiner de rolagem (e recorta o balão), ou não é.
-
-  Recolhida, a barra tem só ícones e cabe em qualquer tela de mesa; o custo de
-  não rolar é nulo. Em telas muito baixas, onde poderia não caber, a rolagem
-  vertical volta e o tooltip fica recortado — perder a dica é melhor do que
-  perder itens do menu.
-*/
-body.sidebar-collapsed .sidebar,
-body.sidebar-locked .sidebar,
-body.sidebar-collapsed .side-navigation,
-body.sidebar-locked .side-navigation {
-  overflow: visible;
-}
-@media (max-height: 620px) {
-  body.sidebar-collapsed .sidebar,
-  body.sidebar-locked .sidebar {
+  body.sidebar-collapsed .side-brand-copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  body.sidebar-collapsed .side-navigation {
+    overflow: visible;
+    padding-inline: var(--space-3);
+  }
+  body.sidebar-collapsed .side-navigation.transborda {
     overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: thin;
+    padding-inline: var(--space-1);
+  }
+  body.sidebar-collapsed .side-footer {
+    justify-items: center;
+  }
+  body.sidebar-collapsed .side-version {
+    display: none;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  body.sidebar-collapsed .nav button::after,
-  body.sidebar-locked .nav button::after {
-    transition: none;
-  }
-}
-body.sidebar-collapsed .side-footer,
-body.sidebar-locked .side-footer {
-  padding-inline: 10px;
-}
-body.sidebar-collapsed .side-logout,
-body.sidebar-locked .side-logout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.profile-avatar-sidebar-button {
-  color: #0f172a;
-}
-.profile-avatar-sidebar-button:hover,
-.profile-avatar-sidebar-button:focus-visible {
-  background: #eef2f7;
-}
-
-[data-theme="dark"] .app .sidebar {
-  background: #111f36 !important;
-  border-color: #253a56 !important;
-}
-[data-theme="dark"] .app .side-brand,
-[data-theme="dark"] .app .side-footer {
-  border-color: #253a56;
-}
-[data-theme="dark"] .app .side-logo-wrap {
-  border-color: #253a56;
-  background: #17253d;
-}
-[data-theme="dark"] .app .side-logo {
-  filter: brightness(0) invert(1);
-}
 [data-theme="dark"] .app .online-presence-button,
 [data-theme="dark"] .app .online-presence-popover,
 [data-theme="dark"] .app .top-user-button,
@@ -1109,33 +687,6 @@ body.sidebar-locked .side-logout {
 [data-theme="dark"] .app .online-presence-person:hover {
   background: #1a2d47;
 }
-[data-theme="dark"] .app .side-brand-copy strong,
-[data-theme="dark"] .app .side-user-copy strong,
-[data-theme="dark"] .app .profile-avatar-sidebar-button {
-  color: #e2eaf4;
-}
-[data-theme="dark"] .app .side-user {
-  background: #17253d;
-}
-[data-theme="dark"] .app .nav button {
-  color: #b8d0e8;
-}
-[data-theme="dark"] .app .nav button:hover {
-  color: #7dd3fc;
-  background: #1a2d47;
-}
-[data-theme="dark"] .app .nav button.active {
-  color: #fff;
-  background: #075ea8;
-}
-[data-theme="dark"] .app .nav-ico {
-  background: transparent;
-  color: inherit;
-}
-[data-theme="dark"] .app .side-logout:hover {
-  background: #1a2d47;
-  color: #e2eaf4;
-}
 
 @media (max-width: 900px) {
   .login-screen {
@@ -1145,44 +696,6 @@ body.sidebar-locked .side-logout {
   .login-outer {
     width: min(500px, calc(100vw - 28px));
     min-width: 0;
-  }
-  .hamb {
-    display: grid !important;
-  }
-  .global-side-toggle {
-    display: none !important;
-  }
-  .sidebar {
-    width: min(86vw, 320px) !important;
-  }
-  .side-brand {
-    justify-content: flex-start !important;
-  }
-  .side-brand-copy,
-  .nav-group > p,
-  .side-theme-row {
-    display: block;
-  }
-  .side-theme-row {
-    display: flex;
-  }
-  .side-user,
-  .side-version {
-    display: block !important;
-  }
-  .side-version {
-    display: flex !important;
-  }
-  .nav button {
-    justify-content: flex-start !important;
-    padding: 5px 8px !important;
-  }
-  .nav-text,
-  .side-logout span {
-    display: inline !important;
-  }
-  .side-footer {
-    padding: 10px !important;
   }
   .top {
     padding-left: 12px;

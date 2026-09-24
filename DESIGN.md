@@ -5,7 +5,7 @@ atual até lá. Vale para `index.html`, `analises.html` e tudo em `src/styles/` 
 `src/analises/*.css`.
 
 Parte do que o sistema já tem — as cores da marca AgSUS (`--agsus-*` em `app.css`), a fonte
-Inter, o shell de `platform-shell.css` — e organiza isso em tokens com papel definido, para que
+Geist, o shell de `platform-shell.css` — e organiza isso em tokens com papel definido, para que
 o mesmo estado tenha a mesma aparência em Saúde Indígena, Núcleo, Calendário, Aprovados,
 Configurações e Análises.
 
@@ -69,9 +69,9 @@ outros valores (`--green #16934d` contra `#0b8f58`, `--red #e14444` contra `#d92
 `--yellow #e2a400` contra `#f2b705`, `--radius 20px` contra `18px`). O mesmo estado
 tem cor diferente em cada tela.
 
-**Fonte:** Inter, do Google Fonts, carregada com seis pesos (400 a 900). Só quatro são necessários.
-**Ícones:** Font Awesome 6.5.2 via CDN (62 usos no `index.html`). O pacote `lucide` está no
-`package.json`, mas não é importado em `src/`.
+**Fonte:** Geist, do Google Fonts, como fonte variável (400 a 900 num arquivo só).
+**Ícones:** Font Awesome 6.5.2 via CDN (62 usos no `index.html`). A barra lateral e o que é dela
+já usam o `lucide`, por `src/modules/icones.js` (ver "Ícones", seção 4).
 
 **Possível órfão:** `src/styles/pwa-lifecycle.css` não é importado por nenhum arquivo.
 `runtime-critical-fixes.css` é carregado de dentro de `src/modules/connectivity-status.js`.
@@ -93,6 +93,10 @@ tem cor diferente em cada tela.
 
 Os valores abaixo são o alvo. Devem morar em **um único arquivo**, `src/styles/tokens.css`,
 importado antes de qualquer outro CSS no `src/main.js` e no `src/analises/main.js`.
+O arquivo já existe, com o que pôde entrar sem repintar nada: fonte, tamanhos `--text-sm/md/base`,
+espaçamento, raio, `--shadow-overlay`, movimento e `--text-inverse`. As cores de texto e superfície
+entram quando cada componente migrar (as reservas atuais divergem). As camadas (`--z-*`) seguem em
+`app.css`.
 O nome diz o **papel** (`--text-secondary`), não a cor (`--muted`), para que o tema escuro
 troque o valor sem trocar o nome. Todo par de cor abaixo foi medido: os números entre
 parênteses são a razão de contraste sobre `--surface-card`.
@@ -189,7 +193,7 @@ Não as troque pela paleta geral.
 
 ```css
 :root {
-  --font-sans: "Inter", "Segoe UI", Roboto, Arial, sans-serif;   /* a de hoje, em app.css */
+  --font-sans: "Geist", "Segoe UI", Roboto, Arial, sans-serif;   /* tokens.css */
   --text-xs: 11px;    /* só metadado auxiliar: eixo de gráfico, contador em badge */
   --text-sm: 12px;    /* mínimo para informação operacional */
   --text-md: 13px;    /* tabela, rótulo de campo */
@@ -201,9 +205,10 @@ Não as troque pela paleta geral.
 }
 ```
 
-**A Inter fica.** O problema da tipografia não é a família, é o peso. Quando nenhuma regra usar
-mais de 700, tire `800;900` da URL do Google Fonts no `index.html` e no `analises.html`: são dois
-arquivos de fonte a menos em cada carregamento.
+**A fonte é a Geist**, no app principal e em Análises. Vem do Google Fonts como fonte variável
+(`family=Geist:wght@400..900`): um arquivo cobre todos os pesos, então os 800 e 900 legados não
+custam download extra. Regra nova usa `var(--font-sans)` e fica em 400–700 — o problema da
+tipografia daqui não é a família, é o peso.
 
 | Uso | Tamanho | Peso | Tracking |
 |---|---|---|---|
@@ -273,6 +278,8 @@ A escada já existe em parte (`app.css:40-42`). Formalizada:
 |---|---|---|
 | `--z-sticky` | 100 | cabeçalho de tabela, barra de filtros |
 | `--z-header` | 10010 | `.app .top` |
+| `--z-sidebar` | 10020 | barra lateral acima de 900px: a alça de recolher e o painel flutuante do menu passam por cima do cabeçalho |
+| `--z-popover` | 10040 | popovers do cabeçalho |
 | `--z-map-immersive` | 12050 | mapa imersivo |
 | `--z-exit-dialog` | 15000 | diálogo de saída da Saúde Indígena |
 | `--z-overlay` | 20000 | modais |
@@ -280,13 +287,16 @@ A escada já existe em parte (`app.css:40-42`). Formalizada:
 | `--z-toast` | 20050 | toast (o topo) |
 
 Nada acima de `--z-toast`. Os `2147483000` de `nina-conversation.css` e
-`analises-residual-ui-fixes.js` devem descer para essa escada.
+`analises-residual-ui-fixes.js` devem descer para essa escada. Quem precisa ficar acima da barra
+lateral usa os tokens de overlay: modal de busca (`--z-overlay`); link de pular, faixa offline,
+aviso de conectividade e aviso de sessão (`--z-toast`). `tests/camadas-acima-da-barra.test.js`
+guarda essa ordem.
 
 ### 3.8 Breakpoints
 
 Media query não aceita `var()`, então os valores são constantes documentadas:
 **420px** (celular pequeno) · **640px** (celular) · **900px** (tablet; a barra lateral
-vira gaveta — contrato com `src/modules/colapsar-a-sidebar.js`) · **1220px** (desktop estreito).
+vira gaveta — contrato com `src/componentes/barra-lateral/usar-ambiente.js`) · **1220px** (desktop estreito).
 Os valores de hoje (560, 680, 700, 720, 820, 1180) migram para o mais próximo quando a regra for tocada.
 
 ---
@@ -365,14 +375,46 @@ sem permissão e offline (`src/modules/connectivity-status.js`).
 
 ### Barra lateral
 
-256px expandida e 68px recolhida (`platform-shell.css`). No estado recolhido, o alvo clicável tem o
-tamanho do ícone (40×40), e hover e ativo vivem no ícone, não no `<button>`. O tooltip vem do `title`.
-A coluna não anima a largura (ver o comentário em `platform-shell.css`).
+**É React** (`src/componentes/barra-lateral/`), o primeiro componente da migração; o legado a
+alimenta por estado externo e eventos (ver `src/componentes/CLAUDE.md`). **Organizada em áreas** —
+Saúde indígena, Recrutamento e seleção, Administração —, cada uma com as suas páginas
+(`src/lib/menu-lateral.js`; área nova é uma entrada no catálogo). Painéis externos
+entram em Recrutamento e seleção; as seções de Configurações são as páginas de Administração. Área
+marcada como `paginaUnica` (Saúde indígena) é link direto.
+
+- **Medidas:** 240px expandida e 60px recolhida. Marca 56px com logo de 32px. Cabeçalho de área
+  36px, ícone 18px (traço 1,75), rótulo `--text-md`/500. Item 32px, pendurado numa linha-guia
+  alinhada ao centro do ícone. Na gaveta do celular (≤ 900px), os botões mantêm 44px de toque.
+- **Expandida:** acordeão, com **todas as áreas abertas por padrão**; só a seta gira, a altura não
+  anima. Guarda-se (`localStorage`) só a lista das áreas que a pessoa fechou, então área nova no
+  catálogo já nasce aberta. Abrir uma página reabre a área dela.
+- **Recolhida:** trilho de ícones de 36px. O painel da área vira um flutuante ao lado do trilho,
+  com a pílula do nome em cima. Abre por clique, Enter/Espaço ou ponteiro (só com hover) e fecha
+  por `Esc`, clique fora, foco saindo ou item escolhido — um por vez. O estado mora no JS
+  (`src/componentes/barra-lateral/menu-de-areas.jsx`), não em `:hover`.
+- **Rodapé:** seletor Claro/Escuro (único controle de tema do app), Sair e versão. Recolhida,
+  o tema vira um botão que alterna e o Sair vira ícone.
+- **Alça de recolher:** círculo de 24px na borda direita, na altura da marca, metade para fora; a
+  seta gira com a barra recolhida. Até 900px o mesmo botão vai para o cabeçalho, como hambúrguer da
+  gaveta (`alca-de-recolher.jsx`, CSS em `barra-lateral.css`).
+- **Cores:** tokens de componente `--menu-*` em `platform-shell.css`, trocados pelo tema escuro e
+  pela barra com cor configurada escura. Hover e ativo são o próprio texto em baixa opacidade
+  (`color-mix` com `currentColor`). O painel flutuante é um cartão da página
+  (`--menu-flutuante-*`), fora do alcance da cor configurada.
+- A coluna não anima a largura (ver o comentário em `platform-shell.css`).
 
 ### Ícones
 
-Só Font Awesome 6, nos tamanhos 14, 16 e 20px, na cor do texto ao lado. Não misture outro conjunto:
-se a decisão for migrar para o `lucide` (já no `package.json`), migre tudo de uma vez.
+**Migração para o `lucide` em andamento, por componente.** Já migrados: a barra lateral e o que é
+dela (menu inferior do celular, Sair, seletor de tema, alça de recolher). O resto segue em Font
+Awesome 6 até o componente migrar. Regras:
+
+- Um conjunto por componente: nunca Lucide e Font Awesome dentro do mesmo componente.
+- Lucide sai de um registro só, `src/modules/icones.js`, que importa cada ícone pelo nome — só os
+  usados entram no bundle. Ícone novo: registre lá. Sem framework, `criarIcone(nome, { tamanho })`;
+  em React, `<Icone nome="…" tamanho={…} />` (`src/componentes/icone.jsx`).
+- Tamanhos 16, 18 e 20px, traço 1,75, na cor do texto ao lado (`stroke: currentColor`).
+- O ícone é decorativo (`aria-hidden`); quem nomeia o controle é o texto dele ou um `aria-label`.
 
 ---
 

@@ -1,6 +1,15 @@
+import {
+  avisar,
+  EVENTO_BARRA_ALTERNADA,
+} from "../lib/eventos-da-barra-lateral.js";
+
 const MOBILE_BREAKPOINT = 900;
-const SIDEBAR_SELECTOR =
-  "#sidebar a, #sidebar button, .sidebar a, .sidebar button";
+/*
+  Na gaveta, escolher uma página fecha a gaveta. Abrir uma área do menu ou
+  trocar o tema não fecha: a pessoa ainda está escolhendo. O Sair também não
+  entra — o clique dele para a propagação e abre a confirmação.
+*/
+const SIDEBAR_NAVIGATION_SELECTOR = ".sidebar [data-view]";
 const SERVICE_WORKER_WARNING =
   "Service worker do AgSUS Monitora não foi registrado:";
 
@@ -10,6 +19,8 @@ function closeMobileSidebar() {
 
   const overlay = document.getElementById("sidebarOverlay");
   overlay?.classList.add("hidden");
+  // O botão da gaveta (React, no cabeçalho) acompanha o `aria-expanded`.
+  avisar(EVENTO_BARRA_ALTERNADA);
 }
 
 function ensureSidebarOverlay() {
@@ -47,7 +58,7 @@ function bindMobileInteractions() {
     const target = event.target;
     if (!(target instanceof Element)) return;
 
-    const selectedSidebarItem = target.closest(SIDEBAR_SELECTOR);
+    const selectedSidebarItem = target.closest(SIDEBAR_NAVIGATION_SELECTOR);
     const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
 
     if (selectedSidebarItem && isMobile) closeMobileSidebar();

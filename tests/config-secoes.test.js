@@ -1,14 +1,14 @@
 import { readFileSync } from "node:fs";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   SECAO_PADRAO,
   SECAO_POR_BLOCO,
   SECAO_POR_CAMPO,
   SECOES,
+  abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
-  montarSubmenuConfiguracoes,
-  sincronizarSubmenuConfiguracoes,
   removerNavegadorAntigo,
+  secaoAtualDeConfiguracao,
   secaoDoCampo,
 } from "../src/modules/config-secoes.js";
 
@@ -204,74 +204,69 @@ describe("organizar move sem destruir", () => {
   });
 });
 
-describe("subgrupos no menu principal", () => {
-  let navegacoes;
+/*
+  As sete seções são as páginas da área Administração do menu lateral
+  (`src/lib/menu-lateral.js`). O menu navega até Configurações e chama
+  `abrirSecaoDeConfiguracao`; quem marca o item ativo é o próprio menu, testado
+  em `tests/componentes/barra-lateral.test.js`.
+*/
+describe("as seções como páginas de Administração", () => {
   beforeEach(() => {
-    navegacoes = 0;
     document.body.className = "";
     document.body.innerHTML =
-      '<nav id="nav"><button data-view="config">Configurações</button></nav><section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgTitle" value="AgSUS"></div></div></section>';
+      '<section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgTitle" value="AgSUS"></div></div></section>';
     organizarConfiguracoesEmSecoes(document);
-    montarSubmenuConfiguracoes(document, {
-      navegar: () => {
-        navegacoes++;
-        document.getElementById("page-config").classList.add("active");
-      },
-      alternarBarra: () =>
-        document.body.classList.remove("sidebar-collapsed", "sidebar-open"),
-    });
   });
-  const escolher = (id) =>
-    document.querySelector('.config-submenu [data-secao="' + id + '"]').click();
-  it("substitui a coluna interna por sete subgrupos no menu", () => {
+  afterEach(() => {
+    delete window.loadAccessManagement;
+  });
+
+  it("não cria navegador próprio: quem navega é o menu lateral", () => {
     expect(document.querySelector(".config-nav")).toBeNull();
     expect(document.getElementById("configBuscaSecao")).toBeNull();
+    expect(modulo).not.toContain("configSubmenu");
+    expect(modulo).not.toContain("insertAdjacentHTML");
+  });
+
+  it("começa em Marca e informa a seção aberta", () => {
+    expect(secaoAtualDeConfiguracao(document)).toBe("marca");
     expect(
-      document.querySelectorAll("#nav .config-submenu__item"),
-    ).toHaveLength(7);
-    expect(document.getElementById("configSubmenu").hidden).toBe(true);
+      document.querySelector('.config-secao[data-secao="marca"]').hidden,
+    ).toBe(false);
   });
-  it("abre Configurações, expande a barra recolhida e alterna o submenu", () => {
-    document.body.classList.add("sidebar-collapsed");
-    const botao = document.querySelector('[data-view="config"]');
-    botao.click();
-    expect(navegacoes).toBe(1);
-    expect(document.body.classList.contains("sidebar-collapsed")).toBe(false);
-    expect(botao.getAttribute("aria-expanded")).toBe("true");
-    botao.click();
-    expect(botao.getAttribute("aria-expanded")).toBe("false");
-    expect(navegacoes).toBe(1);
-  });
-  it("troca o subgrupo sem recriar campos nem perder valores pendentes", () => {
-    document.querySelector('[data-view="config"]').click();
+
+  it("troca a seção sem recriar campos nem perder valores pendentes", () => {
     const campo = document.getElementById("cfgTitle");
     campo.value = "Rascunho";
-    escolher("acessos");
+
+    expect(abrirSecaoDeConfiguracao(document, "acessos")).toBe(true);
+    expect(secaoAtualDeConfiguracao(document)).toBe("acessos");
     expect(
       document.querySelector('.config-secao[data-secao="acessos"]').hidden,
     ).toBe(false);
     expect(
       document.querySelector('.config-secao[data-secao="marca"]').hidden,
     ).toBe(true);
-    escolher("marca");
+
+    abrirSecaoDeConfiguracao(document, "marca");
     expect(document.getElementById("cfgTitle")).toBe(campo);
     expect(campo.value).toBe("Rascunho");
-    expect(navegacoes).toBe(1);
-    expect(
-      document
-        .querySelector('.config-submenu [data-secao="marca"]')
-        .getAttribute("aria-current"),
-    ).toBe("page");
   });
-  it("recolhe a gaveta móvel ao selecionar e oculta os subgrupos em outra página", () => {
-    document.querySelector('[data-view="config"]').click();
-    document.body.classList.add("sidebar-open");
-    escolher("operacao");
-    expect(document.body.classList.contains("sidebar-open")).toBe(false);
-    sincronizarSubmenuConfiguracoes(document, "dashboard");
-    expect(document.getElementById("configSubmenu").hidden).toBe(true);
-    sincronizarSubmenuConfiguracoes(document, "config");
-    expect(document.getElementById("configSubmenu").hidden).toBe(false);
+
+  it("recusa seção que não existe e não muda a aberta", () => {
+    expect(abrirSecaoDeConfiguracao(document, "inexistente")).toBe(false);
+    expect(secaoAtualDeConfiguracao(document)).toBe("marca");
+  });
+
+  it("Acessos carrega a gestão de acessos; as outras, não", () => {
+    let cargas = 0;
+    window.loadAccessManagement = () => {
+      cargas += 1;
+    };
+    abrirSecaoDeConfiguracao(document, "operacao");
+    expect(cargas).toBe(0);
+    abrirSecaoDeConfiguracao(document, "acessos");
+    expect(cargas).toBe(1);
   });
 });
 

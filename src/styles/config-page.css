@@ -456,7 +456,7 @@
 
 #page-config .config-sticky-actions {
   position: fixed;
-  left: calc(var(--sidebar-width, 52px) + 18px);
+  left: calc(var(--sidebar-mini) + 18px);
   right: 18px;
   bottom: 15px;
   z-index: 450;
@@ -473,7 +473,7 @@
 }
 
 body:not(.sidebar-collapsed) #page-config .config-sticky-actions {
-  left: calc(var(--sidebar-width, 250px) + 18px);
+  left: calc(var(--sidebar) + 18px);
 }
 
 #page-config:not(.active) .config-sticky-actions {

@@ -1,99 +1,69 @@
+import { criarIcone } from "./icones.js";
+import {
+  avisar,
+  EVENTO_BARRA_ALTERNADA,
+  EVENTO_MENU_ATUALIZADO,
+} from "../lib/eventos-da-barra-lateral.js";
+
+/*
+  Menu inferior do celular: as quatro primeiras páginas do menu lateral e um
+  "Mais", que abre a gaveta com tudo.
+
+  As páginas saem do `data-view` (cabeçalho de área não navega, então não
+  entra), sem filtrar pelo que está visível: as páginas de uma área fechada
+  estão ocultas e continuam valendo. Rótulo e ícone vêm de `data-rotulo` e
+  `data-icone`, que o menu lateral escreve. Uma entrada por página: as sete
+  seções de Configurações contam como uma.
+
+  Quando o menu lateral (React) é remontado ou troca de página, ele avisa
+  (`agsus:menu-lateral-atualizado`), já com o DOM atualizado. Aqui isso basta
+  para remontar, se as origens saíram do DOM, e para acompanhar o item ativo
+  pelo `aria-current`.
+*/
+
 const MOBILE_BREAKPOINT = 900;
 const MAX_PRIMARY_ITEMS = 4;
-// Só destinos: o cabeçalho dos grupos da barra lateral também é um <button>.
-const NAV_ITEM_SELECTOR = "#nav a, #nav button[data-view]";
-const DEFAULT_ICON_CLASS = "fa-solid fa-circle";
-const MORE_BUTTON_HTML =
-  '<i class="fa-solid fa-bars" aria-hidden="true"></i><span>Mais</span>';
+const NAV_ITEM_SELECTOR = "#nav [data-view]";
 
 function getLabel(element) {
-  const explicit = element.getAttribute("aria-label") || element.title;
-  const text = element.textContent?.replace(/\s+/g, " ").trim();
-  return explicit || text || "Acessar";
+  return (
+    element.dataset.rotulo ||
+    element.getAttribute("aria-label") ||
+    element.textContent?.replace(/\s+/g, " ").trim() ||
+    "Acessar"
+  );
 }
 
-function getIconClass(element) {
-  const icon = element.querySelector("i");
-  return icon?.className || DEFAULT_ICON_CLASS;
-}
-
-function isUsableSidebarItem(element) {
-  if (!(element instanceof HTMLElement)) return false;
-  if (element.hidden || element.closest("[hidden], .hidden")) return false;
-  // Grupo recolhido na barra lateral continua sendo destino válido aqui.
-  if (element.closest('.nav-grupo[data-aberto="false"]')) return true;
-
-  const style = window.getComputedStyle(element);
-  if (style.display === "none" || style.visibility === "hidden") return false;
-
-  const label = getLabel(element).toLowerCase();
-  return !label.includes("sair") && !label.includes("logout");
-}
-
-function ehPainelExterno(element) {
-  return String(element.dataset?.view || "").startsWith("panel:") ? 1 : 0;
-}
-
-function collectPrimaryItems() {
+export function collectPrimaryItems(documento = document) {
   const seen = new Set();
-
-  return Array.from(document.querySelectorAll(NAV_ITEM_SELECTOR))
-    .filter(isUsableSidebarItem)
+  return Array.from(documento.querySelectorAll(NAV_ITEM_SELECTOR))
     .filter((element) => {
-      const key =
-        element.getAttribute("href") ||
-        element.getAttribute("onclick") ||
-        element.id ||
-        getLabel(element);
-
-      if (seen.has(key)) return false;
-      seen.add(key);
+      const view = element.dataset.view;
+      if (!view || seen.has(view)) return false;
+      seen.add(view);
       return true;
     })
-    // Telas do próprio MONITORA antes dos painéis externos: com a barra lateral
-    // agrupada por área, os painéis da Saúde Indígena vinham antes de Editais,
-    // Cronograma e Aprovados e ocupavam os quatro atalhos. `sort` é estável.
-    .sort((a, b) => ehPainelExterno(a) - ehPainelExterno(b))
     .slice(0, MAX_PRIMARY_ITEMS);
 }
 
-function setActiveItem(source, navigation) {
-  let matched = false;
-
-  navigation.querySelectorAll(".mobile-bottom-nav__item").forEach((item) => {
-    const active = Boolean(source.id) && item.dataset.sourceId === source.id;
-    item.classList.toggle("is-active", active);
-
-    if (active) {
-      item.setAttribute("aria-current", "page");
-      matched = true;
-    } else {
-      item.removeAttribute("aria-current");
-    }
-  });
-
-  return matched;
+function fillItem(button, iconName, label) {
+  const text = document.createElement("span");
+  text.textContent = label;
+  button.replaceChildren(criarIcone(iconName, { tamanho: 20 }), text);
 }
 
-function createNavigationItem(source, navigation, index) {
+function createNavigationItem(source, index) {
   if (!source.id) source.id = `mobileNavSource${index}`;
 
   const label = getLabel(source);
-  // A barra lateral usa SVG (Lucide); a barra de baixo copia o mesmo desenho.
-  const svg = source.querySelector("svg")?.outerHTML;
-  const iconClass = getIconClass(source);
   const button = document.createElement("button");
-
   button.type = "button";
   button.className = "mobile-bottom-nav__item";
   button.dataset.sourceId = source.id;
+  button.dataset.view = source.dataset.view;
   button.setAttribute("aria-label", label);
-  button.innerHTML = `${svg || `<i class="${iconClass}" aria-hidden="true"></i>`}<span>${label}</span>`;
-  button.addEventListener("click", () => {
-    source.click();
-    setActiveItem(source, navigation);
-  });
-
+  fillItem(button, source.dataset.icone, label);
+  button.addEventListener("click", () => source.click());
   return button;
 }
 
@@ -102,14 +72,33 @@ function createMoreButton() {
   button.type = "button";
   button.className = "mobile-bottom-nav__item";
   button.setAttribute("aria-label", "Abrir menu completo");
-  button.innerHTML = MORE_BUTTON_HTML;
+  fillItem(button, "menu", "Mais");
   button.addEventListener("click", () => {
     document.body.classList.remove("sidebar-collapsed");
     document.body.classList.add("sidebar-open");
     document.getElementById("sidebarOverlay")?.classList.remove("hidden");
+    avisar(EVENTO_BARRA_ALTERNADA);
   });
-
   return button;
+}
+
+export function syncActiveItem(navigation, documento = document) {
+  const current = documento.querySelector('#nav [aria-current="page"]');
+  const activeView = current?.dataset.view;
+  navigation
+    .querySelectorAll(".mobile-bottom-nav__item[data-view]")
+    .forEach((item) => {
+      const active = Boolean(activeView) && item.dataset.view === activeView;
+      item.classList.toggle("is-active", active);
+      if (active) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
+}
+
+function sourcesConnected(navigation) {
+  return Array.from(navigation.querySelectorAll("[data-source-id]")).every(
+    (item) => document.getElementById(item.dataset.sourceId)?.isConnected,
+  );
 }
 
 function buildBottomNavigation() {
@@ -123,14 +112,12 @@ function buildBottomNavigation() {
   navigation.id = "mobileBottomNav";
   navigation.className = "mobile-bottom-nav";
   navigation.setAttribute("aria-label", "Navegação principal no celular");
-
   sources.forEach((source, index) => {
-    const item = createNavigationItem(source, navigation, index);
-    navigation.appendChild(item);
+    navigation.appendChild(createNavigationItem(source, index));
   });
-
   navigation.appendChild(createMoreButton());
   document.body.appendChild(navigation);
+  syncActiveItem(navigation);
   return true;
 }
 
@@ -152,22 +139,19 @@ function syncVisibility() {
   navigation.classList.toggle("hidden", isDesktop);
 }
 
-function syncActiveStateFromSidebarClick(event) {
-  const target = event.target;
-  if (!(target instanceof Element)) return;
-
-  const source = target.closest(NAV_ITEM_SELECTOR);
-  if (!(source instanceof HTMLElement)) return;
-
+function refreshFromMenu() {
   const navigation = document.getElementById("mobileBottomNav");
-  if (!navigation) return;
-
-  setActiveItem(source, navigation);
+  if (navigation && sourcesConnected(navigation)) {
+    syncActiveItem(navigation);
+    return;
+  }
+  navigation?.remove();
+  buildBottomNavigation();
 }
 
 export function initMobileBottomNavigation() {
   scheduleBuild();
-  document.addEventListener("click", syncActiveStateFromSidebarClick);
+  document.addEventListener(EVENTO_MENU_ATUALIZADO, refreshFromMenu);
   window.addEventListener("resize", syncVisibility, { passive: true });
   window.addEventListener("orientationchange", syncVisibility, {
     passive: true,

@@ -74,7 +74,11 @@ describe("fluxo de autenticação Supabase", () => {
     const html = source("index.html");
     expect(html).not.toContain('id="updatedPill"');
     expect(html).not.toContain("Agência Brasileira de Apoio à Gestão do SUS");
-    expect(html).toContain('class="fa-solid fa-bars"');
+    // A barra lateral e o botão de recolher são React; o index.html só tem o <aside>.
+    expect(html).toContain('<aside class="sidebar"');
+    expect(
+      source("src/componentes/barra-lateral/alca-de-recolher.jsx"),
+    ).toContain('id="globalSidebarToggle"');
     expect(html).toContain('id="topUserMenu"');
   });
 });
