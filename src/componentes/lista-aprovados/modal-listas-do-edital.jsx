@@ -4,6 +4,7 @@ import {
   canReplaceApprovedList,
   normalizeRole,
 } from "../../lib/access-roles.js";
+import { formatNumberBR } from "../../lib/formatters.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { Modal } from "../modal.jsx";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
@@ -48,7 +49,7 @@ function ResumoDaListaAtual({ lista, podeSubstituir }) {
         </div>
         <div className="approved-import-summary-detail compact">
           <span>Candidatos</span>
-          <strong>{String(lista.total_candidatos ?? 0)} candidatos</strong>
+          <strong>{formatNumberBR(lista.total_candidatos ?? 0)} candidatos</strong>
         </div>
       </div>
       {podeSubstituir ? (
@@ -93,7 +94,7 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
       <p id="approvedImportPermissionNote" className="modal-note">
         {soLeitura
           ? `A lista já foi importada. O perfil ${normalizeRole(perfil) || "atual"} pode ativar/inativar, mas somente admin pode substituir ou remover o XLSX.`
-          : "A importação cria candidatos vinculados a este edital pelo ID do registro da Equipe Núcleo."}
+          : "A importação cria candidatos vinculados a este edital pelo ID do edital."}
       </p>
       <div className="form-grid">
         <div

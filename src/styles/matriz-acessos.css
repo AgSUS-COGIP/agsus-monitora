@@ -24,7 +24,8 @@
 .permission-scroll {
   isolation: isolate;
   max-width: 100%;
-  max-height: 62vh;
+  /* A seção de Acessos é da matriz: ela ocupa quase a altura toda da tela. */
+  max-height: max(420px, calc(100dvh - 240px));
   overflow: auto;
   border: 1px solid var(--permission-divider);
   border-radius: var(--radius-md, 12px);
@@ -43,7 +44,7 @@
   padding: var(--space-3, 12px);
   border-bottom: 1px solid var(--permission-divider);
   text-align: left;
-  min-width: 160px;
+  min-width: 136px;
   background: var(--permission-surface);
   color: var(--permission-text);
 }

@@ -68,3 +68,25 @@ export function unidadesDoResponsavel(responsavel, unidadesDoCatalogo) {
   // Sem responsável escolhido vale o catálogo de sempre, como antes deste campo.
   return unidadesDoCatalogo || [];
 }
+
+const semAcento = (valor) =>
+  text(valor).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+const UNIDADES_CORES_NORMALIZADAS = new Set(UNIDADES_CORES.map(semAcento));
+
+/**
+ * O edital entra no painel da Saúde Indígena?
+ *
+ * O painel mostrava tudo o que está em `TB_MONITORAMENTO_INDIGENA`, inclusive
+ * SEDE, MFC e as outras unidades do CORES. O responsável sozinho não basta:
+ * `20260922120000_editais_existentes_como_usi.sql` marcou todos os editais
+ * antigos como USI, os do CORES inclusive. Por isso a unidade também decide —
+ * uma unidade do catálogo do CORES nunca é da Saúde Indígena.
+ *
+ * Editais, Cronograma e Lista de Aprovados continuam vendo tudo: são
+ * transversais às áreas.
+ */
+export function ehEditalDaSaudeIndigena(edital) {
+  if (ehResponsavelCores(edital?.responsavel)) return false;
+  return !UNIDADES_CORES_NORMALIZADAS.has(semAcento(edital?.unidade));
+}

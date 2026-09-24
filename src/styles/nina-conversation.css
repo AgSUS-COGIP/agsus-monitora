@@ -16,6 +16,17 @@
   margin-left: auto;
 }
 
+/* Minimizada, a caixa tem o tamanho da arara, não os 580px do chat. */
+/*
+  Minimizada, a caixa tem o tamanho da arara, não os 580px do chat, e prende
+  à direita. No celular arara-guide.css dá `left` e `right` à caixa para o
+  chat ocupar a largura; sem `left: auto` a arara ia para o canto esquerdo.
+*/
+#araraGuideHost:has(> .arara-assistant.is-hidden) {
+  width: fit-content;
+  left: auto;
+}
+
 .arara-assistant__panel {
   cursor: grab;
 }

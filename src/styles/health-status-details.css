@@ -1,12 +1,6 @@
 #page-dashboard .health-status-card {
   overflow: hidden;
 }
-#page-dashboard .health-status-subtitle {
-  margin: -4px 0 14px;
-  color: #71849a;
-  font-size: 12px;
-  font-weight: 600;
-}
 #page-dashboard .health-status-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(300px, 1.1fr);
@@ -28,62 +22,81 @@
   pointer-events: none;
   text-align: center;
 }
+/*
+  Situação dos processos: rosca + lista. Cada linha é um botão que filtra a
+  tabela; a barra dá a proporção de relance. Valores de tokens.css.
+*/
 #page-dashboard .health-status-center strong {
-  font-size: 32px;
+  font-size: var(--text-kpi);
+  font-weight: 700;
   line-height: 1;
-  color: #0b355d;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 #page-dashboard .health-status-center span {
-  margin-top: 4px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #7b8fa4;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 #page-dashboard .health-status-legend {
   display: grid;
-  gap: 7px;
+  gap: var(--space-2);
 }
 #page-dashboard .health-status-legend-item {
   display: grid;
-  grid-template-columns: 12px 1fr auto 42px;
+  grid-template-columns: 10px 1fr auto 44px;
   align-items: center;
-  gap: 9px;
+  column-gap: var(--space-3);
+  row-gap: var(--space-2);
   width: 100%;
-  padding: 10px 11px;
-  border: 1px solid #e0e8f1;
-  border-radius: 11px;
-  background: #fff;
-  color: #20384f;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
   text-align: left;
   cursor: pointer;
-  transition: 0.16s ease;
+  transition: border-color var(--motion-fast) var(--ease-standard);
 }
 #page-dashboard .health-status-legend-item:hover {
-  border-color: #92bceb;
-  background: #f6faff;
-  transform: translateX(2px);
+  border-color: var(--border-control);
+  background: var(--surface-hover);
 }
 #page-dashboard .health-status-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.12);
 }
 #page-dashboard .health-status-name {
-  font-size: 12px;
-  font-weight: 800;
+  font-size: var(--text-md);
+  font-weight: 600;
 }
 #page-dashboard .health-status-legend-item strong {
-  font-size: 14px;
-  color: #0b355d;
+  font-size: var(--text-base);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 #page-dashboard .health-status-legend-item small {
-  font-size: 11px;
-  font-weight: 800;
-  color: #71849a;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
   text-align: right;
+}
+#page-dashboard .health-status-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--state-neutral-soft);
+}
+#page-dashboard .health-status-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
 }
 
 #page-dashboard .health-details-card {
@@ -437,4 +450,31 @@ html[data-theme="dark"] .health-drawer-metrics > div {
   .health-drawer-metrics {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Nenhum processo em risco médio ou alto (legacy-app.js, renderRisks). */
+#page-dashboard .risk-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--state-success-soft);
+  color: var(--text-primary);
+}
+#page-dashboard .risk-empty > i {
+  margin-top: 2px;
+  color: var(--state-success);
+  font-size: 18px;
+}
+#page-dashboard .risk-empty strong {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+#page-dashboard .risk-empty span {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--text-md);
+  color: var(--text-secondary);
 }

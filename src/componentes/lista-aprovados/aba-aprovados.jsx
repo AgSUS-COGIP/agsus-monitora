@@ -3,6 +3,7 @@ import {
   OPCOES_DO_FILTRO_DE_STATUS,
   canEditSubJudice,
   formatarNota,
+  modalidadeSemAspas,
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
@@ -164,11 +165,13 @@ export function AbaAprovados({
         <table className="approved-table">
           <thead>
             <tr>
+              {/* Nome primeiro: é por ele que se procura; na última coluna
+                  ficava cortado pela rolagem horizontal. */}
+              <th>Nome</th>
               <th>Cargo</th>
               <th>Modalidade</th>
               <th className="num">Classificação</th>
               <th className="num">Nota</th>
-              <th>Nome</th>
               <th>Status</th>
               <th style={{ textAlign: "center" }}>Ações</th>
             </tr>
@@ -183,13 +186,13 @@ export function AbaAprovados({
             ) : pagina.rows.length ? (
               pagina.rows.map((row) => (
                 <tr key={row.candidato_id}>
-                  <td>{row.cargo || "-"}</td>
-                  <td>{row.modalidade || "-"}</td>
-                  <td className="num">{row.classificacao ?? "-"}</td>
-                  <td className="num">{formatarNota(row.nota)}</td>
                   <td>
                     <NomeDoCandidato candidato={row} />
                   </td>
+                  <td>{row.cargo || "-"}</td>
+                  <td>{modalidadeSemAspas(row.modalidade) || "-"}</td>
+                  <td className="num">{row.classificacao ?? "-"}</td>
+                  <td className="num">{formatarNota(row.nota)}</td>
                   <td>
                     <SeloDeStatus status={text(row.status)} />
                   </td>

@@ -46,14 +46,14 @@ const ABAS = [
     id: "approvedTabAprovados",
     painel: "approvedPanelAprovados",
     icone: "fa-user-check",
-    rotulo: "Lista de aprovados",
+    rotulo: "aprovados",
   },
   {
     nome: "convocacao",
     id: "approvedTabConvocacao",
     painel: "approvedPanelConvocacao",
     icone: "fa-bullhorn",
-    rotulo: "Lista de convocação",
+    rotulo: "convocação",
   },
 ];
 
@@ -177,10 +177,6 @@ export function ListaAprovados({ estado }) {
               <i className="fa-solid fa-user-check" aria-hidden="true" /> Lista
               de Aprovados
             </h3>
-            <p className="approved-page-subtitle">
-              Consulte candidatos por edital e acompanhe a situação de
-              contratação.
-            </p>
           </div>
           {/*
             O contador e o botão de sub judice falam da lista de aprovados.
@@ -236,6 +232,7 @@ export function ListaAprovados({ estado }) {
               onClick={() => setAba(item.nome)}
             >
               <i className={`fa-solid ${item.icone}`} aria-hidden="true" />{" "}
+              <span className="approved-tab-prefixo">Lista de </span>
               {item.rotulo}
             </button>
           ))}

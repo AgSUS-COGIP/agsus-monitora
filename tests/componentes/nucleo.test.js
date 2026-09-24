@@ -511,16 +511,15 @@ describe("formulário do edital", () => {
     await montar();
     await abrirEdital("1");
     const caixa = $("cronogramaValidation");
+    // O motivo só é cobrado depois de mexer no cronograma, não ao abrir o modal.
+    expect(caixa.textContent).not.toContain("Informe o motivo");
+    await clicar($("cronogramaExample"));
     expect(caixa.hidden).toBe(false);
     expect(caixa.textContent).toContain(
       "Informe o motivo da alteração do cronograma.",
     );
     await digitar($("mCronogramaMotivo"), "Ajuste de datas");
     expect(caixa.textContent).not.toContain("Informe o motivo");
-    // Sem etapa de resultado final: é aviso, não erro.
-    expect(caixa.textContent).toContain(
-      "não possui uma etapa de resultado final",
-    );
   });
 
   it("status excepcional pede motivo e data da decisão", async () => {

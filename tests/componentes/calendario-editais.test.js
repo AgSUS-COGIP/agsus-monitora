@@ -69,6 +69,12 @@ function supabaseFalso({ erroNoResumo = null, falhaNoEdital = null } = {}) {
         return erroNoResumo
           ? { data: null, error: { message: erroNoResumo } }
           : { data: RESUMO, error: null };
+      /*
+        Banco sem `listar_etapas_do_cronograma` (versão anterior): o teste
+        simula PGRST202, e o componente cai no caminho antigo, por edital.
+      */
+      if (nome === "listar_etapas_do_cronograma")
+        return { data: null, error: { code: "PGRST202" } };
       const id = argumentos.p_monitoramento_id;
       if (id === falhaNoEdital)
         return { data: null, error: { message: "sem permissão" } };
@@ -83,18 +89,16 @@ async function montar(opcoes = {}) {
   document.body.innerHTML = `<section id="page-calendario" class="page active"></section>`;
   const supabase = opcoes.supabase || supabaseFalso();
   const toast = opcoes.toast || vi.fn();
-  const loader = vi.fn();
   await act(async () => {
     controlador = montarCalendarioEditais({
       secao: document.getElementById("page-calendario"),
       supabase,
       toast,
-      loader,
       agora: () => new Date(HOJE),
     });
   });
   await esperar(() => controlador.render());
-  return { supabase, toast, loader };
+  return { supabase, toast };
 }
 
 afterEach(async () => {
@@ -116,30 +120,47 @@ const etapasDaLinhaDoTempo = () =>
   );
 
 describe("carregamento", () => {
-  it("custa 1 + N chamadas, só para os editais com cronograma", async () => {
-    const { supabase, loader } = await montar();
+  it("custa 2 + N chamadas quando o banco ainda não tem a RPC em lote", async () => {
+    const { supabase } = await montar();
     const nomes = supabase.rpc.mock.calls.map(([nome, args]) =>
       args ? `${nome}:${args.p_monitoramento_id}` : nome,
     );
     expect(nomes).toEqual([
       "get_nucleo_cronograma_resumo",
+      "listar_etapas_do_cronograma",
       "get_monitoramento_cronograma:1",
       "get_monitoramento_cronograma:2",
     ]);
-    expect(loader).toHaveBeenNthCalledWith(1, true);
-    expect(loader).toHaveBeenLastCalledWith(false);
+  });
+
+  it("com a RPC em lote, custa 2 chamadas — nenhuma por edital", async () => {
+    const supabase = supabaseFalso();
+    supabase.rpc.mockImplementation(async (nome) => {
+      if (nome === "get_nucleo_cronograma_resumo")
+        return { data: RESUMO, error: null };
+      if (nome === "listar_etapas_do_cronograma")
+        return {
+          data: Object.entries(CRONOGRAMAS).flatMap(([id, etapas]) =>
+            etapas.map((etapa) => ({ ...etapa, monitoramento_id: Number(id) })),
+          ),
+          error: null,
+        };
+      throw new Error(`RPC inesperada: ${nome}`);
+    });
+    await montar({ supabase });
+    expect(supabase.rpc).toHaveBeenCalledTimes(2);
   });
 
   it("reabrir dentro do minuto não repete as chamadas; salvar cronograma invalida", async () => {
     const { supabase } = await montar();
     await esperar(() => controlador.render());
-    expect(supabase.rpc).toHaveBeenCalledTimes(3);
+    expect(supabase.rpc).toHaveBeenCalledTimes(4);
 
     await act(async () =>
       document.dispatchEvent(new CustomEvent("agsus:nucleo-cronograma-saved")),
     );
     await esperar(() => controlador.render());
-    expect(supabase.rpc).toHaveBeenCalledTimes(6);
+    expect(supabase.rpc).toHaveBeenCalledTimes(8);
   });
 
   it("mostra o erro no lugar da grade", async () => {
@@ -301,23 +322,73 @@ describe("popup do dia", () => {
 });
 
 describe("próximas etapas", () => {
-  it("lista o que ainda não terminou, na ordem, e foca o edital ao clicar", async () => {
+  /*
+    Pela próxima data que importa, não pelo início bruto: o Prazo de recurso
+    começou em 14/09 e ainda está em andamento (hoje é 15/09) — o que importa
+    é 22/09, quando ele termina, por isso vem depois de Inscrições (que só
+    começa em 22/09, mesma data, mas ainda não começou).
+  */
+  it("lista o que ainda não terminou, pela data que importa, e foca o edital ao clicar", async () => {
     await montar();
     const itens = [...document.querySelectorAll("#calProximas .cal-item")];
     expect(
       itens.map((item) => item.querySelector("strong").textContent),
     ).toEqual([
-      "Prazo de recurso do resultado preliminar",
       "Inscrições",
+      "Prazo de recurso do resultado preliminar",
       "Homologação do resultado final",
       "Entrevista",
     ]);
-    expect(itens[0].querySelector(".cal-item-data").textContent).toBe("14/09");
-    expect(itens[0].querySelector("small").textContent).toContain(
+    const prazoDeRecurso = itens[1];
+    expect(prazoDeRecurso.querySelector(".cal-item-data").textContent).toBe(
+      "22/09",
+    );
+    expect(prazoDeRecurso.querySelector("small").textContent).toContain(
       "14/09 a 22/09 (9 dias)",
     );
 
-    await clicar(itens[1]);
+    await clicar(itens[0]);
     expect($("calTimelineEdital").value).toBe("2");
+  });
+});
+
+describe("datas impossíveis (ano digitado errado)", () => {
+  it("avisa quais editais têm etapa a revisar, e a etapa some da lista", async () => {
+    const supabase = supabaseFalso();
+    supabase.rpc.mockImplementation(async (nome, argumentos) => {
+      if (nome === "get_nucleo_cronograma_resumo")
+        return { data: RESUMO, error: null };
+      if (nome === "listar_etapas_do_cronograma")
+        return { data: null, error: { code: "PGRST202" } };
+      const id = argumentos.p_monitoramento_id;
+      if (id === 1)
+        return {
+          data: {
+            etapas: [
+              // Ano 0202 em vez de 2026: gravado assim antes desta correção.
+              {
+                atividade: "Etapa com ano errado",
+                data_inicio: "0202-10-09",
+                data_fim: "0202-10-10",
+                ordem: 1,
+              },
+              ...CRONOGRAMAS[1],
+            ],
+          },
+          error: null,
+        };
+      return { data: { etapas: CRONOGRAMAS[id] || [] }, error: null };
+    });
+    await montar({ supabase });
+
+    expect($("calProximas").textContent).toContain(
+      "1 edital com data impossível no cronograma",
+    );
+    expect($("calProximas").textContent).toContain("10/2026");
+    expect(
+      [...document.querySelectorAll("#calProximas .cal-item strong")].map(
+        (item) => item.textContent,
+      ),
+    ).not.toContain("Etapa com ano errado");
   });
 });

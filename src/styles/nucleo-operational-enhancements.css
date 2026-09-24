@@ -1,74 +1,83 @@
+/*
+  Indicadores de Editais no mesmo padrão da Saúde Indígena
+  (health-reference-kpis.css): sem faixa colorida no topo — a cor de estado vai
+  no tile do ícone —, pesos 600/700 e valores de tokens.css.
+*/
 .nucleo-operational-panel {
-  margin: 0 0 14px;
-  padding: 18px;
-  border: 1px solid #dbe5f0;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fff, #f8fbff);
-  box-shadow: 0 8px 22px rgba(15, 48, 82, 0.06);
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-card);
 }
 .nucleo-operational-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 14px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 .nucleo-operational-heading span {
   display: block;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #3974a8;
+  color: var(--text-secondary);
 }
 .nucleo-operational-heading h3 {
   margin: 2px 0 3px;
-  color: #0b355d;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
 }
 .nucleo-operational-heading p {
   margin: 0;
-  color: #71849a;
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: var(--text-md);
 }
 .nucleo-kpi-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(130px, 1fr));
-  gap: 10px;
+  gap: var(--space-3);
 }
 .nucleo-kpi-card {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 13px;
-  border: 1px solid #dce6f0;
-  border-top: 3px solid var(--tone, #2673d8);
-  border-radius: 14px;
-  background: #fff;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
   text-align: left;
   cursor: pointer;
-  transition: 0.18s ease;
-  color: #13283d;
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+  color: var(--text-primary);
 }
-.nucleo-kpi-card:hover,
+.nucleo-kpi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-raised);
+}
+/* Filtro ativo: borda na cor do estado, que é a informação do cartão. */
 .nucleo-kpi-card.is-active {
-  transform: translateY(-2px);
-  box-shadow: 0 9px 18px rgba(23, 69, 109, 0.12);
-  border-color: var(--tone, #2673d8);
+  border-color: var(--tone);
+  box-shadow: 0 0 0 1px var(--tone);
 }
 .nucleo-kpi-card small {
   display: block;
-  margin-bottom: 1px;
-  font-size: 12px;
-  font-weight: 700;
+  margin-bottom: 2px;
+  font-size: var(--text-sm);
+  font-weight: 600;
   line-height: 1.3;
-  /* #687d92 dava 4.25:1 sobre o cartão branco — abaixo do mínimo AA. */
-  color: #55697d;
+  color: var(--text-secondary);
 }
 .nucleo-kpi-card strong {
-  font-size: 25px;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-size: var(--text-kpi);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
   /*
     Os seis números ficam lado a lado numa grade. Com dígitos de largura
     variável, "111" e "999" ocupam espaços diferentes e a linha perde o
@@ -79,29 +88,36 @@
 .nucleo-kpi-icon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--tone, #2673d8) 12%, white);
-  color: var(--tone, #2673d8);
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: var(--radius-md);
+  background: var(--tone-soft);
+  color: var(--tone);
 }
 .nucleo-kpi-card.tone-blue {
-  --tone: #286ff0;
+  --tone: var(--state-info);
+  --tone-soft: var(--state-info-soft);
 }
 .nucleo-kpi-card.tone-green {
-  --tone: #17a66a;
+  --tone: var(--state-success);
+  --tone-soft: var(--state-success-soft);
 }
 .nucleo-kpi-card.tone-red {
-  --tone: #e14c4c;
+  --tone: var(--state-danger);
+  --tone-soft: var(--state-danger-soft);
 }
 .nucleo-kpi-card.tone-amber {
-  --tone: #e5a400;
+  --tone: var(--state-warning);
+  --tone-soft: var(--state-warning-soft);
 }
 .nucleo-kpi-card.tone-cyan {
-  --tone: #1499bd;
+  --tone: var(--series-3);
+  --tone-soft: var(--state-info-soft);
 }
 .nucleo-kpi-card.tone-purple {
-  --tone: #7b61d8;
+  --tone: var(--series-4);
+  --tone-soft: var(--state-neutral-soft);
 }
 .nucleo-active-alert-filter {
   display: flex;
@@ -633,7 +649,7 @@ html[data-theme="dark"] .cronograma-validation-warnings {
 html[data-theme="dark"] .cronograma-history-empty {
   color: #9fb4c9;
 }
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .nucleo-kpi-grid {
     grid-template-columns: repeat(3, 1fr);
   }

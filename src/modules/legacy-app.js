@@ -27,6 +27,9 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
+import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
+import { mostrarNotificacao } from "./notificacao.js";
+import { ehEditalDaSaudeIndigena } from "../lib/responsavel-do-edital.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import { updateAraraGuide } from "./arara-guide.js";
 import {
@@ -629,16 +632,7 @@ function closeMoreActions() {
 }
 
 function toast(message, type = "ok") {
-  const box = $("toastBox");
-  const el = document.createElement("div");
-  el.className = "toast " + type;
-  el.innerHTML = `<div>${esc(message)}</div><button onclick="this.parentElement.remove()">×</button>`;
-  box.appendChild(el);
-  setTimeout(() => {
-    try {
-      el.remove();
-    } catch (e) {}
-  }, 4500);
+  mostrarNotificacao($("toastBox"), message, type);
 }
 
 function loader(show, title = "Carregando", sub = "Aguarde...", pct = 0) {
@@ -2323,7 +2317,7 @@ function navigate(view) {
     $("page-calendario").classList.add("active");
     setPageTitle(
       "Cronograma",
-      "Etapas dos editais organizadas por data, a partir dos cronogramas da Equipe Núcleo.",
+      "Etapas de todos os editais, por data.",
     );
     void window.calendarioEditaisController?.render();
     if (previousView !== requestedView)
@@ -2334,7 +2328,7 @@ function navigate(view) {
     $("page-approved").classList.add("active");
     setPageTitle(
       "Lista de Aprovados",
-      "Acompanhe candidatos, contratações e situações dos editais.",
+      "Candidatos por edital e situação de contratação.",
     );
     void window.aprovadosController?.render();
     if (previousView !== requestedView)
@@ -2528,16 +2522,25 @@ function compareFilterValues(field, a, b) {
     sensitivity: "base",
   });
 }
+/*
+  Editais que o painel da Saúde Indígena considera. `rows` tem tudo o que está
+  em TB_MONITORAMENTO_INDIGENA, inclusive SEDE, MFC e o resto do CORES, porque
+  Editais e a busca global precisam de todos. Filtros, KPIs, mapa, tabela e
+  exportação da Saúde Indígena partem daqui.
+*/
+function rowsDaSaudeIndigena() {
+  return rows.filter(ehEditalDaSaudeIndigena);
+}
 function optionValuesFor(field) {
   return opcoesDoCampo(
-    rows,
+    rowsDaSaudeIndigena(),
     filterState,
     field,
     opcoesDeFiltro({ comparar: (a, b) => compareFilterValues(field, a, b) }),
   );
 }
 function pruneFilterSelections() {
-  return podarSelecoes(rows, filterState, opcoesDeFiltro());
+  return podarSelecoes(rowsDaSaudeIndigena(), filterState, opcoesDeFiltro());
 }
 /* A opção aparece com a busca do menu? (sem acento, sem caixa) */
 function opcaoCasaComBusca(field, value) {
@@ -2744,7 +2747,7 @@ function applyFilters() {
   ensureSearchInputTextColor();
   const qt = normalizeForSort($("tableSearch")?.value);
   const chaveDaLinha = (r) => dseiKey(r.unidade);
-  filtered = rows
+  filtered = rowsDaSaudeIndigena()
     .filter((r) => {
       const hay = [
         r.processo,
@@ -2840,6 +2843,18 @@ function isCriticalRiskFilterActive() {
 }
 function toggleCriticalRiskFilter() {
   const active = isCriticalRiskFilterActive();
+  /*
+    Sem nenhum processo Médio/Alto no recorte, os valores de reserva ("Alto",
+    "Médio") eram podados por não existirem nas opções: o clique não filtrava
+    nada e o toast ainda dizia "Filtro aplicado".
+  */
+  const existentes = optionValuesFor("risco").filter((v) =>
+    ["alto", "médio", "medio"].includes(low(v)),
+  );
+  if (!active && !existentes.length) {
+    toast("Nenhum processo com risco Médio ou Alto no recorte atual.");
+    return;
+  }
   filterState.risco = active ? new Set() : new Set(criticalRiskValues());
   applyFilterStateChange();
   toast(
@@ -2910,7 +2925,14 @@ function renderAll() {
   renderTable();
 }
 function canUseMonitoramentoPayload() {
-  return !!monitoramentoPayload && !hasActiveFilter() && !hideClosed;
+  // O resumo do servidor soma todos os editais, CORES inclusive. Só serve
+  // quando não há nenhum edital fora da Saúde Indígena na base.
+  return (
+    !!monitoramentoPayload &&
+    !hasActiveFilter() &&
+    !hideClosed &&
+    rowsDaSaudeIndigena().length === rows.length
+  );
 }
 
 function renderKpis() {
@@ -2941,41 +2963,8 @@ function renderKpis() {
     kCriticos.textContent = fmt(filtered.filter(isRiscoAtivo).length);
   if (kInscritos) kInscritos.textContent = fmt(inscritos);
 
-  // Taxa de preenchimento: o alvo correto é o card .kpi, não o <b>.
-  // Na versão anterior a barra era injetada dentro do número do KPI,
-  // quebrando a semântica visual e podendo deixar barras antigas.
-  function setRate(valueElementId, pct, color) {
-    const valueEl = $(valueElementId);
-    const card = valueEl?.closest(".kpi");
-    if (!card) return;
-    let bar = card.querySelector(".kpi-rate");
-    if (!bar) {
-      bar = document.createElement("div");
-      bar.className = "kpi-rate";
-      bar.innerHTML = `<div class="kpi-rate-bar"><div class="kpi-rate-fill"></div></div><span class="kpi-rate-pct"></span>`;
-      card.appendChild(bar);
-    }
-    const safePct = Math.max(
-      0,
-      Math.min(100, Number.isFinite(Number(pct)) ? Number(pct) : 0),
-    );
-    const fill = bar.querySelector(".kpi-rate-fill");
-    const label = bar.querySelector(".kpi-rate-pct");
-    if (fill) fill.style.cssText = `width:${safePct}%;background:${color}`;
-    if (label) label.textContent = `${safePct}% das vagas`;
-  }
-  function clearRate(valueElementId) {
-    const card = $(valueElementId)?.closest(".kpi");
-    card?.querySelector(".kpi-rate")?.remove();
-  }
-
-  if (vagas) {
-    setRate("kContratados", Math.round((contrat / vagas) * 100), "#0b8f58");
-    setRate("kOciosas", Math.round((ociosas / vagas) * 100), "#d92d3a");
-  } else {
-    clearRate("kContratados");
-    clearRate("kOciosas");
-  }
+  // Sem a barra "NN% das vagas" sob Contratações e Ociosas: o KPI mostra o
+  // número; a proporção pedia leitura extra e alongava os cards.
 
   const criticalActive = isCriticalRiskFilterActive();
   const criticalCard = $("kpiCriticosCard");
@@ -3025,7 +3014,7 @@ function renderStatusSummary() {
                 : cls === "red"
                   ? "#d92d3a"
                   : "#60758f";
-      return `<div data-etapa-toggle="true" onclick="toggleSelectFilter('filterEtapa','${attr(k)}','Filtro de etapa')" title="Clique para filtrar" style="border-bottom:1px solid var(--line);padding:10px 0;cursor:pointer;">
+      return `<div data-etapa-toggle="true" onclick="toggleSelectFilter('filterEtapa','${attr(k)}','Filtro de etapa')" title="Filtrar pela etapa ${attr(k)}" style="border-bottom:1px solid var(--line);padding:10px 0;cursor:pointer;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">
           <b style="font-size:13px;font-weight:700;color:#10243e">${esc(k)}</b>
           <div style="display:flex;align-items:center;gap:7px;flex-shrink:0;">
@@ -10818,7 +10807,7 @@ function renderRisks() {
         return `<div class="risk-item"><div class="top-line"><span>${esc(r.edital || "-")}</span><span class="chip ${isHigh ? "red" : "yellow"}">${esc(r.risco || "-")}</span></div><small>${esc(r.etapa || "Etapa não informada")} <span style="float:right">${esc(r.unidade || "")}</span></small></div>`;
       })
       .join("") ||
-    `<div class="alert">Nenhum processo crítico com os filtros atuais.</div>`;
+    `<div class="risk-empty"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><div><strong>Nenhum processo em risco médio ou alto</strong><span>Considerando os filtros aplicados.</span></div></div>`;
 }
 
 function statusChip(status) {
@@ -11029,12 +11018,12 @@ function removerPilula(acao, botao) {
 function renderTable() {
   if (!visibleCols) visibleCols = loadVisibleCols();
   const detailRows = filtered;
-  const totalRows = rows;
+  const totalRows = rowsDaSaudeIndigena();
   renderSortIndicators();
   renderActiveFilters();
   const sortText = tableSort.field
     ? ` Ordenação: ${tableSort.direction === "asc" ? "crescente" : "decrescente"}.`
-    : " Clique nos cabeçalhos para ordenar.";
+    : "";
   $("tableMeta").textContent =
     `Exibindo ${fmt(detailRows.length)} de ${fmt(totalRows.length)} registros.${sortText}`;
 
@@ -11163,7 +11152,7 @@ function openPanel(code) {
     toast("Painel indisponível ou inativo.", "warn");
     return;
   }
-  const safePanelUrl = safeUrl(panel.url);
+  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
   /*
     O painel externo traz o seu próprio cabeçalho. Somado ao do Monitora, a
     pessoa via dois títulos empilhados dizendo a mesma coisa.
@@ -11185,7 +11174,7 @@ function openPanel(code) {
   $("page-external").classList.add("active");
   setPageTitle(panel.titulo, cfgValue("external_default_title"));
   $("externalTitle").textContent = panel.titulo;
-  $("externalOpen").href = safeUrl(panel.url) || "#";
+  $("externalOpen").href = enderecoDoPainel(panel.url, window.location.origin) || "#";
   const mount = $("externalMount");
   if (mount.classList.contains("external-placeholder")) {
     mount.className = "";
@@ -11210,7 +11199,7 @@ function buildExternalPanel(holder, panel) {
     holder.innerHTML = `<div class="external-placeholder"><div><div style="font-size:58px;color:#555"><i class="fa-solid fa-screwdriver-wrench"></i></div><h2>${esc(cfgValue("maintenance_title"))}</h2><p>${esc(cfgValue("maintenance_message"))}</p></div></div>`;
     return;
   }
-  const safePanelUrl = safeUrl(panel.url);
+  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
   if (!safePanelUrl) {
     holder.innerHTML = `<div class="external-placeholder"><div><h2>${esc(panel.titulo)}</h2><p>Cadastre uma URL http(s) válida deste painel em paineis_externos.</p></div></div>`;
     return;
@@ -11626,12 +11615,20 @@ async function renderAccessRequestsAdmin() {
         ${pendingHTML}
       </div>
     `;
+  /*
+    Ordem da seção: histórico e solicitações em cima (curtos), matriz embaixo
+    com a altura livre para a tabela, que é o que se usa todo dia.
+  */
+  const historicoRoot = document.createElement("div");
+  historicoRoot.className = "access-admin-section access-history-section";
+  box.prepend(historicoRoot);
   const matrixRoot = document.createElement("div");
   matrixRoot.className = "access-admin-section";
-  box.prepend(matrixRoot);
+  box.append(matrixRoot);
   disposeAccessMatrix = await mountAccessMatrix(matrixRoot, {
     sb,
     currentUser,
+    historicoRoot,
     onManageAccount(user) {
       accessProfiles = [user];
       abrirGestaoConta(user, {
@@ -11985,9 +11982,9 @@ function syncDisplayModeButtons() {
   const fullscreenActive =
     !!document.fullscreenElement ||
     document.body.classList.contains("app-fullscreen-fallback");
-  const moreMenu = $("moreActionsMenu");
-  if (moreMenu) {
-    const fsBtn = moreMenu.querySelector("button:first-child i");
+  // O item de tela cheia fica no menu da conta (index.html, #fullscreenActionIcon).
+  {
+    const fsBtn = $("fullscreenActionIcon");
     if (fsBtn)
       fsBtn.className = fullscreenActive
         ? "fa-solid fa-compress"
@@ -12077,7 +12074,7 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 function exportCSV() {
-  const source = filtered.length ? filtered : rows;
+  const source = filtered.length ? filtered : rowsDaSaudeIndigena();
   const fieldMap = [
     { key: "unidade", label: "Unidade" },
     { key: "uf", label: "UF" },
@@ -12488,22 +12485,14 @@ window.addEventListener("orientationchange", () => {
 });
 
 // Indicador de conexão (offline)
-function updateOnlineStatus() {
-  const bar = $("offlineBar");
-  if (!bar) return;
-  const off = typeof navigator !== "undefined" && navigator.onLine === false;
-  bar.style.display = off ? "block" : "none";
-  document.body.style.paddingTop = off ? "32px" : "";
-}
-window.addEventListener("online", () => {
-  updateOnlineStatus();
-  toast("Conexão restabelecida.");
-});
-window.addEventListener("offline", () => {
-  updateOnlineStatus();
-  toast("Você está offline. Os dados continuam visíveis.");
-});
-updateOnlineStatus();
+/*
+  Conexão: quem avisa é src/modules/connectivity-status.js (faixa com
+  "Tentar", e "Conexão restabelecida" que some sozinha). Aqui havia mais dois
+  avisos para o mesmo fato — um toast e a #offlineBar, que ainda empurrava a
+  página 32px para baixo —, e a queda de rede mostrava três mensagens juntas.
+  O texto configurável `offline_message` continua sendo gravado em #offlineBar,
+  que fica escondida.
+*/
 
 // Ctrl+K / Cmd+K abre busca global
 document.addEventListener("keydown", (e) => {

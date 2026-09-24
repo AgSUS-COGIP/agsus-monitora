@@ -1,3 +1,8 @@
+import {
+  anoDaSelecao,
+  anosDosEditais,
+  editaisDoAno,
+} from "../lib/atalhos-de-filtro.js";
 import { enhanceHealthDetailsTable } from "./health-details-ux.js";
 
 const state = {
@@ -42,12 +47,10 @@ function ensureIntro(documentRef) {
     intro.innerHTML = `
       <div>
         <strong>Processos seletivos</strong>
-        <span>Use a busca ou os filtros do topo. Clique em uma linha para consultar o cronograma.</span>
       </div>
       <div class="health-details-legend">
-        <span><i class="fa-solid fa-calendar-days health-legend-icon deadline"></i> prazo do edital</span>
-        <span><i class="fa-solid fa-route health-legend-icon schedule"></i> próxima etapa</span>
-        <span><i class="fa-solid fa-circle-info health-legend-icon details"></i> abrir detalhes</span>
+        <span><i class="fa-solid fa-calendar-days health-legend-icon deadline"></i> Prazo do edital</span>
+        <span><i class="fa-solid fa-route health-legend-icon schedule"></i> Próxima etapa</span>
       </div>`;
     meta.insertAdjacentElement("beforebegin", intro);
   }
@@ -130,25 +133,6 @@ function setFilterFieldSelection(
   return selectedFilterValues(documentRef, field);
 }
 
-function toggle2026(windowRef, documentRef) {
-  const target = edital2026Values(documentRef);
-  if (!target.length) return false;
-
-  if (!isOnly2026Selection(documentRef)) {
-    state.previousEditalSelection = selectedFilterValues(documentRef, "edital");
-    state.only2026 = true;
-    setFilterFieldSelection(documentRef, "edital", target, windowRef);
-  } else {
-    const restore = state.only2026 ? state.previousEditalSelection : [];
-    state.only2026 = false;
-    state.previousEditalSelection = [];
-    setFilterFieldSelection(documentRef, "edital", restore, windowRef);
-  }
-
-  windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-  return isOnly2026Selection(documentRef);
-}
-
 function findFilterInput(documentRef, field, predicate) {
   return filterInputs(documentRef, field).find((input) =>
     predicate(
@@ -161,22 +145,6 @@ function selectedFieldValues(documentRef, field) {
   return selectedFilterValues(documentRef, field)
     .map(normalize)
     .filter(Boolean);
-}
-
-function isProgressActive(documentRef) {
-  return selectedFieldValues(documentRef, "status").some((value) =>
-    value.includes("andamento"),
-  );
-}
-
-function isRiskActive(documentRef) {
-  const values = selectedFieldValues(documentRef, "risco");
-  return (
-    values.length > 0 &&
-    values.every(
-      (value) => value === "alto" || value === "medio" || value === "médio",
-    )
-  );
 }
 
 function isHideClosedActive(documentRef) {
@@ -197,13 +165,6 @@ function activeFilterCount(documentRef) {
   if (String($(documentRef, "tableSearch")?.value || "").trim()) count += 1;
   if (isHideClosedActive(documentRef)) count += 1;
   return count;
-}
-
-function setQuickButtonState(documentRef, id, active) {
-  const button = $(documentRef, id);
-  if (!button) return;
-  button.classList.toggle("active", active);
-  button.setAttribute("aria-pressed", String(active));
 }
 
 function syncFilterToggle(documentRef, count) {
@@ -234,22 +195,7 @@ export function syncFilterToolbar(
     state.previousEditalSelection = [];
   }
 
-  setQuickButtonState(documentRef, "healthQuick2026Btn", exact2026Selection);
-  setQuickButtonState(
-    documentRef,
-    "healthQuickProgressBtn",
-    isProgressActive(documentRef),
-  );
-  setQuickButtonState(
-    documentRef,
-    "healthQuickRiskBtn",
-    isRiskActive(documentRef),
-  );
-  setQuickButtonState(
-    documentRef,
-    "healthQuickClosedBtn",
-    isHideClosedActive(documentRef),
-  );
+  sincronizarAtalhos(documentRef);
 
   const count = activeFilterCount(documentRef);
   const clear = $(documentRef, "healthQuickClearBtn");
@@ -258,18 +204,62 @@ export function syncFilterToolbar(
   return count;
 }
 
-function makeQuickButton(documentRef, { id, icon, label, title, onClick }) {
-  let button = $(documentRef, id);
-  if (button) return button;
-  button = documentRef.createElement("button");
-  button.id = id;
-  button.type = "button";
-  button.className = "health-filter-chip";
-  button.title = title || label;
-  button.setAttribute("aria-pressed", "false");
-  button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i><span>${label}</span>`;
-  button.addEventListener("click", onClick);
-  return button;
+/*
+  Campo Ano dentro do painel de filtros ("Mostrar filtros"), o primeiro, com os
+  anos lidos dos próprios editais (src/lib/atalhos-de-filtro.js). Substitui os
+  botões "Editais 2026", "Em andamento", "Risco médio/alto" e "Ocultar
+  encerrados" que ficavam no topo do card.
+*/
+function montarCampoAno(windowRef, documentRef) {
+  const corpo = $(documentRef, "filterBody");
+  if (!corpo || $(documentRef, "healthFiltroAno")) return;
+  const campo = documentRef.createElement("div");
+  campo.className = "health-filter-field health-filtro-ano";
+  campo.innerHTML =
+    '<label for="healthFiltroAno"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i><span>Ano</span></label>' +
+    '<select id="healthFiltroAno"></select>';
+  campo.querySelector("select").addEventListener("change", (evento) => {
+    const ano = evento.target.value;
+    if (ano === "personalizado") return;
+    state.only2026 = false;
+    state.previousEditalSelection = [];
+    setFilterFieldSelection(
+      documentRef,
+      "edital",
+      ano ? editaisDoAno(allFilterValues(documentRef, "edital"), ano) : [],
+      windowRef,
+    );
+    windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
+  });
+  corpo.prepend(campo);
+
+  // "Ocultar encerrados" não tem mais botão: preferência antiga salva no
+  // navegador seria um filtro que ninguém consegue desligar.
+  if (isHideClosedActive(documentRef)) windowRef?.toggleHideClosed?.();
+}
+
+function sincronizarAtalhos(documentRef) {
+  const select = $(documentRef, "healthFiltroAno");
+  if (!select) return;
+  const editais = allFilterValues(documentRef, "edital");
+  const atual = anoDaSelecao(
+    selectedFilterValues(documentRef, "edital"),
+    editais,
+  );
+  const opcoes = [
+    '<option value="">Todos os anos</option>',
+    ...anosDosEditais(editais).map(
+      (ano) => `<option value="${ano}">${ano}</option>`,
+    ),
+    atual === "personalizado"
+      ? '<option value="personalizado" disabled>Seleção própria</option>'
+      : "",
+  ].join("");
+  if (select.dataset.opcoes !== opcoes) {
+    select.innerHTML = opcoes;
+    select.dataset.opcoes = opcoes;
+  }
+  select.value = atual;
 }
 
 export function ensureTopFilterToolbar(
@@ -292,73 +282,7 @@ export function ensureTopFilterToolbar(
     head.appendChild(actions);
   }
 
-  let quickGroup = actions.querySelector(".health-filter-quick-group");
-  if (!quickGroup) {
-    quickGroup = documentRef.createElement("div");
-    quickGroup.className = "health-filter-quick-group";
-    actions.appendChild(quickGroup);
-  }
-
-  const quick2026 = makeQuickButton(documentRef, {
-    id: "healthQuick2026Btn",
-    icon: "fa-calendar-check",
-    label: "Editais 2026",
-    title: "Selecionar somente os valores de Edital terminados em /2026",
-    onClick: () => toggle2026(windowRef, documentRef),
-  });
-
-  const quickProgress = makeQuickButton(documentRef, {
-    id: "healthQuickProgressBtn",
-    icon: "fa-play",
-    label: "Em andamento",
-    onClick: () => {
-      // Todas as grafias de "andamento" entram; clicar de novo tira o filtro.
-      const emAndamento = allFilterValues(documentRef, "status").filter(
-        (value) => normalize(value).includes("andamento"),
-      );
-      if (typeof windowRef?.definirSelecaoDeFiltro === "function") {
-        windowRef.definirSelecaoDeFiltro(
-          "status",
-          isProgressActive(documentRef) ? [] : emAndamento,
-        );
-      } else {
-        const input = findFilterInput(documentRef, "status", (value) =>
-          value.includes("andamento"),
-        );
-        if (input)
-          windowRef?.toggleSelectFilter?.(
-            "filterStatus",
-            input.dataset.filterValue,
-            "Status",
-          );
-      }
-      windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    },
-  });
-
-  const quickRisk = makeQuickButton(documentRef, {
-    id: "healthQuickRiskBtn",
-    icon: "fa-triangle-exclamation",
-    label: "Risco médio/alto",
-    onClick: () => {
-      windowRef?.toggleCriticalRiskFilter?.();
-      windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    },
-  });
-
-  const quickClosed = makeQuickButton(documentRef, {
-    id: "healthQuickClosedBtn",
-    icon: "fa-eye-slash",
-    label: "Ocultar encerrados",
-    onClick: () => {
-      windowRef?.toggleHideClosed?.();
-      windowRef.setTimeout(() => syncFilterToolbar(windowRef, documentRef), 0);
-    },
-  });
-
-  [quick2026, quickProgress, quickRisk, quickClosed].forEach((button) => {
-    if (button.parentElement !== quickGroup) quickGroup.appendChild(button);
-  });
+  montarCampoAno(windowRef, documentRef);
 
   let clear = $(documentRef, "healthQuickClearBtn");
   if (!clear) {
@@ -433,7 +357,13 @@ function ensureOperationalPlaceholders(documentRef) {
 
     const realBadge = cell.querySelector(".health-row-operational");
     const placeholder = cell.querySelector(".health-operational-loading");
-    if (realBadge) {
+    /*
+      `data-health-detail-id` chega com os dados de cronograma
+      (health-status-details.js). Depois disso, linha sem selo é linha que não
+      tem selo — o refinement remove o dos editais concluídos e cancelados —, e
+      o "Carregando cronograma..." ficava nela para sempre (83 de 99 linhas).
+    */
+    if (realBadge || row.dataset.healthDetailId) {
       placeholder?.remove();
       return;
     }

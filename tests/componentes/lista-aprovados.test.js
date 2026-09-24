@@ -201,7 +201,7 @@ describe("carregamento", () => {
       linhaDe("Bruno Lima").querySelector(".approved-status").textContent,
     ).toBe("Sem status");
     expect(
-      linhaDe("Ana Ribeiro").querySelector("td.num:nth-of-type(4)").textContent,
+      linhaDe("Ana Ribeiro").querySelector("td.num:nth-of-type(5)").textContent,
     ).toBe("90,5");
   });
 
@@ -213,7 +213,7 @@ describe("carregamento", () => {
       [0, 999],
       [1000, 1999],
     ]);
-    expect($("approvedKpiTotal").textContent).toBe("1003");
+    expect($("approvedKpiTotal").textContent).toBe("1.003");
   });
 
   it("avisa o erro de carregamento", async () => {

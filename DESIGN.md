@@ -407,11 +407,19 @@ marcada como `paginaUnica` (Saúde indígena) é link direto.
 
 ### Ícones
 
-**Migração para o `lucide` em andamento, por componente.** Já migrados: a barra lateral e o que é
-dela (menu inferior do celular, Sair, seletor de tema, alça de recolher). O resto segue em Font
-Awesome 6 até o componente migrar. Regras:
+**Todo o sistema desenha Lucide.** O Font Awesome não é mais carregado. Dois caminhos:
 
-- Um conjunto por componente: nunca Lucide e Font Awesome dentro do mesmo componente.
+- **Barra lateral e o que é dela** (menu inferior do celular, Sair, tema, alça de recolher): SVG
+  Lucide de verdade, pelo registro abaixo.
+- **Resto do sistema:** o HTML e os módulos ainda escrevem `<i class="fa-solid fa-…">`, mas
+  `src/styles/icones-lucide.css` (gerado por `npm run icones` a partir de
+  `src/lib/mapa-de-icones-lucide.js`) desenha em cada classe o ícone Lucide equivalente, como
+  máscara no `::before`. Ícone novo com classe `fa-…`: acrescente o par no mapa e rode
+  `npm run icones`; `tests/icones-lucide.test.js` falha se faltar. Ao reescrever um componente,
+  prefira o registro abaixo.
+
+Regras:
+
 - Lucide sai de um registro só, `src/modules/icones.js`, que importa cada ícone pelo nome — só os
   usados entram no bundle. Ícone novo: registre lá. Sem framework, `criarIcone(nome, { tamanho })`;
   em React, `<Icone nome="…" tamanho={…} />` (`src/componentes/icone.jsx`).

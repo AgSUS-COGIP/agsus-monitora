@@ -59,8 +59,21 @@
     padding: 10px 12px 0;
     overflow-x: auto;
   }
+  /* As duas abas dividem a largura: com rolagem lateral, "Lista de
+     convocação" ficava cortada e ninguém sabia que dava para arrastar. */
   .approved-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 8px;
     white-space: nowrap;
+  }
+  /* "Lista de" sai no celular: "Aprovados" e "Convocação" bastam lado a lado. */
+  .approved-tabs:not(.approved-tabs-modal) .approved-tab-prefixo {
+    display: none;
+  }
+  .approved-tabs:not(.approved-tabs-modal) .approved-tab {
+    text-transform: capitalize;
   }
 }
 [data-theme="dark"] .approved-tabs {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ehEditalDaSaudeIndigena,
   ehResponsavelCores,
   normalizarResponsavel,
   UNIDADES_CORES,
@@ -86,5 +87,39 @@ describe("unidadesDoResponsavel", () => {
     expect(unidadesDoResponsavel("CORES", null)).toHaveLength(
       UNIDADES_CORES.length,
     );
+  });
+});
+
+describe("o painel da Saúde Indígena só mostra editais da USI", () => {
+  it("DSEI e CASAI entram", () => {
+    expect(
+      ehEditalDaSaudeIndigena({ responsavel: "USI", unidade: "DSEI Yanomami" }),
+    ).toBe(true);
+    expect(
+      ehEditalDaSaudeIndigena({ responsavel: "", unidade: "CASAI Brasília" }),
+    ).toBe(true);
+  });
+
+  it("edital do CORES fica fora", () => {
+    expect(
+      ehEditalDaSaudeIndigena({
+        responsavel: "CORES",
+        unidade: "DSEI Xavante",
+      }),
+    ).toBe(false);
+  });
+
+  it("unidade do CORES fica fora mesmo marcada como USI pela migração antiga", () => {
+    for (const unidade of [
+      "SEDE",
+      "MFC",
+      "Escritório Distrital e Regional",
+      "escritorio distrital e regional",
+      " Saúde nas Fronteiras ",
+    ]) {
+      expect(ehEditalDaSaudeIndigena({ responsavel: "USI", unidade })).toBe(
+        false,
+      );
+    }
   });
 });

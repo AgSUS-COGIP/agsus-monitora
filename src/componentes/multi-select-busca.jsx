@@ -124,7 +124,18 @@ export function MultiSelectBusca({
   return (
     <div
       ref={raiz}
-      className={classes("multi-select", escolhidos.length && "is-filled")}
+      /*
+        `multi-select-busca` separa este componente do filtro legado da Saúde
+        Indígena, que usa as mesmas classes mas abre por `.open`, não por
+        `hidden`: sem ela, `.multi-select-menu { display: grid }` valia para
+        os dois, e os filtros da Saúde Indígena ficavam abertos ao mesmo
+        tempo, empilhados uns sobre os outros.
+      */
+      className={classes(
+        "multi-select",
+        "multi-select-busca",
+        escolhidos.length && "is-filled",
+      )}
     >
       <button
         ref={gatilho}

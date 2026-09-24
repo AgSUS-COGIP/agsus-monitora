@@ -9,6 +9,7 @@ import { installCspReportMonitor } from "./lib/csp-report-monitor.js";
 import "./lib/chartjs-global.js";
 import "./lib/supabase-legacy-bridge.js";
 import "./styles/tokens.css";
+import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
 import "./styles/arara-guide.css";
 import "./styles/nina-conversation.css";
@@ -92,6 +93,9 @@ import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprova
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 
+// Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
+document.documentElement.classList.remove("vite-dev-carregando");
+
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
 installMapBaseLayerSwitcher();
@@ -157,9 +161,9 @@ window.aprovadosController = montarListaAprovados({
   getProfile: window.getMonitoraProfile,
 });
 
+// Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
 window.calendarioEditaisController = montarCalendarioEditais({
   toast: window.monitoraToast,
-  loader: window.monitoraLoader,
 });
 
 if (!hasSupabaseEnv()) {

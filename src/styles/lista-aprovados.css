@@ -1,50 +1,54 @@
+/*
+  Indicadores da Lista de Aprovados no padrão da Saúde Indígena: número na cor
+  do texto (o estado fica no ícone), rótulo 12px/600, valores de tokens.css.
+*/
 .approved-kpis {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-  padding: 16px 18px;
-  background: var(--surface, #fff);
-  border-bottom: 1px solid var(--border, #e3e9ef);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-subtle);
 }
 .approved-kpi {
-  --kpi-accent: #0b69b7;
-  --kpi-soft: #e9f4ff;
+  --kpi-accent: var(--state-info);
+  --kpi-soft: var(--state-info-soft);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-width: 0;
-  padding: 14px 15px;
-  border: 1px solid #e3e9ef;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(15, 45, 75, 0.06);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
 }
 .approved-kpi[data-tone="success"] {
-  --kpi-accent: #159447;
-  --kpi-soft: #e7f8ef;
+  --kpi-accent: var(--state-success);
+  --kpi-soft: var(--state-success-soft);
 }
 .approved-kpi[data-tone="danger"] {
-  --kpi-accent: #c33b32;
-  --kpi-soft: #fdebea;
+  --kpi-accent: var(--state-danger);
+  --kpi-soft: var(--state-danger-soft);
 }
 .approved-kpi[data-tone="info"] {
-  --kpi-accent: #087e8b;
-  --kpi-soft: #e5f6f7;
+  --kpi-accent: var(--series-3);
+  --kpi-soft: var(--state-info-soft);
 }
 .approved-kpi[data-tone="warning"] {
-  --kpi-accent: #b66a00;
-  --kpi-soft: #fff1da;
+  --kpi-accent: var(--state-warning);
+  --kpi-soft: var(--state-warning-soft);
 }
 .approved-kpi-icon {
   display: grid;
   place-items: center;
-  flex: 0 0 42px;
-  width: 42px;
-  height: 42px;
-  border-radius: 13px;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
   background: var(--kpi-soft);
   color: var(--kpi-accent);
-  font-size: 17px;
+  font-size: 14px;
 }
 .approved-kpi > div {
   display: flex;
@@ -52,17 +56,18 @@
   min-width: 0;
 }
 .approved-kpi-label {
-  color: #687a90;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1.15;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.3;
 }
 .approved-kpi strong {
-  margin-top: 4px;
-  color: var(--kpi-accent);
-  font-size: 24px;
-  line-height: 1;
-  font-weight: 900;
+  margin-top: 2px;
+  color: var(--text-primary);
+  font-size: var(--text-kpi);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 @media (max-width: 1200px) {

@@ -107,6 +107,11 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     ...CRONOGRAMA_VAZIO,
     carregando: Boolean(id),
   }));
+  /*
+    O motivo só é cobrado depois de mexer no cronograma ou ao salvar: o
+    formulário abria já com "Corrija antes de salvar", antes de qualquer edição.
+  */
+  const [editorMexido, setEditorMexido] = useState(false);
 
   useEffect(() => {
     if (!id) return undefined;
@@ -144,6 +149,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     edital,
     cronograma.etapas,
     cronograma.motivo,
+    { exigirMotivo: editorMexido },
   );
   const automatico = cronograma.automatico;
 
@@ -151,6 +157,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     setFormulario((atual) => ({ ...atual, [campo]: evento.target.value }));
 
   function mudarCronograma(transformar) {
+    setEditorMexido(true);
     /*
       Desligar o automático devolve o status e a etapa à mão de quem edita, a
       partir do que estava calculado — e não de um valor antigo escondido.

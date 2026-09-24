@@ -1,6 +1,7 @@
 import { dataLocal, situacaoDaEtapa } from "../../lib/etapas-de-edital.js";
 import {
   DIAS_SEMANA,
+  dataExibidaNasProximas,
   etapasDoDia,
   formatarCurto,
   periodoDaEtapa,
@@ -88,6 +89,7 @@ export function ItemDeEtapa({
   etapa,
   marco = "",
   mostrarData = false,
+  dataExibida = null,
   aoEscolher,
 }) {
   return (
@@ -100,7 +102,7 @@ export function ItemDeEtapa({
     >
       {mostrarData ? (
         <span className="cal-item-data">
-          {formatarCurto(dataLocal(etapa.data_inicio))}
+          {formatarCurto(dataLocal(dataExibida || etapa.data_inicio))}
         </span>
       ) : null}
       <span className="cal-item-corpo">
@@ -130,7 +132,25 @@ export function ItemDeEtapa({
 const chaveDaEtapa = (etapa, indice) =>
   `${etapa.editalId}:${etapa.ordem}:${etapa.data_inicio}:${indice}`;
 
-export function ProximasEtapas({ etapas, aoEscolher }) {
+/*
+  Avisa quem pode corrigir quando há etapa de data impossível (ano digitado
+  errado): sem isto, ela só sumia da lista de "Próximas etapas".
+*/
+export function AvisoDeDatasARevisar({ editais }) {
+  if (!editais.length) return null;
+  return (
+    <p className="cal-aviso-datas" role="status">
+      <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
+      <span>
+        {editais.length} edita{editais.length === 1 ? "l" : "is"} com data
+        impossível no cronograma (ano digitado errado):{" "}
+        {editais.map((item) => item.edital).join("; ")}. Corrija em Editais.
+      </span>
+    </p>
+  );
+}
+
+export function ProximasEtapas({ etapas, hoje, aoEscolher }) {
   if (!etapas.length)
     return (
       <p className="cal-vazio">
@@ -142,6 +162,7 @@ export function ProximasEtapas({ etapas, aoEscolher }) {
       key={chaveDaEtapa(etapa, indice)}
       etapa={etapa}
       mostrarData
+      dataExibida={dataExibidaNasProximas(etapa, hoje)}
       aoEscolher={aoEscolher}
     />
   ));

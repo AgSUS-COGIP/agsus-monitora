@@ -392,8 +392,7 @@ function refineConfigurationCopy() {
   if (eyebrow) eyebrow.textContent = "Administração";
   if (heading) heading.textContent = "Ajustes do sistema";
   if (description) {
-    description.textContent =
-      "Gerencie acessos, identidade visual, painéis e parâmetros técnicos em um único lugar.";
+    description.textContent = "Acessos, marca, painéis e parâmetros técnicos.";
   }
   if (search) search.setAttribute("placeholder", "Buscar configuração...");
   if (accessTitle) accessTitle.textContent = "Acessos e permissões";

@@ -23,6 +23,12 @@
     width: 100%;
   }
 
+  /* O `display: block` acima vencia o `hidden`: no celular, os filtros de
+     Editais ("Próximos 7 dias" etc.) marcavam as linhas e nenhuma sumia. */
+  table.mobile-card-table tr[hidden] {
+    display: none;
+  }
+
   table.mobile-card-table tbody {
     display: grid;
     gap: 12px;

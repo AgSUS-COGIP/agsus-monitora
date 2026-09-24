@@ -7,17 +7,19 @@
   existem em `nucleo-cronograma.js`. Quem edita continua a ser a Equipe Núcleo.
 
   CUSTO DE REDE — ler antes de mexer no carregamento.
-  Não existe RPC que devolva as etapas de todos os editais de uma vez. O que há:
+  Há duas fontes possíveis:
 
-    get_nucleo_cronograma_resumo()                   → 1 linha por edital, sem etapas
-    get_monitoramento_cronograma(p_monitoramento_id) → etapas de UM edital
+    listar_etapas_do_cronograma()                     → todas as etapas dos editais
+                                                          ativos, num pedido só
+    get_nucleo_cronograma_resumo()                     → 1 linha por edital, sem etapas
+    get_monitoramento_cronograma(p_monitoramento_id)   → etapas de UM edital
 
-  Então montar o calendário custa 1 + N chamadas. É o motivo de existirem aqui o
-  limite de concorrência e o cache por TTL — sem eles a tela dispara uma rajada
-  de pedidos a cada abertura. Se o número de editais crescer muito, a correção
-  certa não é mexer nestes números: é criar um RPC que devolva tudo achatado e
-  trocar `carregar` por uma chamada só. O resto da tela não precisa de saber de
-  onde vieram as etapas.
+  A primeira (migration 20260924170000) substitui 1 + N chamadas por 2: era o
+  padrão antigo, ~118 pedidos de ~300 ms cada, seis a sete segundos com a tela
+  bloqueada. Se o banco ainda não tiver a função (PGRST202, versão anterior
+  ainda em produção), cai de volta ao caminho por edital — limite de
+  concorrência e tudo. O cache por TTL evita repetir qualquer um dos dois a
+  cada abertura. O resto da tela não precisa de saber de onde vieram as etapas.
 */
 
 import { exigirSessao } from "../../lib/sessao.js";
@@ -29,8 +31,13 @@ import {
 
 const RPC_RESUMO = "get_nucleo_cronograma_resumo";
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";
+/** Todas as etapas num pedido só (migration 20260924170000). */
+const RPC_TODAS_AS_ETAPAS = "listar_etapas_do_cronograma";
 
-/** Pedidos simultâneos ao Supabase. Acima disto o navegador enfileira à toa. */
+/*
+  Pedidos simultâneos ao Supabase. Acima disto o navegador enfileira à toa.
+  Só entra em jogo no caminho antigo, por edital (banco sem RPC_TODAS_AS_ETAPAS).
+*/
 const CONCORRENCIA = 6;
 /** Enquanto fresco, reabrir a tela não repete as N chamadas. */
 const CACHE_TTL_MS = 60_000;
@@ -58,19 +65,37 @@ export function criarEstadoDoCalendario({
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  async function buscar() {
-    await exigirSessao(supabase);
-    const { data, error } = await supabase.rpc(RPC_RESUMO);
-    if (error) throw error;
-
-    const editais = editaisComCronograma(data);
-    const blocos = await comLimite(editais, CONCORRENCIA, async (edital) => {
+  /*
+    Um pedido para todas as etapas; eram 118, um por edital (6 a 7 s). Com o
+    banco ainda sem a função nova (PGRST202), volta ao pedido por edital.
+    Devolve um bloco de etapas por edital, na ordem de `editais`.
+  */
+  async function buscarEtapasDosEditais(editais) {
+    const todas = await supabase.rpc(RPC_TODAS_AS_ETAPAS);
+    if (!todas.error) {
+      const porEdital = new Map(editais.map((edital) => [String(edital.id), []]));
+      for (const etapa of Array.isArray(todas.data) ? todas.data : []) {
+        porEdital.get(String(etapa.monitoramento_id))?.push(etapa);
+      }
+      return editais.map((edital) => porEdital.get(String(edital.id)));
+    }
+    if (todas.error.code !== "PGRST202") throw todas.error;
+    return comLimite(editais, CONCORRENCIA, async (edital) => {
       const resposta = await supabase.rpc(RPC_CRONOGRAMA, {
         p_monitoramento_id: edital.id,
       });
       if (resposta.error) throw resposta.error;
       return Array.isArray(resposta.data?.etapas) ? resposta.data.etapas : [];
     });
+  }
+
+  async function buscar() {
+    await exigirSessao(supabase);
+    const { data, error } = await supabase.rpc(RPC_RESUMO);
+    if (error) throw error;
+
+    const editais = editaisComCronograma(data);
+    const blocos = await buscarEtapasDosEditais(editais);
     return montarEtapasDosEditais(editais, blocos);
   }
 

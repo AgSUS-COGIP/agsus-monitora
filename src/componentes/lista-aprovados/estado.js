@@ -16,6 +16,7 @@
 */
 
 import { readApprovedWorkbook } from "../../lib/aprovados-import.js";
+import { buscarTodasAsPaginas } from "../../lib/paginas-em-paralelo.js";
 import {
   canImportApprovedList,
   canManageSubJudice,
@@ -111,20 +112,19 @@ export function criarEstadoDaListaDeAprovados({
 
   // ── Leitura ────────────────────────────────────────────────────────────
 
-  async function buscarTodosOsCandidatos() {
-    const rows = [];
-    let from = 0;
-    while (true) {
-      const result = await supabase
-        .rpc("listar_candidatos_aprovados")
-        .range(from, from + CANDIDATES_PAGE_SIZE - 1);
-      if (result.error) return { data: rows, error: result.error };
-      const batch = Array.isArray(result.data) ? result.data : [];
-      rows.push(...batch);
-      if (batch.length < CANDIDATES_PAGE_SIZE) break;
-      from += CANDIDATES_PAGE_SIZE;
-    }
-    return { data: rows, error: null };
+  // Páginas em paralelo: em sequência eram 16 pedidos de ~750 ms (12 s).
+  function buscarTodosOsCandidatos() {
+    return buscarTodasAsPaginas(
+      (inicio, fim, { contar }) =>
+        supabase
+          .rpc(
+            "listar_candidatos_aprovados",
+            {},
+            contar ? { count: "exact" } : undefined,
+          )
+          .range(inicio, fim),
+      { tamanho: CANDIDATES_PAGE_SIZE, concorrencia: 6 },
+    );
   }
 
   async function lerConfiguracoes() {

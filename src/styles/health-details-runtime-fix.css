@@ -34,12 +34,12 @@ body.health-filter-toolbar-ready #page-dashboard #hideClosedBtn {
   gap: 7px;
   border-radius: 999px;
   padding: 0 12px;
-  border: 1px solid #c8d9e8;
-  background: #fff;
-  color: #355a7c;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--text-primary);
   font: inherit;
-  font-size: 12px;
-  font-weight: 850;
+  font-size: var(--text-sm);
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -52,17 +52,16 @@ body.health-filter-toolbar-ready #page-dashboard #hideClosedBtn {
 
 #page-dashboard .health-filter-chip:hover,
 #page-dashboard .health-filter-clear-top:hover {
-  border-color: #72a7d3;
-  background: #f2f8ff;
-  transform: translateY(-1px);
+  border-color: var(--border-control);
+  background: var(--surface-hover);
 }
 
 #page-dashboard .health-filter-chip.active,
 #page-dashboard .health-filter-chip[aria-pressed="true"] {
-  color: #fff;
-  background: #1769aa;
-  border-color: #1769aa;
-  box-shadow: 0 7px 18px rgba(23, 105, 170, 0.2);
+  color: var(--text-inverse);
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  box-shadow: none;
 }
 
 #page-dashboard #healthQuickRiskBtn.active {
@@ -92,8 +91,9 @@ body.health-filter-toolbar-ready #page-dashboard #hideClosedBtn {
   justify-content: center;
   gap: 8px;
   padding: 0 13px;
-  border-radius: 12px;
-  font-weight: 850;
+  border-radius: var(--radius-md);
+  font-size: var(--text-md);
+  font-weight: 600;
 }
 
 #page-dashboard .health-filter-toggle b {
@@ -101,10 +101,10 @@ body.health-filter-toolbar-ready #page-dashboard #hideClosedBtn {
   height: 22px;
   display: grid;
   place-items: center;
-  border-radius: 999px;
-  background: #1769aa;
-  color: #fff;
-  font-size: 11px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-size: var(--text-xs);
 }
 
 #page-dashboard .health-filter-chevron {
@@ -298,11 +298,25 @@ body.dark-mode #page-dashboard .health-operational-loading {
   #page-dashboard .health-filter-body-enhanced {
     grid-template-columns: 1fr;
   }
+  /*
+    No celular os atalhos viram uma fileira rolável na horizontal. Empilhados em
+    largura total, os quatro ocupavam meia tela antes do primeiro número.
+  */
   #page-dashboard .health-filter-quick-group {
     width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  #page-dashboard .health-filter-quick-group::-webkit-scrollbar {
+    display: none;
   }
   #page-dashboard .health-filter-chip {
-    flex: 1 1 calc(50% - 8px);
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    white-space: nowrap;
   }
   #page-dashboard .health-filter-toggle {
     flex: 1 1 auto;
@@ -310,10 +324,29 @@ body.dark-mode #page-dashboard .health-operational-loading {
 }
 
 @media (max-width: 480px) {
-  #page-dashboard .health-filter-chip {
-    flex-basis: 100%;
-  }
   #page-dashboard .health-filter-clear-top span {
     display: none;
   }
+}
+
+/*
+  Campo Ano do painel de filtros (health-details-runtime-fix.js,
+  montarCampoAno): mesmo desenho dos outros campos do painel.
+*/
+#page-dashboard .health-filtro-ano select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 500;
+  cursor: pointer;
+}
+#page-dashboard .health-filtro-ano select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }

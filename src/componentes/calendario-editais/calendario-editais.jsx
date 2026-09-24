@@ -12,6 +12,7 @@ import {
   TIPOS_DA_LEGENDA,
   chaveDoDia,
   contarEtapasNoMes,
+  editaisComDatasARevisar,
   editaisDoFiltro,
   editalDaLinhaDoTempo,
   etapasDoEdital,
@@ -27,6 +28,7 @@ import {
 } from "../../lib/calendario-editais.js";
 import { criarEstadoDoCalendario } from "./estado.js";
 import {
+  AvisoDeDatasARevisar,
   DiaDoCalendario,
   GradeDoMes,
   LinhaDoTempo,
@@ -260,8 +262,10 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
             </h3>
           </div>
           <div id="calProximas">
+            <AvisoDeDatasARevisar editais={editaisComDatasARevisar(etapas)} />
             <ProximasEtapas
               etapas={proximasEtapas(filtradas, hoje)}
+              hoje={hoje}
               aoEscolher={setEditalEscolhido}
             />
           </div>
@@ -315,7 +319,6 @@ export function montarCalendarioEditais({
   secao = document.getElementById("page-calendario"),
   supabase = getSupabaseClient(),
   toast,
-  loader = () => {},
   agora,
 } = {}) {
   const estado = criarEstadoDoCalendario({ supabase, toast });
@@ -331,14 +334,13 @@ export function montarCalendarioEditais({
   return {
     estado,
     raiz,
-    async render() {
-      loader(true);
-      try {
-        await estado.carregar();
-      } finally {
-        loader(false);
-      }
-    },
+    /*
+      Sem o carregamento de tela cheia: ele travava a navegação inteira. A
+      grade já mostra "Carregando…" enquanto a primeira carga não chega
+      (`carregando && !carregado`, no contador do mês); nas seguintes, o cache
+      de `estado.js` desenha na hora.
+    */
+    render: () => estado.carregar(),
     recarregar: () => estado.carregar(true),
   };
 }

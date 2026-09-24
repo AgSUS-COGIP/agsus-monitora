@@ -158,7 +158,7 @@ function setPending(pending) {
   if (exportButton) {
     exportButton.disabled = pending;
     exportButton.title = pending
-      ? "Consulte uma unidade ou edital antes de exportar"
+      ? "Escolha uma unidade ou edital para exportar"
       : "";
   }
 }

@@ -421,7 +421,11 @@ describe("formulário de convocação do edital", () => {
       expect.objectContaining({ codigo_vaga: "VG-002", imediatas: 4 }),
     ]);
     // Salvar recarrega a página: a ordem de convocação depende destas vagas.
-    expect(supabase.rpc).toHaveBeenCalledWith("listar_candidatos_aprovados");
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "listar_candidatos_aprovados",
+      {},
+      { count: "exact" },
+    );
   });
 
   it("aplica o total padrão a todas as vagas", async () => {

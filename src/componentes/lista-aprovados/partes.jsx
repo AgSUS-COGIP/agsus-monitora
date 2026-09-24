@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { canChangeCandidateStatus } from "../../lib/access-roles.js";
+import { formatNumberBR } from "../../lib/formatters.js";
 import {
   canEditCandidateStatus,
   tomDoStatus,
@@ -13,7 +14,7 @@ import {
 export const classes = (...lista) => lista.filter(Boolean).join(" ");
 
 export const plural = (total, singular, varios) =>
-  `${total} ${total === 1 ? singular : varios}`;
+  `${formatNumberBR(total)} ${total === 1 ? singular : varios}`;
 
 /** Indicador da fileira de KPIs. Antes do dado chegar, "—": carregando não é zero. */
 export function Kpi({ id, tom, icone, rotulo, valor, carregado = true }) {
@@ -24,7 +25,7 @@ export function Kpi({ id, tom, icone, rotulo, valor, carregado = true }) {
       </span>
       <div>
         <span className="approved-kpi-label">{rotulo}</span>
-        <strong id={id}>{carregado ? String(valor) : "—"}</strong>
+        <strong id={id}>{carregado ? formatNumberBR(valor) : "—"}</strong>
       </div>
     </div>
   );
@@ -114,7 +115,9 @@ export function Paginacao({
         id={`${prefixo}PaginacaoInfo`}
         aria-live="polite"
       >
-        {totalPages > 1 ? `Mostrando ${from}–${to} de ${total} ${unidade}` : ""}
+        {totalPages > 1
+          ? `Mostrando ${formatNumberBR(from)}–${formatNumberBR(to)} de ${formatNumberBR(total)} ${unidade}`
+          : ""}
       </span>
       <span className="approved-paginacao-controles">
         <label

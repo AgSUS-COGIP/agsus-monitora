@@ -206,25 +206,25 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 13px;
   text-align: left;
 }
 
 .kpis-main .kpi > span {
   min-width: 0;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: var(--text-sm);
+  font-weight: 600;
   line-height: 1.35;
-  letter-spacing: 0.025em;
+  letter-spacing: 0;
 }
 
 .kpis-main .kpi > b {
   margin-top: 9px;
-  font-size: clamp(25px, 2vw, 29px);
-  font-weight: 800;
+  font-size: var(--text-kpi);
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.03em;
 }
 
 /* Configuracoes: menor densidade visual sem reduzir alvo de clique. */

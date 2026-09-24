@@ -53,14 +53,6 @@ function ensureLayout() {
   const card = canvas?.closest(".card");
   if (!canvas || !wrap || !card) return null;
 
-  if (!card.querySelector(".health-status-subtitle")) {
-    card
-      .querySelector(".panel-title")
-      ?.insertAdjacentHTML(
-        "afterend",
-        '<p class="health-status-subtitle">Distribuição dos processos por situação operacional. Clique em uma categoria para filtrar.</p>',
-      );
-  }
   if (!wrap.parentElement?.classList.contains("health-status-layout")) {
     const layout = document.createElement("div");
     layout.className = "health-status-layout";
@@ -144,7 +136,8 @@ function syncChart() {
     legend.innerHTML = entries
       .map(([label, value]) => {
         const pct = total ? Math.round((value / total) * 100) : 0;
-        return `<button type="button" class="health-status-legend-item" data-health-status="${escapeHtml(label)}"><span class="health-status-dot" style="background:${statusColor(label)}"></span><span class="health-status-name">${escapeHtml(label)}</span><strong>${Number(value).toLocaleString("pt-BR")}</strong><small>${pct}%</small></button>`;
+        // Mesma linha de health-status-details.js: a barra dá a proporção de relance.
+        return `<button type="button" class="health-status-legend-item" data-health-status="${escapeHtml(label)}" title="Filtrar por ${escapeHtml(label)}"><span class="health-status-dot" style="background:${statusColor(label)}"></span><span class="health-status-name">${escapeHtml(label)}</span><strong>${Number(value).toLocaleString("pt-BR")}</strong><small>${pct}%</small><span class="health-status-bar" aria-hidden="true"><i style="width:${pct}%;background:${statusColor(label)}"></i></span></button>`;
       })
       .join("");
   return true;
@@ -165,7 +158,7 @@ function compactDetails() {
         return;
       }
       if (value.includes("sem cronograma estruturado")) {
-        badge.title = "Cronograma ainda não estruturado na Equipe Núcleo";
+        badge.title = "Cronograma ainda não cadastrado em Editais";
         badge.innerHTML =
           '<i class="fa-solid fa-calendar-xmark"></i><span>Sem cronograma</span>';
       }

@@ -28,6 +28,14 @@ import {
   etapaConcluida,
   normalizarTexto,
 } from "./etapas-de-edital.js";
+import {
+  editaisComDatasARevisar,
+  etapaComDatasValidas,
+  proximaDataDaEtapa,
+  proximasEtapas as etapasNaOrdemDaProximaData,
+} from "./datas-do-cronograma.js";
+
+export { editaisComDatasARevisar };
 
 export const MESES = Object.freeze([
   "Janeiro",
@@ -265,6 +273,8 @@ export function duracaoEmDias(etapa) {
 }
 
 export function periodoDaEtapa(etapa) {
+  // Ano digitado errado (0202, 2206): a duração dava "(666205 dias)".
+  if (!etapaComDatasValidas(etapa)) return "data a revisar no cronograma";
   const inicio = dataLocal(etapa.data_inicio);
   if (etapa.data_inicio === etapa.data_fim) return formatarCurto(inicio);
   const fim = dataLocal(etapa.data_fim);
@@ -343,16 +353,27 @@ export function contarEtapasNoMes(etapas, mes) {
 export const rotuloDaContagem = (total) =>
   `${total} ${plural(total, "etapa", "etapas")} no mês`;
 
-/* O painel fixo do rodapé: o que vem a seguir, independente do dia aberto. */
+/*
+  O painel fixo do rodapé: o que vem a seguir, independente do dia aberto.
+
+  Pela próxima data que importa — início, se ainda vai começar; fim, se já
+  está em andamento —, e não pelo início bruto: um recurso aberto desde agosto
+  que termina amanhã é "amanhã", não "agosto". Etapas de data impossível (ano
+  digitado errado) ficam de fora: não há como dizer quando vêm.
+*/
 export function proximasEtapas(
   etapas,
   hoje = new Date(),
   limite = PROXIMAS_NO_PAINEL,
 ) {
   const hojeChave = chaveDoDia(hoje);
-  return (etapas || [])
-    .filter((etapa) => etapa.data_fim >= hojeChave)
-    .slice(0, limite);
+  return etapasNaOrdemDaProximaData(etapas || [], hojeChave, limite);
+}
+
+/** A data (início ou fim) a mostrar ao lado da etapa em "Próximas etapas". */
+export function dataExibidaNasProximas(etapa, hoje = new Date()) {
+  if (!etapaComDatasValidas(etapa)) return null;
+  return proximaDataDaEtapa(etapa, chaveDoDia(hoje));
 }
 
 /** Todas as etapas de um edital, na ordem do cronograma, sem filtro nenhum. */

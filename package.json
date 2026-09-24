@@ -30,6 +30,7 @@
     "aya:bridge": "node scripts/aya-local-bridge.mjs",
     "aya:servico": "node scripts/aya-servico.mjs",
     "aya:conhecimento": "node scripts/compilar-conhecimento-aya.mjs",
+    "icones": "node scripts/gerar-icones-lucide.mjs",
     "start": "node server/servidor.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test:smoke:servidor": "node scripts/test-servidor-smoke.mjs"
@@ -37,6 +38,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2",
     "chart.js": "^4.4.1",
+    "date-fns": "^4.4.0",
     "dompurify": "^3",
     "echarts": "^6",
     "lucide": "^0.577.0",

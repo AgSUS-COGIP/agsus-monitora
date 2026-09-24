@@ -132,14 +132,6 @@ function ensureChartLayout() {
   if (!canvas || !card || !wrap) return null;
 
   card.classList.add("health-status-card");
-  if (!card.querySelector(".health-status-subtitle")) {
-    card
-      .querySelector(".panel-title")
-      ?.insertAdjacentHTML(
-        "afterend",
-        '<p class="health-status-subtitle">Distribuição dos processos por situação operacional. Clique em uma categoria para filtrar.</p>',
-      );
-  }
   if (!wrap.parentElement?.classList.contains("health-status-layout")) {
     const layout = document.createElement("div");
     layout.className = "health-status-layout";
@@ -222,11 +214,13 @@ function enhanceChart() {
     legend.innerHTML = entries
       .map(([label, value]) => {
         const pct = total ? Math.round((value / total) * 100) : 0;
-        return `<button type="button" class="health-status-legend-item" data-health-status="${esc(label)}">
+        // A barra mostra a proporção sem precisar ler o número; o botão filtra.
+        return `<button type="button" class="health-status-legend-item" data-health-status="${esc(label)}" title="Filtrar por ${esc(label)}">
         <span class="health-status-dot" style="background:${statusColor(label)}"></span>
         <span class="health-status-name">${esc(label)}</span>
         <strong>${fmt(value)}</strong>
         <small>${pct}%</small>
+        <span class="health-status-bar" aria-hidden="true"><i style="width:${pct}%;background:${statusColor(label)}"></i></span>
       </button>`;
       })
       .join("");
@@ -284,7 +278,7 @@ function enhanceDetails() {
       "beforebegin",
       `
       <div class="health-details-intro">
-        <div><strong>Processos seletivos</strong><span>Clique em uma linha para consultar o resumo operacional e o cronograma.</span></div>
+        <div><strong>Processos seletivos</strong></div>
         <div class="health-details-legend"><span><i class="dot danger"></i> até 3 dias</span><span><i class="dot warning"></i> até 7 dias</span><span><i class="dot neutral"></i> sem cronograma</span></div>
       </div>`,
     );
@@ -380,7 +374,7 @@ function openDrawer(id) {
       <h3>Cronograma</h3>
       <div class="health-progress-line"><span style="width:${Math.max(0, Math.min(100, Number(row.cronograma_percentual || 0)))}%"></span></div>
       <div class="health-progress-meta"><strong>${Number(row.cronograma_percentual || 0)}% concluído</strong><span>Próxima data: ${formatDate(row.cronograma_proxima_data)}</span></div>
-      ${row.cronograma_automatico ? "" : '<div class="health-drawer-warning"><i class="fa-solid fa-calendar-xmark"></i> Cronograma ainda não estruturado na Equipe Núcleo.</div>'}
+      ${row.cronograma_automatico ? "" : '<div class="health-drawer-warning"><i class="fa-solid fa-calendar-xmark"></i> Cronograma ainda não cadastrado em Editais.</div>'}
     </section>
     <section class="health-drawer-section">
       <h3>Informações</h3>

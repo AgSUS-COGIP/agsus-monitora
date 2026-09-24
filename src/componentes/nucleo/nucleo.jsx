@@ -194,7 +194,7 @@ export function Nucleo({ estado, agora }) {
         <div className="table-head">
           <h3>
             <i className="fa-solid fa-pen-to-square" aria-hidden="true" />{" "}
-            Controle do Núcleo
+            Controle de editais
           </h3>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <input
@@ -218,8 +218,7 @@ export function Nucleo({ estado, agora }) {
           </div>
         </div>
         <div className="table-meta">
-          Editais: editar e salvar registros permitidos. Campos calculados pelo
-          banco são apenas leitura.
+          Campos calculados automaticamente não podem ser editados.
         </div>
         <PainelOperacional estado={estado} nucleo={nucleo} />
         <div className="table-wrap">

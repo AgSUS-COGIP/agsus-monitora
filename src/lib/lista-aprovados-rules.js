@@ -179,6 +179,13 @@ export function formatarNota(value) {
   );
 }
 
+/** A planilha importada traz a modalidade entre aspas ("Ampla Concorrência"). */
+export function modalidadeSemAspas(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/^["“”']+|["“”']+$/g, "");
+}
+
 /** Tom do selo de status (`.approved-status.<tom>`). */
 export function tomDoStatus(status) {
   if (status === "Contratado") return "success";

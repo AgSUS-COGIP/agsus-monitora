@@ -8,6 +8,8 @@
   cancelado, paralisado) é a única forma de o contrariar, e exige motivo e data.
 */
 
+import { ANO_MAXIMO, ANO_MINIMO, dataPlausivel } from "./datas-do-cronograma.js";
+
 const txt = (valor) => String(valor ?? "").trim();
 
 export const PENDENTE = "Cronograma pendente";
@@ -133,7 +135,12 @@ export function estadoDoCronograma(etapas, opcoes = {}) {
  * @param {Array} etapas
  * @param {string} motivo o motivo da alteração, que vai para o histórico
  */
-export function analisarCronograma(edital, etapas, motivo) {
+export function analisarCronograma(
+  edital,
+  etapas,
+  motivo,
+  { exigirMotivo = true } = {},
+) {
   const erros = [];
   const avisos = [];
   if (!edital.edital || !edital.unidade)
@@ -155,6 +162,19 @@ export function analisarCronograma(edital, etapas, motivo) {
       etapa.data_fim < etapa.data_inicio
     )
       erros.push(`${rotulo}: a data final é anterior à inicial.`);
+    /*
+      Ano digitado errado (0202, 2206) era só aviso e salvava: seis etapas
+      foram gravadas assim e apareciam no Cronograma como "(666205 dias)".
+    */
+    for (const [campo, nome] of [
+      ["data_inicio", "início"],
+      ["data_fim", "fim"],
+    ]) {
+      if (etapa[campo] && !dataPlausivel(etapa[campo]))
+        erros.push(
+          `${rotulo}: o ano do ${nome} (${etapa[campo].slice(0, 4)}) não é possível. Use um ano entre ${ANO_MINIMO} e ${ANO_MAXIMO}.`,
+        );
+    }
     const chave = txt(etapa.atividade).toLowerCase();
     if (chave && vistas.has(chave))
       erros.push(`${rotulo}: atividade duplicada.`);
@@ -194,7 +214,8 @@ export function analisarCronograma(edital, etapas, motivo) {
     (!edital.status_override_motivo || !edital.status_override_data)
   )
     erros.push("Status excepcional exige motivo e data da decisão.");
-  if (!txt(motivo)) erros.push("Informe o motivo da alteração do cronograma.");
+  if (exigirMotivo && !txt(motivo))
+    erros.push("Informe o motivo da alteração do cronograma.");
   return { erros: [...new Set(erros)], avisos: [...new Set(avisos)] };
 }
 
