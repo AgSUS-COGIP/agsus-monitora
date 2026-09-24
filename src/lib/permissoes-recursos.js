@@ -1,7 +1,7 @@
 export const RESOURCES = Object.freeze([
   ["dashboard", "Visão geral"],
   ["analises", "Análises"],
-  ["nucleo", "Equipe Núcleo"],
+  ["nucleo", "Editais"],
   ["calendario", "Cronograma"],
   ["aprovados", "Lista de aprovados"],
   ["importacao", "Importação e convocação"],

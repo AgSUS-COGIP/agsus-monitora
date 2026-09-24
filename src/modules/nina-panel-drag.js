@@ -5,6 +5,8 @@ const INTERACTIVE_SELECTOR =
 const OPEN_DRAG_SELECTOR = "[data-nina-drag-handle], .arara-assistant__panel";
 const LAUNCHER_SELECTOR = ".arara-assistant__launcher";
 const DRAG_THRESHOLD_PX = 4;
+// Mesma chave de `ARARA_VISIBILITY_STORAGE_KEY` em arara-guide.js.
+const ARARA_OCULTA_STORAGE_KEY = "agsus_monitora_arara_oculta_v1";
 
 function readPosition(win) {
   try {
@@ -51,6 +53,37 @@ function applyPosition(win, host, position) {
   host.style.bottom = "auto";
 }
 
+/*
+  Minimizada, a Aya volta para o canto inferior direito.
+
+  A posição salva é a do chat aberto, arrastado com 580px de largura. Aplicada
+  à arara minimizada, ela ia para a ponta direita dessa caixa invisível — com o
+  chat arrastado para a esquerda, isso é o meio da tela, em cima do conteúdo de
+  todas as páginas. A posição continua guardada e volta quando o chat abre.
+*/
+function estaMinimizada(win, host) {
+  const root = host?.querySelector("[data-arara-guide]");
+  if (root) return root.classList.contains("is-hidden");
+  try {
+    return win.localStorage.getItem(ARARA_OCULTA_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function ancorarNoCanto(host) {
+  host.style.left = "";
+  host.style.top = "";
+  host.style.right = "";
+  host.style.bottom = "";
+}
+
+function posicionarConformeEstado(win, host) {
+  if (!host) return;
+  if (estaMinimizada(win, host)) ancorarNoCanto(host);
+  else applyPosition(win, host, readPosition(win));
+}
+
 function keepInsideViewport(win, host, persist = true) {
   if (!host) return;
   const rect = host.getBoundingClientRect();
@@ -78,8 +111,7 @@ export function initNinaPanelDrag(doc = document) {
   let drag = null;
   let suppressLauncherClickUntil = 0;
 
-  const initialHost = doc.getElementById("araraGuideHost");
-  if (initialHost) applyPosition(win, initialHost, readPosition(win));
+  posicionarConformeEstado(win, doc.getElementById("araraGuideHost"));
 
   doc.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
@@ -138,7 +170,8 @@ export function initNinaPanelDrag(doc = document) {
 
     drag.root.classList.remove("is-panel-dragging");
     drag.handle.releasePointerCapture?.(event.pointerId);
-    keepInsideViewport(win, drag.host, true);
+    // Arrastar a arara minimizada move só por agora; o que se guarda é o chat.
+    keepInsideViewport(win, drag.host, !estaMinimizada(win, drag.host));
 
     if (drag.launcher && drag.moved) {
       suppressLauncherClickUntil = Date.now() + 500;
@@ -170,15 +203,14 @@ export function initNinaPanelDrag(doc = document) {
     }
 
     win.requestAnimationFrame(() => {
-      const host = doc.getElementById("araraGuideHost");
-      keepInsideViewport(win, host, true);
+      posicionarConformeEstado(win, doc.getElementById("araraGuideHost"));
     });
   });
 
   win.addEventListener("resize", () => {
     const host = doc.getElementById("araraGuideHost");
     if (!host || host.style.left === "") return;
-    keepInsideViewport(win, host, true);
+    keepInsideViewport(win, host, !estaMinimizada(win, host));
   });
 }
 

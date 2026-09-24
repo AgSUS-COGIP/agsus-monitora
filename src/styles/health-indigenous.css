@@ -179,18 +179,6 @@
   z-index: -1;
 }
 
-#page-dashboard .kpi span {
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  font-weight: 800;
-}
-
-#page-dashboard .kpi b {
-  font-size: clamp(29px, 3vw, 39px);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-}
-
 #page-dashboard .kpi.ag-navy {
   color: var(--health-navy);
 }

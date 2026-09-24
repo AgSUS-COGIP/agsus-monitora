@@ -99,6 +99,84 @@
         }
       })();
     </script>
+    <!--
+      Só no `npm run dev:frontend`. Lá o Vite injeta o CSS dos módulos pelo
+      JavaScript, depois da primeira pintura; até isso acontecer só valia o
+      app.css, e cada recarga mostrava uma tela de acesso antiga, sem estilo e
+      sem o botão do Google. O Vite põe `/@vite/client` no <head> antes deste
+      script, e esse é o sinal. No build de produção o CSS vem em <link> e nada
+      disto se aplica. `src/main.js` tira a classe depois dos imports de CSS.
+    -->
+    <style>
+      html.vite-dev-carregando #loginScreen {
+        visibility: hidden;
+      }
+    </style>
+    <script>
+      if (document.querySelector('script[src="/@vite/client"]'))
+        document.documentElement.classList.add("vite-dev-carregando");
+    </script>
+    <!--
+      Recarregar já logado não mostra a tela de acesso.
+
+      Enquanto as configurações carregam (`body.config-loading`), app.css deixa
+      a tela de acesso visível — é ela a tela de espera de quem ainda não
+      entrou. Para quem já tem sessão guardada, isso piscava a tela de login,
+      com a arte de fundo, a cada F5. Este script roda antes da primeira
+      pintura: havendo sessão (`refresh_token` em `agsus-monitora-auth`, a
+      chave de src/lib/env.js), a espera vira o fundo neutro com um indicador.
+      Se a sessão tiver expirado, `config-loading` sai e o login aparece como
+      sempre. `tests/recarga-logado.test.js` cobre a chave e as regras.
+    -->
+    <style>
+      html.sessao-guardada body.config-loading #loginScreen {
+        display: none;
+      }
+      html.sessao-guardada body.config-loading {
+        background: #f3f7fb;
+      }
+      html.sessao-guardada body.config-loading::after {
+        content: "";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 28px;
+        height: 28px;
+        margin: -14px 0 0 -14px;
+        border: 3px solid #d7e5f2;
+        border-top-color: #003b70;
+        border-radius: 50%;
+        animation: espera-da-sessao 0.8s linear infinite;
+      }
+      @keyframes espera-da-sessao {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html.sessao-guardada body.config-loading::after {
+          animation: none;
+        }
+      }
+    </style>
+    <script>
+      (function marcarSessaoGuardada() {
+        try {
+          var chave = "agsus-monitora-auth";
+          var bruto =
+            localStorage.getItem(chave) || sessionStorage.getItem(chave);
+          var sessao = bruto && JSON.parse(bruto);
+          if (
+            sessao &&
+            typeof sessao.refresh_token === "string" &&
+            sessao.refresh_token
+          )
+            document.documentElement.classList.add("sessao-guardada");
+        } catch (erro) {
+          /* Armazenamento bloqueado ou conteúdo inválido: fica a tela de acesso. */
+        }
+      })();
+    </script>
     <title>MONITORA</title>
     <meta name="description" content="" />
     <!--
@@ -117,10 +195,7 @@
       href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&display=swap"
       rel="stylesheet"
     />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
+    <!-- Ícones: Lucide via src/styles/icones-lucide.css (gerado). O Font Awesome saiu. -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
@@ -440,7 +515,24 @@
                 <strong id="topUserPopoverName">-</strong>
                 <small id="userEmail">-</small>
                 <span id="topUserPopoverProfile"></span>
+                <!--
+                  Ações do antigo botão "⋮" do cabeçalho: agora ficam no menu da conta,
+                  um lugar só para o que é da pessoa e da sessão. Modo escuro e Sair são
+                  retirados daqui por nielsen-shell-ux.js (estão na barra lateral).
+                -->
                 <div class="top-user-popover-actions">
+                  <button type="button" onclick="refreshData(); this.closest('details').removeAttribute('open')">
+                    <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                    <span id="refreshActionText">Atualizar dados</span>
+                  </button>
+                  <button type="button" onclick="this.closest('details').removeAttribute('open'); toggleBrowserFullscreen()">
+                    <i id="fullscreenActionIcon" class="fa-solid fa-expand" aria-hidden="true"></i>
+                    <span id="fullscreenActionText">Tela cheia</span>
+                  </button>
+                  <button type="button" onclick="this.closest('details').removeAttribute('open'); exportPDF()">
+                    <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                    <span id="exportPdfActionText">Exportar relatório (PDF)</span>
+                  </button>
                   <button type="button" onclick="toggleDarkMode()">
                     <i class="fa-solid fa-moon" aria-hidden="true"></i>
                     <span>Alternar modo escuro</span>
@@ -465,119 +557,6 @@
               <i class="fa-solid fa-download"></i>
               <span id="exportCsvText"></span>
             </button>
-            <div style="position: relative" id="moreActionsWrap">
-              <button
-                class="btn outline"
-                type="button"
-                onclick="toggleMoreActions()"
-                id="moreActionsBtn"
-                title=""
-                aria-label=""
-                aria-expanded="false"
-              >
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              <div
-                id="moreActionsMenu"
-                hidden
-                style="
-                  position: absolute;
-                  right: 0;
-                  top: calc(100% + 6px);
-                  background: #fff;
-                  border: 1px solid #d7e5f2;
-                  border-radius: 14px;
-                  box-shadow: 0 14px 34px rgba(15, 35, 60, 0.14);
-                  min-width: 180px;
-                  z-index: 200;
-                  overflow: hidden;
-                "
-              >
-                <button
-                  type="button"
-                  onclick="
-                    closeMoreActions();
-                    toggleBrowserFullscreen();
-                  "
-                  style="
-                    width: 100%;
-                    border: 0;
-                    background: transparent;
-                    padding: 11px 16px;
-                    text-align: left;
-                    cursor: pointer;
-                    font: inherit;
-                    font-weight: 700;
-                    font-size: 13px;
-                    color: #10243e;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                  "
-                >
-                  <i
-                    class="fa-solid fa-expand"
-                    style="width: 16px; text-align: center; color: #60758f"
-                  ></i>
-                  <span id="fullscreenActionText"></span>
-                </button>
-                <button
-                  type="button"
-                  onclick="
-                    refreshData();
-                    closeMoreActions();
-                  "
-                  style="
-                    width: 100%;
-                    border: 0;
-                    background: transparent;
-                    padding: 11px 16px;
-                    text-align: left;
-                    cursor: pointer;
-                    font: inherit;
-                    font-weight: 700;
-                    font-size: 13px;
-                    color: #10243e;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    border-top: 1px solid #edf3f9;
-                  "
-                >
-                  <i
-                    class="fa-solid fa-rotate-right"
-                    style="width: 16px; text-align: center; color: #60758f"
-                  ></i>
-                  <span id="refreshActionText"></span>
-                </button>
-                <button
-                  type="button"
-                  onclick="exportPDF()"
-                  style="
-                    width: 100%;
-                    border: 0;
-                    background: transparent;
-                    padding: 11px 16px;
-                    text-align: left;
-                    cursor: pointer;
-                    font: inherit;
-                    font-weight: 600;
-                    font-size: 13px;
-                    color: #10243e;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    border-top: 1px solid #edf3f9;
-                  "
-                >
-                  <i
-                    class="fa-solid fa-file-pdf"
-                    style="width: 16px; text-align: center; color: #d92d3a"
-                  ></i>
-                  <span id="exportPdfActionText"></span>
-                </button>
-              </div>
-            </div>
           </div>
         </header>
         <div id="araraGuideHost"></div>
@@ -593,10 +572,6 @@
           <section id="page-dashboard" class="page active">
             <div class="filter-card card">
               <div class="filter-head">
-                <div>
-                  <div id="filterTitle" class="filter-title"></div>
-                  <p id="filterSubtitle" class="filter-sub"></p>
-                </div>
                 <button
                   id="filterToggleBtn"
                   class="btn secondary"
@@ -767,14 +742,14 @@
                       <div class="health-map-empty">
                         <i class="fa-solid fa-map-location-dot"></i>
                         <strong>Carregando os territórios</strong>
-                        <span>A lista acompanha os filtros da página.</span>
+                        <span>Segue os filtros da página.</span>
                       </div>
                     </div>
                   </aside>
                 </div>
                 <footer class="health-map-pane__hint">
                   <i class="fa-solid fa-arrow-pointer"></i>
-                  Selecione um DSEI para explorar polos e unidades.
+                  Escolha um DSEI no mapa para ver polos e unidades.
                 </footer>
                 <span id="mapLegendMin" class="hidden">0</span>
                 <span id="mapLegendMax" class="hidden"></span>
@@ -912,11 +887,7 @@
                 </div>
               </div>
               <div class="card panel-pad">
-                <h3
-                  id="attentionTitle"
-                  class="panel-title"
-                  style="color: var(--red)"
-                ></h3>
+                <h3 id="attentionTitle" class="panel-title"></h3>
                 <div id="riskList" class="risk-list"></div>
               </div>
             </div>
@@ -1122,11 +1093,12 @@
             <div class="table-card card wide-table">
               <div class="table-head">
                 <h3>
-                  <i class="fa-solid fa-pen-to-square"></i> Controle do Núcleo
+                  <i class="fa-solid fa-pen-to-square"></i> Controle de editais
                 </h3>
                 <div style="display: flex; gap: 10px; align-items: center">
                   <input
                     id="nucleoSearch"
+                    aria-label="Pesquisar editais"
                     placeholder="Pesquisar edital, unidade, status..."
                     oninput="debouncedNucleo()"
                   />
@@ -1136,8 +1108,7 @@
                 </div>
               </div>
               <div class="table-meta">
-                Editais: editar e salvar registros permitidos. Campos
-                calculados pelo banco são apenas leitura.
+                Campos calculados automaticamente não podem ser editados.
               </div>
               <div class="table-wrap">
                 <table>
@@ -1223,7 +1194,7 @@
               <div class="table-head approved-page-head">
                 <div>
                   <h3><i class="fa-solid fa-user-check"></i> Lista de Aprovados</h3>
-                  <p class="approved-page-subtitle">Consulte candidatos por edital e acompanhe a situação de contratação.</p>
+                  
                 </div>
                 <div class="approved-head-actions" id="approvedHeadActions">
                   <span id="approvedCount" class="chip blue">0 candidatos</span>
@@ -1234,10 +1205,10 @@
               </div>
               <div class="approved-tabs" role="tablist" aria-label="Visões da lista do edital">
                 <button id="approvedTabAprovados" class="approved-tab active" type="button" role="tab" aria-selected="true" aria-controls="approvedPanelAprovados" data-approved-tab="aprovados">
-                  <i class="fa-solid fa-user-check" aria-hidden="true"></i> Lista de aprovados
+                  <i class="fa-solid fa-user-check" aria-hidden="true"></i> <span class="approved-tab-prefixo">Lista de </span>aprovados
                 </button>
                 <button id="approvedTabConvocacao" class="approved-tab" type="button" role="tab" aria-selected="false" aria-controls="approvedPanelConvocacao" data-approved-tab="convocacao">
-                  <i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Lista de convocação
+                  <i class="fa-solid fa-bullhorn" aria-hidden="true"></i> <span class="approved-tab-prefixo">Lista de </span>convocação
                 </button>
               </div>
               <div id="approvedPanelAprovados" class="approved-tabpanel" role="tabpanel" aria-labelledby="approvedTabAprovados">
@@ -1269,19 +1240,19 @@
               </div>
               <div class="approved-filters">
                 <div class="form-row">
-                  <label>Edital</label>
+                  <label for="approvedFilterEdital">Edital</label>
                   <select id="approvedFilterEdital"><option value="">Todos os editais</option></select>
                 </div>
                 <div class="form-row">
-                  <label>Cargo</label>
+                  <label for="approvedFilterCargo">Cargo</label>
                   <select id="approvedFilterCargo"><option value="">Todos os cargos</option></select>
                 </div>
                 <div class="form-row">
-                  <label>Modalidade</label>
+                  <label for="approvedFilterModalidade">Modalidade</label>
                   <select id="approvedFilterModalidade"><option value="">Todas as modalidades</option></select>
                 </div>
                 <div class="form-row">
-                  <label>Status</label>
+                  <label for="approvedFilterStatus">Status</label>
                   <select id="approvedFilterStatus">
                     <option value="">Todos os status</option>
                     <option value="__sem_status__">Sem status</option>
@@ -1298,11 +1269,11 @@
                 <table class="approved-table">
                   <thead>
                     <tr>
+                      <th>Nome</th>
                       <th>Cargo</th>
                       <th>Modalidade</th>
                       <th class="num">Classificação</th>
                       <th class="num">Nota</th>
-                      <th>Nome</th>
                       <th>Status</th>
                       <th style="text-align:center">Ações</th>
                     </tr>
@@ -1359,15 +1330,15 @@
                 </div>
                 <div class="approved-filters convocacao-filters">
                   <div class="form-row">
-                    <label>Edital</label>
+                    <label for="convocacaoFilterEdital">Edital</label>
                     <select id="convocacaoFilterEdital"><option value="">Todos os editais</option></select>
                   </div>
                   <div class="form-row">
-                    <label>Cargo</label>
+                    <label for="convocacaoFilterCargo">Cargo</label>
                     <select id="convocacaoFilterCargo"><option value="">Todos os cargos</option></select>
                   </div>
                   <div class="form-row">
-                    <label>Status</label>
+                    <label for="convocacaoFilterStatus">Status</label>
                     <select id="convocacaoFilterStatus">
                     <option value="">Todos os status</option>
                     <option value="__sem_status__">Sem status</option>
@@ -1445,30 +1416,11 @@
                 <div id="accessRequestsAdmin" class="access-admin-list"></div>
               </div>
 
-              <div
-                id="accessMonitorCard"
-                class="admin-card card full access-monitor-card hidden"
-              >
-                <div class="config-card-title">
-                  <div>
-                    <h3>Acessos e usuários online</h3>
-                    <p>
-                      Visível apenas para perfil admin. Online considera
-                      atividade registrada nos últimos 15 minutos.
-                    </p>
-                  </div>
-                  <button
-                    class="btn secondary"
-                    type="button"
-                    onclick="loadAccessDashboard(true)"
-                  >
-                    <i class="fa-solid fa-rotate-right"></i> Atualizar
-                  </button>
-                </div>
-                <div id="accessMonitorBody" class="access-monitor-empty">
-                  Carregando acessos...
-                </div>
-              </div>
+              <!--
+                O card "Acessos e usuários online" saiu a pedido: a seção de Acessos
+                fica para a matriz de permissões. Sem o card, access-dashboard.js não
+                consulta o banco nem liga o temporizador.
+              -->
 
               <div class="admin-card card config-main-card">
                 <div class="config-card-title">
@@ -1483,28 +1435,28 @@
 
                 <div class="form-grid">
                   <div class="form-row" style="display: none">
-                    <label>ID / referência da base</label
+                    <label for="cfgMonitId">ID / referência da base</label
                     ><input id="cfgMonitId" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Título do sistema</label><input id="cfgTitle" />
+                    <label for="cfgTitle">Título do sistema</label><input id="cfgTitle" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Subtítulo do login</label><input id="cfgSubtitle" />
+                    <label for="cfgSubtitle">Subtítulo do login</label><input id="cfgSubtitle" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Slogan / área</label><input id="cfgSlogan" />
+                    <label for="cfgSlogan">Slogan / área</label><input id="cfgSlogan" />
                   </div>
 
                   <div class="form-row">
-                    <label>Título da página inicial</label
+                    <label for="cfgPageTitle">Título da página inicial</label
                     ><input
                       id="cfgPageTitle"
                       placeholder="Ex: Saúde Indígena"
                     />
                   </div>
                   <div class="form-row">
-                    <label>Subtítulo da página inicial</label
+                    <label for="cfgPageSubtitle">Subtítulo da página inicial</label
                     ><input
                       id="cfgPageSubtitle"
                       placeholder="Ex: Monitoramento DSEI/CASAI"
@@ -1512,55 +1464,55 @@
                   </div>
 
                   <div class="form-row" style="display: none">
-                    <label>Texto superior do login</label
+                    <label for="cfgLoginEyebrow">Texto superior do login</label
                     ><input id="cfgLoginEyebrow" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Label do e-mail</label
+                    <label for="cfgLoginEmailLabel">Label do e-mail</label
                     ><input id="cfgLoginEmailLabel" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Placeholder do e-mail</label
+                    <label for="cfgLoginEmailPlaceholder">Placeholder do e-mail</label
                     ><input id="cfgLoginEmailPlaceholder" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Label da senha</label
+                    <label for="cfgLoginPasswordLabel">Label da senha</label
                     ><input id="cfgLoginPasswordLabel" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Placeholder da senha</label
+                    <label for="cfgLoginPasswordPlaceholder">Placeholder da senha</label
                     ><input id="cfgLoginPasswordPlaceholder" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Texto do botão entrar</label
+                    <label for="cfgLoginButtonText">Texto do botão entrar</label
                     ><input id="cfgLoginButtonText" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label>Ajuda de senha</label
+                    <label for="cfgPasswordResetMessage">Ajuda de senha</label
                     ><input id="cfgPasswordResetMessage" />
                   </div>
 
                   <div class="config-section-title">Autenticação Google</div>
                   <div class="form-row">
-                    <label>Login Google</label
+                    <label for="cfgGoogleEnabled">Login Google</label
                     ><select id="cfgGoogleEnabled">
                       <option value="false">Inativo</option>
                       <option value="true">Ativo</option>
                     </select>
                   </div>
                   <div class="form-row">
-                    <label>Texto do botão Google</label
+                    <label for="cfgGoogleButtonText">Texto do botão Google</label
                     ><input id="cfgGoogleButtonText" />
                   </div>
                   <div class="form-row">
-                    <label>Domínio sugerido</label
+                    <label for="cfgGoogleDomainHint">Domínio sugerido</label
                     ><input
                       id="cfgGoogleDomainHint"
                       placeholder="agenciasus.org.br"
                     />
                   </div>
                   <div class="form-row full">
-                    <label>Domínios institucionais permitidos</label
+                    <label for="cfgGoogleAllowedDomains">Domínios institucionais permitidos</label
                     ><input
                       id="cfgGoogleAllowedDomains"
                       placeholder="agenciasus.org.br,agsus.org.br"
@@ -1613,7 +1565,7 @@
                     ></div>
                   </div>
                   <div class="form-row full">
-                    <label>Logo da AgSUS no acesso</label
+                    <label for="cfgAccessLogoUrl">Logo da AgSUS no acesso</label
                     ><input
                       id="cfgAccessLogoUrl"
                       placeholder="/assets/agsus-logo.webp"
@@ -1623,7 +1575,7 @@
                     >
                   </div>
                   <div class="form-row">
-                    <label>Cor do painel de acesso</label
+                    <label for="cfgAccessPanelColor">Cor do painel de acesso</label
                     ><input
                       id="cfgAccessPanelColor"
                       type="color"
@@ -1645,14 +1597,14 @@
                     </select>
                   </div>
                   <div class="form-row">
-                    <label>Saudação do acesso</label
+                    <label for="cfgAccessGreeting">Saudação do acesso</label
                     ><input
                       id="cfgAccessGreeting"
                       placeholder="Seja bem-vindo(a) à AgSUS"
                     />
                   </div>
                   <div class="form-row full">
-                    <label>Instrução do acesso</label
+                    <label for="cfgAccessInstruction">Instrução do acesso</label
                     ><input
                       id="cfgAccessInstruction"
                       placeholder="Acesse com sua conta institucional."
@@ -1661,43 +1613,43 @@
 
                   <div class="config-section-title">Textos do dashboard</div>
                   <div class="form-row">
-                    <label>Título dos filtros</label
+                    <label for="cfgFilterTitle">Título dos filtros</label
                     ><input id="cfgFilterTitle" />
                   </div>
                   <div class="form-row">
-                    <label>Subtítulo dos filtros</label
+                    <label for="cfgFilterSubtitle">Subtítulo dos filtros</label
                     ><input id="cfgFilterSubtitle" />
                   </div>
                   <div class="form-row">
-                    <label>Mostrar filtros</label
+                    <label for="cfgFilterToggleShow">Mostrar filtros</label
                     ><input id="cfgFilterToggleShow" />
                   </div>
                   <div class="form-row">
-                    <label>Ocultar filtros</label
+                    <label for="cfgFilterToggleHide">Ocultar filtros</label
                     ><input id="cfgFilterToggleHide" />
                   </div>
                   <div class="form-row">
-                    <label>KPI processos</label><input id="cfgKpiProcessos" />
+                    <label for="cfgKpiProcessos">KPI processos</label><input id="cfgKpiProcessos" />
                   </div>
                   <div class="form-row">
-                    <label>KPI vagas</label><input id="cfgKpiVagas" />
+                    <label for="cfgKpiVagas">KPI vagas</label><input id="cfgKpiVagas" />
                   </div>
                   <div class="form-row">
-                    <label>KPI contratações</label
+                    <label for="cfgKpiContratados">KPI contratações</label
                     ><input id="cfgKpiContratados" />
                   </div>
                   <div class="form-row">
-                    <label>KPI ociosas</label><input id="cfgKpiOciosas" />
+                    <label for="cfgKpiOciosas">KPI ociosas</label><input id="cfgKpiOciosas" />
                   </div>
                   <div class="form-row">
-                    <label>KPI críticos</label><input id="cfgKpiCriticos" />
+                    <label for="cfgKpiCriticos">KPI críticos</label><input id="cfgKpiCriticos" />
                   </div>
                   <div class="form-row">
-                    <label>KPI inscritos</label><input id="cfgKpiInscritos" />
+                    <label for="cfgKpiInscritos">KPI inscritos</label><input id="cfgKpiInscritos" />
                   </div>
 
                   <div class="form-row full" style="display: none">
-                    <label>Logo da tela de login</label>
+                    <label for="cfgLoginLogo">Logo da tela de login</label>
                     <input
                       id="cfgLoginLogo"
                       oninput="previewImg('cfgLoginLogo', 'prevLoginLogo')"
@@ -1720,7 +1672,7 @@
                   </div>
 
                   <div class="form-row full" style="display: none">
-                    <label>Imagem de fundo do login</label>
+                    <label for="cfgLoginBg">Imagem de fundo do login</label>
                     <input
                       id="cfgLoginBg"
                       oninput="previewImg('cfgLoginBg', 'prevLoginBg')"
@@ -1745,36 +1697,36 @@
                     Rodapé institucional (COGIP)
                   </div>
                   <div class="form-row">
-                    <label>Nome da equipe</label
+                    <label for="cfgCogipNome">Nome da equipe</label
                     ><input id="cfgCogipNome" placeholder="Ex: COGIP" />
                   </div>
                   <div class="form-row">
-                    <label>Função / área</label
+                    <label for="cfgCogipFuncao">Função / área</label
                     ><input
                       id="cfgCogipFuncao"
                       placeholder="Ex: Desenvolvimento e sustentação"
                     />
                   </div>
                   <div class="form-row">
-                    <label>Versão do sistema</label
+                    <label for="cfgCogipVersao">Versão do sistema</label
                     ><input id="cfgCogipVersao" placeholder="Ex: V.2.7.3" />
                   </div>
                   <div class="form-row">
-                    <label>Texto institucional</label
+                    <label for="cfgCogipDept">Texto institucional</label
                     ><input
                       id="cfgCogipDept"
                       placeholder="Ex: Gestão da Informação de Pessoal"
                     />
                   </div>
                   <div class="form-row">
-                    <label>Versão publicada</label
+                    <label for="cfgAppVersionCurrent">Versão publicada</label
                     ><input
                       id="cfgAppVersionCurrent"
                       placeholder="Ex: MONITORA Web V2.9.35"
                     />
                   </div>
                   <div class="form-row full">
-                    <label>Logo da equipe (URL)</label>
+                    <label for="cfgCogipLogo">Logo da equipe (URL)</label>
                     <input
                       id="cfgCogipLogo"
                       oninput="previewImg('cfgCogipLogo', 'prevCogipLogo')"
@@ -1795,7 +1747,7 @@
                     />
                   </div>
                   <div class="form-row">
-                    <label>Rodapé</label><input id="cfgFooter" />
+                    <label for="cfgFooter">Rodapé</label><input id="cfgFooter" />
                   </div>
                 </div>
               </div>
@@ -1812,7 +1764,7 @@
 
                 <div class="form-grid">
                   <div class="form-row">
-                    <label>Tipo do aviso</label
+                    <label for="cfgBroadcastType">Tipo do aviso</label
                     ><select id="cfgBroadcastType">
                       <option value="info">Info</option>
                       <option value="warning">Alerta</option>
@@ -1820,7 +1772,7 @@
                     </select>
                   </div>
                   <div class="form-row">
-                    <label>Mensagem</label
+                    <label for="cfgBroadcastMsg">Mensagem</label
                     ><input
                       id="cfgBroadcastMsg"
                       placeholder="Mensagem global"
@@ -1848,14 +1800,14 @@
                     </summary>
                     <div class="form-grid" style="margin-top: 10px">
                       <div class="form-row">
-                        <label>Realtime do monitoramento</label
+                        <label for="cfgRealtimeEnabled">Realtime do monitoramento</label
                         ><select id="cfgRealtimeEnabled">
                           <option value="true">Ativo</option>
                           <option value="false">Inativo</option>
                         </select>
                       </div>
                       <div class="form-row">
-                        <label>Heartbeat de auditoria (min)</label
+                        <label for="cfgAccessHeartbeatMinutos">Heartbeat de auditoria (min)</label
                         ><input
                           id="cfgAccessHeartbeatMinutos"
                           type="number"
@@ -1941,15 +1893,15 @@
             <input type="hidden" id="mCiclo" />
             <div class="subsection">Identificação do edital</div>
             <div class="form-row">
-              <label>Processo</label
+              <label for="mProcesso">Processo</label
               ><input id="mProcesso" placeholder="Processo SEI" />
             </div>
             <div class="form-row">
-              <label>Edital</label
+              <label for="mEdital">Edital</label
               ><input id="mEdital" placeholder="Número do edital" />
             </div>
             <div class="form-row">
-              <label>Responsável</label
+              <label for="mResponsavel">Responsável</label
               ><select id="mResponsavel" onchange="onModalResponsavelChange()">
                 <option value="">Selecione o responsável</option>
                 <option value="USI">USI</option>
@@ -1957,13 +1909,13 @@
               </select>
             </div>
             <div class="form-row">
-              <label>Unidade</label
+              <label for="mUnidade">Unidade</label
               ><select id="mUnidade" onchange="onModalUnidadeChange()">
                 <option value="">Carregando unidades...</option>
               </select>
             </div>
             <div class="form-row">
-              <label>UF</label
+              <label for="mUf">UF</label
               ><input
                 id="mUf"
                 maxlength="2"
@@ -1973,32 +1925,32 @@
               />
             </div>
             <div class="form-row">
-              <label>Link do edital</label
+              <label for="mLink">Link do edital</label
               ><input id="mLink" placeholder="https://..." />
             </div>
             <div class="subsection">Situação operacional</div>
             <div class="form-row">
-              <label>Vagas previstas</label
+              <label for="mVagas">Vagas previstas</label
               ><input id="mVagas" type="number" min="0" />
             </div>
             <div class="form-row">
-              <label>Data de início</label
+              <label for="mDataInicio">Data de início</label
               ><input id="mDataInicio" type="date" />
             </div>
             <div class="form-row">
-              <label>Data de encerramento</label
+              <label for="mDataFim">Data de encerramento</label
               ><input id="mDataFim" type="date" />
             </div>
             <div class="form-row">
-              <label>Status</label
+              <label for="mStatus">Status</label
               ><input id="mStatus" placeholder="Ex.: Em andamento, Concluído" />
             </div>
             <div class="form-row">
-              <label>Etapa</label
+              <label for="mEtapa">Etapa</label
               ><input id="mEtapa" placeholder="Ex.: Análise Curricular" />
             </div>
             <div class="form-row">
-              <label>Risco</label
+              <label for="mRisco">Risco</label
               ><select id="mRisco">
                 <option>Baixo</option>
                 <option>Médio</option>
@@ -2049,14 +2001,14 @@
             </div>
             <div class="subsection">Observações</div>
             <div class="form-row full">
-              <label>Observações gerenciais</label
+              <label for="mObs">Observações gerenciais</label
               ><textarea
                 id="mObs"
                 placeholder="Resumo visível no painel"
               ></textarea>
             </div>
             <div class="form-row full">
-              <label>Observações internas</label
+              <label for="mObsInternas">Observações internas</label
               ><textarea
                 id="mObsInternas"
                 placeholder="Notas internas da equipe"
@@ -2107,7 +2059,7 @@
         <div class="modal-body">
           <div class="form-grid">
             <div class="form-row full">
-              <label>Status</label>
+              <label for="approvedStatusSelect">Status</label>
               <select id="approvedStatusSelect">
                 <option value="">Sem status</option>
                 <option value="Contratado">Contratado</option>
@@ -2118,11 +2070,11 @@
               </select>
             </div>
             <div class="form-row full">
-              <label>Processo SEI <small>(opcional)</small></label>
+              <label for="approvedStatusSei">Processo SEI <small>(opcional)</small></label>
               <input id="approvedStatusSei" placeholder="Ex.: 00700.000000/2026-00" />
             </div>
             <div class="form-row full">
-              <label>Matrícula</label>
+              <label for="approvedStatusMatricula">Matrícula</label>
               <input id="approvedStatusMatricula" placeholder="Informe quando o status exigir" />
               <small id="approvedMatriculaHint" class="approved-field-hint">Opcional para este status.</small>
             </div>
@@ -2147,19 +2099,19 @@
         <div class="modal-body">
           <div class="form-grid">
             <div class="form-row full">
-              <label>Nome do candidato</label>
+              <label for="subJudiceNome">Nome do candidato</label>
               <input id="subJudiceNome" placeholder="Nome completo" />
             </div>
             <div class="form-row">
-              <label>Edital</label>
+              <label for="subJudiceEdital">Edital</label>
               <select id="subJudiceEdital"></select>
             </div>
             <div class="form-row">
-              <label>Cargo</label>
+              <label for="subJudiceCargo">Cargo</label>
               <select id="subJudiceCargo"></select>
             </div>
             <div class="form-row full">
-              <label>Nota</label>
+              <label for="subJudiceNota">Nota</label>
               <input id="subJudiceNota" inputmode="decimal" placeholder="Ex.: 87,50" />
             </div>
           </div>
@@ -2194,12 +2146,12 @@
           <p id="approvedImportPermissionNote" class="modal-note"></p>
           <div class="form-grid">
             <div id="approvedImportFileRow" class="form-row full">
-              <label>Arquivo XLSX</label>
+              <label for="approvedImportFile">Arquivo XLSX</label>
               <input id="approvedImportFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
               <small class="approved-field-hint">Colunas obrigatórias: codigo_vaga, cargo, classificacao, nota, nome e modalidade.</small>
             </div>
             <div class="form-row full">
-              <label>Situação da lista</label>
+              <label for="approvedImportActive">Situação da lista</label>
               <select id="approvedImportActive">
                 <option value="true">Ativa — permite alterar candidatos</option>
                 <option value="false">Inativa — somente consulta</option>

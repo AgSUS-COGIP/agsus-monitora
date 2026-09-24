@@ -212,9 +212,8 @@ function ensureDeadlineLegend(documentRef) {
   if (!legend || legend.dataset.healthLegendReady === "1") return;
   legend.dataset.healthLegendReady = "1";
   legend.innerHTML = `
-    <span><i class="fa-solid fa-calendar-days health-legend-icon deadline"></i> prazo do edital</span>
-    <span><i class="fa-solid fa-route health-legend-icon schedule"></i> próxima etapa do cronograma</span>
-    <span><i class="fa-solid fa-circle-info health-legend-icon details"></i> clique na linha para abrir detalhes</span>`;
+    <span><i class="fa-solid fa-calendar-days health-legend-icon deadline"></i> Prazo do edital</span>
+    <span><i class="fa-solid fa-route health-legend-icon schedule"></i> Próxima etapa</span>`;
 }
 
 export function enhanceHealthDetailsTable(documentRef = globalThis.document) {
@@ -231,7 +230,7 @@ export function enhanceHealthDetailsTable(documentRef = globalThis.document) {
     if (!cells.length) return;
 
     row.classList.add("health-details-row-refined");
-    row.title = "Clique para consultar o resumo operacional e o cronograma";
+    row.title = "Ver cronograma e detalhes do edital";
 
     const editalCell = cells[indexes.edital];
     const statusCell = cells[indexes.status];

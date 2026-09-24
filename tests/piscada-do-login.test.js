@@ -211,3 +211,32 @@ describe("uma resposta parcial não apaga o cache", () => {
     expect(boot).toContain("aplicarMarcaNaTela(completa, documento)");
   });
 });
+
+/*
+  A tela de acesso antiga — foto em i.postimg.cc e cartão branco — aparecia
+  sempre que o CSS dos módulos atrasava, porque app.css ainda a desenhava.
+  Sem arte configurada, o fundo é liso, em todos os arquivos que pintam a tela.
+*/
+describe("fundo da tela de acesso sem arte configurada", () => {
+  const folhas = [
+    "src/styles/app.css",
+    "src/styles/platform-shell.css",
+    "src/styles/config-page.css",
+  ].map((arquivo) => [arquivo, readFileSync(arquivo, "utf8")]);
+
+  it.each(folhas)("%s não carrega imagem de host externo", (_, css) => {
+    expect(css).not.toMatch(/url\(\s*["']?https?:/);
+  });
+
+  it.each(folhas)("%s não usa mais o roxo legado", (_, css) => {
+    expect(css).not.toContain("#4d2270");
+  });
+
+  it("a alternativa da arte é nenhuma imagem", () => {
+    const [, app] = folhas[0];
+    const regra = app.slice(app.indexOf(".login-screen {"));
+    expect(regra.slice(0, regra.indexOf("}"))).toContain(
+      "background-image: var(--login-background-image, none)",
+    );
+  });
+});

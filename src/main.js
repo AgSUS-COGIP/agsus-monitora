@@ -9,6 +9,7 @@ import { installCspReportMonitor } from "./lib/csp-report-monitor.js";
 import "./lib/chartjs-global.js";
 import "./lib/supabase-legacy-bridge.js";
 import "./styles/tokens.css";
+import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
 import "./styles/arara-guide.css";
 import "./styles/nina-conversation.css";
@@ -95,6 +96,9 @@ import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
 import { createListaAprovadosController } from "./modules/lista-aprovados.js";
 import { createCalendarioEditaisController } from "./modules/calendario-editais.js";
+
+// Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
+document.documentElement.classList.remove("vite-dev-carregando");
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();

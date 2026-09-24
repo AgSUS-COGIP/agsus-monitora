@@ -12,7 +12,7 @@ const label = (level) =>
 
 export async function mountAccessMatrix(
   root,
-  { sb, currentUser, onManageAccount },
+  { sb, currentUser, onManageAccount, historicoRoot = null },
 ) {
   let data = { usuarios: [], paineis: [], historico: [], total: 0 };
   let offset = 0;
@@ -29,7 +29,22 @@ export async function mountAccessMatrix(
     ...RESOURCES,
     ...data.paineis.map((p) => [`painel:${p.id}`, p.titulo]),
   ];
+  /*
+    Histórico das alterações. Com `historicoRoot`, ele sai da matriz e vai
+    para esse lugar — na tela de Acessos, o topo, acima das solicitações; a
+    matriz fica embaixo com a altura toda para a tabela.
+  */
+  function historicoHTML() {
+    return `<details class="permission-history"><summary>Histórico de permissões — últimas 50 alterações</summary><div class="permission-scroll"><table><thead><tr><th>Data</th><th>Usuário</th><th>Módulo / painel</th><th>Alteração</th><th>Realizado por</th><th>Motivo</th></tr></thead><tbody>${data.historico.map((h) => `<tr><td>${escape(new Date(h.alterado_em).toLocaleString("pt-BR"))}</td><td>${escape(h.email)}</td><td>${escape(resources().find(([r]) => r === h.recurso)?.[1] || h.recurso)}</td><td>${label(h.nivel_anterior)} → ${label(h.nivel_novo)}</td><td>${escape(h.autor || h.alterado_por)}</td><td>${escape(h.motivo)}</td></tr>`).join("") || '<tr><td colspan="6">Nenhuma alteração de permissão registrada.</td></tr>'}</tbody></table></div></details>`;
+  }
+  function renderHistorico() {
+    if (!historicoRoot) return;
+    const aberto = historicoRoot.querySelector("details")?.open;
+    historicoRoot.innerHTML = sanitizeHtml(historicoHTML());
+    if (aberto) historicoRoot.querySelector("details").open = true;
+  }
   function render(message = "", error = false) {
+    renderHistorico();
     const changes = matrixChanges(data.usuarios, draft);
     root.dataset.pendingCount = String(changes.length);
     root.innerHTML =
@@ -74,7 +89,7 @@ export async function mountAccessMatrix(
       <div data-pending>${changes.length ? `<details open><summary>${changes.length} alterações para revisar</summary><ul>${changes.map((c) => `<li>${escape(data.usuarios.find((u) => u.id === c.usuario_id)?.email)} · ${escape(resources().find(([r]) => r === c.recurso)?.[1])}: ${label(data.usuarios.find((u) => u.id === c.usuario_id).permissoes[c.recurso].nivel)} → <strong>${label(c.nivel)}</strong></li>`).join("")}</ul></details>` : ""}</div>
       <form data-save class="permission-toolbar"><label>Motivo da alteração <input name="motivo" required minlength="3" maxlength="500" placeholder="Descreva o motivo" ${busy ? "disabled" : ""}></label><button class="btn primary" ${!changes.length || busy ? "disabled" : ""}>${busy ? "Salvando…" : "Salvar alterações"}</button><button type="button" class="btn outline" data-discard ${!changes.length || busy ? "disabled" : ""}>Descartar alterações</button></form>
       <p role="status" class="${error ? "alert error" : "access-status"}">${escape(message)}</p>
-      <details class="permission-history"><summary>Histórico de permissões — últimas 50 alterações</summary><div class="permission-scroll"><table><thead><tr><th>Data</th><th>Usuário</th><th>Módulo / painel</th><th>Alteração</th><th>Realizado por</th><th>Motivo</th></tr></thead><tbody>${data.historico.map((h) => `<tr><td>${escape(new Date(h.alterado_em).toLocaleString("pt-BR"))}</td><td>${escape(h.email)}</td><td>${escape(resources().find(([r]) => r === h.recurso)?.[1] || h.recurso)}</td><td>${label(h.nivel_anterior)} → ${label(h.nivel_novo)}</td><td>${escape(h.autor || h.alterado_por)}</td><td>${escape(h.motivo)}</td></tr>`).join("") || '<tr><td colspan="6">Nenhuma alteração de permissão registrada.</td></tr>'}</tbody></table></div></details>
+      ${historicoRoot ? "" : historicoHTML()}
     </section>`);
   }
   async function load(message = "") {

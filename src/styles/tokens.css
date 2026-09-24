@@ -6,21 +6,30 @@
   `index.html`, mas isso não pesa: `var()` resolve no valor computado, com a
   cascata inteira já montada.
 
-  Só entra aqui o que não muda nada do que já existe. Nenhum destes nomes era
-  definido antes, e as reservas que o código já escrevia (`var(--space-2,
-  8px)`, `var(--radius-sm, 8px)`…) têm os mesmos valores. As cores de texto e
-  de superfície (`--text-primary`, `--surface-card`…) ficam de fora: as
-  reservas espalhadas pelo código divergem entre si, e defini-las agora
-  repintaria componentes que ninguém está revisando.
+  Primeira parte (fonte, espaçamento, raio, movimento, sombra de popover):
+  nomes que não existiam antes e cujas reservas no código (`var(--space-2,
+  8px)`, `var(--radius-sm, 8px)`…) têm os mesmos valores.
+
+  Segunda parte (cor de marca, superfície, texto, borda, estado, séries,
+  tipografia e sombras de card): usada pelos componentes revisados — KPIs e
+  cards da Saúde Indígena, Editais e Lista de Aprovados, notificações,
+  cabeçalhos de tabela. Só pinta quem usa o token; os componentes ainda não
+  revisados continuam com as cores chumbadas de antes.
 
   As camadas (`--z-*`) continuam em `app.css`, junto das que já existiam.
 */
 :root {
   /* Tipografia: Geist, carregada como fonte variável (um arquivo, 400–900). */
   --font-sans: "Geist", "Segoe UI", Roboto, Arial, sans-serif;
+  --text-xs: 11px;
   --text-sm: 12px;
   --text-md: 13px;
   --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-kpi: clamp(24px, 1.9vw, 30px);
+  --text-kpi-sm: clamp(20px, 1.5vw, 24px); /* KPI compacto da Saúde Indígena */
 
   /* Espaçamento, base de 4px. */
   --space-1: 4px;
@@ -38,7 +47,10 @@
   --radius-lg: 18px;
   --radius-pill: 999px;
 
-  /* Sombra de popover, painel flutuante e gaveta. */
+  /* Sombra: repouso, destaque (hover) e popover/painel flutuante/gaveta. */
+  --shadow-card: 0 1px 2px rgba(15, 35, 60, 0.04);
+  --shadow-raised:
+    0 1px 2px rgba(15, 35, 60, 0.03), 0 12px 32px -24px rgba(15, 35, 60, 0.28);
   --shadow-overlay: 0 24px 64px -16px rgba(15, 35, 60, 0.32);
 
   /* Movimento: os valores do colapso da barra lateral, generalizados. */
@@ -52,8 +64,78 @@
     lateral com cor configurada escura, botão primário).
   */
   --text-inverse: #ffffff;
+
+  /* Marca. Os números são a razão de contraste sobre --surface-card. */
+  --brand-primary: #003b70; /* 11,29 */
+  --brand-primary-strong: #002b54;
+  --brand-accent: #00a8d6; /* só preenchimento decorativo; nunca texto (2,77) */
+
+  /* Superfícies */
+  --surface-page: #f3f7fb;
+  --surface-card: #ffffff;
+  --surface-raised: #f6f9fc;
+  --surface-hover: #f1f5f9;
+
+  /* Texto */
+  --text-primary: #10243e; /* 15,63 */
+  --text-secondary: #5f6f86; /* 5,12 no card, 4,75 na página */
+
+  /* Bordas e foco */
+  --border-subtle: #dfe7f0;
+  --border-control: #7d8fa5; /* 3,31 */
+  --focus-ring: #1f8fff;
+
+  /* Estado: texto/ícone | fundo suave */
+  --state-success: #087a4b;
+  --state-success-soft: #e7f5ee;
+  --state-warning: #8a5a00;
+  --state-warning-soft: #fdf4d8;
+  --state-danger: #c02634;
+  --state-danger-soft: #fdecee;
+  --state-info: #0f5db7;
+  --state-info-soft: #e8f1fc;
+  --state-neutral: #5f6f86;
+  --state-neutral-soft: #eef2f6;
+
+  /* Séries de gráfico (DESIGN.md, seção 6) */
+  --series-1: #0f5db7;
+  --series-2: #eb6834;
+  --series-3: #0090bc;
+  --series-4: #6d5efc;
+  --series-5: #d55181;
+  --series-6: #8a6d00;
 }
 
 html[data-theme="dark"] {
+  --shadow-card: none;
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.38);
   --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+
+  --brand-primary: #70cfff; /* 9,69 */
+  --brand-primary-strong: #b5e5ff;
+  --brand-accent: #4fdcff;
+  --surface-page: #071421;
+  --surface-card: #0e1e2e;
+  --surface-raised: #14283a;
+  --surface-hover: #1a3146;
+  --text-primary: #edf4fa; /* 15,21 */
+  --text-secondary: #a8b8c8; /* 8,33 */
+  --border-subtle: #294158;
+  --border-control: #6a829a;
+  --focus-ring: #7dd3fc;
+  --state-success: #29b36a;
+  --state-success-soft: rgba(41, 179, 106, 0.16);
+  --state-warning: #f2b705;
+  --state-warning-soft: rgba(242, 183, 5, 0.16);
+  --state-danger: #ff6b76;
+  --state-danger-soft: rgba(255, 107, 118, 0.16);
+  --state-info: #70cfff;
+  --state-info-soft: rgba(112, 207, 255, 0.16);
+  --state-neutral: #a8b8c8;
+  --state-neutral-soft: rgba(168, 184, 200, 0.14);
+  --series-1: #4f8ff0;
+  --series-2: #d95f2b;
+  --series-3: #1a9fc8;
+  --series-4: #8e6cf2;
+  --series-6: #a8861a;
 }

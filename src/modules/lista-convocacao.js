@@ -63,6 +63,7 @@ import {
 } from "../lib/lista-convocacao-rules.js";
 import { paginateApprovedCandidates } from "../lib/lista-aprovados-rules.js";
 import { ativarMultiSelectBusca } from "./multi-select-busca.js";
+import { formatNumberBR } from "../lib/formatters.js";
 
 const escMap = {
   "&": "&amp;",
@@ -1194,7 +1195,8 @@ export function createListaConvocacaoController(deps = {}) {
     };
     Object.entries(valores).forEach(([id, valor]) => {
       const elemento = $(id);
-      if (elemento) elemento.textContent = String(valor);
+      // Formato brasileiro: 15.265, não 15265.
+      if (elemento) elemento.textContent = formatNumberBR(valor);
     });
   }
 
@@ -1204,7 +1206,8 @@ export function createListaConvocacaoController(deps = {}) {
     barra.hidden = totalPages <= 1;
     if (barra.hidden) return;
     const info = $("convocacaoPaginacaoInfo");
-    if (info) info.textContent = `Mostrando ${from}–${to} de ${total} linhas`;
+    if (info)
+      info.textContent = `Mostrando ${formatNumberBR(from)}–${formatNumberBR(to)} de ${formatNumberBR(total)} linhas`;
     const atual = $("convocacaoPaginaAtual");
     if (atual) atual.textContent = `Página ${page} de ${totalPages}`;
     const anterior = $("convocacaoPagePrev");

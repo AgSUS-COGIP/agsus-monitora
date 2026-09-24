@@ -32,7 +32,7 @@
   isolation: isolate;
   align-items: center;
   justify-content: flex-start;
-  background-color: #4d2270;
+  background-color: var(--surface-page);
   background-image: var(--login-background-image, none);
   background-size: cover;
   background-position: center;
@@ -596,19 +596,24 @@ html[data-theme="dark"] .sidebar {
   min-height: 40px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
+  padding: 0 var(--space-2);
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: #475569;
+  color: var(--text-primary);
   font: inherit;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: var(--text-md);
+  font-weight: 500;
+  text-align: left;
   cursor: pointer;
 }
+.top-user-popover-actions button i {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
 .top-user-popover-actions button:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--surface-hover);
 }
 
 /*

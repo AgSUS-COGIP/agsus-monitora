@@ -156,6 +156,12 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Cronograma de um monitoramento.",
   },
+  listar_etapas_do_cronograma: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Todas as etapas de cronograma dos editais ativos, num pedido só (tela Cronograma).",
+  },
   get_nucleo_cronograma_resumo: {
     argumentos: [],
     critica: false,

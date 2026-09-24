@@ -46,50 +46,48 @@ function nextUiCycle(dom) {
 }
 
 describe("health details runtime fix", () => {
-  it("coloca Editais 2026 no topo e seleciona somente valores da coluna Edital", async () => {
+  /*
+    "Editais 2026" (ano fixo no botão) virou o seletor Ano, com os anos dos
+    próprios editais; "Em andamento" virou uma opção do seletor Situação.
+  */
+  it("campo Ano fica no painel de filtros e seleciona só os editais do ano", async () => {
     const dom = dashboardDom();
     dom.window.toggleSelectFilter = vi.fn();
     dom.window.toggleCriticalRiskFilter = vi.fn();
     dom.window.toggleHideClosed = vi.fn();
     dom.window.clearFilters = vi.fn();
+    const doc = dom.window.document;
 
-    const previous = dom.window.document.querySelector(
-      'input[data-filter-value="03/2025"]',
-    );
-    previous.click();
+    doc.querySelector('input[data-filter-value="03/2025"]').click();
 
-    const toolbar = ensureTopFilterToolbar(dom.window, dom.window.document);
-    const button = dom.window.document.getElementById("healthQuick2026Btn");
+    const toolbar = ensureTopFilterToolbar(dom.window, doc);
+    const ano = doc.getElementById("healthFiltroAno");
 
     expect(toolbar).not.toBeNull();
-    expect(button?.closest(".filter-head")).not.toBeNull();
-    expect(dom.window.document.getElementById("healthOnly2026Btn").hidden).toBe(
-      true,
-    );
-    expect(dom.window.document.getElementById("hideClosedBtn").hidden).toBe(
-      true,
-    );
+    expect(ano?.closest("#filterBody")).not.toBeNull();
+    expect(doc.getElementById("healthFiltroSituacao")).toBeNull();
+    expect([...ano.options].map((o) => o.value)).toEqual(["", "2026", "2025"]);
+    expect(ano.value).toBe("2025");
+    expect(doc.getElementById("healthOnly2026Btn").hidden).toBe(true);
+    expect(doc.getElementById("hideClosedBtn").hidden).toBe(true);
+    expect(doc.getElementById("healthQuickRiskBtn")).toBeNull();
 
-    button.click();
+    const marcados = () =>
+      [
+        ...doc.querySelectorAll('input[data-filter-field="edital"]:checked'),
+      ].map((input) => input.dataset.filterValue);
+
+    ano.value = "2026";
+    ano.dispatchEvent(new dom.window.Event("change"));
     await nextUiCycle(dom);
+    expect(marcados()).toEqual(["01/2026", "02/2026"]);
+    expect(doc.getElementById("tableSearch").value).toBe("");
+    expect(ano.value).toBe("2026");
 
-    const selected = [
-      ...dom.window.document.querySelectorAll(
-        'input[data-filter-field="edital"]:checked',
-      ),
-    ].map((input) => input.dataset.filterValue);
-    expect(selected).toEqual(["01/2026", "02/2026"]);
-    expect(dom.window.document.getElementById("tableSearch").value).toBe("");
-    expect(button.getAttribute("aria-pressed")).toBe("true");
-
-    button.click();
+    ano.value = "";
+    ano.dispatchEvent(new dom.window.Event("change"));
     await nextUiCycle(dom);
-    const restored = [
-      ...dom.window.document.querySelectorAll(
-        'input[data-filter-field="edital"]:checked',
-      ),
-    ].map((input) => input.dataset.filterValue);
-    expect(restored).toEqual(["03/2025"]);
+    expect(marcados()).toEqual([]);
   });
 
   it("mostra contador no botão de filtros quando há seleção ativa", () => {
@@ -104,11 +102,6 @@ describe("health details runtime fix", () => {
     expect(
       dom.window.document.getElementById("filterToggleBtn").textContent,
     ).toContain("1");
-    expect(
-      dom.window.document
-        .getElementById("healthQuickProgressBtn")
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
   });
 
   it("aplica placeholder de cronograma imediatamente e o remove quando chega o dado real", () => {

@@ -116,8 +116,16 @@
   background: var(--card);
   box-shadow: 0 24px 60px rgba(13, 35, 58, 0.22);
   padding: 10px;
-  display: grid;
   gap: 8px;
+}
+/*
+  Só o componente deste arquivo abre e fecha por `hidden`. O `display: grid`
+  valia para todo `.multi-select-menu` do sistema, e os seis filtros da Saúde
+  Indígena — que fecham tirando `.open` (app.css) — ficavam abertos ao mesmo
+  tempo, empilhados uns sobre os outros.
+*/
+.multi-select-busca > .multi-select-menu {
+  display: grid;
 }
 .multi-select-menu[hidden] {
   display: none !important;

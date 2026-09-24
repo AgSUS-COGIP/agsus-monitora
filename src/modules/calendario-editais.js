@@ -35,6 +35,12 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { exigirSessao } from "../lib/sessao.js";
 import {
+  editaisComDatasARevisar,
+  etapaComDatasValidas,
+  proximaDataDaEtapa,
+  proximasEtapas,
+} from "../lib/datas-do-cronograma.js";
+import {
   SITUACAO_ETAPA,
   TIPOS_DE_ETAPA,
   TIPO_OUTROS,
@@ -47,8 +53,11 @@ import {
 
 const RPC_RESUMO = "get_nucleo_cronograma_resumo";
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";
+/** Todas as etapas num pedido só (migration 20260924170000). */
+const RPC_TODAS_AS_ETAPAS = "listar_etapas_do_cronograma";
 
 /** Pedidos simultâneos ao Supabase. Acima disto o navegador enfileira à toa. */
+/* Só no caminho antigo, um pedido por edital (banco sem RPC_TODAS_AS_ETAPAS). */
 const CONCORRENCIA = 6;
 /** Enquanto fresco, reabrir a tela não repete as N chamadas. */
 const CACHE_TTL_MS = 60_000;
@@ -132,7 +141,6 @@ function formatarCurto(data) {
 export function createCalendarioEditaisController(opcoes = {}) {
   const sb = opcoes.supabase || getSupabaseClient();
   const toast = opcoes.toast || ((mensagem) => console.info(mensagem));
-  const loader = opcoes.loader || (() => {});
   const agora = opcoes.now || (() => new Date());
 
   const state = {
@@ -172,6 +180,32 @@ export function createCalendarioEditaisController(opcoes = {}) {
 
   // ── Dados ──────────────────────────────────────────────────────────────
 
+  /*
+    Um pedido para todas as etapas; eram 118, um por edital (6 a 7 s). Com o
+    banco ainda sem a função nova (PGRST202), volta ao pedido por edital.
+    Devolve um bloco de etapas por edital, na ordem de `editais`.
+  */
+  async function buscarEtapasDosEditais(editais) {
+    const todas = await sb.rpc(RPC_TODAS_AS_ETAPAS);
+    if (!todas.error) {
+      const porEdital = new Map(
+        editais.map((edital) => [String(edital.id), []]),
+      );
+      for (const etapa of Array.isArray(todas.data) ? todas.data : []) {
+        porEdital.get(String(etapa.monitoramento_id))?.push(etapa);
+      }
+      return editais.map((edital) => porEdital.get(String(edital.id)));
+    }
+    if (todas.error.code !== "PGRST202") throw todas.error;
+    return comLimite(editais, CONCORRENCIA, async (edital) => {
+      const resposta = await sb.rpc(RPC_CRONOGRAMA, {
+        p_monitoramento_id: edital.id,
+      });
+      if (resposta.error) throw resposta.error;
+      return Array.isArray(resposta.data?.etapas) ? resposta.data.etapas : [];
+    });
+  }
+
   async function carregarEtapas(forcar = false) {
     const fresco = Date.now() - state.carregadoEm < CACHE_TTL_MS;
     if (!forcar && fresco && state.etapas.length) return;
@@ -192,13 +226,7 @@ export function createCalendarioEditaisController(opcoes = {}) {
         (linha) => Number(linha?.cronograma_total || 0) > 0,
       );
 
-      const blocos = await comLimite(editais, CONCORRENCIA, async (edital) => {
-        const resposta = await sb.rpc(RPC_CRONOGRAMA, {
-          p_monitoramento_id: edital.id,
-        });
-        if (resposta.error) throw resposta.error;
-        return Array.isArray(resposta.data?.etapas) ? resposta.data.etapas : [];
-      });
+      const blocos = await buscarEtapasDosEditais(editais);
 
       const falhas = blocos.filter((bloco) => bloco === null).length;
       const etapas = [];
@@ -305,6 +333,8 @@ export function createCalendarioEditaisController(opcoes = {}) {
   }
 
   function periodoDaEtapa(etapa) {
+    // Ano digitado errado (0202, 2206): mostrar a duração dava "666205 dias".
+    if (!etapaComDatasValidas(etapa)) return "data a revisar no cronograma";
     const inicio = dataLocal(etapa.data_inicio);
     if (etapa.data_inicio === etapa.data_fim) return formatarCurto(inicio);
     const fim = dataLocal(etapa.data_fim);
@@ -383,8 +413,8 @@ export function createCalendarioEditaisController(opcoes = {}) {
 
   // ── Render: painel de detalhe ──────────────────────────────────────────
 
-  function linhaDeEtapa({ etapa, marco }, mostrarData) {
-    const inicio = dataLocal(etapa.data_inicio);
+  function linhaDeEtapa({ etapa, marco }, mostrarData, dataExibida) {
+    const inicio = dataLocal(dataExibida || etapa.data_inicio);
     return `
       <button type="button" class="cal-item" data-edital-id="${attr(etapa.editalId)}"
               data-cor="${attr(etapa.tipo.cor)}">
@@ -417,15 +447,30 @@ export function createCalendarioEditaisController(opcoes = {}) {
   function renderProximas(etapas) {
     const alvo = $("calProximas");
     if (!alvo) return;
-    const hoje = agora();
-    const proximas = etapas
-      .filter((etapa) => etapa.data_fim >= chaveDoDia(hoje))
-      .slice(0, PROXIMAS_NO_PAINEL);
-    alvo.innerHTML = proximas.length
-      ? proximas
-          .map((etapa) => linhaDeEtapa({ etapa, marco: "" }, true))
-          .join("")
-      : `<p class="cal-vazio">Nenhuma etapa em aberto para os filtros atuais.</p>`;
+    const hoje = chaveDoDia(agora());
+    // Pela próxima data que importa (início ou, se já começou, o fim), e sem as
+    // etapas de data impossível — elas vinham primeiro por terem "ano 202".
+    const proximas = proximasEtapas(etapas, hoje, PROXIMAS_NO_PAINEL);
+    // Avisa quem pode corrigir: sem isto a etapa só sumia da lista.
+    const revisar = editaisComDatasARevisar(state.etapas);
+    const aviso = revisar.length
+      ? `<p class="cal-aviso-datas" role="status"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>${revisar.length} edita${revisar.length === 1 ? "l" : "is"} com data impossível no cronograma (ano digitado errado): ${revisar
+          .map((r) => esc(r.edital))
+          .join("; ")}. Corrija em Editais.</span></p>`
+      : "";
+    alvo.innerHTML =
+      aviso +
+      (proximas.length
+        ? proximas
+            .map((etapa) =>
+              linhaDeEtapa(
+                { etapa, marco: "" },
+                true,
+                proximaDataDaEtapa(etapa, hoje),
+              ),
+            )
+            .join("")
+        : `<p class="cal-vazio">Nenhuma etapa em aberto para os filtros atuais.</p>`);
   }
 
   /*
@@ -718,17 +763,20 @@ export function createCalendarioEditaisController(opcoes = {}) {
     });
   }
 
+  /*
+    Sem o carregamento de tela cheia: ele travava a navegação inteira. Na
+    primeira abertura o aviso fica dentro do calendário; nas seguintes, o cache
+    de CACHE_TTL_MS desenha na hora.
+  */
   async function render() {
     ligarEventos();
-    loader(true);
-    try {
-      await carregarEtapas();
-      if (!state.editalSelecionado && state.editais.length)
-        state.editalSelecionado = state.editais[0].id;
-      pintar();
-    } finally {
-      loader(false);
-    }
+    const grade = $("calGrade");
+    if (!state.etapas.length && grade)
+      grade.innerHTML = `<p class="cal-vazio" role="status"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Carregando o cronograma dos editais…</p>`;
+    await carregarEtapas();
+    if (!state.editalSelecionado && state.editais.length)
+      state.editalSelecionado = state.editais[0].id;
+    pintar();
   }
 
   return { render, recarregar: () => carregarEtapas(true).then(pintar), state };
