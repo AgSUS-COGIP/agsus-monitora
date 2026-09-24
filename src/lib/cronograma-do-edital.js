@@ -8,7 +8,11 @@
   cancelado, paralisado) é a única forma de o contrariar, e exige motivo e data.
 */
 
-import { ANO_MAXIMO, ANO_MINIMO, dataPlausivel } from "./datas-do-cronograma.js";
+import {
+  ANO_MAXIMO,
+  ANO_MINIMO,
+  dataPlausivel,
+} from "./datas-do-cronograma.js";
 
 const txt = (valor) => String(valor ?? "").trim();
 

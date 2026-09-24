@@ -49,7 +49,9 @@ function ResumoDaListaAtual({ lista, podeSubstituir }) {
         </div>
         <div className="approved-import-summary-detail compact">
           <span>Candidatos</span>
-          <strong>{formatNumberBR(lista.total_candidatos ?? 0)} candidatos</strong>
+          <strong>
+            {formatNumberBR(lista.total_candidatos ?? 0)} candidatos
+          </strong>
         </div>
       </div>
       {podeSubstituir ? (

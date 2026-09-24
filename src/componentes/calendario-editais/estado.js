@@ -73,7 +73,9 @@ export function criarEstadoDoCalendario({
   async function buscarEtapasDosEditais(editais) {
     const todas = await supabase.rpc(RPC_TODAS_AS_ETAPAS);
     if (!todas.error) {
-      const porEdital = new Map(editais.map((edital) => [String(edital.id), []]));
+      const porEdital = new Map(
+        editais.map((edital) => [String(edital.id), []]),
+      );
       for (const etapa of Array.isArray(todas.data) ? todas.data : []) {
         porEdital.get(String(etapa.monitoramento_id))?.push(etapa);
       }
