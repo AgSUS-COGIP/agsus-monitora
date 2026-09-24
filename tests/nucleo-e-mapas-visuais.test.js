@@ -16,7 +16,6 @@ const nucleoCss = semComentarios(
 const mapaCss = semComentarios(
   readFileSync("src/styles/health-map-workspace.css", "utf8"),
 );
-const nucleoJs = readFileSync("src/modules/nucleo-operational.js", "utf8");
 const seletorCss = semComentarios(
   readFileSync("src/styles/map-base-layer-switcher.css", "utf8"),
 );
@@ -235,46 +234,5 @@ describe("seletor de camada Mapa/Satélite", () => {
     ).join(" ");
     expect(regra).toMatch(/outline:[^;]*!important/);
     expect(regra).toMatch(/outline-offset:[^;]*!important/);
-  });
-});
-
-describe("estados do painel operacional", () => {
-  it("tem os três estados, não só o de erro", () => {
-    expect(nucleoJs).toContain("nucleo-summary-loading");
-    expect(nucleoJs).toContain("nucleo-summary-empty");
-    expect(nucleoJs).toContain("nucleo-summary-error");
-  });
-
-  it("o erro oferece uma ação e não despeja a mensagem do banco na tela", () => {
-    expect(nucleoJs).toContain("nucleo-summary-retry");
-    expect(nucleoJs).not.toContain("esc(error?.message");
-    // O detalhe técnico continua a existir — no console, não na interface.
-    expect(nucleoJs).toContain("console.error");
-  });
-
-  it("o estado vazio explica o contexto em vez de dizer só que está vazio", () => {
-    expect(nucleoJs).toContain("Nenhum edital ativo na Equipe Núcleo");
-    expect(nucleoJs).not.toContain("Nenhum resultado");
-  });
-
-  it("a grade não inventa zeros enquanto o resumo não chegou", () => {
-    expect(nucleoJs).toContain('state.status === "idle"');
-  });
-});
-
-describe("acessibilidade do painel operacional", () => {
-  it("o filtro ativo é anunciado por `aria-pressed`, não só pela cor", () => {
-    expect(nucleoJs).toContain("aria-pressed=");
-    expect(nucleoJs).toContain("is-active");
-  });
-
-  it("a tarja de filtro ativo é uma região de status", () => {
-    expect(nucleoJs).toContain(
-      'class="nucleo-active-alert-filter" role="status"',
-    );
-  });
-
-  it("os ícones decorativos ficam fora da árvore de acessibilidade", () => {
-    expect(nucleoJs).toContain('aria-hidden="true"');
   });
 });

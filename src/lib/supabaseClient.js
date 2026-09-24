@@ -44,8 +44,3 @@ export function getSupabaseClient() {
 
   return supabaseClient;
 }
-
-export function resetSupabaseClientForTests() {
-  supabaseClient = null;
-  authStorage = null;
-}

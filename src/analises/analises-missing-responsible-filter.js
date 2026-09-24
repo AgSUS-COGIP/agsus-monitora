@@ -122,7 +122,6 @@ function bindEvents() {
     }
   });
 
-  document.addEventListener("agsus:analises-loading-end", syncCardState);
   document.addEventListener("agsus:analises-cache-cleared", syncCardState);
 }
 

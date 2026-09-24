@@ -79,11 +79,6 @@ import {
 } from "./modules/config-secoes.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
-import { initNucleoCronograma } from "./modules/nucleo-cronograma.js";
-import { initNucleoEditorSafe } from "./modules/nucleo-editor.js";
-import { initNucleoOperationalSafe } from "./modules/nucleo-operational.js";
-import { initNucleoCronogramaTools } from "./modules/nucleo-cronograma-tools.js";
-import { initNucleoCronogramaOpenHook } from "./modules/nucleo-cronograma-open-hook.js";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
 import { initMobileGoogleOAuth } from "./modules/mobile-google-oauth.js";
@@ -93,8 +88,9 @@ import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
-import { createListaAprovadosController } from "./modules/lista-aprovados.js";
-import { createCalendarioEditaisController } from "./modules/calendario-editais.js";
+import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
+import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
+import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
@@ -135,11 +131,6 @@ organizarConfiguracoesEmSecoes();
 initConfigPageEnhancements();
 initConfigGovernance();
 removerNavegadorAntigo();
-initNucleoCronograma();
-initNucleoEditorSafe();
-initNucleoOperationalSafe();
-initNucleoCronogramaTools();
-initNucleoCronogramaOpenHook();
 initMobileAppExperience();
 initMobileBottomNavigation();
 initMobileGoogleOAuth();
@@ -149,13 +140,24 @@ initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
 
-window.aprovadosController = createListaAprovadosController({
+/*
+  Núcleo, Lista de Aprovados e Calendário são React e montam nas próprias
+  <section>. O legado as abre por estes controladores (`render()` ao navegar e
+  `openImportModal` no Núcleo), nunca pelo DOM delas.
+*/
+window.nucleoController = montarNucleo({
   toast: window.monitoraToast,
   loader: window.monitoraLoader,
   getProfile: window.getMonitoraProfile,
 });
 
-window.calendarioEditaisController = createCalendarioEditaisController({
+window.aprovadosController = montarListaAprovados({
+  toast: window.monitoraToast,
+  loader: window.monitoraLoader,
+  getProfile: window.getMonitoraProfile,
+});
+
+window.calendarioEditaisController = montarCalendarioEditais({
   toast: window.monitoraToast,
   loader: window.monitoraLoader,
 });

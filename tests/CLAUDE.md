@@ -5,7 +5,8 @@
   nomeada pelo comportamento (`terras-do-dsei.test.js`, `sobreposicao-na-tela.test.js`).
 - **React** — o teste continua `.test.js`, sem JSX: monte com a função de montagem do componente e
   envolva cada mudança em `act` (de `react`), com `globalThis.IS_REACT_ACT_ENVIRONMENT = true`.
-  Modelo: `tests/componentes/barra-lateral.test.js`.
+  Modelo: `tests/componentes/barra-lateral.test.js`. Campo controlado não aceita `campo.value = …`
+  seguido de evento: use `digitar`, `escolher`, `clicar` e `teclar` de `tests/componentes/interacoes.js`.
 - **Playwright** (`*.spec.js`) — `smoke`, `aviso-global`, `sessao-autenticada`,
   `analises-authenticated`, `mapa-workspace-autenticado`. Sobe o servidor sozinho (`playwright.config.js`).
 - `setup/rede-bloqueada.js` — **bloqueia a rede em todo teste unitário.** Existe porque um teste

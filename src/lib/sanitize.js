@@ -12,10 +12,6 @@ export function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ESCAPE_MAP[char]);
 }
 
-export function escapeAttr(value) {
-  return escapeHtml(value).replaceAll("`", "&#096;");
-}
-
 export function sanitizeHtml(value, config = {}) {
   return DOMPurify.sanitize(String(value ?? ""), config);
 }

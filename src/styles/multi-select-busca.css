@@ -1,25 +1,9 @@
 /*
-  Select com busca e escolha múltipla (ver src/modules/multi-select-busca.js).
+  Select com busca e escolha múltipla (ver src/componentes/multi-select-busca.jsx).
 
   Usa só os tokens do tema (--card, --line, --soft, --blue), por isso o modo
   escuro sai de graça: `[data-theme="dark"]` já os redefine.
 */
-
-/*
-  O select nativo continua a guardar o estado, mas sai da tela. Não pode usar
-  `display:none` nem `hidden`: o campo deixaria de ser submetido e de ser
-  encontrado por quem o lê pelo id.
-*/
-.multi-select-native {
-  position: absolute !important;
-  inline-size: 1px !important;
-  block-size: 1px !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
 
 .multi-select {
   position: relative;
@@ -169,8 +153,9 @@
   line-height: 1.25;
   cursor: pointer;
 }
+/* O teclado anda pelas caixas; a linha da caixa com foco fica marcada. */
 .multi-select-option:hover,
-.multi-select-option.is-active {
+.multi-select-option:focus-within {
   background: var(--soft);
 }
 .multi-select-option input {

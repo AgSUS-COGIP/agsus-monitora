@@ -6,7 +6,6 @@ import {
   VINCULO_INDETERMINADO,
   VINCULO_NORMAL,
   classificarVinculoTerritorial,
-  divergenciaDeDiagnostico,
   siglaDaUf,
 } from "../src/lib/uf-ibge.js";
 import {
@@ -15,8 +14,6 @@ import {
   classificarRegistros,
   formaDoTipo,
   htmlDoMarcador,
-  linhasDaReconciliacao,
-  linhasDasCoordenadas,
   registrosExternos,
   registrosLocais,
   textoDoChip,
@@ -147,20 +144,11 @@ describe("regressão sobre os dados reais", () => {
 
   it.each(falsosPositivosDoPoligono)(
     "%s NÃO recebe linha pontilhada",
-    (_nome, ufCnes, ufsDoDsei, ufDoPoligono) => {
+    (_nome, ufCnes, ufsDoDsei) => {
       const r = classificarVinculoTerritorial(ufCnes, ufsDoDsei);
       expect(r.vinculo).toBe(VINCULO_NORMAL);
-
-      // O polígono discorda, mas isso é só diagnóstico — o CNES vence.
-      const divergencia = divergenciaDeDiagnostico(ufCnes, ufDoPoligono);
-      expect(divergencia).not.toBeNull();
-      expect(divergencia.autoridade).toBe(r.uf);
     },
   );
-
-  it("o diagnóstico se cala quando as duas fontes concordam", () => {
-    expect(divergenciaDeDiagnostico(22, "PI")).toBeNull();
-  });
 });
 
 describe("separação para o enquadramento", () => {
@@ -266,76 +254,12 @@ describe("apresentação", () => {
     expect(texto).toContain("Localização: RN");
     expect(texto).not.toContain("Fontes divergem");
     expect(texto).not.toContain("Registro unificado");
-
-    // O popup é quem herda a explicação.
-    expect(linhasDaReconciliacao(registro).join(" ")).toContain(
-      "Fontes divergem 10.4 km",
-    );
-  });
-
-  it("escreve Registro, não Registo", () => {
-    const linhas = linhasDaReconciliacao({
-      origens: ["lmap", "rede_cnes"],
-      coordenadas: { lotacoes: { lat: -5, lon: -35 } },
-    });
-    expect(linhas[0]).toContain("Registro unificado");
   });
 
   it("a linha avisa que não é trajeto", () => {
     expect(TOOLTIP_DA_LINHA).toBe(
       "Vínculo territorial — não representa trajeto",
     );
-  });
-
-  /*
-    O popup de POLO BASE JOAO CAMARA imprimia três linhas de coordenada e duas
-    eram idênticas — Lotações e CNES no mesmo ponto. Lido de fora, parecia
-    defeito do registro.
-  */
-  it("agrupa fontes que apontam a mesma coordenada numa linha só", () => {
-    expect(
-      linhasDasCoordenadas({
-        lmap: { lat: -5.514, lon: -35.9042 },
-        lotacoes: { lat: -5.53222, lon: -35.81213 },
-        rede_cnes: { lat: -5.53222, lon: -35.81213 },
-      }),
-    ).toEqual([
-      "mapa anterior: -5.51400, -35.90420",
-      "Lotações e CNES: -5.53222, -35.81213",
-    ]);
-  });
-
-  it("junta as três quando todas concordam", () => {
-    expect(
-      linhasDasCoordenadas({
-        lmap: { lat: -7.1, lon: -34.9 },
-        lotacoes: { lat: -7.1, lon: -34.9 },
-        rede_cnes: { lat: -7.1, lon: -34.9 },
-      }),
-    ).toEqual(["mapa anterior, Lotações e CNES: -7.10000, -34.90000"]);
-  });
-
-  it("mantém linhas separadas quando as fontes discordam", () => {
-    expect(
-      linhasDasCoordenadas({
-        lmap: { lat: -1, lon: -2 },
-        rede_cnes: { lat: -3, lon: -4 },
-      }),
-    ).toHaveLength(2);
-  });
-
-  it("não lista coordenada quando só há uma fonte", () => {
-    expect(linhasDasCoordenadas({ lmap: { lat: -1, lon: -2 } })).toEqual([]);
-    expect(linhasDasCoordenadas()).toEqual([]);
-  });
-
-  it("ignora coordenada que não é número", () => {
-    expect(
-      linhasDasCoordenadas({
-        lmap: { lat: "sem valor", lon: -2 },
-        rede_cnes: { lat: -3, lon: -4 },
-      }),
-    ).toEqual([]);
   });
 
   it("a linha é visualmente secundária, como especificado", () => {

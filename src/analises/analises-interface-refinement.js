@@ -145,9 +145,5 @@ function init() {
     },
     true,
   );
-  document.addEventListener("agsus:analises-loading-start", startLoading);
-  document.addEventListener("agsus:analises-loading-end", () =>
-    setTimeout(recolorCharts, 0),
-  );
 }
 init();

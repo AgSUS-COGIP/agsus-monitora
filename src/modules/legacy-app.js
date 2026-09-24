@@ -1,4 +1,14 @@
-import { renderNucleoTable } from "../lib/nucleo-table-render.js";
+import {
+  compararEditais as compareRows,
+  ordemDoRisco as riskRank,
+  ordenarUnidades as sortUnits,
+  tomDoRisco,
+  tomDoStatusDoEdital,
+} from "../lib/editais-do-nucleo.js";
+import {
+  publicarLinhasDoMonitoramento,
+  publicarUnidadesDoCatalogo,
+} from "../componentes/dados-do-monitoramento.js";
 import { mountAccessMatrix } from "./matriz-acessos.js";
 import { abrirGestaoConta } from "./gestao-conta.js";
 import {
@@ -17,11 +27,6 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
-import {
-  ehResponsavelCores,
-  normalizarResponsavel,
-  unidadesDoResponsavel,
-} from "../lib/responsavel-do-edital.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import { updateAraraGuide } from "./arara-guide.js";
 import {
@@ -124,7 +129,6 @@ import {
 } from "../lib/sessao.js";
 import {
   canViewCore,
-  canManageEditais,
   canManageSettings,
   canManageAccess,
   canImportApprovedList,
@@ -145,7 +149,6 @@ import {
 
 const APP_VERSION_FALLBACK = "";
 
-const RPC_SAVE_MONITORAMENTO = "salvar_monitoramento_indigena";
 const RPC_SAVE_CONFIG = "salvar_configuracoes_e_paineis";
 const RPC_ACCESS_LOG = "registrar_evento_acesso";
 const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
@@ -554,42 +557,6 @@ function safeUrl(v) {
     return u.protocol === "http:" || u.protocol === "https:" ? s : "";
   } catch (e) {
     return "";
-  }
-}
-function isInternalPanelUrl(v) {
-  const s = txt(v);
-  if (!s) return false;
-  try {
-    const u = new URL(s, window.location.origin);
-    return u.origin === window.location.origin;
-  } catch (e) {
-    return false;
-  }
-}
-function isSystemShellUrl(v) {
-  const s = txt(v);
-  if (!s) return false;
-  try {
-    const u = new URL(s, window.location.origin);
-    const path = u.pathname.replace(/\/+$/, "") || "/";
-    return path === "/" || path.endsWith("/index.html");
-  } catch (e) {
-    return false;
-  }
-}
-function isGoogleAppsScriptUrl(v) {
-  const s = txt(v);
-  if (!s) return false;
-  try {
-    const u = new URL(s, window.location.origin);
-    const host = u.hostname.toLowerCase();
-    return (
-      host === "script.google.com" ||
-      host === "script.googleusercontent.com" ||
-      host.endsWith(".googleusercontent.com")
-    );
-  } catch (e) {
-    return false;
   }
 }
 function rpcFirst(data) {
@@ -1211,11 +1178,6 @@ function applyStoredSidebarState() {
   } catch (e) {}
   syncSidebarToggle();
 }
-function togglePassword() {
-  const p = $("loginPassword");
-  if (!p) return;
-  p.type = p.type === "password" ? "text" : "password";
-}
 
 async function login() {
   showAlert(
@@ -1573,9 +1535,6 @@ async function loadProfile() {
     badge.style.display = "inline-block";
     setText("topUserPopoverProfile", label);
   }
-  const newEditalButton = $("newEditalBtn");
-  if (newEditalButton)
-    newEditalButton.classList.toggle("hidden", !canManageEditais(profile));
   return true;
 }
 
@@ -1992,28 +1951,10 @@ function applyConfigToUi() {
   */
 }
 
-function normalizeUnitName(value) {
-  return low(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-function sortUnits(a, b) {
-  const ta = txt(a.tipo),
-    tb = txt(b.tipo);
-  if (ta !== tb) return ta.localeCompare(tb, "pt-BR", { numeric: true });
-  return txt(a.nome_oficial || a.unidade || a.nome).localeCompare(
-    txt(b.nome_oficial || b.unidade || b.nome),
-    "pt-BR",
-    { numeric: true },
-  );
-}
-
 async function loadUnidades() {
   if (!sb) {
     unidadesCatalog = [];
-    populateModalUnidades();
+    publicarUnidadesDoCatalogo(unidadesCatalog);
     return false;
   }
   const { data, error } = await sb
@@ -2024,147 +1965,15 @@ async function loadUnidades() {
     .order("nome_oficial", { ascending: true });
   if (error) {
     unidadesCatalog = [];
-    populateModalUnidades();
+    publicarUnidadesDoCatalogo(unidadesCatalog);
     toast("Catálogo dim_unidades não disponível.", "warn");
     return false;
   }
   unidadesCatalog = Array.isArray(data)
     ? data.filter((u) => txt(u.nome_oficial)).sort(sortUnits)
     : [];
-  populateModalUnidades();
+  publicarUnidadesDoCatalogo(unidadesCatalog);
   return true;
-}
-
-function fallbackUnitsFromRows() {
-  const map = new Map();
-  rows.forEach((r) => {
-    const nome = txt(r.unidade);
-    if (!nome || map.has(normalizeUnitName(nome))) return;
-    map.set(normalizeUnitName(nome), {
-      id_unidade: txt(r.id_unidade) || "",
-      sigla: txt(r.sigla_unidade) || "",
-      nome_oficial: nome,
-      tipo:
-        txt(r.tipo_unidade) ||
-        (nome.toUpperCase().startsWith("CASAI") ? "CASAI" : "DSEI"),
-      uf_sede: txt(r.uf).toUpperCase(),
-      ativo: true,
-      fallback: true,
-    });
-  });
-  return Array.from(map.values()).sort(sortUnits);
-}
-
-/** Responsável escolhido no modal. Decide de onde vem a lista de unidades. */
-function modalResponsavel() {
-  return normalizarResponsavel($("mResponsavel")?.value);
-}
-
-function unidadesForModal() {
-  const primary = unidadesCatalog.length ? unidadesCatalog : [];
-  const byName = new Map(
-    primary.map((u) => [normalizeUnitName(u.nome_oficial), u]),
-  );
-  fallbackUnitsFromRows().forEach((u) => {
-    if (!byName.has(normalizeUnitName(u.nome_oficial)))
-      byName.set(normalizeUnitName(u.nome_oficial), u);
-  });
-  return Array.from(byName.values()).sort(sortUnits);
-}
-
-function unidadeOptionValue(unit) {
-  return txt(unit.id_unidade) || txt(unit.nome_oficial);
-}
-function findUnitByValue(value) {
-  const clean = txt(value);
-  if (!clean) return null;
-  return (
-    unidadesForModal().find(
-      (u) =>
-        unidadeOptionValue(u) === clean ||
-        txt(u.id_unidade) === clean ||
-        txt(u.nome_oficial) === clean,
-    ) || null
-  );
-}
-function findUnitForRow(row) {
-  if (!row) return null;
-  const byId = txt(row.id_unidade);
-  if (byId) {
-    const found = unidadesForModal().find((u) => txt(u.id_unidade) === byId);
-    if (found) return found;
-  }
-  const rowName = normalizeUnitName(row.unidade);
-  if (rowName) {
-    const found = unidadesForModal().find(
-      (u) => normalizeUnitName(u.nome_oficial) === rowName,
-    );
-    if (found) return found;
-  }
-  return null;
-}
-
-function populateModalUnidades(selectedValue = "") {
-  const select = $("mUnidade");
-  if (!select) return;
-  const current = selectedValue || select.value;
-  /*
-    As unidades do CORES vêm sem UF, então o rótulo sai só com o nome e o
-    valor da opção cai no nome — `unidadeOptionValue` usa o id quando existe.
-  */
-  const units = unidadesDoResponsavel(modalResponsavel(), unidadesForModal());
-  select.innerHTML =
-    `<option value="">Selecione a unidade</option>` +
-    units
-      .map((u) => {
-        const value = unidadeOptionValue(u);
-        const label = `${txt(u.nome_oficial)}${txt(u.uf_sede) ? " — " + txt(u.uf_sede).toUpperCase() : ""}`;
-        return `<option value="${attr(value)}" data-id="${attr(u.id_unidade)}" data-sigla="${attr(u.sigla)}" data-tipo="${attr(u.tipo)}" data-uf="${attr(u.uf_sede)}" data-nome="${attr(u.nome_oficial)}">${esc(label)}</option>`;
-      })
-      .join("");
-  if (current && Array.from(select.options).some((o) => o.value === current))
-    select.value = current;
-}
-
-function selectedModalUnidade() {
-  const select = $("mUnidade");
-  if (!select) return null;
-  /*
-    No CORES a opção é só um nome. Procurar no catálogo daria o registro errado
-    se algum DSEI tivesse nome parecido, por isso nem se tenta.
-  */
-  if (!ehResponsavelCores(modalResponsavel())) {
-    const unit = findUnitByValue(select.value);
-    if (unit) return unit;
-  }
-  const opt = select.options[select.selectedIndex];
-  if (!opt || !txt(opt.value)) return null;
-  return {
-    id_unidade: opt.dataset.id || "",
-    sigla: opt.dataset.sigla || "",
-    nome_oficial: opt.dataset.nome || opt.textContent || "",
-    tipo: opt.dataset.tipo || "",
-    uf_sede: opt.dataset.uf || "",
-  };
-}
-
-function onModalUnidadeChange() {
-  const unit = selectedModalUnidade();
-  setFieldValue("mIdUnidade", unit?.id_unidade || "");
-  setFieldValue("mSiglaUnidade", unit?.sigla || "");
-  setFieldValue("mTipoUnidade", unit?.tipo || "");
-  setFieldValue("mUf", txt(unit?.uf_sede).toUpperCase());
-}
-
-/*
-  Trocar de responsável troca o catálogo de unidades, e a unidade que estava
-  escolhida não existe na outra lista. Limpar é mais honesto do que deixar um
-  nome que o select já não oferece.
-*/
-function onModalResponsavelChange() {
-  setFieldValue("mUnidade", "");
-  populateModalUnidades();
-  onModalUnidadeChange();
 }
 
 async function loadPanels() {
@@ -2202,37 +2011,6 @@ function panelAllowed(panel) {
 
 function canAccessPanelCode(code) {
   return panels.some((p) => p.codigo === code && panelAllowed(p));
-}
-
-async function saveMapaConfigToSupabase(options = {}) {
-  if (!sb || !can("config")) return false;
-  const silent = options.silent === true;
-  const rowsToSave = [
-    {
-      chave: "lmap",
-      payload: LMAP,
-      descricao: "Mapa dos DSEIs e polos base usado pelo dashboard",
-    },
-    {
-      chave: "rede_cnes",
-      payload: REDE_CNES,
-      descricao: "Rede assistencial CNES/UBSI/CASAI usada pelo mapa",
-    },
-  ];
-  const { error } = await sb
-    .from(MAPA_CONFIG_TABLE)
-    .upsert(rowsToSave, { onConflict: "chave" });
-  if (error) {
-    if (!silent)
-      toast(
-        "Erro ao salvar mapa/rede no Supabase: " + friendlyError(error),
-        "error",
-      );
-    return false;
-  }
-  mapConfigLoadOk = true;
-  if (!silent) toast("Mapa e rede assistencial salvos no Supabase.");
-  return true;
 }
 
 async function loadMapaConfig() {
@@ -2292,6 +2070,7 @@ async function loadData(options = {}) {
     ) {
       rows = [];
       filtered = [];
+      publicarLinhasDoMonitoramento(rows);
       buildNav();
       return true;
     }
@@ -2335,8 +2114,8 @@ async function loadData(options = {}) {
     window.dispatchEvent(
       new CustomEvent("agsus:monitoramento-carregado", { detail: { rows } }),
     );
+    publicarLinhasDoMonitoramento(rows);
     lastMapUfKey = null; // invalida cache do mapa ao recarregar dados
-    populateModalUnidades();
     populateFilters();
     applyFilters();
     setUpdated();
@@ -2535,7 +2314,7 @@ function navigate(view) {
   if (requestedView === "nucleo") {
     $("page-nucleo").classList.add("active");
     setPageTitle("Editais", cfgValue("nucleo_page_subtitle"));
-    renderNucleo();
+    void window.nucleoController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -3009,7 +2788,6 @@ function applyFilters() {
   if (mapChanged) renderMap();
   renderRisks();
   renderTable(); // já desenha as pílulas de filtros ativos
-  if (currentView === "nucleo") renderNucleo();
   // Um aviso único para quem mostra estado dos filtros (contador, atalhos).
   document.dispatchEvent(
     new CustomEvent("agsus:filtros-alterados", {
@@ -3069,16 +2847,6 @@ function toggleCriticalRiskFilter() {
   );
 }
 
-function riskRank(value) {
-  const rank = { alto: 0, médio: 1, medio: 1, baixo: 2 };
-  return rank[low(value)] ?? 9;
-}
-function compareRows(a, b) {
-  const ar = riskRank(a.risco),
-    br = riskRank(b.risco);
-  if (ar !== br) return ar - br;
-  return n(b.vagas_ociosas) - n(a.vagas_ociosas);
-}
 function sortValue(row, field) {
   if (["vagas_total", "contratados", "vagas_ociosas"].includes(field))
     return n(row[field]);
@@ -3140,7 +2908,6 @@ function renderAll() {
   renderMap();
   renderRisks();
   renderTable();
-  if (currentView === "nucleo") renderNucleo();
 }
 function canUseMonitoramentoPayload() {
   return !!monitoramentoPayload && !hasActiveFilter() && !hideClosed;
@@ -9188,47 +8955,6 @@ function flyToBrasil(bounds) {
   clearTimeout(_homeFlyTimer);
   _homeFlyTimer = setTimeout(setBrazilMaxBounds, 0);
 }
-function buscarLocalMapa(termo) {
-  if (!_leaflet) return;
-  const norm = (s) =>
-    txt(s)
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  const q = norm(termo).trim();
-  if (!q) {
-    toast("Digite o nome de um DSEI, polo ou município.");
-    return;
-  }
-  let alvo = LMAP.dsei.find(
-    (d) => norm(d.n).includes(q) || norm(d.k).includes(q),
-  );
-  if (alvo) {
-    _leaflet.flyTo([alvo.lat, alvo.lon], 6, { duration: 0.6 });
-    toast("DSEI " + alvo.n + " localizado.");
-    return;
-  }
-  for (const d of LMAP.dsei) {
-    const p = polosCorrigidosPorCnes(d).find((p) => norm(p.n).includes(q));
-    if (p) {
-      _leaflet.flyTo([p.lat, p.lon], 8, { duration: 0.6 });
-      toast("Polo " + p.n + " (" + d.n + ") localizado.");
-      return;
-    }
-  }
-  for (const k in REDE_CNES.rede || {}) {
-    const rede = REDE_CNES.rede[k];
-    const ach = [...(rede.u || []), ...(rede.c || [])].find((a) =>
-      norm(a[4] || "").includes(q),
-    );
-    if (ach) {
-      _leaflet.flyTo([ach[2], ach[3]], 9, { duration: 0.6 });
-      toast("Município " + (ach[4] || "") + " localizado.");
-      return;
-    }
-  }
-  toast('Não encontrei "' + termo + '" no mapa.');
-}
 function toggleHeatMap() {
   _heatMode = !_heatMode;
   const b = $("heatBtn");
@@ -10687,17 +10413,6 @@ function drawCasai() {
   });
 }
 
-function polosBounds(d) {
-  let pts = [[d.lat, d.lon]].concat(
-    polosCorrigidosPorCnes(d).map((p) => [p.lat, p.lon]),
-  );
-  const rede = REDE_CNES.rede[d.k];
-  if (rede) {
-    (rede.c || []).forEach((a) => pts.push([a[2], a[3]]));
-  }
-  return L.latLngBounds(pts);
-}
-
 // Nível 2 (complemento): CASAIs locais do DSEI (coordenadas oficiais do CNES)
 /*
   Esta função afastava cada estabelecimento repetido em até 0,05° — cerca de
@@ -11036,177 +10751,6 @@ function mapVoltar() {
   voltarAoBrasil();
 }
 
-// ===== IMPORTAÇÃO DA REDE ASSISTENCIAL (UBSI + CASAI) DO JSON v4 =====
-// As coordenadas oficiais do CNES no JSON v4 estão nos estabelecimentos (UBSI/CASAI),
-// não nos polos base (que vêm com latitude/longitude nulas). Esta função lê o JSON v4,
-// agrupa os estabelecimentos por DSEI e atualiza REDE_CNES nesta sessão.
-function _dseiKeyNorm(s) {
-  let u = txt(s)
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-  u = u
-    .replace(/^DSEI\s+/, "")
-    .replace(/^CASAI\s+/, "")
-    .replace(/\bNACIONAL\b/g, " ")
-    .replace(/-/g, " ");
-  u = u
-    .replace(/\b(DE|DO|DA|DOS|DAS|E)\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return u;
-}
-function _redeFromV4(json) {
-  // mapa: chave normalizada do DSEI -> k original do mapa
-  const keyToK = {};
-  LMAP.dsei.forEach((d) => {
-    keyToK[_dseiKeyNorm(d.k)] = d.k;
-  });
-  const rede = {};
-  const nac = [];
-  let nUbsi = 0,
-    nCasai = 0,
-    semDsei = 0;
-  const okLoc = (e) => {
-    const l = e && e.localizacao;
-    return (
-      l && typeof l.latitude === "number" && typeof l.longitude === "number"
-    );
-  };
-  const pack = (e) => [
-    e.nome,
-    e.cnes,
-    +e.localizacao.latitude.toFixed(6),
-    +e.localizacao.longitude.toFixed(6),
-    e.municipio,
-    e.uf,
-  ];
-  const add = (dseiNome, e, tipo) => {
-    const k = keyToK[_dseiKeyNorm(dseiNome)];
-    if (!k) {
-      semDsei++;
-      return;
-    }
-    if (!rede[k]) rede[k] = { u: [], c: [] };
-    if (tipo === "UBSI") {
-      rede[k].u.push(pack(e));
-      nUbsi++;
-    } else {
-      rede[k].c.push(pack(e));
-      nCasai++;
-    }
-  };
-  (json.ubsis_amostra_por_dsei || []).forEach((b) =>
-    (b.ubsis || []).forEach((e) => {
-      if (okLoc(e)) add(b.dsei, e, "UBSI");
-    }),
-  );
-  (json.casais_dsei_ou_local_por_dsei || []).forEach((b) =>
-    (b.casais || []).forEach((e) => {
-      if (okLoc(e)) add(b.dsei, e, "CASAI");
-    }),
-  );
-  (json.casais_nacionais || []).forEach((e) => {
-    if (okLoc(e)) nac.push(pack(e));
-  });
-  return { rede, nac, nUbsi, nCasai, semDsei };
-}
-
-function _parseCnesTextarea() {
-  const raw = (($("cfgCnesJson") && $("cfgCnesJson").value) || "").trim();
-  if (!raw) throw new Error("Cole o conteúdo do JSON v4 primeiro.");
-  let json;
-  try {
-    json = JSON.parse(raw);
-  } catch (e) {
-    throw new Error("O texto colado não é um JSON válido.");
-  }
-  if (
-    !json.dseis &&
-    !json.ubsis_amostra_por_dsei &&
-    !json.casais_dsei_ou_local_por_dsei
-  )
-    throw new Error(
-      "JSON sem as chaves esperadas (dseis / ubsis_amostra_por_dsei / casais_dsei_ou_local_por_dsei) — confira se é o arquivo v4 correto.",
-    );
-  return json;
-}
-
-function previewCnesCoords() {
-  const box = $("cnesImportResumo");
-  try {
-    const json = _parseCnesTextarea();
-    const { nUbsi, nCasai, nac, semDsei } = _redeFromV4(json);
-    if (box) {
-      box.style.display = "block";
-      box.style.background = "#f0f7ff";
-      box.style.borderColor = "#d7e5f2";
-      box.style.color = "#234";
-      box.innerHTML =
-        `<b>Pré-visualização:</b> o arquivo traz <b>${nUbsi}</b> UBSIs e <b>${nCasai}</b> CASAIs de DSEI/locais com coordenada oficial do CNES, além de <b>${nac.length}</b> CASAI(s) nacional(is). ` +
-        (semDsei
-          ? `(${semDsei} estabelecimento(s) sem DSEI reconhecido foram ignorados.) `
-          : ``) +
-        `Clique em <b>Aplicar ao mapa</b> para usar estes estabelecimentos no drill-down dos DSEIs.`;
-    }
-  } catch (e) {
-    if (box) {
-      box.style.display = "block";
-      box.style.background = "#fff3f3";
-      box.style.borderColor = "#f0c0c0";
-      box.style.color = "#a02020";
-      box.textContent = e.message;
-    }
-  }
-}
-
-async function aplicarCnesCoords() {
-  const box = $("cnesImportResumo");
-  try {
-    const json = _parseCnesTextarea();
-    const { rede, nac, nUbsi, nCasai } = _redeFromV4(json);
-    // Substitui a rede em memória e persiste no Supabase para os próximos acessos.
-    REDE_CNES.rede = rede;
-    REDE_CNES.nac = nac;
-    const savedOnSupabase = await saveMapaConfigToSupabase({ silent: true });
-    // redesenhar: visão Brasil e CASAIs nacionais
-    if (_leaflet) {
-      if (_layerPolos) _layerPolos.clearLayers();
-      if (_layerUbsi) _layerUbsi.clearLayers();
-      if (_layerCasaiLocal) _layerCasaiLocal.clearLayers();
-      if (_layerUF) _layerUF.clearLayers();
-      drawDSEIBubbles();
-    }
-    if (box) {
-      box.style.display = "block";
-      box.style.background = "#edfaf0";
-      box.style.borderColor = "#bfe6cd";
-      box.style.color = "#16603a";
-      box.innerHTML =
-        `<b>Rede assistencial aplicada${savedOnSupabase ? " e salva no Supabase" : ""}.</b> ${nUbsi} UBSIs e ${nCasai} CASAIs de DSEI/locais com coordenada oficial do CNES disponíveis no drill-down. ` +
-        `<br><i>Clique num DSEI no mapa para ver as unidades.</i>`;
-    }
-    toast(
-      savedOnSupabase
-        ? "Rede do CNES aplicada e salva (" +
-            nUbsi +
-            " UBSIs, " +
-            nCasai +
-            " CASAIs)."
-        : "Rede aplicada nesta tela, mas não foi salva no Supabase.",
-      savedOnSupabase ? "ok" : "warn",
-    );
-  } catch (e) {
-    if (box) {
-      box.style.display = "block";
-      box.style.background = "#fff3f3";
-      box.style.borderColor = "#f0c0c0";
-      box.style.color = "#a02020";
-      box.textContent = e.message;
-    }
-  }
-}
-
 function syncMapLevelUI() {
   const showingPolos =
     (_layerPolos && _layerPolos.getLayers().length > 0) ||
@@ -11278,23 +10822,10 @@ function renderRisks() {
 }
 
 function statusChip(status) {
-  const l = low(status);
-  const cls = l.includes("conclu")
-    ? "green"
-    : l.includes("andamento")
-      ? "blue"
-      : l.includes("elabora")
-        ? "cyan"
-        : l.includes("cancel")
-          ? "red"
-          : "gray";
-  return `<span class="chip ${cls}">${esc(status || "-")}</span>`;
+  return `<span class="chip ${tomDoStatusDoEdital(status)}">${esc(status || "-")}</span>`;
 }
 function riscoChip(risco) {
-  const l = low(risco);
-  const cls =
-    l === "alto" ? "red" : l === "médio" || l === "medio" ? "yellow" : "green";
-  return `<span class="chip ${cls}">${esc(risco || "-")}</span>`;
+  return `<span class="chip ${tomDoRisco(risco)}">${esc(risco || "-")}</span>`;
 }
 function shouldShowObsToggle(value) {
   return txt(value).length > 180;
@@ -11582,226 +11113,6 @@ function renderTable() {
       foot.innerHTML = `<tr style="position:sticky;bottom:0;background:#eef5fc;border-top:2px solid var(--agsus-ciano)">${ftds}</tr>`;
     }
   }
-}
-
-let nucleoDebounce = null;
-function debouncedNucleo() {
-  clearTimeout(nucleoDebounce);
-  nucleoDebounce = setTimeout(renderNucleo, 250);
-}
-function renderNucleo() {
-  const started = performance.now();
-  const newButton = $("newEditalBtn");
-  if (newButton)
-    newButton.classList.toggle("hidden", !canManageEditais(profile));
-  const q = low($("nucleoSearch").value);
-  const data = rows
-    .filter(
-      (r) =>
-        !q ||
-        [r.edital, r.unidade, r.status, r.etapa, r.risco, r.processo]
-          .map(low)
-          .join(" | ")
-          .includes(q),
-    )
-    .sort(compareRows);
-  const markup =
-    data
-      .map(
-        (r) => `<tr data-record-id="${attr(r.id)}">
-      <td>${esc(r.unidade)}</td>
-      <td>${safeUrl(r.link_edital) ? `<a class="link" href="${attr(safeUrl(r.link_edital))}" target="_blank" rel="noopener">${esc(r.edital || "-")}</a>` : esc(r.edital || "-")}</td>
-      <td>${statusChip(r.status)}</td>
-      <td>${esc(r.etapa)}</td>
-      <td class="num">${fmt(r.vagas_total)}</td>
-      <td class="num green-text">${fmt(r.contratados)}</td>
-      <td class="num red-text">${fmt(r.vagas_ociosas)}</td>
-      <td>${riscoChip(r.risco)}</td>
-      <td style="text-align:center">
-        <div class="nucleo-row-actions">
-          ${canManageEditais(profile) ? `<button class="btn icon outline" onclick="openEditModal('${attr(r.id)}')" title="Editar registro" aria-label="Editar ${esc(r.edital || r.unidade)}"><i class="fa-solid fa-pen-to-square"></i></button>` : ""}
-          ${canImportApprovedList(profile) ? `<button class="btn icon outline" onclick="openApprovedListImport('${attr(r.id)}')" title="Lista de aprovados" aria-label="Lista de aprovados de ${esc(r.edital || r.unidade)}"><i class="fa-solid fa-file-arrow-up"></i></button>` : ""}
-          ${!canManageEditais(profile) && !canImportApprovedList(profile) ? '<span class="approved-no-action">—</span>' : ""}
-        </div>
-      </td>
-    </tr>`,
-      )
-      .join("") ||
-    `<tr><td colspan="9" style="text-align:center;padding:22px">Nenhum registro encontrado.</td></tr>`;
-  renderNucleoTable($("nucleoRows"), markup);
-  document.dispatchEvent(new CustomEvent("agsus:nucleo-rendered"));
-  document.dispatchEvent(
-    new CustomEvent("agsus:nucleo-metric", {
-      detail: {
-        name: "table-render",
-        durationMs: performance.now() - started,
-        rows: data.length,
-      },
-    }),
-  );
-}
-
-function openApprovedListImport(id) {
-  if (!canImportApprovedList(profile))
-    return toast("Sem permissão para gerir listas de aprovados.", "warn");
-  const row = rows.find((item) => String(item.id) === String(id));
-  if (!row) return toast("Edital não encontrado.", "warn");
-  const label = [row.edital, row.unidade].filter(Boolean).join(" · ");
-  if (!window.aprovadosController)
-    return toast("O módulo Lista de Aprovados ainda está carregando.", "warn");
-  void window.aprovadosController.openImportModal(row.id, label);
-}
-
-function setFieldValue(id, value) {
-  const el = $(id);
-  if (el) el.value = value ?? "";
-}
-function setMetricValue(id, value) {
-  const el = $(id);
-  if (el) el.textContent = fmt(value);
-}
-function dateOrNull(id) {
-  const v = txt($(id)?.value);
-  return v || null;
-}
-
-function openEditModal(id) {
-  if (!canManageEditais(profile))
-    return toast(
-      "Seu perfil pode consultar Editais, mas não editar editais.",
-      "warn",
-    );
-  const r = id ? rows.find((x) => String(x.id) === String(id)) : {};
-  $("editModalTitle").textContent = id ? "Editar edital" : "Novo edital";
-  setFieldValue("mId", r?.id || "");
-  setFieldValue("mProcesso", r?.processo || "");
-  setFieldValue("mEdital", r?.edital || "");
-  /*
-    O responsável decide de que catálogo vêm as unidades, por isso entra antes
-    delas. Editais gravados antes deste campo virar seleção têm um nome de
-    pessoa em `responsavel`; esse valor não é USI nem CORES, então o select
-    abre vazio e só é substituído quando o edital for salvo de novo.
-  */
-  setFieldValue("mResponsavel", normalizarResponsavel(r?.responsavel));
-  const doCores = ehResponsavelCores(modalResponsavel());
-  const rowUnit = doCores ? null : findUnitForRow(r);
-  const unitValue = doCores
-    ? txt(r?.unidade)
-    : rowUnit
-      ? unidadeOptionValue(rowUnit)
-      : "";
-  populateModalUnidades(unitValue);
-  setFieldValue("mUnidade", unitValue);
-  if (rowUnit || doCores) {
-    onModalUnidadeChange();
-  } else {
-    setFieldValue("mIdUnidade", r?.id_unidade || "");
-    setFieldValue("mSiglaUnidade", r?.sigla_unidade || "");
-    setFieldValue("mTipoUnidade", r?.tipo_unidade || "");
-    setFieldValue("mUf", r?.uf || "");
-  }
-  setFieldValue("mCiclo", r?.ciclo || "");
-  setFieldValue("mLink", r?.link_edital || "");
-  setFieldValue("mVagas", r?.vagas_total || 0);
-  setFieldValue("mDataInicio", r?.data_inicio || "");
-  setFieldValue("mDataFim", r?.data_fim || "");
-  setFieldValue("mStatus", r?.status || "");
-  setFieldValue("mEtapa", r?.etapa || "");
-  setFieldValue("mRisco", r?.risco || "Baixo");
-  setFieldValue("mObs", r?.observacoes || "");
-  setFieldValue("mObsInternas", r?.observacoes_internas || "");
-  setMetricValue("mAutoInscritos", r?.inscritos);
-  setMetricValue("mAutoAptosAnalise", r?.aptos_analise);
-  setMetricValue("mAutoCancelados", r?.cancelados);
-  setMetricValue("mAutoEliminadosNota", r?.eliminados_nota);
-  setMetricValue("mAutoReprovadosAnalise", r?.reprovados_analise);
-  setMetricValue("mAutoTotalEliminados", r?.total_eliminados);
-  setMetricValue("mAutoAprovadosAnalise", r?.aprovados_analise);
-  setMetricValue("mAutoAprovadosProva", r?.aprovados_prova);
-  setMetricValue("mAutoEntrevistados", r?.entrevistados);
-  setMetricValue("mAutoContratados", r?.contratados);
-  setMetricValue("mAutoOciosas", r?.vagas_ociosas);
-  $("editModal").classList.add("show");
-  setTimeout(() => {
-    try {
-      $("mProcesso")?.focus();
-    } catch (e) {}
-  }, 60);
-}
-function closeEditModal() {
-  $("editModal").classList.remove("show");
-}
-
-async function saveEdital() {
-  if (!canManageEditais(profile))
-    return toast("Sem permissão para salvar editais.", "warn");
-  const id = txt($("mId").value);
-  const unit = selectedModalUnidade();
-  const payload = {
-    processo: txt($("mProcesso").value),
-    edital: txt($("mEdital").value),
-    id_unidade: txt(unit?.id_unidade) || null,
-    sigla_unidade: txt(unit?.sigla) || null,
-    tipo_unidade: txt(unit?.tipo) || null,
-    unidade: txt(unit?.nome_oficial),
-    uf: txt(unit?.uf_sede).toUpperCase(),
-    ciclo: txt($("mCiclo").value),
-    vagas_total: n($("mVagas").value),
-    data_inicio: dateOrNull("mDataInicio"),
-    data_fim: dateOrNull("mDataFim"),
-    status: txt($("mStatus").value),
-    etapa: txt($("mEtapa").value),
-    risco: txt($("mRisco").value),
-    responsavel: txt($("mResponsavel").value),
-    link_edital: txt($("mLink").value),
-    observacoes: txt($("mObs").value),
-    observacoes_internas: txt($("mObsInternas").value),
-    ativo: true,
-  };
-  if (id) payload.id = id;
-  if (!payload.edital || !payload.unidade) {
-    toast("Informe pelo menos edital e unidade.", "warn");
-    return;
-  }
-  if (
-    payload.data_inicio &&
-    payload.data_fim &&
-    payload.data_inicio > payload.data_fim
-  ) {
-    toast(
-      "A data de início não pode ser posterior à data de encerramento.",
-      "warn",
-    );
-    return;
-  }
-  const btn = $("saveEditalBtn");
-  btn.disabled = true;
-  btn.textContent = "Salvando...";
-  loader(true, "Editais", "Salvando no Supabase...", 70);
-  const result = await sb.rpc(RPC_SAVE_MONITORAMENTO, { p_payload: payload });
-  btn.disabled = false;
-  btn.textContent = "Salvar";
-  if (result.error) {
-    loader(false);
-    toast("Erro ao salvar: " + friendlyError(result.error), "error");
-    return;
-  }
-  const saved = rpcFirst(result.data);
-  if (!saved || !saved.id) {
-    loader(false);
-    toast(
-      "Não foi possível confirmar o salvamento. Verifique as permissões de Editais.",
-      "error",
-    );
-    return;
-  }
-  closeEditModal();
-  await loadData({ showLoader: false });
-  loader(false);
-  toast(
-    `${saved.edital || "Registro"} — ${saved.unidade || ""} salvo com sucesso.`,
-  );
-  navigate("nucleo");
 }
 
 function warmExternalPanels(force = false) {
@@ -12899,7 +12210,7 @@ function friendlyError(error) {
 
   if (msg.includes("vagas_ociosas"))
     return "Campo calculado protegido pelo banco. Atualize a página e tente novamente.";
-  if (msg.includes(RPC_SAVE_MONITORAMENTO) || msg.includes(RPC_SAVE_CONFIG))
+  if (msg.includes(RPC_SAVE_CONFIG))
     return "As funções RPC necessárias ainda não estão disponíveis. Aplique o script SQL institucional no Supabase.";
   if (msg.includes("Sem permissão para salvar monitoramento indígena"))
     return "Seu usuário não tem permissão para salvar registros de Editais.";
@@ -13209,15 +12520,6 @@ $("searchModal")?.addEventListener("click", (e) => {
   if (e.target === $("searchModal")) closeSearchModal();
 });
 
-// Esc fecha o modal de edição; clique no backdrop também fecha.
-document.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-  if ($("editModal")?.classList.contains("show")) closeEditModal();
-});
-$("editModal")?.addEventListener("click", (e) => {
-  if (e.target === $("editModal")) closeEditModal();
-});
-
 loadDarkModePreference();
 enforceResponsiveSidebar();
 initFilterControls();
@@ -13235,16 +12537,13 @@ Object.assign(window, {
   getMonitoraProfile: () => profile,
   monitoraToast: toast,
   monitoraLoader: loader,
-  aplicarCnesCoords,
   approveAccessRequest,
   clearFilters,
   clearFilterField,
   clearSearchPill,
   definirSelecaoDeFiltro,
-  closeEditModal,
   closeMoreActions,
   closeSearchModal,
-  debouncedNucleo,
   debouncedSearch,
   denyAccessRequest,
   deactivateUserAccess,
@@ -13258,11 +12557,6 @@ Object.assign(window, {
   loginWithGoogle,
   logout,
   navigate,
-  onModalResponsavelChange,
-  onModalUnidadeChange,
-  openEditModal,
-  openApprovedListImport,
-  previewCnesCoords,
   previewImg,
   refreshData,
   reloadExternal,
@@ -13271,7 +12565,6 @@ Object.assign(window, {
   runGlobalSearch,
   saveAdminSettings,
   restoreAccessBackground,
-  saveEdital,
   searchModalKey,
   selectAllFilterValues,
   selectSearchResult,
@@ -13288,7 +12581,6 @@ Object.assign(window, {
   toggleHideClosed,
   toggleMoreActions,
   toggleObs,
-  togglePassword,
   toggleSelectFilter,
   toggleSidebar,
   toggleOnlinePresence,

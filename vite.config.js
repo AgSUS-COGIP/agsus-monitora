@@ -40,7 +40,7 @@ function copyProgressiveWebAppAssets() {
 }
 
 export default defineConfig({
-  // React entra pela barra lateral (src/componentes/); o resto do front migra aos poucos.
+  // React em src/componentes/ (barra lateral, Calendário, Lista de Aprovados); o resto migra aos poucos.
   plugins: [react(), createHtmlSecurityPlugin(), copyProgressiveWebAppAssets()],
   build: {
     rollupOptions: {
@@ -53,7 +53,7 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
           if (id.includes("@supabase")) return "vendor-supabase";
-          // Só a página principal usa React (a barra lateral); Análises não baixa.
+          // Só a página principal usa React; Análises não baixa.
           // O Vite normaliza o id com "/", também no Windows.
           if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
             return "vendor-react";

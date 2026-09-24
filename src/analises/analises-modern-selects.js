@@ -19,14 +19,6 @@ export function selectedValues(select) {
     .filter(Boolean);
 }
 
-function optionData(select) {
-  return [...select.options].map((option) => ({
-    value: option.value,
-    text: normalizeLabel(option.textContent),
-    disabled: option.disabled,
-  }));
-}
-
 function counterText(select) {
   const selected = selectedValues(select).length;
   const total = [...select.options].filter((option) => !option.disabled).length;
@@ -69,17 +61,6 @@ function bindGlobalCloseHandlers() {
 
   window.addEventListener("scroll", () => closeInstances(), { passive: true });
   window.addEventListener("resize", () => closeInstances(), { passive: true });
-}
-
-function syncTomSelect(select, instance) {
-  const values = selectedValues(select);
-  instance.close?.();
-  instance.clear(true);
-  instance.clearOptions();
-  instance.addOptions(optionData(select));
-  instance.setValue(values, true);
-  instance.refreshOptions(false);
-  updateCounter(select);
 }
 
 function dispatchNativeChange(select) {
@@ -187,15 +168,6 @@ function createInstance(select) {
   };
 
   select.addEventListener("change", syncFromNative);
-  select.addEventListener("agsus:options-updated", () => {
-    if (syncing) return;
-    syncing = true;
-    try {
-      syncTomSelect(select, instance);
-    } finally {
-      syncing = false;
-    }
-  });
 
   return instance;
 }
@@ -270,10 +242,6 @@ function start() {
   ensureStyles();
   bindGlobalCloseHandlers();
   startInstallLoop();
-  document.addEventListener(
-    "agsus:analises-scope-guard-ready",
-    startInstallLoop,
-  );
 }
 
 document.addEventListener("DOMContentLoaded", start, { once: true });

@@ -342,12 +342,6 @@ async function expireSession({ broadcast = true } = {}) {
   const client = getSupabaseClient();
 
   if (broadcast) broadcastLogout();
-  window.dispatchEvent(
-    new CustomEvent("agsus:session-expired", {
-      detail: { reason: "idle_timeout", idleLimitMs: currentIdleLimitMs },
-    }),
-  );
-
   if (client) {
     await auditExpiration(client);
     try {
@@ -538,14 +532,4 @@ export function installSessionLifecycle({
   void client.auth.getSession().then(({ data: sessionData }) => {
     if (sessionData?.session?.user) startActiveSession(sessionData.session);
   });
-}
-
-export function resetSessionLifecycleForTests() {
-  stopActiveSession({ clearActivity: false });
-  authSubscription?.unsubscribe?.();
-  authSubscription = null;
-  broadcastChannel?.close?.();
-  broadcastChannel = null;
-  installed = false;
-  expirationInProgress = false;
 }

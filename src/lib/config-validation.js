@@ -10,17 +10,6 @@ function hasControlCharacters(value) {
   return false;
 }
 
-export function isValidHttpUrl(value) {
-  const raw = clean(value);
-  if (!raw) return true;
-  try {
-    const url = new URL(raw);
-    return url.protocol === "https:" || url.protocol === "http:";
-  } catch (error) {
-    return false;
-  }
-}
-
 export function isValidAccessAssetUrl(value) {
   const raw = clean(value);
   if (!raw) return true;

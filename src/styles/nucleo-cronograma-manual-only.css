@@ -1,7 +1,3 @@
-#cronogramaEditor .cronograma-manual-source-grid {
-  grid-template-columns: 1fr;
-}
-
 #cronogramaEditor .cronograma-manual-actions {
   display: flex;
   flex-wrap: wrap;

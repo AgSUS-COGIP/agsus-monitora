@@ -4,8 +4,6 @@ import {
   FUNAI_PROXY_GEOJSON,
   FUNAI_PROXY_WMS,
   FUNAI_TERRITORIES_LAYER,
-  FUNAI_TERRITORIES_WFS,
-  FUNAI_TERRITORIES_WMS,
   dseiFeatureMatches,
   dseiFeatureName,
   funaiDseiUrl,
@@ -38,12 +36,10 @@ const projetarNoZoom8 = (ponto) => ({
 
 describe("camada de Terras Indígenas", () => {
   it("usa a camada oficial de polígonos da Funai", () => {
-    expect(FUNAI_TERRITORIES_WMS).toContain("geoserver.funai.gov.br");
     expect(FUNAI_TERRITORIES_LAYER).toBe("Funai:tis_poligonais");
   });
 
-  it("mantém as fontes oficiais e usa proxy same-origin no navegador", () => {
-    expect(FUNAI_TERRITORIES_WFS).toContain("geoserver.funai.gov.br");
+  it("usa proxy same-origin no navegador", () => {
     expect(FUNAI_PROXY_WMS).toBe("/api/funai-wms");
     expect(FUNAI_PROXY_GEOJSON).toBe("/api/funai-geodata");
 

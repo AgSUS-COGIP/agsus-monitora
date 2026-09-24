@@ -353,7 +353,7 @@ sticky (`--z-sticky`) e tem ordenação visível (`aria-sort` + ícone). Número
 O rótulo é sempre visível; o placeholder não substitui o rótulo. Campo com borda
 `--border-control`, `--radius-md` e altura de 40px. No foco, anel `--focus-ring`. O erro
 aparece junto do campo, em `--state-danger`, com ícone. Campo obrigatório é marcado. Os dados
-digitados se mantêm depois de erro do servidor. Seleção múltipla: `src/modules/multi-select-busca.js`
+digitados se mantêm depois de erro do servidor. Seleção múltipla: `src/componentes/multi-select-busca.jsx`
 no app principal e Tom Select em análises. Não crie um terceiro.
 
 ### Modal — `.modal` > `.modal-card` (`.modal-head`, `.modal-body`)
@@ -361,6 +361,8 @@ no app principal e Tom Select em análises. Não crie um terceiro.
 `--z-overlay`, `--radius-lg`, `--shadow-overlay` e fundo escurecido. O foco fica preso no modal,
 `Esc` fecha e, ao fechar, o foco volta ao elemento que abriu. Largura máxima de 560px (formulário)
 ou 880px (detalhe). Formulário longo não vai em modal pequeno: use página ou drawer.
+Em React, `<Modal>` (`src/componentes/modal.jsx`) já faz o portal, o `Esc`, o foco preso e a volta
+do foco; o legado ainda tem modais próprios (`#editModal`, `#searchModal`).
 
 ### Chip, badge e alerta — `.chip`, `.alert`
 
@@ -539,4 +541,4 @@ Para contraste, calcule e não estime: a razão WCAG sai da luminância relativa
 Português do Brasil, com acentos. Verbos de ação ("Importar lista", "Publicar edital",
 "Tentar de novo"). Nada de termo de banco ou de código na tela. Erro diz o que aconteceu e o
 que fazer. Confirmação cita o objeto ("Excluir o edital 101/2026?"). Número segue o formato
-brasileiro (`1.308`, `60,5%`), via `src/lib/formatters.js`.
+brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNumero` em `src/lib/editais-do-nucleo.js`).

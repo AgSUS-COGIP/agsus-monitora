@@ -107,15 +107,3 @@ export function classificarVinculoTerritorial(ufDaUnidade, ufsDoDsei) {
     ufsDoDsei: abrangencia,
   };
 }
-
-/*
-  Diagnóstico, não decisão. Serve para registrar no console quando o polígono
-  discorda do CNES — útil para achar coordenada errada — sem nunca mudar a
-  classificação nem mexer na coordenada desenhada.
-*/
-export function divergenciaDeDiagnostico(ufCnes, ufDoPoligono) {
-  const cnes = siglaDaUf(ufCnes);
-  const poligono = siglaDaUf(ufDoPoligono);
-  if (!cnes || !poligono || cnes === poligono) return null;
-  return { cnes, poligono, autoridade: cnes };
-}

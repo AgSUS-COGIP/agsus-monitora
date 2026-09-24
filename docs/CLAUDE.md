@@ -8,7 +8,7 @@ Leia **só o documento do assunto**. Nada aqui é carregado pelo build, exceto `
 | `arquitetura-evolucao.md` | plano técnico de evolução |
 | `banco-de-dados.md` | modelo de dados e RPCs |
 | `servidor.md` | servidor web em TypeScript: contrato, rodar, implantar |
-| `nucleo-e-mapas.md`, `nucleo-performance-evidencias.md` | Núcleo e mapas; medições de desempenho |
+| `nucleo-e-mapas.md` | guia de uso do Núcleo e dos mapas |
 | `auditoria-geografica.md` (26 KB) | método de validação de coordenadas — leia por seção |
 | `auditoria-sedes-dsei-2026-09-16.md` | auditoria pontual das sedes de DSEI |
 | `handoff-codex-mapas.md` | contexto de transição do trabalho de mapas |

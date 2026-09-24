@@ -73,10 +73,6 @@ async function reportViolation(event) {
   reportedSignatures.add(signature);
   incrementReportCount();
 
-  window.dispatchEvent(
-    new CustomEvent("agsus:csp-violation", { detail: details }),
-  );
-
   const client = getSupabaseClient();
   if (!client) return;
 
@@ -106,9 +102,4 @@ export function installCspReportMonitor() {
   document.addEventListener("securitypolicyviolation", (event) => {
     void reportViolation(event);
   });
-}
-
-export function resetCspReportMonitorForTests() {
-  installed = false;
-  reportedSignatures.clear();
 }

@@ -337,12 +337,6 @@ html[data-theme="dark"] .sidebar {
     min-height: 38px;
     padding-inline: 11px;
   }
-  #updatedPill {
-    max-width: 168px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
   .online-presence-button {
     padding-inline: 10px;
   }

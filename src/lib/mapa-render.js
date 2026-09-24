@@ -243,25 +243,6 @@ export function criarRegistroDeDescarte() {
 }
 
 /*
-  RECONSTRUÇÃO DIFERENCIAL
-
-  `clearLayers()` aparece 24 vezes no `legacy-app.js`: qualquer filtro ou clique
-  deitava fora a camada inteira e reconstruía tudo. Com 1462 pontos a 180 ms por
-  reconstrução, é o custo repetido a cada interação.
-
-  Esta função diz se vale a pena reconstruir: compara a assinatura do que está
-  desenhado com a do que se quer desenhar. Igual, não se mexe.
-*/
-export function assinaturaDeCamada(registros) {
-  if (!Array.isArray(registros)) return "";
-  const partes = registros.map(
-    (r) =>
-      `${r?.cnes || r?.name || ""}|${r?.lat ?? ""}|${r?.lon ?? ""}|${r?.type?.key || ""}`,
-  );
-  return `${partes.length}:${partes.join(";")}`;
-}
-
-/*
   AGRUPAMENTO POR CÉLULA — A DECISÃO MEDIDA
 
   Três caminhos foram medidos com os volumes reais, mediana de três corridas
@@ -325,38 +306,4 @@ export function agruparPorCelula(
       unico: n === 1 ? g.registros[0] : null,
     };
   });
-}
-
-/*
-  GRUPO COINCIDENTE — a distinção que decide entre zoom e leque
-
-  Um grupo junta-se por duas razões diferentes, e a saída não é a mesma.
-
-  Se os membros apenas caem na mesma célula de pixel, aproximar separa-os.
-
-  Se partilham a MESMA coordenada, aproximar nunca separa — e foi isto que a
-  revisão apanhou em `drawPolos`: medido na base real em 15/09/2026, há 9
-  grupos de polos com coordenada idêntica dentro do mesmo DSEI, 40 polos ao
-  todo. O maior tem 19 polos no Alto Rio Negro, em `0.3318,-68.0903`; o
-  Yanomami tem 5 em `3.0779,-62.6675`. No zoom máximo continuariam num único
-  selo, com 18 e 4 deles inalcançáveis.
-
-  Cinco casas decimais são cerca de um metro — é a mesma tolerância usada para
-  agrupar coincidentes no resto do módulo.
-*/
-export function grupoCoincidente(registros, casas = 5) {
-  const lista = Array.isArray(registros) ? registros : [];
-  if (lista.length < 2) return false;
-  const [primeiro] = lista;
-  if (!Number.isFinite(primeiro?.lat) || !Number.isFinite(primeiro?.lon))
-    return false;
-  const lat = primeiro.lat.toFixed(casas);
-  const lon = primeiro.lon.toFixed(casas);
-  return lista.every(
-    (r) =>
-      Number.isFinite(r?.lat) &&
-      Number.isFinite(r?.lon) &&
-      r.lat.toFixed(casas) === lat &&
-      r.lon.toFixed(casas) === lon,
-  );
 }

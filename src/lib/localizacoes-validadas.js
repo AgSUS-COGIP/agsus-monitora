@@ -177,19 +177,6 @@ export function rotuloDaLocalizacao(veredicto) {
 }
 
 /*
-  Para quem desenha: um veredito que pede atenção não pode ficar com a mesma
-  cor de um que está resolvido. Devolve a severidade, não a cor — a paleta é de
-  quem desenha, não desta biblioteca.
-*/
-export function severidadeDaLocalizacao(veredicto) {
-  const estado = veredicto?.estado;
-  if (estado === "validada") return "confirmada";
-  if (estado === "conflito" || estado === "erro") return "divergente";
-  if (estado === "coerente") return "sem_contradicao";
-  return "sem_veredito";
-}
-
-/*
   A coordenada que o mapa deve desenhar. Só se substitui a que lá está quando
   a validação apurou uma melhor; nos outros casos devolve null e quem chama
   mantém a sua.

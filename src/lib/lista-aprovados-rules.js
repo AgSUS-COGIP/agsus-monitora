@@ -14,7 +14,7 @@ const low = (value) => text(value).toLocaleLowerCase("pt-BR");
 const multi = (value) =>
   (Array.isArray(value) ? value : [value]).map(text).filter(Boolean);
 
-const SEM_STATUS = "__sem_status__";
+export const SEM_STATUS = "__sem_status__";
 
 function matchStatus(escolhidos, row) {
   const status = text(row.status);
@@ -147,4 +147,92 @@ export function paginateApprovedCandidates(rows, page = 1, pageSize = 50) {
     from: pageRows.length ? start + 1 : 0,
     to: start + pageRows.length,
   };
+}
+
+// ── Apresentação ─────────────────────────────────────────────────────────
+
+/*
+  Os status que um candidato pode ter, na ordem da tela. O filtro acrescenta
+  "Sem status" (`SEM_STATUS`) à frente; o modal de status usa o valor vazio.
+*/
+export const STATUS_DO_CANDIDATO = Object.freeze([
+  "Contratado",
+  "Desistente",
+  "Migração",
+  "Documentação Rejeitada",
+  "Fim de Fila",
+]);
+
+export const OPCOES_DO_FILTRO_DE_STATUS = Object.freeze([
+  Object.freeze({ value: SEM_STATUS, label: "Sem status" }),
+  ...STATUS_DO_CANDIDATO.map((status) =>
+    Object.freeze({ value: status, label: status }),
+  ),
+]);
+
+/** Nota como a tela a escreve: "87,5"; "-" quando não há número. */
+export function formatarNota(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "-";
+  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(
+    number,
+  );
+}
+
+/** Tom do selo de status (`.approved-status.<tom>`). */
+export function tomDoStatus(status) {
+  if (status === "Contratado") return "success";
+  if (status === "Desistente" || status === "Documentação Rejeitada")
+    return "danger";
+  if (status === "Migração") return "info";
+  if (status === "Fim de Fila") return "warning";
+  return "neutral";
+}
+
+/** Nome do arquivo no Storage: sem acento, espaço nem símbolo. */
+export function nomeDeArquivoSeguro(name) {
+  return (
+    text(name)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "lista-aprovados.xlsx"
+  );
+}
+
+/**
+ * Opções do filtro de edital: um por edital com lista, ordenados por número
+ * e unidade, no formato "03/2025 · CASAI Manaus".
+ */
+export function opcoesDeEdital(lists) {
+  return [
+    ...new Map(
+      (lists || []).map((row) => [String(row.edital_id), row]),
+    ).values(),
+  ]
+    .sort(
+      (a, b) =>
+        text(a.edital).localeCompare(text(b.edital), "pt-BR") ||
+        text(a.unidade).localeCompare(text(b.unidade), "pt-BR"),
+    )
+    .map((row) => ({
+      value: String(row.edital_id),
+      label: [text(row.edital) || "Edital", text(row.unidade)]
+        .filter(Boolean)
+        .join(" · "),
+    }));
+}
+
+/*
+  Tira da seleção o que deixou de ser opção. Ao filtrar por edital, a lista de
+  cargos encolhe, e um cargo escolhido que sumiu não pode continuar a filtrar —
+  estaria a esconder linhas sem aparecer na tela.
+*/
+export function manterSoAsOpcoes(selecionados, opcoes) {
+  const disponiveis = new Set(
+    (opcoes || []).map((opcao) =>
+      typeof opcao === "object" && opcao !== null ? opcao.value : opcao,
+    ),
+  );
+  return (selecionados || []).filter((valor) => disponiveis.has(valor));
 }
