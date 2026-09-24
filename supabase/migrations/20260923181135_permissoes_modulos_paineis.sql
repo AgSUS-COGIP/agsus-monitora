@@ -60,7 +60,7 @@ end;
 $$;
 create function private.pode_recurso(p_recurso text,p_minimo integer default 1) returns boolean
 language sql stable security definer set search_path='' as $$
-  select case private.nivel_recurso(p_recurso) when 'admin' then 3 when 'editor' then 2 when 'leitor' then 1 else 0 end >= greatest(p_minimo,1);
+  select coalesce((select auth.role())='service_role',false) or case private.nivel_recurso(p_recurso) when 'admin' then 3 when 'editor' then 2 when 'leitor' then 1 else 0 end >= greatest(p_minimo,1);
 $$;
 create function private.papel_recurso(p_recurso text) returns text
 language sql stable security definer set search_path='' as $$
@@ -238,6 +238,9 @@ begin
         source:=regexp_replace(source,'private\.has_perm\(''paineis''\)[[:space:]]+or private\.has_perm\(''ind''\)[[:space:]]+or private\.has_perm\(''config''\)[[:space:]]+or private\.has_perm\(''admin''\)','private.pode_recurso(''analises'')');
       end if;
       if item.name like 'get_configuracoes%' then source:=replace(source,'private.has_perm(''config'')','private.pode_recurso(''configuracoes'')'); end if;
+      if item.name like 'get_monitoramento%' or item.name='get_nucleo_cronograma_resumo' then
+        source:=replace(source,'private.has_perm(''cores'')','('||item.guard||')');
+      end if;
       if item.name='get_acessos_config_master' then source:=replace(source,'= ''master''','= ''admin'''); end if;
       if f.lanname='plpgsql' then
         if source !~* '\mbegin\M' then raise exception 'RPC % sem bloco begin',item.name; end if;

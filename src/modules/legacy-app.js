@@ -12299,6 +12299,10 @@ async function renderAccessRequestsAdmin() {
   const allowed = isMasterProfile();
   card.classList.toggle("hidden", !allowed);
   if (!allowed) return;
+  if (
+    Number(box.querySelector("[data-pending-count]")?.dataset.pendingCount) > 0
+  )
+    return;
   disposeAccessMatrix?.();
   box.innerHTML = `<div class="access-status">Carregando acessos...</div>`;
   const [requestsResponse, profilesResponse] = await Promise.all([
