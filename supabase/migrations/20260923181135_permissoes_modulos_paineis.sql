@@ -166,7 +166,16 @@ do $$
 declare t text; regra text;
 begin
   foreach t in array array['TB_MONITORAMENTO_INDIGENA','TH_MONITORAMENTO'] loop
+    execute format('create policy recurso_leitura_permitida on public.%I for select to authenticated using (private.pode_recurso(''dashboard'') or private.pode_recurso(''nucleo'') or private.pode_recurso(''calendario'') or private.pode_recurso(''aprovados'') or private.pode_recurso(''importacao'',2))',t);
     execute format('create policy recurso_leitura on public.%I as restrictive for select to authenticated using (private.pode_recurso(''dashboard'') or private.pode_recurso(''nucleo'') or private.pode_recurso(''calendario'') or private.pode_recurso(''aprovados'') or private.pode_recurso(''importacao''))',t);
+  end loop;
+  foreach t in array array['TB_ANALISE_CURRICULAR','TB_EDITAL_ANALISE'] loop
+    execute format('create policy recurso_leitura_permitida on public.%I for select to authenticated using (private.pode_recurso(''analises''))',t);
+  end loop;
+  foreach t in array array['TB_ANALISE_CURRICULAR','TB_EDITAL_ANALISE','TM_ANALISE_CURRICULAR','TL_SYNC_ANALISE'] loop
+    execute format('create policy recurso_insercao on public.%I as restrictive for insert to authenticated with check (private.pode_recurso(''analises'',2))',t);
+    execute format('create policy recurso_atualizacao on public.%I as restrictive for update to authenticated using (private.pode_recurso(''analises'',2)) with check (private.pode_recurso(''analises'',2))',t);
+    execute format('create policy recurso_exclusao on public.%I as restrictive for delete to authenticated using (private.pode_recurso(''analises'',3))',t);
   end loop;
   foreach t in array array['TB_ANALISE_CURRICULAR','TB_EDITAL_ANALISE','TM_ANALISE_CURRICULAR','TL_SYNC_ANALISE','TB_LISTA_APROVADO','TB_CANDIDATO_APROVADO','TH_CANDIDATO_APROVADO','TB_CONVOCACAO_EDITAL','TB_CATEGORIA_CONVOCACAO','TB_MODELO_CONVOCACAO','TB_VAGA_IMEDIATA'] loop
     regra:=case when t like '%ANALISE%' then 'analises' else 'aprovados' end;
