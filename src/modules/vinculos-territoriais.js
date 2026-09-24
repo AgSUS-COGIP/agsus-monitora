@@ -16,7 +16,6 @@ import {
   VINCULO_INDETERMINADO,
   classificarVinculoTerritorial,
 } from "../lib/uf-ibge.js";
-import { DIVERGENCIA } from "../lib/reconciliacao-unidades.js";
 import { TITULO_DA_LEGENDA } from "./legenda-das-terras.js";
 
 /*
@@ -189,88 +188,6 @@ export function tooltipDoRegistro(registro, dsei) {
   }
 
   return linhas.join("<br>");
-}
-
-/*
-  Quando um marcador representa a mesma estrutura vinda das duas fontes, quem
-  olha o mapa tem de saber disso — e sobretudo tem de saber quando as duas
-  discordam. Um ponto desenhado sem ressalva é lido como localização apurada.
-*/
-export function linhasDaReconciliacao(registro) {
-  const origens = Array.isArray(registro?.origens) ? registro.origens : [];
-  if (origens.length < 2) return [];
-
-  const linhas = [
-    registro?.coordenadas?.lotacoes
-      ? "<i>Registro unificado: mapa anterior + Lotações + CNES</i>"
-      : "<i>Registro unificado: mapa anterior + CNES</i>",
-  ];
-  const km = registro?.distancia_entre_fontes_km;
-
-  if (registro?.divergencia === DIVERGENCIA.PENDENTE) {
-    linhas.push(
-      km == null
-        ? "<b>Localização pendente de validação</b>"
-        : `<b>Localização pendente de validação</b> — as fontes divergem ${km} km`,
-    );
-  } else if (registro?.divergencia === DIVERGENCIA.DIVERGENTE) {
-    linhas.push(
-      `Fontes divergem ${km} km — preservada a coordenada anterior até validação independente`,
-    );
-  } else if (km != null) {
-    linhas.push(
-      `Diferença entre mapa anterior e CNES: ${km} km — proximidade não equivale a validação`,
-    );
-  }
-
-  return linhas;
-}
-
-const ROTULOS_DE_FONTE = [
-  ["lmap", "mapa anterior"],
-  ["lotacoes", "Lotações"],
-  ["rede_cnes", "CNES"],
-];
-
-function listaEmPortugues(itens) {
-  if (itens.length <= 1) return itens.join("");
-  return `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}`;
-}
-
-/*
-  Uma linha por coordenada distinta, não por fonte.
-
-  Em POLO BASE JOAO CAMARA as Lotações e o CNES dão exatamente o mesmo ponto, e
-  o popup imprimia as duas linhas idênticas uma sob a outra. Lido de fora, isso
-  parece um defeito do registro. Agrupar por coordenada mostra o que de facto
-  interessa: quantos pontos diferentes existem, e quais fontes sustentam cada
-  um. Uma única coordenada distinta significa que as fontes concordam.
-
-  Cinco casas decimais são cerca de um metro — mais do que a precisão de
-  qualquer destes cadastros, e o suficiente para não juntar pontos distintos.
-*/
-export function linhasDasCoordenadas(coordenadas) {
-  const porPonto = new Map();
-
-  for (const [chave, rotulo] of ROTULOS_DE_FONTE) {
-    const lat = Number(coordenadas?.[chave]?.lat);
-    const lon = Number(coordenadas?.[chave]?.lon);
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-    const ponto = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-    if (!porPonto.has(ponto)) porPonto.set(ponto, []);
-    porPonto.get(ponto).push(rotulo);
-  }
-
-  // Com uma fonte só não há o que comparar, e a coordenada já está no mapa.
-  const fontes = [...porPonto.values()].reduce(
-    (total, rotulos) => total + rotulos.length,
-    0,
-  );
-  if (fontes < 2) return [];
-
-  return [...porPonto.entries()].map(
-    ([ponto, rotulos]) => `${listaEmPortugues(rotulos)}: ${ponto}`,
-  );
 }
 
 export const TOOLTIP_DA_LINHA = "Vínculo territorial — não representa trajeto";

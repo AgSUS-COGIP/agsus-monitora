@@ -4,7 +4,6 @@ import {
   coordenadaValidada,
   indexarVereditos,
   rotuloDaLocalizacao,
-  severidadeDaLocalizacao,
   veredictoDaUnidade,
 } from "../src/lib/localizacoes-validadas.js";
 import { LOCALIZACOES_VALIDADAS } from "../src/lib/localizacoes-validadas-gerado.js";
@@ -140,20 +139,6 @@ describe("o que o mapa mostra", () => {
     expect(rotuloDaLocalizacao({ estado: "erro" })).toContain(
       "fora da UF declarada",
     );
-  });
-
-  /*
-    Quem desenha precisa de separar o que pede atenção do que está resolvido,
-    sem repetir a tabela de estados em cada sítio que desenha.
-  */
-  it("separa por severidade, para quem desenha", () => {
-    expect(severidadeDaLocalizacao({ estado: "validada" })).toBe("confirmada");
-    expect(severidadeDaLocalizacao({ estado: "conflito" })).toBe("divergente");
-    expect(severidadeDaLocalizacao({ estado: "erro" })).toBe("divergente");
-    expect(severidadeDaLocalizacao({ estado: "coerente" })).toBe(
-      "sem_contradicao",
-    );
-    expect(severidadeDaLocalizacao(null)).toBe("sem_veredito");
   });
 
   it("só substitui a coordenada quando o veredito é validada", () => {

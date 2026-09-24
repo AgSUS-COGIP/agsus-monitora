@@ -314,13 +314,10 @@ body.access-request-mode .login-card h1 {
 body.access-request-mode .login-card .login-subtitle2 {
   margin-bottom: 10px;
 }
-body.access-request-mode #loginEmailLabel,
 body.access-request-mode #loginEmail,
-body.access-request-mode #loginPasswordLabel,
 body.access-request-mode .password-wrap,
 body.access-request-mode #loginBtn,
-body.access-request-mode #googleLoginBtn,
-body.access-request-mode #loginHelp {
+body.access-request-mode #googleLoginBtn {
   display: none !important;
 }
 body.access-request-mode .login-form {
@@ -3096,7 +3093,6 @@ body.access-request-mode .login-mark,
 body.access-request-mode .login-eyebrow,
 body.access-request-mode #loginTitle,
 body.access-request-mode #loginSubtitle,
-body.access-request-mode #loginSlogan,
 body.access-request-mode #loginMsg {
   display: none !important;
 }

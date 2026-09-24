@@ -10,5 +10,4 @@ export function initHealthMapLegendCleanup() {
   if (initialized) return;
   initialized = true;
   removeDuplicateLegend();
-  document.addEventListener("agsus:health-map-rendered", removeDuplicateLegend);
 }

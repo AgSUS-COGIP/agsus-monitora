@@ -12,10 +12,3 @@ export const SUPABASE_AUTH_STORAGE_KEY = "agsus-monitora-auth";
 export function hasSupabaseEnv() {
   return Boolean(ENV_SUPABASE_URL && ENV_SUPABASE_KEY);
 }
-
-export function assertSupabaseEnv() {
-  if (hasSupabaseEnv()) return;
-  throw new Error(
-    "Configuração do Supabase ausente. Defina VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no ambiente de implantação.",
-  );
-}

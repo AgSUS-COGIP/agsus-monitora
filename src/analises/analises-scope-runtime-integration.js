@@ -190,21 +190,6 @@ function init() {
       scheduleSync();
   });
 
-  document.addEventListener("agsus:analises-loading-end", () => {
-    clearObsoletePendingClass();
-    const status = document.getElementById("scopeGuardStatus");
-    const total = txt(document.getElementById("kTotal")?.textContent);
-    if (
-      status &&
-      currentScope() !== "ativo" &&
-      hasCompleteSelection() &&
-      total
-    ) {
-      status.textContent = `Consulta concluída: ${total} registro(s) no recorte.`;
-      status.classList.remove("is-warning");
-    }
-  });
-
   document.addEventListener(
     "agsus:analises-query-complete",
     clearObsoletePendingClass,

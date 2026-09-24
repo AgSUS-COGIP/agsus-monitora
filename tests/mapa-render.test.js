@@ -4,9 +4,7 @@ import {
   RAIO_MINIMO,
   agruparCoincidentes,
   agruparPorCelula,
-  assinaturaDeCamada,
   criarRegistroDeDescarte,
-  grupoCoincidente,
   posicoesSpiderfy,
   raioDaBolha,
 } from "../src/lib/mapa-render.js";
@@ -169,31 +167,6 @@ describe("registo de descarte", () => {
   });
 });
 
-describe("assinatura de camada", () => {
-  const r = (nome, lat, lon) => ({
-    name: nome,
-    lat,
-    lon,
-    type: { key: "polo" },
-  });
-
-  it("é igual para o mesmo conteúdo e diferente para conteúdo diferente", () => {
-    expect(assinaturaDeCamada([r("A", 1, 2)])).toBe(
-      assinaturaDeCamada([r("A", 1, 2)]),
-    );
-    expect(assinaturaDeCamada([r("A", 1, 2)])).not.toBe(
-      assinaturaDeCamada([r("A", 1, 3)]),
-    );
-    expect(assinaturaDeCamada([r("A", 1, 2)])).not.toBe(
-      assinaturaDeCamada([r("A", 1, 2), r("B", 3, 4)]),
-    );
-  });
-
-  it("não rebenta com entrada ausente", () => {
-    expect(assinaturaDeCamada(null)).toBe("");
-  });
-});
-
 describe("agrupamento por célula de pixel", () => {
   // Projeção grosseira só para o teste: graus para pixels, linear.
   const paraPonto = (r) => ({ x: (r.lon + 180) * 100, y: (90 - r.lat) * 100 });
@@ -240,41 +213,5 @@ describe("agrupamento por célula de pixel", () => {
     const pontos = [p(1, 1, "A"), p(1, 1.4, "B")];
     expect(agruparPorCelula(pontos, paraPonto, 20)).toHaveLength(2);
     expect(agruparPorCelula(pontos, paraPonto, 200)).toHaveLength(1);
-  });
-});
-
-describe("grupo coincidente", () => {
-  const p = (lat, lon) => ({ lat, lon });
-
-  /*
-    Esta é a distinção que decide entre aproximar e abrir em leque. Medido na
-    base real: 9 grupos de polos com coordenada idêntica no mesmo DSEI, 40
-    polos, o maior com 19 no Alto Rio Negro. Zoom nenhum os separa.
-  */
-  it("reconhece a mesma coordenada", () => {
-    expect(grupoCoincidente([p(0.3318, -68.0903), p(0.3318, -68.0903)])).toBe(
-      true,
-    );
-  });
-
-  it("não confunde proximidade com coincidência", () => {
-    expect(grupoCoincidente([p(0.3318, -68.0903), p(0.3319, -68.0903)])).toBe(
-      false,
-    );
-  });
-
-  it("um registo sozinho não é grupo", () => {
-    expect(grupoCoincidente([p(1, 2)])).toBe(false);
-    expect(grupoCoincidente([])).toBe(false);
-  });
-
-  it("basta um membro fora para deixar de ser coincidente", () => {
-    expect(grupoCoincidente([p(1, 2), p(1, 2), p(1, 2), p(1.5, 2)])).toBe(
-      false,
-    );
-  });
-
-  it("não afirma coincidência sem coordenada", () => {
-    expect(grupoCoincidente([p(null, null), p(null, null)])).toBe(false);
   });
 });

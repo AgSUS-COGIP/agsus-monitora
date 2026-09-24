@@ -64,8 +64,7 @@
   color: #047857;
   border: 1px solid #a7f3d0;
 }
-#cronogramaEditor .cronograma-recommended-badge,
-#cronogramaEditor .cronograma-experimental-badge {
+#cronogramaEditor .cronograma-recommended-badge {
   display: inline-flex;
   align-items: center;
   margin-left: 7px;
@@ -79,10 +78,6 @@
 #cronogramaEditor .cronograma-recommended-badge {
   background: #dcfce7;
   color: #166534;
-}
-#cronogramaEditor .cronograma-experimental-badge {
-  background: #fef3c7;
-  color: #92400e;
 }
 html[data-theme="dark"] #cronogramaEditor .cronograma-bulk-dates {
   background: #0f172a;

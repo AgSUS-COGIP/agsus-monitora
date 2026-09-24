@@ -130,6 +130,10 @@
   color: #1c5181;
   font-size: 13px;
 }
+/* Sem filtro ativo a tarja some: o `display: flex` acima venceria o atributo `hidden`. */
+.nucleo-active-alert-filter[hidden] {
+  display: none;
+}
 .nucleo-active-alert-filter button {
   border: 0;
   background: transparent;
@@ -242,7 +246,7 @@
   max-height: 90vh;
   overflow: hidden;
 }
-.nucleo-timeline-card .modal-header {
+.nucleo-timeline-card .modal-head {
   align-items: flex-start;
 }
 .nucleo-timeline-eyebrow {
@@ -252,10 +256,10 @@
   letter-spacing: 0.08em;
   color: #3577ad;
 }
-.nucleo-timeline-card .modal-header h3 {
+.nucleo-timeline-card .modal-head h3 {
   margin: 3px 0;
 }
-.nucleo-timeline-card .modal-header p {
+.nucleo-timeline-card .modal-head p {
   margin: 0;
   color: #71849a;
 }

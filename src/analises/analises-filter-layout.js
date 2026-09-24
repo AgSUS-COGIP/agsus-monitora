@@ -322,7 +322,6 @@ function bindControls() {
     true,
   );
 
-  document.addEventListener("agsus:analises-loading-end", scheduleUpdate);
   document.addEventListener("agsus:analises-query-complete", scheduleUpdate);
 }
 

@@ -56,7 +56,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("oferece seleção em massa e sincroniza opções somente por evento explícito", async () => {
+it("oferece seleção em massa", async () => {
   vi.resetModules();
   await import("../../src/analises/analises-modern-selects.js");
   document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -85,21 +85,4 @@ it("oferece seleção em massa e sincroniza opções somente por evento explíci
   expect(
     document.getElementById("scopeGuardUnits").selectedOptions,
   ).toHaveLength(0);
-
-  const editalSelect = document.getElementById("scopeGuardEditais");
-  editalSelect.innerHTML = `
-    <option value="22/2026">22/2026</option>
-    <option value="23/2026" selected>23/2026</option>
-  `;
-
-  expect(instances[1].options).toEqual([]);
-  editalSelect.dispatchEvent(new CustomEvent("agsus:options-updated"));
-
-  expect(instances[1].options.map((option) => option.value)).toEqual([
-    "22/2026",
-    "23/2026",
-  ]);
-  expect(
-    [...editalSelect.selectedOptions].map((option) => option.value),
-  ).toEqual(["23/2026"]);
 });

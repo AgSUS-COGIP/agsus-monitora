@@ -468,11 +468,6 @@ function bindEvents() {
       activateAttention(event.target);
     }
   });
-  document.addEventListener("agsus:analises-loading-end", scheduleEnhance);
-  document.addEventListener(
-    "agsus:analises-scope-guard-ready",
-    scheduleEnhance,
-  );
   document.addEventListener("agsus:analises-cache-cleared", scheduleEnhance);
 }
 

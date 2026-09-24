@@ -25,8 +25,7 @@ export const PLANILHAS = Object.freeze({
     arquivoNoRepositorio:
       "public/assets/modelo-importacao-lista-aprovados.xlsx",
     usadaEm: Object.freeze([
-      "index.html (#approvedImportModelLink)",
-      "src/modules/lista-aprovados.js",
+      "src/componentes/lista-aprovados/modal-listas-do-edital.jsx (#approvedImportModelLink)",
     ]),
   }),
 
@@ -34,7 +33,7 @@ export const PLANILHAS = Object.freeze({
     nome: "Lista de aprovados importada (XLSX por edital)",
     onde: "Supabase Storage",
     bucket: "listas-aprovados",
-    usadaEm: Object.freeze(["src/modules/lista-aprovados.js"]),
+    usadaEm: Object.freeze(["src/componentes/lista-aprovados/estado.js"]),
   }),
 
   origemDaAnalise: Object.freeze({

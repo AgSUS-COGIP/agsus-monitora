@@ -153,12 +153,9 @@ function init() {
   ensureStyles();
   scheduleSweep();
 
-  [
-    "agsus:analises-loading-end",
-    "agsus:analises-query-complete",
-    "agsus:analises-cache-cleared",
-    "agsus:analises-scope-guard-ready",
-  ].forEach((eventName) => document.addEventListener(eventName, scheduleSweep));
+  ["agsus:analises-query-complete", "agsus:analises-cache-cleared"].forEach(
+    (eventName) => document.addEventListener(eventName, scheduleSweep),
+  );
 
   document.addEventListener(
     "click",

@@ -2,7 +2,6 @@ const state = {
   initialized: false,
   refreshTimer: 0,
   only2026: false,
-  logoutResolve: null,
 };
 
 const normalize = (value) =>
@@ -26,65 +25,6 @@ export function formatDeadlineLabel(value) {
   if (/cancelad/i.test(text)) return "Processo cancelado";
   if (/conclu/i.test(text)) return "Processo concluído";
   return text;
-}
-
-function ensureLogoutModal(documentRef = globalThis.document) {
-  if (!documentRef?.body) return null;
-  let modal = documentRef.getElementById("healthLogoutModal");
-  if (modal) return modal;
-
-  modal = documentRef.createElement("div");
-  modal.id = "healthLogoutModal";
-  modal.className = "health-logout-modal";
-  modal.hidden = true;
-  modal.innerHTML = `
-    <div class="health-logout-dialog" role="dialog" aria-modal="true" aria-labelledby="healthLogoutTitle" aria-describedby="healthLogoutDescription">
-      <div class="health-logout-icon" aria-hidden="true"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
-      <div class="health-logout-copy">
-        <span>Encerrar sessão</span>
-        <h2 id="healthLogoutTitle">Deseja realmente sair?</h2>
-        <p id="healthLogoutDescription">Sua sessão no AgSUS Monitora será encerrada neste navegador.</p>
-      </div>
-      <div class="health-logout-actions">
-        <button type="button" class="btn outline" data-health-logout="cancel">Continuar no sistema</button>
-        <button type="button" class="btn health-logout-confirm" data-health-logout="confirm"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</button>
-      </div>
-    </div>`;
-  documentRef.body.appendChild(modal);
-
-  const finish = (confirmed) => {
-    modal.hidden = true;
-    documentRef.body.classList.remove("health-logout-open");
-    const resolve = state.logoutResolve;
-    state.logoutResolve = null;
-    resolve?.(confirmed);
-  };
-
-  modal.addEventListener("click", (event) => {
-    const action = event.target.closest?.("[data-health-logout]")?.dataset
-      .healthLogout;
-    if (action === "confirm") finish(true);
-    if (action === "cancel" || event.target === modal) finish(false);
-  });
-  documentRef.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !modal.hidden) finish(false);
-  });
-  return modal;
-}
-
-export function openLogoutConfirmation(documentRef = globalThis.document) {
-  const modal = ensureLogoutModal(documentRef);
-  if (!modal) return Promise.resolve(false);
-  if (state.logoutResolve) return Promise.resolve(false);
-
-  modal.hidden = false;
-  documentRef.body.classList.add("health-logout-open");
-  requestAnimationFrame(() =>
-    modal.querySelector('[data-health-logout="cancel"]')?.focus(),
-  );
-  return new Promise((resolve) => {
-    state.logoutResolve = resolve;
-  });
 }
 
 function columnIndexes(documentRef) {
@@ -291,18 +231,6 @@ export function initHealthDetailsUx(
   if (state.initialized || !windowRef || !documentRef) return;
   state.initialized = true;
 
-  /*
-    O embrulho de `window.logout` foi retirado em 09/09/2026.
-
-    Este módulo instalava a sua própria confirmação por cima de `window.logout`,
-    e `nielsen-shell-ux` — carregado depois — capturava a versão **já
-    embrulhada** e somava o seu modal. Quem clicava em Sair via dois diálogos
-    seguidos, cada um pedindo a mesma coisa.
-
-    O diálogo do shell fica: tem `role="dialog"`, gestão de foco e Escape. Este
-    sai, e com ele o segundo dono da mesma transição.
-  */
-  ensureLogoutModal(documentRef);
   ensureOnly2026Button(documentRef);
   enhanceHealthDetailsTable(documentRef);
 

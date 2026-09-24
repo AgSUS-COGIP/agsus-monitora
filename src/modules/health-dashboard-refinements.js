@@ -168,5 +168,4 @@ export function initHealthDashboardRefinementsSafe() {
     if (event.target?.id === "tableSearch") scheduleRefresh();
   });
   document.addEventListener("agsus:dashboard-rendered", refreshDecorations);
-  document.addEventListener("agsus:health-map-rendered", syncMapLegend);
 }

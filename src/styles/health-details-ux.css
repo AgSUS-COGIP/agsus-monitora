@@ -214,101 +214,6 @@
   display: none !important;
 }
 
-.health-logout-open {
-  overflow: hidden;
-}
-
-.health-logout-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 15000;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(7, 27, 46, 0.58);
-  backdrop-filter: blur(5px);
-}
-
-.health-logout-modal[hidden] {
-  display: none !important;
-}
-
-.health-logout-dialog {
-  width: min(460px, calc(100vw - 32px));
-  display: grid;
-  grid-template-columns: 58px 1fr;
-  gap: 18px;
-  padding: 24px;
-  border: 1px solid rgba(196, 215, 232, 0.9);
-  border-radius: 22px;
-  background: #fff;
-  box-shadow: 0 28px 80px rgba(5, 24, 42, 0.34);
-  animation: healthLogoutIn 0.18s ease-out;
-}
-
-.health-logout-icon {
-  width: 58px;
-  height: 58px;
-  display: grid;
-  place-items: center;
-  border-radius: 18px;
-  background: #fff0ee;
-  color: #c33d32;
-  font-size: 22px;
-}
-
-.health-logout-copy span {
-  display: block;
-  margin-bottom: 5px;
-  color: #c33d32;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.health-logout-copy h2 {
-  margin: 0;
-  color: #102b45;
-  font-size: 22px;
-}
-
-.health-logout-copy p {
-  margin: 8px 0 0;
-  color: #657b91;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.health-logout-actions {
-  grid-column: 1/-1;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.health-logout-actions .btn {
-  min-height: 42px;
-  padding: 0 16px;
-  border-radius: 12px;
-  font-weight: 850;
-}
-
-.health-logout-confirm {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #b9322a;
-  background: #b9322a;
-  color: #fff;
-}
-
-.health-logout-confirm:hover {
-  background: #962820;
-  border-color: #962820;
-}
-
 @keyframes healthLogoutIn {
   from {
     opacity: 0;
@@ -355,22 +260,6 @@ body.dark-mode #page-dashboard .health-quick-year.active {
   color: #fff;
 }
 
-body.dark-mode .health-logout-dialog {
-  background: #102235;
-  border-color: #294158;
-}
-
-body.dark-mode .health-logout-copy h2 {
-  color: #eef6ff;
-}
-body.dark-mode .health-logout-copy p {
-  color: #afc0cf;
-}
-body.dark-mode .health-logout-icon {
-  background: #3b2022;
-  color: #ff9b91;
-}
-
 @media (max-width: 980px) {
   #page-dashboard .health-edital-cell {
     min-width: 190px;
@@ -389,20 +278,6 @@ body.dark-mode .health-logout-icon {
 }
 
 @media (max-width: 640px) {
-  .health-logout-dialog {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-  .health-logout-icon {
-    margin: 0 auto;
-  }
-  .health-logout-actions {
-    grid-column: 1;
-    flex-direction: column-reverse;
-  }
-  .health-logout-actions .btn {
-    width: 100%;
-  }
   #page-dashboard .health-quick-year span {
     display: none;
   }

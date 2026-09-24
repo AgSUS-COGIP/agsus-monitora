@@ -439,12 +439,6 @@ function bindResetEvents() {
     true,
   );
 
-  document.addEventListener("agsus:analises-loading-start", () => {
-    state.ready = false;
-  });
-  document.addEventListener("agsus:analises-loading-end", () =>
-    scheduleReset(80),
-  );
   document.addEventListener("agsus:analises-query-complete", () =>
     scheduleReset(80),
   );

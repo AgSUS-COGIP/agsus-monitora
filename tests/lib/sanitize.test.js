@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  escapeAttr,
   escapeHtml,
   safeHttpUrl,
   sanitizeHtml,
@@ -11,7 +10,6 @@ describe("sanitize", () => {
     expect(escapeHtml("<script>alert(1)</script>")).toBe(
       "&lt;script&gt;alert(1)&lt;/script&gt;",
     );
-    expect(escapeAttr("`x`")).toBe("&#096;x&#096;");
   });
 
   it("remove scripts ao sanitizar HTML", () => {

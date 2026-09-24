@@ -141,11 +141,6 @@ export const CONTRATO_RPC = {
   },
 
   // ── Monitoramento e cronograma ──────────────────────────────────────────
-  salvar_monitoramento_indigena: {
-    argumentos: ["p_payload"],
-    critica: true,
-    resumo: "Grava um registo de monitoramento.",
-  },
   salvar_monitoramento_com_cronograma_v2: {
     argumentos: ["p_payload", "p_cronograma", "p_motivo", "p_numero_errata"],
     critica: true,

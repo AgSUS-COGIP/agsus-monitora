@@ -354,18 +354,6 @@ function bindEvents() {
     },
     true,
   );
-
-  document.addEventListener("agsus:analises-scope-guard-ready", () => {
-    ensureSummary();
-    setPending(currentScope() !== "ativo" && !isAuthorized());
-  });
-
-  document.addEventListener("agsus:analises-loading-start", () =>
-    setLoading(true),
-  );
-  document.addEventListener("agsus:analises-loading-end", () =>
-    setLoading(false),
-  );
 }
 
 function installStep(attempt = 0) {

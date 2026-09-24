@@ -256,17 +256,11 @@ export async function performExplicitLogout() {
     return false;
   }
 
-  const discardUnsaved = hasUnsavedConfiguration();
   const confirmed = await requestLogoutConfirmation();
   if (!confirmed) return false;
 
   logoutRunning = true;
   document.getElementById("topUserMenu")?.removeAttribute("open");
-  window.dispatchEvent(
-    new CustomEvent("agsus:logout-confirmed", {
-      detail: { discardUnsaved },
-    }),
-  );
   setSignoutBusy(true);
 
   try {

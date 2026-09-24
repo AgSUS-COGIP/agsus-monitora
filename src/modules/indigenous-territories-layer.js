@@ -8,10 +8,6 @@ const STORAGE_KEY_FASES = "agsus_map_terras_fases_ocultas_v1";
 */
 export const EVENTO_DAS_TERRAS = "agsus:terras-mudaram";
 
-export const FUNAI_TERRITORIES_WMS =
-  "https://geoserver.funai.gov.br/geoserver/Funai/wms";
-export const FUNAI_TERRITORIES_WFS =
-  "https://geoserver.funai.gov.br/geoserver/Funai/ows";
 export const FUNAI_TERRITORIES_LAYER = "Funai:tis_poligonais";
 
 export const FUNAI_PROXY_WMS = "/api/funai-wms";
@@ -108,10 +104,6 @@ export function carregarCatalogo(url, buscar) {
       console.warn("Catálogo de Terras Indígenas indisponível.", erro);
       return null;
     });
-}
-
-export function reiniciarCatalogo() {
-  catalogosEmCurso.clear();
 }
 
 function obterCatalogo(url, buscar) {
