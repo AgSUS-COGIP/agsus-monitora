@@ -132,14 +132,6 @@ function ensureChartLayout() {
   if (!canvas || !card || !wrap) return null;
 
   card.classList.add("health-status-card");
-  if (!card.querySelector(".health-status-subtitle")) {
-    card
-      .querySelector(".panel-title")
-      ?.insertAdjacentHTML(
-        "afterend",
-        '<p class="health-status-subtitle">Distribuição dos processos por situação operacional. Clique em uma categoria para filtrar.</p>',
-      );
-  }
   if (!wrap.parentElement?.classList.contains("health-status-layout")) {
     const layout = document.createElement("div");
     layout.className = "health-status-layout";
@@ -222,11 +214,13 @@ function enhanceChart() {
     legend.innerHTML = entries
       .map(([label, value]) => {
         const pct = total ? Math.round((value / total) * 100) : 0;
-        return `<button type="button" class="health-status-legend-item" data-health-status="${esc(label)}">
+        // A barra mostra a proporção sem precisar ler o número; o botão filtra.
+        return `<button type="button" class="health-status-legend-item" data-health-status="${esc(label)}" title="Filtrar por ${esc(label)}">
         <span class="health-status-dot" style="background:${statusColor(label)}"></span>
         <span class="health-status-name">${esc(label)}</span>
         <strong>${fmt(value)}</strong>
         <small>${pct}%</small>
+        <span class="health-status-bar" aria-hidden="true"><i style="width:${pct}%;background:${statusColor(label)}"></i></span>
       </button>`;
       })
       .join("");

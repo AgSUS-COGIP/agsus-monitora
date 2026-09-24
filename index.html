@@ -454,7 +454,24 @@
                 <strong id="topUserPopoverName">-</strong>
                 <small id="userEmail">-</small>
                 <span id="topUserPopoverProfile"></span>
+                <!--
+                  Ações do antigo botão "⋮" do cabeçalho: agora ficam no menu da conta,
+                  um lugar só para o que é da pessoa e da sessão. Modo escuro e Sair são
+                  retirados daqui por nielsen-shell-ux.js (estão na barra lateral).
+                -->
                 <div class="top-user-popover-actions">
+                  <button type="button" onclick="refreshData(); this.closest('details').removeAttribute('open')">
+                    <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                    <span id="refreshActionText">Atualizar dados</span>
+                  </button>
+                  <button type="button" onclick="this.closest('details').removeAttribute('open'); toggleBrowserFullscreen()">
+                    <i id="fullscreenActionIcon" class="fa-solid fa-expand" aria-hidden="true"></i>
+                    <span id="fullscreenActionText">Tela cheia</span>
+                  </button>
+                  <button type="button" onclick="this.closest('details').removeAttribute('open'); exportPDF()">
+                    <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                    <span id="exportPdfActionText">Exportar relatório (PDF)</span>
+                  </button>
                   <button type="button" onclick="toggleDarkMode()">
                     <i class="fa-solid fa-moon" aria-hidden="true"></i>
                     <span>Alternar modo escuro</span>
@@ -479,119 +496,6 @@
               <i class="fa-solid fa-download"></i>
               <span id="exportCsvText"></span>
             </button>
-            <div style="position: relative" id="moreActionsWrap">
-              <button
-                class="btn outline"
-                type="button"
-                onclick="toggleMoreActions()"
-                id="moreActionsBtn"
-                title=""
-                aria-label=""
-                aria-expanded="false"
-              >
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              <div
-                id="moreActionsMenu"
-                hidden
-                style="
-                  position: absolute;
-                  right: 0;
-                  top: calc(100% + 6px);
-                  background: #fff;
-                  border: 1px solid #d7e5f2;
-                  border-radius: 14px;
-                  box-shadow: 0 14px 34px rgba(15, 35, 60, 0.14);
-                  min-width: 180px;
-                  z-index: 200;
-                  overflow: hidden;
-                "
-              >
-                <button
-                  type="button"
-                  onclick="
-                    closeMoreActions();
-                    toggleBrowserFullscreen();
-                  "
-                  style="
-                    width: 100%;
-                    border: 0;
-                    background: transparent;
-                    padding: 11px 16px;
-                    text-align: left;
-                    cursor: pointer;
-                    font: inherit;
-                    font-weight: 700;
-                    font-size: 13px;
-                    color: #10243e;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                  "
-                >
-                  <i
-                    class="fa-solid fa-expand"
-                    style="width: 16px; text-align: center; color: #60758f"
-                  ></i>
-                  <span id="fullscreenActionText"></span>
-                </button>
-                <button
-                  type="button"
-                  onclick="
-                    refreshData();
-                    closeMoreActions();
-                  "
-                  style="
-                    width: 100%;
-                    border: 0;
-                    background: transparent;
-                    padding: 11px 16px;
-                    text-align: left;
-                    cursor: pointer;
-                    font: inherit;
-                    font-weight: 700;
-                    font-size: 13px;
-                    color: #10243e;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    border-top: 1px solid #edf3f9;
-                  "
-                >
-                  <i
-                    class="fa-solid fa-rotate-right"
-                    style="width: 16px; text-align: center; color: #60758f"
-                  ></i>
-                  <span id="refreshActionText"></span>
-                </button>
-                <button
-                  type="button"
-                  onclick="exportPDF()"
-                  style="
-                    width: 100%;
-                    border: 0;
-                    background: transparent;
-                    padding: 11px 16px;
-                    text-align: left;
-                    cursor: pointer;
-                    font: inherit;
-                    font-weight: 600;
-                    font-size: 13px;
-                    color: #10243e;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    border-top: 1px solid #edf3f9;
-                  "
-                >
-                  <i
-                    class="fa-solid fa-file-pdf"
-                    style="width: 16px; text-align: center; color: #d92d3a"
-                  ></i>
-                  <span id="exportPdfActionText"></span>
-                </button>
-              </div>
-            </div>
           </div>
         </header>
         <div id="araraGuideHost"></div>
@@ -926,11 +830,7 @@
                 </div>
               </div>
               <div class="card panel-pad">
-                <h3
-                  id="attentionTitle"
-                  class="panel-title"
-                  style="color: var(--red)"
-                ></h3>
+                <h3 id="attentionTitle" class="panel-title"></h3>
                 <div id="riskList" class="risk-list"></div>
               </div>
             </div>

@@ -11296,7 +11296,7 @@ function renderRisks() {
         return `<div class="risk-item"><div class="top-line"><span>${esc(r.edital || "-")}</span><span class="chip ${isHigh ? "red" : "yellow"}">${esc(r.risco || "-")}</span></div><small>${esc(r.etapa || "Etapa não informada")} <span style="float:right">${esc(r.unidade || "")}</span></small></div>`;
       })
       .join("") ||
-    `<div class="alert">Nenhum processo crítico com os filtros atuais.</div>`;
+    `<div class="risk-empty"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><div><strong>Nenhum processo em risco médio ou alto</strong><span>Considerando os filtros aplicados.</span></div></div>`;
 }
 
 function statusChip(status) {
@@ -12696,9 +12696,9 @@ function syncDisplayModeButtons() {
   const fullscreenActive =
     !!document.fullscreenElement ||
     document.body.classList.contains("app-fullscreen-fallback");
-  const moreMenu = $("moreActionsMenu");
-  if (moreMenu) {
-    const fsBtn = moreMenu.querySelector("button:first-child i");
+  // O item de tela cheia fica no menu da conta (index.html, #fullscreenActionIcon).
+  {
+    const fsBtn = $("fullscreenActionIcon");
     if (fsBtn)
       fsBtn.className = fullscreenActive
         ? "fa-solid fa-compress"
