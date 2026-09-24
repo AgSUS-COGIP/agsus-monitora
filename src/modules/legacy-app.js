@@ -1,5 +1,6 @@
 import { renderNucleoTable } from "../lib/nucleo-table-render.js";
 import { mountAccessMatrix } from "./matriz-acessos.js";
+import { abrirGestaoConta } from "./gestao-conta.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
 import {
   ehResponsavelCores,
@@ -21,7 +22,6 @@ import {
 import {
   accessRequestStatusMessage,
   renderAccessRequestAdminItemHTML,
-  renderAccessUserAdminItemHTML,
 } from "./access-request-ui.js";
 import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
 import { createAccessDashboard } from "./access-dashboard.js";
@@ -12305,38 +12305,24 @@ async function renderAccessRequestsAdmin() {
     return;
   disposeAccessMatrix?.();
   box.innerHTML = `<div class="access-status">Carregando acessos...</div>`;
-  const [requestsResponse, profilesResponse] = await Promise.all([
-    sb
-      .from("TB_SOLICITACAO_ACESSO")
-      .select(
-        "id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at",
-      )
-      .eq("status", "pendente")
-      .order("created_at", { ascending: false })
-      .limit(50),
-    sb
-      .from("TB_PERFIL_USUARIO")
-      .select("id,user_id,email,nome,perfil,ativo,updated_at")
-      .eq("ativo", true)
-      .order("updated_at", { ascending: false })
-      .limit(80),
-  ]);
-  if (requestsResponse.error || profilesResponse.error) {
-    box.innerHTML = `<div class="alert error">Erro ao carregar acessos: ${esc(friendlyError(requestsResponse.error || profilesResponse.error))}</div>`;
+  const requestsResponse = await sb
+    .from("TB_SOLICITACAO_ACESSO")
+    .select(
+      "id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at",
+    )
+    .eq("status", "pendente")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (requestsResponse.error) {
+    box.innerHTML = `<div class="alert error">Erro ao carregar acessos: ${esc(friendlyError(requestsResponse.error))}</div>`;
     return;
   }
   accessRequests = Array.isArray(requestsResponse.data)
     ? requestsResponse.data
     : [];
-  accessProfiles = Array.isArray(profilesResponse.data)
-    ? profilesResponse.data
-    : [];
   const pendingHTML = accessRequests.length
     ? accessRequests.map(renderAccessRequestAdminItem).join("")
     : `<div class="access-status">Nenhuma solicitação pendente.</div>`;
-  const usersHTML = accessProfiles.length
-    ? accessProfiles.map(renderAccessUserAdminItem).join("")
-    : `<div class="access-status">Nenhum usuário ativo encontrado.</div>`;
 
   box.innerHTML = `
       <div class="access-admin-section">
@@ -12349,16 +12335,6 @@ async function renderAccessRequestsAdmin() {
         </div>
         ${pendingHTML}
       </div>
-      <div class="access-admin-section">
-        <div class="section-title-row">
-          <div>
-            <h4>Perfil global e desativação</h4>
-            <p>O perfil define as permissões padrão. Alterações individuais na matriz prevalecem sobre esses padrões. Admin também permite gerenciar usuários.</p>
-          </div>
-          <span class="chip green">${fmt(accessProfiles.length)}</span>
-        </div>
-        ${usersHTML}
-      </div>
     `;
   const matrixRoot = document.createElement("div");
   matrixRoot.className = "access-admin-section";
@@ -12366,6 +12342,14 @@ async function renderAccessRequestsAdmin() {
   disposeAccessMatrix = await mountAccessMatrix(matrixRoot, {
     sb,
     currentUser,
+    onManageAccount(user) {
+      accessProfiles = [user];
+      abrirGestaoConta(user, {
+        currentUser,
+        onSave: updateUserAccess,
+        onDeactivate: deactivateUserAccess,
+      });
+    },
   });
 }
 
@@ -12373,15 +12357,11 @@ function renderAccessRequestAdminItem(req) {
   return renderAccessRequestAdminItemHTML(req);
 }
 
-function renderAccessUserAdminItem(user) {
-  return renderAccessUserAdminItemHTML(user, { currentUser });
-}
-
 function accessRequestById(id) {
   return accessRequests.find((r) => String(r.id) === String(id));
 }
 
-async function updateUserAccess(id) {
+async function updateUserAccess(id, selectedProfile) {
   const user = accessProfiles.find((r) => String(r.id) === String(id));
   if (!user) return toast("Usuário não encontrado.", "warn");
   if (isOwnAccessProfile(currentUser, user))
@@ -12389,7 +12369,7 @@ async function updateUserAccess(id) {
       "Sua própria permissão deve ser alterada por outro administrador.",
       "warn",
     );
-  const perfil = txt($("userPerfil" + id)?.value) || "usuario";
+  const perfil = txt(selectedProfile) || user.perfil;
   const label = user.email || user.nome || "este usuário";
   if (!window.confirm(`Salvar alterações de acesso para ${label}?`)) return;
   const motivo = window.prompt("Motivo da alteração (opcional):", "") || "";
@@ -12406,6 +12386,7 @@ async function updateUserAccess(id) {
     return toast("Erro ao salvar acesso: " + friendlyError(error), "error");
   toast("Acesso atualizado. Oriente o usuário a sair e entrar novamente.");
   await renderAccessRequestsAdmin();
+  return true;
 }
 
 async function approveAccessRequest(id) {
@@ -12448,6 +12429,7 @@ async function deactivateUserAccess(id) {
     return toast("Erro ao desativar acesso: " + friendlyError(error), "error");
   toast("Acesso desativado.");
   await renderAccessRequestsAdmin();
+  return true;
 }
 
 async function denyAccessRequest(id) {

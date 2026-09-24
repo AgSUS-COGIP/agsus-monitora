@@ -29,6 +29,28 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 describe("matriz de acessos", () => {
+  it("gerencia a conta pela matriz e bloqueia a ação enquanto há permissões pendentes", async () => {
+    document.body.innerHTML = '<div id="matrix"></div>';
+    const root = document.getElementById("matrix");
+    const onManageAccount = vi.fn();
+    dispose = await mountAccessMatrix(root, {
+      sb: { rpc: vi.fn(async () => ({ data: payload() })) },
+      currentUser: { id: "self" },
+      onManageAccount,
+    });
+    expect(root.querySelector('[data-manage-account="u1"]')).toBeNull();
+    root.querySelector('[data-manage-account="u2"]').click();
+    expect(onManageAccount).toHaveBeenCalledWith(payload().usuarios[1]);
+    const select = root.querySelector(
+      'select[data-user="u2"][data-resource="nucleo"]',
+    );
+    select.value = "editor";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    const button = root.querySelector('[data-manage-account="u2"]');
+    expect(button.disabled).toBe(true);
+    button.click();
+    expect(onManageAccount).toHaveBeenCalledTimes(1);
+  });
   it("bloqueia o próprio usuário, escapa conteúdo e salva somente após revisão e motivo", async () => {
     document.body.innerHTML = '<div id="matrix"></div>';
     const root = document.getElementById("matrix");
