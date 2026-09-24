@@ -116,6 +116,67 @@
       if (document.querySelector('script[src="/@vite/client"]'))
         document.documentElement.classList.add("vite-dev-carregando");
     </script>
+    <!--
+      Recarregar já logado não mostra a tela de acesso.
+
+      Enquanto as configurações carregam (`body.config-loading`), app.css deixa
+      a tela de acesso visível — é ela a tela de espera de quem ainda não
+      entrou. Para quem já tem sessão guardada, isso piscava a tela de login,
+      com a arte de fundo, a cada F5. Este script roda antes da primeira
+      pintura: havendo sessão (`refresh_token` em `agsus-monitora-auth`, a
+      chave de src/lib/env.js), a espera vira o fundo neutro com um indicador.
+      Se a sessão tiver expirado, `config-loading` sai e o login aparece como
+      sempre. `tests/recarga-logado.test.js` cobre a chave e as regras.
+    -->
+    <style>
+      html.sessao-guardada body.config-loading #loginScreen {
+        display: none;
+      }
+      html.sessao-guardada body.config-loading {
+        background: #f3f7fb;
+      }
+      html.sessao-guardada body.config-loading::after {
+        content: "";
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 28px;
+        height: 28px;
+        margin: -14px 0 0 -14px;
+        border: 3px solid #d7e5f2;
+        border-top-color: #003b70;
+        border-radius: 50%;
+        animation: espera-da-sessao 0.8s linear infinite;
+      }
+      @keyframes espera-da-sessao {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html.sessao-guardada body.config-loading::after {
+          animation: none;
+        }
+      }
+    </style>
+    <script>
+      (function marcarSessaoGuardada() {
+        try {
+          var chave = "agsus-monitora-auth";
+          var bruto =
+            localStorage.getItem(chave) || sessionStorage.getItem(chave);
+          var sessao = bruto && JSON.parse(bruto);
+          if (
+            sessao &&
+            typeof sessao.refresh_token === "string" &&
+            sessao.refresh_token
+          )
+            document.documentElement.classList.add("sessao-guardada");
+        } catch (erro) {
+          /* Armazenamento bloqueado ou conteúdo inválido: fica a tela de acesso. */
+        }
+      })();
+    </script>
     <title>MONITORA</title>
     <meta name="description" content="" />
     <!--

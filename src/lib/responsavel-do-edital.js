@@ -70,10 +70,7 @@ export function unidadesDoResponsavel(responsavel, unidadesDoCatalogo) {
 }
 
 const semAcento = (valor) =>
-  text(valor)
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+  text(valor).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 const UNIDADES_CORES_NORMALIZADAS = new Set(UNIDADES_CORES.map(semAcento));
 

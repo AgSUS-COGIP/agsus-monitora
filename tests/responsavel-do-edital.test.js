@@ -102,7 +102,10 @@ describe("o painel da Saúde Indígena só mostra editais da USI", () => {
 
   it("edital do CORES fica fora", () => {
     expect(
-      ehEditalDaSaudeIndigena({ responsavel: "CORES", unidade: "DSEI Xavante" }),
+      ehEditalDaSaudeIndigena({
+        responsavel: "CORES",
+        unidade: "DSEI Xavante",
+      }),
     ).toBe(false);
   });
 
