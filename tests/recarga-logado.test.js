@@ -10,12 +10,10 @@ import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env.js";
   antes da primeira pintura, e o login fica escondido nessa espera.
 */
 const html = readFileSync("index.html", "utf8");
-const semComentarios = html.replace(/<!--[\s\S]*?-->/g, "");
-const inicio = semComentarios.indexOf("(function marcarSessaoGuardada()");
-const script = semComentarios.slice(
-  inicio,
-  semComentarios.indexOf("</script>", inicio),
-);
+const inicio = html.indexOf("(function marcarSessaoGuardada()");
+const script = html.slice(inicio, html.indexOf("</script>", inicio));
+// O comentário do <head> cita `<body>`; a tag real é a que tem classes.
+const tagBody = html.indexOf("<body class=");
 
 function rodarScript() {
   document.documentElement.className = "";
@@ -31,7 +29,8 @@ describe("recarregar já logado não mostra a tela de acesso", () => {
 
   it("o script roda no <head>, antes do <body>", () => {
     expect(inicio).toBeGreaterThan(-1);
-    expect(inicio).toBeLessThan(semComentarios.indexOf("<body"));
+    expect(tagBody).toBeGreaterThan(-1);
+    expect(inicio).toBeLessThan(tagBody);
   });
 
   it("lê a mesma chave de sessão que o cliente Supabase usa", () => {
@@ -58,7 +57,7 @@ describe("recarregar já logado não mostra a tela de acesso", () => {
   });
 
   it("a regra esconde o login só durante o carregamento", () => {
-    expect(semComentarios).toMatch(
+    expect(html).toMatch(
       /html\.sessao-guardada body\.config-loading #loginScreen\s*\{\s*display:\s*none;/,
     );
   });
