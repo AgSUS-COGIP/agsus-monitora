@@ -276,7 +276,7 @@ import { urlDaPlanilhaGoogle } from "../lib/planilhas.js";
   }
   async function loadAnalisesPermission(){
     const { data, error } = await sb.rpc("usuario_pode_ler_analises");
-    if(error){ canReadAnalisesRpc = null; return; }
+    if(error){ canReadAnalisesRpc = false; return; }
     canReadAnalisesRpc = Array.isArray(data) ? Boolean(data[0]) : Boolean(data);
   }
   function canReadAnalisesFromProfile(){ if(!profile || profile.ativo === false) return false; if(norm(profile.perfil) === "master") return true; return profile.p_paineis === true || profile.p_ind === true || profile.p_config === true || profile.p_admin === true; }

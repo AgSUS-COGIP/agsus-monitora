@@ -1,3 +1,5 @@
+import { hasResource } from "./permissoes-recursos.js";
+
 const ROLE_ALIASES = Object.freeze({
   usuario: "usuario",
   leitor: "usuario",
@@ -59,30 +61,40 @@ function hasLevel(profile, minimum) {
 }
 
 export function canViewCore(profile) {
+  if (profile?.permissoes) return hasResource(profile, "aprovados");
   return normalizeRole(profile) !== "";
 }
 
 export function canManageEditais(profile) {
+  if (profile?.permissoes)
+    return (
+      hasResource(profile, "nucleo", 2) || hasResource(profile, "calendario", 2)
+    );
   return hasLevel(profile, "edital_gestor");
 }
 
 export function canImportApprovedList(profile) {
+  if (profile?.permissoes) return hasResource(profile, "importacao", 2);
   return hasLevel(profile, "edital_gestor");
 }
 
 export function canReplaceApprovedList(profile) {
+  if (profile?.permissoes) return hasResource(profile, "importacao", 3);
   return hasLevel(profile, "admin");
 }
 
 export function canChangeCandidateStatus(profile) {
+  if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");
 }
 
 export function canManageSubJudice(profile) {
+  if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");
 }
 
 export function canManageSettings(profile) {
+  if (profile?.permissoes) return hasResource(profile, "configuracoes", 2);
   return hasLevel(profile, "admin");
 }
 
