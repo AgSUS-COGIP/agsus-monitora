@@ -105,7 +105,9 @@ textarea,
     width: min(86vw, 320px) !important;
     max-width: 320px;
     height: auto !important;
-    z-index: 10020;
+    /* Acima do cabeçalho (system-ui-fixes.css: body.mobile-app .app .top = 10030):
+       com 10020 o topo cobria a logo e o primeiro grupo da gaveta aberta. */
+    z-index: 10036;
     transform: translateX(-105%);
     transition: transform 180ms ease;
     box-shadow: 22px 0 48px rgba(15, 35, 60, 0.24);
@@ -124,7 +126,7 @@ textarea,
   #sidebarOverlay {
     position: fixed;
     inset: 0;
-    z-index: 10010;
+    z-index: 10034;
     background: rgba(5, 22, 40, 0.48);
     backdrop-filter: blur(2px);
   }

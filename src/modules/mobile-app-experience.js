@@ -66,6 +66,17 @@ function bindMobileInteractions() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
 
+  // No `npm run dev:frontend` o Vite serve módulos soltos que mudam a cada
+  // edição. Um service worker guardava versões velhas e a tela de login ficava
+  // carregando pela metade, sem CSS. Em dev, desfaz o que houver registrado.
+  if (import.meta.env?.DEV && import.meta.env?.MODE !== "test") {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registros) => registros.forEach((r) => r.unregister()))
+      .catch(() => {});
+    return;
+  }
+
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch((error) => {
       console.warn(SERVICE_WORKER_WARNING, error);

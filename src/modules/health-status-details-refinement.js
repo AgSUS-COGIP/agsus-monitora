@@ -165,7 +165,7 @@ function compactDetails() {
         return;
       }
       if (value.includes("sem cronograma estruturado")) {
-        badge.title = "Cronograma ainda não estruturado na Equipe Núcleo";
+        badge.title = "Cronograma ainda não cadastrado em Editais";
         badge.innerHTML =
           '<i class="fa-solid fa-calendar-xmark"></i><span>Sem cronograma</span>';
       }

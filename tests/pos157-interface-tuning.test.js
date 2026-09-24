@@ -20,14 +20,30 @@ describe("primeiro paint da tela de login", () => {
   });
 });
 
+/*
+  A densidade do KPI saiu daqui. Este arquivo sobrepunha health-reference-kpis.css
+  com !important e chegou a deixar o rótulo com 9px. Agora o dono é o próprio
+  health-reference-kpis.css, com valores de tokens.css.
+*/
 describe("densidade do dashboard Saúde Indígena", () => {
-  it("vence as regras antigas com important e reduz o KPI sem zoom ou scale", () => {
-    expect(css).toContain("#page-dashboard .kpi > b");
-    expect(css).toContain("clamp(22px, 1.7vw, 28px) !important");
-    expect(css).toContain("min-height: 78px !important");
-    expect(css).toContain("width: 26px !important");
-    expect(css).not.toMatch(/\bzoom\s*:/);
-    expect(css).not.toMatch(/transform:\s*scale\(/);
+  const kpis = readFileSync("src/styles/health-reference-kpis.css", "utf8");
+
+  it("não é mais sobrescrita aqui", () => {
+    expect(css).not.toContain("#page-dashboard .kpi");
+  });
+
+  it("vem de tokens, com rótulo legível e sem zoom ou scale", () => {
+    expect(kpis).toContain("font-size: var(--text-kpi) !important");
+    expect(kpis).toContain("font-size: var(--text-sm) !important");
+    expect(kpis).not.toMatch(/font-size:\s*(8|9|10)(\.\d)?px/);
+    expect(kpis).not.toMatch(/font-weight:\s*(8|9)\d\d/);
+    expect(kpis).not.toMatch(/\bzoom\s*:/);
+    expect(kpis).not.toMatch(/transform:\s*scale\(/);
+  });
+
+  it("tokens.css entra antes de qualquer outro CSS", () => {
+    const primeiroCss = main.match(/import "(\.\/styles\/[^"]+\.css)"/)[1];
+    expect(primeiroCss).toBe("./styles/tokens.css");
   });
 });
 

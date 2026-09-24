@@ -66,6 +66,17 @@ body {
 .hidden {
   display: none !important;
 }
+/*
+  O atributo `hidden` esconde sempre, como `.hidden`. Sem isto, qualquer
+  regra com `display` o vencia em silêncio — e venceu várias vezes: os seis
+  filtros da Saúde Indígena abertos ao mesmo tempo, "Alterações não salvas"
+  sempre visível, a grade antiga de Configurações aparecendo sob as seções
+  novas, as linhas de Editais que o filtro escondia continuando no celular.
+  Cada caso ganhou um `[hidden]` local; esta regra cobre também os próximos.
+*/
+[hidden] {
+  display: none !important;
+}
 .print-only {
   display: none;
 }
@@ -102,6 +113,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
+summary:focus-visible,
 [tabindex]:focus-visible {
   outline: 3px solid #1f8fff !important;
   outline-offset: 2px !important;
@@ -136,9 +148,13 @@ textarea:focus-visible,
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background:
-    linear-gradient(160deg, rgba(0, 18, 45, 0.55), rgba(0, 45, 92, 0.35)),
-    url("https://i.postimg.cc/RFw7RxXC/image.png");
+  /*
+    Fundo liso até a arte configurada chegar (ver platform-shell.css, "Login").
+    Aqui morava uma foto em i.postimg.cc — host de terceiros — que aparecia
+    como tela de acesso toda vez que o restante do CSS atrasava.
+  */
+  background-color: var(--surface-page);
+  background-image: var(--login-background-image, none);
   background-size: cover;
   background-position: center;
   padding: 32px 16px;
@@ -562,40 +578,88 @@ textarea:focus-visible,
   overflow: visible;
   pointer-events: none;
 }
+/*
+  Notificação: cartão claro com ícone na cor do estado (src/modules/notificacao.js).
+  Antes era um bloco verde/vermelho/amarelo saturado com texto branco em
+  negrito — gritava mais que o conteúdo, e o amarelo com texto escuro fugia
+  do padrão dos outros três.
+*/
 .toast {
   pointer-events: auto;
-  border-radius: 14px;
-  padding: 14px 16px;
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  border: 1px solid var(--line);
-  font-weight: 600;
   display: flex;
-  gap: 10px;
   align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  animation: toast-entrada var(--motion-base) var(--ease-standard);
 }
-.toast.ok {
-  background: #22a957;
-  color: #fff;
-  border: 0;
+.toast.is-saindo {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
 }
-.toast.error {
-  background: #e4323b;
-  color: #fff;
-  border: 0;
+.toast-icone {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  font-size: 16px;
 }
-.toast.warn {
-  background: #f5b400;
-  color: #2d2200;
-  border: 0;
+.toast.ok .toast-icone {
+  color: var(--state-success);
 }
-.toast button {
-  margin-left: auto;
+.toast.info .toast-icone {
+  color: var(--state-info);
+}
+.toast.warn .toast-icone {
+  color: var(--state-warning);
+}
+.toast.error .toast-icone {
+  color: var(--state-danger);
+}
+.toast-texto {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 500;
+  line-height: 1.45;
+}
+.toast-fechar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin: -2px 0 -2px auto;
   border: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: inherit;
-  font-weight: 900;
+  color: var(--text-secondary);
+  font-size: 14px;
   cursor: pointer;
+}
+.toast-fechar:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.toast-fechar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+@keyframes toast-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -752,7 +816,12 @@ body.app-fullscreen-fallback .global-side-toggle {
   top: 16px;
 }
 
-@media (min-width: 1481px) {
+/*
+  Barra fixa em todo desktop, a partir de 901px. Antes valia só acima de 1480px:
+  nos notebooks (1366, 1280) a barra rolava com a página, crescia até a altura
+  do conteúdo e o "Sair" ia parar no fim da tela.
+*/
+@media (min-width: 901px) {
   .sidebar {
     position: fixed;
     left: 0;
@@ -891,6 +960,11 @@ body.sidebar-locked .nav button {
   width: 18px;
   text-align: center;
 }
+.nav-ico .nav-svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
 .side-user,
 .side-version {
   margin-top: 14px;
@@ -1028,17 +1102,17 @@ body.external-clean #externalReturnBar {
 }
 .page-title h1 {
   margin: 0;
-  font-size: 30px;
-  line-height: 1.05;
-  color: var(--agsus-azul);
-  font-weight: 800;
-  letter-spacing: -0.035em;
+  font-size: var(--text-2xl);
+  line-height: 1.15;
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 .page-title p {
-  margin: 5px 0 0;
-  color: #526780;
-  font-weight: 700;
-  font-size: 13px;
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: var(--text-md);
 }
 .actions {
   display: flex;
@@ -1560,7 +1634,7 @@ body.external-clean #externalReturnBar {
   color: #7a9bbf !important;
 }
 [data-theme="dark"] .app .table-head {
-  background: linear-gradient(90deg, #0d1f3c, #0e3460, #00568a) !important;
+  background: var(--surface-card);
 }
 [data-theme="dark"] .app .active-filters-bar {
   background: #142035 !important;
@@ -1760,9 +1834,9 @@ body.external-clean #externalReturnBar {
   background: linear-gradient(90deg, var(--navy), var(--cyan));
 }
 .kpi span {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
-  color: #3a4a63;
+  color: var(--text-secondary);
   line-height: 1.15;
   position: relative;
   z-index: 1;
@@ -1867,7 +1941,7 @@ body.external-clean #externalReturnBar {
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 .multi-unit-chip {
   border: 1px solid #b8dcff;
@@ -1984,34 +2058,44 @@ body.external-clean #externalReturnBar {
   margin-top: 10px;
   overflow: hidden;
 }
+/*
+  Cabeçalho de card de tabela: barra clara, não faixa azul. A faixa em gradiente
+  repetia o título da página (que já está no topo) em maiúsculas e competia com
+  o conteúdo. Editais, Lista de Aprovados e Cronograma herdam daqui; a Saúde
+  Indígena já usava a versão clara (health-reference-kpis.css).
+*/
 .table-head {
-  background: var(--agsus-azul);
-  color: #fff;
-  padding: 12px 14px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .table-head h3 {
   margin: 0;
-  font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+}
+.table-head h3 > i {
+  color: var(--brand-primary);
 }
 .table-head input {
   max-width: 390px;
-  min-height: 38px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.35);
+  min-height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-control);
 }
 .table-head input::placeholder {
-  color: #d7e8ff;
+  color: var(--text-secondary);
 }
 .table-meta {
   color: #43566d;
@@ -3088,7 +3172,9 @@ body.sidebar-locked #page-dashboard .details-table {
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 820px) {
+/* 900px, não 820: o JS (SIDEBAR_MOBILE_BREAKPOINT) e o restante do CSS já
+   tratam 900px como gaveta; entre 821 e 900 o conteúdo caía na coluna de 68px. */
+@media (max-width: 900px) {
   .app {
     grid-template-columns: 1fr;
   }
@@ -3193,7 +3279,7 @@ body.sidebar-locked #page-dashboard .details-table {
     grid-template-columns: 1fr;
   }
   .page-title h1 {
-    font-size: 24px;
+    font-size: 20px;
   }
   .table-head {
     align-items: stretch;

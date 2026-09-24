@@ -49,7 +49,21 @@ function valor(css, seletor, propriedade) {
     .filter(Boolean);
   if (!declarados.length)
     throw new Error(`${propriedade} não declarada em ${seletor}`);
-  return declarados[declarados.length - 1];
+  return resolverToken(declarados[declarados.length - 1]);
+}
+
+/*
+  Cor em token (`var(--text-secondary)`) vira o hex do tema claro em tokens.css,
+  para o contraste continuar sendo calculado, não suposto.
+*/
+const tokensCss = semComentarios(readFileSync("src/styles/tokens.css", "utf8"));
+const raizClara = tokensCss.slice(0, tokensCss.indexOf('[data-theme="dark"]'));
+function resolverToken(valorCss) {
+  const nome = valorCss.match(/^var\(\s*(--[\w-]+)/)?.[1];
+  if (!nome) return valorCss;
+  const achado = raizClara.match(new RegExp(`${nome}\\s*:\\s*([^;]+);`));
+  if (!achado) throw new Error(`token ${nome} não existe em tokens.css`);
+  return achado[1].trim();
 }
 
 const canal = (valor) => {
@@ -253,7 +267,7 @@ describe("estados do painel operacional", () => {
   });
 
   it("o estado vazio explica o contexto em vez de dizer só que está vazio", () => {
-    expect(nucleoJs).toContain("Nenhum edital ativo na Equipe Núcleo");
+    expect(nucleoJs).toContain("Nenhum edital ativo");
     expect(nucleoJs).not.toContain("Nenhum resultado");
   });
 

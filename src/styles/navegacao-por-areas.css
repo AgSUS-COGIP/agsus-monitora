@@ -1,0 +1,117 @@
+/*
+  Grupos recolhíveis da barra lateral — `src/modules/navegacao-por-areas.js`.
+
+  O cabeçalho do grupo é um <button> dentro do <p> que `platform-shell.css`
+  já esconde quando a barra recolhe. Como é um botão, as regras genéricas de
+  `.nav button` (app.css, platform-shell.css, nielsen-shell-ux.css e o tema azul
+  de post157-interface-tuning.css, até 0,3,1) o pintariam como item de menu.
+  O seletor abaixo tem 0,4,0 de propósito, para vencê-las sem !important.
+*/
+.nav .nav-group > .nav-grupo__cabecalho > .nav-grupo__alternar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--platform-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+.nav .nav-group > .nav-grupo__cabecalho > .nav-grupo__alternar:hover {
+  color: var(--navy);
+  background: var(--platform-hover);
+}
+.nav .nav-group > .nav-grupo__cabecalho > .nav-grupo__alternar:focus-visible {
+  outline: 2px solid var(--focus-ring, #1f8fff);
+  outline-offset: 2px;
+}
+/* O tema azul da barra (branding) pinta o <p>; o botão herda a cor dele. */
+body.sidebar-theme-dark
+  .nav
+  .nav-group
+  > .nav-grupo__cabecalho
+  > .nav-grupo__alternar,
+body.sidebar-theme-dark
+  .nav
+  .nav-group
+  > .nav-grupo__cabecalho
+  > .nav-grupo__alternar:hover {
+  color: inherit;
+}
+body.sidebar-theme-dark
+  .nav
+  .nav-group
+  > .nav-grupo__cabecalho
+  > .nav-grupo__alternar:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.nav-grupo__cabecalho {
+  /* vence o padding e o margin de `.nav-group > p` em platform-shell.css:291 */
+  padding: 0;
+  margin: 0 0 4px;
+}
+.nav-grupo__titulo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-grupo__seta {
+  font-size: 11px;
+  transition: transform var(--sidebar-slide, 220ms) var(--sidebar-ease, ease);
+}
+.nav-grupo[data-aberto="false"] .nav-grupo__seta {
+  transform: rotate(-90deg);
+}
+.nav-grupo[data-aberto="false"] > .nav-grupo__itens {
+  display: none;
+}
+.nav .nav-group.nav-grupo {
+  margin-top: 12px;
+}
+.nav .nav-group.nav-grupo:first-child {
+  margin-top: 0;
+}
+
+/*
+  Barra recolhida (68px, só desktop — abaixo de 900px ela vira gaveta com texto,
+  ver platform-shell.css:1164): o cabeçalho sai do fluxo e todos os ícones
+  aparecem, inclusive os de grupo fechado. Uma linha fina separa os grupos para
+  a pessoa ainda perceber onde uma área acaba e outra começa.
+*/
+@media (min-width: 901px) {
+  body.sidebar-collapsed .nav-grupo > .nav-grupo__cabecalho,
+  body.sidebar-locked .nav-grupo > .nav-grupo__cabecalho {
+    height: 0;
+    margin: 0;
+  }
+  body.sidebar-collapsed .nav-grupo[data-aberto="false"] > .nav-grupo__itens,
+  body.sidebar-locked .nav-grupo[data-aberto="false"] > .nav-grupo__itens {
+    display: grid;
+  }
+  body.sidebar-collapsed .nav .nav-group.nav-grupo + .nav-grupo,
+  body.sidebar-locked .nav .nav-group.nav-grupo + .nav-grupo {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--platform-border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-grupo__seta {
+    transition: none;
+  }
+}

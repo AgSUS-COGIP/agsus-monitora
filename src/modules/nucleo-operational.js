@@ -104,7 +104,7 @@ function ensureKpis() {
     `
     <section id="nucleoOperationalKpis" class="nucleo-operational-panel">
       <div class="nucleo-operational-heading">
-        <div><span>Acompanhamento operacional</span><h3>Cronogramas e alertas</h3><p>Clique nos indicadores para filtrar a fila da Equipe Núcleo.</p></div>
+        <div><h3>Cronogramas e alertas</h3></div>
         <button id="nucleoOperationalRefresh" type="button" class="btn outline"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Atualizar</button>
       </div>
       <div id="nucleoKpiGrid" class="nucleo-kpi-grid"></div>
@@ -178,13 +178,13 @@ const ESTADOS = {
   loading: {
     classe: "nucleo-summary-loading",
     icone: "fa-spinner fa-spin",
-    titulo: "Carregando os alertas da Equipe Núcleo",
+    titulo: "Carregando os alertas dos editais",
     texto: "Os indicadores aparecem assim que o resumo chegar.",
   },
   empty: {
     classe: "nucleo-summary-empty",
     icone: "fa-folder-open",
-    titulo: "Nenhum edital ativo na Equipe Núcleo",
+    titulo: "Nenhum edital ativo",
     texto:
       "Quando um edital for cadastrado, os indicadores e os alertas de cronograma aparecem aqui.",
   },

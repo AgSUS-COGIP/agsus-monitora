@@ -31,7 +31,7 @@
   isolation: isolate;
   align-items: center;
   justify-content: flex-start;
-  background-color: #4d2270;
+  background-color: var(--surface-page);
   background-image: var(--login-background-image, none);
   background-size: cover;
   background-position: center;
@@ -309,8 +309,8 @@ body.sidebar-locked .side-logo {
   border-radius: 12px;
   color: #475569;
   padding: 5px 8px;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: var(--text-md);
+  font-weight: 600;
 }
 .nav button:hover {
   color: #003b70;
@@ -321,21 +321,18 @@ body.sidebar-locked .side-logo {
   background: #003b70;
   box-shadow: 0 10px 24px -18px rgba(0, 59, 112, 0.95);
 }
+/*
+  Ícone de traço (Lucide, src/lib/icones-da-navegacao.js) sem quadrado de
+  fundo: herda a cor do item. O estado fica na linha (hover e ativo) e, com a
+  barra recolhida, no quadrado de 40px das regras mais abaixo.
+*/
 .nav-ico {
   width: 34px;
   height: 34px;
   flex: 0 0 34px;
   border-radius: 10px;
-  background: #f1f5f9;
-  color: #64748b;
-}
-.nav button:hover .nav-ico {
-  color: #003b70;
-  background: #fff;
-}
-.nav button.active .nav-ico {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: inherit;
 }
 .side-footer {
   flex: 0 0 auto;
@@ -945,14 +942,15 @@ body.sidebar-locked #appScreen .nav button.active:hover .nav-ico {
   background: #00509e;
   color: #fff;
 }
+/* Recolhida no tema azul: ícone solto; só o hover e o ativo ganham quadrado. */
 body.sidebar-theme-dark.sidebar-collapsed #appScreen .nav button .nav-ico,
 body.sidebar-theme-dark.sidebar-locked #appScreen .nav button .nav-ico {
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   color: #fff;
 }
 body.sidebar-theme-dark.sidebar-collapsed #appScreen .nav button:hover .nav-ico,
 body.sidebar-theme-dark.sidebar-locked #appScreen .nav button:hover .nav-ico {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
 }
 body.sidebar-theme-dark.sidebar-collapsed
@@ -1131,8 +1129,8 @@ body.sidebar-locked .side-logout {
   background: #075ea8;
 }
 [data-theme="dark"] .app .nav-ico {
-  background: #1a2d47;
-  color: #7a9bbf;
+  background: transparent;
+  color: inherit;
 }
 [data-theme="dark"] .app .side-logout:hover {
   background: #1a2d47;

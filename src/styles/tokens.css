@@ -1,0 +1,140 @@
+/*
+  Tokens do MONITORA — DESIGN.md, seção 3.
+
+  Um só lugar para cor, tipografia, espaçamento, raio, sombra, movimento e
+  camadas. O nome diz o papel (`--text-secondary`), não a cor, para o tema
+  escuro trocar o valor sem trocar o nome. Os números entre parênteses são a
+  razão de contraste sobre `--surface-card`, medida (não estimada).
+
+  Importado antes de qualquer outro CSS em `src/main.js` e `src/analises/main.js`.
+  Os nomes legados (`--navy`, `--muted`, `--line`…) ainda moram em app.css e
+  analises.css; viram alias destes na fase 1 do plano de migração.
+*/
+:root {
+  /* Marca */
+  --brand-primary: #003b70; /* 11,29 */
+  --brand-primary-strong: #002b54;
+  --brand-accent: #00a8d6; /* só preenchimento decorativo; nunca texto (2,77) */
+  --brand-secondary: #0b8f58;
+
+  /* Superfícies */
+  --surface-page: #f3f7fb;
+  --surface-card: #ffffff;
+  --surface-raised: #f6f9fc;
+  --surface-hover: #f1f5f9;
+  --surface-inverse: #003b70;
+
+  /* Texto */
+  --text-primary: #10243e; /* 15,63 */
+  --text-secondary: #5f6f86; /* 5,12 no card, 4,75 na página */
+  --text-inverse: #ffffff;
+
+  /* Bordas e foco */
+  --border-subtle: #dfe7f0;
+  --border-control: #7d8fa5; /* 3,31 */
+  --focus-ring: #1f8fff;
+
+  /* Estado: texto/ícone | fundo suave */
+  --state-success: #087a4b;
+  --state-success-soft: #e7f5ee;
+  --state-success-strong: #087a4b;
+  --state-warning: #8a5a00;
+  --state-warning-soft: #fdf4d8;
+  --state-warning-fill: #f2b705;
+  --state-danger: #c02634;
+  --state-danger-soft: #fdecee;
+  --state-info: #0f5db7;
+  --state-info-soft: #e8f1fc;
+  --state-neutral: #5f6f86;
+  --state-neutral-soft: #eef2f6;
+
+  /* Séries de gráfico (DESIGN.md, seção 6) */
+  --series-1: #0f5db7;
+  --series-2: #eb6834;
+  --series-3: #0090bc;
+  --series-4: #6d5efc;
+  --series-5: #d55181;
+  --series-6: #8a6d00;
+
+  /* Tipografia */
+  --font-sans: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-kpi: clamp(24px, 1.9vw, 30px);
+
+  /* Espaçamento (base 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Raio */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* Sombra */
+  --shadow-card: 0 1px 2px rgba(15, 35, 60, 0.04);
+  --shadow-raised:
+    0 1px 2px rgba(15, 35, 60, 0.03), 0 12px 32px -24px rgba(15, 35, 60, 0.28);
+  --shadow-overlay: 0 24px 64px -16px rgba(15, 35, 60, 0.32);
+
+  /* Movimento */
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* Camadas */
+  --z-sticky: 100;
+  --z-header: 10010;
+  --z-map-immersive: 12050;
+  --z-exit-dialog: 15000;
+  --z-overlay: 20000;
+  --z-loader: 20025;
+  --z-toast: 20050;
+}
+
+:root[data-theme="dark"] {
+  --brand-primary: #70cfff; /* 9,69 */
+  --brand-primary-strong: #b5e5ff;
+  --brand-accent: #4fdcff;
+  --surface-page: #071421;
+  --surface-card: #0e1e2e;
+  --surface-raised: #14283a;
+  --surface-hover: #1a3146;
+  --surface-inverse: #10273f;
+  --text-primary: #edf4fa; /* 15,21 */
+  --text-secondary: #a8b8c8; /* 8,33 */
+  --text-inverse: #071421;
+  --border-subtle: #294158;
+  --border-control: #6a829a;
+  --focus-ring: #7dd3fc;
+  --state-success: #29b36a;
+  --state-success-soft: rgba(41, 179, 106, 0.16);
+  --state-warning: #f2b705;
+  --state-warning-soft: rgba(242, 183, 5, 0.16);
+  --state-danger: #ff6b76;
+  --state-danger-soft: rgba(255, 107, 118, 0.16);
+  --state-info: #70cfff;
+  --state-info-soft: rgba(112, 207, 255, 0.16);
+  --state-neutral: #a8b8c8;
+  --state-neutral-soft: rgba(168, 184, 200, 0.14);
+  --series-1: #4f8ff0;
+  --series-2: #d95f2b;
+  --series-3: #1a9fc8;
+  --series-4: #8e6cf2;
+  --series-6: #a8861a;
+  --shadow-card: none;
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.38);
+  --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+}

@@ -34,7 +34,7 @@
   min-height: 112px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background-color: #4d2270;
+  background-color: var(--surface-page);
   background-position: center;
   background-size: cover;
   box-shadow: 0 8px 22px rgba(15, 35, 60, 0.1);
@@ -279,6 +279,12 @@
 
 #page-config .config-dirty-indicator i {
   font-size: 7px;
+}
+
+/* O `display` acima vencia o atributo `hidden`: o aviso "Alterações não
+   salvas" aparecia sempre, ao lado de "Nenhuma alteração pendente". */
+#page-config .config-dirty-indicator[hidden] {
+  display: none;
 }
 
 #page-config .config-validation-summary {

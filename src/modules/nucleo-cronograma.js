@@ -1,5 +1,10 @@
 import { exigirSessao } from "../lib/sessao.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
+import {
+  ANO_MAXIMO,
+  ANO_MINIMO,
+  dataPlausivel,
+} from "../lib/datas-do-cronograma.js";
 
 const RPC_GET = "get_monitoramento_cronograma";
 const RPC_SAVE = "salvar_monitoramento_com_cronograma_v2";
@@ -10,6 +15,8 @@ const state = {
   rows: [],
   history: [],
   loading: false,
+  // Alguém mexeu no cronograma desde que o formulário abriu?
+  editorMexido: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -362,7 +369,7 @@ function collectPayload() {
   };
 }
 
-function analyzeRows(payload) {
+function analyzeRows(payload, { exigirMotivo = true } = {}) {
   const errors = [],
     warnings = [];
   if (!payload.edital || !payload.unidade)
@@ -379,6 +386,19 @@ function analyzeRows(payload) {
       errors.push(`${label}: preencha atividade, início e fim.`);
     if (row.data_inicio && row.data_fim && row.data_fim < row.data_inicio)
       errors.push(`${label}: a data final é anterior à inicial.`);
+    /*
+      Ano digitado errado (0202, 2206) era só aviso e salvava: seis etapas
+      foram gravadas assim e apareciam no Cronograma como "(666205 dias)".
+    */
+    for (const [campo, nome] of [
+      ["data_inicio", "início"],
+      ["data_fim", "fim"],
+    ]) {
+      if (row[campo] && !dataPlausivel(row[campo]))
+        errors.push(
+          `${label}: o ano do ${nome} (${row[campo].slice(0, 4)}) não é possível. Use um ano entre ${ANO_MINIMO} e ${ANO_MAXIMO}.`,
+        );
+    }
     const key = txt(row.atividade).toLowerCase();
     if (key && seen.has(key)) errors.push(`${label}: atividade duplicada.`);
     seen.add(key);
@@ -418,14 +438,21 @@ function analyzeRows(payload) {
   )
     errors.push("Status excepcional exige motivo e data da decisão.");
   const reason = txt($("mCronogramaMotivo")?.value);
-  if (!reason) errors.push("Informe o motivo da alteração do cronograma.");
+  if (exigirMotivo && !reason)
+    errors.push("Informe o motivo da alteração do cronograma.");
   return { errors: [...new Set(errors)], warnings: [...new Set(warnings)] };
 }
 
 function renderValidation(force = false) {
   const box = $("cronogramaValidation");
   if (!box) return { errors: [], warnings: [] };
-  const analysis = analyzeRows(collectPayload());
+  /*
+    O motivo só é cobrado depois de mexer no cronograma ou ao salvar: o
+    formulário abria já com "Corrija antes de salvar", antes de qualquer edição.
+  */
+  const analysis = analyzeRows(collectPayload(), {
+    exigirMotivo: force || state.editorMexido,
+  });
   if (!force && !analysis.errors.length && !analysis.warnings.length) {
     box.hidden = true;
     box.innerHTML = "";
@@ -480,6 +507,7 @@ function renderHistory() {
 }
 
 async function loadCronograma(id) {
+  state.editorMexido = false;
   state.rows = [];
   state.history = [];
   if (!id) {
@@ -631,6 +659,7 @@ export function initNucleoCronograma() {
   installSaveWrapper();
   document.addEventListener("input", (event) => {
     if (event.target?.closest?.("#cronogramaEditor")) {
+      state.editorMexido = true;
       updatePreview();
       renderValidation(false);
     }

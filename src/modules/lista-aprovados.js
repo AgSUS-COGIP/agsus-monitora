@@ -22,6 +22,14 @@ import {
 import { ativarMultiSelectBusca } from "./multi-select-busca.js";
 import { createListaConvocacaoController } from "./lista-convocacao.js";
 import { PLANILHAS } from "../lib/planilhas.js";
+import { formatNumberBR } from "../lib/formatters.js";
+import { buscarTodasAsPaginas } from "../lib/paginas-em-paralelo.js";
+
+// A planilha importada traz a modalidade entre aspas ("Ampla Concorrência").
+const semAspas = (valor) =>
+  String(valor ?? "")
+    .trim()
+    .replace(/^["“”']+|["“”']+$/g, "");
 
 const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;
 const MODEL_URL = PLANILHAS.modeloListaAprovados.url;
@@ -29,6 +37,14 @@ const CANDIDATES_PAGE_SIZE = 1000;
 
 /** Linhas por página da tabela. Tem de existir como opção em `#approvedPageSize`. */
 const DEFAULT_PAGE_SIZE = 50;
+const KPI_IDS = [
+  "approvedKpiTotal",
+  "approvedKpiContratado",
+  "approvedKpiDesistente",
+  "approvedKpiMigracao",
+  "approvedKpiDocumentacaoRejeitada",
+  "approvedKpiFimDeFila",
+];
 
 const escMap = {
   "&": "&amp;",
@@ -225,7 +241,8 @@ export function createListaAprovadosController(options = {}) {
 
     Object.entries(values).forEach(([id, value]) => {
       const element = document.getElementById(id);
-      if (element) element.textContent = String(value);
+      // Formato brasileiro: 15.895, não 15895 (DESIGN.md, seção 11).
+      if (element) element.textContent = formatNumberBR(value);
     });
   }
 
@@ -242,7 +259,7 @@ export function createListaAprovadosController(options = {}) {
 
     const info = document.getElementById("approvedPaginacaoInfo");
     if (info)
-      info.textContent = `Mostrando ${from}–${to} de ${total} candidatos`;
+      info.textContent = `Mostrando ${formatNumberBR(from)}–${formatNumberBR(to)} de ${formatNumberBR(total)} candidatos`;
     const atual = document.getElementById("approvedPaginaAtual");
     if (atual) atual.textContent = `Página ${page} de ${totalPages}`;
     const anterior = document.getElementById("approvedPagePrev");
@@ -260,7 +277,7 @@ export function createListaAprovadosController(options = {}) {
     if (!body) return;
     const todas = filterApprovedCandidates(state.candidates, currentFilters());
     if (count)
-      count.textContent = `${todas.length} candidato${todas.length === 1 ? "" : "s"}`;
+      count.textContent = `${formatNumberBR(todas.length)} candidato${todas.length === 1 ? "" : "s"}`;
 
     // `paginate` corrige a página: filtrar pode ter encurtado a lista para
     // aquém da que estava aberta.
@@ -288,12 +305,14 @@ export function createListaAprovadosController(options = {}) {
             const remove = canRemove
               ? `<button class="btn icon red" type="button" data-approved-action="remove-subjudice" data-candidate-id="${attr(row.candidato_id)}" title="Remover sub judice"><i class="fa-solid fa-user-minus"></i></button>`
               : "";
+            // Nome primeiro: é por ele que se procura; na última coluna ficava
+            // cortado pela rolagem horizontal.
             return `<tr>
+            <td><div class="approved-name"><strong>${esc(row.nome)}</strong>${row.sub_judice ? '<span class="approved-tag subjudice">SUB JUDICE</span>' : ""}<small>${esc(row.edital || "")}${inactive ? " · Lista inativa" : ""}</small></div></td>
             <td>${esc(row.cargo || "-")}</td>
-            <td>${esc(row.modalidade || "-")}</td>
+            <td>${esc(semAspas(row.modalidade) || "-")}</td>
             <td class="num">${row.classificacao ?? "-"}</td>
             <td class="num">${esc(formatScore(row.nota))}</td>
-            <td><div class="approved-name"><strong>${esc(row.nome)}</strong>${row.sub_judice ? '<span class="approved-tag subjudice">SUB JUDICE</span>' : ""}<small>${esc(row.edital || "")}${inactive ? " · Lista inativa" : ""}</small></div></td>
             <td><span class="approved-status ${statusClass(status)}">${esc(status || "Sem status")}</span></td>
             <td class="approved-actions">${action}${remove}</td>
           </tr>`;
@@ -322,23 +341,19 @@ export function createListaAprovadosController(options = {}) {
     convocacao.render();
   }
 
-  async function fetchAllCandidates() {
-    const rows = [];
-    let from = 0;
-
-    while (true) {
-      const result = await sb
-        .rpc("listar_candidatos_aprovados")
-        .range(from, from + CANDIDATES_PAGE_SIZE - 1);
-      if (result.error) return { data: rows, error: result.error };
-
-      const batch = Array.isArray(result.data) ? result.data : [];
-      rows.push(...batch);
-      if (batch.length < CANDIDATES_PAGE_SIZE) break;
-      from += CANDIDATES_PAGE_SIZE;
-    }
-
-    return { data: rows, error: null };
+  // Páginas em paralelo: em sequência eram 16 pedidos de ~750 ms (12 s).
+  function fetchAllCandidates() {
+    return buscarTodasAsPaginas(
+      (inicio, fim, { contar }) =>
+        sb
+          .rpc(
+            "listar_candidatos_aprovados",
+            {},
+            contar ? { count: "exact" } : undefined,
+          )
+          .range(inicio, fim),
+      { tamanho: CANDIDATES_PAGE_SIZE, concorrencia: 6 },
+    );
   }
 
   async function refresh(options = {}) {
@@ -380,9 +395,18 @@ export function createListaAprovadosController(options = {}) {
     return true;
   }
 
+  /*
+    Primeira abertura sem o carregamento de tela cheia: ele bloqueava a
+    navegação inteira enquanto a lista chegava. A tabela já mostra
+    "Carregando lista de aprovados..." e os KPIs mostram "…", não "0".
+  */
   async function ensureLoaded() {
-    if (!state.loaded) await refresh();
-    else render();
+    if (state.loaded) return render();
+    for (const id of KPI_IDS) {
+      const elemento = document.getElementById(id);
+      if (elemento) elemento.textContent = "…";
+    }
+    await refresh({ loader: false });
   }
 
   function openStatusModal(candidateId) {
@@ -580,7 +604,7 @@ export function createListaAprovadosController(options = {}) {
             </div>
             <div class="approved-import-summary-detail compact">
               <span>Candidatos</span>
-              <strong>${esc(String(list.total_candidatos ?? 0))} candidatos</strong>
+              <strong>${esc(formatNumberBR(list.total_candidatos ?? 0))} candidatos</strong>
             </div>
           </div>
           ${canReplace ? `<div class="approved-import-replace-warning"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>Atenção: enviar um novo XLSX substituirá a lista atual.</span></div>` : ""}`
@@ -608,7 +632,7 @@ export function createListaAprovadosController(options = {}) {
       note.textContent =
         list && !canReplace
           ? `A lista já foi importada. O perfil ${role || "atual"} pode ativar/inativar, mas somente admin pode substituir ou remover o XLSX.`
-          : "A importação cria candidatos vinculados a este edital pelo ID do registro da Equipe Núcleo.";
+          : "A importação cria candidatos vinculados a este edital pelo ID do edital.";
     }
   }
 

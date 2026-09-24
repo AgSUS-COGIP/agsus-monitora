@@ -123,7 +123,9 @@ export function ativarMultiSelectBusca(alvo, config = {}) {
   select.tabIndex = -1;
 
   const raiz = document.createElement("div");
-  raiz.className = "multi-select";
+  // `multi-select-busca` separa este componente do filtro legado da Saúde
+  // Indígena, que usa as mesmas classes mas abre por `.open`, não por `hidden`.
+  raiz.className = "multi-select multi-select-busca";
   raiz.innerHTML = `
     <button type="button" class="multi-select-trigger" aria-haspopup="listbox" aria-expanded="false">
       <span class="multi-select-label"></span>

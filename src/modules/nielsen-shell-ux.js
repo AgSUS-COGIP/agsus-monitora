@@ -1,3 +1,4 @@
+import { iconeDeSair } from "../lib/icones-da-navegacao.js";
 const THEME_STORAGE_KEY = "agsus_dark_mode_v1";
 const PRESENCE_SYNC_GRACE_MS = 12000;
 const PRESENCE_WATCHDOG_MS = 5000;
@@ -312,8 +313,8 @@ function installSidebarLogout() {
   button.className = "side-logout";
   button.title = "Sair da sessão atual";
   button.setAttribute("aria-label", "Sair da sessão atual");
-  button.innerHTML =
-    '<i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>Sair</span>';
+  // Mesmo traço dos ícones da barra lateral (src/lib/icones-da-navegacao.js).
+  button.innerHTML = `${iconeDeSair()}<span>Sair</span>`;
   button.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -418,7 +419,7 @@ function refineConfigurationCopy() {
   if (heading) heading.textContent = "Ajustes do sistema";
   if (description) {
     description.textContent =
-      "Gerencie acessos, identidade visual, painéis e parâmetros técnicos em um único lugar.";
+      "Acessos, marca, painéis e parâmetros técnicos.";
   }
   if (search) search.setAttribute("placeholder", "Buscar configuração...");
   if (accessTitle) accessTitle.textContent = "Acessos e permissões";

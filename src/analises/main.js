@@ -1,3 +1,5 @@
+import "../styles/tokens.css";
+import "../styles/icones-lucide.css";
 import { installCsvBlobSecurityGuard } from "../lib/csv-security.js";
 import { updateAraraGuide } from "../modules/arara-guide.js";
 import { initAraraSpeakingEffects } from "../modules/arara-speaking-effects.js";

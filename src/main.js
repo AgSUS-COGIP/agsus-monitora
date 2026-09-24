@@ -1,3 +1,5 @@
+import "./styles/tokens.css";
+import "./styles/icones-lucide.css";
 import { hasSupabaseEnv } from "./lib/env.js";
 // Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
 import "./lib/access-branding-boot.js";
@@ -47,6 +49,7 @@ import "./styles/nielsen-shell-ux.css";
 import "./styles/post-152-regression-fixes.css";
 import "./styles/post157-interface-tuning.css";
 import "./styles/colapsar-a-sidebar.css";
+import "./styles/navegacao-por-areas.css";
 import "./styles/lista-aprovados.css";
 import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
@@ -94,6 +97,9 @@ import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { initColapsarDaSidebar } from "./modules/colapsar-a-sidebar.js";
 import { createListaAprovadosController } from "./modules/lista-aprovados.js";
 import { createCalendarioEditaisController } from "./modules/calendario-editais.js";
+
+// Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
+document.documentElement.classList.remove("vite-dev-carregando");
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();

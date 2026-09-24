@@ -12,65 +12,6 @@
   background: var(--login-panel-color, #ffffff);
 }
 
-/*
- * Densidade do dashboard Saúde Indígena. As regras de health-reference-kpis.css
- * usam !important; estes ajustes precisam da mesma prioridade porque este ficheiro
- * é carregado depois e representa a decisão visual mais recente.
- */
-body:has(#page-dashboard.active) .page-title h1 {
-  font-size: 22px !important;
-}
-
-body:has(#page-dashboard.active) .page-title p {
-  font-size: 11px !important;
-}
-
-#page-dashboard .kpis-main {
-  gap: 7px !important;
-}
-
-#page-dashboard .kpi {
-  min-height: 78px !important;
-  padding: 9px 11px !important;
-  border-radius: 11px !important;
-}
-
-#page-dashboard .kpi > span {
-  min-height: 24px !important;
-  gap: 6px !important;
-  font-size: 9px !important;
-  line-height: 1.15 !important;
-}
-
-#page-dashboard .kpi > span > i {
-  width: 26px !important;
-  height: 26px !important;
-  flex-basis: 26px !important;
-  border-radius: 8px !important;
-  font-size: 11px !important;
-}
-
-#page-dashboard .kpi > b {
-  margin-top: 3px !important;
-  font-size: clamp(22px, 1.7vw, 28px) !important;
-  line-height: 0.98 !important;
-  letter-spacing: -0.03em !important;
-}
-
-#page-dashboard .kpi-rate {
-  margin-top: 4px !important;
-}
-
-#page-dashboard .kpi-rate-pct,
-#page-dashboard .kpi .kpi-note {
-  font-size: 8.5px !important;
-}
-
-#page-dashboard #panicChip {
-  padding: 3px 7px !important;
-  font-size: 8px !important;
-}
-
 /* Sidebar configurável. A classe de contraste é derivada em JS da cor escolhida. */
 .sidebar {
   background: var(--sidebar-custom-bg, #ffffff);
@@ -117,7 +58,7 @@ body.sidebar-theme-dark .side-user {
 
 body.sidebar-theme-dark .nav-ico {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
+  background: transparent;
 }
 
 body.sidebar-theme-dark .nav button:hover,
@@ -129,7 +70,7 @@ body.sidebar-theme-dark .side-logout:hover {
 body.sidebar-theme-dark .nav button:hover .nav-ico,
 body.sidebar-theme-dark .nav button.active .nav-ico {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.14);
+  background: transparent;
 }
 
 body.sidebar-theme-dark .nav button.active {
@@ -292,14 +233,6 @@ body.sidebar-theme-dark .side-brand-copy small {
 }
 
 @media (max-width: 900px) {
-  body:has(#page-dashboard.active) .page-title h1 {
-    font-size: 20px !important;
-  }
-
-  #page-dashboard .kpi > b {
-    font-size: 22px !important;
-  }
-
   .sidebar-logo-manager {
     grid-template-columns: 1fr;
   }

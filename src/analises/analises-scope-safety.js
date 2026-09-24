@@ -51,7 +51,7 @@ function setPending(pending) {
   if (exportBtn) {
     exportBtn.disabled = pending;
     exportBtn.title = pending
-      ? "Consulte uma unidade ou edital antes de exportar"
+      ? "Escolha uma unidade ou edital para exportar"
       : "";
   }
 }

@@ -42,12 +42,10 @@ function ensureIntro(documentRef) {
     intro.innerHTML = `
       <div>
         <strong>Processos seletivos</strong>
-        <span>Use a busca ou os filtros do topo. Clique em uma linha para consultar o cronograma.</span>
       </div>
       <div class="health-details-legend">
-        <span><i class="fa-solid fa-calendar-days health-legend-icon deadline"></i> prazo do edital</span>
-        <span><i class="fa-solid fa-route health-legend-icon schedule"></i> próxima etapa</span>
-        <span><i class="fa-solid fa-circle-info health-legend-icon details"></i> abrir detalhes</span>
+        <span><i class="fa-solid fa-calendar-days health-legend-icon deadline"></i> Prazo do edital</span>
+        <span><i class="fa-solid fa-route health-legend-icon schedule"></i> Próxima etapa</span>
       </div>`;
     meta.insertAdjacentElement("beforebegin", intro);
   }
@@ -433,7 +431,13 @@ function ensureOperationalPlaceholders(documentRef) {
 
     const realBadge = cell.querySelector(".health-row-operational");
     const placeholder = cell.querySelector(".health-operational-loading");
-    if (realBadge) {
+    /*
+      `data-health-detail-id` chega com os dados de cronograma
+      (health-status-details.js). Depois disso, linha sem selo é linha que não
+      tem selo — o refinement remove o dos editais concluídos e cancelados —, e
+      o "Carregando cronograma..." ficava nela para sempre (83 de 99 linhas).
+    */
+    if (realBadge || row.dataset.healthDetailId) {
       placeholder?.remove();
       return;
     }

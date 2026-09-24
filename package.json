@@ -30,6 +30,7 @@
     "aya:bridge": "node scripts/aya-local-bridge.mjs",
     "aya:servico": "node scripts/aya-servico.mjs",
     "aya:conhecimento": "node scripts/compilar-conhecimento-aya.mjs",
+    "icones": "node scripts/gerar-icones-lucide.mjs",
     "start": "node server/servidor.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test:smoke:servidor": "node scripts/test-servidor-smoke.mjs"

@@ -1,6 +1,7 @@
 const MOBILE_BREAKPOINT = 900;
 const MAX_PRIMARY_ITEMS = 4;
-const NAV_ITEM_SELECTOR = "#nav a, #nav button";
+// Só destinos: o cabeçalho dos grupos da barra lateral também é um <button>.
+const NAV_ITEM_SELECTOR = "#nav a, #nav button[data-view]";
 const DEFAULT_ICON_CLASS = "fa-solid fa-circle";
 const MORE_BUTTON_HTML =
   '<i class="fa-solid fa-bars" aria-hidden="true"></i><span>Mais</span>';
@@ -19,12 +20,18 @@ function getIconClass(element) {
 function isUsableSidebarItem(element) {
   if (!(element instanceof HTMLElement)) return false;
   if (element.hidden || element.closest("[hidden], .hidden")) return false;
+  // Grupo recolhido na barra lateral continua sendo destino válido aqui.
+  if (element.closest('.nav-grupo[data-aberto="false"]')) return true;
 
   const style = window.getComputedStyle(element);
   if (style.display === "none" || style.visibility === "hidden") return false;
 
   const label = getLabel(element).toLowerCase();
   return !label.includes("sair") && !label.includes("logout");
+}
+
+function ehPainelExterno(element) {
+  return String(element.dataset?.view || "").startsWith("panel:") ? 1 : 0;
 }
 
 function collectPrimaryItems() {
@@ -43,6 +50,10 @@ function collectPrimaryItems() {
       seen.add(key);
       return true;
     })
+    // Telas do próprio MONITORA antes dos painéis externos: com a barra lateral
+    // agrupada por área, os painéis da Saúde Indígena vinham antes de Editais,
+    // Cronograma e Aprovados e ocupavam os quatro atalhos. `sort` é estável.
+    .sort((a, b) => ehPainelExterno(a) - ehPainelExterno(b))
     .slice(0, MAX_PRIMARY_ITEMS);
 }
 
@@ -68,6 +79,8 @@ function createNavigationItem(source, navigation, index) {
   if (!source.id) source.id = `mobileNavSource${index}`;
 
   const label = getLabel(source);
+  // A barra lateral usa SVG (Lucide); a barra de baixo copia o mesmo desenho.
+  const svg = source.querySelector("svg")?.outerHTML;
   const iconClass = getIconClass(source);
   const button = document.createElement("button");
 
@@ -75,7 +88,7 @@ function createNavigationItem(source, navigation, index) {
   button.className = "mobile-bottom-nav__item";
   button.dataset.sourceId = source.id;
   button.setAttribute("aria-label", label);
-  button.innerHTML = `<i class="${iconClass}" aria-hidden="true"></i><span>${label}</span>`;
+  button.innerHTML = `${svg || `<i class="${iconClass}" aria-hidden="true"></i>`}<span>${label}</span>`;
   button.addEventListener("click", () => {
     source.click();
     setActiveItem(source, navigation);

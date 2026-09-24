@@ -31,11 +31,6 @@
   z-index: -1;
 }
 
-.visual-polish-ready .kpi span {
-  font-size: 11px;
-  letter-spacing: 0.02em;
-}
-
 .visual-polish-ready .kpi b {
   font-size: clamp(26px, 3vw, 36px);
   font-variant-numeric: tabular-nums;
@@ -125,11 +120,6 @@
 
 .visual-polish-ready .table-card {
   overflow: clip;
-}
-
-.visual-polish-ready .table-head {
-  background: linear-gradient(135deg, #003b70, #006db8);
-  color: #fff;
 }
 
 .visual-polish-ready #tableSearch {
