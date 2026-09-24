@@ -71,8 +71,9 @@
 #page-dashboard .kpi {
   display: flex !important;
   flex-direction: column;
-  min-height: 112px !important;
-  padding: var(--space-4) !important;
+  /* Compacto: rótulo e número, sem barra de proporção (tirada a pedido). */
+  min-height: 0 !important;
+  padding: var(--space-3) var(--space-4) !important;
   overflow: visible !important;
   isolation: auto !important;
   transition:
@@ -91,7 +92,7 @@
   display: flex !important;
   align-items: center !important;
   gap: var(--space-2) !important;
-  min-height: 32px !important;
+  min-height: 24px !important;
   color: var(--text-secondary) !important;
   font-size: var(--text-sm) !important;
   font-weight: 600 !important;
@@ -104,12 +105,12 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 32px !important;
-  height: 32px !important;
-  flex: 0 0 32px !important;
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
   margin: 0 !important;
-  border-radius: var(--radius-md) !important;
-  font-size: 14px !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 13px !important;
   opacity: 1 !important;
 }
 #page-dashboard .kpi.ag-navy > span > i,
@@ -135,24 +136,14 @@
 }
 #page-dashboard .kpi > b {
   display: block !important;
-  margin-top: var(--space-3) !important;
+  margin-top: var(--space-2) !important;
   color: var(--text-primary) !important;
-  font-size: var(--text-kpi) !important;
+  font-size: var(--text-kpi-sm) !important;
   font-weight: 700 !important;
   font-variant-numeric: tabular-nums;
   line-height: 1 !important;
   letter-spacing: -0.03em !important;
 }
-#page-dashboard .kpi-rate {
-  justify-content: flex-start;
-  margin-top: auto !important;
-  padding-top: var(--space-3);
-}
-#page-dashboard .kpi-rate-bar {
-  height: 4px !important;
-  background: var(--state-neutral-soft) !important;
-}
-#page-dashboard .kpi-rate-pct,
 #page-dashboard .kpi .kpi-note {
   color: var(--text-secondary) !important;
   font-size: var(--text-xs) !important;
@@ -274,7 +265,6 @@
 /* No celular ficam dois por linha: um por linha fazia rolar seis telas de cards. */
 @media (max-width: 460px) {
   #page-dashboard .kpi {
-    min-height: 96px !important;
     padding: var(--space-3) !important;
   }
 }

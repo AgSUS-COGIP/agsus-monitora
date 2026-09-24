@@ -29,6 +29,7 @@
   --text-xl: 18px;
   --text-2xl: 22px;
   --text-kpi: clamp(24px, 1.9vw, 30px);
+  --text-kpi-sm: clamp(20px, 1.5vw, 24px); /* KPI compacto da Saúde Indígena */
 
   /* Espaçamento, base de 4px. */
   --space-1: 4px;

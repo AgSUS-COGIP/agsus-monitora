@@ -3196,41 +3196,8 @@ function renderKpis() {
     kCriticos.textContent = fmt(filtered.filter(isRiscoAtivo).length);
   if (kInscritos) kInscritos.textContent = fmt(inscritos);
 
-  // Taxa de preenchimento: o alvo correto é o card .kpi, não o <b>.
-  // Na versão anterior a barra era injetada dentro do número do KPI,
-  // quebrando a semântica visual e podendo deixar barras antigas.
-  function setRate(valueElementId, pct, color) {
-    const valueEl = $(valueElementId);
-    const card = valueEl?.closest(".kpi");
-    if (!card) return;
-    let bar = card.querySelector(".kpi-rate");
-    if (!bar) {
-      bar = document.createElement("div");
-      bar.className = "kpi-rate";
-      bar.innerHTML = `<div class="kpi-rate-bar"><div class="kpi-rate-fill"></div></div><span class="kpi-rate-pct"></span>`;
-      card.appendChild(bar);
-    }
-    const safePct = Math.max(
-      0,
-      Math.min(100, Number.isFinite(Number(pct)) ? Number(pct) : 0),
-    );
-    const fill = bar.querySelector(".kpi-rate-fill");
-    const label = bar.querySelector(".kpi-rate-pct");
-    if (fill) fill.style.cssText = `width:${safePct}%;background:${color}`;
-    if (label) label.textContent = `${safePct}% das vagas`;
-  }
-  function clearRate(valueElementId) {
-    const card = $(valueElementId)?.closest(".kpi");
-    card?.querySelector(".kpi-rate")?.remove();
-  }
-
-  if (vagas) {
-    setRate("kContratados", Math.round((contrat / vagas) * 100), "#0b8f58");
-    setRate("kOciosas", Math.round((ociosas / vagas) * 100), "#d92d3a");
-  } else {
-    clearRate("kContratados");
-    clearRate("kOciosas");
-  }
+  // Sem a barra "NN% das vagas" sob Contratações e Ociosas: o KPI mostra o
+  // número; a proporção pedia leitura extra e alongava os cards.
 
   const criticalActive = isCriticalRiskFilterActive();
   const criticalCard = $("kpiCriticosCard");

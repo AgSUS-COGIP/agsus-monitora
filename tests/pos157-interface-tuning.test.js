@@ -33,7 +33,7 @@ describe("densidade do dashboard Saúde Indígena", () => {
   });
 
   it("vem de tokens, com rótulo legível e sem zoom ou scale", () => {
-    expect(kpis).toContain("font-size: var(--text-kpi) !important");
+    expect(kpis).toContain("font-size: var(--text-kpi-sm) !important");
     expect(kpis).toContain("font-size: var(--text-sm) !important");
     expect(kpis).not.toMatch(/font-size:\s*(8|9|10)(\.\d)?px/);
     expect(kpis).not.toMatch(/font-weight:\s*(8|9)\d\d/);
