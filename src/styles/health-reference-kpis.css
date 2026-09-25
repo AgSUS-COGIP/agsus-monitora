@@ -23,14 +23,23 @@
 }
 
 /*
-  Sem moldura: filtros, gráficos e tabela ficam direto na página (DS 9.4).
+  Filtros e tabela em card, como os KPIs (exceção aceita ao DS 9.4, a pedido do
+  responsável em 25/09/2026): fundo claro, borda sutil, raio de 8px, sem sombra.
+  O invólucro do mapa e o dos gráficos continuam sem moldura, porque o card é o
+  painel de dentro (.health-map-pane) — card dentro de card não.
   Vence app.css ([data-theme="dark"] .app .card, .filter-card, .panel-pad…) e
   mobile-app.css (.card, .filter-card, .table-card no celular).
 */
 #page-dashboard .filter-card,
-#page-dashboard .map-card,
-#page-dashboard .panel-pad,
 #page-dashboard .table-card {
+  padding: var(--space-4) !important;
+  background: var(--surface-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: none !important;
+}
+#page-dashboard .map-card,
+#page-dashboard .panel-pad {
   padding: 0 !important;
   background: transparent !important;
   border: 0 !important;
@@ -39,15 +48,15 @@
 }
 
 /*
-  Superfície do DS 11.6 onde tirar a moldura quebraria a leitura: o mapa (com
-  cabeçalho, lista e legenda) e o destaque das unidades com mais de um
-  processo. Fundo sutil, sem borda, sem sombra. Vence as mesmas regras de
-  app.css e mobile-app.css citadas acima.
+  O mapa (com cabeçalho, lista e legenda) e o destaque das unidades com mais de
+  um processo ficam em card, como os KPIs (exceção aceita, 25/09/2026): fundo
+  claro, borda sutil, sem sombra. Vence as mesmas regras de app.css e
+  mobile-app.css citadas acima.
 */
 #page-dashboard .multi-units-card,
 #page-dashboard .health-map-pane {
-  background: var(--surface-raised) !important;
-  border: 0 !important;
+  background: var(--surface-card) !important;
+  border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: none !important;
 }
@@ -83,13 +92,14 @@
 }
 
 /*
-  KPIs: faixa contínua (DS 11.7). Rótulo em `label`, valor em `metric` com
-  algarismos tabulares; 4 colunas a partir de 1280px, 2 a partir de 768px e 1
-  abaixo, com 32px entre colunas. Ícone pequeno na cor do rótulo, sem tile.
+  KPIs em cards — exceção aceita ao DS 11.7 (faixa sem card), a pedido do
+  responsável em 25/09/2026: os cards leem melhor nesta tela. Seguem o DS 11.6
+  para cards (fundo claro, borda sutil, raio de 8px, sem sombra). Uma linha
+  quando cabe (6 cards em tela larga), quebrando para menos colunas.
 */
 #page-dashboard .kpis-main {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-6) var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-3);
 }
 #page-dashboard .kpi {
   position: relative;
@@ -98,23 +108,19 @@
   align-items: flex-start;
   min-width: 0;
   min-height: 0;
-  padding: 0;
+  padding: var(--space-3) var(--space-4);
   overflow: visible;
-  background: transparent;
-  border: 0;
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: none;
   color: var(--text-primary);
   font: inherit;
   text-align: left;
 }
-/* O KPI que filtra (Processos críticos): o bloco inteiro é o alvo (DS 11.7). */
-/* O padding de 12px sai por fora da coluna, para o texto alinhar com os vizinhos. */
+/* O KPI que filtra (Processos críticos): o card inteiro é o alvo (DS 11.6). */
 #page-dashboard .kpi-clickable {
-  width: calc(100% + var(--space-3) * 2);
-  max-width: none;
-  margin: calc(var(--space-3) * -1);
-  padding: var(--space-3);
+  width: 100%;
   appearance: none;
   cursor: pointer;
 }
@@ -126,6 +132,7 @@
   outline-offset: 2px;
 }
 #page-dashboard .kpi.active-filter {
+  border-color: var(--brand-primary);
   background: var(--state-info-soft);
 }
 #page-dashboard .kpi > span {
@@ -142,19 +149,38 @@
   flex-wrap: wrap;
 }
 #page-dashboard .kpi > span > i {
-  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
   /* vencem o style="margin-right: 5px; opacity: 0.7" do index.html */
   margin: 0 !important;
   opacity: 1 !important;
-  color: var(--text-secondary);
-  font-size: 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--state-info);
+  background: var(--state-info-soft);
+}
+#page-dashboard .kpi.ag-green > span > i {
+  color: var(--state-success);
+  background: var(--state-success-soft);
+}
+#page-dashboard .kpi.ag-yellow > span > i {
+  color: var(--state-warning);
+  background: var(--state-warning-soft);
+}
+#page-dashboard .kpi.ag-red > span > i {
+  color: var(--state-danger);
+  background: var(--state-danger-soft);
 }
 #page-dashboard .kpi > b {
   display: block;
   margin-top: var(--space-1);
   color: var(--text-primary);
-  font-size: var(--text-metric);
-  line-height: var(--leading-metric);
+  font-size: var(--text-metric-sm);
+  line-height: var(--leading-metric-sm);
   font-weight: 600;
   letter-spacing: var(--tracking-metric);
   font-variant-numeric: tabular-nums;
@@ -263,13 +289,8 @@
   color: var(--text-primary);
 }
 
-@media (max-width: 1279px) {
-  #page-dashboard .kpis-main {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 @media (max-width: 767px) {
   #page-dashboard .kpis-main {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -194,19 +194,23 @@ que compete com o conteúdo. A cor vai para o tile do ícone e para o indicador,
 
 ### Indicador — `.kpi`, `.approved-kpi`
 
-Faixa contínua, sem card (Design System 11.7). Feito na Visão geral da Saúde Indígena
-(`health-reference-kpis.css`); Editais e Aprovados ainda usam cartão (seção 12).
+**Card** — exceção aceita ao Design System 11.7 (que pede faixa sem card), por decisão do
+responsável em 25/09/2026: os KPIs em card leem melhor no MONITORA. O card segue o DS 11.6.
+Feito na Visão geral da Saúde Indígena (`health-reference-kpis.css`).
 
 ```
-[ícone] Rótulo em cinza          --text-label/500 --color-text-secondary · ícone 16px, sem tile
-1.308                            --text-metric/600 tabular-nums --color-text-primary
+┌──────────────────────────┐   --surface-card · borda 1px --border-subtle · --radius-lg · sem sombra
+│ [▣] Rótulo em cinza      │   --text-label/500 --text-secondary · ícone 13px num tile de 24px
+│ 1.308                    │   --text-metric-sm/600 tabular-nums --text-primary
+└──────────────────────────┘
 ```
 
-- Grade de 4 colunas a partir de 1280px, 2 a partir de 768px e 1 abaixo, com 32px entre colunas.
-  Sem borda, sem fundo, sem sombra.
-- KPI clicável (ex.: Processos críticos, que filtra): o bloco inteiro é o alvo, com hover
-  `--color-bg-muted`, `--radius-lg`, padding de 12px (compensado por margem negativa, para o
-  texto alinhar com os vizinhos) e foco visível.
+- Tile do ícone na cor do estado (`--state-*` / `--state-*-soft`): azul por padrão, verde para
+  contratação, vermelho para vagas ociosas, amarelo para processos críticos.
+- Grade `repeat(auto-fit, minmax(170px, 1fr))` com 12px de gap: 6 numa linha em tela larga,
+  quebrando conforme a largura; 2 colunas abaixo de 768px.
+- KPI clicável (ex.: Processos críticos, que filtra): o card inteiro é o alvo, hover
+  `--surface-hover`, foco visível; filtro ativo com borda `--brand-primary` e fundo `--state-info-soft`.
 
 - Todos os KPIs de uma fileira têm o mesmo tratamento e a mesma altura. O indicador fica
   preso ao pé (`margin-top: auto`).
@@ -445,8 +449,8 @@ mutirão.
 | `box-shadow` | 145 | só menus, popovers, modais e toasts |
 | `!important` | 493 | < 50 (seção 8) |
 | Hex chumbado em CSS | 1579 | só dentro de `tokens.css` |
-| KPIs em card | Editais, Aprovados (Saúde Indígena feita) | faixa contínua, sem card (DS 11.7) |
-| Tabelas dentro de card, com borda | várias telas (na Saúde Indígena sem card, mas o `.table-wrap` ainda tem borda) | tabela direto na página (DS 11.4) |
+| **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena; Editais e Aprovados ainda com o card antigo. | Manter card; alinhar Editais e Aprovados ao mesmo card. |
+| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). | Manter card; não aninhar card dentro de card. |
 | Botão verde arredondado (`.btn.green`) | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu | `--color-action-primary`, `--radius-md`, sem sombra |
 | Modo escuro | existe | fora do escopo do DS: manter, sem investir |
 | **Exceção aceita:** cor da barra lateral | Segue a cor configurada em Configurações → Aparência (`ui_sidebar_background_color`), identidade do MONITORA — exceção aceita ao `--color-sidebar-bg` oficial (decisão do responsável, 25/09/2026). | Não trocar. |
