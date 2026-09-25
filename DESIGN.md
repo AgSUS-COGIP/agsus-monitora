@@ -200,7 +200,7 @@ Feito na Visão geral da Saúde Indígena (`health-reference-kpis.css`).
 
 ```
 ┌──────────────────────────┐   --surface-card · borda 1px --border-subtle · --radius-lg · sem sombra
-│ [▣] Rótulo em cinza      │   --text-label/500 --text-secondary · ícone 13px num tile de 24px
+│ [▣] Rótulo em cinza      │   --text-caption/500 --text-secondary · ícone 13px num tile de 24px, 6px até o texto
 │ 1.308                    │   --text-metric-sm/600 tabular-nums --text-primary
 └──────────────────────────┘
 ```
