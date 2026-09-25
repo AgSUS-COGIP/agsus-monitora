@@ -450,7 +450,7 @@ mutirão.
 | `!important` | 493 | < 50 (seção 8) |
 | Hex chumbado em CSS | 1579 | só dentro de `tokens.css` |
 | **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena; Editais e Aprovados ainda com o card antigo. | Manter card; alinhar Editais e Aprovados ao mesmo card. |
-| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). | Manter card; não aninhar card dentro de card. |
+| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). | Manter card; não aninhar card dentro de card. Entre os blocos, 12px (ritmo compacto de antes), não os 48px de seção do DS 5.2. |
 | Botão verde arredondado (`.btn.green`) | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu | `--color-action-primary`, `--radius-md`, sem sombra |
 | Modo escuro | existe | fora do escopo do DS: manter, sem investir |
 | **Exceção aceita:** cor da barra lateral | Segue a cor configurada em Configurações → Aparência (`ui_sidebar_background_color`), identidade do MONITORA — exceção aceita ao `--color-sidebar-bg` oficial (decisão do responsável, 25/09/2026). | Não trocar. |
