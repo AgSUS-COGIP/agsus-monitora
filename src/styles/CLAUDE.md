@@ -8,7 +8,6 @@
   os outros. Por isso perde empates e acumulou `!important`.
 - Os demais são importados por `src/main.js`, **em ordem**. Em empate de especificidade, vence o último.
 - `runtime-critical-fixes.css` é importado por `src/modules/connectivity-status.js`, não pelo `main.js`.
-- `pwa-lifecycle.css` não é importado por ninguém (possível órfão).
 - `health-reference-kpis.css` domina `#page-dashboard` com `#id … !important`. `barra-lateral.css`
   usa `#appScreen` de propósito (botão de recolher). Regra com só classe perde **em silêncio** para eles.
 

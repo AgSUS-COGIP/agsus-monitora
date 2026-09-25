@@ -73,7 +73,6 @@ tem cor diferente em cada tela.
 **Ícones:** Font Awesome 6.5.2 via CDN (62 usos no `index.html`). A barra lateral e o que é dela
 já usam o `lucide`, por `src/modules/icones.js` (ver "Ícones", seção 4).
 
-**Possível órfão:** `src/styles/pwa-lifecycle.css` não é importado por nenhum arquivo.
 `runtime-critical-fixes.css` é carregado de dentro de `src/modules/connectivity-status.js`.
 
 ---
@@ -506,7 +505,7 @@ Cada fase é independente, entregável em PR próprio e reversível.
 | **2. Contraste** | Corrigir as 5 falhas da seção 1: `.btn` sólido, `.btn.green`, texto secundário, borda de campo, vermelho de texto. | As falhas da tabela da seção 1 passam no AA. |
 | **3. Tipografia** | Pesos ≤ 700; nada abaixo de 11px; `uppercase` só no eyebrow; tirar `800;900` do Google Fonts. | `grep` da seção 9 não encontra 750–1000 nem 8–10px. |
 | **4. Componentes** | Consolidar botão, card, tabela, formulário e modal em `componentes.css`, usando só tokens. | `.btn` é definido em um arquivo só. |
-| **5. Dívida** | Dissolver `system-ui-fixes`, `post-152-regression-fixes`, `post157-interface-tuning`, `runtime-critical-fixes` e `health-*-fix*` no CSS do módulo; trocar `body.dark-mode` por `[data-theme]`; alinhar `analises.css` aos tokens; decidir sobre `pwa-lifecycle.css`; aplicar `@layer`. | `!important` < 50 e cores hex distintas < 80. |
+| **5. Dívida** | Dissolver `system-ui-fixes`, `post-152-regression-fixes`, `post157-interface-tuning`, `runtime-critical-fixes` e `health-*-fix*` no CSS do módulo; trocar `body.dark-mode` por `[data-theme]`; alinhar `analises.css` aos tokens; aplicar `@layer`. | `!important` < 50 e cores hex distintas < 80. |
 
 As fases 1 e 2 têm o maior retorno pelo menor risco: são poucas linhas e corrigem problemas de acessibilidade reais.
 
