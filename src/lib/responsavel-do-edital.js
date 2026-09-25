@@ -14,6 +14,9 @@
 
 const text = (value) => String(value ?? "").trim();
 
+/** Código da área em `TB_AREA`. */
+export const AREA_SAUDE_INDIGENA = "saude-indigena";
+
 export const RESPONSAVEL_USI = "USI";
 export const RESPONSAVEL_CORES = "CORES";
 
@@ -83,10 +86,15 @@ const UNIDADES_CORES_NORMALIZADAS = new Set(UNIDADES_CORES.map(semAcento));
  * antigos como USI, os do CORES inclusive. Por isso a unidade também decide —
  * uma unidade do catálogo do CORES nunca é da Saúde Indígena.
  *
- * Editais, Cronograma e Lista de Aprovados continuam vendo tudo: são
- * transversais às áreas.
+ * Desde 25/09/2026 o banco sabe a área (`CO_AREA`, calculada pela mesma regra
+ * em `private."FC_AREA_EDITAL"`) e ela manda. A regra local fica só para
+ * linhas sem a coluna — cache offline gravado antes da mudança.
+ *
+ * Quem não é admin já recebe do banco só editais das suas áreas; este filtro é
+ * o do painel da Saúde Indígena, que também vale para o admin.
  */
 export function ehEditalDaSaudeIndigena(edital) {
+  if (edital?.CO_AREA) return edital.CO_AREA === AREA_SAUDE_INDIGENA;
   if (ehResponsavelCores(edital?.responsavel)) return false;
   return !UNIDADES_CORES_NORMALIZADAS.has(semAcento(edital?.unidade));
 }

@@ -18,14 +18,12 @@ import {
   formatarNumero,
   indexarResumo,
   passaNoFiltroOperacional,
+  resumoDasLinhas,
   resumoDoEdital,
   tomDoRisco,
   tomDoStatusDoEdital,
 } from "../../lib/editais-do-nucleo.js";
-import {
-  assinarDadosDoMonitoramento,
-  obterDadosDoMonitoramento,
-} from "../dados-do-monitoramento.js";
+import { usarAreaAtual } from "../usar-area-atual.js";
 import { criarEstadoDoNucleo } from "./estado.js";
 import { ModalDoEdital } from "./modal-do-edital.jsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.jsx";
@@ -166,11 +164,17 @@ function ModalAberto({ estado, modal, agora }) {
 }
 
 export function Nucleo({ estado, agora }) {
-  const { linhas, carregado } = useSyncExternalStore(
-    assinarDadosDoMonitoramento,
-    obterDadosDoMonitoramento,
+  // Só os editais da área escolhida no menu; os indicadores contam os mesmos.
+  const { linhas, carregado } = usarAreaAtual();
+  const doResumo = useSyncExternalStore(estado.assinar, estado.obter);
+  const resumoDaArea = useMemo(
+    () => resumoDasLinhas(doResumo.resumo, linhas),
+    [doResumo.resumo, linhas],
   );
-  const nucleo = useSyncExternalStore(estado.assinar, estado.obter);
+  const nucleo = useMemo(
+    () => ({ ...doResumo, resumo: resumoDaArea }),
+    [doResumo, resumoDaArea],
+  );
   const [busca, setBusca] = useState("");
 
   const indice = useMemo(() => indexarResumo(nucleo.resumo), [nucleo.resumo]);

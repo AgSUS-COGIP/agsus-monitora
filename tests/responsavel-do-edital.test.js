@@ -122,4 +122,23 @@ describe("o painel da Saúde Indígena só mostra editais da USI", () => {
       );
     }
   });
+  it("a área do banco (CO_AREA) manda quando vem na linha", () => {
+    expect(
+      ehEditalDaSaudeIndigena({
+        CO_AREA: "saude-indigena",
+        responsavel: "CORES",
+        unidade: "SEDE",
+      }),
+    ).toBe(true);
+    expect(
+      ehEditalDaSaudeIndigena({
+        CO_AREA: "projetos",
+        responsavel: "USI",
+        unidade: "DSEI Yanomami",
+      }),
+    ).toBe(false);
+    expect(
+      ehEditalDaSaudeIndigena({ CO_AREA: "sede", unidade: "CASAI Brasília" }),
+    ).toBe(false);
+  });
 });

@@ -11,6 +11,8 @@ import {
   paginateApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
+import { soDosEditais } from "../dados-do-monitoramento.js";
+import { usarAreaAtual } from "../usar-area-atual.js";
 import { AbaAprovados } from "./aba-aprovados.jsx";
 import { AbaConvocacao } from "./aba-convocacao.jsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
@@ -57,7 +59,7 @@ const ABAS = [
   },
 ];
 
-function ModalAberto({ estado, dados }) {
+function ModalAberto({ estado, dados, daArea }) {
   const { modal } = dados;
   if (!modal) return null;
   if (modal.tipo === "status") {
@@ -77,8 +79,8 @@ function ModalAberto({ estado, dados }) {
       <ModalSubJudice
         key={modal.abertura}
         estado={estado}
-        listas={dados.listas}
-        candidatos={dados.candidatos}
+        listas={daArea.listas}
+        candidatos={daArea.candidatos}
       />
     );
   if (modal.tipo === "listas")
@@ -96,7 +98,22 @@ function ModalAberto({ estado, dados }) {
 
 export function ListaAprovados({ estado }) {
   const dados = useSyncExternalStore(estado.assinar, estado.obter);
-  const { candidatos, listas, carregado, perfil } = dados;
+  const { carregado, perfil } = dados;
+  /*
+    Só as listas e os candidatos dos editais da área escolhida no menu — o
+    seletor de edital, os filtros, as duas abas e o sub judice partem daqui. O
+    modal de listas aberto pelo Núcleo é de um edital certo e continua a ver
+    tudo.
+  */
+  const { ids } = usarAreaAtual();
+  const listas = useMemo(
+    () => soDosEditais(dados.listas, ids),
+    [dados.listas, ids],
+  );
+  const candidatos = useMemo(
+    () => soDosEditais(dados.candidatos, ids),
+    [dados.candidatos, ids],
+  );
   const [aba, setAba] = useState("aprovados");
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*
@@ -265,7 +282,11 @@ export function ListaAprovados({ estado }) {
           carregado={carregado}
         />
       </div>
-      <ModalAberto estado={estado} dados={dados} />
+      <ModalAberto
+        estado={estado}
+        dados={dados}
+        daArea={{ listas, candidatos }}
+      />
     </>
   );
 }

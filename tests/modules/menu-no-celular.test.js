@@ -22,6 +22,11 @@ import {
   syncActiveItem,
 } from "../../src/modules/mobile-bottom-navigation.js";
 import { initMobileAppExperience } from "../../src/modules/mobile-app-experience.js";
+import {
+  definirAreaAtual,
+  obterDadosDoMonitoramento,
+  redefinirDadosDoMonitoramento,
+} from "../../src/componentes/dados-do-monitoramento.js";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -38,6 +43,7 @@ let raiz = null;
 async function montarMenu(
   permitidas = TUDO,
   paineis = [{ codigo: "analises", titulo: "Análises" }],
+  areas = ["saude-indigena"],
 ) {
   document.body.className = "";
   document.body.innerHTML = `
@@ -57,6 +63,7 @@ async function montarMenu(
         permitidas,
         paineis,
         secoesDeConfiguracao: SECOES,
+        areas,
       }),
       { navegar: () => {} },
     ),
@@ -80,11 +87,13 @@ afterAll(() => {
 beforeEach(() => {
   document.getElementById("mobileBottomNav")?.remove();
   localStorage.clear();
+  sessionStorage.clear();
 });
 afterEach(async () => {
   await act(async () => raiz?.unmount());
   raiz = null;
   await act(async () => redefinirBarraLateral());
+  await act(async () => redefinirDadosDoMonitoramento());
 });
 
 /*
@@ -118,7 +127,7 @@ describe("menu inferior do celular", () => {
     const barra = document.getElementById("mobileBottomNav");
     const itens = [...barra.querySelectorAll(".mobile-bottom-nav__item")];
     expect(itens.map((botao) => botao.textContent)).toEqual([
-      "Saúde indígena",
+      "Visão geral",
       "Editais",
       "Cronograma",
       "Lista de aprovados",
@@ -153,6 +162,77 @@ describe("menu inferior do celular", () => {
     expect(ativo()).toBe("approved");
   });
 
+  /*
+    Com as três áreas, Editais, Cronograma e Aprovados aparecem três vezes no
+    menu lateral. Aqui entra uma de cada: a da área atual.
+  */
+  it("com várias áreas, mostra as páginas da área atual, sem repetir", async () => {
+    await montarMenu(TUDO, [], ["saude-indigena", "sede", "projetos"]);
+    await act(async () => definirAreaAtual("sede"));
+
+    const origens = collectPrimaryItems();
+    expect(origens.map((el) => [el.dataset.view, el.dataset.area])).toEqual([
+      ["dashboard", "saude-indigena"],
+      ["nucleo", "sede"],
+      ["calendario", "sede"],
+      ["approved", "sede"],
+    ]);
+    expect(
+      collectPrimaryItems(document, "projetos").map((el) => el.dataset.area),
+    ).toEqual(["saude-indigena", "projetos", "projetos", "projetos"]);
+  });
+
+  it("escolher pelo menu de baixo troca a área e remonta com as páginas dela", async () => {
+    const navegacoes = [];
+    await montarMenu(TUDO, [], ["saude-indigena", "sede"]);
+    await act(async () =>
+      atualizarMenuLateral(
+        montarArvoreDoMenu({
+          permitidas: TUDO,
+          secoesDeConfiguracao: SECOES,
+          areas: ["saude-indigena", "sede"],
+        }),
+        {
+          navegar: (view) => {
+            navegacoes.push([view, obterDadosDoMonitoramento().areaAtual]);
+            marcarItemAtivoNoMenu(view);
+          },
+        },
+      ),
+    );
+    initMobileBottomNavigation();
+    const areasDaBarra = () =>
+      [...document.querySelectorAll("#mobileBottomNav [data-source-id]")].map(
+        (botao) => document.getElementById(botao.dataset.sourceId).dataset.area,
+      );
+    expect(areasDaBarra()).toEqual([
+      "saude-indigena",
+      "saude-indigena",
+      "saude-indigena",
+      "saude-indigena",
+    ]);
+
+    // A troca de área vem do menu lateral; o de baixo acompanha.
+    await act(async () =>
+      document
+        .querySelector('.menu-area[data-area="sede"] [data-view="calendario"]')
+        .click(),
+    );
+    expect(areasDaBarra()).toEqual(["saude-indigena", "sede", "sede", "sede"]);
+
+    const botaoDeEditais = document.querySelector(
+      '#mobileBottomNav [data-view="nucleo"]',
+    );
+    await act(async () => botaoDeEditais.click());
+    expect(navegacoes).toEqual([
+      ["calendario", "sede"],
+      ["nucleo", "sede"],
+    ]);
+    expect(
+      document.querySelector("#mobileBottomNav .is-active")?.dataset.view,
+    ).toBe("nucleo");
+  });
+
   it("syncActiveItem compara pela página, não pelo nó", async () => {
     await montarMenu();
     const barra = document.createElement("nav");
@@ -176,7 +256,7 @@ describe("gaveta do celular", () => {
     await act(async () =>
       document
         .querySelector(
-          '.menu-area[data-area="recrutamento"] .menu-area__cabecalho',
+          '.menu-area[data-area="saude-indigena"] .menu-area__cabecalho',
         )
         .click(),
     );

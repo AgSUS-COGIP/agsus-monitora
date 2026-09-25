@@ -1,8 +1,25 @@
 import { act } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
 import { PLANILHAS } from "../../src/lib/planilhas.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
+import {
+  definirAreaAtual,
+  publicarLinhasDoMonitoramento,
+  redefinirDadosDoMonitoramento,
+} from "../../src/componentes/dados-do-monitoramento.js";
+
+/*
+  A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
+  editais das fixtures precisam estar nas linhas do monitoramento. Registrado
+  antes dos outros ganchos, o afterEach roda depois de desmontar.
+*/
+beforeEach(() =>
+  publicarLinhasDoMonitoramento(
+    ["10", "20"].map((id) => ({ id, CO_AREA: "saude-indigena" })),
+  ),
+);
+afterEach(() => redefinirDadosDoMonitoramento());
 
 /*
   A Lista de Aprovados em React: a aba de aprovados (indicadores, filtros,
@@ -665,5 +682,31 @@ describe("modal de listas do edital", () => {
     expect($("approvedImportPanelArquivo").classList.contains("hidden")).toBe(
       false,
     );
+  });
+});
+
+/*
+  Só as listas e os candidatos dos editais da área escolhida no menu: o
+  recorte é pelo conjunto de ids das linhas do monitoramento daquela área.
+*/
+describe("área atual", () => {
+  it("candidatos, contador e seletor de edital seguem a área", async () => {
+    publicarLinhasDoMonitoramento([
+      { id: "10", CO_AREA: "saude-indigena" },
+      { id: "20", CO_AREA: "sede" },
+    ]);
+    await montar();
+    expect(nomes()).toEqual(["Ana Ribeiro", "Bruno Lima", "Carla Souza"]);
+    expect($("approvedCount").textContent).toBe("3 candidatos");
+
+    await act(async () => definirAreaAtual("sede"));
+    expect(nomes()).toEqual(["Diego Alves"]);
+    expect($("approvedCount").textContent).toBe("1 candidato");
+    expect(opcoesDoFiltro("approvedFilterEdital")).toEqual([
+      expect.stringContaining("04/2025"),
+    ]);
+
+    await act(async () => definirAreaAtual("projetos"));
+    expect(nomes()).toEqual([]);
   });
 });

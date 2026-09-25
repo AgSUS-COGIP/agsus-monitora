@@ -111,7 +111,7 @@ async function loadOperationalRows() {
     const { data, error } = await sb
       .from("TB_MONITORAMENTO_INDIGENA")
       .select(
-        "id,unidade,edital,status,etapa,risco,vagas_total,contratados,vagas_ociosas,inscritos,data_inicio,data_fim,link_edital,observacoes,responsavel,cronograma_automatico,cronograma_percentual,cronograma_atividade_atual,cronograma_proxima_atividade,cronograma_proxima_data,cronograma_dias_para_proxima",
+        "id,unidade,edital,status,etapa,risco,vagas_total,contratados,vagas_ociosas,inscritos,data_inicio,data_fim,link_edital,observacoes,responsavel,cronograma_automatico,cronograma_percentual,cronograma_atividade_atual,cronograma_proxima_atividade,cronograma_proxima_data,cronograma_dias_para_proxima,CO_AREA",
       )
       .eq("ativo", true)
       .order("unidade", { ascending: true })

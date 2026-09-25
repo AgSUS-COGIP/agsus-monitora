@@ -87,6 +87,14 @@
 .permission-scroll select[data-level="admin"] {
   background: var(--permission-success-soft);
 }
+/* Área "Não" é o caso comum (cada pessoa tem uma área): sem o vermelho de "Sem acesso". */
+.permission-scroll select[data-resource^="area:"][data-level="sem_acesso"] {
+  border-color: var(--permission-control);
+  background: var(--permission-surface);
+}
+.permission-scroll select[data-resource^="area:"][data-level="leitor"] {
+  background: var(--permission-success-soft);
+}
 .permission-scroll select:disabled {
   opacity: 0.7;
   cursor: not-allowed;

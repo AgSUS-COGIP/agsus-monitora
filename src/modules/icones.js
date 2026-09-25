@@ -1,11 +1,12 @@
 import {
-  BriefcaseBusiness,
+  Building2,
   CalendarDays,
   ChevronDown,
   ChevronLeft,
   Circle,
   createElement,
   FileText,
+  FolderKanban,
   HeartPulse,
   LogOut,
   Map as Mapa,
@@ -34,12 +35,13 @@ import {
   `innerHTML`, sempre decorativo — quem nomeia o controle é o texto dele.
 */
 export const ICONES = Object.freeze({
-  "briefcase-business": BriefcaseBusiness,
+  "building-2": Building2,
   "calendar-days": CalendarDays,
   "chevron-down": ChevronDown,
   "chevron-left": ChevronLeft,
   circle: Circle,
   "file-text": FileText,
+  "folder-kanban": FolderKanban,
   "heart-pulse": HeartPulse,
   "log-out": LogOut,
   map: Mapa,

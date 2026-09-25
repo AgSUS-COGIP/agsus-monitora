@@ -3,6 +3,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+import {
+  publicarLinhasDoMonitoramento,
+  redefinirDadosDoMonitoramento,
+} from "../../src/componentes/dados-do-monitoramento.js";
+
+/*
+  A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
+  editais das fixtures precisam estar nas linhas do monitoramento. Registrado
+  antes dos outros ganchos, o afterEach roda depois de desmontar.
+*/
+beforeEach(() =>
+  publicarLinhasDoMonitoramento(
+    ["7"].map((id) => ({ id, CO_AREA: "saude-indigena" })),
+  ),
+);
+afterEach(() => redefinirDadosDoMonitoramento());
 
 /*
   A costura entre as peças da lista de convocação: o modelo e a configuração
