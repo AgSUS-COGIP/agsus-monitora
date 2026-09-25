@@ -57,9 +57,12 @@ de nota nas Análises, o mapa). A área vai no endereço: `/saude-indigena/anali
 
 - A planilha da SEDE e dos Projetos terá o **mesmo formato** da planilha da Saúde
   Indígena, com critérios de nota diferentes.
-- Uma tabela **planilha → área** diz de qual área é cada `origem_planilha`; a
-  sincronização preenche a área sozinha. As funções chamadas pelo Apps Script
-  (`processar_sync_*`, `*_incremental`) mantêm nome e assinatura: o script não muda.
+- A planilha já manda a área na coluna `grupo` ("Saúde Indígena"). O gatilho
+  `"TBA_ANALISE_CURRICULAR"` preenche `"CO_AREA"` a partir de
+  `TB_AREA."NO_GRUPO_PLANILHA"`; a planilha da SEDE só precisa trazer `grupo` =
+  "SEDE" ou "Projetos". (`origem_planilha` é o arquivo de candidatos de cada vaga,
+  não serve para isso.) As funções chamadas pelo Apps Script (`processar_sync_*`,
+  `*_incremental`) mantêm nome e assinatura: o script não muda.
 - As notas próprias saem das colunas fixas para **critérios por área** (critério ×
   candidato × valor). A Saúde Indígena mantém os dela; a SEDE cadastra os seus
   sem migration.
@@ -121,7 +124,7 @@ Banco:
 | 0     | Correções: jobs do pg_cron, RPCs fora do contrato, registro de migrations                                                                                                                                                                                                |
 | 1     | **Feita em 25/09.** Lixo certo: `get_analises_dashboard_payload` (v1) e suas 4 views e cache, gatilho de invalidação, `VW_AUDITORIA_ACESSOS_DIARIA`, `TL_NOTIFICACAO`, funções sem referência; `pwa-lifecycle.css`; dependências `echarts`, `pdfjs-dist`, `tesseract.js` |
 | 2     | **Feita em 25/09**: `bench/`, o PDF do padrão e `pwa-lifecycle.css` saíram; `TA_ANALISE_QUARENTENA` foi para o schema `arquivo`. Falta: funções sem chamador                                                                                                             |
-| 3     | Tabela de áreas, coluna de área, planilha → área; schema `monitora`                                                                                                                                                                                                      |
+| 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). Falta: schema `monitora`                                                                                                                                       |
 | 4     | Nomes neutros e `FC_`, função própria de sessão (em lotes)                                                                                                                                                                                                               |
 | 5     | Permissão por área no banco; sai `ehEditalDaSaudeIndigena`                                                                                                                                                                                                               |
 
