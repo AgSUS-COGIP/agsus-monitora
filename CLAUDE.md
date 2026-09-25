@@ -29,7 +29,6 @@ scripts/                checagens, pipeline geográfico, AYA, banco            �
 tests/                  Vitest (*.test.js) e Playwright (*.spec.js)           → tests/CLAUDE.md
 server/servidor.ts      servidor web (TypeScript, Node 24, sem dependências)  → server/CLAUDE.md
 docs/                   decisões, auditorias e base de conhecimento da AYA    → docs/CLAUDE.md
-bench/                  protótipos HTML isolados (fora do build)
 ```
 
 ## Índice por assunto (vá direto ao arquivo)
@@ -101,7 +100,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - Link, caminho ou bucket de planilha só em `src/lib/planilhas.js`; o consumidor importa de lá
   (`tests/planilhas.test.js` falha se aparecer em outro arquivo).
 - CSS segue `DESIGN.md`: token em vez de hex, sem `!important`/`#id` novos, sem arquivo `*-fix.css` novo.
-- Nomenclatura de banco: padrão MAD (`padrao_nomenclatura_tabelas_agsus.pdf`); skill `mad-ddl-review`.
+- Nomenclatura de banco: padrão MAD (PDTIC 2026–2027; o PDF fica fora do repositório, resumo em `docs/padronizacao_nomenclatura_*.md`); skill `mad-ddl-review`.
 
 ## Código legado: sai quando a mudança é confirmada
 

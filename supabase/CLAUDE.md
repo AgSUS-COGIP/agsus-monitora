@@ -12,7 +12,7 @@ Não ler inteiro: `migrations/20260918160000_padronizacao_nomenclatura_tabelas.s
 Regras:
 - O app só fala por **RPC** (`SECURITY DEFINER`). Criou/alterou RPC → atualize `src/lib/rpc-contrato.js`.
 - RLS ligada por padrão; não desligar para "resolver" permissão.
-- Nomenclatura MAD: prefixo tipológico, MAIÚSCULAS, aspas duplas (`padrao_nomenclatura_tabelas_agsus.pdf`,
-  `docs/padronizacao_nomenclatura_*.md`). A skill `mad-ddl-review` revisa o DDL antes de aplicar.
+- Nomenclatura MAD: prefixo tipológico, MAIÚSCULAS, aspas duplas (PDTIC 2026–2027, resumido em
+  `docs/padronizacao_nomenclatura_*.md`; o PDF fica fora do repositório). A skill `mad-ddl-review` revisa o DDL antes de aplicar.
 - Validar: `npm run check:rpc-contract:db`, `npm run db:capturar-baseline`,
   `node scripts/estado-das-migrations.mjs` e o `scripts/validar-migration-*.mjs` do tema, quando houver.

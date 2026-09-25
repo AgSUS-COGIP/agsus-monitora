@@ -1,6 +1,6 @@
 # Mapa de padronizacao de nomenclatura - tabelas AgSUS
 
-Referencia: `padrao_nomenclatura_tabelas_agsus.pdf` (PDTIC 2026-2027, v1.0), item 6.
+Referencia: padrão de nomenclatura de tabelas da AgSUS (PDTIC 2026-2027, v1.0), item 6. O PDF saiu do repositório em 25/09/2026 (está no histórico do git).
 
 | Nome atual | Nome padronizado | Tipo (item 6) |
 |---|---|---|
