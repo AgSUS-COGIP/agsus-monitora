@@ -103,16 +103,12 @@ body.mobile-app .app .top {
   display: none !important;
 }
 
-/* Fundo neutro durante a recuperação das imagens do mapa. O contorno vetorial
-   do Brasil continua visível mesmo se o provedor principal oscilar. */
+/* Fundo neutro, também durante a recuperação das imagens do mapa (sem
+   gradiente: DS 3.5). O contorno vetorial do Brasil continua visível mesmo se
+   o provedor principal oscilar. */
 #page-dashboard #map,
 #page-dashboard #detailMap {
   background: #eaf3f5 !important;
-}
-
-#page-dashboard #map.map-tiles-recovering,
-#page-dashboard #detailMap.map-tiles-recovering {
-  background-image: linear-gradient(135deg, #edf6f7, #dcecef) !important;
 }
 
 /* A marca deve repousar diretamente sobre a sidebar. O contorno anterior

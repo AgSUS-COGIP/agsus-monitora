@@ -135,7 +135,9 @@ existente mude de cor sem mudar de código:
 degrau (controle `--radius-md`, card `--radius-lg`, painel e modal `--radius-xl`).
 
 A barra lateral usa a cor configurada em Configurações → Aparência
-(`ui_sidebar_background_color`); o valor oficial é `#0B1F3D` (`--color-sidebar-bg`).
+(`ui_sidebar_background_color`), que é identidade do MONITORA. É **exceção aceita** ao
+`--color-sidebar-bg` oficial (`#0B1F3D`), por decisão do responsável em 25/09/2026: não trocar
+pela cor oficial (seção 12).
 
 ### 3.7 Camadas (z-index)
 
@@ -172,15 +174,15 @@ Os valores de hoje (560, 680, 700, 720, 820, 1180) migram para o mais próximo q
 
 ### Botão — `.btn`
 
-- **Primário** (`.btn`): fundo sólido `--brand-primary`, texto `--text-inverse`, hover
-  `--brand-primary-strong`. **Sem gradiente**, porque o gradiente atual termina em ciano
-  e reprova o contraste. Um primário por contexto.
+- **Primário** (`.btn`; `.btn.green` e `.btn.primary` são aliases): fundo sólido
+  `--color-action-primary`, texto `--color-text-inverse`, hover `--color-action-primary-hover`,
+  pressionado `--color-action-primary-pressed`. Sem gradiente, sem sombra. Ação principal é azul,
+  também em "Salvar", "Aprovar" ou "Publicar". Um primário por contexto.
 - **Secundário** (`.btn.secondary`): fundo `--surface-card`, borda `--border-control`, texto `--text-primary`.
 - **Terciário** (`.btn.outline`): sem fundo, texto `--brand-primary`. Para ações de baixo peso.
-- **Sucesso** (`.btn.success`; `.btn.green` fica como alias): `--state-success-strong`.
 - **Destrutivo** (`.btn.danger`; hoje só existe em `.config-governance-footer`): `--state-danger`. Sempre com confirmação que cita o objeto afetado.
-- Geometria: altura mínima de 40px (44px no toque, `--mobile-touch-size`), `--radius-md`,
-  peso 600, ícone a 8px do texto.
+- Geometria (Design System 11.1, `md`): altura de 36px (44px no toque, `--mobile-touch-size`),
+  padding `0 --space-4`, `--radius-md`, `--text-button` peso 500, ícone a 8px do texto.
 - Só com ícone: `aria-label` + `title` e alvo de 40×40.
 - Desabilitado: `opacity: .6` + `cursor: not-allowed`. Se o motivo não for óbvio, diga qual é (`title` ou texto ao lado).
 
@@ -192,13 +194,23 @@ que compete com o conteúdo. A cor vai para o tile do ícone e para o indicador,
 
 ### Indicador — `.kpi`, `.approved-kpi`
 
+**Card** — exceção aceita ao Design System 11.7 (que pede faixa sem card), por decisão do
+responsável em 25/09/2026: os KPIs em card leem melhor no MONITORA. O card segue o DS 11.6.
+Feito na Visão geral da Saúde Indígena (`health-reference-kpis.css`).
+
 ```
-┌──────────────────────────────────────┐
-│ Rótulo em cinza              [ícone] │  --text-sm/600 --text-secondary · tile 34px --radius-md
-│ 1.308                                │  --text-kpi/700 tabular-nums --text-primary
-│ ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬  60% das vagas    │  barra de 4px + percentual na cor do estado
-└──────────────────────────────────────┘
+┌──────────────────────────┐   --surface-card · borda 1px --border-subtle · --radius-lg · sem sombra
+│ [▣] Rótulo em cinza      │   --text-caption/500 --text-secondary · ícone 13px num tile de 24px, 6px até o texto
+│ 1.308                    │   --text-metric-sm/600 tabular-nums --text-primary
+└──────────────────────────┘
 ```
+
+- Tile do ícone na cor do estado (`--state-*` / `--state-*-soft`): azul por padrão, verde para
+  contratação, vermelho para vagas ociosas, amarelo para processos críticos.
+- Grade `repeat(auto-fit, minmax(170px, 1fr))` com 12px de gap: 6 numa linha em tela larga,
+  quebrando conforme a largura; 2 colunas abaixo de 768px.
+- KPI clicável (ex.: Processos críticos, que filtra): o card inteiro é o alvo, hover
+  `--surface-hover`, foco visível; filtro ativo com borda `--brand-primary` e fundo `--state-info-soft`.
 
 - Todos os KPIs de uma fileira têm o mesmo tratamento e a mesma altura. O indicador fica
   preso ao pé (`margin-top: auto`).
@@ -423,18 +435,22 @@ brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNume
 
 ## 12. Divergências com o Design System AgSUS
 
-Medido em 2026-09-25, depois da troca de tokens. O caminho é o da seção 8: resolver ao migrar cada
-tela (de preferência junto com a passagem para React), não num mutirão.
+Medido em 2026-09-25, depois da Visão geral da Saúde Indígena no Design System (antes, na troca
+de tokens: 215 · 54 · 28 · 157 · 547 · 1645). Ocorrências em `src/styles/*.css`, contadas com
+`cat src/styles/*.css | grep -oiE '<padrão>' | wc -l` (hex: `#[0-9a-f]{3,8}`). O caminho é o
+da seção 8: resolver ao migrar cada tela (de preferência junto com a passagem para React), não num
+mutirão.
 
 | Divergência | Hoje | Alvo |
 |---|---|---|
-| Peso ≥ 700 (`font-weight: 700/800/900/bold`) | 215 | 0 (máximo 600) |
-| `text-transform: uppercase` | 54 | 0 (sentence case) |
-| `linear-gradient` | 28 | 0 (proibido) |
-| `box-shadow` | 157 | só menus, popovers, modais e toasts |
-| `!important` | 550 | < 50 (seção 8) |
-| Hex chumbado em CSS | 1645 | só dentro de `tokens.css` |
-| KPIs em card | Saúde Indígena, Editais, Aprovados | faixa contínua, sem card (DS 11.7) |
-| Tabelas dentro de card, com borda | várias telas | tabela direto na página (DS 11.4) |
-| Botão verde arredondado (`.btn.green`) | ações principais | `--color-action-primary`, `--radius-md`, sem sombra |
+| Peso ≥ 700 (`font-weight: 700/800/900/bold`) | 163 | 0 (máximo 600) |
+| `text-transform: uppercase` | 42 | 0 (sentence case) |
+| `linear-gradient` | 12 | 0 (proibido) |
+| `box-shadow` | 145 | só menus, popovers, modais e toasts |
+| `!important` | 493 | < 50 (seção 8) |
+| Hex chumbado em CSS | 1579 | só dentro de `tokens.css` |
+| **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena; Editais e Aprovados ainda com o card antigo. | Manter card; alinhar Editais e Aprovados ao mesmo card. |
+| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). | Manter card; não aninhar card dentro de card. |
+| Botão verde arredondado (`.btn.green`) | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu | `--color-action-primary`, `--radius-md`, sem sombra |
 | Modo escuro | existe | fora do escopo do DS: manter, sem investir |
+| **Exceção aceita:** cor da barra lateral | Segue a cor configurada em Configurações → Aparência (`ui_sidebar_background_color`), identidade do MONITORA — exceção aceita ao `--color-sidebar-bg` oficial (decisão do responsável, 25/09/2026). | Não trocar. |
