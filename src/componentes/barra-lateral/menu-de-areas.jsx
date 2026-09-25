@@ -33,7 +33,7 @@ import { marcarItemAtivoNoMenu } from "./estado.js";
   - Expandida (e na gaveta do celular): cada área é um acordeão, e todas
     nascem abertas. O que se guarda é a lista das que a pessoa fechou, então
     uma área nova no catálogo já chega aberta. Só a seta gira; a altura não
-    anima (DESIGN.md, 3.6).
+    anima (Design System AgSUS, 7.1).
   - Recolhida (acima de 900px): cada área é um ícone, e o painel dela vira um
     flutuante `position: fixed` ao lado do trilho, com a pílula do nome em
     cima. Por ser `fixed`, ele escapa do recorte da rolagem; por continuar

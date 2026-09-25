@@ -28,9 +28,7 @@ describe("fonte Geist no sistema todo", () => {
   });
 
   it("o token --font-sans começa pela Geist", () => {
-    expect(ler("src/styles/tokens.css")).toMatch(
-      /--font-sans:\s*"Geist",\s*"Segoe UI"/,
-    );
+    expect(ler("src/styles/tokens.css")).toMatch(/--font-sans:\s*"Geist",/);
   });
 
   it("tokens.css é o primeiro CSS dos dois pontos de entrada", () => {

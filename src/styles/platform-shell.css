@@ -1,11 +1,11 @@
 /* Camada institucional compartilhada com o padrão visual do AgSUS Pesquisas. */
 :root {
-  /* Barra lateral: 240px expandida, 60px recolhida (trilho de ícones). */
-  --sidebar: 240px;
-  --sidebar-mini: 60px;
-  --platform-border: #e2e8f0;
-  --platform-muted: #64748b;
-  --platform-hover: #f1f5f9;
+  /* Barra lateral: 256px expandida, 64px recolhida (Design System AgSUS, 5.3). */
+  --sidebar: var(--sidebar-width);
+  --sidebar-mini: var(--sidebar-width-collapsed);
+  --platform-border: var(--color-border-subtle);
+  --platform-muted: var(--color-text-secondary);
+  --platform-hover: var(--color-bg-muted);
 }
 
 /* Login */
@@ -79,7 +79,7 @@
   object-fit: contain;
 }
 .login-organization-mark strong {
-  color: #003b70;
+  color: var(--color-blue-800);
   font-size: 18px;
   font-weight: 900;
   line-height: 1;
@@ -363,7 +363,7 @@ html[data-theme="dark"] .sidebar {
 }
 .online-presence-button:hover {
   background: #f8fafc;
-  color: #003b70;
+  color: var(--color-blue-800);
 }
 .online-presence-dot {
   width: 9px;
@@ -401,7 +401,7 @@ html[data-theme="dark"] .sidebar {
 }
 .online-presence-heading small {
   margin-top: 2px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 11px;
 }
 .online-presence-list {
@@ -412,7 +412,7 @@ html[data-theme="dark"] .sidebar {
 .online-presence-list > p {
   margin: 0;
   padding: 14px 8px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 13px;
 }
 .online-presence-person {
@@ -441,7 +441,7 @@ html[data-theme="dark"] .sidebar {
 }
 .online-presence-person small {
   margin-top: 2px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 11px;
 }
 .online-presence-avatar {
@@ -453,7 +453,7 @@ html[data-theme="dark"] .sidebar {
   place-items: center;
   border-radius: 12px;
   background: #eaf4ff;
-  color: #003b70;
+  color: var(--color-blue-800);
   font-size: 11px;
   font-weight: 900;
 }
@@ -569,7 +569,7 @@ html[data-theme="dark"] .sidebar {
 }
 .top-user-popover > small {
   margin-top: 3px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 11px;
 }
 .top-user-popover > span {
@@ -593,7 +593,7 @@ html[data-theme="dark"] .sidebar {
   gap: var(--space-3);
   padding: 0 var(--space-2);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-primary);
   font: inherit;

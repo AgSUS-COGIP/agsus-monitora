@@ -102,18 +102,18 @@ html[data-theme="dark"] #page-config option {
   Ele era fixo em #101c2a — azul quase preto — para qualquer identidade
   escolhida. Com o painel atual (#c090eb) isso é legível, mas destoa do SIGAV,
   cujo botão é branco com texto azul-escuro e sombra forte:
-  `bg-white text-[#003b70] shadow-lg hover:bg-slate-100`.
+  `bg-white text-[var(--color-blue-800)] shadow-lg hover:bg-slate-100`.
 
   Medido contra os painéis em uso:
 
     branco sobre #c090eb (atual)   2.49:1
     branco sobre #c898eb (SIGAV)   2.30:1
     branco sobre #6c009e (escuro)  9.85:1
-    texto #003b70 sobre branco    11.29:1
+    texto var(--color-blue-800) sobre branco    11.29:1
 
   O preenchimento branco fica abaixo do mínimo de 3:1 num painel claro — é assim
   no SIGAV também. A WCAG, porém, pede que a **borda do componente** seja
-  perceptível, não necessariamente o preenchimento: a borda #003b70 dá 4.53:1
+  perceptível, não necessariamente o preenchimento: a borda var(--color-blue-800) dá 4.53:1
   contra o painel atual e 4.92:1 contra o do SIGAV. O SIGAV não tem essa borda e
   se apoia só na sombra; ela é a única diferença deliberada, e sai numa linha se
   a paridade exata for preferível.
@@ -124,9 +124,9 @@ html[data-theme="dark"] #page-config option {
   Vale para os dois botões da tela de acesso: o principal e o de trocar de conta.
 */
 #loginScreen .google-login-btn {
-  border: 1px solid #003b70;
+  border: 1px solid var(--color-blue-800);
   background: #ffffff;
-  color: #003b70;
+  color: var(--color-blue-800);
   box-shadow: 0 12px 26px -14px rgba(15, 23, 42, 0.5);
 }
 

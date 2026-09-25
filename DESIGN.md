@@ -9,6 +9,11 @@ Geist, o shell de `platform-shell.css` — e organiza isso em tokens com papel d
 o mesmo estado tenha a mesma aparência em Saúde Indígena, Núcleo, Calendário, Aprovados,
 Configurações e Análises.
 
+> **Norma institucional:** o [Design System AgSUS](docs/design-system-agsus.md) (cores, tipografia,
+> espaçamento, raio, sombra, componentes, acessibilidade). Onde ele e este arquivo divergirem, vale
+> o Design System; este arquivo diz como o MONITORA chega lá e guarda as regras locais (camadas,
+> onde escrever CSS, medições). Divergências que ainda restam: seção 12.
+>
 > Leia a seção 0 sempre que for tocar em CSS. As demais, só a que o trabalho pede.
 
 ---
@@ -25,10 +30,11 @@ Configurações e Análises.
    `grep -rn "nome-da-classe" src/styles src/analises | grep -E "important|#"`.
 5. **Confira o estilo computado no navegador** (`getComputedStyle(el).prop`), não o arquivo.
    Declaração perdida na cascata falha em silêncio.
-6. **Contraste AA:** texto ≥ 4,5:1, texto grande e bordas de controle ≥ 3:1.
-   `--brand-accent` (ciano) e `--state-warning-fill` (amarelo) **nunca** são cor de texto
-   nem fundo de texto branco.
-7. **Pesos só 400, 500, 600, 700. Informação operacional com no mínimo 12px.**
+6. **Contraste AA:** texto ≥ 4,5:1, texto grande e bordas de controle ≥ 3:1. Use só os pares
+   de fundo e texto do Design System (seção 3.4 dele). `--brand-accent` (azul claro) é só
+   preenchimento decorativo, nunca cor de texto.
+7. **Pesos só 400, 500 e 600** (Design System, 4.1). **Nada abaixo de 12px**; conteúdo principal com 14px.
+   Sentence case: sem `text-transform: uppercase` em rótulos, títulos e botões.
 8. **Anime só `opacity` e `transform`.** O tema escuro sai de `html[data-theme="dark"]`.
 9. **Regra do escoteiro:** ao mexer num componente, migre para token os valores
    **daquele bloco** — não o arquivo inteiro, não outro componente.
@@ -100,174 +106,36 @@ O nome diz o **papel** (`--text-secondary`), não a cor (`--muted`), para que o 
 troque o valor sem trocar o nome. Todo par de cor abaixo foi medido: os números entre
 parênteses são a razão de contraste sobre `--surface-card`.
 
-### 3.1 Cor
+### 3.1 De onde vêm os tokens
 
-```css
-:root {
-  /* Marca */
-  --brand-primary: #003b70;          /* ação principal, links, destaque (11,29) */
-  --brand-primary-strong: #002b54;   /* hover/pressionado do primário */
-  --brand-accent: #00a8d6;           /* SÓ preenchimento decorativo: tile de ícone, barra. Nunca texto (2,77) */
-  --brand-secondary: #0b8f58;        /* identidade; como botão use --state-success-strong */
+Os valores (cor, tipografia, espaçamento, raio, sombra, movimento) são os do Design System
+AgSUS, seção 8, copiados sem alteração no topo de `src/styles/tokens.css`. **Código novo usa os
+nomes oficiais** (`--color-text-secondary`, `--color-bg-subtle`, `--radius-lg`, `--text-body`…).
 
-  /* Superfícies */
-  --surface-page: #f3f7fb;
-  --surface-card: #ffffff;
-  --surface-raised: #f6f9fc;         /* cabeçalho de tabela, faixa de filtros */
-  --surface-hover: #f1f5f9;
-  --surface-inverse: #003b70;
+Os nomes que o MONITORA já usava continuam valendo e apontam para os oficiais, para que o código
+existente mude de cor sem mudar de código:
 
-  /* Texto */
-  --text-primary: #10243e;           /* 15,63 */
-  --text-secondary: #5f6f86;         /* 5,12 no card, 4,75 na página */
-  --text-inverse: #ffffff;
+| Nome do MONITORA | Aponta para |
+|---|---|
+| `--brand-primary` / `--brand-primary-strong` | `--color-action-primary` / `-hover` (blue-600 / blue-700) |
+| `--brand-accent` | `--color-blue-400` (o ciano saiu: não existe na paleta oficial) |
+| `--surface-page`, `--surface-card` | `--color-bg-canvas` (branco) |
+| `--surface-raised` / `--surface-hover` | `--color-bg-subtle` / `--color-bg-muted` |
+| `--text-primary` / `--text-secondary` | `--color-text-primary` / `--color-text-secondary` |
+| `--border-subtle` / `--border-control` | `--color-border-subtle` / `--color-border-input` |
+| `--state-*` / `--state-*-soft` | `--color-status-*-text` / `--color-status-*-bg` |
+| `--series-1…5` | `--color-chart-1…5` (`--series-6`: `--color-blue-200`) |
+| `--shadow-card` / `--shadow-raised` / `--shadow-overlay` | `none` / `--shadow-md` / `--shadow-lg` |
+| `--text-kpi` / `--text-kpi-sm` | `--text-metric` / `--text-metric-sm` |
+| `--sidebar` / `--sidebar-mini` (platform-shell.css) | `--sidebar-width` (256px) / `--sidebar-width-collapsed` (64px) |
+| Antigas de `app.css`: `--card`, `--bg`, `--line`, `--soft`, `--muted`, `--slate`, `--navy`, `--blue`, `--cyan`, `--agsus-*` | os tokens oficiais equivalentes (comentário no topo de `app.css`) |
 
-  /* Bordas e foco */
-  --border-subtle: #d7e5f2;          /* decorativa: card, divisória, linha de tabela */
-  --border-control: #7d8fa5;         /* campo, select, checkbox (3,31 — WCAG 1.4.11) */
-  --focus-ring: #1f8fff;             /* 3,27 */
+**Raio:** os nomes `--radius-sm/md/lg` agora têm os valores oficiais (4/6/8px) e `--radius-xl` é
+12px. O MONITORA usava `sm` para controle, `md` para card e `lg` para painel; os usos subiram um
+degrau (controle `--radius-md`, card `--radius-lg`, painel e modal `--radius-xl`).
 
-  /* Estado — texto/ícone | fundo suave (texto sobre o suave ≥ 4,5) */
-  --state-success: #087a4b;          --state-success-soft: #e7f5ee;   /* 5,39 | 4,80 */
-  --state-success-strong: #087a4b;   /* fundo de botão com texto branco (5,39) */
-  --state-warning: #8a5a00;          --state-warning-soft: #fdf4d8;   /* 5,93 | 5,39 */
-  --state-warning-fill: #f2b705;     /* só com --text-primary por cima (8,59) */
-  --state-danger: #c02634;           --state-danger-soft: #fdecee;    /* 5,89 | 5,16 */
-  --state-info: #0f5db7;             --state-info-soft: #e8f1fc;      /* 6,42 | 5,63 */
-  --state-neutral: #5f6f86;          --state-neutral-soft: #eef2f6;   /* 5,12 | 4,55 */
-}
-
-:root[data-theme="dark"] {
-  --brand-primary: #70cfff;          /* 9,69 sobre o card escuro */
-  --brand-primary-strong: #b5e5ff;
-  --brand-accent: #4fdcff;
-  --surface-page: #071421;
-  --surface-card: #0e1e2e;
-  --surface-raised: #14283a;
-  --surface-hover: #1a3146;
-  --surface-inverse: #10273f;
-  --text-primary: #edf4fa;           /* 15,21 */
-  --text-secondary: #a8b8c8;         /* 8,33 */
-  --text-inverse: #071421;
-  --border-subtle: #294158;
-  --border-control: #6a829a;         /* 4,24 */
-  --focus-ring: #7dd3fc;
-  --state-success: #29b36a;          /* 6,23 */
-  --state-warning: #f2b705;          /* 9,29 */
-  --state-danger: #ff6b76;           /* 6,12 */
-  --state-info: #70cfff;
-  /* Os -soft escuros: a mesma cor com 16% de opacidade sobre o card — medir o texto por cima antes de usar. */
-}
-```
-
-**Semântica de estado:** azul = disponível, pendente ou informativo ·
-âmbar = atenção, prazo próximo ou em andamento · verde = sucesso, ativo ou concluído ·
-vermelho = erro, bloqueio ou ação destrutiva · cinza = encerrado ou secundário.
-Uma cor de estado não é usada para decorar nem para identificar uma série de gráfico.
-
-**Nomes legados viram alias**, para não quebrar nada durante a migração:
-
-```css
-:root {
-  --navy: var(--brand-primary);      --agsus-azul: var(--brand-primary);
-  --cyan: var(--brand-accent);       --agsus-ciano: var(--brand-accent);
-  --green: var(--brand-secondary);   --agsus-verde: var(--brand-secondary);
-  --yellow: var(--state-warning-fill); --agsus-amarelo: var(--state-warning-fill);
-  --red: var(--state-danger);        --agsus-vermelho: var(--state-danger);
-  --slate: var(--text-primary);      --muted: var(--text-secondary);
-  --bg: var(--surface-page);         --card: var(--surface-card);
-  --soft: var(--surface-raised);     --line: var(--border-subtle);
-  --platform-border: var(--border-subtle);
-  --platform-muted: var(--text-secondary);
-  --platform-hover: var(--surface-hover);
-  --shadow: var(--shadow-card);      --radius: var(--radius-lg);
-}
-```
-
-As cores de território (`--indigena-verde`, `--indigena-folha`) e as do mapa são semânticas do
-domínio e têm teste (`tests/cor-da-terra-indigena.test.js`, `tests/fases-da-terra-indigena.test.js`).
-Não as troque pela paleta geral.
-
-### 3.2 Tipografia
-
-```css
-:root {
-  --font-sans: "Geist", "Segoe UI", Roboto, Arial, sans-serif;   /* tokens.css */
-  --text-xs: 11px;    /* só metadado auxiliar: eixo de gráfico, contador em badge */
-  --text-sm: 12px;    /* mínimo para informação operacional */
-  --text-md: 13px;    /* tabela, rótulo de campo */
-  --text-base: 14px;  /* corpo */
-  --text-lg: 16px;
-  --text-xl: 18px;    /* título de painel */
-  --text-2xl: 22px;   /* título de página */
-  --text-kpi: clamp(22px, 1.75vw, 28px);
-}
-```
-
-**A fonte é a Geist**, no app principal e em Análises. Vem do Google Fonts como fonte variável
-(`family=Geist:wght@400..900`): um arquivo cobre todos os pesos, então os 800 e 900 legados não
-custam download extra. Regra nova usa `var(--font-sans)` e fica em 400–700 — o problema da
-tipografia daqui não é a família, é o peso.
-
-| Uso | Tamanho | Peso | Tracking |
-|---|---|---|---|
-| Número de KPI | `--text-kpi` | 700 | `-0.03em` + `tabular-nums` |
-| Título de página | `--text-2xl` | 700 | `-0.02em` |
-| Título de painel | `--text-xl` | 700 | 0 |
-| Eyebrow de seção (único caso de maiúsculas) | `--text-sm` | 600 | `0.04em` |
-| Rótulo, botão, cabeçalho de tabela | `--text-sm` a `--text-md` | 600 | 0 |
-| Célula de tabela, controle | `--text-md` | 500 | 0 |
-| Texto corrido | `--text-base` | 400 | 0 |
-
-**Por que não 800 e 900:** em corpo de 10 a 12px, peso 900 fecha as contraformas e o
-texto vira uma mancha. Hoje há 183 declarações de 800 ou 900. Converta para 700
-(títulos e números) ou 600 (rótulos). Tracking largo (`0.08em` ou mais) só funciona
-em maiúsculas grandes. Em rótulo pequeno, separa demais as letras.
-
-Números em tabela e KPI usam `font-variant-numeric: tabular-nums` e ficam alinhados à direita (`.num`).
-
-### 3.3 Espaçamento
-
-Base de 4px: `--space-1: 4px`, `--space-2: 8px`, `--space-3: 12px`, `--space-4: 16px`,
-`--space-5: 20px`, `--space-6: 24px`, `--space-8: 32px`, `--space-10: 40px`.
-O padding de card é `--space-5`. O espaço entre cards é `--space-4`. O espaço entre seções é `--space-8`.
-
-### 3.4 Raio
-
-| Token | Valor | Uso | Absorve hoje |
-|---|---|---|---|
-| `--radius-sm` | 8px | chip interno, checkbox, tooltip | 3–9px |
-| `--radius-md` | 12px | botão, campo, tile de ícone, KPI | 10–14px |
-| `--radius-lg` | 18px | card, painel, modal (= `--radius` atual) | 16–26px |
-| `--radius-pill` | 999px | badge, pílula, toggle | 99px, 999px |
-
-### 3.5 Sombra
-
-```css
-:root {
-  --shadow-card: 0 4px 14px rgba(15, 35, 60, 0.06);        /* repouso (= --shadow atual) */
-  --shadow-raised: 0 1px 2px rgba(15, 35, 60, 0.03),
-                   0 12px 32px -24px rgba(15, 35, 60, 0.28); /* destaque, hover */
-  --shadow-overlay: 0 24px 64px -16px rgba(15, 35, 60, 0.32); /* modal, popover, drawer */
-}
-:root[data-theme="dark"] {
-  --shadow-card: none;   /* no escuro, a borda separa as superfícies */
-  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.38);
-  --shadow-overlay: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
-}
-```
-
-A sombra de destaque tem duas camadas de propósito: a curta assenta o card, e a longa, quase
-transparente, dá a elevação. Com uma camada só, o card parece uma caixa flutuando.
-
-### 3.6 Movimento
-
-`--motion-fast: 140ms` (fade), `--motion-base: 220ms` (deslocamento),
-`--ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1)`. São os valores do colapso da
-barra lateral, generalizados. Nunca anime `width`, `height`, `top`, `left` nem
-`grid-template-columns`, porque recalculam o layout a cada quadro. `display` não
-interpola: para esconder com transição, use `opacity` + `visibility`. O
-`prefers-reduced-motion` já está tratado globalmente em `app.css`.
+A barra lateral usa a cor configurada em Configurações → Aparência
+(`ui_sidebar_background_color`); o valor oficial é `#0B1F3D` (`--color-sidebar-bg`).
 
 ### 3.7 Camadas (z-index)
 
@@ -550,3 +418,23 @@ Português do Brasil, com acentos. Verbos de ação ("Importar lista", "Publicar
 "Tentar de novo"). Nada de termo de banco ou de código na tela. Erro diz o que aconteceu e o
 que fazer. Confirmação cita o objeto ("Excluir o edital 101/2026?"). Número segue o formato
 brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNumero` em `src/lib/editais-do-nucleo.js`).
+
+---
+
+## 12. Divergências com o Design System AgSUS
+
+Medido em 2026-09-25, depois da troca de tokens. O caminho é o da seção 8: resolver ao migrar cada
+tela (de preferência junto com a passagem para React), não num mutirão.
+
+| Divergência | Hoje | Alvo |
+|---|---|---|
+| Peso ≥ 700 (`font-weight: 700/800/900/bold`) | 215 | 0 (máximo 600) |
+| `text-transform: uppercase` | 54 | 0 (sentence case) |
+| `linear-gradient` | 28 | 0 (proibido) |
+| `box-shadow` | 157 | só menus, popovers, modais e toasts |
+| `!important` | 550 | < 50 (seção 8) |
+| Hex chumbado em CSS | 1645 | só dentro de `tokens.css` |
+| KPIs em card | Saúde Indígena, Editais, Aprovados | faixa contínua, sem card (DS 11.7) |
+| Tabelas dentro de card, com borda | várias telas | tabela direto na página (DS 11.4) |
+| Botão verde arredondado (`.btn.green`) | ações principais | `--color-action-primary`, `--radius-md`, sem sombra |
+| Modo escuro | existe | fora do escopo do DS: manter, sem investir |

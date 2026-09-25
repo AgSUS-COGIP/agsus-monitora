@@ -1,109 +1,276 @@
 /*
-  Tokens do MONITORA (DESIGN.md, seção 3).
+  Tokens do MONITORA.
+
+  Fonte da verdade: o Design System AgSUS (docs/design-system-agsus.md,
+  seção 8). Os tokens oficiais (`--color-*`, `--text-h1`, `--radius-*`…)
+  vêm primeiro e sem alteração; código novo usa esses nomes.
+
+  Os nomes que o MONITORA já usava (`--brand-primary`, `--surface-card`,
+  `--state-*`, `--series-*`…) continuam existindo e agora apontam para os
+  oficiais: quem já usava token muda de cor sem mudar de código. As variáveis
+  antigas de `app.css` (`--card`, `--line`, `--muted`, `--navy`…) fazem o
+  mesmo, lá. Divergências que ainda restam: DESIGN.md, seção "Design System AgSUS".
 
   Importado antes de qualquer outro CSS em `src/main.js` e em
-  `src/analises/main.js`. O `app.css` entra antes, pelo `<link>` do
-  `index.html`, mas isso não pesa: `var()` resolve no valor computado, com a
-  cascata inteira já montada.
-
-  Primeira parte (fonte, espaçamento, raio, movimento, sombra de popover):
-  nomes que não existiam antes e cujas reservas no código (`var(--space-2,
-  8px)`, `var(--radius-sm, 8px)`…) têm os mesmos valores.
-
-  Segunda parte (cor de marca, superfície, texto, borda, estado, séries,
-  tipografia e sombras de card): usada pelos componentes revisados — KPIs e
-  cards da Saúde Indígena, Editais e Lista de Aprovados, notificações,
-  cabeçalhos de tabela. Só pinta quem usa o token; os componentes ainda não
-  revisados continuam com as cores chumbadas de antes.
-
-  As camadas (`--z-*`) continuam em `app.css`, junto das que já existiam.
+  `src/analises/main.js`. As camadas (`--z-*`) continuam em `app.css`.
 */
 :root {
-  /* Tipografia: Geist, carregada como fonte variável (um arquivo, 400–900). */
-  --font-sans: "Geist", "Segoe UI", Roboto, Arial, sans-serif;
-  --text-xs: 11px;
-  --text-sm: 12px;
-  --text-md: 13px;
-  --text-base: 14px;
-  --text-lg: 16px;
-  --text-xl: 18px;
-  --text-2xl: 22px;
-  --text-kpi: clamp(24px, 1.9vw, 30px);
-  --text-kpi-sm: clamp(20px, 1.5vw, 24px); /* KPI compacto da Saúde Indígena */
+  /* ---------- Primitivos: azul institucional ---------- */
+  --color-blue-50: #f2f6fc;
+  --color-blue-100: #e3ecf8;
+  --color-blue-200: #c5d7f0;
+  --color-blue-300: #97b8e3;
+  --color-blue-400: #5e8fd1;
+  --color-blue-500: #2f6dc0;
+  --color-blue-600: #1f5aa8;
+  --color-blue-700: #1a4a8b;
+  --color-blue-800: #153b6f;
+  --color-blue-900: #102d55;
+  --color-blue-950: #0b1f3d;
 
-  /* Espaçamento, base de 4px. */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
+  /* ---------- Primitivos: neutros ---------- */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f5f7fa;
+  --color-neutral-100: #edf0f4;
+  --color-neutral-200: #e0e5ec;
+  --color-neutral-300: #cbd2dc;
+  --color-neutral-400: #858f9f;
+  --color-neutral-500: #677183;
+  --color-neutral-600: #556070;
+  --color-neutral-700: #3e4857;
+  --color-neutral-800: #29313e;
+  --color-neutral-900: #171c26;
 
-  /* Raio. */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-pill: 999px;
+  /* ---------- Primitivos: semânticos ---------- */
+  --color-success-50: #eaf6ef;
+  --color-success-600: #1e7a45;
+  --color-success-700: #17613a;
+  --color-warning-50: #fdf4e3;
+  --color-warning-600: #9a5b00;
+  --color-warning-700: #7d4a00;
+  --color-danger-50: #fdeeec;
+  --color-danger-600: #c23b30;
+  --color-danger-700: #a02e25;
 
-  /* Sombra: repouso, destaque (hover) e popover/painel flutuante/gaveta. */
-  --shadow-card: 0 1px 2px rgba(15, 35, 60, 0.04);
-  --shadow-raised:
-    0 1px 2px rgba(15, 35, 60, 0.03), 0 12px 32px -24px rgba(15, 35, 60, 0.28);
-  --shadow-overlay: 0 24px 64px -16px rgba(15, 35, 60, 0.32);
+  /* ---------- Fundo ---------- */
+  --color-bg-canvas: var(--color-neutral-0);
+  --color-bg-subtle: var(--color-neutral-50);
+  --color-bg-muted: var(--color-neutral-100);
+  --color-bg-selected: var(--color-blue-50);
+  --color-bg-raised: var(--color-neutral-0);
+  --color-bg-inverse: var(--color-neutral-900);
+  --color-bg-overlay: rgb(11 31 61 / 0.4);
 
-  /* Movimento: os valores do colapso da barra lateral, generalizados. */
-  --motion-fast: 140ms;
-  --motion-base: 220ms;
-  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* ---------- Texto ---------- */
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-tertiary: var(--color-neutral-500);
+  --color-text-disabled: var(--color-neutral-400);
+  --color-text-inverse: var(--color-neutral-0);
+  --color-text-brand: var(--color-blue-900);
+  --color-text-link: var(--color-blue-700);
+  --color-text-link-hover: var(--color-blue-800);
 
-  /*
-    Texto sobre fundo escuro. Sem variação no tema escuro: quem usa são
-    superfícies que continuam escuras nos dois temas (pílula de dica, barra
-    lateral com cor configurada escura, botão primário).
-  */
-  --text-inverse: #ffffff;
+  /* ---------- Borda ---------- */
+  --color-border-subtle: var(--color-neutral-200);
+  --color-border-default: var(--color-neutral-300);
+  --color-border-input: var(--color-neutral-400);
+  --color-border-focus: var(--color-blue-600);
+  --color-border-danger: var(--color-danger-600);
 
-  /* Marca. Os números são a razão de contraste sobre --surface-card. */
-  --brand-primary: #003b70; /* 11,29 */
-  --brand-primary-strong: #002b54;
-  --brand-accent: #00a8d6; /* só preenchimento decorativo; nunca texto (2,77) */
+  /* ---------- Ação ---------- */
+  --color-action-primary: var(--color-blue-600);
+  --color-action-primary-hover: var(--color-blue-700);
+  --color-action-primary-pressed: var(--color-blue-800);
+  --color-action-secondary: var(--color-blue-50);
+  --color-action-secondary-hover: var(--color-blue-100);
+  --color-action-secondary-text: var(--color-blue-700);
+  --color-action-ghost-hover: var(--color-neutral-100);
+  --color-action-ghost-text: var(--color-neutral-700);
+  --color-action-danger: var(--color-danger-600);
+  --color-action-danger-hover: var(--color-danger-700);
+  --color-focus-ring: var(--color-blue-600);
 
-  /* Superfícies */
-  --surface-page: #f3f7fb;
-  --surface-card: #ffffff;
-  --surface-raised: #f6f9fc;
-  --surface-hover: #f1f5f9;
+  /* ---------- Status ---------- */
+  --color-status-success-bg: var(--color-success-50);
+  --color-status-success-text: var(--color-success-700);
+  --color-status-success-solid: var(--color-success-600);
+  --color-status-warning-bg: var(--color-warning-50);
+  --color-status-warning-text: var(--color-warning-700);
+  --color-status-warning-solid: var(--color-warning-600);
+  --color-status-danger-bg: var(--color-danger-50);
+  --color-status-danger-text: var(--color-danger-700);
+  --color-status-danger-solid: var(--color-danger-600);
+  --color-status-info-bg: var(--color-blue-50);
+  --color-status-info-text: var(--color-blue-700);
+  --color-status-info-solid: var(--color-blue-600);
+  --color-status-neutral-bg: var(--color-neutral-100);
+  --color-status-neutral-text: var(--color-neutral-700);
+  --color-status-neutral-solid: var(--color-neutral-500);
 
-  /* Texto */
-  --text-primary: #10243e; /* 15,63 */
-  --text-secondary: #5f6f86; /* 5,12 no card, 4,75 na página */
+  /* ---------- Sidebar ---------- */
+  --color-sidebar-bg: var(--color-blue-950);
+  --color-sidebar-text: #c3d0e4;
+  --color-sidebar-text-muted: #8fa2bf;
+  --color-sidebar-item-hover: rgb(255 255 255 / 0.06);
+  --color-sidebar-item-active: var(--color-blue-800);
+  --color-sidebar-item-active-text: var(--color-neutral-0);
+  --color-sidebar-indicator: var(--color-blue-300);
+  --color-sidebar-divider: rgb(255 255 255 / 0.08);
+  --color-sidebar-focus: var(--color-neutral-0);
 
-  /* Bordas e foco */
-  --border-subtle: #dfe7f0;
-  --border-control: #7d8fa5; /* 3,31 */
-  --focus-ring: #1f8fff;
+  /* ---------- Gráficos ---------- */
+  --color-chart-1: var(--color-blue-600);
+  --color-chart-2: var(--color-blue-400);
+  --color-chart-3: var(--color-blue-900);
+  --color-chart-4: #1b7f84;
+  --color-chart-5: var(--color-neutral-400);
+  --color-chart-context: var(--color-neutral-400);
+  --color-chart-grid: var(--color-neutral-200);
+  --color-chart-axis: var(--color-neutral-300);
+  --color-chart-positive: var(--color-success-600);
+  --color-chart-negative: var(--color-danger-600);
 
-  /* Estado: texto/ícone | fundo suave */
-  --state-success: #087a4b;
-  --state-success-soft: #e7f5ee;
-  --state-warning: #8a5a00;
-  --state-warning-soft: #fdf4d8;
-  --state-danger: #c02634;
-  --state-danger-soft: #fdecee;
-  --state-info: #0f5db7;
-  --state-info-soft: #e8f1fc;
-  --state-neutral: #5f6f86;
-  --state-neutral-soft: #eef2f6;
+  /* ---------- Tipografia ---------- */
+  --font-sans:
+    "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Séries de gráfico (DESIGN.md, seção 6) */
-  --series-1: #0f5db7;
-  --series-2: #eb6834;
-  --series-3: #0090bc;
-  --series-4: #6d5efc;
-  --series-5: #d55181;
-  --series-6: #8a6d00;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --text-display: 2.25rem;
+  --leading-display: 2.75rem;
+  --tracking-display: -0.02em;
+  --text-h1: 1.75rem;
+  --leading-h1: 2.25rem;
+  --tracking-h1: -0.015em;
+  --text-h2: 1.375rem;
+  --leading-h2: 1.875rem;
+  --tracking-h2: -0.01em;
+  --text-h3: 1.125rem;
+  --leading-h3: 1.625rem;
+  --tracking-h3: -0.005em;
+  --text-h4: 1rem;
+  --leading-h4: 1.5rem;
+  --text-body: 0.875rem;
+  --leading-body: 1.375rem;
+  --text-body-sm: 0.8125rem;
+  --leading-body-sm: 1.25rem;
+  --text-caption: 0.75rem;
+  --leading-caption: 1rem;
+  --tracking-caption: 0.01em;
+  --text-label: 0.8125rem;
+  --leading-label: 1.25rem;
+  --text-button: 0.875rem;
+  --leading-button: 1.25rem;
+  --text-metric: 1.75rem;
+  --leading-metric: 2.25rem;
+  --tracking-metric: -0.02em;
+  --text-metric-sm: 1.25rem;
+  --leading-metric-sm: 1.75rem;
+
+  /* ---------- Espaçamento ---------- */
+  --space-0-5: 0.125rem; /* 2px  */
+  --space-1: 0.25rem; /* 4px  */
+  --space-1-5: 0.375rem; /* 6px  */
+  --space-2: 0.5rem; /* 8px  */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+
+  /* ---------- Layout ---------- */
+  --sidebar-width: 16rem; /* 256px  */
+  --sidebar-width-collapsed: 4rem; /* 64px   */
+  --header-height: 3.5rem; /* 56px   */
+  --content-max-width: 90rem; /* 1440px */
+  --form-max-width: 40rem; /* 640px  */
+  --prose-max-width: 45rem; /* 720px  */
+
+  /* ---------- Raio ---------- */
+  --radius-sm: 0.25rem; /* 4px  */
+  --radius-md: 0.375rem; /* 6px  */
+  --radius-lg: 0.5rem; /* 8px  */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-full: 9999px;
+
+  /* ---------- Sombras ---------- */
+  --shadow-sm: 0 1px 2px rgb(23 28 38 / 0.06);
+  --shadow-md: 0 1px 3px rgb(23 28 38 / 0.06), 0 4px 16px rgb(23 28 38 / 0.08);
+  --shadow-lg: 0 2px 6px rgb(23 28 38 / 0.06), 0 16px 40px rgb(23 28 38 / 0.14);
+
+  /* ---------- Movimento ---------- */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---------- Nomes do MONITORA, apontando para os oficiais ---------- */
+  --text-xs: 0.75rem; /* 12px: o Design System não desce abaixo de caption */
+  --text-sm: 0.75rem;
+  --text-md: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.375rem;
+  --text-kpi: var(--text-metric);
+  --text-kpi-sm: var(--text-metric-sm);
+
+  --radius-pill: var(--radius-full);
+
+  --shadow-card: none;
+  --shadow-raised: var(--shadow-md);
+  --shadow-overlay: var(--shadow-lg);
+
+  --motion-fast: var(--duration-fast);
+  --motion-base: var(--duration-base);
+
+  --text-inverse: var(--color-text-inverse);
+
+  --brand-primary: var(--color-action-primary);
+  --brand-primary-strong: var(--color-action-primary-hover);
+  --brand-accent: var(--color-blue-400); /* só preenchimento decorativo */
+
+  --surface-page: var(--color-bg-canvas);
+  --surface-card: var(--color-bg-canvas);
+  --surface-raised: var(--color-bg-subtle);
+  --surface-hover: var(--color-bg-muted);
+
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+
+  --border-subtle: var(--color-border-subtle);
+  --border-control: var(--color-border-input);
+  --focus-ring: var(--color-focus-ring);
+
+  --state-success: var(--color-status-success-text);
+  --state-success-soft: var(--color-status-success-bg);
+  --state-warning: var(--color-status-warning-text);
+  --state-warning-soft: var(--color-status-warning-bg);
+  --state-danger: var(--color-status-danger-text);
+  --state-danger-soft: var(--color-status-danger-bg);
+  --state-info: var(--color-status-info-text);
+  --state-info-soft: var(--color-status-info-bg);
+  --state-neutral: var(--color-status-neutral-text);
+  --state-neutral-soft: var(--color-status-neutral-bg);
+
+  /* Até 5 categorias (seção 13.4); a 6ª é a escala sequencial clara. */
+  --series-1: var(--color-chart-1);
+  --series-2: var(--color-chart-2);
+  --series-3: var(--color-chart-3);
+  --series-4: var(--color-chart-4);
+  --series-5: var(--color-chart-5);
+  --series-6: var(--color-blue-200);
 }
 
 html[data-theme="dark"] {
