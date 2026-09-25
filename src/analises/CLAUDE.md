@@ -14,7 +14,7 @@ App separado: `analises.html` → `main.js`. Bundle e CSS próprios. Herda `agsu
   `DESIGN.md` seção 1), `analises-layout-modern.css`, `analises-responsive-fixes.css`
   (importado pelo `main.js`), `analises-infinite-table.css`.
 - KPIs aqui são **botões de filtro** (`aria-pressed`): mudar o visual sem quebrar o filtro.
-- Gráficos em ECharts; paleta e regras em `DESIGN.md` seção 6.
+- Gráficos em Chart.js; paleta e regras em `DESIGN.md` seção 6.
 
 Regras: dados só por RPC via `analises-consolidated-transport.js` / `analises-shared-client-bootstrap.js`
 — nada de cliente Supabase novo. Bug → arquivo pequeno + teste em `tests/analises/`, sem inchar

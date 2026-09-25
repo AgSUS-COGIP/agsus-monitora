@@ -445,7 +445,7 @@ Regras:
 
 ## 6. Gráficos
 
-Chart.js (`legacy-app.js`, `window.Chart` via `src/lib/chartjs-global.js`) e ECharts (`analises-app.js`).
+Chart.js em todo o sistema (`legacy-app.js` e `analises-app.js`, `window.Chart` via `src/lib/chartjs-global.js`).
 
 **Paleta categórica, em ordem fixa**, validada com o validador da skill `dataviz`: faixa de luminosidade,
 croma, separação para daltonismo (CVD), visão normal e contraste ≥ 3:1. Passou em todos.
