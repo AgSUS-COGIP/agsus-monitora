@@ -3,12 +3,25 @@ import {
   LEVELS,
   matrixChanges,
 } from "../lib/permissoes-recursos.js";
-import { isOwnAccessProfile } from "../lib/access-roles.js";
+import { isOwnAccessProfile, normalizeRole } from "../lib/access-roles.js";
 import "../styles/matriz-acessos.css";
 import { escapeHtml as escape, sanitizeHtml } from "../lib/sanitize.js";
 
-const label = (level) =>
-  LEVELS.find(([value]) => value === level)?.[1] || "Sem acesso";
+/*
+  Áreas (Saúde Indígena, SEDE, Projetos) entram na matriz como recurso
+  "area:<código>": sem_acesso é "Não", leitor é "Sim". Quem não é admin só vê
+  dados das áreas marcadas; admin vê todas e a célula não é editável.
+*/
+const AREA_LEVELS = Object.freeze([
+  ["sem_acesso", "Não"],
+  ["leitor", "Sim"],
+]);
+const isArea = (resource) => String(resource).startsWith("area:");
+
+const label = (level, resource = "") =>
+  (isArea(resource) ? AREA_LEVELS : LEVELS).find(
+    ([value]) => value === level,
+  )?.[1] || (isArea(resource) ? "Não" : "Sem acesso");
 
 export async function mountAccessMatrix(
   root,
@@ -26,6 +39,7 @@ export async function mountAccessMatrix(
   };
   window.addEventListener("beforeunload", beforeUnload);
   const resources = () => [
+    ...(data.areas || []).map((a) => [`area:${a.id}`, `Área: ${a.titulo}`]),
     ...RESOURCES,
     ...data.paineis.map((p) => [`painel:${p.id}`, p.titulo]),
   ];
@@ -35,7 +49,7 @@ export async function mountAccessMatrix(
     matriz fica embaixo com a altura toda para a tabela.
   */
   function historicoHTML() {
-    return `<details class="permission-history"><summary>Histórico de permissões — últimas 50 alterações</summary><div class="permission-scroll"><table><thead><tr><th>Data</th><th>Usuário</th><th>Módulo / painel</th><th>Alteração</th><th>Realizado por</th><th>Motivo</th></tr></thead><tbody>${data.historico.map((h) => `<tr><td>${escape(new Date(h.alterado_em).toLocaleString("pt-BR"))}</td><td>${escape(h.email)}</td><td>${escape(resources().find(([r]) => r === h.recurso)?.[1] || h.recurso)}</td><td>${label(h.nivel_anterior)} → ${label(h.nivel_novo)}</td><td>${escape(h.autor || h.alterado_por)}</td><td>${escape(h.motivo)}</td></tr>`).join("") || '<tr><td colspan="6">Nenhuma alteração de permissão registrada.</td></tr>'}</tbody></table></div></details>`;
+    return `<details class="permission-history"><summary>Histórico de permissões — últimas 50 alterações</summary><div class="permission-scroll"><table><thead><tr><th>Data</th><th>Usuário</th><th>Módulo / painel</th><th>Alteração</th><th>Realizado por</th><th>Motivo</th></tr></thead><tbody>${data.historico.map((h) => `<tr><td>${escape(new Date(h.alterado_em).toLocaleString("pt-BR"))}</td><td>${escape(h.email)}</td><td>${escape(resources().find(([r]) => r === h.recurso)?.[1] || h.recurso)}</td><td>${label(h.nivel_anterior, h.recurso)} → ${label(h.nivel_novo, h.recurso)}</td><td>${escape(h.autor || h.alterado_por)}</td><td>${escape(h.motivo)}</td></tr>`).join("") || '<tr><td colspan="6">Nenhuma alteração de permissão registrada.</td></tr>'}</tbody></table></div></details>`;
   }
   function renderHistorico() {
     if (!historicoRoot) return;
@@ -51,6 +65,7 @@ export async function mountAccessMatrix(
       sanitizeHtml(`<section class="permission-matrix" aria-labelledby="permission-title">
       <h4 id="permission-title">Permissões por módulo e painel</h4>
       <p>Leitor consulta; Editor altera dados; Administrador também executa operações administrativas do módulo. A gestão de usuários continua restrita ao perfil global Admin.</p>
+      <p>Áreas: o usuário só vê editais, cronograma, aprovados e análises das áreas marcadas com Sim. Administrador vê todas.</p>
       <p>Painéis externos: a permissão libera a abertura pelo MONITORA. A edição e a proteção do endereço externo dependem do sistema de origem. O módulo “Painéis externos” também precisa estar liberado.</p>
       <form class="permission-toolbar" data-search>
         <label>Buscar usuário <input name="busca" value="${escape(search)}" placeholder="Nome ou e-mail" maxlength="100"></label>
@@ -67,16 +82,20 @@ export async function mountAccessMatrix(
               (u) =>
                 `<tr><th scope="row"><strong>${escape(u.nome || u.email)}</strong><small>${escape(u.email)}</small>${isOwnAccessProfile(currentUser, u) ? "<small>Seu acesso: outro administrador deve alterar.</small>" : onManageAccount ? `<button type="button" class="btn outline permission-account-button" data-manage-account="${escape(u.id)}" aria-label="Gerenciar conta de ${escape(u.nome || u.email)}" ${busy || changes.length ? "disabled" : ""}>Gerenciar conta</button>` : ""}</th>${resources()
                   .map(([id, title]) => {
+                    if (isArea(id) && normalizeRole(u) === "admin")
+                      return '<td><small class="permission-area-admin">Todas</small></td>';
                     const cell = u.permissoes[id] || {
                       nivel: "sem_acesso",
                       revisao: 0,
                     };
                     const value = draft.get(`${u.id}/${id}`) ?? cell.nivel;
-                    const levels = id.startsWith("painel:")
-                      ? LEVELS.slice(0, 2)
-                      : id === "configuracoes"
-                        ? LEVELS.filter(([key]) => key !== "leitor")
-                        : LEVELS;
+                    const levels = isArea(id)
+                      ? AREA_LEVELS
+                      : id.startsWith("painel:")
+                        ? LEVELS.slice(0, 2)
+                        : id === "configuracoes"
+                          ? LEVELS.filter(([key]) => key !== "leitor")
+                          : LEVELS;
                     return `<td><select data-user="${escape(u.id)}" data-resource="${escape(id)}" data-level="${escape(value)}" aria-label="${escape(title)} — ${escape(u.email)}" ${isOwnAccessProfile(currentUser, u) || busy ? "disabled" : ""}>${levels.map(([key, text]) => `<option value="${key}" ${key === value ? "selected" : ""}>${text}</option>`).join("")}</select>${value !== cell.nivel ? '<small class="permission-changed">Alteração pendente</small>' : ""}</td>`;
                   })
                   .join("")}</tr>`,
@@ -86,7 +105,7 @@ export async function mountAccessMatrix(
         }</tbody></table>
       </div>
       <div class="permission-toolbar"><button type="button" data-page="-1" class="btn outline" ${offset === 0 || busy || changes.length ? "disabled" : ""}>Anterior</button><span>${data.total ? offset + 1 : 0}–${Math.min(offset + data.usuarios.length, data.total)} de ${data.total}</span><button type="button" data-page="1" class="btn outline" ${offset + 30 >= data.total || busy || changes.length ? "disabled" : ""}>Próxima</button></div>
-      <div data-pending>${changes.length ? `<details open><summary>${changes.length} alterações para revisar</summary><ul>${changes.map((c) => `<li>${escape(data.usuarios.find((u) => u.id === c.usuario_id)?.email)} · ${escape(resources().find(([r]) => r === c.recurso)?.[1])}: ${label(data.usuarios.find((u) => u.id === c.usuario_id).permissoes[c.recurso].nivel)} → <strong>${label(c.nivel)}</strong></li>`).join("")}</ul></details>` : ""}</div>
+      <div data-pending>${changes.length ? `<details open><summary>${changes.length} alterações para revisar</summary><ul>${changes.map((c) => `<li>${escape(data.usuarios.find((u) => u.id === c.usuario_id)?.email)} · ${escape(resources().find(([r]) => r === c.recurso)?.[1])}: ${label(data.usuarios.find((u) => u.id === c.usuario_id).permissoes[c.recurso].nivel, c.recurso)} → <strong>${label(c.nivel, c.recurso)}</strong></li>`).join("")}</ul></details>` : ""}</div>
       <form data-save class="permission-toolbar"><label>Motivo da alteração <input name="motivo" required minlength="3" maxlength="500" placeholder="Descreva o motivo" ${busy ? "disabled" : ""}></label><button class="btn primary" ${!changes.length || busy ? "disabled" : ""}>${busy ? "Salvando…" : "Salvar alterações"}</button><button type="button" class="btn outline" data-discard ${!changes.length || busy ? "disabled" : ""}>Descartar alterações</button></form>
       <p role="status" class="${error ? "alert error" : "access-status"}">${escape(message)}</p>
       ${historicoRoot ? "" : historicoHTML()}
