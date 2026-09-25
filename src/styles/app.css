@@ -1598,7 +1598,7 @@ body.external-clean #externalReturnBar {
 /* KPIs da Visão geral: faixa contínua, sem card (DS 11.7). Dono: health-reference-kpis.css. */
 
 .multi-units-card {
-  margin-top: var(--space-8);
+  margin-top: var(--space-3);
   padding: var(--space-4) var(--space-5);
   display: flex;
   align-items: center;
@@ -1663,8 +1663,8 @@ body.external-clean #externalReturnBar {
 .lower-grid {
   display: grid;
   grid-template-columns: 2fr 1.08fr;
-  gap: var(--space-8);
-  margin-top: var(--space-12);
+  gap: var(--space-3);
+  margin-top: var(--space-3);
 }
 .panel-pad {
   padding: 14px;
