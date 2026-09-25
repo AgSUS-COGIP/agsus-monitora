@@ -126,7 +126,7 @@ Banco:
 | 2     | **Feita em 25/09**: `bench/`, o PDF do padrão e `pwa-lifecycle.css` saíram; `TA_ANALISE_QUARENTENA` foi para o schema `arquivo`. Falta: funções sem chamador                                                                                                             |
 | 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). Falta: schema `monitora`                                                                                                                                       |
 | 4     | Nomes neutros e `FC_`, função própria de sessão (em lotes)                                                                                                                                                                                                               |
-| 5     | Permissão por área no banco; sai `ehEditalDaSaudeIndigena`                                                                                                                                                                                                               |
+| 5     | **Leitura recortada por área desde 25/09** (`RL_PERFIL_USUARIO_AREA`, policies restritivas, 9 RPCs; todo não-admin começou em Saúde Indígena). Falta: RPCs de gravação conferirem área, áreas em Configurações → Acessos, sair `ehEditalDaSaudeIndigena`                 |
 
 Front (em paralelo, sem parar o sistema):
 
