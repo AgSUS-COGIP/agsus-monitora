@@ -44,7 +44,7 @@ test.describe("AgSUS Monitora smoke", () => {
     await expectNoSupabaseCdn(request, "/analises.html");
     await page.goto("/analises.html", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveTitle("MONITORA");
+    await expect(page).toHaveTitle("MONITORA Análises · Saúde Indígena");
     await expect(page.locator("h1")).toContainText("MONITORA Análises");
 
     const guide = page.locator("[data-arara-guide]");

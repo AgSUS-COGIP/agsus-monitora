@@ -157,6 +157,12 @@ export const CONTRATO_RPC = {
     resumo:
       "Todas as etapas de cronograma dos editais ativos, num pedido só (tela Cronograma).",
   },
+  get_monitoramento_dashboard_payload: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Payload consolidado da Saúde Indígena; sem ele a tela volta ao carregamento legado.",
+  },
   get_nucleo_cronograma_resumo: {
     argumentos: [],
     critica: false,
@@ -253,6 +259,19 @@ export const CONTRATO_RPC = {
     argumentos: ["p_scope"],
     critica: true,
     resumo: "Payload consolidado do painel de Análises.",
+  },
+  get_analises_dashboard_filtrado: {
+    argumentos: [
+      "p_scope",
+      "p_unidades",
+      "p_editais",
+      "p_offset",
+      "p_limit",
+      "p_include_total",
+    ],
+    critica: true,
+    resumo:
+      "Linhas do painel de Análises filtradas por unidade e edital, paginadas.",
   },
 
   // ── Auditoria e presença ────────────────────────────────────────────────

@@ -161,8 +161,7 @@ const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
 const RPC_PLATFORM_CONTEXT = "obter_contexto_monitora";
 const RPC_REGISTER_ONLINE_PRESENCE = "registrar_presenca_monitora";
 const RPC_LIST_ONLINE_PRESENCE = "listar_presenca_online_monitora";
-const MONITORAMENTO_DASHBOARD_PAYLOAD_RPC =
-  "get_monitoramento_dashboard_payload";
+const RPC_MONITORAMENTO_DASHBOARD_PAYLOAD = "get_monitoramento_dashboard_payload";
 const MAPA_CONFIG_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
 const DEFAULT_ACCESS_HEARTBEAT_MINUTES = 5;
 const DETAILS_TABLE_SOURCE_MODE = "client";
@@ -2039,7 +2038,7 @@ async function loadMapaConfig() {
 
 async function loadMonitoramentoPayload() {
   if (!sb) return null;
-  const { data, error } = await sb.rpc(MONITORAMENTO_DASHBOARD_PAYLOAD_RPC);
+  const { data, error } = await sb.rpc(RPC_MONITORAMENTO_DASHBOARD_PAYLOAD);
   if (error) {
     console.warn(
       "Payload consolidado de monitoramento indisponível; usando carregamento legado:",

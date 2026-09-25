@@ -2,7 +2,7 @@ const TARGET_VIEWS = new Set([
   "VW_ANALISES_DASHBOARD_BASE",
   "VW_ANALISES_DASHBOARD_BASE_TODOS",
 ]);
-const RPC = "get_analises_dashboard_filtrado";
+const RPC_ANALISES_FILTRADO = "get_analises_dashboard_filtrado";
 const PAGE_SIZE = 1000;
 
 const state = {
@@ -92,7 +92,7 @@ function syncPendingContext() {
 
 async function rpcPage(offset, limit) {
   const includeTotal = offset === 0;
-  const { data, error } = await state.client.rpc(RPC, {
+  const { data, error } = await state.client.rpc(RPC_ANALISES_FILTRADO, {
     p_scope: scope(),
     p_unidades: state.units,
     p_editais: state.editais,
