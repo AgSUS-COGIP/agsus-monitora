@@ -18,9 +18,9 @@ Arquivos que exigem cuidado:
 - `planilhas.js` — **catálogo de todas as planilhas** (modelo de aprovados, bucket da lista importada,
   link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
 - `contraste.js` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
-- `menu-lateral.js` — **catálogo das áreas do menu lateral** (Saúde indígena, Recrutamento e seleção,
-  Administração), árvore por permissão, página ativa, áreas abertas por padrão e estado do painel
-  flutuante. Área ou página nova entra aqui; o desenho é de `src/componentes/barra-lateral/`.
+- `menu-lateral.js` — **catálogo dos grupos do menu lateral** (as áreas do usuário — Saúde
+  Indígena, SEDE, Projetos —, Painéis e Administração), árvore por permissão e por área, página ativa
+  (considera a área atual), áreas abertas por padrão e estado do painel flutuante. Área ou página nova entra aqui; o desenho é de `src/componentes/barra-lateral/`.
 - `eventos-da-barra-lateral.js` — nomes dos eventos entre o legado e a barra lateral (React).
 - `editais-do-nucleo.js` — a página Editais sem DOM: ordem da fila (risco, vagas ociosas), tons de
   status e risco (também usados pelo mapa), unidades do formulário (catálogo + as que só existem nos

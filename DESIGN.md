@@ -378,10 +378,11 @@ sem permissão e offline (`src/modules/connectivity-status.js`).
 
 **É React** (`src/componentes/barra-lateral/`), o primeiro componente da migração; o legado a
 alimenta por estado externo e eventos (ver `src/componentes/CLAUDE.md`). **Organizada em áreas** —
-Saúde indígena, Recrutamento e seleção, Administração —, cada uma com as suas páginas
-(`src/lib/menu-lateral.js`; área nova é uma entrada no catálogo). Painéis externos
-entram em Recrutamento e seleção; as seções de Configurações são as páginas de Administração. Área
-marcada como `paginaUnica` (Saúde indígena) é link direto.
+um grupo por área do usuário (Saúde Indígena, SEDE, Projetos), cada um com Editais, Cronograma e
+Lista de aprovados (a Saúde Indígena também com Visão geral e Análises), depois Painéis e
+Administração (`src/lib/menu-lateral.js`; área nova é uma entrada no catálogo). O item escolhido
+define a área atual, que recorta as páginas; só o item da área atual fica ativo. Os painéis externos
+que não são de área entram em Painéis; as seções de Configurações são as páginas de Administração.
 
 - **Medidas:** 240px expandida e 60px recolhida. Marca 56px com logo de 32px. Cabeçalho de área
   36px, ícone 18px (traço 1,75), rótulo `--text-md`/500. Item 32px, pendurado numa linha-guia

@@ -305,6 +305,20 @@ export function resumoDoEdital(indice, linha) {
   );
 }
 
+/**
+ * Só os itens do resumo que casam com alguma das linhas, pela mesma regra da
+ * tabela (`resumoDoEdital`). O resumo vem de todos os editais; recortado assim,
+ * os indicadores contam exatamente os editais que a tabela mostra (a área
+ * atual, no Núcleo).
+ */
+export function resumoDasLinhas(resumo, linhas) {
+  const indice = indexarResumo(resumo);
+  const casados = new Set(
+    (linhas || []).map((linha) => resumoDoEdital(indice, linha)),
+  );
+  return (resumo || []).filter((item) => casados.has(item));
+}
+
 const ALERTAS = Object.freeze({
   sem_cronograma: {
     label: "Sem cronograma",

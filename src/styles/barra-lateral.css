@@ -199,11 +199,6 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
   color: var(--menu-realce);
 }
 
-/* Link direto (área de uma página só): o próprio cabeçalho é o item ativo. */
-.menu-area--link > .menu-area__cabecalho.active {
-  background: var(--menu-fundo-ativo);
-}
-
 /*
   Acordeão: o painel só aparece com a área aberta, sem animar a altura. A
   pílula com o nome é só do trilho recolhido.

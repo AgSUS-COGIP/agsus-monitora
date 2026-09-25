@@ -4,11 +4,11 @@ import {
   useReducer,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { Icone } from "../icone.jsx";
 import {
   areaAberta,
-  eLinkDireto,
   FLUTUANTE_FECHADO,
   itemAtivoDaArvore,
   navegacaoTransborda,
@@ -19,6 +19,11 @@ import {
   avisar,
   EVENTO_MENU_ATUALIZADO,
 } from "../../lib/eventos-da-barra-lateral.js";
+import {
+  assinarDadosDoMonitoramento,
+  definirAreaAtual,
+  obterDadosDoMonitoramento,
+} from "../dados-do-monitoramento.js";
 import { marcarItemAtivoNoMenu } from "./estado.js";
 
 /*
@@ -36,10 +41,14 @@ import { marcarItemAtivoNoMenu } from "./estado.js";
     aberto, e por quê) é o de `proximoFlutuante`: um por vez, `Esc` fecha, um
     clique não prende o painel aberto.
 
+  As áreas do sistema (Saúde Indígena, SEDE, Projetos) repetem as mesmas
+  páginas. Escolher um item de área torna a área dele a atual
+  (`definirAreaAtual`) antes de navegar, e só o item da área atual acende.
+
   O DOM continua sendo contrato: `#nav`, `[data-view]`, `[data-secao]`,
-  `data-rotulo`, `data-icone` e `aria-current` são lidos pelo menu inferior do
-  celular, pelos ganchos do mapa (`[data-view="dashboard"]`) e pelos testes de
-  ponta a ponta.
+  `[data-area]`, `data-rotulo`, `data-icone` e `aria-current` são lidos pelo
+  menu inferior do celular, pelos ganchos do mapa (`[data-view="dashboard"]`)
+  e pelos testes de ponta a ponta.
 */
 
 const CHAVE_AREAS_FECHADAS = "agsus_monitora_menu_areas_fechadas_v1";
@@ -109,6 +118,7 @@ function ItemDoMenu({ item, ativo, aoEscolher }) {
         className={classes("menu-item", ativo && "active")}
         data-view={item.view}
         data-secao={item.secao}
+        data-area={item.area}
         data-rotulo={item.rotulo}
         data-icone={item.icone}
         aria-current={ativo ? "page" : undefined}
@@ -135,9 +145,7 @@ function Area({
   const refSecao = useRef(null);
   const refCabecalho = useRef(null);
   const refPainel = useRef(null);
-  const linkDireto = eLinkDireto(area);
   const idDoPainel = `menuArea-${area.id}`;
-  const cabecalhoAtivo = linkDireto && area.itens[0] === itemAtivo;
 
   // Aberto no trilho: o painel se alinha ao ícone e fica dentro da janela.
   useLayoutEffect(() => {
@@ -185,32 +193,17 @@ function Area({
   };
 
   const aoClicarNoCabecalho = () => {
-    if (linkDireto) aoEscolher(area.itens[0], area.id, null);
-    else if (trilho) despachar({ tipo: "alternar", area: area.id });
+    if (trilho) despachar({ tipo: "alternar", area: area.id });
     else aoAlternar(area.id);
   };
-
-  const atributosDoCabecalho = linkDireto
-    ? {
-        "data-view": area.itens[0].view,
-        "data-secao": area.itens[0].secao,
-        "data-rotulo": area.rotulo,
-        "data-icone": area.icone,
-        "aria-current": cabecalhoAtivo ? "page" : undefined,
-      }
-    : {
-        "aria-expanded": trilho ? flutuante : aberta,
-        "aria-controls": idDoPainel,
-      };
 
   return (
     <section
       ref={refSecao}
       className={classes(
         "menu-area",
-        !linkDireto && aberta && "menu-area--aberta",
+        aberta && "menu-area--aberta",
         atual && "menu-area--atual",
-        linkDireto && "menu-area--link",
         flutuante && "menu-area--flutuante",
       )}
       data-area={area.id}
@@ -223,32 +216,29 @@ function Area({
       <button
         ref={refCabecalho}
         type="button"
-        className={classes("menu-area__cabecalho", cabecalhoAtivo && "active")}
+        className="menu-area__cabecalho"
         onClick={aoClicarNoCabecalho}
-        {...atributosDoCabecalho}
+        aria-expanded={trilho ? flutuante : aberta}
+        aria-controls={idDoPainel}
       >
         <Icone nome={area.icone} className="menu-area__icone" />
         <span className="menu-area__rotulo">{area.rotulo}</span>
-        {linkDireto ? null : (
-          <Icone nome="chevron-down" tamanho={16} className="menu-area__seta" />
-        )}
+        <Icone nome="chevron-down" tamanho={16} className="menu-area__seta" />
       </button>
       <div ref={refPainel} className="menu-area__painel" id={idDoPainel}>
         <p className="menu-area__pilula" aria-hidden="true">
           {area.rotulo}
         </p>
-        {linkDireto ? null : (
-          <ul className="menu-area__itens" aria-label={area.rotulo}>
-            {area.itens.map((item) => (
-              <ItemDoMenu
-                key={`${item.view}|${item.secao ?? ""}`}
-                item={item}
-                ativo={item === itemAtivo}
-                aoEscolher={() => aoEscolher(item, area.id, refCabecalho)}
-              />
-            ))}
-          </ul>
-        )}
+        <ul className="menu-area__itens" aria-label={area.rotulo}>
+          {area.itens.map((item) => (
+            <ItemDoMenu
+              key={`${item.view}|${item.secao ?? ""}`}
+              item={item}
+              ativo={item === itemAtivo}
+              aoEscolher={() => aoEscolher(item, area.id, refCabecalho)}
+            />
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -265,7 +255,16 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
     FLUTUANTE_FECHADO,
   );
 
-  const itemAtivo = itemAtivoDaArvore(arvore, ativo.view, ativo.secao);
+  const areaAtual = useSyncExternalStore(
+    assinarDadosDoMonitoramento,
+    () => obterDadosDoMonitoramento().areaAtual,
+  );
+  const itemAtivo = itemAtivoDaArvore(
+    arvore,
+    ativo.view,
+    ativo.secao,
+    areaAtual,
+  );
   const areaAtiva = itemAtivo?.area ?? null;
 
   const guardarFechadas = (proximas) => {
@@ -285,11 +284,18 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
     guardarFechadas(proximas);
   }, [areaAtiva, ativo.view, ativo.secao]);
 
-  // Depois de o DOM refletir o menu e a página ativa, avisa quem o espelha.
+  /*
+    Depois de o DOM refletir o menu e a página ativa, avisa quem o espelha. A
+    área atual entra: o menu do celular mostra as páginas dela.
+  */
   const secaoAtiva = itemAtivo?.item.secao ?? null;
   useEffect(() => {
-    avisar(EVENTO_MENU_ATUALIZADO, { view: ativo.view, secao: secaoAtiva });
-  }, [arvore, ativo, secaoAtiva]);
+    avisar(EVENTO_MENU_ATUALIZADO, {
+      view: ativo.view,
+      secao: secaoAtiva,
+      area: areaAtual,
+    });
+  }, [arvore, ativo, secaoAtiva, areaAtual]);
 
   useEffect(() => {
     if (!trilho) despachar({ tipo: "fechar" });
@@ -325,6 +331,8 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
   const escolher = (item, area, refCabecalho) => {
     const navegar = opcoes.navegar ?? navegarPelaJanela;
     const paginaAtiva = opcoes.paginaAtiva ?? paginaAtivaPadrao;
+    // A área vem antes da navegação: a página abre já recortada por ela.
+    if (item.area) definirAreaAtual(item.area);
 
     if (item.secao) {
       /*

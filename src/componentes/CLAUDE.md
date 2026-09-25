@@ -12,7 +12,10 @@ icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de
 modal.jsx                    <Modal>: portal no body, Esc, clique no fundo, foco preso e devolvido
 multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
 dados-do-monitoramento.js    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
-                             carrega e publica aqui (loadData / loadUnidades); sem React
+                             carrega e publica aqui (loadData / loadUnidades), e a área atual
+                             (definida pelo menu; linhasDaArea, soDosEditais); sem React
+usar-area-atual.js           hook: a área atual, as linhas dela e os ids dos editais (Editais,
+                             Cronograma e Lista de aprovados recortam por eles)
 barra-lateral/
   barra-lateral.jsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.js)
   estado.js                  estado externo da barra (sem React): o legado empurra, a barra lê
@@ -74,7 +77,7 @@ Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.j
 - **O componente avisa por evento** quando o DOM dele mudou (`agsus:menu-lateral-atualizado`) — o
   menu inferior do celular, ainda sem framework, espelha a partir daí.
 - **O DOM continua sendo contrato** enquanto houver consumidor legado: `#nav [data-view]`,
-  `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo`, `#sidebarLogoutBtn.side-logout`,
+  `data-area`, `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo`, `#sidebarLogoutBtn.side-logout`,
   `#globalSidebarToggle`. Não renomeie sem procurar quem lê.
 - **Folhas do legado:** o `src` de `#sideLogo` (de `sidebar-branding.js`) e o texto de
   `#sidebarVersion` (de `applyConfigToUi`) são escritos pelo legado. O React só cria esses nós e não

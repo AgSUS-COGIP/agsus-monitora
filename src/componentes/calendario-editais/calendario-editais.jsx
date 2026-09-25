@@ -26,6 +26,8 @@ import {
   somarMeses,
   unidadesDasEtapas,
 } from "../../lib/calendario-editais.js";
+import { soDosEditais } from "../dados-do-monitoramento.js";
+import { usarAreaAtual } from "../usar-area-atual.js";
 import { criarEstadoDoCalendario } from "./estado.js";
 import {
   AvisoDeDatasARevisar,
@@ -53,9 +55,21 @@ const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 const TIPOS_DO_FILTRO = TIPOS_DA_LEGENDA.map((tipo) => [tipo.id, tipo.rotulo]);
 
 export function CalendarioEditais({ estado, agora = () => new Date() }) {
-  const { etapas, editais, carregando, carregado, erro } = useSyncExternalStore(
-    estado.assinar,
-    estado.obter,
+  const carga = useSyncExternalStore(estado.assinar, estado.obter);
+  const { carregando, carregado, erro } = carga;
+  /*
+    As etapas chegam de todos os editais; a tela mostra só as dos editais da
+    área escolhida no menu. O cache de `estado.js` continua um só: trocar de
+    área não repete os pedidos.
+  */
+  const { ids } = usarAreaAtual();
+  const etapas = useMemo(
+    () => soDosEditais(carga.etapas, ids, "editalId"),
+    [carga.etapas, ids],
+  );
+  const editais = useMemo(
+    () => soDosEditais(carga.editais, ids, "id"),
+    [carga.editais, ids],
   );
   const [mes, setMes] = useState(() => primeiroDoMes(agora()));
   const [diaAberto, setDiaAberto] = useState("");

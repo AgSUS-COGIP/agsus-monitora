@@ -4,6 +4,7 @@ import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_MENU_ATUALIZADO,
 } from "../lib/eventos-da-barra-lateral.js";
+import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.js";
 
 /*
   Menu inferior do celular: as quatro primeiras páginas do menu lateral e um
@@ -14,6 +15,11 @@ import {
   estão ocultas e continuam valendo. Rótulo e ícone vêm de `data-rotulo` e
   `data-icone`, que o menu lateral escreve. Uma entrada por página: as sete
   seções de Configurações contam como uma.
+
+  As áreas do sistema (Saúde Indígena, SEDE, Projetos) repetem as mesmas
+  páginas. Aqui entra uma por view — a da área atual, quando a view existe
+  nela; senão, a primeira do menu (a Visão geral só existe na Saúde Indígena).
+  Trocar de área remonta a barra com as páginas da nova área.
 
   Quando o menu lateral (React) é remontado ou troca de página, ele avisa
   (`agsus:menu-lateral-atualizado`), já com o DOM atualizado. Aqui isso basta
@@ -34,16 +40,23 @@ function getLabel(element) {
   );
 }
 
-export function collectPrimaryItems(documento = document) {
-  const seen = new Set();
-  return Array.from(documento.querySelectorAll(NAV_ITEM_SELECTOR))
-    .filter((element) => {
-      const view = element.dataset.view;
-      if (!view || seen.has(view)) return false;
-      seen.add(view);
-      return true;
-    })
-    .slice(0, MAX_PRIMARY_ITEMS);
+export function collectPrimaryItems(
+  documento = document,
+  area = obterDadosDoMonitoramento().areaAtual,
+) {
+  const porView = new Map();
+  for (const element of documento.querySelectorAll(NAV_ITEM_SELECTOR)) {
+    const view = element.dataset.view;
+    if (!view) continue;
+    // A ordem é a da primeira aparição da view; a da área atual toma o lugar.
+    const escolhido = porView.get(view);
+    if (
+      !escolhido ||
+      (element.dataset.area === area && escolhido.dataset.area !== area)
+    )
+      porView.set(view, element);
+  }
+  return [...porView.values()].slice(0, MAX_PRIMARY_ITEMS);
 }
 
 function fillItem(button, iconName, label) {
@@ -52,8 +65,14 @@ function fillItem(button, iconName, label) {
   button.replaceChildren(criarIcone(iconName, { tamanho: 20 }), text);
 }
 
-function createNavigationItem(source, index) {
-  if (!source.id) source.id = `mobileNavSource${index}`;
+/*
+  Id novo a cada origem, nunca pelo índice: ao trocar de área, a página da
+  área nova ocuparia o id que o botão da área anterior ainda tem no DOM.
+*/
+let proximaOrigem = 0;
+
+function createNavigationItem(source) {
+  if (!source.id) source.id = `mobileNavSource${++proximaOrigem}`;
 
   const label = getLabel(source);
   const button = document.createElement("button");
@@ -95,9 +114,15 @@ export function syncActiveItem(navigation, documento = document) {
     });
 }
 
-function sourcesConnected(navigation) {
-  return Array.from(navigation.querySelectorAll("[data-source-id]")).every(
-    (item) => document.getElementById(item.dataset.sourceId)?.isConnected,
+/* A barra montada ainda aponta exatamente para as origens de agora? */
+function sameSources(navigation, sources) {
+  const atuais = Array.from(navigation.querySelectorAll("[data-source-id]"));
+  return (
+    atuais.length === sources.length &&
+    atuais.every((item, index) => {
+      const origem = document.getElementById(item.dataset.sourceId);
+      return origem?.isConnected && origem === sources[index];
+    })
   );
 }
 
@@ -112,8 +137,8 @@ function buildBottomNavigation() {
   navigation.id = "mobileBottomNav";
   navigation.className = "mobile-bottom-nav";
   navigation.setAttribute("aria-label", "Navegação principal no celular");
-  sources.forEach((source, index) => {
-    navigation.appendChild(createNavigationItem(source, index));
+  sources.forEach((source) => {
+    navigation.appendChild(createNavigationItem(source));
   });
   navigation.appendChild(createMoreButton());
   document.body.appendChild(navigation);
@@ -141,7 +166,7 @@ function syncVisibility() {
 
 function refreshFromMenu() {
   const navigation = document.getElementById("mobileBottomNav");
-  if (navigation && sourcesConnected(navigation)) {
+  if (navigation && sameSources(navigation, collectPrimaryItems())) {
     syncActiveItem(navigation);
     return;
   }

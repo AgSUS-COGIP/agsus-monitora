@@ -2,6 +2,23 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarCalendarioEditais } from "../../src/componentes/calendario-editais/calendario-editais.jsx";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
+import {
+  definirAreaAtual,
+  publicarLinhasDoMonitoramento,
+  redefinirDadosDoMonitoramento,
+} from "../../src/componentes/dados-do-monitoramento.js";
+
+/*
+  A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
+  editais das fixtures precisam estar nas linhas do monitoramento. Registrado
+  antes dos outros ganchos, o afterEach roda depois de desmontar.
+*/
+beforeEach(() =>
+  publicarLinhasDoMonitoramento(
+    [1, 2, 3].map((id) => ({ id, CO_AREA: "saude-indigena" })),
+  ),
+);
+afterEach(() => redefinirDadosDoMonitoramento());
 
 /*
   O Calendário de Editais em React: a costura entre o carregamento (1 + N
@@ -390,5 +407,31 @@ describe("datas impossíveis (ano digitado errado)", () => {
         (item) => item.textContent,
       ),
     ).not.toContain("Etapa com ano errado");
+  });
+});
+
+/*
+  A tela mostra só as etapas dos editais da área escolhida no menu: o recorte é
+  pelo conjunto de ids das linhas do monitoramento daquela área.
+*/
+describe("área atual", () => {
+  beforeEach(async () => {
+    publicarLinhasDoMonitoramento([
+      { id: 1, CO_AREA: "saude-indigena" },
+      { id: 2, CO_AREA: "sede" },
+      { id: 3, CO_AREA: "sede" },
+    ]);
+    await montar();
+  });
+
+  it("troca de área sem recarregar, e só mostra os editais dela", async () => {
+    expect(contador()).toBe("2 etapas no mês");
+
+    await act(async () => definirAreaAtual("sede"));
+    expect(contador()).toBe("1 etapa no mês");
+    expect(pontos("2026-09-14")).toEqual([]);
+
+    await act(async () => definirAreaAtual("projetos"));
+    expect(contador()).toBe("0 etapas no mês");
   });
 });

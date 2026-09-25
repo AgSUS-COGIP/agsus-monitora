@@ -6,6 +6,8 @@ import {
   tomDoStatusDoEdital,
 } from "../lib/editais-do-nucleo.js";
 import {
+  definirAreasDoUsuario,
+  obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
 } from "../componentes/dados-do-monitoramento.js";
@@ -20,7 +22,11 @@ import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.js";
-import { montarArvoreDoMenu } from "../lib/menu-lateral.js";
+import {
+  areasDoUsuario,
+  montarArvoreDoMenu,
+  nomeDaArea,
+} from "../lib/menu-lateral.js";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
@@ -161,7 +167,8 @@ const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
 const RPC_PLATFORM_CONTEXT = "obter_contexto_monitora";
 const RPC_REGISTER_ONLINE_PRESENCE = "registrar_presenca_monitora";
 const RPC_LIST_ONLINE_PRESENCE = "listar_presenca_online_monitora";
-const RPC_MONITORAMENTO_DASHBOARD_PAYLOAD = "get_monitoramento_dashboard_payload";
+const RPC_MONITORAMENTO_DASHBOARD_PAYLOAD =
+  "get_monitoramento_dashboard_payload";
 const MAPA_CONFIG_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
 const DEFAULT_ACCESS_HEARTBEAT_MINUTES = 5;
 const DETAILS_TABLE_SOURCE_MODE = "client";
@@ -2201,8 +2208,16 @@ function buildNav() {
   const paineis = can("paineis")
     ? panels.filter(panelAllowed).sort((a, b) => n(a.ordem) - n(b.ordem))
     : [];
+  // Um grupo por área do usuário; a área atual passa a ser uma delas.
+  const areas = areasDoUsuario(profile?.areas);
+  definirAreasDoUsuario(areas);
   atualizarMenuLateral(
-    montarArvoreDoMenu({ permitidas, paineis, secoesDeConfiguracao: SECOES }),
+    montarArvoreDoMenu({
+      permitidas,
+      paineis,
+      secoesDeConfiguracao: SECOES,
+      areas,
+    }),
     {
       aoAbrirSecao: (_view, secao) => abrirSecaoDeConfiguracao(document, secao),
       textoVazio: cfgValue("permissions_empty_text"),
@@ -2306,7 +2321,7 @@ function navigate(view) {
   }
   if (requestedView === "nucleo") {
     $("page-nucleo").classList.add("active");
-    setPageTitle("Editais", cfgValue("nucleo_page_subtitle"));
+    setPageTitle("Editais", subtituloDaArea(cfgValue("nucleo_page_subtitle")));
     void window.nucleoController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
@@ -2316,7 +2331,7 @@ function navigate(view) {
     $("page-calendario").classList.add("active");
     setPageTitle(
       "Cronograma",
-      "Etapas de todos os editais, por data.",
+      subtituloDaArea("Etapas dos editais, por data."),
     );
     void window.calendarioEditaisController?.render();
     if (previousView !== requestedView)
@@ -2327,7 +2342,7 @@ function navigate(view) {
     $("page-approved").classList.add("active");
     setPageTitle(
       "Lista de Aprovados",
-      "Candidatos por edital e situação de contratação.",
+      subtituloDaArea("Candidatos por edital e situação de contratação."),
     );
     void window.aprovadosController?.render();
     if (previousView !== requestedView)
@@ -2352,6 +2367,12 @@ function navigate(view) {
       trackAccess("abertura_tela", { tela: requestedView });
   }
   void syncOnlinePresence();
+}
+
+/* Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
+function subtituloDaArea(sub) {
+  const area = nomeDaArea(obterDadosDoMonitoramento().areaAtual);
+  return [area, sub].filter(Boolean).join(" · ");
 }
 
 function setPageTitle(title, sub) {
@@ -11173,7 +11194,8 @@ function openPanel(code) {
   $("page-external").classList.add("active");
   setPageTitle(panel.titulo, cfgValue("external_default_title"));
   $("externalTitle").textContent = panel.titulo;
-  $("externalOpen").href = enderecoDoPainel(panel.url, window.location.origin) || "#";
+  $("externalOpen").href =
+    enderecoDoPainel(panel.url, window.location.origin) || "#";
   const mount = $("externalMount");
   if (mount.classList.contains("external-placeholder")) {
     mount.className = "";
