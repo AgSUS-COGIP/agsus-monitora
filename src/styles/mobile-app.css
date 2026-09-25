@@ -198,7 +198,6 @@ textarea,
   .card,
   .panel,
   .widget,
-  .kpi,
   .kpi-card,
   .filter-card,
   .table-card,
@@ -222,7 +221,6 @@ textarea,
     gap: 10px !important;
   }
 
-  .kpi,
   .kpi-card {
     min-height: 112px;
   }

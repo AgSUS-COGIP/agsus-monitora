@@ -23,7 +23,9 @@ describe("primeiro paint da tela de login", () => {
 /*
   A densidade do KPI saiu daqui. Este arquivo sobrepunha health-reference-kpis.css
   com !important e chegou a deixar o rótulo com 9px. Agora o dono é o próprio
-  health-reference-kpis.css, com valores de tokens.css.
+  health-reference-kpis.css, com valores de tokens.css: a faixa contínua do
+  Design System AgSUS (11.7), com rótulo em `label` e valor em `metric`. Sem
+  card nenhum sobrescrevendo, os tamanhos não precisam mais de !important.
 */
 describe("densidade do dashboard Saúde Indígena", () => {
   const kpis = readFileSync("src/styles/health-reference-kpis.css", "utf8");
@@ -33,10 +35,11 @@ describe("densidade do dashboard Saúde Indígena", () => {
   });
 
   it("vem de tokens, com rótulo legível e sem zoom ou scale", () => {
-    expect(kpis).toContain("font-size: var(--text-kpi-sm) !important");
-    expect(kpis).toContain("font-size: var(--text-sm) !important");
+    expect(kpis).toContain("font-size: var(--text-metric);");
+    expect(kpis).toContain("font-size: var(--text-label);");
+    expect(kpis).toContain("font-variant-numeric: tabular-nums;");
     expect(kpis).not.toMatch(/font-size:\s*(8|9|10)(\.\d)?px/);
-    expect(kpis).not.toMatch(/font-weight:\s*(8|9)\d\d/);
+    expect(kpis).not.toMatch(/font-weight:\s*(7|8|9)\d\d/);
     expect(kpis).not.toMatch(/\bzoom\s*:/);
     expect(kpis).not.toMatch(/transform:\s*scale\(/);
   });
