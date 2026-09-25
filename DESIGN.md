@@ -435,8 +435,8 @@ brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNume
 
 ## 12. Divergências com o Design System AgSUS
 
-Medido em 2026-09-25, depois da Visão geral da Saúde Indígena no Design System (antes, na troca
-de tokens: 215 · 54 · 28 · 157 · 547 · 1645). Ocorrências em `src/styles/*.css`, contadas com
+Medido em 2026-09-25, depois do acabamento do mapa da Visão geral (botões, Mapa/Satélite, selo e
+legenda no Design System; antes, na troca de tokens: 215 · 54 · 28 · 157 · 547 · 1645). Ocorrências em `src/styles/*.css`, contadas com
 `cat src/styles/*.css | grep -oiE '<padrão>' | wc -l` (hex: `#[0-9a-f]{3,8}`). O caminho é o
 da seção 8: resolver ao migrar cada tela (de preferência junto com a passagem para React), não num
 mutirão.
@@ -446,11 +446,12 @@ mutirão.
 | Peso ≥ 700 (`font-weight: 700/800/900/bold`) | 163 | 0 (máximo 600) |
 | `text-transform: uppercase` | 42 | 0 (sentence case) |
 | `linear-gradient` | 12 | 0 (proibido) |
-| `box-shadow` | 145 | só menus, popovers, modais e toasts |
-| `!important` | 493 | < 50 (seção 8) |
-| Hex chumbado em CSS | 1579 | só dentro de `tokens.css` |
+| `box-shadow` | 147 | só menus, popovers, modais e toasts |
+| `!important` | 497 | < 50 (seção 8) |
+| Hex chumbado em CSS | 1571 | só dentro de `tokens.css` |
 | **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena; Editais e Aprovados ainda com o card antigo. | Manter card; alinhar Editais e Aprovados ao mesmo card. |
 | **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). | Manter card; não aninhar card dentro de card. Entre os blocos, 12px (ritmo compacto de antes), não os 48px de seção do DS 5.2. |
 | Botão verde arredondado (`.btn.green`) | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu | `--color-action-primary`, `--radius-md`, sem sombra |
+| Emoji como ícone | feito no mapa da Visão geral: "Brasil" e "Calor" com Lucide `map` e `flame` (16px, `aria-hidden`), pelo registro `icones.js` (`controles-do-mapa.js`). A legenda do mapa nacional é recolhível (`ChevronDown`/`ChevronUp`) e começa fechada abaixo de 768px. | Nenhum emoji no lugar de ícone (DS 14). |
 | Modo escuro | existe | fora do escopo do DS: manter, sem investir |
 | **Exceção aceita:** cor da barra lateral | Segue a cor configurada em Configurações → Aparência (`ui_sidebar_background_color`), identidade do MONITORA — exceção aceita ao `--color-sidebar-bg` oficial (decisão do responsável, 25/09/2026). | Não trocar. |

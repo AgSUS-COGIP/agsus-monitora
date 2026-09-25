@@ -70,6 +70,10 @@ import {
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
 import { montarLegendaDasTerras } from "./legenda-das-terras.js";
+import {
+  criarBotaoDoMapa,
+  montarLegendaRecolhivel,
+} from "./controles-do-mapa.js";
 import { criarCamadaComRecuo } from "./map-base-layer-switcher.js";
 import {
   reconciliarDsei,
@@ -9167,26 +9171,25 @@ function initLeaflet() {
   const HomeCtl = L.Control.extend({
     options: { position: "topright" },
     onAdd: function () {
-      const wrap = L.DomUtil.create("div", "");
-      wrap.style.cssText = "display:flex;gap:6px;";
-      const b = L.DomUtil.create("button", "", wrap);
-      b.type = "button";
+      // Ícones Lucide (Design System, seção 14) no lugar dos emojis; o estilo
+      // é `.health-map-controles` / `.health-map-botao` em health-map-workspace.css.
+      const wrap = L.DomUtil.create("div", "health-map-controles");
+      const b = criarBotaoDoMapa(document, { icone: "map", rotulo: "Brasil" });
+      wrap.append(b);
       b.title = "Voltar à visão do Brasil inteiro";
-      b.innerHTML = "🗺️ Brasil";
-      b.style.cssText =
-        "background:#fff;border:1px solid #bcd;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#22577a;cursor:pointer;box-shadow:0 2px 8px rgba(15,35,60,.18);";
       L.DomEvent.on(b, "click", function (e) {
         L.DomEvent.stop(e);
         mapVoltar();
       });
-      const h = L.DomUtil.create("button", "", wrap);
+      const h = criarBotaoDoMapa(document, {
+        icone: "flame",
+        rotulo: "Calor",
+        classe: "health-map-botao--calor",
+      });
+      wrap.append(h);
       h.id = "heatBtn";
-      h.type = "button";
       h.title = "Mapa de calor: cor por % de vagas ociosas";
       h.setAttribute("aria-pressed", "false");
-      h.innerHTML = "🔥 Calor";
-      h.style.cssText =
-        "background:#fff;border:1px solid #bcd;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#a3322b;cursor:pointer;box-shadow:0 2px 8px rgba(15,35,60,.18);";
       L.DomEvent.on(h, "click", function (e) {
         L.DomEvent.stop(e);
         toggleHeatMap();
@@ -9205,6 +9208,10 @@ function initLeaflet() {
       d.id = "mapLegendBox";
       d.style.cssText =
         "background:rgba(255,255,255,.94);border:1px solid #d7e5f2;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:600;color:#43566d;box-shadow:0 2px 10px rgba(15,35,60,.12);line-height:1.7;max-width:230px;";
+      // Recolhível: o título é um botão (aria-expanded) e o corpo começa
+      // fechado no celular. `syncMapLevelUI` só reescreve título e corpo, então
+      // o estado aberto/fechado sobrevive à troca Brasil/DSEI.
+      montarLegendaRecolhivel(d, { largura: window.innerWidth });
       L.DomEvent.disableClickPropagation(d);
       return d;
     },
@@ -10726,7 +10733,7 @@ function resumoDaRedeDoDsei(d) {
 /*
   VOLTAR AO BRASIL — SAI DO DSEI, MANTÉM OS FILTROS.
 
-  Antes, o botão "🗺️ Brasil" apagava todos os filtros (e sem passar pelos
+  Antes, o botão "Brasil" (ícone de mapa, `controles-do-mapa.js`) apagava todos os filtros (e sem passar pelos
   módulos que mostram o contador), enquanto o breadcrumb não apagava nada —
   nem o nome do DSEI que ficava escondido na busca. Agora os dois só saem do
   território; apagar o recorte é trabalho do "Limpar filtros" (`clearFilters`),
@@ -10797,13 +10804,23 @@ function syncMapLevelUI() {
     const abrangencia = temAbrangencia
       ? `${limiteDsei}abrangência oficial do DSEI<br>`
       : "";
-    box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${abrangencia}${terras}`
-      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${abrangencia}${losango("#7b2ff7")}CASAI Nacional${terras}`;
-    montarLegendaDasTerras(
-      box.querySelector("[data-legenda-das-terras]"),
-      _leaflet,
-    );
+    // A caixa é recolhível (`montarLegendaRecolhivel`): o título vai no botão
+    // que abre e fecha, e o resto no corpo. Reescrever só os dois preserva o
+    // estado aberto/fechado.
+    const titulo = box.querySelector("[data-legenda-titulo]");
+    const corpo = box.querySelector("[data-legenda-corpo]");
+    if (titulo && corpo) {
+      titulo.innerHTML = showingPolos
+        ? '<b style="color:#22577a">Polos base do DSEI</b>'
+        : '<b style="color:#22577a">Legenda</b>';
+      corpo.innerHTML = showingPolos
+        ? `${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${abrangencia}${terras}`
+        : `${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${abrangencia}${losango("#7b2ff7")}CASAI Nacional${terras}`;
+      montarLegendaDasTerras(
+        corpo.querySelector("[data-legenda-das-terras]"),
+        _leaflet,
+      );
+    }
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei) {

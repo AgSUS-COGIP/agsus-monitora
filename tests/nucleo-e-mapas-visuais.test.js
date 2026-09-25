@@ -209,20 +209,51 @@ describe("seletor de camada Mapa/Satélite", () => {
     que diz a quem navega por teclado onde está. Os dois falhavam no escuro:
     3.78:1 no texto e 2.47:1 no anel.
   */
-  const ativoEscuro = () =>
-    valor(
-      seletorCss,
-      '[data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"]',
-      "background",
-    );
+  /*
+    Desde o controle segmentado do Design System (10.5) o seletor não tem
+    cores próprias no escuro: usa `--surface-*` e `--text-*`, que tokens.css
+    redefine em `html[data-theme="dark"]`. O contraste do escuro passa a ser
+    calculado resolvendo o mesmo token no bloco escuro.
+  */
+  const ATIVO = '.agsus-basemap-switcher__button[aria-pressed="true"]';
+  const bloco = tokensCss.slice(tokensCss.indexOf('html[data-theme="dark"]'));
+  const raizEscura = bloco.slice(0, bloco.indexOf("}"));
+  const resolverTokenEscuro = (valorCss) => {
+    const nome = valorCss.match(/^var\(\s*(--[\w-]+)/)?.[1];
+    if (!nome) return valorCss;
+    const achado = raizEscura.match(new RegExp(`${nome}\\s*:\\s*([^;]+);`));
+    return achado
+      ? resolverTokenEscuro(achado[1].trim())
+      : resolverToken(valorCss);
+  };
+  const bruto = (seletor, propriedade) =>
+    blocos(seletorCss, seletor)
+      .map(
+        (corpo) =>
+          corpo.match(
+            new RegExp(`(?:^|;)\\s*${propriedade}\\s*:\\s*([^;]+)`),
+          )?.[1],
+      )
+      .filter(Boolean)
+      .pop()
+      .trim();
 
   it("o botão ativo passa o AA no tema escuro", () => {
-    const cor = valor(
-      seletorCss,
-      '[data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"]',
-      "color",
-    );
-    expect(contraste(cor, ativoEscuro())).toBeGreaterThanOrEqual(AA);
+    const fundo = resolverTokenEscuro(bruto(ATIVO, "background"));
+    const cor = resolverTokenEscuro(bruto(ATIVO, "color"));
+    expect(fundo).toMatch(/^#/);
+    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+  });
+
+  it("o segmento inativo passa o AA sobre o trilho nos dois temas", () => {
+    const trilho = bruto(".agsus-basemap-switcher", "background");
+    const texto = bruto(".agsus-basemap-switcher__button", "color");
+    expect(
+      contraste(resolverToken(texto), resolverToken(trilho)),
+    ).toBeGreaterThanOrEqual(AA);
+    expect(
+      contraste(resolverTokenEscuro(texto), resolverTokenEscuro(trilho)),
+    ).toBeGreaterThanOrEqual(AA);
   });
 
   it("o botão ativo passa o AA no tema claro", () => {
