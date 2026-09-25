@@ -681,7 +681,7 @@ html[data-theme="dark"] #page-config .config-workspace-tab.is-active {
 }
 
 .access-background-gallery-hint {
-  color: var(--config-muted, #64748b);
+  color: var(--config-muted, var(--color-text-secondary));
   font-size: 11px;
   line-height: 1.3;
 }

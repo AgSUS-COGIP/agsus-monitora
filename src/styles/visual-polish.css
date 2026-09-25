@@ -37,10 +37,10 @@
 }
 
 .visual-polish-ready .kpi.ag-navy {
-  color: #003b70;
+  color: var(--color-blue-800);
 }
 .visual-polish-ready .kpi.ag-blue {
-  color: #0d6efd;
+  color: var(--color-blue-600);
 }
 .visual-polish-ready .kpi.ag-green {
   color: #0b8f58;
@@ -158,7 +158,7 @@
 .section-title-row h4 {
   margin: 0;
   font-size: 14px;
-  color: #10243e;
+  color: var(--color-text-primary);
 }
 
 .section-title-row p {
@@ -201,7 +201,7 @@
 
 .access-admin-actions .btn.outline {
   background: #fff;
-  color: #003b70;
+  color: var(--color-blue-800);
   border: 1px solid rgba(0, 59, 112, 0.22);
 }
 

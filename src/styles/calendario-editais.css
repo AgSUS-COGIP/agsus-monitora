@@ -21,7 +21,7 @@
   --cal-violeta-claro: #8b5cf6;
   --cal-verde: #22c55e;
   --cal-azul-escuro: #2563eb;
-  --cal-neutro: #64748b;
+  --cal-neutro: var(--color-text-secondary);
 }
 
 /* ── Barra superior ──────────────────────────────────────────────────── */
@@ -124,7 +124,7 @@
   text-align: center;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -338,7 +338,7 @@
 
 .cal-item-corpo small {
   font-size: 11px;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 /* ── Popup do dia ────────────────────────────────────────────────────── */
@@ -359,7 +359,7 @@
   --cal-violeta-claro: #8b5cf6;
   --cal-verde: #22c55e;
   --cal-azul-escuro: #2563eb;
-  --cal-neutro: #64748b;
+  --cal-neutro: var(--color-text-secondary);
 }
 
 /* A lista encosta nas margens do cartão; cada item já tem o seu espaçamento. */
@@ -398,7 +398,7 @@
   left: -50%;
   width: 100%;
   height: 2px;
-  background: #e2e8f0;
+  background: var(--color-border-subtle);
 }
 
 .cal-passo:first-child::before {
@@ -447,7 +447,7 @@
 .cal-passo small {
   display: block;
   font-size: 11px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
@@ -486,7 +486,7 @@
   margin: 0;
   padding: 16px 4px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   text-align: center;
 }
 
@@ -559,7 +559,7 @@
   align-items: flex-start;
   margin: 0 0 var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--state-warning-soft);
   color: var(--state-warning);
   font-size: var(--text-sm);

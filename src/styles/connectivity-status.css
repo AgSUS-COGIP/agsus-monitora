@@ -9,7 +9,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, var(--primary, #003b70) 18%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--primary, var(--color-blue-800)) 18%, transparent);
   border-radius: 16px;
   background: var(--surface, #ffffff);
   box-shadow: 0 14px 36px rgba(0, 35, 69, 0.18);
@@ -49,10 +50,11 @@
   min-height: 40px;
   flex-shrink: 0;
   padding: 0 14px;
-  border: 1px solid color-mix(in srgb, var(--primary, #003b70) 24%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--primary, var(--color-blue-800)) 24%, transparent);
   border-radius: 12px;
   background: transparent;
-  color: var(--primary, #003b70);
+  color: var(--primary, var(--color-blue-800));
   font: inherit;
   font-size: 0.82rem;
   font-weight: 700;

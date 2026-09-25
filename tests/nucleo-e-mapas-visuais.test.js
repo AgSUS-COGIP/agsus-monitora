@@ -62,7 +62,8 @@ function resolverToken(valorCss) {
   if (!nome) return valorCss;
   const achado = raizClara.match(new RegExp(`${nome}\\s*:\\s*([^;]+);`));
   if (!achado) throw new Error(`token ${nome} não existe em tokens.css`);
-  return achado[1].trim();
+  // Os nomes do MONITORA apontam para os oficiais (--text-secondary → --color-text-secondary → hex).
+  return resolverToken(achado[1].trim());
 }
 
 const canal = (valor) => {

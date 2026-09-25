@@ -6,10 +6,10 @@
     height: 40px;
     flex: 0 0 40px;
     place-items: center;
-    border: 1px solid #d7e5f2;
+    border: 1px solid var(--color-border-subtle);
     border-radius: 12px;
     background: #fff;
-    color: #003b70;
+    color: var(--color-blue-800);
     box-shadow: 0 4px 14px rgba(15, 35, 60, 0.08);
   }
 
