@@ -36,7 +36,8 @@ describe("densidade do dashboard Saúde Indígena", () => {
 
   it("vem de tokens, com rótulo legível e sem zoom ou scale", () => {
     expect(kpis).toContain("font-size: var(--text-metric-sm);");
-    expect(kpis).toContain("font-size: var(--text-label);");
+    // 12px (caption, o mínimo do Design System): em 13px o rótulo mais longo quebrava e esticava a fileira.
+    expect(kpis).toContain("font-size: var(--text-caption);");
     expect(kpis).toContain("font-variant-numeric: tabular-nums;");
     expect(kpis).not.toMatch(/font-size:\s*(8|9|10)(\.\d)?px/);
     expect(kpis).not.toMatch(/font-weight:\s*(7|8|9)\d\d/);
