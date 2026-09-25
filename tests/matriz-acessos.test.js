@@ -116,4 +116,72 @@ describe("matriz de acessos", () => {
         .value,
     ).toBe("sem_acesso");
   });
+  it("áreas: Sim/Não para quem não é admin, Todas para admin, e salva como area:<código>", async () => {
+    document.body.innerHTML = '<div id="matrix"></div>';
+    const root = document.getElementById("matrix");
+    const comAreas = () => {
+      const p = payload();
+      p.areas = [
+        { id: "saude-indigena", titulo: "Saúde Indígena" },
+        { id: "sede", titulo: "SEDE" },
+      ];
+      p.usuarios[1].perfil = "usuario";
+      p.usuarios[1].permissoes["area:saude-indigena"] = {
+        nivel: "leitor",
+        revisao: 0,
+      };
+      p.usuarios[1].permissoes["area:sede"] = {
+        nivel: "sem_acesso",
+        revisao: 0,
+      };
+      p.usuarios.push({
+        id: "u3",
+        user_id: "adm",
+        email: "adm@example.org",
+        nome: "Admin",
+        perfil: "admin",
+        permissoes: { "area:sede": { nivel: "leitor", revisao: 0 } },
+      });
+      return p;
+    };
+    const rpc = vi.fn(async (name) => ({
+      data: name === "obter_matriz_acessos" ? comAreas() : { alteradas: 1 },
+      error: null,
+    }));
+    dispose = await mountAccessMatrix(root, {
+      sb: { rpc },
+      currentUser: { id: "self" },
+    });
+    expect(root.textContent).toContain("Área: SEDE");
+    const sede = root.querySelector(
+      'select[data-user="u2"][data-resource="area:sede"]',
+    );
+    expect([...sede.options].map((o) => o.textContent)).toEqual(["Não", "Sim"]);
+    expect(
+      root.querySelector('select[data-user="u3"][data-resource="area:sede"]'),
+    ).toBeNull();
+    expect(root.querySelector(".permission-area-admin").textContent).toBe(
+      "Todas",
+    );
+    sede.value = "leitor";
+    sede.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(root.textContent).toContain("Não → Sim");
+    root.querySelector('[name="motivo"]').value = "Passou a atender a SEDE";
+    root
+      .querySelector("[data-save]")
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await vi.waitFor(() =>
+      expect(rpc).toHaveBeenCalledWith("salvar_matriz_acessos", {
+        p_alteracoes: [
+          {
+            usuario_id: "u2",
+            recurso: "area:sede",
+            nivel: "leitor",
+            revisao: 0,
+          },
+        ],
+        p_motivo: "Passou a atender a SEDE",
+      }),
+    );
+  });
 });

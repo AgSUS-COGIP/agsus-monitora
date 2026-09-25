@@ -119,14 +119,14 @@ src/
 
 Banco:
 
-| Etapa | O quê                                                                                                                                                                                                                                                                    |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0     | Correções: jobs do pg_cron, RPCs fora do contrato, registro de migrations                                                                                                                                                                                                |
-| 1     | **Feita em 25/09.** Lixo certo: `get_analises_dashboard_payload` (v1) e suas 4 views e cache, gatilho de invalidação, `VW_AUDITORIA_ACESSOS_DIARIA`, `TL_NOTIFICACAO`, funções sem referência; `pwa-lifecycle.css`; dependências `echarts`, `pdfjs-dist`, `tesseract.js` |
-| 2     | **Feita em 25/09**: `bench/`, o PDF do padrão e `pwa-lifecycle.css` saíram; `TA_ANALISE_QUARENTENA` foi para o schema `arquivo`. Falta: funções sem chamador                                                                                                             |
-| 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). Falta: schema `monitora`                                                                                                                                       |
-| 4     | Nomes neutros e `FC_`, função própria de sessão (em lotes)                                                                                                                                                                                                               |
-| 5     | **Leitura recortada por área desde 25/09** (`RL_PERFIL_USUARIO_AREA`, policies restritivas, 9 RPCs; todo não-admin começou em Saúde Indígena). Falta: RPCs de gravação conferirem área, áreas em Configurações → Acessos, sair `ehEditalDaSaudeIndigena`                 |
+| Etapa | O quê                                                                                                                                                                                                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Correções: jobs do pg_cron, RPCs fora do contrato, registro de migrations                                                                                                                                                                                                       |
+| 1     | **Feita em 25/09.** Lixo certo: `get_analises_dashboard_payload` (v1) e suas 4 views e cache, gatilho de invalidação, `VW_AUDITORIA_ACESSOS_DIARIA`, `TL_NOTIFICACAO`, funções sem referência; `pwa-lifecycle.css`; dependências `echarts`, `pdfjs-dist`, `tesseract.js`        |
+| 2     | **Feita em 25/09**: `bench/`, o PDF do padrão e `pwa-lifecycle.css` saíram; `TA_ANALISE_QUARENTENA` foi para o schema `arquivo`. Falta: funções sem chamador                                                                                                                    |
+| 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). Falta: schema `monitora`                                                                                                                                              |
+| 4     | Nomes neutros e `FC_`, função própria de sessão (em lotes)                                                                                                                                                                                                                      |
+| 5     | **Leitura recortada por área desde 25/09** (`RL_PERFIL_USUARIO_AREA`, policies restritivas, 9 RPCs; todo não-admin começou em Saúde Indígena). Gravação por área e colunas de área em Configurações → Acessos desde 25/09. Falta: sair `ehEditalDaSaudeIndigena`, menu por área |
 
 Front (em paralelo, sem parar o sistema):
 
