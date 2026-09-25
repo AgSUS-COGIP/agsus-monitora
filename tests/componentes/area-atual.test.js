@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   areaDaLinha,
@@ -110,5 +111,23 @@ describe("resumoDasLinhas", () => {
       ]).map((item) => item.id),
     ).toEqual([2, 9]);
     expect(resumoDasLinhas(resumo, [])).toEqual([]);
+  });
+});
+
+describe("as leituras de editais pedem a área", () => {
+  // As colunas são listadas uma a uma; sem CO_AREA, SEDE e Projetos ficavam vazios.
+  it.each([
+    ["src/modules/legacy-app.js"],
+    ["src/modules/health-status-details.js"],
+  ])("%s", (arquivo) => {
+    const fonte = readFileSync(arquivo, "utf8");
+    const selects = [
+      ...fonte.matchAll(
+        /from\("TB_MONITORAMENTO_INDIGENA"\)[\s\S]*?\.select\(\s*"([^"]+)"/g,
+      ),
+    ];
+    expect(selects.length).toBeGreaterThan(0);
+    for (const [, colunas] of selects)
+      expect(colunas.split(",")).toContain("CO_AREA");
   });
 });
