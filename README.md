@@ -136,7 +136,7 @@ dist/
 ```
 
 - O JS é dividido em `main`, `analises` e pacotes de terceiros (`vendor-supabase`,
-  `vendor-charts`, `vendor-echarts`, `vendor-documents` e `vendor`), definidos em `vite.config.js`.
+  `vendor-react`, `vendor-charts` e `vendor`), definidos em `vite.config.js`.
 - **Tudo em `public/` é copiado como está e fica público.** Não coloque ali nada que não possa ser
   baixado por qualquer pessoa.
 - **As variáveis `VITE_*` ficam gravadas no JS gerado.** Mudou o `.env`, precisa de novo build.

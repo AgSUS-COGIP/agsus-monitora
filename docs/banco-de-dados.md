@@ -50,12 +50,12 @@ npm run db:estado -- --registrar-todas-pendentes
 O script lê `supabase/migrations/` e `supabase/correcoes/` e responde quatro
 coisas:
 
-| Estado          | O que significa                                        |
-| --------------- | ------------------------------------------------------ |
-| **aplicado**    | caminho e hash batem com o registro                    |
-| **pendente**    | está no disco e não no banco                           |
-| **divergente**  | foi aplicado e o ficheiro **mudou depois**             |
-| **órfão**       | está registado e o ficheiro já não existe no disco     |
+| Estado         | O que significa                                    |
+| -------------- | -------------------------------------------------- |
+| **aplicado**   | caminho e hash batem com o registro                |
+| **pendente**   | está no disco e não no banco                       |
+| **divergente** | foi aplicado e o ficheiro **mudou depois**         |
+| **órfão**      | está registado e o ficheiro já não existe no disco |
 
 A divergência é o que só o hash encontra, e é a mais perigosa: alguém corrige um
 erro de digitação numa migration já aplicada, o Git fica coerente, o banco não, e
@@ -134,7 +134,7 @@ Sem migration (⚠ = crítica):
 - ⚠ `usuario_pode_ler_analises`
 - ⚠ `salvar_configuracoes_e_paineis`
 - ⚠ `salvar_configuracoes_e_paineis_v2`
-- ⚠ `salvar_monitoramento_indigena`
+- ~~`salvar_monitoramento_indigena`~~ (removida em `20260925150000_remove_objetos_mortos.sql`)
 - ⚠ `salvar_monitoramento_com_cronograma_v2`
 - ⚠ `get_monitoramento_cronograma`
 - ⚠ `get_analises_dashboard_payload_v2`

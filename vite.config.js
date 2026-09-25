@@ -59,10 +59,6 @@ export default defineConfig({
             return "vendor-react";
           }
           if (id.includes("chart.js")) return "vendor-charts";
-          if (id.includes("echarts")) return "vendor-echarts";
-          if (id.includes("pdfjs-dist") || id.includes("tesseract.js")) {
-            return "vendor-documents";
-          }
           return "vendor";
         },
       },
