@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+import { compactarCandidatos } from "./candidatos-compactos-falsos.js";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
@@ -96,6 +97,8 @@ const supabaseFalso = ({
         ],
         error: null,
       };
+    if (nome === "listar_candidatos_aprovados_compacto")
+      return { data: compactarCandidatos(candidatos), error: null };
     if (nome === "listar_candidatos_aprovados")
       return { data: candidatos, error: null };
     if (nome === "listar_modelos_convocacao")
@@ -437,9 +440,7 @@ describe("formulário de convocação do edital", () => {
     ]);
     // Salvar recarrega a página: a ordem de convocação depende destas vagas.
     expect(supabase.rpc).toHaveBeenCalledWith(
-      "listar_candidatos_aprovados",
-      {},
-      { count: "exact" },
+      "listar_candidatos_aprovados_compacto",
     );
   });
 

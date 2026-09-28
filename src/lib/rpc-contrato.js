@@ -181,6 +181,12 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Lista os candidatos vigentes das listas de aprovados.",
   },
+  listar_candidatos_aprovados_compacto: {
+    argumentos: [],
+    critica: true,
+    resumo:
+      "Candidatos vigentes das listas de aprovados numa chamada só: listas uma vez e candidatos em linhas posicionais.",
+  },
   importar_lista_aprovados: {
     argumentos: [
       "p_edital_id",
