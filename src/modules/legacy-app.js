@@ -86,6 +86,7 @@ import {
   posicoesSpiderfy,
   raioDaBolha,
 } from "../lib/mapa-render.js";
+import { calcularLeque } from "../lib/leque-de-marcadores.js";
 import {
   ACCESS_BACKGROUND_BUCKET,
   ACCESS_BACKGROUND_FOLDER,
@@ -8898,6 +8899,9 @@ let _leaflet = null,
   _layerUF = null,
   _layerBR = null,
   _mapInited = false;
+// Bolhas de DSEI do mapa nacional e os traços do leque que as afasta.
+let _marcadoresDsei = [],
+  _tracosDoLeque = [];
 let _detailLeaflet = null,
   _detailBaseLayer = null,
   _detailUnitLayer = null,
@@ -9232,6 +9236,8 @@ function initLeaflet() {
   _layerCasaiLocal = L.layerGroup().addTo(_leaflet); // CASAIs do DSEI/locais (drill-down)
   _layerUbsi = L.layerGroup().addTo(_leaflet); // UBSIs (drill-down)
   _layerCasai = L.layerGroup().addTo(_leaflet); // CASAI Nacional (sempre)
+  // O leque é em pixels: a cada zoom os grupos mudam e os offsets também.
+  _leaflet.on("zoomend", aplicarLequeDosDsei);
   drawBrasilOutline();
 
   // Botão "ver Brasil inteiro" dentro do mapa (controle Leaflet, canto superior direito)
@@ -10281,10 +10287,83 @@ function renderPainelNacional(linhas) {
   });
 }
 
+/*
+  LEQUE DAS SEDES QUE CAEM NO MESMO LUGAR
+
+  Leste de Roraima e Yanomami têm sede em Boa Vista, a 1,8 km: no mapa
+  nacional são o mesmo pixel, e Alto Rio Solimões e Vale do Javari ficam a
+  poucos pixels um do outro. A matemática vive em `src/lib/leque-de-marcadores.js`;
+  aqui só se converte latlng ↔ pixel no zoom corrente.
+
+  Cada bolha de um grupo vai para um círculo de 16 px em volta do ponto real,
+  com um traço fino até ele e um ponto pequeno no lugar verdadeiro. O traço usa
+  `--text-secondary`, com o mesmo cinza-azulado do leque do mapa de detalhe
+  como recuo. Tooltip, clique, cor e tamanho são os da própria bolha, que
+  apenas muda de sítio; quando o zoom já separa os pontos, volta ao lugar.
+*/
+function corDoTracoDoLeque() {
+  try {
+    const cor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--text-secondary")
+      .trim();
+    if (cor) return cor;
+  } catch (e) {}
+  return "#4a6b80";
+}
+
+function aplicarLequeDosDsei() {
+  if (!_leaflet || !_layerDSEI) return;
+  _tracosDoLeque.forEach((camada) => _layerDSEI.removeLayer(camada));
+  _tracosDoLeque = [];
+  const vivos = _marcadoresDsei.filter(({ m }) => _layerDSEI.hasLayer(m));
+  if (!vivos.length) return;
+
+  const pontos = vivos.map(({ lat, lon }) =>
+    _leaflet.latLngToLayerPoint([lat, lon]),
+  );
+  const leque = calcularLeque(pontos);
+  const cor = corDoTracoDoLeque();
+
+  leque.forEach((offset, i) => {
+    const { m, lat, lon } = vivos[i];
+    if (!offset.emLeque) {
+      m.setLatLng([lat, lon]);
+      return;
+    }
+    const destino = _leaflet.layerPointToLatLng(
+      pontos[i].add(L.point(offset.dx, offset.dy)),
+    );
+    m.setLatLng(destino);
+    _tracosDoLeque.push(
+      L.polyline([[lat, lon], destino], {
+        color: cor,
+        weight: 1,
+        opacity: 0.7,
+        interactive: false,
+      }),
+      L.circleMarker([lat, lon], {
+        radius: 2,
+        stroke: false,
+        fillColor: cor,
+        fillOpacity: 0.9,
+        interactive: false,
+      }),
+    );
+  });
+
+  if (!_tracosDoLeque.length) return;
+  _tracosDoLeque.forEach((camada) => _layerDSEI.addLayer(camada));
+  // Os traços entram por último no SVG; as bolhas voltam para cima deles, na
+  // ordem em que foram desenhadas (maior primeiro, menor por cima).
+  vivos.forEach(({ m }) => m.bringToFront());
+}
+
 // Nível 1: bolhas dos DSEIs
 function drawDSEIBubbles() {
   if (!_leaflet) return;
   _layerDSEI.clearLayers();
+  _marcadoresDsei = [];
+  _tracosDoLeque = [];
   _layerPolos.clearLayers();
   if (_layerUbsi) _layerUbsi.clearLayers();
   if (_layerCasaiLocal) _layerCasaiLocal.clearLayers();
@@ -10308,9 +10387,12 @@ function drawDSEIBubbles() {
     decrescente põe a bolha menor por cima, de modo que ambas ficam clicáveis:
     a maior continua a aparecer como anel em volta da menor. E onde a sede é
     exactamente a mesma entra um selo com a contagem, que nomeia os distritos.
+
+    O selo nunca chegou a existir e a ordenação sozinha deixava a bolha maior
+    reduzida a um anel. Passou a valer o leque (`aplicarLequeDosDsei`): bolhas
+    que caem no mesmo lugar da tela são desenhadas num pequeno círculo em volta
+    do ponto real, com um traço até ele. A coordenada continua intacta.
   */
-  // DSEIs com a mesma sede permanecem sobrepostos no ponto verdadeiro.
-  // A ordenação por raio mantém a bolha menor clicável sem selo numérico.
 
   [...LMAP.dsei]
     .sort((a, b) => raioDaBolha(b.pop, popMax) - raioDaBolha(a.pop, popMax))
@@ -10380,13 +10462,8 @@ function drawDSEIBubbles() {
       }
       m.on("click", () => entrarNoTerritorio(d));
       _layerDSEI.addLayer(m);
+      _marcadoresDsei.push({ m, lat, lon });
     });
-
-  /*
-    Onde a sede é exactamente a mesma, um selo nomeia os distritos empilhados.
-    Fica ao lado do centro — deslocado em PIXELS, convertidos no zoom corrente —
-    e não substitui as bolhas: elas continuam no seu lugar, clicáveis.
-  */
 
   /*
     Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
@@ -10425,6 +10502,8 @@ function drawDSEIBubbles() {
         }
       } catch (e) {}
   }
+  // Depois do enquadramento: se ele não mudou o zoom, o `zoomend` não dispara.
+  aplicarLequeDosDsei();
   _ptsZoom = null;
   const masterCount = $("masterMapCount");
   if (masterCount)
