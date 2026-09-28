@@ -1,44 +1,27 @@
 /*
-  Indicadores da Lista de Aprovados no mesmo card compacto da Visão geral
-  (health-reference-kpis.css; DESIGN.md seção 4, "Indicador", e seção 12,
-  exceção aceita): fundo claro, borda sutil, raio de 8px, sem sombra; tile de
-  24px na cor do estado, rótulo 12px/500 e valor 20px/600 tabular. Só tokens:
-  o tema escuro troca os valores sem regra própria.
+  Indicadores da Lista de Aprovados no padrão da Saúde Indígena: número na cor
+  do texto (o estado fica no ícone), rótulo 12px/600, valores de tokens.css.
 */
 .approved-kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
-  /* O fundo é o do card da página, também no escuro. */
-  background: transparent;
+  background: var(--surface-card);
   border-bottom: 1px solid var(--border-subtle);
 }
-/*
-  O JSX (partes.jsx, <Kpi>) põe o ícone num <span> e o par rótulo/valor num
-  <div>; com `display: contents` no <div>, os três entram na mesma grade: ícone
-  e rótulo na primeira linha (6px entre eles), valor embaixo, na largura toda.
-*/
 .approved-kpi {
   --kpi-accent: var(--state-info);
   --kpi-soft: var(--state-info-soft);
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  align-content: start;
-  column-gap: var(--space-1-5);
-  row-gap: var(--space-1);
+  gap: var(--space-3);
   min-width: 0;
-  /* A linha de 3px à esquerda come 2px a mais que a borda de 1px: o padding compensa, para o rótulo mais longo não quebrar. */
-  padding: var(--space-3) var(--space-4) var(--space-3)
-    calc(var(--space-4) - 2px);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border-subtle);
-  /* Cor do KPI (pedido do responsável, como no SIGAV): linha de 3px à esquerda e o número na cor do estado. */
-  border-left: 3px solid var(--kpi-accent);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
-  box-shadow: none;
-  color: var(--text-primary);
+  box-shadow: var(--shadow-card);
 }
 .approved-kpi[data-tone="success"] {
   --kpi-accent: var(--state-success);
@@ -48,113 +31,72 @@
   --kpi-accent: var(--state-danger);
   --kpi-soft: var(--state-danger-soft);
 }
+.approved-kpi[data-tone="info"] {
+  --kpi-accent: var(--series-3);
+  --kpi-soft: var(--state-info-soft);
+}
 .approved-kpi[data-tone="warning"] {
   --kpi-accent: var(--state-warning);
   --kpi-soft: var(--state-warning-soft);
 }
-/* "Fim de fila" não é estado bom nem ruim: neutro (DS 11.8). */
-.approved-kpi[data-tone="fila"] {
-  --kpi-accent: var(--state-neutral);
-  --kpi-soft: var(--state-neutral-soft);
-}
 .approved-kpi-icon {
-  grid-column: 1;
-  grid-row: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
   background: var(--kpi-soft);
   color: var(--kpi-accent);
-  font-size: 13px;
+  font-size: 14px;
 }
 .approved-kpi > div {
-  display: contents;
-}
-/* O texto encolhe e quebra dentro da coluna, em vez de descer para baixo do ícone. */
-.approved-kpi-label {
-  grid-column: 2;
-  grid-row: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   min-width: 0;
-  min-height: 24px;
+}
+.approved-kpi-label {
   color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  line-height: var(--leading-caption);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.3;
 }
 .approved-kpi strong {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  color: var(--kpi-accent);
-  font-size: var(--text-metric-sm);
-  line-height: 1.2;
-  font-weight: 600;
-  letter-spacing: var(--tracking-metric);
+  margin-top: 2px;
+  color: var(--text-primary);
+  font-size: var(--text-kpi);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
-/* 2 colunas no celular, como na Visão geral (DESIGN.md seção 4). */
-@media (max-width: 767px) {
+@media (max-width: 1200px) {
   .approved-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: var(--space-3);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-/*
-  O card da página: fica o card (exceção aceita, DESIGN.md seção 12), no DS
-  11.6 — borda sutil, raio de 8px, sem sombra. Vence `.card` (app.css) e
-  `.visual-polish-ready .table-card` (visual-polish.css): mesma
-  especificidade deste, carregado antes.
-*/
-.table-card.approved-page-card {
-  overflow: visible;
-  border-color: var(--border-subtle);
-  border-radius: var(--radius-lg);
+@media (max-width: 700px) {
+  .approved-kpis {
+    grid-template-columns: 1fr 1fr;
+    padding: 14px;
+  }
+  .approved-kpi:first-child {
+    grid-column: 1/-1;
+  }
+}
+[data-theme="dark"] .approved-kpis {
+  background: rgba(15, 23, 42, 0.72);
+}
+[data-theme="dark"] .approved-kpi {
+  background: #111c2d;
+  border-color: #2b3a50;
   box-shadow: none;
 }
-/*
-  Tabelas das duas abas no DS 11.4. As regras de app.css (`th` em maiúsculas
-  e peso 800, `td` 650, `.num` centralizado, `.chip` 900) valem para o
-  sistema todo; aqui perdem por especificidade só nesta página. O cabeçalho
-  continua sticky, por isso tem o fundo do card.
-*/
-.approved-page-card th {
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+[data-theme="dark"] .approved-kpi-label {
+  color: #a8b4c4;
 }
-.approved-page-card td {
-  border-bottom-color: var(--border-subtle);
-  font-weight: 400;
-}
-.approved-page-card tr:hover td {
-  background: var(--surface-hover);
-}
-.approved-page-card .num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-.approved-page-card .chip {
-  font-weight: 500;
-}
-.approved-page-card .table-meta {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-/* Rótulos dos filtros em sentence case (o `label` de app.css é em maiúsculas, 900). */
-.approved-filters .form-row > label {
-  color: var(--text-primary);
-  font-size: var(--text-label);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+.approved-page-card {
+  overflow: visible;
 }
 .approved-page-head {
   gap: 18px;
@@ -163,13 +105,13 @@
 .approved-page-subtitle,
 .approved-modal-subtitle {
   margin: 4px 0 0;
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
+  color: var(--text-muted, #6b7c93);
+  font-size: 13px;
 }
 .approved-head-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 10px;
   flex-wrap: wrap;
 }
 .approved-filters {
@@ -178,12 +120,11 @@
       0,
       2.5fr
     );
-  /* 12px entre filtros (DS 11.3); a faixa fica no fundo do card, sem cor própria. */
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border-top: 0;
-  border-bottom: 1px solid var(--border-subtle);
-  background: transparent;
+  gap: 16px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--border, #e3e9ef);
+  border-bottom: 1px solid var(--border, #e3e9ef);
+  background: rgba(248, 250, 252, 0.75);
 }
 .approved-filters .form-row {
   margin: 0;
@@ -199,56 +140,52 @@
   gap: 4px;
   min-width: 240px;
 }
-/* Coluna principal: nome em peso 500 (DS 11.4). */
 .approved-name strong {
-  font-weight: 500;
+  font-weight: 800;
 }
 .approved-name small {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
+  color: #6b7c93;
+  font-size: 11px;
 }
-/* Badge do DS 11.8; o texto "SUB JUDICE" é literal do JSX. */
 .approved-tag {
   display: inline-flex;
-  align-items: center;
   width: max-content;
-  min-height: 20px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
-  font-weight: 500;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
 }
 .approved-tag.subjudice {
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
+  background: #fff4d6;
+  color: #8a5a00;
+  border: 1px solid #f0d38a;
 }
-/* Selo de status: badge do DS 11.8 (20px, raio pequeno, caption 500, cor do estado). */
 .approved-status {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 20px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
-  font-weight: 500;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
   white-space: nowrap;
 }
 .approved-status.success {
-  background: var(--state-success-soft);
-  color: var(--state-success);
+  background: #e7f8ef;
+  color: #11643a;
 }
 .approved-status.danger {
-  background: var(--state-danger-soft);
-  color: var(--state-danger);
+  background: #fdebea;
+  color: #9a2b25;
 }
 .approved-status.info {
-  background: var(--state-info-soft);
-  color: var(--state-info);
+  background: #e6f4fb;
+  color: #176a8f;
 }
 .approved-status.neutral {
-  background: var(--state-neutral-soft);
-  color: var(--state-neutral);
+  background: #eef2f6;
+  color: #596a7a;
 }
 .approved-actions {
   display: flex;
@@ -263,6 +200,20 @@
   text-align: center;
   padding: 26px !important;
   color: #718096;
+}
+/* A primeira carga falhou (`ErroAoCarregar`): o motivo e "Tentar de novo". */
+.approved-erro {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  color: var(--text-primary);
+}
+.approved-erro p {
+  margin: 0;
+}
+.approved-erro small {
+  display: block;
+  color: var(--text-secondary);
 }
 .approved-modal-card {
   width: min(620px, calc(100vw - 32px));
@@ -343,19 +294,33 @@
     flex: 1 1 100%;
   }
 }
+[data-theme="dark"] .approved-filters {
+  background: rgba(15, 23, 42, 0.58);
+}
+[data-theme="dark"] .approved-name small,
+[data-theme="dark"] .approved-page-subtitle,
+[data-theme="dark"] .approved-modal-subtitle,
 [data-theme="dark"] .approved-field-hint {
   color: #a8b4c4;
 }
+[data-theme="dark"] .approved-status.neutral {
+  background: #273449;
+  color: #dbe5f0;
+}
+[data-theme="dark"] .approved-tag.subjudice {
+  background: #4c3915;
+  color: #ffe3a0;
+  border-color: #765820;
+}
 
-/* Lista ativa do edital: superfície de sucesso, sem gradiente e sem sombra. */
 .approved-import-state.has-list {
   display: block;
   margin: 0 0 16px;
   padding: 16px;
-  border: 0;
-  border-radius: var(--radius-lg);
-  background: var(--state-success-soft);
-  box-shadow: none;
+  border: 1px solid #b9e4d0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f1fbf6 0%, #f8fcff 100%);
+  box-shadow: 0 8px 24px rgba(15, 118, 82, 0.08);
 }
 .approved-import-summary-head {
   display: flex;
@@ -384,7 +349,7 @@
 .approved-import-summary-title {
   color: #17324d;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 900;
 }
 .approved-import-summary-copy > span {
   color: #607080;
@@ -407,14 +372,16 @@
 }
 .approved-import-summary-detail > span {
   color: #708399;
-  font-size: var(--text-caption);
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .approved-import-summary-detail > strong {
   overflow: hidden;
   color: #253b53;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -431,7 +398,7 @@
   background: #fff6e6;
   color: #8a5a00;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 800;
 }
 .approved-import-replace-warning i {
   color: #d38800;
@@ -453,6 +420,15 @@
   .approved-import-summary-detail.compact {
     min-width: 0;
   }
+}
+[data-theme="dark"] .approved-import-state.has-list {
+  border-color: #205d4b;
+  background: linear-gradient(
+    135deg,
+    rgba(13, 67, 51, 0.72),
+    rgba(15, 23, 42, 0.88)
+  );
+  box-shadow: none;
 }
 [data-theme="dark"] .approved-import-summary-icon {
   background: #164f3c;
@@ -476,18 +452,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: 14px;
   flex-wrap: wrap;
-  padding: var(--space-3) var(--space-5);
-  border-top: 1px solid var(--border-subtle);
+  padding: 12px 18px;
+  border-top: 1px solid var(--border, #e3e9ef);
 }
 .approved-paginacao[hidden] {
   display: none;
 }
 .approved-paginacao-info {
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
-  font-weight: 400;
+  color: #607080;
+  font-size: 12px;
+  font-weight: 600;
 }
 .approved-paginacao-controles {
   display: flex;
@@ -495,34 +471,28 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-/* "Por página" é um <label>: sem as maiúsculas do `label` de app.css. */
 .approved-paginacao-tamanho {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1-5);
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+  gap: 6px;
+  color: #607080;
+  font-size: 12px;
+  font-weight: 600;
 }
 .approved-paginacao-tamanho select {
-  min-height: 32px;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-  font-weight: 400;
+  padding: 5px 8px;
+  border: 1px solid var(--border, #dbe6f1);
+  border-radius: 8px;
+  background: #fff;
+  color: #13233a;
+  font-size: 12px;
 }
 .approved-paginacao-pagina {
   min-width: 132px;
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-  font-weight: 600;
+  color: #253b53;
+  font-size: 12px;
+  font-weight: 800;
   text-align: center;
-  font-variant-numeric: tabular-nums;
 }
 .approved-paginacao .btn {
   padding: 6px 12px;
@@ -544,4 +514,16 @@
     width: 100%;
     text-align: center;
   }
+}
+[data-theme="dark"] .approved-paginacao-info,
+[data-theme="dark"] .approved-paginacao-tamanho {
+  color: #a8b4c4;
+}
+[data-theme="dark"] .approved-paginacao-pagina {
+  color: #e6eef7;
+}
+[data-theme="dark"] .approved-paginacao-tamanho select {
+  background: #111c2d;
+  border-color: #2b3a50;
+  color: #e6eef7;
 }

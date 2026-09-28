@@ -45,8 +45,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  /* 12px entre os blocos da Visão geral: o ritmo compacto de antes (a pedido do responsável). */
-  margin-top: var(--space-3);
+  margin-top: 8px;
 }
 
 /* Estado 1 — Brasil. O painel de detalhe nem ocupa espaço. */
@@ -63,10 +62,11 @@
   display: block;
 }
 
-/* Fundo, borda e raio: health-reference-kpis.css (superfície do DS 11.6). */
 .health-map-pane {
   min-width: 0;
   overflow: hidden;
+  border-top: 3px solid #0f8f98;
+  background: #fff;
 }
 
 /*
@@ -91,15 +91,17 @@
 
 .health-map-pane__header h3 {
   margin: 2px 0 0;
-  color: var(--color-text-primary);
+  color: #10243e;
   font-size: 15px;
   line-height: 1.2;
 }
 
 .health-map-pane__eyebrow {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: 500;
+  color: #0d8192;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .health-map-pane__acoes,
@@ -116,7 +118,7 @@
   gap: 6px;
   color: #5f7288;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 750;
 }
 
 .health-map-breadcrumb__voltar {
@@ -125,30 +127,12 @@
   background: none;
   color: #0d6ba8;
   font: inherit;
-  font-weight: 500;
+  font-weight: 800;
   cursor: pointer;
   text-decoration: underline;
 }
 
-/*
-  "36 territórios": só contagem, então badge neutro do Design System (11.8).
-  Os tokens `--state-neutral*` já mudam no tema escuro.
-*/
-.health-map-pane__count {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--state-neutral-soft);
-  color: var(--state-neutral);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
-}
-
+.health-map-pane__count,
 .health-map-reset {
   flex: 0 0 auto;
   padding: 6px 10px;
@@ -157,7 +141,7 @@
   background: #f7fbfd;
   color: #17607b;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 900;
 }
 
 .health-map-reset {
@@ -184,9 +168,9 @@
   gap: 7px;
   padding: 7px 13px;
   border-top: 1px solid #dce8ef;
-  color: var(--color-text-secondary);
+  color: #64748b;
   font-size: 11px;
-  font-weight: 400;
+  font-weight: 650;
 }
 
 /*
@@ -274,7 +258,7 @@
   background: #fff;
   color: #17607b;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 800;
   cursor: pointer;
 }
 
@@ -307,9 +291,11 @@
   gap: 8px;
   padding: 9px 10px;
   border-bottom: 1px solid #dce8ef;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: 500;
+  color: #0d8192;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .health-map-units__header b {
@@ -340,7 +326,7 @@
   border: 1px solid #dce8ef;
   border-radius: 10px;
   background: #fff;
-  color: var(--color-text-primary);
+  color: #10243e;
   text-align: left;
   cursor: pointer;
 }
@@ -376,7 +362,7 @@
 */
 .health-map-unit strong {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
 }
 
@@ -384,14 +370,17 @@
   margin-top: 3px;
   color: #5f7288;
   font-size: 10px;
-  font-weight: 400;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .health-map-unit__type {
   color: #0d8192;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 /*
@@ -410,7 +399,7 @@
   margin-bottom: var(--space-1, 4px);
   padding: var(--space-2, 8px) var(--space-3, 12px) var(--space-2, 8px)
     var(--space-2, 8px);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-sm, 8px);
 }
 
 .health-map-unit__rank {
@@ -511,7 +500,7 @@
   display: block;
   color: var(--text-primary, #17324a);
   font-size: var(--text-lg, 16px);
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -585,75 +574,6 @@
 }
 
 /*
-  BOTÕES "BRASIL" E "CALOR" DENTRO DO MAPA — `controles-do-mapa.js`
-
-  Botão `sm` do Design System (11.1): ícone Lucide de 16px antes do texto, sem
-  borda. A sombra média é porque o botão flutua sobre os azulejos, cuja cor
-  ninguém controla. O "Calor" ligado (vermelho) continua em
-  `#heatBtn.active` de `app.css`.
-*/
-.health-map-controles {
-  display: flex;
-  gap: var(--space-1-5);
-}
-
-.health-map-botao {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  height: 32px;
-  padding: 0 var(--space-3);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-md);
-  font: inherit;
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.health-map-botao:hover {
-  background: var(--surface-hover);
-}
-
-.health-map-botao .icone {
-  flex: none;
-}
-
-.health-map-botao--calor {
-  color: var(--state-danger);
-}
-
-/*
-  LEGENDA RECOLHÍVEL DO MAPA NACIONAL — `controles-do-mapa.js`
-
-  A caixa (`#mapLegendBox`) e as amostras seguem como estavam; aqui só o
-  cabeçalho que abre e fecha. Começa fechada abaixo de 768px.
-*/
-.health-map-legenda__alternar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  width: 100%;
-  min-height: 24px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.health-map-legenda__alternar .icone {
-  flex: none;
-}
-
-/*
   A LISTA DAS TERRAS INDÍGENAS
 
   Três linhas por terra, e a hierarquia é a da pergunta que se faz: qual é a
@@ -712,7 +632,7 @@
    que as duas legendas e o botão da camada partilham. */
 
 .health-status-summary-card {
-  margin-top: var(--space-3);
+  margin-top: 10px;
   overflow: visible !important;
 }
 
@@ -749,6 +669,7 @@
   }
 }
 
+[data-theme="dark"] .health-map-pane,
 [data-theme="dark"] .health-map-unit,
 [data-theme="dark"] .health-map-units {
   background: #17253d;
@@ -790,6 +711,7 @@
 [data-theme="dark"] .health-map-empty {
   color: #9fb4c9;
 }
+[data-theme="dark"] .health-map-pane__count,
 [data-theme="dark"] .health-map-reset {
   border-color: #2f4a6b;
   background: #1a2d47;
@@ -906,7 +828,7 @@ html[data-theme="dark"] .health-map-external-toggle {
 
 .health-map-unit__externo {
   color: #b25a12;
-  font-weight: 600;
+  font-weight: 900;
 }
 
 html[data-theme="dark"] .health-map-unit__externo {
@@ -933,7 +855,7 @@ html[data-theme="dark"] .health-map-unit__externo {
   box-shadow: 0 1px 4px rgba(15, 35, 60, 0.4);
   color: #fff;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }

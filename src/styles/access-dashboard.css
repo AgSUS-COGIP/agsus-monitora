@@ -14,7 +14,7 @@
 
 .access-monitor-summary span {
   display: block;
-  color: var(--color-text-secondary);
+  color: #63748d;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.04em;
@@ -24,7 +24,7 @@
 .access-monitor-summary strong {
   display: block;
   margin-top: 5px;
-  color: var(--color-text-primary);
+  color: #10243e;
   font-size: 14px;
   font-weight: 900;
 }
@@ -50,7 +50,7 @@
   color: #0b8f58;
 }
 .access-monitor-kpi.is-users {
-  color: var(--color-blue-800);
+  color: #003b70;
 }
 .access-monitor-kpi.is-events {
   color: #007b95;
@@ -117,7 +117,7 @@
 
 .access-monitor-user-head strong {
   min-width: 0;
-  color: var(--color-text-primary);
+  color: #10243e;
   font-size: 13px;
   font-weight: 900;
   overflow-wrap: anywhere;
@@ -126,7 +126,7 @@
 .access-monitor-email {
   display: block;
   margin-top: 2px;
-  color: var(--color-text-secondary);
+  color: #63748d;
   font-size: 11px;
   font-weight: 800;
   overflow-wrap: anywhere;
@@ -141,7 +141,7 @@
   padding: 5px 8px;
   border-radius: 999px;
   background: #eef6ff;
-  color: var(--color-blue-800);
+  color: #003b70;
   font-size: 11px;
   font-weight: 900;
   line-height: 1.2;
@@ -156,14 +156,14 @@
   display: grid;
   justify-items: end;
   gap: 3px;
-  color: var(--color-text-secondary);
+  color: #63748d;
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .access-monitor-user-meta strong {
-  color: var(--color-text-primary);
+  color: #10243e;
   font-size: 12px;
 }
 
@@ -204,7 +204,7 @@
   padding: 5px 8px;
   border-radius: 999px;
   background: #eef6ff;
-  color: var(--color-blue-800);
+  color: #003b70;
   font-size: 11px;
   font-weight: 900;
   overflow-wrap: anywhere;
@@ -222,11 +222,11 @@
 }
 
 .access-monitor-empty-strong strong {
-  color: var(--color-text-primary);
+  color: #10243e;
 }
 
 .access-monitor-empty-strong span {
-  color: var(--color-text-secondary);
+  color: #63748d;
   font-size: 12px;
 }
 

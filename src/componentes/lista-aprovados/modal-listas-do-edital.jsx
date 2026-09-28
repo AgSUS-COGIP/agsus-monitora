@@ -8,7 +8,7 @@ import { formatNumberBR } from "../../lib/formatters.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { Modal } from "../modal.jsx";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
-import { classes } from "./partes.jsx";
+import { BotaoDeAcao, classes } from "./partes.jsx";
 
 /*
   O modal "Listas do edital", aberto pelo Núcleo (`openImportModal` do
@@ -153,32 +153,35 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
       </div>
       <div className="approved-modal-actions approved-import-actions">
         {lista && podeSubstituir ? (
-          <button
+          <BotaoDeAcao
+            estado={estado}
+            acao="remover-lista"
             id="approvedImportRemove"
             className="btn red"
-            type="button"
             onClick={() => void estado.removerLista(editalId)}
           >
             <i className="fa-solid fa-trash" aria-hidden="true" /> Remover lista
-          </button>
+          </BotaoDeAcao>
         ) : null}
         <span className="approved-action-spacer" />
         {lista && podeImportar ? (
-          <button
+          <BotaoDeAcao
+            estado={estado}
+            acao="lista-ativa"
             id="approvedImportToggleActive"
             className="btn secondary"
-            type="button"
             onClick={() => void estado.definirListaAtiva({ editalId, ativo })}
           >
             <i className="fa-solid fa-power-off" aria-hidden="true" /> Aplicar
             situação
-          </button>
+          </BotaoDeAcao>
         ) : null}
         {podeImportar && !soLeitura ? (
-          <button
+          <BotaoDeAcao
+            estado={estado}
+            acao="importar"
             id="approvedImportSubmit"
             className="btn green"
-            type="button"
             onClick={() =>
               void estado.importarLista({
                 editalId,
@@ -198,7 +201,7 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
                 Importar lista
               </>
             )}
-          </button>
+          </BotaoDeAcao>
         ) : null}
       </div>
     </div>

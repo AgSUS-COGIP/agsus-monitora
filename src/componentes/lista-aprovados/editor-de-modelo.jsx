@@ -16,7 +16,7 @@ import {
   lerTaxa,
   removerCategoria,
 } from "../../lib/configuracao-de-convocacao.js";
-import { CampoEditavel, classes } from "./partes.jsx";
+import { BotaoDeAcao, CampoEditavel, classes } from "./partes.jsx";
 
 /*
   Editor do modelo de regras de convocação, dentro do formulário do edital.
@@ -292,6 +292,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
 }
 
 export function EditorDeModelo({
+  estado,
   editor,
   aoAlterar,
   aoEscolherBase,
@@ -423,14 +424,15 @@ export function EditorDeModelo({
           </button>
         ) : null}
         {salvo ? (
-          <button
+          <BotaoDeAcao
+            estado={estado}
+            acao="remover-modelo"
             id="convocacaoRemoverModelo"
             className="btn red"
-            type="button"
             onClick={aoRemover}
           >
             <i className="fa-solid fa-trash" aria-hidden="true" /> Remover
-          </button>
+          </BotaoDeAcao>
         ) : null}
         <button
           id="convocacaoCancelarModelo"
@@ -440,15 +442,16 @@ export function EditorDeModelo({
         >
           Cancelar
         </button>
-        <button
+        <BotaoDeAcao
+          estado={estado}
+          acao="salvar-modelo"
           id="convocacaoSalvarModelo"
           className="btn green"
-          type="button"
           onClick={aoSalvar}
         >
           <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar
           modelo
-        </button>
+        </BotaoDeAcao>
       </div>
     </>
   );

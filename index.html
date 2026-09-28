@@ -124,39 +124,16 @@
       entrou. Para quem já tem sessão guardada, isso piscava a tela de login,
       com a arte de fundo, a cada F5. Este script roda antes da primeira
       pintura: havendo sessão (`refresh_token` em `agsus-monitora-auth`, a
-      chave de src/lib/env.js), a espera vira o fundo neutro com um indicador.
-      Se a sessão tiver expirado, `config-loading` sai e o login aparece como
-      sempre. `tests/recarga-logado.test.js` cobre a chave e as regras.
+      chave de src/lib/env.js), a espera vira o skeleton da entrada
+      (`.esqueleto-da-entrada`, src/modules/carregamento.js), já no
+      formato da última tela, com a barra aberta ou recolhida e no tema escuro
+      de quem o escolheu. Se a sessão tiver expirado, o skeleton sai e o login
+      aparece como sempre. `tests/recarga-logado.test.js` e
+      `tests/esqueleto-da-entrada.test.js` cobrem as chaves e as regras.
     -->
     <style>
       html.sessao-guardada body.config-loading #loginScreen {
         display: none;
-      }
-      html.sessao-guardada body.config-loading {
-        background: #f3f7fb;
-      }
-      html.sessao-guardada body.config-loading::after {
-        content: "";
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        width: 28px;
-        height: 28px;
-        margin: -14px 0 0 -14px;
-        border: 3px solid #d7e5f2;
-        border-top-color: #003b70;
-        border-radius: 50%;
-        animation: espera-da-sessao 0.8s linear infinite;
-      }
-      @keyframes espera-da-sessao {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        html.sessao-guardada body.config-loading::after {
-          animation: none;
-        }
       }
     </style>
     <script>
@@ -167,11 +144,30 @@
             localStorage.getItem(chave) || sessionStorage.getItem(chave);
           var sessao = bruto && JSON.parse(bruto);
           if (
-            sessao &&
-            typeof sessao.refresh_token === "string" &&
-            sessao.refresh_token
+            !sessao ||
+            typeof sessao.refresh_token !== "string" ||
+            !sessao.refresh_token
           )
-            document.documentElement.classList.add("sessao-guardada");
+            return;
+          var raiz = document.documentElement;
+          raiz.classList.add("sessao-guardada", "esqueleto-ativo");
+          // A mesma regra de src/lib/esqueleto-da-entrada.js.
+          var visao =
+            localStorage.getItem("agsus_monitora_current_view_v268") || "";
+          raiz.setAttribute(
+            "data-esqueleto",
+            visao === "calendario"
+              ? "calendario"
+              : !visao || visao === "dashboard" || visao.indexOf("panel:") === 0
+                ? "painel"
+                : "tabela",
+          );
+          if (
+            localStorage.getItem("agsus_monitora_sidebar_collapsed_v1") === "0"
+          )
+            raiz.setAttribute("data-esqueleto-barra", "aberta");
+          if (localStorage.getItem("agsus_dark_mode_v1") === "1")
+            raiz.setAttribute("data-theme", "dark");
         } catch (erro) {
           /* Armazenamento bloqueado ou conteúdo inválido: fica a tela de acesso. */
         }
@@ -239,6 +235,156 @@
       aria-live="polite"
       aria-atomic="false"
     ></div>
+
+    <!--
+      Skeleton da entrada: o formato do sistema enquanto a sessão e os dados
+      chegam, no lugar da antiga tela de carregamento. Liga e desliga por
+      `html.esqueleto-ativo` (src/modules/carregamento.js); o formato do
+      conteúdo vem de `html[data-esqueleto]`. Estilo em
+      src/styles/carregamento.css.
+    -->
+    <div class="esqueleto-da-entrada" role="status" aria-live="polite">
+      <span class="sr-only">Carregando o MONITORA…</span>
+      <div class="esqueleto-da-entrada__barra" aria-hidden="true">
+        <div class="esqueleto-da-entrada__marca">
+          <span class="esqueleto"></span>
+        </div>
+        <span class="esqueleto"></span>
+        <span class="esqueleto"></span>
+        <div class="esqueleto-da-entrada__rodape">
+          <span class="esqueleto"></span>
+          <span class="esqueleto"></span>
+        </div>
+      </div>
+      <div class="esqueleto-da-entrada__topo" aria-hidden="true">
+        <span class="esqueleto esqueleto--menu"></span>
+        <div class="esqueleto-da-entrada__titulo">
+          <span class="esqueleto esqueleto--titulo"></span>
+          <span class="esqueleto esqueleto--linha"></span>
+        </div>
+        <span class="esqueleto esqueleto--pilula"></span>
+        <span class="esqueleto esqueleto--conta"></span>
+      </div>
+      <div class="esqueleto-da-entrada__conteudo" aria-hidden="true">
+        <div class="esqueleto-da-entrada__formato" data-formato="painel">
+          <div class="esqueleto-cartao esqueleto-cartao--filtros">
+            <span class="esqueleto esqueleto--botao"></span>
+          </div>
+          <div class="esqueleto-da-entrada__kpis">
+            <div class="esqueleto-cartao esqueleto-cartao--kpi">
+              <span class="esqueleto esqueleto--icone"></span>
+              <span class="esqueleto esqueleto--numero"></span>
+            </div>
+            <div class="esqueleto-cartao esqueleto-cartao--kpi">
+              <span class="esqueleto esqueleto--icone"></span>
+              <span class="esqueleto esqueleto--numero"></span>
+            </div>
+            <div class="esqueleto-cartao esqueleto-cartao--kpi">
+              <span class="esqueleto esqueleto--icone"></span>
+              <span class="esqueleto esqueleto--numero"></span>
+            </div>
+            <div class="esqueleto-cartao esqueleto-cartao--kpi">
+              <span class="esqueleto esqueleto--icone"></span>
+              <span class="esqueleto esqueleto--numero"></span>
+            </div>
+            <div class="esqueleto-cartao esqueleto-cartao--kpi">
+              <span class="esqueleto esqueleto--icone"></span>
+              <span class="esqueleto esqueleto--numero"></span>
+            </div>
+            <div class="esqueleto-cartao esqueleto-cartao--kpi">
+              <span class="esqueleto esqueleto--icone"></span>
+              <span class="esqueleto esqueleto--numero"></span>
+            </div>
+          </div>
+          <div class="esqueleto-cartao esqueleto-cartao--mapa">
+            <span class="esqueleto esqueleto--sobretitulo"></span>
+            <span class="esqueleto esqueleto--titulo"></span>
+            <span class="esqueleto esqueleto--area"></span>
+          </div>
+        </div>
+        <div class="esqueleto-da-entrada__formato" data-formato="tabela">
+          <div class="esqueleto-cartao esqueleto-cartao--tabela">
+            <div class="esqueleto-cartao__cabecalho">
+              <span class="esqueleto esqueleto--titulo"></span>
+              <span class="esqueleto esqueleto--linha"></span>
+            </div>
+            <div class="esqueleto-tabela__linha esqueleto-tabela__cabeca">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto-tabela__linha">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span>
+            </div>
+          </div>
+        </div>
+        <div class="esqueleto-da-entrada__formato" data-formato="calendario">
+          <div class="esqueleto-cartao esqueleto-cartao--calendario">
+            <div class="esqueleto-calendario__barra">
+              <span class="esqueleto esqueleto--quadrado"></span>
+              <span class="esqueleto esqueleto--quadrado"></span>
+              <span class="esqueleto esqueleto--titulo"></span>
+              <span class="esqueleto esqueleto--pilula"></span>
+            </div>
+            <div class="esqueleto-calendario__filtros">
+              <span class="esqueleto"></span><span class="esqueleto"></span
+              ><span class="esqueleto"></span><span class="esqueleto"></span>
+            </div>
+            <div class="esqueleto esqueleto-calendario__grade">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="esqueleto-aviso" hidden>
+        <p></p>
+        <button type="button" class="btn secondary" hidden>
+          Tentar novamente
+        </button>
+      </div>
+    </div>
 
     <div id="loader" class="loader">
       <div class="loader-card">
@@ -570,13 +716,6 @@
 
         <div class="content">
           <section id="page-dashboard" class="page active">
-            <div
-              id="boasVindas"
-              class="boas-vindas"
-              role="status"
-              aria-live="polite"
-              hidden
-            ></div>
             <div class="filter-card card">
               <div class="filter-head">
                 <button
@@ -961,9 +1100,11 @@
                         id="columnsMenuTitle"
                         style="
                           padding: 8px 16px 6px;
-                          font-size: var(--text-caption);
-                          font-weight: 500;
-                          color: var(--text-secondary);
+                          font-size: 11px;
+                          font-weight: 900;
+                          color: #60758f;
+                          text-transform: uppercase;
+                          letter-spacing: 0.06em;
                         "
                       ></div>
                     </div>
@@ -976,7 +1117,7 @@
                   padding: 5px 14px 0;
                   font-size: 11px;
                   color: #9fb3c8;
-                  font-weight: 500;
+                  font-weight: 700;
                 "
               >
                 <i class="fa-solid fa-keyboard" style="margin-right: 4px"></i>

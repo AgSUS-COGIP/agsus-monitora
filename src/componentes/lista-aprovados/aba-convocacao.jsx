@@ -27,6 +27,8 @@ import {
   AcaoDeStatus,
   Kpi,
   NomeDoCandidato,
+  ErroAoCarregar,
+  LinhasEsqueleto,
   Paginacao,
   SeloDeStatus,
   classes,
@@ -279,6 +281,7 @@ export function AbaConvocacao({
   configs,
   modelos,
   carregado,
+  erroAoCarregar,
 }) {
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   const [pagina, setPagina] = useState(1);
@@ -438,8 +441,18 @@ export function AbaConvocacao({
       </div>
       <div className="table-wrap" ref={tabela}>
         <div id="convocacaoRows" className="convocacao-grupos">
-          {!carregado ? (
-            <p className="approved-empty">Carregando lista de convocação...</p>
+          {erroAoCarregar ? (
+            <ErroAoCarregar
+              estado={estado}
+              mensagem={erroAoCarregar}
+              oQue="a lista de convocação"
+            />
+          ) : !carregado ? (
+            <table className="approved-table convocacao-table" aria-busy="true">
+              <tbody>
+                <LinhasEsqueleto colunas={8} />
+              </tbody>
+            </table>
           ) : paginaAtual.rows.length ? (
             emBlocos(paginaAtual.rows).map(({ grupo, linhas }, indice) => (
               <TabelaDoGrupo

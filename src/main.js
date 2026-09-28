@@ -52,6 +52,7 @@ import "./styles/barra-lateral.css";
 import "./styles/lista-aprovados.css";
 import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
+import "./styles/carregamento.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -60,6 +61,7 @@ import "./modules/monitoramento-operational-transport.js";
 import "./modules/lotacoes-geograficas-transport.js";
 import "./modules/legacy-app.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
+import { instalarCarregamento } from "./modules/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initHealthDashboardRefinementsSafe } from "./modules/health-dashboard-refinements.js";
 import { initHealthDashboardInteractionFixes } from "./modules/health-dashboard-interaction-fixes.js";
@@ -88,7 +90,6 @@ import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
-import { initBoasVindas } from "./modules/boas-vindas.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
 import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
@@ -111,6 +112,7 @@ installCspReportMonitor();
   legado e o menu do celular a encontram no DOM quando rodam.
 */
 montarBarraLateral();
+instalarCarregamento();
 initLoadingExperience();
 initVisualPolish();
 initAraraSpeakingEffects();
@@ -141,7 +143,6 @@ initMobileBottomNavigation();
 initMobileGoogleOAuth();
 initMobileTableCards();
 initPwaLifecycle();
-initBoasVindas();
 initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
@@ -157,9 +158,9 @@ window.nucleoController = montarNucleo({
   getProfile: window.getMonitoraProfile,
 });
 
+// Sem loader de tela cheia: skeleton na carga, e cada ação mostra o estado no botão.
 window.aprovadosController = montarListaAprovados({
   toast: window.monitoraToast,
-  loader: window.monitoraLoader,
   getProfile: window.getMonitoraProfile,
 });
 

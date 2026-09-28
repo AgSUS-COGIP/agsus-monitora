@@ -98,7 +98,7 @@ function ModalAberto({ estado, dados, daArea }) {
 
 export function ListaAprovados({ estado }) {
   const dados = useSyncExternalStore(estado.assinar, estado.obter);
-  const { carregado, perfil } = dados;
+  const { carregado, erroAoCarregar, perfil } = dados;
   /*
     Só as listas e os candidatos dos editais da área escolhida no menu — o
     seletor de edital, os filtros, as duas abas e o sub judice partem daqui. O
@@ -210,7 +210,9 @@ export function ListaAprovados({ estado }) {
             <span id="approvedCount" className="chip blue">
               {carregado
                 ? plural(filtrados.length, "candidato", "candidatos")
-                : "Carregando…"}
+                : erroAoCarregar
+                  ? "Sem dados"
+                  : "Carregando…"}
             </span>
             {podeSubJudice ? (
               <button
@@ -260,6 +262,7 @@ export function ListaAprovados({ estado }) {
           perfil={perfil}
           candidatos={candidatos}
           carregado={carregado}
+          erroAoCarregar={erroAoCarregar}
           opcoes={opcoes}
           filtros={efetivos}
           aoMudarFiltro={mudarFiltro}
@@ -280,6 +283,7 @@ export function ListaAprovados({ estado }) {
           configs={dados.configs}
           modelos={dados.modelos}
           carregado={carregado}
+          erroAoCarregar={erroAoCarregar}
         />
       </div>
       <ModalAberto
@@ -299,7 +303,6 @@ export function montarListaAprovados({
   secao = document.getElementById("page-approved"),
   supabase = getSupabaseClient(),
   toast,
-  loader,
   getProfile,
   confirmar,
   lerPlanilha,
@@ -307,7 +310,6 @@ export function montarListaAprovados({
   const estado = criarEstadoDaListaDeAprovados({
     supabase,
     toast,
-    loader,
     getProfile,
     confirmar,
     lerPlanilha,
@@ -325,8 +327,6 @@ export function montarListaAprovados({
     estado,
     raiz,
     render: () => estado.garantirCarregado(),
-    refresh: (opcoes = {}) =>
-      estado.carregar({ comLoader: opcoes.loader !== false }),
     openImportModal: (editalId, rotulo = "") =>
       estado.abrirListasDoEdital(editalId, rotulo),
     closeImportModal: estado.fecharModal,

@@ -149,7 +149,6 @@ async function montar({
       secao: document.getElementById("page-approved"),
       supabase,
       toast,
-      loader: () => {},
       getProfile: () => perfilAtual,
       confirmar: () => true,
     });

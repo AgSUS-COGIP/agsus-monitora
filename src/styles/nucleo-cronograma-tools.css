@@ -4,7 +4,7 @@
   border: 1px solid #d7e4f1;
   border-left: 4px solid #286ff0;
   border-radius: 13px;
-  background: var(--state-info-soft);
+  background: linear-gradient(135deg, #f7fbff, #eef6ff);
 }
 .cronograma-copy-heading {
   display: flex;
@@ -15,8 +15,10 @@
 }
 .cronograma-copy-heading span {
   display: block;
-  font-size: var(--text-caption);
+  font-size: 10px;
   font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #3974a8;
 }
 .cronograma-copy-heading strong {
@@ -95,6 +97,7 @@
   color: #71849a;
 }
 html[data-theme="dark"] .cronograma-copy-box {
+  background: linear-gradient(135deg, #102438, #142b41);
   border-color: #2d4d68;
 }
 html[data-theme="dark"] .cronograma-copy-heading strong {

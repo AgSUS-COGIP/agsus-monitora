@@ -3,7 +3,7 @@
   padding: 16px;
   border: 1px solid #bfdbfe;
   border-radius: 14px;
-  background: var(--state-info-soft);
+  background: linear-gradient(180deg, #eff6ff 0%, #fff 100%);
 }
 #cronogramaEditor .cronograma-bulk-head {
   display: flex;
@@ -19,7 +19,7 @@
 }
 #cronogramaEditor .cronograma-bulk-head p {
   margin: 0;
-  color: var(--color-text-secondary);
+  color: #64748b;
   font-size: 13px;
 }
 #cronogramaEditor #cronogramaBulkInput {
@@ -70,8 +70,10 @@
   margin-left: 7px;
   padding: 2px 7px;
   border-radius: 999px;
-  font-size: var(--text-caption);
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 #cronogramaEditor .cronograma-recommended-badge {
   background: #dcfce7;

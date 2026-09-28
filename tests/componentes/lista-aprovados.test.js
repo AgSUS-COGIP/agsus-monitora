@@ -147,7 +147,6 @@ async function montar({
       secao: document.getElementById("page-approved"),
       supabase,
       toast,
-      loader: () => {},
       getProfile: () => perfilAtual,
       confirmar,
       lerPlanilha,
@@ -189,13 +188,46 @@ const opcoesDoFiltro = (filtro) =>
   ].map((opcao) => opcao.textContent);
 
 describe("carregamento", () => {
-  it("antes do dado chegar, mostra carregando — e não zero", async () => {
+  it("antes do dado chegar, mostra skeleton — e não zero", async () => {
     await montar({ carregar: false });
-    expect($("approvedKpiTotal").textContent).toBe("—");
+    expect($("approvedKpiTotal").textContent).toBe("");
+    expect($("approvedKpiTotal").querySelector(".esqueleto")).not.toBeNull();
     expect($("approvedCount").textContent).toBe("Carregando…");
-    expect($("approvedRows").textContent).toContain(
-      "Carregando lista de aprovados",
+    expect(
+      document.querySelectorAll("#approvedRows tr.esqueleto-da-tabela"),
+    ).toHaveLength(8);
+    expect(
+      $("convocacaoRows").querySelector("tr.esqueleto-da-tabela"),
+    ).not.toBeNull();
+  });
+
+  it("carregar não cobre a tela: não há tela de carregamento a chamar", async () => {
+    const fonte = await import("node:fs").then(({ readFileSync }) =>
+      readFileSync("src/componentes/lista-aprovados/estado.js", "utf8"),
     );
+    expect(fonte).not.toContain("loader");
+  });
+
+  it("se a primeira carga falha, mostra o erro e tenta de novo", async () => {
+    const erros = { listar_listas_aprovados: "sem rede" };
+    const supabase = supabaseFalso({ erros });
+    await montar({ supabase });
+    expect($("approvedRows").textContent).toContain(
+      "Não foi possível carregar a lista de aprovados",
+    );
+    expect($("approvedRows").textContent).toContain("sem rede");
+    expect($("approvedRows").querySelector(".esqueleto-da-tabela")).toBeNull();
+    expect($("approvedCount").textContent).toBe("Sem dados");
+
+    delete erros.listar_listas_aprovados;
+    await clicar(
+      [...$("approvedRows").querySelectorAll("button")].find(
+        (botao) => botao.textContent.trim() === "Tentar de novo",
+      ),
+    );
+    await esperar(() => new Promise((resolver) => setTimeout(resolver, 0)));
+    expect(nomes()).toContain("Ana Ribeiro");
+    expect($("approvedCount").textContent).toBe("4 candidatos");
   });
 
   it("desenha as linhas e os indicadores", async () => {
@@ -426,6 +458,82 @@ describe("modal de status", () => {
     await teclar(document, "Tab");
     // Do último controle, o Tab volta ao primeiro (o Fechar do cabeçalho).
     expect(document.activeElement.textContent).toBe("Fechar");
+  });
+});
+
+/*
+  As ações não cobrem mais a tela: o botão da ação em curso mostra o andamento,
+  e os das outras ficam desativados até ela terminar.
+*/
+describe("ações sem tela de carregamento", () => {
+  function supabaseQueEspera(rpcDemorada) {
+    const supabase = supabaseFalso();
+    const responder = supabase.rpc.getMockImplementation();
+    let concluir = () => {};
+    supabase.rpc.mockImplementation((nome, ...resto) => {
+      if (nome !== rpcDemorada) return responder(nome, ...resto);
+      return new Promise((resolver) => {
+        concluir = () => resolver({ data: { ok: true }, error: null });
+      });
+    });
+    return { supabase, concluir: () => concluir() };
+  }
+  const removerDaCarla = () =>
+    linhaDe("Carla Souza").querySelector(
+      '[data-approved-action="remove-subjudice"]',
+    );
+  const terminar = (concluir) =>
+    esperar(async () => {
+      concluir();
+      await new Promise((resolver) => setTimeout(resolver, 0));
+    });
+
+  it("o botão mostra o andamento e as outras ações esperam", async () => {
+    const { supabase, concluir } = supabaseQueEspera(
+      "alterar_status_candidato_aprovado",
+    );
+    await montar({ supabase });
+    await clicar(
+      linhaDe("Bruno Lima").querySelector('[data-approved-action="status"]'),
+    );
+    await escolher($("approvedStatusSelect"), "Desistente");
+    await clicar($("approvedStatusSave"));
+
+    const salvar = $("approvedStatusSave");
+    expect(salvar.disabled).toBe(true);
+    expect(salvar.getAttribute("aria-busy")).toBe("true");
+    expect(salvar.textContent).toContain("Salvando…");
+    expect(removerDaCarla().disabled).toBe(true);
+
+    await terminar(concluir);
+    expect($("approvedStatusModal")).toBeNull();
+    expect(removerDaCarla().disabled).toBe(false);
+    expect(removerDaCarla().hasAttribute("aria-busy")).toBe(false);
+  });
+
+  it("na tabela, só o botão daquela linha gira", async () => {
+    const { supabase, concluir } = supabaseQueEspera("remover_sub_judice");
+    await montar({ supabase });
+    await clicar(removerDaCarla());
+    expect(removerDaCarla().getAttribute("aria-busy")).toBe("true");
+    expect(removerDaCarla().querySelector(".botao-girando")).not.toBeNull();
+    // Botão só de ícone: o rótulo fica para o leitor de tela.
+    expect(removerDaCarla().querySelector(".sr-only").textContent).toBe(
+      "Removendo…",
+    );
+    await terminar(concluir);
+    expect(removerDaCarla().querySelector(".botao-girando")).toBeNull();
+  });
+
+  it("com uma ação em curso, a segunda não sai para a rede", async () => {
+    const { supabase, concluir } = supabaseQueEspera("remover_sub_judice");
+    await montar({ supabase });
+    await clicar(removerDaCarla());
+    await esperar(() => controlador.estado.removerSubJudice("carla"));
+    expect(
+      supabase.rpc.mock.calls.filter(([nome]) => nome === "remover_sub_judice"),
+    ).toHaveLength(1);
+    await terminar(concluir);
   });
 });
 

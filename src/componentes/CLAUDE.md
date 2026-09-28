@@ -40,14 +40,15 @@ calendario-editais/          a página #page-calendario (só leitura dos cronogr
 lista-aprovados/             a página #page-approved e os seus modais
   lista-aprovados.jsx        <ListaAprovados> e montarListaAprovados() → window.aprovadosController
   estado.js                  candidatos, listas, configuração de convocação, modal aberto e as ações
-                             que escrevem no banco (RPC e Storage); sem React
+                             que escrevem no banco (RPC e Storage), uma por vez (`executar`, `acao`); sem React
   aba-aprovados.jsx          KPIs, filtros e tabela paginada
   aba-convocacao.jsx         ordem de convocação por vaga
   modais.jsx                 status do candidato e inclusão sub judice
   modal-listas-do-edital.jsx XLSX da lista (importar, situação, remover) + aba de convocação
   formulario-de-convocacao.jsx  modelo de regras e vagas imediatas do edital (rascunho local)
   editor-de-modelo.jsx       categorias, percentuais, arredondamento e cascata
-  partes.jsx                 KPI, selo de status, ação de status, paginação, CampoEditavel
+  partes.jsx                 KPI, selo de status, ação de status, paginação, CampoEditavel, e o carregamento
+                             sem tela cheia: LinhasEsqueleto, ErroAoCarregar, BotaoDeAcao (estado no botão)
 ```
 
 Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.js` e

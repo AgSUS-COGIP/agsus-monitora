@@ -70,10 +70,6 @@ import {
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
 import { montarLegendaDasTerras } from "./legenda-das-terras.js";
-import {
-  criarBotaoDoMapa,
-  montarLegendaRecolhivel,
-} from "./controles-do-mapa.js";
 import { criarCamadaComRecuo } from "./map-base-layer-switcher.js";
 import {
   reconciliarDsei,
@@ -86,7 +82,6 @@ import {
   posicoesSpiderfy,
   raioDaBolha,
 } from "../lib/mapa-render.js";
-import { calcularLeque } from "../lib/leque-de-marcadores.js";
 import {
   ACCESS_BACKGROUND_BUCKET,
   ACCESS_BACKGROUND_FOLDER,
@@ -150,6 +145,27 @@ import {
   normalizeRole,
   roleLabel,
 } from "../lib/access-roles.js";
+import {
+  assinaturaDoAcesso,
+  consultasDosDados,
+  copiaServe,
+  dadosDasRespostas,
+  montarCopia,
+  partesQueMudaram,
+  respostasDasConsultas,
+} from "../lib/copia-da-sessao.js";
+import {
+  VERSAO_DA_COPIA,
+  apagarCopiaDaSessao,
+  guardarCopiaDaSessao,
+  lerCopiaDaSessao,
+} from "./copia-da-sessao-indexeddb.js";
+import {
+  acompanharCarregamentoDoPainel,
+  esconderEsqueleto,
+  marcarAtualizacao,
+  mostrarEsqueleto,
+} from "./carregamento.js";
 
 // ============================================================
 // AgSUS Monitora Web V2.9.35
@@ -353,7 +369,6 @@ let currentView = "dashboard";
 let statusChart = null;
 let chartsReady = false;
 let dataLoadedAtLeastOnce = false;
-let externalPanelsWarmed = false;
 /*
   Dono único da transição para o estado deslogado.
 
@@ -863,6 +878,7 @@ function resetSignedOutState(message = "", type = "warn") {
   stopOnlinePresence();
   stopAccessDashboardRefresh();
   clearExternalPanelCache();
+  esconderEsqueleto();
   document.body.classList.remove("access-request-mode");
   $("appScreen").classList.add("hidden");
   $("loginScreen").classList.remove("hidden");
@@ -896,6 +912,8 @@ async function clearLocalAuthState() {
 }
 async function returnToLogin() {
   await clearLocalAuthState();
+  // "Limpar sessão" limpa tudo, inclusive a cópia que a saída comum mantém.
+  await apagarCopiaDaSessao();
   declararSaida(SAIDA_MANUAL);
   if (sb) await sb.auth.signOut();
   aplicarSaida({ mensagem: "" });
@@ -990,7 +1008,8 @@ async function handleSignedInSession(nextSession, source = "auth") {
   } finally {
     clearOAuthUrl();
     activeSessionLoadPromise = null;
-    loader(false);
+    // Rede de segurança: aconteça o que acontecer, a entrada não fica no skeleton.
+    esconderEsqueleto();
     document.body.classList.remove("config-loading");
     const googleBtn = $("googleLoginBtn");
     if (googleBtn) {
@@ -1004,7 +1023,7 @@ async function handleOAuthCodeCallback() {
   const qs = new URLSearchParams(window.location.search || "");
   const code = qs.get("code");
   if (!code) return false;
-  loader(true, "Autenticando com Google", "Finalizando acesso seguro...", 18);
+  mostrarEsqueleto(storedView());
   oauthExchangeInProgress = true;
   try {
     const { data, error } = await sb.auth.exchangeCodeForSession(code);
@@ -1020,7 +1039,7 @@ async function handleOAuthCodeCallback() {
   } catch (error) {
     console.error("Falha no callback OAuth:", error);
     clearOAuthUrl();
-    loader(false);
+    esconderEsqueleto();
     document.body.classList.remove("config-loading");
     resetSignedOutState(
       "Não foi possível finalizar o login Google. Tente novamente escolhendo a conta.",
@@ -1045,7 +1064,6 @@ async function waitForAuthSession(expectedUserId = "", maxWaitMs = 5000) {
 
 async function boot() {
   if (!initSupabase()) return;
-  loader(true, "Carregando", "", 5);
   applyStoredSidebarState();
   applyStoredDisplayModes();
   ensureSearchInputTextColor();
@@ -1123,7 +1141,8 @@ async function boot() {
   if (isUsableSession(data?.session)) {
     await handleSignedInSession(data.session, "boot");
   } else {
-    loader(false);
+    // A sessão guardada expirou: o skeleton ligado pelo <head> dá lugar ao login.
+    esconderEsqueleto();
     document.body.classList.remove("config-loading");
     if (authError) {
       showAlert(
@@ -1354,21 +1373,87 @@ function openApp(user) {
   setText("userEmail", user?.email || "-");
 }
 
-async function loadInitialData() {
-  loader(
-    true,
-    cfgValue("loader_environment_title"),
-    cfgValue("loader_environment_subtitle"),
-    22,
+/*
+  As consultas da entrada saem juntas.
+
+  Configurações, painéis, mapa, unidades e monitoramento dependem só da sessão e
+  do perfil, não uns dos outros. Pedir cada um depois que o anterior voltava
+  somava as idas ao Supabase; agora a espera é a da consulta mais lenta. Quem
+  aplica o resultado continua sendo cada `load*`, na mesma ordem de antes: muda
+  só a hora em que o pedido sai. `Promise.resolve` é o que dispara, porque a
+  consulta do Supabase só vai para a rede quando alguém chama `then`.
+*/
+function iniciarConsultasDaSessao() {
+  const iniciar = (consulta) => Promise.resolve(consulta);
+  return {
+    config: iniciar(consultaDeConfiguracao()),
+    paineis: iniciar(consultaDePaineis()),
+    mapa: iniciar(consultaDoMapa()),
+    unidades: iniciar(consultaDeUnidades()),
+    monitoramento: podeCarregarMonitoramento()
+      ? consultaDoMonitoramento()
+      : null,
+  };
+}
+
+/*
+  Depois que a tela abriu. Espera as consultas reais e guarda a cópia nova (regras
+  em `lib/copia-da-sessao.js`). Se a tela abriu pela cópia (`anteriores`),
+  reaplica antes só o que mudou; quase sempre nada, e nada pisca.
+*/
+async function atualizarCopiaDaSessao(sessao, consultas, anteriores) {
+  const dados = dadosDasRespostas(await respostasDasConsultas(consultas));
+  if (currentUser?.id !== sessao.usuarioId) return;
+  if (!dados) {
+    if (anteriores)
+      toast(
+        "Não foi possível atualizar os dados; mostrando os da última entrada.",
+        "warn",
+      );
+    return;
+  }
+  if (anteriores) {
+    const mudou = partesQueMudaram(anteriores, dados);
+    const novas = consultasDosDados(dados);
+    if (mudou.has("config"))
+      await loadConfig({ consulta: novas.config, silent: true });
+    if (mudou.has("paineis")) {
+      await loadPanels({ consulta: novas.paineis });
+      await loadPanelPermissions();
+    }
+    if (mudou.has("config") || mudou.has("paineis")) buildNav();
+    // Só painel: `isViewAllowed` não conhece todas as telas (Acessos, por exemplo).
+    if (currentView.startsWith("panel:") && !isViewAllowed(currentView))
+      navigate(startView());
+    if (mudou.has("mapa")) await loadMapaConfig({ consulta: novas.mapa });
+    if (mudou.has("unidades")) await loadUnidades({ consulta: novas.unidades });
+    if (
+      mudou.has("mapa") ||
+      mudou.has("unidades") ||
+      mudou.has("monitoramento")
+    )
+      await loadData({ consulta: novas.monitoramento });
+  }
+  if (currentUser?.id !== sessao.usuarioId) return;
+  await guardarCopiaDaSessao(
+    montarCopia({ ...sessao, agora: Date.now(), dados }),
   );
+}
+
+async function loadInitialData() {
+  /*
+    O skeleton da entrada no lugar da antiga tela de carregamento: a pessoa vê
+    o formato da tela que vai abrir, e não um cartão com etapas. Na recarga,
+    o script do <head> já o ligou; aqui ele é ligado de novo para o login e o
+    retorno do Google, e ajustado ao formato da última tela.
+  */
+  mostrarEsqueleto(storedView());
+  // Leitura local: corre junto com a consulta do perfil.
+  const copiaLida = lerCopiaDaSessao();
   const profileOk = await loadProfile();
   if (!profileOk) {
-    loader(
-      true,
-      cfgValue("loader_panels_title"),
-      cfgValue("loader_panels_subtitle"),
-      35,
-    );
+    // Sem acesso, ou acesso revogado: nada desta pessoa fica no navegador.
+    void apagarCopiaDaSessao();
     try {
       await loadPanels();
     } catch (error) {
@@ -1383,61 +1468,36 @@ async function loadInitialData() {
         "Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.",
       );
     }
-    loader(false);
     return false;
   }
-  loader(
-    true,
-    cfgValue("loader_config_title"),
-    cfgValue("loader_config_subtitle"),
-    34,
-  );
-  await loadConfig();
-  loader(
-    true,
-    cfgValue("loader_panels_title"),
-    cfgValue("loader_panels_subtitle"),
-    48,
-  );
-  await loadPanels();
+  const sessao = {
+    usuarioId: currentUser.id,
+    acesso: assinaturaDoAcesso(profile, allowedPanelIds),
+    versao: VERSAO_DA_COPIA,
+  };
+  const consultas = iniciarConsultasDaSessao();
+  const copia = await copiaLida;
+  // Outra pessoa entrou neste navegador: a cópia de quem saiu vai embora.
+  if (copia && copia.usuarioId !== sessao.usuarioId) void apagarCopiaDaSessao();
+  const daCopia = copiaServe(copia, { ...sessao, agora: Date.now() });
+  const fonte = daCopia ? consultasDosDados(copia.dados) : consultas;
+  await loadConfig({ consulta: fonte.config });
+  await loadPanels({ consulta: fonte.paineis });
   await loadPanelPermissions();
   buildNav();
-  warmExternalPanels();
-  await sleep(180);
-  loader(
-    true,
-    cfgValue("loader_map_title"),
-    cfgValue("loader_map_subtitle"),
-    52,
-  );
-  await loadMapaConfig();
-  loader(
-    true,
-    cfgValue("loader_units_title"),
-    cfgValue("loader_units_subtitle"),
-    55,
-  );
-  await loadUnidades();
-  loader(
-    true,
-    cfgValue("loader_data_title"),
-    cfgValue("loader_data_subtitle"),
-    62,
-  );
-  const dataOk = await loadData({ showLoader: false });
+  await loadMapaConfig({ consulta: fonte.mapa });
+  await loadUnidades({ consulta: fonte.unidades });
+  const dataOk = await loadData({ consulta: fonte.monitoramento });
   if (!dataOk) {
-    loader(false);
+    esconderEsqueleto();
     return;
   }
-  loader(
-    true,
-    cfgValue("loader_finish_title"),
-    cfgValue("loader_finish_subtitle"),
-    88,
-  );
   openApp(currentUser);
   navigate(startView());
-  loader(false);
+  esconderEsqueleto();
+  atualizarCopiaDaSessao(sessao, consultas, daCopia ? copia.dados : null).catch(
+    (erro) => console.warn("Falha ao atualizar a cópia da sessão:", erro),
+  );
   return true;
 }
 
@@ -1557,7 +1617,7 @@ function userDisplayName() {
 async function showAccessRequestState() {
   stopRealtime();
   stopAccessHeartbeat();
-  loader(false);
+  esconderEsqueleto();
   document.body.classList.remove("config-loading");
   $("appScreen").classList.add("hidden");
   $("loginScreen").classList.remove("hidden");
@@ -1590,7 +1650,7 @@ async function showAccessRequestState() {
 function forceAccessRequestFallback(message) {
   stopRealtime();
   stopAccessHeartbeat();
-  loader(false);
+  esconderEsqueleto();
   document.body.classList.remove("config-loading");
   $("appScreen")?.classList.add("hidden");
   $("loginScreen")?.classList.remove("hidden");
@@ -1707,14 +1767,16 @@ async function submitAccessRequest() {
   await loadMyAccessRequest();
 }
 
+function consultaDeConfiguracao() {
+  return sb.from("TB_CONFIGURACAO").select("chave,valor,descricao");
+}
+
 async function loadConfig(options = {}) {
   const silent = options.silent === true;
   appConfig = {};
   loadedConfigKeys = new Set();
   configLoadOk = false;
-  const { data, error } = await sb
-    .from("TB_CONFIGURACAO")
-    .select("chave,valor,descricao");
+  const { data, error } = await (options.consulta || consultaDeConfiguracao());
   if (error) {
     if (!silent)
       toast("Erro ao carregar configurações: " + friendlyError(error), "error");
@@ -1956,18 +2018,22 @@ function applyConfigToUi() {
   */
 }
 
-async function loadUnidades() {
-  if (!sb) {
-    unidadesCatalog = [];
-    publicarUnidadesDoCatalogo(unidadesCatalog);
-    return false;
-  }
-  const { data, error } = await sb
+function consultaDeUnidades() {
+  return sb
     .from("TD_UNIDADE")
     .select("id_unidade,sigla,nome_oficial,tipo,uf_sede,ativo")
     .eq("ativo", true)
     .order("tipo", { ascending: true })
     .order("nome_oficial", { ascending: true });
+}
+
+async function loadUnidades(options = {}) {
+  if (!sb) {
+    unidadesCatalog = [];
+    publicarUnidadesDoCatalogo(unidadesCatalog);
+    return false;
+  }
+  const { data, error } = await (options.consulta || consultaDeUnidades());
   if (error) {
     unidadesCatalog = [];
     publicarUnidadesDoCatalogo(unidadesCatalog);
@@ -1981,13 +2047,17 @@ async function loadUnidades() {
   return true;
 }
 
-async function loadPanels() {
-  const { data, error } = await sb
+function consultaDePaineis() {
+  return sb
     .from("TB_PAINEL_EXTERNO")
     .select(
       "id,codigo,titulo,icone,url,ordem,ativo,em_manutencao,tipo_abertura",
     )
     .order("ordem", { ascending: true });
+}
+
+async function loadPanels(options = {}) {
+  const { data, error } = await (options.consulta || consultaDePaineis());
   if (!error && Array.isArray(data) && data.length) panels = data;
   else panels = [...DEFAULT_PANELS];
   renderPanelAdmin();
@@ -2018,13 +2088,17 @@ function canAccessPanelCode(code) {
   return panels.some((p) => p.codigo === code && panelAllowed(p));
 }
 
-async function loadMapaConfig() {
-  mapConfigLoadOk = false;
-  if (!sb) return false;
-  const { data, error } = await sb
+function consultaDoMapa() {
+  return sb
     .from(MAPA_CONFIG_TABLE)
     .select("chave,payload")
     .in("chave", ["lmap", "rede_cnes"]);
+}
+
+async function loadMapaConfig(options = {}) {
+  mapConfigLoadOk = false;
+  if (!sb) return false;
+  const { data, error } = await (options.consulta || consultaDoMapa());
   if (error) {
     console.warn("Mapa/rede do Supabase indisponível:", error);
     if (can("config"))
@@ -2061,51 +2135,56 @@ async function loadMonitoramentoPayload() {
   return data || null;
 }
 
+function podeCarregarMonitoramento() {
+  return (
+    can("ind") ||
+    can("cores") ||
+    can("calendario") ||
+    canViewCore(profile) ||
+    canImportApprovedList(profile)
+  );
+}
+
+function consultaDoMonitoramento() {
+  return Promise.all([
+    loadMonitoramentoPayload(),
+    sb
+      .from("TB_MONITORAMENTO_INDIGENA")
+      /*
+        As seis colunas `cronograma_*` entram aqui de proposito.
+
+        `health-status-details.js` fazia uma **segunda leitura completa** da
+        mesma view so para obte-las: 21 colunas, das quais 15 eram copia exata
+        desta requisicao. Enquanto essa segunda chamada nao voltava, cada linha
+        ficava com "Carregando cronograma...", porque o badge so existe quando
+        o dado do cronograma chega. Uma requisicao, um conjunto de linhas.
+      */
+      .select(
+        "aprovados_analise,aprovados_prova,aptos_analise,ativo,cancelados,cargos,ciclo,contratados,cronograma_atividade_atual,cronograma_automatico,cronograma_dias_para_proxima,cronograma_percentual,cronograma_proxima_atividade,cronograma_proxima_data,data_fim,data_inicio,edital,eliminados_nota,entrevistados,etapa,id,id_unidade,inscritos,link_edital,observacoes,observacoes_internas,processo,reprovados_analise,responsavel,risco,sigla_unidade,status,tipo_unidade,total_eliminados,uf,unidade,vagas_ociosas,vagas_total,CO_AREA",
+      )
+      .eq("ativo", true)
+      .order("unidade", { ascending: true })
+      .order("edital", { ascending: true }),
+  ]);
+}
+
 async function loadData(options = {}) {
   if (activeLoadDataPromise) return activeLoadDataPromise;
-  const showOwnLoader = options.showLoader !== false;
   const runId = ++loadDataRunCounter;
   activeLoadDataPromise = (async () => {
-    if (
-      !can("ind") &&
-      !can("cores") &&
-      !can("calendario") &&
-      !canViewCore(profile) &&
-      !canImportApprovedList(profile)
-    ) {
+    if (!podeCarregarMonitoramento()) {
       rows = [];
       filtered = [];
       publicarLinhasDoMonitoramento(rows);
       buildNav();
       return true;
     }
-    if (showOwnLoader)
-      loader(true, "Atualizando", "Sincronizando dados...", 62);
-    const [payloadResponse, tableResponse] = await Promise.all([
-      loadMonitoramentoPayload(),
-      sb
-        .from("TB_MONITORAMENTO_INDIGENA")
-        /*
-          As seis colunas `cronograma_*` entram aqui de proposito.
-        
-          `health-status-details.js` fazia uma **segunda leitura completa** da
-          mesma view so para obte-las: 21 colunas, das quais 15 eram copia exata
-          desta requisicao. Enquanto essa segunda chamada nao voltava, cada linha
-          ficava com "Carregando cronograma...", porque o badge so existe quando
-          o dado do cronograma chega. Uma requisicao, um conjunto de linhas.
-        */
-        .select(
-          "aprovados_analise,aprovados_prova,aptos_analise,ativo,cancelados,cargos,ciclo,contratados,cronograma_atividade_atual,cronograma_automatico,cronograma_dias_para_proxima,cronograma_percentual,cronograma_proxima_atividade,cronograma_proxima_data,data_fim,data_inicio,edital,eliminados_nota,entrevistados,etapa,id,id_unidade,inscritos,link_edital,observacoes,observacoes_internas,processo,reprovados_analise,responsavel,risco,sigla_unidade,status,tipo_unidade,total_eliminados,uf,unidade,vagas_ociosas,vagas_total,CO_AREA",
-        )
-        .eq("ativo", true)
-        .order("unidade", { ascending: true })
-        .order("edital", { ascending: true }),
-    ]);
+    const [payloadResponse, tableResponse] = await (options.consulta ||
+      consultaDoMonitoramento());
     if (runId !== loadDataRunCounter) return false;
     monitoramentoPayload = payloadResponse || null;
     const { data, error } = tableResponse;
     if (error) {
-      if (showOwnLoader) loader(false);
       toast("Erro ao carregar dados: " + friendlyError(error), "error");
       return false;
     }
@@ -2124,7 +2203,6 @@ async function loadData(options = {}) {
     populateFilters();
     applyFilters();
     setUpdated();
-    if (showOwnLoader) loader(false);
     return true;
   })();
   try {
@@ -2141,53 +2219,36 @@ function setUpdated() {
 
 async function refreshData() {
   if (activeRefreshDataPromise) return activeRefreshDataPromise;
-  const previousView = currentView;
-  const previousPanelCode =
-    previousView && previousView.startsWith("panel:")
-      ? previousView.split(":")[1]
-      : "";
+  /*
+    Sem tela de carregamento: o que está na tela fica, com a barra de
+    atualização no cabeçalho, até os dados novos chegarem. Tudo é esperado antes
+    de aplicar, porque `loadConfig` zera a configuração enquanto espera a sua.
+    Como dá para navegar nesse meio-tempo, a tela reaberta no fim é a de agora,
+    e não a do clique.
+  */
+  marcarAtualizacao(true);
   activeRefreshDataPromise = (async () => {
-    loader(
-      true,
-      "Atualizando configurações",
-      "Buscando parâmetros e painéis...",
-      24,
-    );
-    await loadConfig();
-    await loadPanels();
+    const consultas = iniciarConsultasDaSessao();
+    await respostasDasConsultas(consultas);
+    await loadConfig({ consulta: consultas.config });
+    await loadPanels({ consulta: consultas.paineis });
     await loadPanelPermissions();
-    await loadMapaConfig();
+    await loadMapaConfig({ consulta: consultas.mapa });
     buildNav();
-    loader(true, "Atualizando painéis", "Reconstruindo cache...", 48);
-    warmExternalPanels(true);
-    await sleep(180);
-    loader(
-      true,
-      "Atualizando unidades",
-      "Atualizando catálogo DSEI/CASAI...",
-      58,
-    );
-    await loadUnidades();
-    loader(true, "Atualizando dados", "Sincronizando monitoramento...", 68);
-    const dataOk = await loadData({ showLoader: false });
-    if (!dataOk) {
-      loader(false);
-      return false;
+    await loadUnidades({ consulta: consultas.unidades });
+    const dataOk = await loadData({ consulta: consultas.monitoramento });
+    if (!dataOk) return false;
+    // Painel já aberto recarrega na próxima abertura; o atual, logo abaixo.
+    document.querySelectorAll(".external-panel").forEach((el) => el.remove());
+    const painel = currentView.startsWith("panel:")
+      ? currentView.split(":")[1]
+      : "";
+    if (painel && canAccessPanelCode(painel)) openPanel(painel);
+    else if (!painel && isViewAllowed(currentView)) navigate(currentView);
+    else {
+      currentPanel = null;
+      navigate(startView());
     }
-    if (previousPanelCode) {
-      const activePanel = panels.find(
-        (p) => p.codigo === previousPanelCode && panelAllowed(p),
-      );
-      if (activePanel) {
-        currentPanel = activePanel;
-        openPanel(previousPanelCode);
-      } else {
-        currentPanel = null;
-        navigate(startView());
-      }
-    } else if (isViewAllowed(previousView)) navigate(previousView);
-    else navigate(startView());
-    loader(false);
     toast("Dados atualizados.");
     return true;
   })();
@@ -2195,6 +2256,7 @@ async function refreshData() {
     return await activeRefreshDataPromise;
   } finally {
     activeRefreshDataPromise = null;
+    marcarAtualizacao(false);
   }
 }
 
@@ -8832,9 +8894,6 @@ let _leaflet = null,
   _layerUF = null,
   _layerBR = null,
   _mapInited = false;
-// Bolhas de DSEI do mapa nacional e os traços do leque que as afasta.
-let _marcadoresDsei = [],
-  _tracosDoLeque = [];
 let _detailLeaflet = null,
   _detailBaseLayer = null,
   _detailUnitLayer = null,
@@ -9169,33 +9228,32 @@ function initLeaflet() {
   _layerCasaiLocal = L.layerGroup().addTo(_leaflet); // CASAIs do DSEI/locais (drill-down)
   _layerUbsi = L.layerGroup().addTo(_leaflet); // UBSIs (drill-down)
   _layerCasai = L.layerGroup().addTo(_leaflet); // CASAI Nacional (sempre)
-  // O leque é em pixels: a cada zoom os grupos mudam e os offsets também.
-  _leaflet.on("zoomend", aplicarLequeDosDsei);
   drawBrasilOutline();
 
   // Botão "ver Brasil inteiro" dentro do mapa (controle Leaflet, canto superior direito)
   const HomeCtl = L.Control.extend({
     options: { position: "topright" },
     onAdd: function () {
-      // Ícones Lucide (Design System, seção 14) no lugar dos emojis; o estilo
-      // é `.health-map-controles` / `.health-map-botao` em health-map-workspace.css.
-      const wrap = L.DomUtil.create("div", "health-map-controles");
-      const b = criarBotaoDoMapa(document, { icone: "map", rotulo: "Brasil" });
-      wrap.append(b);
+      const wrap = L.DomUtil.create("div", "");
+      wrap.style.cssText = "display:flex;gap:6px;";
+      const b = L.DomUtil.create("button", "", wrap);
+      b.type = "button";
       b.title = "Voltar à visão do Brasil inteiro";
+      b.innerHTML = "🗺️ Brasil";
+      b.style.cssText =
+        "background:#fff;border:1px solid #bcd;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#22577a;cursor:pointer;box-shadow:0 2px 8px rgba(15,35,60,.18);";
       L.DomEvent.on(b, "click", function (e) {
         L.DomEvent.stop(e);
         mapVoltar();
       });
-      const h = criarBotaoDoMapa(document, {
-        icone: "flame",
-        rotulo: "Calor",
-        classe: "health-map-botao--calor",
-      });
-      wrap.append(h);
+      const h = L.DomUtil.create("button", "", wrap);
       h.id = "heatBtn";
+      h.type = "button";
       h.title = "Mapa de calor: cor por % de vagas ociosas";
       h.setAttribute("aria-pressed", "false");
+      h.innerHTML = "🔥 Calor";
+      h.style.cssText =
+        "background:#fff;border:1px solid #bcd;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#a3322b;cursor:pointer;box-shadow:0 2px 8px rgba(15,35,60,.18);";
       L.DomEvent.on(h, "click", function (e) {
         L.DomEvent.stop(e);
         toggleHeatMap();
@@ -9214,10 +9272,6 @@ function initLeaflet() {
       d.id = "mapLegendBox";
       d.style.cssText =
         "background:rgba(255,255,255,.94);border:1px solid #d7e5f2;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:600;color:#43566d;box-shadow:0 2px 10px rgba(15,35,60,.12);line-height:1.7;max-width:230px;";
-      // Recolhível: o título é um botão (aria-expanded) e o corpo começa
-      // fechado no celular. `syncMapLevelUI` só reescreve título e corpo, então
-      // o estado aberto/fechado sobrevive à troca Brasil/DSEI.
-      montarLegendaRecolhivel(d, { largura: window.innerWidth });
       L.DomEvent.disableClickPropagation(d);
       return d;
     },
@@ -10220,83 +10274,10 @@ function renderPainelNacional(linhas) {
   });
 }
 
-/*
-  LEQUE DAS SEDES QUE CAEM NO MESMO LUGAR
-
-  Leste de Roraima e Yanomami têm sede em Boa Vista, a 1,8 km: no mapa
-  nacional são o mesmo pixel, e Alto Rio Solimões e Vale do Javari ficam a
-  poucos pixels um do outro. A matemática vive em `src/lib/leque-de-marcadores.js`;
-  aqui só se converte latlng ↔ pixel no zoom corrente.
-
-  Cada bolha de um grupo vai para um círculo de 16 px em volta do ponto real,
-  com um traço fino até ele e um ponto pequeno no lugar verdadeiro. O traço usa
-  `--text-secondary`, com o mesmo cinza-azulado do leque do mapa de detalhe
-  como recuo. Tooltip, clique, cor e tamanho são os da própria bolha, que
-  apenas muda de sítio; quando o zoom já separa os pontos, volta ao lugar.
-*/
-function corDoTracoDoLeque() {
-  try {
-    const cor = getComputedStyle(document.documentElement)
-      .getPropertyValue("--text-secondary")
-      .trim();
-    if (cor) return cor;
-  } catch (e) {}
-  return "#4a6b80";
-}
-
-function aplicarLequeDosDsei() {
-  if (!_leaflet || !_layerDSEI) return;
-  _tracosDoLeque.forEach((camada) => _layerDSEI.removeLayer(camada));
-  _tracosDoLeque = [];
-  const vivos = _marcadoresDsei.filter(({ m }) => _layerDSEI.hasLayer(m));
-  if (!vivos.length) return;
-
-  const pontos = vivos.map(({ lat, lon }) =>
-    _leaflet.latLngToLayerPoint([lat, lon]),
-  );
-  const leque = calcularLeque(pontos);
-  const cor = corDoTracoDoLeque();
-
-  leque.forEach((offset, i) => {
-    const { m, lat, lon } = vivos[i];
-    if (!offset.emLeque) {
-      m.setLatLng([lat, lon]);
-      return;
-    }
-    const destino = _leaflet.layerPointToLatLng(
-      pontos[i].add(L.point(offset.dx, offset.dy)),
-    );
-    m.setLatLng(destino);
-    _tracosDoLeque.push(
-      L.polyline([[lat, lon], destino], {
-        color: cor,
-        weight: 1,
-        opacity: 0.7,
-        interactive: false,
-      }),
-      L.circleMarker([lat, lon], {
-        radius: 2,
-        stroke: false,
-        fillColor: cor,
-        fillOpacity: 0.9,
-        interactive: false,
-      }),
-    );
-  });
-
-  if (!_tracosDoLeque.length) return;
-  _tracosDoLeque.forEach((camada) => _layerDSEI.addLayer(camada));
-  // Os traços entram por último no SVG; as bolhas voltam para cima deles, na
-  // ordem em que foram desenhadas (maior primeiro, menor por cima).
-  vivos.forEach(({ m }) => m.bringToFront());
-}
-
 // Nível 1: bolhas dos DSEIs
 function drawDSEIBubbles() {
   if (!_leaflet) return;
   _layerDSEI.clearLayers();
-  _marcadoresDsei = [];
-  _tracosDoLeque = [];
   _layerPolos.clearLayers();
   if (_layerUbsi) _layerUbsi.clearLayers();
   if (_layerCasaiLocal) _layerCasaiLocal.clearLayers();
@@ -10320,12 +10301,9 @@ function drawDSEIBubbles() {
     decrescente põe a bolha menor por cima, de modo que ambas ficam clicáveis:
     a maior continua a aparecer como anel em volta da menor. E onde a sede é
     exactamente a mesma entra um selo com a contagem, que nomeia os distritos.
-
-    O selo nunca chegou a existir e a ordenação sozinha deixava a bolha maior
-    reduzida a um anel. Passou a valer o leque (`aplicarLequeDosDsei`): bolhas
-    que caem no mesmo lugar da tela são desenhadas num pequeno círculo em volta
-    do ponto real, com um traço até ele. A coordenada continua intacta.
   */
+  // DSEIs com a mesma sede permanecem sobrepostos no ponto verdadeiro.
+  // A ordenação por raio mantém a bolha menor clicável sem selo numérico.
 
   [...LMAP.dsei]
     .sort((a, b) => raioDaBolha(b.pop, popMax) - raioDaBolha(a.pop, popMax))
@@ -10395,8 +10373,13 @@ function drawDSEIBubbles() {
       }
       m.on("click", () => entrarNoTerritorio(d));
       _layerDSEI.addLayer(m);
-      _marcadoresDsei.push({ m, lat, lon });
     });
+
+  /*
+    Onde a sede é exactamente a mesma, um selo nomeia os distritos empilhados.
+    Fica ao lado do centro — deslocado em PIXELS, convertidos no zoom corrente —
+    e não substitui as bolhas: elas continuam no seu lugar, clicáveis.
+  */
 
   /*
     Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
@@ -10435,8 +10418,6 @@ function drawDSEIBubbles() {
         }
       } catch (e) {}
   }
-  // Depois do enquadramento: se ele não mudou o zoom, o `zoomend` não dispara.
-  aplicarLequeDosDsei();
   _ptsZoom = null;
   const masterCount = $("masterMapCount");
   if (masterCount)
@@ -10812,7 +10793,7 @@ function resumoDaRedeDoDsei(d) {
 /*
   VOLTAR AO BRASIL — SAI DO DSEI, MANTÉM OS FILTROS.
 
-  Antes, o botão "Brasil" (ícone de mapa, `controles-do-mapa.js`) apagava todos os filtros (e sem passar pelos
+  Antes, o botão "🗺️ Brasil" apagava todos os filtros (e sem passar pelos
   módulos que mostram o contador), enquanto o breadcrumb não apagava nada —
   nem o nome do DSEI que ficava escondido na busca. Agora os dois só saem do
   território; apagar o recorte é trabalho do "Limpar filtros" (`clearFilters`),
@@ -10883,23 +10864,13 @@ function syncMapLevelUI() {
     const abrangencia = temAbrangencia
       ? `${limiteDsei}abrangência oficial do DSEI<br>`
       : "";
-    // A caixa é recolhível (`montarLegendaRecolhivel`): o título vai no botão
-    // que abre e fecha, e o resto no corpo. Reescrever só os dois preserva o
-    // estado aberto/fechado.
-    const titulo = box.querySelector("[data-legenda-titulo]");
-    const corpo = box.querySelector("[data-legenda-corpo]");
-    if (titulo && corpo) {
-      titulo.innerHTML = showingPolos
-        ? '<b style="color:#22577a">Polos base do DSEI</b>'
-        : '<b style="color:#22577a">Legenda</b>';
-      corpo.innerHTML = showingPolos
-        ? `${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${abrangencia}${terras}`
-        : `${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${abrangencia}${losango("#7b2ff7")}CASAI Nacional${terras}`;
-      montarLegendaDasTerras(
-        corpo.querySelector("[data-legenda-das-terras]"),
-        _leaflet,
-      );
-    }
+    box.innerHTML = showingPolos
+      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${abrangencia}${terras}`
+      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${abrangencia}${losango("#7b2ff7")}CASAI Nacional${terras}`;
+    montarLegendaDasTerras(
+      box.querySelector("[data-legenda-das-terras]"),
+      _leaflet,
+    );
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei) {
@@ -11220,37 +11191,6 @@ function renderTable() {
   }
 }
 
-function warmExternalPanels(force = false) {
-  if (!can("paineis")) return;
-  const mount = $("externalMount");
-  if (!mount) return;
-  if (force) {
-    document.querySelectorAll(".external-panel").forEach((el) => el.remove());
-    externalPanelsWarmed = false;
-  }
-  if (externalPanelsWarmed) return;
-  if (mount.classList.contains("external-placeholder")) {
-    mount.className = "";
-    mount.innerHTML = "";
-  }
-  panels
-    .filter((p) => p.ativo !== false)
-    .sort((a, b) => n(a.ordem) - n(b.ordem))
-    .forEach((panel) => {
-      const code = txt(panel.codigo);
-      if (!code) return;
-      let holder = document.getElementById("external-panel-" + code);
-      if (holder) return;
-      holder = document.createElement("div");
-      holder.id = "external-panel-" + code;
-      holder.className = "external-panel";
-      holder.hidden = true;
-      mount.appendChild(holder);
-      buildExternalPanel(holder, panel);
-    });
-  externalPanelsWarmed = true;
-}
-
 function clearExternalPanelCache() {
   document.querySelectorAll(".external-panel").forEach((el) => el.remove());
   const mount = $("externalMount");
@@ -11258,7 +11198,6 @@ function clearExternalPanelCache() {
     mount.className = "external-placeholder";
     mount.textContent = cfgValue("external_placeholder");
   }
-  externalPanelsWarmed = false;
   currentPanel = null;
 }
 
@@ -11300,6 +11239,11 @@ function openPanel(code) {
   document
     .querySelectorAll(".external-panel")
     .forEach((el) => (el.hidden = true));
+  /*
+    O iframe nasce na primeira abertura e fica até a página fechar. Antes, a
+    entrada criava de uma vez o iframe de cada painel ativo, escondido, e todos
+    carregavam a cada login, mesmo sem ninguém abrir.
+  */
   let holder = document.getElementById("external-panel-" + code);
   if (!holder) {
     holder = document.createElement("div");
@@ -11323,6 +11267,8 @@ function buildExternalPanel(holder, panel) {
   }
 
   holder.innerHTML = `<iframe class="external-frame" src="${attr(safePanelUrl)}" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="fullscreen *; clipboard-read *; clipboard-write *; encrypted-media *; geolocation *; display-capture *" allowfullscreen="true"></iframe>`;
+  // Até o site de fora responder, o quadro ficaria em branco.
+  acompanharCarregamentoDoPainel(holder, { aoTentarDeNovo: reloadExternal });
 }
 
 function reloadExternal() {
@@ -12546,7 +12492,7 @@ function startRealtime() {
           // Debounce: evita múltiplas chamadas em rajada
           clearTimeout(window.__realtimeDebounce);
           window.__realtimeDebounce = setTimeout(async () => {
-            await loadData({ showLoader: false });
+            await loadData();
             toast("Dashboard atualizado automaticamente.", "ok");
           }, 800);
         },
