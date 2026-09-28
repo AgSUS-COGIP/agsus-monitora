@@ -6,8 +6,6 @@ import {
   FLUTUANTE_FECHADO,
   PAGINAS_DO_MENU,
   areaAberta,
-  areaDeAberturaDoPainel,
-  areasDoPainel,
   areasDoUsuario,
   iconesDoCatalogo,
   itemAtivoDaArvore,
@@ -25,10 +23,11 @@ const TUDO = {
   nucleo: true,
   calendario: true,
   approved: true,
+  analises: true,
   config: true,
 };
 const PAINEIS = [
-  { codigo: "analises", titulo: "Monitora Análises" },
+  { codigo: "recursos", titulo: "Recursos" },
   { codigo: "sem-titulo", titulo: "  " },
   { codigo: "", titulo: "Sem código" },
 ];
@@ -110,12 +109,22 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       "Lista de aprovados",
       "Análises curriculares",
     ]);
-    expect(grupos["saude-indigena"].at(-1).view).toBe("panel:analises");
+    expect(grupos["saude-indigena"].at(-1)).toEqual({
+      view: "analises",
+      rotulo: "Análises curriculares",
+      icone: "file-search",
+      area: "saude-indigena",
+    });
     expect(
       grupos["saude-indigena"].every((item) => item.area === "saude-indigena"),
     ).toBe(true);
-    // Os outros painéis vão para Painéis, sem área.
+    // Os painéis externos vão para Painéis, sem área.
     expect(grupos.paineis).toEqual([
+      {
+        view: "panel:recursos",
+        rotulo: "Recursos",
+        icone: "square-arrow-out-up-right",
+      },
       {
         view: "panel:sem-titulo",
         rotulo: "sem-titulo",
@@ -149,15 +158,16 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
         "nucleo",
         "calendario",
         "approved",
-        "panel:analises",
+        "analises",
       ]);
       expect(grupos[area].at(-1).rotulo).toBe("Análises curriculares");
       expect(grupos[area].every((item) => item.area === area)).toBe(true);
     }
-    // O mesmo painel, uma vez em cada área; nenhum sobra em Painéis.
-    expect(grupos.paineis.some((item) => item.view === "panel:analises")).toBe(
-      false,
-    );
+    // A mesma página, uma vez em cada área; Painéis só tem os externos.
+    expect(grupos.paineis.map((item) => item.view)).toEqual([
+      "panel:recursos",
+      "panel:sem-titulo",
+    ]);
   });
 
   it("sem áreas no contexto (contrato antigo), vale a Saúde Indígena", () => {
@@ -165,21 +175,32 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     expect(arvore.map((grupo) => grupo.id)).toEqual(["saude-indigena"]);
   });
 
-  it("quem só tem a SEDE vê Análises na SEDE, e não em Painéis", () => {
+  it("quem só tem a SEDE vê Análises na SEDE", () => {
     const grupos = porGrupo(
       montarArvoreDoMenu({
-        permitidas: { nucleo: true },
-        paineis: [PAINEIS[0]],
+        permitidas: { nucleo: true, analises: true },
         areas: ["sede"],
       }),
     );
     expect(Object.keys(grupos)).toEqual(["sede"]);
-    expect(grupos.sede.at(-1)).toEqual({
-      view: "panel:analises",
-      rotulo: "Análises curriculares",
-      icone: "square-arrow-out-up-right",
-      area: "sede",
-    });
+    expect(grupos.sede.map((item) => item.view)).toEqual([
+      "nucleo",
+      "analises",
+    ]);
+  });
+
+  it("Análises só com o recurso analises; os painéis externos não a trazem", () => {
+    const grupos = porGrupo(
+      montarArvoreDoMenu({
+        permitidas: { nucleo: true },
+        paineis: [{ codigo: "analises", titulo: "Analises" }],
+        areas: ["sede"],
+      }),
+    );
+    expect(grupos.sede.map((item) => item.view)).toEqual(["nucleo"]);
+    // O painel antigo não tem mais lugar especial: se chegasse, seria um
+    // painel comum (o legado o tira antes, em `semOPainelAntigoDeAnalises`).
+    expect(grupos.paineis.map((item) => item.view)).toEqual(["panel:analises"]);
   });
 
   it("grupo sem página permitida não aparece", () => {
@@ -190,32 +211,6 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     expect(arvore.map((grupo) => grupo.id)).toEqual(["saude-indigena"]);
     expect(montarArvoreDoMenu({ permitidas: {} })).toEqual([]);
     expect(montarArvoreDoMenu()).toEqual([]);
-  });
-
-  it("o painel de análises é das três áreas; os outros, de Painéis", () => {
-    expect(areasDoPainel("analises")).toEqual([
-      "saude-indigena",
-      "sede",
-      "projetos",
-    ]);
-    expect(areasDoPainel("qualquer-outro")).toEqual([AREA_DOS_PAINEIS]);
-    expect(areasDoPainel(undefined)).toEqual([AREA_DOS_PAINEIS]);
-  });
-
-  it("o painel de análises abre com a área atual; painel sem área, sem área", () => {
-    expect(areaDeAberturaDoPainel("analises", "projetos")).toBe("projetos");
-    expect(areaDeAberturaDoPainel("analises", "sede")).toBe("sede");
-    expect(areaDeAberturaDoPainel("analises", "saude-indigena")).toBe(
-      "saude-indigena",
-    );
-    // Área atual que não é do painel (ou nenhuma): a primeira dele.
-    expect(areaDeAberturaDoPainel("analises", "paineis")).toBe(
-      "saude-indigena",
-    );
-    expect(areaDeAberturaDoPainel("analises", undefined)).toBe(
-      "saude-indigena",
-    );
-    expect(areaDeAberturaDoPainel("qualquer-outro", "sede")).toBe("");
   });
 });
 

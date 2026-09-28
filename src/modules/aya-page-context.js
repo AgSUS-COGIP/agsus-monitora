@@ -93,11 +93,7 @@ export function ayaPageContextFor(section = "", title = "") {
   if (sectionKey === "nucleo" || /equipe nucleo|nucleo/.test(titleKey)) {
     return PAGE_CONTEXTS.nucleo;
   }
-  if (
-    sectionKey === "analises" ||
-    (sectionKey.startsWith("panel:") && /analise/.test(titleKey)) ||
-    /analise/.test(titleKey)
-  ) {
+  if (sectionKey === "analises" || /analise/.test(titleKey)) {
     return PAGE_CONTEXTS.analises;
   }
   if (sectionKey === "config" || /configur/.test(titleKey)) {

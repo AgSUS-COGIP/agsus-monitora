@@ -8,17 +8,18 @@ Num painel feito em Google Apps Script (como o de Recursos), a página abre e s�
 busca os dados, mostrando o carregamento dele. Para o skeleton ficar até os dados aparecerem, o
 painel avisa o MONITORA com duas mensagens:
 
-| Mensagem | Quando mandar | Efeito |
-|---|---|---|
-| `{ tipo: "agsus:painel-carregando" }` | logo no início da página | o skeleton não sai no `load` |
-| `{ tipo: "agsus:painel-pronto" }` | quando os dados estiverem desenhados (ou o erro na tela) | o skeleton sai |
+| Mensagem                              | Quando mandar                                            | Efeito                       |
+| ------------------------------------- | -------------------------------------------------------- | ---------------------------- |
+| `{ tipo: "agsus:painel-carregando" }` | logo no início da página                                 | o skeleton não sai no `load` |
+| `{ tipo: "agsus:painel-pronto" }`     | quando os dados estiverem desenhados (ou o erro na tela) | o skeleton sai               |
 
 Painel que não manda nada continua como sempre: o skeleton sai no `load`. Um painel que avisou e
 nunca mandou o "pronto" é descoberto depois de 45 s.
 
-O painel de análises do próprio MONITORA (`analises.html`) já manda os dois avisos, em
+O app de análises do próprio MONITORA (`analises.html`) já manda os dois avisos, em
 `src/analises/analises-loading-feedback.js`: o "pronto" sai quando os dados (ou o erro) estão na
-tela.
+tela. Ele não é mais um painel externo: é a página Análises curriculares
+(`src/modules/pagina-de-analises.js`), que usa o mesmo skeleton e os mesmos avisos.
 
 ## O que colar no Apps Script
 

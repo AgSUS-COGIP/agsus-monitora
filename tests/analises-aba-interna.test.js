@@ -1,0 +1,136 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import {
+  enderecoDasAnalises,
+  semOPainelAntigoDeAnalises,
+} from "../src/lib/pagina-de-analises.js";
+import { RESOURCES } from "../src/lib/permissoes-recursos.js";
+import {
+  collectPanelRows,
+  renderPanelAdminHTML,
+} from "../src/modules/config-ui.js";
+
+/*
+  Análises curriculares deixou de ser o painel externo `analises` e virou a
+  view `analises`, com permissão só do recurso `analises`.
+*/
+const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
+const legado = ler("src/modules/legacy-app.js");
+const trecho = (inicio, fim) =>
+  legado.slice(
+    legado.indexOf(inicio),
+    legado.indexOf(fim, legado.indexOf(inicio)),
+  );
+
+const PAINEIS = [
+  { id: "1", codigo: "recrutamento", titulo: "Seleção", url: "https://a" },
+  { id: "2", codigo: "analises", titulo: "Analises", url: "/analises.html" },
+  { id: "3", codigo: "recursos", titulo: "Recursos", url: "https://b" },
+];
+
+describe("o endereço e a lista de painéis", () => {
+  it("o quadro abre no domínio atual, com a área", () => {
+    expect(enderecoDasAnalises("http://localhost:5173", "sede")).toBe(
+      "http://localhost:5173/analises.html?area=sede",
+    );
+    expect(enderecoDasAnalises("https://previa.vercel.app", "")).toBe(
+      "https://previa.vercel.app/analises.html",
+    );
+  });
+
+  it("o painel antigo sai da lista (banco antes da migration, cópia da sessão)", () => {
+    expect(
+      semOPainelAntigoDeAnalises(PAINEIS).map((painel) => painel.codigo),
+    ).toEqual(["recrutamento", "recursos"]);
+    expect(semOPainelAntigoDeAnalises(undefined)).toEqual([]);
+  });
+
+  it("Painéis externos da Administração não mostram Análises, e o salvar lê as linhas certas", () => {
+    const lista = semOPainelAntigoDeAnalises(PAINEIS);
+    document.body.innerHTML = `<div id="panelAdmin">${renderPanelAdminHTML(lista)}</div>`;
+    expect(document.body.textContent).not.toContain("Analises");
+    expect(collectPanelRows(lista).map((linha) => linha.id)).toEqual([
+      "1",
+      "3",
+    ]);
+  });
+
+  it("o recurso analises se chama Análises curriculares na matriz", () => {
+    expect(Object.fromEntries(RESOURCES).analises).toBe(
+      "Análises curriculares",
+    );
+  });
+});
+
+describe("o legado trata Análises como página", () => {
+  it("a permissão é só o recurso analises", () => {
+    expect(trecho("function can(perm)", "function isMasterProfile")).toContain(
+      'analises: "analises"',
+    );
+    expect(
+      trecho("function isViewAllowed(view)", "function rememberView"),
+    ).toContain('if (view === "analises") return can("analises");');
+    expect(trecho("function buildNav()", "function setActiveNav")).toContain(
+      'analises: can("analises")',
+    );
+    expect(
+      trecho("function navigate(view)", "function subtituloDaArea"),
+    ).toMatch(/requestedView === "analises" && !can\("analises"\)/);
+  });
+
+  it("navegar abre a página e o quadro dela", () => {
+    const navegar = trecho(
+      "function navigate(view)",
+      "function subtituloDaArea",
+    );
+    expect(navegar).toContain('$("page-analises").classList.add("active");');
+    expect(navegar).toContain('abrirPaginaDeAnalises($("page-analises"));');
+  });
+
+  it("os painéis carregados perdem o antigo de análises", () => {
+    expect(
+      trecho("async function loadPanels", "function panelAllowed"),
+    ).toContain("semOPainelAntigoDeAnalises(data)");
+  });
+
+  it("o caminho do painel externo não tem mais caso de área", () => {
+    const painel = trecho(
+      "function openPanel(code)",
+      "function renderConfigForm",
+    );
+    expect(painel).not.toMatch(/area/i);
+    expect(legado).not.toContain("recarregarPainelNaAreaAtual");
+  });
+
+  it("o index.html tem a seção da página", () => {
+    expect(ler("index.html")).toContain(
+      '<section id="page-analises" class="page pagina-das-analises"></section>',
+    );
+  });
+});
+
+describe("a migration preserva quem via", () => {
+  const migration = ler(
+    "supabase/migrations/20260929100000_analises_aba_interna.sql",
+  );
+  const rollback = ler(
+    "supabase/rollback/20260929100000_analises_aba_interna.sql",
+  );
+
+  it("arquiva o painel com marca, sem apagar", () => {
+    expect(migration).toContain(
+      "set ativo = false, tipo_abertura = 'aba_interna'",
+    );
+    expect(migration).not.toMatch(/\bdelete\b/i);
+    expect(migration).toContain(
+      "c_manter_quem_nao_via constant boolean := true;",
+    );
+    expect(migration).toContain("'Análises curriculares viram aba interna'");
+  });
+
+  it("o rollback só desfaz o que a migration fez", () => {
+    expect(rollback).toContain("h.motivo = c_motivo");
+    expect(rollback).toContain("r.revisao = 1");
+    expect(rollback).toContain("paineis_antes");
+  });
+});
