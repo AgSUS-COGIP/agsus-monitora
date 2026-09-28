@@ -522,6 +522,28 @@ describe("formulário do edital", () => {
     expect(caixa.textContent).not.toContain("Informe o motivo");
   });
 
+  it("edital novo não pede justificativa, nem ao mexer no cronograma nem ao salvar", async () => {
+    const { supabase, toast } = await montar();
+    await clicar($("newEditalBtn"));
+    expect($("editModalTitle").textContent).not.toBe("Editar edital");
+    await digitar($("mEdital"), "20/2026");
+    await escolher($("mUnidade"), "U1");
+    // Mexer no cronograma (desligar o automático) é o que cobrava o motivo.
+    await clicar($("mCronogramaAutomatico"));
+    expect($("cronogramaValidation").textContent).not.toContain(
+      "Informe o motivo",
+    );
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_monitoramento_com_cronograma_v2",
+    );
+    expect(chamada, JSON.stringify(toast.mock.calls.slice(-1))).toBeTruthy();
+    // Sem motivo: o banco registra "Cadastro do edital" no histórico.
+    expect(chamada[1].p_motivo).toBe("");
+    expect(chamada[1].p_payload.id ?? "").toBe("");
+  });
+
   it("status excepcional pede motivo e data da decisão", async () => {
     await montar();
     await abrirEdital("1");
