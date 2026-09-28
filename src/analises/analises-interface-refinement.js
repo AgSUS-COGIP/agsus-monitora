@@ -63,7 +63,6 @@ function installStyles() {
     .analises-detail-empty{color:#94a3b8;font-style:italic}
     .analises-drawer .detail-actions{display:flex;gap:8px;flex-wrap:wrap}
     #attentionList .attention-item.low{display:none!important}
-    #loading .loading-card{width:min(460px,calc(100vw - 32px))!important;border-radius:16px!important}
     @media(max-width:720px){
       .oper-grid{grid-template-columns:1fr!important}.analises-drawer-context{grid-template-columns:1fr!important;padding:14px 16px 6px!important}.analises-drawer-context div:nth-child(5){grid-column:auto}.analises-detail-section-grid{grid-template-columns:1fr}#analisesDrawerBody{padding:8px 16px 22px!important}
     }

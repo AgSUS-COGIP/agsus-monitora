@@ -11,6 +11,7 @@ import { installCspReportMonitor } from "../lib/csp-report-monitor.js";
 import "../lib/chartjs-global.js";
 import "../lib/supabase-legacy-bridge.js";
 import "./analises-responsive-fixes.css";
+import "./analises-esqueleto.css";
 import "./analises-area.js";
 import "./analises-active-cache-recovery.js";
 import "./analises-consolidated-transport.js";

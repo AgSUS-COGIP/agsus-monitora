@@ -142,7 +142,6 @@ function ensureDarkModeStyles() {
       color:var(--text)!important;
     }
 
-    html[data-theme="dark"] .loading-card,
     html[data-theme="dark"] .toast{
       background:var(--card)!important;
       color:var(--text)!important;

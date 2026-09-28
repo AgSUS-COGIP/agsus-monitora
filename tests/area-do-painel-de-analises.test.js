@@ -154,13 +154,14 @@ describe("CSV e tabela vazia por área", () => {
     );
   });
 
-  it("SEDE e Projetos ganham a experiência profissional no fim", () => {
+  it("SEDE e Projetos ganham a experiência profissional e o município no fim", () => {
     expect(colunasDoCsvDeAnalises(colunas, "projetos")).toEqual([
       ...colunas,
       "experiencia_profissional_anos",
       "experiencia_profissional_meses",
       "experiencia_profissional_dias",
       "experiencia_profissional_total",
+      "municipio_uf",
     ]);
     expect(nomeDoCsvDeAnalises("projetos")).toBe(
       "agsus_analises_curriculares_projetos.csv",

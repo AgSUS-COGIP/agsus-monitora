@@ -9,7 +9,18 @@ import {
   mensagemDeAreaSemAnalises,
   nomeDoCsvDeAnalises,
 } from "../lib/area-do-painel-de-analises.js";
+import {
+  haLinhasSemParecer,
+  linhaSemParecer,
+  mesclarPareceres,
+  municipioUfDaLinha,
+} from "../lib/textos-do-painel-de-analises.js";
 import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
+import { buscarPareceresDoEscopo } from "./analises-pareceres-sob-demanda.js";
+import {
+  definirCarregamentoDoPainel,
+  mostrarErroDoCarregamento,
+} from "./analises-loading-feedback.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME_ATIVOS = "VW_ANALISES_DASHBOARD_BASE";
@@ -248,14 +259,14 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
         if(event === "TOKEN_REFRESHED"){ session = nextSession || null; return; }
         if(event === "SIGNED_IN" || event === "USER_UPDATED"){
           panelBootstrapPromise = bootstrapPanel(nextSession, { reloadData:true, trackOpen:true }).catch(err => {
-            showAuth("Falha ao atualizar painel: " + (err && err.message ? err.message : err));
+            showLoadError("Falha ao atualizar painel: " + (err && err.message ? err.message : err));
           });
         }
       });
       const res = await sb.auth.getSession();
       panelBootstrapPromise = bootstrapPanel(res.data && res.data.session, { reloadData:true, trackOpen:true });
       await panelBootstrapPromise;
-    }catch(err){ showAuth("Falha ao iniciar painel: " + (err && err.message ? err.message : err)); }
+    }catch(err){ showLoadError("Falha ao iniciar painel: " + (err && err.message ? err.message : err), () => window.location.reload()); }
     finally{ showLoading(false); }
   }
 
@@ -268,12 +279,12 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
     $("fSituacaoEdital")?.addEventListener("change", () => {
       resetDataForScopeChange();
       loadFromCacheOrPrompt().catch(err => {
-        showAuth("Erro ao carregar processos " + currentEditalScopeLabel().toLowerCase() + ": " + (err && err.message ? err.message : err));
+        showLoadError("Erro ao carregar processos " + currentEditalScopeLabel().toLowerCase() + ": " + (err && err.message ? err.message : err));
       });
     });
-    ["fUnidade","fEdital","fVaga","fStatus","fResponsavel","fCategoria","fModalidade","fPdf","fValidacao"].forEach(id => $(id)?.addEventListener("change", () => { currentPage=1; applyFilters(); }));
-    $("fBusca").addEventListener("input", debounce(() => { currentPage=1; applyFilters(); }));
-    $("tableSearch").addEventListener("input", debounce(() => { currentPage=1; tableRowsDirty=true; renderTable(); }));
+    ["fUnidade","fMunicipio","fEdital","fVaga","fStatus","fResponsavel","fCategoria","fModalidade","fPdf","fValidacao"].forEach(id => $(id)?.addEventListener("change", () => { currentPage=1; applyFilters(); }));
+    $("fBusca").addEventListener("input", debounce(() => { currentPage=1; applyFilters(); ensureSearchTexts(); }));
+    $("tableSearch").addEventListener("input", debounce(() => { currentPage=1; tableRowsDirty=true; renderTable(); ensureSearchTexts(); }));
     $("rowsPerPage").addEventListener("change", () => { rowsPerPage = Number($("rowsPerPage").value)||25; currentPage=1; renderTable(); });
     $("firstBtn").onclick = () => goPage(1); $("prevBtn").onclick = () => goPage(currentPage-1); $("nextBtn").onclick = () => goPage(currentPage+1); $("lastBtn").onclick = () => goPage(Math.ceil(getTableRows().length/rowsPerPage));
     document.querySelectorAll("[data-kpi]").forEach(card => card.addEventListener("click", () => { activeKpi = activeKpi === card.dataset.kpi ? "total" : card.dataset.kpi; currentPage=1; applyFilters(); }));
@@ -297,7 +308,10 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
   function canReadAnalisesFromProfile(){ if(!profile || profile.ativo === false) return false; if(norm(profile.perfil) === "master") return true; return profile.p_paineis === true || profile.p_ind === true || profile.p_config === true || profile.p_admin === true; }
   function canReadAnalises(){ return canReadAnalisesRpc === null ? canReadAnalisesFromProfile() : canReadAnalisesRpc; }
   function showAuth(message){ showLoading(false); $("authWarning").hidden=false; $("authWarning").textContent = message; }
-  function showLoading(show){ $("loading").classList.toggle("show", !!show); }
+  // O carregamento é o skeleton do próprio painel (analises-loading-feedback.js); `#loading.show` segue como sinal para os outros módulos.
+  function showLoading(show){ $("loading").classList.toggle("show", !!show); definirCarregamentoDoPainel(!!show); }
+  // Falha ao buscar dados: a mensagem com "Tentar novamente", como no skeleton do MONITORA.
+  function showLoadError(message, retry){ $("loading").classList.remove("show"); mostrarErroDoCarregamento(message, retry || (() => { resetDataForScopeChange(); loadFromCacheOrPrompt().catch(err => showLoadError("Erro ao carregar o painel: " + (err && err.message ? err.message : err))); })); }
   function setProgress(value, text){ $("progressBar").style.width = Math.max(0, Math.min(100, value)) + "%"; $("loadingText").textContent = text || ""; }
 
   function setupFixedTopbar(){ const bar = $("topbar"); if(!bar) return; document.documentElement.style.setProperty("--topbar-height", `${bar.offsetHeight}px`); }
@@ -386,10 +400,36 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
       row.data_validacao_status = validation.status;
       row.data_validacao_label = validation.label;
       row.fora_periodo_analise = validation.outside ? "SIM" : "NAO";
-      row.__filter_search = norm([row.grupo,row.unidade,row.edital,row.codigo_vaga,row.nome_vaga,row.candidato,row.responsavel_analise,row.status_consolidado,row.analise,row.categoria,row.modalidade_concorrencia].join(" "));
-      row.__table_search = norm([row.grupo,row.unidade,row.edital,row.codigo_vaga,row.nome_vaga,row.candidato,row.status_consolidado,row.etapa,row.responsavel_analise,row.analise,row.modalidade_concorrencia].join(" "));
+      if(!PAINEL_DA_SAUDE_INDIGENA) row.municipio_uf = municipioUfDaLinha(row, AREA_DO_PAINEL);
+      indexSearch(row);
       return row;
     });
+  }
+  // A busca geral também procura no parecer (`analise`). Sem ele (payload leve),
+  // o índice fica sem o texto até `ensureSearchTexts` trazê-lo.
+  function indexSearch(row){
+    row.__filter_search = norm([row.grupo,row.unidade,row.edital,row.codigo_vaga,row.nome_vaga,row.candidato,row.responsavel_analise,row.status_consolidado,row.analise,row.categoria,row.modalidade_concorrencia].join(" "));
+    row.__table_search = norm([row.grupo,row.unidade,row.edital,row.codigo_vaga,row.nome_vaga,row.candidato,row.status_consolidado,row.etapa,row.responsavel_analise,row.analise,row.modalidade_concorrencia].join(" "));
+  }
+
+  // ---------------- Parecer sob demanda (busca geral e CSV) ----------------
+  // Põe o parecer nas linhas que vieram sem ele e refaz o índice da busca.
+  async function loadMissingTexts(){
+    const target = rows;
+    if(!haLinhasSemParecer(target)) return true;
+    const map = await buscarPareceresDoEscopo(currentEditalScope());
+    if(target !== rows) return false;
+    mesclarPareceres(rows, map).forEach(indexSearch);
+    return true;
+  }
+  function ensureSearchTexts(){
+    const hasSearch = txt($("fBusca")?.value) || txt($("tableSearch")?.value);
+    if(!hasSearch || !haLinhasSemParecer(rows)) return;
+    loadMissingTexts().then(updated => {
+      if(!updated) return;
+      tableRowsDirty = true;
+      applyFilters();
+    }).catch(err => console.warn("Não foi possível trazer os pareceres para a busca:", err));
   }
   function editalKey(grupo, unidade, edital){ return [norm(grupo), norm(unidade), norm(edital)].join("|"); }
   function isActiveEdital(meta){ return ["sim","s","ativo","1","true","x"].includes(norm(meta && meta.ativo)); }
@@ -537,7 +577,7 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
         { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
       ], currentScopeQueryOptions());
       if(runId !== refreshRunCounter) return false;
-      if(baseResponse.error){ showAuth("Erro ao carregar o painel: " + baseResponse.error.message); return false; }
+      if(baseResponse.error){ showLoadError("Erro ao carregar o painel: " + baseResponse.error.message); return false; }
       const rawBaseRows = Array.isArray(baseResponse.data) ? baseResponse.data : [];
       editais = editaisDasLinhas(rawBaseRows);
       setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(rawBaseRows.length)} registros...`);
@@ -556,6 +596,8 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
   // ---------------- Filtros ----------------
   const FILTER_CONFIG = [
     { id:"fUnidade", placeholder:"Todas as unidades", getValues: row => [txt(row.unidade)] },
+    // Município/UF da UBS móvel (Projetos e SEDE); o campo só aparece quando a área tem.
+    { id:"fMunicipio", placeholder:"Todos os municípios", getValues: row => [txt(row.municipio_uf)] },
     { id:"fEdital", placeholder:"Todos os editais", getValues: row => [txt(row.edital)] },
     { id:"fVaga", placeholder:"Todas as vagas", getValues: row => [txt(row.codigo_vaga)] },
     { id:"fStatus", placeholder:"Todos os status", getValues: row => [txt(row.status_consolidado)] },
@@ -574,7 +616,14 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
   const FILTER_IDS = FILTER_CONFIG.map(filter => filter.id);
   const FILTER_CONFIG_MAP = Object.fromEntries(FILTER_CONFIG.map(filter => [filter.id, filter]));
 
-  function hydrateFilters(){ refreshFilterOptions(); }
+  function hydrateFilters(){ syncMunicipioField(); refreshFilterOptions(); }
+  // O filtro Município/UF só existe onde as linhas trazem município (Projetos/SEDE).
+  function syncMunicipioField(){
+    const field = $("fMunicipio")?.closest(".field"); if(!field) return;
+    const show = !PAINEL_DA_SAUDE_INDIGENA && rows.some(r => txt(r.municipio_uf));
+    field.hidden = !show;
+    if(!show && multiSelectState.fMunicipio?.selected?.length){ multiSelectState.fMunicipio.selected = []; renderMultiSelect("fMunicipio"); }
+  }
   function displayOptionLabel(id, value){ const maps={ fSituacaoEdital:{ativo:"Ativo",inativo:"Inativo",todos:"Todos"}, fPdf:{COM_PDF:"Com PDF",SEM_PDF:"Sem PDF",ERRO:"PDF com erro",DESATUALIZADO:"PDF desatualizado"}, fValidacao:{DENTRO_PERIODO:"Dentro do período",FORA_PERIODO:"Fora do período",SEM_DATA:"Sem data de análise",SEM_JANELA:"Sem janela configurada"} }; return (maps[id]&&maps[id][value]) || value; }
   function valuesForFilter(id, row){ const config = FILTER_CONFIG_MAP[id]; if(!config) return []; return (config.getValues(row) || []).map(v => txt(v)).filter(Boolean); }
   function optionValues(id, sourceRows){
@@ -650,7 +699,7 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
     filterOptionsSignature = "";
     if(scopeBeforeClear !== "ativo"){
       resetDataForScopeChange();
-      loadFromCacheOrPrompt().catch(err => showAuth("Erro ao limpar filtros: " + (err && err.message ? err.message : err)));
+      loadFromCacheOrPrompt().catch(err => showLoadError("Erro ao limpar filtros: " + (err && err.message ? err.message : err)));
       return;
     }
     applyFilters();
@@ -689,9 +738,10 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
   }
   function renderContext(){
     const parts = [`Situação do processo: ${currentEditalScopeLabel()}`];
-    [["fUnidade","Unidade"],["fEdital","Edital"],["fVaga","Vaga"],["fStatus","Status"],["fResponsavel","Responsável"],["fCategoria","Categoria"],["fModalidade","Modalidade"],["fPdf","PDF"],["fValidacao","Validação"]].forEach(([id,label]) => { const vals=selectedValues(id); if(vals.length) parts.push(`${label}: ${vals.map(v=>displayOptionLabel(id,v)).join(", ")}`); }); if(txt($("fBusca").value)) parts.push(`Busca: ${txt($("fBusca").value)}`); if(activeKpi!=="total") parts.push(`KPI: ${activeKpiLabel(activeKpi)}`); if(activeResponsavel) parts.push(`Responsável visual: ${activeResponsavel}`);
+    [["fUnidade","Unidade"],["fMunicipio","Município/UF"],["fEdital","Edital"],["fVaga","Vaga"],["fStatus","Status"],["fResponsavel","Responsável"],["fCategoria","Categoria"],["fModalidade","Modalidade"],["fPdf","PDF"],["fValidacao","Validação"]].forEach(([id,label]) => { const vals=selectedValues(id); if(vals.length) parts.push(`${label}: ${vals.map(v=>displayOptionLabel(id,v)).join(", ")}`); }); if(txt($("fBusca").value)) parts.push(`Busca: ${txt($("fBusca").value)}`); if(activeKpi!=="total") parts.push(`KPI: ${activeKpiLabel(activeKpi)}`); if(activeResponsavel) parts.push(`Responsável visual: ${activeResponsavel}`);
     $("contextLine").textContent = `Recorte ativo: ${parts.join(" · ")}`;
-    $("filterChips").innerHTML = parts.map(p => `<span class="chip-filter"><b>Filtro</b>${esc(p)}</span>`).join("");
+    // Montado com elementos (sem HTML): os rótulos vêm de filtros e da busca digitada.
+    $("filterChips").replaceChildren(...parts.map(p => { const chip=document.createElement("span"); chip.className="chip-filter"; const b=document.createElement("b"); b.textContent="Filtro"; chip.append(b, p); return chip; }));
   }
   function activeKpiLabel(k){ return {analisado:"Análises realizadas",pendente:"Pendentes",revisar:"Em revisão",aprovado:"Aprovados",reprovado:"Reprovados"}[k] || "Todos"; }
   function renderWindowMeta(){
@@ -806,7 +856,12 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
     const origemId = txt(r.origem_arquivo_id);
     const origem = safeUrl(urlDaPlanilhaGoogle(origemId));
     const pdf = safeUrl(r.link_pdf);
-    return `<div class="detail-shell"><div class="detail-grid"><div class="kv"><div class="kv-label">Etapa</div><div class="kv-value">${esc(r.etapa||'-')}</div></div><div class="kv"><div class="kv-label">Data da análise</div><div class="kv-value">${esc(fmtDate(r.data_analise)||'-')}</div></div><div class="kv"><div class="kv-label">Nota final</div><div class="kv-value">${esc(r.nota_final_ajustada ?? '-')}</div></div><div class="kv"><div class="kv-label">Modalidade</div><div class="kv-value">${esc(r.modalidade_concorrencia||'-')}</div></div><div class="kv"><div class="kv-label">Validação</div><div class="kv-value">${esc(validationLabel(r.data_validacao_status))}</div></div><div class="kv"><div class="kv-label">Janela oficial</div><div class="kv-value">${esc(fmtDate(r.data_inicio_analise)||'--')} a ${esc(fmtDate(r.data_fim_analise)||'--')}</div></div><div class="kv"><div class="kv-label">Escolaridade</div><div class="kv-value">${esc(r.pontuacao_escolaridade ?? '-')}</div></div><div class="kv"><div class="kv-label">Cursos</div><div class="kv-value">${esc(r.pontuacao_cursos_aperfeicoamento ?? '-')}</div></div><div class="kv"><div class="kv-label">Experiência profissional</div><div class="kv-value">${esc(r.pontuacao_experiencia_profissional ?? '-')}</div></div>${criteriosDaAreaHtml(r)}</div><div class="detail-block"><div class="detail-actions">${origem?`<a class="btn secondary small" href="${attr(origem)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir origem</a>`:""}${pdf?`<a class="btn green small" href="${attr(pdf)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf"></i> Abrir PDF</a>`:`<span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF</span>`}${txt(r.erro_pdf)?`<span class="mini-chip" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(truncate(r.erro_pdf,80))}</span>`:""}</div><div class="analysis-text">${esc(r.analise||'Sem análise registrada.')}</div></div></div>`;
+    const municipio = txt(r.municipio_uf);
+    // Sem o parecer no payload leve: o detalhamento o busca ao abrir, no mesmo lugar.
+    const analysis = linhaSemParecer(r)
+      ? `<div class="analysis-text" data-analise-id="${attr(r.id)}" data-analise-pendente="true">Carregando parecer…</div>`
+      : `<div class="analysis-text">${esc(r.analise||'Sem análise registrada.')}</div>`;
+    return `<div class="detail-shell"${municipio?` data-municipio-uf="${attr(municipio)}"`:""}><div class="detail-grid"><div class="kv"><div class="kv-label">Etapa</div><div class="kv-value">${esc(r.etapa||'-')}</div></div><div class="kv"><div class="kv-label">Data da análise</div><div class="kv-value">${esc(fmtDate(r.data_analise)||'-')}</div></div><div class="kv"><div class="kv-label">Nota final</div><div class="kv-value">${esc(r.nota_final_ajustada ?? '-')}</div></div><div class="kv"><div class="kv-label">Modalidade</div><div class="kv-value">${esc(r.modalidade_concorrencia||'-')}</div></div><div class="kv"><div class="kv-label">Validação</div><div class="kv-value">${esc(validationLabel(r.data_validacao_status))}</div></div><div class="kv"><div class="kv-label">Janela oficial</div><div class="kv-value">${esc(fmtDate(r.data_inicio_analise)||'--')} a ${esc(fmtDate(r.data_fim_analise)||'--')}</div></div><div class="kv"><div class="kv-label">Escolaridade</div><div class="kv-value">${esc(r.pontuacao_escolaridade ?? '-')}</div></div><div class="kv"><div class="kv-label">Cursos</div><div class="kv-value">${esc(r.pontuacao_cursos_aperfeicoamento ?? '-')}</div></div><div class="kv"><div class="kv-label">Experiência profissional</div><div class="kv-value">${esc(r.pontuacao_experiencia_profissional ?? '-')}</div></div>${criteriosDaAreaHtml(r)}</div><div class="detail-block"><div class="detail-actions">${origem?`<a class="btn secondary small" href="${attr(origem)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir origem</a>`:""}${pdf?`<a class="btn green small" href="${attr(pdf)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf"></i> Abrir PDF</a>`:`<span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF</span>`}${txt(r.erro_pdf)?`<span class="mini-chip" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(truncate(r.erro_pdf,80))}</span>`:""}</div>${analysis}</div></div>`;
   }
   function toggleDetails(encoded){ const key=decodeURIComponent(encoded||""); if(expanded.has(key)) expanded.delete(key); else expanded.add(key); renderTable(); }
   function validationLabel(v){ return {DENTRO_PERIODO:"Dentro do período configurado",FORA_PERIODO:"Fora do período configurado",SEM_DATA:"Sem data de análise informada",SEM_JANELA:"Sem janela configurada no edital"}[txt(v)] || txt(v) || "-"; }
@@ -822,6 +877,13 @@ import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
   function applyTheme(){ const saved=localStorage.getItem(THEME_KEY); if(saved==="dark") document.documentElement.dataset.theme="dark"; }
   function toggleTheme(){ const dark=document.documentElement.dataset.theme==="dark"; document.documentElement.dataset.theme=dark?"":"dark"; if(!dark) localStorage.setItem(THEME_KEY,"dark"); else localStorage.removeItem(THEME_KEY); renderResponsavelChart(); renderTrendChart(); }
   function toggleFullscreen(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
-  function exportCSV(){ const source = panelRows; const headers=["edital_status","grupo","unidade","edital","codigo_vaga","nome_vaga","candidato","status_consolidado","etapa","data_analise","responsavel_analise","nota_final_ajustada","modalidade_concorrencia","link_pdf","data_validacao_status","analise"]; const csvHeaders=colunasDoCsvDeAnalises(headers, AREA_DO_PAINEL); const csv=[csvHeaders.join(";"), ...source.map(r=>csvHeaders.map(h=>String(r[h] ?? "").replaceAll("\n"," ").replaceAll("\r"," ").replaceAll(";"," ").replaceAll('"',"'")).join(";"))].join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nomeDoCsvDeAnalises(AREA_DO_PAINEL); a.click(); URL.revokeObjectURL(a.href); toast(`Exportados ${fmt(source.length)} registros do recorte atual.`, "info"); }
+  async function exportCSV(){
+    // O CSV leva o parecer, como sempre: sem ele no payload leve, busca antes.
+    if(haLinhasSemParecer(panelRows)){
+      toast("Preparando o CSV com os pareceres...", "info", 4000);
+      try{ if(!(await loadMissingTexts())) return; }
+      catch(err){ toast("Não foi possível trazer os pareceres para o CSV. Tente novamente.", "error", 6000); return; }
+    }
+    const source = panelRows; const headers=["edital_status","grupo","unidade","edital","codigo_vaga","nome_vaga","candidato","status_consolidado","etapa","data_analise","responsavel_analise","nota_final_ajustada","modalidade_concorrencia","link_pdf","data_validacao_status","analise"]; const csvHeaders=colunasDoCsvDeAnalises(headers, AREA_DO_PAINEL); const csv=[csvHeaders.join(";"), ...source.map(r=>csvHeaders.map(h=>String(r[h] ?? "").replaceAll("\n"," ").replaceAll("\r"," ").replaceAll(";"," ").replaceAll('"',"'")).join(";"))].join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nomeDoCsvDeAnalises(AREA_DO_PAINEL); a.click(); URL.revokeObjectURL(a.href); toast(`Exportados ${fmt(source.length)} registros do recorte atual.`, "info"); }
   window.toggleDetails = toggleDetails; window.goPage = goPage;
 

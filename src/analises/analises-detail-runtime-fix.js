@@ -1,3 +1,5 @@
+import { buscarParecerDaLinha } from "./analises-pareceres-sob-demanda.js";
+
 const state = {
   opening: false,
   activeKey: "",
@@ -115,7 +117,7 @@ function makeSection(definition) {
   return section;
 }
 
-function contextItems(row) {
+function contextItems(row, source) {
   const cells = [...(row?.querySelectorAll("td") || [])];
   return [
     ["Grupo", txt(cells[0]?.textContent)],
@@ -129,7 +131,47 @@ function contextItems(row) {
           cells[4]?.textContent,
       ),
     ],
+    // Projetos e SEDE: onde fica a UBS móvel da vaga.
+    ["Município/UF", txt(source?.dataset?.municipioUf)],
   ].filter(([, value]) => visibleValue(value));
+}
+
+function analysisSection(text) {
+  const section = document.createElement("section");
+  section.className = "analises-detail-section";
+  section.innerHTML =
+    '<div class="analises-detail-section-head"><i class="fa-solid fa-file-lines"></i><span>Parecer da análise</span></div><div class="analises-detail-analysis"></div>';
+  section.querySelector(".analises-detail-analysis").textContent = text;
+  return section;
+}
+
+/*
+  Parecer que o payload leve não trouxe: a seção aparece com "Carregando
+  parecer…" e o texto entra no mesmo lugar quando chega. Sem parecer no banco,
+  a seção sai, como quando a linha já vinha sem texto.
+*/
+function loadPendingAnalysis(backdrop, section, id) {
+  const slot = section.querySelector(".analises-detail-analysis");
+  slot.setAttribute("aria-busy", "true");
+  backdrop.dataset.analiseAtual = id;
+  buscarParecerDaLinha(id)
+    .then((text) => {
+      if (backdrop.dataset.analiseAtual !== id) return;
+      const cleaned = txt(text);
+      if (!cleaned) {
+        section.remove();
+        return;
+      }
+      slot.textContent = cleaned;
+      slot.removeAttribute("aria-busy");
+    })
+    .catch((error) => {
+      console.warn("Não foi possível carregar o parecer da análise:", error);
+      if (backdrop.dataset.analiseAtual !== id) return;
+      slot.textContent =
+        "Não foi possível carregar o parecer. Feche e abra o registro de novo.";
+      slot.removeAttribute("aria-busy");
+    });
 }
 
 function buildDrawerContent(row, detailRow) {
@@ -144,14 +186,18 @@ function buildDrawerContent(row, detailRow) {
     txt(cells[5]?.querySelector(".secondary-text")?.textContent) ||
     "Sem responsável";
   const status = txt(cells[6]?.textContent) || "Pendente";
-  const source = detailRow?.querySelector(".detail-shell");
   const body = backdrop.querySelector("#analisesDrawerBody");
 
   backdrop.querySelector("#analisesDrawerTitle").textContent = candidate;
   backdrop.querySelector("#analisesDrawerSummary").innerHTML = `
     <span class="status"><i class="fa-solid fa-circle-info"></i>${status}</span>
     <span><i class="fa-solid fa-user-check"></i>${responsible}</span>`;
-  backdrop.querySelector("#analisesDrawerContext").innerHTML = contextItems(row)
+  const source = detailRow?.querySelector(".detail-shell");
+  backdrop.dataset.analiseAtual = "";
+  backdrop.querySelector("#analisesDrawerContext").innerHTML = contextItems(
+    row,
+    source,
+  )
     .map(
       ([label, value]) =>
         `<div><small>${label}</small><strong>${value}</strong></div>`,
@@ -198,15 +244,18 @@ function buildDrawerContent(row, detailRow) {
   });
   if (actions?.children.length) shell.insertBefore(actions, shell.firstChild);
 
-  const analysisText = txt(source.querySelector(".analysis-text")?.textContent);
-  if (analysisText && analysisText !== "Sem análise registrada.") {
-    const analysisSection = document.createElement("section");
-    analysisSection.className = "analises-detail-section";
-    analysisSection.innerHTML =
-      '<div class="analises-detail-section-head"><i class="fa-solid fa-file-lines"></i><span>Parecer da análise</span></div><div class="analises-detail-analysis"></div>';
-    analysisSection.querySelector(".analises-detail-analysis").textContent =
-      analysisText;
-    shell.appendChild(analysisSection);
+  const analysisSource = source.querySelector(".analysis-text");
+  const analysisText = txt(analysisSource?.textContent);
+  if (analysisSource?.dataset.analisePendente === "true") {
+    const section = analysisSection(analysisText);
+    shell.appendChild(section);
+    loadPendingAnalysis(
+      backdrop,
+      section,
+      txt(analysisSource.dataset.analiseId),
+    );
+  } else if (analysisText && analysisText !== "Sem análise registrada.") {
+    shell.appendChild(analysisSection(analysisText));
   }
 
   body.appendChild(shell);
