@@ -301,7 +301,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_scope", "p_area"],
     critica: true,
     resumo:
-      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), sem o parecer (`analise`).",
+      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), sem o parecer (`analise`). O escopo ativo vem do cache do servidor (`TA_PAINEL_ANALISE`, `cache.hit`).",
   },
   get_analises_dashboard_filtrado: {
     argumentos: [

@@ -13,8 +13,6 @@ import "../lib/supabase-legacy-bridge.js";
 import "./analises-responsive-fixes.css";
 import "./analises-esqueleto.css";
 import "./analises-area.js";
-import "./analises-active-cache-recovery.js";
-import "./analises-consolidated-transport.js";
 import "./analises-scope-guard.js";
 import "./analises-scope-runtime-integration.js";
 import "./analises-shared-client-bootstrap.js";

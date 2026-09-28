@@ -137,7 +137,7 @@ Sem migration (⚠ = crítica):
 - ~~`salvar_monitoramento_indigena`~~ (removida em `20260925150000_remove_objetos_mortos.sql`)
 - ⚠ `salvar_monitoramento_com_cronograma_v2`
 - ⚠ `get_monitoramento_cronograma`
-- ⚠ `get_analises_dashboard_payload_v2` (hoje em `20260928200000`)
+- ⚠ `get_analises_dashboard_payload_v2` (hoje em `20260928240000`)
 - `get_acessos_config_master`
 - `get_configuracoes_snapshot`
 - `get_configuracoes_historico`
@@ -422,6 +422,48 @@ Migration `20260928200000_analises_painel_mais_leve.sql` (rollback em
   ~380 ms → ~150 ms no banco, no ensaio).
 - Fora da Saúde Indígena, o payload ganha `municipio_uf` no fim de `columns`,
   lido do nome da vaga ("… UBS móvel Seropédica/RJ …" → `Seropédica/RJ`).
+
+### 6.3 Cache do painel de análises (servidor e navegador)
+
+Migration `20260928240000_cache_do_painel_de_analises.sql` (rollback em
+`supabase/rollback/`, que volta às definições de 28/09/2026; ensaiado, com hash
+das funções igual ao de antes).
+
+- `private."TA_PAINEL_ANALISE"` guarda, por área, as linhas e os editais do
+  escopo `ativo` já montados em JSON (`DS_LINHAS`, `DS_EDITAIS`, `QT_LINHAS`),
+  a versão dos dados usada (`DS_VERSAO_DADOS`), a hora (`DT_GERACAO`) e quanto
+  levou (`NU_DURACAO_MS`). Schema `private`, RLS ligada, sem policy e sem grant:
+  só funções `SECURITY DEFINER` leem (como as da seção 4.2).
+- A montagem saiu de dentro de `get_analises_dashboard_payload_v2` para
+  `private."FC_MONTAR_PAINEL_ANALISE"(área, escopo)`, sem mudar o SQL e sem
+  checar permissão: a RPC e a remontagem usam a mesma conta.
+- `get_analises_dashboard_payload_v2` mantém assinatura, permissão
+  (`pode_recurso` + `FC_GRUPOS_ANALISES_DA_AREA`) e conteúdo (md5 de `rows` e
+  `editais` igual ao de antes nas três áreas). No `ativo`, devolve o guardado
+  (`cache.hit = true`; `generated_at` e `cache.refreshed_at` = hora da
+  montagem). `inativo` e `todos` seguem montados na hora.
+- O guardado vale enquanto `private."FC_VERSAO_DADOS_ANALISE"(área)` — quantos
+  syncs das planilhas da área terminaram e o último `finished_at`, em
+  `TL_SYNC_ANALISE` — for a mesma da montagem e ele tiver menos de 40 min.
+  Vencido, a RPC remonta (uma abertura por vez, por trava consultiva; as outras
+  recebem o guardado anterior) e, se não conseguir gravar, monta na hora.
+- Quem remonta: `public.atualizar_cache_painel_analises(p_area default null)`
+  (só `service_role`/`postgres`), chamada no fim de
+  `finalizar_sync_analises_lotes` e `finalizar_sync_analises_incremental` (a
+  área da planilha; erro vira aviso, o sync não falha), pelo pg_cron
+  `agsus_analises_cache_do_painel` (`7,37 * * * *`, todas as áreas) e pela RPC.
+  Sem gatilho por linha (o cache antigo, `TA_DASHBOARD_ANALISE`, era apagado a
+  cada escrita do sync).
+- Ensaio (Saúde Indígena, 6.828 linhas, 3,5 MB): a RPC levava de 0,6 s (banco
+  quente) a 5 s (frio); com o cache, 0,14–0,17 s. Projetos: 0,08–0,5 s →
+  0,03 s. A remontagem da Saúde Indígena leva 0,2–0,8 s.
+- No navegador, o payload fica no IndexedDB (banco `agsus-monitora-analises`,
+  por usuário, área e escopo, amarrado à publicação e ao `schema_version`):
+  o painel abre com a cópia e revalida por trás (`analises-consolidated-transport.js`,
+  regras em `src/lib/cache-do-painel-de-analises.js`). O MONITORA apaga esse
+  banco ao sair pelo botão, em "Limpar sessão", com acesso revogado e quando
+  outro usuário entra. O cache antigo do `localStorage`
+  (`agsus_analises_cache_*`) é apagado ao abrir o painel.
 
 ## 7. Edital sempre na área certa
 

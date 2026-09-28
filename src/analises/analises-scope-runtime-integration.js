@@ -1,4 +1,3 @@
-const CACHE_PREFIX = "agsus_analises_cache_v1_v";
 const LEGACY_UNIT_ID = "scopeGuardUnits";
 const LEGACY_EDITAL_ID = "scopeGuardEditais";
 
@@ -75,29 +74,6 @@ function syncLegacySelections({ notify = true } = {}) {
   }
 }
 
-function hasCompleteSelection() {
-  return checkedValues("unit").length > 0 && checkedValues("edital").length > 0;
-}
-
-function clearScopedCache() {
-  const scope = currentScope();
-  if (scope === "ativo") return;
-  try {
-    const suffix = `_${scope}`;
-    const keys = [];
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (key?.startsWith(CACHE_PREFIX) && key.endsWith(suffix)) keys.push(key);
-    }
-    keys.forEach((key) => localStorage.removeItem(key));
-  } catch (error) {
-    console.warn(
-      "Não foi possível limpar o cache do recorte de análises:",
-      error,
-    );
-  }
-}
-
 function clearObsoletePendingClass() {
   if (
     currentScope() === "ativo" ||
@@ -168,7 +144,6 @@ function init() {
       const consult = event.target?.closest?.("#scopeGuardLoad");
       if (!consult) return;
       syncLegacySelections();
-      if (hasCompleteSelection()) clearScopedCache();
     },
     true,
   );
