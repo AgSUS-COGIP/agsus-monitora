@@ -315,3 +315,61 @@ camada pelo mesmo contrato de RPC deste documento.
 
 Nada disso foi iniciado. Nenhuma migração de produção para o `db_dataware` deve
 acontecer sem autorização explícita.
+
+## 6. Análises curriculares: sincronização por planilha
+
+Migration `20260928140000_sync_de_analises_por_planilha.sql` (rollback em
+`supabase/rollback/`); passo a passo das planilhas em `apps-script/LEIA-ME.md`.
+
+As planilhas Google de cada área (Saúde Indígena, Projetos e, no futuro, SEDE)
+enviam para as **mesmas** tabelas. Cada linha leva a etiqueta da planilha que a
+enviou, e só o envio dessa planilha a altera ou desativa.
+
+| Objeto | Papel |
+|---|---|
+| `TB_PLANILHA_ANALISE` | cadastro: `CO_PLANILHA` (saude-indigena, projetos, sede), `CO_AREA`, `NO_PLANILHA`, `DS_PLANILHA_ID` (arquivo no Drive) |
+| `TA_ORIGEM_ANALISE` | `CO_ORIGEM` (a constante `ORIGEM` do Apps Script, gravada em `TL_SYNC_ANALISE.origem`) → `CO_PLANILHA`, `TP_CARGA` (FULL/INCREMENTAL) |
+| `"CO_PLANILHA"` | em `TB_ANALISE_CURRICULAR`, `TB_EDITAL_ANALISE` e `TL_SYNC_ANALISE`, NOT NULL, FK |
+| `experiencia_profissional_anos/meses/dias/total` | colunas do Edital 30/2026 (Projetos) em `TB_ANALISE_CURRICULAR` |
+
+As duas tabelas novas têm RLS com leitura para `authenticated`; escrita só por
+migration. Cadastrar planilha ou origem nova = migration nova.
+
+**Fluxo.** O Apps Script grava staging em `TM_ANALISE_CURRICULAR` e chama as
+RPCs. O banco descobre a planilha pela origem do log (`TL_SYNC_ANALISE.origem`
+→ `TA_ORIGEM_ANALISE`):
+
+- **Origem não cadastrada**: recusada no insert do log (gatilho
+  `trg_analises_sync_guard_before_insert`, caminho do FULL) e em
+  `iniciar_sync_analises_incremental` (que também exige origem INCREMENTAL).
+- **Porteiro** (`FC_VALIDAR_GRUPO_STAGING_ANALISE`): qualquer linha de
+  `FATO_ANALISES` ou `DIM_EDITAIS` com `grupo` diferente de
+  `TB_AREA."NO_GRUPO_PLANILHA"` da área da planilha recusa o sync inteiro. Roda
+  no `preparar_sync_analises_incremental`, no primeiro lote do FULL e nos dois
+  `finalizar_*`; cada lote ainda confere as linhas que vai gravar.
+- **Isolamento**: os `finalizar_*` só desativam editais (e, no FULL, análises)
+  com `"CO_PLANILHA"` = planilha do sync. Upsert que encontre a mesma chave
+  etiquetada com outra planilha recusa o sync.
+- **Filas por planilha**: lock consultivo `hashtext('public.processar_sync_analises:' || planilha)`
+  e "um sync pendente por planilha" (no `iniciar` e no gatilho do log). Planilhas
+  diferentes enviam ao mesmo tempo.
+- `verificar_sync_analises_incremental` conta só a planilha da origem.
+
+**Compatibilidade.** `iniciar_sync_analises_incremental` e
+`verificar_sync_analises_incremental` ganharam `p_origem text` com default =
+`apps_script_analises_incremental_v1` (a SI). A assinatura antiga saiu na mesma
+transação, para o PostgREST não ter duas sobrecargas. Os JSON devolvidos
+mantêm as chaves e ganharam `planilha`. O script da SI sem mudança continua
+funcionando.
+
+**Auxiliares em `public`.** As RPCs incrementais são SECURITY INVOKER e rodam
+como `service_role`, que não tem USAGE em `private` nem SELECT em `TB_AREA`.
+Por isso `FC_PLANILHA_DA_ORIGEM_ANALISE`, `FC_PLANILHA_DO_SYNC_ANALISE` e
+`FC_VALIDAR_GRUPO_STAGING_ANALISE` ficam em `public`, SECURITY DEFINER,
+`search_path` vazio, com EXECUTE só para `service_role`.
+
+**Envio recusado pelo porteiro** fica pendente (status `carregado`) e o
+script da planilha repete a recusa a cada ciclo: não há recuperação
+automática, de propósito. Corrige-se a planilha e reconcilia-se à mão
+(`apps-script/LEIA-ME.md`, "Envio recusado"). As outras planilhas não são
+afetadas, porque a fila é por planilha.

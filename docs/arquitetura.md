@@ -57,12 +57,23 @@ de nota nas Análises, o mapa). A área vai no endereço: `/saude-indigena/anali
 
 - A planilha da SEDE e dos Projetos terá o **mesmo formato** da planilha da Saúde
   Indígena, com critérios de nota diferentes.
-- A planilha já manda a área na coluna `grupo` ("Saúde Indígena"). O gatilho
-  `"TBA_ANALISE_CURRICULAR"` preenche `"CO_AREA"` a partir de
-  `TB_AREA."NO_GRUPO_PLANILHA"`; a planilha da SEDE só precisa trazer `grupo` =
-  "SEDE" ou "Projetos". (`origem_planilha` é o arquivo de candidatos de cada vaga,
-  não serve para isso.) As funções chamadas pelo Apps Script (`processar_sync_*`,
-  `*_incremental`) mantêm nome e assinatura: o script não muda.
+- **Uma planilha por área, mesmas tabelas** (migration de 28/09, a aplicar:
+  `20260928140000_sync_de_analises_por_planilha.sql`). `TB_PLANILHA_ANALISE`
+  cadastra as planilhas (saude-indigena, projetos, sede) e `TA_ORIGEM_ANALISE`
+  liga a `origem` de cada script à planilha. Análises, editais e logs levam
+  `"CO_PLANILHA"`; o envio de uma planilha só altera e desativa linhas dela, e
+  cada planilha tem a própria fila (SI e Projetos enviam ao mesmo tempo).
+- A área continua vindo da coluna `grupo`: o gatilho `"TBA_ANALISE_CURRICULAR"`
+  preenche `"CO_AREA"` a partir de `TB_AREA."NO_GRUPO_PLANILHA"`. O **porteiro**
+  recusa o envio inteiro se alguma linha trouxer `grupo` de outra área
+  (`origem_planilha` é o arquivo de candidatos de cada vaga, não serve para isso).
+- Os scripts de cada planilha estão versionados em `apps-script/` (ver
+  `apps-script/LEIA-ME.md`). As RPCs mantêm nome e aceitam as chamadas antigas;
+  `iniciar_sync_analises_incremental` e `verificar_sync_analises_incremental`
+  ganharam `p_origem` com default da Saúde Indígena. Detalhes em
+  `docs/banco-de-dados.md`, seção 6.
+- Projetos (Edital 30/2026) ganhou colunas `experiencia_profissional_*` em
+  `TB_ANALISE_CURRICULAR`; são colunas fixas provisórias até os critérios por área.
 - As notas próprias saem das colunas fixas para **critérios por área** (critério ×
   candidato × valor). A Saúde Indígena mantém os dela; a SEDE cadastra os seus
   sem migration.
@@ -124,7 +135,7 @@ Banco:
 | 0     | Correções: jobs do pg_cron, RPCs fora do contrato, registro de migrations                                                                                                                                                                                                       |
 | 1     | **Feita em 25/09.** Lixo certo: `get_analises_dashboard_payload` (v1) e suas 4 views e cache, gatilho de invalidação, `VW_AUDITORIA_ACESSOS_DIARIA`, `TL_NOTIFICACAO`, funções sem referência; `pwa-lifecycle.css`; dependências `echarts`, `pdfjs-dist`, `tesseract.js`        |
 | 2     | **Feita em 25/09**: `bench/`, o PDF do padrão e `pwa-lifecycle.css` saíram; `TA_ANALISE_QUARENTENA` foi para o schema `arquivo`. Falta: funções sem chamador                                                                                                                    |
-| 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). Falta: schema `monitora`                                                                                                                                              |
+| 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). **Sync de análises por planilha: migration de 28/09 pronta, a aplicar** (`TB_PLANILHA_ANALISE`, `TA_ORIGEM_ANALISE`, `"CO_PLANILHA"`). Falta: schema `monitora`                                                            |
 | 4     | Nomes neutros e `FC_`, função própria de sessão (em lotes)                                                                                                                                                                                                                      |
 | 5     | **Leitura recortada por área desde 25/09** (`RL_PERFIL_USUARIO_AREA`, policies restritivas, 9 RPCs; todo não-admin começou em Saúde Indígena). Gravação por área e colunas de área em Configurações → Acessos desde 25/09. Falta: sair `ehEditalDaSaudeIndigena`, menu por área |
 
