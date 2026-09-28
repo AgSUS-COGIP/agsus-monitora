@@ -43,6 +43,9 @@ jobs:
       - name: Verificar arquitetura DOM
         run: node scripts/check-no-new-mutation-observer.mjs
 
+      - name: Verificar que não há novos remendos
+        run: node scripts/check-no-new-patch-layers.mjs
+
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
 
