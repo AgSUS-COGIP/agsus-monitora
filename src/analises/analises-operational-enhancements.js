@@ -193,6 +193,7 @@ function attentionAction(title) {
   const key = norm(title);
   if (key === "pendentes") return "kpi:pendente";
   if (key === "em revisao") return "kpi:revisar";
+  if (key === "data de analise no futuro") return "validation:DATA_FUTURA";
   if (key === "data fora do periodo") return "validation:FORA_PERIODO";
   if (key === "etapa sem data") return "validation:SEM_DATA";
   return "";
@@ -232,6 +233,7 @@ function shortcutLabel(action) {
     {
       "kpi:pendente": "Pendentes",
       "kpi:revisar": "Em revisão",
+      "validation:DATA_FUTURA": "Análises com data no futuro",
       "validation:FORA_PERIODO": "Análises fora do período",
       "validation:SEM_DATA": "Análises sem data",
     }[action] || ""
