@@ -5,6 +5,7 @@ import {
   canEditCandidateStatus,
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.js";
+import { Icone } from "../icone.jsx";
 
 /*
   Peças que as duas abas (aprovados e convocação) e os modais repetem. As
@@ -139,7 +140,7 @@ export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
   if (canEditCandidateStatus(perfil, candidato))
     return (
       <button
-        className="btn icon outline"
+        className="approved-icone-acao"
         type="button"
         title="Alterar status"
         aria-label={`Alterar status de ${candidato.nome}`}
@@ -153,7 +154,7 @@ export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
   if (!candidato.lista_ativa && canChangeCandidateStatus(perfil))
     return (
       <button
-        className="btn icon outline"
+        className="approved-icone-acao"
         type="button"
         disabled
         title="Lista inativa"
@@ -163,6 +164,39 @@ export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
       </button>
     );
   return <span className="approved-no-action">—</span>;
+}
+
+/** O ícone de PDF dos anexos; a cor vem do texto em volta. */
+export const IconeDePdf = ({ tamanho = 22 }) => (
+  <Icone nome="file-type-pdf" tamanho={tamanho} />
+);
+
+/*
+  Os anexos do candidato: o ícone de PDF, cinza sem arquivo e vermelho com
+  arquivo. Sem anexo, fica desativado (e não some), para que o lápis de status
+  continue no mesmo lugar em todas as linhas.
+*/
+export function AcaoDeAnexos({ candidato, anexos = [], aoAbrir }) {
+  const total = anexos.length;
+  return (
+    <button
+      className="approved-icone-acao approved-anexos-botao"
+      type="button"
+      data-tem-anexo={total ? "" : undefined}
+      disabled={!total}
+      title={total ? `Ver anexos (${total})` : "Sem anexos"}
+      aria-label={
+        total
+          ? `Ver ${total} anexo(s) de ${candidato.nome}`
+          : `${candidato.nome} não tem anexos`
+      }
+      data-approved-action="anexos"
+      data-candidate-id={candidato.candidato_id}
+      onClick={() => aoAbrir(candidato.candidato_id)}
+    >
+      <IconeDePdf />
+    </button>
+  );
 }
 
 /*

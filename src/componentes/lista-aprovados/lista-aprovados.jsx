@@ -16,7 +16,7 @@ import { usarAreaAtual } from "../usar-area-atual.js";
 import { AbaAprovados } from "./aba-aprovados.jsx";
 import { AbaConvocacao } from "./aba-convocacao.jsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
-import { ModalDeStatus, ModalSubJudice } from "./modais.jsx";
+import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.jsx";
 import { ModalListasDoEdital } from "./modal-listas-do-edital.jsx";
 import { classes, plural } from "./partes.jsx";
 
@@ -62,18 +62,29 @@ const ABAS = [
 function ModalAberto({ estado, dados, daArea }) {
   const { modal } = dados;
   if (!modal) return null;
-  if (modal.tipo === "status") {
-    const candidato = dados.candidatos.find(
-      (row) => String(row.candidato_id) === modal.candidatoId,
-    );
+  const candidato = dados.candidatos.find(
+    (row) => String(row.candidato_id) === modal.candidatoId,
+  );
+  const anexos = dados.anexos.get(String(modal.candidatoId)) || [];
+  if (modal.tipo === "status")
     return candidato ? (
       <ModalDeStatus
         key={modal.abertura}
         estado={estado}
         candidato={candidato}
+        jaAnexados={anexos.length}
       />
     ) : null;
-  }
+  if (modal.tipo === "anexos")
+    return candidato ? (
+      <ModalDeAnexos
+        key={modal.abertura}
+        estado={estado}
+        perfil={dados.perfil}
+        candidato={candidato}
+        anexos={anexos}
+      />
+    ) : null;
   if (modal.tipo === "sub-judice")
     return (
       <ModalSubJudice
@@ -261,6 +272,7 @@ export function ListaAprovados({ estado }) {
           estado={estado}
           perfil={perfil}
           candidatos={candidatos}
+          anexos={dados.anexos}
           carregado={carregado}
           erroAoCarregar={erroAoCarregar}
           opcoes={opcoes}
@@ -306,6 +318,7 @@ export function montarListaAprovados({
   getProfile,
   confirmar,
   lerPlanilha,
+  novaAba,
 } = {}) {
   const estado = criarEstadoDaListaDeAprovados({
     supabase,
@@ -313,6 +326,7 @@ export function montarListaAprovados({
     getProfile,
     confirmar,
     lerPlanilha,
+    novaAba,
   });
   let raiz = null;
   if (secao) {

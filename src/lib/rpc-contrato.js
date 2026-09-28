@@ -208,6 +208,24 @@ export const CONTRATO_RPC = {
     resumo:
       "Altera o status de um candidato e registra processo SEI e matrícula quando informados.",
   },
+  listar_anexos_candidatos_aprovados: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Lista os anexos (PDF) dos candidatos vigentes das áreas do usuário.",
+  },
+  registrar_anexo_candidato_aprovado: {
+    argumentos: ["p_candidato_id", "p_arquivo_nome", "p_arquivo_path"],
+    critica: false,
+    resumo:
+      "Registra um PDF já enviado ao Storage como anexo do candidato (até 5, 2 MB cada).",
+  },
+  remover_anexo_candidato_aprovado: {
+    argumentos: ["p_anexo_id"],
+    critica: false,
+    resumo:
+      "Remove o registro de um anexo do candidato e devolve o caminho do arquivo.",
+  },
   incluir_sub_judice: {
     argumentos: ["p_edital_id", "p_cargo", "p_nome", "p_nota"],
     critica: true,

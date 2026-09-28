@@ -230,9 +230,171 @@
 }
 .approved-field-hint {
   display: block;
-  margin-top: 5px;
-  color: #718096;
-  font-size: 11px;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+.approved-field-erro {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--state-danger);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* Anexos do candidato: os PDFs escolhidos no modal de status e o modal de anexos. */
+.approved-anexos-escolhidos,
+.approved-anexos-lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.approved-anexos-escolhidos li,
+.approved-anexos-lista li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: var(--text-md);
+}
+.approved-anexos-escolhidos .approved-anexo-nome,
+.approved-anexos-lista li > div {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.approved-anexos-escolhidos small,
+.approved-anexos-lista small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+.approved-anexo-icone {
+  display: inline-flex;
+  color: var(--state-danger);
+}
+.approved-anexos-lista {
+  margin: 0;
+}
+.approved-dica {
+  color: var(--text-secondary);
+  cursor: help;
+}
+
+/*
+  Tooltip do campo de anexos: o texto de `data-dica`, na hora, no hover e no
+  foco. O `title` nativo demora e às vezes nem aparece dentro do modal.
+*/
+.com-dica {
+  position: relative;
+}
+.com-dica::after {
+  content: attr(data-dica);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 2;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--text-primary);
+  color: var(--surface-card);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.com-dica:hover::after,
+.com-dica:focus-within::after {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .com-dica::after {
+    transition: none;
+  }
+}
+
+/* "Fazer upload": o botão secundário do app, com o input nativo escondido dentro. */
+.approved-anexar-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.approved-anexar-linha .approved-field-hint {
+  margin-top: 0;
+}
+.approved-anexar {
+  position: relative;
+  cursor: pointer;
+  /* É um <label>: desfaz o rótulo em maiúsculas de app.css:371. */
+  text-transform: none;
+  letter-spacing: 0;
+}
+.approved-anexar input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.approved-anexar:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.approved-anexar[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/*
+  Ação só de ícone, sem moldura nem fundo: a cor é a do próprio ícone. O PDF
+  da tabela é cinza sem anexo e vermelho com anexo.
+*/
+.approved-icone-acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  cursor: pointer;
+}
+.approved-icone-acao:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+.approved-icone-acao:disabled {
+  cursor: default;
+}
+.approved-icone-acao.perigo,
+.approved-anexos-botao[data-tem-anexo] {
+  color: var(--state-danger);
+}
+.approved-icone-acao.perigo:hover:not(:disabled),
+.approved-anexos-botao[data-tem-anexo]:hover {
+  color: var(--state-danger);
+  opacity: 0.8;
 }
 .approved-import-state {
   display: flex;
@@ -300,9 +462,6 @@
 [data-theme="dark"] .approved-name small,
 [data-theme="dark"] .approved-page-subtitle,
 [data-theme="dark"] .approved-modal-subtitle,
-[data-theme="dark"] .approved-field-hint {
-  color: #a8b4c4;
-}
 [data-theme="dark"] .approved-status.neutral {
   background: #273449;
   color: #dbe5f0;

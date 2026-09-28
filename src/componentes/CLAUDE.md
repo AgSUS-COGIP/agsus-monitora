@@ -43,11 +43,11 @@ lista-aprovados/             a página #page-approved e os seus modais
                              que escrevem no banco (RPC e Storage), uma por vez (`executar`, `acao`); sem React
   aba-aprovados.jsx          KPIs, filtros e tabela paginada
   aba-convocacao.jsx         ordem de convocação por vaga
-  modais.jsx                 status do candidato e inclusão sub judice
+  modais.jsx                 status do candidato (com anexar PDF), anexos do candidato e inclusão sub judice
   modal-listas-do-edital.jsx XLSX da lista (importar, situação, remover) + aba de convocação
   formulario-de-convocacao.jsx  modelo de regras e vagas imediatas do edital (rascunho local)
   editor-de-modelo.jsx       categorias, percentuais, arredondamento e cascata
-  partes.jsx                 KPI, selo de status, ação de status, paginação, CampoEditavel, e o carregamento
+  partes.jsx                 KPI, selo de status, ação de status, ícone de PDF dos anexos, paginação, CampoEditavel, e o carregamento
                              sem tela cheia: LinhasEsqueleto, ErroAoCarregar, BotaoDeAcao (estado no botão)
 ```
 
