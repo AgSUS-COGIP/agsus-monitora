@@ -45,8 +45,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  /* 48px entre as seções da página (DS 5.2). */
-  margin-top: var(--space-12);
+  /* 12px entre os blocos da Visão geral: o ritmo compacto de antes (a pedido do responsável). */
+  margin-top: var(--space-3);
 }
 
 /* Estado 1 — Brasil. O painel de detalhe nem ocupa espaço. */
@@ -625,7 +625,7 @@
    que as duas legendas e o botão da camada partilham. */
 
 .health-status-summary-card {
-  margin-top: var(--space-12);
+  margin-top: var(--space-3);
   overflow: visible !important;
 }
 
