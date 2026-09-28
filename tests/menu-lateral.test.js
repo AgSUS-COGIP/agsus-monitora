@@ -6,7 +6,8 @@ import {
   FLUTUANTE_FECHADO,
   PAGINAS_DO_MENU,
   areaAberta,
-  areaDoPainel,
+  areaDeAberturaDoPainel,
+  areasDoPainel,
   areasDoUsuario,
   iconesDoCatalogo,
   itemAtivoDaArvore,
@@ -129,7 +130,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     );
   });
 
-  it("o admin vê as três áreas; SEDE e Projetos sem Visão geral e sem Análises", () => {
+  it("o admin vê as três áreas; SEDE e Projetos sem Visão geral, com Análises", () => {
     const grupos = porGrupo(
       montarArvoreDoMenu({
         permitidas: TUDO,
@@ -148,9 +149,15 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
         "nucleo",
         "calendario",
         "approved",
+        "panel:analises",
       ]);
+      expect(grupos[area].at(-1).rotulo).toBe("Análises");
       expect(grupos[area].every((item) => item.area === area)).toBe(true);
     }
+    // O mesmo painel, uma vez em cada área; nenhum sobra em Painéis.
+    expect(grupos.paineis.some((item) => item.view === "panel:analises")).toBe(
+      false,
+    );
   });
 
   it("sem áreas no contexto (contrato antigo), vale a Saúde Indígena", () => {
@@ -158,7 +165,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     expect(arvore.map((grupo) => grupo.id)).toEqual(["saude-indigena"]);
   });
 
-  it("painel de área que o usuário não tem continua acessível, em Painéis", () => {
+  it("quem só tem a SEDE vê Análises na SEDE, e não em Painéis", () => {
     const grupos = porGrupo(
       montarArvoreDoMenu({
         permitidas: { nucleo: true },
@@ -166,12 +173,13 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
         areas: ["sede"],
       }),
     );
-    expect(Object.keys(grupos)).toEqual(["sede", "paineis"]);
-    expect(grupos.paineis[0]).toMatchObject({
+    expect(Object.keys(grupos)).toEqual(["sede"]);
+    expect(grupos.sede.at(-1)).toEqual({
       view: "panel:analises",
-      rotulo: "Monitora Análises",
+      rotulo: "Análises",
+      icone: "square-arrow-out-up-right",
+      area: "sede",
     });
-    expect(grupos.paineis[0].area).toBeUndefined();
   });
 
   it("grupo sem página permitida não aparece", () => {
@@ -184,10 +192,30 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     expect(montarArvoreDoMenu()).toEqual([]);
   });
 
-  it("o painel de análises é da Saúde Indígena; os outros, de Painéis", () => {
-    expect(areaDoPainel("analises")).toBe("saude-indigena");
-    expect(areaDoPainel("qualquer-outro")).toBe(AREA_DOS_PAINEIS);
-    expect(areaDoPainel(undefined)).toBe(AREA_DOS_PAINEIS);
+  it("o painel de análises é das três áreas; os outros, de Painéis", () => {
+    expect(areasDoPainel("analises")).toEqual([
+      "saude-indigena",
+      "sede",
+      "projetos",
+    ]);
+    expect(areasDoPainel("qualquer-outro")).toEqual([AREA_DOS_PAINEIS]);
+    expect(areasDoPainel(undefined)).toEqual([AREA_DOS_PAINEIS]);
+  });
+
+  it("o painel de análises abre com a área atual; painel sem área, sem área", () => {
+    expect(areaDeAberturaDoPainel("analises", "projetos")).toBe("projetos");
+    expect(areaDeAberturaDoPainel("analises", "sede")).toBe("sede");
+    expect(areaDeAberturaDoPainel("analises", "saude-indigena")).toBe(
+      "saude-indigena",
+    );
+    // Área atual que não é do painel (ou nenhuma): a primeira dele.
+    expect(areaDeAberturaDoPainel("analises", "paineis")).toBe(
+      "saude-indigena",
+    );
+    expect(areaDeAberturaDoPainel("analises", undefined)).toBe(
+      "saude-indigena",
+    );
+    expect(areaDeAberturaDoPainel("qualquer-outro", "sede")).toBe("");
   });
 });
 

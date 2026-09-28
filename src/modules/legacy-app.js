@@ -6,6 +6,7 @@ import {
   tomDoStatusDoEdital,
 } from "../lib/editais-do-nucleo.js";
 import {
+  assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
   obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
@@ -23,6 +24,7 @@ import {
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.js";
 import {
+  areaDeAberturaDoPainel,
   areasDoUsuario,
   montarArvoreDoMenu,
   nomeDaArea,
@@ -33,7 +35,7 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
-import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
+import { enderecoDoPainelNaArea } from "../lib/endereco-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import { ehEditalDaSaudeIndigena } from "../lib/responsavel-do-edital.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
@@ -11303,7 +11305,11 @@ function openPanel(code) {
     toast("Painel indisponível ou inativo.", "warn");
     return;
   }
-  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
+  // Painel de várias áreas (Análises) abre com a área atual do menu: `?area=`.
+  const areaDoPainel = areaDeAberturaDoPainel(
+    code,
+    obterDadosDoMonitoramento().areaAtual,
+  );
   /*
     O painel externo traz o seu próprio cabeçalho. Somado ao do Monitora, a
     pessoa via dois títulos empilhados dizendo a mesma coisa.
@@ -11326,7 +11332,8 @@ function openPanel(code) {
   setPageTitle(panel.titulo, cfgValue("external_default_title"));
   $("externalTitle").textContent = panel.titulo;
   $("externalOpen").href =
-    enderecoDoPainel(panel.url, window.location.origin) || "#";
+    enderecoDoPainelNaArea(panel.url, window.location.origin, areaDoPainel) ||
+    "#";
   const mount = $("externalMount");
   if (mount.classList.contains("external-placeholder")) {
     mount.className = "";
@@ -11341,10 +11348,16 @@ function openPanel(code) {
     carregavam a cada login, mesmo sem ninguém abrir.
   */
   let holder = document.getElementById("external-panel-" + code);
+  // Aberto antes em outra área: o quadro recarrega com a área nova.
+  if (holder && (holder.dataset.area || "") !== areaDoPainel) {
+    holder.remove();
+    holder = null;
+  }
   if (!holder) {
     holder = document.createElement("div");
     holder.id = "external-panel-" + code;
     holder.className = "external-panel";
+    holder.dataset.area = areaDoPainel;
     mount.appendChild(holder);
     buildExternalPanel(holder, panel);
   }
@@ -11356,7 +11369,11 @@ function buildExternalPanel(holder, panel) {
     holder.innerHTML = `<div class="external-placeholder"><div><div style="font-size:58px;color:#555"><i class="fa-solid fa-screwdriver-wrench"></i></div><h2>${esc(cfgValue("maintenance_title"))}</h2><p>${esc(cfgValue("maintenance_message"))}</p></div></div>`;
     return;
   }
-  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
+  const safePanelUrl = enderecoDoPainelNaArea(
+    panel.url,
+    window.location.origin,
+    holder.dataset.area,
+  );
   if (!safePanelUrl) {
     holder.innerHTML = `<div class="external-placeholder"><div><h2>${esc(panel.titulo)}</h2><p>Cadastre uma URL http(s) válida deste painel em paineis_externos.</p></div></div>`;
     return;
@@ -11366,6 +11383,24 @@ function buildExternalPanel(holder, panel) {
   // Até o site de fora responder, o quadro ficaria em branco.
   acompanharCarregamentoDoPainel(holder, { aoTentarDeNovo: reloadExternal });
 }
+
+/*
+  A área mudou com o painel de várias áreas aberto: ele recarrega com a nova.
+  Só reabre quando o quadro visível é de outra área.
+*/
+function recarregarPainelNaAreaAtual() {
+  if (!currentPanel || currentView !== "panel:" + currentPanel.codigo) return;
+  const area = areaDeAberturaDoPainel(
+    currentPanel.codigo,
+    obterDadosDoMonitoramento().areaAtual,
+  );
+  const holder = document.getElementById(
+    "external-panel-" + currentPanel.codigo,
+  );
+  if (!area || !holder || (holder.dataset.area || "") === area) return;
+  openPanel(currentPanel.codigo);
+}
+assinarDadosDoMonitoramento(recarregarPainelNaAreaAtual);
 
 function reloadExternal() {
   if (!currentPanel) return;

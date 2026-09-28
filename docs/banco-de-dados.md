@@ -373,3 +373,28 @@ script da planilha repete a recusa a cada ciclo: não há recuperação
 automática, de propósito. Corrige-se a planilha e reconcilia-se à mão
 (`apps-script/LEIA-ME.md`, "Envio recusado"). As outras planilhas não são
 afetadas, porque a fila é por planilha.
+
+### 6.1 O painel de análises por área
+
+Migration `20260928180000_analises_do_painel_por_area.sql` (rollback em
+`supabase/rollback/`, que volta às versões de `20260928170000`).
+
+Saúde Indígena, SEDE e Projetos usam o **mesmo** painel (`analises.html`). O
+MONITORA abre o painel com a área atual do menu na URL (`?area=`); sem área, é o
+da Saúde Indígena.
+
+- `get_analises_dashboard_payload_v2(p_scope, p_area)` e
+  `get_analises_dashboard_filtrado(…, p_include_total, p_area)`: `p_area` tem
+  padrão `'saude-indigena'`, então a chamada sem ela devolve o mesmo que antes
+  (ensaiado: linhas e editais da Saúde Indígena idênticos). As assinaturas
+  antigas saíram na mesma transação.
+- A área tem de existir em `TB_AREA` (senão `22023`) e ser do usuário
+  (`FC_PODE_AREA`) ou o usuário ser admin (senão `42501`). A regra fica em
+  `private."FC_GRUPOS_ANALISES_DA_AREA"`, sem EXECUTE para os papéis da API.
+- Linhas e editais são os do grupo da planilha da área
+  (`TB_AREA."NO_GRUPO_PLANILHA"`). O front lê o catálogo de `TB_EDITAL_ANALISE`
+  por `"CO_PLANILHA"` = área.
+- O payload ganhou, **no fim** de `columns`, `experiencia_profissional_anos`,
+  `_meses`, `_dias` e `_total` (em dias), e as chaves `area` e `area_nome`. O
+  front monta as linhas pelo nome da coluna, então a ordem antiga não mudou.
+  No filtrado, as mesmas quatro entram como chaves a mais em cada linha.

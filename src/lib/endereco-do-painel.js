@@ -11,6 +11,21 @@
 */
 export const PAGINAS_DO_APP = Object.freeze(["/analises.html"]);
 
+/*
+  O endereço com a área do menu (`?area=`), para o painel que serve várias
+  áreas (o de análises: Saúde Indígena, SEDE e Projetos). Só página do app
+  recebe a área; sem área, fica o endereço de `enderecoDoPainel`.
+*/
+export function enderecoDoPainelNaArea(url, origemAtual, area) {
+  const endereco = enderecoDoPainel(url, origemAtual);
+  const codigo = String(area ?? "").trim();
+  if (!endereco || !codigo) return endereco;
+  const destino = new URL(endereco, origemAtual);
+  if (!PAGINAS_DO_APP.includes(destino.pathname)) return endereco;
+  destino.searchParams.set("area", codigo);
+  return destino.toString();
+}
+
 export function enderecoDoPainel(url, origemAtual) {
   const texto = String(url ?? "").trim();
   if (!texto) return "";
