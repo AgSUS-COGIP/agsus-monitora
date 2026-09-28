@@ -19,19 +19,12 @@
     />
   </head>
   <body>
-    <div id="loading" class="loading" aria-live="polite">
-      <div class="loading-card">
-        <div class="loading-head">
-          <div class="spin"></div>
-          <div>
-            <div id="loadingTitle">Carregando painel</div>
-            <small id="loadingText" style="color: var(--muted)"
-              >Preparando dados...</small
-            >
-          </div>
-        </div>
-        <div class="progress"><div id="progressBar" class="bar"></div></div>
-      </div>
+    <!-- Etapas do carregamento, só para o leitor de tela: na tela, o próprio
+         painel vira o skeleton (src/analises/analises-loading-feedback.js). -->
+    <div id="loading" class="loading" role="status" aria-live="polite">
+      <span id="loadingTitle">Carregando painel</span>
+      <span id="loadingText">Preparando dados...</span>
+      <span id="progressBar" hidden></span>
     </div>
 
     <div
@@ -129,6 +122,10 @@
               <div class="field">
                 <label for="fUnidade">Unidade</label
                 ><select id="fUnidade"></select>
+              </div>
+              <div class="field" hidden>
+                <label for="fMunicipio">Município/UF</label
+                ><select id="fMunicipio"></select>
               </div>
               <div class="field">
                 <label for="fEdital">Edital</label

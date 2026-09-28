@@ -140,19 +140,21 @@ export function experienciaProfissionalDaLinha(linha) {
   return total === null ? "-" : plural(total, "dia", "dias");
 }
 
-/* Colunas a mais do CSV fora da Saúde Indígena. */
-export const COLUNAS_DE_EXPERIENCIA_DO_CSV = Object.freeze([
+/*
+  Colunas a mais do CSV fora da Saúde Indígena: o tempo de experiência
+  profissional e o município/UF da UBS móvel (lido do nome da vaga).
+*/
+export const COLUNAS_EXTRAS_DO_CSV = Object.freeze([
   "experiencia_profissional_anos",
   "experiencia_profissional_meses",
   "experiencia_profissional_dias",
   "experiencia_profissional_total",
+  "municipio_uf",
 ]);
 
 export function colunasDoCsvDeAnalises(colunasBase, area) {
   const base = Array.isArray(colunasBase) ? [...colunasBase] : [];
-  return ehAreaSaudeIndigena(area)
-    ? base
-    : [...base, ...COLUNAS_DE_EXPERIENCIA_DO_CSV];
+  return ehAreaSaudeIndigena(area) ? base : [...base, ...COLUNAS_EXTRAS_DO_CSV];
 }
 
 /* Nome do arquivo do CSV: o da Saúde Indígena fica como sempre foi. */
