@@ -656,6 +656,50 @@ describe("anexos do candidato", () => {
     expect(botaoDeAnexos("Bruno Lima").disabled).toBe(true);
   });
 
+  it("status já definido: o contratador só anexa, sem mexer no status", async () => {
+    const supabase = supabaseFalso();
+    const { toast } = await montar({ supabase });
+    await abrirStatusDe("Ana Ribeiro");
+    expect($("approvedStatusTitle").textContent).toBe(
+      "Anexar documentos do candidato",
+    );
+    expect($("approvedStatusTravado").textContent).toContain(
+      "só o admin pode alterá-lo",
+    );
+    expect($("approvedStatusSelect").disabled).toBe(true);
+    expect($("approvedStatusSei").disabled).toBe(true);
+    expect($("approvedStatusMatricula").disabled).toBe(true);
+    // Sem PDF escolhido, não há o que salvar.
+    expect($("approvedStatusSave").disabled).toBe(true);
+    expect($("approvedStatusSave").textContent).toContain("Salvar anexos");
+
+    await escolherArquivos([pdf("contrato.pdf")]);
+    supabase.rpc.mockClear();
+    await clicar($("approvedStatusSave"));
+    expect(supabase.rpc).not.toHaveBeenCalledWith(
+      "alterar_status_candidato_aprovado",
+      expect.anything(),
+    );
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "registrar_anexo_candidato_aprovado",
+      expect.objectContaining({ p_candidato_id: "ana" }),
+    );
+    expect(toast).toHaveBeenCalledWith("1 anexo(s) enviados.");
+    expect(
+      linhaDe("Ana Ribeiro").querySelector(".approved-status").textContent,
+    ).toBe("Contratado");
+  });
+
+  it("o admin continua alterando um status já definido", async () => {
+    await montar({ perfil: { perfil: "admin" } });
+    await abrirStatusDe("Ana Ribeiro");
+    expect($("approvedStatusTitle").textContent).toBe(
+      "Alterar status do candidato",
+    );
+    expect($("approvedStatusTravado")).toBeNull();
+    expect($("approvedStatusSelect").disabled).toBe(false);
+  });
+
   it("registro recusado pelo banco tira o arquivo do bucket e avisa", async () => {
     const supabase = supabaseFalso({
       erros: { registrar_anexo_candidato_aprovado: "limite" },

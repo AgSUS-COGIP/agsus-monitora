@@ -88,6 +88,12 @@ export function canChangeCandidateStatus(profile) {
   return hasLevel(profile, "contratador");
 }
 
+/** Admin do módulo: o único que muda um status já definido (trava de 20260928180000). */
+export function canUnlockCandidateStatus(profile) {
+  if (profile?.permissoes) return hasResource(profile, "aprovados", 3);
+  return hasLevel(profile, "admin");
+}
+
 export function canManageSubJudice(profile) {
   if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");

@@ -71,6 +71,7 @@ function ModalAberto({ estado, dados, daArea }) {
       <ModalDeStatus
         key={modal.abertura}
         estado={estado}
+        perfil={dados.perfil}
         candidato={candidato}
         jaAnexados={anexos.length}
       />

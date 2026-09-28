@@ -38,6 +38,7 @@ import {
   canEditSubJudice,
   nomeDeArquivoSeguro,
   statusNeedsMatricula,
+  statusTravado,
 } from "../../lib/lista-aprovados-rules.js";
 import {
   argumentosDaConfiguracao,
@@ -422,7 +423,13 @@ export function criarEstadoDaListaDeAprovados({
     const processo = text(campos.processo);
     const matricula = text(campos.matricula);
     const arquivos = Array.from(campos.anexos ?? []);
-    if (statusNeedsMatricula(status) && !matricula) {
+    // Status travado: só os anexos saem; o status fica como está no banco.
+    const soAnexos = statusTravado(perfil(), candidato);
+    if (soAnexos && !arquivos.length) {
+      toast("Escolha os PDFs para anexar.", "warn");
+      return false;
+    }
+    if (!soAnexos && statusNeedsMatricula(status) && !matricula) {
       toast("Informe a matrícula para Contratado ou Migração.", "warn");
       return false;
     }
@@ -435,15 +442,14 @@ export function criarEstadoDaListaDeAprovados({
       return false;
     }
     const salvo = await executar("status", "Salvando…", async (rotular) => {
-      const { error } = await supabase.rpc(
-        "alterar_status_candidato_aprovado",
-        {
-          p_candidato_id: candidato.candidato_id,
-          p_status: status || null,
-          p_processo_sei: processo || null,
-          p_matricula: matricula || null,
-        },
-      );
+      const { error } = soAnexos
+        ? { error: null }
+        : await supabase.rpc("alterar_status_candidato_aprovado", {
+            p_candidato_id: candidato.candidato_id,
+            p_status: status || null,
+            p_processo_sei: processo || null,
+            p_matricula: matricula || null,
+          });
       if (error) {
         toast(`Erro ao alterar status: ${mensagemDe(error)}`, "error");
         return false;
@@ -453,23 +459,29 @@ export function criarEstadoDaListaDeAprovados({
         : { falhas: [], novos: [] };
       // Como o banco gravou: matrícula só fica para Contratado e Migração.
       aplicarLocal({
-        candidatos: comCandidato({
-          ...candidato,
-          status: status || null,
-          processo_sei: processo || null,
-          matricula: statusNeedsMatricula(status) ? matricula : null,
-        }),
+        ...(soAnexos
+          ? {}
+          : {
+              candidatos: comCandidato({
+                ...candidato,
+                status: status || null,
+                processo_sei: processo || null,
+                matricula: statusNeedsMatricula(status) ? matricula : null,
+              }),
+            }),
         anexos: comAnexos(candidato.candidato_id, [
           ...anexosDe(candidato.candidato_id),
           ...novos,
         ]),
       });
       fecharModal();
+      const inicio = soAnexos ? "" : "Status atualizado";
       if (falhas.length)
         toast(
-          `Status atualizado, mas ${falhas.length} anexo(s) não foram enviados. ${falhas.join(" · ")}`,
+          `${inicio ? `${inicio}, mas ` : ""}${falhas.length} anexo(s) não foram enviados. ${falhas.join(" · ")}`,
           "error",
         );
+      else if (soAnexos) toast(`${arquivos.length} anexo(s) enviados.`);
       else
         toast(
           arquivos.length
