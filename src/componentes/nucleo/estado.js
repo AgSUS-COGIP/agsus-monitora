@@ -167,7 +167,10 @@ export function criarEstadoDoNucleo({
       toast("Sem permissão para salvar editais.", "warn");
       return false;
     }
-    const analise = analisarCronograma(edital, etapas, motivo);
+    // Edital novo não tem cronograma anterior a justificar (o banco registra "Cadastro do edital").
+    const analise = analisarCronograma(edital, etapas, motivo, {
+      exigirMotivo: Boolean(edital.id),
+    });
     if (analise.erros.length) {
       toast(analise.erros[0], "warn");
       return false;

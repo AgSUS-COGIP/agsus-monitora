@@ -149,7 +149,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     edital,
     cronograma.etapas,
     cronograma.motivo,
-    { exigirMotivo: editorMexido },
+    { exigirMotivo: editorMexido && Boolean(id) },
   );
   const automatico = cronograma.automatico;
 
