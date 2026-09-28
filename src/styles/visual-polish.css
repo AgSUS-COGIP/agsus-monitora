@@ -8,57 +8,7 @@
   box-shadow: 0 10px 28px rgba(15, 35, 60, 0.07);
 }
 
-.visual-polish-ready .kpis-main {
-  gap: 14px;
-}
-
-.visual-polish-ready .kpi {
-  border-radius: 14px;
-  min-height: 112px;
-  isolation: isolate;
-  box-shadow: 0 8px 22px rgba(15, 35, 60, 0.06);
-}
-
-.visual-polish-ready .kpi::after {
-  content: "";
-  position: absolute;
-  inset: auto 10px 10px auto;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.08;
-  z-index: -1;
-}
-
-.visual-polish-ready .kpi b {
-  font-size: clamp(26px, 3vw, 36px);
-  font-variant-numeric: tabular-nums;
-}
-
-.visual-polish-ready .kpi.ag-navy {
-  color: var(--color-blue-800);
-}
-.visual-polish-ready .kpi.ag-blue {
-  color: var(--color-blue-600);
-}
-.visual-polish-ready .kpi.ag-green {
-  color: #0b8f58;
-}
-.visual-polish-ready .kpi.ag-red {
-  color: #d92d3a;
-}
-.visual-polish-ready .kpi.ag-yellow {
-  color: #7a5600;
-}
-.visual-polish-ready .kpi.ag-cyan {
-  color: #007b95;
-}
-
-.visual-polish-ready .dashboard-grid,
-.visual-polish-ready .lower-grid {
-  gap: 18px;
-}
+/* Os KPIs e a grade de baixo da Visão geral são de health-reference-kpis.css e app.css. */
 
 .executive-mini-chart {
   display: none !important;
@@ -243,10 +193,6 @@ body.access-request-mode #googleLoginBtn + #accessRequestCard::before {
 }
 
 @media (max-width: 900px) {
-  .visual-polish-ready .kpis-main {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .visual-polish-ready .map-card,
   .visual-polish-ready #map {
     height: 420px !important;
@@ -255,10 +201,6 @@ body.access-request-mode #googleLoginBtn + #accessRequestCard::before {
 }
 
 @media (max-width: 560px) {
-  .visual-polish-ready .kpis-main {
-    grid-template-columns: 1fr;
-  }
-
   .visual-polish-ready .map-card,
   .visual-polish-ready #map {
     height: 360px !important;

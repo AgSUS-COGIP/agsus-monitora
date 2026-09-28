@@ -195,38 +195,6 @@
   line-height: 1.5;
 }
 
-/* KPIs: numero e rotulo com hierarquia mais equilibrada. */
-.kpis-main {
-  gap: 11px;
-}
-
-.kpis-main .kpi {
-  min-width: 0;
-  min-height: 88px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  padding: 12px 13px;
-  text-align: left;
-}
-
-.kpis-main .kpi > span {
-  min-width: 0;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: 0;
-}
-
-.kpis-main .kpi > b {
-  margin-top: 9px;
-  font-size: var(--text-kpi);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-
 /* Configuracoes: menor densidade visual sem reduzir alvo de clique. */
 #page-config .config-workspace-toolbar {
   padding: 17px 18px 12px;
@@ -401,7 +369,6 @@ html[data-theme="dark"] .online-presence-list > p {
 }
 
 html[data-theme="dark"] .card,
-html[data-theme="dark"] .kpi,
 html[data-theme="dark"] .filter-card,
 html[data-theme="dark"] .table-wrap {
   border-color: var(--ux-dark-border) !important;
@@ -493,15 +460,6 @@ html[data-theme="dark"] .shell-confirm-cancel {
 }
 
 @media (max-width: 640px) {
-  .kpis-main .kpi {
-    min-height: 78px;
-    padding: 10px;
-  }
-
-  .kpis-main .kpi > b {
-    font-size: 24px;
-  }
-
   .shell-confirm-actions {
     flex-direction: column-reverse;
   }

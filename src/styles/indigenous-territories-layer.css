@@ -15,7 +15,7 @@
   display: flex;
   font: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   gap: 8px;
   min-height: 36px;
   padding: 8px 10px;
@@ -75,7 +75,7 @@
   color: #fff;
   /* 12px é o mínimo do DESIGN.md; 800 não está na escala de pesos. */
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.01em;
   padding: 5px 7px;
 }
@@ -107,7 +107,7 @@
 }
 
 .agsus-ti-tooltip b {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* ROTULO DO POVO SOBRE O POLIGONO
@@ -129,7 +129,7 @@
   color: #0b3c35;
   display: inline-block;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   left: 0;
   letter-spacing: 0.01em;
   line-height: 1.2;

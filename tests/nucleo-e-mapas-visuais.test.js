@@ -155,18 +155,36 @@ describe("legibilidade e contraste dos mapas", () => {
     expect(contraste(cor, BRANCO)).toBeGreaterThanOrEqual(AA);
   });
 
+  /*
+    O fundo do painel saiu daqui: é a superfície do Design System (11.6) em
+    health-reference-kpis.css, `var(--surface-raised)`, cujo valor escuro mora
+    no bloco [data-theme="dark"] de tokens.css.
+  */
+  const fundoDoPainelEscuro = () => {
+    const kpisCss = semComentarios(
+      readFileSync("src/styles/health-reference-kpis.css", "utf8"),
+    );
+    const declarado = blocos(kpisCss, "#page-dashboard .health-map-pane")
+      .map((corpo) => corpo.match(/(?:^|;)\s*background\s*:\s*([^;!]+)/)?.[1])
+      .filter(Boolean)
+      .pop()
+      .trim();
+    const nome = declarado.match(/^var\(\s*(--[\w-]+)/)[1];
+    const raizEscura = tokensCss.slice(
+      tokensCss.indexOf('[data-theme="dark"]'),
+    );
+    return raizEscura.match(
+      new RegExp(`${nome}\\s*:\\s*(#[0-9a-f]{6})`, "i"),
+    )[1];
+  };
+
   it("legenda, dica e vazio passam o AA sobre o painel escuro", () => {
     const cor = valor(
       mapaCss,
       '[data-theme="dark"] .health-map-detail-legend',
       "color",
     );
-    const fundo = valor(
-      mapaCss,
-      '[data-theme="dark"] .health-map-pane',
-      "background",
-    );
-    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+    expect(contraste(cor, fundoDoPainelEscuro())).toBeGreaterThanOrEqual(AA);
   });
 
   it("a tarja de seção passa o AA sobre o painel escuro", () => {
@@ -175,11 +193,12 @@ describe("legibilidade e contraste dos mapas", () => {
       '[data-theme="dark"] .health-map-pane__eyebrow',
       "color",
     );
-    const fundo = valor(
-      mapaCss,
-      '[data-theme="dark"] .health-map-pane',
-      "background",
-    );
+    expect(contraste(cor, fundoDoPainelEscuro())).toBeGreaterThanOrEqual(AA);
+  });
+
+  it("a tarja de seção passa o AA sobre o painel claro", () => {
+    const cor = valor(mapaCss, ".health-map-pane__eyebrow", "color");
+    const fundo = resolverToken("var(--surface-raised)");
     expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
   });
 });
