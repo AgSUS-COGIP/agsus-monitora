@@ -1,3 +1,6 @@
+import { parametroDeAreaDaRpc } from "../lib/area-do-painel-de-analises.js";
+import { AREA_DO_PAINEL } from "./analises-area.js";
+
 const TARGET_VIEWS = new Set([
   "VW_ANALISES_DASHBOARD_BASE",
   "VW_ANALISES_DASHBOARD_BASE_TODOS",
@@ -47,6 +50,7 @@ function scopedMode() {
 }
 function key() {
   return JSON.stringify({
+    area: AREA_DO_PAINEL,
     scope: scope(),
     units: sorted(state.units),
     editais: sorted(state.editais),
@@ -99,6 +103,7 @@ async function rpcPage(offset, limit) {
     p_offset: offset,
     p_limit: Math.min(Math.max(limit, 1), PAGE_SIZE),
     p_include_total: includeTotal,
+    ...parametroDeAreaDaRpc(AREA_DO_PAINEL),
   });
   if (error) throw error;
   const payload = data && typeof data === "object" ? data : {};
@@ -418,6 +423,8 @@ async function loadCatalog() {
     const { data, error } = await state.client
       .from("TB_EDITAL_ANALISE")
       .select("grupo,unidade,edital,ativo")
+      // Só os editais da área do painel (Saúde Indígena, SEDE ou Projetos).
+      .eq("CO_PLANILHA", AREA_DO_PAINEL)
       .order("unidade", { ascending: true })
       .order("edital", { ascending: true });
     if (error) throw error;

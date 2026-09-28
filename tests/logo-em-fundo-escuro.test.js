@@ -110,9 +110,10 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
     return (x + 0.05) / (y + 0.05);
   };
 
-  it("usa as cores do SIGAV", () => {
+  // O azul do SIGAV (#003b70) virou o blue-800 do Design System AgSUS (#153B6F).
+  it("usa o azul institucional do Design System", () => {
     expect(regra).toContain("background: #ffffff");
-    expect(regra).toContain("color: #003b70");
+    expect(regra).toContain("color: var(--color-blue-800)");
   });
 
   it("o hover é o slate-100 do SIGAV", () => {
@@ -121,7 +122,7 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
     );
     expect(hover).toContain("background: #f1f5f9");
     // O texto é escuro; o hover clareia, então continua legível.
-    expect(contraste("#f1f5f9", "#003b70")).toBeGreaterThan(4.5);
+    expect(contraste("#f1f5f9", "#153B6F")).toBeGreaterThan(4.5);
   });
 
   /*
@@ -129,14 +130,14 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
     acontece no SIGAV. Com ela, 4.53:1.
   */
   it("a borda torna a aresta perceptível onde o preenchimento não basta", () => {
-    expect(regra).toContain("border: 1px solid #003b70");
+    expect(regra).toContain("border: 1px solid var(--color-blue-800)");
     expect(contraste("#ffffff", "#c090eb")).toBeLessThan(3);
-    expect(contraste("#003b70", "#c090eb")).toBeGreaterThan(3);
-    expect(contraste("#003b70", "#c898eb")).toBeGreaterThan(3);
+    expect(contraste("#153B6F", "#c090eb")).toBeGreaterThan(3);
+    expect(contraste("#153B6F", "#c898eb")).toBeGreaterThan(3);
   });
 
   it("o texto sobre o botão tem folga larga", () => {
-    expect(contraste("#003b70", "#ffffff")).toBeGreaterThan(7);
+    expect(contraste("#153B6F", "#ffffff")).toBeGreaterThan(7);
   });
 
   /*

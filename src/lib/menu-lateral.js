@@ -79,12 +79,16 @@ export const PAGINAS_DO_MENU = Object.freeze([
 
 /*
   Painéis externos não têm área no banco (`TB_PAINEL_EXTERNO`). O de análises
-  curriculares é o da Saúde Indígena e entra nela, com nome curto; os outros
-  vão para Painéis. Para mandar um painel para uma área, registre o `codigo`
-  dele aqui.
+  curriculares é um painel só para as três áreas: aparece em cada uma, com nome
+  curto, e abre com a área atual na URL (`?area=`, ver
+  `enderecoDoPainelNaArea`). Os outros vão para Painéis. Para mandar um painel
+  para uma ou mais áreas, registre o `codigo` dele aqui.
 */
 export const PAINEIS_DE_AREA = Object.freeze({
-  analises: Object.freeze({ area: "saude-indigena", rotulo: "Análises" }),
+  analises: Object.freeze({
+    areas: Object.freeze(["saude-indigena", "sede", "projetos"]),
+    rotulo: "Análises curriculares",
+  }),
 });
 
 /* A área de quem ainda recebe o contexto antigo, sem `profile.areas`. */
@@ -105,8 +109,21 @@ export function nomeDaArea(id) {
   return AREAS_DO_SISTEMA.find((area) => area.id === id)?.rotulo ?? "";
 }
 
-export function areaDoPainel(codigo) {
-  return PAINEIS_DE_AREA[texto(codigo)]?.area ?? AREA_DOS_PAINEIS;
+/* As áreas em que o painel aparece; painel sem área fica em Painéis. */
+export function areasDoPainel(codigo) {
+  const areas = PAINEIS_DE_AREA[texto(codigo)]?.areas;
+  return areas ? [...areas] : [AREA_DOS_PAINEIS];
+}
+
+/*
+  Com que área o painel abre: a atual, se ele é dela; senão a primeira dele.
+  Painel que não é de área nenhuma devolve "" (abre sem `?area=`).
+*/
+export function areaDeAberturaDoPainel(codigo, areaAtual) {
+  const areas = PAINEIS_DE_AREA[texto(codigo)]?.areas;
+  if (!areas) return "";
+  const atual = texto(areaAtual);
+  return areas.includes(atual) ? atual : areas[0];
 }
 
 /*
@@ -148,16 +165,22 @@ export function montarArvoreDoMenu({
     const codigo = texto(painel?.codigo);
     if (!codigo) continue;
     const deArea = PAINEIS_DE_AREA[codigo];
-    // Painel de uma área que o usuário não tem continua acessível, em Painéis.
-    if (deArea && itensPorArea.has(deArea.area)) {
-      itensPorArea.get(deArea.area).push({
-        view: `panel:${codigo}`,
-        rotulo: deArea.rotulo,
-        icone: ICONE_DOS_PAINEIS,
-        area: deArea.area,
-      });
+    // O painel entra em cada área dele que o usuário tem.
+    const areasDoUsuarioNoPainel = (deArea?.areas ?? []).filter((area) =>
+      itensPorArea.has(area),
+    );
+    if (areasDoUsuarioNoPainel.length) {
+      for (const area of areasDoUsuarioNoPainel) {
+        itensPorArea.get(area).push({
+          view: `panel:${codigo}`,
+          rotulo: deArea.rotulo,
+          icone: ICONE_DOS_PAINEIS,
+          area,
+        });
+      }
       continue;
     }
+    // Painel de áreas que o usuário não tem continua acessível, em Painéis.
     itensPorArea.get(AREA_DOS_PAINEIS).push({
       view: `panel:${codigo}`,
       rotulo: texto(painel.titulo) || codigo,

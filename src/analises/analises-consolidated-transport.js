@@ -1,3 +1,10 @@
+import {
+  chaveDoCacheDoPayload,
+  grupoDaPlanilhaDaArea,
+  parametroDeAreaDaRpc,
+} from "../lib/area-do-painel-de-analises.js";
+import { AREA_DO_PAINEL } from "./analises-area.js";
+
 const TARGET_VIEWS = new Set([
   "VW_ANALISES_DASHBOARD_BASE",
   "VW_ANALISES_DASHBOARD_BASE_TODOS",
@@ -10,6 +17,8 @@ const CLIENT_CACHE_PREFIX = "agsus_analises_cache_v1_v4_";
 const CLIENT_CACHE_MIGRATION_MARKER =
   "agsus_analises_responsavel_normalizado_v1";
 const payloadCache = new Map();
+/* Erro de permissão ou de área: o fallback pela view não pode contorná-lo. */
+const ERROS_SEM_FALLBACK = new Set(["42501", "22023"]);
 
 function normalizeAnaliseRow(row) {
   if (!row || typeof row !== "object") return row;
@@ -57,8 +66,9 @@ function clearPayloadCache(scope = "") {
   const normalized = String(scope || "")
     .trim()
     .toLowerCase();
-  if (normalized && payloadCache.has(normalized)) {
-    payloadCache.delete(normalized);
+  const chave = chaveDoCacheDoPayload(AREA_DO_PAINEL, normalized);
+  if (normalized && payloadCache.has(chave)) {
+    payloadCache.delete(chave);
     return;
   }
   payloadCache.clear();
@@ -85,13 +95,18 @@ function invalidateLegacyClientCache() {
 }
 
 async function getPayload(client, scope) {
-  const cached = payloadCache.get(scope);
+  // A área entra na chave: Saúde Indígena, SEDE e Projetos nunca se misturam.
+  const cacheKey = chaveDoCacheDoPayload(AREA_DO_PAINEL, scope);
+  const cached = payloadCache.get(cacheKey);
   if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
     return cached.promise;
   }
 
   const promise = (async () => {
-    const { data, error } = await client.rpc(RPC_NAME, { p_scope: scope });
+    const { data, error } = await client.rpc(RPC_NAME, {
+      p_scope: scope,
+      ...parametroDeAreaDaRpc(AREA_DO_PAINEL),
+    });
     if (error) throw error;
     const payload = Array.isArray(data) ? data[0] : data;
     return {
@@ -100,12 +115,12 @@ async function getPayload(client, scope) {
     };
   })();
 
-  payloadCache.set(scope, { createdAt: Date.now(), promise });
+  payloadCache.set(cacheKey, { createdAt: Date.now(), promise });
 
   try {
     return await promise;
   } catch (error) {
-    payloadCache.delete(scope);
+    payloadCache.delete(cacheKey);
     throw error;
   }
 }
@@ -151,6 +166,8 @@ class ConsolidatedQuery {
     this.filters.forEach((value, column) => {
       fallback = fallback.eq(column, value);
     });
+    // A view traz todas as áreas; o fallback fica só com a do painel.
+    fallback = fallback.eq("grupo", grupoDaPlanilhaDaArea(AREA_DO_PAINEL));
 
     this.orders.forEach(({ column, options }) => {
       fallback = fallback.order(column, options);
@@ -175,6 +192,15 @@ class ConsolidatedQuery {
         statusText: "OK",
       };
     } catch (error) {
+      if (ERROS_SEM_FALLBACK.has(String(error?.code ?? ""))) {
+        return {
+          data: [],
+          error,
+          count: 0,
+          status: 403,
+          statusText: "Forbidden",
+        };
+      }
       console.warn(
         "Carga consolidada indisponível; usando fallback do Supabase:",
         error,

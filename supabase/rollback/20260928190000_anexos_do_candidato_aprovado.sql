@@ -1,5 +1,5 @@
 /*
-  ROLLBACK de migrations/20260928140000_anexos_do_candidato_aprovado.sql
+  ROLLBACK de migrations/20260928190000_anexos_do_candidato_aprovado.sql
   Remove as RPCs, a tabela e as políticas dos anexos. O bucket só sai vazio:
   apague os objetos pelo painel do Storage (ou pela API) antes de rodar.
 */

@@ -21,7 +21,25 @@
   --cal-violeta-claro: #8b5cf6;
   --cal-verde: #22c55e;
   --cal-azul-escuro: #2563eb;
-  --cal-neutro: #64748b;
+  --cal-neutro: var(--color-text-secondary);
+}
+
+/*
+  Os três blocos da página (o mês e os dois painéis de baixo) ficam em card
+  (exceção aceita, DESIGN.md seção 12), no DS 11.6: borda sutil, raio de 8px,
+  sem sombra. Vence `.card` (app.css) e `.visual-polish-ready .table-card`
+  (visual-polish.css): mesma especificidade, carregado antes.
+*/
+.table-card.cal-card,
+.cal-inferior > .table-card {
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+/* Contador do mês: badge (DS 11.8), peso 500 em vez do 900 de `.chip` (app.css). */
+.cal-card .chip {
+  font-weight: 500;
 }
 
 /* ── Barra superior ──────────────────────────────────────────────────── */
@@ -37,7 +55,8 @@
 .cal-barra h3 {
   margin: 0;
   font-size: 19px;
-  color: #13233a;
+  font-weight: 600;
+  color: var(--text-primary);
   min-width: 165px;
 }
 
@@ -46,62 +65,82 @@
   gap: 6px;
 }
 
+/* Mês anterior/seguinte: botões ghost só com ícone (DS 11.1), 36px. */
 .cal-nav button {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #dbe6f1;
-  border-radius: 9px;
-  background: #fff;
-  color: #334155;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .cal-nav button:hover {
-  background: #f1f5f9;
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 /* Empurrado para a direita: filtrar é secundário face a navegar no mês. */
 .cal-filtros {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex-wrap: wrap;
   margin-left: auto;
 }
 
-/* Mais largo que os selects: é onde se escreve, não onde se escolhe. */
+/*
+  Campos do DS 11.2: 36px, borda `--border-control`, raio médio, texto 400.
+  Mais largo que os selects: é onde se escreve, não onde se escolhe.
+*/
 .cal-busca {
   flex: 1 1 230px;
   min-width: 180px;
   max-width: 320px;
-  padding: 7px 10px;
-  border: 1px solid #dbe6f1;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 13px;
-  color: #13233a;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-size: var(--text-body-sm);
+  font-weight: 400;
+  color: var(--text-primary);
 }
 
 .cal-busca::placeholder {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .cal-filtros select {
   max-width: 190px;
-  padding: 7px 8px;
-  border: 1px solid #dbe6f1;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 13px;
-  color: #13233a;
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-size: var(--text-body-sm);
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+/*
+  Sentence case também nos rótulos: o `label` global de app.css é em
+  maiúsculas, peso 900 e espaçado (vence por especificidade, 0-1-1 contra 0-0-1).
+*/
+.cal-card label,
+.cal-inferior label {
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secondary);
 }
 
 .cal-caixa {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #475569;
+  gap: var(--space-1-5);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -123,10 +162,8 @@
   padding: 6px 4px;
   text-align: center;
   font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  color: var(--color-text-secondary);
 }
 
 .cal-dias {
@@ -145,9 +182,10 @@
   gap: 8px;
   min-height: 84px;
   padding: 8px;
-  border: 1px solid #e6edf5;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-primary);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -157,22 +195,22 @@
 }
 
 .cal-celula:hover {
-  border-color: #b9cbe0;
-  background: #f8fbff;
+  border-color: var(--border-control);
+  background: var(--surface-hover);
 }
 
 .cal-celula.vazio {
   cursor: default;
-  background: #fcfdff;
+  background: var(--surface-card);
 }
 
 .cal-celula.vazio:hover {
-  border-color: #e6edf5;
-  background: #fcfdff;
+  border-color: var(--border-subtle);
+  background: var(--surface-card);
 }
 
 .cal-celula.fora-do-mes {
-  background: #f8fafc;
+  background: var(--surface-raised);
 }
 
 .cal-celula.fora-do-mes .cal-numero {
@@ -180,19 +218,21 @@
 }
 
 .cal-celula.hoje {
-  border-color: #2563eb;
+  border-color: var(--brand-primary);
 }
 
+/* Selecionado: contorno de 2px (1px da borda + 1px de outline), sem sombra. */
 .cal-celula.selecionado {
-  border-color: #2563eb;
-  background: #eff6ff;
-  box-shadow: inset 0 0 0 1px #2563eb;
+  border-color: var(--brand-primary);
+  background: var(--state-info-soft);
+  outline: 1px solid var(--brand-primary);
+  outline-offset: -2px;
 }
 
 .cal-numero {
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-primary);
 }
 
 .cal-celula.hoje .cal-numero {
@@ -241,11 +281,12 @@
 
 /* ── Painéis de baixo ────────────────────────────────────────────────── */
 
+/* 12px entre os blocos da página (DESIGN.md seção 12, exceção aceita). */
 .cal-inferior {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  margin-top: 16px;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
   align-items: start;
 }
 
@@ -293,9 +334,11 @@
   white-space: nowrap;
 }
 
+/* Nome da etapa: peso 500 (DS 11.4), não o bold padrão de <strong>. */
 .cal-item-corpo strong {
   font-size: 13px;
-  color: #13233a;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 /*
@@ -317,11 +360,9 @@
   padding: 2px 7px;
   border: 1px solid #94a3b8;
   border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: 500;
   line-height: 1.4;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   vertical-align: 1px;
 }
 
@@ -338,7 +379,7 @@
 
 .cal-item-corpo small {
   font-size: 11px;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 /* ── Popup do dia ────────────────────────────────────────────────────── */
@@ -359,7 +400,7 @@
   --cal-violeta-claro: #8b5cf6;
   --cal-verde: #22c55e;
   --cal-azul-escuro: #2563eb;
-  --cal-neutro: #64748b;
+  --cal-neutro: var(--color-text-secondary);
 }
 
 /* A lista encosta nas margens do cartão; cada item já tem o seu espaçamento. */
@@ -398,7 +439,7 @@
   left: -50%;
   width: 100%;
   height: 2px;
-  background: #e2e8f0;
+  background: var(--color-border-subtle);
 }
 
 .cal-passo:first-child::before {
@@ -415,7 +456,7 @@
   border: 3px solid #fff;
   border-radius: 50%;
   background: var(--cal-cor, var(--cal-neutro));
-  box-shadow: 0 0 0 1px #cbd5e1;
+  outline: 1px solid var(--border-subtle);
 }
 
 /*
@@ -426,11 +467,12 @@
   confusos do que úteis, e não faria sentido reintroduzi-los aqui.
 */
 .cal-passo[data-situacao="concluida"] .cal-passo-marca {
-  box-shadow: 0 0 0 1px var(--cal-cor, var(--cal-neutro));
+  outline: 1px solid var(--cal-cor, var(--cal-neutro));
 }
 
+/* Anel em outline, não sombra: o contorno do círculo acompanha o raio. */
 .cal-passo[data-situacao="em-andamento"] .cal-passo-marca {
-  box-shadow: 0 0 0 3px #bfdbfe;
+  outline: 3px solid color-mix(in srgb, var(--state-info) 30%, transparent);
 }
 
 .cal-passo[data-situacao="futura"] .cal-passo-marca {
@@ -440,14 +482,15 @@
 .cal-passo strong {
   display: block;
   font-size: 12px;
-  color: #13233a;
+  font-weight: 500;
+  color: var(--text-primary);
   line-height: 1.25;
 }
 
 .cal-passo small {
   display: block;
   font-size: 11px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
@@ -486,7 +529,7 @@
   margin: 0;
   padding: 16px 4px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   text-align: center;
 }
 
@@ -559,7 +602,7 @@
   align-items: flex-start;
   margin: 0 0 var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--state-warning-soft);
   color: var(--state-warning);
   font-size: var(--text-sm);

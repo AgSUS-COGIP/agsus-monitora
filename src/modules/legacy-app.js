@@ -6,6 +6,7 @@ import {
   tomDoStatusDoEdital,
 } from "../lib/editais-do-nucleo.js";
 import {
+  assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
   obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
@@ -23,6 +24,7 @@ import {
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.js";
 import {
+  areaDeAberturaDoPainel,
   areasDoUsuario,
   montarArvoreDoMenu,
   nomeDaArea,
@@ -33,7 +35,7 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
-import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
+import { enderecoDoPainelNaArea } from "../lib/endereco-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import { ehEditalDaSaudeIndigena } from "../lib/responsavel-do-edital.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
@@ -70,6 +72,10 @@ import {
 import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
 import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
 import { montarLegendaDasTerras } from "./legenda-das-terras.js";
+import {
+  criarBotaoDoMapa,
+  montarLegendaRecolhivel,
+} from "./controles-do-mapa.js";
 import { criarCamadaComRecuo } from "./map-base-layer-switcher.js";
 import {
   reconciliarDsei,
@@ -82,6 +88,7 @@ import {
   posicoesSpiderfy,
   raioDaBolha,
 } from "../lib/mapa-render.js";
+import { calcularLeque } from "../lib/leque-de-marcadores.js";
 import {
   ACCESS_BACKGROUND_BUCKET,
   ACCESS_BACKGROUND_FOLDER,
@@ -8894,6 +8901,9 @@ let _leaflet = null,
   _layerUF = null,
   _layerBR = null,
   _mapInited = false;
+// Bolhas de DSEI do mapa nacional e os traços do leque que as afasta.
+let _marcadoresDsei = [],
+  _tracosDoLeque = [];
 let _detailLeaflet = null,
   _detailBaseLayer = null,
   _detailUnitLayer = null,
@@ -9228,32 +9238,33 @@ function initLeaflet() {
   _layerCasaiLocal = L.layerGroup().addTo(_leaflet); // CASAIs do DSEI/locais (drill-down)
   _layerUbsi = L.layerGroup().addTo(_leaflet); // UBSIs (drill-down)
   _layerCasai = L.layerGroup().addTo(_leaflet); // CASAI Nacional (sempre)
+  // O leque é em pixels: a cada zoom os grupos mudam e os offsets também.
+  _leaflet.on("zoomend", aplicarLequeDosDsei);
   drawBrasilOutline();
 
   // Botão "ver Brasil inteiro" dentro do mapa (controle Leaflet, canto superior direito)
   const HomeCtl = L.Control.extend({
     options: { position: "topright" },
     onAdd: function () {
-      const wrap = L.DomUtil.create("div", "");
-      wrap.style.cssText = "display:flex;gap:6px;";
-      const b = L.DomUtil.create("button", "", wrap);
-      b.type = "button";
+      // Ícones Lucide (Design System, seção 14) no lugar dos emojis; o estilo
+      // é `.health-map-controles` / `.health-map-botao` em health-map-workspace.css.
+      const wrap = L.DomUtil.create("div", "health-map-controles");
+      const b = criarBotaoDoMapa(document, { icone: "map", rotulo: "Brasil" });
+      wrap.append(b);
       b.title = "Voltar à visão do Brasil inteiro";
-      b.innerHTML = "🗺️ Brasil";
-      b.style.cssText =
-        "background:#fff;border:1px solid #bcd;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#22577a;cursor:pointer;box-shadow:0 2px 8px rgba(15,35,60,.18);";
       L.DomEvent.on(b, "click", function (e) {
         L.DomEvent.stop(e);
         mapVoltar();
       });
-      const h = L.DomUtil.create("button", "", wrap);
+      const h = criarBotaoDoMapa(document, {
+        icone: "flame",
+        rotulo: "Calor",
+        classe: "health-map-botao--calor",
+      });
+      wrap.append(h);
       h.id = "heatBtn";
-      h.type = "button";
       h.title = "Mapa de calor: cor por % de vagas ociosas";
       h.setAttribute("aria-pressed", "false");
-      h.innerHTML = "🔥 Calor";
-      h.style.cssText =
-        "background:#fff;border:1px solid #bcd;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#a3322b;cursor:pointer;box-shadow:0 2px 8px rgba(15,35,60,.18);";
       L.DomEvent.on(h, "click", function (e) {
         L.DomEvent.stop(e);
         toggleHeatMap();
@@ -9272,6 +9283,10 @@ function initLeaflet() {
       d.id = "mapLegendBox";
       d.style.cssText =
         "background:rgba(255,255,255,.94);border:1px solid #d7e5f2;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:600;color:#43566d;box-shadow:0 2px 10px rgba(15,35,60,.12);line-height:1.7;max-width:230px;";
+      // Recolhível: o título é um botão (aria-expanded) e o corpo começa
+      // fechado no celular. `syncMapLevelUI` só reescreve título e corpo, então
+      // o estado aberto/fechado sobrevive à troca Brasil/DSEI.
+      montarLegendaRecolhivel(d, { largura: window.innerWidth });
       L.DomEvent.disableClickPropagation(d);
       return d;
     },
@@ -10274,10 +10289,83 @@ function renderPainelNacional(linhas) {
   });
 }
 
+/*
+  LEQUE DAS SEDES QUE CAEM NO MESMO LUGAR
+
+  Leste de Roraima e Yanomami têm sede em Boa Vista, a 1,8 km: no mapa
+  nacional são o mesmo pixel, e Alto Rio Solimões e Vale do Javari ficam a
+  poucos pixels um do outro. A matemática vive em `src/lib/leque-de-marcadores.js`;
+  aqui só se converte latlng ↔ pixel no zoom corrente.
+
+  Cada bolha de um grupo vai para um círculo de 16 px em volta do ponto real,
+  com um traço fino até ele e um ponto pequeno no lugar verdadeiro. O traço usa
+  `--text-secondary`, com o mesmo cinza-azulado do leque do mapa de detalhe
+  como recuo. Tooltip, clique, cor e tamanho são os da própria bolha, que
+  apenas muda de sítio; quando o zoom já separa os pontos, volta ao lugar.
+*/
+function corDoTracoDoLeque() {
+  try {
+    const cor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--text-secondary")
+      .trim();
+    if (cor) return cor;
+  } catch (e) {}
+  return "#4a6b80";
+}
+
+function aplicarLequeDosDsei() {
+  if (!_leaflet || !_layerDSEI) return;
+  _tracosDoLeque.forEach((camada) => _layerDSEI.removeLayer(camada));
+  _tracosDoLeque = [];
+  const vivos = _marcadoresDsei.filter(({ m }) => _layerDSEI.hasLayer(m));
+  if (!vivos.length) return;
+
+  const pontos = vivos.map(({ lat, lon }) =>
+    _leaflet.latLngToLayerPoint([lat, lon]),
+  );
+  const leque = calcularLeque(pontos);
+  const cor = corDoTracoDoLeque();
+
+  leque.forEach((offset, i) => {
+    const { m, lat, lon } = vivos[i];
+    if (!offset.emLeque) {
+      m.setLatLng([lat, lon]);
+      return;
+    }
+    const destino = _leaflet.layerPointToLatLng(
+      pontos[i].add(L.point(offset.dx, offset.dy)),
+    );
+    m.setLatLng(destino);
+    _tracosDoLeque.push(
+      L.polyline([[lat, lon], destino], {
+        color: cor,
+        weight: 1,
+        opacity: 0.7,
+        interactive: false,
+      }),
+      L.circleMarker([lat, lon], {
+        radius: 2,
+        stroke: false,
+        fillColor: cor,
+        fillOpacity: 0.9,
+        interactive: false,
+      }),
+    );
+  });
+
+  if (!_tracosDoLeque.length) return;
+  _tracosDoLeque.forEach((camada) => _layerDSEI.addLayer(camada));
+  // Os traços entram por último no SVG; as bolhas voltam para cima deles, na
+  // ordem em que foram desenhadas (maior primeiro, menor por cima).
+  vivos.forEach(({ m }) => m.bringToFront());
+}
+
 // Nível 1: bolhas dos DSEIs
 function drawDSEIBubbles() {
   if (!_leaflet) return;
   _layerDSEI.clearLayers();
+  _marcadoresDsei = [];
+  _tracosDoLeque = [];
   _layerPolos.clearLayers();
   if (_layerUbsi) _layerUbsi.clearLayers();
   if (_layerCasaiLocal) _layerCasaiLocal.clearLayers();
@@ -10301,9 +10389,12 @@ function drawDSEIBubbles() {
     decrescente põe a bolha menor por cima, de modo que ambas ficam clicáveis:
     a maior continua a aparecer como anel em volta da menor. E onde a sede é
     exactamente a mesma entra um selo com a contagem, que nomeia os distritos.
+
+    O selo nunca chegou a existir e a ordenação sozinha deixava a bolha maior
+    reduzida a um anel. Passou a valer o leque (`aplicarLequeDosDsei`): bolhas
+    que caem no mesmo lugar da tela são desenhadas num pequeno círculo em volta
+    do ponto real, com um traço até ele. A coordenada continua intacta.
   */
-  // DSEIs com a mesma sede permanecem sobrepostos no ponto verdadeiro.
-  // A ordenação por raio mantém a bolha menor clicável sem selo numérico.
 
   [...LMAP.dsei]
     .sort((a, b) => raioDaBolha(b.pop, popMax) - raioDaBolha(a.pop, popMax))
@@ -10373,13 +10464,8 @@ function drawDSEIBubbles() {
       }
       m.on("click", () => entrarNoTerritorio(d));
       _layerDSEI.addLayer(m);
+      _marcadoresDsei.push({ m, lat, lon });
     });
-
-  /*
-    Onde a sede é exactamente a mesma, um selo nomeia os distritos empilhados.
-    Fica ao lado do centro — deslocado em PIXELS, convertidos no zoom corrente —
-    e não substitui as bolhas: elas continuam no seu lugar, clicáveis.
-  */
 
   /*
     Por vagas, decrescente: é a pergunta que a página faz nos KPIs logo acima,
@@ -10418,6 +10504,8 @@ function drawDSEIBubbles() {
         }
       } catch (e) {}
   }
+  // Depois do enquadramento: se ele não mudou o zoom, o `zoomend` não dispara.
+  aplicarLequeDosDsei();
   _ptsZoom = null;
   const masterCount = $("masterMapCount");
   if (masterCount)
@@ -10793,7 +10881,7 @@ function resumoDaRedeDoDsei(d) {
 /*
   VOLTAR AO BRASIL — SAI DO DSEI, MANTÉM OS FILTROS.
 
-  Antes, o botão "🗺️ Brasil" apagava todos os filtros (e sem passar pelos
+  Antes, o botão "Brasil" (ícone de mapa, `controles-do-mapa.js`) apagava todos os filtros (e sem passar pelos
   módulos que mostram o contador), enquanto o breadcrumb não apagava nada —
   nem o nome do DSEI que ficava escondido na busca. Agora os dois só saem do
   território; apagar o recorte é trabalho do "Limpar filtros" (`clearFilters`),
@@ -10864,13 +10952,23 @@ function syncMapLevelUI() {
     const abrangencia = temAbrangencia
       ? `${limiteDsei}abrangência oficial do DSEI<br>`
       : "";
-    box.innerHTML = showingPolos
-      ? `<b style="color:#22577a">Polos base do DSEI</b><br>${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${abrangencia}${terras}`
-      : `<b style="color:#22577a">Legenda</b><br>${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${abrangencia}${losango("#7b2ff7")}CASAI Nacional${terras}`;
-    montarLegendaDasTerras(
-      box.querySelector("[data-legenda-das-terras]"),
-      _leaflet,
-    );
+    // A caixa é recolhível (`montarLegendaRecolhivel`): o título vai no botão
+    // que abre e fecha, e o resto no corpo. Reescrever só os dois preserva o
+    // estado aberto/fechado.
+    const titulo = box.querySelector("[data-legenda-titulo]");
+    const corpo = box.querySelector("[data-legenda-corpo]");
+    if (titulo && corpo) {
+      titulo.innerHTML = showingPolos
+        ? '<b style="color:#22577a">Polos base do DSEI</b>'
+        : '<b style="color:#22577a">Legenda</b>';
+      corpo.innerHTML = showingPolos
+        ? `${dot("#1d4e89")}polo base<br>${dot("#e8730c")}polo fora das UFs administrativas do DSEI<br>${losango("#d92d3a")}CASAI (Casa de Saúde)<br>${tracejado}vínculo administrativo<br>${abrangencia}${terras}`
+        : `${dot("#5b9bd5")}DSEI (sede; tamanho = nº de indígenas)<br>${dot("#0b8f58")}DSEI com processo ativo<br>${abrangencia}${losango("#7b2ff7")}CASAI Nacional${terras}`;
+      montarLegendaDasTerras(
+        corpo.querySelector("[data-legenda-das-terras]"),
+        _leaflet,
+      );
+    }
   }
   const lgDsei = $("mapLegendDsei");
   if (lgDsei) {
@@ -11207,7 +11305,11 @@ function openPanel(code) {
     toast("Painel indisponível ou inativo.", "warn");
     return;
   }
-  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
+  // Painel de várias áreas (Análises) abre com a área atual do menu: `?area=`.
+  const areaDoPainel = areaDeAberturaDoPainel(
+    code,
+    obterDadosDoMonitoramento().areaAtual,
+  );
   /*
     O painel externo traz o seu próprio cabeçalho. Somado ao do Monitora, a
     pessoa via dois títulos empilhados dizendo a mesma coisa.
@@ -11230,7 +11332,8 @@ function openPanel(code) {
   setPageTitle(panel.titulo, cfgValue("external_default_title"));
   $("externalTitle").textContent = panel.titulo;
   $("externalOpen").href =
-    enderecoDoPainel(panel.url, window.location.origin) || "#";
+    enderecoDoPainelNaArea(panel.url, window.location.origin, areaDoPainel) ||
+    "#";
   const mount = $("externalMount");
   if (mount.classList.contains("external-placeholder")) {
     mount.className = "";
@@ -11245,10 +11348,16 @@ function openPanel(code) {
     carregavam a cada login, mesmo sem ninguém abrir.
   */
   let holder = document.getElementById("external-panel-" + code);
+  // Aberto antes em outra área: o quadro recarrega com a área nova.
+  if (holder && (holder.dataset.area || "") !== areaDoPainel) {
+    holder.remove();
+    holder = null;
+  }
   if (!holder) {
     holder = document.createElement("div");
     holder.id = "external-panel-" + code;
     holder.className = "external-panel";
+    holder.dataset.area = areaDoPainel;
     mount.appendChild(holder);
     buildExternalPanel(holder, panel);
   }
@@ -11260,7 +11369,11 @@ function buildExternalPanel(holder, panel) {
     holder.innerHTML = `<div class="external-placeholder"><div><div style="font-size:58px;color:#555"><i class="fa-solid fa-screwdriver-wrench"></i></div><h2>${esc(cfgValue("maintenance_title"))}</h2><p>${esc(cfgValue("maintenance_message"))}</p></div></div>`;
     return;
   }
-  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
+  const safePanelUrl = enderecoDoPainelNaArea(
+    panel.url,
+    window.location.origin,
+    holder.dataset.area,
+  );
   if (!safePanelUrl) {
     holder.innerHTML = `<div class="external-placeholder"><div><h2>${esc(panel.titulo)}</h2><p>Cadastre uma URL http(s) válida deste painel em paineis_externos.</p></div></div>`;
     return;
@@ -11270,6 +11383,24 @@ function buildExternalPanel(holder, panel) {
   // Até o site de fora responder, o quadro ficaria em branco.
   acompanharCarregamentoDoPainel(holder, { aoTentarDeNovo: reloadExternal });
 }
+
+/*
+  A área mudou com o painel de várias áreas aberto: ele recarrega com a nova.
+  Só reabre quando o quadro visível é de outra área.
+*/
+function recarregarPainelNaAreaAtual() {
+  if (!currentPanel || currentView !== "panel:" + currentPanel.codigo) return;
+  const area = areaDeAberturaDoPainel(
+    currentPanel.codigo,
+    obterDadosDoMonitoramento().areaAtual,
+  );
+  const holder = document.getElementById(
+    "external-panel-" + currentPanel.codigo,
+  );
+  if (!area || !holder || (holder.dataset.area || "") === area) return;
+  openPanel(currentPanel.codigo);
+}
+assinarDadosDoMonitoramento(recarregarPainelNaAreaAtual);
 
 function reloadExternal() {
   if (!currentPanel) return;

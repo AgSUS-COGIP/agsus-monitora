@@ -173,7 +173,8 @@ export const CONTRATO_RPC = {
   listar_listas_aprovados: {
     argumentos: [],
     critica: true,
-    resumo: "Lista as listas vigentes de aprovados vinculadas aos editais.",
+    resumo:
+      "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou.",
   },
   listar_candidatos_aprovados: {
     argumentos: [],
@@ -206,7 +207,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_candidato_id", "p_status", "p_processo_sei", "p_matricula"],
     critica: true,
     resumo:
-      "Altera o status de um candidato e registra processo SEI e matrícula quando informados.",
+      "Altera o status de um candidato e registra processo SEI e matrícula quando informados. Status já definido só o admin altera.",
   },
   listar_anexos_candidatos_aprovados: {
     argumentos: [],
@@ -274,9 +275,10 @@ export const CONTRATO_RPC = {
 
   // ── Análises ────────────────────────────────────────────────────────────
   get_analises_dashboard_payload_v2: {
-    argumentos: ["p_scope"],
+    argumentos: ["p_scope", "p_area"],
     critica: true,
-    resumo: "Payload consolidado do painel de Análises.",
+    resumo:
+      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos).",
   },
   get_analises_dashboard_filtrado: {
     argumentos: [
@@ -286,10 +288,11 @@ export const CONTRATO_RPC = {
       "p_offset",
       "p_limit",
       "p_include_total",
+      "p_area",
     ],
     critica: true,
     resumo:
-      "Linhas do painel de Análises filtradas por unidade e edital, paginadas.",
+      "Linhas do painel de Análises da área, filtradas por unidade e edital, paginadas.",
   },
 
   // ── Auditoria e presença ────────────────────────────────────────────────

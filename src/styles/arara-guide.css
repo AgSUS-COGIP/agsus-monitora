@@ -55,7 +55,7 @@
 }
 
 .arara-assistant__title {
-  color: var(--strong, #10243e);
+  color: var(--strong, var(--color-text-primary));
   font-size: 19px;
   line-height: 1.12;
 }
@@ -136,7 +136,7 @@
   border: 1px solid var(--line2, #cbd8e6);
   border-radius: 999px;
   background: var(--card, #fff);
-  color: var(--strong, #10243e);
+  color: var(--strong, var(--color-text-primary));
   font: inherit;
   font-size: 10px;
   font-weight: 850;

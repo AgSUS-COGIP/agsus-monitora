@@ -41,14 +41,14 @@ function blocos(css, seletor) {
 }
 
 /** Último valor declarado para a propriedade — que é o que a cascata aplica. */
-function valor(css, seletor, propriedade) {
+function valor(css, seletor, propriedade, resolver = resolverToken) {
   const padrao = new RegExp(`(?:^|;)\\s*${propriedade}\\s*:\\s*([^;]+)`);
   const declarados = blocos(css, seletor)
     .map((corpo) => corpo.match(padrao)?.[1]?.trim())
     .filter(Boolean);
   if (!declarados.length)
     throw new Error(`${propriedade} não declarada em ${seletor}`);
-  return resolverToken(declarados[declarados.length - 1]);
+  return resolver(declarados[declarados.length - 1]);
 }
 
 /*
@@ -62,7 +62,24 @@ function resolverToken(valorCss) {
   if (!nome) return valorCss;
   const achado = raizClara.match(new RegExp(`${nome}\\s*:\\s*([^;]+);`));
   if (!achado) throw new Error(`token ${nome} não existe em tokens.css`);
-  return achado[1].trim();
+  // Os nomes do MONITORA apontam para os oficiais (--text-secondary → --color-text-secondary → hex).
+  return resolverToken(achado[1].trim());
+}
+
+/*
+  O mesmo com os valores do tema escuro: o bloco `html[data-theme="dark"]` de
+  tokens.css, e o do tema claro para o que o escuro não redefine.
+*/
+const raizEscura = tokensCss.slice(tokensCss.indexOf('[data-theme="dark"]'));
+function resolverTokenEscuro(valorCss) {
+  const nome = valorCss.match(/^var\(\s*(--[\w-]+)/)?.[1];
+  if (!nome) return valorCss;
+  const achado = raizEscura.match(
+    new RegExp(`(?<![\\w-])${nome}\\s*:\\s*([^;]+);`),
+  );
+  return achado
+    ? resolverTokenEscuro(achado[1].trim())
+    : resolverToken(valorCss);
 }
 
 const canal = (valor) => {
@@ -117,18 +134,46 @@ describe("contraste dos KPIs da Equipe Núcleo", () => {
     qualquer regra nossa perderia para ele. Afirmar a cor do rótulo a partir
     deste ficheiro seria afirmar algo que a tela não mostra.
   */
-  it("o valor passa o AA sobre o cartão escuro", () => {
-    const cor = valor(
-      nucleoCss,
-      'html[data-theme="dark"] .nucleo-kpi-card',
-      "color",
+  /*
+    O cartão é o card compacto da Visão geral, só com tokens e sem regra
+    própria para o escuro: valor e fundo saem das regras de sempre, resolvidos
+    com os tokens do tema escuro.
+  */
+  /*
+    O número vem na cor do KPI (`--tone`, definida por `.tone-*`): cada cor
+    tem de passar o AA sobre o cartão, no claro e no escuro.
+  */
+  const tons = [
+    ...nucleoCss.matchAll(
+      /\.nucleo-kpi-card\.tone-([\w-]+)\s*\{[^}]*--tone:\s*(var\([^;]+\));/g,
+    ),
+  ].map(([, nome, cor]) => [nome, cor]);
+
+  it("o número usa a cor do KPI", () => {
+    expect(valor(nucleoCss, ".nucleo-kpi-card strong", "color", (v) => v)).toBe(
+      "var(--tone, var(--text-primary))",
     );
-    const fundo = valor(
+    expect(tons.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("cada cor de KPI passa o AA sobre o cartão, no claro e no escuro", () => {
+    const fundoClaro = valor(nucleoCss, ".nucleo-kpi-card", "background");
+    const fundoEscuro = valor(
       nucleoCss,
-      'html[data-theme="dark"] .nucleo-kpi-card',
+      ".nucleo-kpi-card",
       "background",
+      resolverTokenEscuro,
     );
-    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+    for (const [nome, cor] of tons) {
+      expect(
+        contraste(resolverToken(cor), fundoClaro),
+        `${nome} no claro`,
+      ).toBeGreaterThanOrEqual(AA);
+      expect(
+        contraste(resolverTokenEscuro(cor), fundoEscuro),
+        `${nome} no escuro`,
+      ).toBeGreaterThanOrEqual(AA);
+    }
   });
 });
 
@@ -154,18 +199,36 @@ describe("legibilidade e contraste dos mapas", () => {
     expect(contraste(cor, BRANCO)).toBeGreaterThanOrEqual(AA);
   });
 
+  /*
+    O fundo do painel saiu daqui: é a superfície do Design System (11.6) em
+    health-reference-kpis.css, `var(--surface-raised)`, cujo valor escuro mora
+    no bloco [data-theme="dark"] de tokens.css.
+  */
+  const fundoDoPainelEscuro = () => {
+    const kpisCss = semComentarios(
+      readFileSync("src/styles/health-reference-kpis.css", "utf8"),
+    );
+    const declarado = blocos(kpisCss, "#page-dashboard .health-map-pane")
+      .map((corpo) => corpo.match(/(?:^|;)\s*background\s*:\s*([^;!]+)/)?.[1])
+      .filter(Boolean)
+      .pop()
+      .trim();
+    const nome = declarado.match(/^var\(\s*(--[\w-]+)/)[1];
+    const raizEscura = tokensCss.slice(
+      tokensCss.indexOf('[data-theme="dark"]'),
+    );
+    return raizEscura.match(
+      new RegExp(`${nome}\\s*:\\s*(#[0-9a-f]{6})`, "i"),
+    )[1];
+  };
+
   it("legenda, dica e vazio passam o AA sobre o painel escuro", () => {
     const cor = valor(
       mapaCss,
       '[data-theme="dark"] .health-map-detail-legend',
       "color",
     );
-    const fundo = valor(
-      mapaCss,
-      '[data-theme="dark"] .health-map-pane',
-      "background",
-    );
-    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+    expect(contraste(cor, fundoDoPainelEscuro())).toBeGreaterThanOrEqual(AA);
   });
 
   it("a tarja de seção passa o AA sobre o painel escuro", () => {
@@ -174,11 +237,12 @@ describe("legibilidade e contraste dos mapas", () => {
       '[data-theme="dark"] .health-map-pane__eyebrow',
       "color",
     );
-    const fundo = valor(
-      mapaCss,
-      '[data-theme="dark"] .health-map-pane',
-      "background",
-    );
+    expect(contraste(cor, fundoDoPainelEscuro())).toBeGreaterThanOrEqual(AA);
+  });
+
+  it("a tarja de seção passa o AA sobre o painel claro", () => {
+    const cor = valor(mapaCss, ".health-map-pane__eyebrow", "color");
+    const fundo = resolverToken("var(--surface-raised)");
     expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
   });
 });
@@ -189,20 +253,51 @@ describe("seletor de camada Mapa/Satélite", () => {
     que diz a quem navega por teclado onde está. Os dois falhavam no escuro:
     3.78:1 no texto e 2.47:1 no anel.
   */
-  const ativoEscuro = () =>
-    valor(
-      seletorCss,
-      '[data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"]',
-      "background",
-    );
+  /*
+    Desde o controle segmentado do Design System (10.5) o seletor não tem
+    cores próprias no escuro: usa `--surface-*` e `--text-*`, que tokens.css
+    redefine em `html[data-theme="dark"]`. O contraste do escuro passa a ser
+    calculado resolvendo o mesmo token no bloco escuro.
+  */
+  const ATIVO = '.agsus-basemap-switcher__button[aria-pressed="true"]';
+  const bloco = tokensCss.slice(tokensCss.indexOf('html[data-theme="dark"]'));
+  const raizEscura = bloco.slice(0, bloco.indexOf("}"));
+  const resolverTokenEscuro = (valorCss) => {
+    const nome = valorCss.match(/^var\(\s*(--[\w-]+)/)?.[1];
+    if (!nome) return valorCss;
+    const achado = raizEscura.match(new RegExp(`${nome}\\s*:\\s*([^;]+);`));
+    return achado
+      ? resolverTokenEscuro(achado[1].trim())
+      : resolverToken(valorCss);
+  };
+  const bruto = (seletor, propriedade) =>
+    blocos(seletorCss, seletor)
+      .map(
+        (corpo) =>
+          corpo.match(
+            new RegExp(`(?:^|;)\\s*${propriedade}\\s*:\\s*([^;]+)`),
+          )?.[1],
+      )
+      .filter(Boolean)
+      .pop()
+      .trim();
 
   it("o botão ativo passa o AA no tema escuro", () => {
-    const cor = valor(
-      seletorCss,
-      '[data-theme="dark"] .agsus-basemap-switcher__button[aria-pressed="true"]',
-      "color",
-    );
-    expect(contraste(cor, ativoEscuro())).toBeGreaterThanOrEqual(AA);
+    const fundo = resolverTokenEscuro(bruto(ATIVO, "background"));
+    const cor = resolverTokenEscuro(bruto(ATIVO, "color"));
+    expect(fundo).toMatch(/^#/);
+    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+  });
+
+  it("o segmento inativo passa o AA sobre o trilho nos dois temas", () => {
+    const trilho = bruto(".agsus-basemap-switcher", "background");
+    const texto = bruto(".agsus-basemap-switcher__button", "color");
+    expect(
+      contraste(resolverToken(texto), resolverToken(trilho)),
+    ).toBeGreaterThanOrEqual(AA);
+    expect(
+      contraste(resolverTokenEscuro(texto), resolverTokenEscuro(trilho)),
+    ).toBeGreaterThanOrEqual(AA);
   });
 
   it("o botão ativo passa o AA no tema claro", () => {

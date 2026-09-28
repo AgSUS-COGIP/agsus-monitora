@@ -217,7 +217,7 @@ describe("áreas abertas por padrão", () => {
       ["Editais", "saude-indigena"],
       ["Cronograma", "saude-indigena"],
       ["Lista de aprovados", "saude-indigena"],
-      ["Análises", "saude-indigena"],
+      ["Análises curriculares", "saude-indigena"],
     ]);
   });
 });
@@ -276,7 +276,7 @@ describe("as áreas do usuário", () => {
   const itemDaArea = (id, view) =>
     area(id).querySelector(`.menu-item[data-view="${view}"]`);
 
-  it("o admin vê as três áreas; SEDE e Projetos sem Visão geral nem Análises", async () => {
+  it("o admin vê as três áreas; SEDE e Projetos sem Visão geral, com Análises", async () => {
     await montar(
       montarArvoreDoMenu({
         permitidas: {
@@ -299,7 +299,7 @@ describe("as áreas do usuário", () => {
         [...area(id).querySelectorAll(".menu-item")].map(
           (botao) => botao.dataset.view,
         ),
-      ).toEqual(["nucleo", "calendario", "approved"]);
+      ).toEqual(["nucleo", "calendario", "approved", "panel:analises"]);
     }
   });
 

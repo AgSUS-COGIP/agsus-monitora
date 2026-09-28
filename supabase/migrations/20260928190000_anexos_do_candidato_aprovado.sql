@@ -19,7 +19,7 @@
   Escrita com as mesmas regras do status: aprovados nível 2, perfil contratador
   ou admin, lista vigente e ativa, edital de área do usuário.
 
-  ROLLBACK: supabase/rollback/20260928140000_anexos_do_candidato_aprovado.sql
+  ROLLBACK: supabase/rollback/20260928190000_anexos_do_candidato_aprovado.sql
 */
 begin;
 

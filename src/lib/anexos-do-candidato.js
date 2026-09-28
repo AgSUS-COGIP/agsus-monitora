@@ -1,7 +1,7 @@
 /*
   Anexos do candidato aprovado: só PDF, até 2 MB cada, até 5 por candidato.
   Os mesmos limites estão no banco (bucket e `registrar_anexo_candidato_aprovado`,
-  migration 20260928140000); aqui eles viram aviso antes do envio.
+  migration 20260928190000); aqui eles viram aviso antes do envio.
 */
 
 export const BUCKET_DE_ANEXOS = "anexos-candidatos-aprovados";
