@@ -16,6 +16,9 @@
   própria (dashboard, nucleo, calendario…). Chamar o agrupamento do menu pelo
   mesmo nome misturaria as duas coisas.
 
+  Com mais de uma área, a barra desenha só a área atual, escolhida num seletor
+  no topo (`recortarArvorePorArea`, abaixo); a árvore segue com todas.
+
   Área nova = uma entrada em `AREAS_DO_SISTEMA` (o código é o de `TB_AREA`).
   Página nova = uma entrada em `PAGINAS_DO_MENU`. Quem decide o que o perfil
   pode ver continua sendo o `buildNav` de `legacy-app.js`; este arquivo só
@@ -201,6 +204,49 @@ export function itemAtivoDaArvore(arvore = [], view, secao, area) {
 }
 
 /*
+  Seletor de área. Em vez das áreas abertas uma sob a outra, o menu mostra no
+  topo "Área: <nome>" e, abaixo, só as páginas da área atual; Painéis e
+  Administração continuam embaixo. Quem tem uma área só não vê o seletor, e a
+  área dela aparece como antes.
+
+  A árvore continua com todas as áreas (`montarArvoreDoMenu`): o recorte é só
+  do desenho, e mora aqui para ser testável sem React. As páginas de cada área
+  são as que a árvore traz: o seletor não conhece nenhuma view pelo nome.
+*/
+export const ICONE_DO_SELETOR_DE_AREA = "chevrons-up-down";
+const IDS_DAS_AREAS = new Set(AREAS_DO_SISTEMA.map((area) => area.id));
+
+export function ehAreaDoSistema(id) {
+  return IDS_DAS_AREAS.has(texto(id));
+}
+
+/*
+  `areas`: os grupos de área que o usuário tem (com itens). `grupoAtual`: o da
+  área atual (ou o primeiro, se a atual não está entre eles). `demais`:
+  Painéis e Administração. `comSeletor`: mais de uma área.
+*/
+export function recortarArvorePorArea(arvore = [], areaAtual) {
+  const areas = arvore.filter((grupo) => ehAreaDoSistema(grupo.id));
+  const demais = arvore.filter((grupo) => !ehAreaDoSistema(grupo.id));
+  const grupoAtual =
+    areas.find((grupo) => grupo.id === texto(areaAtual)) ?? areas[0] ?? null;
+  return { areas, grupoAtual, demais, comSeletor: areas.length > 1 };
+}
+
+/*
+  Para onde ir ao trocar de área: a mesma página, se a área nova a tem (de
+  Editais da SEDE para Editais de Projetos); senão, a primeira página dela.
+  Devolve o item, ou `null` se a área não tem nenhuma página.
+*/
+export function destinoAoTrocarDeArea(arvore = [], area, viewAtual) {
+  const grupo = arvore.find((g) => g.id === texto(area));
+  if (!grupo?.itens.length) return null;
+  return (
+    grupo.itens.find((item) => item.view === texto(viewAtual)) ?? grupo.itens[0]
+  );
+}
+
+/*
   Recolhida, a navegação só rola quando os ícones não cabem (no trilho de 60px
   uma rolagem permanente espremeria os ícones). Folga de 1px para subpixel.
 */
@@ -229,6 +275,7 @@ export function iconesDoCatalogo() {
       ...PAGINAS_DO_MENU.map((pagina) => pagina.icone),
       ICONE_DOS_PAINEIS,
       ICONE_DAS_CONFIGURACOES,
+      ICONE_DO_SELETOR_DE_AREA,
     ]),
   ];
 }

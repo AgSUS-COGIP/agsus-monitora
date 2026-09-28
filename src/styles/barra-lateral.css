@@ -1,7 +1,7 @@
 /*
   Barra lateral — o CSS dos componentes React de `src/componentes/barra-lateral/`:
-  a alça de recolher (`alca-de-recolher.jsx`), o menu em áreas
-  (`menu-de-areas.jsx`) e os controles do rodapé (`rodape.jsx`).
+  a alça de recolher (`alca-de-recolher.jsx`), o menu em áreas com o seletor
+  de área (`menu-de-areas.jsx`) e os controles do rodapé (`rodape.jsx`).
 
   O contêiner da barra (largura, marca, navegação, rodapé, trilho recolhido e os
   tokens de componente `--menu-*`) é de `platform-shell.css`. Aqui ficam só as
@@ -351,6 +351,113 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
   body.sidebar-collapsed .menu-area__itens .menu-item {
     padding: 0 var(--space-3);
     color: var(--menu-flutuante-texto);
+  }
+}
+
+/* ── Seletor de área ──────────────────────────────────────────────────────── */
+
+/*
+  A cor de cada área: a bolinha do seletor (`menu-de-areas.jsx`). Os tokens de
+  estado trocam no escuro sem regra própria. A cor nunca vai sozinha: o nome
+  da área está sempre ao lado (no trilho, no rótulo acessível do botão).
+*/
+[data-cor-da-area="saude-indigena"] {
+  --cor-da-area: var(--state-success);
+}
+
+[data-cor-da-area="sede"] {
+  --cor-da-area: var(--state-info);
+}
+
+[data-cor-da-area="projetos"] {
+  --cor-da-area: var(--state-warning);
+}
+
+.menu-seletor {
+  margin-bottom: var(--space-1);
+}
+
+/* Duas linhas ("Área" e o nome), com borda: é um controle, não um grupo. */
+.menu-seletor__botao {
+  min-height: 44px;
+  border: 1px solid var(--menu-borda);
+}
+
+.menu-seletor__marca {
+  position: relative;
+  width: var(--menu-icone);
+  height: var(--menu-icone);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+/* Expandida, a marca é só a bolinha; o ícone de trocar é do trilho. */
+.menu-seletor__icone {
+  display: none;
+}
+
+.menu-seletor__ponto {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--cor-da-area, currentColor);
+  /* O anel na cor do texto garante a bolinha visível em qualquer cor de barra. */
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.menu-seletor__rotulo {
+  display: grid;
+  line-height: 1.2;
+}
+
+.menu-seletor__rotulo small {
+  color: var(--menu-texto-suave);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.menu-seletor__rotulo strong {
+  color: var(--menu-realce);
+  font-weight: 600;
+}
+
+.menu-seletor__opcao {
+  gap: var(--space-2);
+}
+
+/* Administração fica separada embaixo, depois das páginas da área. */
+.menu-area--administracao {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--menu-borda);
+}
+
+@media (min-width: 901px) {
+  body.sidebar-collapsed .menu-seletor {
+    margin-bottom: 0;
+  }
+
+  body.sidebar-collapsed .menu-seletor__botao {
+    border: 0;
+  }
+
+  body.sidebar-collapsed .menu-seletor__icone {
+    display: block;
+  }
+
+  body.sidebar-collapsed .menu-seletor__marca .menu-seletor__ponto {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 8px;
+    height: 8px;
+  }
+
+  body.sidebar-collapsed .menu-area--administracao {
+    margin-top: var(--space-1);
+    padding-top: var(--space-1);
   }
 }
 
