@@ -6,7 +6,6 @@ import {
   tomDoStatusDoEdital,
 } from "../lib/editais-do-nucleo.js";
 import {
-  assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
   obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
@@ -24,7 +23,6 @@ import {
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.js";
 import {
-  areaDeAberturaDoPainel,
   areasDoUsuario,
   montarArvoreDoMenu,
   nomeDaArea,
@@ -35,7 +33,12 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
-import { enderecoDoPainelNaArea } from "../lib/endereco-do-painel.js";
+import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
+import { semOPainelAntigoDeAnalises } from "../lib/pagina-de-analises.js";
+import {
+  abrirPaginaDeAnalises,
+  quadroDasAnalises,
+} from "./pagina-de-analises.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import { ehEditalDaSaudeIndigena } from "../lib/responsavel-do-edital.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
@@ -711,6 +714,7 @@ function can(perm) {
     if (perm === "admin") return canManageAccess(profile);
     const resource = {
       ind: "dashboard",
+      analises: "analises",
       cores: "nucleo",
       calendario: "calendario",
       paineis: "paineis",
@@ -720,7 +724,8 @@ function can(perm) {
   }
   const role = normalizeRole(profile);
   if (role) {
-    if (["ind", "cores", "paineis"].includes(perm)) return canViewCore(profile);
+    if (["ind", "analises", "cores", "paineis"].includes(perm))
+      return canViewCore(profile);
     if (["config", "admin"].includes(perm)) return canManageSettings(profile);
   }
   return profile["p_" + perm] === true;
@@ -1519,6 +1524,7 @@ function isViewAllowed(view) {
   if (view === "calendario")
     return profile?.permissoes ? can("calendario") : can("cores");
   if (view === "approved") return canViewCore(profile);
+  if (view === "analises") return can("analises");
   if (view === "config") return can("config");
   if (view.startsWith("panel:")) {
     const code = view.split(":")[1];
@@ -1545,6 +1551,7 @@ function systemHomeView() {
   if (can("cores")) return "nucleo";
   if (can("calendario")) return "calendario";
   if (canViewCore(profile)) return "approved";
+  if (can("analises")) return "analises";
   if (can("config")) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
@@ -2069,7 +2076,9 @@ function consultaDePaineis() {
 
 async function loadPanels(options = {}) {
   const { data, error } = await (options.consulta || consultaDePaineis());
-  if (!error && Array.isArray(data) && data.length) panels = data;
+  // Análises curriculares virou página (view `analises`): o painel antigo sai.
+  if (!error && Array.isArray(data) && data.length)
+    panels = semOPainelAntigoDeAnalises(data);
   else panels = [...DEFAULT_PANELS];
   renderPanelAdmin();
 }
@@ -2281,6 +2290,7 @@ function buildNav() {
     nucleo: can("cores"),
     calendario: can("calendario") || (!profile?.permissoes && can("cores")),
     approved: canViewCore(profile),
+    analises: can("analises"),
     config: can("config"),
   };
   const paineis = can("paineis")
@@ -2341,6 +2351,10 @@ function navigate(view) {
   }
   if (requestedView === "approved" && !canViewCore(profile)) {
     toast("Sem permissão para Lista de Aprovados.", "warn");
+    return;
+  }
+  if (requestedView === "analises" && !can("analises")) {
+    toast("Sem permissão para Análises curriculares.", "warn");
     return;
   }
   if (requestedView === "config" && !can("config")) {
@@ -2423,6 +2437,16 @@ function navigate(view) {
       subtituloDaArea("Candidatos por edital e situação de contratação."),
     );
     void window.aprovadosController?.render();
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "analises") {
+    // O app de análises traz o próprio cabeçalho: o de cima sai, como no painel.
+    document.body.classList.add("external-panel-mode");
+    $("page-analises").classList.add("active");
+    setPageTitle("Análises curriculares", subtituloDaArea(""));
+    abrirPaginaDeAnalises($("page-analises"));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -11309,11 +11333,6 @@ function openPanel(code) {
     toast("Painel indisponível ou inativo.", "warn");
     return;
   }
-  // Painel de várias áreas (Análises) abre com a área atual do menu: `?area=`.
-  const areaDoPainel = areaDeAberturaDoPainel(
-    code,
-    obterDadosDoMonitoramento().areaAtual,
-  );
   /*
     O painel externo traz o seu próprio cabeçalho. Somado ao do Monitora, a
     pessoa via dois títulos empilhados dizendo a mesma coisa.
@@ -11336,8 +11355,7 @@ function openPanel(code) {
   setPageTitle(panel.titulo, cfgValue("external_default_title"));
   $("externalTitle").textContent = panel.titulo;
   $("externalOpen").href =
-    enderecoDoPainelNaArea(panel.url, window.location.origin, areaDoPainel) ||
-    "#";
+    enderecoDoPainel(panel.url, window.location.origin) || "#";
   const mount = $("externalMount");
   if (mount.classList.contains("external-placeholder")) {
     mount.className = "";
@@ -11352,16 +11370,10 @@ function openPanel(code) {
     carregavam a cada login, mesmo sem ninguém abrir.
   */
   let holder = document.getElementById("external-panel-" + code);
-  // Aberto antes em outra área: o quadro recarrega com a área nova.
-  if (holder && (holder.dataset.area || "") !== areaDoPainel) {
-    holder.remove();
-    holder = null;
-  }
   if (!holder) {
     holder = document.createElement("div");
     holder.id = "external-panel-" + code;
     holder.className = "external-panel";
-    holder.dataset.area = areaDoPainel;
     mount.appendChild(holder);
     buildExternalPanel(holder, panel);
   }
@@ -11373,11 +11385,7 @@ function buildExternalPanel(holder, panel) {
     holder.innerHTML = `<div class="external-placeholder"><div><div style="font-size:58px;color:#555"><i class="fa-solid fa-screwdriver-wrench"></i></div><h2>${esc(cfgValue("maintenance_title"))}</h2><p>${esc(cfgValue("maintenance_message"))}</p></div></div>`;
     return;
   }
-  const safePanelUrl = enderecoDoPainelNaArea(
-    panel.url,
-    window.location.origin,
-    holder.dataset.area,
-  );
+  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
   if (!safePanelUrl) {
     holder.innerHTML = `<div class="external-placeholder"><div><h2>${esc(panel.titulo)}</h2><p>Cadastre uma URL http(s) válida deste painel em paineis_externos.</p></div></div>`;
     return;
@@ -11387,24 +11395,6 @@ function buildExternalPanel(holder, panel) {
   // Até o site de fora responder, o quadro ficaria em branco.
   acompanharCarregamentoDoPainel(holder, { aoTentarDeNovo: reloadExternal });
 }
-
-/*
-  A área mudou com o painel de várias áreas aberto: ele recarrega com a nova.
-  Só reabre quando o quadro visível é de outra área.
-*/
-function recarregarPainelNaAreaAtual() {
-  if (!currentPanel || currentView !== "panel:" + currentPanel.codigo) return;
-  const area = areaDeAberturaDoPainel(
-    currentPanel.codigo,
-    obterDadosDoMonitoramento().areaAtual,
-  );
-  const holder = document.getElementById(
-    "external-panel-" + currentPanel.codigo,
-  );
-  if (!area || !holder || (holder.dataset.area || "") === area) return;
-  openPanel(currentPanel.codigo);
-}
-assinarDadosDoMonitoramento(recarregarPainelNaAreaAtual);
 
 function reloadExternal() {
   if (!currentPanel) return;
@@ -12211,6 +12201,10 @@ function exitExternalPanel() {
 }
 
 function getFullscreenTarget() {
+  if (currentView === "analises") {
+    const frame = quadroDasAnalises($("page-analises"));
+    if (frame) return frame;
+  }
   if (currentView && currentView.startsWith("panel:") && currentPanel) {
     const holder = document.getElementById(
       "external-panel-" + currentPanel.codigo,

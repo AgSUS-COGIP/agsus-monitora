@@ -42,7 +42,7 @@ let raiz = null;
 
 async function montarMenu(
   permitidas = TUDO,
-  paineis = [{ codigo: "analises", titulo: "Análises" }],
+  paineis = [{ codigo: "recursos", titulo: "Recursos" }],
   areas = ["saude-indigena"],
 ) {
   document.body.className = "";

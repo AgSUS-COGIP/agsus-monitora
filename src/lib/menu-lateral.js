@@ -6,9 +6,9 @@
   Recrutamento e seleção). Agora os grupos de cima são as ÁREAS do sistema que
   o usuário tem (`profile.areas`, de `obter_contexto_monitora`): Saúde
   Indígena, SEDE e Projetos. Cada área repete as mesmas páginas — Editais,
-  Cronograma, Lista de aprovados —, e a página abre recortada pela área
-  escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.js`).
-  Abaixo delas ficam Painéis (os externos que não são de área nenhuma) e
+  Cronograma, Lista de aprovados, Análises curriculares —, e a página abre
+  recortada pela área escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.js`).
+  Abaixo delas ficam Painéis (os externos, que não têm área) e
   Administração. Com a barra recolhida, cada grupo vira um ícone só.
 
   Por que "área" e não "módulo": em `permissoes-recursos.js` e
@@ -75,21 +75,17 @@ export const PAGINAS_DO_MENU = Object.freeze([
     rotulo: "Lista de aprovados",
     icone: "user-round-check",
   }),
-]);
-
-/*
-  Painéis externos não têm área no banco (`TB_PAINEL_EXTERNO`). O de análises
-  curriculares é um painel só para as três áreas: aparece em cada uma, com nome
-  curto, e abre com a área atual na URL (`?area=`, ver
-  `enderecoDoPainelNaArea`). Os outros vão para Painéis. Para mandar um painel
-  para uma ou mais áreas, registre o `codigo` dele aqui.
-*/
-export const PAINEIS_DE_AREA = Object.freeze({
-  analises: Object.freeze({
-    areas: Object.freeze(["saude-indigena", "sede", "projetos"]),
+  /*
+    Análises curriculares era um painel externo (`TB_PAINEL_EXTERNO`, código
+    `analises`) repetido em cada área. Virou página: a permissão é só a do
+    recurso `analises`, e o quadro é dela (`src/modules/pagina-de-analises.js`).
+  */
+  Object.freeze({
+    view: "analises",
     rotulo: "Análises curriculares",
+    icone: "file-search",
   }),
-});
+]);
 
 /* A área de quem ainda recebe o contexto antigo, sem `profile.areas`. */
 const AREAS_PADRAO = Object.freeze(["saude-indigena"]);
@@ -107,23 +103,6 @@ export function areasDoUsuario(areas) {
 
 export function nomeDaArea(id) {
   return AREAS_DO_SISTEMA.find((area) => area.id === id)?.rotulo ?? "";
-}
-
-/* As áreas em que o painel aparece; painel sem área fica em Painéis. */
-export function areasDoPainel(codigo) {
-  const areas = PAINEIS_DE_AREA[texto(codigo)]?.areas;
-  return areas ? [...areas] : [AREA_DOS_PAINEIS];
-}
-
-/*
-  Com que área o painel abre: a atual, se ele é dela; senão a primeira dele.
-  Painel que não é de área nenhuma devolve "" (abre sem `?area=`).
-*/
-export function areaDeAberturaDoPainel(codigo, areaAtual) {
-  const areas = PAINEIS_DE_AREA[texto(codigo)]?.areas;
-  if (!areas) return "";
-  const atual = texto(areaAtual);
-  return areas.includes(atual) ? atual : areas[0];
 }
 
 /*
@@ -164,23 +143,6 @@ export function montarArvoreDoMenu({
   for (const painel of paineis) {
     const codigo = texto(painel?.codigo);
     if (!codigo) continue;
-    const deArea = PAINEIS_DE_AREA[codigo];
-    // O painel entra em cada área dele que o usuário tem.
-    const areasDoUsuarioNoPainel = (deArea?.areas ?? []).filter((area) =>
-      itensPorArea.has(area),
-    );
-    if (areasDoUsuarioNoPainel.length) {
-      for (const area of areasDoUsuarioNoPainel) {
-        itensPorArea.get(area).push({
-          view: `panel:${codigo}`,
-          rotulo: deArea.rotulo,
-          icone: ICONE_DOS_PAINEIS,
-          area,
-        });
-      }
-      continue;
-    }
-    // Painel de áreas que o usuário não tem continua acessível, em Painéis.
     itensPorArea.get(AREA_DOS_PAINEIS).push({
       view: `panel:${codigo}`,
       rotulo: texto(painel.titulo) || codigo,

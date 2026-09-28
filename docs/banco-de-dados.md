@@ -518,3 +518,52 @@ Risco levantado no ensaio: dos 137 editais, 100 têm unidade fora de
 `TA_UNIDADE_AREA` (36 unidades, todas DSEI/CASAI do `TD_UNIDADE`, todas na
 Saúde Indígena) e **nenhum** tem unidade fora das duas tabelas; nenhum edital
 tem área diferente da que a regra deduz.
+
+## 8. Análises curriculares viram aba interna
+
+Migration `20260929100000_analises_aba_interna.sql` (rollback em
+`supabase/rollback/`; ensaiada, com o rollback, em 28/09/2026).
+
+Análises curriculares era a linha `analises` de `TB_PAINEL_EXTERNO`, aberta
+como painel externo e repetida em cada área pelo menu. Para vê-la eram precisos
+três recursos: `analises`, `paineis` e `painel:<id do analises>`. Agora é a
+view `analises` do front (`src/modules/pagina-de-analises.js`), com endereço
+fixo do app (`analises.html?area=<área atual>`) e permissão **só do recurso
+`analises`** (>= leitor). Nenhuma RPC mudou.
+
+- **Quem via continua vendo.** Quem via o painel já tinha `analises` >= leitor
+  (era uma das três condições); nenhuma linha é criada para essas pessoas, e a
+  migration aborta se alguém delas ficasse sem acesso.
+- **Quem não via continua sem ver** (padrão, `c_manter_quem_nao_via = true` no
+  topo do bloco): quem tinha `analises` mas não o painel ganha linha explícita
+  `analises` = `sem_acesso`. Isso também tira o acesso direto a
+  `analises.html` e às RPCs de análises, que essas pessoas tinham pelo padrão
+  do papel. Com `false`, elas passam a ver a aba e nenhuma linha é criada.
+- **O painel é arquivado**: `ativo = false` e `tipo_abertura = 'aba_interna'`
+  (a marca, em coluna existente; `em_manutencao` não muda). As linhas
+  `painel:<id>` de `TB_PERMISSAO_RECURSO` ficam, como histórico. Painel
+  inativo já some de `obter_contexto_monitora` (`panel_ids`) e da matriz
+  (`obter_matriz_acessos` lista só painel ativo).
+- **Auditoria**: cada permissão alterada em `TH_PERMISSAO_RECURSO` (motivo
+  "Análises curriculares viram aba interna"); o arquivamento em
+  `TH_CONFIGURACAO` (histórico de configurações, com a foto dos painéis antes e
+  depois). Idempotente: com a marca já gravada, não faz nada.
+- **Rollback**: desfaz só as permissões que a migration mudou e que ninguém
+  mudou depois (linha criada por ela sai; linha que já existia volta ao nível e à
+  revisão anteriores) e devolve `ativo`/`tipo_abertura` da foto
+  `paineis_antes`. Registra o desfazer nos dois históricos.
+
+Ensaio (begin…rollback, produção, 22 perfis ativos): a fórmula da migration bate
+com `private.nivel_recurso` perfil a perfil (impersonando cada usuário). Viam o
+painel: admin 9/9, edital_gestor 2/2, usuario 9/11. Depois: os mesmos 20 veem a
+aba, ninguém perde e ninguém ganha; 2 linhas criadas (`usuario`, `analises` =
+`sem_acesso`, sem linha anterior — contas de 24 e 25/09, sem nenhum painel);
+`panel_ids` somados 80 → 60; a matriz fica com Seleção, Entrevistas e Recursos.
+Com `false`, 0 linhas e os 2 passam a ver. Rodar duas vezes não muda nada.
+Migration + rollback devolvem `TB_PERMISSAO_RECURSO` (nível, revisão,
+updated_at, updated_by) e a linha do painel idênticas.
+
+Cuidado: restaurar no Histórico de configurações uma versão anterior a esta
+migration reativa a linha (`ativo`), e a coluna `painel:<analises>` volta à
+matriz. O front ignora o painel `analises` de qualquer jeito
+(`semOPainelAntigoDeAnalises`, em `src/lib/pagina-de-analises.js`).

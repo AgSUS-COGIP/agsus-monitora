@@ -793,6 +793,9 @@ html[data-theme="dark"] .sidebar {
   Este estado esconde **apenas** o cabeçalho superior. Não é o antigo
   `external-clean`, que também escondia a navegação lateral: a sidebar fica, é
   por ela que se volta.
+
+  A página Análises curriculares (`.pagina-das-analises`) usa o mesmo estado:
+  o app de análises também traz o próprio cabeçalho.
 */
 body.external-panel-mode .main > header.top {
   display: none;
@@ -809,7 +812,10 @@ body.external-panel-mode .content {
 
 body.external-panel-mode #page-external,
 body.external-panel-mode #page-external .external-panel,
-body.external-panel-mode #page-external iframe {
+body.external-panel-mode #page-external iframe,
+body.external-panel-mode .pagina-das-analises,
+body.external-panel-mode .pagina-das-analises .external-panel,
+body.external-panel-mode .pagina-das-analises iframe {
   height: 100%;
   min-height: 100dvh;
 }

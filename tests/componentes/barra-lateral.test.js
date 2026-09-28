@@ -32,15 +32,14 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const CHAVE_FECHADAS = "agsus_monitora_menu_areas_fechadas_v1";
 const LARGURA_ORIGINAL = window.innerWidth;
 
-function arvoreCompleta(
-  paineis = [{ codigo: "analises", titulo: "Análises" }],
-) {
+function arvoreCompleta(paineis = []) {
   return montarArvoreDoMenu({
     permitidas: {
       dashboard: true,
       nucleo: true,
       calendario: true,
       approved: true,
+      analises: true,
       config: true,
     },
     paineis,
@@ -284,8 +283,8 @@ describe("as áreas do usuário", () => {
           nucleo: true,
           calendario: true,
           approved: true,
+          analises: true,
         },
-        paineis: [{ codigo: "analises", titulo: "Monitora Análises" }],
         areas: TODAS,
       }),
     );
@@ -299,7 +298,7 @@ describe("as áreas do usuário", () => {
         [...area(id).querySelectorAll(".menu-item")].map(
           (botao) => botao.dataset.view,
         ),
-      ).toEqual(["nucleo", "calendario", "approved", "panel:analises"]);
+      ).toEqual(["nucleo", "calendario", "approved", "analises"]);
     }
   });
 
@@ -350,9 +349,9 @@ describe("escolher uma página", () => {
 
     await clicar(item("nucleo"));
     await clicar(item("dashboard"));
-    await clicar(item("panel:analises"));
+    await clicar(item("analises"));
 
-    expect(chamadas).toEqual(["nucleo", "dashboard", "panel:analises"]);
+    expect(chamadas).toEqual(["nucleo", "dashboard", "analises"]);
   });
 
   it("sem opção, usa window.navigate na hora do clique (os embrulhos valem)", async () => {
