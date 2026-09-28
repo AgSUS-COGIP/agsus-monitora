@@ -1,13 +1,16 @@
 /*
-  Indicadores de Editais no mesmo padrão da Saúde Indígena
-  (health-reference-kpis.css): sem faixa colorida no topo — a cor de estado vai
-  no tile do ícone —, pesos 600/700 e valores de tokens.css.
+  Indicadores de Editais no mesmo card compacto da Visão geral
+  (health-reference-kpis.css; DESIGN.md seção 4, "Indicador", e seção 12,
+  exceção aceita): fundo claro, borda sutil, raio de 8px, sem sombra; tile de
+  24px na cor do estado, rótulo 12px/500 e valor 20px/600 em algarismos
+  tabulares. Só tokens: o tema escuro troca os valores sem regra própria.
 */
 .nucleo-operational-panel {
   margin: 0;
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--surface-card);
+  /* O fundo é o do card da tabela, também no escuro (runtime-critical-fixes.css). */
+  background: transparent;
 }
 .nucleo-operational-heading {
   display: flex;
@@ -16,12 +19,12 @@
   gap: var(--space-4);
   margin-bottom: var(--space-3);
 }
+/* "Acompanhamento operacional": rótulo em sentence case (DS 4), não eyebrow em maiúsculas. */
 .nucleo-operational-heading span {
   display: block;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  font-weight: 500;
   color: var(--text-secondary);
 }
 .nucleo-operational-heading h3 {
@@ -35,49 +38,76 @@
   color: var(--text-secondary);
   font-size: var(--text-md);
 }
+/* Uma linha quando cabe, quebrando para menos colunas; 2 abaixo de 768px (fim do arquivo). */
 .nucleo-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--space-3);
 }
+/*
+  O card inteiro é o botão que filtra (DS 11.6). O JSX põe o ícone num <span> e
+  o par rótulo/valor noutro; com `display: contents` nesse segundo, os três
+  entram na mesma grade: ícone e rótulo na primeira linha (6px entre eles),
+  valor embaixo, ocupando a largura toda — a anatomia do KPI da Visão geral.
+*/
 .nucleo-kpi-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  align-content: start;
+  column-gap: var(--space-1-5);
+  row-gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
+  appearance: none;
+  color: var(--text-primary);
+  font: inherit;
   text-align: left;
   cursor: pointer;
-  transition:
-    transform var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard);
-  color: var(--text-primary);
+  transition: background-color var(--motion-fast) var(--ease-standard);
 }
 .nucleo-kpi-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-raised);
+  background: var(--surface-hover);
 }
-/* Filtro ativo: borda na cor do estado, que é a informação do cartão. */
+.nucleo-kpi-card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+/* Filtro ativo: o mesmo da Visão geral (borda da marca, fundo informativo). */
 .nucleo-kpi-card.is-active {
-  border-color: var(--tone);
-  box-shadow: 0 0 0 1px var(--tone);
+  border-color: var(--brand-primary);
+  background: var(--state-info-soft);
 }
+.nucleo-kpi-card > span:last-child {
+  display: contents;
+}
+/* O texto encolhe e quebra dentro da coluna, em vez de descer para baixo do ícone. */
 .nucleo-kpi-card small {
-  display: block;
-  margin-bottom: 2px;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  line-height: 1.3;
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 24px;
+  margin: 0;
+  font-size: var(--text-caption);
+  font-weight: 500;
+  line-height: var(--leading-caption);
   color: var(--text-secondary);
 }
 .nucleo-kpi-card strong {
-  font-size: var(--text-kpi);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  color: var(--text-primary);
+  font-size: var(--text-metric-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-metric);
   /*
     Os seis números ficam lado a lado numa grade. Com dígitos de largura
     variável, "111" e "999" ocupam espaços diferentes e a linha perde o
@@ -86,14 +116,17 @@
   font-variant-numeric: tabular-nums;
 }
 .nucleo-kpi-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  border-radius: var(--radius-lg);
+  grid-column: 1;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-md);
   background: var(--tone-soft);
   color: var(--tone);
+  font-size: 13px;
 }
 .nucleo-kpi-card.tone-blue {
   --tone: var(--state-info);
@@ -111,8 +144,9 @@
   --tone: var(--state-warning);
   --tone-soft: var(--state-warning-soft);
 }
+/* "Próximos 7 dias" é agenda (DS 11.8: info); o ciano de série não é cor de estado. */
 .nucleo-kpi-card.tone-cyan {
-  --tone: var(--series-3);
+  --tone: var(--state-info);
   --tone-soft: var(--state-info-soft);
 }
 .nucleo-kpi-card.tone-purple {
@@ -123,23 +157,35 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: #eaf3ff;
-  color: #1c5181;
-  font-size: 13px;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-body-sm);
 }
 /* Sem filtro ativo a tarja some: o `display: flex` acima venceria o atributo `hidden`. */
 .nucleo-active-alert-filter[hidden] {
   display: none;
 }
+.nucleo-active-alert-filter strong {
+  font-weight: 600;
+}
+/* "Limpar": botão ghost dentro da tarja (DS 11.3). */
 .nucleo-active-alert-filter button {
+  min-height: 32px;
+  padding: 0 var(--space-3);
   border: 0;
+  border-radius: var(--radius-md);
   background: transparent;
-  color: #1267b7;
-  font-weight: 800;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
   cursor: pointer;
+}
+.nucleo-active-alert-filter button:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
 }
 /*
   Carregando, vazio e erro ocupam a mesma faixa da grade de KPIs: o aviso
@@ -152,26 +198,26 @@
   grid-column: 1/-1;
   display: flex;
   align-items: flex-start;
-  gap: 11px;
-  padding: 15px;
-  border-radius: 12px;
-  font-size: 13px;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-sm);
   line-height: 1.45;
 }
 .nucleo-summary-loading {
-  border: 1px solid #d7e4f1;
-  background: #f5f9ff;
-  color: #35506d;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
 }
 .nucleo-summary-empty {
-  border: 1px dashed #ccd8e4;
-  background: #f9fbfd;
-  color: #4e6175;
+  border: 1px dashed var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
 }
 .nucleo-summary-error {
-  border: 1px solid #facaca;
-  background: #fff2f2;
-  color: #af2727;
+  border: 0;
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
 }
 .nucleo-summary-loading > i,
 .nucleo-summary-empty > i,
@@ -186,20 +232,23 @@
 .nucleo-summary-text strong {
   display: block;
   margin-bottom: 2px;
+  font-weight: 600;
 }
 .nucleo-summary-retry {
   flex: 0 0 auto;
-  padding: 6px 12px;
-  border: 1px solid currentColor;
-  border-radius: 8px;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
   background: transparent;
   color: inherit;
-  font-size: 12px;
-  font-weight: 800;
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-weight: 500;
   cursor: pointer;
 }
 .nucleo-summary-retry:hover {
-  background: rgba(175, 39, 39, 0.08);
+  background: color-mix(in srgb, currentColor 10%, transparent);
 }
 #nucleoRows td:last-child {
   white-space: nowrap;
@@ -209,37 +258,84 @@
   flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   white-space: nowrap;
 }
 #nucleoRows td:last-child .btn {
   margin: 0 2px;
 }
+/* Alerta da linha: badge do DS 11.8 (caption 500, raio pequeno, cor do estado). */
 .nucleo-row-alert {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 5px;
-  padding: 4px 7px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
+  gap: var(--space-1);
+  min-height: 20px;
+  margin-top: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-caption);
+  font-weight: 500;
 }
 .nucleo-row-alert.tone-danger {
-  background: #fee7e7;
-  color: #bd2f2f;
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
 }
 .nucleo-row-alert.tone-warning {
-  background: #fff3cf;
-  color: #9a6c00;
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
 }
 .nucleo-row-alert.tone-purple {
   background: #eee9ff;
   color: #6544bf;
 }
 .nucleo-row-alert.tone-success {
-  background: #e2f7ed;
-  color: #168454;
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+/*
+  O card da tabela de Editais: fica o card (exceção aceita, DESIGN.md seção
+  12), no DS 11.6 — borda sutil, raio de 8px, sem sombra. Vence `.card`
+  (app.css) e `.visual-polish-ready .table-card` (visual-polish.css): mesma
+  especificidade deste, carregado antes.
+*/
+.table-card.nucleo-page-card {
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+/*
+  Tabela no DS 11.4. As regras de app.css (`th` em maiúsculas e peso 800,
+  `td` 650, `.num` centralizado, `.chip` 900, `.link` 900, `.table-meta`
+  800) valem para o sistema todo; aqui perdem por especificidade só nesta
+  página. O cabeçalho continua sticky, por isso tem o fundo do card.
+*/
+.nucleo-page-card th {
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.nucleo-page-card td {
+  border-bottom-color: var(--border-subtle);
+  font-weight: 400;
+}
+.nucleo-page-card tr:hover td {
+  background: var(--surface-hover);
+}
+.nucleo-page-card .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.nucleo-page-card .chip,
+.nucleo-page-card .link {
+  font-weight: 500;
+}
+.nucleo-page-card .table-meta {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 .nucleo-timeline-card {
   width: min(920px, 94vw);
@@ -250,10 +346,8 @@
   align-items: flex-start;
 }
 .nucleo-timeline-eyebrow {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: var(--text-caption);
+  font-weight: 500;
   color: #3577ad;
 }
 .nucleo-timeline-card .modal-head h3 {
@@ -281,9 +375,8 @@
 }
 .nucleo-timeline-summary span {
   display: block;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: 500;
   color: #73889d;
 }
 .nucleo-timeline-summary strong {
@@ -322,9 +415,8 @@
   border-bottom: 1px solid #e0e8f0;
 }
 .nucleo-timeline-section-title span {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: 500;
   color: #668198;
 }
 .nucleo-timeline-list {
@@ -355,7 +447,7 @@
   height: 36px;
   border: 3px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 0 0 1px #d9e2ec;
+  outline: 1px solid var(--border-subtle);
   background: #e7edf3;
   color: #8293a4;
 }
@@ -366,7 +458,7 @@
 }
 .nucleo-timeline-item > div > div span {
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 500;
 }
 .nucleo-timeline-item p {
   margin: 5px 0;
@@ -492,9 +584,8 @@
 .cronograma-governance-heading span,
 .cronograma-history-heading span {
   display: block;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: 500;
   color: #638098;
 }
 .cronograma-governance-heading strong,
@@ -557,8 +648,6 @@
 .cronograma-override-detail[hidden] {
   display: none !important;
 }
-html[data-theme="dark"] .nucleo-operational-panel,
-html[data-theme="dark"] .nucleo-kpi-card,
 html[data-theme="dark"] .nucleo-timeline-card,
 html[data-theme="dark"] .cronograma-governance,
 html[data-theme="dark"] .cronograma-history-section,
@@ -567,7 +656,6 @@ html[data-theme="dark"] .cronograma-history-item {
   color: #dfeaf4;
   border-color: #294159;
 }
-html[data-theme="dark"] .nucleo-operational-heading h3,
 html[data-theme="dark"] .nucleo-timeline-summary strong,
 html[data-theme="dark"] .cronograma-governance-heading strong,
 html[data-theme="dark"] .cronograma-history-heading strong {
@@ -577,55 +665,6 @@ html[data-theme="dark"] .nucleo-timeline-summary > div,
 html[data-theme="dark"] .nucleo-timeline-history article {
   background: #13273a;
   border-color: #2b455d;
-}
-/*
-  O que segue não existia. Enquanto o tema escuro destas folhas estava
-  desligado, o painel inteiro ficava claro e o conjunto era ao menos
-  coerente. Ligado o tema, as peças sem regra própria continuariam claras
-  no meio de um painel escuro — e duas reprovavam contraste: o subtítulo do
-  cabeçalho dava 4.30:1 e a tarja de seção, 3.33:1.
-*/
-html[data-theme="dark"] .nucleo-operational-heading span {
-  color: #7fb4e0;
-}
-html[data-theme="dark"] .nucleo-operational-heading p {
-  color: #9fb4c9;
-}
-/*
-  O rótulo do KPI não aparece aqui de propósito. No escuro ele é resolvido por
-  `config-page.css`, que pinta `html[data-theme="dark"] .app small` com
-  `!important` — 15.03:1 sobre este cartão, verificado no navegador. Uma regra
-  nossa perderia para esse `!important` e ficaria no ficheiro sem nunca valer,
-  que é exatamente o que este trabalho veio desfazer.
-*/
-html[data-theme="dark"] .nucleo-kpi-icon {
-  background: color-mix(in srgb, var(--tone, #2673d8) 25%, #0f2031);
-  color: #eef6ff;
-}
-html[data-theme="dark"] .nucleo-active-alert-filter {
-  background: #13314c;
-  color: #bcd9f5;
-}
-html[data-theme="dark"] .nucleo-active-alert-filter button {
-  color: #8ec5ff;
-}
-html[data-theme="dark"] .nucleo-summary-loading {
-  border-color: #294159;
-  background: #13273a;
-  color: #c3d3e2;
-}
-html[data-theme="dark"] .nucleo-summary-empty {
-  border-color: #2b455d;
-  background: #13273a;
-  color: #9fb4c9;
-}
-html[data-theme="dark"] .nucleo-summary-error {
-  border-color: #5d2b2e;
-  background: #33181a;
-  color: #ff9f9f;
-}
-html[data-theme="dark"] .nucleo-summary-retry:hover {
-  background: rgba(255, 159, 159, 0.12);
 }
 html[data-theme="dark"] .nucleo-timeline-empty,
 html[data-theme="dark"] .nucleo-timeline-loading {
@@ -649,13 +688,13 @@ html[data-theme="dark"] .cronograma-validation-warnings {
 html[data-theme="dark"] .cronograma-history-empty {
   color: #9fb4c9;
 }
-@media (max-width: 1280px) {
+/* KPIs em 2 colunas no celular, como na Visão geral (DESIGN.md seção 4). */
+@media (max-width: 767px) {
   .nucleo-kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 720px) {
-  .nucleo-kpi-grid,
   .nucleo-timeline-summary,
   .cronograma-governance-grid {
     grid-template-columns: 1fr 1fr;
@@ -666,7 +705,6 @@ html[data-theme="dark"] .cronograma-history-empty {
   }
 }
 @media (max-width: 480px) {
-  .nucleo-kpi-grid,
   .nucleo-timeline-summary,
   .cronograma-governance-grid {
     grid-template-columns: 1fr;

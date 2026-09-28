@@ -3,7 +3,7 @@
   padding: 16px;
   border: 1px solid #bfdbfe;
   border-radius: 14px;
-  background: linear-gradient(180deg, #eff6ff 0%, #fff 100%);
+  background: var(--state-info-soft);
 }
 #cronogramaEditor .cronograma-bulk-head {
   display: flex;
@@ -70,10 +70,8 @@
   margin-left: 7px;
   padding: 2px 7px;
   border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: 500;
 }
 #cronogramaEditor .cronograma-recommended-badge {
   background: #dcfce7;

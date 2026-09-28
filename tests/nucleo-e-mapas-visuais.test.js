@@ -41,14 +41,14 @@ function blocos(css, seletor) {
 }
 
 /** Último valor declarado para a propriedade — que é o que a cascata aplica. */
-function valor(css, seletor, propriedade) {
+function valor(css, seletor, propriedade, resolver = resolverToken) {
   const padrao = new RegExp(`(?:^|;)\\s*${propriedade}\\s*:\\s*([^;]+)`);
   const declarados = blocos(css, seletor)
     .map((corpo) => corpo.match(padrao)?.[1]?.trim())
     .filter(Boolean);
   if (!declarados.length)
     throw new Error(`${propriedade} não declarada em ${seletor}`);
-  return resolverToken(declarados[declarados.length - 1]);
+  return resolver(declarados[declarados.length - 1]);
 }
 
 /*
@@ -64,6 +64,22 @@ function resolverToken(valorCss) {
   if (!achado) throw new Error(`token ${nome} não existe em tokens.css`);
   // Os nomes do MONITORA apontam para os oficiais (--text-secondary → --color-text-secondary → hex).
   return resolverToken(achado[1].trim());
+}
+
+/*
+  O mesmo com os valores do tema escuro: o bloco `html[data-theme="dark"]` de
+  tokens.css, e o do tema claro para o que o escuro não redefine.
+*/
+const raizEscura = tokensCss.slice(tokensCss.indexOf('[data-theme="dark"]'));
+function resolverTokenEscuro(valorCss) {
+  const nome = valorCss.match(/^var\(\s*(--[\w-]+)/)?.[1];
+  if (!nome) return valorCss;
+  const achado = raizEscura.match(
+    new RegExp(`(?<![\\w-])${nome}\\s*:\\s*([^;]+);`),
+  );
+  return achado
+    ? resolverTokenEscuro(achado[1].trim())
+    : resolverToken(valorCss);
 }
 
 const canal = (valor) => {
@@ -118,16 +134,23 @@ describe("contraste dos KPIs da Equipe Núcleo", () => {
     qualquer regra nossa perderia para ele. Afirmar a cor do rótulo a partir
     deste ficheiro seria afirmar algo que a tela não mostra.
   */
+  /*
+    O cartão é o card compacto da Visão geral, só com tokens e sem regra
+    própria para o escuro: valor e fundo saem das regras de sempre, resolvidos
+    com os tokens do tema escuro.
+  */
   it("o valor passa o AA sobre o cartão escuro", () => {
     const cor = valor(
       nucleoCss,
-      'html[data-theme="dark"] .nucleo-kpi-card',
+      ".nucleo-kpi-card strong",
       "color",
+      resolverTokenEscuro,
     );
     const fundo = valor(
       nucleoCss,
-      'html[data-theme="dark"] .nucleo-kpi-card',
+      ".nucleo-kpi-card",
       "background",
+      resolverTokenEscuro,
     );
     expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
   });

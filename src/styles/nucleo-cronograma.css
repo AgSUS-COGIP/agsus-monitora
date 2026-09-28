@@ -34,10 +34,8 @@
 
 .cronograma-eyebrow {
   color: #2563eb;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: 500;
 }
 
 .cronograma-auto-toggle {
@@ -50,7 +48,7 @@
   background: #f4f8ff;
   color: #174d8c;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -79,10 +77,8 @@
   display: block;
   margin-bottom: 6px;
   color: #8290a4;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: var(--text-caption);
+  font-weight: 500;
 }
 
 .cronograma-status-preview strong {
@@ -118,15 +114,15 @@
   min-width: 760px;
 }
 
+/* Cabeçalho no DS 11.4: sem fundo colorido, caption 500 em cinza. */
 .cronograma-table th {
   padding: 9px 10px;
-  background: #f4f7fb;
-  color: #6f8097;
-  font-size: 10px;
-  font-weight: 900;
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-caption);
+  font-weight: 500;
   text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .cronograma-table td {
@@ -166,7 +162,7 @@
   background: #eef4ff;
   color: #2563eb;
   font-size: 9px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .cronograma-remove {
@@ -218,11 +214,6 @@ html[data-theme="dark"] .cronograma-actions-box,
 html[data-theme="dark"] .cronograma-table input {
   background: #172a3f;
   border-color: #334b63;
-}
-
-html[data-theme="dark"] .cronograma-table th {
-  background: #172a3f;
-  color: #a8b8ca;
 }
 
 html[data-theme="dark"] .cronograma-table td {
