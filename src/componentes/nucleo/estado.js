@@ -10,13 +10,15 @@
   estiver a caminho.
 */
 
-import { canManageEditais } from "../../lib/access-roles.js";
+import { canManageAccess, canManageEditais } from "../../lib/access-roles.js";
 import { exigirSessao } from "../../lib/sessao.js";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.js";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.js";
 
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";
 const RPC_SALVAR = "salvar_monitoramento_com_cronograma_v2";
+const RPC_UNIDADES_POR_AREA = "listar_unidades_por_area";
+const RPC_MOVER_DE_AREA = "mover_edital_de_area";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -61,6 +63,8 @@ export function criarEstadoDoNucleo({
     loader: () => carregarResumoDoNucleo(supabase),
   });
   let pedido = { fonte: null, pendente: null, token: 0 };
+  /* Unidades com área (TA_UNIDADE_AREA): uma carga por sessão, refeita depois de salvar. */
+  let unidadesPorArea = null;
   let identidade;
 
   function publicar(mudancas) {
@@ -121,6 +125,7 @@ export function criarEstadoDoNucleo({
   */
   function reiniciarSessao() {
     resumo.invalidate();
+    unidadesPorArea = null;
     pedido = { fonte: null, pendente: null, token: pedido.token + 1 };
     publicar({
       resumo: [],
@@ -155,6 +160,31 @@ export function criarEstadoDoNucleo({
     });
     if (error) throw error;
     return data || {};
+  }
+
+  /*
+    As unidades com área definida, para o formulário oferecer só as da área.
+    Falhar aqui não impede de editar: o formulário cai na área gravada nos
+    editais, e o banco confere a unidade ao salvar.
+  */
+  function lerUnidadesPorArea() {
+    if (!supabase) return Promise.resolve([]);
+    if (!unidadesPorArea)
+      unidadesPorArea = exigirSessao(supabase)
+        .then(() => supabase.rpc(RPC_UNIDADES_POR_AREA))
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return Array.isArray(data) ? data : [];
+        })
+        .catch((erro) => {
+          console.warn(
+            "Unidades por área indisponíveis:",
+            erro?.message || erro,
+          );
+          unidadesPorArea = null;
+          return [];
+        });
+    return unidadesPorArea;
   }
 
   /**
@@ -199,6 +229,8 @@ export function criarEstadoDoNucleo({
       });
       if (error) throw error;
       if (!data?.ok) throw new Error("O Supabase não confirmou o salvamento.");
+      // Uma unidade nova pode ter sido registrada na área.
+      unidadesPorArea = null;
 
       /*
         O aviso sai antes de reabrir a página: ele invalida o resumo (aqui e no
@@ -217,6 +249,54 @@ export function criarEstadoDoNucleo({
       return true;
     } catch (erro) {
       toast(`Erro ao salvar edital: ${erro?.message || erro}`, "error");
+      return false;
+    } finally {
+      loader(false);
+      publicar({ salvando: false });
+    }
+  }
+
+  /**
+   * Só admin: muda o edital de área, com motivo (auditado no banco). Pede
+   * confirmação citando o edital e as duas áreas.
+   */
+  async function moverEdital({ id, area, motivo, rotulo, de, para }) {
+    if (estado.salvando) return false;
+    if (!canManageAccess(perfil())) {
+      toast("Só administradores podem mover editais de área.", "warn");
+      return false;
+    }
+    if (!txt(area)) {
+      toast("Escolha a área de destino.", "warn");
+      return false;
+    }
+    if (!txt(motivo)) {
+      toast("Informe o motivo da mudança de área.", "warn");
+      return false;
+    }
+    if (!confirmar(`Mover o edital ${rotulo} de ${de} para ${para}?`))
+      return false;
+
+    publicar({ salvando: true });
+    loader(true, "Editais", "Movendo edital de área...", 70);
+    try {
+      await exigirSessao(supabase);
+      const { data, error } = await supabase.rpc(RPC_MOVER_DE_AREA, {
+        p_id: id,
+        p_area: area,
+        p_motivo: txt(motivo),
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error("O Supabase não confirmou a mudança.");
+      publicar({ modal: null });
+      document.dispatchEvent(
+        new CustomEvent(EVENTO_CRONOGRAMA_SALVO, { detail: { id, data } }),
+      );
+      await aoSalvar();
+      toast(`${rotulo} movido para ${para}.`);
+      return true;
+    } catch (erro) {
+      toast(`Erro ao mover edital: ${erro?.message || erro}`, "error");
       return false;
     } finally {
       loader(false);
@@ -259,7 +339,9 @@ export function criarEstadoDoNucleo({
     abrirLinhaDoTempo: (id) => abrir({ tipo: "linha-do-tempo", id: txt(id) }),
     fecharModal: () => estado.modal && publicar({ modal: null }),
     lerCronograma,
+    lerUnidadesPorArea,
     salvarEdital,
+    moverEdital,
     desligar() {
       assinaturaDoAuth?.data?.subscription?.unsubscribe?.();
       document.removeEventListener(EVENTO_CRONOGRAMA_SALVO, invalidarResumo);

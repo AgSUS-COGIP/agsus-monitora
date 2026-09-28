@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  areaDaUnidade,
   compararEditais,
   editalParaSalvar,
   formularioDoEdital,
   indexarResumo,
   indicadoresDoResumo,
+  mapaDeAreasDasUnidades,
   opcoesDeUnidade,
   passaNoFiltroOperacional,
   resumoDoEdital,
+  unidadesDaArea,
   unidadesDisponiveis,
 } from "../src/lib/editais-do-nucleo.js";
 import { UNIDADES_CORES } from "../src/lib/responsavel-do-edital.js";
@@ -162,5 +165,54 @@ describe("resumo e filtro operacional", () => {
     expect(passaNoFiltroOperacional(null, "todos")).toBe(true);
     expect(passaNoFiltroOperacional(null, "incompleto")).toBe(false);
     expect(passaNoFiltroOperacional(resumo[1], "proxima")).toBe(true);
+  });
+});
+
+describe("unidades por área", () => {
+  const TA = [
+    { unidade: "SEDE", area: "sede" },
+    { unidade: "Rio Doce", area: "projetos" },
+  ];
+
+  it("TA_UNIDADE_AREA manda; depois o catálogo (Saúde Indígena); depois os editais", () => {
+    const mapa = mapaDeAreasDasUnidades({
+      unidadesPorArea: TA,
+      catalogo: CATALOGO,
+      linhas: [
+        // Edital movido para a SEDE não tira o DSEI da Saúde Indígena.
+        { unidade: "DSEI Manaus", CO_AREA: "sede" },
+        { unidade: "Unidade Antiga", CO_AREA: "projetos" },
+        { unidade: "sede", CO_AREA: "saude-indigena" },
+      ],
+    });
+    expect(areaDaUnidade("DSEI  Manaus", mapa)).toBe("saude-indigena");
+    expect(areaDaUnidade("Unidade Antiga", mapa)).toBe("projetos");
+    expect(areaDaUnidade("Sede", mapa)).toBe("sede");
+    expect(areaDaUnidade("Desconhecida", mapa)).toBe("");
+  });
+
+  it("filtra pela área, deixa as desconhecidas e mantém a unidade do edital aberto", () => {
+    const mapa = mapaDeAreasDasUnidades({ unidadesPorArea: TA });
+    const opcoes = opcoesDeUnidade("CORES", CATALOGO, []);
+    expect(
+      unidadesDaArea(opcoes, "sede", mapa).map((u) => u.nome_oficial),
+    ).toEqual(UNIDADES_CORES.filter((nome) => nome !== "Rio Doce"));
+    expect(
+      unidadesDaArea(opcoes, "sede", mapa, "Rio Doce").map(
+        (u) => u.nome_oficial,
+      ),
+    ).toContain("Rio Doce");
+  });
+
+  it("o payload leva co_area só quando há área", () => {
+    const formulario = formularioDoEdital(null, CATALOGO, []);
+    const cronograma = { automatico: false, etapas: [] };
+    const previa = { status: "", etapa: "" };
+    expect(
+      editalParaSalvar(formulario, null, cronograma, previa, "sede").co_area,
+    ).toBe("sede");
+    expect(
+      editalParaSalvar(formulario, null, cronograma, previa),
+    ).not.toHaveProperty("co_area");
   });
 });

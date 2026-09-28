@@ -325,12 +325,12 @@ As planilhas Google de cada área (Saúde Indígena, Projetos e, no futuro, SEDE
 enviam para as **mesmas** tabelas. Cada linha leva a etiqueta da planilha que a
 enviou, e só o envio dessa planilha a altera ou desativa.
 
-| Objeto | Papel |
-|---|---|
-| `TB_PLANILHA_ANALISE` | cadastro: `CO_PLANILHA` (saude-indigena, projetos, sede), `CO_AREA`, `NO_PLANILHA`, `DS_PLANILHA_ID` (arquivo no Drive) |
-| `TA_ORIGEM_ANALISE` | `CO_ORIGEM` (a constante `ORIGEM` do Apps Script, gravada em `TL_SYNC_ANALISE.origem`) → `CO_PLANILHA`, `TP_CARGA` (FULL/INCREMENTAL) |
-| `"CO_PLANILHA"` | em `TB_ANALISE_CURRICULAR`, `TB_EDITAL_ANALISE` e `TL_SYNC_ANALISE`, NOT NULL, FK |
-| `experiencia_profissional_anos/meses/dias/total` | colunas do Edital 30/2026 (Projetos) em `TB_ANALISE_CURRICULAR` |
+| Objeto                                           | Papel                                                                                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `TB_PLANILHA_ANALISE`                            | cadastro: `CO_PLANILHA` (saude-indigena, projetos, sede), `CO_AREA`, `NO_PLANILHA`, `DS_PLANILHA_ID` (arquivo no Drive)               |
+| `TA_ORIGEM_ANALISE`                              | `CO_ORIGEM` (a constante `ORIGEM` do Apps Script, gravada em `TL_SYNC_ANALISE.origem`) → `CO_PLANILHA`, `TP_CARGA` (FULL/INCREMENTAL) |
+| `"CO_PLANILHA"`                                  | em `TB_ANALISE_CURRICULAR`, `TB_EDITAL_ANALISE` e `TL_SYNC_ANALISE`, NOT NULL, FK                                                     |
+| `experiencia_profissional_anos/meses/dias/total` | colunas do Edital 30/2026 (Projetos) em `TB_ANALISE_CURRICULAR`                                                                       |
 
 As duas tabelas novas têm RLS com leitura para `authenticated`; escrita só por
 migration. Cadastrar planilha ou origem nova = migration nova.
@@ -422,3 +422,57 @@ Migration `20260928200000_analises_painel_mais_leve.sql` (rollback em
   ~380 ms → ~150 ms no banco, no ensaio).
 - Fora da Saúde Indígena, o payload ganha `municipio_uf` no fim de `columns`,
   lido do nome da vaga ("… UBS móvel Seropédica/RJ …" → `Seropédica/RJ`).
+
+## 7. Edital sempre na área certa
+
+Migration `20260928220000_edital_na_area_certa.sql` (rollback em
+`supabase/rollback/`, que volta às definições lidas do banco em 28/09/2026 e
+**não** desfaz dados: unidades registradas e editais movidos ficam).
+
+Antes, a área do edital (`"CO_AREA"`) era só deduzida pelo gatilho
+`TBA_MONITORAMENTO_INDIGENA` (unidade em `TA_UNIDADE_AREA`; senão responsável
+CORES → `sede`; senão `saude-indigena`), calada: um edital da SEDE com unidade
+desconhecida caía na Saúde Indígena e sumia da tela de quem o criou.
+
+- **Área de uma unidade** (`private."FC_AREA_DA_UNIDADE"`): `TA_UNIDADE_AREA`;
+  senão unidade do catálogo `TD_UNIDADE` (DSEI/CASAI) → `saude-indigena`; senão
+  desconhecida. O front usa a mesma ordem (`mapaDeAreasDasUnidades`, em
+  `src/lib/editais-do-nucleo.js`), lendo `listar_unidades_por_area()`.
+- **`salvar_monitoramento_com_cronograma_v2`** — mesma assinatura; a área
+  pretendida vai em `p_payload.co_area` (o formulário manda a área do menu no
+  edital novo e a do próprio edital ao editar). Com ela: a área tem de existir
+  (`22023`) e ser do usuário (`FC_AREAS_USUARIO`, admin tem todas; senão
+  `42501`); edital existente só é salvo na área em que está; unidade nova ou
+  trocada que é de outra área é recusada ("A unidade X é da área Y; escolha uma
+  unidade de Z ou peça ao administrador para mover."); unidade desconhecida é
+  registrada em `TA_UNIDADE_AREA` na área pretendida. **Sem `co_area`, tudo como
+  antes** — o front já publicado continua funcionando.
+- **Gatilho**: no INSERT só deduz se `"CO_AREA"` vier vazio; no UPDATE só deduz
+  quando responsável ou unidade mudam de verdade e `"CO_AREA"` não foi trocado
+  no mesmo comando. (Antes deduzia a cada salvar, o que desfaria uma mudança de
+  área.) Nenhuma linha existente mudou (ensaio: hash de id + área igual antes e
+  depois).
+- **`mover_edital_de_area(p_id, p_area, p_motivo)`** — só `is_master()`; motivo
+  obrigatório; só o edital muda (não `TA_UNIDADE_AREA`). Auditoria em
+  `TH_MONITORAMENTO`: `campo_alterado = 'CO_AREA'`, `valor_anterior`,
+  `valor_novo`, `snapshot_json = {acao, de, para, motivo}`; quem e quando em
+  `usuario_id`, `usuario_email`, `created_at`. O gatilho de histórico grava
+  também a foto da linha.
+- **Arquivar**: o edital já tem `ativo` (o front lê só `ativo = true`; o
+  histórico registra `desativado`). Não há RPC para arquivar pelo app, e esta
+  migration não apaga nada.
+
+Ensaio (begin…rollback, produção, 28/09/2026, admin sintético e um
+`edital_gestor` da Saúde Indígena): SEDE + unidade SEDE → `sede`; SEDE + Rio
+Doce e SEDE + DSEI → recusados (`22023`); Projetos + unidade nova → edital e
+`TA_UNIDADE_AREA` em `projetos`; sem área → mesmas áreas de hoje (CORES +
+desconhecida continua `sede`, sem registrar); edital existente salvo em outra
+área → recusado; mover como admin → área trocada + 1 linha de auditoria, e
+salvar de novo (com ou sem área) mantém a área movida; mover sem motivo ou para
+a mesma área → recusado; mover e salvar em área alheia como não admin →
+`42501`. Migration + rollback devolvem as definições idênticas às do banco.
+
+Risco levantado no ensaio: dos 137 editais, 100 têm unidade fora de
+`TA_UNIDADE_AREA` (36 unidades, todas DSEI/CASAI do `TD_UNIDADE`, todas na
+Saúde Indígena) e **nenhum** tem unidade fora das duas tabelas; nenhum edital
+tem área diferente da que a regra deduz.
