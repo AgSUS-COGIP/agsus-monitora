@@ -97,14 +97,20 @@ function supabaseFalso({
   erros = {},
 } = {}) {
   const lotes = [];
+  let novos = 0;
   const responder = (nome) => {
     if (erros[nome]) return { data: null, error: { message: erros[nome] } };
     if (nome === "listar_listas_aprovados")
       return { data: listas, error: null };
     if (nome === "listar_anexos_candidatos_aprovados")
       return { data: anexos, error: null };
-    if (nome === "remover_anexo_candidato_aprovado")
-      return { data: { ok: true, arquivo_path: "bruno/a.pdf" }, error: null };
+    if (nome === "registrar_anexo_candidato_aprovado")
+      return { data: { ok: true, anexo_id: `novo-${++novos}` }, error: null };
+    if (nome === "baixar_anexo_candidato_aprovado")
+      return {
+        data: { arquivo_nome: "termo.pdf", arquivo_base64: btoa("%PDF-1.4") },
+        error: null,
+      };
     if (nome === "listar_modelos_convocacao") return { data: [], error: null };
     if (nome === "listar_configuracao_convocacao")
       return { data: [], error: null };
@@ -128,11 +134,6 @@ function supabaseFalso({
   const bucket = {
     upload: vi.fn(async () => ({ data: {}, error: null })),
     download: vi.fn(async () => ({ data: new Blob(["x"]), error: null })),
-    remove: vi.fn(async () => ({ data: [], error: null })),
-    createSignedUrl: vi.fn(async (caminho) => ({
-      data: { signedUrl: `https://assinado/${caminho}` },
-      error: null,
-    })),
   };
   const storage = { from: vi.fn(() => bucket) };
   return { rpc, storage, bucket, lotes };
@@ -487,7 +488,6 @@ describe("anexos do candidato", () => {
       anexo_id: "x1",
       candidato_id: "bruno",
       arquivo_nome: "termo.pdf",
-      arquivo_path: "bruno/a.pdf",
       tamanho: 2048,
       incluido_em: "2026-09-28T12:00:00Z",
     },
@@ -531,8 +531,15 @@ describe("anexos do candidato", () => {
     expect(botaoDeAnexos("Ana Ribeiro").disabled).toBe(true);
   });
 
-  it("abre o PDF numa aba nova, pelo endereço assinado", async () => {
+  it("abre o PDF que vem do banco numa aba nova", async () => {
     const aba = { mostrar: vi.fn(), fechar: vi.fn() };
+    // O jsdom não implementa URL.createObjectURL.
+    let pdfAberto = null;
+    URL.createObjectURL = vi.fn((blob) => {
+      pdfAberto = blob;
+      return "blob:pdf";
+    });
+    URL.revokeObjectURL = vi.fn();
     const supabase = supabaseFalso({ anexos: ANEXOS() });
     await montar({ supabase, novaAba: () => aba });
     await clicar(botaoDeAnexos("Bruno Lima"));
@@ -542,13 +549,17 @@ describe("anexos do candidato", () => {
         '[data-approved-action="abrir-anexo"]',
       ),
     );
-    expect(supabase.storage.from).toHaveBeenCalledWith(
-      "anexos-candidatos-aprovados",
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "baixar_anexo_candidato_aprovado",
+      { p_anexo_id: "x1" },
     );
-    expect(aba.mostrar).toHaveBeenCalledWith("https://assinado/bruno/a.pdf");
+    expect(supabase.storage.from).not.toHaveBeenCalled();
+    expect(aba.mostrar).toHaveBeenCalledWith("blob:pdf");
+    expect(pdfAberto.type).toBe("application/pdf");
+    expect(await pdfAberto.text()).toBe("%PDF-1.4");
   });
 
-  it("remove o anexo pela RPC e apaga o arquivo do bucket", async () => {
+  it("remove o anexo pela RPC, com o arquivo junto", async () => {
     const supabase = supabaseFalso({ anexos: ANEXOS() });
     await montar({ supabase });
     await clicar(botaoDeAnexos("Bruno Lima"));
@@ -561,29 +572,30 @@ describe("anexos do candidato", () => {
       "remover_anexo_candidato_aprovado",
       { p_anexo_id: "x1" },
     );
-    expect(supabase.bucket.remove).toHaveBeenCalledWith(["bruno/a.pdf"]);
+    expect(supabase.storage.from).not.toHaveBeenCalled();
   });
 
-  it("salvar o status envia os PDFs escolhidos e registra cada um", async () => {
+  it("salvar o status grava cada PDF no banco, em base64", async () => {
     const supabase = supabaseFalso();
     const { toast } = await montar({ supabase });
     await abrirStatusDe("Bruno Lima");
-    await escolherArquivos([pdf("Termo de desistência.pdf"), pdf("b.pdf")]);
+    const conteudo = new File(["%PDF-1.7 termo"], "Termo de desistência.pdf", {
+      type: "application/pdf",
+    });
+    await escolherArquivos([conteudo, pdf("b.pdf")]);
     expect($("approvedAnexosHint").textContent).toContain("2 de 5");
     await clicar($("approvedStatusSave"));
 
-    expect(supabase.bucket.upload).toHaveBeenCalledTimes(2);
-    const [caminho, , opcoes] = supabase.bucket.upload.mock.calls[0];
-    expect(caminho).toMatch(/^bruno\/.+-Termo-de-desistencia\.pdf$/);
-    expect(opcoes.contentType).toBe("application/pdf");
-    expect(supabase.rpc).toHaveBeenCalledWith(
-      "registrar_anexo_candidato_aprovado",
-      {
-        p_candidato_id: "bruno",
-        p_arquivo_nome: "Termo de desistência.pdf",
-        p_arquivo_path: caminho,
-      },
+    expect(supabase.storage.from).not.toHaveBeenCalled();
+    const registros = supabase.rpc.mock.calls.filter(
+      ([nome]) => nome === "registrar_anexo_candidato_aprovado",
     );
+    expect(registros).toHaveLength(2);
+    expect(registros[0][1]).toEqual({
+      p_candidato_id: "bruno",
+      p_arquivo_nome: "Termo de desistência.pdf",
+      p_arquivo_base64: btoa("%PDF-1.7 termo"),
+    });
     expect(toast).toHaveBeenCalledWith(
       "Status atualizado e 2 anexo(s) enviados.",
     );
@@ -614,7 +626,10 @@ describe("anexos do candidato", () => {
     await escolherArquivos([pdf("grande.pdf", 2 * 1024 * 1024 + 1)]);
     expect($("approvedStatusModal").textContent).toContain("passa de 2 MB");
     expect($("approvedStatusSave").disabled).toBe(true);
-    expect(supabase.bucket.upload).not.toHaveBeenCalled();
+    expect(supabase.rpc).not.toHaveBeenCalledWith(
+      "registrar_anexo_candidato_aprovado",
+      expect.anything(),
+    );
   });
 
   it("status e anexos entram na linha sem esperar a releitura", async () => {
@@ -700,7 +715,7 @@ describe("anexos do candidato", () => {
     expect($("approvedStatusSelect").disabled).toBe(false);
   });
 
-  it("registro recusado pelo banco tira o arquivo do bucket e avisa", async () => {
+  it("registro recusado pelo banco avisa qual arquivo não entrou", async () => {
     const supabase = supabaseFalso({
       erros: { registrar_anexo_candidato_aprovado: "limite" },
     });
@@ -708,8 +723,7 @@ describe("anexos do candidato", () => {
     await abrirStatusDe("Bruno Lima");
     await escolherArquivos([pdf("a.pdf")]);
     await clicar($("approvedStatusSave"));
-    const [caminho] = supabase.bucket.upload.mock.calls[0];
-    expect(supabase.bucket.remove).toHaveBeenCalledWith([caminho]);
+    expect(botaoDeAnexos("Bruno Lima").disabled).toBe(true);
     expect(toast).toHaveBeenCalledWith(
       "Status atualizado, mas 1 anexo(s) não foram enviados. a.pdf: limite",
       "error",

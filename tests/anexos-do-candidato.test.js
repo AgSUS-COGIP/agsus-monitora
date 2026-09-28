@@ -1,8 +1,12 @@
+// Sem DOM: o btoa/atob do jsdom é JS puro e leva segundos num PDF de 2 MB.
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import {
   LIMITE_DO_ANEXO,
   anexosPorCandidato,
+  arquivoEmBase64,
   formatarTamanho,
+  pdfDoBase64,
   problemaDosAnexos,
 } from "../src/lib/anexos-do-candidato.js";
 
@@ -66,5 +70,20 @@ describe("formatarTamanho", () => {
     expect(formatarTamanho(100)).toBe("1 KB");
     expect(formatarTamanho(850 * 1024)).toBe("850 KB");
     expect(formatarTamanho(1.5 * 1024 * 1024)).toBe("1,5 MB");
+  });
+});
+
+describe("base64 do PDF", () => {
+  it("vai e volta sem perder byte, inclusive num PDF de 2 MB", async () => {
+    const bytes = new Uint8Array(LIMITE_DO_ANEXO).map((_, i) => i % 256);
+    const arquivo = new File([bytes], "grande.pdf", {
+      type: "application/pdf",
+    });
+    const base64 = await arquivoEmBase64(arquivo);
+    expect(base64).not.toContain("data:");
+    const volta = pdfDoBase64(base64);
+    expect(volta.type).toBe("application/pdf");
+    const recebidos = new Uint8Array(await volta.arrayBuffer());
+    expect(Buffer.compare(recebidos, bytes)).toBe(0);
   });
 });

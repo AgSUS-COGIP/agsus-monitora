@@ -1,10 +1,12 @@
 /*
   Anexos do candidato aprovado: só PDF, até 2 MB cada, até 5 por candidato.
-  Os mesmos limites estão no banco (bucket e `registrar_anexo_candidato_aprovado`,
-  migration 20260928190000); aqui eles viram aviso antes do envio.
+  Os mesmos limites estão no banco (`registrar_anexo_candidato_aprovado`,
+  migration 20260928200000); aqui eles viram aviso antes do envio.
+
+  O PDF mora no banco, em bytea (TB_ANEXO_CANDIDATO_APROVADO."IM_ARQUIVO"), e
+  vai e volta pelas RPCs em base64, que é como o JSON leva binário.
 */
 
-export const BUCKET_DE_ANEXOS = "anexos-candidatos-aprovados";
 export const LIMITE_DO_ANEXO = 2 * 1024 * 1024;
 export const MAXIMO_DE_ANEXOS = 5;
 export const TIPO_DO_ANEXO = "application/pdf";
@@ -44,6 +46,30 @@ export function anexosPorCandidato(linhas) {
     mapa.get(chave).push(linha);
   }
   return mapa;
+}
+
+/*
+  Base64 em pedaços: `String.fromCharCode(...bytes)` de um PDF de 2 MB inteiro
+  estoura a pilha de argumentos.
+*/
+const PEDACO = 0x8000;
+
+/** Os bytes do arquivo em base64, sem o prefixo `data:`. */
+export async function arquivoEmBase64(arquivo) {
+  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  let binario = "";
+  for (let inicio = 0; inicio < bytes.length; inicio += PEDACO)
+    binario += String.fromCharCode(...bytes.subarray(inicio, inicio + PEDACO));
+  return btoa(binario);
+}
+
+/** O PDF que a RPC devolve em base64, pronto para `URL.createObjectURL`. */
+export function pdfDoBase64(base64) {
+  const binario = atob(String(base64 ?? ""));
+  const bytes = new Uint8Array(binario.length);
+  for (let indice = 0; indice < binario.length; indice += 1)
+    bytes[indice] = binario.charCodeAt(indice);
+  return new Blob([bytes], { type: TIPO_DO_ANEXO });
 }
 
 /** "850 KB", "1,4 MB". */

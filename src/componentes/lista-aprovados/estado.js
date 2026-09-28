@@ -51,9 +51,9 @@ import {
 } from "../../lib/configuracao-de-convocacao.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import {
-  BUCKET_DE_ANEXOS,
-  TIPO_DO_ANEXO,
   anexosPorCandidato,
+  arquivoEmBase64,
+  pdfDoBase64,
   problemaDosAnexos,
 } from "../../lib/anexos-do-candidato.js";
 
@@ -370,24 +370,20 @@ export function criarEstadoDaListaDeAprovados({
     );
 
   /*
-    Um arquivo por vez: sobe ao Storage e registra. Se o registro falha (o
-    limite de 5, a lista inativada no meio), o arquivo sai do Storage.
-    Devolve os anexos registrados e a mensagem de cada arquivo que não entrou.
+    Um arquivo por vez: o PDF vai em base64 e o banco grava em bytea, na mesma
+    chamada que confere o limite de 5 e a lista ativa. Devolve os anexos
+    registrados e a mensagem de cada arquivo que não entrou.
   */
   async function enviarAnexos(candidato, arquivos, rotular) {
     const falhas = [];
     const novos = [];
-    const bucket = supabase.storage.from(BUCKET_DE_ANEXOS);
     for (const [indice, arquivo] of arquivos.entries()) {
       rotular(`Enviando anexo ${indice + 1} de ${arquivos.length}…`);
-      const nome = nomeDeArquivoSeguro(arquivo.name).replace(/\.pdf$/i, "");
-      const caminho = `${candidato.candidato_id}/${Date.now()}-${uuid()}-${nome}.pdf`;
-      const envio = await bucket.upload(caminho, arquivo, {
-        contentType: TIPO_DO_ANEXO,
-        upsert: false,
-      });
-      if (envio.error) {
-        falhas.push(`${arquivo.name}: ${mensagemDe(envio.error)}`);
+      let base64;
+      try {
+        base64 = await arquivoEmBase64(arquivo);
+      } catch (erro) {
+        falhas.push(`${arquivo.name}: ${mensagemDe(erro)}`);
         continue;
       }
       const { data, error } = await supabase.rpc(
@@ -395,19 +391,17 @@ export function criarEstadoDaListaDeAprovados({
         {
           p_candidato_id: candidato.candidato_id,
           p_arquivo_nome: arquivo.name,
-          p_arquivo_path: caminho,
+          p_arquivo_base64: base64,
         },
       );
-      if (error) {
-        falhas.push(`${arquivo.name}: ${mensagemDe(error)}`);
-        await bucket.remove([caminho]);
+      if (error || !data?.anexo_id) {
+        falhas.push(`${arquivo.name}: ${mensagemDe(error) || "sem resposta"}`);
         continue;
       }
       novos.push({
-        anexo_id: data?.anexo_id ?? caminho,
+        anexo_id: data.anexo_id,
         candidato_id: candidato.candidato_id,
         arquivo_nome: arquivo.name,
-        arquivo_path: caminho,
         tamanho: arquivo.size,
         incluido_em: new Date().toISOString(),
       });
@@ -494,21 +488,28 @@ export function criarEstadoDaListaDeAprovados({
     return salvo;
   }
 
+  /*
+    O PDF vem do banco em base64 e abre numa aba nova por um endereço `blob:`,
+    que é liberado um minuto depois (a aba já o carregou).
+  */
   async function abrirAnexo(anexo) {
-    if (!anexo?.arquivo_path) return;
+    if (!anexo?.anexo_id) return;
     const aba = novaAba();
-    const { data, error } = await supabase.storage
-      .from(BUCKET_DE_ANEXOS)
-      .createSignedUrl(anexo.arquivo_path, 120);
-    if (error || !data?.signedUrl) {
+    const { data, error } = await supabase.rpc(
+      "baixar_anexo_candidato_aprovado",
+      { p_anexo_id: anexo.anexo_id },
+    );
+    if (error || !data?.arquivo_base64) {
       aba.fechar();
       toast(
-        `Erro ao abrir o anexo: ${mensagemDe(error) || "sem endereço"}`,
+        `Erro ao abrir o anexo: ${mensagemDe(error) || "arquivo vazio"}`,
         "error",
       );
       return;
     }
-    aba.mostrar(data.signedUrl);
+    const url = URL.createObjectURL(pdfDoBase64(data.arquivo_base64));
+    aba.mostrar(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 
   async function removerAnexo(anexo) {
@@ -520,7 +521,8 @@ export function criarEstadoDaListaDeAprovados({
       `remover-anexo:${anexo.anexo_id}`,
       "Removendo…",
       async () => {
-        const { data, error } = await supabase.rpc(
+        // O arquivo está na linha: apagá-la apaga o PDF junto.
+        const { error } = await supabase.rpc(
           "remover_anexo_candidato_aprovado",
           { p_anexo_id: anexo.anexo_id },
         );
@@ -528,12 +530,6 @@ export function criarEstadoDaListaDeAprovados({
           toast(`Erro ao remover o anexo: ${mensagemDe(error)}`, "error");
           return false;
         }
-        // O registro já saiu; o arquivo que sobrar no Storage fica sem link.
-        const { error: erroDoArquivo } = await supabase.storage
-          .from(BUCKET_DE_ANEXOS)
-          .remove([data?.arquivo_path || anexo.arquivo_path]);
-        if (erroDoArquivo)
-          console.warn("Anexo removido, mas o arquivo ficou:", erroDoArquivo);
         aplicarLocal({
           anexos: comAnexos(
             candidato.candidato_id,

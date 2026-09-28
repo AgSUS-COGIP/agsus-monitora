@@ -213,19 +213,23 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Lista os anexos (PDF) dos candidatos vigentes das áreas do usuário.",
+      "Lista os anexos (PDF) dos candidatos vigentes das áreas do usuário, sem o arquivo.",
+  },
+  baixar_anexo_candidato_aprovado: {
+    argumentos: ["p_anexo_id"],
+    critica: false,
+    resumo: "Devolve um anexo do candidato, com o PDF em base64.",
   },
   registrar_anexo_candidato_aprovado: {
-    argumentos: ["p_candidato_id", "p_arquivo_nome", "p_arquivo_path"],
+    argumentos: ["p_candidato_id", "p_arquivo_nome", "p_arquivo_base64"],
     critica: false,
     resumo:
-      "Registra um PDF já enviado ao Storage como anexo do candidato (até 5, 2 MB cada).",
+      "Grava um PDF (base64) como anexo do candidato, em bytea (até 5, 2 MB cada).",
   },
   remover_anexo_candidato_aprovado: {
     argumentos: ["p_anexo_id"],
     critica: false,
-    resumo:
-      "Remove o registro de um anexo do candidato e devolve o caminho do arquivo.",
+    resumo: "Remove um anexo do candidato, com o arquivo.",
   },
   incluir_sub_judice: {
     argumentos: ["p_edital_id", "p_cargo", "p_nome", "p_nota"],
