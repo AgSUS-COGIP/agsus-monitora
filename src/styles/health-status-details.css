@@ -28,7 +28,7 @@
 */
 #page-dashboard .health-status-center strong {
   font-size: var(--text-kpi);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -75,7 +75,7 @@
 }
 #page-dashboard .health-status-legend-item strong {
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }
@@ -109,6 +109,7 @@
   gap: 18px;
   padding: 12px 16px;
   border-bottom: 1px solid #e3ebf3;
+  background: linear-gradient(90deg, #f7fbff, #fff);
 }
 #page-dashboard .health-details-intro > div:first-child {
   display: grid;
@@ -133,7 +134,7 @@
   align-items: center;
   gap: 5px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 800;
   color: #667b90;
 }
 #page-dashboard .health-details-legend .dot {
@@ -181,7 +182,7 @@
   padding: 3px 7px;
   border-radius: 999px;
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 800;
   line-height: 1.25;
 }
 #page-dashboard .health-row-operational.tone-danger {
@@ -237,10 +238,13 @@
   gap: 18px;
   padding: 22px;
   border-bottom: 1px solid #dfe8f1;
+  background: linear-gradient(135deg, #f6fbff, #fff);
 }
 .health-process-drawer-head span {
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
   color: #3675aa;
 }
 .health-process-drawer-head h2 {
@@ -250,7 +254,7 @@
 .health-process-drawer-head p {
   margin: 0;
   color: #71849a;
-  font-weight: 400;
+  font-weight: 700;
 }
 .health-process-drawer-body {
   padding: 20px;
@@ -284,7 +288,9 @@
 .health-drawer-metrics span {
   display: block;
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: #71849a;
 }
 .health-drawer-status strong {
@@ -331,7 +337,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--brand-primary);
+  background: linear-gradient(90deg, #2474e7, #16a46a);
 }
 .health-progress-meta {
   display: flex;
@@ -354,7 +360,7 @@
   background: #fff3d4;
   color: #896000;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 800;
 }
 .health-drawer-list {
   display: grid;
@@ -374,7 +380,7 @@
 }
 .health-drawer-list dt {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 900;
   color: #60758f;
 }
 .health-drawer-list dd {
@@ -398,6 +404,7 @@ html[data-theme="dark"] .health-drawer-section {
   border-color: #294158;
 }
 html[data-theme="dark"] .health-process-drawer-head,
+html[data-theme="dark"] #page-dashboard .health-details-intro,
 html[data-theme="dark"] .health-drawer-status {
   background: #13283c;
   border-color: #294158;
