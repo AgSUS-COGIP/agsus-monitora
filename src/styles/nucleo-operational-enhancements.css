@@ -59,7 +59,9 @@
   row-gap: var(--space-1);
   width: 100%;
   min-width: 0;
-  padding: var(--space-3) var(--space-4);
+  /* A linha de 3px à esquerda come 2px a mais que a borda de 1px: o padding compensa, para o rótulo mais longo não quebrar. */
+  padding: var(--space-3) var(--space-4) var(--space-3)
+    calc(var(--space-4) - 2px);
   border: 1px solid var(--border-subtle);
   /* Cor do KPI (pedido do responsável, como no SIGAV): linha de 3px à esquerda e o número na cor do estado. */
   border-left: 3px solid var(--tone, var(--border-subtle));
