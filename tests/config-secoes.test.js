@@ -33,7 +33,7 @@ describe("as sete seções do SIGAV", () => {
       "Página inicial",
       "Tela de acesso",
       "Aparência",
-      "Recursos",
+      "Painéis externos",
       "Operação",
       "Acessos",
     ]);
@@ -365,5 +365,21 @@ describe("um navegador só", () => {
     expect(main.indexOf("removerNavegadorAntigo()")).toBeGreaterThan(
       main.indexOf("initConfigPageEnhancements()"),
     );
+  });
+});
+
+describe("campos técnicos ficam em Operação", () => {
+  it("o Realtime do monitoramento não cai na seção de painéis externos", () => {
+    document.body.innerHTML = `
+      <section id="page-config" class="page active">
+        <div class="admin-grid">
+          <div class="form-row"><select id="cfgRealtimeEnabled"></select></div>
+        </div>
+      </section>`;
+    organizarConfiguracoesEmSecoes(document);
+    const secao = document
+      .getElementById("cfgRealtimeEnabled")
+      .closest(".config-secao");
+    expect(secao.dataset.secao).toBe("operacao");
   });
 });

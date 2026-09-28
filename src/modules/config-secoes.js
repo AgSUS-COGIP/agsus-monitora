@@ -49,9 +49,9 @@ export const SECOES = Object.freeze([
   },
   {
     id: "recursos",
-    rotulo: "Recursos",
+    rotulo: "Painéis externos",
     icone: "fa-tower-broadcast",
-    descricao: "Funcionalidades que podem ser ligadas ou desligadas.",
+    descricao: "Os painéis externos do menu: título, endereço e situação.",
   },
   {
     id: "operacao",
@@ -123,10 +123,8 @@ export const SECAO_POR_CAMPO = Object.freeze({
   cfgSidebarLogoUrl: "aparencia",
   cfgSidebarBackgroundColor: "aparencia",
 
-  // Recursos
-  cfgRealtimeEnabled: "recursos",
-
-  // Operação
+  // Operação (o Realtime é ajuste técnico, não painel externo)
+  cfgRealtimeEnabled: "operacao",
   cfgMonitId: "operacao",
   cfgCogipVersao: "operacao",
   cfgAppVersionCurrent: "operacao",

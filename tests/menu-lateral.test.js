@@ -7,6 +7,8 @@ import {
   PAGINAS_DO_MENU,
   areaAberta,
   areasDoUsuario,
+  destinoAoTrocarDeArea,
+  ehAreaDoSistema,
   iconesDoCatalogo,
   itemAtivoDaArvore,
   montarArvoreDoMenu,
@@ -14,6 +16,7 @@ import {
   nomeDaArea,
   posicaoDoPainelFlutuante,
   proximoFlutuante,
+  recortarArvorePorArea,
 } from "../src/lib/menu-lateral.js";
 import { SECOES } from "../src/modules/config-secoes.js";
 import { NOMES_DE_ICONES } from "../src/modules/icones.js";
@@ -418,5 +421,69 @@ describe("Visão geral da SEDE e de Projetos", () => {
     });
     const ativo = itemAtivoDaArvore(arvore, "visao-area", null, "projetos");
     expect(ativo.area).toBe("projetos");
+  });
+});
+
+/*
+  Seletor de área: a árvore segue com todas as áreas; a barra desenha só a
+  atual. Trocar de área mantém a página, se a área nova a tem. As páginas vêm
+  da árvore: o teste não supõe qual view é a Visão geral de cada área.
+*/
+describe("seletor de área", () => {
+  const arvore = montarArvoreDoMenu({
+    permitidas: TUDO,
+    paineis: [{ codigo: "bi", titulo: "BI" }],
+    secoesDeConfiguracao: SECOES,
+    areas: TODAS,
+  });
+  const itens = porGrupo(arvore);
+
+  it("só as áreas do sistema entram no seletor", () => {
+    expect(ehAreaDoSistema("sede")).toBe(true);
+    expect(ehAreaDoSistema("administracao")).toBe(false);
+    expect(ehAreaDoSistema(AREA_DOS_PAINEIS)).toBe(false);
+  });
+
+  it("recorta a área atual e deixa Painéis e Administração embaixo", () => {
+    const recorte = recortarArvorePorArea(arvore, "sede");
+    expect(recorte.comSeletor).toBe(true);
+    expect(recorte.areas.map((g) => g.id)).toEqual(TODAS);
+    expect(recorte.grupoAtual.id).toBe("sede");
+    expect(recorte.demais.map((g) => g.id)).toEqual([
+      AREA_DOS_PAINEIS,
+      "administracao",
+    ]);
+  });
+
+  it("área atual fora das do usuário cai na primeira; uma área só, sem seletor", () => {
+    expect(recortarArvorePorArea(arvore, "outra").grupoAtual.id).toBe(
+      "saude-indigena",
+    );
+    const umaSo = montarArvoreDoMenu({ permitidas: TUDO, areas: ["sede"] });
+    expect(recortarArvorePorArea(umaSo, "sede").comSeletor).toBe(false);
+    expect(recortarArvorePorArea([], "sede")).toEqual({
+      areas: [],
+      grupoAtual: null,
+      demais: [],
+      comSeletor: false,
+    });
+  });
+
+  it("trocar de área mantém a página; sem ela, a primeira da área", () => {
+    expect(destinoAoTrocarDeArea(arvore, "projetos", "calendario").view).toBe(
+      "calendario",
+    );
+    expect(destinoAoTrocarDeArea(arvore, "projetos", "calendario").area).toBe(
+      "projetos",
+    );
+    const soDaSaude = itens["saude-indigena"].find(
+      (item) => !itens.sede.some((outro) => outro.view === item.view),
+    );
+    expect(soDaSaude).toBeTruthy();
+    expect(destinoAoTrocarDeArea(arvore, "sede", soDaSaude.view)).toBe(
+      itens.sede[0],
+    );
+    expect(destinoAoTrocarDeArea(arvore, "sede", "config")).toBe(itens.sede[0]);
+    expect(destinoAoTrocarDeArea(arvore, "inexistente", "nucleo")).toBeNull();
   });
 });
