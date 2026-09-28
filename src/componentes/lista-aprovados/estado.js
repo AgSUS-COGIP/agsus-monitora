@@ -13,6 +13,11 @@
 
   O que é só da tela (filtros, página, aba, rascunho do formulário) fica nos
   componentes.
+
+  Sem tela de carregamento: antes da primeira carga a página desenha skeleton
+  (`carregado` falso), e uma falha nela vira `erroAoCarregar`, com "Tentar de
+  novo". As ações passam por `executar`: `acao` diz qual está em curso, o botão
+  dela mostra o rótulo e os outros ficam desativados até terminar.
 */
 
 import { readApprovedWorkbook } from "../../lib/aprovados-import.js";
@@ -53,6 +58,10 @@ const ESTADO_INICIAL = Object.freeze({
   candidatos: Object.freeze([]),
   listas: Object.freeze([]),
   carregado: false,
+  /** A primeira carga falhou: a página mostra o erro e "Tentar de novo". */
+  erroAoCarregar: "",
+  /** A ação em curso, `{ tipo, rotulo }`, ou `null`. Uma por vez. */
+  acao: null,
   /** modelo_id → modelo normalizado, com `editais` (quantos o usam). */
   modelos: new Map(),
   /** edital_id → { proporcionalidade, modeloId, padraoImediata, vagas }. */
@@ -85,7 +94,6 @@ function baixarNoNavegador(arquivo, nome) {
 export function criarEstadoDaListaDeAprovados({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
-  loader = () => {},
   getProfile = () => null,
   confirmar = (mensagem) => window.confirm(mensagem),
   baixar = baixarNoNavegador,
@@ -108,6 +116,21 @@ export function criarEstadoDaListaDeAprovados({
 
   function avisar(nome, detail) {
     document.dispatchEvent(new CustomEvent(nome, { detail }));
+  }
+
+  /*
+    Uma ação por vez. `fazer` recebe `rotular`, para trocar o rótulo no meio
+    (a importação valida o XLSX e depois envia). Com outra ação em curso, não
+    faz nada: os botões já estão desativados, isto só fecha a porta.
+  */
+  async function executar(tipo, rotulo, fazer) {
+    if (estado.acao) return false;
+    publicar({ acao: { tipo, rotulo } });
+    try {
+      return await fazer((novo) => publicar({ acao: { tipo, rotulo: novo } }));
+    } finally {
+      publicar({ acao: null });
+    }
   }
 
   // ── Leitura ────────────────────────────────────────────────────────────
@@ -156,10 +179,9 @@ export function criarEstadoDaListaDeAprovados({
     if (lidas) publicar(lidas);
   }
 
-  async function carregar({ comLoader = true } = {}) {
+  async function carregar() {
     if (!supabase) return false;
-    if (comLoader)
-      loader(true, "Lista de aprovados", "Carregando candidatos...", 55);
+    if (estado.erroAoCarregar) publicar({ erroAoCarregar: "" });
     let resultados;
     try {
       /*
@@ -176,8 +198,6 @@ export function criarEstadoDaListaDeAprovados({
       ]);
     } catch (erro) {
       resultados = [{ error: erro }, { error: null }, null];
-    } finally {
-      if (comLoader) loader(false);
     }
     const [listas, candidatos, configuracao] = resultados;
     const error = listas.error || candidatos.error;
@@ -186,6 +206,9 @@ export function criarEstadoDaListaDeAprovados({
         `Erro ao carregar lista de aprovados: ${mensagemDe(error)}`,
         "error",
       );
+      // Recarga depois de uma ação: os dados de antes continuam na tela.
+      if (!estado.carregado)
+        publicar({ erroAoCarregar: String(mensagemDe(error)) });
       return false;
     }
     publicar({
@@ -251,7 +274,7 @@ export function criarEstadoDaListaDeAprovados({
       toast("Sem permissão para gerir lista de aprovados.", "warn");
       return;
     }
-    if (!estado.carregado) await carregar({ comLoader: false });
+    if (!estado.carregado) await carregar();
     abrir({ tipo: "listas", editalId: String(editalId || ""), rotulo });
   }
 
@@ -268,22 +291,25 @@ export function criarEstadoDaListaDeAprovados({
       toast("Informe a matrícula para Contratado ou Migração.", "warn");
       return false;
     }
-    loader(true, "Lista de aprovados", "Salvando status do candidato...", 65);
-    const { error } = await supabase.rpc("alterar_status_candidato_aprovado", {
-      p_candidato_id: candidato.candidato_id,
-      p_status: status || null,
-      p_processo_sei: processo || null,
-      p_matricula: matricula || null,
+    return executar("status", "Salvando…", async () => {
+      const { error } = await supabase.rpc(
+        "alterar_status_candidato_aprovado",
+        {
+          p_candidato_id: candidato.candidato_id,
+          p_status: status || null,
+          p_processo_sei: processo || null,
+          p_matricula: matricula || null,
+        },
+      );
+      if (error) {
+        toast(`Erro ao alterar status: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      fecharModal();
+      toast("Status do candidato atualizado.");
+      await carregar();
+      return true;
     });
-    loader(false);
-    if (error) {
-      toast(`Erro ao alterar status: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    fecharModal();
-    toast("Status do candidato atualizado.");
-    await carregar({ comLoader: false });
-    return true;
   }
 
   async function incluirSubJudice(campos) {
@@ -295,22 +321,22 @@ export function criarEstadoDaListaDeAprovados({
       toast("Preencha edital, cargo, nome e uma nota válida.", "warn");
       return false;
     }
-    loader(true, "Sub judice", "Incluindo candidato...", 65);
-    const { error } = await supabase.rpc("incluir_sub_judice", {
-      p_edital_id: editalId,
-      p_cargo: cargo,
-      p_nome: nome,
-      p_nota: nota,
+    return executar("sub-judice", "Incluindo…", async () => {
+      const { error } = await supabase.rpc("incluir_sub_judice", {
+        p_edital_id: editalId,
+        p_cargo: cargo,
+        p_nome: nome,
+        p_nota: nota,
+      });
+      if (error) {
+        toast(`Erro ao incluir sub judice: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      fecharModal();
+      toast("Candidato sub judice incluído.");
+      await carregar();
+      return true;
     });
-    loader(false);
-    if (error) {
-      toast(`Erro ao incluir sub judice: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    fecharModal();
-    toast("Candidato sub judice incluído.");
-    await carregar({ comLoader: false });
-    return true;
   }
 
   async function removerSubJudice(candidatoId) {
@@ -322,18 +348,22 @@ export function criarEstadoDaListaDeAprovados({
       )
     )
       return false;
-    loader(true, "Sub judice", "Removendo candidato...", 60);
-    const { error } = await supabase.rpc("remover_sub_judice", {
-      p_candidato_id: candidato.candidato_id,
-    });
-    loader(false);
-    if (error) {
-      toast(`Erro ao remover sub judice: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    toast("Sub judice removido da lista vigente.");
-    await carregar({ comLoader: false });
-    return true;
+    return executar(
+      `remover-sub-judice:${candidato.candidato_id}`,
+      "Removendo…",
+      async () => {
+        const { error } = await supabase.rpc("remover_sub_judice", {
+          p_candidato_id: candidato.candidato_id,
+        });
+        if (error) {
+          toast(`Erro ao remover sub judice: ${mensagemDe(error)}`, "error");
+          return false;
+        }
+        toast("Sub judice removido da lista vigente.");
+        await carregar();
+        return true;
+      },
+    );
   }
 
   // ── Listas (XLSX) ──────────────────────────────────────────────────────
@@ -352,75 +382,67 @@ export function criarEstadoDaListaDeAprovados({
       toast("O XLSX deve ter no máximo 10 MB.", "warn");
       return false;
     }
-    let candidatos;
-    try {
-      loader(true, "Lista de aprovados", "Validando o XLSX...", 25);
-      candidatos = await lerPlanilha(arquivo);
-    } catch (erro) {
-      loader(false);
-      toast(`Arquivo inválido: ${mensagemDe(erro)}`, "error");
-      return false;
-    }
-    const caminho = `${editalId}/${Date.now()}-${uuid()}-${nomeDeArquivoSeguro(arquivo.name)}`;
-    loader(
-      true,
-      "Lista de aprovados",
-      `Enviando ${candidatos.length} candidato(s)...`,
-      55,
-    );
-    const envio = await supabase.storage
-      .from(BUCKET)
-      .upload(caminho, arquivo, { contentType: TIPO_DO_XLSX, upsert: false });
-    if (envio.error) {
-      loader(false);
-      toast(`Erro ao anexar XLSX: ${mensagemDe(envio.error)}`, "error");
-      return false;
-    }
-    const { error } = await supabase.rpc("importar_lista_aprovados", {
-      p_edital_id: editalId,
-      p_ativo: ativo,
-      p_arquivo_nome: arquivo.name,
-      p_arquivo_path: caminho,
-      p_candidatos: candidatos,
-      p_substituir: Boolean(atual),
+    return executar("importar", "Validando o XLSX…", async (rotular) => {
+      let candidatos;
+      try {
+        candidatos = await lerPlanilha(arquivo);
+      } catch (erro) {
+        toast(`Arquivo inválido: ${mensagemDe(erro)}`, "error");
+        return false;
+      }
+      const caminho = `${editalId}/${Date.now()}-${uuid()}-${nomeDeArquivoSeguro(arquivo.name)}`;
+      rotular(`Enviando ${candidatos.length} candidato(s)…`);
+      const envio = await supabase.storage
+        .from(BUCKET)
+        .upload(caminho, arquivo, { contentType: TIPO_DO_XLSX, upsert: false });
+      if (envio.error) {
+        toast(`Erro ao anexar XLSX: ${mensagemDe(envio.error)}`, "error");
+        return false;
+      }
+      const { error } = await supabase.rpc("importar_lista_aprovados", {
+        p_edital_id: editalId,
+        p_ativo: ativo,
+        p_arquivo_nome: arquivo.name,
+        p_arquivo_path: caminho,
+        p_candidatos: candidatos,
+        p_substituir: Boolean(atual),
+      });
+      if (error) {
+        toast(`Erro ao importar lista: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      fecharModal();
+      toast(`${candidatos.length} candidato(s) importados com sucesso.`);
+      await carregar();
+      avisar("agsus:listas-aprovados-changed");
+      return true;
     });
-    loader(false);
-    if (error) {
-      toast(`Erro ao importar lista: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    fecharModal();
-    toast(`${candidatos.length} candidato(s) importados com sucesso.`);
-    await carregar({ comLoader: false });
-    avisar("agsus:listas-aprovados-changed");
-    return true;
   }
 
   async function definirListaAtiva({ editalId, ativo }) {
     const lista = listaDoEdital(editalId);
     if (!lista) return false;
-    loader(
-      true,
-      "Lista de aprovados",
-      ativo ? "Ativando lista..." : "Inativando lista...",
-      60,
+    return executar(
+      "lista-ativa",
+      ativo ? "Ativando…" : "Inativando…",
+      async () => {
+        const { error } = await supabase.rpc("definir_lista_aprovados_ativa", {
+          p_lista_id: lista.lista_id,
+          p_ativo: ativo,
+        });
+        if (error) {
+          toast(`Erro ao alterar a lista: ${mensagemDe(error)}`, "error");
+          return false;
+        }
+        toast(
+          ativo
+            ? "Lista ativada."
+            : "Lista inativada. Os candidatos ficaram bloqueados para alteração.",
+        );
+        await carregar();
+        return true;
+      },
     );
-    const { error } = await supabase.rpc("definir_lista_aprovados_ativa", {
-      p_lista_id: lista.lista_id,
-      p_ativo: ativo,
-    });
-    loader(false);
-    if (error) {
-      toast(`Erro ao alterar a lista: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    toast(
-      ativo
-        ? "Lista ativada."
-        : "Lista inativada. Os candidatos ficaram bloqueados para alteração.",
-    );
-    await carregar({ comLoader: false });
-    return true;
   }
 
   async function removerLista(editalId) {
@@ -432,19 +454,19 @@ export function criarEstadoDaListaDeAprovados({
       )
     )
       return false;
-    loader(true, "Lista de aprovados", "Arquivando lista vigente...", 60);
-    const { error } = await supabase.rpc("remover_lista_aprovados", {
-      p_lista_id: lista.lista_id,
+    return executar("remover-lista", "Arquivando…", async () => {
+      const { error } = await supabase.rpc("remover_lista_aprovados", {
+        p_lista_id: lista.lista_id,
+      });
+      if (error) {
+        toast(`Erro ao remover lista: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      toast("Lista removida da visão vigente. O histórico foi preservado.");
+      await carregar();
+      avisar("agsus:listas-aprovados-changed");
+      return true;
     });
-    loader(false);
-    if (error) {
-      toast(`Erro ao remover lista: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    toast("Lista removida da visão vigente. O histórico foi preservado.");
-    await carregar({ comLoader: false });
-    avisar("agsus:listas-aprovados-changed");
-    return true;
   }
 
   async function baixarArquivoAtual(editalId) {
@@ -478,18 +500,19 @@ export function criarEstadoDaListaDeAprovados({
       );
       return null;
     }
-    loader(true, "Lista de convocação", "Salvando o modelo de regras...", 60);
-    const { data, error } = await supabase.rpc("salvar_modelo_convocacao", {
-      p_modelo: modeloParaSalvar(pronto),
+    const salvo = await executar("salvar-modelo", "Salvando…", async () => {
+      const { data, error } = await supabase.rpc("salvar_modelo_convocacao", {
+        p_modelo: modeloParaSalvar(pronto),
+      });
+      if (error) {
+        toast(`Erro ao salvar o modelo: ${mensagemDe(error)}`, "error");
+        return null;
+      }
+      await carregarConfiguracoes();
+      toast("Modelo salvo.");
+      return String(data?.modelo_id || pronto.id || "");
     });
-    loader(false);
-    if (error) {
-      toast(`Erro ao salvar o modelo: ${mensagemDe(error)}`, "error");
-      return null;
-    }
-    await carregarConfiguracoes();
-    toast("Modelo salvo.");
-    return String(data?.modelo_id || pronto.id || "");
+    return salvo || null;
   }
 
   async function removerModelo(modelo, editais = 0) {
@@ -499,18 +522,18 @@ export function criarEstadoDaListaDeAprovados({
         ? `Remover "${modelo.nome}"? ${editais} edital(is) ficarão sem regra de convocação.`
         : `Remover "${modelo.nome}"?`;
     if (!confirmar(aviso)) return false;
-    loader(true, "Lista de convocação", "Removendo o modelo...", 60);
-    const { error } = await supabase.rpc("remover_modelo_convocacao", {
-      p_modelo_id: modelo.id,
+    return executar("remover-modelo", "Removendo…", async () => {
+      const { error } = await supabase.rpc("remover_modelo_convocacao", {
+        p_modelo_id: modelo.id,
+      });
+      if (error) {
+        toast(`Erro ao remover o modelo: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      await carregarConfiguracoes();
+      toast("Modelo removido.");
+      return true;
     });
-    loader(false);
-    if (error) {
-      toast(`Erro ao remover o modelo: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    await carregarConfiguracoes();
-    toast("Modelo removido.");
-    return true;
   }
 
   async function salvarConfiguracao(formulario) {
@@ -519,20 +542,20 @@ export function criarEstadoDaListaDeAprovados({
       toast("Sem permissão para configurar a convocação.", "warn");
       return false;
     }
-    loader(true, "Lista de convocação", "Salvando as vagas do edital...", 60);
-    const { error } = await supabase.rpc(
-      "salvar_configuracao_convocacao",
-      argumentosDaConfiguracao(formulario),
-    );
-    loader(false);
-    if (error) {
-      toast(`Erro ao salvar a convocação: ${mensagemDe(error)}`, "error");
-      return false;
-    }
-    toast("Convocação salva.");
-    // Recarrega tudo: a ordem de convocação da página depende destas vagas.
-    await carregar({ comLoader: false });
-    return true;
+    return executar("salvar-configuracao", "Salvando…", async () => {
+      const { error } = await supabase.rpc(
+        "salvar_configuracao_convocacao",
+        argumentosDaConfiguracao(formulario),
+      );
+      if (error) {
+        toast(`Erro ao salvar a convocação: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      toast("Convocação salva.");
+      // Recarrega tudo: a ordem de convocação da página depende destas vagas.
+      await carregar();
+      return true;
+    });
   }
 
   return {

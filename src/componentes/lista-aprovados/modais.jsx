@@ -5,6 +5,7 @@ import {
   uniqueCandidateCargos,
 } from "../../lib/lista-aprovados-rules.js";
 import { Modal } from "../modal.jsx";
+import { BotaoDeAcao } from "./partes.jsx";
 
 /*
   Os modais de status do candidato e de inclusão sub judice. Cada abertura é
@@ -101,10 +102,11 @@ export function ModalDeStatus({ estado, candidato }) {
           <button className="btn secondary" type="button" onClick={fechar}>
             Cancelar
           </button>
-          <button
+          <BotaoDeAcao
+            estado={estado}
+            acao="status"
             id="approvedStatusSave"
             className="btn green"
-            type="button"
             onClick={() =>
               void estado.salvarStatus(candidato.candidato_id, {
                 status,
@@ -115,7 +117,7 @@ export function ModalDeStatus({ estado, candidato }) {
           >
             <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar
             status
-          </button>
+          </BotaoDeAcao>
         </div>
       </div>
     </Modal>
@@ -211,17 +213,18 @@ export function ModalSubJudice({ estado, listas, candidatos }) {
           <button className="btn secondary" type="button" onClick={fechar}>
             Cancelar
           </button>
-          <button
+          <BotaoDeAcao
+            estado={estado}
+            acao="sub-judice"
             id="subJudiceSave"
             className="btn green"
-            type="button"
             onClick={() =>
               void estado.incluirSubJudice({ editalId, cargo, nome, nota })
             }
           >
             <i className="fa-solid fa-user-plus" aria-hidden="true" /> Incluir
             sub judice
-          </button>
+          </BotaoDeAcao>
         </div>
       </div>
     </Modal>
