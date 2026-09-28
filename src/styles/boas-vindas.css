@@ -1,0 +1,70 @@
+/*
+  Boas-vindas da Visão geral (src/modules/boas-vindas.js). Card compacto como
+  os outros blocos da tela (exceção aceita, DESIGN.md seção 12), com a linha de
+  3px à esquerda na cor de ação — o mesmo toque de cor dos KPIs.
+*/
+.boas-vindas {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--brand-primary);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.boas-vindas__texto {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.boas-vindas__texto strong {
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  font-weight: 600;
+}
+.boas-vindas__texto span {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+}
+.boas-vindas__acao,
+.boas-vindas__fechar {
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+/* Link (DS 11.1): navegação dentro do texto do bloco. */
+.boas-vindas__acao {
+  padding: var(--space-1) var(--space-2);
+  color: var(--state-info);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+}
+.boas-vindas__acao:hover {
+  text-decoration: underline;
+}
+/* Ghost de ícone (DS 11.1), 32px. */
+.boas-vindas__fechar {
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  font-size: var(--text-h3);
+  line-height: 1;
+}
+.boas-vindas__fechar:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.boas-vindas__acao:focus-visible,
+.boas-vindas__fechar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
