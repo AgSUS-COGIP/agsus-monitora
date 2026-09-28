@@ -418,6 +418,8 @@ async function loadCatalog() {
     const { data, error } = await state.client
       .from("TB_EDITAL_ANALISE")
       .select("grupo,unidade,edital,ativo")
+      // Painel antigo é só da Saúde Indígena (SEDE e Projetos têm painel próprio).
+      .eq("CO_PLANILHA", "saude-indigena")
       .order("unidade", { ascending: true })
       .order("edital", { ascending: true });
     if (error) throw error;
