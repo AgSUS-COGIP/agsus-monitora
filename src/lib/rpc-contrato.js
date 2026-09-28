@@ -215,6 +215,28 @@ export const CONTRATO_RPC = {
     resumo:
       "Altera o status de um candidato e registra processo SEI e matrícula quando informados. Status já definido só o admin altera.",
   },
+  listar_anexos_candidatos_aprovados: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Lista os anexos (PDF) dos candidatos vigentes das áreas do usuário, sem o arquivo.",
+  },
+  baixar_anexo_candidato_aprovado: {
+    argumentos: ["p_anexo_id"],
+    critica: false,
+    resumo: "Devolve um anexo do candidato, com o PDF em base64.",
+  },
+  registrar_anexo_candidato_aprovado: {
+    argumentos: ["p_candidato_id", "p_arquivo_nome", "p_arquivo_base64"],
+    critica: false,
+    resumo:
+      "Grava um PDF (base64) como anexo do candidato, em bytea (até 5, 2 MB cada).",
+  },
+  remover_anexo_candidato_aprovado: {
+    argumentos: ["p_anexo_id"],
+    critica: false,
+    resumo: "Remove um anexo do candidato, com o arquivo.",
+  },
   incluir_sub_judice: {
     argumentos: ["p_edital_id", "p_cargo", "p_nome", "p_nota"],
     critica: true,

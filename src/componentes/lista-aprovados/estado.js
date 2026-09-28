@@ -14,6 +14,11 @@
   O que é só da tela (filtros, página, aba, rascunho do formulário) fica nos
   componentes.
 
+  Status e anexos entram na tela assim que o banco confirma (`aplicarLocal`):
+  esperar a releitura dos milhares de candidatos deixava a linha antiga por
+  segundos, como se nada tivesse sido salvo. A releitura corre depois, sem
+  travar os botões, e é descartada se outra mudança local chegou no meio.
+
   Sem tela de carregamento: antes da primeira carga a página desenha skeleton
   (`carregado` falso), e uma falha nela vira `erroAoCarregar`, com "Tentar de
   novo". As ações passam por `executar`: `acao` diz qual está em curso, o botão
@@ -34,6 +39,7 @@ import {
   canEditSubJudice,
   nomeDeArquivoSeguro,
   statusNeedsMatricula,
+  statusTravado,
 } from "../../lib/lista-aprovados-rules.js";
 import {
   argumentosDaConfiguracao,
@@ -45,6 +51,12 @@ import {
   somaDasReservas,
 } from "../../lib/configuracao-de-convocacao.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
+import {
+  anexosPorCandidato,
+  arquivoEmBase64,
+  pdfDoBase64,
+  problemaDosAnexos,
+} from "../../lib/anexos-do-candidato.js";
 
 const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;
 const CANDIDATES_PAGE_SIZE = 1000;
@@ -57,6 +69,8 @@ const mensagemDe = (erro) => erro?.message || erro;
 
 const ESTADO_INICIAL = Object.freeze({
   candidatos: Object.freeze([]),
+  /** candidato_id → anexos (PDF) dele. */
+  anexos: new Map(),
   listas: Object.freeze([]),
   carregado: false,
   /** A primeira carga falhou: a página mostra o erro e "Tentar de novo". */
@@ -72,6 +86,7 @@ const ESTADO_INICIAL = Object.freeze({
     O modal aberto, ou `null`. `abertura` muda a cada abertura: o componente
     usa-a como `key`, e reabrir o mesmo modal começa de um rascunho limpo.
       { tipo: "status", candidatoId }
+      { tipo: "anexos", candidatoId }
       { tipo: "sub-judice" }
       { tipo: "listas", editalId, rotulo }
   */
@@ -92,6 +107,25 @@ function baixarNoNavegador(arquivo, nome) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/*
+  A aba abre na hora do clique (depois do `await` o navegador a bloquearia como
+  popup) e recebe o endereço assinado quando ele chega.
+*/
+function abrirEmNovaAba() {
+  const janela = window.open("", "_blank");
+  return {
+    mostrar(url) {
+      if (!janela) {
+        window.open(url, "_blank", "noopener");
+        return;
+      }
+      janela.opener = null;
+      janela.location.href = url;
+    },
+    fechar: () => janela?.close(),
+  };
+}
+
 export function criarEstadoDaListaDeAprovados({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
@@ -99,9 +133,11 @@ export function criarEstadoDaListaDeAprovados({
   confirmar = (mensagem) => window.confirm(mensagem),
   baixar = baixarNoNavegador,
   lerPlanilha = readApprovedWorkbook,
+  novaAba = abrirEmNovaAba,
 } = {}) {
   let estado = ESTADO_INICIAL;
   let aberturas = 0;
+  let mudancasLocais = 0;
   const ouvintes = new Set();
 
   function publicar(mudancas) {
@@ -187,14 +223,42 @@ export function criarEstadoDaListaDeAprovados({
     };
   }
 
+  /*
+    Os anexos, como a configuração, não interrompem a carga: sem eles a lista
+    aparece e o botão de anexos fica vazio.
+  */
+  async function lerAnexos() {
+    if (!canViewCore(perfil())) return new Map();
+    const { data, error } = await supabase.rpc(
+      "listar_anexos_candidatos_aprovados",
+    );
+    if (error) {
+      console.warn("Anexos dos candidatos indisponíveis:", error);
+      return null;
+    }
+    return anexosPorCandidato(data);
+  }
+
   async function carregarConfiguracoes() {
     if (!supabase) return;
     const lidas = await lerConfiguracoes();
     if (lidas) publicar(lidas);
   }
 
-  async function carregar() {
+  /** Publica o que o banco acabou de confirmar, sem esperar a releitura. */
+  function aplicarLocal(mudancas) {
+    mudancasLocais += 1;
+    publicar(mudancas);
+  }
+
+  /*
+    `emSegundoPlano`: a releitura depois de uma mudança já aplicada na tela.
+    Se outra mudança local chegou enquanto ela corria, os dados dela são mais
+    velhos que a tela — e a mudança nova dispara a própria releitura.
+  */
+  async function carregar({ emSegundoPlano = false } = {}) {
     if (!supabase) return false;
+    const versao = mudancasLocais;
     if (estado.erroAoCarregar) publicar({ erroAoCarregar: "" });
     let resultados;
     try {
@@ -209,11 +273,13 @@ export function criarEstadoDaListaDeAprovados({
           ? buscarTodosOsCandidatos()
           : Promise.resolve({ data: [], error: null }),
         lerConfiguracoes(),
+        lerAnexos().catch(() => null),
       ]);
     } catch (erro) {
-      resultados = [{ error: erro }, { error: null }, null];
+      resultados = [{ error: erro }, { error: null }, null, null];
     }
-    const [listas, candidatos, configuracao] = resultados;
+    const [listas, candidatos, configuracao, anexos] = resultados;
+    if (emSegundoPlano && versao !== mudancasLocais) return false;
     const error = listas.error || candidatos.error;
     if (error) {
       toast(
@@ -231,6 +297,7 @@ export function criarEstadoDaListaDeAprovados({
       carregado: true,
       perfil: perfil(),
       ...(configuracao || {}),
+      ...(anexos ? { anexos } : {}),
     });
     avisar("agsus:listas-aprovados-loaded", { lists: estado.listas });
     return true;
@@ -271,6 +338,11 @@ export function criarEstadoDaListaDeAprovados({
     abrir({ tipo: "status", candidatoId: String(candidatoId) });
   }
 
+  function abrirAnexos(candidatoId) {
+    if (!candidatoPorId(candidatoId)) return;
+    abrir({ tipo: "anexos", candidatoId: String(candidatoId) });
+  }
+
   function abrirSubJudice() {
     if (!canManageSubJudice(perfil())) {
       toast("Sem permissão para incluir sub judice.", "warn");
@@ -294,6 +366,63 @@ export function criarEstadoDaListaDeAprovados({
 
   // ── Candidatos ─────────────────────────────────────────────────────────
 
+  const anexosDe = (candidatoId) =>
+    estado.anexos.get(String(candidatoId)) || [];
+
+  function comAnexos(candidatoId, anexos) {
+    const mapa = new Map(estado.anexos);
+    if (anexos.length) mapa.set(String(candidatoId), anexos);
+    else mapa.delete(String(candidatoId));
+    return mapa;
+  }
+
+  const comCandidato = (atualizado) =>
+    estado.candidatos.map((row) =>
+      String(row.candidato_id) === String(atualizado.candidato_id)
+        ? atualizado
+        : row,
+    );
+
+  /*
+    Um arquivo por vez: o PDF vai em base64 e o banco grava em bytea, na mesma
+    chamada que confere o limite de 5 e a lista ativa. Devolve os anexos
+    registrados e a mensagem de cada arquivo que não entrou.
+  */
+  async function enviarAnexos(candidato, arquivos, rotular) {
+    const falhas = [];
+    const novos = [];
+    for (const [indice, arquivo] of arquivos.entries()) {
+      rotular(`Enviando anexo ${indice + 1} de ${arquivos.length}…`);
+      let base64;
+      try {
+        base64 = await arquivoEmBase64(arquivo);
+      } catch (erro) {
+        falhas.push(`${arquivo.name}: ${mensagemDe(erro)}`);
+        continue;
+      }
+      const { data, error } = await supabase.rpc(
+        "registrar_anexo_candidato_aprovado",
+        {
+          p_candidato_id: candidato.candidato_id,
+          p_arquivo_nome: arquivo.name,
+          p_arquivo_base64: base64,
+        },
+      );
+      if (error || !data?.anexo_id) {
+        falhas.push(`${arquivo.name}: ${mensagemDe(error) || "sem resposta"}`);
+        continue;
+      }
+      novos.push({
+        anexo_id: data.anexo_id,
+        candidato_id: candidato.candidato_id,
+        arquivo_nome: arquivo.name,
+        tamanho: arquivo.size,
+        incluido_em: new Date().toISOString(),
+      });
+    }
+    return { falhas, novos };
+  }
+
   async function salvarStatus(candidatoId, campos) {
     const candidato = candidatoPorId(candidatoId);
     if (!candidato || !canEditCandidateStatus(perfil(), candidato))
@@ -301,29 +430,134 @@ export function criarEstadoDaListaDeAprovados({
     const status = text(campos.status);
     const processo = text(campos.processo);
     const matricula = text(campos.matricula);
-    if (statusNeedsMatricula(status) && !matricula) {
+    const arquivos = Array.from(campos.anexos ?? []);
+    // Status travado: só os anexos saem; o status fica como está no banco.
+    const soAnexos = statusTravado(perfil(), candidato);
+    if (soAnexos && !arquivos.length) {
+      toast("Escolha os PDFs para anexar.", "warn");
+      return false;
+    }
+    if (!soAnexos && statusNeedsMatricula(status) && !matricula) {
       toast("Informe a matrícula para Contratado ou Migração.", "warn");
       return false;
     }
-    return executar("status", "Salvando…", async () => {
-      const { error } = await supabase.rpc(
-        "alterar_status_candidato_aprovado",
-        {
-          p_candidato_id: candidato.candidato_id,
-          p_status: status || null,
-          p_processo_sei: processo || null,
-          p_matricula: matricula || null,
-        },
-      );
+    const problema = problemaDosAnexos(
+      arquivos,
+      anexosDe(candidato.candidato_id).length,
+    );
+    if (problema) {
+      toast(problema, "warn");
+      return false;
+    }
+    const salvo = await executar("status", "Salvando…", async (rotular) => {
+      const { error } = soAnexos
+        ? { error: null }
+        : await supabase.rpc("alterar_status_candidato_aprovado", {
+            p_candidato_id: candidato.candidato_id,
+            p_status: status || null,
+            p_processo_sei: processo || null,
+            p_matricula: matricula || null,
+          });
       if (error) {
         toast(`Erro ao alterar status: ${mensagemDe(error)}`, "error");
         return false;
       }
+      const { falhas, novos } = arquivos.length
+        ? await enviarAnexos(candidato, arquivos, rotular)
+        : { falhas: [], novos: [] };
+      // Como o banco gravou: matrícula só fica para Contratado e Migração.
+      aplicarLocal({
+        ...(soAnexos
+          ? {}
+          : {
+              candidatos: comCandidato({
+                ...candidato,
+                status: status || null,
+                processo_sei: processo || null,
+                matricula: statusNeedsMatricula(status) ? matricula : null,
+              }),
+            }),
+        anexos: comAnexos(candidato.candidato_id, [
+          ...anexosDe(candidato.candidato_id),
+          ...novos,
+        ]),
+      });
       fecharModal();
-      toast("Status do candidato atualizado.");
-      await carregar();
+      const inicio = soAnexos ? "" : "Status atualizado";
+      if (falhas.length)
+        toast(
+          `${inicio ? `${inicio}, mas ` : ""}${falhas.length} anexo(s) não foram enviados. ${falhas.join(" · ")}`,
+          "error",
+        );
+      else if (soAnexos) toast(`${arquivos.length} anexo(s) enviados.`);
+      else
+        toast(
+          arquivos.length
+            ? `Status atualizado e ${arquivos.length} anexo(s) enviados.`
+            : "Status do candidato atualizado.",
+        );
       return true;
     });
+    if (salvo) void carregar({ emSegundoPlano: true });
+    return salvo;
+  }
+
+  /*
+    O PDF vem do banco em base64 e abre numa aba nova por um endereço `blob:`,
+    que é liberado um minuto depois (a aba já o carregou).
+  */
+  async function abrirAnexo(anexo) {
+    if (!anexo?.anexo_id) return;
+    const aba = novaAba();
+    const { data, error } = await supabase.rpc(
+      "baixar_anexo_candidato_aprovado",
+      { p_anexo_id: anexo.anexo_id },
+    );
+    if (error || !data?.arquivo_base64) {
+      aba.fechar();
+      toast(
+        `Erro ao abrir o anexo: ${mensagemDe(error) || "arquivo vazio"}`,
+        "error",
+      );
+      return;
+    }
+    const url = URL.createObjectURL(pdfDoBase64(data.arquivo_base64));
+    aba.mostrar(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
+  async function removerAnexo(anexo) {
+    const candidato = candidatoPorId(anexo?.candidato_id);
+    if (!candidato || !canEditCandidateStatus(perfil(), candidato))
+      return false;
+    if (!confirmar(`Remover o anexo "${anexo.arquivo_nome}"?`)) return false;
+    const removido = await executar(
+      `remover-anexo:${anexo.anexo_id}`,
+      "Removendo…",
+      async () => {
+        // O arquivo está na linha: apagá-la apaga o PDF junto.
+        const { error } = await supabase.rpc(
+          "remover_anexo_candidato_aprovado",
+          { p_anexo_id: anexo.anexo_id },
+        );
+        if (error) {
+          toast(`Erro ao remover o anexo: ${mensagemDe(error)}`, "error");
+          return false;
+        }
+        aplicarLocal({
+          anexos: comAnexos(
+            candidato.candidato_id,
+            anexosDe(candidato.candidato_id).filter(
+              (item) => item.anexo_id !== anexo.anexo_id,
+            ),
+          ),
+        });
+        toast("Anexo removido.");
+        return true;
+      },
+    );
+    if (removido) void carregar({ emSegundoPlano: true });
+    return removido;
   }
 
   async function incluirSubJudice(campos) {
@@ -584,10 +818,13 @@ export function criarEstadoDaListaDeAprovados({
     carregarConfiguracoes,
     garantirCarregado,
     abrirStatus,
+    abrirAnexos,
     abrirSubJudice,
     abrirListasDoEdital,
     fecharModal,
     salvarStatus,
+    abrirAnexo,
+    removerAnexo,
     incluirSubJudice,
     removerSubJudice,
     importarLista,

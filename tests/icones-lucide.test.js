@@ -20,7 +20,7 @@ function arquivos(pasta, extensoes) {
 }
 
 const fontes = [
-  ...arquivos("src", [".js", ".html"]),
+  ...arquivos("src", [".js", ".jsx", ".html"]),
   "index.html",
   "analises.html",
   "auth/callback.html",

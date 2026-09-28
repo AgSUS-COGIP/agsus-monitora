@@ -1,6 +1,7 @@
 import {
   canChangeCandidateStatus,
   canManageSubJudice,
+  canUnlockCandidateStatus,
 } from "./access-roles.js";
 
 const text = (value) => String(value ?? "").trim();
@@ -29,6 +30,15 @@ export function statusNeedsMatricula(status) {
 
 export function canEditCandidateStatus(profile, candidate) {
   return Boolean(candidate?.lista_ativa) && canChangeCandidateStatus(profile);
+}
+
+/*
+  A trava do status (migration 20260928180000): com status já definido, só o
+  admin do módulo o altera — e o processo SEI e a matrícula, que vão na mesma
+  RPC. Os anexos ficam fora da trava: quem altera status continua anexando.
+*/
+export function statusTravado(profile, candidate) {
+  return Boolean(text(candidate?.status)) && !canUnlockCandidateStatus(profile);
 }
 
 export function canEditSubJudice(profile, candidate) {

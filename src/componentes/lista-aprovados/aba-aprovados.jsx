@@ -8,6 +8,7 @@ import {
 } from "../../lib/lista-aprovados-rules.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import {
+  AcaoDeAnexos,
   AcaoDeStatus,
   Kpi,
   NomeDoCandidato,
@@ -37,6 +38,7 @@ export function AbaAprovados({
   estado,
   perfil,
   candidatos,
+  anexos,
   carregado,
   erroAoCarregar,
   opcoes,
@@ -207,6 +209,11 @@ export function AbaAprovados({
                     <SeloDeStatus status={text(row.status)} />
                   </td>
                   <td className="approved-actions">
+                    <AcaoDeAnexos
+                      candidato={row}
+                      anexos={anexos.get(String(row.candidato_id))}
+                      aoAbrir={estado.abrirAnexos}
+                    />
                     <AcaoDeStatus
                       perfil={perfil}
                       candidato={row}

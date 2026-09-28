@@ -48,7 +48,7 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 | **Editais / Núcleo** (React: tabela, alertas, formulário com cronograma, linha do tempo) | `src/componentes/nucleo/`, `src/lib/editais-do-nucleo.js`, `cronograma-do-edital.js`, `responsavel-do-edital.js`, `etapas-de-edital.js`, `editais-das-linhas.js`; o legado abre por `window.nucleoController` |
 | Calendário de editais (React) | `src/componentes/calendario-editais/`, `src/lib/calendario-editais.js` |
 | Linhas do monitoramento e unidades para o React | `src/componentes/dados-do-monitoramento.js` (o legado publica em `loadData`/`loadUnidades`) |
-| **Lista de aprovados** (React: aprovados, convocação, modais) | `src/componentes/lista-aprovados/`, `src/lib/lista-aprovados-rules.js`, `aprovados-import.js`, `lista-convocacao-rules.js`, `configuracao-de-convocacao.js`, `modelo-de-convocacao.js`; o legado abre por `window.aprovadosController` |
+| **Lista de aprovados** (React: aprovados, convocação, modais) | `src/componentes/lista-aprovados/`, `src/lib/lista-aprovados-rules.js`, `aprovados-import.js`, `lista-convocacao-rules.js`, `configuracao-de-convocacao.js`, `modelo-de-convocacao.js`, `anexos-do-candidato.js` (PDFs do candidato); o legado abre por `window.aprovadosController` |
 | Assistente AYA | `src/modules/aya-*.js`, `api/aya.js`, `docs/aya/`, `scripts/aya-*.mjs` |
 | Branding / acesso | `src/lib/access-branding*.js`, `src/modules/sidebar-branding.js`, `access-request-ui.js` |
 | **Barra lateral** (React: áreas, trilho, rodapé) | `src/componentes/barra-lateral/`, `src/lib/menu-lateral.js` (catálogo e estado do flutuante), `src/lib/eventos-da-barra-lateral.js`, `src/styles/barra-lateral.css`; o legado alimenta por `buildNav`/`setActiveNav` |
