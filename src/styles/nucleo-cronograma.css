@@ -235,3 +235,53 @@ html[data-theme="dark"] .cronograma-table td {
     grid-template-columns: 1fr;
   }
 }
+
+/*
+  Cabeçalho do formulário do edital: o rascunho à espera e a pergunta
+  "Descartar as alterações?" moram nele (sticky), para aparecerem onde quer
+  que a pessoa esteja no formulário. Os tokens de estado já trocam no escuro.
+*/
+.edital-cabecalho {
+  flex-wrap: wrap;
+  row-gap: var(--space-3);
+}
+
+.edital-aviso {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-body);
+}
+
+.edital-aviso p {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-body-sm);
+}
+
+.edital-aviso--perigo {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+
+.edital-aviso-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.edital-aviso-acoes .btn.danger {
+  border: 0;
+  background: var(--state-danger);
+  color: var(--text-inverse);
+}
+
+.edital-aviso-acoes .btn.danger:hover {
+  background: color-mix(in srgb, var(--state-danger) 88%, black);
+}

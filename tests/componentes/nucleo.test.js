@@ -239,6 +239,7 @@ async function montar({
 
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
+  window.localStorage.clear();
 });
 
 afterEach(async () => {
@@ -699,6 +700,120 @@ describe("formulário do edital", () => {
     await teclar(document, "Escape");
     expect($("editModal")).toBeNull();
     expect(document.activeElement).toBe(botao);
+  });
+});
+
+describe("não perder o edital", () => {
+  const rascunhosGuardados = () =>
+    Object.keys(window.localStorage).filter((chave) =>
+      chave.startsWith("agsus_monitora_rascunho_edital_v1:"),
+    );
+  const botaoDoRodape = (texto) =>
+    [...document.querySelectorAll("#editModal .modal-body button")].find(
+      (botao) => botao.textContent.trim() === texto,
+    );
+
+  it("clicar no fundo escuro não fecha o formulário", async () => {
+    await montar();
+    await clicar($("newEditalBtn"));
+    await digitar($("mEdital"), "20/2026");
+    await clicar($("editModal"));
+    expect($("editModal")).not.toBeNull();
+    expect($("mEdital").value).toBe("20/2026");
+    expect($("editalDescartar")).toBeNull();
+  });
+
+  it("sem mudança, Cancelar fecha direto, sem perguntar", async () => {
+    await montar();
+    await abrirEdital("1");
+    await clicar(botaoDoRodape("Cancelar"));
+    expect($("editModal")).toBeNull();
+    expect(rascunhosGuardados()).toEqual([]);
+  });
+
+  it("com mudança, Esc pergunta; Esc de novo volta à edição; Descartar fecha e apaga o rascunho", async () => {
+    await montar();
+    await abrirEdital("1");
+    await digitar($("mObs"), "Anotação que não pode sumir");
+    expect(rascunhosGuardados()).toHaveLength(1);
+
+    await teclar(document, "Escape");
+    expect($("editModal")).not.toBeNull();
+    const pergunta = $("editalDescartar");
+    expect(pergunta.getAttribute("role")).toBe("alertdialog");
+    expect(pergunta.textContent).toContain("Descartar as alterações?");
+    expect(document.activeElement).toBe($("editalContinuar"));
+
+    await teclar(document, "Escape");
+    expect($("editalDescartar")).toBeNull();
+    expect($("mObs").value).toBe("Anotação que não pode sumir");
+
+    await clicar(botaoDoRodape("Cancelar"));
+    await clicar($("editalContinuar"));
+    expect($("editModal")).not.toBeNull();
+
+    await clicar(
+      document.querySelector("#editModal .modal-head > .btn.secondary"),
+    );
+    await clicar($("editalDescartarConfirmar"));
+    expect($("editModal")).toBeNull();
+    expect(rascunhosGuardados()).toEqual([]);
+  });
+
+  it("reabrir Novo oferece o rascunho: Retomar devolve o que foi digitado", async () => {
+    await montar();
+    await clicar($("newEditalBtn"));
+    await digitar($("mEdital"), "20/2026");
+    await escolher($("mUnidade"), "U1");
+    // A aba fechou ou a página recarregou: o modal some sem perguntar.
+    await act(async () => controlador.estado.fecharModal());
+
+    await clicar($("newEditalBtn"));
+    expect($("mEdital").value).toBe("");
+    expect($("editalRascunho").textContent).toContain(
+      "Há um rascunho de 10:00.",
+    );
+    await clicar($("editalRascunhoRetomar"));
+    expect($("editalRascunho")).toBeNull();
+    expect($("mEdital").value).toBe("20/2026");
+    expect($("mUnidade").value).toBe("U1");
+    expect($("mUf").value).toBe("AM");
+  });
+
+  it("Descartar o rascunho abre o formulário limpo e o apaga", async () => {
+    await montar();
+    await clicar($("newEditalBtn"));
+    await digitar($("mEdital"), "20/2026");
+    await act(async () => controlador.estado.fecharModal());
+
+    await clicar($("newEditalBtn"));
+    await clicar($("editalRascunhoDescartar"));
+    expect($("editalRascunho")).toBeNull();
+    expect($("mEdital").value).toBe("");
+    expect(rascunhosGuardados()).toEqual([]);
+  });
+
+  it("o rascunho de um edital não aparece em outro", async () => {
+    await montar();
+    await abrirEdital("1");
+    await digitar($("mObs"), "Nota do edital 1");
+    await act(async () => controlador.estado.fecharModal());
+
+    await abrirEdital("2");
+    expect($("editalRascunho")).toBeNull();
+    await act(async () => controlador.estado.fecharModal());
+    await abrirEdital("1");
+    expect($("editalRascunho")).not.toBeNull();
+  });
+
+  it("salvar apaga o rascunho", async () => {
+    await montar();
+    await abrirEdital("1");
+    await digitar($("mCronogramaMotivo"), "Ajuste de datas");
+    expect(rascunhosGuardados()).toHaveLength(1);
+    await clicar($("saveEditalBtn"));
+    expect($("editModal")).toBeNull();
+    expect(rascunhosGuardados()).toEqual([]);
   });
 });
 

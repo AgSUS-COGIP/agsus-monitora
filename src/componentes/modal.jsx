@@ -11,6 +11,10 @@ import { createPortal } from "react-dom";
   o foco vai para o primeiro controle (ou para o marcado com
   `data-foco-inicial`) e fica preso no cartão; `Esc` e clique no fundo escuro
   chamam `aoFechar`; ao fechar, o foco volta a quem abriu.
+
+  `fecharAoClicarFora={false}` desliga o clique no fundo: formulário longo (o
+  do edital) não pode sumir com um clique perdido fora do cartão. O `Esc`
+  continua chamando `aoFechar`, e quem usa decide se pergunta antes de fechar.
 */
 
 const FOCAVEIS = [
@@ -34,6 +38,7 @@ export function Modal({
   id,
   rotuloId,
   aoFechar,
+  fecharAoClicarFora = true,
   className = "",
   cartaoClassName = "",
   children,
@@ -92,8 +97,9 @@ export function Modal({
       aria-modal="true"
       aria-labelledby={rotuloId}
       onClick={(evento) => {
-        // Clique no fundo escuro fecha; clique dentro do cartão, não.
-        if (evento.target === evento.currentTarget) aoFechar();
+        // Clique no fundo escuro fecha (se permitido); dentro do cartão, não.
+        if (fecharAoClicarFora && evento.target === evento.currentTarget)
+          aoFechar();
       }}
     >
       <div ref={cartao} className={classes("modal-card", cartaoClassName)}>
