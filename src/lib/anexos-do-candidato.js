@@ -9,7 +9,7 @@
 
 export const LIMITE_DO_ANEXO = 2 * 1024 * 1024;
 export const MAXIMO_DE_ANEXOS = 5;
-export const TIPO_DO_ANEXO = "application/pdf";
+const TIPO_DO_ANEXO = "application/pdf";
 
 const ehPdf = (arquivo) =>
   arquivo?.type === TIPO_DO_ANEXO ||
