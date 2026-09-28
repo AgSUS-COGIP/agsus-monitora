@@ -49,8 +49,19 @@ export function rotuloDaAreaDoPainel(area) {
   return nomeDaArea(normalizarAreaDoPainel(area));
 }
 
-export function tituloDoPainelDeAnalises(area) {
-  return `MONITORA Análises · ${rotuloDaAreaDoPainel(area)}`;
+export const TITULO_DO_PAINEL_DE_ANALISES = "Painel de análises curriculares";
+
+export function tituloDoPainelDeAnalises() {
+  return TITULO_DO_PAINEL_DE_ANALISES;
+}
+
+export function subtituloDoPainelDeAnalises(area) {
+  return `${rotuloDaAreaDoPainel(area)} · Acompanhamento das análises dos processos seletivos`;
+}
+
+// Aba do navegador: o MONITORA fica para quem abrir o painel em outra aba.
+export function tituloDaAbaDoPainelDeAnalises(area) {
+  return `${TITULO_DO_PAINEL_DE_ANALISES} · ${rotuloDaAreaDoPainel(area)} — MONITORA`;
 }
 
 /*

@@ -8,6 +8,8 @@ import {
   areaDaUrlDoPainel,
   ehAreaSaudeIndigena,
   rotuloDaAreaDoPainel,
+  subtituloDoPainelDeAnalises,
+  tituloDaAbaDoPainelDeAnalises,
   tituloDoPainelDeAnalises,
 } from "../lib/area-do-painel-de-analises.js";
 
@@ -16,10 +18,12 @@ export const PAINEL_DA_SAUDE_INDIGENA = ehAreaSaudeIndigena(AREA_DO_PAINEL);
 export const ROTULO_DA_AREA_DO_PAINEL = rotuloDaAreaDoPainel(AREA_DO_PAINEL);
 
 function aplicarTitulo() {
-  const titulo = tituloDoPainelDeAnalises(AREA_DO_PAINEL);
-  document.title = titulo;
+  document.title = tituloDaAbaDoPainelDeAnalises(AREA_DO_PAINEL);
   const cabecalho = document.querySelector("#topbar .brand h1");
-  if (cabecalho) cabecalho.textContent = titulo;
+  if (cabecalho) cabecalho.textContent = tituloDoPainelDeAnalises();
+  const subtitulo = document.querySelector("#topbar .brand .sub");
+  if (subtitulo)
+    subtitulo.textContent = subtituloDoPainelDeAnalises(AREA_DO_PAINEL);
   document.documentElement.dataset.areaDoPainel = AREA_DO_PAINEL;
 }
 

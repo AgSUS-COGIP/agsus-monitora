@@ -87,7 +87,7 @@ export const PAGINAS_DO_MENU = Object.freeze([
 export const PAINEIS_DE_AREA = Object.freeze({
   analises: Object.freeze({
     areas: Object.freeze(["saude-indigena", "sede", "projetos"]),
-    rotulo: "Análises",
+    rotulo: "Análises curriculares",
   }),
 });
 

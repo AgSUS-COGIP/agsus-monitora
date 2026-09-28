@@ -12,6 +12,8 @@ import {
   nomeDoCsvDeAnalises,
   parametroDeAreaDaRpc,
   rotuloDaAreaDoPainel,
+  subtituloDoPainelDeAnalises,
+  tituloDaAbaDoPainelDeAnalises,
   tituloDoPainelDeAnalises,
 } from "../src/lib/area-do-painel-de-analises.js";
 
@@ -38,13 +40,14 @@ describe("a área do painel pela URL", () => {
   });
 
   it("título e rótulo de cada área", () => {
-    expect(tituloDoPainelDeAnalises("saude-indigena")).toBe(
-      "MONITORA Análises · Saúde Indígena",
+    expect(tituloDoPainelDeAnalises()).toBe("Painel de análises curriculares");
+    expect(subtituloDoPainelDeAnalises("projetos")).toBe(
+      "Projetos · Acompanhamento das análises dos processos seletivos",
     );
-    expect(tituloDoPainelDeAnalises("projetos")).toBe(
-      "MONITORA Análises · Projetos",
+    expect(subtituloDoPainelDeAnalises("sede")).toMatch(/^SEDE · /);
+    expect(tituloDaAbaDoPainelDeAnalises("saude-indigena")).toBe(
+      "Painel de análises curriculares · Saúde Indígena — MONITORA",
     );
-    expect(tituloDoPainelDeAnalises("sede")).toBe("MONITORA Análises · SEDE");
     expect(rotuloDaAreaDoPainel("xyz")).toBe("Saúde Indígena");
     expect(ehAreaSaudeIndigena("saude-indigena")).toBe(true);
     expect(ehAreaSaudeIndigena("projetos")).toBe(false);

@@ -217,7 +217,7 @@ describe("áreas abertas por padrão", () => {
       ["Editais", "saude-indigena"],
       ["Cronograma", "saude-indigena"],
       ["Lista de aprovados", "saude-indigena"],
-      ["Análises", "saude-indigena"],
+      ["Análises curriculares", "saude-indigena"],
     ]);
   });
 });

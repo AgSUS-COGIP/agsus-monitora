@@ -108,7 +108,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       "Editais",
       "Cronograma",
       "Lista de aprovados",
-      "Análises",
+      "Análises curriculares",
     ]);
     expect(grupos["saude-indigena"].at(-1).view).toBe("panel:analises");
     expect(
@@ -151,7 +151,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
         "approved",
         "panel:analises",
       ]);
-      expect(grupos[area].at(-1).rotulo).toBe("Análises");
+      expect(grupos[area].at(-1).rotulo).toBe("Análises curriculares");
       expect(grupos[area].every((item) => item.area === area)).toBe(true);
     }
     // O mesmo painel, uma vez em cada área; nenhum sobra em Painéis.
@@ -176,7 +176,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     expect(Object.keys(grupos)).toEqual(["sede"]);
     expect(grupos.sede.at(-1)).toEqual({
       view: "panel:analises",
-      rotulo: "Análises",
+      rotulo: "Análises curriculares",
       icone: "square-arrow-out-up-right",
       area: "sede",
     });
