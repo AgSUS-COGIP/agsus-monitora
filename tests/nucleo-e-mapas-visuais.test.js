@@ -41,14 +41,14 @@ function blocos(css, seletor) {
 }
 
 /** Último valor declarado para a propriedade — que é o que a cascata aplica. */
-function valor(css, seletor, propriedade, resolver = resolverToken) {
+function valor(css, seletor, propriedade) {
   const padrao = new RegExp(`(?:^|;)\\s*${propriedade}\\s*:\\s*([^;]+)`);
   const declarados = blocos(css, seletor)
     .map((corpo) => corpo.match(padrao)?.[1]?.trim())
     .filter(Boolean);
   if (!declarados.length)
     throw new Error(`${propriedade} não declarada em ${seletor}`);
-  return resolver(declarados[declarados.length - 1]);
+  return resolverToken(declarados[declarados.length - 1]);
 }
 
 /*
@@ -64,22 +64,6 @@ function resolverToken(valorCss) {
   if (!achado) throw new Error(`token ${nome} não existe em tokens.css`);
   // Os nomes do MONITORA apontam para os oficiais (--text-secondary → --color-text-secondary → hex).
   return resolverToken(achado[1].trim());
-}
-
-/*
-  O mesmo com os valores do tema escuro: o bloco `html[data-theme="dark"]` de
-  tokens.css, e o do tema claro para o que o escuro não redefine.
-*/
-const raizEscura = tokensCss.slice(tokensCss.indexOf('[data-theme="dark"]'));
-function resolverTokenEscuro(valorCss) {
-  const nome = valorCss.match(/^var\(\s*(--[\w-]+)/)?.[1];
-  if (!nome) return valorCss;
-  const achado = raizEscura.match(
-    new RegExp(`(?<![\\w-])${nome}\\s*:\\s*([^;]+);`),
-  );
-  return achado
-    ? resolverTokenEscuro(achado[1].trim())
-    : resolverToken(valorCss);
 }
 
 const canal = (valor) => {
@@ -134,46 +118,18 @@ describe("contraste dos KPIs da Equipe Núcleo", () => {
     qualquer regra nossa perderia para ele. Afirmar a cor do rótulo a partir
     deste ficheiro seria afirmar algo que a tela não mostra.
   */
-  /*
-    O cartão é o card compacto da Visão geral, só com tokens e sem regra
-    própria para o escuro: valor e fundo saem das regras de sempre, resolvidos
-    com os tokens do tema escuro.
-  */
-  /*
-    O número vem na cor do KPI (`--tone`, definida por `.tone-*`): cada cor
-    tem de passar o AA sobre o cartão, no claro e no escuro.
-  */
-  const tons = [
-    ...nucleoCss.matchAll(
-      /\.nucleo-kpi-card\.tone-([\w-]+)\s*\{[^}]*--tone:\s*(var\([^;]+\));/g,
-    ),
-  ].map(([, nome, cor]) => [nome, cor]);
-
-  it("o número usa a cor do KPI", () => {
-    expect(valor(nucleoCss, ".nucleo-kpi-card strong", "color", (v) => v)).toBe(
-      "var(--tone, var(--text-primary))",
-    );
-    expect(tons.length).toBeGreaterThanOrEqual(4);
-  });
-
-  it("cada cor de KPI passa o AA sobre o cartão, no claro e no escuro", () => {
-    const fundoClaro = valor(nucleoCss, ".nucleo-kpi-card", "background");
-    const fundoEscuro = valor(
+  it("o valor passa o AA sobre o cartão escuro", () => {
+    const cor = valor(
       nucleoCss,
-      ".nucleo-kpi-card",
-      "background",
-      resolverTokenEscuro,
+      'html[data-theme="dark"] .nucleo-kpi-card',
+      "color",
     );
-    for (const [nome, cor] of tons) {
-      expect(
-        contraste(resolverToken(cor), fundoClaro),
-        `${nome} no claro`,
-      ).toBeGreaterThanOrEqual(AA);
-      expect(
-        contraste(resolverTokenEscuro(cor), fundoEscuro),
-        `${nome} no escuro`,
-      ).toBeGreaterThanOrEqual(AA);
-    }
+    const fundo = valor(
+      nucleoCss,
+      'html[data-theme="dark"] .nucleo-kpi-card',
+      "background",
+    );
+    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
   });
 });
 

@@ -492,29 +492,17 @@ textarea:focus-visible,
   cursor: not-allowed;
   background: var(--color-action-primary);
 }
-/*
-  Secundário (DS 11.1): tonal e sem borda — fundo azul muito claro, texto azul,
-  hover um tom acima. `.btn.outline` é alias dele. Os tokens de estado trocam
-  de valor no tema escuro, então não há regra própria para o escuro.
-*/
-.btn.secondary,
+.btn.secondary {
+  background: #ffffff;
+  color: #18324f;
+  border: 1px solid rgba(0, 59, 112, 0.16);
+  box-shadow: 0 4px 12px rgba(15, 35, 60, 0.05);
+}
 .btn.outline {
-  border: 0;
-  background: var(--state-info-soft);
-  color: var(--state-info);
+  background: rgba(255, 255, 255, 0.55);
+  color: #004c93;
+  border: 1px solid rgba(0, 128, 210, 0.38);
   box-shadow: none;
-}
-.btn.secondary:hover,
-.btn.outline:hover {
-  background: color-mix(in srgb, var(--state-info) 12%, var(--state-info-soft));
-}
-.btn.secondary:active,
-.btn.outline:active {
-  background: color-mix(in srgb, var(--state-info) 20%, var(--state-info-soft));
-}
-.btn.secondary:disabled,
-.btn.outline:disabled {
-  background: var(--state-info-soft);
 }
 .btn.red {
   background: #dc2626;
@@ -522,18 +510,6 @@ textarea:focus-visible,
 .btn.icon {
   min-width: 40px;
   padding: 0;
-}
-/* Só ícone com contorno (ações das linhas de tabela): ghost (DS 11.1). */
-.btn.icon.outline {
-  background: transparent;
-  color: var(--text-secondary);
-}
-.btn.icon.outline:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-.btn.icon.outline:disabled {
-  background: transparent;
 }
 
 .alert {
@@ -1443,6 +1419,16 @@ body.external-clean #externalReturnBar {
 }
 [data-theme="dark"] .app .multi-option {
   color: #d0e4f5 !important;
+}
+[data-theme="dark"] .app .btn.secondary {
+  background: #1a2d47 !important;
+  color: #b8d0e8 !important;
+  border-color: #1e3050 !important;
+}
+[data-theme="dark"] .app .btn.outline {
+  background: #1a2d47 !important;
+  color: #7dd3fc !important;
+  border-color: #2a4a6e !important;
 }
 [data-theme="dark"] .app .kpi-rate-pct {
   color: #7a9bbf !important;

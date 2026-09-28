@@ -194,7 +194,7 @@ export function Nucleo({ estado, agora }) {
 
   return (
     <>
-      <div className="table-card card wide-table nucleo-page-card">
+      <div className="table-card card wide-table">
         <div className="table-head">
           <h3>
             <i className="fa-solid fa-pen-to-square" aria-hidden="true" />{" "}

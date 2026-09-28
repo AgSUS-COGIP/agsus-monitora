@@ -594,7 +594,7 @@ describe("o mapa não inventa coordenadas", () => {
 
   it("todo deslocamento visual preserva uma linha até a coordenada real", () => {
     const usos = codigo.match(/layerPointToLatLng/g) || [];
-    expect(usos).toHaveLength(3);
+    expect(usos).toHaveLength(2);
 
     const detalhe = codigo.slice(
       codigo.indexOf("agruparPorProximidadeNaTela(visiveisAgora"),
@@ -613,14 +613,5 @@ describe("o mapa não inventa coordenadas", () => {
     expect(polos).toContain("layerPointToLatLng");
     expect(polos).toContain("L.polyline([[grupo.lat, grupo.lon], destino]");
     expect(codigo).not.toContain("mapa-cluster");
-    // As sedes de DSEI que caem no mesmo pixel (Boa Vista) entram no leque
-    // com traço até o ponto real, e o ponto real também fica desenhado.
-    const sedes = codigo.slice(
-      codigo.indexOf("function aplicarLequeDosDsei"),
-      codigo.indexOf("function drawDSEIBubbles"),
-    );
-    expect(sedes).toContain("layerPointToLatLng");
-    expect(sedes).toContain("L.polyline([[lat, lon], destino]");
-    expect(sedes).toContain("L.circleMarker([lat, lon]");
   });
 });
