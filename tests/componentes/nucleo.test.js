@@ -2,6 +2,7 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarNucleo } from "../../src/componentes/nucleo/nucleo.jsx";
 import {
+  definirAreaAtual,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
   redefinirDadosDoMonitoramento,
@@ -166,6 +167,20 @@ const CRONOGRAMAS = {
   },
 };
 
+/* TA_UNIDADE_AREA como está no banco (28/09/2026). */
+const UNIDADES_POR_AREA = [
+  { unidade: "CCE", area: "sede" },
+  { unidade: "Escritório Distrital e Regional", area: "sede" },
+  { unidade: "SEDE", area: "sede" },
+  { unidade: "MFC", area: "projetos" },
+  {
+    unidade: "Projeto Agora Tem Especialistas Caminhoneiros",
+    area: "projetos",
+  },
+  { unidade: "Rio Doce", area: "projetos" },
+  { unidade: "Saúde nas Fronteiras", area: "projetos" },
+];
+
 function supabaseFalso({ resumo = RESUMO, cronogramas = CRONOGRAMAS } = {}) {
   const auth = { ouvinte: null };
   return {
@@ -186,6 +201,13 @@ function supabaseFalso({ resumo = RESUMO, cronogramas = CRONOGRAMAS } = {}) {
       if (nome === "get_monitoramento_cronograma")
         return {
           data: cronogramas[argumentos.p_monitoramento_id] || {},
+          error: null,
+        };
+      if (nome === "listar_unidades_por_area")
+        return { data: UNIDADES_POR_AREA, error: null };
+      if (nome === "mover_edital_de_area")
+        return {
+          data: { ok: true, id: argumentos.p_id, para: argumentos.p_area },
           error: null,
         };
       if (nome === "salvar_monitoramento_com_cronograma_v2")
@@ -484,12 +506,35 @@ describe("formulário do edital", () => {
     await montar();
     await abrirEdital("1");
     await escolher($("mResponsavel"), "CORES");
-    const opcoes = [...$("mUnidade").options]
-      .map((opcao) => opcao.value)
-      .filter(Boolean);
-    expect(opcoes).toEqual(UNIDADES_CORES);
+    const opcoes = () =>
+      [...$("mUnidade").options]
+        .map((opcao) => opcao.value)
+        .filter((valor) => valor && valor !== "__nova__");
+    // Edital da Saúde Indígena: as unidades do CORES são da SEDE ou de Projetos.
+    expect(opcoes()).toEqual([]);
     expect($("mUnidade").value).toBe("");
     expect($("mUf").value).toBe("");
+    await escolher($("mResponsavel"), "USI");
+    expect(opcoes()).toEqual(["U2", "U1"]);
+  });
+
+  it("sem área definida (a RPC falhou), o CORES mostra as sete unidades", async () => {
+    const supabase = supabaseFalso();
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(async (nome, argumentos) =>
+      nome === "listar_unidades_por_area"
+        ? { data: null, error: { message: "ainda não existe" } }
+        : original(nome, argumentos),
+    );
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await montar({ supabase });
+    await abrirEdital("1");
+    await escolher($("mResponsavel"), "CORES");
+    expect(
+      [...$("mUnidade").options]
+        .map((opcao) => opcao.value)
+        .filter((valor) => valor && valor !== "__nova__"),
+    ).toEqual(UNIDADES_CORES);
   });
 
   it("com o automático, status e etapa são os das datas; sem ele, voltam a ser editáveis", async () => {
@@ -753,7 +798,9 @@ describe("não perder o edital", () => {
     expect($("editModal")).not.toBeNull();
 
     await clicar(
-      document.querySelector("#editModal .modal-head > .btn.secondary"),
+      [...document.querySelectorAll("#editModal .modal-head button")].find(
+        (botao) => botao.textContent.trim() === "Fechar",
+      ),
     );
     await clicar($("editalDescartarConfirmar"));
     expect($("editModal")).toBeNull();
@@ -814,6 +861,158 @@ describe("não perder o edital", () => {
     await clicar($("saveEditalBtn"));
     expect($("editModal")).toBeNull();
     expect(rascunhosGuardados()).toEqual([]);
+  });
+});
+
+describe("edital sempre na área certa", () => {
+  const valoresDaUnidade = () =>
+    [...$("mUnidade").options].map((opcao) => opcao.value).filter(Boolean);
+  const chamadaDe = (supabase, nome) =>
+    supabase.rpc.mock.calls.find(([chamada]) => chamada === nome);
+
+  it("Novo mostra a área do menu; editar mostra a do edital", async () => {
+    await montar();
+    await act(async () => definirAreaAtual("sede"));
+    await clicar($("newEditalBtn"));
+    expect($("mArea").textContent).toBe("Área: SEDE");
+    await act(async () => controlador.estado.fecharModal());
+
+    await act(async () => definirAreaAtual("saude-indigena"));
+    await abrirEdital("1");
+    expect($("mArea").textContent).toBe("Área: Saúde Indígena");
+  });
+
+  it("na SEDE, o CORES oferece só as unidades da SEDE, e o payload leva a área", async () => {
+    const { supabase } = await montar();
+    await act(async () => definirAreaAtual("sede"));
+    await clicar($("newEditalBtn"));
+    await escolher($("mResponsavel"), "CORES");
+    expect(valoresDaUnidade()).toEqual([
+      "CCE",
+      "SEDE",
+      "Escritório Distrital e Regional",
+      "__nova__",
+    ]);
+    await digitar($("mEdital"), "30/2026");
+    await escolher($("mUnidade"), "SEDE");
+    // Sem etapas, o cálculo automático não deixa salvar.
+    await clicar($("mCronogramaAutomatico"));
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    const [, argumentos] = chamadaDe(
+      supabase,
+      "salvar_monitoramento_com_cronograma_v2",
+    );
+    expect(argumentos.p_payload).toMatchObject({
+      unidade: "SEDE",
+      responsavel: "CORES",
+      co_area: "sede",
+    });
+  });
+
+  it("editar salva na área do próprio edital", async () => {
+    const { supabase } = await montar();
+    await act(async () => definirAreaAtual("sede"));
+    await act(async () => controlador.estado.abrirEdital("1"));
+    expect($("mArea").textContent).toBe("Área: Saúde Indígena");
+    await digitar($("mCronogramaMotivo"), "Ajuste");
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    const [, argumentos] = chamadaDe(
+      supabase,
+      "salvar_monitoramento_com_cronograma_v2",
+    );
+    expect(argumentos.p_payload.co_area).toBe("saude-indigena");
+  });
+
+  it("dá para digitar uma unidade nova, que vai no payload com a área", async () => {
+    const { supabase } = await montar();
+    await act(async () => definirAreaAtual("projetos"));
+    await clicar($("newEditalBtn"));
+    await digitar($("mEdital"), "31/2026");
+    await escolher($("mUnidade"), "__nova__");
+    expect($("mUnidadeNova")).not.toBeNull();
+    expect($("mUf").readOnly).toBe(false);
+    await digitar($("mUnidadeNova"), "Projeto Mais Médicos Especialistas");
+    expect($("mUnidadeNovaAjuda").textContent).toContain(
+      "fica registrada na área Projetos",
+    );
+    await clicar($("mCronogramaAutomatico"));
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    const [, argumentos] = chamadaDe(
+      supabase,
+      "salvar_monitoramento_com_cronograma_v2",
+    );
+    expect(argumentos.p_payload).toMatchObject({
+      unidade: "Projeto Mais Médicos Especialistas",
+      id_unidade: null,
+      co_area: "projetos",
+    });
+  });
+
+  it("unidade digitada que é de outra área avisa antes de salvar", async () => {
+    await montar();
+    await act(async () => definirAreaAtual("sede"));
+    await clicar($("newEditalBtn"));
+    await escolher($("mUnidade"), "__nova__");
+    await digitar($("mUnidadeNova"), "rio doce");
+    const ajuda = $("mUnidadeNovaAjuda");
+    expect(ajuda.className).toContain("is-erro");
+    expect(ajuda.textContent).toContain("Esta unidade é da área Projetos");
+  });
+
+  it("só administrador vê Mover para outra área", async () => {
+    await montar();
+    await abrirEdital("1");
+    expect($("editalMoverAbrir")).toBeNull();
+    await act(async () => controlador.estado.fecharModal());
+
+    perfilAtual = { perfil: "admin" };
+    await clicar($("newEditalBtn"));
+    // Edital novo não tem de onde sair.
+    expect($("editalMoverAbrir")).toBeNull();
+  });
+
+  it("administrador move o edital com motivo e confirmação", async () => {
+    const { supabase, confirmar, aoSalvar, toast } = await montar({
+      perfil: { perfil: "admin" },
+    });
+    await abrirEdital("1");
+    await clicar($("editalMoverAbrir"));
+    const areas = [...$("mMoverArea").options]
+      .map((opcao) => opcao.value)
+      .filter(Boolean);
+    expect(areas).toEqual(["sede", "projetos"]);
+    expect($("editalMoverConfirmar").disabled).toBe(true);
+
+    await escolher($("mMoverArea"), "sede");
+    await digitar($("mMoverMotivo"), "Cadastrado na área errada");
+    supabase.rpc.mockClear();
+    await clicar($("editalMoverConfirmar"));
+    expect(confirmar).toHaveBeenCalledWith(
+      "Mover o edital 10/2026 de Saúde Indígena para SEDE?",
+    );
+    const [, argumentos] = chamadaDe(supabase, "mover_edital_de_area");
+    expect(argumentos).toEqual({
+      p_id: "1",
+      p_area: "sede",
+      p_motivo: "Cadastrado na área errada",
+    });
+    expect($("editModal")).toBeNull();
+    expect(aoSalvar).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenLastCalledWith("10/2026 movido para SEDE.");
+  });
+
+  it("com o formulário mexido, mover fica bloqueado", async () => {
+    await montar({ perfil: { perfil: "admin" } });
+    await abrirEdital("1");
+    await digitar($("mObs"), "mudança não salva");
+    await clicar($("editalMoverAbrir"));
+    await escolher($("mMoverArea"), "projetos");
+    await digitar($("mMoverMotivo"), "motivo");
+    expect($("editalMoverBloqueio")).not.toBeNull();
+    expect($("editalMoverConfirmar").disabled).toBe(true);
   });
 });
 

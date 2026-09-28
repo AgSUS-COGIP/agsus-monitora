@@ -6,13 +6,19 @@ import {
   useSyncExternalStore,
 } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.js";
+import { canManageAccess } from "../../lib/access-roles.js";
+import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.js";
 import {
+  NOVA_UNIDADE,
+  areaDaUnidade,
   camposDaUnidade,
   editalParaSalvar,
   formatarNumero,
   formularioDoEdital,
+  mapaDeAreasDasUnidades,
   opcoesDeUnidade,
   rotuloDaUnidade,
+  unidadesDaArea,
   valorDaUnidade,
 } from "../../lib/editais-do-nucleo.js";
 import {
@@ -30,6 +36,7 @@ import {
   usuarioDoPerfil,
 } from "../../lib/rascunho-do-edital.js";
 import {
+  areaDaLinha,
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../dados-do-monitoramento.js";
@@ -53,6 +60,13 @@ import { EditorDeCronograma } from "./editor-de-cronograma.jsx";
   navegador (`rascunho-do-edital.js`): reabrir o mesmo edital (ou "Novo" na
   mesma área) oferece Retomar ou Descartar. Salvar ou descartar apaga o
   rascunho.
+
+  O edital nasce na área do menu e é salvo nela (`co_area` no payload): o
+  cabeçalho mostra "Área: …", a lista de unidades traz só as da área (e as
+  que o banco ainda não conhece), e dá para digitar uma unidade nova — o banco
+  a registra na área ao salvar e recusa unidade de outra área. Ao editar, vale
+  a área do próprio edital; só um administrador o muda de área ("Mover para
+  outra área", `mover_edital_de_area`).
 */
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -156,6 +170,25 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     formulário abria já com "Corrija antes de salvar", antes de qualquer edição.
   */
   const [editorMexido, setEditorMexido] = useState(false);
+  /* Edital novo nasce na área do menu; o existente fica na dele. */
+  const [areaDoEdital] = useState(() =>
+    id ? areaDaLinha(linha) || areaAtual : areaAtual,
+  );
+  const [unidadesPorArea, setUnidadesPorArea] = useState([]);
+  const [movendo, setMovendo] = useState(false);
+  const [destino, setDestino] = useState("");
+  const [motivoDaMudanca, setMotivoDaMudanca] = useState("");
+  const podeMover = Boolean(id) && canManageAccess(perfil);
+
+  useEffect(() => {
+    let vivo = true;
+    Promise.resolve(estado.lerUnidadesPorArea?.())
+      .then((lista) => vivo && setUnidadesPorArea(lista || []))
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [estado]);
 
   useEffect(() => {
     if (!id) return undefined;
@@ -200,19 +233,54 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     if (confirmandoDescarte) continuarEditando.current?.focus();
   }, [confirmandoDescarte]);
 
-  const opcoes = useMemo(
-    () => opcoesDeUnidade(formulario.responsavel, unidades, linhas),
-    [formulario.responsavel, unidades, linhas],
+  const mapaDeAreas = useMemo(
+    () =>
+      mapaDeAreasDasUnidades({ unidadesPorArea, catalogo: unidades, linhas }),
+    [unidadesPorArea, unidades, linhas],
   );
-  const unidade =
-    opcoes.find((item) => valorDaUnidade(item) === formulario.unidade) || null;
+  const opcoes = useMemo(
+    () =>
+      unidadesDaArea(
+        opcoesDeUnidade(formulario.responsavel, unidades, linhas),
+        areaDoEdital,
+        mapaDeAreas,
+        linha?.unidade,
+      ),
+    [
+      formulario.responsavel,
+      unidades,
+      linhas,
+      areaDoEdital,
+      mapaDeAreas,
+      linha,
+    ],
+  );
+  const digitandoUnidade = formulario.unidade === NOVA_UNIDADE;
+  const unidade = digitandoUnidade
+    ? txt(formulario.unidadeNova)
+      ? { nome_oficial: txt(formulario.unidadeNova) }
+      : null
+    : opcoes.find((item) => valorDaUnidade(item) === formulario.unidade) ||
+      null;
+  // Unidade digitada que o banco já conhece em outra área: avisa antes de salvar.
+  const areaDaDigitada = digitandoUnidade
+    ? areaDaUnidade(formulario.unidadeNova, mapaDeAreas)
+    : "";
+  const digitadaDeOutraArea =
+    areaDaDigitada && areaDaDigitada !== areaDoEdital ? areaDaDigitada : "";
   const previa = estadoDoCronograma(cronograma.etapas, {
     automatico: cronograma.automatico,
     statusExcepcional: cronograma.statusExcepcional,
     etapaExcepcional: cronograma.etapaExcepcional,
     hoje: agora(),
   });
-  const edital = editalParaSalvar(formulario, unidade, cronograma, previa);
+  const edital = editalParaSalvar(
+    formulario,
+    unidade,
+    cronograma,
+    previa,
+    areaDoEdital,
+  );
   const analise = analisarCronograma(
     edital,
     cronograma.etapas,
@@ -271,6 +339,17 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     setRascunho(null);
   }
 
+  function mover() {
+    void estado.moverEdital({
+      id,
+      area: destino,
+      motivo: motivoDaMudanca,
+      rotulo: txt(linha?.edital) || txt(linha?.unidade) || "edital",
+      de: nomeDaArea(areaDoEdital) || areaDoEdital,
+      para: nomeDaArea(destino) || destino,
+    });
+  }
+
   async function salvar() {
     const salvou = await estado.salvarEdital({
       edital,
@@ -289,14 +368,31 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
       fecharAoClicarFora={false}
     >
       <div className="modal-head edital-cabecalho">
-        <h3 id="editModalTitle">{id ? "Editar edital" : "Novo edital"}</h3>
-        <button
-          className="btn secondary"
-          type="button"
-          onClick={pedirParaFechar}
-        >
-          Fechar
-        </button>
+        <div className="edital-titulo">
+          <h3 id="editModalTitle">{id ? "Editar edital" : "Novo edital"}</h3>
+          <span id="mArea" className="edital-area">
+            Área: <strong>{nomeDaArea(areaDoEdital) || areaDoEdital}</strong>
+          </span>
+        </div>
+        <div className="edital-aviso-acoes">
+          {podeMover && !movendo && (
+            <button
+              id="editalMoverAbrir"
+              className="btn secondary"
+              type="button"
+              onClick={() => setMovendo(true)}
+            >
+              Mover para outra área
+            </button>
+          )}
+          <button
+            className="btn secondary"
+            type="button"
+            onClick={pedirParaFechar}
+          >
+            Fechar
+          </button>
+        </div>
         {rascunho && !confirmandoDescarte && (
           <div id="editalRascunho" className="edital-aviso" role="status">
             <span>
@@ -362,6 +458,71 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
         )}
       </div>
       <div className="modal-body">
+        {podeMover && movendo && (
+          <section
+            id="editalMover"
+            className="edital-mover"
+            aria-labelledby="editalMoverTitulo"
+          >
+            <h4 id="editalMoverTitulo">Mover para outra área</h4>
+            <p className="modal-note">
+              Só o edital muda de área (com a lista de aprovados, o cronograma e
+              a convocação dele). A mudança fica registrada com o motivo.
+            </p>
+            {mexido && (
+              <p id="editalMoverBloqueio" className="edital-mover-aviso">
+                Salve ou descarte as alterações do formulário antes de mover.
+              </p>
+            )}
+            <div className="form-grid">
+              <Campo id="mMoverArea" rotulo="Nova área">
+                <select
+                  id="mMoverArea"
+                  value={destino}
+                  onChange={(evento) => setDestino(evento.target.value)}
+                >
+                  <option value="">Selecione a área</option>
+                  {AREAS_DO_SISTEMA.filter(
+                    (area) => area.id !== areaDoEdital,
+                  ).map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              <Campo id="mMoverMotivo" rotulo="Motivo da mudança" largo>
+                <textarea
+                  id="mMoverMotivo"
+                  placeholder="Ex.: edital cadastrado na área errada"
+                  value={motivoDaMudanca}
+                  onChange={(evento) => setMotivoDaMudanca(evento.target.value)}
+                />
+              </Campo>
+            </div>
+            <div className="edital-aviso-acoes edital-mover-acoes">
+              <button
+                id="editalMoverCancelar"
+                className="btn secondary"
+                type="button"
+                onClick={() => setMovendo(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                id="editalMoverConfirmar"
+                className="btn"
+                type="button"
+                disabled={
+                  salvando || mexido || !destino || !txt(motivoDaMudanca)
+                }
+                onClick={mover}
+              >
+                Mover edital
+              </button>
+            </div>
+          </section>
+        )}
         <div className="form-grid">
           <div className="subsection">Identificação do edital</div>
           <Campo id="mProcesso" rotulo="Processo">
@@ -407,6 +568,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             </select>
           </Campo>
           <Campo id="mUnidade" rotulo="Unidade">
+            {/* Só as unidades da área do edital; "Outra unidade" abre o campo para digitar. */}
             <select
               id="mUnidade"
               value={formulario.unidade}
@@ -427,16 +589,53 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
                   {rotuloDaUnidade(item)}
                 </option>
               ))}
+              <option value={NOVA_UNIDADE}>
+                Outra unidade (digitar o nome)…
+              </option>
             </select>
           </Campo>
+          {digitandoUnidade && (
+            <Campo id="mUnidadeNova" rotulo="Nome da nova unidade">
+              <input
+                id="mUnidadeNova"
+                placeholder="Nome da unidade"
+                maxLength={150}
+                aria-describedby="mUnidadeNovaAjuda"
+                value={formulario.unidadeNova}
+                onChange={mudar("unidadeNova")}
+              />
+              <small
+                id="mUnidadeNovaAjuda"
+                className={
+                  digitadaDeOutraArea
+                    ? "edital-unidade-ajuda is-erro"
+                    : "edital-unidade-ajuda"
+                }
+              >
+                {digitadaDeOutraArea
+                  ? `Esta unidade é da área ${nomeDaArea(digitadaDeOutraArea) || digitadaDeOutraArea}: o banco vai recusar. Escolha uma unidade de ${nomeDaArea(areaDoEdital) || areaDoEdital}.`
+                  : `Ao salvar, a unidade fica registrada na área ${nomeDaArea(areaDoEdital) || areaDoEdital}.`}
+              </small>
+            </Campo>
+          )}
           <Campo id="mUf" rotulo="UF">
             <input
               id="mUf"
               maxLength={2}
               placeholder="UF"
-              readOnly
-              title="Preenchida automaticamente pela unidade selecionada"
+              readOnly={!digitandoUnidade}
+              title={
+                digitandoUnidade
+                  ? "UF da nova unidade (opcional)"
+                  : "Preenchida automaticamente pela unidade selecionada"
+              }
               value={formulario.uf}
+              onChange={(evento) =>
+                setFormulario((atual) => ({
+                  ...atual,
+                  uf: evento.target.value.toUpperCase(),
+                }))
+              }
             />
           </Campo>
           <Campo id="mLink" rotulo="Link do edital">

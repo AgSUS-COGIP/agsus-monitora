@@ -10,6 +10,7 @@
 */
 
 import {
+  AREA_SAUDE_INDIGENA,
   ehResponsavelCores,
   normalizarResponsavel,
   unidadesDoResponsavel,
@@ -158,6 +159,59 @@ export function opcoesDeUnidade(responsavel, catalogo, linhas) {
   );
 }
 
+// ── Unidades por área ────────────────────────────────────────────────────
+
+/** A opção do select de unidade que abre o campo para digitar uma unidade nova. */
+export const NOVA_UNIDADE = "__nova__";
+
+/**
+ * Área de cada unidade, pelo nome normalizado. A mesma regra do banco
+ * (`private."FC_AREA_DA_UNIDADE"`), na mesma ordem:
+ *   1. `TA_UNIDADE_AREA` (`listar_unidades_por_area`);
+ *   2. catálogo `TD_UNIDADE` (DSEI e CASAI) → Saúde Indígena;
+ *   3. na falta dos dois, a área gravada nos editais que já usam a unidade —
+ *      o que resta quando a RPC falha ou ainda não chegou.
+ * Unidade fora do mapa é desconhecida: o banco a registra na área de quem salva.
+ *
+ * @param {{unidadesPorArea?: Array<{unidade: string, area: string}>, catalogo?: object[], linhas?: object[]}} fontes
+ * @returns {Map<string, string>}
+ */
+export function mapaDeAreasDasUnidades({
+  unidadesPorArea = [],
+  catalogo = [],
+  linhas = [],
+} = {}) {
+  const mapa = new Map();
+  const anotar = (nome, area) => {
+    const chave = normalizarNomeDaUnidade(nome);
+    if (chave && txt(area) && !mapa.has(chave)) mapa.set(chave, txt(area));
+  };
+  (unidadesPorArea || []).forEach((item) => anotar(item?.unidade, item?.area));
+  (catalogo || []).forEach((u) => anotar(u?.nome_oficial, AREA_SAUDE_INDIGENA));
+  (linhas || []).forEach((linha) => anotar(linha?.unidade, linha?.CO_AREA));
+  return mapa;
+}
+
+/** A área conhecida de uma unidade, ou `""`. */
+export function areaDaUnidade(nome, mapa) {
+  return mapa?.get(normalizarNomeDaUnidade(nome)) || "";
+}
+
+/**
+ * As opções de unidade que servem para a área: as da área e as desconhecidas.
+ * `manter` é a unidade gravada no edital aberto — continua na lista mesmo que
+ * seja de outra área (edital movido por um administrador).
+ */
+export function unidadesDaArea(opcoes, area, mapa, manter = "") {
+  const mantida = normalizarNomeDaUnidade(manter);
+  return (opcoes || []).filter((unidade) => {
+    const nome = normalizarNomeDaUnidade(unidade.nome_oficial);
+    if (mantida && nome === mantida) return true;
+    const daUnidade = mapa?.get(nome);
+    return !daUnidade || daUnidade === area;
+  });
+}
+
 /** A unidade de um edital gravado: pelo id e, na falta dele, pelo nome. */
 export function unidadeDoEdital(edital, unidades) {
   if (!edital) return null;
@@ -209,6 +263,8 @@ export function formularioDoEdital(edital, catalogo, linhas) {
     edital: txt(e.edital),
     responsavel,
     unidade: escolhida ? valor : "",
+    // Nome digitado quando a unidade não está na lista (opção NOVA_UNIDADE).
+    unidadeNova: "",
     idUnidade: pelaUnidade ? txt(escolhida?.id_unidade) : txt(e.id_unidade),
     siglaUnidade: pelaUnidade ? txt(escolhida?.sigla) : txt(e.sigla_unidade),
     tipoUnidade: pelaUnidade ? txt(escolhida?.tipo) : txt(e.tipo_unidade),
@@ -244,8 +300,16 @@ export function camposDaUnidade(unidade) {
  * @param {object|null} unidade a unidade escolhida no select
  * @param {object} cronograma `{ automatico, etapas, statusExcepcional, … }`
  * @param {{status: string, etapa: string}} previa o que `estadoDoCronograma` calculou
+ * @param {string} [area] a área pretendida (`co_area`): a do menu no edital novo,
+ *   a do próprio edital ao editar. Sem ela, o banco deduz a área como antes.
  */
-export function editalParaSalvar(formulario, unidade, cronograma, previa) {
+export function editalParaSalvar(
+  formulario,
+  unidade,
+  cronograma,
+  previa,
+  area = "",
+) {
   const f = formulario;
   const automatico = Boolean(cronograma.automatico);
   return {
@@ -275,6 +339,7 @@ export function editalParaSalvar(formulario, unidade, cronograma, previa) {
     status_override_motivo: txt(cronograma.motivoExcepcional) || null,
     status_override_data: txt(cronograma.dataExcepcional) || null,
     status_override_previsao_retomada: txt(cronograma.retomada) || null,
+    ...(txt(area) ? { co_area: txt(area) } : {}),
   };
 }
 

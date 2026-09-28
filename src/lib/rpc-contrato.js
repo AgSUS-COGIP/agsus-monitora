@@ -144,7 +144,20 @@ export const CONTRATO_RPC = {
   salvar_monitoramento_com_cronograma_v2: {
     argumentos: ["p_payload", "p_cronograma", "p_motivo", "p_numero_errata"],
     critica: true,
-    resumo: "Grava monitoramento junto com o cronograma.",
+    resumo:
+      "Grava monitoramento junto com o cronograma. Com `co_area` no p_payload, salva na área pretendida (recusa unidade de outra área e registra a unidade nova).",
+  },
+  mover_edital_de_area: {
+    argumentos: ["p_id", "p_area", "p_motivo"],
+    critica: false,
+    resumo:
+      "Só admin: muda o edital de área, com motivo auditado em TH_MONITORAMENTO.",
+  },
+  listar_unidades_por_area: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Unidades com área definida (TA_UNIDADE_AREA); sem ela o formulário cai na área dos editais.",
   },
   get_monitoramento_cronograma: {
     argumentos: ["p_monitoramento_id"],
