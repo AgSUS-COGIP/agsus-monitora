@@ -139,10 +139,10 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     );
   });
 
-  it("o admin vê as três áreas; SEDE e Projetos sem Visão geral, com Análises", () => {
+  it("o admin vê as três áreas; SEDE e Projetos com a Visão geral delas, com Análises", () => {
     const grupos = porGrupo(
       montarArvoreDoMenu({
-        permitidas: TUDO,
+        permitidas: { ...TUDO, "visao-area": true },
         paineis: PAINEIS,
         areas: TODAS,
       }),
@@ -153,13 +153,23 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       "projetos",
       "paineis",
     ]);
+    // A Saúde Indígena continua com o mapa (`dashboard`), e só ele.
+    expect(grupos["saude-indigena"].map((item) => item.view)).toEqual([
+      "dashboard",
+      "nucleo",
+      "calendario",
+      "approved",
+      "analises",
+    ]);
     for (const area of ["sede", "projetos"]) {
       expect(grupos[area].map((item) => item.view)).toEqual([
+        "visao-area",
         "nucleo",
         "calendario",
         "approved",
         "analises",
       ]);
+      expect(grupos[area][0].rotulo).toBe("Visão geral");
       expect(grupos[area].at(-1).rotulo).toBe("Análises curriculares");
       expect(grupos[area].every((item) => item.area === area)).toBe(true);
     }
@@ -386,5 +396,27 @@ describe("estado do painel flutuante", () => {
   it("evento desconhecido não muda nada", () => {
     const aberto = passo(FLUTUANTE_FECHADO, "apontar", "sede");
     expect(passo(aberto, "piscar", "sede")).toBe(aberto);
+  });
+});
+
+describe("Visão geral da SEDE e de Projetos", () => {
+  it("segue a permissão da Visão geral: sem ela, SEDE e Projetos não a mostram", () => {
+    const grupos = porGrupo(
+      montarArvoreDoMenu({
+        permitidas: { nucleo: true, "visao-area": false },
+        areas: ["sede", "projetos"],
+      }),
+    );
+    expect(grupos.sede.map((item) => item.view)).toEqual(["nucleo"]);
+    expect(grupos.projetos.map((item) => item.view)).toEqual(["nucleo"]);
+  });
+
+  it("acende o item da área atual", () => {
+    const arvore = montarArvoreDoMenu({
+      permitidas: { "visao-area": true, nucleo: true },
+      areas: TODAS,
+    });
+    const ativo = itemAtivoDaArvore(arvore, "visao-area", null, "projetos");
+    expect(ativo.area).toBe("projetos");
   });
 });

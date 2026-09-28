@@ -24,7 +24,12 @@ export const FORMATOS_DO_ESQUELETO = Object.freeze([
 export function formatoDoEsqueleto(visao) {
   const tela = String(visao ?? "").trim();
   if (tela === "calendario") return "calendario";
-  if (!tela || tela === "dashboard" || tela.startsWith("panel:"))
+  if (
+    !tela ||
+    tela === "dashboard" ||
+    tela === "visao-area" ||
+    tela.startsWith("panel:")
+  )
     return "painel";
   return "tabela";
 }

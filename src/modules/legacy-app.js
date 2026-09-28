@@ -40,7 +40,16 @@ import {
   quadroDasAnalises,
 } from "./pagina-de-analises.js";
 import { mostrarNotificacao } from "./notificacao.js";
-import { ehEditalDaSaudeIndigena } from "../lib/responsavel-do-edital.js";
+import {
+  AREA_SAUDE_INDIGENA,
+  ehEditalDaSaudeIndigena,
+} from "../lib/responsavel-do-edital.js";
+import {
+  ehEditalEncerrado as isEncerrado,
+  ehRiscoAtivo as isRiscoAtivo,
+  indicadoresDoMonitoramento,
+  somarCampo,
+} from "../lib/indicadores-do-monitoramento.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import { updateAraraGuide } from "./arara-guide.js";
 import {
@@ -1519,7 +1528,7 @@ async function loadInitialData() {
 
 function isViewAllowed(view) {
   if (!view) return false;
-  if (view === "dashboard") return can("ind");
+  if (view === "dashboard" || view === "visao-area") return can("ind");
   if (view === "nucleo") return can("cores");
   if (view === "calendario")
     return profile?.permissoes ? can("calendario") : can("cores");
@@ -2287,6 +2296,7 @@ async function refreshData() {
 function buildNav() {
   const permitidas = {
     dashboard: can("ind"),
+    "visao-area": can("ind"),
     nucleo: can("cores"),
     calendario: can("calendario") || (!profile?.permissoes && can("cores")),
     approved: canViewCore(profile),
@@ -2338,6 +2348,16 @@ function navigate(view) {
     toast("Sem permissão para Saúde Indígena.", "warn");
     return;
   }
+  if (requestedView === "visao-area" && !can("ind")) {
+    toast("Sem permissão para a Visão geral.", "warn");
+    return;
+  }
+  // A Visão geral da Saúde Indígena é o mapa (`dashboard`), não esta.
+  if (
+    requestedView === "visao-area" &&
+    obterDadosDoMonitoramento().areaAtual === AREA_SAUDE_INDIGENA
+  )
+    return navigate("dashboard");
   if (requestedView === "nucleo" && !can("cores")) {
     toast("Sem permissão para Editais.", "warn");
     return;
@@ -2411,6 +2431,17 @@ function navigate(view) {
       trackAccess("abertura_tela", { tela: requestedView });
     return;
   }
+  if (requestedView === "visao-area") {
+    $("page-visao-area").classList.add("active");
+    setPageTitle(
+      "Visão geral",
+      subtituloDaArea("Editais, vagas e próximas etapas."),
+    );
+    window.visaoGeralDaAreaController?.render();
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
   if (requestedView === "nucleo") {
     $("page-nucleo").classList.add("active");
     setPageTitle("Editais", subtituloDaArea(cfgValue("nucleo_page_subtitle")));
@@ -2471,7 +2502,7 @@ function navigate(view) {
   void syncOnlinePresence();
 }
 
-/* Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
+/* Visão geral (SEDE e Projetos), Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
 function subtituloDaArea(sub) {
   const area = nomeDaArea(obterDadosDoMonitoramento().areaAtual);
   return [area, sub].filter(Boolean).join(" · ");
@@ -2941,15 +2972,7 @@ function toggleSelectFilter(selectId, value, label) {
   toast(removing ? `${label} removido.` : `${label}: ${cleanValue}`);
 }
 
-// Processo encerrado (concluído ou cancelado) não é risco ativo a monitorar.
-function isEncerrado(r) {
-  return ["concluído", "concluido", "cancelado", "cancelada"].includes(
-    low(r.status),
-  );
-}
-function isRiscoAtivo(r) {
-  return !isEncerrado(r) && ["alto", "médio", "medio"].includes(low(r.risco));
-}
+// isEncerrado e isRiscoAtivo vêm de src/lib/indicadores-do-monitoramento.js.
 function criticalRiskValues() {
   const values = optionValuesFor("risco").filter((v) =>
     ["alto", "médio", "medio"].includes(low(v)),
@@ -3035,7 +3058,7 @@ function renderSortIndicators() {
 }
 
 function sum(field) {
-  return filtered.reduce((acc, r) => acc + n(r[field]), 0);
+  return somarCampo(filtered, field);
 }
 function renderAll() {
   renderKpis();
@@ -3061,15 +3084,15 @@ function renderKpis() {
   const payloadKpis = canUseMonitoramentoPayload()
     ? monitoramentoPayload.kpis
     : null;
-  const vagas = payloadKpis ? n(payloadKpis.vagas_total) : sum("vagas_total");
-  const contrat = payloadKpis ? n(payloadKpis.contratados) : sum("contratados");
-  const ociosas = payloadKpis
-    ? n(payloadKpis.vagas_ociosas)
-    : sum("vagas_ociosas");
-  const inscritos = payloadKpis ? n(payloadKpis.inscritos) : sum("inscritos");
+  // A conta local é a mesma da Visão geral das outras áreas (src/lib/indicadores-do-monitoramento.js).
+  const locais = indicadoresDoMonitoramento(filtered);
+  const vagas = payloadKpis ? n(payloadKpis.vagas_total) : locais.vagas;
+  const contrat = payloadKpis ? n(payloadKpis.contratados) : locais.contratados;
+  const ociosas = payloadKpis ? n(payloadKpis.vagas_ociosas) : locais.ociosas;
+  const inscritos = payloadKpis ? n(payloadKpis.inscritos) : locais.inscritos;
   const processos = payloadKpis
     ? n(payloadKpis.processos_ativos)
-    : filtered.length;
+    : locais.processos;
   const kProcessos = $("kProcessos");
   const kVagas = $("kVagas");
   const kContratados = $("kContratados");
@@ -3081,8 +3104,7 @@ function renderKpis() {
   if (kVagas) kVagas.textContent = fmt(vagas);
   if (kContratados) kContratados.textContent = fmt(contrat);
   if (kOciosas) kOciosas.textContent = fmt(ociosas);
-  if (kCriticos)
-    kCriticos.textContent = fmt(filtered.filter(isRiscoAtivo).length);
+  if (kCriticos) kCriticos.textContent = fmt(locais.criticos);
   if (kInscritos) kInscritos.textContent = fmt(inscritos);
 
   // Sem a barra "NN% das vagas" sob Contratações e Ociosas: o KPI mostra o
