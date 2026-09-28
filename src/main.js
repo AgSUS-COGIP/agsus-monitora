@@ -52,6 +52,7 @@ import "./styles/barra-lateral.css";
 import "./styles/lista-aprovados.css";
 import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
+import "./styles/visao-geral-da-area.css";
 import "./styles/carregamento.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
@@ -95,6 +96,7 @@ import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.js
 import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
+import { montarVisaoGeralDaArea } from "./componentes/visao-geral-da-area/visao-geral-da-area.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -150,7 +152,7 @@ initGoogleProfilePhoto();
 initNielsenShellUx();
 
 /*
-  Núcleo, Lista de Aprovados e Calendário são React e montam nas próprias
+  Visão geral da SEDE e de Projetos, Núcleo, Lista de Aprovados e Calendário são React e montam nas próprias
   <section>. O legado as abre por estes controladores (`render()` ao navegar e
   `openImportModal` no Núcleo), nunca pelo DOM delas.
 */
@@ -169,6 +171,11 @@ window.aprovadosController = montarListaAprovados({
 // Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
 window.calendarioEditaisController = montarCalendarioEditais({
   toast: window.monitoraToast,
+});
+
+// Os editais já vêm do legado; em Projetos, o mapa pede os municípios ao abrir.
+window.visaoGeralDaAreaController = montarVisaoGeralDaArea({
+  obterPerfil: window.getMonitoraProfile,
 });
 
 if (!hasSupabaseEnv()) {

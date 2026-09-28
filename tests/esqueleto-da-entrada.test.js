@@ -27,6 +27,7 @@ const script = html.slice(inicio, html.indexOf("</script>", inicio));
 const TELAS = [
   ["", "painel"],
   ["dashboard", "painel"],
+  ["visao-area", "painel"],
   ["panel:bi-rh", "painel"],
   ["calendario", "calendario"],
   ["nucleo", "tabela"],

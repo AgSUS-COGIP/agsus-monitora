@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   chaveDoDia,
   editaisComEtapaNaSemana,
+  editaisComEtapaNosProximosDias,
   primeiroNome,
   resumoDoDia,
   saudacao,
@@ -38,6 +39,20 @@ describe("textos das boas-vindas", () => {
     ];
     expect(editaisComEtapaNaSemana(linhas, hoje)).toBe(2);
     expect(chaveDoDia(hoje)).toBe("2026-09-28");
+  });
+
+  it("lista os editais da semana da etapa mais próxima para a mais distante", () => {
+    const hoje = new Date(2026, 8, 28, 9);
+    const linhas = [
+      { id: "a", cronograma_proxima_data: "2026-10-04" },
+      { id: "b", cronograma_proxima_data: "2026-09-28T00:00:00" },
+      { id: "c", cronograma_proxima_data: "2026-10-06" },
+      { id: "d", cronograma_proxima_data: "2026-09-27" },
+      { id: "e", cronograma_proxima_data: null },
+    ];
+    expect(
+      editaisComEtapaNosProximosDias(linhas, hoje).map((linha) => linha.id),
+    ).toEqual(["b", "a"]);
   });
 
   it("resume o dia com informação real", () => {

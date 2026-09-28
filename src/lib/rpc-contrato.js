@@ -297,6 +297,12 @@ export const CONTRATO_RPC = {
   },
 
   // ── Análises ────────────────────────────────────────────────────────────
+  listar_municipios_das_vagas_da_area: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Municípios das vagas da área (UBS móvel no nome da vaga), com vagas, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migration 20260929090000).",
+  },
   get_analises_dashboard_payload_v2: {
     argumentos: ["p_scope", "p_area"],
     critica: true,

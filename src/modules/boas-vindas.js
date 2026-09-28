@@ -20,10 +20,14 @@ import "../styles/boas-vindas.css";
   Aparece quando o perfil e os editais já chegaram. Fechar (×) esconde até o
   fim do dia: guarda-se a data em localStorage, e amanhã ela volta. Sem
   armazenamento (janela privada), fecha só nesta visita.
+
+  A Visão geral da SEDE e a de Projetos (React, em
+  `src/componentes/visao-geral-da-area/`) mostram a mesma mensagem com as
+  funções exportadas daqui: fechar numa área fecha em todas, até amanhã.
 */
 const CHAVE_FECHADA = "agsus_monitora_boas_vindas_fechada";
 
-function fechadaHoje() {
+export function boasVindasFechadaHoje() {
   try {
     return localStorage.getItem(CHAVE_FECHADA) === chaveDoDia();
   } catch {
@@ -31,7 +35,7 @@ function fechadaHoje() {
   }
 }
 
-function lembrarFechada() {
+export function lembrarBoasVindasFechada() {
   try {
     localStorage.setItem(CHAVE_FECHADA, chaveDoDia());
   } catch {
@@ -39,11 +43,10 @@ function lembrarFechada() {
   }
 }
 
-function abrirCronograma() {
+/* Abre o Cronograma da área pelo item do menu, que também troca a área atual. */
+export function abrirCronogramaDaArea(area = AREA_SAUDE_INDIGENA) {
   document
-    .querySelector(
-      `.menu-item[data-view="calendario"][data-area="${AREA_SAUDE_INDIGENA}"]`,
-    )
+    .querySelector(`.menu-item[data-view="calendario"][data-area="${area}"]`)
     ?.click();
 }
 
@@ -53,7 +56,7 @@ export function initBoasVindas({
   agora = () => new Date(),
 } = {}) {
   if (!raiz) return () => {};
-  let fechada = fechadaHoje();
+  let fechada = boasVindasFechadaHoje();
 
   const desenhar = () => {
     const perfil = obterPerfil();
@@ -83,10 +86,11 @@ export function initBoasVindas({
   raiz.addEventListener("click", (evento) => {
     const alvo = evento.target.closest("[data-boas-vindas]");
     if (!alvo) return;
-    if (alvo.dataset.boasVindas === "cronograma") abrirCronograma();
+    if (alvo.dataset.boasVindas === "cronograma")
+      abrirCronogramaDaArea(AREA_SAUDE_INDIGENA);
     if (alvo.dataset.boasVindas === "fechar") {
       fechada = true;
-      lembrarFechada();
+      lembrarBoasVindasFechada();
       desenhar();
     }
   });

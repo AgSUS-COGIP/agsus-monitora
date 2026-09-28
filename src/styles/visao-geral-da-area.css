@@ -1,0 +1,298 @@
+/*
+  Visão geral da SEDE e de Projetos (src/componentes/visao-geral-da-area/).
+
+  A faixa de indicadores e o título da seção são os da Saúde Indígena
+  (health-reference-kpis.css, por `.visao-da-area`); a boas-vindas é a de
+  boas-vindas.css. Aqui ficam os blocos: mapa de municípios, próximas etapas e
+  editais — card compacto como os KPIs (fundo claro, borda sutil, raio de 8px,
+  sem sombra), 12px entre eles. Só tokens; o tema escuro vem deles.
+*/
+.visao-da-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+/* O espaço entre os blocos é o `gap`; as margens próprias sairiam dobradas. */
+.visao-da-area > .boas-vindas,
+.visao-da-area > .section-label {
+  margin-bottom: 0;
+}
+.visao-da-area > .section-label {
+  margin-top: 0;
+}
+
+.visao-da-area__bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+}
+.visao-da-area__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.visao-da-area__cabecalho h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.visao-da-area__cabecalho h3 i {
+  color: var(--state-info);
+}
+.visao-da-area__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* Estado vazio, de carregamento e de erro: centrado, dentro do bloco. */
+.visao-da-area__vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  text-align: center;
+}
+.visao-da-area > .visao-da-area__vazio {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.visao-da-area__vazio i {
+  color: var(--state-info);
+  font-size: var(--text-xl);
+}
+.visao-da-area__vazio strong {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+.visao-da-area__vazio .btn {
+  margin-top: var(--space-2);
+}
+
+/* Próximas etapas ao lado dos editais; um embaixo do outro até 1440px. */
+.visao-da-area__grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+@media (min-width: 1440px) {
+  .visao-da-area__grade {
+    grid-template-columns: minmax(280px, 1fr) minmax(0, 2.6fr);
+  }
+}
+
+.visao-da-area__etapas {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.visao-da-area__etapa {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.visao-da-area__etapa:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.visao-da-area__data {
+  display: flex;
+  flex: 0 0 64px;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.visao-da-area__data[data-hoje="true"] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.visao-da-area__data b {
+  font-size: var(--text-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.visao-da-area__data small {
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+.visao-da-area__etapa-texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.visao-da-area__etapa-texto strong {
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.visao-da-area__etapa-texto small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* Tabela dos editais: compacta, com rolagem própria na horizontal. */
+.visao-da-area__rolagem {
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+/* O `table` de app.css pede 1180px de largura mínima; esta tabela é compacta. */
+.visao-da-area__tabela {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: var(--text-body-sm);
+}
+.visao-da-area__tabela th {
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: nowrap;
+}
+.visao-da-area__tabela td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.visao-da-area__tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+.visao-da-area__tabela tbody tr:hover td {
+  background: var(--surface-hover);
+}
+.visao-da-area__tabela .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* A etapa quebra em linhas: é o texto longo que empurrava a tabela para os lados. */
+.visao-da-area__etapa-da-linha {
+  min-width: 180px;
+  max-width: 280px;
+  color: var(--text-secondary);
+}
+
+/* Mapa dos municípios (Projetos): mapa à esquerda, lista à direita. */
+.visao-da-area__mapa-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+@media (min-width: 900px) {
+  .visao-da-area__mapa-layout {
+    grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  }
+}
+.visao-da-area__mapa {
+  min-height: 360px;
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+@media (max-width: 640px) {
+  .visao-da-area__mapa {
+    min-height: 280px;
+  }
+}
+/* O círculo do município: a cor vem do token, e troca com o tema. */
+.visao-da-area__ponto {
+  fill: var(--state-info);
+  fill-opacity: 0.55;
+  stroke: var(--brand-primary);
+}
+.visao-da-area__popup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  font-size: var(--text-body-sm);
+}
+.visao-da-area__popup strong {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+.visao-da-area__municipios ol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.visao-da-area__municipio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.visao-da-area__municipio:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.visao-da-area__municipio:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.visao-da-area__municipio:disabled {
+  cursor: default;
+}
+.visao-da-area__municipio-nome {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+.visao-da-area__municipio-nome strong {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+.visao-da-area__municipio-nome small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.visao-da-area__municipio > b {
+  color: var(--state-info);
+  font-size: var(--text-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

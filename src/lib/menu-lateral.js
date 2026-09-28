@@ -53,9 +53,13 @@ export const AREAS_DO_MENU = Object.freeze([
 ]);
 
 /*
-  As páginas de cada área. Sem `areas`, a página existe em todas; a Visão geral
-  (o mapa) é só da Saúde Indígena. O ícone da página só aparece no menu
-  inferior do celular.
+  As páginas de cada área. Sem `areas`, a página existe em todas. A Visão
+  geral tem duas telas: a da Saúde Indígena (`dashboard`, o mapa dos DSEIs, no
+  legado) e a da SEDE e de Projetos (`visao-area`, React, em
+  `src/componentes/visao-geral-da-area/`), com a mesma permissão (`dashboard`).
+  São views diferentes de propósito: vários módulos do mapa escutam
+  `[data-view="dashboard"]`. O ícone da página só aparece no menu inferior do
+  celular.
 */
 export const PAGINAS_DO_MENU = Object.freeze([
   Object.freeze({
@@ -63,6 +67,12 @@ export const PAGINAS_DO_MENU = Object.freeze([
     areas: Object.freeze(["saude-indigena"]),
     rotulo: "Visão geral",
     icone: "map",
+  }),
+  Object.freeze({
+    view: "visao-area",
+    areas: Object.freeze(["sede", "projetos"]),
+    rotulo: "Visão geral",
+    icone: "layout-dashboard",
   }),
   Object.freeze({ view: "nucleo", rotulo: "Editais", icone: "file-text" }),
   Object.freeze({
