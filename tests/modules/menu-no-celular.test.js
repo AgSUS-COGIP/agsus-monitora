@@ -174,7 +174,7 @@ describe("menu inferior do celular", () => {
     const origens = collectPrimaryItems();
     const views = origens.map((el) => el.dataset.view);
     expect(new Set(views).size).toBe(views.length);
-    expect(views.slice(0, 3)).toEqual(["nucleo", "calendario", "approved"]);
+    expect(views.slice(0, 3)).toEqual(["dashboard", "nucleo", "calendario"]);
     // Só a SEDE; o que vem sem área é a Administração.
     for (const el of origens) {
       expect([undefined, "sede"]).toContain(el.dataset.area);

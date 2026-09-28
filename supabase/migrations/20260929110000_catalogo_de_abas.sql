@@ -12,9 +12,9 @@
     - public."TB_ABA": o catálogo das abas (código, rótulo, ícone, ordem, a
       view do front que a desenha e o recurso de permissão que ela usa hoje).
     - public."RL_ABA_AREA": em que área cada aba aparece. Pode trocar, só
-      naquela área, a ordem, a view e o ícone: a Visão geral é a mesma aba nas
-      três áreas, mas na Saúde Indígena é o mapa dos DSEIs (view `dashboard`,
-      ícone `map`) e na SEDE e em Projetos é a tela React (`visao-area`).
+      naquela área, a ordem, a view e o ícone. Hoje nenhuma área troca nada:
+      a Visão geral é a mesma tela (`dashboard`, ícone `map`) nas três
+      áreas, recortada pela área atual.
     - public.listar_abas_do_menu(): o catálogo ativo, já resolvido por área.
 
   O QUE NÃO ENTRA (próximas etapas)
@@ -70,7 +70,7 @@ comment on column public."TB_ABA"."CO_ABA" is 'Código da aba (visao-geral, edit
 comment on column public."TB_ABA"."NO_ABA" is 'Rótulo da aba no menu.';
 comment on column public."TB_ABA"."DS_ICONE" is 'Nome do ícone Lucide (registro em src/modules/icones.js). RL_ABA_AREA pode trocar por área.';
 comment on column public."TB_ABA"."NU_ORDEM" is 'Ordem da aba dentro da área. RL_ABA_AREA pode trocar por área.';
-comment on column public."TB_ABA"."CO_VIEW" is 'Tela do front que desenha a aba (data-view: dashboard, visao-area, nucleo, calendario, approved, analises). RL_ABA_AREA pode trocar por área.';
+comment on column public."TB_ABA"."CO_VIEW" is 'Tela do front que desenha a aba (data-view: dashboard, nucleo, calendario, approved, analises). RL_ABA_AREA pode trocar por área.';
 comment on column public."TB_ABA"."CO_RECURSO" is 'Recurso de permissão que a aba usa hoje (TB_PERMISSAO_RECURSO.recurso). Ponto de partida da permissão perfil × aba.';
 comment on column public."TB_ABA"."TP_ABA" is 'nativa (tela do MONITORA) ou externa (painel externo que virou aba; nenhuma ainda).';
 comment on column public."TB_ABA"."ST_ATIVO" is 'S: aparece no menu; N: fora do menu em todas as áreas.';
@@ -100,7 +100,7 @@ comment on table public."RL_ABA_AREA" is
 comment on column public."RL_ABA_AREA"."CO_ABA" is 'Aba (TB_ABA).';
 comment on column public."RL_ABA_AREA"."CO_AREA" is 'Área (TB_AREA).';
 comment on column public."RL_ABA_AREA"."NU_ORDEM" is 'Ordem da aba nesta área; nulo = TB_ABA.NU_ORDEM.';
-comment on column public."RL_ABA_AREA"."CO_VIEW" is 'Tela do front nesta área; nulo = TB_ABA.CO_VIEW (a Visão geral da Saúde Indígena é dashboard).';
+comment on column public."RL_ABA_AREA"."CO_VIEW" is 'Tela do front nesta área; nulo = TB_ABA.CO_VIEW.';
 comment on column public."RL_ABA_AREA"."DS_ICONE" is 'Ícone Lucide nesta área; nulo = TB_ABA.DS_ICONE.';
 comment on column public."RL_ABA_AREA"."ST_ATIVO" is 'S: a aba aparece nesta área; N: não aparece.';
 comment on column public."RL_ABA_AREA"."DT_CRIACAO" is 'Quando a aba entrou na área.';
@@ -112,14 +112,14 @@ comment on index public."IN_FKABAAREA_COAREA" is 'Chave estrangeira para TB_AREA
 
 -- Seed: o menu de hoje (espelho de ABAS_DO_MENU em src/lib/menu-lateral.js) --
 insert into public."TB_ABA" ("CO_ABA", "NO_ABA", "DS_ICONE", "NU_ORDEM", "CO_VIEW", "CO_RECURSO", "TP_ABA") values
-  ('visao-geral', 'Visão geral', 'layout-dashboard', 1, 'visao-area', 'dashboard', 'nativa'),
+  ('visao-geral', 'Visão geral', 'map', 1, 'dashboard', 'dashboard', 'nativa'),
   ('editais', 'Editais', 'file-text', 2, 'nucleo', 'nucleo', 'nativa'),
   ('cronograma', 'Cronograma', 'calendar-days', 3, 'calendario', 'calendario', 'nativa'),
   ('aprovados', 'Lista de aprovados', 'user-round-check', 4, 'approved', 'aprovados', 'nativa'),
   ('analises', 'Análises curriculares', 'file-search', 5, 'analises', 'analises', 'nativa');
 
 insert into public."RL_ABA_AREA" ("CO_ABA", "CO_AREA", "CO_VIEW", "DS_ICONE") values
-  ('visao-geral', 'saude-indigena', 'dashboard', 'map'),
+  ('visao-geral', 'saude-indigena', null, null),
   ('visao-geral', 'sede', null, null),
   ('visao-geral', 'projetos', null, null),
   ('editais', 'saude-indigena', null, null),

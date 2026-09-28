@@ -67,12 +67,11 @@ export const AREAS_DO_MENU = Object.freeze([
   ele. Em `areas`, o que a área não troca vem da aba (a mesma regra de
   `listar_abas_do_menu`).
 
-  A Visão geral é uma aba só, com duas telas: a da Saúde Indígena
-  (`dashboard`, o mapa dos DSEIs, no legado) e a da SEDE e de Projetos
-  (`visao-area`, React, em `src/componentes/visao-geral-da-area/`), com a
-  mesma permissão (`dashboard`). São views diferentes de propósito: vários
-  módulos do mapa escutam `[data-view="dashboard"]`. O ícone da página só
-  aparece no menu inferior do celular.
+  A Visão geral é a mesma página (`dashboard`) nas três áreas, recortada pela
+  área atual; o que muda é o bloco do mapa — DSEIs na Saúde Indígena,
+  municípios das vagas em Projetos, nenhum na SEDE
+  (`src/lib/visao-geral-da-area.js`). O ícone da página só aparece no menu
+  inferior do celular.
 
   Análises curriculares era um painel externo (`TB_PAINEL_EXTERNO`, código
   `analises`) repetido em cada área. Virou página: a permissão é só a do
@@ -97,16 +96,12 @@ export const ABAS_DO_MENU = Object.freeze(
     {
       id: "visao-geral",
       rotulo: "Visão geral",
-      icone: "layout-dashboard",
+      icone: "map",
       ordem: 1,
-      view: "visao-area",
+      view: "dashboard",
       recurso: "dashboard",
       tipo: "nativa",
-      areas: [
-        { area: "saude-indigena", view: "dashboard", icone: "map" },
-        { area: "sede" },
-        { area: "projetos" },
-      ],
+      areas: NAS_TRES_AREAS,
     },
     {
       id: "editais",

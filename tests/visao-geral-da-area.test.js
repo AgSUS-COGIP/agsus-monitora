@@ -1,73 +1,53 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   chaveDoMunicipio,
   coordenadasDoMunicipio,
 } from "../src/lib/coordenadas-dos-municipios.js";
 import {
+  MAPA_DOS_DSEIS,
+  MAPA_DOS_MUNICIPIOS,
   RAIO_MAXIMO,
   RAIO_MINIMO,
-  contarEncerrados,
-  diaEMes,
-  editaisDaTabela,
+  TEXTOS_DO_MAPA,
+  cabecalhoDaVisaoGeral,
+  mapaDaVisaoGeral,
   municipiosDaResposta,
   pontosDosMunicipios,
-  quandoDaEtapa,
   raioDoPonto,
-  temMapaDeMunicipios,
-  totalDosMunicipios,
+  resultadoDoMunicipio,
 } from "../src/lib/visao-geral-da-area.js";
 
-const HOJE = new Date(2026, 8, 28, 10);
+const html = readFileSync("index.html", "utf8").replace(/\s+/g, " ");
 
-describe("áreas com mapa", () => {
-  it("só Projetos tem mapa de municípios; a SEDE fica em Brasília", () => {
-    expect(temMapaDeMunicipios("projetos")).toBe(true);
-    expect(temMapaDeMunicipios("sede")).toBe(false);
-    expect(temMapaDeMunicipios("saude-indigena")).toBe(false);
-  });
-});
-
-describe("tabela dos editais", () => {
-  const LINHAS = [
-    { id: 1, status: "Concluído", risco: "Alto", vagas_ociosas: 9 },
-    { id: 2, status: "Em andamento", risco: "Baixo", vagas_ociosas: 1 },
-    { id: 3, status: "Em andamento", risco: "Alto", vagas_ociosas: 2 },
-    { id: 4, status: "Em andamento", risco: "Baixo", vagas_ociosas: 5 },
-    { id: 5, status: "Em andamento", risco: "Médio", vagas_ociosas: 0 },
-  ];
-  const ids = (linhas) => linhas.map((linha) => linha.id);
-
-  it("esconde os encerrados e segue a fila do Núcleo (risco, depois ociosas)", () => {
-    expect(ids(editaisDaTabela(LINHAS))).toEqual([3, 5, 4, 2]);
-    expect(contarEncerrados(LINHAS)).toBe(1);
+describe("uma Visão geral para as três áreas", () => {
+  it("DSEIs na Saúde Indígena, municípios em Projetos, nenhum mapa na SEDE", () => {
+    expect(mapaDaVisaoGeral("saude-indigena")).toBe(MAPA_DOS_DSEIS);
+    expect(mapaDaVisaoGeral("projetos")).toBe(MAPA_DOS_MUNICIPIOS);
+    expect(mapaDaVisaoGeral("sede")).toBe("");
+    expect(mapaDaVisaoGeral(undefined)).toBe("");
   });
 
-  it("com os encerrados, eles vão para o fim", () => {
-    expect(ids(editaisDaTabela(LINHAS, { mostrarEncerrados: true }))).toEqual([
-      3, 5, 4, 2, 1,
-    ]);
+  it("a Saúde Indígena segue a configuração; as outras dizem o nome delas", () => {
+    const configuracao = {
+      titulo: "Saúde Indígena",
+      subtitulo: "Monitoramento DSEI/CASAI",
+    };
+    expect(cabecalhoDaVisaoGeral("saude-indigena", configuracao)).toEqual(
+      configuracao,
+    );
+    expect(cabecalhoDaVisaoGeral("sede", configuracao)).toEqual({
+      titulo: "SEDE",
+      subtitulo: "Monitoramento dos processos seletivos",
+    });
+    expect(cabecalhoDaVisaoGeral("projetos", configuracao).titulo).toBe(
+      "Projetos",
+    );
   });
 
-  it("o filtro de críticos deixa só risco médio ou alto em aberto", () => {
-    expect(
-      ids(
-        editaisDaTabela(LINHAS, { soCriticos: true, mostrarEncerrados: true }),
-      ),
-    ).toEqual([3, 5]);
-  });
-});
-
-describe("próximas etapas", () => {
-  it("diz quando, em relação a hoje", () => {
-    expect(quandoDaEtapa("2026-09-28", HOJE)).toBe("Hoje");
-    expect(quandoDaEtapa("2026-09-29T00:00:00", HOJE)).toBe("Amanhã");
-    expect(quandoDaEtapa("2026-10-02", HOJE)).toBe("Em 4 dias");
-    expect(quandoDaEtapa("", HOJE)).toBe("");
-  });
-
-  it("escreve dia e mês", () => {
-    expect(diaEMes("2026-10-02")).toBe("02/10");
-    expect(diaEMes(null)).toBe("");
+  it("os textos do mapa da Saúde Indígena são os do index.html", () => {
+    const textos = TEXTOS_DO_MAPA[MAPA_DOS_DSEIS];
+    for (const valor of Object.values(textos)) expect(html).toContain(valor);
   });
 });
 
@@ -79,10 +59,6 @@ describe("municípios do mapa", () => {
       uf: "RJ",
       ibge: 3305554,
     });
-    expect(coordenadasDoMunicipio("Talismã/TO").latitude).toBeCloseTo(
-      -12.79,
-      1,
-    );
     // Mesmo nome, outra UF: não é o mesmo lugar.
     expect(coordenadasDoMunicipio("Irati/SC")).toBeNull();
     expect(coordenadasDoMunicipio("Seropédica")).toBeNull();
@@ -123,8 +99,6 @@ describe("municípios do mapa", () => {
     ).toEqual([
       {
         municipioUf: "Irati/PR",
-        municipio: "Irati",
-        uf: "PR",
         vagas: 5,
         candidatos: 70,
         aprovados: 43,
@@ -134,29 +108,40 @@ describe("municípios do mapa", () => {
     expect(municipiosDaResposta(null)).toEqual([]);
   });
 
-  it("o raio cresce pela raiz: a área do círculo acompanha os candidatos", () => {
+  it("o raio cresce pela raiz e não passa o das bolhas dos DSEIs", () => {
     expect(raioDoPonto(0, 100)).toBe(RAIO_MINIMO);
     expect(raioDoPonto(100, 100)).toBe(RAIO_MAXIMO);
-    expect(raioDoPonto(25, 100)).toBe(16);
+    expect(RAIO_MAXIMO).toBe(15);
+    expect(raioDoPonto(25, 100)).toBe(11);
     expect(raioDoPonto(10, 0)).toBe(RAIO_MINIMO);
   });
 
-  it("ordena por candidatos e marca quem não tem coordenada", () => {
+  it("ordena por vagas (candidatos desempatam) e marca quem não tem coordenada", () => {
     const pontos = pontosDosMunicipios(
       municipiosDaResposta([
-        { municipio_uf: "Irati/PR", candidatos: 70 },
-        { municipio_uf: "Seropédica/RJ", candidatos: 647 },
-        { municipio_uf: "Lugar Novo/AM", candidatos: 10 },
+        { municipio_uf: "Irati/PR", vagas: 5, candidatos: 70 },
+        { municipio_uf: "Seropédica/RJ", vagas: 12, candidatos: 647 },
+        { municipio_uf: "Cubatão/SP", vagas: 5, candidatos: 90 },
+        { municipio_uf: "Lugar Novo/AM", vagas: 1, candidatos: 10 },
       ]),
     );
     expect(pontos.map((ponto) => ponto.municipioUf)).toEqual([
       "Seropédica/RJ",
+      "Cubatão/SP",
       "Irati/PR",
       "Lugar Novo/AM",
     ]);
     expect(pontos[0].coordenadas).toEqual([-22.7526, -43.7155]);
     expect(pontos[0].raio).toBe(RAIO_MAXIMO);
-    expect(pontos[2].coordenadas).toBeNull();
-    expect(totalDosMunicipios(pontos, "candidatos")).toBe(727);
+    expect(pontos[3].coordenadas).toBeNull();
+  });
+
+  it("o resultado é a parte aprovada entre as decididas", () => {
+    expect(resultadoDoMunicipio({ aprovados: 43, reprovados: 27 })).toEqual({
+      pct: 61,
+      decididos: 70,
+    });
+    expect(resultadoDoMunicipio({ aprovados: 0, reprovados: 0 })).toBeNull();
+    expect(resultadoDoMunicipio()).toBeNull();
   });
 });

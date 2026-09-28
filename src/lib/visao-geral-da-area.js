@@ -1,21 +1,25 @@
 /*
-  A Visão geral da SEDE e de Projetos, sem DOM nem rede.
+  A Visão geral de cada área, sem DOM nem rede.
 
-  O desenho é de `src/componentes/visao-geral-da-area/`. Os números da faixa de
-  indicadores são os mesmos da Saúde Indígena (`indicadores-do-monitoramento.js`)
-  e as próximas etapas saem das próprias linhas dos editais
-  (`editaisComEtapaNosProximosDias`, de `boas-vindas.js`). Aqui ficam a tabela
-  dos editais da área e os pontos do mapa de municípios.
+  Saúde Indígena, SEDE e Projetos abrem a MESMA página (`dashboard`, no
+  legado): indicadores, filtros, "Unidades com mais de um processo seletivo",
+  resumo, gráfico, atenção e tabela, sempre com os editais da área atual. O
+  que muda é o bloco "Visão nacional":
+
+  - Saúde Indígena: o mapa dos DSEIs e CASAIs, com as Terras Indígenas, e a
+    lista "Territórios por vagas" — como sempre foi;
+  - Projetos: o mesmo mapa, sem nada da Saúde Indígena, com um ponto por
+    município das vagas (UBS móvel no nome da vaga, RPC
+    `listar_municipios_das_vagas_da_area`) e a lista "Municípios por vagas";
+  - SEDE: sem o bloco — a equipe fica em Brasília.
+
+  Aqui ficam essa escolha, os textos de cada bloco e a conta dos municípios.
+  O desenho é de `src/modules/municipios-da-visao-geral.js` e do legado.
 */
 
-import { chaveDoDia } from "./boas-vindas.js";
 import { coordenadasDoMunicipio } from "./coordenadas-dos-municipios.js";
-import { compararEditais } from "./editais-do-nucleo.js";
-import { dataLocal } from "./etapas-de-edital.js";
-import {
-  ehEditalEncerrado,
-  ehRiscoAtivo,
-} from "./indicadores-do-monitoramento.js";
+import { nomeDaArea } from "./menu-lateral.js";
+import { AREA_SAUDE_INDIGENA } from "./responsavel-do-edital.js";
 
 const num = (valor) => {
   const numero = Number(valor || 0);
@@ -23,65 +27,67 @@ const num = (valor) => {
 };
 const texto = (valor) => String(valor ?? "").trim();
 
-/*
-  Áreas com mapa de municípios. A SEDE não tem: a equipe dela fica em
-  Brasília. Projetos tem, porque as vagas das UBS móveis dizem o município.
-*/
-export const AREAS_COM_MAPA_DE_MUNICIPIOS = Object.freeze(["projetos"]);
+export const MAPA_DOS_DSEIS = "dsei";
+export const MAPA_DOS_MUNICIPIOS = "municipios";
 
-export function temMapaDeMunicipios(area) {
-  return AREAS_COM_MAPA_DE_MUNICIPIOS.includes(texto(area));
+const MAPA_POR_AREA = Object.freeze({
+  [AREA_SAUDE_INDIGENA]: MAPA_DOS_DSEIS,
+  projetos: MAPA_DOS_MUNICIPIOS,
+});
+
+/** O mapa da Visão geral da área: `"dsei"`, `"municipios"` ou `""` (sem mapa). */
+export function mapaDaVisaoGeral(area) {
+  return MAPA_POR_AREA[texto(area)] ?? "";
 }
 
-// ── Tabela dos editais ───────────────────────────────────────────────────
-
 /*
-  Os editais da tabela: os em andamento primeiro, na fila do Núcleo (risco,
-  depois vagas ociosas); os encerrados só quando pedidos. \`soCriticos\` é o
-  filtro do indicador "Processos críticos".
+  Título e subtítulo do cabeçalho. A Saúde Indígena segue a configuração
+  (`page_title`, `page_subtitle`: "Saúde Indígena", "Monitoramento
+  DSEI/CASAI"); as outras áreas dizem o nome delas.
 */
-export function editaisDaTabela(
-  linhas,
-  { mostrarEncerrados = false, soCriticos = false } = {},
+export function cabecalhoDaVisaoGeral(
+  area,
+  { titulo = "", subtitulo = "" } = {},
 ) {
-  return (Array.isArray(linhas) ? linhas : [])
-    .filter((linha) => !soCriticos || ehRiscoAtivo(linha))
-    .filter((linha) => mostrarEncerrados || !ehEditalEncerrado(linha))
-    .sort(
-      (a, b) =>
-        Number(ehEditalEncerrado(a)) - Number(ehEditalEncerrado(b)) ||
-        compararEditais(a, b),
-    );
+  if (texto(area) === AREA_SAUDE_INDIGENA) return { titulo, subtitulo };
+  return {
+    titulo: nomeDaArea(texto(area)) || titulo,
+    subtitulo: "Monitoramento dos processos seletivos",
+  };
 }
-
-/** Quantos editais encerrados a tabela esconde por padrão. */
-export function contarEncerrados(linhas) {
-  return (Array.isArray(linhas) ? linhas : []).filter(ehEditalEncerrado).length;
-}
-
-// ── Próximas etapas ──────────────────────────────────────────────────────
-
-/** "Hoje", "Amanhã", "Em 3 dias" — da data AAAA-MM-DD em relação a hoje. */
-export function quandoDaEtapa(data, hoje = new Date()) {
-  const dia = dataLocal(texto(data).slice(0, 10));
-  const referencia = dataLocal(chaveDoDia(hoje));
-  if (!dia || !referencia) return "";
-  const dias = Math.round((dia - referencia) / 86_400_000);
-  if (dias <= 0) return "Hoje";
-  if (dias === 1) return "Amanhã";
-  return `Em ${dias} dias`;
-}
-
-/** "2026-09-30" → "30/09". */
-export function diaEMes(data) {
-  const [, mes, dia] = texto(data).slice(0, 10).split("-");
-  return dia && mes ? `${dia}/${mes}` : "";
-}
-
-// ── Mapa de municípios ───────────────────────────────────────────────────
 
 /*
-  A resposta de \`listar_municipios_das_vagas_da_area\`: uma linha por
+  Os textos do bloco do mapa, por tipo de mapa. Os da Saúde Indígena são os
+  do `index.html`: trocar de área e voltar deixa o bloco como estava.
+*/
+export const TEXTOS_DO_MAPA = Object.freeze({
+  [MAPA_DOS_DSEIS]: Object.freeze({
+    area: "Mapas da rede de saúde indígena",
+    titulo: "DSEIs / CASAIs do Brasil",
+    mapa: "Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI",
+    lista: "Territórios por vagas",
+    dica: "Escolha um DSEI no mapa para ver polos e unidades.",
+  }),
+  [MAPA_DOS_MUNICIPIOS]: Object.freeze({
+    area: "Mapa dos municípios das vagas",
+    titulo: "Municípios das vagas",
+    mapa: "Mapa do Brasil com os municípios das vagas da área",
+    lista: "Municípios por vagas",
+    dica: "Clique num município para ver vagas, candidatos e o resultado das análises.",
+  }),
+});
+
+export function textosDoMapa(mapa) {
+  return TEXTOS_DO_MAPA[mapa] ?? TEXTOS_DO_MAPA[MAPA_DOS_DSEIS];
+}
+
+export const plural = (total, um, varios) =>
+  `${num(total).toLocaleString("pt-BR")} ${num(total) === 1 ? um : varios}`;
+
+// ── Municípios ───────────────────────────────────────────────────────────
+
+/*
+  A resposta de `listar_municipios_das_vagas_da_area`: uma linha por
   município, com as contagens. Normaliza números e descarta linha sem
   município.
 */
@@ -89,8 +95,6 @@ export function municipiosDaResposta(dados) {
   return (Array.isArray(dados) ? dados : [])
     .map((linha) => ({
       municipioUf: texto(linha?.municipio_uf),
-      municipio: texto(linha?.municipio),
-      uf: texto(linha?.uf),
       vagas: num(linha?.vagas),
       candidatos: num(linha?.candidatos),
       aprovados: num(linha?.aprovados),
@@ -99,12 +103,12 @@ export function municipiosDaResposta(dados) {
     .filter((linha) => linha.municipioUf);
 }
 
-export const RAIO_MINIMO = 8;
-export const RAIO_MAXIMO = 24;
+export const RAIO_MINIMO = 6;
+export const RAIO_MAXIMO = 15;
 
 /*
-  Raio do ponto pela raiz do valor: a ÁREA do círculo cresce com o número de
-  candidatos, que é como o olho compara. Sem candidato, o raio mínimo.
+  Raio do ponto pela raiz do valor: a ÁREA do círculo cresce com as vagas,
+  que é como o olho compara. O teto é o das bolhas dos DSEIs (15 px).
 */
 export function raioDoPonto(valor, maior) {
   if (!(maior > 0) || !(valor > 0)) return RAIO_MINIMO;
@@ -113,30 +117,33 @@ export function raioDoPonto(valor, maior) {
 }
 
 /*
-  Os municípios, do que tem mais candidatos para o que tem menos, cada um com
-  a coordenada (ou \`null\`, se a tabela ainda não o tem) e o raio do ponto.
+  O resultado das análises do município: a parte aprovada entre as já
+  decididas (aprovados + reprovados). Sem nenhuma decidida, sem barra.
+*/
+export function resultadoDoMunicipio({ aprovados = 0, reprovados = 0 } = {}) {
+  const decididos = num(aprovados) + num(reprovados);
+  if (!decididos) return null;
+  return { pct: Math.round((num(aprovados) / decididos) * 100), decididos };
+}
+
+/*
+  Os municípios por vagas, decrescente (candidatos desempatam), cada um com a
+  coordenada (ou `null`, se a tabela ainda não o tem) e o raio do ponto.
 */
 export function pontosDosMunicipios(municipios) {
   const lista = [...(Array.isArray(municipios) ? municipios : [])].sort(
     (a, b) =>
+      b.vagas - a.vagas ||
       b.candidatos - a.candidatos ||
       a.municipioUf.localeCompare(b.municipioUf, "pt-BR"),
   );
-  const maior = Math.max(0, ...lista.map((item) => item.candidatos));
+  const maior = Math.max(0, ...lista.map((item) => item.vagas));
   return lista.map((item) => {
     const lugar = coordenadasDoMunicipio(item.municipioUf);
     return {
       ...item,
       coordenadas: lugar ? [lugar.latitude, lugar.longitude] : null,
-      raio: raioDoPonto(item.candidatos, maior),
+      raio: raioDoPonto(item.vagas, maior),
     };
   });
-}
-
-/** Total de uma contagem sobre os municípios (vagas, candidatos…). */
-export function totalDosMunicipios(municipios, campo) {
-  return (Array.isArray(municipios) ? municipios : []).reduce(
-    (total, item) => total + num(item?.[campo]),
-    0,
-  );
 }

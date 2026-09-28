@@ -158,10 +158,7 @@
             "data-esqueleto",
             visao === "calendario"
               ? "calendario"
-              : !visao ||
-                  visao === "dashboard" ||
-                  visao === "visao-area" ||
-                  visao.indexOf("panel:") === 0
+              : !visao || visao === "dashboard" || visao.indexOf("panel:") === 0
                 ? "painel"
                 : "tabela",
           );
@@ -1242,9 +1239,6 @@
               </div>
             </div>
           </section>
-
-          <!-- React: src/componentes/visao-geral-da-area/ (Visão geral da SEDE e de Projetos). -->
-          <section id="page-visao-area" class="page"></section>
 
           <!-- React: src/componentes/nucleo/ (o modal do edital e a linha do tempo são portais no fim do body). -->
           <section id="page-nucleo" class="page"></section>
