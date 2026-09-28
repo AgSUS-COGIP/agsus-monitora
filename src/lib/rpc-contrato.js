@@ -256,9 +256,10 @@ export const CONTRATO_RPC = {
 
   // ── Análises ────────────────────────────────────────────────────────────
   get_analises_dashboard_payload_v2: {
-    argumentos: ["p_scope"],
+    argumentos: ["p_scope", "p_area"],
     critica: true,
-    resumo: "Payload consolidado do painel de Análises.",
+    resumo:
+      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos).",
   },
   get_analises_dashboard_filtrado: {
     argumentos: [
@@ -268,10 +269,11 @@ export const CONTRATO_RPC = {
       "p_offset",
       "p_limit",
       "p_include_total",
+      "p_area",
     ],
     critica: true,
     resumo:
-      "Linhas do painel de Análises filtradas por unidade e edital, paginadas.",
+      "Linhas do painel de Análises da área, filtradas por unidade e edital, paginadas.",
   },
 
   // ── Auditoria e presença ────────────────────────────────────────────────

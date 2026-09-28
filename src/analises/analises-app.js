@@ -2,6 +2,14 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { editaisDasLinhas } from "../lib/editais-das-linhas.js";
 import { urlDaPlanilhaGoogle } from "../lib/planilhas.js";
 import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js";
+import {
+  chaveDoCacheLocalDeAnalises,
+  colunasDoCsvDeAnalises,
+  experienciaProfissionalDaLinha,
+  mensagemDeAreaSemAnalises,
+  nomeDoCsvDeAnalises,
+} from "../lib/area-do-painel-de-analises.js";
+import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
 
   // Chave pública (anon/publishable). A proteção real depende das policies RLS e dos RPCs no Supabase.
   const VIEW_NAME_ATIVOS = "VW_ANALISES_DASHBOARD_BASE";
@@ -66,8 +74,14 @@ import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js
   }
 
   function currentCacheKey(){
-    const userId = txt(session?.user?.id) || "anonymous";
-    return `${CACHE_KEY}_v${CACHE_SCHEMA_VERSION}_${userId}_${currentEditalScope()}`;
+    // A área entra na chave (a da Saúde Indígena segue no formato de sempre).
+    return chaveDoCacheLocalDeAnalises({
+      prefixo: CACHE_KEY,
+      versao: CACHE_SCHEMA_VERSION,
+      usuario: txt(session?.user?.id),
+      area: AREA_DO_PAINEL,
+      escopo: currentEditalScope()
+    });
   }
 
   function resetDataForScopeChange(){
@@ -779,14 +793,20 @@ import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js
     tableRowsDirty = false;
     return tableRows;
   }
-  function renderTable(){ const visible=getTableRows(); const pages=Math.max(1,Math.ceil(visible.length/rowsPerPage)); if(currentPage>pages) currentPage=pages; if(currentPage<1) currentPage=1; const start=(currentPage-1)*rowsPerPage, end=Math.min(start+rowsPerPage,visible.length), page=visible.slice(start,end); $("tableInfo").textContent = visible.length ? `Mostrando ${fmt(start+1)}-${fmt(end)} de ${fmt(visible.length)} registros pesquisados` : "Mostrando 0 de 0 registros"; $("pageInfo").textContent = `Página ${fmt(currentPage)} de ${fmt(pages)} · Recorte atual: ${fmt(panelRows.length)} de ${fmt(rows.length)}`; $("tableBody").innerHTML = page.length ? page.map((r,i)=>rowHtml(r,start+i)).join("") : `<tr><td colspan="8" class="empty">Nenhum registro encontrado.</td></tr>`; renderPagination(pages); }
+  function renderTable(){ const visible=getTableRows(); const pages=Math.max(1,Math.ceil(visible.length/rowsPerPage)); if(currentPage>pages) currentPage=pages; if(currentPage<1) currentPage=1; const start=(currentPage-1)*rowsPerPage, end=Math.min(start+rowsPerPage,visible.length), page=visible.slice(start,end); $("tableInfo").textContent = visible.length ? `Mostrando ${fmt(start+1)}-${fmt(end)} de ${fmt(visible.length)} registros pesquisados` : "Mostrando 0 de 0 registros"; $("pageInfo").textContent = `Página ${fmt(currentPage)} de ${fmt(pages)} · Recorte atual: ${fmt(panelRows.length)} de ${fmt(rows.length)}`; $("tableBody").innerHTML = page.length ? page.map((r,i)=>rowHtml(r,start+i)).join("") : `<tr><td colspan="8" class="empty">${esc((!rows.length && mensagemDeAreaSemAnalises(AREA_DO_PAINEL)) || "Nenhum registro encontrado.")}</td></tr>`; renderPagination(pages); }
   function rowKey(r,i){ return [r.id,r.chave_natural,r.codigo_vaga,r.candidato,i].map(txt).join("|"); }
   function rowHtml(r,i){ const key=rowKey(r,i), isOpen=expanded.has(key); return `<tr><td>${esc(r.grupo||'-')}</td><td>${esc(r.unidade||'-')}</td><td>${esc(r.edital||'-')}</td><td>${esc(r.codigo_vaga||'-')}</td><td><div class="primary-text">${esc(r.nome_vaga||'-')}</div><span class="secondary-text">${esc(r.categoria||'Sem categoria')}</span></td><td><div class="primary-text">${esc(r.candidato||'-')}</div><span class="secondary-text">${esc(r.responsavel_analise||'Sem responsável')}</span></td><td><span class="badge ${statusClass(r.status_consolidado)}">${esc(r.status_consolidado||'Pendente')}</span></td><td><button class="btn secondary small" aria-expanded="${isOpen}" onclick="toggleDetails('${attr(encodeURIComponent(key))}')"><i class="fa-solid ${isOpen?'fa-chevron-up':'fa-chevron-down'}"></i> ${isOpen?'Ocultar':'Detalhes'}</button></td></tr>${isOpen?`<tr class="detail-row"><td colspan="8">${detailHtml(r)}</td></tr>`:""}`; }
+  // Saúde Indígena: critério étnico e experiências em saúde indígena e atenção básica.
+  // SEDE e Projetos: o tempo de experiência profissional, que é o que a planilha delas traz.
+  function criteriosDaAreaHtml(r){
+    if(PAINEL_DA_SAUDE_INDIGENA) return `<div class="kv"><div class="kv-label">Critério étnico</div><div class="kv-value">${esc(r.pontuacao_criterio_etnico ?? '-')}</div></div><div class="kv"><div class="kv-label">Exp. Saúde Indígena</div><div class="kv-value">${esc(r.experiencia_saude_indigena_total ?? '-')}</div></div><div class="kv"><div class="kv-label">Exp. Atenção Básica</div><div class="kv-value">${esc(r.experiencia_atencao_basica_total ?? '-')}</div></div>`;
+    return `<div class="kv"><div class="kv-label">Tempo de experiência profissional</div><div class="kv-value">${esc(experienciaProfissionalDaLinha(r))}</div></div>`;
+  }
   function detailHtml(r){
     const origemId = txt(r.origem_arquivo_id);
     const origem = safeUrl(urlDaPlanilhaGoogle(origemId));
     const pdf = safeUrl(r.link_pdf);
-    return `<div class="detail-shell"><div class="detail-grid"><div class="kv"><div class="kv-label">Etapa</div><div class="kv-value">${esc(r.etapa||'-')}</div></div><div class="kv"><div class="kv-label">Data da análise</div><div class="kv-value">${esc(fmtDate(r.data_analise)||'-')}</div></div><div class="kv"><div class="kv-label">Nota final</div><div class="kv-value">${esc(r.nota_final_ajustada ?? '-')}</div></div><div class="kv"><div class="kv-label">Modalidade</div><div class="kv-value">${esc(r.modalidade_concorrencia||'-')}</div></div><div class="kv"><div class="kv-label">Validação</div><div class="kv-value">${esc(validationLabel(r.data_validacao_status))}</div></div><div class="kv"><div class="kv-label">Janela oficial</div><div class="kv-value">${esc(fmtDate(r.data_inicio_analise)||'--')} a ${esc(fmtDate(r.data_fim_analise)||'--')}</div></div><div class="kv"><div class="kv-label">Escolaridade</div><div class="kv-value">${esc(r.pontuacao_escolaridade ?? '-')}</div></div><div class="kv"><div class="kv-label">Cursos</div><div class="kv-value">${esc(r.pontuacao_cursos_aperfeicoamento ?? '-')}</div></div><div class="kv"><div class="kv-label">Experiência profissional</div><div class="kv-value">${esc(r.pontuacao_experiencia_profissional ?? '-')}</div></div><div class="kv"><div class="kv-label">Critério étnico</div><div class="kv-value">${esc(r.pontuacao_criterio_etnico ?? '-')}</div></div><div class="kv"><div class="kv-label">Exp. Saúde Indígena</div><div class="kv-value">${esc(r.experiencia_saude_indigena_total ?? '-')}</div></div><div class="kv"><div class="kv-label">Exp. Atenção Básica</div><div class="kv-value">${esc(r.experiencia_atencao_basica_total ?? '-')}</div></div></div><div class="detail-block"><div class="detail-actions">${origem?`<a class="btn secondary small" href="${attr(origem)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir origem</a>`:""}${pdf?`<a class="btn green small" href="${attr(pdf)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf"></i> Abrir PDF</a>`:`<span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF</span>`}${txt(r.erro_pdf)?`<span class="mini-chip" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(truncate(r.erro_pdf,80))}</span>`:""}</div><div class="analysis-text">${esc(r.analise||'Sem análise registrada.')}</div></div></div>`;
+    return `<div class="detail-shell"><div class="detail-grid"><div class="kv"><div class="kv-label">Etapa</div><div class="kv-value">${esc(r.etapa||'-')}</div></div><div class="kv"><div class="kv-label">Data da análise</div><div class="kv-value">${esc(fmtDate(r.data_analise)||'-')}</div></div><div class="kv"><div class="kv-label">Nota final</div><div class="kv-value">${esc(r.nota_final_ajustada ?? '-')}</div></div><div class="kv"><div class="kv-label">Modalidade</div><div class="kv-value">${esc(r.modalidade_concorrencia||'-')}</div></div><div class="kv"><div class="kv-label">Validação</div><div class="kv-value">${esc(validationLabel(r.data_validacao_status))}</div></div><div class="kv"><div class="kv-label">Janela oficial</div><div class="kv-value">${esc(fmtDate(r.data_inicio_analise)||'--')} a ${esc(fmtDate(r.data_fim_analise)||'--')}</div></div><div class="kv"><div class="kv-label">Escolaridade</div><div class="kv-value">${esc(r.pontuacao_escolaridade ?? '-')}</div></div><div class="kv"><div class="kv-label">Cursos</div><div class="kv-value">${esc(r.pontuacao_cursos_aperfeicoamento ?? '-')}</div></div><div class="kv"><div class="kv-label">Experiência profissional</div><div class="kv-value">${esc(r.pontuacao_experiencia_profissional ?? '-')}</div></div>${criteriosDaAreaHtml(r)}</div><div class="detail-block"><div class="detail-actions">${origem?`<a class="btn secondary small" href="${attr(origem)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir origem</a>`:""}${pdf?`<a class="btn green small" href="${attr(pdf)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf"></i> Abrir PDF</a>`:`<span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF</span>`}${txt(r.erro_pdf)?`<span class="mini-chip" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(truncate(r.erro_pdf,80))}</span>`:""}</div><div class="analysis-text">${esc(r.analise||'Sem análise registrada.')}</div></div></div>`;
   }
   function toggleDetails(encoded){ const key=decodeURIComponent(encoded||""); if(expanded.has(key)) expanded.delete(key); else expanded.add(key); renderTable(); }
   function validationLabel(v){ return {DENTRO_PERIODO:"Dentro do período configurado",FORA_PERIODO:"Fora do período configurado",SEM_DATA:"Sem data de análise informada",SEM_JANELA:"Sem janela configurada no edital"}[txt(v)] || txt(v) || "-"; }
@@ -802,6 +822,6 @@ import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js
   function applyTheme(){ const saved=localStorage.getItem(THEME_KEY); if(saved==="dark") document.documentElement.dataset.theme="dark"; }
   function toggleTheme(){ const dark=document.documentElement.dataset.theme==="dark"; document.documentElement.dataset.theme=dark?"":"dark"; if(!dark) localStorage.setItem(THEME_KEY,"dark"); else localStorage.removeItem(THEME_KEY); renderResponsavelChart(); renderTrendChart(); }
   function toggleFullscreen(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
-  function exportCSV(){ const source = panelRows; const headers=["edital_status","grupo","unidade","edital","codigo_vaga","nome_vaga","candidato","status_consolidado","etapa","data_analise","responsavel_analise","nota_final_ajustada","modalidade_concorrencia","link_pdf","data_validacao_status","analise"]; const csv=[headers.join(";"), ...source.map(r=>headers.map(h=>String(r[h] ?? "").replaceAll("\n"," ").replaceAll("\r"," ").replaceAll(";"," ").replaceAll('"',"'")).join(";"))].join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="agsus_analises_curriculares_v3.csv"; a.click(); URL.revokeObjectURL(a.href); toast(`Exportados ${fmt(source.length)} registros do recorte atual.`, "info"); }
+  function exportCSV(){ const source = panelRows; const headers=["edital_status","grupo","unidade","edital","codigo_vaga","nome_vaga","candidato","status_consolidado","etapa","data_analise","responsavel_analise","nota_final_ajustada","modalidade_concorrencia","link_pdf","data_validacao_status","analise"]; const csvHeaders=colunasDoCsvDeAnalises(headers, AREA_DO_PAINEL); const csv=[csvHeaders.join(";"), ...source.map(r=>csvHeaders.map(h=>String(r[h] ?? "").replaceAll("\n"," ").replaceAll("\r"," ").replaceAll(";"," ").replaceAll('"',"'")).join(";"))].join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nomeDoCsvDeAnalises(AREA_DO_PAINEL); a.click(); URL.revokeObjectURL(a.href); toast(`Exportados ${fmt(source.length)} registros do recorte atual.`, "info"); }
   window.toggleDetails = toggleDetails; window.goPage = goPage;
 
