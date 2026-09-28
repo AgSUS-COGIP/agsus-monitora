@@ -19,7 +19,7 @@
   min-width: 0;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   box-shadow: var(--shadow-card);
 }
@@ -45,7 +45,7 @@
   flex: 0 0 32px;
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--kpi-soft);
   color: var(--kpi-accent);
   font-size: 14px;

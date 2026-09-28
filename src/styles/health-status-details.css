@@ -53,7 +53,7 @@
   width: 100%;
   padding: var(--space-3);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   color: var(--text-primary);
   text-align: left;
@@ -458,7 +458,7 @@ html[data-theme="dark"] .health-drawer-metrics > div {
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--state-success-soft);
   color: var(--text-primary);
 }

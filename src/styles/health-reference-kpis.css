@@ -23,7 +23,7 @@
 #page-dashboard .table-card {
   background: var(--surface-card) !important;
   border: 1px solid var(--border-subtle) !important;
-  border-radius: var(--radius-lg) !important;
+  border-radius: var(--radius-xl) !important;
   box-shadow: var(--shadow-card) !important;
 }
 
@@ -43,7 +43,7 @@
 #page-dashboard #tableSearch {
   background: var(--surface-card) !important;
   border: 1px solid var(--border-control) !important;
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--radius-lg) !important;
   box-shadow: none !important;
 }
 #page-dashboard .multi-select.open .multi-select-toggle,
@@ -52,7 +52,7 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 22%, transparent) !important;
 }
 
-/* Rótulo de seção: o único caso de maiúsculas (DESIGN.md, 3.2) */
+/* Rótulo de seção em maiúsculas: divergência com o Design System AgSUS (4.3), ver DESIGN.md seção 12 */
 #page-dashboard .section-label {
   margin: var(--space-5) 0 var(--space-3);
   color: var(--text-secondary);
@@ -109,7 +109,7 @@
   height: 24px !important;
   flex: 0 0 24px !important;
   margin: 0 !important;
-  border-radius: var(--radius-sm) !important;
+  border-radius: var(--radius-md) !important;
   font-size: 13px !important;
   opacity: 1 !important;
 }
@@ -229,7 +229,7 @@
 #page-dashboard .table-wrap {
   margin: 0 18px 18px;
   border: 1px solid var(--hr-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: auto;
 }
 #page-dashboard .details-table thead th {

@@ -19,7 +19,7 @@
 }
 #cronogramaEditor .cronograma-bulk-head p {
   margin: 0;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 13px;
 }
 #cronogramaEditor #cronogramaBulkInput {

@@ -3,27 +3,33 @@
    ============================================================ */
 
 :root {
-  --navy: #003b70;
-  --blue: #0d6efd;
-  --cyan: #00a8d6;
-  --green: #0b8f58;
-  --yellow: #f2b705;
-  --red: #d92d3a;
-  --slate: #17233c;
-  --muted: #63748d;
-  --agsus-azul: #003b70;
-  --agsus-ciano: #00a8d6;
-  --agsus-verde: #0b8f58;
-  --agsus-amarelo: #f2b705;
-  --agsus-vermelho: #d92d3a;
-  --indigena-verde: #007a3d;
-  --indigena-folha: #29b36a;
-  --bg: #f3f7fb;
-  --card: #ffffff;
-  --line: #d7e5f2;
-  --soft: #f6f9fc;
-  --shadow: 0 4px 14px rgba(15, 35, 60, 0.06);
-  --radius: 18px;
+  /*
+    Variáveis antigas, agora apontando para o Design System AgSUS
+    (src/styles/tokens.css). Código novo usa os tokens oficiais direto.
+    O ciano e o amarelo vivo não existem na paleta oficial: viram o azul
+    claro e a cor de atenção.
+  */
+  --navy: var(--color-blue-800);
+  --blue: var(--color-blue-600);
+  --cyan: var(--color-blue-400);
+  --green: var(--color-success-600);
+  --yellow: var(--color-warning-600);
+  --red: var(--color-danger-600);
+  --slate: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --agsus-azul: var(--color-blue-800);
+  --agsus-ciano: var(--color-blue-400);
+  --agsus-verde: var(--color-success-600);
+  --agsus-amarelo: var(--color-warning-600);
+  --agsus-vermelho: var(--color-danger-600);
+  --indigena-verde: var(--color-success-600);
+  --indigena-folha: var(--color-success-600);
+  --bg: var(--color-bg-canvas);
+  --card: var(--color-bg-canvas);
+  --line: var(--color-border-subtle);
+  --soft: var(--color-bg-subtle);
+  --shadow: none; /* cards não têm sombra (seção 6.3) */
+  --radius: var(--radius-lg);
 
   /* Camadas acima do shell. O cabeçalho (.app .top) usa z-index 10010 e
      isola o próprio contexto de empilhamento, então todo overlay precisa
@@ -60,8 +66,8 @@ body {
 body {
   margin: 0;
   font-family: var(--font-sans, "Geist", "Segoe UI", Roboto, Arial, sans-serif);
-  font-weight: 500;
-  color: #10243e;
+  font-weight: 400;
+  color: var(--color-text-primary);
   background: var(--bg);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -173,7 +179,7 @@ body.config-loading #loginScreen {
 /* ── Wrapper azul com faixas SUS ── */
 .login-outer {
   width: min(520px, calc(100vw - 32px));
-  background: #003b70;
+  background: var(--color-blue-800);
   border-radius: 28px;
   box-shadow:
     0 50px 130px rgba(0, 0, 0, 0.55),
@@ -237,7 +243,7 @@ body.config-loading #loginScreen {
 }
 
 .login-eyebrow {
-  color: #003b70;
+  color: var(--color-blue-800);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -247,7 +253,7 @@ body.config-loading #loginScreen {
 .login-card h1 {
   font-size: 28px;
   margin: 0 0 3px;
-  color: #003b70;
+  color: var(--color-blue-800);
   font-weight: 900;
   letter-spacing: -0.02em;
 }
@@ -343,7 +349,7 @@ body.access-request-mode .login-cogip {
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  border: 1.5px solid #d7e5f2;
+  border: 1.5px solid var(--color-border-subtle);
 }
 .login-cogip-info {
   flex: 1;
@@ -352,7 +358,7 @@ body.access-request-mode .login-cogip {
 .login-cogip-name {
   font-size: 13px;
   font-weight: 900;
-  color: #003b70;
+  color: var(--color-blue-800);
 }
 .login-cogip-role {
   font-size: 11px;
@@ -594,7 +600,7 @@ textarea:focus-visible,
   gap: var(--space-3);
   padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   box-shadow: var(--shadow-overlay);
   color: var(--text-primary);
@@ -640,7 +646,7 @@ textarea:focus-visible,
   height: 28px;
   margin: -2px 0 -2px auto;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-secondary);
   font-size: 14px;
@@ -741,10 +747,10 @@ textarea:focus-visible,
 .google-login-btn {
   min-height: 44px;
   width: 100%;
-  border: 1px solid #d7e5f2;
+  border: 1px solid var(--color-border-subtle);
   border-radius: 12px;
   background: #fff;
-  color: #10243e;
+  color: var(--color-text-primary);
   font-weight: 900;
   font-size: 14px;
   cursor: pointer;
@@ -1075,7 +1081,7 @@ body.external-clean #externalReturnBar {
   align-items: center;
   padding: 9px 14px;
   background: #f0f7ff;
-  border-bottom: 1px solid #d7e5f2;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 .active-filters-bar.hidden {
   display: none !important;
@@ -1229,7 +1235,7 @@ body.external-clean #externalReturnBar {
   font: inherit;
   font-size: 16px;
   font-weight: 600;
-  color: #10243e;
+  color: var(--color-text-primary);
   background: transparent;
 }
 .search-modal-input-wrap input::placeholder {
@@ -1238,7 +1244,7 @@ body.external-clean #externalReturnBar {
 .search-modal-input-wrap kbd {
   font-size: 11px;
   background: #f4f8fc;
-  border: 1px solid #d7e5f2;
+  border: 1px solid var(--color-border-subtle);
   border-radius: 6px;
   padding: 2px 7px;
   color: #60758f;
@@ -1281,7 +1287,7 @@ body.external-clean #externalReturnBar {
 .search-result-title {
   font-size: 13px;
   font-weight: 800;
-  color: #10243e;
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1311,7 +1317,7 @@ body.external-clean #externalReturnBar {
 }
 .search-footer kbd {
   background: #edf3f9;
-  border: 1px solid #d7e5f2;
+  border: 1px solid var(--color-border-subtle);
   border-radius: 4px;
   padding: 1px 5px;
   font-family: inherit;
@@ -1328,7 +1334,7 @@ body.external-clean #externalReturnBar {
   right: 0;
   top: calc(100% + 6px);
   background: #fff;
-  border: 1px solid #d7e5f2;
+  border: 1px solid var(--color-border-subtle);
   border-radius: 14px;
   box-shadow: 0 14px 34px rgba(15, 35, 60, 0.14);
   min-width: 200px;
@@ -1347,7 +1353,7 @@ body.external-clean #externalReturnBar {
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
-  color: #10243e;
+  color: var(--color-text-primary);
 }
 .col-toggle-item:hover {
   background: #f0f7ff;
@@ -1893,7 +1899,7 @@ body.external-clean #externalReturnBar {
 .table-head input {
   max-width: 390px;
   min-height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   color: var(--text-primary);
   border: 1px solid var(--border-control);
@@ -1927,7 +1933,7 @@ th {
   top: 0;
   z-index: 2;
   background: #f4f8fc;
-  color: #10243e;
+  color: var(--color-text-primary);
   text-align: left;
   border-bottom: 1px solid var(--line);
   padding: 10px 9px;
@@ -1941,7 +1947,7 @@ td {
   padding: 10px 9px;
   vertical-align: top;
   font-weight: 650;
-  color: #10243e;
+  color: var(--color-text-primary);
 }
 tr:hover td {
   background: rgba(0, 168, 214, 0.07);
@@ -2139,7 +2145,7 @@ th.sorted-desc .sort-icon::before {
   padding: 9px 8px;
   border-radius: 10px;
   cursor: pointer;
-  color: #10243e;
+  color: var(--color-text-primary);
   font-size: 13px;
   font-weight: 700;
 }
@@ -2155,13 +2161,13 @@ th.sorted-desc .sort-icon::before {
   accent-color: #0077bf;
 }
 .multi-option.empty {
-  color: #63748d;
+  color: var(--color-text-secondary);
   cursor: default;
   font-style: italic;
 }
 .multi-hint {
   font-size: 11px;
-  color: #63748d;
+  color: var(--color-text-secondary);
   font-weight: 800;
   padding: 0 10px 9px;
   background: #fff;
@@ -2188,7 +2194,7 @@ th.sorted-desc .sort-icon::before {
   display: grid;
   place-items: center;
   text-align: center;
-  color: #63748d;
+  color: var(--color-text-secondary);
   font-weight: 800;
   background: var(--card);
   border-radius: var(--radius);
@@ -2272,7 +2278,7 @@ th.sorted-desc .sort-icon::before {
 }
 .config-card-title h3 {
   margin: 0 0 4px;
-  color: #10243e;
+  color: var(--color-text-primary);
 }
 .config-card-title p,
 .config-help {
@@ -2348,7 +2354,7 @@ th.sorted-desc .sort-icon::before {
 }
 .panel-admin-head span:first-child {
   min-width: 0;
-  color: #10243e;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 900;
   overflow-wrap: anywhere;
@@ -2379,7 +2385,7 @@ th.sorted-desc .sort-icon::before {
 .cnes-status-grid strong {
   display: block;
   margin-top: 5px;
-  color: #10243e;
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 .access-request-card {
@@ -2470,7 +2476,7 @@ th.sorted-desc .sort-icon::before {
   font-weight: 900;
 }
 .access-authenticated-user strong {
-  color: #10243e;
+  color: var(--color-text-primary);
   font-size: 14px;
   overflow-wrap: anywhere;
 }
@@ -2573,7 +2579,7 @@ th.sorted-desc .sort-icon::before {
 }
 .access-admin-head strong {
   display: block;
-  color: #10243e;
+  color: var(--color-text-primary);
   font-size: 15px;
 }
 .access-admin-head span {
@@ -2679,7 +2685,7 @@ th.sorted-desc .sort-icon::before {
 }
 .access-monitor-title h4 {
   margin: 0;
-  color: #10243e;
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 .access-monitor-title span {
@@ -2704,7 +2710,7 @@ th.sorted-desc .sort-icon::before {
 }
 .access-monitor-user strong {
   display: block;
-  color: #10243e;
+  color: var(--color-text-primary);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
@@ -2753,7 +2759,7 @@ th.sorted-desc .sort-icon::before {
   background: #f8fbff;
 }
 .access-monitor-table td {
-  color: #10243e;
+  color: var(--color-text-primary);
   font-weight: 750;
 }
 .access-monitor-meta {
@@ -2848,7 +2854,7 @@ th.sorted-desc .sort-icon::before {
   font-weight: 900;
 }
 #mUf[readonly] {
-  background: #f3f7fb;
+  background: var(--color-bg-subtle);
   color: #334155;
   cursor: not-allowed;
 }

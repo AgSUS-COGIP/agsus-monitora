@@ -178,7 +178,7 @@
   color: #2474e7;
 }
 #page-dashboard .health-legend-icon.details {
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 #page-dashboard .health-quick-year {

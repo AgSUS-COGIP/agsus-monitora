@@ -5,7 +5,7 @@
  */
 
 :root {
-  --ux-focus: #2563eb;
+  --ux-focus: var(--color-focus-ring);
   --ux-dark-page: #071421;
   --ux-dark-surface: #0e1e2e;
   --ux-dark-surface-soft: #14283a;
@@ -152,7 +152,7 @@
 }
 
 .shell-signout-card span {
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 12px;
 }
 
@@ -190,7 +190,7 @@
 .online-presence-list > p {
   margin: 0;
   padding: 16px;
-  color: #64748b;
+  color: var(--color-text-secondary);
   font-size: 12px;
   line-height: 1.5;
 }
