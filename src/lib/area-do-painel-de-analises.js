@@ -64,26 +64,6 @@ export function tituloDaAbaDoPainelDeAnalises(area) {
   return `${TITULO_DO_PAINEL_DE_ANALISES} · ${rotuloDaAreaDoPainel(area)} — MONITORA`;
 }
 
-/*
-  Chave do cache local (localStorage). A da Saúde Indígena fica no formato de
-  sempre — o cache que já está no navegador continua valendo e nenhum cache
-  órfão de vários MB fica ocupando espaço. As outras áreas ganham o código da
-  área antes do escopo, então nunca batem com a da Saúde Indígena nem entre si.
-*/
-export function chaveDoCacheLocalDeAnalises({
-  prefixo,
-  versao,
-  usuario,
-  area,
-  escopo,
-}) {
-  const base = `${prefixo}_v${versao}_${texto(usuario) || "anonymous"}`;
-  const codigo = normalizarAreaDoPainel(area);
-  return ehAreaSaudeIndigena(codigo)
-    ? `${base}_${escopo}`
-    : `${base}_${codigo}_${escopo}`;
-}
-
 /* Chave do cache em memória do transporte consolidado. */
 export function chaveDoCacheDoPayload(area, escopo) {
   return `${normalizarAreaDoPainel(area)}:${texto(escopo).toLowerCase()}`;

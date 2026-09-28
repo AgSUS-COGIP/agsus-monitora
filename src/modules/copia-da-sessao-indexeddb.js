@@ -9,6 +9,8 @@
   "não há cópia", e a entrada segue pela rede como antes.
 */
 
+import { apagarCacheDasAnalises } from "./cache-das-analises-indexeddb.js";
+
 const BANCO = "agsus-monitora";
 const LOJA = "copia-da-sessao";
 const CHAVE = "sessao";
@@ -65,10 +67,16 @@ export async function guardarCopiaDaSessao(copia) {
   }
 }
 
+/*
+  Apaga a cópia da sessão e, junto, a cópia do painel de análises (outro banco,
+  mesma pessoa): "Limpar sessão", acesso revogado e outro usuário entrando
+  levam as duas.
+*/
 export async function apagarCopiaDaSessao() {
   try {
     await naLoja("readwrite", (loja) => loja.delete(CHAVE));
   } catch {
     // Sem armazenamento, não há o que apagar.
   }
+  await apagarCacheDasAnalises();
 }

@@ -57,9 +57,9 @@ describe("o painel pede os dados da sua área", () => {
     );
   });
 
-  it("o cache local usa a chave por área", () => {
-    expect(ler("src/analises/analises-app.js")).toContain(
-      "chaveDoCacheLocalDeAnalises({",
+  it("a cópia guardada no navegador é por área", () => {
+    expect(ler("src/analises/analises-consolidated-transport.js")).toContain(
+      "area: AREA_DO_PAINEL,",
     );
   });
 });

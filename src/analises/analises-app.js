@@ -3,7 +3,6 @@ import { editaisDasLinhas } from "../lib/editais-das-linhas.js";
 import { urlDaPlanilhaGoogle } from "../lib/planilhas.js";
 import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js";
 import {
-  chaveDoCacheLocalDeAnalises,
   colunasDoCsvDeAnalises,
   experienciaProfissionalDaLinha,
   mensagemDeAreaSemAnalises,
@@ -16,6 +15,13 @@ import {
   municipioUfDaLinha,
 } from "../lib/textos-do-painel-de-analises.js";
 import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
+import {
+  ERROS_SEM_FALLBACK,
+  carregarPayloadDoPainel,
+  grupoDoFallbackPelaView,
+  limparCacheAntigoDoLocalStorage,
+  normalizeAnaliseRows,
+} from "./analises-consolidated-transport.js";
 import { buscarPareceresDoEscopo } from "./analises-pareceres-sob-demanda.js";
 import {
   definirCarregamentoDoPainel,
@@ -29,9 +35,6 @@ import {
   const THEME_KEY = "agsus_analises_theme_v3";
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
   const APP_VERSION = "institucional-2026-06-09";
-  const CACHE_KEY = "agsus_analises_cache_v1";
-  const CACHE_SCHEMA_VERSION = 5;
-  const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutos
   const DASHBOARD_PAYLOAD_TIMEOUT_MS = 12000;
   const ACCESS_HEARTBEAT_MS = 5 * 60 * 1000;
   let sb, session, profile, canReadAnalisesRpc = null;
@@ -82,17 +85,6 @@ import {
 
   function currentScopeQueryOptions(){
     return currentEditalScope() === "inativo" ? { editalAtivo: false } : {};
-  }
-
-  function currentCacheKey(){
-    // A área entra na chave (a da Saúde Indígena segue no formato de sempre).
-    return chaveDoCacheLocalDeAnalises({
-      prefixo: CACHE_KEY,
-      versao: CACHE_SCHEMA_VERSION,
-      usuario: txt(session?.user?.id),
-      area: AREA_DO_PAINEL,
-      escopo: currentEditalScope()
-    });
   }
 
   function resetDataForScopeChange(){
@@ -249,6 +241,7 @@ import {
 
   document.addEventListener("DOMContentLoaded", boot);
   async function boot(){
+    limparCacheAntigoDoLocalStorage();
     applyTheme(); setupFixedTopbar(); bindEvents(); setProgress(6,"Preparando sessão..."); showLoading(true);
     try{
       sb = getSupabaseClient();
@@ -456,62 +449,23 @@ import {
     return { outside:false, status:"DENTRO_PERIODO", label:"Dentro do período configurado" };
   }
 
-  // ---------------- Cache local (30 min) ----------------
-  function readCache(){
-    try{
-      const raw = localStorage.getItem(currentCacheKey());
-      if(!raw) return null;
-      const parsed = JSON.parse(raw);
-      if(!parsed || parsed.version !== CACHE_SCHEMA_VERSION || !parsed.ts || !Array.isArray(parsed.rows)) return null;
-      return parsed;
-    }catch(e){ return null; }
-  }
-  function writeCache(rawRows, rawEditais, payload){
-    try{
-      localStorage.setItem(currentCacheKey(), JSON.stringify({ version:CACHE_SCHEMA_VERSION, ts: Date.now(), rows: rawRows, editais: rawEditais, payload: payload || null }));
-    }catch(e){
-      console.warn("Não foi possível gravar o cache local:", e);
-    }
-  }
-  function cacheAgeMs(cache){ return cache && cache.ts ? Date.now() - cache.ts : Infinity; }
-  function setUpdatedFromCache(ts){
-    const label = `Cache de ${fmtDateTime(new Date(ts).toISOString())}`;
-    $("updatedText").textContent = label;
-    $("footerUpdated").textContent = label;
-  }
-
-  // Carrega do cache se válido (< 30 min). Se não houver cache, busca automaticamente no Supabase.
   async function loadFromCacheOrPrompt(){
     if(analisesDataLoadedAtLeastOnce && rows.length){
       return true;
     }
-    const cache = readCache();
-    if(cache && cacheAgeMs(cache) < CACHE_TTL_MS){
-      editais = Array.isArray(cache.editais) ? cache.editais : [];
-      analisesPayload = cache.payload || null;
-      rows = hydrateRowsWithEditalWindows(Array.isArray(cache.rows) ? cache.rows : []);
-      filterOptionsSignature = "";
-      dataSourceMeta = { source:"cache", ts:cache.ts };
-      hydrateFilters(); currentPage=1; applyFilters();
-      analisesDataLoadedAtLeastOnce = true;
-      const mins = Math.round(cacheAgeMs(cache) / 60000);
-      setUpdatedFromCache(cache.ts);
-      toast(`Dados ${currentEditalScopeLabel().toLowerCase()} carregados do cache local (${mins} min). Clique em Atualizar para buscar dados novos.`, "info", 6000);
-      return true;
-    }
     $("updatedText").textContent = "Carregando dados...";
     $("footerUpdated").textContent = "Carregando dados...";
-    toast(`Carregando dados ${currentEditalScopeLabel().toLowerCase()} do Supabase.`, "info", 4000);
     return refreshData();
   }
 
-  // Atualização manual: sempre busca dados novos do Supabase (ignora cache) e regrava o cache.
+  // Atualização manual: sempre busca dados novos do Supabase (ignora a cópia guardada) e regrava a cópia.
   async function manualRefresh(){
     if(!canReadAnalises()){
       toast("Sem permissão ou sessão para atualizar os dados.", "error", 6000);
       return;
     }
-    await refreshData();
+    document.dispatchEvent(new CustomEvent("agsus:analises-cache-cleared"));
+    await refreshData({ forcarRede:true });
   }
 
   // ---------------- Leitura paginada do Supabase ----------------
@@ -524,6 +478,10 @@ import {
       let query = sb.from(tableName).select(columns).range(from, from + SUPABASE_PAGE_SIZE - 1);
       if(options.editalAtivo !== undefined){
         query = query.eq("edital_ativo", options.editalAtivo);
+      }
+      // A view traz todas as áreas; sem a RPC, a leitura fica só com a do painel.
+      if(options.grupo){
+        query = query.eq("grupo", options.grupo);
       }
       orders.forEach(spec => { query = query.order(spec.column, { ascending: spec.ascending !== false }); });
       const response = await query;
@@ -538,50 +496,89 @@ import {
     return { data: allRows, error: null };
   }
 
-  async function loadAnalisesPayload(){
-    return null;
+  // ---------------- Payload consolidado (escopo ativo) ----------------
+  // Vem de analises-consolidated-transport.js, com a cópia guardada no navegador
+  // (IndexedDB): abre na hora com a cópia e redesenha, sem skeleton, se o
+  // servidor mandar dados mais novos. Os outros escopos seguem pelo recorte
+  // (analises-scope-guard.js), pela leitura paginada abaixo.
+  async function loadAnalisesPayload(runId, forcarRede){
+    if(currentEditalScope() !== "ativo") return null;
+    const escopo = currentEditalScope();
+    const usuarioId = txt(session?.user?.id);
+    const aindaValeEsta = () => runId === refreshRunCounter && escopo === currentEditalScope() && usuarioId === txt(session?.user?.id);
+    return carregarPayloadDoPainel(sb, {
+      escopo,
+      usuarioId,
+      forcarRede,
+      aoMudar: novo => {
+        if(!aindaValeEsta()) return;
+        (activeRefreshPromise || Promise.resolve()).catch(() => {}).then(() => {
+          if(aindaValeEsta()) applyPayload(novo, { silencioso:true });
+        });
+      },
+      aoPerderAcesso: erro => {
+        if(!aindaValeEsta()) return;
+        // Acesso revogado: a cópia não pode ficar na tela.
+        rows = []; editais = []; tableRowsDirty = true; applyFilters();
+        showLoadError("Erro ao carregar o painel: " + (erro && erro.message ? erro.message : erro));
+      }
+    });
   }
 
-  async function refreshData(){
+  function applyPayload({ payload, linhas }, opcoes = {}){
+    const silencioso = opcoes.silencioso === true;
+    analisesPayload = payload;
+    editais = Array.isArray(payload.editais) && payload.editais.length
+      ? payload.editais
+      : editaisDasLinhas(linhas);
+    if(!silencioso) setProgress(42,`Montando painel a partir do cache consolidado para ${fmtNum(linhas.length)} registros...`);
+    rows = hydrateRowsWithEditalWindows(linhas);
+    filterOptionsSignature = "";
+    tableRowsDirty = true;
+    dataSourceMeta = {
+      source: opcoes.daCopia ? "navegador" : (payload.cache && payload.cache.hit ? "supabase-cache" : "supabase-refresh"),
+      ts: Date.parse(payload.cache?.refreshed_at || payload.generated_at) || Date.now()
+    };
+    analisesDataLoadedAtLeastOnce = true;
+    // Redesenho por trás: mantém a página e os filtros de quem está olhando.
+    if(silencioso){ hydrateFilters(); applyFilters(); setUpdatedAt(); return; }
+    hydrateFilters(); setProgress(62,"Calculando indicadores..."); currentPage=1; applyFilters(); setUpdatedAt(); setProgress(100,`Painel pronto com ${fmtNum(rows.length)} registros.`);
+    setTimeout(() => showLoading(false), 180);
+    toast(`Dados ${currentEditalScopeLabel().toLowerCase()} atualizados: ${fmtNum(rows.length)} registros carregados.`, "info", 5000);
+  }
+
+  async function refreshData(opcoes = {}){
     if(activeRefreshPromise) return activeRefreshPromise;
     const runId = ++refreshRunCounter;
     activeRefreshPromise = (async () => {
-      showLoading(true); setProgress(12,"Consultando Supabase em lotes...");
-      const payloadResponse = await loadAnalisesPayload();
+      showLoading(true); setProgress(12,"Consultando Supabase...");
+      let payloadResponse = null;
+      try{
+        payloadResponse = await loadAnalisesPayload(runId, opcoes.forcarRede === true);
+      }catch(err){
+        if(runId !== refreshRunCounter) return false;
+        // Sem permissão ou área inválida: nada de fallback pela view.
+        if(ERROS_SEM_FALLBACK.has(String(err?.code ?? ""))){ showLoadError("Erro ao carregar o painel: " + (err.message || err)); return false; }
+        console.warn("Carga consolidada indisponível; usando a leitura paginada da view:", err);
+      }
       if(runId !== refreshRunCounter) return false;
-      analisesPayload = payloadResponse || null;
 
-      if(analisesPayload && Array.isArray(analisesPayload.rows)){
-        const rawBaseRows = analisesPayload.rows;
-        editais = Array.isArray(analisesPayload.editais) && analisesPayload.editais.length
-          ? analisesPayload.editais
-          : editaisDasLinhas(rawBaseRows);
-        setProgress(42,`Montando painel a partir do cache consolidado para ${fmtNum(rawBaseRows.length)} registros...`);
-        writeCache(rawBaseRows, editais, analisesPayload);
-        rows = hydrateRowsWithEditalWindows(rawBaseRows);
-        filterOptionsSignature = "";
-        dataSourceMeta = {
-          source: analisesPayload.cache && analisesPayload.cache.hit ? "supabase-cache" : "supabase-refresh",
-          ts: Date.parse(analisesPayload.cache?.refreshed_at || analisesPayload.generated_at) || Date.now()
-        };
-        analisesDataLoadedAtLeastOnce = true;
-        hydrateFilters(); setProgress(62,"Calculando indicadores..."); currentPage=1; applyFilters(); setUpdatedAt(); setProgress(100,`Painel pronto com ${fmtNum(rows.length)} registros.`);
-        setTimeout(() => showLoading(false), 180);
-        toast(`Dados ${currentEditalScopeLabel().toLowerCase()} atualizados pelo cache consolidado: ${fmtNum(rows.length)} registros.`, "info", 5000);
+      if(payloadResponse){
+        applyPayload(payloadResponse, { daCopia: payloadResponse.daCopia });
         return true;
       }
 
+      analisesPayload = null;
       setProgress(12,currentEditalScope() === "ativo" ? "Cache consolidado indisponível. Consultando Supabase em lotes..." : "Consultando Supabase em lotes...");
       const baseResponse = await fetchAllSupabaseRows(currentViewName(), "*", [
         { column: "unidade", ascending: true }, { column: "edital", ascending: true },
         { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
-      ], currentScopeQueryOptions());
+      ], { ...currentScopeQueryOptions(), grupo: currentEditalScope() === "ativo" ? grupoDoFallbackPelaView() : undefined });
       if(runId !== refreshRunCounter) return false;
       if(baseResponse.error){ showLoadError("Erro ao carregar o painel: " + baseResponse.error.message); return false; }
-      const rawBaseRows = Array.isArray(baseResponse.data) ? baseResponse.data : [];
+      const rawBaseRows = currentEditalScope() === "ativo" ? normalizeAnaliseRows(baseResponse.data) : (Array.isArray(baseResponse.data) ? baseResponse.data : []);
       editais = editaisDasLinhas(rawBaseRows);
       setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(rawBaseRows.length)} registros...`);
-      writeCache(rawBaseRows, editais, analisesPayload);
       rows = hydrateRowsWithEditalWindows(rawBaseRows);
       filterOptionsSignature = "";
       dataSourceMeta = { source:"supabase", ts:Date.now() };
