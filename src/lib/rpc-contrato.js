@@ -181,6 +181,12 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Lista os candidatos vigentes das listas de aprovados.",
   },
+  listar_candidatos_aprovados_compacto: {
+    argumentos: [],
+    critica: true,
+    resumo:
+      "Candidatos vigentes das listas de aprovados numa chamada só: listas uma vez e candidatos em linhas posicionais.",
+  },
   importar_lista_aprovados: {
     argumentos: [
       "p_edital_id",
@@ -282,7 +288,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_scope", "p_area"],
     critica: true,
     resumo:
-      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos).",
+      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), sem o parecer (`analise`).",
   },
   get_analises_dashboard_filtrado: {
     argumentos: [
@@ -297,6 +303,18 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo:
       "Linhas do painel de Análises da área, filtradas por unidade e edital, paginadas.",
+  },
+  get_analise_detalhe_do_painel: {
+    argumentos: ["p_id"],
+    critica: false,
+    resumo:
+      "Parecer (`analise`) de uma linha do painel de Análises, ao abrir o detalhamento.",
+  },
+  get_analises_texto_do_painel: {
+    argumentos: ["p_scope", "p_area"],
+    critica: false,
+    resumo:
+      "Pareceres da área e escopo do painel de Análises, em lote, para o CSV e a busca geral.",
   },
 
   // ── Auditoria e presença ────────────────────────────────────────────────

@@ -137,7 +137,7 @@ Sem migration (⚠ = crítica):
 - ~~`salvar_monitoramento_indigena`~~ (removida em `20260925150000_remove_objetos_mortos.sql`)
 - ⚠ `salvar_monitoramento_com_cronograma_v2`
 - ⚠ `get_monitoramento_cronograma`
-- ⚠ `get_analises_dashboard_payload_v2`
+- ⚠ `get_analises_dashboard_payload_v2` (hoje em `20260928200000`)
 - `get_acessos_config_master`
 - `get_configuracoes_snapshot`
 - `get_configuracoes_historico`
@@ -398,3 +398,27 @@ da Saúde Indígena.
   `_meses`, `_dias` e `_total` (em dias), e as chaves `area` e `area_nome`. O
   front monta as linhas pelo nome da coluna, então a ordem antiga não mudou.
   No filtrado, as mesmas quatro entram como chaves a mais em cada linha.
+
+### 6.2 O painel de análises mais leve
+
+Migration `20260928200000_analises_painel_mais_leve.sql` (rollback em
+`supabase/rollback/`, que volta às versões de `20260928180000`; ensaiado).
+
+- O payload da lista (`get_analises_dashboard_payload_v2`, `schema_version` 3)
+  não traz mais `analise` (o parecer) nem `chave_natural`. Na Saúde Indígena
+  ativa, 7,1 MB → 3,6 MB (gzip: 669 KB → 365 KB); em Projetos, 1,4 MB → 0,8 MB.
+  O front monta as linhas pelo nome da coluna e aceita linha com ou sem
+  `analise` (o filtrado, o fallback pela view e o cache antigo ainda trazem).
+- O parecer vem sob demanda: `get_analise_detalhe_do_painel(p_id)` ao abrir o
+  detalhamento, e `get_analises_texto_do_painel(p_scope, p_area)` em lote para
+  o CSV (que sai igual ao de antes) e para a busca geral, que também procura no
+  parecer. Mesma permissão da lista: `pode_recurso('analises')` e área do
+  usuário (`FC_PODE_AREA`) ou admin; no detalhe, a área é a do grupo da linha.
+- O recorte por área (e, no filtrado, por unidade e edital) compara as colunas
+  geradas `*_norm` da tabela, em vez de chamar `analises_norm_key` linha a
+  linha (a função tem `SET search_path` e não é embutida pelo planejador).
+- As RPCs da lista devolvem `json` (montado com `json_agg`/`json_build_*`),
+  não `jsonb`: mesmo conteúdo, montagem mais rápida (Saúde Indígena ativa:
+  ~380 ms → ~150 ms no banco, no ensaio).
+- Fora da Saúde Indígena, o payload ganha `municipio_uf` no fim de `columns`,
+  lido do nome da vaga ("… UBS móvel Seropédica/RJ …" → `Seropédica/RJ`).

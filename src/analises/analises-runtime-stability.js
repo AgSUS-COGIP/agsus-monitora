@@ -58,20 +58,6 @@ function ensureStyles() {
     body.${PENDING_CLASS} main.content > section:not(.filter-panel):not(#authWarning){display:none!important}
     body.${PENDING_CLASS} #exportBtn{opacity:.55;cursor:not-allowed}
     #advancedBtn[hidden]{display:none!important}
-    @keyframes analises-skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
-    body.${LOADING_CLASS} #kpiGrid .kpi b,
-    body.${LOADING_CLASS} #pdfMetrics > *,
-    body.${LOADING_CLASS} #attentionList > *,
-    body.${LOADING_CLASS} #tableBody tr{
-      color:transparent!important;
-      border-color:transparent!important;
-      background:linear-gradient(90deg,rgba(148,163,184,.10) 25%,rgba(148,163,184,.22) 50%,rgba(148,163,184,.10) 75%)!important;
-      background-size:200% 100%!important;
-      animation:analises-skeleton 1.35s ease-in-out infinite!important;
-    }
-    body.${LOADING_CLASS} #kpiGrid .kpi b{display:inline-block;min-width:72px;border-radius:8px;user-select:none}
-    body.${LOADING_CLASS} .chart-wrap{position:relative;min-height:180px;overflow:hidden}
-    body.${LOADING_CLASS} .chart-wrap::after{content:"";position:absolute;inset:12px;border-radius:12px;background:linear-gradient(90deg,rgba(148,163,184,.08) 25%,rgba(148,163,184,.18) 50%,rgba(148,163,184,.08) 75%);background-size:200% 100%;animation:analises-skeleton 1.35s ease-in-out infinite;pointer-events:none}
     .scope-guard-summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:52px}
     .scope-guard-summary[hidden]{display:none!important}
     .scope-guard-summary-main{display:flex;align-items:center;gap:12px;min-width:0}
@@ -83,7 +69,6 @@ function ensureStyles() {
     .scope-guard--collapsed > .scope-guard-grid,
     .scope-guard--collapsed > .scope-guard-status{display:none!important}
     .scope-guard-summary-action{white-space:nowrap}
-    @media(prefers-reduced-motion:reduce){body.${LOADING_CLASS} #kpiGrid .kpi b,body.${LOADING_CLASS} #pdfMetrics > *,body.${LOADING_CLASS} #attentionList > *,body.${LOADING_CLASS} #tableBody tr,body.${LOADING_CLASS} .chart-wrap::after{animation:none!important}}
     @media(max-width:720px){.scope-guard-summary{align-items:flex-start;flex-direction:column}.scope-guard-summary-action{width:100%}.scope-guard-summary-text{white-space:normal}}
   `;
   document.head.appendChild(style);

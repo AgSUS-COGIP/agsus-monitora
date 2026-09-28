@@ -1,51 +1,151 @@
-import { expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const flushLoadingState = async () => {
-  await Promise.resolve();
-  await new Promise((resolve) => setTimeout(resolve, 300));
-};
+const PAINEL = `
+  <div id="loading" class="loading"><span id="loadingText"></span></div>
+  <main class="content">
+    <section class="filter-grid"><select id="fUnidade"></select></section>
+    <section id="kpiGrid"><article class="kpi"><b id="kTotal">0</b></article></section>
+    <div id="attentionList"></div>
+    <table><tbody id="tableBody"></tbody></table>
+  </main>
+  <button id="refreshBtn"></button>
+  <button id="applyBtn"></button>
+  <button id="scopeGuardLoad" disabled></button>
+`;
 
-it("ativa e remove o feedback de carregamento", async () => {
-  document.body.innerHTML = `
-    <div id="loading" class="loading show">
-      <div class="loading-card">
-        <div id="loadingTitle">Carregando painel</div>
-        <small id="loadingText">Preparando dados...</small>
-        <div id="progressBar" style="width: 10%"></div>
-      </div>
-    </div>
-    <main class="content"></main>
-    <button id="refreshBtn"></button>
-    <button id="applyBtn"></button>
-    <button id="scopeGuardLoad"></button>
-    <section id="kpiGrid"><article class="kpi"><b>100</b></article></section>
-  `;
-
+async function carregarModulo() {
   vi.resetModules();
-  await import("../../src/analises/analises-loading-feedback.js");
-  document.dispatchEvent(new Event("DOMContentLoaded"));
+  return import("../../src/analises/analises-loading-feedback.js");
+}
 
-  const loading = document.getElementById("loading");
-  const refreshButton = document.getElementById("refreshBtn");
+const aviso = () => document.getElementById("analisesAvisoDoCarregamento");
 
-  expect(document.body.classList.contains("analises-is-loading")).toBe(true);
-  expect(loading.getAttribute("role")).toBe("status");
-  expect(document.querySelector("main").getAttribute("aria-busy")).toBe("true");
-  expect(refreshButton.getAttribute("aria-busy")).toBe("true");
-  expect(refreshButton.disabled).toBe(true);
-  expect(document.getElementById("loadingTitle").textContent).toBe(
-    "Preparando o painel de análises",
-  );
-  expect(document.getElementById("analisesLoadingMeta").textContent).toContain(
-    "Etapa 1",
-  );
+beforeEach(() => {
+  document.body.className = "";
+  document.body.innerHTML = PAINEL;
+});
 
-  loading.classList.remove("show");
-  await flushLoadingState();
+afterEach(() => {
+  vi.useRealTimers();
+});
 
-  expect(document.body.classList.contains("analises-is-loading")).toBe(false);
-  expect(document.querySelector("main").getAttribute("aria-busy")).toBe(
-    "false",
-  );
-  expect(refreshButton.disabled).toBe(false);
+describe("skeleton do painel de análises", () => {
+  it("liga na primeira carga com linhas de marcação e desliga sem deixar rastro", async () => {
+    const { definirCarregamentoDoPainel } = await carregarModulo();
+    const refresh = document.getElementById("refreshBtn");
+    const guarda = document.getElementById("scopeGuardLoad");
+
+    definirCarregamentoDoPainel(true);
+
+    expect(document.body.classList.contains("analises-is-loading")).toBe(true);
+    expect(document.querySelector("main").getAttribute("aria-busy")).toBe(
+      "true",
+    );
+    expect(refresh.disabled).toBe(true);
+    expect(refresh.getAttribute("aria-busy")).toBe("true");
+    expect(
+      document.querySelectorAll("#tableBody tr[data-esqueleto]"),
+    ).toHaveLength(8);
+    expect(
+      document.querySelectorAll("#tableBody tr[data-esqueleto] td"),
+    ).toHaveLength(64);
+    expect(
+      document.querySelectorAll("#attentionList [data-esqueleto]"),
+    ).toHaveLength(4);
+
+    definirCarregamentoDoPainel(false);
+
+    expect(document.body.classList.contains("analises-is-loading")).toBe(false);
+    expect(document.querySelector("main").getAttribute("aria-busy")).toBe(
+      "false",
+    );
+    expect(refresh.disabled).toBe(false);
+    expect(guarda.disabled).toBe(true);
+    expect(document.querySelectorAll("[data-esqueleto]")).toHaveLength(0);
+  });
+
+  it("na recarga, mantém as linhas reais e só marca o painel como carregando", async () => {
+    const { definirCarregamentoDoPainel } = await carregarModulo();
+    document.getElementById("tableBody").innerHTML =
+      "<tr><td>Real</td></tr><tr><td>Outra</td></tr>";
+    document.getElementById("attentionList").innerHTML =
+      '<div class="attention-item"><b>Pendentes</b><small>3</small></div>';
+
+    definirCarregamentoDoPainel(true);
+
+    expect(document.body.classList.contains("analises-is-loading")).toBe(true);
+    expect(document.querySelectorAll("#tableBody tr")).toHaveLength(2);
+    expect(document.querySelectorAll("[data-esqueleto]")).toHaveLength(0);
+
+    definirCarregamentoDoPainel(false);
+    expect(document.getElementById("tableBody").textContent).toBe("RealOutra");
+  });
+
+  it("avisa a demora aos 12 s e oferece tentar de novo aos 25 s", async () => {
+    vi.useFakeTimers();
+    const { definirCarregamentoDoPainel } = await carregarModulo();
+
+    definirCarregamentoDoPainel(true);
+    expect(aviso()).toBeNull();
+
+    vi.advanceTimersByTime(12_000);
+    expect(aviso().hidden).toBe(false);
+    expect(aviso().querySelector("button").hidden).toBe(true);
+
+    vi.advanceTimersByTime(13_000);
+    expect(aviso().querySelector("button").hidden).toBe(false);
+
+    definirCarregamentoDoPainel(false);
+    expect(aviso().hidden).toBe(true);
+  });
+
+  it("no erro, tira o skeleton e mostra a mensagem com Tentar novamente", async () => {
+    const { definirCarregamentoDoPainel, mostrarErroDoCarregamento } =
+      await carregarModulo();
+    const tentar = vi.fn();
+
+    definirCarregamentoDoPainel(true);
+    mostrarErroDoCarregamento("Erro ao carregar o painel: rede", tentar);
+
+    expect(document.body.classList.contains("analises-is-loading")).toBe(false);
+    expect(document.querySelectorAll("[data-esqueleto]")).toHaveLength(0);
+    expect(aviso().hidden).toBe(false);
+    expect(aviso().querySelector("p").textContent).toBe(
+      "Erro ao carregar o painel: rede",
+    );
+
+    // O fim do carregamento que falhou não esconde o erro.
+    definirCarregamentoDoPainel(false);
+    expect(aviso().hidden).toBe(false);
+
+    aviso().querySelector("button").click();
+    expect(tentar).toHaveBeenCalledTimes(1);
+    expect(aviso().hidden).toBe(true);
+  });
+
+  it("dentro do MONITORA, avisa que começou e, uma vez só, que ficou pronto", async () => {
+    const postMessage = vi.fn();
+    const topo = vi
+      .spyOn(window, "top", "get")
+      .mockReturnValue({ postMessage });
+    try {
+      const { definirCarregamentoDoPainel } = await carregarModulo();
+      expect(postMessage).toHaveBeenCalledWith(
+        { tipo: "agsus:painel-carregando" },
+        "*",
+      );
+
+      definirCarregamentoDoPainel(true);
+      definirCarregamentoDoPainel(false);
+      definirCarregamentoDoPainel(true);
+      definirCarregamentoDoPainel(false);
+
+      const prontos = postMessage.mock.calls.filter(
+        ([mensagem]) => mensagem.tipo === "agsus:painel-pronto",
+      );
+      expect(prontos).toHaveLength(1);
+    } finally {
+      topo.mockRestore();
+    }
+  });
 });

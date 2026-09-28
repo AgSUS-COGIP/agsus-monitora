@@ -5,6 +5,7 @@ const state = {
 
 const FILTER_IDS = [
   "fUnidade",
+  "fMunicipio",
   "fEdital",
   "fVaga",
   "fStatus",

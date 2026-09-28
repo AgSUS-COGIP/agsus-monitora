@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
 import { PLANILHAS } from "../../src/lib/planilhas.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
+import { compactarCandidatos } from "./candidatos-compactos-falsos.js";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
@@ -95,6 +96,7 @@ function supabaseFalso({
   listas = [LISTA_ATIVA, LISTA_INATIVA],
   anexos = [],
   erros = {},
+  compacto = true,
 } = {}) {
   const lotes = [];
   let novos = 0;
@@ -117,6 +119,19 @@ function supabaseFalso({
     return { data: { ok: true }, error: null };
   };
   const rpc = vi.fn((nome) => {
+    if (nome === "listar_candidatos_aprovados_compacto") {
+      const erro =
+        erros[nome] || erros.listar_candidatos_aprovados
+          ? { message: erros[nome] || erros.listar_candidatos_aprovados }
+          : compacto
+            ? null
+            : { code: "PGRST202", message: "função ausente" };
+      return Promise.resolve(
+        erro
+          ? { data: null, error: erro }
+          : { data: compactarCandidatos(candidatos), error: null },
+      );
+    }
     if (nome === "listar_candidatos_aprovados") {
       const pagina = (de, ate) => {
         lotes.push([de, ate]);
@@ -267,9 +282,22 @@ describe("carregamento", () => {
     ).toBe("90,5");
   });
 
-  it("busca os candidatos de mil em mil, até o lote vir incompleto", async () => {
+  it("busca os candidatos numa chamada só, sem páginas", async () => {
     const muitos = Array.from({ length: 1003 }, () => candidato());
     const supabase = supabaseFalso({ candidatos: muitos });
+    await montar({ supabase });
+    expect(supabase.lotes).toEqual([]);
+    expect(
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_candidatos_aprovados_compacto",
+      ),
+    ).toHaveLength(1);
+    expect($("approvedKpiTotal").textContent).toBe("1.003");
+  });
+
+  it("sem a função compacta no banco, busca de mil em mil", async () => {
+    const muitos = Array.from({ length: 1003 }, () => candidato());
+    const supabase = supabaseFalso({ candidatos: muitos, compacto: false });
     await montar({ supabase });
     expect(supabase.lotes).toEqual([
       [0, 999],

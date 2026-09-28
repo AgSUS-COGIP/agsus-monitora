@@ -27,6 +27,7 @@
 
 import { readApprovedWorkbook } from "../../lib/aprovados-import.js";
 import { buscarTodasAsPaginas } from "../../lib/paginas-em-paralelo.js";
+import { expandirCandidatosCompactos } from "../../lib/candidatos-aprovados-compactos.js";
 import {
   canImportApprovedList,
   canManageSubJudice,
@@ -171,8 +172,21 @@ export function criarEstadoDaListaDeAprovados({
 
   // ── Leitura ────────────────────────────────────────────────────────────
 
+  /*
+    Uma chamada só: em páginas, o banco refazia a lista inteira (≈20 mil
+    candidatos) a cada uma das ~16 páginas. As páginas em paralelo ficam só
+    como reserva, para o banco que ainda não tem a função compacta.
+  */
+  async function buscarTodosOsCandidatos() {
+    const compacto = await supabase.rpc("listar_candidatos_aprovados_compacto");
+    if (!compacto.error)
+      return { data: expandirCandidatosCompactos(compacto.data), error: null };
+    if (compacto.error.code !== "PGRST202") return compacto;
+    return buscarPorPaginas();
+  }
+
   // Páginas em paralelo: em sequência eram 16 pedidos de ~750 ms (12 s).
-  function buscarTodosOsCandidatos() {
+  function buscarPorPaginas() {
     return buscarTodasAsPaginas(
       (inicio, fim, { contar }) =>
         supabase
