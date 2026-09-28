@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { dataDeAnaliseNoFuturo } from "../lib/data-de-analise.js";
 import { editaisDasLinhas } from "../lib/editais-das-linhas.js";
 import { urlDaPlanilhaGoogle } from "../lib/planilhas.js";
 import { modalidadesDaConcorrencia } from "../lib/modalidades-de-concorrencia.js";
@@ -444,6 +445,7 @@ import {
     const startDate = dateObj(row.data_inicio_analise);
     const endDate = dateObj(row.data_fim_analise);
     if(!analysisDate) return { outside:false, status:"SEM_DATA", label:"Sem data de análise informada" };
+    if(dataDeAnaliseNoFuturo(analysisDate)) return { outside:true, status:"DATA_FUTURA", label:"Data de análise no futuro" };
     if(!startDate && !endDate) return { outside:false, status:"SEM_JANELA", label:"Sem janela configurada no edital" };
     if((startDate && analysisDate < startDate) || (endDate && analysisDate > endDate)) return { outside:true, status:"FORA_PERIODO", label:"Fora do período configurado" };
     return { outside:false, status:"DENTRO_PERIODO", label:"Dentro do período configurado" };
@@ -621,7 +623,7 @@ import {
     field.hidden = !show;
     if(!show && multiSelectState.fMunicipio?.selected?.length){ multiSelectState.fMunicipio.selected = []; renderMultiSelect("fMunicipio"); }
   }
-  function displayOptionLabel(id, value){ const maps={ fSituacaoEdital:{ativo:"Ativo",inativo:"Inativo",todos:"Todos"}, fPdf:{COM_PDF:"Com PDF",SEM_PDF:"Sem PDF",ERRO:"PDF com erro",DESATUALIZADO:"PDF desatualizado"}, fValidacao:{DENTRO_PERIODO:"Dentro do período",FORA_PERIODO:"Fora do período",SEM_DATA:"Sem data de análise",SEM_JANELA:"Sem janela configurada"} }; return (maps[id]&&maps[id][value]) || value; }
+  function displayOptionLabel(id, value){ const maps={ fSituacaoEdital:{ativo:"Ativo",inativo:"Inativo",todos:"Todos"}, fPdf:{COM_PDF:"Com PDF",SEM_PDF:"Sem PDF",ERRO:"PDF com erro",DESATUALIZADO:"PDF desatualizado"}, fValidacao:{DENTRO_PERIODO:"Dentro do período",FORA_PERIODO:"Fora do período",SEM_DATA:"Sem data de análise",SEM_JANELA:"Sem janela configurada",DATA_FUTURA:"Data no futuro"} }; return (maps[id]&&maps[id][value]) || value; }
   function valuesForFilter(id, row){ const config = FILTER_CONFIG_MAP[id]; if(!config) return []; return (config.getValues(row) || []).map(v => txt(v)).filter(Boolean); }
   function optionValues(id, sourceRows){
     const seen = new Set(); const values = [];
@@ -794,7 +796,7 @@ import {
     }
     charts.resp = new Chart($("chartResponsavel"), { type:"bar", data:{ labels, datasets }, options:{ responsive:true, maintainAspectRatio:false, animation:{duration:380}, interaction:{mode:"index",intersect:false}, plugins:{legend:{position:"top",labels:{color:p.text,boxWidth:14,usePointStyle:true}},tooltip:{callbacks:{title:c=>respItems[c[0].dataIndex]?.label||"",afterBody:c=>[`Total: ${fmt(respItems[c[0].dataIndex]?.total||0)}`]}}}, scales:{x:{stacked:true,ticks:{color:p.text,maxRotation:0},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:p.text,precision:0},grid:{color:p.grid}}}, onClick:(_,els)=>{ if(!els.length) return; const item=respItems[els[0].index]; activeResponsavel = activeResponsavel === item.label ? "" : item.label; currentPage=1; applyFilters(); } } });
   }
-  function aggregateDate(){ const map=new Map(); panelRows.forEach(r=>{ const key=fmtDate(r.data_analise); if(!key) return; if(!map.has(key)) map.set(key,{label:key,value:0,out:0,raw:dateObj(r.data_analise)}); const e=map.get(key); e.value++; if(txt(r.data_validacao_status)==="FORA_PERIODO") e.out++; }); return [...map.values()].sort((a,b)=>(a.raw?.getTime()||0)-(b.raw?.getTime()||0)); }
+  function aggregateDate(){ const map=new Map(); panelRows.forEach(r=>{ const key=fmtDate(r.data_analise); if(!key) return; if(!map.has(key)) map.set(key,{label:key,value:0,out:0,raw:dateObj(r.data_analise)}); const e=map.get(key); e.value++; if(txt(r.data_validacao_status)==="FORA_PERIODO") e.out++; if(txt(r.data_validacao_status)==="DATA_FUTURA") e.fut=(e.fut||0)+1; }); return [...map.values()].sort((a,b)=>(a.raw?.getTime()||0)-(b.raw?.getTime()||0)); }
   function aggregateDateFromPayload(){
     if(!canUseAnalisesPayload() || !Array.isArray(analisesPayload.tendencia_diaria)) return null;
     return analisesPayload.tendencia_diaria.map(r => ({
@@ -809,8 +811,8 @@ import {
     trendItems = aggregateDateFromPayload() || aggregateDate(); const p=palette();
     const labels = trendItems.map(x=>x.label);
     const data = trendItems.map(x=>x.value);
-    const pointBg = trendItems.map(x=>x.out?p.bad:p.blue);
-    const pointR = trendItems.map(x=>x.out?5:3);
+    const pointBg = trendItems.map(x=>(x.out||x.fut)?p.bad:p.blue);
+    const pointR = trendItems.map(x=>(x.out||x.fut)?5:3);
     if(charts.trend){
       const ds = charts.trend.data.datasets[0];
       charts.trend.data.labels = labels; ds.data = data; ds.pointBackgroundColor = pointBg; ds.pointRadius = pointR;
@@ -818,7 +820,7 @@ import {
       charts.trend.update();
       return;
     }
-    charts.trend = new Chart($("chartTrend"), { type:"line", data:{ labels, datasets:[{label:"Análises",data,borderColor:p.blue,backgroundColor:"rgba(15,93,183,.08)",pointBackgroundColor:pointBg,pointRadius:pointR,borderWidth:2.5,tension:.22,fill:true}] }, options:{ responsive:true, maintainAspectRatio:false, animation:{duration:380}, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.y)} análise(s)`,afterBody:c=>{ const it=trendItems[c[0].dataIndex]; return it&&it.out?[`${fmt(it.out)} fora do período`]:[]; }}}}, scales:{x:{ticks:{color:p.text,maxRotation:0},grid:{color:p.grid}},y:{beginAtZero:true,ticks:{color:p.text,precision:0},grid:{color:p.grid}}} } });
+    charts.trend = new Chart($("chartTrend"), { type:"line", data:{ labels, datasets:[{label:"Análises",data,borderColor:p.blue,backgroundColor:"rgba(15,93,183,.08)",pointBackgroundColor:pointBg,pointRadius:pointR,borderWidth:2.5,tension:.22,fill:true}] }, options:{ responsive:true, maintainAspectRatio:false, animation:{duration:380}, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.parsed.y)} análise(s)`,afterBody:c=>{ const it=trendItems[c[0].dataIndex]; return it?[...(it.out?[`${fmt(it.out)} fora do período`]:[]),...(it.fut?[`${fmt(it.fut)} com data no futuro — corrija na planilha`]:[])]:[]; }}}}, scales:{x:{ticks:{color:p.text,maxRotation:0},grid:{color:p.grid}},y:{beginAtZero:true,ticks:{color:p.text,precision:0},grid:{color:p.grid}}} } });
   }
   function restyleChart(chart, p, hasLegend){
     if(chart.options.scales?.x){ chart.options.scales.x.ticks.color = p.text; if(chart.options.scales.x.grid && chart.options.scales.x.grid.color) chart.options.scales.x.grid.color = p.grid; }
@@ -827,8 +829,8 @@ import {
   }
 
   function renderAttention(){
-    const items=[]; const pend=panelRows.filter(r=>txt(r.status_consolidado)==="Pendente").length, rev=panelRows.filter(r=>txt(r.status_consolidado)==="Revisar").length, semResp=panelRows.filter(r=>!txt(r.responsavel_analise)).length, semData=panelRows.filter(r=>txt(r.etapa)&&!txt(r.data_analise)).length, fora=panelRows.filter(r=>txt(r.data_validacao_status)==="FORA_PERIODO").length, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, semPdf=panelRows.filter(r=>!txt(r.link_pdf)).length;
-    if(fora) items.push({t:"Data fora do período",d:`${fmt(fora)} análise(s) fora da janela oficial do edital.`,c:"high"}); if(erro) items.push({t:"PDF com erro",d:`${fmt(erro)} espelho(s) com erro na última tentativa.`,c:"high"}); if(semResp) items.push({t:"Sem responsável",d:`${fmt(semResp)} registro(s) sem responsável de análise.`,c:"high"}); if(pend) items.push({t:"Pendentes",d:`${fmt(pend)} registro(s) pendentes no recorte atual.`,c:"medium"}); if(rev) items.push({t:"Em revisão",d:`${fmt(rev)} registro(s) aguardando revisão.`,c:"medium"}); if(semData) items.push({t:"Etapa sem data",d:`${fmt(semData)} registro(s) com etapa, mas sem data de análise.`,c:"medium"}); if(semPdf) items.push({t:"Espelho ausente",d:`${fmt(semPdf)} registro(s) sem link de PDF no recorte.`,c:"low"});
+    const items=[]; const pend=panelRows.filter(r=>txt(r.status_consolidado)==="Pendente").length, rev=panelRows.filter(r=>txt(r.status_consolidado)==="Revisar").length, semResp=panelRows.filter(r=>!txt(r.responsavel_analise)).length, semData=panelRows.filter(r=>txt(r.etapa)&&!txt(r.data_analise)).length, fora=panelRows.filter(r=>txt(r.data_validacao_status)==="FORA_PERIODO").length, futura=panelRows.filter(r=>txt(r.data_validacao_status)==="DATA_FUTURA").length, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, semPdf=panelRows.filter(r=>!txt(r.link_pdf)).length;
+    if(futura) items.push({t:"Data de análise no futuro",d:`${fmt(futura)} análise(s) com data depois de hoje. Corrija na planilha de origem.`,c:"high"}); if(fora) items.push({t:"Data fora do período",d:`${fmt(fora)} análise(s) fora da janela oficial do edital.`,c:"high"}); if(erro) items.push({t:"PDF com erro",d:`${fmt(erro)} espelho(s) com erro na última tentativa.`,c:"high"}); if(semResp) items.push({t:"Sem responsável",d:`${fmt(semResp)} registro(s) sem responsável de análise.`,c:"high"}); if(pend) items.push({t:"Pendentes",d:`${fmt(pend)} registro(s) pendentes no recorte atual.`,c:"medium"}); if(rev) items.push({t:"Em revisão",d:`${fmt(rev)} registro(s) aguardando revisão.`,c:"medium"}); if(semData) items.push({t:"Etapa sem data",d:`${fmt(semData)} registro(s) com etapa, mas sem data de análise.`,c:"medium"}); if(semPdf) items.push({t:"Espelho ausente",d:`${fmt(semPdf)} registro(s) sem link de PDF no recorte.`,c:"low"});
     $("attentionList").innerHTML = items.length ? items.slice(0,8).map(x=>`<div class="attention-item ${x.c==='high'?'high':x.c==='low'?'low':''}"><b>${esc(x.t)}</b><small>${esc(x.d)}</small></div>`).join("") : `<div class="empty">Nenhuma pendência prioritária no recorte atual.</div>`;
   }
 
@@ -861,7 +863,7 @@ import {
     return `<div class="detail-shell"${municipio?` data-municipio-uf="${attr(municipio)}"`:""}><div class="detail-grid"><div class="kv"><div class="kv-label">Etapa</div><div class="kv-value">${esc(r.etapa||'-')}</div></div><div class="kv"><div class="kv-label">Data da análise</div><div class="kv-value">${esc(fmtDate(r.data_analise)||'-')}</div></div><div class="kv"><div class="kv-label">Nota final</div><div class="kv-value">${esc(r.nota_final_ajustada ?? '-')}</div></div><div class="kv"><div class="kv-label">Modalidade</div><div class="kv-value">${esc(r.modalidade_concorrencia||'-')}</div></div><div class="kv"><div class="kv-label">Validação</div><div class="kv-value">${esc(validationLabel(r.data_validacao_status))}</div></div><div class="kv"><div class="kv-label">Janela oficial</div><div class="kv-value">${esc(fmtDate(r.data_inicio_analise)||'--')} a ${esc(fmtDate(r.data_fim_analise)||'--')}</div></div><div class="kv"><div class="kv-label">Escolaridade</div><div class="kv-value">${esc(r.pontuacao_escolaridade ?? '-')}</div></div><div class="kv"><div class="kv-label">Cursos</div><div class="kv-value">${esc(r.pontuacao_cursos_aperfeicoamento ?? '-')}</div></div><div class="kv"><div class="kv-label">Experiência profissional</div><div class="kv-value">${esc(r.pontuacao_experiencia_profissional ?? '-')}</div></div>${criteriosDaAreaHtml(r)}</div><div class="detail-block"><div class="detail-actions">${origem?`<a class="btn secondary small" href="${attr(origem)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir origem</a>`:""}${pdf?`<a class="btn green small" href="${attr(pdf)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf"></i> Abrir PDF</a>`:`<span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF</span>`}${txt(r.erro_pdf)?`<span class="mini-chip" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(truncate(r.erro_pdf,80))}</span>`:""}</div>${analysis}</div></div>`;
   }
   function toggleDetails(encoded){ const key=decodeURIComponent(encoded||""); if(expanded.has(key)) expanded.delete(key); else expanded.add(key); renderTable(); }
-  function validationLabel(v){ return {DENTRO_PERIODO:"Dentro do período configurado",FORA_PERIODO:"Fora do período configurado",SEM_DATA:"Sem data de análise informada",SEM_JANELA:"Sem janela configurada no edital"}[txt(v)] || txt(v) || "-"; }
+  function validationLabel(v){ return {DENTRO_PERIODO:"Dentro do período configurado",FORA_PERIODO:"Fora do período configurado",SEM_DATA:"Sem data de análise informada",SEM_JANELA:"Sem janela configurada no edital",DATA_FUTURA:"Data de análise no futuro (corrija na planilha)"}[txt(v)] || txt(v) || "-"; }
   function renderPagination(pages){ const wrap=$("pageNumbers"); const list=pageWindow(currentPage,pages,5); wrap.innerHTML=list.map(p=>p==="..."?`<span style="padding:8px;color:var(--muted)">...</span>`:`<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`).join(""); $("firstBtn").disabled=currentPage<=1; $("prevBtn").disabled=currentPage<=1; $("nextBtn").disabled=currentPage>=pages; $("lastBtn").disabled=currentPage>=pages; }
   function pageWindow(page,total,max){ if(total<=max+2) return Array.from({length:total},(_,i)=>i+1); const out=[1]; let start=Math.max(2,page-2), end=Math.min(total-1,page+2); if(start>2) out.push("..."); for(let i=start;i<=end;i++) out.push(i); if(end<total-1) out.push("..."); out.push(total); return out; }
   function goPage(p){ const pages=Math.max(1,Math.ceil(getTableRows().length/rowsPerPage)); currentPage=Math.max(1,Math.min(p,pages)); renderTable(); }
