@@ -159,7 +159,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       "nucleo",
       "calendario",
       "approved",
-      "panel:analises",
+      "analises",
     ]);
     for (const area of ["sede", "projetos"]) {
       expect(grupos[area].map((item) => item.view)).toEqual([
