@@ -61,6 +61,8 @@
   min-width: 0;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border-subtle);
+  /* Cor do KPI (pedido do responsável, como no SIGAV): linha de 3px à esquerda e o número na cor do estado. */
+  border-left: 3px solid var(--tone, var(--border-subtle));
   border-radius: var(--radius-lg);
   background: var(--surface-card);
   box-shadow: none;
@@ -103,7 +105,7 @@
 .nucleo-kpi-card strong {
   grid-column: 1 / -1;
   grid-row: 2;
-  color: var(--text-primary);
+  color: var(--tone, var(--text-primary));
   font-size: var(--text-metric-sm);
   font-weight: 600;
   line-height: 1.2;
