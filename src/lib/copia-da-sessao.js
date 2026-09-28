@@ -27,6 +27,13 @@ export const VALIDADE_DA_COPIA_MS = 7 * 24 * 60 * 60 * 1000;
 
 const PARTES_SIMPLES = Object.freeze(["config", "paineis", "mapa", "unidades"]);
 
+/*
+  Partes que podem faltar sem invalidar a cópia: `abas` (o catálogo de abas do
+  menu) tem reserva no código (`ABAS_DO_MENU`, em `menu-lateral.js`), com o
+  mesmo menu. Falhou ou a função ainda não existe no banco, a parte fica `null`.
+*/
+const PARTES_OPCIONAIS = Object.freeze(["abas"]);
+
 /** O que muda a cada acesso sem mudar o que a pessoa pode ver. */
 const CAMPO_DE_DATA = /(^|_)(em|at)$|^ultimo_|^last_/;
 
@@ -73,6 +80,10 @@ export function dadosDasRespostas(respostas) {
     if (!resposta || resposta.error) return null;
     dados[parte] = resposta.data ?? [];
   }
+  for (const parte of PARTES_OPCIONAIS) {
+    const resposta = respostas?.[parte];
+    dados[parte] = !resposta || resposta.error ? null : (resposta.data ?? null);
+  }
   const monitoramento = respostas.monitoramento;
   if (!monitoramento) {
     dados.monitoramento = null;
@@ -92,6 +103,7 @@ export function consultasDosDados(dados) {
     paineis: resposta(dados.paineis),
     mapa: resposta(dados.mapa),
     unidades: resposta(dados.unidades),
+    abas: resposta(dados.abas ?? null),
     monitoramento: dados.monitoramento
       ? Promise.resolve([
           dados.monitoramento.payload,
@@ -127,7 +139,7 @@ export function copiaServe(copia, { usuarioId, acesso, versao, agora }) {
 export function partesQueMudaram(anteriores, atuais) {
   const texto = (valor) => JSON.stringify(valor ?? null);
   return new Set(
-    [...PARTES_SIMPLES, "monitoramento"].filter(
+    [...PARTES_SIMPLES, ...PARTES_OPCIONAIS, "monitoramento"].filter(
       (parte) => texto(anteriores?.[parte]) !== texto(atuais?.[parte]),
     ),
   );
