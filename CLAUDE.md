@@ -24,6 +24,7 @@ src/styles/             CSS do app principal (ordem de import em main.js)     �
 src/analises/           app de análises, JS + CSS próprios                    → src/analises/CLAUDE.md
 src/main.js             bootstrap: importa CSS e instala módulos, em ordem
 supabase/               migrations/ e correcoes/ (SQL de dados)               → supabase/CLAUDE.md
+apps-script/            código das planilhas de análises (colado no Google)   → apps-script/LEIA-ME.md
 public/                 copiado para o site: assets/ e data/ (JSON GERADO por scripts/)
 scripts/                checagens, pipeline geográfico, AYA, banco            → scripts/CLAUDE.md
 tests/                  Vitest (*.test.js) e Playwright (*.spec.js)           → tests/CLAUDE.md
