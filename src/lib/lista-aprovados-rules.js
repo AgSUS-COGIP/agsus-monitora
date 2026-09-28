@@ -1,5 +1,6 @@
 import {
   canChangeCandidateStatus,
+  canManageCandidateAttachments,
   canManageSubJudice,
   canUnlockCandidateStatus,
 } from "./access-roles.js";
@@ -29,16 +30,27 @@ export function statusNeedsMatricula(status) {
 }
 
 export function canEditCandidateStatus(profile, candidate) {
-  return Boolean(candidate?.lista_ativa) && canChangeCandidateStatus(profile);
+  return (
+    Boolean(candidate?.lista_ativa) &&
+    canChangeCandidateStatus(profile) &&
+    !statusTravado(profile, candidate)
+  );
 }
 
 /*
   A trava do status (migration 20260928180000): com status já definido, só o
   admin do módulo o altera — e o processo SEI e a matrícula, que vão na mesma
-  RPC. Os anexos ficam fora da trava: quem altera status continua anexando.
+  RPC.
 */
 export function statusTravado(profile, candidate) {
   return Boolean(text(candidate?.status)) && !canUnlockCandidateStatus(profile);
+}
+
+/** Anexos do candidato: só o admin do módulo inclui e remove, em lista ativa. */
+export function canEditCandidateAttachments(profile, candidate) {
+  return (
+    Boolean(candidate?.lista_ativa) && canManageCandidateAttachments(profile)
+  );
 }
 
 export function canEditSubJudice(profile, candidate) {

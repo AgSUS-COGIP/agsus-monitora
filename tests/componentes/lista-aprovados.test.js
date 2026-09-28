@@ -511,6 +511,7 @@ describe("modal de status", () => {
   e os das outras ficam desativados até ela terminar.
 */
 describe("anexos do candidato", () => {
+  const ADMIN = { perfil: "admin" };
   const ANEXOS = () => [
     {
       anexo_id: "x1",
@@ -569,7 +570,7 @@ describe("anexos do candidato", () => {
     });
     URL.revokeObjectURL = vi.fn();
     const supabase = supabaseFalso({ anexos: ANEXOS() });
-    await montar({ supabase, novaAba: () => aba });
+    await montar({ supabase, novaAba: () => aba, perfil: ADMIN });
     await clicar(botaoDeAnexos("Bruno Lima"));
     expect($("approvedAnexosLista").textContent).toContain("termo.pdf");
     await clicar(
@@ -589,7 +590,7 @@ describe("anexos do candidato", () => {
 
   it("remove o anexo pela RPC, com o arquivo junto", async () => {
     const supabase = supabaseFalso({ anexos: ANEXOS() });
-    await montar({ supabase });
+    await montar({ supabase, perfil: ADMIN });
     await clicar(botaoDeAnexos("Bruno Lima"));
     await clicar(
       $("approvedAnexosModal").querySelector(
@@ -605,7 +606,7 @@ describe("anexos do candidato", () => {
 
   it("salvar o status grava cada PDF no banco, em base64", async () => {
     const supabase = supabaseFalso();
-    const { toast } = await montar({ supabase });
+    const { toast } = await montar({ supabase, perfil: ADMIN });
     await abrirStatusDe("Bruno Lima");
     const conteudo = new File(["%PDF-1.7 termo"], "Termo de desistência.pdf", {
       type: "application/pdf",
@@ -634,7 +635,7 @@ describe("anexos do candidato", () => {
       ...ANEXOS()[0],
       anexo_id: `a${i}`,
     }));
-    await montar({ supabase: supabaseFalso({ anexos: cinco }) });
+    await montar({ supabase: supabaseFalso({ anexos: cinco }), perfil: ADMIN });
     await abrirStatusDe("Bruno Lima");
     expect($("approvedStatusAnexos").disabled).toBe(true);
     expect($("approvedAnexosHint").textContent).toContain("5 de 5");
@@ -642,7 +643,7 @@ describe("anexos do candidato", () => {
 
   it("recusa o que não é PDF e o maior que 2 MB, sem enviar", async () => {
     const supabase = supabaseFalso();
-    await montar({ supabase });
+    await montar({ supabase, perfil: ADMIN });
     await abrirStatusDe("Bruno Lima");
     await escolherArquivos([pdf("foto.png", 10, "image/png")]);
     expect($("approvedStatusModal").textContent).toContain("não é PDF");
@@ -662,7 +663,7 @@ describe("anexos do candidato", () => {
 
   it("status e anexos entram na linha sem esperar a releitura", async () => {
     const supabase = supabaseFalso();
-    await montar({ supabase });
+    await montar({ supabase, perfil: ADMIN });
     segurarRecarga(supabase);
     await abrirStatusDe("Bruno Lima");
     await escolher($("approvedStatusSelect"), "Desistente");
@@ -685,7 +686,7 @@ describe("anexos do candidato", () => {
 
   it("remover o anexo tira da linha na hora", async () => {
     const supabase = supabaseFalso({ anexos: ANEXOS() });
-    await montar({ supabase });
+    await montar({ supabase, perfil: ADMIN });
     segurarRecarga(supabase);
     await clicar(botaoDeAnexos("Bruno Lima"));
     await clicar(
@@ -699,38 +700,61 @@ describe("anexos do candidato", () => {
     expect(botaoDeAnexos("Bruno Lima").disabled).toBe(true);
   });
 
-  it("status já definido: o contratador só anexa, sem mexer no status", async () => {
-    const supabase = supabaseFalso();
-    const { toast } = await montar({ supabase });
-    await abrirStatusDe("Ana Ribeiro");
-    expect($("approvedStatusTitle").textContent).toBe(
-      "Anexar documentos do candidato",
+  it("o contratador altera o status, mas não vê o campo de anexar", async () => {
+    await montar();
+    await abrirStatusDe("Bruno Lima");
+    expect($("approvedStatusSelect")).not.toBeNull();
+    expect($("approvedStatusAnexos")).toBeNull();
+    expect($("approvedStatusModal").textContent).not.toContain(
+      "Anexar documentos",
     );
-    expect($("approvedStatusTravado").textContent).toContain(
-      "só o admin pode alterá-lo",
-    );
-    expect($("approvedStatusSelect").disabled).toBe(true);
-    expect($("approvedStatusSei").disabled).toBe(true);
-    expect($("approvedStatusMatricula").disabled).toBe(true);
-    // Sem PDF escolhido, não há o que salvar.
-    expect($("approvedStatusSave").disabled).toBe(true);
-    expect($("approvedStatusSave").textContent).toContain("Salvar anexos");
+  });
 
-    await escolherArquivos([pdf("contrato.pdf")]);
-    supabase.rpc.mockClear();
-    await clicar($("approvedStatusSave"));
-    expect(supabase.rpc).not.toHaveBeenCalledWith(
-      "alterar_status_candidato_aprovado",
-      expect.anything(),
+  it("o contratador vê os anexos, mas não remove", async () => {
+    await montar({ supabase: supabaseFalso({ anexos: ANEXOS() }) });
+    await clicar(botaoDeAnexos("Bruno Lima"));
+    expect($("approvedAnexosLista").textContent).toContain("termo.pdf");
+    expect(
+      $("approvedAnexosModal").querySelector(
+        '[data-approved-action="abrir-anexo"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      $("approvedAnexosModal").querySelector(
+        '[data-approved-action="remover-anexo"]',
+      ),
+    ).toBeNull();
+  });
+
+  it("status já definido: o contratador vê o cadeado e o modal não abre", async () => {
+    const { toast } = await montar();
+    const cadeado = linhaDe("Ana Ribeiro").querySelector(
+      'button[title="Status já definido: só o admin altera"]',
     );
+    expect(cadeado.disabled).toBe(true);
+    expect(
+      linhaDe("Ana Ribeiro").querySelector('[data-approved-action="status"]'),
+    ).toBeNull();
+    // Mesmo chamado por fora (o legado), o estado recusa e diz porquê.
+    await act(async () => controlador.estado.abrirStatus("ana"));
+    expect($("approvedStatusModal")).toBeNull();
+    expect(toast).toHaveBeenCalledWith(
+      "O status já foi definido. Só o admin pode alterá-lo.",
+      "warn",
+    );
+  });
+
+  it("o admin anexa também a candidato com status já definido", async () => {
+    const supabase = supabaseFalso();
+    await montar({ supabase, perfil: ADMIN });
+    await abrirStatusDe("Ana Ribeiro");
+    expect($("approvedStatusAnexos")).not.toBeNull();
+    await escolherArquivos([pdf("contrato.pdf")]);
+    await clicar($("approvedStatusSave"));
     expect(supabase.rpc).toHaveBeenCalledWith(
       "registrar_anexo_candidato_aprovado",
       expect.objectContaining({ p_candidato_id: "ana" }),
     );
-    expect(toast).toHaveBeenCalledWith("1 anexo(s) enviados.");
-    expect(
-      linhaDe("Ana Ribeiro").querySelector(".approved-status").textContent,
-    ).toBe("Contratado");
   });
 
   it("o admin continua alterando um status já definido", async () => {
@@ -739,7 +763,6 @@ describe("anexos do candidato", () => {
     expect($("approvedStatusTitle").textContent).toBe(
       "Alterar status do candidato",
     );
-    expect($("approvedStatusTravado")).toBeNull();
     expect($("approvedStatusSelect").disabled).toBe(false);
   });
 
@@ -747,7 +770,7 @@ describe("anexos do candidato", () => {
     const supabase = supabaseFalso({
       erros: { registrar_anexo_candidato_aprovado: "limite" },
     });
-    const { toast } = await montar({ supabase });
+    const { toast } = await montar({ supabase, perfil: ADMIN });
     await abrirStatusDe("Bruno Lima");
     await escolherArquivos([pdf("a.pdf")]);
     await clicar($("approvedStatusSave"));

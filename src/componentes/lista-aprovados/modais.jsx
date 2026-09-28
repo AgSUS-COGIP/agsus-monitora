@@ -6,9 +6,8 @@ import {
 } from "../../lib/anexos-do-candidato.js";
 import {
   STATUS_DO_CANDIDATO,
-  canEditCandidateStatus,
+  canEditCandidateAttachments,
   statusNeedsMatricula,
-  statusTravado,
   uniqueCandidateCargos,
 } from "../../lib/lista-aprovados-rules.js";
 import { Modal } from "../modal.jsx";
@@ -130,15 +129,14 @@ function CampoDeAnexos({ jaAnexados, arquivos, aoMudar }) {
 }
 
 export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
-  // Status já definido e sem admin: o modal só anexa documentos.
-  const travado = statusTravado(perfil, candidato);
+  // Anexar é só do admin do módulo; para os demais, o campo não aparece.
+  const podeAnexar = canEditCandidateAttachments(perfil, candidato);
   const [status, setStatus] = useState(candidato.status || "");
   const [processo, setProcesso] = useState(candidato.processo_sei || "");
   const [matricula, setMatricula] = useState(candidato.matricula || "");
   const [anexos, setAnexos] = useState([]);
-  const exigeMatricula = !travado && statusNeedsMatricula(status);
+  const exigeMatricula = statusNeedsMatricula(status);
   const anexosInvalidos = Boolean(problemaDosAnexos(anexos, jaAnexados));
-  const semNadaParaSalvar = travado && !anexos.length;
   const fechar = estado.fecharModal;
 
   return (
@@ -151,30 +149,18 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
     >
       <Cabecalho
         tituloId="approvedStatusTitle"
-        titulo={
-          travado
-            ? "Anexar documentos do candidato"
-            : "Alterar status do candidato"
-        }
+        titulo="Alterar status do candidato"
         subtituloId="approvedStatusCandidate"
         subtitulo={`${candidato.nome} · ${candidato.cargo}`}
         aoFechar={fechar}
       />
       <div className="modal-body">
-        {travado ? (
-          <p id="approvedStatusTravado" className="modal-note">
-            <i className="fa-solid fa-lock" aria-hidden="true" /> O status já
-            foi definido e só o admin pode alterá-lo. Você ainda pode anexar
-            documentos.
-          </p>
-        ) : null}
         <div className="form-grid">
           <div className="form-row full">
             <label htmlFor="approvedStatusSelect">Status</label>
             <select
               id="approvedStatusSelect"
-              data-foco-inicial={travado ? undefined : true}
-              disabled={travado}
+              data-foco-inicial
               value={status}
               onChange={(evento) => setStatus(evento.target.value)}
             >
@@ -193,7 +179,6 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
             <input
               id="approvedStatusSei"
               placeholder="Ex.: 00700.000000/2026-00"
-              disabled={travado}
               value={processo}
               onChange={(evento) => setProcesso(evento.target.value)}
             />
@@ -203,7 +188,6 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
             <input
               id="approvedStatusMatricula"
               placeholder="Informe quando o status exigir"
-              disabled={travado}
               required={exigeMatricula}
               aria-describedby={
                 exigeMatricula ? "approvedMatriculaHint" : undefined
@@ -217,11 +201,13 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
               </small>
             ) : null}
           </div>
-          <CampoDeAnexos
-            jaAnexados={jaAnexados}
-            arquivos={anexos}
-            aoMudar={setAnexos}
-          />
+          {podeAnexar ? (
+            <CampoDeAnexos
+              jaAnexados={jaAnexados}
+              arquivos={anexos}
+              aoMudar={setAnexos}
+            />
+          ) : null}
         </div>
         <div className="approved-modal-actions">
           <button className="btn secondary" type="button" onClick={fechar}>
@@ -232,7 +218,7 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
             acao="status"
             id="approvedStatusSave"
             className="btn green"
-            disabled={anexosInvalidos || semNadaParaSalvar}
+            disabled={anexosInvalidos}
             onClick={() =>
               void estado.salvarStatus(candidato.candidato_id, {
                 status,
@@ -242,8 +228,8 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
               })
             }
           >
-            <i className="fa-solid fa-floppy-disk" aria-hidden="true" />{" "}
-            {travado ? "Salvar anexos" : "Salvar status"}
+            <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar
+            status
           </BotaoDeAcao>
         </div>
       </div>
@@ -259,7 +245,7 @@ const dataCurta = (valor) => {
 /* Os anexos de um candidato: abrir cada PDF e, para quem altera o status, remover. */
 export function ModalDeAnexos({ estado, perfil, candidato, anexos }) {
   const fechar = estado.fecharModal;
-  const podeRemover = canEditCandidateStatus(perfil, candidato);
+  const podeRemover = canEditCandidateAttachments(perfil, candidato);
   return (
     <Modal
       id="approvedAnexosModal"

@@ -3,6 +3,7 @@ import { canChangeCandidateStatus } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   canEditCandidateStatus,
+  statusTravado,
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.js";
 import { Icone } from "../icone.jsx";
@@ -133,8 +134,9 @@ export function NomeDoCandidato({ candidato }) {
 }
 
 /*
-  A ação de status é a mesma nas duas abas: lápis quando pode, cadeado quando a
-  lista está inativa para quem poderia, e um traço para quem não pode.
+  A ação de status é a mesma nas duas abas: lápis quando pode, cadeado quando
+  quem poderia está barrado (lista inativa, ou status já definido e só o admin
+  altera), e um traço para quem não pode.
 */
 export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
   if (canEditCandidateStatus(perfil, candidato))
@@ -151,14 +153,19 @@ export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
         <i className="fa-solid fa-pen" aria-hidden="true" />
       </button>
     );
-  if (!candidato.lista_ativa && canChangeCandidateStatus(perfil))
+  const barrado = !candidato.lista_ativa
+    ? "Lista inativa"
+    : statusTravado(perfil, candidato)
+      ? "Status já definido: só o admin altera"
+      : "";
+  if (barrado && canChangeCandidateStatus(perfil))
     return (
       <button
         className="approved-icone-acao"
         type="button"
         disabled
-        title="Lista inativa"
-        aria-label="Lista inativa"
+        title={barrado}
+        aria-label={barrado}
       >
         <i className="fa-solid fa-lock" aria-hidden="true" />
       </button>

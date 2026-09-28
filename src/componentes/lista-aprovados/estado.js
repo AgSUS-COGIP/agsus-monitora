@@ -35,6 +35,7 @@ import {
   canViewCore,
 } from "../../lib/access-roles.js";
 import {
+  canEditCandidateAttachments,
   canEditCandidateStatus,
   canEditSubJudice,
   nomeDeArquivoSeguro,
@@ -330,7 +331,9 @@ export function criarEstadoDaListaDeAprovados({
       toast(
         candidato?.lista_ativa === false
           ? "A lista está inativa."
-          : "Sem permissão para alterar o status.",
+          : candidato && statusTravado(perfil(), candidato)
+            ? "O status já foi definido. Só o admin pode alterá-lo."
+            : "Sem permissão para alterar o status.",
         "warn",
       );
       return;
@@ -431,13 +434,11 @@ export function criarEstadoDaListaDeAprovados({
     const processo = text(campos.processo);
     const matricula = text(campos.matricula);
     const arquivos = Array.from(campos.anexos ?? []);
-    // Status travado: só os anexos saem; o status fica como está no banco.
-    const soAnexos = statusTravado(perfil(), candidato);
-    if (soAnexos && !arquivos.length) {
-      toast("Escolha os PDFs para anexar.", "warn");
+    if (arquivos.length && !canEditCandidateAttachments(perfil(), candidato)) {
+      toast("Somente admin pode anexar documentos.", "warn");
       return false;
     }
-    if (!soAnexos && statusNeedsMatricula(status) && !matricula) {
+    if (statusNeedsMatricula(status) && !matricula) {
       toast("Informe a matrícula para Contratado ou Migração.", "warn");
       return false;
     }
@@ -450,14 +451,15 @@ export function criarEstadoDaListaDeAprovados({
       return false;
     }
     const salvo = await executar("status", "Salvando…", async (rotular) => {
-      const { error } = soAnexos
-        ? { error: null }
-        : await supabase.rpc("alterar_status_candidato_aprovado", {
-            p_candidato_id: candidato.candidato_id,
-            p_status: status || null,
-            p_processo_sei: processo || null,
-            p_matricula: matricula || null,
-          });
+      const { error } = await supabase.rpc(
+        "alterar_status_candidato_aprovado",
+        {
+          p_candidato_id: candidato.candidato_id,
+          p_status: status || null,
+          p_processo_sei: processo || null,
+          p_matricula: matricula || null,
+        },
+      );
       if (error) {
         toast(`Erro ao alterar status: ${mensagemDe(error)}`, "error");
         return false;
@@ -467,29 +469,23 @@ export function criarEstadoDaListaDeAprovados({
         : { falhas: [], novos: [] };
       // Como o banco gravou: matrícula só fica para Contratado e Migração.
       aplicarLocal({
-        ...(soAnexos
-          ? {}
-          : {
-              candidatos: comCandidato({
-                ...candidato,
-                status: status || null,
-                processo_sei: processo || null,
-                matricula: statusNeedsMatricula(status) ? matricula : null,
-              }),
-            }),
+        candidatos: comCandidato({
+          ...candidato,
+          status: status || null,
+          processo_sei: processo || null,
+          matricula: statusNeedsMatricula(status) ? matricula : null,
+        }),
         anexos: comAnexos(candidato.candidato_id, [
           ...anexosDe(candidato.candidato_id),
           ...novos,
         ]),
       });
       fecharModal();
-      const inicio = soAnexos ? "" : "Status atualizado";
       if (falhas.length)
         toast(
-          `${inicio ? `${inicio}, mas ` : ""}${falhas.length} anexo(s) não foram enviados. ${falhas.join(" · ")}`,
+          `Status atualizado, mas ${falhas.length} anexo(s) não foram enviados. ${falhas.join(" · ")}`,
           "error",
         );
-      else if (soAnexos) toast(`${arquivos.length} anexo(s) enviados.`);
       else
         toast(
           arquivos.length
@@ -528,7 +524,7 @@ export function criarEstadoDaListaDeAprovados({
 
   async function removerAnexo(anexo) {
     const candidato = candidatoPorId(anexo?.candidato_id);
-    if (!candidato || !canEditCandidateStatus(perfil(), candidato))
+    if (!candidato || !canEditCandidateAttachments(perfil(), candidato))
       return false;
     if (!confirmar(`Remover o anexo "${anexo.arquivo_nome}"?`)) return false;
     const removido = await executar(

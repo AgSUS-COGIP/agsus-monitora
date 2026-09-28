@@ -94,6 +94,12 @@ export function canUnlockCandidateStatus(profile) {
   return hasLevel(profile, "admin");
 }
 
+/** Anexar e remover documento do candidato: só o admin do módulo (20260928235000). */
+export function canManageCandidateAttachments(profile) {
+  if (profile?.permissoes) return hasResource(profile, "aprovados", 3);
+  return hasLevel(profile, "admin");
+}
+
 export function canManageSubJudice(profile) {
   if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");
