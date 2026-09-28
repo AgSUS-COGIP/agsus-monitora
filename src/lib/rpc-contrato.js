@@ -57,6 +57,12 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Contexto unificado de acesso: perfil, permissões e painéis.",
   },
+  listar_abas_do_menu: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Catálogo de abas do menu lateral (TB_ABA × RL_ABA_AREA), já resolvido por área. Sem ela, o menu usa ABAS_DO_MENU (o mesmo catálogo no código).",
+  },
   obter_branding_acesso_publico: {
     argumentos: [],
     critica: true,

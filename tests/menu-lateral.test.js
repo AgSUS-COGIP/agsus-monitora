@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   AREA_DOS_PAINEIS,
   AREAS_DO_MENU,
+  ABAS_DO_MENU,
   AREAS_DO_SISTEMA,
   FLUTUANTE_FECHADO,
-  PAGINAS_DO_MENU,
   areaAberta,
   areasDoUsuario,
   destinoAoTrocarDeArea,
@@ -62,10 +62,12 @@ describe("o catálogo", () => {
     );
   });
 
-  it("página restrita a áreas só aponta para áreas que existem", () => {
+  it("toda aba só aponta para áreas que existem", () => {
     const areas = new Set(AREAS_DO_SISTEMA.map((area) => area.id));
-    const restritas = PAGINAS_DO_MENU.flatMap((pagina) => pagina.areas ?? []);
-    expect(restritas.every((area) => areas.has(area))).toBe(true);
+    const usadas = ABAS_DO_MENU.flatMap((aba) =>
+      aba.areas.map((item) => item.area),
+    );
+    expect(usadas.every((area) => areas.has(area))).toBe(true);
     expect(AREAS_DO_MENU.some((area) => area.id === AREA_DOS_PAINEIS)).toBe(
       true,
     );

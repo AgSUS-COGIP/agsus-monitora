@@ -181,6 +181,11 @@ import {
 } from "./copia-da-sessao-indexeddb.js";
 import { apagarCacheDasAnalises } from "./cache-das-analises-indexeddb.js";
 import {
+  abasDoMenu,
+  carregarCatalogoDeAbas,
+  consultaDoCatalogoDeAbas,
+} from "./catalogo-de-abas.js";
+import {
   acompanharCarregamentoDoPainel,
   esconderEsqueleto,
   marcarAtualizacao,
@@ -1415,6 +1420,7 @@ function iniciarConsultasDaSessao() {
     paineis: iniciar(consultaDePaineis()),
     mapa: iniciar(consultaDoMapa()),
     unidades: iniciar(consultaDeUnidades()),
+    abas: consultaDoCatalogoDeAbas(sb),
     monitoramento: podeCarregarMonitoramento()
       ? consultaDoMonitoramento()
       : null,
@@ -1446,7 +1452,10 @@ async function atualizarCopiaDaSessao(sessao, consultas, anteriores) {
       await loadPanels({ consulta: novas.paineis });
       await loadPanelPermissions();
     }
-    if (mudou.has("config") || mudou.has("paineis")) buildNav();
+    if (mudou.has("abas"))
+      await carregarCatalogoDeAbas({ consulta: novas.abas });
+    if (mudou.has("config") || mudou.has("paineis") || mudou.has("abas"))
+      buildNav();
     // Só painel: `isViewAllowed` não conhece todas as telas (Acessos, por exemplo).
     if (currentView.startsWith("panel:") && !isViewAllowed(currentView))
       navigate(startView());
@@ -1509,6 +1518,7 @@ async function loadInitialData() {
   await loadConfig({ consulta: fonte.config });
   await loadPanels({ consulta: fonte.paineis });
   await loadPanelPermissions();
+  await carregarCatalogoDeAbas({ consulta: fonte.abas });
   buildNav();
   await loadMapaConfig({ consulta: fonte.mapa });
   await loadUnidades({ consulta: fonte.unidades });
@@ -2263,6 +2273,7 @@ async function refreshData() {
     await loadPanels({ consulta: consultas.paineis });
     await loadPanelPermissions();
     await loadMapaConfig({ consulta: consultas.mapa });
+    await carregarCatalogoDeAbas({ consulta: consultas.abas });
     buildNav();
     await loadUnidades({ consulta: consultas.unidades });
     const dataOk = await loadData({ consulta: consultas.monitoramento });
@@ -2315,6 +2326,7 @@ function buildNav() {
       paineis,
       secoesDeConfiguracao: SECOES,
       areas,
+      abas: abasDoMenu(),
     }),
     {
       aoAbrirSecao: (_view, secao) => abrirSecaoDeConfiguracao(document, secao),

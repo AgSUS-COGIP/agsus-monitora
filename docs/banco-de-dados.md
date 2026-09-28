@@ -567,3 +567,45 @@ Cuidado: restaurar no Histórico de configurações uma versão anterior a esta
 migration reativa a linha (`ativo`), e a coluna `painel:<analises>` volta à
 matriz. O front ignora o painel `analises` de qualquer jeito
 (`semOPainelAntigoDeAnalises`, em `src/lib/pagina-de-analises.js`).
+
+## 9. Catálogo de abas (etapa 1 do "tudo vira aba")
+
+Migration `20260929110000_catalogo_de_abas.sql` (rollback em
+`supabase/rollback/`; ensaiada, com o rollback, em 28/09/2026). **Nenhuma
+mudança visível**: o seed é o menu de hoje.
+
+- `TB_ABA` — catálogo: `CO_ABA` (visao-geral, editais, cronograma, aprovados,
+  analises), `NO_ABA`, `DS_ICONE`, `NU_ORDEM`, `CO_VIEW` (a tela do front:
+  `dashboard`, `visao-area`, `nucleo`, `calendario`, `approved`, `analises`),
+  `CO_RECURSO` (o recurso de permissão que a aba usa hoje), `TP_ABA`
+  (`nativa`/`externa`), `ST_ATIVO` e auditoria (`DT_CRIACAO`,
+  `DT_ATUALIZACAO`, `CO_USUARIO_ATUALIZACAO`).
+- `RL_ABA_AREA` — aba × área (`TB_AREA`). Sem linha ativa, a aba não aparece
+  na área. `NU_ORDEM`, `CO_VIEW` e `DS_ICONE` nulos herdam da aba: é assim que
+  a Visão geral é `dashboard`/`map` na Saúde Indígena e
+  `visao-area`/`layout-dashboard` na SEDE e em Projetos.
+- `listar_abas_do_menu()` — JSON
+  `[{co_aba, no_aba, ds_icone, nu_ordem, co_view, co_recurso, tp_aba, areas: [{co_area, nu_ordem, co_view, ds_icone}]}]`,
+  só o que está ativo, com a herança já resolvida. `SECURITY INVOKER`: não
+  precisa de privilégio a mais, então valem a RLS (`using (true)` para
+  `authenticated`) e os grants (só `select` para `authenticated`; `anon` sem
+  nada). Nenhuma escrita: a manutenção virá por RPC de administração.
+
+Não entram ainda: permissão perfil × aba (continua `TB_PERMISSAO_RECURSO` por
+recurso; `CO_RECURSO` é o ponto de partida) e os painéis externos (Seleção,
+Entrevistas, Recursos seguem em `TB_PAINEL_EXTERNO`, grupo "Painéis"; quando
+virarem aba, entram com `TP_ABA = 'externa'`).
+
+O front (`src/modules/catalogo-de-abas.js`) pede a função junto com as outras
+consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
+`abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
+`ABAS_DO_MENU` (`src/lib/menu-lateral.js`), o mesmo catálogo no código — por
+isso o front pode ir antes da migration. `tests/catalogo-de-abas.test.js`
+confere que o seed é `ABAS_DO_MENU`, que a resposta capturada no ensaio
+(`tests/fixtures/listar-abas-do-menu.json`) é a que o seed produz e que a árvore
+do menu é a de antes em toda combinação de permissão e área.
+
+Ensaio (begin…rollback, produção): 5 abas, 15 ligações, a função como
+`authenticated` (admin ativo) devolve o menu de hoje; `anon` recebe `42501` na
+função e na tabela; `authenticated` recebe `42501` ao inserir; migration +
+rollback não deixam tabela nem função.

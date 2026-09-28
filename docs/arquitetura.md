@@ -97,6 +97,21 @@ de nota nas Análises, o mapa). A área vai no endereço: `/saude-indigena/anali
 - Chaves do JSON devolvido pelas RPCs são contrato com a tela; não renomear às cegas.
 - Ensaiar cada lote numa cópia do banco chamando as RPCs com um usuário real.
 
+### Catálogo de abas ("tudo vira aba")
+
+Decidido em 28/09: cada área tem as suas **abas**, e os painéis externos
+(Seleção, Entrevistas, Recursos) viram abas também, mais tarde.
+
+- **Etapa 1 — feita (migration de 29/09, a aplicar):** `TB_ABA` (catálogo) e
+  `RL_ABA_AREA` (aba × área, com ordem, view e ícone próprios da área quando
+  diferem), lidas por `listar_abas_do_menu()`. O seed é o menu de hoje e o
+  front guarda o mesmo catálogo (`ABAS_DO_MENU`) como reserva: nada muda na
+  tela, e o front pode ir antes da migration. Detalhes em
+  `docs/banco-de-dados.md`, seção 9.
+- **Depois:** permissão perfil × aba (partindo de `TB_ABA.CO_RECURSO`),
+  manutenção pela tela (sistema/área/aba/aba na área, por RPC de
+  administração) e os painéis externos como abas (`TP_ABA = 'externa'`).
+
 ## Permissões
 
 O modelo atual (`TB_PERMISSAO_RECURSO`: perfil × recurso × nível) ganha a **área**:

@@ -20,9 +20,13 @@
   no topo (`recortarArvorePorArea`, abaixo); a árvore segue com todas.
 
   Área nova = uma entrada em `AREAS_DO_SISTEMA` (o código é o de `TB_AREA`).
-  Página nova = uma entrada em `PAGINAS_DO_MENU`. Quem decide o que o perfil
-  pode ver continua sendo o `buildNav` de `legacy-app.js`; este arquivo só
-  organiza o que já foi permitido.
+  As páginas de cada área são as ABAS do catálogo do banco (`TB_ABA` ×
+  `RL_ABA_AREA`, lidas por `listar_abas_do_menu`); `ABAS_DO_MENU`, abaixo, é o
+  mesmo catálogo no código, usado enquanto o do banco não chega ou falha. Aba
+  nova = uma linha no banco E uma entrada em `ABAS_DO_MENU` (o teste
+  `catalogo-de-abas.test.js` confere que o seed da migration e esta lista são
+  iguais). Quem decide o que o perfil pode ver continua sendo o `buildNav` de
+  `legacy-app.js`; este arquivo só organiza o que já foi permitido.
 */
 
 /* Na ordem do banco. O código é o de `TB_AREA` e o de `CO_AREA` nos editais. */
@@ -56,54 +60,166 @@ export const AREAS_DO_MENU = Object.freeze([
 ]);
 
 /*
-  As páginas de cada área. Sem `areas`, a página existe em todas. A Visão
-  geral tem duas telas: a da Saúde Indígena (`dashboard`, o mapa dos DSEIs, no
-  legado) e a da SEDE e de Projetos (`visao-area`, React, em
-  `src/componentes/visao-geral-da-area/`), com a mesma permissão (`dashboard`).
-  São views diferentes de propósito: vários módulos do mapa escutam
-  `[data-view="dashboard"]`. O ícone da página só aparece no menu inferior do
-  celular.
+  As abas de cada área: o catálogo do banco (`TB_ABA` × `RL_ABA_AREA`) no
+  código. É o espelho do seed de
+  `supabase/migrations/20260929110000_catalogo_de_abas.sql` e vale enquanto o
+  catálogo do banco não chega ou falha — por isso o menu é o mesmo com ou sem
+  ele. Em `areas`, o que a área não troca vem da aba (a mesma regra de
+  `listar_abas_do_menu`).
+
+  A Visão geral é uma aba só, com duas telas: a da Saúde Indígena
+  (`dashboard`, o mapa dos DSEIs, no legado) e a da SEDE e de Projetos
+  (`visao-area`, React, em `src/componentes/visao-geral-da-area/`), com a
+  mesma permissão (`dashboard`). São views diferentes de propósito: vários
+  módulos do mapa escutam `[data-view="dashboard"]`. O ícone da página só
+  aparece no menu inferior do celular.
+
+  Análises curriculares era um painel externo (`TB_PAINEL_EXTERNO`, código
+  `analises`) repetido em cada área. Virou página: a permissão é só a do
+  recurso `analises`, e o quadro é dela (`src/modules/pagina-de-analises.js`).
+
+  `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
+  por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
 */
-export const PAGINAS_DO_MENU = Object.freeze([
+const congelarAba = ({ areas, ...aba }) =>
   Object.freeze({
-    view: "dashboard",
-    areas: Object.freeze(["saude-indigena"]),
-    rotulo: "Visão geral",
-    icone: "map",
-  }),
-  Object.freeze({
-    view: "visao-area",
-    areas: Object.freeze(["sede", "projetos"]),
-    rotulo: "Visão geral",
-    icone: "layout-dashboard",
-  }),
-  Object.freeze({ view: "nucleo", rotulo: "Editais", icone: "file-text" }),
-  Object.freeze({
-    view: "calendario",
-    rotulo: "Cronograma",
-    icone: "calendar-days",
-  }),
-  Object.freeze({
-    view: "approved",
-    rotulo: "Lista de aprovados",
-    icone: "user-round-check",
-  }),
-  /*
-    Análises curriculares era um painel externo (`TB_PAINEL_EXTERNO`, código
-    `analises`) repetido em cada área. Virou página: a permissão é só a do
-    recurso `analises`, e o quadro é dela (`src/modules/pagina-de-analises.js`).
-  */
-  Object.freeze({
-    view: "analises",
-    rotulo: "Análises curriculares",
-    icone: "file-search",
-  }),
-]);
+    ...aba,
+    areas: Object.freeze(areas.map((area) => Object.freeze({ ...area }))),
+  });
+const NAS_TRES_AREAS = [
+  { area: "saude-indigena" },
+  { area: "sede" },
+  { area: "projetos" },
+];
+
+export const ABAS_DO_MENU = Object.freeze(
+  [
+    {
+      id: "visao-geral",
+      rotulo: "Visão geral",
+      icone: "layout-dashboard",
+      ordem: 1,
+      view: "visao-area",
+      recurso: "dashboard",
+      tipo: "nativa",
+      areas: [
+        { area: "saude-indigena", view: "dashboard", icone: "map" },
+        { area: "sede" },
+        { area: "projetos" },
+      ],
+    },
+    {
+      id: "editais",
+      rotulo: "Editais",
+      icone: "file-text",
+      ordem: 2,
+      view: "nucleo",
+      recurso: "nucleo",
+      tipo: "nativa",
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "cronograma",
+      rotulo: "Cronograma",
+      icone: "calendar-days",
+      ordem: 3,
+      view: "calendario",
+      recurso: "calendario",
+      tipo: "nativa",
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "aprovados",
+      rotulo: "Lista de aprovados",
+      icone: "user-round-check",
+      ordem: 4,
+      view: "approved",
+      recurso: "aprovados",
+      tipo: "nativa",
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "analises",
+      rotulo: "Análises curriculares",
+      icone: "file-search",
+      ordem: 5,
+      view: "analises",
+      recurso: "analises",
+      tipo: "nativa",
+      areas: NAS_TRES_AREAS,
+    },
+  ].map(congelarAba),
+);
 
 /* A área de quem ainda recebe o contexto antigo, sem `profile.areas`. */
 const AREAS_PADRAO = Object.freeze(["saude-indigena"]);
 
 const texto = (valor) => String(valor ?? "").trim();
+const numero = (valor) => {
+  const n = Number(valor);
+  return valor !== null && valor !== "" && Number.isFinite(n) ? n : null;
+};
+
+/*
+  A resposta de `listar_abas_do_menu` no formato de `ABAS_DO_MENU`. Linha sem
+  código, rótulo ou view fica de fora (o front não saberia desenhá-la); área
+  sem código, também. Resposta que não é lista, ou que fica vazia, devolve
+  `null`: quem chama usa `ABAS_DO_MENU`, e o menu continua o de sempre.
+*/
+export function abasDoCatalogo(dados) {
+  if (!Array.isArray(dados)) return null;
+  const abas = [];
+  for (const linha of dados) {
+    const id = texto(linha?.co_aba);
+    const rotulo = texto(linha?.no_aba);
+    const view = texto(linha?.co_view);
+    if (!id || !rotulo || !view) continue;
+    const areas = (Array.isArray(linha.areas) ? linha.areas : [])
+      .map((item) => ({
+        area: texto(item?.co_area),
+        ordem: numero(item?.nu_ordem),
+        view: texto(item?.co_view) || null,
+        icone: texto(item?.ds_icone) || null,
+      }))
+      .filter((item) => item.area);
+    abas.push(
+      congelarAba({
+        id,
+        rotulo,
+        icone: texto(linha.ds_icone),
+        ordem: numero(linha.nu_ordem) ?? 0,
+        view,
+        recurso: texto(linha.co_recurso),
+        tipo: texto(linha.tp_aba) || "nativa",
+        areas,
+      }),
+    );
+  }
+  return abas.length ? Object.freeze(abas) : null;
+}
+
+/*
+  As páginas de uma área, na ordem do catálogo: a view, o ícone e a ordem da
+  área quando ela troca; senão, os da aba. Empate na ordem fica na ordem da
+  lista.
+*/
+export function paginasDaArea(abas, area) {
+  return abas
+    .flatMap((aba) => {
+      const naArea = aba.areas.find((item) => item.area === area);
+      if (!naArea) return [];
+      return [
+        {
+          ordem: naArea.ordem ?? aba.ordem,
+          view: naArea.view || aba.view,
+          rotulo: aba.rotulo,
+          icone: naArea.icone || aba.icone,
+        },
+      ];
+    })
+    .sort((a, b) => a.ordem - b.ordem)
+    .map(({ view, rotulo, icone }) => ({ view, rotulo, icone }));
+}
 
 /* As áreas do usuário, só as conhecidas e na ordem do catálogo. */
 export function areasDoUsuario(areas) {
@@ -120,7 +236,8 @@ export function nomeDaArea(id) {
 
 /*
   `permitidas` diz, por view, o que o perfil pode abrir. `paineis` chega já
-  filtrado e na ordem de exibição. `areas` são as do usuário. Devolve os grupos
+  filtrado e na ordem de exibição. `areas` são as do usuário. `abas` é o
+  catálogo (de `abasDoCatalogo`); sem ele, `ABAS_DO_MENU`. Devolve os grupos
   na ordem do catálogo, cada um com os seus itens, e descarta os vazios. Todo
   item de área leva `area`: é ela que a navegação torna a área atual.
 */
@@ -129,7 +246,9 @@ export function montarArvoreDoMenu({
   paineis = [],
   secoesDeConfiguracao = [],
   areas,
+  abas,
 } = {}) {
+  const catalogo = Array.isArray(abas) && abas.length ? abas : ABAS_DO_MENU;
   const doUsuario = new Set(areasDoUsuario(areas));
   const doSistema = new Set(AREAS_DO_SISTEMA.map((area) => area.id));
   const itensPorArea = new Map(
@@ -141,15 +260,9 @@ export function montarArvoreDoMenu({
   for (const area of AREAS_DO_SISTEMA) {
     const itens = itensPorArea.get(area.id);
     if (!itens) continue;
-    for (const pagina of PAGINAS_DO_MENU) {
+    for (const pagina of paginasDaArea(catalogo, area.id)) {
       if (!permitidas[pagina.view]) continue;
-      if (pagina.areas && !pagina.areas.includes(area.id)) continue;
-      itens.push({
-        view: pagina.view,
-        rotulo: pagina.rotulo,
-        icone: pagina.icone,
-        area: area.id,
-      });
+      itens.push({ ...pagina, area: area.id });
     }
   }
 
@@ -267,12 +380,18 @@ export function areaAberta(fechadas, area) {
   return !fechadas.has(area);
 }
 
-/* Todo nome de ícone que o catálogo pode pedir — o registro de ícones precisa ter todos. */
+/*
+  Todo nome de ícone que o catálogo do código pode pedir — o registro de ícones
+  precisa ter todos. Ícone novo no banco entra também em `ABAS_DO_MENU`.
+*/
 export function iconesDoCatalogo() {
   return [
     ...new Set([
       ...AREAS_DO_MENU.map((area) => area.icone),
-      ...PAGINAS_DO_MENU.map((pagina) => pagina.icone),
+      ...ABAS_DO_MENU.flatMap((aba) => [
+        aba.icone,
+        ...aba.areas.map((area) => area.icone).filter(Boolean),
+      ]),
       ICONE_DOS_PAINEIS,
       ICONE_DAS_CONFIGURACOES,
       ICONE_DO_SELETOR_DE_AREA,
