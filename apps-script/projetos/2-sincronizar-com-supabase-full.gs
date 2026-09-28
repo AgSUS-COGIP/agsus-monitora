@@ -764,12 +764,16 @@ function readSheetObjectsForAnalises_(sheet, entidade) {
   }
 
   const headers = displayValues[0].map(normalizeHeaderAnalises_);
+  // [projetos] A FATO desta planilha tem colunas repetidas (ex.: pdf_hash_origem).
+  // Aceita a repeticao; na linha, fica o valor preenchido. Valores diferentes recusam o envio.
   const seen = new Set();
+  const repetidos = new Set();
   headers.forEach(function(h) {
     if (!h) return;
-    if (seen.has(h)) throw new Error('Cabeçalho duplicado em ' + sheet.getName() + ': ' + h);
+    if (seen.has(h)) repetidos.add(h);
     seen.add(h);
   });
+  if (repetidos.size) Logger.log('Aviso: cabeçalho repetido em ' + sheet.getName() + ': ' + Array.from(repetidos).join(', '));
   const required = entidade === 'FATO_ANALISES' ? ['id', 'candidato', 'origem_arquivo_id', 'status_consolidado'] : ['grupo', 'unidade', 'edital', 'ativo'];
   required.forEach(function(h) { if (!seen.has(h)) throw new Error('Cabeçalho obrigatório ausente em ' + sheet.getName() + ': ' + h); });
   const rows = [];
@@ -789,7 +793,15 @@ function readSheetObjectsForAnalises_(sheet, entidade) {
       if (/^#(?:REF!|VALUE!|N\/A|DIV\/0!|NAME\?|NUM!|ERROR!|NOME\?|VALOR!)$/.test(String(displayRow[colIndex] || '').trim())) {
         throw new Error('Erro de célula em ' + sheet.getName() + ', linha ' + (r + 1) + ', campo ' + header);
       }
-      payload[header] = normalizeValueForAnalises_(header, rawRow[colIndex], displayRow[colIndex]);
+      const valor = normalizeValueForAnalises_(header, rawRow[colIndex], displayRow[colIndex]);
+      if (repetidos.has(header) && Object.prototype.hasOwnProperty.call(payload, header)) {
+        const vazio = function(v) { return v === null || v === undefined || String(v).trim() === ''; };
+        if (vazio(valor)) return;
+        if (!vazio(payload[header]) && String(payload[header]) !== String(valor)) {
+          throw new Error('Colunas repetidas "' + header + '" com valores diferentes em ' + sheet.getName() + ', linha ' + (r + 1));
+        }
+      }
+      payload[header] = valor;
     });
 
     if (entidade === 'FATO_ANALISES' || normalizeHeaderAnalises_(sheet.getName()) === 'fato_analises') {
