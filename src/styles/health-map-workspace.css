@@ -130,7 +130,25 @@
   text-decoration: underline;
 }
 
-.health-map-pane__count,
+/*
+  "36 territórios": só contagem, então badge neutro do Design System (11.8).
+  Os tokens `--state-neutral*` já mudam no tema escuro.
+*/
+.health-map-pane__count {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .health-map-reset {
   flex: 0 0 auto;
   padding: 6px 10px;
@@ -567,6 +585,75 @@
 }
 
 /*
+  BOTÕES "BRASIL" E "CALOR" DENTRO DO MAPA — `controles-do-mapa.js`
+
+  Botão `sm` do Design System (11.1): ícone Lucide de 16px antes do texto, sem
+  borda. A sombra média é porque o botão flutua sobre os azulejos, cuja cor
+  ninguém controla. O "Calor" ligado (vermelho) continua em
+  `#heatBtn.active` de `app.css`.
+*/
+.health-map-controles {
+  display: flex;
+  gap: var(--space-1-5);
+}
+
+.health-map-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.health-map-botao:hover {
+  background: var(--surface-hover);
+}
+
+.health-map-botao .icone {
+  flex: none;
+}
+
+.health-map-botao--calor {
+  color: var(--state-danger);
+}
+
+/*
+  LEGENDA RECOLHÍVEL DO MAPA NACIONAL — `controles-do-mapa.js`
+
+  A caixa (`#mapLegendBox`) e as amostras seguem como estavam; aqui só o
+  cabeçalho que abre e fecha. Começa fechada abaixo de 768px.
+*/
+.health-map-legenda__alternar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.health-map-legenda__alternar .icone {
+  flex: none;
+}
+
+/*
   A LISTA DAS TERRAS INDÍGENAS
 
   Três linhas por terra, e a hierarquia é a da pergunta que se faz: qual é a
@@ -703,7 +790,6 @@
 [data-theme="dark"] .health-map-empty {
   color: #9fb4c9;
 }
-[data-theme="dark"] .health-map-pane__count,
 [data-theme="dark"] .health-map-reset {
   border-color: #2f4a6b;
   background: #1a2d47;
