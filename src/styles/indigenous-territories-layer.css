@@ -170,15 +170,3 @@
 .agsus-dsei-tooltip::before {
   border-top-color: rgba(11, 95, 165, 0.94) !important;
 }
-
-/*
-  Clicar numa forma do mapa (terra indígena, DSEI) foca o <path> SVG, e o
-  Chrome desenha o anel de foco padrão como um RETÂNGULO em volta da forma —
-  parecia que a seleção era um quadrado, não o limite da terra. Essas formas
-  não entram na ordem do Tab (tabindex -1), então o anel não serve a quem usa
-  teclado; o destaque de verdade é o traço da própria terra, que engrossa ao
-  passar o mouse (indigenous-territories-layer.js, `destacarAoPassar`).
-*/
-.leaflet-container path.leaflet-interactive:focus {
-  outline: none;
-}
