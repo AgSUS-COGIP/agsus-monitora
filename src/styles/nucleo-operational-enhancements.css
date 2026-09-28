@@ -151,8 +151,9 @@
   --tone: var(--state-info);
   --tone-soft: var(--state-info-soft);
 }
+/* "Excepcionais" (status manual, suspenso): neutro, como Inativo/Cancelado no DS 11.8. O roxo de série não passava o AA no escuro (4,48). */
 .nucleo-kpi-card.tone-purple {
-  --tone: var(--series-4);
+  --tone: var(--state-neutral);
   --tone-soft: var(--state-neutral-soft);
 }
 .nucleo-active-alert-filter {

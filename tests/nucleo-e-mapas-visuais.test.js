@@ -139,20 +139,41 @@ describe("contraste dos KPIs da Equipe Núcleo", () => {
     própria para o escuro: valor e fundo saem das regras de sempre, resolvidos
     com os tokens do tema escuro.
   */
-  it("o valor passa o AA sobre o cartão escuro", () => {
-    const cor = valor(
-      nucleoCss,
-      ".nucleo-kpi-card strong",
-      "color",
-      resolverTokenEscuro,
+  /*
+    O número vem na cor do KPI (`--tone`, definida por `.tone-*`): cada cor
+    tem de passar o AA sobre o cartão, no claro e no escuro.
+  */
+  const tons = [
+    ...nucleoCss.matchAll(
+      /\.nucleo-kpi-card\.tone-([\w-]+)\s*\{[^}]*--tone:\s*(var\([^;]+\));/g,
+    ),
+  ].map(([, nome, cor]) => [nome, cor]);
+
+  it("o número usa a cor do KPI", () => {
+    expect(valor(nucleoCss, ".nucleo-kpi-card strong", "color", (v) => v)).toBe(
+      "var(--tone, var(--text-primary))",
     );
-    const fundo = valor(
+    expect(tons.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("cada cor de KPI passa o AA sobre o cartão, no claro e no escuro", () => {
+    const fundoClaro = valor(nucleoCss, ".nucleo-kpi-card", "background");
+    const fundoEscuro = valor(
       nucleoCss,
       ".nucleo-kpi-card",
       "background",
       resolverTokenEscuro,
     );
-    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+    for (const [nome, cor] of tons) {
+      expect(
+        contraste(resolverToken(cor), fundoClaro),
+        `${nome} no claro`,
+      ).toBeGreaterThanOrEqual(AA);
+      expect(
+        contraste(resolverTokenEscuro(cor), fundoEscuro),
+        `${nome} no escuro`,
+      ).toBeGreaterThanOrEqual(AA);
+    }
   });
 });
 
