@@ -740,7 +740,8 @@ import {
     const parts = [`Situação do processo: ${currentEditalScopeLabel()}`];
     [["fUnidade","Unidade"],["fMunicipio","Município/UF"],["fEdital","Edital"],["fVaga","Vaga"],["fStatus","Status"],["fResponsavel","Responsável"],["fCategoria","Categoria"],["fModalidade","Modalidade"],["fPdf","PDF"],["fValidacao","Validação"]].forEach(([id,label]) => { const vals=selectedValues(id); if(vals.length) parts.push(`${label}: ${vals.map(v=>displayOptionLabel(id,v)).join(", ")}`); }); if(txt($("fBusca").value)) parts.push(`Busca: ${txt($("fBusca").value)}`); if(activeKpi!=="total") parts.push(`KPI: ${activeKpiLabel(activeKpi)}`); if(activeResponsavel) parts.push(`Responsável visual: ${activeResponsavel}`);
     $("contextLine").textContent = `Recorte ativo: ${parts.join(" · ")}`;
-    $("filterChips").innerHTML = parts.map(p => `<span class="chip-filter"><b>Filtro</b>${esc(p)}</span>`).join("");
+    // Montado com elementos (sem HTML): os rótulos vêm de filtros e da busca digitada.
+    $("filterChips").replaceChildren(...parts.map(p => { const chip=document.createElement("span"); chip.className="chip-filter"; const b=document.createElement("b"); b.textContent="Filtro"; chip.append(b, p); return chip; }));
   }
   function activeKpiLabel(k){ return {analisado:"Análises realizadas",pendente:"Pendentes",revisar:"Em revisão",aprovado:"Aprovados",reprovado:"Reprovados"}[k] || "Todos"; }
   function renderWindowMeta(){
