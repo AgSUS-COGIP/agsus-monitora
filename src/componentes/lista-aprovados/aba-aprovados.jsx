@@ -209,37 +209,39 @@ export function AbaAprovados({
                     <SeloDeStatus status={text(row.status)} />
                   </td>
                   <td className="approved-actions">
-                    <AcaoDeAnexos
-                      candidato={row}
-                      anexos={anexos.get(String(row.candidato_id))}
-                      aoAbrir={estado.abrirAnexos}
-                    />
-                    <AcaoDeStatus
-                      perfil={perfil}
-                      candidato={row}
-                      atributos={{ "data-approved-action": "status" }}
-                      aoAbrir={estado.abrirStatus}
-                    />
-                    {canEditSubJudice(perfil, row) ? (
-                      <BotaoDeAcao
-                        estado={estado}
-                        acao={`remover-sub-judice:${row.candidato_id}`}
-                        soIcone
-                        className="btn icon red"
-                        data-approved-action="remove-subjudice"
-                        data-candidate-id={row.candidato_id}
-                        title="Remover sub judice"
-                        aria-label={`Remover ${row.nome} da lista como sub judice`}
-                        onClick={() =>
-                          void estado.removerSubJudice(row.candidato_id)
-                        }
-                      >
-                        <i
-                          className="fa-solid fa-user-minus"
-                          aria-hidden="true"
-                        />
-                      </BotaoDeAcao>
-                    ) : null}
+                    <div className="approved-actions-grupo">
+                      <AcaoDeAnexos
+                        candidato={row}
+                        anexos={anexos.get(String(row.candidato_id))}
+                        aoAbrir={estado.abrirAnexos}
+                      />
+                      <AcaoDeStatus
+                        perfil={perfil}
+                        candidato={row}
+                        atributos={{ "data-approved-action": "status" }}
+                        aoAbrir={estado.abrirStatus}
+                      />
+                      {canEditSubJudice(perfil, row) ? (
+                        <BotaoDeAcao
+                          estado={estado}
+                          acao={`remover-sub-judice:${row.candidato_id}`}
+                          soIcone
+                          className="btn icon red"
+                          data-approved-action="remove-subjudice"
+                          data-candidate-id={row.candidato_id}
+                          title="Remover sub judice"
+                          aria-label={`Remover ${row.nome} da lista como sub judice`}
+                          onClick={() =>
+                            void estado.removerSubJudice(row.candidato_id)
+                          }
+                        >
+                          <i
+                            className="fa-solid fa-user-minus"
+                            aria-hidden="true"
+                          />
+                        </BotaoDeAcao>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))

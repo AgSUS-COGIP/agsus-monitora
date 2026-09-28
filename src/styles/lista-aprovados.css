@@ -249,11 +249,23 @@
   background: var(--state-neutral-soft);
   color: var(--state-neutral);
 }
+/*
+  A célula continua célula: com `display: flex` na <td>, ela deixava de esticar
+  até a altura da linha, e a borda de baixo da coluna Ações ficava acima da do
+  resto da linha. O flex mora no grupo de dentro.
+*/
 .approved-actions {
-  display: flex;
-  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+.approved-actions-grupo {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
+}
+/* No cartão do celular (mobile-table-cards.js), rótulo e ícones à esquerda, como os outros campos. */
+table.mobile-card-table td.approved-actions {
+  text-align: start;
 }
 .approved-no-action {
   color: #9aa8b6;

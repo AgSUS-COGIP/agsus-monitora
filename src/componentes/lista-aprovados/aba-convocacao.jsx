@@ -256,12 +256,14 @@ function TabelaDoGrupo({ grupo, linhas, perfil, aoAbrirStatus }) {
                   <SeloDeStatus status={text(candidato.status)} />
                 </td>
                 <td className="approved-actions">
-                  <AcaoDeStatus
-                    perfil={perfil}
-                    candidato={candidato}
-                    atributos={{ "data-convocacao-action": "status" }}
-                    aoAbrir={aoAbrirStatus}
-                  />
+                  <div className="approved-actions-grupo">
+                    <AcaoDeStatus
+                      perfil={perfil}
+                      candidato={candidato}
+                      atributos={{ "data-convocacao-action": "status" }}
+                      aoAbrir={aoAbrirStatus}
+                    />
+                  </div>
                 </td>
               </tr>
             );
