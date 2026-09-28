@@ -4,7 +4,7 @@
   --permission-text: var(--text-primary, var(--ink));
   --permission-brand: var(--brand-primary, var(--navy));
   --permission-on-brand: var(--text-inverse, #fff);
-  --permission-divider: var(--border-subtle, #d7e5f2);
+  --permission-divider: var(--border-subtle, var(--color-border-subtle));
   --permission-control: var(--border-control, #7d8fa5);
   --permission-danger: var(--state-danger, #c02634);
   --permission-danger-soft: var(--state-danger-soft, #fdecee);
@@ -28,7 +28,7 @@
   max-height: max(420px, calc(100dvh - 240px));
   overflow: auto;
   border: 1px solid var(--permission-divider);
-  border-radius: var(--radius-md, 12px);
+  border-radius: var(--radius-lg, 12px);
   margin: var(--space-4, 16px) 0;
 }
 .permission-scroll table {
@@ -72,7 +72,7 @@
   width: 160px;
   padding: var(--space-2, 8px);
   border: 1px solid var(--permission-control);
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-md, 8px);
   background: var(--permission-surface);
   color: var(--permission-text);
   font: inherit;
@@ -126,7 +126,7 @@
   min-height: 40px;
   padding: var(--space-2, 8px) var(--space-3, 12px);
   border: 1px solid var(--permission-control);
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-md, 8px);
   font: inherit;
 }
 [data-theme="dark"] .permission-matrix {
@@ -157,7 +157,7 @@
   overflow: auto;
   padding: var(--space-6, 24px);
   border: 1px solid var(--border-control, var(--line));
-  border-radius: var(--radius-md, 12px);
+  border-radius: var(--radius-lg, 12px);
   background: var(--surface-card, var(--card));
   color: var(--text-primary, var(--ink));
 }
@@ -175,7 +175,7 @@
   color: inherit;
   background: var(--surface-card, var(--card));
   border: 1px solid var(--border-control, var(--line));
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-md, 8px);
   padding: var(--space-2, 8px);
 }
 @media (max-width: 640px) {
