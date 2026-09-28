@@ -1,0 +1,493 @@
+/*
+  Carregamento sem tela de carregamento (src/modules/carregamento.js).
+
+  Skeleton da entrada: o formato do sistema enquanto a sessão e os dados
+  chegam — trilho, cabeçalho e o conteúdo da última tela aberta
+  (`html[data-esqueleto]`). As medidas são as do shell real (trilho de
+  `--sidebar-mini`, marca de 56px, cabeçalho de 70px, cartões com
+  `--radius-lg`), para a troca pelo sistema não tirar nada do lugar. Os
+  espaçamentos são os tokens mais próximos dos do shell, a 2px deles.
+
+  Pulsa só com `opacity` (DESIGN.md §0, regra 8), e só enquanto está ligado:
+  escondido, a animação fica pausada. O `prefers-reduced-motion` global de
+  app.css desliga o pulso.
+*/
+
+.esqueleto {
+  display: block;
+  background: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  animation: esqueleto-pulso 1.4s var(--ease-standard) infinite;
+}
+
+@keyframes esqueleto-pulso {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.esqueleto-da-entrada {
+  --esqueleto-barra: var(--sidebar-mini);
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-loader);
+  display: grid;
+  grid-template-columns: var(--esqueleto-barra) minmax(0, 1fr);
+  grid-template-rows: 70px minmax(0, 1fr);
+  background: var(--surface-page);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--motion-fast) var(--ease-standard),
+    visibility 0s linear var(--motion-fast);
+}
+.esqueleto-da-entrada .esqueleto {
+  animation-play-state: paused;
+}
+html.esqueleto-ativo .esqueleto-da-entrada {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: none;
+}
+html.esqueleto-ativo .esqueleto-da-entrada .esqueleto {
+  animation-play-state: running;
+}
+html[data-esqueleto-barra="aberta"] .esqueleto-da-entrada {
+  --esqueleto-barra: var(--sidebar);
+}
+
+/* Trilho: a cor configurada da barra (sidebar-branding.js) vale aqui também. */
+.esqueleto-da-entrada__barra {
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  background: var(--sidebar-custom-bg, var(--surface-card));
+  border-right: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+body.sidebar-theme-dark .esqueleto-da-entrada__barra {
+  color: var(--text-inverse);
+}
+html[data-theme="dark"] .esqueleto-da-entrada__barra {
+  background: var(--surface-card);
+  color: var(--text-secondary);
+}
+.esqueleto-da-entrada__barra .esqueleto {
+  height: 36px;
+  margin: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+.esqueleto-da-entrada__marca {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  margin-bottom: var(--space-2);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.esqueleto-da-entrada__barra .esqueleto-da-entrada__marca .esqueleto {
+  width: 34px;
+  height: 34px;
+  margin: 0;
+}
+.esqueleto-da-entrada__rodape {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+/* Cabeçalho */
+.esqueleto-da-entrada__topo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-6);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.esqueleto-da-entrada__titulo {
+  display: grid;
+  gap: var(--space-2);
+  margin-right: auto;
+}
+.esqueleto--menu {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+}
+.esqueleto--titulo {
+  width: 180px;
+  height: 22px;
+}
+.esqueleto--linha {
+  width: 120px;
+  height: 12px;
+}
+.esqueleto--pilula {
+  width: 112px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+}
+.esqueleto--conta {
+  width: 164px;
+  height: 44px;
+  border-radius: var(--radius-md);
+}
+
+/* Conteúdo: um formato por vez, o da tela que vai abrir. */
+.esqueleto-da-entrada__conteudo {
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--space-3) var(--space-2);
+}
+.esqueleto-da-entrada__formato {
+  display: none;
+  height: 100%;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+html:not([data-esqueleto]) [data-formato="painel"],
+html[data-esqueleto="painel"] [data-formato="painel"],
+html[data-esqueleto="tabela"] [data-formato="tabela"],
+html[data-esqueleto="calendario"] [data-formato="calendario"] {
+  display: flex;
+}
+
+.esqueleto-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.esqueleto-cartao--filtros {
+  justify-content: center;
+  height: 68px;
+  flex: none;
+  padding: var(--space-3);
+}
+.esqueleto--botao {
+  width: 156px;
+  height: 40px;
+  border-radius: var(--radius-md);
+}
+.esqueleto--sobretitulo {
+  width: 110px;
+  height: 10px;
+}
+.esqueleto--area {
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--radius-md);
+}
+
+/* Painel: indicadores em duas fileiras de três, e o mapa. */
+.esqueleto-da-entrada__kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+.esqueleto-cartao--kpi {
+  height: 80px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+.esqueleto--icone {
+  width: 22px;
+  height: 22px;
+}
+.esqueleto--numero {
+  width: 64px;
+  height: 24px;
+}
+.esqueleto-cartao--mapa {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Tabela: cabeçalho do cartão, cabeça da tabela e linhas de 62px. */
+.esqueleto-cartao--tabela {
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.esqueleto-cartao__cabecalho {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.esqueleto-tabela__linha {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.2fr 1.4fr 0.8fr;
+  align-items: center;
+  gap: var(--space-6);
+  height: 62px;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.esqueleto-tabela__linha .esqueleto {
+  height: 12px;
+}
+.esqueleto-tabela__linha .esqueleto:nth-child(2n) {
+  width: 70%;
+}
+.esqueleto-tabela__linha .esqueleto:nth-child(3n) {
+  width: 55%;
+}
+.esqueleto-tabela__cabeca {
+  height: 39px;
+  background: var(--surface-raised);
+}
+.esqueleto-tabela__cabeca .esqueleto {
+  height: 10px;
+  width: 50%;
+}
+
+/* Calendário: barra do mês, filtros e a grade de 6 semanas em caixas. */
+.esqueleto-cartao--calendario {
+  flex: 1;
+  min-height: 0;
+}
+.esqueleto-calendario__barra {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.esqueleto--quadrado {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+}
+.esqueleto-calendario__filtros {
+  display: grid;
+  grid-template-columns: 2fr repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  width: min(100%, 920px);
+  margin-left: auto;
+}
+.esqueleto-calendario__filtros .esqueleto {
+  height: 40px;
+  border-radius: var(--radius-sm);
+}
+/* A grade pulsa inteira: o fundo é transparente, quem aparece são as caixas. */
+.esqueleto.esqueleto-calendario__grade {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: var(--space-2);
+  background: transparent;
+  border-radius: 0;
+}
+.esqueleto-calendario__grade span {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+/*
+  Painel externo: o skeleton cobre o iframe até o `load` dele. Não se sabe o
+  que o site de fora desenha; o formato é o de um painel de indicadores, que é
+  o que os painéis cadastrados são. `.external-panel` não tinha posição
+  (app.css, platform-shell.css): passa a segurar a cobertura.
+*/
+.external-panel {
+  position: relative;
+}
+.esqueleto-do-painel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--surface-page);
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}
+.esqueleto-do-painel--saindo {
+  opacity: 0;
+}
+.esqueleto-do-painel__conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+  padding: var(--space-4);
+}
+.esqueleto-do-painel__topo {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+.esqueleto-do-painel__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.esqueleto-do-painel__graficos {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-3);
+}
+.esqueleto-do-painel__graficos .esqueleto-cartao {
+  min-height: 0;
+}
+
+/*
+  Tabela antes da primeira carga (Lista de aprovados): linhas de skeleton no
+  lugar das de verdade, com a mesma grade de colunas do `<thead>`.
+*/
+.esqueleto-da-tabela td .esqueleto {
+  width: 70%;
+  height: 12px;
+}
+.esqueleto-da-tabela td:first-child .esqueleto {
+  width: 85%;
+  height: 14px;
+}
+.esqueleto-da-tabela td:nth-child(3n) .esqueleto {
+  width: 50%;
+}
+.esqueleto-da-tabela td:last-child .esqueleto {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
+  border-radius: var(--radius-md);
+}
+
+/*
+  Ação em curso dentro do próprio botão (`BotaoDeAcao`), no lugar da tela
+  cheia. Gira por `transform`; com movimento reduzido, fica parado.
+*/
+.botao-girando {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  vertical-align: -0.15em;
+  animation: botao-girando 0.7s linear infinite;
+}
+
+@keyframes botao-girando {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Demora: o aviso e o "Tentar novamente" da antiga tela, na entrada e no painel. */
+.esqueleto-aviso {
+  position: absolute;
+  bottom: var(--space-8);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: max-content;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  transform: translateX(-50%);
+}
+.esqueleto-aviso[hidden],
+.esqueleto-aviso button[hidden] {
+  display: none;
+}
+.esqueleto-aviso p {
+  margin: 0;
+}
+
+/*
+  Atualizar dados: a tela fica, e uma barra corre no pé do cabeçalho. O
+  cabeçalho é `position: sticky` (app.css), então segura a barra. Cresce por
+  `scaleX`, não por largura: nada transborda nem refaz o layout.
+*/
+html.dados-atualizando .app .top::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  background: var(--brand-primary);
+  transform-origin: left center;
+  animation: dados-atualizando 1.2s var(--ease-standard) infinite;
+}
+
+@keyframes dados-atualizando {
+  0% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+  70% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+/* Movimento reduzido: a regra global de app.css terminaria a barra invisível. */
+@media (prefers-reduced-motion: reduce) {
+  html.dados-atualizando .app .top::after {
+    animation: none;
+  }
+}
+
+/* 900px: a barra lateral vira gaveta; o cabeçalho ganha o botão do menu. */
+@media (max-width: 900px) {
+  .esqueleto-da-entrada {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .esqueleto-da-entrada__barra,
+  .esqueleto--pilula {
+    display: none;
+  }
+  .esqueleto--menu {
+    display: block;
+  }
+  .esqueleto-da-entrada__topo {
+    padding: var(--space-3) var(--space-4);
+  }
+  .esqueleto-da-entrada__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .esqueleto-tabela__linha {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+  .esqueleto-tabela__linha .esqueleto:nth-child(n + 4) {
+    display: none;
+  }
+  .esqueleto-calendario__filtros,
+  .esqueleto-do-painel__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .esqueleto-do-painel__graficos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .esqueleto--conta {
+    width: 44px;
+  }
+}

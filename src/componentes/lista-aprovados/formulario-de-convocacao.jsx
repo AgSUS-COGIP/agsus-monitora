@@ -16,7 +16,7 @@ import {
   resumoDoModelo,
 } from "../../lib/configuracao-de-convocacao.js";
 import { EditorDeModelo } from "./editor-de-modelo.jsx";
-import { CampoEditavel, classes, plural } from "./partes.jsx";
+import { BotaoDeAcao, CampoEditavel, classes, plural } from "./partes.jsx";
 
 /*
   A aba "Lista de convocação" do modal de listas do edital: o MODELO de regras
@@ -282,6 +282,7 @@ export function FormularioDeConvocacao({
           {editor ? (
             <EditorDeModelo
               key={editor.abertura}
+              estado={estado}
               editor={editor}
               aoAlterar={(transformar) =>
                 setEditor((atual) => ({
@@ -469,15 +470,16 @@ export function FormularioDeConvocacao({
       <div className="approved-modal-actions approved-import-actions">
         <span className="approved-action-spacer" />
         {editavel ? (
-          <button
+          <BotaoDeAcao
+            estado={estado}
+            acao="salvar-configuracao"
             id="convocacaoSalvar"
             className="btn green"
-            type="button"
             onClick={() => void estado.salvarConfiguracao(formulario)}
           >
             <i className="fa-solid fa-floppy-disk" aria-hidden="true" /> Salvar
             convocação
-          </button>
+          </BotaoDeAcao>
         ) : null}
       </div>
     </div>

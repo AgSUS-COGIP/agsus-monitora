@@ -12,7 +12,8 @@ a lógica pura correspondente mora em `src/lib/`. O CSS da feature fica em `src/
 Grupos: `aya-*` (assistente) · `map-*`, `health-*`, `indigenous-*`, `vinculos-territoriais.js`,
 `lotacoes-geograficas-transport.js` (mapa e Saúde Indígena) ·
 `config-*` (configurações) · `icones.js` (registro único de ícones Lucide, usado também pelo
-React), `mobile-*`, `nielsen-shell-ux.js` (shell e responsivo; tema, logout e presença) · a barra
+React), `mobile-*`, `nielsen-shell-ux.js` (shell e responsivo; tema, logout e presença) · `carregamento.js` (skeleton da
+entrada e barra do "Atualizar dados"; a antiga tela `#loader` ficou só para salvamentos) · a barra
 lateral, o Núcleo (Editais), o Calendário de Editais e a Lista de Aprovados são React, em
 `src/componentes/` · `access-*`,
 `sidebar-branding.js` (acesso e marca) · `arara-*`, `nina-panel-drag.js` (guia interativo).

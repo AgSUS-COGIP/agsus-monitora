@@ -33,6 +33,9 @@ Arquivos que exigem cuidado:
 - `configuracao-de-convocacao.js` — leitura do modelo e das vagas que o banco guarda, precedência do
   quadro (manual > total da vaga > padrão), rascunho do formulário e edição imutável do modelo. O
   cálculo da ordem é de `lista-convocacao-rules.js`; o desenho, de `src/componentes/lista-aprovados/`.
+- `copia-da-sessao.js` — quando a cópia da sessão guardada no navegador pode abrir a tela (mesmo
+  usuário, mesmo acesso, mesma versão publicada, dentro da validade) e o que mudou desde ela.
+  Afrouxar uma regra daqui expõe dado a quem perdeu acesso.
 - `env.js` — leitura de variáveis; nunca hardcode de chave.
 
 Arquivo novo: nome em português, kebab-case, com teste junto.

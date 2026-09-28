@@ -36,6 +36,8 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 | Assunto | Arquivos |
 |---|---|
 | Sessão / auth | `src/lib/sessao.js`, `session-lifecycle.js`, `auth-flow.js`, `supabaseClient.js`, `src/modules/auth-storage.js` |
+| Carga da entrada (consultas em paralelo, cópia da sessão no navegador) | `loadInitialData`/`atualizarCopiaDaSessao` em `legacy-app.js`, `src/lib/copia-da-sessao.js` (regras), `src/modules/copia-da-sessao-indexeddb.js` (IndexedDB) |
+| Carregamento sem tela de carregamento (skeleton da entrada, barra do "Atualizar dados") | `src/modules/carregamento.js`, `src/lib/esqueleto-da-entrada.js` (formato), `src/styles/carregamento.css`, marcação `.esqueleto-da-entrada` e script `marcarSessaoGuardada` no `index.html` |
 | Permissões e perfis | `src/lib/access-roles.js` (o que cada perfil pode), `permissoes-recursos.js` (permissões por recurso) |
 | Contrato de RPC | `src/lib/rpc-contrato.js` + `scripts/check-rpc-contract.mjs` |
 | Mapa (Leaflet) | `src/lib/fabrica-do-leaflet.js`, `mapa-render.js`, `brasil-bounds.js`, `src/modules/map-*.js` |

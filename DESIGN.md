@@ -282,7 +282,7 @@ A escada já existe em parte (`app.css:40-42`). Formalizada:
 | `--z-map-immersive` | 12050 | mapa imersivo |
 | `--z-exit-dialog` | 15000 | diálogo de saída da Saúde Indígena |
 | `--z-overlay` | 20000 | modais |
-| `--z-loader` | 20025 | carregamento de tela inteira |
+| `--z-loader` | 20025 | skeleton da entrada e a tela de carregamento dos salvamentos |
 | `--z-toast` | 20050 | toast (o topo) |
 
 Nada acima de `--z-toast`. Os `2147483000` de `nina-conversation.css` e
@@ -373,6 +373,11 @@ Fundo `--state-*-soft`, texto `--state-*`, **ícone obrigatório**, `--radius-pi
 Toda consulta prevê: carregando (skeleton com o formato do conteúdo, não um spinner solto), com
 dados, vazio (o que significa e qual é a próxima ação), erro recuperável (com "Tentar de novo"),
 sem permissão e offline (`src/modules/connectivity-status.js`).
+
+O bloco do skeleton é `.esqueleto` (`src/styles/carregamento.css`): fundo `--border-subtle`,
+`--radius-sm` e pulso de `opacity`. Dê a ele o tamanho do conteúdo que vai substituir. A entrada
+inteira usa `.esqueleto-da-entrada`, no formato da última tela; atualizar dados que já estão na tela
+não os troca por skeleton: a tela fica e a barra do cabeçalho corre (`marcarAtualizacao`).
 
 ### Barra lateral
 

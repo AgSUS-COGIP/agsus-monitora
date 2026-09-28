@@ -201,6 +201,20 @@
   padding: 26px !important;
   color: #718096;
 }
+/* A primeira carga falhou (`ErroAoCarregar`): o motivo e "Tentar de novo". */
+.approved-erro {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  color: var(--text-primary);
+}
+.approved-erro p {
+  margin: 0;
+}
+.approved-erro small {
+  display: block;
+  color: var(--text-secondary);
+}
 .approved-modal-card {
   width: min(620px, calc(100vw - 32px));
 }

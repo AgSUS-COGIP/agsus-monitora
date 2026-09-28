@@ -11,6 +11,9 @@ import {
   AcaoDeStatus,
   Kpi,
   NomeDoCandidato,
+  BotaoDeAcao,
+  ErroAoCarregar,
+  LinhasEsqueleto,
   Paginacao,
   SeloDeStatus,
   classes,
@@ -35,6 +38,7 @@ export function AbaAprovados({
   perfil,
   candidatos,
   carregado,
+  erroAoCarregar,
   opcoes,
   filtros,
   aoMudarFiltro,
@@ -176,13 +180,19 @@ export function AbaAprovados({
               <th style={{ textAlign: "center" }}>Ações</th>
             </tr>
           </thead>
-          <tbody id="approvedRows">
-            {!carregado ? (
+          <tbody id="approvedRows" aria-busy={carregado ? undefined : true}>
+            {erroAoCarregar ? (
               <tr>
-                <td colSpan={COLUNAS} className="approved-empty">
-                  Carregando lista de aprovados...
+                <td colSpan={COLUNAS}>
+                  <ErroAoCarregar
+                    estado={estado}
+                    mensagem={erroAoCarregar}
+                    oQue="a lista de aprovados"
+                  />
                 </td>
               </tr>
+            ) : !carregado ? (
+              <LinhasEsqueleto colunas={COLUNAS} />
             ) : pagina.rows.length ? (
               pagina.rows.map((row) => (
                 <tr key={row.candidato_id}>
@@ -204,9 +214,11 @@ export function AbaAprovados({
                       aoAbrir={estado.abrirStatus}
                     />
                     {canEditSubJudice(perfil, row) ? (
-                      <button
+                      <BotaoDeAcao
+                        estado={estado}
+                        acao={`remover-sub-judice:${row.candidato_id}`}
+                        soIcone
                         className="btn icon red"
-                        type="button"
                         data-approved-action="remove-subjudice"
                         data-candidate-id={row.candidato_id}
                         title="Remover sub judice"
@@ -219,7 +231,7 @@ export function AbaAprovados({
                           className="fa-solid fa-user-minus"
                           aria-hidden="true"
                         />
-                      </button>
+                      </BotaoDeAcao>
                     ) : null}
                   </td>
                 </tr>
