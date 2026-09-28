@@ -1,7 +1,6 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { readApprovedWorkbook } from "../lib/aprovados-import.js";
 import {
-  canChangeCandidateStatus,
   canImportApprovedList,
   canManageSubJudice,
   canReplaceApprovedList,
@@ -17,8 +16,11 @@ import {
   candidateCargosForEdital,
   candidateModalidadesForEdital,
   paginateApprovedCandidates,
+  motivoDoStatusBloqueado,
+  autoriaDaImportacao,
 } from "../lib/lista-aprovados-rules.js";
 import { ativarMultiSelectBusca } from "./multi-select-busca.js";
+import { createListaConvocacaoController } from "./lista-convocacao.js";
 import { PLANILHAS } from "../lib/planilhas.js";
 
 const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;
@@ -278,10 +280,11 @@ export function createListaAprovadosController(options = {}) {
             const canRemove = canEditSubJudice(profile(), row);
             const inactive = !row.lista_ativa;
             const status = text(row.status);
+            const bloqueio = motivoDoStatusBloqueado(profile(), row);
             const action = canStatus
               ? `<button class="btn icon outline" type="button" data-approved-action="status" data-candidate-id="${attr(row.candidato_id)}" title="Alterar status"><i class="fa-solid fa-pen"></i></button>`
-              : inactive && canChangeCandidateStatus(profile())
-                ? `<button class="btn icon outline" type="button" disabled title="Lista inativa"><i class="fa-solid fa-lock"></i></button>`
+              : bloqueio
+                ? `<button class="btn icon outline" type="button" disabled title="${attr(bloqueio)}"><i class="fa-solid fa-lock"></i></button>`
                 : `<span class="approved-no-action">—</span>`;
             const remove = canRemove
               ? `<button class="btn icon red" type="button" data-approved-action="remove-subjudice" data-candidate-id="${attr(row.candidato_id)}" title="Remover sub judice"><i class="fa-solid fa-user-minus"></i></button>`
@@ -385,9 +388,8 @@ export function createListaAprovadosController(options = {}) {
     const candidate = byId(candidateId);
     if (!candidate || !canEditCandidateStatus(profile(), candidate)) {
       return toast(
-        candidate?.lista_ativa === false
-          ? "A lista está inativa."
-          : "Sem permissão para alterar o status.",
+        motivoDoStatusBloqueado(profile(), candidate) ||
+          "Sem permissão para alterar o status.",
         "warn",
       );
     }
@@ -559,6 +561,7 @@ export function createListaAprovadosController(options = {}) {
     if (activeSelect)
       activeSelect.value = list?.ativo === false ? "false" : "true";
     if (stateText) {
+      const autoria = list ? autoriaDaImportacao(list) : "";
       stateText.classList.toggle("has-list", Boolean(list));
       stateText.innerHTML = list
         ? `<div class="approved-import-summary-head">
@@ -566,6 +569,7 @@ export function createListaAprovadosController(options = {}) {
             <div class="approved-import-summary-copy">
               <strong class="approved-import-summary-title">Lista atual cadastrada</strong>
               <span>Este edital já possui uma lista de aprovados importada.</span>
+              ${autoria ? `<span>${esc(autoria)}.</span>` : ""}
             </div>
             <span class="approved-status ${list.ativo ? "success" : "neutral"}">${list.ativo ? "Lista ativa" : "Lista inativa"}</span>
           </div>

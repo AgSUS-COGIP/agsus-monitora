@@ -155,7 +155,8 @@ export const CONTRATO_RPC = {
   listar_listas_aprovados: {
     argumentos: [],
     critica: true,
-    resumo: "Lista as listas vigentes de aprovados vinculadas aos editais.",
+    resumo:
+      "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou.",
   },
   listar_candidatos_aprovados: {
     argumentos: [],
@@ -188,7 +189,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_candidato_id", "p_status", "p_processo_sei", "p_matricula"],
     critica: true,
     resumo:
-      "Altera o status de um candidato e registra processo SEI e matrícula quando informados.",
+      "Altera o status de um candidato e registra processo SEI e matrícula quando informados. Status já definido só o admin altera.",
   },
   incluir_sub_judice: {
     argumentos: ["p_edital_id", "p_cargo", "p_nome", "p_nota"],

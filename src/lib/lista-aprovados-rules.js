@@ -1,6 +1,7 @@
 import {
   canChangeCandidateStatus,
   canManageSubJudice,
+  normalizeRole,
 } from "./access-roles.js";
 
 const text = (value) => String(value ?? "").trim();
@@ -27,8 +28,62 @@ export function statusNeedsMatricula(status) {
   return status === "Contratado" || status === "Migração";
 }
 
+/*
+  Quem não é admin define o status UMA vez; depois disso, só o admin altera.
+  É o espelho da trava de `alterar_status_candidato_aprovado`
+  (20260928120000), que é quem decide: lê o status atual, e por isso o admin
+  destrava o candidato voltando-o para "Sem status".
+*/
+export function statusTravadoParaPerfil(profile, candidate) {
+  return Boolean(text(candidate?.status)) && normalizeRole(profile) !== "admin";
+}
+
 export function canEditCandidateStatus(profile, candidate) {
-  return Boolean(candidate?.lista_ativa) && canChangeCandidateStatus(profile);
+  return (
+    Boolean(candidate?.lista_ativa) &&
+    canChangeCandidateStatus(profile) &&
+    !statusTravadoParaPerfil(profile, candidate)
+  );
+}
+
+/*
+  Por que o botão de status aparece como cadeado em vez de lápis. Vazio quando
+  a pessoa pode editar, ou quando nunca poderia (aí a tela mostra "—", e um
+  cadeado sugeriria um acesso que ela não tem).
+*/
+export function motivoDoStatusBloqueado(profile, candidate) {
+  if (!canChangeCandidateStatus(profile)) return "";
+  if (!candidate?.lista_ativa) return "Lista inativa";
+  if (statusTravadoParaPerfil(profile, candidate))
+    return "Status já definido. Somente admin pode alterar.";
+  return "";
+}
+
+/*
+  "Importado por Fulana (fulana@agenciasus.org.br) em 28/09/2026 14:05".
+  Listas anteriores à gravação da autoria, ou de usuários já apagados, não
+  têm nome nem e-mail — aí sobra só a data, e sem data não há o que dizer.
+*/
+export function autoriaDaImportacao(list) {
+  const nome = text(list?.importado_por_nome);
+  const email = text(list?.importado_por_email);
+  const data = list?.importado_em ? new Date(list.importado_em) : null;
+  const quando =
+    data && !Number.isNaN(data.getTime())
+      ? data.toLocaleString("pt-BR", {
+          dateStyle: "short",
+          timeStyle: "short",
+          timeZone: "America/Sao_Paulo",
+        })
+      : "";
+  const quem =
+    nome && email && nome.toLowerCase() !== email.toLowerCase()
+      ? `${nome} (${email})`
+      : nome || email;
+  if (quem && quando) return `Importado por ${quem} em ${quando}`;
+  if (quem) return `Importado por ${quem}`;
+  if (quando) return `Importado em ${quando}`;
+  return "";
 }
 
 export function canEditSubJudice(profile, candidate) {

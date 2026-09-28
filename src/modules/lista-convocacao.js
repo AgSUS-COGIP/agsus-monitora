@@ -33,11 +33,11 @@
   DOM nem rede, que é onde as regras ficam testáveis.
 */
 
+import { canImportApprovedList } from "../lib/access-roles.js";
 import {
-  canChangeCandidateStatus,
-  canImportApprovedList,
-} from "../lib/access-roles.js";
-import { canEditCandidateStatus } from "../lib/lista-aprovados-rules.js";
+  canEditCandidateStatus,
+  motivoDoStatusBloqueado,
+} from "../lib/lista-aprovados-rules.js";
 import {
   ARREDONDAMENTOS,
   COTAS_MULTIPLAS,
@@ -1244,10 +1244,11 @@ export function createListaConvocacaoController(deps = {}) {
     const status = text(candidato.status);
     const podeStatus = canEditCandidateStatus(profile(), candidato);
     const inativa = !candidato.lista_ativa;
+    const bloqueio = motivoDoStatusBloqueado(profile(), candidato);
     const acao = podeStatus
       ? `<button class="btn icon outline" type="button" data-convocacao-action="status" data-candidate-id="${attr(candidato.candidato_id)}" title="Alterar status"><i class="fa-solid fa-pen"></i></button>`
-      : inativa && canChangeCandidateStatus(profile())
-        ? `<button class="btn icon outline" type="button" disabled title="Lista inativa"><i class="fa-solid fa-lock"></i></button>`
+      : bloqueio
+        ? `<button class="btn icon outline" type="button" disabled title="${attr(bloqueio)}"><i class="fa-solid fa-lock"></i></button>`
         : `<span class="approved-no-action">—</span>`;
     return `<tr class="${linha.imediata ? "convocacao-linha-imediata" : ""}${linha.posicao ? "" : " convocacao-linha-fora"}">
       <td class="num">${linha.posicao ?? "—"}</td>
