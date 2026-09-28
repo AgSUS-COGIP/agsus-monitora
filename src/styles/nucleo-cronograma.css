@@ -138,7 +138,7 @@
 .cronograma-table td:first-child {
   width: 42px;
   text-align: center;
-  color: var(--color-text-secondary);
+  color: #64748b;
 }
 
 .cronograma-table input {
