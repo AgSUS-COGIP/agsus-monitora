@@ -144,7 +144,12 @@ Front (em paralelo, sem parar o sistema):
 1. Casca React: rotas por área, login, permissões, `dados/`.
 2. Configurações e acessos (as permissões por área dependem dela).
 3. Monitora Análises vira rota do sistema (hoje é `analises.html` à parte) — é a
-   primeira tela que a SEDE usa.
+   primeira tela que a SEDE usa. **Começou em 28/09**: página React
+   `#page-analises` (`src/componentes/analises-da-area/`, lógica em
+   `src/lib/analises-da-area.js`), item "Análises" no menu de SEDE e Projetos,
+   lendo `get_analises_da_area` (migration `20260928160000_analises_por_area.sql`,
+   a aplicar). A Saúde Indígena continua no `analises.html` até o responsável
+   aprovar a tela nova; aprovada, o painel antigo sai inteiro.
 4. Início por área.
 5. Editais, Cronograma e Aprovados: já em React, só mudam de pasta.
 6. Mapa nacional, por último.

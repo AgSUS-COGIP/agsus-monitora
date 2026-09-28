@@ -373,3 +373,35 @@ script da planilha repete a recusa a cada ciclo: não há recuperação
 automática, de propósito. Corrige-se a planilha e reconcilia-se à mão
 (`apps-script/LEIA-ME.md`, "Envio recusado"). As outras planilhas não são
 afetadas, porque a fila é por planilha.
+
+## 7. Análises por área: leitura do painel novo
+
+Migration `20260928160000_analises_por_area.sql` (rollback em `supabase/rollback/`,
+só `drop function`). Tela: `src/componentes/analises-da-area/` (página
+`#page-analises`, menu de SEDE e Projetos).
+
+| RPC | Devolve |
+|---|---|
+| `get_analises_da_area(p_area text, p_scope text default 'ativo')` | `{schema_version, area, nome_area, scope, columns[], rows[][], editais[], total, generated_at}` — as análises da área em formato posicional (como `get_analises_dashboard_payload_v2`), com `municipio` e `uf` tirados do nome da vaga (`UBS m[óo]vel ([^/]+)/([A-Z]{2})`, nulos sem casamento) e as colunas `experiencia_profissional_*`; `editais` = os da área com a janela de análise |
+| `get_analise_detalhe_da_area(p_id uuid)` | o texto da análise (`analise`), `erro_pdf`, regime, carga horária, linha de origem e a janela do edital de UMA análise; nulo se o id não existe |
+
+- **Escopo**: `ativo` = análise ativa **e** edital ativo (edital sem cadastro conta
+  como ativo, como na `VW_ANALISES_DASHBOARD_BASE_TODOS`); `inativo` = o
+  complemento; `todos`. Outro valor → 22023. Área fora de `TB_AREA` → 22023.
+- **Permissão**: `private.pode_recurso('analises')` **e** (`private.is_master()` ou
+  `private."FC_PODE_AREA"(área)`); senão 42501. No detalhe, a área é a da própria
+  análise. SECURITY DEFINER de `postgres` ignora a RLS, por isso a checagem é
+  explícita. EXECUTE só para `authenticated` (revogado de `public` e `anon`).
+- **Sem o texto da análise na lista**: ~480 caracteres por linha na Saúde Indígena,
+  ~3 MB a mais nas ~6,7 mil ativas. O texto vem do detalhe, quando a gaveta abre.
+- **Nome**: minúsculas, como as outras RPCs chamadas pelo app; o contrato de RPC do
+  front só reconhece `[a-z0-9_]`. O prefixo MAD `FC_` fica para os auxiliares
+  internos.
+- **Medido no ensaio (28/09, begin…rollback, admin sintético)**: Saúde Indígena
+  ativas 6.728 linhas, 2,9 MB de JSON, ~175 ms com cache quente (1,4 s na primeira
+  chamada fria; seq scan de 24 mil linhas, 50 ms, e o resto é montar o JSON);
+  inativas 16.070 linhas / 7,2 MB; todas 22.788 / 10,1 MB. Projetos: 1.285 linhas
+  (todas ativas), 726 KB, ~60 ms, 100% com município (Cubatão/SP, Irati/PR,
+  Palhoça/SC, Seropédica/RJ, Talismã/TO). SEDE: 0. Leitor só de Projetos: lê
+  Projetos, recebe 42501 na Saúde Indígena (lista e detalhe); sem o recurso
+  `analises`, 42501.

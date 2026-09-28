@@ -153,6 +153,36 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     }
   });
 
+  it("com leitura de análises, SEDE e Projetos ganham Análises (a página nova); a Saúde Indígena segue com o painel externo", () => {
+    const grupos = porGrupo(
+      montarArvoreDoMenu({
+        permitidas: { ...TUDO, analises: true },
+        paineis: PAINEIS,
+        areas: TODAS,
+      }),
+    );
+    for (const area of ["sede", "projetos"]) {
+      expect(grupos[area].at(-1)).toEqual({
+        view: "analises",
+        rotulo: "Análises",
+        icone: "clipboard-check",
+        area,
+      });
+    }
+    const daSaudeIndigena = grupos["saude-indigena"].map((item) => item.view);
+    expect(daSaudeIndigena).not.toContain("analises");
+    expect(daSaudeIndigena).toContain("panel:analises");
+  });
+
+  it("sem leitura de análises, a página nova não aparece em área nenhuma", () => {
+    const arvore = montarArvoreDoMenu({
+      permitidas: { ...TUDO, analises: false },
+      areas: TODAS,
+    });
+    const views = arvore.flatMap((grupo) => grupo.itens.map((i) => i.view));
+    expect(views).not.toContain("analises");
+  });
+
   it("sem áreas no contexto (contrato antigo), vale a Saúde Indígena", () => {
     const arvore = montarArvoreDoMenu({ permitidas: { nucleo: true } });
     expect(arvore.map((grupo) => grupo.id)).toEqual(["saude-indigena"]);

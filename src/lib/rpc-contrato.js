@@ -273,6 +273,17 @@ export const CONTRATO_RPC = {
     resumo:
       "Linhas do painel de Análises filtradas por unidade e edital, paginadas.",
   },
+  get_analises_da_area: {
+    argumentos: ["p_area", "p_scope"],
+    critica: true,
+    resumo:
+      "Análises de uma área (columns + rows), com município/UF e os editais da área.",
+  },
+  get_analise_detalhe_da_area: {
+    argumentos: ["p_id"],
+    critica: false,
+    resumo: "Texto e campos extras de uma análise, para o detalhe.",
+  },
 
   // ── Auditoria e presença ────────────────────────────────────────────────
   registrar_evento_acesso: {

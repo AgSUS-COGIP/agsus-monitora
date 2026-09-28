@@ -75,6 +75,17 @@ export const PAGINAS_DO_MENU = Object.freeze([
     rotulo: "Lista de aprovados",
     icone: "user-round-check",
   }),
+  /*
+    Análises por área (React, #page-analises). Só SEDE e Projetos por
+    enquanto: a Saúde Indígena continua com o painel externo de análises
+    (PAINEIS_DE_AREA, abaixo) até o responsável aprovar a tela nova.
+  */
+  Object.freeze({
+    view: "analises",
+    areas: Object.freeze(["sede", "projetos"]),
+    rotulo: "Análises",
+    icone: "clipboard-check",
+  }),
 ]);
 
 /*

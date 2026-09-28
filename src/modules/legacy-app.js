@@ -710,6 +710,7 @@ function can(perm) {
       ind: "dashboard",
       cores: "nucleo",
       calendario: "calendario",
+      analises: "analises",
       paineis: "paineis",
       config: "configuracoes",
     }[perm];
@@ -717,7 +718,8 @@ function can(perm) {
   }
   const role = normalizeRole(profile);
   if (role) {
-    if (["ind", "cores", "paineis"].includes(perm)) return canViewCore(profile);
+    if (["ind", "cores", "paineis", "analises"].includes(perm))
+      return canViewCore(profile);
     if (["config", "admin"].includes(perm)) return canManageSettings(profile);
   }
   return profile["p_" + perm] === true;
@@ -1513,6 +1515,8 @@ function isViewAllowed(view) {
   if (view === "calendario")
     return profile?.permissoes ? can("calendario") : can("cores");
   if (view === "approved") return canViewCore(profile);
+  // Análises por área (React). A RPC confere de novo o recurso e a área.
+  if (view === "analises") return can("analises");
   if (view === "config") return can("config");
   if (view.startsWith("panel:")) {
     const code = view.split(":")[1];
@@ -2275,6 +2279,7 @@ function buildNav() {
     nucleo: can("cores"),
     calendario: can("calendario") || (!profile?.permissoes && can("cores")),
     approved: canViewCore(profile),
+    analises: can("analises"),
     config: can("config"),
   };
   const paineis = can("paineis")
@@ -2335,6 +2340,10 @@ function navigate(view) {
   }
   if (requestedView === "approved" && !canViewCore(profile)) {
     toast("Sem permissão para Lista de Aprovados.", "warn");
+    return;
+  }
+  if (requestedView === "analises" && !can("analises")) {
+    toast("Sem permissão para Análises.", "warn");
     return;
   }
   if (requestedView === "config" && !can("config")) {
@@ -2417,6 +2426,17 @@ function navigate(view) {
       subtituloDaArea("Candidatos por edital e situação de contratação."),
     );
     void window.aprovadosController?.render();
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "analises") {
+    $("page-analises").classList.add("active");
+    setPageTitle(
+      "Análises",
+      subtituloDaArea("Análises curriculares, por status e responsável."),
+    );
+    void window.analisesDaAreaController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
