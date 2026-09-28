@@ -886,6 +886,7 @@ function enhanceMap(L, map) {
     style: (feature) => vectorStyle(map, feature),
     onEachFeature: (feature, layer) => {
       if (!supportsHover()) return;
+      destacarAoPassar(feature, layer);
       const texto = tooltipDaTerraIndigena(feature?.properties);
       if (!texto) return;
       layer.bindTooltip(texto, {
@@ -895,6 +896,24 @@ function enhanceMap(L, map) {
       });
     },
   });
+
+  /*
+    Passar o mouse numa terra engrossa o traço DELA — o limite da terra, não
+    uma caixa em volta. Antes, o único retorno visual era o anel de foco do
+    navegador, que num <path> SVG é um retângulo (ver
+    indigenous-territories-layer.css). Ao sair, volta ao estilo da camada,
+    respeitando o destaque temporário da terra escolhida na lista.
+  */
+  function destacarAoPassar(feature, layer) {
+    layer.on("mouseover", () => {
+      const base = estiloComDestaque(feature);
+      layer.setStyle({
+        weight: base.weight + 2,
+        fillOpacity: Math.max(base.fillOpacity ?? 0, 0.4),
+      });
+    });
+    layer.on("mouseout", () => layer.setStyle(estiloComDestaque(feature)));
+  }
   map.__agsusIndigenousTerritoriesVectorLayer = vectorLayer;
 
   const rotulosLayer = L.layerGroup([], { pane: rotulosPaneName });
