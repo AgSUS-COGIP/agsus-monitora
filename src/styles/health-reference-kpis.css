@@ -87,7 +87,7 @@
 }
 
 /* Título da seção: sentence case, h4 (app.css), 16px até o conteúdo. */
-:is(#page-dashboard, .visao-da-area) .section-label {
+#page-dashboard .section-label {
   margin: var(--space-5) 0 var(--space-3);
 }
 
@@ -96,15 +96,12 @@
   responsável em 25/09/2026: os cards leem melhor nesta tela. Seguem o DS 11.6
   para cards (fundo claro, borda sutil, raio de 8px, sem sombra). Uma linha
   quando cabe (6 cards em tela larga), quebrando para menos colunas.
-  A Visão geral da SEDE e de Projetos (`.visao-da-area`, React) usa as
-  mesmas regras: `:is()` fica com a especificidade do `#page-dashboard`, então
-  a Saúde Indígena não muda.
 */
-:is(#page-dashboard, .visao-da-area) .kpis-main {
+#page-dashboard .kpis-main {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: var(--space-3);
 }
-:is(#page-dashboard, .visao-da-area) .kpi {
+#page-dashboard .kpi {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -127,23 +124,23 @@
   text-align: left;
 }
 /* O KPI que filtra (Processos críticos): o card inteiro é o alvo (DS 11.6). */
-:is(#page-dashboard, .visao-da-area) .kpi-clickable {
+#page-dashboard .kpi-clickable {
   width: 100%;
   appearance: none;
   cursor: pointer;
 }
-:is(#page-dashboard, .visao-da-area) .kpi-clickable:hover {
+#page-dashboard .kpi-clickable:hover {
   background: var(--surface-hover);
 }
-:is(#page-dashboard, .visao-da-area) .kpi-clickable:focus-visible {
+#page-dashboard .kpi-clickable:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-:is(#page-dashboard, .visao-da-area) .kpi.active-filter {
+#page-dashboard .kpi.active-filter {
   border-color: var(--brand-primary);
   background: var(--state-info-soft);
 }
-:is(#page-dashboard, .visao-da-area) .kpi > span {
+#page-dashboard .kpi > span {
   display: flex;
   align-items: center;
   gap: var(--space-1-5); /* ícone ↔ texto em componente sm (DS 5.2) */
@@ -159,11 +156,11 @@
   flex-wrap: wrap;
 }
 /* O texto encolhe e quebra dentro dele, em vez de descer inteiro para baixo do ícone. */
-:is(#page-dashboard, .visao-da-area) .kpi > span > span {
+#page-dashboard .kpi > span > span {
   flex: 0 1 auto;
   min-width: 0;
 }
-:is(#page-dashboard, .visao-da-area) .kpi > span > i {
+#page-dashboard .kpi > span > i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -178,28 +175,28 @@
   color: var(--state-info);
   background: var(--state-info-soft);
 }
-:is(#page-dashboard, .visao-da-area) .kpi.ag-green > span > i {
+#page-dashboard .kpi.ag-green > span > i {
   color: var(--state-success);
   background: var(--state-success-soft);
 }
-:is(#page-dashboard, .visao-da-area) .kpi.ag-yellow > span > i {
+#page-dashboard .kpi.ag-yellow > span > i {
   color: var(--state-warning);
   background: var(--state-warning-soft);
 }
-:is(#page-dashboard, .visao-da-area) .kpi.ag-red > span > i {
+#page-dashboard .kpi.ag-red > span > i {
   color: var(--state-danger);
   background: var(--state-danger-soft);
 }
-:is(#page-dashboard, .visao-da-area) .kpi.ag-green {
+#page-dashboard .kpi.ag-green {
   --kpi-tom: var(--state-success);
 }
-:is(#page-dashboard, .visao-da-area) .kpi.ag-yellow {
+#page-dashboard .kpi.ag-yellow {
   --kpi-tom: var(--state-warning);
 }
-:is(#page-dashboard, .visao-da-area) .kpi.ag-red {
+#page-dashboard .kpi.ag-red {
   --kpi-tom: var(--state-danger);
 }
-:is(#page-dashboard, .visao-da-area) .kpi > b {
+#page-dashboard .kpi > b {
   display: block;
   margin-top: var(--space-1);
   color: var(--kpi-tom);
@@ -314,7 +311,7 @@
 }
 
 @media (max-width: 767px) {
-  :is(#page-dashboard, .visao-da-area) .kpis-main {
+  #page-dashboard .kpis-main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

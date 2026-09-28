@@ -129,7 +129,6 @@ describe("o seed da migration é o catálogo do código", () => {
   it("toda view do catálogo é uma tela que o front desenha", () => {
     const telas = new Set([
       "dashboard",
-      "visao-area",
       "nucleo",
       "calendario",
       "approved",
@@ -149,7 +148,6 @@ describe("o seed da migration é o catálogo do código", () => {
 const PERMISSOES = {
   admin: {
     dashboard: true,
-    "visao-area": true,
     nucleo: true,
     calendario: true,
     approved: true,
@@ -158,7 +156,6 @@ const PERMISSOES = {
   },
   usuario: {
     dashboard: true,
-    "visao-area": true,
     nucleo: true,
     calendario: true,
     approved: true,

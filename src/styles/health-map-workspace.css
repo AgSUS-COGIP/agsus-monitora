@@ -63,6 +63,20 @@
   display: block;
 }
 
+/*
+  A Visão geral é a mesma nas três áreas; o mapa é da área
+  (`data-mapa-da-area`, de `municipios-da-visao-geral.js`). SEDE: sem o bloco.
+  Projetos: o mapa nacional com os municípios, sem o que é só da Saúde
+  Indígena — o painel do DSEI, o modo calor (ociosas por DSEI) e o botão das
+  Terras Indígenas.
+*/
+.page[data-mapa-da-area="nenhum"] .health-map-workspace,
+.page[data-mapa-da-area="municipios"] .health-map-pane--detail,
+.page[data-mapa-da-area="municipios"] .health-map-botao--calor,
+.page[data-mapa-da-area="municipios"] .agsus-indigenous-territories-control {
+  display: none;
+}
+
 /* Fundo, borda e raio: health-reference-kpis.css (superfície do DS 11.6). */
 .health-map-pane {
   min-width: 0;
@@ -485,6 +499,15 @@
 
 .health-map-unit__preench.is-critico .health-map-unit__barra i {
   background: var(--state-danger, #d92d3a);
+}
+
+/*
+  Em Projetos a barra é o resultado das análises do município: aprovados em
+  verde sobre o trilho dos reprovados. O texto "NN% aprovados" ao lado diz o
+  mesmo sem depender da cor.
+*/
+.health-map-unit__preench.is-resultado .health-map-unit__barra {
+  background: var(--state-danger-soft);
 }
 
 .health-map-unit__pct {

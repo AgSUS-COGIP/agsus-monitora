@@ -144,10 +144,10 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     );
   });
 
-  it("o admin vê as três áreas; SEDE e Projetos com a Visão geral delas, com Análises", () => {
+  it("o admin vê as três áreas, todas com a mesma Visão geral e com Análises", () => {
     const grupos = porGrupo(
       montarArvoreDoMenu({
-        permitidas: { ...TUDO, "visao-area": true },
+        permitidas: TUDO,
         paineis: PAINEIS,
         areas: TODAS,
       }),
@@ -158,17 +158,11 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       "projetos",
       "paineis",
     ]);
-    // A Saúde Indígena continua com o mapa (`dashboard`), e só ele.
-    expect(grupos["saude-indigena"].map((item) => item.view)).toEqual([
-      "dashboard",
-      "nucleo",
-      "calendario",
-      "approved",
-      "analises",
-    ]);
-    for (const area of ["sede", "projetos"]) {
+    // A Visão geral é a mesma página (`dashboard`, ícone `map`) nas três.
+    for (const area of ["saude-indigena", "sede", "projetos"]) {
+      expect(grupos[area][0].icone).toBe("map");
       expect(grupos[area].map((item) => item.view)).toEqual([
-        "visao-area",
+        "dashboard",
         "nucleo",
         "calendario",
         "approved",
@@ -257,9 +251,12 @@ describe("a página aberta no menu", () => {
     );
   });
 
-  it("página que só existe numa área acende nela, qualquer que seja a atual", () => {
+  it("a Visão geral acende na área atual; painel acende em Painéis", () => {
     expect(itemAtivoDaArvore(arvore, "dashboard", null, "sede").area).toBe(
-      "saude-indigena",
+      "sede",
+    );
+    expect(itemAtivoDaArvore(arvore, "dashboard", null, "projetos").area).toBe(
+      "projetos",
     );
     expect(
       itemAtivoDaArvore(arvore, "panel:sem-titulo", null, "sede").area,
@@ -408,7 +405,7 @@ describe("Visão geral da SEDE e de Projetos", () => {
   it("segue a permissão da Visão geral: sem ela, SEDE e Projetos não a mostram", () => {
     const grupos = porGrupo(
       montarArvoreDoMenu({
-        permitidas: { nucleo: true, "visao-area": false },
+        permitidas: { nucleo: true, dashboard: false },
         areas: ["sede", "projetos"],
       }),
     );
@@ -418,10 +415,10 @@ describe("Visão geral da SEDE e de Projetos", () => {
 
   it("acende o item da área atual", () => {
     const arvore = montarArvoreDoMenu({
-      permitidas: { "visao-area": true, nucleo: true },
+      permitidas: { dashboard: true, nucleo: true },
       areas: TODAS,
     });
-    const ativo = itemAtivoDaArvore(arvore, "visao-area", null, "projetos");
+    const ativo = itemAtivoDaArvore(arvore, "dashboard", null, "projetos");
     expect(ativo.area).toBe("projetos");
   });
 });
@@ -478,12 +475,17 @@ describe("seletor de área", () => {
     expect(destinoAoTrocarDeArea(arvore, "projetos", "calendario").area).toBe(
       "projetos",
     );
-    const soDaSaude = itens["saude-indigena"].find(
-      (item) => !itens.sede.some((outro) => outro.view === item.view),
+    // Hoje toda aba existe nas três áreas; sem a página na área nova, a primeira.
+    const semVisaoGeral = arvore.map((grupo) =>
+      grupo.id === "sede"
+        ? {
+            ...grupo,
+            itens: grupo.itens.filter((item) => item.view !== "dashboard"),
+          }
+        : grupo,
     );
-    expect(soDaSaude).toBeTruthy();
-    expect(destinoAoTrocarDeArea(arvore, "sede", soDaSaude.view)).toBe(
-      itens.sede[0],
+    expect(destinoAoTrocarDeArea(semVisaoGeral, "sede", "dashboard")).toBe(
+      semVisaoGeral.find((grupo) => grupo.id === "sede").itens[0],
     );
     expect(destinoAoTrocarDeArea(arvore, "sede", "config")).toBe(itens.sede[0]);
     expect(destinoAoTrocarDeArea(arvore, "inexistente", "nucleo")).toBeNull();

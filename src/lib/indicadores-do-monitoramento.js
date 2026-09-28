@@ -2,11 +2,10 @@
   Os indicadores da Visão geral, sem DOM: Processos seletivos, Vagas imediatas
   previstas, Contratações, Vagas ociosas, Processos críticos e Inscritos.
 
-  A Visão geral da Saúde Indígena (`renderKpis`, em `legacy-app.js`) e a das
-  outras áreas (`src/componentes/visao-geral-da-area/`) contam do mesmo jeito,
-  a partir das linhas de `TB_MONITORAMENTO_INDIGENA`. A da Saúde Indígena ainda
-  pode trocar os números pelo resumo do servidor quando não há filtro; a conta
-  local é esta.
+  A Visão geral (`renderKpis`, em `legacy-app.js`) é a mesma nas três áreas
+  e conta a partir das linhas de `TB_MONITORAMENTO_INDIGENA` da área atual.
+  Sem filtro, e quando a área tem todas as linhas, ela ainda pode trocar os
+  números pelo resumo do servidor; a conta local é esta.
 */
 
 const txt = (valor) => String(valor ?? "").trim();

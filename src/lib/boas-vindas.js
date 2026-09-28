@@ -29,35 +29,16 @@ export function chaveDoDia(data = new Date()) {
   return `${ano}-${mes}-${dia}`;
 }
 
-/** A data da próxima etapa do edital (AAAA-MM-DD), ou "". */
-export const dataDaProximaEtapa = (linha) =>
-  texto(linha?.cronograma_proxima_data).slice(0, 10);
-
-/*
-  Editais cuja próxima etapa cai de hoje até daqui a `dias` dias, da mais
-  próxima para a mais distante. É o "Próximas etapas" da Visão geral das
-  áreas e a conta da mensagem de boas-vindas.
-*/
-export function editaisComEtapaNosProximosDias(
-  linhas,
-  hoje = new Date(),
-  dias = 7,
-) {
+/** Editais cuja próxima etapa cai de hoje até daqui a `dias` dias. */
+export function editaisComEtapaNaSemana(linhas, hoje = new Date(), dias = 7) {
   const inicio = chaveDoDia(hoje);
   const limite = new Date(hoje);
   limite.setDate(limite.getDate() + dias);
   const fim = chaveDoDia(limite);
-  return (Array.isArray(linhas) ? linhas : [])
-    .filter((linha) => {
-      const data = dataDaProximaEtapa(linha);
-      return data && data >= inicio && data <= fim;
-    })
-    .sort((a, b) => dataDaProximaEtapa(a).localeCompare(dataDaProximaEtapa(b)));
-}
-
-/** Quantos editais têm etapa de hoje até daqui a `dias` dias. */
-export function editaisComEtapaNaSemana(linhas, hoje = new Date(), dias = 7) {
-  return editaisComEtapaNosProximosDias(linhas, hoje, dias).length;
+  return (Array.isArray(linhas) ? linhas : []).filter((linha) => {
+    const data = texto(linha?.cronograma_proxima_data).slice(0, 10);
+    return data && data >= inicio && data <= fim;
+  }).length;
 }
 
 export function resumoDoDia(quantidade) {

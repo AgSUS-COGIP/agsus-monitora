@@ -346,10 +346,21 @@ describe("as áreas do usuário: seletor de área", () => {
 
   it("trocar de área abre a mesma página na área nova; sem ela, a primeira", async () => {
     const chamadas = [];
+    /*
+      Hoje toda aba existe nas três áreas; para o "sem ela", a Visão geral
+      fica só na Saúde Indígena nesta árvore.
+    */
     const arvore = montarArvoreDoMenu({
       permitidas: { dashboard: true, nucleo: true, calendario: true },
       areas: TODAS,
-    });
+    }).map((grupo) =>
+      grupo.id === "saude-indigena"
+        ? grupo
+        : {
+            ...grupo,
+            itens: grupo.itens.filter((item) => item.view !== "dashboard"),
+          },
+    );
     await montar(arvore, {
       navegar: (view) => {
         // A área já mudou quando a navegação acontece.

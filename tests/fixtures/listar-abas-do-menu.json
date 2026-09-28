@@ -2,9 +2,9 @@
   {
     "co_aba": "visao-geral",
     "no_aba": "Visão geral",
-    "ds_icone": "layout-dashboard",
+    "ds_icone": "map",
     "nu_ordem": 1,
-    "co_view": "visao-area",
+    "co_view": "dashboard",
     "co_recurso": "dashboard",
     "tp_aba": "nativa",
     "areas": [
@@ -17,14 +17,14 @@
       {
         "co_area": "sede",
         "nu_ordem": 1,
-        "co_view": "visao-area",
-        "ds_icone": "layout-dashboard"
+        "co_view": "dashboard",
+        "ds_icone": "map"
       },
       {
         "co_area": "projetos",
         "nu_ordem": 1,
-        "co_view": "visao-area",
-        "ds_icone": "layout-dashboard"
+        "co_view": "dashboard",
+        "ds_icone": "map"
       }
     ]
   },

@@ -6,7 +6,9 @@ import {
   tomDoStatusDoEdital,
 } from "../lib/editais-do-nucleo.js";
 import {
+  assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
+  linhasDaArea,
   obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
@@ -41,9 +43,17 @@ import {
 } from "./pagina-de-analises.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import {
-  AREA_SAUDE_INDIGENA,
-  ehEditalDaSaudeIndigena,
-} from "../lib/responsavel-do-edital.js";
+  MAPA_DOS_DSEIS,
+  MAPA_DOS_MUNICIPIOS,
+  cabecalhoDaVisaoGeral,
+  mapaDaVisaoGeral,
+} from "../lib/visao-geral-da-area.js";
+import {
+  aplicarAreaNaVisaoGeral,
+  criarCarregadorDeMunicipios,
+  desenharMunicipiosDaArea,
+  legendaDosMunicipios,
+} from "./municipios-da-visao-geral.js";
 import {
   ehEditalEncerrado as isEncerrado,
   ehRiscoAtivo as isRiscoAtivo,
@@ -1538,7 +1548,7 @@ async function loadInitialData() {
 
 function isViewAllowed(view) {
   if (!view) return false;
-  if (view === "dashboard" || view === "visao-area") return can("ind");
+  if (view === "dashboard") return can("ind");
   if (view === "nucleo") return can("cores");
   if (view === "calendario")
     return profile?.permissoes ? can("calendario") : can("cores");
@@ -2307,7 +2317,6 @@ async function refreshData() {
 function buildNav() {
   const permitidas = {
     dashboard: can("ind"),
-    "visao-area": can("ind"),
     nucleo: can("cores"),
     calendario: can("calendario") || (!profile?.permissoes && can("cores")),
     approved: canViewCore(profile),
@@ -2360,16 +2369,6 @@ function navigate(view) {
     toast("Sem permissão para Saúde Indígena.", "warn");
     return;
   }
-  if (requestedView === "visao-area" && !can("ind")) {
-    toast("Sem permissão para a Visão geral.", "warn");
-    return;
-  }
-  // A Visão geral da Saúde Indígena é o mapa (`dashboard`), não esta.
-  if (
-    requestedView === "visao-area" &&
-    obterDadosDoMonitoramento().areaAtual === AREA_SAUDE_INDIGENA
-  )
-    return navigate("dashboard");
   if (requestedView === "nucleo" && !can("cores")) {
     toast("Sem permissão para Editais.", "warn");
     return;
@@ -2437,19 +2436,8 @@ function navigate(view) {
 
   if (requestedView === "dashboard") {
     $("page-dashboard").classList.add("active");
-    setPageTitle(cfgValue("page_title"), cfgValue("page_subtitle"));
+    prepararVisaoGeralDaArea();
     renderAll();
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (requestedView === "visao-area") {
-    $("page-visao-area").classList.add("active");
-    setPageTitle(
-      "Visão geral",
-      subtituloDaArea("Editais, vagas e próximas etapas."),
-    );
-    window.visaoGeralDaAreaController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -2514,11 +2502,53 @@ function navigate(view) {
   void syncOnlinePresence();
 }
 
-/* Visão geral (SEDE e Projetos), Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
+/* Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
 function subtituloDaArea(sub) {
-  const area = nomeDaArea(obterDadosDoMonitoramento().areaAtual);
+  const area = nomeDaArea(areaAtual());
   return [area, sub].filter(Boolean).join(" · ");
 }
+
+const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
+
+/*
+  A VISÃO GERAL É UMA SÓ PARA AS TRÊS ÁREAS
+
+  Saúde Indígena, SEDE e Projetos abrem esta mesma página, com os editais da
+  área atual (`rowsDaAreaAtual`). Muda o bloco do mapa — DSEIs na Saúde
+  Indígena, municípios das vagas em Projetos, nenhum na SEDE — e o cabeçalho
+  (`src/lib/visao-geral-da-area.js`, `src/modules/municipios-da-visao-geral.js`).
+*/
+function prepararVisaoGeralDaArea() {
+  const area = areaAtual();
+  aplicarAreaNaVisaoGeral($("page-dashboard"), area);
+  if (currentView !== "dashboard") return;
+  const { titulo, subtitulo } = cabecalhoDaVisaoGeral(area, {
+    titulo: cfgValue("page_title"),
+    subtitulo: cfgValue("page_subtitle"),
+  });
+  setPageTitle(titulo, subtitulo);
+}
+
+/*
+  Trocou a área (menu): sai do DSEI aberto, recorta os filtros pelas opções da
+  área nova e redesenha. Roda também fora da Visão geral — o recorte fica
+  pronto para quando ela abrir.
+*/
+let areaDaVisaoGeral = areaAtual();
+function aoMudarDadosDoMonitoramento() {
+  const area = areaAtual();
+  if (area === areaDaVisaoGeral) return;
+  areaDaVisaoGeral = area;
+  if (_mapInited && dseiSelecionado) resetDetailMap({ silent: true });
+  else sairDoTerritorio();
+  lastMapUfKey = null;
+  _lastMapAutoFitKey = "";
+  prepararVisaoGeralDaArea();
+  if (!dataLoadedAtLeastOnce) return;
+  populateFilters();
+  applyFilters();
+}
+assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento);
 
 function setPageTitle(title, sub) {
   $("pageTitle").textContent = title;
@@ -2688,24 +2718,24 @@ function compareFilterValues(field, a, b) {
   });
 }
 /*
-  Editais que o painel da Saúde Indígena considera. `rows` tem tudo o que está
-  em TB_MONITORAMENTO_INDIGENA, inclusive SEDE, MFC e o resto do CORES, porque
-  Editais e a busca global precisam de todos. Filtros, KPIs, mapa, tabela e
-  exportação da Saúde Indígena partem daqui.
+  Editais que a Visão geral considera: os da área atual (Saúde Indígena, SEDE
+  ou Projetos, por `CO_AREA`). `rows` tem tudo o que está em
+  TB_MONITORAMENTO_INDIGENA, porque Editais e a busca global precisam de
+  todos. Filtros, KPIs, mapa, tabela e exportação partem daqui.
 */
-function rowsDaSaudeIndigena() {
-  return rows.filter(ehEditalDaSaudeIndigena);
+function rowsDaAreaAtual() {
+  return linhasDaArea(rows, areaAtual());
 }
 function optionValuesFor(field) {
   return opcoesDoCampo(
-    rowsDaSaudeIndigena(),
+    rowsDaAreaAtual(),
     filterState,
     field,
     opcoesDeFiltro({ comparar: (a, b) => compareFilterValues(field, a, b) }),
   );
 }
 function pruneFilterSelections() {
-  return podarSelecoes(rowsDaSaudeIndigena(), filterState, opcoesDeFiltro());
+  return podarSelecoes(rowsDaAreaAtual(), filterState, opcoesDeFiltro());
 }
 /* A opção aparece com a busca do menu? (sem acento, sem caixa) */
 function opcaoCasaComBusca(field, value) {
@@ -2912,7 +2942,7 @@ function applyFilters() {
   ensureSearchInputTextColor();
   const qt = normalizeForSort($("tableSearch")?.value);
   const chaveDaLinha = (r) => dseiKey(r.unidade);
-  filtered = rowsDaSaudeIndigena()
+  filtered = rowsDaAreaAtual()
     .filter((r) => {
       const hay = [
         r.processo,
@@ -3082,13 +3112,13 @@ function renderAll() {
   renderTable();
 }
 function canUseMonitoramentoPayload() {
-  // O resumo do servidor soma todos os editais, CORES inclusive. Só serve
-  // quando não há nenhum edital fora da Saúde Indígena na base.
+  // O resumo do servidor soma todos os editais, de todas as áreas. Só serve
+  // quando não há nenhum edital fora da área atual na base.
   return (
     !!monitoramentoPayload &&
     !hasActiveFilter() &&
     !hideClosed &&
-    rowsDaSaudeIndigena().length === rows.length
+    rowsDaAreaAtual().length === rows.length
   );
 }
 
@@ -3096,7 +3126,7 @@ function renderKpis() {
   const payloadKpis = canUseMonitoramentoPayload()
     ? monitoramentoPayload.kpis
     : null;
-  // A conta local é a mesma da Visão geral das outras áreas (src/lib/indicadores-do-monitoramento.js).
+  // A conta local: src/lib/indicadores-do-monitoramento.js.
   const locais = indicadoresDoMonitoramento(filtered);
   const vagas = payloadKpis ? n(payloadKpis.vagas_total) : locais.vagas;
   const contrat = payloadKpis ? n(payloadKpis.contratados) : locais.contratados;
@@ -10856,10 +10886,56 @@ function drawPolos(d) {
 // compat: chamada antiga renderMap() agora inicializa/atualiza o Leaflet
 function renderMap() {
   if (currentView !== "dashboard") return;
+  // SEDE: a Visão geral não tem mapa (o bloco some pelo CSS).
+  const mapa = mapaDaVisaoGeral(areaAtual());
+  if (!mapa) return;
   initLeaflet();
   if (!_leaflet) return;
   scheduleMapResize(60);
-  drawDSEIBubbles();
+  _leaflet.__agsusSuspenderCamadasIndigenas?.(mapa !== MAPA_DOS_DSEIS);
+  if (mapa === MAPA_DOS_MUNICIPIOS) desenharMunicipiosNoMapa();
+  else drawDSEIBubbles();
+}
+
+/*
+  Projetos: o mapa nacional é o mesmo, com os municípios das vagas no lugar
+  dos DSEIs e das CASAIs (`municipios-da-visao-geral.js`).
+*/
+const carregadorDeMunicipios = criarCarregadorDeMunicipios({
+  obterSupabase: () => sb,
+});
+let desenhoDosMunicipios = 0;
+function desenharMunicipiosNoMapa() {
+  const area = areaAtual();
+  const desenho = ++desenhoDosMunicipios;
+  _layerDSEI.clearLayers();
+  _marcadoresDsei = [];
+  _tracosDoLeque = [];
+  _layerPolos.clearLayers();
+  _layerUbsi?.clearLayers();
+  _layerCasaiLocal?.clearLayers();
+  _layerUF?.clearLayers();
+  _layerCasai?.clearLayers();
+  syncMapLevelUI();
+  void desenharMunicipiosDaArea({
+    L,
+    mapa: _leaflet,
+    camada: _layerDSEI,
+    area,
+    carregador: carregadorDeMunicipios,
+    lista: $("brasilDseiList"),
+    conta: $("brasilDseiCount"),
+    contador: $("masterMapCount"),
+    enquadrar: !_suppressAutoFit,
+    limitesDoBrasil: L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]),
+    aindaVale: () =>
+      desenho === desenhoDosMunicipios &&
+      area === areaAtual() &&
+      currentView === "dashboard",
+    podeFlutuar: () =>
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true,
+  });
 }
 
 /*
@@ -11019,7 +11095,14 @@ function syncMapLevelUI() {
     // estado aberto/fechado.
     const titulo = box.querySelector("[data-legenda-titulo]");
     const corpo = box.querySelector("[data-legenda-corpo]");
-    if (titulo && corpo) {
+    if (
+      titulo &&
+      corpo &&
+      mapaDaVisaoGeral(areaAtual()) === MAPA_DOS_MUNICIPIOS
+    ) {
+      titulo.innerHTML = '<b style="color:#22577a">Legenda</b>';
+      corpo.innerHTML = legendaDosMunicipios();
+    } else if (titulo && corpo) {
       titulo.innerHTML = showingPolos
         ? '<b style="color:#22577a">Polos base do DSEI</b>'
         : '<b style="color:#22577a">Legenda</b>';
@@ -11265,7 +11348,7 @@ function removerPilula(acao, botao) {
 function renderTable() {
   if (!visibleCols) visibleCols = loadVisibleCols();
   const detailRows = filtered;
-  const totalRows = rowsDaSaudeIndigena();
+  const totalRows = rowsDaAreaAtual();
   renderSortIndicators();
   renderActiveFilters();
   const sortText = tableSort.field
@@ -12300,7 +12383,7 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 function exportCSV() {
-  const source = filtered.length ? filtered : rowsDaSaudeIndigena();
+  const source = filtered.length ? filtered : rowsDaAreaAtual();
   const fieldMap = [
     { key: "unidade", label: "Unidade" },
     { key: "uf", label: "UF" },
