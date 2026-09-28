@@ -44,8 +44,12 @@ test.describe("AgSUS Monitora smoke", () => {
     await expectNoSupabaseCdn(request, "/analises.html");
     await page.goto("/analises.html", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveTitle("Painel de análises curriculares · Saúde Indígena — MONITORA");
-    await expect(page.locator("h1")).toContainText("Painel de análises curriculares");
+    await expect(page).toHaveTitle(
+      "Painel de análises curriculares · Saúde Indígena — MONITORA",
+    );
+    await expect(page.locator("h1")).toContainText(
+      "Painel de análises curriculares",
+    );
 
     const guide = page.locator("[data-arara-guide]");
     const panel = guide.locator(".arara-assistant__panel");
