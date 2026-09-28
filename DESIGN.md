@@ -178,8 +178,12 @@ Os valores de hoje (560, 680, 700, 720, 820, 1180) migram para o mais próximo q
   `--color-action-primary`, texto `--color-text-inverse`, hover `--color-action-primary-hover`,
   pressionado `--color-action-primary-pressed`. Sem gradiente, sem sombra. Ação principal é azul,
   também em "Salvar", "Aprovar" ou "Publicar". Um primário por contexto.
-- **Secundário** (`.btn.secondary`): fundo `--surface-card`, borda `--border-control`, texto `--text-primary`.
-- **Terciário** (`.btn.outline`): sem fundo, texto `--brand-primary`. Para ações de baixo peso.
+- **Secundário** (`.btn.secondary`; `.btn.outline` é alias): tonal e sem borda (DS 11.1) — fundo
+  `--state-info-soft`, texto `--state-info`, hover um tom acima
+  (`color-mix(in srgb, var(--state-info) 12%, var(--state-info-soft))`). Os tokens de estado trocam no
+  escuro, sem regra própria (`app.css`).
+- **Ghost só com ícone** (`.btn.icon.outline`, ações das linhas de tabela): sem fundo, texto
+  `--text-secondary`, hover `--surface-hover`.
 - **Destrutivo** (`.btn.danger`; hoje só existe em `.config-governance-footer`): `--state-danger`. Sempre com confirmação que cita o objeto afetado.
 - Geometria (Design System 11.1, `md`): altura de 36px (44px no toque, `--mobile-touch-size`),
   padding `0 --space-4`, `--radius-md`, `--text-button` peso 500, ícone a 8px do texto.
@@ -196,7 +200,9 @@ que compete com o conteúdo. A cor vai para o tile do ícone e para o indicador,
 
 **Card** — exceção aceita ao Design System 11.7 (que pede faixa sem card), por decisão do
 responsável em 25/09/2026: os KPIs em card leem melhor no MONITORA. O card segue o DS 11.6.
-Feito na Visão geral da Saúde Indígena (`health-reference-kpis.css`).
+Feito na Visão geral da Saúde Indígena (`health-reference-kpis.css`), em Editais
+(`.nucleo-kpi-card`, `nucleo-operational-enhancements.css`) e na Lista de aprovados, nas duas abas
+(`.approved-kpi`, `lista-aprovados.css`): card de 78px, padding `--space-3 --space-4`.
 
 ```
 ┌──────────────────────────┐   --surface-card · borda 1px --border-subtle · --radius-lg · sem sombra
@@ -435,22 +441,24 @@ brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNume
 
 ## 12. Divergências com o Design System AgSUS
 
-Medido em 2026-09-25, depois do acabamento do mapa da Visão geral (botões, Mapa/Satélite, selo e
-legenda no Design System; antes, na troca de tokens: 215 · 54 · 28 · 157 · 547 · 1645). Ocorrências em `src/styles/*.css`, contadas com
+Medido em 2026-09-28, depois de Editais, Cronograma e Lista de aprovados no Design System (KPIs no
+card compacto, sentence case, pesos até 600, botão secundário tonal, tabelas do DS 11.4; antes:
+163 · 42 · 12 · 147 · 497 · 1571, medido em 2026-09-25 depois do mapa da Visão geral; na troca de
+tokens: 215 · 54 · 28 · 157 · 547 · 1645). Ocorrências em `src/styles/*.css`, contadas com
 `cat src/styles/*.css | grep -oiE '<padrão>' | wc -l` (hex: `#[0-9a-f]{3,8}`). O caminho é o
 da seção 8: resolver ao migrar cada tela (de preferência junto com a passagem para React), não num
 mutirão.
 
 | Divergência | Hoje | Alvo |
 |---|---|---|
-| Peso ≥ 700 (`font-weight: 700/800/900/bold`) | 163 | 0 (máximo 600) |
-| `text-transform: uppercase` | 42 | 0 (sentence case) |
-| `linear-gradient` | 12 | 0 (proibido) |
-| `box-shadow` | 147 | só menus, popovers, modais e toasts |
-| `!important` | 497 | < 50 (seção 8) |
-| Hex chumbado em CSS | 1571 | só dentro de `tokens.css` |
-| **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena; Editais e Aprovados ainda com o card antigo. | Manter card; alinhar Editais e Aprovados ao mesmo card. |
-| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). | Manter card; não aninhar card dentro de card. Entre os blocos, 12px (ritmo compacto de antes), não os 48px de seção do DS 5.2. |
+| Peso ≥ 700 (`font-weight: 700/800/900/bold`) | 106 | 0 (máximo 600) |
+| `text-transform: uppercase` | 24 | 0 (sentence case) |
+| `linear-gradient` | 7 | 0 (proibido) |
+| `box-shadow` | 138 | só menus, popovers, modais e toasts |
+| `!important` | 489 | < 50 (seção 8) |
+| Hex chumbado em CSS | 1414 | só dentro de `tokens.css` |
+| **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena, em Editais e na Lista de aprovados (as duas abas): o mesmo card compacto de 78px. | Manter card. |
+| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). Editais, Cronograma e Lista de aprovados mantêm o card em volta da tabela e dos blocos, sem sombra, com 12px entre os blocos. | Manter card; não aninhar card dentro de card. Entre os blocos, 12px (ritmo compacto de antes), não os 48px de seção do DS 5.2. |
 | Botão verde arredondado (`.btn.green`) | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu | `--color-action-primary`, `--radius-md`, sem sombra |
 | Emoji como ícone | feito no mapa da Visão geral: "Brasil" e "Calor" com Lucide `map` e `flame` (16px, `aria-hidden`), pelo registro `icones.js` (`controles-do-mapa.js`). A legenda do mapa nacional é recolhível (`ChevronDown`/`ChevronUp`) e começa fechada abaixo de 768px. | Nenhum emoji no lugar de ícone (DS 14). |
 | Modo escuro | existe | fora do escopo do DS: manter, sem investir |

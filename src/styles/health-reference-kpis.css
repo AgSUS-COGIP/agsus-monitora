@@ -108,10 +108,15 @@
   align-items: flex-start;
   min-width: 0;
   min-height: 0;
-  padding: var(--space-3) var(--space-4);
+  /* A linha de 3px à esquerda come 2px a mais que a borda de 1px: o padding compensa, para o rótulo mais longo não quebrar. */
+  padding: var(--space-3) var(--space-4) var(--space-3)
+    calc(var(--space-4) - 2px);
   overflow: visible;
   background: var(--surface-card);
+  --kpi-tom: var(--state-info);
   border: 1px solid var(--border-subtle);
+  /* Cor do KPI (pedido do responsável, como no SIGAV): linha de 3px à esquerda e o número na cor do estado. */
+  border-left: 3px solid var(--kpi-tom);
   border-radius: var(--radius-lg);
   box-shadow: none;
   color: var(--text-primary);
@@ -182,10 +187,19 @@
   color: var(--state-danger);
   background: var(--state-danger-soft);
 }
+#page-dashboard .kpi.ag-green {
+  --kpi-tom: var(--state-success);
+}
+#page-dashboard .kpi.ag-yellow {
+  --kpi-tom: var(--state-warning);
+}
+#page-dashboard .kpi.ag-red {
+  --kpi-tom: var(--state-danger);
+}
 #page-dashboard .kpi > b {
   display: block;
   margin-top: var(--space-1);
-  color: var(--text-primary);
+  color: var(--kpi-tom);
   font-size: var(--text-metric-sm);
   line-height: 1.2;
   font-weight: 600;
