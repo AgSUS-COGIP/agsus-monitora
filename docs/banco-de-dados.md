@@ -609,3 +609,28 @@ Ensaio (begin…rollback, produção): 5 abas, 15 ligações, a função como
 `authenticated` (admin ativo) devolve o menu de hoje; `anon` recebe `42501` na
 função e na tabela; `authenticated` recebe `42501` ao inserir; migration +
 rollback não deixam tabela nem função.
+
+## 10. Recursos dos candidatos viram aba nativa
+
+Migration `20260929120000_recursos.sql` (rollback em `supabase/rollback/`;
+ensaiada com o rollback em 29/09/2026 — as quatro funções de permissão voltam
+com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
+"Recursos" (`TB_PAINEL_EXTERNO`) fica até a aba ser aprovada.
+
+- `TB_ORIGEM_RECURSO` (domínio: análise curricular, entrevista, resultado
+  final; avaliação de conhecimentos inativa), `TB_RECURSO_CANDIDATO` (edital =
+  `TB_MONITORAMENTO_INDIGENA`, área do edital; candidato = FK para
+  `TB_ANALISE_CURRICULAR`, sem cópia de nome/vaga/nota; só "fora das análises"
+  guarda o digitado; nota e resultado do dia do cadastro para saber se a nota
+  mudou; etapas com quando e quem) e `TH_RECURSO_CANDIDATO` (auditoria).
+  RLS ligada, sem policy nem grant: só as RPCs leem e escrevem.
+- RPCs `SECURITY DEFINER`: `get_recursos_da_area` (json), `get_recurso_candidato_detalhe`,
+  `buscar_candidatos_recurso`, `salvar_recurso_candidato` (revisão → `40001`,
+  duplicado em análise → `23505` salvo `permitir_duplicado`),
+  `marcar_etapa_recurso`, `excluir_recurso_candidato` (lógica, com motivo).
+- Permissão: recurso `recursos` (admin = admin, edital_gestor = editor,
+  usuario/contratador = leitor) + área do edital (`FC_PODE_AREA`). Ler exige
+  leitor; gravar e buscar candidato, editor.
+- Catálogo: aba `recursos` (ícone `scale`, ordem 6) nas três áreas.
+- O prazo de resposta é classificado no front a partir das etapas do
+  cronograma (`src/lib/prazo-do-recurso.js`); nada é guardado no banco.

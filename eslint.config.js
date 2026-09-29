@@ -24,6 +24,7 @@ export default [
       "src/lib/**/*.js",
       "src/modules/**/*.js",
       "src/componentes/**/*.{js,jsx}",
+      "src/recursos/**/*.{js,jsx}",
       "scripts/**/*.mjs",
       "tests/**/*.js",
       "vite.config.js",

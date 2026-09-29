@@ -36,11 +36,8 @@ import {
 } from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
 import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
-import { semOPainelAntigoDeAnalises } from "../lib/pagina-de-analises.js";
-import {
-  abrirPaginaDeAnalises,
-  quadroDasAnalises,
-} from "./pagina-de-analises.js";
+import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
+import { abrirPaginaDoPainel, quadroDoPainel } from "./pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import {
   MAPA_DOS_DSEIS,
@@ -167,6 +164,7 @@ import {
 } from "../lib/sessao.js";
 import {
   canViewCore,
+  canViewRecursos,
   canManageSettings,
   canManageAccess,
   canImportApprovedList,
@@ -1554,6 +1552,7 @@ function isViewAllowed(view) {
     return profile?.permissoes ? can("calendario") : can("cores");
   if (view === "approved") return canViewCore(profile);
   if (view === "analises") return can("analises");
+  if (view === "recursos") return canViewRecursos(profile);
   if (view === "config") return can("config");
   if (view.startsWith("panel:")) {
     const code = view.split(":")[1];
@@ -1581,6 +1580,7 @@ function systemHomeView() {
   if (can("calendario")) return "calendario";
   if (canViewCore(profile)) return "approved";
   if (can("analises")) return "analises";
+  if (canViewRecursos(profile)) return "recursos";
   if (can("config")) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
@@ -2321,6 +2321,7 @@ function buildNav() {
     calendario: can("calendario") || (!profile?.permissoes && can("cores")),
     approved: canViewCore(profile),
     analises: can("analises"),
+    recursos: canViewRecursos(profile),
     config: can("config"),
   };
   const paineis = can("paineis")
@@ -2386,6 +2387,10 @@ function navigate(view) {
   }
   if (requestedView === "analises" && !can("analises")) {
     toast("Sem permissão para Análises curriculares.", "warn");
+    return;
+  }
+  if (requestedView === "recursos" && !canViewRecursos(profile)) {
+    toast("Sem permissão para Recursos.", "warn");
     return;
   }
   if (requestedView === "config" && !can("config")) {
@@ -2477,7 +2482,17 @@ function navigate(view) {
     document.body.classList.add("external-panel-mode");
     $("page-analises").classList.add("active");
     setPageTitle("Análises curriculares", subtituloDaArea(""));
-    abrirPaginaDeAnalises($("page-analises"));
+    abrirPaginaDoPainel($("page-analises"));
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "recursos") {
+    // O painel de recursos (recursos.html) também traz o próprio cabeçalho.
+    document.body.classList.add("external-panel-mode");
+    $("page-recursos").classList.add("active");
+    setPageTitle("Recursos", subtituloDaArea(""));
+    abrirPaginaDoPainel($("page-recursos"));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -12318,8 +12333,8 @@ function exitExternalPanel() {
 }
 
 function getFullscreenTarget() {
-  if (currentView === "analises") {
-    const frame = quadroDasAnalises($("page-analises"));
+  if (currentView === "analises" || currentView === "recursos") {
+    const frame = quadroDoPainel($("page-" + currentView));
     if (frame) return frame;
   }
   if (currentView && currentView.startsWith("panel:") && currentPanel) {

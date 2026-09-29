@@ -29,20 +29,9 @@ import "./analises-missing-responsible-filter.js";
 import "./analises-interface-refinement.js";
 import "./analises-residual-ui-fixes.js";
 import "./analises-dark-mode-fix.js";
-
-function compactAnalisesSessionTimer() {
-  const timer = document.getElementById("agsusSessionTimer");
-  const footerMeta = document.querySelector(".footer > span:last-child");
-  if (!timer || !footerMeta) return;
-
-  timer.classList.add("analises-session-compact");
-  timer.setAttribute("aria-label", "Tempo restante da sessão");
-  timer.title = "Tempo restante até o encerramento da sessão por inatividade.";
-
-  if (timer.parentElement !== footerMeta) {
-    footerMeta.prepend(timer);
-  }
-}
+// Por último: o visual comum dos painéis vem depois de todo o CSS acima (analises-painel.css).
+import "./analises-painel.css";
+import { compactarCronometroDaSessao } from "./cronometro-da-sessao.js";
 
 const embeddedInParentApp = window.parent !== window;
 if (!embeddedInParentApp) {
@@ -57,7 +46,7 @@ if (!embeddedInParentApp) {
 installCsvBlobSecurityGuard();
 if (!embeddedInParentApp) {
   installSessionLifecycle();
-  compactAnalisesSessionTimer();
+  compactarCronometroDaSessao();
 }
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();

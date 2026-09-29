@@ -31,6 +31,14 @@ const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
 const MIGRATION = ler(
   "supabase/migrations/20260929110000_catalogo_de_abas.sql",
 );
+/*
+  Abas que entraram depois, cada uma na migration dela (o mesmo formato de
+  insert): o seed do catálogo é a soma de todas.
+*/
+const MIGRATIONS_DO_SEED = [
+  MIGRATION,
+  ler("supabase/migrations/20260929120000_recursos.sql"),
+];
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu.json"),
 );
@@ -38,11 +46,20 @@ const ARVORES_DE_ANTES = JSON.parse(
   ler("tests/fixtures/menu-lateral-antes-do-catalogo.json"),
 );
 
-/* As linhas do `insert into public."<tabela>" (...) values (...), (...);`. */
+/* As linhas dos `insert into public."<tabela>" (...) values (...), (...);` do seed. */
 function linhasDoInsert(tabela) {
-  const inicio = MIGRATION.indexOf(`insert into public."${tabela}"`);
-  expect(inicio, tabela).toBeGreaterThan(-1);
-  const insert = MIGRATION.slice(inicio, MIGRATION.indexOf(";", inicio));
+  const linhas = MIGRATIONS_DO_SEED.flatMap((sql) =>
+    sql.includes(`insert into public."${tabela}"`)
+      ? linhasDoInsertEm(sql, tabela)
+      : [],
+  );
+  expect(linhas.length, tabela).toBeGreaterThan(0);
+  return linhas;
+}
+
+function linhasDoInsertEm(sql, tabela) {
+  const inicio = sql.indexOf(`insert into public."${tabela}"`);
+  const insert = sql.slice(inicio, sql.indexOf(";", inicio));
   const [cabecalho, valores] = insert.split(/\)\s*values\s*/);
   const colunas = [...cabecalho.matchAll(/"([A-Z_]+)"/g)]
     .map((m) => m[1])
@@ -133,6 +150,7 @@ describe("o seed da migration é o catálogo do código", () => {
       "calendario",
       "approved",
       "analises",
+      "recursos",
     ]);
     const views = Object.values(paginasPorArea(ABAS_DO_MENU)).flatMap(
       (paginas) => paginas.map((pagina) => pagina.view),

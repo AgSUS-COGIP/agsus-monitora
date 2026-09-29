@@ -77,6 +77,13 @@ export const AREAS_DO_MENU = Object.freeze([
   `analises`) repetido em cada área. Virou página: a permissão é só a do
   recurso `analises`, e o quadro é dela (`src/modules/pagina-de-analises.js`).
 
+  Recursos (dos candidatos) era o painel externo do Apps Script. Virou a aba
+  nativa `recursos`: o painel `recursos.html` (com a cara do de análises)
+  num quadro da página, como Análises curriculares
+  (`src/modules/pagina-do-painel.js`), com o recurso de permissão `recursos`
+  (migration `20260929120000_recursos.sql`). O painel externo continua em
+  Painéis até a aba nova ser aprovada.
+
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
   por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
 */
@@ -140,6 +147,16 @@ export const ABAS_DO_MENU = Object.freeze(
       ordem: 5,
       view: "analises",
       recurso: "analises",
+      tipo: "nativa",
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "recursos",
+      rotulo: "Recursos",
+      icone: "scale",
+      ordem: 6,
+      view: "recursos",
+      recurso: "recursos",
       tipo: "nativa",
       areas: NAS_TRES_AREAS,
     },
