@@ -398,3 +398,62 @@ describe("contrato e acesso da função", () => {
     expect(rollback).toContain('drop table if exists public."TB_ABA";');
   });
 });
+
+/*
+  Selo "BETA": campo opcional só do front por enquanto (`ABAS_DO_MENU`), fora
+  da comparação seed × código. Quando o banco mandar `ds_selo` ou `beta`, vale
+  o do banco; sem eles, o do código.
+*/
+describe("selo beta das abas", () => {
+  const recursosDe = (abas) => abas.find((aba) => aba.id === "recursos");
+
+  it("no código, só Recursos é beta; as outras nem têm o campo", () => {
+    expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
+      ["recursos"],
+    );
+    expect(
+      ABAS_DO_MENU.filter((aba) => aba.id !== "recursos").some((aba) =>
+        Object.hasOwn(aba, "beta"),
+      ),
+    ).toBe(false);
+  });
+
+  it("o banco de hoje (sem ds_selo) herda o selo do código", () => {
+    expect(recursosDe(abasDoCatalogo(RESPOSTA_DO_ENSAIO)).beta).toBe(true);
+    expect(
+      paginasDaArea(abasDoCatalogo(RESPOSTA_DO_ENSAIO), "sede").at(-1),
+    ).toEqual({
+      view: "recursos",
+      rotulo: "Recursos",
+      icone: "scale",
+      beta: true,
+    });
+  });
+
+  it("ds_selo ou beta do banco valem sobre o código", () => {
+    const comSelo = (campos) =>
+      abasDoCatalogo(
+        RESPOSTA_DO_ENSAIO.map((aba) => ({
+          ...aba,
+          ...(aba.co_aba === "recursos" ? campos : {}),
+          ...(aba.co_aba === "editais" ? { ds_selo: "BETA" } : {}),
+        })),
+      );
+    expect(recursosDe(comSelo({ ds_selo: null })).beta).toBeUndefined();
+    expect(recursosDe(comSelo({ beta: false })).beta).toBeUndefined();
+    expect(comSelo({}).find((aba) => aba.id === "editais").beta).toBe(true);
+  });
+
+  it("o item do menu leva o selo da página beta", () => {
+    const itens = montarArvoreDoMenu({
+      permitidas: { nucleo: true, recursos: true },
+    })[0].itens;
+    expect(itens.find((i) => i.view === "recursos").beta).toBe(true);
+    expect(
+      Object.hasOwn(
+        itens.find((i) => i.view === "nucleo"),
+        "beta",
+      ),
+    ).toBe(false);
+  });
+});

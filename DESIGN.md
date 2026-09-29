@@ -147,7 +147,7 @@ A escada já existe em parte (`app.css:40-42`). Formalizada:
 |---|---|---|
 | `--z-sticky` | 100 | cabeçalho de tabela, barra de filtros |
 | `--z-header` | 10010 | `.app .top` |
-| `--z-sidebar` | 10020 | barra lateral acima de 900px: a alça de recolher e o painel flutuante do menu passam por cima do cabeçalho |
+| `--z-sidebar` | 10020 | barra lateral acima de 900px: o painel flutuante do menu e as dicas do trilho passam por cima do cabeçalho |
 | `--z-popover` | 10040 | popovers do cabeçalho |
 | `--z-map-immersive` | 12050 | mapa imersivo |
 | `--z-exit-dialog` | 15000 | diálogo de saída da Saúde Indígena |
@@ -300,7 +300,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
 
 **Todo o sistema desenha Lucide.** O Font Awesome não é mais carregado. Dois caminhos:
 
-- **Barra lateral e o que é dela** (menu inferior do celular, Sair, tema, alça de recolher): SVG
+- **Barra lateral e o que é dela** (menu inferior do celular, Sair, tema, botão de recolher): SVG
   Lucide de verdade, pelo registro abaixo.
 - **Resto do sistema:** o HTML e os módulos ainda escrevem `<i class="fa-solid fa-…">`, mas
   `src/styles/icones-lucide.css` (gerado por `npm run icones` a partir de

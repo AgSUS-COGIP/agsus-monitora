@@ -11,8 +11,8 @@ import {
   AREA_DAS_CONFIGURACOES,
   areaAberta,
   destinoAoTrocarDeArea,
+  ehAreaDoSistema,
   FLUTUANTE_FECHADO,
-  ICONE_DO_SELETOR_DE_AREA,
   itemAtivoDaArvore,
   navegacaoTransborda,
   posicaoDoPainelFlutuante,
@@ -34,19 +34,22 @@ import { marcarItemAtivoNoMenu } from "./estado.js";
   O menu em áreas. O catálogo, a árvore e o estado do painel flutuante são
   lógica pura, em `src/lib/menu-lateral.js`; aqui fica o desenho.
 
-  - Com mais de uma área, o topo é o SELETOR DE ÁREA ("Área: Projetos", com a
-    bolinha da cor da área) e, abaixo dele, só as páginas da área atual — no
-    lugar das três áreas abertas uma sob a outra. Trocar de área chama
-    `definirAreaAtual` e abre a mesma página na área nova, ou a primeira dela
-    (`destinoAoTrocarDeArea`). Com uma área só, não há seletor: a área aparece
-    como acordeão, como antes.
+  - Com mais de uma área, o topo é o SELETOR DE ÁREA ("Área: Projetos", com o
+    ícone da área e a bolinha da cor dela) e, abaixo dele, só as páginas da
+    área atual — no lugar das três áreas abertas uma sob a outra. Trocar de
+    área chama `definirAreaAtual` e abre a mesma página na área nova, ou a
+    primeira dela (`destinoAoTrocarDeArea`). Com uma área só, não há seletor:
+    a área aparece como acordeão, como antes.
   - Expandida (e na gaveta do celular): Painéis e Administração são acordeões,
     e todos nascem abertos. O que se guarda é a lista dos que a pessoa fechou.
     Só a seta gira; a altura não anima (Design System AgSUS, 7.1).
-  - Recolhida (acima de 900px): cada grupo é um ícone, e o painel dele vira um
-    flutuante `position: fixed` ao lado do trilho, com a pílula do nome em
-    cima. O seletor de área também: o ícone de trocar, com a bolinha da área,
-    abre a lista das áreas. O estado (qual está aberto, e por quê) é o de
+  - Recolhida (acima de 900px), de cima para baixo: o seletor vira o ícone da
+    área atual, com o anel e a bolinha da cor dela (dica "Área: <nome>"; o
+    clique abre a lista das áreas); cada página da área atual é um ícone que
+    navega num clique (`direto`, com a dica do nome e a página aberta em
+    destaque); Painéis e Administração são um ícone cada, e o painel deles
+    vira um flutuante `position: fixed` ao lado do trilho, com a pílula do
+    nome em cima. O estado do flutuante (qual está aberto, e por quê) é o de
     `proximoFlutuante`: um por vez, `Esc` fecha, um clique não prende o painel.
 
   O DOM continua sendo contrato: `#nav`, `[data-view]`, `[data-secao]`,
@@ -118,9 +121,18 @@ function usarTransbordo(refNavegacao, refNav) {
 
 /*
   O comportamento de gatilho do painel flutuante no trilho, comum às áreas e
-  ao seletor: posição alinhada ao ícone, ponteiro, foco e `Esc`.
+  ao seletor: posição alinhada ao ícone, ponteiro, foco e `Esc`. Com
+  `soNoClique` (o seletor de área), apontar e focar não abrem o painel — só
+  mostram a dica — e quem abre é o clique (ou Enter/Espaço).
 */
-function usarGatilhoFlutuante({ id, trilho, flutuante, despachar, espera }) {
+function usarGatilhoFlutuante({
+  id,
+  trilho,
+  flutuante,
+  despachar,
+  espera,
+  soNoClique = false,
+}) {
   const refSecao = useRef(null);
   const refCabecalho = useRef(null);
   const refPainel = useRef(null);
@@ -140,7 +152,8 @@ function usarGatilhoFlutuante({ id, trilho, flutuante, despachar, espera }) {
 
   const eventos = {
     onPointerEnter(evento) {
-      if (!trilho || evento.pointerType === "touch" || !temHover()) return;
+      if (!trilho || soNoClique) return;
+      if (evento.pointerType === "touch" || !temHover()) return;
       window.clearTimeout(espera.current);
       despachar({ tipo: "apontar", area: id });
     },
@@ -154,7 +167,7 @@ function usarGatilhoFlutuante({ id, trilho, flutuante, despachar, espera }) {
       );
     },
     onFocus() {
-      if (trilho) despachar({ tipo: "focar", area: id });
+      if (trilho && !soNoClique) despachar({ tipo: "focar", area: id });
     },
     onBlur(evento) {
       if (refSecao.current?.contains(evento.relatedTarget)) return;
@@ -173,21 +186,39 @@ function usarGatilhoFlutuante({ id, trilho, flutuante, despachar, espera }) {
   return { refSecao, refCabecalho, refPainel, eventos, dispensarPorEsc };
 }
 
-function ItemDoMenu({ item, ativo, aoEscolher }) {
+/*
+  Todo item mostra o ícone da página à esquerda do nome — o mesmo do trilho.
+  Aba marcada como beta (`item.beta`, do catálogo) leva o selo "BETA" ao lado
+  do nome.
+
+  `direto`: no trilho, a página é um ícone que navega num clique. O nome (e o
+  selo) saem de vista — continuam no nome do botão para o leitor de tela —, o
+  beta vira um ponto no ícone e os dois aparecem na dica (`data-dica`) no
+  ponteiro e no foco.
+*/
+function ItemDoMenu({ item, ativo, direto = false, aoEscolher }) {
+  const dica = item.beta ? `${item.rotulo} · BETA` : item.rotulo;
   return (
     <li>
       <button
         type="button"
-        className={classes("menu-item", ativo && "active")}
+        className={classes(
+          "menu-item",
+          ativo && "active",
+          item.beta && "menu-item--beta",
+        )}
         data-view={item.view}
         data-secao={item.secao}
         data-area={item.area}
         data-rotulo={item.rotulo}
         data-icone={item.icone}
+        data-dica={direto ? dica : undefined}
         aria-current={ativo ? "page" : undefined}
         onClick={aoEscolher}
       >
+        <Icone nome={item.icone} className="menu-item__icone" />
         <span className="menu-item__rotulo">{item.rotulo}</span>
+        {item.beta ? <span className="menu-item__selo">BETA</span> : null}
       </button>
     </li>
   );
@@ -198,6 +229,7 @@ function Area({
   aberta,
   atual,
   semCabecalho = false,
+  direto = false,
   itemAtivo,
   trilho,
   flutuante,
@@ -214,6 +246,11 @@ function Area({
       despachar,
       espera,
     });
+  /*
+    Direta (as páginas da área no trilho, cada uma um ícone), não há cabeçalho
+    nem painel a abrir: ponteiro e foco não disparam o flutuante.
+  */
+  const semCabecalhoNemPainel = semCabecalho || direto;
   const idDoPainel = `menuArea-${area.id}`;
 
   const aoClicarNoCabecalho = () => {
@@ -226,17 +263,18 @@ function Area({
       ref={refSecao}
       className={classes(
         "menu-area",
-        (aberta || semCabecalho) && "menu-area--aberta",
+        (aberta || semCabecalhoNemPainel) && "menu-area--aberta",
         atual && "menu-area--atual",
-        flutuante && "menu-area--flutuante",
-        semCabecalho && "menu-area--sem-cabecalho",
+        flutuante && !direto && "menu-area--flutuante",
+        semCabecalhoNemPainel && "menu-area--sem-cabecalho",
+        direto && "menu-area--direta",
         area.id === AREA_DAS_CONFIGURACOES && "menu-area--administracao",
       )}
       data-area={area.id}
-      {...eventos}
-      onKeyDown={dispensarPorEsc}
+      {...(direto ? {} : eventos)}
+      onKeyDown={direto ? undefined : dispensarPorEsc}
     >
-      {semCabecalho ? null : (
+      {semCabecalhoNemPainel ? null : (
         <button
           ref={refCabecalho}
           type="button"
@@ -260,6 +298,7 @@ function Area({
               key={`${item.view}|${item.secao ?? ""}`}
               item={item}
               ativo={item === itemAtivo}
+              direto={direto}
               aoEscolher={() => aoEscolher(item, area.id, refCabecalho)}
             />
           ))}
@@ -271,8 +310,10 @@ function Area({
 
 /*
   "Área: Projetos ▾". Expandida, abre a lista das áreas logo abaixo (como um
-  acordeão, sem sobrepor o menu); no trilho, é um ícone com a bolinha da área,
-  e a lista vira o painel flutuante.
+  acordeão, sem sobrepor o menu); no trilho, é o ícone da própria área, com o
+  anel e a bolinha da cor dela e a dica "Área: <nome>", e o clique abre a
+  lista no painel flutuante. A cor nunca vai sozinha: o ícone e o nome dizem
+  qual é a área.
 */
 function SeletorDeArea({
   areas,
@@ -291,6 +332,7 @@ function SeletorDeArea({
       flutuante,
       despachar,
       espera,
+      soNoClique: true,
     });
   const idDoPainel = "menuSeletorDeArea";
 
@@ -342,10 +384,12 @@ function SeletorDeArea({
         aria-expanded={trilho ? flutuante : aberto}
         aria-controls={idDoPainel}
         aria-label={`Área atual: ${atual.rotulo}. Trocar de área`}
+        data-dica={trilho ? `Área: ${atual.rotulo}` : undefined}
+        data-cor-da-area={atual.id}
       >
         <span className="menu-seletor__marca" aria-hidden="true">
           <Icone
-            nome={ICONE_DO_SELETOR_DE_AREA}
+            nome={atual.icone}
             className="menu-area__icone menu-seletor__icone"
           />
           <span className="menu-seletor__ponto" data-cor-da-area={atual.id} />
@@ -533,8 +577,18 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
     />
   );
 
+  /*
+    No trilho, as páginas da área atual são ícones diretos (um clique navega);
+    Painéis e Administração continuam agrupados, com o painel flutuante.
+    Expandida, o seletor é o cabeçalho da área atual; com uma área só, ela é
+    acordeão.
+  */
   const conteudo = () => {
-    if (!recorte.comSeletor) return arvore.map((area) => desenharArea(area));
+    if (!recorte.comSeletor) {
+      return arvore.map((area) =>
+        desenharArea(area, { direto: trilho && ehAreaDoSistema(area.id) }),
+      );
+    }
     return [
       <SeletorDeArea
         key={ID_DO_SELETOR}
@@ -546,8 +600,7 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
         espera={espera}
         aoTrocar={trocarDeArea}
       />,
-      // Expandida, o seletor é o cabeçalho da área; no trilho, a área mantém o ícone.
-      desenharArea(recorte.grupoAtual, { semCabecalho: !trilho }),
+      desenharArea(recorte.grupoAtual, { semCabecalho: true, direto: trilho }),
       ...recorte.demais.map((area) => desenharArea(area)),
     ];
   };

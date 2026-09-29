@@ -9,7 +9,8 @@
   Cronograma, Lista de aprovados, Análises curriculares —, e a página abre
   recortada pela área escolhida (a "área atual", em `src/componentes/dados-do-monitoramento.js`).
   Abaixo delas ficam Painéis (os externos, que não têm área) e
-  Administração. Com a barra recolhida, cada grupo vira um ícone só.
+  Administração. Com a barra recolhida, cada página da área atual vira um
+  ícone (link direto), e Painéis e Administração, um ícone só cada.
 
   Por que "área" e não "módulo": em `permissoes-recursos.js` e
   `permissoes-por-modulo.js`, módulo já é o nome de cada página com permissão
@@ -70,8 +71,8 @@ export const AREAS_DO_MENU = Object.freeze([
   A Visão geral é a mesma página (`dashboard`) nas três áreas, recortada pela
   área atual; o que muda é o bloco do mapa — DSEIs na Saúde Indígena,
   municípios das vagas em Projetos, nenhum na SEDE
-  (`src/lib/visao-geral-da-area.js`). O ícone da página só aparece no menu
-  inferior do celular.
+  (`src/lib/visao-geral-da-area.js`). O ícone da página aparece no menu
+  inferior do celular e no trilho da barra recolhida.
 
   Análises curriculares era um painel externo (`TB_PAINEL_EXTERNO`, código
   `analises`) repetido em cada área. Virou página: a permissão é só a do
@@ -86,10 +87,18 @@ export const AREAS_DO_MENU = Object.freeze([
 
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
   por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
+
+  `beta` (opcional, só do front por enquanto): a aba ainda em teste, com o
+  selo "BETA" no menu. O banco ainda não tem a coluna, então o seed não o
+  traz e a comparação seed × código (`catalogo-de-abas.test.js`) o deixa de
+  fora. Quando o catálogo do banco mandar `ds_selo` ('beta') ou `beta`, vale o
+  do banco; enquanto não mandar, vale o daqui (`seloBeta`, abaixo).
 */
-const congelarAba = ({ areas, ...aba }) =>
+const congelarAba = ({ areas, beta, ...aba }) =>
   Object.freeze({
     ...aba,
+    // Só a aba beta leva o campo: as outras ficam iguais às do banco.
+    ...(beta ? { beta: true } : {}),
     areas: Object.freeze(areas.map((area) => Object.freeze({ ...area }))),
   });
 const NAS_TRES_AREAS = [
@@ -158,6 +167,7 @@ export const ABAS_DO_MENU = Object.freeze(
       view: "recursos",
       recurso: "recursos",
       tipo: "nativa",
+      beta: true,
       areas: NAS_TRES_AREAS,
     },
   ].map(congelarAba),
@@ -171,6 +181,19 @@ const numero = (valor) => {
   const n = Number(valor);
   return valor !== null && valor !== "" && Number.isFinite(n) ? n : null;
 };
+
+/*
+  O selo beta de uma linha do catálogo do banco: `beta` (booleano) ou
+  `ds_selo` ('beta', sem diferença de caixa; nulo = sem selo). Sem nenhum dos
+  dois campos (o banco de hoje), vale o da mesma aba em `ABAS_DO_MENU`.
+*/
+function seloBeta(linha, id) {
+  if (typeof linha.beta === "boolean") return linha.beta;
+  if (Object.hasOwn(linha, "ds_selo")) {
+    return texto(linha.ds_selo).toLowerCase() === "beta";
+  }
+  return Boolean(ABAS_DO_MENU.find((aba) => aba.id === id)?.beta);
+}
 
 /*
   A resposta de `listar_abas_do_menu` no formato de `ABAS_DO_MENU`. Linha sem
@@ -203,6 +226,7 @@ export function abasDoCatalogo(dados) {
         view,
         recurso: texto(linha.co_recurso),
         tipo: texto(linha.tp_aba) || "nativa",
+        beta: seloBeta(linha, id),
         areas,
       }),
     );
@@ -213,7 +237,7 @@ export function abasDoCatalogo(dados) {
 /*
   As páginas de uma área, na ordem do catálogo: a view, o ícone e a ordem da
   área quando ela troca; senão, os da aba. Empate na ordem fica na ordem da
-  lista.
+  lista. A página de aba beta leva `beta: true`; as outras, nem o campo.
 */
 export function paginasDaArea(abas, area) {
   return abas
@@ -226,11 +250,17 @@ export function paginasDaArea(abas, area) {
           view: naArea.view || aba.view,
           rotulo: aba.rotulo,
           icone: naArea.icone || aba.icone,
+          beta: Boolean(aba.beta),
         },
       ];
     })
     .sort((a, b) => a.ordem - b.ordem)
-    .map(({ view, rotulo, icone }) => ({ view, rotulo, icone }));
+    .map(({ view, rotulo, icone, beta }) => ({
+      view,
+      rotulo,
+      icone,
+      ...(beta ? { beta: true } : {}),
+    }));
 }
 
 /* As áreas do usuário, só as conhecidas e na ordem do catálogo. */
@@ -338,7 +368,6 @@ export function itemAtivoDaArvore(arvore = [], view, secao, area) {
   do desenho, e mora aqui para ser testável sem React. As páginas de cada área
   são as que a árvore traz: o seletor não conhece nenhuma view pelo nome.
 */
-export const ICONE_DO_SELETOR_DE_AREA = "chevrons-up-down";
 const IDS_DAS_AREAS = new Set(AREAS_DO_SISTEMA.map((area) => area.id));
 
 export function ehAreaDoSistema(id) {
@@ -406,7 +435,6 @@ export function iconesDoCatalogo() {
       ]),
       ICONE_DOS_PAINEIS,
       ICONE_DAS_CONFIGURACOES,
-      ICONE_DO_SELETOR_DE_AREA,
     ]),
   ];
 }

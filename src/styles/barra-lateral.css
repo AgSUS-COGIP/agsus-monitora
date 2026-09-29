@@ -1,6 +1,6 @@
 /*
   Barra lateral — o CSS dos componentes React de `src/componentes/barra-lateral/`:
-  a alça de recolher (`alca-de-recolher.jsx`), o menu em áreas com o seletor
+  o botão de recolher (`alca-de-recolher.jsx`), o menu em áreas com o seletor
   de área (`menu-de-areas.jsx`) e os controles do rodapé (`rodape.jsx`).
 
   O contêiner da barra (largura, marca, navegação, rodapé, trilho recolhido e os
@@ -13,8 +13,8 @@
 
 /*
   Os seletores usam `#appScreen` porque as regras concorrentes usam
-  `!important`: `system-ui-fixes.css` esconde o botão acima de 901px e `app.css`
-  esconde os dois em `body.sidebar-locked`. Entre declarações `!important`, quem
+  `!important`: `app.css` esconde o botão em `body.sidebar-locked` (páginas que
+  travam a barra recolhida), mas no celular é ele que abre a gaveta. Entre declarações `!important`, quem
   decide é a especificidade — e um id resolve de uma vez, sem escalada de
   classes.
 */
@@ -34,67 +34,16 @@
 }
 
 /*
-  Dentro da barra lateral: uma alça redonda de 24px na borda direita, na altura
-  da marca, metade para fora. É o mesmo lugar com a barra expandida ou
-  recolhida; só a seta gira. O bloco de contenção é `.side-brand`
-  (`position: relative`, em `platform-shell.css`), e a barra fica acima do
-  cabeçalho (`--z-sidebar`, em `app.css`) para a metade de fora aparecer.
-
-  `top`, `right` e `left: auto` vão explícitos porque este botão já foi
-  flutuante, com `left` calculado: com `absolute`, um `left` esquecido em outra
-  regra venceria o `right`. O seletor mira `.side-brand >` porque o botão é
-  filho da marca (`alca-de-recolher.jsx`).
+  No rodapé da barra (acima de 900px), entre o tema e o Sair: uma linha como a
+  do Sair, com o ícone e "Recolher menu"; recolhida, só o ícone (regras do
+  trilho, no fim do arquivo). É o mesmo lugar nos dois modos. O `display: grid`
+  vem da regra de cima (`!important`), então a linha é uma grade em coluna; o
+  resto do desenho é o do Sair (seção do rodapé, abaixo).
 */
-#appScreen .sidebar .side-brand > .global-side-toggle {
-  position: absolute;
-  top: 50%;
-  right: -12px;
-  left: auto;
-  z-index: 1;
-  width: 24px;
-  height: 24px;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  place-items: center;
-  border: 1px solid var(--platform-border);
-  border-radius: var(--radius-pill);
-  background: var(--card);
-  color: var(--platform-muted);
-  box-shadow: var(--shadow);
-  backdrop-filter: none;
-  transform: translateY(-50%);
-  cursor: pointer;
-}
-
-/* O desenho tem 24px; o alvo de toque, 40px. */
-.side-brand > .global-side-toggle::before {
-  content: "";
-  position: absolute;
-  inset: -8px;
-  border-radius: inherit;
-}
-
-.side-brand > .global-side-toggle:hover {
-  color: var(--navy);
-}
-
-/*
-  Cada lugar mostra o seu ícone: a alça, a seta; o cabeçalho, o hambúrguer da
-  gaveta. A seta aponta para onde a barra vai — recolhida, gira para a direita.
-*/
-.side-brand > .global-side-toggle .icone-menu,
-.title-row > .global-side-toggle .icone-recolher {
-  display: none;
-}
-
-.side-brand > .global-side-toggle .icone-recolher {
-  transition: transform var(--motion-base) var(--ease-standard);
-}
-
-body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
-  transform: rotate(180deg);
+.side-footer > .side-recolher {
+  grid-auto-flow: column;
+  justify-content: start;
+  align-items: center;
 }
 
 /*
@@ -223,9 +172,35 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
   list-style: none;
 }
 
+/* O ícone da página à esquerda do nome, na cor do texto do item (o mesmo do trilho). */
 .menu-item {
   min-height: 32px;
+  gap: var(--space-2);
   padding: 0 var(--space-2);
+}
+
+.menu-item__icone {
+  flex: 0 0 auto;
+}
+
+/*
+  Selo "BETA" da aba em teste (`item.beta`). Texto na cor de destaque da barra
+  sobre o próprio fundo dela (o tom de ativo), com borda: os tokens `--menu-*`
+  seguem a cor configurada e o tema, então o par mantém o contraste AA do
+  texto principal da barra. No painel flutuante (um cartão da página), a cor
+  é a do cartão.
+*/
+.menu-item__selo {
+  flex: 0 0 auto;
+  padding: 0 var(--space-1-5);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-pill);
+  background: var(--menu-fundo-ativo);
+  color: var(--menu-realce);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
 }
 
 .menu-item.active {
@@ -352,14 +327,99 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
     padding: 0 var(--space-3);
     color: var(--menu-flutuante-texto);
   }
+
+  /*
+    As páginas da área atual (`.menu-area--direta`): cada uma é um ícone de
+    36px no próprio trilho, sem painel flutuante — um clique navega. A página
+    aberta fica em destaque (fundo e anel), e o nome vem na dica.
+  */
+  body.sidebar-collapsed .menu-area--direta > .menu-area__painel {
+    position: static;
+    display: block;
+    max-height: none;
+    color: inherit;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition: none;
+  }
+
+  body.sidebar-collapsed .menu-area--direta > .menu-area__painel::before,
+  body.sidebar-collapsed .menu-area--direta .menu-area__pilula {
+    display: none;
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-area__itens {
+    min-width: 0;
+    max-width: none;
+    overflow: visible;
+    justify-items: center;
+    gap: var(--space-1);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-item {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    justify-content: center;
+    padding: 0;
+    color: var(--menu-texto-suave);
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-item:hover {
+    color: var(--menu-texto);
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-item.active {
+    background: var(--menu-fundo-ativo);
+    color: var(--menu-realce);
+    box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, currentColor 35%, transparent);
+  }
+
+  body.sidebar-collapsed .menu-area__itens .menu-item__selo {
+    color: var(--menu-flutuante-texto);
+  }
+
+  /* A aba beta, no trilho: um ponto discreto no canto do ícone; "BETA" vai na dica. */
+  body.sidebar-collapsed .menu-area--direta .menu-item--beta {
+    position: relative;
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-item--beta::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--menu-realce);
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-item__selo,
+  body.sidebar-collapsed .menu-area--direta .menu-item__rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 /* ── Seletor de área ──────────────────────────────────────────────────────── */
 
 /*
-  A cor de cada área: a bolinha do seletor (`menu-de-areas.jsx`). Os tokens de
-  estado trocam no escuro sem regra própria. A cor nunca vai sozinha: o nome
-  da área está sempre ao lado (no trilho, no rótulo acessível do botão).
+  A cor de cada área: a bolinha do seletor (`menu-de-areas.jsx`) e, no trilho,
+  o anel do botão. Os tokens de estado trocam no escuro sem regra própria. A
+  cor nunca vai sozinha: o ícone da área está na marca e o nome ao lado (no
+  trilho, na dica e no rótulo acessível do botão).
 */
 [data-cor-da-area="saude-indigena"] {
   --cor-da-area: var(--state-success);
@@ -392,11 +452,6 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
   place-items: center;
 }
 
-/* Expandida, a marca é só a bolinha; o ícone de trocar é do trilho. */
-.menu-seletor__icone {
-  display: none;
-}
-
 .menu-seletor__ponto {
   width: 10px;
   height: 10px;
@@ -405,6 +460,15 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
   background: var(--cor-da-area, currentColor);
   /* O anel na cor do texto garante a bolinha visível em qualquer cor de barra. */
   box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 45%, transparent);
+}
+
+/* A marca é o ícone da área atual, com a bolinha da cor dela no canto. */
+.menu-seletor__marca .menu-seletor__ponto {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 8px;
+  height: 8px;
 }
 
 .menu-seletor__rotulo {
@@ -439,20 +503,11 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
     margin-bottom: 0;
   }
 
+  /* No trilho, o anel na cor da área diz que é o seletor, não uma página. */
   body.sidebar-collapsed .menu-seletor__botao {
     border: 0;
-  }
-
-  body.sidebar-collapsed .menu-seletor__icone {
-    display: block;
-  }
-
-  body.sidebar-collapsed .menu-seletor__marca .menu-seletor__ponto {
-    position: absolute;
-    right: -3px;
-    bottom: -3px;
-    width: 8px;
-    height: 8px;
+    box-shadow: inset 0 0 0 2px
+      color-mix(in srgb, var(--cor-da-area, currentColor) 80%, transparent);
   }
 
   body.sidebar-collapsed .menu-area--administracao {
@@ -461,10 +516,10 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
   }
 }
 
-/* ── Rodapé: tema e Sair ──────────────────────────────────────────────────── */
+/* ── Rodapé: tema, recolher e Sair ────────────────────────────────────────── */
 
 /*
-  Rodapé da barra lateral: o seletor de tema e o Sair (`rodape.jsx`). O
+  Rodapé da barra lateral: o seletor de tema, o recolher e o Sair (`rodape.jsx`). O
   contêiner é de `platform-shell.css`; as cores
   vêm dos tokens `--menu-*` da barra, então seguem o tema escuro e a cor
   configurada sem regra própria. O segmento ativo é um cartão da página
@@ -508,7 +563,8 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
 }
 
 .sidebar .side-logout,
-.side-tema__alternar {
+.side-tema__alternar,
+.side-footer > .side-recolher {
   width: 100%;
   min-height: 36px;
   display: flex;
@@ -527,7 +583,8 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
 }
 
 .sidebar .side-logout:hover,
-.side-tema__alternar:hover {
+.side-tema__alternar:hover,
+.side-footer > .side-recolher:hover {
   background: var(--menu-fundo-hover);
   color: var(--menu-texto);
 }
@@ -550,8 +607,9 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
 
 /*
   Recolhida (acima de 900px): os dois segmentos dão lugar ao botão único, que
-  alterna, e o Sair vira ícone. Os rótulos saem com o padrão de texto só para
-  leitor de tela; os dois botões também têm `aria-label`.
+  alterna, e o recolher e o Sair viram ícones. Os rótulos saem com o padrão de
+  texto só para leitor de tela; os três botões também têm `aria-label`, e o
+  nome aparece na dica (abaixo).
 */
 @media (min-width: 901px) {
   body.sidebar-collapsed .side-tema__opcoes {
@@ -559,15 +617,18 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
   }
 
   body.sidebar-collapsed .side-tema__alternar,
-  body.sidebar-collapsed .sidebar .side-logout {
+  body.sidebar-collapsed .sidebar .side-logout,
+  body.sidebar-collapsed .side-footer > .side-recolher {
     width: 36px;
     height: 36px;
     min-height: 36px;
     display: grid;
     place-items: center;
+    justify-content: center;
     padding: 0;
   }
 
+  body.sidebar-collapsed .side-recolher__rotulo,
   body.sidebar-collapsed .sidebar .side-logout span {
     position: absolute;
     width: 1px;
@@ -575,5 +636,55 @@ body.sidebar-collapsed .side-brand > .global-side-toggle .icone-recolher {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+
+/* ── Dicas do trilho ──────────────────────────────────────────────────────── */
+
+/*
+  No trilho, todo controle só com ícone tem uma dica com o nome, no ponteiro e
+  no foco do teclado: o texto de `data-dica`, na hora (o `title` nativo demora
+  e não aparece no foco). É `position: fixed` ao lado do trilho, como o painel
+  flutuante — a navegação rola e recortaria uma dica absoluta —, e a altura é a
+  do centro do controle, que `barra-lateral.jsx` grava em `--dica-topo`.
+  Painéis e Administração não têm dica: a pílula do painel deles já diz o nome.
+*/
+@media (min-width: 901px) {
+  body.sidebar-collapsed .sidebar [data-dica]::after {
+    content: attr(data-dica);
+    position: fixed;
+    top: var(--dica-topo, 50%);
+    left: calc(var(--sidebar-mini) + var(--space-2));
+    z-index: 2;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--menu-pilula-fundo);
+    color: var(--text-inverse);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    box-shadow: var(--shadow-overlay);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-4px, -50%);
+    transition:
+      opacity var(--motion-fast) var(--ease-standard),
+      transform var(--motion-fast) var(--ease-standard),
+      visibility 0s linear var(--motion-fast);
+  }
+
+  body.sidebar-collapsed .sidebar [data-dica]:hover::after,
+  body.sidebar-collapsed .sidebar [data-dica]:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0, -50%);
+    transition-delay: 0s;
+  }
+
+  /* Com a lista das áreas aberta, a pílula dela ocupa o lugar da dica. */
+  body.sidebar-collapsed .menu-area--flutuante > [data-dica]::after {
+    display: none;
   }
 }

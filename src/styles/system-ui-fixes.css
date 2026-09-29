@@ -13,13 +13,12 @@
     box-shadow: 0 4px 14px rgba(15, 35, 60, 0.08);
   }
 
-  .global-side-toggle {
-    display: none !important;
-  }
-
-  /* Folga para a metade da alça de recolher, que sai 12px da barra. */
+  /*
+    O botão de recolher mora no rodapé da barra (`alca-de-recolher.jsx`): não
+    há mais alça saindo da borda, e o cabeçalho volta à folga de antes.
+  */
   .app .top {
-    padding-left: var(--space-6);
+    padding-left: 14px;
   }
 }
 

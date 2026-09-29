@@ -31,6 +31,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const CHAVE_FECHADAS = "agsus_monitora_menu_areas_fechadas_v1";
 const LARGURA_ORIGINAL = window.innerWidth;
+const PAINEL_X = [{ codigo: "x", titulo: "Painel X" }];
 
 function arvoreCompleta(paineis = []) {
   return montarArvoreDoMenu({
@@ -401,7 +402,7 @@ describe("as áreas do usuário: seletor de área", () => {
     ]);
   });
 
-  it("recolhida, o seletor é um ícone e a lista das áreas flutua", async () => {
+  it("recolhida, o seletor é um ícone e a lista das áreas flutua no clique", async () => {
     await montar(
       montarArvoreDoMenu({ permitidas: { nucleo: true }, areas: TODAS }),
       { navegar: () => {} },
@@ -411,10 +412,22 @@ describe("as áreas do usuário: seletor de área", () => {
     expect(botao.getAttribute("aria-label")).toBe(
       "Área atual: Saúde Indígena. Trocar de área",
     );
-    // No trilho a área mantém o ícone dela, com o painel flutuante.
+    // No trilho a área atual não tem cabeçalho: as páginas são ícones diretos.
     expect(
       area("saude-indigena").querySelector(".menu-area__cabecalho"),
-    ).not.toBeNull();
+    ).toBeNull();
+
+    // Apontar e focar só mostram a dica; quem abre a lista é o clique.
+    await act(async () => {
+      botao.dispatchEvent(
+        new PointerEvent("pointerover", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      );
+      botao.focus();
+    });
+    expect(seletor().classList.contains("menu-area--flutuante")).toBe(false);
 
     await clicar(botao);
     expect(seletor().classList.contains("menu-area--flutuante")).toBe(true);
@@ -424,6 +437,218 @@ describe("as áreas do usuário: seletor de área", () => {
     expect(document.activeElement).toBe(
       seletor().querySelector(".menu-area__cabecalho"),
     );
+  });
+
+  it("o ícone do seletor é o da área atual, com a cor e a dica dela", async () => {
+    await montar(
+      montarArvoreDoMenu({ permitidas: { nucleo: true }, areas: TODAS }),
+      { navegar: () => {} },
+    );
+    await recolher();
+    const botao = () => seletor().querySelector(".menu-seletor__botao");
+    const icone = () =>
+      botao().querySelector(".menu-seletor__icone").dataset.icone;
+
+    const esperado = {
+      "saude-indigena": ["heart-pulse", "Área: Saúde Indígena"],
+      sede: ["building-2", "Área: SEDE"],
+      projetos: ["folder-kanban", "Área: Projetos"],
+    };
+    for (const [id, [nome, dica]] of Object.entries(esperado)) {
+      await act(async () => definirAreaAtual(id));
+      expect(icone()).toBe(nome);
+      expect(botao().dataset.corDaArea).toBe(id);
+      expect(botao().dataset.dica).toBe(dica);
+      expect(
+        botao().querySelector(".menu-seletor__ponto").dataset.corDaArea,
+      ).toBe(id);
+    }
+
+    // Expandida, a marca é a mesma (ícone e bolinha); a dica é só do trilho.
+    await recolher(false);
+    expect(icone()).toBe("folder-kanban");
+    expect(botao().hasAttribute("data-dica")).toBe(false);
+  });
+});
+
+/*
+  Recolhida, cada página da área atual é um ícone que navega num clique, com a
+  dica do nome e a página aberta em destaque. Painéis e Administração
+  continuam agrupados, com o painel flutuante.
+*/
+describe("barra recolhida: páginas da área como ícones", () => {
+  const TODAS = ["saude-indigena", "sede", "projetos"];
+  const arvoreDasAreas = () =>
+    montarArvoreDoMenu({
+      permitidas: {
+        dashboard: true,
+        nucleo: true,
+        calendario: true,
+        approved: true,
+        analises: true,
+        recursos: true,
+        config: true,
+      },
+      paineis: [{ codigo: "x", titulo: "Painel X" }],
+      secoesDeConfiguracao: SECOES,
+      areas: TODAS,
+    });
+  const paginasDoTrilho = () => [
+    ...document.querySelectorAll(".menu-area--direta .menu-item"),
+  ];
+
+  it("de cima para baixo: área, páginas, Painéis e Administração", async () => {
+    await montar(arvoreDasAreas(), { navegar: () => {} });
+    await recolher();
+
+    const ordem = [...document.querySelectorAll("#nav > section")].map(
+      (secao) => (secao.dataset.seletorDeArea ? "seletor" : secao.dataset.area),
+    );
+    expect(ordem).toEqual([
+      "seletor",
+      "saude-indigena",
+      "paineis",
+      "administracao",
+    ]);
+    expect(
+      paginasDoTrilho().map((botao) => [
+        botao.dataset.rotulo,
+        botao.querySelector(".menu-item__icone").dataset.icone,
+        botao.dataset.dica,
+      ]),
+    ).toEqual([
+      ["Visão geral", "map", "Visão geral"],
+      ["Editais", "file-text", "Editais"],
+      ["Cronograma", "calendar-days", "Cronograma"],
+      ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
+      ["Análises curriculares", "file-search", "Análises curriculares"],
+      ["Recursos", "scale", "Recursos · BETA"],
+    ]);
+    // O nome continua no botão para o leitor de tela.
+    expect(
+      paginasDoTrilho().map(
+        (botao) => botao.querySelector(".menu-item__rotulo").textContent,
+      ),
+    ).toContain("Cronograma");
+    // Painéis e Administração continuam agrupados, sem dica (a pílula diz o nome).
+    expect(cabecalho("paineis").getAttribute("aria-expanded")).toBe("false");
+    expect(cabecalho("administracao").hasAttribute("data-dica")).toBe(false);
+  });
+
+  it("um clique navega e marca a página aberta, sem painel", async () => {
+    const chamadas = [];
+    await montar(arvoreDasAreas(), {
+      navegar: (view) => {
+        chamadas.push(view);
+        marcarItemAtivoNoMenu(view);
+      },
+    });
+    await recolher();
+
+    const cronograma = item("calendario");
+    expect(cronograma.closest(".menu-area--direta")).not.toBeNull();
+    await clicar(cronograma);
+
+    expect(chamadas).toEqual(["calendario"]);
+    expect(item("calendario").getAttribute("aria-current")).toBe("page");
+    expect(item("calendario").classList.contains("active")).toBe(true);
+    expect(
+      document.querySelectorAll('#nav [aria-current="page"]'),
+    ).toHaveLength(1);
+    expect(document.querySelector(".menu-area--flutuante")).toBeNull();
+
+    // Apontar uma página não abre painel nenhum.
+    await act(async () =>
+      area("saude-indigena").dispatchEvent(
+        new PointerEvent("pointerover", {
+          bubbles: true,
+          pointerType: "mouse",
+        }),
+      ),
+    );
+    expect(document.querySelector(".menu-area--flutuante")).toBeNull();
+  });
+
+  it("trocar de área troca os ícones das páginas", async () => {
+    await montar(arvoreDasAreas(), { navegar: () => {} });
+    await recolher();
+    expect(
+      new Set(paginasDoTrilho().map((botao) => botao.dataset.area)),
+    ).toEqual(new Set(["saude-indigena"]));
+
+    await act(async () => definirAreaAtual("projetos"));
+    expect(
+      new Set(paginasDoTrilho().map((botao) => botao.dataset.area)),
+    ).toEqual(new Set(["projetos"]));
+  });
+
+  it("com uma área só, as páginas também são ícones diretos", async () => {
+    await montar(arvoreCompleta(), { navegar: () => {} });
+    await recolher();
+    expect(area("saude-indigena").classList.contains("menu-area--direta")).toBe(
+      true,
+    );
+    expect(
+      area("saude-indigena").querySelector(".menu-area__cabecalho"),
+    ).toBeNull();
+    expect(item("nucleo").dataset.dica).toBe("Editais");
+  });
+
+  it("a dica aparece na altura do ícone apontado ou focado", async () => {
+    await montar(arvoreDasAreas(), { navegar: () => {} });
+    await recolher();
+    const editais = item("nucleo");
+    editais.getBoundingClientRect = () => ({ top: 100, height: 36 });
+    await act(async () => editais.focus());
+    expect(editais.style.getPropertyValue("--dica-topo")).toBe("118px");
+  });
+});
+
+/*
+  O menu aberto mostra o ícone de cada página à esquerda do nome (o mesmo do
+  trilho), e a aba beta leva o selo "BETA".
+*/
+describe("ícones e selo beta no menu aberto", () => {
+  const arvore = () =>
+    montarArvoreDoMenu({
+      permitidas: {
+        dashboard: true,
+        nucleo: true,
+        recursos: true,
+        config: true,
+      },
+      paineis: [{ codigo: "x", titulo: "Painel X" }],
+      secoesDeConfiguracao: SECOES,
+    });
+
+  it("todo item tem o ícone da página antes do nome", async () => {
+    await montar(arvore());
+    const itens = [...document.querySelectorAll("#nav .menu-item")];
+    expect(itens.length).toBeGreaterThan(0);
+    for (const botao of itens) {
+      const icone = botao.firstElementChild;
+      expect(icone.classList.contains("menu-item__icone")).toBe(true);
+      expect(icone.dataset.icone).toBe(botao.dataset.icone);
+      expect(icone.nextElementSibling.className).toBe("menu-item__rotulo");
+    }
+    expect(item("dashboard").dataset.icone).toBe("map");
+    expect(item("panel:x").dataset.icone).toBe("square-arrow-out-up-right");
+    expect(item("config", "acessos").dataset.icone).toBe("settings");
+    // Expandida não há dica: o nome está à vista.
+    expect(document.querySelector("#nav [data-dica]")).toBeNull();
+  });
+
+  it("só a aba beta leva o selo, ao lado do nome", async () => {
+    await montar(arvore());
+    const selos = document.querySelectorAll("#nav .menu-item__selo");
+    expect(selos).toHaveLength(1);
+    expect(selos[0].textContent).toBe("BETA");
+    expect(selos[0].closest(".menu-item")).toBe(item("recursos"));
+    expect(item("recursos").classList.contains("menu-item--beta")).toBe(true);
+    expect(selos[0].previousElementSibling.textContent).toBe("Recursos");
+    // O mobile lê o nome de `data-rotulo`: o selo não entra nele.
+    expect(item("recursos").dataset.rotulo).toBe("Recursos");
+    expect(item("nucleo").querySelector(".menu-item__selo")).toBeNull();
   });
 });
 
@@ -478,41 +703,38 @@ describe("escolher uma página", () => {
 });
 
 /*
-  Recolhida, cada área é um ícone e o painel dela flutua ao lado do trilho. O
-  estado é o de `proximoFlutuante` (testado em tests/menu-lateral.test.js).
+  Recolhida, Painéis e Administração são um ícone cada, e o painel deles
+  flutua ao lado do trilho. O estado é o de `proximoFlutuante` (testado em
+  tests/menu-lateral.test.js).
 */
 describe("barra recolhida: painel flutuante", () => {
   it("o clique no ícone abre e fixa; o segundo fecha", async () => {
-    await montar(arvoreCompleta(), { navegar: () => {} });
+    await montar(arvoreCompleta(PAINEL_X), { navegar: () => {} });
     await recolher();
 
-    await clicar(cabecalho("saude-indigena"));
-    expect(flutuando("saude-indigena")).toBe(true);
-    expect(cabecalho("saude-indigena").getAttribute("aria-expanded")).toBe(
-      "true",
-    );
+    await clicar(cabecalho("paineis"));
+    expect(flutuando("paineis")).toBe(true);
+    expect(cabecalho("paineis").getAttribute("aria-expanded")).toBe("true");
     expect(
-      area("saude-indigena").style.getPropertyValue("--menu-flutuante-topo"),
+      area("paineis").style.getPropertyValue("--menu-flutuante-topo"),
     ).toMatch(/px$/);
 
-    await clicar(cabecalho("saude-indigena"));
-    expect(flutuando("saude-indigena")).toBe(false);
-    expect(cabecalho("saude-indigena").getAttribute("aria-expanded")).toBe(
-      "false",
-    );
+    await clicar(cabecalho("paineis"));
+    expect(flutuando("paineis")).toBe(false);
+    expect(cabecalho("paineis").getAttribute("aria-expanded")).toBe("false");
   });
 
   it("só um painel por vez", async () => {
-    await montar(arvoreCompleta(), { navegar: () => {} });
+    await montar(arvoreCompleta(PAINEL_X), { navegar: () => {} });
     await recolher();
-    await clicar(cabecalho("saude-indigena"));
+    await clicar(cabecalho("paineis"));
     await clicar(cabecalho("administracao"));
-    expect(flutuando("saude-indigena")).toBe(false);
+    expect(flutuando("paineis")).toBe(false);
     expect(flutuando("administracao")).toBe(true);
   });
 
   it("Esc fecha e devolve o foco ao ícone, sem reabrir", async () => {
-    await montar(arvoreCompleta(), { navegar: () => {} });
+    await montar(arvoreCompleta(PAINEL_X), { navegar: () => {} });
     await recolher();
     await clicar(cabecalho("administracao"));
 
@@ -528,24 +750,24 @@ describe("barra recolhida: painel flutuante", () => {
   });
 
   it("escolher um item, clicar fora ou expandir a barra fecham o painel", async () => {
-    await montar(arvoreCompleta(), { navegar: () => {} });
+    await montar(arvoreCompleta(PAINEL_X), { navegar: () => {} });
     await recolher();
 
-    await clicar(cabecalho("saude-indigena"));
-    await clicar(item("nucleo"));
-    expect(flutuando("saude-indigena")).toBe(false);
+    await clicar(cabecalho("paineis"));
+    await clicar(item("panel:x"));
+    expect(flutuando("paineis")).toBe(false);
 
-    await clicar(cabecalho("saude-indigena"));
+    await clicar(cabecalho("paineis"));
     await act(async () =>
       document.body.dispatchEvent(
         new MouseEvent("pointerdown", { bubbles: true }),
       ),
     );
-    expect(flutuando("saude-indigena")).toBe(false);
+    expect(flutuando("paineis")).toBe(false);
 
-    await clicar(cabecalho("saude-indigena"));
+    await clicar(cabecalho("paineis"));
     await recolher(false);
-    expect(flutuando("saude-indigena")).toBe(false);
+    expect(flutuando("paineis")).toBe(false);
   });
 
   it("expandida, o clique no cabeçalho volta a ser acordeão", async () => {
@@ -586,37 +808,66 @@ describe("barra recolhida: painel flutuante", () => {
 });
 
 /*
-  Um controle só para recolher, com o id de sempre. Acima de 900px é a alça na
-  marca; até 900px a barra é gaveta fora da tela e o botão vai para o cabeçalho
-  (portal), senão sairia da tela junto com ela.
+  Um controle só para recolher, com o id de sempre. Acima de 900px mora no
+  rodapé, entre o tema e o Sair, no mesmo lugar expandida ou recolhida; até
+  900px a barra é gaveta fora da tela e o botão vai para o cabeçalho (portal),
+  senão sairia da tela junto com ela.
 */
 describe("o botão de recolher", () => {
   const botoes = () => document.querySelectorAll("#globalSidebarToggle");
+  const filhosDoRodape = () =>
+    [...document.querySelector(".side-footer").children].map(
+      (filho) => filho.id || filho.className,
+    );
 
-  it("no desktop é a alça dentro da marca, com seta e hambúrguer", async () => {
+  it("no desktop fica no rodapé, entre o tema e o Sair, nos dois modos", async () => {
     await montar();
     const botao = document.getElementById("globalSidebarToggle");
 
     expect(botoes()).toHaveLength(1);
-    expect(botao.parentElement.className).toBe("side-brand");
-    expect(botao.querySelector(".icone-recolher").dataset.icone).toBe(
-      "chevron-left",
-    );
-    expect(botao.querySelector(".icone-menu").dataset.icone).toBe("menu");
+    expect(botao.parentElement.className).toBe("side-footer");
+    expect(filhosDoRodape()).toEqual([
+      "side-tema",
+      "globalSidebarToggle",
+      "sidebarLogoutBtn",
+      "side-version",
+    ]);
+    expect(botao.querySelector("svg").dataset.icone).toBe("panel-left");
+    expect(botao.textContent).toBe("Recolher menu");
     expect(botao.getAttribute("aria-expanded")).toBe("true");
-    expect(botao.getAttribute("aria-label")).toBe("Recolher menu lateral");
+    expect(botao.getAttribute("aria-label")).toBe("Recolher menu");
+    // A marca ficou só com a logo e o nome: nenhuma alça na borda.
+    expect(document.querySelector(".side-brand button")).toBeNull();
+
+    await recolher();
+    expect(botoes()).toHaveLength(1);
+    expect(filhosDoRodape()).toEqual([
+      "side-tema",
+      "globalSidebarToggle",
+      "sidebarLogoutBtn",
+      "side-version",
+    ]);
+    expect(
+      document.getElementById("globalSidebarToggle").querySelector("svg")
+        .dataset.icone,
+    ).toBe("panel-left");
   });
 
-  it("acompanha a classe de body e chama window.toggleSidebar", async () => {
+  it("acompanha a classe de body, com rótulo e dica, e chama window.toggleSidebar", async () => {
     await montar();
     window.toggleSidebar = vi.fn();
     await recolher();
 
     const botao = document.getElementById("globalSidebarToggle");
     expect(botao.getAttribute("aria-expanded")).toBe("false");
-    expect(botao.getAttribute("aria-label")).toBe("Expandir menu lateral");
+    expect(botao.getAttribute("aria-label")).toBe("Expandir menu");
+    expect(botao.dataset.dica).toBe("Expandir menu");
+    expect(botao.textContent).toBe("Expandir menu");
     await clicar(botao);
     expect(window.toggleSidebar).toHaveBeenCalledTimes(1);
+
+    await recolher(false);
+    expect(botao.dataset.dica).toBe("Recolher menu");
   });
 
   it("até 900px vai para o cabeçalho, e o hambúrguer antigo fica onde está", async () => {
@@ -627,15 +878,62 @@ describe("o botão de recolher", () => {
     expect(botoes()).toHaveLength(1);
     expect(botao.parentElement.classList.contains("title-row")).toBe(true);
     expect(botao.closest(".sidebar")).toBeNull();
+    expect(botao.querySelector("svg").dataset.icone).toBe("menu");
     expect(
       document.getElementById("hambToggle").closest("header.top"),
     ).not.toBeNull();
+    // Na gaveta, `sidebar-collapsed` quer dizer fechada.
+    await recolher();
+    expect(
+      document.getElementById("globalSidebarToggle").getAttribute("aria-label"),
+    ).toBe("Abrir menu");
+    await recolher(false);
+    expect(
+      document.getElementById("globalSidebarToggle").getAttribute("aria-label"),
+    ).toBe("Fechar menu");
 
     await larguraDaJanela(1440);
     expect(
       document.getElementById("globalSidebarToggle").parentElement.className,
-    ).toBe("side-brand");
+    ).toBe("side-footer");
     expect(botoes()).toHaveLength(1);
+  });
+});
+
+/*
+  No trilho, todo controle só com ícone tem nome acessível e dica visível
+  (`data-dica`, que o CSS desenha no ponteiro e no foco).
+*/
+describe("barra recolhida: nomes e dicas dos ícones", () => {
+  it("seletor, páginas, tema, recolher e Sair têm aria-label ou nome e dica", async () => {
+    await montar(
+      montarArvoreDoMenu({
+        permitidas: { dashboard: true, nucleo: true, config: true },
+        secoesDeConfiguracao: SECOES,
+        areas: ["saude-indigena", "sede"],
+      }),
+      { navegar: () => {} },
+    );
+    await recolher();
+
+    const comDica = [...document.querySelectorAll(".sidebar [data-dica]")];
+    expect(comDica.map((botao) => botao.dataset.dica)).toEqual([
+      "Área: Saúde Indígena",
+      "Visão geral",
+      "Editais",
+      "Alternar para tema escuro",
+      "Expandir menu",
+      "Sair",
+    ]);
+    for (const botao of comDica) {
+      expect(botao.tagName).toBe("BUTTON");
+      const nome =
+        botao.getAttribute("aria-label") ||
+        botao.querySelector(".menu-item__rotulo")?.textContent;
+      expect(nome).toBeTruthy();
+      // Sem `title`: o nativo repetiria a dica, com atraso.
+      expect(botao.hasAttribute("title")).toBe(false);
+    }
   });
 });
 
@@ -718,14 +1016,11 @@ describe("contrato de CSS e ligação no arranque", () => {
     );
   });
 
-  it("é alça na borda da barra e fica no fluxo do cabeçalho, nunca fixo", () => {
-    const alca = bloco(
-      css,
-      "#appScreen .sidebar .side-brand > .global-side-toggle",
+  it("fica no rodapé (sem alça na marca) e no fluxo do cabeçalho, nunca fixo", () => {
+    expect(css).not.toContain(".side-brand > .global-side-toggle");
+    expect(bloco(css, ".side-footer > .side-recolher {")).toContain(
+      "grid-auto-flow: column",
     );
-    expect(alca).toContain("position: absolute");
-    expect(alca).toContain("left: auto");
-    expect(alca).toMatch(/right:\s*-12px/);
     const noCabecalho = bloco(
       css,
       "#appScreen .title-row > .global-side-toggle",
@@ -735,13 +1030,34 @@ describe("contrato de CSS e ligação no arranque", () => {
     expect(css).not.toContain("position: fixed;\n  top: 50%");
   });
 
-  it("a seta gira recolhida, e cada lugar mostra o seu ícone", () => {
-    expect(css).toMatch(
-      /body\.sidebar-collapsed \.side-brand > \.global-side-toggle \.icone-recolher\s*\{\s*transform:\s*rotate\(180deg\)/,
+  it("recolhida, as dicas aparecem no ponteiro e no foco, fixas ao lado do trilho", () => {
+    const dica = bloco(
+      css,
+      "body.sidebar-collapsed .sidebar [data-dica]::after",
     );
+    expect(dica).toContain("content: attr(data-dica)");
+    expect(dica).toContain("position: fixed");
+    expect(dica).toContain("top: var(--dica-topo");
     expect(css).toMatch(
-      /\.side-brand > \.global-side-toggle \.icone-menu,\s*\.title-row > \.global-side-toggle \.icone-recolher\s*\{\s*display:\s*none/,
+      /body\.sidebar-collapsed \.sidebar \[data-dica\]:hover::after,\s*body\.sidebar-collapsed \.sidebar \[data-dica\]:focus-visible::after\s*\{[^}]*visibility:\s*visible/,
     );
+  });
+
+  it("recolhida, as páginas da área atual ficam no trilho, sem painel flutuante", () => {
+    const painel = bloco(
+      css,
+      "body.sidebar-collapsed .menu-area--direta > .menu-area__painel",
+    );
+    expect(painel).toContain("position: static");
+    expect(painel).toContain("visibility: visible");
+  });
+
+  it("o system-ui-fixes não esconde mais o botão nem guarda folga para a alça", () => {
+    const fixes = semComentarios(
+      readFileSync("src/styles/system-ui-fixes.css", "utf8"),
+    );
+    expect(fixes).not.toContain(".global-side-toggle");
+    expect(fixes).not.toContain("padding-left: var(--space-6)");
   });
 
   it("recolhida, quem rola é a navegação, e só quando transborda", () => {
