@@ -1,4 +1,4 @@
--- Perfis de acesso, coordenações e gestão delegada (migrations 20260929121000–121300).
+-- Perfis de acesso, coordenações e gestão delegada (migrations 20260929121000–121300 e 190200).
 -- Rode só num banco de teste isolado, com as migrations aplicadas.
 -- Identidades sintéticas; o rollback final não deixa rastro.
 begin;
@@ -120,6 +120,27 @@ begin
   if not negado then raise exception 'Ver como de fora da coordenação'; end if;
   -- solicitação da própria coordenação, perfil dentro do teto
   perform public.aprovar_solicitacao_acesso('40000000-0000-0000-0000-000000000001', 'usuario', null, null, 'ok');
+end;
+$$;
+reset role;
+
+-- 6. Aba Recursos: o coordenador (recursos = editor) só vê e grava na coordenação ------------
+select set_config('request.jwt.claims','{"sub":"20000000-0000-0000-0000-000000000012","email":"coord@test.invalid"}',true);
+set local role authenticated;
+do $$
+declare
+  v_editais jsonb := public.get_recursos_da_area('saude-indigena')::jsonb -> 'editais';
+begin
+  if not v_editais @> '[{"id":"30000000-0000-0000-0000-000000000001"}]' then raise exception 'Recursos sem o edital da coordenação'; end if;
+  if v_editais @> '[{"id":"30000000-0000-0000-0000-000000000002"}]' then raise exception 'Recursos lista edital fora da coordenação'; end if;
+  begin
+    perform public.buscar_candidatos_recurso('30000000-0000-0000-0000-000000000002', 'teste');
+    raise exception 'Recursos buscou candidato fora da coordenação';
+  exception when insufficient_privilege then null; end;
+  begin
+    perform public.salvar_recurso_candidato('{"edital_id":"30000000-0000-0000-0000-000000000002","origem":"analise-curricular","fora_analise":true}');
+    raise exception 'Recursos gravou fora da coordenação';
+  exception when insufficient_privilege then null; end;
 end;
 $$;
 reset role;

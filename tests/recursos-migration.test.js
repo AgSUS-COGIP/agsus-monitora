@@ -171,3 +171,43 @@ describe("catálogo, contrato e domínio", () => {
     expect(ROLLBACK).not.toContain("'recursos','importacao'");
   });
 });
+
+describe("recorte por coordenação (20260929190200)", () => {
+  const RECORTE = ler(
+    "supabase/migrations/20260929190200_recorte_por_coordenacao_nos_recursos.sql",
+  );
+  const corpoDe = (nome) => {
+    const inicio = RECORTE.indexOf(
+      `create or replace function public.${nome}(`,
+    );
+    expect(inicio).toBeGreaterThan(-1);
+    return RECORTE.slice(inicio, RECORTE.indexOf("$function$;", inicio));
+  };
+
+  it("a lista e os editais do formulário ficam na coordenação", () => {
+    const corpo = corpoDe("get_recursos_da_area");
+    expect(
+      corpo.match(/\(select private\."FC_EDITAIS_VISIVEIS"\(\)\) is null/g),
+    ).toHaveLength(2);
+    expect(corpo).toContain('private."FC_EXIGIR_RECURSOS_NA_AREA"(p_area, 1)');
+  });
+
+  it.each(Object.keys(RPCS).filter((nome) => nome !== "get_recursos_da_area"))(
+    "%s: o edital passa pelo porteiro da coordenação depois da área",
+    (nome) => {
+      const corpo = corpoDe(nome);
+      const area = corpo.indexOf('private."FC_EXIGIR_RECURSOS_NA_AREA"');
+      const edital = corpo.indexOf('private."FC_EXIGIR_AREA_EDITAL"(');
+      expect(area).toBeGreaterThan(-1);
+      expect(edital).toBeGreaterThan(area);
+      expect(corpo).toContain("security definer");
+      expect(corpo).toContain("set search_path to ''");
+    },
+  );
+
+  it("salvar confere o edital no cadastro e na edição", () => {
+    expect(
+      corpoDe("salvar_recurso_candidato").match(/FC_EXIGIR_AREA_EDITAL/g),
+    ).toHaveLength(2);
+  });
+});

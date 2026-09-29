@@ -114,7 +114,7 @@ Decidido em 28/09: cada área tem as suas **abas**, e os painéis externos
 
 ## Permissões
 
-Migrations de 29/09 (`20260929121000` a `121300`, já aplicadas; `190000` e `190100`, a aplicar):
+Migrations de 29/09 (`20260929121000` a `121300`, já aplicadas; `190000` a `190200`, a aplicar):
 
 - **Grupo + permissão individual.** O grupo (`TB_GRUPO_ACESSO` + `TA_GRUPO_ACESSO_RECURSO`) é o
   modelo de níveis por módulo, editável pelo admin; a permissão individual continua em
@@ -124,7 +124,8 @@ Migrations de 29/09 (`20260929121000` a `121300`, já aplicadas; `190000` e `190
 - **Coordenação = subdivisão de uma área** (`TB_COORDENACAO`, com filtro por responsável USI/CORES,
   `RL_COORDENACAO_UNIDADE` e `RL_COORDENACAO_EDITAL`). Cada pessoa em no máximo uma
   (`TB_PERFIL_USUARIO."CO_COORDENACAO"`); sem coordenação, vê as áreas marcadas inteiras. O recorte
-  (`FC_EDITAIS_VISIVEIS`, `FC_PODE_VER_EDITAL`) vale para tudo que deriva do edital e para as análises.
+  (`FC_EDITAIS_VISIVEIS`, `FC_PODE_VER_EDITAL`) vale para tudo que deriva do edital, para as análises e
+  para a aba Recursos (`190200`).
 - **Gestão delegada com teto.** Módulo `acessos` (sem_acesso | editor): o coordenador gerencia só a
   própria coordenação, sem conceder mais do que tem, sem conceder `acessos`, sem mexer em área nem
   em coordenação.
