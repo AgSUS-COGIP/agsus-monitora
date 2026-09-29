@@ -193,6 +193,9 @@ function buildDrawerContent(row, detailRow) {
   body.appendChild(shell);
 }
 
+// Até 10 s: na lista enxuta, o detalhamento vem do servidor antes de abrir.
+const ESPERA_MAXIMA_DO_DETALHE = 500;
+
 function waitForDetail(key, attempts = 0) {
   return new Promise((resolve) => {
     const check = () => {
@@ -203,7 +206,7 @@ function waitForDetail(key, attempts = 0) {
       )
         ? row.nextElementSibling
         : null;
-      if (detailRow || attempts >= 40) {
+      if (detailRow || attempts >= ESPERA_MAXIMA_DO_DETALHE) {
         resolve({ button, row, detailRow });
         return;
       }

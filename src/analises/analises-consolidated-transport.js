@@ -1,8 +1,13 @@
 /*
   Carga do payload consolidado do painel de análises
-  (get_analises_dashboard_payload_v2) — a única fonte das linhas do escopo
-  'ativo'. O analises-app.js chama `carregarPayloadDoPainel` direto; nada aqui
-  embrulha o cliente do Supabase.
+  (get_analises_dashboard_payload_v2) — a fonte das linhas dos três escopos da
+  "Situação do processo". O analises-app.js chama `carregarEscopoDoPainel`
+  direto; nada aqui embrulha o cliente do Supabase.
+
+  "Ativo" e "Inativo" são um pacote cada. "Todos" não tem pacote próprio: são
+  os pacotes 'ativo', 'inativo' e 'desativadas' juntos aqui, na ordem do banco
+  (regras em src/lib/lista-do-painel-de-analises.js) — quem já abriu "Ativo"
+  e "Inativo" tem as cópias e só busca o que falta.
 
   A cópia guardada no navegador (IndexedDB) mora aqui, no lugar do antigo cache
   do localStorage do analises-app.js e do cache em memória que este módulo
@@ -19,6 +24,12 @@ import {
   criarCacheDoPainel,
   revalidarPayload,
 } from "../lib/cache-do-painel-de-analises.js";
+import {
+  completarLinhaPeloEnvelope,
+  envelopeDeTodos,
+  juntarPartesDoPainel,
+  partesDoEscopo,
+} from "../lib/lista-do-painel-de-analises.js";
 import { armazenamentoDasAnalises } from "../modules/cache-das-analises-indexeddb.js";
 import { AREA_DO_PAINEL } from "./analises-area.js";
 
@@ -55,7 +66,11 @@ export function normalizeAnaliseRows(rows) {
   return Array.isArray(rows) ? rows.map(normalizeAnaliseRow) : [];
 }
 
-/* Linhas do payload (colunas + arrays) como objetos, pelo NOME da coluna. */
+/*
+  Linhas do payload (colunas + arrays) como objetos, pelo NOME da coluna. O que
+  a lista enxuta manda uma vez no envelope (grupo, situação do edital) entra em
+  cada linha.
+*/
 export function decodeRows(payload) {
   if (
     !payload ||
@@ -71,7 +86,7 @@ export function decodeRows(payload) {
     columns.forEach((column, index) => {
       row[column] = Array.isArray(values) ? values[index] : null;
     });
-    return normalizeAnaliseRow(row);
+    return normalizeAnaliseRow(completarLinhaPeloEnvelope(row, payload));
   });
 }
 
@@ -90,7 +105,8 @@ async function buscarDoServidor(client, escopo) {
 }
 
 /**
- * O payload do escopo, com as linhas já decodificadas.
+ * O payload de um pacote ('ativo', 'inativo' ou 'desativadas'), com as linhas
+ * já decodificadas.
  *
  * - Com cópia guardada (e sem `forcarRede`): devolve a cópia na hora
  *   (`daCopia: true`) e revalida por trás; `aoMudar({ payload, linhas })` só é
@@ -121,6 +137,64 @@ export async function carregarPayloadDoPainel(
   const linhas = decodeRows(payload);
   void cacheLocal.guardar(contexto, payload);
   return { payload, linhas, daCopia: false };
+}
+
+/*
+  "Todos": os três pacotes em paralelo, juntos. A revalidação de cada um
+  (`aoMudar` do pacote) refaz a junção com o que há de mais novo e chama o
+  `aoMudar` de fora uma vez por pacote que mudou. Falha de um pacote rejeita
+  tudo (o painel cai na leitura pela view, como nos outros escopos).
+*/
+async function carregarTodosDoPainel(
+  client,
+  { usuarioId, forcarRede, aoMudar, aoPerderAcesso },
+) {
+  const partes = partesDoEscopo("todos");
+  const atuais = new Array(partes.length);
+  let pronto = false;
+  let semAcesso = false;
+  const juntar = () => {
+    const linhas = juntarPartesDoPainel(atuais);
+    return { payload: envelopeDeTodos(atuais, linhas.length), linhas };
+  };
+
+  const resultados = await Promise.all(
+    partes.map((escopo, indice) =>
+      carregarPayloadDoPainel(client, {
+        escopo,
+        usuarioId,
+        forcarRede,
+        aoMudar: (novo) => {
+          atuais[indice] = novo;
+          if (pronto && !semAcesso) aoMudar?.(juntar());
+        },
+        aoPerderAcesso: (erro) => {
+          if (semAcesso) return;
+          semAcesso = true;
+          aoPerderAcesso?.(erro);
+        },
+      }),
+    ),
+  );
+  // A revalidação de um pacote pode ter chegado antes dos outros: fica a nova.
+  resultados.forEach((resultado, indice) => {
+    if (!atuais[indice]) atuais[indice] = resultado;
+  });
+  pronto = true;
+  return {
+    ...juntar(),
+    daCopia: resultados.some((resultado) => resultado.daCopia),
+  };
+}
+
+/**
+ * O escopo da "Situação do processo" ('ativo', 'inativo' ou 'todos'), com as
+ * mesmas opções e o mesmo retorno de `carregarPayloadDoPainel`.
+ */
+export function carregarEscopoDoPainel(client, opcoes) {
+  return opcoes.escopo === "todos"
+    ? carregarTodosDoPainel(client, opcoes)
+    : carregarPayloadDoPainel(client, opcoes);
 }
 
 /*

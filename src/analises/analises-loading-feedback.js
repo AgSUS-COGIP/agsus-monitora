@@ -34,7 +34,7 @@ export const AVISO_DO_PAINEL_PRONTO = "agsus:painel-pronto";
 const MARCOS_DE_DEMORA_MS = [12_000, 25_000];
 const LINHAS_DA_FILA = 8;
 const ITENS_DE_PENDENCIA = 4;
-const BOTOES_OCUPADOS = ["refreshBtn", "applyBtn", "scopeGuardLoad"];
+const BOTOES_OCUPADOS = ["refreshBtn", "applyBtn"];
 
 const estado = {
   ativo: false,

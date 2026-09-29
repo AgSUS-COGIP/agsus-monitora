@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  carregarEscopoDoPainel,
   carregarPayloadDoPainel,
   limparCacheAntigoDoLocalStorage,
 } from "../../src/analises/analises-consolidated-transport.js";
@@ -140,6 +141,91 @@ describe("cópia do painel no navegador", () => {
     const { resultado } = await abrir(resposta(payload("10:00", ["Maria"])));
     expect(resultado.daCopia).toBe(false);
     expect(nomes(resultado)).toEqual(["Maria"]);
+  });
+
+  it("a lista enxuta (schema 4) põe em cada linha o grupo e a situação do edital do envelope", async () => {
+    const enxuto = {
+      ...payload("10:00", ["Maria"]),
+      schema_version: 4,
+      grupo: "Projetos",
+      edital_status: "Inativo",
+    };
+    const { resultado } = await abrir(resposta(enxuto), { escopo: "inativo" });
+    expect(resultado.linhas[0]).toMatchObject({
+      candidato: "Maria",
+      grupo: "Projetos",
+      edital_status: "Inativo",
+    });
+  });
+
+  it("Todos junta os três pacotes, sem repetir, e redesenha quando um deles muda", async () => {
+    const pacote = (escopo, geradoEm, linhas) => ({
+      schema_version: 4,
+      scope: escopo,
+      grupo: "Saúde Indígena",
+      edital_status: escopo === "inativo" ? "Inativo" : "Ativo",
+      columns: ["id", "unidade", "edital", "codigo_vaga", "candidato"],
+      rows: linhas,
+      editais: [],
+      total: linhas.length,
+      generated_at: geradoEm,
+      cache: { hit: true, refreshed_at: geradoEm },
+    });
+    const servidor = {
+      ativo: pacote("ativo", "10:00", [["b", "DSEI B", "1", "1", "Bia"]]),
+      inativo: pacote("inativo", "10:00", [["a", "DSEI A", "1", "1", "Ana"]]),
+      desativadas: pacote("desativadas", "10:00", [
+        ["c", "DSEI C", "1", "1", "Caio"],
+      ]),
+    };
+    const rpc = vi.fn(async (_nome, { p_scope }) => ({
+      data: servidor[p_scope],
+      error: null,
+    }));
+    const aoMudar = vi.fn();
+    const primeira = await carregarEscopoDoPainel(
+      { rpc },
+      { escopo: "todos", usuarioId: "u1", aoMudar },
+    );
+    expect(rpc.mock.calls.map((chamada) => chamada[1].p_scope)).toEqual([
+      "ativo",
+      "inativo",
+      "desativadas",
+    ]);
+    expect(primeira.linhas.map((l) => [l.id, l.edital_status])).toEqual([
+      ["a", "Inativo"],
+      ["b", "Ativo"],
+      ["c", "Ativo"],
+    ]);
+    expect(primeira.payload).toMatchObject({ scope: "todos", total: 3 });
+
+    // A análise "b" passou para inativo no servidor: a cópia abre na hora e
+    // redesenha, sem repetir, quando a revalidação chega.
+    await esperarGravacao();
+    servidor.ativo = pacote("ativo", "10:30", []);
+    servidor.inativo = pacote("inativo", "10:30", [
+      ["a", "DSEI A", "1", "1", "Ana"],
+      ["b", "DSEI B", "1", "1", "Bia"],
+    ]);
+    const rede = adiada();
+    const rpcLenta = vi.fn(async (nome, argumentos) => {
+      await rede.promessa;
+      return rpc(nome, argumentos);
+    });
+    const segunda = await carregarEscopoDoPainel(
+      { rpc: rpcLenta },
+      { escopo: "todos", usuarioId: "u1", aoMudar },
+    );
+    expect(segunda.daCopia).toBe(true);
+    expect(segunda.linhas.map((l) => l.id)).toEqual(["a", "b", "c"]);
+    rede.resolver();
+    await vi.waitFor(() => expect(aoMudar).toHaveBeenCalledTimes(2));
+    const ultima = aoMudar.mock.calls.at(-1)[0];
+    expect(ultima.linhas.map((l) => [l.id, l.edital_status])).toEqual([
+      ["a", "Inativo"],
+      ["b", "Inativo"],
+      ["c", "Ativo"],
+    ]);
   });
 
   it("o cache antigo do localStorage (e o recovery dele) sai; o resto fica", () => {

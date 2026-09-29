@@ -248,8 +248,6 @@ function bindControls() {
     },
     true,
   );
-
-  document.addEventListener("agsus:analises-query-complete", scheduleUpdate);
 }
 
 function start() {

@@ -32,36 +32,20 @@ test.describe("Análises autenticadas", () => {
     );
   });
 
-  test("consulta recorte histórico, exibe contadores e libera KPIs", async ({
+  test("Inativo e Todos carregam direto, como o Ativo, sem pedir recorte", async ({
     page,
   }) => {
     await page.goto("/analises.html");
 
-    await page.locator("#fSituacaoEdital").selectOption("inativo");
-    await expect(page.locator("#scopeGuard")).toBeVisible();
-
-    const unitInput = page.locator("#scopeGuardUnits-ts-control");
-    await unitInput.fill("Parintins");
-    await page
-      .locator(".ts-dropdown .option", { hasText: "DSEI Parintins" })
-      .first()
-      .click();
-
-    await expect(page.locator(".scope-modern-counter").first()).toContainText(
-      "1 de",
-    );
-    await page.getByRole("button", { name: "Consultar dados" }).click();
-
-    await expect(page.locator("main.content")).toHaveAttribute(
-      "aria-busy",
-      "true",
-    );
-    await expect(page.locator("main.content")).toHaveAttribute(
-      "aria-busy",
-      "false",
-      { timeout: 30_000 },
-    );
-    await expect(page.locator("#kpiGrid")).toBeVisible();
-    await expect(page.locator("#scopeSummary")).toBeVisible();
+    for (const escopo of ["inativo", "todos"]) {
+      await page.locator("#fSituacaoEdital").selectOption(escopo);
+      await expect(page.locator("main.content")).toHaveAttribute(
+        "aria-busy",
+        "false",
+        { timeout: 30_000 },
+      );
+      await expect(page.locator("#kpiGrid")).toBeVisible();
+      await expect(page.locator("#tableBody tr").first()).toBeVisible();
+    }
   });
 });
