@@ -33,6 +33,7 @@ apps-script/
     2-sincronizar-com-supabase-full.gs   substitui "Sincronizar com Supabase" (Scipts Monitora analises2)
     3-analises-incremental.gs            substitui "AnalisesIncremental" (Scipts Monitora analises3)
   projetos/
+    1-atualizar-base.gs                  o "Atualizar base" (DIM_VAGAS -> FATO_ANALISES); ver nota abaixo
     2-sincronizar-com-supabase-full.gs   novo; substitui o antigo sync (Script Projetos1), que deve ser APAGADO
     3-analises-incremental.gs            novo
     4-orquestrador-fato-supabase.gs      novo (orquestrador igual ao da SI)
@@ -186,3 +187,16 @@ relação ao da Saúde Indígena, que **não impedem** o funcionamento:
   troque `CONTINUATION_SYNC_TRIGGER_HANDLER` para
   `'processarLoteSincronizacaoAnalises'` (a função pública já vem no
   `4-orquestrador-fato-supabase.gs`).
+
+## Nota: nomes repetidos entre arquivos (29/09/2026)
+
+No Apps Script, quando dois arquivos do mesmo projeto definem a mesma função,
+vale a do arquivo carregado por último, sem aviso. Em Projetos, o painel web
+(Code.gs) e o "Atualizar base" tinham `normalizeHeader_`, `parseDateOnlySafe_`,
+`getTodayDateOnly_` e `formatDateOnlyPtBr_` com comportamentos diferentes. Quando
+a ordem dos arquivos mudou, o Atualizar base passou a ler `pasta_origem_link`
+como vazio ("Linha de DIM_EDITAIS ignorada por edital ou pasta vazios") e
+encontrava 0 vagas. `projetos/1-atualizar-base.gs` usa nomes próprios
+(`normalizarCabecalhoAB_`, `parseDataSemHoraAB_`, `hojeSemHoraAB_`,
+`formatarDataPtBrAB_`). Ao colar código novo num projeto, confira se não há
+função com o mesmo nome em outro arquivo.
