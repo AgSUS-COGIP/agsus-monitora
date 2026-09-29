@@ -433,3 +433,80 @@ describe("Configurações › Acessos", () => {
     expect(controlador.temAlteracoesPendentes()).toBe(false);
   });
 });
+
+/*
+  Pedidos de 29/09: o administrador global aparece com o nível real do grupo
+  (em "Gestão de acessos" é Editor, não Administrador) e uma falha de rede no
+  salvar vira mensagem clara, com o botão de volta — nunca "Salvando…" preso.
+*/
+describe("Acessos: administrador global e falha de rede", () => {
+  const ADMIN_GLOBAL = {
+    id: "adm2",
+    nome: "COET",
+    email: "coet@agenciasus.org.br",
+    grupo: "admin",
+    coordenacao: null,
+    revisao_conta: "t2",
+    admin_global: true,
+    permissoes: {
+      nucleo: celula("admin"),
+      acessos: celula("editor"),
+    },
+  };
+
+  it("admin global: texto com o nível do grupo, sem select, e Editor em Gestão de acessos", async () => {
+    const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    supabase.rpc.mockImplementation((nome) =>
+      Promise.resolve({
+        data:
+          nome === "obter_matriz_acessos"
+            ? {
+                ...MATRIZ(TETO_ADMIN),
+                usuarios: [ADMIN_GLOBAL],
+                grupos: GRUPOS.map((g) =>
+                  g.codigo === "admin"
+                    ? { ...g, niveis: { nucleo: "admin", acessos: "editor" } }
+                    : g,
+                ),
+              }
+            : [],
+        error: null,
+      }),
+    );
+    await act(async () => controlador.estado.carregarMatriz());
+    expect(select("Editais de COET")).toBeNull();
+    const linha = [...document.querySelectorAll("tbody tr")].find((tr) =>
+      tr.textContent.includes("COET"),
+    );
+    const textos = [...linha.querySelectorAll(".acessos-nivel-fixo")].map(
+      (el) => el.textContent,
+    );
+    const colunas = [...document.querySelectorAll("thead th")].map((th) =>
+      th.textContent.trim(),
+    );
+    const celulaDe = (rotulo) =>
+      linha.children[colunas.indexOf(rotulo)].textContent.trim();
+    expect(celulaDe("Editais")).toBe("Administrador");
+    expect(celulaDe("Gestão de acessos")).toBe("Editor");
+    expect(textos).not.toContain("Leitor");
+  });
+
+  it("'Failed to fetch' no salvar: mensagem clara, rascunho mantido e botão de volta", async () => {
+    const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation((nome, args) =>
+      nome === "salvar_matriz_acessos"
+        ? Promise.reject(new TypeError("Failed to fetch"))
+        : original(nome, args),
+    );
+    await escolher(select("Editais de Ana <img src=x>"), "editor");
+    await digitar(document.getElementById("acessosMotivo"), "Nova função");
+    await clicar(botao("Salvar alterações"));
+    expect(document.body.textContent).toContain(
+      "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.",
+    );
+    expect(document.body.textContent).not.toContain("Failed to fetch");
+    expect(botao("Salvar alterações").disabled).toBe(false);
+    expect(controlador.estado.obter().rascunho.size).toBe(1);
+  });
+});

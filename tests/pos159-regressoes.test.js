@@ -22,16 +22,18 @@ const semComentarios = (fonte) =>
 /*
   1 — A cor da barra lateral não persistia.
 
-  `installSaveOverride()` troca `window.saveAdminSettings` por `reviewAndPublish`,
-  então o botão Salvar publica pelo módulo de governança. As chaves da barra
-  lateral só tinham sido acrescentadas à função de `legacy-app.js`, que nesse
-  fluxo nunca roda: `collectConfigRows()` não as via, `buildChanges()` não achava
+  O botão Salvar (e o Ctrl+S) publica pelo módulo de governança, que chama
+  `reviewAndPublish` direto — o `saveAdminSettings` do legado, que nesse fluxo
+  nunca rodava, saiu. As chaves da barra lateral tinham sido acrescentadas só
+  a ele: `collectConfigRows()` não as via, `buildChanges()` não achava
   diferença e mudar apenas a cor terminava em "Nada para publicar".
 */
 describe("as chaves da barra lateral chegam ao caminho que realmente salva", () => {
   it("o fluxo de governança é quem publica", () => {
-    expect(governance).toContain("window.saveAdminSettings = governed");
-    expect(governance).toContain("return await reviewAndPublish(...args)");
+    const codigo = semComentarios(governance);
+    expect(codigo).not.toMatch(/window.saveAdminSettingss*=/);
+    expect(codigo).toContain("void reviewAndPublish()");
+    expect(semComentarios(app)).not.toContain("function saveAdminSettings");
   });
 
   it("collectConfigRows inclui as linhas da barra lateral", () => {
@@ -46,8 +48,7 @@ describe("as chaves da barra lateral chegam ao caminho que realmente salva", () 
     expect(fn).toContain("...linhasDeConfiguracaoDaSidebar()");
   });
 
-  it("as duas chaves saem da mesma função nos dois caminhos", () => {
-    expect(app).toContain("...linhasDeConfiguracaoDaSidebar()");
+  it("as duas chaves saem de uma função da barra lateral", () => {
     expect(sidebar).toContain("chave: KEY_LOGO");
     expect(sidebar).toContain("chave: KEY_COLOR");
   });

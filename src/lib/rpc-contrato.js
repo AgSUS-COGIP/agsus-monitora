@@ -192,11 +192,6 @@ export const CONTRATO_RPC = {
   },
 
   // ── Configurações ───────────────────────────────────────────────────────
-  salvar_configuracoes_e_paineis: {
-    argumentos: ["p_config_rows", "p_paineis"],
-    critica: true,
-    resumo: "Grava configurações e painéis (caminho clássico).",
-  },
   salvar_configuracoes_e_paineis_v2: {
     argumentos: ["p_config_rows", "p_paineis", "p_motivo"],
     critica: true,

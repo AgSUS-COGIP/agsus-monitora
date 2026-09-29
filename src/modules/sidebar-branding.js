@@ -442,11 +442,6 @@ export function linhasDeConfiguracaoDaSidebar() {
   ];
 }
 
-/** Reaplica a aparência depois de o salvamento principal ter tido sucesso. */
-export function reaplicarSidebarAposSalvar() {
-  applySidebarBranding();
-}
-
 export function initSidebarBranding() {
   if (initialized || typeof document === "undefined") return;
   initialized = true;
