@@ -701,3 +701,59 @@ provisoriamente; a decisão de 29/09/2026 é que a SEDE só tem a unidade SEDE.
   `mover_edital_de_area`. Edital já movido por um administrador para outra área
   fica onde está.
 - As análises curriculares não mudam: a área delas vem do `grupo` da planilha.
+
+## 12. Lista de aprovados por área
+
+Migration `20260929210000_aprovados_por_area.sql` (rollback em
+`supabase/rollback/`, que volta à definição lida do banco em 29/09/2026, com o
+recorte por coordenação; ensaiado: hash, volatilidade, config, grants e
+comentário da função iguais aos de antes, e nenhuma sobra).
+
+- `listar_candidatos_aprovados_compacto(p_area text default null, p_versao text
+default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não é
+  do usuário), mesma permissão (`pode_recurso` + `papel_recurso`) e mesmo recorte
+  por coordenação (`FC_EDITAIS_VISIVEIS`). Sem `p_area`: exatamente a resposta
+  de antes (formato 1, todas as áreas), para o front publicado até o deploy — sai
+  numa próxima migration, junto com o formato 1 do expansor.
+- **Formato 2**: `listas` em array (id na primeira coluna; a linha leva o
+  índice), `dicionarios` com cargo, modalidade, status e código da vaga (a linha
+  leva o índice, base 0), `versao`, `area` e `cache`. O front
+  (`src/lib/candidatos-aprovados-compactos.js`) remonta objetos idênticos aos
+  de antes — conferido no ensaio para o admin (3 áreas), um usuário da Saúde
+  Indígena e um usuário sintético com recorte por coordenação: conteúdo e ordem
+  iguais.
+- **Tamanho** (ensaio, 29/09): admin 9.809 KB (todas as áreas) → Saúde Indígena
+  1.539 KB, SEDE 1.345 KB, Projetos 1.626 KB. Usuário só da Saúde Indígena:
+  2.640 KB → 1.539 KB. Usuário com recorte (3 editais da SEDE): 2.083 KB → 780 KB.
+- **Tempo** (ensaio): antes 1,6 s com o banco quente e 11 s frio (todas as
+  áreas); com o pronto, 18–30 ms por área; com `p_versao` que ainda vale,
+  14–18 ms e nada trafega. A versão custa ~13 ms; montar uma área, 150–300 ms.
+- **Pronto no servidor**: `private."TA_CANDIDATO_APROVADO_AREA"` (por área:
+  `DS_LISTAS`, `DS_DICIONARIOS`, `DS_LINHAS`, `QT_CANDIDATOS`,
+  `DS_VERSAO_DADOS`, `DT_GERACAO`, `NU_DURACAO_MS`; RLS sem policy, sem
+  grant). Montagem em `private."FC_MONTAR_APROVADOS_AREA"(área, editais)`;
+  remontagem em `atualizar_cache_aprovados(p_area)` e
+  `atualizar_cache_aprovados_vencidos()` (só `service_role`/`postgres`), pelo
+  pg_cron `agsus_aprovados_cache_por_area` a cada 2 min. Só quem vê a área
+  inteira recebe o pronto; quem tem recorte por coordenação, a lista montada na
+  hora (a versão dele leva o md5 dos editais visíveis).
+- **Quem escreve vê a própria mudança na hora**: a versão
+  (`private."FC_VERSAO_APROVADOS_AREA"`) é calculada a cada chamada dos próprios
+  dados — contagens e soma de hash do `xmin` das listas da área e dos
+  candidatos das listas vigentes, mais edital/unidade do monitoramento. Todo
+  insert, update (status, sub judice, soft delete) ou delete muda a versão no
+  mesmo commit dos dados. O pronto só é servido com a versão de agora; senão a
+  RPC remonta (trava consultiva por área) ou, com a trava ocupada, monta na hora
+  sem gravar. Não há "stale-while-cron" nesta lista, e as RPCs que escrevem não
+  mudaram. Ensaio: depois de `alterar_status_candidato_aprovado`, a chamada
+  seguinte trouxe o status novo e a versão nova; depois de um soft delete, um
+  candidato a menos.
+- **No navegador**: uma cópia por área no IndexedDB (`aprovados:<área>`, no
+  mesmo banco e com o mesmo dono das cópias do painel de análises; regras gerais
+  em `src/lib/cache-de-payload.js`). A primeira abertura da área mostra a cópia
+  e pergunta ao banco se a `versao` dela vale; a releitura depois de uma
+  escrita vai sempre ao banco, com a versão da tela. Sair, "Limpar sessão",
+  acesso revogado e outro usuário apagam as cópias.
+- **Ordem de publicação**: a migration pode ir antes do front (o front
+  publicado chama sem `p_area` e recebe o de sempre) ou depois (o front novo,
+  sem `p_area` no banco, recebe PGRST202 e chama a função sem argumentos).

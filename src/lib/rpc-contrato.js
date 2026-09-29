@@ -272,16 +272,11 @@ export const CONTRATO_RPC = {
     resumo:
       "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou.",
   },
-  listar_candidatos_aprovados: {
-    argumentos: [],
-    critica: true,
-    resumo: "Lista os candidatos vigentes das listas de aprovados.",
-  },
   listar_candidatos_aprovados_compacto: {
-    argumentos: [],
+    argumentos: ["p_area", "p_versao"],
     critica: true,
     resumo:
-      "Candidatos vigentes das listas de aprovados numa chamada só: listas uma vez e candidatos em linhas posicionais.",
+      "Candidatos vigentes da lista de aprovados de uma área numa chamada só: listas uma vez, cargo/modalidade/status/código da vaga em dicionário e linhas posicionais; p_versao igual à atual devolve só `inalterado`.",
   },
   importar_lista_aprovados: {
     argumentos: [

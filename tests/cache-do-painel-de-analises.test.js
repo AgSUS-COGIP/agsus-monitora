@@ -1,17 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHAVE_DO_DONO,
-  ESQUEMAS_DO_PAYLOAD,
   VALIDADE_DO_CACHE_MS,
+} from "../src/lib/cache-de-payload.js";
+import {
+  ESQUEMAS_DO_PAYLOAD,
   chavesDoCacheAntigo,
   criarCacheDoPainel,
   payloadMudou,
   revalidarPayload,
 } from "../src/lib/cache-do-painel-de-analises.js";
 import {
-  apagarCacheDasAnalises,
-  armazenamentoDasAnalises,
-} from "../src/modules/cache-das-analises-indexeddb.js";
+  apagarCacheDePayload,
+  armazenamentoDePayload,
+} from "../src/modules/cache-de-payload-indexeddb.js";
 import { indexedDBFalso } from "./indexeddb-falso.js";
 
 const payload = (geradoEm, total = 2) => ({
@@ -262,14 +264,14 @@ describe("armazenamento no IndexedDB", () => {
     const falso = indexedDBFalso();
     globalThis.indexedDB = falso;
     const cache = criarCacheDoPainel({
-      armazenamento: armazenamentoDasAnalises,
+      armazenamento: armazenamentoDePayload,
       versao: "v1",
     });
     expect(await cache.guardar(U1, payload("10:00"))).toBe(true);
     expect(await cache.ler(U1)).toEqual(payload("10:00"));
     expect(falso.bancos.has("agsus-monitora-analises")).toBe(true);
 
-    await apagarCacheDasAnalises();
+    await apagarCacheDePayload();
     expect(falso.bancos.has("agsus-monitora-analises")).toBe(false);
     expect(await cache.ler(U1)).toBeNull();
   });
@@ -277,11 +279,11 @@ describe("armazenamento no IndexedDB", () => {
   it("sem IndexedDB (janela anônima, bloqueado), o painel segue pela rede", async () => {
     globalThis.indexedDB = undefined;
     const cache = criarCacheDoPainel({
-      armazenamento: armazenamentoDasAnalises,
+      armazenamento: armazenamentoDePayload,
       versao: "v1",
     });
     await expect(cache.guardar(U1, payload("1"))).resolves.toBe(false);
     await expect(cache.ler(U1)).resolves.toBeNull();
-    await expect(apagarCacheDasAnalises()).resolves.toBeUndefined();
+    await expect(apagarCacheDePayload()).resolves.toBeUndefined();
   });
 });

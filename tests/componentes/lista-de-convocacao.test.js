@@ -99,8 +99,6 @@ const supabaseFalso = ({
       };
     if (nome === "listar_candidatos_aprovados_compacto")
       return { data: compactarCandidatos(candidatos), error: null };
-    if (nome === "listar_candidatos_aprovados")
-      return { data: candidatos, error: null };
     if (nome === "listar_modelos_convocacao")
       return { data: modelo ? [modelo] : [], error: null };
     if (nome === "listar_configuracao_convocacao")
@@ -441,6 +439,7 @@ describe("formulário de convocação do edital", () => {
     // Salvar recarrega a página: a ordem de convocação depende destas vagas.
     expect(supabase.rpc).toHaveBeenCalledWith(
       "listar_candidatos_aprovados_compacto",
+      expect.objectContaining({ p_area: "saude-indigena" }),
     );
   });
 

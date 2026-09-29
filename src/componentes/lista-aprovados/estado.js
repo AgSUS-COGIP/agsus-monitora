@@ -23,11 +23,35 @@
   (`carregado` falso), e uma falha nela vira `erroAoCarregar`, com "Tentar de
   novo". As ações passam por `executar`: `acao` diz qual está em curso, o botão
   dela mostra o rótulo e os outros ficam desativados até terminar.
+
+  Os candidatos vêm só da área atual do menu (`areaAtual`, de
+  `dados-do-monitoramento.js`): trocar de área e abrir a página busca os da
+  área nova. A primeira abertura de uma área mostra a cópia guardada no
+  navegador (IndexedDB, regras em `lib/cache-de-payload.js`) e pergunta ao
+  banco, por trás, se a `versao` dela ainda vale — o banco calcula a versão dos
+  próprios dados a cada chamada e só manda o pacote de novo se ela mudou. A
+  releitura depois de uma escrita nunca usa a cópia: vai ao banco, que devolve
+  os dados com a escrita (ver a migration 20260929190000).
 */
 
+/*
+  Versão da cópia guardada: o endereço do bundle traz o hash do conteúdo, e
+  cada publicação invalida as cópias antigas sozinha.
+*/
+const VERSAO_DA_COPIA = `1:${import.meta.url}`;
+
 import { readApprovedWorkbook } from "../../lib/aprovados-import.js";
-import { buscarTodasAsPaginas } from "../../lib/paginas-em-paralelo.js";
-import { expandirCandidatosCompactos } from "../../lib/candidatos-aprovados-compactos.js";
+import {
+  LISTA_DE_APROVADOS,
+  expandirCandidatosCompactos,
+  pacoteInalterado,
+} from "../../lib/candidatos-aprovados-compactos.js";
+import {
+  criarCacheDePayload,
+  revalidarPayload,
+} from "../../lib/cache-de-payload.js";
+import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import { obterDadosDoMonitoramento } from "../dados-do-monitoramento.js";
 import {
   canImportApprovedList,
   canManageSubJudice,
@@ -60,7 +84,6 @@ import {
 } from "../../lib/anexos-do-candidato.js";
 
 const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;
-const CANDIDATES_PAGE_SIZE = 1000;
 const LIMITE_DO_XLSX = 10 * 1024 * 1024;
 const TIPO_DO_XLSX =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -135,11 +158,21 @@ export function criarEstadoDaListaDeAprovados({
   baixar = baixarNoNavegador,
   lerPlanilha = readApprovedWorkbook,
   novaAba = abrirEmNovaAba,
+  armazenamento = armazenamentoDePayload,
+  areaAtual = () => obterDadosDoMonitoramento().areaAtual,
 } = {}) {
   let estado = ESTADO_INICIAL;
   let aberturas = 0;
   let mudancasLocais = 0;
+  /* A área dos candidatos na tela e a `versao` do banco para eles. */
+  let areaCarregada = "";
+  let versaoCarregada = null;
   const ouvintes = new Set();
+  const copias = criarCacheDePayload({
+    armazenamento,
+    versao: VERSAO_DA_COPIA,
+    tipo: LISTA_DE_APROVADOS,
+  });
 
   function publicar(mudancas) {
     estado = { ...estado, ...mudancas };
@@ -173,32 +206,92 @@ export function criarEstadoDaListaDeAprovados({
 
   // ── Leitura ────────────────────────────────────────────────────────────
 
+  const contextoDaCopia = (area) => ({
+    usuarioId: text(perfil()?.user_id),
+    area,
+  });
+
   /*
-    Uma chamada só: em páginas, o banco refazia a lista inteira (≈20 mil
-    candidatos) a cada uma das ~16 páginas. As páginas em paralelo ficam só
-    como reserva, para o banco que ainda não tem a função compacta.
+    Uma chamada só, da área. `versao` é a dos dados que a tela já tem: se o
+    banco disser que continua valendo, volta `{ inalterado: true }` e nada
+    trafega. O banco de antes da migration 20260929190000 não conhece
+    `p_area` (PGRST202): a função sem argumentos devolve todas as áreas no
+    formato 1, e a tela recorta pela área como sempre.
   */
-  async function buscarTodosOsCandidatos() {
-    const compacto = await supabase.rpc("listar_candidatos_aprovados_compacto");
-    if (!compacto.error)
-      return { data: expandirCandidatosCompactos(compacto.data), error: null };
-    if (compacto.error.code !== "PGRST202") return compacto;
-    return buscarPorPaginas();
+  async function pedirPacote(area, versao) {
+    const resposta = await supabase.rpc(
+      "listar_candidatos_aprovados_compacto",
+      { p_area: area, p_versao: versao },
+    );
+    if (resposta.error?.code !== "PGRST202") return resposta;
+    return supabase.rpc("listar_candidatos_aprovados_compacto");
   }
 
-  // Páginas em paralelo: em sequência eram 16 pedidos de ~750 ms (12 s).
-  function buscarPorPaginas() {
-    return buscarTodasAsPaginas(
-      (inicio, fim, { contar }) =>
-        supabase
-          .rpc(
-            "listar_candidatos_aprovados",
-            {},
-            contar ? { count: "exact" } : undefined,
-          )
-          .range(inicio, fim),
-      { tamanho: CANDIDATES_PAGE_SIZE, concorrencia: 6 },
-    );
+  /*
+    Os candidatos da área. `usarCopia`: a primeira abertura da área devolve a
+    cópia guardada na hora (`guardado`), e quem chama a revalida por trás.
+    Fora disso (releitura depois de uma escrita), vai sempre ao banco.
+  */
+  async function buscarCandidatos(area, { usarCopia }) {
+    const contexto = contextoDaCopia(area);
+    const guardado = usarCopia ? await copias.ler(contexto) : null;
+    if (guardado)
+      return {
+        data: expandirCandidatosCompactos(guardado),
+        error: null,
+        versao: guardado.versao,
+        guardado,
+      };
+    const versaoDaTela =
+      !usarCopia && area === areaCarregada ? versaoCarregada : null;
+    const { data, error } = await pedirPacote(area, versaoDaTela);
+    if (error) return { data: null, error };
+    if (pacoteInalterado(data)) return { inalterado: true, error: null };
+    void copias.guardar(contexto, data);
+    return {
+      data: expandirCandidatosCompactos(data),
+      error: null,
+      versao: typeof data?.versao === "string" ? data.versao : null,
+    };
+  }
+
+  /*
+    A cópia já está na tela: pergunta ao banco se ela vale. Mudou, entra a
+    nova — a menos que a área tenha mudado ou uma escrita local tenha chegado
+    no meio (ela dispara a própria releitura). Sem acesso à área (42501/22023),
+    as cópias saem e a lista fica vazia.
+  */
+  function revalidarCopia(area, guardado) {
+    const contexto = contextoDaCopia(area);
+    const mudancas = mudancasLocais;
+    const aindaVale = () =>
+      area === areaCarregada && mudancas === mudancasLocais;
+    return revalidarPayload({
+      guardado,
+      buscar: async () => {
+        const { data, error } = await pedirPacote(area, guardado.versao);
+        if (error) throw error;
+        return data;
+      },
+      mudou: (_, novo) => !pacoteInalterado(novo),
+      guardar: (novo) =>
+        pacoteInalterado(novo) ? null : copias.guardar(contexto, novo),
+      aoMudar: (novo) => {
+        if (!aindaVale()) return;
+        versaoCarregada = typeof novo?.versao === "string" ? novo.versao : null;
+        publicar({ candidatos: expandirCandidatosCompactos(novo) });
+      },
+      aoPerderAcesso: (erro) => {
+        if (area !== areaCarregada) return;
+        versaoCarregada = null;
+        publicar({ candidatos: [] });
+        toast(
+          `Erro ao carregar lista de aprovados: ${mensagemDe(erro)}`,
+          "error",
+        );
+      },
+      apagarTudo: () => copias.apagarTudo(),
+    });
   }
 
   async function lerConfiguracoes() {
@@ -260,6 +353,15 @@ export function criarEstadoDaListaDeAprovados({
   async function carregar({ emSegundoPlano = false } = {}) {
     if (!supabase) return false;
     const versao = mudancasLocais;
+    const area = text(areaAtual());
+    /*
+      Outra área: a tela volta ao skeleton em vez de mostrar os candidatos da
+      área anterior (que o recorte por área esconderia, parecendo lista vazia).
+      A cópia guardada só serve aqui, e na primeira carga.
+    */
+    const outraArea = area !== areaCarregada;
+    const usarCopia = !emSegundoPlano && (outraArea || !estado.carregado);
+    if (outraArea && estado.carregado) publicar({ carregado: false });
     if (estado.erroAoCarregar) publicar({ erroAoCarregar: "" });
     let resultados;
     try {
@@ -271,8 +373,8 @@ export function criarEstadoDaListaDeAprovados({
       resultados = await Promise.all([
         supabase.rpc("listar_listas_aprovados"),
         canViewCore(perfil())
-          ? buscarTodosOsCandidatos()
-          : Promise.resolve({ data: [], error: null }),
+          ? buscarCandidatos(area, { usarCopia })
+          : Promise.resolve({ data: [], error: null, versao: null }),
         lerConfiguracoes(),
         lerAnexos().catch(() => null),
       ]);
@@ -281,6 +383,8 @@ export function criarEstadoDaListaDeAprovados({
     }
     const [listas, candidatos, configuracao, anexos] = resultados;
     if (emSegundoPlano && versao !== mudancasLocais) return false;
+    // A área mudou enquanto a carga corria: a carga da área nova é que vale.
+    if (text(areaAtual()) !== area) return false;
     const error = listas.error || candidatos.error;
     if (error) {
       toast(
@@ -292,24 +396,34 @@ export function criarEstadoDaListaDeAprovados({
         publicar({ erroAoCarregar: String(mensagemDe(error)) });
       return false;
     }
+    areaCarregada = area;
+    // Inalterado: a versão e os candidatos da tela continuam os mesmos.
+    if (!candidatos.inalterado) versaoCarregada = candidatos.versao ?? null;
     publicar({
       listas: Array.isArray(listas.data) ? listas.data : [],
-      candidatos: Array.isArray(candidatos.data) ? candidatos.data : [],
+      ...(candidatos.inalterado
+        ? {}
+        : {
+            candidatos: Array.isArray(candidatos.data) ? candidatos.data : [],
+          }),
       carregado: true,
       perfil: perfil(),
       ...(configuracao || {}),
       ...(anexos ? { anexos } : {}),
     });
     avisar("agsus:listas-aprovados-loaded", { lists: estado.listas });
+    if (candidatos.guardado) void revalidarCopia(area, candidatos.guardado);
     return true;
   }
 
   /*
     Chamada a cada abertura da página. As permissões dependem do perfil, que o
     legado troca sem avisar; republicá-lo aqui redesenha a tela com o de agora.
+    Trocar de área no menu abre a página de novo: os candidatos são da área.
   */
   async function garantirCarregado() {
-    if (!estado.carregado) return carregar();
+    if (!estado.carregado || text(areaAtual()) !== areaCarregada)
+      return carregar();
     publicar({ perfil: perfil() });
     return true;
   }
@@ -363,7 +477,8 @@ export function criarEstadoDaListaDeAprovados({
       toast("Sem permissão para gerir lista de aprovados.", "warn");
       return;
     }
-    if (!estado.carregado) await carregar();
+    if (!estado.carregado || text(areaAtual()) !== areaCarregada)
+      await carregar();
     abrir({ tipo: "listas", editalId: String(editalId || ""), rotulo });
   }
 
