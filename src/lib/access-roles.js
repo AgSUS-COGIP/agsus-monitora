@@ -100,6 +100,17 @@ export function canManageCandidateAttachments(profile) {
   return hasLevel(profile, "admin");
 }
 
+/* Aba Recursos: ver (leitor) e cadastrar/editar (editor). Por padrão, admin e edital gestor editam. */
+export function canViewRecursos(profile) {
+  if (profile?.permissoes) return hasResource(profile, "recursos");
+  return normalizeRole(profile) !== "";
+}
+
+export function canEditRecursos(profile) {
+  if (profile?.permissoes) return hasResource(profile, "recursos", 2);
+  return ["admin", "edital_gestor"].includes(normalizeRole(profile));
+}
+
 export function canManageSubJudice(profile) {
   if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");

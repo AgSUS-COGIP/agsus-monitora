@@ -4,6 +4,7 @@ export const RESOURCES = Object.freeze([
   ["nucleo", "Editais"],
   ["calendario", "Cronograma"],
   ["aprovados", "Lista de aprovados"],
+  ["recursos", "Recursos"],
   ["importacao", "Importação e convocação"],
   ["paineis", "Painéis externos"],
   ["configuracoes", "Configurações"],

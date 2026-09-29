@@ -167,6 +167,7 @@ import {
 } from "../lib/sessao.js";
 import {
   canViewCore,
+  canViewRecursos,
   canManageSettings,
   canManageAccess,
   canImportApprovedList,
@@ -1554,6 +1555,7 @@ function isViewAllowed(view) {
     return profile?.permissoes ? can("calendario") : can("cores");
   if (view === "approved") return canViewCore(profile);
   if (view === "analises") return can("analises");
+  if (view === "recursos") return canViewRecursos(profile);
   if (view === "config") return can("config");
   if (view.startsWith("panel:")) {
     const code = view.split(":")[1];
@@ -1581,6 +1583,7 @@ function systemHomeView() {
   if (can("calendario")) return "calendario";
   if (canViewCore(profile)) return "approved";
   if (can("analises")) return "analises";
+  if (canViewRecursos(profile)) return "recursos";
   if (can("config")) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
@@ -2321,6 +2324,7 @@ function buildNav() {
     calendario: can("calendario") || (!profile?.permissoes && can("cores")),
     approved: canViewCore(profile),
     analises: can("analises"),
+    recursos: canViewRecursos(profile),
     config: can("config"),
   };
   const paineis = can("paineis")
@@ -2386,6 +2390,10 @@ function navigate(view) {
   }
   if (requestedView === "analises" && !can("analises")) {
     toast("Sem permissão para Análises curriculares.", "warn");
+    return;
+  }
+  if (requestedView === "recursos" && !canViewRecursos(profile)) {
+    toast("Sem permissão para Recursos.", "warn");
     return;
   }
   if (requestedView === "config" && !can("config")) {
@@ -2478,6 +2486,17 @@ function navigate(view) {
     $("page-analises").classList.add("active");
     setPageTitle("Análises curriculares", subtituloDaArea(""));
     abrirPaginaDeAnalises($("page-analises"));
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "recursos") {
+    $("page-recursos").classList.add("active");
+    setPageTitle(
+      "Recursos",
+      subtituloDaArea("Recursos dos candidatos: prazos, etapas e respostas."),
+    );
+    window.recursosController?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;

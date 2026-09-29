@@ -1,0 +1,650 @@
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { formatNumberBR } from "../../lib/formatters.js";
+import {
+  compararEditais,
+  dadosParaSalvar,
+  errosDoRascunho,
+  RASCUNHO_VAZIO,
+  rascunhoDoRecurso,
+  recursoDuplicado,
+  SITUACOES,
+} from "../../lib/recursos-dos-candidatos.js";
+import { Modal } from "../modal.jsx";
+import { classes } from "./paineis.jsx";
+
+/*
+  Cadastro e edição de recurso.
+
+  Cadastro: edital (só os da área atual) → origem → candidato, buscado nas
+  análises curriculares daquele edital (a base de nomes das três origens). Ao
+  escolher, cargo, vaga, código, nota atual e resultado da análise aparecem
+  sozinhos, e o analista vem preenchido com o responsável pela análise (pode
+  trocar). "Não encontrei o candidato" é a exceção: nome digitado, e o recurso
+  fica marcado como fora das análises. Outro recurso em análise do mesmo
+  candidato, edital e origem gera um aviso, e só grava confirmando.
+
+  Edição: o edital e o candidato não mudam (para isso, exclua e cadastre de
+  novo); os demais campos, sim. O banco confere a revisão: se outra pessoa
+  salvou no meio, pede para recarregar.
+*/
+
+const ESPERA_DA_BUSCA_MS = 300;
+
+const nota = (valor) =>
+  valor === null || valor === undefined || valor === ""
+    ? "—"
+    : formatNumberBR(Number(valor), { maximumFractionDigits: 2 });
+
+function Campo({ rotulo, erro, obrigatorio, children, largo }) {
+  return (
+    <label
+      className={classes("recursos-campo", largo && "recursos-campo--largo")}
+    >
+      <span>
+        {rotulo}
+        {obrigatorio ? <abbr title="obrigatório"> *</abbr> : null}
+      </span>
+      {children}
+      {erro ? (
+        <small className="recursos-erro-campo" role="alert">
+          <i className="fa-solid fa-circle-exclamation" aria-hidden="true" />{" "}
+          {erro}
+        </small>
+      ) : null}
+    </label>
+  );
+}
+
+function ResumoDoCandidato({ analise }) {
+  return (
+    <dl className="recursos-resumo" aria-label="Dados da análise do candidato">
+      <div>
+        <dt>Cargo</dt>
+        <dd>{analise.cargo || "—"}</dd>
+      </div>
+      <div>
+        <dt>Vaga</dt>
+        <dd>{analise.vaga || "—"}</dd>
+      </div>
+      <div>
+        <dt>Código</dt>
+        <dd>{analise.codigo || "—"}</dd>
+      </div>
+      <div>
+        <dt>Nota atual</dt>
+        <dd>{nota(analise.nota)}</dd>
+      </div>
+      <div>
+        <dt>Resultado da análise</dt>
+        <dd>{analise.resultado || "—"}</dd>
+      </div>
+      <div>
+        <dt>Responsável pela análise</dt>
+        <dd>{analise.responsavel || "—"}</dd>
+      </div>
+    </dl>
+  );
+}
+
+/* Busca do candidato com espera: só a resposta do último texto digitado vale. */
+function BuscaDoCandidato({
+  estado,
+  editalId,
+  aoEscolher,
+  aoNaoEncontrar,
+  erro,
+}) {
+  const [texto, setTexto] = useState("");
+  const [resultado, setResultado] = useState({
+    itens: [],
+    buscado: "",
+    erro: "",
+  });
+  const [buscando, setBuscando] = useState(false);
+  const ultimo = useRef(0);
+
+  useEffect(() => {
+    const busca = texto.trim();
+    if (!editalId || busca.length < 2) {
+      ultimo.current += 1;
+      setBuscando(false);
+      setResultado({ itens: [], buscado: "", erro: "" });
+      return undefined;
+    }
+    const meu = ++ultimo.current;
+    setBuscando(true);
+    const espera = setTimeout(async () => {
+      try {
+        const itens = await estado.buscarCandidatos(editalId, busca);
+        if (meu === ultimo.current)
+          setResultado({ itens, buscado: busca, erro: "" });
+      } catch (falha) {
+        if (meu === ultimo.current)
+          setResultado({ itens: [], buscado: busca, erro: falha.message });
+      } finally {
+        if (meu === ultimo.current) setBuscando(false);
+      }
+    }, ESPERA_DA_BUSCA_MS);
+    return () => clearTimeout(espera);
+  }, [texto, editalId, estado]);
+
+  return (
+    <div className="recursos-busca">
+      <Campo
+        rotulo="Candidato (nas análises do edital)"
+        obrigatorio
+        erro={erro}
+        largo
+      >
+        <input
+          type="search"
+          name="busca_candidato"
+          value={texto}
+          disabled={!editalId}
+          autoComplete="off"
+          placeholder={
+            editalId
+              ? "Digite o nome ou o código do candidato"
+              : "Escolha o edital primeiro"
+          }
+          onChange={(evento) => setTexto(evento.target.value)}
+        />
+      </Campo>
+      {buscando ? <p className="recursos-busca-status">Buscando…</p> : null}
+      {resultado.erro ? (
+        <p className="recursos-aviso" data-tone="danger">
+          Não foi possível buscar: {resultado.erro}
+        </p>
+      ) : null}
+      {!buscando &&
+      resultado.buscado &&
+      !resultado.itens.length &&
+      !resultado.erro ? (
+        <p className="recursos-busca-status">
+          Nenhum candidato com “{resultado.buscado}” nas análises deste edital.
+        </p>
+      ) : null}
+      {resultado.itens.length ? (
+        <ul
+          className="recursos-busca-lista"
+          aria-label="Candidatos encontrados"
+        >
+          {resultado.itens.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                className="recursos-busca-item"
+                onClick={() => aoEscolher(item)}
+              >
+                <b>{item.candidato}</b>
+                <small>
+                  {[
+                    item.codigo && `Cód. ${item.codigo}`,
+                    item.vaga && `Vaga ${item.vaga}`,
+                    item.cargo,
+                    `Nota ${nota(item.nota)}`,
+                    item.resultado,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </small>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {editalId ? (
+        <button
+          type="button"
+          className="recursos-link"
+          onClick={aoNaoEncontrar}
+        >
+          Não encontrei o candidato
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+export function FormularioDoRecurso({
+  estado,
+  recurso,
+  detalhe,
+  recursos,
+  editais,
+  origens,
+}) {
+  const { acao } = useSyncExternalStore(estado.assinar, estado.obter);
+  const edicao = Boolean(recurso);
+  const [rascunho, setRascunho] = useState(() =>
+    edicao ? rascunhoDoRecurso(recurso, detalhe || {}) : RASCUNHO_VAZIO,
+  );
+  const [tentou, setTentou] = useState(false);
+  const [confirmaDuplicado, setConfirmaDuplicado] = useState(false);
+  const [duplicadoDoBanco, setDuplicadoDoBanco] = useState(null);
+  const analistaAutomatico = useRef("");
+
+  // A observação e os dados digitados chegam com o detalhe; sem ele, o rascunho começa sem eles.
+  const detalheChegou = Boolean(detalhe && !detalhe.erro);
+  useEffect(() => {
+    if (edicao && detalheChegou)
+      setRascunho((atual) => ({
+        ...atual,
+        observacao: atual.observacao || detalhe.observacao || "",
+        nome_informado: detalhe.nome_informado ?? atual.nome_informado,
+        codigo_informado: detalhe.codigo_informado ?? atual.codigo_informado,
+        cargo_informado: detalhe.cargo_informado ?? atual.cargo_informado,
+        vaga_informada: detalhe.vaga_informada ?? atual.vaga_informada,
+      }));
+  }, [edicao, detalheChegou]);
+
+  const editaisOrdenados = useMemo(
+    () => [...editais].sort((a, b) => compararEditais(a.edital, b.edital)),
+    [editais],
+  );
+  const origensAtivas = origens.filter(
+    (o) => o.ativo || o.id === rascunho.origem,
+  );
+  const analistas = useMemo(
+    () => [...new Set(recursos.map((r) => r.analista).filter(Boolean))].sort(),
+    [recursos],
+  );
+  const erros = errosDoRascunho(rascunho, { edicao });
+  const duplicado = edicao
+    ? null
+    : recursoDuplicado(recursos, {
+        editalId: rascunho.edital_id,
+        origem: rascunho.origem,
+        analiseId: rascunho.fora_analise ? null : rascunho.analise?.id,
+        nomeInformado: rascunho.fora_analise ? rascunho.nome_informado : "",
+      });
+  const numeroDuplicado = duplicado?.nu ?? duplicadoDoBanco;
+  const salvando = acao?.tipo === "salvar";
+
+  const mudar = (campo, valor) => {
+    setRascunho((atual) => ({ ...atual, [campo]: valor }));
+    if (
+      [
+        "edital_id",
+        "origem",
+        "analise",
+        "nome_informado",
+        "fora_analise",
+      ].includes(campo)
+    ) {
+      setConfirmaDuplicado(false);
+      setDuplicadoDoBanco(null);
+    }
+  };
+
+  function escolherCandidato(item) {
+    setRascunho((atual) => {
+      const analistaFoiAutomatico =
+        !atual.analista || atual.analista === analistaAutomatico.current;
+      analistaAutomatico.current = item.responsavel || "";
+      return {
+        ...atual,
+        analise: item,
+        analista: analistaFoiAutomatico
+          ? item.responsavel || ""
+          : atual.analista,
+      };
+    });
+    setConfirmaDuplicado(false);
+    setDuplicadoDoBanco(null);
+  }
+
+  async function enviar(evento) {
+    evento.preventDefault();
+    setTentou(true);
+    if (Object.keys(erros).length) return;
+    if (numeroDuplicado && !confirmaDuplicado) return;
+    const resposta = await estado.salvar(
+      dadosParaSalvar(rascunho, {
+        id: recurso?.id ?? null,
+        revisao: recurso?.revisao ?? null,
+        permitirDuplicado: confirmaDuplicado,
+      }),
+    );
+    if (resposta?.duplicado) {
+      setDuplicadoDoBanco(
+        resposta.duplicado === true ? "?" : resposta.duplicado,
+      );
+      setConfirmaDuplicado(false);
+    }
+  }
+
+  const erro = (campo) => (tentou ? erros[campo] : "");
+
+  return (
+    <Modal
+      id="recursosFormulario"
+      rotuloId="recursosFormularioTitulo"
+      aoFechar={estado.fecharFormulario}
+      fecharAoClicarFora={false}
+      className="recursos-modal"
+      cartaoClassName="recursos-formulario-cartao"
+    >
+      <form onSubmit={enviar} noValidate>
+        <div className="modal-head">
+          <h3 id="recursosFormularioTitulo">
+            {edicao ? `Editar recurso nº ${recurso.nu}` : "Novo recurso"}
+          </h3>
+          <button
+            type="button"
+            className="btn icon outline"
+            aria-label="Fechar formulário"
+            title="Fechar"
+            onClick={estado.fecharFormulario}
+          >
+            <i className="fa-solid fa-xmark" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="modal-body recursos-formulario">
+          {edicao ? (
+            <div className="recursos-formulario-fixo">
+              <p>
+                <b>{recurso.candidato}</b> · {recurso.edital} ·{" "}
+                {recurso.unidade}
+              </p>
+              {recurso.fora_analise ? (
+                <span className="recursos-marca-fora">Fora das análises</span>
+              ) : (
+                <small>
+                  {[
+                    recurso.codigo && `Cód. ${recurso.codigo}`,
+                    recurso.vaga && `Vaga ${recurso.vaga}`,
+                    recurso.cargo,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </small>
+              )}
+            </div>
+          ) : (
+            <div className="recursos-formulario-grade">
+              <Campo rotulo="Edital" obrigatorio erro={erro("edital_id")}>
+                <select
+                  name="edital_id"
+                  value={rascunho.edital_id}
+                  data-foco-inicial
+                  onChange={(evento) => {
+                    mudar("edital_id", evento.target.value);
+                    mudar("analise", null);
+                  }}
+                >
+                  <option value="">Escolha o edital</option>
+                  {editaisOrdenados.map((ed) => (
+                    <option key={ed.id} value={ed.id}>
+                      {ed.edital} · {ed.unidade}
+                      {ed.tem_analises ? "" : " (sem análises)"}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              <Campo
+                rotulo="Origem do recurso"
+                obrigatorio
+                erro={erro("origem")}
+              >
+                <select
+                  name="origem"
+                  value={rascunho.origem}
+                  onChange={(evento) => mudar("origem", evento.target.value)}
+                >
+                  <option value="">Escolha a origem</option>
+                  {origensAtivas.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+            </div>
+          )}
+
+          {!edicao && !rascunho.fora_analise ? (
+            rascunho.analise ? (
+              <div className="recursos-escolhido">
+                <div className="recursos-escolhido-topo">
+                  <b>{rascunho.analise.candidato}</b>
+                  <button
+                    type="button"
+                    className="recursos-link"
+                    onClick={() => mudar("analise", null)}
+                  >
+                    Trocar candidato
+                  </button>
+                </div>
+                <ResumoDoCandidato analise={rascunho.analise} />
+              </div>
+            ) : (
+              <BuscaDoCandidato
+                estado={estado}
+                editalId={rascunho.edital_id}
+                erro={erro("candidato")}
+                aoEscolher={escolherCandidato}
+                aoNaoEncontrar={() => {
+                  mudar("fora_analise", true);
+                  mudar("analise", null);
+                }}
+              />
+            )
+          ) : null}
+
+          {rascunho.fora_analise ? (
+            <div className="recursos-fora">
+              {!edicao ? (
+                <p className="recursos-aviso" data-tone="warning">
+                  <i
+                    className="fa-solid fa-triangle-exclamation"
+                    aria-hidden="true"
+                  />{" "}
+                  O recurso será marcado como <b>fora das análises</b>: os dados
+                  abaixo são os digitados.{" "}
+                  <button
+                    type="button"
+                    className="recursos-link"
+                    onClick={() => mudar("fora_analise", false)}
+                  >
+                    Voltar à busca
+                  </button>
+                </p>
+              ) : null}
+              <div className="recursos-formulario-grade">
+                <Campo
+                  rotulo="Nome do candidato"
+                  obrigatorio
+                  erro={erro("nome_informado")}
+                  largo
+                >
+                  <input
+                    name="nome_informado"
+                    value={rascunho.nome_informado}
+                    maxLength={200}
+                    onChange={(evento) =>
+                      mudar("nome_informado", evento.target.value)
+                    }
+                  />
+                </Campo>
+                <Campo rotulo="Código do candidato">
+                  <input
+                    name="codigo_informado"
+                    value={rascunho.codigo_informado}
+                    maxLength={60}
+                    onChange={(evento) =>
+                      mudar("codigo_informado", evento.target.value)
+                    }
+                  />
+                </Campo>
+                <Campo rotulo="Vaga">
+                  <input
+                    name="vaga_informada"
+                    value={rascunho.vaga_informada}
+                    maxLength={60}
+                    onChange={(evento) =>
+                      mudar("vaga_informada", evento.target.value)
+                    }
+                  />
+                </Campo>
+                <Campo rotulo="Cargo" largo>
+                  <input
+                    name="cargo_informado"
+                    value={rascunho.cargo_informado}
+                    maxLength={200}
+                    onChange={(evento) =>
+                      mudar("cargo_informado", evento.target.value)
+                    }
+                  />
+                </Campo>
+              </div>
+            </div>
+          ) : null}
+
+          {numeroDuplicado ? (
+            <div className="recursos-aviso" data-tone="warning" role="alert">
+              <p>
+                <i
+                  className="fa-solid fa-triangle-exclamation"
+                  aria-hidden="true"
+                />{" "}
+                Já existe o recurso nº {numeroDuplicado} em análise para este
+                candidato, edital e origem.
+              </p>
+              <label className="recursos-check">
+                <input
+                  type="checkbox"
+                  name="confirma_duplicado"
+                  checked={confirmaDuplicado}
+                  onChange={(evento) =>
+                    setConfirmaDuplicado(evento.target.checked)
+                  }
+                />
+                <span>Cadastrar mesmo assim</span>
+              </label>
+            </div>
+          ) : null}
+
+          <div className="recursos-formulario-grade">
+            {edicao ? (
+              <Campo
+                rotulo="Origem do recurso"
+                obrigatorio
+                erro={erro("origem")}
+              >
+                <select
+                  name="origem"
+                  value={rascunho.origem}
+                  onChange={(evento) => mudar("origem", evento.target.value)}
+                >
+                  {origensAtivas.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+            ) : null}
+            <Campo rotulo="Analista responsável">
+              <input
+                name="analista"
+                value={rascunho.analista}
+                maxLength={200}
+                list="recursosAnalistas"
+                onChange={(evento) => mudar("analista", evento.target.value)}
+              />
+              <datalist id="recursosAnalistas">
+                {analistas.map((nome) => (
+                  <option key={nome} value={nome} />
+                ))}
+              </datalist>
+            </Campo>
+            <Campo rotulo="Situação">
+              <select
+                name="situacao"
+                value={rascunho.situacao}
+                onChange={(evento) => mudar("situacao", evento.target.value)}
+              >
+                {SITUACOES.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.rotulo}
+                  </option>
+                ))}
+              </select>
+            </Campo>
+            <Campo rotulo="Nº do processo SEI">
+              <input
+                name="processo_sei"
+                value={rascunho.processo_sei}
+                maxLength={60}
+                placeholder="Ex.: 25000.000000/2026-00"
+                onChange={(evento) =>
+                  mudar("processo_sei", evento.target.value)
+                }
+              />
+            </Campo>
+            <label className="recursos-check recursos-check--campo">
+              <input
+                type="checkbox"
+                name="mudou_classificacao"
+                checked={rascunho.mudou_classificacao}
+                onChange={(evento) =>
+                  mudar("mudou_classificacao", evento.target.checked)
+                }
+              />
+              <span>
+                O recurso mudou a classificação
+                <small>
+                  A mudança de nota é conferida sozinha, pela nota da análise.
+                </small>
+              </span>
+            </label>
+            <Campo rotulo="Observação" erro={erro("observacao")} largo>
+              <textarea
+                name="observacao"
+                rows={3}
+                maxLength={2000}
+                value={rascunho.observacao}
+                onChange={(evento) => mudar("observacao", evento.target.value)}
+              />
+            </Campo>
+          </div>
+        </div>
+        <div className="recursos-gaveta-rodape">
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={estado.fecharFormulario}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="btn"
+            disabled={
+              Boolean(acao) || (Boolean(numeroDuplicado) && !confirmaDuplicado)
+            }
+            aria-busy={salvando || undefined}
+          >
+            {salvando ? (
+              <>
+                <span className="botao-girando" aria-hidden="true" />{" "}
+                {acao.rotulo}
+              </>
+            ) : edicao ? (
+              "Salvar alterações"
+            ) : (
+              "Cadastrar recurso"
+            )}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
