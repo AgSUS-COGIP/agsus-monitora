@@ -27,15 +27,18 @@ import {
 } from "../../lib/tema-do-painel.js";
 import { criarEstadoDosRecursos } from "./estado.js";
 import { FormularioDoRecurso } from "./formulario.jsx";
-import { dataHora, GavetaDoRecurso } from "./gaveta.jsx";
+import { GavetaDoRecurso } from "./gaveta.jsx";
+import { dataHora } from "./partes.jsx";
 import {
   Filtros,
   filtrosAtivos,
   Graficos,
   Indicadores,
+  IndicadoresDasRespostas,
   Recorte,
   Topo,
 } from "./paineis.jsx";
+import { PainelDeModelos } from "./modelos.jsx";
 import { TabelaDeRecursos } from "./tabela.jsx";
 
 /*
@@ -48,7 +51,9 @@ import { TabelaDeRecursos } from "./tabela.jsx";
 
   A área vem da URL e não muda: trocar de área no menu refaz o quadro. Admin e
   gestor de edital (recurso de permissão `recursos` >= editor; `pode_editar`
-  vem do banco) cadastram e editam; quem só lê consulta.
+  vem do banco) cadastram, editam, escrevem e revisam a resposta e anexam; quem
+  só lê consulta (e baixa os anexos). Quem administra Recursos
+  (`pode_administrar_modelos`) mantém os modelos de resposta.
 
   O carregamento é o skeleton do painel de análises
   (analises-loading-feedback.js + analises-esqueleto.css): liga na primeira
@@ -102,6 +107,9 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
 
   const origens = dados?.origens?.length ? dados.origens : ORIGENS_PADRAO;
   const podeEditar = Boolean(carregado && dados?.pode_editar);
+  const podeAdministrarModelos = Boolean(
+    carregado && dados?.pode_administrar_modelos,
+  );
   const hoje = diaLocal();
   const recursos = useMemo(
     () => (dados ? enriquecerRecursos(dados, hoje) : []),
@@ -155,6 +163,7 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
           exportarDesativado={!carregado || !filtrados.length}
           aoNovo={podeEditar ? estado.abrirNovo : null}
           novoDesativado={Boolean(e.acao)}
+          aoModelos={podeAdministrarModelos ? estado.abrirModelos : null}
         />
 
         <main className="content">
@@ -172,6 +181,12 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
             aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
           />
           <Indicadores
+            indicadores={indicadores}
+            carregado={carregado}
+            filtros={filtros}
+            aoFiltrar={alternarFiltro}
+          />
+          <IndicadoresDasRespostas
             indicadores={indicadores}
             carregado={carregado}
             filtros={filtros}
@@ -210,13 +225,15 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
       </div>
 
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}
-      {aberto && !e.formulario ? (
+      {aberto && !e.formulario && !e.modelosAbertos ? (
         <GavetaDoRecurso
           estado={estado}
           recurso={aberto}
           detalhe={e.detalhes.get(aberto.id)}
           origens={origens}
           podeEditar={podeEditar}
+          modelos={dados?.modelos || []}
+          area={area}
         />
       ) : null}
       {e.formulario && (e.formulario.modo === "novo" || emEdicao) ? (
@@ -230,6 +247,7 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
           origens={origens}
         />
       ) : null}
+      {e.modelosAbertos ? <PainelDeModelos estado={estado} /> : null}
     </>
   );
 }
@@ -273,8 +291,20 @@ export function montarPainelDeRecursos({
   nomeDaArea,
   toast = criarAvisoDoPainel(document.getElementById("toastHost")),
   baixar,
+  baixarArquivo,
+  abrirUrl,
+  imprimir,
+  novoId,
 } = {}) {
-  const estado = criarEstadoDosRecursos({ supabase, toast, baixar });
+  const estado = criarEstadoDosRecursos({
+    supabase,
+    toast,
+    baixar,
+    baixarArquivo,
+    abrirUrl,
+    imprimir,
+    novoId,
+  });
   let raizDoReact = null;
   if (raiz) {
     raizDoReact = createRoot(raiz);

@@ -68,6 +68,7 @@ export function Topo({
   exportarDesativado,
   aoNovo,
   novoDesativado,
+  aoModelos,
 }) {
   const topo = useRef(null);
   usarAlturaDoTopo(topo);
@@ -132,6 +133,18 @@ export function Topo({
         >
           <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
         </button>
+        {aoModelos ? (
+          <button
+            type="button"
+            className="btn secondary"
+            id="modelosRespostaBtn"
+            title="Modelos de resposta aos recursos (administração)"
+            onClick={aoModelos}
+          >
+            <i className="fa-solid fa-file-signature" aria-hidden="true" />{" "}
+            Modelos de resposta
+          </button>
+        ) : null}
         {aoNovo ? (
           <button
             type="button"
@@ -432,6 +445,55 @@ export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
         rotulo="Taxa de conclusão"
         valor={k.taxaConclusao}
         sufixo="%"
+      />
+    </section>
+  );
+}
+
+/*
+  A resposta escrita no sistema (resposta-do-recurso.js): em revisão,
+  aprovadas aguardando envio e devolvidas. Uma segunda fileira de `.kpi`,
+  alinhada às colunas da primeira; cada uma filtra pela pendência dela.
+*/
+export function IndicadoresDasRespostas({
+  indicadores: k,
+  carregado,
+  filtros,
+  aoFiltrar,
+}) {
+  const filtro = (valor) =>
+    carregado
+      ? {
+          ativo: filtros.pendencia === valor,
+          aoFiltrar: () => aoFiltrar("pendencia", valor),
+        }
+      : {};
+  return (
+    <section
+      className="kpis recursos-kpis-respostas"
+      id="kpiGridRespostas"
+      aria-label="Indicadores das respostas"
+    >
+      <Kpi
+        cor="k-yellow"
+        chave="respostas-em-revisao"
+        rotulo="Respostas em revisão"
+        valor={k.respostasEmRevisao}
+        {...filtro("resposta_em_revisao")}
+      />
+      <Kpi
+        cor="k-green"
+        chave="respostas-aprovadas"
+        rotulo="Aprovadas aguardando envio"
+        valor={k.respostasAprovadas}
+        {...filtro("resposta_aprovada")}
+      />
+      <Kpi
+        cor="k-red"
+        chave="respostas-devolvidas"
+        rotulo="Respostas devolvidas"
+        valor={k.respostasDevolvidas}
+        {...filtro("resposta_devolvida")}
       />
     </section>
   );
