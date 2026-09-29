@@ -7,6 +7,12 @@ Arquivos que exigem cuidado:
 - `rpc-contrato.js` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
 - `sessao.js`, `session-lifecycle.js`, `supabaseClient.js`, `auth-flow.js` — único caminho de auth.
 - `access-roles.js`, `permissoes-recursos.js` — matriz de permissão; costuma exigir migration junto.
+  `access-roles.js` também é a regra única de páginas e seções liberadas (`paginasPermitidas`,
+  `secaoDeConfiguracaoPermitida`), usada pela barra e pelo "Ver como".
+- `matriz-de-acessos.js` (rascunho; grupo × individual), `teto-de-acessos.js` (teto do coordenador),
+  `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.js` — Configurações › Acessos.
+- `apresentacao-das-configuracoes.js` — grupos, dicas e resumos das seções Marca, Página inicial, Tela de
+  acesso e Recursos; o desenho é de `src/modules/config-apresentacao.js`.
 - `sanitize.js`, `html-security.js`, `csv-security.js` — fronteira de segurança. Não afrouxar.
 - `localizacoes-validadas-gerado.js` — **201 KB, gerado.** Não editar nem ler inteiro; regenere com
   `node scripts/recompilar-vereditos.mjs`. A API legível é `localizacoes-validadas.js`.

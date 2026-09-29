@@ -419,7 +419,8 @@ function bindWorkspaceEvents(root) {
       target instanceof HTMLSelectElement
     ))
       return;
-    if (target.closest("#configWorkspaceToolbar")) return;
+    // A tela de Acessos (React) tem rascunho e guarda de saída próprios.
+    if (target.closest("#configWorkspaceToolbar, [data-acessos]")) return;
     setDirty(root, true);
     if (target.classList.contains("config-field-invalid")) {
       target.classList.remove("config-field-invalid");
@@ -435,7 +436,7 @@ function bindWorkspaceEvents(root) {
       target instanceof HTMLSelectElement
     ))
       return;
-    if (target.closest("#configWorkspaceToolbar")) return;
+    if (target.closest("#configWorkspaceToolbar, [data-acessos]")) return;
     setDirty(root, true);
   });
 

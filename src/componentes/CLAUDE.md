@@ -37,6 +37,18 @@ calendario-editais/          a página #page-calendario (só leitura dos cronogr
   calendario-editais.jsx     <CalendarioEditais> e montarCalendarioEditais() → window.calendarioEditaisController
   estado.js                  etapas carregadas (1 + N RPCs, cache de 60 s); sem React
   partes.jsx                 grade do mês, linha de etapa, linha do tempo, popup do dia
+acessos/                     Configurações › Acessos (#acessosApp, dentro da seção "acessos")
+  acessos.jsx                <Acessos> (abas Usuários · Grupos · Coordenações) e montarAcessos()
+                             → window.acessosController
+  estado.js                  pessoas, rascunho (a guarda de saída pergunta aqui), pedidos, gaveta e as
+                             RPCs de acesso, uma ação por vez; sem React
+  aba-usuarios.jsx           Ativos: grupo (tag) + um select por módulo ("Do grupo" ou individual),
+                             filtros, barra de salvar com motivo · Pendentes: solicitacoes.jsx
+  solicitacoes.jsx           pedidos de acesso: aprovar com grupo + coordenação (ou áreas) / recusar
+  gaveta-do-usuario.jsx      gaveta da pessoa: áreas, painéis e "como a pessoa vê" (só leitura)
+  aba-grupos.jsx             lista + detalhe: nível de cada módulo no grupo (só admin global)
+  aba-coordenacoes.jsx       lista + detalhe: área, responsável, unidades, editais (só admin global)
+  partes.jsx                 controle segmentado, lista mestre, cabeçalho da gaveta, campo de motivo
 lista-aprovados/             a página #page-approved e os seus modais
   lista-aprovados.jsx        <ListaAprovados> e montarListaAprovados() → window.aprovadosController
   estado.js                  candidatos, listas, configuração de convocação, modal aberto e as ações

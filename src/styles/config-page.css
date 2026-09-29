@@ -121,14 +121,14 @@
   }
 }
 
+/* Sem moldura (design.md 2.1): o cabeçalho da página se destaca pela tipografia. */
 #page-config .config-workspace-toolbar {
-  margin-bottom: 16px;
-  padding: 20px 22px 14px;
-  background: var(--config-surface);
-  border: 1px solid var(--config-border);
-  border-top: 3px solid var(--config-primary);
-  border-radius: 14px;
-  box-shadow: var(--config-shadow);
+  margin-bottom: var(--space-6);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 #page-config .config-workspace-heading {
@@ -138,22 +138,24 @@
   gap: 24px;
 }
 
+/* Contexto acima do título: sentence case, sem negrito (design.md 4.3). */
 #page-config .config-workspace-eyebrow {
   display: block;
-  margin-bottom: 4px;
-  color: var(--config-primary);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 #page-config .config-workspace-heading h2 {
   margin: 0;
-  color: var(--config-text);
-  font-size: 23px;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  font-size: var(--text-h3);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
 }
 
 #page-config .config-workspace-heading p {
@@ -312,51 +314,44 @@
   gap: 15px;
 }
 
+/*
+  Os blocos moram dentro das seções (config-secoes.js), que já são a
+  superfície: sem borda, faixa colorida, fundo ou sombra (design.md 2.1 e 9.4).
+  O !important é o de antes: vence [data-theme="dark"] .app .card (app.css).
+*/
 #page-config .admin-card {
   position: relative;
-  border: 1px solid var(--config-border) !important;
-  border-top: 3px solid #94a3b8 !important;
-  border-radius: 13px !important;
-  background: var(--config-surface) !important;
-  box-shadow: var(--config-shadow) !important;
-  overflow: hidden;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible;
 }
 
-#page-config .admin-card[data-config-section="access"] {
-  border-top-color: #18a56d !important;
-}
-
-#page-config .admin-card[data-config-section="system"] {
-  border-top-color: var(--config-primary) !important;
-}
-
-#page-config .admin-card[data-config-section="panels"] {
-  border-top-color: #7c5ce0 !important;
-}
-
-#page-config .admin-card[data-config-section="technical"] {
-  border-top-color: #e19a14 !important;
-}
-
+/* Títulos e textos de apoio: hierarquia por tamanho e cor, sem negrito. */
 #page-config .config-card-title {
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding-bottom: 13px;
-  border-bottom: 1px solid #edf1f6;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 #page-config .admin-card h3,
 #page-config .config-card-title h3 {
   margin: 0;
-  color: var(--config-text);
-  font-size: 16px;
-  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 #page-config .config-card-title p,
 #page-config .config-help {
-  color: var(--config-muted);
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: 400;
   line-height: 1.5;
 }
 
@@ -371,21 +366,35 @@
   text-transform: uppercase;
 }
 
-#page-config .form-row label {
-  margin-bottom: 6px;
-  color: #5e7087;
-  font-size: 11px;
-  font-weight: 800;
+/*
+  Rótulo sempre visível, em sentence case e sem negrito (vence o label de
+  app.css: caixa alta, 900). :not(.btn): os botões de envio de imagem são
+  <label class="btn"> e mantêm o estilo de botão.
+*/
+#page-config .form-row label:not(.btn) {
+  margin-bottom: var(--space-1-5);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
+/*
+  Campo do design.md 11.2. Só valores neutros (sem padding novo): a regra
+  também alcança o seletor de cor e os campos de arquivo escondidos nos
+  botões de envio, que dependem das próprias medidas.
+*/
 #page-config .form-row input,
 #page-config .form-row select,
 #page-config .form-row textarea {
-  min-height: 40px;
-  border: 1px solid var(--config-border);
-  border-radius: 9px;
-  background: #f9fbfd;
-  color: var(--config-text);
+  min-height: 36px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 400;
   box-shadow: none;
   transition:
     border-color 0.15s ease,
@@ -430,7 +439,6 @@
   color: #395b84 !important;
 }
 
-#page-config .panel-admin-item,
 #page-config .access-monitor-panel,
 #page-config .access-monitor-user-card,
 #page-config .access-admin-item {
@@ -497,8 +505,9 @@ body:not(.sidebar-collapsed) #page-config .config-sticky-actions {
 }
 
 #page-config .config-sticky-status strong {
-  color: var(--config-text);
-  font-size: 12px;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
 }
 
 #page-config .config-sticky-status span:not(.config-status-icon) {
@@ -581,11 +590,7 @@ html[data-theme="dark"] #page-config {
   --config-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
 }
 
-body.dark-mode #page-config .config-workspace-toolbar,
-body.dark-mode #page-config .admin-card,
 body.dark-mode #page-config .config-sticky-actions,
-html[data-theme="dark"] #page-config .config-workspace-toolbar,
-html[data-theme="dark"] #page-config .admin-card,
 html[data-theme="dark"] #page-config .config-sticky-actions {
   background: var(--config-surface) !important;
 }

@@ -121,6 +121,89 @@ export function canManageSettings(profile) {
   return hasLevel(profile, "admin");
 }
 
-export function canManageAccess(profile) {
+/**
+ * Administrador global: o perfil de acesso de sistema com ST_ADMIN_GLOBAL.
+ * O banco manda `admin_global` no contexto; sem ele (banco anterior), o papel.
+ */
+export function isAdminGlobal(profile) {
+  if (!profile || profile.ativo === false) return false;
+  if (typeof profile.admin_global === "boolean") return profile.admin_global;
   return hasLevel(profile, "admin");
+}
+
+/** Gerencia acessos: admin global, ou coordenador (módulo "acessos" ≥ editor). */
+export function canManageAccess(profile) {
+  return isAdminGlobal(profile) || hasResource(profile, "acessos", 2);
+}
+
+/** Grupos, coordenações e áreas dos editais: só o admin global. */
+export const canManageGroups = isAdminGlobal;
+export const canManageCoordinations = isAdminGlobal;
+export const canMoveEditalBetweenAreas = isAdminGlobal;
+
+/** Página Configurações: quem edita configurações ou quem gerencia acessos. */
+export function podeAbrirConfiguracoes(profile) {
+  return canManageSettings(profile) || canManageAccess(profile);
+}
+
+/** Seção de Configurações liberada: "acessos" é de quem gerencia acessos; as demais, de quem edita configurações. */
+export function secaoDeConfiguracaoPermitida(profile, secao) {
+  return secao === "acessos"
+    ? canManageAccess(profile)
+    : canManageSettings(profile);
+}
+
+/**
+ * Permissão por chave antiga do legado (ind, cores, calendario, paineis,
+ * config, admin). Com matriz, lê os módulos; sem ela, o papel e as flags p_*.
+ */
+export function permissaoLegada(profile, perm) {
+  if (!profile) return false;
+  if (profile.permissoes) {
+    if (perm === "admin") return canManageAccess(profile);
+    const resource = {
+      ind: "dashboard",
+      analises: "analises",
+      cores: "nucleo",
+      calendario: "calendario",
+      paineis: "paineis",
+      config: "configuracoes",
+    }[perm];
+    return hasResource(profile, resource, perm === "config" ? 2 : 1);
+  }
+  const role = normalizeRole(profile);
+  if (role) {
+    if (["ind", "analises", "cores", "paineis"].includes(perm))
+      return canViewCore(profile);
+    if (["config", "admin"].includes(perm)) return canManageSettings(profile);
+  }
+  return profile["p_" + perm] === true;
+}
+
+/** Páginas do sistema que o perfil abre (a barra, a navegação e o "Ver como" usam a mesma regra). */
+export function paginasPermitidas(profile) {
+  const pode = (perm) => permissaoLegada(profile, perm);
+  return {
+    dashboard: pode("ind"),
+    nucleo: pode("cores"),
+    calendario: profile?.permissoes ? pode("calendario") : pode("cores"),
+    approved: canViewCore(profile),
+    analises: pode("analises"),
+    recursos: canViewRecursos(profile),
+    config: podeAbrirConfiguracoes(profile),
+  };
+}
+
+/** Painéis externos liberados, em ordem. Com matriz, só os de `liberados` (ids). */
+export function paineisPermitidos(profile, paineis, liberados) {
+  if (!permissaoLegada(profile, "paineis")) return [];
+  const ids = new Set([...(liberados || [])].map(String));
+  return (paineis || [])
+    .filter(
+      (painel) =>
+        painel &&
+        painel.ativo !== false &&
+        (!profile?.permissoes || ids.has(String(painel.id))),
+    )
+    .sort((a, b) => Number(a.ordem || 0) - Number(b.ordem || 0));
 }

@@ -53,6 +53,8 @@ import "./styles/lista-aprovados.css";
 import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
 import "./styles/carregamento.css";
+import "./styles/acessos.css";
+import "./styles/config-apresentacao.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -79,7 +81,9 @@ import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
 import {
   organizarConfiguracoesEmSecoes,
   removerNavegadorAntigo,
+  SECOES,
 } from "./modules/config-secoes.js";
+import { instalarApresentacaoDasConfiguracoes } from "./modules/config-apresentacao.js";
 import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
@@ -95,6 +99,7 @@ import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.js
 import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
+import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -136,6 +141,8 @@ initSidebarBranding();
   existe o que organizar quando eles ja estao no DOM.
 */
 organizarConfiguracoesEmSecoes();
+// Grupos, dicas e prévias de Marca, Página inicial, Tela de acesso e Recursos.
+instalarApresentacaoDasConfiguracoes();
 initConfigPageEnhancements();
 initConfigGovernance();
 removerNavegadorAntigo();
@@ -169,6 +176,13 @@ window.aprovadosController = montarListaAprovados({
 // Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
 window.calendarioEditaisController = montarCalendarioEditais({
   toast: window.monitoraToast,
+});
+
+// Configurações › Acessos: abre pela seção (config-secoes.js → render()).
+window.acessosController = montarAcessos({
+  toast: window.monitoraToast,
+  getProfile: window.getMonitoraProfile,
+  secoesDeConfiguracao: SECOES,
 });
 
 if (!hasSupabaseEnv()) {

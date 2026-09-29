@@ -10,7 +10,10 @@
   estiver a caminho.
 */
 
-import { canManageAccess, canManageEditais } from "../../lib/access-roles.js";
+import {
+  canMoveEditalBetweenAreas,
+  canManageEditais,
+} from "../../lib/access-roles.js";
 import { exigirSessao } from "../../lib/sessao.js";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.js";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.js";
@@ -262,7 +265,7 @@ export function criarEstadoDoNucleo({
    */
   async function moverEdital({ id, area, motivo, rotulo, de, para }) {
     if (estado.salvando) return false;
-    if (!canManageAccess(perfil())) {
+    if (!canMoveEditalBetweenAreas(perfil())) {
       toast("Só administradores podem mover editais de área.", "warn");
       return false;
     }

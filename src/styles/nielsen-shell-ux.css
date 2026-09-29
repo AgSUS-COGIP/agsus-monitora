@@ -196,17 +196,9 @@
 }
 
 /* Configuracoes: menor densidade visual sem reduzir alvo de clique. */
-#page-config .config-workspace-toolbar {
-  padding: 17px 18px 12px;
-}
-
-#page-config .config-workspace-heading h2 {
-  font-size: 20px;
-}
-
 #page-config .config-workspace-heading p {
   max-width: 720px;
-  font-size: 12px;
+  font-size: var(--text-body-sm);
   line-height: 1.5;
 }
 
@@ -214,8 +206,9 @@
   gap: 12px;
 }
 
+/* Sem moldura, o bloco alinha com o título da seção (config-page.css). */
 #page-config .admin-card {
-  padding: 14px !important;
+  padding: 0 !important;
 }
 
 #page-config .access-admin-item {
@@ -399,8 +392,6 @@ html[data-theme="dark"] #page-config {
 }
 
 html[data-theme="dark"] #page-config .config-sticky-actions,
-html[data-theme="dark"] #page-config .config-workspace-toolbar,
-html[data-theme="dark"] #page-config .admin-card,
 html[data-theme="dark"] #page-config .access-admin-item,
 html[data-theme="dark"] #page-config .panel-check,
 html[data-theme="dark"] #page-config .permission-check {

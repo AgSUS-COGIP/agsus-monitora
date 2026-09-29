@@ -5,6 +5,7 @@ import {
   semOPainelAntigoDeAnalises,
 } from "../src/lib/pagina-do-painel.js";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
+import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
 import {
   collectPanelRows,
   renderPanelAdminHTML,
@@ -64,14 +65,23 @@ describe("o endereço e a lista de painéis", () => {
 
 describe("o legado trata Análises como página", () => {
   it("a permissão é só o recurso analises", () => {
+    // can(), isViewAllowed e buildNav delegam a access-roles.js.
+    const perfil = (analises) => ({
+      role: "usuario",
+      permissoes: { dashboard: "leitor", analises },
+    });
+    expect(permissaoLegada(perfil("leitor"), "analises")).toBe(true);
+    expect(permissaoLegada(perfil("sem_acesso"), "analises")).toBe(false);
+    expect(paginasPermitidas(perfil("leitor")).analises).toBe(true);
+    expect(paginasPermitidas(perfil("sem_acesso")).analises).toBe(false);
     expect(trecho("function can(perm)", "function isMasterProfile")).toContain(
-      'analises: "analises"',
+      "permissaoLegada(profile, perm)",
     );
     expect(
       trecho("function isViewAllowed(view)", "function rememberView"),
-    ).toContain('if (view === "analises") return can("analises");');
+    ).toContain("paginasPermitidas(profile)");
     expect(trecho("function buildNav()", "function setActiveNav")).toContain(
-      'analises: can("analises")',
+      "paginasPermitidas(profile)",
     );
     expect(
       trecho("function navigate(view)", "function subtituloDaArea"),

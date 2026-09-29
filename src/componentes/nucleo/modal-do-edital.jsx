@@ -6,7 +6,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.js";
-import { canManageAccess } from "../../lib/access-roles.js";
+import { canMoveEditalBetweenAreas } from "../../lib/access-roles.js";
 import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.js";
 import {
   NOVA_UNIDADE,
@@ -178,7 +178,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
   const [movendo, setMovendo] = useState(false);
   const [destino, setDestino] = useState("");
   const [motivoDaMudanca, setMotivoDaMudanca] = useState("");
-  const podeMover = Boolean(id) && canManageAccess(perfil);
+  const podeMover = Boolean(id) && canMoveEditalBetweenAreas(perfil);
 
   useEffect(() => {
     let vivo = true;

@@ -507,6 +507,13 @@
                 </div>
 
                 <div class="form-row full">
+                  <label for="accessReqCoordenacao">Coordenação</label>
+                  <select id="accessReqCoordenacao">
+                    <option value="">Não sei — o administrador define</option>
+                  </select>
+                </div>
+
+                <div class="form-row full">
                   <label for="accessReqJustificativa">Justificativa</label>
                   <textarea
                     id="accessReqJustificativa"
@@ -1288,6 +1295,10 @@
                 <h3>Solicitações de acesso</h3>
                 <div id="accessRequestsAdmin" class="access-admin-list"></div>
               </div>
+
+              <!-- Configurações › Acessos em React (src/componentes/acessos/). Sem card:
+                   a seção de Configurações já é a superfície. -->
+              <div id="acessosApp" class="full" data-acessos></div>
 
               <!--
                 O card "Acessos e usuários online" saiu a pedido: a seção de Acessos

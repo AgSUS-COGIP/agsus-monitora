@@ -6,6 +6,7 @@ import {
   SECAO_POR_CAMPO,
   SECOES,
   abrirSecaoDeConfiguracao,
+  definirSecoesPermitidas,
   organizarConfiguracoesEmSecoes,
   removerNavegadorAntigo,
   secaoAtualDeConfiguracao,
@@ -218,7 +219,7 @@ describe("as seções como páginas de Administração", () => {
     organizarConfiguracoesEmSecoes(document);
   });
   afterEach(() => {
-    delete window.loadAccessManagement;
+    delete window.acessosController;
   });
 
   it("não cria navegador próprio: quem navega é o menu lateral", () => {
@@ -258,15 +259,42 @@ describe("as seções como páginas de Administração", () => {
     expect(secaoAtualDeConfiguracao(document)).toBe("marca");
   });
 
-  it("Acessos carrega a gestão de acessos; as outras, não", () => {
+  it("Acessos carrega a tela React de acessos; as outras, não", () => {
     let cargas = 0;
-    window.loadAccessManagement = () => {
-      cargas += 1;
+    window.acessosController = {
+      render: () => {
+        cargas += 1;
+      },
+      confirmarSaida: () => true,
     };
     abrirSecaoDeConfiguracao(document, "operacao");
     expect(cargas).toBe(0);
     abrirSecaoDeConfiguracao(document, "acessos");
     expect(cargas).toBe(1);
+  });
+
+  it("sair de Acessos com alteração não salva recusada fica em Acessos", () => {
+    window.acessosController = { render() {}, confirmarSaida: () => false };
+    abrirSecaoDeConfiguracao(document, "acessos");
+    expect(abrirSecaoDeConfiguracao(document, "marca")).toBe(false);
+    expect(secaoAtualDeConfiguracao(document)).toBe("acessos");
+  });
+
+  it("só abre as seções permitidas; a aberta proibida cede à primeira permitida", () => {
+    definirSecoesPermitidas(document, ["acessos"]);
+    expect(secaoAtualDeConfiguracao(document)).toBe("acessos");
+    expect(abrirSecaoDeConfiguracao(document, "marca")).toBe(false);
+    expect(secaoAtualDeConfiguracao(document)).toBe("acessos");
+  });
+
+  it("em Acessos o botão fixo de salvar configurações some", () => {
+    const barra = document.createElement("div");
+    barra.className = "config-sticky-actions";
+    document.getElementById("page-config").appendChild(barra);
+    abrirSecaoDeConfiguracao(document, "acessos");
+    expect(barra.hidden).toBe(true);
+    abrirSecaoDeConfiguracao(document, "marca");
+    expect(barra.hidden).toBe(false);
   });
 });
 
@@ -365,6 +393,33 @@ describe("um navegador só", () => {
     expect(main.indexOf("removerNavegadorAntigo()")).toBeGreaterThan(
       main.indexOf("initConfigPageEnhancements()"),
     );
+  });
+});
+
+describe("agrupadores que ficam vazios depois de distribuir", () => {
+  it("escondem-se (título órfão e caixa sem campos); com campo, continuam", async () => {
+    const { esconderAgrupadoresVazios } =
+      await import("../src/modules/config-secoes.js");
+    document.body.innerHTML = `
+      <div id="raiz">
+        <div class="admin-card card config-main-card" id="orfao">
+          <div class="config-card-title"><h3>Aviso global</h3></div>
+          <div class="form-grid"><details id="vazia"><summary>Avançado técnico</summary></details></div>
+        </div>
+        <div class="admin-card card config-main-card" id="cheio">
+          <div class="config-card-title"><h3>Com campo</h3></div>
+          <div class="form-grid"><details id="cheia"><summary>X</summary><input id="c"></details></div>
+        </div>
+      </div>`;
+    expect(esconderAgrupadoresVazios(document.getElementById("raiz"))).toBe(2);
+    expect(document.querySelector("#orfao .config-card-title").hidden).toBe(
+      true,
+    );
+    expect(document.getElementById("vazia").hidden).toBe(true);
+    expect(document.querySelector("#cheio .config-card-title").hidden).toBe(
+      false,
+    );
+    expect(document.getElementById("cheia").hidden).toBe(false);
   });
 });
 

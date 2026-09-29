@@ -114,13 +114,27 @@ Decidido em 28/09: cada área tem as suas **abas**, e os painéis externos
 
 ## Permissões
 
-O modelo atual (`TB_PERMISSAO_RECURSO`: perfil × recurso × nível) ganha a **área**:
-"Maria · Análises · SEDE · editor", "João · Editais · todas · leitor".
+Migrations de 29/09 (`20260929121000` a `121300`, já aplicadas; `190000` a `190200`, a aplicar):
 
-- **O banco decide.** As RPCs devolvem só as áreas permitidas (`private.has_perm`
-  passa a receber a área). A tela apenas esconde o que não pode.
-- A barra lateral mostra só áreas e telas liberadas.
-- A matriz de Configurações → Acessos ganha a coluna de área.
+- **Grupo + permissão individual.** O grupo (`TB_GRUPO_ACESSO` + `TA_GRUPO_ACESSO_RECURSO`) é o
+  modelo de níveis por módulo, editável pelo admin; a permissão individual continua em
+  `TB_PERMISSAO_RECURSO`. Nível efetivo = individual ?? grupo (`private."FC_NIVEL_EFETIVO"`). A
+  coluna legada `TB_PERFIL_USUARIO.perfil` guarda o código do grupo. Admin global = grupo de sistema
+  com `ST_ADMIN_GLOBAL` (`private.is_master`).
+- **Coordenação = subdivisão de uma área** (`TB_COORDENACAO`, com filtro por responsável USI/CORES,
+  `RL_COORDENACAO_UNIDADE` e `RL_COORDENACAO_EDITAL`). Cada pessoa em no máximo uma
+  (`TB_PERFIL_USUARIO."CO_COORDENACAO"`); sem coordenação, vê as áreas marcadas inteiras. O recorte
+  (`FC_EDITAIS_VISIVEIS`, `FC_PODE_VER_EDITAL`) vale para tudo que deriva do edital, para as análises e
+  para a aba Recursos (`190200`).
+- **Gestão delegada com teto.** Módulo `acessos` (sem_acesso | editor): o coordenador gerencia só a
+  própria coordenação, sem conceder mais do que tem, sem conceder `acessos`, sem mexer em área nem
+  em coordenação.
+- **O banco decide**; a tela (Configurações → Acessos, React em `src/componentes/acessos/`) só esconde
+  o que não pode. Usuários (grupo + um select por módulo, "Do grupo" ou nível individual; pedidos
+  pendentes), Grupos e Coordenações (lista + detalhe); gaveta da pessoa com áreas, painéis e "como a
+  pessoa vê" (só leitura).
+- Pendente: nível por área para quem vê várias áreas sem coordenação ("Maria · Análises · SEDE ·
+  editor") — hoje o nível vale igual em todas as áreas liberadas.
 
 ## Front
 

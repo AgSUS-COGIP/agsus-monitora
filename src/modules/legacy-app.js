@@ -17,6 +17,7 @@ import { mountAccessMatrix } from "./matriz-acessos.js";
 import { abrirGestaoConta } from "./gestao-conta.js";
 import {
   abrirSecaoDeConfiguracao,
+  definirSecoesPermitidas,
   SECOES,
   secaoAtualDeConfiguracao,
 } from "./config-secoes.js";
@@ -34,7 +35,6 @@ import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
-import { hasResource } from "../lib/permissoes-recursos.js";
 import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
 import { abrirPaginaDoPainel, quadroDoPainel } from "./pagina-do-painel.js";
@@ -69,10 +69,12 @@ import {
   getSupabaseAuthStorage,
   getSupabaseClient,
 } from "../lib/supabaseClient.js";
+import { renderAccessRequestAdminItemHTML } from "./access-request-ui.js";
 import {
-  accessRequestStatusMessage,
-  renderAccessRequestAdminItemHTML,
-} from "./access-request-ui.js";
+  carregarMinhaSolicitacao,
+  enviarSolicitacao,
+  garantirAcessoBasico,
+} from "./solicitacao-de-acesso.js";
 import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
 import { createAccessDashboard } from "./access-dashboard.js";
 import {
@@ -165,12 +167,14 @@ import {
 import {
   canViewCore,
   canViewRecursos,
-  canManageSettings,
-  canManageAccess,
   canImportApprovedList,
+  isAdminGlobal,
   isOwnAccessProfile,
-  normalizeRole,
+  paginasPermitidas,
+  permissaoLegada,
+  podeAbrirConfiguracoes,
   roleLabel,
+  secaoDeConfiguracaoPermitida,
 } from "../lib/access-roles.js";
 import {
   assinaturaDoAcesso,
@@ -731,30 +735,11 @@ function initSupabase() {
 }
 
 function can(perm) {
-  if (!profile) return false;
-  if (profile.permissoes) {
-    if (perm === "admin") return canManageAccess(profile);
-    const resource = {
-      ind: "dashboard",
-      analises: "analises",
-      cores: "nucleo",
-      calendario: "calendario",
-      paineis: "paineis",
-      config: "configuracoes",
-    }[perm];
-    return hasResource(profile, resource, perm === "config" ? 2 : 1);
-  }
-  const role = normalizeRole(profile);
-  if (role) {
-    if (["ind", "analises", "cores", "paineis"].includes(perm))
-      return canViewCore(profile);
-    if (["config", "admin"].includes(perm)) return canManageSettings(profile);
-  }
-  return profile["p_" + perm] === true;
+  return permissaoLegada(profile, perm);
 }
 
 function isMasterProfile() {
-  return canManageAccess(profile);
+  return isAdminGlobal(profile);
 }
 
 function getClientSessionId() {
@@ -1546,14 +1531,8 @@ async function loadInitialData() {
 
 function isViewAllowed(view) {
   if (!view) return false;
-  if (view === "dashboard") return can("ind");
-  if (view === "nucleo") return can("cores");
-  if (view === "calendario")
-    return profile?.permissoes ? can("calendario") : can("cores");
-  if (view === "approved") return canViewCore(profile);
-  if (view === "analises") return can("analises");
-  if (view === "recursos") return canViewRecursos(profile);
-  if (view === "config") return can("config");
+  const paginas = paginasPermitidas(profile);
+  if (Object.hasOwn(paginas, view)) return paginas[view];
   if (view.startsWith("panel:")) {
     const code = view.split(":")[1];
     return canAccessPanelCode(code);
@@ -1581,7 +1560,7 @@ function systemHomeView() {
   if (canViewCore(profile)) return "approved";
   if (can("analises")) return "analises";
   if (canViewRecursos(profile)) return "recursos";
-  if (can("config")) return "config";
+  if (podeAbrirConfiguracoes(profile)) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
   return "sem-acesso";
@@ -1615,6 +1594,8 @@ async function loadProfile() {
     allowedPanelIds = new Set(context.panelIds);
     platformContextLoaded = true;
   } else {
+    // Conta institucional sem perfil: o banco cria o acesso básico e o contexto é relido.
+    if (await garantirAcessoBasico(sb)) return loadProfile();
     if (contextError)
       console.info(
         "Contexto unificado ainda não aplicado; usando contrato compatível.",
@@ -1715,54 +1696,10 @@ function forceAccessRequestFallback(message) {
   if (btn) btn.disabled = false;
 }
 
-function setAccessRequestFormLocked(locked) {
-  ["accessReqNome", "accessReqSetor", "accessReqJustificativa"].forEach(
-    (id) => {
-      const el = $(id);
-      if (el) el.disabled = !!locked;
-    },
-  );
-}
-
+// Formulário de solicitação: src/modules/solicitacao-de-acesso.js (por RPC).
 async function loadMyAccessRequest() {
-  if (!currentUser?.id) return null;
-  const { data, error } = await sb
-    .from("TB_SOLICITACAO_ACESSO")
-    .select("id,status,observacao_admin,created_at")
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false })
-    .limit(1);
-  const status = $("accessRequestStatus");
-  const btn = $("accessRequestBtn");
-  if (error) {
-    if (status) {
-      status.classList.remove("hidden");
-      status.textContent =
-        "Não foi possível consultar sua solicitação anterior: " +
-        friendlyError(error);
-    }
-    if (btn) btn.disabled = false;
-    return null;
-  }
-  const req = Array.isArray(data) ? data[0] : null;
-  if (!req) {
-    if (status) status.classList.add("hidden");
-    if (btn) btn.disabled = false;
-    setAccessRequestFormLocked(false);
-    return null;
-  }
-  if (status) {
-    status.classList.remove("hidden");
-    status.classList.toggle("success", req.status === "aprovado");
-    status.classList.toggle("warn", req.status === "pendente");
-    status.textContent = accessRequestStatusMessage(req);
-  }
-  if (btn)
-    btn.disabled = req.status === "pendente" || req.status === "aprovado";
-  setAccessRequestFormLocked(
-    req.status === "pendente" || req.status === "aprovado",
-  );
-  return req;
+  if (!sb || !currentUser?.id) return null;
+  return carregarMinhaSolicitacao(sb);
 }
 
 async function submitAccessRequest() {
@@ -1785,33 +1722,26 @@ async function submitAccessRequest() {
       "warn",
     );
   }
-  const { data, error } = await sb
-    .from("TB_SOLICITACAO_ACESSO")
-    .insert({
-      user_id: currentUser.id,
-      email: currentUser.email,
-      nome,
-      setor,
-      justificativa,
-      perfil_solicitado: "usuario",
-      status: "pendente",
-    })
-    .select("id")
-    .single();
-  if (error) {
+  const resultado = await enviarSolicitacao(sb, {
+    nome,
+    setor,
+    justificativa,
+    coordenacao: $("accessReqCoordenacao")?.value,
+  });
+  if (!resultado.ok) {
     if (btn) btn.disabled = false;
     return showAlert(
       "loginMsg",
-      "Não foi possível enviar a solicitação: " + friendlyError(error),
+      "Não foi possível enviar a solicitação: " +
+        friendlyError({ message: resultado.mensagem }),
       "error",
     );
   }
   showAlert(
     "loginMsg",
-    "Solicitação enviada. Um administrador poderá liberar seu acesso.",
+    "Solicitação enviada. A coordenação escolhida (ou um administrador) poderá liberar seu acesso.",
     "success",
   );
-  await loadMyAccessRequest();
 }
 
 function consultaDeConfiguracao() {
@@ -2315,18 +2245,19 @@ async function refreshData() {
   o que o perfil vê; a árvore vai para o estado da barra, que desenha o menu.
 */
 function buildNav() {
-  const permitidas = {
-    dashboard: can("ind"),
-    nucleo: can("cores"),
-    calendario: can("calendario") || (!profile?.permissoes && can("cores")),
-    approved: canViewCore(profile),
-    analises: can("analises"),
-    recursos: canViewRecursos(profile),
-    config: can("config"),
-  };
+  // As mesmas regras do "Ver como" de Acessos (src/lib/access-roles.js).
+  const permitidas = paginasPermitidas(profile);
   const paineis = can("paineis")
     ? panels.filter(panelAllowed).sort((a, b) => n(a.ordem) - n(b.ordem))
     : [];
+  // Seção "Acessos" só para quem gerencia acessos; as demais, para quem edita configurações.
+  const secoes = SECOES.filter((secao) =>
+    secaoDeConfiguracaoPermitida(profile, secao.id),
+  );
+  definirSecoesPermitidas(
+    document,
+    secoes.map((secao) => secao.id),
+  );
   // Um grupo por área do usuário; a área atual passa a ser uma delas.
   const areas = areasDoUsuario(profile?.areas);
   definirAreasDoUsuario(areas);
@@ -2334,7 +2265,7 @@ function buildNav() {
     montarArvoreDoMenu({
       permitidas,
       paineis,
-      secoesDeConfiguracao: SECOES,
+      secoesDeConfiguracao: secoes,
       areas,
       abas: abasDoMenu(),
     }),
@@ -2353,13 +2284,9 @@ function setActiveNav(view) {
 function navigate(view) {
   const previousView = currentView;
   const requestedView = txt(view) || startView();
-  const pendingPermissions = document.querySelector(
-    "#accessRequestsAdmin [data-pending-count]",
-  );
   if (
     requestedView !== currentView &&
-    Number(pendingPermissions?.dataset.pendingCount) > 0 &&
-    !window.confirm("Existem permissões ainda não salvas. Sair desta tela?")
+    window.acessosController?.confirmarSaida() === false
   )
     return;
 
@@ -2393,7 +2320,7 @@ function navigate(view) {
     toast("Sem permissão para Recursos.", "warn");
     return;
   }
-  if (requestedView === "config" && !can("config")) {
+  if (requestedView === "config" && !podeAbrirConfiguracoes(profile)) {
     toast("Sem permissão para Configurações.", "warn");
     return;
   }
@@ -2504,7 +2431,8 @@ function navigate(view) {
       cfgValue("config_page_subtitle"),
     );
     renderConfigForm();
-    startAccessDashboardRefresh();
+    // Reabre a seção guardada (ou a primeira permitida); em Acessos, carrega a tela React.
+    abrirSecaoDeConfiguracao(document, secaoAtualDeConfiguracao(document));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -11648,7 +11576,6 @@ function renderConfigForm() {
   if ($("cfgCogipLogo")) previewImg("cfgCogipLogo", "prevCogipLogo");
   renderAccessBackgroundPreview();
   void loadAccessBackgroundGallery();
-  renderAccessRequestsAdmin();
   renderAccessDashboard(null);
   renderPanelAdmin();
 }
