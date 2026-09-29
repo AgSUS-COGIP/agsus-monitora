@@ -47,6 +47,7 @@ export default defineConfig({
       input: {
         main: resolve(projectDirectory, "index.html"),
         analises: resolve(projectDirectory, "analises.html"),
+        entrevistas: resolve(projectDirectory, "entrevistas.html"),
         recursos: resolve(projectDirectory, "recursos.html"),
         authCallback: resolve(projectDirectory, "auth/callback.html"),
       },

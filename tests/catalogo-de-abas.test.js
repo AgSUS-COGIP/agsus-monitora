@@ -39,6 +39,18 @@ const MIGRATIONS_DO_SEED = [
   MIGRATION,
   ler("supabase/migrations/20260929120000_recursos.sql"),
 ];
+/*
+  Entrevistas (20260929235000_entrevistas.sql): a aba entra em TB_ABA
+  desligada — 20260930090000_liga_aba_entrevistas.sql só a liga (ST_ATIVO) —,
+  em todas as áreas (insert ... select de TB_AREA) e Recursos passa à ordem 7
+  (update). O seed modela o estado depois das duas.
+*/
+const MIGRATION_DAS_ENTREVISTAS = ler(
+  "supabase/migrations/20260929235000_entrevistas.sql",
+);
+const MIGRATION_QUE_LIGA_AS_ENTREVISTAS = ler(
+  "supabase/migrations/20260930090000_liga_aba_entrevistas.sql",
+);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu.json"),
 );
@@ -79,10 +91,38 @@ function linhasDoInsertEm(sql, tabela) {
   );
 }
 
+function abasDoSeed() {
+  const abas = [
+    ...linhasDoInsert("TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DAS_ENTREVISTAS, "TB_ABA"),
+  ];
+  for (const [, ordem, aba] of MIGRATION_DAS_ENTREVISTAS.matchAll(
+    /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
+  ))
+    abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
+  return abas;
+}
+
+function ligacoesDoSeed() {
+  expect(MIGRATION_DAS_ENTREVISTAS).toContain(
+    `select 'entrevistas', a."CO_AREA", 'S' from public."TB_AREA" a`,
+  );
+  expect(MIGRATION_QUE_LIGA_AS_ENTREVISTAS).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'entrevistas'`,
+  );
+  return [
+    ...linhasDoInsert("RL_ABA_AREA"),
+    ...AREAS_DO_SISTEMA.map((area) => ({
+      CO_ABA: "entrevistas",
+      CO_AREA: area.id,
+    })),
+  ];
+}
+
 /* O que `listar_abas_do_menu` devolve para o seed (a mesma regra do SQL). */
 function respostaDoSeed() {
-  const abas = linhasDoInsert("TB_ABA");
-  const ligacoes = linhasDoInsert("RL_ABA_AREA");
+  const abas = abasDoSeed();
+  const ligacoes = ligacoesDoSeed();
   const ordemDaArea = (co) =>
     AREAS_DO_SISTEMA.findIndex((area) => area.id === co);
   return abas
@@ -150,6 +190,7 @@ describe("o seed da migration é o catálogo do código", () => {
       "calendario",
       "approved",
       "analises",
+      "entrevistas",
       "recursos",
     ]);
     const views = Object.values(paginasPorArea(ABAS_DO_MENU)).flatMap(
@@ -407,14 +448,14 @@ describe("contrato e acesso da função", () => {
 describe("selo beta das abas", () => {
   const recursosDe = (abas) => abas.find((aba) => aba.id === "recursos");
 
-  it("no código, só Recursos é beta; as outras nem têm o campo", () => {
+  it("no código, só Entrevistas e Recursos são beta; as outras nem têm o campo", () => {
     expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
-      ["recursos"],
+      ["entrevistas", "recursos"],
     );
     expect(
-      ABAS_DO_MENU.filter((aba) => aba.id !== "recursos").some((aba) =>
-        Object.hasOwn(aba, "beta"),
-      ),
+      ABAS_DO_MENU.filter(
+        (aba) => !["entrevistas", "recursos"].includes(aba.id),
+      ).some((aba) => Object.hasOwn(aba, "beta")),
     ).toBe(false);
   });
 

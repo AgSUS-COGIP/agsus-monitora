@@ -100,6 +100,12 @@ export function canManageCandidateAttachments(profile) {
   return hasLevel(profile, "admin");
 }
 
+/* Aba Entrevistas (20260929235000_entrevistas.sql): só consulta nesta fase (leitor). */
+export function canViewEntrevistas(profile) {
+  if (profile?.permissoes) return hasResource(profile, "entrevistas");
+  return normalizeRole(profile) !== "";
+}
+
 /* Aba Recursos: ver (leitor) e cadastrar/editar (editor). Por padrão, admin e edital gestor editam. */
 export function canViewRecursos(profile) {
   if (profile?.permissoes) return hasResource(profile, "recursos");
@@ -189,6 +195,7 @@ export function paginasPermitidas(profile) {
     calendario: profile?.permissoes ? pode("calendario") : pode("cores"),
     approved: canViewCore(profile),
     analises: pode("analises"),
+    entrevistas: canViewEntrevistas(profile),
     recursos: canViewRecursos(profile),
     config: podeAbrirConfiguracoes(profile),
   };

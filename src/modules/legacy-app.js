@@ -163,6 +163,7 @@ import {
 } from "../lib/sessao.js";
 import {
   canViewCore,
+  canViewEntrevistas,
   canViewRecursos,
   canImportApprovedList,
   isAdminGlobal,
@@ -1556,6 +1557,7 @@ function systemHomeView() {
   if (canViewCore(profile)) return "approved";
   if (can("analises")) return "analises";
   if (canViewRecursos(profile)) return "recursos";
+  if (canViewEntrevistas(profile)) return "entrevistas";
   if (podeAbrirConfiguracoes(profile)) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
@@ -2314,6 +2316,10 @@ function navigate(view) {
     toast("Sem permissão para Análises curriculares.", "warn");
     return;
   }
+  if (requestedView === "entrevistas" && !canViewEntrevistas(profile)) {
+    toast("Sem permissão para Entrevistas.", "warn");
+    return;
+  }
   if (requestedView === "recursos" && !canViewRecursos(profile)) {
     toast("Sem permissão para Recursos.", "warn");
     return;
@@ -2408,6 +2414,16 @@ function navigate(view) {
     $("page-analises").classList.add("active");
     setPageTitle("Análises curriculares", subtituloDaArea(""));
     abrirPaginaDoPainel($("page-analises"));
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "entrevistas") {
+    // O painel de entrevistas (entrevistas.html) também traz o próprio cabeçalho.
+    document.body.classList.add("external-panel-mode");
+    $("page-entrevistas").classList.add("active");
+    setPageTitle("Entrevistas", subtituloDaArea(""));
+    abrirPaginaDoPainel($("page-entrevistas"));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -12021,7 +12037,11 @@ function exitExternalPanel() {
 }
 
 function getFullscreenTarget() {
-  if (currentView === "analises" || currentView === "recursos") {
+  if (
+    currentView === "analises" ||
+    currentView === "entrevistas" ||
+    currentView === "recursos"
+  ) {
     const frame = quadroDoPainel($("page-" + currentView));
     if (frame) return frame;
   }

@@ -4,6 +4,7 @@ export const RESOURCES = Object.freeze([
   ["nucleo", "Editais"],
   ["calendario", "Cronograma"],
   ["aprovados", "Lista de aprovados"],
+  ["entrevistas", "Entrevistas"],
   ["recursos", "Recursos"],
   ["importacao", "Importação e convocação"],
   ["paineis", "Painéis externos"],
@@ -19,6 +20,7 @@ export const DESCRICOES_DOS_MODULOS = Object.freeze({
   calendario: "Cronograma dos editais; Editor altera etapas.",
   aprovados:
     "Lista de aprovados; Editor muda status; Administrador desfaz status e anexa documentos.",
+  entrevistas: "Painel das entrevistas por área (somente consulta).",
   recursos: "Recursos dos candidatos por área; Editor registra a análise.",
   importacao:
     "Importar listas e configurar convocação; Administrador substitui listas.",

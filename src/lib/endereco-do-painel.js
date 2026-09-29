@@ -11,6 +11,7 @@
 */
 export const PAGINAS_DO_APP = Object.freeze([
   "/analises.html",
+  "/entrevistas.html",
   "/recursos.html",
 ]);
 
