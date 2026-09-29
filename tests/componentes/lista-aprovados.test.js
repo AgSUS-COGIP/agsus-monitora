@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
 import { PLANILHAS } from "../../src/lib/planilhas.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
-import { compactarCandidatos } from "./candidatos-compactos-falsos.js";
+import {
+  compactarCandidatos,
+  compactarPorArea,
+} from "./candidatos-compactos-falsos.js";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
@@ -96,9 +99,13 @@ function supabaseFalso({
   listas = [LISTA_ATIVA, LISTA_INATIVA],
   anexos = [],
   erros = {},
-  compacto = true,
+  porArea = true,
 } = {}) {
-  const lotes = [];
+  /*
+    O que o banco tem: a versão dos dados muda a cada escrita (como a
+    assinatura de FC_VERSAO_APROVADOS_AREA); `candidatos` pode ser trocado.
+  */
+  const banco = { candidatos, versao: "v1" };
   let novos = 0;
   const responder = (nome) => {
     if (erros[nome]) return { data: null, error: { message: erros[nome] } };
@@ -118,30 +125,36 @@ function supabaseFalso({
       return { data: [], error: null };
     return { data: { ok: true }, error: null };
   };
-  const rpc = vi.fn((nome) => {
-    if (nome === "listar_candidatos_aprovados_compacto") {
-      const erro =
-        erros[nome] || erros.listar_candidatos_aprovados
-          ? { message: erros[nome] || erros.listar_candidatos_aprovados }
-          : compacto
-            ? null
-            : { code: "PGRST202", message: "função ausente" };
-      return Promise.resolve(
-        erro
-          ? { data: null, error: erro }
-          : { data: compactarCandidatos(candidatos), error: null },
-      );
-    }
-    if (nome === "listar_candidatos_aprovados") {
-      const pagina = (de, ate) => {
-        lotes.push([de, ate]);
-        return Promise.resolve({
-          data: candidatos.slice(de, ate + 1),
-          error: null,
-        });
+  const pacote = (argumentos) => {
+    const mensagem =
+      erros.listar_candidatos_aprovados_compacto ||
+      erros.listar_candidatos_aprovados;
+    if (mensagem) return { data: null, error: { message: mensagem } };
+    // Sem argumentos: a função de antes da migration (formato 1, todas as áreas).
+    if (!argumentos)
+      return { data: compactarCandidatos(banco.candidatos), error: null };
+    if (!porArea)
+      return {
+        data: null,
+        error: { code: "PGRST202", message: "função ausente" },
       };
-      return { range: pagina };
-    }
+    const { p_area: area, p_versao: versao } = argumentos;
+    if (versao && versao === banco.versao)
+      return {
+        data: { formato: 2, area, versao, inalterado: true },
+        error: null,
+      };
+    return {
+      data: compactarPorArea(banco.candidatos, { area, versao: banco.versao }),
+      error: null,
+    };
+  };
+  const rpc = vi.fn((nome, argumentos) => {
+    if (nome === "listar_candidatos_aprovados_compacto")
+      return Promise.resolve(pacote(argumentos));
+    // Toda escrita muda a versão dos dados no banco.
+    if (/^(alterar|incluir|remover|importar|definir|salvar)_/.test(nome))
+      banco.versao = `v${Number(banco.versao.slice(1)) + 1}`;
     const resposta = Promise.resolve(responder(nome));
     resposta.range = () => resposta;
     return resposta;
@@ -151,7 +164,7 @@ function supabaseFalso({
     download: vi.fn(async () => ({ data: new Blob(["x"]), error: null })),
   };
   const storage = { from: vi.fn(() => bucket) };
-  return { rpc, storage, bucket, lotes };
+  return { rpc, storage, bucket, banco };
 }
 
 let controlador = null;
@@ -166,6 +179,7 @@ async function montar({
   novaAba = () => ({ mostrar: vi.fn(), fechar: vi.fn() }),
   secaoAtiva = true,
   carregar = true,
+  armazenamento,
 } = {}) {
   document.body.innerHTML = `<section id="page-approved" class="page${secaoAtiva ? " active" : ""}"></section>`;
   perfilAtual = perfil;
@@ -178,6 +192,7 @@ async function montar({
       confirmar,
       lerPlanilha,
       novaAba,
+      armazenamento,
     });
   });
   if (carregar) await esperar(() => controlador.render());
@@ -191,6 +206,11 @@ afterEach(async () => {
 });
 
 const $ = (id) => document.getElementById(id);
+/* Os argumentos de cada chamada a listar_candidatos_aprovados_compacto. */
+const chamadasDoPacote = (supabase) =>
+  supabase.rpc.mock.calls
+    .filter(([nome]) => nome === "listar_candidatos_aprovados_compacto")
+    .map(([, argumentos]) => argumentos);
 const nomes = () =>
   [...document.querySelectorAll("#approvedRows .approved-name strong")].map(
     (item) => item.textContent,
@@ -282,28 +302,25 @@ describe("carregamento", () => {
     ).toBe("90,5");
   });
 
-  it("busca os candidatos numa chamada só, sem páginas", async () => {
+  it("busca os candidatos da área atual numa chamada só", async () => {
     const muitos = Array.from({ length: 1003 }, () => candidato());
     const supabase = supabaseFalso({ candidatos: muitos });
     await montar({ supabase });
-    expect(supabase.lotes).toEqual([]);
-    expect(
-      supabase.rpc.mock.calls.filter(
-        ([nome]) => nome === "listar_candidatos_aprovados_compacto",
-      ),
-    ).toHaveLength(1);
+    expect(chamadasDoPacote(supabase)).toEqual([
+      { p_area: "saude-indigena", p_versao: null },
+    ]);
     expect($("approvedKpiTotal").textContent).toBe("1.003");
   });
 
-  it("sem a função compacta no banco, busca de mil em mil", async () => {
-    const muitos = Array.from({ length: 1003 }, () => candidato());
-    const supabase = supabaseFalso({ candidatos: muitos, compacto: false });
+  it("sem a função por área no banco, usa a de antes (todas as áreas)", async () => {
+    const supabase = supabaseFalso({ porArea: false });
     await montar({ supabase });
-    expect(supabase.lotes).toEqual([
-      [0, 999],
-      [1000, 1999],
+    expect(chamadasDoPacote(supabase)).toEqual([
+      { p_area: "saude-indigena", p_versao: null },
+      undefined,
     ]);
-    expect($("approvedKpiTotal").textContent).toBe("1.003");
+    // A tela recorta pela área, como sempre: os 4 são de editais da área.
+    expect($("approvedKpiTotal").textContent).toBe("4");
   });
 
   it("avisa o erro de carregamento", async () => {
@@ -1133,5 +1150,147 @@ describe("área atual", () => {
 
     await act(async () => definirAreaAtual("projetos"));
     expect(nomes()).toEqual([]);
+  });
+});
+
+describe("candidatos por área, com a cópia do navegador", () => {
+  const USUARIO = { perfil: "contratador", user_id: "u1" };
+  const ADMIN = { perfil: "admin" };
+
+  function armazenamentoEmMemoria() {
+    const dados = new Map();
+    return {
+      dados,
+      ler: async (chave) => structuredClone(dados.get(chave) ?? null),
+      guardar: async (chave, valor) => {
+        dados.set(chave, structuredClone(valor));
+      },
+      apagarTudo: async () => dados.clear(),
+    };
+  }
+
+  // A gravação da cópia não é esperada pela carga: dá a vez às promessas.
+  const assentar = () => esperar(() => new Promise((r) => setTimeout(r, 0)));
+
+  it("trocar de área no menu busca os candidatos da área nova", async () => {
+    publicarLinhasDoMonitoramento([
+      { id: "10", CO_AREA: "saude-indigena" },
+      { id: "30", CO_AREA: "sede" },
+    ]);
+    const supabase = supabaseFalso({
+      candidatos: [
+        ...CANDIDATOS(),
+        candidato({ candidato_id: "sede", nome: "Sara Sede", edital_id: "30" }),
+      ],
+    });
+    await montar({ supabase });
+    expect(nomes()).not.toContain("Sara Sede");
+
+    await esperar(() => definirAreaAtual("sede"));
+    await esperar(() => controlador.render());
+    expect(chamadasDoPacote(supabase).at(-1)).toEqual({
+      p_area: "sede",
+      p_versao: null,
+    });
+    expect(nomes()).toEqual(["Sara Sede"]);
+  });
+
+  it("depois de uma escrita, relê do banco com a versão da tela e fica com a nova", async () => {
+    const supabase = supabaseFalso();
+    await montar({ supabase, perfil: ADMIN });
+    await clicar(
+      linhaDe("Bruno Lima").querySelector('[data-approved-action="status"]'),
+    );
+    await escolher($("approvedStatusSelect"), "Desistente");
+    supabase.banco.candidatos = supabase.banco.candidatos.map((c) =>
+      c.candidato_id === "bruno" ? { ...c, status: "Desistente" } : c,
+    );
+    await clicar($("approvedStatusSave"));
+    await assentar();
+    expect(chamadasDoPacote(supabase).at(-1)).toEqual({
+      p_area: "saude-indigena",
+      p_versao: "v1",
+    });
+    expect(
+      linhaDe("Bruno Lima").querySelector(".approved-status").textContent,
+    ).toBe("Desistente");
+  });
+
+  it("versão que continua valendo mantém os candidatos da tela", async () => {
+    const supabase = supabaseFalso();
+    await montar({ supabase });
+    const antes = controlador.estado.obter().candidatos;
+    await esperar(() => controlador.estado.carregar({ emSegundoPlano: true }));
+    expect(chamadasDoPacote(supabase).at(-1)).toEqual({
+      p_area: "saude-indigena",
+      p_versao: "v1",
+    });
+    expect(controlador.estado.obter().candidatos).toBe(antes);
+  });
+
+  it("a próxima abertura mostra a cópia guardada e só pergunta a versão", async () => {
+    const armazenamento = armazenamentoEmMemoria();
+    await montar({ perfil: USUARIO, armazenamento });
+    await assentar();
+    expect(armazenamento.dados.has("aprovados:saude-indigena")).toBe(true);
+    await act(async () => controlador.raiz.unmount());
+
+    // Mesmo banco, mesma versão: a lista vem da cópia, sem baixar de novo.
+    const supabase = supabaseFalso({ candidatos: [] });
+    await montar({ perfil: USUARIO, armazenamento, supabase });
+    await assentar();
+    expect(chamadasDoPacote(supabase)).toEqual([
+      { p_area: "saude-indigena", p_versao: "v1" },
+    ]);
+    expect(nomes()).toContain("Bruno Lima");
+  });
+
+  it("a cópia aparece na hora e a versão nova do banco a substitui", async () => {
+    const armazenamento = armazenamentoEmMemoria();
+    await montar({ perfil: USUARIO, armazenamento });
+    await assentar();
+    await act(async () => controlador.raiz.unmount());
+
+    const supabase = supabaseFalso({
+      candidatos: [candidato({ candidato_id: "nova", nome: "Nina Nova" })],
+    });
+    supabase.banco.versao = "v9";
+    await montar({ perfil: USUARIO, armazenamento, supabase });
+    await assentar();
+    expect(nomes()).toEqual(["Nina Nova"]);
+    const guardada = JSON.parse(
+      armazenamento.dados.get("aprovados:saude-indigena").texto,
+    );
+    expect(guardada.versao).toBe("v9");
+  });
+
+  it("sem acesso à área na revalidação, a cópia sai e a lista fica vazia", async () => {
+    const armazenamento = armazenamentoEmMemoria();
+    await montar({ perfil: USUARIO, armazenamento });
+    await assentar();
+    await act(async () => controlador.raiz.unmount());
+
+    const supabase = supabaseFalso();
+    const responder = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation((nome, ...resto) =>
+      nome === "listar_candidatos_aprovados_compacto"
+        ? Promise.resolve({
+            data: null,
+            error: { code: "42501", message: "Sem permissão" },
+          })
+        : responder(nome, ...resto),
+    );
+    const { toast } = await montar({
+      perfil: USUARIO,
+      armazenamento,
+      supabase,
+    });
+    await assentar();
+    expect(nomes()).toEqual([]);
+    expect(armazenamento.dados.size).toBe(0);
+    expect(toast).toHaveBeenCalledWith(
+      "Erro ao carregar lista de aprovados: Sem permissão",
+      "error",
+    );
   });
 });

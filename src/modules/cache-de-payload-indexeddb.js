@@ -1,18 +1,22 @@
 /*
-  Onde a cópia do painel de análises mora: no IndexedDB do navegador, num banco
-  próprio (o do MONITORA, `agsus-monitora`, é aberto na versão 1 pelo outro
-  bundle; dividir o mesmo banco obrigaria os dois a subir de versão juntos).
+  Onde as cópias de payload moram (painel de análises e lista de aprovados):
+  no IndexedDB do navegador, num banco próprio (o do MONITORA, `agsus-monitora`,
+  é aberto na versão 1 pelo outro bundle; dividir o mesmo banco obrigaria os
+  dois a subir de versão juntos). O nome do banco continua o de quando só o
+  painel o usava: as cópias já guardadas e a limpeza seguem valendo.
 
   IndexedDB e não `localStorage`: o payload da Saúde Indígena (≈3,5 MB de
   texto) passa do limite do `localStorage`. As regras de quando a cópia serve
-  estão em `src/lib/cache-do-painel-de-analises.js`.
+  estão em `src/lib/cache-de-payload.js`; cada tela guarda com a própria chave
+  (área e escopo no painel, `aprovados:<área>` na lista de aprovados), e o dono
+  das cópias é um só.
 
   O painel roda num iframe da mesma origem do MONITORA: os dois veem o mesmo
   banco. O MONITORA apaga tudo daqui ao "Limpar sessão", ao sair pelo botão e
   quando o acesso é revogado (ver `apagarCopiaDaSessao`).
 
-  Nada aqui lança erro para quem usa `armazenamentoDasAnalises` pelo
-  `criarCacheDoPainel`; `apagarCacheDasAnalises` também nunca lança.
+  Nada aqui lança erro para quem usa `armazenamentoDePayload` pelo
+  `criarCacheDePayload`; `apagarCacheDePayload` também nunca lança.
 */
 
 const BANCO = "agsus-monitora-analises";
@@ -44,8 +48,8 @@ async function naLoja(modo, operar) {
   }
 }
 
-/** O armazenamento que `criarCacheDoPainel` espera. Estas funções podem lançar. */
-export const armazenamentoDasAnalises = Object.freeze({
+/** O armazenamento que `criarCacheDePayload` espera. Estas funções podem lançar. */
+export const armazenamentoDePayload = Object.freeze({
   async ler(chave) {
     return (await naLoja("readonly", (loja) => loja.get(chave))) ?? null;
   },
@@ -58,10 +62,10 @@ export const armazenamentoDasAnalises = Object.freeze({
 });
 
 /**
- * Apaga o banco inteiro (todas as áreas e escopos). Não cria o banco se ele não
+ * Apaga o banco inteiro (todas as telas, áreas e escopos). Não cria o banco se ele não
  * existir e não espera além do necessário: bloqueado, segue.
  */
-export function apagarCacheDasAnalises() {
+export function apagarCacheDePayload() {
   return new Promise((resolver) => {
     try {
       const pedido = globalThis.indexedDB.deleteDatabase(BANCO);

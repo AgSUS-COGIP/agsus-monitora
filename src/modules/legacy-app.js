@@ -191,7 +191,7 @@ import {
   guardarCopiaDaSessao,
   lerCopiaDaSessao,
 } from "./copia-da-sessao-indexeddb.js";
-import { apagarCacheDasAnalises } from "./cache-das-analises-indexeddb.js";
+import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.js";
 import {
   abasDoMenu,
   carregarCatalogoDeAbas,
@@ -1382,7 +1382,7 @@ async function logout() {
   declararSaida(SAIDA_MANUAL);
   // A cópia da sessão fica (entrar de novo é imediato); a do painel de análises,
   // com nomes e notas de candidatos, sai com a pessoa.
-  await apagarCacheDasAnalises();
+  await apagarCacheDePayload();
   if (sb) await sb.auth.signOut();
   aplicarSaida();
 }

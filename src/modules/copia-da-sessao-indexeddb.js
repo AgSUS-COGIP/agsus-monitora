@@ -9,7 +9,7 @@
   "não há cópia", e a entrada segue pela rede como antes.
 */
 
-import { apagarCacheDasAnalises } from "./cache-das-analises-indexeddb.js";
+import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.js";
 
 const BANCO = "agsus-monitora";
 const LOJA = "copia-da-sessao";
@@ -78,5 +78,5 @@ export async function apagarCopiaDaSessao() {
   } catch {
     // Sem armazenamento, não há o que apagar.
   }
-  await apagarCacheDasAnalises();
+  await apagarCacheDePayload();
 }

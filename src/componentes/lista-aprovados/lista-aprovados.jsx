@@ -113,9 +113,11 @@ export function ListaAprovados({ estado }) {
   const { carregado, erroAoCarregar, perfil } = dados;
   /*
     Só as listas e os candidatos dos editais da área escolhida no menu — o
-    seletor de edital, os filtros, as duas abas e o sub judice partem daqui. O
-    modal de listas aberto pelo Núcleo é de um edital certo e continua a ver
-    tudo.
+    seletor de edital, os filtros, as duas abas e o sub judice partem daqui.
+    Os candidatos já chegam só da área (o banco recorta); o recorte aqui é o
+    mesmo, pelos editais que a tela conhece. O modal de listas aberto pelo
+    Núcleo é de um edital certo e vê tudo o que foi carregado — a área atual,
+    a mesma do Núcleo.
   */
   const { ids } = usarAreaAtual();
   const listas = useMemo(
@@ -320,6 +322,7 @@ export function montarListaAprovados({
   confirmar,
   lerPlanilha,
   novaAba,
+  armazenamento,
 } = {}) {
   const estado = criarEstadoDaListaDeAprovados({
     supabase,
@@ -328,6 +331,7 @@ export function montarListaAprovados({
     confirmar,
     lerPlanilha,
     novaAba,
+    armazenamento,
   });
   let raiz = null;
   if (secao) {

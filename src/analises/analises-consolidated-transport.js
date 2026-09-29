@@ -30,7 +30,7 @@ import {
   juntarPartesDoPainel,
   partesDoEscopo,
 } from "../lib/lista-do-painel-de-analises.js";
-import { armazenamentoDasAnalises } from "../modules/cache-das-analises-indexeddb.js";
+import { armazenamentoDePayload } from "../modules/cache-de-payload-indexeddb.js";
 import { AREA_DO_PAINEL } from "./analises-area.js";
 
 const RPC_PAINEL_DE_ANALISES = "get_analises_dashboard_payload_v2";
@@ -47,7 +47,7 @@ export const ERROS_SEM_FALLBACK = new Set(["42501", "22023"]);
   formato do registro.
 */
 const cacheLocal = criarCacheDoPainel({
-  armazenamento: armazenamentoDasAnalises,
+  armazenamento: armazenamentoDePayload,
   versao: `1:${import.meta.url}`,
 });
 
