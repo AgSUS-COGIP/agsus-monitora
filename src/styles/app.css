@@ -2188,60 +2188,99 @@ th.sorted-desc .sort-icon::before {
   padding-top: 14px;
   border-top: 1px solid var(--line);
 }
+/* Selo de situação = badge do design.md 11.8: 20px, raio sm, caption, sem borda. */
 .config-status {
-  font-size: 11px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-weight: 900;
-  border: 1px solid var(--line);
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  line-height: 20px;
   white-space: nowrap;
 }
 .config-status.ok {
-  background: #dff8ea;
-  color: #00824c;
-  border-color: #bfeccd;
+  background: var(--state-success-soft);
+  color: var(--state-success);
 }
 .config-status.warn {
-  background: #fff1b8;
-  color: #684600;
-  border-color: #f3cf54;
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
 }
 .config-status.danger {
-  background: #ffe1e3;
-  color: #9f0714;
-  border-color: #ffb8bf;
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
 }
 .config-status.neutral {
-  background: #eef2f7;
-  color: #334155;
-  border-color: #d5dfec;
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
 }
-.panel-admin-list {
-  display: grid;
-  gap: 10px;
-  max-height: 560px;
-  overflow: auto;
-  padding-right: 2px;
+/*
+  Painéis externos (Configurações › Recursos): tabela leve do design.md 11.4,
+  uma linha por painel, sem cartão por item e sem rolagem interna. Vence a
+  tabela global (min-width 1180px, th em caixa alta) e o input global.
+*/
+.painel-externo-tabela {
+  overflow-x: auto;
 }
-.panel-admin-item {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fbfdff;
+.painel-externo-tabela table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: var(--text-body);
 }
-.panel-admin-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+.painel-externo-tabela th {
+  position: static;
+  padding: 0 var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--border-control);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
 }
-.panel-admin-head span:first-child {
-  min-width: 0;
-  color: var(--color-text-primary);
-  font-size: 14px;
-  font-weight: 900;
-  overflow-wrap: anywhere;
+.painel-externo-tabela th:nth-child(1) {
+  width: 26%;
+}
+.painel-externo-tabela th:nth-child(3),
+.painel-externo-tabela th:nth-child(4) {
+  width: 120px;
+}
+.painel-externo-tabela th:nth-child(5) {
+  width: 110px;
+}
+.painel-externo-tabela td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-weight: 400;
+  vertical-align: top;
+}
+.painel-externo-tabela tr:last-child td {
+  border-bottom: 0;
+}
+.painel-externo-tabela input,
+.painel-externo-tabela select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 400;
+}
+.painel-externo-tabela small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.painel-externo-tabela .config-status {
+  margin-top: var(--space-2);
 }
 .cnes-status-card {
   grid-column: 1/-1;

@@ -1,0 +1,584 @@
+/*
+  Grupos, dicas e prévias de Marca, Página inicial, Tela de acesso e Recursos
+  (src/modules/config-apresentacao.js). Tokens do design.md: a cor marca o
+  assunto de cada grupo (paleta de gráficos e estados), a hierarquia vem da
+  tipografia e do espaço, e a prévia usa superfície sutil, sem moldura.
+*/
+
+/* ── Cor de cada seção (tile do cabeçalho) ───────────────────────────────── */
+.config-secao[data-secao="marca"] .config-secao__icone {
+  background: color-mix(in srgb, var(--color-chart-1) 12%, var(--surface-card));
+  color: var(--color-chart-1);
+}
+.config-secao[data-secao="inicio"] .config-secao__icone {
+  background: color-mix(in srgb, var(--color-chart-4) 14%, var(--surface-card));
+  color: var(--color-chart-4);
+}
+.config-secao[data-secao="acesso"] .config-secao__icone {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.config-secao[data-secao="recursos"] .config-secao__icone {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+
+/* ── Seção com prévia: campos à esquerda, prévia fixa à direita ─────────── */
+.config-secao--com-previa {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  column-gap: var(--space-8);
+  align-items: start;
+}
+.config-secao--com-previa > .config-secao__cabecalho {
+  grid-column: 1 / -1;
+}
+.config-secao--com-previa > .config-secao__corpo {
+  grid-column: 1;
+  min-width: 0;
+}
+.config-previa {
+  grid-column: 2;
+  position: sticky;
+  top: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.config-previa__rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 500;
+}
+@media (max-width: 1220px) {
+  .config-secao--com-previa {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .config-previa {
+    grid-column: 1;
+    position: static;
+    margin-top: var(--space-6);
+  }
+}
+
+/* ── Grupos ──────────────────────────────────────────────────────────────── */
+.config-grupo {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.config-grupo:not([hidden]) ~ .config-grupo:not([hidden]) {
+  margin-top: var(--space-4);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+}
+.config-grupo__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.config-grupo__cabecalho h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+.config-grupo__cabecalho p {
+  margin: var(--space-0-5) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
+}
+.config-grupo__icone {
+  display: grid;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+}
+.config-grupo[data-tom="azul"] .config-grupo__icone {
+  background: var(--state-info-soft);
+  color: var(--color-chart-1);
+}
+.config-grupo[data-tom="petroleo"] .config-grupo__icone {
+  background: color-mix(in srgb, var(--color-chart-4) 14%, var(--surface-card));
+  color: var(--color-chart-4);
+}
+.config-grupo[data-tom="sucesso"] .config-grupo__icone {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.config-grupo[data-tom="atencao"] .config-grupo__icone {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.config-grupo[data-tom="neutro"] .config-grupo__icone {
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+}
+.config-grupo__campos {
+  column-gap: var(--space-4);
+  row-gap: var(--space-4);
+  margin-left: calc(28px + var(--space-3));
+}
+@media (max-width: 640px) {
+  .config-grupo__campos {
+    margin-left: 0;
+  }
+}
+
+/* ── Dica (tooltip do design.md 11.10) ───────────────────────────────────── */
+.config-rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+.config-rotulo > label {
+  margin-bottom: 0;
+}
+.config-dica {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: help;
+}
+.config-dica:hover,
+.config-dica:focus-visible {
+  background: var(--surface-hover);
+  color: var(--brand-primary);
+}
+.config-dica::after {
+  content: attr(data-dica);
+  position: absolute;
+  bottom: calc(100% + var(--space-1-5));
+  left: 50%;
+  z-index: var(--z-popover);
+  width: max-content;
+  max-width: 240px;
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  font-size: var(--text-caption);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+.config-dica:hover::after,
+.config-dica:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: 400ms;
+}
+.config-dica:focus-visible::after {
+  transition-delay: 0ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .config-dica::after {
+    transform: translate(-50%, 0);
+    transition: none;
+  }
+}
+
+/* ── Peças comuns das prévias ────────────────────────────────────────────── */
+.config-previa__conteudo {
+  min-width: 0;
+}
+.previa-vazio,
+.previa-nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* Marca: barra lateral + rodapé */
+.previa-marca {
+  display: grid;
+  gap: var(--space-3);
+}
+.previa-marca__barra {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.previa-marca__topo,
+.previa-marca__equipe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.previa-marca__topo strong {
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+.previa-marca__logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.previa-marca__logo-reserva {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--brand-primary);
+}
+.previa-marca__menu {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-body-sm);
+}
+.previa-marca__menu li {
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-md);
+  opacity: 0.8;
+}
+.previa-marca__menu li.ativo {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  font-weight: 500;
+  opacity: 1;
+}
+.previa-marca__equipe {
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+.previa-marca__equipe > div {
+  display: grid;
+  min-width: 0;
+}
+.previa-marca__equipe strong {
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+}
+.previa-marca__equipe small {
+  overflow: hidden;
+  font-size: var(--text-caption);
+  opacity: 0.8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.previa-marca__avatar {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-chart-4) 16%, var(--surface-card));
+  color: var(--color-chart-4);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  object-fit: cover;
+}
+.previa-marca__rodape {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+
+/* Página inicial */
+.previa-inicio {
+  display: grid;
+  gap: var(--space-3);
+}
+.previa-inicio__titulo {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+.previa-inicio__subtitulo {
+  margin-top: calc(var(--space-2) * -1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.previa-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+.previa-aviso strong {
+  font-weight: 500;
+}
+.previa-aviso > .icone {
+  flex: none;
+  margin-top: 1px;
+}
+.previa-aviso[data-tom="info"] {
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.previa-aviso[data-tom="warning"] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.previa-aviso[data-tom="danger"] {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.previa-inicio__filtros {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--color-chart-4);
+}
+.previa-inicio__filtros > div {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.previa-inicio__filtros strong {
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: 500;
+}
+.previa-inicio__filtros small {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.previa-inicio__botao {
+  flex: none;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-action-secondary);
+  color: var(--color-action-secondary-text);
+  font-size: var(--text-caption);
+  line-height: 22px;
+}
+.previa-inicio__kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.previa-kpi {
+  display: grid;
+  gap: var(--space-0-5);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.previa-kpi__rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+.previa-kpi__rotulo .icone {
+  flex: none;
+  color: var(--color-chart-1);
+}
+.previa-kpi strong {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tela de acesso: o cartão sobre a arte de fundo */
+.previa-acesso {
+  display: grid;
+  min-height: 300px;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-primary);
+  background-position: center;
+  background-size: cover;
+  place-items: center start;
+}
+.previa-acesso__cartao {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  width: min(100%, 230px);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.previa-acesso__logo {
+  max-width: 96px;
+  max-height: 32px;
+  object-fit: contain;
+}
+.previa-acesso__marca {
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+.previa-acesso__cartao small {
+  font-size: var(--text-caption);
+  opacity: 0.85;
+}
+.previa-acesso__saudacao {
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+.previa-acesso__cartao p {
+  margin: 0;
+  font-size: var(--text-caption);
+  opacity: 0.9;
+}
+.previa-acesso__google {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  justify-content: center;
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: 500;
+}
+.previa-acesso__g {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--state-info-soft);
+  color: var(--brand-primary);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.previa-acesso__dominio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Recursos: tempo real + resumo dos painéis */
+.previa-recursos {
+  display: grid;
+  gap: var(--space-3);
+}
+.previa-tempo-real {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.previa-tempo-real > div {
+  display: grid;
+}
+.previa-tempo-real strong {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+}
+.previa-tempo-real small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.previa-tempo-real__ponto {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--state-neutral);
+}
+.previa-tempo-real[data-ligado="sim"] .previa-tempo-real__ponto {
+  background: var(--state-success);
+  box-shadow: 0 0 0 4px var(--state-success-soft);
+}
+.previa-recursos__titulo {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+}
+.previa-recursos__barra {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+}
+.previa-recursos__barra span[data-tom="sucesso"],
+.previa-recursos__lista li[data-tom="sucesso"] .previa-recursos__marca {
+  background: var(--state-success);
+}
+.previa-recursos__barra span[data-tom="atencao"],
+.previa-recursos__lista li[data-tom="atencao"] .previa-recursos__marca {
+  background: var(--state-warning);
+}
+.previa-recursos__barra span[data-tom="neutro"],
+.previa-recursos__lista li[data-tom="neutro"] .previa-recursos__marca {
+  background: var(--state-neutral);
+}
+.previa-recursos__barra span[data-tom="perigo"],
+.previa-recursos__lista li[data-tom="perigo"] .previa-recursos__marca {
+  background: var(--state-danger);
+}
+.previa-recursos__lista {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.previa-recursos__lista li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.previa-recursos__lista strong {
+  margin-left: auto;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.previa-recursos__marca {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}

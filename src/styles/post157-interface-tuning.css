@@ -162,15 +162,17 @@
   gap: 9px;
 }
 
-.sidebar-color-control input[type="color"] {
+/* Todo seletor de cor das seções é uma amostra compacta (não uma faixa na linha inteira). */
+.sidebar-color-control input[type="color"],
+.config-secao input[type="color"] {
   width: 52px;
   height: 36px;
   padding: 2px;
 }
 
 .sidebar-color-control span {
-  color: #526780;
-  font-size: 11px;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
 }
 
 @media (max-width: 900px) {
@@ -263,62 +265,63 @@ html[data-theme="dark"] .contraste-aviso[data-nivel="alerta"] {
   gap: 12px;
 }
 
+/*
+  Seções de Administração sem moldura (design.md 2.1): título, descrição e
+  espaço separam a seção. Os tokens já trocam no tema escuro.
+*/
 .config-secao {
-  border: 1px solid #dce8ef;
-  border-radius: 14px;
-  background: #ffffff;
-  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
 }
 
 .config-secao__cabecalho {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #eaf1f6;
+  gap: var(--space-3);
+  padding: 0 0 var(--space-5);
 }
 
 .config-secao__icone {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
-  background: #e7f2f9;
-  color: #10456b;
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--state-info);
 }
 
 .config-secao__cabecalho h3 {
   margin: 0;
-  color: var(--color-text-primary);
-  font-size: 14px;
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+  font-weight: 500;
 }
 
 .config-secao__cabecalho p {
-  margin: 3px 0 0;
-  color: #64758b;
-  font-size: 11.5px;
-  line-height: 1.4;
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
 }
 
+/* start: campo curto não estica até a altura do bloco vizinho na linha. */
 .config-secao__corpo {
-  padding: 14px 16px;
+  padding: 0;
+  align-items: start;
+}
+
+/* Recursos: uma coluna (o grupo "Atualização em tempo real" vem antes dos painéis). */
+.config-secao[data-secao="recursos"] .config-secao__corpo {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-6);
 }
 
 .config-secao__corpo:empty {
   display: none;
 }
 
-html[data-theme="dark"] .config-secao {
-  border-color: #253a56;
-  background: #17253d;
-}
 
-html[data-theme="dark"] .config-secao__cabecalho {
-  border-color: #253a56;
-}
-
-html[data-theme="dark"] .config-secao__cabecalho h3 {
-  color: #e2eaf4;
-}

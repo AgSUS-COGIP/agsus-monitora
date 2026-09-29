@@ -23,31 +23,44 @@ export function renderPanelAdminHTML(panels) {
               ? statusPill("Ativo", "ok")
               : statusPill("Sem URL", "neutral");
 
-      return `<div class="panel-admin-item">
-      <div class="panel-admin-head">
-        <span>${esc(panel.titulo || panel.codigo)}</span>
-        ${status}
-      </div>
-      <input type="hidden" id="panelId${index}" value="${attr(panel.id || "")}">
-      <div class="form-grid compact">
-        <div class="form-row"><label>Título</label><input id="panelTitulo${index}" value="${attr(panel.titulo || "")}"></div>
-        <div class="form-row"><label>Código</label><input value="${attr(panel.codigo || "")}" readonly></div>
-        <div class="form-row full"><label>URL</label><input id="panelUrl${index}" value="${attr(panel.url || "")}" placeholder="URL do painel"></div>
-        <div class="form-row"><label>Ativo</label><select id="panelAtivo${index}"><option value="true" ${panel.ativo !== false ? "selected" : ""}>Sim</option><option value="false" ${panel.ativo === false ? "selected" : ""}>Não</option></select></div>
-        <div class="form-row"><label>Manutenção</label><select id="panelManut${index}"><option value="false" ${!panel.em_manutencao ? "selected" : ""}>Não</option><option value="true" ${panel.em_manutencao ? "selected" : ""}>Sim</option></select></div>
-      </div>
-    </div>`;
+      /*
+        Uma linha por painel (tabela leve do design.md 11.4). Os ids panelId,
+        panelTitulo, panelUrl, panelAtivo e panelManut são contrato:
+        collectPanelRows, a validação (config-governance.js e
+        config-page-enhancements.js) e o salvamento leem por eles.
+      */
+      const nome = esc(panel.titulo || panel.codigo || "painel");
+      return `<tr>
+      <td>
+        <input type="hidden" id="panelId${index}" value="${attr(panel.id || "")}">
+        <input id="panelTitulo${index}" value="${attr(panel.titulo || "")}" aria-label="Título do painel ${nome}">
+        <small>Código: ${esc(panel.codigo || "—")}</small>
+      </td>
+      <td><input id="panelUrl${index}" type="url" value="${attr(panel.url || "")}" placeholder="https://" aria-label="Endereço do painel ${nome}"></td>
+      <td><select id="panelAtivo${index}" aria-label="Painel ${nome} ativo"><option value="true" ${panel.ativo !== false ? "selected" : ""}>Sim</option><option value="false" ${panel.ativo === false ? "selected" : ""}>Não</option></select></td>
+      <td><select id="panelManut${index}" aria-label="Painel ${nome} em manutenção"><option value="false" ${!panel.em_manutencao ? "selected" : ""}>Não</option><option value="true" ${panel.em_manutencao ? "selected" : ""}>Sim</option></select></td>
+      <td>${status}</td>
+    </tr>`;
     })
     .join("");
+
+  const tabela = rows
+    ? `<div class="painel-externo-tabela" data-mobile-table="scroll">
+    <table>
+      <thead><tr><th scope="col">Painel</th><th scope="col">Endereço</th><th scope="col">Ativo</th><th scope="col">Em manutenção</th><th scope="col">Situação</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`
+    : `<p class="config-help">Nenhum painel externo cadastrado.</p>`;
 
   return `<div class="config-card-title">
     <div>
       <h3>Painéis externos</h3>
-      <p>Edite apenas título, URL, status e manutenção. As permissões ficam em Solicitações de acesso.</p>
+      <p>Título, endereço e situação de cada painel. Quem abre cada painel se define em Acessos.</p>
     </div>
   </div>
-  <div class="panel-admin-list">${rows || `<div class="access-status">Nenhum painel externo cadastrado.</div>`}</div>
-  <p class="config-help">As alterações só são enviadas ao Supabase quando clicar em Salvar configurações.</p>`;
+  ${tabela}
+  <p class="config-help">As alterações só valem depois de clicar em Salvar alterações.</p>`;
 }
 
 export function collectPanelRows(panels) {

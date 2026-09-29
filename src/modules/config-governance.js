@@ -194,7 +194,7 @@ function collectConfigRows() {
 function currentPanels() {
   try {
     const panelItems = [
-      ...document.querySelectorAll("#panelAdmin .panel-admin-item"),
+      ...document.querySelectorAll('#panelAdmin input[id^="panelId"]'),
     ];
     const placeholders = panelItems.map((_, index) => ({
       id: txt($(`panelId${index}`)?.value),
@@ -243,7 +243,7 @@ function validateCurrentConfiguration() {
         throw new Error("protocol");
     } catch (error) {
       errors.push(
-        `URL inválida no campo ${field.closest(".form-row")?.querySelector("label")?.textContent || field.id}.`,
+        `URL inválida no campo ${field.getAttribute("aria-label") || field.closest(".form-row")?.querySelector("label")?.textContent || field.id}.`,
       );
     }
   });
