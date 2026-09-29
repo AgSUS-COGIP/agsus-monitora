@@ -10,7 +10,6 @@ const PAINEL = `
   </main>
   <button id="refreshBtn"></button>
   <button id="applyBtn"></button>
-  <button id="scopeGuardLoad" disabled></button>
 `;
 
 async function carregarModulo() {
@@ -33,7 +32,6 @@ describe("skeleton do painel de análises", () => {
   it("liga na primeira carga com linhas de marcação e desliga sem deixar rastro", async () => {
     const { definirCarregamentoDoPainel } = await carregarModulo();
     const refresh = document.getElementById("refreshBtn");
-    const guarda = document.getElementById("scopeGuardLoad");
 
     definirCarregamentoDoPainel(true);
 
@@ -60,7 +58,6 @@ describe("skeleton do painel de análises", () => {
       "false",
     );
     expect(refresh.disabled).toBe(false);
-    expect(guarda.disabled).toBe(true);
     expect(document.querySelectorAll("[data-esqueleto]")).toHaveLength(0);
   });
 

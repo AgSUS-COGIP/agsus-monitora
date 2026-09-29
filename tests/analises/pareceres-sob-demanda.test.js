@@ -41,33 +41,54 @@ describe("parecer sob demanda do painel de análises", () => {
     await expect(buscarParecerDaLinha("a")).resolves.toBe("Apto");
   });
 
-  it("traz os pareceres do escopo com a área do painel e aproveita no detalhe", async () => {
+  it("o detalhamento vem inteiro, uma vez por registro, e serve ao parecer", async () => {
+    rpc.mockResolvedValue({
+      data: { id: "a", analise: "Apto", pontuacao_escolaridade: 10 },
+      error: null,
+    });
+    const { buscarDetalheDaLinha, buscarParecerDaLinha } =
+      await carregarModulo();
+
+    await expect(buscarDetalheDaLinha("a")).resolves.toEqual({
+      id: "a",
+      analise: "Apto",
+      pontuacao_escolaridade: 10,
+    });
+    await expect(buscarParecerDaLinha("a")).resolves.toBe("Apto");
+    expect(rpc).toHaveBeenCalledTimes(1);
+    await expect(buscarDetalheDaLinha("")).resolves.toBeNull();
+  });
+
+  it("traz os textos do escopo com a área do painel e aproveita no detalhe", async () => {
     rpc.mockResolvedValue({
       data: {
-        columns: ["id", "analise"],
+        columns: ["id", "analise", "link_pdf"],
         rows: [
-          ["a", "Apto"],
-          ["b", "Inapto"],
+          ["a", "Apto", null],
+          ["b", "Inapto", "https://pdf/b"],
         ],
       },
       error: null,
     });
-    const { buscarPareceresDoEscopo, buscarParecerDaLinha, esquecerPareceres } =
+    const { buscarTextosDoEscopo, buscarParecerDaLinha, esquecerTextos } =
       await carregarModulo();
 
-    const mapa = await buscarPareceresDoEscopo("ativo");
-    expect(mapa.get("b")).toBe("Inapto");
+    const mapa = await buscarTextosDoEscopo("todos");
+    expect(mapa.get("b")).toEqual({
+      analise: "Inapto",
+      link_pdf: "https://pdf/b",
+    });
     expect(rpc).toHaveBeenCalledWith("get_analises_texto_do_painel", {
-      p_scope: "ativo",
+      p_scope: "todos",
       p_area: "saude-indigena",
     });
 
-    await buscarPareceresDoEscopo("ativo");
+    await buscarTextosDoEscopo("todos");
     await expect(buscarParecerDaLinha("a")).resolves.toBe("Apto");
     expect(rpc).toHaveBeenCalledTimes(1);
 
-    esquecerPareceres();
-    await buscarPareceresDoEscopo("ativo");
+    esquecerTextos();
+    await buscarTextosDoEscopo("todos");
     expect(rpc).toHaveBeenCalledTimes(2);
   });
 });

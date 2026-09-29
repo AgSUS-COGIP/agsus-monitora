@@ -32,8 +32,13 @@ import { chaveDoCacheDoPayload } from "./area-do-painel-de-analises.js";
 
 export const VALIDADE_DO_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
 
-/* `schema_version` do payload de get_analises_dashboard_payload_v2 que a cópia aceita. */
-export const ESQUEMA_DO_PAYLOAD = 3;
+/*
+  `schema_version` do payload de get_analises_dashboard_payload_v2 que a cópia
+  aceita: 4 é a lista enxuta (20260929150000); 3, a de 35 colunas, que o
+  servidor ainda manda até a migration ser aplicada.
+*/
+export const ESQUEMAS_DO_PAYLOAD = Object.freeze([3, 4]);
+const esquemaAceito = (esquema) => ESQUEMAS_DO_PAYLOAD.includes(esquema);
 
 /* Registro que diz de quem são as cópias guardadas. */
 export const CHAVE_DO_DONO = "__dono__";
@@ -79,7 +84,7 @@ export function payloadDoRegistro(registro, { usuarioId, versao, agora }) {
   if (
     registro.usuarioId !== usuarioId ||
     registro.versao !== versao ||
-    registro.esquema !== ESQUEMA_DO_PAYLOAD ||
+    !esquemaAceito(registro.esquema) ||
     !(idade >= 0 && idade <= VALIDADE_DO_CACHE_MS) ||
     typeof registro.texto !== "string"
   )
@@ -138,8 +143,7 @@ export function criarCacheDoPainel({
     },
 
     async guardar({ usuarioId, area, escopo }, payload) {
-      if (!usuarioId || payload?.schema_version !== ESQUEMA_DO_PAYLOAD)
-        return false;
+      if (!usuarioId || !esquemaAceito(payload?.schema_version)) return false;
       if (
         !(await confirmarDono(usuarioId)) &&
         !(await gravar(CHAVE_DO_DONO, usuarioId))

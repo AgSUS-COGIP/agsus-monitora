@@ -13,18 +13,26 @@ import {
 import {
   haLinhasSemParecer,
   linhaSemParecer,
-  mesclarPareceres,
+  mesclarTextos,
   municipioUfDaLinha,
 } from "../lib/textos-do-painel-de-analises.js";
+import {
+  linhaSemDetalhe,
+  mesclarDetalhe,
+  temPdf,
+} from "../lib/lista-do-painel-de-analises.js";
 import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
 import {
   ERROS_SEM_FALLBACK,
-  carregarPayloadDoPainel,
+  carregarEscopoDoPainel,
   grupoDoFallbackPelaView,
   limparCacheAntigoDoLocalStorage,
   normalizeAnaliseRows,
 } from "./analises-consolidated-transport.js";
-import { buscarPareceresDoEscopo } from "./analises-pareceres-sob-demanda.js";
+import {
+  buscarDetalheDaLinha,
+  buscarTextosDoEscopo,
+} from "./analises-pareceres-sob-demanda.js";
 import {
   definirCarregamentoDoPainel,
   mostrarErroDoCarregamento,
@@ -408,13 +416,14 @@ import {
   }
 
   // ---------------- Parecer sob demanda (busca geral e CSV) ----------------
-  // Põe o parecer nas linhas que vieram sem ele e refaz o índice da busca.
+  // Põe o parecer (e o link do PDF e a experiência, que só o CSV usa) nas
+  // linhas que vieram sem ele e refaz o índice da busca.
   async function loadMissingTexts(){
     const target = rows;
     if(!haLinhasSemParecer(target)) return true;
-    const map = await buscarPareceresDoEscopo(currentEditalScope());
+    const map = await buscarTextosDoEscopo(currentEditalScope());
     if(target !== rows) return false;
-    mesclarPareceres(rows, map).forEach(indexSearch);
+    mesclarTextos(rows, map).forEach(indexSearch);
     return true;
   }
   function ensureSearchTexts(){
@@ -499,17 +508,16 @@ import {
     return { data: allRows, error: null };
   }
 
-  // ---------------- Payload consolidado (escopo ativo) ----------------
+  // ---------------- Payload consolidado (Ativo, Inativo e Todos) ----------------
   // Vem de analises-consolidated-transport.js, com a cópia guardada no navegador
-  // (IndexedDB): abre na hora com a cópia e redesenha, sem skeleton, se o
-  // servidor mandar dados mais novos. Os outros escopos seguem pelo recorte
-  // (analises-scope-guard.js), pela leitura paginada abaixo.
+  // (IndexedDB) por escopo: abre na hora com a cópia e redesenha, sem skeleton,
+  // se o servidor mandar dados mais novos. Sem o payload (RPC fora do ar), a
+  // leitura paginada da view, abaixo.
   async function loadAnalisesPayload(runId, forcarRede){
-    if(currentEditalScope() !== "ativo") return null;
     const escopo = currentEditalScope();
     const usuarioId = txt(session?.user?.id);
     const aindaValeEsta = () => runId === refreshRunCounter && escopo === currentEditalScope() && usuarioId === txt(session?.user?.id);
-    return carregarPayloadDoPainel(sb, {
+    return carregarEscopoDoPainel(sb, {
       escopo,
       usuarioId,
       forcarRede,
@@ -572,14 +580,14 @@ import {
       }
 
       analisesPayload = null;
-      setProgress(12,currentEditalScope() === "ativo" ? "Cache consolidado indisponível. Consultando Supabase em lotes..." : "Consultando Supabase em lotes...");
+      setProgress(12,"Cache consolidado indisponível. Consultando Supabase em lotes...");
       const baseResponse = await fetchAllSupabaseRows(currentViewName(), "*", [
         { column: "unidade", ascending: true }, { column: "edital", ascending: true },
         { column: "codigo_vaga", ascending: true }, { column: "candidato", ascending: true }
-      ], { ...currentScopeQueryOptions(), grupo: currentEditalScope() === "ativo" ? grupoDoFallbackPelaView() : undefined });
+      ], { ...currentScopeQueryOptions(), grupo: grupoDoFallbackPelaView() });
       if(runId !== refreshRunCounter) return false;
       if(baseResponse.error){ showLoadError("Erro ao carregar o painel: " + baseResponse.error.message); return false; }
-      const rawBaseRows = currentEditalScope() === "ativo" ? normalizeAnaliseRows(baseResponse.data) : (Array.isArray(baseResponse.data) ? baseResponse.data : []);
+      const rawBaseRows = normalizeAnaliseRows(baseResponse.data);
       editais = editaisDasLinhas(rawBaseRows);
       setProgress(42,`Montando filtros e janelas oficiais para ${fmtNum(rawBaseRows.length)} registros...`);
       rows = hydrateRowsWithEditalWindows(rawBaseRows);
@@ -606,7 +614,7 @@ import {
     { id:"fModalidade", placeholder:"Todas as modalidades", getValues: row => modalidadesDaConcorrencia(row.modalidade_concorrencia) },
     { id:"fPdf", placeholder:"Todas", getValues: row => {
         const values = []; const status = txt(row.pdf_status).toUpperCase();
-        values.push(txt(row.link_pdf) ? "COM_PDF" : "SEM_PDF");
+        values.push(temPdf(row) ? "COM_PDF" : "SEM_PDF");
         if(status === "ERRO") values.push("ERRO");
         if(status === "DESATUALIZADO") values.push("DESATUALIZADO");
         return values;
@@ -760,7 +768,7 @@ import {
     }
     $("windowMeta").innerHTML = html;
   }
-  function renderPdfMetrics(){ const com=panelRows.filter(r=>txt(r.link_pdf)).length, sem=panelRows.length-com, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, des=panelRows.filter(r=>norm(r.pdf_status)==="desatualizado").length; $("pdfMetrics").innerHTML = `<span class="mini-chip"><i class="fa-solid fa-file-pdf"></i> Com PDF: ${fmt(com)}</span><span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF: ${fmt(sem)}</span><span class="mini-chip"><i class="fa-solid fa-triangle-exclamation"></i> Erro: ${fmt(erro)}</span><span class="mini-chip"><i class="fa-solid fa-clock-rotate-left"></i> Desatualizado: ${fmt(des)}</span>`; }
+  function renderPdfMetrics(){ const com=panelRows.filter(temPdf).length, sem=panelRows.length-com, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, des=panelRows.filter(r=>norm(r.pdf_status)==="desatualizado").length; $("pdfMetrics").innerHTML = `<span class="mini-chip"><i class="fa-solid fa-file-pdf"></i> Com PDF: ${fmt(com)}</span><span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF: ${fmt(sem)}</span><span class="mini-chip"><i class="fa-solid fa-triangle-exclamation"></i> Erro: ${fmt(erro)}</span><span class="mini-chip"><i class="fa-solid fa-clock-rotate-left"></i> Desatualizado: ${fmt(des)}</span>`; }
 
   function statusClass(s){ const x=norm(s); if(x==="aprovado") return "aprovado"; if(x==="reprovado") return "reprovado"; if(x==="revisar") return "revisar"; if(x==="pendente") return "pendente"; return "neutro"; }
   function palette(){ return paletaDoPainel(document.documentElement.dataset.theme==="dark"); }
@@ -830,7 +838,7 @@ import {
   }
 
   function renderAttention(){
-    const items=[]; const pend=panelRows.filter(r=>txt(r.status_consolidado)==="Pendente").length, rev=panelRows.filter(r=>txt(r.status_consolidado)==="Revisar").length, semResp=panelRows.filter(r=>!txt(r.responsavel_analise)).length, semData=panelRows.filter(r=>txt(r.etapa)&&!txt(r.data_analise)).length, fora=panelRows.filter(r=>txt(r.data_validacao_status)==="FORA_PERIODO").length, futura=panelRows.filter(r=>txt(r.data_validacao_status)==="DATA_FUTURA").length, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, semPdf=panelRows.filter(r=>!txt(r.link_pdf)).length;
+    const items=[]; const pend=panelRows.filter(r=>txt(r.status_consolidado)==="Pendente").length, rev=panelRows.filter(r=>txt(r.status_consolidado)==="Revisar").length, semResp=panelRows.filter(r=>!txt(r.responsavel_analise)).length, semData=panelRows.filter(r=>txt(r.etapa)&&!txt(r.data_analise)).length, fora=panelRows.filter(r=>txt(r.data_validacao_status)==="FORA_PERIODO").length, futura=panelRows.filter(r=>txt(r.data_validacao_status)==="DATA_FUTURA").length, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, semPdf=panelRows.filter(r=>!temPdf(r)).length;
     if(futura) items.push({t:"Data de análise no futuro",d:`${fmt(futura)} análise(s) com data depois de hoje. Corrija na planilha de origem.`,c:"high"}); if(fora) items.push({t:"Data fora do período",d:`${fmt(fora)} análise(s) fora da janela oficial do edital.`,c:"high"}); if(erro) items.push({t:"PDF com erro",d:`${fmt(erro)} espelho(s) com erro na última tentativa.`,c:"high"}); if(semResp) items.push({t:"Sem responsável",d:`${fmt(semResp)} registro(s) sem responsável de análise.`,c:"high"}); if(pend) items.push({t:"Pendentes",d:`${fmt(pend)} registro(s) pendentes no recorte atual.`,c:"medium"}); if(rev) items.push({t:"Em revisão",d:`${fmt(rev)} registro(s) aguardando revisão.`,c:"medium"}); if(semData) items.push({t:"Etapa sem data",d:`${fmt(semData)} registro(s) com etapa, mas sem data de análise.`,c:"medium"}); if(semPdf) items.push({t:"Espelho ausente",d:`${fmt(semPdf)} registro(s) sem link de PDF no recorte.`,c:"low"});
     $("attentionList").innerHTML = items.length ? items.slice(0,8).map(x=>`<div class="attention-item ${x.c==='high'?'high':x.c==='low'?'low':''}"><b>${esc(x.t)}</b><small>${esc(x.d)}</small></div>`).join("") : `<div class="empty">Nenhuma pendência prioritária no recorte atual.</div>`;
   }
@@ -863,13 +871,28 @@ import {
       : `<div class="analysis-text">${esc(r.analise||'Sem análise registrada.')}</div>`;
     return `<div class="detail-shell"${municipio?` data-municipio-uf="${attr(municipio)}"`:""}><div class="detail-grid"><div class="kv"><div class="kv-label">Etapa</div><div class="kv-value">${esc(r.etapa||'-')}</div></div><div class="kv"><div class="kv-label">Data da análise</div><div class="kv-value">${esc(fmtDate(r.data_analise)||'-')}</div></div><div class="kv"><div class="kv-label">Nota final</div><div class="kv-value">${esc(r.nota_final_ajustada ?? '-')}</div></div><div class="kv"><div class="kv-label">Modalidade</div><div class="kv-value">${esc(r.modalidade_concorrencia||'-')}</div></div><div class="kv"><div class="kv-label">Validação</div><div class="kv-value">${esc(validationLabel(r.data_validacao_status))}</div></div><div class="kv"><div class="kv-label">Janela oficial</div><div class="kv-value">${esc(fmtDate(r.data_inicio_analise)||'--')} a ${esc(fmtDate(r.data_fim_analise)||'--')}</div></div><div class="kv"><div class="kv-label">Escolaridade</div><div class="kv-value">${esc(r.pontuacao_escolaridade ?? '-')}</div></div><div class="kv"><div class="kv-label">Cursos</div><div class="kv-value">${esc(r.pontuacao_cursos_aperfeicoamento ?? '-')}</div></div><div class="kv"><div class="kv-label">Experiência profissional</div><div class="kv-value">${esc(r.pontuacao_experiencia_profissional ?? '-')}</div></div>${criteriosDaAreaHtml(r)}</div><div class="detail-block"><div class="detail-actions">${origem?`<a class="btn secondary small" href="${attr(origem)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir origem</a>`:""}${pdf?`<a class="btn green small" href="${attr(pdf)}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file-pdf"></i> Abrir PDF</a>`:`<span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF</span>`}${txt(r.erro_pdf)?`<span class="mini-chip" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(truncate(r.erro_pdf,80))}</span>`:""}</div>${analysis}</div></div>`;
   }
-  function toggleDetails(encoded){ const key=decodeURIComponent(encoded||""); if(expanded.has(key)) expanded.delete(key); else expanded.add(key); renderTable(); }
+  // A lista enxuta não traz pontuações, links e datas: o detalhamento os busca
+  // antes de abrir (os drawers esperam a linha de detalhe aparecer).
+  function rowOfKey(key){ const index=Number(String(key).split("|").pop()); return Number.isInteger(index) ? getTableRows()[index] : null; }
+  function toggleDetails(encoded){
+    const key=decodeURIComponent(encoded||"");
+    if(expanded.has(key)){ expanded.delete(key); renderTable(); return; }
+    const row=rowOfKey(key);
+    if(!row || !linhaSemDetalhe(row)){ expanded.add(key); renderTable(); return; }
+    buscarDetalheDaLinha(row.id)
+      .then(detalhe => { if(mesclarDetalhe(row, detalhe)) indexSearch(row); })
+      .catch(err => console.warn("Não foi possível carregar o detalhamento da análise:", err))
+      .finally(() => { expanded.add(key); renderTable(); });
+  }
   function validationLabel(v){ return {DENTRO_PERIODO:"Dentro do período configurado",FORA_PERIODO:"Fora do período configurado",SEM_DATA:"Sem data de análise informada",SEM_JANELA:"Sem janela configurada no edital",DATA_FUTURA:"Data de análise no futuro (corrija na planilha)"}[txt(v)] || txt(v) || "-"; }
   function renderPagination(pages){ const wrap=$("pageNumbers"); const list=pageWindow(currentPage,pages,5); wrap.innerHTML=list.map(p=>p==="..."?`<span style="padding:8px;color:var(--muted)">...</span>`:`<button class="page-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`).join(""); $("firstBtn").disabled=currentPage<=1; $("prevBtn").disabled=currentPage<=1; $("nextBtn").disabled=currentPage>=pages; $("lastBtn").disabled=currentPage>=pages; }
   function pageWindow(page,total,max){ if(total<=max+2) return Array.from({length:total},(_,i)=>i+1); const out=[1]; let start=Math.max(2,page-2), end=Math.min(total-1,page+2); if(start>2) out.push("..."); for(let i=start;i<=end;i++) out.push(i); if(end<total-1) out.push("..."); out.push(total); return out; }
   function goPage(p){ const pages=Math.max(1,Math.ceil(getTableRows().length/rowsPerPage)); currentPage=Math.max(1,Math.min(p,pages)); renderTable(); }
   function setUpdatedAt(){
-    const latest = rows.map(r => r.updated_at || r.ultima_atualizacao).map(value => ({ value, parsed: dateObj(value) })).filter(item => item.value && item.parsed).sort((a, b) => a.parsed.getTime() - b.parsed.getTime()).pop();
+    // A lista enxuta manda a hora do dado mais novo no envelope (atualizado_em).
+    const datas = rows.map(r => r.updated_at || r.ultima_atualizacao).filter(Boolean);
+    if(!datas.length && analisesPayload?.atualizado_em) datas.push(analisesPayload.atualizado_em);
+    const latest = datas.map(value => ({ value, parsed: dateObj(value) })).filter(item => item.value && item.parsed).sort((a, b) => a.parsed.getTime() - b.parsed.getTime()).pop();
     const label = latest ? `Atualizado em ${fmtDateTime(latest.value)}` : "Base carregada";
     $("updatedText").textContent = label; $("footerUpdated").textContent = label;
   }

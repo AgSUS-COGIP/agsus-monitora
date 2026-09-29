@@ -313,33 +313,19 @@ export const CONTRATO_RPC = {
     argumentos: ["p_scope", "p_area"],
     critica: true,
     resumo:
-      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), sem o parecer (`analise`). O escopo ativo vem do cache do servidor (`TA_PAINEL_ANALISE`, `cache.hit`).",
-  },
-  get_analises_dashboard_filtrado: {
-    argumentos: [
-      "p_scope",
-      "p_unidades",
-      "p_editais",
-      "p_offset",
-      "p_limit",
-      "p_include_total",
-      "p_area",
-    ],
-    critica: true,
-    resumo:
-      "Linhas do painel de Análises da área, filtradas por unidade e edital, paginadas.",
+      "Lista enxuta (schema_version 4) do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), por escopo: ativo, inativo ou desativadas ('Todos' = os três juntos no navegador). Vem do cache do servidor (`TA_PAINEL_ANALISE`, `cache.hit`), exceto para quem tem recorte por coordenação (migration 20260929150000).",
   },
   get_analise_detalhe_do_painel: {
     argumentos: ["p_id"],
     critica: false,
     resumo:
-      "Parecer (`analise`) de uma linha do painel de Análises, ao abrir o detalhamento.",
+      "Detalhamento de uma linha do painel de Análises (parecer, pontuações, experiências, links, datas), ao abrir o registro.",
   },
   get_analises_texto_do_painel: {
     argumentos: ["p_scope", "p_area"],
     critica: false,
     resumo:
-      "Pareceres da área e escopo do painel de Análises, em lote, para o CSV e a busca geral.",
+      "Parecer, link do PDF e tempo de experiência profissional da área e escopo do painel de Análises, em lote, para o CSV e a busca geral.",
   },
 
   // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──

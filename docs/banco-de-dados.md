@@ -80,11 +80,10 @@ registro passar a mentir.
 
 ### 2.1 Acesso direto a tabelas
 
-Doze pontos, em nove tabelas. Dez são leitura.
+Onze pontos, em oito tabelas. Nove são leitura.
 
 | Tabela                        | Operação   | Onde                                                        |
 | ----------------------------- | ---------- | ----------------------------------------------------------- |
-| `analises_editais`            | select     | `analises/analises-scope-guard.js`                          |
 | `monitoramento_indigena`      | select     | `modules/health-status-details.js`, `modules/legacy-app.js` |
 | `solicitacoes_acesso`         | select ×3  | `modules/legacy-app.js`                                     |
 | `solicitacoes_acesso`         | **insert** | `modules/legacy-app.js` — pedido que a própria pessoa faz   |
@@ -464,6 +463,58 @@ das funções igual ao de antes).
   banco ao sair pelo botão, em "Limpar sessão", com acesso revogado e quando
   outro usuário entra. O cache antigo do `localStorage`
   (`agsus_analises_cache_*`) é apagado ao abrir o painel.
+
+### 6.4 Lista enxuta e os três escopos prontos
+
+Migration `20260929150000_analises_lista_enxuta.sql` (rollback em
+`supabase/rollback/`, que volta às definições que estavam no banco em 29/09,
+inclusive o recorte por coordenação aplicado fora do repositório; ensaiado, com
+hash das funções, permissões, comentários e colunas iguais aos de antes).
+
+- **Lista (schema_version 4)**: `columns` = `id`, `unidade`, `edital`,
+  `codigo_vaga`, `nome_vaga`, `candidato`, `categoria`,
+  `modalidade_concorrencia`, `status_consolidado`, `etapa`,
+  `responsavel_analise`, `data_analise`, `nota_final_ajustada`, `pdf_status`,
+  `tem_pdf`. O envelope ganhou `grupo` (o da área), `edital_status` (do
+  escopo), `atualizado_em` (o "Atualizado em" do painel), `versao_dados` e
+  `detalhe_sob_demanda`. Saúde Indígena ativa: 3.644 KB → 1.935 KB (gzip
+  370 → 306 KB); inativa: 7.804 KB → 3.926 KB (gzip 859 → 633 KB); Projetos
+  inativo: 828 KB → 411 KB.
+- **O que saiu da linha e onde está**: a janela oficial e a validação, o front
+  calcula com `editais[]` (como já fazia quando a linha vinha sem janela); o
+  município/UF, o front lê do nome da vaga; pontuações, experiências,
+  `link_pdf`, `erro_pdf`, `origem_arquivo_id`, `updated_at`,
+  `ultima_atualizacao`, `chave_natural` vêm em
+  `get_analise_detalhe_do_painel(p_id)`, ao abrir o registro;
+  `get_analises_texto_do_painel` traz, com o parecer, `link_pdf` e o tempo de
+  experiência profissional, e o CSV sai igual ao de antes.
+- **Três escopos guardados** por área em `TA_PAINEL_ANALISE`, que dividem as
+  análises sem sobra nem repetição: `ativo` (análise ativa de edital ativo),
+  `inativo` (edital inativo) e `desativadas` (análise desativada pelo sync, de
+  edital ativo — só aparece em "Todos"). "Todos" não tem pacote: o front junta
+  os três na ordem do banco (unidade, edital, vaga, candidato e, no desempate,
+  o id). `private."FC_MONTAR_PAINEL_ANALISE"(área, escopos[], só_visíveis)`
+  monta os escopos numa passada pela tabela (Saúde Indígena: 2–4 s os três,
+  contra ~5 s só o ativo e ~8 s só o inativo antes).
+- **Quem recebe o pronto**: quem vê a área inteira (`FC_EDITAIS_VISIVEIS()`
+  nulo). Quem tem recorte por coordenação recebe a lista montada na hora, só
+  com o que pode ver. RPC com o pronto: Saúde Indígena ativa 1,6–5,1 s →
+  0,03–0,11 s; inativa 0,4–3 s → 0,01–0,07 s.
+- **Remontagem**: `atualizar_cache_painel_analises(p_area, p_escopos)` (só
+  `service_role`/`postgres`) e o pg_cron `agsus_analises_cache_do_painel`
+  (a cada 2 min, `atualizar_cache_painel_analises_vencidos`), que remonta a
+  área só quando a versão dos dados muda, falta um escopo ou o pronto tem mais
+  de 6 h.
+- `get_analises_dashboard_filtrado` saiu: o painel não pede mais o recorte
+  (unidades e editais) antes de mostrar Inativo e Todos; os filtros de unidade
+  e edital agem sobre as linhas carregadas.
+- **No navegador**: uma cópia por escopo no IndexedDB (`ativo`, `inativo`,
+  `desativadas`); "Todos" reaproveita as de Ativo e Inativo. A cópia aceita
+  `schema_version` 3 e 4.
+- **Ordem de publicação**: primeiro o front (aceita o payload de 35 colunas e o
+  enxuto; sem o escopo `desativadas` no banco, "Todos" cai na leitura pela
+  view), depois a migration. Ao contrário, o front antigo mostraria a lista
+  enxuta sem grupo e sem detalhamento, e o Inativo quebraria (sem o filtrado).
 
 ## 7. Edital sempre na área certa
 

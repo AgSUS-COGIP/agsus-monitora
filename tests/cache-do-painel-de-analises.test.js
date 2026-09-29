@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHAVE_DO_DONO,
-  ESQUEMA_DO_PAYLOAD,
+  ESQUEMAS_DO_PAYLOAD,
   VALIDADE_DO_CACHE_MS,
   chavesDoCacheAntigo,
   criarCacheDoPainel,
@@ -15,7 +15,7 @@ import {
 import { indexedDBFalso } from "./indexeddb-falso.js";
 
 const payload = (geradoEm, total = 2) => ({
-  schema_version: ESQUEMA_DO_PAYLOAD,
+  schema_version: 4,
   columns: ["id", "candidato"],
   rows: Array.from({ length: total }, (_, i) => [`id${i}`, `Pessoa ${i}`]),
   editais: [],
@@ -101,6 +101,16 @@ describe("cópia do painel de análises no navegador", () => {
     );
     const depoisDoDeploy = criarCacheDoPainel({ armazenamento, versao: "v2" });
     expect(await depoisDoDeploy.ler(U1)).toBeNull();
+  });
+
+  it("aceita a lista enxuta (4) e a de 35 colunas (3), que o servidor manda até a migration", async () => {
+    expect(ESQUEMAS_DO_PAYLOAD).toEqual([3, 4]);
+    const armazenamento = armazenamentoEmMemoria();
+    const cache = criarCacheDoPainel({ armazenamento, versao: "v1" });
+    expect(
+      await cache.guardar(U1, { ...payload("1"), schema_version: 3 }),
+    ).toBe(true);
+    expect((await cache.ler(U1))?.schema_version).toBe(3);
   });
 
   it("payload de outro schema_version não é guardado", async () => {

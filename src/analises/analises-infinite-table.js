@@ -439,9 +439,6 @@ function bindResetEvents() {
     true,
   );
 
-  document.addEventListener("agsus:analises-query-complete", () =>
-    scheduleReset(80),
-  );
   document.addEventListener("agsus:analises-cache-cleared", () =>
     scheduleReset(180),
   );
