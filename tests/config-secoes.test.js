@@ -398,7 +398,8 @@ describe("um navegador só", () => {
 
 describe("agrupadores que ficam vazios depois de distribuir", () => {
   it("escondem-se (título órfão e caixa sem campos); com campo, continuam", async () => {
-    const { esconderAgrupadoresVazios } = await import("../src/modules/config-secoes.js");
+    const { esconderAgrupadoresVazios } =
+      await import("../src/modules/config-secoes.js");
     document.body.innerHTML = `
       <div id="raiz">
         <div class="admin-card card config-main-card" id="orfao">
@@ -411,9 +412,13 @@ describe("agrupadores que ficam vazios depois de distribuir", () => {
         </div>
       </div>`;
     expect(esconderAgrupadoresVazios(document.getElementById("raiz"))).toBe(2);
-    expect(document.querySelector("#orfao .config-card-title").hidden).toBe(true);
+    expect(document.querySelector("#orfao .config-card-title").hidden).toBe(
+      true,
+    );
     expect(document.getElementById("vazia").hidden).toBe(true);
-    expect(document.querySelector("#cheio .config-card-title").hidden).toBe(false);
+    expect(document.querySelector("#cheio .config-card-title").hidden).toBe(
+      false,
+    );
     expect(document.getElementById("cheia").hidden).toBe(false);
   });
 });

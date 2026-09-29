@@ -700,7 +700,9 @@ td.acessos-vazio {
   border-color: transparent;
   background-color: transparent;
 }
-.acessos-tela td select:not(.acessos-tag):not(.acessos-nivel):hover:not(:disabled),
+.acessos-tela
+  td
+  select:not(.acessos-tag):not(.acessos-nivel):hover:not(:disabled),
 .acessos-tela td select:not(.acessos-tag):not(.acessos-nivel):focus-visible {
   border-color: var(--border-control);
 }
@@ -835,4 +837,3 @@ td.acessos-vazio {
 .acessos-modal .btn.acessos-ghost:hover:not(:disabled) {
   background: var(--color-action-ghost-hover);
 }
-

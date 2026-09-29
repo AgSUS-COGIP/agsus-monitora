@@ -47,7 +47,10 @@ function baseDoAlvo(usuario, alvo) {
   if (alvo === ALVO_GRUPO)
     return { valor: usuario.grupo ?? "", revisao: usuario.revisao_conta };
   if (alvo === ALVO_COORDENACAO)
-    return { valor: usuario.coordenacao ?? null, revisao: usuario.revisao_conta };
+    return {
+      valor: usuario.coordenacao ?? null,
+      revisao: usuario.revisao_conta,
+    };
   return (
     usuario.permissoes?.[alvo] || {
       nivel: "sem_acesso",
@@ -88,7 +91,8 @@ export const contarPendencias = (rascunho) => rascunho.size;
 
 export function pendenciasDoUsuario(rascunho, usuarioId) {
   let total = 0;
-  for (const k of rascunho.keys()) if (k.startsWith(`${usuarioId}/`)) total += 1;
+  for (const k of rascunho.keys())
+    if (k.startsWith(`${usuarioId}/`)) total += 1;
   return total;
 }
 
@@ -111,7 +115,12 @@ export const alvoPendente = (rascunho, usuarioId, alvo) =>
  * nível do grupo em vigor e se há alteração pendente. Trocar o grupo no
  * rascunho já muda as células que seguem o grupo.
  */
-export function celulaExibida(usuario, recurso, rascunho, gruposPorCodigo = {}) {
+export function celulaExibida(
+  usuario,
+  recurso,
+  rascunho,
+  gruposPorCodigo = {},
+) {
   const base = baseDoAlvo(usuario, recurso);
   const grupo = grupoDaLinha(usuario, rascunho);
   const nivelGrupo =
@@ -139,9 +148,19 @@ export function alteracoesDoRascunho(rascunho) {
   for (const [k, { valor, base, usuario }] of rascunho) {
     const alvo = k.slice(k.indexOf("/") + 1);
     if (alvo === ALVO_GRUPO)
-      conta.push({ tipo: "grupo", usuario_id: usuario.id, grupo: valor, revisao: base.revisao });
+      conta.push({
+        tipo: "grupo",
+        usuario_id: usuario.id,
+        grupo: valor,
+        revisao: base.revisao,
+      });
     else if (alvo === ALVO_COORDENACAO)
-      conta.push({ tipo: "coordenacao", usuario_id: usuario.id, coordenacao: valor, revisao: base.revisao });
+      conta.push({
+        tipo: "coordenacao",
+        usuario_id: usuario.id,
+        coordenacao: valor,
+        revisao: base.revisao,
+      });
     else {
       if (valor !== null && !LEVELS.some(([nivel]) => nivel === valor))
         throw new Error("Nível inválido");
@@ -167,7 +186,9 @@ export function resumoDoRascunho(
 ) {
   const nomeDaColuna = new Map(colunas.map((c) => [c.id, c.rotulo]));
   const nomeDoGrupo = new Map(grupos.map((g) => [g.codigo, g.nome]));
-  const nomeDaCoordenacao = new Map(coordenacoes.map((c) => [c.codigo, c.nome]));
+  const nomeDaCoordenacao = new Map(
+    coordenacoes.map((c) => [c.codigo, c.nome]),
+  );
   const doGrupo = (nivel, alvo) => `Do grupo (${rotuloDoNivel(nivel, alvo)})`;
   const porUsuario = new Map();
   for (const [k, { valor, base, usuario }] of rascunho) {
@@ -188,10 +209,17 @@ export function resumoDoRascunho(
     else
       item = {
         rotulo: nomeDaColuna.get(alvo) || alvo,
-        de: base.origem === "excecao" ? rotuloDoNivel(base.nivel, alvo) : doGrupo(base.nivel_grupo, alvo),
-        para: valor === null ? doGrupo(base.nivel_grupo, alvo) : rotuloDoNivel(valor, alvo),
+        de:
+          base.origem === "excecao"
+            ? rotuloDoNivel(base.nivel, alvo)
+            : doGrupo(base.nivel_grupo, alvo),
+        para:
+          valor === null
+            ? doGrupo(base.nivel_grupo, alvo)
+            : rotuloDoNivel(valor, alvo),
       };
-    if (!porUsuario.has(usuario.id)) porUsuario.set(usuario.id, { usuario, itens: [] });
+    if (!porUsuario.has(usuario.id))
+      porUsuario.set(usuario.id, { usuario, itens: [] });
     porUsuario.get(usuario.id).itens.push(item);
   }
   return [...porUsuario.values()];
@@ -217,7 +245,8 @@ export function rebasearRascunho(rascunho, usuariosRecarregados = []) {
       conflitos.push({ usuario: entrada.usuario, alvo });
       continue;
     }
-    if (!semEfeito(alvo, nova, entrada.valor)) proximo.set(k, { ...entrada, base: nova });
+    if (!semEfeito(alvo, nova, entrada.valor))
+      proximo.set(k, { ...entrada, base: nova });
   }
   return { rascunho: proximo, conflitos };
 }

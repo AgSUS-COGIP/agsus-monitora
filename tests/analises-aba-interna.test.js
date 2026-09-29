@@ -5,10 +5,7 @@ import {
   semOPainelAntigoDeAnalises,
 } from "../src/lib/pagina-do-painel.js";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
-import {
-  paginasPermitidas,
-  permissaoLegada,
-} from "../src/lib/access-roles.js";
+import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
 import {
   collectPanelRows,
   renderPanelAdminHTML,

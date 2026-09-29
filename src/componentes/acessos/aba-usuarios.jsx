@@ -20,7 +20,12 @@ import {
 import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
 import { BotaoDeAcao, LinhasEsqueleto } from "../lista-aprovados/partes.jsx";
 import { Icone } from "../icone.jsx";
-import { CampoMotivo, ControleSegmentado, classes, motivoValido } from "./partes.jsx";
+import {
+  CampoMotivo,
+  ControleSegmentado,
+  classes,
+  motivoValido,
+} from "./partes.jsx";
 import { Solicitacoes } from "./solicitacoes.jsx";
 import { ModalAdicionarPessoa } from "./modal-adicionar-pessoa.jsx";
 
@@ -79,7 +84,15 @@ function OpcoesDoModulo({ opcoes }) {
   );
 }
 
-function Linha({ estado, matriz, usuario, rascunho, gruposPorCodigo, usuarioLogado, comCoordenacao }) {
+function Linha({
+  estado,
+  matriz,
+  usuario,
+  rascunho,
+  gruposPorCodigo,
+  usuarioLogado,
+  comCoordenacao,
+}) {
   const { teto, grupos = [], coordenacoes = [], areas = [] } = matriz;
   const edicao = podeEditarUsuario(teto, usuario, usuarioLogado);
   const bloqueada = !edicao.pode;
@@ -104,23 +117,38 @@ function Linha({ estado, matriz, usuario, rascunho, gruposPorCodigo, usuarioLoga
           </button>
         </span>
       </th>
-      <td className={classes(alvoPendente(rascunho, usuario.id, ALVO_GRUPO) && "acessos-pendente")}>
+      <td
+        className={classes(
+          alvoPendente(rascunho, usuario.id, ALVO_GRUPO) && "acessos-pendente",
+        )}
+      >
         <select
           className="acessos-tag"
           aria-label={`Grupo de ${nome}`}
           value={grupo || ""}
           disabled={bloqueada}
-          onChange={(e) => estado.registrar(usuario, ALVO_GRUPO, e.target.value)}
+          onChange={(e) =>
+            estado.registrar(usuario, ALVO_GRUPO, e.target.value)
+          }
         >
           {grupos.map((g) => (
-            <option key={g.codigo} value={g.codigo} disabled={g.codigo !== grupo && !atribuiveis.includes(g)}>
+            <option
+              key={g.codigo}
+              value={g.codigo}
+              disabled={g.codigo !== grupo && !atribuiveis.includes(g)}
+            >
               {g.nome}
             </option>
           ))}
         </select>
       </td>
       {comCoordenacao ? (
-        <td className={classes(alvoPendente(rascunho, usuario.id, ALVO_COORDENACAO) && "acessos-pendente")}>
+        <td
+          className={classes(
+            alvoPendente(rascunho, usuario.id, ALVO_COORDENACAO) &&
+              "acessos-pendente",
+          )}
+        >
           {usuario.admin_global ? (
             <span className="acessos-vazio">—</span>
           ) : (
@@ -128,14 +156,27 @@ function Linha({ estado, matriz, usuario, rascunho, gruposPorCodigo, usuarioLoga
               aria-label={`Coordenação de ${nome}`}
               value={coordenacao || ""}
               disabled={bloqueada || !podeMudarCoordenacao(teto)}
-              onChange={(e) => estado.registrar(usuario, ALVO_COORDENACAO, e.target.value || null)}
+              onChange={(e) =>
+                estado.registrar(
+                  usuario,
+                  ALVO_COORDENACAO,
+                  e.target.value || null,
+                )
+              }
             >
               <option value="">Sem coordenação</option>
-              <OpcoesDeCoordenacao coordenacoes={coordenacoes} areas={areas} atual={coordenacao} />
+              <OpcoesDeCoordenacao
+                coordenacoes={coordenacoes}
+                areas={areas}
+                atual={coordenacao}
+              />
             </select>
           )}
           {usuario.setor && !usuario.admin_global ? (
-            <small className="acessos-setor" title="Setor que a pessoa informou ao pedir acesso">
+            <small
+              className="acessos-setor"
+              title="Setor que a pessoa informou ao pedir acesso"
+            >
               Informou: {usuario.setor}
             </small>
           ) : null}
@@ -149,18 +190,37 @@ function Linha({ estado, matriz, usuario, rascunho, gruposPorCodigo, usuarioLoga
               <span className="acessos-nivel-fixo">Administrador</span>
             </td>
           );
-        const celula = celulaExibida(usuario, modulo.id, rascunho, gruposPorCodigo);
+        const celula = celulaExibida(
+          usuario,
+          modulo.id,
+          rascunho,
+          gruposPorCodigo,
+        );
         return (
-          <td key={modulo.id} className={classes(celula.pendente && "acessos-pendente")}>
+          <td
+            key={modulo.id}
+            className={classes(celula.pendente && "acessos-pendente")}
+          >
             <select
-              className={classes("acessos-nivel", celula.individual && "individual")}
+              className={classes(
+                "acessos-nivel",
+                celula.individual && "individual",
+              )}
               aria-label={`${modulo.rotulo} de ${nome}`}
               value={valorDoSelect(celula)}
               disabled={bloqueada || usuario.admin_global}
-              title={celula.individual ? "Permissão individual: vale só para esta pessoa" : "Segue o grupo"}
-              onChange={(e) => estado.registrar(usuario, modulo.id, e.target.value || null)}
+              title={
+                celula.individual
+                  ? "Permissão individual: vale só para esta pessoa"
+                  : "Segue o grupo"
+              }
+              onChange={(e) =>
+                estado.registrar(usuario, modulo.id, e.target.value || null)
+              }
             >
-              <OpcoesDoModulo opcoes={opcoesDoModulo(teto, modulo.id, celula)} />
+              <OpcoesDoModulo
+                opcoes={opcoesDoModulo(teto, modulo.id, celula)}
+              />
             </select>
           </td>
         );
@@ -174,7 +234,10 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
   const [tentou, setTentou] = useState(false);
   const pendentes = contarPendencias(rascunho);
   if (!pendentes) return null;
-  const porPessoa = resumoDoRascunho(rascunho, { grupos: matriz.grupos, coordenacoes: matriz.coordenacoes });
+  const porPessoa = resumoDoRascunho(rascunho, {
+    grupos: matriz.grupos,
+    coordenacoes: matriz.coordenacoes,
+  });
   return (
     <form
       className="acessos-salvar"
@@ -182,13 +245,15 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
         evento.preventDefault();
         setTentou(true);
         if (!motivoValido(motivo)) return;
-        void estado.salvar(motivo).then((ok) => ok && (setMotivo(""), setTentou(false)));
+        void estado
+          .salvar(motivo)
+          .then((ok) => ok && (setMotivo(""), setTentou(false)));
       }}
     >
       <details>
         <summary>
-          {pendentes} {pendentes === 1 ? "alteração" : "alterações"} em {porPessoa.length}{" "}
-          {porPessoa.length === 1 ? "pessoa" : "pessoas"}
+          {pendentes} {pendentes === 1 ? "alteração" : "alterações"} em{" "}
+          {porPessoa.length} {porPessoa.length === 1 ? "pessoa" : "pessoas"}
         </summary>
         <ul>
           {porPessoa.map(({ usuario, itens }) => (
@@ -203,12 +268,26 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
           ))}
         </ul>
       </details>
-      <CampoMotivo id="acessosMotivo" valor={motivo} aoMudar={setMotivo} erro={tentou && !motivoValido(motivo)} />
+      <CampoMotivo
+        id="acessosMotivo"
+        valor={motivo}
+        aoMudar={setMotivo}
+        erro={tentou && !motivoValido(motivo)}
+      />
       <div className="acessos-acoes">
-        <button type="button" className="btn outline acessos-ghost" onClick={estado.descartar}>
+        <button
+          type="button"
+          className="btn outline acessos-ghost"
+          onClick={estado.descartar}
+        >
           Descartar
         </button>
-        <BotaoDeAcao estado={estado} acao="salvar" type="submit" className="btn primary">
+        <BotaoDeAcao
+          estado={estado}
+          acao="salvar"
+          type="submit"
+          className="btn primary"
+        >
           Salvar alterações
         </BotaoDeAcao>
       </div>
@@ -222,7 +301,10 @@ function Ativos({ estado, atual }) {
   // Busca aplica 300 ms depois da digitação (design.md 11.3).
   useEffect(() => {
     if (busca.trim() === atual.busca) return undefined;
-    const espera = setTimeout(() => void estado.carregarMatriz({ busca: busca.trim(), offset: 0 }), 300);
+    const espera = setTimeout(
+      () => void estado.carregarMatriz({ busca: busca.trim(), offset: 0 }),
+      300,
+    );
     return () => clearTimeout(espera);
   }, [busca, atual.busca, estado]);
 
@@ -234,8 +316,12 @@ function Ativos({ estado, atual }) {
   const comCoordenacao = Boolean(teto?.admin_global);
   const total = matriz?.total || 0;
   const usuarios = matriz?.usuarios || [];
-  const usuarioLogado = atual.perfil ? { id: atual.perfil.user_id, email: atual.perfil.email } : null;
-  const filtrando = Boolean(atual.busca || atual.filtroGrupo || atual.filtroCoordenacao);
+  const usuarioLogado = atual.perfil
+    ? { id: atual.perfil.user_id, email: atual.perfil.email }
+    : null;
+  const filtrando = Boolean(
+    atual.busca || atual.filtroGrupo || atual.filtroCoordenacao,
+  );
   const colunas = MODULOS.length + (comCoordenacao ? 3 : 2);
 
   return (
@@ -244,12 +330,23 @@ function Ativos({ estado, atual }) {
         <label className="acessos-busca">
           <Icone nome="search" tamanho={16} />
           <span className="sr-only">Pesquisar pessoas</span>
-          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Pesquisar por nome ou e-mail" maxLength={100} />
+          <input
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Pesquisar por nome ou e-mail"
+            maxLength={100}
+          />
         </label>
         <select
           aria-label="Filtrar por grupo"
           value={atual.filtroGrupo}
-          onChange={(e) => void estado.carregarMatriz({ filtroGrupo: e.target.value, offset: 0 })}
+          onChange={(e) =>
+            void estado.carregarMatriz({
+              filtroGrupo: e.target.value,
+              offset: 0,
+            })
+          }
         >
           <option value="">Todos os grupos</option>
           {(matriz?.grupos || []).map((g) => (
@@ -262,11 +359,19 @@ function Ativos({ estado, atual }) {
           <select
             aria-label="Filtrar por coordenação"
             value={atual.filtroCoordenacao}
-            onChange={(e) => void estado.carregarMatriz({ filtroCoordenacao: e.target.value, offset: 0 })}
+            onChange={(e) =>
+              void estado.carregarMatriz({
+                filtroCoordenacao: e.target.value,
+                offset: 0,
+              })
+            }
           >
             <option value="">Todas as coordenações</option>
             <option value="__sem__">Sem coordenação</option>
-            <OpcoesDeCoordenacao coordenacoes={matriz?.coordenacoes || []} areas={matriz?.areas || []} />
+            <OpcoesDeCoordenacao
+              coordenacoes={matriz?.coordenacoes || []}
+              areas={matriz?.areas || []}
+            />
           </select>
         ) : null}
         {filtrando ? (
@@ -275,7 +380,12 @@ function Ativos({ estado, atual }) {
             className="btn outline acessos-ghost"
             onClick={() => {
               setBusca("");
-              void estado.carregarMatriz({ busca: "", filtroGrupo: "", filtroCoordenacao: "", offset: 0 });
+              void estado.carregarMatriz({
+                busca: "",
+                filtroGrupo: "",
+                filtroCoordenacao: "",
+                offset: 0,
+              });
             }}
           >
             Limpar filtros
@@ -290,7 +400,13 @@ function Ativos({ estado, atual }) {
         </span>
       </div>
 
-      <div className="acessos-tabela" data-mobile-table="scroll" tabIndex={0} role="region" aria-label="Permissões por pessoa">
+      <div
+        className="acessos-tabela"
+        data-mobile-table="scroll"
+        tabIndex={0}
+        role="region"
+        aria-label="Permissões por pessoa"
+      >
         <table>
           <thead>
             <tr>
@@ -323,7 +439,9 @@ function Ativos({ estado, atual }) {
             ) : (
               <tr>
                 <td colSpan={colunas} className="acessos-vazio">
-                  {filtrando ? "Nenhuma pessoa corresponde aos filtros aplicados." : "Nenhuma pessoa com acesso ativo."}
+                  {filtrando
+                    ? "Nenhuma pessoa corresponde aos filtros aplicados."
+                    : "Nenhuma pessoa com acesso ativo."}
                 </td>
               </tr>
             )}
@@ -334,7 +452,8 @@ function Ativos({ estado, atual }) {
       {total > POR_PAGINA ? (
         <div className="acessos-paginacao">
           <span>
-            {atual.offset + 1}–{Math.min(atual.offset + usuarios.length, total)} de {total.toLocaleString("pt-BR")}
+            {atual.offset + 1}–{Math.min(atual.offset + usuarios.length, total)}{" "}
+            de {total.toLocaleString("pt-BR")}
           </span>
           <span className="acessos-acoes">
             <button
@@ -342,7 +461,11 @@ function Ativos({ estado, atual }) {
               className="btn icon outline"
               aria-label="Página anterior"
               disabled={atual.offset === 0}
-              onClick={() => void estado.carregarMatriz({ offset: Math.max(0, atual.offset - POR_PAGINA) })}
+              onClick={() =>
+                void estado.carregarMatriz({
+                  offset: Math.max(0, atual.offset - POR_PAGINA),
+                })
+              }
             >
               <Icone nome="chevron-left" tamanho={16} />
             </button>
@@ -351,7 +474,11 @@ function Ativos({ estado, atual }) {
               className="btn icon outline"
               aria-label="Próxima página"
               disabled={atual.offset + POR_PAGINA >= total}
-              onClick={() => void estado.carregarMatriz({ offset: atual.offset + POR_PAGINA })}
+              onClick={() =>
+                void estado.carregarMatriz({
+                  offset: atual.offset + POR_PAGINA,
+                })
+              }
             >
               <Icone nome="chevron-right" tamanho={16} />
             </button>
@@ -360,11 +487,19 @@ function Ativos({ estado, atual }) {
       ) : null}
 
       {atual.aviso ? (
-        <p role="status" className={classes("alert", atual.aviso.tom === "danger" ? "error" : atual.aviso.tom)}>
+        <p
+          role="status"
+          className={classes(
+            "alert",
+            atual.aviso.tom === "danger" ? "error" : atual.aviso.tom,
+          )}
+        >
           <Icone nome="triangle-alert" tamanho={16} /> {atual.aviso.texto}
         </p>
       ) : null}
-      {matriz ? <BarraDeSalvar estado={estado} rascunho={rascunho} matriz={matriz} /> : null}
+      {matriz ? (
+        <BarraDeSalvar estado={estado} rascunho={rascunho} matriz={matriz} />
+      ) : null}
     </>
   );
 }
@@ -382,17 +517,30 @@ export function AbaUsuarios({ estado }) {
           aoMudar={setSituacao}
           opcoes={[
             { valor: "ativos", rotulo: "Ativos" },
-            { valor: "pendentes", rotulo: pendentes ? `Pendentes (${pendentes})` : "Pendentes" },
+            {
+              valor: "pendentes",
+              rotulo: pendentes ? `Pendentes (${pendentes})` : "Pendentes",
+            },
           ]}
         />
         {atual.matriz ? (
-          <button type="button" className="btn primary" onClick={estado.abrirAdicionar}>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={estado.abrirAdicionar}
+          >
             <Icone nome="plus" tamanho={16} /> Adicionar pessoa
           </button>
         ) : null}
       </div>
-      {situacao === "ativos" ? <Ativos estado={estado} atual={atual} /> : <Solicitacoes estado={estado} atual={atual} />}
-      {atual.adicionando && atual.matriz ? <ModalAdicionarPessoa key={atual.adicionando} estado={estado} /> : null}
+      {situacao === "ativos" ? (
+        <Ativos estado={estado} atual={atual} />
+      ) : (
+        <Solicitacoes estado={estado} atual={atual} />
+      )}
+      {atual.adicionando && atual.matriz ? (
+        <ModalAdicionarPessoa key={atual.adicionando} estado={estado} />
+      ) : null}
     </section>
   );
 }

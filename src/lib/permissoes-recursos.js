@@ -17,9 +17,11 @@ export const DESCRICOES_DOS_MODULOS = Object.freeze({
   analises: "Painel de análises curriculares.",
   nucleo: "Editais: consultar; Editor cadastra e edita editais e cronogramas.",
   calendario: "Cronograma dos editais; Editor altera etapas.",
-  aprovados: "Lista de aprovados; Editor muda status; Administrador desfaz status e anexa documentos.",
+  aprovados:
+    "Lista de aprovados; Editor muda status; Administrador desfaz status e anexa documentos.",
   recursos: "Recursos dos candidatos por área; Editor registra a análise.",
-  importacao: "Importar listas e configurar convocação; Administrador substitui listas.",
+  importacao:
+    "Importar listas e configurar convocação; Administrador substitui listas.",
   paineis: "Abrir os painéis externos liberados à pessoa.",
   configuracoes: "Marca, textos, aparência e operação do sistema.",
   acessos: "Gerenciar os acessos da própria coordenação.",

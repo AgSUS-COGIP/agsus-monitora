@@ -50,8 +50,10 @@ function el(documento, tag, atributos = {}, ...filhos) {
 }
 
 const icone = (nome, tamanho = 16) => criarIcone(nome, { tamanho });
-const linhaDoCampo = (documento, id) => documento.getElementById(id)?.closest(".form-row") || null;
-const campoVisivel = (linha) => linha && !linha.hidden && linha.style.display !== "none";
+const linhaDoCampo = (documento, id) =>
+  documento.getElementById(id)?.closest(".form-row") || null;
+const campoVisivel = (linha) =>
+  linha && !linha.hidden && linha.style.display !== "none";
 
 // ── 1. Grupos ────────────────────────────────────────────────────────────────────
 
@@ -59,19 +61,33 @@ function montarGrupos(documento, secaoId, corpo) {
   const grupos = GRUPOS_POR_SECAO[secaoId] || [];
   let anterior = null;
   for (const grupo of grupos) {
-    const linhas = grupo.campos.map((id) => linhaDoCampo(documento, id)).filter(Boolean);
+    const linhas = grupo.campos
+      .map((id) => linhaDoCampo(documento, id))
+      .filter(Boolean);
     if (!linhas.length) continue;
     const tituloId = `configGrupo-${secaoId}-${grupo.id}`;
-    const campos = el(documento, "div", { className: "config-grupo__campos form-grid" });
+    const campos = el(documento, "div", {
+      className: "config-grupo__campos form-grid",
+    });
     const caixa = el(
       documento,
       "section",
-      { className: "config-grupo", "data-tom": grupo.tom, "data-grupo": grupo.id, "aria-labelledby": tituloId },
+      {
+        className: "config-grupo",
+        "data-tom": grupo.tom,
+        "data-grupo": grupo.id,
+        "aria-labelledby": tituloId,
+      },
       el(
         documento,
         "header",
         { className: "config-grupo__cabecalho" },
-        el(documento, "span", { className: "config-grupo__icone", "aria-hidden": "true" }, icone(grupo.icone)),
+        el(
+          documento,
+          "span",
+          { className: "config-grupo__icone", "aria-hidden": "true" },
+          icone(grupo.icone),
+        ),
         el(
           documento,
           "div",
@@ -97,7 +113,8 @@ function aplicarDicas(documento, corpo) {
     const campo = documento.getElementById(id);
     if (!campo || !corpo.contains(campo)) continue;
     const rotulo = corpo.querySelector(`label[for="${id}"]`);
-    if (!rotulo || rotulo.parentElement?.classList.contains("config-rotulo")) continue;
+    if (!rotulo || rotulo.parentElement?.classList.contains("config-rotulo"))
+      continue;
     const descricaoId = `${id}Dica`;
     const envoltorio = el(documento, "div", { className: "config-rotulo" });
     rotulo.before(envoltorio);
@@ -114,9 +131,15 @@ function aplicarDicas(documento, corpo) {
         },
         icone("circle-help", 14),
       ),
-      el(documento, "span", { id: descricaoId, className: "sr-only", texto: dica }),
+      el(documento, "span", {
+        id: descricaoId,
+        className: "sr-only",
+        texto: dica,
+      }),
     );
-    const descritos = new Set(txt(campo.getAttribute("aria-describedby")).split(/\s+/).filter(Boolean));
+    const descritos = new Set(
+      txt(campo.getAttribute("aria-describedby")).split(/\s+/).filter(Boolean),
+    );
     descritos.add(descricaoId);
     campo.setAttribute("aria-describedby", [...descritos].join(" "));
   }
@@ -129,7 +152,13 @@ const valor = (documento, id) => txt(documento.getElementById(id)?.value);
 function imagem(documento, url, alt, className, reserva) {
   const src = urlDeImagem(url);
   if (!src) return reserva;
-  const img = el(documento, "img", { className, src, alt, loading: "lazy", referrerpolicy: "no-referrer" });
+  const img = el(documento, "img", {
+    className,
+    src,
+    alt,
+    loading: "lazy",
+    referrerpolicy: "no-referrer",
+  });
   // Endereço que não carrega: volta para a reserva em vez de mostrar imagem quebrada.
   img.addEventListener("error", () => img.replaceWith(reserva), { once: true });
   return img;
@@ -137,7 +166,11 @@ function imagem(documento, url, alt, className, reserva) {
 
 function iniciais(nome) {
   const partes = txt(nome).split(/\s+/).filter(Boolean);
-  return ((partes[0]?.[0] || "") + (partes.length > 1 ? partes.at(-1)[0] : "")).toUpperCase() || "?";
+  return (
+    (
+      (partes[0]?.[0] || "") + (partes.length > 1 ? partes.at(-1)[0] : "")
+    ).toUpperCase() || "?"
+  );
 }
 
 function previaDaMarca(documento) {
@@ -145,8 +178,16 @@ function previaDaMarca(documento) {
   const corDoTexto = corDoTextoPara(fundo);
   const titulo = valor(documento, "cfgTitle") || "MONITORA";
   const equipe = valor(documento, "cfgCogipNome") || "Nome da equipe";
-  const reservaDoSistema = el(documento, "span", { className: "previa-marca__logo-reserva" }, icone("layout-dashboard", 18));
-  const reservaDaEquipe = el(documento, "span", { className: "previa-marca__avatar", texto: iniciais(equipe) });
+  const reservaDoSistema = el(
+    documento,
+    "span",
+    { className: "previa-marca__logo-reserva" },
+    icone("layout-dashboard", 18),
+  );
+  const reservaDaEquipe = el(documento, "span", {
+    className: "previa-marca__avatar",
+    texto: iniciais(equipe),
+  });
   return el(
     documento,
     "div",
@@ -154,12 +195,21 @@ function previaDaMarca(documento) {
     el(
       documento,
       "div",
-      { className: "previa-marca__barra", estilo: { background: fundo, color: corDoTexto } },
+      {
+        className: "previa-marca__barra",
+        estilo: { background: fundo, color: corDoTexto },
+      },
       el(
         documento,
         "div",
         { className: "previa-marca__topo" },
-        imagem(documento, valor(documento, "cfgSidebarLogoUrl"), "", "previa-marca__logo", reservaDoSistema),
+        imagem(
+          documento,
+          valor(documento, "cfgSidebarLogoUrl"),
+          "",
+          "previa-marca__logo",
+          reservaDoSistema,
+        ),
         el(documento, "strong", { texto: titulo }),
       ),
       el(
@@ -167,25 +217,43 @@ function previaDaMarca(documento) {
         "ul",
         { className: "previa-marca__menu", "aria-hidden": "true" },
         ["Visão geral", "Editais", "Lista de aprovados"].map((item, indice) =>
-          el(documento, "li", { className: indice === 0 ? "ativo" : "", texto: item }),
+          el(documento, "li", {
+            className: indice === 0 ? "ativo" : "",
+            texto: item,
+          }),
         ),
       ),
       el(
         documento,
         "div",
         { className: "previa-marca__equipe" },
-        imagem(documento, valor(documento, "cfgCogipLogo"), `Logo de ${equipe}`, "previa-marca__avatar", reservaDaEquipe),
+        imagem(
+          documento,
+          valor(documento, "cfgCogipLogo"),
+          `Logo de ${equipe}`,
+          "previa-marca__avatar",
+          reservaDaEquipe,
+        ),
         el(
           documento,
           "div",
           {},
           el(documento, "strong", { texto: equipe }),
-          el(documento, "small", { texto: valor(documento, "cfgCogipFuncao") || "Função / área" }),
-          valor(documento, "cfgCogipDept") ? el(documento, "small", { texto: valor(documento, "cfgCogipDept") }) : null,
+          el(documento, "small", {
+            texto: valor(documento, "cfgCogipFuncao") || "Função / área",
+          }),
+          valor(documento, "cfgCogipDept")
+            ? el(documento, "small", {
+                texto: valor(documento, "cfgCogipDept"),
+              })
+            : null,
         ),
       ),
     ),
-    el(documento, "p", { className: "previa-marca__rodape", texto: valor(documento, "cfgFooter") || "Rodapé das páginas" }),
+    el(documento, "p", {
+      className: "previa-marca__rodape",
+      texto: valor(documento, "cfgFooter") || "Rodapé das páginas",
+    }),
   );
 }
 
@@ -205,17 +273,32 @@ function previaDaPaginaInicial(documento) {
     documento,
     "div",
     { className: "previa-inicio" },
-    el(documento, "strong", { className: "previa-inicio__titulo", texto: valor(documento, "cfgPageTitle") || "Título da página inicial" }),
-    el(documento, "small", { className: "previa-inicio__subtitulo", texto: valor(documento, "cfgPageSubtitle") || "Subtítulo" }),
+    el(documento, "strong", {
+      className: "previa-inicio__titulo",
+      texto: valor(documento, "cfgPageTitle") || "Título da página inicial",
+    }),
+    el(documento, "small", {
+      className: "previa-inicio__subtitulo",
+      texto: valor(documento, "cfgPageSubtitle") || "Subtítulo",
+    }),
     mensagem
       ? el(
           documento,
           "div",
           { className: "previa-aviso", "data-tom": aviso.tom },
           icone(aviso.icone, 14),
-          el(documento, "span", {}, el(documento, "strong", { texto: `${aviso.rotulo}: ` }), mensagem),
+          el(
+            documento,
+            "span",
+            {},
+            el(documento, "strong", { texto: `${aviso.rotulo}: ` }),
+            mensagem,
+          ),
         )
-      : el(documento, "p", { className: "previa-vazio", texto: "Sem aviso no topo (mensagem em branco)." }),
+      : el(documento, "p", {
+          className: "previa-vazio",
+          texto: "Sem aviso no topo (mensagem em branco).",
+        }),
     el(
       documento,
       "div",
@@ -225,10 +308,17 @@ function previaDaPaginaInicial(documento) {
         documento,
         "div",
         {},
-        el(documento, "strong", { texto: valor(documento, "cfgFilterTitle") || "Filtros" }),
-        el(documento, "small", { texto: valor(documento, "cfgFilterSubtitle") }),
+        el(documento, "strong", {
+          texto: valor(documento, "cfgFilterTitle") || "Filtros",
+        }),
+        el(documento, "small", {
+          texto: valor(documento, "cfgFilterSubtitle"),
+        }),
       ),
-      el(documento, "span", { className: "previa-inicio__botao", texto: valor(documento, "cfgFilterToggleShow") || "Mostrar filtros" }),
+      el(documento, "span", {
+        className: "previa-inicio__botao",
+        texto: valor(documento, "cfgFilterToggleShow") || "Mostrar filtros",
+      }),
     ),
     el(
       documento,
@@ -239,54 +329,112 @@ function previaDaPaginaInicial(documento) {
           documento,
           "div",
           { className: "previa-kpi" },
-          el(documento, "span", { className: "previa-kpi__rotulo" }, icone(nomeDoIcone, 12), valor(documento, id) || padrao),
+          el(
+            documento,
+            "span",
+            { className: "previa-kpi__rotulo" },
+            icone(nomeDoIcone, 12),
+            valor(documento, id) || padrao,
+          ),
           el(documento, "strong", { texto: numero }),
         ),
       ),
     ),
-    el(documento, "small", { className: "previa-nota", texto: "Números de exemplo." }),
+    el(documento, "small", {
+      className: "previa-nota",
+      texto: "Números de exemplo.",
+    }),
   );
 }
 
 function previaDaTelaDeAcesso(documento) {
   const cor = valor(documento, "cfgAccessPanelColor") || "#0b1f3d";
-  const corDoTexto = corDoTextoPara(cor, valor(documento, "cfgAccessTextoModo"));
-  const arte = documento.querySelector(".access-background-preview")?.style.backgroundImage || "";
+  const corDoTexto = corDoTextoPara(
+    cor,
+    valor(documento, "cfgAccessTextoModo"),
+  );
+  const arte =
+    documento.querySelector(".access-background-preview")?.style
+      .backgroundImage || "";
   const googleLigado = valor(documento, "cfgGoogleEnabled") !== "false";
-  const dominio = valor(documento, "cfgGoogleDomainHint") || primeiroDominio(valor(documento, "cfgGoogleAllowedDomains"));
-  const reservaDoLogo = el(documento, "strong", { className: "previa-acesso__marca", texto: "AgSUS" });
+  const dominio =
+    valor(documento, "cfgGoogleDomainHint") ||
+    primeiroDominio(valor(documento, "cfgGoogleAllowedDomains"));
+  const reservaDoLogo = el(documento, "strong", {
+    className: "previa-acesso__marca",
+    texto: "AgSUS",
+  });
   return el(
     documento,
     "div",
-    { className: "previa-acesso", estilo: arte ? { backgroundImage: arte } : undefined },
+    {
+      className: "previa-acesso",
+      estilo: arte ? { backgroundImage: arte } : undefined,
+    },
     el(
       documento,
       "div",
-      { className: "previa-acesso__cartao", estilo: { background: cor, color: corDoTexto } },
-      imagem(documento, valor(documento, "cfgAccessLogoUrl"), "Logo no acesso", "previa-acesso__logo", reservaDoLogo),
-      valor(documento, "cfgLoginEyebrow") ? el(documento, "small", { texto: valor(documento, "cfgLoginEyebrow") }) : null,
-      el(documento, "strong", { className: "previa-acesso__saudacao", texto: valor(documento, "cfgAccessGreeting") || "Seja bem-vindo(a)" }),
-      el(documento, "p", { texto: valor(documento, "cfgAccessInstruction") || "Entre com sua conta institucional." }),
+      {
+        className: "previa-acesso__cartao",
+        estilo: { background: cor, color: corDoTexto },
+      },
+      imagem(
+        documento,
+        valor(documento, "cfgAccessLogoUrl"),
+        "Logo no acesso",
+        "previa-acesso__logo",
+        reservaDoLogo,
+      ),
+      valor(documento, "cfgLoginEyebrow")
+        ? el(documento, "small", { texto: valor(documento, "cfgLoginEyebrow") })
+        : null,
+      el(documento, "strong", {
+        className: "previa-acesso__saudacao",
+        texto: valor(documento, "cfgAccessGreeting") || "Seja bem-vindo(a)",
+      }),
+      el(documento, "p", {
+        texto:
+          valor(documento, "cfgAccessInstruction") ||
+          "Entre com sua conta institucional.",
+      }),
       googleLigado
         ? el(
             documento,
             "span",
             { className: "previa-acesso__google" },
-            el(documento, "span", { className: "previa-acesso__g", "aria-hidden": "true", texto: "G" }),
+            el(documento, "span", {
+              className: "previa-acesso__g",
+              "aria-hidden": "true",
+              texto: "G",
+            }),
             valor(documento, "cfgGoogleButtonText") || "Entrar com Google",
           )
-        : el(documento, "small", { className: "previa-acesso__desligado", texto: "Botão do Google desligado." }),
-      dominio ? el(documento, "small", { className: "previa-acesso__dominio" }, icone("shield-check", 12), `Contas @${dominio}`) : null,
+        : el(documento, "small", {
+            className: "previa-acesso__desligado",
+            texto: "Botão do Google desligado.",
+          }),
+      dominio
+        ? el(
+            documento,
+            "small",
+            { className: "previa-acesso__dominio" },
+            icone("shield-check", 12),
+            `Contas @${dominio}`,
+          )
+        : null,
     ),
   );
 }
 
 function paineisNaTela(documento) {
-  return [...documento.querySelectorAll('#panelAdmin input[id^="panelId"]')].map((oculto) => {
+  return [
+    ...documento.querySelectorAll('#panelAdmin input[id^="panelId"]'),
+  ].map((oculto) => {
     const indice = oculto.id.slice("panelId".length);
     return {
       ativo: documento.getElementById(`panelAtivo${indice}`)?.value !== "false",
-      manutencao: documento.getElementById(`panelManut${indice}`)?.value === "true",
+      manutencao:
+        documento.getElementById(`panelManut${indice}`)?.value === "true",
       url: documento.getElementById(`panelUrl${indice}`)?.value,
     };
   });
@@ -304,15 +452,29 @@ function previaDosRecursos(documento) {
     documento,
     "div",
     { className: "previa-recursos" },
-    el(documento, "strong", { className: "previa-recursos__titulo", texto: `${resumo.total} ${resumo.total === 1 ? "painel externo" : "painéis externos"}` }),
+    el(documento, "strong", {
+      className: "previa-recursos__titulo",
+      texto: `${resumo.total} ${resumo.total === 1 ? "painel externo" : "painéis externos"}`,
+    }),
     resumo.total
       ? el(
           documento,
           "div",
-          { className: "previa-recursos__barra", role: "img", "aria-label": faixas.map(([k, r]) => `${r}: ${resumo[k]}`).join(", ") },
+          {
+            className: "previa-recursos__barra",
+            role: "img",
+            "aria-label": faixas
+              .map(([k, r]) => `${r}: ${resumo[k]}`)
+              .join(", "),
+          },
           faixas
             .filter(([k]) => resumo[k])
-            .map(([k, , tom]) => el(documento, "span", { "data-tom": tom, estilo: { flex: String(resumo[k]) } })),
+            .map(([k, , tom]) =>
+              el(documento, "span", {
+                "data-tom": tom,
+                estilo: { flex: String(resumo[k]) },
+              }),
+            ),
         )
       : null,
     el(
@@ -320,7 +482,17 @@ function previaDosRecursos(documento) {
       "ul",
       { className: "previa-recursos__lista" },
       faixas.map(([k, rotulo, tom]) =>
-        el(documento, "li", { "data-tom": tom }, el(documento, "span", { className: "previa-recursos__marca", "aria-hidden": "true" }), rotulo, el(documento, "strong", { texto: String(resumo[k]) })),
+        el(
+          documento,
+          "li",
+          { "data-tom": tom },
+          el(documento, "span", {
+            className: "previa-recursos__marca",
+            "aria-hidden": "true",
+          }),
+          rotulo,
+          el(documento, "strong", { texto: String(resumo[k]) }),
+        ),
       ),
     ),
   );
@@ -342,27 +514,43 @@ function montarPrevia(documento, secao) {
       documento,
       "aside",
       { className: "config-previa", "aria-label": titulo },
-      el(documento, "p", { className: "config-previa__rotulo" }, icone("eye", 14), titulo),
-      el(documento, "div", { className: "config-previa__conteudo", "aria-live": "polite" }),
+      el(
+        documento,
+        "p",
+        { className: "config-previa__rotulo" },
+        icone("eye", 14),
+        titulo,
+      ),
+      el(documento, "div", {
+        className: "config-previa__conteudo",
+        "aria-live": "polite",
+      }),
     ),
   );
 }
 
 export function atualizarPrevia(documento, secao) {
   const [, desenhar] = PREVIAS[secao?.dataset.secao] || [];
-  const alvo = secao?.querySelector(":scope > .config-previa .config-previa__conteudo");
+  const alvo = secao?.querySelector(
+    ":scope > .config-previa .config-previa__conteudo",
+  );
   if (!desenhar || !alvo) return false;
   alvo.replaceChildren(desenhar(documento));
   return true;
 }
 
 export function atualizarPrevias(documento = globalThis.document) {
-  for (const secao of documento.querySelectorAll("#page-config .config-secao--com-previa")) atualizarPrevia(documento, secao);
+  for (const secao of documento.querySelectorAll(
+    "#page-config .config-secao--com-previa",
+  ))
+    atualizarPrevia(documento, secao);
 }
 
 // ── Instalação ──────────────────────────────────────────────────────────────────
 
-export function instalarApresentacaoDasConfiguracoes(documento = globalThis.document) {
+export function instalarApresentacaoDasConfiguracoes(
+  documento = globalThis.document,
+) {
   const pagina = documento?.getElementById?.("page-config");
   if (!pagina || pagina.dataset.apresentacao === "1") return false;
   pagina.dataset.apresentacao = "1";
@@ -384,18 +572,25 @@ export function instalarApresentacaoDasConfiguracoes(documento = globalThis.docu
     if (!secao?.classList.contains("config-secao--com-previa")) return;
     pendentes.add(secao);
     if (quadro) return;
-    const raf = documento.defaultView?.requestAnimationFrame || ((fn) => setTimeout(fn, 16));
+    const raf =
+      documento.defaultView?.requestAnimationFrame ||
+      ((fn) => setTimeout(fn, 16));
     quadro = raf(() => {
       quadro = 0;
       for (const alvo of pendentes) atualizarPrevia(documento, alvo);
       pendentes.clear();
     });
   };
-  const aoMudar = (evento) => agendar(evento.target?.closest?.(".config-secao"));
+  const aoMudar = (evento) =>
+    agendar(evento.target?.closest?.(".config-secao"));
   pagina.addEventListener("input", aoMudar);
   pagina.addEventListener("change", aoMudar);
   documento.addEventListener(EVENTO_SECAO_ABERTA, (evento) => {
-    agendar(pagina.querySelector(`.config-secao[data-secao="${evento.detail?.secao}"]`));
+    agendar(
+      pagina.querySelector(
+        `.config-secao[data-secao="${evento.detail?.secao}"]`,
+      ),
+    );
   });
 
   atualizarPrevias(documento);

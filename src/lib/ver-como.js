@@ -60,7 +60,10 @@ export function capacidadesDoPerfil(perfil) {
     [canImportApprovedList(perfil), "Importa listas de aprovados"],
     [canReplaceApprovedList(perfil), "Substitui e remove listas de aprovados"],
     [canChangeCandidateStatus(perfil), "Muda o status dos candidatos"],
-    [canUnlockCandidateStatus(perfil), "Desfaz status já definido e anexa documentos"],
+    [
+      canUnlockCandidateStatus(perfil),
+      "Desfaz status já definido e anexa documentos",
+    ],
     [canManageSettings(perfil), "Edita as configurações do sistema"],
     [canManageAccess(perfil), "Gerencia acessos"],
   ]

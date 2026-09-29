@@ -42,11 +42,17 @@ export function abasDeAcessos(perfil) {
 /** A pessoa pode ser editada? { pode, motivo } */
 export function podeEditarUsuario(teto, alvo, usuarioLogado = null) {
   if (!teto || !alvo) return { pode: false, motivo: "" };
-  if ((teto.usuario_id && teto.usuario_id === alvo.id) || isOwnAccessProfile(usuarioLogado, alvo))
+  if (
+    (teto.usuario_id && teto.usuario_id === alvo.id) ||
+    isOwnAccessProfile(usuarioLogado, alvo)
+  )
     return { pode: false, motivo: "Seu acesso: outra pessoa deve alterar." };
   if (teto.admin_global) return { pode: true, motivo: "" };
   if (alvo.admin_global)
-    return { pode: false, motivo: "Só um administrador altera outro administrador." };
+    return {
+      pode: false,
+      motivo: "Só um administrador altera outro administrador.",
+    };
   if ((alvo.coordenacao ?? null) !== (teto.coordenacao ?? null))
     return { pode: false, motivo: "Fora da sua coordenação." };
   return { pode: true, motivo: "" };
@@ -59,7 +65,9 @@ export function nivelMaximo(teto, recurso) {
   const tipo = tipoDoRecurso(recurso);
   if (recurso === "acessos" || tipo === "area") return "sem_acesso";
   if (tipo === "painel")
-    return (teto.paineis || []).includes(recurso.slice("painel:".length)) ? "leitor" : "sem_acesso";
+    return (teto.paineis || []).includes(recurso.slice("painel:".length))
+      ? "leitor"
+      : "sem_acesso";
   return teto.niveis?.[recurso] || "sem_acesso";
 }
 
@@ -73,7 +81,8 @@ export function celulaSoLeitura(teto, recurso) {
 }
 
 /** Valor do select do módulo: "" = segue o grupo; senão o nível individual. */
-export const valorDoSelect = (celula) => (celula.individual ? celula.nivel : "");
+export const valorDoSelect = (celula) =>
+  celula.individual ? celula.nivel : "";
 
 /**
  * Opções do select de um módulo: primeiro o nível do grupo (valor "", segue o grupo), depois os
@@ -87,12 +96,14 @@ export function opcoesDoModulo(teto, recurso, celula) {
     {
       valor: "",
       rotulo: rotuloDoNivel(celula.nivelGrupo, recurso),
-      desabilitada: atual !== "" && (soLeitura || !cabe(teto, recurso, celula.nivelGrupo)),
+      desabilitada:
+        atual !== "" && (soLeitura || !cabe(teto, recurso, celula.nivelGrupo)),
     },
     ...niveisDoRecurso(recurso).map(([valor, rotulo]) => ({
       valor,
       rotulo,
-      desabilitada: valor !== atual && (soLeitura || !cabe(teto, recurso, valor)),
+      desabilitada:
+        valor !== atual && (soLeitura || !cabe(teto, recurso, valor)),
     })),
   ];
 }
@@ -109,7 +120,9 @@ export function gruposAtribuiveis(teto, grupos = []) {
     (grupo) =>
       !grupo.admin_global &&
       Object.entries(grupo.niveis || {}).every(([recurso, nivel]) =>
-        recurso === "acessos" ? nivel === "sem_acesso" : cabe(teto, recurso, nivel),
+        recurso === "acessos"
+          ? nivel === "sem_acesso"
+          : cabe(teto, recurso, nivel),
       ),
   );
 }

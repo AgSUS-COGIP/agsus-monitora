@@ -56,9 +56,10 @@ export function lerGrupo(grupo) {
 /** Erros por campo ({} = válido). */
 export function validarGrupo(rascunho, { existentes = [] } = {}) {
   const erros = {};
-  const codigo = rascunho.revisao === null
-    ? codigoAPartirDoNome(rascunho.nome, "_")
-    : rascunho.codigo;
+  const codigo =
+    rascunho.revisao === null
+      ? codigoAPartirDoNome(rascunho.nome, "_")
+      : rascunho.codigo;
   if (txt(rascunho.nome).length < 2) erros.nome = "Informe o nome do grupo.";
   else if (
     existentes.some(
@@ -126,8 +127,11 @@ export function lerCoordenacao(coordenacao) {
 export function validarCoordenacao(rascunho, { existentes = [] } = {}) {
   const erros = {};
   const codigo =
-    rascunho.revisao === null ? codigoAPartirDoNome(rascunho.nome) : rascunho.codigo;
-  if (txt(rascunho.nome).length < 2) erros.nome = "Informe o nome da coordenação.";
+    rascunho.revisao === null
+      ? codigoAPartirDoNome(rascunho.nome)
+      : rascunho.codigo;
+  if (txt(rascunho.nome).length < 2)
+    erros.nome = "Informe o nome da coordenação.";
   else if (
     existentes.some(
       (c) =>
@@ -170,8 +174,10 @@ export function resumoDaCoordenacao(coordenacao) {
   if (coordenacao.responsavel) partes.push(coordenacao.responsavel);
   const unidades = coordenacao.unidades?.length || 0;
   const editais = coordenacao.editais?.length || 0;
-  if (unidades) partes.push(`${unidades} ${unidades === 1 ? "unidade" : "unidades"}`);
-  if (editais) partes.push(`${editais} ${editais === 1 ? "edital" : "editais"}`);
+  if (unidades)
+    partes.push(`${unidades} ${unidades === 1 ? "unidade" : "unidades"}`);
+  if (editais)
+    partes.push(`${editais} ${editais === 1 ? "edital" : "editais"}`);
   return partes.length ? partes.join(" · ") : "A área inteira";
 }
 
@@ -201,7 +207,10 @@ export function opcoesDeUnidadesDaCoordenacao({
       vistos.add(chave);
       return mapa.get(chave) === area;
     })
-    .map((unidade) => ({ value: unidade.nome_oficial, label: unidade.nome_oficial }));
+    .map((unidade) => ({
+      value: unidade.nome_oficial,
+      label: unidade.nome_oficial,
+    }));
 }
 
 /** Editais da área que a coordenação pode receber pela lista explícita. */
@@ -210,7 +219,8 @@ export function opcoesDeEditaisDaCoordenacao(linhasDaArea = []) {
     .filter((linha) => linha?.id && linha.ativo !== false)
     .map((linha) => ({
       value: String(linha.id),
-      label: [linha.edital, linha.unidade].map(txt).filter(Boolean).join(" · ") ||
+      label:
+        [linha.edital, linha.unidade].map(txt).filter(Boolean).join(" · ") ||
         String(linha.id),
     }));
 }

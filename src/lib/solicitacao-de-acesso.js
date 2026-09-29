@@ -44,7 +44,12 @@ export function validarSolicitacao({ nome, justificativa }) {
   return erros;
 }
 
-export function argumentosDaSolicitacao({ nome, setor, justificativa, coordenacao }) {
+export function argumentosDaSolicitacao({
+  nome,
+  setor,
+  justificativa,
+  coordenacao,
+}) {
   return {
     p_nome: txt(nome),
     p_setor: txt(setor) || null,

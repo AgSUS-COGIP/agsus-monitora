@@ -173,7 +173,8 @@ export function permissaoLegada(profile, perm) {
   }
   const role = normalizeRole(profile);
   if (role) {
-    if (["ind", "analises", "cores", "paineis"].includes(perm)) return canViewCore(profile);
+    if (["ind", "analises", "cores", "paineis"].includes(perm))
+      return canViewCore(profile);
     if (["config", "admin"].includes(perm)) return canManageSettings(profile);
   }
   return profile["p_" + perm] === true;

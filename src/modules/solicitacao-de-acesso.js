@@ -31,7 +31,10 @@ const CAMPOS = [
 export async function garantirAcessoBasico(sb) {
   const { data, error } = await sb.rpc(RPC_ACESSO_BASICO);
   if (error) {
-    console.warn("Acesso básico automático indisponível:", error.message || error);
+    console.warn(
+      "Acesso básico automático indisponível:",
+      error.message || error,
+    );
     return false;
   }
   return data?.criado === true;

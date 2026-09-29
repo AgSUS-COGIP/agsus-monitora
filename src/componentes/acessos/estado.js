@@ -126,7 +126,8 @@ export function criarEstadoDosAcessos({
     }
   }
 
-  const mensagemDoErro = (erro) => erro?.message || "Tente de novo em instantes.";
+  const mensagemDoErro = (erro) =>
+    erro?.message || "Tente de novo em instantes.";
 
   // ── Matriz ──────────────────────────────────────────────────────────────────
 
@@ -138,7 +139,12 @@ export function criarEstadoDosAcessos({
       filtroGrupo: mudancas.filtroGrupo ?? estado.filtroGrupo,
     };
     const geracao = estado.geracao;
-    publicar({ ...alvo, status: estado.matriz ? "ready" : "loading", erro: "", erroCodigo: "" });
+    publicar({
+      ...alvo,
+      status: estado.matriz ? "ready" : "loading",
+      erro: "",
+      erroCodigo: "",
+    });
     try {
       const matriz = await rpc(RPC_MATRIZ, {
         p_busca: alvo.busca,
@@ -152,14 +158,21 @@ export function criarEstadoDosAcessos({
     } catch (erro) {
       if (geracao !== estado.geracao) return null;
       console.error("Erro ao carregar os acessos:", erro);
-      publicar({ status: "error", erro: mensagemDoErro(erro), erroCodigo: erro?.code || "" });
+      publicar({
+        status: "error",
+        erro: mensagemDoErro(erro),
+        erroCodigo: erro?.code || "",
+      });
       return null;
     }
   }
 
   function registrar(usuario, alvo, valor) {
     try {
-      publicar({ rascunho: registrarNoRascunho(estado.rascunho, usuario, alvo, valor), aviso: null });
+      publicar({
+        rascunho: registrarNoRascunho(estado.rascunho, usuario, alvo, valor),
+        aviso: null,
+      });
     } catch (erro) {
       toast(mensagemDoErro(erro), "error");
     }
@@ -178,13 +191,19 @@ export function criarEstadoDosAcessos({
         });
         const total = resultado?.alteradas ?? alteracoes.length;
         publicar({ rascunho: new Map(), aviso: null });
-        toast(`${total} ${total === 1 ? "alteração salva" : "alterações salvas"}. Vale na próxima vez que a pessoa abrir o sistema.`, "success");
+        toast(
+          `${total} ${total === 1 ? "alteração salva" : "alterações salvas"}. Vale na próxima vez que a pessoa abrir o sistema.`,
+          "success",
+        );
         await carregarMatriz();
         return true;
       } catch (erro) {
         if (erro?.code === CONFLITO) {
           const matriz = await carregarMatriz();
-          const { rascunho, conflitos } = rebasearRascunho(estado.rascunho, matriz?.usuarios || []);
+          const { rascunho, conflitos } = rebasearRascunho(
+            estado.rascunho,
+            matriz?.usuarios || [],
+          );
           publicar({
             rascunho,
             aviso: {
@@ -197,7 +216,10 @@ export function criarEstadoDosAcessos({
           return false;
         }
         publicar({
-          aviso: { tom: "danger", texto: `Não foi possível salvar: ${mensagemDoErro(erro)} As alterações continuam pendentes.` },
+          aviso: {
+            tom: "danger",
+            texto: `Não foi possível salvar: ${mensagemDoErro(erro)} As alterações continuam pendentes.`,
+          },
         });
         return false;
       }
@@ -207,8 +229,14 @@ export function criarEstadoDosAcessos({
   function desativarUsuario(usuario, motivo) {
     return executar(`desativar:${usuario.id}`, "Desativando…", async () => {
       try {
-        await rpc(RPC_DESATIVAR_USUARIO, { p_perfil_usuario_id: usuario.id, p_motivo: motivo });
-        toast(`Acesso de ${usuario.nome || usuario.email} desativado.`, "success");
+        await rpc(RPC_DESATIVAR_USUARIO, {
+          p_perfil_usuario_id: usuario.id,
+          p_motivo: motivo,
+        });
+        toast(
+          `Acesso de ${usuario.nome || usuario.email} desativado.`,
+          "success",
+        );
         publicar({ gaveta: null });
         await carregarMatriz();
         return true;
@@ -230,7 +258,12 @@ export function criarEstadoDosAcessos({
           p_areas: areas?.length ? areas : null,
           p_motivo: motivo,
         });
-        toast(resposta?.reativada ? `Acesso de ${nome} reativado.` : `${nome} tem acesso a partir de agora (entra com ${email}).`, "success");
+        toast(
+          resposta?.reativada
+            ? `Acesso de ${nome} reativado.`
+            : `${nome} tem acesso a partir de agora (entra com ${email}).`,
+          "success",
+        );
         publicar({ adicionando: 0 });
         await carregarMatriz();
         return true;
@@ -249,7 +282,10 @@ export function criarEstadoDosAcessos({
           p_area: area,
           p_motivo: motivo,
         });
-        toast(`"${coordenacao?.nome || usuario.nome}" agora está em Coordenações; a conta foi desativada.`, "success");
+        toast(
+          `"${coordenacao?.nome || usuario.nome}" agora está em Coordenações; a conta foi desativada.`,
+          "success",
+        );
         publicar({ gaveta: null });
         await carregarMatriz();
         return true;
@@ -264,11 +300,17 @@ export function criarEstadoDosAcessos({
 
   async function carregarSolicitacoes() {
     const geracao = estado.geracao;
-    publicar({ statusDasSolicitacoes: estado.statusDasSolicitacoes === "ready" ? "ready" : "loading" });
+    publicar({
+      statusDasSolicitacoes:
+        estado.statusDasSolicitacoes === "ready" ? "ready" : "loading",
+    });
     try {
       const lista = await rpc(RPC_SOLICITACOES, { p_status: "pendente" });
       if (geracao !== estado.geracao) return;
-      publicar({ solicitacoes: Array.isArray(lista) ? lista : [], statusDasSolicitacoes: "ready" });
+      publicar({
+        solicitacoes: Array.isArray(lista) ? lista : [],
+        statusDasSolicitacoes: "ready",
+      });
     } catch (erro) {
       if (geracao !== estado.geracao) return;
       console.error("Erro ao carregar solicitações de acesso:", erro);
@@ -286,7 +328,10 @@ export function criarEstadoDosAcessos({
           p_areas: areas?.length ? areas : null,
           p_observacao_admin: observacao || null,
         });
-        toast(`Acesso de ${solicitacao.nome || solicitacao.email} aprovado.`, "success");
+        toast(
+          `Acesso de ${solicitacao.nome || solicitacao.email} aprovado.`,
+          "success",
+        );
         await Promise.all([carregarSolicitacoes(), carregarMatriz()]);
         return true;
       } catch (erro) {
@@ -299,8 +344,14 @@ export function criarEstadoDosAcessos({
   function recusar(solicitacao, observacao) {
     return executar(`recusar:${solicitacao.id}`, "Recusando…", async () => {
       try {
-        await rpc(RPC_RECUSAR, { p_solicitacao_id: solicitacao.id, p_observacao_admin: observacao || null });
-        toast(`Solicitação de ${solicitacao.nome || solicitacao.email} recusada.`, "success");
+        await rpc(RPC_RECUSAR, {
+          p_solicitacao_id: solicitacao.id,
+          p_observacao_admin: observacao || null,
+        });
+        toast(
+          `Solicitação de ${solicitacao.nome || solicitacao.email} recusada.`,
+          "success",
+        );
         await carregarSolicitacoes();
         return true;
       } catch (erro) {
@@ -332,41 +383,75 @@ export function criarEstadoDosAcessos({
   }
 
   const salvarGrupo = (grupo, motivo) =>
-    gravar("grupo", "Salvando…", RPC_SALVAR_GRUPO, { p_grupo: grupo, p_motivo: motivo }, `Grupo "${grupo.nome}" salvo.`);
+    gravar(
+      "grupo",
+      "Salvando…",
+      RPC_SALVAR_GRUPO,
+      { p_grupo: grupo, p_motivo: motivo },
+      `Grupo "${grupo.nome}" salvo.`,
+    );
   const removerGrupo = (grupo, motivo) =>
-    gravar("remover-grupo", "Excluindo…", RPC_REMOVER_GRUPO, { p_codigo: grupo.codigo, p_motivo: motivo }, `Grupo "${grupo.nome}" excluído.`);
+    gravar(
+      "remover-grupo",
+      "Excluindo…",
+      RPC_REMOVER_GRUPO,
+      { p_codigo: grupo.codigo, p_motivo: motivo },
+      `Grupo "${grupo.nome}" excluído.`,
+    );
   const salvarCoordenacao = (coordenacao, motivo) =>
-    gravar("coordenacao", "Salvando…", RPC_SALVAR_COORDENACAO, { p_coordenacao: coordenacao, p_motivo: motivo }, `Coordenação "${coordenacao.nome}" salva.`);
+    gravar(
+      "coordenacao",
+      "Salvando…",
+      RPC_SALVAR_COORDENACAO,
+      { p_coordenacao: coordenacao, p_motivo: motivo },
+      `Coordenação "${coordenacao.nome}" salva.`,
+    );
   const desativarCoordenacao = (coordenacao, motivo) =>
-    gravar("desativar-coordenacao", "Desativando…", RPC_DESATIVAR_COORDENACAO, { p_codigo: coordenacao.codigo, p_motivo: motivo }, `Coordenação "${coordenacao.nome}" desativada.`);
+    gravar(
+      "desativar-coordenacao",
+      "Desativando…",
+      RPC_DESATIVAR_COORDENACAO,
+      { p_codigo: coordenacao.codigo, p_motivo: motivo },
+      `Coordenação "${coordenacao.nome}" desativada.`,
+    );
 
   function lerUnidadesPorArea() {
     if (!unidadesPorArea)
       unidadesPorArea = rpc(RPC_UNIDADES_POR_AREA)
         .then((dados) => (Array.isArray(dados) ? dados : []))
         .catch((erro) => {
-          console.warn("Unidades por área indisponíveis:", erro?.message || erro);
+          console.warn(
+            "Unidades por área indisponíveis:",
+            erro?.message || erro,
+          );
           unidadesPorArea = null;
           return [];
         });
     return unidadesPorArea;
   }
 
-  const lerContextoDoUsuario = (id) => rpc(RPC_CONTEXTO_DE_USUARIO, { p_perfil_usuario_id: id });
+  const lerContextoDoUsuario = (id) =>
+    rpc(RPC_CONTEXTO_DE_USUARIO, { p_perfil_usuario_id: id });
 
   // ── Sessão ────────────────────────────────────────────────────────────────
 
   function reiniciarSessao() {
     unidadesPorArea = null;
-    publicar({ ...ESTADO_INICIAL, rascunho: new Map(), geracao: estado.geracao + 1 });
+    publicar({
+      ...ESTADO_INICIAL,
+      rascunho: new Map(),
+      geracao: estado.geracao + 1,
+    });
   }
 
-  const assinaturaDoAuth = supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
-    const atual = sessao?.user?.id || null;
-    if (atual === identidade) return;
-    if (identidade !== undefined || !atual) reiniciarSessao();
-    identidade = atual;
-  });
+  const assinaturaDoAuth = supabase?.auth?.onAuthStateChange?.(
+    (_evento, sessao) => {
+      const atual = sessao?.user?.id || null;
+      if (atual === identidade) return;
+      if (identidade !== undefined || !atual) reiniciarSessao();
+      identidade = atual;
+    },
+  );
 
   return {
     assinar(ouvinte) {
@@ -380,8 +465,12 @@ export function criarEstadoDosAcessos({
     garantirCarregado() {
       publicar({ perfil: getProfile() || null });
       const tarefas = [];
-      if (estado.status === "idle" || estado.status === "error") tarefas.push(carregarMatriz());
-      if (estado.statusDasSolicitacoes === "idle" || estado.statusDasSolicitacoes === "error")
+      if (estado.status === "idle" || estado.status === "error")
+        tarefas.push(carregarMatriz());
+      if (
+        estado.statusDasSolicitacoes === "idle" ||
+        estado.statusDasSolicitacoes === "error"
+      )
         tarefas.push(carregarSolicitacoes());
       return Promise.all(tarefas);
     },

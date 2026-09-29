@@ -9,7 +9,11 @@ import {
   resumoDaCoordenacao,
   validarCoordenacao,
 } from "../../lib/grupos-e-coordenacoes.js";
-import { assinarDadosDoMonitoramento, linhasDaArea, obterDadosDoMonitoramento } from "../dados-do-monitoramento.js";
+import {
+  assinarDadosDoMonitoramento,
+  linhasDaArea,
+  obterDadosDoMonitoramento,
+} from "../dados-do-monitoramento.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import { Icone } from "../icone.jsx";
 import { BotaoDeAcao } from "../lista-aprovados/partes.jsx";
@@ -26,24 +30,45 @@ import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";
 const NOVA = "__nova__";
 const mesmo = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar }) {
-  const dados = useSyncExternalStore(assinarDadosDoMonitoramento, obterDadosDoMonitoramento);
-  const inicial = coordenacao ? lerCoordenacao(coordenacao) : coordenacaoVazia(areas[0]?.id || "");
+function Editor({
+  estado,
+  coordenacao,
+  existentes,
+  areas,
+  aoSalvar,
+  aoAlterar,
+}) {
+  const dados = useSyncExternalStore(
+    assinarDadosDoMonitoramento,
+    obterDadosDoMonitoramento,
+  );
+  const inicial = coordenacao
+    ? lerCoordenacao(coordenacao)
+    : coordenacaoVazia(areas[0]?.id || "");
   const [rascunho, setRascunho] = useState(inicial);
   const [motivo, setMotivo] = useState("");
   const [tentou, setTentou] = useState(false);
   const [unidadesPorArea, setUnidadesPorArea] = useState([]);
   useEffect(() => {
     let vivo = true;
-    void estado.lerUnidadesPorArea().then((lista) => vivo && setUnidadesPorArea(lista));
+    void estado
+      .lerUnidadesPorArea()
+      .then((lista) => vivo && setUnidadesPorArea(lista));
     return () => {
       vivo = false;
     };
   }, [estado]);
 
   const unidadesDe = (area, responsavel) =>
-    opcoesDeUnidadesDaCoordenacao({ area, responsavel, catalogo: dados.unidades, linhas: dados.linhas, unidadesPorArea });
-  const editaisDe = (area) => opcoesDeEditaisDaCoordenacao(linhasDaArea(dados.linhas, area));
+    opcoesDeUnidadesDaCoordenacao({
+      area,
+      responsavel,
+      catalogo: dados.unidades,
+      linhas: dados.linhas,
+      unidadesPorArea,
+    });
+  const editaisDe = (area) =>
+    opcoesDeEditaisDaCoordenacao(linhasDaArea(dados.linhas, area));
   const opcoesDeUnidades = unidadesDe(rascunho.area, rascunho.responsavel);
   const opcoesDeEditais = editaisDe(rascunho.area);
 
@@ -58,7 +83,9 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
   function mudar(campo, valor) {
     const proximo = { ...rascunho, [campo]: valor };
     if (campo === "area" || campo === "responsavel") {
-      const unidades = new Set(unidadesDe(proximo.area, proximo.responsavel).map((o) => o.value));
+      const unidades = new Set(
+        unidadesDe(proximo.area, proximo.responsavel).map((o) => o.value),
+      );
       proximo.unidades = proximo.unidades.filter((u) => unidades.has(u));
     }
     if (campo === "area") {
@@ -72,13 +99,20 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
     evento.preventDefault();
     setTentou(true);
     if (Object.keys(erros).length || !motivoValido(motivo)) return;
-    const resposta = await estado.salvarCoordenacao(coordenacaoParaSalvar(rascunho), motivo.trim());
-    if (resposta) aoSalvar(resposta.codigo || coordenacaoParaSalvar(rascunho).codigo);
+    const resposta = await estado.salvarCoordenacao(
+      coordenacaoParaSalvar(rascunho),
+      motivo.trim(),
+    );
+    if (resposta)
+      aoSalvar(resposta.codigo || coordenacaoParaSalvar(rascunho).codigo);
   }
 
   function desativar() {
-    const motivoDaDesativacao = window.prompt(`Desativar a coordenação "${coordenacao.nome}"? Informe o motivo:`);
-    if (motivoValido(motivoDaDesativacao)) void estado.desativarCoordenacao(coordenacao, motivoDaDesativacao.trim());
+    const motivoDaDesativacao = window.prompt(
+      `Desativar a coordenação "${coordenacao.nome}"? Informe o motivo:`,
+    );
+    if (motivoValido(motivoDaDesativacao))
+      void estado.desativarCoordenacao(coordenacao, motivoDaDesativacao.trim());
   }
 
   const erro = (campo) =>
@@ -89,7 +123,12 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
     ) : null;
 
   return (
-    <form className="acessos-detalhe" onSubmit={salvar} noValidate aria-label={nova ? "Nova coordenação" : `Coordenação ${coordenacao.nome}`}>
+    <form
+      className="acessos-detalhe"
+      onSubmit={salvar}
+      noValidate
+      aria-label={nova ? "Nova coordenação" : `Coordenação ${coordenacao.nome}`}
+    >
       <header className="acessos-detalhe-cabecalho">
         <div className="acessos-campo">
           <label htmlFor="acessosCoordNome">Nome da coordenação</label>
@@ -104,19 +143,26 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
         </div>
         {!nova ? (
           <p className="acessos-secundario">
-            {coordenacao.usuarios || 0} {coordenacao.usuarios === 1 ? "pessoa" : "pessoas"} · {coordenacao.ativo ? "Ativa" : "Desativada"}
+            {coordenacao.usuarios || 0}{" "}
+            {coordenacao.usuarios === 1 ? "pessoa" : "pessoas"} ·{" "}
+            {coordenacao.ativo ? "Ativa" : "Desativada"}
           </p>
         ) : null}
       </header>
 
       <h4>Recorte</h4>
       <p className="acessos-secundario">
-        Vê: <strong>{resumoDaCoordenacao(rascunho)}</strong>. Sem responsável, unidades nem editais, a coordenação vê a área inteira.
+        Vê: <strong>{resumoDaCoordenacao(rascunho)}</strong>. Sem responsável,
+        unidades nem editais, a coordenação vê a área inteira.
       </p>
       <div className="acessos-grade-campos">
         <div className="acessos-campo">
           <label htmlFor="acessosCoordArea">Área</label>
-          <select id="acessosCoordArea" value={rascunho.area} onChange={(e) => mudar("area", e.target.value)}>
+          <select
+            id="acessosCoordArea"
+            value={rascunho.area}
+            onChange={(e) => mudar("area", e.target.value)}
+          >
             {areas.map((area) => (
               <option key={area.id} value={area.id}>
                 {area.titulo}
@@ -127,7 +173,11 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
         </div>
         <div className="acessos-campo">
           <label htmlFor="acessosCoordResponsavel">Responsável do edital</label>
-          <select id="acessosCoordResponsavel" value={rascunho.responsavel} onChange={(e) => mudar("responsavel", e.target.value)}>
+          <select
+            id="acessosCoordResponsavel"
+            value={rascunho.responsavel}
+            onChange={(e) => mudar("responsavel", e.target.value)}
+          >
             <option value="">Qualquer um</option>
             {RESPONSAVEIS_DE_EDITAL.map((r) => (
               <option key={r} value={r}>
@@ -149,7 +199,8 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
       </div>
       <div className="acessos-campo">
         <label htmlFor="acessosCoordEditais">
-          Editais atribuídos <span className="acessos-secundario">(além da regra)</span>
+          Editais atribuídos{" "}
+          <span className="acessos-secundario">(além da regra)</span>
         </label>
         <MultiSelectBusca
           id="acessosCoordEditais"
@@ -161,7 +212,14 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
       </div>
 
       <footer className="acessos-detalhe-rodape">
-        {alterado || nova ? <CampoMotivo id="acessosCoordMotivo" valor={motivo} aoMudar={setMotivo} erro={tentou && !motivoValido(motivo)} /> : null}
+        {alterado || nova ? (
+          <CampoMotivo
+            id="acessosCoordMotivo"
+            valor={motivo}
+            aoMudar={setMotivo}
+            erro={tentou && !motivoValido(motivo)}
+          />
+        ) : null}
         <div className="acessos-acoes">
           {!nova && coordenacao.ativo ? (
             <BotaoDeAcao
@@ -169,7 +227,11 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
               acao="desativar-coordenacao"
               className="btn outline acessos-ghost acessos-perigo"
               disabled={Boolean(coordenacao.usuarios)}
-              title={coordenacao.usuarios ? "Há pessoas nesta coordenação: mude-as de coordenação antes." : undefined}
+              title={
+                coordenacao.usuarios
+                  ? "Há pessoas nesta coordenação: mude-as de coordenação antes."
+                  : undefined
+              }
               onClick={desativar}
             >
               Desativar coordenação
@@ -177,11 +239,21 @@ function Editor({ estado, coordenacao, existentes, areas, aoSalvar, aoAlterar })
           ) : null}
           <span className="acessos-espaco" />
           {alterado ? (
-            <button type="button" className="btn outline acessos-ghost" onClick={() => (setRascunho(inicial), setTentou(false))}>
+            <button
+              type="button"
+              className="btn outline acessos-ghost"
+              onClick={() => (setRascunho(inicial), setTentou(false))}
+            >
               Descartar
             </button>
           ) : null}
-          <BotaoDeAcao estado={estado} acao="coordenacao" type="submit" className="btn primary" disabled={!alterado && !nova}>
+          <BotaoDeAcao
+            estado={estado}
+            acao="coordenacao"
+            type="submit"
+            className="btn primary"
+            disabled={!alterado && !nova}
+          >
             {nova ? "Criar coordenação" : "Salvar coordenação"}
           </BotaoDeAcao>
         </div>
@@ -199,14 +271,23 @@ export function AbaCoordenacoes({ estado }) {
   const alterado = useRef(false);
   const aoAlterar = useRef((valor) => (alterado.current = valor)).current;
   const escolher = (codigo) => {
-    if (alterado.current && !estado.confirmar("Descartar as alterações desta coordenação?")) return;
+    if (
+      alterado.current &&
+      !estado.confirmar("Descartar as alterações desta coordenação?")
+    )
+      return;
     alterado.current = false;
     setSelecionada(codigo);
   };
   const escolhida = selecionada ?? coordenacoes[0]?.codigo ?? NOVA;
   const coordenacao = coordenacoes.find((c) => c.codigo === escolhida) || null;
 
-  if (!atual.matriz) return <p aria-busy="true"><span className="esqueleto" /></p>;
+  if (!atual.matriz)
+    return (
+      <p aria-busy="true">
+        <span className="esqueleto" />
+      </p>
+    );
 
   return (
     <section className="acessos-mestre-detalhe" aria-label="Coordenações">
@@ -228,7 +309,10 @@ export function AbaCoordenacoes({ estado }) {
         coordenacao={escolhida === NOVA ? null : coordenacao}
         existentes={coordenacoes}
         areas={areas}
-        aoSalvar={(codigo) => ((alterado.current = false), setSelecionada(codigo))}
+        aoSalvar={(codigo) => (
+          (alterado.current = false),
+          setSelecionada(codigo)
+        )}
         aoAlterar={aoAlterar}
       />
     </section>

@@ -256,7 +256,9 @@ export function abrirSecaoDeConfiguracao(documento, secao) {
   if (secao === "acessos") void acessos?.render();
   // As prévias de config-apresentacao.js redesenham com o que o legado acabou de preencher.
   const Evento = documento.defaultView?.CustomEvent || globalThis.CustomEvent;
-  documento.dispatchEvent(new Evento("agsus:secao-de-configuracao-aberta", { detail: { secao } }));
+  documento.dispatchEvent(
+    new Evento("agsus:secao-de-configuracao-aberta", { detail: { secao } }),
+  );
   return true;
 }
 

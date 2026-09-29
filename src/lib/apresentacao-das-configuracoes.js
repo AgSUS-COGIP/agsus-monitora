@@ -28,7 +28,12 @@ export const GRUPOS_POR_SECAO = Object.freeze({
       descricao: "Quem mantém o sistema; aparece no pé da barra lateral.",
       icone: "users",
       tom: "petroleo",
-      campos: ["cfgCogipNome", "cfgCogipFuncao", "cfgCogipDept", "cfgCogipLogo"],
+      campos: [
+        "cfgCogipNome",
+        "cfgCogipFuncao",
+        "cfgCogipDept",
+        "cfgCogipLogo",
+      ],
     },
     {
       id: "rodape",
@@ -62,7 +67,12 @@ export const GRUPOS_POR_SECAO = Object.freeze({
       descricao: "Textos do painel de filtros do mapa e da tabela.",
       icone: "list-filter",
       tom: "petroleo",
-      campos: ["cfgFilterTitle", "cfgFilterSubtitle", "cfgFilterToggleShow", "cfgFilterToggleHide"],
+      campos: [
+        "cfgFilterTitle",
+        "cfgFilterSubtitle",
+        "cfgFilterToggleShow",
+        "cfgFilterToggleHide",
+      ],
     },
     {
       id: "indicadores",
@@ -70,7 +80,14 @@ export const GRUPOS_POR_SECAO = Object.freeze({
       descricao: "Rótulo de cada número do topo da página inicial.",
       icone: "gauge",
       tom: "sucesso",
-      campos: ["cfgKpiProcessos", "cfgKpiVagas", "cfgKpiContratados", "cfgKpiOciosas", "cfgKpiCriticos", "cfgKpiInscritos"],
+      campos: [
+        "cfgKpiProcessos",
+        "cfgKpiVagas",
+        "cfgKpiContratados",
+        "cfgKpiOciosas",
+        "cfgKpiCriticos",
+        "cfgKpiInscritos",
+      ],
     },
   ],
   acesso: [
@@ -80,7 +97,12 @@ export const GRUPOS_POR_SECAO = Object.freeze({
       descricao: "O que a pessoa lê no cartão de entrada.",
       icone: "log-in",
       tom: "azul",
-      campos: ["cfgLoginEyebrow", "cfgAccessGreeting", "cfgAccessInstruction", "cfgSubtitle"],
+      campos: [
+        "cfgLoginEyebrow",
+        "cfgAccessGreeting",
+        "cfgAccessInstruction",
+        "cfgSubtitle",
+      ],
     },
     {
       id: "google",
@@ -88,7 +110,11 @@ export const GRUPOS_POR_SECAO = Object.freeze({
       descricao: "O botão de entrada com a conta institucional.",
       icone: "globe",
       tom: "petroleo",
-      campos: ["cfgGoogleEnabled", "cfgGoogleButtonText", "cfgGoogleDomainHint"],
+      campos: [
+        "cfgGoogleEnabled",
+        "cfgGoogleButtonText",
+        "cfgGoogleDomainHint",
+      ],
     },
     {
       id: "dominios",
@@ -118,19 +144,23 @@ export const GRUPOS_POR_SECAO = Object.freeze({
 
 /** Dica de ajuda por campo (tooltip do ícone "?", design.md 11.10). */
 export const DICAS_DOS_CAMPOS = Object.freeze({
-  cfgCogipNome: "Nome da equipe que mantém o sistema. Aparece no pé da barra lateral.",
-  cfgCogipFuncao: "Linha curta abaixo do nome da equipe, como a área ou a função.",
+  cfgCogipNome:
+    "Nome da equipe que mantém o sistema. Aparece no pé da barra lateral.",
+  cfgCogipFuncao:
+    "Linha curta abaixo do nome da equipe, como a área ou a função.",
   cfgCogipDept: "Texto institucional exibido junto da equipe.",
   cfgCogipLogo:
     "Endereço de uma imagem (PNG, JPG, WEBP ou SVG): https:// ou um caminho do próprio site, como /assets/logo.png.",
   cfgFooter: "Texto no pé das páginas, como créditos.",
   cfgPageTitle: "Título grande da página inicial.",
   cfgPageSubtitle: "Linha logo abaixo do título da página inicial.",
-  cfgBroadcastType: "Informação (azul), Alerta (amarelo) ou Crítico (vermelho): a cor da faixa de aviso.",
+  cfgBroadcastType:
+    "Informação (azul), Alerta (amarelo) ou Crítico (vermelho): a cor da faixa de aviso.",
   cfgBroadcastMsg: "Deixe em branco para não mostrar aviso.",
   cfgFilterToggleShow: "Texto do botão que abre o painel de filtros.",
   cfgFilterToggleHide: "Texto do mesmo botão quando os filtros estão abertos.",
-  cfgKpiProcessos: "Os seis rótulos seguem a ordem dos indicadores na página inicial.",
+  cfgKpiProcessos:
+    "Os seis rótulos seguem a ordem dos indicadores na página inicial.",
   cfgAccessGreeting: "Título grande do cartão de entrada.",
   cfgAccessInstruction: "Frase curta abaixo da saudação, dizendo como entrar.",
   cfgGoogleEnabled: "Desligado, o botão do Google some da tela de entrada.",
@@ -164,7 +194,9 @@ export function urlDeImagem(valor) {
   if (/^\/(?!\/)/.test(bruto)) return bruto;
   try {
     const url = new URL(bruto);
-    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : "";
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : "";
   } catch {
     return "";
   }
@@ -191,7 +223,13 @@ export function situacaoDoPainel({ ativo, manutencao, url }) {
 }
 
 export function resumoDosPaineis(paineis = []) {
-  const resumo = { total: paineis.length, ativo: 0, manutencao: 0, inativo: 0, semUrl: 0 };
+  const resumo = {
+    total: paineis.length,
+    ativo: 0,
+    manutencao: 0,
+    inativo: 0,
+    semUrl: 0,
+  };
   for (const painel of paineis) resumo[situacaoDoPainel(painel)] += 1;
   return resumo;
 }

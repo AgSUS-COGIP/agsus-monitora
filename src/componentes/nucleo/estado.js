@@ -10,7 +10,10 @@
   estiver a caminho.
 */
 
-import { canMoveEditalBetweenAreas, canManageEditais } from "../../lib/access-roles.js";
+import {
+  canMoveEditalBetweenAreas,
+  canManageEditais,
+} from "../../lib/access-roles.js";
 import { exigirSessao } from "../../lib/sessao.js";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.js";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.js";

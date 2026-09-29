@@ -51,12 +51,14 @@ export const CONTRATO_RPC = {
   listar_solicitacoes_acesso: {
     argumentos: ["p_status"],
     critica: true,
-    resumo: "Solicitações de acesso: todas (admin) ou da coordenação (coordenador).",
+    resumo:
+      "Solicitações de acesso: todas (admin) ou da coordenação (coordenador).",
   },
   salvar_grupo_acesso: {
     argumentos: ["p_grupo", "p_motivo"],
     critica: false,
-    resumo: "Cria ou edita um grupo de permissões (níveis por módulo). Só admin global.",
+    resumo:
+      "Cria ou edita um grupo de permissões (níveis por módulo). Só admin global.",
   },
   remover_grupo_acesso: {
     argumentos: ["p_codigo", "p_motivo"],
@@ -66,7 +68,8 @@ export const CONTRATO_RPC = {
   salvar_coordenacao: {
     argumentos: ["p_coordenacao", "p_motivo"],
     critica: false,
-    resumo: "Cria ou edita coordenação (área, responsável, unidades, editais). Só admin global.",
+    resumo:
+      "Cria ou edita coordenação (área, responsável, unidades, editais). Só admin global.",
   },
   desativar_coordenacao: {
     argumentos: ["p_codigo", "p_motivo"],
@@ -76,12 +79,13 @@ export const CONTRATO_RPC = {
   obter_contexto_de_usuario: {
     argumentos: ["p_perfil_usuario_id"],
     critica: false,
-    resumo: "\"Ver como\": contexto de acesso de outra pessoa, só leitura.",
+    resumo: '"Ver como": contexto de acesso de outra pessoa, só leitura.',
   },
   listar_coordenacoes_ativas: {
     argumentos: [],
     critica: false,
-    resumo: "Coordenações para escolher ao pedir acesso (autenticado, mesmo sem perfil).",
+    resumo:
+      "Coordenações para escolher ao pedir acesso (autenticado, mesmo sem perfil).",
   },
   registrar_solicitacao_acesso: {
     argumentos: ["p_nome", "p_setor", "p_justificativa", "p_coordenacao"],
@@ -89,19 +93,29 @@ export const CONTRATO_RPC = {
     resumo: "Registra a solicitação de acesso de quem está autenticado.",
   },
   adicionar_pessoa_acesso: {
-    argumentos: ["p_email", "p_nome", "p_grupo", "p_coordenacao", "p_areas", "p_motivo"],
+    argumentos: [
+      "p_email",
+      "p_nome",
+      "p_grupo",
+      "p_coordenacao",
+      "p_areas",
+      "p_motivo",
+    ],
     critica: false,
-    resumo: "Cadastra uma pessoa pelo e-mail (entra sem pedir), com grupo e coordenação ou áreas.",
+    resumo:
+      "Cadastra uma pessoa pelo e-mail (entra sem pedir), com grupo e coordenação ou áreas.",
   },
   mover_conta_para_coordenacoes: {
     argumentos: ["p_perfil_usuario_id", "p_area", "p_motivo"],
     critica: false,
-    resumo: "Conta que é uma coordenação vira coordenação e é desativada. Só admin global.",
+    resumo:
+      "Conta que é uma coordenação vira coordenação e é desativada. Só admin global.",
   },
   garantir_acesso_basico: {
     argumentos: [],
     critica: false,
-    resumo: "Cria o acesso básico (grupo usuario) para conta @agenciasus.org.br sem perfil.",
+    resumo:
+      "Cria o acesso básico (grupo usuario) para conta @agenciasus.org.br sem perfil.",
   },
   obter_minha_solicitacao_acesso: {
     argumentos: [],

@@ -1,4 +1,10 @@
-import { StrictMode, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  StrictMode,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createRoot } from "react-dom/client";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { abasDeAcessos } from "../../lib/teto-de-acessos.js";
@@ -33,7 +39,11 @@ function Abas({ abas, ativa, aoEscolher, contagens }) {
     botoes.current[proximo]?.focus();
   }
   return (
-    <div className="approved-tabs acessos-abas" role="tablist" aria-label="Acessos">
+    <div
+      className="approved-tabs acessos-abas"
+      role="tablist"
+      aria-label="Acessos"
+    >
       {abas.map((aba, indice) => (
         <button
           key={aba.id}
@@ -49,7 +59,9 @@ function Abas({ abas, ativa, aoEscolher, contagens }) {
           onKeyDown={(evento) => aoTeclar(evento, indice)}
         >
           {aba.rotulo}
-          {contagens[aba.id] ? <span className="acessos-contador">{contagens[aba.id]}</span> : null}
+          {contagens[aba.id] ? (
+            <span className="acessos-contador">{contagens[aba.id]}</span>
+          ) : null}
         </button>
       ))}
     </div>
@@ -78,7 +90,11 @@ function ErroDaCarga({ estado, codigo, mensagem }) {
         </p>
         {codigo ? <small>Código: {codigo}</small> : null}
       </div>
-      <button type="button" className="btn secondary" onClick={() => void estado.carregarMatriz()}>
+      <button
+        type="button"
+        className="btn secondary"
+        onClick={() => void estado.carregarMatriz()}
+      >
         Tentar novamente
       </button>
     </div>
@@ -117,7 +133,13 @@ export function Acessos({ estado, secoesDeConfiguracao = [] }) {
 
   // Sem a primeira carga não há o que mostrar em nenhuma aba: o erro fica no lugar delas.
   if (atual.status === "error" && !atual.matriz)
-    return <ErroDaCarga estado={estado} codigo={atual.erroCodigo} mensagem={atual.erro} />;
+    return (
+      <ErroDaCarga
+        estado={estado}
+        codigo={atual.erroCodigo}
+        mensagem={atual.erro}
+      />
+    );
 
   const verPessoasDoGrupo = (codigo) => {
     setAtiva("usuarios");
@@ -133,10 +155,17 @@ export function Acessos({ estado, secoesDeConfiguracao = [] }) {
         contagens={{ usuarios: atual.solicitacoes.length || "" }}
       />
       {painel("usuarios", <AbaUsuarios estado={estado} />)}
-      {painel("grupos", <AbaGrupos estado={estado} aoVerPessoas={verPessoasDoGrupo} />)}
+      {painel(
+        "grupos",
+        <AbaGrupos estado={estado} aoVerPessoas={verPessoasDoGrupo} />,
+      )}
       {painel("coordenacoes", <AbaCoordenacoes estado={estado} />)}
       {atual.gaveta ? (
-        <GavetaDoUsuario key={atual.gaveta.abertura} estado={estado} secoesDeConfiguracao={secoesDeConfiguracao} />
+        <GavetaDoUsuario
+          key={atual.gaveta.abertura}
+          estado={estado}
+          secoesDeConfiguracao={secoesDeConfiguracao}
+        />
       ) : null}
     </div>
   );
@@ -150,7 +179,12 @@ export function montarAcessos({
   confirmar,
   secoesDeConfiguracao = [],
 } = {}) {
-  const estado = criarEstadoDosAcessos({ supabase, toast, getProfile, confirmar });
+  const estado = criarEstadoDosAcessos({
+    supabase,
+    toast,
+    getProfile,
+    confirmar,
+  });
   let raiz = null;
   if (raizDaTela) {
     raiz = createRoot(raizDaTela);
