@@ -5,7 +5,7 @@ const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const main = readFileSync("src/main.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const governance = readFileSync("src/modules/config-governance.js", "utf8");
 const migration = readFileSync(
   "supabase/migrations/20260909114500_platform_assets_6mb.sql",
   "utf8",
@@ -127,15 +127,9 @@ describe("branding independente da sidebar", () => {
     expect(codigo).not.toContain("salvar_configuracoes_e_paineis");
   });
 
-  it("as chaves entram no mesmo p_config_rows do salvamento principal", () => {
+  it("as chaves entram no mesmo p_config_rows da publicação", () => {
     expect(sidebar).toContain("export function linhasDeConfiguracaoDaSidebar");
-    expect(app).toContain("linhasDeConfiguracaoDaSidebar()");
-    const chamada = app.slice(
-      app.indexOf("const linhasDeConfiguracao = ["),
-      app.indexOf("p_paineis: panelRows"),
-    );
-    expect(chamada).toContain("...configRows");
-    expect(chamada).toContain("...linhasDeConfiguracaoDaSidebar()");
+    expect(governance).toContain("...linhasDeConfiguracaoDaSidebar()");
   });
 
   it("não desreferencia o cliente quando não há ambiente", () => {
@@ -151,7 +145,7 @@ describe("branding independente da sidebar", () => {
   it("é inicializado antes do guard de Configurações", () => {
     expect(main.indexOf("initSidebarBranding();")).toBeGreaterThan(-1);
     expect(main.indexOf("initSidebarBranding();")).toBeLessThan(
-      main.indexOf("initConfigPageEnhancements();"),
+      main.indexOf("initConfigGovernance();"),
     );
   });
 });

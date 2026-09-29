@@ -80,11 +80,9 @@ import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.j
 import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
 import {
   organizarConfiguracoesEmSecoes,
-  removerNavegadorAntigo,
   SECOES,
 } from "./modules/config-secoes.js";
 import { instalarApresentacaoDasConfiguracoes } from "./modules/config-apresentacao.js";
-import { initConfigPageEnhancements } from "./modules/config-page-enhancements.js";
 import { initConfigGovernance } from "./modules/config-governance.js";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
@@ -143,9 +141,7 @@ initSidebarBranding();
 organizarConfiguracoesEmSecoes();
 // Grupos, dicas e prévias de Marca, Página inicial, Tela de acesso e Recursos.
 instalarApresentacaoDasConfiguracoes();
-initConfigPageEnhancements();
 initConfigGovernance();
-removerNavegadorAntigo();
 initMobileAppExperience();
 initMobileBottomNavigation();
 initMobileGoogleOAuth();

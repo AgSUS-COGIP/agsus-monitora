@@ -18,6 +18,7 @@ import {
   valorDoSelect,
 } from "../../lib/teto-de-acessos.js";
 import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
+import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
 import { BotaoDeAcao, LinhasEsqueleto } from "../lista-aprovados/partes.jsx";
 import { Icone } from "../icone.jsx";
 import {
@@ -183,19 +184,24 @@ function Linha({
         </td>
       ) : null}
       {MODULOS.map((modulo) => {
-        // Admin global tem tudo: texto, não um select desabilitado.
-        if (usuario.admin_global)
-          return (
-            <td key={modulo.id}>
-              <span className="acessos-nivel-fixo">Administrador</span>
-            </td>
-          );
         const celula = celulaExibida(
           usuario,
           modulo.id,
           rascunho,
           gruposPorCodigo,
         );
+        /*
+          Admin global tem tudo pelo grupo: texto, não um select desabilitado.
+          O texto é o nível real do grupo — em "Gestão de acessos" é Editor.
+        */
+        if (usuario.admin_global)
+          return (
+            <td key={modulo.id}>
+              <span className="acessos-nivel-fixo">
+                {rotuloDoNivel(celula.nivel, modulo.id)}
+              </span>
+            </td>
+          );
         return (
           <td
             key={modulo.id}

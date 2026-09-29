@@ -11,6 +11,7 @@
 */
 
 import { exigirSessao } from "../../lib/sessao.js";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import {
   alteracoesDoRascunho,
   contarPendencias,
@@ -34,6 +35,12 @@ const RPC_ADICIONAR_PESSOA = "adicionar_pessoa_acesso";
 const RPC_MOVER_PARA_COORDENACOES = "mover_conta_para_coordenacoes";
 
 const CONFLITO = "40001";
+/*
+  Uma chamada que não volta (rede caída, VPN, servidor parado) não pode deixar
+  o botão em "Salvando…" para sempre: passado o limite, ela falha como erro de
+  rede, o `executar` devolve o botão e o aviso diz o que fazer.
+*/
+const TEMPO_LIMITE_MS = 30000;
 
 const ESTADO_INICIAL = Object.freeze({
   perfil: null,
@@ -110,8 +117,10 @@ export function criarEstadoDosAcessos({
 
   async function rpc(nome, argumentos) {
     if (!supabase) throw new Error("Supabase indisponível.");
-    await exigirSessao(supabase);
-    const { data, error } = await supabase.rpc(nome, argumentos);
+    const { data, error } = await comTempoLimite(
+      exigirSessao(supabase).then(() => supabase.rpc(nome, argumentos)),
+      TEMPO_LIMITE_MS,
+    );
     if (error) throw error;
     return data;
   }
@@ -126,8 +135,9 @@ export function criarEstadoDosAcessos({
     }
   }
 
+  // "Failed to fetch" vira "Não foi possível falar com o servidor…".
   const mensagemDoErro = (erro) =>
-    erro?.message || "Tente de novo em instantes.";
+    erro ? mensagemDeFalha(erro) : "Tente de novo em instantes.";
 
   // ── Matriz ──────────────────────────────────────────────────────────────────
 

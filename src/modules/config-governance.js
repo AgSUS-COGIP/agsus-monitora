@@ -1,12 +1,35 @@
 import { isValidAccessAssetUrl } from "../lib/config-validation.js";
+import { comTempoLimite, mensagemDeFalha } from "../lib/falha-de-rede.js";
+import { sanitizeHtml } from "../lib/sanitize.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { collectPanelRows } from "./config-ui.js";
+import { anexarNaSecao } from "./config-secoes.js";
 import { linhasDeConfiguracaoDaSidebar } from "./sidebar-branding.js";
+
+/*
+  Publicação das Configurações: o único dono do "salvar" da página.
+
+  Aqui moram a barra de cabeçalho (título, indicador de alterações e resumo
+  da validação), a barra fixa "Salvar alterações" (e o Ctrl+S), o controle de
+  alterações não salvas, a validação, a revisão do que muda ("Revisar
+  publicação") com motivo obrigatório, a publicação versionada
+  (salvar_configuracoes_e_paineis_v2) e o histórico com restauração.
+
+  Antes eram duas camadas: `config-page-enhancements.js` embrulhava o
+  `saveAdminSettings` do legado e marcava a página como "suja" a cada `input`
+  dentro de #page-config (filtros e selects fora dos campos de configuração
+  também), e este módulo embrulhava de novo o `saveAdminSettings` e o
+  `window.navigate`. Agora o botão e o Ctrl+S chamam a publicação direto, só
+  os campos de configuração marcam alteração (`ehCampoDeConfiguracao`) e o
+  `navigate` do legado pergunta a `confirmarSaidaDasConfiguracoes`, como já
+  pergunta ao `acessosController`.
+*/
 
 const RPC_SNAPSHOT = "get_configuracoes_snapshot";
 const RPC_SAVE_V2 = "salvar_configuracoes_e_paineis_v2";
 const RPC_HISTORY = "get_configuracoes_historico";
 const RPC_RESTORE = "restaurar_configuracoes_versao";
+const TEMPO_LIMITE_MS = 30000;
 
 const FIELD_MAP = [
   ["cfgMonitId", "monit_id", "ID / referência da base"],
@@ -103,6 +126,7 @@ const state = {
   initialized: false,
   client: null,
   saving: false,
+  dirty: false,
   history: [],
 };
 
@@ -118,69 +142,150 @@ const escMap = {
 const esc = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (char) => escMap[char]);
 
-function friendlyError(error) {
-  return txt(
-    error?.message ||
-      error?.details ||
-      error?.hint ||
-      error ||
-      "Erro desconhecido",
-  );
-}
-
 function createClient() {
   if (state.client) return state.client;
   state.client = getSupabaseClient();
   return state.client;
 }
 
-function isDirty() {
-  const indicator = $("configWorkspaceDirtyTop");
-  const saveButton = $("configStickySaveButton");
+// ── Barra de cabeçalho e barra fixa ────────────────────────────────────────
+
+function toolbarHTML() {
+  return `
+    <section id="configWorkspaceToolbar" class="config-workspace-toolbar" aria-label="Configurações">
+      <div class="config-workspace-heading">
+        <div>
+          <span class="config-workspace-eyebrow">Administração do sistema</span>
+          <h2>Configurações</h2>
+          <p>Localize ajustes, revise acessos e salve alterações com validação antes de publicar.</p>
+        </div>
+      </div>
+      <div class="config-workspace-meta">
+        <span id="configWorkspaceDirtyTop" class="config-dirty-indicator" hidden><i class="fa-solid fa-circle" aria-hidden="true"></i> Alterações não salvas</span>
+      </div>
+      <div id="configValidationSummary" class="config-validation-summary" role="alert" hidden></div>
+    </section>
+  `;
+}
+
+function stickyActionsHTML() {
+  return `
+    <div id="configStickyActions" class="config-sticky-actions" aria-live="polite">
+      <div class="config-sticky-status">
+        <span id="configStickyStatusIcon" class="config-status-icon is-clean"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
+        <div>
+          <strong id="configStickyStatusTitle">Nenhuma alteração pendente</strong>
+          <span id="configStickyStatusText">As configurações carregadas estão preservadas.</span>
+        </div>
+      </div>
+      <div class="config-sticky-buttons">
+        <span class="config-shortcut-hint"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+        <button id="configStickySaveButton" type="button" class="btn green" disabled>
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          <span>Salvar alterações</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function ensureWorkspace(root) {
+  if (!$("configWorkspaceToolbar"))
+    root.insertAdjacentHTML("afterbegin", toolbarHTML());
+  if (!$("configStickyActions"))
+    root.insertAdjacentHTML("beforeend", stickyActionsHTML());
+}
+
+/*
+  A seção Acessos tem o próprio fluxo (a matriz salva sozinha, com motivo):
+  lá a barra global de Configurações não aparece nem responde ao Ctrl+S.
+*/
+function secaoAtual(root = $("page-config")) {
+  return root?.dataset.subgrupo || "";
+}
+
+function atualizarBarraDaSecao(root = $("page-config")) {
+  const barra = $("configStickyActions");
+  if (barra) barra.hidden = secaoAtual(root) === "acessos";
+}
+
+/**
+ * Só os campos de configuração marcam a página como alterada: os `cfg*` e
+ * os do editor de painéis. Busca, matriz de acessos e solicitações não.
+ */
+export function ehCampoDeConfiguracao(campo) {
+  if (!(
+    campo instanceof HTMLInputElement ||
+    campo instanceof HTMLTextAreaElement ||
+    campo instanceof HTMLSelectElement
+  ))
+    return false;
+  if (campo.closest("[data-acessos], #configWorkspaceToolbar")) return false;
   return (
-    Boolean(indicator && !indicator.hidden) ||
-    Boolean(saveButton && !saveButton.disabled)
+    /^cfg/.test(campo.id) ||
+    Boolean(campo.closest("#panelAdmin") && /^panel/.test(campo.id))
   );
 }
 
-function markClean() {
-  const indicator = $("configWorkspaceDirtyTop");
+export function configuracoesComAlteracoes() {
+  return state.dirty;
+}
+
+function setDirty(dirty) {
+  state.dirty = Boolean(dirty);
+  const topIndicator = $("configWorkspaceDirtyTop");
   const saveButton = $("configStickySaveButton");
   const icon = $("configStickyStatusIcon");
   const title = $("configStickyStatusTitle");
   const text = $("configStickyStatusText");
-  if (indicator) indicator.hidden = true;
-  if (saveButton) saveButton.disabled = true;
+
+  if (topIndicator) topIndicator.hidden = !state.dirty;
+  if (saveButton) saveButton.disabled = !state.dirty || state.saving;
   if (icon) {
-    icon.className = "config-status-icon is-clean";
-    icon.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i>';
+    icon.className = `config-status-icon ${state.dirty ? "is-dirty" : "is-clean"}`;
+    icon.innerHTML = `<i class="fa-solid ${state.dirty ? "fa-pen" : "fa-check"}" aria-hidden="true"></i>`;
   }
-  if (title) title.textContent = "Nenhuma alteração pendente";
-  if (text) text.textContent = "As configurações carregadas estão preservadas.";
+  if (title)
+    title.textContent = state.dirty
+      ? "Existem alterações não salvas"
+      : "Nenhuma alteração pendente";
+  if (text)
+    text.textContent = state.dirty
+      ? "Revise os campos e salve antes de sair desta página."
+      : "As configurações carregadas estão preservadas.";
 }
+
+const markClean = () => setDirty(false);
 
 function setSaving(saving) {
   state.saving = Boolean(saving);
   const button = $("configStickySaveButton");
-  if (!button) return;
-  button.disabled = state.saving || !isDirty();
-  button.innerHTML = state.saving
-    ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Publicando...</span>'
-    : '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Salvar alterações</span>';
+  if (button) {
+    button.disabled = state.saving || !state.dirty;
+    button.innerHTML = state.saving
+      ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Publicando...</span>'
+      : '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Salvar alterações</span>';
+  }
+  if (!state.saving) return setDirty(state.dirty);
+  const title = $("configStickyStatusTitle");
+  const text = $("configStickyStatusText");
+  const icon = $("configStickyStatusIcon");
+  if (title) title.textContent = "Preparando publicação";
+  if (text) text.textContent = "Aguarde a resposta do servidor.";
+  if (icon) {
+    icon.className = "config-status-icon is-saving";
+    icon.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
+  }
 }
 
-/*
-  `installSaveOverride()` troca `window.saveAdminSettings` por `reviewAndPublish`,
-  de modo que o botão Salvar publica por aqui — e não pela função de
-  `legacy-app.js`. As chaves da barra lateral tinham sido acrescentadas só lá,
-  então nunca chegavam ao banco: `collectConfigRows()` não as conhecia,
-  `buildChanges()` não via diferença e mudar apenas a cor caía em
-  "Nada para publicar".
+// ── Coleta e validação ─────────────────────────────────────────────────────
 
-  A lista vem da mesma função que o caminho de contingência usa, para os dois
-  não voltarem a divergir. Ela devolve `[]` quando os campos não estão no DOM —
-  sem isso, um salvamento feito com a secção ausente gravaria os valores padrão
-  por cima de uma personalização existente.
+/*
+  As chaves da barra lateral viajam no mesmo `p_config_rows` (uma chamada,
+  uma transação). A lista delas devolve `[]` quando os campos não estão no
+  DOM — sem isso, um salvamento com a seção ausente gravaria os valores
+  padrão por cima de uma personalização existente.
 */
 function collectConfigRows() {
   const campos = FIELD_MAP.map(([id, chave, descricao, fallback = ""]) => ({
@@ -206,59 +311,109 @@ function currentPanels() {
   }
 }
 
-function validateCurrentConfiguration() {
-  const errors = [];
-  const pageTitle = txt($("cfgPageTitle")?.value);
-  if (!pageTitle) errors.push("Informe o título da página inicial.");
-
-  const domain = txt($("cfgGoogleDomainHint")?.value);
-  if (
-    domain &&
-    (!/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(domain) ||
-      /[:/\s@]/.test(domain))
-  ) {
-    errors.push("O domínio Google deve estar no formato agenciasus.org.br.");
+function urlHttpValida(valor) {
+  const raw = txt(valor);
+  if (!raw) return true;
+  try {
+    return ["https:", "http:"].includes(new URL(raw).protocol);
+  } catch {
+    return false;
   }
+}
 
-  const heartbeat = Number($("cfgAccessHeartbeatMinutos")?.value);
-  if (!Number.isInteger(heartbeat) || heartbeat < 1 || heartbeat > 60) {
-    errors.push("O heartbeat deve estar entre 1 e 60 minutos.");
+function dominioValido(valor) {
+  const raw = txt(valor);
+  if (!raw) return true;
+  if (/[:/\s@]/.test(raw)) return false;
+  return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(raw);
+}
+
+function rotuloDoCampo(campo) {
+  return (
+    campo.getAttribute("aria-label") ||
+    txt(campo.closest(".form-row")?.querySelector("label")?.textContent) ||
+    campo.id
+  );
+}
+
+/** [{ campo, mensagem }] — campo pode ser null. */
+function validateCurrentConfiguration() {
+  const erros = [];
+  const erro = (campo, mensagem) => erros.push({ campo, mensagem });
+
+  const pageTitle = $("cfgPageTitle");
+  if (pageTitle && !txt(pageTitle.value))
+    erro(pageTitle, "Informe o título da página inicial.");
+
+  const domain = $("cfgGoogleDomainHint");
+  if (domain && !dominioValido(domain.value))
+    erro(
+      domain,
+      "O domínio Google deve estar no formato agenciasus.org.br, sem https://, @ ou barras.",
+    );
+
+  const heartbeat = $("cfgAccessHeartbeatMinutos");
+  if (heartbeat) {
+    const valor = Number(heartbeat.value);
+    if (!Number.isInteger(valor) || valor < 1 || valor > 60)
+      erro(heartbeat, "O heartbeat deve ser um número inteiro entre 1 e 60.");
   }
 
   const accessLogo = $("cfgAccessLogoUrl");
-  if (accessLogo && !isValidAccessAssetUrl(accessLogo.value)) {
-    errors.push("URL inválida no campo Logo da AgSUS no acesso.");
-  }
+  if (accessLogo && !isValidAccessAssetUrl(accessLogo.value))
+    erro(accessLogo, "URL inválida no campo Logo da AgSUS no acesso.");
 
-  const urls = [
-    $("cfgCogipLogo"),
-    ...document.querySelectorAll('[id^="panelUrl"]'),
-  ].filter(Boolean);
-  urls.forEach((field) => {
-    const value = txt(field.value);
-    if (!value) return;
-    try {
-      const url = new URL(value);
-      if (!["https:", "http:"].includes(url.protocol))
-        throw new Error("protocol");
-    } catch (error) {
-      errors.push(
-        `URL inválida no campo ${field.getAttribute("aria-label") || field.closest(".form-row")?.querySelector("label")?.textContent || field.id}.`,
-      );
-    }
+  [$("cfgCogipLogo"), ...document.querySelectorAll('[id^="panelUrl"]')]
+    .filter(Boolean)
+    .forEach((campo) => {
+      if (!urlHttpValida(campo.value))
+        erro(
+          campo,
+          `URL inválida no campo ${rotuloDoCampo(campo)}: use https:// ou http://.`,
+        );
+    });
+
+  document.querySelectorAll('[id^="panelAtivo"]').forEach((ativo) => {
+    if (ativo.value !== "true") return;
+    const campo = $(`panelUrl${ativo.id.replace("panelAtivo", "")}`);
+    if (campo && !txt(campo.value))
+      erro(campo, "Painéis ativos precisam de uma URL configurada.");
   });
 
-  document.querySelectorAll('[id^="panelAtivo"]').forEach((active) => {
-    if (active.value !== "true") return;
-    const index = active.id.replace("panelAtivo", "");
-    if (!txt($(`panelUrl${index}`)?.value))
-      errors.push("Painel ativo sem URL configurada.");
-  });
-
-  return [...new Set(errors)];
+  return erros;
 }
 
-function snapshotMaps(snapshot) {
+function mostrarValidacao(erros) {
+  document
+    .querySelectorAll("#page-config .config-field-invalid")
+    .forEach((f) => {
+      f.classList.remove("config-field-invalid");
+      f.removeAttribute("aria-invalid");
+    });
+  const resumo = $("configValidationSummary");
+  erros.forEach(({ campo }) => {
+    campo?.classList.add("config-field-invalid");
+    campo?.setAttribute("aria-invalid", "true");
+  });
+  if (resumo) {
+    resumo.hidden = !erros.length;
+    resumo.innerHTML = erros.length
+      ? sanitizeHtml(
+          `<div><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><strong>Revise ${erros.length} ${erros.length === 1 ? "campo" : "campos"} antes de salvar.</strong></div><ul>${[...new Set(erros.map((e) => e.mensagem))].map((m) => `<li>${esc(m)}</li>`).join("")}</ul>`,
+        )
+      : "";
+  }
+}
+
+// ── Revisão do que muda ────────────────────────────────────────────────────
+
+/*
+  get_configuracoes_snapshot devolve { configuracoes, paineis, gerado_em }.
+  (A renomeação de 20260918160000 trocou a chave por '"TB_CONFIGURACAO"' e a
+  revisão passou a mostrar toda configuração como "(vazio) → valor"; a
+  migration 20260929220000 devolveu o nome.)
+*/
+export function snapshotMaps(snapshot) {
   const configMap = new Map(
     (snapshot?.configuracoes || []).map((item) => [item.chave, item]),
   );
@@ -268,7 +423,7 @@ function snapshotMaps(snapshot) {
   return { configMap, panelMap };
 }
 
-function buildChanges(snapshot, configRows, panels) {
+export function buildChanges(snapshot, configRows, panels) {
   const { configMap, panelMap } = snapshotMaps(snapshot);
   const changes = [];
 
@@ -333,18 +488,9 @@ function modalHTML() {
   `;
 }
 
-function ensureGovernanceUI() {
-  const root = $("page-config");
-  if (!root) return;
-  if (!$("configGovernanceModal"))
-    document.body.insertAdjacentHTML("beforeend", modalHTML());
-
-  const grid = root.querySelector(":scope > .admin-grid");
-  if (grid && !$("configHistoryCard")) {
-    grid.insertAdjacentHTML(
-      "beforeend",
-      `
-      <div id="configHistoryCard" class="admin-card card full config-history-card" data-config-section="technical">
+function historyCardHTML() {
+  return `
+      <div id="configHistoryCard" class="admin-card card full config-history-card">
         <div class="config-card-title">
           <div>
             <h3>Histórico de configurações</h3>
@@ -354,22 +500,43 @@ function ensureGovernanceUI() {
         </div>
         <div id="configHistoryBody" class="config-history-empty">Carregando histórico...</div>
       </div>
-    `,
-    );
+    `;
+}
+
+/*
+  O histórico mora na seção Operação ("Referência da base, auditoria e
+  importação"). Antes ele era acrescentado à `.admin-grid` original, que
+  `organizarConfiguracoesEmSecoes` já tinha esvaziado e escondido: o card
+  existia, mas nunca aparecia.
+*/
+function ensureGovernanceUI(root) {
+  if (!$("configGovernanceModal"))
+    document.body.insertAdjacentHTML("beforeend", modalHTML());
+
+  if (!$("configHistoryCard")) {
+    const molde = document.createElement("template");
+    molde.innerHTML = historyCardHTML().trim();
+    const cartao = molde.content.firstElementChild;
+    if (!anexarNaSecao(document, "operacao", cartao))
+      (root.querySelector(":scope > .admin-grid") || root).append(cartao);
   }
 
-  document
-    .querySelectorAll("[data-governance-close]")
-    .forEach((button) => button.addEventListener("click", closeModal));
+  $("configGovernanceModal").addEventListener("click", (event) => {
+    if (event.target.closest("[data-governance-close]")) closeModal();
+  });
   $("configHistoryRefresh")?.addEventListener("click", () => loadHistory(true));
+  $("configHistoryBody")?.addEventListener("click", (event) => {
+    const botao = event.target.closest(".config-history-restore");
+    if (botao) reviewRestore(botao.dataset.versionId);
+  });
 }
 
 function openModal(title, body, footer) {
   const modal = $("configGovernanceModal");
   if (!modal) return;
   $("configGovernanceTitle").textContent = title;
-  $("configGovernanceBody").innerHTML = body;
-  $("configGovernanceFooter").innerHTML = footer;
+  $("configGovernanceBody").innerHTML = sanitizeHtml(body);
+  $("configGovernanceFooter").innerHTML = sanitizeHtml(footer);
   modal.hidden = false;
   document.body.classList.add("config-governance-open");
   modal.querySelector("button, input, textarea")?.focus();
@@ -380,6 +547,21 @@ function closeModal() {
   if (!modal) return;
   modal.hidden = true;
   document.body.classList.remove("config-governance-open");
+}
+
+function alertaHTML(titulo, detalhe) {
+  return `<div class="config-governance-alert is-error" role="alert"><strong>${esc(titulo)}</strong><span>${esc(detalhe)}</span></div>`;
+}
+
+/** Mostra o erro dentro do modal aberto, acima do conteúdo. */
+function mostrarErroNoModal(titulo, erro) {
+  const corpo = $("configGovernanceBody");
+  if (!corpo) return;
+  corpo.querySelector("[data-erro-da-publicacao]")?.remove();
+  const aviso = document.createElement("div");
+  aviso.dataset.erroDaPublicacao = "";
+  aviso.innerHTML = sanitizeHtml(alertaHTML(titulo, mensagemDeFalha(erro)));
+  corpo.prepend(aviso);
 }
 
 function changeRowsHTML(changes) {
@@ -397,31 +579,99 @@ function changeRowsHTML(changes) {
     .join("");
 }
 
-async function reviewAndPublish() {
+const BOTAO_FECHAR = `<button type="button" class="btn secondary" data-governance-close>Fechar</button>`;
+
+async function publicar(client, { configRows, panels, changes }) {
+  const reason = txt($("configPublishReason")?.value);
+  const field = $("configPublishReason");
+  if (!reason) {
+    field?.classList.add("config-field-invalid");
+    field?.focus();
+    return;
+  }
+
+  const button = $("configConfirmPublish");
+  if (button) {
+    button.disabled = true;
+    button.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
+  }
+
+  let data;
+  try {
+    const resposta = await comTempoLimite(
+      client.rpc(RPC_SAVE_V2, {
+        p_config_rows: configRows,
+        p_paineis: panels,
+        p_motivo: reason,
+      }),
+      TEMPO_LIMITE_MS,
+    );
+    if (resposta.error) throw resposta.error;
+    data = resposta.data;
+    if (!data?.ok) throw new Error("O servidor não confirmou a publicação.");
+  } catch (error) {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML =
+        '<i class="fa-solid fa-cloud-arrow-up"></i> Tentar novamente';
+    }
+    mostrarErroNoModal("Não foi possível publicar.", error);
+    return;
+  }
+
+  markClean();
+  closeModal();
+  await loadHistory(true);
+  window.dispatchEvent(new CustomEvent("agsus:config-saved", { detail: data }));
+  window.alert(
+    `${data.total_alteracoes || changes.length} alteração(ões) publicada(s) e auditada(s). A página será recarregada para aplicar os novos valores.`,
+  );
+  window.location.reload();
+}
+
+/** O "Salvar alterações" de Configurações (botão da barra e Ctrl+S). */
+export async function reviewAndPublish() {
   if (state.saving) return false;
-  const validationErrors = validateCurrentConfiguration();
-  if (validationErrors.length) {
+  const erros = validateCurrentConfiguration();
+  mostrarValidacao(erros);
+  if (erros.length) {
     openModal(
       "Corrigir configurações",
-      `<div class="config-governance-alert is-error"><strong>Não foi possível publicar.</strong><ul>${validationErrors.map((error) => `<li>${esc(error)}</li>`).join("")}</ul></div>`,
-      `<button type="button" class="btn secondary" data-governance-close>Fechar</button>`,
+      `<div class="config-governance-alert is-error"><strong>Não foi possível publicar.</strong><ul>${[...new Set(erros.map((e) => e.mensagem))].map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>`,
+      BOTAO_FECHAR,
     );
-    document
-      .querySelectorAll("[data-governance-close]")
-      .forEach((button) => button.addEventListener("click", closeModal));
     return false;
   }
 
+  if (
+    $("cfgGoogleEnabled")?.value === "false" &&
+    !window.confirm(
+      "O login Google será desativado. Como este é o acesso institucional principal, usuários podem ficar sem conseguir entrar. Deseja continuar?",
+    )
+  )
+    return false;
+
   const client = createClient();
-  if (!client)
-    return window.alert("Supabase indisponível para publicar configurações.");
+  if (!client) {
+    openModal(
+      "Publicação indisponível",
+      alertaHTML(
+        "Não foi possível publicar.",
+        "O servidor de dados não está configurado neste ambiente.",
+      ),
+      BOTAO_FECHAR,
+    );
+    return false;
+  }
 
   setSaving(true);
   try {
-    const [{ data: snapshot, error: snapshotError }] = await Promise.all([
+    const { data: snapshot, error } = await comTempoLimite(
       client.rpc(RPC_SNAPSHOT),
-    ]);
-    if (snapshotError) throw snapshotError;
+      TEMPO_LIMITE_MS,
+    );
+    if (error) throw error;
 
     const configRows = collectConfigRows();
     const panels = currentPanels();
@@ -431,11 +681,8 @@ async function reviewAndPublish() {
       openModal(
         "Nenhuma alteração",
         `<div class="config-governance-empty"><i class="fa-solid fa-circle-check"></i><strong>Nada para publicar.</strong><span>Os valores da tela já são iguais aos publicados.</span></div>`,
-        `<button type="button" class="btn secondary" data-governance-close>Fechar</button>`,
+        BOTAO_FECHAR,
       );
-      document
-        .querySelectorAll("[data-governance-close]")
-        .forEach((button) => button.addEventListener("click", closeModal));
       return true;
     }
 
@@ -447,63 +694,23 @@ async function reviewAndPublish() {
       `<button type="button" class="btn secondary" data-governance-close>Cancelar</button>
        <button id="configConfirmPublish" type="button" class="btn green"><i class="fa-solid fa-cloud-arrow-up"></i> Publicar ${changes.length} alteração(ões)</button>`,
     );
-
-    document
-      .querySelectorAll("[data-governance-close]")
-      .forEach((button) => button.addEventListener("click", closeModal));
-    $("configConfirmPublish")?.addEventListener("click", async () => {
-      const reason = txt($("configPublishReason")?.value);
-      const field = $("configPublishReason");
-      if (!reason) {
-        field?.classList.add("config-field-invalid");
-        field?.focus();
-        return;
-      }
-
-      const button = $("configConfirmPublish");
-      if (button) {
-        button.disabled = true;
-        button.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...';
-      }
-
-      try {
-        const { data, error } = await client.rpc(RPC_SAVE_V2, {
-          p_config_rows: configRows,
-          p_paineis: panels,
-          p_motivo: reason,
-        });
-        if (error) throw error;
-        if (!data?.ok)
-          throw new Error("O Supabase não confirmou a publicação.");
-
-        markClean();
-        closeModal();
-        await loadHistory(true);
-        window.dispatchEvent(
-          new CustomEvent("agsus:config-saved", { detail: data }),
-        );
-        window.alert(
-          `${data.total_alteracoes || changes.length} alteração(ões) publicada(s) e auditada(s). A página será recarregada para aplicar os novos valores.`,
-        );
-        window.location.reload();
-      } catch (error) {
-        if (button) {
-          button.disabled = false;
-          button.innerHTML =
-            '<i class="fa-solid fa-cloud-arrow-up"></i> Tentar novamente';
-        }
-        window.alert(`Erro ao publicar configurações: ${friendlyError(error)}`);
-      }
-    });
+    $("configConfirmPublish")?.addEventListener("click", () =>
+      publicar(client, { configRows, panels, changes }),
+    );
     return true;
   } catch (error) {
-    window.alert(`Erro ao preparar publicação: ${friendlyError(error)}`);
+    openModal(
+      "Não foi possível preparar a publicação",
+      `${alertaHTML("Nada foi publicado.", mensagemDeFalha(error))}<p>As alterações continuam na tela. Tente salvar de novo.</p>`,
+      BOTAO_FECHAR,
+    );
     return false;
   } finally {
     setSaving(false);
   }
 }
+
+// ── Histórico e restauração ────────────────────────────────────────────────
 
 function historyChangeSummary(changes) {
   const items = Array.isArray(changes) ? changes : [];
@@ -544,8 +751,7 @@ async function loadHistory(force = false) {
   const body = $("configHistoryBody");
   if (!body) return false;
   if (!force && state.history.length) {
-    body.innerHTML = historyHTML(state.history);
-    bindRestoreButtons();
+    body.innerHTML = sanitizeHtml(historyHTML(state.history));
     return true;
   }
 
@@ -553,28 +759,75 @@ async function loadHistory(force = false) {
   body.textContent = "Carregando histórico...";
   const client = createClient();
   if (!client) {
-    body.textContent = "Supabase indisponível.";
+    body.textContent = "Servidor de dados indisponível.";
     return false;
   }
 
-  const { data, error } = await client.rpc(RPC_HISTORY, { p_limit: 30 });
-  if (error) {
-    body.innerHTML = `<div class="alert error">Erro ao carregar histórico: ${esc(friendlyError(error))}</div>`;
+  try {
+    const { data, error } = await comTempoLimite(
+      client.rpc(RPC_HISTORY, { p_limit: 30 }),
+      TEMPO_LIMITE_MS,
+    );
+    if (error) throw error;
+    state.history = Array.isArray(data) ? data : [];
+  } catch (error) {
+    body.innerHTML = sanitizeHtml(
+      `<div class="alert error" role="alert">Erro ao carregar histórico: ${esc(mensagemDeFalha(error))}</div>`,
+    );
     return false;
   }
-  state.history = Array.isArray(data) ? data : [];
   body.className = "";
-  body.innerHTML = historyHTML(state.history);
-  bindRestoreButtons();
+  body.innerHTML = sanitizeHtml(historyHTML(state.history));
   return true;
 }
 
-function bindRestoreButtons() {
-  document.querySelectorAll(".config-history-restore").forEach((button) => {
-    button.addEventListener("click", () =>
-      reviewRestore(button.dataset.versionId),
+async function restaurar(versionId) {
+  const reason = txt($("configRestoreReason")?.value);
+  if (!reason) {
+    $("configRestoreReason")?.classList.add("config-field-invalid");
+    $("configRestoreReason")?.focus();
+    return;
+  }
+  if (
+    !window.confirm(
+      "Confirmar restauração desta versão? Os valores atuais serão substituídos.",
+    )
+  )
+    return;
+
+  const button = $("configConfirmRestore");
+  if (button) {
+    button.disabled = true;
+    button.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Restaurando...';
+  }
+  let data;
+  try {
+    const resposta = await comTempoLimite(
+      createClient().rpc(RPC_RESTORE, {
+        p_versao_id: versionId,
+        p_motivo: reason,
+      }),
+      TEMPO_LIMITE_MS,
     );
-  });
+    if (resposta.error) throw resposta.error;
+    data = resposta.data;
+    if (!data?.ok) throw new Error("O servidor não confirmou a restauração.");
+  } catch (error) {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML =
+        '<i class="fa-solid fa-rotate-left"></i> Tentar novamente';
+    }
+    mostrarErroNoModal("Não foi possível restaurar.", error);
+    return;
+  }
+  markClean();
+  closeModal();
+  window.alert(
+    `${data.total_alteracoes || 0} alteração(ões) restaurada(s). A página será recarregada.`,
+  );
+  window.location.reload();
 }
 
 function reviewRestore(versionId) {
@@ -599,94 +852,59 @@ function reviewRestore(versionId) {
     `<button type="button" class="btn secondary" data-governance-close>Cancelar</button>
      <button id="configConfirmRestore" type="button" class="btn danger"><i class="fa-solid fa-rotate-left"></i> Restaurar versão</button>`,
   );
-  document
-    .querySelectorAll("[data-governance-close]")
-    .forEach((button) => button.addEventListener("click", closeModal));
-  $("configConfirmRestore")?.addEventListener("click", async () => {
-    const reason = txt($("configRestoreReason")?.value);
-    if (!reason) {
-      $("configRestoreReason")?.classList.add("config-field-invalid");
-      $("configRestoreReason")?.focus();
-      return;
-    }
-    const confirmed = window.confirm(
-      "Confirmar restauração desta versão? Os valores atuais serão substituídos.",
-    );
-    if (!confirmed) return;
+  $("configConfirmRestore")?.addEventListener("click", () =>
+    restaurar(versionId),
+  );
+}
 
-    const button = $("configConfirmRestore");
-    if (button) {
-      button.disabled = true;
-      button.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Restaurando...';
-    }
-    const client = createClient();
-    const { data, error } = await client.rpc(RPC_RESTORE, {
-      p_versao_id: versionId,
-      p_motivo: reason,
-    });
-    if (error || !data?.ok) {
-      if (button) {
-        button.disabled = false;
-        button.innerHTML =
-          '<i class="fa-solid fa-rotate-left"></i> Tentar novamente';
-      }
-      window.alert(`Erro ao restaurar versão: ${friendlyError(error || data)}`);
+// ── Eventos ────────────────────────────────────────────────────────────────
+
+function bindWorkspaceEvents(root) {
+  const marcar = (event) => {
+    if (!ehCampoDeConfiguracao(event.target)) return;
+    setDirty(true);
+    event.target.classList.remove("config-field-invalid");
+    event.target.removeAttribute("aria-invalid");
+  };
+  root.addEventListener("input", marcar);
+  root.addEventListener("change", marcar);
+
+  $("configStickySaveButton")?.addEventListener("click", () => {
+    void reviewAndPublish();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s")
       return;
-    }
-    markClean();
-    closeModal();
-    window.alert(
-      `${data.total_alteracoes || 0} alteração(ões) restaurada(s). A página será recarregada.`,
-    );
-    window.location.reload();
+    if (!root.isConnected || !root.classList.contains("active")) return;
+    event.preventDefault();
+    if (secaoAtual(root) === "acessos") return;
+    if (state.dirty && !state.saving) void reviewAndPublish();
+  });
+
+  window.addEventListener("beforeunload", (event) => {
+    if (!state.dirty) return;
+    event.preventDefault();
+    event.returnValue = "";
   });
 }
 
-function installSaveOverride() {
+/**
+ * Pode sair de Configurações? Sem alteração não salva, sim; com, pergunta e,
+ * confirmado, descarta. Chamado pelo `navigate` do legado.
+ */
+export function confirmarSaidaDasConfiguracoes(
+  confirmar = (mensagem) => window.confirm(mensagem),
+) {
+  if (!state.dirty) return true;
   if (
-    typeof window.saveAdminSettings !== "function" ||
-    window.saveAdminSettings.__governanceWrapped
+    !confirmar(
+      "Existem alterações não salvas em Configurações. Sair e descartar essas alterações?",
+    )
   )
-    return;
-  const fallback = window.saveAdminSettings;
-  const governed = async (...args) => {
-    try {
-      return await reviewAndPublish(...args);
-    } catch (error) {
-      console.error(
-        "Falha no fluxo de governança; salvamento antigo preservado como contingência.",
-        error,
-      );
-      return fallback(...args);
-    }
-  };
-  governed.__governanceWrapped = true;
-  governed.__fallback = fallback;
-  window.saveAdminSettings = governed;
-}
-
-function installNavigationGuard() {
-  if (
-    typeof window.navigate !== "function" ||
-    window.navigate.__configGovernanceWrapped
-  )
-    return;
-  const originalNavigate = window.navigate;
-  const guardedNavigate = (...args) => {
-    const target = String(args[0] || "");
-    if (isDirty() && target !== "config") {
-      const confirmed = window.confirm(
-        "Existem alterações não salvas em Configurações. Sair e descartar essas alterações?",
-      );
-      if (!confirmed) return false;
-      markClean();
-    }
-    return originalNavigate(...args);
-  };
-  guardedNavigate.__configGovernanceWrapped = true;
-  guardedNavigate.__original = originalNavigate;
-  window.navigate = guardedNavigate;
+    return false;
+  markClean();
+  return true;
 }
 
 export function initConfigGovernance() {
@@ -694,8 +912,10 @@ export function initConfigGovernance() {
   const root = $("page-config");
   if (!root) return;
   state.initialized = true;
-  ensureGovernanceUI();
-  installSaveOverride();
-  installNavigationGuard();
+  ensureWorkspace(root);
+  ensureGovernanceUI(root);
+  bindWorkspaceEvents(root);
+  atualizarBarraDaSecao(root);
+  setDirty(false);
   loadHistory();
 }

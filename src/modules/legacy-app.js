@@ -75,7 +75,8 @@ import {
   enviarSolicitacao,
   garantirAcessoBasico,
 } from "./solicitacao-de-acesso.js";
-import { collectPanelRows, renderPanelAdminHTML } from "./config-ui.js";
+import { renderPanelAdminHTML } from "./config-ui.js";
+import { confirmarSaidaDasConfiguracoes } from "./config-governance.js";
 import { createAccessDashboard } from "./access-dashboard.js";
 import {
   isAllowedInstitutionalEmail,
@@ -135,10 +136,6 @@ import {
   definirPaginaDaAba,
   definirSistemaDaAba,
 } from "../lib/identidade-da-aba.js";
-import {
-  linhasDeConfiguracaoDaSidebar,
-  reaplicarSidebarAposSalvar,
-} from "./sidebar-branding.js";
 import { classificarVinculoTerritorial } from "../lib/uf-ibge.js";
 import {
   chaveDeFiltro,
@@ -216,7 +213,6 @@ import {
 
 const APP_VERSION_FALLBACK = "";
 
-const RPC_SAVE_CONFIG = "salvar_configuracoes_e_paineis";
 const RPC_ACCESS_LOG = "registrar_evento_acesso";
 const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
 const RPC_DENY_ACCESS_REQUEST = "recusar_solicitacao_acesso";
@@ -2284,9 +2280,11 @@ function setActiveNav(view) {
 function navigate(view) {
   const previousView = currentView;
   const requestedView = txt(view) || startView();
+  // Sair com alteração não salva (matriz de Acessos ou campos de Configurações) pergunta antes.
   if (
     requestedView !== currentView &&
-    window.acessosController?.confirmarSaida() === false
+    (window.acessosController?.confirmarSaida() === false ||
+      !confirmarSaidaDasConfiguracoes())
   )
     return;
 
@@ -11988,243 +11986,6 @@ async function denyAccessRequest(id) {
   await renderAccessRequestsAdmin();
 }
 
-async function saveAdminSettings() {
-  if (!can("config"))
-    return toast("Sem permissão para salvar configurações.", "warn");
-  if (!configLoadOk)
-    return toast(
-      "As configurações não foram carregadas do Supabase. Recarregue antes de salvar para evitar sobrescrever valores bons.",
-      "warn",
-    );
-  loader(true, "Configurações", "Salvando ajustes no Supabase...", 60);
-  const configRows = [
-    {
-      chave: "monit_id",
-      valor: txt($("cfgMonitId").value),
-      descricao: "ID / referência da base",
-    },
-    {
-      chave: "page_title",
-      valor: txt($("cfgPageTitle")?.value || ""),
-      descricao: "Título da página inicial",
-    },
-    {
-      chave: "page_subtitle",
-      valor: txt($("cfgPageSubtitle")?.value || ""),
-      descricao: "Subtítulo da página inicial",
-    },
-    {
-      chave: "auth_google_enabled",
-      valor: txt($("cfgGoogleEnabled")?.value || "true"),
-      descricao: "Exibe ou oculta o login com Google",
-    },
-    {
-      chave: "auth_google_button_text",
-      valor: txt($("cfgGoogleButtonText")?.value || ""),
-      descricao: "Texto do botão de autenticação Google",
-    },
-    {
-      chave: "auth_google_domain_hint",
-      valor: txt($("cfgGoogleDomainHint")?.value || ""),
-      descricao: "Domínio sugerido no login Google",
-    },
-    {
-      chave: "auth_google_allowed_domains",
-      valor: normalizeAllowedDomains(
-        $("cfgGoogleAllowedDomains")?.value || "",
-      ).join(","),
-      descricao: "Domínios institucionais autorizados no login Google",
-    },
-    {
-      chave: "auth_access_background_url",
-      valor: normalizeAccessBackgroundUrl(
-        $("cfgAccessBackgroundUrl")?.value || "",
-      ),
-      descricao: "Arte institucional da tela de acesso",
-    },
-    {
-      chave: "auth_access_logo_url",
-      valor: normalizeAccessLogoUrl($("cfgAccessLogoUrl")?.value || ""),
-      descricao: "Logo da AgSUS na tela de acesso",
-    },
-    {
-      chave: "auth_access_panel_color",
-      valor: normalizeAccessPanelColor($("cfgAccessPanelColor")?.value || ""),
-      descricao: "Cor do painel da tela de acesso",
-    },
-    {
-      chave: "auth_access_texto_modo",
-      valor: txt($("cfgAccessTextoModo")?.value || "auto"),
-      descricao: "Texto sobre o painel de acesso: auto, claro ou escuro",
-    },
-
-    {
-      chave: "auth_access_greeting",
-      valor: txt(
-        $("cfgAccessGreeting")?.value || DEFAULT_ACCESS_BRANDING.greeting,
-      ),
-      descricao: "Saudação da tela de acesso",
-    },
-    {
-      chave: "auth_access_instruction",
-      valor: txt(
-        $("cfgAccessInstruction")?.value || DEFAULT_ACCESS_BRANDING.instruction,
-      ),
-      descricao: "Instrução da tela de acesso",
-    },
-    {
-      chave: "filter_title",
-      valor: txt($("cfgFilterTitle")?.value || ""),
-      descricao: "Título dos filtros",
-    },
-    {
-      chave: "filter_subtitle",
-      valor: txt($("cfgFilterSubtitle")?.value || ""),
-      descricao: "Subtítulo dos filtros",
-    },
-    {
-      chave: "filter_toggle_show",
-      valor: txt($("cfgFilterToggleShow")?.value || ""),
-      descricao: "Texto para mostrar filtros",
-    },
-    {
-      chave: "filter_toggle_hide",
-      valor: txt($("cfgFilterToggleHide")?.value || ""),
-      descricao: "Texto para ocultar filtros",
-    },
-    {
-      chave: "kpi_processos_label",
-      valor: txt($("cfgKpiProcessos")?.value || ""),
-      descricao: "Rótulo do KPI processos",
-    },
-    {
-      chave: "kpi_vagas_label",
-      valor: txt($("cfgKpiVagas")?.value || ""),
-      descricao: "Rótulo do KPI vagas",
-    },
-    {
-      chave: "kpi_contratados_label",
-      valor: txt($("cfgKpiContratados")?.value || ""),
-      descricao: "Rótulo do KPI contratações",
-    },
-    {
-      chave: "kpi_ociosas_label",
-      valor: txt($("cfgKpiOciosas")?.value || ""),
-      descricao: "Rótulo do KPI vagas ociosas",
-    },
-    {
-      chave: "kpi_criticos_label",
-      valor: txt($("cfgKpiCriticos")?.value || ""),
-      descricao: "Rótulo do KPI críticos",
-    },
-    {
-      chave: "kpi_inscritos_label",
-      valor: txt($("cfgKpiInscritos")?.value || ""),
-      descricao: "Rótulo do KPI inscritos",
-    },
-    {
-      chave: "footer_text",
-      valor: txt($("cfgFooter").value),
-      descricao: "Texto do rodapé (fallback)",
-    },
-    {
-      chave: "cogip_nome",
-      valor: txt($("cfgCogipNome")?.value || ""),
-      descricao: "Nome da equipe (COGIP)",
-    },
-    {
-      chave: "cogip_funcao",
-      valor: txt($("cfgCogipFuncao")?.value || ""),
-      descricao: "Função / área da equipe",
-    },
-    {
-      chave: "cogip_versao",
-      valor: txt($("cfgCogipVersao")?.value || ""),
-      descricao: "Versão do sistema",
-    },
-    {
-      chave: "cogip_dept",
-      valor: txt($("cfgCogipDept")?.value || ""),
-      descricao: "Texto institucional",
-    },
-    {
-      chave: "app_version_current",
-      valor: txt($("cfgAppVersionCurrent")?.value || ""),
-      descricao: "Versão corrente publicada",
-    },
-    {
-      chave: "cogip_logo_url",
-      valor: txt($("cfgCogipLogo")?.value || ""),
-      descricao: "Logo da equipe",
-    },
-    {
-      chave: "broadcast_type",
-      valor: txt($("cfgBroadcastType").value),
-      descricao: "Tipo do aviso global",
-    },
-    {
-      chave: "broadcast_msg",
-      valor: txt($("cfgBroadcastMsg").value),
-      descricao: "Mensagem do aviso global",
-    },
-    {
-      chave: "feature_realtime_monitoramento",
-      valor: txt($("cfgRealtimeEnabled")?.value || "true"),
-      descricao: "Habilita atualização em tempo real do monitoramento",
-    },
-    {
-      chave: "access_heartbeat_minutos",
-      valor: String(
-        Math.max(
-          1,
-          n(
-            $("cfgAccessHeartbeatMinutos")?.value ||
-              DEFAULT_ACCESS_HEARTBEAT_MINUTES,
-          ),
-        ),
-      ),
-      descricao: "Intervalo de auditoria heartbeat, em minutos",
-    },
-  ];
-
-  const panelRows = collectPanelRows(panels);
-
-  /*
-    As chaves da barra lateral viajam no mesmo `p_config_rows`. Uma chamada, uma
-    transação: ou tudo é gravado, ou nada é — sem salvamento parcial e sem
-    depender de deduzir sucesso pela mensagem que apareceu na tela.
-  */
-  const linhasDeConfiguracao = [
-    ...configRows,
-    ...linhasDeConfiguracaoDaSidebar(),
-  ];
-
-  const { error: cfgErr } = await sb.rpc(RPC_SAVE_CONFIG, {
-    p_config_rows: linhasDeConfiguracao,
-    p_paineis: panelRows,
-  });
-  if (cfgErr) {
-    loader(false);
-    return toast(
-      "Erro ao salvar configurações: " + friendlyError(cfgErr),
-      "error",
-    );
-  }
-
-  await loadConfig();
-  await loadPanels();
-  reaplicarSidebarAposSalvar();
-  if (currentUser?.id) {
-    startAccessHeartbeat();
-    startOnlinePresence();
-    stopRealtime();
-    startRealtime();
-  }
-  buildNav();
-  loader(false);
-  toast("Configurações salvas.");
-}
-
 function syncDisplayModeButtons() {
   const fullscreenActive =
     !!document.fullscreenElement ||
@@ -12458,8 +12219,6 @@ function friendlyError(error) {
 
   if (msg.includes("vagas_ociosas"))
     return "Campo calculado protegido pelo banco. Atualize a página e tente novamente.";
-  if (msg.includes(RPC_SAVE_CONFIG))
-    return "As funções RPC necessárias ainda não estão disponíveis. Aplique o script SQL institucional no Supabase.";
   if (msg.includes("Sem permissão para salvar monitoramento indígena"))
     return "Seu usuário não tem permissão para salvar registros de Editais.";
   if (msg.includes("Sem permissão para salvar configurações"))
@@ -12803,7 +12562,6 @@ Object.assign(window, {
   returnToLogin,
   removeFilterPill,
   runGlobalSearch,
-  saveAdminSettings,
   restoreAccessBackground,
   searchModalKey,
   selectAllFilterValues,
