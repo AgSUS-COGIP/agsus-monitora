@@ -168,6 +168,9 @@ describe("indicadores e pendências", () => {
       mudouResultado: 2,
       atrasados: 2,
       taxaConclusao: 40,
+      respostasEmRevisao: 0,
+      respostasAprovadas: 0,
+      respostasDevolvidas: 0,
     });
     expect(calcularIndicadores([]).taxaConclusao).toBe(0);
   });

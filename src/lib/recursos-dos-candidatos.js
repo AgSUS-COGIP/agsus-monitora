@@ -162,6 +162,9 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
     // Atrasado: a resposta ainda não saiu e o prazo já passou.
     atrasado: semResposta && diasParaPrazo !== null && diasParaPrazo < 0,
     etapasFeitas: ETAPAS.filter((etapa) => etapas[etapa.id]).length,
+    // A resposta escrita no sistema (resposta-do-recurso.js) e os anexos ativos.
+    respostaEstado: recurso.resposta_estado || null,
+    qtAnexos: Number(recurso.qt_anexos) || 0,
   };
 }
 
@@ -211,6 +214,27 @@ export const PENDENCIAS = Object.freeze([
     teste: (r) => r.decidido && !r.etapas.resposta_candidato,
   }),
   Object.freeze({
+    chave: "resposta_devolvida",
+    titulo: "Respostas devolvidas",
+    subtitulo: "O revisor pediu ajuste no texto da resposta.",
+    severidade: "alta",
+    teste: (r) => r.respostaEstado === "devolvida",
+  }),
+  Object.freeze({
+    chave: "resposta_aprovada",
+    titulo: "Respostas aprovadas aguardando envio",
+    subtitulo: "Aprovadas, mas ainda não marcadas como enviadas ao candidato.",
+    severidade: "alta",
+    teste: (r) => r.respostaEstado === "aprovada",
+  }),
+  Object.freeze({
+    chave: "resposta_em_revisao",
+    titulo: "Respostas em revisão",
+    subtitulo: "Aguardando a aprovação ou a devolução de um revisor.",
+    severidade: "media",
+    teste: (r) => r.respostaEstado === "em_revisao",
+  }),
+  Object.freeze({
     chave: "mudou_resultado",
     titulo: "Mudança de nota ou classificação",
     subtitulo: "Casos sensíveis para conferir no resultado final.",
@@ -254,6 +278,14 @@ export function calcularIndicadores(recursos) {
     mudouResultado: recursos.filter((r) => r.mudouResultado).length,
     atrasados: recursos.filter((r) => r.atrasado).length,
     taxaConclusao: total ? Math.round((concluidos / total) * 100) : 0,
+    respostasEmRevisao: recursos.filter(
+      (r) => r.respostaEstado === "em_revisao",
+    ).length,
+    respostasAprovadas: recursos.filter((r) => r.respostaEstado === "aprovada")
+      .length,
+    respostasDevolvidas: recursos.filter(
+      (r) => r.respostaEstado === "devolvida",
+    ).length,
   };
 }
 

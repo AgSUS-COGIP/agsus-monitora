@@ -400,13 +400,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_area"],
     critica: false,
     resumo:
-      "Aba Recursos de uma área (json): recursos com o candidato da análise, origens, editais (quem edita) e as etapas do cronograma para o prazo.",
+      "Aba Recursos de uma área (json): recursos com o candidato da análise, o estado da resposta e o nº de anexos, origens, editais e modelos (quem edita) e as etapas do cronograma para o prazo.",
   },
   get_recurso_candidato_detalhe: {
     argumentos: ["p_id"],
     critica: false,
     resumo:
-      "Detalhe de um recurso: observação, quem fez cada etapa e o histórico.",
+      "Detalhe de um recurso: observação, quem fez cada etapa, o histórico, os anexos, a resposta (com o histórico dela) e o id de quem pede.",
   },
   buscar_candidatos_recurso: {
     argumentos: ["p_edital_id", "p_busca"],
@@ -430,6 +430,60 @@ export const CONTRATO_RPC = {
     argumentos: ["p_id", "p_motivo"],
     critica: false,
     resumo: "Exclusão lógica de um recurso, com motivo no histórico.",
+  },
+
+  // ── Recursos: modelos, resposta e anexos (20260929230000) ────────────────
+  listar_modelos_resposta_recurso: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Modelos de resposta (versão vigente, ativos e arquivados), versões, áreas, origens e marcadores. Só admin de Recursos.",
+  },
+  salvar_modelo_resposta_recurso: {
+    argumentos: ["p_dados"],
+    critica: false,
+    resumo:
+      "Cria um modelo ou grava a versão seguinte (revisão 40001, marcadores conferidos). Só admin de Recursos.",
+  },
+  arquivar_modelo_resposta_recurso: {
+    argumentos: ["p_modelo_id", "p_motivo"],
+    critica: false,
+    resumo: "Arquiva um modelo de resposta, com motivo. Só admin de Recursos.",
+  },
+  salvar_resposta_recurso: {
+    argumentos: ["p_dados"],
+    critica: false,
+    resumo:
+      "Cria ou grava o rascunho da resposta (modelo + versão, fundamentação, texto final; revisão 40001).",
+  },
+  transicionar_resposta_recurso: {
+    argumentos: ["p_resposta_id", "p_acao", "p_revisao", "p_comentario"],
+    critica: false,
+    resumo:
+      "Enviar para revisão, aprovar, devolver, reabrir ou marcar enviada (marca a etapa do recurso); quem escreveu não aprova depois da revisão.",
+  },
+  registrar_anexo_recurso: {
+    argumentos: [
+      "p_recurso_id",
+      "p_tipo",
+      "p_nome",
+      "p_caminho",
+      "p_resposta_id",
+    ],
+    critica: false,
+    resumo:
+      "Registra o arquivo enviado ao bucket recursos-anexos (caminho, dono, tamanho e tipo lidos do Storage).",
+  },
+  arquivar_anexo_recurso: {
+    argumentos: ["p_anexo_id", "p_motivo"],
+    critica: false,
+    resumo: "Arquiva um anexo (lógico, com motivo); o arquivo fica no bucket.",
+  },
+  registrar_download_anexo_recurso: {
+    argumentos: ["p_anexo_id"],
+    critica: false,
+    resumo:
+      "Confere o acesso, registra o download e devolve o caminho para a URL assinada (a política do bucket exige o registro).",
   },
 
   // ── Auditoria e presença ────────────────────────────────────────────────

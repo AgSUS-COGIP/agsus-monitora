@@ -8,6 +8,7 @@ import {
   rotuloDaSituacao,
   tomDaSituacao,
 } from "../../lib/recursos-dos-candidatos.js";
+import { rotuloDoEstado, tomDoEstado } from "../../lib/resposta-do-recurso.js";
 import { classes } from "./paineis.jsx";
 
 /*
@@ -57,6 +58,19 @@ export function SeloDaSituacao({ situacao }) {
       className={`badge ${BADGE_DO_TOM[tomDaSituacao(situacao)] || "neutro"}`}
     >
       {rotuloDaSituacao(situacao)}
+    </span>
+  );
+}
+
+/* O estado da resposta escrita (resposta-do-recurso.js), no mesmo `.badge`. */
+export function SeloDaResposta({ estado }) {
+  if (!estado) return null;
+  return (
+    <span
+      className={`badge ${BADGE_DO_TOM[tomDoEstado(estado)] || "neutro"}`}
+      title="Resposta ao candidato"
+    >
+      Resposta: {rotuloDoEstado(estado).toLowerCase()}
     </span>
   );
 }
@@ -260,6 +274,7 @@ export function TabelaDeRecursos({
                   <td>{r.analista || "Sem analista"}</td>
                   <td>
                     <SeloDaSituacao situacao={r.situacao} />
+                    <SeloDaResposta estado={r.respostaEstado} />
                   </td>
                   <td>
                     <MarcasDasEtapas etapas={r.etapas} />

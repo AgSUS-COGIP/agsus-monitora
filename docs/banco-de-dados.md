@@ -757,3 +757,63 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
 - **Ordem de publicação**: a migration pode ir antes do front (o front
   publicado chama sem `p_area` e recebe o de sempre) ou depois (o front novo,
   sem `p_area` no banco, recebe PGRST202 e chama a função sem argumentos).
+
+## 13. Recursos: anexos, modelos de resposta e resposta escrita no sistema
+
+Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
+`supabase/rollback/`; ensaiada com o rollback em 29/09/2026, depois de
+`20260929190200` — sem ela a migration para). Os corpos de
+`get_recursos_da_area` e `get_recurso_candidato_detalhe` são os de
+`20260929190200` (com o recorte por coordenação), só acrescidos.
+
+- **Anexos**: bucket privado `recursos-anexos` (20 MB; pdf, docx, doc, jpg,
+  png, odt), caminho `<área>/<recurso>/<uuid>-<nome>`. `TB_ANEXO_RECURSO`
+  (metadados, `TP_ANEXO` recurso_candidato/resposta/documento/outro, tamanho e
+  tipo lidos do Storage no registro, arquivamento lógico com motivo) e
+  `TH_ANEXO_RECURSO` (inclusão, download, arquivamento).
+  Políticas do Storage (funções `private."FC_PODE_ANEXO_RECURSO"` e
+  `private."FC_PODE_BAIXAR_ANEXO_RECURSO"`): envio com `recursos` >= editor e o
+  edital visível (área + coordenação); leitura — que é o que gera a URL
+  assinada — só com um download registrado pela própria pessoa nos últimos 5
+  minutos (`registrar_download_anexo_recurso` confere o acesso e grava), ou o
+  próprio arquivo recém-enviado (10 min, porque o insert do Storage devolve a
+  linha). Sem update nem delete: nada se sobrescreve nem se apaga pela API.
+  Arquivo enviado e não registrado (falha no meio) fica órfão no bucket.
+- **Modelos de resposta**: `TB_MODELO_RESPOSTA_RECURSO`, uma linha por versão
+  (PK modelo + versão, `ST_VIGENTE`); área e origem nulas = todas. Editar grava
+  a versão seguinte; a resposta guarda a versão usada. Marcadores aceitos em
+  `private."FC_MARCADORES_MODELO_RESPOSTA"()` (= `src/lib/modelos-de-resposta.js`).
+  Seis modelos iniciais (deferido, indeferido, parcialmente indeferido ×
+  análise curricular, entrevista). Manutenção só com `recursos` = admin, na
+  gaveta "Modelos de resposta" do painel de recursos.
+- **Resposta**: `TB_RESPOSTA_RECURSO` (uma por recurso; `NU_REVISAO`) e
+  `TH_RESPOSTA_RECURSO` (cada gravação e transição, com o texto do momento).
+  Estados rascunho → (em_revisao → devolvida | aprovada) → enviada; revisão
+  opcional, mas depois de ir à revisão quem escreveu ou enviou não aprova;
+  aprovar exige o recurso decidido com a situação do modelo; marcar enviada
+  marca a etapa `resposta_candidato` do recurso. Regras espelhadas em
+  `src/lib/resposta-do-recurso.js`.
+- `TH_RECURSO_CANDIDATO` passa a aceitar `anexo` e `resposta` em `TP_ACAO`.
+- RPCs: `listar_modelos_resposta_recurso`, `salvar_modelo_resposta_recurso`,
+  `arquivar_modelo_resposta_recurso`, `salvar_resposta_recurso`,
+  `transicionar_resposta_recurso`, `registrar_anexo_recurso`,
+  `arquivar_anexo_recurso`, `registrar_download_anexo_recurso` (todas
+  `SECURITY DEFINER`, search_path vazio, sem `anon`; nível + área +
+  coordenação por `private."FC_EXIGIR_RECURSO_ACESSIVEL"`).
+- **Rollback**: tira políticas, RPCs e funções e devolve leitura e detalhe aos
+  corpos de `20260929190200`; **não** apaga o bucket nem arquivo
+  (`storage.protect_delete`), e só apaga as tabelas se estiverem sem dado de
+  uso (senão ficam, com NOTICE).
+
+Ensaio (begin…rollback, produção): admin cria modelo (v1 → v2, sem mudança não
+cria versão, versão velha → 40001, marcador desconhecido → 22023, arquiva);
+usuario lê a aba sem modelos e recebe 42501 ao gravar; editor grava rascunho
+(revisão velha → 40001), não aprova recurso em análise, envia para revisão e
+não aprova a própria; outro editor devolve (comentário obrigatório), aprova
+(situação diferente do modelo → 22023) e marca enviada (etapa marcada); editor
+com coordenação recortada não vê o recurso nem envia arquivo; upload com área
+errada, em subpasta ou por leitor é barrado pela política; registrar arquivo
+de outra pessoa → 42501; leitor só enxerga o objeto depois de registrar o
+download; outra área → 42501; anexo arquivado só o editor baixa. Migration +
+rollback: funções, CHECK e comentários iguais aos de antes (a menos do fim de
+linha CRLF com que 20260929190200 foi aplicada); fica só o bucket, vazio.

@@ -8,7 +8,10 @@
   Tudo passa por RPC (supabase/migrations/20260929120000_recursos.sql):
   `get_recursos_da_area` numa chamada só (json), o detalhe sob demanda, a
   busca do candidato nas análises do edital e as três escritas. O banco confere
-  permissão e área em todas; `pode_editar` vem dele.
+  permissão e área em todas; `pode_editar` vem dele. A resposta escrita, os
+  anexos (bucket privado `recursos-anexos`, com URL assinada depois do registro
+  do download) e os modelos de resposta são de
+  20260929230000_recursos_modelos_anexos_respostas.sql.
 
   Sem tela de carregamento: antes da primeira carga o painel é o skeleton
   (`carregado` falso); uma falha nela vira `erroAoCarregar`, com "Tentar
@@ -17,6 +20,19 @@
   outros ficam desativados.
 */
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.js";
+import {
+  BUCKET_DOS_ANEXOS,
+  caminhoDoAnexo,
+  validarArquivoDoAnexo,
+  VALIDADE_DO_DOWNLOAD,
+} from "../../lib/anexos-do-recurso.js";
+import {
+  gerarDocx,
+  MIME_DOCX,
+  montarPaginaDeImpressao,
+  nomeDoDocumento,
+} from "../../lib/documento-da-resposta.js";
+import { dadosDoModelo } from "../../lib/modelos-de-resposta.js";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Abra este painel pelo menu do MONITORA para compartilhar a sessão do Supabase Auth.";
@@ -37,6 +53,10 @@ const ESTADO_INICIAL = Object.freeze({
   detalhes: new Map(),
   /** `{ modo: "novo" | "edicao", id, abertura }` ou `null`. */
   formulario: null,
+  /** Gaveta "Modelos de resposta" (administração) aberta. */
+  modelosAbertos: false,
+  /** `listar_modelos_resposta_recurso` ou `{ erro }`; `null` antes de pedir. */
+  modelosAdmin: null,
 });
 
 const mensagemDe = (erro) =>
@@ -60,10 +80,65 @@ function baixarNoNavegador(conteudo, nome) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function baixarBlobNoNavegador(arquivo, nome) {
+  const url = URL.createObjectURL(arquivo);
+  const ancora = document.createElement("a");
+  ancora.href = url;
+  ancora.download = nome;
+  ancora.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* A URL assinada abre numa aba nova, sem dar acesso a esta (noopener). */
+function abrirNoNavegador(url) {
+  const ancora = document.createElement("a");
+  ancora.href = url;
+  ancora.target = "_blank";
+  ancora.rel = "noopener noreferrer";
+  ancora.click();
+}
+
+/*
+  Impressão (e "Salvar como PDF") por um iframe escondido: a página é montada
+  com elementos e texto (documento-da-resposta.js), sem HTML.
+*/
+function imprimirNoNavegador(texto, titulo) {
+  const quadro = document.createElement("iframe");
+  quadro.setAttribute("aria-hidden", "true");
+  quadro.tabIndex = -1;
+  quadro.style.cssText =
+    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.append(quadro);
+  montarPaginaDeImpressao(quadro.contentDocument, texto, { titulo });
+  const janela = quadro.contentWindow;
+  janela.addEventListener?.(
+    "afterprint",
+    () => setTimeout(() => quadro.remove(), 500),
+    { once: true },
+  );
+  janela.focus?.();
+  janela.print?.();
+  setTimeout(() => quadro.remove(), 60_000);
+}
+
+function novoUuid() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function criarEstadoDosRecursos({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
   baixar = baixarNoNavegador,
+  baixarArquivo = baixarBlobNoNavegador,
+  abrirUrl = abrirNoNavegador,
+  imprimir = imprimirNoNavegador,
+  novoId = novoUuid,
   agora = () => Date.now(),
 } = {}) {
   let estado = ESTADO_INICIAL;
@@ -280,7 +355,316 @@ export function criarEstadoDosRecursos({
     );
   }
 
+  // ── Resposta ao candidato (20260929230000) ─────────────────────────────
+
+  /* O que a resposta ou um anexo muda no recurso, direto na lista da aba. */
+  function atualizarRecursoNaLista(id, mudar) {
+    if (!estado.dados) return;
+    const recursos = estado.dados.recursos.map((r) =>
+      r.id === id ? { ...r, ...mudar(r) } : r,
+    );
+    publicar({ dados: { ...estado.dados, recursos } });
+  }
+
+  const mensagemDaEscrita = (erro) =>
+    erro?.code === "40001"
+      ? "Outra pessoa alterou esta resposta. Recarregue e tente de novo."
+      : mensagemDe(erro);
+
+  /** Rascunho da resposta: `{ ok, id, revisao }` ou `{ erro }`. */
+  function salvarResposta(recursoId, dados) {
+    return executar("resposta:salvar", "Salvando…", async () => {
+      const { data, error } = await supabase.rpc("salvar_resposta_recurso", {
+        p_dados: { recurso_id: recursoId, ...dados },
+      });
+      if (error) {
+        const mensagem = mensagemDaEscrita(error);
+        toast(`Não foi possível salvar a resposta: ${mensagem}`, "error");
+        return { erro: mensagem };
+      }
+      toast("Rascunho da resposta salvo.", "ok");
+      atualizarRecursoNaLista(recursoId, () => ({
+        resposta_estado: data?.estado || "rascunho",
+      }));
+      await carregarDetalhe(recursoId);
+      return { ok: true, id: data?.id, revisao: data?.revisao };
+    });
+  }
+
+  const AVISO_DA_TRANSICAO = {
+    enviar_revisao: "Resposta enviada para revisão.",
+    aprovar: "Resposta aprovada.",
+    devolver: "Resposta devolvida para ajuste.",
+    reabrir: "Resposta reaberta para edição.",
+    marcar_enviada: "Resposta marcada como enviada ao candidato.",
+  };
+
+  /*
+    Enviar para revisão, aprovar, devolver, reabrir ou marcar enviada. Marcar
+    enviada também marca a etapa do recurso (e muda a revisão dele): a aba é
+    relida inteira.
+  */
+  function transicionarResposta(recursoId, resposta, acao, comentario = "") {
+    return executar(`resposta:${acao}`, "Salvando…", async () => {
+      const { data, error } = await supabase.rpc(
+        "transicionar_resposta_recurso",
+        {
+          p_resposta_id: resposta.id,
+          p_acao: acao,
+          p_revisao: resposta.revisao,
+          p_comentario: String(comentario || "").trim() || null,
+        },
+      );
+      if (error) {
+        toast(
+          `Não foi possível concluir: ${mensagemDaEscrita(error)}`,
+          "error",
+        );
+        return false;
+      }
+      toast(AVISO_DA_TRANSICAO[acao] || "Resposta atualizada.", "ok");
+      if (acao === "marcar_enviada") await carregar();
+      else {
+        atualizarRecursoNaLista(recursoId, () => ({
+          resposta_estado: data?.estado,
+        }));
+        await carregarDetalhe(recursoId);
+      }
+      return true;
+    });
+  }
+
+  // ── Anexos ──────────────────────────────────────────────────────────────
+
+  const somarAnexos = (id, quantos) =>
+    atualizarRecursoNaLista(id, (r) => ({
+      qt_anexos: Math.max(0, (Number(r.qt_anexos) || 0) + quantos),
+    }));
+
+  /* Envia ao bucket (caminho da área e do recurso) e registra no banco. */
+  async function enviarERegistrar(recursoId, arquivo, tipo, mime, respostaId) {
+    const caminho = caminhoDoAnexo(
+      estado.area,
+      recursoId,
+      novoId(),
+      arquivo.name,
+    );
+    const envio = await supabase.storage
+      .from(BUCKET_DOS_ANEXOS)
+      .upload(caminho, arquivo, { contentType: mime, upsert: false });
+    if (envio.error) throw new Error(mensagemDe(envio.error));
+    const { error } = await supabase.rpc("registrar_anexo_recurso", {
+      p_recurso_id: recursoId,
+      p_tipo: tipo,
+      p_nome: arquivo.name,
+      p_caminho: caminho,
+      p_resposta_id: respostaId,
+    });
+    if (error) throw new Error(mensagemDe(error));
+  }
+
+  function enviarAnexo(recursoId, arquivo, tipo) {
+    const validacao = validarArquivoDoAnexo(arquivo);
+    if (validacao.erro) {
+      toast(validacao.erro, "warn");
+      return Promise.resolve(false);
+    }
+    return executar("anexo:enviar", "Enviando…", async () => {
+      try {
+        await enviarERegistrar(recursoId, arquivo, tipo, validacao.mime, null);
+      } catch (erro) {
+        toast(`Não foi possível anexar: ${mensagemDe(erro)}`, "error");
+        return false;
+      }
+      toast("Arquivo anexado.", "ok");
+      somarAnexos(recursoId, 1);
+      await carregarDetalhe(recursoId);
+      return true;
+    });
+  }
+
+  function arquivarAnexo(recursoId, anexoId, motivo) {
+    return executar(`anexo:arquivar:${anexoId}`, "Arquivando…", async () => {
+      const { data, error } = await supabase.rpc("arquivar_anexo_recurso", {
+        p_anexo_id: anexoId,
+        p_motivo: motivo,
+      });
+      if (error) {
+        toast(`Não foi possível arquivar: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      toast("Anexo arquivado. O arquivo continua guardado.", "ok");
+      if (data?.alterou !== false) somarAnexos(recursoId, -1);
+      await carregarDetalhe(recursoId);
+      return true;
+    });
+  }
+
+  /*
+    O banco registra o download e devolve o caminho; só então o Storage aceita
+    gerar a URL assinada (a política de leitura procura esse registro), que
+    vale 60 segundos.
+  */
+  function baixarAnexo(anexo) {
+    return executar(`anexo:baixar:${anexo.id}`, "Abrindo…", async () => {
+      const { data, error } = await supabase.rpc(
+        "registrar_download_anexo_recurso",
+        { p_anexo_id: anexo.id },
+      );
+      if (error || !data?.caminho) {
+        toast(
+          `Não foi possível baixar: ${mensagemDe(error || "anexo sem caminho")}`,
+          "error",
+        );
+        return false;
+      }
+      const assinada = await supabase.storage
+        .from(BUCKET_DOS_ANEXOS)
+        .createSignedUrl(data.caminho, VALIDADE_DO_DOWNLOAD, {
+          download: data.nome || true,
+        });
+      if (assinada.error || !assinada.data?.signedUrl) {
+        toast(
+          `Não foi possível baixar: ${mensagemDe(assinada.error || "sem endereço")}`,
+          "error",
+        );
+        return false;
+      }
+      abrirUrl(assinada.data.signedUrl);
+      return true;
+    });
+  }
+
+  // ── Documento da resposta ──────────────────────────────────────────────
+
+  const tituloDoDocumento = (recurso) =>
+    `Resposta ao recurso nº ${recurso.nu ?? ""}`.trim();
+  const docxDaResposta = (recurso, resposta) =>
+    gerarDocx(resposta.texto_final, {
+      titulo: tituloDoDocumento(recurso),
+      quando: new Date(agora()),
+    });
+
+  /** Página de impressão: o navegador imprime ou salva em PDF. */
+  function imprimirResposta(recurso, resposta) {
+    imprimir(resposta.texto_final, nomeDoDocumento(recurso));
+  }
+
+  function baixarDocx(recurso, resposta) {
+    baixarArquivo(
+      new Blob([docxDaResposta(recurso, resposta)], { type: MIME_DOCX }),
+      `${nomeDoDocumento(recurso)}.docx`,
+    );
+  }
+
+  /** O .docx da resposta vira anexo do recurso (tipo "resposta"). */
+  function anexarDocx(recurso, resposta) {
+    return executar("anexo:documento", "Anexando…", async () => {
+      const arquivo = new File(
+        [docxDaResposta(recurso, resposta)],
+        `${nomeDoDocumento(recurso)}.docx`,
+        { type: MIME_DOCX },
+      );
+      try {
+        await enviarERegistrar(
+          recurso.id,
+          arquivo,
+          "resposta",
+          MIME_DOCX,
+          resposta.id,
+        );
+      } catch (erro) {
+        toast(
+          `Não foi possível anexar o documento: ${mensagemDe(erro)}`,
+          "error",
+        );
+        return false;
+      }
+      toast("Documento da resposta anexado ao recurso.", "ok");
+      somarAnexos(recurso.id, 1);
+      await carregarDetalhe(recurso.id);
+      return true;
+    });
+  }
+
+  // ── Modelos de resposta (administração) ────────────────────────────────
+
+  async function carregarModelos() {
+    const { data, error } = await supabase.rpc(
+      "listar_modelos_resposta_recurso",
+    );
+    publicar({
+      modelosAdmin: error
+        ? { erro: mensagemDe(error) }
+        : data || { modelos: [], areas: [], origens: [], marcadores: [] },
+    });
+  }
+
+  function abrirModelos() {
+    publicar({ modelosAbertos: true, modelosAdmin: null });
+    void carregarModelos();
+  }
+
+  const fecharModelos = () => publicar({ modelosAbertos: false });
+
+  /* Salvar cria a versão seguinte; a aba é relida (os modelos da gaveta). */
+  function salvarModelo(rascunho) {
+    return executar("modelo:salvar", "Salvando…", async () => {
+      const { data, error } = await supabase.rpc(
+        "salvar_modelo_resposta_recurso",
+        { p_dados: dadosDoModelo(rascunho) },
+      );
+      if (error) {
+        const mensagem =
+          error.code === "40001"
+            ? "Outra pessoa alterou este modelo. Recarregue e tente de novo."
+            : mensagemDe(error);
+        toast(`Não foi possível salvar o modelo: ${mensagem}`, "error");
+        return { erro: mensagem };
+      }
+      toast(
+        data?.criou_versao === false
+          ? "Nada mudou no modelo."
+          : `Modelo salvo (versão ${data?.versao ?? 1}).`,
+        "ok",
+      );
+      await carregarModelos();
+      void carregar();
+      return { ok: true, id: data?.id, versao: data?.versao };
+    });
+  }
+
+  function arquivarModelo(id, motivo) {
+    return executar(`modelo:arquivar:${id}`, "Arquivando…", async () => {
+      const { error } = await supabase.rpc("arquivar_modelo_resposta_recurso", {
+        p_modelo_id: id,
+        p_motivo: motivo,
+      });
+      if (error) {
+        toast(`Não foi possível arquivar: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      toast("Modelo arquivado.", "ok");
+      await carregarModelos();
+      void carregar();
+      return true;
+    });
+  }
+
   return {
+    salvarResposta,
+    transicionarResposta,
+    enviarAnexo,
+    arquivarAnexo,
+    baixarAnexo,
+    imprimirResposta,
+    baixarDocx,
+    anexarDocx,
+    abrirModelos,
+    fecharModelos,
+    carregarModelos,
+    salvarModelo,
+    arquivarModelo,
     assinar(ouvinte) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);

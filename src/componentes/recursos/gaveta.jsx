@@ -5,8 +5,12 @@ import {
   rotuloDaOrigem,
   rotuloDaSituacao,
 } from "../../lib/recursos-dos-candidatos.js";
+import { rotuloDoEstado } from "../../lib/resposta-do-recurso.js";
 import { Modal } from "../modal.jsx";
+import { SecaoDeAnexos } from "./anexos.jsx";
 import { classes } from "./paineis.jsx";
+import { dataHora, Kv, nota, Secao, TopoDaGaveta } from "./partes.jsx";
+import { SecaoDaResposta } from "./resposta.jsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
 
 /*
@@ -15,25 +19,10 @@ import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
   o resumo em pílulas, o contexto em cartões e as seções
   `.analises-detail-section` com `.kv`). Traz os dados do candidato (vindos da
   análise), a nota e o resultado do cadastro contra os de hoje, o prazo do
-  cronograma, as etapas com quem e quando, a observação e o histórico. Quem
-  edita marca as etapas aqui, edita e exclui.
+  cronograma, as etapas com quem e quando, a resposta ao candidato
+  (resposta.jsx), os anexos (anexos.jsx), a observação e o histórico. Quem
+  edita marca as etapas aqui, escreve a resposta, anexa, edita e exclui.
 */
-
-export const dataHora = (valor) =>
-  valor
-    ? new Date(valor).toLocaleString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
-
-export const nota = (valor) =>
-  valor === null || valor === undefined || valor === ""
-    ? "—"
-    : formatNumberBR(Number(valor), { maximumFractionDigits: 2 });
 
 const CAMPOS_DO_HISTORICO = {
   origem: "Origem",
@@ -48,8 +37,27 @@ const CAMPOS_DO_HISTORICO = {
   vaga_informada: "Vaga",
 };
 
+const ACOES_DA_RESPOSTA_NO_HISTORICO = {
+  criacao: "Criou o rascunho da resposta",
+  enviar_revisao: "Enviou a resposta para revisão",
+  aprovar: "Aprovou a resposta",
+  devolver: "Devolveu a resposta",
+  reabrir: "Reabriu a resposta",
+  marcar_enviada: "Marcou a resposta como enviada",
+};
+
 function textoDoHistorico(h, origens) {
   if (h.acao === "criacao") return "Cadastrou o recurso";
+  if (h.acao === "anexo")
+    return h.campo === "arquivamento"
+      ? `Arquivou o anexo ${h.anterior || ""}${h.motivo ? `: ${h.motivo}` : ""}`
+      : `Anexou ${h.novo || "um arquivo"}`;
+  if (h.acao === "resposta") {
+    const texto =
+      ACOES_DA_RESPOSTA_NO_HISTORICO[h.campo] ||
+      `Resposta: ${rotuloDoEstado(h.novo).toLowerCase()}`;
+    return `${texto}${h.motivo ? `: ${h.motivo}` : ""}`;
+  }
   if (h.acao === "exclusao")
     return `Excluiu o recurso${h.motivo ? `: ${h.motivo}` : ""}`;
   if (h.acao === "etapa") {
@@ -66,76 +74,17 @@ function textoDoHistorico(h, origens) {
   return `${CAMPOS_DO_HISTORICO[h.campo] || h.campo}: ${valor(h.anterior)} → ${valor(h.novo)}`;
 }
 
-/* Um `.kv` do painel de análises; vazio, some (`data-empty`). */
-export function Kv({ rotulo, children }) {
-  const vazio =
-    children === null ||
-    children === undefined ||
-    children === "" ||
-    children === "—";
-  return (
-    <div className="kv" data-empty={vazio || undefined}>
-      <div className="kv-label">{rotulo}</div>
-      <div className="kv-value">{vazio ? "—" : children}</div>
-    </div>
-  );
-}
-
-export function Secao({ icone, titulo, secao, children }) {
-  return (
-    <section
-      className="analises-detail-section"
-      data-section={secao}
-      aria-label={titulo}
-    >
-      <div className="analises-detail-section-head">
-        <i className={`fa-solid ${icone}`} aria-hidden="true" />
-        <span>{titulo}</span>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-/* O topo da gaveta (e do formulário): sobretítulo, título, resumo e fechar. */
-export function TopoDaGaveta({
-  sobretitulo,
-  titulo,
-  tituloId,
-  resumo,
-  aoFechar,
-  rotuloDoFechar,
-}) {
-  return (
-    <div className="analises-drawer-head">
-      <div>
-        <span className="eyebrow">{sobretitulo}</span>
-        <h2 id={tituloId}>{titulo}</h2>
-        {resumo ? (
-          <div className="analises-drawer-summary">{resumo}</div>
-        ) : null}
-      </div>
-      <button
-        type="button"
-        className="analises-drawer-close"
-        aria-label={rotuloDoFechar}
-        title="Fechar"
-        onClick={aoFechar}
-      >
-        <i className="fa-solid fa-xmark" aria-hidden="true" />
-      </button>
-    </div>
-  );
-}
-
 export function GavetaDoRecurso({
   estado,
   recurso: r,
   detalhe,
   origens,
   podeEditar,
+  modelos = [],
+  area = "",
 }) {
   const { acao } = useSyncExternalStore(estado.assinar, estado.obter);
+  const resposta = detalhe?.resposta;
   const [excluindo, setExcluindo] = useState(false);
   const [motivo, setMotivo] = useState("");
   const carregando = !detalhe;
@@ -268,6 +217,34 @@ export function GavetaDoRecurso({
               })}
             </ul>
           </Secao>
+
+          {erro ? null : (
+            <SecaoDaResposta
+              key={
+                resposta
+                  ? `${resposta.id}:${resposta.revisao}`
+                  : detalhe
+                    ? "nova"
+                    : "carregando"
+              }
+              estado={estado}
+              recurso={r}
+              detalhe={detalhe}
+              modelos={modelos}
+              origens={origens}
+              area={area}
+              podeEditar={podeEditar}
+              acao={acao}
+            />
+          )}
+
+          <SecaoDeAnexos
+            estado={estado}
+            recurso={r}
+            detalhe={detalhe}
+            podeEditar={podeEditar}
+            acao={acao}
+          />
 
           {r.fora_analise ? null : (
             <Secao

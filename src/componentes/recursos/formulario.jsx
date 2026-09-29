@@ -19,7 +19,7 @@ import {
   SITUACOES,
 } from "../../lib/recursos-dos-candidatos.js";
 import { Modal } from "../modal.jsx";
-import { Kv, nota, TopoDaGaveta } from "./gaveta.jsx";
+import { Kv, nota, TopoDaGaveta } from "./partes.jsx";
 import { classes } from "./paineis.jsx";
 
 /*
