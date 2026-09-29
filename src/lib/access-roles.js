@@ -100,6 +100,17 @@ export function canManageCandidateAttachments(profile) {
   return hasLevel(profile, "admin");
 }
 
+/* Aba Recursos: ver (leitor) e cadastrar/editar (editor). Por padrão, admin e edital gestor editam. */
+export function canViewRecursos(profile) {
+  if (profile?.permissoes) return hasResource(profile, "recursos");
+  return normalizeRole(profile) !== "";
+}
+
+export function canEditRecursos(profile) {
+  if (profile?.permissoes) return hasResource(profile, "recursos", 2);
+  return ["admin", "edital_gestor"].includes(normalizeRole(profile));
+}
+
 export function canManageSubJudice(profile) {
   if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");
@@ -152,6 +163,7 @@ export function permissaoLegada(profile, perm) {
     if (perm === "admin") return canManageAccess(profile);
     const resource = {
       ind: "dashboard",
+      analises: "analises",
       cores: "nucleo",
       calendario: "calendario",
       paineis: "paineis",
@@ -161,7 +173,7 @@ export function permissaoLegada(profile, perm) {
   }
   const role = normalizeRole(profile);
   if (role) {
-    if (["ind", "cores", "paineis"].includes(perm)) return canViewCore(profile);
+    if (["ind", "analises", "cores", "paineis"].includes(perm)) return canViewCore(profile);
     if (["config", "admin"].includes(perm)) return canManageSettings(profile);
   }
   return profile["p_" + perm] === true;
@@ -175,6 +187,8 @@ export function paginasPermitidas(profile) {
     nucleo: pode("cores"),
     calendario: profile?.permissoes ? pode("calendario") : pode("cores"),
     approved: canViewCore(profile),
+    analises: pode("analises"),
+    recursos: canViewRecursos(profile),
     config: podeAbrirConfiguracoes(profile),
   };
 }

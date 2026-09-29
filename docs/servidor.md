@@ -6,13 +6,13 @@ sob RLS. Não há chave do Supabase no servidor.
 
 ## O que ele faz
 
-| Pedido | Resposta |
-|---|---|
-| `/`, `/index.html`, `/analises`, `/analises.html`, `/auth/callback`, `/auth/callback.html` | a página do `dist/`, idêntica byte a byte ao build, com `Cache-Control: no-store` |
-| `/up` | `200 ok` — saúde para Docker e CI |
-| `/assets/*`, `/icons/*`, `/data/*`, `manifest.webmanifest`, `offline.html`, `sw.js`, `sw-policy.js` | o arquivo estático, com ETag e gzip para texto e JSON |
-| qualquer outra coisa (`/.env`, pastas, arquivos com ponto, `..`) | `404` |
-| método diferente de GET/HEAD numa rota conhecida | `405` |
+| Pedido                                                                                                                    | Resposta                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `/`, `/index.html`, `/analises`, `/analises.html`, `/recursos`, `/recursos.html`, `/auth/callback`, `/auth/callback.html` | a página do `dist/`, idêntica byte a byte ao build, com `Cache-Control: no-store` |
+| `/up`                                                                                                                     | `200 ok` — saúde para Docker e CI                                                 |
+| `/assets/*`, `/icons/*`, `/data/*`, `manifest.webmanifest`, `offline.html`, `sw.js`, `sw-policy.js`                       | o arquivo estático, com ETag e gzip para texto e JSON                             |
+| qualquer outra coisa (`/.env`, pastas, arquivos com ponto, `..`)                                                          | `404`                                                                             |
+| método diferente de GET/HEAD numa rota conhecida                                                                          | `405`                                                                             |
 
 - **Cabeçalhos de segurança:** lidos do `vercel.json`. Vercel e servidor têm uma fonte só; mudou lá,
   mudou aqui. O HSTS só sai por HTTPS (conexão TLS ou `X-Forwarded-Proto: https` do proxy).

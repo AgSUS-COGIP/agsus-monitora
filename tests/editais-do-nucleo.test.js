@@ -204,6 +204,30 @@ describe("unidades por área", () => {
     ).toContain("Rio Doce");
   });
 
+  it("unidade registrada com área entra em qualquer responsável, uma vez só", () => {
+    const registradas = [
+      ...TA,
+      { unidade: "CCE", area: "projetos" },
+      { unidade: "Projeto Novo", area: "projetos" },
+    ];
+    const mapa = mapaDeAreasDasUnidades({
+      unidadesPorArea: registradas,
+      catalogo: CATALOGO,
+    });
+    const nomes = (responsavel) =>
+      unidadesDaArea(
+        opcoesDeUnidade(responsavel, CATALOGO, [], registradas),
+        "projetos",
+        mapa,
+      ).map((u) => u.nome_oficial);
+    expect(nomes("")).toEqual(["CCE", "Projeto Novo", "Rio Doce"]);
+    expect(nomes("USI")).toEqual(["CCE", "Projeto Novo", "Rio Doce"]);
+    expect(nomes("CORES")).toEqual([
+      ...UNIDADES_CORES.filter((nome) => nome !== "SEDE"),
+      "Projeto Novo",
+    ]);
+  });
+
   it("o payload leva co_area só quando há área", () => {
     const formulario = formularioDoEdital(null, CATALOGO, []);
     const cronograma = { automatico: false, etapas: [] };

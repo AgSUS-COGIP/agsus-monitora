@@ -19,6 +19,7 @@ const CONSULTAS = [
   ["loadConfig", "config"],
   ["loadPanels", "paineis"],
   ["loadMapaConfig", "mapa"],
+  ["carregarCatalogoDeAbas", "abas"],
   ["loadUnidades", "unidades"],
   ["loadData", "monitoramento"],
 ];

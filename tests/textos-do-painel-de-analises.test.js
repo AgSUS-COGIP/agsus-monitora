@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   haLinhasSemParecer,
   linhaSemParecer,
-  mapaDosPareceres,
-  mesclarPareceres,
+  mapaDosTextos,
+  mesclarTextos,
   municipioUfDaLinha,
   municipioUfDaVaga,
   parecerDoDetalhe,
@@ -50,32 +50,69 @@ describe("parecer sob demanda", () => {
   });
 
   it("monta o mapa pelos nomes das colunas", () => {
-    const mapa = mapaDosPareceres({
-      columns: ["id", "analise"],
+    const mapa = mapaDosTextos({
+      columns: ["id", "analise", "link_pdf", "experiencia_profissional_anos"],
       rows: [
-        ["a", "Apto"],
-        ["b", "  texto com espaço  "],
-        [null, "sem id"],
+        ["a", "Apto", "https://pdf/a", 2],
+        ["b", "  texto com espaço  ", null, null],
+        [null, "sem id", null, null],
       ],
     });
     expect([...mapa]).toEqual([
-      ["a", "Apto"],
-      ["b", "  texto com espaço  "],
+      [
+        "a",
+        {
+          analise: "Apto",
+          link_pdf: "https://pdf/a",
+          experiencia_profissional_anos: 2,
+        },
+      ],
+      [
+        "b",
+        {
+          analise: "  texto com espaço  ",
+          link_pdf: null,
+          experiencia_profissional_anos: null,
+        },
+      ],
     ]);
-    expect(mapaDosPareceres({ columns: ["id"], rows: [["a"]] }).size).toBe(0);
-    expect(mapaDosPareceres(null).size).toBe(0);
+    // O payload antigo, só com o parecer, continua servindo.
+    expect(
+      mapaDosTextos({ columns: ["id", "analise"], rows: [["a", "X"]] }).get(
+        "a",
+      ),
+    ).toEqual({ analise: "X" });
+    expect(mapaDosTextos({ columns: ["id"], rows: [["a"]] }).size).toBe(0);
+    expect(mapaDosTextos(null).size).toBe(0);
   });
 
-  it("põe o parecer só nas linhas sem ele, e null para quem não tem no banco", () => {
-    const linhas = [{ id: "a" }, { id: "b" }, { id: "c", analise: "já veio" }];
-    const alteradas = mesclarPareceres(linhas, new Map([["a", "Apto"]]));
+  it("põe o parecer e o que veio junto só nas linhas sem ele, e null para quem não tem no banco", () => {
+    const linhas = [
+      { id: "a", link_pdf: "já tinha" },
+      { id: "b" },
+      { id: "c", analise: "já veio" },
+    ];
+    const mapa = new Map([
+      [
+        "a",
+        {
+          analise: "Apto",
+          link_pdf: "novo",
+          experiencia_profissional_total: 30,
+        },
+      ],
+    ]);
+    const alteradas = mesclarTextos(linhas, mapa);
     expect(alteradas).toEqual([linhas[0], linhas[1]]);
     expect(linhas.map((linha) => linha.analise)).toEqual([
       "Apto",
       null,
       "já veio",
     ]);
-    expect(mesclarPareceres(linhas, new Map([["a", "outro"]]))).toEqual([]);
+    // Campo que a linha já tem não é trocado.
+    expect(linhas[0].link_pdf).toBe("já tinha");
+    expect(linhas[0].experiencia_profissional_total).toBe(30);
+    expect(mesclarTextos(linhas, mapa)).toEqual([]);
   });
 
   it("lê o parecer do detalhe", () => {

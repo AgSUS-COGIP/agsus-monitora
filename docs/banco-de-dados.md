@@ -80,11 +80,10 @@ registro passar a mentir.
 
 ### 2.1 Acesso direto a tabelas
 
-Doze pontos, em nove tabelas. Dez são leitura.
+Onze pontos, em oito tabelas. Nove são leitura.
 
 | Tabela                        | Operação   | Onde                                                        |
 | ----------------------------- | ---------- | ----------------------------------------------------------- |
-| `analises_editais`            | select     | `analises/analises-scope-guard.js`                          |
 | `monitoramento_indigena`      | select     | `modules/health-status-details.js`, `modules/legacy-app.js` |
 | `solicitacoes_acesso`         | select ×3  | `modules/legacy-app.js`                                     |
 | `solicitacoes_acesso`         | **insert** | `modules/legacy-app.js` — pedido que a própria pessoa faz   |
@@ -137,7 +136,7 @@ Sem migration (⚠ = crítica):
 - ~~`salvar_monitoramento_indigena`~~ (removida em `20260925150000_remove_objetos_mortos.sql`)
 - ⚠ `salvar_monitoramento_com_cronograma_v2`
 - ⚠ `get_monitoramento_cronograma`
-- ⚠ `get_analises_dashboard_payload_v2` (hoje em `20260928200000`)
+- ⚠ `get_analises_dashboard_payload_v2` (hoje em `20260928240000`)
 - `get_acessos_config_master`
 - `get_configuracoes_snapshot`
 - `get_configuracoes_historico`
@@ -423,6 +422,100 @@ Migration `20260928200000_analises_painel_mais_leve.sql` (rollback em
 - Fora da Saúde Indígena, o payload ganha `municipio_uf` no fim de `columns`,
   lido do nome da vaga ("… UBS móvel Seropédica/RJ …" → `Seropédica/RJ`).
 
+### 6.3 Cache do painel de análises (servidor e navegador)
+
+Migration `20260928240000_cache_do_painel_de_analises.sql` (rollback em
+`supabase/rollback/`, que volta às definições de 28/09/2026; ensaiado, com hash
+das funções igual ao de antes).
+
+- `private."TA_PAINEL_ANALISE"` guarda, por área, as linhas e os editais do
+  escopo `ativo` já montados em JSON (`DS_LINHAS`, `DS_EDITAIS`, `QT_LINHAS`),
+  a versão dos dados usada (`DS_VERSAO_DADOS`), a hora (`DT_GERACAO`) e quanto
+  levou (`NU_DURACAO_MS`). Schema `private`, RLS ligada, sem policy e sem grant:
+  só funções `SECURITY DEFINER` leem (como as da seção 4.2).
+- A montagem saiu de dentro de `get_analises_dashboard_payload_v2` para
+  `private."FC_MONTAR_PAINEL_ANALISE"(área, escopo)`, sem mudar o SQL e sem
+  checar permissão: a RPC e a remontagem usam a mesma conta.
+- `get_analises_dashboard_payload_v2` mantém assinatura, permissão
+  (`pode_recurso` + `FC_GRUPOS_ANALISES_DA_AREA`) e conteúdo (md5 de `rows` e
+  `editais` igual ao de antes nas três áreas). No `ativo`, devolve o guardado
+  (`cache.hit = true`; `generated_at` e `cache.refreshed_at` = hora da
+  montagem). `inativo` e `todos` seguem montados na hora.
+- O guardado vale enquanto `private."FC_VERSAO_DADOS_ANALISE"(área)` — quantos
+  syncs das planilhas da área terminaram e o último `finished_at`, em
+  `TL_SYNC_ANALISE` — for a mesma da montagem e ele tiver menos de 40 min.
+  Vencido, a RPC remonta (uma abertura por vez, por trava consultiva; as outras
+  recebem o guardado anterior) e, se não conseguir gravar, monta na hora.
+- Quem remonta: `public.atualizar_cache_painel_analises(p_area default null)`
+  (só `service_role`/`postgres`), chamada no fim de
+  `finalizar_sync_analises_lotes` e `finalizar_sync_analises_incremental` (a
+  área da planilha; erro vira aviso, o sync não falha), pelo pg_cron
+  `agsus_analises_cache_do_painel` (`7,37 * * * *`, todas as áreas) e pela RPC.
+  Sem gatilho por linha (o cache antigo, `TA_DASHBOARD_ANALISE`, era apagado a
+  cada escrita do sync).
+- Ensaio (Saúde Indígena, 6.828 linhas, 3,5 MB): a RPC levava de 0,6 s (banco
+  quente) a 5 s (frio); com o cache, 0,14–0,17 s. Projetos: 0,08–0,5 s →
+  0,03 s. A remontagem da Saúde Indígena leva 0,2–0,8 s.
+- No navegador, o payload fica no IndexedDB (banco `agsus-monitora-analises`,
+  por usuário, área e escopo, amarrado à publicação e ao `schema_version`):
+  o painel abre com a cópia e revalida por trás (`analises-consolidated-transport.js`,
+  regras em `src/lib/cache-do-painel-de-analises.js`). O MONITORA apaga esse
+  banco ao sair pelo botão, em "Limpar sessão", com acesso revogado e quando
+  outro usuário entra. O cache antigo do `localStorage`
+  (`agsus_analises_cache_*`) é apagado ao abrir o painel.
+
+### 6.4 Lista enxuta e os três escopos prontos
+
+Migration `20260929150000_analises_lista_enxuta.sql` (rollback em
+`supabase/rollback/`, que volta às definições que estavam no banco em 29/09,
+inclusive o recorte por coordenação aplicado fora do repositório; ensaiado, com
+hash das funções, permissões, comentários e colunas iguais aos de antes).
+
+- **Lista (schema_version 4)**: `columns` = `id`, `unidade`, `edital`,
+  `codigo_vaga`, `nome_vaga`, `candidato`, `categoria`,
+  `modalidade_concorrencia`, `status_consolidado`, `etapa`,
+  `responsavel_analise`, `data_analise`, `nota_final_ajustada`, `pdf_status`,
+  `tem_pdf`. O envelope ganhou `grupo` (o da área), `edital_status` (do
+  escopo), `atualizado_em` (o "Atualizado em" do painel), `versao_dados` e
+  `detalhe_sob_demanda`. Saúde Indígena ativa: 3.644 KB → 1.935 KB (gzip
+  370 → 306 KB); inativa: 7.804 KB → 3.926 KB (gzip 859 → 633 KB); Projetos
+  inativo: 828 KB → 411 KB.
+- **O que saiu da linha e onde está**: a janela oficial e a validação, o front
+  calcula com `editais[]` (como já fazia quando a linha vinha sem janela); o
+  município/UF, o front lê do nome da vaga; pontuações, experiências,
+  `link_pdf`, `erro_pdf`, `origem_arquivo_id`, `updated_at`,
+  `ultima_atualizacao`, `chave_natural` vêm em
+  `get_analise_detalhe_do_painel(p_id)`, ao abrir o registro;
+  `get_analises_texto_do_painel` traz, com o parecer, `link_pdf` e o tempo de
+  experiência profissional, e o CSV sai igual ao de antes.
+- **Três escopos guardados** por área em `TA_PAINEL_ANALISE`, que dividem as
+  análises sem sobra nem repetição: `ativo` (análise ativa de edital ativo),
+  `inativo` (edital inativo) e `desativadas` (análise desativada pelo sync, de
+  edital ativo — só aparece em "Todos"). "Todos" não tem pacote: o front junta
+  os três na ordem do banco (unidade, edital, vaga, candidato e, no desempate,
+  o id). `private."FC_MONTAR_PAINEL_ANALISE"(área, escopos[], só_visíveis)`
+  monta os escopos numa passada pela tabela (Saúde Indígena: 2–4 s os três,
+  contra ~5 s só o ativo e ~8 s só o inativo antes).
+- **Quem recebe o pronto**: quem vê a área inteira (`FC_EDITAIS_VISIVEIS()`
+  nulo). Quem tem recorte por coordenação recebe a lista montada na hora, só
+  com o que pode ver. RPC com o pronto: Saúde Indígena ativa 1,6–5,1 s →
+  0,03–0,11 s; inativa 0,4–3 s → 0,01–0,07 s.
+- **Remontagem**: `atualizar_cache_painel_analises(p_area, p_escopos)` (só
+  `service_role`/`postgres`) e o pg_cron `agsus_analises_cache_do_painel`
+  (a cada 2 min, `atualizar_cache_painel_analises_vencidos`), que remonta a
+  área só quando a versão dos dados muda, falta um escopo ou o pronto tem mais
+  de 6 h.
+- `get_analises_dashboard_filtrado` saiu: o painel não pede mais o recorte
+  (unidades e editais) antes de mostrar Inativo e Todos; os filtros de unidade
+  e edital agem sobre as linhas carregadas.
+- **No navegador**: uma cópia por escopo no IndexedDB (`ativo`, `inativo`,
+  `desativadas`); "Todos" reaproveita as de Ativo e Inativo. A cópia aceita
+  `schema_version` 3 e 4.
+- **Ordem de publicação**: primeiro o front (aceita o payload de 35 colunas e o
+  enxuto; sem o escopo `desativadas` no banco, "Todos" cai na leitura pela
+  view), depois a migration. Ao contrário, o front antigo mostraria a lista
+  enxuta sem grupo e sem detalhamento, e o Inativo quebraria (sem o filtrado).
+
 ## 7. Edital sempre na área certa
 
 Migration `20260928220000_edital_na_area_certa.sql` (rollback em
@@ -476,3 +569,135 @@ Risco levantado no ensaio: dos 137 editais, 100 têm unidade fora de
 `TA_UNIDADE_AREA` (36 unidades, todas DSEI/CASAI do `TD_UNIDADE`, todas na
 Saúde Indígena) e **nenhum** tem unidade fora das duas tabelas; nenhum edital
 tem área diferente da que a regra deduz.
+
+## 8. Análises curriculares viram aba interna
+
+Migration `20260929100000_analises_aba_interna.sql` (rollback em
+`supabase/rollback/`; ensaiada, com o rollback, em 28/09/2026).
+
+Análises curriculares era a linha `analises` de `TB_PAINEL_EXTERNO`, aberta
+como painel externo e repetida em cada área pelo menu. Para vê-la eram precisos
+três recursos: `analises`, `paineis` e `painel:<id do analises>`. Agora é a
+view `analises` do front (`src/modules/pagina-de-analises.js`), com endereço
+fixo do app (`analises.html?area=<área atual>`) e permissão **só do recurso
+`analises`** (>= leitor). Nenhuma RPC mudou.
+
+- **Quem via continua vendo.** Quem via o painel já tinha `analises` >= leitor
+  (era uma das três condições); nenhuma linha é criada para essas pessoas, e a
+  migration aborta se alguém delas ficasse sem acesso.
+- **Quem não via continua sem ver** (padrão, `c_manter_quem_nao_via = true` no
+  topo do bloco): quem tinha `analises` mas não o painel ganha linha explícita
+  `analises` = `sem_acesso`. Isso também tira o acesso direto a
+  `analises.html` e às RPCs de análises, que essas pessoas tinham pelo padrão
+  do papel. Com `false`, elas passam a ver a aba e nenhuma linha é criada.
+- **O painel é arquivado**: `ativo = false` e `tipo_abertura = 'aba_interna'`
+  (a marca, em coluna existente; `em_manutencao` não muda). As linhas
+  `painel:<id>` de `TB_PERMISSAO_RECURSO` ficam, como histórico. Painel
+  inativo já some de `obter_contexto_monitora` (`panel_ids`) e da matriz
+  (`obter_matriz_acessos` lista só painel ativo).
+- **Auditoria**: cada permissão alterada em `TH_PERMISSAO_RECURSO` (motivo
+  "Análises curriculares viram aba interna"); o arquivamento em
+  `TH_CONFIGURACAO` (histórico de configurações, com a foto dos painéis antes e
+  depois). Idempotente: com a marca já gravada, não faz nada.
+- **Rollback**: desfaz só as permissões que a migration mudou e que ninguém
+  mudou depois (linha criada por ela sai; linha que já existia volta ao nível e à
+  revisão anteriores) e devolve `ativo`/`tipo_abertura` da foto
+  `paineis_antes`. Registra o desfazer nos dois históricos.
+
+Ensaio (begin…rollback, produção, 22 perfis ativos): a fórmula da migration bate
+com `private.nivel_recurso` perfil a perfil (impersonando cada usuário). Viam o
+painel: admin 9/9, edital_gestor 2/2, usuario 9/11. Depois: os mesmos 20 veem a
+aba, ninguém perde e ninguém ganha; 2 linhas criadas (`usuario`, `analises` =
+`sem_acesso`, sem linha anterior — contas de 24 e 25/09, sem nenhum painel);
+`panel_ids` somados 80 → 60; a matriz fica com Seleção, Entrevistas e Recursos.
+Com `false`, 0 linhas e os 2 passam a ver. Rodar duas vezes não muda nada.
+Migration + rollback devolvem `TB_PERMISSAO_RECURSO` (nível, revisão,
+updated_at, updated_by) e a linha do painel idênticas.
+
+Cuidado: restaurar no Histórico de configurações uma versão anterior a esta
+migration reativa a linha (`ativo`), e a coluna `painel:<analises>` volta à
+matriz. O front ignora o painel `analises` de qualquer jeito
+(`semOPainelAntigoDeAnalises`, em `src/lib/pagina-de-analises.js`).
+
+## 9. Catálogo de abas (etapa 1 do "tudo vira aba")
+
+Migration `20260929110000_catalogo_de_abas.sql` (rollback em
+`supabase/rollback/`; ensaiada, com o rollback, em 28/09/2026). **Nenhuma
+mudança visível**: o seed é o menu de hoje.
+
+- `TB_ABA` — catálogo: `CO_ABA` (visao-geral, editais, cronograma, aprovados,
+  analises), `NO_ABA`, `DS_ICONE`, `NU_ORDEM`, `CO_VIEW` (a tela do front:
+  `dashboard`, `visao-area`, `nucleo`, `calendario`, `approved`, `analises`),
+  `CO_RECURSO` (o recurso de permissão que a aba usa hoje), `TP_ABA`
+  (`nativa`/`externa`), `ST_ATIVO` e auditoria (`DT_CRIACAO`,
+  `DT_ATUALIZACAO`, `CO_USUARIO_ATUALIZACAO`).
+- `RL_ABA_AREA` — aba × área (`TB_AREA`). Sem linha ativa, a aba não aparece
+  na área. `NU_ORDEM`, `CO_VIEW` e `DS_ICONE` nulos herdam da aba: é assim que
+  a Visão geral é `dashboard`/`map` na Saúde Indígena e
+  `visao-area`/`layout-dashboard` na SEDE e em Projetos.
+- `listar_abas_do_menu()` — JSON
+  `[{co_aba, no_aba, ds_icone, nu_ordem, co_view, co_recurso, tp_aba, areas: [{co_area, nu_ordem, co_view, ds_icone}]}]`,
+  só o que está ativo, com a herança já resolvida. `SECURITY INVOKER`: não
+  precisa de privilégio a mais, então valem a RLS (`using (true)` para
+  `authenticated`) e os grants (só `select` para `authenticated`; `anon` sem
+  nada). Nenhuma escrita: a manutenção virá por RPC de administração.
+
+Não entram ainda: permissão perfil × aba (continua `TB_PERMISSAO_RECURSO` por
+recurso; `CO_RECURSO` é o ponto de partida) e os painéis externos (Seleção,
+Entrevistas, Recursos seguem em `TB_PAINEL_EXTERNO`, grupo "Painéis"; quando
+virarem aba, entram com `TP_ABA = 'externa'`).
+
+O front (`src/modules/catalogo-de-abas.js`) pede a função junto com as outras
+consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
+`abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
+`ABAS_DO_MENU` (`src/lib/menu-lateral.js`), o mesmo catálogo no código — por
+isso o front pode ir antes da migration. `tests/catalogo-de-abas.test.js`
+confere que o seed é `ABAS_DO_MENU`, que a resposta capturada no ensaio
+(`tests/fixtures/listar-abas-do-menu.json`) é a que o seed produz e que a árvore
+do menu é a de antes em toda combinação de permissão e área.
+
+Ensaio (begin…rollback, produção): 5 abas, 15 ligações, a função como
+`authenticated` (admin ativo) devolve o menu de hoje; `anon` recebe `42501` na
+função e na tabela; `authenticated` recebe `42501` ao inserir; migration +
+rollback não deixam tabela nem função.
+
+## 10. Recursos dos candidatos viram aba nativa
+
+Migration `20260929120000_recursos.sql` (rollback em `supabase/rollback/`;
+ensaiada com o rollback em 29/09/2026 — as quatro funções de permissão voltam
+com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
+"Recursos" (`TB_PAINEL_EXTERNO`) fica até a aba ser aprovada.
+
+- `TB_ORIGEM_RECURSO` (domínio: análise curricular, entrevista, resultado
+  final; avaliação de conhecimentos inativa), `TB_RECURSO_CANDIDATO` (edital =
+  `TB_MONITORAMENTO_INDIGENA`, área do edital; candidato = FK para
+  `TB_ANALISE_CURRICULAR`, sem cópia de nome/vaga/nota; só "fora das análises"
+  guarda o digitado; nota e resultado do dia do cadastro para saber se a nota
+  mudou; etapas com quando e quem) e `TH_RECURSO_CANDIDATO` (auditoria).
+  RLS ligada, sem policy nem grant: só as RPCs leem e escrevem.
+- RPCs `SECURITY DEFINER`: `get_recursos_da_area` (json), `get_recurso_candidato_detalhe`,
+  `buscar_candidatos_recurso`, `salvar_recurso_candidato` (revisão → `40001`,
+  duplicado em análise → `23505` salvo `permitir_duplicado`),
+  `marcar_etapa_recurso`, `excluir_recurso_candidato` (lógica, com motivo).
+- Permissão: recurso `recursos` (admin = admin, edital_gestor = editor,
+  usuario/contratador = leitor) + área do edital (`FC_PODE_AREA`). Ler exige
+  leitor; gravar e buscar candidato, editor.
+- Catálogo: aba `recursos` (ícone `scale`, ordem 6) nas três áreas.
+- O prazo de resposta é classificado no front a partir das etapas do
+  cronograma (`src/lib/prazo-do-recurso.js`); nada é guardado no banco.
+
+## 11. CCE e Escritório Distrital e Regional são Projetos
+
+Migration `20260929180000_cce_e_escritorio_em_projetos.sql` (rollback em
+`supabase/rollback/`). Em 25/09 as duas unidades foram para a SEDE,
+provisoriamente; a decisão de 29/09/2026 é que a SEDE só tem a unidade SEDE.
+
+- `TA_UNIDADE_AREA`: CCE e Escritório Distrital e Regional → `projetos`. O
+  formulário da SEDE deixa de oferecê-las e o salvar as recusa num edital da
+  SEDE.
+- Os editais dessas unidades que estavam em `sede` vão para `projetos`, com uma
+  linha de auditoria cada em `TH_MONITORAMENTO` (`campo_alterado = 'CO_AREA'`,
+  `snapshot_json.acao = 'cce_e_escritorio_em_projetos'`), como no
+  `mover_edital_de_area`. Edital já movido por um administrador para outra área
+  fica onde está.
+- As análises curriculares não mudam: a área delas vem do `grupo` da planilha.

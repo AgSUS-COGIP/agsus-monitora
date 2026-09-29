@@ -23,6 +23,7 @@ const RESPOSTAS = {
   paineis: ok([{ id: 1, codigo: "bi" }]),
   mapa: ok([{ chave: "lmap", payload: { dsei: [] } }]),
   unidades: ok([{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }]),
+  abas: ok([{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }]),
   monitoramento: [{ resumo: 1 }, ok([{ id: 10, edital: "01/2026" }])],
 };
 
@@ -75,6 +76,7 @@ describe("dados das respostas", () => {
       paineis: [{ id: 1, codigo: "bi" }],
       mapa: [{ chave: "lmap", payload: { dsei: [] } }],
       unidades: [{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }],
+      abas: [{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }],
       monitoramento: {
         payload: { resumo: 1 },
         linhas: [{ id: 10, edital: "01/2026" }],
@@ -88,6 +90,26 @@ describe("dados das respostas", () => {
       expect(dadosDasRespostas({ ...RESPOSTAS, [parte]: falha })).toBeNull();
     },
   );
+
+  /*
+    O catálogo de abas tem reserva no código (o mesmo menu): falhar, ou a função
+    ainda não existir no banco, não joga a cópia fora.
+  */
+  it("o catálogo de abas que falhou fica nulo, e a cópia continua", () => {
+    const dados = dadosDasRespostas({ ...RESPOSTAS, abas: falha });
+    expect(dados).not.toBeNull();
+    expect(dados.abas).toBeNull();
+    const semAbas = { ...RESPOSTAS };
+    delete semAbas.abas;
+    expect(dadosDasRespostas(semAbas).abas).toBeNull();
+  });
+
+  it("cópia antiga, sem o catálogo de abas, volta com as abas vazias", async () => {
+    const antiga = dadosDasRespostas(RESPOSTAS);
+    delete antiga.abas;
+    const { abas } = await respostasDasConsultas(consultasDosDados(antiga));
+    expect(abas).toEqual(ok(null));
+  });
 
   it("nenhuma cópia se a tabela do monitoramento falhou", () => {
     expect(
@@ -155,6 +177,12 @@ describe("o que mudou desde a cópia", () => {
     expect([...partesQueMudaram(anteriores, atuais)]).toEqual([
       "monitoramento",
     ]);
+  });
+
+  it("o catálogo de abas conta como parte", () => {
+    const atuais = structuredClone(anteriores);
+    atuais.abas = null;
+    expect([...partesQueMudaram(anteriores, atuais)]).toEqual(["abas"]);
   });
 });
 

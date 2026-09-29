@@ -9,6 +9,7 @@ import {
 } from "../src/lib/boas-vindas.js";
 import { initBoasVindas } from "../src/modules/boas-vindas.js";
 import {
+  definirAreaAtual,
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../src/componentes/dados-do-monitoramento.js";
@@ -83,6 +84,27 @@ describe("componente de boas-vindas", () => {
     expect(
       raiz.querySelector('[data-boas-vindas="cronograma"]'),
     ).not.toBeNull();
+  });
+
+  it("na SEDE conta os editais da SEDE e abre o Cronograma dela", () => {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      '<button class="menu-item" data-view="calendario" data-area="sede"></button>',
+    );
+    let abriu = false;
+    document
+      .querySelector('.menu-item[data-area="sede"]')
+      .addEventListener("click", () => (abriu = true));
+    iniciar();
+    publicarLinhasDoMonitoramento([
+      { CO_AREA: "saude-indigena", cronograma_proxima_data: "2026-09-30" },
+      { CO_AREA: "sede", cronograma_proxima_data: "2026-09-29" },
+      { CO_AREA: "sede", cronograma_proxima_data: "2026-10-01" },
+    ]);
+    definirAreaAtual("sede");
+    expect(raiz.textContent).toContain("2 editais");
+    raiz.querySelector('[data-boas-vindas="cronograma"]').click();
+    expect(abriu).toBe(true);
   });
 
   it("fechar esconde e continua fechado no mesmo dia", () => {

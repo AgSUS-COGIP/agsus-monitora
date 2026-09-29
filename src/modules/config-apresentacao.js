@@ -11,7 +11,8 @@
   2. DICAS: um "?" ao lado do rótulo abre a explicação do campo (tooltip do
      design.md 11.10). O mesmo texto vai para o aria-describedby do campo.
   3. PRÉVIA: ao lado dos campos, como aquilo aparece de verdade — a barra
-     lateral, a página inicial, o cartão de entrada e o resumo dos painéis.
+     lateral, a página inicial, o cartão de entrada e o resumo dos painéis
+     externos (o Realtime fica em Operação).
      Atualiza enquanto se digita e sempre que a seção é aberta
      (evento agsus:secao-de-configuracao-aberta, de config-secoes.js), porque
      o legado preenche os campos por código, sem evento de input.
@@ -292,7 +293,6 @@ function paineisNaTela(documento) {
 }
 
 function previaDosRecursos(documento) {
-  const ligado = valor(documento, "cfgRealtimeEnabled") !== "false";
   const resumo = resumoDosPaineis(paineisNaTela(documento));
   const faixas = [
     ["ativo", "Ativos", "sucesso"],
@@ -304,19 +304,6 @@ function previaDosRecursos(documento) {
     documento,
     "div",
     { className: "previa-recursos" },
-    el(
-      documento,
-      "div",
-      { className: "previa-tempo-real", "data-ligado": ligado ? "sim" : "nao" },
-      el(documento, "span", { className: "previa-tempo-real__ponto", "aria-hidden": "true" }),
-      el(
-        documento,
-        "div",
-        {},
-        el(documento, "strong", { texto: ligado ? "Tempo real ligado" : "Tempo real desligado" }),
-        el(documento, "small", { texto: ligado ? "Os dados mudam na tela sem recarregar." : "Os dados só mudam ao recarregar a página." }),
-      ),
-    ),
     el(documento, "strong", { className: "previa-recursos__titulo", texto: `${resumo.total} ${resumo.total === 1 ? "painel externo" : "painéis externos"}` }),
     resumo.total
       ? el(
@@ -343,7 +330,7 @@ const PREVIAS = Object.freeze({
   marca: ["Prévia da barra lateral", previaDaMarca],
   inicio: ["Prévia da página inicial", previaDaPaginaInicial],
   acesso: ["Prévia do cartão de entrada", previaDaTelaDeAcesso],
-  recursos: ["Resumo", previaDosRecursos],
+  recursos: ["Resumo dos painéis externos", previaDosRecursos],
 });
 
 function montarPrevia(documento, secao) {

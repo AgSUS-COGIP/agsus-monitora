@@ -3,7 +3,6 @@ import {
   AREA_PADRAO_DO_PAINEL,
   areaDaUrlDoPainel,
   chaveDoCacheDoPayload,
-  chaveDoCacheLocalDeAnalises,
   colunasDoCsvDeAnalises,
   ehAreaSaudeIndigena,
   experienciaProfissionalDaLinha,
@@ -65,30 +64,6 @@ describe("a área do painel pela URL", () => {
 });
 
 describe("cache por área", () => {
-  const base = {
-    prefixo: "agsus_analises_cache_v1",
-    versao: 5,
-    usuario: "u1",
-    escopo: "ativo",
-  };
-
-  it("a chave da Saúde Indígena é a de sempre (o cache já guardado vale)", () => {
-    expect(
-      chaveDoCacheLocalDeAnalises({ ...base, area: "saude-indigena" }),
-    ).toBe("agsus_analises_cache_v1_v5_u1_ativo");
-  });
-
-  it("as outras áreas têm chave própria e nunca batem entre si", () => {
-    const chaves = ["saude-indigena", "sede", "projetos"].map((area) =>
-      chaveDoCacheLocalDeAnalises({ ...base, area }),
-    );
-    expect(chaves[2]).toBe("agsus_analises_cache_v1_v5_u1_projetos_ativo");
-    expect(new Set(chaves).size).toBe(3);
-    expect(
-      chaveDoCacheLocalDeAnalises({ ...base, usuario: "", area: "sede" }),
-    ).toBe("agsus_analises_cache_v1_v5_anonymous_sede_ativo");
-  });
-
   it("o cache em memória do transporte também separa as áreas", () => {
     expect(chaveDoCacheDoPayload("projetos", "ativo")).toBe("projetos:ativo");
     expect(chaveDoCacheDoPayload("saude-indigena", "Todos")).toBe(

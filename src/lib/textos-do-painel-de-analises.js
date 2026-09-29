@@ -52,35 +52,48 @@ export function haLinhasSemParecer(linhas) {
   return Array.isArray(linhas) && linhas.some(linhaSemParecer);
 }
 
-/** `{ columns: ["id", "analise"], rows: [[id, texto], …] }` → Map(id → texto). */
-export function mapaDosPareceres(payload) {
+/*
+  `{ columns: ["id", "analise", "link_pdf", …], rows: [[id, …], …] }` →
+  Map(id → { analise, link_pdf, … }): as colunas pelo nome, menos o id.
+*/
+export function mapaDosTextos(payload) {
   const mapa = new Map();
   const colunas = Array.isArray(payload?.columns) ? payload.columns : [];
   const linhas = Array.isArray(payload?.rows) ? payload.rows : [];
   const posId = colunas.indexOf("id");
-  const posTexto = colunas.indexOf("analise");
-  if (posId < 0 || posTexto < 0) return mapa;
+  if (posId < 0 || !colunas.includes("analise")) return mapa;
   linhas.forEach((valores) => {
     if (!Array.isArray(valores)) return;
     const id = texto(valores[posId]);
-    if (id) mapa.set(id, valores[posTexto] ?? null);
+    if (!id) return;
+    const campos = {};
+    colunas.forEach((coluna, pos) => {
+      if (pos !== posId) campos[coluna] = valores[pos] ?? null;
+    });
+    mapa.set(id, campos);
   });
   return mapa;
 }
 
 /*
-  Põe o parecer nas linhas que vieram sem ele. A linha que não está no mapa
-  não tem parecer no banco: fica com `analise: null`, como no payload antigo.
-  Devolve as linhas alteradas (as mesmas referências), para o chamador
-  refazer o que depende do texto (a busca).
+  Põe o parecer (e o que mais veio junto: link do PDF, experiência) nas linhas
+  que vieram sem ele. A linha que não está no mapa não tem parecer no banco:
+  fica com `analise: null`, como no payload antigo. Campo que a linha já tem
+  não é trocado. Devolve as linhas alteradas (as mesmas referências), para o
+  chamador refazer o que depende do texto (a busca).
 */
-export function mesclarPareceres(linhas, mapa) {
+export function mesclarTextos(linhas, mapa) {
   const alteradas = [];
   if (!Array.isArray(linhas) || !(mapa instanceof Map)) return alteradas;
   linhas.forEach((linha) => {
     if (!linhaSemParecer(linha)) return;
-    const id = texto(linha.id);
-    linha.analise = id && mapa.has(id) ? mapa.get(id) : null;
+    const campos = mapa.get(texto(linha.id)) || {};
+    Object.entries(campos).forEach(([coluna, valor]) => {
+      if (!Object.prototype.hasOwnProperty.call(linha, coluna))
+        linha[coluna] = valor;
+    });
+    if (!Object.prototype.hasOwnProperty.call(linha, "analise"))
+      linha.analise = null;
     alteradas.push(linha);
   });
   return alteradas;

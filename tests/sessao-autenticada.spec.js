@@ -162,7 +162,7 @@ test.describe("sessão autenticada", () => {
     const erros = [];
     page.on("pageerror", (e) => erros.push(e.message));
     await page.goto("/analises.html", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("#kpiGrid, #scopeGuard").first()).toBeVisible({
+    await expect(page.locator("#kpiGrid")).toBeVisible({
       timeout: 30_000,
     });
     expect(erros).toEqual([]);

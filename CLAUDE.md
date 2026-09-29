@@ -79,7 +79,7 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 ```bash
 npx vitest run tests/<arquivo>.test.js   # 1 teste — padrão ao editar
 npm run lint                             # só arquivos alterados
-npm run check:architecture               # auth + rpc + MutationObserver
+npm run check:architecture               # auth + rpc + MutationObserver + remendos
 npm test                                 # Vitest completo (lento)
 npm run typecheck                        # tipos do servidor (server/*.ts)
 npm run dev                              # vite build --watch + servidor em 127.0.0.1:8000
@@ -94,6 +94,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
   (`check:rpc-contract` quebra o build).
 - Auth só pelos módulos de sessão (`check:auth-architecture` bloqueia `createClient` avulso).
 - Nenhum `MutationObserver` novo (`check-no-new-mutation-observer.mjs`).
+- Nenhum remendo novo (`check-no-new-patch-layers.mjs`): nada de arquivo `*-fix`, `*-refinement`, `*-enhancements`, `post-N…` nem `window.navigate = …`/`window.saveAdminSettings = …` por outro módulo. Mude a fonte onde o comportamento é definido; ao passar por um remendo existente, prefira absorvê-lo na fonte e apagá-lo.
 - HTML dinâmico passa por `src/lib/sanitize.js` / `html-security.js`. Nunca `innerHTML` cru.
 - Feature nova = arquivo novo em `src/modules/` (+ lógica em `src/lib/` + teste). Não crescer
   `legacy-app.js`; a cada parte migrada, ele encolhe (ver "Código legado" abaixo).

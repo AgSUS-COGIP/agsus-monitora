@@ -114,16 +114,6 @@ export const GRUPOS_POR_SECAO = Object.freeze({
       ],
     },
   ],
-  recursos: [
-    {
-      id: "tempo-real",
-      titulo: "Atualização em tempo real",
-      descricao: "Liga ou desliga a atualização automática dos dados do monitoramento.",
-      icone: "radio",
-      tom: "sucesso",
-      campos: ["cfgRealtimeEnabled"],
-    },
-  ],
 });
 
 /** Dica de ajuda por campo (tooltip do ícone "?", design.md 11.10). */

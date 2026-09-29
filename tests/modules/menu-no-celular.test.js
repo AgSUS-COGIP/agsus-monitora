@@ -42,7 +42,7 @@ let raiz = null;
 
 async function montarMenu(
   permitidas = TUDO,
-  paineis = [{ codigo: "analises", titulo: "Análises" }],
+  paineis = [{ codigo: "recursos", titulo: "Recursos" }],
   areas = ["saude-indigena"],
 ) {
   document.body.className = "";
@@ -163,23 +163,30 @@ describe("menu inferior do celular", () => {
   });
 
   /*
-    Com as três áreas, Editais, Cronograma e Aprovados aparecem três vezes no
-    menu lateral. Aqui entra uma de cada: a da área atual.
+    Com várias áreas, o menu lateral só desenha a área atual (seletor de área):
+    o de baixo mostra as páginas dela, sem as das outras áreas, e acompanha a
+    troca de área.
   */
   it("com várias áreas, mostra as páginas da área atual, sem repetir", async () => {
     await montarMenu(TUDO, [], ["saude-indigena", "sede", "projetos"]);
     await act(async () => definirAreaAtual("sede"));
 
     const origens = collectPrimaryItems();
-    expect(origens.map((el) => [el.dataset.view, el.dataset.area])).toEqual([
-      ["dashboard", "saude-indigena"],
-      ["nucleo", "sede"],
-      ["calendario", "sede"],
-      ["approved", "sede"],
-    ]);
-    expect(
-      collectPrimaryItems(document, "projetos").map((el) => el.dataset.area),
-    ).toEqual(["saude-indigena", "projetos", "projetos", "projetos"]);
+    const views = origens.map((el) => el.dataset.view);
+    expect(new Set(views).size).toBe(views.length);
+    expect(views.slice(0, 3)).toEqual(["dashboard", "nucleo", "calendario"]);
+    // Só a SEDE; o que vem sem área é a Administração.
+    for (const el of origens) {
+      expect([undefined, "sede"]).toContain(el.dataset.area);
+    }
+    expect(origens[0].dataset.area).toBe("sede");
+
+    await act(async () => definirAreaAtual("projetos"));
+    const deProjetos = collectPrimaryItems();
+    expect(deProjetos[0].dataset.area).toBe("projetos");
+    for (const el of deProjetos) {
+      expect([undefined, "projetos"]).toContain(el.dataset.area);
+    }
   });
 
   it("escolher pelo menu de baixo troca a área e remonta com as páginas dela", async () => {
@@ -200,37 +207,34 @@ describe("menu inferior do celular", () => {
         },
       ),
     );
+    await act(async () => marcarItemAtivoNoMenu("nucleo"));
     initMobileBottomNavigation();
     const areasDaBarra = () =>
-      [...document.querySelectorAll("#mobileBottomNav [data-source-id]")].map(
-        (botao) => document.getElementById(botao.dataset.sourceId).dataset.area,
-      );
-    expect(areasDaBarra()).toEqual([
-      "saude-indigena",
-      "saude-indigena",
-      "saude-indigena",
-      "saude-indigena",
-    ]);
+      [...document.querySelectorAll("#mobileBottomNav [data-source-id]")]
+        .map(
+          (botao) =>
+            document.getElementById(botao.dataset.sourceId).dataset.area,
+        )
+        .filter(Boolean);
+    expect(new Set(areasDaBarra())).toEqual(new Set(["saude-indigena"]));
 
-    // A troca de área vem do menu lateral; o de baixo acompanha.
+    // A troca de área vem do seletor do menu lateral; o de baixo acompanha.
     await act(async () =>
-      document
-        .querySelector('.menu-area[data-area="sede"] [data-view="calendario"]')
-        .click(),
+      document.querySelector('[data-opcao-de-area="sede"]').click(),
     );
-    expect(areasDaBarra()).toEqual(["saude-indigena", "sede", "sede", "sede"]);
+    expect(new Set(areasDaBarra())).toEqual(new Set(["sede"]));
 
-    const botaoDeEditais = document.querySelector(
-      '#mobileBottomNav [data-view="nucleo"]',
+    const botaoDoCronograma = document.querySelector(
+      '#mobileBottomNav [data-view="calendario"]',
     );
-    await act(async () => botaoDeEditais.click());
+    await act(async () => botaoDoCronograma.click());
     expect(navegacoes).toEqual([
-      ["calendario", "sede"],
       ["nucleo", "sede"],
+      ["calendario", "sede"],
     ]);
     expect(
       document.querySelector("#mobileBottomNav .is-active")?.dataset.view,
-    ).toBe("nucleo");
+    ).toBe("calendario");
   });
 
   it("syncActiveItem compara pela página, não pelo nó", async () => {

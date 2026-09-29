@@ -45,22 +45,6 @@ function findButton(key) {
   );
 }
 
-function ensureStyles() {
-  if (document.getElementById("analisesDrawerControllerStyles")) return;
-  const style = document.createElement("style");
-  style.id = "analisesDrawerControllerStyles";
-  style.textContent = `
-    .analises-drawer-summary{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-    .analises-drawer-summary span{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--muted)}
-    .analises-drawer-summary .status{background:color-mix(in srgb,var(--blue2) 8%,var(--card));color:var(--strong)}
-    .analises-detail-section-grid .kv[data-empty="true"]{display:none!important}
-    .analises-detail-section[data-section="result"] .kv:first-child{background:color-mix(in srgb,var(--blue2) 7%,var(--card));border-color:color-mix(in srgb,var(--blue2) 20%,var(--line))}
-    .analises-detail-section[data-section="result"] .kv:first-child .kv-value{font-size:22px;font-weight:900;color:var(--strong)}
-    .analises-drawer-context strong{line-height:1.35}
-  `;
-  document.head.appendChild(style);
-}
-
 function ensureDrawer() {
   let backdrop = document.getElementById("analisesDetailDrawer");
   if (backdrop) return backdrop;
@@ -209,6 +193,9 @@ function buildDrawerContent(row, detailRow) {
   body.appendChild(shell);
 }
 
+// Até 10 s: na lista enxuta, o detalhamento vem do servidor antes de abrir.
+const ESPERA_MAXIMA_DO_DETALHE = 500;
+
 function waitForDetail(key, attempts = 0) {
   return new Promise((resolve) => {
     const check = () => {
@@ -219,7 +206,7 @@ function waitForDetail(key, attempts = 0) {
       )
         ? row.nextElementSibling
         : null;
-      if (detailRow || attempts >= 40) {
+      if (detailRow || attempts >= ESPERA_MAXIMA_DO_DETALHE) {
         resolve({ button, row, detailRow });
         return;
       }
@@ -289,7 +276,6 @@ async function openDetail(button) {
   }
 }
 
-ensureStyles();
 document.addEventListener(
   "click",
   (event) => {

@@ -15,10 +15,11 @@ const cssDe = (pasta) =>
   pelo token `--font-sans`, de `tokens.css`.
 */
 describe("fonte Geist no sistema todo", () => {
-  it("as três páginas carregam Geist, e nenhuma carrega Inter", () => {
+  it("as páginas carregam Geist, e nenhuma carrega Inter", () => {
     for (const pagina of [
       "index.html",
       "analises.html",
+      "recursos.html",
       "src/analises/index.html",
     ]) {
       const html = ler(pagina);
@@ -31,10 +32,13 @@ describe("fonte Geist no sistema todo", () => {
     expect(ler("src/styles/tokens.css")).toMatch(/--font-sans:\s*"Geist",/);
   });
 
-  it("tokens.css é o primeiro CSS dos dois pontos de entrada", () => {
+  it("tokens.css é o primeiro CSS dos pontos de entrada", () => {
     const primeiroCss = (fonte) => fonte.match(/import\s+"([^"]+\.css)"/)?.[1];
     expect(primeiroCss(ler("src/main.js"))).toBe("./styles/tokens.css");
     expect(primeiroCss(ler("src/analises/main.js"))).toBe(
+      "../styles/tokens.css",
+    );
+    expect(primeiroCss(ler("src/recursos/main.jsx"))).toBe(
       "../styles/tokens.css",
     );
   });

@@ -151,12 +151,55 @@ export function rotuloDaUnidade(unidade) {
   return `${txt(unidade.nome_oficial)}${uf ? ` — ${uf}` : ""}`;
 }
 
-/** As opções do select de unidade para o responsável escolhido. */
-export function opcoesDeUnidade(responsavel, catalogo, linhas) {
-  return unidadesDoResponsavel(
+/*
+  Unidades que o banco sabe de que área são (`listar_unidades_por_area`): as do
+  CORES e as digitadas em "Outra unidade". Sem elas, uma unidade que ainda não
+  tem edital (o CCE, em Projetos) só aparecia com o responsável CORES.
+*/
+function unidadesRegistradas(unidadesPorArea) {
+  return (unidadesPorArea || [])
+    .map((item) => ({
+      nome_oficial: txt(item?.unidade),
+      id_unidade: "",
+      sigla: "",
+      tipo: "",
+      uf_sede: "",
+    }))
+    .filter((unidade) => unidade.nome_oficial);
+}
+
+/**
+ * As opções do select de unidade para o responsável escolhido, completadas
+ * pelas unidades registradas com área. Quem filtra pela área é `unidadesDaArea`.
+ */
+export function opcoesDeUnidade(
+  responsavel,
+  catalogo,
+  linhas,
+  unidadesPorArea = [],
+) {
+  const disponiveis = unidadesDisponiveis(catalogo, linhas);
+  const registradas = unidadesRegistradas(unidadesPorArea);
+  const nomeDe = (unidade) => normalizarNomeDaUnidade(unidade.nome_oficial);
+  const conhecidas = new Set(disponiveis.map(nomeDe));
+  const opcoes = unidadesDoResponsavel(
     responsavel,
-    unidadesDisponiveis(catalogo, linhas),
+    [
+      ...disponiveis,
+      ...registradas.filter((unidade) => !conhecidas.has(nomeDe(unidade))),
+    ].sort(ordenarUnidades),
   );
+  // O CORES tem lista própria: as registradas que ela não traz vão no fim.
+  const oferecidas = new Set(opcoes.map(nomeDe));
+  return [
+    ...opcoes,
+    ...registradas.filter((unidade) => {
+      const nome = nomeDe(unidade);
+      if (oferecidas.has(nome)) return false;
+      oferecidas.add(nome);
+      return true;
+    }),
+  ];
 }
 
 // ── Unidades por área ────────────────────────────────────────────────────

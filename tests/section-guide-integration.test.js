@@ -13,7 +13,7 @@ describe("título e guia conectados à navegação real", () => {
     ["dashboard", "Saúde Indígena", "território"],
     ["nucleo", "Editais", "cronograma"],
     ["config", "Configurações", "acessos"],
-    ["panel:analises", "Análises", "curriculares"],
+    ["analises", "Análises curriculares", "curriculares"],
   ])(
     "atualiza a orientação de %s sem renomear a aba",
     (view, title, instruction) => {

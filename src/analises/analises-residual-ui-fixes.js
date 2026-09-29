@@ -1,48 +1,7 @@
-const COMPATIBILITY_SELECT_IDS = ["scopeGuardUnits", "scopeGuardEditais"];
-const ORPHAN_PLACEHOLDERS = new Set([
-  "Pesquise e selecione unidades",
-  "Pesquise e selecione editais",
-]);
-
 const txt = (value) => String(value ?? "").trim();
 const numberFromPtBr = (value) => Number(txt(value).replace(/\./g, "")) || 0;
 let tableScrollBound = false;
 let sweepTimer = 0;
-
-function removeCompatibilityTomSelect(select) {
-  if (!select || select.dataset.scopeCompatibility !== "true") return;
-
-  try {
-    select.tomselect?.destroy?.();
-  } catch (error) {
-    console.warn(
-      "Não foi possível desmontar seletor de compatibilidade:",
-      error,
-    );
-  }
-
-  const sibling = select.nextElementSibling;
-  if (sibling?.classList?.contains("ts-wrapper")) sibling.remove();
-
-  select.hidden = true;
-  select.tabIndex = -1;
-  select.setAttribute("aria-hidden", "true");
-  select.style.setProperty("display", "none", "important");
-}
-
-function removeOrphanTomSelects() {
-  document.querySelectorAll(".ts-wrapper").forEach((wrapper) => {
-    const input = wrapper.querySelector("input");
-    if (ORPHAN_PLACEHOLDERS.has(txt(input?.placeholder))) wrapper.remove();
-  });
-}
-
-function cleanupCompatibilitySelectors() {
-  COMPATIBILITY_SELECT_IDS.forEach((id) =>
-    removeCompatibilityTomSelect(document.getElementById(id)),
-  );
-  removeOrphanTomSelects();
-}
 
 function visibleTableRows() {
   return [
@@ -106,17 +65,10 @@ function ensureStyles() {
   const style = document.createElement("style");
   style.id = "analisesResidualUiFixStyles";
   style.textContent = `
-    #scopeGuardUnits[data-scope-compatibility="true"],
-    #scopeGuardEditais[data-scope-compatibility="true"],
-    #scopeGuardUnits[data-scope-compatibility="true"] + .ts-wrapper,
-    #scopeGuardEditais[data-scope-compatibility="true"] + .ts-wrapper{
-      display:none!important
-    }
     #analisesInfiniteStatusV2,
     #analisesLoadMoreV2{
       display:none!important
     }
-    .analises-drawer-backdrop{z-index:2147483000!important}
   `;
   document.head.appendChild(style);
 }
@@ -134,7 +86,6 @@ function bindTableScroll() {
 }
 
 function sweep(attempt = 0) {
-  cleanupCompatibilitySelectors();
   reconcileInfiniteStatus();
   bindTableScroll();
 
@@ -153,18 +104,12 @@ function init() {
   ensureStyles();
   scheduleSweep();
 
-  ["agsus:analises-query-complete", "agsus:analises-cache-cleared"].forEach(
-    (eventName) => document.addEventListener(eventName, scheduleSweep),
-  );
+  document.addEventListener("agsus:analises-cache-cleared", scheduleSweep);
 
   document.addEventListener(
     "click",
     (event) => {
-      if (
-        event.target?.closest?.(
-          "#scopeGuardLoad,#refreshBtn,#clearBtn,[data-kpi]",
-        )
-      )
+      if (event.target?.closest?.("#refreshBtn,#clearBtn,[data-kpi]"))
         scheduleSweep();
     },
     true,

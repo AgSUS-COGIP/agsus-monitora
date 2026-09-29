@@ -119,6 +119,12 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Contexto unificado de acesso: perfil, permissões e painéis.",
   },
+  listar_abas_do_menu: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Catálogo de abas do menu lateral (TB_ABA × RL_ABA_AREA), já resolvido por área. Sem ela, o menu usa ABAS_DO_MENU (o mesmo catálogo no código).",
+  },
   obter_branding_acesso_publico: {
     argumentos: [],
     critica: true,
@@ -360,37 +366,66 @@ export const CONTRATO_RPC = {
   },
 
   // ── Análises ────────────────────────────────────────────────────────────
+  listar_municipios_das_vagas_da_area: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Municípios das vagas da área (UBS móvel no nome da vaga), com vagas, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migration 20260929090000).",
+  },
   get_analises_dashboard_payload_v2: {
     argumentos: ["p_scope", "p_area"],
     critica: true,
     resumo:
-      "Payload consolidado do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), sem o parecer (`analise`).",
-  },
-  get_analises_dashboard_filtrado: {
-    argumentos: [
-      "p_scope",
-      "p_unidades",
-      "p_editais",
-      "p_offset",
-      "p_limit",
-      "p_include_total",
-      "p_area",
-    ],
-    critica: true,
-    resumo:
-      "Linhas do painel de Análises da área, filtradas por unidade e edital, paginadas.",
+      "Lista enxuta (schema_version 4) do painel de Análises da área (Saúde Indígena, SEDE ou Projetos), por escopo: ativo, inativo ou desativadas ('Todos' = os três juntos no navegador). Vem do cache do servidor (`TA_PAINEL_ANALISE`, `cache.hit`), exceto para quem tem recorte por coordenação (migration 20260929150000).",
   },
   get_analise_detalhe_do_painel: {
     argumentos: ["p_id"],
     critica: false,
     resumo:
-      "Parecer (`analise`) de uma linha do painel de Análises, ao abrir o detalhamento.",
+      "Detalhamento de uma linha do painel de Análises (parecer, pontuações, experiências, links, datas), ao abrir o registro.",
   },
   get_analises_texto_do_painel: {
     argumentos: ["p_scope", "p_area"],
     critica: false,
     resumo:
-      "Pareceres da área e escopo do painel de Análises, em lote, para o CSV e a busca geral.",
+      "Parecer, link do PDF e tempo de experiência profissional da área e escopo do painel de Análises, em lote, para o CSV e a busca geral.",
+  },
+
+  // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──
+  get_recursos_da_area: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Aba Recursos de uma área (json): recursos com o candidato da análise, origens, editais (quem edita) e as etapas do cronograma para o prazo.",
+  },
+  get_recurso_candidato_detalhe: {
+    argumentos: ["p_id"],
+    critica: false,
+    resumo:
+      "Detalhe de um recurso: observação, quem fez cada etapa e o histórico.",
+  },
+  buscar_candidatos_recurso: {
+    argumentos: ["p_edital_id", "p_busca"],
+    critica: false,
+    resumo:
+      "Candidatos das análises curriculares do edital, por nome ou código, para o cadastro de recurso.",
+  },
+  salvar_recurso_candidato: {
+    argumentos: ["p_dados"],
+    critica: false,
+    resumo:
+      "Cadastra ou edita um recurso (revisão, duplicado 23505, histórico).",
+  },
+  marcar_etapa_recurso: {
+    argumentos: ["p_id", "p_etapa", "p_feita"],
+    critica: false,
+    resumo:
+      "Marca ou desmarca uma etapa do recurso (Empregare, SEI, upload, resposta), com quando e quem.",
+  },
+  excluir_recurso_candidato: {
+    argumentos: ["p_id", "p_motivo"],
+    critica: false,
+    resumo: "Exclusão lógica de um recurso, com motivo no histórico.",
   },
 
   // ── Auditoria e presença ────────────────────────────────────────────────

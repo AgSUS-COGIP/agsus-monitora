@@ -207,16 +207,10 @@ function genericGuide(title) {
 }
 
 export function guideForSection(section, title = "") {
-  if (section.startsWith("panel:") && /an[aá]lises/i.test(title)) {
-    return GUIDES.analises;
-  }
   return GUIDES[section] || genericGuide(title);
 }
 
-function quickSuggestionsForSection(section, title = "") {
-  if (section.startsWith("panel:") && /an[aá]lises/i.test(title)) {
-    return QUICK_SUGGESTIONS.analises;
-  }
+function quickSuggestionsForSection(section) {
   return QUICK_SUGGESTIONS[section] || QUICK_SUGGESTIONS.generic;
 }
 
@@ -403,7 +397,7 @@ function setThinking(state, active) {
 }
 
 function renderQuickSuggestions(state) {
-  const suggestions = quickSuggestionsForSection(state.section, state.title);
+  const suggestions = quickSuggestionsForSection(state.section);
   state.suggestions.replaceChildren();
   state.suggestionLabel.hidden = !suggestions.length;
 

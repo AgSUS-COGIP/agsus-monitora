@@ -8,6 +8,7 @@ import {
 import {
   assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
+  linhasDaArea,
   obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
@@ -25,7 +26,6 @@ import {
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.js";
 import {
-  areaDeAberturaDoPainel,
   areasDoUsuario,
   montarArvoreDoMenu,
   nomeDaArea,
@@ -35,9 +35,28 @@ import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
-import { enderecoDoPainelNaArea } from "../lib/endereco-do-painel.js";
+import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
+import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
+import { abrirPaginaDoPainel, quadroDoPainel } from "./pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
-import { ehEditalDaSaudeIndigena } from "../lib/responsavel-do-edital.js";
+import {
+  MAPA_DOS_DSEIS,
+  MAPA_DOS_MUNICIPIOS,
+  cabecalhoDaVisaoGeral,
+  mapaDaVisaoGeral,
+} from "../lib/visao-geral-da-area.js";
+import {
+  aplicarAreaNaVisaoGeral,
+  criarCarregadorDeMunicipios,
+  desenharMunicipiosDaArea,
+  legendaDosMunicipios,
+} from "./municipios-da-visao-geral.js";
+import {
+  ehEditalEncerrado as isEncerrado,
+  ehRiscoAtivo as isRiscoAtivo,
+  indicadoresDoMonitoramento,
+  somarCampo,
+} from "../lib/indicadores-do-monitoramento.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import { updateAraraGuide } from "./arara-guide.js";
 import {
@@ -147,6 +166,7 @@ import {
 } from "../lib/sessao.js";
 import {
   canViewCore,
+  canViewRecursos,
   canImportApprovedList,
   isAdminGlobal,
   isOwnAccessProfile,
@@ -171,6 +191,12 @@ import {
   guardarCopiaDaSessao,
   lerCopiaDaSessao,
 } from "./copia-da-sessao-indexeddb.js";
+import { apagarCacheDasAnalises } from "./cache-das-analises-indexeddb.js";
+import {
+  abasDoMenu,
+  carregarCatalogoDeAbas,
+  consultaDoCatalogoDeAbas,
+} from "./catalogo-de-abas.js";
 import {
   acompanharCarregamentoDoPainel,
   esconderEsqueleto,
@@ -1354,6 +1380,9 @@ async function logout() {
   await trackAccess("logout", { detalhes: { current_view: currentView } });
   stopRealtime();
   declararSaida(SAIDA_MANUAL);
+  // A cópia da sessão fica (entrar de novo é imediato); a do painel de análises,
+  // com nomes e notas de candidatos, sai com a pessoa.
+  await apagarCacheDasAnalises();
   if (sb) await sb.auth.signOut();
   aplicarSaida();
 }
@@ -1384,6 +1413,7 @@ function iniciarConsultasDaSessao() {
     paineis: iniciar(consultaDePaineis()),
     mapa: iniciar(consultaDoMapa()),
     unidades: iniciar(consultaDeUnidades()),
+    abas: consultaDoCatalogoDeAbas(sb),
     monitoramento: podeCarregarMonitoramento()
       ? consultaDoMonitoramento()
       : null,
@@ -1415,7 +1445,10 @@ async function atualizarCopiaDaSessao(sessao, consultas, anteriores) {
       await loadPanels({ consulta: novas.paineis });
       await loadPanelPermissions();
     }
-    if (mudou.has("config") || mudou.has("paineis")) buildNav();
+    if (mudou.has("abas"))
+      await carregarCatalogoDeAbas({ consulta: novas.abas });
+    if (mudou.has("config") || mudou.has("paineis") || mudou.has("abas"))
+      buildNav();
     // Só painel: `isViewAllowed` não conhece todas as telas (Acessos, por exemplo).
     if (currentView.startsWith("panel:") && !isViewAllowed(currentView))
       navigate(startView());
@@ -1478,6 +1511,7 @@ async function loadInitialData() {
   await loadConfig({ consulta: fonte.config });
   await loadPanels({ consulta: fonte.paineis });
   await loadPanelPermissions();
+  await carregarCatalogoDeAbas({ consulta: fonte.abas });
   buildNav();
   await loadMapaConfig({ consulta: fonte.mapa });
   await loadUnidades({ consulta: fonte.unidades });
@@ -1524,6 +1558,8 @@ function systemHomeView() {
   if (can("cores")) return "nucleo";
   if (can("calendario")) return "calendario";
   if (canViewCore(profile)) return "approved";
+  if (can("analises")) return "analises";
+  if (canViewRecursos(profile)) return "recursos";
   if (podeAbrirConfiguracoes(profile)) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
@@ -1999,7 +2035,9 @@ function consultaDePaineis() {
 
 async function loadPanels(options = {}) {
   const { data, error } = await (options.consulta || consultaDePaineis());
-  if (!error && Array.isArray(data) && data.length) panels = data;
+  // Análises curriculares virou página (view `analises`): o painel antigo sai.
+  if (!error && Array.isArray(data) && data.length)
+    panels = semOPainelAntigoDeAnalises(data);
   else panels = [...DEFAULT_PANELS];
   renderPanelAdmin();
 }
@@ -2175,6 +2213,7 @@ async function refreshData() {
     await loadPanels({ consulta: consultas.paineis });
     await loadPanelPermissions();
     await loadMapaConfig({ consulta: consultas.mapa });
+    await carregarCatalogoDeAbas({ consulta: consultas.abas });
     buildNav();
     await loadUnidades({ consulta: consultas.unidades });
     const dataOk = await loadData({ consulta: consultas.monitoramento });
@@ -2228,6 +2267,7 @@ function buildNav() {
       paineis,
       secoesDeConfiguracao: secoes,
       areas,
+      abas: abasDoMenu(),
     }),
     {
       aoAbrirSecao: (_view, secao) => abrirSecaoDeConfiguracao(document, secao),
@@ -2270,6 +2310,14 @@ function navigate(view) {
   }
   if (requestedView === "approved" && !canViewCore(profile)) {
     toast("Sem permissão para Lista de Aprovados.", "warn");
+    return;
+  }
+  if (requestedView === "analises" && !can("analises")) {
+    toast("Sem permissão para Análises curriculares.", "warn");
+    return;
+  }
+  if (requestedView === "recursos" && !canViewRecursos(profile)) {
+    toast("Sem permissão para Recursos.", "warn");
     return;
   }
   if (requestedView === "config" && !podeAbrirConfiguracoes(profile)) {
@@ -2320,7 +2368,7 @@ function navigate(view) {
 
   if (requestedView === "dashboard") {
     $("page-dashboard").classList.add("active");
-    setPageTitle(cfgValue("page_title"), cfgValue("page_subtitle"));
+    prepararVisaoGeralDaArea();
     renderAll();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
@@ -2356,6 +2404,26 @@ function navigate(view) {
       trackAccess("abertura_tela", { tela: requestedView });
     return;
   }
+  if (requestedView === "analises") {
+    // O app de análises traz o próprio cabeçalho: o de cima sai, como no painel.
+    document.body.classList.add("external-panel-mode");
+    $("page-analises").classList.add("active");
+    setPageTitle("Análises curriculares", subtituloDaArea(""));
+    abrirPaginaDoPainel($("page-analises"));
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
+  if (requestedView === "recursos") {
+    // O painel de recursos (recursos.html) também traz o próprio cabeçalho.
+    document.body.classList.add("external-panel-mode");
+    $("page-recursos").classList.add("active");
+    setPageTitle("Recursos", subtituloDaArea(""));
+    abrirPaginaDoPainel($("page-recursos"));
+    if (previousView !== requestedView)
+      trackAccess("abertura_tela", { tela: requestedView });
+    return;
+  }
   if (requestedView === "config") {
     $("page-config").classList.add("active");
     setPageTitle(
@@ -2379,9 +2447,51 @@ function navigate(view) {
 
 /* Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
 function subtituloDaArea(sub) {
-  const area = nomeDaArea(obterDadosDoMonitoramento().areaAtual);
+  const area = nomeDaArea(areaAtual());
   return [area, sub].filter(Boolean).join(" · ");
 }
+
+const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
+
+/*
+  A VISÃO GERAL É UMA SÓ PARA AS TRÊS ÁREAS
+
+  Saúde Indígena, SEDE e Projetos abrem esta mesma página, com os editais da
+  área atual (`rowsDaAreaAtual`). Muda o bloco do mapa — DSEIs na Saúde
+  Indígena, municípios das vagas em Projetos, nenhum na SEDE — e o cabeçalho
+  (`src/lib/visao-geral-da-area.js`, `src/modules/municipios-da-visao-geral.js`).
+*/
+function prepararVisaoGeralDaArea() {
+  const area = areaAtual();
+  aplicarAreaNaVisaoGeral($("page-dashboard"), area);
+  if (currentView !== "dashboard") return;
+  const { titulo, subtitulo } = cabecalhoDaVisaoGeral(area, {
+    titulo: cfgValue("page_title"),
+    subtitulo: cfgValue("page_subtitle"),
+  });
+  setPageTitle(titulo, subtitulo);
+}
+
+/*
+  Trocou a área (menu): sai do DSEI aberto, recorta os filtros pelas opções da
+  área nova e redesenha. Roda também fora da Visão geral — o recorte fica
+  pronto para quando ela abrir.
+*/
+let areaDaVisaoGeral = areaAtual();
+function aoMudarDadosDoMonitoramento() {
+  const area = areaAtual();
+  if (area === areaDaVisaoGeral) return;
+  areaDaVisaoGeral = area;
+  if (_mapInited && dseiSelecionado) resetDetailMap({ silent: true });
+  else sairDoTerritorio();
+  lastMapUfKey = null;
+  _lastMapAutoFitKey = "";
+  prepararVisaoGeralDaArea();
+  if (!dataLoadedAtLeastOnce) return;
+  populateFilters();
+  applyFilters();
+}
+assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento);
 
 function setPageTitle(title, sub) {
   $("pageTitle").textContent = title;
@@ -2551,24 +2661,24 @@ function compareFilterValues(field, a, b) {
   });
 }
 /*
-  Editais que o painel da Saúde Indígena considera. `rows` tem tudo o que está
-  em TB_MONITORAMENTO_INDIGENA, inclusive SEDE, MFC e o resto do CORES, porque
-  Editais e a busca global precisam de todos. Filtros, KPIs, mapa, tabela e
-  exportação da Saúde Indígena partem daqui.
+  Editais que a Visão geral considera: os da área atual (Saúde Indígena, SEDE
+  ou Projetos, por `CO_AREA`). `rows` tem tudo o que está em
+  TB_MONITORAMENTO_INDIGENA, porque Editais e a busca global precisam de
+  todos. Filtros, KPIs, mapa, tabela e exportação partem daqui.
 */
-function rowsDaSaudeIndigena() {
-  return rows.filter(ehEditalDaSaudeIndigena);
+function rowsDaAreaAtual() {
+  return linhasDaArea(rows, areaAtual());
 }
 function optionValuesFor(field) {
   return opcoesDoCampo(
-    rowsDaSaudeIndigena(),
+    rowsDaAreaAtual(),
     filterState,
     field,
     opcoesDeFiltro({ comparar: (a, b) => compareFilterValues(field, a, b) }),
   );
 }
 function pruneFilterSelections() {
-  return podarSelecoes(rowsDaSaudeIndigena(), filterState, opcoesDeFiltro());
+  return podarSelecoes(rowsDaAreaAtual(), filterState, opcoesDeFiltro());
 }
 /* A opção aparece com a busca do menu? (sem acento, sem caixa) */
 function opcaoCasaComBusca(field, value) {
@@ -2775,7 +2885,7 @@ function applyFilters() {
   ensureSearchInputTextColor();
   const qt = normalizeForSort($("tableSearch")?.value);
   const chaveDaLinha = (r) => dseiKey(r.unidade);
-  filtered = rowsDaSaudeIndigena()
+  filtered = rowsDaAreaAtual()
     .filter((r) => {
       const hay = [
         r.processo,
@@ -2847,15 +2957,7 @@ function toggleSelectFilter(selectId, value, label) {
   toast(removing ? `${label} removido.` : `${label}: ${cleanValue}`);
 }
 
-// Processo encerrado (concluído ou cancelado) não é risco ativo a monitorar.
-function isEncerrado(r) {
-  return ["concluído", "concluido", "cancelado", "cancelada"].includes(
-    low(r.status),
-  );
-}
-function isRiscoAtivo(r) {
-  return !isEncerrado(r) && ["alto", "médio", "medio"].includes(low(r.risco));
-}
+// isEncerrado e isRiscoAtivo vêm de src/lib/indicadores-do-monitoramento.js.
 function criticalRiskValues() {
   const values = optionValuesFor("risco").filter((v) =>
     ["alto", "médio", "medio"].includes(low(v)),
@@ -2941,7 +3043,7 @@ function renderSortIndicators() {
 }
 
 function sum(field) {
-  return filtered.reduce((acc, r) => acc + n(r[field]), 0);
+  return somarCampo(filtered, field);
 }
 function renderAll() {
   renderKpis();
@@ -2953,13 +3055,13 @@ function renderAll() {
   renderTable();
 }
 function canUseMonitoramentoPayload() {
-  // O resumo do servidor soma todos os editais, CORES inclusive. Só serve
-  // quando não há nenhum edital fora da Saúde Indígena na base.
+  // O resumo do servidor soma todos os editais, de todas as áreas. Só serve
+  // quando não há nenhum edital fora da área atual na base.
   return (
     !!monitoramentoPayload &&
     !hasActiveFilter() &&
     !hideClosed &&
-    rowsDaSaudeIndigena().length === rows.length
+    rowsDaAreaAtual().length === rows.length
   );
 }
 
@@ -2967,15 +3069,15 @@ function renderKpis() {
   const payloadKpis = canUseMonitoramentoPayload()
     ? monitoramentoPayload.kpis
     : null;
-  const vagas = payloadKpis ? n(payloadKpis.vagas_total) : sum("vagas_total");
-  const contrat = payloadKpis ? n(payloadKpis.contratados) : sum("contratados");
-  const ociosas = payloadKpis
-    ? n(payloadKpis.vagas_ociosas)
-    : sum("vagas_ociosas");
-  const inscritos = payloadKpis ? n(payloadKpis.inscritos) : sum("inscritos");
+  // A conta local: src/lib/indicadores-do-monitoramento.js.
+  const locais = indicadoresDoMonitoramento(filtered);
+  const vagas = payloadKpis ? n(payloadKpis.vagas_total) : locais.vagas;
+  const contrat = payloadKpis ? n(payloadKpis.contratados) : locais.contratados;
+  const ociosas = payloadKpis ? n(payloadKpis.vagas_ociosas) : locais.ociosas;
+  const inscritos = payloadKpis ? n(payloadKpis.inscritos) : locais.inscritos;
   const processos = payloadKpis
     ? n(payloadKpis.processos_ativos)
-    : filtered.length;
+    : locais.processos;
   const kProcessos = $("kProcessos");
   const kVagas = $("kVagas");
   const kContratados = $("kContratados");
@@ -2987,8 +3089,7 @@ function renderKpis() {
   if (kVagas) kVagas.textContent = fmt(vagas);
   if (kContratados) kContratados.textContent = fmt(contrat);
   if (kOciosas) kOciosas.textContent = fmt(ociosas);
-  if (kCriticos)
-    kCriticos.textContent = fmt(filtered.filter(isRiscoAtivo).length);
+  if (kCriticos) kCriticos.textContent = fmt(locais.criticos);
   if (kInscritos) kInscritos.textContent = fmt(inscritos);
 
   // Sem a barra "NN% das vagas" sob Contratações e Ociosas: o KPI mostra o
@@ -10728,10 +10829,56 @@ function drawPolos(d) {
 // compat: chamada antiga renderMap() agora inicializa/atualiza o Leaflet
 function renderMap() {
   if (currentView !== "dashboard") return;
+  // SEDE: a Visão geral não tem mapa (o bloco some pelo CSS).
+  const mapa = mapaDaVisaoGeral(areaAtual());
+  if (!mapa) return;
   initLeaflet();
   if (!_leaflet) return;
   scheduleMapResize(60);
-  drawDSEIBubbles();
+  _leaflet.__agsusSuspenderCamadasIndigenas?.(mapa !== MAPA_DOS_DSEIS);
+  if (mapa === MAPA_DOS_MUNICIPIOS) desenharMunicipiosNoMapa();
+  else drawDSEIBubbles();
+}
+
+/*
+  Projetos: o mapa nacional é o mesmo, com os municípios das vagas no lugar
+  dos DSEIs e das CASAIs (`municipios-da-visao-geral.js`).
+*/
+const carregadorDeMunicipios = criarCarregadorDeMunicipios({
+  obterSupabase: () => sb,
+});
+let desenhoDosMunicipios = 0;
+function desenharMunicipiosNoMapa() {
+  const area = areaAtual();
+  const desenho = ++desenhoDosMunicipios;
+  _layerDSEI.clearLayers();
+  _marcadoresDsei = [];
+  _tracosDoLeque = [];
+  _layerPolos.clearLayers();
+  _layerUbsi?.clearLayers();
+  _layerCasaiLocal?.clearLayers();
+  _layerUF?.clearLayers();
+  _layerCasai?.clearLayers();
+  syncMapLevelUI();
+  void desenharMunicipiosDaArea({
+    L,
+    mapa: _leaflet,
+    camada: _layerDSEI,
+    area,
+    carregador: carregadorDeMunicipios,
+    lista: $("brasilDseiList"),
+    conta: $("brasilDseiCount"),
+    contador: $("masterMapCount"),
+    enquadrar: !_suppressAutoFit,
+    limitesDoBrasil: L.latLngBounds(_BRASIL_VIEW[0], _BRASIL_VIEW[1]),
+    aindaVale: () =>
+      desenho === desenhoDosMunicipios &&
+      area === areaAtual() &&
+      currentView === "dashboard",
+    podeFlutuar: () =>
+      window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+      true,
+  });
 }
 
 /*
@@ -10891,7 +11038,14 @@ function syncMapLevelUI() {
     // estado aberto/fechado.
     const titulo = box.querySelector("[data-legenda-titulo]");
     const corpo = box.querySelector("[data-legenda-corpo]");
-    if (titulo && corpo) {
+    if (
+      titulo &&
+      corpo &&
+      mapaDaVisaoGeral(areaAtual()) === MAPA_DOS_MUNICIPIOS
+    ) {
+      titulo.innerHTML = '<b style="color:#22577a">Legenda</b>';
+      corpo.innerHTML = legendaDosMunicipios();
+    } else if (titulo && corpo) {
       titulo.innerHTML = showingPolos
         ? '<b style="color:#22577a">Polos base do DSEI</b>'
         : '<b style="color:#22577a">Legenda</b>';
@@ -11137,7 +11291,7 @@ function removerPilula(acao, botao) {
 function renderTable() {
   if (!visibleCols) visibleCols = loadVisibleCols();
   const detailRows = filtered;
-  const totalRows = rowsDaSaudeIndigena();
+  const totalRows = rowsDaAreaAtual();
   renderSortIndicators();
   renderActiveFilters();
   const sortText = tableSort.field
@@ -11239,11 +11393,6 @@ function openPanel(code) {
     toast("Painel indisponível ou inativo.", "warn");
     return;
   }
-  // Painel de várias áreas (Análises) abre com a área atual do menu: `?area=`.
-  const areaDoPainel = areaDeAberturaDoPainel(
-    code,
-    obterDadosDoMonitoramento().areaAtual,
-  );
   /*
     O painel externo traz o seu próprio cabeçalho. Somado ao do Monitora, a
     pessoa via dois títulos empilhados dizendo a mesma coisa.
@@ -11266,8 +11415,7 @@ function openPanel(code) {
   setPageTitle(panel.titulo, cfgValue("external_default_title"));
   $("externalTitle").textContent = panel.titulo;
   $("externalOpen").href =
-    enderecoDoPainelNaArea(panel.url, window.location.origin, areaDoPainel) ||
-    "#";
+    enderecoDoPainel(panel.url, window.location.origin) || "#";
   const mount = $("externalMount");
   if (mount.classList.contains("external-placeholder")) {
     mount.className = "";
@@ -11282,16 +11430,10 @@ function openPanel(code) {
     carregavam a cada login, mesmo sem ninguém abrir.
   */
   let holder = document.getElementById("external-panel-" + code);
-  // Aberto antes em outra área: o quadro recarrega com a área nova.
-  if (holder && (holder.dataset.area || "") !== areaDoPainel) {
-    holder.remove();
-    holder = null;
-  }
   if (!holder) {
     holder = document.createElement("div");
     holder.id = "external-panel-" + code;
     holder.className = "external-panel";
-    holder.dataset.area = areaDoPainel;
     mount.appendChild(holder);
     buildExternalPanel(holder, panel);
   }
@@ -11303,11 +11445,7 @@ function buildExternalPanel(holder, panel) {
     holder.innerHTML = `<div class="external-placeholder"><div><div style="font-size:58px;color:#555"><i class="fa-solid fa-screwdriver-wrench"></i></div><h2>${esc(cfgValue("maintenance_title"))}</h2><p>${esc(cfgValue("maintenance_message"))}</p></div></div>`;
     return;
   }
-  const safePanelUrl = enderecoDoPainelNaArea(
-    panel.url,
-    window.location.origin,
-    holder.dataset.area,
-  );
+  const safePanelUrl = enderecoDoPainel(panel.url, window.location.origin);
   if (!safePanelUrl) {
     holder.innerHTML = `<div class="external-placeholder"><div><h2>${esc(panel.titulo)}</h2><p>Cadastre uma URL http(s) válida deste painel em paineis_externos.</p></div></div>`;
     return;
@@ -11317,24 +11455,6 @@ function buildExternalPanel(holder, panel) {
   // Até o site de fora responder, o quadro ficaria em branco.
   acompanharCarregamentoDoPainel(holder, { aoTentarDeNovo: reloadExternal });
 }
-
-/*
-  A área mudou com o painel de várias áreas aberto: ele recarrega com a nova.
-  Só reabre quando o quadro visível é de outra área.
-*/
-function recarregarPainelNaAreaAtual() {
-  if (!currentPanel || currentView !== "panel:" + currentPanel.codigo) return;
-  const area = areaDeAberturaDoPainel(
-    currentPanel.codigo,
-    obterDadosDoMonitoramento().areaAtual,
-  );
-  const holder = document.getElementById(
-    "external-panel-" + currentPanel.codigo,
-  );
-  if (!area || !holder || (holder.dataset.area || "") === area) return;
-  openPanel(currentPanel.codigo);
-}
-assinarDadosDoMonitoramento(recarregarPainelNaAreaAtual);
 
 function reloadExternal() {
   if (!currentPanel) return;
@@ -12140,6 +12260,10 @@ function exitExternalPanel() {
 }
 
 function getFullscreenTarget() {
+  if (currentView === "analises" || currentView === "recursos") {
+    const frame = quadroDoPainel($("page-" + currentView));
+    if (frame) return frame;
+  }
   if (currentView && currentView.startsWith("panel:") && currentPanel) {
     const holder = document.getElementById(
       "external-panel-" + currentPanel.codigo,
@@ -12201,7 +12325,7 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 function exportCSV() {
-  const source = filtered.length ? filtered : rowsDaSaudeIndigena();
+  const source = filtered.length ? filtered : rowsDaAreaAtual();
   const fieldMap = [
     { key: "unidade", label: "Unidade" },
     { key: "uf", label: "UF" },

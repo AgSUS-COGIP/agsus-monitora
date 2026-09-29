@@ -491,42 +491,10 @@
   gap: var(--space-1);
 }
 
-/* Recursos: tempo real + resumo dos painéis */
+/* Recursos: resumo dos painéis externos */
 .previa-recursos {
   display: grid;
   gap: var(--space-3);
-}
-.previa-tempo-real {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-}
-.previa-tempo-real > div {
-  display: grid;
-}
-.previa-tempo-real strong {
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-}
-.previa-tempo-real small {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.previa-tempo-real__ponto {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  margin-top: var(--space-1);
-  border-radius: var(--radius-full);
-  background: var(--state-neutral);
-}
-.previa-tempo-real[data-ligado="sim"] .previa-tempo-real__ponto {
-  background: var(--state-success);
-  box-shadow: 0 0 0 4px var(--state-success-soft);
 }
 .previa-recursos__titulo {
   color: var(--text-primary);

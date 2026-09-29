@@ -1,0 +1,176 @@
+[
+  {
+    "co_aba": "visao-geral",
+    "no_aba": "Visão geral",
+    "ds_icone": "map",
+    "nu_ordem": 1,
+    "co_view": "dashboard",
+    "co_recurso": "dashboard",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 1,
+        "co_view": "dashboard",
+        "ds_icone": "map"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 1,
+        "co_view": "dashboard",
+        "ds_icone": "map"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 1,
+        "co_view": "dashboard",
+        "ds_icone": "map"
+      }
+    ]
+  },
+  {
+    "co_aba": "editais",
+    "no_aba": "Editais",
+    "ds_icone": "file-text",
+    "nu_ordem": 2,
+    "co_view": "nucleo",
+    "co_recurso": "nucleo",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 2,
+        "co_view": "nucleo",
+        "ds_icone": "file-text"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 2,
+        "co_view": "nucleo",
+        "ds_icone": "file-text"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 2,
+        "co_view": "nucleo",
+        "ds_icone": "file-text"
+      }
+    ]
+  },
+  {
+    "co_aba": "cronograma",
+    "no_aba": "Cronograma",
+    "ds_icone": "calendar-days",
+    "nu_ordem": 3,
+    "co_view": "calendario",
+    "co_recurso": "calendario",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 3,
+        "co_view": "calendario",
+        "ds_icone": "calendar-days"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 3,
+        "co_view": "calendario",
+        "ds_icone": "calendar-days"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 3,
+        "co_view": "calendario",
+        "ds_icone": "calendar-days"
+      }
+    ]
+  },
+  {
+    "co_aba": "aprovados",
+    "no_aba": "Lista de aprovados",
+    "ds_icone": "user-round-check",
+    "nu_ordem": 4,
+    "co_view": "approved",
+    "co_recurso": "aprovados",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 4,
+        "co_view": "approved",
+        "ds_icone": "user-round-check"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 4,
+        "co_view": "approved",
+        "ds_icone": "user-round-check"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 4,
+        "co_view": "approved",
+        "ds_icone": "user-round-check"
+      }
+    ]
+  },
+  {
+    "co_aba": "analises",
+    "no_aba": "Análises curriculares",
+    "ds_icone": "file-search",
+    "nu_ordem": 5,
+    "co_view": "analises",
+    "co_recurso": "analises",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 5,
+        "co_view": "analises",
+        "ds_icone": "file-search"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 5,
+        "co_view": "analises",
+        "ds_icone": "file-search"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 5,
+        "co_view": "analises",
+        "ds_icone": "file-search"
+      }
+    ]
+  },
+  {
+    "co_aba": "recursos",
+    "no_aba": "Recursos",
+    "ds_icone": "scale",
+    "nu_ordem": 6,
+    "co_view": "recursos",
+    "co_recurso": "recursos",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 6,
+        "co_view": "recursos",
+        "ds_icone": "scale"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 6,
+        "co_view": "recursos",
+        "ds_icone": "scale"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 6,
+        "co_view": "recursos",
+        "ds_icone": "scale"
+      }
+    ]
+  }
+]

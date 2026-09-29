@@ -32,15 +32,14 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const CHAVE_FECHADAS = "agsus_monitora_menu_areas_fechadas_v1";
 const LARGURA_ORIGINAL = window.innerWidth;
 
-function arvoreCompleta(
-  paineis = [{ codigo: "analises", titulo: "Análises" }],
-) {
+function arvoreCompleta(paineis = []) {
   return montarArvoreDoMenu({
     permitidas: {
       dashboard: true,
       nucleo: true,
       calendario: true,
       approved: true,
+      analises: true,
       config: true,
     },
     paineis,
@@ -268,78 +267,163 @@ describe("página ativa", () => {
 });
 
 /*
-  Um grupo por área do usuário, com as mesmas páginas. O item escolhido torna
-  a área dele a atual, e só o item da área atual acende.
+  Com mais de uma área, o topo é o seletor de área e, abaixo, só as páginas da
+  área atual. Trocar de área abre a mesma página na área nova, ou a primeira
+  dela. As páginas esperadas vêm da árvore: o teste não supõe qual view é a
+  Visão geral de cada área.
 */
-describe("as áreas do usuário", () => {
+describe("as áreas do usuário: seletor de área", () => {
   const TODAS = ["saude-indigena", "sede", "projetos"];
   const itemDaArea = (id, view) =>
-    area(id).querySelector(`.menu-item[data-view="${view}"]`);
+    area(id)?.querySelector(`.menu-item[data-view="${view}"]`);
+  const seletor = () => document.querySelector(".menu-seletor");
+  const opcao = (id) => document.querySelector(`[data-opcao-de-area="${id}"]`);
+  const areasDesenhadas = () =>
+    [...document.querySelectorAll(".menu-area[data-area]")].map(
+      (secao) => secao.dataset.area,
+    );
+  const viewsDoGrupo = (arvore, id) =>
+    arvore.find((grupo) => grupo.id === id).itens.map((item) => item.view);
 
-  it("o admin vê as três áreas; SEDE e Projetos sem Visão geral, com Análises", async () => {
-    await montar(
-      montarArvoreDoMenu({
-        permitidas: {
-          dashboard: true,
-          nucleo: true,
-          calendario: true,
-          approved: true,
-        },
-        paineis: [{ codigo: "analises", titulo: "Monitora Análises" }],
-        areas: TODAS,
-      }),
+  it("com três áreas, mostra o seletor e só as páginas da área atual", async () => {
+    const arvore = montarArvoreDoMenu({
+      permitidas: {
+        dashboard: true,
+        nucleo: true,
+        calendario: true,
+        approved: true,
+        analises: true,
+        config: true,
+      },
+      secoesDeConfiguracao: SECOES,
+      areas: TODAS,
+    });
+    await montar(arvore);
+
+    expect(seletor().querySelector("strong").textContent).toBe(
+      "Saúde Indígena",
     );
     expect(
-      [...document.querySelectorAll(".menu-area__rotulo")].map(
-        (r) => r.textContent,
+      [...seletor().querySelectorAll(".menu-seletor__opcao")].map(
+        (botao) => botao.textContent,
       ),
     ).toEqual(["Saúde Indígena", "SEDE", "Projetos"]);
-    for (const id of ["sede", "projetos"]) {
-      expect(
-        [...area(id).querySelectorAll(".menu-item")].map(
-          (botao) => botao.dataset.view,
-        ),
-      ).toEqual(["nucleo", "calendario", "approved", "panel:analises"]);
-    }
-  });
-
-  it("escolher Editais da SEDE torna a SEDE a área atual e só ele acende", async () => {
-    const chamadas = [];
-    await montar(
-      montarArvoreDoMenu({
-        permitidas: { nucleo: true, calendario: true },
-        areas: TODAS,
-      }),
-      {
-        navegar: (view) => {
-          // A área já mudou quando a navegação acontece.
-          chamadas.push([view, obterDadosDoMonitoramento().areaAtual]);
-          marcarItemAtivoNoMenu(view);
-        },
-      },
-    );
-
-    await clicar(itemDaArea("sede", "nucleo"));
-
-    expect(chamadas).toEqual([["nucleo", "sede"]]);
-    expect(itemDaArea("sede", "nucleo").getAttribute("aria-current")).toBe(
-      "page",
+    // As opções não são páginas: o celular e os ganchos do mapa não as veem.
+    expect(seletor().querySelector("[data-view]")).toBeNull();
+    // No lugar das três áreas abertas uma sob a outra, só a atual.
+    expect(areasDesenhadas()).toEqual(["saude-indigena", "administracao"]);
+    // Expandida, o seletor é o cabeçalho: a área não repete o nome.
+    expect(area("saude-indigena").querySelector(".menu-area__cabecalho")).toBe(
+      null,
     );
     expect(
-      itemDaArea("saude-indigena", "nucleo").hasAttribute("aria-current"),
-    ).toBe(false);
-    expect(area("sede").classList.contains("menu-area--atual")).toBe(true);
-    expect(area("saude-indigena").classList.contains("menu-area--atual")).toBe(
-      false,
-    );
+      area("administracao").classList.contains("menu-area--administracao"),
+    ).toBe(true);
+    // Administração lista todas as seções de Configurações.
+    expect(
+      [...area("administracao").querySelectorAll(".menu-item")].map(
+        (botao) => botao.dataset.secao,
+      ),
+    ).toEqual(SECOES.map((secao) => secao.id));
 
-    await act(async () => definirAreaAtual("projetos"));
-    expect(itemDaArea("projetos", "nucleo").getAttribute("aria-current")).toBe(
+    await act(async () => definirAreaAtual("sede"));
+    expect(seletor().querySelector("strong").textContent).toBe("SEDE");
+    expect(areasDesenhadas()).toEqual(["sede", "administracao"]);
+    expect(
+      [...area("sede").querySelectorAll(".menu-item")].map(
+        (botao) => botao.dataset.view,
+      ),
+    ).toEqual(viewsDoGrupo(arvore, "sede"));
+  });
+
+  it("com uma área só, não há seletor e a área é acordeão como antes", async () => {
+    await montar();
+    expect(seletor()).toBeNull();
+    expect(
+      area("saude-indigena").querySelector(".menu-area__cabecalho"),
+    ).not.toBeNull();
+  });
+
+  it("trocar de área abre a mesma página na área nova; sem ela, a primeira", async () => {
+    const chamadas = [];
+    /*
+      Hoje toda aba existe nas três áreas; para o "sem ela", a Visão geral
+      fica só na Saúde Indígena nesta árvore.
+    */
+    const arvore = montarArvoreDoMenu({
+      permitidas: { dashboard: true, nucleo: true, calendario: true },
+      areas: TODAS,
+    }).map((grupo) =>
+      grupo.id === "saude-indigena"
+        ? grupo
+        : {
+            ...grupo,
+            itens: grupo.itens.filter((item) => item.view !== "dashboard"),
+          },
+    );
+    await montar(arvore, {
+      navegar: (view) => {
+        // A área já mudou quando a navegação acontece.
+        chamadas.push([view, obterDadosDoMonitoramento().areaAtual]);
+        marcarItemAtivoNoMenu(view);
+      },
+    });
+
+    await clicar(itemDaArea("saude-indigena", "calendario"));
+    await clicar(seletor().querySelector(".menu-area__cabecalho"));
+    expect(seletor().classList.contains("menu-area--aberta")).toBe(true);
+    await clicar(opcao("sede"));
+
+    expect(seletor().classList.contains("menu-area--aberta")).toBe(false);
+    expect(seletor().dataset.seletorDeArea).toBe("sede");
+    expect(itemDaArea("sede", "calendario").getAttribute("aria-current")).toBe(
       "page",
     );
     expect(
       document.querySelectorAll('#nav [aria-current="page"]'),
     ).toHaveLength(1);
+
+    // Uma página que só a Saúde Indígena tem: em Projetos, abre a primeira dela.
+    const sede = viewsDoGrupo(arvore, "sede");
+    const soDaSaude = viewsDoGrupo(arvore, "saude-indigena").find(
+      (view) => !sede.includes(view),
+    );
+    await clicar(opcao("saude-indigena"));
+    await clicar(itemDaArea("saude-indigena", soDaSaude));
+    await clicar(opcao("projetos"));
+
+    expect(chamadas).toEqual([
+      ["calendario", "saude-indigena"],
+      ["calendario", "sede"],
+      ["calendario", "saude-indigena"],
+      [soDaSaude, "saude-indigena"],
+      [viewsDoGrupo(arvore, "projetos")[0], "projetos"],
+    ]);
+  });
+
+  it("recolhida, o seletor é um ícone e a lista das áreas flutua", async () => {
+    await montar(
+      montarArvoreDoMenu({ permitidas: { nucleo: true }, areas: TODAS }),
+      { navegar: () => {} },
+    );
+    await recolher();
+    const botao = seletor().querySelector(".menu-area__cabecalho");
+    expect(botao.getAttribute("aria-label")).toBe(
+      "Área atual: Saúde Indígena. Trocar de área",
+    );
+    // No trilho a área mantém o ícone dela, com o painel flutuante.
+    expect(
+      area("saude-indigena").querySelector(".menu-area__cabecalho"),
+    ).not.toBeNull();
+
+    await clicar(botao);
+    expect(seletor().classList.contains("menu-area--flutuante")).toBe(true);
+    await clicar(opcao("projetos"));
+    expect(seletor().classList.contains("menu-area--flutuante")).toBe(false);
+    expect(obterDadosDoMonitoramento().areaAtual).toBe("projetos");
+    expect(document.activeElement).toBe(
+      seletor().querySelector(".menu-area__cabecalho"),
+    );
   });
 });
 
@@ -350,9 +434,9 @@ describe("escolher uma página", () => {
 
     await clicar(item("nucleo"));
     await clicar(item("dashboard"));
-    await clicar(item("panel:analises"));
+    await clicar(item("analises"));
 
-    expect(chamadas).toEqual(["nucleo", "dashboard", "panel:analises"]);
+    expect(chamadas).toEqual(["nucleo", "dashboard", "analises"]);
   });
 
   it("sem opção, usa window.navigate na hora do clique (os embrulhos valem)", async () => {

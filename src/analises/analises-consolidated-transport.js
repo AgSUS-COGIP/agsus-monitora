@@ -1,24 +1,55 @@
+/*
+  Carga do payload consolidado do painel de análises
+  (get_analises_dashboard_payload_v2) — a fonte das linhas dos três escopos da
+  "Situação do processo". O analises-app.js chama `carregarEscopoDoPainel`
+  direto; nada aqui embrulha o cliente do Supabase.
+
+  "Ativo" e "Inativo" são um pacote cada. "Todos" não tem pacote próprio: são
+  os pacotes 'ativo', 'inativo' e 'desativadas' juntos aqui, na ordem do banco
+  (regras em src/lib/lista-do-painel-de-analises.js) — quem já abriu "Ativo"
+  e "Inativo" tem as cópias e só busca o que falta.
+
+  A cópia guardada no navegador (IndexedDB) mora aqui, no lugar do antigo cache
+  do localStorage do analises-app.js e do cache em memória que este módulo
+  tinha: a abertura devolve a cópia na hora e revalida por trás; se o servidor
+  mandar outro payload, `aoMudar` recebe o novo. As regras estão em
+  src/lib/cache-do-painel-de-analises.js.
+*/
 import {
-  chaveDoCacheDoPayload,
   grupoDaPlanilhaDaArea,
   parametroDeAreaDaRpc,
 } from "../lib/area-do-painel-de-analises.js";
+import {
+  chavesDoCacheAntigo,
+  criarCacheDoPainel,
+  revalidarPayload,
+} from "../lib/cache-do-painel-de-analises.js";
+import {
+  completarLinhaPeloEnvelope,
+  envelopeDeTodos,
+  juntarPartesDoPainel,
+  partesDoEscopo,
+} from "../lib/lista-do-painel-de-analises.js";
+import { armazenamentoDasAnalises } from "../modules/cache-das-analises-indexeddb.js";
 import { AREA_DO_PAINEL } from "./analises-area.js";
 
-const TARGET_VIEWS = new Set([
-  "VW_ANALISES_DASHBOARD_BASE",
-  "VW_ANALISES_DASHBOARD_BASE_TODOS",
-]);
-
-const RPC_NAME = "get_analises_dashboard_payload_v2";
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const RPC_PAINEL_DE_ANALISES = "get_analises_dashboard_payload_v2";
 const MISSING_RESPONSIBLE_LABEL = "Sem responsável";
-const CLIENT_CACHE_PREFIX = "agsus_analises_cache_v1_v4_";
-const CLIENT_CACHE_MIGRATION_MARKER =
-  "agsus_analises_responsavel_normalizado_v1";
-const payloadCache = new Map();
-/* Erro de permissão ou de área: o fallback pela view não pode contorná-lo. */
-const ERROS_SEM_FALLBACK = new Set(["42501", "22023"]);
+/* Erro de permissão ou de área: não há fallback pela view, e a cópia guardada é apagada. */
+export const ERROS_SEM_FALLBACK = new Set(["42501", "22023"]);
+
+/*
+  Versão da cópia. `import.meta.url` é o endereço do bundle do painel, que traz
+  o hash do conteúdo: cada publicação nova do painel invalida as cópias antigas
+  sozinha. Fica aqui, e não no módulo do IndexedDB, porque aquele também entra
+  no bundle do MONITORA (que o usa para apagar) e cai num pedaço compartilhado,
+  cujo hash não muda junto com o painel. O número à frente é para mudança do
+  formato do registro.
+*/
+const cacheLocal = criarCacheDoPainel({
+  armazenamento: armazenamentoDasAnalises,
+  versao: `1:${import.meta.url}`,
+});
 
 function normalizeAnaliseRow(row) {
   if (!row || typeof row !== "object") return row;
@@ -31,11 +62,16 @@ function normalizeAnaliseRow(row) {
   };
 }
 
-function normalizeAnaliseRows(rows) {
+export function normalizeAnaliseRows(rows) {
   return Array.isArray(rows) ? rows.map(normalizeAnaliseRow) : [];
 }
 
-function decodeRows(payload) {
+/*
+  Linhas do payload (colunas + arrays) como objetos, pelo NOME da coluna. O que
+  a lista enxuta manda uma vez no envelope (grupo, situação do edital) entra em
+  cada linha.
+*/
+export function decodeRows(payload) {
   if (
     !payload ||
     !Array.isArray(payload.columns) ||
@@ -50,227 +86,134 @@ function decodeRows(payload) {
     columns.forEach((column, index) => {
       row[column] = Array.isArray(values) ? values[index] : null;
     });
-    return normalizeAnaliseRow(row);
+    return normalizeAnaliseRow(completarLinhaPeloEnvelope(row, payload));
   });
 }
 
-function scopeFor(tableName, filters) {
-  if (tableName === "VW_ANALISES_DASHBOARD_BASE") return "ativo";
-  const editalAtivo = filters.get("edital_ativo");
-  if (editalAtivo === false) return "inativo";
-  if (editalAtivo === true) return "ativo";
-  return "todos";
+/* O grupo da área, para o fallback pela view (que traz todas as áreas). */
+export function grupoDoFallbackPelaView() {
+  return grupoDaPlanilhaDaArea(AREA_DO_PAINEL);
 }
 
-function clearPayloadCache(scope = "") {
-  const normalized = String(scope || "")
-    .trim()
-    .toLowerCase();
-  const chave = chaveDoCacheDoPayload(AREA_DO_PAINEL, normalized);
-  if (normalized && payloadCache.has(chave)) {
-    payloadCache.delete(chave);
-    return;
+async function buscarDoServidor(client, escopo) {
+  const { data, error } = await client.rpc(RPC_PAINEL_DE_ANALISES, {
+    p_scope: escopo,
+    ...parametroDeAreaDaRpc(AREA_DO_PAINEL),
+  });
+  if (error) throw error;
+  return Array.isArray(data) ? data[0] : data;
+}
+
+/**
+ * O payload de um pacote ('ativo', 'inativo' ou 'desativadas'), com as linhas
+ * já decodificadas.
+ *
+ * - Com cópia guardada (e sem `forcarRede`): devolve a cópia na hora
+ *   (`daCopia: true`) e revalida por trás; `aoMudar({ payload, linhas })` só é
+ *   chamado se o servidor mandou outro payload. Sem acesso (42501/22023), as
+ *   cópias são apagadas e `aoPerderAcesso(erro)` é chamado.
+ * - Sem cópia: espera a RPC, guarda a cópia e devolve. Erro da RPC é lançado.
+ */
+export async function carregarPayloadDoPainel(
+  client,
+  { escopo, usuarioId, forcarRede = false, aoMudar, aoPerderAcesso },
+) {
+  const contexto = { usuarioId, area: AREA_DO_PAINEL, escopo };
+  const guardado = forcarRede ? null : await cacheLocal.ler(contexto);
+
+  if (guardado) {
+    void revalidarPayload({
+      guardado,
+      buscar: () => buscarDoServidor(client, escopo),
+      guardar: (novo) => cacheLocal.guardar(contexto, novo),
+      apagarTudo: () => cacheLocal.apagarTudo(),
+      aoMudar: (novo) => aoMudar?.({ payload: novo, linhas: decodeRows(novo) }),
+      aoPerderAcesso: (erro) => aoPerderAcesso?.(erro),
+    });
+    return { payload: guardado, linhas: decodeRows(guardado), daCopia: true };
   }
-  payloadCache.clear();
+
+  const payload = await buscarDoServidor(client, escopo);
+  const linhas = decodeRows(payload);
+  void cacheLocal.guardar(contexto, payload);
+  return { payload, linhas, daCopia: false };
 }
 
-function invalidateLegacyClientCache() {
-  try {
-    if (window.localStorage.getItem(CLIENT_CACHE_MIGRATION_MARKER) === "1")
-      return;
+/*
+  "Todos": os três pacotes em paralelo, juntos. A revalidação de cada um
+  (`aoMudar` do pacote) refaz a junção com o que há de mais novo e chama o
+  `aoMudar` de fora uma vez por pacote que mudou. Falha de um pacote rejeita
+  tudo (o painel cai na leitura pela view, como nos outros escopos).
+*/
+async function carregarTodosDoPainel(
+  client,
+  { usuarioId, forcarRede, aoMudar, aoPerderAcesso },
+) {
+  const partes = partesDoEscopo("todos");
+  const atuais = new Array(partes.length);
+  let pronto = false;
+  let semAcesso = false;
+  const juntar = () => {
+    const linhas = juntarPartesDoPainel(atuais);
+    return { payload: envelopeDeTodos(atuais, linhas.length), linhas };
+  };
 
-    const keysToRemove = [];
-    for (let index = 0; index < window.localStorage.length; index += 1) {
-      const key = window.localStorage.key(index);
-      if (key?.startsWith(CLIENT_CACHE_PREFIX)) keysToRemove.push(key);
-    }
-    keysToRemove.forEach((key) => window.localStorage.removeItem(key));
-    window.localStorage.setItem(CLIENT_CACHE_MIGRATION_MARKER, "1");
+  const resultados = await Promise.all(
+    partes.map((escopo, indice) =>
+      carregarPayloadDoPainel(client, {
+        escopo,
+        usuarioId,
+        forcarRede,
+        aoMudar: (novo) => {
+          atuais[indice] = novo;
+          if (pronto && !semAcesso) aoMudar?.(juntar());
+        },
+        aoPerderAcesso: (erro) => {
+          if (semAcesso) return;
+          semAcesso = true;
+          aoPerderAcesso?.(erro);
+        },
+      }),
+    ),
+  );
+  // A revalidação de um pacote pode ter chegado antes dos outros: fica a nova.
+  resultados.forEach((resultado, indice) => {
+    if (!atuais[indice]) atuais[indice] = resultado;
+  });
+  pronto = true;
+  return {
+    ...juntar(),
+    daCopia: resultados.some((resultado) => resultado.daCopia),
+  };
+}
+
+/**
+ * O escopo da "Situação do processo" ('ativo', 'inativo' ou 'todos'), com as
+ * mesmas opções e o mesmo retorno de `carregarPayloadDoPainel`.
+ */
+export function carregarEscopoDoPainel(client, opcoes) {
+  return opcoes.escopo === "todos"
+    ? carregarTodosDoPainel(client, opcoes)
+    : carregarPayloadDoPainel(client, opcoes);
+}
+
+/*
+  O cache antigo do painel ficava no localStorage (agsus_analises_cache_*):
+  grande demais para ele, falhava calado e ocupava a cota do MONITORA inteiro.
+  Sai de vez; a cópia agora é a do IndexedDB.
+*/
+export function limparCacheAntigoDoLocalStorage() {
+  try {
+    const chaves = [];
+    for (let index = 0; index < window.localStorage.length; index += 1)
+      chaves.push(window.localStorage.key(index));
+    chavesDoCacheAntigo(chaves).forEach((chave) =>
+      window.localStorage.removeItem(chave),
+    );
   } catch (error) {
     console.warn(
-      "Não foi possível invalidar o cache local antigo de Análises:",
+      "Não foi possível limpar o cache local antigo de Análises:",
       error,
     );
   }
 }
-
-async function getPayload(client, scope) {
-  // A área entra na chave: Saúde Indígena, SEDE e Projetos nunca se misturam.
-  const cacheKey = chaveDoCacheDoPayload(AREA_DO_PAINEL, scope);
-  const cached = payloadCache.get(cacheKey);
-  if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
-    return cached.promise;
-  }
-
-  const promise = (async () => {
-    const { data, error } = await client.rpc(RPC_NAME, {
-      p_scope: scope,
-      ...parametroDeAreaDaRpc(AREA_DO_PAINEL),
-    });
-    if (error) throw error;
-    const payload = Array.isArray(data) ? data[0] : data;
-    return {
-      payload,
-      rows: decodeRows(payload),
-    };
-  })();
-
-  payloadCache.set(cacheKey, { createdAt: Date.now(), promise });
-
-  try {
-    return await promise;
-  } catch (error) {
-    payloadCache.delete(cacheKey);
-    throw error;
-  }
-}
-
-class ConsolidatedQuery {
-  constructor(client, tableName) {
-    this.client = client;
-    this.tableName = tableName;
-    this.filters = new Map();
-    this.orders = [];
-    this.columns = "*";
-    this.from = 0;
-    this.to = 999;
-  }
-
-  select(columns = "*") {
-    this.columns = columns || "*";
-    return this;
-  }
-
-  range(from, to) {
-    this.from = Math.max(0, Number(from) || 0);
-    this.to = Math.max(this.from, Number(to) || this.from);
-    return this;
-  }
-
-  eq(column, value) {
-    this.filters.set(column, value);
-    return this;
-  }
-
-  order(column, options = {}) {
-    this.orders.push({ column, options });
-    return this;
-  }
-
-  async executeFallback() {
-    let fallback = this.client
-      .__agsusOriginalFrom(this.tableName)
-      .select(this.columns)
-      .range(this.from, this.to);
-
-    this.filters.forEach((value, column) => {
-      fallback = fallback.eq(column, value);
-    });
-    // A view traz todas as áreas; o fallback fica só com a do painel.
-    fallback = fallback.eq("grupo", grupoDaPlanilhaDaArea(AREA_DO_PAINEL));
-
-    this.orders.forEach(({ column, options }) => {
-      fallback = fallback.order(column, options);
-    });
-
-    const response = await fallback;
-    return {
-      ...response,
-      data: normalizeAnaliseRows(response?.data),
-    };
-  }
-
-  async execute() {
-    try {
-      const scope = scopeFor(this.tableName, this.filters);
-      const { rows } = await getPayload(this.client, scope);
-      return {
-        data: rows.slice(this.from, this.to + 1),
-        error: null,
-        count: rows.length,
-        status: 200,
-        statusText: "OK",
-      };
-    } catch (error) {
-      if (ERROS_SEM_FALLBACK.has(String(error?.code ?? ""))) {
-        return {
-          data: [],
-          error,
-          count: 0,
-          status: 403,
-          statusText: "Forbidden",
-        };
-      }
-      console.warn(
-        "Carga consolidada indisponível; usando fallback do Supabase:",
-        error,
-      );
-      return this.executeFallback();
-    }
-  }
-
-  then(resolve, reject) {
-    return this.execute().then(resolve, reject);
-  }
-}
-
-function wrapClient(client) {
-  if (!client || client.__agsusConsolidatedTransport) return client;
-
-  const originalFrom = client.from.bind(client);
-  Object.defineProperty(client, "__agsusOriginalFrom", {
-    value: originalFrom,
-    enumerable: false,
-  });
-
-  client.from = (tableName) => {
-    if (TARGET_VIEWS.has(tableName)) {
-      return new ConsolidatedQuery(client, tableName);
-    }
-    return originalFrom(tableName);
-  };
-
-  Object.defineProperty(client, "__agsusConsolidatedTransport", {
-    value: true,
-    enumerable: false,
-  });
-
-  return client;
-}
-
-function installRefreshInvalidation() {
-  document.addEventListener("agsus:analises-force-refresh", (event) => {
-    clearPayloadCache(event.detail?.scope || "");
-  });
-
-  document.addEventListener(
-    "click",
-    (event) => {
-      if (!event.target?.closest?.("#refreshBtn")) return;
-      clearPayloadCache();
-      document.dispatchEvent(new CustomEvent("agsus:analises-cache-cleared"));
-    },
-    true,
-  );
-}
-
-function installTransport() {
-  const supabaseGlobal = window.supabase;
-  if (!supabaseGlobal || typeof supabaseGlobal.createClient !== "function") {
-    console.warn(
-      "Supabase ainda não disponível para instalar transporte consolidado.",
-    );
-    return;
-  }
-
-  if (supabaseGlobal.__agsusConsolidatedTransportInstalled) return;
-
-  const originalCreateClient = supabaseGlobal.createClient.bind(supabaseGlobal);
-  supabaseGlobal.createClient = (...args) =>
-    wrapClient(originalCreateClient(...args));
-  supabaseGlobal.__agsusConsolidatedTransportInstalled = true;
-}
-
-invalidateLegacyClientCache();
-installRefreshInvalidation();
-installTransport();

@@ -241,7 +241,12 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
   const opcoes = useMemo(
     () =>
       unidadesDaArea(
-        opcoesDeUnidade(formulario.responsavel, unidades, linhas),
+        opcoesDeUnidade(
+          formulario.responsavel,
+          unidades,
+          linhas,
+          unidadesPorArea,
+        ),
         areaDoEdital,
         mapaDeAreas,
         linha?.unidade,
@@ -250,6 +255,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
       formulario.responsavel,
       unidades,
       linhas,
+      unidadesPorArea,
       areaDoEdital,
       mapaDeAreas,
       linha,

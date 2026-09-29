@@ -816,6 +816,13 @@ function enhanceMap(L, map) {
   map.__agsusIndigenousTerritoriesReady = true;
 
   const mapElementId = String(map.getContainer?.()?.id || "");
+  /*
+    Suspensas = a Visão geral mostra outra área (Projetos): o mapa nacional é o
+    mesmo, mas sem nada da Saúde Indígena — nem terras, nem abrangência dos
+    DSEIs. Diferente de desligar pelo botão, não se guarda: voltar à Saúde
+    Indígena devolve o que a pessoa tinha. Ver `__agsusSuspenderCamadasIndigenas`.
+  */
+  let suspensas = false;
 
   const rasterPaneName = "agsus-indigenous-territories";
   const rasterPane =
@@ -1041,6 +1048,10 @@ function enhanceMap(L, map) {
   const renderDseiCoverage = () => {
     if (!dseiGeojson?.features) return;
     dseiLayer.clearLayers();
+    if (suspensas) {
+      if (map.hasLayer(dseiLayer)) map.removeLayer(dseiLayer);
+      return;
+    }
 
     let features = dseiGeojson.features;
     if (mapElementId === "detailMap") {
@@ -1113,7 +1124,8 @@ function enhanceMap(L, map) {
   let refreshTimer = 0;
   let lastViewportKey = "";
 
-  const visible = () => map.__agsusIndigenousTerritoriesVisible !== false;
+  const visible = () =>
+    !suspensas && map.__agsusIndigenousTerritoriesVisible !== false;
 
   const useRasterFallback = () => {
     if (!visible()) return;
@@ -1276,6 +1288,8 @@ function enhanceMap(L, map) {
     const doEnquadramento = catalogo
       ? terrasNoEnquadramento(catalogo.features, caixa)
       : await terrasDaFunai(bounds);
+    // Desligadas ou suspensas enquanto o catálogo chegava: não desenha.
+    if (!visible()) return;
     if (!doEnquadramento) {
       clearVector();
       useRasterFallback();
@@ -1489,6 +1503,30 @@ function enhanceMap(L, map) {
     desenharEstudo();
     avisar();
     return true;
+  };
+
+  /*
+    SUSPENDER — a Visão geral de outra área (Projetos) usa este mesmo mapa.
+    Tira as terras, as em estudo e a abrangência dos DSEIs sem mexer na
+    preferência guardada; o botão "Terras Indígenas" some pelo CSS da página
+    (`health-map-workspace.css`). Voltar (`false`) redesenha o que estava.
+  */
+  map.__agsusSuspenderCamadasIndigenas = (suspender) => {
+    const alvo = Boolean(suspender);
+    if (alvo === suspensas) return;
+    suspensas = alvo;
+    lastViewportKey = "";
+    if (alvo) {
+      if (map.hasLayer(rasterLayer)) map.removeLayer(rasterLayer);
+      clearVector();
+      estudoLayer.clearLayers();
+      if (map.hasLayer(estudoLayer)) map.removeLayer(estudoLayer);
+    } else {
+      scheduleRefresh();
+      desenharEstudo();
+    }
+    renderDseiCoverage();
+    avisar();
   };
 
   map.__agsusDefinirTerrasVisiveis = definirVisibilidade;
