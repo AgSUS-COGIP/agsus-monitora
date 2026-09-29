@@ -203,8 +203,8 @@
   Antes havia `transition: grid-template-columns 0.25s ease`. Animar uma trilha
   de grid obriga o navegador a refazer o layout a cada frame — reflow não sobe
   para a GPU. A coluna chega ao tamanho final de imediato; o que anima é só o
-  que é composto (`opacity`, `transform`): a seta das áreas, a alça de
-  recolher, o painel flutuante do menu.
+  que é composto (`opacity`, `transform`): a seta das áreas, o painel
+  flutuante do menu e as dicas do trilho.
 
   Cores da barra: tokens de componente (`--menu-*`), que o tema escuro da
   página e a barra com cor configurada escura (`body.sidebar-theme-dark`, de

@@ -1,4 +1,4 @@
-import { StrictMode, useSyncExternalStore } from "react";
+import { StrictMode, useEffect, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.jsx";
@@ -10,8 +10,8 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
 /*
   A barra lateral, em React — o primeiro pedaço do front a migrar.
 
-  O React é dono de tudo dentro de `<aside class="sidebar">`: marca, alça de
-  recolher, menu de áreas e rodapé. O resto do sistema fala com ela sem tocar
+  O React é dono de tudo dentro de `<aside class="sidebar">`: marca, menu de
+  áreas e rodapé (com o botão de recolher). O resto do sistema fala com ela sem tocar
   no DOM dela:
   - o legado empurra a árvore e a página ativa para `estado.js`;
   - a classe de `body` que recolhe a barra, o tema de `html` e a largura
@@ -23,7 +23,7 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
   `barra-lateral.css`), então o visual não depende de onde a barra é montada.
 */
 
-function Marca({ children }) {
+function Marca() {
   return (
     <div className="side-brand">
       <span className="side-logo-wrap">
@@ -42,9 +42,36 @@ function Marca({ children }) {
       <span className="side-brand-copy">
         <strong>MONITORA</strong>
       </span>
-      {children}
     </div>
   );
+}
+
+/*
+  No trilho, todo controle só com ícone tem uma dica com o nome (`data-dica`,
+  desenhada em `barra-lateral.css`), no ponteiro e no foco. A dica é
+  `position: fixed` — a navegação rola e recortaria uma dica absoluta —, então
+  a altura dela vem daqui: ao apontar ou focar um controle com dica, grava o
+  centro dele em `--dica-topo`. Um ouvinte só, delegado no documento.
+*/
+function usarDicasDoTrilho(trilho) {
+  useEffect(() => {
+    if (!trilho) return undefined;
+    const posicionar = (evento) => {
+      const alvo = evento.target?.closest?.(".sidebar [data-dica]");
+      if (!alvo) return;
+      const caixa = alvo.getBoundingClientRect();
+      alvo.style.setProperty(
+        "--dica-topo",
+        `${Math.round(caixa.top + caixa.height / 2)}px`,
+      );
+    };
+    document.addEventListener("pointerover", posicionar);
+    document.addEventListener("focusin", posicionar);
+    return () => {
+      document.removeEventListener("pointerover", posicionar);
+      document.removeEventListener("focusin", posicionar);
+    };
+  }, [trilho]);
 }
 
 export function BarraLateral() {
@@ -55,17 +82,18 @@ export function BarraLateral() {
   const recolhida = usarBarraRecolhida();
   const gaveta = usarGaveta();
   const trilho = recolhida && !gaveta;
+  usarDicasDoTrilho(trilho);
 
   return (
     <>
-      <Marca>{gaveta ? null : <AlcaDeRecolher recolhida={recolhida} />}</Marca>
+      <Marca />
       <Navegacao
         arvore={arvore}
         ativo={ativo}
         opcoes={opcoes}
         trilho={trilho}
       />
-      <Rodape />
+      <Rodape alca={gaveta ? null : <AlcaDeRecolher recolhida={recolhida} />} />
       {gaveta ? <AlcaNoCabecalho recolhida={recolhida} /> : null}
     </>
   );

@@ -45,8 +45,8 @@
   --z-loader: 20025;
   --z-toast: 20050;
 
-  /* Abaixo dos overlays: o cabeçalho, a barra lateral logo acima dele (a alça
-     de recolher e o painel flutuante do menu passam por cima do cabeçalho) e
+  /* Abaixo dos overlays: o cabeçalho, a barra lateral logo acima dele (o painel
+     flutuante do menu e as dicas do trilho passam por cima do cabeçalho) e
      os popovers do cabeçalho. Quem precisa ficar acima da barra usa um dos
      três de cima — busca, link de pular, aviso de sessão, faixa offline. */
   --z-header: 10010;
@@ -857,8 +857,8 @@ body.app-fullscreen-fallback .toast-box {
   rodapé — e o "Sair" — para o fim do documento em qualquer página longa.
 
   Ela fica acima do cabeçalho (`--z-sidebar`) e não recorta nada
-  (`overflow: visible`): a alça de recolher sai meio para fora da borda, e
-  quem rola é só `.side-navigation`. Em janela muito baixa, onde nem marca e
+  (`overflow: visible`): o painel flutuante do menu e as dicas do trilho saem
+  para fora da borda, e quem rola é só `.side-navigation`. Em janela muito baixa, onde nem marca e
   rodapé cabem, a barra inteira volta a rolar.
 */
 @media (min-width: 901px) {

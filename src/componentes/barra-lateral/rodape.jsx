@@ -8,10 +8,13 @@ import {
 import { temaEscuro, usarTemaEscuro } from "./usar-ambiente.js";
 
 /*
-  Rodapé da barra: o seletor Claro/Escuro (único controle de tema do app), o
-  Sair (único logout — `nielsen-shell-ux.js` tira o do menu do perfil) e a
-  versão. Recolhida, o CSS troca os dois segmentos por um botão que alterna e
-  deixa o Sair só com o ícone.
+  Rodapé da barra, de cima para baixo: o seletor Claro/Escuro (único controle
+  de tema do app), o botão de recolher (`alca`, de `alca-de-recolher.jsx`; na
+  gaveta do celular ele mora no cabeçalho e não vem), o Sair (único logout —
+  `nielsen-shell-ux.js` tira o do menu do perfil) e a versão. Recolhida, o CSS
+  troca os dois segmentos por um botão que alterna e deixa o recolher e o Sair
+  só com o ícone; o nome de cada um aparece na dica (`data-dica`) no ponteiro
+  e no foco.
 
   O tema vale em `html[data-theme]`, e quem o troca é `window.toggleDarkMode`
   (legado, embrulhado por `nielsen-shell-ux.js` e por
@@ -19,7 +22,7 @@ import { temaEscuro, usarTemaEscuro } from "./usar-ambiente.js";
   `body.dark-mode`). Ela inverte o tema, então o segmento já ativo não a chama.
   O Sair abre a confirmação de `nielsen-shell-ux.js` antes de encerrar.
 */
-export function Rodape() {
+export function Rodape({ alca = null }) {
   const escuro = usarTemaEscuro();
   const tema = themeControlState(escuro);
   const pedirTema = (pedido) => {
@@ -48,18 +51,19 @@ export function Rodape() {
           type="button"
           className="side-tema__alternar"
           aria-label={tema.label}
-          title={tema.title}
+          data-dica={`Alternar para tema ${escuro ? "claro" : "escuro"}`}
           onClick={() => window.toggleDarkMode?.()}
         >
           <Icone nome={tema.icon} />
         </button>
       </div>
+      {alca}
       <button
         id="sidebarLogoutBtn"
         type="button"
         className="side-logout"
-        title="Sair da sessão atual"
         aria-label="Sair da sessão atual"
+        data-dica="Sair"
         onClick={() => void performExplicitLogout()}
       >
         <Icone nome="log-out" />

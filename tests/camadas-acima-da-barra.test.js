@@ -9,9 +9,9 @@ const valorDoToken = (nome) =>
   Number(app.match(new RegExp(`${nome}:\\s*(\\d+)`))?.[1]);
 
 /*
-  A barra lateral subiu para cima do cabeçalho (`--z-sidebar`): a alça de
-  recolher sai meio para fora da borda e o painel flutuante do menu passa por
-  cima do cabeçalho e do mapa. Quem precisa ficar acima da barra — o modal de
+  A barra lateral subiu para cima do cabeçalho (`--z-sidebar`): o painel
+  flutuante do menu e as dicas do trilho passam por cima do cabeçalho e do
+  mapa. Quem precisa ficar acima da barra — o modal de
   busca, o link de pular, a faixa offline, o aviso de conectividade e o aviso
   de sessão — foi para os tokens de overlay. Antes, com a barra em 20, ficavam
   abaixo do cabeçalho sem ninguém notar.
@@ -28,7 +28,7 @@ describe("camadas acima da barra lateral", () => {
     expect(overlay).toBeGreaterThan(popover);
   });
 
-  it("a barra fixa usa o token e não recorta a alça", () => {
+  it("a barra fixa usa o token e não recorta o que sai da borda", () => {
     const i = app.indexOf("@media (min-width: 901px)");
     const bloco = app.slice(i, app.indexOf("}", i));
     expect(bloco).toContain("z-index: var(--z-sidebar)");
