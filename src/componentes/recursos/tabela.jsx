@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   ETAPAS,
+  FILTROS_VAZIOS,
+  filtrarRecursos,
   rotuloDaOrigem,
   rotuloDaSituacao,
   tomDaSituacao,
@@ -9,14 +11,30 @@ import {
 import { classes } from "./paineis.jsx";
 
 /*
-  A tabela da aba Recursos. Clique na linha (ou Enter) abre a gaveta de
-  detalhe. Mostra 50 por vez e "Mostrar mais": a fila de recursos de uma área é
-  de centenas, não de milhares. Abaixo de 900px vira cartões
-  (`mobile-table-cards.js`, pelo aviso `agsus:content-updated`).
+  "Fila de recursos": a tabela do painel, com a marcação da "Fila operacional
+  consolidada" do painel de análises (`.table-card` > `.table-head`,
+  `.table-meta`, `.table-wrap` com `tbody#tableBody`) e o carregamento
+  contínuo dele: 50 linhas por vez, e mais 50 quando a rolagem da fila chega
+  perto do fim (a faixa `.analises-infinite-status` diz quanto falta). A busca
+  do cabeçalho vale só para a fila, como lá. Clique na linha (ou Enter) ou em
+  "Detalhes" abre a gaveta.
 */
 
 const POR_VEZ = 50;
-const COLUNAS = 9;
+const PERTO_DO_FIM_PX = 160;
+const LINHAS_DO_ESQUELETO = 8;
+const COLUNAS = [
+  ["Nº", "6%"],
+  ["Candidato", "19%"],
+  ["Edital", "13%"],
+  ["Origem", "10%"],
+  ["Analista", "11%"],
+  ["Situação", "10%"],
+  ["Etapas", "8%"],
+  ["Prazo", "11%"],
+  ["Aberto há", "6%"],
+  ["Ações", "8%"],
+];
 
 export function dataBR(valor) {
   const texto = String(valor ?? "").slice(0, 10);
@@ -25,46 +43,61 @@ export function dataBR(valor) {
     : "";
 }
 
+/* O tom da situação no `.badge` do painel de análises. */
+const BADGE_DO_TOM = {
+  warning: "pendente",
+  success: "aprovado",
+  danger: "reprovado",
+  info: "revisar",
+};
+
 export function SeloDaSituacao({ situacao }) {
   return (
-    <span className="recursos-selo" data-tone={tomDaSituacao(situacao)}>
+    <span
+      className={`badge ${BADGE_DO_TOM[tomDaSituacao(situacao)] || "neutro"}`}
+    >
       {rotuloDaSituacao(situacao)}
     </span>
   );
 }
 
+export function MarcaForaDasAnalises() {
+  return <span className="badge neutro">Fora das análises</span>;
+}
+
 /* Prazo com o destaque de atraso: vencido (vermelho), vence em até 2 dias (âmbar). */
-export function Prazo({ recurso }) {
+export function detalheDoPrazo(recurso) {
   const { prazo, diasParaPrazo, atrasado, etapas } = recurso;
-  if (!prazo.data)
-    return (
-      <span className="recursos-prazo" data-tone="neutral">
-        Não encontrado
-      </span>
-    );
+  if (!prazo.data) return { data: "", texto: "Não encontrado", tom: "neutral" };
   const respondido = etapas.resposta_candidato;
   const tom = atrasado
     ? "danger"
     : !respondido && diasParaPrazo <= 2
       ? "warning"
       : "neutral";
-  const detalhe = respondido
+  const texto = respondido
     ? "respondido"
     : atrasado
       ? `vencido há ${formatNumberBR(-diasParaPrazo)} ${diasParaPrazo === -1 ? "dia" : "dias"}`
       : diasParaPrazo === 0
         ? "vence hoje"
         : `em ${formatNumberBR(diasParaPrazo)} ${diasParaPrazo === 1 ? "dia" : "dias"}`;
+  return {
+    data: `${dataBR(prazo.data)}${prazo.fonte === "abertura" ? "*" : ""}`,
+    texto,
+    tom,
+  };
+}
+
+function Prazo({ recurso }) {
+  const { data, texto, tom } = detalheDoPrazo(recurso);
   return (
-    <span
-      className="recursos-prazo"
-      data-tone={tom}
-      title={prazo.aviso || prazo.atividade}
-    >
-      {dataBR(prazo.data)}
-      {prazo.fonte === "abertura" ? "*" : ""}
-      <small>{detalhe}</small>
-    </span>
+    <div title={recurso.prazo.aviso || recurso.prazo.atividade || undefined}>
+      <div className="primary-text">{data || "—"}</div>
+      <span className="secondary-text recursos-prazo" data-tone={tom}>
+        {texto}
+      </span>
+    </div>
   );
 }
 
@@ -89,6 +122,18 @@ export function MarcasDasEtapas({ etapas }) {
   );
 }
 
+function LinhasDoEsqueleto() {
+  return Array.from({ length: LINHAS_DO_ESQUELETO }, (_, linha) => (
+    <tr key={linha} aria-hidden="true">
+      {COLUNAS.map(([rotulo]) => (
+        <td key={rotulo}>
+          <span>&nbsp;</span>
+        </td>
+      ))}
+    </tr>
+  ));
+}
+
 export function TabelaDeRecursos({
   recursos,
   total,
@@ -98,112 +143,121 @@ export function TabelaDeRecursos({
   aoAbrir,
   aoNovo,
 }) {
+  const [busca, setBusca] = useState("");
   const [limite, setLimite] = useState(POR_VEZ);
-  useEffect(() => setLimite(POR_VEZ), [recursos]);
-  const visiveis = recursos.slice(0, limite);
+  const naFila = useMemo(
+    () => filtrarRecursos(recursos, { ...FILTROS_VAZIOS, busca }),
+    [recursos, busca],
+  );
+  useEffect(() => setLimite(POR_VEZ), [naFila]);
+  const visiveis = naFila.slice(0, limite);
+  const faltam = naFila.length - visiveis.length;
 
-  useEffect(() => {
-    if (carregado)
-      document.dispatchEvent(new CustomEvent("agsus:content-updated"));
-  }, [carregado, visiveis]);
+  function aoRolar(evento) {
+    const caixa = evento.currentTarget;
+    if (
+      faltam > 0 &&
+      caixa.scrollTop + caixa.clientHeight >=
+        caixa.scrollHeight - PERTO_DO_FIM_PX
+    )
+      setLimite((atual) => atual + POR_VEZ);
+  }
 
   return (
-    <div className="table-card card recursos-tabela-card">
+    <section className="panel table-card" aria-labelledby="recursosFilaTitulo">
       <div className="table-head">
-        <h3>
-          <i className="fa-solid fa-table-list" aria-hidden="true" /> Recursos
-        </h3>
-        <span className="chip blue" id="recursosContagem">
+        <div>
+          <span className="eyebrow">Detalhes</span>
+          <h2 className="title" id="recursosFilaTitulo">
+            Fila de recursos
+          </h2>
+          <p className="hint">
+            Abra um registro para consultar o prazo, as etapas (quem fez e
+            quando) e o histórico.
+          </p>
+        </div>
+        <div className="table-tools">
+          <input
+            type="search"
+            id="tableSearch"
+            value={busca}
+            disabled={!carregado}
+            placeholder="Buscar somente na fila de recursos"
+            aria-label="Buscar somente na fila de recursos"
+            onChange={(evento) => setBusca(evento.target.value)}
+          />
+        </div>
+      </div>
+      <div className="table-meta">
+        <span id="tableInfo">
           {carregado
-            ? recursos.length === total
-              ? `${formatNumberBR(total)} ${total === 1 ? "recurso" : "recursos"}`
-              : `${formatNumberBR(recursos.length)} de ${formatNumberBR(total)}`
-            : "Carregando…"}
+            ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(naFila.length)} registros`
+            : "Mostrando 0 de 0 registros"}
+        </span>
+        <span id="pageInfo">
+          <span id="recursosContagem">
+            {carregado
+              ? naFila.length === total
+                ? `${formatNumberBR(total)} ${total === 1 ? "recurso" : "recursos"}`
+                : `${formatNumberBR(naFila.length)} de ${formatNumberBR(total)}`
+              : "Carregando…"}
+          </span>{" "}
+          · Carregamento contínuo
         </span>
       </div>
-      <div className="table-wrap recursos-tabela-rolagem">
-        <table className="recursos-tabela">
+      <div className="table-wrap" onScroll={aoRolar}>
+        <table>
           <thead>
             <tr>
-              <th scope="col" className="num">
-                Nº
-              </th>
-              <th scope="col">Candidato</th>
-              <th scope="col">Edital</th>
-              <th scope="col">Origem</th>
-              <th scope="col">Analista</th>
-              <th scope="col">Situação</th>
-              <th scope="col">Etapas</th>
-              <th scope="col">Prazo</th>
-              <th scope="col" className="num">
-                Dias em aberto
-              </th>
+              {COLUNAS.map(([rotulo, largura]) => (
+                <th key={rotulo} scope="col" style={{ width: largura }}>
+                  {rotulo}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody id="tableBody">
             {!carregado ? (
-              Array.from({ length: 6 }, (_, linha) => (
-                <tr
-                  key={linha}
-                  className="esqueleto-da-tabela"
-                  aria-hidden="true"
-                >
-                  {Array.from({ length: COLUNAS }, (_, coluna) => (
-                    <td key={coluna}>
-                      <span className="esqueleto" />
-                    </td>
-                  ))}
-                </tr>
-              ))
+              <LinhasDoEsqueleto />
             ) : visiveis.length ? (
               visiveis.map((r) => (
                 <tr
                   key={r.id}
-                  className={classes(
-                    "recursos-linha",
-                    r.atrasado && "is-atrasado",
-                  )}
+                  className="recursos-linha"
                   tabIndex={0}
                   onClick={() => aoAbrir(r.id)}
                   onKeyDown={(evento) => {
-                    if (evento.key === "Enter" || evento.key === " ") {
+                    if (
+                      evento.target === evento.currentTarget &&
+                      (evento.key === "Enter" || evento.key === " ")
+                    ) {
                       evento.preventDefault();
                       aoAbrir(r.id);
                     }
                   }}
-                  aria-label={`Recurso nº ${r.nu} de ${r.candidato}: abrir detalhe`}
+                  aria-label={`Recurso nº ${r.nu} de ${r.candidato}`}
                 >
-                  <td className="num">{r.nu}</td>
                   <td>
-                    <span className="recursos-candidato">
-                      <b>{r.candidato}</b>
-                      <small>
-                        {[
-                          r.codigo && `Cód. ${r.codigo}`,
-                          r.vaga && `Vaga ${r.vaga}`,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </small>
-                      {r.fora_analise ? (
-                        <span className="recursos-marca-fora">
-                          Fora das análises
-                        </span>
-                      ) : null}
-                    </span>
+                    <div className="primary-text">{r.nu}</div>
                   </td>
                   <td>
-                    <span className="recursos-candidato">
-                      <b>{r.edital}</b>
-                      <small>{r.unidade}</small>
+                    <div className="primary-text">{r.candidato}</div>
+                    <span className="secondary-text">
+                      {[
+                        r.codigo && `Cód. ${r.codigo}`,
+                        r.vaga && `Vaga ${r.vaga}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || r.cargo}
                     </span>
+                    {r.fora_analise ? <MarcaForaDasAnalises /> : null}
+                  </td>
+                  <td>
+                    <div className="primary-text">{r.edital}</div>
+                    <span className="secondary-text">{r.unidade}</span>
                   </td>
                   <td>{rotuloDaOrigem(r.origem, origens)}</td>
-                  <td>
-                    {r.analista || (
-                      <span className="recursos-sem">Sem analista</span>
-                    )}
-                  </td>
+                  <td>{r.analista || "Sem analista"}</td>
                   <td>
                     <SeloDaSituacao situacao={r.situacao} />
                   </td>
@@ -213,21 +267,41 @@ export function TabelaDeRecursos({
                   <td>
                     <Prazo recurso={r} />
                   </td>
-                  <td className="num">{r.diasEmAberto ?? ""}</td>
+                  <td>
+                    {r.diasEmAberto === null || r.diasEmAberto === undefined
+                      ? "—"
+                      : `${formatNumberBR(r.diasEmAberto)} d`}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="btn secondary small"
+                      onClick={(evento) => {
+                        evento.stopPropagation();
+                        aoAbrir(r.id);
+                      }}
+                    >
+                      <i
+                        className="fa-solid fa-chevron-down"
+                        aria-hidden="true"
+                      />{" "}
+                      Detalhes
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={COLUNAS} className="recursos-vazio-tabela">
+                <td colSpan={COLUNAS.length} className="empty">
                   {total ? (
-                    "Nenhum recurso com estes filtros."
+                    "Nenhum registro encontrado."
                   ) : (
                     <>
                       Nenhum recurso cadastrado nesta área.{" "}
                       {podeEditar ? (
                         <button
                           type="button"
-                          className="btn secondary"
+                          className="btn secondary small"
                           onClick={aoNovo}
                         >
                           <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
@@ -242,23 +316,17 @@ export function TabelaDeRecursos({
           </tbody>
         </table>
       </div>
-      {carregado && recursos.length > limite ? (
-        <div className="recursos-mais">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => setLimite((n) => n + POR_VEZ)}
-          >
-            Mostrar mais ({formatNumberBR(recursos.length - limite)} restantes)
-          </button>
+      {carregado && naFila.length ? (
+        <div
+          className="analises-infinite-status"
+          role="status"
+          aria-live="polite"
+        >
+          {faltam > 0
+            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naFila.length)} registros · role a fila para carregar mais`
+            : `Todos os ${formatNumberBR(naFila.length)} registros do recorte foram carregados`}
         </div>
       ) : null}
-      {carregado && recursos.some((r) => r.prazo.fonte === "abertura") ? (
-        <p className="recursos-nota">
-          * O cronograma não traz a resposta aos recursos; o prazo é o fim do
-          prazo de recurso.
-        </p>
-      ) : null}
-    </div>
+    </section>
   );
 }

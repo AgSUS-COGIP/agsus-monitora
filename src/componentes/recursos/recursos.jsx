@@ -6,7 +6,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createRoot } from "react-dom/client";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { flushSync } from "react-dom";
+import {
+  definirCarregamentoDoPainel,
+  mostrarErroDoCarregamento,
+} from "../../analises/analises-loading-feedback.js";
 import {
   calcularIndicadores,
   diaLocal,
@@ -17,45 +21,87 @@ import {
   ORIGENS_PADRAO,
   pendenciasPrioritarias,
 } from "../../lib/recursos-dos-candidatos.js";
-import { usarAreaAtual } from "../usar-area-atual.js";
+import {
+  alternarTemaDoPainel,
+  temaEscuroDoPainel,
+} from "../../lib/tema-do-painel.js";
 import { criarEstadoDosRecursos } from "./estado.js";
 import { FormularioDoRecurso } from "./formulario.jsx";
-import { GavetaDoRecurso } from "./gaveta.jsx";
-import { Filtros, Graficos, Indicadores } from "./paineis.jsx";
+import { dataHora, GavetaDoRecurso } from "./gaveta.jsx";
+import {
+  Filtros,
+  filtrosAtivos,
+  Graficos,
+  Indicadores,
+  Recorte,
+  Topo,
+} from "./paineis.jsx";
 import { TabelaDeRecursos } from "./tabela.jsx";
 
 /*
-  Aba Recursos, em React — a página `#page-recursos`, uma por área (Saúde
-  Indígena, SEDE, Projetos), a mesma tela recortada pela área atual do menu.
+  Painel de recursos (`recursos.html?area=`), em React, com a cara e as
+  classes do painel de análises curriculares: é o mesmo desenho de página
+  (src/analises/*.css), não uma imitação dele. Aberto dentro do MONITORA pela
+  view `recursos` (src/modules/pagina-do-painel.js), num quadro, como o de
+  análises; sozinho numa aba, funciona do mesmo jeito (a sessão do Supabase é a
+  do navegador).
 
-  Substitui o painel de recursos do Apps Script com a cara do painel de
-  análises: "Refinar resultados", indicadores em card, recursos por analista,
-  pendências prioritárias, situação/impacto/esteira, a tabela e a gaveta de
-  detalhe. Admin e gestor de edital (recurso de permissão `recursos` >=
-  editor) cadastram e editam; quem é leitor só consulta.
+  A área vem da URL e não muda: trocar de área no menu refaz o quadro. Admin e
+  gestor de edital (recurso de permissão `recursos` >= editor; `pode_editar`
+  vem do banco) cadastram e editam; quem só lê consulta.
 
-  O legado só troca a classe `.active` da seção e chama `render()` ao abrir a
-  página (`window.recursosController`); a carga começa aí, não na entrada.
+  O carregamento é o skeleton do painel de análises
+  (analises-loading-feedback.js + analises-esqueleto.css): liga na primeira
+  carga, desliga quando os dados entram — e aí avisa o MONITORA
+  (`agsus:painel-pronto`) para tirar o skeleton de lá. Falha na primeira carga
+  vira o aviso de erro dele, com "Tentar novamente".
 */
 
-export function Recursos({ estado }) {
+const NUMEROS_ZERADOS = calcularIndicadores([]);
+
+function textoDoStatus(e, recursos) {
+  if (e.semSessao) return "Sessão não localizada";
+  if (e.erroAoCarregar && !e.carregado) return "Sem dados";
+  if (!e.carregado) return "Carregando dados...";
+  if (e.atualizando) return "Atualizando...";
+  const ultima = recursos
+    .map((r) => r.atualizado_em || r.criado_em)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+  return `Atualizado em ${dataHora(ultima || e.carregadoEm)}`;
+}
+
+function alternarTelaCheia() {
+  if (!document.fullscreenElement)
+    document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+export function PainelDeRecursos({ estado, area, nomeDaArea }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const { area, nome } = usarAreaAtual();
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
-  const { ativa } = e;
+  const [escuro, setEscuro] = useState(() => temaEscuroDoPainel());
+  const { carregado, dados } = e;
 
-  // Aberta a página, a área atual manda: trocar de área no menu relê o banco.
+  // A área é a do quadro (`?area=`): a primeira carga começa ao montar.
   useEffect(() => {
-    if (ativa) estado.garantirCarregado(area);
-  }, [ativa, area, estado]);
+    void estado.carregar(area);
+  }, [estado, area]);
 
-  // Filtros de uma área não fazem sentido na outra.
-  useEffect(() => setFiltros(FILTROS_VAZIOS), [area]);
+  // O skeleton e o aviso de erro são os do painel de análises.
+  useEffect(() => {
+    if (carregado || e.semSessao) definirCarregamentoDoPainel(false);
+    else if (e.erroAoCarregar)
+      mostrarErroDoCarregamento(
+        `Não foi possível carregar os recursos: ${e.erroAoCarregar}`,
+        () => void estado.carregar(area),
+      );
+    else definirCarregamentoDoPainel(true);
+  }, [carregado, e.semSessao, e.erroAoCarregar, estado, area]);
 
-  const dados = e.area === area ? e.dados : null;
-  const carregado = e.area === area && e.carregado;
   const origens = dados?.origens?.length ? dados.origens : ORIGENS_PADRAO;
-  const podeEditar = Boolean(dados?.pode_editar);
+  const podeEditar = Boolean(carregado && dados?.pode_editar);
   const hoje = diaLocal();
   const recursos = useMemo(
     () => (dados ? enriquecerRecursos(dados, hoje) : []),
@@ -70,20 +116,22 @@ export function Recursos({ estado }) {
     [recursos, origens],
   );
   const indicadores = useMemo(
-    () => calcularIndicadores(filtrados),
-    [filtrados],
+    () => (carregado ? calcularIndicadores(filtrados) : NUMEROS_ZERADOS),
+    [carregado, filtrados],
   );
   const pendencias = useMemo(
     () => pendenciasPrioritarias(filtrados),
     [filtrados],
   );
+  const ativos = filtrosAtivos(filtros, opcoes);
   const aberto = e.gaveta ? recursos.find((r) => r.id === e.gaveta) : null;
   const emEdicao =
     e.formulario?.modo === "edicao"
       ? recursos.find((r) => r.id === e.formulario.id)
       : null;
 
-  const mudarFiltro = (campo, valor) =>
+  // KPI, pendência e barra de gráfico: clicar de novo tira o filtro.
+  const alternarFiltro = (campo, valor) =>
     setFiltros((atuais) => ({
       ...atuais,
       [campo]: atuais[campo] === valor ? "" : valor,
@@ -92,98 +140,74 @@ export function Recursos({ estado }) {
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
 
   return (
-    <div className="recursos-pagina" aria-busy={!carregado || undefined}>
-      <div className="recursos-barra">
-        <p className="recursos-barra-status" role="status">
-          {e.area === area && e.erroAoCarregar && !carregado
-            ? "Sem dados"
-            : carregado
-              ? `${nome} · atualizado às ${new Date(e.carregadoEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}${e.atualizando ? " · atualizando…" : ""}`
-              : "Carregando…"}
-          {carregado && !podeEditar ? (
-            <span className="chip gray recursos-leitura">
-              <i className="fa-solid fa-eye" aria-hidden="true" /> Somente
-              consulta
-            </span>
+    <>
+      <div className="shell">
+        <Topo
+          subtitulo={`${nomeDaArea} · Acompanhamento dos recursos dos candidatos`}
+          status={textoDoStatus(e, recursos)}
+          somenteConsulta={carregado && !podeEditar}
+          escuro={escuro}
+          aoTema={() => setEscuro(alternarTemaDoPainel())}
+          aoTelaCheia={alternarTelaCheia}
+          aoAtualizar={() => void estado.carregar(area)}
+          atualizarDesativado={e.atualizando || e.semSessao}
+          aoExportar={() => estado.exportarCsv(filtrados, origens)}
+          exportarDesativado={!carregado || !filtrados.length}
+          aoNovo={podeEditar ? estado.abrirNovo : null}
+          novoDesativado={Boolean(e.acao)}
+        />
+
+        <main className="content">
+          {e.semSessao ? (
+            <section id="authWarning" className="auth-warning" role="alert">
+              {e.erroAoCarregar}
+            </section>
           ) : null}
-        </p>
-        <div className="recursos-barra-acoes">
-          <button
-            type="button"
-            className="btn secondary"
-            disabled={!carregado || e.atualizando}
-            onClick={() => void estado.carregar(area)}
-          >
-            <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
-          </button>
-          <button
-            type="button"
-            className="btn secondary"
-            disabled={!carregado || !filtrados.length}
-            onClick={() => estado.exportarCsv(filtrados, origens)}
-          >
-            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
-            CSV
-          </button>
-          {podeEditar ? (
-            <button
-              type="button"
-              className="btn"
-              disabled={Boolean(e.acao)}
-              onClick={estado.abrirNovo}
-            >
-              <i className="fa-solid fa-plus" aria-hidden="true" /> Novo recurso
-            </button>
-          ) : null}
-        </div>
+
+          <Filtros
+            filtros={filtros}
+            opcoes={opcoes}
+            carregado={carregado}
+            aoMudar={trocarFiltro}
+            aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
+          />
+          <Indicadores
+            indicadores={indicadores}
+            carregado={carregado}
+            filtros={filtros}
+            aoFiltrar={alternarFiltro}
+          />
+          <Recorte ativos={ativos} recursos={filtrados} carregado={carregado} />
+          <Graficos
+            recursos={filtrados}
+            pendencias={pendencias}
+            carregado={carregado}
+            filtros={filtros}
+            aoFiltrar={alternarFiltro}
+            escuro={escuro}
+          />
+          <TabelaDeRecursos
+            recursos={filtrados}
+            total={recursos.length}
+            origens={origens}
+            carregado={carregado}
+            podeEditar={podeEditar}
+            aoAbrir={estado.abrirGaveta}
+            aoNovo={estado.abrirNovo}
+          />
+        </main>
+
+        <footer className="footer">
+          <span>
+            Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde ©
+            2026
+          </span>
+          <span>
+            <span id="footerUpdated">{textoDoStatus(e, recursos)}</span>{" "}
+            <span className="secure">SECURE</span>
+          </span>
+        </footer>
       </div>
-
-      {e.area === area && e.erroAoCarregar && !carregado ? (
-        <div className="card recursos-erro" role="alert">
-          <p>
-            Não foi possível carregar os recursos.{" "}
-            <small>{e.erroAoCarregar}</small>
-          </p>
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => void estado.carregar(area)}
-          >
-            <i className="fa-solid fa-rotate-right" aria-hidden="true" /> Tentar
-            de novo
-          </button>
-        </div>
-      ) : null}
-
-      <Filtros
-        filtros={filtros}
-        opcoes={opcoes}
-        carregado={carregado}
-        aoMudar={trocarFiltro}
-        aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
-      />
-      <Indicadores
-        indicadores={indicadores}
-        carregado={carregado}
-        filtros={filtros}
-        aoFiltrar={mudarFiltro}
-      />
-      <Graficos
-        recursos={filtrados}
-        pendencias={pendencias}
-        carregado={carregado}
-        filtros={filtros}
-        aoFiltrar={mudarFiltro}
-      />
-      <TabelaDeRecursos
-        recursos={filtrados}
-        total={recursos.length}
-        origens={origens}
-        carregado={carregado}
-        podeEditar={podeEditar}
-        aoAbrir={estado.abrirGaveta}
-        aoNovo={estado.abrirNovo}
-      />
 
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}
       {aberto && !e.formulario ? (
@@ -206,40 +230,65 @@ export function Recursos({ estado }) {
           origens={origens}
         />
       ) : null}
-    </div>
+    </>
   );
 }
 
+const ICONE_DO_AVISO = {
+  error: "fa-circle-exclamation",
+  warn: "fa-triangle-exclamation",
+};
+
+/*
+  O aviso do painel de análises (`.toast` no `#toastHost`): some sozinho em
+  alguns segundos. Montado com elementos, sem HTML: a mensagem pode trazer o
+  que o banco respondeu.
+*/
+export function criarAvisoDoPainel(host, duracaoMs = 5200) {
+  return (mensagem, tipo = "info") => {
+    if (!host) return;
+    const aviso = document.createElement("div");
+    aviso.className = `toast${tipo === "warn" ? " warn" : tipo === "error" ? " error" : ""}`;
+    aviso.setAttribute("role", tipo === "error" ? "alert" : "status");
+    const icone = document.createElement("i");
+    icone.className = `fa-solid ${ICONE_DO_AVISO[tipo] || "fa-circle-info"}`;
+    icone.setAttribute("aria-hidden", "true");
+    const texto = document.createElement("span");
+    texto.textContent = String(mensagem ?? "");
+    aviso.append(icone, texto);
+    host.append(aviso);
+    setTimeout(() => aviso.remove(), duracaoMs);
+  };
+}
+
 /**
- * Monta a página em `#page-recursos` e devolve o controlador que o legado
- * chama (`window.recursosController`).
+ * Monta o painel no `raiz` (o `#recursosPainel` de recursos.html) e devolve o
+ * estado e a raiz do React. `flushSync`: a página já sai desenhada (o
+ * skeleton) desta chamada.
  */
-export function montarRecursos({
-  secao = document.getElementById("page-recursos"),
-  supabase = getSupabaseClient(),
-  toast,
-  getProfile,
+export function montarPainelDeRecursos({
+  raiz = document.getElementById("recursosPainel"),
+  supabase,
+  area,
+  nomeDaArea,
+  toast = criarAvisoDoPainel(document.getElementById("toastHost")),
   baixar,
 } = {}) {
-  const estado = criarEstadoDosRecursos({
-    supabase,
-    toast,
-    getProfile,
-    baixar,
-  });
-  let raiz = null;
-  if (secao) {
-    raiz = createRoot(secao);
-    raiz.render(
-      <StrictMode>
-        <Recursos estado={estado} />
-      </StrictMode>,
+  const estado = criarEstadoDosRecursos({ supabase, toast, baixar });
+  let raizDoReact = null;
+  if (raiz) {
+    raizDoReact = createRoot(raiz);
+    flushSync(() =>
+      raizDoReact.render(
+        <StrictMode>
+          <PainelDeRecursos
+            estado={estado}
+            area={area}
+            nomeDaArea={nomeDaArea}
+          />
+        </StrictMode>,
+      ),
     );
   }
-  return {
-    estado,
-    raiz,
-    /* Abrir a página ativa a carga (a primeira vez) e revalida depois. */
-    render: () => estado.ativar(),
-  };
+  return { estado, raiz: raizDoReact };
 }

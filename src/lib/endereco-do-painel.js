@@ -9,13 +9,16 @@
 
   Painéis de fora (Apps Script, outros sites) ficam como estão.
 */
-export const PAGINAS_DO_APP = Object.freeze(["/analises.html"]);
+export const PAGINAS_DO_APP = Object.freeze([
+  "/analises.html",
+  "/recursos.html",
+]);
 
 /*
   O endereço com a área do menu (`?area=`), para a página do app que serve
-  várias áreas (Análises curriculares: Saúde Indígena, SEDE e Projetos, aberta
-  por `src/modules/pagina-de-analises.js`). Só página do app recebe a área; sem
-  área, fica o endereço de `enderecoDoPainel`.
+  várias áreas (Análises curriculares e Recursos: Saúde Indígena, SEDE e
+  Projetos, abertas por `src/modules/pagina-do-painel.js`). Só página do app
+  recebe a área; sem área, fica o endereço de `enderecoDoPainel`.
 */
 export function enderecoDoPainelNaArea(url, origemAtual, area) {
   const endereco = enderecoDoPainel(url, origemAtual);

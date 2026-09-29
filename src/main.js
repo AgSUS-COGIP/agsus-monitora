@@ -53,7 +53,6 @@ import "./styles/lista-aprovados.css";
 import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
 import "./styles/carregamento.css";
-import "./styles/recursos.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -96,7 +95,6 @@ import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.js
 import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
-import { montarRecursos } from "./componentes/recursos/recursos.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -171,12 +169,6 @@ window.aprovadosController = montarListaAprovados({
 // Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
 window.calendarioEditaisController = montarCalendarioEditais({
   toast: window.monitoraToast,
-});
-
-// Recursos dos candidatos: carrega ao abrir a página (skeleton), por área.
-window.recursosController = montarRecursos({
-  toast: window.monitoraToast,
-  getProfile: window.getMonitoraProfile,
 });
 
 if (!hasSupabaseEnv()) {

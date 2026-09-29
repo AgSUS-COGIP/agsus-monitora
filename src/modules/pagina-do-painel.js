@@ -1,10 +1,13 @@
 /*
-  A página Análises curriculares (`#page-analises`, view `analises`).
+  As páginas que são um painel do app num quadro: Análises curriculares
+  (`#page-analises`, view `analises`) e Recursos dos candidatos
+  (`#page-recursos`, view `recursos`).
 
-  É o app de análises (`analises.html`) num quadro que pertence à página, com
-  endereço fixo do próprio MONITORA (`enderecoDasAnalises`) e a área atual do
-  menu na URL (`?area=`). Antes era um painel externo (`openPanel` do legado);
-  o comportamento que vinha de lá continua o mesmo:
+  A seção diz qual painel é (`data-painel="analises" | "recursos"`); o
+  endereço e o título do quadro vêm de `PAGINAS_DO_PAINEL`
+  (src/lib/pagina-do-painel.js), com a área atual do menu na URL (`?area=`).
+  O comportamento é o que Análises herdou do antigo painel externo
+  (`openPanel` do legado):
 
   - o quadro nasce na primeira abertura, e não na entrada;
   - aberto de novo na mesma área, fica como está (não recarrega);
@@ -17,21 +20,25 @@
   O quadro leva a classe `external-panel`, como os dos painéis: é ela que dá a
   posição ao skeleton (carregamento.css), e é por ela que o legado descarta os
   quadros ao sair da conta e ao atualizar os dados (`clearExternalPanelCache`,
-  `refreshData`) — o de análises vai junto e renasce na próxima abertura.
+  `refreshData`) — o quadro vai junto e renasce na próxima abertura.
 */
 import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.js";
-import { enderecoDasAnalises } from "../lib/pagina-de-analises.js";
+import {
+  enderecoDaPaginaDoPainel,
+  PAGINAS_DO_PAINEL,
+} from "../lib/pagina-do-painel.js";
 import { acompanharCarregamentoDoPainel } from "./carregamento.js";
 
-const CLASSE_DO_QUADRO = "quadro-das-analises";
+const CLASSE_DO_QUADRO = "quadro-do-painel";
 const vigiadas = new WeakSet();
 
 const texto = (valor) => String(valor ?? "").trim();
 const quadroDa = (pagina) =>
   pagina.querySelector(`:scope > .${CLASSE_DO_QUADRO}`);
+const painelDa = (pagina) => PAGINAS_DO_PAINEL[pagina.dataset.painel] || null;
 
 function criarQuadro(pagina, area, origem) {
   const quadro = document.createElement("div");
@@ -39,15 +46,15 @@ function criarQuadro(pagina, area, origem) {
   quadro.dataset.area = area;
   const frame = document.createElement("iframe");
   frame.className = "external-frame";
-  frame.title = "Análises curriculares";
-  frame.src = enderecoDasAnalises(origem, area);
+  frame.title = painelDa(pagina).titulo;
+  frame.src = enderecoDaPaginaDoPainel(pagina.dataset.painel, origem, area);
   frame.loading = "eager";
   frame.allow = "fullscreen; clipboard-read; clipboard-write";
   frame.allowFullscreen = true;
   quadro.append(frame);
   pagina.append(quadro);
   acompanharCarregamentoDoPainel(quadro, {
-    aoTentarDeNovo: () => recarregarPaginaDeAnalises(pagina, { origem }),
+    aoTentarDeNovo: () => recarregarPaginaDoPainel(pagina, { origem }),
   });
   return quadro;
 }
@@ -61,19 +68,20 @@ function vigiarAArea(pagina, origem) {
     if (!quadro || !pagina.classList.contains("active")) return;
     if (quadro.dataset.area === texto(obterDadosDoMonitoramento().areaAtual))
       return;
-    abrirPaginaDeAnalises(pagina, { origem });
+    abrirPaginaDoPainel(pagina, { origem });
   });
 }
 
 /**
  * Mostra o quadro da área atual na página: cria na primeira vez, refaz se a
- * área mudou e, na mesma área, deixa como está. Devolve o quadro.
+ * área mudou e, na mesma área, deixa como está. Devolve o quadro (ou `null`,
+ * se a seção não diz um painel conhecido).
  */
-export function abrirPaginaDeAnalises(
+export function abrirPaginaDoPainel(
   pagina,
   { origem = window.location.origin } = {},
 ) {
-  if (!pagina) return null;
+  if (!pagina || !painelDa(pagina)) return null;
   vigiarAArea(pagina, origem);
   const area = texto(obterDadosDoMonitoramento().areaAtual);
   const atual = quadroDa(pagina);
@@ -83,13 +91,13 @@ export function abrirPaginaDeAnalises(
 }
 
 /** O "Tentar novamente" do aviso de demora: o quadro recomeça do zero. */
-export function recarregarPaginaDeAnalises(pagina, opcoes) {
+export function recarregarPaginaDoPainel(pagina, opcoes) {
   if (!pagina) return null;
   quadroDa(pagina)?.remove();
-  return abrirPaginaDeAnalises(pagina, opcoes);
+  return abrirPaginaDoPainel(pagina, opcoes);
 }
 
 /** O iframe aberto, para a tela cheia do legado. */
-export function quadroDasAnalises(pagina) {
+export function quadroDoPainel(pagina) {
   return pagina ? quadroDa(pagina)?.querySelector("iframe") || null : null;
 }

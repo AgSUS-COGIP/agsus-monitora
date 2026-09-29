@@ -116,7 +116,6 @@ function ensureStyles() {
     #analisesLoadMoreV2{
       display:none!important
     }
-    .analises-drawer-backdrop{z-index:2147483000!important}
   `;
   document.head.appendChild(style);
 }

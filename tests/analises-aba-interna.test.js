@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   enderecoDasAnalises,
   semOPainelAntigoDeAnalises,
-} from "../src/lib/pagina-de-analises.js";
+} from "../src/lib/pagina-do-painel.js";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import {
   collectPanelRows,
@@ -84,7 +84,7 @@ describe("o legado trata Análises como página", () => {
       "function subtituloDaArea",
     );
     expect(navegar).toContain('$("page-analises").classList.add("active");');
-    expect(navegar).toContain('abrirPaginaDeAnalises($("page-analises"));');
+    expect(navegar).toContain('abrirPaginaDoPainel($("page-analises"));');
   });
 
   it("os painéis carregados perdem o antigo de análises", () => {
@@ -104,7 +104,7 @@ describe("o legado trata Análises como página", () => {
 
   it("o index.html tem a seção da página", () => {
     expect(ler("index.html")).toContain(
-      '<section id="page-analises" class="page pagina-das-analises"></section>',
+      '<section id="page-analises" class="page pagina-do-painel" data-painel="analises"></section>',
     );
   });
 });

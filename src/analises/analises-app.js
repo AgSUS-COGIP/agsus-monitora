@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { CHAVE_DO_TEMA_DO_PAINEL, paletaDoPainel } from "../lib/tema-do-painel.js";
 import { dataDeAnaliseNoFuturo } from "../lib/data-de-analise.js";
 import { editaisDasLinhas } from "../lib/editais-das-linhas.js";
 import { urlDaPlanilhaGoogle } from "../lib/planilhas.js";
@@ -33,7 +34,7 @@ import {
   const VIEW_NAME_ATIVOS = "VW_ANALISES_DASHBOARD_BASE";
   const VIEW_NAME_TODOS = "VW_ANALISES_DASHBOARD_BASE_TODOS";
   const ANALISES_DASHBOARD_PAYLOAD_RPC = "get_analises_dashboard_payload_v2";
-  const THEME_KEY = "agsus_analises_theme_v3";
+  const THEME_KEY = CHAVE_DO_TEMA_DO_PAINEL;
   const RPC_ACCESS_LOG = "registrar_evento_acesso";
   const APP_VERSION = "institucional-2026-06-09";
   const DASHBOARD_PAYLOAD_TIMEOUT_MS = 12000;
@@ -762,7 +763,7 @@ import {
   function renderPdfMetrics(){ const com=panelRows.filter(r=>txt(r.link_pdf)).length, sem=panelRows.length-com, erro=panelRows.filter(r=>norm(r.pdf_status)==="erro").length, des=panelRows.filter(r=>norm(r.pdf_status)==="desatualizado").length; $("pdfMetrics").innerHTML = `<span class="mini-chip"><i class="fa-solid fa-file-pdf"></i> Com PDF: ${fmt(com)}</span><span class="mini-chip"><i class="fa-regular fa-file"></i> Sem PDF: ${fmt(sem)}</span><span class="mini-chip"><i class="fa-solid fa-triangle-exclamation"></i> Erro: ${fmt(erro)}</span><span class="mini-chip"><i class="fa-solid fa-clock-rotate-left"></i> Desatualizado: ${fmt(des)}</span>`; }
 
   function statusClass(s){ const x=norm(s); if(x==="aprovado") return "aprovado"; if(x==="reprovado") return "reprovado"; if(x==="revisar") return "revisar"; if(x==="pendente") return "pendente"; return "neutro"; }
-  function palette(){ const dark=document.documentElement.dataset.theme==="dark"; return { grid:dark?"rgba(255,255,255,.08)":"rgba(7,59,121,.09)", text:dark?"#dbe8f5":"#526780", ok:"#2ca25f", bad:"#e45757", warn:"#e2a400", review:"#2f74c0", blue:"#0f5db7", surface:dark?"#0f1c2e":"#fff" }; }
+  function palette(){ return paletaDoPainel(document.documentElement.dataset.theme==="dark"); }
   function aggregateResponsavel(limit=12){ const map=new Map(); panelRows.forEach(r=>{ const label=txt(r.responsavel_analise)||"Sem responsável"; if(!map.has(label)) map.set(label,{label,Pendente:0,Revisar:0,Aprovado:0,Reprovado:0,total:0}); const e=map.get(label); const s=txt(r.status_consolidado)||"Pendente"; if(e[s]!==undefined) e[s]++; else e.Pendente++; e.total++; }); return [...map.values()].sort((a,b)=>b.total-a.total).slice(0,limit); }
   function aggregateResponsavelFromPayload(limit=12){
     if(!canUseAnalisesPayload() || !Array.isArray(analisesPayload.por_responsavel)) return null;

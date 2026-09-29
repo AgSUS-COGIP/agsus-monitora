@@ -1,11 +1,14 @@
 import {
+  Children,
+  cloneElement,
+  isValidElement,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import { formatNumberBR } from "../../lib/formatters.js";
 import {
   compararEditais,
   dadosParaSalvar,
@@ -16,10 +19,13 @@ import {
   SITUACOES,
 } from "../../lib/recursos-dos-candidatos.js";
 import { Modal } from "../modal.jsx";
+import { Kv, nota, TopoDaGaveta } from "./gaveta.jsx";
 import { classes } from "./paineis.jsx";
 
 /*
-  Cadastro e edição de recurso.
+  Cadastro e edição de recurso, na gaveta do painel (`.analises-drawer`),
+  com os campos do painel de análises (`.field`: rótulo em cima, controle
+  embaixo).
 
   Cadastro: edital (só os da área atual) → origem → candidato, buscado nas
   análises curriculares daquele edital (a base de nomes das três origens). Ao
@@ -36,59 +42,48 @@ import { classes } from "./paineis.jsx";
 
 const ESPERA_DA_BUSCA_MS = 300;
 
-const nota = (valor) =>
-  valor === null || valor === undefined || valor === ""
-    ? "—"
-    : formatNumberBR(Number(valor), { maximumFractionDigits: 2 });
+const CONTROLES = ["input", "select", "textarea"];
 
+/* O `.field` do painel de análises; o primeiro controle ganha o id do rótulo. */
 function Campo({ rotulo, erro, obrigatorio, children, largo }) {
+  const id = useId();
+  let ligado = false;
+  const filhos = Children.map(children, (filho) => {
+    if (ligado || !isValidElement(filho) || !CONTROLES.includes(filho.type))
+      return filho;
+    ligado = true;
+    return cloneElement(filho, { id });
+  });
   return (
-    <label
-      className={classes("recursos-campo", largo && "recursos-campo--largo")}
-    >
-      <span>
+    <div className={classes("field", largo && "recursos-campo-largo")}>
+      <label htmlFor={id}>
         {rotulo}
         {obrigatorio ? <abbr title="obrigatório"> *</abbr> : null}
-      </span>
-      {children}
+      </label>
+      {filhos}
       {erro ? (
         <small className="recursos-erro-campo" role="alert">
           <i className="fa-solid fa-circle-exclamation" aria-hidden="true" />{" "}
           {erro}
         </small>
       ) : null}
-    </label>
+    </div>
   );
 }
 
 function ResumoDoCandidato({ analise }) {
   return (
-    <dl className="recursos-resumo" aria-label="Dados da análise do candidato">
-      <div>
-        <dt>Cargo</dt>
-        <dd>{analise.cargo || "—"}</dd>
-      </div>
-      <div>
-        <dt>Vaga</dt>
-        <dd>{analise.vaga || "—"}</dd>
-      </div>
-      <div>
-        <dt>Código</dt>
-        <dd>{analise.codigo || "—"}</dd>
-      </div>
-      <div>
-        <dt>Nota atual</dt>
-        <dd>{nota(analise.nota)}</dd>
-      </div>
-      <div>
-        <dt>Resultado da análise</dt>
-        <dd>{analise.resultado || "—"}</dd>
-      </div>
-      <div>
-        <dt>Responsável pela análise</dt>
-        <dd>{analise.responsavel || "—"}</dd>
-      </div>
-    </dl>
+    <div
+      className="analises-detail-section-grid recursos-resumo"
+      aria-label="Dados da análise do candidato"
+    >
+      <Kv rotulo="Cargo">{analise.cargo}</Kv>
+      <Kv rotulo="Vaga">{analise.vaga}</Kv>
+      <Kv rotulo="Código">{analise.codigo}</Kv>
+      <Kv rotulo="Nota atual">{nota(analise.nota)}</Kv>
+      <Kv rotulo="Resultado da análise">{analise.resultado}</Kv>
+      <Kv rotulo="Responsável pela análise">{analise.responsavel}</Kv>
+    </div>
   );
 }
 
@@ -328,292 +323,299 @@ export function FormularioDoRecurso({
       rotuloId="recursosFormularioTitulo"
       aoFechar={estado.fecharFormulario}
       fecharAoClicarFora={false}
-      className="recursos-modal"
-      cartaoClassName="recursos-formulario-cartao"
+      className="analises-drawer-backdrop recursos-formulario-gaveta"
+      cartaoClassName="analises-drawer recursos-formulario-cartao"
     >
       <form onSubmit={enviar} noValidate>
-        <div className="modal-head">
-          <h3 id="recursosFormularioTitulo">
-            {edicao ? `Editar recurso nº ${recurso.nu}` : "Novo recurso"}
-          </h3>
-          <button
-            type="button"
-            className="btn icon outline"
-            aria-label="Fechar formulário"
-            title="Fechar"
-            onClick={estado.fecharFormulario}
-          >
-            <i className="fa-solid fa-xmark" aria-hidden="true" />
-          </button>
-        </div>
-        <div className="modal-body recursos-formulario">
-          {edicao ? (
-            <div className="recursos-formulario-fixo">
-              <p>
-                <b>{recurso.candidato}</b> · {recurso.edital} ·{" "}
-                {recurso.unidade}
-              </p>
-              {recurso.fora_analise ? (
-                <span className="recursos-marca-fora">Fora das análises</span>
-              ) : (
-                <small>
-                  {[
-                    recurso.codigo && `Cód. ${recurso.codigo}`,
-                    recurso.vaga && `Vaga ${recurso.vaga}`,
-                    recurso.cargo,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </small>
-              )}
+        <TopoDaGaveta
+          sobretitulo={edicao ? "Edição do recurso" : "Cadastro de recurso"}
+          titulo={edicao ? `Editar recurso nº ${recurso.nu}` : "Novo recurso"}
+          tituloId="recursosFormularioTitulo"
+          rotuloDoFechar="Fechar formulário"
+          aoFechar={estado.fecharFormulario}
+        />
+        {edicao ? (
+          <div className="analises-drawer-context">
+            <div>
+              <small>Candidato</small>
+              <strong>{recurso.candidato}</strong>
             </div>
-          ) : (
-            <div className="recursos-formulario-grade">
-              <Campo rotulo="Edital" obrigatorio erro={erro("edital_id")}>
-                <select
-                  name="edital_id"
-                  value={rascunho.edital_id}
-                  data-foco-inicial
-                  onChange={(evento) => {
-                    mudar("edital_id", evento.target.value);
+            <div>
+              <small>Edital</small>
+              <strong>{recurso.edital}</strong>
+            </div>
+            <div>
+              <small>Unidade</small>
+              <strong>{recurso.unidade || "—"}</strong>
+            </div>
+            <div>
+              <small>{recurso.fora_analise ? "Candidato" : "Vaga"}</small>
+              <strong>
+                {recurso.fora_analise
+                  ? "Fora das análises"
+                  : [
+                      recurso.codigo && `Cód. ${recurso.codigo}`,
+                      recurso.vaga && `Vaga ${recurso.vaga}`,
+                      recurso.cargo,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
+              </strong>
+            </div>
+          </div>
+        ) : null}
+        <div id="analisesDrawerBody">
+          <div className="detail-shell recursos-formulario">
+            {edicao ? null : (
+              <div className="recursos-formulario-grade">
+                <Campo rotulo="Edital" obrigatorio erro={erro("edital_id")}>
+                  <select
+                    name="edital_id"
+                    value={rascunho.edital_id}
+                    data-foco-inicial
+                    onChange={(evento) => {
+                      mudar("edital_id", evento.target.value);
+                      mudar("analise", null);
+                    }}
+                  >
+                    <option value="">Escolha o edital</option>
+                    {editaisOrdenados.map((ed) => (
+                      <option key={ed.id} value={ed.id}>
+                        {ed.edital} · {ed.unidade}
+                        {ed.tem_analises ? "" : " (sem análises)"}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo
+                  rotulo="Origem do recurso"
+                  obrigatorio
+                  erro={erro("origem")}
+                >
+                  <select
+                    name="origem"
+                    value={rascunho.origem}
+                    onChange={(evento) => mudar("origem", evento.target.value)}
+                  >
+                    <option value="">Escolha a origem</option>
+                    {origensAtivas.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.rotulo}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+              </div>
+            )}
+
+            {!edicao && !rascunho.fora_analise ? (
+              rascunho.analise ? (
+                <div className="recursos-escolhido">
+                  <div className="recursos-escolhido-topo">
+                    <b>{rascunho.analise.candidato}</b>
+                    <button
+                      type="button"
+                      className="recursos-link"
+                      onClick={() => mudar("analise", null)}
+                    >
+                      Trocar candidato
+                    </button>
+                  </div>
+                  <ResumoDoCandidato analise={rascunho.analise} />
+                </div>
+              ) : (
+                <BuscaDoCandidato
+                  estado={estado}
+                  editalId={rascunho.edital_id}
+                  erro={erro("candidato")}
+                  aoEscolher={escolherCandidato}
+                  aoNaoEncontrar={() => {
+                    mudar("fora_analise", true);
                     mudar("analise", null);
                   }}
-                >
-                  <option value="">Escolha o edital</option>
-                  {editaisOrdenados.map((ed) => (
-                    <option key={ed.id} value={ed.id}>
-                      {ed.edital} · {ed.unidade}
-                      {ed.tem_analises ? "" : " (sem análises)"}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-              <Campo
-                rotulo="Origem do recurso"
-                obrigatorio
-                erro={erro("origem")}
-              >
-                <select
-                  name="origem"
-                  value={rascunho.origem}
-                  onChange={(evento) => mudar("origem", evento.target.value)}
-                >
-                  <option value="">Escolha a origem</option>
-                  {origensAtivas.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-            </div>
-          )}
+                />
+              )
+            ) : null}
 
-          {!edicao && !rascunho.fora_analise ? (
-            rascunho.analise ? (
-              <div className="recursos-escolhido">
-                <div className="recursos-escolhido-topo">
-                  <b>{rascunho.analise.candidato}</b>
-                  <button
-                    type="button"
-                    className="recursos-link"
-                    onClick={() => mudar("analise", null)}
+            {rascunho.fora_analise ? (
+              <div className="recursos-fora">
+                {!edicao ? (
+                  <p className="recursos-aviso" data-tone="warning">
+                    <i
+                      className="fa-solid fa-triangle-exclamation"
+                      aria-hidden="true"
+                    />{" "}
+                    O recurso será marcado como <b>fora das análises</b>: os
+                    dados abaixo são os digitados.{" "}
+                    <button
+                      type="button"
+                      className="recursos-link"
+                      onClick={() => mudar("fora_analise", false)}
+                    >
+                      Voltar à busca
+                    </button>
+                  </p>
+                ) : null}
+                <div className="recursos-formulario-grade">
+                  <Campo
+                    rotulo="Nome do candidato"
+                    obrigatorio
+                    erro={erro("nome_informado")}
+                    largo
                   >
-                    Trocar candidato
-                  </button>
+                    <input
+                      name="nome_informado"
+                      value={rascunho.nome_informado}
+                      maxLength={200}
+                      onChange={(evento) =>
+                        mudar("nome_informado", evento.target.value)
+                      }
+                    />
+                  </Campo>
+                  <Campo rotulo="Código do candidato">
+                    <input
+                      name="codigo_informado"
+                      value={rascunho.codigo_informado}
+                      maxLength={60}
+                      onChange={(evento) =>
+                        mudar("codigo_informado", evento.target.value)
+                      }
+                    />
+                  </Campo>
+                  <Campo rotulo="Vaga">
+                    <input
+                      name="vaga_informada"
+                      value={rascunho.vaga_informada}
+                      maxLength={60}
+                      onChange={(evento) =>
+                        mudar("vaga_informada", evento.target.value)
+                      }
+                    />
+                  </Campo>
+                  <Campo rotulo="Cargo" largo>
+                    <input
+                      name="cargo_informado"
+                      value={rascunho.cargo_informado}
+                      maxLength={200}
+                      onChange={(evento) =>
+                        mudar("cargo_informado", evento.target.value)
+                      }
+                    />
+                  </Campo>
                 </div>
-                <ResumoDoCandidato analise={rascunho.analise} />
               </div>
-            ) : (
-              <BuscaDoCandidato
-                estado={estado}
-                editalId={rascunho.edital_id}
-                erro={erro("candidato")}
-                aoEscolher={escolherCandidato}
-                aoNaoEncontrar={() => {
-                  mudar("fora_analise", true);
-                  mudar("analise", null);
-                }}
-              />
-            )
-          ) : null}
+            ) : null}
 
-          {rascunho.fora_analise ? (
-            <div className="recursos-fora">
-              {!edicao ? (
-                <p className="recursos-aviso" data-tone="warning">
+            {numeroDuplicado ? (
+              <div className="recursos-aviso" data-tone="warning" role="alert">
+                <p>
                   <i
                     className="fa-solid fa-triangle-exclamation"
                     aria-hidden="true"
                   />{" "}
-                  O recurso será marcado como <b>fora das análises</b>: os dados
-                  abaixo são os digitados.{" "}
-                  <button
-                    type="button"
-                    className="recursos-link"
-                    onClick={() => mudar("fora_analise", false)}
-                  >
-                    Voltar à busca
-                  </button>
+                  Já existe o recurso nº {numeroDuplicado} em análise para este
+                  candidato, edital e origem.
                 </p>
-              ) : null}
-              <div className="recursos-formulario-grade">
-                <Campo
-                  rotulo="Nome do candidato"
-                  obrigatorio
-                  erro={erro("nome_informado")}
-                  largo
-                >
+                <label className="recursos-check">
                   <input
-                    name="nome_informado"
-                    value={rascunho.nome_informado}
-                    maxLength={200}
+                    type="checkbox"
+                    name="confirma_duplicado"
+                    checked={confirmaDuplicado}
                     onChange={(evento) =>
-                      mudar("nome_informado", evento.target.value)
+                      setConfirmaDuplicado(evento.target.checked)
                     }
                   />
-                </Campo>
-                <Campo rotulo="Código do candidato">
-                  <input
-                    name="codigo_informado"
-                    value={rascunho.codigo_informado}
-                    maxLength={60}
-                    onChange={(evento) =>
-                      mudar("codigo_informado", evento.target.value)
-                    }
-                  />
-                </Campo>
-                <Campo rotulo="Vaga">
-                  <input
-                    name="vaga_informada"
-                    value={rascunho.vaga_informada}
-                    maxLength={60}
-                    onChange={(evento) =>
-                      mudar("vaga_informada", evento.target.value)
-                    }
-                  />
-                </Campo>
-                <Campo rotulo="Cargo" largo>
-                  <input
-                    name="cargo_informado"
-                    value={rascunho.cargo_informado}
-                    maxLength={200}
-                    onChange={(evento) =>
-                      mudar("cargo_informado", evento.target.value)
-                    }
-                  />
-                </Campo>
+                  <span>Cadastrar mesmo assim</span>
+                </label>
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {numeroDuplicado ? (
-            <div className="recursos-aviso" data-tone="warning" role="alert">
-              <p>
-                <i
-                  className="fa-solid fa-triangle-exclamation"
-                  aria-hidden="true"
-                />{" "}
-                Já existe o recurso nº {numeroDuplicado} em análise para este
-                candidato, edital e origem.
-              </p>
-              <label className="recursos-check">
-                <input
-                  type="checkbox"
-                  name="confirma_duplicado"
-                  checked={confirmaDuplicado}
-                  onChange={(evento) =>
-                    setConfirmaDuplicado(evento.target.checked)
-                  }
-                />
-                <span>Cadastrar mesmo assim</span>
-              </label>
-            </div>
-          ) : null}
-
-          <div className="recursos-formulario-grade">
-            {edicao ? (
-              <Campo
-                rotulo="Origem do recurso"
-                obrigatorio
-                erro={erro("origem")}
-              >
-                <select
-                  name="origem"
-                  value={rascunho.origem}
-                  onChange={(evento) => mudar("origem", evento.target.value)}
+            <div className="recursos-formulario-grade">
+              {edicao ? (
+                <Campo
+                  rotulo="Origem do recurso"
+                  obrigatorio
+                  erro={erro("origem")}
                 >
-                  {origensAtivas.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.rotulo}
+                  <select
+                    name="origem"
+                    value={rascunho.origem}
+                    onChange={(evento) => mudar("origem", evento.target.value)}
+                  >
+                    {origensAtivas.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.rotulo}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+              ) : null}
+              <Campo rotulo="Analista responsável">
+                <input
+                  name="analista"
+                  value={rascunho.analista}
+                  maxLength={200}
+                  list="recursosAnalistas"
+                  onChange={(evento) => mudar("analista", evento.target.value)}
+                />
+                <datalist id="recursosAnalistas">
+                  {analistas.map((nome) => (
+                    <option key={nome} value={nome} />
+                  ))}
+                </datalist>
+              </Campo>
+              <Campo rotulo="Situação">
+                <select
+                  name="situacao"
+                  value={rascunho.situacao}
+                  onChange={(evento) => mudar("situacao", evento.target.value)}
+                >
+                  {SITUACOES.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.rotulo}
                     </option>
                   ))}
                 </select>
               </Campo>
-            ) : null}
-            <Campo rotulo="Analista responsável">
-              <input
-                name="analista"
-                value={rascunho.analista}
-                maxLength={200}
-                list="recursosAnalistas"
-                onChange={(evento) => mudar("analista", evento.target.value)}
-              />
-              <datalist id="recursosAnalistas">
-                {analistas.map((nome) => (
-                  <option key={nome} value={nome} />
-                ))}
-              </datalist>
-            </Campo>
-            <Campo rotulo="Situação">
-              <select
-                name="situacao"
-                value={rascunho.situacao}
-                onChange={(evento) => mudar("situacao", evento.target.value)}
-              >
-                {SITUACOES.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.rotulo}
-                  </option>
-                ))}
-              </select>
-            </Campo>
-            <Campo rotulo="Nº do processo SEI">
-              <input
-                name="processo_sei"
-                value={rascunho.processo_sei}
-                maxLength={60}
-                placeholder="Ex.: 25000.000000/2026-00"
-                onChange={(evento) =>
-                  mudar("processo_sei", evento.target.value)
-                }
-              />
-            </Campo>
-            <label className="recursos-check recursos-check--campo">
-              <input
-                type="checkbox"
-                name="mudou_classificacao"
-                checked={rascunho.mudou_classificacao}
-                onChange={(evento) =>
-                  mudar("mudou_classificacao", evento.target.checked)
-                }
-              />
-              <span>
-                O recurso mudou a classificação
-                <small>
-                  A mudança de nota é conferida sozinha, pela nota da análise.
-                </small>
-              </span>
-            </label>
-            <Campo rotulo="Observação" erro={erro("observacao")} largo>
-              <textarea
-                name="observacao"
-                rows={3}
-                maxLength={2000}
-                value={rascunho.observacao}
-                onChange={(evento) => mudar("observacao", evento.target.value)}
-              />
-            </Campo>
+              <Campo rotulo="Nº do processo SEI">
+                <input
+                  name="processo_sei"
+                  value={rascunho.processo_sei}
+                  maxLength={60}
+                  placeholder="Ex.: 25000.000000/2026-00"
+                  onChange={(evento) =>
+                    mudar("processo_sei", evento.target.value)
+                  }
+                />
+              </Campo>
+              <label className="recursos-check recursos-check--campo">
+                <input
+                  type="checkbox"
+                  name="mudou_classificacao"
+                  checked={rascunho.mudou_classificacao}
+                  onChange={(evento) =>
+                    mudar("mudou_classificacao", evento.target.checked)
+                  }
+                />
+                <span>
+                  O recurso mudou a classificação
+                  <small>
+                    A mudança de nota é conferida sozinha, pela nota da análise.
+                  </small>
+                </span>
+              </label>
+              <Campo rotulo="Observação" erro={erro("observacao")} largo>
+                <textarea
+                  name="observacao"
+                  rows={3}
+                  maxLength={2000}
+                  value={rascunho.observacao}
+                  onChange={(evento) =>
+                    mudar("observacao", evento.target.value)
+                  }
+                />
+              </Campo>
+            </div>
           </div>
         </div>
         <div className="recursos-gaveta-rodape">
@@ -634,7 +636,7 @@ export function FormularioDoRecurso({
           >
             {salvando ? (
               <>
-                <span className="botao-girando" aria-hidden="true" />{" "}
+                <span className="recursos-girando" aria-hidden="true" />{" "}
                 {acao.rotulo}
               </>
             ) : edicao ? (

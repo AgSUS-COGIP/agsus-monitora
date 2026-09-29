@@ -1,32 +1,32 @@
 /*
-  Estado da aba Recursos, fora do React: o que o banco devolve para a área
-  atual, o recurso aberto na gaveta (com o detalhe e o histórico), o formulário
-  aberto e as ações que escrevem no banco. Os componentes leem com
-  `useSyncExternalStore`; o legado chega aqui pelo controlador de
-  `recursos.jsx` (`window.recursosController`). Este arquivo não importa React.
+  Estado do painel de recursos (`recursos.html`), fora do React: o que o
+  banco devolve para a área do painel (`?area=`), o recurso aberto na gaveta
+  (com o detalhe e o histórico), o formulário aberto e as ações que escrevem
+  no banco. Os componentes leem com `useSyncExternalStore`. Este arquivo não
+  importa React.
 
   Tudo passa por RPC (supabase/migrations/20260929120000_recursos.sql):
   `get_recursos_da_area` numa chamada só (json), o detalhe sob demanda, a
   busca do candidato nas análises do edital e as três escritas. O banco confere
   permissão e área em todas; `pode_editar` vem dele.
 
-  Sem tela de carregamento: antes da primeira carga a página desenha skeleton
-  (`carregado` falso); uma falha nela vira `erroAoCarregar`, com "Tentar de
-  novo". Uma ação por vez (`executar`): o botão dela mostra o rótulo, os outros
-  ficam desativados.
+  Sem tela de carregamento: antes da primeira carga o painel é o skeleton
+  (`carregado` falso); uma falha nela vira `erroAoCarregar`, com "Tentar
+  novamente". Sem sessão do Supabase Auth (painel aberto fora do MONITORA),
+  `semSessao`. Uma ação por vez (`executar`): o botão dela mostra o rótulo, os
+  outros ficam desativados.
 */
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.js";
 
-/* Aberta de novo depois disto, a aba relê o banco por trás, sem skeleton. */
-const VALIDADE_MS = 60 * 1000;
+export const MENSAGEM_SEM_SESSAO =
+  "Sessão não localizada. Abra este painel pelo menu do MONITORA para compartilhar a sessão do Supabase Auth.";
 
 const ESTADO_INICIAL = Object.freeze({
-  /** A página já foi aberta (a carga só começa aí, não na entrada). */
-  ativa: false,
   area: "",
   dados: null,
   carregado: false,
   erroAoCarregar: "",
+  semSessao: false,
   atualizando: false,
   carregadoEm: 0,
   /** A ação em curso, `{ tipo, rotulo }`, ou `null`. */
@@ -63,7 +63,6 @@ function baixarNoNavegador(conteudo, nome) {
 export function criarEstadoDosRecursos({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
-  getProfile = () => null,
   baixar = baixarNoNavegador,
   agora = () => Date.now(),
 } = {}) {
@@ -98,12 +97,7 @@ export function criarEstadoDosRecursos({
     if (!area) return false;
     const meu = ++pedido;
     if (area !== estado.area) {
-      publicar({
-        ...ESTADO_INICIAL,
-        ativa: estado.ativa,
-        area,
-        detalhes: new Map(),
-      });
+      publicar({ ...ESTADO_INICIAL, area, detalhes: new Map() });
     } else {
       publicar({ atualizando: true, erroAoCarregar: "" });
     }
@@ -113,6 +107,19 @@ export function criarEstadoDosRecursos({
         atualizando: false,
       });
       return false;
+    }
+    // Aberto fora do MONITORA (ou com a sessão vencida): sem sessão, nada a pedir.
+    if (supabase.auth?.getSession) {
+      const { data: sessao } = await supabase.auth.getSession();
+      if (meu !== pedido) return false;
+      if (!sessao?.session) {
+        publicar({
+          erroAoCarregar: MENSAGEM_SEM_SESSAO,
+          semSessao: true,
+          atualizando: false,
+        });
+        return false;
+      }
     }
     const { data, error } = await supabase.rpc("get_recursos_da_area", {
       p_area: area,
@@ -141,20 +148,6 @@ export function criarEstadoDosRecursos({
     });
     if (estado.gaveta) void carregarDetalhe(estado.gaveta);
     return true;
-  }
-
-  function garantirCarregado(area) {
-    if (!area) return;
-    if (area !== estado.area || (!estado.carregado && !estado.erroAoCarregar))
-      return void carregar(area);
-    if (estado.carregado && agora() - estado.carregadoEm > VALIDADE_MS)
-      void carregar(area);
-  }
-
-  /* O legado abriu a página: a carga começa (ou revalida, se ficou velha). */
-  function ativar() {
-    if (!estado.ativa) publicar({ ativa: true });
-    else if (estado.area) garantirCarregado(estado.area);
   }
 
   async function carregarDetalhe(id) {
@@ -293,10 +286,7 @@ export function criarEstadoDosRecursos({
       return () => ouvintes.delete(ouvinte);
     },
     obter: () => estado,
-    perfil: () => getProfile() || null,
     carregar,
-    garantirCarregado,
-    ativar,
     carregarDetalhe,
     abrirGaveta,
     fecharGaveta,

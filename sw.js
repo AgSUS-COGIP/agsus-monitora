@@ -1,12 +1,13 @@
 importScripts("/sw-policy.js");
 
-const CACHE_VERSION = "agsus-monitora-v11";
+const CACHE_VERSION = "agsus-monitora-v12";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/analises.html",
+  "/recursos.html",
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/sw-policy.js",

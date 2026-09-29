@@ -349,7 +349,7 @@ export function opcoesDosFiltros(recursos, origens = ORIGENS_PADRAO) {
   };
 }
 
-/* ── Gráficos (barras em HTML: valores prontos para desenhar) ──────────── */
+/* ── Gráficos (valores prontos para o Chart.js do painel) ──────────────── */
 
 export function recursosPorAnalista(recursos, limite = 10) {
   const mapa = new Map();

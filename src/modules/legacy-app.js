@@ -36,11 +36,8 @@ import {
 } from "../lib/eventos-da-barra-lateral.js";
 import { hasResource } from "../lib/permissoes-recursos.js";
 import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
-import { semOPainelAntigoDeAnalises } from "../lib/pagina-de-analises.js";
-import {
-  abrirPaginaDeAnalises,
-  quadroDasAnalises,
-} from "./pagina-de-analises.js";
+import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
+import { abrirPaginaDoPainel, quadroDoPainel } from "./pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import {
   MAPA_DOS_DSEIS,
@@ -2485,18 +2482,17 @@ function navigate(view) {
     document.body.classList.add("external-panel-mode");
     $("page-analises").classList.add("active");
     setPageTitle("Análises curriculares", subtituloDaArea(""));
-    abrirPaginaDeAnalises($("page-analises"));
+    abrirPaginaDoPainel($("page-analises"));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
   }
   if (requestedView === "recursos") {
+    // O painel de recursos (recursos.html) também traz o próprio cabeçalho.
+    document.body.classList.add("external-panel-mode");
     $("page-recursos").classList.add("active");
-    setPageTitle(
-      "Recursos",
-      subtituloDaArea("Recursos dos candidatos: prazos, etapas e respostas."),
-    );
-    window.recursosController?.render();
+    setPageTitle("Recursos", subtituloDaArea(""));
+    abrirPaginaDoPainel($("page-recursos"));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -12337,8 +12333,8 @@ function exitExternalPanel() {
 }
 
 function getFullscreenTarget() {
-  if (currentView === "analises") {
-    const frame = quadroDasAnalises($("page-analises"));
+  if (currentView === "analises" || currentView === "recursos") {
+    const frame = quadroDoPainel($("page-" + currentView));
     if (frame) return frame;
   }
   if (currentView && currentView.startsWith("panel:") && currentPanel) {

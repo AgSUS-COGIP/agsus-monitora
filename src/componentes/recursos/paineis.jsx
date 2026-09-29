@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   esteiraDosRecursos,
@@ -7,22 +7,150 @@ import {
   recursosPorAnalista,
   recursosPorSituacao,
 } from "../../lib/recursos-dos-candidatos.js";
+import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import { Grafico } from "./grafico.jsx";
 
 /*
-  Os blocos de cima da aba Recursos, na ordem do painel de análises: "Refinar
-  resultados", os indicadores e os gráficos (recursos por analista, pendências
-  prioritárias, situação, impacto e esteira). Os gráficos são barras em HTML:
-  leem no tema escuro pelos tokens e têm o número escrito ao lado — o texto é a
-  alternativa em tabela que o DESIGN.md pede.
+  Os blocos do painel de recursos, com a marcação e as classes do painel de
+  análises curriculares (analises.html + src/analises/*.css): o cabeçalho fixo
+  (`.topbar`), "Refinar resultados" (`.filter-panel`), os KPIs (`.kpis` >
+  `.kpi` com a barra colorida em cima), o recorte ativo (`.context-line`), os
+  gráficos Chart.js em `.panel` (`.oper-grid`, `.trend`) e as pendências
+  prioritárias (`.attention-list`). Os ids que o CSS de análises usa (kpiGrid,
+  attentionList, tableBody, topbar…) são os mesmos, e o skeleton é o dele
+  (`body.analises-is-loading`, analises-esqueleto.css).
 */
 
 export const classes = (...lista) => lista.filter(Boolean).join(" ");
 
-const Esqueleto = ({ className = "" }) => (
-  <span className={classes("esqueleto", className)} aria-hidden="true" />
-);
+const truncar = (valor, limite) => {
+  const texto = String(valor ?? "").trim();
+  return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
+};
 
-const CAMPOS_DO_FILTRO = [
+/* ── Cabeçalho ──────────────────────────────────────────────────────── */
+
+/*
+  O `.topbar` é fixo; a altura dele vira `--topbar-height`, que empurra o
+  conteúdo (`.shell`) e o cabeçalho da tabela — como o `setupFixedTopbar` do
+  painel de análises, acompanhando também a quebra de linha dos botões.
+*/
+function usarAlturaDoTopo(topo) {
+  useLayoutEffect(() => {
+    const barra = topo.current;
+    if (!barra) return undefined;
+    const medir = () =>
+      document.documentElement.style.setProperty(
+        "--topbar-height",
+        `${barra.offsetHeight}px`,
+      );
+    medir();
+    if (typeof ResizeObserver === "function") {
+      const observador = new ResizeObserver(medir);
+      observador.observe(barra);
+      return () => observador.disconnect();
+    }
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, [topo]);
+}
+
+export function Topo({
+  subtitulo,
+  status,
+  somenteConsulta,
+  escuro,
+  aoTema,
+  aoTelaCheia,
+  aoAtualizar,
+  atualizarDesativado,
+  aoExportar,
+  exportarDesativado,
+  aoNovo,
+  novoDesativado,
+}) {
+  const topo = useRef(null);
+  usarAlturaDoTopo(topo);
+  const rotuloDoTema = escuro ? "Usar tema claro" : "Usar tema escuro";
+  return (
+    <header className="topbar" id="topbar" ref={topo}>
+      <div className="brand">
+        <div>
+          <h1>Painel de recursos</h1>
+          <p className="sub">{subtitulo}</p>
+        </div>
+      </div>
+      <div className="top-actions">
+        <span className="status-pill">
+          <span className="dot" />
+          <span id="updatedText">{status}</span>
+        </span>
+        {somenteConsulta ? (
+          <span className="status-pill" title="Seu acesso só consulta">
+            <i className="fa-solid fa-eye" aria-hidden="true" /> Somente
+            consulta
+          </span>
+        ) : null}
+        <button
+          type="button"
+          className="btn secondary icon"
+          id="themeBtn"
+          title={rotuloDoTema}
+          aria-label={rotuloDoTema}
+          onClick={aoTema}
+        >
+          <i
+            className={`fa-solid ${escuro ? "fa-sun" : "fa-moon"}`}
+            aria-hidden="true"
+          />
+        </button>
+        <button
+          type="button"
+          className="btn secondary icon"
+          id="fullBtn"
+          title="Tela cheia"
+          aria-label="Alternar tela cheia"
+          onClick={aoTelaCheia}
+        >
+          <i className="fa-solid fa-expand" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="btn"
+          id="refreshBtn"
+          disabled={atualizarDesativado}
+          onClick={aoAtualizar}
+        >
+          <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
+        </button>
+        <button
+          type="button"
+          className="btn green"
+          id="exportBtn"
+          disabled={exportarDesativado}
+          onClick={aoExportar}
+        >
+          <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
+        </button>
+        {aoNovo ? (
+          <button
+            type="button"
+            className="btn"
+            id="novoRecursoBtn"
+            disabled={novoDesativado}
+            onClick={aoNovo}
+          >
+            <i className="fa-solid fa-plus" aria-hidden="true" /> Novo recurso
+          </button>
+        ) : null}
+      </div>
+    </header>
+  );
+}
+
+/* ── Filtros ────────────────────────────────────────────────────────── */
+
+export const CAMPOS_DO_FILTRO = [
   ["edital", "Edital", "editais", "Todos os editais"],
   ["origem", "Origem", "origens", "Todas as origens"],
   ["analista", "Analista", "analistas", "Todos os analistas"],
@@ -30,303 +158,439 @@ const CAMPOS_DO_FILTRO = [
   ["pendencia", "Pendência", "pendencias", "Qualquer pendência"],
 ];
 
+const rotuloDoValor = (opcoes, lista, valor) =>
+  opcoes[lista].find((o) => o.valor === valor)?.rotulo || valor;
+
+/** Os filtros ativos, como o recorte os descreve: `[campo, rótulo, valor]`. */
+export function filtrosAtivos(filtros, opcoes) {
+  const ativos = CAMPOS_DO_FILTRO.filter(([campo]) => filtros[campo]).map(
+    ([campo, rotulo, lista]) => [
+      campo,
+      rotulo,
+      rotuloDoValor(opcoes, lista, filtros[campo]),
+    ],
+  );
+  if (String(filtros.busca || "").trim())
+    ativos.push(["busca", "Busca", filtros.busca.trim()]);
+  return ativos;
+}
+
 export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
-  const ativos = CAMPOS_DO_FILTRO.filter(([campo]) => filtros[campo]);
-  const algum = ativos.length > 0 || Boolean(filtros.busca);
+  const [recolhido, setRecolhido] = useState(false);
+  const [maisOpcoes, setMaisOpcoes] = useState(false);
+  const ativos = filtrosAtivos(filtros, opcoes);
+  const quantos = ativos.length;
+  const avancados = String(filtros.busca || "").trim() ? 1 : 0;
+
   return (
     <section
-      className="card recursos-filtros"
+      className={classes("panel filter-panel", recolhido && "is-collapsed")}
       aria-labelledby="recursosFiltrosTitulo"
     >
-      <div className="recursos-filtros-topo">
+      <div className="filter-head">
         <div>
-          <span className="recursos-sobretitulo">Filtros</span>
-          <h3 id="recursosFiltrosTitulo" className="recursos-titulo">
+          <span className="eyebrow">Filtros da visualização</span>
+          <h2 className="title" id="recursosFiltrosTitulo">
             Refinar resultados
-          </h3>
-          <p className="recursos-dica">
-            Os filtros valem para os indicadores, os gráficos, a tabela e o CSV.
+          </h2>
+          <p className="hint">
+            Use os filtros para refinar os recursos exibidos. Indicadores,
+            gráficos, a fila e o CSV são atualizados conforme o recorte
+            selecionado.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn secondary"
-          disabled={!algum}
-          onClick={aoLimpar}
+        <div className="filter-actions">
+          <span
+            id="filterSummary"
+            className={classes("filter-summary", quantos && "has-filters")}
+            aria-live="polite"
+          >
+            <i
+              className={`fa-solid ${quantos ? "fa-filter-circle-check" : "fa-layer-group"}`}
+              aria-hidden="true"
+            />
+            <span>
+              Todos ·{" "}
+              {quantos
+                ? `${quantos} filtro${quantos === 1 ? "" : "s"} adicional${quantos === 1 ? "" : "is"}`
+                : "nenhum filtro adicional"}
+            </span>
+          </span>
+          <button
+            type="button"
+            className="btn secondary"
+            id="toggleFiltersBtn"
+            aria-expanded={!recolhido}
+            title={
+              recolhido
+                ? "Mostrar os filtros da visualização"
+                : "Ocultar os filtros da visualização"
+            }
+            onClick={() => {
+              setRecolhido((atual) => !atual);
+              setMaisOpcoes(false);
+            }}
+          >
+            <i
+              className={`fa-solid ${recolhido ? "fa-filter" : "fa-chevron-up"}`}
+              aria-hidden="true"
+            />
+            <span className="toggle-label">
+              {recolhido ? "Mostrar filtros" : "Ocultar filtros"}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="btn secondary"
+            id="clearBtn"
+            disabled={!quantos}
+            title="Remove os filtros e volta a todos os recursos da área."
+            onClick={aoLimpar}
+          >
+            Limpar tudo
+          </button>
+        </div>
+      </div>
+
+      <div id="filtersBody" className="filters-body" hidden={recolhido}>
+        <div id="filtersToolbar" className="filters-toolbar">
+          <div className="filters-toolbar-copy">
+            <strong>Filtros principais</strong>
+            <small>Edital, origem, analista, situação e pendência.</small>
+          </div>
+          <button
+            type="button"
+            className="btn secondary"
+            id="advancedBtn"
+            aria-expanded={maisOpcoes}
+            title={
+              maisOpcoes
+                ? "Ocultar filtros adicionais"
+                : "Mostrar a busca em todo o painel"
+            }
+            onClick={() => setMaisOpcoes((atual) => !atual)}
+          >
+            <i
+              className={`fa-solid ${maisOpcoes ? "fa-chevron-up" : "fa-sliders"}`}
+              aria-hidden="true"
+            />{" "}
+            {maisOpcoes ? "Menos opções" : "Mais opções"}{" "}
+            {avancados ? (
+              <span className="advanced-count">{avancados}</span>
+            ) : null}
+          </button>
+        </div>
+        <div className="filter-grid">
+          {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
+            <div className="field" key={campo}>
+              <label htmlFor={`filtro-${campo}`}>{rotulo}</label>
+              <select
+                id={`filtro-${campo}`}
+                name={campo}
+                value={filtros[campo]}
+                disabled={!carregado}
+                onChange={(evento) => aoMudar(campo, evento.target.value)}
+              >
+                <option value="">{todos}</option>
+                {opcoes[lista].map((opcao) => (
+                  <option key={opcao.valor} value={opcao.valor}>
+                    {opcao.rotulo}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+        <div
+          id="advancedFilters"
+          className={classes("advanced filter-grid", maisOpcoes && "show")}
         >
-          <i className="fa-solid fa-eraser" aria-hidden="true" /> Limpar
-        </button>
-      </div>
-      <div className="recursos-filtros-grade">
-        {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
-          <label key={campo} className="recursos-campo">
-            <span>{rotulo}</span>
-            <select
-              name={campo}
-              value={filtros[campo]}
+          <div className="field">
+            <label htmlFor="filtro-busca">Buscar em todo o painel</label>
+            <input
+              id="filtro-busca"
+              type="search"
+              name="busca"
+              value={filtros.busca}
               disabled={!carregado}
-              onChange={(evento) => aoMudar(campo, evento.target.value)}
-            >
-              <option value="">{todos}</option>
-              {opcoes[lista].map((opcao) => (
-                <option key={opcao.valor} value={opcao.valor}>
-                  {opcao.rotulo}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
-        <label className="recursos-campo recursos-campo--busca">
-          <span>Buscar</span>
-          <input
-            type="search"
-            name="busca"
-            value={filtros.busca}
-            disabled={!carregado}
-            placeholder="Candidato, código, vaga, nº ou processo SEI"
-            onChange={(evento) => aoMudar("busca", evento.target.value)}
-          />
-        </label>
-      </div>
-      {ativos.length ? (
-        <div className="recursos-chips" aria-label="Filtros aplicados">
-          {ativos.map(([campo, rotulo, lista]) => (
+              placeholder="Candidato, código, vaga, nº ou processo SEI"
+              onChange={(evento) => aoMudar("busca", evento.target.value)}
+            />
+          </div>
+        </div>
+        <div id="filterChips" className="chips" aria-label="Filtros aplicados">
+          {ativos.map(([campo, rotulo, valor]) => (
             <button
               key={campo}
               type="button"
-              className="recursos-chip"
+              className="chip-filter"
+              title={`Tirar o filtro ${rotulo}`}
               onClick={() => aoMudar(campo, FILTROS_VAZIOS[campo])}
-              aria-label={`Tirar o filtro ${rotulo}`}
             >
-              <b>{rotulo}:</b>{" "}
-              {opcoes[lista].find((o) => o.valor === filtros[campo])?.rotulo ||
-                filtros[campo]}
+              <b>{rotulo}</b> {valor}{" "}
               <i className="fa-solid fa-xmark" aria-hidden="true" />
             </button>
           ))}
         </div>
-      ) : null}
+      </div>
     </section>
   );
 }
 
-/* Indicador da fileira: card compacto, linha de 3px e número na cor do estado. */
-function Kpi({
-  tom = "info",
-  icone,
-  rotulo,
-  valor,
-  carregado,
-  filtro,
-  ativo,
-  aoFiltrar,
-  sufixo = "",
-}) {
-  const conteudo = (
-    <>
-      <span className="recursos-kpi-icone">
-        <i className={`fa-solid ${icone}`} aria-hidden="true" />
-      </span>
-      <span className="recursos-kpi-rotulo">{rotulo}</span>
-      <strong aria-busy={carregado ? undefined : true}>
-        {carregado ? (
-          `${formatNumberBR(valor)}${sufixo}`
-        ) : (
-          <Esqueleto className="esqueleto--numero" />
-        )}
-      </strong>
-    </>
-  );
-  if (!filtro)
+/* ── KPIs ───────────────────────────────────────────────────────────── */
+
+/*
+  Cartão de KPI do painel de análises: `.kpi` com a barra colorida em cima
+  (`k-cyan`, `k-green`, `k-yellow`, `k-red`, `k-purple`), o rótulo e o número
+  grande. Os que filtram são botões com `aria-pressed`, como lá.
+*/
+function Kpi({ cor, rotulo, valor, sufixo = "", chave, ativo, aoFiltrar }) {
+  const numero = `${formatNumberBR(valor)}${sufixo}`;
+  if (!aoFiltrar)
     return (
-      <div className="recursos-kpi" data-tone={tom}>
-        {conteudo}
-      </div>
+      <article className={classes("kpi", cor)} data-kpi={chave}>
+        <span>{rotulo}</span>
+        <b>{numero}</b>
+      </article>
     );
   return (
-    <button
-      type="button"
-      className={classes(
-        "recursos-kpi",
-        "recursos-kpi--filtro",
-        ativo && "is-ativo",
-      )}
-      data-tone={tom}
-      aria-pressed={ativo}
-      disabled={!carregado}
-      title="Filtrar a tabela"
-      onClick={aoFiltrar}
+    <article
+      className={classes("kpi", cor, ativo && "is-active")}
+      data-kpi={chave}
     >
-      {conteudo}
-    </button>
-  );
-}
-
-export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
-  const filtro = (campo, valor) => ({
-    filtro: true,
-    ativo: filtros[campo] === valor,
-    aoFiltrar: () => aoFiltrar(campo, valor),
-  });
-  return (
-    <section className="recursos-kpis" aria-label="Indicadores dos recursos">
-      <Kpi
-        icone="fa-scale-balanced"
-        rotulo="Total de recursos"
-        valor={k.total}
-        carregado={carregado}
-      />
-      <Kpi
-        tom="warning"
-        icone="fa-clock"
-        rotulo="Em análise"
-        valor={k.pendentes}
-        carregado={carregado}
-        {...filtro("situacao", "EM_ANALISE")}
-      />
-      <Kpi
-        tom="success"
-        icone="fa-circle-check"
-        rotulo="Decididos"
-        valor={k.concluidos}
-        carregado={carregado}
-      />
-      <Kpi
-        tom={k.atrasados ? "danger" : "success"}
-        icone="fa-calendar-xmark"
-        rotulo="Prazo vencido"
-        valor={k.atrasados}
-        carregado={carregado}
-        {...filtro("pendencia", "prazo_vencido")}
-      />
-      <Kpi
-        tom="danger"
-        icone="fa-folder-open"
-        rotulo="Sem processo SEI"
-        valor={k.semSei}
-        carregado={carregado}
-        {...filtro("pendencia", "sem_sei")}
-      />
-      <Kpi
-        tom="warning"
-        icone="fa-paper-plane"
-        rotulo="Sem resposta enviada"
-        valor={k.semResposta}
-        carregado={carregado}
-      />
-      <Kpi
-        tom="info"
-        icone="fa-right-left"
-        rotulo="Mudou nota ou classificação"
-        valor={k.mudouResultado}
-        carregado={carregado}
-        {...filtro("pendencia", "mudou_resultado")}
-      />
-      <Kpi
-        tom="neutral"
-        icone="fa-chart-simple"
-        rotulo="Taxa de conclusão"
-        valor={k.taxaConclusao}
-        sufixo="%"
-        carregado={carregado}
-      />
-    </section>
-  );
-}
-
-/* Barra horizontal com o número escrito; `partes` empilha (soma = total). */
-function Barra({ rotulo, partes, maximo, total, ativo, aoClicar, sufixo }) {
-  const largura = (valor) =>
-    `${maximo ? Math.max((valor / maximo) * 100, valor ? 2 : 0) : 0}%`;
-  const corpo = (
-    <>
-      <span className="recursos-barra-rotulo" title={rotulo}>
-        {rotulo}
-      </span>
-      <span className="recursos-barra-trilho" aria-hidden="true">
-        {partes.map((parte) => (
-          <span
-            key={parte.id}
-            className="recursos-barra-parte"
-            data-tone={parte.tom}
-            style={{ width: largura(parte.valor) }}
-          />
-        ))}
-      </span>
-      <span className="recursos-barra-valor">
-        {formatNumberBR(total)}
-        {sufixo ? <small>{sufixo}</small> : null}
-      </span>
-    </>
-  );
-  if (!aoClicar) return <li className="recursos-barra-item">{corpo}</li>;
-  return (
-    <li>
       <button
         type="button"
-        className={classes(
-          "recursos-barra-item",
-          "recursos-barra-item--filtro",
-          ativo && "is-ativo",
-        )}
         aria-pressed={ativo}
-        onClick={aoClicar}
+        title="Filtrar o painel"
+        onClick={aoFiltrar}
       >
-        {corpo}
+        <span>{rotulo}</span>
+        <b>{numero}</b>
       </button>
-    </li>
-  );
-}
-
-function BlocoDoGrafico({
-  id,
-  sobretitulo,
-  titulo,
-  dica,
-  carregado,
-  vazio,
-  children,
-  legenda,
-}) {
-  return (
-    <article className="card recursos-bloco" aria-labelledby={id}>
-      <span className="recursos-sobretitulo">{sobretitulo}</span>
-      <h3 id={id} className="recursos-titulo">
-        {titulo}
-      </h3>
-      {dica ? <p className="recursos-dica">{dica}</p> : null}
-      {legenda}
-      {!carregado ? (
-        <div className="recursos-grafico-esqueleto" aria-hidden="true">
-          {[80, 62, 48, 30].map((largura) => (
-            <Esqueleto key={largura} className="esqueleto--linha" />
-          ))}
-        </div>
-      ) : vazio ? (
-        <p className="recursos-vazio">{vazio}</p>
-      ) : (
-        children
-      )}
     </article>
   );
 }
 
-const Legenda = ({ itens }) => (
-  <ul className="recursos-legenda">
-    {itens.map((item) => (
-      <li key={item.rotulo}>
-        <span
-          className="recursos-legenda-cor"
-          data-tone={item.tom}
-          aria-hidden="true"
-        />
-        {item.rotulo}
-      </li>
-    ))}
-  </ul>
-);
+export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
+  const filtro = (campo, valor) =>
+    carregado
+      ? {
+          ativo: filtros[campo] === valor,
+          aoFiltrar: () => aoFiltrar(campo, valor),
+        }
+      : {};
+  return (
+    <section className="kpis" id="kpiGrid" aria-label="Indicadores">
+      <Kpi
+        cor="k-cyan"
+        chave="total"
+        rotulo="Total de recursos"
+        valor={k.total}
+      />
+      <Kpi
+        cor="k-yellow"
+        chave="em-analise"
+        rotulo="Em análise"
+        valor={k.pendentes}
+        {...filtro("situacao", "EM_ANALISE")}
+      />
+      <Kpi
+        cor="k-green"
+        chave="decididos"
+        rotulo="Decididos"
+        valor={k.concluidos}
+      />
+      <Kpi
+        cor="k-red"
+        chave="prazo-vencido"
+        rotulo="Prazo vencido"
+        valor={k.atrasados}
+        {...filtro("pendencia", "prazo_vencido")}
+      />
+      <Kpi
+        cor="k-red"
+        chave="sem-sei"
+        rotulo="Sem processo SEI"
+        valor={k.semSei}
+        {...filtro("pendencia", "sem_sei")}
+      />
+      <Kpi
+        cor="k-yellow"
+        chave="sem-resposta"
+        rotulo="Sem resposta enviada"
+        valor={k.semResposta}
+      />
+      <Kpi
+        cor="k-purple"
+        chave="mudou-resultado"
+        rotulo="Mudou nota/classificação"
+        valor={k.mudouResultado}
+        {...filtro("pendencia", "mudou_resultado")}
+      />
+      <Kpi
+        chave="taxa"
+        rotulo="Taxa de conclusão"
+        valor={k.taxaConclusao}
+        sufixo="%"
+      />
+    </section>
+  );
+}
 
-const SEVERIDADE = { alta: "Alta", media: "Média", baixa: "Baixa" };
+/* ── Recorte ativo ──────────────────────────────────────────────────── */
+
+export function Recorte({ ativos, recursos, carregado }) {
+  const vencidos = recursos.filter((r) => r.atrasado).length;
+  const semPrazo = recursos.filter((r) => !r.prazo.data).length;
+  const pelaAbertura = recursos.filter(
+    (r) => r.prazo.fonte === "abertura",
+  ).length;
+  return (
+    <section className="panel panel-pad">
+      <div id="contextLine" className="context-line">
+        {ativos.length
+          ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
+          : "Sem filtros aplicados. Recorte base: todos os recursos da área."}
+      </div>
+      <div id="windowMeta" className="meta-line">
+        {carregado ? (
+          <>
+            <span className={classes("meta-chip", vencidos && "warning")}>
+              <i
+                className={`fa-solid ${vencidos ? "fa-triangle-exclamation" : "fa-circle-check"}`}
+                aria-hidden="true"
+              />{" "}
+              {formatNumberBR(vencidos)} recurso(s) com o prazo de resposta
+              vencido
+            </span>
+            {semPrazo ? (
+              <span className="meta-chip warning">
+                <i className="fa-solid fa-circle-info" aria-hidden="true" />{" "}
+                {formatNumberBR(semPrazo)} sem prazo no cronograma
+              </span>
+            ) : null}
+            {pelaAbertura ? (
+              <span className="meta-chip">
+                <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
+                {formatNumberBR(pelaAbertura)} com o prazo pelo fim do prazo de
+                recurso (*)
+              </span>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+/* ── Pendências prioritárias ────────────────────────────────────────── */
+
+/*
+  Severidade → classe do `.attention-item` de análises: alta é `high` (borda
+  vermelha); média e baixa ficam na borda âmbar (a classe `low` de lá esconde
+  o item, e aqui as de baixa — prazo não encontrado, fora das análises —
+  precisam aparecer).
+*/
+const CLASSE_DA_SEVERIDADE = { alta: "high", media: "", baixa: "" };
+const ITENS_DO_ESQUELETO = 4;
+
+function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
+  if (!carregado)
+    return (
+      <div id="attentionList" className="attention-list" aria-hidden="true">
+        {Array.from({ length: ITENS_DO_ESQUELETO }, (_, indice) => (
+          <div className="attention-item" key={indice}>
+            <b>&nbsp;</b>
+            <small>&nbsp;</small>
+          </div>
+        ))}
+      </div>
+    );
+  return (
+    <div id="attentionList" className="attention-list">
+      {pendencias.length ? (
+        pendencias.map((p) => {
+          const ativo = filtros.pendencia === p.chave;
+          return (
+            <button
+              type="button"
+              key={p.chave}
+              className={classes(
+                "attention-item",
+                CLASSE_DA_SEVERIDADE[p.severidade],
+                ativo && "is-active",
+              )}
+              data-action="pendencia"
+              aria-pressed={ativo}
+              onClick={() => aoFiltrar("pendencia", p.chave)}
+            >
+              <b>{p.titulo}</b>
+              <small>
+                {formatNumberBR(p.valor)}{" "}
+                {p.valor === 1 ? "recurso" : "recursos"} · {p.subtitulo}
+              </small>
+            </button>
+          );
+        })
+      ) : (
+        <div className="empty">
+          Nenhuma pendência prioritária no recorte atual.
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Gráficos ───────────────────────────────────────────────────────── */
+
+/* Eixos, legenda e dica dos gráficos de barra do painel de análises. */
+function opcoesDeBarras(
+  p,
+  { empilhado = false, legenda = false, deitado = false, aoClicar, dica } = {},
+) {
+  const categorias = {
+    stacked: empilhado,
+    ticks: { color: p.text, maxRotation: 0 },
+    grid: { display: false },
+  };
+  const valores = {
+    stacked: empilhado,
+    beginAtZero: true,
+    ticks: { color: p.text, precision: 0 },
+    grid: { color: p.grid },
+  };
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 380 },
+    indexAxis: deitado ? "y" : "x",
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: legenda
+        ? {
+            position: "top",
+            labels: { color: p.text, boxWidth: 14, usePointStyle: true },
+          }
+        : { display: false },
+      tooltip: dica ? { callbacks: dica } : {},
+    },
+    scales: deitado
+      ? { x: valores, y: categorias }
+      : { x: categorias, y: valores },
+    onClick: aoClicar
+      ? (_, elementos) => {
+          if (elementos.length) aoClicar(elementos[0].index);
+        }
+      : undefined,
+  };
+}
+
+const coresDaSituacao = (p) => ({
+  warning: p.warn,
+  success: p.ok,
+  danger: p.bad,
+  info: p.review,
+});
 
 export function Graficos({
   recursos,
@@ -334,157 +598,206 @@ export function Graficos({
   carregado,
   filtros,
   aoFiltrar,
+  escuro,
 }) {
-  const analistas = useMemo(() => recursosPorAnalista(recursos), [recursos]);
+  const analistas = useMemo(
+    () => recursosPorAnalista(recursos, 12),
+    [recursos],
+  );
   const situacoes = useMemo(() => recursosPorSituacao(recursos), [recursos]);
   const impacto = useMemo(() => impactoNoResultado(recursos), [recursos]);
   const esteira = useMemo(() => esteiraDosRecursos(recursos), [recursos]);
-  const maxAnalista = Math.max(0, ...analistas.map((a) => a.total));
-  const maxSituacao = Math.max(0, ...situacoes.map((s) => s.valor));
-  const maxImpacto = Math.max(0, ...impacto.map((i) => i.valor));
   const total = recursos.length;
-  const semRecursos = "Nenhum recurso no recorte.";
+  const tema = escuro ? "escuro" : "claro";
+
+  // O clique do Chart.js chega aqui, sempre com o filtro mais recente.
+  const filtrar = useRef(aoFiltrar);
+  useEffect(() => {
+    filtrar.current = aoFiltrar;
+  });
 
   return (
     <>
-      <section className="recursos-grade-operacional">
-        <BlocoDoGrafico
-          id="recursosPorAnalista"
-          sobretitulo="Carga operacional"
-          titulo="Recursos por analista"
-          dica="Clique em um analista para recortar a fila."
-          carregado={carregado}
-          vazio={analistas.length ? "" : semRecursos}
-          legenda={
-            <Legenda
-              itens={[
-                { rotulo: "Em análise", tom: "warning" },
-                { rotulo: "Decididos", tom: "success" },
-              ]}
+      <section className="oper-grid">
+        <article className="panel panel-pad">
+          <span className="eyebrow">Carga operacional</span>
+          <h2 className="title">Recursos por analista</h2>
+          <p className="hint">
+            Barras empilhadas por situação. Clique em um analista para recortar
+            a fila.
+          </p>
+          <div className="chart-wrap short">
+            <Grafico
+              id="chartAnalista"
+              tipo="bar"
+              rotulo="Recursos por analista: em análise e decididos"
+              dependencias={[analistas, tema]}
+              montar={() => {
+                const p = paletaDoPainel(escuro);
+                return {
+                  data: {
+                    labels: analistas.map((a) => truncar(a.rotulo, 22)),
+                    datasets: [
+                      {
+                        label: "Em análise",
+                        data: analistas.map((a) => a.pendentes),
+                        backgroundColor: p.warn,
+                        borderRadius: 7,
+                      },
+                      {
+                        label: "Decididos",
+                        data: analistas.map((a) => a.concluidos),
+                        backgroundColor: p.ok,
+                        borderRadius: 7,
+                      },
+                    ],
+                  },
+                  options: opcoesDeBarras(p, {
+                    empilhado: true,
+                    legenda: true,
+                    dica: {
+                      title: (itens) =>
+                        analistas[itens[0].dataIndex]?.rotulo || "",
+                      afterBody: (itens) => [
+                        `Total: ${formatNumberBR(analistas[itens[0].dataIndex]?.total || 0)}`,
+                      ],
+                    },
+                    aoClicar: (indice) =>
+                      analistas[indice] &&
+                      filtrar.current("analista", analistas[indice].rotulo),
+                  }),
+                };
+              }}
             />
-          }
-        >
-          <ul className="recursos-barras">
-            {analistas.map((a) => (
-              <Barra
-                key={a.rotulo}
-                rotulo={a.rotulo}
-                total={a.total}
-                maximo={maxAnalista}
-                partes={[
-                  { id: "pendentes", tom: "warning", valor: a.pendentes },
-                  { id: "concluidos", tom: "success", valor: a.concluidos },
-                ]}
-                ativo={filtros.analista === a.rotulo}
-                aoClicar={() => aoFiltrar("analista", a.rotulo)}
-              />
-            ))}
-          </ul>
-        </BlocoDoGrafico>
-        <BlocoDoGrafico
-          id="recursosPendencias"
-          sobretitulo="Ação imediata"
-          titulo="Pendências prioritárias"
-          dica="Clique em um item para recortar a fila."
-          carregado={carregado}
-          vazio={pendencias.length ? "" : "Nenhuma pendência no recorte."}
-        >
-          <ul className="recursos-pendencias">
-            {pendencias.map((p) => (
-              <li key={p.chave}>
-                <button
-                  type="button"
-                  className={classes(
-                    "recursos-pendencia",
-                    filtros.pendencia === p.chave && "is-ativo",
-                  )}
-                  data-severidade={p.severidade}
-                  aria-pressed={filtros.pendencia === p.chave}
-                  onClick={() => aoFiltrar("pendencia", p.chave)}
-                >
-                  <span className="recursos-pendencia-topo">
-                    <b>{p.titulo}</b>
-                    <span className="recursos-severidade">
-                      {SEVERIDADE[p.severidade]}
-                    </span>
-                  </span>
-                  <small>
-                    {formatNumberBR(p.valor)}{" "}
-                    {p.valor === 1 ? "recurso" : "recursos"} · {p.subtitulo}
-                  </small>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </BlocoDoGrafico>
+          </div>
+        </article>
+        <article className="panel panel-pad">
+          <span className="eyebrow">Ação imediata</span>
+          <h2 className="title">Pendências prioritárias</h2>
+          <p className="hint">
+            Clique em um item para aplicar o recorte correspondente na fila.
+          </p>
+          <Pendencias
+            pendencias={pendencias}
+            carregado={carregado}
+            filtros={filtros}
+            aoFiltrar={aoFiltrar}
+          />
+        </article>
       </section>
-      <section className="recursos-grade-tripla">
-        <BlocoDoGrafico
-          id="recursosSituacao"
-          sobretitulo="Decisão"
-          titulo="Situação"
-          carregado={carregado}
-          vazio={total ? "" : semRecursos}
-        >
-          <ul className="recursos-barras">
-            {situacoes.map((s) => (
-              <Barra
-                key={s.id}
-                rotulo={s.rotulo}
-                total={s.valor}
-                maximo={maxSituacao}
-                partes={[{ id: s.id, tom: s.tom, valor: s.valor }]}
-                ativo={filtros.situacao === s.id}
-                aoClicar={() => aoFiltrar("situacao", s.id)}
-              />
-            ))}
-          </ul>
-        </BlocoDoGrafico>
-        <BlocoDoGrafico
-          id="recursosImpacto"
-          sobretitulo="Resultado"
-          titulo="Impacto no resultado"
-          dica="A nota mudou quando a nota atual da análise difere da do cadastro."
-          carregado={carregado}
-          vazio={total ? "" : semRecursos}
-        >
-          <ul className="recursos-barras">
-            {impacto.map((i, indice) => (
-              <Barra
-                key={i.id}
-                rotulo={i.rotulo}
-                total={i.valor}
-                maximo={maxImpacto}
-                partes={[
-                  { id: i.id, tom: `serie-${indice + 1}`, valor: i.valor },
-                ]}
-              />
-            ))}
-          </ul>
-        </BlocoDoGrafico>
-        <BlocoDoGrafico
-          id="recursosEsteira"
-          sobretitulo="Fluxo"
-          titulo="Esteira do recurso"
-          dica="Quantos recursos já passaram por cada etapa."
-          carregado={carregado}
-          vazio={total ? "" : semRecursos}
-        >
-          <ul className="recursos-barras">
-            {esteira.map((etapa) => (
-              <Barra
-                key={etapa.id}
-                rotulo={etapa.rotulo}
-                total={etapa.valor}
-                maximo={total}
-                partes={[{ id: etapa.id, tom: "serie-1", valor: etapa.valor }]}
-                sufixo={
-                  total ? ` ${Math.round((etapa.valor / total) * 100)}%` : ""
-                }
-              />
-            ))}
-          </ul>
-        </BlocoDoGrafico>
+
+      <section className="oper-grid">
+        <article className="panel panel-pad">
+          <span className="eyebrow">Decisão</span>
+          <h2 className="title">Situação</h2>
+          <p className="hint">
+            Recursos por situação. Clique em uma barra para recortar a fila.
+          </p>
+          <div className="chart-wrap short">
+            <Grafico
+              id="chartSituacao"
+              tipo="bar"
+              rotulo="Recursos por situação"
+              dependencias={[situacoes, tema]}
+              montar={() => {
+                const p = paletaDoPainel(escuro);
+                const cores = coresDaSituacao(p);
+                return {
+                  data: {
+                    labels: situacoes.map((s) => s.rotulo),
+                    datasets: [
+                      {
+                        label: "Recursos",
+                        data: situacoes.map((s) => s.valor),
+                        backgroundColor: situacoes.map(
+                          (s) => cores[s.tom] || p.blue,
+                        ),
+                        borderRadius: 7,
+                      },
+                    ],
+                  },
+                  options: opcoesDeBarras(p, {
+                    aoClicar: (indice) =>
+                      situacoes[indice] &&
+                      filtrar.current("situacao", situacoes[indice].id),
+                  }),
+                };
+              }}
+            />
+          </div>
+        </article>
+        <article className="panel panel-pad">
+          <span className="eyebrow">Resultado</span>
+          <h2 className="title">Impacto no resultado</h2>
+          <p className="hint">
+            A nota mudou quando a nota atual da análise difere da do cadastro.
+          </p>
+          <div className="chart-wrap short">
+            <Grafico
+              id="chartImpacto"
+              tipo="bar"
+              rotulo="Impacto dos recursos na nota e na classificação"
+              dependencias={[impacto, tema]}
+              montar={() => {
+                const p = paletaDoPainel(escuro);
+                return {
+                  data: {
+                    labels: impacto.map((i) => i.rotulo),
+                    datasets: [
+                      {
+                        label: "Recursos",
+                        data: impacto.map((i) => i.valor),
+                        backgroundColor: [p.review, p.warn, p.ok],
+                        borderRadius: 7,
+                      },
+                    ],
+                  },
+                  options: opcoesDeBarras(p),
+                };
+              }}
+            />
+          </div>
+        </article>
+      </section>
+
+      <section className="panel panel-pad trend">
+        <span className="eyebrow">Evolução</span>
+        <h2 className="title">Esteira do recurso</h2>
+        <p className="hint">
+          Quantos recursos do recorte já passaram por cada etapa, do cadastro à
+          resposta ao candidato.
+        </p>
+        <div className="chart-wrap">
+          <Grafico
+            id="chartEsteira"
+            tipo="bar"
+            rotulo="Recursos por etapa da esteira"
+            dependencias={[esteira, tema]}
+            montar={() => {
+              const p = paletaDoPainel(escuro);
+              return {
+                data: {
+                  labels: esteira.map((etapa) => etapa.rotulo),
+                  datasets: [
+                    {
+                      label: "Recursos",
+                      data: esteira.map((etapa) => etapa.valor),
+                      backgroundColor: p.blue,
+                      borderRadius: 7,
+                    },
+                  ],
+                },
+                options: opcoesDeBarras(p, {
+                  deitado: true,
+                  dica: {
+                    label: (item) =>
+                      `${formatNumberBR(item.parsed.x)} recurso(s)${total ? ` · ${Math.round((item.parsed.x / total) * 100)}%` : ""}`,
+                  },
+                }),
+              };
+            }}
+          />
+        </div>
       </section>
     </>
   );
