@@ -704,7 +704,7 @@ provisoriamente; a decisão de 29/09/2026 é que a SEDE só tem a unidade SEDE.
 
 ## 12. Lista de aprovados por área
 
-Migration `20260929190000_aprovados_por_area.sql` (rollback em
+Migration `20260929210000_aprovados_por_area.sql` (rollback em
 `supabase/rollback/`, que volta à definição lida do banco em 29/09/2026, com o
 recorte por coordenação; ensaiado: hash, volatilidade, config, grants e
 comentário da função iguais aos de antes, e nenhuma sobra).
