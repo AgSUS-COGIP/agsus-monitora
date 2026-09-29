@@ -634,3 +634,19 @@ com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
 - Catálogo: aba `recursos` (ícone `scale`, ordem 6) nas três áreas.
 - O prazo de resposta é classificado no front a partir das etapas do
   cronograma (`src/lib/prazo-do-recurso.js`); nada é guardado no banco.
+
+## 11. CCE e Escritório Distrital e Regional são Projetos
+
+Migration `20260929180000_cce_e_escritorio_em_projetos.sql` (rollback em
+`supabase/rollback/`). Em 25/09 as duas unidades foram para a SEDE,
+provisoriamente; a decisão de 29/09/2026 é que a SEDE só tem a unidade SEDE.
+
+- `TA_UNIDADE_AREA`: CCE e Escritório Distrital e Regional → `projetos`. O
+  formulário da SEDE deixa de oferecê-las e o salvar as recusa num edital da
+  SEDE.
+- Os editais dessas unidades que estavam em `sede` vão para `projetos`, com uma
+  linha de auditoria cada em `TH_MONITORAMENTO` (`campo_alterado = 'CO_AREA'`,
+  `snapshot_json.acao = 'cce_e_escritorio_em_projetos'`), como no
+  `mover_edital_de_area`. Edital já movido por um administrador para outra área
+  fica onde está.
+- As análises curriculares não mudam: a área delas vem do `grupo` da planilha.

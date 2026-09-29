@@ -167,10 +167,10 @@ const CRONOGRAMAS = {
   },
 };
 
-/* TA_UNIDADE_AREA como está no banco (28/09/2026). */
+/* TA_UNIDADE_AREA como está no banco (29/09/2026: CCE e Escritório passaram a Projetos). */
 const UNIDADES_POR_AREA = [
-  { unidade: "CCE", area: "sede" },
-  { unidade: "Escritório Distrital e Regional", area: "sede" },
+  { unidade: "CCE", area: "projetos" },
+  { unidade: "Escritório Distrital e Regional", area: "projetos" },
   { unidade: "SEDE", area: "sede" },
   { unidade: "MFC", area: "projetos" },
   {
@@ -882,17 +882,33 @@ describe("edital sempre na área certa", () => {
     expect($("mArea").textContent).toBe("Área: Saúde Indígena");
   });
 
-  it("na SEDE, o CORES oferece só as unidades da SEDE, e o payload leva a área", async () => {
+  it("em Projetos, o CORES oferece CCE e Escritório Distrital e Regional", async () => {
+    await montar();
+    await act(async () => definirAreaAtual("projetos"));
+    await clicar($("newEditalBtn"));
+    await escolher($("mResponsavel"), "CORES");
+    expect(valoresDaUnidade()).toEqual(
+      expect.arrayContaining(["CCE", "Escritório Distrital e Regional"]),
+    );
+    expect(valoresDaUnidade()).not.toContain("SEDE");
+  });
+
+  it("em Projetos, CCE aparece mesmo sem edital e sem o responsável CORES", async () => {
+    await montar();
+    await act(async () => definirAreaAtual("projetos"));
+    await clicar($("newEditalBtn"));
+    expect(valoresDaUnidade()).toEqual(
+      expect.arrayContaining(["CCE", "Escritório Distrital e Regional"]),
+    );
+    expect(valoresDaUnidade()).not.toContain("SEDE");
+  });
+
+  it("na SEDE, o CORES oferece só a unidade SEDE, e o payload leva a área", async () => {
     const { supabase } = await montar();
     await act(async () => definirAreaAtual("sede"));
     await clicar($("newEditalBtn"));
     await escolher($("mResponsavel"), "CORES");
-    expect(valoresDaUnidade()).toEqual([
-      "CCE",
-      "SEDE",
-      "Escritório Distrital e Regional",
-      "__nova__",
-    ]);
+    expect(valoresDaUnidade()).toEqual(["SEDE", "__nova__"]);
     await digitar($("mEdital"), "30/2026");
     await escolher($("mUnidade"), "SEDE");
     // Sem etapas, o cálculo automático não deixa salvar.
