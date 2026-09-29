@@ -39,7 +39,8 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 | Sessão / auth | `src/lib/sessao.js`, `session-lifecycle.js`, `auth-flow.js`, `supabaseClient.js`, `src/modules/auth-storage.js` |
 | Carga da entrada (consultas em paralelo, cópia da sessão no navegador) | `loadInitialData`/`atualizarCopiaDaSessao` em `legacy-app.js`, `src/lib/copia-da-sessao.js` (regras), `src/modules/copia-da-sessao-indexeddb.js` (IndexedDB) |
 | Carregamento sem tela de carregamento (skeleton da entrada, barra do "Atualizar dados") | `src/modules/carregamento.js`, `src/lib/esqueleto-da-entrada.js` (formato), `src/styles/carregamento.css`, marcação `.esqueleto-da-entrada` e script `marcarSessaoGuardada` no `index.html` |
-| Permissões e perfis | `src/lib/access-roles.js` (o que cada perfil pode), `permissoes-recursos.js` (permissões por recurso) |
+| Permissões e perfis | `src/lib/access-roles.js` (o que cada perfil pode, páginas e seções liberadas), `permissoes-recursos.js` (módulos e níveis) |
+| **Acessos** (React: grupos de permissões + permissões individuais, coordenações, teto do coordenador, "como a pessoa vê", pedidos de acesso) | `src/componentes/acessos/`, `src/lib/matriz-de-acessos.js`, `teto-de-acessos.js`, `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.js` (+ `src/modules/solicitacao-de-acesso.js`); banco em `supabase/migrations/20260929121000`–`121300` e `190000`–`190100`; o legado abre por `window.acessosController` |
 | Contrato de RPC | `src/lib/rpc-contrato.js` + `scripts/check-rpc-contract.mjs` |
 | Mapa (Leaflet) | `src/lib/fabrica-do-leaflet.js`, `mapa-render.js`, `brasil-bounds.js`, `src/modules/map-*.js` |
 | Filtros do mapa/tabela | `src/lib/filtros-do-mapa.js` (lógica pura) · estado em `legacy-app.js` (`filterState`, `dseiSelecionado`, `applyFilters`) · evento `agsus:filtros-alterados` |

@@ -341,10 +341,12 @@ export function Navegacao({ arvore, ativo, opcoes, trilho }) {
         (uma confirmação recusada), a seção não abre.
       */
       if (!paginaAtiva(item.view)) navegar(item.view);
-      if (paginaAtiva(item.view)) {
-        opcoes.aoAbrirSecao?.(item.view, item.secao);
+      // A seção pode recusar abrir (saída de Acessos com alteração não salva).
+      if (
+        paginaAtiva(item.view) &&
+        opcoes.aoAbrirSecao?.(item.view, item.secao) !== false
+      )
         marcarItemAtivoNoMenu(item.view, item.secao);
-      }
     } else {
       navegar(item.view);
     }

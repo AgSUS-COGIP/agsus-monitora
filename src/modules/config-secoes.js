@@ -63,7 +63,7 @@ export const SECOES = Object.freeze([
     id: "acessos",
     rotulo: "Acessos",
     icone: "fa-user-group",
-    descricao: "Solicitações, perfis e quem está autorizado a entrar.",
+    descricao: "Pessoas, grupos de permissões e coordenações.",
   },
 ]);
 
@@ -140,6 +140,7 @@ export const SECAO_POR_BLOCO = Object.freeze({
   cnesImportResumo: "operacao",
   accessRequestsAdminCard: "acessos",
   accessMonitorCard: "acessos",
+  acessosApp: "acessos",
 });
 
 export const SECAO_PADRAO = "operacao";
@@ -206,6 +207,28 @@ function selecionarSubgrupo(documento, secao) {
   for (const artigo of pagina.querySelectorAll(".config-secao")) {
     artigo.hidden = artigo.dataset.secao !== secao;
   }
+  // Acessos salva pela própria tela (com motivo): o "Salvar alterações" fixo não vale ali.
+  for (const barra of pagina.querySelectorAll(".config-sticky-actions")) {
+    barra.hidden = secao === "acessos";
+  }
+}
+
+const secoesPermitidas = (pagina) =>
+  pagina?.dataset.secoesPermitidas
+    ? pagina.dataset.secoesPermitidas.split(",")
+    : SECOES.map((s) => s.id);
+
+/*
+  Seções que o perfil abre (buildNav, pelas regras de access-roles.js): o
+  coordenador só vê Acessos; quem edita configurações sem gerenciar acessos,
+  as demais. Se a seção aberta deixou de valer, abre a primeira permitida.
+*/
+export function definirSecoesPermitidas(documento, ids) {
+  const pagina = documento?.getElementById?.("page-config");
+  if (!pagina) return;
+  pagina.dataset.secoesPermitidas = ids.join(",");
+  if (ids.length && !ids.includes(pagina.dataset.subgrupo || SECOES[0].id))
+    selecionarSubgrupo(documento, ids[0]);
 }
 
 /*
@@ -221,10 +244,21 @@ export function secaoAtualDeConfiguracao(documento = globalThis.document) {
 
 export function abrirSecaoDeConfiguracao(documento, secao) {
   if (!SECOES.some((s) => s.id === secao)) return false;
+  const pagina = documento?.getElementById?.("page-config");
+  if (!secoesPermitidas(pagina).includes(secao)) return false;
+  const acessos = documento.defaultView?.acessosController;
+  // Sair de Acessos com alteração não salva pergunta antes (o rascunho é da tela React).
+  if (
+    secaoAtualDeConfiguracao(documento) === "acessos" &&
+    secao !== "acessos" &&
+    acessos?.confirmarSaida() === false
+  )
+    return false;
   selecionarSubgrupo(documento, secao);
-  if (secao === "acessos") {
-    void documento.defaultView?.loadAccessManagement?.();
-  }
+  if (secao === "acessos") void acessos?.render();
+  // As prévias de config-apresentacao.js redesenham com o que o legado acabou de preencher.
+  const Evento = documento.defaultView?.CustomEvent || globalThis.CustomEvent;
+  documento.dispatchEvent(new Evento("agsus:secao-de-configuracao-aberta", { detail: { secao } }));
   return true;
 }
 
@@ -262,9 +296,36 @@ export function organizarConfiguracoesEmSecoes(
   if (!grade.querySelector("input, select, textarea, button")) {
     grade.hidden = true;
   }
+  esconderAgrupadoresVazios(painel);
 
   selecionarSubgrupo(documento, pagina.dataset.subgrupo || "marca");
   return movidos > 0;
+}
+
+/*
+  Os campos saem dos agrupadores antigos para as seções, e alguns agrupadores
+  ficam vazios dentro de uma seção: o título "Aviso global" (os campos do
+  aviso foram para Página inicial) e a caixa "Avançado técnico" (os dois
+  campos foram para Recursos e Operação). Só se escondem — nada é apagado, e
+  um agrupador que ainda tenha campo continua à vista.
+*/
+const TEM_CAMPO = "input:not([type=hidden]), select, textarea";
+
+export function esconderAgrupadoresVazios(raiz) {
+  let escondidos = 0;
+  for (const caixa of raiz.querySelectorAll("details")) {
+    if (caixa.querySelector(TEM_CAMPO)) continue;
+    caixa.hidden = true;
+    escondidos += 1;
+  }
+  for (const cartao of raiz.querySelectorAll(".config-main-card")) {
+    const titulo = cartao.querySelector(":scope > .config-card-title");
+    const grade = cartao.querySelector(":scope > .form-grid");
+    if (!titulo || !grade || grade.querySelector(TEM_CAMPO)) continue;
+    titulo.hidden = true;
+    escondidos += 1;
+  }
+  return escondidos;
 }
 
 /*
