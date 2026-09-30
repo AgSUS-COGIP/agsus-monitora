@@ -199,6 +199,14 @@ import {
   consultaDoCatalogoDeAbas,
 } from "./catalogo-de-abas.js";
 import {
+  aplicarManutencaoNaNavegacao,
+  carregarSituacaoDoSistema,
+  consultaDaSituacaoDoSistema,
+  esquecerSituacaoDoSistema,
+  situacaoDoSistema,
+} from "./situacao-dos-modulos.js";
+import { filtrarAreasAtivas } from "../lib/situacao-dos-modulos.js";
+import {
   acompanharCarregamentoDoPainel,
   esconderEsqueleto,
   marcarAtualizacao,
@@ -898,6 +906,7 @@ function resetSignedOutState(message = "", type = "warn") {
   stopOnlinePresence();
   stopAccessDashboardRefresh();
   clearExternalPanelCache();
+  esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
   document.body.classList.remove("access-request-mode");
   $("appScreen").classList.add("hidden");
@@ -1452,6 +1461,10 @@ async function atualizarCopiaDaSessao(sessao, consultas, anteriores) {
     // Só painel: `isViewAllowed` não conhece todas as telas (Acessos, por exemplo).
     if (currentView.startsWith("panel:") && !isViewAllowed(currentView))
       navigate(startView());
+    // A cópia trazia o catálogo antigo: a manutenção das abas pode ter mudado.
+    // Configurações fica (reabrir repreencheria os campos que a pessoa edita).
+    else if (mudou.has("abas") && currentView !== "config")
+      navigate(currentView);
     if (mudou.has("mapa")) await loadMapaConfig({ consulta: novas.mapa });
     if (mudou.has("unidades")) await loadUnidades({ consulta: novas.unidades });
     if (
@@ -1503,6 +1516,8 @@ async function loadInitialData() {
     versao: VERSAO_DA_COPIA,
   };
   const consultas = iniciarConsultasDaSessao();
+  // Fora da cópia da sessão: a manutenção é sempre a do banco, nesta entrada.
+  const situacaoDoBanco = consultaDaSituacaoDoSistema(sb);
   const copia = await copiaLida;
   // Outra pessoa entrou neste navegador: a cópia de quem saiu vai embora.
   if (copia && copia.usuarioId !== sessao.usuarioId) void apagarCopiaDaSessao();
@@ -1512,6 +1527,7 @@ async function loadInitialData() {
   await loadPanels({ consulta: fonte.paineis });
   await loadPanelPermissions();
   await carregarCatalogoDeAbas({ consulta: fonte.abas });
+  await carregarSituacaoDoSistema({ consulta: situacaoDoBanco });
   buildNav();
   await loadMapaConfig({ consulta: fonte.mapa });
   await loadUnidades({ consulta: fonte.unidades });
@@ -2189,12 +2205,14 @@ async function refreshData() {
   marcarAtualizacao(true);
   activeRefreshDataPromise = (async () => {
     const consultas = iniciarConsultasDaSessao();
+    const situacaoDoBanco = consultaDaSituacaoDoSistema(sb);
     await respostasDasConsultas(consultas);
     await loadConfig({ consulta: consultas.config });
     await loadPanels({ consulta: consultas.paineis });
     await loadPanelPermissions();
     await loadMapaConfig({ consulta: consultas.mapa });
     await carregarCatalogoDeAbas({ consulta: consultas.abas });
+    await carregarSituacaoDoSistema({ consulta: situacaoDoBanco });
     buildNav();
     await loadUnidades({ consulta: consultas.unidades });
     const dataOk = await loadData({ consulta: consultas.monitoramento });
@@ -2240,8 +2258,11 @@ function buildNav() {
     secoes.map((secao) => secao.id),
   );
   // Um grupo por área do usuário; a área atual passa a ser uma delas.
+  // Área desativada (Configurações › Módulos e abas) sai do menu.
+  const situacao = situacaoDoSistema();
   const areas = areasDoUsuario(profile?.areas);
-  definirAreasDoUsuario(areas);
+  const ativas = filtrarAreasAtivas(areas, situacao);
+  definirAreasDoUsuario(ativas.length ? ativas : areas);
   atualizarMenuLateral(
     montarArvoreDoMenu({
       permitidas,
@@ -2249,6 +2270,7 @@ function buildNav() {
       secoesDeConfiguracao: secoes,
       areas,
       abas: abasDoMenu(),
+      situacao,
     }),
     {
       aoAbrirSecao: (_view, secao) => abrirSecaoDeConfiguracao(document, secao),
@@ -2265,10 +2287,11 @@ function setActiveNav(view) {
 function navigate(view) {
   const previousView = currentView;
   const requestedView = txt(view) || startView();
-  // Sair com alteração não salva (matriz de Acessos ou campos de Configurações) pergunta antes.
+  // Sair com alteração não salva (Acessos, Módulos e abas ou campos de Configurações) pergunta antes.
   if (
     requestedView !== currentView &&
     (window.acessosController?.confirmarSaida() === false ||
+      window.modulosController?.confirmarSaida() === false ||
       !confirmarSaidaDasConfiguracoes())
   )
     return;
@@ -2350,6 +2373,19 @@ function navigate(view) {
       "Acesso aos módulos",
       "Nenhum módulo disponível para seu perfil.",
     );
+    return;
+  }
+
+  // Sistema, área ou aba em manutenção: quem não é admin global vê a tela de manutenção.
+  if (
+    aplicarManutencaoNaNavegacao({
+      view: requestedView,
+      area: areaAtual(),
+      abas: abasDoMenu(),
+      adminGlobal: isMasterProfile(),
+    })
+  ) {
+    setPageTitle("Em manutenção", subtituloDaArea(""));
     return;
   }
 

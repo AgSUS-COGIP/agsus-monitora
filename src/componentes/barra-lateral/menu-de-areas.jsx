@@ -28,6 +28,7 @@ import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
 } from "../dados-do-monitoramento.js";
+import { dicaDaManutencao } from "../../lib/situacao-dos-modulos.js";
 import { marcarItemAtivoNoMenu } from "./estado.js";
 
 /*
@@ -195,9 +196,30 @@ function usarGatilhoFlutuante({
   selo) saem de vista — continuam no nome do botão para o leitor de tela —, o
   beta vira um ponto no ícone e os dois aparecem na dica (`data-dica`) no
   ponteiro e no foco.
+
+  Aba em manutenção (`item.manutencao`, do catálogo; ver
+  `src/lib/situacao-dos-modulos.js`) leva a chave inglesa âmbar ao lado do
+  nome, com a mensagem e a previsão na dica (`title`). A página continua no
+  menu: quem abre vê a tela de manutenção (o administrador global entra).
 */
+function IndicadorDeManutencao({ manutencao }) {
+  if (!manutencao) return null;
+  const dica = dicaDaManutencao(manutencao);
+  return (
+    <span className="menu-manutencao" title={dica} aria-label={dica}>
+      <Icone nome="wrench" tamanho={14} />
+    </span>
+  );
+}
+
 function ItemDoMenu({ item, ativo, direto = false, aoEscolher }) {
-  const dica = item.beta ? `${item.rotulo} · BETA` : item.rotulo;
+  const dica = [
+    item.rotulo,
+    item.beta ? "BETA" : "",
+    item.manutencao ? "em manutenção" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <li>
       <button
@@ -206,6 +228,7 @@ function ItemDoMenu({ item, ativo, direto = false, aoEscolher }) {
           "menu-item",
           ativo && "active",
           item.beta && "menu-item--beta",
+          item.manutencao && "menu-item--manutencao",
         )}
         data-view={item.view}
         data-secao={item.secao}
@@ -219,6 +242,7 @@ function ItemDoMenu({ item, ativo, direto = false, aoEscolher }) {
         <Icone nome={item.icone} className="menu-item__icone" />
         <span className="menu-item__rotulo">{item.rotulo}</span>
         {item.beta ? <span className="menu-item__selo">BETA</span> : null}
+        <IndicadorDeManutencao manutencao={item.manutencao} />
       </button>
     </li>
   );
@@ -285,6 +309,7 @@ function Area({
         >
           <Icone nome={area.icone} className="menu-area__icone" />
           <span className="menu-area__rotulo">{area.rotulo}</span>
+          <IndicadorDeManutencao manutencao={area.manutencao} />
           <Icone nome="chevron-down" tamanho={16} className="menu-area__seta" />
         </button>
       )}
@@ -398,6 +423,7 @@ function SeletorDeArea({
           <small>Área</small>
           <strong>{atual.rotulo}</strong>
         </span>
+        <IndicadorDeManutencao manutencao={atual.manutencao} />
         <Icone nome="chevron-down" tamanho={16} className="menu-area__seta" />
       </button>
       <div ref={refPainel} className="menu-area__painel" id={idDoPainel}>
@@ -426,6 +452,7 @@ function SeletorDeArea({
                     aria-hidden="true"
                   />
                   <span className="menu-item__rotulo">{area.rotulo}</span>
+                  <IndicadorDeManutencao manutencao={area.manutencao} />
                 </button>
               </li>
             );

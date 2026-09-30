@@ -54,6 +54,7 @@ import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
 import "./styles/carregamento.css";
 import "./styles/acessos.css";
+import "./styles/modulos-e-manutencao.css";
 import "./styles/config-apresentacao.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
@@ -98,6 +99,7 @@ import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprova
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
+import { montarModulos } from "./componentes/modulos/modulos.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -179,6 +181,12 @@ window.acessosController = montarAcessos({
   toast: window.monitoraToast,
   getProfile: window.getMonitoraProfile,
   secoesDeConfiguracao: SECOES,
+});
+
+// Configurações › Módulos e abas (só admin global): abre pela seção (config-secoes.js → render()).
+window.modulosController = montarModulos({
+  toast: window.monitoraToast,
+  getProfile: window.getMonitoraProfile,
 });
 
 if (!hasSupabaseEnv()) {

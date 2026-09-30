@@ -137,7 +137,26 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Catálogo de abas do menu lateral (TB_ABA × RL_ABA_AREA), já resolvido por área. Sem ela, o menu usa ABAS_DO_MENU (o mesmo catálogo no código).",
+      "Catálogo de abas do menu lateral (TB_ABA × RL_ABA_AREA), já resolvido por área, com selo BETA (st_beta) e manutenção da aba e da aba na área. Sem ela, o menu usa ABAS_DO_MENU (o mesmo catálogo no código).",
+  },
+  // ── Módulos e abas: ativar, desativar, manutenção e selo BETA ────────────
+  obter_situacao_do_sistema: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Situação do sistema inteiro e de cada área (ativo, manutenção, mensagem, previsão) para o menu e a tela de manutenção. Sem ela, tudo vale como ativo.",
+  },
+  obter_modulos_e_abas: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Configurações › Módulos e abas (admin global): sistema, áreas com as abas, abas, painéis externos e as 50 últimas mudanças.",
+  },
+  salvar_situacao_modulos: {
+    argumentos: ["p_alteracoes", "p_motivo"],
+    critica: false,
+    resumo:
+      "Grava em lote ativo/situação/mensagem/previsão/beta de sistema, áreas, abas, abas por área e painéis, com motivo e histórico (admin global).",
   },
   obter_branding_acesso_publico: {
     argumentos: [],

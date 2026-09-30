@@ -19,7 +19,8 @@ const modulo = readFileSync("src/modules/config-secoes.js", "utf8");
 
 /*
   A página era um formulário corrido: um card com 47 campos e três subtítulos
-  soltos. Agora tem as mesmas sete seções do SIGAV, com navegador e busca.
+  soltos. Agora tem as mesmas sete seções do SIGAV, com navegador e busca,
+  mais Módulos e abas (só admin global).
 
   O ponto delicado não é o desenho, é não quebrar o salvamento: os 45 campos têm
   `id` fixo, de que dependem `saveAdminSettings`, o `FIELD_MAP` da governança,
@@ -27,7 +28,7 @@ const modulo = readFileSync("src/modules/config-secoes.js", "utf8");
   **move** os nós existentes em vez de reescrever o HTML — os mesmos elementos,
   com os mesmos `id` e os mesmos listeners.
 */
-describe("as sete seções do SIGAV", () => {
+describe("as seções (as sete do SIGAV + Módulos e abas)", () => {
   it("são exatamente essas, nessa ordem", () => {
     expect(SECOES.map((s) => s.rotulo)).toEqual([
       "Marca",
@@ -37,6 +38,7 @@ describe("as sete seções do SIGAV", () => {
       "Painéis externos",
       "Operação",
       "Acessos",
+      "Módulos e abas",
     ]);
   });
 
@@ -117,9 +119,9 @@ describe("organizar move sem destruir", () => {
 
   beforeEach(montarPagina);
 
-  it("cria as sete seções e distribui os campos", () => {
+  it("cria as oito seções e distribui os campos", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(7);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(8);
     expect(
       document
         .querySelector('.config-secao[data-secao="marca"]')
@@ -201,12 +203,12 @@ describe("organizar move sem destruir", () => {
   it("não organiza duas vezes", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
     expect(organizarConfiguracoesEmSecoes(document)).toBe(false);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(7);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(8);
   });
 });
 
 /*
-  As sete seções são as páginas da área Administração do menu lateral
+  As seções são as páginas da área Administração do menu lateral
   (`src/lib/menu-lateral.js`). O menu navega até Configurações e chama
   `abrirSecaoDeConfiguracao`; quem marca o item ativo é o próprio menu, testado
   em `tests/componentes/barra-lateral.test.js`.
@@ -220,6 +222,7 @@ describe("as seções como páginas de Administração", () => {
   });
   afterEach(() => {
     delete window.acessosController;
+    delete window.modulosController;
   });
 
   it("não cria navegador próprio: quem navega é o menu lateral", () => {
@@ -295,6 +298,25 @@ describe("as seções como páginas de Administração", () => {
     expect(barra.hidden).toBe(true);
     abrirSecaoDeConfiguracao(document, "marca");
     expect(barra.hidden).toBe(false);
+    abrirSecaoDeConfiguracao(document, "modulos");
+    expect(barra.hidden).toBe(true);
+  });
+
+  it("Módulos e abas carrega a própria tela e pergunta antes de sair com pendência", () => {
+    let cargas = 0;
+    let deixa = false;
+    window.modulosController = {
+      render: () => {
+        cargas += 1;
+      },
+      confirmarSaida: () => deixa,
+    };
+    expect(abrirSecaoDeConfiguracao(document, "modulos")).toBe(true);
+    expect(cargas).toBe(1);
+    expect(abrirSecaoDeConfiguracao(document, "marca")).toBe(false);
+    expect(secaoAtualDeConfiguracao(document)).toBe("modulos");
+    deixa = true;
+    expect(abrirSecaoDeConfiguracao(document, "marca")).toBe(true);
   });
 });
 
