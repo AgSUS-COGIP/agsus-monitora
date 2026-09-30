@@ -96,11 +96,32 @@ export function editaisParaConduzir(doMonitoramento, doPainel) {
         comEntrevistas: true,
       });
   }
+  // Do mais novo para o mais antigo: ano, depois número (06/2026 antes de 03/2025).
   return [...porId.values()].sort(
     (a, b) =>
+      ordemDoEdital(b.edital) - ordemDoEdital(a.edital) ||
       a.edital.localeCompare(b.edital, "pt-BR", { numeric: true }) ||
       a.unidade.localeCompare(b.unidade, "pt-BR"),
   );
+}
+
+/** "06/2026 (sanitarista)" -> 2026 * 10000 + 6; sem número, 0 (vai para o fim). */
+export function ordemDoEdital(edital) {
+  const m = String(edital || "").match(/(\d{1,4})\s*\/\s*(\d{4})/);
+  return m ? Number(m[2]) * 10000 + Number(m[1]) : 0;
+}
+
+/**
+ * Nome do cargo para a tela, sem o resto que a planilha de origem deixou
+ * ("Enfermeiro - DSEI Porto Velho em Excel (questionário NÍVEL SUPERIOR" ->
+ * "Enfermeiro - DSEI Porto Velho"). Não muda o dado gravado.
+ */
+export function nomeDoCargo(cargo) {
+  return String(cargo || "")
+    .replace(/\s+em\s+excel\b.*$/i, "")
+    .replace(/\s*\(question[aá]rio[^)]*\)?\s*$/i, "")
+    .replace(/[\s-]+$/, "")
+    .trim();
 }
 
 /* ── Configuração do edital ────────────────────────────────────────── */

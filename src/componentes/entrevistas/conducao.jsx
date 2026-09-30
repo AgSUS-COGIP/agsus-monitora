@@ -16,6 +16,7 @@ import {
   selecaoSugerida,
   textoDaRegra,
   avaliadoresDaFicha,
+  nomeDoCargo,
 } from "../../lib/conducao-de-entrevista.js";
 import { rotuloDoComparecimento } from "../../lib/entrevistas-do-painel.js";
 import {
@@ -211,7 +212,7 @@ function FormularioDeConfiguracao({
               {r.vagas.map((v) => (
                 <tr key={v.vaga}>
                   <td>{v.vaga}</td>
-                  <td>{v.cargo}</td>
+                  <td>{nomeDoCargo(v.cargo)}</td>
                   <td>{v.aprovados}</td>
                   <td>
                     <input
@@ -588,7 +589,7 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
           <div className="entrevistas-vaga" key={g.vaga} data-vaga={g.vaga}>
             <div className="entrevistas-vaga-topo">
               <strong>
-                Vaga {g.vaga} · {g.cargo || "—"}
+                Vaga {g.vaga} · {nomeDoCargo(g.cargo) || "—"}
               </strong>
               {configurado ? (
                 <small>
@@ -886,7 +887,9 @@ function PassoDaFicha({ dados, aoAbrir }) {
                       </td>
                       <td>
                         <div className="primary-text">{c.vaga}</div>
-                        <span className="secondary-text">{c.cargo}</span>
+                        <span className="secondary-text">
+                          {nomeDoCargo(c.cargo)}
+                        </span>
                       </td>
                       <td>{c.banca ?? "—"}</td>
                       <td>{rotuloDoComparecimento(c.compareceu)}</td>

@@ -516,9 +516,9 @@ describe("editais e erros", () => {
       ],
     );
     expect(lista.map((e) => [e.id, e.comEntrevistas])).toEqual([
-      ["m1", true],
-      ["m2", false],
       ["m3", true],
+      ["m2", false],
+      ["m1", true],
     ]);
   });
 
@@ -543,6 +543,39 @@ describe("editais e erros", () => {
     ).toBe("Configure a entrevista do edital antes de convocar.");
     expect(mensagemDoErroDaEntrevista({ code: "PGRST202" })).toMatch(
       /publicada/,
+    );
+  });
+});
+
+describe("ajustes de 30/09: ordem dos editais e nome do cargo", () => {
+  it("editais do mais novo para o mais antigo", async () => {
+    const { editaisParaConduzir } =
+      await import("../src/lib/conducao-de-entrevista.js");
+    const lista = editaisParaConduzir(
+      [
+        { id: "a", edital: "03/2025", unidade: "X" },
+        { id: "b", edital: "06/2026", unidade: "Y" },
+        { id: "c", edital: "110/2026", unidade: "Z" },
+      ],
+      [],
+    );
+    expect(lista.map((e) => e.edital)).toEqual([
+      "110/2026",
+      "06/2026",
+      "03/2025",
+    ]);
+  });
+
+  it("tira o resto da planilha do nome do cargo", async () => {
+    const { nomeDoCargo } =
+      await import("../src/lib/conducao-de-entrevista.js");
+    expect(
+      nomeDoCargo(
+        "Enfermeiro - DSEI Porto Velho em Excel (questionário NÍVEL SUPERIOR",
+      ),
+    ).toBe("Enfermeiro - DSEI Porto Velho");
+    expect(nomeDoCargo("Analista Técnico de Saúde Indígena")).toBe(
+      "Analista Técnico de Saúde Indígena",
     );
   });
 });
