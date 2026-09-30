@@ -547,7 +547,7 @@ describe("vagas imediatas: digitadas × sugeridas", () => {
 });
 
 describe("editais e erros", () => {
-  it("junta os editais do monitoramento com os que já têm entrevistas", () => {
+  it("marca os que já têm entrevistas e não acrescenta edital fora da lista", () => {
     const lista = editaisParaConduzir(
       [
         { id: "m2", edital: "105/2026", unidade: "DSEI Litoral Sul" },
@@ -560,10 +560,43 @@ describe("editais e erros", () => {
       ],
     );
     expect(lista.map((e) => [e.id, e.comEntrevistas])).toEqual([
-      ["m3", true],
       ["m2", false],
       ["m1", true],
     ]);
+  });
+
+  it("descreve a janela e o motivo de o edital aparecer", async () => {
+    const { marcaDoEdital, textoDaJanela } =
+      await import("../src/lib/conducao-de-entrevista.js");
+    const [liberado, fora, pendente, semCronograma] = editaisParaConduzir(
+      [
+        {
+          id: "a",
+          edital: "120/2026",
+          na_janela: false,
+          visivel_por: "liberado",
+          liberado_ate: "2026-11-15",
+          janela_inicio: "2026-12-01",
+          janela_fim: "2026-12-20",
+        },
+        { id: "b", edital: "119/2026", na_janela: false, visivel_por: "admin" },
+        {
+          id: "c",
+          edital: "118/2026",
+          na_janela: false,
+          visivel_por: "convocados",
+          pendentes: 3,
+        },
+        { id: "d", edital: "117/2026", na_janela: true, visivel_por: "janela" },
+      ],
+      [],
+    );
+    expect(marcaDoEdital(liberado)).toBe("liberado até 15/11");
+    expect(marcaDoEdital(fora)).toBe("fora da janela");
+    expect(marcaDoEdital(pendente)).toBe("3 sem parecer");
+    expect(marcaDoEdital(semCronograma)).toBe("");
+    expect(textoDaJanela(liberado)).toBe("janela da entrevista: 01/12 a 20/12");
+    expect(textoDaJanela(fora)).toBe("sem etapa de entrevista no cronograma");
   });
 
   it("traduz os códigos das RPCs", () => {

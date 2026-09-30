@@ -498,10 +498,16 @@ export const CONTRATO_RPC = {
       "Retira um convocado sem notas, com motivo (23514 se já tem notas). Devolve o payload do edital.",
   },
   listar_editais_entrevista: {
-    argumentos: ["p_area"],
+    argumentos: ["p_area", "p_todos"],
     critica: false,
     resumo:
-      "Editais ativos da área (recorte da coordenação) para conduzir entrevistas.",
+      "Editais da área para conduzir entrevistas: na janela do cronograma, liberados pelo administrador global ou com convocado sem parecer; p_todos (administrador global) traz todos. Devolve {admin_global, hoje, editais}.",
+  },
+  liberar_entrevista_edital: {
+    argumentos: ["p_edital", "p_ate", "p_motivo"],
+    critica: false,
+    resumo:
+      "Administrador global: libera o edital fora da janela até p_ate (máx. 180 dias), com motivo; p_ate nulo encerra.",
   },
   obter_quadro_de_vagas: {
     argumentos: ["p_edital"],
