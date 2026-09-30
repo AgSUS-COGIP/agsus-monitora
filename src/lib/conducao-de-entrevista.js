@@ -134,6 +134,20 @@ export function ordemDoEdital(edital) {
  * ("Enfermeiro - DSEI Porto Velho em Excel (questionário NÍVEL SUPERIOR" ->
  * "Enfermeiro - DSEI Porto Velho"). Não muda o dado gravado.
  */
+/**
+ * O candidato é PcD? A análise traz o campo como texto da planilha ("SIM" /
+ * "NÃO"); só o sim conta (também aceita booleano, "S", "true" e "1").
+ */
+export function ehPcd(valor) {
+  if (typeof valor === "boolean") return valor;
+  const t = String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  return ["sim", "s", "true", "1", "yes"].includes(t);
+}
+
 export function nomeDoCargo(cargo) {
   return String(cargo || "")
     .replace(/\s+em\s+excel\b.*$/i, "")

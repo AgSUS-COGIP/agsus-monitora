@@ -17,6 +17,7 @@ import {
   textoDaRegra,
   avaliadoresDaFicha,
   nomeDoCargo,
+  ehPcd,
   marcaDoEdital,
   textoDaJanela,
 } from "../../lib/conducao-de-entrevista.js";
@@ -654,7 +655,7 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                           </td>
                           <td>
                             {c.modalidade || "—"}
-                            {c.pcd ? (
+                            {ehPcd(c.pcd) ? (
                               <span className="badge neutro">PcD</span>
                             ) : null}
                           </td>
