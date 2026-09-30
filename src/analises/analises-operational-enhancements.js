@@ -2,7 +2,6 @@ const state = {
   initialized: false,
   scheduled: 0,
   bootAttempts: 0,
-  lastFocus: null,
   activeShortcut: "",
 };
 
@@ -109,113 +108,6 @@ function renderShortcutStatus(list) {
   list.insertAdjacentElement("beforebegin", status);
 }
 
-function ensureDrawer() {
-  let backdrop = document.getElementById("analisesDetailDrawer");
-  if (backdrop) return backdrop;
-
-  backdrop = document.createElement("div");
-  backdrop.id = "analisesDetailDrawer";
-  backdrop.className = "analises-drawer-backdrop";
-  backdrop.hidden = true;
-  backdrop.innerHTML = `
-    <aside class="analises-drawer" role="dialog" aria-modal="true" aria-labelledby="analisesDrawerTitle">
-      <div class="analises-drawer-head">
-        <div><span class="eyebrow">Detalhamento do candidato</span><h2 id="analisesDrawerTitle">Registro da análise</h2></div>
-        <button type="button" class="analises-drawer-close" aria-label="Fechar detalhamento"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="analises-drawer-context" id="analisesDrawerContext"></div>
-      <div id="analisesDrawerBody"></div>
-    </aside>`;
-
-  document.body.appendChild(backdrop);
-  backdrop
-    .querySelector(".analises-drawer-close")
-    ?.addEventListener("click", closeDrawer);
-  backdrop.addEventListener("click", (event) => {
-    if (event.target === backdrop) closeDrawer();
-  });
-  return backdrop;
-}
-
-function closeDrawer() {
-  const backdrop = document.getElementById("analisesDetailDrawer");
-  if (!backdrop || backdrop.hidden) return;
-
-  backdrop.hidden = true;
-  document.body.style.overflow = "";
-  if (state.lastFocus?.isConnected) state.lastFocus.focus();
-  state.lastFocus = null;
-}
-
-function encodedDetailKey(button) {
-  const inline = txt(button?.getAttribute("onclick"));
-  const match = inline.match(/toggleDetails\('([^']+)'\)/);
-  return match ? match[1] : "";
-}
-
-function contextItems(cells) {
-  return [
-    ["Grupo", cells[0]],
-    ["Unidade", cells[1]],
-    ["Edital", cells[2]],
-    ["Código da vaga", cells[3]],
-    ["Vaga", cells[4]],
-    ["Status", cells[6]],
-  ].filter(([, value]) => Boolean(value));
-}
-
-function openDrawerFromRenderedDetail(button, detailRow) {
-  const backdrop = ensureDrawer();
-  const row = button.closest("tr");
-  const cells = [...(row?.querySelectorAll("td") || [])].map((cell) =>
-    txt(cell.textContent),
-  );
-  const candidate = cells[5] || "Registro da análise";
-  const detail = detailRow?.querySelector(".detail-shell")?.cloneNode(true);
-
-  backdrop.querySelector("#analisesDrawerTitle").textContent = candidate;
-  backdrop.querySelector("#analisesDrawerContext").innerHTML = contextItems(
-    cells,
-  )
-    .map(
-      ([label, value]) =>
-        `<div><small>${label}</small><strong>${value}</strong></div>`,
-    )
-    .join("");
-
-  const body = backdrop.querySelector("#analisesDrawerBody");
-  body.replaceChildren();
-
-  if (detail) {
-    detail.querySelectorAll(".mini-chip").forEach((chip) => chip.remove());
-    detail.querySelectorAll("a").forEach((link) => {
-      const href = txt(link.getAttribute("href"));
-      if (!href || !/^https?:\/\//i.test(href)) link.remove();
-    });
-    body.appendChild(detail);
-  } else {
-    body.innerHTML =
-      '<div class="empty">Não foi possível montar o detalhamento deste registro.</div>';
-  }
-
-  state.lastFocus = button;
-  backdrop.hidden = false;
-  document.body.style.overflow = "hidden";
-  backdrop.querySelector(".analises-drawer-close")?.focus();
-}
-
-function openDrawerFromButton(button) {
-  const encoded = encodedDetailKey(button);
-  if (!encoded || typeof window.toggleDetails !== "function") return;
-
-  window.toggleDetails(encoded);
-  window.setTimeout(() => {
-    const detailRow = button.closest("tr")?.nextElementSibling;
-    openDrawerFromRenderedDetail(button, detailRow);
-    window.toggleDetails(encoded);
-  }, 0);
-}
-
 function clickMultiFilter(id, value) {
   const input = document.querySelector(
     `#ms-options-${CSS.escape(id)} input[value="${CSS.escape(value)}"]`,
@@ -277,7 +169,6 @@ function enhance() {
   renameSearches();
   removePdfSignals();
   markAttentionActions();
-  ensureDrawer();
 }
 
 function scheduleEnhance() {
@@ -289,16 +180,7 @@ function bindEvents() {
   document.addEventListener(
     "click",
     (event) => {
-      const detailButton = event.target?.closest?.(
-        '#tableBody button[onclick*="toggleDetails"]',
-      );
-      if (detailButton) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        openDrawerFromButton(detailButton);
-        return;
-      }
-
+      // A gaveta de detalhe é de analises-detail-runtime-fix.js.
       const attention = event.target?.closest?.(
         "#attentionList .attention-item[data-action]",
       );
@@ -316,7 +198,6 @@ function bindEvents() {
   document.addEventListener("change", scheduleEnhance, true);
   document.addEventListener("input", scheduleEnhance, true);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeDrawer();
     if (
       (event.key === "Enter" || event.key === " ") &&
       event.target?.matches?.("#attentionList .attention-item[data-action]")

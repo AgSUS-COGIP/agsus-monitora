@@ -161,8 +161,6 @@ export const SECAO_POR_CAMPO = Object.freeze({
 export const SECAO_POR_BLOCO = Object.freeze({
   panelAdmin: "recursos",
   cnesImportResumo: "operacao",
-  accessRequestsAdminCard: "acessos",
-  accessMonitorCard: "acessos",
   acessosApp: "acessos",
   modulosApp: "modulos",
 });

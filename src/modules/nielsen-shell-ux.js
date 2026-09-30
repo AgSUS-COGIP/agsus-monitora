@@ -2,6 +2,7 @@ import {
   avisar,
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
+import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
 
 const THEME_STORAGE_KEY = "agsus_dark_mode_v1";
 const PRESENCE_SYNC_GRACE_MS = 12000;
@@ -197,9 +198,9 @@ function logoutDialogHTML() {
   `;
 }
 
-function hasUnsavedConfiguration() {
-  const indicator = document.getElementById("configWorkspaceDirtyTop");
-  return Boolean(indicator && !indicator.hidden);
+/* Alterações não salvas vêm do estado das Configurações (React), o mesmo que o navigate consulta. */
+export function hasUnsavedConfiguration(estado = estadoDasConfiguracoes) {
+  return Boolean(estado?.temAlteracoes?.());
 }
 
 function finishLogoutConfirmation(confirmed) {
@@ -241,8 +242,8 @@ function setSignoutBusy(busy) {
 
 function reportSignoutFailure() {
   const message = "Não foi possível encerrar esta sessão. Tente novamente.";
-  if (typeof window.toast === "function") {
-    window.toast(message, "error");
+  if (typeof window.monitoraToast === "function") {
+    window.monitoraToast(message, "error");
     return;
   }
   window.alert(message);
@@ -369,63 +370,6 @@ function startPresenceWatchdog() {
   });
 }
 
-function updateSectionCopy(root, titleBefore, titleAfter, description) {
-  const heading = [...root.querySelectorAll(".section-title-row h4")].find(
-    (item) => text(item.textContent) === titleBefore,
-  );
-  if (!heading) return;
-  heading.textContent = titleAfter;
-  const paragraph = heading.parentElement?.querySelector("p");
-  if (paragraph && description) paragraph.textContent = description;
-}
-
-function refineConfigurationCopy() {
-  const root = document.getElementById("page-config");
-  if (!root) return;
-
-  // O cabeçalho da página é o da seção aberta (src/componentes/configuracoes/).
-  const accessTitle = document.querySelector("#accessRequestsAdminCard > h3");
-  if (accessTitle) accessTitle.textContent = "Acessos e permissões";
-
-  updateSectionCopy(
-    root,
-    "Solicitações pendentes",
-    "Solicitações pendentes",
-    "Aprove ou recuse novos pedidos de acesso.",
-  );
-  updateSectionCopy(
-    root,
-    "Usuários ativos",
-    "Usuários com acesso",
-    "Ajuste perfil, permissões e painéis sem apagar o histórico.",
-  );
-}
-
-function scheduleConfigurationRefinement() {
-  [0, 250, 900].forEach((delay) =>
-    window.setTimeout(refineConfigurationCopy, delay),
-  );
-}
-
-function installNavigationRefinement() {
-  const originalNavigate = window.navigate;
-  if (
-    typeof originalNavigate !== "function" ||
-    originalNavigate.__nielsenUxWrapped
-  ) {
-    return;
-  }
-
-  const wrappedNavigate = (...args) => {
-    const result = originalNavigate(...args);
-    if (String(args[0] || "") === "config") scheduleConfigurationRefinement();
-    return result;
-  };
-  wrappedNavigate.__nielsenUxWrapped = true;
-  wrappedNavigate.__original = originalNavigate;
-  window.navigate = wrappedNavigate;
-}
-
 export function initNielsenShellUx() {
   if (initialized) return;
   initialized = true;
@@ -434,11 +378,4 @@ export function initNielsenShellUx() {
   installThemeSync();
   installLogoutFlow();
   startPresenceWatchdog();
-  installNavigationRefinement();
-  scheduleConfigurationRefinement();
-
-  window.addEventListener(
-    "agsus:config-saved",
-    scheduleConfigurationRefinement,
-  );
 }

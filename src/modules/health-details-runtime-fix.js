@@ -3,6 +3,7 @@ import {
   anosDosEditais,
   editaisDoAno,
 } from "../lib/atalhos-de-filtro.js";
+import { escapeHtml } from "../lib/sanitize.js";
 import { enhanceHealthDetailsTable } from "./health-details-ux.js";
 
 const state = {
@@ -326,7 +327,7 @@ function decorateFilterFields(documentRef) {
     if (label.dataset.healthReady !== "1") {
       const icon = FILTER_ICONS[select.id] || "fa-filter";
       const text = label.textContent.trim();
-      label.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i><span>${text}</span>`;
+      label.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i><span>${escapeHtml(text)}</span>`;
       label.dataset.healthReady = "1";
     }
   });

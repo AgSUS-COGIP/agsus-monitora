@@ -13,8 +13,6 @@ import {
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
 } from "../componentes/dados-do-monitoramento.js";
-import { mountAccessMatrix } from "./matriz-acessos.js";
-import { abrirGestaoConta } from "./gestao-conta.js";
 import {
   abrirSecaoDeConfiguracao,
   definirSecoesPermitidas,
@@ -75,12 +73,10 @@ import {
   garantirAcessoBasico,
   lerCampos,
   mostrarStatus,
-  renderAccessRequestAdminItemHTML,
 } from "./solicitacao-de-acesso.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
 import { renderPanelAdminHTML } from "./config-ui.js";
 import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
-import { createAccessDashboard } from "./access-dashboard.js";
 import {
   isAllowedInstitutionalEmail,
   normalizeAllowedDomains,
@@ -171,7 +167,6 @@ import {
   canViewSelecao,
   canImportApprovedList,
   isAdminGlobal,
-  isOwnAccessProfile,
   paginasPermitidas,
   permissaoLegada,
   podeAbrirConfiguracoes,
@@ -227,10 +222,6 @@ import {
 const APP_VERSION_FALLBACK = "";
 
 const RPC_ACCESS_LOG = "registrar_evento_acesso";
-const RPC_APPROVE_ACCESS_REQUEST = "aprovar_solicitacao_acesso";
-const RPC_DENY_ACCESS_REQUEST = "recusar_solicitacao_acesso";
-const RPC_UPDATE_USER_ACCESS = "atualizar_acesso_usuario";
-const RPC_DEACTIVATE_USER_ACCESS = "desativar_acesso_usuario";
 const RPC_PLATFORM_CONTEXT = "obter_contexto_monitora";
 const RPC_REGISTER_ONLINE_PRESENCE = "registrar_presenca_monitora";
 const RPC_LIST_ONLINE_PRESENCE = "listar_presenca_online_monitora";
@@ -407,8 +398,6 @@ function loadFilterState() {
 let panels = [...DEFAULT_PANELS];
 let allowedPanelIds = new Set();
 let platformContextLoaded = false;
-let accessRequests = [];
-let accessProfiles = [];
 let mapConfigLoadOk = false;
 let currentPanel = null;
 let currentView = "dashboard";
@@ -602,11 +591,6 @@ function setImg(id, url, alt = "") {
     el.style.display = "none";
   }
 }
-function setLoginButtonReady() {
-  const btn = $("loginBtn");
-  if (!btn) return;
-  btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Iniciar sessão`;
-}
 function fmt(v) {
   return n(v).toLocaleString("pt-BR");
 }
@@ -649,19 +633,6 @@ function fmtDate(v) {
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
-const accessDashboard = createAccessDashboard({
-  getSupabase: () => sb,
-  isMasterProfile,
-  getCurrentView: () => currentView,
-  $,
-  n,
-  txt,
-  esc,
-  fmt,
-  fmtDate,
-  friendlyError,
-});
-
 function previewImg(inputId, imgId) {
   const url = txt($(inputId)?.value);
   const img = $(imgId);
@@ -676,31 +647,6 @@ function previewImg(inputId, imgId) {
   img.onerror = () => {
     img.style.display = "none";
   };
-}
-
-function toggleMoreActions() {
-  const menu = $("moreActionsMenu");
-  const btn = $("moreActionsBtn");
-  if (!menu) return;
-  const opening = menu.hidden;
-  menu.hidden = !opening;
-  if (btn) btn.setAttribute("aria-expanded", opening ? "true" : "false");
-  if (opening) {
-    const close = (e) => {
-      if (!e.target.closest("#moreActionsWrap")) {
-        closeMoreActions();
-        document.removeEventListener("click", close);
-      }
-    };
-    setTimeout(() => document.addEventListener("click", close), 0);
-  }
-}
-
-function closeMoreActions() {
-  const menu = $("moreActionsMenu");
-  const btn = $("moreActionsBtn");
-  if (menu) menu.hidden = true;
-  if (btn) btn.setAttribute("aria-expanded", "false");
 }
 
 function toast(message, type = "ok") {
@@ -884,19 +830,6 @@ function startAccessHeartbeat() {
   );
 }
 
-function stopAccessDashboardRefresh() {
-  accessDashboard.stopRefresh();
-}
-function startAccessDashboardRefresh() {
-  accessDashboard.startRefresh();
-}
-function loadAccessDashboard(force = false) {
-  return accessDashboard.load(force);
-}
-function renderAccessDashboard(payload = null) {
-  return accessDashboard.render(payload);
-}
-
 function resetSignedOutState(message = "", type = "warn") {
   currentUser = null;
   profile = null;
@@ -907,19 +840,14 @@ function resetSignedOutState(message = "", type = "warn") {
   lastSignedInEventAt = 0;
   allowedPanelIds = new Set();
   platformContextLoaded = false;
-  accessRequests = [];
-  accessProfiles = [];
   stopAccessHeartbeat();
   stopOnlinePresence();
-  stopAccessDashboardRefresh();
   clearExternalPanelCache();
   esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
   document.body.classList.remove("access-request-mode");
   $("appScreen").classList.add("hidden");
   $("loginScreen").classList.remove("hidden");
-  const loginPassword = $("loginPassword");
-  if (loginPassword) loginPassword.value = "";
   const accessCard = $("accessRequestCard");
   if (accessCard) accessCard.classList.add("hidden");
   const accessStatus = $("accessRequestStatus");
@@ -953,10 +881,6 @@ async function returnToLogin() {
   declararSaida(SAIDA_MANUAL);
   if (sb) await sb.auth.signOut();
   aplicarSaida({ mensagem: "" });
-  const emailInput = $("loginEmail");
-  if (emailInput) emailInput.value = "";
-  const passwordInput = $("loginPassword");
-  if (passwordInput) passwordInput.value = "";
   showAlert("loginMsg", "Sessão limpa. Escolha como deseja entrar.", "ok");
 }
 
@@ -1237,15 +1161,6 @@ function applyStoredSidebarState() {
     if (saved === "1") document.body.classList.add("sidebar-collapsed");
   } catch (e) {}
   syncSidebarToggle();
-}
-
-async function login() {
-  showAlert(
-    "loginMsg",
-    "Use o login com Google institucional para acessar.",
-    "warn",
-  );
-  return loginWithGoogle();
 }
 
 async function loginWithGoogle() {
@@ -1680,11 +1595,7 @@ async function showAccessRequestState() {
   $("appScreen").classList.add("hidden");
   $("loginScreen").classList.remove("hidden");
   document.body.classList.add("access-request-mode");
-  const emailInput = $("loginEmail");
-  if (emailInput) emailInput.value = currentUser?.email || "";
   setText("accessReqEmail", currentUser?.email || "-");
-  const loginPassword = $("loginPassword");
-  if (loginPassword) loginPassword.value = "";
   showAlert("loginMsg", "", "");
   const card = $("accessRequestCard");
   if (card) card.classList.remove("hidden");
@@ -1712,11 +1623,7 @@ function forceAccessRequestFallback(message) {
   $("appScreen")?.classList.add("hidden");
   $("loginScreen")?.classList.remove("hidden");
   document.body.classList.add("access-request-mode");
-  const emailInput = $("loginEmail");
-  if (emailInput) emailInput.value = currentUser?.email || "";
   setText("accessReqEmail", currentUser?.email || "-");
-  const pass = $("loginPassword");
-  if (pass) pass.value = "";
   showAlert("loginMsg", message || "", message ? "warn" : "");
   $("accessRequestCard")?.classList.remove("hidden");
   const nome = $("accessReqNome");
@@ -1837,7 +1744,6 @@ function applyConfigToUi() {
     );
   setText("skipLink", cfgValue("skip_link_text"));
   setText("offlineBar", cfgValue("offline_message"));
-  setLoginButtonReady();
   /*
     A identidade da tela de acesso só é tocada quando veio do banco.
 
@@ -1969,8 +1875,6 @@ function applyConfigToUi() {
     setAttr(id, "title", cfgValue("external_back_text"));
     setAttr(id, "aria-label", cfgValue("external_back_text"));
   });
-  setAttr("moreActionsBtn", "title", cfgValue("action_more_label"));
-  setAttr("moreActionsBtn", "aria-label", cfgValue("action_more_label"));
   syncFilterToggleText();
   syncHideClosedBtn();
   aplicarAvisoGlobal();
@@ -2376,7 +2280,6 @@ function navigate(view) {
   currentView = requestedView;
   rememberView(requestedView);
   if (!requestedView.startsWith("panel:")) currentPanel = null;
-  if (requestedView !== "config") stopAccessDashboardRefresh();
   enforceResponsiveSidebar();
   setActiveNav(requestedView);
   document
@@ -11616,7 +11519,6 @@ function renderConfigForm() {
   previewImg("cfgLoginBg", "prevLoginBg");
   renderAccessBackgroundPreview();
   void loadAccessBackgroundGallery();
-  renderAccessDashboard(null);
   renderPanelAdmin();
 }
 
@@ -11853,181 +11755,6 @@ function renderPanelAdmin() {
   box.innerHTML = renderPanelAdminHTML(panels);
 }
 
-async function loadAccessManagement() {
-  return renderAccessRequestsAdmin();
-}
-
-let disposeAccessMatrix = null;
-async function renderAccessRequestsAdmin() {
-  const card = $("accessRequestsAdminCard");
-  const box = $("accessRequestsAdmin");
-  if (!card || !box) return;
-  const allowed = isMasterProfile();
-  card.classList.toggle("hidden", !allowed);
-  if (!allowed) return;
-  if (
-    Number(box.querySelector("[data-pending-count]")?.dataset.pendingCount) > 0
-  )
-    return;
-  disposeAccessMatrix?.();
-  box.innerHTML = `<div class="access-status">Carregando acessos...</div>`;
-  const requestsResponse = await sb
-    .from("TB_SOLICITACAO_ACESSO")
-    .select(
-      "id,user_id,email,nome,setor,justificativa,perfil_solicitado,status,observacao_admin,created_at",
-    )
-    .eq("status", "pendente")
-    .order("created_at", { ascending: false })
-    .limit(50);
-  if (requestsResponse.error) {
-    box.innerHTML = `<div class="alert error">Erro ao carregar acessos: ${esc(friendlyError(requestsResponse.error))}</div>`;
-    return;
-  }
-  accessRequests = Array.isArray(requestsResponse.data)
-    ? requestsResponse.data
-    : [];
-  const pendingHTML = accessRequests.length
-    ? accessRequests.map(renderAccessRequestAdminItem).join("")
-    : `<div class="access-status">Nenhuma solicitação pendente.</div>`;
-
-  box.innerHTML = `
-      <div class="access-admin-section">
-        <div class="section-title-row">
-          <div>
-            <h4>Solicitações pendentes</h4>
-            <p>Aprove ou recuse novos pedidos. Solicitações já avaliadas ficam no histórico do banco.</p>
-          </div>
-          <span class="chip blue">${fmt(accessRequests.length)}</span>
-        </div>
-        ${pendingHTML}
-      </div>
-    `;
-  /*
-    Ordem da seção: histórico e solicitações em cima (curtos), matriz embaixo
-    com a altura livre para a tabela, que é o que se usa todo dia.
-  */
-  const historicoRoot = document.createElement("div");
-  historicoRoot.className = "access-admin-section access-history-section";
-  box.prepend(historicoRoot);
-  const matrixRoot = document.createElement("div");
-  matrixRoot.className = "access-admin-section";
-  box.append(matrixRoot);
-  disposeAccessMatrix = await mountAccessMatrix(matrixRoot, {
-    sb,
-    currentUser,
-    historicoRoot,
-    onManageAccount(user) {
-      accessProfiles = [user];
-      abrirGestaoConta(user, {
-        currentUser,
-        onSave: updateUserAccess,
-        onDeactivate: deactivateUserAccess,
-      });
-    },
-  });
-}
-
-function renderAccessRequestAdminItem(req) {
-  return renderAccessRequestAdminItemHTML(req);
-}
-
-function accessRequestById(id) {
-  return accessRequests.find((r) => String(r.id) === String(id));
-}
-
-async function updateUserAccess(id, selectedProfile) {
-  const user = accessProfiles.find((r) => String(r.id) === String(id));
-  if (!user) return toast("Usuário não encontrado.", "warn");
-  if (isOwnAccessProfile(currentUser, user))
-    return toast(
-      "Sua própria permissão deve ser alterada por outro administrador.",
-      "warn",
-    );
-  const perfil = txt(selectedProfile) || user.perfil;
-  const label = user.email || user.nome || "este usuário";
-  if (!window.confirm(`Salvar alterações de acesso para ${label}?`)) return;
-  const motivo = window.prompt("Motivo da alteração (opcional):", "") || "";
-  loader(true, "Salvando acesso", "Atualizando o perfil de acesso...", 55);
-  const { error } = await sb.rpc(RPC_UPDATE_USER_ACCESS, {
-    p_perfil_usuario_id: id,
-    p_perfil: perfil,
-    p_permissoes: {},
-    p_paineis: [],
-    p_motivo: motivo,
-  });
-  loader(false);
-  if (error)
-    return toast("Erro ao salvar acesso: " + friendlyError(error), "error");
-  toast("Acesso atualizado. Oriente o usuário a sair e entrar novamente.");
-  await renderAccessRequestsAdmin();
-  return true;
-}
-
-async function approveAccessRequest(id) {
-  const req = accessRequestById(id);
-  if (!req) return toast("Solicitação não encontrada.", "warn");
-  const perfil = txt($("accessPerfil" + id)?.value) || "usuario";
-  loader(true, "Aprovando acesso", "Salvando o perfil de acesso...", 55);
-  const { error: reqErr } = await sb.rpc(RPC_APPROVE_ACCESS_REQUEST, {
-    p_solicitacao_id: id,
-    p_perfil: perfil,
-    p_permissoes: {},
-    p_paineis: [],
-    p_observacao_admin: txt($("accessObs" + id)?.value),
-  });
-  loader(false);
-  if (reqErr)
-    return toast("Erro ao aprovar acesso: " + friendlyError(reqErr), "error");
-  toast("Acesso aprovado. Oriente o usuário a sair e entrar novamente.");
-  await renderAccessRequestsAdmin();
-}
-
-async function deactivateUserAccess(id) {
-  const user = accessProfiles.find((r) => String(r.id) === String(id));
-  if (!user) return toast("Usuário não encontrado.", "warn");
-  if (isOwnAccessProfile(currentUser, user))
-    return toast("Você não pode desativar o próprio acesso.", "warn");
-  const label = user.email || "este usuário";
-  if (
-    !window.confirm(`Desativar o acesso de ${label}? O histórico será mantido.`)
-  )
-    return;
-  const motivo = window.prompt("Motivo da desativação (opcional):", "") || "";
-  loader(true, "Desativando acesso", "Removendo permissões do usuário...", 45);
-  const { error } = await sb.rpc(RPC_DEACTIVATE_USER_ACCESS, {
-    p_perfil_usuario_id: id,
-    p_motivo: motivo,
-  });
-  loader(false);
-  if (error)
-    return toast("Erro ao desativar acesso: " + friendlyError(error), "error");
-  toast("Acesso desativado.");
-  await renderAccessRequestsAdmin();
-  return true;
-}
-
-async function denyAccessRequest(id) {
-  const req = accessRequestById(id);
-  if (!req) return toast("Solicitação não encontrada.", "warn");
-  /*
-    Recusar passou a ser RPC, como aprovar, atualizar e desativar já eram. Antes,
-    esta era a única decisão de acesso que o navegador gravava direto na tabela —
-    escolhendo `status`, `avaliado_por` e `avaliado_em` por conta própria. A
-    autorização da mesma decisão vivia, portanto, em dois lugares.
-  */
-  const { error } = await sb.rpc(RPC_DENY_ACCESS_REQUEST, {
-    p_solicitacao_id: id,
-    p_observacao_admin: txt($("accessObs" + id)?.value),
-  });
-  if (error)
-    return toast(
-      "Erro ao recusar solicitação: " + friendlyError(error),
-      "error",
-    );
-  toast("Solicitação recusada.");
-  await renderAccessRequestsAdmin();
-}
-
 function syncDisplayModeButtons() {
   const fullscreenActive =
     !!document.fullscreenElement ||
@@ -12174,7 +11901,6 @@ function exportCSV() {
 
 // Exporta relatório em PDF (via diálogo de impressão do navegador — funciona offline)
 function exportPDF() {
-  closeMoreActions && closeMoreActions();
   const now = new Date();
   const dataStr = now.toLocaleString("pt-BR", {
     day: "2-digit",
@@ -12283,11 +12009,6 @@ function friendlyError(error) {
 function applyDarkMode(dark) {
   document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
   avisar(EVENTO_TEMA_ALTERADO);
-  const thumb = $("darkModeThumb");
-  const track = $("darkModeToggle");
-  if (thumb)
-    thumb.style.transform = dark ? "translateX(18px)" : "translateX(0)";
-  if (track) track.style.background = dark ? "#00a8d6" : "#334e6a";
 }
 function toggleDarkMode() {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -12387,7 +12108,7 @@ function runGlobalSearch(q) {
         <div class="search-result-icon" style="background:#f0f7ff"><i class="fa-solid fa-folder-open" style="color:#0075c9"></i></div>
         <div class="search-result-body">
           <div class="search-result-title">${esc(r.edital || "-")} — ${esc(r.unidade)}</div>
-          <div class="search-result-sub">${esc(r.etapa || "")}${r.uf ? " · " + r.uf : ""}</div>
+          <div class="search-result-sub">${esc(r.etapa || "")}${r.uf ? " · " + esc(r.uf) : ""}</div>
         </div>
         <span class="search-result-chip" style="background:${riscoColor}1a;color:${riscoColor};border:1px solid ${riscoColor}40">${riscoText}</span>
       </div>`;
@@ -12511,14 +12232,12 @@ function stopRealtime() {
 window.addEventListener("agsus:background-suspend", () => {
   stopAccessHeartbeat();
   stopRealtime();
-  stopAccessDashboardRefresh();
 });
 window.addEventListener("agsus:background-resume", () => {
   if (!currentUser?.id) return;
   startAccessHeartbeat();
   startOnlinePresence();
   startRealtime();
-  if (currentView === "acessos") startAccessDashboardRefresh();
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && currentUser?.id)
@@ -12581,23 +12300,16 @@ Object.assign(window, {
   getMonitoraProfile: () => profile,
   monitoraToast: toast,
   monitoraLoader: loader,
-  approveAccessRequest,
   clearFilters,
   clearFilterField,
   clearSearchPill,
   definirSelecaoDeFiltro,
-  closeMoreActions,
   closeSearchModal,
   debouncedSearch,
-  denyAccessRequest,
-  deactivateUserAccess,
   exitExternalPanel,
   exportCSV,
   exportPDF,
   highlightSearchItems,
-  login,
-  loadAccessDashboard,
-  loadAccessManagement,
   loginWithGoogle,
   logout,
   navigate,
@@ -12612,7 +12324,6 @@ Object.assign(window, {
   selectAllFilterValues,
   selectSearchResult,
   sortDetails,
-  updateUserAccess,
   uploadAccessBackground,
   submitAccessRequest,
   toggleBrowserFullscreen,
@@ -12622,7 +12333,6 @@ Object.assign(window, {
   toggleFilterMenu,
   toggleFilters,
   toggleHideClosed,
-  toggleMoreActions,
   toggleObs,
   toggleSelectFilter,
   toggleSidebar,

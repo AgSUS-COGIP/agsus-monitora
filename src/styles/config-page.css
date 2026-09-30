@@ -271,15 +271,6 @@
   color: #395b84 !important;
 }
 
-#page-config .access-monitor-panel,
-#page-config .access-monitor-user-card,
-#page-config .access-admin-item {
-  border-color: var(--config-border) !important;
-  border-radius: 11px !important;
-  background: var(--config-surface-soft) !important;
-  box-shadow: none !important;
-}
-
 #page-config .cnes-status-grid > div {
   border: 1px solid var(--config-border);
   border-radius: 10px;

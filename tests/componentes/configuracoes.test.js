@@ -54,10 +54,8 @@ async function montar({ secao = "marca", confirmar = () => true } = {}) {
     <section id="page-config" class="page active">
       <div id="configuracoesApp" data-configuracoes></div>
       <div class="admin-grid">
-        <div id="accessRequestsAdminCard" class="admin-card card full">
-          <div id="acessosApp" class="full" data-acessos>
-            <input id="buscaDeAcessos" type="search" />
-          </div>
+        <div id="acessosApp" class="full" data-acessos>
+          <input id="buscaDeAcessos" type="search" />
         </div>
         <div class="admin-card card config-main-card"><div class="form-grid">
           <div class="form-row"><label>Título</label><input id="cfgPageTitle" value="Saúde Indígena" /></div>

@@ -164,34 +164,6 @@
   padding: 6px 12px;
   font-size: 12px;
 }
-.convocacao-cotas {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-}
-.convocacao-cota {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-.convocacao-cota-rotulo {
-  color: #708399;
-  font-size: var(--text-caption);
-  font-weight: 500;
-  line-height: 1.2;
-}
-.convocacao-cota input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--border, #dbe6f1);
-  border-radius: 10px;
-  background: #fff;
-  color: #13233a;
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
 /*
   A altura fica presa ao ecrã, e não a um valor fixo: com 320px, um edital de 18
   vagas punha uma barra de rolagem dentro da barra de rolagem do modal.
@@ -238,9 +210,6 @@
   .convocacao-tipo {
     grid-template-columns: 1fr;
   }
-  .convocacao-cotas {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 [data-theme="dark"] .convocacao-tipo-card {
   background: #111c2d;
@@ -254,11 +223,9 @@
   color: #e6eef7;
 }
 [data-theme="dark"] .convocacao-tipo-copy small,
-[data-theme="dark"] .convocacao-bloco-head small,
-[data-theme="dark"] .convocacao-cota-rotulo {
+[data-theme="dark"] .convocacao-bloco-head small {
   color: #a8b4c4;
 }
-[data-theme="dark"] .convocacao-cota input,
 [data-theme="dark"] .convocacao-vagas-table input {
   background: #111c2d;
   border-color: #2b3a50;
@@ -381,26 +348,6 @@
 }
 
 /* ── Percentuais, total por vaga e quadro derivado ──────────────────────── */
-.convocacao-cotas {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.convocacao-cota-campo {
-  position: relative;
-  display: block;
-}
-.convocacao-cota-campo input {
-  padding-right: 26px;
-}
-.convocacao-cota-sufixo {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  color: #8b9aab;
-  font-size: 12px;
-  font-weight: 500;
-  pointer-events: none;
-}
 .convocacao-bloco-acoes {
   display: flex;
   align-items: center;
@@ -470,15 +417,11 @@
   font-weight: 500;
 }
 @media (max-width: 700px) {
-  .convocacao-cotas {
-    grid-template-columns: 1fr 1fr;
-  }
   .convocacao-quadro-celula {
     min-width: 0;
   }
 }
 [data-theme="dark"] .convocacao-padrao-campo,
-[data-theme="dark"] .convocacao-cota-sufixo,
 [data-theme="dark"] .convocacao-quadro-campo > span {
   color: #a8b4c4;
 }

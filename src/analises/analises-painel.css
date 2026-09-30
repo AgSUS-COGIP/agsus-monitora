@@ -7,7 +7,7 @@
   src/analises/, na mesma ordem em que os blocos entravam na página:
 
   1. resumo e barra dos filtros (vinha de analises-filter-layout.js);
-  2. resumo da gaveta de detalhe (analises-detail-drawer-controller.js);
+  2. resumo da gaveta de detalhe (analises-detail-runtime-fix.js);
   3. visual moderno: cores, cabeçalho, KPIs, blocos, tabela e gaveta
      (analises-interface-refinement.js);
   4. tema escuro (analises-dark-mode-fix.js);
