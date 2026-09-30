@@ -10,6 +10,7 @@ Cada script documenta o próprio uso no comentário do topo: leia só as primeir
 | **Pipeline geográfico** | `validar-localizacoes.mjs` (usa `ler-planilha-xlsx.mjs`, `malhas-das-ufs.mjs`, `decidir-localizacao.mjs`, `veredito-para-o-mapa.mjs`); `recompilar-vereditos.mjs`; `validar-localizacoes-sem-par.mjs`; `auditar-coordenadas.mjs`; `relatorio-reconciliacao.mjs`; `malhas-dos-municipios.mjs`; `compilar-terras-indigenas.mjs` | geram `public/data/*.json` e `src/lib/localizacoes-validadas-gerado.js`; a validação completa fala com CNES/IBGE e é lenta |
 | **AYA** | `compilar-conhecimento-aya.mjs` (`npm run aya:conhecimento`), `aya-local-bridge.mjs`, `aya-servico.mjs`, `endereco-do-tunel.mjs`, `aya-instalar-servico.ps1`, `aya-servico-oculto.vbs` | o compilador gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/` |
 | **Servidor** | `dev.mjs` (`npm run dev`: build em watch + servidor), `test-servidor-smoke.mjs` | |
+| **Cargas de planilha** | `sincronizar-entrevistas.mjs` (`npm run sync:entrevistas`, `--seco` só lê) | aba Entrevistados → `sincronizar_entrevistas`; conta de serviço do Google + `service_role`; roda às 9h pelo `.github/workflows/sincronizar-entrevistas.yml` |
 | **Diversos** | `medir-cronograma.mjs` (`npm run medir:cronograma`) | |
 
 Regras:

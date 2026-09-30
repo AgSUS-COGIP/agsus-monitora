@@ -203,6 +203,12 @@ função com o mesmo nome em outro arquivo.
 
 ## Entrevistas → MONITORA (29/09/2026)
 
+> **Em substituição (30/09/2026).** A carga passa para o GitHub Actions:
+> `scripts/sincronizar-entrevistas.mjs` lê a mesma aba com a conta de serviço
+> do Google e chama as mesmas RPCs, todo dia às 9h
+> (`.github/workflows/sincronizar-entrevistas.yml`). Depois de validada, este
+> script sai do repositório e o gatilho dele sai da planilha.
+
 `saude-indigena/5-entrevistas-para-supabase.gs` vai no projeto Apps Script da
 planilha **"[dash] entrevistados"** (não no da planilha de análises). Lê a aba
 `Entrevistados` — a que o script "Cruzamento de entrevistados" monta — e envia

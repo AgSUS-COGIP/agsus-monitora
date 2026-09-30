@@ -26,6 +26,7 @@
     "db:capturar-baseline": "node scripts/capturar-baseline-rpcs.mjs",
     "db:validar-branding": "node scripts/validar-migration-branding.mjs",
     "medir:cronograma": "node scripts/medir-cronograma.mjs",
+    "sync:entrevistas": "node scripts/sincronizar-entrevistas.mjs",
     "dev:frontend": "vite --host 0.0.0.0",
     "aya:bridge": "node scripts/aya-local-bridge.mjs",
     "aya:servico": "node scripts/aya-servico.mjs",

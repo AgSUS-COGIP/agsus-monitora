@@ -1,0 +1,69 @@
+name: Sincronizar entrevistas
+
+# Lê a aba Entrevistados da planilha "[dash] entrevistados" com a conta de
+# serviço do Google e grava no Supabase (scripts/sincronizar-entrevistas.mjs).
+# Todo dia às 9h de Brasília (12h UTC; o Brasil não tem horário de verão) e,
+# quando precisar, pelo botão "Run workflow" na aba Actions.
+# Como operar e o que fazer quando falha: docs/sincronizacao-das-entrevistas.md.
+#
+# Secrets do repositório (Settings → Secrets and variables → Actions):
+#   GOOGLE_SERVICE_ACCOUNT_JSON  conteúdo inteiro do JSON da conta de serviço
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+
+on:
+  # TEMPORÁRIO: primeira execução antes do merge (modo normal). Tirar antes do merge.
+  push:
+    branches:
+      - feat/entrevistas-etl-google
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "seco = só lê a planilha; normal = grava; forcar = aceita carga pequena"
+        type: choice
+        options:
+          - normal
+          - seco
+          - forcar
+        default: normal
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sincronizar-entrevistas
+  cancel-in-progress: false
+
+jobs:
+  sincronizar:
+    name: Planilha → Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Configurar Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # O script não usa dependências: não precisa de npm install.
+      - name: Sincronizar
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+        run: |
+          case "$MODO" in
+            seco)   node scripts/sincronizar-entrevistas.mjs --seco ;;
+            forcar) node scripts/sincronizar-entrevistas.mjs --forcar ;;
+            *)      node scripts/sincronizar-entrevistas.mjs ;;
+          esac

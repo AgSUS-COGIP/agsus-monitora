@@ -51,6 +51,16 @@ export const PLANILHAS = Object.freeze({
     idGoogle: null,
     usadaEm: Object.freeze(["scripts/validar-localizacoes.mjs"]),
   }),
+
+  entrevistados: Object.freeze({
+    nome: "[dash] entrevistados (Saúde Indígena)",
+    onde: "Google Sheets",
+    // Lida pela conta de serviço do Google (leitor na planilha), não por link.
+    idGoogle: "1xGY9cYNdLvVvnqQGStcGCgsnczqN9DoO1naPt_Y53Ko",
+    aba: "Entrevistados",
+    area: "saude-indigena",
+    usadaEm: Object.freeze(["scripts/sincronizar-entrevistas.mjs"]),
+  }),
 });
 
 function idGoogleValido(id) {
