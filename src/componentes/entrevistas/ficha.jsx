@@ -10,6 +10,7 @@ import {
   notasAlteradas,
   podeLancarPor,
   rotuloDoLancamento,
+  nomeDoCargo,
 } from "../../lib/conducao-de-entrevista.js";
 import {
   notaNaEscala,
@@ -268,8 +269,9 @@ export function FichaDoCandidato({
         <div>
           <small>Vaga</small>
           <strong>
-            {[convocado.vaga, convocado.cargo].filter(Boolean).join(" · ") ||
-              "—"}
+            {[convocado.vaga, nomeDoCargo(convocado.cargo)]
+              .filter(Boolean)
+              .join(" · ") || "—"}
           </strong>
         </div>
         <div>

@@ -593,6 +593,11 @@
   border: 1px solid var(--line);
   border-radius: 12px;
 }
+/* Campo numérico estreito: a coluna "Vagas imediatas" cabe em telas médias. */
+.entrevistas-tabela input[type="number"] {
+  width: 88px;
+  max-width: 100%;
+}
 .entrevistas-tabela {
   width: 100%;
   border-collapse: collapse;
