@@ -9,8 +9,8 @@ import { Icone } from "../icone.jsx";
   rodapé, com a prévia da barra lateral ao lado. Os valores são do rascunho
   de `estado.js` e vão na publicação da barra fixa.
 
-  A prévia ainda lê a cor e o logo da barra no DOM: esses dois campos são da
-  seção Aparência, que não migrou (`sidebar-branding.js`).
+  A cor e o logo da barra vêm do valor publicado (os campos são da seção
+  Aparência, que ainda é legada: `sidebar-branding.js`).
 */
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -106,10 +106,8 @@ function iniciais(nome) {
   );
 }
 
-const valorDoLegado = (id) => txt(document.getElementById(id)?.value);
-
 function PreviaDaMarca({ estado }) {
-  const fundo = valorDoLegado("cfgSidebarBackgroundColor") || "#ffffff";
+  const fundo = txt(estado.valor("ui_sidebar_background_color")) || "#ffffff";
   const titulo = txt(estado.valor("app_title")) || "MONITORA";
   const equipe = txt(estado.valor("cogip_nome")) || "Nome da equipe";
   const funcao = txt(estado.valor("cogip_funcao")) || "Função / área";
@@ -129,7 +127,7 @@ function PreviaDaMarca({ estado }) {
           >
             <div className="previa-marca__topo">
               <Imagem
-                url={valorDoLegado("cfgSidebarLogoUrl")}
+                url={estado.valor("ui_sidebar_logo_url")}
                 alt=""
                 className="previa-marca__logo"
                 reserva={
