@@ -386,7 +386,11 @@
     color: var(--menu-flutuante-texto);
   }
 
-  /* A aba beta, no trilho: um ponto discreto no canto do ícone; "BETA" vai na dica. */
+  /*
+    A aba beta, no trilho: um ponto lilás no canto do ícone (a mesma leitura do
+    selo BETA); o anel na cor da barra o separa do ícone em qualquer cor
+    configurada. "BETA" vai na dica.
+  */
   body.sidebar-collapsed .menu-area--direta .menu-item--beta {
     position: relative;
   }
@@ -396,10 +400,11 @@
     position: absolute;
     top: 6px;
     right: 6px;
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     border-radius: var(--radius-pill);
-    background: var(--menu-realce);
+    background: #a78bfa;
+    box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
   body.sidebar-collapsed .menu-area--direta .menu-item__selo,
@@ -458,8 +463,10 @@
   flex: 0 0 10px;
   border-radius: var(--radius-pill);
   background: var(--cor-da-area, currentColor);
-  /* O anel na cor do texto garante a bolinha visível em qualquer cor de barra. */
-  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 45%, transparent);
+  /* Anel na cor da barra + contorno na cor do texto: a bolinha aparece em qualquer cor de barra. */
+  box-shadow:
+    0 0 0 2px var(--sidebar-custom-bg, var(--card)),
+    0 0 0 3px color-mix(in srgb, currentColor 70%, transparent);
 }
 
 /* A marca é o ícone da área atual, com a bolinha da cor dela no canto. */
@@ -711,7 +718,11 @@
     color: var(--state-warning);
   }
 
-  /* No trilho, a chave vai para o canto do ícone; o resto do aviso, na dica. */
+  /*
+    No trilho, a chave vai para o canto do ícone como um selo âmbar (ícone
+    escuro dentro, anel na cor da barra): âmbar solto sobre barra escura
+    sumia (30/09). O resto do aviso, na dica.
+  */
   body.sidebar-collapsed .menu-area--direta .menu-item--manutencao,
   body.sidebar-collapsed .menu-seletor__botao {
     position: relative;
@@ -723,13 +734,19 @@
     .menu-manutencao,
   body.sidebar-collapsed .menu-seletor__botao .menu-manutencao {
     position: absolute;
-    right: 2px;
-    bottom: 2px;
+    right: 0;
+    bottom: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: var(--radius-pill);
+    background: #fbbf24;
+    color: #422006;
+    box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
   body.sidebar-collapsed .menu-area--direta .menu-manutencao .icone,
   body.sidebar-collapsed .menu-seletor__botao .menu-manutencao .icone {
-    width: 11px;
-    height: 11px;
+    width: 9px;
+    height: 9px;
   }
 }
