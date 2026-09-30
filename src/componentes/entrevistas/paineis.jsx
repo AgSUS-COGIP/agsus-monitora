@@ -12,14 +12,16 @@ import {
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import { Grafico } from "../recursos/grafico.jsx";
 import { classes, usarAlturaDoTopo } from "../recursos/paineis.jsx";
+import { Segmentado } from "./partes.jsx";
 
 /*
   Os blocos do painel de entrevistas, com a marcação e as classes do painel de
   análises (e do de recursos, que é o mesmo desenho): o cabeçalho fixo
   (`.topbar`), "Refinar resultados" (`.filter-panel`), os KPIs (`.kpis` >
   `.kpi`), o recorte (`.context-line`), os gráficos Chart.js em `.panel`
-  (`.oper-grid`) e as pendências (`.attention-list`). Só leitura: sem botões
-  de cadastro.
+  (`.oper-grid`) e as pendências (`.attention-list`). A visão "Resultados" é
+  só leitura; o cabeçalho troca de visão (Resultados, Conduzir entrevistas,
+  Roteiros).
 */
 
 const truncar = (valor, limite) => {
@@ -39,16 +41,29 @@ export function Topo({
   atualizarDesativado,
   aoExportar,
   exportarDesativado,
+  visoes = null,
+  visao = "resultados",
+  aoTrocarVisao,
 }) {
   const topo = useRef(null);
   usarAlturaDoTopo(topo);
   const rotuloDoTema = escuro ? "Usar tema claro" : "Usar tema escuro";
+  const resultados = visao === "resultados";
   return (
     <header className="topbar" id="topbar" ref={topo}>
       <div className="brand">
         <div>
           <h1>Painel de entrevistas</h1>
           <p className="sub">{subtitulo}</p>
+          {visoes ? (
+            <Segmentado
+              rotulo="Visão do painel"
+              className="entrevistas-visoes"
+              opcoes={visoes}
+              valor={visao}
+              aoMudar={aoTrocarVisao}
+            />
+          ) : null}
         </div>
       </div>
       <div className="top-actions">
@@ -56,9 +71,15 @@ export function Topo({
           <span className="dot" />
           <span id="updatedText">{status}</span>
         </span>
-        <span className="status-pill" title="Nesta fase o painel só consulta">
-          <i className="fa-solid fa-eye" aria-hidden="true" /> Somente consulta
-        </span>
+        {resultados ? (
+          <span
+            className="status-pill"
+            title="Os resultados são só de consulta; a condução fica em “Conduzir entrevistas”"
+          >
+            <i className="fa-solid fa-eye" aria-hidden="true" /> Somente
+            consulta
+          </span>
+        ) : null}
         <button
           type="button"
           className="btn secondary icon"
@@ -91,15 +112,17 @@ export function Topo({
         >
           <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
         </button>
-        <button
-          type="button"
-          className="btn green"
-          id="exportBtn"
-          disabled={exportarDesativado}
-          onClick={aoExportar}
-        >
-          <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
-        </button>
+        {resultados ? (
+          <button
+            type="button"
+            className="btn green"
+            id="exportBtn"
+            disabled={exportarDesativado}
+            onClick={aoExportar}
+          >
+            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
+          </button>
+        ) : null}
       </div>
     </header>
   );

@@ -177,3 +177,585 @@
 .entrevistas-sem-entrevista small {
   color: var(--muted);
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Visões "Conduzir entrevistas" e "Roteiros" (conducao.jsx, ficha.jsx,
+   roteiros.jsx, partes.jsx): os mesmos cartões, campos e gaveta do painel
+   de análises; aqui só o que eles não têm.
+   ───────────────────────────────────────────────────────────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Controle segmentado (visões do cabeçalho, escala, lançamento, comparecimento). */
+.entrevistas-segmentado {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card2);
+}
+.entrevistas-segmentado button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.entrevistas-segmentado button:hover:not(:disabled) {
+  color: var(--text);
+}
+.entrevistas-segmentado button.ativo {
+  background: var(--card);
+  color: var(--blue2);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+.entrevistas-segmentado button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.entrevistas-segmentado button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.entrevistas-visoes {
+  margin-top: 8px;
+}
+
+/* Campos. */
+.entrevistas-campo-largo {
+  grid-column: 1 / -1;
+}
+.entrevistas-dica {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.entrevistas-erro-campo {
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 800;
+}
+.entrevistas-formulario [aria-invalid="true"] {
+  border-color: var(--red);
+}
+.entrevistas-formulario textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 13px;
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  background: var(--card2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 650;
+  resize: vertical;
+}
+.entrevistas-formulario textarea:focus {
+  border-color: rgba(15, 93, 183, 0.55);
+  box-shadow: var(--ring);
+  outline: none;
+}
+.field abbr {
+  color: var(--red);
+  text-decoration: none;
+}
+.entrevistas-visao input[type="checkbox"],
+.entrevistas-gaveta input[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  height: 18px;
+  accent-color: var(--blue2);
+}
+.entrevistas-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.entrevistas-em-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.entrevistas-em-linha input {
+  flex: 1 1 120px;
+  width: auto;
+}
+.entrevistas-marcar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.entrevistas-rotulo {
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--muted);
+}
+
+/* Aviso em faixa. */
+.entrevistas-aviso {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--blue2);
+  border-radius: 12px;
+  background: var(--card2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+.entrevistas-aviso[data-tone="warning"] {
+  border-left-color: var(--yellow);
+}
+.entrevistas-aviso[data-tone="danger"] {
+  border-left-color: var(--red);
+}
+.table-card > .entrevistas-aviso {
+  margin: 0 12px 12px;
+}
+
+/* Listas editáveis (exceções, banca, níveis, membros, desempate). */
+.entrevistas-bloco,
+.entrevistas-sublista {
+  display: grid;
+  gap: 10px;
+}
+.entrevistas-sublista-topo {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+}
+.entrevistas-sublista-topo small {
+  color: var(--muted);
+}
+.entrevistas-linhas {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entrevistas-linhas > li {
+  display: grid;
+  align-items: end;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.entrevistas-linhas > li > * {
+  min-width: 0;
+}
+.entrevistas-linha-excecao {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+.entrevistas-linha-banca {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) auto;
+}
+.entrevistas-linha-nivel {
+  grid-template-columns: 90px minmax(0, 1.2fr) minmax(0, 3fr) auto;
+}
+.entrevistas-linha-membro {
+  grid-template-columns: 2fr 1.3fr 90px 2fr auto;
+}
+.entrevistas-desempate > li {
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+}
+.entrevistas-ordem {
+  align-self: center;
+  color: var(--muted);
+  font-weight: 850;
+}
+.entrevistas-vazio-linha {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+.entrevistas-botao-linha {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+.entrevistas-competencia-acoes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+@media (max-width: 720px) {
+  .entrevistas-linha-excecao,
+  .entrevistas-linha-banca,
+  .entrevistas-linha-nivel,
+  .entrevistas-linha-membro {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Roteiros: cartões compactos. */
+.entrevistas-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+.entrevistas-cartao {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 14px;
+}
+.entrevistas-cartao-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.entrevistas-cartao h3 {
+  margin: 2px 0 0;
+  color: var(--strong);
+  font-size: 15px;
+  line-height: 1.3;
+}
+.entrevistas-cartao-linha {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.entrevistas-cartao-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Gaveta: formulário longo e ficha de notas precisam de mais largura. */
+.analises-drawer.entrevistas-gaveta-larga {
+  width: min(1040px, 98vw) !important;
+}
+.analises-drawer.entrevistas-gaveta-estreita {
+  width: min(520px, 96vw) !important;
+}
+.entrevistas-formulario {
+  display: grid;
+  gap: 12px;
+}
+.entrevistas-formulario-curto {
+  padding: 16px 24px 20px;
+}
+.entrevistas-secao-corpo {
+  display: grid;
+  gap: 12px;
+}
+.entrevistas-competencias {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entrevistas-competencia {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--blue2);
+  border-radius: 12px;
+  background: var(--card);
+}
+.entrevistas-competencia-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--strong);
+}
+.entrevistas-gaveta-rodape {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+.entrevistas-rodape-resumo {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Conduzir: passos em cartões. */
+.entrevistas-conducao {
+  display: grid;
+  gap: 14px;
+}
+.entrevistas-passo {
+  display: grid;
+  gap: 12px;
+}
+.entrevistas-passo-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.entrevistas-subtitulo {
+  margin: 6px 0 0;
+  color: var(--strong);
+  font-size: 13px;
+  font-weight: 850;
+}
+.entrevistas-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.entrevistas-filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+.entrevistas-botao-alinhado {
+  justify-self: start;
+  min-height: 44px;
+}
+.entrevistas-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.entrevistas-resumo > div {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card2);
+}
+.entrevistas-resumo dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.entrevistas-resumo dd {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  color: var(--strong);
+  font-size: 13px;
+  font-weight: 750;
+}
+.entrevistas-resumo dd small {
+  color: var(--muted);
+  font-weight: 650;
+}
+
+/* Tabelas das visões (convocação, vagas, ficha). */
+.entrevistas-tabela-rolagem {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.entrevistas-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.entrevistas-tabela th,
+.entrevistas-tabela td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+}
+.entrevistas-tabela thead th {
+  background: var(--card2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.entrevistas-tabela tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.entrevistas-tabela th small,
+.entrevistas-tabela td small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.entrevistas-tabela input:not([type="checkbox"]),
+.entrevistas-tabela select {
+  min-height: 36px;
+  max-width: 180px;
+}
+.entrevistas-tabela .badge {
+  margin-left: 4px;
+}
+.entrevistas-col-marca {
+  width: 40px;
+}
+.entrevistas-tabela tr.entrevistas-sugerido td {
+  background: color-mix(in srgb, var(--blue2) 5%, transparent);
+}
+.entrevistas-tabela tr.entrevistas-convocado td {
+  background: color-mix(in srgb, var(--green) 7%, transparent);
+}
+.entrevistas-tabela tr.entrevistas-linha {
+  cursor: pointer;
+}
+.entrevistas-tabela tr.entrevistas-linha:hover td,
+.entrevistas-tabela tr.entrevistas-linha:focus-visible td {
+  background: color-mix(in srgb, var(--blue2) 8%, var(--card));
+}
+.entrevistas-tabela tr.entrevistas-linha:focus-visible {
+  outline: none;
+}
+.entrevistas-situacao {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.entrevistas-vaga {
+  display: grid;
+  gap: 8px;
+}
+.entrevistas-vaga-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--strong);
+  font-size: 13px;
+}
+.entrevistas-vaga-topo small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* Ficha de notas. */
+.entrevistas-ficha-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18px;
+}
+.entrevistas-ficha thead th.is-editavel {
+  color: var(--blue2);
+}
+.entrevistas-ficha tbody th {
+  min-width: 180px;
+  font-weight: 800;
+}
+.entrevistas-ficha tfoot th,
+.entrevistas-ficha tfoot td {
+  border-top: 2px solid var(--line2);
+  border-bottom: 0;
+  font-size: 14px;
+}
+.entrevistas-ficha tfoot th {
+  text-align: right;
+}
+.entrevistas-nota {
+  width: 100%;
+  min-width: 90px;
+}
+.entrevistas-nota.is-invalida {
+  border-color: var(--red);
+}
+.entrevistas-nota-fixa {
+  display: grid;
+  font-weight: 800;
+}
+.entrevistas-reprova strong {
+  color: var(--red);
+}
+.entrevistas-reprova small {
+  color: var(--red) !important;
+}
+.entrevistas-previa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 750;
+}
+.entrevistas-previa ul {
+  flex-basis: 100%;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-weight: 650;
+}
+.entrevistas-niveis {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  font-size: 13px;
+}
+.entrevistas-niveis summary {
+  font-weight: 800;
+  cursor: pointer;
+}
+.entrevistas-niveis dl {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+.entrevistas-niveis dt {
+  font-weight: 800;
+}
+.entrevistas-niveis dd {
+  margin: 2px 0 0;
+  color: var(--muted);
+}

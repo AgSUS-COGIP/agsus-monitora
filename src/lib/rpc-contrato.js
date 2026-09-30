@@ -453,6 +453,55 @@ export const CONTRATO_RPC = {
     resumo:
       "Aba Entrevistas de uma área (json, só leitura): entrevistas com as notas por critério, a análise ligada, a última carga da planilha e os aprovados na análise sem entrevista.",
   },
+  // ── Entrevistas no sistema (20260930220000_entrevistas_roteiros_e_notas.sql)
+  listar_roteiros_entrevista: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Roteiros de entrevista ativos (última versão de cada), da área pedida ou de qualquer área, com competências e níveis.",
+  },
+  salvar_roteiro_entrevista: {
+    argumentos: ["p_dados"],
+    critica: false,
+    resumo:
+      "Cria um roteiro ou a versão seguinte de um roteiro (p_dados.origem); os editais que usam a anterior continuam nela. entrevistas >= editor.",
+  },
+  obter_entrevistas_do_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Condução da entrevista de um edital: configuração, vagas com vagas imediatas, aprovados na análise (posição por vaga), banca e convocados com as notas; pode_editar, admin_global e meu_perfil.",
+  },
+  configurar_entrevista_edital: {
+    argumentos: ["p_edital", "p_dados"],
+    critica: false,
+    resumo:
+      "Grava roteiro, convocação, banca, modo de lançamento, vagas imediatas e membros da banca do edital (23514 se trocar o roteiro com notas). Devolve o payload do edital.",
+  },
+  convocar_para_entrevista: {
+    argumentos: ["p_edital", "p_analises"],
+    critica: false,
+    resumo:
+      "Convoca aprovados da análise do edital para a entrevista (idempotente; 23514 sem configuração). Devolve {convocados, dados}.",
+  },
+  desconvocar_da_entrevista: {
+    argumentos: ["p_entrevista", "p_motivo"],
+    critica: false,
+    resumo:
+      "Retira um convocado sem notas, com motivo (23514 se já tem notas). Devolve o payload do edital.",
+  },
+  listar_editais_entrevista: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Editais ativos da área (recorte da coordenação) para conduzir entrevistas.",
+  },
+  lancar_notas_entrevista: {
+    argumentos: ["p_entrevista", "p_dados"],
+    critica: false,
+    resumo:
+      "Lança/corrige notas e comparecimento de um convocado (22023 fora da escala; 42501 no modo AVALIADOR para nota de outro) e recalcula o resultado. Devolve o payload do edital.",
+  },
 
   // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──
   get_recursos_da_area: {
