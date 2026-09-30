@@ -602,12 +602,14 @@ function validarSnapshotAnalisesIncremental_(state, snapshot) {
   if (!snapshot.editais.length) throw new Error('DIM_EDITAIS sem registros.');
   if (!snapshot.fatoAtivo.length) throw new Error('Nenhuma analise pertence a edital ativo.');
   if (state.snapshot_hash && state.snapshot_hash !== snapshot.snapshotHash) {
-    // Ainda comparando (nada preparado nem processado no banco): recomeça a
+    // Antes da preparação no banco (nada processado ainda): recomeça a
     // comparação com a planilha de agora, descartando o staging deste sync.
     // Antes, a planilha mudava entre duas execuções da comparação (a equipe
     // trabalhando) e o sync ficava travado para sempre (29/09/2026, 17 h sem
     // sincronizar a Saúde Indígena).
-    if (state.phase === 'INIT' || state.phase === 'COMPARING') {
+    // Inclui UPLOADING_EDITAIS e PREPARING: em 30/09 a preparação foi recusada
+    // (linha de DIM_EDITAIS sem grupo) e a correção na planilha travaria de novo.
+    if (!state.prepared && ['INIT', 'COMPARING', 'UPLOADING_EDITAIS', 'PREPARING'].indexOf(state.phase) !== -1) {
       recomecarComparacaoAnalisesIncremental_(state, snapshot);
       return;
     }
@@ -616,21 +618,21 @@ function validarSnapshotAnalisesIncremental_(state, snapshot) {
 }
 
 function recomecarComparacaoAnalisesIncremental_(state, snapshot) {
-  if (Number(state.changed_count || 0) > 0) {
-    requestIdempotenteAnalisesIncremental_(
-      '/rest/v1/TM_ANALISE_CURRICULAR?sync_id=eq.' + encodeURIComponent(state.sync_id),
-      'DELETE',
-      undefined,
-      { Prefer: 'return=minimal' },
-      3
-    );
-  }
+  // Staging deste sync (FATO alterados e DIM_EDITAIS) sai inteiro; é reenviado.
+  requestIdempotenteAnalisesIncremental_(
+    '/rest/v1/TM_ANALISE_CURRICULAR?sync_id=eq.' + encodeURIComponent(state.sync_id),
+    'DELETE',
+    undefined,
+    { Prefer: 'return=minimal' },
+    3
+  );
   Logger.log('Planilha mudou durante a comparacao: recomecando o sync ' + state.sync_id + ' com a planilha atual (alterados descartados=' + Number(state.changed_count || 0) + ').');
   state.snapshot_hash = snapshot.snapshotHash;
   state.total_ativos_local = snapshot.fatoAtivo.length;
   state.total_editais_local = snapshot.editais.length;
   state.compare_index = 0;
   state.changed_count = 0;
+  state.editais_uploaded = false;
   state.phase = 'COMPARING';
   salvarEstadoAnalisesIncremental_(state);
 }
