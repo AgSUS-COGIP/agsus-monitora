@@ -68,41 +68,59 @@ export function mensagemDoErroDaEntrevista(erro) {
 /* ── Editais da área ───────────────────────────────────────────────── */
 
 /**
- * Junta os editais lidos do monitoramento com os que já têm entrevistas no
- * painel (quem só tem o módulo Entrevistas pode não ler o monitoramento):
- * `[{ id, edital, unidade, comEntrevistas }]`, por número do edital.
+ * Os editais de `listar_editais_entrevista` (já filtrados pela janela da
+ * entrevista, pela liberação do administrador ou por convocados sem parecer),
+ * marcados com `comEntrevistas` quando o painel "Resultados" já tem
+ * entrevistas deles. O painel não acrescenta edital: o que está fora da janela
+ * fica fora. Do mais novo para o mais antigo.
  */
 export function editaisParaConduzir(doMonitoramento, doPainel) {
-  const porId = new Map();
-  for (const m of doMonitoramento || []) {
-    if (!m?.id) continue;
-    porId.set(m.id, {
+  const comEntrevistas = new Set(
+    (doPainel || []).map((e) => e?.edital_id ?? e?.id).filter(Boolean),
+  );
+  const lista = (doMonitoramento || [])
+    .filter((m) => m?.id)
+    .map((m) => ({
       id: m.id,
       edital: texto(m.edital),
       unidade: texto(m.unidade),
-      comEntrevistas: false,
-    });
-  }
-  for (const e of doPainel || []) {
-    const id = e?.edital_id ?? e?.id;
-    if (!id) continue;
-    const atual = porId.get(id);
-    if (atual) atual.comEntrevistas = true;
-    else
-      porId.set(id, {
-        id,
-        edital: texto(e.edital),
-        unidade: texto(e.unidade),
-        comEntrevistas: true,
-      });
-  }
-  // Do mais novo para o mais antigo: ano, depois número (06/2026 antes de 03/2025).
-  return [...porId.values()].sort(
+      comEntrevistas: comEntrevistas.has(m.id),
+      naJanela: m.na_janela !== false,
+      janelaInicio: texto(m.janela_inicio),
+      janelaFim: texto(m.janela_fim),
+      liberadoAte: texto(m.liberado_ate),
+      motivoLiberacao: texto(m.motivo_liberacao),
+      visivelPor: texto(m.visivel_por) || "janela",
+      pendentes: Number(m.pendentes) || 0,
+    }));
+  return lista.sort(
     (a, b) =>
       ordemDoEdital(b.edital) - ordemDoEdital(a.edital) ||
       a.edital.localeCompare(b.edital, "pt-BR", { numeric: true }) ||
       a.unidade.localeCompare(b.unidade, "pt-BR"),
   );
+}
+
+const dataCurta = (iso) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(iso)
+    ? iso.slice(8, 10) + "/" + iso.slice(5, 7)
+    : "";
+
+/** Complemento do nome do edital na lista ("liberado até 15/11", "fora da janela"). */
+export function marcaDoEdital(item) {
+  if (!item) return "";
+  if (item.visivelPor === "liberado" && item.liberadoAte)
+    return `liberado até ${dataCurta(item.liberadoAte)}`;
+  if (item.visivelPor === "convocados") return `${item.pendentes} sem parecer`;
+  if (item.visivelPor === "admin") return "fora da janela";
+  return "";
+}
+
+/** A janela da entrevista em uma frase. */
+export function textoDaJanela(item) {
+  if (!item?.janelaInicio || !item?.janelaFim)
+    return "sem etapa de entrevista no cronograma";
+  return `janela da entrevista: ${dataCurta(item.janelaInicio)} a ${dataCurta(item.janelaFim)}`;
 }
 
 /** "06/2026 (sanitarista)" -> 2026 * 10000 + 6; sem número, 0 (vai para o fim). */
