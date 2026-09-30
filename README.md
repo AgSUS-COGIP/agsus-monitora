@@ -1,17 +1,46 @@
 # MONITORA
 
-Aplicação de monitoramento da AgSUS: mapas da saúde indígena, editais e cronogramas,
-análises e lista de aprovados. O cliente é JavaScript modular compilado pelo Vite; os
-dados e a autenticação ficam no Supabase; um servidor web pequeno, em TypeScript, entrega as
-páginas. Detalhes do servidor: [docs/servidor.md](docs/servidor.md).
+Aplicação de monitoramento dos processos seletivos da AgSUS, separada por **área** (Saúde
+Indígena, SEDE e Projetos): mapas da saúde indígena, editais e cronogramas, análises
+curriculares, seleção, entrevistas, recursos e lista de aprovados. O cliente é compilado pelo
+Vite (telas novas em React, o restante em JavaScript modular); os dados e a autenticação ficam no
+Supabase; um servidor web pequeno, em TypeScript, entrega as páginas. Detalhes do servidor:
+[docs/servidor.md](docs/servidor.md).
 
 ## Stack
 
-- Vite 7 + JavaScript modular (sem framework), HTML e CSS
-- Supabase (Postgres com RLS, RPCs e login Google)
+- Vite 7 + React 19 (`src/componentes/`) e JavaScript modular legado (`src/modules/`), HTML e CSS
+- Supabase: Postgres com RLS, RPCs, login Google e rotinas agendadas (`pg_cron`)
+- Funções serverless na Vercel (`api/`): Node e uma em Python (`anexos-do-edital.py`, que lê o
+  PDF de anexos do edital com pdfplumber; dependências em `requirements.txt`)
+- Apps Script nas planilhas do Google, que enviam análises, seleção e entrevistas ao Supabase
+  (`apps-script/`)
 - Servidor web em TypeScript (`server/servidor.ts`), rodando direto no Node 24, sem dependências;
   a Vercel continua como caminho estático
-- Vitest e Playwright nos testes
+- Vitest e Playwright nos testes do front; `unittest` nos testes da função Python
+
+## Áreas e módulos
+
+Cada edital pertence a uma área, e cada pessoa vê só as áreas e os módulos que o seu grupo de
+acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `TB_ABA`, ligado à
+área em `RL_ABA_AREA`). Módulos e abas podem ser desligados ou postos em manutenção em
+**Configurações → Módulos e abas**, sem deploy.
+
+| Módulo | Onde | O que faz |
+|---|---|---|
+| Visão geral e mapas | `index.html` | terras indígenas, DSEIs e editais no mapa |
+| Editais | `index.html` (`src/componentes/nucleo/`) | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos |
+| Cronograma | `index.html` (`src/componentes/calendario-editais/`) | calendário das etapas de todos os editais |
+| Análises | `analises.html` | análises curriculares vindas das planilhas |
+| Seleção | `selecao.html` | funil por vaga (inscritos, aptos, eliminados) |
+| Entrevistas | `entrevistas.html` | resultados, condução (roteiro, convocação, banca, notas) e roteiros |
+| Recursos | `recursos.html` | recursos dos candidatos |
+| Lista de aprovados | `index.html` (`src/componentes/lista-aprovados/`) | aprovados e convocação |
+| Acessos | `index.html` (`src/componentes/acessos/`) | convites, grupos, contas desativadas e reativação |
+
+Em **Conduzir entrevistas** aparecem só os editais na janela da entrevista pelo cronograma (de 7
+dias antes a 15 dias depois das etapas de entrevista), os liberados pelo administrador global e os
+que ainda têm convocado sem parecer.
 
 ## Abrir o projeto
 
@@ -23,8 +52,10 @@ páginas. Detalhes do servidor: [docs/servidor.md](docs/servidor.md).
 | Node.js | **24** | obrigatório em todos os caminhos |
 | npm | o que vem com o Node 24 | dependências |
 | Docker | com Compose | só para o caminho D (container) |
+| Python | 3.12 com `pdfplumber` | só para testar `api/anexos-do-edital.py` na máquina |
 
 O Node 24 executa o servidor TypeScript direto, sem etapa de compilação. Não há PHP nem Composer.
+O Python não é preciso para rodar o sistema: a Vercel instala o `requirements.txt` sozinha.
 
 ### 2. Clonar e instalar
 
@@ -75,8 +106,13 @@ Escolha o caminho conforme o que você vai fazer:
 | **C. Build de produção** | `npm run build` e depois `npm start` | http://127.0.0.1:8000 | conferir exatamente o que vai para produção, com todas as checagens |
 | **D. Docker** | `docker compose up --build -d` | http://127.0.0.1:8000 | subir como em produção, isolado da máquina |
 
-As três páginas existem em todos os caminhos: `/` (painel principal), `/analises.html` e
-`/auth/callback.html` (retorno do login).
+As páginas existem em todos os caminhos: `/` (painel principal), `/analises.html`,
+`/selecao.html`, `/entrevistas.html`, `/recursos.html` e `/auth/callback.html` (retorno do
+login).
+
+As rotas `/api/*` (AYA, proxies da FUNAI e leitura do PDF de anexos) **só existem na Vercel**.
+Nos caminhos A a D elas respondem 404, e a tela avisa que o recurso só funciona na versão
+publicada.
 
 Observações sobre cada caminho:
 
@@ -129,13 +165,14 @@ Leva poucos segundos. Os limites do orçamento podem ser ajustados por variável
 
 ```text
 dist/
-├── index.html, analises.html, auth/callback.html   as três páginas (entradas do Vite)
+├── index.html, analises.html, selecao.html,
+│   entrevistas.html, recursos.html, auth/callback.html   as páginas (entradas do Vite)
 ├── assets/          JS e CSS com hash no nome + tudo de public/assets/
 ├── data/            JSON geográfico de public/data/ (terras indígenas, lotações)
 ├── icons/, manifest.webmanifest, offline.html, sw.js, sw-policy.js   PWA
 ```
 
-- O JS é dividido em `main`, `analises` e pacotes de terceiros (`vendor-supabase`,
+- O JS é dividido por página (`main`, `analises`, `selecao`, `entrevistas`, `recursos`) e pacotes de terceiros (`vendor-supabase`,
   `vendor-react`, `vendor-charts` e `vendor`), definidos em `vite.config.js`.
 - **Tudo em `public/` é copiado como está e fica público.** Não coloque ali nada que não possa ser
   baixado por qualquer pessoa.
@@ -161,7 +198,8 @@ Detalhes em [docs/servidor.md](docs/servidor.md).
 O `vercel.json` só builda a branch `main` (`ignoreCommand`): **todo push em `main` vai para produção.**
 A Vercel serve o `dist/` e as funções de `api/`, sem usar o `server/servidor.ts`, mas com os mesmos
 cabeçalhos de segurança: o servidor os lê do próprio `vercel.json`. Depois de alterar variáveis,
-faça um novo deploy.
+faça um novo deploy. Como só a `main` é publicada, **não há preview por branch**: o que depende de
+`/api` (como a leitura do PDF de anexos) só pode ser testado depois do merge.
 
 **Container.** O `Dockerfile` roda o `npm run build` completo (com as sete etapas) e entrega uma
 imagem só com `dist/`, `server/` e Node 24, sem `node_modules` e rodando como usuário sem privilégio:
@@ -199,6 +237,7 @@ npm run test:smoke                       # smoke no navegador (Playwright)
 npm run test:e2e                         # todos os testes de navegador
 npm run typecheck                        # tipos do servidor TypeScript
 npm run test:smoke:servidor              # smoke no navegador contra o servidor TypeScript
+python -m unittest discover -s tests/python   # testes da função Python (anexos do edital)
 ```
 
 Os testes unitários **bloqueiam a rede** (`tests/setup/rede-bloqueada.js`). Eles nunca falam com o
@@ -210,23 +249,28 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 .
 ├── index.html              painel principal
 ├── analises.html           painel de análises
+├── selecao.html, entrevistas.html, recursos.html   páginas dos módulos
 ├── auth/callback.html      retorno do login
 ├── DESIGN.md               guia de interface (tokens, componentes, contraste)
 ├── src/
 │   ├── main.js             entrada do painel principal
 │   ├── lib/                lógica pura e testável
-│   ├── modules/            funcionalidades de tela, um arquivo por feature
+│   ├── componentes/        telas em React (menu lateral, editais, entrevistas, acessos…)
+│   ├── modules/            funcionalidades de tela legadas, um arquivo por feature
 │   ├── styles/             CSS do painel principal
-│   ├── analises/           app de análises (JS e CSS próprios)
+│   ├── analises/, selecao/, entrevistas/, recursos/   entradas e CSS de cada página
 │   └── auth/               callback do login
-├── api/                    funções serverless da Vercel (proxy FUNAI, assistente AYA)
+├── api/                    funções serverless da Vercel (AYA, proxies FUNAI, anexos do edital em Python)
+├── requirements.txt        dependências das funções Python da Vercel
+├── apps-script/            scripts das planilhas (saude-indigena/, sede/, projetos/); ver LEIA-ME.md
 ├── public/                 imagens e dados geográficos (gerados por scripts)
 ├── supabase/
 │   ├── migrations/         mudanças de schema, versionadas
+│   ├── rollback/           como desfazer cada migration (mesmo nome)
 │   └── correcoes/          correções pontuais de dados
 ├── server/servidor.ts      servidor web (TypeScript)
 ├── scripts/                checagens do build e ferramentas
-├── tests/                  Vitest (*.test.js) e Playwright (*.spec.js)
+├── tests/                  Vitest (*.test.js), Playwright (*.spec.js) e tests/python/
 └── docs/                   decisões técnicas e auditorias
 ```
 
@@ -236,8 +280,15 @@ mexer, mesmo sem usar IA.
 ## Supabase
 
 Mudanças de schema ficam em `supabase/migrations/`, com nome `AAAAMMDDHHMMSS_descricao.sql`. Nunca
-edite uma migration já aplicada: crie outra. Antes de alterar estrutura, permissões, autenticação
-ou regras de acesso, confira:
+edite uma migration já aplicada: crie outra. Cada migration nova vem com:
+
+- o arquivo de desfazer em `supabase/rollback/`, com o mesmo nome;
+- um ensaio antes de aplicar em produção (o SQL dentro de `begin; … rollback;`);
+- o registro em `public.migracoes_aplicadas` (caminho e sha256 do arquivo), depois de aplicada;
+- nomes no Padrão Institucional de Nomenclatura (`TB_`, `TA_`, `TH_`, `RL_`, `TL_`; colunas em
+  maiúsculas com prefixo tipológico; `COMMENT ON` em tudo). Detalhes em `docs/banco-de-dados.md`.
+
+Antes de alterar estrutura, permissões, autenticação ou regras de acesso, confira:
 
 - quais tabelas e RPCs são afetadas (ao mudar uma RPC, atualize `src/lib/rpc-contrato.js`);
 - quais perfis de usuário usam a funcionalidade;
@@ -251,20 +302,21 @@ Não coloque chaves secretas, tokens, senhas ou credenciais no repositório.
 1. Criar uma branch a partir de `main`.
 2. Implementar a alteração, com teste.
 3. Rodar `npm run build` (inclui as sete etapas descritas em [Build e implantação](#build-e-implantação)).
-4. Publicar o preview na Vercel.
-5. Testar login, permissões, painéis e análises.
-6. Abrir o Pull Request.
-7. Fazer o merge em `main` somente depois da validação.
+4. Testar localmente (caminho A ou B): login, permissões, painéis e análises.
+5. Se houver migration: ensaiar, aplicar em produção e registrar (seção [Supabase](#supabase)).
+6. Abrir o Pull Request e esperar o CI.
+7. Fazer o merge em `main` somente depois da validação: o merge publica em produção.
 
 ## Checklist antes de publicar em produção
 
 - O build passou.
-- `index.html` e `analises.html` abrem corretamente.
+- `index.html`, `analises.html`, `selecao.html`, `entrevistas.html` e `recursos.html` abrem corretamente.
 - O login Google funciona para conta autorizada.
 - Usuário sem perfil cai no fluxo de solicitação de acesso.
 - As solicitações aparecem para a administração.
 - O administrador consegue aprovar o usuário e configurar as permissões.
-- Os painéis externos carregam ou exibem mensagem clara de indisponibilidade.
+- As migrations novas foram aplicadas e registradas em `public.migracoes_aplicadas`.
+- Os painéis externos que ainda restam carregam ou exibem mensagem clara de indisponibilidade.
 - As variáveis do Supabase estão configuradas no ambiente correto.
 - Nenhum segredo foi commitado.
 
