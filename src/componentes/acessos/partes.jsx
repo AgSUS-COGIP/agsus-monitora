@@ -142,10 +142,16 @@ export function CabecalhoDaGaveta({ tituloId, titulo, subtitulo, aoFechar }) {
   );
 }
 
-export function CampoMotivo({ id, valor, aoMudar, erro = false }) {
+export function CampoMotivo({
+  id,
+  valor,
+  aoMudar,
+  erro = false,
+  rotulo = "Motivo da alteração",
+}) {
   return (
     <div className="acessos-campo">
-      <label htmlFor={id}>Motivo da alteração</label>
+      <label htmlFor={id}>{rotulo}</label>
       <input
         id={id}
         value={valor}
@@ -163,6 +169,55 @@ export function CampoMotivo({ id, valor, aoMudar, erro = false }) {
         </small>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Caixas das áreas que a pessoa vê inteiras (sem coordenação): a gaveta e a
+ * reativação usam as mesmas. `marcadas` são ids; `aoAlternar(id, ligar)`.
+ */
+export function CaixasDeArea({
+  areas,
+  marcadas,
+  aoAlternar,
+  desabilitado = false,
+}) {
+  return (
+    <fieldset className="acessos-opcoes">
+      <legend className="sr-only">Áreas que a pessoa vê inteiras</legend>
+      {areas.map((area) => (
+        <label key={area.id}>
+          <input
+            type="checkbox"
+            checked={marcadas.includes(area.id)}
+            disabled={desabilitado}
+            onChange={(e) => aoAlternar(area.id, e.target.checked)}
+          />
+          {area.titulo}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
+/* As travas da matriz (23514 no banco), com o mesmo texto na gaveta e na reativação. */
+export function AvisoSemArea({ nome }) {
+  return (
+    <p className="alert warn acessos-sem-area" role="alert">
+      <Icone nome="triangle-alert" tamanho={16} /> Sem área e sem coordenação,{" "}
+      {nome} entra e não vê nada. Marque ao menos uma área (ou escolha uma
+      coordenação) para poder salvar.
+    </p>
+  );
+}
+
+export function AvisoSemCoordenacao({ nome, nomeDoGrupo }) {
+  return (
+    <p className="alert warn acessos-sem-area" role="alert">
+      <Icone nome="triangle-alert" tamanho={16} /> O grupo {nomeDoGrupo}{" "}
+      gerencia acessos, e o coordenador gerencia só a própria coordenação.
+      Escolha a coordenação de {nome} (ou outro grupo) para poder salvar.
+    </p>
   );
 }
 

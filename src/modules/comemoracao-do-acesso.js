@@ -36,6 +36,16 @@ export function lembrarContaDesativada(usuarioId, janela = globalThis.window) {
     gravar(janela?.localStorage, chaveDaDesativacao(usuarioId), "1");
 }
 
+/** A tela de conta desativada já foi mostrada a esta pessoa (e ela não voltou)? */
+export function contaMarcadaComoDesativada(
+  usuarioId,
+  janela = globalThis.window,
+) {
+  return Boolean(
+    usuarioId && ler(janela?.localStorage, chaveDaDesativacao(usuarioId)),
+  );
+}
+
 /**
  * Depois de abrir o app: comemora se for a hora e apaga/grava as marcas.
  * Devolve o tipo mostrado ("liberado" | "reativado") ou null.

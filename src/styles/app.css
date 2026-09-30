@@ -2526,6 +2526,30 @@ th.sorted-desc .sort-icon::before {
     animation: none;
   }
 }
+/* Situação do pedido ainda sendo lida: duas linhas de esqueleto no lugar do formulário. */
+.access-request-carregando {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.access-request-carregando .esqueleto {
+  height: 14px;
+}
+.access-request-carregando .esqueleto + .esqueleto {
+  width: 60%;
+}
+/* Conta desativada: pedir reativação (src/modules/solicitacao-de-acesso.js). */
+.access-reativar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+.access-reativar .btn {
+  min-height: 36px;
+}
 .access-enter-btn {
   justify-self: start;
   min-height: 40px;
