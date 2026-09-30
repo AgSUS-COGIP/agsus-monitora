@@ -107,8 +107,8 @@ Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.j
 - Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo, trecho do
   `legacy-app.js`, marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
 
-- Handler de navegação chama `window.navigate` **na hora do clique** (não guarde a referência na
-  montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
+- Handler de navegação chama `window.navigate` **na hora do clique**: `nielsen-shell-ux.js` embrulha
+  essa função.
 - Monte com `flushSync` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
 - `StrictMode` ligado: efeito tem de limpar o que instala.
 - Sem `innerHTML` e sem `dangerouslySetInnerHTML`: texto vai como filho.
