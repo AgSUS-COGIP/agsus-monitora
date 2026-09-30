@@ -16,9 +16,10 @@ import {
   dataHoraBR,
   FILTROS_VAZIOS,
   filtrarVagas,
+  observacoesDoRecorte,
   opcoesDosFiltros,
-  pendenciasDaSelecao,
   textoDaUltimaCarga,
+  textoDoRecorte,
 } from "../../lib/selecao-do-painel.js";
 import {
   alternarTemaDoPainel,
@@ -28,25 +29,24 @@ import { criarAvisoDoPainel } from "../aviso-do-painel.js";
 import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import {
   Filtros,
-  filtrosAtivos,
   Graficos,
   Indicadores,
+  Observacoes,
   Recorte,
   Topo,
 } from "./paineis.jsx";
-import { GavetaDaVaga, MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.jsx";
+import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.jsx";
 
 /*
-  Painel de seleção (`selecao.html?area=`), em React, com a cara e as classes
-  do painel de análises — o mesmo desenho dos painéis de entrevistas e de
-  recursos. Aberto dentro do MONITORA pela view `selecao`
-  (src/modules/pagina-do-painel.js), num quadro; sozinho numa aba, funciona do
-  mesmo jeito (a sessão do Supabase é a do navegador).
+  Painel de seleção (`selecao.html?area=`), em React: a mesma tela do antigo
+  painel externo "AgSUS Monitora Recrutamento e Seleção" (Apps Script), agora
+  com os dados do banco (get_selecao_da_area). Aberto dentro do MONITORA pela
+  view `selecao` (src/modules/pagina-do-painel.js), num quadro; sozinho numa
+  aba, funciona do mesmo jeito (a sessão do Supabase é a do navegador).
 
-  Substitui o painel externo "Seleção": o funil de cada vaga vem da aba
-  Resultado da planilha "Auditoria" (carga diária, scripts/sincronizar-selecao.mjs);
-  convocados, aprovados e contratados, do próprio MONITORA
-  (get_selecao_da_area). Só leitura.
+  Ordem da tela, a do painel antigo: filtros (DSEI, edital, cargo, vaga),
+  sete KPIs, o recorte, cinco gráficos, os alertas da coluna Observação e a
+  base operacional. Só leitura.
 */
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);
@@ -55,11 +55,11 @@ function textoDoStatus(e) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.semAcesso) return "Sem acesso";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
-  if (!e.carregado) return "Carregando dados...";
+  if (!e.carregado) return "Carregando painel...";
   if (e.atualizando) return "Atualizando...";
   const carga = dataHoraBR(e.dados?.ultimaCarga?.em);
   return carga
-    ? `Última carga em ${carga}`
+    ? `Atualizado em ${carga}`
     : `Atualizado em ${dataHoraBR(e.carregadoEm)}`;
 }
 
@@ -111,30 +111,37 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
     () => filtrarVagas(vagas, filtros),
     [vagas, filtros],
   );
-  const opcoes = useMemo(() => opcoesDosFiltros(vagas), [vagas]);
+  const opcoes = useMemo(
+    () => opcoesDosFiltros(vagas, filtros),
+    [vagas, filtros],
+  );
   const indicadores = useMemo(
     () => (carregado ? calcularIndicadores(filtradas) : NUMEROS_ZERADOS),
     [carregado, filtradas],
   );
-  const pendencias = useMemo(() => pendenciasDaSelecao(filtradas), [filtradas]);
-  const ativos = filtrosAtivos(filtros, opcoes);
-  const aberta = e.gaveta ? vagas.find((v) => v.id === e.gaveta) : null;
+  const observacoes = useMemo(
+    () => observacoesDoRecorte(filtradas),
+    [filtradas],
+  );
   const textoDaCarga = textoDaUltimaCarga(dados?.ultimaCarga);
   const vazio = carregado && !vagas.length;
 
-  const alternarFiltro = (campo, valor) =>
+  const trocarFiltro = (campo, valores) =>
+    setFiltros((atuais) => ({ ...atuais, [campo]: valores }));
+  const alternarUnidade = (unidade) =>
     setFiltros((atuais) => ({
       ...atuais,
-      [campo]: atuais[campo] === valor ? "" : valor,
+      unidades:
+        atuais.unidades.length === 1 && atuais.unidades[0] === unidade
+          ? []
+          : [unidade],
     }));
-  const trocarFiltro = (campo, valor) =>
-    setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
 
   return (
     <>
       <div className="shell">
         <Topo
-          subtitulo={`${nomeDaArea} · Funil da seleção por vaga`}
+          subtitulo={`Acompanhamento estratégico dos processos seletivos · ${nomeDaArea}`}
           status={textoDoStatus(e)}
           escuro={escuro}
           aoTema={() => setEscuro(alternarTemaDoPainel())}
@@ -166,29 +173,25 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
               <Filtros
                 filtros={filtros}
                 opcoes={opcoes}
+                area={area}
                 carregado={carregado && !vazio}
                 aoMudar={trocarFiltro}
-                aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
               />
               <Indicadores indicadores={indicadores} />
-              <Recorte
-                ativos={ativos}
-                textoDaCarga={textoDaCarga}
-                carregado={carregado}
-              />
+              <Recorte texto={textoDoRecorte(filtros, area)} />
               <Graficos
                 vagas={filtradas}
-                pendencias={pendencias}
-                carregado={carregado}
-                filtros={filtros}
-                aoFiltrar={alternarFiltro}
+                indicadores={indicadores}
+                area={area}
                 escuro={escuro}
+                aoFiltrarUnidade={alternarUnidade}
               />
+              <Observacoes observacoes={observacoes} />
               <TabelaDeVagas
                 vagas={filtradas}
                 total={vagas.length}
                 carregado={carregado}
-                aoAbrir={estado.abrirGaveta}
+                area={area}
               />
             </>
           )}
@@ -201,16 +204,12 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
           </span>
           <span>
             <span id="footerUpdated">
-              {carregado ? textoDaCarga : textoDoStatus(e)}
+              {carregado ? textoDaCarga : "Atualizado: --"}
             </span>{" "}
             <span className="secure">SECURE</span>
           </span>
         </footer>
       </div>
-
-      {aberta ? (
-        <GavetaDaVaga vaga={aberta} aoFechar={estado.fecharGaveta} />
-      ) : null}
     </>
   );
 }

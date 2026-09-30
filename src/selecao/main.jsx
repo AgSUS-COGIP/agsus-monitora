@@ -20,6 +20,7 @@ import "../analises/analises-responsive-fixes.css";
 import "../analises/analises-esqueleto.css";
 import "../analises/analises-infinite-table.css";
 import "../analises/analises-painel.css";
+import "../styles/multi-select-busca.css";
 import "./selecao.css";
 import { compactarCronometroDaSessao } from "../analises/cronometro-da-sessao.js";
 import {

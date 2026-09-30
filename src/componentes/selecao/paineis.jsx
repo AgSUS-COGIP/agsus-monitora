@@ -1,22 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
-  FILTROS_VAZIOS,
+  aptosEEliminados,
+  CAMPOS_DO_FILTRO,
+  eliminadosAntesDaAnalise,
+  filtrosAtivos,
   formatarQuantidade,
-  funil,
-  motivosDeEliminacao,
+  formatarTaxa,
+  rotuloDaUnidade,
   topUnidades,
+  triadosEReprovados,
 } from "../../lib/selecao-do-painel.js";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import { Grafico } from "../recursos/grafico.jsx";
 import { classes, usarAlturaDoTopo } from "../recursos/paineis.jsx";
 
 /*
-  Os blocos do painel de seleção, com a marcação e as classes do painel de
-  análises (o mesmo desenho dos painéis de entrevistas e de recursos): o
-  cabeçalho fixo (`.topbar`), "Refinar resultados" (`.filter-panel`), os KPIs
-  (`.kpis` > `.kpi`), o recorte (`.context-line`), os gráficos Chart.js em
-  `.panel` (`.oper-grid`) e as pendências (`.attention-list`). Só leitura.
+  Os blocos do painel de seleção, na ordem e com os textos do antigo painel
+  externo "AgSUS Monitora Recrutamento e Seleção" (Apps Script): cabeçalho,
+  "Refinar resultados" com quatro filtros de escolha múltipla, sete KPIs, a
+  frase do recorte, cinco gráficos e os alertas da coluna Observação. As
+  classes são as do painel de análises (o antigo já era uma cópia dele); o que
+  é só da seleção está em src/selecao/selecao.css.
 */
 
 const truncar = (valor, limite) => {
@@ -44,7 +50,7 @@ export function Topo({
     <header className="topbar" id="topbar" ref={topo}>
       <div className="brand">
         <div>
-          <h1>Painel de seleção</h1>
+          <h1>AgSUS Monitora Recrutamento e Seleção</h1>
           <p className="sub">{subtitulo}</p>
         </div>
       </div>
@@ -52,9 +58,6 @@ export function Topo({
         <span className="status-pill">
           <span className="dot" />
           <span id="updatedText">{status}</span>
-        </span>
-        <span className="status-pill" title="O painel só consulta">
-          <i className="fa-solid fa-eye" aria-hidden="true" /> Somente consulta
         </span>
         <button
           type="button"
@@ -104,39 +107,11 @@ export function Topo({
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-export const CAMPOS_DO_FILTRO = [
-  ["unidade", "Unidade", "unidades", "Todas as unidades"],
-  ["edital", "Edital", "editais", "Todos os editais"],
-  ["cargo", "Cargo", "cargos", "Todos os cargos"],
-  ["origem", "Convocados vêm de", "origens", "Todas as origens"],
-  ["situacao", "Situação", "situacoes", "Todas as situações"],
-];
-
-const rotuloDoValor = (opcoes, lista, valor) =>
-  opcoes[lista].find((o) => o.valor === valor)?.rotulo || valor;
-
-/** Os filtros ativos, como o recorte os descreve: `[campo, rótulo, valor]`. */
-export function filtrosAtivos(filtros, opcoes) {
-  const ativos = CAMPOS_DO_FILTRO.filter(([campo]) => filtros[campo]).map(
-    ([campo, rotulo, lista]) => [
-      campo,
-      rotulo,
-      rotuloDoValor(opcoes, lista, filtros[campo]),
-    ],
-  );
-  if (String(filtros.busca || "").trim())
-    ativos.push(["busca", "Busca", filtros.busca.trim()]);
-  return ativos;
-}
-
-export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
-  const [recolhido, setRecolhido] = useState(false);
-  const ativos = filtrosAtivos(filtros, opcoes);
-  const quantos = ativos.length;
-
+export function Filtros({ filtros, opcoes, area, carregado, aoMudar }) {
+  const ativos = filtrosAtivos(filtros, area);
   return (
     <section
-      className={classes("panel filter-panel", recolhido && "is-collapsed")}
+      className="panel filter-panel selecao-filtros"
       aria-labelledby="selecaoFiltrosTitulo"
     >
       <div className="filter-head">
@@ -145,104 +120,52 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
           <h2 className="title" id="selecaoFiltrosTitulo">
             Refinar resultados
           </h2>
-          <p className="hint">
-            Indicadores, gráficos, pendências, a tabela e o CSV seguem o recorte
-            selecionado.
-          </p>
-        </div>
-        <div className="filter-actions">
-          <span
-            id="filterSummary"
-            className={classes("filter-summary", quantos && "has-filters")}
-            aria-live="polite"
-          >
-            <i
-              className={`fa-solid ${quantos ? "fa-filter-circle-check" : "fa-layer-group"}`}
-              aria-hidden="true"
-            />
-            <span>
-              Todos ·{" "}
-              {quantos
-                ? `${quantos} filtro${quantos === 1 ? "" : "s"} adicional${quantos === 1 ? "" : "is"}`
-                : "nenhum filtro adicional"}
-            </span>
-          </span>
-          <button
-            type="button"
-            className="btn secondary"
-            id="toggleFiltersBtn"
-            aria-expanded={!recolhido}
-            onClick={() => setRecolhido((atual) => !atual)}
-          >
-            <i
-              className={`fa-solid ${recolhido ? "fa-filter" : "fa-chevron-up"}`}
-              aria-hidden="true"
-            />
-            <span className="toggle-label">
-              {recolhido ? "Mostrar filtros" : "Ocultar filtros"}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="btn secondary"
-            id="clearBtn"
-            disabled={!quantos}
-            title="Remove os filtros e volta a todas as vagas da área."
-            onClick={aoLimpar}
-          >
-            Limpar tudo
-          </button>
         </div>
       </div>
 
-      <div id="filtersBody" className="filters-body" hidden={recolhido}>
-        <div className="filter-grid">
-          <div className="field">
-            <label htmlFor="filtro-busca">Buscar vaga</label>
-            <input
-              id="filtro-busca"
-              type="search"
-              name="busca"
-              value={filtros.busca}
-              disabled={!carregado}
-              placeholder="Código da vaga, cargo ou unidade"
-              onChange={(evento) => aoMudar("busca", evento.target.value)}
-            />
-          </div>
-          {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
-            <div className="field" key={campo}>
-              <label htmlFor={`filtro-${campo}`}>{rotulo}</label>
-              <select
+      <div className="selecao-filtros-grade">
+        {CAMPOS_DO_FILTRO.map(({ campo, rotulo, todos }) => (
+          <div className="field" key={campo}>
+            <label htmlFor={`filtro-${campo}`}>
+              {campo === "unidades" ? rotuloDaUnidade(area) : rotulo}
+            </label>
+            {carregado ? (
+              <MultiSelectBusca
                 id={`filtro-${campo}`}
-                name={campo}
-                value={filtros[campo]}
-                disabled={!carregado}
-                onChange={(evento) => aoMudar(campo, evento.target.value)}
-              >
-                <option value="">{todos}</option>
-                {opcoes[lista].map((opcao) => (
-                  <option key={opcao.valor} value={opcao.valor}>
-                    {opcao.rotulo}
-                  </option>
-                ))}
+                opcoes={opcoes[campo]}
+                selecionados={filtros[campo]}
+                placeholder={
+                  campo === "unidades" && area !== "saude-indigena"
+                    ? "Todas as unidades"
+                    : todos
+                }
+                aoMudar={(valores) => aoMudar(campo, valores)}
+              />
+            ) : (
+              <select id={`filtro-${campo}`} disabled>
+                <option>{todos}</option>
               </select>
-            </div>
-          ))}
-        </div>
-        <div id="filterChips" className="chips" aria-label="Filtros aplicados">
-          {ativos.map(([campo, rotulo, valor]) => (
-            <button
-              key={campo}
-              type="button"
-              className="chip-filter"
-              title={`Tirar o filtro ${rotulo}`}
-              onClick={() => aoMudar(campo, FILTROS_VAZIOS[campo])}
-            >
-              <b>{rotulo}</b> {valor}{" "}
-              <i className="fa-solid fa-xmark" aria-hidden="true" />
-            </button>
-          ))}
-        </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div id="filterChips" className="chips" aria-label="Filtros aplicados">
+        {ativos.map(({ campo, rotulo, valores }) => (
+          <button
+            key={campo}
+            type="button"
+            className="chip-filter"
+            title={`Tirar o filtro ${rotulo}`}
+            onClick={() => aoMudar(campo, [])}
+          >
+            <b>{rotulo}</b>{" "}
+            {valores.length > 2
+              ? `${valores.length} selecionados`
+              : valores.join(", ")}{" "}
+            <i className="fa-solid fa-xmark" aria-hidden="true" />
+          </button>
+        ))}
       </div>
     </section>
   );
@@ -262,38 +185,25 @@ function Kpi({ cor, rotulo, valor, chave, titulo }) {
 export function Indicadores({ indicadores: k }) {
   const n = formatarQuantidade;
   return (
-    <section className="kpis" id="kpiGrid" aria-label="Indicadores">
-      <Kpi
-        cor="k-cyan"
-        chave="vagas"
-        rotulo="Vagas"
-        valor={formatNumberBR(k.vagas)}
-        titulo={`${formatNumberBR(k.editais)} edital(is)`}
-      />
+    <section
+      className="kpis selecao-kpis"
+      id="kpiGrid"
+      aria-label="Indicadores do recorte"
+    >
       <Kpi chave="inscritos" rotulo="Inscritos" valor={n(k.inscritos)} />
+      <Kpi cor="k-green" chave="aptos" rotulo="Aptos" valor={n(k.aptos)} />
       <Kpi
-        cor="k-green"
-        chave="aptos"
-        rotulo="Aptos para análise"
-        valor={n(k.aptos)}
-      />
-      <Kpi
-        cor="k-red"
-        chave="eliminados"
-        rotulo="Total de eliminados"
-        valor={n(k.eliminados)}
-      />
-      <Kpi
-        cor="k-purple"
+        cor="k-yellow"
         chave="triados"
         rotulo="Triados"
         valor={n(k.triados)}
       />
       <Kpi
-        cor="k-yellow"
+        cor="k-orange"
         chave="convocados"
-        rotulo="Convocados p/ entrevista"
+        rotulo="Convocados entrevista"
         valor={n(k.convocados)}
+        titulo="Das entrevistas do MONITORA quando o edital tem; senão, da planilha Auditoria"
       />
       <Kpi
         cor="k-green"
@@ -303,17 +213,17 @@ export function Indicadores({ indicadores: k }) {
         titulo="Da lista de aprovados vigente de cada edital"
       />
       <Kpi
-        cor="k-cyan"
         chave="contratados"
         rotulo="Contratados"
         valor={n(k.contratados)}
         titulo="Status Contratado ou Migração na lista de aprovados"
       />
       <Kpi
-        chave="nao-contratados"
-        rotulo="Não contratados"
-        valor={n(k.naoContratados)}
-        titulo="Aprovados menos contratados"
+        cor="k-slate"
+        chave="taxa"
+        rotulo="Taxa contratação"
+        valor={formatarTaxa(k.taxa)}
+        titulo="Contratados / aprovados"
       />
     </section>
   );
@@ -321,78 +231,66 @@ export function Indicadores({ indicadores: k }) {
 
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
-export function Recorte({ ativos, textoDaCarga, carregado }) {
+export function Recorte({ texto }) {
   return (
-    <section className="panel panel-pad">
-      <div id="contextLine" className="context-line">
-        {ativos.length
-          ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
-          : "Sem filtros aplicados. Recorte base: todas as vagas da área."}
-      </div>
-      <div id="windowMeta" className="meta-line">
-        {carregado ? (
-          <span className="meta-chip">
-            <i className="fa-solid fa-table-list" aria-hidden="true" />{" "}
-            {textoDaCarga}
-          </span>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-/* ── Pendências ─────────────────────────────────────────────────────── */
-
-const CLASSE_DA_SEVERIDADE = { alta: "high", media: "", baixa: "" };
-const ITENS_DO_ESQUELETO = 3;
-
-function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
-  if (!carregado)
-    return (
-      <div id="attentionList" className="attention-list" aria-hidden="true">
-        {Array.from({ length: ITENS_DO_ESQUELETO }, (_, indice) => (
-          <div className="attention-item" key={indice}>
-            <b>&nbsp;</b>
-            <small>&nbsp;</small>
-          </div>
-        ))}
-      </div>
-    );
-  const comValor = pendencias.filter((p) => p.valor > 0);
-  return (
-    <div id="attentionList" className="attention-list">
-      {comValor.length ? (
-        comValor.map((p) => {
-          const ativo = filtros.situacao === p.chave;
-          return (
-            <button
-              type="button"
-              key={p.chave}
-              className={classes(
-                "attention-item",
-                CLASSE_DA_SEVERIDADE[p.severidade],
-                ativo && "is-active",
-              )}
-              data-action="pendencia"
-              aria-pressed={ativo}
-              onClick={() => aoFiltrar("situacao", p.chave)}
-            >
-              <b>{p.titulo}</b>
-              <small>
-                {formatNumberBR(p.valor)}{" "}
-                {p.valor === 1 ? p.unidade[0] : p.unidade[1]} · {p.subtitulo}
-              </small>
-            </button>
-          );
-        })
-      ) : (
-        <div className="empty">Nenhuma pendência no recorte atual.</div>
-      )}
+    <div id="activeContextSummary" className="selecao-recorte">
+      {texto}
     </div>
   );
 }
 
 /* ── Gráficos ───────────────────────────────────────────────────────── */
+
+/* O número em cima (ou ao lado) de cada barra, como no painel antigo. */
+const rotuloDeValor = {
+  id: "selecaoRotuloDeValor",
+  afterDatasetsDraw(grafico) {
+    const { ctx } = grafico;
+    const deitado = grafico.options.indexAxis === "y";
+    const cor = grafico.options.plugins?.selecaoRotuloDeValor?.cor || "#20324a";
+    grafico.data.datasets.forEach((conjunto, i) => {
+      grafico.getDatasetMeta(i).data.forEach((barra, j) => {
+        const valor = conjunto.data[j];
+        if (!valor) return;
+        const { x, y } = barra.tooltipPosition();
+        ctx.save();
+        ctx.fillStyle = cor;
+        ctx.font = "600 11px Geist, system-ui, sans-serif";
+        ctx.textAlign = deitado ? "left" : "center";
+        ctx.textBaseline = deitado ? "middle" : "bottom";
+        ctx.fillText(
+          formatNumberBR(valor),
+          deitado ? x + 6 : x,
+          deitado ? y : y - 4,
+        );
+        ctx.restore();
+      });
+    });
+  },
+};
+
+/* O percentual no meio do medidor de contratação. */
+const textoNoCentro = {
+  id: "selecaoTextoNoCentro",
+  afterDraw(grafico) {
+    const cfg = grafico.options.plugins?.selecaoTextoNoCentro;
+    const area = grafico.chartArea;
+    if (!cfg || !area) return;
+    const { ctx } = grafico;
+    const x = (area.left + area.right) / 2;
+    const y = area.bottom - (area.bottom - area.top) * 0.22;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = cfg.cor;
+    ctx.font = "800 28px Geist, system-ui, sans-serif";
+    ctx.fillText(cfg.principal || "", x, y - 8);
+    ctx.fillStyle = cfg.corSecundaria;
+    ctx.font = "400 12px Geist, system-ui, sans-serif";
+    ctx.fillText(cfg.secundario || "", x, y + 24);
+    ctx.restore();
+  },
+};
 
 function opcoesDeBarras(p, { deitado = false, aoClicar, dica } = {}) {
   const categorias = {
@@ -401,6 +299,7 @@ function opcoesDeBarras(p, { deitado = false, aoClicar, dica } = {}) {
   };
   const valores = {
     beginAtZero: true,
+    grace: "12%",
     ticks: { color: p.text, precision: 0 },
     grid: { color: p.grid },
   };
@@ -413,6 +312,7 @@ function opcoesDeBarras(p, { deitado = false, aoClicar, dica } = {}) {
     plugins: {
       legend: { display: false },
       tooltip: dica ? { callbacks: dica } : {},
+      selecaoRotuloDeValor: { cor: p.text },
     },
     scales: deitado
       ? { x: valores, y: categorias }
@@ -425,7 +325,7 @@ function opcoesDeBarras(p, { deitado = false, aoClicar, dica } = {}) {
   };
 }
 
-function opcoesDeRosca(p) {
+function opcoesDeRosca(p, extra = {}) {
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -437,163 +337,276 @@ function opcoesDeRosca(p) {
         labels: { color: p.text, boxWidth: 14, usePointStyle: true },
       },
     },
+    ...extra,
   };
+}
+
+const CINZA = "#cbd2dc";
+
+function Bloco({ sobretitulo, titulo, texto, classe, altura, children }) {
+  return (
+    <article className={classes("panel panel-pad selecao-grafico", classe)}>
+      <span className="eyebrow">{sobretitulo}</span>
+      <h2 className="title">{titulo}</h2>
+      <p className="hint">{texto}</p>
+      <div className={classes("chart-wrap", altura)}>{children}</div>
+    </article>
+  );
 }
 
 export function Graficos({
   vagas,
-  pendencias,
-  carregado,
-  filtros,
-  aoFiltrar,
+  indicadores,
+  area,
   escuro,
+  aoFiltrarUnidade,
 }) {
-  const etapas = useMemo(() => funil(vagas), [vagas]);
-  const motivos = useMemo(() => motivosDeEliminacao(vagas), [vagas]);
+  const eliminados = useMemo(() => eliminadosAntesDaAnalise(vagas), [vagas]);
+  const aptos = useMemo(() => aptosEEliminados(vagas), [vagas]);
+  const analise = useMemo(() => triadosEReprovados(vagas), [vagas]);
   const unidades = useMemo(() => topUnidades(vagas, 10), [vagas]);
   const tema = escuro ? "escuro" : "claro";
+  const taxa = indicadores.taxa ?? 0;
+  const unidade = rotuloDaUnidade(area) === "Nome DSEI" ? "DSEIs" : "unidades";
 
-  const filtrar = useRef(aoFiltrar);
+  const filtrar = useRef(aoFiltrarUnidade);
   useEffect(() => {
-    filtrar.current = aoFiltrar;
+    filtrar.current = aoFiltrarUnidade;
   });
 
   return (
-    <>
-      <section className="oper-grid selecao-grade-dupla">
-        <article className="panel panel-pad">
-          <span className="eyebrow">Funil</span>
-          <h2 className="title">Da inscrição à contratação</h2>
-          <p className="hint">
-            Soma das vagas do recorte. Convocados, aprovados e contratados vêm
-            do MONITORA (entrevistas e lista de aprovados) quando o edital tem.
-          </p>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartFunil"
-              tipo="bar"
-              rotulo="Funil da seleção: inscritos, aptos, triados, convocados, aprovados e contratados"
-              dependencias={[etapas, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: etapas.map((e) => e.rotulo),
-                    datasets: [
-                      {
-                        label: "Candidatos",
-                        data: etapas.map((e) => e.valor),
-                        backgroundColor: [
-                          p.blue,
-                          p.review,
-                          p.warn,
-                          p.blue,
-                          p.ok,
-                          p.ok,
-                        ],
-                        borderRadius: 7,
-                      },
-                    ],
+    <section className="selecao-graficos" id="chartsArea">
+      <Bloco
+        classe="metade"
+        sobretitulo="Eliminações"
+        titulo="Eliminados antes da análise"
+        texto="Cancelados, questionários não finalizados e eliminados por nota."
+      >
+        <Grafico
+          id="chartEliminados"
+          tipo="bar"
+          rotulo="Eliminados antes da análise: cancelados, questionário não finalizado e eliminados por nota"
+          plugins={[rotuloDeValor]}
+          dependencias={[eliminados, tema]}
+          montar={() => {
+            const p = paletaDoPainel(escuro);
+            return {
+              data: {
+                labels: eliminados.map((e) => e.rotulo),
+                datasets: [
+                  {
+                    label: "Candidatos",
+                    data: eliminados.map((e) => e.valor),
+                    backgroundColor: [p.warn, p.review, p.bad],
+                    borderRadius: 7,
                   },
-                  options: opcoesDeBarras(p, {
-                    deitado: true,
-                    dica: {
-                      label: (item) =>
-                        `${formatNumberBR(item.parsed.x)} candidato(s)`,
-                    },
-                  }),
-                };
-              }}
-            />
-          </div>
-        </article>
-        <article className="panel panel-pad">
-          <span className="eyebrow">Eliminação</span>
-          <h2 className="title">Por que saíram</h2>
-          <p className="hint">
-            Cancelados, questionário não finalizado, nota e análise curricular.
-          </p>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartMotivos"
-              tipo="doughnut"
-              rotulo="Eliminados por motivo"
-              dependencias={[motivos, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: motivos.map((m) => m.rotulo),
-                    datasets: [
-                      {
-                        data: motivos.map((m) => m.valor),
-                        backgroundColor: [p.warn, p.review, p.bad, p.blue],
-                        borderColor: p.surface,
-                        borderWidth: 2,
-                      },
-                    ],
-                  },
-                  options: opcoesDeRosca(p),
-                };
-              }}
-            />
-          </div>
-        </article>
-      </section>
+                ],
+              },
+              options: opcoesDeBarras(p),
+            };
+          }}
+        />
+      </Bloco>
 
-      <section className="oper-grid">
-        <article className="panel panel-pad">
-          <span className="eyebrow">Território</span>
-          <h2 className="title">Top unidades por inscritos</h2>
-          <p className="hint">Clique em uma unidade para recortar o painel.</p>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartUnidades"
-              tipo="bar"
-              rotulo="Unidades com mais inscritos"
-              dependencias={[unidades, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: unidades.map((u) => truncar(u.rotulo, 24)),
-                    datasets: [
-                      {
-                        label: "Inscritos",
-                        data: unidades.map((u) => u.valor),
-                        backgroundColor: p.review,
-                        borderRadius: 7,
-                      },
-                    ],
+      <Bloco
+        classe="metade"
+        sobretitulo="Análise curricular"
+        titulo="Aptos na análise e eliminados"
+        texto="Composição entre aptos para análise e eliminados totais."
+      >
+        <Grafico
+          id="chartAptos"
+          tipo="doughnut"
+          rotulo="Aptos para análise e eliminados"
+          dependencias={[aptos, tema]}
+          montar={() => {
+            const p = paletaDoPainel(escuro);
+            return {
+              data: {
+                labels: aptos.map((a) => a.rotulo),
+                datasets: [
+                  {
+                    data: aptos.map((a) => a.valor),
+                    backgroundColor: [p.ok, p.bad],
+                    borderColor: p.surface,
+                    borderWidth: 2,
                   },
-                  options: opcoesDeBarras(p, {
-                    deitado: true,
-                    dica: {
-                      title: (itens) =>
-                        unidades[itens[0].dataIndex]?.rotulo || "",
+                ],
+              },
+              options: opcoesDeRosca(p),
+            };
+          }}
+        />
+      </Bloco>
+
+      <Bloco
+        classe="metade"
+        sobretitulo="Contratação"
+        titulo="Contratados"
+        texto="Percentual de contratados em relação ao total de aprovados."
+      >
+        <Grafico
+          id="chartContratados"
+          tipo="doughnut"
+          rotulo={`Contratados: ${formatarTaxa(indicadores.taxa)} dos aprovados`}
+          plugins={[textoNoCentro]}
+          dependencias={[indicadores.aprovados, indicadores.contratados, tema]}
+          montar={() => {
+            const p = paletaDoPainel(escuro);
+            const contratados = indicadores.contratados ?? 0;
+            const resto = Math.max(
+              (indicadores.aprovados ?? 0) - contratados,
+              0,
+            );
+            return {
+              data: {
+                labels: ["Contratados", "Não contratados"],
+                datasets: [
+                  {
+                    data: contratados || resto ? [contratados, resto] : [0, 1],
+                    backgroundColor: [p.blue, CINZA],
+                    borderColor: p.surface,
+                    borderWidth: 2,
+                  },
+                ],
+              },
+              options: opcoesDeRosca(p, {
+                rotation: -90,
+                circumference: 180,
+                cutout: "72%",
+                plugins: {
+                  legend: {
+                    position: "bottom",
+                    labels: {
+                      color: p.text,
+                      boxWidth: 14,
+                      usePointStyle: true,
                     },
-                    aoClicar: (indice) =>
-                      unidades[indice] &&
-                      unidades[indice].rotulo !== "Sem unidade" &&
-                      filtrar.current("unidade", unidades[indice].rotulo),
-                  }),
-                };
-              }}
-            />
-          </div>
-        </article>
-        <article className="panel panel-pad">
-          <span className="eyebrow">Ação imediata</span>
-          <h2 className="title">Pendências</h2>
-          <p className="hint">Clique em um item para recortar a tabela.</p>
-          <Pendencias
-            pendencias={pendencias}
-            carregado={carregado}
-            filtros={filtros}
-            aoFiltrar={aoFiltrar}
-          />
-        </article>
-      </section>
-    </>
+                  },
+                  selecaoTextoNoCentro: {
+                    principal: formatarTaxa(taxa),
+                    secundario: `${formatarQuantidade(indicadores.contratados)} de ${formatarQuantidade(indicadores.aprovados)} aprovados`,
+                    cor: escuro ? "#f5f8fc" : "#20324a",
+                    corSecundaria: p.text,
+                  },
+                },
+              }),
+            };
+          }}
+        />
+      </Bloco>
+
+      <Bloco
+        classe="metade"
+        sobretitulo="Resultado da análise"
+        titulo="Triados e reprovados na análise"
+        texto="Comparativo operacional da etapa de análise."
+      >
+        <Grafico
+          id="chartAnalise"
+          tipo="bar"
+          rotulo="Triados e reprovados na análise"
+          plugins={[rotuloDeValor]}
+          dependencias={[analise, tema]}
+          montar={() => {
+            const p = paletaDoPainel(escuro);
+            return {
+              data: {
+                labels: analise.map((a) => a.rotulo),
+                datasets: [
+                  {
+                    label: "Candidatos",
+                    data: analise.map((a) => a.valor),
+                    backgroundColor: [p.review, p.bad],
+                    borderRadius: 7,
+                  },
+                ],
+              },
+              options: opcoesDeBarras(p),
+            };
+          }}
+        />
+      </Bloco>
+
+      <Bloco
+        classe="inteiro"
+        altura="alto"
+        sobretitulo="Distribuição"
+        titulo={`Top ${unidade} por inscritos`}
+        texto="Ranking do recorte ativo para identificar concentração de volume. Clique numa barra para filtrar."
+      >
+        <Grafico
+          id="chartDsei"
+          tipo="bar"
+          rotulo={`Top ${unidade} por inscritos`}
+          plugins={[rotuloDeValor]}
+          dependencias={[unidades, tema]}
+          montar={() => {
+            const p = paletaDoPainel(escuro);
+            return {
+              data: {
+                labels: unidades.map((u) => truncar(u.rotulo, 34)),
+                datasets: [
+                  {
+                    label: "Inscritos",
+                    data: unidades.map((u) => u.valor),
+                    backgroundColor: p.review,
+                    borderRadius: 7,
+                  },
+                ],
+              },
+              options: opcoesDeBarras(p, {
+                deitado: true,
+                dica: {
+                  title: (itens) => unidades[itens[0].dataIndex]?.rotulo || "",
+                },
+                aoClicar: (indice) =>
+                  unidades[indice] &&
+                  unidades[indice].rotulo !== "Sem unidade" &&
+                  filtrar.current(unidades[indice].rotulo),
+              }),
+            };
+          }}
+        />
+      </Bloco>
+    </section>
+  );
+}
+
+/* ── Observações ────────────────────────────────────────────────────── */
+
+export function Observacoes({ observacoes }) {
+  if (!observacoes.length) return null;
+  return (
+    <section
+      className="panel panel-pad selecao-observacoes"
+      id="observationsSection"
+      aria-labelledby="selecaoObservacoesTitulo"
+    >
+      <span className="eyebrow">Observações</span>
+      <h2 className="title" id="selecaoObservacoesTitulo">
+        Alertas identificados no recorte
+      </h2>
+      <p className="hint">
+        Lista única das observações informadas na planilha Auditoria.
+      </p>
+      <ul className="selecao-observacoes-lista" id="observationsList">
+        {observacoes.map((o) => (
+          <li key={o.texto}>
+            <span className="selecao-observacao-icone" aria-hidden="true">
+              !
+            </span>
+            <div>
+              <div className="selecao-observacao-titulo">{o.texto}</div>
+              <div className="selecao-observacao-texto">
+                {o.vagas} {o.vagas === 1 ? "vaga" : "vagas"} ·{" "}
+                {truncar(o.unidades.join(", "), 120) || "sem unidade"} · Edital{" "}
+                {o.editais.join(", ")}
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

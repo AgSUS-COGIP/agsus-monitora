@@ -35,8 +35,10 @@ são da conta `dados.recursoshumanos`. Este guia cobre só as cargas para o banc
 - **Aprovados, contratados e não contratados** (colunas W, X e Y da Auditoria, que **não** são
   lidas): da lista de aprovados vigente do edital. Contratados = status *Contratado* ou
   *Migração*; não contratados = aprovados − contratados. Edital sem lista importada mostra "—".
-- **Área**: a do edital cadastrado; sem edital, a da unidade (CCE, Caminhoneiros etc. são Projetos
-  ou SEDE; DSEI e CASAI, Saúde Indígena).
+- **Área**: DSEI e CASAI são sempre Saúde Indígena (edital procurado entre os da Saúde Indígena).
+  As outras unidades nunca são: o edital é procurado entre os da SEDE e de Projetos, e a área é a
+  dele; sem edital, a da unidade em `TA_UNIDADE_AREA`, senão SEDE
+  (`20261001100000_selecao_area_pelos_editais.sql`).
 - Editais de **outras bancas** (04/2026, 96/2025, 97/2025, FGV, FCC) só têm inscritos e total de
   eliminados. Não é erro: o processo é outro.
 

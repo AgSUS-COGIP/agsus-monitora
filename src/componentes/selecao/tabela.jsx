@@ -4,54 +4,42 @@ import {
   FILTROS_VAZIOS,
   filtrarVagas,
   formatarQuantidade,
-  rotuloDaOrigem,
+  rotuloDaUnidade,
 } from "../../lib/selecao-do-painel.js";
-import { Modal } from "../modal.jsx";
-import { Kv, Secao, TopoDaGaveta } from "../recursos/partes.jsx";
 
 /*
-  "Vagas": a tabela do painel, com a marcação da fila do painel de análises
-  (`.table-card` > `.table-head`, `.table-meta`, `.table-wrap` com
-  `tbody#tableBody`) e o carregamento contínuo dele: 50 linhas por vez. A
-  busca do cabeçalho vale só para a tabela. Clique na linha (ou Enter) abre a
-  gaveta com o funil completo da vaga.
+  "Base operacional consolidada": a tabela do painel antigo (DSEI, edital,
+  cargo, vaga, inscritos, aptos, triados, aprovados, contratados e
+  observação), com a marcação da fila do painel de análises e o carregamento
+  contínuo dele — 50 linhas por vez, e mais 50 quando a rolagem chega perto
+  do fim. A busca do cabeçalho vale só para a tabela.
 */
 
 const POR_VEZ = 50;
 const PERTO_DO_FIM_PX = 160;
 const LINHAS_DO_ESQUELETO = 8;
-const COLUNAS = [
-  ["Vaga / Cargo", "22%"],
-  ["Unidade / Edital", "18%"],
-  ["Inscritos", "8%"],
-  ["Aptos", "7%"],
-  ["Eliminados", "8%"],
-  ["Triados", "7%"],
-  ["Convocados", "10%"],
-  ["Aprovados", "7%"],
-  ["Contratados", "7%"],
-  ["Não contratados", "6%"],
-];
 
 export const MENSAGEM_SEM_VAGAS =
   "Nenhuma vaga carregada para esta área ainda.";
 
-function SeloDaOrigem({ origem }) {
-  return origem === "entrevistas" ? null : (
-    <span
-      className="badge neutro"
-      title="Edital sem entrevista no MONITORA: total da planilha Auditoria"
-    >
-      Planilha
-    </span>
-  );
-}
+const colunas = (area) => [
+  [rotuloDaUnidade(area) === "Nome DSEI" ? "DSEI" : "Unidade", "15%", false],
+  ["Edital", "9%", false],
+  ["Cargo", "20%", false],
+  ["Vaga", "7%", false],
+  ["Inscritos", "7%", true],
+  ["Aptos", "7%", true],
+  ["Triados", "7%", true],
+  ["Aprovados", "7%", true],
+  ["Contratados", "7%", true],
+  ["Observação", "14%", false],
+];
 
-function LinhasDoEsqueleto() {
+function LinhasDoEsqueleto({ quantas }) {
   return Array.from({ length: LINHAS_DO_ESQUELETO }, (_, linha) => (
     <tr key={linha} aria-hidden="true">
-      {COLUNAS.map(([rotulo]) => (
-        <td key={rotulo}>
+      {Array.from({ length: quantas }, (__, coluna) => (
+        <td key={coluna}>
           <span>&nbsp;</span>
         </td>
       ))}
@@ -59,17 +47,19 @@ function LinhasDoEsqueleto() {
   ));
 }
 
-export function TabelaDeVagas({ vagas, total, carregado, aoAbrir }) {
+export function TabelaDeVagas({ vagas, total, carregado, area }) {
   const [busca, setBusca] = useState("");
   const [limite, setLimite] = useState(POR_VEZ);
   const naTabela = useMemo(
-    () => filtrarVagas(vagas, { ...FILTROS_VAZIOS, busca }),
+    () => filtrarVagas(vagas, FILTROS_VAZIOS, busca),
     [vagas, busca],
   );
   useEffect(() => setLimite(POR_VEZ), [naTabela]);
   const visiveis = naTabela.slice(0, limite);
   const faltam = naTabela.length - visiveis.length;
+  const cols = colunas(area);
   const n = formatarQuantidade;
+  const daUnidade = rotuloDaUnidade(area) === "Nome DSEI" ? "DSEI" : "unidade";
 
   function aoRolar(evento) {
     const caixa = evento.currentTarget;
@@ -87,10 +77,10 @@ export function TabelaDeVagas({ vagas, total, carregado, aoAbrir }) {
         <div>
           <span className="eyebrow">Detalhes</span>
           <h2 className="title" id="selecaoTabelaTitulo">
-            Vagas
+            Base operacional consolidada
           </h2>
           <p className="hint">
-            Abra uma vaga para ver o funil completo e a observação da planilha.
+            {`Consulta por ${daUnidade}, edital, cargo, vaga e indicadores principais.`}
           </p>
         </div>
         <div className="table-tools">
@@ -99,8 +89,8 @@ export function TabelaDeVagas({ vagas, total, carregado, aoAbrir }) {
             id="tableSearch"
             value={busca}
             disabled={!carregado}
-            placeholder="Buscar somente na tabela"
-            aria-label="Buscar somente na tabela de vagas"
+            placeholder={`Buscar ${daUnidade}, edital, cargo ou observação`}
+            aria-label="Buscar somente na tabela"
             onChange={(evento) => setBusca(evento.target.value)}
           />
         </div>
@@ -108,8 +98,8 @@ export function TabelaDeVagas({ vagas, total, carregado, aoAbrir }) {
       <div className="table-meta">
         <span id="tableInfo">
           {carregado
-            ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} vagas`
-            : "Mostrando 0 de 0 vagas"}
+            ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros`
+            : "Mostrando 0 de 0 registros"}
         </span>
         <span id="pageInfo">
           {carregado
@@ -121,11 +111,16 @@ export function TabelaDeVagas({ vagas, total, carregado, aoAbrir }) {
         </span>
       </div>
       <div className="table-wrap" onScroll={aoRolar}>
-        <table>
+        <table className="selecao-tabela">
           <thead>
             <tr>
-              {COLUNAS.map(([rotulo, largura]) => (
-                <th key={rotulo} scope="col" style={{ width: largura }}>
+              {cols.map(([rotulo, largura, numero]) => (
+                <th
+                  key={rotulo}
+                  scope="col"
+                  style={{ width: largura }}
+                  className={numero ? "num" : undefined}
+                >
                   {rotulo}
                 </th>
               ))}
@@ -133,58 +128,36 @@ export function TabelaDeVagas({ vagas, total, carregado, aoAbrir }) {
           </thead>
           <tbody id="tableBody">
             {!carregado ? (
-              <LinhasDoEsqueleto />
+              <LinhasDoEsqueleto quantas={cols.length} />
             ) : visiveis.length ? (
               visiveis.map((v) => (
-                <tr
-                  key={v.id}
-                  className="selecao-linha"
-                  tabIndex={0}
-                  onClick={() => aoAbrir(v.id)}
-                  onKeyDown={(evento) => {
-                    if (
-                      evento.target === evento.currentTarget &&
-                      (evento.key === "Enter" || evento.key === " ")
-                    ) {
-                      evento.preventDefault();
-                      aoAbrir(v.id);
-                    }
-                  }}
-                  aria-label={`Vaga ${v.vaga || v.cargo}`}
-                >
-                  <td>
-                    <div className="primary-text">{v.cargo || "—"}</div>
-                    <span className="secondary-text">
-                      {v.vaga ? `Vaga ${v.vaga}` : "Outra banca"}
-                    </span>
-                    {v.aConferir ? (
-                      <span className="badge revisar">A conferir</span>
-                    ) : null}
-                  </td>
+                <tr key={v.id} className="selecao-linha">
                   <td>
                     <div className="primary-text">{v.unidade || "—"}</div>
-                    <span className="secondary-text">{v.edital}</span>
-                    {v.semEdital ? (
-                      <span className="badge pendente">Sem edital</span>
-                    ) : null}
                   </td>
-                  <td>{n(v.inscritos)}</td>
-                  <td>{n(v.aptos)}</td>
-                  <td>{n(v.totalEliminados)}</td>
-                  <td>{n(v.triados)}</td>
+                  <td>{v.edital}</td>
                   <td>
-                    <div className="primary-text">{n(v.convocados)}</div>
-                    <SeloDaOrigem origem={v.origemConvocados} />
+                    <div className="primary-text">{v.cargo || "—"}</div>
                   </td>
-                  <td>{n(v.aprovados)}</td>
-                  <td>{n(v.contratados)}</td>
-                  <td>{n(v.naoContratados)}</td>
+                  <td>{v.vaga || "—"}</td>
+                  <td className="num">{n(v.inscritos)}</td>
+                  <td className="num">{n(v.aptos)}</td>
+                  <td className="num">{n(v.triados)}</td>
+                  <td className="num">{n(v.aprovados)}</td>
+                  <td className="num">{n(v.contratados)}</td>
+                  <td>
+                    {v.observacao ? (
+                      <span className="secondary-text">{v.observacao}</span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={COLUNAS.length} className="empty">
-                  {total ? "Nenhuma vaga encontrada." : MENSAGEM_SEM_VAGAS}
+                <td colSpan={cols.length} className="empty">
+                  {total ? "Nenhum registro encontrado." : MENSAGEM_SEM_VAGAS}
                 </td>
               </tr>
             )}
@@ -198,111 +171,10 @@ export function TabelaDeVagas({ vagas, total, carregado, aoAbrir }) {
           aria-live="polite"
         >
           {faltam > 0
-            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} vagas · role a tabela para carregar mais`
-            : `Todas as ${formatNumberBR(naTabela.length)} vagas do recorte foram carregadas`}
+            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros · role a tabela para carregar mais`
+            : `Todos os ${formatNumberBR(naTabela.length)} registros do recorte foram carregados`}
         </div>
       ) : null}
     </section>
-  );
-}
-
-/* ── Gaveta: o funil completo da vaga ─────────────────────────────────── */
-
-export function GavetaDaVaga({ vaga: v, aoFechar }) {
-  const n = formatarQuantidade;
-  return (
-    <Modal
-      id="selecaoGaveta"
-      rotuloId="selecaoGavetaTitulo"
-      aoFechar={aoFechar}
-      className="analises-drawer-backdrop selecao-gaveta"
-      cartaoClassName="analises-drawer"
-    >
-      <TopoDaGaveta
-        sobretitulo={v.vaga ? `Vaga ${v.vaga}` : "Outra banca"}
-        titulo={v.cargo || v.vagaPlanilha}
-        tituloId="selecaoGavetaTitulo"
-        rotuloDoFechar="Fechar detalhe"
-        aoFechar={aoFechar}
-        resumo={
-          <>
-            <span className="status">
-              <i className="fa-solid fa-users" aria-hidden="true" />
-              {n(v.inscritos)} inscritos
-            </span>
-            {v.semEdital ? <span>Sem edital cadastrado</span> : null}
-            {v.aConferir ? <span>Números a conferir</span> : null}
-          </>
-        }
-      />
-      <div className="analises-drawer-context">
-        <div>
-          <small>Edital</small>
-          <strong>{v.edital || "—"}</strong>
-        </div>
-        <div>
-          <small>Unidade</small>
-          <strong>{v.unidade || "—"}</strong>
-        </div>
-      </div>
-      <div id="analisesDrawerBody">
-        <div className="detail-shell">
-          <Secao icone="fa-filter" titulo="Análise curricular" secao="analise">
-            <div className="analises-detail-section-grid">
-              <Kv rotulo="Inscritos">{n(v.inscritos)}</Kv>
-              <Kv rotulo="Aptos para análise">{n(v.aptos)}</Kv>
-              <Kv rotulo="Cancelados">{n(v.cancelados)}</Kv>
-              <Kv rotulo="Não finalizaram o questionário">
-                {n(v.reprovadosQuestionario)}
-              </Kv>
-              <Kv rotulo="Eliminados por nota">{n(v.eliminadosNota)}</Kv>
-              <Kv rotulo="Reprovados na análise">{n(v.reprovadosAnalise)}</Kv>
-              <Kv rotulo="Triados">{n(v.triados)}</Kv>
-              <Kv rotulo="Total de eliminados">{n(v.totalEliminados)}</Kv>
-            </div>
-          </Secao>
-          <Secao icone="fa-comments" titulo="Entrevista" secao="entrevista">
-            <div className="analises-detail-section-grid">
-              <Kv rotulo="Convocados para entrevista">{n(v.convocados)}</Kv>
-              <Kv rotulo="De onde vem">{rotuloDaOrigem(v.origemConvocados)}</Kv>
-            </div>
-          </Secao>
-          <Secao
-            icone="fa-user-check"
-            titulo="Lista de aprovados"
-            secao="lista"
-          >
-            {v.temLista ? (
-              <div className="analises-detail-section-grid">
-                <Kv rotulo="Aprovados">{n(v.aprovados)}</Kv>
-                <Kv rotulo="Contratados (Contratado ou Migração)">
-                  {n(v.contratados)}
-                </Kv>
-                <Kv rotulo="Não contratados">{n(v.naoContratados)}</Kv>
-              </div>
-            ) : (
-              <div className="analises-detail-analysis">
-                <span className="analises-detail-empty">
-                  {v.semEdital
-                    ? "O edital da planilha não foi encontrado no MONITORA."
-                    : "O edital ainda não tem lista de aprovados vigente."}
-                </span>
-              </div>
-            )}
-          </Secao>
-          {v.observacao ? (
-            <Secao
-              icone="fa-circle-info"
-              titulo="Observação"
-              secao="observacao"
-            >
-              <div className="analises-detail-analysis">
-                <span>{v.observacao}</span>
-              </div>
-            </Secao>
-          ) : null}
-        </div>
-      </div>
-    </Modal>
   );
 }
