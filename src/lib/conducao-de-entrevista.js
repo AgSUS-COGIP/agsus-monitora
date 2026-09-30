@@ -151,6 +151,12 @@ export function rascunhoDaConfiguracao(dados) {
       aprovados: Number(v.aprovados) || 0,
       vagas_imediatas: textoDoNumero(v.vagas_imediatas),
       salvas: Boolean(v.vagas_imediatas_salvas),
+      /* De onde veio o número: "manual" (digitado aqui), "quadro" (quadro do edital) ou "lista". */
+      origem: texto(v.vagas_imediatas_origem),
+      lotacao_quadro: texto(v.lotacao_quadro),
+      sugerido: v.vagas_imediatas_salvas
+        ? ""
+        : textoDoNumero(v.vagas_imediatas),
     })),
     avaliadores: (dados?.avaliadores || [])
       .filter((a) => a.ativo !== false)
@@ -245,8 +251,16 @@ export function dadosDaConfiguracaoParaSalvar(r) {
     convocacao: convocacaoDoRascunho(r.convocacao),
     banca: bancaDoRascunho(r.banca),
     lancamento: r.lancamento === "AVALIADOR" ? "AVALIADOR" : "SECRETARIA",
+    /*
+      Só vai o que foi digitado aqui: o número que veio do quadro do edital (ou
+      da lista de convocação) e não foi mexido continua acompanhando a fonte.
+    */
     vagas: (r.vagas || [])
-      .filter((v) => numero(v.vagas_imediatas) !== null)
+      .filter(
+        (v) =>
+          numero(v.vagas_imediatas) !== null &&
+          (v.salvas || numero(v.vagas_imediatas) !== numero(v.sugerido)),
+      )
       .map((v) => ({
         vaga: v.vaga,
         vagas_imediatas: numero(v.vagas_imediatas),

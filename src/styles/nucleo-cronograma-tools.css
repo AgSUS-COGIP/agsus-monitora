@@ -75,6 +75,65 @@
   background: #ffeded;
   color: #aa2f2f;
 }
+/* Anexos do edital (PDF): importar-anexos.jsx, sobre a caixa de cópia. */
+.anexos-box .cronograma-copy-controls {
+  grid-template-columns: auto;
+  justify-content: start;
+}
+.anexos-resultado {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.anexos-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 9px 11px;
+  border: 1px solid #d7e4f1;
+  border-radius: 10px;
+  background: #fff;
+  color: #17324d;
+  font-size: 13px;
+}
+.anexos-linha .btn {
+  min-height: 34px;
+  white-space: nowrap;
+}
+.anexos-quadro {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid #dde6f0;
+  border-radius: 11px;
+  background: #fff;
+}
+.anexos-tabela {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.anexos-tabela th {
+  position: sticky;
+  top: 0;
+  padding: 8px 9px;
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-weight: 500;
+  text-align: left;
+}
+.anexos-tabela td {
+  padding: 7px 9px;
+  border-top: 1px solid #e6edf5;
+  color: #17324d;
+}
+.anexos-tabela .anexos-num {
+  text-align: center;
+  white-space: nowrap;
+}
 .nucleo-timeline-modal.show {
   display: flex !important;
   align-items: center;

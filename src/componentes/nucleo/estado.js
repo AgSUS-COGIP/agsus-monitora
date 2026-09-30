@@ -16,12 +16,15 @@ import {
 } from "../../lib/access-roles.js";
 import { exigirSessao } from "../../lib/sessao.js";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.js";
+import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.js";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.js";
 
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";
 const RPC_SALVAR = "salvar_monitoramento_com_cronograma_v2";
 const RPC_UNIDADES_POR_AREA = "listar_unidades_por_area";
 const RPC_MOVER_DE_AREA = "mover_edital_de_area";
+const RPC_QUADRO = "obter_quadro_de_vagas";
+const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -165,6 +168,28 @@ export function criarEstadoDoNucleo({
     return data || {};
   }
 
+  // ── Anexos (PDF) e quadro de vagas ─────────────────────────────────────
+
+  /** Lê os PDFs de anexos na função Python, um por vez. */
+  async function lerAnexos(arquivos) {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    const sessao = await exigirSessao(supabase);
+    const resultados = [];
+    for (const arquivo of arquivos || [])
+      resultados.push(
+        await lerAnexoNoServidor(arquivo, { token: sessao.access_token }),
+      );
+    return resultados;
+  }
+
+  async function lerQuadroDeVagas(id) {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    await exigirSessao(supabase);
+    const { data, error } = await supabase.rpc(RPC_QUADRO, { p_edital: id });
+    if (error) throw error;
+    return data || {};
+  }
+
   /*
     As unidades com área definida, para o formulário oferecer só as da área.
     Falhar aqui não impede de editar: o formulário cai na área gravada nos
@@ -194,7 +219,13 @@ export function criarEstadoDoNucleo({
    * Salva o edital e o cronograma numa só RPC, com o motivo no histórico.
    * Erro de validação não chega ao banco; aviso pede confirmação.
    */
-  async function salvarEdital({ edital, etapas, motivo, errata }) {
+  async function salvarEdital({
+    edital,
+    etapas,
+    motivo,
+    errata,
+    quadro = null,
+  }) {
     if (estado.salvando) return false;
     if (!canManageEditais(perfil())) {
       toast("Sem permissão para salvar editais.", "warn");
@@ -236,6 +267,22 @@ export function criarEstadoDoNucleo({
       unidadesPorArea = null;
 
       /*
+        O quadro de vagas importado do PDF vai depois do edital (o edital novo
+        só tem id agora). Falhar aqui não desfaz o edital salvo: avisa.
+      */
+      let avisoDoQuadro = "";
+      const idSalvo = data?.registro?.id || edital.id;
+      if (quadro?.linhas?.length && idSalvo) {
+        const gravou = await supabase.rpc(RPC_SALVAR_QUADRO, {
+          p_edital: idSalvo,
+          p_dados: quadro,
+        });
+        avisoDoQuadro = gravou.error
+          ? ` O quadro de vagas não foi salvo: ${gravou.error.message}`
+          : ` Quadro de vagas: ${quadro.linhas.length} linha(s).`;
+      }
+
+      /*
         O aviso sai antes de reabrir a página: ele invalida o resumo (aqui e no
         calendário), e a página reaberta já pede o novo.
       */
@@ -246,9 +293,9 @@ export function criarEstadoDoNucleo({
         }),
       );
       await aoSalvar();
-      toast(
-        `${edital.edital} salvo. ${cronograma.length} etapa(s) registradas e histórico atualizado.`,
-      );
+      const mensagem = `${edital.edital} salvo. ${cronograma.length} etapa(s) registradas e histórico atualizado.${avisoDoQuadro}`;
+      if (avisoDoQuadro.includes("não foi salvo")) toast(mensagem, "warn");
+      else toast(mensagem);
       return true;
     } catch (erro) {
       toast(`Erro ao salvar edital: ${erro?.message || erro}`, "error");
@@ -343,6 +390,8 @@ export function criarEstadoDoNucleo({
     fecharModal: () => estado.modal && publicar({ modal: null }),
     lerCronograma,
     lerUnidadesPorArea,
+    lerAnexos,
+    lerQuadroDeVagas,
     salvarEdital,
     moverEdital,
     desligar() {

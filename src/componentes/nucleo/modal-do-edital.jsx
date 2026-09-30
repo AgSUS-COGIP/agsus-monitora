@@ -42,6 +42,7 @@ import {
 } from "../dados-do-monitoramento.js";
 import { Modal } from "../modal.jsx";
 import { EditorDeCronograma } from "./editor-de-cronograma.jsx";
+import { ImportarAnexos } from "./importar-anexos.jsx";
 
 /*
   O formulário do edital: identificação, situação operacional, indicadores que
@@ -170,6 +171,8 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
     formulário abria já com "Corrija antes de salvar", antes de qualquer edição.
   */
   const [editorMexido, setEditorMexido] = useState(false);
+  /* Quadro de vagas lido do PDF de anexos, gravado junto com o edital. */
+  const [quadroPendente, setQuadroPendente] = useState(null);
   /* Edital novo nasce na área do menu; o existente fica na dele. */
   const [areaDoEdital] = useState(() =>
     id ? areaDaLinha(linha) || areaAtual : areaAtual,
@@ -362,6 +365,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
       etapas: cronograma.etapas,
       motivo: cronograma.motivo,
       errata: cronograma.errata,
+      quadro: quadroPendente,
     });
     if (salvou) apagarRascunho(chaveDoRascunhoAtual);
   }
@@ -725,6 +729,23 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               </div>
             ))}
           </div>
+
+          <ImportarAnexos
+            estado={estado}
+            idAtual={id}
+            numeroDoFormulario={formulario.edital}
+            temEtapas={cronograma.etapas.length > 0}
+            quadroPendente={quadroPendente}
+            aoMudarQuadro={setQuadroPendente}
+            aoUsarCronograma={(etapas) =>
+              mudarCronograma((atual) => ({ ...atual, etapas }))
+            }
+            aoPreencherEdital={(numero) =>
+              setFormulario((atual) =>
+                txt(atual.edital) ? atual : { ...atual, edital: numero },
+              )
+            }
+          />
 
           <EditorDeCronograma
             estado={estado}

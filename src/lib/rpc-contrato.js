@@ -503,6 +503,18 @@ export const CONTRATO_RPC = {
     resumo:
       "Editais ativos da área (recorte da coordenação) para conduzir entrevistas.",
   },
+  obter_quadro_de_vagas: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Quadro de vagas vigente do edital (Anexo II importado do PDF), de onde veio e a que linha cada vaga da análise se liga.",
+  },
+  salvar_quadro_de_vagas: {
+    argumentos: ["p_edital", "p_dados"],
+    critica: false,
+    resumo:
+      "Substitui o quadro de vagas do edital (o anterior fica desativado). Núcleo ou Calendário (editor). Devolve o quadro.",
+  },
   lancar_notas_entrevista: {
     argumentos: ["p_entrevista", "p_dados"],
     critica: false,

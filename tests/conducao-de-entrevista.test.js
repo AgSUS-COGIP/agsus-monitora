@@ -493,12 +493,56 @@ describe("configuração do edital", () => {
       convocacao: CONVOCACAO,
       banca: NIVEIS.banca_padrao,
       lancamento: "AVALIADOR",
-      vagas: [{ vaga: "V1", vagas_imediatas: 2 }],
+      // V1 veio sugerida (quadro/lista) e não foi mexida: não vira número digitado.
+      vagas: [],
       avaliadores: [
         { id: "a1", nome: "Ana", origem: "AgSUS", banca: 1, perfil: null },
         { nome: "Bia", origem: "CONDISI", banca: 2, perfil: null },
       ],
     });
+  });
+});
+
+describe("vagas imediatas: digitadas × sugeridas", () => {
+  const vaga = (extra) =>
+    rascunhoDaConfiguracao({
+      vagas: [
+        {
+          vaga: "V1",
+          cargo: "Enfermeiro - Polo Base Leonardo",
+          aprovados: 4,
+          vagas_imediatas: 1,
+          vagas_imediatas_origem: "quadro",
+          lotacao_quadro: "Enfermeiro — Polo Base Leonardo",
+          vagas_imediatas_salvas: false,
+          ...extra,
+        },
+      ],
+    }).vagas;
+
+  it("guarda a origem e o número sugerido", () => {
+    const [v] = vaga();
+    expect(v).toMatchObject({
+      origem: "quadro",
+      sugerido: "1",
+      lotacao_quadro: "Enfermeiro — Polo Base Leonardo",
+    });
+  });
+
+  it("só manda o que foi digitado ou já estava digitado", () => {
+    const enviar = (vagas) => dadosDaConfiguracaoParaSalvar({ vagas }).vagas;
+    expect(enviar(vaga())).toEqual([]);
+    expect(enviar(vaga().map((v) => ({ ...v, vagas_imediatas: "3" })))).toEqual(
+      [{ vaga: "V1", vagas_imediatas: 3 }],
+    );
+    expect(
+      enviar(
+        vaga({
+          vagas_imediatas_salvas: true,
+          vagas_imediatas_origem: "manual",
+        }),
+      ),
+    ).toEqual([{ vaga: "V1", vagas_imediatas: 1 }]);
   });
 });
 
