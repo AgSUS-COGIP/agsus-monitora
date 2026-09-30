@@ -213,7 +213,9 @@ describe("CSV e cópia guardada", () => {
       ],
     }).vagas;
     const csv = csvDaSelecao(perigosa);
-    expect(csv.startsWith("\uFEFFEdital;Unidade;Vaga;Cargo;Inscritos;")).toBe(true);
+    expect(csv.startsWith("\uFEFFEdital;Unidade;Vaga;Cargo;Inscritos;")).toBe(
+      true,
+    );
     expect(csv).toContain("'=HYPERLINK(1)");
     expect(csv).toContain(";3;;");
     expect(csv).toContain("Planilha (dado antigo)");
