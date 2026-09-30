@@ -33,7 +33,6 @@ import { corDoTextoPara } from "../lib/contraste.js";
 import { EVENTO_SECAO_ABERTA } from "./config-secoes.js";
 import { criarIcone } from "./icones.js";
 
-
 const txt = (valor) => String(valor ?? "").trim();
 
 function el(documento, tag, atributos = {}, ...filhos) {
