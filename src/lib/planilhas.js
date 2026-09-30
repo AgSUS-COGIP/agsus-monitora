@@ -61,6 +61,16 @@ export const PLANILHAS = Object.freeze({
     area: "saude-indigena",
     usadaEm: Object.freeze(["scripts/sincronizar-entrevistas.mjs"]),
   }),
+
+  auditoriaDaSelecao: Object.freeze({
+    nome: "Auditoria (funil da seleção por vaga)",
+    onde: "Google Sheets",
+    // Lida pela conta de serviço do Google (leitor na planilha), não por link.
+    // Mistura áreas: a área de cada vaga sai do edital/unidade, no banco.
+    idGoogle: "1ZGZRl8m9A2T2lWlQkxKWq-xqQECLAkbqUuihMkOtLyk",
+    aba: "Resultado",
+    usadaEm: Object.freeze(["scripts/sincronizar-selecao.mjs"]),
+  }),
 });
 
 function idGoogleValido(id) {

@@ -9,7 +9,7 @@ Leia **só o documento do assunto**. Nada aqui é carregado pelo build, exceto `
 | `banco-de-dados.md` | modelo de dados e RPCs |
 | `servidor.md` | servidor web em TypeScript: contrato, rodar, implantar |
 | `nucleo-e-mapas.md` | guia de uso do Núcleo e dos mapas |
-| `sincronizacao-das-entrevistas.md` | operar a carga diária das entrevistas (GitHub Actions): rodar, falhas, trocar credenciais |
+| `sincronizacao-das-planilhas.md` | operar as cargas diárias das planilhas (Entrevistas e Seleção, GitHub Actions): rodar, falhas, trocar credenciais |
 | `painel-externo-avisa-que-carregou.md` | mensagens que um painel externo (Apps Script) manda para o skeleton esperar os dados |
 | `auditoria-geografica.md` (26 KB) | método de validação de coordenadas — leia por seção |
 | `auditoria-sedes-dsei-2026-09-16.md` | auditoria pontual das sedes de DSEI |

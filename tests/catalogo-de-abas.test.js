@@ -51,6 +51,16 @@ const MIGRATION_DAS_ENTREVISTAS = ler(
 const MIGRATION_QUE_LIGA_AS_ENTREVISTAS = ler(
   "supabase/migrations/20260930090000_liga_aba_entrevistas.sql",
 );
+/*
+  Seleção (20261001090000_selecao.sql): o mesmo formato das Entrevistas — entra
+  desligada, em todas as áreas, e 20261001090500_liga_aba_selecao.sql a liga.
+*/
+const MIGRATION_DA_SELECAO = ler(
+  "supabase/migrations/20261001090000_selecao.sql",
+);
+const MIGRATION_QUE_LIGA_A_SELECAO = ler(
+  "supabase/migrations/20261001090500_liga_aba_selecao.sql",
+);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu.json"),
 );
@@ -95,6 +105,7 @@ function abasDoSeed() {
   const abas = [
     ...linhasDoInsert("TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DAS_ENTREVISTAS, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DA_SELECAO, "TB_ABA"),
   ];
   for (const [, ordem, aba] of MIGRATION_DAS_ENTREVISTAS.matchAll(
     /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
@@ -110,12 +121,17 @@ function ligacoesDoSeed() {
   expect(MIGRATION_QUE_LIGA_AS_ENTREVISTAS).toContain(
     `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'entrevistas'`,
   );
+  expect(MIGRATION_DA_SELECAO).toContain(
+    `select 'selecao', a."CO_AREA", 'S' from public."TB_AREA" a`,
+  );
+  expect(MIGRATION_QUE_LIGA_A_SELECAO).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'selecao'`,
+  );
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
-    ...AREAS_DO_SISTEMA.map((area) => ({
-      CO_ABA: "entrevistas",
-      CO_AREA: area.id,
-    })),
+    ...["entrevistas", "selecao"].flatMap((aba) =>
+      AREAS_DO_SISTEMA.map((area) => ({ CO_ABA: aba, CO_AREA: area.id })),
+    ),
   ];
 }
 
@@ -192,6 +208,7 @@ describe("o seed da migration é o catálogo do código", () => {
       "analises",
       "entrevistas",
       "recursos",
+      "selecao",
     ]);
     const views = Object.values(paginasPorArea(ABAS_DO_MENU)).flatMap(
       (paginas) => paginas.map((pagina) => pagina.view),
@@ -448,21 +465,24 @@ describe("contrato e acesso da função", () => {
 describe("selo beta das abas", () => {
   const recursosDe = (abas) => abas.find((aba) => aba.id === "recursos");
 
-  it("no código, só Entrevistas e Recursos são beta; as outras nem têm o campo", () => {
+  it("no código, só Entrevistas, Recursos e Seleção são beta; as outras nem têm o campo", () => {
+    const beta = ["entrevistas", "recursos", "selecao"];
     expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
-      ["entrevistas", "recursos"],
+      beta,
     );
     expect(
-      ABAS_DO_MENU.filter(
-        (aba) => !["entrevistas", "recursos"].includes(aba.id),
-      ).some((aba) => Object.hasOwn(aba, "beta")),
+      ABAS_DO_MENU.filter((aba) => !beta.includes(aba.id)).some((aba) =>
+        Object.hasOwn(aba, "beta"),
+      ),
     ).toBe(false);
   });
 
   it("o banco de hoje (sem ds_selo) herda o selo do código", () => {
     expect(recursosDe(abasDoCatalogo(RESPOSTA_DO_ENSAIO)).beta).toBe(true);
     expect(
-      paginasDaArea(abasDoCatalogo(RESPOSTA_DO_ENSAIO), "sede").at(-1),
+      paginasDaArea(abasDoCatalogo(RESPOSTA_DO_ENSAIO), "sede").find(
+        (pagina) => pagina.view === "recursos",
+      ),
     ).toEqual({
       view: "recursos",
       rotulo: "Recursos",

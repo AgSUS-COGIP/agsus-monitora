@@ -21,6 +21,7 @@ describe("fonte Geist no sistema todo", () => {
       "analises.html",
       "entrevistas.html",
       "recursos.html",
+      "selecao.html",
       "src/analises/index.html",
     ]) {
       const html = ler(pagina);

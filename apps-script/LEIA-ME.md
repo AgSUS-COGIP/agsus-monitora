@@ -206,7 +206,7 @@ função com o mesmo nome em outro arquivo.
 A carga das entrevistas não é mais Apps Script (30/09/2026): o GitHub Actions
 lê a aba `Entrevistados` da planilha **"[dash] entrevistados"** com a conta de
 serviço do Google, todo dia às 9h (`scripts/sincronizar-entrevistas.mjs`). Como
-operar: `docs/sincronizacao-das-entrevistas.md`.
+operar: `docs/sincronizacao-das-planilhas.md`.
 
 Na planilha continua só o script "Cruzamento de entrevistados", que monta a aba
 `Entrevistados` (as pastas das planilhas de vaga não são da conta

@@ -102,6 +102,12 @@ export function canManageCandidateAttachments(profile) {
   return hasLevel(profile, "admin");
 }
 
+/* Aba Seleção (20261001090000_selecao.sql): só consulta (leitor). */
+export function canViewSelecao(profile) {
+  if (profile?.permissoes) return hasResource(profile, "selecao");
+  return normalizeRole(profile) !== "";
+}
+
 /* Aba Entrevistas (20260929235000_entrevistas.sql): só consulta nesta fase (leitor). */
 export function canViewEntrevistas(profile) {
   if (profile?.permissoes) return hasResource(profile, "entrevistas");
@@ -208,6 +214,7 @@ export function paginasPermitidas(profile) {
     analises: pode("analises"),
     entrevistas: canViewEntrevistas(profile),
     recursos: canViewRecursos(profile),
+    selecao: canViewSelecao(profile),
     config: podeAbrirConfiguracoes(profile),
   };
 }

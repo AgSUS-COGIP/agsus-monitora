@@ -817,3 +817,30 @@ de outra pessoa → 42501; leitor só enxerga o objeto depois de registrar o
 download; outra área → 42501; anexo arquivado só o editor baixa. Migration +
 rollback: funções, CHECK e comentários iguais aos de antes (a menos do fim de
 linha CRLF com que 20260929190200 foi aplicada); fica só o bucket, vazio.
+
+## 14. Seleção vira aba nativa (funil por vaga)
+
+Migration `20261001090000_selecao.sql` (rollback em `supabase/rollback/`); a aba entra desligada
+e `20261001090500_liga_aba_selecao.sql` a liga junto com o front. **Ainda não ensaiada no banco.**
+
+- `TB_SELECAO_VAGA` — uma linha por vaga da aba Resultado da planilha "Auditoria": inscritos,
+  aptos, cancelados, reprovados no questionário, eliminados por nota, reprovados na análise,
+  triados, total de eliminados, convocados antigos (`QT_CONVOCADO_PLANILHA`) e observação. Chave
+  natural `DS_CHAVE_ORIGEM` = número do edital | código da vaga (outras bancas: `cargo:<nome>`,
+  com `#2`… para vaga de mesmo nome e números diferentes). Exclusão lógica em `ST_REGISTRO_ATIVO`
+  (norma MAD; `TB_ENTREVISTA` usa `ST_ATIVO`).
+- `TL_SYNC_SELECAO` — log das cargas (sem área: a planilha mistura as três).
+- Carga só `service_role` (`scripts/sincronizar-selecao.mjs`, GitHub Actions às 9h):
+  `sincronizar_selecao(p_sync, p_linhas)` em lotes e `finalizar_sync_selecao(p_sync, p_forcar)`,
+  que desativa o que saiu, liga o edital (`FC_NUMERO_EDITAL`, de preferência mesma área e unidade)
+  e acerta a área (a do edital; sem edital, a da unidade em `TA_UNIDADE_AREA`, senão
+  `saude-indigena`). Carga com menos da metade das linhas ativas é recusada sem `p_forcar`.
+- Leitura `get_selecao_da_area(p_area)` — recurso `selecao` >= leitor, área e recorte da
+  coordenação. Calcula na hora:
+  - **convocados**: edital com alguma entrevista ativa em `TB_ENTREVISTA` (planilha ou sistema)
+    usa a contagem da vaga (0 sem nenhuma); senão, `QT_CONVOCADO_PLANILHA`;
+  - **aprovados / contratados / não contratados**: lista vigente (`TB_LISTA_APROVADO.vigente`) ×
+    `TB_CANDIDATO_APROVADO` sem removidos, pela vaga; contratado = status `Contratado` ou
+    `Migração`; sem lista vigente, nulos.
+- Permissão `selecao` com os níveis de `entrevistas`. O painel externo "Seleção" continua ativo até
+  a aba nova ser aprovada.

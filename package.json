@@ -27,6 +27,7 @@
     "db:validar-branding": "node scripts/validar-migration-branding.mjs",
     "medir:cronograma": "node scripts/medir-cronograma.mjs",
     "sync:entrevistas": "node scripts/sincronizar-entrevistas.mjs",
+    "sync:selecao": "node scripts/sincronizar-selecao.mjs",
     "dev:frontend": "vite --host 0.0.0.0",
     "aya:bridge": "node scripts/aya-local-bridge.mjs",
     "aya:servico": "node scripts/aya-servico.mjs",

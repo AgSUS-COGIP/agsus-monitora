@@ -121,6 +121,24 @@ describe("a página Entrevistas", () => {
   });
 });
 
+describe("a página Seleção", () => {
+  beforeEach(() => {
+    pagina = criarPagina("selecao");
+  });
+
+  it("abre o painel de seleção com a área, pelo mesmo módulo", () => {
+    pagina.classList.add("active");
+    definirAreaAtual("projetos");
+
+    const quadro = abrirPaginaDoPainel(pagina, { origem: ORIGEM });
+
+    expect(quadro.classList.contains("external-panel")).toBe(true);
+    expect(endereco().pathname).toBe("/selecao.html");
+    expect(endereco().searchParams.get("area")).toBe("projetos");
+    expect(quadroDoPainel(pagina).title).toBe("Seleção");
+  });
+});
+
 describe("a página Recursos", () => {
   beforeEach(() => {
     pagina = criarPagina("recursos");

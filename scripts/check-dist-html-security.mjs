@@ -7,6 +7,7 @@ const SOURCE_HTML_FILES = [
   "analises.html",
   "entrevistas.html",
   "recursos.html",
+  "selecao.html",
   "auth/callback.html",
 ];
 const violations = [];

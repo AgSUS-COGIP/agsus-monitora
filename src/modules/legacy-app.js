@@ -168,6 +168,7 @@ import {
   canViewCore,
   canViewEntrevistas,
   canViewRecursos,
+  canViewSelecao,
   canImportApprovedList,
   isAdminGlobal,
   isOwnAccessProfile,
@@ -1588,6 +1589,7 @@ function systemHomeView() {
   if (can("analises")) return "analises";
   if (canViewRecursos(profile)) return "recursos";
   if (canViewEntrevistas(profile)) return "entrevistas";
+  if (canViewSelecao(profile)) return "selecao";
   if (podeAbrirConfiguracoes(profile)) return "config";
   const firstPanel = panels.find(panelAllowed);
   if (firstPanel) return "panel:" + firstPanel.codigo;
@@ -2294,6 +2296,17 @@ function setActiveNav(view) {
   marcarItemAtivoNoMenu(view, secaoAtualDeConfiguracao(document));
 }
 
+/*
+  Páginas que são um painel do app num quadro, com o próprio cabeçalho
+  (entrevistas.html, recursos.html, selecao.html; src/lib/pagina-do-painel.js):
+  a permissão para abrir e o título da página.
+*/
+const PAINEIS_EM_PAGINA = Object.freeze({
+  entrevistas: { titulo: "Entrevistas", pode: canViewEntrevistas },
+  recursos: { titulo: "Recursos", pode: canViewRecursos },
+  selecao: { titulo: "Seleção", pode: canViewSelecao },
+});
+
 function navigate(view) {
   const previousView = currentView;
   const requestedView = txt(view) || startView();
@@ -2332,12 +2345,11 @@ function navigate(view) {
     toast("Sem permissão para Análises curriculares.", "warn");
     return;
   }
-  if (requestedView === "entrevistas" && !canViewEntrevistas(profile)) {
-    toast("Sem permissão para Entrevistas.", "warn");
-    return;
-  }
-  if (requestedView === "recursos" && !canViewRecursos(profile)) {
-    toast("Sem permissão para Recursos.", "warn");
+  const painelEmPagina = Object.hasOwn(PAINEIS_EM_PAGINA, requestedView)
+    ? PAINEIS_EM_PAGINA[requestedView]
+    : null;
+  if (painelEmPagina && !painelEmPagina.pode(profile)) {
+    toast(`Sem permissão para ${painelEmPagina.titulo}.`, "warn");
     return;
   }
   if (requestedView === "config" && !podeAbrirConfiguracoes(profile)) {
@@ -2447,22 +2459,12 @@ function navigate(view) {
       trackAccess("abertura_tela", { tela: requestedView });
     return;
   }
-  if (requestedView === "entrevistas") {
-    // O painel de entrevistas (entrevistas.html) também traz o próprio cabeçalho.
+  if (painelEmPagina) {
+    // O painel (entrevistas.html, recursos.html…) também traz o próprio cabeçalho.
     document.body.classList.add("external-panel-mode");
-    $("page-entrevistas").classList.add("active");
-    setPageTitle("Entrevistas", subtituloDaArea(""));
-    abrirPaginaDoPainel($("page-entrevistas"));
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (requestedView === "recursos") {
-    // O painel de recursos (recursos.html) também traz o próprio cabeçalho.
-    document.body.classList.add("external-panel-mode");
-    $("page-recursos").classList.add("active");
-    setPageTitle("Recursos", subtituloDaArea(""));
-    abrirPaginaDoPainel($("page-recursos"));
+    $("page-" + requestedView).classList.add("active");
+    setPageTitle(painelEmPagina.titulo, subtituloDaArea(""));
+    abrirPaginaDoPainel($("page-" + requestedView));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -12068,8 +12070,7 @@ function exitExternalPanel() {
 function getFullscreenTarget() {
   if (
     currentView === "analises" ||
-    currentView === "entrevistas" ||
-    currentView === "recursos"
+    Object.hasOwn(PAINEIS_EM_PAGINA, currentView)
   ) {
     const frame = quadroDoPainel($("page-" + currentView));
     if (frame) return frame;
