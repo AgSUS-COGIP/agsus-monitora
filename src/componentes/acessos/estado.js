@@ -17,7 +17,9 @@ import {
   contarPendencias,
   rebasearRascunho,
   registrarNoRascunho,
+  separarRascunhoDaPessoa,
 } from "../../lib/matriz-de-acessos.js";
+import { isOwnAccessProfile } from "../../lib/access-roles.js";
 
 const RPC_MATRIZ = "obter_matriz_acessos";
 const RPC_SALVAR_MATRIZ = "salvar_matriz_acessos";
@@ -35,6 +37,8 @@ const RPC_ADICIONAR_PESSOA = "adicionar_pessoa_acesso";
 const RPC_MOVER_PARA_COORDENACOES = "mover_conta_para_coordenacoes";
 
 const CONFLITO = "40001";
+/* salvar_matriz_acessos: o lote deixaria alguém ativo sem nenhuma área. */
+const SEM_AREA = "23514";
 /*
   Uma chamada que não volta (rede caída, VPN, servidor parado) não pode deixar
   o botão em "Salvando…" para sempre: passado o limite, ela falha como erro de
@@ -189,9 +193,23 @@ export function criarEstadoDosAcessos({
   }
 
   const descartar = () => publicar({ rascunho: new Map(), aviso: null });
+  /* Descartar da gaveta: só o que mudou nesta pessoa. */
+  const descartarDaPessoa = (usuarioId) =>
+    publicar({
+      rascunho: separarRascunhoDaPessoa(estado.rascunho, usuarioId).resto,
+      aviso: null,
+    });
 
-  function salvar(motivo) {
-    const alteracoes = alteracoesDoRascunho(estado.rascunho);
+  /*
+    Sem `usuarioId`: grava o rascunho inteiro (barra da página). Com
+    `usuarioId`: só o que mudou naquela pessoa (Salvar da gaveta); o resto do
+    rascunho continua pendente.
+  */
+  function salvar(motivo, { usuarioId = null } = {}) {
+    const lote = usuarioId
+      ? separarRascunhoDaPessoa(estado.rascunho, usuarioId).daPessoa
+      : estado.rascunho;
+    const alteracoes = alteracoesDoRascunho(lote);
     if (!alteracoes.length) return Promise.resolve(false);
     return executar("salvar", "Salvando…", async () => {
       try {
@@ -200,7 +218,12 @@ export function criarEstadoDosAcessos({
           p_motivo: String(motivo || "").trim(),
         });
         const total = resultado?.alteradas ?? alteracoes.length;
-        publicar({ rascunho: new Map(), aviso: null });
+        publicar({
+          rascunho: usuarioId
+            ? separarRascunhoDaPessoa(estado.rascunho, usuarioId).resto
+            : new Map(),
+          aviso: null,
+        });
         toast(
           `${total} ${total === 1 ? "alteração salva" : "alterações salvas"}. Vale na próxima vez que a pessoa abrir o sistema.`,
           "success",
@@ -225,18 +248,26 @@ export function criarEstadoDosAcessos({
           });
           return false;
         }
+        // Sem área: a mensagem do banco já diz quem e o que fazer.
         publicar({
-          aviso: {
-            tom: "danger",
-            texto: `Não foi possível salvar: ${mensagemDoErro(erro)} As alterações continuam pendentes.`,
-          },
+          aviso:
+            erro?.code === SEM_AREA
+              ? {
+                  tom: "warn",
+                  texto: `${mensagemDoErro(erro)} Nada foi salvo; as alterações continuam pendentes.`,
+                }
+              : {
+                  tom: "danger",
+                  texto: `Não foi possível salvar: ${mensagemDoErro(erro)} As alterações continuam pendentes.`,
+                },
         });
         return false;
       }
     });
   }
 
-  function desativarUsuario(usuario, motivo) {
+  /* `convite`: cancelar o convite de quem nunca entrou (a mesma desativação). */
+  function desativarUsuario(usuario, motivo, { convite = false } = {}) {
     return executar(`desativar:${usuario.id}`, "Desativando…", async () => {
       try {
         await rpc(RPC_DESATIVAR_USUARIO, {
@@ -244,7 +275,9 @@ export function criarEstadoDosAcessos({
           p_motivo: motivo,
         });
         toast(
-          `Acesso de ${usuario.nome || usuario.email} desativado.`,
+          convite
+            ? `Convite de ${usuario.nome || usuario.email} cancelado.`
+            : `Acesso de ${usuario.nome || usuario.email} desativado.`,
           "success",
         );
         publicar({ gaveta: null });
@@ -274,9 +307,9 @@ export function criarEstadoDosAcessos({
             : `${nome} tem acesso a partir de agora (entra com ${email}).`,
           "success",
         );
-        publicar({ adicionando: 0 });
+        // O modal continua aberto, no passo "Convite pronto".
         await carregarMatriz();
-        return true;
+        return { nome, email, reativada: Boolean(resposta?.reativada) };
       } catch (erro) {
         toast(`Não foi possível adicionar: ${mensagemDoErro(erro)}`, "error");
         return false;
@@ -284,7 +317,18 @@ export function criarEstadoDosAcessos({
     });
   }
 
+  /*
+    Desativa a conta e cria a coordenação com o nome dela. Nunca na própria
+    conta (o banco também recusa); a confirmação escrita fica na gaveta.
+  */
   function moverParaCoordenacoes(usuario, area, motivo) {
+    const eu = estado.perfil
+      ? { id: estado.perfil.user_id, email: estado.perfil.email }
+      : null;
+    if (isOwnAccessProfile(eu, usuario)) {
+      toast("Você não pode transformar a sua própria conta.", "error");
+      return Promise.resolve(false);
+    }
     return executar(`mover:${usuario.id}`, "Movendo…", async () => {
       try {
         const coordenacao = await rpc(RPC_MOVER_PARA_COORDENACOES, {
@@ -487,6 +531,7 @@ export function criarEstadoDosAcessos({
     carregarMatriz,
     registrar,
     descartar,
+    descartarDaPessoa,
     salvar,
     desativarUsuario,
     adicionarPessoa,

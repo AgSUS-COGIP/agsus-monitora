@@ -6,12 +6,16 @@ import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import { Icone } from "../icone.jsx";
 import { BotaoDeAcao } from "../lista-aprovados/partes.jsx";
 import { CampoMotivo, motivoValido } from "./partes.jsx";
+import { AcoesDoConvite } from "./convite.jsx";
 
 /*
   "Adicionar pessoa": cadastra pelo e-mail, antes de ela entrar
   (adicionar_pessoa_acesso). No primeiro login o banco liga o perfil à conta
   pelo e-mail. Admin escolhe grupo e coordenação (ou áreas); o coordenador
   adiciona na própria coordenação, com grupo dentro do teto.
+
+  Depois de gravar, o modal vira "Convite pronto": a mensagem para mandar à
+  pessoa (copiar ou abrir no e-mail).
 */
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -34,6 +38,8 @@ export function ModalAdicionarPessoa({ estado }) {
   const [areasEscolhidas, setAreasEscolhidas] = useState(["saude-indigena"]);
   const [motivo, setMotivo] = useState("");
   const [tentou, setTentou] = useState(false);
+  /** { nome, email, reativada } depois de gravar: passo "Convite pronto". */
+  const [convite, setConvite] = useState(null);
   const adminGlobal = grupos.find((g) => g.codigo === grupo)?.admin_global;
   const semCoordenacao = !coordenacao && !adminGlobal;
   const erros = {
@@ -53,11 +59,11 @@ export function ModalAdicionarPessoa({ estado }) {
       </small>
     ) : null;
 
-  function salvar(evento) {
+  async function salvar(evento) {
     evento.preventDefault();
     setTentou(true);
     if (!valido) return;
-    void estado.adicionarPessoa(
+    const pronto = await estado.adicionarPessoa(
       {
         email: email.trim().toLowerCase(),
         nome: nome.trim(),
@@ -67,7 +73,53 @@ export function ModalAdicionarPessoa({ estado }) {
       },
       motivo.trim(),
     );
+    if (pronto) setConvite(pronto);
   }
+
+  if (convite)
+    return (
+      <Modal
+        id="acessosAdicionar"
+        rotuloId="acessosAdicionarTitulo"
+        className="acessos-modal"
+        cartaoClassName="acessos-modal-cartao"
+        aoFechar={estado.fecharAdicionar}
+      >
+        <div className="acessos-gaveta-cabecalho">
+          <div>
+            <h3 id="acessosAdicionarTitulo">Convite pronto</h3>
+            <p>
+              {convite.reativada
+                ? `O acesso de ${convite.nome} foi reativado.`
+                : `${convite.nome} já pode entrar.`}{" "}
+              Mande a mensagem abaixo para avisar.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn icon outline"
+            aria-label="Fechar"
+            title="Fechar"
+            onClick={estado.fecharAdicionar}
+          >
+            <Icone nome="x" tamanho={16} />
+          </button>
+        </div>
+        <div className="acessos-modal-corpo">
+          <AcoesDoConvite nome={convite.nome} email={convite.email} />
+          <div className="acessos-acoes acessos-modal-rodape">
+            <button
+              type="button"
+              className="btn primary"
+              data-foco-inicial
+              onClick={estado.fecharAdicionar}
+            >
+              Concluir
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
 
   return (
     <Modal

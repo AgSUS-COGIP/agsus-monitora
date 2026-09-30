@@ -2392,15 +2392,20 @@ th.sorted-desc .sort-icon::before {
   margin-bottom: 14px;
 }
 .access-authenticated-user span {
-  color: var(--muted);
+  color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 10px;
   font-weight: 900;
 }
+/*
+  O cartão de pedido é sempre claro por dentro (também no painel escuro e no
+  tema escuro): as cores são fixas, não tokens que mudam com o tema.
+*/
 .access-authenticated-user strong {
-  color: var(--color-text-primary);
-  font-size: 14px;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 900;
   overflow-wrap: anywhere;
 }
 .access-account-actions {
@@ -2482,6 +2487,72 @@ th.sorted-desc .sort-icon::before {
   border-color: #f3cf54;
   background: #fff9df;
   color: #684600;
+}
+.access-status.info {
+  border-color: #b9d8f2;
+  background: #eef6ff;
+  color: #0b3f6b;
+}
+.access-status.danger {
+  border-color: #ffb8bf;
+  background: #fff1f2;
+  color: #8a0612;
+}
+#accessRequestStatus {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+#accessRequestStatus strong {
+  color: inherit;
+  font-size: 14px;
+}
+/* Conta desativada: um rosto triste discreto, que só aparece devagar. */
+.access-status-ilustracao {
+  justify-self: center;
+  font-size: 40px;
+  line-height: 1;
+  animation: access-ilustracao-entra 0.8s ease-out both;
+}
+@keyframes access-ilustracao-entra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .access-status-ilustracao {
+    animation: none;
+  }
+}
+.access-enter-btn {
+  justify-self: start;
+  min-height: 40px;
+  margin-top: 4px;
+}
+.access-field-hint {
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+}
+.access-field-error {
+  color: #b00020;
+  font-size: 11px;
+  font-weight: 850;
+}
+.access-request-grid [aria-invalid="true"] {
+  border-color: #b00020;
+}
+.access-request-grid input[readonly],
+.access-request-grid textarea[readonly],
+.access-request-grid select:disabled {
+  background: #f1f5f9;
+  color: #334155;
+}
+.access-required {
+  color: #475569;
+  font-weight: 700;
 }
 .access-admin-list {
   display: grid;
@@ -3018,6 +3089,7 @@ body.access-request-mode .access-request-card {
   padding: 18px;
   border-radius: 14px;
   background: #fff;
+  color: #132030;
 }
 
 body.access-request-mode .access-request-head {
@@ -3032,8 +3104,15 @@ body.access-request-mode .access-request-head h2 {
 }
 
 body.access-request-mode .access-request-head p {
-  font-size: 12px;
-  line-height: 1.35;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.access-request-mode .access-request-head .access-request-invite {
+  margin-top: 6px;
+  color: #0b3f6b;
+  font-weight: 850;
 }
 
 body.access-request-mode .access-flow-steps,
