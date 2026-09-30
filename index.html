@@ -489,6 +489,16 @@
                 </div>
               </div>
 
+              <!-- Enquanto a situação não é conhecida: nada de formulário (solicitacao-de-acesso.js). -->
+              <div
+                id="accessRequestCarregando"
+                class="access-request-carregando hidden"
+                aria-hidden="true"
+              >
+                <span class="esqueleto"></span>
+                <span class="esqueleto"></span>
+              </div>
+
               <div class="access-authenticated-user">
                 <span>E-mail autenticado</span>
                 <strong id="accessReqEmail">-</strong>
@@ -517,6 +527,16 @@
                   <i class="fa-solid fa-arrow-right"></i> Entrar
                   agora
                 </button>
+                <div id="accessRequestReativar" class="access-reativar hidden">
+                  <span>Precisa do acesso de novo?</span>
+                  <button
+                    id="accessRequestReativarBtn"
+                    type="button"
+                    class="btn secondary"
+                  >
+                    <i class="fa-solid fa-rotate-left"></i> Pedir reativação
+                  </button>
+                </div>
               </div>
 
               <div id="accessRequestForm" class="access-request-grid">
@@ -537,7 +557,7 @@
                   ></small>
                 </div>
 
-                <div class="form-row">
+                <div id="accessReqSetorLinha" class="form-row">
                   <label for="accessReqSetor">Área / setor</label>
                   <input
                     id="accessReqSetor"
@@ -599,7 +619,8 @@
                 class="btn green access-submit-btn"
                 onclick="submitAccessRequest()"
               >
-                <i class="fa-solid fa-paper-plane"></i> Enviar pedido
+                <i class="fa-solid fa-paper-plane"></i>
+                <span id="accessRequestBtnTexto">Enviar pedido</span>
               </button>
 
               <div class="access-account-actions">

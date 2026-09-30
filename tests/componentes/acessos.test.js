@@ -137,8 +137,9 @@ const PEDIDO = {
   created_at: "2026-09-29T10:00:00Z",
 };
 
-function supabaseFalso(teto) {
-  const rpc = vi.fn((nome) => {
+function supabaseFalso(teto, extra = {}) {
+  const rpc = vi.fn((nome, args) => {
+    if (extra[nome]) return Promise.resolve(extra[nome](args));
     if (nome === "obter_matriz_acessos")
       return Promise.resolve({ data: MATRIZ(teto), error: null });
     if (nome === "listar_solicitacoes_acesso")
@@ -178,9 +179,9 @@ function supabaseFalso(teto) {
 }
 
 let controlador = null;
-async function montar({ perfil, teto, confirmar = () => true }) {
+async function montar({ perfil, teto, confirmar = () => true, extra = {} }) {
   document.body.innerHTML = '<div id="acessosApp" data-acessos></div>';
-  const supabase = supabaseFalso(teto);
+  const supabase = supabaseFalso(teto, extra);
   await act(async () => {
     controlador = montarAcessos({
       raizDaTela: document.getElementById("acessosApp"),
@@ -883,5 +884,291 @@ describe("Acessos: visão simples, trava de área e convite", () => {
       p_perfil_usuario_id: "eu",
       p_motivo: "Não vai mais entrar",
     });
+  });
+});
+
+describe("Acessos: contas desativadas e reativação", () => {
+  const DESATIVADAS = [
+    {
+      id: "p9",
+      nome: "Caio",
+      email: "caio@agenciasus.org.br",
+      grupo: "coordenador",
+      grupo_nome: "Coordenador",
+      coordenacao: "norte",
+      areas: [],
+      desativada_em: "2026-09-30T15:00:00Z",
+      desativada_por: "adm@agenciasus.org.br",
+      motivo: "Saiu da equipe",
+      pedido_pendente: true,
+      ultimo_acesso: null,
+    },
+    {
+      id: "p8",
+      nome: null,
+      email: "antiga@agenciasus.org.br",
+      grupo: "usuario",
+      grupo_nome: "Usuário",
+      coordenacao: null,
+      areas: ["saude-indigena"],
+      desativada_em: "2026-01-10T15:00:00Z",
+      desativada_por: null,
+      motivo: null,
+      pedido_pendente: false,
+      ultimo_acesso: null,
+    },
+  ];
+  const comDesativadas = (mais = {}) => ({
+    listar_contas_desativadas: () => ({
+      data: { contas: DESATIVADAS },
+      error: null,
+    }),
+    ...mais,
+  });
+  const chamadas = (supabase, nome) =>
+    supabase.rpc.mock.calls.filter(([n]) => n === nome);
+  const modal = () => document.getElementById("acessosReativar");
+  const botaoNo = (raiz, texto) =>
+    [...raiz.querySelectorAll("button")].find(
+      (b) => b.textContent.trim() === texto,
+    );
+  const linhaDe = (texto) =>
+    [...document.querySelectorAll("tbody tr")].find((tr) =>
+      tr.textContent.includes(texto),
+    );
+
+  async function abrirReativacaoDoCaio(mais) {
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: comDesativadas(mais),
+    });
+    await clicar(botao("Desativadas (2)"));
+    await clicar(botaoNo(linhaDe("caio@agenciasus.org.br"), "Reativar"));
+    return supabase;
+  }
+
+  it("admin: aba 'Desativadas' com contagem, quando/por quem/motivo e 'Pediu reativação'", async () => {
+    await montar({ perfil: ADMIN, teto: TETO_ADMIN, extra: comDesativadas() });
+    expect(document.querySelector(".acessos-resumo-contas").textContent).toBe(
+      "2 ativas · 2 desativadas",
+    );
+    await clicar(botao("Desativadas (2)"));
+    const caio = linhaDe("caio@agenciasus.org.br");
+    expect(caio.textContent).toContain(
+      "Desativada em 30/09/2026 por adm@agenciasus.org.br",
+    );
+    expect(caio.textContent).toContain("Saiu da equipe");
+    expect(caio.textContent).toContain("Coordenador");
+    expect(caio.textContent).toContain("Norte");
+    expect(caio.textContent).toContain("Pediu reativação");
+    const antiga = linhaDe("antiga@agenciasus.org.br");
+    expect(antiga.textContent).toContain("Desativada em 10/01/2026");
+    expect(antiga.textContent).not.toContain(" por ");
+    expect(antiga.textContent).toContain("motivo não registrado");
+    expect(antiga.textContent).toContain("Saúde Indígena");
+    expect(antiga.textContent).not.toContain("Pediu reativação");
+  });
+
+  it("a busca da aba vale para Desativadas", async () => {
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: comDesativadas(),
+    });
+    await clicar(botao("Desativadas (2)"));
+    vi.useFakeTimers();
+    try {
+      await digitar(
+        document.querySelector('.acessos-busca input[type="search"]'),
+        "caio",
+      );
+      await act(async () => vi.advanceTimersByTime(350));
+    } finally {
+      vi.useRealTimers();
+    }
+    await esperar();
+    expect(chamadas(supabase, "listar_contas_desativadas").at(-1)[1]).toEqual({
+      p_busca: "caio",
+    });
+  });
+
+  it("reativar: vem o que a pessoa tinha, com as travas da gaveta, motivo e toast", async () => {
+    const supabase = await abrirReativacaoDoCaio();
+    expect(modal().querySelector("h3").textContent).toBe("Reativar Caio");
+    expect(document.getElementById("acessosReativarGrupo").value).toBe(
+      "coordenador",
+    );
+    expect(document.getElementById("acessosReativarCoordenacao").value).toBe(
+      "norte",
+    );
+    // Sem coordenação: o grupo gerencia acessos e não há área.
+    await escolher(document.getElementById("acessosReativarCoordenacao"), "");
+    const avisos = [...modal().querySelectorAll(".acessos-sem-area")].map(
+      (el) => el.textContent,
+    );
+    expect(avisos.join(" ")).toContain(
+      "Sem área e sem coordenação, Caio entra e não vê nada.",
+    );
+    expect(avisos.join(" ")).toContain("O grupo Coordenador gerencia acessos");
+    expect(botaoNo(modal(), "Reativar").disabled).toBe(true);
+    await escolher(
+      document.getElementById("acessosReativarCoordenacao"),
+      "norte",
+    );
+    expect(modal().querySelector(".acessos-sem-area")).toBeNull();
+    // Motivo obrigatório.
+    await clicar(botaoNo(modal(), "Reativar"));
+    expect(modal().textContent).toContain("Informe o motivo");
+    expect(chamadas(supabase, "reativar_acesso_usuario")).toHaveLength(0);
+
+    await digitar(
+      document.getElementById("acessosReativarMotivo"),
+      "Voltou para a equipe",
+    );
+    const lidas = chamadas(supabase, "listar_contas_desativadas").length;
+    await clicar(botaoNo(modal(), "Reativar"));
+    expect(chamadas(supabase, "reativar_acesso_usuario")[0][1]).toEqual({
+      p_perfil_usuario_id: "p9",
+      p_grupo: "coordenador",
+      p_coordenacao: "norte",
+      p_areas: [],
+      p_motivo: "Voltou para a equipe",
+    });
+    expect(controlador.estado.toast).toHaveBeenCalledWith(
+      "Conta reativada. Na próxima entrada, Caio verá as boas-vindas de volta.",
+      "success",
+    );
+    expect(modal()).toBeNull();
+    expect(chamadas(supabase, "listar_contas_desativadas").length).toBe(
+      lidas + 1,
+    );
+  });
+
+  it("reativar sem coordenação manda as áreas marcadas", async () => {
+    const supabase = await abrirReativacaoDoCaio();
+    await escolher(document.getElementById("acessosReativarGrupo"), "usuario");
+    await escolher(document.getElementById("acessosReativarCoordenacao"), "");
+    const caixa = [...modal().querySelectorAll("label")]
+      .find((l) => l.textContent.trim() === "Saúde Indígena")
+      .querySelector("input");
+    await clicar(caixa);
+    await digitar(document.getElementById("acessosReativarMotivo"), "Voltou");
+    await clicar(botaoNo(modal(), "Reativar"));
+    expect(chamadas(supabase, "reativar_acesso_usuario")[0][1]).toMatchObject({
+      p_grupo: "usuario",
+      p_coordenacao: null,
+      p_areas: ["saude-indigena"],
+    });
+  });
+
+  it("recusa do banco (23514 / 42501) aparece no modal, que fica aberto", async () => {
+    const mensagem =
+      "O grupo coordenador gerencia acessos: escolha a coordenação da pessoa";
+    await abrirReativacaoDoCaio({
+      reativar_acesso_usuario: () => ({
+        data: null,
+        error: { code: "23514", message: mensagem },
+      }),
+    });
+    await digitar(document.getElementById("acessosReativarMotivo"), "Voltou");
+    await clicar(botaoNo(modal(), "Reativar"));
+    expect(modal().querySelector(".acessos-recusa").textContent).toContain(
+      mensagem,
+    );
+    await act(async () => controlador.raiz.unmount());
+    await abrirReativacaoDoCaio({
+      reativar_acesso_usuario: () => ({
+        data: null,
+        error: { code: "42501", message: "Somente o administrador global" },
+      }),
+    });
+    await digitar(document.getElementById("acessosReativarMotivo"), "Voltou");
+    await clicar(botaoNo(modal(), "Reativar"));
+    expect(modal().querySelector(".acessos-recusa").textContent).toContain(
+      "Só o administrador global pode reativar contas.",
+    );
+  });
+
+  it("coordenador não vê 'Desativadas' nem lê as contas desativadas", async () => {
+    const supabase = await montar({
+      perfil: COORD,
+      teto: TETO_COORD,
+      extra: comDesativadas(),
+    });
+    expect(
+      [...document.querySelectorAll('[role="radio"]')].map((b) =>
+        b.textContent.trim(),
+      ),
+    ).toEqual(["Ativos", "Pendentes (1)"]);
+    expect(document.querySelector(".acessos-resumo-contas")).toBeNull();
+    expect(chamadas(supabase, "listar_contas_desativadas")).toHaveLength(0);
+  });
+
+  it("gaveta: 'Desativar acesso' pede o motivo (obrigatório) e a conta vai para Desativadas", async () => {
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: comDesativadas(),
+    });
+    await clicar(linhaDe("ana@agenciasus.org.br").querySelector("td"));
+    await clicar(botao("Desativar acesso"));
+    const formulario = document.querySelector(
+      'form[aria-label="Desativar acesso"]',
+    );
+    const confirmar = botaoNo(formulario, "Desativar acesso");
+    expect(confirmar.disabled).toBe(true);
+    expect(formulario.textContent).toContain("Motivo da desativação");
+    await digitar(
+      document.getElementById("acessosDesativarMotivo"),
+      "Saiu da equipe",
+    );
+    const lidas = chamadas(supabase, "listar_contas_desativadas").length;
+    await clicar(botaoNo(formulario, "Desativar acesso"));
+    expect(chamadas(supabase, "desativar_acesso_usuario")[0][1]).toEqual({
+      p_perfil_usuario_id: "u1",
+      p_motivo: "Saiu da equipe",
+    });
+    expect(chamadas(supabase, "listar_contas_desativadas").length).toBe(
+      lidas + 1,
+    );
+  });
+
+  it("Pendentes: pedido de reativação com selo, histórico e o grupo de antes", async () => {
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: comDesativadas({
+        listar_solicitacoes_acesso: () => ({
+          data: [
+            {
+              ...PEDIDO,
+              id: "s2",
+              nome: "Caio",
+              email: "caio@agenciasus.org.br",
+              reativacao: true,
+              desativada_em: "2026-09-30T15:00:00Z",
+              desativada_por: "adm@agenciasus.org.br",
+              motivo_desativacao: "Saiu da equipe",
+              grupo_anterior: "coordenador",
+            },
+          ],
+          error: null,
+        }),
+      }),
+    });
+    await clicar(botao("Pendentes (1)"));
+    const linha = linhaDe("caio@agenciasus.org.br");
+    expect(linha.querySelector(".acessos-selo-reativacao").textContent).toBe(
+      "Reativação",
+    );
+    expect(linha.textContent).toContain(
+      "Desativada em 30/09 por adm@agenciasus.org.br · motivo: Saiu da equipe",
+    );
+    expect(select("Grupo de Caio").value).toBe("coordenador");
+    await clicar(botaoNo(linha, "Aprovar"));
+    expect(
+      chamadas(supabase, "aprovar_solicitacao_acesso")[0][1],
+    ).toMatchObject({ p_solicitacao_id: "s2", p_grupo: "coordenador" });
   });
 });

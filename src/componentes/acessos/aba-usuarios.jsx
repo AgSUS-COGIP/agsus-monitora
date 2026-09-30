@@ -36,6 +36,8 @@ import {
   motivoValido,
 } from "./partes.jsx";
 import { Solicitacoes } from "./solicitacoes.jsx";
+import { Desativadas } from "./contas-desativadas.jsx";
+import { resumoDeContas } from "../../lib/contas-desativadas.js";
 import { ModalAdicionarPessoa } from "./modal-adicionar-pessoa.jsx";
 
 const POR_PAGINA = 30;
@@ -419,9 +421,25 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
   );
 }
 
-function Ativos({ estado, atual }) {
+/* A busca é uma só na aba: vale para Ativos e Desativadas (nome ou e-mail). */
+function CampoDeBusca({ valor, aoMudar }) {
+  return (
+    <label className="acessos-busca">
+      <Icone nome="search" tamanho={16} />
+      <span className="sr-only">Pesquisar pessoas</span>
+      <input
+        type="search"
+        value={valor}
+        onChange={(e) => aoMudar(e.target.value)}
+        placeholder="Pesquisar por nome ou e-mail"
+        maxLength={100}
+      />
+    </label>
+  );
+}
+
+function Ativos({ estado, atual, busca, setBusca, campoDeBusca }) {
   const { matriz, rascunho } = atual;
-  const [busca, setBusca] = useState(atual.busca);
   const [porModulo, setPorModulo] = useState(false);
   // Busca aplica 300 ms depois da digitação (design.md 11.3).
   useEffect(() => {
@@ -452,17 +470,7 @@ function Ativos({ estado, atual }) {
   return (
     <>
       <div className="acessos-filtros">
-        <label className="acessos-busca">
-          <Icone nome="search" tamanho={16} />
-          <span className="sr-only">Pesquisar pessoas</span>
-          <input
-            type="search"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder="Pesquisar por nome ou e-mail"
-            maxLength={100}
-          />
-        </label>
+        {campoDeBusca}
         <select
           aria-label="Filtrar por grupo"
           value={atual.filtroGrupo}
@@ -666,23 +674,49 @@ function Ativos({ estado, atual }) {
 
 export function AbaUsuarios({ estado }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
-  const [situacao, setSituacao] = useState("ativos");
+  const [escolhida, setSituacao] = useState("ativos");
+  const [busca, setBusca] = useState(atual.busca);
   const pendentes = atual.solicitacoes.length;
+  // "Desativadas" só para o administrador global (o banco recusa os demais).
+  const adminGlobal = Boolean(atual.matriz?.teto?.admin_global);
+  const desativadas =
+    adminGlobal && atual.statusDasDesativadas === "ready"
+      ? atual.desativadas.length
+      : null;
+  const situacao =
+    escolhida === "desativadas" && !adminGlobal ? "ativos" : escolhida;
+  const opcoes = [
+    { valor: "ativos", rotulo: "Ativos" },
+    {
+      valor: "pendentes",
+      rotulo: pendentes ? `Pendentes (${pendentes})` : "Pendentes",
+    },
+  ];
+  if (adminGlobal)
+    opcoes.push({
+      valor: "desativadas",
+      rotulo: desativadas ? `Desativadas (${desativadas})` : "Desativadas",
+    });
+  const campoDeBusca = <CampoDeBusca valor={busca} aoMudar={setBusca} />;
   return (
     <section className="acessos-usuarios" aria-label="Usuários">
       <div className="acessos-topo">
-        <ControleSegmentado
-          rotulo="Situação"
-          valor={situacao}
-          aoMudar={setSituacao}
-          opcoes={[
-            { valor: "ativos", rotulo: "Ativos" },
-            {
-              valor: "pendentes",
-              rotulo: pendentes ? `Pendentes (${pendentes})` : "Pendentes",
-            },
-          ]}
-        />
+        <span className="acessos-topo-inicio">
+          <ControleSegmentado
+            rotulo="Situação"
+            valor={situacao}
+            aoMudar={setSituacao}
+            opcoes={opcoes}
+          />
+          {adminGlobal && atual.matriz ? (
+            <span className="acessos-resumo-contas">
+              {resumoDeContas({
+                ativas: atual.matriz.total || 0,
+                desativadas,
+              })}
+            </span>
+          ) : null}
+        </span>
         {atual.matriz ? (
           <button
             type="button"
@@ -694,7 +728,20 @@ export function AbaUsuarios({ estado }) {
         ) : null}
       </div>
       {situacao === "ativos" ? (
-        <Ativos estado={estado} atual={atual} />
+        <Ativos
+          estado={estado}
+          atual={atual}
+          busca={busca}
+          setBusca={setBusca}
+          campoDeBusca={campoDeBusca}
+        />
+      ) : situacao === "desativadas" ? (
+        <Desativadas
+          estado={estado}
+          atual={atual}
+          busca={busca}
+          campoDeBusca={campoDeBusca}
+        />
       ) : (
         <Solicitacoes estado={estado} atual={atual} />
       )}

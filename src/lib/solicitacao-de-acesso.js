@@ -14,6 +14,11 @@
       o banco o devolver para qualquer e-mail;
     - pedido "aprovado" sem perfil ativo: foi aprovado e o acesso saiu depois
       (desativado). Com perfil ativo (o contexto relido achou), é "liberado".
+
+  Conta desativada pode pedir REATIVAÇÃO (o mesmo registrar_solicitacao_acesso,
+  só nome e justificativa obrigatórios). Com o pedido pendente, a tela segue
+  "Acesso desativado" e diz que o pedido de reativação aguarda um
+  administrador.
 */
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -23,6 +28,7 @@ export const SITUACOES = Object.freeze({
   PENDENTE: "pendente",
   RECUSADO: "recusado",
   DESATIVADA: "desativada",
+  REATIVACAO_PENDENTE: "reativacao_pendente",
   LIBERADO: "liberado",
 });
 
@@ -36,6 +42,7 @@ export const TEXTO_DO_CONVITE =
 export const TITULO_DESATIVADA = "Seu acesso ao MONITORA foi desativado.";
 export const TEXTO_DESATIVADA =
   "Se acha que é um engano, fale com a equipe responsável pelo MONITORA.";
+export const PERGUNTA_DA_REATIVACAO = "Precisa do acesso de novo?";
 
 const FORMATO_DIA_E_MES = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
@@ -63,16 +70,20 @@ export function contaDesativadaNaResposta(resposta) {
 /**
  * Situação da tela, a partir do pedido mais recente, da conta desativada e de
  * haver (agora) perfil ativo. Desativada vence tudo: um pedido antigo
- * aprovado não pode dizer "aprovada" para quem foi desligado.
+ * aprovado não pode dizer "aprovada" para quem foi desligado. A exceção é o
+ * pedido pendente da conta desativada: é o pedido de reativação.
  */
 export function situacaoDaSolicitacao({
   solicitacao = null,
   contaDesativada = false,
   perfilAtivo = false,
 } = {}) {
-  if (contaDesativada) return SITUACOES.DESATIVADA;
-  if (perfilAtivo) return SITUACOES.LIBERADO;
   const status = txt(solicitacao?.status).toLowerCase();
+  if (contaDesativada)
+    return status === "pendente"
+      ? SITUACOES.REATIVACAO_PENDENTE
+      : SITUACOES.DESATIVADA;
+  if (perfilAtivo) return SITUACOES.LIBERADO;
   if (status === "pendente") return SITUACOES.PENDENTE;
   if (status === "recusado") return SITUACOES.RECUSADO;
   if (status === "aprovado") return SITUACOES.DESATIVADA;
@@ -81,11 +92,14 @@ export function situacaoDaSolicitacao({
 
 /**
  * O que a tela mostra em cada situação:
- *   { situacao, tom, titulo, texto, formulario, acao, ilustracao }
+ *   { situacao, tom, titulo, texto, formulario, acao, ilustracao,
+ *     desativada, reativacao }
  *   tom        "info" | "success" | "warn" | "danger" | ""
  *   formulario "editavel" | "leitura" (mostra o pedido enviado) | "oculto"
  *   acao       "enviar" | "entrar" | null
  *   ilustracao "triste" (conta desativada) | null
+ *   desativada a conta está desativada (o cartão diz "Acesso desativado")
+ *   reativacao "oferecer" (botão "Pedir reativação") | "pendente" | null
  */
 export function telaDaSolicitacao(dados = {}) {
   const situacao = situacaoDaSolicitacao(dados);
@@ -102,7 +116,23 @@ export function telaDaSolicitacao(dados = {}) {
       formulario: "oculto",
       acao: null,
       ilustracao: "triste",
+      desativada: true,
+      reativacao: "oferecer",
     };
+  if (situacao === SITUACOES.REATIVACAO_PENDENTE) {
+    const dia = diaEMes(req?.created_at);
+    return {
+      situacao,
+      tom: "info",
+      titulo: TITULO_DESATIVADA,
+      texto: `Pedido de reativação enviado${dia ? ` em ${dia}` : ""}, aguardando um administrador.`,
+      formulario: "leitura",
+      acao: null,
+      ilustracao: null,
+      desativada: true,
+      reativacao: "pendente",
+    };
+  }
   if (situacao === SITUACOES.LIBERADO)
     return {
       situacao,
@@ -148,19 +178,18 @@ export function telaDaSolicitacao(dados = {}) {
 /**
  * Erros por campo ({} = válido). Nome e justificativa são obrigatórios; área
  * / setor ou coordenação, ao menos um (o administrador precisa saber onde a
- * pessoa trabalha).
+ * pessoa trabalha). No pedido de reativação, o administrador já sabe (o
+ * grupo e as áreas de antes): coordenação é opcional e não há setor.
  */
-export function validarSolicitacao({
-  nome,
-  setor,
-  coordenacao,
-  justificativa,
-} = {}) {
+export function validarSolicitacao(
+  { nome, setor, coordenacao, justificativa } = {},
+  { reativacao = false } = {},
+) {
   const erros = {};
   if (txt(nome).length < NOME_MINIMO) erros.nome = "Informe seu nome.";
-  if (txt(setor).length > SETOR_MAXIMO)
+  if (!reativacao && txt(setor).length > SETOR_MAXIMO)
     erros.setor = `Use no máximo ${SETOR_MAXIMO} caracteres.`;
-  else if (!txt(setor) && !txt(coordenacao))
+  else if (!reativacao && !txt(setor) && !txt(coordenacao))
     erros.setor = "Informe sua área / setor ou escolha a coordenação.";
   const tamanho = txt(justificativa).length;
   if (!tamanho) erros.justificativa = "Explique por que precisa do acesso.";
@@ -171,15 +200,13 @@ export function validarSolicitacao({
   return erros;
 }
 
-export function argumentosDaSolicitacao({
-  nome,
-  setor,
-  justificativa,
-  coordenacao,
-}) {
+export function argumentosDaSolicitacao(
+  { nome, setor, justificativa, coordenacao },
+  { reativacao = false } = {},
+) {
   return {
     p_nome: txt(nome),
-    p_setor: txt(setor) || null,
+    p_setor: reativacao ? null : txt(setor) || null,
     p_justificativa: txt(justificativa) || null,
     p_coordenacao: txt(coordenacao) || null,
   };

@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { gruposAtribuiveis } from "../../lib/teto-de-acessos.js";
 import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
+import {
+  grupoInicialDoPedido,
+  linhaDoPedidoDeReativacao,
+} from "../../lib/contas-desativadas.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import { BotaoDeAcao, LinhasEsqueleto } from "../lista-aprovados/partes.jsx";
 import { Icone } from "../icone.jsx";
@@ -10,16 +14,18 @@ import { Icone } from "../icone.jsx";
   admin vê todos; o coordenador, só os que pediram a coordenação dele (e
   aprova sempre nela, com grupo dentro do teto). Sem coordenação, o admin
   escolhe as áreas que a pessoa vê inteiras.
+
+  Pedido de quem tem conta desativada é de REATIVAÇÃO: selo, quando/por
+  quem/por que foi desativada e o grupo de antes já escolhido. Aprovar
+  reativa a conta.
 */
 
 function Pedido({ estado, solicitacao, matriz }) {
   const teto = matriz.teto;
   const grupos = gruposAtribuiveis(teto, matriz.grupos || []);
   const areas = matriz.areas || [];
-  const [grupo, setGrupo] = useState(
-    grupos.find((g) => g.codigo === "usuario")?.codigo ||
-      grupos[0]?.codigo ||
-      "",
+  const [grupo, setGrupo] = useState(() =>
+    grupoInicialDoPedido(solicitacao, grupos),
   );
   const [coordenacao, setCoordenacao] = useState(
     teto.admin_global ? solicitacao.coordenacao || "" : teto.coordenacao || "",
@@ -36,6 +42,16 @@ function Pedido({ estado, solicitacao, matriz }) {
       <th scope="row">
         <strong>{nome}</strong>
         <small>{solicitacao.email}</small>
+        {solicitacao.reativacao ? (
+          <>
+            <span className="acessos-selo acessos-selo-reativacao">
+              Reativação
+            </span>
+            <small className="acessos-linha-reativacao">
+              {linhaDoPedidoDeReativacao(solicitacao)}
+            </small>
+          </>
+        ) : null}
         {solicitacao.justificativa ? (
           <small className="acessos-truncado" title={solicitacao.justificativa}>
             {solicitacao.justificativa}

@@ -42,7 +42,10 @@ import { Modal } from "../modal.jsx";
 import { Icone } from "../icone.jsx";
 import { BotaoDeAcao } from "../lista-aprovados/partes.jsx";
 import {
+  AvisoSemArea,
+  AvisoSemCoordenacao,
   CabecalhoDaGaveta,
+  CaixasDeArea,
   CampoMotivo,
   OpcoesDeCoordenacao,
   OpcoesDoGrupo,
@@ -249,9 +252,65 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
   Quem foi cadastrado e nunca entrou: reenviar a mensagem do convite ou
   cancelar (desativa o cadastro, com motivo, pela mesma RPC de desativar).
 */
+/*
+  Desativar (ou cancelar o convite, a mesma RPC): o motivo é obrigatório — vai
+  para o histórico e aparece na aba "Desativadas", de onde dá para reativar.
+*/
+function ConfirmarDesativacao({
+  estado,
+  usuario,
+  id,
+  texto,
+  rotulo,
+  convite = false,
+  aoVoltar,
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [tentou, setTentou] = useState(false);
+  return (
+    <form
+      className="acessos-mover"
+      aria-label={rotulo}
+      noValidate
+      onSubmit={(evento) => {
+        evento.preventDefault();
+        setTentou(true);
+        if (motivoValido(motivo))
+          void estado.desativarUsuario(usuario, motivo.trim(), { convite });
+      }}
+    >
+      <p>{texto}</p>
+      <CampoMotivo
+        id={id}
+        rotulo={convite ? "Motivo do cancelamento" : "Motivo da desativação"}
+        valor={motivo}
+        aoMudar={setMotivo}
+        erro={tentou && !motivoValido(motivo)}
+      />
+      <div className="acessos-acoes">
+        <button
+          type="button"
+          className="btn outline acessos-ghost"
+          onClick={aoVoltar}
+        >
+          Voltar
+        </button>
+        <BotaoDeAcao
+          estado={estado}
+          acao={`desativar:${usuario.id}`}
+          type="submit"
+          className="btn outline acessos-perigo"
+          disabled={!motivoValido(motivo)}
+        >
+          {rotulo}
+        </BotaoDeAcao>
+      </div>
+    </form>
+  );
+}
+
 function Convite({ estado, usuario, podeCancelar }) {
   const [cancelando, setCancelando] = useState(false);
-  const [motivo, setMotivo] = useState("");
   const nome = usuario.nome || usuario.email;
   const desde = dataCurta(usuario.cadastrado_em);
   return (
@@ -270,49 +329,15 @@ function Convite({ estado, usuario, podeCancelar }) {
         <AcoesDoConvite nome={usuario.nome} email={usuario.email} />
       </details>
       {!podeCancelar ? null : cancelando ? (
-        <form
-          className="acessos-mover"
-          onSubmit={(evento) => {
-            evento.preventDefault();
-            if (motivoValido(motivo))
-              void estado.desativarUsuario(usuario, motivo.trim(), {
-                convite: true,
-              });
-          }}
-        >
-          <p>
-            O cadastro de {nome} é desativado e o e-mail deixa de entrar. Dá
-            para convidar de novo depois.
-          </p>
-          <div className="acessos-campo">
-            <label htmlFor="acessosCancelarConviteMotivo">Motivo</label>
-            <input
-              id="acessosCancelarConviteMotivo"
-              value={motivo}
-              maxLength={500}
-              onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Vai para o histórico"
-            />
-          </div>
-          <div className="acessos-acoes">
-            <button
-              type="button"
-              className="btn outline acessos-ghost"
-              onClick={() => setCancelando(false)}
-            >
-              Voltar
-            </button>
-            <BotaoDeAcao
-              estado={estado}
-              acao={`desativar:${usuario.id}`}
-              type="submit"
-              className="btn outline acessos-perigo"
-              disabled={!motivoValido(motivo)}
-            >
-              Cancelar convite
-            </BotaoDeAcao>
-          </div>
-        </form>
+        <ConfirmarDesativacao
+          estado={estado}
+          usuario={usuario}
+          id="acessosCancelarConviteMotivo"
+          texto={`O cadastro de ${nome} é desativado e o e-mail deixa de entrar. Dá para convidar de novo depois.`}
+          rotulo="Cancelar convite"
+          convite
+          aoVoltar={() => setCancelando(false)}
+        />
       ) : (
         <div className="acessos-acoes">
           <button
@@ -455,6 +480,7 @@ function SalvarNaGaveta({ estado, usuario, rascunho, matriz, semArea }) {
 
 export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
+  const [desativando, setDesativando] = useState(false);
   const { matriz, rascunho, gaveta } = atual;
   const usuario = matriz?.usuarios?.find((u) => u.id === gaveta?.usuarioId);
   if (!usuario) return null;
@@ -567,32 +593,14 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               Vê só o recorte da coordenação {nomeDaCoordenacao || coordenacao}.
             </p>
           ) : (
-            <fieldset className="acessos-opcoes">
-              <legend className="sr-only">
-                Áreas que a pessoa vê inteiras
-              </legend>
-              {areas.map((area) => (
-                <label key={area.id}>
-                  <input
-                    type="checkbox"
-                    checked={marcado(`area:${area.id}`)}
-                    disabled={!edicao.pode || !podeEditarAreas(teto)}
-                    onChange={(e) =>
-                      alternar(`area:${area.id}`, e.target.checked)
-                    }
-                  />
-                  {area.titulo}
-                </label>
-              ))}
-            </fieldset>
+            <CaixasDeArea
+              areas={areas}
+              marcadas={areasMarcadasDaLinha(usuario, rascunho, areas)}
+              desabilitado={!edicao.pode || !podeEditarAreas(teto)}
+              aoAlternar={(id, ligar) => alternar(`area:${id}`, ligar)}
+            />
           )}
-          {semArea ? (
-            <p className="alert warn acessos-sem-area" role="alert">
-              <Icone nome="triangle-alert" tamanho={16} /> Sem área e sem
-              coordenação, {nome} entra e não vê nada. Marque ao menos uma área
-              (ou escolha uma coordenação) para poder salvar.
-            </p>
-          ) : null}
+          {semArea ? <AvisoSemArea nome={nome} /> : null}
         </section>
 
         {!adminGlobal ? (
@@ -618,12 +626,10 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               />
             </select>
             {semCoordenacao ? (
-              <p className="alert warn acessos-sem-area" role="alert">
-                <Icone nome="triangle-alert" tamanho={16} /> O grupo{" "}
-                {grupo?.nome || codigoDoGrupo} gerencia acessos, e o coordenador
-                gerencia só a própria coordenação. Escolha a coordenação de{" "}
-                {nome} (ou outro grupo) para poder salvar.
-              </p>
+              <AvisoSemCoordenacao
+                nome={nome}
+                nomeDoGrupo={grupo?.nome || codigoDoGrupo}
+              />
             ) : null}
             <p className="acessos-secundario">
               Com coordenação, a pessoa vê só os dados dela.
@@ -715,22 +721,25 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               semArea={semArea || semCoordenacao}
             />
           ) : null}
-          {adminPodeAgir && !usuario.convite_pendente ? (
+          {!adminPodeAgir || usuario.convite_pendente ? null : desativando ? (
+            <ConfirmarDesativacao
+              estado={estado}
+              usuario={usuario}
+              id="acessosDesativarMotivo"
+              texto={`${nome} perde o acesso agora. A conta vai para "Desativadas", onde dá para reativar depois.`}
+              rotulo="Desativar acesso"
+              aoVoltar={() => setDesativando(false)}
+            />
+          ) : (
             <BotaoDeAcao
               estado={estado}
               acao={`desativar:${usuario.id}`}
               className="btn outline acessos-ghost acessos-perigo"
-              onClick={() => {
-                const motivo = window.prompt(
-                  `Desativar o acesso de ${nome}? Informe o motivo:`,
-                );
-                if (motivoValido(motivo))
-                  void estado.desativarUsuario(usuario, motivo.trim());
-              }}
+              onClick={() => setDesativando(true)}
             >
               <Icone nome="user-x" tamanho={16} /> Desativar acesso
             </BotaoDeAcao>
-          ) : null}
+          )}
         </div>
       ) : null}
     </Modal>

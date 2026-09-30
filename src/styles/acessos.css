@@ -90,7 +90,8 @@ td.acessos-vazio {
   gap: var(--space-1-5);
   min-width: 0;
 }
-.acessos-campo > label {
+.acessos-campo > label,
+.acessos-campo > .acessos-rotulo {
   color: var(--text-primary);
   font-size: var(--text-label);
   font-weight: 500;
@@ -1007,4 +1008,24 @@ td.acessos-vazio {
   align-items: center;
   gap: var(--space-2);
   text-decoration: none;
+}
+
+/* ── Contas desativadas e pedido de reativação ────────────────────────────── */
+.acessos-selo-reativacao {
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.acessos-motivo-ausente {
+  font-style: italic;
+}
+.acessos-resumo-contas {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+.acessos-topo-inicio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
