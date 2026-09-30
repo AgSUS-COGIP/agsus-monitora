@@ -442,22 +442,25 @@ const EDITAL = {
   ],
 };
 
-/* Um `from()` do Supabase que devolve os editais do monitoramento. */
-function consultaFalsa(linhas) {
-  const consulta = {
-    select: () => consulta,
-    eq: () => consulta,
-    order: () => consulta,
-    then: (ok, erro) =>
-      Promise.resolve({ data: linhas, error: null }).then(ok, erro),
-  };
-  return consulta;
-}
-
 function supabaseDaConducao({ edital = EDITAL, respostas = {} } = {}) {
   const padrao = {
     get_entrevistas_da_area: () => ({ data: PAYLOAD, error: null }),
     listar_roteiros_entrevista: () => ({ data: [ROTEIRO], error: null }),
+    listar_editais_entrevista: () => ({
+      data: {
+        admin_global: false,
+        editais: [
+          {
+            id: "m1",
+            edital: "100/2026",
+            unidade: "CASAI Brasília",
+            na_janela: true,
+            visivel_por: "janela",
+          },
+        ],
+      },
+      error: null,
+    }),
     obter_entrevistas_do_edital: () => ({ data: edital, error: null }),
     salvar_roteiro_entrevista: (args) => ({
       data: { ...ROTEIRO, id: "r1b", versao: 2, nome: args.p_dados.nome },
@@ -472,11 +475,6 @@ function supabaseDaConducao({ edital = EDITAL, respostas = {} } = {}) {
   };
   return {
     rpc: vi.fn(async (nome, args) => (respostas[nome] || padrao[nome])(args)),
-    from: vi.fn(() =>
-      consultaFalsa([
-        { id: "m1", edital: "100/2026", unidade: "CASAI Brasília" },
-      ]),
-    ),
     auth: {
       getSession: async () => ({ data: { session: { user: { id: "u" } } } }),
     },
@@ -718,6 +716,71 @@ describe("visões de condução e roteiros", () => {
       celulas.every((c) => c.getAttribute("aria-label").includes("Ana")),
     ).toBe(true);
     expect(ficha.textContent).toContain("só a coluna ligada ao seu perfil");
+  });
+
+  it("administrador global: mostra todos e libera edital fora da janela", async () => {
+    const editais = (todos) => ({
+      data: {
+        admin_global: true,
+        editais: [
+          {
+            id: "m1",
+            edital: "100/2026",
+            unidade: "CASAI Brasília",
+            na_janela: true,
+            visivel_por: "janela",
+          },
+          ...(todos
+            ? [
+                {
+                  id: "m9",
+                  edital: "120/2026",
+                  unidade: "DSEI X",
+                  na_janela: false,
+                  visivel_por: "admin",
+                },
+              ]
+            : []),
+        ],
+      },
+      error: null,
+    });
+    const supabase = supabaseDaConducao({
+      respostas: {
+        listar_editais_entrevista: (args) => editais(args.p_todos),
+        liberar_entrevista_edital: () => ({ data: {}, error: null }),
+      },
+    });
+    await montar(supabase);
+    await clicar(visao("conduzir"));
+    await esperar();
+    const seletor = document.getElementById("entrevistasEdital");
+    expect(seletor.querySelectorAll("option")).toHaveLength(2);
+    await clicar(document.querySelector(".entrevistas-todos input"));
+    await esperar();
+    expect(chamadas(supabase, "listar_editais_entrevista").at(-1)[1]).toEqual({
+      p_area: expect.any(String),
+      p_todos: true,
+    });
+    expect(seletor.textContent).toContain("120/2026 · DSEI X · fora da janela");
+    await escolher(seletor, "m9");
+    await esperar();
+    const caixa = document.getElementById("entrevistasLiberacao");
+    expect(caixa.textContent).toContain(
+      "sem etapa de entrevista no cronograma",
+    );
+    await digitar(caixa.querySelector('input[type="date"]'), "2026-11-15");
+    await digitar(
+      caixa.querySelector('input[type="text"]'),
+      "Cronograma em revisão",
+    );
+    await clicar(caixa.querySelector("button"));
+    await esperar();
+    expect(chamadas(supabase, "liberar_entrevista_edital")[0][1]).toEqual({
+      p_edital: "m9",
+      p_ate: "2026-11-15",
+      p_motivo: "Cronograma em revisão",
+    });
   });
 
   it("sem nível de editor, tudo aparece só para consulta", async () => {

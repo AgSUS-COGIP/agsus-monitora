@@ -17,6 +17,8 @@ import {
   textoDaRegra,
   avaliadoresDaFicha,
   nomeDoCargo,
+  marcaDoEdital,
+  textoDaJanela,
 } from "../../lib/conducao-de-entrevista.js";
 import { rotuloDoComparecimento } from "../../lib/entrevistas-do-painel.js";
 import {
@@ -939,6 +941,69 @@ function PassoDaFicha({ dados, aoAbrir }) {
   );
 }
 
+/* ── Liberação fora da janela (administrador global) ──────────────── */
+
+function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
+  const [ate, setAte] = useState("");
+  const [motivo, setMotivo] = useState("");
+  if (!item || item.naJanela) return null;
+  const liberado = item.visivelPor === "liberado" && item.liberadoAte;
+  const motivoValido = motivo.trim().length >= 3;
+  return (
+    <div className="entrevistas-liberacao" id="entrevistasLiberacao">
+      <p>
+        <strong>Fora da janela</strong> — {textoDaJanela(item)}.{" "}
+        {liberado
+          ? `Liberado para a equipe até ${item.liberadoAte.split("-").reverse().join("/")} (${item.motivoLiberacao}).`
+          : "Só você (administrador global) vê este edital."}
+      </p>
+      <div className="entrevistas-liberacao-campos">
+        {!liberado ? (
+          <label>
+            Liberar até
+            <input
+              type="date"
+              value={ate}
+              onChange={(ev) => setAte(ev.target.value)}
+            />
+          </label>
+        ) : null}
+        <label className="entrevistas-liberacao-motivo">
+          Motivo
+          <input
+            type="text"
+            maxLength={500}
+            placeholder={
+              liberado ? "Por que encerrar" : "Por que liberar fora da janela"
+            }
+            value={motivo}
+            onChange={(ev) => setMotivo(ev.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="btn secondary"
+          disabled={ocupado || !motivoValido || (!liberado && !ate)}
+          onClick={async () => {
+            const r = await conducao.liberarEdital(
+              item.id,
+              liberado ? null : ate,
+              motivo.trim(),
+              doPainel,
+            );
+            if (r?.ok) {
+              setAte("");
+              setMotivo("");
+            }
+          }}
+        >
+          {liberado ? "Encerrar liberação" : "Liberar"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── A visão ───────────────────────────────────────────────────────── */
 
 export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
@@ -1004,6 +1069,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
                   {m.edital}
                   {m.unidade ? ` · ${m.unidade}` : ""}
                   {m.comEntrevistas ? " · com entrevistas" : ""}
+                  {marcaDoEdital(m) ? ` · ${marcaDoEdital(m)}` : ""}
                 </option>
               ))}
             </select>
@@ -1019,6 +1085,30 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
             </button>
           ) : null}
         </div>
+        {editais.admin ? (
+          <label className="entrevistas-todos">
+            <input
+              type="checkbox"
+              checked={editais.todos}
+              disabled={editais.carregando}
+              onChange={(ev) =>
+                void conducao.carregarEditais(area, entrevistasDoPainel, {
+                  todos: ev.target.checked,
+                })
+              }
+            />{" "}
+            Mostrar todos os editais da área (só administrador global)
+          </label>
+        ) : null}
+        {editais.admin ? (
+          <LiberacaoDoEdital
+            key={e.editalId}
+            conducao={conducao}
+            item={editais.lista.find((m) => m.id === e.editalId)}
+            ocupado={Boolean(e.acao)}
+            doPainel={entrevistasDoPainel}
+          />
+        ) : null}
         {editais.carregado && !editais.lista.length ? (
           <Aviso tom="warning">{editais.erro}</Aviso>
         ) : null}

@@ -770,3 +770,46 @@
   margin: 2px 0 0;
   color: var(--muted);
 }
+
+/* Conduzir entrevistas: filtro do administrador e liberação fora da janela. */
+.entrevistas-todos {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+.entrevistas-liberacao {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #f0d99a;
+  border-radius: 10px;
+  background: #fff8e6;
+  font-size: 13px;
+}
+.entrevistas-liberacao p {
+  margin: 0 0 8px;
+}
+.entrevistas-liberacao-campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+.entrevistas-liberacao-campos label {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.entrevistas-liberacao-motivo {
+  flex: 1 1 220px;
+}
+.entrevistas-liberacao-campos input {
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid #d7e1ec;
+  border-radius: 8px;
+}

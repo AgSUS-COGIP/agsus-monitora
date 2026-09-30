@@ -11,10 +11,11 @@
   da tela. Notas, convocação e desconvocação mudam o que a visão "Resultados"
   mostra (a mesma TB_ENTREVISTA): `aoMudarResultados` pede a releitura dela.
 
-  A lista de editais vem do monitoramento (TB_MONITORAMENTO_INDIGENA, com a
-  área e o recorte da coordenação aplicados pela política de leitura), somada
-  aos editais que já têm entrevistas no painel — quem só tem o módulo
-  Entrevistas pode não ler o monitoramento.
+  A lista de editais vem de `listar_editais_entrevista` (migration
+  20260930235000): só os editais na janela da entrevista pelo cronograma, os
+  liberados pelo administrador global e os com convocado sem parecer. O
+  administrador global pode pedir todos (`todos`) e liberar um edital fora
+  da janela até uma data (`liberarEdital`).
 */
 import {
   comTempoLimite,
@@ -36,6 +37,8 @@ const RPC_CONFIGURAR = "configurar_entrevista_edital";
 const RPC_CONVOCAR = "convocar_para_entrevista";
 const RPC_DESCONVOCAR = "desconvocar_da_entrevista";
 const RPC_LANCAR_NOTAS = "lancar_notas_entrevista";
+const RPC_LISTAR_EDITAIS = "listar_editais_entrevista";
+const RPC_LIBERAR_EDITAL = "liberar_entrevista_edital";
 
 const LISTA_VAZIA = Object.freeze({
   lista: [],
@@ -44,10 +47,17 @@ const LISTA_VAZIA = Object.freeze({
   erro: "",
 });
 
+const EDITAIS_VAZIOS = Object.freeze({
+  ...LISTA_VAZIA,
+  /** O administrador global vê o filtro "todos" e libera editais. */
+  admin: false,
+  todos: false,
+});
+
 const ESTADO_INICIAL = Object.freeze({
   area: "",
   roteiros: LISTA_VAZIA,
-  editais: LISTA_VAZIA,
+  editais: EDITAIS_VAZIOS,
   editalId: "",
   /** Payload de `obter_entrevistas_do_edital` do edital aberto. */
   edital: null,
@@ -161,54 +171,61 @@ export function criarEstadoDaConducao({
 
   // ── Editais ─────────────────────────────────────────────────────────
 
-  async function lerMonitoramento(area) {
-    // Pelo módulo Entrevistas (listar_editais_entrevista, com o recorte da
-    // coordenação); a leitura direta da tabela fica só de reserva.
-    if (typeof supabase?.rpc === "function") {
-      try {
-        const { data, error } = await comTempoLimite(
-          supabase.rpc("listar_editais_entrevista", { p_area: area }),
-          tempoLimiteMs,
-        );
-        if (!error && Array.isArray(data)) return data;
-      } catch (erro) {
-        console.warn("listar_editais_entrevista indisponível:", erro);
-      }
-    }
-    if (typeof supabase?.from !== "function") return [];
+  /** `doPainel`: as entrevistas da visão "Resultados" (com `edital_id`). */
+  async function carregarEditais(
+    area = estado.area,
+    doPainel = [],
+    { todos = estado.editais.todos } = {},
+  ) {
+    trocarArea(area);
+    publicar({ editais: { ...estado.editais, carregando: true, erro: "" } });
     try {
-      const { data, error } = await comTempoLimite(
-        supabase
-          .from("TB_MONITORAMENTO_INDIGENA")
-          .select("id,edital,unidade")
-          .eq("CO_AREA", area)
-          .eq("ativo", true)
-          .order("edital", { ascending: true }),
-        tempoLimiteMs,
-      );
-      if (error) throw error;
-      return Array.isArray(data) ? data : [];
+      const dados = await rpc(RPC_LISTAR_EDITAIS, {
+        p_area: area,
+        p_todos: Boolean(todos),
+      });
+      const admin = Boolean(dados?.admin_global);
+      const lista = editaisParaConduzir(dados?.editais || [], doPainel);
+      publicar({
+        editais: {
+          lista,
+          carregando: false,
+          carregado: true,
+          admin,
+          todos: admin && Boolean(todos),
+          erro: lista.length
+            ? ""
+            : "Nenhum edital na janela da entrevista. O edital aparece 7 dias antes da primeira etapa de entrevista do cronograma.",
+        },
+      });
+      return lista;
     } catch (erro) {
-      console.warn("Editais do monitoramento indisponíveis:", erro);
+      publicar({
+        editais: {
+          ...EDITAIS_VAZIOS,
+          carregado: true,
+          erro: `Não foi possível carregar os editais: ${mensagemDe(erro)}`,
+        },
+      });
       return [];
     }
   }
 
-  /** `doPainel`: as entrevistas da visão "Resultados" (com `edital_id`). */
-  async function carregarEditais(area = estado.area, doPainel = []) {
-    trocarArea(area);
-    publicar({ editais: { ...estado.editais, carregando: true, erro: "" } });
-    const monitoramento = await lerMonitoramento(area);
-    const lista = editaisParaConduzir(monitoramento, doPainel);
-    publicar({
-      editais: {
-        lista,
-        carregando: false,
-        carregado: true,
-        erro: lista.length ? "" : "Nenhum edital desta área disponível.",
-      },
+  /** Administrador global: libera o edital até `ate` (ou encerra, com `ate` vazio). */
+  function liberarEdital(id, ate, motivo, doPainel = []) {
+    return executar("liberar", ate ? "Liberando…" : "Encerrando…", async () => {
+      await rpc(RPC_LIBERAR_EDITAL, {
+        p_edital: id,
+        p_ate: ate || null,
+        p_motivo: motivo,
+      });
+      toast(
+        ate ? "Edital liberado para a equipe." : "Liberação encerrada.",
+        "ok",
+      );
+      await carregarEditais(estado.area, doPainel);
+      return { ok: true };
     });
-    return lista;
   }
 
   function mostrarEdital(dados) {
@@ -316,6 +333,7 @@ export function criarEstadoDaConducao({
     carregarRoteiros,
     salvarRoteiro,
     carregarEditais,
+    liberarEdital,
     abrirEdital,
     recarregarEdital,
     configurar,
