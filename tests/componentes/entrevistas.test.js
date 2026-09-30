@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, escolher, esperar } from "./interacoes.js";
+import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 
 /*
   O painel de entrevistas (entrevistas.html) em React, só leitura: carga ao
@@ -295,6 +295,449 @@ describe("cópia guardada (stale-while-revalidate)", async () => {
         area: "saude-indigena",
         dados: estado.obter().dados,
       }),
+    );
+  });
+});
+
+/*
+  Visões "Conduzir entrevistas" e "Roteiros" (fase 2): troca de visão no
+  cabeçalho, lista e edição de roteiro (versão nova), configuração,
+  convocação sugerida pela regra, ficha de notas (prévia do parecer, modo
+  AVALIADOR, erros do banco) e a releitura de "Resultados" depois de gravar.
+*/
+
+const PERFIL_DA_ANA = "11111111-1111-4111-8111-111111111111";
+
+const ROTEIRO = {
+  id: "r1",
+  origem: "r1",
+  versao: 1,
+  area: "saude-indigena",
+  nome: "Saúde Indígena 2026",
+  descricao: null,
+  etapa: "Entrevista Individual",
+  escala: "NIVEIS",
+  passo: 1,
+  notas_permitidas: [],
+  nota_minima_total: 4,
+  notas_eliminatorias: [0, 1],
+  ausencia_elimina: true,
+  desempate: ["Idade igual ou superior a 60 anos"],
+  soma_analise: true,
+  convocacao_padrao: {
+    multiplo_imediatas: 5,
+    posicao_cadastro_reserva: 10,
+    excecoes: [],
+  },
+  banca_padrao: [{ origem: "AgSUS", quantidade: 1 }],
+  ativo: true,
+  competencias: [
+    {
+      id: "c1",
+      ordem: 1,
+      nome: "Políticas públicas",
+      descricao: "SUS e SasiSUS",
+      nota_maxima: 5,
+      peso: 1,
+      minimo: 2,
+      tipo_minimo: "VALOR",
+      avaliacao: "INDIVIDUAL",
+    },
+    {
+      id: "c2",
+      ordem: 2,
+      nome: "Habilidade interpessoal",
+      descricao: null,
+      nota_maxima: 5,
+      peso: 1,
+      minimo: 2,
+      tipo_minimo: "VALOR",
+      avaliacao: "INDIVIDUAL",
+    },
+  ],
+  niveis: [0, 1, 2, 3, 4, 5].map((nota) => ({
+    nota,
+    nome: `Nível ${nota}`,
+    descricao: `Parâmetro ${nota}`,
+  })),
+  editais_em_uso: 1,
+};
+
+const EDITAL = {
+  edital: {
+    id: "m1",
+    edital: "100/2026",
+    unidade: "CASAI Brasília",
+    area: "saude-indigena",
+  },
+  pode_editar: true,
+  admin_global: false,
+  meu_perfil: PERFIL_DA_ANA,
+  configuracao: {
+    roteiro: ROTEIRO,
+    convocacao: {
+      multiplo_imediatas: 1,
+      posicao_cadastro_reserva: 1,
+      excecoes: [],
+    },
+    banca: [{ origem: "AgSUS", quantidade: 1 }],
+    lancamento: "SECRETARIA",
+    atualizado_em: "2026-09-30T12:00:00Z",
+  },
+  vagas: [
+    {
+      vaga: "V1",
+      cargo: "Enfermeiro",
+      aprovados: 3,
+      vagas_imediatas: 2,
+      vagas_imediatas_salvas: true,
+    },
+  ],
+  candidatos: [1, 2, 3].map((posicao) => ({
+    analise_id: `an${posicao}`,
+    candidato: `Candidato ${posicao}`,
+    codigo: `K${posicao}`,
+    vaga: "V1",
+    cargo: "Enfermeiro",
+    nota_analise: 90 - posicao,
+    modalidade: "Ampla",
+    pcd: false,
+    posicao,
+  })),
+  avaliadores: [
+    {
+      id: "a1",
+      nome: "Ana",
+      origem: "AgSUS",
+      banca: 1,
+      perfil: PERFIL_DA_ANA,
+      ativo: true,
+    },
+    {
+      id: "a2",
+      nome: "Beto",
+      origem: "CONDISI",
+      banca: 1,
+      perfil: null,
+      ativo: true,
+    },
+  ],
+  convocados: [
+    {
+      id: "e1",
+      analise_id: "an1",
+      candidato: "Candidato 1",
+      codigo: "K1",
+      vaga: "V1",
+      cargo: "Enfermeiro",
+      modalidade: "Ampla",
+      banca: 1,
+      compareceu: null,
+      nota: null,
+      parecer: "SEM_PARECER",
+      nota_analise: 89,
+      avaliacoes: [],
+      notas: [],
+    },
+  ],
+};
+
+/* Um `from()` do Supabase que devolve os editais do monitoramento. */
+function consultaFalsa(linhas) {
+  const consulta = {
+    select: () => consulta,
+    eq: () => consulta,
+    order: () => consulta,
+    then: (ok, erro) =>
+      Promise.resolve({ data: linhas, error: null }).then(ok, erro),
+  };
+  return consulta;
+}
+
+function supabaseDaConducao({ edital = EDITAL, respostas = {} } = {}) {
+  const padrao = {
+    get_entrevistas_da_area: () => ({ data: PAYLOAD, error: null }),
+    listar_roteiros_entrevista: () => ({ data: [ROTEIRO], error: null }),
+    obter_entrevistas_do_edital: () => ({ data: edital, error: null }),
+    salvar_roteiro_entrevista: (args) => ({
+      data: { ...ROTEIRO, id: "r1b", versao: 2, nome: args.p_dados.nome },
+      error: null,
+    }),
+    configurar_entrevista_edital: () => ({ data: edital, error: null }),
+    convocar_para_entrevista: () => ({
+      data: { convocados: 1, dados: edital },
+      error: null,
+    }),
+    lancar_notas_entrevista: () => ({ data: edital, error: null }),
+  };
+  return {
+    rpc: vi.fn(async (nome, args) => (respostas[nome] || padrao[nome])(args)),
+    from: vi.fn(() =>
+      consultaFalsa([
+        { id: "m1", edital: "100/2026", unidade: "CASAI Brasília" },
+      ]),
+    ),
+    auth: {
+      getSession: async () => ({ data: { session: { user: { id: "u" } } } }),
+    },
+  };
+}
+
+const visao = (valor) =>
+  document.querySelector(
+    `#topbar .entrevistas-visoes button[data-valor="${valor}"]`,
+  );
+const chamadas = (supabase, nome) =>
+  supabase.rpc.mock.calls.filter(([n]) => n === nome);
+
+async function abrirEdital() {
+  await clicar(visao("conduzir"));
+  await esperar();
+  await escolher(document.getElementById("entrevistasEdital"), "m1");
+  await esperar();
+}
+
+describe("visões de condução e roteiros", () => {
+  it("o cabeçalho troca de visão; Resultados é a primeira", async () => {
+    await montar(supabaseDaConducao());
+    expect(visao("resultados").getAttribute("aria-checked")).toBe("true");
+    expect(document.getElementById("kpiGrid")).not.toBeNull();
+    await clicar(visao("roteiros"));
+    await esperar();
+    expect(document.getElementById("kpiGrid")).toBeNull();
+    expect(document.getElementById("exportBtn")).toBeNull();
+    expect(naTela("Roteiros de entrevista")).toBe(true);
+    expect(document.querySelector('[data-roteiro="r1"]').textContent).toContain(
+      "Usado em 1 edital",
+    );
+  });
+
+  it("editar um roteiro grava a versão seguinte, com a prévia e o +50%", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await clicar(visao("roteiros"));
+    await esperar();
+    const editar = [
+      ...document.querySelectorAll('[data-roteiro="r1"] button'),
+    ].find((b) => b.textContent.includes("Editar (cria versão 2)"));
+    await clicar(editar);
+    const editor = document.getElementById("entrevistasEditorDeRoteiro");
+    expect(editor).not.toBeNull();
+    expect(
+      document.getElementById("entrevistasPreviaDoRoteiro").textContent,
+    ).toBe("Pontuação máxima 10 · mínimo 4");
+    const peso = editor.querySelectorAll(
+      'li[data-competencia="1"] input[type="number"]',
+    )[1];
+    await digitar(peso, "1.5");
+    expect(editor.textContent).toContain("+50% sobre a média da banca");
+    expect(
+      document.getElementById("entrevistasPreviaDoRoteiro").textContent,
+    ).toBe("Pontuação máxima 12,5 · mínimo 4");
+    await clicar(editor.querySelector('button[type="submit"]'));
+    await esperar();
+    const [[, { p_dados }]] = chamadas(supabase, "salvar_roteiro_entrevista");
+    expect(p_dados.origem).toBe("r1");
+    expect(p_dados.competencias[0].peso).toBe(1.5);
+    expect(p_dados.niveis).toHaveLength(6);
+    expect(document.getElementById("entrevistasEditorDeRoteiro")).toBeNull();
+    expect(chamadas(supabase, "listar_roteiros_entrevista").length).toBe(2);
+  });
+
+  it("formulário inválido não chama o banco", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await clicar(visao("roteiros"));
+    await esperar();
+    await clicar(document.getElementById("entrevistasNovoRoteiro"));
+    const editor = document.getElementById("entrevistasEditorDeRoteiro");
+    await clicar(editor.querySelector('button[type="submit"]'));
+    expect(editor.textContent).toContain("Nome do roteiro: de 3 a 150");
+    expect(chamadas(supabase, "salvar_roteiro_entrevista")).toHaveLength(0);
+  });
+
+  it("convoca os sugeridos pela regra e relê os resultados", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await abrirEdital();
+    expect(chamadas(supabase, "obter_entrevistas_do_edital")[0][1]).toEqual({
+      p_edital: "m1",
+    });
+    const passo = document.querySelector('[data-passo="convocacao"]');
+    const caixas = passo.querySelectorAll('input[type="checkbox"]');
+    // 1× 2 vagas imediatas: até a 2ª posição; a 1ª já foi convocada.
+    expect([...caixas].map((c) => [c.checked, c.disabled])).toEqual([
+      [true, true],
+      [true, false],
+      [false, false],
+    ]);
+    expect(passo.textContent).toContain("convocar até a 2ª posição");
+    const antes = chamadas(supabase, "get_entrevistas_da_area").length;
+    await clicar(document.getElementById("entrevistasConvocar"));
+    await esperar();
+    expect(chamadas(supabase, "convocar_para_entrevista")[0][1]).toEqual({
+      p_edital: "m1",
+      p_analises: ["an2"],
+    });
+    expect(chamadas(supabase, "get_entrevistas_da_area").length).toBe(
+      antes + 1,
+    );
+  });
+
+  it("salva a configuração com o modo de lançamento e a banca", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await abrirEdital();
+    const passo = document.querySelector('[data-passo="configuracao"]');
+    expect(passo.textContent).toContain("Saúde Indígena 2026");
+    await clicar(
+      [...passo.querySelectorAll("button")].find((b) =>
+        b.textContent.includes("Editar configuração"),
+      ),
+    );
+    await clicar(passo.querySelector('button[data-valor="AVALIADOR"]'));
+    await clicar(passo.querySelector('button[type="submit"]'));
+    await esperar();
+    const [[, argumentos]] = chamadas(supabase, "configurar_entrevista_edital");
+    expect(argumentos.p_edital).toBe("m1");
+    expect(argumentos.p_dados).toMatchObject({
+      roteiro: "r1",
+      lancamento: "AVALIADOR",
+      vagas: [{ vaga: "V1", vagas_imediatas: 2 }],
+      avaliadores: [
+        {
+          id: "a1",
+          nome: "Ana",
+          origem: "AgSUS",
+          banca: 1,
+          perfil: PERFIL_DA_ANA,
+        },
+        { id: "a2", nome: "Beto", origem: "CONDISI", banca: 1, perfil: null },
+      ],
+    });
+  });
+
+  it("ficha de notas: prévia do parecer, gravação e erro do banco", async () => {
+    let falhar = true;
+    const supabase = supabaseDaConducao({
+      respostas: {
+        lancar_notas_entrevista: () =>
+          falhar
+            ? {
+                data: null,
+                error: { code: "22023", message: "Nota 7 fora da faixa" },
+              }
+            : { data: EDITAL, error: null },
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(
+      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
+    );
+    const ficha = document.getElementById("entrevistasFichaDoCandidato");
+    const celulas = ficha.querySelectorAll("select.entrevistas-nota");
+    expect(celulas).toHaveLength(4);
+    expect(celulas[0].querySelector('option[value="3"]').textContent).toBe(
+      "3 — Nível 3",
+    );
+    await clicar(
+      ficha.querySelector('.entrevistas-segmentado button[data-valor="S"]'),
+    );
+    for (const celula of celulas) await escolher(celula, "3");
+    expect(
+      document.getElementById("entrevistasFichaTotal").textContent,
+    ).toContain("6");
+    expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
+      "Apto",
+    );
+    await escolher(celulas[0], "1");
+    await escolher(celulas[1], "1");
+    expect(document.getElementById("entrevistasFichaParecer").textContent).toBe(
+      "Inapto",
+    );
+    expect(ficha.textContent).toContain("é eliminatória");
+
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    await esperar();
+    expect(ficha.textContent).toContain("Dado inválido: Nota 7 fora da faixa.");
+    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
+    expect(argumentos.p_entrevista).toBe("e1");
+    expect(argumentos.p_dados.compareceu).toBe("S");
+    expect(argumentos.p_dados.notas).toHaveLength(4);
+    expect(argumentos.p_dados.notas).toContainEqual({
+      competencia: "c1",
+      avaliador: "a1",
+      nota: 1,
+    });
+
+    falhar = false;
+    const antes = chamadas(supabase, "get_entrevistas_da_area").length;
+    await clicar(ficha.querySelector('button[type="submit"]'));
+    await esperar();
+    expect(chamadas(supabase, "get_entrevistas_da_area").length).toBe(
+      antes + 1,
+    );
+  });
+
+  it("ficha pelo teclado: Enter avança para a próxima nota, Ctrl+Enter salva", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(
+      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
+    );
+    const ficha = document.getElementById("entrevistasFichaDoCandidato");
+    const celulas = ficha.querySelectorAll("select.entrevistas-nota");
+    celulas[0].focus();
+    await escolher(celulas[0], "4");
+    await teclar(celulas[0], "Enter");
+    expect(document.activeElement).toBe(celulas[1]);
+    await teclar(celulas[1], "Enter", { ctrlKey: true });
+    await esperar();
+    const [[, argumentos]] = chamadas(supabase, "lancar_notas_entrevista");
+    expect(argumentos.p_dados.notas).toEqual([
+      { competencia: "c1", avaliador: "a1", nota: 4 },
+    ]);
+  });
+
+  it("modo AVALIADOR: só a coluna do avaliador ligado ao perfil fica aberta", async () => {
+    const edital = {
+      ...EDITAL,
+      configuracao: { ...EDITAL.configuracao, lancamento: "AVALIADOR" },
+    };
+    await montar(supabaseDaConducao({ edital }));
+    await abrirEdital();
+    await clicar(
+      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
+    );
+    const ficha = document.getElementById("entrevistasFichaDoCandidato");
+    const celulas = [...ficha.querySelectorAll("select.entrevistas-nota")];
+    expect(celulas).toHaveLength(2);
+    expect(
+      celulas.every((c) => c.getAttribute("aria-label").includes("Ana")),
+    ).toBe(true);
+    expect(ficha.textContent).toContain("só a coluna ligada ao seu perfil");
+  });
+
+  it("sem nível de editor, tudo aparece só para consulta", async () => {
+    const edital = { ...EDITAL, pode_editar: false };
+    await montar(supabaseDaConducao({ edital }));
+    await abrirEdital();
+    expect(document.getElementById("entrevistasConvocar")).toBeNull();
+    expect(naTela("Somente consulta")).toBe(true);
+    await clicar(
+      document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
+    );
+    const ficha = document.getElementById("entrevistasFichaDoCandidato");
+    expect(ficha.querySelectorAll("select.entrevistas-nota")).toHaveLength(0);
+    expect(ficha.querySelector('button[type="submit"]')).toBeNull();
+    await clicar(ficha.querySelector(".analises-drawer-close"));
+    await clicar(visao("roteiros"));
+    await esperar();
+    expect(document.getElementById("entrevistasNovoRoteiro")).toBeNull();
+    expect(document.querySelector('[data-roteiro="r1"]').textContent).toContain(
+      "Ver",
     );
   });
 });

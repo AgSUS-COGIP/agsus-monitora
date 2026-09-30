@@ -26,8 +26,11 @@ import {
   temaEscuroDoPainel,
 } from "../../lib/tema-do-painel.js";
 import { criarAvisoDoPainel } from "../aviso-do-painel.js";
+import { VisaoDeConducao } from "./conducao.jsx";
+import { criarEstadoDaConducao } from "./estado-da-conducao.js";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import { GavetaDaEntrevista, GavetaDosSemEntrevista } from "./gaveta.jsx";
+import { VisaoDeRoteiros } from "./roteiros.jsx";
 import {
   Filtros,
   filtrosAtivos,
@@ -45,11 +48,17 @@ import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
   (src/modules/pagina-do-painel.js), num quadro; sozinho numa aba, funciona do
   mesmo jeito (a sessão do Supabase é a do navegador).
 
-  Fase 1: só leitura. Os dados vêm da planilha de entrevistas, carregada no
-  banco pela sincronização (`sincronizar_entrevistas`); a tela mostra a última
-  carga, os KPIs, os gráficos, as pendências (aprovados sem entrevista,
-  entrevistas sem análise, sem edital e com nota divergente), a tabela e a
-  gaveta com o caminho do candidato.
+  Três visões, no controle segmentado do cabeçalho:
+  - "Resultados" (a primeira, só leitura): os dados da planilha de
+    entrevistas, carregada no banco pela sincronização
+    (`sincronizar_entrevistas`), e os das entrevistas conduzidas no sistema
+    (a mesma TB_ENTREVISTA); a última carga, os KPIs, os gráficos, as
+    pendências (aprovados sem entrevista, entrevistas sem análise, sem edital
+    e com nota divergente), a tabela e a gaveta com o caminho do candidato.
+  - "Conduzir entrevistas" (conducao.jsx): configurar, convocar e lançar as
+    notas de um edital. Cada gravação que muda o resultado relê "Resultados".
+  - "Roteiros" (roteiros.jsx): os modelos de entrevista, com versões.
+  Quem não edita as entrevistas vê as duas últimas só para consulta.
 
   O carregamento é o skeleton do painel de análises; falha na primeira carga
   vira o aviso de erro dele, com "Tentar novamente". Sem permissão, a tela diz
@@ -92,8 +101,27 @@ function SemAcesso({ mensagem }) {
   );
 }
 
-export function PainelDeEntrevistas({ estado, area, nomeDaArea }) {
+export const VISOES = Object.freeze([
+  Object.freeze({
+    valor: "resultados",
+    rotulo: "Resultados",
+    icone: "fa-chart-column",
+  }),
+  Object.freeze({
+    valor: "conduzir",
+    rotulo: "Conduzir entrevistas",
+    icone: "fa-file-circle-check",
+  }),
+  Object.freeze({
+    valor: "roteiros",
+    rotulo: "Roteiros",
+    icone: "fa-list-check",
+  }),
+]);
+
+export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
+  const [visao, setVisao] = useState("resultados");
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const [escuro, setEscuro] = useState(() => temaEscuroDoPainel());
   const { carregado, dados } = e;
@@ -153,15 +181,29 @@ export function PainelDeEntrevistas({ estado, area, nomeDaArea }) {
     <>
       <div className="shell">
         <Topo
-          subtitulo={`${nomeDaArea} · Resultado das entrevistas dos candidatos`}
+          subtitulo={`${nomeDaArea} · ${
+            visao === "resultados"
+              ? "Resultado das entrevistas dos candidatos"
+              : visao === "conduzir"
+                ? "Configuração, convocação e notas por edital"
+                : "Roteiros de entrevista"
+          }`}
           status={textoDoStatus(e)}
           escuro={escuro}
           aoTema={() => setEscuro(alternarTemaDoPainel())}
           aoTelaCheia={alternarTelaCheia}
-          aoAtualizar={() => void estado.carregar(area)}
+          aoAtualizar={() => {
+            void estado.carregar(area);
+            if (visao === "conduzir" && conducao.obter().editalId)
+              void conducao.recarregarEdital();
+            if (visao === "roteiros") void conducao.carregarRoteiros(area);
+          }}
           atualizarDesativado={e.atualizando || e.semSessao}
           aoExportar={() => estado.exportarCsv(filtradas)}
           exportarDesativado={!carregado || !filtradas.length}
+          visoes={e.semAcesso || e.semSessao ? null : VISOES}
+          visao={visao}
+          aoTrocarVisao={setVisao}
         />
 
         <main className="content">
@@ -172,7 +214,18 @@ export function PainelDeEntrevistas({ estado, area, nomeDaArea }) {
           ) : null}
           {e.semAcesso ? <SemAcesso mensagem={e.erroAoCarregar} /> : null}
 
-          {e.semAcesso ? null : (
+          {e.semAcesso || e.semSessao || visao !== "conduzir" ? null : (
+            <VisaoDeConducao
+              conducao={conducao}
+              area={area}
+              entrevistasDoPainel={entrevistas}
+            />
+          )}
+          {e.semAcesso || e.semSessao || visao !== "roteiros" ? null : (
+            <VisaoDeRoteiros conducao={conducao} area={area} />
+          )}
+
+          {e.semAcesso || visao !== "resultados" ? null : (
             <>
               {vazio ? (
                 <section
@@ -270,6 +323,12 @@ export function montarPainelDeEntrevistas({
     baixar,
     ...(armazenamento ? { armazenamento } : {}),
   });
+  const conducao = criarEstadoDaConducao({
+    supabase,
+    toast,
+    // Notas, convocação e desconvocação mudam o que "Resultados" mostra.
+    aoMudarResultados: () => void estado.carregar(),
+  });
   let raizDoReact = null;
   if (raiz) {
     raizDoReact = createRoot(raiz);
@@ -278,6 +337,7 @@ export function montarPainelDeEntrevistas({
         <StrictMode>
           <PainelDeEntrevistas
             estado={estado}
+            conducao={conducao}
             area={area}
             nomeDaArea={nomeDaArea}
           />
@@ -285,5 +345,5 @@ export function montarPainelDeEntrevistas({
       ),
     );
   }
-  return { estado, raiz: raizDoReact };
+  return { estado, conducao, raiz: raizDoReact };
 }
