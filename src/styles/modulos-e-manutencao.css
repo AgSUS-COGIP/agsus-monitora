@@ -127,13 +127,19 @@
   color: var(--state-neutral);
 }
 
-.modulos-beta {
+.modulos-beta,
+.modulos-comemoracoes {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5);
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
   cursor: pointer;
+}
+
+.modulos-comemoracoes__dica {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-size: var(--text-caption);
 }
 
 /* Mensagem e previsão, quando em manutenção. */

@@ -300,4 +300,22 @@ describe("Configurações › Módulos e abas", () => {
     expect(controlador.confirmarSaida()).toBe(true);
     expect(controlador.temAlteracoesPendentes()).toBe(false);
   });
+  it("desliga as comemorações do sistema inteiro pelo rascunho, com motivo", async () => {
+    const { supabase } = await montar({ perfil: ADMIN });
+    const caixa = document.querySelector(
+      ".modulos-comemoracoes input[type=checkbox]",
+    );
+    expect(caixa.checked).toBe(true);
+    await clicar(caixa);
+    await clicar(botao("Revisar e salvar"));
+    expect(document.querySelector(".modulos-revisao").textContent).toContain(
+      "Sistema inteiro · Comemorações: Ligadas → Desligadas",
+    );
+    await digitar(document.getElementById("modulosMotivo"), "pedido da gestão");
+    await clicar(botao("Salvar alterações"));
+    await esperar();
+    expect(salvarChamadas(supabase)[0][1].p_alteracoes).toEqual([
+      { escopo: "sistema", campo: "comemoracoes", valor: "N" },
+    ]);
+  });
 });

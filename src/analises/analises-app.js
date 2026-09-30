@@ -21,7 +21,8 @@ import {
   mesclarDetalhe,
   temPdf,
 } from "../lib/lista-do-painel-de-analises.js";
-import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA } from "./analises-area.js";
+import { AREA_DO_PAINEL, PAINEL_DA_SAUDE_INDIGENA, ROTULO_DA_AREA_DO_PAINEL } from "./analises-area.js";
+import { avaliarMarcosDasAnalises } from "./analises-marcos.js";
 import {
   ERROS_SEM_FALLBACK,
   carregarEscopoDoPainel,
@@ -536,6 +537,11 @@ import {
     });
   }
 
+  // Edital 100% analisado e fila zerada (analises-marcos.js); nunca bloqueia o painel.
+  function avaliarMarcosDoPainel(){
+    void avaliarMarcosDasAnalises({ supabase: sb, usuarioId: txt(session?.user?.id), area: AREA_DO_PAINEL, nomeDaArea: ROTULO_DA_AREA_DO_PAINEL, escopo: currentEditalScope(), linhas: rows });
+  }
+
   function applyPayload({ payload, linhas }, opcoes = {}){
     const silencioso = opcoes.silencioso === true;
     analisesPayload = payload;
@@ -551,6 +557,7 @@ import {
       ts: Date.parse(payload.cache?.refreshed_at || payload.generated_at) || Date.now()
     };
     analisesDataLoadedAtLeastOnce = true;
+    avaliarMarcosDoPainel();
     // Redesenho por trás: mantém a página e os filtros de quem está olhando.
     if(silencioso){ hydrateFilters(); applyFilters(); setUpdatedAt(); return; }
     hydrateFilters(); setProgress(62,"Calculando indicadores..."); currentPage=1; applyFilters(); setUpdatedAt(); setProgress(100,`Painel pronto com ${fmtNum(rows.length)} registros.`);
@@ -594,6 +601,7 @@ import {
       filterOptionsSignature = "";
       dataSourceMeta = { source:"supabase", ts:Date.now() };
       analisesDataLoadedAtLeastOnce = true;
+      avaliarMarcosDoPainel();
       hydrateFilters(); setProgress(62,"Calculando indicadores..."); currentPage=1; applyFilters(); setUpdatedAt(); setProgress(100,`Painel pronto com ${fmtNum(rows.length)} registros.`); setTimeout(() => showLoading(false), 180);
       toast(`Dados ${currentEditalScopeLabel().toLowerCase()} atualizados: ${fmtNum(rows.length)} registros carregados.`, "info", 5000);
       return true;

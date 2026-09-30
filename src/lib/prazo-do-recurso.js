@@ -173,3 +173,15 @@ export function cronogramasPorEdital(etapas) {
   }
   return mapa;
 }
+
+/**
+ * A decisão saiu dentro do prazo de resposta? `true` (no dia do prazo ou
+ * antes), `false` (depois) ou `null` (sem decisão ou sem prazo no
+ * cronograma). Datas AAAA-MM-DD; a da decisão já no dia local.
+ */
+export function decididoNoPrazo(diaDaDecisao, dataDoPrazo) {
+  const decisao = data(diaDaDecisao);
+  const prazo = data(dataDoPrazo);
+  if (!decisao || !prazo) return null;
+  return decisao <= prazo;
+}

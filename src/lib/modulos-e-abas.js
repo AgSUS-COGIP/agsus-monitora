@@ -9,8 +9,9 @@
 
   Cada campo editável é identificado por um ALVO — `{ escopo, area?, aba?,
   painel? }`, com escopo em 'sistema' | 'area' | 'aba' | 'aba_area' | 'painel'
-  — e um CAMPO ('ativo' | 'situacao' | 'mensagem' | 'previsao' | 'beta'). Os
-  valores ficam como o banco compara: 'S'/'N' em ativo e beta, 'ATIVA'/
+  — e um CAMPO ('ativo' | 'situacao' | 'mensagem' | 'previsao' | 'beta' |
+  'comemoracoes'). Os valores ficam como o banco compara: 'S'/'N' em ativo,
+  beta e comemoracoes, 'ATIVA'/
   'MANUTENCAO' em situação, '' para mensagem e previsão vazias.
 
   O rascunho guarda só o que difere do original: voltar um campo ao valor
@@ -19,7 +20,8 @@
   A situação que a tela mostra junta ativo e situação em três estados —
   'ativa', 'manutencao', 'desativada'. O sistema inteiro não desativa (só
   entra ou sai de manutenção); painel externo não tem mensagem nem previsão;
-  o selo BETA é só da aba (em todas as áreas). São as regras do banco,
+  o selo BETA é só da aba (em todas as áreas); ligar ou desligar as
+  comemorações (marcos do processo) é só do sistema inteiro. São as regras do banco,
   repetidas aqui para a tela não oferecer o que vai ser recusado.
 */
 import { dataDaPrevisao, formatarPrevisao } from "./situacao-dos-modulos.js";
@@ -60,6 +62,12 @@ export function originaisDaArvore(arvore) {
   if (!arvore) return originais;
 
   guardarManutencao({ escopo: "sistema" }, arvore.sistema);
+  // Sem o campo (banco anterior à migration 20260930150000): ligadas.
+  guardar(
+    { escopo: "sistema" },
+    "comemoracoes",
+    sn(arvore.sistema?.comemoracoes !== false),
+  );
   for (const area of arvore.areas || []) {
     const alvo = { escopo: "area", area: area.co_area };
     guardar(alvo, "ativo", sn(area.ativo !== false));
@@ -234,6 +242,7 @@ const ROTULO_DO_CAMPO = Object.freeze({
   mensagem: "Mensagem",
   previsao: "Previsão de volta",
   beta: "Selo BETA",
+  comemoracoes: "Comemorações",
 });
 
 export function valorLegivel(campo, valor) {
@@ -245,6 +254,8 @@ export function valorLegivel(campo, valor) {
       return v === "MANUTENCAO" ? "Em manutenção" : "Ativa";
     case "beta":
       return v === "S" ? "Com selo" : "Sem selo";
+    case "comemoracoes":
+      return v === "N" ? "Desligadas" : "Ligadas";
     case "previsao":
       return formatarPrevisao(v) || "sem previsão";
     case "mensagem":

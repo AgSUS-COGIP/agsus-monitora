@@ -68,6 +68,11 @@
 html[data-theme="dark"] .recursos-prazo[data-tone="warning"] {
   color: var(--yellow);
 }
+/* "No prazo" / "Fora do prazo" do recurso decidido, abaixo do prazo. */
+.recursos-no-prazo {
+  display: block;
+  width: fit-content;
+}
 
 /* Etapas na fila: uma bolinha por etapa, cheia quando feita. */
 .recursos-etapas {

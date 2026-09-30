@@ -212,6 +212,7 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
             podeEditar={podeEditar}
             aoAbrir={estado.abrirGaveta}
             aoNovo={estado.abrirNovo}
+            comemoracoes={e.comemoracoes}
           />
         </main>
 

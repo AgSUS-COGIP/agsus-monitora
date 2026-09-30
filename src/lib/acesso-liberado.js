@@ -8,8 +8,9 @@ import { LEVELS, RESOURCES } from "./permissoes-recursos.js";
 
 /*
   Comemoração de quem acabou de ganhar (ou recuperar) acesso, com a lista do
-  que a pessoa pode usar agora. Sem DOM; o desenho e os fogos são de
-  src/modules/comemoracao-do-acesso.js.
+  que a pessoa pode usar agora. Sem DOM; quem mostra é
+  src/modules/comemoracao-do-acesso.js, com o confete e o aviso comuns a todas
+  as comemorações (src/modules/comemoracao.js, regra em src/lib/comemoracao.js).
 
   Quando comemorar, sem campo novo no banco:
     - "reativado": a tela de acesso desativado já foi mostrada a esta pessoa
@@ -28,7 +29,6 @@ export const PREFIXO_DA_CHAVE = "agsus_monitora_acesso_liberado:";
 export const PREFIXO_DA_DESATIVACAO = "agsus_monitora_acesso_desativado:";
 export const JANELA_DA_PRIMEIRA_ENTRADA_MS = 24 * 60 * 60 * 1000;
 export const JANELA_DO_PERFIL_NOVO_MS = 3 * 24 * 60 * 60 * 1000;
-export const DURACAO_DOS_FOGOS_MS = 3000;
 
 const limpo = (valor) => String(valor ?? "").trim();
 
