@@ -220,8 +220,9 @@ describe("marcos do ano", () => {
     expect(marcoAlcancado(26000)).toBe(25000);
   });
 
-  it("marco novo só contra o guardado; ano novo recomeça de zero", () => {
-    expect(marcoNovo(null, { ano: 2026, quantidade: 8000 })).toBe(0);
+  it("primeira vez anuncia o marco do ano; depois só contra o guardado; ano novo recomeça", () => {
+    expect(marcoNovo(null, { ano: 2026, quantidade: 8000 })).toBe(7500);
+    expect(marcoNovo(null, { ano: 2026, quantidade: 400 })).toBe(0);
     expect(
       marcoNovo({ ano: 2026, marco: 5000 }, { ano: 2026, quantidade: 7600 }),
     ).toBe(7500);

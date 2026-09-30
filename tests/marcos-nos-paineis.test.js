@@ -57,11 +57,13 @@ describe("marcos do ano na Visão geral", () => {
   };
   const card = () => document.getElementById("marcosDoAno");
 
-  it("primeira leitura grava a linha de base; o marco novo aparece uma vez e fecha no ×", async () => {
+  it("primeira leitura anuncia o marco já alcançado; o próximo aparece uma vez e fecha no ×", async () => {
     montar(supabaseComMarcos(7400));
     publicarLinhasDoMonitoramento([]);
     await esperar();
-    expect(card().hidden).toBe(true);
+    expect(card().hidden).toBe(false);
+    expect(card().textContent).toContain("passou de 5.000 análises");
+    card().querySelector("button").click();
     desligar();
 
     const supabase = supabaseComMarcos(7600);

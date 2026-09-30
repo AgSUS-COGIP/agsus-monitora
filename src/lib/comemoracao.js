@@ -271,12 +271,14 @@ export function marcoAlcancado(quantidade) {
 
 /**
  * O marco novo desta leitura, ou 0. `anterior` é `{ ano, marco }` guardado;
- * sem ele (linha de base), não há transição vista. Guardado de um ano
+ * sem ele (primeira vez da pessoa), anuncia o marco já alcançado no ano — é
+ * notícia da equipe, não uma pendência antiga (pedido de 30/09). Guardado de um ano
  * anterior: a contagem recomeçou, e o ano novo parte de zero para quem já
  * acompanhava.
  */
 export function marcoNovo(anterior, { ano, quantidade }) {
-  if (!anterior || typeof anterior !== "object") return 0;
+  if (!anterior || typeof anterior !== "object")
+    return marcoAlcancado(quantidade);
   const anoAnterior = Number(anterior.ano);
   if (anoAnterior > Number(ano)) return 0;
   const jaVisto = anoAnterior === Number(ano) ? Number(anterior.marco) || 0 : 0;

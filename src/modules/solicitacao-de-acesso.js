@@ -121,6 +121,17 @@ export function mostrarStatus(doc, tela) {
   }
   const texto = doc.getElementById("accessRequestStatusTexto");
   if (texto) texto.textContent = tela?.texto || "";
+  // Conta desativada não pede nada: o título muda e os textos de pedido e convite somem.
+  const desativada = tela?.ilustracao === "triste";
+  const tituloDoCartao = doc.getElementById("accessRequestTitulo");
+  if (tituloDoCartao)
+    tituloDoCartao.textContent = desativada
+      ? "Acesso desativado"
+      : "Solicitar acesso";
+  for (const seletor of [".access-request-subtitle", ".access-request-invite"])
+    doc
+      .querySelector(`#accessRequestCard ${seletor}`)
+      ?.classList.toggle("hidden", desativada);
   // Conta desativada: um rosto triste discreto (entra devagar; parado com reduced-motion).
   doc
     .getElementById("accessRequestIlustracao")
