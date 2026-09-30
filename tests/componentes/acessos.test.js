@@ -60,6 +60,10 @@ const MATRIZ = (teto) => ({
       coordenacao: "norte",
       revisao_conta: "t0",
       admin_global: false,
+      ativo: true,
+      ultimo_acesso: "2026-09-29T15:00:00Z",
+      convite_pendente: false,
+      areas_efetivas: ["saude-indigena"],
       permissoes: {
         "area:saude-indigena": celula("leitor", "excecao", "sem_acesso"),
         dashboard: celula("leitor"),
@@ -76,6 +80,11 @@ const MATRIZ = (teto) => ({
       coordenacao: "norte",
       revisao_conta: "t1",
       admin_global: false,
+      ativo: true,
+      cadastrado_em: "2026-09-28T15:00:00Z",
+      ultimo_acesso: null,
+      convite_pendente: true,
+      areas_efetivas: ["saude-indigena"],
       permissoes: { nucleo: celula("editor") },
     },
   ],
@@ -204,6 +213,13 @@ const abas = () =>
   );
 const select = (rotulo) =>
   document.querySelector(`select[aria-label="${rotulo}"]`);
+/** Liga "Ver permissões por módulo (avançado)": a matriz com um select por módulo. */
+const verPorModulo = () =>
+  clicar(
+    [...document.querySelectorAll("label.acessos-alternar input")].find(
+      (el) => el.type === "checkbox",
+    ),
+  );
 const botao = (texto) =>
   [...document.querySelectorAll("button")].find(
     (b) => b.textContent.trim() === texto,
@@ -222,6 +238,7 @@ describe("Configurações › Acessos", () => {
     const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
     expect(document.body.textContent).toContain("Ana <img src=x>");
     expect(document.querySelector("img")).toBeNull();
+    await verPorModulo();
     expect(select("Grupo de Ana <img src=x>").value).toBe("usuario");
     const aprovados = select("Lista de aprovados de Ana <img src=x>");
     expect(aprovados.value).toBe("editor");
@@ -257,6 +274,7 @@ describe("Configurações › Acessos", () => {
 
   it("coordenador: a própria linha trava, nível acima do teto e grupo com Acessos ficam fora", async () => {
     await montar({ perfil: COORD, teto: TETO_COORD });
+    await verPorModulo();
     expect(select("Editais de Coord").disabled).toBe(true);
     const dashboard = select("Visão geral de Ana <img src=x>");
     expect(
@@ -395,6 +413,29 @@ describe("Configurações › Acessos", () => {
       p_areas: null,
       p_motivo: "Entrou na equipe",
     });
+    // Passo "Convite pronto": mensagem, copiar e abrir no e-mail.
+    const modal = document.getElementById("acessosAdicionar");
+    expect(modal.querySelector("h3").textContent).toBe("Convite pronto");
+    const mensagem = modal.querySelector(".acessos-convite-mensagem");
+    expect(mensagem.textContent).toBe(
+      `Olá, Nova Pessoa! Você foi convidado(a) para o MONITORA (AgSUS). Acesse ${window.location.origin} e entre com sua conta Google nova.pessoa@agenciasus.org.br.`,
+    );
+    const email = [...modal.querySelectorAll("a")].find(
+      (a) => a.textContent.trim() === "Abrir no e-mail",
+    );
+    expect(email.getAttribute("href")).toMatch(
+      /^mailto:nova\.pessoa@agenciasus\.org\.br\?subject=Convite%20para%20o%20MONITORA&body=Ol%C3%A1%2C%20Nova%20Pessoa!/,
+    );
+    const writeText = vi.fn(async () => {});
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    await clicar(botao("Copiar mensagem"));
+    expect(writeText).toHaveBeenCalledWith(mensagem.textContent);
+    expect(modal.textContent).toContain("Mensagem copiada.");
+    await clicar(botao("Concluir"));
+    expect(document.getElementById("acessosAdicionar")).toBeNull();
   });
 
   it("conta que é coordenação vai para Coordenações pela gaveta", async () => {
@@ -423,6 +464,7 @@ describe("Configurações › Acessos", () => {
   it("guarda de saída: com alteração pendente pergunta, e descartar limpa", async () => {
     const confirmar = vi.fn(() => false);
     await montar({ perfil: ADMIN, teto: TETO_ADMIN, confirmar });
+    await verPorModulo();
     await escolher(select("Editais de Ana <img src=x>"), "editor");
     expect(controlador.temAlteracoesPendentes()).toBe(true);
     expect(controlador.confirmarSaida()).toBe(false);
@@ -474,6 +516,7 @@ describe("Acessos: administrador global e falha de rede", () => {
       }),
     );
     await act(async () => controlador.estado.carregarMatriz());
+    await verPorModulo();
     expect(select("Editais de COET")).toBeNull();
     const linha = [...document.querySelectorAll("tbody tr")].find((tr) =>
       tr.textContent.includes("COET"),
@@ -499,6 +542,7 @@ describe("Acessos: administrador global e falha de rede", () => {
         ? Promise.reject(new TypeError("Failed to fetch"))
         : original(nome, args),
     );
+    await verPorModulo();
     await escolher(select("Editais de Ana <img src=x>"), "editor");
     await digitar(document.getElementById("acessosMotivo"), "Nova função");
     await clicar(botao("Salvar alterações"));
@@ -508,5 +552,214 @@ describe("Acessos: administrador global e falha de rede", () => {
     expect(document.body.textContent).not.toContain("Failed to fetch");
     expect(botao("Salvar alterações").disabled).toBe(false);
     expect(controlador.estado.obter().rascunho.size).toBe(1);
+  });
+});
+
+/*
+  Pedidos de 30/09: a aba Usuários fica simples (pessoa, grupo, áreas,
+  coordenação, situação) e a matriz por módulo vira opção avançada. Uma conta
+  de administrador foi para "Usuário" sem área e entrou num sistema vazio: a
+  gaveta avisa e o salvar espera a área (o banco recusa com 23514). Quem nunca
+  entrou tem o convite para reenviar ou cancelar.
+*/
+describe("Acessos: visão simples, trava de área e convite", () => {
+  const CONTA_ADMIN = {
+    id: "adm3",
+    nome: "Conta Admin",
+    email: "contaadmin@agenciasus.org.br",
+    grupo: "admin",
+    coordenacao: null,
+    revisao_conta: "t3",
+    admin_global: true,
+    ativo: true,
+    ultimo_acesso: "2026-09-30T12:00:00Z",
+    convite_pendente: false,
+    areas_efetivas: ["saude-indigena"],
+    permissoes: {
+      "area:saude-indigena": celula("sem_acesso", "excecao", "sem_acesso"),
+      nucleo: celula("admin"),
+    },
+  };
+
+  async function montarCom(usuarios, extra = {}) {
+    const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation((nome, args) =>
+      nome === "obter_matriz_acessos"
+        ? Promise.resolve({
+            data: { ...MATRIZ(TETO_ADMIN), usuarios },
+            error: null,
+          })
+        : extra[nome]
+          ? extra[nome](args)
+          : original(nome, args),
+    );
+    await act(async () => controlador.estado.carregarMatriz());
+    return supabase;
+  }
+  const linhaDe = (texto) =>
+    [...document.querySelectorAll("tbody tr")].find((tr) =>
+      tr.textContent.includes(texto),
+    );
+  const gaveta = () => document.getElementById("acessosGaveta");
+
+  it("por padrão: pessoa, grupo, áreas, coordenação e situação; sem select por módulo", async () => {
+    await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    const colunas = [...document.querySelectorAll("thead th")].map((th) =>
+      th.textContent.trim(),
+    );
+    expect(colunas).toEqual([
+      "Pessoa",
+      "Grupo",
+      "Áreas",
+      "Coordenação",
+      "Situação",
+    ]);
+    expect(select("Editais de Ana <img src=x>")).toBeNull();
+    const ana = linhaDe("Ana <img src=x>");
+    expect(ana.textContent).toContain("ana@agenciasus.org.br");
+    expect(ana.querySelector(".acessos-chip-grupo").textContent).toBe(
+      "Usuário",
+    );
+    expect(ana.querySelector(".acessos-grupo small").textContent).toMatch(
+      /^Leitura: vê .*não altera nada\.$/,
+    );
+    expect(ana.textContent).toContain("Saúde Indígena");
+    expect(ana.textContent).toContain("Norte");
+    expect(ana.textContent).toContain("Último acesso em 29/09/2026");
+    const coord = linhaDe("coord@agenciasus.org.br");
+    expect(coord.querySelector(".acessos-selo-convite").textContent).toBe(
+      "Convidado · ainda não entrou",
+    );
+    // A linha inteira abre a gaveta.
+    await clicar(ana.querySelector("td"));
+    expect(gaveta().querySelector("h3").textContent).toBe("Ana <img src=x>");
+    const titulos = [...gaveta().querySelectorAll("h4, summary")].map((el) =>
+      el.textContent.trim(),
+    );
+    expect(titulos.slice(0, 4)).toEqual([
+      "Grupo",
+      "Áreas",
+      "Coordenação",
+      "Avançado: exceções por módulo",
+    ]);
+    expect(
+      gaveta().querySelector('select[aria-label="Grupo de Ana <img src=x>"]')
+        .value,
+    ).toBe("usuario");
+    // Voltar à matriz: o toggle mostra um select por módulo.
+    await clicar(gaveta().querySelector('button[aria-label="Fechar"]'));
+    await verPorModulo();
+    expect(select("Editais de Ana <img src=x>")).not.toBeNull();
+  });
+
+  it("admin que vira Usuário sem área: a gaveta avisa, o salvar espera; com a área, vai tudo num lote", async () => {
+    const supabase = await montarCom([CONTA_ADMIN]);
+    await clicar(linhaDe("Conta Admin").querySelector("td"));
+    expect(gaveta().textContent).toContain(
+      "Administrador global: vê todas as áreas.",
+    );
+    await escolher(
+      gaveta().querySelector('select[aria-label="Grupo de Conta Admin"]'),
+      "usuario",
+    );
+    expect(gaveta().querySelector(".acessos-sem-area").textContent).toContain(
+      "Sem área e sem coordenação, Conta Admin entra e não vê nada.",
+    );
+    expect(gaveta().textContent).toContain(
+      "Leitura: vê visão geral, editais e lista de aprovados, não altera nada.",
+    );
+    const barra = document.querySelector(".acessos-salvar");
+    expect(barra.querySelector(".acessos-sem-area").textContent).toContain(
+      "Conta Admin ficaria sem nenhuma área",
+    );
+    await digitar(document.getElementById("acessosMotivo"), "Saiu da gestão");
+    expect(botao("Salvar alterações").disabled).toBe(true);
+
+    const caixa = [...gaveta().querySelectorAll("label")]
+      .find((l) => l.textContent.trim() === "Saúde Indígena")
+      .querySelector("input");
+    await clicar(caixa);
+    expect(gaveta().querySelector(".acessos-sem-area")).toBeNull();
+    expect(
+      document.querySelector(".acessos-salvar .acessos-sem-area"),
+    ).toBeNull();
+    await clicar(gaveta().querySelector('button[aria-label="Fechar"]'));
+    await clicar(botao("Salvar alterações"));
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_matriz_acessos",
+    );
+    expect(chamada[1]).toEqual({
+      p_alteracoes: [
+        { tipo: "grupo", usuario_id: "adm3", grupo: "usuario", revisao: "t3" },
+        {
+          tipo: "nivel",
+          usuario_id: "adm3",
+          recurso: "area:saude-indigena",
+          nivel: "leitor",
+          revisao: 0,
+        },
+      ],
+      p_motivo: "Saiu da gestão",
+    });
+  });
+
+  it("recusa do banco (23514) aparece com a mensagem dele e o rascunho fica", async () => {
+    const mensagem =
+      "Ana ficaria sem nenhuma área e não veria nada no sistema. Marque ao menos uma área (ou uma coordenação) junto com a troca de grupo.";
+    await montarCom(MATRIZ(TETO_ADMIN).usuarios, {
+      salvar_matriz_acessos: () =>
+        Promise.resolve({
+          data: null,
+          error: { code: "23514", message: mensagem },
+        }),
+    });
+    await verPorModulo();
+    await escolher(select("Editais de Ana <img src=x>"), "editor");
+    await digitar(document.getElementById("acessosMotivo"), "Teste");
+    await clicar(botao("Salvar alterações"));
+    const aviso = document.querySelector('p.alert[role="status"]');
+    expect(aviso.className).toContain("warn");
+    expect(aviso.textContent).toContain(mensagem);
+    expect(aviso.textContent).toContain("Nada foi salvo");
+    expect(controlador.estado.obter().rascunho.size).toBe(1);
+  });
+
+  it("convite pendente: a gaveta reenvia (copiar / e-mail) e cancela com motivo", async () => {
+    const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    await clicar(linhaDe("coord@agenciasus.org.br").querySelector("td"));
+    const secao = gaveta().querySelector(
+      '[aria-labelledby="acessosGavetaConvite"]',
+    );
+    expect(secao.textContent).toContain("Cadastrado em 28/09/2026.");
+    expect(secao.querySelector("summary").textContent).toBe("Reenviar convite");
+    expect(
+      secao.querySelector(".acessos-convite-mensagem").textContent,
+    ).toContain("Olá, Coord! Você foi convidado(a) para o MONITORA (AgSUS).");
+    expect(
+      [...secao.querySelectorAll("a")]
+        .find((a) => a.textContent.trim() === "Abrir no e-mail")
+        .getAttribute("href"),
+    ).toMatch(/^mailto:coord@agenciasus\.org\.br\?subject=/);
+    expect(secao.textContent).toContain("O link sozinho não dá acesso");
+    // "Desativar acesso" some: para quem nunca entrou, é "Cancelar convite".
+    expect(botao("Desativar acesso")).toBeUndefined();
+    await clicar(botao("Cancelar convite"));
+    await digitar(
+      document.getElementById("acessosCancelarConviteMotivo"),
+      "Não vai mais entrar",
+    );
+    await clicar(
+      [...secao.querySelectorAll("form button")].find(
+        (b) => b.textContent.trim() === "Cancelar convite",
+      ),
+    );
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "desativar_acesso_usuario",
+    );
+    expect(chamada[1]).toEqual({
+      p_perfil_usuario_id: "eu",
+      p_motivo: "Não vai mais entrar",
+    });
   });
 });

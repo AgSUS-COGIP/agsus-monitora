@@ -35,6 +35,8 @@ const RPC_ADICIONAR_PESSOA = "adicionar_pessoa_acesso";
 const RPC_MOVER_PARA_COORDENACOES = "mover_conta_para_coordenacoes";
 
 const CONFLITO = "40001";
+/* salvar_matriz_acessos: o lote deixaria alguém ativo sem nenhuma área. */
+const SEM_AREA = "23514";
 /*
   Uma chamada que não volta (rede caída, VPN, servidor parado) não pode deixar
   o botão em "Salvando…" para sempre: passado o limite, ela falha como erro de
@@ -225,18 +227,26 @@ export function criarEstadoDosAcessos({
           });
           return false;
         }
+        // Sem área: a mensagem do banco já diz quem e o que fazer.
         publicar({
-          aviso: {
-            tom: "danger",
-            texto: `Não foi possível salvar: ${mensagemDoErro(erro)} As alterações continuam pendentes.`,
-          },
+          aviso:
+            erro?.code === SEM_AREA
+              ? {
+                  tom: "warn",
+                  texto: `${mensagemDoErro(erro)} Nada foi salvo; as alterações continuam pendentes.`,
+                }
+              : {
+                  tom: "danger",
+                  texto: `Não foi possível salvar: ${mensagemDoErro(erro)} As alterações continuam pendentes.`,
+                },
         });
         return false;
       }
     });
   }
 
-  function desativarUsuario(usuario, motivo) {
+  /* `convite`: cancelar o convite de quem nunca entrou (a mesma desativação). */
+  function desativarUsuario(usuario, motivo, { convite = false } = {}) {
     return executar(`desativar:${usuario.id}`, "Desativando…", async () => {
       try {
         await rpc(RPC_DESATIVAR_USUARIO, {
@@ -244,7 +254,9 @@ export function criarEstadoDosAcessos({
           p_motivo: motivo,
         });
         toast(
-          `Acesso de ${usuario.nome || usuario.email} desativado.`,
+          convite
+            ? `Convite de ${usuario.nome || usuario.email} cancelado.`
+            : `Acesso de ${usuario.nome || usuario.email} desativado.`,
           "success",
         );
         publicar({ gaveta: null });
@@ -274,9 +286,9 @@ export function criarEstadoDosAcessos({
             : `${nome} tem acesso a partir de agora (entra com ${email}).`,
           "success",
         );
-        publicar({ adicionando: 0 });
+        // O modal continua aberto, no passo "Convite pronto".
         await carregarMatriz();
-        return true;
+        return { nome, email, reativada: Boolean(resposta?.reativada) };
       } catch (erro) {
         toast(`Não foi possível adicionar: ${mensagemDoErro(erro)}`, "error");
         return false;

@@ -4,12 +4,18 @@ import {
   ALVO_GRUPO,
   MODULOS,
   alvoPendente,
+  areasDaLinha,
   celulaExibida,
   contarPendencias,
   coordenacaoDaLinha,
+  explicacaoDoGrupo,
   grupoDaLinha,
+  linhaFicariaSemArea,
+  pendenciasDoUsuario,
+  pessoasSemAreaNoRascunho,
   resumoDoRascunho,
 } from "../../lib/matriz-de-acessos.js";
+import { situacaoDoAcesso } from "../../lib/convite-de-acesso.js";
 import {
   gruposAtribuiveis,
   opcoesDoModulo,
@@ -17,13 +23,15 @@ import {
   podeMudarCoordenacao,
   valorDoSelect,
 } from "../../lib/teto-de-acessos.js";
-import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
 import { BotaoDeAcao, LinhasEsqueleto } from "../lista-aprovados/partes.jsx";
 import { Icone } from "../icone.jsx";
 import {
   CampoMotivo,
   ControleSegmentado,
+  OpcoesDeCoordenacao,
+  OpcoesDoGrupo,
+  OpcoesDoModulo,
   classes,
   motivoValido,
 } from "./partes.jsx";
@@ -45,47 +53,147 @@ export function iniciais(nome) {
 }
 
 /*
-  Usuários: cada pessoa segue um grupo (select em forma de tag) e pode ter
-  permissão individual em qualquer módulo (um select por módulo; "Do grupo"
-  segue o grupo). Áreas, painéis e "como a pessoa vê" ficam na gaveta, aberta
-  pelo nome. As alterações vão para um rascunho e só gravam com motivo.
+  Usuários. Por padrão, a visão SIMPLES: uma linha por pessoa com grupo (e o
+  que ele deixa fazer), áreas, coordenação e situação (convite pendente ou
+  último acesso). A linha abre a gaveta, onde se muda grupo, áreas e
+  coordenação.
+
+  "Ver permissões por módulo (avançado)" troca pela matriz: grupo (select em
+  forma de tag) e um select por módulo ("Do grupo" segue o grupo). Nas duas,
+  as alterações vão para o mesmo rascunho e só gravam com motivo.
 */
 
-function OpcoesDeCoordenacao({ coordenacoes, areas, atual }) {
-  return coordenacoesPorArea(
-    coordenacoes.filter((c) => c.ativo || c.codigo === atual),
-    areas,
-  ).map((grupo) => (
-    <optgroup key={grupo.area.id} label={grupo.area.titulo}>
-      {grupo.coordenacoes.map((c) => (
-        <option key={c.codigo} value={c.codigo}>
-          {c.nome}
-        </option>
-      ))}
-    </optgroup>
-  ));
-}
-
-/*
-  O select mostra só o nível. Aberto, separa o que vem do grupo (valor "") do
-  que vira permissão individual; a legenda acima da tabela explica o destaque.
-*/
-function OpcoesDoModulo({ opcoes }) {
-  const [doGrupo, ...individuais] = opcoes;
-  const opcao = (o) => (
-    <option key={o.valor} value={o.valor} disabled={o.desabilitada}>
-      {o.rotulo}
-    </option>
-  );
+function Pessoa({ usuario, titulo, aoAbrir, comEmail = false }) {
+  const nome = usuario.nome || usuario.email;
   return (
-    <>
-      <optgroup label="Do grupo">{opcao(doGrupo)}</optgroup>
-      <optgroup label="Individual">{individuais.map(opcao)}</optgroup>
-    </>
+    <span className="acessos-pessoa">
+      <span className="acessos-avatar" aria-hidden="true">
+        {iniciais(nome)}
+      </span>
+      <span className="acessos-pessoa-textos">
+        <button
+          type="button"
+          className="acessos-nome"
+          title={titulo}
+          onClick={(evento) => {
+            evento.stopPropagation();
+            aoAbrir();
+          }}
+        >
+          {nome}
+        </button>
+        {comEmail && usuario.nome ? <small>{usuario.email}</small> : null}
+      </span>
+    </span>
   );
 }
 
-function Linha({
+// ── Visão simples ───────────────────────────────────────────────────────────
+
+function LinhaSimples({ estado, matriz, usuario, rascunho, gruposPorCodigo }) {
+  const { areas = [], coordenacoes = [] } = matriz;
+  const codigoDoGrupo = grupoDaLinha(usuario, rascunho);
+  const grupo = gruposPorCodigo[codigoDoGrupo];
+  const explicacao = explicacaoDoGrupo(grupo);
+  const coordenacao = coordenacaoDaLinha(usuario, rascunho);
+  const nomeDaCoordenacao = coordenacoes.find(
+    (c) => c.codigo === coordenacao,
+  )?.nome;
+  const visiveis = areasDaLinha(usuario, rascunho, matriz);
+  const tituloDaArea = new Map(areas.map((a) => [a.id, a.titulo]));
+  const semArea = linhaFicariaSemArea(usuario, rascunho, matriz);
+  const situacao = situacaoDoAcesso(usuario);
+  const abrir = () => estado.abrirGaveta(usuario.id);
+  const adminGlobal = visiveis.todas;
+  return (
+    <tr
+      className={classes(
+        "acessos-linha-clicavel",
+        pendenciasDoUsuario(rascunho, usuario.id) && "acessos-linha-pendente",
+      )}
+      onClick={abrir}
+    >
+      <th scope="row">
+        <Pessoa
+          usuario={usuario}
+          titulo={`Abrir o acesso de ${usuario.nome || usuario.email}`}
+          aoAbrir={abrir}
+          comEmail
+        />
+      </th>
+      <td
+        className={classes(
+          alvoPendente(rascunho, usuario.id, ALVO_GRUPO) && "acessos-pendente",
+        )}
+      >
+        <span className="acessos-grupo" title={grupo?.descricao || explicacao}>
+          <span className="acessos-chip acessos-chip-grupo">
+            {grupo?.nome || codigoDoGrupo || "—"}
+          </span>
+          {explicacao ? <small>{explicacao}</small> : null}
+        </span>
+      </td>
+      <td>
+        <span className="acessos-chips">
+          {adminGlobal ? (
+            <span className="acessos-chip">Todas as áreas</span>
+          ) : visiveis.ids.length ? (
+            areas
+              .filter((a) => visiveis.ids.includes(a.id))
+              .concat(
+                visiveis.ids
+                  .filter((id) => !tituloDaArea.has(id))
+                  .map((id) => ({ id, titulo: id })),
+              )
+              .map((a) => (
+                <span key={a.id} className="acessos-chip">
+                  {a.titulo}
+                </span>
+              ))
+          ) : (
+            <span
+              className="acessos-chip acessos-chip-alerta"
+              title={
+                semArea
+                  ? "Sem área e sem coordenação: a pessoa entra e não vê nada."
+                  : undefined
+              }
+            >
+              Nenhuma área
+            </span>
+          )}
+        </span>
+      </td>
+      <td
+        className={classes(
+          alvoPendente(rascunho, usuario.id, ALVO_COORDENACAO) &&
+            "acessos-pendente",
+        )}
+      >
+        {adminGlobal ? (
+          <span className="acessos-vazio">—</span>
+        ) : (
+          <span className={classes(!coordenacao && "acessos-secundario")}>
+            {nomeDaCoordenacao || coordenacao || "Sem coordenação"}
+          </span>
+        )}
+      </td>
+      <td>
+        {situacao.tipo === "convite" ? (
+          <span className="acessos-selo acessos-selo-convite">
+            {situacao.rotulo}
+          </span>
+        ) : (
+          <span className="acessos-secundario">{situacao.rotulo}</span>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// ── Visão avançada: permissões por módulo ─────────────────────────────────────
+
+function LinhaPorModulo({
   estado,
   matriz,
   usuario,
@@ -99,24 +207,15 @@ function Linha({
   const bloqueada = !edicao.pode;
   const grupo = grupoDaLinha(usuario, rascunho);
   const coordenacao = coordenacaoDaLinha(usuario, rascunho);
-  const atribuiveis = gruposAtribuiveis(teto, grupos);
   const nome = usuario.nome || usuario.email;
   return (
     <tr>
       <th scope="row">
-        <span className="acessos-pessoa">
-          <span className="acessos-avatar" aria-hidden="true">
-            {iniciais(nome)}
-          </span>
-          <button
-            type="button"
-            className="acessos-nome"
-            title={`${usuario.email}${edicao.motivo ? ` · ${edicao.motivo}` : ""}`}
-            onClick={() => estado.abrirGaveta(usuario.id)}
-          >
-            {nome}
-          </button>
-        </span>
+        <Pessoa
+          usuario={usuario}
+          titulo={`${usuario.email}${edicao.motivo ? ` · ${edicao.motivo}` : ""}`}
+          aoAbrir={() => estado.abrirGaveta(usuario.id)}
+        />
       </th>
       <td
         className={classes(
@@ -132,15 +231,11 @@ function Linha({
             estado.registrar(usuario, ALVO_GRUPO, e.target.value)
           }
         >
-          {grupos.map((g) => (
-            <option
-              key={g.codigo}
-              value={g.codigo}
-              disabled={g.codigo !== grupo && !atribuiveis.includes(g)}
-            >
-              {g.nome}
-            </option>
-          ))}
+          <OpcoesDoGrupo
+            grupos={grupos}
+            atribuiveis={gruposAtribuiveis(teto, grupos)}
+            atual={grupo}
+          />
         </select>
       </td>
       {comCoordenacao ? (
@@ -214,7 +309,7 @@ function Linha({
               )}
               aria-label={`${modulo.rotulo} de ${nome}`}
               value={valorDoSelect(celula)}
-              disabled={bloqueada || usuario.admin_global}
+              disabled={bloqueada}
               title={
                 celula.individual
                   ? "Permissão individual: vale só para esta pessoa"
@@ -235,6 +330,8 @@ function Linha({
   );
 }
 
+// ── Salvar ──────────────────────────────────────────────────────────────────
+
 function BarraDeSalvar({ estado, rascunho, matriz }) {
   const [motivo, setMotivo] = useState("");
   const [tentou, setTentou] = useState(false);
@@ -244,13 +341,15 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
     grupos: matriz.grupos,
     coordenacoes: matriz.coordenacoes,
   });
+  // Mesma regra do banco: ninguém sai do lote sem área.
+  const semArea = pessoasSemAreaNoRascunho(rascunho, matriz);
   return (
     <form
       className="acessos-salvar"
       onSubmit={(evento) => {
         evento.preventDefault();
         setTentou(true);
-        if (!motivoValido(motivo)) return;
+        if (!motivoValido(motivo) || semArea.length) return;
         void estado
           .salvar(motivo)
           .then((ok) => ok && (setMotivo(""), setTentou(false)));
@@ -274,6 +373,24 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
           ))}
         </ul>
       </details>
+      {semArea.length ? (
+        <div className="alert warn acessos-sem-area" role="alert">
+          <Icone nome="triangle-alert" tamanho={16} />
+          <span>
+            {semArea.map((u) => u.nome || u.email).join(", ")}{" "}
+            {semArea.length === 1 ? "ficaria" : "ficariam"} sem nenhuma área e
+            não {semArea.length === 1 ? "veria" : "veriam"} nada. Marque ao
+            menos uma área (ou uma coordenação) antes de salvar.
+          </span>
+          <button
+            type="button"
+            className="btn outline acessos-ghost"
+            onClick={() => estado.abrirGaveta(semArea[0].id)}
+          >
+            Marcar área
+          </button>
+        </div>
+      ) : null}
       <CampoMotivo
         id="acessosMotivo"
         valor={motivo}
@@ -293,6 +410,7 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
           acao="salvar"
           type="submit"
           className="btn primary"
+          disabled={semArea.length > 0}
         >
           Salvar alterações
         </BotaoDeAcao>
@@ -304,6 +422,7 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
 function Ativos({ estado, atual }) {
   const { matriz, rascunho } = atual;
   const [busca, setBusca] = useState(atual.busca);
+  const [porModulo, setPorModulo] = useState(false);
   // Busca aplica 300 ms depois da digitação (design.md 11.3).
   useEffect(() => {
     if (busca.trim() === atual.busca) return undefined;
@@ -328,7 +447,7 @@ function Ativos({ estado, atual }) {
   const filtrando = Boolean(
     atual.busca || atual.filtroGrupo || atual.filtroCoordenacao,
   );
-  const colunas = MODULOS.length + (comCoordenacao ? 3 : 2);
+  const colunas = porModulo ? MODULOS.length + (comCoordenacao ? 3 : 2) : 5;
 
   return (
     <>
@@ -397,51 +516,86 @@ function Ativos({ estado, atual }) {
             Limpar filtros
           </button>
         ) : null}
-        <span className="acessos-legenda" aria-label="Como ler os níveis">
-          <span className="acessos-legenda-grupo">Leitor</span> segue o grupo
-          <span className="acessos-legenda-individual">Editor</span> individual
-        </span>
+        <label className="acessos-alternar">
+          <input
+            type="checkbox"
+            checked={porModulo}
+            onChange={(e) => setPorModulo(e.target.checked)}
+          />
+          Ver permissões por módulo (avançado)
+        </label>
+        {porModulo ? (
+          <span className="acessos-legenda" aria-label="Como ler os níveis">
+            <span className="acessos-legenda-grupo">Leitor</span> segue o grupo
+            <span className="acessos-legenda-individual">Editor</span>{" "}
+            individual
+          </span>
+        ) : null}
         <span className="acessos-contagem-resultados">
           {total.toLocaleString("pt-BR")} {total === 1 ? "pessoa" : "pessoas"}
         </span>
       </div>
 
       <div
-        className="acessos-tabela"
+        className={classes(
+          "acessos-tabela",
+          !porModulo && "acessos-tabela-simples",
+        )}
         data-mobile-table="scroll"
         tabIndex={0}
         role="region"
-        aria-label="Permissões por pessoa"
+        aria-label={porModulo ? "Permissões por módulo" : "Pessoas com acesso"}
       >
         <table>
           <thead>
-            <tr>
-              <th scope="col">Pessoa</th>
-              <th scope="col">Grupo</th>
-              {comCoordenacao ? <th scope="col">Coordenação</th> : null}
-              {MODULOS.map((modulo) => (
-                <th key={modulo.id} scope="col">
-                  {modulo.rotulo}
-                </th>
-              ))}
-            </tr>
+            {porModulo ? (
+              <tr>
+                <th scope="col">Pessoa</th>
+                <th scope="col">Grupo</th>
+                {comCoordenacao ? <th scope="col">Coordenação</th> : null}
+                {MODULOS.map((modulo) => (
+                  <th key={modulo.id} scope="col">
+                    {modulo.rotulo}
+                  </th>
+                ))}
+              </tr>
+            ) : (
+              <tr>
+                <th scope="col">Pessoa</th>
+                <th scope="col">Grupo</th>
+                <th scope="col">Áreas</th>
+                <th scope="col">Coordenação</th>
+                <th scope="col">Situação</th>
+              </tr>
+            )}
           </thead>
           <tbody>
             {!matriz ? (
               <LinhasEsqueleto colunas={colunas} linhas={6} />
             ) : usuarios.length ? (
-              usuarios.map((usuario) => (
-                <Linha
-                  key={usuario.id}
-                  estado={estado}
-                  matriz={matriz}
-                  usuario={usuario}
-                  rascunho={rascunho}
-                  gruposPorCodigo={gruposPorCodigo}
-                  usuarioLogado={usuarioLogado}
-                  comCoordenacao={comCoordenacao}
-                />
-              ))
+              usuarios.map((usuario) =>
+                porModulo ? (
+                  <LinhaPorModulo
+                    key={usuario.id}
+                    estado={estado}
+                    matriz={matriz}
+                    usuario={usuario}
+                    rascunho={rascunho}
+                    gruposPorCodigo={gruposPorCodigo}
+                    usuarioLogado={usuarioLogado}
+                    comCoordenacao={comCoordenacao}
+                  />
+                ) : (
+                  <LinhaSimples
+                    key={usuario.id}
+                    estado={estado}
+                    matriz={matriz}
+                    usuario={usuario}
+                    rascunho={rascunho}
+                    gruposPorCodigo={gruposPorCodigo}
+                  />
+                ),
+              )
             ) : (
               <tr>
                 <td colSpan={colunas} className="acessos-vazio">

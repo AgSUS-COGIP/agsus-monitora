@@ -1,13 +1,27 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
+  ALVO_COORDENACAO,
+  ALVO_GRUPO,
+  MODULOS,
+  adminGlobalDaLinha,
+  areasMarcadasDaLinha,
   celulaExibida,
   coordenacaoDaLinha,
+  explicacaoDoGrupo,
+  ficariaSemArea,
+  grupoDaLinha,
   pendenciasDoUsuario,
 } from "../../lib/matriz-de-acessos.js";
+import { dataCurta } from "../../lib/convite-de-acesso.js";
+import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
 import {
+  gruposAtribuiveis,
   nivelMaximo,
+  opcoesDoModulo,
   podeEditarAreas,
   podeEditarUsuario,
+  podeMudarCoordenacao,
+  valorDoSelect,
 } from "../../lib/teto-de-acessos.js";
 import {
   capacidadesDoPerfil,
@@ -18,13 +32,27 @@ import {
 import { Modal } from "../modal.jsx";
 import { Icone } from "../icone.jsx";
 import { BotaoDeAcao } from "../lista-aprovados/partes.jsx";
-import { CabecalhoDaGaveta, motivoValido } from "./partes.jsx";
+import {
+  CabecalhoDaGaveta,
+  OpcoesDeCoordenacao,
+  OpcoesDoGrupo,
+  OpcoesDoModulo,
+  classes,
+  motivoValido,
+} from "./partes.jsx";
+import { AcoesDoConvite } from "./convite.jsx";
 
 /*
-  Gaveta da pessoa, aberta pelo nome na tabela: o que não cabe em coluna
-  (áreas e painéis externos) e "como a pessoa vê" (menu e escopo lidos do que
-  está salvo — não é entrar como ela). O que muda aqui vai para o mesmo
-  rascunho da tabela e grava com "Salvar alterações".
+  Gaveta da pessoa, aberta pela linha na tabela. Na ordem em que se pensa:
+  grupo (e o que ele deixa fazer), áreas, coordenação e, fechado, "Avançado:
+  exceções por módulo" (níveis individuais e painéis externos). Embaixo,
+  "como a pessoa vê" (menu e escopo lidos do que está salvo — não é entrar
+  como ela). Quem ainda não entrou tem o convite para reenviar ou cancelar.
+
+  O que muda aqui vai para o mesmo rascunho da tabela e grava com "Salvar
+  alterações". Trava: grupo que não é de administrador sem área e sem
+  coordenação deixa a pessoa num sistema vazio — a gaveta avisa e o salvar
+  espera a área (o banco recusa com 23514).
 */
 
 function ComoAPessoaVe({ estado, usuario, matriz, secoesDeConfiguracao }) {
@@ -164,20 +192,174 @@ function MoverParaCoordenacoes({ estado, usuario, areas }) {
   );
 }
 
+/*
+  Quem foi cadastrado e nunca entrou: reenviar a mensagem do convite ou
+  cancelar (desativa o cadastro, com motivo, pela mesma RPC de desativar).
+*/
+function Convite({ estado, usuario, podeCancelar }) {
+  const [cancelando, setCancelando] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const nome = usuario.nome || usuario.email;
+  const desde = dataCurta(usuario.cadastrado_em);
+  return (
+    <section aria-labelledby="acessosGavetaConvite">
+      <h4 id="acessosGavetaConvite">Convite</h4>
+      <p>
+        <span className="acessos-selo acessos-selo-convite">
+          Convidado · ainda não entrou
+        </span>
+        {desde ? (
+          <span className="acessos-secundario"> Cadastrado em {desde}.</span>
+        ) : null}
+      </p>
+      <details className="acessos-reenviar">
+        <summary>Reenviar convite</summary>
+        <AcoesDoConvite nome={usuario.nome} email={usuario.email} />
+      </details>
+      {!podeCancelar ? null : cancelando ? (
+        <form
+          className="acessos-mover"
+          onSubmit={(evento) => {
+            evento.preventDefault();
+            if (motivoValido(motivo))
+              void estado.desativarUsuario(usuario, motivo.trim(), {
+                convite: true,
+              });
+          }}
+        >
+          <p>
+            O cadastro de {nome} é desativado e o e-mail deixa de entrar. Dá
+            para convidar de novo depois.
+          </p>
+          <div className="acessos-campo">
+            <label htmlFor="acessosCancelarConviteMotivo">Motivo</label>
+            <input
+              id="acessosCancelarConviteMotivo"
+              value={motivo}
+              maxLength={500}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Vai para o histórico"
+            />
+          </div>
+          <div className="acessos-acoes">
+            <button
+              type="button"
+              className="btn outline acessos-ghost"
+              onClick={() => setCancelando(false)}
+            >
+              Voltar
+            </button>
+            <BotaoDeAcao
+              estado={estado}
+              acao={`desativar:${usuario.id}`}
+              type="submit"
+              className="btn outline acessos-perigo"
+              disabled={!motivoValido(motivo)}
+            >
+              Cancelar convite
+            </BotaoDeAcao>
+          </div>
+        </form>
+      ) : (
+        <div className="acessos-acoes">
+          <button
+            type="button"
+            className="btn outline acessos-ghost acessos-perigo"
+            onClick={() => setCancelando(true)}
+          >
+            <Icone nome="user-x" tamanho={16} /> Cancelar convite
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Níveis individuais por módulo: o mesmo select da tabela avançada. */
+function ExcecoesPorModulo({
+  estado,
+  usuario,
+  rascunho,
+  teto,
+  gruposPorCodigo,
+  pode,
+}) {
+  return (
+    <ul className="acessos-modulos">
+      {MODULOS.map((modulo) => {
+        const celula = celulaExibida(
+          usuario,
+          modulo.id,
+          rascunho,
+          gruposPorCodigo,
+        );
+        return (
+          <li key={modulo.id}>
+            <div>
+              <strong>{modulo.rotulo}</strong>
+              <small>
+                {celula.individual
+                  ? "Individual: vale só para esta pessoa"
+                  : "Segue o grupo"}
+              </small>
+            </div>
+            {usuario.admin_global ? (
+              <span className="acessos-nivel-fixo">
+                {rotuloDoNivel(celula.nivel, modulo.id)}
+              </span>
+            ) : (
+              <select
+                className={classes(
+                  "acessos-nivel",
+                  celula.individual && "individual",
+                  celula.pendente && "acessos-pendente",
+                )}
+                aria-label={`${modulo.rotulo}: nível da pessoa`}
+                value={valorDoSelect(celula)}
+                disabled={!pode}
+                onChange={(e) =>
+                  estado.registrar(usuario, modulo.id, e.target.value || null)
+                }
+              >
+                <OpcoesDoModulo
+                  opcoes={opcoesDoModulo(teto, modulo.id, celula)}
+                />
+              </select>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
   const { matriz, rascunho, gaveta } = atual;
   const usuario = matriz?.usuarios?.find((u) => u.id === gaveta?.usuarioId);
   if (!usuario) return null;
   const teto = matriz.teto;
+  const grupos = matriz.grupos || [];
+  const areas = matriz.areas || [];
+  const gruposPorCodigo = Object.fromEntries(grupos.map((g) => [g.codigo, g]));
   const usuarioLogado = atual.perfil
     ? { id: atual.perfil.user_id, email: atual.perfil.email }
     : null;
   const edicao = podeEditarUsuario(teto, usuario, usuarioLogado);
+  const codigoDoGrupo = grupoDaLinha(usuario, rascunho);
+  const grupo = gruposPorCodigo[codigoDoGrupo];
+  const adminGlobal = adminGlobalDaLinha(usuario, rascunho, gruposPorCodigo);
   const coordenacao = coordenacaoDaLinha(usuario, rascunho);
   const nomeDaCoordenacao = (matriz.coordenacoes || []).find(
     (c) => c.codigo === coordenacao,
   )?.nome;
+  const semArea =
+    usuario.ativo !== false &&
+    ficariaSemArea({
+      adminGlobal,
+      coordenacao,
+      areasMarcadas: areasMarcadasDaLinha(usuario, rascunho, areas),
+    });
   const nome = usuario.nome || usuario.email;
   const pendentes = pendenciasDoUsuario(rascunho, usuario.id);
   const marcado = (recurso) =>
@@ -220,13 +402,40 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
           <p className="alert info">
             <Icone nome="triangle-alert" tamanho={16} /> {pendentes}{" "}
             {pendentes === 1 ? "alteração pendente" : "alterações pendentes"}:
-            salve na página, com o motivo.
+            feche e salve na página, com o motivo.
           </p>
         ) : null}
 
+        {usuario.convite_pendente ? (
+          <Convite
+            estado={estado}
+            usuario={usuario}
+            podeCancelar={Boolean(teto.admin_global && edicao.pode)}
+          />
+        ) : null}
+
+        <section aria-labelledby="acessosGavetaGrupo">
+          <h4 id="acessosGavetaGrupo">Grupo</h4>
+          <select
+            aria-label={`Grupo de ${nome}`}
+            value={codigoDoGrupo || ""}
+            disabled={!edicao.pode}
+            onChange={(e) =>
+              estado.registrar(usuario, ALVO_GRUPO, e.target.value)
+            }
+          >
+            <OpcoesDoGrupo
+              grupos={grupos}
+              atribuiveis={gruposAtribuiveis(teto, grupos)}
+              atual={codigoDoGrupo}
+            />
+          </select>
+          <p className="acessos-secundario">{explicacaoDoGrupo(grupo)}</p>
+        </section>
+
         <section aria-labelledby="acessosGavetaAreas">
           <h4 id="acessosGavetaAreas">Áreas</h4>
-          {usuario.admin_global ? (
+          {adminGlobal ? (
             <p className="acessos-secundario">
               Administrador global: vê todas as áreas.
             </p>
@@ -239,7 +448,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               <legend className="sr-only">
                 Áreas que a pessoa vê inteiras
               </legend>
-              {(matriz.areas || []).map((area) => (
+              {areas.map((area) => (
                 <label key={area.id}>
                   <input
                     type="checkbox"
@@ -254,13 +463,60 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               ))}
             </fieldset>
           )}
+          {semArea ? (
+            <p className="alert warn acessos-sem-area" role="alert">
+              <Icone nome="triangle-alert" tamanho={16} /> Sem área e sem
+              coordenação, {nome} entra e não vê nada. Marque ao menos uma área
+              (ou escolha uma coordenação) para poder salvar.
+            </p>
+          ) : null}
         </section>
 
-        {(matriz.paineis || []).length ? (
-          <section aria-labelledby="acessosGavetaPaineis">
-            <h4 id="acessosGavetaPaineis">Painéis externos</h4>
+        {!adminGlobal ? (
+          <section aria-labelledby="acessosGavetaCoordenacao">
+            <h4 id="acessosGavetaCoordenacao">Coordenação</h4>
+            <select
+              aria-label={`Coordenação de ${nome}`}
+              value={coordenacao || ""}
+              disabled={!edicao.pode || !podeMudarCoordenacao(teto)}
+              onChange={(e) =>
+                estado.registrar(
+                  usuario,
+                  ALVO_COORDENACAO,
+                  e.target.value || null,
+                )
+              }
+            >
+              <option value="">Sem coordenação</option>
+              <OpcoesDeCoordenacao
+                coordenacoes={matriz.coordenacoes || []}
+                areas={areas}
+                atual={coordenacao}
+              />
+            </select>
+            <p className="acessos-secundario">
+              Com coordenação, a pessoa vê só os dados dela.
+            </p>
+          </section>
+        ) : null}
+
+        <details className="acessos-avancado">
+          <summary>Avançado: exceções por módulo</summary>
+          <p className="acessos-secundario">
+            Só para casos especiais: o nível escolhido aqui vale só para esta
+            pessoa e passa por cima do grupo.
+          </p>
+          <ExcecoesPorModulo
+            estado={estado}
+            usuario={usuario}
+            rascunho={rascunho}
+            teto={teto}
+            gruposPorCodigo={gruposPorCodigo}
+            pode={edicao.pode}
+          />
+          {(matriz.paineis || []).length ? (
             <fieldset className="acessos-opcoes">
-              <legend className="sr-only">Painéis que a pessoa abre</legend>
+              <legend>Painéis externos</legend>
               {matriz.paineis.map((painel) => {
                 const recurso = `painel:${painel.id}`;
                 return (
@@ -280,8 +536,8 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
                 );
               })}
             </fieldset>
-          </section>
-        ) : null}
+          ) : null}
+        </details>
 
         <section aria-labelledby="acessosGavetaVe">
           <h4 id="acessosGavetaVe">Como a pessoa vê</h4>
@@ -298,22 +554,24 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
           <MoverParaCoordenacoes
             estado={estado}
             usuario={usuario}
-            areas={matriz.areas || []}
+            areas={areas}
           />
-          <BotaoDeAcao
-            estado={estado}
-            acao={`desativar:${usuario.id}`}
-            className="btn outline acessos-ghost acessos-perigo"
-            onClick={() => {
-              const motivo = window.prompt(
-                `Desativar o acesso de ${nome}? Informe o motivo:`,
-              );
-              if (motivoValido(motivo))
-                void estado.desativarUsuario(usuario, motivo.trim());
-            }}
-          >
-            <Icone nome="user-x" tamanho={16} /> Desativar acesso
-          </BotaoDeAcao>
+          {usuario.convite_pendente ? null : (
+            <BotaoDeAcao
+              estado={estado}
+              acao={`desativar:${usuario.id}`}
+              className="btn outline acessos-ghost acessos-perigo"
+              onClick={() => {
+                const motivo = window.prompt(
+                  `Desativar o acesso de ${nome}? Informe o motivo:`,
+                );
+                if (motivoValido(motivo))
+                  void estado.desativarUsuario(usuario, motivo.trim());
+              }}
+            >
+              <Icone nome="user-x" tamanho={16} /> Desativar acesso
+            </BotaoDeAcao>
+          )}
         </div>
       ) : null}
     </Modal>
