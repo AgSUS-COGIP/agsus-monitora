@@ -219,3 +219,16 @@ quem saiu da planilha. A aba Entrevistas do MONITORA mostra o resultado.
 - Não define `onOpen` (o script da planilha já tem): para ter o item no menu,
   acrescente `.addItem('Enviar para o MONITORA', 'enviarEntrevistasParaSupabase')`
   no `onOpen` existente.
+
+## Sync incremental travado por "A planilha mudou" (30/09/2026)
+
+Em 29/09, às 15h07, um sync incremental da Saúde Indígena pausou no meio da
+comparação (fase COMPARING, nenhuma linha enviada). Na execução seguinte a
+planilha já tinha mudado (a equipe continua trabalhando) e o script parava a
+cada gatilho com "A planilha mudou durante um sync incremental pendente": 17 h
+sem sincronizar, análises concluídas aparecendo como pendentes no painel.
+
+Agora, nas fases INIT e COMPARING (nada preparado nem processado no banco), o
+`3-analises-incremental.gs` das três planilhas recomeça a comparação com a
+planilha atual e apaga o staging daquele sync. Depois da preparação a trava
+continua (aí misturar planilhas seria errado).
