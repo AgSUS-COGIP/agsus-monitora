@@ -788,8 +788,9 @@ function stopAccessHeartbeat() {
   }
 }
 
+/* "Pessoas online" é só do administrador global (decisão de 30/09/2026). */
 function canViewOnlinePresence() {
-  return isMasterProfile() || can("config") || can("admin");
+  return isMasterProfile();
 }
 
 function onlinePresenceAvatar(person) {
@@ -829,12 +830,17 @@ async function syncOnlinePresence() {
       p_current_view: currentView || null,
     });
     if (beat.error) throw beat.error;
-    if (!canViewOnlinePresence()) return;
+    // Sem permissão (inclusive quem a perdeu nesta sessão): o indicador some.
+    if (!canViewOnlinePresence()) {
+      $("onlinePresence")?.classList.add("hidden");
+      return;
+    }
     const result = await sb.rpc(RPC_LIST_ONLINE_PRESENCE);
     if (result.error) throw result.error;
     renderOnlinePresence(normalizeOnlinePresenceList(result.data), true);
   } catch (_) {
     if (canViewOnlinePresence()) renderOnlinePresence([], false);
+    else $("onlinePresence")?.classList.add("hidden");
   }
 }
 
