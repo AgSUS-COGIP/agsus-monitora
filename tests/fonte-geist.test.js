@@ -19,6 +19,7 @@ describe("fonte Geist no sistema todo", () => {
     for (const pagina of [
       "index.html",
       "analises.html",
+      "entrevistas.html",
       "recursos.html",
       "src/analises/index.html",
     ]) {
@@ -39,6 +40,9 @@ describe("fonte Geist no sistema todo", () => {
       "../styles/tokens.css",
     );
     expect(primeiroCss(ler("src/recursos/main.jsx"))).toBe(
+      "../styles/tokens.css",
+    );
+    expect(primeiroCss(ler("src/entrevistas/main.jsx"))).toBe(
       "../styles/tokens.css",
     );
   });

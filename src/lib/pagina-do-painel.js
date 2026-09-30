@@ -29,6 +29,10 @@ export const PAGINAS_DO_PAINEL = Object.freeze({
     endereco: "/analises.html",
     titulo: "Análises curriculares",
   }),
+  entrevistas: Object.freeze({
+    endereco: "/entrevistas.html",
+    titulo: "Entrevistas",
+  }),
   recursos: Object.freeze({
     endereco: "/recursos.html",
     titulo: "Recursos dos candidatos",

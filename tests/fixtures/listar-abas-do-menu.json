@@ -145,29 +145,58 @@
     ]
   },
   {
+    "co_aba": "entrevistas",
+    "no_aba": "Entrevistas",
+    "ds_icone": "messages-square",
+    "nu_ordem": 6,
+    "co_view": "entrevistas",
+    "co_recurso": "entrevistas",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 6,
+        "co_view": "entrevistas",
+        "ds_icone": "messages-square"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 6,
+        "co_view": "entrevistas",
+        "ds_icone": "messages-square"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 6,
+        "co_view": "entrevistas",
+        "ds_icone": "messages-square"
+      }
+    ]
+  },
+  {
     "co_aba": "recursos",
     "no_aba": "Recursos",
     "ds_icone": "scale",
-    "nu_ordem": 6,
+    "nu_ordem": 7,
     "co_view": "recursos",
     "co_recurso": "recursos",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "recursos",
         "ds_icone": "scale"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "recursos",
         "ds_icone": "scale"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "recursos",
         "ds_icone": "scale"
       }

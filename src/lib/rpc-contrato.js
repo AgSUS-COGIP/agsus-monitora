@@ -395,6 +395,14 @@ export const CONTRATO_RPC = {
       "Parecer, link do PDF e tempo de experiência profissional da área e escopo do painel de Análises, em lote, para o CSV e a busca geral.",
   },
 
+  // ── Entrevistas (aba Entrevistas, 20260929235000_entrevistas.sql) ──────
+  get_entrevistas_da_area: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Aba Entrevistas de uma área (json, só leitura): entrevistas com as notas por critério, a análise ligada, a última carga da planilha e os aprovados na análise sem entrevista.",
+  },
+
   // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──
   get_recursos_da_area: {
     argumentos: ["p_area"],

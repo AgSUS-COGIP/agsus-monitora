@@ -103,6 +103,24 @@ describe("a página Análises curriculares", () => {
   });
 });
 
+describe("a página Entrevistas", () => {
+  beforeEach(() => {
+    pagina = criarPagina("entrevistas");
+  });
+
+  it("abre o painel de entrevistas com a área, pelo mesmo módulo", () => {
+    pagina.classList.add("active");
+    definirAreaAtual("sede");
+
+    const quadro = abrirPaginaDoPainel(pagina, { origem: ORIGEM });
+
+    expect(quadro.classList.contains("external-panel")).toBe(true);
+    expect(endereco().pathname).toBe("/entrevistas.html");
+    expect(endereco().searchParams.get("area")).toBe("sede");
+    expect(quadroDoPainel(pagina).title).toBe("Entrevistas");
+  });
+});
+
 describe("a página Recursos", () => {
   beforeEach(() => {
     pagina = criarPagina("recursos");

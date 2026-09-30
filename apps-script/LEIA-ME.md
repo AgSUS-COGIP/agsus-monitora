@@ -200,3 +200,22 @@ encontrava 0 vagas. `projetos/1-atualizar-base.gs` usa nomes próprios
 (`normalizarCabecalhoAB_`, `parseDataSemHoraAB_`, `hojeSemHoraAB_`,
 `formatarDataPtBrAB_`). Ao colar código novo num projeto, confira se não há
 função com o mesmo nome em outro arquivo.
+
+## Entrevistas → MONITORA (29/09/2026)
+
+`saude-indigena/5-entrevistas-para-supabase.gs` vai no projeto Apps Script da
+planilha **"[dash] entrevistados"** (não no da planilha de análises). Lê a aba
+`Entrevistados` — a que o script "Cruzamento de entrevistados" monta — e envia
+para o banco em lotes de 500 (`sincronizar_entrevistas`), fechando com
+`finalizar_sync_entrevistas`, que liga cada entrevista ao edital e à análise
+curricular (pelo código do candidato + vaga; sem código, pelo nome) e desativa
+quem saiu da planilha. A aba Entrevistas do MONITORA mostra o resultado.
+
+- Chave: cole a service_role em `CHAVE_FIXA` no topo do arquivo (no projeto do Apps Script, nunca no repositório). A propriedade do script `SUPABASE_SERVICE_ROLE_KEY`, se existir, tem prioridade.
+- Rodar: `enviarEntrevistasParaSupabase`. Automático:
+  `instalarGatilhoEntrevistasMonitora` (de hora em hora).
+- Carga com menos da metade das linhas ativas no banco é recusada; depois de
+  conferir a planilha, `enviarEntrevistasForcandoES`.
+- Não define `onOpen` (o script da planilha já tem): para ter o item no menu,
+  acrescente `.addItem('Enviar para o MONITORA', 'enviarEntrevistasParaSupabase')`
+  no `onOpen` existente.

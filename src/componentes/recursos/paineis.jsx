@@ -35,7 +35,7 @@ const truncar = (valor, limite) => {
   conteúdo (`.shell`) e o cabeçalho da tabela — como o `setupFixedTopbar` do
   painel de análises, acompanhando também a quebra de linha dos botões.
 */
-function usarAlturaDoTopo(topo) {
+export function usarAlturaDoTopo(topo) {
   useLayoutEffect(() => {
     const barra = topo.current;
     if (!barra) return undefined;
