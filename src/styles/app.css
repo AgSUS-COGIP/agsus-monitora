@@ -3073,9 +3073,9 @@ body.sidebar-locked #page-dashboard .details-table {
     -webkit-overflow-scrolling: touch;
   }
 }
+/* O nome MONITORA fica na marca (ao lado do gráfico) também na tela de pedido. */
 body.access-request-mode .login-mark,
 body.access-request-mode .login-eyebrow,
-body.access-request-mode #loginTitle,
 body.access-request-mode #loginSubtitle,
 body.access-request-mode #loginMsg {
   display: none !important;
