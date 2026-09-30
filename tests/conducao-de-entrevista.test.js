@@ -656,3 +656,20 @@ describe("ajustes de 30/09: ordem dos editais e nome do cargo", () => {
     );
   });
 });
+
+describe("selo PcD", () => {
+  it("só o sim da planilha conta como PcD", async () => {
+    const { ehPcd } = await import("../src/lib/conducao-de-entrevista.js");
+    expect(["SIM", "Sim", " s ", "true", true, 1].map(ehPcd)).toEqual([
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]);
+    expect(
+      ["NÃO", "Não", "nao", "N", "", null, undefined, false, 0].map(ehPcd),
+    ).toEqual(Array(9).fill(false));
+  });
+});
