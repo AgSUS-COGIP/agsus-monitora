@@ -1,0 +1,141 @@
+-- Volta finalizar_sync_analises_incremental à definição de 30/09 (sem desativar duplicados).
+begin;
+
+CREATE OR REPLACE FUNCTION public.finalizar_sync_analises_incremental(p_sync_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SET search_path TO 'public', 'pg_temp'
+ SET statement_timeout TO '30s'
+ SET lock_timeout TO '2s'
+ SET work_mem TO '8MB'
+ SET jit TO 'off'
+AS $function$
+declare
+  v_cursor integer:=0;
+  v_max integer:=0;
+  v_total_staging integer:=0;
+  v_esperado integer:=0;
+  v_total_fato integer:=0;
+  v_total_editais integer:=0;
+  v_editais_upsert integer:=0;
+  v_editais_inativados integer:=0;
+  v_removido integer:=0;
+  v_total_ativos_local integer:=0;
+  v_result jsonb;
+  v_planilha text;
+  v_conflitos integer:=0;
+begin
+  if p_sync_id is null then raise exception 'p_sync_id obrigatorio'; end if;
+  -- [por-planilha]
+  v_planilha := public."FC_PLANILHA_DO_SYNC_ANALISE"(p_sync_id);
+  if v_planilha is null then raise exception 'Sync incremental nao esta pronto para finalizacao.'; end if;
+  if not pg_try_advisory_xact_lock(hashtext('public.processar_sync_analises:'||v_planilha)::bigint) then
+    raise exception 'Outro processamento de analises esta em andamento.';
+  end if;
+
+  select coalesce(nullif(resultado->>'lote_cursor','')::integer,0),
+         coalesce(linhas_staging,0),
+         coalesce(nullif(resultado->>'incremental_total_ativos_local','')::integer,0)
+    into v_cursor,v_esperado,v_total_ativos_local
+  from public."TL_SYNC_ANALISE"
+  where sync_id=p_sync_id and modo='INCREMENTAL_ACTIVE' and status in ('carregado','processando')
+    and coalesce((resultado->>'incremental_preparado')::boolean,false)=true
+  order by id desc limit 1;
+  if not found then raise exception 'Sync incremental nao esta pronto para finalizacao.'; end if;
+
+  select coalesce(max(linha_origem) filter(where entidade='FATO_ANALISES'),0),
+         count(*)::integer,
+         count(*) filter(where entidade='FATO_ANALISES')::integer,
+         count(*) filter(where entidade='DIM_EDITAIS')::integer
+    into v_max,v_total_staging,v_total_fato,v_total_editais
+  from public."TM_ANALISE_CURRICULAR"
+  where sync_id=p_sync_id;
+
+  if v_total_staging <> v_esperado then raise exception 'Staging incremental divergente: esperado %, encontrado %.',v_esperado,v_total_staging; end if;
+  if v_cursor < v_max then raise exception 'Ainda existem linhas FATO incrementais pendentes: cursor %, max %.',v_cursor,v_max; end if;
+  if v_total_editais < 1 then raise exception 'DIM_EDITAIS ausente no incremental.'; end if;
+
+  -- [por-planilha] porteiro antes de gravar editais.
+  perform public."FC_VALIDAR_GRUPO_STAGING_ANALISE"(p_sync_id, v_planilha);
+
+  create temporary table tmp_editais_incremental on commit drop as
+  with x as (
+    select s.id,s.linha_origem,
+      public.jsonb_text_or_null(s.payload,'grupo') as grupo,
+      coalesce(public.jsonb_text_or_null(s.payload,'unidade'),'Nao informada') as unidade,
+      coalesce(public.jsonb_text_or_null(s.payload,'edital'),'Sem edital') as edital,
+      coalesce(public.jsonb_bool_or_null(s.payload,'ativo'),true) as ativo,
+      public.jsonb_date_or_null(s.payload,'data_inicio_analise') as data_inicio_analise,
+      public.jsonb_date_or_null(s.payload,'data_fim_analise') as data_fim_analise
+    from public."TM_ANALISE_CURRICULAR" s
+    where s.sync_id=p_sync_id and s.entidade='DIM_EDITAIS'
+  ), ranked as (
+    select *,row_number() over(partition by grupo,unidade,edital order by coalesce(linha_origem,2147483647),id) rn
+    from x
+  )
+  select grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise
+  from ranked where rn=1;
+
+  -- [por-planilha] edital já cadastrado por outra planilha: recusa.
+  select count(*)::integer into v_conflitos
+  from public."TB_EDITAL_ANALISE" e
+  join tmp_editais_incremental x
+    on e.grupo_norm=coalesce(public.analises_norm_key(x.grupo),'')
+   and e.unidade_norm=coalesce(public.analises_norm_key(x.unidade),'')
+   and e.edital_norm=coalesce(public.analises_norm_key(x.edital),'')
+  where e."CO_PLANILHA"<>v_planilha;
+  if v_conflitos>0 then
+    raise exception 'Sync % recusado: % edital(is) do envio ja pertencem a outra planilha.',p_sync_id,v_conflitos
+      using errcode = '22023';
+  end if;
+
+  insert into public."TB_EDITAL_ANALISE"(grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise,"CO_PLANILHA")
+  select grupo,unidade,edital,ativo,data_inicio_analise,data_fim_analise,v_planilha
+  from tmp_editais_incremental
+  on conflict(grupo,unidade,edital) do update set
+    ativo=excluded.ativo,
+    data_inicio_analise=excluded.data_inicio_analise,
+    data_fim_analise=excluded.data_fim_analise,
+    updated_at=now()
+  where "TB_EDITAL_ANALISE"."CO_PLANILHA"=excluded."CO_PLANILHA";
+  get diagnostics v_editais_upsert=row_count;
+
+  -- [por-planilha] só desativa editais desta planilha.
+  update public."TB_EDITAL_ANALISE" e
+  set ativo=false,updated_at=now()
+  where e.ativo is true
+    and e."CO_PLANILHA"=v_planilha
+    and not exists(select 1 from tmp_editais_incremental x
+      where e.grupo is not distinct from x.grupo
+        and e.unidade=x.unidade
+        and e.edital=x.edital);
+  get diagnostics v_editais_inativados=row_count;
+
+  delete from public."TM_ANALISE_CURRICULAR" where sync_id=p_sync_id;
+  get diagnostics v_removido=row_count;
+
+  v_result=jsonb_build_object(
+    'ok',true,
+    'sync_id',p_sync_id,
+    'modo_processamento','incremental',
+    'planilha',v_planilha,
+    'total_ativos_local',v_total_ativos_local,
+    'fato_analises_enviadas',v_total_fato,
+    'analises_editais_recebidos',v_total_editais,
+    'analises_editais_upsert',v_editais_upsert,
+    'analises_editais_inativados',v_editais_inativados,
+    'staging',v_total_staging,
+    'staging_removido',v_removido,
+    'historico_inativado',0
+  );
+
+  update public."TL_SYNC_ANALISE"
+  set status='processado',resultado=v_result,erro=null,total_processados=v_total_fato,
+      finished_at=now(),updated_at=now()
+  where sync_id=p_sync_id and modo='INCREMENTAL_ACTIVE';
+
+  return v_result;
+end;
+$function$;
+
+commit;
