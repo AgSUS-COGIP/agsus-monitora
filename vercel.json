@@ -4,6 +4,9 @@
   "functions": {
     "api/aya.js": {
       "maxDuration": 60
+    },
+    "api/anexos-do-edital.py": {
+      "maxDuration": 30
     }
   },
   "git": {

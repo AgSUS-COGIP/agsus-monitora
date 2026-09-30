@@ -239,6 +239,14 @@ function FormularioDeConfiguracao({
                       <small className="entrevistas-erro-campo" role="alert">
                         {visiveis[`vaga.${v.vaga}`]}
                       </small>
+                    ) : v.origem === "quadro" &&
+                      v.vagas_imediatas === v.sugerido ? (
+                      <small
+                        className="entrevistas-origem-vaga"
+                        title={v.lotacao_quadro}
+                      >
+                        do quadro do edital
+                      </small>
                     ) : null}
                   </td>
                 </tr>

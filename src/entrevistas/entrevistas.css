@@ -256,6 +256,12 @@
   font-size: 12px;
   font-weight: 800;
 }
+.entrevistas-origem-vaga {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
 .entrevistas-formulario [aria-invalid="true"] {
   border-color: var(--red);
 }
