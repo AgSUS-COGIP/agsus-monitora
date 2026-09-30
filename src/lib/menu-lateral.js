@@ -30,6 +30,12 @@
   `legacy-app.js`; este arquivo só organiza o que já foi permitido.
 */
 
+import {
+  filtrarAreasAtivas,
+  manutencaoDaArea,
+  manutencaoDaLinha,
+} from "./situacao-dos-modulos.js";
+
 /* Na ordem do banco. O código é o de `TB_AREA` e o de `CO_AREA` nos editais. */
 export const AREAS_DO_SISTEMA = Object.freeze([
   Object.freeze({
@@ -88,18 +94,27 @@ export const AREAS_DO_MENU = Object.freeze([
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
   por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
 
-  `beta` (opcional, só do front por enquanto): a aba ainda em teste, com o
-  selo "BETA" no menu. O banco ainda não tem a coluna, então o seed não o
-  traz e a comparação seed × código (`catalogo-de-abas.test.js`) o deixa de
-  fora. Quando o catálogo do banco mandar `ds_selo` ('beta') ou `beta`, vale o
-  do banco; enquanto não mandar, vale o daqui (`seloBeta`, abaixo).
+  `beta` (opcional): a aba ainda em teste, com o selo "BETA" no menu. Quem
+  decide é o banco (`TB_ABA.ST_BETA`, lido como `st_beta` e ligado em
+  Configurações › Módulos e abas); o `beta` daqui só vale enquanto o catálogo
+  do banco não chega ou não traz o campo (`seloBeta`, abaixo). O seed antigo
+  não o traz, e a comparação seed × código (`catalogo-de-abas.test.js`) o
+  deixa de fora.
+
+  `manutencao` (opcional, só do banco): `{ mensagem, previsao }` quando a aba
+  — em todas as áreas, ou só numa (`areas[].manutencao`) — está em
+  manutenção (`src/lib/situacao-dos-modulos.js`). O catálogo do código nunca
+  o tem.
 */
-const congelarAba = ({ areas, beta, ...aba }) =>
+const congelarArea = ({ manutencao, ...area }) =>
+  Object.freeze({ ...area, ...(manutencao ? { manutencao } : {}) });
+const congelarAba = ({ areas, beta, manutencao, ...aba }) =>
   Object.freeze({
     ...aba,
-    // Só a aba beta leva o campo: as outras ficam iguais às do banco.
+    // Só a aba beta (ou em manutenção) leva o campo: as outras ficam iguais às do banco.
     ...(beta ? { beta: true } : {}),
-    areas: Object.freeze(areas.map((area) => Object.freeze({ ...area }))),
+    ...(manutencao ? { manutencao } : {}),
+    areas: Object.freeze(areas.map(congelarArea)),
   });
 const NAS_TRES_AREAS = [
   { area: "saude-indigena" },
@@ -194,11 +209,13 @@ const numero = (valor) => {
 };
 
 /*
-  O selo beta de uma linha do catálogo do banco: `beta` (booleano) ou
-  `ds_selo` ('beta', sem diferença de caixa; nulo = sem selo). Sem nenhum dos
-  dois campos (o banco de hoje), vale o da mesma aba em `ABAS_DO_MENU`.
+  O selo beta de uma linha do catálogo do banco: `st_beta` (booleano, de
+  `TB_ABA.ST_BETA`), `beta` (booleano) ou `ds_selo` ('beta', sem diferença de
+  caixa; nulo = sem selo). Sem nenhum desses campos (banco anterior à
+  migration de Módulos e abas), vale o da mesma aba em `ABAS_DO_MENU`.
 */
 function seloBeta(linha, id) {
+  if (typeof linha.st_beta === "boolean") return linha.st_beta;
   if (typeof linha.beta === "boolean") return linha.beta;
   if (Object.hasOwn(linha, "ds_selo")) {
     return texto(linha.ds_selo).toLowerCase() === "beta";
@@ -226,6 +243,11 @@ export function abasDoCatalogo(dados) {
         ordem: numero(item?.nu_ordem),
         view: texto(item?.co_view) || null,
         icone: texto(item?.ds_icone) || null,
+        manutencao: manutencaoDaLinha(
+          item?.tp_situacao,
+          item?.ds_mensagem,
+          item?.dt_previsao,
+        ),
       }))
       .filter((item) => item.area);
     abas.push(
@@ -238,6 +260,11 @@ export function abasDoCatalogo(dados) {
         recurso: texto(linha.co_recurso),
         tipo: texto(linha.tp_aba) || "nativa",
         beta: seloBeta(linha, id),
+        manutencao: manutencaoDaLinha(
+          linha.tp_situacao,
+          linha.ds_mensagem,
+          linha.dt_previsao,
+        ),
         areas,
       }),
     );
@@ -248,7 +275,9 @@ export function abasDoCatalogo(dados) {
 /*
   As páginas de uma área, na ordem do catálogo: a view, o ícone e a ordem da
   área quando ela troca; senão, os da aba. Empate na ordem fica na ordem da
-  lista. A página de aba beta leva `beta: true`; as outras, nem o campo.
+  lista. A página de aba beta leva `beta: true`; a de aba em manutenção (em
+  todas as áreas, que vale primeiro, ou só nesta), `manutencao`; as outras,
+  nem os campos.
 */
 export function paginasDaArea(abas, area) {
   return abas
@@ -262,15 +291,17 @@ export function paginasDaArea(abas, area) {
           rotulo: aba.rotulo,
           icone: naArea.icone || aba.icone,
           beta: Boolean(aba.beta),
+          manutencao: aba.manutencao || naArea.manutencao || null,
         },
       ];
     })
     .sort((a, b) => a.ordem - b.ordem)
-    .map(({ view, rotulo, icone, beta }) => ({
+    .map(({ view, rotulo, icone, beta, manutencao }) => ({
       view,
       rotulo,
       icone,
       ...(beta ? { beta: true } : {}),
+      ...(manutencao ? { manutencao } : {}),
     }));
 }
 
@@ -293,6 +324,10 @@ export function nomeDaArea(id) {
   catálogo (de `abasDoCatalogo`); sem ele, `ABAS_DO_MENU`. Devolve os grupos
   na ordem do catálogo, cada um com os seus itens, e descarta os vazios. Todo
   item de área leva `area`: é ela que a navegação torna a área atual.
+
+  `situacao` (de `normalizarSituacaoDoSistema`, opcional): área desativada
+  sai do menu, e o grupo da área em manutenção leva `manutencao`. Sem ela,
+  todas as áreas valem como ativas.
 */
 export function montarArvoreDoMenu({
   permitidas = {},
@@ -300,9 +335,12 @@ export function montarArvoreDoMenu({
   secoesDeConfiguracao = [],
   areas,
   abas,
+  situacao,
 } = {}) {
   const catalogo = Array.isArray(abas) && abas.length ? abas : ABAS_DO_MENU;
-  const doUsuario = new Set(areasDoUsuario(areas));
+  const doUsuario = new Set(
+    filtrarAreasAtivas(areasDoUsuario(areas), situacao),
+  );
   const doSistema = new Set(AREAS_DO_SISTEMA.map((area) => area.id));
   const itensPorArea = new Map(
     AREAS_DO_MENU.filter(
@@ -341,7 +379,14 @@ export function montarArvoreDoMenu({
   }
 
   return AREAS_DO_MENU.filter((area) => itensPorArea.has(area.id))
-    .map((area) => ({ ...area, itens: itensPorArea.get(area.id) }))
+    .map((area) => {
+      const manutencao = manutencaoDaArea(situacao, area.id);
+      return {
+        ...area,
+        ...(manutencao ? { manutencao } : {}),
+        itens: itensPorArea.get(area.id),
+      };
+    })
     .filter((area) => area.itens.length > 0);
 }
 

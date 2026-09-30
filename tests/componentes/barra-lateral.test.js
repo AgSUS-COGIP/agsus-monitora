@@ -650,6 +650,37 @@ describe("ícones e selo beta no menu aberto", () => {
     expect(item("recursos").dataset.rotulo).toBe("Recursos");
     expect(item("nucleo").querySelector(".menu-item__selo")).toBeNull();
   });
+
+  it("aba e área em manutenção levam a chave inglesa, com a mensagem na dica", async () => {
+    const base = arvore();
+    const [saude, ...demais] = base;
+    await montar([
+      {
+        ...saude,
+        manutencao: { mensagem: "Área em ajuste", previsao: null },
+        itens: saude.itens.map((i) =>
+          i.view === "nucleo"
+            ? {
+                ...i,
+                manutencao: { mensagem: "Editais", previsao: "2026-10-05" },
+              }
+            : i,
+        ),
+      },
+      ...demais,
+    ]);
+    const indicador = item("nucleo").querySelector(".menu-manutencao");
+    expect(indicador.title).toBe(
+      "Em manutenção · Editais · Previsão de volta: 05/10/2026",
+    );
+    expect(item("nucleo").classList.contains("menu-item--manutencao")).toBe(
+      true,
+    );
+    expect(item("dashboard").querySelector(".menu-manutencao")).toBeNull();
+    expect(
+      cabecalho(saude.id).querySelector(".menu-manutencao").title,
+    ).toContain("Área em ajuste");
+  });
 });
 
 describe("escolher uma página", () => {

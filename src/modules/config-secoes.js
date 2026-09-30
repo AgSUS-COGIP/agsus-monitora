@@ -65,7 +65,28 @@ export const SECOES = Object.freeze([
     icone: "fa-user-group",
     descricao: "Pessoas, grupos de permissões e coordenações.",
   },
+  {
+    id: "modulos",
+    rotulo: "Módulos e abas",
+    icone: "fa-layer-group",
+    descricao:
+      "Ativar, desativar e pôr em manutenção o sistema, as áreas, as abas e os painéis; selo BETA.",
+  },
 ]);
+
+/*
+  Seções que salvam pela própria tela React, com motivo (Acessos e Módulos e
+  abas): o "Salvar alterações" fixo das Configurações não vale nelas, e sair
+  delas com alteração pendente pergunta antes (`confirmarSaida` do controlador).
+*/
+const CONTROLADOR_DA_SECAO = Object.freeze({
+  acessos: "acessosController",
+  modulos: "modulosController",
+});
+const controladorDaSecao = (documento, secao) =>
+  CONTROLADOR_DA_SECAO[secao]
+    ? documento.defaultView?.[CONTROLADOR_DA_SECAO[secao]]
+    : null;
 
 /*
   Onde cada campo vai parar. Um campo sem entrada aqui cai em "Operação", que é
@@ -139,6 +160,7 @@ export const SECAO_POR_BLOCO = Object.freeze({
   accessRequestsAdminCard: "acessos",
   accessMonitorCard: "acessos",
   acessosApp: "acessos",
+  modulosApp: "modulos",
 });
 
 export const SECAO_PADRAO = "operacao";
@@ -205,9 +227,9 @@ function selecionarSubgrupo(documento, secao) {
   for (const artigo of pagina.querySelectorAll(".config-secao")) {
     artigo.hidden = artigo.dataset.secao !== secao;
   }
-  // Acessos salva pela própria tela (com motivo): o "Salvar alterações" fixo não vale ali.
+  // Acessos e Módulos e abas salvam pela própria tela (com motivo): o "Salvar alterações" fixo não vale ali.
   for (const barra of pagina.querySelectorAll(".config-sticky-actions")) {
-    barra.hidden = secao === "acessos";
+    barra.hidden = Boolean(CONTROLADOR_DA_SECAO[secao]);
   }
 }
 
@@ -244,16 +266,15 @@ export function abrirSecaoDeConfiguracao(documento, secao) {
   if (!SECOES.some((s) => s.id === secao)) return false;
   const pagina = documento?.getElementById?.("page-config");
   if (!secoesPermitidas(pagina).includes(secao)) return false;
-  const acessos = documento.defaultView?.acessosController;
-  // Sair de Acessos com alteração não salva pergunta antes (o rascunho é da tela React).
+  const atual = secaoAtualDeConfiguracao(documento);
+  // Sair de Acessos (ou de Módulos e abas) com alteração não salva pergunta antes (o rascunho é da tela React).
   if (
-    secaoAtualDeConfiguracao(documento) === "acessos" &&
-    secao !== "acessos" &&
-    acessos?.confirmarSaida() === false
+    atual !== secao &&
+    controladorDaSecao(documento, atual)?.confirmarSaida() === false
   )
     return false;
   selecionarSubgrupo(documento, secao);
-  if (secao === "acessos") void acessos?.render();
+  void controladorDaSecao(documento, secao)?.render();
   // As prévias de config-apresentacao.js redesenham com o que o legado acabou de preencher.
   const Evento = documento.defaultView?.CustomEvent || globalThis.CustomEvent;
   documento.dispatchEvent(

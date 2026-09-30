@@ -688,3 +688,48 @@
     display: none;
   }
 }
+
+/*
+  Aba ou área em manutenção (`item.manutencao` / `area.manutencao`, de
+  Configurações › Módulos e abas): a chave inglesa âmbar ao lado do nome, com a
+  mensagem e a previsão na dica. Âmbar clareado sobre o fundo escuro da barra;
+  no painel flutuante (cartão claro), o âmbar do estado de atenção.
+*/
+.menu-manutencao {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: color-mix(
+    in srgb,
+    var(--color-warning-600) 55%,
+    var(--color-neutral-0)
+  );
+}
+
+@media (min-width: 901px) {
+  body.sidebar-collapsed .menu-area__itens .menu-manutencao {
+    color: var(--state-warning);
+  }
+
+  /* No trilho, a chave vai para o canto do ícone; o resto do aviso, na dica. */
+  body.sidebar-collapsed .menu-area--direta .menu-item--manutencao,
+  body.sidebar-collapsed .menu-seletor__botao {
+    position: relative;
+  }
+
+  body.sidebar-collapsed
+    .menu-area--direta
+    .menu-item--manutencao
+    .menu-manutencao,
+  body.sidebar-collapsed .menu-seletor__botao .menu-manutencao {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-manutencao .icone,
+  body.sidebar-collapsed .menu-seletor__botao .menu-manutencao .icone {
+    width: 11px;
+    height: 11px;
+  }
+}
