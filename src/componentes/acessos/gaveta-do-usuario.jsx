@@ -9,6 +9,7 @@ import {
   coordenacaoDaLinha,
   explicacaoDoGrupo,
   ficariaSemArea,
+  gerenciariaAcessosSemCoordenacao,
   grupoDaLinha,
   pendenciasDoUsuario,
   resumoDoRascunho,
@@ -480,6 +481,19 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
       coordenacao,
       areasMarcadas: areasMarcadasDaLinha(usuario, rascunho, areas),
     });
+  // Nível em "acessos" no rascunho: exceção da pessoa ou, sem ela, o do grupo escolhido.
+  const excecaoAcessos = celulaExibida(usuario, "acessos", rascunho);
+  const nivelAcessos =
+    excecaoAcessos?.origem === "excecao"
+      ? excecaoAcessos.nivel
+      : grupo?.niveis?.acessos || excecaoAcessos?.nivel;
+  const semCoordenacao =
+    usuario.ativo !== false &&
+    gerenciariaAcessosSemCoordenacao({
+      adminGlobal,
+      coordenacao,
+      nivelAcessos,
+    });
   const nome = usuario.nome || usuario.email;
   const pendentes = pendenciasDoUsuario(rascunho, usuario.id);
   const adminPodeAgir = Boolean(teto.admin_global && edicao.pode);
@@ -603,6 +617,14 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
                 atual={coordenacao}
               />
             </select>
+            {semCoordenacao ? (
+              <p className="alert warn acessos-sem-area" role="alert">
+                <Icone nome="triangle-alert" tamanho={16} /> O grupo{" "}
+                {grupo?.nome || codigoDoGrupo} gerencia acessos, e o coordenador
+                gerencia só a própria coordenação. Escolha a coordenação de{" "}
+                {nome} (ou outro grupo) para poder salvar.
+              </p>
+            ) : null}
             <p className="acessos-secundario">
               Com coordenação, a pessoa vê só os dados dela.
             </p>
@@ -690,7 +712,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               usuario={usuario}
               rascunho={rascunho}
               matriz={matriz}
-              semArea={semArea}
+              semArea={semArea || semCoordenacao}
             />
           ) : null}
           {adminPodeAgir && !usuario.convite_pendente ? (
