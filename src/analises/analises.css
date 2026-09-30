@@ -781,26 +781,6 @@ tbody tr:hover td {
   color: #fff;
   border-color: var(--blue2);
 }
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 14px 22px;
-  color: var(--muted);
-  font-size: 13px;
-}
-.secure {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  border-radius: 999px;
-  background: var(--cyan);
-  color: #08354e;
-  font-weight: 900;
-  padding: 0 10px;
-}
 /*
   As etapas do carregamento: só para o leitor de tela. Na tela, quem mostra o
   carregamento é o skeleton do próprio painel (analises-esqueleto.css).

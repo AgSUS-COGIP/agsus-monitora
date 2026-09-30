@@ -18,7 +18,6 @@ import {
   filtrarVagas,
   observacoesDoRecorte,
   opcoesDosFiltros,
-  textoDaUltimaCarga,
   textoDoRecorte,
 } from "../../lib/selecao-do-painel.js";
 import {
@@ -123,7 +122,6 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
     () => observacoesDoRecorte(filtradas),
     [filtradas],
   );
-  const textoDaCarga = textoDaUltimaCarga(dados?.ultimaCarga);
   const vazio = carregado && !vagas.length;
 
   const trocarFiltro = (campo, valores) =>
@@ -151,7 +149,6 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
           aoExportar={() => estado.exportarCsv(filtradas)}
           exportarDesativado={!carregado || !filtradas.length}
         />
-
         <main className="content">
           {e.semSessao ? (
             <section id="authWarning" className="auth-warning" role="alert">
@@ -195,20 +192,7 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
               />
             </>
           )}
-        </main>
-
-        <footer className="footer">
-          <span>
-            Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde ©
-            2026
-          </span>
-          <span>
-            <span id="footerUpdated">
-              {carregado ? textoDaCarga : "Atualizado: --"}
-            </span>{" "}
-            <span className="secure">SECURE</span>
-          </span>
-        </footer>
+        </main>{" "}
       </div>
     </>
   );

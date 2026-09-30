@@ -168,7 +168,6 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
           novoDesativado={Boolean(e.acao)}
           aoModelos={podeAdministrarModelos ? estado.abrirModelos : null}
         />
-
         <main className="content">
           {e.semSessao ? (
             <section id="authWarning" className="auth-warning" role="alert">
@@ -214,18 +213,7 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
             aoNovo={estado.abrirNovo}
             comemoracoes={e.comemoracoes}
           />
-        </main>
-
-        <footer className="footer">
-          <span>
-            Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde ©
-            2026
-          </span>
-          <span>
-            <span id="footerUpdated">{textoDoStatus(e, recursos)}</span>{" "}
-            <span className="secure">SECURE</span>
-          </span>
-        </footer>
+        </main>{" "}
       </div>
 
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}

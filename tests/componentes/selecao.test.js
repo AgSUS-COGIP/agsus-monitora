@@ -150,7 +150,8 @@ describe("painel de seleção", () => {
     expect(
       naTela("Sem filtros aplicados. Visualizando toda a base carregada."),
     ).toBe(true);
-    expect(naTela("Atualizado: 01/10/2026 09:02")).toBe(true);
+    // Sem rodapé institucional (Agência ©, Atualizado, SECURE) desde 30/09/2026.
+    expect(document.querySelector("footer.footer")).toBeNull();
     expect(naTela("Base operacional consolidada")).toBe(true);
     expect(linhas()).toHaveLength(2);
     expect(document.querySelector("#tableBody img")).toBeNull();

@@ -25,7 +25,6 @@ import "./analises-residual-ui-fixes.js";
 import "./analises-dark-mode-fix.js";
 // Por último: o visual comum dos painéis vem depois de todo o CSS acima (analises-painel.css).
 import "./analises-painel.css";
-import { compactarCronometroDaSessao } from "./cronometro-da-sessao.js";
 
 const embeddedInParentApp = window.parent !== window;
 if (!embeddedInParentApp) {
@@ -40,7 +39,6 @@ if (!embeddedInParentApp) {
 installCsvBlobSecurityGuard();
 if (!embeddedInParentApp) {
   installSessionLifecycle();
-  compactarCronometroDaSessao();
 }
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
