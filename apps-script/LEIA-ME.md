@@ -201,30 +201,16 @@ encontrava 0 vagas. `projetos/1-atualizar-base.gs` usa nomes próprios
 `formatarDataPtBrAB_`). Ao colar código novo num projeto, confira se não há
 função com o mesmo nome em outro arquivo.
 
-## Entrevistas → MONITORA (29/09/2026)
+## Entrevistas → MONITORA
 
-> **Em substituição (30/09/2026).** A carga passa para o GitHub Actions:
-> `scripts/sincronizar-entrevistas.mjs` lê a mesma aba com a conta de serviço
-> do Google e chama as mesmas RPCs, todo dia às 9h
-> (`.github/workflows/sincronizar-entrevistas.yml`). Depois de validada, este
-> script sai do repositório e o gatilho dele sai da planilha.
+A carga das entrevistas não é mais Apps Script (30/09/2026): o GitHub Actions
+lê a aba `Entrevistados` da planilha **"[dash] entrevistados"** com a conta de
+serviço do Google, todo dia às 9h (`scripts/sincronizar-entrevistas.mjs`). Como
+operar: `docs/sincronizacao-das-entrevistas.md`.
 
-`saude-indigena/5-entrevistas-para-supabase.gs` vai no projeto Apps Script da
-planilha **"[dash] entrevistados"** (não no da planilha de análises). Lê a aba
-`Entrevistados` — a que o script "Cruzamento de entrevistados" monta — e envia
-para o banco em lotes de 500 (`sincronizar_entrevistas`), fechando com
-`finalizar_sync_entrevistas`, que liga cada entrevista ao edital e à análise
-curricular (pelo código do candidato + vaga; sem código, pelo nome) e desativa
-quem saiu da planilha. A aba Entrevistas do MONITORA mostra o resultado.
-
-- Chave: cole a service_role em `CHAVE_FIXA` no topo do arquivo (no projeto do Apps Script, nunca no repositório). A propriedade do script `SUPABASE_SERVICE_ROLE_KEY`, se existir, tem prioridade.
-- Rodar: `enviarEntrevistasParaSupabase`. Automático:
-  `instalarGatilhoEntrevistasMonitora` (de hora em hora).
-- Carga com menos da metade das linhas ativas no banco é recusada; depois de
-  conferir a planilha, `enviarEntrevistasForcandoES`.
-- Não define `onOpen` (o script da planilha já tem): para ter o item no menu,
-  acrescente `.addItem('Enviar para o MONITORA', 'enviarEntrevistasParaSupabase')`
-  no `onOpen` existente.
+Na planilha continua só o script "Cruzamento de entrevistados", que monta a aba
+`Entrevistados` (as pastas das planilhas de vaga não são da conta
+`dados.recursoshumanos`). Ele não está neste repositório.
 
 ## Sync incremental travado por "A planilha mudou" (30/09/2026)
 

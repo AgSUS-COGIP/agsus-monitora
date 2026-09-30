@@ -4,8 +4,8 @@
   Transforma os valores da aba Entrevistados da planilha "[dash] entrevistados"
   (como a API do Google Sheets os devolve: matriz de textos formatados, com a
   primeira linha de cabeçalho) nas linhas que `public.sincronizar_entrevistas`
-  espera. É a mesma leitura que o Apps Script `5-entrevistas-para-supabase.gs`
-  fazia; quem chama é `scripts/sincronizar-entrevistas.mjs`.
+  espera. É a mesma leitura que o Apps Script da planilha fazia até 30/09/2026;
+  quem chama é `scripts/sincronizar-entrevistas.mjs`.
 
   As colunas são achadas pelo nome do cabeçalho, sem acento e sem caixa: nome
   exato primeiro, depois cabeçalho que começa pelo nome ("NOTA TOTAL (0 a 20)").
