@@ -19,7 +19,13 @@ import {
   registrarNoRascunho,
   separarRascunhoDaPessoa,
 } from "../../lib/matriz-de-acessos.js";
-import { isOwnAccessProfile } from "../../lib/access-roles.js";
+import { isAdminGlobal, isOwnAccessProfile } from "../../lib/access-roles.js";
+import {
+  argumentosDaReativacao,
+  contasDaResposta,
+  mensagemDaRecusaDeReativacao,
+  mensagemDeContaReativada,
+} from "../../lib/contas-desativadas.js";
 
 const RPC_MATRIZ = "obter_matriz_acessos";
 const RPC_SALVAR_MATRIZ = "salvar_matriz_acessos";
@@ -35,6 +41,8 @@ const RPC_DESATIVAR_USUARIO = "desativar_acesso_usuario";
 const RPC_UNIDADES_POR_AREA = "listar_unidades_por_area";
 const RPC_ADICIONAR_PESSOA = "adicionar_pessoa_acesso";
 const RPC_MOVER_PARA_COORDENACOES = "mover_conta_para_coordenacoes";
+const RPC_CONTAS_DESATIVADAS = "listar_contas_desativadas";
+const RPC_REATIVAR_USUARIO = "reativar_acesso_usuario";
 
 const CONFLITO = "40001";
 /* salvar_matriz_acessos: o lote deixaria alguém ativo sem nenhuma área. */
@@ -64,6 +72,11 @@ const ESTADO_INICIAL = Object.freeze({
   rascunho: new Map(),
   solicitacoes: Object.freeze([]),
   statusDasSolicitacoes: "idle",
+  /** Aba "Desativadas" (só admin global): listar_contas_desativadas. */
+  desativadas: Object.freeze([]),
+  /** "idle", "loading", "ready" ou "error". */
+  statusDasDesativadas: "idle",
+  buscaDasDesativadas: "",
   /** { tipo, rotulo } da ação em curso, ou null. */
   acao: null,
   /** Gaveta da pessoa: { usuarioId, abertura } ou null. */
@@ -281,13 +294,67 @@ export function criarEstadoDosAcessos({
           "success",
         );
         publicar({ gaveta: null });
-        await carregarMatriz();
+        // A conta sai de Ativos e entra em Desativadas.
+        await Promise.all([carregarMatriz(), recarregarDesativadas()]);
         return true;
       } catch (erro) {
         toast(`Não foi possível desativar: ${mensagemDoErro(erro)}`, "error");
         return false;
       }
     });
+  }
+
+  // ── Contas desativadas (admin global) ─────────────────────────────────────
+
+  async function carregarDesativadas({ busca } = {}) {
+    const alvo = busca ?? estado.buscaDasDesativadas;
+    const geracao = estado.geracao;
+    publicar({
+      buscaDasDesativadas: alvo,
+      statusDasDesativadas:
+        estado.statusDasDesativadas === "ready" ? "ready" : "loading",
+    });
+    try {
+      const resposta = await rpc(RPC_CONTAS_DESATIVADAS, { p_busca: alvo });
+      if (geracao !== estado.geracao) return null;
+      const contas = contasDaResposta(resposta);
+      publicar({ desativadas: contas, statusDasDesativadas: "ready" });
+      return contas;
+    } catch (erro) {
+      if (geracao !== estado.geracao) return null;
+      console.error("Erro ao carregar as contas desativadas:", erro);
+      publicar({ statusDasDesativadas: "error" });
+      return null;
+    }
+  }
+
+  /* Só recarrega se a aba já foi lida (quem não é admin global nunca a lê). */
+  const recarregarDesativadas = () =>
+    estado.statusDasDesativadas === "idle"
+      ? Promise.resolve(null)
+      : carregarDesativadas();
+
+  /*
+    Reativa com grupo, coordenação e áreas escolhidos. Devolve { ok } ou
+    { ok: false, erro } com a mensagem para o modal mostrar ali mesmo (23514,
+    42501 e 22023 vêm do banco já explicadas).
+  */
+  function reativar(conta, valores, grupos = []) {
+    return executar(`reativar:${conta.id}`, "Reativando…", async () => {
+      try {
+        await rpc(
+          RPC_REATIVAR_USUARIO,
+          argumentosDaReativacao(conta, valores, grupos),
+        );
+        toast(mensagemDeContaReativada(conta), "success");
+        await Promise.all([carregarMatriz(), carregarDesativadas()]);
+        return { ok: true, erro: "" };
+      } catch (erro) {
+        const mensagem = mensagemDaRecusaDeReativacao(erro);
+        toast(`Não foi possível reativar: ${mensagem}`, "error");
+        return { ok: false, erro: mensagem };
+      }
+    }).then((resultado) => resultado || { ok: false, erro: "" });
   }
 
   function adicionarPessoa({ email, nome, grupo, coordenacao, areas }, motivo) {
@@ -386,7 +453,14 @@ export function criarEstadoDosAcessos({
           `Acesso de ${solicitacao.nome || solicitacao.email} aprovado.`,
           "success",
         );
-        await Promise.all([carregarSolicitacoes(), carregarMatriz()]);
+        // Aprovar um pedido de reativação tira a conta de Desativadas.
+        await Promise.all([
+          carregarSolicitacoes(),
+          carregarMatriz(),
+          solicitacao.reativacao
+            ? recarregarDesativadas()
+            : Promise.resolve(null),
+        ]);
         return true;
       } catch (erro) {
         toast(`Não foi possível aprovar: ${mensagemDoErro(erro)}`, "error");
@@ -521,6 +595,13 @@ export function criarEstadoDosAcessos({
       const tarefas = [];
       if (estado.status === "idle" || estado.status === "error")
         tarefas.push(carregarMatriz());
+      // Desativadas: só o administrador global lê (o banco recusa os demais com 42501).
+      if (
+        isAdminGlobal(estado.perfil) &&
+        (estado.statusDasDesativadas === "idle" ||
+          estado.statusDasDesativadas === "error")
+      )
+        tarefas.push(carregarDesativadas());
       if (
         estado.statusDasSolicitacoes === "idle" ||
         estado.statusDasSolicitacoes === "error"
@@ -539,6 +620,8 @@ export function criarEstadoDosAcessos({
     abrirAdicionar: () => publicar({ adicionando: Date.now() }),
     fecharAdicionar: () => estado.adicionando && publicar({ adicionando: 0 }),
     carregarSolicitacoes,
+    carregarDesativadas,
+    reativar,
     aprovar,
     recusar,
     salvarGrupo,

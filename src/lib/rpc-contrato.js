@@ -209,7 +209,26 @@ export const CONTRATO_RPC = {
   desativar_acesso_usuario: {
     argumentos: ["p_perfil_usuario_id", "p_motivo"],
     critica: true,
-    resumo: "Desativa o acesso de um usuário.",
+    resumo:
+      "Desativa o acesso de um usuário; motivo obrigatório (3 a 500), gravado no histórico.",
+  },
+  listar_contas_desativadas: {
+    argumentos: ["p_busca"],
+    critica: false,
+    resumo:
+      "Aba Desativadas de Acessos (admin global): quando, por quem, motivo, grupo/áreas de antes e pedido pendente.",
+  },
+  reativar_acesso_usuario: {
+    argumentos: [
+      "p_perfil_usuario_id",
+      "p_grupo",
+      "p_coordenacao",
+      "p_areas",
+      "p_motivo",
+    ],
+    critica: false,
+    resumo:
+      "Reativa uma conta desativada com grupo, coordenação e áreas (regras da matriz), com motivo. Só admin global.",
   },
   get_acessos_config_master: {
     argumentos: ["p_days", "p_online_minutes", "p_recent_limit"],
