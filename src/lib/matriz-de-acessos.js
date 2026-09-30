@@ -336,6 +336,24 @@ export function ficariaSemArea({ adminGlobal, coordenacao, areasMarcadas }) {
   return !adminGlobal && !coordenacao && !(areasMarcadas || []).length;
 }
 
+/**
+ * Regra do banco (salvar_matriz_acessos, 23514): quem gerencia acessos (nível
+ * editor ou mais em "acessos") sem ser administrador global precisa de
+ * coordenação — o coordenador só gerencia a própria. Sem ela, o menu mostra
+ * Acessos e o banco recusa a leitura.
+ */
+export function gerenciariaAcessosSemCoordenacao({
+  adminGlobal,
+  coordenacao,
+  nivelAcessos,
+}) {
+  return (
+    !adminGlobal &&
+    !coordenacao &&
+    ["editor", "admin"].includes(nivelAcessos || "")
+  );
+}
+
 /** A pessoa, como está no rascunho, ficaria sem área? (inativa não conta) */
 export function linhaFicariaSemArea(
   usuario,

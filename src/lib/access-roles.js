@@ -33,6 +33,8 @@ export function normalizeRole(profile) {
 }
 
 export function roleLabel(profile) {
+  // O grupo de acesso de verdade (obter_contexto_monitora), quando veio.
+  if (profile?.grupo?.nome) return profile.grupo.nome;
   const role = normalizeRole(profile);
   return ACCESS_ROLES.find((item) => item.value === role)?.label || "Usuário";
 }
@@ -139,7 +141,12 @@ export function isAdminGlobal(profile) {
 
 /** Gerencia acessos: admin global, ou coordenador (módulo "acessos" ≥ editor). */
 export function canManageAccess(profile) {
-  return isAdminGlobal(profile) || hasResource(profile, "acessos", 2);
+  if (isAdminGlobal(profile)) return true;
+  // O coordenador gerencia só a própria coordenação; sem ela o banco recusa
+  // (FC_GESTOR_DE_ACESSOS). Perfil antigo sem o campo segue a regra de antes.
+  if (profile?.permissoes && "coordenacao" in profile && !profile.coordenacao)
+    return false;
+  return hasResource(profile, "acessos", 2);
 }
 
 /** Grupos, coordenações e áreas dos editais: só o admin global. */
