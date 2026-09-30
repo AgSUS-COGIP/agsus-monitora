@@ -373,7 +373,7 @@ export function montarArvoreDoMenu({
         view: "config",
         secao: secao.id,
         rotulo: secao.rotulo,
-        icone: ICONE_DAS_CONFIGURACOES,
+        icone: secao.iconeDoMenu || ICONE_DAS_CONFIGURACOES,
       });
     }
   }

@@ -1383,6 +1383,9 @@
           </section>
 
           <section id="page-config" class="page">
+            <!-- Moldura React de Configurações (src/componentes/configuracoes/):
+                 cabeçalho da seção, barra de salvar, diálogos e a seção Marca. -->
+            <div id="configuracoesApp" data-configuracoes></div>
             <div class="admin-grid">
               <div
                 id="accessRequestsAdminCard"
@@ -1422,13 +1425,7 @@
                     ><input id="cfgMonitId" />
                   </div>
                   <div class="form-row" style="display: none">
-                    <label for="cfgTitle">Título do sistema</label><input id="cfgTitle" />
-                  </div>
-                  <div class="form-row" style="display: none">
                     <label for="cfgSubtitle">Subtítulo do login</label><input id="cfgSubtitle" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgSlogan">Slogan / área</label><input id="cfgSlogan" />
                   </div>
 
                   <div class="form-row">
@@ -1676,30 +1673,10 @@
                     />
                   </div>
 
-                  <div class="config-section-title">
-                    Rodapé institucional (COGIP)
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgCogipNome">Nome da equipe</label
-                    ><input id="cfgCogipNome" placeholder="Ex: COGIP" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgCogipFuncao">Função / área</label
-                    ><input
-                      id="cfgCogipFuncao"
-                      placeholder="Ex: Desenvolvimento e sustentação"
-                    />
-                  </div>
+                  <div class="config-section-title">Versão</div>
                   <div class="form-row">
                     <label for="cfgCogipVersao">Versão do sistema</label
                     ><input id="cfgCogipVersao" placeholder="Ex: V.2.7.3" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgCogipDept">Texto institucional</label
-                    ><input
-                      id="cfgCogipDept"
-                      placeholder="Ex: Gestão da Informação de Pessoal"
-                    />
                   </div>
                   <div class="form-row">
                     <label for="cfgAppVersionCurrent">Versão publicada</label
@@ -1707,30 +1684,6 @@
                       id="cfgAppVersionCurrent"
                       placeholder="Ex: MONITORA Web V2.9.35"
                     />
-                  </div>
-                  <div class="form-row full">
-                    <label for="cfgCogipLogo">Logo da equipe (URL)</label>
-                    <input
-                      id="cfgCogipLogo"
-                      oninput="previewImg('cfgCogipLogo', 'prevCogipLogo')"
-                    />
-                    <img
-                      id="prevCogipLogo"
-                      src=""
-                      alt=""
-                      style="
-                        display: none;
-                        height: 40px;
-                        width: 40px;
-                        object-fit: cover;
-                        border-radius: 50%;
-                        border: 1px solid var(--line);
-                        margin-top: 6px;
-                      "
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgFooter">Rodapé</label><input id="cfgFooter" />
                   </div>
                 </div>
               </div>

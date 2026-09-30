@@ -8,7 +8,7 @@ import {
   abrirSecaoDeConfiguracao,
   definirSecoesPermitidas,
   organizarConfiguracoesEmSecoes,
-  anexarNaSecao,
+  EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
   secaoDoCampo,
 } from "../src/modules/config-secoes.js";
@@ -105,7 +105,7 @@ describe("organizar move sem destruir", () => {
         <div class="admin-grid">
           <div class="admin-card">
             <div class="form-grid">
-              <div class="form-row"><label>Título</label><input id="cfgTitle" value="AgSUS" /></div>
+              <div class="form-row"><label>Título</label><input id="cfgMonitId" value="AgSUS" /></div>
               <div class="form-row"><label>KPI vagas</label><input id="cfgKpiVagas" value="Vagas" /></div>
               <div class="form-row"><label>Cor</label><input id="cfgAccessPanelColor" type="color" /></div>
               <div class="form-row"><label>Heartbeat</label><input id="cfgAccessHeartbeatMinutos" value="5" /></div>
@@ -124,9 +124,17 @@ describe("organizar move sem destruir", () => {
     expect(document.querySelectorAll(".config-secao")).toHaveLength(8);
     expect(
       document
-        .querySelector('.config-secao[data-secao="marca"]')
-        .contains(document.getElementById("cfgTitle")),
+        .querySelector('.config-secao[data-secao="operacao"]')
+        .contains(document.getElementById("cfgMonitId")),
     ).toBe(true);
+    // A Marca é React (src/componentes/configuracoes/marca.jsx): o corpo chega vazio.
+    expect(
+      document.querySelector(
+        '.config-secao[data-secao="marca"] .config-secao__corpo',
+      ).children,
+    ).toHaveLength(0);
+    // O cabeçalho é da moldura React, um só para a página.
+    expect(document.querySelector(".config-secao__cabecalho")).toBeNull();
     expect(
       document
         .querySelector('.config-secao[data-secao="inicio"]')
@@ -144,14 +152,14 @@ describe("organizar move sem destruir", () => {
     reconstruído, o valor digitado e os listeners iriam junto com ele.
   */
   it("preserva o mesmo nó, com valor e listener", () => {
-    const antes = document.getElementById("cfgTitle");
+    const antes = document.getElementById("cfgMonitId");
     let ouviu = 0;
     antes.addEventListener("input", () => (ouviu += 1));
     antes.value = "digitado";
 
     organizarConfiguracoesEmSecoes(document);
 
-    const depois = document.getElementById("cfgTitle");
+    const depois = document.getElementById("cfgMonitId");
     expect(depois).toBe(antes);
     expect(depois.value).toBe("digitado");
     depois.dispatchEvent(new Event("input"));
@@ -217,7 +225,7 @@ describe("as seções como páginas de Administração", () => {
   beforeEach(() => {
     document.body.className = "";
     document.body.innerHTML =
-      '<section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgTitle" value="AgSUS"></div></div></section>';
+      '<section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgMonitId" value="AgSUS"></div></div></section>';
     organizarConfiguracoesEmSecoes(document);
   });
   afterEach(() => {
@@ -240,7 +248,7 @@ describe("as seções como páginas de Administração", () => {
   });
 
   it("troca a seção sem recriar campos nem perder valores pendentes", () => {
-    const campo = document.getElementById("cfgTitle");
+    const campo = document.getElementById("cfgMonitId");
     campo.value = "Rascunho";
 
     expect(abrirSecaoDeConfiguracao(document, "acessos")).toBe(true);
@@ -253,7 +261,7 @@ describe("as seções como páginas de Administração", () => {
     ).toBe(true);
 
     abrirSecaoDeConfiguracao(document, "marca");
-    expect(document.getElementById("cfgTitle")).toBe(campo);
+    expect(document.getElementById("cfgMonitId")).toBe(campo);
     expect(campo.value).toBe("Rascunho");
   });
 
@@ -290,16 +298,14 @@ describe("as seções como páginas de Administração", () => {
     expect(secaoAtualDeConfiguracao(document)).toBe("acessos");
   });
 
-  it("em Acessos o botão fixo de salvar configurações some", () => {
-    const barra = document.createElement("div");
-    barra.className = "config-sticky-actions";
-    document.getElementById("page-config").appendChild(barra);
+  it("cada troca de seção avisa a moldura React (cabeçalho e barra de salvar)", () => {
+    const abertas = [];
+    const ouvir = (evento) => abertas.push(evento.detail.secao);
+    document.addEventListener(EVENTO_SECAO_ABERTA, ouvir);
     abrirSecaoDeConfiguracao(document, "acessos");
-    expect(barra.hidden).toBe(true);
     abrirSecaoDeConfiguracao(document, "marca");
-    expect(barra.hidden).toBe(false);
-    abrirSecaoDeConfiguracao(document, "modulos");
-    expect(barra.hidden).toBe(true);
+    document.removeEventListener(EVENTO_SECAO_ABERTA, ouvir);
+    expect(abertas).toEqual(["acessos", "marca"]);
   });
 
   it("Módulos e abas carrega a própria tela e pergunta antes de sair com pendência", () => {
@@ -341,33 +347,11 @@ describe("integração no arranque", () => {
 /*
   Um navegador só: a barra antiga de config-page-enhancements.js (cinco abas,
   busca e contador) saiu junto com o arquivo; o navegador é o menu de seções.
-  Blocos que nascem depois da organização entram numa seção por anexarNaSecao.
 */
 describe("um navegador só", () => {
   it("o arquivo da barra antiga não é mais instalado", () => {
     expect(main).not.toContain("config-page-enhancements");
     expect(main).not.toContain("removerNavegadorAntigo");
-  });
-
-  it("anexarNaSecao põe o bloco no corpo da seção pedida", () => {
-    document.body.innerHTML = `
-      <section id="page-config">
-        <div class="admin-grid"><div class="admin-card"><div class="form-grid">
-          <div class="form-row"><label>Título</label><input id="cfgTitle" /></div>
-        </div></div></div>
-      </section>`;
-    organizarConfiguracoesEmSecoes(document);
-    const bloco = document.createElement("div");
-    expect(anexarNaSecao(document, "operacao", bloco)).toBe(true);
-    expect(bloco.closest('.config-secao[data-secao="operacao"]')).toBeTruthy();
-    expect(bloco.closest("[hidden]:not(.config-secao)")).toBeNull();
-  });
-
-  it("sem seções, devolve false e não mexe no bloco", () => {
-    document.body.innerHTML = '<section id="page-config"></section>';
-    const bloco = document.createElement("div");
-    expect(anexarNaSecao(document, "operacao", bloco)).toBe(false);
-    expect(bloco.parentNode).toBeNull();
   });
 });
 

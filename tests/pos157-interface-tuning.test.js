@@ -5,7 +5,10 @@ const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const main = readFileSync("src/main.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
-const governance = readFileSync("src/modules/config-governance.js", "utf8");
+const governance = readFileSync(
+  "src/componentes/configuracoes/estado.js",
+  "utf8",
+);
 const migration = readFileSync(
   "supabase/migrations/20260909114500_platform_assets_6mb.sql",
   "utf8",
@@ -142,10 +145,10 @@ describe("branding independente da sidebar", () => {
     expect(guarda).toBeLessThan(uso);
   });
 
-  it("é inicializado antes do guard de Configurações", () => {
+  it("é inicializado antes da moldura de Configurações", () => {
     expect(main.indexOf("initSidebarBranding();")).toBeGreaterThan(-1);
     expect(main.indexOf("initSidebarBranding();")).toBeLessThan(
-      main.indexOf("initConfigGovernance();"),
+      main.indexOf("montarConfiguracoes();"),
     );
   });
 });

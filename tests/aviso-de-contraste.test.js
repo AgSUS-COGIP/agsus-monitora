@@ -211,7 +211,10 @@ describe("os dois campos de cor recebem o aviso", () => {
 */
 describe("modo do texto sobre o painel", () => {
   const html = readFileSync("index.html", "utf8");
-  const governanca = readFileSync("src/modules/config-governance.js", "utf8");
+  const governanca = readFileSync(
+    "src/lib/publicacao-de-configuracoes.js",
+    "utf8",
+  );
   const boot = readFileSync("src/lib/access-branding-boot.js", "utf8");
   const cache = readFileSync("src/lib/access-branding-cache.js", "utf8");
   const publico = readFileSync("src/lib/access-branding-publico.js", "utf8");
@@ -315,7 +318,7 @@ describe("modo do texto sobre o painel", () => {
     expect(bloco).toContain('modo === "escuro"');
   });
 
-  // Um caminho só: a publicação de config-governance.js (o salvar do legado saiu).
+  // Um caminho só: a publicação de Configurações (publicacao-de-configuracoes.js).
   it("a chave entra no caminho de gravação", () => {
     expect(governanca).toContain('"auth_access_texto_modo"');
   });
