@@ -32,6 +32,7 @@ import {
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { aplicarTemaSalvoDoPainel } from "../lib/tema-do-painel.js";
 import { montarPainelDeRecursos } from "../componentes/recursos/recursos.jsx";
+import { comemoracoesLigadasNoPainel } from "../modules/comemoracao.js";
 
 const area = areaDaUrlDoPainel(window.location.search);
 const nomeDaArea = rotuloDaAreaDoPainel(area);
@@ -39,11 +40,14 @@ document.title = `Painel de recursos · ${nomeDaArea} — MONITORA`;
 document.documentElement.dataset.areaDoPainel = area;
 aplicarTemaSalvoDoPainel();
 
-montarPainelDeRecursos({
-  supabase: getSupabaseClient(),
+const supabase = getSupabaseClient();
+const { estado } = montarPainelDeRecursos({
+  supabase,
   area,
   nomeDaArea,
 });
+// Selo "No prazo" dos recursos decididos: só com as comemorações ligadas.
+void comemoracoesLigadasNoPainel(supabase).then(estado.definirComemoracoes);
 
 const embeddedInParentApp = window.parent !== window;
 installCsvBlobSecurityGuard();

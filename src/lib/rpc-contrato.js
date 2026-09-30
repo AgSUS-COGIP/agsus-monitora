@@ -144,7 +144,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Situação do sistema inteiro e de cada área (ativo, manutenção, mensagem, previsão) para o menu e a tela de manutenção. Sem ela, tudo vale como ativo.",
+      "Situação do sistema inteiro e de cada área (ativo, manutenção, mensagem, previsão) para o menu e a tela de manutenção, e o liga/desliga das comemorações (sistema.comemoracoes), lido também pelos painéis. Sem ela, tudo vale como ativo e as comemorações ficam desligadas.",
   },
   obter_modulos_e_abas: {
     argumentos: [],
@@ -156,7 +156,14 @@ export const CONTRATO_RPC = {
     argumentos: ["p_alteracoes", "p_motivo"],
     critica: false,
     resumo:
-      "Grava em lote ativo/situação/mensagem/previsão/beta de sistema, áreas, abas, abas por área e painéis, com motivo e histórico (admin global).",
+      "Grava em lote ativo/situação/mensagem/previsão/beta de sistema, áreas, abas, abas por área e painéis, e comemoracoes (S/N) do sistema, com motivo e histórico (admin global).",
+  },
+  // ── Comemorações: marcos do ano da equipe (nunca ranking individual) ─────
+  obter_marcos_da_area: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Análises concluídas (Aprovado/Reprovado, ativas) da área no ano corrente e no total, para o card de marcos do ano na Visão geral. Exige a área do usuário. Sem ela, o card não aparece.",
   },
   obter_branding_acesso_publico: {
     argumentos: [],

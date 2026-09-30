@@ -103,7 +103,31 @@ export function detalheDoPrazo(recurso) {
   };
 }
 
-function Prazo({ recurso }) {
+/*
+  Recurso decidido: selo estático "No prazo" (verde) ou "Fora do prazo"
+  (neutro), pela data da decisão contra o prazo do cronograma. Faz parte das
+  comemorações (marcos do processo): some com elas desligadas. Sem confete.
+*/
+export function SeloDoPrazoCumprido({ recurso, ligado = true }) {
+  if (!ligado || typeof recurso?.noPrazo !== "boolean") return null;
+  return recurso.noPrazo ? (
+    <span
+      className="badge aprovado recursos-no-prazo"
+      title="Decidido dentro do prazo de resposta"
+    >
+      No prazo
+    </span>
+  ) : (
+    <span
+      className="badge neutro recursos-no-prazo"
+      title="Decidido depois do prazo de resposta"
+    >
+      Fora do prazo
+    </span>
+  );
+}
+
+function Prazo({ recurso, comemoracoes }) {
   const { data, texto, tom } = detalheDoPrazo(recurso);
   return (
     <div title={recurso.prazo.aviso || recurso.prazo.atividade || undefined}>
@@ -111,6 +135,7 @@ function Prazo({ recurso }) {
       <span className="secondary-text recursos-prazo" data-tone={tom}>
         {texto}
       </span>
+      <SeloDoPrazoCumprido recurso={recurso} ligado={comemoracoes} />
     </div>
   );
 }
@@ -156,6 +181,7 @@ export function TabelaDeRecursos({
   podeEditar,
   aoAbrir,
   aoNovo,
+  comemoracoes = false,
 }) {
   const [busca, setBusca] = useState("");
   const [limite, setLimite] = useState(POR_VEZ);
@@ -280,7 +306,7 @@ export function TabelaDeRecursos({
                     <MarcasDasEtapas etapas={r.etapas} />
                   </td>
                   <td>
-                    <Prazo recurso={r} />
+                    <Prazo recurso={r} comemoracoes={comemoracoes} />
                   </td>
                   <td>
                     {r.diasEmAberto === null || r.diasEmAberto === undefined

@@ -405,6 +405,43 @@ describe("filtros", () => {
   });
 });
 
+describe("selo do prazo cumprido", () => {
+  const decidido = (id, dia) => ({
+    ...RECURSO_EXISTENTE,
+    id,
+    nu: id === "r2" ? 8 : 9,
+    candidato: id === "r2" ? "Bruno Lima" : "Célia Souza",
+    situacao: "DEFERIDO",
+    decisao_em: `${dia}T12:00:00`,
+    resposta_candidato_em: `${dia}T12:00:00`,
+  });
+  const dados = () =>
+    payload({
+      recursos: [
+        RECURSO_EXISTENTE,
+        decidido("r2", "2026-09-22"),
+        decidido("r3", "2026-09-25"),
+      ],
+    });
+  const selos = () =>
+    [...document.querySelectorAll("#tableBody .recursos-no-prazo")].map((s) => [
+      s.textContent,
+      s.classList.contains("aprovado"),
+    ]);
+
+  it("com as comemorações ligadas: No prazo (verde) e Fora do prazo (neutro), só nos decididos", async () => {
+    const { estado } = await montar(supabaseFalso({ dados: dados() }));
+    expect(selos()).toEqual([]);
+    await act(async () => estado.definirComemoracoes(true));
+    expect(selos().sort()).toEqual([
+      ["Fora do prazo", false],
+      ["No prazo", true],
+    ]);
+    await act(async () => estado.definirComemoracoes(false));
+    expect(selos()).toEqual([]);
+  });
+});
+
 describe("permissão", () => {
   it("quem só lê não vê “Novo recurso” e não marca etapa", async () => {
     await montar(

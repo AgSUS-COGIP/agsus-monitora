@@ -13,9 +13,14 @@
   sistema > área > aba em todas as áreas > aba nesta área: a mensagem e a
   previsão mostradas são as do nível mais alto em manutenção.
 
+  O liga/desliga das comemorações (`sistema.comemoracoes`) vem junto, em
+  `comemoracoes`.
+
   Sem resposta do banco (erro de rede, função ainda não publicada), vale
-  `SITUACAO_PADRAO`: tudo ativo. A tela nunca tranca ninguém por falha de rede.
+  `SITUACAO_PADRAO`: tudo ativo (e comemorações desligadas). A tela nunca
+  tranca ninguém por falha de rede.
 */
+import { comemoracoesLigadasNaResposta } from "./comemoracao.js";
 
 export const ATIVA = "ATIVA";
 export const MANUTENCAO = "MANUTENCAO";
@@ -55,6 +60,8 @@ export function manutencaoDaLinha(situacao, mensagem, previsao) {
 export const SITUACAO_PADRAO = Object.freeze({
   carregada: false,
   adminGlobal: false,
+  /* Sem resposta do banco, comemoração nenhuma (src/lib/comemoracao.js). */
+  comemoracoes: false,
   sistema: null,
   areas: Object.freeze([]),
 });
@@ -82,6 +89,7 @@ export function normalizarSituacaoDoSistema(dados) {
   return Object.freeze({
     carregada: true,
     adminGlobal: dados.admin_global === true,
+    comemoracoes: comemoracoesLigadasNaResposta(dados),
     sistema: manutencaoDaLinha(
       sistema.situacao,
       sistema.mensagem,

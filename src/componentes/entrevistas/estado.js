@@ -36,6 +36,7 @@ import {
   payloadMudou,
 } from "../../lib/entrevistas-do-painel.js";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import { avaliarMarcosDasEntrevistas } from "./marcos.js";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Abra este painel pelo menu do MONITORA para compartilhar a sessão do Supabase Auth.";
@@ -87,9 +88,12 @@ export function criarEstadoDasEntrevistas({
   armazenamento = armazenamentoDePayload,
   agora = () => Date.now(),
   tempoLimiteMs = TEMPO_LIMITE_MS,
+  /* Vaga pronta para o resultado final (marcos.js); troque nos testes. */
+  avaliarMarcos = avaliarMarcosDasEntrevistas,
 } = {}) {
   let estado = ESTADO_INICIAL;
   let pedido = 0;
+  let usuarioDaCarga = "";
   const ouvintes = new Set();
   const copias = criarCacheDePayload({
     armazenamento,
@@ -102,7 +106,7 @@ export function criarEstadoDasEntrevistas({
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  const mostrar = (payload, extra = {}) =>
+  function mostrar(payload, extra = {}) {
     publicar({
       dados: normalizarPayload(payload || {}),
       carregado: true,
@@ -113,6 +117,13 @@ export function criarEstadoDasEntrevistas({
       carregadoEm: agora(),
       ...extra,
     });
+    void avaliarMarcos?.({
+      supabase,
+      usuarioId: usuarioDaCarga,
+      area: estado.area,
+      dados: estado.dados,
+    });
+  }
 
   const perderAcesso = (erro) =>
     publicar({
@@ -172,6 +183,7 @@ export function criarEstadoDasEntrevistas({
         });
         return false;
       }
+      usuarioDaCarga = usuarioId;
       const contexto = { usuarioId, area };
 
       const guardado = primeira ? await copias.ler(contexto) : null;

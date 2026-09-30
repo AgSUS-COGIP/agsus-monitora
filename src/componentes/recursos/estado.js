@@ -57,6 +57,11 @@ const ESTADO_INICIAL = Object.freeze({
   modelosAbertos: false,
   /** `listar_modelos_resposta_recurso` ou `{ erro }`; `null` antes de pedir. */
   modelosAdmin: null,
+  /*
+    Comemorações ligadas (obter_situacao_do_sistema, lida pelo main.jsx):
+    mostra o selo "No prazo" / "Fora do prazo" nos recursos decididos.
+  */
+  comemoracoes: false,
 });
 
 const mensagemDe = (erro) =>
@@ -172,7 +177,12 @@ export function criarEstadoDosRecursos({
     if (!area) return false;
     const meu = ++pedido;
     if (area !== estado.area) {
-      publicar({ ...ESTADO_INICIAL, area, detalhes: new Map() });
+      publicar({
+        ...ESTADO_INICIAL,
+        area,
+        detalhes: new Map(),
+        comemoracoes: estado.comemoracoes,
+      });
     } else {
       publicar({ atualizando: true, erroAoCarregar: "" });
     }
@@ -682,5 +692,7 @@ export function criarEstadoDosRecursos({
     marcarEtapa,
     excluir,
     exportarCsv,
+    definirComemoracoes: (ligadas) =>
+      publicar({ comemoracoes: ligadas === true }),
   };
 }

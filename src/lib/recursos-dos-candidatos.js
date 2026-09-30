@@ -14,7 +14,11 @@
   mudou" calculados, sem digitar.
 */
 import { sanitizeCsvCell } from "./csv-security.js";
-import { cronogramasPorEdital, prazoDoRecurso } from "./prazo-do-recurso.js";
+import {
+  cronogramasPorEdital,
+  decididoNoPrazo,
+  prazoDoRecurso,
+} from "./prazo-do-recurso.js";
 
 export const SITUACOES = Object.freeze([
   Object.freeze({ id: "EM_ANALISE", rotulo: "Em análise", tom: "warning" }),
@@ -161,6 +165,11 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
     diasParaPrazo,
     // Atrasado: a resposta ainda não saiu e o prazo já passou.
     atrasado: semResposta && diasParaPrazo !== null && diasParaPrazo < 0,
+    // Decidido dentro do prazo do cronograma (true/false); null sem decisão ou prazo.
+    noPrazo:
+      decidido && recurso.decisao_em
+        ? decididoNoPrazo(diaLocal(recurso.decisao_em), prazo.data)
+        : null,
     etapasFeitas: ETAPAS.filter((etapa) => etapas[etapa.id]).length,
     // A resposta escrita no sistema (resposta-do-recurso.js) e os anexos ativos.
     respostaEstado: recurso.resposta_estado || null,

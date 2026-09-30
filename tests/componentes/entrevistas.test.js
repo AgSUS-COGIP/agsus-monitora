@@ -281,4 +281,20 @@ describe("cópia guardada (stale-while-revalidate)", async () => {
     expect(estado.obter().carregado).toBe(false);
     expect(armazenamento.mapa.size).toBe(0);
   });
+  it("avisa os marcos (vaga pronta) com o usuário, a área e os dados da tela", async () => {
+    const avaliarMarcos = vi.fn();
+    const estado = criarEstadoDasEntrevistas({
+      supabase: supabaseFalso({ data: PAYLOAD, error: null }),
+      armazenamento: memoria(),
+      avaliarMarcos,
+    });
+    await estado.carregar("saude-indigena");
+    expect(avaliarMarcos).toHaveBeenCalledWith(
+      expect.objectContaining({
+        usuarioId: "u",
+        area: "saude-indigena",
+        dados: estado.obter().dados,
+      }),
+    );
+  });
 });

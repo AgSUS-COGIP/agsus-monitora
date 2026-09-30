@@ -1539,7 +1539,11 @@ async function loadInitialData() {
   openApp(currentUser);
   navigate(startView());
   esconderEsqueleto();
-  comemorarAcessoLiberado({ usuario: currentUser, perfil: profile });
+  comemorarAcessoLiberado({
+    usuario: currentUser,
+    perfil: profile,
+    ligadas: situacaoDoSistema().comemoracoes,
+  });
   atualizarCopiaDaSessao(sessao, consultas, daCopia ? copia.dados : null).catch(
     (erro) => console.warn("Falha ao atualizar a cópia da sessão:", erro),
   );

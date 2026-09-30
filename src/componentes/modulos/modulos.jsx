@@ -22,7 +22,8 @@ import { Icone } from "../icone.jsx";
   em manutenção o sistema inteiro, cada área, cada aba (em todas as áreas ou
   só numa) e os painéis externos, e ligar o selo BETA de cada aba.
 
-    Sistema inteiro       Ativo / Em manutenção (+ mensagem e previsão)
+    Sistema inteiro       Ativo / Em manutenção (+ mensagem e previsão) e o
+                          liga/desliga das comemorações (marcos do processo)
     Um cartão por área    a situação da área e, dentro, as abas dela
     Abas (todas as áreas) a situação de cada aba e o selo BETA
     Painéis externos      Ativo / Em manutenção / Desativado
@@ -402,6 +403,25 @@ export function ModulosEAbas({ estado }) {
         {estadoDoSistema === "manutencao" ? (
           <CamposDaManutencao estado={estado} alvo={sistema} valor={valor} />
         ) : null}
+        <label className="modulos-comemoracoes">
+          <input
+            type="checkbox"
+            checked={valor(sistema, "comemoracoes") !== "N"}
+            onChange={(evento) =>
+              estado.mudarCampo(
+                sistema,
+                "comemoracoes",
+                evento.target.checked ? "S" : "N",
+              )
+            }
+          />
+          <span>Comemorações (marcos do processo)</span>
+        </label>
+        <p className="acessos-secundario modulos-comemoracoes__dica">
+          Confete discreto quando um edital é todo analisado, a fila zera ou uma
+          vaga fica pronta, e os marcos do ano da equipe. Nunca ranking
+          individual. Desligado, ninguém vê.
+        </p>
       </Cartao>
 
       {(arvore.areas || []).map((area) => {
