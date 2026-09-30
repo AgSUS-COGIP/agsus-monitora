@@ -69,12 +69,15 @@ import {
   getSupabaseAuthStorage,
   getSupabaseClient,
 } from "../lib/supabaseClient.js";
-import { renderAccessRequestAdminItemHTML } from "./access-request-ui.js";
 import {
   carregarMinhaSolicitacao,
   enviarSolicitacao,
   garantirAcessoBasico,
+  lerCampos,
+  mostrarStatus,
+  renderAccessRequestAdminItemHTML,
 } from "./solicitacao-de-acesso.js";
+import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
 import { renderPanelAdminHTML } from "./config-ui.js";
 import { confirmarSaidaDasConfiguracoes } from "./config-governance.js";
 import { createAccessDashboard } from "./access-dashboard.js";
@@ -1520,6 +1523,7 @@ async function loadInitialData() {
   openApp(currentUser);
   navigate(startView());
   esconderEsqueleto();
+  comemorarAcessoLiberado({ usuario: currentUser, perfil: profile });
   atualizarCopiaDaSessao(sessao, consultas, daCopia ? copia.dados : null).catch(
     (erro) => console.warn("Falha ao atualizar a cópia da sessão:", erro),
   );
@@ -1662,12 +1666,11 @@ async function showAccessRequestState() {
     await loadMyAccessRequest();
   } catch (error) {
     console.warn("Nao foi possivel consultar solicitacao anterior:", error);
-    const status = $("accessRequestStatus");
-    if (status) {
-      status.classList.remove("hidden");
-      status.textContent =
-        "Preencha e envie a solicitação. Não foi possível consultar solicitações anteriores neste momento.";
-    }
+    mostrarStatus(document, {
+      tom: "warn",
+      texto:
+        "Não foi possível consultar seu pedido anterior. Você pode enviar um pedido agora.",
+    });
     const btn = $("accessRequestBtn");
     if (btn) btn.disabled = false;
   }
@@ -1697,7 +1700,7 @@ function forceAccessRequestFallback(message) {
 // Formulário de solicitação: src/modules/solicitacao-de-acesso.js (por RPC).
 async function loadMyAccessRequest() {
   if (!sb || !currentUser?.id) return null;
-  return carregarMinhaSolicitacao(sb);
+  return carregarMinhaSolicitacao(sb, document, { usuarioId: currentUser.id });
 }
 
 async function submitAccessRequest() {
@@ -1709,37 +1712,17 @@ async function submitAccessRequest() {
     );
   const btn = $("accessRequestBtn");
   if (btn) btn.disabled = true;
-  const nome = txt($("accessReqNome")?.value) || userDisplayName();
-  const setor = txt($("accessReqSetor")?.value);
-  const justificativa = txt($("accessReqJustificativa")?.value);
-  if (!nome || !justificativa) {
-    if (btn) btn.disabled = false;
-    return showAlert(
-      "loginMsg",
-      "Informe seu nome e uma justificativa breve.",
-      "warn",
-    );
-  }
-  const resultado = await enviarSolicitacao(sb, {
-    nome,
-    setor,
-    justificativa,
-    coordenacao: $("accessReqCoordenacao")?.value,
-  });
-  if (!resultado.ok) {
-    if (btn) btn.disabled = false;
-    return showAlert(
-      "loginMsg",
-      "Não foi possível enviar a solicitação: " +
+  // Validação por campo, envio e a situação depois: solicitacao-de-acesso.js.
+  const resultado = await enviarSolicitacao(sb, lerCampos(document));
+  if (resultado.ok) return;
+  if (btn) btn.disabled = false;
+  if (resultado.mensagem)
+    mostrarStatus(document, {
+      tom: "danger",
+      texto:
+        "Não foi possível enviar o pedido: " +
         friendlyError({ message: resultado.mensagem }),
-      "error",
-    );
-  }
-  showAlert(
-    "loginMsg",
-    "Solicitação enviada. A coordenação escolhida (ou um administrador) poderá liberar seu acesso.",
-    "success",
-  );
+    });
 }
 
 function consultaDeConfiguracao() {

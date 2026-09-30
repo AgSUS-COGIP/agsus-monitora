@@ -68,3 +68,82 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+
+/*
+  Acesso liberado (src/modules/comemoracao-do-acesso.js): a frase no topo, por
+  cima de tudo, e o confete num canvas que não recebe clique.
+*/
+.acesso-liberado {
+  position: fixed;
+  top: var(--space-5, 24px);
+  left: 50%;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  max-width: min(560px, calc(100vw - 32px));
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--brand-primary);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  animation: acesso-liberado-entra 0.35s ease-out;
+}
+.acesso-liberado strong {
+  font-size: 15px;
+  line-height: 1.4;
+}
+.acesso-liberado__fechar {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+}
+.acesso-liberado__fechar:hover {
+  background: var(--surface-muted, rgba(0, 0, 0, 0.06));
+}
+.acesso-liberado__fechar:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+.acesso-liberado__confete {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+@keyframes acesso-liberado-entra {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .acesso-liberado {
+    animation: none;
+  }
+}
+.acesso-liberado__corpo {
+  display: grid;
+  gap: var(--space-2, 8px);
+}
+.acesso-liberado__corpo span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.acesso-liberado__corpo ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.4;
+}

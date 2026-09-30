@@ -479,9 +479,12 @@
               <div class="access-request-head compact">
                 <div>
                   <h2>Solicitar acesso</h2>
-                  <p>
-                    Preencha os dados para que um administrador libere seu
-                    perfil de acesso.
+                  <p class="access-request-subtitle">
+                    Sua conta Google entrou, mas ainda não tem acesso ao
+                    MONITORA. Envie o pedido e um administrador avalia.
+                  </p>
+                  <p class="access-request-invite">
+                    Se você recebeu um convite, entre com o e-mail convidado.
                   </p>
                 </div>
               </div>
@@ -491,10 +494,47 @@
                 <strong id="accessReqEmail">-</strong>
               </div>
 
-              <div class="access-request-grid">
+              <!-- Situação do pedido: src/modules/solicitacao-de-acesso.js -->
+              <div
+                id="accessRequestStatus"
+                class="access-status hidden"
+                role="status"
+                aria-live="polite"
+              >
+                <span
+                  id="accessRequestIlustracao"
+                  class="access-status-ilustracao hidden"
+                  aria-hidden="true"
+                  >😢</span
+                >
+                <strong id="accessRequestStatusTitulo" class="hidden"></strong>
+                <span id="accessRequestStatusTexto"></span>
+                <button
+                  id="accessRequestEnterBtn"
+                  type="button"
+                  class="btn green access-enter-btn hidden"
+                >
+                  <i class="fa-solid fa-arrow-right"></i> Entrar
+                  agora
+                </button>
+              </div>
+
+              <div id="accessRequestForm" class="access-request-grid">
                 <div class="form-row">
-                  <label for="accessReqNome">Nome</label>
-                  <input id="accessReqNome" type="text" autocomplete="name" />
+                  <label for="accessReqNome"
+                    >Nome <span class="access-required">(obrigatório)</span></label
+                  >
+                  <input
+                    id="accessReqNome"
+                    type="text"
+                    autocomplete="name"
+                    maxlength="120"
+                    aria-describedby="accessReqNomeErro"
+                  />
+                  <small
+                    id="accessReqNomeErro"
+                    class="access-field-error hidden"
+                  ></small>
                 </div>
 
                 <div class="form-row">
@@ -502,29 +542,56 @@
                   <input
                     id="accessReqSetor"
                     type="text"
-                    placeholder="Ex: COGIP, DSEI, gestão"
+                    maxlength="200"
+                    placeholder="Ex.: COGIP, DSEI Yanomami"
+                    aria-describedby="accessReqSetorDica accessReqSetorErro"
                   />
+                  <small id="accessReqSetorDica" class="access-field-hint"
+                    >Obrigatório se você não escolher a coordenação.</small
+                  >
+                  <small
+                    id="accessReqSetorErro"
+                    class="access-field-error hidden"
+                  ></small>
                 </div>
 
                 <div class="form-row full">
                   <label for="accessReqCoordenacao">Coordenação</label>
-                  <select id="accessReqCoordenacao">
+                  <select
+                    id="accessReqCoordenacao"
+                    aria-describedby="accessReqCoordenacaoErro"
+                  >
                     <option value="">Não sei — o administrador define</option>
                   </select>
+                  <small
+                    id="accessReqCoordenacaoErro"
+                    class="access-field-error hidden"
+                  ></small>
                 </div>
 
                 <div class="form-row full">
-                  <label for="accessReqJustificativa">Justificativa</label>
+                  <label for="accessReqJustificativa"
+                    >Justificativa
+                    <span class="access-required">(obrigatória)</span></label
+                  >
                   <textarea
                     id="accessReqJustificativa"
-                    rows="2"
-                    placeholder="Explique brevemente por que precisa acessar o sistema"
+                    rows="3"
+                    maxlength="2000"
+                    placeholder="Para que você vai usar o MONITORA?"
+                    aria-describedby="accessReqJustificativaDica accessReqJustificativaErro"
                   ></textarea>
+                  <small
+                    id="accessReqJustificativaDica"
+                    class="access-field-hint"
+                    >Mínimo de 20 caracteres.</small
+                  >
+                  <small
+                    id="accessReqJustificativaErro"
+                    class="access-field-error hidden"
+                  ></small>
                 </div>
-
               </div>
-
-              <div id="accessRequestStatus" class="access-status hidden"></div>
 
               <button
                 id="accessRequestBtn"
@@ -532,7 +599,7 @@
                 class="btn green access-submit-btn"
                 onclick="submitAccessRequest()"
               >
-                <i class="fa-solid fa-paper-plane"></i> Enviar solicitação
+                <i class="fa-solid fa-paper-plane"></i> Enviar pedido
               </button>
 
               <div class="access-account-actions">

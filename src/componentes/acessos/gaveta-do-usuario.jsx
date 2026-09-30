@@ -11,8 +11,15 @@ import {
   ficariaSemArea,
   grupoDaLinha,
   pendenciasDoUsuario,
+  resumoDoRascunho,
+  separarRascunhoDaPessoa,
 } from "../../lib/matriz-de-acessos.js";
 import { dataCurta } from "../../lib/convite-de-acesso.js";
+import {
+  PALAVRA_DE_CONFIRMACAO,
+  avisoDeTransformarEmCoordenacao,
+  confirmacaoDeTransformarValida,
+} from "../../lib/grupos-e-coordenacoes.js";
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
 import {
   gruposAtribuiveis,
@@ -25,6 +32,7 @@ import {
 } from "../../lib/teto-de-acessos.js";
 import {
   capacidadesDoPerfil,
+  contextoDepoisDeSalvar,
   menuDoContexto,
   perfilDoContexto,
   resumoDoEscopo,
@@ -34,6 +42,7 @@ import { Icone } from "../icone.jsx";
 import { BotaoDeAcao } from "../lista-aprovados/partes.jsx";
 import {
   CabecalhoDaGaveta,
+  CampoMotivo,
   OpcoesDeCoordenacao,
   OpcoesDoGrupo,
   OpcoesDoModulo,
@@ -43,31 +52,43 @@ import {
 import { AcoesDoConvite } from "./convite.jsx";
 
 /*
-  Gaveta da pessoa, aberta pela linha na tabela. Na ordem em que se pensa:
-  grupo (e o que ele deixa fazer), áreas, coordenação e, fechado, "Avançado:
-  exceções por módulo" (níveis individuais e painéis externos). Embaixo,
-  "como a pessoa vê" (menu e escopo lidos do que está salvo — não é entrar
-  como ela). Quem ainda não entrou tem o convite para reenviar ou cancelar.
+  Gaveta da pessoa, aberta pela linha na tabela: o ÚNICO lugar para mudar
+  alguém. Na ordem em que se pensa: grupo (e o que ele deixa fazer), áreas,
+  coordenação e "como a pessoa vê" — que, com alteração pendente, já mostra o
+  resultado ("Depois de salvar"). O rodapé tem o próprio "Salvar" com motivo
+  (grava só esta pessoa) e "Desativar acesso". Quem ainda não entrou tem o
+  convite para reenviar ou cancelar.
 
-  O que muda aqui vai para o mesmo rascunho da tabela e grava com "Salvar
-  alterações". Trava: grupo que não é de administrador sem área e sem
-  coordenação deixa a pessoa num sistema vazio — a gaveta avisa e o salvar
-  espera a área (o banco recusa com 23514).
+  "Avançado" (fechado): exceções por módulo, painéis externos e, só para o
+  administrador global, "transformar em coordenação" — ação que DESATIVA a
+  conta, com confirmação escrita (em 30/09 foi usada numa conta de pessoa por
+  engano). Nunca aparece para a própria conta.
+
+  Trava: grupo que não é de administrador sem área e sem coordenação deixa a
+  pessoa num sistema vazio — a gaveta avisa e o salvar espera a área (o banco
+  recusa com 23514).
 */
 
-function ComoAPessoaVe({ estado, usuario, matriz, secoesDeConfiguracao }) {
-  const [contexto, setContexto] = useState(null);
+function ComoAPessoaVe({
+  estado,
+  usuario,
+  matriz,
+  rascunho,
+  secoesDeConfiguracao,
+}) {
+  const [salvo, setSalvo] = useState(null);
   const [erro, setErro] = useState("");
+  // Relê a cada carga da matriz (depois de salvar, o salvo mudou).
   useEffect(() => {
     let vivo = true;
     estado
       .lerContextoDoUsuario(usuario.id)
-      .then((dados) => vivo && setContexto(dados))
+      .then((dados) => vivo && setSalvo(dados))
       .catch((falha) => vivo && setErro(falha?.message || "Tente novamente."));
     return () => {
       vivo = false;
     };
-  }, [estado, usuario.id]);
+  }, [estado, usuario.id, matriz]);
 
   if (erro)
     return (
@@ -76,6 +97,9 @@ function ComoAPessoaVe({ estado, usuario, matriz, secoesDeConfiguracao }) {
         salvo.
       </p>
     );
+  const contexto = salvo
+    ? contextoDepoisDeSalvar(salvo, usuario, rascunho, matriz)
+    : null;
   const perfil = contexto ? perfilDoContexto(contexto) : null;
   if (!perfil)
     return (
@@ -116,36 +140,44 @@ function ComoAPessoaVe({ estado, usuario, matriz, secoesDeConfiguracao }) {
 }
 
 /*
-  Conta de e-mail compartilhado de uma coordenação (ex.: "COET – …") não é uma
-  pessoa: vira coordenação (com o nome da conta) e a conta é desativada.
+  Conta de e-mail compartilhado de um setor (ex.: "COET – …") não é uma
+  pessoa: vira coordenação (com o nome da conta) e a conta é DESATIVADA. A
+  confirmação diz isso com todas as letras e pede CONFIRMAR (ou o e-mail) e
+  motivo antes de liberar o botão.
 */
-function MoverParaCoordenacoes({ estado, usuario, areas }) {
+function TransformarEmCoordenacao({ estado, usuario, areas }) {
   const [aberto, setAberto] = useState(false);
   const [area, setArea] = useState(areas[0]?.id || "");
+  const [confirmacao, setConfirmacao] = useState("");
   const [motivo, setMotivo] = useState("");
+  const tituloDaArea = areas.find((a) => a.id === area)?.titulo || area;
+  const pronto =
+    Boolean(area) &&
+    confirmacaoDeTransformarValida(confirmacao, usuario) &&
+    motivoValido(motivo);
   if (!aberto)
     return (
-      <button
-        type="button"
-        className="btn outline acessos-ghost"
-        onClick={() => setAberto(true)}
-      >
-        Mover para Coordenações
-      </button>
+      <div className="acessos-conta-de-setor">
+        <button
+          type="button"
+          className="btn outline acessos-ghost acessos-perigo"
+          onClick={() => setAberto(true)}
+        >
+          Esta conta é de um setor (e-mail compartilhado)? Transformar em
+          coordenação
+        </button>
+      </div>
     );
   return (
     <form
-      className="acessos-mover"
+      className="acessos-mover acessos-conta-de-setor"
+      aria-label="Transformar a conta em coordenação"
       onSubmit={(evento) => {
         evento.preventDefault();
-        if (motivoValido(motivo))
+        if (pronto)
           void estado.moverParaCoordenacoes(usuario, area, motivo.trim());
       }}
     >
-      <p>
-        Esta conta é de uma coordenação, não de uma pessoa? Ela vira a
-        coordenação "{usuario.nome}" e a conta é desativada.
-      </p>
       <div className="acessos-campo">
         <label htmlFor="acessosMoverArea">Área da coordenação</label>
         <select
@@ -159,6 +191,23 @@ function MoverParaCoordenacoes({ estado, usuario, areas }) {
             </option>
           ))}
         </select>
+      </div>
+      <p className="alert error acessos-aviso-perigo" role="alert">
+        <Icone nome="triangle-alert" tamanho={16} />{" "}
+        <span>{avisoDeTransformarEmCoordenacao(usuario, tituloDaArea)}</span>
+      </p>
+      <div className="acessos-campo">
+        <label htmlFor="acessosMoverConfirmacao">
+          Para confirmar, digite {PALAVRA_DE_CONFIRMACAO} ou o e-mail da conta
+        </label>
+        <input
+          id="acessosMoverConfirmacao"
+          value={confirmacao}
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => setConfirmacao(e.target.value)}
+          placeholder={PALAVRA_DE_CONFIRMACAO}
+        />
       </div>
       <div className="acessos-campo">
         <label htmlFor="acessosMoverMotivo">Motivo</label>
@@ -174,7 +223,10 @@ function MoverParaCoordenacoes({ estado, usuario, areas }) {
         <button
           type="button"
           className="btn outline acessos-ghost"
-          onClick={() => setAberto(false)}
+          onClick={() => {
+            setAberto(false);
+            setConfirmacao("");
+          }}
         >
           Cancelar
         </button>
@@ -182,10 +234,10 @@ function MoverParaCoordenacoes({ estado, usuario, areas }) {
           estado={estado}
           acao={`mover:${usuario.id}`}
           type="submit"
-          className="btn primary"
-          disabled={!motivoValido(motivo)}
+          className="btn outline acessos-perigo"
+          disabled={!pronto}
         >
-          Mover para Coordenações
+          Desativar a conta e criar a coordenação
         </BotaoDeAcao>
       </div>
     </form>
@@ -333,6 +385,73 @@ function ExcecoesPorModulo({
   );
 }
 
+/*
+  "Salvar" da gaveta: o que mudou nesta pessoa, com o motivo ali mesmo. Grava
+  só esta pessoa (o que foi mudado em outras linhas segue pendente na página).
+*/
+function SalvarNaGaveta({ estado, usuario, rascunho, matriz, semArea }) {
+  const [motivo, setMotivo] = useState("");
+  const [tentou, setTentou] = useState(false);
+  const { daPessoa } = separarRascunhoDaPessoa(rascunho, usuario.id);
+  const itens =
+    resumoDoRascunho(daPessoa, {
+      grupos: matriz.grupos,
+      coordenacoes: matriz.coordenacoes,
+    })[0]?.itens || [];
+  return (
+    <form
+      className="acessos-salvar acessos-salvar-gaveta"
+      aria-label={`Salvar alterações de ${usuario.nome || usuario.email}`}
+      onSubmit={(evento) => {
+        evento.preventDefault();
+        setTentou(true);
+        if (!motivoValido(motivo) || semArea) return;
+        void estado
+          .salvar(motivo, { usuarioId: usuario.id })
+          .then((ok) => ok && (setMotivo(""), setTentou(false)));
+      }}
+    >
+      <details>
+        <summary>
+          {itens.length}{" "}
+          {itens.length === 1 ? "alteração pendente" : "alterações pendentes"}
+        </summary>
+        <ul>
+          {itens.map((item, indice) => (
+            <li key={indice}>
+              {item.rotulo}: {item.de} → {item.para}
+            </li>
+          ))}
+        </ul>
+      </details>
+      <CampoMotivo
+        id="acessosGavetaMotivo"
+        valor={motivo}
+        aoMudar={setMotivo}
+        erro={tentou && !motivoValido(motivo)}
+      />
+      <div className="acessos-acoes">
+        <button
+          type="button"
+          className="btn outline acessos-ghost"
+          onClick={() => estado.descartarDaPessoa(usuario.id)}
+        >
+          Descartar
+        </button>
+        <BotaoDeAcao
+          estado={estado}
+          acao="salvar"
+          type="submit"
+          className="btn primary"
+          disabled={semArea}
+        >
+          Salvar
+        </BotaoDeAcao>
+      </div>
+    </form>
+  );
+}
+
 export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
   const { matriz, rascunho, gaveta } = atual;
@@ -345,6 +464,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
   const usuarioLogado = atual.perfil
     ? { id: atual.perfil.user_id, email: atual.perfil.email }
     : null;
+  // Própria conta: podeEditarUsuario já trava (e esconde as ações do rodapé).
   const edicao = podeEditarUsuario(teto, usuario, usuarioLogado);
   const codigoDoGrupo = grupoDaLinha(usuario, rascunho);
   const grupo = gruposPorCodigo[codigoDoGrupo];
@@ -362,6 +482,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
     });
   const nome = usuario.nome || usuario.email;
   const pendentes = pendenciasDoUsuario(rascunho, usuario.id);
+  const adminPodeAgir = Boolean(teto.admin_global && edicao.pode);
   const marcado = (recurso) =>
     celulaExibida(usuario, recurso, rascunho).nivel === "leitor";
   // Desmarcar o que só estava marcado no rascunho desfaz; desmarcar o que estava salvo grava "sem acesso".
@@ -398,21 +519,6 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
         {edicao.motivo ? (
           <p className="acessos-secundario">{edicao.motivo}</p>
         ) : null}
-        {pendentes ? (
-          <p className="alert info">
-            <Icone nome="triangle-alert" tamanho={16} /> {pendentes}{" "}
-            {pendentes === 1 ? "alteração pendente" : "alterações pendentes"}:
-            feche e salve na página, com o motivo.
-          </p>
-        ) : null}
-
-        {usuario.convite_pendente ? (
-          <Convite
-            estado={estado}
-            usuario={usuario}
-            podeCancelar={Boolean(teto.admin_global && edicao.pode)}
-          />
-        ) : null}
 
         <section aria-labelledby="acessosGavetaGrupo">
           <h4 id="acessosGavetaGrupo">Grupo</h4>
@@ -420,6 +526,9 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
             aria-label={`Grupo de ${nome}`}
             value={codigoDoGrupo || ""}
             disabled={!edicao.pode}
+            className={classes(
+              codigoDoGrupo !== usuario.grupo && "acessos-pendente",
+            )}
             onChange={(e) =>
               estado.registrar(usuario, ALVO_GRUPO, e.target.value)
             }
@@ -500,8 +609,35 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
           </section>
         ) : null}
 
+        <section aria-labelledby="acessosGavetaVe">
+          <h4 id="acessosGavetaVe">
+            Como a pessoa vê
+            {pendentes ? (
+              <span className="acessos-selo acessos-selo-rascunho">
+                Depois de salvar
+              </span>
+            ) : null}
+          </h4>
+          <ComoAPessoaVe
+            estado={estado}
+            usuario={usuario}
+            matriz={matriz}
+            rascunho={rascunho}
+            secoesDeConfiguracao={secoesDeConfiguracao}
+          />
+        </section>
+
+        {usuario.convite_pendente ? (
+          <Convite
+            estado={estado}
+            usuario={usuario}
+            podeCancelar={adminPodeAgir}
+          />
+        ) : null}
+
         <details className="acessos-avancado">
-          <summary>Avançado: exceções por módulo</summary>
+          <summary>Avançado</summary>
+          <h5>Exceções por módulo</h5>
           <p className="acessos-secundario">
             Só para casos especiais: o nível escolhido aqui vale só para esta
             pessoa e passa por cima do grupo.
@@ -537,26 +673,27 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               })}
             </fieldset>
           ) : null}
+          {adminPodeAgir && !usuario.convite_pendente ? (
+            <TransformarEmCoordenacao
+              estado={estado}
+              usuario={usuario}
+              areas={areas}
+            />
+          ) : null}
         </details>
-
-        <section aria-labelledby="acessosGavetaVe">
-          <h4 id="acessosGavetaVe">Como a pessoa vê</h4>
-          <ComoAPessoaVe
-            estado={estado}
-            usuario={usuario}
-            matriz={matriz}
-            secoesDeConfiguracao={secoesDeConfiguracao}
-          />
-        </section>
       </div>
-      {teto.admin_global && edicao.pode ? (
+      {edicao.pode && (pendentes || adminPodeAgir) ? (
         <div className="acessos-gaveta-rodape">
-          <MoverParaCoordenacoes
-            estado={estado}
-            usuario={usuario}
-            areas={areas}
-          />
-          {usuario.convite_pendente ? null : (
+          {pendentes ? (
+            <SalvarNaGaveta
+              estado={estado}
+              usuario={usuario}
+              rascunho={rascunho}
+              matriz={matriz}
+              semArea={semArea}
+            />
+          ) : null}
+          {adminPodeAgir && !usuario.convite_pendente ? (
             <BotaoDeAcao
               estado={estado}
               acao={`desativar:${usuario.id}`}
@@ -571,7 +708,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
             >
               <Icone nome="user-x" tamanho={16} /> Desativar acesso
             </BotaoDeAcao>
-          )}
+          ) : null}
         </div>
       ) : null}
     </Modal>

@@ -234,3 +234,39 @@ export function coordenacoesPorArea(coordenacoes = [], areas = []) {
     }))
     .filter((grupo) => grupo.coordenacoes.length);
 }
+
+// ── Conta de setor → coordenação (ação perigosa) ─────────────────────────────
+
+/*
+  mover_conta_para_coordenacoes DESATIVA a conta e cria (ou reaproveita) a
+  coordenação com o nome dela. Em 30/09 um administrador usou isso numa conta
+  de PESSOA achando que era um ajuste e a conta perdeu o acesso. Por isso: só
+  no "Avançado" da gaveta, nunca para a própria conta, e com confirmação
+  escrita (CONFIRMAR ou o e-mail da conta) e motivo.
+*/
+
+export const PALAVRA_DE_CONFIRMACAO = "CONFIRMAR";
+
+/** O nome que o banco dá à coordenação: o nome da conta ou o e-mail antes do @. */
+export function nomeDaCoordenacaoDaConta(conta) {
+  return (
+    txt(conta?.nome) ||
+    txt(conta?.email).split("@")[0] ||
+    "(sem nome)"
+  ).slice(0, 120);
+}
+
+/** A frase que diz, com todas as letras, o que vai acontecer. */
+export function avisoDeTransformarEmCoordenacao(conta, tituloDaArea) {
+  const area = txt(tituloDaArea) || "escolhida";
+  return `Isto vai DESATIVAR a conta ${txt(conta?.email)} (ela não entra mais) e criar a coordenação ${nomeDaCoordenacaoDaConta(conta)} na área ${area}. Use só para contas compartilhadas de setor.`;
+}
+
+/** A confirmação digitada vale? "CONFIRMAR" ou o e-mail da conta (sem caixa). */
+export function confirmacaoDeTransformarValida(digitado, conta) {
+  const valor = txt(digitado);
+  if (!valor) return false;
+  if (valor === PALAVRA_DE_CONFIRMACAO) return true;
+  const email = txt(conta?.email).toLowerCase();
+  return Boolean(email) && valor.toLowerCase() === email;
+}

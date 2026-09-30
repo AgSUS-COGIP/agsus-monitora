@@ -438,19 +438,46 @@ describe("Configurações › Acessos", () => {
     expect(document.getElementById("acessosAdicionar")).toBeNull();
   });
 
-  it("conta que é coordenação vai para Coordenações pela gaveta", async () => {
+  /*
+    30/09: um admin clicou em "Mover para Coordenações" (no rodapé, ao lado
+    de "Desativar acesso") numa conta de PESSOA achando que era um ajuste; a
+    conta foi desativada. Agora a ação mora só no "Avançado", diz o que vai
+    acontecer e pede CONFIRMAR (ou o e-mail) e motivo.
+  */
+  it("conta de setor vira coordenação só pelo Avançado, com confirmação escrita", async () => {
     const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
     await clicar(document.querySelector(".acessos-nome"));
-    await clicar(botao("Mover para Coordenações"));
+    const gaveta = document.getElementById("acessosGaveta");
+    const rotulo =
+      "Esta conta é de um setor (e-mail compartilhado)? Transformar em coordenação";
+    // Não fica no rodapé: lá, só "Desativar acesso".
+    const rodape = gaveta.querySelector(".acessos-gaveta-rodape");
+    expect(
+      [...rodape.querySelectorAll("button")].map((b) => b.textContent.trim()),
+    ).toEqual(["Desativar acesso"]);
+    const abrir = botao(rotulo);
+    expect(abrir.closest("details.acessos-avancado")).not.toBeNull();
+    await clicar(abrir);
+    const form = gaveta.querySelector(".acessos-mover");
+    expect(form.querySelector('[role="alert"]').textContent).toContain(
+      "Isto vai DESATIVAR a conta ana@agenciasus.org.br (ela não entra mais) e criar a coordenação Ana <img src=x> na área Saúde Indígena. Use só para contas compartilhadas de setor.",
+    );
+    const confirmar = [...form.querySelectorAll("button")].find(
+      (b) => b.textContent.trim() === "Desativar a conta e criar a coordenação",
+    );
     await digitar(
       document.getElementById("acessosMoverMotivo"),
       "É a conta da COET",
     );
-    await clicar(
-      [...document.querySelectorAll(".acessos-mover button")].find(
-        (b) => b.textContent.trim() === "Mover para Coordenações",
-      ),
+    expect(confirmar.disabled).toBe(true);
+    await digitar(document.getElementById("acessosMoverConfirmacao"), "sim");
+    expect(confirmar.disabled).toBe(true);
+    await digitar(
+      document.getElementById("acessosMoverConfirmacao"),
+      "CONFIRMAR",
     );
+    expect(confirmar.disabled).toBe(false);
+    await clicar(confirmar);
     const chamada = supabase.rpc.mock.calls.find(
       ([nome]) => nome === "mover_conta_para_coordenacoes",
     );
@@ -459,6 +486,101 @@ describe("Configurações › Acessos", () => {
       p_area: "saude-indigena",
       p_motivo: "É a conta da COET",
     });
+  });
+
+  it("a própria conta não oferece transformar em coordenação (nem desativar)", async () => {
+    const eu = {
+      ...MATRIZ(TETO_ADMIN).usuarios[0],
+      id: "adm",
+      nome: "Eu Mesma",
+      email: "eu@agenciasus.org.br",
+    };
+    const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation((nome, args) =>
+      nome === "obter_matriz_acessos"
+        ? Promise.resolve({
+            data: { ...MATRIZ(TETO_ADMIN), usuarios: [eu] },
+            error: null,
+          })
+        : original(nome, args),
+    );
+    await esperar(() => controlador.estado.carregarMatriz());
+    await clicar(document.querySelector(".acessos-nome"));
+    const gaveta = document.getElementById("acessosGaveta");
+    expect(gaveta.textContent).toContain(
+      "Seu acesso: outra pessoa deve alterar.",
+    );
+    expect(gaveta.textContent).not.toContain("Transformar em coordenação");
+    expect(gaveta.querySelector(".acessos-gaveta-rodape")).toBeNull();
+  });
+
+  /*
+    30/09: o grupo mudava na linha da tabela, a gaveta dizia "salve na
+    página" e "Como a pessoa vê" ainda mostrava o salvo. Agora a gaveta tem o
+    grupo no topo, o próprio Salvar com motivo e mostra o resultado.
+  */
+  it("gaveta: grupo no topo, 'Como a pessoa vê' com o rascunho e Salvar com motivo só desta pessoa", async () => {
+    const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
+    // Alteração em outra pessoa, feita na matriz: não pode ir junto.
+    await verPorModulo();
+    await escolher(select("Editais de Coord"), "leitor");
+    await verPorModulo();
+    await clicar(document.querySelector(".acessos-nome"));
+    const gaveta = document.getElementById("acessosGaveta");
+    expect(gaveta.querySelector(".acessos-gaveta-corpo h4").textContent).toBe(
+      "Grupo",
+    );
+    expect(gaveta.querySelector(".acessos-selo-rascunho")).toBeNull();
+    await escolher(
+      gaveta.querySelector('select[aria-label="Grupo de Ana <img src=x>"]'),
+      "admin",
+    );
+    const ve = gaveta.querySelector('[aria-labelledby="acessosGavetaVe"]');
+    expect(ve.querySelector("h4").textContent).toContain("Depois de salvar");
+    expect(ve.textContent).toContain(
+      "Administrador global: vê todas as áreas.",
+    );
+    expect(gaveta.textContent).not.toContain("salve na página");
+    const salvar = gaveta.querySelector(".acessos-salvar-gaveta");
+    expect(salvar.querySelector("summary").textContent).toBe(
+      "1 alteração pendente",
+    );
+    expect(salvar.textContent).toContain(
+      "Grupo: Usuário → Administrador global",
+    );
+    await clicar(
+      [...salvar.querySelectorAll("button")].find(
+        (b) => b.textContent.trim() === "Salvar",
+      ),
+    );
+    // Sem motivo não grava.
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "salvar_matriz_acessos",
+      ),
+    ).toBe(false);
+    await digitar(
+      document.getElementById("acessosGavetaMotivo"),
+      "Assumiu a gestão",
+    );
+    await clicar(
+      [...salvar.querySelectorAll("button")].find(
+        (b) => b.textContent.trim() === "Salvar",
+      ),
+    );
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_matriz_acessos",
+    );
+    expect(chamada[1]).toEqual({
+      p_alteracoes: [
+        { tipo: "grupo", usuario_id: "u1", grupo: "admin", revisao: "t0" },
+      ],
+      p_motivo: "Assumiu a gestão",
+    });
+    // A alteração da outra pessoa segue pendente.
+    const pendentes = [...controlador.estado.obter().rascunho.keys()];
+    expect(pendentes).toEqual(["eu/nucleo"]);
   });
 
   it("guarda de saída: com alteração pendente pergunta, e descartar limpa", async () => {
@@ -641,7 +763,7 @@ describe("Acessos: visão simples, trava de área e convite", () => {
       "Grupo",
       "Áreas",
       "Coordenação",
-      "Avançado: exceções por módulo",
+      "Como a pessoa vê",
     ]);
     expect(
       gaveta().querySelector('select[aria-label="Grupo de Ana <img src=x>"]')

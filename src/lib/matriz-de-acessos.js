@@ -96,6 +96,19 @@ export function pendenciasDoUsuario(rascunho, usuarioId) {
   return total;
 }
 
+/**
+ * Separa o rascunho de uma pessoa do resto: { daPessoa, resto }. O "Salvar"
+ * da gaveta grava só `daPessoa`; o que foi mudado em outras linhas continua
+ * pendente.
+ */
+export function separarRascunhoDaPessoa(rascunho, usuarioId) {
+  const daPessoa = new Map();
+  const resto = new Map();
+  for (const [k, entrada] of rascunho)
+    (k.startsWith(`${usuarioId}/`) ? daPessoa : resto).set(k, entrada);
+  return { daPessoa, resto };
+}
+
 /** Grupo em vigor na linha: o do rascunho, se houver; senão o salvo. */
 export function grupoDaLinha(usuario, rascunho) {
   const entrada = rascunho.get(chave(usuario.id, ALVO_GRUPO));

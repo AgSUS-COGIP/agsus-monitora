@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   capacidadesDoPerfil,
+  contextoDepoisDeSalvar,
   menuDoContexto,
   resumoDoEscopo,
 } from "../src/lib/ver-como.js";
@@ -10,11 +11,7 @@ import {
   secaoDeConfiguracaoPermitida,
 } from "../src/lib/access-roles.js";
 import { areasDoUsuario, montarArvoreDoMenu } from "../src/lib/menu-lateral.js";
-import {
-  mensagemDoStatus,
-  argumentosDaSolicitacao,
-  formularioTravado,
-} from "../src/lib/solicitacao-de-acesso.js";
+import { registrarNoRascunho } from "../src/lib/matriz-de-acessos.js";
 
 const SECOES = [
   { id: "marca", rotulo: "Marca" },
@@ -77,29 +74,84 @@ describe("ver como usuário", () => {
   });
 });
 
-describe("solicitação de acesso", () => {
-  it("status cita a coordenação e trava com pendente ou aprovada", () => {
-    expect(
-      mensagemDoStatus({ status: "pendente", coordenacao_nome: "Norte" }).text,
-    ).toMatch(/Norte/);
-    expect(formularioTravado({ status: "pendente" })).toBe(true);
-    expect(formularioTravado({ status: "recusado" })).toBe(false);
-    expect(mensagemDoStatus(null)).toBeNull();
+/*
+  "Como a pessoa vê" na gaveta reflete o RASCUNHO ("Depois de salvar"): em
+  30/09 a gaveta dizia "Administrador global" com o grupo já trocado para
+  Usuário no rascunho.
+*/
+describe("como a pessoa vê depois de salvar", () => {
+  const GRUPOS = [
+    {
+      codigo: "usuario",
+      nome: "Usuário",
+      niveis: { dashboard: "leitor", nucleo: "leitor", acessos: "sem_acesso" },
+    },
+    {
+      codigo: "admin",
+      nome: "Administrador global",
+      admin_global: true,
+      niveis: {},
+    },
+  ];
+  const AREAS = [
+    { id: "saude-indigena", titulo: "Saúde Indígena" },
+    { id: "sede", titulo: "SEDE" },
+  ];
+  const ADMIN = {
+    id: "u9",
+    nome: "Bia",
+    email: "bia@agenciasus.org.br",
+    grupo: "admin",
+    admin_global: true,
+    coordenacao: null,
+    revisao_conta: "t9",
+    permissoes: {},
+  };
+  const salvo = {
+    profile: {
+      id: "u9",
+      perfil: "admin",
+      admin_global: true,
+      areas: ["saude-indigena", "sede"],
+      permissoes: { dashboard: "admin", nucleo: "admin", acessos: "editor" },
+    },
+    panel_ids: [],
+    escopo: { editais_da_area: 10, editais_visiveis: 10 },
+  };
+  const matriz = {
+    grupos: GRUPOS,
+    areas: AREAS,
+    coordenacoes: [],
+    paineis: [],
+  };
+
+  it("sem pendência, é o contexto salvo", () => {
+    expect(contextoDepoisDeSalvar(salvo, ADMIN, new Map(), matriz)).toBe(salvo);
   });
 
-  it("argumentos vazios viram null", () => {
-    expect(
-      argumentosDaSolicitacao({
-        nome: " Ana ",
-        setor: "",
-        justificativa: "x",
-        coordenacao: "",
-      }),
-    ).toEqual({
-      p_nome: "Ana",
-      p_setor: null,
-      p_justificativa: "x",
-      p_coordenacao: null,
+  it("admin que vai para Usuário com uma área: deixa de ser admin e perde a gestão", () => {
+    let rascunho = registrarNoRascunho(new Map(), ADMIN, "#grupo", "usuario");
+    rascunho = registrarNoRascunho(rascunho, ADMIN, "area:sede", "leitor");
+    const depois = contextoDepoisDeSalvar(salvo, ADMIN, rascunho, matriz);
+    expect(depois.profile).toMatchObject({
+      perfil: "usuario",
+      admin_global: false,
+      areas: ["sede"],
+      coordenacao: null,
+      grupo: { codigo: "usuario", nome: "Usuário" },
     });
+    expect(depois.profile.permissoes).toMatchObject({
+      dashboard: "leitor",
+      nucleo: "leitor",
+      acessos: "sem_acesso",
+    });
+    expect(
+      resumoDoEscopo(depois, new Map(AREAS.map((a) => [a.id, a.titulo]))),
+    ).toBe("Áreas: SEDE.");
+    expect(capacidadesDoPerfil(depois.profile)).not.toContain(
+      "Gerencia acessos",
+    );
+    // O salvo não muda.
+    expect(salvo.profile.admin_global).toBe(true);
   });
 });

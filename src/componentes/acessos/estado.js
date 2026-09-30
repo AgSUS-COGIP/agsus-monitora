@@ -17,7 +17,9 @@ import {
   contarPendencias,
   rebasearRascunho,
   registrarNoRascunho,
+  separarRascunhoDaPessoa,
 } from "../../lib/matriz-de-acessos.js";
+import { isOwnAccessProfile } from "../../lib/access-roles.js";
 
 const RPC_MATRIZ = "obter_matriz_acessos";
 const RPC_SALVAR_MATRIZ = "salvar_matriz_acessos";
@@ -191,9 +193,23 @@ export function criarEstadoDosAcessos({
   }
 
   const descartar = () => publicar({ rascunho: new Map(), aviso: null });
+  /* Descartar da gaveta: só o que mudou nesta pessoa. */
+  const descartarDaPessoa = (usuarioId) =>
+    publicar({
+      rascunho: separarRascunhoDaPessoa(estado.rascunho, usuarioId).resto,
+      aviso: null,
+    });
 
-  function salvar(motivo) {
-    const alteracoes = alteracoesDoRascunho(estado.rascunho);
+  /*
+    Sem `usuarioId`: grava o rascunho inteiro (barra da página). Com
+    `usuarioId`: só o que mudou naquela pessoa (Salvar da gaveta); o resto do
+    rascunho continua pendente.
+  */
+  function salvar(motivo, { usuarioId = null } = {}) {
+    const lote = usuarioId
+      ? separarRascunhoDaPessoa(estado.rascunho, usuarioId).daPessoa
+      : estado.rascunho;
+    const alteracoes = alteracoesDoRascunho(lote);
     if (!alteracoes.length) return Promise.resolve(false);
     return executar("salvar", "Salvando…", async () => {
       try {
@@ -202,7 +218,12 @@ export function criarEstadoDosAcessos({
           p_motivo: String(motivo || "").trim(),
         });
         const total = resultado?.alteradas ?? alteracoes.length;
-        publicar({ rascunho: new Map(), aviso: null });
+        publicar({
+          rascunho: usuarioId
+            ? separarRascunhoDaPessoa(estado.rascunho, usuarioId).resto
+            : new Map(),
+          aviso: null,
+        });
         toast(
           `${total} ${total === 1 ? "alteração salva" : "alterações salvas"}. Vale na próxima vez que a pessoa abrir o sistema.`,
           "success",
@@ -296,7 +317,18 @@ export function criarEstadoDosAcessos({
     });
   }
 
+  /*
+    Desativa a conta e cria a coordenação com o nome dela. Nunca na própria
+    conta (o banco também recusa); a confirmação escrita fica na gaveta.
+  */
   function moverParaCoordenacoes(usuario, area, motivo) {
+    const eu = estado.perfil
+      ? { id: estado.perfil.user_id, email: estado.perfil.email }
+      : null;
+    if (isOwnAccessProfile(eu, usuario)) {
+      toast("Você não pode transformar a sua própria conta.", "error");
+      return Promise.resolve(false);
+    }
     return executar(`mover:${usuario.id}`, "Movendo…", async () => {
       try {
         const coordenacao = await rpc(RPC_MOVER_PARA_COORDENACOES, {
@@ -499,6 +531,7 @@ export function criarEstadoDosAcessos({
     carregarMatriz,
     registrar,
     descartar,
+    descartarDaPessoa,
     salvar,
     desativarUsuario,
     adicionarPessoa,
