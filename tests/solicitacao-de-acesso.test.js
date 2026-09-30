@@ -269,10 +269,12 @@ const $ = (id) => document.getElementById(id);
 const visivel = (id) => !$(id).classList.contains("hidden");
 
 /** RPCs da tela; `pedidos` responde obter_minha_solicitacao_acesso em fila. */
-function supabaseDaTela({ basico, pedidos }) {
+function supabaseDaTela({ basico, pedidos, desativadaNoBanco = false }) {
   const fila = [...pedidos];
   return {
     rpc: vi.fn(async (nome) => {
+      if (nome === "minha_conta_desativada")
+        return { data: desativadaNoBanco, error: null };
       if (nome === "garantir_acesso_basico")
         return { data: basico, error: null };
       if (nome === "obter_minha_solicitacao_acesso")
@@ -513,5 +515,35 @@ describe("tela de acesso: sem formulário antes de saber a situação", () => {
         "Não foi possível consultar seu pedido anterior",
       );
     }
+  });
+});
+
+describe("conta desativada vinda do banco (minha_conta_desativada)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = CARTAO;
+    localStorage.clear();
+  });
+  afterEach(() => {
+    document.body.innerHTML = "";
+    localStorage.clear();
+  });
+
+  it("sem pista no navegador e com pedido pendente, mostra a reativação aguardando (não um pedido comum)", async () => {
+    const sb = supabaseDaTela({
+      basico: null,
+      desativadaNoBanco: true,
+      pedidos: [
+        {
+          status: "pendente",
+          created_at: "2026-09-30T15:15:00Z",
+          nome: "Ana",
+          justificativa: "Preciso voltar para a equipe de editais.",
+        },
+      ],
+    });
+    await garantirAcessoBasico(sb);
+    await carregarMinhaSolicitacao(sb, document, { usuarioId: "sem-marca" });
+    expect($("accessRequestTitulo").textContent).toBe("Acesso desativado");
+    expect(document.body.textContent).toContain("reativação");
   });
 });
