@@ -37,6 +37,10 @@ export const PAGINAS_DO_PAINEL = Object.freeze({
     endereco: "/recursos.html",
     titulo: "Recursos dos candidatos",
   }),
+  selecao: Object.freeze({
+    endereco: "/selecao.html",
+    titulo: "Seleção",
+  }),
 });
 
 export const ENDERECO_DAS_ANALISES = PAGINAS_DO_PAINEL.analises.endereco;

@@ -25,6 +25,7 @@ const fontes = [
   "analises.html",
   "entrevistas.html",
   "recursos.html",
+  "selecao.html",
   "auth/callback.html",
 ].filter((f) => !f.replace(/\\/g, "/").endsWith("src/analises/index.html"));
 
@@ -63,6 +64,7 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
       "analises.html",
       "entrevistas.html",
       "recursos.html",
+      "selecao.html",
     ]) {
       expect(readFileSync(pagina, "utf8")).not.toContain("font-awesome");
     }

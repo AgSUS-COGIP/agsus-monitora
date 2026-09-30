@@ -453,6 +453,13 @@ export const CONTRATO_RPC = {
     resumo:
       "Aba Entrevistas de uma área (json, só leitura): entrevistas com as notas por critério, a análise ligada, a última carga da planilha e os aprovados na análise sem entrevista.",
   },
+  // ── Seleção (aba Seleção, 20261001090000_selecao.sql) ──────────────────
+  get_selecao_da_area: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Aba Seleção de uma área (json, só leitura): o funil de cada vaga da planilha Auditoria, os convocados (entrevistas do MONITORA ou a planilha) e aprovados/contratados da lista vigente.",
+  },
   // ── Entrevistas no sistema (20260930220000_entrevistas_roteiros_e_notas.sql)
   listar_roteiros_entrevista: {
     argumentos: ["p_area"],

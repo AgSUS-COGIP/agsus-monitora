@@ -201,5 +201,34 @@
         "ds_icone": "scale"
       }
     ]
+  },
+  {
+    "co_aba": "selecao",
+    "no_aba": "Seleção",
+    "ds_icone": "funnel",
+    "nu_ordem": 8,
+    "co_view": "selecao",
+    "co_recurso": "selecao",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 8,
+        "co_view": "selecao",
+        "ds_icone": "funnel"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 8,
+        "co_view": "selecao",
+        "ds_icone": "funnel"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 8,
+        "co_view": "selecao",
+        "ds_icone": "funnel"
+      }
+    ]
   }
 ]

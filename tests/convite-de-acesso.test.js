@@ -129,6 +129,7 @@ const GRUPOS = [
       aprovados: "leitor",
       entrevistas: "leitor",
       recursos: "leitor",
+      selecao: "leitor",
       importacao: "leitor",
       paineis: "leitor",
       configuracoes: "sem_acesso",

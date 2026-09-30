@@ -6,6 +6,7 @@ export const RESOURCES = Object.freeze([
   ["aprovados", "Lista de aprovados"],
   ["entrevistas", "Entrevistas"],
   ["recursos", "Recursos"],
+  ["selecao", "Seleção"],
   ["importacao", "Importação e convocação"],
   ["paineis", "Painéis externos"],
   ["configuracoes", "Configurações"],
@@ -22,6 +23,7 @@ export const DESCRICOES_DOS_MODULOS = Object.freeze({
     "Lista de aprovados; Editor muda status; Administrador desfaz status e anexa documentos.",
   entrevistas: "Painel das entrevistas por área (somente consulta).",
   recursos: "Recursos dos candidatos por área; Editor registra a análise.",
+  selecao: "Funil da seleção por vaga, por área (somente consulta).",
   importacao:
     "Importar listas e configurar convocação; Administrador substitui listas.",
   paineis: "Abrir os painéis externos liberados à pessoa.",

@@ -196,6 +196,17 @@ export const ABAS_DO_MENU = Object.freeze(
       beta: true,
       areas: NAS_TRES_AREAS,
     },
+    {
+      id: "selecao",
+      rotulo: "Seleção",
+      icone: "funnel",
+      ordem: 8,
+      view: "selecao",
+      recurso: "selecao",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
   ].map(congelarAba),
 );
 
