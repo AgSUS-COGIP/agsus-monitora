@@ -633,7 +633,7 @@ describe("ícones e selo beta no menu aberto", () => {
     }
     expect(item("dashboard").dataset.icone).toBe("map");
     expect(item("panel:x").dataset.icone).toBe("square-arrow-out-up-right");
-    expect(item("config", "acessos").dataset.icone).toBe("settings");
+    expect(item("config", "acessos").dataset.icone).toBe("users");
     // Expandida não há dica: o nome está à vista.
     expect(document.querySelector("#nav [data-dica]")).toBeNull();
   });

@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
 
 const app = readFileSync("src/modules/legacy-app.js", "utf8");
-const governance = readFileSync("src/modules/config-governance.js", "utf8");
+const governance = readFileSync(
+  "src/componentes/configuracoes/estado.js",
+  "utf8",
+);
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const lifecycle = readFileSync("src/lib/session-lifecycle.js", "utf8");
@@ -22,28 +25,28 @@ const semComentarios = (fonte) =>
 /*
   1 — A cor da barra lateral não persistia.
 
-  O botão Salvar (e o Ctrl+S) publica pelo módulo de governança, que chama
-  `reviewAndPublish` direto — o `saveAdminSettings` do legado, que nesse fluxo
+  O botão Salvar (e o Ctrl+S) publica pelo estado de Configurações
+  (src/componentes/configuracoes/estado.js), que chama `revisar` direto — o `saveAdminSettings` do legado, que nesse fluxo
   nunca rodava, saiu. As chaves da barra lateral tinham sido acrescentadas só
-  a ele: `collectConfigRows()` não as via, `buildChanges()` não achava
+  a ele: a coleta das linhas não as via, `buildChanges()` não achava
   diferença e mudar apenas a cor terminava em "Nada para publicar".
 */
 describe("as chaves da barra lateral chegam ao caminho que realmente salva", () => {
   it("o fluxo de governança é quem publica", () => {
     const codigo = semComentarios(governance);
     expect(codigo).not.toMatch(/window.saveAdminSettingss*=/);
-    expect(codigo).toContain("void reviewAndPublish()");
+    expect(codigo).toContain("void revisar()");
     expect(semComentarios(app)).not.toContain("function saveAdminSettings");
   });
 
-  it("collectConfigRows inclui as linhas da barra lateral", () => {
+  it("as linhas da publicação incluem as da barra lateral", () => {
     const codigo = semComentarios(governance);
     expect(codigo).toContain(
-      'import { linhasDeConfiguracaoDaSidebar } from "./sidebar-branding.js"',
+      'import { linhasDeConfiguracaoDaSidebar } from "../../modules/sidebar-branding.js"',
     );
     const fn = codigo.slice(
-      codigo.indexOf("function collectConfigRows"),
-      codigo.indexOf("function currentPanels"),
+      codigo.indexOf("const linhasDaPublicacao"),
+      codigo.indexOf("async function revisar"),
     );
     expect(fn).toContain("...linhasDeConfiguracaoDaSidebar()");
   });

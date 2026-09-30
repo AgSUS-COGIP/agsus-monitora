@@ -37,6 +37,12 @@ calendario-editais/          a página #page-calendario (só leitura dos cronogr
   calendario-editais.jsx     <CalendarioEditais> e montarCalendarioEditais() → window.calendarioEditaisController
   estado.js                  etapas carregadas (1 + N RPCs, cache de 60 s); sem React
   partes.jsx                 grade do mês, linha de etapa, linha do tempo, popup do dia
+configuracoes/               moldura de Configurações (#configuracoesApp), migrando por seção
+  configuracoes.jsx          montarConfiguracoes(): cabeçalho da seção aberta, barra fixa de salvar,
+                             diálogos de publicar/restaurar e o histórico (portal na seção Operação)
+  estado.js                  estadoDasConfiguracoes: valores (o legado publica em loadConfig), rascunho,
+                             publicação com motivo e histórico; sem React. Ainda lê os campos cfg* legados
+  marca.jsx                  seção Marca (portal no corpo da seção) com a prévia da barra lateral
 acessos/                     Configurações › Acessos (#acessosApp, dentro da seção "acessos")
   acessos.jsx                <Acessos> (abas Usuários · Grupos · Coordenações) e montarAcessos()
                              → window.acessosController
@@ -101,8 +107,8 @@ Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.j
 - Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo, trecho do
   `legacy-app.js`, marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
 
-- Handler de navegação chama `window.navigate` **na hora do clique**: `config-governance.js` e
-  `nielsen-shell-ux.js` embrulham essa função.
+- Handler de navegação chama `window.navigate` **na hora do clique**: `nielsen-shell-ux.js` embrulha
+  essa função.
 - Monte com `flushSync` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
 - `StrictMode` ligado: efeito tem de limpar o que instala.
 - Sem `innerHTML` e sem `dangerouslySetInnerHTML`: texto vai como filho.
