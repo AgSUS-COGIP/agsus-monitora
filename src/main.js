@@ -56,6 +56,7 @@ import "./styles/carregamento.css";
 import "./styles/acessos.css";
 import "./styles/modulos-e-manutencao.css";
 import "./styles/config-apresentacao.css";
+import "./styles/configuracoes.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -84,7 +85,7 @@ import {
   SECOES,
 } from "./modules/config-secoes.js";
 import { instalarApresentacaoDasConfiguracoes } from "./modules/config-apresentacao.js";
-import { initConfigGovernance } from "./modules/config-governance.js";
+import { montarConfiguracoes } from "./componentes/configuracoes/configuracoes.jsx";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
 import { initMobileGoogleOAuth } from "./modules/mobile-google-oauth.js";
@@ -134,7 +135,7 @@ instalarAvisoDoPainelDeAcesso();
 initHealthStatusDetailsRefinement();
 initHealthDetailsUx();
 initHealthDetailsRuntimeFix();
-// Instala antes do guard de Configurações para que o botão global salve também
+// Instala antes da moldura de Configurações para que o botão global salve também
 // as duas chaves independentes da sidebar usando a RPC existente.
 initSidebarBranding();
 /*
@@ -142,9 +143,10 @@ initSidebarBranding();
   existe o que organizar quando eles ja estao no DOM.
 */
 organizarConfiguracoesEmSecoes();
-// Grupos, dicas e prévias de Marca, Página inicial, Tela de acesso e Recursos.
+// Grupos, dicas e prévias das seções legadas (Página inicial, Tela de acesso e Recursos).
 instalarApresentacaoDasConfiguracoes();
-initConfigGovernance();
+// A moldura React de Configurações (cabeçalho, salvar, histórico) e a seção Marca.
+montarConfiguracoes();
 initMobileAppExperience();
 initMobileBottomNavigation();
 initMobileGoogleOAuth();

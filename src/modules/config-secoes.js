@@ -22,53 +22,64 @@
   tradução, e é o único lugar onde ela existe.
 */
 
+/* Disparado a cada troca de seção, com { detail: { secao } }. */
+export const EVENTO_SECAO_ABERTA = "agsus:secao-de-configuracao-aberta";
+
 export const SECOES = Object.freeze([
   {
     id: "marca",
     rotulo: "Marca",
     icone: "fa-font",
+    iconeDoMenu: "type",
     descricao: "Nomes, versão e identidade que aparecem em todo o sistema.",
   },
   {
     id: "inicio",
     rotulo: "Página inicial",
     icone: "fa-bullhorn",
+    iconeDoMenu: "house",
     descricao: "Comunicado, títulos e rótulos do painel de monitoramento.",
   },
   {
     id: "acesso",
     rotulo: "Tela de acesso",
     icone: "fa-right-to-bracket",
+    iconeDoMenu: "door-open",
     descricao: "Textos do login e regras de autenticação institucional.",
   },
   {
     id: "aparencia",
     rotulo: "Aparência",
     icone: "fa-image",
+    iconeDoMenu: "image",
     descricao: "Arte de fundo, cores e logotipos. Cada cor mostra o contraste.",
   },
   {
     id: "recursos",
     rotulo: "Painéis externos",
     icone: "fa-tower-broadcast",
+    iconeDoMenu: "monitor",
     descricao: "Os painéis externos do menu: título, endereço e situação.",
   },
   {
     id: "operacao",
     rotulo: "Operação",
     icone: "fa-sliders",
+    iconeDoMenu: "sliders-horizontal",
     descricao: "Referência da base, auditoria e importação de dados.",
   },
   {
     id: "acessos",
     rotulo: "Acessos",
     icone: "fa-user-group",
+    iconeDoMenu: "users",
     descricao: "Pessoas, grupos de permissões e coordenações.",
   },
   {
     id: "modulos",
     rotulo: "Módulos e abas",
     icone: "fa-layer-group",
+    iconeDoMenu: "layers",
     descricao:
       "Ativar, desativar e pôr em manutenção o sistema, as áreas, as abas e os painéis; selo BETA.",
   },
@@ -93,14 +104,7 @@ const controladorDaSecao = (documento, secao) =>
   o balde honesto: melhor aparecer numa seção discutível do que sumir da tela.
 */
 export const SECAO_POR_CAMPO = Object.freeze({
-  // Marca
-  cfgTitle: "marca",
-  cfgSlogan: "marca",
-  cfgCogipNome: "marca",
-  cfgCogipFuncao: "marca",
-  cfgCogipDept: "marca",
-  cfgCogipLogo: "marca",
-  cfgFooter: "marca",
+  // Marca: em React (src/componentes/configuracoes/marca.jsx), sem campo aqui.
 
   // Página inicial
   cfgPageTitle: "inicio",
@@ -169,23 +173,18 @@ export function secaoDoCampo(id) {
   return SECAO_POR_CAMPO[id] || SECAO_PADRAO;
 }
 
-const escapar = (valor) =>
-  String(valor ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
+/*
+  O cabeçalho da seção (ícone, nome e descrição) é da moldura React
+  (src/componentes/configuracoes/configuracoes.jsx), um só para a página.
+*/
 function criarCartaoDaSecao(documento, secao) {
   const artigo = documento.createElement("article");
   artigo.className = "config-secao";
   artigo.dataset.secao = secao.id;
-  artigo.innerHTML =
-    `<header class="config-secao__cabecalho">` +
-    `<span class="config-secao__icone"><i class="fa-solid ${escapar(secao.icone)}" aria-hidden="true"></i></span>` +
-    `<div><h3>${escapar(secao.rotulo)}</h3><p>${escapar(secao.descricao)}</p></div>` +
-    `</header>` +
-    `<div class="config-secao__corpo form-grid"></div>`;
+  artigo.setAttribute("aria-label", secao.rotulo);
+  const corpo = documento.createElement("div");
+  corpo.className = "config-secao__corpo form-grid";
+  artigo.appendChild(corpo);
   return artigo;
 }
 
@@ -227,10 +226,11 @@ function selecionarSubgrupo(documento, secao) {
   for (const artigo of pagina.querySelectorAll(".config-secao")) {
     artigo.hidden = artigo.dataset.secao !== secao;
   }
-  // Acessos e Módulos e abas salvam pela própria tela (com motivo): o "Salvar alterações" fixo não vale ali.
-  for (const barra of pagina.querySelectorAll(".config-sticky-actions")) {
-    barra.hidden = Boolean(CONTROLADOR_DA_SECAO[secao]);
-  }
+  // A moldura React (cabeçalho e barra de salvar) e as prévias acompanham a seção aberta.
+  const Evento = documento.defaultView?.CustomEvent || globalThis.CustomEvent;
+  documento.dispatchEvent(
+    new Evento(EVENTO_SECAO_ABERTA, { detail: { secao } }),
+  );
 }
 
 const secoesPermitidas = (pagina) =>
@@ -275,11 +275,6 @@ export function abrirSecaoDeConfiguracao(documento, secao) {
     return false;
   selecionarSubgrupo(documento, secao);
   void controladorDaSecao(documento, secao)?.render();
-  // As prévias de config-apresentacao.js redesenham com o que o legado acabou de preencher.
-  const Evento = documento.defaultView?.CustomEvent || globalThis.CustomEvent;
-  documento.dispatchEvent(
-    new Evento("agsus:secao-de-configuracao-aberta", { detail: { secao } }),
-  );
   return true;
 }
 
@@ -347,23 +342,4 @@ export function esconderAgrupadoresVazios(raiz) {
     escondidos += 1;
   }
   return escondidos;
-}
-
-/*
-  Põe um bloco que nasce depois da organização (o histórico de configurações,
-  de `config-governance.js`) no corpo de uma seção. Devolve false se as
-  seções ainda não existem — quem chama decide onde pôr.
-
-  (A barra antiga de `config-page-enhancements.js`, com cinco abas, busca e
-  contador, saiu junto com o arquivo: o navegador é o menu de seções.)
-*/
-export function anexarNaSecao(documento, secao, elemento) {
-  const corpo = documento
-    ?.getElementById?.("page-config")
-    ?.querySelector(
-      `.config-secao[data-secao="${secao}"] .config-secao__corpo`,
-    );
-  if (!corpo || !elemento) return false;
-  corpo.appendChild(elemento);
-  return true;
 }

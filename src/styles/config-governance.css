@@ -17,8 +17,7 @@
   border-radius: 12px;
 }
 
-#page-config .config-history-empty > i {
-  font-size: 24px;
+#page-config .config-history-empty > svg {
   color: #7c3aed;
 }
 
@@ -106,26 +105,6 @@
   gap: 5px;
 }
 
-.config-governance-modal[hidden] {
-  display: none !important;
-}
-
-.config-governance-modal {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-overlay);
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-
-.config-governance-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(8, 18, 34, 0.58);
-  backdrop-filter: blur(4px);
-}
-
 .config-governance-dialog {
   position: relative;
   width: min(960px, calc(100vw - 32px));
@@ -163,16 +142,6 @@
   margin: 0;
   color: #142033;
   font-size: 20px;
-}
-
-.config-governance-close {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #dbe4ee;
-  border-radius: 9px;
-  background: #fff;
-  color: #596a80;
-  cursor: pointer;
 }
 
 .config-governance-body {
@@ -285,8 +254,9 @@
 }
 
 .config-change-arrow {
+  display: grid;
+  place-items: center;
   color: #91a0b4;
-  text-align: center;
 }
 
 .config-reason-field {
@@ -353,8 +323,8 @@
   color: #176445;
 }
 
-.config-governance-empty i {
-  font-size: 28px;
+.config-governance-empty svg {
+  margin: 0 auto;
 }
 
 .config-governance-more {
@@ -367,10 +337,6 @@
   background: #dc3545;
   border-color: #dc3545;
   color: #fff;
-}
-
-body.config-governance-open {
-  overflow: hidden;
 }
 
 body.dark-mode #page-config .config-history-item,

@@ -1,5 +1,5 @@
 /*
-  Apresentação das seções de Configurações (Marca, Página inicial, Tela de
+  Apresentação das seções legadas de Configurações (Página inicial, Tela de
   acesso e Recursos), sem DOM: como os campos se agrupam, as dicas de cada
   campo e os resumos que as prévias mostram. O desenho é de
   src/modules/config-apresentacao.js.
@@ -13,37 +13,6 @@
  * gráficos e estados do design.md; ver config-apresentacao.css).
  */
 export const GRUPOS_POR_SECAO = Object.freeze({
-  marca: [
-    {
-      id: "identidade",
-      titulo: "Identidade do sistema",
-      descricao: "Nome e linha de apoio do MONITORA.",
-      icone: "layout-dashboard",
-      tom: "azul",
-      campos: ["cfgTitle", "cfgSlogan"],
-    },
-    {
-      id: "equipe",
-      titulo: "Equipe responsável",
-      descricao: "Quem mantém o sistema; aparece no pé da barra lateral.",
-      icone: "users",
-      tom: "petroleo",
-      campos: [
-        "cfgCogipNome",
-        "cfgCogipFuncao",
-        "cfgCogipDept",
-        "cfgCogipLogo",
-      ],
-    },
-    {
-      id: "rodape",
-      titulo: "Rodapé",
-      descricao: "Texto no pé das páginas.",
-      icone: "file-text",
-      tom: "neutro",
-      campos: ["cfgFooter"],
-    },
-  ],
   inicio: [
     {
       id: "cabecalho",
@@ -144,14 +113,6 @@ export const GRUPOS_POR_SECAO = Object.freeze({
 
 /** Dica de ajuda por campo (tooltip do ícone "?", design.md 11.10). */
 export const DICAS_DOS_CAMPOS = Object.freeze({
-  cfgCogipNome:
-    "Nome da equipe que mantém o sistema. Aparece no pé da barra lateral.",
-  cfgCogipFuncao:
-    "Linha curta abaixo do nome da equipe, como a área ou a função.",
-  cfgCogipDept: "Texto institucional exibido junto da equipe.",
-  cfgCogipLogo:
-    "Endereço de uma imagem (PNG, JPG, WEBP ou SVG): https:// ou um caminho do próprio site, como /assets/logo.png.",
-  cfgFooter: "Texto no pé das páginas, como créditos.",
   cfgPageTitle: "Título grande da página inicial.",
   cfgPageSubtitle: "Linha logo abaixo do título da página inicial.",
   cfgBroadcastType:
