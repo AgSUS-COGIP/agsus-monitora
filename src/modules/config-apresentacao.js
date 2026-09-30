@@ -1,5 +1,6 @@
 /*
-  Apresentação das seções Marca, Página inicial, Tela de acesso e Recursos.
+  Apresentação das seções legadas Página inicial, Tela de acesso e Recursos
+  (a Marca já é React: src/componentes/configuracoes/marca.jsx).
 
   Três coisas, sem trocar nenhum campo (os ids, os valores, os listeners e o
   salvamento continuam os de sempre — os nós só mudam de lugar, como em
@@ -10,8 +11,8 @@
      nenhum campo visível fica escondido.
   2. DICAS: um "?" ao lado do rótulo abre a explicação do campo (tooltip do
      design.md 11.10). O mesmo texto vai para o aria-describedby do campo.
-  3. PRÉVIA: ao lado dos campos, como aquilo aparece de verdade — a barra
-     lateral, a página inicial, o cartão de entrada e o resumo dos painéis
+  3. PRÉVIA: ao lado dos campos, como aquilo aparece de verdade — a página
+     inicial, o cartão de entrada e o resumo dos painéis
      externos (o Realtime fica em Operação).
      Atualiza enquanto se digita e sempre que a seção é aberta
      (evento agsus:secao-de-configuracao-aberta, de config-secoes.js), porque
@@ -29,9 +30,8 @@ import {
   urlDeImagem,
 } from "../lib/apresentacao-das-configuracoes.js";
 import { corDoTextoPara } from "../lib/contraste.js";
+import { EVENTO_SECAO_ABERTA } from "./config-secoes.js";
 import { criarIcone } from "./icones.js";
-
-export const EVENTO_SECAO_ABERTA = "agsus:secao-de-configuracao-aberta";
 
 const txt = (valor) => String(valor ?? "").trim();
 
@@ -162,99 +162,6 @@ function imagem(documento, url, alt, className, reserva) {
   // Endereço que não carrega: volta para a reserva em vez de mostrar imagem quebrada.
   img.addEventListener("error", () => img.replaceWith(reserva), { once: true });
   return img;
-}
-
-function iniciais(nome) {
-  const partes = txt(nome).split(/\s+/).filter(Boolean);
-  return (
-    (
-      (partes[0]?.[0] || "") + (partes.length > 1 ? partes.at(-1)[0] : "")
-    ).toUpperCase() || "?"
-  );
-}
-
-function previaDaMarca(documento) {
-  const fundo = valor(documento, "cfgSidebarBackgroundColor") || "#ffffff";
-  const corDoTexto = corDoTextoPara(fundo);
-  const titulo = valor(documento, "cfgTitle") || "MONITORA";
-  const equipe = valor(documento, "cfgCogipNome") || "Nome da equipe";
-  const reservaDoSistema = el(
-    documento,
-    "span",
-    { className: "previa-marca__logo-reserva" },
-    icone("layout-dashboard", 18),
-  );
-  const reservaDaEquipe = el(documento, "span", {
-    className: "previa-marca__avatar",
-    texto: iniciais(equipe),
-  });
-  return el(
-    documento,
-    "div",
-    { className: "previa-marca" },
-    el(
-      documento,
-      "div",
-      {
-        className: "previa-marca__barra",
-        estilo: { background: fundo, color: corDoTexto },
-      },
-      el(
-        documento,
-        "div",
-        { className: "previa-marca__topo" },
-        imagem(
-          documento,
-          valor(documento, "cfgSidebarLogoUrl"),
-          "",
-          "previa-marca__logo",
-          reservaDoSistema,
-        ),
-        el(documento, "strong", { texto: titulo }),
-      ),
-      el(
-        documento,
-        "ul",
-        { className: "previa-marca__menu", "aria-hidden": "true" },
-        ["Visão geral", "Editais", "Lista de aprovados"].map((item, indice) =>
-          el(documento, "li", {
-            className: indice === 0 ? "ativo" : "",
-            texto: item,
-          }),
-        ),
-      ),
-      el(
-        documento,
-        "div",
-        { className: "previa-marca__equipe" },
-        imagem(
-          documento,
-          valor(documento, "cfgCogipLogo"),
-          `Logo de ${equipe}`,
-          "previa-marca__avatar",
-          reservaDaEquipe,
-        ),
-        el(
-          documento,
-          "div",
-          {},
-          el(documento, "strong", { texto: equipe }),
-          el(documento, "small", {
-            texto: valor(documento, "cfgCogipFuncao") || "Função / área",
-          }),
-          valor(documento, "cfgCogipDept")
-            ? el(documento, "small", {
-                texto: valor(documento, "cfgCogipDept"),
-              })
-            : null,
-        ),
-      ),
-    ),
-    el(documento, "p", {
-      className: "previa-marca__rodape",
-      texto: valor(documento, "cfgFooter") || "Rodapé das páginas",
-    }),
-  );
 }
 
 const KPIS = [
@@ -499,7 +406,6 @@ function previaDosRecursos(documento) {
 }
 
 const PREVIAS = Object.freeze({
-  marca: ["Prévia da barra lateral", previaDaMarca],
   inicio: ["Prévia da página inicial", previaDaPaginaInicial],
   acesso: ["Prévia do cartão de entrada", previaDaTelaDeAcesso],
   recursos: ["Resumo dos painéis externos", previaDosRecursos],

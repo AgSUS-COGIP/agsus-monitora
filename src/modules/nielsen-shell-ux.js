@@ -383,18 +383,8 @@ function refineConfigurationCopy() {
   const root = document.getElementById("page-config");
   if (!root) return;
 
-  const eyebrow = root.querySelector(".config-workspace-eyebrow");
-  const heading = root.querySelector(".config-workspace-heading h2");
-  const description = root.querySelector(".config-workspace-heading p");
-  const search = document.getElementById("configWorkspaceSearch");
+  // O cabeçalho da página é o da seção aberta (src/componentes/configuracoes/).
   const accessTitle = document.querySelector("#accessRequestsAdminCard > h3");
-
-  if (eyebrow) eyebrow.textContent = "Administração";
-  if (heading) heading.textContent = "Ajustes do sistema";
-  if (description) {
-    description.textContent = "Acessos, marca, painéis e parâmetros técnicos.";
-  }
-  if (search) search.setAttribute("placeholder", "Buscar configuração...");
   if (accessTitle) accessTitle.textContent = "Acessos e permissões";
 
   updateSectionCopy(

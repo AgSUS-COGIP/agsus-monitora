@@ -11,8 +11,10 @@ Arquivos que exigem cuidado:
   `secaoDeConfiguracaoPermitida`), usada pela barra e pelo "Ver como".
 - `matriz-de-acessos.js` (rascunho; grupo × individual), `teto-de-acessos.js` (teto do coordenador),
   `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.js` — Configurações › Acessos.
-- `apresentacao-das-configuracoes.js` — grupos, dicas e resumos das seções Marca, Página inicial, Tela de
+- `apresentacao-das-configuracoes.js` — grupos, dicas e resumos das seções legadas Página inicial, Tela de
   acesso e Recursos; o desenho é de `src/modules/config-apresentacao.js`.
+- `publicacao-de-configuracoes.js` — publicação de Configurações sem DOM: chaves de cada seção (legado e
+  React), comparação com o retrato do banco, validação de URL e domínio.
 - `sanitize.js`, `html-security.js`, `csv-security.js` — fronteira de segurança. Não afrouxar.
 - `localizacoes-validadas-gerado.js` — **201 KB, gerado.** Não editar nem ler inteiro; regenere com
   `node scripts/recompilar-vereditos.mjs`. A API legível é `localizacoes-validadas.js`.

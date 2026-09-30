@@ -79,7 +79,7 @@ import {
 } from "./solicitacao-de-acesso.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
 import { renderPanelAdminHTML } from "./config-ui.js";
-import { confirmarSaidaDasConfiguracoes } from "./config-governance.js";
+import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
 import { createAccessDashboard } from "./access-dashboard.js";
 import {
   isAllowedInstitutionalEmail,
@@ -1768,6 +1768,7 @@ async function loadConfig(options = {}) {
       toast("Erro ao carregar configurações: " + friendlyError(error), "error");
     applyConfigToUi();
     renderConfigForm();
+    estadoDasConfiguracoes.definirValoresCarregados(appConfig);
     document.body.classList.remove("config-loading");
     return false;
   }
@@ -1781,6 +1782,8 @@ async function loadConfig(options = {}) {
   configLoadOk = true;
   applyConfigToUi();
   renderConfigForm();
+  // As seções de Configurações em React (src/componentes/configuracoes/) leem daqui.
+  estadoDasConfiguracoes.definirValoresCarregados(appConfig);
   document.body.classList.remove("config-loading");
   return true;
 }
@@ -2315,7 +2318,7 @@ function navigate(view) {
     requestedView !== currentView &&
     (window.acessosController?.confirmarSaida() === false ||
       window.modulosController?.confirmarSaida() === false ||
-      !confirmarSaidaDasConfiguracoes())
+      !estadoDasConfiguracoes.confirmarSaida())
   )
     return;
 
@@ -11512,9 +11515,7 @@ function reloadExternal() {
 
 function renderConfigForm() {
   $("cfgMonitId").value = cfgValue("monit_id");
-  $("cfgTitle").value = cfgValue("app_title");
   $("cfgSubtitle") && ($("cfgSubtitle").value = cfgValue("app_subtitle"));
-  $("cfgSlogan").value = cfgValue("app_slogan");
   $("cfgPageTitle") && ($("cfgPageTitle").value = cfgValue("page_title"));
   $("cfgPageSubtitle") &&
     ($("cfgPageSubtitle").value = cfgValue("page_subtitle"));
@@ -11594,15 +11595,10 @@ function renderConfigForm() {
     ($("cfgKpiCriticos").value = cfgValue("kpi_criticos_label"));
   $("cfgKpiInscritos") &&
     ($("cfgKpiInscritos").value = cfgValue("kpi_inscritos_label"));
-  $("cfgFooter").value = cfgValue("footer_text");
   $("cfgLoginLogo").value = cfgValue("login_logo_url");
   $("cfgLoginBg").value = cfgValue("login_bg_url");
-  $("cfgCogipNome") && ($("cfgCogipNome").value = cfgValue("cogip_nome"));
-  $("cfgCogipFuncao") && ($("cfgCogipFuncao").value = cfgValue("cogip_funcao"));
   $("cfgCogipVersao") && ($("cfgCogipVersao").value = cfgValue("cogip_versao"));
-  $("cfgCogipDept") && ($("cfgCogipDept").value = cfgValue("cogip_dept"));
   $("cfgAppVersionCurrent") && ($("cfgAppVersionCurrent").value = appVersion());
-  $("cfgCogipLogo") && ($("cfgCogipLogo").value = cfgValue("cogip_logo_url"));
   $("cfgBroadcastType").value = cfgValue("broadcast_type") || "info";
   $("cfgBroadcastMsg").value = cfgValue("broadcast_msg");
   $("cfgRealtimeEnabled") &&
@@ -11618,7 +11614,6 @@ function renderConfigForm() {
     ));
   previewImg("cfgLoginLogo", "prevLoginLogo");
   previewImg("cfgLoginBg", "prevLoginBg");
-  if ($("cfgCogipLogo")) previewImg("cfgCogipLogo", "prevCogipLogo");
   renderAccessBackgroundPreview();
   void loadAccessBackgroundGallery();
   renderAccessDashboard(null);
