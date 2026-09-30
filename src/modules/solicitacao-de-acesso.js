@@ -26,6 +26,7 @@ const RPC_MINHA_SOLICITACAO = "obter_minha_solicitacao_acesso";
 const RPC_REGISTRAR_SOLICITACAO = "registrar_solicitacao_acesso";
 const RPC_ACESSO_BASICO = "garantir_acesso_basico";
 const RPC_CONTEXTO = "obter_contexto_monitora";
+const RPC_MINHA_CONTA_DESATIVADA = "minha_conta_desativada";
 
 /* id do campo → chave do formulário (validarSolicitacao / argumentos). */
 const CAMPOS = Object.freeze({
@@ -297,7 +298,15 @@ export async function carregarMinhaSolicitacao(
 
 async function lerEDesenhar(sb, doc, usuarioId) {
   void preencherCoordenacoes(sb, doc);
-  const { data, error } = await sb.rpc(RPC_MINHA_SOLICITACAO);
+  // O banco diz se a conta existe e está desativada (antes a tela adivinhava).
+  const [{ data, error }, desativadaNoBanco] = await Promise.all([
+    sb.rpc(RPC_MINHA_SOLICITACAO),
+    Promise.resolve()
+      .then(() => sb.rpc(RPC_MINHA_CONTA_DESATIVADA))
+      .then((r) => !r?.error && r?.data === true)
+      .catch(() => false),
+  ]);
+  if (desativadaNoBanco) contaDesativada = true;
   if (error) {
     desenharSemPedido(doc, usuarioId);
     return null;

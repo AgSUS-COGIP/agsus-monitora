@@ -122,6 +122,12 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo: "Última solicitação de acesso de quem está autenticado.",
   },
+  minha_conta_desativada: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "true quando quem está autenticado tem conta no MONITORA e ela está desativada.",
+  },
   // ── Identidade e autorização ────────────────────────────────────────────
   meu_usuario: {
     argumentos: [],
