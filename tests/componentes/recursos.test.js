@@ -245,7 +245,8 @@ describe("a cara do painel de análises", () => {
     expect(
       document.querySelector(".table-card .table-head h2.title").textContent,
     ).toBe("Fila de recursos");
-    expect(document.querySelector("footer.footer .secure")).not.toBeNull();
+    // Sem rodapé institucional (Agência ©, Atualizado, SECURE) desde 30/09/2026.
+    expect(document.querySelector("footer.footer")).toBeNull();
   });
 
   it("recursos por analista é o Chart.js de barras empilhadas de análises", async () => {

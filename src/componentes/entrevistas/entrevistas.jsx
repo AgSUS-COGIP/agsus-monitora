@@ -205,7 +205,6 @@ export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
           visao={visao}
           aoTrocarVisao={setVisao}
         />
-
         <main className="content">
           {e.semSessao ? (
             <section id="authWarning" className="auth-warning" role="alert">
@@ -272,20 +271,7 @@ export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
               />
             </>
           )}
-        </main>
-
-        <footer className="footer">
-          <span>
-            Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde ©
-            2026
-          </span>
-          <span>
-            <span id="footerUpdated">
-              {carregado ? textoDaCarga : textoDoStatus(e)}
-            </span>{" "}
-            <span className="secure">SECURE</span>
-          </span>
-        </footer>
+        </main>{" "}
       </div>
 
       {aberta ? (

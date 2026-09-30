@@ -467,7 +467,6 @@ import {
       return true;
     }
     $("updatedText").textContent = "Carregando dados...";
-    $("footerUpdated").textContent = "Carregando dados...";
     return refreshData();
   }
 
@@ -902,7 +901,7 @@ import {
     if(!datas.length && analisesPayload?.atualizado_em) datas.push(analisesPayload.atualizado_em);
     const latest = datas.map(value => ({ value, parsed: dateObj(value) })).filter(item => item.value && item.parsed).sort((a, b) => a.parsed.getTime() - b.parsed.getTime()).pop();
     const label = latest ? `Atualizado em ${fmtDateTime(latest.value)}` : "Base carregada";
-    $("updatedText").textContent = label; $("footerUpdated").textContent = label;
+    $("updatedText").textContent = label;
   }
   function truncate(v,n){ const s=txt(v); return s.length>n ? s.slice(0,n-1)+"…" : s; }
   function applyTheme(){ const saved=localStorage.getItem(THEME_KEY); if(saved==="dark") document.documentElement.dataset.theme="dark"; }

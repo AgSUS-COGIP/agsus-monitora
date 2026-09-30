@@ -22,7 +22,6 @@ import "../analises/analises-esqueleto.css";
 import "../analises/analises-infinite-table.css";
 import "../analises/analises-painel.css";
 import "./entrevistas.css";
-import { compactarCronometroDaSessao } from "../analises/cronometro-da-sessao.js";
 import {
   areaDaUrlDoPainel,
   rotuloDaAreaDoPainel,
@@ -47,7 +46,6 @@ const embeddedInParentApp = window.parent !== window;
 installCsvBlobSecurityGuard();
 if (!embeddedInParentApp) {
   installSessionLifecycle();
-  compactarCronometroDaSessao();
 }
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
