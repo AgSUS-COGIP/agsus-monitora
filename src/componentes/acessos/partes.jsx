@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
 import { Icone } from "../icone.jsx";
 
 /*
@@ -163,4 +164,52 @@ export function CampoMotivo({ id, valor, aoMudar, erro = false }) {
       ) : null}
     </div>
   );
+}
+
+/** Coordenações agrupadas por área; a atual aparece mesmo se desativada. */
+export function OpcoesDeCoordenacao({ coordenacoes, areas, atual }) {
+  return coordenacoesPorArea(
+    coordenacoes.filter((c) => c.ativo || c.codigo === atual),
+    areas,
+  ).map((grupo) => (
+    <optgroup key={grupo.area.id} label={grupo.area.titulo}>
+      {grupo.coordenacoes.map((c) => (
+        <option key={c.codigo} value={c.codigo}>
+          {c.nome}
+        </option>
+      ))}
+    </optgroup>
+  ));
+}
+
+/*
+  O select do módulo mostra só o nível. Aberto, separa o que vem do grupo
+  (valor "") do que vira permissão individual.
+*/
+export function OpcoesDoModulo({ opcoes }) {
+  const [doGrupo, ...individuais] = opcoes;
+  const opcao = (o) => (
+    <option key={o.valor} value={o.valor} disabled={o.desabilitada}>
+      {o.rotulo}
+    </option>
+  );
+  return (
+    <>
+      <optgroup label="Do grupo">{opcao(doGrupo)}</optgroup>
+      <optgroup label="Individual">{individuais.map(opcao)}</optgroup>
+    </>
+  );
+}
+
+/** Opções do grupo: o que quem está logado não pode atribuir fica desabilitado. */
+export function OpcoesDoGrupo({ grupos, atribuiveis, atual }) {
+  return grupos.map((g) => (
+    <option
+      key={g.codigo}
+      value={g.codigo}
+      disabled={g.codigo !== atual && !atribuiveis.includes(g)}
+    >
+      {g.nome}
+    </option>
+  ));
 }

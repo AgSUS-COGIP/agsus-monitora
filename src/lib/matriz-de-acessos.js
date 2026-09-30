@@ -96,6 +96,19 @@ export function pendenciasDoUsuario(rascunho, usuarioId) {
   return total;
 }
 
+/**
+ * Separa o rascunho de uma pessoa do resto: { daPessoa, resto }. O "Salvar"
+ * da gaveta grava só `daPessoa`; o que foi mudado em outras linhas continua
+ * pendente.
+ */
+export function separarRascunhoDaPessoa(rascunho, usuarioId) {
+  const daPessoa = new Map();
+  const resto = new Map();
+  for (const [k, entrada] of rascunho)
+    (k.startsWith(`${usuarioId}/`) ? daPessoa : resto).set(k, entrada);
+  return { daPessoa, resto };
+}
+
 /** Grupo em vigor na linha: o do rascunho, se houver; senão o salvo. */
 export function grupoDaLinha(usuario, rascunho) {
   const entrada = rascunho.get(chave(usuario.id, ALVO_GRUPO));
@@ -249,4 +262,132 @@ export function rebasearRascunho(rascunho, usuariosRecarregados = []) {
       proximo.set(k, { ...entrada, base: nova });
   }
   return { rascunho: proximo, conflitos };
+}
+
+// ── Visão simples: grupo em uma frase, áreas da pessoa e a trava de área ───────
+
+/** Módulos que contam para a frase do grupo ("acessos" vira frase à parte). */
+const MODULOS_DA_FRASE = MODULOS.filter((m) => m.id !== "acessos");
+/* "Tudo" não conta Configurações: o módulo não tem nível de leitura. */
+const MODULOS_DE_TUDO = MODULOS_DA_FRASE.filter(
+  (m) => m.id !== "configuracoes",
+);
+
+function listaCurta(rotulos, maximo = 3) {
+  const nomes = rotulos.map((r) => r.toLocaleLowerCase("pt-BR"));
+  if (nomes.length <= maximo)
+    return nomes.length > 1
+      ? `${nomes.slice(0, -1).join(", ")} e ${nomes.at(-1)}`
+      : nomes[0] || "";
+  return `${nomes.slice(0, maximo).join(", ")} e mais ${nomes.length - maximo}`;
+}
+
+/**
+ * O que o grupo deixa fazer, em uma linha, lida dos níveis do grupo:
+ *   "Leitura: vê tudo, não altera nada."
+ *   "Edição: altera editais e cronograma; o resto só vê."
+ */
+export function explicacaoDoGrupo(grupo) {
+  if (!grupo) return "";
+  if (grupo.admin_global)
+    return "Administrador: vê e altera tudo, em todas as áreas.";
+  const niveis = grupo.niveis || {};
+  const nivelDe = (id) => niveis[id] || "sem_acesso";
+  const ve = MODULOS_DA_FRASE.filter((m) => nivelDe(m.id) !== "sem_acesso");
+  const altera = ve.filter((m) => ["editor", "admin"].includes(nivelDe(m.id)));
+  const gerencia = nivelDe("acessos") === "editor";
+  const extra = gerencia ? " Gerencia os acessos da coordenação." : "";
+  if (!ve.length)
+    return gerencia
+      ? `Só gestão de acessos.${extra}`
+      : "Sem acesso: não vê nenhuma página.";
+  const cobre = (lista) =>
+    MODULOS_DE_TUDO.every((m) => lista.some((x) => x.id === m.id));
+  const tudo = cobre(ve);
+  if (!altera.length)
+    return `Leitura: vê ${tudo ? "tudo" : listaCurta(ve.map((m) => m.rotulo))}, não altera nada.${extra}`;
+  const resto = ve.length > altera.length ? "; o resto só vê" : "";
+  return `Edição: altera ${
+    cobre(altera) ? "tudo" : listaCurta(altera.map((m) => m.rotulo))
+  }${resto}.${extra}`;
+}
+
+/** O grupo em vigor na linha (rascunho ou salvo) é de administrador global? */
+export function adminGlobalDaLinha(usuario, rascunho, gruposPorCodigo = {}) {
+  const grupo = gruposPorCodigo[grupoDaLinha(usuario, rascunho)];
+  return grupo ? Boolean(grupo.admin_global) : Boolean(usuario.admin_global);
+}
+
+/** Áreas marcadas uma a uma (area:<id> = "leitor"), já com o rascunho. */
+export function areasMarcadasDaLinha(usuario, rascunho, areas = []) {
+  return areas
+    .map((area) => area.id)
+    .filter(
+      (id) => celulaExibida(usuario, `area:${id}`, rascunho).nivel === "leitor",
+    );
+}
+
+/**
+ * Regra do banco (salvar_matriz_acessos, 23514): quem não é administrador
+ * global só vê as áreas marcadas ou a da coordenação. Sem nenhuma das duas, a
+ * pessoa entra e não vê nada.
+ */
+export function ficariaSemArea({ adminGlobal, coordenacao, areasMarcadas }) {
+  return !adminGlobal && !coordenacao && !(areasMarcadas || []).length;
+}
+
+/** A pessoa, como está no rascunho, ficaria sem área? (inativa não conta) */
+export function linhaFicariaSemArea(
+  usuario,
+  rascunho,
+  { grupos = [], areas = [] } = {},
+) {
+  if (usuario.ativo === false) return false;
+  const gruposPorCodigo = Object.fromEntries(grupos.map((g) => [g.codigo, g]));
+  return ficariaSemArea({
+    adminGlobal: adminGlobalDaLinha(usuario, rascunho, gruposPorCodigo),
+    coordenacao: coordenacaoDaLinha(usuario, rascunho),
+    areasMarcadas: areasMarcadasDaLinha(usuario, rascunho, areas),
+  });
+}
+
+/**
+ * Pessoas com alteração pendente que ficariam sem área: o salvar espera até
+ * alguém marcar a área (o banco recusaria o lote inteiro). Só confere quem
+ * está na página carregada; as demais o banco confere.
+ */
+export function pessoasSemAreaNoRascunho(rascunho, matriz = {}) {
+  const ids = new Set([...rascunho.values()].map((e) => e.usuario.id));
+  return (matriz.usuarios || []).filter(
+    (usuario) =>
+      ids.has(usuario.id) && linhaFicariaSemArea(usuario, rascunho, matriz),
+  );
+}
+
+/**
+ * Áreas que a pessoa vê, para a coluna "Áreas": { todas } para administrador
+ * global; senão os ids. Sem alteração pendente vale o que o banco calculou
+ * (areas_efetivas); com alteração, a coordenação e as áreas marcadas do
+ * rascunho.
+ */
+export function areasDaLinha(
+  usuario,
+  rascunho,
+  { grupos = [], areas = [], coordenacoes = [] } = {},
+) {
+  const gruposPorCodigo = Object.fromEntries(grupos.map((g) => [g.codigo, g]));
+  if (adminGlobalDaLinha(usuario, rascunho, gruposPorCodigo))
+    return { todas: true, ids: [] };
+  if (
+    !pendenciasDoUsuario(rascunho, usuario.id) &&
+    Array.isArray(usuario.areas_efetivas)
+  )
+    return { todas: false, ids: usuario.areas_efetivas };
+  const coordenacao = coordenacaoDaLinha(usuario, rascunho);
+  const daCoordenacao = coordenacoes.find(
+    (c) => c.codigo === coordenacao,
+  )?.area;
+  const ids = new Set(areasMarcadasDaLinha(usuario, rascunho, areas));
+  if (daCoordenacao) ids.add(daCoordenacao);
+  return { todas: false, ids: [...ids] };
 }

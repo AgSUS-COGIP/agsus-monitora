@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  avisoDeTransformarEmCoordenacao,
   codigoAPartirDoNome,
+  confirmacaoDeTransformarValida,
+  nomeDaCoordenacaoDaConta,
   coordenacaoParaSalvar,
   coordenacaoVazia,
   opcoesDeUnidadesDaCoordenacao,
@@ -107,5 +110,33 @@ describe("coordenação", () => {
         unidadesPorArea,
       }),
     ).toEqual([]);
+  });
+});
+
+/*
+  Em 30/09 "transformar a conta em coordenação" foi usado numa conta de
+  PESSOA: a conta foi desativada. A confirmação diz as consequências e só
+  aceita CONFIRMAR ou o e-mail da conta.
+*/
+describe("conta de setor vira coordenação", () => {
+  const conta = { nome: "COET – Saúde", email: "coet@agenciasus.org.br" };
+
+  it("o aviso diz que desativa a conta e cria a coordenação na área", () => {
+    expect(avisoDeTransformarEmCoordenacao(conta, "Saúde Indígena")).toBe(
+      "Isto vai DESATIVAR a conta coet@agenciasus.org.br (ela não entra mais) e criar a coordenação COET – Saúde na área Saúde Indígena. Use só para contas compartilhadas de setor.",
+    );
+    expect(
+      nomeDaCoordenacaoDaConta({ email: "setor.x@agenciasus.org.br" }),
+    ).toBe("setor.x");
+  });
+
+  it("confirmação: CONFIRMAR (exato) ou o e-mail (sem caixa)", () => {
+    expect(confirmacaoDeTransformarValida("CONFIRMAR", conta)).toBe(true);
+    expect(
+      confirmacaoDeTransformarValida(" COET@agenciasus.org.br ", conta),
+    ).toBe(true);
+    expect(confirmacaoDeTransformarValida("confirmar", conta)).toBe(false);
+    expect(confirmacaoDeTransformarValida("sim", conta)).toBe(false);
+    expect(confirmacaoDeTransformarValida("", conta)).toBe(false);
   });
 });

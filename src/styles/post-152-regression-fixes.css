@@ -8,9 +8,9 @@
 
 #loginScreen.login-panel-dark .login-card,
 #loginScreen.login-panel-dark .login-card h1,
-#loginScreen.login-panel-dark .login-card p,
-#loginScreen.login-panel-dark .login-card strong,
-#loginScreen.login-panel-dark .login-card small,
+#loginScreen.login-panel-dark .login-card p:not(.access-request-card *),
+#loginScreen.login-panel-dark .login-card strong:not(.access-request-card *),
+#loginScreen.login-panel-dark .login-card small:not(.access-request-card *),
 #loginScreen.login-panel-dark .login-subtitle,
 #loginScreen.login-panel-dark .login-subtitle2,
 #loginScreen.login-panel-dark .login-organization-mark,
@@ -18,7 +18,8 @@
   color: #f7fbff !important;
 }
 
-#loginScreen.login-panel-dark .login-card p,
+/* O cartão "Solicitar acesso" é claro por dentro: fica com as cores de app.css. */
+#loginScreen.login-panel-dark .login-card p:not(.access-request-card *),
 #loginScreen.login-panel-dark .login-subtitle {
   color: rgba(247, 251, 255, 0.82) !important;
 }

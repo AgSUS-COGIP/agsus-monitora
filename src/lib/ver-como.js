@@ -12,7 +12,21 @@ import {
 } from "./access-roles.js";
 import { areasDoUsuario, montarArvoreDoMenu } from "./menu-lateral.js";
 import { normalizePlatformContext } from "./platform-context.js";
-import { RESOURCES, rotuloDoNivel } from "./permissoes-recursos.js";
+import {
+  RESOURCES,
+  niveisDoRecurso,
+  rotuloDoNivel,
+} from "./permissoes-recursos.js";
+import {
+  MODULOS,
+  adminGlobalDaLinha,
+  alvoPendente,
+  areasDaLinha,
+  celulaExibida,
+  coordenacaoDaLinha,
+  grupoDaLinha,
+  pendenciasDoUsuario,
+} from "./matriz-de-acessos.js";
 
 /*
   "Ver como usuário": com o contexto de outra pessoa (obter_contexto_de_usuario,
@@ -81,7 +95,92 @@ export function resumoDoEscopo(payload, nomesDasAreas = new Map()) {
   const onde = perfil.coordenacao
     ? `Coordenação ${perfil.coordenacao.nome}`
     : `Áreas: ${areas.join(", ") || "nenhuma"}`;
+  if (escopo.rascunho) return `${onde}.`;
   if (!escopo.recortado)
     return `${onde} — vê todos os ${escopo.editais_da_area ?? 0} editais da área.`;
   return `${onde} — vê ${escopo.editais_visiveis ?? 0} de ${escopo.editais_da_area ?? 0} editais da área.`;
+}
+
+/**
+ * "Como a pessoa vê" DEPOIS DE SALVAR: o contexto salvo (obter_contexto_de_
+ * usuario) com o rascunho da gaveta aplicado — grupo, administrador global,
+ * níveis por módulo, áreas, coordenação e painéis. Sem alteração pendente,
+ * devolve o contexto como veio. O `escopo` (contagem de editais) é do que
+ * está salvo, então sai e vira `{ rascunho: true }`.
+ */
+export function contextoDepoisDeSalvar(
+  payload,
+  usuario,
+  rascunho,
+  { grupos = [], areas = [], coordenacoes = [], paineis = [] } = {},
+) {
+  const raw = Array.isArray(payload) ? payload[0] : payload;
+  const contexto = normalizePlatformContext(raw);
+  if (!contexto || !usuario || !pendenciasDoUsuario(rascunho, usuario.id))
+    return payload;
+  const gruposPorCodigo = Object.fromEntries(grupos.map((g) => [g.codigo, g]));
+  const codigo = grupoDaLinha(usuario, rascunho);
+  const grupo = gruposPorCodigo[codigo];
+  const adminGlobal = adminGlobalDaLinha(usuario, rascunho, gruposPorCodigo);
+  const salvo = contexto.profile;
+  const permissoes = Object.fromEntries(
+    MODULOS.map((m) => {
+      if (adminGlobal)
+        return [
+          m.id,
+          salvo.admin_global && salvo.permissoes?.[m.id]
+            ? salvo.permissoes[m.id]
+            : niveisDoRecurso(m.id).at(-1)[0],
+        ];
+      return [
+        m.id,
+        celulaExibida(usuario, m.id, rascunho, gruposPorCodigo).nivel,
+      ];
+    }),
+  );
+  const codigoDaCoordenacao = adminGlobal
+    ? null
+    : coordenacaoDaLinha(usuario, rascunho);
+  const coordenacao = codigoDaCoordenacao
+    ? (() => {
+        const c = coordenacoes.find((x) => x.codigo === codigoDaCoordenacao);
+        return {
+          codigo: codigoDaCoordenacao,
+          nome: c?.nome || codigoDaCoordenacao,
+          area: c?.area || null,
+        };
+      })()
+    : null;
+  const areasVisiveis = adminGlobal
+    ? areas.map((a) => a.id)
+    : areasDaLinha(usuario, rascunho, { grupos, areas, coordenacoes }).ids;
+  const ativos = paineis.filter((p) => p.ativo !== false);
+  let panelIds;
+  if (adminGlobal) panelIds = ativos.map((p) => String(p.id));
+  else {
+    const liberados = new Set(salvo.admin_global ? [] : contexto.panelIds);
+    for (const p of ativos) {
+      const recurso = `painel:${p.id}`;
+      if (!alvoPendente(rascunho, usuario.id, recurso) && !salvo.admin_global)
+        continue;
+      if (celulaExibida(usuario, recurso, rascunho).nivel === "leitor")
+        liberados.add(String(p.id));
+      else liberados.delete(String(p.id));
+    }
+    panelIds = [...liberados];
+  }
+  return {
+    ...raw,
+    profile: {
+      ...salvo,
+      perfil: codigo,
+      grupo: grupo ? { codigo, nome: grupo.nome } : salvo.grupo,
+      admin_global: adminGlobal,
+      permissoes,
+      areas: areasVisiveis,
+      coordenacao,
+    },
+    panel_ids: panelIds,
+    escopo: { rascunho: true },
+  };
 }
