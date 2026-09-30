@@ -16,8 +16,10 @@ import {
 
   - "Usar no cronograma" troca as etapas do editor pelas do Anexo I (com
     confirmação quando já há etapas);
-  - o quadro de vagas fica pendente e é gravado junto com o edital, ao Salvar
-    (`estado.salvarEdital({ quadro })`).
+  - o quadro de vagas: em edital já cadastrado, "Salvar quadro de vagas"
+    grava na hora (`estado.salvarQuadroDeVagas`), sem depender do Salvar do
+    formulário; em edital novo (ainda sem id), fica pendente e vai junto com o
+    edital (`estado.salvarEdital({ quadro })`).
 
   Para edital existente mostra também o quadro já salvo. Regras puras em
   `src/lib/anexos-do-edital.js`.
@@ -99,6 +101,9 @@ export function ImportarAnexos({
   const [cronogramaUsado, setCronogramaUsado] = useState(false);
   const [verQuadro, setVerQuadro] = useState(false);
   const [salvo, setSalvo] = useState(null);
+  const [gravandoQuadro, setGravandoQuadro] = useState(false);
+  /* Resultado da gravação na hora: { tom: "success" | "error", texto }. */
+  const [gravacao, setGravacao] = useState(null);
 
   useEffect(() => {
     if (!idAtual || !estado.lerQuadroDeVagas) return undefined;
@@ -125,16 +130,52 @@ export function ImportarAnexos({
     setErro("");
     setLido(null);
     setCronogramaUsado(false);
+    setGravacao(null);
     try {
       const juntado = juntarAnexos(await estado.lerAnexos(arquivos));
       setLido(juntado);
-      aoMudarQuadro(juntado.vagas.length ? quadroParaSalvar(juntado) : null);
+      // Edital cadastrado grava pelo botão; só o edital novo leva o quadro no Salvar.
+      aoMudarQuadro(
+        !idAtual && juntado.vagas.length ? quadroParaSalvar(juntado) : null,
+      );
       if (juntado.edital) aoPreencherEdital(juntado.edital);
     } catch (e) {
       setErro(e?.message || String(e));
       aoMudarQuadro(null);
     } finally {
       setLendo(false);
+    }
+  }
+
+  async function gravarQuadro() {
+    if (!idAtual || !lido?.vagas?.length || gravandoQuadro) return;
+    const atuais = salvo?.linhas?.length || 0;
+    if (
+      atuais &&
+      !estado.confirmar(
+        `Substituir o quadro de vagas salvo (${plural(atuais, "linha", "linhas")}) pelo do PDF?`,
+      )
+    )
+      return;
+    setGravandoQuadro(true);
+    setGravacao(null);
+    try {
+      const dados = await estado.salvarQuadroDeVagas(
+        idAtual,
+        quadroParaSalvar(lido),
+      );
+      setSalvo(dados);
+      setGravacao({
+        tom: "success",
+        texto: `Quadro de vagas salvo: ${plural(dados?.linhas?.length ?? lido.vagas.length, "linha", "linhas")}.`,
+      });
+    } catch (e) {
+      setGravacao({
+        tom: "error",
+        texto: `O quadro de vagas não foi salvo: ${e?.message || e}`,
+      });
+    } finally {
+      setGravandoQuadro(false);
     }
   }
 
@@ -234,9 +275,24 @@ export function ImportarAnexos({
             <div>
               <strong>Quadro de vagas</strong>{" "}
               {lido.vagas.length
-                ? `${frase(resumoDoQuadro(lido.vagas))} — ${quadroPendente ? "será salvo com o edital" : "descartado"}`
+                ? `${frase(resumoDoQuadro(lido.vagas))}${idAtual ? "" : quadroPendente ? " — será salvo com o edital" : ""}`
                 : "não encontrado"}
             </div>
+            {idAtual && lido.vagas.length > 0 && (
+              <button
+                id="anexosSalvarQuadro"
+                className="btn green"
+                type="button"
+                disabled={gravandoQuadro || gravacao?.tom === "success"}
+                onClick={() => void gravarQuadro()}
+              >
+                {gravandoQuadro
+                  ? "Salvando..."
+                  : gravacao?.tom === "success"
+                    ? "Quadro salvo"
+                    : "Salvar quadro de vagas"}
+              </button>
+            )}
             {lido.vagas.length > 0 && (
               <button
                 id="anexosVerQuadro"
@@ -248,6 +304,14 @@ export function ImportarAnexos({
               </button>
             )}
           </div>
+          {gravacao && (
+            <p
+              className={`cronograma-copy-feedback is-${gravacao.tom}`}
+              role={gravacao.tom === "error" ? "alert" : "status"}
+            >
+              {gravacao.texto}
+            </p>
+          )}
           {verQuadro && lido.vagas.length > 0 && (
             <TabelaDoQuadro
               linhas={lido.vagas}

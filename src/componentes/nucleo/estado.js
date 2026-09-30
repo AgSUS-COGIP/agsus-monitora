@@ -190,6 +190,18 @@ export function criarEstadoDoNucleo({
     return data || {};
   }
 
+  /** Grava o quadro de vagas de um edital já cadastrado, sem esperar o Salvar do edital. */
+  async function salvarQuadroDeVagas(id, quadro) {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    await exigirSessao(supabase);
+    const { data, error } = await supabase.rpc(RPC_SALVAR_QUADRO, {
+      p_edital: id,
+      p_dados: quadro,
+    });
+    if (error) throw error;
+    return data || {};
+  }
+
   /*
     As unidades com área definida, para o formulário oferecer só as da área.
     Falhar aqui não impede de editar: o formulário cai na área gravada nos
@@ -392,6 +404,7 @@ export function criarEstadoDoNucleo({
     lerUnidadesPorArea,
     lerAnexos,
     lerQuadroDeVagas,
+    salvarQuadroDeVagas,
     salvarEdital,
     moverEdital,
     desligar() {

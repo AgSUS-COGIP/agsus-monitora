@@ -697,6 +697,73 @@ describe("formulário do edital", () => {
     );
   });
 
+  it("edital cadastrado: o quadro de vagas do PDF é salvo na hora, sem o Salvar do edital", async () => {
+    const supabase = supabaseFalso();
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(async (nome, argumentos) =>
+      nome === "salvar_quadro_de_vagas"
+        ? { data: { linhas: argumentos.p_dados.linhas }, error: null }
+        : original(nome, argumentos),
+    );
+    const resposta = {
+      edital: "10/2026",
+      cronograma: [],
+      vagas: [
+        {
+          cargo: "Enfermeiro",
+          lotacao: "Polo Base Leonardo",
+          modalidades: { "Ampla Concorrência": 1 },
+          vagas_imediatas: 1,
+          cadastro_reserva: true,
+        },
+        {
+          cargo: "Enfermeiro",
+          lotacao: "Polo Base Pavuru",
+          modalidades: { "Ampla Concorrência": null },
+          vagas_imediatas: 0,
+          cadastro_reserva: true,
+        },
+      ],
+      modalidades: ["Ampla Concorrência"],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => resposta,
+      })),
+    );
+    try {
+      await montar({ supabase });
+      await abrirEdital("1");
+      const entrada = $("anexosArquivo");
+      Object.defineProperty(entrada, "files", {
+        value: [
+          new File(["%PDF-1.4"], "anexos.pdf", { type: "application/pdf" }),
+        ],
+      });
+      await act(async () => {
+        entrada.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await esperar();
+      await clicar($("anexosSalvarQuadro"));
+      await esperar();
+      const [, argumentos] = supabase.rpc.mock.calls.find(
+        ([nome]) => nome === "salvar_quadro_de_vagas",
+      );
+      expect(argumentos.p_edital).toBe("1");
+      expect(argumentos.p_dados.linhas).toHaveLength(2);
+      expect($("anexosDoEdital").textContent).toContain(
+        "Quadro de vagas salvo: 2 linhas.",
+      );
+      expect($("anexosSalvarQuadro").textContent).toBe("Quadro salvo");
+      expect($("editModal")).not.toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("erro de validação não chega ao banco", async () => {
     const { supabase, toast } = await montar();
     await clicar($("newEditalBtn"));
