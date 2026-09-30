@@ -832,9 +832,12 @@ e `20261001090500_liga_aba_selecao.sql` a liga junto com o front. **Ainda não e
 - `TL_SYNC_SELECAO` — log das cargas (sem área: a planilha mistura as três).
 - Carga só `service_role` (`scripts/sincronizar-selecao.mjs`, GitHub Actions às 9h):
   `sincronizar_selecao(p_sync, p_linhas)` em lotes e `finalizar_sync_selecao(p_sync, p_forcar)`,
-  que desativa o que saiu, liga o edital (`FC_NUMERO_EDITAL`, de preferência mesma área e unidade)
-  e acerta a área (a do edital; sem edital, a da unidade em `TA_UNIDADE_AREA`, senão
-  `saude-indigena`). Carga com menos da metade das linhas ativas é recusada sem `p_forcar`.
+  que desativa o que saiu e chama `private."FC_LIGAR_SELECAO_AOS_EDITAIS"()`
+  (`20261001100000_selecao_area_pelos_editais.sql`): unidade DSEI ou CASAI fica na Saúde Indígena,
+  com o edital de mesmo número (`FC_NUMERO_EDITAL`) da Saúde Indígena; qualquer outra unidade
+  nunca fica nela — edital de mesmo número da SEDE ou de Projetos (de preferência mesma unidade),
+  área dele; sem edital, `TA_UNIDADE_AREA`, senão `sede`. Carga com menos da metade das linhas
+  ativas é recusada sem `p_forcar`.
 - Leitura `get_selecao_da_area(p_area)` — recurso `selecao` >= leitor, área e recorte da
   coordenação. Calcula na hora:
   - **convocados**: edital com alguma entrevista ativa em `TB_ENTREVISTA` (planilha ou sistema)

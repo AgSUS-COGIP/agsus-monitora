@@ -1,7 +1,7 @@
 /*
   Estado do painel de seleção (`selecao.html`), fora do React: o que o banco
-  devolve para a área do painel (`?area=`) e a vaga aberta na gaveta. Os
-  componentes leem com `useSyncExternalStore`. Este arquivo não importa React.
+  devolve para a área do painel (`?area=`). Os componentes leem com
+  `useSyncExternalStore`. Este arquivo não importa React.
 
   O painel só lê: uma RPC, `get_selecao_da_area` (json), que confere permissão
   (recurso `selecao` >= leitor), área e o recorte da coordenação
@@ -48,8 +48,6 @@ const ESTADO_INICIAL = Object.freeze({
   atualizando: false,
   daCopia: false,
   carregadoEm: 0,
-  /** id da vaga aberta na gaveta, ou `null`. */
-  gaveta: null,
 });
 
 function mensagemDaCarga(erro) {
@@ -226,8 +224,6 @@ export function criarEstadoDaSelecao({
       return () => ouvintes.delete(ouvinte);
     },
     carregar,
-    abrirGaveta: (id) => publicar({ gaveta: id }),
-    fecharGaveta: () => publicar({ gaveta: null }),
     exportarCsv,
   };
 }

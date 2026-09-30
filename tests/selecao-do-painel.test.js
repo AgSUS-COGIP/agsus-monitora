@@ -1,21 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
+  aptosEEliminados,
   calcularIndicadores,
   csvDaSelecao,
+  eliminadosAntesDaAnalise,
   FILTROS_VAZIOS,
   filtrarVagas,
-  funil,
-  motivosDeEliminacao,
+  filtrosAtivos,
+  formatarQuantidade,
+  formatarTaxa,
   normalizarPayload,
-  numerosAConferir,
+  observacoesDoRecorte,
   opcoesDosFiltros,
   PAINEL_DE_SELECAO,
   payloadMudou,
-  pendenciasDaSelecao,
-  situacoesDaVaga,
+  rotuloDaUnidade,
   somar,
+  taxaDeContratacao,
   textoDaUltimaCarga,
+  textoDoRecorte,
   topUnidades,
+  triadosEReprovados,
 } from "../src/lib/selecao-do-painel.js";
 
 /* O formato de get_selecao_da_area (20261001090000_selecao.sql). */
@@ -29,10 +34,8 @@ const PAYLOAD = {
       id: "v1",
       edital_id: "m6",
       edital: "06/2026",
-      edital_planilha: "06/2026",
       unidade: "DSEI Xingu",
       vaga: "104123",
-      vaga_planilha: "104123",
       cargo: "Enfermeiro",
       inscritos: 83,
       aptos: 72,
@@ -41,13 +44,13 @@ const PAYLOAD = {
       eliminados_nota: 0,
       reprovados_analise: 3,
       triados: 69,
-      total_eliminados: 14,
+      total_eliminados: 11,
       observacao: "1 Interessado",
       convocados: 10,
       origem_convocados: "entrevistas",
-      aprovados: 5,
+      aprovados: 8,
       contratados: 2,
-      nao_contratados: 3,
+      nao_contratados: 6,
     },
     {
       id: "v2",
@@ -57,19 +60,22 @@ const PAYLOAD = {
       vaga: "104124",
       cargo: "Médico",
       inscritos: 10,
-      aptos: 12,
-      total_eliminados: 1,
+      aptos: 8,
+      cancelados: 1,
+      reprovados_questionario: 1,
+      triados: 6,
+      reprovados_analise: 2,
+      total_eliminados: 2,
+      observacao: "1 interessado",
       convocados: 0,
       origem_convocados: "entrevistas",
       aprovados: null,
       contratados: null,
-      nao_contratados: null,
     },
     {
       id: "v3",
       edital_id: null,
       edital: "96/2025",
-      edital_planilha: "96/2025",
       unidade: "Projeto Agora Tem Especialistas Caminhoneiros",
       vaga: null,
       vaga_planilha: "CARGO 1: MÉDICO",
@@ -84,41 +90,24 @@ const PAYLOAD = {
 };
 
 const vagas = normalizarPayload(PAYLOAD).vagas;
-const porId = (id) => vagas.find((v) => v.id === id);
+const ids = (xs) => xs.map((v) => v.id);
 
 describe("payload da seleção", () => {
-  it("normaliza números, origem e situações", () => {
-    const [v1, v2, v3] = vagas;
-    expect(v1).toMatchObject({
+  it("normaliza números, vaga e origem dos convocados", () => {
+    expect(vagas[0]).toMatchObject({
       vaga: "104123",
       inscritos: 83,
       eliminadosNota: 0,
+      aprovados: 8,
       origemConvocados: "entrevistas",
-      temLista: true,
-      semEdital: false,
-      outraBanca: false,
-      aConferir: false,
     });
-    // Mais aptos que inscritos: a conferir; edital sem lista.
-    expect(v2.aConferir).toBe(true);
-    expect(situacoesDaVaga(v2)).toEqual(["sem_lista", "a_conferir"]);
-    // Outra banca: cargo no lugar da vaga, só inscritos e eliminados.
-    expect(v3).toMatchObject({
+    // Outra banca: cargo no lugar da vaga, sem código e com os números vazios.
+    expect(vagas[2]).toMatchObject({
       vaga: null,
-      outraBanca: true,
-      semEdital: true,
+      cargo: "CARGO 1: MÉDICO",
       aptos: null,
-      triados: null,
       origemConvocados: "planilha",
     });
-    expect(situacoesDaVaga(v3)).toEqual(["sem_edital", "outra_banca"]);
-  });
-
-  it("número negativo é a conferir; vazio não é", () => {
-    expect(numerosAConferir({ inscritos: 5, reprovadosAnalise: -1 })).toBe(
-      true,
-    );
-    expect(numerosAConferir({ inscritos: null, aptos: null })).toBe(false);
   });
 
   it("payload estranho vira lista vazia", () => {
@@ -126,82 +115,128 @@ describe("payload da seleção", () => {
     expect(normalizarPayload({ vagas: "x" }).vagas).toEqual([]);
   });
 
-  it("texto da última carga", () => {
+  it("texto da última carga, como no rodapé do painel antigo", () => {
     expect(textoDaUltimaCarga(normalizarPayload(PAYLOAD).ultimaCarga)).toBe(
-      "Dados da planilha Auditoria · última carga 01/10/2026 09:02",
+      "Atualizado: 01/10/2026 09:02",
     );
-    expect(textoDaUltimaCarga(null)).toContain("sem carga concluída");
+    expect(textoDaUltimaCarga(null)).toBe("Atualizado: --");
   });
 });
 
-describe("filtros", () => {
-  it("por unidade, origem, situação e busca", () => {
-    const ids = (filtros) =>
-      filtrarVagas(vagas, { ...FILTROS_VAZIOS, ...filtros }).map((v) => v.id);
-    expect(ids({ unidade: "DSEI Xingu" })).toEqual(["v1"]);
-    expect(ids({ origem: "planilha" })).toEqual(["v3"]);
-    expect(ids({ situacao: "a_conferir" })).toEqual(["v2"]);
-    expect(ids({ situacao: "sem_edital" })).toEqual(["v3"]);
-    expect(ids({ busca: "medico" })).toEqual(["v2", "v3"]);
-    expect(ids({ busca: "104123" })).toEqual(["v1"]);
-  });
-
-  it("opções sem repetição, em ordem", () => {
-    const opcoes = opcoesDosFiltros(vagas);
-    expect(opcoes.editais.map((o) => o.valor)).toEqual(["06/2026", "96/2025"]);
-    expect(opcoes.origens.map((o) => o.valor)).toEqual([
-      "entrevistas",
-      "planilha",
+describe("filtros de escolha múltipla (DSEI, edital, cargo, vaga)", () => {
+  it("vazio é tudo; cada filtro aceita vários valores; a busca olha a observação", () => {
+    expect(ids(filtrarVagas(vagas))).toEqual(["v1", "v2", "v3"]);
+    expect(
+      ids(
+        filtrarVagas(vagas, {
+          ...FILTROS_VAZIOS,
+          unidades: ["DSEI Xingu", "DSEI Yanomami"],
+        }),
+      ),
+    ).toEqual(["v1", "v2"]);
+    expect(
+      ids(filtrarVagas(vagas, { ...FILTROS_VAZIOS, editais: ["96/2025"] })),
+    ).toEqual(["v3"]);
+    expect(
+      ids(filtrarVagas(vagas, { ...FILTROS_VAZIOS, vagas: ["104124"] })),
+    ).toEqual(["v2"]);
+    expect(ids(filtrarVagas(vagas, FILTROS_VAZIOS, "interessado"))).toEqual([
+      "v1",
+      "v2",
+    ]);
+    expect(ids(filtrarVagas(vagas, FILTROS_VAZIOS, "medico"))).toEqual([
+      "v2",
+      "v3",
     ]);
   });
-});
 
-describe("indicadores e gráficos", () => {
-  it("soma ignora vazio; sem nenhum número é nulo", () => {
-    expect(somar(vagas, "inscritos")).toBe(132);
-    expect(somar(vagas, "aprovados")).toBe(5);
-    expect(somar([porId("v3")], "aptos")).toBeNull();
+  it("as opções de um filtro seguem os outros filtros escolhidos", () => {
+    const todas = opcoesDosFiltros(vagas);
+    expect(todas.editais).toEqual(["06/2026", "96/2025"]);
+    expect(todas.vagas).toEqual(["104123", "104124"]);
+    const soXingu = opcoesDosFiltros(vagas, {
+      ...FILTROS_VAZIOS,
+      unidades: ["DSEI Xingu"],
+    });
+    expect(soXingu.editais).toEqual(["06/2026"]);
+    expect(soXingu.cargos).toEqual(["Enfermeiro"]);
+    // O filtro escolhido não limita as próprias opções.
+    expect(soXingu.unidades).toHaveLength(3);
   });
 
-  it("KPIs do recorte", () => {
+  it("chips e recorte descrevem o que foi escolhido; fora da SI a unidade não é DSEI", () => {
+    const filtros = {
+      ...FILTROS_VAZIOS,
+      editais: ["06/2026"],
+      unidades: ["DSEI Xingu"],
+    };
+    expect(filtrosAtivos(filtros).map((f) => f.rotulo)).toEqual([
+      "Nome DSEI",
+      "Edital",
+    ]);
+    expect(textoDoRecorte(filtros, "saude-indigena")).toBe(
+      "Recorte ativo: Nome DSEI: DSEI Xingu · Edital: 06/2026",
+    );
+    expect(textoDoRecorte(FILTROS_VAZIOS)).toBe(
+      "Sem filtros aplicados. Visualizando toda a base carregada.",
+    );
+    expect(rotuloDaUnidade("sede")).toBe("Unidade");
+  });
+});
+
+describe("os 7 KPIs", () => {
+  it("soma ignora vazio; taxa = contratados / aprovados", () => {
+    expect(somar(vagas, "inscritos")).toBe(132);
     expect(calcularIndicadores(vagas)).toEqual({
       vagas: 3,
-      editais: 2,
       inscritos: 132,
-      aptos: 84,
-      eliminados: 15,
-      triados: 69,
+      aptos: 80,
+      triados: 75,
       convocados: 14,
-      aprovados: 5,
+      aprovados: 8,
       contratados: 2,
-      naoContratados: 3,
+      taxa: 0.25,
     });
-    expect(calcularIndicadores([]).inscritos).toBeNull();
+    expect(taxaDeContratacao(0, 0)).toBeNull();
   });
 
-  it("funil, motivos e unidades", () => {
-    expect(funil(vagas).map((e) => [e.id, e.valor])).toEqual([
-      ["inscritos", 132],
-      ["aptos", 84],
-      ["triados", 69],
-      ["convocados", 14],
-      ["aprovados", 5],
-      ["contratados", 2],
+  it("formata como o painel antigo (zero sem número, taxa em %)", () => {
+    expect(formatarQuantidade(null)).toBe("0");
+    expect(formatarQuantidade(1234)).toBe("1.234");
+    expect(formatarTaxa(0.25)).toBe("25%");
+    expect(formatarTaxa(1 / 3)).toBe("33,3%");
+    expect(formatarTaxa(null)).toBe("0%");
+  });
+});
+
+describe("os 5 gráficos", () => {
+  it("eliminados antes da análise, aptos × eliminados, triados × reprovados", () => {
+    expect(eliminadosAntesDaAnalise(vagas).map((x) => x.valor)).toEqual([
+      3, 10, 0,
     ]);
-    expect(motivosDeEliminacao(vagas).map((m) => m.valor)).toEqual([
-      2, 9, 0, 3,
-    ]);
-    expect(topUnidades(vagas, 2).map((u) => u.rotulo)).toEqual([
-      "DSEI Xingu",
-      "Projeto Agora Tem Especialistas Caminhoneiros",
-    ]);
+    expect(aptosEEliminados(vagas).map((x) => x.valor)).toEqual([80, 13]);
+    expect(triadosEReprovados(vagas).map((x) => x.valor)).toEqual([75, 5]);
   });
 
-  it("pendências", () => {
-    const valores = Object.fromEntries(
-      pendenciasDaSelecao(vagas).map((p) => [p.chave, p.valor]),
-    );
-    expect(valores).toEqual({ a_conferir: 1, sem_edital: 1, sem_lista: 1 });
+  it("top DSEIs por inscritos", () => {
+    expect(topUnidades(vagas, 2)).toEqual([
+      { rotulo: "DSEI Xingu", valor: 83 },
+      { rotulo: "Projeto Agora Tem Especialistas Caminhoneiros", valor: 39 },
+    ]);
+  });
+});
+
+describe("alertas da coluna Observação", () => {
+  it("cada observação uma vez (sem diferenciar caixa), com onde aparece", () => {
+    expect(observacoesDoRecorte(vagas)).toEqual([
+      {
+        texto: "1 Interessado",
+        vagas: 2,
+        unidades: ["DSEI Xingu", "DSEI Yanomami"],
+        editais: ["06/2026"],
+      },
+    ]);
+    expect(observacoesDoRecorte([vagas[2]])).toEqual([]);
   });
 });
 
@@ -213,12 +248,13 @@ describe("CSV e cópia guardada", () => {
       ],
     }).vagas;
     const csv = csvDaSelecao(perigosa);
-    expect(csv.startsWith("\uFEFFEdital;Unidade;Vaga;Cargo;Inscritos;")).toBe(
-      true,
-    );
+    expect(
+      csv.startsWith(
+        String.fromCharCode(0xfeff) + "DSEI / Unidade;Edital;Cargo;Vaga;",
+      ),
+    ).toBe(true);
     expect(csv).toContain("'=HYPERLINK(1)");
-    expect(csv).toContain(";3;;");
-    expect(csv).toContain("Planilha (dado antigo)");
+    expect(csv).toContain("Planilha Auditoria (dado antigo)");
   });
 
   it("tipo da cópia e mudança sem contar gerado_em", () => {
@@ -241,8 +277,8 @@ describe("registro da aba", async () => {
   const { PAGINAS_DO_PAINEL } = await import("../src/lib/pagina-do-painel.js");
 
   it("Seleção vem depois de Recursos, como beta, com a página própria", () => {
-    const ids = ABAS_DO_MENU.map((aba) => aba.id);
-    expect(ids.indexOf("selecao")).toBe(ids.indexOf("recursos") + 1);
+    const lista = ABAS_DO_MENU.map((aba) => aba.id);
+    expect(lista.indexOf("selecao")).toBe(lista.indexOf("recursos") + 1);
     expect(ABAS_DO_MENU.find((aba) => aba.id === "selecao")).toMatchObject({
       view: "selecao",
       recurso: "selecao",

@@ -10,12 +10,14 @@ import { Chart } from "../../lib/chartjs-global.js";
   nas dependências para as cores acompanharem o botão de tema.
 
   O canvas leva `role="img"` e o `rotulo`; os números estão também nos KPIs,
-  nas pendências e na tabela.
+  nas pendências e na tabela. `plugins` (opcional) são plugins do Chart.js só
+  deste gráfico, fixos desde a criação (ex.: rótulo de valor nas barras).
 */
-export function Grafico({ tipo, montar, dependencias, rotulo, id }) {
+export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
   const canvas = useRef(null);
   const grafico = useRef(null);
   const ultimoMontar = useRef(montar);
+  const pluginsIniciais = useRef(plugins);
   useLayoutEffect(() => {
     ultimoMontar.current = montar;
   });
@@ -28,6 +30,9 @@ export function Grafico({ tipo, montar, dependencias, rotulo, id }) {
         type: tipo,
         data,
         options,
+        ...(pluginsIniciais.current
+          ? { plugins: pluginsIniciais.current }
+          : {}),
       });
     } catch (erro) {
       console.warn("Não foi possível desenhar o gráfico:", erro);
