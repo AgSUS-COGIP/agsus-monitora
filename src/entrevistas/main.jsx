@@ -22,14 +22,14 @@ import "../analises/analises-esqueleto.css";
 import "../analises/analises-infinite-table.css";
 import "../analises/analises-painel.css";
 import "../ui/ui.css";
-import "./entrevistas.css";
+import "../modulos/entrevistas/entrevistas.css";
 import {
   areaDaUrlDoPainel,
   rotuloDaAreaDoPainel,
 } from "../lib/area-do-painel-de-analises.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { aplicarTemaSalvoDoPainel } from "../lib/tema-do-painel.js";
-import { montarPainelDeEntrevistas } from "../componentes/entrevistas/entrevistas.jsx";
+import { montarPainelDeEntrevistas } from "../modulos/entrevistas/entrevistas.jsx";
 
 const area = areaDaUrlDoPainel(window.location.search);
 const nomeDaArea = rotuloDaAreaDoPainel(area);

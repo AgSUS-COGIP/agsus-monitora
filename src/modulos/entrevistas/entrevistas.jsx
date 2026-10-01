@@ -18,7 +18,7 @@ import {
   temaEscuroDoPainel,
 } from "../../lib/tema-do-painel.js";
 import { EstadoVazio, PainelNoQuadro } from "../../ui/index.js";
-import { criarAvisoDoPainel } from "../aviso-do-painel.js";
+import { criarAvisoDoPainel } from "../../componentes/aviso-do-painel.js";
 import { VisaoDeConducao } from "./conducao.jsx";
 import { criarEstadoDaConducao } from "./estado-da-conducao.js";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.js";

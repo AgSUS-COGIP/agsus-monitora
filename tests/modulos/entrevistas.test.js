@@ -1,6 +1,12 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
+import {
+  clicar,
+  digitar,
+  escolher,
+  esperar,
+  teclar,
+} from "../componentes/interacoes.js";
 
 /*
   O painel de entrevistas (entrevistas.html) em React, só leitura: carga ao
@@ -20,7 +26,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarPainelDeEntrevistas } =
-  await import("../../src/componentes/entrevistas/entrevistas.jsx");
+  await import("../../src/modulos/entrevistas/entrevistas.jsx");
 
 const PAYLOAD = {
   schema_version: 1,
@@ -219,7 +225,7 @@ describe("painel de entrevistas", () => {
 
 describe("cópia guardada (stale-while-revalidate)", async () => {
   const { criarEstadoDasEntrevistas } =
-    await import("../../src/componentes/entrevistas/estado.js");
+    await import("../../src/modulos/entrevistas/estado.js");
 
   function memoria() {
     const mapa = new Map();
