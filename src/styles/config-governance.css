@@ -269,11 +269,6 @@
   background: #fff;
 }
 
-.config-reason-field small {
-  color: #8493a7;
-  font-weight: 500;
-}
-
 .config-governance-alert,
 .config-governance-empty {
   display: flex;

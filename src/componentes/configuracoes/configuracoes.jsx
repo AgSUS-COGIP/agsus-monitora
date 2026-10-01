@@ -198,7 +198,6 @@ function CampoDoMotivo({
   valor,
   invalido,
   aoMudar,
-  ajuda,
 }) {
   return (
     <label className="config-reason-field" htmlFor={id}>
@@ -216,7 +215,6 @@ function CampoDoMotivo({
         data-foco-inicial
         onChange={(evento) => aoMudar(evento.target.value)}
       />
-      {ajuda ? <small>{ajuda}</small> : null}
     </label>
   );
 }
@@ -306,7 +304,6 @@ function DialogoDeRevisao({ estado, modal }) {
         id="configPublishReason"
         rotulo="Motivo da alteração"
         placeholder="Ex.: ajuste de rótulos"
-        ajuda="Obrigatório"
         valor={motivo}
         invalido={tentou && !motivo.trim()}
         aoMudar={setMotivo}
