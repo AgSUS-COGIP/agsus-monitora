@@ -34,6 +34,7 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
+import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.js";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
 import { abrirPaginaDoPainel, quadroDoPainel } from "./pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
@@ -502,36 +503,29 @@ function ensureSearchInputTextColor() {
     st.textContent = `
         #tableSearch,
         #tableSearch:focus,
-        #tableSearch:active,
-        #searchModalInput,
-        #searchModalInput:focus,
-        #searchModalInput:active {
+        #tableSearch:active {
           color: #0f172a !important;
           -webkit-text-fill-color: #0f172a !important;
           caret-color: #0f172a !important;
           background-color: #ffffff !important;
         }
-        #tableSearch::placeholder,
-        #searchModalInput::placeholder {
+        #tableSearch::placeholder {
           color: #64748b !important;
           -webkit-text-fill-color: #64748b !important;
           opacity: .72 !important;
         }
-        #tableSearch:-webkit-autofill,
-        #searchModalInput:-webkit-autofill {
+        #tableSearch:-webkit-autofill {
           -webkit-text-fill-color: #0f172a !important;
           box-shadow: 0 0 0 1000px #ffffff inset !important;
         }
       `;
     document.head.appendChild(st);
   }
-  ["tableSearch", "searchModalInput"].forEach((id) => {
-    const el = $(id);
-    if (!el) return;
-    el.style.color = "#0f172a";
-    el.style.webkitTextFillColor = "#0f172a";
-    el.style.caretColor = "#0f172a";
-  });
+  const el = $("tableSearch");
+  if (!el) return;
+  el.style.color = "#0f172a";
+  el.style.webkitTextFillColor = "#0f172a";
+  el.style.caretColor = "#0f172a";
 }
 
 function $(id) {
@@ -12041,112 +12035,12 @@ function loadDarkModePreference() {
   }
 }
 
-// ── Busca global Ctrl+K ─────────────────────────────────────────────────
-let searchIdx = -1;
-
-function openSearchModal() {
-  $("searchModal").classList.add("show");
-  setTimeout(() => {
-    $("searchModalInput").focus();
-    $("searchModalInput").value = "";
-    runGlobalSearch("");
-  }, 50);
-  document.body.style.overflow = "hidden";
-}
-function closeSearchModal() {
-  $("searchModal").classList.remove("show");
-  document.body.style.overflow = "";
-  searchIdx = -1;
-}
-function runGlobalSearch(q) {
-  searchIdx = -1;
-  const el = $("searchResults");
-  if (!el) return;
-  if (!q.trim()) {
-    el.innerHTML = `<div style="padding:18px;text-align:center;color:#9fb3c8;font-size:13px;font-weight:700;">Digite para buscar em todos os processos seletivos</div>`;
-    return;
-  }
-  const ql = low(q);
-  const results = rows
-    .filter((r) =>
-      [
-        r.edital,
-        r.unidade,
-        r.etapa,
-        r.status,
-        r.uf,
-        r.risco,
-        r.ciclo,
-        r.responsavel,
-        r.observacoes,
-      ]
-        .map(low)
-        .join(" ")
-        .includes(ql),
-    )
-    .slice(0, 12);
-  if (!results.length) {
-    el.innerHTML = `<div style="padding:18px;text-align:center;color:#9fb3c8;font-size:13px;font-weight:700;">Nenhum resultado encontrado</div>`;
-    return;
-  }
-  el.innerHTML = results
-    .map((r, i) => {
-      const risco = low(r.risco);
-      const riscoColor =
-        risco === "alto"
-          ? "#d92d3a"
-          : risco === "médio" || risco === "medio"
-            ? "#f2b705"
-            : "#0b8f58";
-      const riscoText =
-        risco === "alto"
-          ? "Alto"
-          : risco === "médio" || risco === "medio"
-            ? "Médio"
-            : "Baixo";
-      return `<div class="search-result-item" data-idx="${i}" data-id="${attr(r.id)}" onclick="selectSearchResult('${attr(r.id)}')" onmouseenter="searchIdx=${i};highlightSearchItems()">
-        <div class="search-result-icon" style="background:#f0f7ff"><i class="fa-solid fa-folder-open" style="color:#0075c9"></i></div>
-        <div class="search-result-body">
-          <div class="search-result-title">${esc(r.edital || "-")} — ${esc(r.unidade)}</div>
-          <div class="search-result-sub">${esc(r.etapa || "")}${r.uf ? " · " + esc(r.uf) : ""}</div>
-        </div>
-        <span class="search-result-chip" style="background:${riscoColor}1a;color:${riscoColor};border:1px solid ${riscoColor}40">${riscoText}</span>
-      </div>`;
-    })
-    .join("");
-}
-function highlightSearchItems() {
-  document
-    .querySelectorAll(".search-result-item")
-    .forEach((el, i) => el.classList.toggle("active", i === searchIdx));
-}
-function searchModalKey(e) {
-  const items = [...document.querySelectorAll(".search-result-item")];
-  if (e.key === "Escape") {
-    closeSearchModal();
-    return;
-  }
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    searchIdx = Math.min(searchIdx + 1, items.length - 1);
-    highlightSearchItems();
-    items[searchIdx]?.scrollIntoView({ block: "nearest" });
-    return;
-  }
-  if (e.key === "ArrowUp") {
-    e.preventDefault();
-    searchIdx = Math.max(searchIdx - 1, 0);
-    highlightSearchItems();
-    items[searchIdx]?.scrollIntoView({ block: "nearest" });
-    return;
-  }
-  if (e.key === "Enter" && searchIdx >= 0) {
-    const item = items[searchIdx];
-    if (item) selectSearchResult(item.dataset.id);
-  }
-}
-function selectSearchResult(id) {
-  closeSearchModal();
+/*
+  Busca global (Ctrl+K): o componente React (src/componentes/busca-global/)
+  avisa a linha escolhida; aqui, dono dos filtros e da navegação, ela fica à
+  vista no painel de Saúde Indígena.
+*/
+function localizarLinhaDoMonitoramento(id) {
   const r = rows.find((x) => String(x.id) === String(id));
   if (!r) return;
 
@@ -12187,6 +12081,9 @@ function selectSearchResult(id) {
     });
   }, 400);
 }
+document.addEventListener(EVENTO_ESCOLHA_DA_BUSCA, (e) =>
+  localizarLinhaDoMonitoramento(e.detail?.id),
+);
 
 // ── Realtime Supabase ───────────────────────────────────────────────────
 let realtimeChannel = null;
@@ -12268,48 +12165,23 @@ window.addEventListener("orientationchange", () => {
   que fica escondida.
 */
 
-// Ctrl+K / Cmd+K abre busca global
-document.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-    e.preventDefault();
-    if ($("searchModal").classList.contains("show")) closeSearchModal();
-    else if (currentUser) openSearchModal();
-  }
-  if (e.key === "Escape" && $("searchModal").classList.contains("show"))
-    closeSearchModal();
-});
-// Fechar modal de busca ao clicar fora
-$("searchModal")?.addEventListener("click", (e) => {
-  if (e.target === $("searchModal")) closeSearchModal();
-});
-
 loadDarkModePreference();
 enforceResponsiveSidebar();
 initFilterControls();
-Object.defineProperty(window, "searchIdx", {
-  configurable: true,
-  get() {
-    return searchIdx;
-  },
-  set(value) {
-    searchIdx = Number(value) || 0;
-  },
-});
 Object.assign(window, {
   $,
   getMonitoraProfile: () => profile,
+  getMonitoraUser: () => currentUser,
   monitoraToast: toast,
   monitoraLoader: loader,
   clearFilters,
   clearFilterField,
   clearSearchPill,
   definirSelecaoDeFiltro,
-  closeSearchModal,
   debouncedSearch,
   exitExternalPanel,
   exportCSV,
   exportPDF,
-  highlightSearchItems,
   loginWithGoogle,
   logout,
   navigate,
@@ -12318,11 +12190,8 @@ Object.assign(window, {
   reloadExternal,
   returnToLogin,
   removeFilterPill,
-  runGlobalSearch,
   restoreAccessBackground,
-  searchModalKey,
   selectAllFilterValues,
-  selectSearchResult,
   sortDetails,
   uploadAccessBackground,
   submitAccessRequest,
