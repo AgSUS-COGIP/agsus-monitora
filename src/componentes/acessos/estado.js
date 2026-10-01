@@ -158,6 +158,11 @@ export function criarEstadoDosAcessos({
 
   // ── Matriz ──────────────────────────────────────────────────────────────────
 
+  /* Busca, filtros e página disparam cargas sem esperar a anterior: só a
+     resposta do último pedido entra na tela (a geração cobre a troca de sessão). */
+  let pedidoDaMatriz = 0;
+  let pedidoDasDesativadas = 0;
+
   async function carregarMatriz(mudancas = {}) {
     const alvo = {
       busca: mudancas.busca ?? estado.busca,
@@ -166,6 +171,8 @@ export function criarEstadoDosAcessos({
       filtroGrupo: mudancas.filtroGrupo ?? estado.filtroGrupo,
     };
     const geracao = estado.geracao;
+    const meu = ++pedidoDaMatriz;
+    const antigo = () => geracao !== estado.geracao || meu !== pedidoDaMatriz;
     publicar({
       ...alvo,
       status: estado.matriz ? "ready" : "loading",
@@ -179,11 +186,11 @@ export function criarEstadoDosAcessos({
         p_coordenacao: alvo.filtroCoordenacao,
         p_grupo: alvo.filtroGrupo,
       });
-      if (geracao !== estado.geracao) return null;
+      if (antigo()) return null;
       publicar({ matriz, status: "ready" });
       return matriz;
     } catch (erro) {
-      if (geracao !== estado.geracao) return null;
+      if (antigo()) return null;
       console.error("Erro ao carregar os acessos:", erro);
       publicar({
         status: "error",
@@ -248,7 +255,7 @@ export function criarEstadoDosAcessos({
           const matriz = await carregarMatriz();
           const { rascunho, conflitos } = rebasearRascunho(
             estado.rascunho,
-            matriz?.usuarios || [],
+            (matriz || estado.matriz)?.usuarios || [],
           );
           publicar({
             rascunho,
@@ -309,6 +316,9 @@ export function criarEstadoDosAcessos({
   async function carregarDesativadas({ busca } = {}) {
     const alvo = busca ?? estado.buscaDasDesativadas;
     const geracao = estado.geracao;
+    const meu = ++pedidoDasDesativadas;
+    const antigo = () =>
+      geracao !== estado.geracao || meu !== pedidoDasDesativadas;
     publicar({
       buscaDasDesativadas: alvo,
       statusDasDesativadas:
@@ -316,12 +326,12 @@ export function criarEstadoDosAcessos({
     });
     try {
       const resposta = await rpc(RPC_CONTAS_DESATIVADAS, { p_busca: alvo });
-      if (geracao !== estado.geracao) return null;
+      if (antigo()) return null;
       const contas = contasDaResposta(resposta);
       publicar({ desativadas: contas, statusDasDesativadas: "ready" });
       return contas;
     } catch (erro) {
-      if (geracao !== estado.geracao) return null;
+      if (antigo()) return null;
       console.error("Erro ao carregar as contas desativadas:", erro);
       publicar({ statusDasDesativadas: "error" });
       return null;
