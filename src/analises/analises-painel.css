@@ -458,8 +458,6 @@ html[data-theme="dark"] .topbar {
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
 }
 
-html[data-theme="dark"] .panel,
-html[data-theme="dark"] .kpi,
 .status-discreto {
   color: var(--muted);
   font-size: 12px;
@@ -467,6 +465,8 @@ html[data-theme="dark"] .kpi,
   white-space: nowrap;
 }
 
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .kpi,
 html[data-theme="dark"] .status-pill,
 html[data-theme="dark"] .table-card,
 html[data-theme="dark"] .table-wrap,
