@@ -28,8 +28,7 @@ export function paletaDosGraficos(escuro, reserva) {
     typeof getComputedStyle === "function"
       ? getComputedStyle(document.documentElement)
       : null;
-  const ler = (nome, padrao) =>
-    estilo?.getPropertyValue(nome).trim() || padrao;
+  const ler = (nome, padrao) => estilo?.getPropertyValue(nome).trim() || padrao;
   const estados = TOKENS_DA_PALETA[escuro ? "escuro" : "claro"];
   return {
     grid: ler("--border-subtle", reserva.grid),
