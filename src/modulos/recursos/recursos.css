@@ -2,8 +2,8 @@
   O que é só da tela de Recursos (src/modulos/recursos/), só com tokens de
   src/styles/tokens.css — o tema escuro vem dos próprios tokens
   (`html[data-theme="dark"]`). Topo, filtros, KPIs, cards de gráfico, fila,
-  gaveta, seções e selos são de src/ui/ (ui.css). Aqui: as marcas das etapas,
-  o tom do prazo, as marcas do recorte, a lista de etapas e o histórico
+  gaveta, seções, selos, recorte, pendências e "Mais opções" são de src/ui/
+  (ui.css). Aqui: as marcas das etapas, o tom do prazo, a lista de etapas e o histórico
   da gaveta, o formulário, a resposta, os anexos e os modelos.
 
   Importado pelo src/main.js, depois do ui.css.
@@ -14,56 +14,6 @@
   .recursos-kpis {
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
-}
-
-/* Filtros: o "Mais opções" e a busca em toda a tela. */
-.ui-grade-de-campos[hidden] {
-  display: none;
-}
-.recursos-contagem-avancada {
-  display: inline-grid;
-  place-items: center;
-  min-width: 18px;
-  height: 18px;
-  margin-left: var(--space-1);
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-pill);
-  background: var(--brand-primary);
-  color: var(--text-inverse);
-  font-size: var(--text-caption);
-}
-
-/* As marcas de prazo dentro do recorte ativo (LinhaDoRecorte, src/ui/). */
-.recursos-recorte-marcas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.recursos-marca {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--state-success-soft);
-  color: var(--state-success);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-}
-.recursos-marca[data-tom="alerta"] {
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
-}
-.recursos-marca:not([data-tom]) + .recursos-marca:not([data-tom]) {
-  background: var(--state-neutral-soft);
-  color: var(--state-neutral);
-}
-
-/* O card das pendências prioritárias (a lista é ListaDePendencias, src/ui/). */
-.recursos-bloco-de-pendencias {
-  display: grid;
-  align-content: start;
-  gap: var(--space-3);
 }
 
 /* Fila: a linha abre a gaveta. */

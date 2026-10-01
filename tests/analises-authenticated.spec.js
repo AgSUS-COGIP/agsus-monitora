@@ -35,17 +35,18 @@ test.describe("Análises autenticadas", () => {
   test("Inativo e Todos carregam direto, como o Ativo, sem pedir recorte", async ({
     page,
   }) => {
-    await page.goto("/analises.html");
+    // Análises é uma tela do app (src/modulos/analises/), aberta pelo menu.
+    await page.goto("/");
+    await expect(page.locator("#appScreen")).toBeVisible({ timeout: 30_000 });
+    await page.locator('#nav [data-view="analises"]').first().click();
+    const tela = page.locator("#page-analises");
 
     for (const escopo of ["inativo", "todos"]) {
-      await page.locator("#fSituacaoEdital").selectOption(escopo);
-      await expect(page.locator("main.content")).toHaveAttribute(
-        "aria-busy",
-        "false",
-        { timeout: 30_000 },
-      );
-      await expect(page.locator("#kpiGrid")).toBeVisible();
-      await expect(page.locator("#tableBody tr").first()).toBeVisible();
+      await tela.locator("#analises-filtro-escopo").selectOption(escopo);
+      await expect(tela.locator(".ui-kpis")).toBeVisible();
+      await expect(tela.locator('[data-acao="detalhes"]').first()).toBeVisible({
+        timeout: 30_000,
+      });
     }
   });
 });

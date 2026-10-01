@@ -1,8 +1,7 @@
 /*
-  Painel de seleção (`selecao.html`): o bootstrap, como o do painel de
-  análises (src/analises/main.js). O desenho é o do painel de análises —
-  selecao.html carrega os mesmos arquivos de src/analises/ e aqui entram,
-  na mesma ordem, os que o main de análises importa. Por cima, o ui.css (os
+  Painel de seleção (`selecao.html`): o bootstrap. O desenho é o do antigo
+  painel de análises — selecao.html carrega o CSS de src/analises/ e aqui
+  entram, na mesma ordem, os outros arquivos dele. Por cima, o ui.css (os
   componentes de src/ui/) e o selecao.css, com o que é só da seleção.
 
   A área vem de `?area=`; a sessão é a do Supabase Auth guardada no

@@ -76,7 +76,7 @@ describe("ligação do aviso global com a interface", () => {
   it("aplica o aviso sempre que a configuração é aplicada", () => {
     const aplica = app.slice(
       app.indexOf("function applyConfigToUi() {"),
-      app.indexOf("function renderConfigForm() {"),
+      app.indexOf("function consultaDeUnidades() {"),
     );
     expect(aplica).toContain("aplicarAvisoGlobal()");
   });

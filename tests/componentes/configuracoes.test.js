@@ -2,6 +2,7 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarConfiguracoes } from "../../src/componentes/configuracoes/configuracoes.jsx";
 import { criarEstadoDasConfiguracoes } from "../../src/componentes/configuracoes/estado.js";
+import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.js";
 import {
   abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
@@ -14,8 +15,8 @@ import { clicar, digitar, esperar, teclar } from "./interacoes.js";
   o histórico com restauração e a seção Marca. Pedidos de 29/09 e 30/09:
   - o cabeçalho é o da seção (nome e descrição), sem "Ajustes do sistema";
   - na seção Acessos, a barra fixa e o Ctrl+S não publicam Configurações;
-  - "não salvo" só vale para campos de configuração ([id^=cfg], painéis) e
-    para os campos das seções em React;
+  - "não salvo" só vale para os campos das seções e os painéis (busca e
+    matriz de acessos, não);
   - falha de rede: mensagem clara e botões de volta (publicar, histórico,
     restaurar);
   - o histórico fica na seção Operação;
@@ -36,11 +37,14 @@ const PUBLICADO = {
   cogip_nome: "COGIP",
   footer_text: "AgSUS",
 };
+// O banco igual à tela: as chaves que faltam vêm com o padrão que a tela mostra.
 const snapshotIgual = () => ({
-  configuracoes: Object.entries(PUBLICADO).map(([chave, valor]) => ({
-    chave,
-    valor,
-  })),
+  configuracoes: [...normalizarValoresCarregados(PUBLICADO)].map(
+    ([chave, valor]) => ({
+      chave,
+      valor,
+    }),
+  ),
   paineis: [],
 });
 
@@ -58,9 +62,7 @@ async function montar({ secao = "marca", confirmar = () => true } = {}) {
           <input id="buscaDeAcessos" type="search" />
         </div>
         <div class="admin-card card config-main-card"><div class="form-grid">
-          <div class="form-row"><label>Título</label><input id="cfgPageTitle" value="Saúde Indígena" /></div>
           <div class="form-row"><label>Outro</label><input id="campoSolto" /></div>
-          <div class="form-row"><label>Filtros</label><input id="cfgFilterTitle" value="" /></div>
         </div></div>
       </div>
     </section>`;
@@ -90,7 +92,8 @@ const sujo = () =>
 const tituloDoDialogo = () => $("configGovernanceTitle")?.textContent;
 const ctrlS = () => teclar(document, "s", { ctrlKey: true });
 
-async function digitarNoLegado(id, valor) {
+/* Digita num campo que não é da tela React (busca de acessos, campo solto). */
+async function digitarForaDoReact(id, valor) {
   await act(async () => {
     const campo = $(id);
     campo.value = valor;
@@ -150,13 +153,13 @@ describe("barra fixa", () => {
 });
 
 describe("controle de 'não salvo'", () => {
-  it("só campos de configuração marcam a página", async () => {
+  it("só os campos das seções marcam a página", async () => {
     await montar();
-    await digitarNoLegado("buscaDeAcessos", "ana");
-    await digitarNoLegado("campoSolto", "x");
+    await digitarForaDoReact("buscaDeAcessos", "ana");
+    await digitarForaDoReact("campoSolto", "x");
     expect(sujo()).toBe(false);
     expect(salvar().disabled).toBe(true);
-    await digitarNoLegado("cfgPageTitle", "Novo título");
+    await digitar($("configInicio-pageTitle"), "Novo título");
     expect(sujo()).toBe(true);
     expect(salvar().disabled).toBe(false);
     expect(
@@ -190,7 +193,7 @@ describe("seção Acessos", () => {
   it("a barra fixa some e o Ctrl+S não publica Configurações", async () => {
     await montar({ secao: "acessos" });
     expect(barra()).toBeNull();
-    await digitarNoLegado("cfgPageTitle", "Mudou em outra seção");
+    await digitar($("configInicio-pageTitle"), "Mudou em outra seção");
     cliente.rpc.mockClear();
     await ctrlS();
     expect(cliente.rpc).not.toHaveBeenCalled();
@@ -200,7 +203,7 @@ describe("seção Acessos", () => {
   it("fora de Acessos, o Ctrl+S abre a revisão", async () => {
     await montar();
     expect(barra()).not.toBeNull();
-    await digitarNoLegado("cfgPageTitle", "Título novo");
+    await digitar($("configInicio-pageTitle"), "Título novo");
     await ctrlS();
     await esperar();
     expect(tituloDoDialogo()).toBe("Revisar publicação");
@@ -277,7 +280,7 @@ describe("revisão da publicação", () => {
 describe("falha de rede", () => {
   it("ao preparar: mensagem clara e o botão volta a 'Salvar alterações'", async () => {
     await montar();
-    await digitarNoLegado("cfgPageTitle", "Título novo");
+    await digitar($("configInicio-pageTitle"), "Título novo");
     cliente.rpc.mockRejectedValue(new TypeError("Failed to fetch"));
     await clicar(salvar());
     await esperar();
@@ -290,7 +293,7 @@ describe("falha de rede", () => {
 
   it("ao publicar: erro no diálogo e 'Tentar novamente' habilitado", async () => {
     await montar();
-    await digitarNoLegado("cfgPageTitle", "Título novo");
+    await digitar($("configInicio-pageTitle"), "Título novo");
     await clicar(salvar());
     await esperar();
     cliente.rpc.mockResolvedValue({

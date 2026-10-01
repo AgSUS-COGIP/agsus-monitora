@@ -4,7 +4,7 @@ O front está migrando para **um único app React** (alvo, regras e ordem em
 `docs/arquitetura-react.md`). Já são React: barra lateral, Núcleo (Editais), Calendário, Lista de
 Aprovados, Acessos, Módulos e abas, Status das atualizações, busca global (Ctrl+K), Configurações
 (moldura, Marca, Painéis externos, Operação) e o painel de Seleção (ainda em página
-própria/iframe; Recursos e Entrevistas já mudaram para `src/modulos/`). Toda tela monta por
+própria/iframe; Recursos, Entrevistas e Análises curriculares já mudaram para `src/modulos/`). Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
 (`.jsx`), sem TypeScript. Nomes em português, arquivo em kebab-case, componente em PascalCase.
@@ -43,13 +43,17 @@ calendario-editais/          a página #page-calendario (só leitura dos cronogr
   calendario-editais.jsx     <CalendarioEditais> e montarCalendarioEditais() → window.calendarioEditaisController
   estado.js                  etapas carregadas (1 + N RPCs, cache de 60 s); sem React
   partes.jsx                 grade do mês, linha de etapa, linha do tempo, popup do dia
-configuracoes/               moldura de Configurações (#configuracoesApp), migrando por seção
+configuracoes/               Configurações (#configuracoesApp): moldura e todas as seções
   configuracoes.jsx          montarConfiguracoes(): cabeçalho da seção aberta, barra fixa de salvar,
                              diálogos de publicar/restaurar e o histórico (portal na seção Operação)
   estado.js                  estadoDasConfiguracoes: valores (o legado publica em loadConfig), rascunho,
-                             publicação com motivo e histórico; sem React. Ainda lê os campos cfg* das
-                             seções legadas (Página inicial, Tela de acesso, Aparência)
+                             publicação com motivo e histórico; sem React e sem ler o DOM
   marca.jsx                  seção Marca (portal no corpo da seção) com a prévia da barra lateral
+  pagina-inicial.jsx         seção Página inicial (título, aviso global, filtros, rótulos dos KPIs) com prévia
+  tela-de-acesso.jsx         seção Tela de acesso (saudação, Google, domínios) com prévia
+  aparencia.jsx              seção Aparência (arte de fundo, logo e cores do acesso e da barra lateral)
+  imagens.js                 envio e galerias da arte de fundo e da logo da barra (Storage); sem React
+  partes.jsx                 grupo de campos, campo, prévia, aviso de contraste e imagem
   paineis-externos.jsx       seção Painéis externos (lista editável; payload igual ao de antes)
   operacao.jsx               seção Operação (versões, Realtime, heartbeat) + histórico
 acessos/                     Configurações › Acessos (#acessosApp, dentro da seção "acessos")

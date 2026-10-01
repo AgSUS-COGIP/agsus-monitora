@@ -1,16 +1,13 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  SECAO_PADRAO,
   SECAO_POR_BLOCO,
-  SECAO_POR_CAMPO,
   SECOES,
   abrirSecaoDeConfiguracao,
   definirSecoesPermitidas,
   organizarConfiguracoesEmSecoes,
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
-  secaoDoCampo,
 } from "../src/modules/config-secoes.js";
 
 const html = readFileSync("index.html", "utf8");
@@ -19,14 +16,11 @@ const modulo = readFileSync("src/modules/config-secoes.js", "utf8");
 
 /*
   A página era um formulário corrido: um card com 47 campos e três subtítulos
-  soltos. Agora tem as mesmas sete seções do SIGAV, com navegador e busca,
-  mais Módulos e abas (só admin global).
-
-  O ponto delicado não é o desenho, é não quebrar o salvamento: os 45 campos têm
-  `id` fixo, de que dependem `saveAdminSettings`, o `FIELD_MAP` da governança,
-  `applyConfigToUi`, o aviso de contraste e a validação. Por isso o módulo
-  **move** os nós existentes em vez de reescrever o HTML — os mesmos elementos,
-  com os mesmos `id` e os mesmos listeners.
+  soltos. Agora tem as mesmas sete seções do SIGAV, mais Módulos e abas e
+  Status das atualizações (só admin global). O conteúdo de cada seção é
+  React (src/componentes/configuracoes/ e as ilhas de Acessos, Módulos e
+  Status); este módulo cria o esqueleto das seções, move os blocos das ilhas
+  e controla a seção aberta.
 */
 describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualizações)", () => {
   it("são exatamente essas, nessa ordem", () => {
@@ -54,23 +48,11 @@ describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualiza�
   });
 });
 
-describe("o mapa de campos", () => {
-  /*
-    Os campos do Monitora não são os do SIGAV — há KPIs, filtros e painéis
-    externos que lá não existem. Este mapa é a única tradução, e um campo sem
-    entrada cai em "Operação" em vez de sumir da tela.
-  */
-  it("aponta todo campo para uma seção que existe", () => {
+describe("o mapa dos blocos", () => {
+  it("aponta todo bloco para uma seção que existe", () => {
     const ids = new Set(SECOES.map((s) => s.id));
-    for (const [campo, secao] of Object.entries(SECAO_POR_CAMPO)) {
-      expect(ids, `${campo} aponta para "${secao}", que não existe`).toContain(
-        secao,
-      );
-    }
-    for (const [bloco, secao] of Object.entries(SECAO_POR_BLOCO)) {
+    for (const [bloco, secao] of Object.entries(SECAO_POR_BLOCO))
       expect(ids, `${bloco} aponta para "${secao}"`).toContain(secao);
-    }
-    expect(ids).toContain(SECAO_PADRAO);
   });
 
   /*
@@ -78,7 +60,6 @@ describe("o mapa de campos", () => {
     o que um merge fez com `saudeDasCargasApp`, em 01/10/2026).
   */
   it("todo bloco das seções existe no index.html", () => {
-    const html = readFileSync("index.html", "utf8");
     for (const bloco of Object.keys(SECAO_POR_BLOCO)) {
       expect(html, `index.html sem o bloco #${bloco}`).toContain(
         `id="${bloco}"`,
@@ -86,128 +67,75 @@ describe("o mapa de campos", () => {
     }
   });
 
-  it("um campo desconhecido cai no padrão, não no vazio", () => {
-    expect(secaoDoCampo("cfgInventadoAgora")).toBe(SECAO_PADRAO);
-  });
-
-  /*
-    Tripwire: se alguém acrescentar um campo ao formulário e esquecer o mapa,
-    ele vai parar em "Operação" sem ninguém notar. Este teste nomeia os que
-    ainda não foram classificados de propósito.
-  */
-  it("todo campo do formulário está classificado explicitamente", () => {
+  it("o formulário legado saiu: nenhum campo cfg* em Configurações", () => {
     const inicio = html.indexOf('id="page-config"');
     const bloco = html.slice(
       inicio,
-      html.indexOf('<section id="page-', inicio + 10),
+      html.indexOf("</section>", html.indexOf('id="saudeDasCargasApp"')),
     );
-    const naoMapeados = [
-      ...bloco.matchAll(
-        /<div class="form-row[^>]*>[\s\S]{0,400}?id="(cfg[A-Za-z0-9]+)"/g,
-      ),
-    ]
-      .map((m) => m[1])
-      .filter((id) => !(id in SECAO_POR_CAMPO));
-    expect(naoMapeados).toEqual([]);
+    expect(bloco).not.toMatch(/id="cfg/);
+    expect(bloco).not.toContain("config-main-card");
   });
 });
 
-describe("organizar move sem destruir", () => {
+describe("organizar cria as seções e move os blocos", () => {
   const montarPagina = () => {
     document.body.innerHTML = `
       <section id="page-config">
         <div class="admin-grid">
-          <div class="admin-card">
-            <div class="form-grid">
-              <div class="form-row"><label>Título</label><input id="cfgPageTitle" value="AgSUS" /></div>
-              <div class="form-row"><label>KPI vagas</label><input id="cfgKpiVagas" value="Vagas" /></div>
-              <div class="form-row"><label>Cor</label><input id="cfgAccessPanelColor" type="color" /></div>
-              <div class="form-row"><label>Sem mapa</label><input id="cfgInventadoAgora" value="x" /></div>
-            </div>
-          </div>
-          <div id="acessosApp" class="full" data-acessos></div>
+          <div id="acessosApp" class="full" data-acessos><input id="buscaDeAcessos" /></div>
+          <div id="modulosApp" class="full" data-modulos></div>
         </div>
       </section>`;
   };
 
   beforeEach(montarPagina);
 
-  it("cria as nove seções e distribui os campos", () => {
+  it("cria as nove seções, com o corpo das seções React vazio", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
     expect(document.querySelectorAll(".config-secao")).toHaveLength(9);
-    expect(
-      document
-        .querySelector('.config-secao[data-secao="inicio"]')
-        .contains(document.getElementById("cfgPageTitle")),
-    ).toBe(true);
-    // Campo sem mapa cai no balde (Operação), em vez de sumir.
-    expect(
-      document
-        .querySelector(`.config-secao[data-secao="${SECAO_PADRAO}"]`)
-        .contains(document.getElementById("cfgInventadoAgora")),
-    ).toBe(true);
-    // Marca e Painéis externos são React (src/componentes/configuracoes/): o corpo chega vazio.
-    for (const secao of ["marca", "recursos"])
+    for (const secao of [
+      "marca",
+      "inicio",
+      "acesso",
+      "aparencia",
+      "recursos",
+      "operacao",
+    ])
       expect(
         document.querySelector(
           `.config-secao[data-secao="${secao}"] .config-secao__corpo`,
         ).children,
+        secao,
       ).toHaveLength(0);
     // O cabeçalho é da moldura React, um só para a página.
     expect(document.querySelector(".config-secao__cabecalho")).toBeNull();
-    expect(
-      document
-        .querySelector('.config-secao[data-secao="inicio"]')
-        .contains(document.getElementById("cfgKpiVagas")),
-    ).toBe(true);
-    expect(
-      document
-        .querySelector('.config-secao[data-secao="aparencia"]')
-        .contains(document.getElementById("cfgAccessPanelColor")),
-    ).toBe(true);
   });
 
-  /*
-    O que faz a reorganização ser segura: mover não recria. Se o elemento fosse
-    reconstruído, o valor digitado e os listeners iriam junto com ele.
-  */
-  it("preserva o mesmo nó, com valor e listener", () => {
-    const antes = document.getElementById("cfgPageTitle");
-    let ouviu = 0;
-    antes.addEventListener("input", () => (ouviu += 1));
-    antes.value = "digitado";
-
-    organizarConfiguracoesEmSecoes(document);
-
-    const depois = document.getElementById("cfgPageTitle");
-    expect(depois).toBe(antes);
-    expect(depois.value).toBe("digitado");
-    depois.dispatchEvent(new Event("input"));
-    expect(ouviu).toBe(1);
-  });
-
-  it("nenhum campo fica fora de uma seção", () => {
-    organizarConfiguracoesEmSecoes(document);
-    const fora = [
-      ...document.querySelectorAll('#page-config [id^="cfg"]'),
-    ].filter((e) => !e.closest(".config-secao"));
-    expect(fora.map((e) => e.id)).toEqual([]);
-  });
-
-  it("blocos inteiros vão para a seção certa", () => {
+  /* Mover não recria: o que a ilha já desenhou (e digitou) continua. */
+  it("blocos inteiros vão para a seção certa, o mesmo nó", () => {
+    const busca = document.getElementById("buscaDeAcessos");
+    busca.value = "ana";
     organizarConfiguracoesEmSecoes(document);
     expect(
       document
         .querySelector('.config-secao[data-secao="acessos"]')
         .contains(document.getElementById("acessosApp")),
     ).toBe(true);
+    expect(
+      document
+        .querySelector('.config-secao[data-secao="modulos"]')
+        .contains(document.getElementById("modulosApp")),
+    ).toBe(true);
+    expect(document.getElementById("buscaDeAcessos")).toBe(busca);
+    expect(busca.value).toBe("ana");
   });
 
   /*
     A grade antiga só some se de facto esvaziou. Escondê-la às cegas apagaria
-    da tela qualquer campo que o mapa tivesse deixado para trás.
+    da tela o que tivesse ficado para trás.
   */
-  it("a grade antiga só é escondida quando não resta campo nela", () => {
+  it("a grade antiga só é escondida quando não resta conteúdo nela", () => {
     organizarConfiguracoesEmSecoes(document);
     expect(document.querySelector("#page-config .admin-grid").hidden).toBe(
       true,
@@ -215,7 +143,7 @@ describe("organizar move sem destruir", () => {
 
     montarPagina();
     const sobra = document.createElement("input");
-    sobra.id = "sobraNaoMapeada";
+    sobra.id = "sobraSemSecao";
     document.querySelector("#page-config .admin-grid").appendChild(sobra);
     organizarConfiguracoesEmSecoes(document);
     expect(document.querySelector("#page-config .admin-grid").hidden).toBe(
@@ -240,7 +168,7 @@ describe("as seções como páginas de Administração", () => {
   beforeEach(() => {
     document.body.className = "";
     document.body.innerHTML =
-      '<section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgPageTitle" value="AgSUS"></div></div></section>';
+      '<section id="page-config" class="page"><div class="admin-grid"><div id="acessosApp"><input id="buscaDeAcessos" value="AgSUS"></div></div></section>';
     organizarConfiguracoesEmSecoes(document);
   });
   afterEach(() => {
@@ -263,7 +191,7 @@ describe("as seções como páginas de Administração", () => {
   });
 
   it("troca a seção sem recriar campos nem perder valores pendentes", () => {
-    const campo = document.getElementById("cfgPageTitle");
+    const campo = document.getElementById("buscaDeAcessos");
     campo.value = "Rascunho";
 
     expect(abrirSecaoDeConfiguracao(document, "acessos")).toBe(true);
@@ -276,7 +204,7 @@ describe("as seções como páginas de Administração", () => {
     ).toBe(true);
 
     abrirSecaoDeConfiguracao(document, "marca");
-    expect(document.getElementById("cfgPageTitle")).toBe(campo);
+    expect(document.getElementById("buscaDeAcessos")).toBe(campo);
     expect(campo.value).toBe("Rascunho");
   });
 
@@ -342,14 +270,12 @@ describe("as seções como páginas de Administração", () => {
 });
 
 describe("integração no arranque", () => {
-  /*
-    A barra lateral injeta os próprios campos em Configurações. Organizar antes
-    disso deixaria esses campos na grade antiga — foi o que aconteceu na
-    primeira tentativa, com nove campos órfãos.
-  */
-  it("organiza depois de a barra lateral injetar os campos dela", () => {
+  it("organiza as seções antes de montar a moldura React (os portais)", () => {
     expect(main.indexOf("organizarConfiguracoesEmSecoes()")).toBeGreaterThan(
-      main.indexOf("initSidebarBranding()"),
+      -1,
+    );
+    expect(main.indexOf("organizarConfiguracoesEmSecoes()")).toBeLessThan(
+      main.indexOf("montarConfiguracoes()"),
     );
   });
 
@@ -371,18 +297,11 @@ describe("um navegador só", () => {
 });
 
 /*
-  Painéis externos e Operação são React (src/componentes/configuracoes/):
-  nenhum campo nem bloco do index.html vai para elas pelo mapa, e o legado
-  não tem mais a marcação delas.
+  As seções que publicam pela barra fixa são React: o legado não tem mais a
+  marcação delas nem os módulos que as montavam.
 */
-describe("Painéis externos e Operação saíram do legado", () => {
-  it("o mapa não manda nada para elas e o index.html não tem a marcação antiga", () => {
-    const destinos = [
-      ...Object.values(SECAO_POR_CAMPO),
-      ...Object.values(SECAO_POR_BLOCO),
-    ];
-    expect(destinos).not.toContain("recursos");
-    expect(destinos).not.toContain("operacao");
+describe("as seções do formulário saíram do legado", () => {
+  it("o index.html não tem a marcação antiga e os módulos antigos não são instalados", () => {
     for (const id of [
       "panelAdmin",
       "cfgRealtimeEnabled",
@@ -392,8 +311,14 @@ describe("Painéis externos e Operação saíram do legado", () => {
       "cfgMonitId",
       "cfgCnesJson",
       "cnesImportResumo",
+      "cfgPageTitle",
+      "cfgAccessGreeting",
+      "cfgAccessPanelColor",
     ])
       expect(html, id).not.toContain(`id="${id}"`);
     expect(modulo).not.toContain("esconderAgrupadoresVazios");
+    expect(modulo).not.toContain("SECAO_POR_CAMPO");
+    expect(main).not.toContain("config-apresentacao.js");
+    expect(main).not.toContain("aviso-de-contraste");
   });
 });

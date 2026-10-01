@@ -11,8 +11,13 @@ export { Carregando, EstadoVazio } from "./estados.jsx";
 export { Gaveta, TopoDaGaveta, usarClassesDaGaveta } from "./gaveta.jsx";
 export { Grafico, paletaDosGraficos } from "./grafico.jsx";
 export { GradeDeKpis, Kpi } from "./kpi.jsx";
-export { LinhaDoRecorte, textoDoRecorte } from "./linha-do-recorte.jsx";
+export {
+  LinhaDoRecorte,
+  MarcasDoRecorte,
+  textoDoRecorte,
+} from "./linha-do-recorte.jsx";
 export { ListaDePendencias } from "./lista-de-pendencias.jsx";
+export { MaisOpcoes } from "./mais-opcoes.jsx";
 export { Modal } from "./modal.jsx";
 export { PainelNoQuadro, usarNoQuadro } from "./no-quadro.jsx";
 export {

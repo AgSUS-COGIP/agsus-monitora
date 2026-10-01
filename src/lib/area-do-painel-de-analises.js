@@ -1,10 +1,11 @@
 /*
-  A área do painel de análises (`analises.html`).
+  A área de Análises curriculares (e dos painéis do quadro, Entrevistas e
+  Seleção, que leem a área da URL).
 
-  Saúde Indígena, SEDE e Projetos usam o MESMO painel; o que muda é a área
-  pedida na URL (`?area=projetos`). O MONITORA abre o painel com a área atual
-  do menu; aberto sem `?area=`, ou com um código desconhecido, ele continua
-  sendo o da Saúde Indígena — exatamente como era antes de haver áreas.
+  Saúde Indígena, SEDE e Projetos usam a MESMA tela; o que muda é a área.
+  Análises usa a área atual do app; os painéis do quadro, a da URL
+  (`?area=projetos`) — sem `?area=`, ou com um código desconhecido, a da Saúde
+  Indígena.
 
   Aqui só há regra pura: ler a área da URL, os rótulos, as chaves de cache
   (áreas nunca se misturam no cache) e o que o detalhe e o CSV mostram de
@@ -49,42 +50,12 @@ export function rotuloDaAreaDoPainel(area) {
   return nomeDaArea(normalizarAreaDoPainel(area));
 }
 
-export const TITULO_DO_PAINEL_DE_ANALISES = "Painel de análises curriculares";
-
-export function tituloDoPainelDeAnalises() {
-  return TITULO_DO_PAINEL_DE_ANALISES;
-}
-
-export function subtituloDoPainelDeAnalises(area) {
-  return `${rotuloDaAreaDoPainel(area)} · Acompanhamento das análises dos processos seletivos`;
-}
-
-// Aba do navegador: o MONITORA fica para quem abrir o painel em outra aba.
-export function tituloDaAbaDoPainelDeAnalises(area) {
-  return `${TITULO_DO_PAINEL_DE_ANALISES} · ${rotuloDaAreaDoPainel(area)} — MONITORA`;
-}
-
 /* Chave do cache em memória do transporte consolidado. */
 export function chaveDoCacheDoPayload(area, escopo) {
   return `${normalizarAreaDoPainel(area)}:${texto(escopo).toLowerCase()}`;
 }
 
-/*
-  O grupo das linhas da área na view de análises (`grupo`, que vem de
-  TB_AREA."NO_GRUPO_PLANILHA"). Só o fallback do transporte usa: a RPC já
-  recorta pela área.
-*/
-const GRUPO_DA_PLANILHA = Object.freeze({
-  "saude-indigena": "Saúde Indígena",
-  sede: "SEDE",
-  projetos: "Projetos",
-});
-
-export function grupoDaPlanilhaDaArea(area) {
-  return GRUPO_DA_PLANILHA[normalizarAreaDoPainel(area)];
-}
-
-/* Parâmetros de área para as RPCs do painel. */
+/* Parâmetros de área para as RPCs de Análises curriculares. */
 export function parametroDeAreaDaRpc(area) {
   return { p_area: normalizarAreaDoPainel(area) };
 }

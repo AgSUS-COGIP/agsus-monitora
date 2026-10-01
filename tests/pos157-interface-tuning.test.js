@@ -5,6 +5,20 @@ const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const main = readFileSync("src/main.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
+// A escolha da logo e da cor é de Configurações › Aparência (React).
+const marcaDaBarra = readFileSync("src/lib/marca-da-barra-lateral.js", "utf8");
+const imagens = readFileSync(
+  "src/componentes/configuracoes/imagens.js",
+  "utf8",
+);
+const aparencia = readFileSync(
+  "src/componentes/configuracoes/aparencia.jsx",
+  "utf8",
+);
+const publicacao = readFileSync(
+  "src/lib/publicacao-de-configuracoes.js",
+  "utf8",
+);
 const governance = readFileSync(
   "src/componentes/configuracoes/estado.js",
   "utf8",
@@ -80,8 +94,10 @@ describe("overview inicial dos mapas", () => {
 
 describe("branding independente da sidebar", () => {
   it("usa chaves próprias", () => {
-    expect(sidebar).toContain('"ui_sidebar_logo_url"');
-    expect(sidebar).toContain('"ui_sidebar_background_color"');
+    expect(marcaDaBarra).toContain('"ui_sidebar_logo_url"');
+    expect(marcaDaBarra).toContain('"ui_sidebar_background_color"');
+    expect(sidebar).toContain("CHAVE_DO_LOGO_DA_BARRA");
+    expect(sidebar).toContain("CHAVE_DA_COR_DA_BARRA");
   });
 
   it("deriva contraste da cor escolhida", () => {
@@ -90,25 +106,25 @@ describe("branding independente da sidebar", () => {
   });
 
   it("oferece upload de logo como o gestor de fundo do login", () => {
-    expect(sidebar).toContain('type="file"');
-    expect(sidebar).toContain("Escolher imagem");
-    expect(sidebar).toContain("validateAccessBackgroundFile");
-    expect(sidebar).toContain("client.storage");
-    expect(sidebar).toContain("SIDEBAR_LOGO_FOLDER");
-    expect(sidebar).toContain("loadSidebarLogoGallery");
+    expect(aparencia).toContain('type="file"');
+    expect(aparencia).toContain("Escolher imagem");
+    expect(imagens).toContain("validateAccessBackgroundFile");
+    expect(imagens).toContain(".storage?.from(ACCESS_BACKGROUND_BUCKET)");
+    expect(imagens).toContain("PASTA_DOS_LOGOS_DA_BARRA");
+    expect(imagens).toContain("carregarLogos");
   });
 
   it("mantém upload da logo dentro da pasta branding já autorizada", () => {
-    expect(sidebar).toContain(
-      "const SIDEBAR_LOGO_FOLDER = `${ACCESS_BACKGROUND_FOLDER}/sidebar`",
+    expect(marcaDaBarra).toContain(
+      "export const PASTA_DOS_LOGOS_DA_BARRA = `${ACCESS_BACKGROUND_FOLDER}/sidebar`",
     );
-    expect(sidebar).toContain("ACCESS_BACKGROUND_BUCKET");
+    expect(imagens).toContain("ACCESS_BACKGROUND_BUCKET");
   });
 
   it("permite restaurar padrão e apagar logos não selecionadas", () => {
-    expect(sidebar).toContain("cfgSidebarLogoRestore");
-    expect(sidebar).toContain("deleteStoredSidebarLogo");
-    expect(sidebar).toContain("Restaurar padrão");
+    expect(imagens).toContain("restaurarLogo");
+    expect(imagens).toContain("apagarLogo");
+    expect(aparencia).toContain("Restaurar padrão");
   });
 
   it("não embrulha window.saveAdminSettings", () => {
@@ -131,8 +147,11 @@ describe("branding independente da sidebar", () => {
   });
 
   it("as chaves entram no mesmo p_config_rows da publicação", () => {
-    expect(sidebar).toContain("export function linhasDeConfiguracaoDaSidebar");
-    expect(governance).toContain("...linhasDeConfiguracaoDaSidebar()");
+    expect(publicacao).toContain('"ui_sidebar_logo_url"');
+    expect(publicacao).toContain('"ui_sidebar_background_color"');
+    expect(governance).toContain(
+      "const linhasDaPublicacao = () => linhasDasSecoes(valoresAtuais());",
+    );
   });
 
   it("não desreferencia o cliente quando não há ambiente", () => {

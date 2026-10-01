@@ -1,12 +1,12 @@
 /*
-  Marcos do painel de análises: edital 100% analisado e fila zerada.
-
-  Chamado pelo analises-app.js sempre que as linhas do escopo "Ativo" chegam
-  (do servidor ou da cópia do navegador). Só o escopo "Ativo" conta: Inativo
-  e Todos misturam editais encerrados. A regra (linha de base, transições,
-  frases) é de src/lib/comemoracao.js; o confete e o aviso, de
-  src/modules/comemoracao.js. Com as comemorações desligadas, o estado segue
-  guardado em silêncio.
+  Marcos da tela de Análises curriculares: edital 100% analisado e fila
+  zerada. Chamado pelo estado (estado.js) sempre que as linhas do escopo
+  "Ativo" chegam (do servidor ou da cópia do navegador) — Inativo e Todos
+  misturam editais encerrados. A regra (linha de base, transições, frases) é
+  de src/lib/comemoracao.js; o aviso e o confete, de src/modules/comemoracao.js.
+  `ligadas` é o liga/desliga das comemorações que o app já leu (situação do
+  sistema); desligadas, o estado segue guardado em silêncio. Este arquivo não
+  importa React.
 */
 import {
   chaveDoMarco,
@@ -14,14 +14,11 @@ import {
   estadoGuardadoDosEditais,
   pendentesDaFila,
   situacaoDosEditais,
-} from "../lib/comemoracao.js";
-import {
-  avaliarMarco,
-  comemoracoesLigadasNoPainel,
-} from "../modules/comemoracao.js";
+} from "../../lib/comemoracao.js";
+import { avaliarMarco } from "../../modules/comemoracao.js";
 
-export async function avaliarMarcosDasAnalises({
-  supabase,
+export function avaliarMarcosDasAnalises({
+  ligadas,
   usuarioId,
   area,
   nomeDaArea,
@@ -32,13 +29,12 @@ export async function avaliarMarcosDasAnalises({
     if (escopo !== "ativo" || !usuarioId || !area) return null;
     const lista = Array.isArray(linhas) ? linhas : [];
     if (!lista.length) return null;
-    const ligadas = await comemoracoesLigadasNoPainel(supabase);
     const situacao = situacaoDosEditais(lista);
     const pendentes = pendentesDaFila(lista);
     return avaliarMarco({
       chave: chaveDoMarco("analises", usuarioId, area),
       atual: { editais: estadoGuardadoDosEditais(situacao), fila: pendentes },
-      ligadas,
+      ligadas: Boolean(ligadas),
       decidir: (anterior) =>
         comemoracaoDasAnalises({
           anteriorEditais: anterior?.editais,
@@ -49,8 +45,8 @@ export async function avaliarMarcosDasAnalises({
         }),
     });
   } catch (erro) {
-    // Comemoração nunca atrapalha o painel.
-    console.warn("Marcos do painel de análises indisponíveis:", erro);
+    // Comemoração nunca atrapalha a tela.
+    console.warn("Marcos de Análises curriculares indisponíveis:", erro);
     return null;
   }
 }

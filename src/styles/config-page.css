@@ -18,109 +18,6 @@
   padding-bottom: 92px;
 }
 
-#page-config .access-background-manager {
-  display: grid;
-  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface, #fff);
-}
-
-#page-config .access-background-preview {
-  aspect-ratio: 16 / 9;
-  min-height: 112px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background-color: var(--surface-page);
-  background-position: center;
-  background-size: cover;
-  box-shadow: 0 8px 22px rgba(15, 35, 60, 0.1);
-}
-
-#page-config .access-background-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-#page-config .access-background-actions small {
-  width: 100%;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-#page-config .access-background-upload {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-#page-config .access-background-upload input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-#page-config .access-background-gallery {
-  margin-top: 14px;
-}
-
-#page-config .access-background-gallery-title {
-  margin: 0 0 9px;
-  color: var(--strong);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-#page-config .access-background-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  gap: 10px;
-}
-
-#page-config .access-background-gallery-item {
-  overflow: hidden;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface, #fff);
-  color: var(--agsus-azul);
-  cursor: pointer;
-}
-
-#page-config .access-background-gallery-item span {
-  display: block;
-  aspect-ratio: 16 / 9;
-  background-position: center;
-  background-size: cover;
-}
-
-#page-config .access-background-gallery-item small {
-  display: block;
-  padding: 7px 8px;
-  font-weight: 850;
-}
-
-#page-config .access-background-gallery-item.is-active {
-  border-color: var(--agsus-verde);
-  box-shadow: 0 0 0 2px rgba(11, 143, 88, 0.14);
-  cursor: default;
-}
-
-@media (max-width: 680px) {
-  #page-config .access-background-manager {
-    grid-template-columns: 1fr;
-  }
-}
-
 #page-config .config-validation-summary {
   margin-top: 12px;
   padding: 12px 14px;
@@ -184,17 +81,6 @@
   font-size: var(--text-body-sm);
   font-weight: 400;
   line-height: 1.5;
-}
-
-#page-config .config-section-title {
-  margin: 9px 0 2px;
-  padding: 9px 0 7px;
-  border-bottom: 1px solid #e9eef5;
-  color: #52667f;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
 }
 
 /*
@@ -450,29 +336,3 @@ html[data-theme="dark"] #page-config .form-row textarea {
 }
 
 /* Galeria de artes: cada cartão traz Usar e, quando não está em uso, Apagar. */
-.access-background-gallery-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.access-background-gallery-delete {
-  border: 1px solid var(--config-danger, #be123c);
-  background: transparent;
-  color: var(--config-danger, #be123c);
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.access-background-gallery-delete:hover {
-  background: var(--config-danger-soft, #fff1f2);
-}
-
-.access-background-gallery-hint {
-  color: var(--config-muted, var(--color-text-secondary));
-  font-size: 11px;
-  line-height: 1.3;
-}

@@ -1,13 +1,12 @@
 /*
   Páginas do MONITORA que são um painel do próprio app num quadro.
 
-  Análises curriculares (`analises.html`) e Seleção (`selecao.html`) são apps
-  separados, com cabeçalho, filtros, KPIs e gráficos próprios, abertos dentro
-  da página da view pelo mesmo módulo (`src/modules/pagina-do-painel.js`):
-  endereço fixo do app e a área atual do menu na URL (`?area=`). A tabela
-  abaixo é tudo o que muda de um para outro. Recursos dos candidatos e
-  Entrevistas saíram do quadro: são os módulos src/modulos/recursos/ e
-  src/modulos/entrevistas/.
+  Seleção (`selecao.html`) é um app separado, com cabeçalho, filtros, KPIs e
+  gráficos próprios, aberto dentro da página da view pelo módulo
+  `src/modules/pagina-do-painel.js`: endereço fixo do app e a área atual do
+  menu na URL (`?area=`). A tabela abaixo é o que o quadro precisa saber.
+  Recursos dos candidatos, Entrevistas e Análises curriculares saíram do
+  quadro: são módulos de src/modulos/.
 
   Análises curriculares, antes, era a linha `analises` de `TB_PAINEL_EXTERNO`:
   aberta como painel externo, repetida em cada área pelo menu, e só para quem
@@ -27,17 +26,12 @@
 import { enderecoDoPainelNaArea } from "./endereco-do-painel.js";
 
 export const PAGINAS_DO_PAINEL = Object.freeze({
-  analises: Object.freeze({
-    endereco: "/analises.html",
-    titulo: "Análises curriculares",
-  }),
   selecao: Object.freeze({
     endereco: "/selecao.html",
     titulo: "Seleção",
   }),
 });
 
-export const ENDERECO_DAS_ANALISES = PAGINAS_DO_PAINEL.analises.endereco;
 export const CODIGO_DO_PAINEL_ANTIGO_DE_ANALISES = "analises";
 
 /* O endereço do quadro da view: sempre no domínio atual, com a área (`?area=`). */
@@ -45,10 +39,6 @@ export function enderecoDaPaginaDoPainel(view, origemAtual, area) {
   const pagina = PAGINAS_DO_PAINEL[view];
   if (!pagina) return "";
   return enderecoDoPainelNaArea(pagina.endereco, origemAtual, area);
-}
-
-export function enderecoDasAnalises(origemAtual, area) {
-  return enderecoDaPaginaDoPainel("analises", origemAtual, area);
 }
 
 export function semOPainelAntigoDeAnalises(paineis) {

@@ -1,12 +1,11 @@
 /*
-  As páginas que são um painel do app num quadro: Análises curriculares
-  (`#page-analises`, view `analises`) e Seleção (`#page-selecao`, view
+  A página que é um painel do app num quadro: Seleção (`#page-selecao`, view
   `selecao`).
 
-  A seção diz qual painel é (`data-painel="analises" | "selecao"`); o
+  A seção diz qual painel é (`data-painel="selecao"`); o
   endereço e o título do quadro vêm de `PAGINAS_DO_PAINEL`
   (src/lib/pagina-do-painel.js), com a área atual do menu na URL (`?area=`).
-  O comportamento é o que Análises herdou do antigo painel externo
+  O comportamento é o que os painéis herdaram do antigo painel externo
   (`openPanel` do legado):
 
   - o quadro nasce na primeira abertura, e não na entrada;
