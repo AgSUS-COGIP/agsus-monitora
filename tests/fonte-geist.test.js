@@ -22,7 +22,6 @@ describe("fonte Geist no sistema todo", () => {
       "entrevistas.html",
       "recursos.html",
       "selecao.html",
-      "src/analises/index.html",
     ]) {
       const html = ler(pagina);
       expect(html, pagina).toContain("family=Geist:wght@400..900&display=swap");

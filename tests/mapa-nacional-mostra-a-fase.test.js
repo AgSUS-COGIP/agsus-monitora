@@ -149,10 +149,11 @@ describe("o catálogo largo", () => {
   catálogo não carrega. O que mudou é deixar de ser o normal.
 */
 describe("o raster passa a ser só o recurso", () => {
+  // CRLF vira LF: no Windows o checkout pode trazer \r\n.
   const camada = readFileSync(
     "src/modules/indigenous-territories-layer.js",
     "utf8",
-  );
+  ).replace(/\r\n/g, "\n");
 
   it("não há mais piso de zoom para o vetorial", () => {
     expect(camada).not.toContain("VECTOR_MIN_ZOOM");

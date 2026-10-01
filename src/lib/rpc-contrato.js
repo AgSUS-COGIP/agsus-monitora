@@ -201,17 +201,6 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Recusa solicitação registando quem avaliou e quando.",
   },
-  atualizar_acesso_usuario: {
-    argumentos: [
-      "p_perfil_usuario_id",
-      "p_perfil",
-      "p_permissoes",
-      "p_paineis",
-      "p_motivo",
-    ],
-    critica: true,
-    resumo: "Altera perfil, permissões e painéis de um usuário.",
-  },
   desativar_acesso_usuario: {
     argumentos: ["p_perfil_usuario_id", "p_motivo"],
     critica: true,
@@ -235,11 +224,6 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Reativa uma conta desativada com grupo, coordenação e áreas (regras da matriz), com motivo. Só admin global.",
-  },
-  get_acessos_config_master: {
-    argumentos: ["p_days", "p_online_minutes", "p_recent_limit"],
-    critica: false,
-    resumo: "Painel de acessos da tela de Configurações.",
   },
 
   // ── Configurações ───────────────────────────────────────────────────────

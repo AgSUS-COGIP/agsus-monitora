@@ -1388,26 +1388,12 @@
                  cabeçalho da seção, barra de salvar, diálogos e a seção Marca. -->
             <div id="configuracoesApp" data-configuracoes></div>
             <div class="admin-grid">
-              <div
-                id="accessRequestsAdminCard"
-                class="admin-card card full hidden"
-              >
-                <h3>Solicitações de acesso</h3>
-                <div id="accessRequestsAdmin" class="access-admin-list"></div>
-              </div>
-
               <!-- Configurações › Acessos em React (src/componentes/acessos/). Sem card:
                    a seção de Configurações já é a superfície. -->
               <div id="acessosApp" class="full" data-acessos></div>
 
               <!-- Configurações › Módulos e abas em React (src/componentes/modulos/), só admin global. -->
               <div id="modulosApp" class="full" data-modulos></div>
-
-              <!--
-                O card "Acessos e usuários online" saiu a pedido: a seção de Acessos
-                fica para a matriz de permissões. Sem o card, access-dashboard.js não
-                consulta o banco nem liga o temporizador.
-              -->
 
               <div class="admin-card card config-main-card">
                 <div class="config-card-title">

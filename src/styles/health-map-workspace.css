@@ -116,7 +116,6 @@
   font-weight: 500;
 }
 
-.health-map-pane__acoes,
 .health-map-detail-actions {
   display: flex;
   align-items: center;
@@ -934,54 +933,4 @@ html[data-theme="dark"] .health-map-external-toggle {
 
 html[data-theme="dark"] .health-map-unit__externo {
   color: #e9a45c;
-}
-
-/*
-  Marcador de grupo. Aparece quando várias unidades caem na mesma célula de
-  60 px do ecrã — o que tira 1462 marcadores do DOM e deixa cerca de 79.
-
-  Não é o mesmo que o ponto coletor da auditoria: aquele são estabelecimentos
-  distintos na MESMA coordenada; este é agrupamento de desenho, que se desfaz
-  ao aproximar. Por isso o número, e não uma forma de tipo: um grupo não tem
-  tipo único.
-*/
-.mapa-cluster {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border: 2px solid #fff;
-  border-radius: 999px;
-  background: #1d4e89;
-  box-shadow: 0 1px 4px rgba(15, 35, 60, 0.4);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-}
-
-.mapa-cluster:focus-visible {
-  outline: 3px solid currentColor !important;
-  outline-offset: -3px !important;
-}
-
-[data-theme="dark"] .mapa-cluster {
-  border-color: #17253d;
-  background: #2f6fb5;
-}
-
-/* Selo de sede partilhada: mais discreto que o agrupador de unidades. */
-.mapa-cluster--sede {
-  width: 22px;
-  height: 22px;
-  background: #0f5ea8;
-  font-size: 10px;
-}
-
-/* O agrupador que abre em leque avisa que é outra coisa: anel duplo. */
-.mapa-cluster--leque {
-  box-shadow:
-    0 0 0 3px rgba(29, 78, 137, 0.28),
-    0 1px 4px rgba(15, 35, 60, 0.4);
 }

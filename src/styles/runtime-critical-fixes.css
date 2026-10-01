@@ -21,16 +21,8 @@ html[data-theme="dark"] .app {
   color: #dbe7f3;
 }
 
-html[data-theme="dark"] .app .access-monitor-summary > div,
-html[data-theme="dark"] .app .access-monitor-panel,
-html[data-theme="dark"] .app .access-monitor-title,
-html[data-theme="dark"] .app .access-monitor-user-card,
-html[data-theme="dark"] .app .access-monitor-empty,
-html[data-theme="dark"] .app .access-monitor-kpi,
 html[data-theme="dark"] .app .access-request-card,
 html[data-theme="dark"] .app .access-authenticated-user,
-html[data-theme="dark"] .app .panel-check,
-html[data-theme="dark"] .app .permission-check,
 html[data-theme="dark"] .app .cnes-status-grid > div,
 html[data-theme="dark"] .app .access-status,
 html[data-theme="dark"] .app .metric-readonly {
@@ -39,44 +31,24 @@ html[data-theme="dark"] .app .metric-readonly {
   color: #dbe7f3 !important;
 }
 
-html[data-theme="dark"] .app .access-monitor-panel-online .access-monitor-title,
 html[data-theme="dark"] .app .multi-select-actions {
   background: #16283f !important;
 }
 
-html[data-theme="dark"] .app .access-monitor-user-head strong,
-html[data-theme="dark"] .app .access-monitor-user-meta strong,
-html[data-theme="dark"] .app .access-monitor-summary strong,
-html[data-theme="dark"] .app .access-monitor-kpi b,
-html[data-theme="dark"] .app .access-monitor-title h4,
-html[data-theme="dark"] .app .access-monitor-table td,
-html[data-theme="dark"] .app .access-monitor-empty-strong strong,
 html[data-theme="dark"] .app .config-card-title h3,
 html[data-theme="dark"] .app .access-authenticated-user strong,
-html[data-theme="dark"] .app .access-admin-head strong,
 html[data-theme="dark"] .app .metric-readonly b,
 html[data-theme="dark"] .app .cnes-status-grid strong {
   color: #e8f1fb !important;
 }
 
-html[data-theme="dark"] .app .access-monitor-summary span,
-html[data-theme="dark"] .app .access-monitor-user-meta,
-html[data-theme="dark"] .app .access-monitor-email,
-html[data-theme="dark"] .app .access-monitor-title span,
-html[data-theme="dark"] .app .access-monitor-kpi span,
-html[data-theme="dark"] .app .access-monitor-empty,
-html[data-theme="dark"] .app .access-monitor-empty-strong span,
 html[data-theme="dark"] .app .config-help,
 html[data-theme="dark"] .app .config-card-title p,
-html[data-theme="dark"] .app .access-admin-head span,
 html[data-theme="dark"] .app .metric-readonly span,
 html[data-theme="dark"] .app .cnes-status-grid span {
   color: #9db0c6 !important;
 }
 
-html[data-theme="dark"] .app .access-monitor-screen,
-html[data-theme="dark"] .app .access-monitor-screen-chip,
-html[data-theme="dark"] .app .access-status-pill,
 html[data-theme="dark"] .app .multi-unit-chip {
   background: #162f4b !important;
   border-color: #31547a !important;

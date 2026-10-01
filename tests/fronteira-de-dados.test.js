@@ -7,13 +7,13 @@ import {
 } from "../src/lib/rpc-contrato.js";
 
 const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const acessos = readFileSync("src/componentes/acessos/estado.js", "utf8");
 
 describe("contrato de RPC", () => {
   it("declara as funções de administração de acesso como críticas", () => {
     for (const nome of [
       "aprovar_solicitacao_acesso",
       "recusar_solicitacao_acesso",
-      "atualizar_acesso_usuario",
       "desativar_acesso_usuario",
     ]) {
       expect(RPCS_CRITICAS, `${nome} deveria ser crítica`).toContain(nome);
@@ -47,15 +47,20 @@ describe("fronteira de dados na administração de acesso", () => {
     Esta é a regressão que motivou a mudança: aprovar, atualizar e desativar já
     passavam por RPC, mas recusar gravava direto na tabela — escolhendo no
     navegador `status`, `avaliado_por` e `avaliado_em`. A autorização da mesma
-    decisão ficava em dois lugares.
+    decisão ficava em dois lugares. Hoje a decisão é do Acessos em React
+    (src/componentes/acessos/estado.js).
   */
   it("recusar solicitação passa por RPC, não por escrita direta", () => {
-    const fn = app.slice(
-      app.indexOf("async function denyAccessRequest(id) {"),
-      app.indexOf("async function denyAccessRequest(id) {") + 900,
+    const inicio = acessos.indexOf("function recusar(");
+    expect(inicio).toBeGreaterThan(-1);
+    const fn = acessos.slice(inicio, inicio + 900);
+    expect(fn).toContain("rpc(RPC_RECUSAR");
+    expect(acessos).toContain(
+      'const RPC_RECUSAR = "recusar_solicitacao_acesso"',
     );
-    expect(fn).toContain("RPC_DENY_ACCESS_REQUEST");
-    expect(fn).not.toMatch(/\.from\("TB_SOLICITACAO_ACESSO"\)/);
+    expect(acessos).not.toMatch(
+      /\.from\(\s*["']TB_SOLICITACAO_ACESSO["']\s*\)/,
+    );
   });
 
   it("nenhuma decisão de acesso é gravada direto na tabela", () => {
@@ -64,10 +69,13 @@ describe("fronteira de dados na administração de acesso", () => {
       /status:\s*"aprovado"/,
       /avaliado_por:/,
     ];
-    for (const padrao of decisoes) {
-      expect(app, `campo de decisão escrito no cliente: ${padrao}`).not.toMatch(
-        padrao,
-      );
+    for (const fonte of [app, acessos]) {
+      for (const padrao of decisoes) {
+        expect(
+          fonte,
+          `campo de decisão escrito no cliente: ${padrao}`,
+        ).not.toMatch(padrao);
+      }
     }
   });
 });

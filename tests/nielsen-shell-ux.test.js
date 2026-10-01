@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { criarEstadoDasConfiguracoes } from "../src/componentes/configuracoes/estado.js";
 import {
   deveAlternarTema,
+  hasUnsavedConfiguration,
   OPCOES_DE_TEMA,
   presenceStateFromUi,
   themeControlState,
@@ -62,5 +64,21 @@ describe("Nielsen shell UX", () => {
       compactLabel: "Offline",
       detail: "Sem conexão com a internet.",
     });
+  });
+
+  /*
+    O aviso de "alterações não salvas" do Sair procurava um indicador que não
+    existe mais (#configWorkspaceDirtyTop) e nunca aparecia. Agora pergunta ao
+    estado das Configurações, o mesmo que o navigate consulta.
+  */
+  it("o aviso do Sair segue as alterações não salvas das Configurações", () => {
+    const estado = criarEstadoDasConfiguracoes({ supabase: () => null });
+    estado.definirValoresCarregados({ page_title: "Saúde Indígena" });
+    expect(hasUnsavedConfiguration(estado)).toBe(false);
+    estado.mudarCampo("page_title", "Outro título");
+    expect(hasUnsavedConfiguration(estado)).toBe(true);
+    estado.mudarCampo("page_title", "Saúde Indígena");
+    expect(hasUnsavedConfiguration(estado)).toBe(false);
+    expect(hasUnsavedConfiguration(null)).toBe(false);
   });
 });
