@@ -53,12 +53,15 @@ import {
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
 import { obterDadosDoMonitoramento } from "../dados-do-monitoramento.js";
 import {
+  canAlterarPorDecisaoJudicial,
   canImportApprovedList,
   canManageSubJudice,
   canReplaceApprovedList,
   canViewCore,
 } from "../../lib/access-roles.js";
 import {
+  canAlterarCandidatoSubJudice,
+  canDesfazerAlteracaoSubJudice,
   canEditCandidateAttachments,
   canEditCandidateStatus,
   canEditSubJudice,
@@ -91,6 +94,14 @@ const TIPO_DO_XLSX =
 const text = (value) => String(value ?? "").trim();
 const mensagemDe = (erro) => erro?.message || erro;
 
+/* Nota digitada ("87,5" ou "87.5"): número maior ou igual a zero, ou nulo. */
+function lerNota(valor) {
+  const bruto = text(valor).replace(",", ".");
+  if (!bruto) return null;
+  const nota = Number(bruto);
+  return Number.isFinite(nota) && nota >= 0 ? nota : null;
+}
+
 const ESTADO_INICIAL = Object.freeze({
   candidatos: Object.freeze([]),
   /** candidato_id → anexos (PDF) dele. */
@@ -111,7 +122,7 @@ const ESTADO_INICIAL = Object.freeze({
     usa-a como `key`, e reabrir o mesmo modal começa de um rascunho limpo.
       { tipo: "status", candidatoId }
       { tipo: "anexos", candidatoId }
-      { tipo: "sub-judice" }
+      { tipo: "sub-judice", aba?: "novo" | "aprovado", candidatoId? }
       { tipo: "listas", editalId, rotulo }
   */
   modal: null,
@@ -461,7 +472,10 @@ export function criarEstadoDaListaDeAprovados({
   }
 
   function abrirSubJudice() {
-    if (!canManageSubJudice(perfil())) {
+    if (
+      !canManageSubJudice(perfil()) &&
+      !canAlterarPorDecisaoJudicial(perfil())
+    ) {
       toast("Sem permissão para incluir sub judice.", "warn");
       return;
     }
@@ -470,6 +484,25 @@ export function criarEstadoDaListaDeAprovados({
       return;
     }
     abrir({ tipo: "sub-judice" });
+  }
+
+  function abrirAlteracaoJudicial(candidatoId) {
+    const candidato = candidatoPorId(candidatoId);
+    if (!candidato || !canAlterarCandidatoSubJudice(perfil(), candidato)) {
+      toast(
+        candidato?.lista_ativa === false
+          ? "A lista está inativa."
+          : "Só o admin altera nota ou modalidade por decisão judicial.",
+        "warn",
+      );
+      return;
+    }
+    // O mesmo formulário do sub judice, na aba do candidato já aprovado.
+    abrir({
+      tipo: "sub-judice",
+      aba: "aprovado",
+      candidatoId: String(candidatoId),
+    });
   }
 
   async function abrirListasDoEdital(editalId, rotulo = "") {
@@ -675,8 +708,8 @@ export function criarEstadoDaListaDeAprovados({
     const editalId = text(campos.editalId);
     const cargo = text(campos.cargo);
     const nome = text(campos.nome);
-    const nota = Number(text(campos.nota).replace(",", "."));
-    if (!editalId || !cargo || !nome || !Number.isFinite(nota) || nota < 0) {
+    const nota = lerNota(campos.nota);
+    if (!editalId || !cargo || !nome || nota === null) {
       toast("Preencha edital, cargo, nome e uma nota válida.", "warn");
       return false;
     }
@@ -686,6 +719,9 @@ export function criarEstadoDaListaDeAprovados({
         p_cargo: cargo,
         p_nome: nome,
         p_nota: nota,
+        p_modalidade: text(campos.modalidade) || null,
+        p_processo: text(campos.processo) || null,
+        p_observacao: text(campos.observacao) || null,
       });
       if (error) {
         toast(`Erro ao incluir sub judice: ${mensagemDe(error)}`, "error");
@@ -723,6 +759,75 @@ export function criarEstadoDaListaDeAprovados({
         return true;
       },
     );
+  }
+
+  /*
+    Decisão judicial sobre quem já está na lista: nota e/ou modalidade novas.
+    O banco guarda o resultado publicado na primeira alteração, marca sub
+    judice e refaz a classificação; a releitura traz as posições novas.
+  */
+  async function alterarSubJudice(candidatoId, campos) {
+    const candidato = candidatoPorId(candidatoId);
+    if (!candidato || !canAlterarCandidatoSubJudice(perfil(), candidato))
+      return false;
+    const notaDigitada = text(campos.nota);
+    const nota = lerNota(notaDigitada);
+    if (notaDigitada && nota === null) {
+      toast("Informe uma nota válida.", "warn");
+      return false;
+    }
+    const modalidade = text(campos.modalidade);
+    const mudouNota = nota !== null && nota !== Number(candidato.nota);
+    const mudouModalidade =
+      Boolean(modalidade) && modalidade !== text(candidato.modalidade);
+    if (!mudouNota && !mudouModalidade) {
+      toast("Informe uma nota ou modalidade diferente da atual.", "warn");
+      return false;
+    }
+    return executar("alteracao-judicial", "Salvando…", async () => {
+      const { error } = await supabase.rpc("alterar_candidato_sub_judice", {
+        p_candidato_id: candidato.candidato_id,
+        p_nota: mudouNota ? nota : null,
+        p_modalidade: mudouModalidade ? modalidade : null,
+        p_processo: text(campos.processo) || null,
+        p_observacao: text(campos.observacao) || null,
+      });
+      if (error) {
+        toast(`Erro ao registrar a decisão: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      fecharModal();
+      toast("Decisão judicial registrada e classificação refeita.");
+      await carregar();
+      return true;
+    });
+  }
+
+  /* A decisão caiu: volta à nota, modalidade e classificação do resultado publicado. */
+  async function desfazerAlteracaoSubJudice(candidatoId, observacao = "") {
+    const candidato = candidatoPorId(candidatoId);
+    if (!candidato || !canDesfazerAlteracaoSubJudice(perfil(), candidato))
+      return false;
+    if (
+      !confirmar(
+        `Desfazer a alteração judicial de ${candidato.nome}? A nota e a modalidade voltam às do resultado publicado e a classificação é refeita.`,
+      )
+    )
+      return false;
+    return executar("desfazer-alteracao-judicial", "Desfazendo…", async () => {
+      const { error } = await supabase.rpc("desfazer_alteracao_sub_judice", {
+        p_candidato_id: candidato.candidato_id,
+        p_observacao: text(observacao) || null,
+      });
+      if (error) {
+        toast(`Erro ao desfazer a alteração: ${mensagemDe(error)}`, "error");
+        return false;
+      }
+      fecharModal();
+      toast("Alteração judicial desfeita.");
+      await carregar();
+      return true;
+    });
   }
 
   // ── Listas (XLSX) ──────────────────────────────────────────────────────
@@ -931,6 +1036,7 @@ export function criarEstadoDaListaDeAprovados({
     abrirStatus,
     abrirAnexos,
     abrirSubJudice,
+    abrirAlteracaoJudicial,
     abrirListasDoEdital,
     fecharModal,
     salvarStatus,
@@ -938,6 +1044,8 @@ export function criarEstadoDaListaDeAprovados({
     removerAnexo,
     incluirSubJudice,
     removerSubJudice,
+    alterarSubJudice,
+    desfazerAlteracaoSubJudice,
     importarLista,
     definirListaAtiva,
     removerLista,
