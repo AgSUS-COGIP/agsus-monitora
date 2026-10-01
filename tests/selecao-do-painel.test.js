@@ -17,7 +17,6 @@ import {
   rotuloDaUnidade,
   somar,
   taxaDeContratacao,
-  textoDaUltimaCarga,
   textoDoRecorte,
   topUnidades,
   triadosEReprovados,
@@ -113,13 +112,6 @@ describe("payload da seleção", () => {
   it("payload estranho vira lista vazia", () => {
     expect(normalizarPayload(null).vagas).toEqual([]);
     expect(normalizarPayload({ vagas: "x" }).vagas).toEqual([]);
-  });
-
-  it("texto da última carga, como no rodapé do painel antigo", () => {
-    expect(textoDaUltimaCarga(normalizarPayload(PAYLOAD).ultimaCarga)).toBe(
-      "Atualizado: 01/10/2026 09:02",
-    );
-    expect(textoDaUltimaCarga(null)).toBe("Atualizado: --");
   });
 });
 

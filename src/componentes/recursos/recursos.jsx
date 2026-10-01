@@ -156,7 +156,6 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
         <Topo
           subtitulo={nomeDaArea}
           status={textoDoStatus(e, recursos)}
-          somenteConsulta={carregado && !podeEditar}
           escuro={escuro}
           aoTema={() => setEscuro(alternarTemaDoPainel())}
           aoTelaCheia={alternarTelaCheia}

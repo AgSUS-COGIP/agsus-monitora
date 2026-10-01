@@ -1024,16 +1024,6 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
               Edital
             </h2>
           </div>
-          {dados ? (
-            <span
-              className={classes(
-                "badge",
-                dados.pode_editar ? "aprovado" : "neutro",
-              )}
-            >
-              {dados.pode_editar ? "Você edita" : "Somente consulta"}
-            </span>
-          ) : null}
         </div>
         <div className="entrevistas-filtros">
           <Campo rotulo="Edital da área" largo>

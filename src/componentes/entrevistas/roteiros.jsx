@@ -147,9 +147,6 @@ export function VisaoDeRoteiros({ conducao, area }) {
           )}
         </div>
       </div>
-      {podeEditar === false ? (
-        <Aviso tom="info">Somente consulta.</Aviso>
-      ) : null}
       {roteiros.erro ? (
         <Aviso tom="danger" papel="alert">
           Não foi possível carregar os roteiros: {roteiros.erro}
@@ -648,7 +645,7 @@ export function EditorDeRoteiro({
     modo === "editar"
       ? `Roteiro · versão ${r.versao} → salvar grava a versão ${r.versao + 1}`
       : modo === "ver"
-        ? `Roteiro · versão ${roteiro?.versao ?? 1} · somente consulta`
+        ? `Roteiro · versão ${roteiro?.versao ?? 1}`
         : "Roteiro de entrevista";
   const opcoesDeArea = [...new Set([area, roteiro?.area].filter(Boolean))].map(
     (valor) => ({ valor, rotulo: rotuloDaAreaDoPainel(valor) }),

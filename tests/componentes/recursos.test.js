@@ -450,7 +450,7 @@ describe("permissão", () => {
       supabaseFalso({ dados: payload({ pode_editar: false, editais: [] }) }),
     );
     expect(botao("Novo recurso")).toBeUndefined();
-    expect(naTela("Somente consulta")).toBe(true);
+    expect(naTela("Somente consulta")).toBe(false);
     await clicar(document.querySelector(".recursos-linha"));
     await esperar();
     const gaveta = document.querySelector(".recursos-gaveta");

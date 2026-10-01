@@ -67,16 +67,9 @@ export function Topo({
         </div>
       </div>
       <div className="top-actions">
-        <span className="status-pill">
-          <span className="dot" />
-          <span id="updatedText">{status}</span>
+        <span id="updatedText" className="status-discreto">
+          {status}
         </span>
-        {resultados ? (
-          <span className="status-pill" title="Somente consulta">
-            <i className="fa-solid fa-eye" aria-hidden="true" /> Somente
-            consulta
-          </span>
-        ) : null}
         <button
           type="button"
           className="btn secondary icon"
@@ -361,21 +354,13 @@ export function Indicadores({
 
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
-export function Recorte({ ativos, textoDaCarga, carregado }) {
+export function Recorte({ ativos }) {
   return (
     <section className="panel panel-pad">
       <div id="contextLine" className="context-line">
         {ativos.length
           ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
           : "Sem filtros"}
-      </div>
-      <div id="windowMeta" className="meta-line">
-        {carregado ? (
-          <span className="meta-chip">
-            <i className="fa-solid fa-table-list" aria-hidden="true" />{" "}
-            {textoDaCarga}
-          </span>
-        ) : null}
       </div>
     </section>
   );

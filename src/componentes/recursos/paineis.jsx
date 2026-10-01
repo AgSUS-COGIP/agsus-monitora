@@ -58,7 +58,6 @@ export function usarAlturaDoTopo(topo) {
 export function Topo({
   subtitulo,
   status,
-  somenteConsulta,
   escuro,
   aoTema,
   aoTelaCheia,
@@ -82,16 +81,9 @@ export function Topo({
         </div>
       </div>
       <div className="top-actions">
-        <span className="status-pill">
-          <span className="dot" />
-          <span id="updatedText">{status}</span>
+        <span id="updatedText" className="status-discreto">
+          {status}
         </span>
-        {somenteConsulta ? (
-          <span className="status-pill" title="Seu acesso só consulta">
-            <i className="fa-solid fa-eye" aria-hidden="true" /> Somente
-            consulta
-          </span>
-        ) : null}
         <button
           type="button"
           className="btn secondary icon"

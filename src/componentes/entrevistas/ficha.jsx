@@ -355,9 +355,6 @@ export function FichaDoCandidato({
                   : " Nenhum membro desta banca está ligado ao seu perfil."}
               </Aviso>
             ) : null}
-            {!dados.pode_editar ? (
-              <Aviso tom="info">Somente consulta.</Aviso>
-            ) : null}
 
             {roteiro && avaliadores.length ? (
               <div className="entrevistas-tabela-rolagem">

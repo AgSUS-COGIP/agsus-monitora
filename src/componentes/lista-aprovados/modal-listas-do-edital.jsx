@@ -123,7 +123,7 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
             onChange={(evento) => setEscolhida(evento.target.value)}
           >
             <option value="true">Ativa — permite alterar candidatos</option>
-            <option value="false">Inativa — somente consulta</option>
+            <option value="false">Inativa</option>
           </select>
         </div>
       </div>

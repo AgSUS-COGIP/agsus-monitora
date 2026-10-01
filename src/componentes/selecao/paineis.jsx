@@ -55,9 +55,8 @@ export function Topo({
         </div>
       </div>
       <div className="top-actions">
-        <span className="status-pill">
-          <span className="dot" />
-          <span id="updatedText">{status}</span>
+        <span id="updatedText" className="status-discreto">
+          {status}
         </span>
         <button
           type="button"
