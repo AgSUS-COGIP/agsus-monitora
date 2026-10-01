@@ -46,6 +46,9 @@ jobs:
       - name: Verificar que não há novos remendos
         run: node scripts/check-no-new-patch-layers.mjs
 
+      - name: Verificar que o legado só encolhe
+        run: node scripts/check-legado-so-encolhe.mjs
+
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
 
