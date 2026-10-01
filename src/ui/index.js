@@ -11,6 +11,8 @@ export { Carregando, EstadoVazio } from "./estados.jsx";
 export { Gaveta, TopoDaGaveta, usarClassesDaGaveta } from "./gaveta.jsx";
 export { Grafico, paletaDosGraficos } from "./grafico.jsx";
 export { GradeDeKpis, Kpi } from "./kpi.jsx";
+export { LinhaDoRecorte, textoDoRecorte } from "./linha-do-recorte.jsx";
+export { ListaDePendencias } from "./lista-de-pendencias.jsx";
 export { Modal } from "./modal.jsx";
 export { PainelNoQuadro, usarNoQuadro } from "./no-quadro.jsx";
 export {
@@ -19,6 +21,7 @@ export {
   PainelDeFiltros,
 } from "./painel-de-filtros.jsx";
 export { GradeDeKv, Kv, Secao } from "./secao.jsx";
+export { Segmentado } from "./segmentado.jsx";
 export { Selo } from "./selo.jsx";
 export { TabelaInfinita } from "./tabela-infinita.jsx";
 export { TopoDoPainel, usarAlturaDoTopo } from "./topo-do-painel.jsx";
