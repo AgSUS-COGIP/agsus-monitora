@@ -844,7 +844,9 @@ e `20261001090500_liga_aba_selecao.sql` a liga junto com o front. **Ainda não e
     usa a contagem da vaga (0 sem nenhuma); senão, `QT_CONVOCADO_PLANILHA`;
   - **aprovados / contratados / não contratados**: lista vigente (`TB_LISTA_APROVADO.vigente`) ×
     `TB_CANDIDATO_APROVADO` sem removidos, pela vaga; contratado = status `Contratado` ou
-    `Migração`; sem lista vigente, nulos.
+    `Migração`; sem lista vigente, nulos. Vaga sem código (outras bancas: CESPE, FGV, CCE…) liga
+    pelo nome do cargo — `codigo_vaga` da lista × coluna A da Auditoria, sem acento, caixa nem
+    pontuação (`20261001130000_selecao_aprovados_outras_bancas.sql`).
 - Permissão `selecao` com os níveis de `entrevistas`. O painel externo "Seleção" continua ativo até
   a aba nova ser aprovada.
 
