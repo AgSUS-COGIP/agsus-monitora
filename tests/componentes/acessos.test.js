@@ -417,6 +417,8 @@ describe("Configurações › Acessos", () => {
     // Passo "Convite pronto": mensagem, copiar e abrir no e-mail.
     const modal = document.getElementById("acessosAdicionar");
     expect(modal.querySelector("h3").textContent).toBe("Convite pronto");
+    // O foco vai para "Concluir" (o botão de enviar sumiu com o formulário).
+    expect(document.activeElement?.textContent.trim()).toBe("Concluir");
     const mensagem = modal.querySelector(".acessos-convite-mensagem");
     expect(mensagem.textContent).toBe(
       `Olá, Nova Pessoa! Você foi convidado(a) para o MONITORA (AgSUS). Acesse ${window.location.origin} e entre com sua conta Google nova.pessoa@agenciasus.org.br.`,
