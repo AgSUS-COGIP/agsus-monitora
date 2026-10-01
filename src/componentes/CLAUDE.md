@@ -3,8 +3,8 @@
 O front está migrando para **um único app React** (alvo, regras e ordem em
 `docs/arquitetura-react.md`). Já são React: barra lateral, Núcleo (Editais), Calendário, Lista de
 Aprovados, Acessos, Módulos e abas, Status das atualizações, busca global (Ctrl+K), Configurações
-(moldura, Marca, Painéis externos, Operação) e os painéis de Entrevistas e Seleção (ainda em
-página própria/iframe; Recursos já mudou para `src/modulos/recursos/`). Toda tela monta por
+(moldura, Marca, Painéis externos, Operação) e o painel de Seleção (ainda em página
+própria/iframe; Recursos e Entrevistas já mudaram para `src/modulos/`). Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
 (`.jsx`), sem TypeScript. Nomes em português, arquivo em kebab-case, componente em PascalCase.
@@ -15,7 +15,7 @@ página própria/iframe; Recursos já mudou para `src/modulos/recursos/`). Toda 
 icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
 modal.jsx                    só reexporta o <Modal> de src/ui/modal.jsx (importe de src/ui/ no código novo)
 busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
-entrevistas/, selecao/       painéis no quadro (entradas em src/entrevistas|selecao/main.jsx), dentro de <PainelNoQuadro>
+selecao/                     painel no quadro (entrada em src/selecao/main.jsx), dentro de <PainelNoQuadro>
 multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
 dados-do-monitoramento.js    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
                              carrega e publica aqui (loadData / loadUnidades), e a área atual
