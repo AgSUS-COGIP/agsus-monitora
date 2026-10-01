@@ -87,6 +87,10 @@ export function criarEstadoDaConducao({
 } = {}) {
   let estado = ESTADO_INICIAL;
   let pedidoDoEdital = 0;
+  /* Cada carga de lista leva um número; a troca de área ou de usuário também
+     avança, para a resposta de uma carga antiga não cair sobre a tela nova. */
+  let pedidoDosRoteiros = 0;
+  let pedidoDosEditais = 0;
   const ouvintes = new Set();
 
   function publicar(mudancas) {
@@ -123,6 +127,8 @@ export function criarEstadoDaConducao({
   function trocarArea(area) {
     if (area && area !== estado.area) {
       pedidoDoEdital += 1;
+      pedidoDosRoteiros += 1;
+      pedidoDosEditais += 1;
       publicar({ ...ESTADO_INICIAL, area });
     }
   }
@@ -134,6 +140,8 @@ export function criarEstadoDaConducao({
     // O primeiro aviso da página só registra quem é; não há o que limpar.
     if (identidade !== undefined || !atual) {
       pedidoDoEdital += 1;
+      pedidoDosRoteiros += 1;
+      pedidoDosEditais += 1;
       publicar(ESTADO_INICIAL);
     }
     identidade = atual;
@@ -143,9 +151,11 @@ export function criarEstadoDaConducao({
 
   async function carregarRoteiros(area = estado.area) {
     trocarArea(area);
+    const meu = ++pedidoDosRoteiros;
     publicar({ roteiros: { ...estado.roteiros, carregando: true, erro: "" } });
     try {
       const lista = await rpc(RPC_LISTAR_ROTEIROS, { p_area: area });
+      if (meu !== pedidoDosRoteiros) return false;
       publicar({
         roteiros: {
           lista: Array.isArray(lista) ? lista : [],
@@ -156,6 +166,7 @@ export function criarEstadoDaConducao({
       });
       return true;
     } catch (erro) {
+      if (meu !== pedidoDosRoteiros) return false;
       publicar({
         roteiros: {
           ...estado.roteiros,
@@ -194,12 +205,14 @@ export function criarEstadoDaConducao({
     { todos = estado.editais.todos } = {},
   ) {
     trocarArea(area);
+    const meu = ++pedidoDosEditais;
     publicar({ editais: { ...estado.editais, carregando: true, erro: "" } });
     try {
       const dados = await rpc(RPC_LISTAR_EDITAIS, {
         p_area: area,
         p_todos: Boolean(todos),
       });
+      if (meu !== pedidoDosEditais) return [];
       const admin = Boolean(dados?.admin_global);
       const lista = editaisParaConduzir(dados?.editais || [], doPainel);
       publicar({
@@ -214,6 +227,7 @@ export function criarEstadoDaConducao({
       });
       return lista;
     } catch (erro) {
+      if (meu !== pedidoDosEditais) return [];
       publicar({
         editais: {
           ...EDITAIS_VAZIOS,
