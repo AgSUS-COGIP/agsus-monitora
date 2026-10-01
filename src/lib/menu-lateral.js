@@ -90,6 +90,10 @@ export const AREAS_DO_MENU = Object.freeze([
   (migration `20260929120000_recursos.sql`). O painel externo continua em
   Painéis até a aba nova ser aprovada.
 
+  A ordem segue as etapas do processo seletivo (Editais → Cronograma →
+  Análises → Recursos → Entrevistas → Aprovados → Seleção), migration
+  `20261001160000_ordem_do_menu_por_etapa.sql`.
+
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
   por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
 
@@ -154,23 +158,24 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
-      id: "aprovados",
-      rotulo: "Lista de aprovados",
-      icone: "user-round-check",
+      id: "analises",
+      rotulo: "Análises curriculares",
+      icone: "file-search",
       ordem: 4,
-      view: "approved",
-      recurso: "aprovados",
+      view: "analises",
+      recurso: "analises",
       tipo: "nativa",
       areas: NAS_TRES_AREAS,
     },
     {
-      id: "analises",
-      rotulo: "Análises curriculares",
-      icone: "file-search",
+      id: "recursos",
+      rotulo: "Recursos",
+      icone: "scale",
       ordem: 5,
-      view: "analises",
-      recurso: "analises",
+      view: "recursos",
+      recurso: "recursos",
       tipo: "nativa",
+      beta: true,
       areas: NAS_TRES_AREAS,
     },
     {
@@ -185,14 +190,13 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
-      id: "recursos",
-      rotulo: "Recursos",
-      icone: "scale",
+      id: "aprovados",
+      rotulo: "Lista de aprovados",
+      icone: "user-round-check",
       ordem: 7,
-      view: "recursos",
-      recurso: "recursos",
+      view: "approved",
+      recurso: "aprovados",
       tipo: "nativa",
-      beta: true,
       areas: NAS_TRES_AREAS,
     },
     {

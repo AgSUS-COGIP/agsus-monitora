@@ -61,6 +61,10 @@ const MIGRATION_DA_SELECAO = ler(
 const MIGRATION_QUE_LIGA_A_SELECAO = ler(
   "supabase/migrations/20261001090500_liga_aba_selecao.sql",
 );
+/* A ordem por etapa do processo: só updates de "NU_ORDEM", aplicados por último. */
+const MIGRATION_DA_ORDEM = ler(
+  "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql",
+);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu.json"),
 );
@@ -107,10 +111,11 @@ function abasDoSeed() {
     ...linhasDoInsertEm(MIGRATION_DAS_ENTREVISTAS, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DA_SELECAO, "TB_ABA"),
   ];
-  for (const [, ordem, aba] of MIGRATION_DAS_ENTREVISTAS.matchAll(
-    /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
-  ))
-    abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
+  for (const sql of [MIGRATION_DAS_ENTREVISTAS, MIGRATION_DA_ORDEM])
+    for (const [, ordem, aba] of sql.matchAll(
+      /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
+    ))
+      abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
   return abas;
 }
 
@@ -466,7 +471,7 @@ describe("selo beta das abas", () => {
   const recursosDe = (abas) => abas.find((aba) => aba.id === "recursos");
 
   it("no código, só Entrevistas, Recursos e Seleção são beta; as outras nem têm o campo", () => {
-    const beta = ["entrevistas", "recursos", "selecao"];
+    const beta = ["recursos", "entrevistas", "selecao"];
     expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
       beta,
     );
