@@ -623,7 +623,7 @@ export const VERBETES_AYA = Object.freeze([
       "aprovar exige a decisão",
     ],
     resposta:
-      'No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar, devolver e marcar a resposta como enviada (publicar) são do parecer jurídico. Aprovar exige o recurso decidido e um modelo da mesma situação da decisão. Marcar a etapa "Resposta enviada ao candidato" também é do jurídico, com o recurso decidido.',
+      'No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão. Marcar a resposta como enviada ao candidato (e a etapa "Resposta enviada ao candidato") é de quem edita, mas só com o recurso já decidido; depois disso a decisão não reabre.',
     fato: "",
     fonte: "interface do MONITORA",
   },

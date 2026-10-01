@@ -106,11 +106,12 @@ export function GavetaDoRecurso({
   modelos = [],
   area = "",
 }) {
-  // Recurso decidido: excluir e a etapa "resposta enviada" são do parecer jurídico.
+  // Recurso decidido: excluir é do parecer jurídico. A etapa "resposta
+  // enviada" é de quem edita, mas só marca com o recurso decidido.
   const podeExcluir = podeEditar && (!r.decidido || podeDecidir);
   const podeMarcar = (etapa) =>
     etapa.id === "resposta_candidato"
-      ? podeEditar && podeDecidir && (r.decidido || r.etapas[etapa.id])
+      ? podeEditar && (r.decidido || r.etapas[etapa.id])
       : podeEditar;
   const { acao } = useSyncExternalStore(estado.assinar, estado.obter);
   const resposta = detalhe?.resposta;

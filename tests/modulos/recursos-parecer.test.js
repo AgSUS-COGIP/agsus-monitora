@@ -224,7 +224,15 @@ describe("quem vê os botões de decisão", () => {
     );
   });
 
-  it("decidido: o parecer aparece; quem não decide não reabre nem exclui", async () => {
+  it("em análise jurídica: quem edita ainda não marca a resposta enviada", async () => {
+    await montar(supabaseFalso({ podeDecidir: false }));
+    await abrirGaveta();
+    expect(
+      document.querySelector('input[name="resposta_candidato"]').disabled,
+    ).toBe(true);
+  });
+
+  it("decidido: o parecer aparece; quem não decide não reabre nem exclui, mas marca a resposta enviada", async () => {
     await montar(
       supabaseFalso({
         podeDecidir: false,
@@ -241,6 +249,6 @@ describe("quem vê os botões de decisão", () => {
     );
     expect(excluir).toBeUndefined();
     const resposta = document.querySelector('input[name="resposta_candidato"]');
-    expect(resposta.disabled).toBe(true);
+    expect(resposta.disabled).toBe(false);
   });
 });

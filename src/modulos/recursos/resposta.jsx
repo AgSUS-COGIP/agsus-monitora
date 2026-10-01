@@ -20,9 +20,9 @@ import { SeloDaResposta } from "./tabela.jsx";
   os marcadores preenchidos, escrever a fundamentação e salvar o rascunho; daí
   enviar para revisão (opcional), aprovar ou devolver com comentário, gerar o
   documento (impressão/PDF e .docx, que pode virar anexo) e marcar a resposta
-  como enviada — o que marca também a etapa do recurso. Aprovar, devolver e
-  marcar enviada (publicar) são do parecer jurídico: sem `podeDecidir`, os
-  botões nem aparecem.
+  como enviada — o que marca também a etapa do recurso. Aprovar e devolver
+  são do parecer jurídico: sem `podeDecidir`, os botões nem aparecem. Marcar
+  enviada é de quem edita, só com o recurso decidido.
 
   O banco decide (transicionar_resposta_recurso); os botões seguem
   resposta-do-recurso.js só para dizer antes por que uma ação não vale. Tudo

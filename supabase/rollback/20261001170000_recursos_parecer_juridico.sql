@@ -14,6 +14,9 @@
       20260929230000_recursos_modelos_anexos_respostas.sql; salvar, marcar etapa
       e excluir, aos de 20260929190200_recorte_por_coordenacao_nos_recursos.sql
       (copiados de lá, sem mudança, com os comentários que tinham).
+    - Os dois modelos iniciais "Deferido parcialmente" voltam a "Parcialmente
+      indeferido" (título e frase do corpo), só se ainda estiverem como a
+      migration deixou.
 
   QUANDO NÃO RODA (para, sem mudar nada)
     - Já houve transição do parecer (TH_RECURSO_CANDIDATO com TP_ACAO
@@ -821,6 +824,25 @@ comment on function public.transicionar_resposta_recurso(uuid, text, integer, te
 
 drop function if exists private."FC_EXIGIR_PARECER_RECURSO"();
 drop function if exists private."FC_PODE_PARECER_RECURSO"();
+
+-- Modelos iniciais: de volta a "Parcialmente indeferido", só os que a migration renomeou.
+update public."TB_MODELO_RESPOSTA_RECURSO" t
+   set "NO_MODELO" = v.original
+  from (values
+    ('6f1d8a52-3b0e-4c11-9a51-000000000103'::uuid, 'Parcialmente indeferido — Análise curricular', 'Deferido parcialmente — Análise curricular'),
+    ('6f1d8a52-3b0e-4c11-9a51-000000000203'::uuid, 'Parcialmente indeferido — Entrevista', 'Deferido parcialmente — Entrevista')
+  ) as v(id, original, novo)
+ where t."CO_MODELO_RESPOSTA" = v.id
+   and t."NO_MODELO" = v.novo;
+
+update public."TB_MODELO_RESPOSTA_RECURSO" t
+   set "DS_CORPO" = replace(t."DS_CORPO",
+         'comunica que o recurso foi DEFERIDO PARCIALMENTE:',
+         'comunica que o recurso foi PARCIALMENTE INDEFERIDO:')
+ where t."CO_MODELO_RESPOSTA" in ('6f1d8a52-3b0e-4c11-9a51-000000000103', '6f1d8a52-3b0e-4c11-9a51-000000000203')
+   and t."NU_VERSAO" = 1
+   and t."ST_VIGENTE" = 'S'
+   and position('comunica que o recurso foi DEFERIDO PARCIALMENTE:' in t."DS_CORPO") > 0;
 
 -- 4. Permissão 'recursos_parecer' e o grupo Jurídico ----------------------------------------
 delete from public."TB_GRUPO_ACESSO" where "CO_GRUPO_ACESSO" = 'juridico';

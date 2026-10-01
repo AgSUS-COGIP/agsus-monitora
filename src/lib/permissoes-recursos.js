@@ -38,7 +38,8 @@ export function tipoDoRecurso(recurso) {
 /*
   Módulos de dois níveis (Sem acesso | Editor). "recursos_parecer"
   (20261001170000_recursos_parecer_juridico.sql) é quem decide os recursos:
-  deferir, deferir parcialmente, indeferir, devolver e publicar a resposta.
+  deferir, deferir parcialmente, indeferir, devolver, reabrir e aprovar o
+  texto da resposta.
 */
 export const RECURSOS_SIM_OU_NAO = Object.freeze([
   "acessos",

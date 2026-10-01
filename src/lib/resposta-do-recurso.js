@@ -15,9 +15,10 @@
     aprovada ─reabrir→ rascunho        (com comentário)
     aprovada ─marcar_enviada→ enviada  (marca a etapa "resposta enviada" do recurso)
 
-  Aprovar, devolver e marcar enviada (publicar a resposta final) são do
-  parecer jurídico (`juridico: true`; 20261001170000_recursos_parecer_juridico.sql):
-  quem não tem `recursos_parecer` não vê esses botões.
+  Aprovar e devolver (a revisão final do texto) são do parecer jurídico
+  (`juridico: true`; 20261001170000_recursos_parecer_juridico.sql): quem não
+  tem `recursos_parecer` não vê esses botões. Marcar enviada fica com quem
+  edita, mas só com o recurso decidido.
 */
 import { situacaoDecidida } from "./recursos-dos-candidatos.js";
 
@@ -61,7 +62,6 @@ export const ACOES_DA_RESPOSTA = Object.freeze({
     de: Object.freeze(["aprovada"]),
     para: "enviada",
     comentario: "nao",
-    juridico: true,
   }),
 });
 
@@ -139,6 +139,11 @@ export function avaliarAcao(
         motivo: "A situação do recurso não é a do modelo usado na resposta.",
       };
   }
+  if (acao === "marcar_enviada" && !situacaoDecidida(situacao))
+    return {
+      permitida: false,
+      motivo: "O recurso não está decidido.",
+    };
   if (acao === "devolver" && mesmo(eu, resposta.autor_id))
     return {
       permitida: false,

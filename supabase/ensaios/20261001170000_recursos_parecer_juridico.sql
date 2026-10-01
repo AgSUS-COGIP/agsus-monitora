@@ -799,7 +799,7 @@ $function$;
 comment on function public.salvar_recurso_candidato(jsonb) is
   'Cadastra (sem id; nasce REGISTRADO) ou edita (com id e revisão) um recurso. Cadastro: edital, origem ativa e o candidato das análises do mesmo edital (ou fora_analise com nome); guarda a nota e o resultado do dia; duplicado sem decisão (mesmo candidato, edital e origem) dá 23505 salvo permitir_duplicado. Edição: origem, analista, processo SEI, mudou a classificação, observação e, fora das análises, os dados digitados; revisão desatualizada dá 40001. A situação não muda aqui (22023): é de transicionar_recurso_candidato. Tudo vai para TH_RECURSO_CANDIDATO. Exige recursos >= editor, a área e a coordenação do edital.';
 
--- 8. Etapa: corpo de 20260929190200; "resposta enviada" é do parecer jurídico ---------------
+-- 8. Etapa: corpo de 20260929190200; "resposta enviada" só com o recurso decidido ----------
 create or replace function public.marcar_etapa_recurso(p_id uuid, p_etapa text, p_feita boolean)
 returns json
 language plpgsql
@@ -830,9 +830,8 @@ begin
   select m."CO_AREA" into v_area from public."TB_MONITORAMENTO_INDIGENA" m where m.id = v_atual."CO_MONITORAMENTO";
   perform private."FC_EXIGIR_RECURSOS_NA_AREA"(v_area, 2);
   perform private."FC_EXIGIR_AREA_EDITAL"(v_atual."CO_MONITORAMENTO"::text);
-  -- Publicar a resposta final (a etapa "resposta enviada") é do parecer jurídico, com o recurso decidido.
+  -- A etapa "resposta enviada" (quem edita) só com o recurso já decidido pelo jurídico.
   if p_etapa = 'resposta_candidato' then
-    perform private."FC_EXIGIR_PARECER_RECURSO"();
     if coalesce(p_feita, false) and v_atual."TP_SITUACAO" not in ('DEFERIDO', 'INDEFERIDO', 'PARCIALMENTE_INDEFERIDO') then
       raise exception 'Registre a decisão antes de marcar a resposta enviada' using errcode = '22023';
     end if;
@@ -870,7 +869,7 @@ begin
 end;
 $function$;
 comment on function public.marcar_etapa_recurso(uuid, text, boolean) is
-  'Marca (com quando e quem) ou desmarca uma etapa: download_empregare, processo_sei, upload_sei ou resposta_candidato. A resposta enviada é do parecer jurídico (recursos_parecer) e marcar exige o recurso decidido. Registra no histórico e sobe a revisão. Exige recursos >= editor, a área e a coordenação do edital.';
+  'Marca (com quando e quem) ou desmarca uma etapa: download_empregare, processo_sei, upload_sei ou resposta_candidato. Marcar a resposta enviada exige o recurso decidido (pelo parecer jurídico). Registra no histórico e sobe a revisão. Exige recursos >= editor, a área e a coordenação do edital.';
 
 -- 9. Excluir: corpo de 20260929190200; decidido só com o parecer jurídico ---------------------
 create or replace function public.excluir_recurso_candidato(p_id uuid, p_motivo text)
@@ -918,7 +917,7 @@ $function$;
 comment on function public.excluir_recurso_candidato(uuid, text) is
   'Exclusão lógica (ST_ATIVO = N) de um recurso cadastrado por engano, com motivo no histórico. Exige recursos >= editor, a área e a coordenação do edital; recurso decidido, também o parecer jurídico.';
 
--- 10. Resposta: corpo de 20260929230000; aprovar, devolver e enviar são do parecer ----------
+-- 10. Resposta: corpo de 20260929230000; aprovar e devolver são do parecer ------------------
 create or replace function public.transicionar_resposta_recurso(p_resposta_id uuid, p_acao text, p_revisao integer, p_comentario text default null)
 returns json
 language plpgsql
@@ -949,8 +948,8 @@ begin
     raise exception 'Resposta não encontrada' using errcode = 'P0002';
   end if;
   perform private."FC_EXIGIR_RECURSO_ACESSIVEL"(v_atual."CO_RECURSO_CANDIDATO", 2);
-  -- Aprovar, devolver e publicar (marcar enviada) a resposta final: o parecer jurídico.
-  if p_acao in ('aprovar', 'devolver', 'marcar_enviada') then
+  -- Aprovar ou devolver o texto da resposta (a revisão final): o parecer jurídico.
+  if p_acao in ('aprovar', 'devolver') then
     perform private."FC_EXIGIR_PARECER_RECURSO"();
   end if;
   -- Mesma ordem de trava de salvar_resposta_recurso: o recurso, depois a resposta.
@@ -1007,6 +1006,10 @@ begin
     if v_atual."TP_ESTADO" <> 'aprovada' then
       raise exception 'Só resposta aprovada pode ser marcada como enviada' using errcode = '22023';
     end if;
+    -- Quem edita marca enviada, mas só com o recurso decidido (a decisão pode ter sido reaberta depois da aprovação).
+    if v_rec."TP_SITUACAO" not in ('DEFERIDO', 'INDEFERIDO', 'PARCIALMENTE_INDEFERIDO') then
+      raise exception 'O recurso não está decidido: a resposta não pode ser enviada' using errcode = '22023';
+    end if;
     v_novo := 'enviada';
   end if;
 
@@ -1055,7 +1058,28 @@ begin
 end;
 $function$;
 comment on function public.transicionar_resposta_recurso(uuid, text, integer, text) is
-  'Transição da resposta: enviar_revisao e reabrir (com comentário) por quem edita; aprovar, devolver (com comentário) e marcar_enviada (publica: marca também a etapa resposta_candidato) só com o parecer jurídico (recursos_parecer). Em revisão (ou depois de passar por ela), quem escreveu ou enviou não aprova; aprovar exige o recurso decidido com a situação do modelo. Revisão → 40001. Exige recursos >= editor, a área e a coordenação do edital.';
+  'Transição da resposta: enviar_revisao, reabrir (com comentário) e marcar_enviada (só com o recurso decidido; marca também a etapa resposta_candidato) por quem edita; aprovar e devolver (com comentário) só com o parecer jurídico (recursos_parecer). Em revisão (ou depois de passar por ela), quem escreveu ou enviou não aprova; aprovar exige o recurso decidido com a situação do modelo. Revisão → 40001. Exige recursos >= editor, a área e a coordenação do edital.';
+
+-- 11. Modelos iniciais: "Parcialmente indeferido" → "Deferido parcialmente" -----------------
+-- Título: só se ainda for o semeado (qualquer versão). Corpo: só a versão 1 ainda vigente
+-- (ninguém editou) — a resposta já escrita guarda o próprio texto e não muda.
+update public."TB_MODELO_RESPOSTA_RECURSO" t
+   set "NO_MODELO" = v.novo
+  from (values
+    ('6f1d8a52-3b0e-4c11-9a51-000000000103'::uuid, 'Parcialmente indeferido — Análise curricular', 'Deferido parcialmente — Análise curricular'),
+    ('6f1d8a52-3b0e-4c11-9a51-000000000203'::uuid, 'Parcialmente indeferido — Entrevista', 'Deferido parcialmente — Entrevista')
+  ) as v(id, original, novo)
+ where t."CO_MODELO_RESPOSTA" = v.id
+   and t."NO_MODELO" = v.original;
+
+update public."TB_MODELO_RESPOSTA_RECURSO" t
+   set "DS_CORPO" = replace(t."DS_CORPO",
+         'comunica que o recurso foi PARCIALMENTE INDEFERIDO:',
+         'comunica que o recurso foi DEFERIDO PARCIALMENTE:')
+ where t."CO_MODELO_RESPOSTA" in ('6f1d8a52-3b0e-4c11-9a51-000000000103', '6f1d8a52-3b0e-4c11-9a51-000000000203')
+   and t."NU_VERSAO" = 1
+   and t."ST_VIGENTE" = 'S'
+   and position('comunica que o recurso foi PARCIALMENTE INDEFERIDO:' in t."DS_CORPO") > 0;
 
 -- ═══ CORPO DA MIGRATION (fim) ═══
 
@@ -1183,10 +1207,10 @@ begin
   v_rev := (v->>'revisao')::integer;
   begin
     perform public.marcar_etapa_recurso(v_id, 'resposta_candidato', true);
-    raise exception 'FALHOU E4: editor publicou a resposta';
-  exception when insufficient_privilege then null;
+    raise exception 'FALHOU E4: resposta enviada sem decisão';
+  exception when invalid_parameter_value then null;
   end;
-  raise notice 'ok E4.1: editor cadastra e envia; não decide nem publica (42501)';
+  raise notice 'ok E4.1: editor cadastra e envia; não decide (42501) nem marca resposta enviada sem decisão (22023)';
 
   -- Leitor: não mexe no fluxo.
   perform set_config('request.jwt.claims', c_leitor, true);
@@ -1251,9 +1275,25 @@ begin
   perform set_config('request.jwt.claims', c_juridico, true);
   v := public.transicionar_recurso_candidato(v_id, 'reabrir', v_rev, 'Erro material no parecer');
   if v->>'situacao' <> 'EM_ANALISE_JURIDICA' then raise exception 'FALHOU E4: reabertura'; end if;
+  v_rev := (v->>'revisao')::integer;
+  raise notice 'ok E4.4: decisão grava quem, quando e parecer; editor não exclui decidido; jurídico reabre';
+
+  -- Jurídico indefere; o editor (sem o parecer) marca a resposta enviada; daí a decisão não reabre.
+  v := public.transicionar_recurso_candidato(v_id, 'indeferir', v_rev, 'Indefiro: o recurso foi interposto fora do prazo.');
+  v_rev := (v->>'revisao')::integer;
+  perform set_config('request.jwt.claims', c_editor, true);
+  v := public.marcar_etapa_recurso(v_id, 'resposta_candidato', true);
+  if not (v->>'alterou')::boolean then raise exception 'FALHOU E4: editor não marcou a resposta enviada'; end if;
+  v_rev := (v->>'revisao')::integer;
+  perform set_config('request.jwt.claims', c_juridico, true);
+  begin
+    perform public.transicionar_recurso_candidato(v_id, 'reabrir', v_rev, 'Tentando reabrir depois do envio');
+    raise exception 'FALHOU E4: reabriu com a resposta enviada';
+  exception when invalid_parameter_value then null;
+  end;
 
   perform set_config('ensaio.recurso', v_id::text, true);
-  raise notice 'ok E4.4: decisão grava quem, quando e parecer; editor não exclui decidido; jurídico reabre';
+  raise notice 'ok E4.5: com o recurso decidido, quem edita marca a resposta enviada; a decisão não reabre mais';
 end;
 $$;
 reset role;
@@ -1264,17 +1304,34 @@ begin
   perform set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-00000000e101","role":"authenticated","email":"ensaio.editor@ensaio.invalid"}', true);
   begin
     update public."TB_RECURSO_CANDIDATO"
-       set "TP_SITUACAO" = 'INDEFERIDO', "DT_DECISAO" = now(),
+       set "TP_SITUACAO" = 'DEFERIDO', "DT_DECISAO" = now(),
            "CO_USUARIO_DECISAO" = '00000000-0000-4000-a000-00000000e101', "DS_PARECER_JURIDICO" = 'Direto na tabela.'
      where "CO_RECURSO_CANDIDATO" = current_setting('ensaio.recurso')::uuid;
     raise exception 'FALHOU E5: gatilho deixou decidir';
   exception when insufficient_privilege then null;
   end;
   if (select count(*) from public."TH_RECURSO_CANDIDATO"
-       where "CO_RECURSO_CANDIDATO" = current_setting('ensaio.recurso')::uuid and "TP_ACAO" = 'parecer') <> 5 then
-    raise exception 'FALHOU E5: histórico do parecer não tem as 5 transições';
+       where "CO_RECURSO_CANDIDATO" = current_setting('ensaio.recurso')::uuid and "TP_ACAO" = 'parecer') <> 6 then
+    raise exception 'FALHOU E5: histórico do parecer não tem as 6 transições';
   end if;
-  raise notice 'ok E5: gatilho barra a decisão direta (42501); histórico com as 5 transições';
+  raise notice 'ok E5: gatilho barra a decisão direta (42501); histórico com as 6 transições';
+end;
+$$;
+
+-- E6. Modelos iniciais: o título semeado virou "Deferido parcialmente"; o código ficou.
+do $$
+begin
+  if exists (select 1 from public."TB_MODELO_RESPOSTA_RECURSO"
+              where "CO_MODELO_RESPOSTA" in ('6f1d8a52-3b0e-4c11-9a51-000000000103', '6f1d8a52-3b0e-4c11-9a51-000000000203')
+                and "NO_MODELO" like 'Parcialmente indeferido — %') then
+    raise exception 'FALHOU E6: título semeado não foi renomeado';
+  end if;
+  if exists (select 1 from public."TB_MODELO_RESPOSTA_RECURSO"
+              where "CO_MODELO_RESPOSTA" in ('6f1d8a52-3b0e-4c11-9a51-000000000103', '6f1d8a52-3b0e-4c11-9a51-000000000203')
+                and "TP_SITUACAO" <> 'PARCIALMENTE_INDEFERIDO') then
+    raise exception 'FALHOU E6: o código da situação mudou';
+  end if;
+  raise notice 'ok E6: modelos iniciais com o título novo; código PARCIALMENTE_INDEFERIDO mantido';
   raise notice 'ENSAIO OK — nada foi gravado (rollback a seguir)';
 end;
 $$;

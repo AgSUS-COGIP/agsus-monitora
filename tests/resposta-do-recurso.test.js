@@ -175,9 +175,9 @@ describe("permissões", () => {
     ).toEqual([]);
   });
 
-  it("aprovar, devolver e marcar enviada são do parecer jurídico: sem ele, nem aparecem", () => {
+  it("aprovar e devolver são do parecer jurídico: sem ele, nem aparecem", () => {
     const semParecer = (extra) => contexto({ podeDecidir: false, ...extra });
-    for (const acao of ["aprovar", "devolver", "marcar_enviada"]) {
+    for (const acao of ["aprovar", "devolver"]) {
       expect(ACOES_DA_RESPOSTA[acao].juridico).toBe(true);
       expect(avaliarAcao(acao, semParecer()).motivo).toBe(
         "É do parecer jurídico.",
@@ -186,16 +186,41 @@ describe("permissões", () => {
     expect(acoesDaResposta(semParecer()).map((a) => a.acao)).toEqual([
       "enviar_revisao",
     ]);
+    // Aprovada: quem edita reabre ou marca enviada (o recurso está decidido).
     expect(
       acoesDaResposta(
         semParecer({ resposta: resposta({ estado: "aprovada" }) }),
-      ).map((a) => a.acao),
-    ).toEqual(["reabrir"]);
+      ).map((a) => [a.acao, a.permitida]),
+    ).toEqual([
+      ["reabrir", true],
+      ["marcar_enviada", true],
+    ]);
     expect(
       acoesDaResposta(
         semParecer({ resposta: resposta({ estado: "em_revisao" }) }),
       ),
     ).toEqual([]);
+  });
+
+  it("marcar enviada é de quem edita, mas só com o recurso decidido", () => {
+    const aprovada = resposta({ estado: "aprovada" });
+    const quemEdita = (situacao) =>
+      avaliarAcao("marcar_enviada", {
+        ...contexto({ resposta: aprovada, podeDecidir: false }),
+        situacao,
+      });
+    expect(ACOES_DA_RESPOSTA.marcar_enviada.juridico).toBeUndefined();
+    for (const situacao of [
+      "DEFERIDO",
+      "PARCIALMENTE_INDEFERIDO",
+      "INDEFERIDO",
+    ])
+      expect(quemEdita(situacao).permitida).toBe(true);
+    for (const situacao of ["REGISTRADO", "EM_ANALISE_JURIDICA"])
+      expect(quemEdita(situacao)).toEqual({
+        permitida: false,
+        motivo: "O recurso não está decidido.",
+      });
   });
 
   it("devolver e reabrir pedem comentário; aprovar, não", () => {

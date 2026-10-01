@@ -59,20 +59,56 @@ describe("decidir exige o parecer jurídico no banco", () => {
   it.each([
     [
       "transicionar_resposta_recurso",
-      /if p_acao in \('aprovar', 'devolver', 'marcar_enviada'\) then\s+perform private\."FC_EXIGIR_PARECER_RECURSO"\(\);/,
-    ],
-    [
-      "marcar_etapa_recurso",
-      /if p_etapa = 'resposta_candidato' then\s+perform private\."FC_EXIGIR_PARECER_RECURSO"\(\);/,
+      /if p_acao in \('aprovar', 'devolver'\) then\s+perform private\."FC_EXIGIR_PARECER_RECURSO"\(\);/,
     ],
     [
       "excluir_recurso_candidato",
       /'PARCIALMENTE_INDEFERIDO'\) then\s+perform private\."FC_EXIGIR_PARECER_RECURSO"\(\);/,
     ],
-  ])("%s: publicar ou apagar a decisão exige o parecer", (nome, regra) => {
-    expect(
-      corpoDe(MIGRATION, `create or replace function public.${nome}(`),
-    ).toMatch(regra);
+  ])(
+    "%s: aprovar a resposta ou apagar a decisão exige o parecer",
+    (nome, regra) => {
+      expect(
+        corpoDe(MIGRATION, `create or replace function public.${nome}(`),
+      ).toMatch(regra);
+    },
+  );
+
+  it("marcar a resposta enviada é de quem edita, só com o recurso decidido", () => {
+    const etapa = corpoDe(
+      MIGRATION,
+      "create or replace function public.marcar_etapa_recurso(",
+    );
+    expect(etapa).not.toContain("FC_EXIGIR_PARECER_RECURSO");
+    expect(etapa).toMatch(
+      /if p_etapa = 'resposta_candidato' then\s+if coalesce\(p_feita, false\) and v_atual\."TP_SITUACAO" not in \('DEFERIDO', 'INDEFERIDO', 'PARCIALMENTE_INDEFERIDO'\)/,
+    );
+    const resposta = corpoDe(
+      MIGRATION,
+      "create or replace function public.transicionar_resposta_recurso(",
+    );
+    expect(resposta).not.toMatch(
+      /'marcar_enviada'\) then\s+perform private\."FC_EXIGIR_PARECER/,
+    );
+    expect(resposta).toContain(
+      "a resposta não pode ser enviada' using errcode = '22023'",
+    );
+  });
+
+  it("modelos iniciais: só o título e a frase semeados viram 'Deferido parcialmente'", () => {
+    expect(MIGRATION).toMatch(
+      /set "NO_MODELO" = v\.novo[\s\S]*?and t\."NO_MODELO" = v\.original;/,
+    );
+    expect(MIGRATION).toContain("'Deferido parcialmente — Análise curricular'");
+    expect(MIGRATION).toMatch(
+      /and t\."NU_VERSAO" = 1\s+and t\."ST_VIGENTE" = 'S'/,
+    );
+    expect(MIGRATION).not.toMatch(
+      /set "TP_SITUACAO"\s*=\s*'DEFERIDO_PARCIALMENTE'/,
+    );
+    expect(ROLLBACK).toMatch(
+      /set "NO_MODELO" = v\.original[\s\S]*?and t\."NO_MODELO" = v\.novo;/,
+    );
   });
 
   it("salvar não muda a situação; o cadastro nasce REGISTRADO", () => {

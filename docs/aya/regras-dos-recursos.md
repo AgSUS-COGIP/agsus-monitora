@@ -38,7 +38,7 @@ viraram filtro) estão registrados nestes verbetes.
 ## Resposta ao candidato e parecer
 
 **perguntas:** aprovar resposta do recurso | publicar resposta do recurso | marcar resposta enviada | aprovar exige a decisão
-**resposta:** No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar, devolver e marcar a resposta como enviada (publicar) são do parecer jurídico. Aprovar exige o recurso decidido e um modelo da mesma situação da decisão. Marcar a etapa "Resposta enviada ao candidato" também é do jurídico, com o recurso decidido.
+**resposta:** No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão. Marcar a resposta como enviada ao candidato (e a etapa "Resposta enviada ao candidato") é de quem edita, mas só com o recurso já decidido; depois disso a decisão não reabre.
 **fonte:** interface do MONITORA
 
 ## Indicadores da aba Recursos
