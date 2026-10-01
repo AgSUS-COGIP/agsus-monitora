@@ -295,7 +295,8 @@ function previaDaTelaDeAcesso(documento) {
         : null,
       el(documento, "strong", {
         className: "previa-acesso__saudacao",
-        texto: valor(documento, "cfgAccessGreeting") || "Bem-vindo(a) ao MONITORA",
+        texto:
+          valor(documento, "cfgAccessGreeting") || "Bem-vindo(a) ao MONITORA",
       }),
       el(documento, "p", {
         texto:
