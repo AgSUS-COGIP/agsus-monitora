@@ -1,7 +1,10 @@
 import { StrictMode, useMemo, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
-import { canManageSubJudice } from "../../lib/access-roles.js";
+import {
+  canAlterarPorDecisaoJudicial,
+  canManageSubJudice,
+} from "../../lib/access-roles.js";
 import {
   candidateCargosForEdital,
   candidateModalidadesForEdital,
@@ -91,6 +94,9 @@ function ModalAberto({ estado, dados, daArea }) {
       <ModalSubJudice
         key={modal.abertura}
         estado={estado}
+        perfil={dados.perfil}
+        aba={modal.aba}
+        candidatoId={modal.candidatoId}
         listas={daArea.listas}
         candidatos={daArea.candidatos}
       />
@@ -196,7 +202,8 @@ export function ListaAprovados({ estado }) {
     return true;
   }
 
-  const podeSubJudice = canManageSubJudice(perfil);
+  const podeSubJudice =
+    canManageSubJudice(perfil) || canAlterarPorDecisaoJudicial(perfil);
   const temListaAtiva = listas.some((item) => item.ativo);
 
   return (
@@ -236,13 +243,13 @@ export function ListaAprovados({ estado }) {
                 disabled={!temListaAtiva}
                 title={
                   temListaAtiva
-                    ? "Incluir candidato sub judice"
+                    ? "Incluir candidato sub judice ou registrar decisão sobre candidato já aprovado"
                     : "É necessário ter uma lista ativa"
                 }
                 onClick={estado.abrirSubJudice}
               >
-                <i className="fa-solid fa-user-plus" aria-hidden="true" />{" "}
-                Incluir sub judice
+                <i className="fa-solid fa-gavel" aria-hidden="true" /> Sub
+                judice
               </button>
             ) : null}
           </div>

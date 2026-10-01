@@ -3,7 +3,6 @@ import {
   OPCOES_DO_FILTRO_DE_STATUS,
   SEM_STATUS,
   candidateCargosForEdital,
-  formatarNota,
   manterSoAsOpcoes,
   opcoesDeEdital,
   paginateApprovedCandidates,
@@ -27,6 +26,7 @@ import {
   AcaoDeStatus,
   Kpi,
   NomeDoCandidato,
+  NotaDoCandidato,
   ErroAoCarregar,
   LinhasEsqueleto,
   Paginacao,
@@ -244,7 +244,9 @@ function TabelaDoGrupo({ grupo, linhas, perfil, aoAbrirStatus }) {
                 <td>
                   <NomeDoCandidato candidato={candidato} />
                 </td>
-                <td className="num">{formatarNota(candidato.nota)}</td>
+                <td className="num">
+                  <NotaDoCandidato candidato={candidato} />
+                </td>
                 <td>
                   <ModalidadeDeclarada
                     candidato={candidato}

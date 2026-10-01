@@ -359,16 +359,42 @@ export const CONTRATO_RPC = {
     resumo: "Remove um anexo do candidato, com o arquivo.",
   },
   incluir_sub_judice: {
-    argumentos: ["p_edital_id", "p_cargo", "p_nome", "p_nota"],
+    argumentos: [
+      "p_edital_id",
+      "p_cargo",
+      "p_nome",
+      "p_nota",
+      "p_modalidade",
+      "p_processo",
+      "p_observacao",
+    ],
     critica: true,
     resumo:
-      "Inclui manualmente um candidato sub judice na lista vigente do edital.",
+      "Inclui manualmente um candidato sub judice na lista vigente do edital (modalidade, processo e observação opcionais); entra na classificação pela nota e fica no histórico.",
   },
   remover_sub_judice: {
     argumentos: ["p_candidato_id"],
     critica: true,
     resumo:
-      "Remove logicamente um candidato sub judice preservando o histórico.",
+      "Remove logicamente um candidato sub judice incluído (não o alterado), fecha a classificação e preserva o histórico.",
+  },
+  alterar_candidato_sub_judice: {
+    argumentos: [
+      "p_candidato_id",
+      "p_nota",
+      "p_modalidade",
+      "p_processo",
+      "p_observacao",
+    ],
+    critica: true,
+    resumo:
+      "Altera nota e/ou modalidade de candidato da lista por decisão judicial (só admin do módulo): guarda o resultado publicado, marca sub judice e refaz a classificação.",
+  },
+  desfazer_alteracao_sub_judice: {
+    argumentos: ["p_candidato_id", "p_observacao"],
+    critica: true,
+    resumo:
+      "Desfaz a alteração judicial (só admin do módulo): volta à nota, modalidade e classificação do resultado publicado.",
   },
 
   // ── Lista de convocação ─────────────────────────────────────────────────

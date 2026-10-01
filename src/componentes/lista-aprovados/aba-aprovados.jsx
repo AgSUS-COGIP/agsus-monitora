@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
+  canAlterarCandidatoSubJudice,
   canEditSubJudice,
-  formatarNota,
-  modalidadeSemAspas,
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
@@ -11,7 +10,9 @@ import {
   AcaoDeAnexos,
   AcaoDeStatus,
   Kpi,
+  ModalidadeDoCandidato,
   NomeDoCandidato,
+  NotaDoCandidato,
   BotaoDeAcao,
   ErroAoCarregar,
   LinhasEsqueleto,
@@ -198,9 +199,13 @@ export function AbaAprovados({
                     <NomeDoCandidato candidato={row} />
                   </td>
                   <td>{row.cargo || "-"}</td>
-                  <td>{modalidadeSemAspas(row.modalidade) || "-"}</td>
+                  <td>
+                    <ModalidadeDoCandidato candidato={row} />
+                  </td>
                   <td className="num">{row.classificacao ?? "-"}</td>
-                  <td className="num">{formatarNota(row.nota)}</td>
+                  <td className="num">
+                    <NotaDoCandidato candidato={row} />
+                  </td>
                   <td>
                     <SeloDeStatus status={text(row.status)} />
                   </td>
@@ -217,6 +222,21 @@ export function AbaAprovados({
                         atributos={{ "data-approved-action": "status" }}
                         aoAbrir={estado.abrirStatus}
                       />
+                      {canAlterarCandidatoSubJudice(perfil, row) ? (
+                        <button
+                          type="button"
+                          className="approved-icone-acao"
+                          data-approved-action="alteracao-judicial"
+                          data-candidate-id={row.candidato_id}
+                          title="Alterar nota ou modalidade por decisão judicial"
+                          aria-label={`Alterar nota ou modalidade de ${row.nome} por decisão judicial`}
+                          onClick={() =>
+                            estado.abrirAlteracaoJudicial(row.candidato_id)
+                          }
+                        >
+                          <i className="fa-solid fa-gavel" aria-hidden="true" />
+                        </button>
+                      ) : null}
                       {canEditSubJudice(perfil, row) ? (
                         <BotaoDeAcao
                           estado={estado}

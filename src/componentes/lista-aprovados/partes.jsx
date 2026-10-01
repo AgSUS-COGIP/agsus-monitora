@@ -2,7 +2,10 @@ import { useState, useSyncExternalStore } from "react";
 import { canChangeCandidateStatus } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
+  alteracaoJudicial,
   canEditCandidateStatus,
+  formatarNota,
+  modalidadeSemAspas,
   statusTravado,
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.js";
@@ -130,6 +133,42 @@ export function NomeDoCandidato({ candidato }) {
         {candidato.lista_ativa ? "" : " · Lista inativa"}
       </small>
     </div>
+  );
+}
+
+/*
+  Nota e modalidade mudadas por decisão judicial aparecem com o valor do
+  resultado publicado riscado antes do atual ("33 → 40").
+*/
+function DeParaJudicial({ de, para }) {
+  return (
+    <span className="approved-de-para" title="Alterado por decisão judicial">
+      <s>{de}</s>
+      <span aria-hidden="true"> → </span>
+      <span className="sr-only"> alterado para </span>
+      <strong>{para}</strong>
+    </span>
+  );
+}
+
+export function NotaDoCandidato({ candidato }) {
+  const mudou = alteracaoJudicial(candidato)?.nota;
+  return mudou ? (
+    <DeParaJudicial
+      de={formatarNota(mudou.de)}
+      para={formatarNota(mudou.para)}
+    />
+  ) : (
+    formatarNota(candidato.nota)
+  );
+}
+
+export function ModalidadeDoCandidato({ candidato }) {
+  const mudou = alteracaoJudicial(candidato)?.modalidade;
+  return mudou ? (
+    <DeParaJudicial de={mudou.de || "-"} para={mudou.para || "-"} />
+  ) : (
+    modalidadeSemAspas(candidato.modalidade) || "-"
   );
 }
 

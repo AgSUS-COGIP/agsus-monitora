@@ -758,6 +758,33 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
   publicado chama sem `p_area` e recebe o de sempre) ou depois (o front novo,
   sem `p_area` no banco, recebe PGRST202 e chama a função sem argumentos).
 
+### Sub judice: inclusão e decisão judicial sobre quem já está na lista
+
+Migration `20261001150000_sub_judice_alteracao.sql` (rollback em
+`supabase/rollback/`, que recusa enquanto houver candidato alterado).
+
+- **Inclusão** (`incluir_sub_judice`, editor do módulo): candidato novo na lista
+  vigente e ativa, com modalidade, processo judicial e observação opcionais.
+- **Decisão judicial** (`alterar_candidato_sub_judice`, só admin do módulo):
+  nota e/ou modalidade novas para quem já está na lista. Na primeira alteração
+  o candidato guarda o resultado publicado (`nota_original`,
+  `modalidade_original`, `classificacao_original`, `sub_judice_original`) e
+  ganha `alterado_judicialmente` e `sub_judice`. `desfazer_alteracao_sub_judice`
+  (só admin) volta ao publicado. `remover_sub_judice` vale só para a inclusão.
+- **Classificação**: `private."FC_RECOLOCAR_NA_CLASSIFICACAO"` põe o candidato
+  na posição da nota dentro da escala dele e renumera a escala (os outros
+  mantêm a ordem). A escala é a vaga da convocação (cargo da lista, e o código
+  da vaga quando o cargo tem mais de uma); quando a planilha classificou por
+  modalidade (o mesmo número em modalidades diferentes), cada modalidade é
+  renumerada à parte. Empate de nota: depois de quem tinha a classificação
+  original melhor.
+- **Histórico**: `TH_CANDIDATO_SUB_JUDICE` (INCLUSAO, ALTERACAO, DESFAZER,
+  REMOCAO; antes e depois de nota, modalidade e classificação; processo,
+  observação, quem e quando). RLS sem policy, sem grant.
+- **Pacote da área**: só a linha alterada leva 4 posições a mais
+  (`alterado_judicialmente`, `nota_original`, `modalidade_original`,
+  `classificacao_original`); o expansor do front lê a que falta como nulo.
+
 ## 13. Recursos: anexos, modelos de resposta e resposta escrita no sistema
 
 Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em

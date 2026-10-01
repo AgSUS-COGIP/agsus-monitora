@@ -221,6 +221,30 @@
   background: var(--state-warning-soft);
   color: var(--state-warning);
 }
+/* Nota/modalidade alteradas por decisão judicial: o publicado riscado, o atual em peso. */
+.approved-de-para {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: inherit;
+  gap: 0 var(--space-1);
+}
+.approved-de-para s {
+  color: var(--text-secondary);
+}
+.approved-de-para strong {
+  color: var(--state-warning);
+  font-weight: 600;
+}
+/* Modal da decisão judicial: o resultado publicado de quem já foi alterado. */
+.approved-decisao-original {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--state-warning-soft);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
 /* Selo de status: badge do DS 11.8 (20px, raio pequeno, caption 500, cor do estado). */
 .approved-status {
   display: inline-flex;

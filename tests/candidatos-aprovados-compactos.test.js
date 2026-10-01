@@ -125,15 +125,48 @@ describe("lista de aprovados numa chamada só", () => {
   });
 });
 
+/* Quem não foi alterado por decisão judicial: as 4 colunas da alteração em nulo. */
+const SEM_ALTERACAO = {
+  alterado_judicialmente: null,
+  nota_original: null,
+  modalidade_original: null,
+  classificacao_original: null,
+};
+
 describe("formato 2: por área, com dicionário", () => {
   it("remonta objetos idênticos aos do formato 1, com as chaves na mesma ordem", () => {
     const antes = expandirCandidatosCompactos(compactarCandidatos(CANDIDATOS));
     const depois = expandirCandidatosCompactos(compactarPorArea(CANDIDATOS));
     expect(depois).toEqual(antes);
-    expect(depois).toEqual(CANDIDATOS.map((c) => ({ ...c })));
+    expect(depois).toEqual(CANDIDATOS.map((c) => ({ ...c, ...SEM_ALTERACAO })));
     depois.forEach((candidato, i) =>
       expect(Object.keys(candidato)).toEqual(Object.keys(antes[i])),
     );
+  });
+
+  it("só a linha alterada por decisão judicial leva as 4 posições a mais", () => {
+    const alterado = {
+      ...CANDIDATOS[0],
+      nota: 40,
+      sub_judice: true,
+      alterado_judicialmente: true,
+      nota_original: 33,
+      modalidade_original: "Ampla concorrência",
+      classificacao_original: 7,
+    };
+    const pacote = compactarPorArea([alterado, CANDIDATOS[1]]);
+    expect(pacote.colunas).toHaveLength(16);
+    expect(pacote.linhas[0]).toHaveLength(16);
+    expect(pacote.linhas[1]).toHaveLength(12);
+    const [de, sem] = expandirCandidatosCompactos(pacote);
+    expect(de).toMatchObject({
+      nota: 40,
+      alterado_judicialmente: true,
+      nota_original: 33,
+      modalidade_original: "Ampla concorrência",
+      classificacao_original: 7,
+    });
+    expect(sem).toMatchObject(SEM_ALTERACAO);
   });
 
   it("cargo e código da vaga repetidos vão uma vez só", () => {
