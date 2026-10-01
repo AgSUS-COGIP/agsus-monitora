@@ -46,6 +46,12 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
 }
+/* Card com título e uma lista embaixo (as pendências prioritárias). */
+.ui-pilha {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
 
 /*
   Botões das telas: o `.btn` de app.css, mais o pequeno (ações de linha, de
@@ -696,6 +702,110 @@
 .ui-kv-valor {
   font-weight: var(--font-weight-medium);
   overflow-wrap: anywhere;
+}
+
+/* ── MaisOpcoes ─────────────────────────────────────────────────────── */
+
+.ui-grade-de-campos[hidden] {
+  display: none;
+}
+.ui-contagem {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-size: var(--text-caption);
+}
+
+/* ── Recorte ───────────────────────────────────────────────────────── */
+
+.ui-recorte {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+}
+.ui-recorte-texto {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+}
+.ui-recorte-marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.ui-marca {
+  --marca-cor: var(--state-neutral);
+  --marca-fundo: var(--state-neutral-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--marca-fundo);
+  color: var(--marca-cor);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.ui-marca[data-tom="sucesso"] {
+  --marca-cor: var(--state-success);
+  --marca-fundo: var(--state-success-soft);
+}
+.ui-marca[data-tom="alerta"] {
+  --marca-cor: var(--state-warning);
+  --marca-fundo: var(--state-warning-soft);
+}
+
+/* ── ListaDePendencias ─────────────────────────────────────────────── */
+
+.ui-pendencias {
+  display: grid;
+  gap: var(--space-2);
+}
+.ui-pendencia {
+  display: grid;
+  gap: var(--space-0-5);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+}
+.ui-pendencia[data-tom="perigo"] {
+  border-left-color: var(--state-danger);
+}
+button.ui-pendencia {
+  cursor: pointer;
+}
+button.ui-pendencia:hover {
+  background: var(--surface-hover);
+}
+.ui-pendencia.is-ativo {
+  border-color: var(--brand-primary);
+  background: var(--state-info-soft);
+}
+.ui-pendencia b {
+  font-weight: var(--font-weight-semibold);
+}
+.ui-pendencia small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.ui-pendencia-esqueleto {
+  height: 52px;
+}
+
+/* TabelaInfinita: "Carregar mais", centrado embaixo do status. */
+.ui-tabela-mais {
+  justify-self: center;
 }
 
 /* ── Celular ───────────────────────────────────────────────────────── */

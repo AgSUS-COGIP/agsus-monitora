@@ -13,13 +13,14 @@ import {
   CardDeGrafico,
   ChipDeFiltro,
   ChipsDeFiltro,
-  classes,
-  EstadoVazio,
   Grafico,
   GradeDeKpis,
   Kpi as CardDeKpi,
+  ListaDePendencias,
+  MaisOpcoes,
   paletaDosGraficos,
   PainelDeFiltros,
+  Recorte as RecorteAtivo,
   TopoDoPainel,
 } from "../../ui/index.js";
 
@@ -126,34 +127,12 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
           </Campo>
         ))}
       </div>
-      <div className="recursos-mais-opcoes">
-        <button
-          type="button"
-          className="btn secondary small"
-          data-acao="mais-opcoes"
-          aria-expanded={maisOpcoes}
-          aria-controls="recursosFiltrosAdicionais"
-          title={
-            maisOpcoes
-              ? "Ocultar filtros adicionais"
-              : "Mostrar a busca em toda a tela"
-          }
-          onClick={() => setMaisOpcoes((atual) => !atual)}
-        >
-          <i
-            className={`fa-solid ${maisOpcoes ? "fa-chevron-up" : "fa-sliders"}`}
-            aria-hidden="true"
-          />{" "}
-          {maisOpcoes ? "Menos opções" : "Mais opções"}
-          {avancados ? (
-            <span className="recursos-contagem-avancada">{avancados}</span>
-          ) : null}
-        </button>
-      </div>
-      <div
+      <MaisOpcoes
         id="recursosFiltrosAdicionais"
-        className="ui-grade-de-campos"
-        hidden={!maisOpcoes}
+        aberto={maisOpcoes}
+        aoAlternar={() => setMaisOpcoes((atual) => !atual)}
+        quantos={avancados}
+        titulo="Mostrar a busca em toda a tela"
       >
         <Campo rotulo="Buscar em toda a tela">
           <input
@@ -166,7 +145,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
             onChange={(evento) => aoMudar("busca", evento.target.value)}
           />
         </Campo>
-      </div>
+      </MaisOpcoes>
       <ChipsDeFiltro>
         {ativos.map(([campo, rotulo, valor]) => (
           <ChipDeFiltro
@@ -341,41 +320,35 @@ export function Recorte({ ativos, recursos, carregado }) {
   const pelaAbertura = recursos.filter(
     (r) => r.prazo.fonte === "abertura",
   ).length;
+  const marcas = [
+    {
+      chave: "vencidos",
+      tom: vencidos ? "alerta" : "sucesso",
+      icone: vencidos ? "fa-triangle-exclamation" : "fa-circle-check",
+      texto: `${formatNumberBR(vencidos)} recurso(s) com o prazo de resposta vencido`,
+    },
+    semPrazo && {
+      chave: "sem-prazo",
+      tom: "alerta",
+      icone: "fa-circle-info",
+      texto: `${formatNumberBR(semPrazo)} sem prazo no cronograma`,
+    },
+    pelaAbertura && {
+      chave: "pela-abertura",
+      icone: "fa-calendar-days",
+      texto: `${formatNumberBR(pelaAbertura)} com prazo estimado (*)`,
+    },
+  ].filter(Boolean);
   return (
-    <section className="ui-card recursos-recorte" aria-label="Recorte ativo">
-      <p className="recursos-recorte-texto" data-recorte="">
-        {ativos.length
+    <RecorteAtivo
+      texto={
+        ativos.length
           ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
-          : "Sem filtros"}
-      </p>
-      {carregado ? (
-        <div className="recursos-recorte-marcas">
-          <span
-            className="recursos-marca"
-            data-tom={vencidos ? "alerta" : undefined}
-          >
-            <i
-              className={`fa-solid ${vencidos ? "fa-triangle-exclamation" : "fa-circle-check"}`}
-              aria-hidden="true"
-            />{" "}
-            {formatNumberBR(vencidos)} recurso(s) com o prazo de resposta
-            vencido
-          </span>
-          {semPrazo ? (
-            <span className="recursos-marca" data-tom="alerta">
-              <i className="fa-solid fa-circle-info" aria-hidden="true" />{" "}
-              {formatNumberBR(semPrazo)} sem prazo no cronograma
-            </span>
-          ) : null}
-          {pelaAbertura ? (
-            <span className="recursos-marca">
-              <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
-              {formatNumberBR(pelaAbertura)} com prazo estimado (*)
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
+          : "Sem filtros"
+      }
+      marcas={marcas}
+      carregando={!carregado}
+    />
   );
 }
 
@@ -383,50 +356,21 @@ export function Recorte({ ativos, recursos, carregado }) {
 
 /* Severidade → tom da borda do item: alta em vermelho; média e baixa em âmbar. */
 const TOM_DA_SEVERIDADE = { alta: "perigo", media: "alerta", baixa: "alerta" };
-const ITENS_DO_ESQUELETO = 4;
 
 function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
-  if (!carregado)
-    return (
-      <div className="recursos-pendencias" aria-hidden="true">
-        {Array.from({ length: ITENS_DO_ESQUELETO }, (_, indice) => (
-          <span
-            className="ui-esqueleto recursos-pendencia-esqueleto"
-            key={indice}
-          />
-        ))}
-      </div>
-    );
   return (
-    <div className="recursos-pendencias">
-      {pendencias.length ? (
-        pendencias.map((p) => {
-          const ativo = filtros.pendencia === p.chave;
-          return (
-            <button
-              type="button"
-              key={p.chave}
-              className={classes("recursos-pendencia", ativo && "is-ativo")}
-              data-tom={TOM_DA_SEVERIDADE[p.severidade]}
-              data-action="pendencia"
-              aria-pressed={ativo}
-              onClick={() => aoFiltrar("pendencia", p.chave)}
-            >
-              <b>{p.titulo}</b>
-              <small>
-                {formatNumberBR(p.valor)}{" "}
-                {p.valor === 1 ? "recurso" : "recursos"}
-                {p.subtitulo ? ` · ${p.subtitulo}` : ""}
-              </small>
-            </button>
-          );
-        })
-      ) : (
-        <EstadoVazio>
-          Nenhuma pendência prioritária no recorte atual.
-        </EstadoVazio>
-      )}
-    </div>
+    <ListaDePendencias
+      carregando={!carregado}
+      vazio="Nenhuma pendência prioritária no recorte atual."
+      itens={pendencias.map((p) => ({
+        chave: p.chave,
+        titulo: p.titulo,
+        detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? "recurso" : "recursos"}${p.subtitulo ? ` · ${p.subtitulo}` : ""}`,
+        tom: TOM_DA_SEVERIDADE[p.severidade],
+        ativo: filtros.pendencia === p.chave,
+        aoClicar: () => aoFiltrar("pendencia", p.chave),
+      }))}
+    />
   );
 }
 
@@ -560,7 +504,7 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-        <article className="ui-card recursos-bloco-de-pendencias">
+        <article className="ui-card ui-pilha">
           <h2 className="ui-titulo">Pendências prioritárias</h2>
           <Pendencias
             pendencias={pendencias}

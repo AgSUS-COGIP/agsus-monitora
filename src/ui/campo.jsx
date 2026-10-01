@@ -6,14 +6,24 @@ import { usarNoQuadro } from "./no-quadro.jsx";
   O campo das telas (`.ui-campo`; no quadro, o `.field` dos painéis): rótulo
   em cima, controle embaixo, dica e erro embaixo. O primeiro `<input>`, `<select>` ou `<textarea>` filho ganha o id do
   rótulo (ou fica com o que já tem — contrato de teste/DOM) e `aria-invalid`
-  quando há erro. `largo` ocupa a linha inteira da grade.
+  quando há erro. `largo` ocupa a linha inteira da grade. Controle que não é
+  um desses (a seleção múltipla, um botão) recebe o id de `idDoControle`.
 */
 
 const CONTROLES = ["input", "select", "textarea"];
 
-export function Campo({ rotulo, erro, dica, obrigatorio, largo, children }) {
+export function Campo({
+  rotulo,
+  erro,
+  dica,
+  obrigatorio,
+  largo,
+  idDoControle,
+  children,
+}) {
   const noQuadro = usarNoQuadro();
-  const gerado = useId();
+  const idGerado = useId();
+  const gerado = idDoControle || idGerado;
   let id = gerado;
   let ligado = false;
   const filhos = Children.map(children, (filho) => {
