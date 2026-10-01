@@ -24,7 +24,6 @@ const PAGINAS = {
   "index.html":
     '<!doctype html><title>MONITORA</title><script src="/assets/main-AbCd1234.js"></script>',
   "analises.html": "<!doctype html><title>Análises</title>",
-  "selecao.html": "<!doctype html><title>Seleção</title>",
   "auth/callback.html": "<!doctype html><title>Callback</title>",
 };
 
@@ -92,8 +91,6 @@ describe("servidor web do MONITORA", () => {
     ["/index.html", "index.html"],
     ["/analises", "analises.html"],
     ["/analises.html", "analises.html"],
-    ["/selecao", "selecao.html"],
-    ["/selecao.html", "selecao.html"],
     ["/auth/callback", "auth/callback.html"],
     ["/auth/callback.html", "auth/callback.html"],
   ])("entrega %s idêntica ao build (%s)", async (url, arquivo) => {
@@ -148,6 +145,8 @@ describe("servidor web do MONITORA", () => {
     "/recursos.html",
     "/entrevistas",
     "/entrevistas.html",
+    "/selecao",
+    "/selecao.html",
     "/assets/",
     "/icons/",
     "/assets/../.env",

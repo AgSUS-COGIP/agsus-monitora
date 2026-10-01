@@ -157,8 +157,8 @@ export function comemorar({
 }
 
 /*
-  Painéis no quadro (análises, seleção) são apps à parte, em iframe: cada
-  um lê o liga/desliga por conta própria, uma vez por página. Falhou (rede,
+  O painel no quadro (análises) é um app à parte, em iframe: lê o
+  liga/desliga por conta própria, uma vez por página. Falhou (rede,
   sem sessão), desligado — e nada mais depende disso.
 */
 let consultaDoPainel = null;

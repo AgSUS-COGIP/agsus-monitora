@@ -103,25 +103,7 @@ describe("a página Análises curriculares", () => {
   });
 });
 
-describe("a página Seleção", () => {
-  beforeEach(() => {
-    pagina = criarPagina("selecao");
-  });
-
-  it("abre o painel de seleção com a área, pelo mesmo módulo", () => {
-    pagina.classList.add("active");
-    definirAreaAtual("projetos");
-
-    const quadro = abrirPaginaDoPainel(pagina, { origem: ORIGEM });
-
-    expect(quadro.classList.contains("external-panel")).toBe(true);
-    expect(endereco().pathname).toBe("/selecao.html");
-    expect(endereco().searchParams.get("area")).toBe("projetos");
-    expect(quadroDoPainel(pagina).title).toBe("Seleção");
-  });
-});
-
-it.each(["recursos", "entrevistas"])(
+it.each(["recursos", "entrevistas", "selecao"])(
   "%s não é mais quadro: é um módulo de src/modulos/",
   (view) => {
     pagina = criarPagina(view);

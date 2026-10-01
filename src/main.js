@@ -61,6 +61,7 @@ import "./styles/configuracoes.css";
 import "./ui/ui.css";
 import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
+import "./modulos/selecao/selecao.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -105,6 +106,7 @@ import { montarCalendarioEditais } from "./componentes/calendario-editais/calend
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 import { montarRecursos } from "./modulos/recursos/recursos.jsx";
 import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
+import { montarSelecao } from "./modulos/selecao/selecao.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
@@ -205,6 +207,12 @@ window.entrevistasController = montarEntrevistas({
   toast: window.monitoraToast,
   comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });
+
+/*
+  Seleção: módulo de src/modulos/, na própria <section>, como Recursos e
+  Entrevistas (área do app, render() a cada abertura). Só leitura.
+*/
+window.selecaoController = montarSelecao({ toast: window.monitoraToast });
 
 // Configurações › Acessos: abre pela seção (config-secoes.js → render()).
 window.acessosController = montarAcessos({

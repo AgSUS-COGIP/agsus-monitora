@@ -1,41 +1,11 @@
 /*
-  Tema claro/escuro dos painéis no quadro (análises curriculares e seleção).
-  As telas do app (Recursos, Entrevistas) seguem o tema do app (src/app/tema.js).
-
-  Os painéis dividem a escolha: o botão de tema de um vale para os outros
-  (a mesma chave no localStorage) e o escuro é `html[data-theme="dark"]`, que
-  o CSS de src/analises/ (analises-painel.css) sabe desenhar. A paleta dos
-  gráficos (Chart.js) acompanha o tema — é a do painel de análises.
+  Tema do painel de análises no quadro (analises.html): a chave em que ele
+  guarda a escolha (o escuro é `html[data-theme="dark"]`, que o CSS de
+  src/analises/ sabe desenhar) e a paleta dos gráficos (Chart.js). As telas do
+  app (Recursos, Entrevistas, Seleção) seguem o tema do app (src/app/tema.js) e
+  usam esta paleta só como reserva dos tokens (paletaDosGraficos, src/ui/).
 */
 export const CHAVE_DO_TEMA_DO_PAINEL = "agsus_analises_theme_v3";
-
-export function temaEscuroDoPainel(raiz = document.documentElement) {
-  return raiz.dataset.theme === "dark";
-}
-
-/* Abre com o tema que a pessoa escolheu da última vez. */
-export function aplicarTemaSalvoDoPainel(raiz = document.documentElement) {
-  try {
-    if (localStorage.getItem(CHAVE_DO_TEMA_DO_PAINEL) === "dark")
-      raiz.dataset.theme = "dark";
-  } catch {
-    /* Sem localStorage (janela privada): fica o claro. */
-  }
-  return temaEscuroDoPainel(raiz);
-}
-
-/* Troca o tema e guarda a escolha; devolve se ficou escuro. */
-export function alternarTemaDoPainel(raiz = document.documentElement) {
-  const escuro = !temaEscuroDoPainel(raiz);
-  raiz.dataset.theme = escuro ? "dark" : "";
-  try {
-    if (escuro) localStorage.setItem(CHAVE_DO_TEMA_DO_PAINEL, "dark");
-    else localStorage.removeItem(CHAVE_DO_TEMA_DO_PAINEL);
-  } catch {
-    /* Sem localStorage: a troca vale até fechar. */
-  }
-  return escuro;
-}
 
 /* Cores dos gráficos: a série de status e a grade/texto do tema. */
 export function paletaDoPainel(escuro) {

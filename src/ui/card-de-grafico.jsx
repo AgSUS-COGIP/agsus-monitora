@@ -1,5 +1,4 @@
 import { classes } from "./classes.js";
-import { usarNoQuadro } from "./no-quadro.jsx";
 
 /*
   Bloco de gráfico: título e o corpo (`altura`: "short", "alto"…). Sem
@@ -7,8 +6,7 @@ import { usarNoQuadro } from "./no-quadro.jsx";
   para o bloco que ocupa a linha inteira. `carregando`: o corpo pulsa (o
   gráfico continua montado por baixo e só é atualizado quando o dado chega).
 
-  Dentro do app: `.ui-card.ui-card-de-grafico` > `.ui-grafico[data-altura]`.
-  No quadro (<PainelNoQuadro>): `.panel.panel-pad` > `.chart-wrap`.
+  Marcação: `.ui-card.ui-card-de-grafico` > `.ui-grafico[data-altura]`.
 */
 export function CardDeGrafico({
   titulo,
@@ -18,14 +16,6 @@ export function CardDeGrafico({
   elemento: Elemento = "article",
   children,
 }) {
-  const noQuadro = usarNoQuadro();
-  if (noQuadro)
-    return (
-      <Elemento className={classes("panel panel-pad", className)}>
-        <h2 className="title">{titulo}</h2>
-        <div className={classes("chart-wrap", altura)}>{children}</div>
-      </Elemento>
-    );
   return (
     <Elemento
       className={classes("ui-card ui-card-de-grafico", className)}

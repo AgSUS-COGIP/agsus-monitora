@@ -3,16 +3,12 @@
   tokens de src/styles/tokens.css — o tema escuro vem de
   `html[data-theme="dark"]` nos próprios tokens.
 
-  Importado pelo src/main.js (o app) e pelos painéis que ainda rodam no quadro
-  (Entrevistas e Seleção, depois do CSS de src/analises/).
+  Importado uma vez, pelo src/main.js (o app).
 
-  Dentro do app, os componentes usam só as classes `.ui-*` daqui (prefixo para
-  não colidir com `.panel`, `.kpi`, `.card`… de src/styles/app.css). Os
-  seletores de elemento do app (`label`, `th`, `td`, `table`) são vencidos
-  aqui por classe. No quadro (<PainelNoQuadro>), os componentes devolvem a
-  marcação do painel de análises (`.topbar`, `.kpi`, `.filter-panel`,
-  `.chart-wrap`, `.table-card`, `.analises-drawer`…), desenhada por
-  src/analises/*.css — transição até Entrevistas e Seleção saírem do quadro.
+  Os componentes usam só as classes `.ui-*` daqui (prefixo para não colidir
+  com `.panel`, `.kpi`, `.card`… de src/styles/app.css). Os seletores de
+  elemento do app (`label`, `th`, `td`, `table`) são vencidos aqui por
+  classe.
 */
 
 /* ── Tela (a raiz de um módulo de página inteira) ───────────────────── */
@@ -50,8 +46,7 @@
 /*
   Botões das telas: o `.btn` de app.css, mais o pequeno (ações de linha, de
   gaveta e dos filtros) e o destrutivo (DESIGN.md, "Botão"), que app.css não
-  tem fora de seções específicas. Só dentro de uma tela ou gaveta de src/ui/
-  — no quadro, quem desenha esses botões é src/analises/*.css.
+  tem fora de seções específicas. Só dentro de uma tela ou gaveta de src/ui/.
 */
 :is(.ui-tela, .ui-gaveta) .btn.small {
   min-height: 32px;
@@ -99,17 +94,6 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-}
-.ui-topo-titulo h2 {
-  margin: 0;
-  font-size: var(--text-h3);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-h3);
-}
-.ui-topo-titulo p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
 }
 .ui-topo-acoes {
   display: flex;
