@@ -211,7 +211,12 @@
   color: var(--state-danger);
   text-decoration: none;
 }
-.ui-campo :is(input, select, textarea) {
+/*
+  Caixa de marcar e botão de rádio ficam de fora (`:where` não pesa na
+  especificidade): a seleção múltipla do campo tem caixas por dentro.
+*/
+.ui-campo
+  :is(input:not(:where([type="checkbox"], [type="radio"])), select, textarea) {
   min-height: 40px;
   border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
@@ -224,7 +229,12 @@
   min-height: 88px;
   padding: var(--space-2) var(--space-3);
 }
-.ui-campo :is(input, select, textarea):focus {
+.ui-campo
+  :is(
+    input:not(:where([type="checkbox"], [type="radio"])),
+    select,
+    textarea
+  ):focus {
   border-color: var(--focus-ring);
   box-shadow: none;
 }
