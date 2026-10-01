@@ -7,7 +7,9 @@
   position: fixed;
   top: var(--space-5, 24px);
   left: 50%;
-  z-index: 10001;
+  /* Acima do cabeçalho (.top 10030), da barra lateral (10036) e do painel de
+     Pessoas online (10040): com 10001 o aviso ficava escondido atrás do topo. */
+  z-index: 10045;
   display: flex;
   align-items: center;
   gap: var(--space-3, 12px);
@@ -47,7 +49,7 @@
 .comemoracao__confete {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: 10044;
   pointer-events: none;
 }
 @keyframes comemoracao-entra {
