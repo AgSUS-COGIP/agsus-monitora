@@ -112,7 +112,10 @@ export function MapaDoDsei({
     if (!L || !elemento) return undefined;
     const novo = criarMapa(L, elemento);
     adicionarFundo(L, novo, elemento);
-    const pararDeObservar = observarTamanho(novo, elemento);
+    // Aberto com a página escondida, reenquadra quando ela aparecer.
+    const pararDeObservar = observarTamanho(novo, elemento, {
+      aoAparecer: () => ultimoEnquadrar.current(novo, escopo.current),
+    });
     const base = L.layerGroup().addTo(novo);
     const unidades = L.layerGroup().addTo(novo);
     desenharContornos(L, base, "detalhe");

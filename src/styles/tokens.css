@@ -273,6 +273,14 @@
   --series-4: #6d5efc;
   --series-5: #d55181;
   --series-6: #8a6d00;
+
+  /* Terras Indígenas (domínio, não paleta: DESIGN.md 3.1): as mesmas
+     constantes de `indigenous-territories-layer.js` — o botão da camada e a
+     legenda do mapa da Saúde Indígena leem daqui
+     (`tests/cor-da-terra-indigena.test.js` confere). */
+  --terra-definitiva: #7a4a1f;
+  --terra-fundo: #d6b07a;
+  --terra-em-processo: #c8520f;
 }
 
 html[data-theme="dark"] {

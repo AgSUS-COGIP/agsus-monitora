@@ -43,8 +43,9 @@ function camada(tipo, latlng, opcoes = {}) {
     c.opcoesDaDica = opcoesDaDica;
     return c;
   };
-  c.bindPopup = (conteudo) => {
+  c.bindPopup = (conteudo, opcoesDoPopup) => {
     c.popup = conteudo;
+    c.opcoesDoPopup = opcoesDoPopup;
     return c;
   };
   c.closeTooltip = () => c;

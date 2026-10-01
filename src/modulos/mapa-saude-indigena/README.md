@@ -1,9 +1,8 @@
 # `src/modulos/mapa-saude-indigena/` — Mapa da Saúde Indígena
 
-O mapa da Visão geral da área Saúde Indígena em React (Etapa 5, a parte "mapas"). Peça
-independente, **ainda não ligada**: o legado (`legacy-app.js` + `#map`/`#detailMap` do
-`index.html`) continua desenhando o mapa até a ligação, feita depois que a parte não-mapa da
-Visão geral (`src/modulos/visao-geral/`) entrar.
+O mapa da Visão geral da área Saúde Indígena em React (Etapa 5, a parte "mapas"), ligado na Visão
+geral (`src/modulos/visao-geral/`) e lendo o estado dela. O legado não desenha mais mapa da Saúde
+Indígena; só o de Projetos (municípios das vagas) continua legado.
 
 ```
 mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (calor, tela cheia), contas memorizadas,
@@ -25,95 +24,75 @@ prioridade lmap → reconciliação → rede_cnes, vínculo, tipos, resumo da di
 popups), `contornos.js` (UF_GEO e BR_OUTLINE). Explicações para a Aya:
 `docs/aya/regras-do-mapa-saude-indigena.md`. Testes: `tests/mapa-saude-indigena.test.js` (regras,
 com fixture real das Lotações de `public/data`) e `tests/modulos/mapa-saude-indigena.test.js`
-(componente, Leaflet falso em `tests/modulos/leaflet-falso.js`).
+(componente, Leaflet falso em `tests/modulos/leaflet-falso.js`); a ligação com o estado em
+`tests/modulos/visao-geral.test.js`; dicas e popups em `tests/dica-dentro-do-mapa.test.js`.
 
-## Contrato para ligar na Visão geral
+## Ligação na Visão geral
+
+Ligado em `src/modulos/visao-geral/visao-geral.jsx` (`MapaDaSaudeIndigena`), só quando a área é a
+Saúde Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO estado da Visão geral
+(`src/modulos/visao-geral/estado.js`) e pede a ele:
 
 ```jsx
-import { MapaSaudeIndigena } from "../mapa-saude-indigena/mapa-saude-indigena.jsx";
-// CSS: import "./modulos/mapa-saude-indigena/mapa-saude-indigena.css" em src/main.js, depois de ui.css
-
 <MapaSaudeIndigena
-  lmap={lmap}                    // payload da chave "lmap"
-  redeCnes={redeCnes}            // payload da chave "rede_cnes"
-  linhas={linhasDoRecorte}       // editais da área já recortados (filtros + busca + DSEI)
-  filtroAtivo={haFiltroAtivo}    // hasActiveFilter(): filtro, busca ou DSEI
-  dseiSelecionado={dsei?.k}      // controlado: chave `k` do lmap (ou o nome; compara por chaveDoDsei)
-  carregando={!lmap}
-  aoEscolherDsei={(d) => …}      // bolha ou linha do ranking: o pai recorta a página pelo DSEI
-  aoSairDoDsei={() => …}         // trilho "Brasil": o pai tira só o DSEI do recorte
-  aoFiltrarPorBusca={(t) => …}   // CASAI nacional: busca "CASAI <cidade>"
-  aoEscolherUnidade={(r) => …}   // opcional: unidade da lista (o mapa já voa até ela)
-  tema="escuro" | "claro"        // opcional; sem ele segue usarTemaEscuro()
+  lmap={e.mapa.lmap} // TB_CONFIG_MAPA_SAUDE_INDIG, chave "lmap" (com as Lotações)
+  redeCnes={e.mapa.redeCnes} // chave "rede_cnes"
+  linhas={e.filtradas} // editais da área recortados (filtros + busca + DSEI)
+  filtroAtivo={e.temRecorte}
+  dseiSelecionado={e.dsei.chave} // chave normalizada (chaveDoDsei)
+  carregando={!e.mapa.lmap}
+  aoEscolherDsei={(d) => estado.definirDsei(d.k, d.n)} // bolha ou ranking
+  aoSairDoDsei={estado.tirarDsei} // trilho "Brasil"
+  aoFiltrarPorBusca={estado.definirBusca} // CASAI nacional: "CASAI <cidade>"
 />
 ```
 
-| Prop / evento       | De onde vem hoje no legado                                                                                                                                                                                                                                                        |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lmap`, `redeCnes`  | `loadMapaConfig` lê `TB_CONFIG_MAPA_SAUDE_INDIG` (chaves `lmap`, `rede_cnes`) pelo cliente decorado por `lotacoes-geograficas-transport.js`, que mescla as Lotações (`applyLotacoesGeograficas`). Ao ligar: a mesma consulta no `estado.js` da Visão geral (ou o legado publica). |
-| `linhas`            | `filtered` de `applyFilters` (área atual + `filterState` + busca + `dseiSelecionado`)                                                                                                                                                                                             |
-| `filtroAtivo`       | `hasActiveFilter()`                                                                                                                                                                                                                                                               |
-| `dseiSelecionado`   | `dseiSelecionado`/`dseiSelecionadoNome` (`entrarNoTerritorio`/`sairDoTerritorio`); trocar de área sai do DSEI                                                                                                                                                                     |
-| `aoEscolherDsei`    | `entrarNoTerritorio(d)`: guarda o DSEI e chama `applyFilters()` (a tabela e os KPIs passam a ser só dele)                                                                                                                                                                         |
-| `aoSairDoDsei`      | `resetDetailMap()`/`voltarAoBrasil()`: tira o DSEI, mantém os filtros; a pílula "DSEI X ×" também chama                                                                                                                                                                           |
-| `aoFiltrarPorBusca` | clique da CASAI nacional: `#tableSearch = "CASAI " + cidade` e `applyFilters()`                                                                                                                                                                                                   |
+- **Dados.** `loadMapaConfig` (legado) continua lendo a tabela — ela faz parte da cópia da sessão
+  e da recarga — e publica `estado.definirDadosDoMapa({ lmap, redeCnes })`.
+- **DSEI.** `definirDsei` guarda `chaveDoDsei(chave)`; o recorte compara com
+  `chaveDoDsei(linha.unidade)`. O chip "DSEI X ×" e o trilho "Brasil" chamam `tirarDsei` (os
+  filtros ficam); "Limpar tudo", a busca global (`localizar`) e a troca de área tiram o DSEI.
+- **Ciclo de vida.** Trocar de área desmonta o componente e o `remove` do Leaflet (StrictMode limpo).
 
 **Ids.** Os contêineres dos mapas recebem `id="map"` (nacional) e `id="detailMap"` (DSEI)
 (`idDoMapaNacional`/`idDoMapaDoDsei`), porque `indigenous-territories-layer.js` e
 `map-base-layer-switcher.js` só enfeitam mapas com esses ids (Terras Indígenas, abrangência,
-Mapa/Satélite). Por isso **a marcação antiga sai do `index.html` na mesma mudança** — dois `#map`
-na página quebram as camadas. O `map-guard.js` e o `map-zoom-range.js` valem para qualquer mapa.
-Ganchos da camada de terras usados (todos opcionais): `__agsusSetDseiCoverage`,
+Mapa/Satélite). A marcação antiga saiu do `index.html`: nenhum outro `#map`/`#detailMap` na página.
+O mapa de Projetos (legado) usa `#mapaDosProjetos`. O `map-guard.js` e o `map-zoom-range.js` valem
+para qualquer mapa. Ganchos da camada de terras usados (todos opcionais): `__agsusSetDseiCoverage`,
 `__agsusAoMudarTerras`, `__agsusEnquadrarTerra`, `__agsusDseiCoverageBounds`,
 `agsus:dsei-coverage-ready`, `__agsusDseiCoverageLayer`, `__agsusFaseDaTerraVisivel`,
 `__agsusAlternarFaseDaTerra`, `agsus:terras-mudaram`, `__agsusSuspenderCamadasIndigenas`.
 
-**Projetos/SEDE.** O componente é só da Saúde Indígena: na área Projetos a Visão geral monta o
-mapa de municípios (outro trabalho), na SEDE nenhum. Não há mais `__agsusSuspenderCamadasIndigenas(true)`
-num mapa compartilhado — cada área tem o seu.
+**Projetos/SEDE.** O componente é só da Saúde Indígena. Em Projetos a Visão geral mostra o bloco
+legado do `index.html` (`#mapaDaVisaoGeral`: `criarMapaDosMunicipios` e `desenharMunicipiosDaArea`
+em `src/modules/municipios-da-visao-geral.js`); na SEDE, nenhum.
 
-### O que substituir no legado, na ligação
+**Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.js`,
+também no mapa de Projetos): a dica que abre perto da borda troca de direção (em cima → embaixo →
+o lado com mais espaço) em vez de sair do contêiner, tem largura máxima relativa ao mapa e quebra
+na palavra (`.dica-no-mapa`, `src/ui/ui.css`); o popup tem `autoPan` com folga para os controles,
+`keepInView` e `maxWidth`/`maxHeight` relativos ao tamanho do mapa (celular e mapa do DSEI).
 
-- `index.html`: o bloco `.health-map-workspace` inteiro (os dois `section.health-map-pane`, `#map`,
-  `#detailMap`, `#brasilDseiList`, `#masterMapCount`, `#detailUnitList`, `#detailTerraList`,
-  `#detailFiltros`, `#detailExternal*`, `#detailMapReset`, `#mapLegend*`, a legenda do detalhe).
-- `legacy-app.js` (removíveis, depois de `grep`): `LMAP`/`REDE_CNES` (passam ao estado da Visão
-  geral), `UF_GEO`, `BR_OUTLINE` (importar de `src/lib/mapa-saude-indigena/contornos.js` se ainda
-  houver uso), `_unpackEstab`, as variáveis `_leaflet`, `_layer*`, `_detail*`, `_marcadoresDsei`,
-  `_tracosDoLeque`, `_mapResizeObservers`, `_heatMode`, `_ptsZoom`, `_saBounds`, `_homeFlyTimer`,
-  `_suppressAutoFit`, `_lastMapAutoFitKey`, `_BRASIL_VIEW`, `_detailTiposOcultos`,
-  `_resumoDaRedePorDsei`; as funções `addResilientMapTiles`, `observeLeafletSize`,
-  `setBrazilMaxBounds`, `flyToBrasil`, `toggleHeatMap`, `rebuildDseiIndex`/`DSEI_BY_K`, `mapNameKey`,
-  `_wordContains`, `_strongNameMatch`, `findCnesPoloRecord`, `polosCorrigidosPorCnes`, `procCounts`,
-  `heatColor`, `initLeaflet`, `initDetailLeaflet`, `drawDetailBrazilBase`, `detailUnitType`,
-  `TIPO_SEDE`/`TIPO_POLO`/`TIPO_CASAI`, `detailRecordsForDsei`, `_tiposDoTerritorio`,
-  `renderDetailTerraList`, `renderDetailUnitList`, `renderDetailFiltros`, `renderDetailMap`,
-  `enquadrarDetalhe`, `atualizarChipDeVinculos`, `toggleVinculosExternos`,
-  `definirSelecaoDoMapaDetalhado`, `resetDetailMap`, `scheduleMapResize`, `drawBrasilOutline`,
-  `renderPainelNacional`, `corDoTracoDoLeque`, `aplicarLequeDosDsei`, `drawDSEIBubbles`, `drawCasai`,
-  `_spread`, `drawRedeAssistencial`, `drawPolos`, `esquecerResumoDaRede`, `resumoDaRedeDoDsei`,
-  `mapVoltar`, `syncMapLevelUI`; a parte Saúde Indígena de `renderMap` e `voltarAoBrasil`;
-  `resetDetailMap`/`toggleVinculosExternos` do `Object.assign(window, …)`. Ficam (são da página):
-  `dseiKey` (ou trocar por `chaveDoDsei`), `dseiSelecionado`, `entrarNoTerritorio`/`sairDoTerritorio`
-  reduzidos a estado + `applyFilters`, `chaveDeRenderDoMapa`, `loadMapaConfig` (até o estado da
-  Visão geral ler a tabela).
-  **Já é código morto hoje:** `drawPolos`, `drawRedeAssistencial`, `polosCorrigidosPorCnes`,
-  `findCnesPoloRecord`, `_spread`, `_layerPolos`/`_layerUbsi`/`_layerCasaiLocal` e o ramo
-  "Polos base do DSEI" de `syncMapLevelUI` (nada chama `drawPolos`).
-- `src/modules/` que saem com o legado do mapa: `vinculos-territoriais.js`
-  (e `aplicarLegendaDoMapaDetalhado` no `src/main.js`), `controles-do-mapa.js`,
-  `legenda-das-terras.js`, `health-map-immersive-workspace.js` (tela cheia agora é do componente) e o
-  trecho `#map` de `health-dashboard-refinements.js`. Ficam: `indigenous-territories-layer.js`,
-  `map-guard.js`, `map-base-layer-switcher.js`, `map-zoom-range.js`, `lotacoes-geograficas-transport.js`.
-- CSS que perde seletor: `health-map-workspace.css` (as regras `.health-map-*`, `.mapa-marcador*`),
-  `health-map-size-tuning.css`, `health-map-immersive-workspace.css`, o trecho `#map` de
-  `health-map-contrast.css`, `legenda-das-terras.css` (levar os três `--terra-*` para `tokens.css`
-  ou para o CSS do módulo).
-- Testes que leem o texto do legado do mapa (`enquadramento-do-mapa`, `pos159-regressoes`,
-  `sede-do-dsei-e-casai`, `controles-do-mapa`, `legenda-das-terras`, `vinculo-territorial`,
-  `contagem-da-dica-do-dsei`…): migrar o que valer para os testes deste módulo e apagar o resto.
-  As conferências "igual ao legado" de `tests/mapa-saude-indigena.test.js` se desligam sozinhas
-  quando a cópia do legado sumir.
+### O que saiu do legado na ligação
+
+- `index.html`: o bloco do mapa da Saúde Indígena inteiro (os dois `section.health-map-pane`,
+  `#map`, `#detailMap`, listas, filtros, vínculos externos, legendas). Ficou só o de Projetos.
+- `legacy-app.js`: `LMAP`, `REDE_CNES`, `UF_GEO`, `BR_OUTLINE` (a cópia única é
+  `src/lib/mapa-saude-indigena/contornos.js`), `initLeaflet`, `initDetailLeaflet`, `drawDSEIBubbles`,
+  `drawCasai`, `renderDetailMap`, `detailRecordsForDsei`, `renderPainelNacional`, o leque, o calor, os
+  vínculos externos, `resetDetailMap`, `voltarAoBrasil`, `syncMapLevelUI`, o código morto
+  (`drawPolos`, `drawRedeAssistencial`, `polosCorrigidosPorCnes`…), `dseiSelecionado`,
+  `applyFilters`/`aoMudarRecorte` e o `ligarMapa` do estado. Ficou o mapa de Projetos (`renderMap`,
+  `desenharMunicipiosNoMapa`, `scheduleMapResize`) e `loadMapaConfig`, que publica no estado.
+- `src/modules/`: `vinculos-territoriais.js`, `controles-do-mapa.js`, `legenda-das-terras.js`,
+  `health-map-immersive-workspace.js`.
+- CSS: `health-map-size-tuning.css`, `health-map-immersive-workspace.css`,
+  `health-map-contrast.css`, `legenda-das-terras.css` (os `--terra-*` foram para `tokens.css`), as
+  regras do mapa da Saúde Indígena em `health-map-workspace.css` e os `#map` de `app.css`,
+  `visual-polish.css`, `mobile-app.css` e `system-ui-fixes.css` (pegariam o `#map` do componente).
+- Testes que liam o texto do legado: migrados para as regras de `src/lib/mapa-saude-indigena/` ou
+  para o componente; os dos módulos apagados saíram com eles.
 
 ## O que mudou em relação ao legado
 
@@ -127,3 +106,6 @@ num mapa compartilhado — cada área tem o seu.
 - Enquadramento do Brasil por `BRASIL_BOUNDS` (contorno real), como o `map-guard`, em vez do
   retângulo antigo que cortava a ponta leste.
 - O mapa do DSEI é criado ao abrir o distrito e destruído ao sair (antes ficava montado escondido).
+- O DSEI ativo é verde com borda amarela, como a legenda diz (`CORES_DO_MAPA`). O legado pintava
+  de azul por cima, com o `health-map-contrast.css` (que saiu), e a legenda dele dizia verde.
+- Dicas que não saem do mapa perto da borda; popups que cabem no celular.

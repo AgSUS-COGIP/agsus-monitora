@@ -159,6 +159,8 @@ export function MapaNacional({
   const [mapa, definirMapa] = useState(null);
   const camadas = useRef(null);
   const ultimoEnquadramento = useRef("");
+  // Quantas vezes o contêiner passou de escondido (medida zero) a visível.
+  const [aparecimentos, aparecer] = useReducer((n) => n + 1, 0);
   const chamadas = usarUltimo({ aoEscolherDsei, aoFiltrarPorBusca });
   const avisosDasTerras = usarAvisosDasTerras(mapa);
 
@@ -169,7 +171,16 @@ export function MapaNacional({
     const novo = criarMapa(L, elemento);
     novo.fitBounds(L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]));
     adicionarFundo(L, novo, elemento);
-    const pararDeObservar = observarTamanho(novo, elemento);
+    /*
+      Criado escondido (antes do login, noutra tela) o enquadramento usa a
+      medida zero: ao aparecer, enquadra de novo.
+    */
+    const pararDeObservar = observarTamanho(novo, elemento, {
+      aoAparecer: () => {
+        ultimoEnquadramento.current = "";
+        aparecer();
+      },
+    });
     const contornos = L.layerGroup().addTo(novo);
     const dsei = L.layerGroup().addTo(novo);
     const casai = L.layerGroup().addTo(novo);
@@ -261,7 +272,7 @@ export function MapaNacional({
     }
     // Se o enquadramento não mudou o zoom, o `zoomend` não dispara.
     camadas.current.leque();
-  }, [L, mapa, enquadramento, visivel]);
+  }, [L, mapa, enquadramento, visivel, aparecimentos]);
 
   // Voltou a aparecer, ou mudou para tela cheia: o Leaflet remede.
   useEffect(() => {

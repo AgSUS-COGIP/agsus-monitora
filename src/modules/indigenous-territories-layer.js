@@ -823,6 +823,20 @@ function enhanceMap(L, map) {
     Indígena devolve o que a pessoa tinha. Ver `__agsusSuspenderCamadasIndigenas`.
   */
   let suspensas = false;
+  /*
+    Removido = o mapa saiu da página. Os da Saúde Indígena são React: o do
+    DSEI é destruído ao voltar ao Brasil, os dois ao trocar de área (e o
+    StrictMode monta, desmonta e monta de novo). O que chega depois —
+    catálogo, abrangência, terras em estudo, o redesenho agendado — não toca
+    num mapa removido (o Leaflet quebraria sem os painéis).
+  */
+  let removido = false;
+  map.on?.("unload", () => {
+    removido = true;
+    clearTimeout(refreshTimer);
+    clearTimeout(fimDoDestaque);
+    requestController?.abort?.();
+  });
 
   const rasterPaneName = "agsus-indigenous-territories";
   const rasterPane =
@@ -954,6 +968,7 @@ function enhanceMap(L, map) {
   });
 
   const desenharEstudo = () => {
+    if (removido) return;
     estudoLayer.clearLayers();
     if (
       !estudoGeojson?.features ||
@@ -1046,6 +1061,7 @@ function enhanceMap(L, map) {
   map.__agsusDseiCoverageLayer = dseiLayer;
 
   const renderDseiCoverage = () => {
+    if (removido) return;
     if (!dseiGeojson?.features) return;
     dseiLayer.clearLayers();
     if (suspensas) {
@@ -1125,7 +1141,9 @@ function enhanceMap(L, map) {
   let lastViewportKey = "";
 
   const visible = () =>
-    !suspensas && map.__agsusIndigenousTerritoriesVisible !== false;
+    !removido &&
+    !suspensas &&
+    map.__agsusIndigenousTerritoriesVisible !== false;
 
   const useRasterFallback = () => {
     if (!visible()) return;

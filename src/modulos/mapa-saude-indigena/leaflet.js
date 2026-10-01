@@ -18,6 +18,10 @@ import {
   formaDoTipo,
 } from "../../lib/mapa-saude-indigena/formas.js";
 import { BR_OUTLINE, UF_GEO } from "../../lib/mapa-saude-indigena/contornos.js";
+import {
+  manterDicasDentroDoMapa,
+  opcoesDoPopup,
+} from "../../lib/dica-dentro-do-mapa.js";
 
 export function obterLeaflet() {
   const L = globalThis.L;
@@ -35,9 +39,11 @@ export function podeFlutuar() {
 /*
   `zoomSnap` em quartos é o que faz o Brasil (ou o distrito) encher a
   moldura: com 1, o `fitBounds` só aceita zoom inteiro e o país ocupava 60%.
+  Toda dica e todo popup do mapa ficam dentro dele (`manterDicasDentroDoMapa`:
+  direção que cabe, largura relativa ao mapa); o `remove` desfaz o ouvinte.
 */
 export function criarMapa(L, elemento) {
-  return L.map(elemento, {
+  const mapa = L.map(elemento, {
     zoomControl: true,
     scrollWheelZoom: true,
     attributionControl: true,
@@ -47,6 +53,8 @@ export function criarMapa(L, elemento) {
     zoomDelta: 0.5,
     worldCopyJump: false,
   });
+  manterDicasDentroDoMapa(mapa);
+  return mapa;
 }
 
 /*
@@ -103,19 +111,35 @@ export function adicionarFundo(L, mapa, elemento) {
   return montar().addTo(mapa);
 }
 
-/* O Leaflet guarda a última medida: o contêiner que muda de tamanho avisa. */
-export function observarTamanho(mapa, elemento) {
+/*
+  O Leaflet guarda a última medida: o contêiner que muda de tamanho avisa.
+
+  O mapa pode nascer escondido — a Visão geral monta antes do login, e fica
+  montada noutra tela ou ao trocar de área — e o enquadramento feito com
+  medida zero sai no zoom errado (o do `map-guard` também desiste). Quando o
+  contêiner passa de zero para um tamanho, `aoAparecer` reenquadra.
+*/
+export function observarTamanho(mapa, elemento, { aoAparecer } = {}) {
   if (typeof ResizeObserver === "undefined") return () => {};
+  const temTamanho = () =>
+    Boolean(elemento.offsetWidth && elemento.offsetHeight);
+  let visivel = temTamanho();
   let quadro = 0;
   const observador = new ResizeObserver(() => {
     cancelAnimationFrame(quadro);
     quadro = requestAnimationFrame(() => {
-      if (!elemento.offsetWidth || !elemento.offsetHeight) return;
+      if (!temTamanho()) {
+        visivel = false;
+        return;
+      }
       try {
         mapa.invalidateSize({ animate: false, pan: false });
       } catch {
         // mapa já removido
       }
+      if (visivel) return;
+      visivel = true;
+      aoAparecer?.();
     });
   });
   observador.observe(elemento);
@@ -259,7 +283,8 @@ export function iconeDaCasaiNacional(L, documento) {
   baixo do cursor).
 */
 export function ligarDicaEPopup(marcador, documento, { dica, popup }) {
-  if (popup) marcador.bindPopup(conteudoEmElemento(documento, popup));
+  if (popup)
+    marcador.bindPopup(conteudoEmElemento(documento, popup), opcoesDoPopup());
   if (dica && podeFlutuar()) {
     marcador.bindTooltip(conteudoEmElemento(documento, dica), {
       direction: "top",

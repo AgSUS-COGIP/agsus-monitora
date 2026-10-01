@@ -44,7 +44,6 @@ import {
   territoriosPorVagas,
   textoDaFonteDaCoordenada,
 } from "../src/lib/mapa-saude-indigena/mapa-nacional.js";
-import { formaDoTipo as formaDoLegado } from "../src/modules/vinculos-territoriais.js";
 import { applyLotacoesGeograficas } from "../src/modules/lotacoes-geograficas-transport.js";
 
 /*
@@ -458,10 +457,8 @@ describe("com os dados reais das Lotações (fixture de public/data)", () => {
   });
 });
 
-describe("formas, cores e contornos batem com o legado enquanto ele existir", () => {
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
-
-  it("as formas e as cores são as do vinculos-territoriais", () => {
+describe("formas, cores e contornos (a cópia única, desde que o legado saiu)", () => {
+  it("cada tipo tem a sua forma e a sua cor, na ordem da legenda", () => {
     expect([...TIPOS_DA_LEGENDA]).toEqual([
       "sede",
       "polo",
@@ -469,46 +466,35 @@ describe("formas, cores e contornos batem com o legado enquanto ele existir", ()
       "ubsi",
       "unit",
     ]);
-    for (const tipo of TIPOS_DA_LEGENDA) {
-      expect(FORMAS[tipo].forma, tipo).toBe(formaDoLegado(tipo).forma);
-      expect(FORMAS[tipo].cor, tipo).toBe(formaDoLegado(tipo).cor);
-    }
+    expect(
+      Object.fromEntries(
+        TIPOS_DA_LEGENDA.map((tipo) => [
+          tipo,
+          [FORMAS[tipo].forma, FORMAS[tipo].cor],
+        ]),
+      ),
+    ).toEqual({
+      sede: ["estrela", "#1f2937"],
+      polo: ["circulo", "#e49a1b"],
+      casai: ["casa", "#d92d3a"],
+      ubsi: ["cruz", "#6d28d9"],
+      unit: ["losango", "#0d8192"],
+    });
   });
 
-  it("o tipo pelo nome é o do detailUnitType", () => {
+  it("o tipo vem do nome da unidade", () => {
     expect(tipoDaUnidade("CASA DE SAÚDE INDÍGENA").key).toBe("casai");
     expect(tipoDaUnidade("POLO BASE X").key).toBe("polo");
     expect(tipoDaUnidade("UNIDADE BÁSICA Y").key).toBe("ubsi");
     expect(tipoDaUnidade("POSTO").key).toBe("unit");
-    const legado = app.slice(
-      app.indexOf("function detailUnitType"),
-      app.indexOf("const TIPO_SEDE"),
-    );
-    if (legado) {
-      for (const tipo of ["polo", "casai", "ubsi", "unit"])
-        expect(legado, tipo).toContain(FORMAS[tipo].cor);
-    }
   });
 
-  function literalDoLegado(nome) {
-    const inicio = app.indexOf(`const ${nome} = {`);
-    if (inicio < 0) return null;
-    const corpo = app.slice(app.indexOf("{", inicio));
-    let profundidade = 0;
-    for (let i = 0; i < corpo.length; i += 1) {
-      if (corpo[i] === "{") profundidade += 1;
-      else if (corpo[i] === "}" && --profundidade === 0)
-        return new Function(`return ${corpo.slice(0, i + 1)}`)();
-    }
-    return null;
-  }
-
-  it("UF_GEO e BR_OUTLINE iguais aos do legado (até a cópia dele sair)", () => {
-    const uf = literalDoLegado("UF_GEO");
-    const br = literalDoLegado("BR_OUTLINE");
-    if (uf) expect(JSON.parse(JSON.stringify(UF_GEO))).toEqual(uf);
-    if (br) expect(JSON.parse(JSON.stringify(BR_OUTLINE))).toEqual(br);
+  it("os contornos moram só em contornos.js (o legado não tem mais cópia)", () => {
+    const app = readFileSync("src/modules/legacy-app.js", "utf8");
+    expect(app).not.toContain("const UF_GEO");
+    expect(app).not.toContain("const BR_OUTLINE");
     expect(UF_GEO.features).toHaveLength(27);
+    expect(BR_OUTLINE.type).toBe("MultiPolygon");
   });
 
   it("BRASIL_BOUNDS bate com os vértices do contorno", () => {

@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   reconciliarDsei,
@@ -97,58 +96,9 @@ describe("o polo que o CNES também cadastra", () => {
   });
 });
 
-describe("a dica responde às duas perguntas", () => {
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
-
-  it("diz quantos polos o distrito tem, da planilha de lotações", () => {
-    expect(app).toContain("const polosDaLotacao = (d.polos || []).length;");
-    expect(app).toContain("`Polos base: ${polosDaLotacao}`");
-  });
-
-  it("e quantos pontos o mapa mostra, contados como se desenha", () => {
-    expect(app).toContain("for (const registo of detailRecordsForDsei(d))");
-    expect(app).toContain("No mapa: ");
-  });
-
-  it("não volta a somar o tamanho das listas", () => {
-    expect(app).not.toContain('["Unidades de saúde", (grupo.u || []).length]');
-  });
-
-  it("só mostra o que existe, sem CASAIs: 0", () => {
-    expect(app).toContain(".filter(([, n]) => n > 0)");
-  });
-
-  it("a dica do mapa usa o resumo", () => {
-    expect(app).toContain("${resumoDaRedeDoDsei(d)}");
-  });
-
-  /*
-    O resumo traz uma quebra de linha, que é marcação nossa, e por isso não vai
-    envolvido em `esc`. Só pode ser montado com números e texto literal: no dia
-    em que alguém lá meter um nome vindo da base, isto vira injeção.
-  */
-  it("o resumo não interpola texto vindo da base", () => {
-    const corpo = app.slice(
-      app.indexOf("function resumoDaRedeDoDsei(d)"),
-      app.indexOf("return _resumoDaRedePorDsei.get(d.k);"),
-    );
-    expect(corpo).toContain("<br>");
-    expect(corpo).not.toContain("d.n");
-    expect(corpo).not.toContain("registo.name");
-    expect(corpo).not.toContain("registo.nome");
-  });
-
-  /*
-    Contar é o mesmo trabalho que desenhar: 11 ms para os 34 distritos, medido.
-    Guardar o resultado é o que torna isso aceitável numa dica; esquecê-lo
-    quando os dados mudam é o que impede a dica de mentir depois de um
-    recarregamento.
-  */
-  it("guarda o resultado e esquece-o quando os dados mudam", () => {
-    expect(app).toContain("_resumoDaRedePorDsei");
-    expect(app).toContain("function esquecerResumoDaRede()");
-    expect(app).toMatch(
-      /REDE_CNES = byKey\.rede_cnes;[\s\S]{0,140}esquecerResumoDaRede\(\)/,
-    );
-  });
-});
+/*
+  As duas linhas da dica ("Polos base: N" e "No mapa: N pontos (…)") são do
+  mapa da Saúde Indígena em React: `resumoDaRede` em
+  src/lib/mapa-saude-indigena/mapa-do-dsei.js, testada em
+  tests/mapa-saude-indigena.test.js com as Lotações reais.
+*/

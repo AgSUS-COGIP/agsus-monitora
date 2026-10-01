@@ -247,10 +247,13 @@ describe("visão nacional", () => {
         (b) => b.textContent === "Brasil",
       ),
     );
-    expect(mapa.chamadas.slice(antes).map(([n]) => n)).toEqual([
-      "stop",
-      "fitBounds",
-    ]);
+    // O remedir do requestAnimationFrame pode cair no meio (suíte carregada).
+    expect(
+      mapa.chamadas
+        .slice(antes)
+        .map(([n]) => n)
+        .filter((n) => n !== "invalidateSize"),
+    ).toEqual(["stop", "fitBounds"]);
   });
 
   it("a legenda recolhe e começa fechada no celular", async () => {
@@ -477,5 +480,87 @@ describe("tema", () => {
     expect(host.querySelector(".mapa-si--escuro")).not.toBeNull();
     await rerender({ tema: "claro" });
     expect(host.querySelector(".mapa-si--escuro")).toBeNull();
+  });
+});
+
+/*
+  "O mapa quebra o nome quando passo o mouse ou clico em algum extremo": a
+  dica centrada acima de um ponto na borda saía do contêiner do mapa. Os dois
+  mapas (nacional e do DSEI) ligam src/lib/dica-dentro-do-mapa.js.
+*/
+describe("dicas e popups dentro do mapa", () => {
+  /* Mede como o navegador: contêiner 600 × 400, dica 268 × 58. */
+  function comMedidas(mapa, caixaDaDica) {
+    const moldura = mapa.elemento;
+    Object.defineProperty(moldura, "clientWidth", { value: 600 });
+    Object.defineProperty(moldura, "clientHeight", { value: 400 });
+    moldura.getBoundingClientRect = () => ({ left: 0, top: 0 });
+    const elemento = document.createElement("div");
+    elemento.getBoundingClientRect = () => caixaDaDica;
+    return {
+      elemento,
+      options: { direction: "top" },
+      getElement: () => elemento,
+      getLatLng: () => [-6.9, -35.1],
+      setLatLng: vi.fn(),
+    };
+  }
+
+  it("a dica de um DSEI na borda leste vai para o lado em vez de ser cortada", async () => {
+    window.matchMedia = () => ({ matches: true });
+    await montar();
+    const mapa = mapaVivo("map");
+    expect(mapa.ouvintes("tooltipopen")).toBe(1);
+    // Centrada acima de um ponto a 10 px da borda direita (x = 590).
+    const dica = comMedidas(mapa, {
+      left: 590 - 134,
+      top: 200 - 6 - 58,
+      width: 268,
+      height: 58,
+    });
+    await act(async () => mapa.fire("tooltipopen", { tooltip: dica }));
+    expect(dica.options.direction).toBe("left");
+    expect(dica.setLatLng).toHaveBeenCalled();
+    expect(dica.elemento.classList.contains("dica-no-mapa")).toBe(true);
+  });
+
+  it("no meio do mapa a dica continua em cima", async () => {
+    window.matchMedia = () => ({ matches: true });
+    await montar();
+    const mapa = mapaVivo("map");
+    const dica = comMedidas(mapa, {
+      left: 300 - 134,
+      top: 200 - 6 - 58,
+      width: 268,
+      height: 58,
+    });
+    await act(async () => mapa.fire("tooltipopen", { tooltip: dica }));
+    expect(dica.options.direction).toBe("top");
+  });
+
+  it("popups com autoPan e largura relativa ao mapa, também no mapa do DSEI", async () => {
+    await montar({ dseiSelecionado: "ALAGOAS E SERGIPE" });
+    const mapa = mapaVivo("detailMap");
+    expect(mapa.ouvintes("popupopen")).toBe(1);
+    const [unidade] = leaflet.desenhadas(mapa, "marker");
+    expect(unidade.opcoesDoPopup).toMatchObject({
+      autoPan: true,
+      keepInView: true,
+      className: "popup-no-mapa",
+    });
+    // Aberto num mapa estreito (celular), o popup encolhe e refaz o autoPan.
+    Object.defineProperty(mapa.elemento, "clientWidth", { value: 343 });
+    Object.defineProperty(mapa.elemento, "clientHeight", { value: 360 });
+    const popup = { options: { maxWidth: 300 }, update: vi.fn() };
+    await act(async () => mapa.fire("popupopen", { popup }));
+    expect(popup.options.maxWidth).toBeLessThan(343);
+    expect(popup.options.maxHeight).toBeLessThan(360);
+    expect(popup.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("a CASAI nacional também abre o popup com autoPan", async () => {
+    await montar();
+    const [casai] = leaflet.desenhadas(mapaVivo("map"), "marker");
+    expect(casai.opcoesDoPopup).toMatchObject({ autoPan: true });
   });
 });
