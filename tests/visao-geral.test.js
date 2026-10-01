@@ -367,9 +367,10 @@ describe("exportação", () => {
   });
 
   it("nome do arquivo pela área e pelo dia", () => {
-    expect(nomeDoCsv("saude-indigena", new Date(2026, 9, 1))).toBe(
-      "AgSUS_Monitora_SaudeIndigena_20261001.csv",
-    );
+    // 22h30 em Brasília já é dia 2 em UTC: vale o dia de Brasília.
+    expect(
+      nomeDoCsv("saude-indigena", new Date("2026-10-01T22:30:00-03:00")),
+    ).toBe("AgSUS_Monitora_SaudeIndigena_20261001.csv");
   });
 
   it("o cabeçalho do PDF diz os filtros e os números do recorte", () => {

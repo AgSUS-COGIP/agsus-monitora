@@ -14,6 +14,7 @@
   atenção, tabela e exportação partem do mesmo recorte.
 */
 
+import { hojeEmBrasilia } from "./cronograma-do-edital.js";
 import { sanitizeCsvCell } from "./csv-security.js";
 import {
   compararEditais,
@@ -705,8 +706,9 @@ const nomeDaAreaNoArquivo = (area) =>
     .map((parte) => parte[0].toUpperCase() + parte.slice(1))
     .join("") || "Monitoramento";
 
-export function nomeDoCsv(area, hoje = new Date()) {
-  const dia = `${hoje.getFullYear()}${String(hoje.getMonth() + 1).padStart(2, "0")}${String(hoje.getDate()).padStart(2, "0")}`;
+/* O dia é o de Brasília (com o de UTC, quem exportava à noite levava amanhã). */
+export function nomeDoCsv(area, agora = new Date()) {
+  const dia = hojeEmBrasilia(agora).replaceAll("-", "");
   return `AgSUS_Monitora_${nomeDaAreaNoArquivo(area)}_${dia}.csv`;
 }
 
