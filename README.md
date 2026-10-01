@@ -26,17 +26,17 @@ acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `T
 área em `RL_ABA_AREA`). Módulos e abas podem ser desligados ou postos em manutenção em
 **Configurações → Módulos e abas**, sem deploy.
 
-| Módulo | Onde | O que faz |
-|---|---|---|
-| Visão geral e mapas | `index.html` | terras indígenas, DSEIs e editais no mapa |
-| Editais | `index.html` (`src/componentes/nucleo/`) | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos |
-| Cronograma | `index.html` (`src/componentes/calendario-editais/`) | calendário das etapas de todos os editais |
-| Análises | `analises.html` | análises curriculares vindas das planilhas |
-| Seleção | `selecao.html` | funil por vaga (inscritos, aptos, eliminados) |
-| Entrevistas | `index.html` (`src/modulos/entrevistas/`) | resultados, condução (roteiro, convocação, banca, notas) e roteiros |
-| Recursos | `index.html` (`src/modulos/recursos/`) | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos |
-| Lista de aprovados | `index.html` (`src/componentes/lista-aprovados/`) | aprovados e convocação |
-| Acessos | `index.html` (`src/componentes/acessos/`) | convites, grupos, contas desativadas e reativação |
+| Módulo              | Onde                                                 | O que faz                                                                                 |
+| ------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Visão geral e mapas | `index.html`                                         | terras indígenas, DSEIs e editais no mapa                                                 |
+| Editais             | `index.html` (`src/componentes/nucleo/`)             | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos |
+| Cronograma          | `index.html` (`src/componentes/calendario-editais/`) | calendário das etapas de todos os editais                                                 |
+| Análises            | `analises.html`                                      | análises curriculares vindas das planilhas                                                |
+| Seleção             | `index.html` (`src/modulos/selecao/`)                | funil por vaga (inscritos, aptos, eliminados)                                             |
+| Entrevistas         | `index.html` (`src/modulos/entrevistas/`)            | resultados, condução (roteiro, convocação, banca, notas) e roteiros                       |
+| Recursos            | `index.html` (`src/modulos/recursos/`)               | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos                       |
+| Lista de aprovados  | `index.html` (`src/componentes/lista-aprovados/`)    | aprovados e convocação                                                                    |
+| Acessos             | `index.html` (`src/componentes/acessos/`)            | convites, grupos, contas desativadas e reativação                                         |
 
 Em **Conduzir entrevistas** aparecem só os editais na janela da entrevista pelo cronograma (de 7
 dias antes a 15 dias depois das etapas de entrevista), os liberados pelo administrador global e os
@@ -46,13 +46,13 @@ que ainda têm convocado sem parecer.
 
 ### 1. Requisitos
 
-| Ferramenta | Versão | Para quê |
-|---|---|---|
-| Git | qualquer recente | clonar |
-| Node.js | **24** | obrigatório em todos os caminhos |
-| npm | o que vem com o Node 24 | dependências |
-| Docker | com Compose | só para o caminho D (container) |
-| Python | 3.12 com `pdfplumber` | só para testar `api/anexos-do-edital.py` na máquina |
+| Ferramenta | Versão                  | Para quê                                            |
+| ---------- | ----------------------- | --------------------------------------------------- |
+| Git        | qualquer recente        | clonar                                              |
+| Node.js    | **24**                  | obrigatório em todos os caminhos                    |
+| npm        | o que vem com o Node 24 | dependências                                        |
+| Docker     | com Compose             | só para o caminho D (container)                     |
+| Python     | 3.12 com `pdfplumber`   | só para testar `api/anexos-do-edital.py` na máquina |
 
 O Node 24 executa o servidor TypeScript direto, sem etapa de compilação. Não há PHP nem Composer.
 O Python não é preciso para rodar o sistema: a Vercel instala o `requirements.txt` sozinha.
@@ -99,15 +99,15 @@ Sem essas variáveis, o sistema abre, mas informa que a conexão com o Supabase 
 
 Escolha o caminho conforme o que você vai fazer:
 
-| Caminho | Comando | Endereço | Quando usar |
-|---|---|---|---|
-| **A. Tela, com recarga instantânea** | `npm run dev:frontend` | http://localhost:5173 | editar tela, CSS ou módulo JS; o navegador atualiza sozinho |
-| **B. Front + servidor juntos** | `npm run dev` | http://127.0.0.1:8000 | ver a mudança no servidor de produção, com os cabeçalhos reais; F5 após editar |
-| **C. Build de produção** | `npm run build` e depois `npm start` | http://127.0.0.1:8000 | conferir exatamente o que vai para produção, com todas as checagens |
-| **D. Docker** | `docker compose up --build -d` | http://127.0.0.1:8000 | subir como em produção, isolado da máquina |
+| Caminho                              | Comando                              | Endereço              | Quando usar                                                                    |
+| ------------------------------------ | ------------------------------------ | --------------------- | ------------------------------------------------------------------------------ |
+| **A. Tela, com recarga instantânea** | `npm run dev:frontend`               | http://localhost:5173 | editar tela, CSS ou módulo JS; o navegador atualiza sozinho                    |
+| **B. Front + servidor juntos**       | `npm run dev`                        | http://127.0.0.1:8000 | ver a mudança no servidor de produção, com os cabeçalhos reais; F5 após editar |
+| **C. Build de produção**             | `npm run build` e depois `npm start` | http://127.0.0.1:8000 | conferir exatamente o que vai para produção, com todas as checagens            |
+| **D. Docker**                        | `docker compose up --build -d`       | http://127.0.0.1:8000 | subir como em produção, isolado da máquina                                     |
 
-As páginas existem em todos os caminhos: `/` (painel principal), `/analises.html`,
-`/selecao.html` e `/auth/callback.html` (retorno do login).
+As páginas existem em todos os caminhos: `/` (painel principal), `/analises.html` e
+`/auth/callback.html` (retorno do login).
 
 As rotas `/api/*` (AYA, proxies da FUNAI e leitura do PDF de anexos) **só existem na Vercel**.
 Nos caminhos A a D elas respondem 404, e a tela avisa que o recurso só funciona na versão
@@ -147,15 +147,15 @@ configurar as permissões antes de a pessoa ver os painéis.
 Sete etapas, em ordem. Se qualquer uma falhar, o build para e a mensagem diz qual regra foi violada:
 corrija o código, não a checagem.
 
-| # | Etapa | Script | O que barra |
-|---|---|---|---|
-| 1 | Base de conhecimento da AYA | `aya:conhecimento` | gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/*.md` |
-| 2 | Tipos do servidor | `typecheck` | erro de tipo em `server/*.ts` |
-| 3 | Arquitetura de autenticação | `check:auth-architecture` | cliente Supabase criado fora de `src/lib/supabaseClient.js`, fluxo OAuth implícito |
-| 4 | Contrato de RPC | `check:rpc-contract` | `.rpc("nome")` que não está em `src/lib/rpc-contrato.js`, ou RPC declarada e não usada |
-| 5 | Compilação | `vite build` | erro de sintaxe ou de import; gera o `dist/` |
-| 6 | Segurança do HTML | `check:dist-security` | Supabase por CDN, recurso `http://` inseguro no HTML gerado |
-| 7 | Orçamento de bundles | `check:bundle-size` | JS ou CSS acima do limite (maior JS: 2.500 KB bruto / 700 KB gzip) |
+| #   | Etapa                       | Script                    | O que barra                                                                            |
+| --- | --------------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | Base de conhecimento da AYA | `aya:conhecimento`        | gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/*.md`              |
+| 2   | Tipos do servidor           | `typecheck`               | erro de tipo em `server/*.ts`                                                          |
+| 3   | Arquitetura de autenticação | `check:auth-architecture` | cliente Supabase criado fora de `src/lib/supabaseClient.js`, fluxo OAuth implícito     |
+| 4   | Contrato de RPC             | `check:rpc-contract`      | `.rpc("nome")` que não está em `src/lib/rpc-contrato.js`, ou RPC declarada e não usada |
+| 5   | Compilação                  | `vite build`              | erro de sintaxe ou de import; gera o `dist/`                                           |
+| 6   | Segurança do HTML           | `check:dist-security`     | Supabase por CDN, recurso `http://` inseguro no HTML gerado                            |
+| 7   | Orçamento de bundles        | `check:bundle-size`       | JS ou CSS acima do limite (maior JS: 2.500 KB bruto / 700 KB gzip)                     |
 
 Leva poucos segundos. Os limites do orçamento podem ser ajustados por variável de ambiente
 (`BUNDLE_MAX_*`), mas subir o limite exige justificativa no PR.
@@ -164,14 +164,14 @@ Leva poucos segundos. Os limites do orçamento podem ser ajustados por variável
 
 ```text
 dist/
-├── index.html, analises.html, selecao.html,
+├── index.html, analises.html,
 │   auth/callback.html   as páginas (entradas do Vite)
 ├── assets/          JS e CSS com hash no nome + tudo de public/assets/
 ├── data/            JSON geográfico de public/data/ (terras indígenas, lotações)
 ├── icons/, manifest.webmanifest, offline.html, sw.js, sw-policy.js   PWA
 ```
 
-- O JS é dividido por página (`main`, `analises`, `selecao`) e pacotes de terceiros (`vendor-supabase`,
+- O JS é dividido por página (`main`, `analises`) e pacotes de terceiros (`vendor-supabase`,
   `vendor-react`, `vendor-charts` e `vendor`), definidos em `vite.config.js`.
 - **Tudo em `public/` é copiado como está e fica público.** Não coloque ali nada que não possa ser
   baixado por qualquer pessoa.
@@ -182,10 +182,10 @@ dist/
 
 ### Servir o build
 
-| Comando | O que faz |
-|---|---|
-| `npm start` | serve o `dist/` existente com `server/servidor.ts`, em http://127.0.0.1:8000, com os cabeçalhos de produção |
-| `npm run preview` | serve o `dist/` com o servidor do Vite, em http://localhost:4173, sem os cabeçalhos de produção |
+| Comando           | O que faz                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `npm start`       | serve o `dist/` existente com `server/servidor.ts`, em http://127.0.0.1:8000, com os cabeçalhos de produção |
+| `npm run preview` | serve o `dist/` com o servidor do Vite, em http://localhost:4173, sem os cabeçalhos de produção             |
 
 Variáveis do servidor: `PORT` (padrão 8000), `HOST` (padrão 127.0.0.1) e `DIST` (padrão `dist`).
 Detalhes em [docs/servidor.md](docs/servidor.md).
@@ -216,14 +216,14 @@ testes com cobertura, build, smoke no navegador contra o `npm start` e o mesmo s
 
 ## Problemas comuns
 
-| Sintoma | Causa e solução |
-|---|---|
-| `EADDRINUSE ... 8000` ao rodar `npm run dev` ou `npm start` | A porta 8000 já está ocupada, em geral pelo container do caminho D. Rode `docker compose down` ou use outra porta: `PORT=8001 npm start`. |
-| A tela avisa que a conexão não está configurada | Falta `.env.local` (caminhos A/B/C) ou `.env` (caminho D) com as variáveis `VITE_SUPABASE_*`. Depois de criar, reinicie o comando. |
-| O login volta para o endereço de produção ou dá erro de redirect | O endereço local não está nas Redirect URLs do Supabase (passo 5). |
-| O Vite abriu em `5174` (ou outra porta) em vez de `5173` | Há outra instância aberta, e o Vite pulou para a porta seguinte. Feche a outra: o login só volta para endereços autorizados no Supabase, e a porta nova pode não estar entre eles. |
-| O `npm run build` falha numa checagem `check:*` | É uma regra de arquitetura. A mensagem diz qual; corrija o código, não o script. |
-| O container sobe, mas a página vem sem dados | As variáveis `VITE_*` entram no **build** da imagem. Ajuste o `.env` e rode `docker compose up --build -d` de novo. |
+| Sintoma                                                          | Causa e solução                                                                                                                                                                    |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EADDRINUSE ... 8000` ao rodar `npm run dev` ou `npm start`      | A porta 8000 já está ocupada, em geral pelo container do caminho D. Rode `docker compose down` ou use outra porta: `PORT=8001 npm start`.                                          |
+| A tela avisa que a conexão não está configurada                  | Falta `.env.local` (caminhos A/B/C) ou `.env` (caminho D) com as variáveis `VITE_SUPABASE_*`. Depois de criar, reinicie o comando.                                                 |
+| O login volta para o endereço de produção ou dá erro de redirect | O endereço local não está nas Redirect URLs do Supabase (passo 5).                                                                                                                 |
+| O Vite abriu em `5174` (ou outra porta) em vez de `5173`         | Há outra instância aberta, e o Vite pulou para a porta seguinte. Feche a outra: o login só volta para endereços autorizados no Supabase, e a porta nova pode não estar entre eles. |
+| O `npm run build` falha numa checagem `check:*`                  | É uma regra de arquitetura. A mensagem diz qual; corrija o código, não o script.                                                                                                   |
+| O container sobe, mas a página vem sem dados                     | As variáveis `VITE_*` entram no **build** da imagem. Ajuste o `.env` e rode `docker compose up --build -d` de novo.                                                                |
 
 ## Comandos úteis
 
@@ -248,7 +248,6 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 .
 ├── index.html              painel principal
 ├── analises.html           painel de análises
-├── selecao.html           página da Seleção (ainda no quadro)
 ├── auth/callback.html      retorno do login
 ├── DESIGN.md               guia de interface (tokens, componentes, contraste)
 ├── src/
@@ -257,8 +256,8 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 │   ├── componentes/        telas em React (menu lateral, editais, entrevistas, acessos…)
 │   ├── modules/            funcionalidades de tela legadas, um arquivo por feature
 │   ├── styles/             CSS do painel principal
-│   ├── modulos/            telas React migradas (Recursos, Entrevistas)
-│   ├── analises/, selecao/   entradas e CSS de cada página no quadro
+│   ├── modulos/            telas React migradas (Recursos, Entrevistas, Seleção)
+│   ├── analises/           entrada e CSS do painel de análises (no quadro)
 │   └── auth/               callback do login
 ├── api/                    funções serverless da Vercel (AYA, proxies FUNAI, anexos do edital em Python)
 ├── requirements.txt        dependências das funções Python da Vercel
@@ -310,7 +309,7 @@ Não coloque chaves secretas, tokens, senhas ou credenciais no repositório.
 ## Checklist antes de publicar em produção
 
 - O build passou.
-- `index.html`, `analises.html` e `selecao.html` abrem corretamente.
+- `index.html` e `analises.html` abrem corretamente.
 - O login Google funciona para conta autorizada.
 - Usuário sem perfil cai no fluxo de solicitação de acesso.
 - As solicitações aparecem para a administração.
