@@ -334,9 +334,10 @@ describe("registro da aba", async () => {
     await import("../src/lib/access-roles.js");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.js");
 
-  it("Entrevistas vem depois de Análises e antes de Recursos, como beta", () => {
+  it("Entrevistas vem depois de Recursos e antes da Lista de aprovados, como beta", () => {
     const ids = ABAS_DO_MENU.map((aba) => aba.id);
-    expect(ids.indexOf("entrevistas")).toBe(ids.indexOf("analises") + 1);
+    expect(ids.indexOf("entrevistas")).toBe(ids.indexOf("recursos") + 1);
+    expect(ids.indexOf("aprovados")).toBe(ids.indexOf("entrevistas") + 1);
     expect(ABAS_DO_MENU.find((aba) => aba.id === "entrevistas")).toMatchObject({
       view: "entrevistas",
       recurso: "entrevistas",
@@ -344,7 +345,7 @@ describe("registro da aba", async () => {
       ordem: 6,
       beta: true,
     });
-    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(7);
+    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(5);
     expect(NOMES_DE_ICONES).toContain("messages-square");
     expect(RESOURCES).toContainEqual(["entrevistas", "Entrevistas"]);
   });
