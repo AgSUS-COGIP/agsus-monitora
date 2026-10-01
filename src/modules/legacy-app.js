@@ -89,7 +89,10 @@ import {
   normalizeAccessLogoUrl,
   normalizeAccessPanelColor,
 } from "../lib/access-branding.js";
-import { normalizeOnlinePresenceList } from "../lib/online-presence.js";
+import {
+  normalizeOnlinePresenceList,
+  ondeEstaNoMonitora,
+} from "../lib/online-presence.js";
 import { rotuloDaLocalizacao } from "../lib/localizacoes-validadas.js";
 import { montarLegendaDasTerras } from "./legenda-das-terras.js";
 import {
@@ -739,13 +742,41 @@ function renderOnlinePresence(people, synchronized = true) {
     : `<p>${synchronized ? "Ninguém mais com a plataforma aberta agora." : "Sincronizando presença…"}</p>`;
 }
 
+/* Onde a pessoa está agora, em texto para quem lê (página · área). */
+function localAtualNaPresenca() {
+  const secao = secaoAtualDeConfiguracao(document);
+  return (
+    ondeEstaNoMonitora({
+      view: currentView,
+      area: areaAtual(),
+      rotuloDaSecao: SECOES.find((s) => s.id === secao)?.rotulo,
+    }) || null
+  );
+}
+
+let ultimoLocalNaPresenca = null;
+
+async function registrarLocalNaPresenca() {
+  if (!sb || !currentUser?.id || document.visibilityState !== "visible") return;
+  const local = localAtualNaPresenca();
+  const beat = await sb.rpc(RPC_REGISTER_ONLINE_PRESENCE, {
+    p_current_view: local,
+  });
+  if (beat.error) throw beat.error;
+  ultimoLocalNaPresenca = local;
+}
+
+/* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 45 s). */
+function avisarTrocaDeLocalNaPresenca() {
+  if (!onlinePresenceHandle) return;
+  if (localAtualNaPresenca() === ultimoLocalNaPresenca) return;
+  registrarLocalNaPresenca().catch(() => {});
+}
+
 async function syncOnlinePresence() {
   if (!sb || !currentUser?.id || document.visibilityState !== "visible") return;
   try {
-    const beat = await sb.rpc(RPC_REGISTER_ONLINE_PRESENCE, {
-      p_current_view: currentView || null,
-    });
-    if (beat.error) throw beat.error;
+    await registrarLocalNaPresenca();
     // Sem permissão (inclusive quem a perdeu nesta sessão): o indicador some.
     if (!canViewOnlinePresence()) {
       $("onlinePresence")?.classList.add("hidden");
@@ -2176,6 +2207,7 @@ function buildNav() {
 
 function setActiveNav(view) {
   marcarItemAtivoNoMenu(view, secaoAtualDeConfiguracao(document));
+  avisarTrocaDeLocalNaPresenca();
 }
 
 /*
