@@ -1,5 +1,4 @@
 import { classes } from "./classes.js";
-import { usarNoQuadro } from "./no-quadro.jsx";
 
 /*
   Indicador em card compacto (~78px; DESIGN.md, "Indicador"): o ícone num tile
@@ -10,9 +9,6 @@ import { usarNoQuadro } from "./no-quadro.jsx";
   `cor` é o nome de antes (k-cyan, k-green, k-yellow, k-orange, k-red,
   k-purple, k-slate) e vira o tom do tile (`data-tom`: info, sucesso, alerta,
   perigo, destaque, neutro); `icone` é a classe `fa-*` do tile.
-
-  No quadro (<PainelNoQuadro>): o `.kpi` do painel de análises, com a barra
-  colorida em cima (a `cor` como classe) e `.is-active`.
 */
 
 const TOM_DA_COR = {
@@ -25,47 +21,18 @@ const TOM_DA_COR = {
   "k-slate": "neutro",
 };
 
-function KpiNoQuadro({ cor, rotulo, valor, chave, titulo, ativo, aoClicar }) {
-  if (!aoClicar)
-    return (
-      <article className={classes("kpi", cor)} data-kpi={chave} title={titulo}>
-        <span>{rotulo}</span>
-        <b>{valor}</b>
-      </article>
-    );
-  return (
-    <article
-      className={classes("kpi", cor, ativo && "is-active")}
-      data-kpi={chave}
-    >
-      <button
-        type="button"
-        aria-pressed={ativo === undefined ? undefined : ativo}
-        title={titulo || "Filtrar o painel"}
-        onClick={aoClicar}
-      >
-        <span>{rotulo}</span>
-        <b>{valor}</b>
-      </button>
-    </article>
-  );
-}
-
-export function Kpi(props) {
-  const noQuadro = usarNoQuadro();
-  if (noQuadro) return <KpiNoQuadro {...props} />;
-  const {
-    cor,
-    tom,
-    icone = "fa-chart-simple",
-    rotulo,
-    valor,
-    chave,
-    titulo,
-    ativo,
-    aoClicar,
-    carregando = false,
-  } = props;
+export function Kpi({
+  cor,
+  tom,
+  icone = "fa-chart-simple",
+  rotulo,
+  valor,
+  chave,
+  titulo,
+  ativo,
+  aoClicar,
+  carregando = false,
+}) {
   const conteudo = (
     <>
       <span className="ui-kpi-rotulo">
@@ -112,10 +79,9 @@ export function Kpi(props) {
 
 /** A grade de indicadores. */
 export function GradeDeKpis({ id, className, rotulo, children }) {
-  const noQuadro = usarNoQuadro();
   return (
     <section
-      className={classes(noQuadro ? "kpis" : "ui-kpis", className)}
+      className={classes("ui-kpis", className)}
       id={id}
       aria-label={rotulo}
     >

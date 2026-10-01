@@ -1,14 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import {
-  CardDeGrafico,
-  ChipDeFiltro,
-  ChipsDeFiltro,
-  GradeDeKpis,
-  Kpi,
-  PainelDeFiltros,
-  TopoDoPainel,
-  Grafico,
-} from "../../ui/index.js";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   aptosEEliminados,
@@ -22,15 +13,26 @@ import {
   triadosEReprovados,
 } from "../../lib/selecao-do-painel.js";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
-import { MultiSelectBusca } from "../multi-select-busca.jsx";
+import {
+  CardDeGrafico,
+  ChipDeFiltro,
+  ChipsDeFiltro,
+  Grafico,
+  GradeDeKpis,
+  Kpi,
+  LinhaDoRecorte,
+  paletaDosGraficos,
+  PainelDeFiltros,
+  TopoDoPainel,
+} from "../../ui/index.js";
 
 /*
-  Os blocos do painel de seleção, na ordem e com os textos do antigo painel
-  externo "AgSUS Monitora Recrutamento e Seleção" (Apps Script): cabeçalho,
-  "Refinar resultados" com quatro filtros de escolha múltipla, sete KPIs, a
-  frase do recorte, cinco gráficos e os alertas da coluna Observação. As
-  classes são as do painel de análises (o antigo já era uma cópia dele); o que
-  é só da seleção está em src/selecao/selecao.css.
+  Os blocos da tela de Seleção, com os componentes de src/ui/, na ordem do
+  antigo painel externo "AgSUS Monitora Recrutamento e Seleção": o topo (o
+  status discreto da carga e as ações — o título e a área estão no cabeçalho
+  do app), "Refinar resultados" com quatro filtros de escolha múltipla, sete
+  KPIs em card compacto, o recorte ativo, cinco gráficos Chart.js e os alertas
+  da coluna Observação.
 */
 
 const truncar = (valor, limite) => {
@@ -38,27 +40,42 @@ const truncar = (valor, limite) => {
   return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
 };
 
-/* ── Cabeçalho ──────────────────────────────────────────────────────── */
+/* ── Topo ───────────────────────────────────────────────────────────── */
 
 export function Topo(props) {
-  return (
-    <TopoDoPainel titulo="AgSUS Monitora Recrutamento e Seleção" {...props} />
-  );
+  return <TopoDoPainel {...props} />;
 }
 
 /* ── Filtros ────────────────────────────────────────────────────────── */
 
-export function Filtros({ filtros, opcoes, area, carregado, aoMudar }) {
+/** Os filtros ativos, como o recorte os descreve: `[campo, rótulo, valor]`. */
+export function ativosDoRecorte(filtros, area) {
+  return filtrosAtivos(filtros, area).map(({ campo, rotulo, valores }) => [
+    campo,
+    rotulo,
+    valores.join(", "),
+  ]);
+}
+
+export function Filtros({
+  filtros,
+  opcoes,
+  area,
+  carregado,
+  aoMudar,
+  aoLimpar,
+}) {
   const ativos = filtrosAtivos(filtros, area);
   return (
     <PainelDeFiltros
       idDoTitulo="selecaoFiltrosTitulo"
       className="selecao-filtros"
-      recolhivel={false}
+      quantos={ativos.length}
+      aoLimpar={aoLimpar}
     >
-      <div className="selecao-filtros-grade">
+      <div className="ui-grade-de-campos selecao-filtros-grade">
         {CAMPOS_DO_FILTRO.map(({ campo, rotulo, todos }) => (
-          <div className="field" key={campo}>
+          <div className="ui-campo" key={campo}>
             <label htmlFor={`filtro-${campo}`}>
               {campo === "unidades" ? rotuloDaUnidade(area) : rotulo}
             </label>
@@ -102,48 +119,64 @@ export function Filtros({ filtros, opcoes, area, carregado, aoMudar }) {
 
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
-export function Indicadores({ indicadores: k }) {
+export function Indicadores({ indicadores: k, carregado }) {
   const n = formatarQuantidade;
+  const carregando = !carregado;
   return (
-    <GradeDeKpis
-      className="selecao-kpis"
-      id="kpiGrid"
-      rotulo="Indicadores do recorte"
-    >
-      <Kpi chave="inscritos" rotulo="Inscritos" valor={n(k.inscritos)} />
-      <Kpi cor="k-green" chave="aptos" rotulo="Aptos" valor={n(k.aptos)} />
+    <GradeDeKpis className="selecao-kpis" rotulo="Indicadores do recorte">
       <Kpi
-        cor="k-yellow"
-        chave="triados"
-        rotulo="Triados"
-        valor={n(k.triados)}
-      />
-      <Kpi
-        cor="k-orange"
-        chave="convocados"
-        rotulo="Convocados entrevista"
-        valor={n(k.convocados)}
-        titulo="Das entrevistas do MONITORA quando o edital tem; senão, da planilha Auditoria"
+        icone="fa-users"
+        chave="inscritos"
+        rotulo="Inscritos"
+        valor={n(k.inscritos)}
+        carregando={carregando}
       />
       <Kpi
         cor="k-green"
+        icone="fa-user-check"
+        chave="aptos"
+        rotulo="Aptos"
+        valor={n(k.aptos)}
+        carregando={carregando}
+      />
+      <Kpi
+        cor="k-yellow"
+        icone="fa-filter"
+        chave="triados"
+        rotulo="Triados"
+        valor={n(k.triados)}
+        carregando={carregando}
+      />
+      <Kpi
+        cor="k-orange"
+        icone="fa-calendar-check"
+        chave="convocados"
+        rotulo="Convocados entrevista"
+        valor={n(k.convocados)}
+        carregando={carregando}
+      />
+      <Kpi
+        cor="k-green"
+        icone="fa-circle-check"
         chave="aprovados"
         rotulo="Aprovados"
         valor={n(k.aprovados)}
-        titulo="Da lista de aprovados vigente de cada edital"
+        carregando={carregando}
       />
       <Kpi
+        icone="fa-briefcase"
         chave="contratados"
         rotulo="Contratados"
         valor={n(k.contratados)}
-        titulo="Status Contratado ou Migração na lista de aprovados"
+        carregando={carregando}
       />
       <Kpi
         cor="k-slate"
+        icone="fa-chart-pie"
         chave="taxa"
         rotulo="Taxa contratação"
         valor={formatarTaxa(k.taxa)}
-        titulo="Contratados / aprovados"
+        carregando={carregando}
       />
     </GradeDeKpis>
   );
@@ -151,15 +184,20 @@ export function Indicadores({ indicadores: k }) {
 
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
-export function Recorte({ texto }) {
-  return (
-    <div id="activeContextSummary" className="selecao-recorte">
-      {texto}
-    </div>
-  );
+export function Recorte({ ativos }) {
+  return <LinhaDoRecorte ativos={ativos} />;
 }
 
 /* ── Gráficos ───────────────────────────────────────────────────────── */
+
+/* Uma cor de texto dos tokens do app (com a reserva dos painéis, sem CSS). */
+function corDoToken(nome, reserva) {
+  const estilo =
+    typeof getComputedStyle === "function"
+      ? getComputedStyle(document.documentElement)
+      : null;
+  return estilo?.getPropertyValue(nome).trim() || reserva;
+}
 
 /* O número em cima (ou ao lado) de cada barra, como no painel antigo. */
 const rotuloDeValor = {
@@ -167,7 +205,7 @@ const rotuloDeValor = {
   afterDatasetsDraw(grafico) {
     const { ctx } = grafico;
     const deitado = grafico.options.indexAxis === "y";
-    const cor = grafico.options.plugins?.selecaoRotuloDeValor?.cor || "#20324a";
+    const cor = grafico.options.plugins?.selecaoRotuloDeValor?.cor;
     grafico.data.datasets.forEach((conjunto, i) => {
       grafico.getDatasetMeta(i).data.forEach((barra, j) => {
         const valor = conjunto.data[j];
@@ -261,16 +299,14 @@ function opcoesDeRosca(p, extra = {}) {
   };
 }
 
-const CINZA = "#cbd2dc";
-
-function Bloco({ classe, ...props }) {
-  return <CardDeGrafico className={`selecao-grafico ${classe}`} {...props} />;
-}
+/* As cores dos tokens do app (com a paleta dos painéis de reserva). */
+const paleta = (escuro) => paletaDosGraficos(escuro, paletaDoPainel(escuro));
 
 export function Graficos({
   vagas,
   indicadores,
   area,
+  carregado,
   escuro,
   aoFiltrarUnidade,
 }) {
@@ -281,150 +317,174 @@ export function Graficos({
   const tema = escuro ? "escuro" : "claro";
   const taxa = indicadores.taxa ?? 0;
   const unidade = rotuloDaUnidade(area) === "Nome DSEI" ? "DSEIs" : "unidades";
+  const carregando = !carregado;
 
+  // O clique do Chart.js chega aqui, sempre com o filtro mais recente.
   const filtrar = useRef(aoFiltrarUnidade);
   useEffect(() => {
     filtrar.current = aoFiltrarUnidade;
   });
 
   return (
-    <section className="selecao-graficos" id="chartsArea">
-      <Bloco classe="metade" titulo="Eliminados antes da análise">
-        <Grafico
-          id="chartEliminados"
-          tipo="bar"
-          rotulo="Eliminados antes da análise: cancelados, questionário não finalizado e eliminados por nota"
-          plugins={[rotuloDeValor]}
-          dependencias={[eliminados, tema]}
-          montar={() => {
-            const p = paletaDoPainel(escuro);
-            return {
-              data: {
-                labels: eliminados.map((e) => e.rotulo),
-                datasets: [
-                  {
-                    label: "Candidatos",
-                    data: eliminados.map((e) => e.valor),
-                    backgroundColor: [p.warn, p.review, p.bad],
-                    borderRadius: 7,
-                  },
-                ],
-              },
-              options: opcoesDeBarras(p),
-            };
-          }}
-        />
-      </Bloco>
+    <>
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico
+          titulo="Eliminados antes da análise"
+          carregando={carregando}
+        >
+          <Grafico
+            id="chartEliminados"
+            tipo="bar"
+            rotulo="Eliminados antes da análise: cancelados, questionário não finalizado e eliminados por nota"
+            plugins={[rotuloDeValor]}
+            dependencias={[eliminados, tema]}
+            montar={() => {
+              const p = paleta(escuro);
+              return {
+                data: {
+                  labels: eliminados.map((e) => e.rotulo),
+                  datasets: [
+                    {
+                      label: "Candidatos",
+                      data: eliminados.map((e) => e.valor),
+                      backgroundColor: [p.warn, p.review, p.bad],
+                      borderRadius: 6,
+                    },
+                  ],
+                },
+                options: opcoesDeBarras(p),
+              };
+            }}
+          />
+        </CardDeGrafico>
 
-      <Bloco classe="metade" titulo="Aptos na análise e eliminados">
-        <Grafico
-          id="chartAptos"
-          tipo="doughnut"
-          rotulo="Aptos para análise e eliminados"
-          dependencias={[aptos, tema]}
-          montar={() => {
-            const p = paletaDoPainel(escuro);
-            return {
-              data: {
-                labels: aptos.map((a) => a.rotulo),
-                datasets: [
-                  {
-                    data: aptos.map((a) => a.valor),
-                    backgroundColor: [p.ok, p.bad],
-                    borderColor: p.surface,
-                    borderWidth: 2,
-                  },
-                ],
-              },
-              options: opcoesDeRosca(p),
-            };
-          }}
-        />
-      </Bloco>
+        <CardDeGrafico
+          titulo="Aptos na análise e eliminados"
+          carregando={carregando}
+        >
+          <Grafico
+            id="chartAptos"
+            tipo="doughnut"
+            rotulo="Aptos para análise e eliminados"
+            dependencias={[aptos, tema]}
+            montar={() => {
+              const p = paleta(escuro);
+              return {
+                data: {
+                  labels: aptos.map((a) => a.rotulo),
+                  datasets: [
+                    {
+                      data: aptos.map((a) => a.valor),
+                      backgroundColor: [p.ok, p.bad],
+                      borderColor: p.surface,
+                      borderWidth: 2,
+                    },
+                  ],
+                },
+                options: opcoesDeRosca(p),
+              };
+            }}
+          />
+        </CardDeGrafico>
+      </div>
 
-      <Bloco classe="metade" titulo="Contratados">
-        <Grafico
-          id="chartContratados"
-          tipo="doughnut"
-          rotulo={`Contratados: ${formatarTaxa(indicadores.taxa)} dos aprovados`}
-          plugins={[textoNoCentro]}
-          dependencias={[indicadores.aprovados, indicadores.contratados, tema]}
-          montar={() => {
-            const p = paletaDoPainel(escuro);
-            const contratados = indicadores.contratados ?? 0;
-            const resto = Math.max(
-              (indicadores.aprovados ?? 0) - contratados,
-              0,
-            );
-            return {
-              data: {
-                labels: ["Contratados", "Não contratados"],
-                datasets: [
-                  {
-                    data: contratados || resto ? [contratados, resto] : [0, 1],
-                    backgroundColor: [p.blue, CINZA],
-                    borderColor: p.surface,
-                    borderWidth: 2,
-                  },
-                ],
-              },
-              options: opcoesDeRosca(p, {
-                rotation: -90,
-                circumference: 180,
-                cutout: "72%",
-                plugins: {
-                  legend: {
-                    position: "bottom",
-                    labels: {
-                      color: p.text,
-                      boxWidth: 14,
-                      usePointStyle: true,
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico titulo="Contratados" carregando={carregando}>
+          <Grafico
+            id="chartContratados"
+            tipo="doughnut"
+            rotulo={`Contratados: ${formatarTaxa(indicadores.taxa)} dos aprovados`}
+            plugins={[textoNoCentro]}
+            dependencias={[
+              indicadores.aprovados,
+              indicadores.contratados,
+              tema,
+            ]}
+            montar={() => {
+              const p = paleta(escuro);
+              const contratados = indicadores.contratados ?? 0;
+              const resto = Math.max(
+                (indicadores.aprovados ?? 0) - contratados,
+                0,
+              );
+              return {
+                data: {
+                  labels: ["Contratados", "Não contratados"],
+                  datasets: [
+                    {
+                      data:
+                        contratados || resto ? [contratados, resto] : [0, 1],
+                      backgroundColor: [p.blue, p.neutro],
+                      borderColor: p.surface,
+                      borderWidth: 2,
+                    },
+                  ],
+                },
+                options: opcoesDeRosca(p, {
+                  rotation: -90,
+                  circumference: 180,
+                  cutout: "72%",
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                      labels: {
+                        color: p.text,
+                        boxWidth: 14,
+                        usePointStyle: true,
+                      },
+                    },
+                    selecaoTextoNoCentro: {
+                      principal: formatarTaxa(taxa),
+                      secundario: `${formatarQuantidade(indicadores.contratados)} de ${formatarQuantidade(indicadores.aprovados)} aprovados`,
+                      cor: corDoToken(
+                        "--text-primary",
+                        escuro ? "#edf4fa" : "#20324a",
+                      ),
+                      corSecundaria: p.text,
                     },
                   },
-                  selecaoTextoNoCentro: {
-                    principal: formatarTaxa(taxa),
-                    secundario: `${formatarQuantidade(indicadores.contratados)} de ${formatarQuantidade(indicadores.aprovados)} aprovados`,
-                    cor: escuro ? "#f5f8fc" : "#20324a",
-                    corSecundaria: p.text,
-                  },
+                }),
+              };
+            }}
+          />
+        </CardDeGrafico>
+
+        <CardDeGrafico
+          titulo="Triados e reprovados na análise"
+          carregando={carregando}
+        >
+          <Grafico
+            id="chartAnalise"
+            tipo="bar"
+            rotulo="Triados e reprovados na análise"
+            plugins={[rotuloDeValor]}
+            dependencias={[analise, tema]}
+            montar={() => {
+              const p = paleta(escuro);
+              return {
+                data: {
+                  labels: analise.map((a) => a.rotulo),
+                  datasets: [
+                    {
+                      label: "Candidatos",
+                      data: analise.map((a) => a.valor),
+                      backgroundColor: [p.review, p.bad],
+                      borderRadius: 6,
+                    },
+                  ],
                 },
-              }),
-            };
-          }}
-        />
-      </Bloco>
+                options: opcoesDeBarras(p),
+              };
+            }}
+          />
+        </CardDeGrafico>
+      </div>
 
-      <Bloco classe="metade" titulo="Triados e reprovados na análise">
-        <Grafico
-          id="chartAnalise"
-          tipo="bar"
-          rotulo="Triados e reprovados na análise"
-          plugins={[rotuloDeValor]}
-          dependencias={[analise, tema]}
-          montar={() => {
-            const p = paletaDoPainel(escuro);
-            return {
-              data: {
-                labels: analise.map((a) => a.rotulo),
-                datasets: [
-                  {
-                    label: "Candidatos",
-                    data: analise.map((a) => a.valor),
-                    backgroundColor: [p.review, p.bad],
-                    borderRadius: 7,
-                  },
-                ],
-              },
-              options: opcoesDeBarras(p),
-            };
-          }}
-        />
-      </Bloco>
-
-      <Bloco
-        classe="inteiro"
+      <CardDeGrafico
+        elemento="section"
         altura="alto"
         titulo={`Top ${unidade} por inscritos`}
+        carregando={carregando}
       >
         <Grafico
           id="chartDsei"
@@ -433,7 +493,7 @@ export function Graficos({
           plugins={[rotuloDeValor]}
           dependencias={[unidades, tema]}
           montar={() => {
-            const p = paletaDoPainel(escuro);
+            const p = paleta(escuro);
             return {
               data: {
                 labels: unidades.map((u) => truncar(u.rotulo, 34)),
@@ -442,7 +502,7 @@ export function Graficos({
                     label: "Inscritos",
                     data: unidades.map((u) => u.valor),
                     backgroundColor: p.review,
-                    borderRadius: 7,
+                    borderRadius: 6,
                   },
                 ],
               },
@@ -459,8 +519,8 @@ export function Graficos({
             };
           }}
         />
-      </Bloco>
-    </section>
+      </CardDeGrafico>
+    </>
   );
 }
 
@@ -470,27 +530,21 @@ export function Observacoes({ observacoes }) {
   if (!observacoes.length) return null;
   return (
     <section
-      className="panel panel-pad selecao-observacoes"
-      id="observationsSection"
+      className="ui-card selecao-observacoes"
       aria-labelledby="selecaoObservacoesTitulo"
     >
-      <h2 className="title" id="selecaoObservacoesTitulo">
+      <h2 className="ui-titulo" id="selecaoObservacoesTitulo">
         Alertas identificados no recorte
       </h2>
-      <ul className="selecao-observacoes-lista" id="observationsList">
+      <ul className="selecao-observacoes-lista">
         {observacoes.map((o) => (
-          <li key={o.texto}>
-            <span className="selecao-observacao-icone" aria-hidden="true">
-              !
-            </span>
-            <div>
-              <div className="selecao-observacao-titulo">{o.texto}</div>
-              <div className="selecao-observacao-texto">
-                {o.vagas} {o.vagas === 1 ? "vaga" : "vagas"} ·{" "}
-                {truncar(o.unidades.join(", "), 120) || "sem unidade"} · Edital{" "}
-                {o.editais.join(", ")}
-              </div>
-            </div>
+          <li key={o.texto} data-observacao="">
+            <b>{o.texto}</b>
+            <small>
+              {o.vagas} {o.vagas === 1 ? "vaga" : "vagas"} ·{" "}
+              {truncar(o.unidades.join(", "), 120) || "sem unidade"} · Edital{" "}
+              {o.editais.join(", ")}
+            </small>
           </li>
         ))}
       </ul>

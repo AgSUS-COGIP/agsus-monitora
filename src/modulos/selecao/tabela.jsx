@@ -10,8 +10,8 @@ import { TabelaInfinita } from "../../ui/index.js";
 /*
   "Base operacional consolidada": a tabela do painel antigo (DSEI, edital,
   cargo, vaga, inscritos, aptos, triados, aprovados, contratados e
-  observação), na tabela de carregamento contínuo dos painéis
-  (TabelaInfinita, src/ui/). A busca do cabeçalho vale só para a tabela.
+  observação), na tabela de carregamento contínuo das telas (TabelaInfinita,
+  src/ui/). A busca do cabeçalho vale só para a tabela.
 */
 
 export const MENSAGEM_SEM_VAGAS =
@@ -40,11 +40,11 @@ function LinhaDaVaga({ vaga: v }) {
   return (
     <tr className="selecao-linha">
       <td>
-        <div className="primary-text">{v.unidade || "—"}</div>
+        <span className="ui-texto-principal">{v.unidade || "—"}</span>
       </td>
       <td>{v.edital}</td>
       <td>
-        <div className="primary-text">{v.cargo || "—"}</div>
+        <span className="ui-texto-principal">{v.cargo || "—"}</span>
       </td>
       <td>{v.vaga || "—"}</td>
       <td className="num">{n(v.inscritos)}</td>
@@ -54,7 +54,7 @@ function LinhaDaVaga({ vaga: v }) {
       <td className="num">{n(v.contratados)}</td>
       <td>
         {v.observacao ? (
-          <span className="secondary-text">{v.observacao}</span>
+          <span className="ui-texto-secundario">{v.observacao}</span>
         ) : (
           "—"
         )}
