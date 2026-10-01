@@ -88,3 +88,51 @@ describe("ciclo web sem oferta de instalação", () => {
     ).toBe(false);
   });
 });
+
+describe("versão nova espera a troca de página", () => {
+  it("sem versão nova esperando, não recarrega", async () => {
+    const { aplicarAtualizacaoPendente, marcarAtualizacaoPendenteParaTeste } =
+      await import("../src/modules/pwa-lifecycle.js");
+    marcarAtualizacaoPendenteParaTeste(false);
+    let recargas = 0;
+    expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(false);
+    expect(recargas).toBe(0);
+  });
+
+  it("com versão nova esperando, recarrega uma vez só", async () => {
+    const { aplicarAtualizacaoPendente, marcarAtualizacaoPendenteParaTeste } =
+      await import("../src/modules/pwa-lifecycle.js");
+    marcarAtualizacaoPendenteParaTeste(true);
+    let recargas = 0;
+    expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(true);
+    expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(false);
+    expect(recargas).toBe(1);
+  });
+
+  it("a troca de controlador não recarrega na hora (quem digita não perde o texto)", () => {
+    const trecho = lifecycleSource.slice(
+      lifecycleSource.indexOf('addEventListener("controllerchange"'),
+    );
+    const handler = trecho.slice(
+      0,
+      trecho.indexOf("export function aplicarAtualizacaoPendente"),
+    );
+    expect(handler).not.toContain("location.reload");
+    expect(handler).toContain("atualizacaoPendente = true");
+  });
+
+  it("o navigate aplica a versão nova depois da guarda de alterações não salvas", () => {
+    const legado = readFileSync("src/modules/legacy-app.js", "utf8").replace(
+      /\r\n/g,
+      "\n",
+    );
+    const corpo = legado.slice(legado.indexOf("function navigate(view)"));
+    const guarda = corpo.indexOf("estadoDasConfiguracoes.confirmarSaida()");
+    const aplica = corpo.indexOf("aplicarAtualizacaoPendente(");
+    expect(guarda).toBeGreaterThan(-1);
+    expect(aplica).toBeGreaterThan(guarda);
+    expect(aplica).toBeLessThan(
+      corpo.indexOf("rememberView(requestedView)") + 1,
+    );
+  });
+});
