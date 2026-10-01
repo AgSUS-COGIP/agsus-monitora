@@ -1,9 +1,8 @@
 /*
-  As páginas que são um painel do app num quadro: Entrevistas
-  (`#page-entrevistas`, view `entrevistas`) e Seleção (`#page-selecao`, view
+  A página que é um painel do app num quadro: Seleção (`#page-selecao`, view
   `selecao`).
 
-  A seção diz qual painel é (`data-painel="entrevistas" | "selecao"`); o
+  A seção diz qual painel é (`data-painel="selecao"`); o
   endereço e o título do quadro vêm de `PAGINAS_DO_PAINEL`
   (src/lib/pagina-do-painel.js), com a área atual do menu na URL (`?area=`).
   O comportamento é o que os painéis herdaram do antigo painel externo

@@ -10,8 +10,8 @@ import "../styles/comemoracao.css";
   um aviso no topo (role="status"), que fecha no × ou sozinho. Com
   prefers-reduced-motion, só o aviso. A regra de quando comemorar é de
   src/lib/comemoracao.js; quem usa: o acesso liberado
-  (comemoracao-do-acesso.js), os painéis de análises e de entrevistas e os
-  marcos do ano (marcos-do-ano.js).
+  (comemoracao-do-acesso.js), o painel de análises, a tela de Entrevistas
+  (src/modulos/entrevistas/marcos.js) e os marcos do ano (marcos-do-ano.js).
 */
 
 const CORES = [
@@ -157,7 +157,7 @@ export function comemorar({
 }
 
 /*
-  Painéis (análises, entrevistas, seleção) são apps à parte, em iframe: cada
+  Painéis no quadro (análises, seleção) são apps à parte, em iframe: cada
   um lê o liga/desliga por conta própria, uma vez por página. Falhou (rede,
   sem sessão), desligado — e nada mais depende disso.
 */

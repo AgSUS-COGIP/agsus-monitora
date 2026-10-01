@@ -1,12 +1,12 @@
 /*
-  Estado do painel de entrevistas (`entrevistas.html`), fora do React: o que o
-  banco devolve para a área do painel (`?area=`), a entrevista aberta na
-  gaveta e a lista dos aprovados sem entrevista aberta. Os componentes leem com
-  `useSyncExternalStore`. Este arquivo não importa React.
+  Estado da tela de Entrevistas (`#page-entrevistas`, visão "Resultados"),
+  fora do React: o que o banco devolve para a área atual do app, a entrevista
+  aberta na gaveta e a lista dos aprovados sem entrevista aberta. Os
+  componentes leem com `useSyncExternalStore`. Este arquivo não importa React.
 
-  Nesta fase o painel só lê: uma RPC, `get_entrevistas_da_area` (json), que
-  confere permissão (recurso `entrevistas` >= leitor), área e o recorte da
-  coordenação (supabase/migrations/20260929235000_entrevistas.sql).
+  Uma RPC, `get_entrevistas_da_area` (json), que confere permissão (recurso
+  `entrevistas` >= leitor), área e o recorte da coordenação
+  (supabase/migrations/20260929235000_entrevistas.sql).
 
   Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.js, a
   mesma do painel de análises e da lista de aprovados): na primeira carga da
@@ -14,10 +14,12 @@
   na hora e a versão nova é pedida por trás; a tela só redesenha se ela mudou.
   Acesso revogado (42501) ou área inválida apagam as cópias.
 
-  Sem cópia, antes da primeira carga o painel é o skeleton (`carregado`
+  Sem cópia, antes da primeira carga a tela é o skeleton (`carregado`
   falso); uma falha nela vira `erroAoCarregar`, com "Tentar novamente". Sem
-  permissão (42501), `semAcesso`: a tela diz "Sem acesso às Entrevistas". Falha
-  de rede usa a mensagem de src/lib/falha-de-rede.js.
+  permissão (42501), `semAcesso`: a tela diz "Sem acesso às Entrevistas".
+  Sessão vencida (o cliente Supabase do app sem sessão): `semSessao`. Outro
+  usuário entrou na mesma aba: tudo volta ao início. Falha de rede usa a
+  mensagem de src/lib/falha-de-rede.js.
 */
 import {
   criarCacheDePayload,
@@ -39,7 +41,7 @@ import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb
 import { avaliarMarcosDasEntrevistas } from "./marcos.js";
 
 export const MENSAGEM_SEM_SESSAO =
-  "Sessão não localizada. Abra este painel pelo menu do MONITORA para compartilhar a sessão do Supabase Auth.";
+  "Sessão não localizada. Entre de novo no MONITORA.";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso às Entrevistas";
 
 /* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */
@@ -61,6 +63,11 @@ const ESTADO_INICIAL = Object.freeze({
   gaveta: null,
   /** Gaveta dos aprovados na análise sem entrevista aberta. */
   semEntrevistaAberta: false,
+  /*
+    Comemorações ligadas (a situação do sistema que o app leu na entrada; o
+    controlador relê a cada abertura da tela): o marco "vaga pronta".
+  */
+  comemoracoes: false,
 });
 
 function mensagemDaCarga(erro) {
@@ -118,10 +125,10 @@ export function criarEstadoDasEntrevistas({
       ...extra,
     });
     void avaliarMarcos?.({
-      supabase,
       usuarioId: usuarioDaCarga,
       area: estado.area,
       dados: estado.dados,
+      ligadas: estado.comemoracoes,
     });
   }
 
@@ -129,9 +136,28 @@ export function criarEstadoDasEntrevistas({
     publicar({
       ...ESTADO_INICIAL,
       area: estado.area,
+      comemoracoes: estado.comemoracoes,
       semAcesso: erro?.code === "42501",
       erroAoCarregar: mensagemDaCarga(erro),
     });
+
+  /*
+    Outro usuário na mesma aba (ou saiu da conta): o que era do anterior sai e
+    um pedido em curso deixa de valer. A próxima abertura da tela recarrega.
+  */
+  function reiniciar() {
+    pedido += 1;
+    usuarioDaCarga = "";
+    publicar({ ...ESTADO_INICIAL, comemoracoes: estado.comemoracoes });
+  }
+  let identidade;
+  supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
+    const atual = sessao?.user?.id || null;
+    if (atual === identidade) return;
+    // O primeiro aviso da página só registra quem é; não há o que limpar.
+    if (identidade !== undefined || !atual) reiniciar();
+    identidade = atual;
+  });
 
   /* O payload da área; lança o erro do banco (ou o de rede/tempo). */
   async function buscar(area) {
@@ -163,7 +189,8 @@ export function criarEstadoDasEntrevistas({
     if (!area) return false;
     const meu = ++pedido;
     const primeira = area !== estado.area || !estado.carregado;
-    if (area !== estado.area) publicar({ ...ESTADO_INICIAL, area });
+    if (area !== estado.area)
+      publicar({ ...ESTADO_INICIAL, area, comemoracoes: estado.comemoracoes });
     else publicar({ atualizando: true, erroAoCarregar: "" });
     if (!supabase) {
       publicar({
@@ -266,5 +293,8 @@ export function criarEstadoDasEntrevistas({
     abrirSemEntrevista,
     fecharSemEntrevista,
     exportarCsv,
+    reiniciar,
+    definirComemoracoes: (ligadas) =>
+      publicar({ comemoracoes: ligadas === true }),
   };
 }

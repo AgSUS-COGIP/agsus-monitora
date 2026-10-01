@@ -22,7 +22,12 @@ import {
 import { getLoadingStage } from "../../lib/loading-copy.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.js";
-import { Aviso, Recorte, TopoDoPainel } from "../../ui/index.js";
+import {
+  Aviso,
+  LinhaDoRecorte,
+  MarcasDoRecorte,
+  TopoDoPainel,
+} from "../../ui/index.js";
 import { criarEstadoDasAnalises } from "./estado.js";
 import { GavetaDaAnalise } from "./gaveta.jsx";
 import { chipsDosFiltros, Filtros, Graficos, Indicadores } from "./paineis.jsx";
@@ -285,11 +290,11 @@ function TelaDaArea({ estado, e }) {
         chips={chips}
       />
       <Indicadores kpis={kpis} carregado={carregado} kpi={kpi} aoKpi={setKpi} />
-      <Recorte
+      <LinhaDoRecorte
         texto={descricaoDoRecorte({ escopo, filtros, kpi, responsavel })}
-        marcas={marcas}
-        carregando={!carregado}
-      />
+      >
+        {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}
+      </LinhaDoRecorte>
       <Graficos
         linhas={recorte}
         pendencias={pendencias}

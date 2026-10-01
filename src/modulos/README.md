@@ -5,6 +5,7 @@ Cada tela do MONITORA, quando migra, mora aqui: `<nome>/<nome>.jsx` (componente 
 `useSyncExternalStore`), as consultas RPC e, se precisar, um CSS só da tela. O visual vem de
 `src/ui/`; as regras puras, de `src/lib/`.
 
-Já aqui: `recursos/` (Recursos dos candidatos, o modelo de tela de página inteira) e `analises/`
-(Análises curriculares). As outras mudam uma a uma, na etapa de cada uma. Guia completo, com o
-mapa de hoje → alvo: `docs/arquitetura-react.md`.
+Já aqui: `recursos/` (Recursos dos candidatos, o modelo de tela de página inteira),
+`entrevistas/` (Entrevistas: resultados, condução e roteiros, com as visões no topo) e `analises/`
+(Análises curriculares). As outras mudam uma a uma, na etapa de cada uma (Seleção em seguida).
+Guia completo, com o mapa de hoje → alvo: `docs/arquitetura-react.md`.

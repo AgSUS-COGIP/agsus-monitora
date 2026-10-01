@@ -268,9 +268,9 @@ describe("registro da aba", async () => {
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.js");
   const { PAGINAS_DO_PAINEL } = await import("../src/lib/pagina-do-painel.js");
 
-  it("Seleção vem depois de Recursos, como beta, com a página própria", () => {
+  it("Seleção é a última etapa, depois da Lista de aprovados, como beta, com a página própria", () => {
     const lista = ABAS_DO_MENU.map((aba) => aba.id);
-    expect(lista.indexOf("selecao")).toBe(lista.indexOf("recursos") + 1);
+    expect(lista.indexOf("selecao")).toBe(lista.indexOf("aprovados") + 1);
     expect(ABAS_DO_MENU.find((aba) => aba.id === "selecao")).toMatchObject({
       view: "selecao",
       recurso: "selecao",

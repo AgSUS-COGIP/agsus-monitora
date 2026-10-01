@@ -1,5 +1,5 @@
 /*
-  Regras do painel de entrevistas (`entrevistas.html`), sem React e sem banco:
+  Regras da tela de Entrevistas (src/modulos/entrevistas/), sem React e sem banco:
   o que chega de `get_entrevistas_da_area` (migration
   20260929235000_entrevistas.sql) vira a lista que o painel desenha — os
   filtros, os KPIs, os dados dos gráficos, as pendências e o CSV.

@@ -16,11 +16,12 @@ import {
   Grafico,
   GradeDeKpis,
   Kpi as CardDeKpi,
+  LinhaDoRecorte,
   ListaDePendencias,
   MaisOpcoes,
+  MarcasDoRecorte,
   paletaDosGraficos,
   PainelDeFiltros,
-  Recorte as RecorteAtivo,
   TopoDoPainel,
 } from "../../ui/index.js";
 
@@ -340,15 +341,9 @@ export function Recorte({ ativos, recursos, carregado }) {
     },
   ].filter(Boolean);
   return (
-    <RecorteAtivo
-      texto={
-        ativos.length
-          ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
-          : "Sem filtros"
-      }
-      marcas={marcas}
-      carregando={!carregado}
-    />
+    <LinhaDoRecorte ativos={ativos}>
+      {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}
+    </LinhaDoRecorte>
   );
 }
 

@@ -104,24 +104,6 @@ describe("o quadro de um painel (Seleção)", () => {
   });
 });
 
-describe("a página Entrevistas", () => {
-  beforeEach(() => {
-    pagina = criarPagina("entrevistas");
-  });
-
-  it("abre o painel de entrevistas com a área, pelo mesmo módulo", () => {
-    pagina.classList.add("active");
-    definirAreaAtual("sede");
-
-    const quadro = abrirPaginaDoPainel(pagina, { origem: ORIGEM });
-
-    expect(quadro.classList.contains("external-panel")).toBe(true);
-    expect(endereco().pathname).toBe("/entrevistas.html");
-    expect(endereco().searchParams.get("area")).toBe("sede");
-    expect(quadroDoPainel(pagina).title).toBe("Entrevistas");
-  });
-});
-
 describe("a página Seleção", () => {
   beforeEach(() => {
     pagina = criarPagina("selecao");
@@ -140,19 +122,15 @@ describe("a página Seleção", () => {
   });
 });
 
-it("Análises curriculares não é mais quadro: é o módulo src/modulos/analises/", () => {
-  pagina = criarPagina("analises");
-  pagina.classList.add("active");
-  expect(abrirPaginaDoPainel(pagina, { origem: ORIGEM })).toBeNull();
-  expect(quadros()).toHaveLength(0);
-});
-
-it("Recursos não é mais quadro: é o módulo src/modulos/recursos/", () => {
-  pagina = criarPagina("recursos");
-  pagina.classList.add("active");
-  expect(abrirPaginaDoPainel(pagina, { origem: ORIGEM })).toBeNull();
-  expect(quadros()).toHaveLength(0);
-});
+it.each(["recursos", "entrevistas", "analises"])(
+  "%s não é mais quadro: é um módulo de src/modulos/",
+  (view) => {
+    pagina = criarPagina(view);
+    pagina.classList.add("active");
+    expect(abrirPaginaDoPainel(pagina, { origem: ORIGEM })).toBeNull();
+    expect(quadros()).toHaveLength(0);
+  },
+);
 
 it("seção sem painel conhecido não ganha quadro", () => {
   pagina = criarPagina("desconhecido");

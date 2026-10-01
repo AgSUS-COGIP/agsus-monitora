@@ -39,6 +39,8 @@ export function paletaDosGraficos(escuro, reserva) {
     review: ler(estados.review, reserva.review),
     blue: ler("--series-1", reserva.blue),
     surface: ler("--surface-card", reserva.surface),
+    // "Sem parecer", "Não informado": a fatia neutra das roscas.
+    neutro: ler("--state-neutral", reserva.neutro || "#94a3b8"),
   };
 }
 
