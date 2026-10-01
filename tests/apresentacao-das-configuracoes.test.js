@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  DICAS_DOS_CAMPOS,
   GRUPOS_POR_SECAO,
   primeiroDominio,
-  resumoDosPaineis,
-  situacaoDoPainel,
   tomDoAviso,
   urlDeImagem,
 } from "../src/lib/apresentacao-das-configuracoes.js";
@@ -38,26 +37,15 @@ describe("regras da apresentação", () => {
     expect(urlDeImagem("//outro.site/l.png")).toBe("");
   });
 
-  it("primeiro domínio da lista e situação dos painéis", () => {
+  it("primeiro domínio da lista", () => {
     expect(primeiroDominio(" @AgenciaSUS.org.br, agsus.org.br")).toBe(
       "agenciasus.org.br",
     );
-    expect(situacaoDoPainel({ ativo: false, manutencao: true, url: "x" })).toBe(
-      "inativo",
-    );
-    expect(situacaoDoPainel({ ativo: true, manutencao: true, url: "" })).toBe(
-      "manutencao",
-    );
-    expect(situacaoDoPainel({ ativo: true, url: " " })).toBe("semUrl");
-    expect(
-      resumoDosPaineis([{ ativo: true, url: "x" }, { ativo: false }]),
-    ).toEqual({
-      total: 2,
-      ativo: 1,
-      manutencao: 0,
-      inativo: 1,
-      semUrl: 0,
-    });
+  });
+
+  it("Painéis externos e Operação saíram do legado (são React)", () => {
+    expect(Object.keys(GRUPOS_POR_SECAO)).toEqual(["inicio", "acesso"]);
+    expect(DICAS_DOS_CAMPOS).not.toHaveProperty("cfgRealtimeEnabled");
   });
 });
 

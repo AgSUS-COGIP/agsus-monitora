@@ -750,7 +750,7 @@ describe("Acessos: visão simples, trava de área e convite", () => {
     );
     expect(ana.textContent).toContain("Saúde Indígena");
     expect(ana.textContent).toContain("Norte");
-    expect(ana.textContent).toContain("Último acesso em 29/09/2026");
+    expect(ana.textContent).toContain("Último acesso em 29/09/2026 às 12:00");
     const coord = linhaDe("coord@agenciasus.org.br");
     expect(coord.querySelector(".acessos-selo-convite").textContent).toBe(
       "Convidado · ainda não entrou",

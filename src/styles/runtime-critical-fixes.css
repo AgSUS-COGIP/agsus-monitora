@@ -23,7 +23,6 @@ html[data-theme="dark"] .app {
 
 html[data-theme="dark"] .app .access-request-card,
 html[data-theme="dark"] .app .access-authenticated-user,
-html[data-theme="dark"] .app .cnes-status-grid > div,
 html[data-theme="dark"] .app .access-status,
 html[data-theme="dark"] .app .metric-readonly {
   background: #111f33 !important;
@@ -37,15 +36,12 @@ html[data-theme="dark"] .app .multi-select-actions {
 
 html[data-theme="dark"] .app .config-card-title h3,
 html[data-theme="dark"] .app .access-authenticated-user strong,
-html[data-theme="dark"] .app .metric-readonly b,
-html[data-theme="dark"] .app .cnes-status-grid strong {
+html[data-theme="dark"] .app .metric-readonly b {
   color: #e8f1fb !important;
 }
 
-html[data-theme="dark"] .app .config-help,
 html[data-theme="dark"] .app .config-card-title p,
-html[data-theme="dark"] .app .metric-readonly span,
-html[data-theme="dark"] .app .cnes-status-grid span {
+html[data-theme="dark"] .app .metric-readonly span {
   color: #9db0c6 !important;
 }
 

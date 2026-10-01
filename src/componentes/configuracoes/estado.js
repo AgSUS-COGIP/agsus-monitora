@@ -1,14 +1,16 @@
 /*
   Estado das Configurações, fora do React: os valores carregados (o legado
-  lê a TB_CONFIGURACAO em `loadConfig` e publica aqui), o rascunho das seções
-  já em React, a seção aberta, a publicação versionada com motivo
+  lê a TB_CONFIGURACAO em `loadConfig` e a TB_PAINEL_EXTERNO em `loadPanels`
+  e publica aqui), o rascunho das seções já em React (campos e painéis
+  externos), a seção aberta, a publicação versionada com motivo
   (salvar_configuracoes_e_paineis_v2), o histórico e a restauração. Este
   arquivo não importa React; as RPCs ficam aqui (o check:rpc-contract só lê
-  `.js`). A regra da publicação é de `src/lib/publicacao-de-configuracoes.js`.
+  `.js`). A regra da publicação é de `src/lib/publicacao-de-configuracoes.js`
+  e a dos painéis, de `src/lib/paineis-externos-das-configuracoes.js`.
 
-  TRANSIÇÃO. Enquanto houver seção legada, a publicação também lê os campos
-  `cfg*` do index.html (CAMPOS_DO_LEGADO), a lista de painéis de
-  `#panelAdmin` e as chaves da barra lateral (`sidebar-branding.js`), e
+  TRANSIÇÃO. Enquanto houver seção legada (Página inicial, Tela de acesso,
+  Aparência), a publicação também lê os campos `cfg*` do index.html
+  (CAMPOS_DO_LEGADO) e as chaves da barra lateral (`sidebar-branding.js`), e
   digitar num campo legado marca a página como alterada. Cada seção migrada
   tira daqui a sua parte de DOM; quando não restar nenhuma, as funções
   `…DoLegado` saem.
@@ -23,9 +25,16 @@ import {
   dominioValido,
   errosDasSecoes,
   linhasDasSecoes,
-  urlHttpValida,
+  normalizarValoresCarregados,
 } from "../../lib/publicacao-de-configuracoes.js";
-import { collectPanelRows } from "../../modules/config-ui.js";
+import {
+  chaveDoErroDoPainel,
+  errosDosPaineis,
+  linhasDosPaineis,
+  mudarRascunhoDoPainel,
+  normalizarPaineis,
+  paineisComRascunho,
+} from "../../lib/paineis-externos-das-configuracoes.js";
 import { linhasDeConfiguracaoDaSidebar } from "../../modules/sidebar-branding.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 
@@ -43,9 +52,9 @@ const txt = (valor) => String(valor ?? "").trim();
 // ── Legado (transição) ─────────────────────────────────────────────────────
 
 /**
- * Só os campos de configuração legados marcam a página como alterada: os
- * `cfg*` e os do editor de painéis. Busca, matriz de acessos e os campos das
- * seções em React (ids `config…`, sem o prefixo `cfg`) não.
+ * Só os campos de configuração legados (`cfg*`) marcam a página como
+ * alterada pelo DOM. Busca, matriz de acessos e os campos das seções em
+ * React (ids `config…`, sem o prefixo `cfg`) não: estes vão pelo estado.
  */
 export function ehCampoDeConfiguracao(campo) {
   const Janela = campo?.ownerDocument?.defaultView;
@@ -59,10 +68,7 @@ export function ehCampoDeConfiguracao(campo) {
   )
     return false;
   if (campo.closest("[data-acessos], [data-configuracoes]")) return false;
-  return (
-    /^cfg/.test(campo.id) ||
-    Boolean(campo.closest("#panelAdmin") && /^panel/.test(campo.id))
-  );
+  return /^cfg/.test(campo.id);
 }
 
 function linhasDoLegado(documento) {
@@ -71,30 +77,6 @@ function linhasDoLegado(documento) {
     valor: txt(documento.getElementById(id)?.value ?? reserva),
     descricao,
   }));
-}
-
-function paineisDoLegado(documento) {
-  try {
-    const ocultos = [
-      ...documento.querySelectorAll('#panelAdmin input[id^="panelId"]'),
-    ];
-    return collectPanelRows(
-      ocultos.map((_, indice) => ({
-        id: txt(documento.getElementById(`panelId${indice}`)?.value),
-      })),
-    );
-  } catch (erro) {
-    console.warn("Não foi possível coletar painéis para publicação:", erro);
-    return [];
-  }
-}
-
-function rotuloDoCampo(campo) {
-  return (
-    campo.getAttribute("aria-label") ||
-    txt(campo.closest(".form-row")?.querySelector("label")?.textContent) ||
-    campo.id
-  );
 }
 
 /** [{ campo, mensagem }] dos campos legados. */
@@ -114,31 +96,9 @@ function errosDoLegado(documento) {
       "O domínio Google deve estar no formato agenciasus.org.br, sem https://, @ ou barras.",
     );
 
-  const heartbeat = $("cfgAccessHeartbeatMinutos");
-  if (heartbeat) {
-    const minutos = Number(heartbeat.value);
-    if (!Number.isInteger(minutos) || minutos < 1 || minutos > 60)
-      erro(heartbeat, "O heartbeat deve ser um número inteiro entre 1 e 60.");
-  }
-
   const logo = $("cfgAccessLogoUrl");
   if (logo && !isValidAccessAssetUrl(logo.value))
     erro(logo, "URL inválida no campo Logo da AgSUS no acesso.");
-
-  for (const campo of documento.querySelectorAll('[id^="panelUrl"]')) {
-    if (!urlHttpValida(campo.value))
-      erro(
-        campo,
-        `URL inválida no campo ${rotuloDoCampo(campo)}: use https:// ou http://.`,
-      );
-  }
-
-  for (const ativo of documento.querySelectorAll('[id^="panelAtivo"]')) {
-    if (ativo.value !== "true") continue;
-    const campo = $(`panelUrl${ativo.id.replace("panelAtivo", "")}`);
-    if (campo && !txt(campo.value))
-      erro(campo, "Painéis ativos precisam de uma URL configurada.");
-  }
 
   return erros;
 }
@@ -164,6 +124,10 @@ const ESTADO_INICIAL = Object.freeze({
   carregado: false,
   /** Alterações das seções em React: Map chave → valor. */
   rascunho: new Map(),
+  /** Painéis externos lidos da TB_PAINEL_EXTERNO (normalizarPaineis). */
+  paineis: Object.freeze([]),
+  /** Alterações dos painéis: Map id → { titulo?, url?, ativo?, em_manutencao? }. */
+  rascunhoDosPaineis: new Map(),
   /** Algum campo legado foi alterado desde a carga. */
   legadoAlterado: false,
   /** Seção aberta (id de SECOES, config-secoes.js). */
@@ -203,7 +167,14 @@ export function criarEstadoDasConfiguracoes({
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  const temAlteracoes = () => estado.rascunho.size > 0 || estado.legadoAlterado;
+  const temAlteracoes = () =>
+    estado.rascunho.size > 0 ||
+    estado.rascunhoDosPaineis.size > 0 ||
+    estado.legadoAlterado;
+
+  /** Os painéis como a tela os mostra (carregados + rascunho). */
+  const paineisAtuais = () =>
+    paineisComRascunho(estado.paineis, estado.rascunhoDosPaineis);
 
   const valor = (chave) =>
     estado.rascunho.has(chave)
@@ -219,9 +190,7 @@ export function criarEstadoDasConfiguracoes({
   /** O legado terminou de ler a TB_CONFIGURACAO (`loadConfig`). */
   function definirValoresCarregados(config = {}) {
     publicar({
-      valores: new Map(
-        Object.entries(config || {}).map(([chave, v]) => [chave, v ?? ""]),
-      ),
+      valores: normalizarValoresCarregados(config),
       carregado: true,
       rascunho: new Map(),
       legadoAlterado: false,
@@ -239,6 +208,29 @@ export function criarEstadoDasConfiguracoes({
     publicar({ rascunho, errosDosCampos });
   }
 
+  /** O legado terminou de ler a TB_PAINEL_EXTERNO (`loadPanels`). */
+  function definirPaineisCarregados(lista = []) {
+    publicar({
+      paineis: Object.freeze(normalizarPaineis(lista)),
+      rascunhoDosPaineis: new Map(),
+    });
+  }
+
+  function mudarPainel(id, campo, novo) {
+    const errosDosCampos = new Map(estado.errosDosCampos);
+    errosDosCampos.delete(chaveDoErroDoPainel(id));
+    publicar({
+      rascunhoDosPaineis: mudarRascunhoDoPainel(
+        estado.rascunhoDosPaineis,
+        estado.paineis,
+        id,
+        campo,
+        novo,
+      ),
+      errosDosCampos,
+    });
+  }
+
   function marcarLegadoAlterado() {
     if (!estado.legadoAlterado) publicar({ legadoAlterado: true });
   }
@@ -250,6 +242,7 @@ export function criarEstadoDasConfiguracoes({
   function descartar() {
     publicar({
       rascunho: new Map(),
+      rascunhoDosPaineis: new Map(),
       legadoAlterado: false,
       errosDosCampos: new Map(),
       errosDaValidacao: [],
@@ -270,7 +263,10 @@ export function criarEstadoDasConfiguracoes({
   function validar() {
     const legado = errosDoLegado(documento);
     marcarInvalidosDoLegado(documento, legado);
-    const errosDosCampos = errosDasSecoes(valoresAtuais());
+    const errosDosCampos = new Map([
+      ...errosDasSecoes(valoresAtuais()),
+      ...errosDosPaineis(paineisAtuais()),
+    ]);
     const errosDaValidacao = [
       ...new Set([
         ...errosDosCampos.values(),
@@ -325,7 +321,7 @@ export function criarEstadoDasConfiguracoes({
       );
       if (error) throw error;
       const linhas = linhasDaPublicacao();
-      const paineis = paineisDoLegado(documento);
+      const paineis = linhasDosPaineis(paineisAtuais());
       const alteracoes = buildChanges(retrato, linhas, paineis);
       if (!alteracoes.length) {
         descartar();
@@ -544,9 +540,12 @@ export function criarEstadoDasConfiguracoes({
       return () => ouvintes.delete(ouvinte);
     },
     valor,
+    paineisAtuais,
     temAlteracoes,
     definirValoresCarregados,
+    definirPaineisCarregados,
     mudarCampo,
+    mudarPainel,
     definirSecao,
     revisar,
     confirmarPublicacao,

@@ -1,7 +1,7 @@
 /*
   Grupos, dicas e prévias das seções de Configurações: as legadas
-  (src/modules/config-apresentacao.js) e a Marca, em React, com as mesmas
-  classes. Tokens do design.md: a cor marca o assunto de cada grupo (paleta de gráficos e estados), a hierarquia vem da
+  (src/modules/config-apresentacao.js) e as em React (Marca, Painéis externos
+  e Operação), com as mesmas classes. Tokens do design.md: a cor marca o assunto de cada grupo (paleta de gráficos e estados), a hierarquia vem da
   tipografia e do espaço, e a prévia usa superfície sutil, sem moldura.
 */
 
@@ -473,7 +473,7 @@
   gap: var(--space-1);
 }
 
-/* Recursos: resumo dos painéis externos */
+/* Painéis externos: resumo (src/componentes/configuracoes/paineis-externos.jsx) */
 .previa-recursos {
   display: grid;
   gap: var(--space-3);
