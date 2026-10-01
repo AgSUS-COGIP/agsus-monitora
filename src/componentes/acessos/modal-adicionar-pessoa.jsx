@@ -76,9 +76,12 @@ export function ModalAdicionarPessoa({ estado }) {
     if (pronto) setConvite(pronto);
   }
 
+  /* Uma key por passo: o Modal remonta e leva o foco ao "Concluir" (sem ela,
+     o React reaproveitava o Modal do formulário e o foco caía no body). */
   if (convite)
     return (
       <Modal
+        key="convite"
         id="acessosAdicionar"
         rotuloId="acessosAdicionarTitulo"
         className="acessos-modal"
@@ -122,6 +125,7 @@ export function ModalAdicionarPessoa({ estado }) {
 
   return (
     <Modal
+      key="formulario"
       id="acessosAdicionar"
       rotuloId="acessosAdicionarTitulo"
       className="acessos-modal"

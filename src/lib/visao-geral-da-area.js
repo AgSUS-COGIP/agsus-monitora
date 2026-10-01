@@ -9,15 +9,20 @@
   - Saúde Indígena: o mapa dos DSEIs e CASAIs, com as Terras Indígenas, e a
     lista "Territórios por vagas" — como sempre foi;
   - Projetos: o mesmo mapa, sem nada da Saúde Indígena, com um ponto por
-    município das vagas (UBS móvel no nome da vaga, RPC
-    `listar_municipios_das_vagas_da_area`) e a lista "Municípios por vagas";
+    lugar das vagas de todos os projetos, na cor do projeto (RPC
+    `listar_municipios_das_vagas_da_area`: os locais lidos dos PDFs dos
+    editais, em TB_LOCAL_VAGA_EDITAL, e o "UBS móvel" do nome da vaga), e a
+    lista "Municípios por vagas", com filtro e agrupamento por projeto;
   - SEDE: sem o bloco — a equipe fica em Brasília.
 
   Aqui ficam essa escolha, os textos de cada bloco e a conta dos municípios.
   O desenho é de `src/modules/municipios-da-visao-geral.js` e do legado.
 */
 
-import { coordenadasDoMunicipio } from "./coordenadas-dos-municipios.js";
+import {
+  coordenadasDaUf,
+  coordenadasDoMunicipio,
+} from "./coordenadas-dos-municipios.js";
 import { nomeDaArea } from "./menu-lateral.js";
 import { AREA_SAUDE_INDIGENA } from "./responsavel-do-edital.js";
 
@@ -26,6 +31,7 @@ const num = (valor) => {
   return Number.isFinite(numero) ? numero : 0;
 };
 const texto = (valor) => String(valor ?? "").trim();
+const fmtNumero = (valor) => num(valor).toLocaleString("pt-BR");
 
 export const MAPA_DOS_DSEIS = "dsei";
 export const MAPA_DOS_MUNICIPIOS = "municipios";
@@ -73,7 +79,7 @@ export const TEXTOS_DO_MAPA = Object.freeze({
     titulo: "Municípios das vagas",
     mapa: "Mapa do Brasil com os municípios das vagas da área",
     lista: "Municípios por vagas",
-    dica: "Clique num município para ver vagas, candidatos e o resultado das análises.",
+    dica: "Clique num município para ver projeto, edital, vagas e candidatos.",
   }),
 });
 
@@ -84,23 +90,157 @@ export function textosDoMapa(mapa) {
 export const plural = (total, um, varios) =>
   `${num(total).toLocaleString("pt-BR")} ${num(total) === 1 ? um : varios}`;
 
-// ── Municípios ───────────────────────────────────────────────────────────
+// ── Projetos ─────────────────────────────────────────────────────────────
 
 /*
-  A resposta de `listar_municipios_das_vagas_da_area`: uma linha por
-  município, com as contagens. Normaliza números e descarta linha sem
-  município.
+  Os projetos da área Projetos, na ordem das séries do design system
+  (`--series-1` … `--series-6`, DESIGN.md seção 6). A cor segue o projeto,
+  não a posição: filtrar não repinta quem fica. O projeto vem da unidade do
+  edital ("Projeto Agora Tem Especialistas Caminhoneiros") e é reconhecido
+  pela palavra, sem acento nem caixa. Projeto fora da lista fica com a série 0
+  (neutra) e o nome como veio.
+*/
+export const PROJETOS_DO_MAPA = Object.freeze([
+  Object.freeze({ serie: 1, nome: "Caminhoneiros", palavra: "caminhoneiro" }),
+  Object.freeze({
+    serie: 2,
+    nome: "Saúde nas Fronteiras",
+    palavra: "fronteira",
+  }),
+  Object.freeze({
+    serie: 3,
+    nome: "Escritório Distrital e Regional",
+    palavra: "escritorio",
+  }),
+  Object.freeze({ serie: 4, nome: "Rio Doce", palavra: "rio doce" }),
+  Object.freeze({ serie: 5, nome: "MFC", palavra: "mfc" }),
+  Object.freeze({ serie: 6, nome: "CCE", palavra: "cce" }),
+]);
+
+const semAcento = (valor) =>
+  texto(valor).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/** { nome, serie } do projeto (unidade do edital). */
+export function projetoDoMapa(unidade) {
+  const chave = semAcento(unidade);
+  const conhecido = chave
+    ? PROJETOS_DO_MAPA.find((projeto) =>
+        new RegExp(`(^|[^a-z])${projeto.palavra}`).test(chave),
+      )
+    : null;
+  if (conhecido) return { nome: conhecido.nome, serie: conhecido.serie };
+  return { nome: texto(unidade) || "Sem projeto", serie: 0 };
+}
+
+const ordemDoProjeto = (a, b) =>
+  (a.serie || 99) - (b.serie || 99) || a.nome.localeCompare(b.nome, "pt-BR");
+
+// ── Municípios ───────────────────────────────────────────────────────────
+
+const numeroOuNulo = (valor) => {
+  if (valor === null || valor === undefined || valor === "") return null;
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : null;
+};
+
+/*
+  A resposta de `listar_municipios_das_vagas_da_area`: uma linha por lugar —
+  município ou, quando o edital só diz o estado, UF (`nivel: "uf"`, sem
+  `municipio_uf`). Normaliza números, põe o nome curto de cada projeto e
+  descarta linha sem lugar. `vagas` são as vagas nas análises; `vagasEdital`,
+  as publicadas nos editais (nulo se nenhum diz).
 */
 export function municipiosDaResposta(dados) {
   return (Array.isArray(dados) ? dados : [])
-    .map((linha) => ({
-      municipioUf: texto(linha?.municipio_uf),
-      vagas: num(linha?.vagas),
-      candidatos: num(linha?.candidatos),
-      aprovados: num(linha?.aprovados),
-      reprovados: num(linha?.reprovados),
-    }))
-    .filter((linha) => linha.municipioUf);
+    .map((linha) => {
+      const uf = texto(linha?.uf).toUpperCase();
+      const municipioUf = texto(linha?.municipio_uf);
+      const nivel = !municipioUf && uf ? "uf" : "municipio";
+      const editais = (Array.isArray(linha?.editais) ? linha.editais : [])
+        .map((edital) => {
+          const projeto = projetoDoMapa(edital?.projeto);
+          return {
+            id: texto(edital?.id),
+            edital: texto(edital?.edital),
+            projeto: projeto.nome,
+            serie: projeto.serie,
+            vagas: numeroOuNulo(edital?.vagas),
+            cadastroReserva: edital?.cadastro_reserva === true,
+            origens: Array.isArray(edital?.origens) ? edital.origens : [],
+            lotacoes: Array.isArray(edital?.lotacoes)
+              ? edital.lotacoes.map(texto).filter(Boolean)
+              : [],
+          };
+        })
+        .sort(
+          (a, b) =>
+            ordemDoProjeto(
+              { serie: a.serie, nome: a.projeto },
+              { serie: b.serie, nome: b.projeto },
+            ) || a.edital.localeCompare(b.edital, "pt-BR"),
+        );
+      const projetos = new Map();
+      for (const nome of Array.isArray(linha?.projetos) ? linha.projetos : [])
+        projetos.set(projetoDoMapa(nome).nome, projetoDoMapa(nome));
+      for (const edital of editais)
+        projetos.set(edital.projeto, {
+          nome: edital.projeto,
+          serie: edital.serie,
+        });
+      return {
+        chave: nivel === "uf" ? `uf:${uf}` : municipioUf,
+        municipioUf,
+        uf,
+        nivel,
+        codigoIbge: numeroOuNulo(linha?.codigo_ibge),
+        vagas: num(linha?.vagas),
+        vagasEdital: numeroOuNulo(linha?.vagas_edital),
+        cadastroReserva: linha?.cadastro_reserva === true,
+        candidatos: num(linha?.candidatos),
+        aprovados: num(linha?.aprovados),
+        reprovados: num(linha?.reprovados),
+        projetos: [...projetos.values()].sort(ordemDoProjeto),
+        editais,
+      };
+    })
+    .filter((linha) => linha.municipioUf || linha.nivel === "uf");
+}
+
+/*
+  O nome do lugar: "Seropédica/RJ", ou "Pará (estado)" quando o edital só diz
+  a UF.
+*/
+export function rotuloDoLugar(lugar) {
+  if (lugar?.nivel !== "uf") return texto(lugar?.municipioUf);
+  const nome = coordenadasDaUf(lugar.uf)?.nome || lugar.uf;
+  return `${nome} (estado)`;
+}
+
+/*
+  As vagas publicadas, por extenso: "4 vagas + cadastro reserva",
+  "Cadastro reserva" ou "" quando o edital não diz.
+*/
+export function textoDasVagas({ vagas = null, cadastroReserva = false } = {}) {
+  const imediatas = num(vagas) > 0 ? plural(vagas, "vaga", "vagas") : "";
+  if (imediatas && cadastroReserva) return `${imediatas} + cadastro reserva`;
+  if (imediatas) return imediatas;
+  return cadastroReserva ? "Cadastro reserva" : "";
+}
+
+/*
+  Os projetos presentes, na ordem das séries, com quantos lugares cada um tem
+  — a legenda do mapa e as opções do filtro.
+*/
+export function projetosDosMunicipios(municipios) {
+  const porNome = new Map();
+  for (const lugar of Array.isArray(municipios) ? municipios : []) {
+    for (const projeto of lugar.projetos) {
+      const atual = porNome.get(projeto.nome) ?? { ...projeto, lugares: 0 };
+      atual.lugares += 1;
+      porNome.set(projeto.nome, atual);
+    }
+  }
+  return [...porNome.values()].sort(ordemDoProjeto);
 }
 
 export const RAIO_MINIMO = 6;
@@ -126,24 +266,104 @@ export function resultadoDoMunicipio({ aprovados = 0, reprovados = 0 } = {}) {
   return { pct: Math.round((num(aprovados) / decididos) * 100), decididos };
 }
 
+/* O tamanho do lugar: as vagas publicadas ou, se forem mais, as das análises. */
+const tamanhoDoLugar = (lugar) => Math.max(num(lugar.vagasEdital), lugar.vagas);
+
 /*
-  Os municípios por vagas, decrescente (candidatos desempatam), cada um com a
-  coordenada (ou `null`, se a tabela ainda não o tem) e o raio do ponto.
+  Os lugares por vagas, decrescente (candidatos desempatam), cada um com a
+  coordenada (ou `null`, se a tabela ainda não o tem), o raio do ponto, o
+  rótulo e a série da cor. Com `projeto`, só os lugares dele, pintados com a
+  cor dele; sem filtro, a cor é a do primeiro projeto do lugar e
+  `variosProjetos` diz que há outros (o ponto ganha contorno tracejado).
 */
-export function pontosDosMunicipios(municipios) {
-  const lista = [...(Array.isArray(municipios) ? municipios : [])].sort(
-    (a, b) =>
-      b.vagas - a.vagas ||
-      b.candidatos - a.candidatos ||
-      a.municipioUf.localeCompare(b.municipioUf, "pt-BR"),
-  );
-  const maior = Math.max(0, ...lista.map((item) => item.vagas));
+export function pontosDosMunicipios(municipios, { projeto = "" } = {}) {
+  const filtro = texto(projeto);
+  const lista = (Array.isArray(municipios) ? municipios : [])
+    .map((lugar) => ({
+      projetos: [],
+      editais: [],
+      nivel: "municipio",
+      vagasEdital: null,
+      ...lugar,
+    }))
+    .filter(
+      (lugar) => !filtro || lugar.projetos.some((item) => item.nome === filtro),
+    )
+    .map((lugar) => ({
+      ...lugar,
+      rotulo: rotuloDoLugar(lugar),
+      tamanho: tamanhoDoLugar(lugar),
+    }))
+    .sort(
+      (a, b) =>
+        b.tamanho - a.tamanho ||
+        b.candidatos - a.candidatos ||
+        a.rotulo.localeCompare(b.rotulo, "pt-BR"),
+    );
+  const maior = Math.max(0, ...lista.map((item) => item.tamanho));
   return lista.map((item) => {
-    const lugar = coordenadasDoMunicipio(item.municipioUf);
+    const lugar =
+      item.nivel === "uf"
+        ? coordenadasDaUf(item.uf)
+        : coordenadasDoMunicipio(item.municipioUf, item.codigoIbge);
+    const principal = filtro
+      ? item.projetos.find((projetoDoLugar) => projetoDoLugar.nome === filtro)
+      : item.projetos[0];
     return {
       ...item,
       coordenadas: lugar ? [lugar.latitude, lugar.longitude] : null,
-      raio: raioDoPonto(item.vagas, maior),
+      raio: raioDoPonto(item.tamanho, maior),
+      serie: principal?.serie ?? 0,
+      variosProjetos: !filtro && item.projetos.length > 1,
     };
   });
+}
+
+/*
+  A lista agrupada por projeto: um grupo por projeto, na ordem das séries,
+  com os pontos dele (na ordem que vieram). Lugar de dois projetos aparece nos
+  dois grupos.
+*/
+export function gruposPorProjeto(pontos) {
+  const grupos = new Map();
+  for (const ponto of Array.isArray(pontos) ? pontos : []) {
+    const projetos = ponto.projetos?.length
+      ? ponto.projetos
+      : [{ nome: "Sem projeto", serie: 0 }];
+    for (const projeto of projetos) {
+      const grupo = grupos.get(projeto.nome) ?? { ...projeto, pontos: [] };
+      grupo.pontos.push(ponto);
+      grupos.set(projeto.nome, grupo);
+    }
+  }
+  return [...grupos.values()].sort(ordemDoProjeto);
+}
+
+/*
+  O que o popup do lugar mostra, sem DOM: título, uma linha por edital
+  (projeto, edital, vagas publicadas, lotações) e as contagens das análises.
+*/
+export function resumoDoLugar(ponto) {
+  const editais = (ponto?.editais ?? []).map((edital) => ({
+    projeto: edital.projeto,
+    serie: edital.serie,
+    texto: [
+      edital.edital ? `Edital ${edital.edital}` : "Edital sem número",
+      textoDasVagas(edital),
+      edital.lotacoes.join("; "),
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
+  const resultado = resultadoDoMunicipio(ponto);
+  const linhas = [
+    ponto?.vagas ? `Vagas nas análises: ${fmtNumero(ponto.vagas)}` : "",
+    `Candidatos: ${fmtNumero(ponto?.candidatos)}`,
+    ponto?.aprovados || ponto?.reprovados
+      ? `Aprovados: ${fmtNumero(ponto.aprovados)} · Reprovados: ${fmtNumero(ponto.reprovados)}`
+      : "",
+    resultado ? `${resultado.pct}% aprovados entre os analisados` : "",
+    ponto?.nivel === "uf" ? "O edital diz só o estado" : "",
+  ].filter(Boolean);
+  return { titulo: rotuloDoLugar(ponto), editais, linhas };
 }
