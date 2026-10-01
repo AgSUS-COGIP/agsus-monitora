@@ -23,7 +23,6 @@
 import {
   DICAS_DOS_CAMPOS,
   GRUPOS_POR_SECAO,
-  primeiroDominio,
   tomDoAviso,
   urlDeImagem,
 } from "../lib/apresentacao-das-configuracoes.js";
@@ -262,9 +261,6 @@ function previaDaTelaDeAcesso(documento) {
     documento.querySelector(".access-background-preview")?.style
       .backgroundImage || "";
   const googleLigado = valor(documento, "cfgGoogleEnabled") !== "false";
-  const dominio =
-    valor(documento, "cfgGoogleDomainHint") ||
-    primeiroDominio(valor(documento, "cfgGoogleAllowedDomains"));
   const reservaDoLogo = el(documento, "strong", {
     className: "previa-acesso__marca",
     texto: "AgSUS",
@@ -298,11 +294,6 @@ function previaDaTelaDeAcesso(documento) {
         texto:
           valor(documento, "cfgAccessGreeting") || "Bem-vindo(a) ao MONITORA",
       }),
-      el(documento, "p", {
-        texto:
-          valor(documento, "cfgAccessInstruction") ||
-          "Entre com sua conta institucional.",
-      }),
       googleLigado
         ? el(
             documento,
@@ -313,21 +304,13 @@ function previaDaTelaDeAcesso(documento) {
               "aria-hidden": "true",
               texto: "G",
             }),
-            valor(documento, "cfgGoogleButtonText") || "Entrar com Google",
+            valor(documento, "cfgGoogleButtonText") ||
+              "Entrar com sua conta institucional",
           )
         : el(documento, "small", {
             className: "previa-acesso__desligado",
             texto: "Botão do Google desligado.",
           }),
-      dominio
-        ? el(
-            documento,
-            "small",
-            { className: "previa-acesso__dominio" },
-            icone("shield-check", 12),
-            `Contas @${dominio}`,
-          )
-        : null,
     ),
   );
 }

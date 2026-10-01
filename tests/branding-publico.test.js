@@ -37,7 +37,6 @@ const IDENTIDADE_ATUAL = {
   logoUrl: "https://exemplo.org/logo.png",
   panelColor: "#ffffff",
   greeting: "Bem-vindo ao Agosto Lilás",
-  instruction: "Entre com sua conta institucional.",
   buttonText: "Entrar com sua conta institucional",
 };
 
@@ -112,7 +111,6 @@ function montarTelaDeAcesso() {
     <div id="loginScreen">
       <img id="loginLogo" src="" alt="" />
       <h1 id="loginGreeting"></h1>
-      <p id="loginDescription"></p>
       <button><span id="googleLoginText"></span></button>
     </div>`;
 }
@@ -124,7 +122,6 @@ function identidadeNaTela() {
     painel: tela.style.getPropertyValue("--login-panel-color"),
     logo: document.getElementById("loginLogo").getAttribute("src"),
     saudacao: document.getElementById("loginGreeting").textContent,
-    instrucao: document.getElementById("loginDescription").textContent,
     botao: document.getElementById("googleLoginText").textContent,
   };
 }
@@ -136,8 +133,19 @@ beforeEach(() => {
 afterEach(() => localStorage.clear());
 
 describe("tradução da resposta da RPC", () => {
-  it("mapeia as seis chaves públicas para os campos do cache", () => {
+  it("mapeia as chaves públicas para os campos do cache", () => {
     expect(mapearBrandingPublico(RESPOSTA_DA_RPC)).toEqual(IDENTIDADE_ATUAL);
+  });
+
+  /*
+    A tela de acesso não tem mais instrução: a RPC ainda devolve a chave
+    `auth_access_instruction` (o banco não mudou), e o front a ignora.
+  */
+  it("ignora a instrução que a RPC ainda devolve", () => {
+    expect(RESPOSTA_DA_RPC).toHaveProperty("auth_access_instruction");
+    expect(mapearBrandingPublico(RESPOSTA_DA_RPC)).not.toHaveProperty(
+      "instruction",
+    );
   });
 
   /*
@@ -291,7 +299,6 @@ describe("os seis cenários de identidade", () => {
     expect(naTela.painel).toBe(IDENTIDADE_ATUAL.panelColor);
     expect(naTela.logo).toBe(IDENTIDADE_ATUAL.logoUrl);
     expect(naTela.saudacao).toBe(IDENTIDADE_ATUAL.greeting);
-    expect(naTela.instrucao).toBe(IDENTIDADE_ATUAL.instruction);
     expect(naTela.botao).toBe(IDENTIDADE_ATUAL.buttonText);
   });
 

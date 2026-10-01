@@ -68,11 +68,6 @@ export const CAMPOS_DO_LEGADO = Object.freeze([
     "auto",
   ],
   ["cfgAccessGreeting", "auth_access_greeting", "Saudação da tela de acesso"],
-  [
-    "cfgAccessInstruction",
-    "auth_access_instruction",
-    "Instrução da tela de acesso",
-  ],
   ["cfgFilterTitle", "filter_title", "Título dos filtros"],
   ["cfgFilterSubtitle", "filter_subtitle", "Subtítulo dos filtros"],
   ["cfgFilterToggleShow", "filter_toggle_show", "Texto para mostrar filtros"],

@@ -11,7 +11,6 @@ const MARCA_DA_INSTITUICAO = {
   panelColor: "#ffffff",
   logoUrl: "https://exemplo.org/logo-institucional.png",
   greeting: "Bem-vindo ao Agosto Lilás",
-  instruction: "Entre com sua conta institucional.",
 };
 
 function montarTelaDeAcesso() {
@@ -19,7 +18,6 @@ function montarTelaDeAcesso() {
     <div id="loginScreen">
       <img id="loginLogo" src="" alt="" />
       <h1 id="loginGreeting"></h1>
-      <p id="loginDescription"></p>
     </div>`;
   return document.getElementById("loginScreen");
 }
@@ -31,7 +29,6 @@ function identidadeNaTela() {
     panelColor: tela.style.getPropertyValue("--login-panel-color"),
     logo: document.getElementById("loginLogo").getAttribute("src"),
     greeting: document.getElementById("loginGreeting").textContent,
-    instruction: document.getElementById("loginDescription").textContent,
   };
 }
 
@@ -42,18 +39,41 @@ beforeEach(() => {
 afterEach(() => localStorage.clear());
 
 describe("cache da identidade", () => {
-  it("guarda os cinco campos, não apenas fundo e cor", () => {
+  it("guarda os quatro campos, não apenas fundo e cor", () => {
     guardarMarca(MARCA_DA_INSTITUICAO);
     expect(lerMarcaGuardada()).toEqual(MARCA_DA_INSTITUICAO);
+  });
+
+  /*
+    Quem abriu a tela antes de a instrução sair tem `instruction` no cache. A
+    leitura só considera os campos conhecidos: o resto da marca continua valendo
+    e o campo velho some na próxima gravação.
+  */
+  it("cache antigo com instrução: lê o resto e descarta a instrução", () => {
+    localStorage.setItem(
+      "agsus_monitora_access_branding_v1",
+      JSON.stringify({
+        ...MARCA_DA_INSTITUICAO,
+        instruction: "Acesse com sua conta institucional.",
+      }),
+    );
+    expect(lerMarcaGuardada()).toEqual(MARCA_DA_INSTITUICAO);
+
+    guardarMarca({ greeting: "Nova saudação" });
+    const gravado = JSON.parse(
+      localStorage.getItem("agsus_monitora_access_branding_v1"),
+    );
+    expect(gravado).not.toHaveProperty("instruction");
+    expect(gravado.greeting).toBe("Nova saudação");
   });
 });
 
 describe("aplicação no arranque", () => {
   /*
     Aplicar só fundo e cor produzia tela híbrida: a arte de uma configuração com
-    a saudação e o logotipo de outra. Os cinco campos entram juntos.
+    a saudação e o logotipo de outra. Os campos entram juntos.
   */
-  it("aplica os cinco campos, sem deixar tela híbrida", () => {
+  it("aplica os quatro campos, sem deixar tela híbrida", () => {
     guardarMarca(MARCA_DA_INSTITUICAO);
     expect(aplicarMarcaGuardadaNoArranque(document)).toBe(true);
 
@@ -64,7 +84,6 @@ describe("aplicação no arranque", () => {
     expect(naTela.panelColor).toBe(MARCA_DA_INSTITUICAO.panelColor);
     expect(naTela.logo).toBe(MARCA_DA_INSTITUICAO.logoUrl);
     expect(naTela.greeting).toBe(MARCA_DA_INSTITUICAO.greeting);
-    expect(naTela.instruction).toBe(MARCA_DA_INSTITUICAO.instruction);
   });
 
   /*
@@ -81,7 +100,7 @@ describe("aplicação no arranque", () => {
 
   /*
     O ciclo completo que a pessoa vê: primeiro carregamento, depois do logout e
-    depois de recarregar precisam ser idênticos nos cinco valores.
+    depois de recarregar precisam ser idênticos nos quatro valores.
   */
   it("login inicial = login após logout = login após reload", () => {
     guardarMarca(MARCA_DA_INSTITUICAO);
@@ -123,6 +142,22 @@ describe("falha ao carregar a configuração", () => {
       MARCA_DA_INSTITUICAO.backgroundUrl,
     );
     expect(naTela.panelColor).toBe(MARCA_DA_INSTITUICAO.panelColor);
+  });
+});
+
+describe("tela de acesso sem repetição", () => {
+  const html = readFileSync("index.html", "utf8");
+
+  /*
+    A instrução ("Acesse com sua conta institucional.") e o rodapé de segurança
+    repetiam o botão. Ficam logo, saudação e botão.
+  */
+  it("não tem instrução nem rodapé de segurança, nem campo para a instrução", () => {
+    expect(html).toContain('id="loginGreeting"');
+    expect(html).toContain('id="googleLoginText"');
+    expect(html).not.toContain("loginDescription");
+    expect(html).not.toContain("loginSecurity");
+    expect(html).not.toContain("cfgAccessInstruction");
   });
 });
 

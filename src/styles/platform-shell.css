@@ -106,8 +106,7 @@
 .login-panel-dark .login-organization-mark strong,
 .login-panel-dark .login-product-mark,
 .login-panel-dark .login-card h1,
-.login-panel-dark .login-card p,
-.login-panel-dark .login-security {
+.login-panel-dark .login-card p {
   color: #fff;
 }
 .login-panel-dark .login-brand-divider {
@@ -119,7 +118,7 @@
   letter-spacing: 0.015em;
 }
 .login-card h1 {
-  margin: 26px 0 8px;
+  margin: 26px 0 30px;
   color: #102a43;
   font-size: 25px;
   letter-spacing: -0.025em;
@@ -130,18 +129,8 @@
   font-size: 13px;
   font-weight: 800;
 }
-.login-description {
-  max-width: 390px;
-  margin: 0 auto 30px !important;
-  color: #334155 !important;
-  font-size: 14px;
-  line-height: 1.55;
-  font-weight: 700 !important;
-}
 .login-panel-dark .login-card h1,
-.login-panel-dark .login-card .login-subtitle,
-.login-panel-dark .login-description,
-.login-panel-dark .login-security {
+.login-panel-dark .login-card .login-subtitle {
   color: #fff !important;
 }
 .login-panel-dark .login-product-mark i {
@@ -178,22 +167,6 @@
   place-items: center;
   border-radius: 999px;
   background: #fff;
-}
-.login-security {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
-  color: #334155;
-  font-size: 12px;
-  line-height: 1.5;
-  text-align: center;
-}
-.login-security i {
-  color: #59f2c8;
 }
 
 /* Shell e navegação lateral */

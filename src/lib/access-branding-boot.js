@@ -89,9 +89,6 @@ export function aplicarMarcaNaTela(marca, documento = globalThis.document) {
   const saudacao = documento?.getElementById?.("loginGreeting");
   if (saudacao && marca.greeting) saudacao.textContent = marca.greeting;
 
-  const instrucao = documento?.getElementById?.("loginDescription");
-  if (instrucao && marca.instruction) instrucao.textContent = marca.instruction;
-
   const textoDoBotao = documento?.getElementById?.("googleLoginText");
   if (textoDoBotao && marca.buttonText) {
     textoDoBotao.textContent = marca.buttonText;
