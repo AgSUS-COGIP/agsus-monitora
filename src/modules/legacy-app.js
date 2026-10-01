@@ -110,12 +110,6 @@ import {
   raioDaBolha,
 } from "../lib/mapa-render.js";
 import { calcularLeque } from "../lib/leque-de-marcadores.js";
-import {
-  ACCESS_BACKGROUND_BUCKET,
-  ACCESS_BACKGROUND_FOLDER,
-  createAccessBackgroundPath,
-  validateAccessBackgroundFile,
-} from "../lib/access-background-storage.js";
 import { guardarMarca } from "../lib/access-branding-cache.js";
 import {
   SAIDA_DESCONHECIDA,
@@ -623,22 +617,6 @@ function fmtDate(v) {
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return s;
   return `${m[3]}/${m[2]}/${m[1]}`;
-}
-
-function previewImg(inputId, imgId) {
-  const url = txt($(inputId)?.value);
-  const img = $(imgId);
-  if (!img) return;
-  if (!url) {
-    img.style.display = "none";
-    img.src = "";
-    return;
-  }
-  img.src = url;
-  img.style.display = "block";
-  img.onerror = () => {
-    img.style.display = "none";
-  };
 }
 
 function toast(message, type = "ok") {
@@ -1666,7 +1644,6 @@ async function loadConfig(options = {}) {
     if (!silent)
       toast("Erro ao carregar configurações: " + friendlyError(error), "error");
     applyConfigToUi();
-    renderConfigForm();
     estadoDasConfiguracoes.definirValoresCarregados(appConfig);
     document.body.classList.remove("config-loading");
     return false;
@@ -1680,12 +1657,25 @@ async function loadConfig(options = {}) {
     });
   configLoadOk = true;
   applyConfigToUi();
-  renderConfigForm();
-  // As seções de Configurações em React (src/componentes/configuracoes/) leem daqui.
+  // As seções de Configurações (React, src/componentes/configuracoes/) leem daqui.
   estadoDasConfiguracoes.definirValoresCarregados(appConfig);
   document.body.classList.remove("config-loading");
   return true;
 }
+
+/*
+  Configurações › Aparência (React) gravou a arte da tela de acesso na hora
+  (definir_fundo_acesso_monitora): a tela de acesso e o cache de marca usam o
+  valor novo sem esperar a próxima carga.
+*/
+document.addEventListener("agsus:fundo-do-acesso-definido", (evento) => {
+  appConfig.auth_access_background_url =
+    evento.detail?.url || DEFAULT_ACCESS_BRANDING.backgroundUrl;
+  appConfig.auth_access_background_path = evento.detail?.caminho || "";
+  loadedConfigKeys.add("auth_access_background_url");
+  loadedConfigKeys.add("auth_access_background_path");
+  applyConfigToUi();
+});
 
 /*
   Aviso global — a mensagem de topo definida em Configurações.
@@ -2376,7 +2366,6 @@ function navigate(view) {
       cfgValue("config_nav_title"),
       cfgValue("config_page_subtitle"),
     );
-    renderConfigForm();
     // Reabre a seção guardada (ou a primeira permitida); em Acessos, carrega a tela React.
     abrirSecaoDeConfiguracao(document, secaoAtualDeConfiguracao(document));
     if (previousView !== requestedView)
@@ -11411,320 +11400,6 @@ function reloadExternal() {
   openPanel(currentPanel.codigo);
 }
 
-function renderConfigForm() {
-  $("cfgSubtitle") && ($("cfgSubtitle").value = cfgValue("app_subtitle"));
-  $("cfgPageTitle") && ($("cfgPageTitle").value = cfgValue("page_title"));
-  $("cfgPageSubtitle") &&
-    ($("cfgPageSubtitle").value = cfgValue("page_subtitle"));
-  $("cfgLoginEyebrow") &&
-    ($("cfgLoginEyebrow").value = cfgValue("login_eyebrow"));
-  $("cfgLoginEmailLabel") &&
-    ($("cfgLoginEmailLabel").value = cfgValue("login_email_label"));
-  $("cfgLoginEmailPlaceholder") &&
-    ($("cfgLoginEmailPlaceholder").value = cfgValue("login_email_placeholder"));
-  $("cfgLoginPasswordLabel") &&
-    ($("cfgLoginPasswordLabel").value = cfgValue("login_password_label"));
-  $("cfgLoginPasswordPlaceholder") &&
-    ($("cfgLoginPasswordPlaceholder").value = cfgValue(
-      "login_password_placeholder",
-    ));
-  $("cfgLoginButtonText") &&
-    ($("cfgLoginButtonText").value = cfgValue("login_button_text"));
-  $("cfgPasswordResetMessage") &&
-    ($("cfgPasswordResetMessage").value = passwordResetMessage());
-  $("cfgGoogleEnabled") &&
-    ($("cfgGoogleEnabled").value = String(
-      cfgBool("auth_google_enabled", true),
-    ));
-  $("cfgGoogleButtonText") &&
-    ($("cfgGoogleButtonText").value = cfgValue("auth_google_button_text"));
-  $("cfgGoogleDomainHint") &&
-    ($("cfgGoogleDomainHint").value = cfgValue("auth_google_domain_hint"));
-  $("cfgGoogleAllowedDomains") &&
-    ($("cfgGoogleAllowedDomains").value = normalizeAllowedDomains(
-      cfgValue("auth_google_allowed_domains"),
-    ).join(","));
-  $("cfgAccessBackgroundUrl") &&
-    ($("cfgAccessBackgroundUrl").value = normalizeAccessBackgroundUrl(
-      cfgValue("auth_access_background_url"),
-    ));
-  $("cfgAccessBackgroundPath") &&
-    ($("cfgAccessBackgroundPath").value = cfgValue(
-      "auth_access_background_path",
-    ));
-  $("cfgAccessLogoUrl") &&
-    ($("cfgAccessLogoUrl").value = normalizeAccessLogoUrl(
-      cfgValue("auth_access_logo_url"),
-    ));
-  $("cfgAccessPanelColor") &&
-    ($("cfgAccessPanelColor").value = normalizeAccessPanelColor(
-      cfgValue("auth_access_panel_color"),
-    ));
-  if ($("cfgAccessTextoModo")) {
-    $("cfgAccessTextoModo").value = normalizarModo(
-      cfgValue("auth_access_texto_modo"),
-    );
-    // O aviso de contraste tem de refletir o modo carregado, não só a cor.
-    $("cfgAccessPanelColor")?.dispatchEvent(new Event("input"));
-  }
-  $("cfgAccessGreeting") &&
-    ($("cfgAccessGreeting").value =
-      cfgValue("auth_access_greeting") || DEFAULT_ACCESS_BRANDING.greeting);
-  $("cfgFilterTitle") && ($("cfgFilterTitle").value = cfgValue("filter_title"));
-  $("cfgFilterSubtitle") &&
-    ($("cfgFilterSubtitle").value = cfgValue("filter_subtitle"));
-  $("cfgFilterToggleShow") &&
-    ($("cfgFilterToggleShow").value = cfgValue("filter_toggle_show"));
-  $("cfgFilterToggleHide") &&
-    ($("cfgFilterToggleHide").value = cfgValue("filter_toggle_hide"));
-  $("cfgKpiProcessos") &&
-    ($("cfgKpiProcessos").value = cfgValue("kpi_processos_label"));
-  $("cfgKpiVagas") && ($("cfgKpiVagas").value = cfgValue("kpi_vagas_label"));
-  $("cfgKpiContratados") &&
-    ($("cfgKpiContratados").value = cfgValue("kpi_contratados_label"));
-  $("cfgKpiOciosas") &&
-    ($("cfgKpiOciosas").value = cfgValue("kpi_ociosas_label"));
-  $("cfgKpiCriticos") &&
-    ($("cfgKpiCriticos").value = cfgValue("kpi_criticos_label"));
-  $("cfgKpiInscritos") &&
-    ($("cfgKpiInscritos").value = cfgValue("kpi_inscritos_label"));
-  $("cfgLoginLogo").value = cfgValue("login_logo_url");
-  $("cfgLoginBg").value = cfgValue("login_bg_url");
-  $("cfgBroadcastType").value = cfgValue("broadcast_type") || "info";
-  $("cfgBroadcastMsg").value = cfgValue("broadcast_msg");
-  previewImg("cfgLoginLogo", "prevLoginLogo");
-  previewImg("cfgLoginBg", "prevLoginBg");
-  renderAccessBackgroundPreview();
-  void loadAccessBackgroundGallery();
-}
-
-function renderAccessBackgroundPreview(
-  url = $("cfgAccessBackgroundUrl")?.value,
-) {
-  const preview = $("cfgAccessBackgroundPreview");
-  if (!preview) return;
-  const safeUrl = normalizeAccessBackgroundUrl(url || "");
-  preview.style.backgroundImage = `url("${safeUrl.replace(/["\\]/g, "")}")`;
-  preview.setAttribute(
-    "aria-label",
-    "Prévia da arte configurada na tela de acesso",
-  );
-}
-
-async function persistAccessBackground(url, path) {
-  const { data, error } = await sb.rpc("definir_fundo_acesso_monitora", {
-    p_url: url || null,
-    p_caminho: path || null,
-  });
-  if (error) throw error;
-  appConfig.auth_access_background_url =
-    data?.url || DEFAULT_ACCESS_BRANDING.backgroundUrl;
-  appConfig.auth_access_background_path = data?.caminho || "";
-  loadedConfigKeys.add("auth_access_background_url");
-  loadedConfigKeys.add("auth_access_background_path");
-  if ($("cfgAccessBackgroundUrl"))
-    $("cfgAccessBackgroundUrl").value = appConfig.auth_access_background_url;
-  if ($("cfgAccessBackgroundPath"))
-    $("cfgAccessBackgroundPath").value = appConfig.auth_access_background_path;
-  applyConfigToUi();
-  renderAccessBackgroundPreview();
-}
-
-async function uploadAccessBackground(file) {
-  if (!can("config"))
-    return toast("Sem permissão para alterar a arte de acesso.", "warn");
-  const validationError = validateAccessBackgroundFile(file);
-  if (validationError) return toast(validationError, "warn");
-  const input = $("cfgAccessBackgroundFile");
-  if (input) input.disabled = true;
-  loader(true, "Enviando arte", "Guardando a imagem institucional...", 45);
-  const path = createAccessBackgroundPath(file);
-  try {
-    const { error: uploadError } = await sb.storage
-      .from(ACCESS_BACKGROUND_BUCKET)
-      .upload(path, file, {
-        cacheControl: "31536000",
-        contentType: file.type,
-        upsert: false,
-      });
-    if (uploadError) throw uploadError;
-    const { data: publicUrl } = sb.storage
-      .from(ACCESS_BACKGROUND_BUCKET)
-      .getPublicUrl(path);
-    try {
-      await persistAccessBackground(publicUrl.publicUrl, path);
-    } catch (saveError) {
-      await sb.storage.from(ACCESS_BACKGROUND_BUCKET).remove([path]);
-      throw saveError;
-    }
-    await loadAccessBackgroundGallery();
-    toast("Imagem guardada e aplicada à tela de acesso.");
-  } catch (error) {
-    toast(
-      "Não foi possível guardar a imagem: " + friendlyError(error),
-      "error",
-    );
-  } finally {
-    if (input) input.disabled = false;
-    loader(false);
-  }
-}
-
-async function restoreAccessBackground() {
-  if (!can("config"))
-    return toast("Sem permissão para alterar a arte de acesso.", "warn");
-  loader(true, "Restaurando arte", "Aplicando o fundo institucional...", 60);
-  try {
-    await persistAccessBackground(null, null);
-    await loadAccessBackgroundGallery();
-    toast("Arte institucional padrão restaurada.");
-  } catch (error) {
-    toast(
-      "Não foi possível restaurar a arte: " + friendlyError(error),
-      "error",
-    );
-  } finally {
-    loader(false);
-  }
-}
-
-async function useStoredAccessBackground(path, url) {
-  if (!can("config")) return;
-  loader(true, "Aplicando arte", "Atualizando a tela de acesso...", 60);
-  try {
-    await persistAccessBackground(url, path);
-    await loadAccessBackgroundGallery();
-    toast("Arte aplicada à tela de acesso.");
-  } catch (error) {
-    toast("Não foi possível aplicar a arte: " + friendlyError(error), "error");
-  } finally {
-    loader(false);
-  }
-}
-
-/*
-  Apaga uma arte guardada. Só as que não estão em uso chegam aqui — a galeria não
-  oferece o botão para a ativa, e esta função recusa por garantia, para o caso de
-  a interface e o estado divergirem por um instante.
-*/
-async function deleteStoredAccessBackground(path, nome) {
-  if (!can("config"))
-    return toast("Sem permissão para alterar a arte de acesso.", "warn");
-
-  const emUso = txt(cfgValue("auth_access_background_path"));
-  if (emUso && emUso === path) {
-    return toast(
-      "Esta arte está em uso. Escolha outra ou restaure o padrão antes de apagar.",
-      "warn",
-    );
-  }
-
-  if (
-    !window.confirm(
-      `Apagar definitivamente a arte "${nome}"? Esta ação não pode ser desfeita.`,
-    )
-  )
-    return;
-
-  loader(true, "Apagando arte", "Removendo a imagem do armazenamento...", 60);
-  try {
-    const { error } = await sb.storage
-      .from(ACCESS_BACKGROUND_BUCKET)
-      .remove([path]);
-    if (error) throw error;
-    await loadAccessBackgroundGallery();
-    toast("Arte apagada.");
-  } catch (error) {
-    toast("Não foi possível apagar a arte: " + friendlyError(error), "error");
-  } finally {
-    loader(false);
-  }
-}
-
-async function loadAccessBackgroundGallery() {
-  const gallery = $("cfgAccessBackgroundGallery");
-  if (!gallery || !sb || !currentUser || !can("config")) return;
-  const { data, error } = await sb.storage
-    .from(ACCESS_BACKGROUND_BUCKET)
-    .list(ACCESS_BACKGROUND_FOLDER, {
-      limit: 60,
-      sortBy: { column: "created_at", order: "desc" },
-    });
-  if (error) {
-    gallery.replaceChildren();
-    return;
-  }
-  const currentPath = cfgValue("auth_access_background_path");
-  const items = (data || []).filter((item) =>
-    /\.(?:jpe?g|png|webp)$/i.test(item.name || ""),
-  );
-  gallery.replaceChildren();
-  if (!items.length) return;
-  const heading = document.createElement("p");
-  heading.className = "access-background-gallery-title";
-  heading.textContent = "Artes enviadas";
-  gallery.appendChild(heading);
-  const list = document.createElement("div");
-  list.className = "access-background-gallery-grid";
-  items.forEach((item) => {
-    const path = `${ACCESS_BACKGROUND_FOLDER}/${item.name}`;
-    const url = sb.storage.from(ACCESS_BACKGROUND_BUCKET).getPublicUrl(path)
-      .data.publicUrl;
-    const emUso = path === currentPath;
-
-    const cartao = document.createElement("div");
-    cartao.className = `access-background-gallery-card${emUso ? " is-active" : ""}`;
-
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `access-background-gallery-item${emUso ? " is-active" : ""}`;
-    button.setAttribute(
-      "aria-label",
-      emUso ? "Arte atualmente em uso" : "Usar esta arte",
-    );
-    const image = document.createElement("span");
-    image.style.backgroundImage = `url("${url.replace(/["\\]/g, "")}")`;
-    const label = document.createElement("small");
-    label.textContent = emUso ? "Em uso" : "Usar";
-    button.append(image, label);
-    if (!emUso)
-      button.addEventListener(
-        "click",
-        () => void useStoredAccessBackground(path, url),
-      );
-    cartao.appendChild(button);
-
-    /*
-      A arte em uso não ganha botão de apagar. Apagá-la deixaria
-      `auth_access_background_url` a apontar para um objeto inexistente — e o
-      cache de marca, guardado no navegador de cada pessoa, continuaria a pedir
-      essa imagem por tempo indeterminado. Para remover a atual, troca-se por
-      outra ou restaura-se o padrão primeiro.
-    */
-    if (emUso) {
-      const aviso = document.createElement("small");
-      aviso.className = "access-background-gallery-hint";
-      aviso.textContent =
-        "Para apagar, escolha outra arte ou restaure o padrão.";
-      cartao.appendChild(aviso);
-    } else {
-      const apagar = document.createElement("button");
-      apagar.type = "button";
-      apagar.className = "access-background-gallery-delete";
-      apagar.textContent = "Apagar";
-      apagar.setAttribute("aria-label", `Apagar a arte ${item.name}`);
-      apagar.addEventListener(
-        "click",
-        () => void deleteStoredAccessBackground(path, item.name),
-      );
-      cartao.appendChild(apagar);
-    }
-
-    list.appendChild(cartao);
-  });
-  gallery.appendChild(list);
-}
-
 
 function syncDisplayModeButtons() {
   const fullscreenActive =
@@ -12162,15 +11837,12 @@ Object.assign(window, {
   loginWithGoogle,
   logout,
   navigate,
-  previewImg,
   refreshData,
   reloadExternal,
   returnToLogin,
   removeFilterPill,
-  restoreAccessBackground,
   selectAllFilterValues,
   sortDetails,
-  uploadAccessBackground,
   submitAccessRequest,
   toggleBrowserFullscreen,
   toggleColMenu,

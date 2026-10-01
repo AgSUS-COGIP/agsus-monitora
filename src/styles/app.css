@@ -1944,17 +1944,6 @@ th.sorted-desc .sort-icon::before {
   font-weight: 750;
   line-height: 1.45;
 }
-.config-section-title {
-  grid-column: 1/-1;
-  margin-top: 6px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  font-weight: 900;
-  color: var(--agsus-azul);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
 /* Selo de situação = badge do design.md 11.8: 20px, raio sm, caption, sem borda. */
 .config-status {
   display: inline-block;

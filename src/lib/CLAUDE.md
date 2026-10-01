@@ -4,6 +4,7 @@ Regra do diretório: **sem DOM e sem estado global**. Entrada → saída, com te
 `tests/<nome>.test.js` (ou `tests/lib/`). UI pertence a `src/modules/`.
 
 Arquivos que exigem cuidado:
+
 - `rpc-contrato.js` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
 - `sessao.js`, `session-lifecycle.js`, `supabaseClient.js`, `auth-flow.js` — único caminho de auth.
 - `access-roles.js`, `permissoes-recursos.js` — matriz de permissão; costuma exigir migration junto.
@@ -11,8 +12,9 @@ Arquivos que exigem cuidado:
   `secaoDeConfiguracaoPermitida`), usada pela barra e pelo "Ver como".
 - `matriz-de-acessos.js` (rascunho; grupo × individual), `teto-de-acessos.js` (teto do coordenador),
   `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.js` — Configurações › Acessos.
-- `apresentacao-das-configuracoes.js` — grupos, dicas e resumos das seções legadas Página inicial, Tela de
-  acesso e Recursos; o desenho é de `src/modules/config-apresentacao.js`.
+- `apresentacao-das-configuracoes.js` — tom da faixa de aviso global e endereço de imagem aceito nas
+  prévias de Configurações (telas em `src/componentes/configuracoes/`).
+- `marca-da-barra-lateral.js` — logo e cor da barra lateral publicadas e em rascunho, sem DOM.
 - `publicacao-de-configuracoes.js` — publicação de Configurações sem DOM: chaves de cada seção (legado e
   React), comparação com o retrato do banco, validação de URL e domínio.
 - `sanitize.js`, `html-security.js`, `csv-security.js` — fronteira de segurança. Não afrouxar.
