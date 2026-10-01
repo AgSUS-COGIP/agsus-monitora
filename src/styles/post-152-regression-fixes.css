@@ -56,12 +56,6 @@ body.sidebar-theme-dark .app .side-logo {
   color: #8ff3d0 !important;
 }
 
-#loginScreen.login-panel-dark .login-security-note,
-#loginScreen.login-panel-dark .login-secure-note {
-  color: rgba(247, 251, 255, 0.78) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
 /* O alerta de sessão encerrada precisa continuar legível mesmo quando o cartão
    de acesso estiver configurado com uma cor escura. */
 #loginScreen.login-panel-dark #loginMsg.alert,

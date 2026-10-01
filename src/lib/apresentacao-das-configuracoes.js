@@ -66,12 +66,7 @@ export const GRUPOS_POR_SECAO = Object.freeze({
       descricao: "O que a pessoa lê no cartão de entrada.",
       icone: "log-in",
       tom: "azul",
-      campos: [
-        "cfgLoginEyebrow",
-        "cfgAccessGreeting",
-        "cfgAccessInstruction",
-        "cfgSubtitle",
-      ],
+      campos: ["cfgLoginEyebrow", "cfgAccessGreeting", "cfgSubtitle"],
     },
     {
       id: "google",
@@ -123,7 +118,6 @@ export const DICAS_DOS_CAMPOS = Object.freeze({
   cfgKpiProcessos:
     "Os seis rótulos seguem a ordem dos indicadores na página inicial.",
   cfgAccessGreeting: "Título grande do cartão de entrada.",
-  cfgAccessInstruction: "Frase curta abaixo da saudação, dizendo como entrar.",
   cfgGoogleEnabled: "Desligado, o botão do Google some da tela de entrada.",
   cfgGoogleDomainHint:
     "Domínio sugerido na tela do Google, para quem tem mais de uma conta conectada.",
@@ -159,14 +153,4 @@ export function urlDeImagem(valor) {
   } catch {
     return "";
   }
-}
-
-/** Primeiro domínio da lista "a.org.br, b.org.br" (para "Conta @domínio"). */
-export function primeiroDominio(lista) {
-  return (
-    txt(lista)
-      .split(/[,;\s]+/)
-      .map((d) => d.replace(/^@/, "").toLowerCase())
-      .find(Boolean) || ""
-  );
 }

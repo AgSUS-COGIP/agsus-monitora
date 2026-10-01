@@ -145,7 +145,6 @@ export const SECAO_POR_CAMPO = Object.freeze({
   cfgGoogleDomainHint: "acesso",
   cfgGoogleAllowedDomains: "acesso",
   cfgAccessGreeting: "acesso",
-  cfgAccessInstruction: "acesso",
 
   // Aparência
   cfgAccessBackgroundPreview: "aparencia",
