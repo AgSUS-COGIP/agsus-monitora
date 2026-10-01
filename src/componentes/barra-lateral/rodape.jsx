@@ -17,9 +17,9 @@ import { temaEscuro, usarTemaEscuro } from "../../app/tema.js";
   e no foco.
 
   O tema vale em `html[data-theme]`, e quem o troca é `window.toggleDarkMode`
-  (legado, embrulhado por `nielsen-shell-ux.js` e por
-  `health-dashboard-interaction-fixes.js`, que mantêm o espelho
-  `body.dark-mode`). Ela inverte o tema, então o segmento já ativo não a chama.
+  (legado, embrulhado por `nielsen-shell-ux.js`; `applyDarkMode` mantém o
+  espelho `body.dark-mode`). Ela inverte o tema, então o segmento já ativo não
+  a chama.
   O Sair abre a confirmação de `nielsen-shell-ux.js` antes de encerrar.
 */
 export function Rodape({ alca = null }) {

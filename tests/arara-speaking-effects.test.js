@@ -43,9 +43,7 @@ describe("efeito de fala da Aya", () => {
   });
 
   it("adapta a abertura à seção atual", () => {
-    expect(araraOpeningMessage("nucleo", "Editais")).toContain(
-      "cronograma",
-    );
+    expect(araraOpeningMessage("nucleo", "Editais")).toContain("cronograma");
     expect(araraOpeningMessage("config", "Configurações")).toContain("acessos");
     expect(araraOpeningMessage("analises", "Análises")).toContain(
       "fila operacional",
@@ -71,7 +69,7 @@ describe("efeito de fala da Aya", () => {
 
   it("lê editais visíveis sem consultar uma nova fonte", () => {
     const dom = new JSDOM(`
-      <table><tbody id="monitorRows">
+      <table class="visao-geral-tabela"><tbody>
         <tr>
           <td><a>Edital 12/2026</a></td>
           <td>DSEI Xingu</td>

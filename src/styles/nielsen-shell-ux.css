@@ -268,7 +268,6 @@ html[data-theme="dark"] .online-presence-list > p {
 }
 
 html[data-theme="dark"] .card,
-html[data-theme="dark"] .filter-card,
 html[data-theme="dark"] .table-wrap {
   border-color: var(--ux-dark-border) !important;
   background: var(--ux-dark-surface) !important;

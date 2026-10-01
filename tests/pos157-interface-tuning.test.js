@@ -38,14 +38,13 @@ describe("primeiro paint da tela de login", () => {
 });
 
 /*
-  A densidade do KPI saiu daqui. Este arquivo sobrepunha health-reference-kpis.css
-  com !important e chegou a deixar o rótulo com 9px. Agora o dono é o próprio
-  health-reference-kpis.css, com valores de tokens.css: a faixa contínua do
-  Design System AgSUS (11.7), com rótulo em `label` e valor em `metric`. Sem
-  card nenhum sobrescrevendo, os tamanhos não precisam mais de !important.
+  A densidade do KPI saiu daqui. Este arquivo sobrepunha os KPIs da Visão geral
+  com !important e chegou a deixar o rótulo com 9px. Hoje a Visão geral é React
+  (src/modulos/visao-geral/) e o KPI é o card compacto de src/ui/ (`Kpi`,
+  ui.css), com valores de tokens.css: rótulo em `caption` e valor em `metric`.
 */
 describe("densidade do dashboard Saúde Indígena", () => {
-  const kpis = readFileSync("src/styles/health-reference-kpis.css", "utf8");
+  const kpis = readFileSync("src/ui/ui.css", "utf8");
 
   it("não é mais sobrescrita aqui", () => {
     expect(css).not.toContain("#page-dashboard .kpi");

@@ -1,15 +1,10 @@
 import { aplicarAtualizacaoPendente } from "./pwa-lifecycle.js";
-import {
-  compararEditais as compareRows,
-  ordemDoRisco as riskRank,
-  ordenarUnidades as sortUnits,
-  tomDoRisco,
-  tomDoStatusDoEdital,
-} from "../lib/editais-do-nucleo.js";
+import { ordenarUnidades as sortUnits } from "../lib/editais-do-nucleo.js";
+import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
+import { resumoDoRelatorio } from "../lib/visao-geral.js";
 import {
   assinarDadosDoMonitoramento,
   definirAreasDoUsuario,
-  linhasDaArea,
   obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
@@ -50,12 +45,6 @@ import {
   desenharMunicipiosDaArea,
   desenharLegendaDosMunicipios,
 } from "./municipios-da-visao-geral.js";
-import {
-  ehEditalEncerrado as isEncerrado,
-  ehRiscoAtivo as isRiscoAtivo,
-  indicadoresDoMonitoramento,
-  somarCampo,
-} from "../lib/indicadores-do-monitoramento.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import { updateAraraGuide } from "./arara-guide.js";
 import {
@@ -133,13 +122,7 @@ import {
   definirSistemaDaAba,
 } from "../lib/identidade-da-aba.js";
 import { classificarVinculoTerritorial } from "../lib/uf-ibge.js";
-import {
-  chaveDeFiltro,
-  chaveDeRenderDoMapa,
-  linhaAtende,
-  opcoesDoCampo,
-  podarSelecoes,
-} from "../lib/filtros-do-mapa.js";
+import { chaveDeRenderDoMapa } from "../lib/filtros-do-mapa.js";
 import {
   ESTILO_DA_LINHA,
   TOOLTIP_DA_LINHA,
@@ -226,7 +209,6 @@ const RPC_MONITORAMENTO_DASHBOARD_PAYLOAD =
   "get_monitoramento_dashboard_payload";
 const MAPA_CONFIG_TABLE = "TB_CONFIG_MAPA_SAUDE_INDIG";
 const DEFAULT_ACCESS_HEARTBEAT_MINUTES = 5;
-const DETAILS_TABLE_SOURCE_MODE = "client";
 const PASSWORD_RESET_ADMIN_MESSAGE_FALLBACK = "";
 
 const DEFAULT_CONFIG = {
@@ -248,10 +230,6 @@ const DEFAULT_CONFIG = {
   sidebar_user_label: "",
   sidebar_version_label: "",
   logout_text: "",
-  filter_title: "",
-  filter_subtitle: "",
-  filter_toggle_show: "",
-  filter_toggle_hide: "",
   feature_realtime_monitoramento: "true",
   access_heartbeat_minutos: String(DEFAULT_ACCESS_HEARTBEAT_MINUTES),
   password_reset_flow: "admin",
@@ -286,29 +264,10 @@ const DEFAULT_CONFIG = {
   sidebar_toggle_label: "",
   external_back_text: "Voltar ao sistema",
   dark_mode_label: "",
-  action_export_text: "",
   action_more_label: "",
   action_fullscreen_text: "",
   action_refresh_text: "",
   action_export_pdf_text: "",
-  dashboard_section_processos: "",
-  kpi_processos_label: "",
-  kpi_vagas_label: "",
-  kpi_contratados_label: "",
-  kpi_ociosas_label: "",
-  kpi_criticos_label: "",
-  kpi_criticos_chip: "",
-  kpi_inscritos_label: "",
-  panel_status_summary_title: "",
-  panel_operational_status_title: "",
-  panel_attention_title: "",
-  details_title: "",
-  table_search_placeholder: "",
-  hide_closed_show: "",
-  hide_closed_hide: "",
-  columns_button_text: "",
-  columns_menu_title: "",
-  keyboard_hint: "",
   external_default_title: "",
   external_refresh_text: "",
   external_open_text: "",
@@ -342,25 +301,8 @@ let loadedConfigKeys = new Set();
 let configLoadOk = false;
 let rows = [];
 let filtered = [];
-let monitoramentoPayload = null;
 let unidadesCatalog = [];
-let tableSort = { field: "", direction: "" };
 const VIEW_STORAGE_KEY = "agsus_monitora_current_view_v268";
-const FILTER_CONFIG = [
-  { id: "filterUnidade", field: "unidade", label: "Unidade", all: "Todas" },
-  { id: "filterEdital", field: "edital", label: "Edital", all: "Todos" },
-  { id: "filterEtapa", field: "etapa", label: "Etapa", all: "Todas" },
-  { id: "filterStatus", field: "status", label: "Status", all: "Todos" },
-  { id: "filterRisco", field: "risco", label: "Risco", all: "Todos" },
-  { id: "filterUf", field: "uf", label: "UF", all: "Todas" },
-];
-const FILTER_ID_TO_FIELD = Object.fromEntries(
-  FILTER_CONFIG.map((f) => [f.id, f.field]),
-);
-let filterState = Object.fromEntries(
-  FILTER_CONFIG.map((f) => [f.field, new Set()]),
-);
-const FILTER_FIELDS = FILTER_CONFIG.map((f) => f.field);
 /*
   DSEI aberto no mapa detalhado. É um filtro próprio, por chave do mapa
   (`dseiKey`), e não mais o nome escrito na busca da tabela: a busca por texto
@@ -368,37 +310,12 @@ const FILTER_FIELDS = FILTER_CONFIG.map((f) => f.field);
 */
 let dseiSelecionado = "";
 let dseiSelecionadoNome = "";
-/* Texto digitado na busca de cada menu de filtro; sobrevive ao re-render. */
-const buscaDoMenu = {};
-const FILTER_STORAGE_KEY = "agsus_monitora_filters_v1";
-function saveFilterState() {
-  try {
-    const plain = {};
-    FILTER_CONFIG.forEach((f) => {
-      plain[f.field] = Array.from(filterState[f.field] || []);
-    });
-    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(plain));
-  } catch (e) {}
-}
-function loadFilterState() {
-  try {
-    const raw = localStorage.getItem(FILTER_STORAGE_KEY);
-    if (!raw) return;
-    const plain = JSON.parse(raw);
-    FILTER_CONFIG.forEach((f) => {
-      if (Array.isArray(plain[f.field]))
-        filterState[f.field] = new Set(plain[f.field]);
-    });
-  } catch (e) {}
-}
 let panels = [...DEFAULT_PANELS];
 let allowedPanelIds = new Set();
 let platformContextLoaded = false;
 let mapConfigLoadOk = false;
 let currentPanel = null;
 let currentView = "dashboard";
-let statusChart = null;
-let chartsReady = false;
 let dataLoadedAtLeastOnce = false;
 /*
   Dono único da transição para o estado deslogado.
@@ -439,88 +356,17 @@ try {
   window.__AGSUS_MONITORA_APPS_SCRIPT_FIX__ = "allowall-iframe-2026-07-09";
 } catch (e) {}
 
-// ── Renderização granular: rastreia último conjunto de UFs para evitar
-//    re-render do mapa quando apenas texto da busca muda ──────────────
+/*
+  O que o mapa desenhou por último (processos, vagas e ociosas por DSEI): ele
+  só é redesenhado quando isso muda (`aoMudarRecorte`).
+*/
 let lastMapUfKey = null;
-// Detecta se há qualquer filtro (dropdowns) ou busca de texto ativos.
-// Usado para o mapa focar só nas unidades filtradas e dar zoom.
+/*
+  Há recorte (filtro, busca ou DSEI)? O mapa foca nas unidades do recorte.
+  O recorte é do estado da Visão geral (src/modulos/visao-geral/estado.js).
+*/
 function hasActiveFilter() {
-  const anySelect =
-    typeof FILTER_CONFIG !== "undefined" &&
-    FILTER_CONFIG.some((cfg) => (filterState[cfg.field] || new Set()).size > 0);
-  const qt = ($("tableSearch")?.value || "").trim();
-  return anySelect || qt.length > 0 || !!dseiSelecionado;
-}
-let hideClosed = false; // toggle "Ocultar encerrados" da tabela de detalhes
-function toggleHideClosed() {
-  hideClosed = !hideClosed;
-  try {
-    localStorage.setItem("agsus_hide_closed_v1", hideClosed ? "1" : "0");
-  } catch (e) {}
-  syncHideClosedBtn();
-  // Ocultar encerrados muda as opções de Status: poda e redesenha os menus.
-  applyFilterStateChange();
-  toast(
-    hideClosed
-      ? "Ocultando processos cancelados e concluídos."
-      : "Mostrando todos os processos.",
-  );
-}
-function syncHideClosedBtn() {
-  const btn = $("hideClosedBtn");
-  const lbl = $("hideClosedLabel");
-  if (!btn) return;
-  btn.setAttribute("aria-pressed", hideClosed ? "true" : "false");
-  const ic = btn.querySelector("i");
-  if (ic)
-    ic.className = hideClosed ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
-  if (lbl)
-    lbl.textContent = hideClosed
-      ? cfgValue("hide_closed_show")
-      : cfgValue("hide_closed_hide");
-  btn.classList.toggle("outline", hideClosed);
-}
-
-// ── Debounce na busca da tabela (300ms) ─────────────────────────────
-let searchDebounceTimer = null;
-function debouncedSearch() {
-  clearTimeout(searchDebounceTimer);
-  searchDebounceTimer = setTimeout(() => applyFilters(), 300);
-}
-
-// Correção visual da busca: em alguns navegadores/modos de contraste,
-// o texto digitado no campo da tabela herdava branco sobre fundo branco.
-function ensureSearchInputTextColor() {
-  const styleId = "agsus-search-input-text-color-fix";
-  if (!document.getElementById(styleId)) {
-    const st = document.createElement("style");
-    st.id = styleId;
-    st.textContent = `
-        #tableSearch,
-        #tableSearch:focus,
-        #tableSearch:active {
-          color: #0f172a !important;
-          -webkit-text-fill-color: #0f172a !important;
-          caret-color: #0f172a !important;
-          background-color: #ffffff !important;
-        }
-        #tableSearch::placeholder {
-          color: #64748b !important;
-          -webkit-text-fill-color: #64748b !important;
-          opacity: .72 !important;
-        }
-        #tableSearch:-webkit-autofill {
-          -webkit-text-fill-color: #0f172a !important;
-          box-shadow: 0 0 0 1000px #ffffff inset !important;
-        }
-      `;
-    document.head.appendChild(st);
-  }
-  const el = $("tableSearch");
-  if (!el) return;
-  el.style.color = "#0f172a";
-  el.style.webkitTextFillColor = "#0f172a";
-  el.style.caretColor = "#0f172a";
+  return estadoDaVisaoGeral.obter().temRecorte;
 }
 
 function $(id) {
@@ -596,30 +442,11 @@ function esc(v) {
 function attr(v) {
   return esc(v).replaceAll("`", "&#096;");
 }
-// Sanitiza URLs vindas do banco: só permite http(s). Bloqueia javascript:, data:, etc.
-function safeUrl(v) {
-  const s = txt(v);
-  if (!s) return "";
-  try {
-    const u = new URL(s, window.location.origin);
-    return u.protocol === "http:" || u.protocol === "https:" ? s : "";
-  } catch (e) {
-    return "";
-  }
-}
 function rpcFirst(data) {
   return Array.isArray(data) ? data[0] || null : data || null;
 }
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function fmtDate(v) {
-  if (!v) return "";
-  const s = txt(v);
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return s;
-  return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 function toast(message, type = "ok") {
@@ -1027,7 +854,6 @@ async function boot() {
   if (!initSupabase()) return;
   applyStoredSidebarState();
   applyStoredDisplayModes();
-  ensureSearchInputTextColor();
   sb.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
       currentUser = null;
@@ -1835,43 +1661,17 @@ function applyConfigToUi() {
   setText("logoutText", cfgValue("logout_text"));
   setText("pageTitle", cfgValue("page_title"));
   setText("pageSubtitle", cfgValue("page_subtitle"));
-  setText("filterTitle", cfgValue("filter_title"));
-  setText("filterSubtitle", cfgValue("filter_subtitle"));
   setText("externalBackText", cfgValue("external_back_text"));
   setText("darkModeLabel", cfgValue("dark_mode_label"));
-  setText("exportCsvText", cfgValue("action_export_text"));
   setText("fullscreenActionText", cfgValue("action_fullscreen_text"));
   setText("refreshActionText", cfgValue("action_refresh_text"));
   setText("exportPdfActionText", cfgValue("action_export_pdf_text"));
-  setText("dashboardSectionProcessos", cfgValue("dashboard_section_processos"));
-  setText("kpiProcessosLabel", cfgValue("kpi_processos_label"));
-  setText("kpiVagasLabel", cfgValue("kpi_vagas_label"));
-  setText("kpiContratadosLabel", cfgValue("kpi_contratados_label"));
-  setText("kpiOciosasLabel", cfgValue("kpi_ociosas_label"));
-  setText("kpiCriticosLabel", cfgValue("kpi_criticos_label"));
-  setText("panicChip", cfgValue("kpi_criticos_chip"));
-  setText("kpiInscritosLabel", cfgValue("kpi_inscritos_label"));
-  setText("statusSummaryTitle", cfgValue("panel_status_summary_title"));
-  setText("operationalStatusTitle", cfgValue("panel_operational_status_title"));
-  setText("attentionTitle", cfgValue("panel_attention_title"));
-  setText("detailsTitle", cfgValue("details_title"));
-  setText("columnsButtonText", cfgValue("columns_button_text"));
-  setText("columnsMenuTitle", cfgValue("columns_menu_title"));
-  setText("keyboardHint", cfgValue("keyboard_hint"));
   setText("externalTitle", cfgValue("external_default_title"));
   setText("externalRefreshText", cfgValue("external_refresh_text"));
   setText("externalOpen", cfgValue("external_open_text"));
   const externalMount = $("externalMount");
   if (externalMount && externalMount.classList.contains("external-placeholder"))
     externalMount.textContent = cfgValue("external_placeholder");
-  if ($("tableSearch")) {
-    $("tableSearch").placeholder = cfgValue("table_search_placeholder");
-    $("tableSearch").setAttribute(
-      "aria-label",
-      cfgValue("table_search_placeholder"),
-    );
-    ensureSearchInputTextColor();
-  }
   // O botão de recolher da barra lateral é React e tem rótulo próprio (recolher/expandir).
   ["hambToggle"].forEach((id) => {
     setAttr(id, "title", cfgValue("sidebar_toggle_label"));
@@ -1881,8 +1681,6 @@ function applyConfigToUi() {
     setAttr(id, "title", cfgValue("external_back_text"));
     setAttr(id, "aria-label", cfgValue("external_back_text"));
   });
-  syncFilterToggleText();
-  syncHideClosedBtn();
   aplicarAvisoGlobal();
   // COGIP rodapé
   const cogipBlock = document.querySelector(".login-cogip");
@@ -2076,7 +1874,6 @@ async function loadData(options = {}) {
   activeLoadDataPromise = (async () => {
     if (!podeCarregarMonitoramento()) {
       rows = [];
-      filtered = [];
       publicarLinhasDoMonitoramento(rows);
       buildNav();
       return true;
@@ -2084,7 +1881,6 @@ async function loadData(options = {}) {
     const [payloadResponse, tableResponse] = await (options.consulta ||
       consultaDoMonitoramento());
     if (runId !== loadDataRunCounter) return false;
-    monitoramentoPayload = payloadResponse || null;
     const { data, error } = tableResponse;
     if (error) {
       toast("Erro ao carregar dados: " + friendlyError(error), "error");
@@ -2093,18 +1889,13 @@ async function loadData(options = {}) {
     rows = Array.isArray(data) ? data : [];
     dataLoadedAtLeastOnce = true;
     /*
-      Quem precisa destas linhas escuta, em vez de ir buscá-las de novo. O
-      evento carrega os dados: sem ele, `health-status-details.js` repetia a
-      leitura inteira da view para obter seis colunas.
+      As linhas vão para dados-do-monitoramento.js; a Visão geral (React)
+      recorta e avisa `aoMudarRecorte`, que redesenha o mapa (o cache dele é
+      invalidado antes). O resumo do servidor só vale sem recorte.
     */
-    window.dispatchEvent(
-      new CustomEvent("agsus:monitoramento-carregado", { detail: { rows } }),
-    );
+    lastMapUfKey = null;
+    estadoDaVisaoGeral.definirResumoDoServidor(payloadResponse || null);
     publicarLinhasDoMonitoramento(rows);
-    lastMapUfKey = null; // invalida cache do mapa ao recarregar dados
-    populateFilters();
-    applyFilters();
-    setUpdated();
     return true;
   })();
   try {
@@ -2112,11 +1903,6 @@ async function loadData(options = {}) {
   } finally {
     activeLoadDataPromise = null;
   }
-}
-
-function setUpdated() {
-  // O horário técnico foi removido do cabeçalho: ocupava espaço sem ajudar a
-  // leitura operacional. A atualização continua registrada internamente.
 }
 
 async function refreshData() {
@@ -2358,7 +2144,8 @@ function navigate(view) {
   if (requestedView === "dashboard") {
     $("page-dashboard").classList.add("active");
     prepararVisaoGeralDaArea();
-    renderAll();
+    // O resto da página é React (src/modulos/visao-geral/); o mapa, daqui.
+    renderMap();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -2403,10 +2190,11 @@ const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
 /*
   A VISÃO GERAL É UMA SÓ PARA AS TRÊS ÁREAS
 
-  Saúde Indígena, SEDE e Projetos abrem esta mesma página, com os editais da
-  área atual (`rowsDaAreaAtual`). Muda o bloco do mapa — DSEIs na Saúde
-  Indígena, municípios das vagas em Projetos, nenhum na SEDE — e o cabeçalho
-  (`src/lib/visao-geral-da-area.js`, `src/modules/municipios-da-visao-geral.js`).
+  Saúde Indígena, SEDE e Projetos abrem esta mesma página (React,
+  src/modulos/visao-geral/), com os editais da área atual. Muda o bloco do
+  mapa — DSEIs na Saúde Indígena, municípios das vagas em Projetos, nenhum na
+  SEDE — e o cabeçalho (`src/lib/visao-geral-da-area.js`,
+  `src/modules/municipios-da-visao-geral.js`).
 */
 function prepararVisaoGeralDaArea() {
   const area = areaAtual();
@@ -2420,9 +2208,9 @@ function prepararVisaoGeralDaArea() {
 }
 
 /*
-  Trocou a área (menu): sai do DSEI aberto, recorta os filtros pelas opções da
-  área nova e redesenha. Roda também fora da Visão geral — o recorte fica
-  pronto para quando ela abrir.
+  Trocou a área (menu): sai do DSEI aberto e redesenha o mapa (os filtros são
+  podados pelo estado da Visão geral). Roda também fora da Visão geral — o
+  recorte fica pronto para quando ela abrir.
 */
 let areaDaVisaoGeral = areaAtual();
 function aoMudarDadosDoMonitoramento() {
@@ -2435,7 +2223,6 @@ function aoMudarDadosDoMonitoramento() {
   _lastMapAutoFitKey = "";
   prepararVisaoGeralDaArea();
   if (!dataLoadedAtLeastOnce) return;
-  populateFilters();
   applyFilters();
 }
 assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento);
@@ -2508,688 +2295,32 @@ function toggleSidebar() {
   if (currentView === "dashboard") scheduleMapResize(240);
 }
 
-function syncFilterToggleText() {
-  const btn = $("filterToggleBtn");
-  const body = $("filterBody");
-  if (!btn || !body) return;
-  btn.textContent = body.classList.contains("hidden")
-    ? cfgValue("filter_toggle_show")
-    : cfgValue("filter_toggle_hide");
-}
-function toggleFilters() {
-  $("filterBody").classList.toggle("hidden");
-  syncFilterToggleText();
-}
-
-function selectedValues(field) {
-  return Array.from(filterState[field] || []);
-}
-/* Opções comuns às funções de `filtros-do-mapa.js`. */
-function opcoesDeFiltro(extra = {}) {
-  return {
-    campos: FILTER_FIELDS,
-    excluir: hideClosed ? isEncerrado : null, // toggle "Ocultar encerrados"
-    ...extra,
-  };
-}
-function rowMatchesFilterState(r, ignoreField = "") {
-  return linhaAtende(
-    r,
-    filterState,
-    opcoesDeFiltro({ ignorarCampo: ignoreField }),
-  );
-}
-function normalizeForSort(value) {
-  return txt(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
-function editalSortParts(value) {
-  const m = txt(value).match(/^(\d{1,3})\s*\/\s*(\d{4})/);
-  if (!m) return null;
-  return { numero: Number(m[1]), ano: Number(m[2]) };
-}
-function rankFromList(value, list) {
-  const key = normalizeForSort(value);
-  const idx = list.map(normalizeForSort).indexOf(key);
-  return idx >= 0 ? idx : 999;
-}
-function compareFilterValues(field, a, b) {
-  if (field === "edital") {
-    const ea = editalSortParts(a),
-      eb = editalSortParts(b);
-    if (ea && eb) {
-      if (ea.ano !== eb.ano) return ea.ano - eb.ano;
-      if (ea.numero !== eb.numero) return ea.numero - eb.numero;
-    }
-    if (ea && !eb) return -1;
-    if (!ea && eb) return 1;
-  }
-  if (field === "etapa") {
-    const ordem = [
-      "Elaboração do Edital",
-      "Impugnação do Edital",
-      "Período de inscrição",
-      "Análise Curricular",
-      "Resultado Preliminar",
-      "Abertura do Prazo de Recurso",
-      "Entrevistas",
-      "Resultado final do Processo Seletivo",
-    ];
-    const ra = rankFromList(a, ordem),
-      rb = rankFromList(b, ordem);
-    if (ra !== rb) return ra - rb;
-  }
-  if (field === "status") {
-    const ordem = [
-      "Em Andamento",
-      "Andamento",
-      "Concluído",
-      "Concluido",
-      "Cancelado",
-      "Cancelada",
-    ];
-    const ra = rankFromList(a, ordem),
-      rb = rankFromList(b, ordem);
-    if (ra !== rb) return ra - rb;
-  }
-  if (field === "risco") {
-    const ordem = ["Alto", "Médio", "Medio", "Baixo"];
-    const ra = rankFromList(a, ordem),
-      rb = rankFromList(b, ordem);
-    if (ra !== rb) return ra - rb;
-  }
-  return txt(a).localeCompare(txt(b), "pt-BR", {
-    numeric: true,
-    sensitivity: "base",
-  });
-}
 /*
-  Editais que a Visão geral considera: os da área atual (Saúde Indígena, SEDE
-  ou Projetos, por `CO_AREA`). `rows` tem tudo o que está em
-  TB_MONITORAMENTO_INDIGENA, porque Editais e a busca global precisam de
-  todos. Filtros, KPIs, mapa, tabela e exportação partem daqui.
+  O DSEI aberto no mapa mudou (entrar, sair, voltar ao Brasil): vai para o
+  estado da Visão geral, que recorta a página e avisa `aoMudarRecorte`.
+  Sempre avisa — quem chama zerou `lastMapUfKey` quando quer o mapa de novo.
 */
-function rowsDaAreaAtual() {
-  return linhasDaArea(rows, areaAtual());
-}
-function optionValuesFor(field) {
-  return opcoesDoCampo(
-    rowsDaAreaAtual(),
-    filterState,
-    field,
-    opcoesDeFiltro({ comparar: (a, b) => compareFilterValues(field, a, b) }),
-  );
-}
-function pruneFilterSelections() {
-  return podarSelecoes(rowsDaAreaAtual(), filterState, opcoesDeFiltro());
-}
-/* A opção aparece com a busca do menu? (sem acento, sem caixa) */
-function opcaoCasaComBusca(field, value) {
-  const busca = chaveDeFiltro(buscaDoMenu[field]);
-  return !busca || chaveDeFiltro(value).includes(busca);
-}
-function filterLabel(cfg) {
-  const selected = selectedValues(cfg.field);
-  if (!selected.length) return cfg.all;
-  if (selected.length === 1) return selected[0];
-  return `${selected.length} selecionados`;
-}
-
-function renderFilterControls() {
-  FILTER_CONFIG.forEach((cfg) => {
-    const el = $(cfg.id);
-    if (!el) return;
-    const values = optionValuesFor(cfg.field);
-    const selected = filterState[cfg.field] || new Set();
-    const label = filterLabel(cfg);
-    const options = values.length
-      ? values
-          .map(
-            (value) =>
-              `<label class="multi-option" title="${attr(value)}"${opcaoCasaComBusca(cfg.field, value) ? "" : " hidden"}><input type="checkbox" data-filter-field="${attr(cfg.field)}" data-filter-value="${attr(value)}" ${selected.has(value) ? "checked" : ""}><span>${esc(value)}</span></label>`,
-          )
-          .join("")
-      : `<div class="multi-option empty">Nenhuma opção disponível</div>`;
-    const nome = cfg.label.toLowerCase();
-    el.innerHTML = `<button type="button" class="multi-select-toggle" onclick="toggleFilterMenu('${attr(cfg.id)}')" title="${attr(label)}"><span class="multi-label">${esc(label)}</span><span class="multi-caret">▾</span></button><div class="multi-select-menu"><div class="multi-select-actions"><button type="button" class="multi-mini-btn" data-filter-action="select-all" data-filter-field="${attr(cfg.field)}">Selecionar visíveis</button><button type="button" class="multi-mini-btn" data-filter-action="clear" data-filter-field="${attr(cfg.field)}">Limpar</button></div><label class="health-filter-menu-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" autocomplete="off" data-filter-busca="${attr(cfg.field)}" value="${attr(buscaDoMenu[cfg.field] || "")}" placeholder="Buscar ${attr(nome)}" aria-label="Buscar ${attr(nome)}"></label><div class="multi-options">${options}</div><div class="multi-hint"></div></div>`;
-    atualizarBuscaDoMenu(el, cfg.field);
-  });
-}
-/* Mostra/oculta as opções pela busca e atualiza a dica e o "Selecionar visíveis". */
-function atualizarBuscaDoMenu(el, field) {
-  const opcoes = Array.from(
-    el.querySelectorAll(".multi-option input[data-filter-value]"),
-  );
-  let visiveis = 0;
-  opcoes.forEach((input) => {
-    const casa = opcaoCasaComBusca(field, input.dataset.filterValue);
-    input.closest(".multi-option").hidden = !casa;
-    if (casa) visiveis += 1;
-  });
-  const buscando = !!chaveDeFiltro(buscaDoMenu[field]);
-  const dica = el.querySelector(".multi-hint");
-  if (dica)
-    dica.textContent = buscando
-      ? `${visiveis} de ${opcoes.length} opção(ões).`
-      : `${opcoes.length} opção(ões) disponível(is).`;
-  const botao = el.querySelector('[data-filter-action="select-all"]');
-  if (botao) {
-    botao.textContent = buscando
-      ? `Selecionar ${visiveis} visível(is)`
-      : "Selecionar todos";
-    botao.disabled = visiveis === 0;
-  }
-}
-
-function closeFilterMenus(exceptId = "") {
-  document.querySelectorAll(".multi-select.open").forEach((el) => {
-    if (exceptId && el.id === exceptId) return;
-    el.classList.remove("open");
-    // Menu fechado esquece a busca: ao reabrir, todas as opções aparecem.
-    const field = FILTER_ID_TO_FIELD[el.id];
-    if (field && buscaDoMenu[field]) {
-      buscaDoMenu[field] = "";
-      const campo = el.querySelector("input[data-filter-busca]");
-      if (campo) campo.value = "";
-      atualizarBuscaDoMenu(el, field);
-    }
-  });
-}
-function toggleFilterMenu(id) {
-  const el = $(id);
-  if (!el) return;
-  const opening = !el.classList.contains("open");
-  closeFilterMenus(id);
-  el.classList.toggle("open", opening);
-}
-function applyFilterStateChange(options = {}) {
-  const openId = options.keepOpen
-    ? document.querySelector(".multi-select.open")?.id
-    : "";
-  pruneFilterSelections();
-  saveFilterState();
-  renderFilterControls();
-  if (openId) $(openId)?.classList.add("open");
-  applyFilters();
-}
-function toggleFilterValue(field, value, options = {}) {
-  const selected = filterState[field] || new Set();
-  if (selected.has(value)) selected.delete(value);
-  else selected.add(value);
-  filterState[field] = selected;
-  applyFilterStateChange(options);
-}
-/* "Selecionar visíveis": soma à seleção as opções que a busca do menu mostra. */
-function selectAllFilterValues(field) {
-  const selected = new Set(filterState[field] || []);
-  optionValuesFor(field)
-    .filter((value) => opcaoCasaComBusca(field, value))
-    .forEach((value) => selected.add(value));
-  filterState[field] = selected;
-  applyFilterStateChange({ keepOpen: true });
-}
-function clearFilterField(field) {
-  filterState[field] = new Set();
-  applyFilterStateChange({ keepOpen: true });
-}
-/*
-  Troca a seleção inteira de um campo numa única mudança de estado (um render).
-  Usado pelos atalhos ("Editais 2026", "Em andamento"), que antes simulavam um
-  clique por valor e redesenhavam a página a cada um.
-*/
-function definirSelecaoDeFiltro(field, values = []) {
-  if (!FILTER_FIELDS.includes(field)) return [];
-  filterState[field] = new Set(
-    (values || []).map((v) => txt(v)).filter(Boolean),
-  );
-  applyFilterStateChange();
-  return selectedValues(field);
-}
-function initFilterControls() {
-  document.addEventListener("input", (ev) => {
-    const campo = ev.target.closest?.("input[data-filter-busca]");
-    if (!campo) return;
-    const field = campo.dataset.filterBusca;
-    buscaDoMenu[field] = campo.value;
-    const el = campo.closest(".multi-select");
-    if (el) atualizarBuscaDoMenu(el, field);
-  });
-  document.addEventListener("keydown", (ev) => {
-    const campo = ev.target.closest?.("input[data-filter-busca]");
-    if (!campo || ev.key !== "Escape") return;
-    ev.preventDefault();
-    const el = campo.closest(".multi-select");
-    closeFilterMenus();
-    el?.querySelector(".multi-select-toggle")?.focus();
-  });
-  document.addEventListener("click", (ev) => {
-    const pilula = ev.target.closest?.("[data-pilula-acao]");
-    if (pilula) {
-      removerPilula(pilula.dataset.pilulaAcao, pilula);
-      return;
-    }
-    const actionBtn = ev.target.closest?.("[data-filter-action]");
-    if (actionBtn) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const field = actionBtn.dataset.filterField;
-      if (actionBtn.dataset.filterAction === "select-all")
-        selectAllFilterValues(field);
-      if (actionBtn.dataset.filterAction === "clear") clearFilterField(field);
-      return;
-    }
-    if (!ev.target.closest || !ev.target.closest(".multi-select"))
-      closeFilterMenus();
-  });
-  document.addEventListener("change", (ev) => {
-    const input = ev.target.closest?.("input[data-filter-field]");
-    if (!input) return;
-    ev.stopPropagation();
-    toggleFilterValue(input.dataset.filterField, input.dataset.filterValue, {
-      keepOpen: true,
-    });
-  });
-}
-function populateFilters() {
-  loadFilterState();
-  try {
-    hideClosed = localStorage.getItem("agsus_hide_closed_v1") === "1";
-  } catch (e) {}
-  try {
-    syncMapLevelUI();
-  } catch (e) {}
-  syncHideClosedBtn();
-  pruneFilterSelections();
-  renderFilterControls();
-}
-/*
-  "LIMPAR FILTROS" — O ÚNICO CAMINHO QUE APAGA O RECORTE.
-
-  Zera os seis campos, a busca, o DSEI aberto e o "Ocultar encerrados", volta
-  o mapa ao Brasil e aplica UMA vez. Voltar do DSEI (breadcrumb, botão Brasil)
-  não apaga nada: só sai do território.
-*/
-function clearFilters() {
-  hideClosed = false;
-  try {
-    localStorage.setItem("agsus_hide_closed_v1", "0");
-  } catch (e) {}
-  syncHideClosedBtn();
-  filterState = Object.fromEntries(FILTER_FIELDS.map((f) => [f, new Set()]));
-  Object.keys(buscaDoMenu).forEach((f) => (buscaDoMenu[f] = ""));
-  const busca = $("tableSearch");
-  if (busca) busca.value = "";
-  saveFilterState();
-  renderFilterControls();
-  voltarAoBrasil({ mensagem: "Filtros limpos." });
-}
-
 function applyFilters() {
-  ensureSearchInputTextColor();
-  const qt = normalizeForSort($("tableSearch")?.value);
-  const chaveDaLinha = (r) => dseiKey(r.unidade);
-  filtered = rowsDaAreaAtual()
-    .filter((r) => {
-      const hay = [
-        r.processo,
-        r.edital,
-        r.unidade,
-        r.ciclo,
-        r.uf,
-        r.status,
-        r.etapa,
-        r.responsavel,
-        r.cargos,
-        r.risco,
-        r.observacoes,
-        r.observacoes_internas,
-        r.link_edital,
-      ]
-        .map(normalizeForSort)
-        .join(" | ");
-      return (
-        rowMatchesFilterState(r) &&
-        (!dseiSelecionado || chaveDaLinha(r) === dseiSelecionado) &&
-        (!qt || hay.includes(qt))
-      );
-    })
-    .sort(compareRowsForTable);
+  estadoDaVisaoGeral.definirDsei(dseiSelecionado, dseiSelecionadoNome);
+}
 
-  // O mapa só é redesenhado quando muda o que ele mostra: processos, vagas
-  // e ociosas por DSEI (contar só linhas deixava vagas antigas nas bolhas).
-  const newUfKey = chaveDeRenderDoMapa(
+/*
+  O recorte da Visão geral mudou (filtro, busca, DSEI, dados ou área): o mapa
+  lê as linhas dele (`filtered`: bolhas, lista dos territórios) e só é
+  redesenhado quando muda o que ele mostra — processos, vagas e ociosas por
+  DSEI.
+*/
+function aoMudarRecorte() {
+  const { filtradas, temRecorte } = estadoDaVisaoGeral.obter();
+  filtered = filtradas;
+  const chave = chaveDeRenderDoMapa(
     filtered,
-    chaveDaLinha,
-    hasActiveFilter() ? "F|" : "A|",
+    (r) => dseiKey(r.unidade),
+    temRecorte ? "F|" : "A|",
   );
-  const mapChanged = newUfKey !== lastMapUfKey;
-  lastMapUfKey = newUfKey;
-
-  renderKpis();
-  renderMultiUnits();
-  renderStatusSummary();
-  renderChart();
-  if (mapChanged) renderMap();
-  renderRisks();
-  renderTable(); // já desenha as pílulas de filtros ativos
-  // Um aviso único para quem mostra estado dos filtros (contador, atalhos).
-  document.dispatchEvent(
-    new CustomEvent("agsus:filtros-alterados", {
-      detail: { total: filtered.length, dsei: dseiSelecionado },
-    }),
-  );
-}
-
-function toggleSelectFilter(selectId, value, label) {
-  const field = FILTER_ID_TO_FIELD[selectId];
-  if (field) {
-    const cleanValue = txt(value);
-    const selected = filterState[field] || new Set();
-    const removing = selected.size === 1 && selected.has(cleanValue);
-    filterState[field] = removing ? new Set() : new Set([cleanValue]);
-    applyFilterStateChange();
-    toast(removing ? `${label} removido.` : `${label}: ${cleanValue}`);
-    return;
-  }
-  const el = $(selectId);
-  if (!el) return;
-  const cleanValue = txt(value);
-  const removing = txt(el.value) === cleanValue;
-  el.value = removing ? "" : cleanValue;
-  applyFilters();
-  toast(removing ? `${label} removido.` : `${label}: ${cleanValue}`);
-}
-
-// isEncerrado e isRiscoAtivo vêm de src/lib/indicadores-do-monitoramento.js.
-function criticalRiskValues() {
-  const values = optionValuesFor("risco").filter((v) =>
-    ["alto", "médio", "medio"].includes(low(v)),
-  );
-  return values.length ? values : ["Alto", "Médio"];
-}
-function isCriticalRiskFilterActive() {
-  const sel = Array.from(filterState.risco || []);
-  return (
-    sel.length > 0 &&
-    sel.every((v) => ["alto", "médio", "medio"].includes(low(v)))
-  );
-}
-function toggleCriticalRiskFilter() {
-  const active = isCriticalRiskFilterActive();
-  /*
-    Sem nenhum processo Médio/Alto no recorte, os valores de reserva ("Alto",
-    "Médio") eram podados por não existirem nas opções: o clique não filtrava
-    nada e o toast ainda dizia "Filtro aplicado".
-  */
-  const existentes = optionValuesFor("risco").filter((v) =>
-    ["alto", "médio", "medio"].includes(low(v)),
-  );
-  if (!active && !existentes.length) {
-    toast("Nenhum processo com risco Médio ou Alto no recorte atual.");
-    return;
-  }
-  filterState.risco = active ? new Set() : new Set(criticalRiskValues());
-  applyFilterStateChange();
-  toast(
-    active ? "Filtro de risco removido." : "Filtro aplicado: risco Médio/Alto.",
-  );
-}
-
-function sortValue(row, field) {
-  if (["vagas_total", "contratados", "vagas_ociosas"].includes(field))
-    return n(row[field]);
-  if (field === "risco") return riskRank(row.risco);
-  if (field === "data_inicio" || field === "data_fim") {
-    const v = txt(row[field]);
-    const t = v ? Date.parse(v) : NaN;
-    return Number.isFinite(t) ? t : 0;
-  }
-  return txt(row[field]).toLocaleLowerCase("pt-BR");
-}
-function compareRowsForTable(a, b) {
-  if (!tableSort.field || !tableSort.direction) return compareRows(a, b);
-  const av = sortValue(a, tableSort.field),
-    bv = sortValue(b, tableSort.field);
-  let result = 0;
-  if (typeof av === "number" && typeof bv === "number") result = av - bv;
-  else
-    result = String(av).localeCompare(String(bv), "pt-BR", {
-      numeric: true,
-      sensitivity: "base",
-    });
-  if (result === 0) result = compareRows(a, b);
-  return tableSort.direction === "desc" ? -result : result;
-}
-function sortDetails(field) {
-  if (tableSort.field !== field) tableSort = { field, direction: "asc" };
-  else if (tableSort.direction === "asc")
-    tableSort = { field, direction: "desc" };
-  else tableSort = { field: "", direction: "" };
-  applyFilters();
-}
-function renderSortIndicators() {
-  document
-    .querySelectorAll(".details-table th[data-sort-field]")
-    .forEach((th) => {
-      const field = th.getAttribute("data-sort-field");
-      th.classList.toggle(
-        "sorted-asc",
-        tableSort.field === field && tableSort.direction === "asc",
-      );
-      th.classList.toggle(
-        "sorted-desc",
-        tableSort.field === field && tableSort.direction === "desc",
-      );
-      const icon = th.querySelector(".sort-icon");
-      if (icon && tableSort.field !== field) icon.textContent = "↕";
-    });
-}
-
-function sum(field) {
-  return somarCampo(filtered, field);
-}
-function renderAll() {
-  renderKpis();
-  renderMultiUnits();
-  renderStatusSummary();
-  renderChart();
+  if (chave === lastMapUfKey) return;
+  lastMapUfKey = chave;
   renderMap();
-  renderRisks();
-  renderTable();
-}
-function canUseMonitoramentoPayload() {
-  // O resumo do servidor soma todos os editais, de todas as áreas. Só serve
-  // quando não há nenhum edital fora da área atual na base.
-  return (
-    !!monitoramentoPayload &&
-    !hasActiveFilter() &&
-    !hideClosed &&
-    rowsDaAreaAtual().length === rows.length
-  );
-}
-
-function renderKpis() {
-  const payloadKpis = canUseMonitoramentoPayload()
-    ? monitoramentoPayload.kpis
-    : null;
-  // A conta local: src/lib/indicadores-do-monitoramento.js.
-  const locais = indicadoresDoMonitoramento(filtered);
-  const vagas = payloadKpis ? n(payloadKpis.vagas_total) : locais.vagas;
-  const contrat = payloadKpis ? n(payloadKpis.contratados) : locais.contratados;
-  const ociosas = payloadKpis ? n(payloadKpis.vagas_ociosas) : locais.ociosas;
-  const inscritos = payloadKpis ? n(payloadKpis.inscritos) : locais.inscritos;
-  const processos = payloadKpis
-    ? n(payloadKpis.processos_ativos)
-    : locais.processos;
-  const kProcessos = $("kProcessos");
-  const kVagas = $("kVagas");
-  const kContratados = $("kContratados");
-  const kOciosas = $("kOciosas");
-  const kCriticos = $("kCriticos");
-  const kInscritos = $("kInscritos");
-
-  if (kProcessos) kProcessos.textContent = fmt(processos);
-  if (kVagas) kVagas.textContent = fmt(vagas);
-  if (kContratados) kContratados.textContent = fmt(contrat);
-  if (kOciosas) kOciosas.textContent = fmt(ociosas);
-  if (kCriticos) kCriticos.textContent = fmt(locais.criticos);
-  if (kInscritos) kInscritos.textContent = fmt(inscritos);
-
-  // Sem a barra "NN% das vagas" sob Contratações e Ociosas: o KPI mostra o
-  // número; a proporção pedia leitura extra e alongava os cards.
-
-  const criticalActive = isCriticalRiskFilterActive();
-  const criticalCard = $("kpiCriticosCard");
-  if (criticalCard)
-    criticalCard.classList.toggle("active-filter", criticalActive);
-  if ($("panicChip"))
-    $("panicChip").textContent = criticalActive ? "FILTRO ATIVO" : "MÉDIO/ALTO";
-}
-
-function group(field) {
-  const out = {};
-  filtered.forEach((r) => {
-    const k = txt(r[field]) || "Não informado";
-    out[k] = (out[k] || 0) + 1;
-  });
-  return Object.entries(out).sort((a, b) => b[1] - a[1]);
-}
-function etapaChipClass(etapa) {
-  const l = low(etapa);
-  if (l.includes("conclu")) return "green";
-  if (l.includes("entrevista")) return "blue";
-  if (l.includes("análise") || l.includes("analise")) return "cyan";
-  if (l.includes("resultado")) return "yellow";
-  if (l.includes("cancel")) return "red";
-  return "gray";
-}
-function renderStatusSummary() {
-  const entries = group("etapa");
-  const total = entries.reduce((s, [, v]) => s + v, 0);
-  if (!entries.length) {
-    $("statusSummary").innerHTML = `<div class="alert">Sem dados.</div>`;
-    return;
-  }
-  $("statusSummary").innerHTML = entries
-    .map(([k, v]) => {
-      const cls = etapaChipClass(k);
-      const pct = total ? Math.round((v / total) * 100) : 0;
-      const barColor =
-        cls === "green"
-          ? "#0b8f58"
-          : cls === "blue"
-            ? "#0d6efd"
-            : cls === "cyan"
-              ? "#00a8d6"
-              : cls === "yellow"
-                ? "#f2b705"
-                : cls === "red"
-                  ? "#d92d3a"
-                  : "#60758f";
-      return `<div data-etapa-toggle="true" onclick="toggleSelectFilter('filterEtapa','${attr(k)}','Filtro de etapa')" title="Filtrar pela etapa ${attr(k)}" style="border-bottom:1px solid var(--line);padding:10px 0;cursor:pointer;">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">
-          <b style="font-size:13px;font-weight:700;color:#10243e">${esc(k)}</b>
-          <div style="display:flex;align-items:center;gap:7px;flex-shrink:0;">
-            <span style="font-size:12px;color:#60758f;font-weight:700">${pct}%</span>
-            <span class="chip ${cls}">${fmt(v)}</span>
-          </div>
-        </div>
-        <div style="height:5px;background:#e8f0f8;border-radius:99px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:99px;transition:width .4s ease;"></div>
-        </div>
-      </div>`;
-    })
-    .join("");
-}
-
-function renderMultiUnits() {
-  const card = $("multiUnitsCard");
-  if (!card) return;
-  const counts = {};
-  filtered.forEach((r) => {
-    const unidade = txt(r.unidade) || "Não informada";
-    counts[unidade] = (counts[unidade] || 0) + 1;
-  });
-  const units = Object.entries(counts)
-    .filter(([, count]) => count > 1)
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
-    .slice(0, 8);
-  if (!units.length) {
-    card.classList.add("hidden");
-    card.innerHTML = "";
-    return;
-  }
-  card.classList.remove("hidden");
-  card.innerHTML = `<div class="multi-units-title"><i class="fa-solid fa-layer-group"></i> Unidades com mais de um processo seletivo</div><div class="multi-units-list">${units.map(([unit, count]) => `<button type="button" class="multi-unit-chip" data-unit="${attr(unit)}" title="Filtrar por ${attr(unit)}">${esc(unit)} <span class="chip blue">${fmt(count)}</span></button>`).join("")}</div>`;
-  card
-    .querySelectorAll(".multi-unit-chip")
-    .forEach((btn) =>
-      btn.addEventListener("click", () =>
-        toggleSelectFilter(
-          "filterUnidade",
-          btn.dataset.unit,
-          "Filtro de unidade",
-        ),
-      ),
-    );
-}
-
-function renderChart() {
-  const canvas = $("statusChart");
-  if (!canvas || !window.Chart) return;
-  const entries = group("status");
-  const labels = entries.map((x) => x[0]);
-  const values = entries.map((x) => x[1]);
-  const colors = labels.map((label) => {
-    const l = low(label);
-    if (l.includes("conclu")) return "#0ea76b";
-    if (l.includes("andamento")) return "#0d6efd";
-    if (l.includes("elabora")) return "#00b8d9";
-    if (l.includes("cancel")) return "#e4323b";
-    return "#7d8da5";
-  });
-  // Atualiza in-place se o gráfico já existe (mais rápido, sem flash visual)
-  if (statusChart) {
-    statusChart.data.labels = labels;
-    statusChart.data.datasets[0].data = values;
-    statusChart.data.datasets[0].backgroundColor = colors;
-    statusChart.update();
-    return;
-  }
-  statusChart = new Chart(canvas, {
-    type: "doughnut",
-    data: {
-      labels,
-      datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: "68%",
-      plugins: {
-        legend: {
-          position: "top",
-          labels: {
-            usePointStyle: true,
-            boxWidth: 10,
-            font: { weight: "bold" },
-          },
-        },
-      },
-      onClick: (evt, items) => {
-        if (!items.length) return;
-        toggleSelectFilter(
-          "filterStatus",
-          statusChart.data.labels[items[0].index],
-          "Filtro de status",
-        );
-      },
-    },
-  });
 }
 
 // ── Mapa do Brasil (SVG coroplético autônomo, sem dependência de API externa) ──
@@ -10550,10 +9681,7 @@ function drawCasai() {
       `<b>${esc(c.n)}</b><br>Casa de Saúde Indígena (referência nacional)<br>${esc(c.cidade)} – ${c.uf}<br>Processos seletivos: ${nproc}<br><span style="font-size:10px;color:#6b7d92">${fonteCoord}</span>`,
     );
     mk.on("click", () => {
-      const termo = "CASAI " + c.cidade;
-      const s = $("tableSearch");
-      if (s) s.value = termo;
-      applyFilters();
+      estadoDaVisaoGeral.definirBusca("CASAI " + c.cidade);
     });
     _layerCasai.addLayer(mk);
   });
@@ -10620,11 +9748,7 @@ function drawRedeAssistencial(d) {
       `<b>CASAI — Casa de Saúde Indígena</b><br>${esc(c.n)}<br>${esc(c.mun || "")}${c.uf ? " – " + c.uf : ""}<br>CNES: ${esc(c.cnes || "-")}<br><span style="font-size:10px;color:#6b7d92">${esc(fonte)}</span>`,
     );
     mk.on("click", () => {
-      const s = $("tableSearch");
-      if (s) {
-        s.value = d.n;
-        applyFilters();
-      }
+      estadoDaVisaoGeral.definirBusca(d.n);
     });
     _layerCasaiLocal.addLayer(mk);
   });
@@ -11019,312 +10143,6 @@ function syncMapLevelUI() {
   }
 }
 
-function renderRisks() {
-  const critical = filtered.filter(isRiscoAtivo).slice(0, 30);
-  $("riskList").innerHTML =
-    critical
-      .map((r) => {
-        const isHigh = low(r.risco) === "alto";
-        return `<div class="risk-item"><div class="top-line"><span>${esc(r.edital || "-")}</span><span class="chip ${isHigh ? "red" : "yellow"}">${esc(r.risco || "-")}</span></div><small>${esc(r.etapa || "Etapa não informada")} <span style="float:right">${esc(r.unidade || "")}</span></small></div>`;
-      })
-      .join("") ||
-    `<div class="risk-empty"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><div><strong>Nenhum processo em risco médio ou alto</strong><span>Considerando os filtros aplicados.</span></div></div>`;
-}
-
-function statusChip(status) {
-  return `<span class="chip ${tomDoStatusDoEdital(status)}">${esc(status || "-")}</span>`;
-}
-function riscoChip(risco) {
-  return `<span class="chip ${tomDoRisco(risco)}">${esc(risco || "-")}</span>`;
-}
-function shouldShowObsToggle(value) {
-  return txt(value).length > 180;
-}
-function toggleObs(button) {
-  const cell = button.closest(".obs-cell");
-  if (!cell) return;
-  const text = cell.querySelector(".obs");
-  if (!text) return;
-  const expanded = text.classList.toggle("expanded");
-  button.textContent = expanded ? "Ver menos" : "Ver mais";
-  button.setAttribute("aria-expanded", expanded ? "true" : "false");
-}
-
-// ── Definição de colunas configuráveis ──────────────────────────────────
-const TABLE_COLS = [
-  { key: "unidade", label: "Unidade", default: true },
-  { key: "edital", label: "Edital", default: true },
-  { key: "data_inicio", label: "Início", default: true },
-  { key: "data_fim", label: "Encerramento", default: true },
-  { key: "vagas_total", label: "Vagas", default: true, num: true },
-  { key: "contratados", label: "Contratados", default: true, num: true },
-  { key: "vagas_ociosas", label: "Ociosas", default: true, num: true },
-  { key: "status", label: "Status", default: true },
-  { key: "etapa", label: "Etapa", default: true },
-  { key: "risco", label: "Risco", default: true },
-  { key: "observacoes", label: "Observações", default: true },
-];
-let visibleCols = null;
-
-function loadVisibleCols() {
-  try {
-    const saved = localStorage.getItem("agsus_visible_cols_v1");
-    if (saved) return new Set(JSON.parse(saved));
-  } catch (e) {}
-  return new Set(TABLE_COLS.filter((c) => c.default).map((c) => c.key));
-}
-function saveVisibleCols() {
-  try {
-    localStorage.setItem(
-      "agsus_visible_cols_v1",
-      JSON.stringify([...visibleCols]),
-    );
-  } catch (e) {}
-}
-
-function buildColMenu() {
-  if (!visibleCols) visibleCols = loadVisibleCols();
-  const menu = $("colToggleMenu");
-  if (!menu) return;
-  const items = TABLE_COLS.map(
-    (c) => `
-      <label class="col-toggle-item">
-        <input type="checkbox" ${visibleCols.has(c.key) ? "checked" : ""} onchange="toggleCol('${c.key}',this.checked)">
-        ${esc(c.label)}
-      </label>`,
-  ).join("");
-  // preservar o header
-  const header = menu.querySelector("div");
-  menu.innerHTML = "";
-  if (header) menu.appendChild(header);
-  menu.insertAdjacentHTML("beforeend", items);
-}
-
-function toggleCol(key, checked) {
-  if (!visibleCols) visibleCols = loadVisibleCols();
-  if (checked) visibleCols.add(key);
-  else visibleCols.delete(key);
-  if (visibleCols.size === 0) {
-    visibleCols.add(key);
-    return;
-  } // mínimo 1
-  saveVisibleCols();
-  renderTable();
-}
-
-function toggleColMenu() {
-  buildColMenu();
-  const menu = $("colToggleMenu");
-  if (menu) {
-    menu.classList.toggle("open");
-    if (menu.classList.contains("open")) {
-      const close = (e) => {
-        if (!e.target.closest(".col-toggle-wrap")) {
-          menu.classList.remove("open");
-          document.removeEventListener("click", close);
-        }
-      };
-      setTimeout(() => document.addEventListener("click", close), 0);
-    }
-  }
-}
-
-// ── Alerta de encerramento próximo ──────────────────────────────────────
-function daysUntil(dateStr) {
-  if (!dateStr) return null;
-  // Parseia 'YYYY-MM-DD' como data LOCAL (evita erro de fuso: Date.parse trata como UTC).
-  const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  let target;
-  if (m) {
-    target = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  } else {
-    const t = Date.parse(dateStr);
-    if (!Number.isFinite(t)) return null;
-    target = new Date(t);
-  }
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((target - today) / (1000 * 60 * 60 * 24));
-}
-
-function expiryBadge(r) {
-  if (["cancelado", "cancelada"].includes(low(r.status)))
-    return `<span class="expiry-badge done"><i class="fa-solid fa-ban"></i> Cancelado</span>`;
-  if (["concluído", "concluido"].includes(low(r.status)))
-    return `<span class="expiry-badge done"><i class="fa-solid fa-check"></i> Concluído</span>`;
-  if (!r.data_fim) return "";
-  const days = daysUntil(r.data_fim);
-  if (days === null) return "";
-  if (days < 0) return `<span class="expiry-badge done">Encerrado</span>`;
-  if (days <= 7)
-    return `<span class="expiry-badge crit"><i class="fa-solid fa-fire"></i> ${days}d</span>`;
-  if (days <= 30)
-    return `<span class="expiry-badge warn"><i class="fa-solid fa-clock"></i> ${days}d</span>`;
-  return "";
-}
-
-function rowExpiryClass(r) {
-  if (isEncerrado(r)) return "";
-  const days = daysUntil(r.data_fim);
-  if (days === null) return "";
-  if (days <= 7) return "row-ending-critical";
-  if (days <= 30) return "row-ending-soon";
-  return "";
-}
-
-// ── Pills de filtros ativos ──────────────────────────────────────────────
-function renderActiveFilters() {
-  const bar = $("activeFiltersBar");
-  if (!bar) return;
-  const searchQ = txt($("tableSearch")?.value);
-  const pills = [];
-  /*
-    Os botões levam o valor em data-*, lido por um listener delegado
-    (`initFilterControls`). Antes o valor ia interpolado num onclick: um
-    apóstrofo quebrava o botão, e um valor montado de propósito executava código.
-  */
-  if (dseiSelecionado)
-    pills.push(
-      `<span class="filter-pill"><i class="fa-solid fa-location-dot" style="font-size:10px;"></i> DSEI ${esc(dseiSelecionadoNome)}<button type="button" data-pilula-acao="dsei" title="Voltar à visão do Brasil" aria-label="Sair do DSEI ${attr(dseiSelecionadoNome)}">×</button></span>`,
-    );
-  FILTER_CONFIG.forEach((cfg) => {
-    const selected = Array.from(filterState[cfg.field] || []);
-    selected.forEach((v) => {
-      pills.push(
-        `<span class="filter-pill">${esc(cfg.label)}: ${esc(v)}<button type="button" data-pilula-acao="filtro" data-pilula-campo="${attr(cfg.field)}" data-pilula-valor="${attr(v)}" title="Remover filtro" aria-label="Remover ${attr(v)}">×</button></span>`,
-      );
-    });
-  });
-  if (searchQ)
-    pills.push(
-      `<span class="filter-pill"><i class="fa-solid fa-magnifying-glass" style="font-size:10px;"></i> "${esc(searchQ)}"<button type="button" data-pilula-acao="busca" title="Limpar busca">×</button></span>`,
-    );
-  if (hideClosed)
-    pills.push(
-      `<span class="filter-pill" style="background:#eef2f7;border-color:#d5dfec;color:#334155"><i class="fa-solid fa-eye-slash" style="font-size:10px;"></i> Encerrados ocultos<button type="button" data-pilula-acao="encerrados" title="Mostrar encerrados">×</button></span>`,
-    );
-  if (!pills.length) {
-    bar.classList.add("hidden");
-    bar.innerHTML = "";
-    return;
-  }
-  bar.classList.remove("hidden");
-  bar.innerHTML =
-    pills.join("") +
-    `<button class="filters-clear-all" onclick="clearFilters()"><i class="fa-solid fa-xmark"></i> Limpar filtros</button>`;
-}
-
-function removeFilterPill(field, value) {
-  const selected = filterState[field] || new Set();
-  selected.delete(value);
-  filterState[field] = selected;
-  applyFilterStateChange();
-}
-
-function clearSearchPill() {
-  const el = $("tableSearch");
-  if (el) el.value = "";
-  applyFilters();
-}
-
-/* Listener delegado do "×" das pílulas (ver `renderActiveFilters`). */
-function removerPilula(acao, botao) {
-  if (acao === "dsei") voltarAoBrasil();
-  else if (acao === "filtro")
-    removeFilterPill(botao.dataset.pilulaCampo, botao.dataset.pilulaValor);
-  else if (acao === "busca") clearSearchPill();
-  else if (acao === "encerrados") toggleHideClosed();
-}
-
-function renderTable() {
-  if (!visibleCols) visibleCols = loadVisibleCols();
-  const detailRows = filtered;
-  const totalRows = rowsDaAreaAtual();
-  renderSortIndicators();
-  renderActiveFilters();
-  const sortText = tableSort.field
-    ? ` Ordenação: ${tableSort.direction === "asc" ? "crescente" : "decrescente"}.`
-    : "";
-  $("tableMeta").textContent =
-    `Exibindo ${fmt(detailRows.length)} de ${fmt(totalRows.length)} registros.${sortText}`;
-
-  // sync cabeçalhos
-  const thead = document.querySelector(".details-table thead tr");
-  if (thead) {
-    const allTh = [...thead.querySelectorAll("th[data-sort-field]")];
-    allTh.forEach((th) => {
-      th.style.display = visibleCols.has(th.dataset.sortField) ? "" : "none";
-    });
-  }
-
-  $("monitorRows").innerHTML =
-    detailRows
-      .map((r) => {
-        const link = safeUrl(r.link_edital);
-        const edital = link
-          ? `<a class="link" href="${attr(link)}" target="_blank" rel="noopener">${esc(r.edital || "-")} ↗</a>`
-          : esc(r.edital || "-");
-        const observacoes = txt(r.observacoes) || "-";
-        const obsToggle = shouldShowObsToggle(observacoes)
-          ? `<button type="button" class="obs-toggle" onclick="toggleObs(this)" aria-expanded="false">Ver mais</button>`
-          : "";
-        const badge = expiryBadge(r);
-        const rowCls = rowExpiryClass(r);
-
-        const cells = {
-          unidade: `<td>${esc(r.unidade)}</td>`,
-          edital: `<td>${edital}${badge ? `<div style="margin-top:4px">${badge}</div>` : ""}</td>`,
-          data_inicio: `<td>${esc(fmtDate(r.data_inicio))}</td>`,
-          data_fim: `<td>${esc(fmtDate(r.data_fim))}</td>`,
-          vagas_total: `<td class="num">${fmt(r.vagas_total)}</td>`,
-          contratados: `<td class="num green-text">${fmt(r.contratados)}</td>`,
-          vagas_ociosas: `<td class="num red-text">${fmt(r.vagas_ociosas)}</td>`,
-          status: `<td>${statusChip(r.status)}</td>`,
-          etapa: `<td>${esc(r.etapa)}</td>`,
-          risco: `<td>${riscoChip(r.risco)}</td>`,
-          observacoes: `<td class="obs-col"><div class="obs-cell"><div class="obs">${esc(observacoes)}</div>${obsToggle}</div></td>`,
-        };
-        const tds = TABLE_COLS.filter((c) => visibleCols.has(c.key))
-          .map((c) => cells[c.key])
-          .join("");
-        return `<tr class="${rowCls}">${tds}</tr>`;
-      })
-      .join("") ||
-    `<tr><td colspan="${TABLE_COLS.filter((c) => visibleCols.has(c.key)).length || 1}" style="text-align:center;padding:22px">Nenhum registro encontrado com os filtros atuais.</td></tr>`;
-
-  // Linha de totais (rodapé): soma das colunas numéricas visíveis
-  const foot = $("monitorFoot");
-  if (foot) {
-    if (!detailRows.length) {
-      foot.innerHTML = "";
-    } else {
-      const tot = { vagas_total: 0, contratados: 0, vagas_ociosas: 0 };
-      detailRows.forEach((r) => {
-        tot.vagas_total += n(r.vagas_total);
-        tot.contratados += n(r.contratados);
-        tot.vagas_ociosas += n(r.vagas_ociosas);
-      });
-      const footCells = {
-        unidade: `<td><b>Totais (${fmt(detailRows.length)})</b></td>`,
-        edital: `<td></td>`,
-        data_inicio: `<td></td>`,
-        data_fim: `<td></td>`,
-        vagas_total: `<td class="num"><b>${fmt(tot.vagas_total)}</b></td>`,
-        contratados: `<td class="num green-text"><b>${fmt(tot.contratados)}</b></td>`,
-        vagas_ociosas: `<td class="num red-text"><b>${fmt(tot.vagas_ociosas)}</b></td>`,
-        status: `<td></td>`,
-        etapa: `<td></td>`,
-        risco: `<td></td>`,
-        observacoes: `<td class="obs-col"></td>`,
-      };
-      const ftds = TABLE_COLS.filter((c) => visibleCols.has(c.key))
-        .map((c) => footCells[c.key])
-        .join("");
-      foot.innerHTML = `<tr style="position:sticky;bottom:0;background:#eef5fc;border-top:2px solid var(--agsus-ciano)">${ftds}</tr>`;
-    }
-  }
-}
-
 function clearExternalPanelCache() {
   document.querySelectorAll(".external-panel").forEach((el) => el.remove());
   const mount = $("externalMount");
@@ -11412,7 +10230,6 @@ function reloadExternal() {
   if (holder) holder.remove();
   openPanel(currentPanel.codigo);
 }
-
 
 function syncDisplayModeButtons() {
   const fullscreenActive =
@@ -11509,48 +10326,6 @@ document.addEventListener("fullscreenchange", () => {
   if (currentView === "dashboard") scheduleMapResize(220);
 });
 
-function exportCSV() {
-  const source = filtered.length ? filtered : rowsDaAreaAtual();
-  const fieldMap = [
-    { key: "unidade", label: "Unidade" },
-    { key: "uf", label: "UF" },
-    { key: "edital", label: "Edital" },
-    { key: "processo", label: "Processo SEI" },
-    { key: "ciclo", label: "Ciclo" },
-    { key: "vagas_total", label: "Vagas Previstas" },
-    { key: "contratados", label: "Contratados" },
-    { key: "vagas_ociosas", label: "Vagas Ociosas" },
-    { key: "inscritos", label: "Inscritos" },
-    { key: "status", label: "Status" },
-    { key: "etapa", label: "Etapa" },
-    { key: "risco", label: "Risco" },
-    { key: "data_inicio", label: "Data de Início" },
-    { key: "data_fim", label: "Data de Encerramento" },
-    { key: "responsavel", label: "Responsável" },
-    { key: "observacoes", label: "Observações" },
-    { key: "link_edital", label: "Link do Edital" },
-  ];
-  const clean = (v) =>
-    `"${String(v ?? "")
-      .replaceAll('"', '""')
-      .replaceAll("\r", " ")
-      .replaceAll("\n", " ")}"`;
-  const headers = fieldMap.map((f) => `"${f.label}"`).join(";");
-  const data = source
-    .map((r) => fieldMap.map((f) => clean(r[f.key])).join(";"))
-    .join("\r\n");
-  const now = new Date();
-  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  const blob = new Blob(["\ufeff" + headers + "\n" + data], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `AgSUS_Monitora_SaudeIndigena_${stamp}.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
 // Exporta relatório em PDF (via diálogo de impressão do navegador — funciona offline)
 function exportPDF() {
   const now = new Date();
@@ -11561,29 +10336,9 @@ function exportPDF() {
     hour: "2-digit",
     minute: "2-digit",
   });
-  // Resumo dos filtros ativos
-  const ativos = [];
-  if (typeof FILTER_CONFIG !== "undefined") {
-    FILTER_CONFIG.forEach((cfg) => {
-      const sel = Array.from(filterState[cfg.field] || []);
-      if (sel.length)
-        ativos.push(
-          cfg.all.replace("Todas", "").replace("Todos", "").trim() +
-            ": " +
-            sel.join(", "),
-        );
-    });
-  }
-  const busca = ($("tableSearch")?.value || "").trim();
-  if (busca) ativos.push("Busca: " + busca);
-  const filtrosTxt = ativos.length
-    ? ativos.join(" · ")
-    : "Nenhum filtro aplicado (todos os processos)";
-  // KPIs do conjunto filtrado
-  const vagas = sum("vagas_total"),
-    contrat = sum("contratados"),
-    ociosas = sum("vagas_ociosas");
-  const pctO = vagas > 0 ? Math.round((ociosas / vagas) * 100) : 0;
+  // O recorte da Visão geral: filtros aplicados e os números dele.
+  const { filtros, busca, filtradas } = estadoDaVisaoGeral.obter();
+  const resumo = resumoDoRelatorio({ filtros, busca, linhas: filtradas });
   // Cabeçalho de relatório (inserido só para a impressão)
   let head = document.getElementById("printReportHeader");
   if (head) head.remove();
@@ -11593,12 +10348,12 @@ function exportPDF() {
   head.innerHTML = `<div style="padding:0 0 12px;border-bottom:2px solid #003b70;margin-bottom:14px;">
       <div style="font-size:20px;font-weight:700;color:#003b70;">AgSUS Monitora — Saúde Indígena</div>
       <div style="font-size:12px;color:#444;margin-top:2px;">Relatório de processos seletivos · gerado em ${dataStr}</div>
-      <div style="font-size:11px;color:#555;margin-top:6px;"><b>Filtros:</b> ${esc(filtrosTxt)}</div>
+      <div style="font-size:11px;color:#555;margin-top:6px;"><b>Filtros:</b> ${esc(resumo.filtros)}</div>
       <div style="font-size:12px;color:#222;margin-top:8px;display:flex;gap:18px;flex-wrap:wrap;">
-        <span><b>${fmt(filtered.length)}</b> processos</span>
-        <span><b>${fmt(vagas)}</b> vagas previstas</span>
-        <span><b>${fmt(contrat)}</b> contratações</span>
-        <span style="color:#a3322b;"><b>${fmt(ociosas)}</b> ociosas (${pctO}%)</span>
+        <span><b>${fmt(resumo.processos)}</b> processos</span>
+        <span><b>${fmt(resumo.vagas)}</b> vagas previstas</span>
+        <span><b>${fmt(resumo.contratados)}</b> contratações</span>
+        <span style="color:#a3322b;"><b>${fmt(resumo.ociosas)}</b> ociosas (${resumo.pctOciosas}%)</span>
       </div>
     </div>`;
   const content = document.querySelector(".content") || document.body;
@@ -11660,6 +10415,8 @@ function friendlyError(error) {
 // ── Dark mode ───────────────────────────────────────────────────────────
 function applyDarkMode(dark) {
   document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
+  // O CSS antigo ainda lê `body.dark-mode`; o novo, `html[data-theme]`.
+  document.body?.classList.toggle("dark-mode", dark);
   avisar(EVENTO_TEMA_ALTERADO);
 }
 function toggleDarkMode() {
@@ -11710,34 +10467,14 @@ function localizarLinhaDoMonitoramento(id) {
     return;
   }
 
-  // Garante que o item escolhido fique visível, mesmo se havia filtros/busca ativos.
-  FILTER_CONFIG.forEach((cfg) => {
-    filterState[cfg.field] = new Set();
-  });
-  if ($("tableSearch")) $("tableSearch").value = "";
-  if (r.unidade) filterState.unidade = new Set([txt(r.unidade)]);
-  if (r.edital) filterState.edital = new Set([txt(r.edital)]);
-
+  /*
+    A linha escolhida fica à vista mesmo com filtros ou busca: a Visão geral
+    troca o recorte pela unidade e pelo edital dela e destaca a linha. Um DSEI
+    aberto no mapa sai antes.
+  */
   navigate("dashboard");
-  applyFilters();
-
-  setTimeout(() => {
-    const rows2 = document.querySelectorAll("#monitorRows tr");
-    rows2.forEach((tr) => {
-      if (
-        tr.textContent.includes(r.edital || "") &&
-        tr.textContent.includes(r.unidade || "")
-      ) {
-        tr.scrollIntoView({ behavior: "smooth", block: "center" });
-        tr.style.outline = "2px solid var(--agsus-ciano)";
-        tr.style.borderRadius = "8px";
-        setTimeout(() => {
-          tr.style.outline = "";
-          tr.style.borderRadius = "";
-        }, 2500);
-      }
-    });
-  }, 400);
+  if (dseiSelecionado) resetDetailMap({ silent: true });
+  estadoDaVisaoGeral.localizar(r);
 }
 document.addEventListener(EVENTO_ESCOLHA_DA_BUSCA, (e) =>
   localizarLinhaDoMonitoramento(e.detail?.id),
@@ -11825,20 +10562,25 @@ window.addEventListener("orientationchange", () => {
 
 loadDarkModePreference();
 enforceResponsiveSidebar();
-initFilterControls();
+/*
+  O mapa da Visão geral continua aqui (Etapa 5, parte 2): ele diz ao estado
+  da página como achar o DSEI de cada linha e como sair do território, e
+  redesenha quando o recorte muda. Fica no fim: `dseiKey` lê o índice dos
+  DSEIs, declarado mais acima.
+*/
+estadoDaVisaoGeral.ligarMapa({
+  chaveDsei: (linha) => dseiKey(linha?.unidade),
+  sairDoTerritorio: () => voltarAoBrasil(),
+  aoLimpar: () => voltarAoBrasil({ mensagem: "Filtros limpos." }),
+});
+estadoDaVisaoGeral.assinar(aoMudarRecorte);
 Object.assign(window, {
   $,
   getMonitoraProfile: () => profile,
   getMonitoraUser: () => currentUser,
   monitoraToast: toast,
   monitoraLoader: loader,
-  clearFilters,
-  clearFilterField,
-  clearSearchPill,
-  definirSelecaoDeFiltro,
-  debouncedSearch,
   exitExternalPanel,
-  exportCSV,
   exportPDF,
   loginWithGoogle,
   logout,
@@ -11846,19 +10588,9 @@ Object.assign(window, {
   refreshData,
   reloadExternal,
   returnToLogin,
-  removeFilterPill,
-  selectAllFilterValues,
-  sortDetails,
   submitAccessRequest,
   toggleBrowserFullscreen,
-  toggleColMenu,
-  toggleCriticalRiskFilter,
   toggleDarkMode,
-  toggleFilterMenu,
-  toggleFilters,
-  toggleHideClosed,
-  toggleObs,
-  toggleSelectFilter,
   toggleSidebar,
   toggleOnlinePresence,
   resetDetailMap,

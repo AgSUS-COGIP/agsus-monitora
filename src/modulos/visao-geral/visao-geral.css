@@ -1,0 +1,511 @@
+/*
+  O que é só da Visão geral (src/modulos/visao-geral/), só com tokens de
+  src/styles/tokens.css — o tema escuro vem dos próprios tokens
+  (`html[data-theme="dark"]`). Topo, filtros, chips, KPIs, cards, gráfico,
+  pendências, tabela e gaveta são de src/ui/ (ui.css). Aqui: boas-vindas e
+  marcos do ano, os campos dos filtros numa linha, os seis KPIs numa fileira,
+  as unidades com mais de um processo, o resumo por etapa, a rosca com a
+  legenda, as células da tabela (prazo, cronograma, taxa de ociosas,
+  observação) e o andamento do cronograma na gaveta. O bloco do mapa
+  (`.visao-geral-mapa`) é do legado: health-map-workspace.css.
+  Importado pelo src/main.js, depois do ui.css.
+*/
+
+/* ── Boas-vindas e marcos do ano ─────────────────────────────────────── */
+
+.boas-vindas {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--brand-primary);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.boas-vindas__texto {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.boas-vindas__texto strong {
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  font-weight: var(--font-weight-semibold);
+}
+.boas-vindas__texto span {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+}
+.boas-vindas__acao,
+.boas-vindas__fechar {
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.boas-vindas__acao {
+  padding: var(--space-1) var(--space-2);
+  color: var(--state-info);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.boas-vindas__acao:hover {
+  text-decoration: underline;
+}
+.boas-vindas__fechar {
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  font-size: var(--text-h3);
+  line-height: 1;
+}
+.boas-vindas__fechar:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.boas-vindas__acao:focus-visible,
+.boas-vindas__fechar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ── Filtros: Ano + três campos numa linha; a escolha múltipla no desenho de src/ui/ ── */
+
+.visao-geral-filtros-grade {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .visao-geral-filtros-grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .visao-geral-filtros-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.visao-geral-filtros .multi-select-trigger {
+  border-color: var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-regular);
+}
+.visao-geral-filtros .multi-select-trigger:hover,
+.visao-geral-filtros .multi-select-trigger[aria-expanded="true"] {
+  border-color: var(--focus-ring);
+  box-shadow: none;
+}
+.visao-geral-filtros .multi-select-menu {
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+}
+
+/* ── KPIs: seis numa fileira em tela larga, três por linha no meio (nunca 5 + 1) ── */
+
+@media (min-width: 1280px) {
+  .visao-geral-kpis {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@media (min-width: 641px) and (max-width: 1279px) {
+  .visao-geral-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── Unidades com mais de um processo seletivo ───────────────────────── */
+
+.visao-geral-unidades {
+  display: grid;
+  gap: var(--space-2);
+}
+.visao-geral-unidades-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.visao-geral-unidade {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+.visao-geral-unidade > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.visao-geral-unidade:hover,
+.visao-geral-unidade[aria-pressed="true"] {
+  border-color: var(--focus-ring);
+  background: var(--surface-hover);
+}
+
+/* ── Resumo por etapa e legenda do status: linha com barra ───────────── */
+
+.visao-geral-etapas-lista,
+.visao-geral-legenda {
+  display: grid;
+  gap: var(--space-1);
+}
+.visao-geral-etapa,
+.visao-geral-legenda-item {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.visao-geral-etapa:hover,
+.visao-geral-legenda-item:hover {
+  background: var(--surface-hover);
+}
+.visao-geral-etapa[aria-pressed="true"],
+.visao-geral-legenda-item[aria-pressed="true"] {
+  border-color: var(--focus-ring);
+  background: var(--surface-hover);
+}
+.visao-geral-etapa:focus-visible,
+.visao-geral-legenda-item:focus-visible,
+.visao-geral-unidade:focus-visible,
+.visao-geral-linha:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.visao-geral-etapa-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+/* Etapa de nome longo: reticências (o nome inteiro fica no title), sem transbordar. */
+.visao-geral-etapa-topo b {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.visao-geral-etapa,
+.visao-geral-legenda-item {
+  min-width: 0;
+}
+.visao-geral-etapa-topo small,
+.visao-geral-legenda-item small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.visao-geral-etapa-conta {
+  min-width: 2.25rem;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-neutral-soft);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+.visao-geral-barra {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--state-neutral-soft);
+}
+.visao-geral-barra i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--state-neutral);
+}
+.visao-geral-etapa[data-tom="sucesso"] .visao-geral-barra i {
+  background: var(--state-success);
+}
+.visao-geral-etapa[data-tom="info"] .visao-geral-barra i {
+  background: var(--state-info);
+}
+.visao-geral-etapa[data-tom="destaque"] .visao-geral-barra i {
+  background: var(--series-3);
+}
+.visao-geral-etapa[data-tom="alerta"] .visao-geral-barra i {
+  background: var(--state-warning);
+}
+.visao-geral-etapa[data-tom="perigo"] .visao-geral-barra i {
+  background: var(--state-danger);
+}
+
+/* ── Status operacional: rosca com o total no meio, legenda ao lado ──── */
+
+.visao-geral-status-corpo {
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+/* Até 30 processos: a lista rola dentro do card, ao lado da rosca. */
+.visao-geral-atencao .ui-pendencias {
+  max-height: 360px;
+  overflow-y: auto;
+}
+.visao-geral-rosca {
+  position: relative;
+  height: 180px;
+}
+.visao-geral-rosca-centro {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.visao-geral-rosca-centro strong {
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+}
+.visao-geral-rosca-centro span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.visao-geral-legenda-item {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: var(--space-2);
+}
+.visao-geral-legenda-item .visao-geral-barra {
+  grid-column: 1 / -1;
+}
+.visao-geral-ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+}
+.visao-geral-legenda-nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.visao-geral-status .ui-grafico {
+  height: auto;
+}
+@media (max-width: 600px) {
+  .visao-geral-status-corpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Tabela ──────────────────────────────────────────────────────────── */
+
+.visao-geral-tabela :is(th, td).num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.visao-geral-linha {
+  cursor: pointer;
+}
+/* A situação do cronograma na borda esquerda da linha. */
+.visao-geral-linha > td:first-child {
+  box-shadow: inset 3px 0 0 transparent;
+}
+.visao-geral-linha[data-urgencia="danger"] > td:first-child {
+  box-shadow: inset 3px 0 0 var(--state-danger);
+}
+.visao-geral-linha[data-urgencia="warning"] > td:first-child {
+  box-shadow: inset 3px 0 0 var(--state-warning);
+}
+.visao-geral-linha.is-destacada > td {
+  background: var(--state-info-soft);
+}
+.visao-geral-edital {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+.visao-geral-prazo,
+.visao-geral-cronograma {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.visao-geral-prazo[data-tom="perigo"],
+.visao-geral-cronograma[data-urgencia="danger"] {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.visao-geral-prazo[data-tom="alerta"],
+.visao-geral-cronograma[data-urgencia="warning"] {
+  background: var(--state-warning-soft);
+  color: var(--text-primary);
+}
+.visao-geral-cronograma[data-urgencia="info"] {
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.visao-geral-contratados {
+  color: var(--state-success);
+}
+.visao-geral-ociosas {
+  color: var(--state-danger);
+}
+.visao-geral-taxa {
+  display: inline-block;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--state-neutral-soft);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.visao-geral-taxa[data-nivel="medium"] {
+  background: var(--state-warning-soft);
+  color: var(--text-primary);
+}
+.visao-geral-taxa[data-nivel="high"],
+.visao-geral-taxa[data-nivel="critical"] {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.visao-geral-obs {
+  min-width: 220px;
+  max-width: 360px;
+}
+.visao-geral-obs-texto {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  color: var(--text-secondary);
+}
+.visao-geral-obs-texto.is-aberta {
+  display: block;
+}
+.visao-geral-ver-mais {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--state-info);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+/* "Colunas": o menu sobre a tabela. */
+.visao-geral-colunas {
+  position: relative;
+}
+.visao-geral-colunas-menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: var(--z-popover);
+  display: grid;
+  gap: var(--space-1);
+  min-width: 200px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+}
+.visao-geral-colunas-menu[hidden] {
+  display: none;
+}
+.visao-geral-colunas-menu strong {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.visao-geral-colunas-menu label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+}
+
+/* ── Gaveta do processo ──────────────────────────────────────────────── */
+
+.visao-geral-gaveta-situacao {
+  padding: var(--space-3);
+  border-left: 3px solid var(--state-neutral);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.visao-geral-gaveta-situacao[data-urgencia="danger"] {
+  border-left-color: var(--state-danger);
+}
+.visao-geral-gaveta-situacao[data-urgencia="warning"] {
+  border-left-color: var(--state-warning);
+}
+.visao-geral-gaveta-situacao[data-urgencia="done"] {
+  border-left-color: var(--state-success);
+}
+.visao-geral-progresso {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--state-neutral-soft);
+}
+.visao-geral-progresso i {
+  display: block;
+  height: 100%;
+  background: var(--state-success);
+}
+.visao-geral-progresso-texto {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-body-sm);
+}
+.visao-geral-progresso-texto span,
+.visao-geral-gaveta-aviso {
+  color: var(--text-secondary);
+}
+.visao-geral-gaveta-aviso {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-body-sm);
+}
+
+/* ── O lugar do bloco do mapa (legado) ───────────────────────────────── */
+
+/* Sem altura própria: quem dá o tamanho é o bloco (health-map-workspace.css). */
+.visao-geral-mapa {
+  min-width: 0;
+}
+/* Sem o bloco (SEDE, ou fora do app) o lugar não deixa um vão na grade. */
+.visao-geral-mapa:empty,
+.page[data-mapa-da-area="nenhum"] .visao-geral-mapa {
+  display: none;
+}

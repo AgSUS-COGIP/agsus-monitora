@@ -10,18 +10,23 @@ describe("contexto da tela para a Aya", () => {
   beforeEach(() => {
     document.body.innerHTML = `
       <div id="masterMapCount">34 DSEIs · 2 CASAIs</div>
-      <div id="activeFiltersBar">UF: AM · Edital: 01/2026</div>
-      <div class="kpis kpis-main">
-        <div class="kpi">Vagas 120</div>
-        <div class="kpi">Ociosas 35</div>
-      </div>
-      <input id="tableSearch" value="Xavante" />
+      <section class="ui-tela visao-geral-tela">
+        <div class="visao-geral-filtros"><div class="ui-chips">
+          <button class="ui-chip"><b>UF</b> AM</button>
+          <button class="ui-chip"><b>Edital</b> 01/2026</button>
+        </div></div>
+        <section class="ui-kpis visao-geral-kpis">
+          <article class="ui-kpi">Vagas 120</article>
+          <article class="ui-kpi">Ociosas 35</article>
+        </section>
+        <input class="ui-tabela-busca" value="Xavante" />
+      </section>
       <div class="health-map-unit" data-dsei="0">
         <strong>DSEI Xavante</strong>
         <small>10 vagas · 2 ociosas · 1 processo</small>
         <span class="health-map-unit__type">22.000</span>
       </div>
-      <table><tbody id="monitorRows">
+      <table class="visao-geral-tabela"><tbody>
         <tr><td>Edital 01/2026</td><td>DSEI Xavante</td><td>Aberto</td></tr>
       </tbody></table>
     `;
@@ -32,7 +37,7 @@ describe("contexto da tela para a Aya", () => {
     const context = collectAyaPageContext(document);
 
     expect(context.mapSummary).toBe("34 DSEIs · 2 CASAIs");
-    expect(context.activeFilters.join(" ")).toContain("UF: AM");
+    expect(context.activeFilters.join(" ")).toContain("UF AM");
     expect(context.kpis).toEqual(["Vagas 120", "Ociosas 35"]);
     expect(context.search).toBe("Xavante");
     expect(context.territories[0]).toContain("DSEI Xavante");
@@ -48,7 +53,7 @@ describe("contexto da tela para a Aya", () => {
   });
 
   it("responde a contagem de DSEIs pela lista de DSEIs, não pelo total de pontos", () => {
-    document.querySelector("#activeFiltersBar").textContent = "";
+    document.querySelector(".visao-geral-filtros").textContent = "";
     document.querySelector("#masterMapCount").textContent = "36 pontos";
     document.body.insertAdjacentHTML(
       "beforeend",
