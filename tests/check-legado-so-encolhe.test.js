@@ -109,6 +109,19 @@ describe("check-legado-so-encolhe.mjs num repositório de verdade", () => {
     expect(r.stderr).toContain("src/modules/novo-modulo.js");
   });
 
+  it("a base andou e apagou um arquivo do legado: o ramo que ainda o tem passa", () => {
+    repositorioComBase();
+    git("checkout", "-q", "main");
+    git("rm", "-q", "src/modules/existente.js");
+    git("commit", "-q", "-m", "a base apaga");
+    git("checkout", "-q", "feat");
+    escrever("src/modules/existente.js", "editado no ramo\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "edita");
+    const r = rodar();
+    expect(r.status, r.stderr).toBe(0);
+  });
+
   it("passa editando e apagando no legado e criando em src/modulos", () => {
     repositorioComBase();
     escrever("src/modules/existente.js", "mudou\n");

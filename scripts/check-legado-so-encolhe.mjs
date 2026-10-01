@@ -10,8 +10,8 @@ import { execFileSync } from "node:child_process";
   Análises) só podem perder arquivos: editar o que existe pode; arquivo novo
   nessas pastas, não.
 
-  Compara a lista de arquivos de HEAD com a da base (o ramo de destino), como
-  o check de remendos. Renomear dentro da pasta também conta como arquivo novo
+  Compara a lista de arquivos de HEAD com a do ponto onde o ramo saiu da base
+  (o ramo de destino). Renomear dentro da pasta também conta como arquivo novo
   — o nome antigo some e o novo aparece; quem precisa mover um arquivo do
   legado move para fora dele.
 */
@@ -65,6 +65,20 @@ function resolverBase() {
   return base;
 }
 
+/*
+  Compara com o ponto onde o ramo saiu da base, não com a ponta dela: se a
+  base andou e apagou um arquivo do legado, o ramo ainda o tem, e isso não é
+  arquivo novo. Sem histórico para achar o ponto (clone raso do CI), usa a
+  ponta da base.
+*/
+function pontoDePartida(base) {
+  try {
+    return git(["merge-base", "HEAD", base]).trim() || base;
+  } catch {
+    return base;
+  }
+}
+
 function arquivosEm(ref) {
   return git([
     "ls-tree",
@@ -80,13 +94,13 @@ function arquivosEm(ref) {
 
 function principal() {
   const base = resolverBase();
-  const antes = arquivosEm(base);
+  const antes = arquivosEm(pontoDePartida(base));
   const agora = arquivosEm("HEAD");
   const novos = arquivosNovosNoLegado(antes, agora);
 
   if (novos.length) {
     console.error(
-      `Arquivo novo no legado (${PASTAS_DO_LEGADO.join(", ")}) em relação a ${base}:`,
+      `Arquivo novo no legado (${PASTAS_DO_LEGADO.join(", ")}) desde que o ramo saiu de ${base}:`,
     );
     novos.forEach((caminho) => console.error(`  ${caminho}`));
     console.error(
@@ -96,7 +110,7 @@ function principal() {
   }
 
   console.log(
-    `Legado sem arquivo novo: ${agora.length} arquivo(s) em ${PASTAS_DO_LEGADO.join(" e ")} (${antes.length} em ${base}).`,
+    `Legado sem arquivo novo: ${agora.length} arquivo(s) em ${PASTAS_DO_LEGADO.join(" e ")} (${antes.length} onde o ramo saiu de ${base}).`,
   );
 }
 
