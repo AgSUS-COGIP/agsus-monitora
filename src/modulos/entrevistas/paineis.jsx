@@ -11,27 +11,28 @@ import {
 } from "../../lib/entrevistas-do-painel.js";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
+  Campo,
   CardDeGrafico,
   ChipDeFiltro,
   ChipsDeFiltro,
-  classes,
-  EstadoVazio,
+  Grafico,
   GradeDeKpis,
   Kpi,
+  LinhaDoRecorte,
+  ListaDePendencias,
+  paletaDosGraficos,
   PainelDeFiltros,
+  Segmentado,
   TopoDoPainel,
-  Grafico,
 } from "../../ui/index.js";
-import { Segmentado } from "./partes.jsx";
 
 /*
-  Os blocos do painel de entrevistas, com a marcação e as classes do painel de
-  análises (e do de recursos, que é o mesmo desenho): o cabeçalho fixo
-  (`.topbar`), "Refinar resultados" (`.filter-panel`), os KPIs (`.kpis` >
-  `.kpi`), o recorte (`.context-line`), os gráficos Chart.js em `.panel`
-  (`.oper-grid`) e as pendências (`.attention-list`). A visão "Resultados" é
-  só leitura; o cabeçalho troca de visão (Resultados, Conduzir entrevistas,
-  Roteiros).
+  Os blocos da tela de Entrevistas, com os componentes de src/ui/: o topo (as
+  visões Resultados · Conduzir entrevistas · Roteiros num controle
+  segmentado, o status discreto da carga e as ações — o título e a área estão
+  no cabeçalho do app), "Refinar resultados", os KPIs em card compacto (os
+  que filtram são botões), o recorte ativo, os gráficos Chart.js e as
+  pendências.
 */
 
 const truncar = (valor, limite) => {
@@ -39,9 +40,9 @@ const truncar = (valor, limite) => {
   return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
 };
 
-/* ── Cabeçalho ──────────────────────────────────────────────────────── */
+/* ── Topo ───────────────────────────────────────────────────────────── */
 
-/* Exportar só na visão "Resultados". */
+/* Exportar só na visão "Resultados". Sem `visoes` (sem acesso), sem o segmentado. */
 export function Topo({
   visoes = null,
   visao = "resultados",
@@ -51,11 +52,10 @@ export function Topo({
 }) {
   return (
     <TopoDoPainel
-      titulo="Painel de entrevistas"
       visoes={
         visoes ? (
           <Segmentado
-            rotulo="Visão do painel"
+            rotulo="Visão da tela"
             className="entrevistas-visoes"
             opcoes={visoes}
             valor={visao}
@@ -107,9 +107,8 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
       quantos={ativos.length}
       aoLimpar={aoLimpar}
     >
-      <div className="filter-grid">
-        <div className="field">
-          <label htmlFor="filtro-busca">Buscar candidato</label>
+      <div className="ui-grade-de-campos">
+        <Campo rotulo="Buscar candidato">
           <input
             id="filtro-busca"
             type="search"
@@ -119,10 +118,9 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
             placeholder="Nome ou código do candidato"
             onChange={(evento) => aoMudar("busca", evento.target.value)}
           />
-        </div>
+        </Campo>
         {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
-          <div className="field" key={campo}>
-            <label htmlFor={`filtro-${campo}`}>{rotulo}</label>
+          <Campo rotulo={rotulo} key={campo}>
             <select
               id={`filtro-${campo}`}
               name={campo}
@@ -137,7 +135,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
                 </option>
               ))}
             </select>
-          </div>
+          </Campo>
         ))}
       </div>
       <ChipsDeFiltro>
@@ -172,48 +170,68 @@ export function Indicadores({
         }
       : {};
   const n = (valor) => formatNumberBR(valor);
+  const carregando = !carregado;
   return (
-    <GradeDeKpis id="kpiGrid" rotulo="Indicadores">
+    <GradeDeKpis className="entrevistas-kpis" rotulo="Indicadores">
       <Kpi
         cor="k-cyan"
+        icone="fa-briefcase"
         chave="vagas"
         rotulo="Vagas com entrevista"
         valor={n(k.vagas)}
+        carregando={carregando}
       />
-      <Kpi chave="candidatos" rotulo="Candidatos" valor={n(k.candidatos)} />
+      <Kpi
+        cor="k-slate"
+        icone="fa-users"
+        chave="candidatos"
+        rotulo="Candidatos"
+        valor={n(k.candidatos)}
+        carregando={carregando}
+      />
       <Kpi
         cor="k-green"
+        icone="fa-user-check"
         chave="compareceram"
         rotulo="Compareceram"
         valor={n(k.compareceram)}
+        carregando={carregando}
         {...filtro("comparecimento", "S")}
       />
       <Kpi
         cor="k-green"
+        icone="fa-circle-check"
         chave="aptos"
         rotulo="Aptos"
         valor={n(k.aptos)}
+        carregando={carregando}
         {...filtro("parecer", "APTO")}
       />
       <Kpi
         cor="k-red"
+        icone="fa-circle-xmark"
         chave="inaptos"
         rotulo="Inaptos"
         valor={n(k.inaptos)}
+        carregando={carregando}
         {...filtro("parecer", "INAPTO")}
       />
       <Kpi
         cor="k-purple"
+        icone="fa-chart-simple"
         chave="media"
         rotulo="Média das notas"
         valor={formatarNota(k.media)}
+        carregando={carregando}
       />
       <Kpi
         cor="k-yellow"
+        icone="fa-user-clock"
         chave="sem-entrevista"
         rotulo="Aprovados na análise sem entrevista"
         valor={n(k.semEntrevista)}
         titulo="Ver a lista dos aprovados sem entrevista"
+        carregando={carregando}
         aoClicar={carregado ? aoAbrirSemEntrevista : undefined}
       />
     </GradeDeKpis>
@@ -223,21 +241,13 @@ export function Indicadores({
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
 export function Recorte({ ativos }) {
-  return (
-    <section className="panel panel-pad">
-      <div id="contextLine" className="context-line">
-        {ativos.length
-          ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
-          : "Sem filtros"}
-      </div>
-    </section>
-  );
+  return <LinhaDoRecorte ativos={ativos} />;
 }
 
 /* ── Pendências ─────────────────────────────────────────────────────── */
 
-const CLASSE_DA_SEVERIDADE = { alta: "high", media: "", baixa: "" };
-const ITENS_DO_ESQUELETO = 4;
+/* Severidade → tom da borda do item: alta em vermelho; média e baixa em âmbar. */
+const TOM_DA_SEVERIDADE = { alta: "perigo", media: "alerta", baixa: "alerta" };
 
 function Pendencias({
   pendencias,
@@ -246,53 +256,28 @@ function Pendencias({
   aoFiltrar,
   aoAbrirSemEntrevista,
 }) {
-  if (!carregado)
-    return (
-      <div id="attentionList" className="attention-list" aria-hidden="true">
-        {Array.from({ length: ITENS_DO_ESQUELETO }, (_, indice) => (
-          <div className="attention-item" key={indice}>
-            <b>&nbsp;</b>
-            <small>&nbsp;</small>
-          </div>
-        ))}
-      </div>
-    );
-  const comValor = pendencias.filter((p) => p.valor > 0);
+  const itens = pendencias
+    .filter((p) => p.valor > 0)
+    .map((p) => {
+      // "Aprovados sem entrevista" abre a lista; as outras filtram a ligação.
+      const abreLista = p.chave === "sem_entrevista";
+      return {
+        chave: p.chave,
+        titulo: p.titulo,
+        detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? p.unidade[0] : p.unidade[1]} · ${p.subtitulo}`,
+        tom: TOM_DA_SEVERIDADE[p.severidade],
+        ativo: abreLista ? undefined : filtros.ligacao === p.chave,
+        aoClicar: abreLista
+          ? aoAbrirSemEntrevista
+          : () => aoFiltrar("ligacao", p.chave),
+      };
+    });
   return (
-    <div id="attentionList" className="attention-list">
-      {comValor.length ? (
-        comValor.map((p) => {
-          const abreLista = p.chave === "sem_entrevista";
-          const ativo = !abreLista && filtros.ligacao === p.chave;
-          return (
-            <button
-              type="button"
-              key={p.chave}
-              className={classes(
-                "attention-item",
-                CLASSE_DA_SEVERIDADE[p.severidade],
-                ativo && "is-active",
-              )}
-              data-action="pendencia"
-              aria-pressed={abreLista ? undefined : ativo}
-              onClick={() =>
-                abreLista
-                  ? aoAbrirSemEntrevista()
-                  : aoFiltrar("ligacao", p.chave)
-              }
-            >
-              <b>{p.titulo}</b>
-              <small>
-                {formatNumberBR(p.valor)}{" "}
-                {p.valor === 1 ? p.unidade[0] : p.unidade[1]} · {p.subtitulo}
-              </small>
-            </button>
-          );
-        })
-      ) : (
-        <EstadoVazio>Nenhuma pendência no recorte atual.</EstadoVazio>
-      )}
-    </div>
+    <ListaDePendencias
+      itens={itens}
+      carregando={!carregado}
+      vazio="Nenhuma pendência no recorte atual."
+    />
   );
 }
 
@@ -353,7 +338,8 @@ function opcoesDeRosca(p, { aoClicar } = {}) {
   };
 }
 
-const CINZA = "#94a3b8";
+/* As cores dos tokens do app (com a paleta dos painéis de reserva). */
+const paleta = (escuro) => paletaDosGraficos(escuro, paletaDoPainel(escuro));
 
 export function Graficos({
   entrevistas,
@@ -380,7 +366,9 @@ export function Graficos({
   );
   const unidades = useMemo(() => topUnidades(entrevistas, 10), [entrevistas]);
   const tema = escuro ? "escuro" : "claro";
+  const carregando = !carregado;
 
+  // O clique do Chart.js chega aqui, sempre com o filtro mais recente.
   const filtrar = useRef(aoFiltrar);
   useEffect(() => {
     filtrar.current = aoFiltrar;
@@ -388,22 +376,26 @@ export function Graficos({
 
   return (
     <>
-      <section className="oper-grid entrevistas-grade-dupla">
-        <CardDeGrafico titulo="Aptos x Inaptos" altura="short">
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico
+          titulo="Aptos x Inaptos"
+          altura="short"
+          carregando={carregando}
+        >
           <Grafico
             id="chartParecer"
             tipo="doughnut"
             rotulo="Entrevistas por parecer: aptos, inaptos e sem parecer"
             dependencias={[pareceres, tema]}
             montar={() => {
-              const p = paletaDoPainel(escuro);
+              const p = paleta(escuro);
               return {
                 data: {
                   labels: pareceres.map((x) => x.rotulo),
                   datasets: [
                     {
                       data: pareceres.map((x) => x.valor),
-                      backgroundColor: [p.ok, p.bad, CINZA],
+                      backgroundColor: [p.ok, p.bad, p.neutro],
                       borderColor: p.surface,
                       borderWidth: 2,
                     },
@@ -418,21 +410,25 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-        <CardDeGrafico titulo="Comparecimento" altura="short">
+        <CardDeGrafico
+          titulo="Comparecimento"
+          altura="short"
+          carregando={carregando}
+        >
           <Grafico
             id="chartComparecimento"
             tipo="doughnut"
             rotulo="Entrevistas por comparecimento"
             dependencias={[comparecimentos, tema]}
             montar={() => {
-              const p = paletaDoPainel(escuro);
+              const p = paleta(escuro);
               return {
                 data: {
                   labels: comparecimentos.map((x) => x.rotulo),
                   datasets: [
                     {
                       data: comparecimentos.map((x) => x.valor),
-                      backgroundColor: [p.review, p.warn, CINZA],
+                      backgroundColor: [p.review, p.warn, p.neutro],
                       borderColor: p.surface,
                       borderWidth: 2,
                     },
@@ -450,40 +446,40 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-      </section>
+      </div>
 
-      <section className="oper-grid">
-        <article className="panel panel-pad">
-          <h2 className="title">Faixas de nota final</h2>
-          <p className="hint">0 a 20 · presentes</p>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartFaixas"
-              tipo="bar"
-              rotulo="Candidatos que compareceram por faixa de nota final"
-              dependencias={[faixas, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: faixas.map((f) => f.rotulo),
-                    datasets: [
-                      {
-                        label: "Candidatos",
-                        data: faixas.map((f) => f.valor),
-                        backgroundColor: [p.bad, p.warn, p.review, p.ok],
-                        borderRadius: 7,
-                      },
-                    ],
-                  },
-                  options: opcoesDeBarras(p),
-                };
-              }}
-            />
-          </div>
-        </article>
-        <article className="panel panel-pad">
-          <h2 className="title">Pendências</h2>
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico
+          titulo="Faixas de nota final (0 a 20, presentes)"
+          altura="short"
+          carregando={carregando}
+        >
+          <Grafico
+            id="chartFaixas"
+            tipo="bar"
+            rotulo="Candidatos que compareceram por faixa de nota final"
+            dependencias={[faixas, tema]}
+            montar={() => {
+              const p = paleta(escuro);
+              return {
+                data: {
+                  labels: faixas.map((f) => f.rotulo),
+                  datasets: [
+                    {
+                      label: "Candidatos",
+                      data: faixas.map((f) => f.valor),
+                      backgroundColor: [p.bad, p.warn, p.review, p.ok],
+                      borderRadius: 6,
+                    },
+                  ],
+                },
+                options: opcoesDeBarras(p),
+              };
+            }}
+          />
+        </CardDeGrafico>
+        <article className="ui-card entrevistas-bloco-de-pendencias">
+          <h2 className="ui-titulo">Pendências</h2>
           <Pendencias
             pendencias={pendencias}
             carregado={carregado}
@@ -492,58 +488,62 @@ export function Graficos({
             aoAbrirSemEntrevista={aoAbrirSemEntrevista}
           />
         </article>
-      </section>
+      </div>
 
-      <section className="oper-grid entrevistas-grade-dupla">
-        <article className="panel panel-pad">
-          <h2 className="title">Média por critério</h2>
-          <p className="hint">Escala 0–5</p>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartCriterios"
-              tipo="bar"
-              rotulo="Média das notas por critério da entrevista"
-              dependencias={[porCriterio, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: porCriterio.map((c) => truncar(c.rotulo, 26)),
-                    datasets: [
-                      {
-                        label: "Média",
-                        data: porCriterio.map((c) =>
-                          c.media === null ? 0 : Number(c.media.toFixed(2)),
-                        ),
-                        backgroundColor: p.blue,
-                        borderRadius: 7,
-                      },
-                    ],
-                  },
-                  options: opcoesDeBarras(p, {
-                    deitado: true,
-                    maximo: 5,
-                    decimais: true,
-                    dica: {
-                      title: (itens) =>
-                        porCriterio[itens[0].dataIndex]?.texto || "",
-                      label: (item) =>
-                        `Média ${formatarNota(item.parsed.x)} · ${formatNumberBR(porCriterio[item.dataIndex]?.quantidade || 0)} nota(s)`,
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico
+          titulo="Média por critério (0 a 5)"
+          altura="short"
+          carregando={carregando}
+        >
+          <Grafico
+            id="chartCriterios"
+            tipo="bar"
+            rotulo="Média das notas por critério da entrevista"
+            dependencias={[porCriterio, tema]}
+            montar={() => {
+              const p = paleta(escuro);
+              return {
+                data: {
+                  labels: porCriterio.map((c) => truncar(c.rotulo, 26)),
+                  datasets: [
+                    {
+                      label: "Média",
+                      data: porCriterio.map((c) =>
+                        c.media === null ? 0 : Number(c.media.toFixed(2)),
+                      ),
+                      backgroundColor: p.blue,
+                      borderRadius: 6,
                     },
-                  }),
-                };
-              }}
-            />
-          </div>
-        </article>
-        <CardDeGrafico titulo="Top unidades por entrevistados" altura="short">
+                  ],
+                },
+                options: opcoesDeBarras(p, {
+                  deitado: true,
+                  maximo: 5,
+                  decimais: true,
+                  dica: {
+                    title: (itens) =>
+                      porCriterio[itens[0].dataIndex]?.texto || "",
+                    label: (item) =>
+                      `Média ${formatarNota(item.parsed.x)} · ${formatNumberBR(porCriterio[item.dataIndex]?.quantidade || 0)} nota(s)`,
+                  },
+                }),
+              };
+            }}
+          />
+        </CardDeGrafico>
+        <CardDeGrafico
+          titulo="Top unidades por entrevistados"
+          altura="short"
+          carregando={carregando}
+        >
           <Grafico
             id="chartUnidades"
             tipo="bar"
             rotulo="Unidades com mais entrevistados"
             dependencias={[unidades, tema]}
             montar={() => {
-              const p = paletaDoPainel(escuro);
+              const p = paleta(escuro);
               return {
                 data: {
                   labels: unidades.map((u) => truncar(u.rotulo, 24)),
@@ -552,7 +552,7 @@ export function Graficos({
                       label: "Entrevistados",
                       data: unidades.map((u) => u.valor),
                       backgroundColor: p.review,
-                      borderRadius: 7,
+                      borderRadius: 6,
                     },
                   ],
                 },
@@ -571,7 +571,7 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-      </section>
+      </div>
     </>
   );
 }

@@ -18,12 +18,12 @@ import {
   pontuacaoMaxima,
   rotuloDoPeso,
 } from "../../lib/roteiro-de-entrevista.js";
-import { Aviso, classes, Gaveta } from "../../ui/index.js";
-import { numeroBR, Segmentado } from "./partes.jsx";
+import { Aviso, Campo, classes, Gaveta, Segmentado } from "../../ui/index.js";
+import { numeroBR } from "./partes.jsx";
 import { SeloDoParecer } from "./tabela.jsx";
 
 /*
-  Ficha de notas de um convocado, na gaveta do painel: comparecimento, banca
+  Ficha de notas de um convocado, na gaveta (src/ui/): comparecimento, banca
   e, para cada competência do roteiro, uma coluna por avaliador com as notas
   que a escala aceita (níveis e lista: caixa de escolha com o nome do nível;
   faixa: número de passo em passo). Ao lado, média × peso de cada
@@ -248,7 +248,7 @@ export function FichaDoCandidato({
       rotuloDoFechar="Fechar a ficha"
       resumo={
         <>
-          <span className="status">
+          <span>
             <i className="fa-solid fa-database" aria-hidden="true" />
             Gravado: {numeroBR(convocado.nota)} ·{" "}
             <SeloDoParecer parecer={convocado.parecer} />
@@ -260,7 +260,7 @@ export function FichaDoCandidato({
         </>
       }
     >
-      <div className="analises-drawer-context">
+      <div className="ui-gaveta-contexto">
         <div>
           <small>Vaga</small>
           <strong>
@@ -286,220 +286,217 @@ export function FichaDoCandidato({
       </div>
 
       <form
-        className="entrevistas-formulario"
+        className="entrevistas-formulario-da-gaveta"
         onSubmit={(e) => {
           e.preventDefault();
           void salvar();
         }}
       >
-        <div id="analisesDrawerBody" ref={corpo}>
-          <div className="detail-shell">
-            {!roteiro ? (
-              <Aviso tom="warning">
-                Configure a entrevista do edital antes de lançar notas.
-              </Aviso>
-            ) : null}
-            <div className="entrevistas-ficha-topo">
-              <div className="field">
-                <span className="entrevistas-rotulo">Comparecimento</span>
-                <Segmentado
-                  rotulo="Comparecimento"
-                  opcoes={COMPARECIMENTO}
-                  valor={f.compareceu}
-                  desabilitado={!dados.pode_editar}
-                  aoMudar={(compareceu) =>
-                    setF((atual) => ({ ...atual, compareceu }))
-                  }
-                />
-                {!f.compareceu ? (
-                  <small className="entrevistas-dica">Não informado.</small>
-                ) : null}
-              </div>
-              {bancas.length > 1 ||
-              (convocado.banca !== null && convocado.banca !== undefined) ? (
-                <div className="field">
-                  <label htmlFor="entrevistasFichaBanca">Banca</label>
-                  <select
-                    id="entrevistasFichaBanca"
-                    value={f.banca ?? ""}
-                    disabled={!dados.pode_editar}
-                    onChange={(e) =>
-                      setF((atual) => ({
-                        ...atual,
-                        banca:
-                          e.target.value === "" ? null : Number(e.target.value),
-                      }))
-                    }
-                  >
-                    <option value="">Todas</option>
-                    {bancas.map((b) => (
-                      <option key={b} value={b}>
-                        Banca {b}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+        <div className="ui-gaveta-corpo" ref={corpo}>
+          {!roteiro ? (
+            <Aviso tom="warning">
+              Configure a entrevista do edital antes de lançar notas.
+            </Aviso>
+          ) : null}
+          <div className="entrevistas-ficha-topo">
+            <div className="entrevistas-campo-da-ficha">
+              <span className="entrevistas-rotulo">Comparecimento</span>
+              <Segmentado
+                rotulo="Comparecimento"
+                opcoes={COMPARECIMENTO}
+                valor={f.compareceu}
+                desabilitado={!dados.pode_editar}
+                aoMudar={(compareceu) =>
+                  setF((atual) => ({ ...atual, compareceu }))
+                }
+              />
+              {!f.compareceu ? (
+                <small className="entrevistas-dica">Não informado.</small>
               ) : null}
             </div>
-
-            {modoAvaliador && dados.pode_editar && !dados.admin_global ? (
-              <Aviso tom="info">
-                Você só edita a sua coluna.
-                {algumEditavel
-                  ? ""
-                  : " Nenhum membro desta banca está ligado ao seu perfil."}
-              </Aviso>
-            ) : null}
-
-            {roteiro && avaliadores.length ? (
-              <div className="entrevistas-tabela-rolagem">
-                <table className="entrevistas-tabela entrevistas-ficha">
-                  <thead>
-                    <tr>
-                      <th scope="col">Competência</th>
-                      {avaliadores.map((a) => (
-                        <th
-                          scope="col"
-                          key={a.id}
-                          className={classes(
-                            podeLancarPor(dados, a) && "is-editavel",
-                          )}
-                        >
-                          {a.nome}
-                          <small>
-                            {a.origem}
-                            {a.ativo === false ? " · saiu da banca" : ""}
-                          </small>
-                        </th>
-                      ))}
-                      <th scope="col">Média</th>
-                      <th scope="col">Nota</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {competencias.map((c) => {
-                      const linha = resultado.competencias.find(
-                        (x) => x.id === c.id,
-                      );
-                      const peso = rotuloDoPeso(c.peso);
-                      return (
-                        <tr key={c.id} data-competencia={c.ordem}>
-                          <th scope="row" title={c.descricao || undefined}>
-                            {c.nome}
-                            <small>
-                              0 a {numeroBR(c.nota_maxima)}
-                              {peso ? ` · peso ${peso}` : ""}
-                              {c.avaliacao === "GRUPO" ? " · em grupo" : ""}
-                              {linha?.minimo !== null &&
-                              linha?.minimo !== undefined
-                                ? ` · mín. ${numeroBR(linha.minimo)}`
-                                : ""}
-                            </small>
-                          </th>
-                          {avaliadores.map((a) => {
-                            const editavel = podeLancarPor(dados, a);
-                            const indice = editavel
-                              ? indiceDaCelula++
-                              : undefined;
-                            return (
-                              <td key={a.id}>
-                                <CelulaDaNota
-                                  roteiro={roteiro}
-                                  competencia={c}
-                                  avaliador={a}
-                                  valor={f.mapa[chaveDaNota(c.id, a.id)] ?? ""}
-                                  editavel={editavel}
-                                  indice={indice}
-                                  aoMudar={(valor) =>
-                                    mudarNota(c.id, a.id, valor)
-                                  }
-                                  aoTeclar={aoTeclar}
-                                />
-                              </td>
-                            );
-                          })}
-                          <td>{numeroBR(linha?.media)}</td>
-                          <td
-                            className={classes(
-                              (linha?.abaixoDoMinimo || linha?.eliminatoria) &&
-                                "entrevistas-reprova",
-                            )}
-                          >
-                            <strong>{numeroBR(linha?.nota)}</strong>
-                            {linha?.eliminatoria ? (
-                              <small>eliminatória</small>
-                            ) : null}
-                            {linha?.abaixoDoMinimo ? (
-                              <small>abaixo do mínimo</small>
-                            ) : null}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <th scope="row" colSpan={avaliadores.length + 2}>
-                        Total
-                        {resultado.minimoTotal !== null
-                          ? ` (mínimo ${numeroBR(resultado.minimoTotal)})`
-                          : ""}
-                      </th>
-                      <td id="entrevistasFichaTotal">
-                        <strong>{numeroBR(resultado.total)}</strong>
-                        <small> / {numeroBR(maxima)}</small>
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            ) : roteiro ? (
-              <Aviso tom="warning">
-                Nenhum membro na banca {f.banca ?? ""}. Cadastre a banca na
-                configuração.
-              </Aviso>
-            ) : null}
-
-            {roteiro ? (
-              <div className="entrevistas-previa" aria-live="polite">
-                <span>Prévia do parecer:</span>
-                <span id="entrevistasFichaParecer">
-                  <SeloDoParecer parecer={resultado.parecer} />
-                </span>
-                {motivos.length ? (
-                  <ul>
-                    {motivos.map((m) => (
-                      <li key={m}>{m}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-
-            {roteiro?.escala === "NIVEIS" && roteiro.niveis?.length ? (
-              <details className="entrevistas-niveis">
-                <summary>Níveis da escala</summary>
-                <dl>
-                  {roteiro.niveis.map((n) => (
-                    <div key={n.nota}>
-                      <dt>
-                        {numeroBR(n.nota)} — {n.nome}
-                      </dt>
-                      <dd>{n.descricao}</dd>
-                    </div>
+            {bancas.length > 1 ||
+            (convocado.banca !== null && convocado.banca !== undefined) ? (
+              <Campo rotulo="Banca">
+                <select
+                  id="entrevistasFichaBanca"
+                  value={f.banca ?? ""}
+                  disabled={!dados.pode_editar}
+                  onChange={(e) =>
+                    setF((atual) => ({
+                      ...atual,
+                      banca:
+                        e.target.value === "" ? null : Number(e.target.value),
+                    }))
+                  }
+                >
+                  <option value="">Todas</option>
+                  {bancas.map((b) => (
+                    <option key={b} value={b}>
+                      Banca {b}
+                    </option>
                   ))}
-                </dl>
-              </details>
-            ) : null}
-
-            {erro ? (
-              <Aviso tom="danger" papel="alert">
-                {erro}
-              </Aviso>
+                </select>
+              </Campo>
             ) : null}
           </div>
+
+          {modoAvaliador && dados.pode_editar && !dados.admin_global ? (
+            <Aviso tom="info">
+              Você só edita a sua coluna.
+              {algumEditavel
+                ? ""
+                : " Nenhum membro desta banca está ligado ao seu perfil."}
+            </Aviso>
+          ) : null}
+
+          {roteiro && avaliadores.length ? (
+            <div className="entrevistas-tabela-rolagem">
+              <table className="entrevistas-tabela entrevistas-ficha">
+                <thead>
+                  <tr>
+                    <th scope="col">Competência</th>
+                    {avaliadores.map((a) => (
+                      <th
+                        scope="col"
+                        key={a.id}
+                        className={classes(
+                          podeLancarPor(dados, a) && "is-editavel",
+                        )}
+                      >
+                        {a.nome}
+                        <small>
+                          {a.origem}
+                          {a.ativo === false ? " · saiu da banca" : ""}
+                        </small>
+                      </th>
+                    ))}
+                    <th scope="col">Média</th>
+                    <th scope="col">Nota</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competencias.map((c) => {
+                    const linha = resultado.competencias.find(
+                      (x) => x.id === c.id,
+                    );
+                    const peso = rotuloDoPeso(c.peso);
+                    return (
+                      <tr key={c.id} data-competencia={c.ordem}>
+                        <th scope="row" title={c.descricao || undefined}>
+                          {c.nome}
+                          <small>
+                            0 a {numeroBR(c.nota_maxima)}
+                            {peso ? ` · peso ${peso}` : ""}
+                            {c.avaliacao === "GRUPO" ? " · em grupo" : ""}
+                            {linha?.minimo !== null &&
+                            linha?.minimo !== undefined
+                              ? ` · mín. ${numeroBR(linha.minimo)}`
+                              : ""}
+                          </small>
+                        </th>
+                        {avaliadores.map((a) => {
+                          const editavel = podeLancarPor(dados, a);
+                          const indice = editavel
+                            ? indiceDaCelula++
+                            : undefined;
+                          return (
+                            <td key={a.id}>
+                              <CelulaDaNota
+                                roteiro={roteiro}
+                                competencia={c}
+                                avaliador={a}
+                                valor={f.mapa[chaveDaNota(c.id, a.id)] ?? ""}
+                                editavel={editavel}
+                                indice={indice}
+                                aoMudar={(valor) =>
+                                  mudarNota(c.id, a.id, valor)
+                                }
+                                aoTeclar={aoTeclar}
+                              />
+                            </td>
+                          );
+                        })}
+                        <td>{numeroBR(linha?.media)}</td>
+                        <td
+                          className={classes(
+                            (linha?.abaixoDoMinimo || linha?.eliminatoria) &&
+                              "entrevistas-reprova",
+                          )}
+                        >
+                          <strong>{numeroBR(linha?.nota)}</strong>
+                          {linha?.eliminatoria ? (
+                            <small>eliminatória</small>
+                          ) : null}
+                          {linha?.abaixoDoMinimo ? (
+                            <small>abaixo do mínimo</small>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row" colSpan={avaliadores.length + 2}>
+                      Total
+                      {resultado.minimoTotal !== null
+                        ? ` (mínimo ${numeroBR(resultado.minimoTotal)})`
+                        : ""}
+                    </th>
+                    <td id="entrevistasFichaTotal">
+                      <strong>{numeroBR(resultado.total)}</strong>
+                      <small> / {numeroBR(maxima)}</small>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : roteiro ? (
+            <Aviso tom="warning">
+              Nenhum membro na banca {f.banca ?? ""}. Cadastre a banca na
+              configuração.
+            </Aviso>
+          ) : null}
+
+          {roteiro ? (
+            <div className="entrevistas-previa" aria-live="polite">
+              <span>Prévia do parecer:</span>
+              <span id="entrevistasFichaParecer">
+                <SeloDoParecer parecer={resultado.parecer} />
+              </span>
+              {motivos.length ? (
+                <ul>
+                  {motivos.map((m) => (
+                    <li key={m}>{m}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+
+          {roteiro?.escala === "NIVEIS" && roteiro.niveis?.length ? (
+            <details className="entrevistas-niveis">
+              <summary>Níveis da escala</summary>
+              <dl>
+                {roteiro.niveis.map((n) => (
+                  <div key={n.nota}>
+                    <dt>
+                      {numeroBR(n.nota)} — {n.nome}
+                    </dt>
+                    <dd>{n.descricao}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          ) : null}
+
+          {erro ? (
+            <Aviso tom="danger" papel="alert">
+              {erro}
+            </Aviso>
+          ) : null}
         </div>
-        <div className="entrevistas-gaveta-rodape">
+        <div className="ui-gaveta-rodape">
           <span className="entrevistas-rodape-resumo">
             {alteradas.length
               ? `${alteradas.length} ${alteradas.length === 1 ? "nota alterada" : "notas alteradas"}`

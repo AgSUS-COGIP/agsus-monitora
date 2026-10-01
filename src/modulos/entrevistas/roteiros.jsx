@@ -24,18 +24,20 @@ import {
   Carregando,
   EstadoVazio,
   Gaveta,
+  Secao,
+  Segmentado,
+  Selo,
 } from "../../ui/index.js";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,
   numeroBR,
   RegraDeConvocacao,
-  Segmentado,
   trocarNaLista,
 } from "./partes.jsx";
 
 /*
-  Visão "Roteiros" do painel de entrevistas: os roteiros ativos da área (e os
+  Visão "Roteiros" da tela de Entrevistas: os roteiros ativos da área (e os
   de qualquer área), em cartões compactos, e o formulário na gaveta.
 
   Editar grava a versão seguinte (a anterior continua valendo para os editais
@@ -48,10 +50,10 @@ import {
 function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
   const r = resumoDoRoteiro(roteiro);
   return (
-    <article className="panel entrevistas-cartao" data-roteiro={roteiro.id}>
+    <article className="ui-card entrevistas-cartao" data-roteiro={roteiro.id}>
       <div className="entrevistas-cartao-topo">
         <div>
-          <span className="eyebrow">
+          <span className="entrevistas-sobretitulo">
             {roteiro.etapa || "Entrevista"} ·{" "}
             {roteiro.area
               ? rotuloDaAreaDoPainel(roteiro.area)
@@ -59,9 +61,7 @@ function CartaoDoRoteiro({ roteiro, podeEditar, aoAbrir }) {
           </span>
           <h3>{roteiro.nome}</h3>
         </div>
-        <span className="badge neutro" title="Versão do roteiro">
-          v{r.versao}
-        </span>
+        <Selo titulo="Versão do roteiro">v{r.versao}</Selo>
       </div>
       <p className="entrevistas-cartao-linha">
         {r.competencias} {r.competencias === 1 ? "competência" : "competências"}{" "}
@@ -120,16 +120,16 @@ export function VisaoDeRoteiros({ conducao, area }) {
 
   return (
     <section
-      className="panel table-card entrevistas-visao"
+      className="ui-card entrevistas-passo"
       aria-labelledby="entrevistasRoteirosTitulo"
     >
-      <div className="table-head">
+      <div className="entrevistas-passo-topo">
         <div>
-          <h2 className="title" id="entrevistasRoteirosTitulo">
+          <h2 className="ui-titulo" id="entrevistasRoteirosTitulo">
             Roteiros de entrevista
           </h2>
         </div>
-        <div className="table-tools">
+        <div className="ui-acoes">
           <button
             type="button"
             className="btn secondary"
@@ -481,15 +481,15 @@ function NotasEliminatorias({ valor, aoMudar, somenteLeitura }) {
     setTexto("");
   };
   return (
-    <div className="field">
+    <div className="ui-campo">
       <label htmlFor="entrevistasEliminatoria">Médias eliminatórias</label>
-      <div className="chips" aria-label="Médias que eliminam">
+      <div className="ui-chips" aria-label="Médias que eliminam">
         {valor.length ? (
           valor.map((n) => (
             <button
               key={n}
               type="button"
-              className="chip-filter"
+              className="ui-chip"
               disabled={somenteLeitura}
               title={somenteLeitura ? undefined : `Tirar a nota ${numeroBR(n)}`}
               onClick={() => aoMudar(valor.filter((x) => x !== n))}
@@ -501,7 +501,7 @@ function NotasEliminatorias({ valor, aoMudar, somenteLeitura }) {
             </button>
           ))
         ) : (
-          <small className="entrevistas-dica">Nenhuma.</small>
+          <small className="ui-campo-dica">Nenhuma.</small>
         )}
       </div>
       {somenteLeitura ? null : (
@@ -530,7 +530,7 @@ function NotasEliminatorias({ valor, aoMudar, somenteLeitura }) {
           </button>
         </div>
       )}
-      <small className="entrevistas-dica">Média nestes níveis = inapto.</small>
+      <small className="ui-campo-dica">Média nestes níveis = inapto.</small>
     </div>
   );
 }
@@ -603,16 +603,9 @@ function Desempate({ valor, aoMudar, erros, somenteLeitura }) {
 
 function SecaoDoFormulario({ titulo, icone, children }) {
   return (
-    <section
-      className="analises-detail-section entrevistas-secao"
-      aria-label={titulo}
-    >
-      <div className="analises-detail-section-head">
-        <i className={`fa-solid ${icone}`} aria-hidden="true" />
-        <span>{titulo}</span>
-      </div>
+    <Secao icone={icone} titulo={titulo}>
       <div className="entrevistas-secao-corpo">{children}</div>
-    </section>
+    </Secao>
   );
 }
 
@@ -676,234 +669,227 @@ export function EditorDeRoteiro({
       titulo={titulo}
       rotuloDoFechar="Fechar o roteiro"
       resumo={
-        <span className="status" id="entrevistasPreviaDoRoteiro">
+        <span id="entrevistasPreviaDoRoteiro">
           <i className="fa-solid fa-chart-simple" aria-hidden="true" />
           {textoDaPontuacao(r)}
         </span>
       }
     >
-      <form className="entrevistas-formulario" onSubmit={salvar} noValidate>
-        <div id="analisesDrawerBody">
-          <div className="detail-shell">
-            {modo === "editar" && roteiro?.editais_em_uso ? (
-              <Aviso tom="info">
-                {roteiro.editais_em_uso === 1
-                  ? "1 edital usa esta versão e continua nela."
-                  : `${roteiro.editais_em_uso} editais usam esta versão e continuam nela.`}
-              </Aviso>
-            ) : null}
-            <SecaoDoFormulario titulo="Identificação" icone="fa-file-lines">
-              <div className="entrevistas-grade">
-                <Campo
-                  rotulo="Nome"
-                  obrigatorio
-                  erro={errosVisiveis.nome}
-                  largo
+      <form
+        className="entrevistas-formulario-da-gaveta"
+        onSubmit={salvar}
+        noValidate
+      >
+        <div className="ui-gaveta-corpo">
+          {modo === "editar" && roteiro?.editais_em_uso ? (
+            <Aviso tom="info">
+              {roteiro.editais_em_uso === 1
+                ? "1 edital usa esta versão e continua nela."
+                : `${roteiro.editais_em_uso} editais usam esta versão e continuam nela.`}
+            </Aviso>
+          ) : null}
+          <SecaoDoFormulario titulo="Identificação" icone="fa-file-lines">
+            <div className="entrevistas-grade">
+              <Campo rotulo="Nome" obrigatorio erro={errosVisiveis.nome} largo>
+                <input
+                  type="text"
+                  value={r.nome}
+                  disabled={somenteLeitura}
+                  data-foco-inicial
+                  onChange={(e) => mudar({ nome: e.target.value })}
+                />
+              </Campo>
+              <Campo rotulo="Etapa no edital" erro={errosVisiveis.etapa}>
+                <input
+                  type="text"
+                  value={r.etapa}
+                  placeholder="Entrevista"
+                  disabled={somenteLeitura}
+                  onChange={(e) => mudar({ etapa: e.target.value })}
+                />
+              </Campo>
+              <Campo rotulo="Área">
+                <select
+                  value={r.area}
+                  disabled={somenteLeitura}
+                  onChange={(e) => mudar({ area: e.target.value })}
                 >
-                  <input
-                    type="text"
-                    value={r.nome}
-                    disabled={somenteLeitura}
-                    data-foco-inicial
-                    onChange={(e) => mudar({ nome: e.target.value })}
-                  />
-                </Campo>
-                <Campo rotulo="Etapa no edital" erro={errosVisiveis.etapa}>
-                  <input
-                    type="text"
-                    value={r.etapa}
-                    placeholder="Entrevista"
-                    disabled={somenteLeitura}
-                    onChange={(e) => mudar({ etapa: e.target.value })}
-                  />
-                </Campo>
-                <Campo rotulo="Área">
-                  <select
-                    value={r.area}
-                    disabled={somenteLeitura}
-                    onChange={(e) => mudar({ area: e.target.value })}
-                  >
-                    {opcoesDeArea.map((o) => (
-                      <option key={o.valor} value={o.valor}>
-                        {o.rotulo}
-                      </option>
-                    ))}
-                    <option value="">Qualquer área</option>
-                  </select>
-                </Campo>
-                <Campo rotulo="Descrição" erro={errosVisiveis.descricao} largo>
-                  <textarea
-                    rows={2}
-                    value={r.descricao}
-                    disabled={somenteLeitura}
-                    placeholder="Referência ao edital, observações"
-                    onChange={(e) => mudar({ descricao: e.target.value })}
-                  />
-                </Campo>
-              </div>
-            </SecaoDoFormulario>
+                  {opcoesDeArea.map((o) => (
+                    <option key={o.valor} value={o.valor}>
+                      {o.rotulo}
+                    </option>
+                  ))}
+                  <option value="">Qualquer área</option>
+                </select>
+              </Campo>
+              <Campo rotulo="Descrição" erro={errosVisiveis.descricao} largo>
+                <textarea
+                  rows={2}
+                  value={r.descricao}
+                  disabled={somenteLeitura}
+                  placeholder="Referência ao edital, observações"
+                  onChange={(e) => mudar({ descricao: e.target.value })}
+                />
+              </Campo>
+            </div>
+          </SecaoDoFormulario>
 
-            <SecaoDoFormulario titulo="Escala das notas" icone="fa-sliders">
-              <EscalaDoRoteiro
-                r={r}
-                mudar={mudar}
-                erros={errosVisiveis}
-                somenteLeitura={somenteLeitura}
-              />
-            </SecaoDoFormulario>
+          <SecaoDoFormulario titulo="Escala das notas" icone="fa-sliders">
+            <EscalaDoRoteiro
+              r={r}
+              mudar={mudar}
+              erros={errosVisiveis}
+              somenteLeitura={somenteLeitura}
+            />
+          </SecaoDoFormulario>
 
-            <SecaoDoFormulario titulo="Competências" icone="fa-list-check">
-              {errosVisiveis.competencias ? (
-                <small className="entrevistas-erro-campo" role="alert">
-                  {errosVisiveis.competencias}
-                </small>
-              ) : null}
-              <ol className="entrevistas-competencias">
-                {r.competencias.map((c, indice) => (
-                  <Competencia
-                    key={c.chave}
-                    c={c}
-                    indice={indice}
-                    total={r.competencias.length}
-                    erros={errosVisiveis}
-                    somenteLeitura={somenteLeitura}
-                    mudar={(campo, valor) =>
-                      mudar({
-                        competencias: trocarNaLista(
-                          r.competencias,
-                          c.chave,
-                          campo,
-                          valor,
-                        ),
-                      })
-                    }
-                    mover={(passo) =>
-                      mudar({
-                        competencias: moverItem(r.competencias, indice, passo),
-                      })
-                    }
-                    remover={() =>
-                      mudar({
-                        competencias: r.competencias.filter(
-                          (x) => x.chave !== c.chave,
-                        ),
-                      })
-                    }
-                  />
-                ))}
-              </ol>
-              {somenteLeitura ? null : (
-                <button
-                  type="button"
-                  className="btn secondary small"
-                  disabled={r.competencias.length >= LIMITE_DE_COMPETENCIAS}
-                  onClick={() =>
+          <SecaoDoFormulario titulo="Competências" icone="fa-list-check">
+            {errosVisiveis.competencias ? (
+              <small className="entrevistas-erro-campo" role="alert">
+                {errosVisiveis.competencias}
+              </small>
+            ) : null}
+            <ol className="entrevistas-competencias">
+              {r.competencias.map((c, indice) => (
+                <Competencia
+                  key={c.chave}
+                  c={c}
+                  indice={indice}
+                  total={r.competencias.length}
+                  erros={errosVisiveis}
+                  somenteLeitura={somenteLeitura}
+                  mudar={(campo, valor) =>
                     mudar({
-                      competencias: [...r.competencias, novaCompetencia()],
+                      competencias: trocarNaLista(
+                        r.competencias,
+                        c.chave,
+                        campo,
+                        valor,
+                      ),
                     })
                   }
-                >
-                  <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
-                  Competência
-                </button>
-              )}
-            </SecaoDoFormulario>
-
-            <SecaoDoFormulario titulo="Aprovação" icone="fa-user-check">
-              <div className="entrevistas-grade">
-                <Campo
-                  rotulo="Nota mínima total"
-                  dica="Vazio = sem mínimo total"
-                  erro={errosVisiveis.nota_minima_total}
-                >
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={r.nota_minima_total}
-                    disabled={somenteLeitura}
-                    onChange={(e) =>
-                      mudar({ nota_minima_total: e.target.value })
-                    }
-                  />
-                </Campo>
-                <NotasEliminatorias
-                  valor={r.notas_eliminatorias}
-                  somenteLeitura={somenteLeitura}
-                  aoMudar={(notas_eliminatorias) =>
-                    mudar({ notas_eliminatorias })
+                  mover={(passo) =>
+                    mudar({
+                      competencias: moverItem(r.competencias, indice, passo),
+                    })
+                  }
+                  remover={() =>
+                    mudar({
+                      competencias: r.competencias.filter(
+                        (x) => x.chave !== c.chave,
+                      ),
+                    })
                   }
                 />
-              </div>
-              <label className="entrevistas-marcar">
+              ))}
+            </ol>
+            {somenteLeitura ? null : (
+              <button
+                type="button"
+                className="btn secondary small"
+                disabled={r.competencias.length >= LIMITE_DE_COMPETENCIAS}
+                onClick={() =>
+                  mudar({
+                    competencias: [...r.competencias, novaCompetencia()],
+                  })
+                }
+              >
+                <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
+                Competência
+              </button>
+            )}
+          </SecaoDoFormulario>
+
+          <SecaoDoFormulario titulo="Aprovação" icone="fa-user-check">
+            <div className="entrevistas-grade">
+              <Campo
+                rotulo="Nota mínima total"
+                dica="Vazio = sem mínimo total"
+                erro={errosVisiveis.nota_minima_total}
+              >
                 <input
-                  type="checkbox"
-                  checked={r.ausencia_elimina}
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={r.nota_minima_total}
                   disabled={somenteLeitura}
-                  onChange={(e) =>
-                    mudar({ ausencia_elimina: e.target.checked })
-                  }
+                  onChange={(e) => mudar({ nota_minima_total: e.target.value })}
                 />
-                <span>Faltar à entrevista elimina o candidato</span>
-              </label>
-            </SecaoDoFormulario>
-
-            <SecaoDoFormulario
-              titulo="Resultado e desempate"
-              icone="fa-ranking-star"
-            >
-              <label className="entrevistas-marcar">
-                <input
-                  type="checkbox"
-                  checked={r.soma_analise}
-                  disabled={somenteLeitura}
-                  onChange={(e) => mudar({ soma_analise: e.target.checked })}
-                />
-                <span>Nota final = análise curricular + entrevista</span>
-              </label>
-              <Desempate
-                valor={r.desempate}
-                erros={errosVisiveis}
+              </Campo>
+              <NotasEliminatorias
+                valor={r.notas_eliminatorias}
                 somenteLeitura={somenteLeitura}
-                aoMudar={(desempate) => mudar({ desempate })}
+                aoMudar={(notas_eliminatorias) =>
+                  mudar({ notas_eliminatorias })
+                }
               />
-            </SecaoDoFormulario>
-
-            <SecaoDoFormulario titulo="Convocação padrão" icone="fa-bullhorn">
-              <RegraDeConvocacao
-                valor={r.convocacao}
-                erros={errosVisiveis}
-                somenteLeitura={somenteLeitura}
-                aoMudar={(convocacao) => mudar({ convocacao })}
+            </div>
+            <label className="entrevistas-marcar">
+              <input
+                type="checkbox"
+                checked={r.ausencia_elimina}
+                disabled={somenteLeitura}
+                onChange={(e) => mudar({ ausencia_elimina: e.target.checked })}
               />
-            </SecaoDoFormulario>
+              <span>Faltar à entrevista elimina o candidato</span>
+            </label>
+          </SecaoDoFormulario>
 
-            <SecaoDoFormulario titulo="Banca padrão" icone="fa-users">
-              <ComposicaoDaBanca
-                valor={r.banca}
-                erros={errosVisiveis}
-                somenteLeitura={somenteLeitura}
-                aoMudar={(banca) => mudar({ banca })}
+          <SecaoDoFormulario
+            titulo="Resultado e desempate"
+            icone="fa-ranking-star"
+          >
+            <label className="entrevistas-marcar">
+              <input
+                type="checkbox"
+                checked={r.soma_analise}
+                disabled={somenteLeitura}
+                onChange={(e) => mudar({ soma_analise: e.target.checked })}
               />
-            </SecaoDoFormulario>
+              <span>Nota final = análise curricular + entrevista</span>
+            </label>
+            <Desempate
+              valor={r.desempate}
+              erros={errosVisiveis}
+              somenteLeitura={somenteLeitura}
+              aoMudar={(desempate) => mudar({ desempate })}
+            />
+          </SecaoDoFormulario>
 
-            {tentou && quantosErros ? (
-              <Aviso tom="danger" papel="alert">
-                Confira{" "}
-                {quantosErros === 1
-                  ? "o campo marcado"
-                  : `os ${quantosErros} campos marcados`}{" "}
-                antes de salvar.
-              </Aviso>
-            ) : null}
-            {erroDoBanco ? (
-              <Aviso tom="danger" papel="alert">
-                {erroDoBanco}
-              </Aviso>
-            ) : null}
-          </div>
+          <SecaoDoFormulario titulo="Convocação padrão" icone="fa-bullhorn">
+            <RegraDeConvocacao
+              valor={r.convocacao}
+              erros={errosVisiveis}
+              somenteLeitura={somenteLeitura}
+              aoMudar={(convocacao) => mudar({ convocacao })}
+            />
+          </SecaoDoFormulario>
+
+          <SecaoDoFormulario titulo="Banca padrão" icone="fa-users">
+            <ComposicaoDaBanca
+              valor={r.banca}
+              erros={errosVisiveis}
+              somenteLeitura={somenteLeitura}
+              aoMudar={(banca) => mudar({ banca })}
+            />
+          </SecaoDoFormulario>
+
+          {tentou && quantosErros ? (
+            <Aviso tom="danger" papel="alert">
+              Confira{" "}
+              {quantosErros === 1
+                ? "o campo marcado"
+                : `os ${quantosErros} campos marcados`}{" "}
+              antes de salvar.
+            </Aviso>
+          ) : null}
+          {erroDoBanco ? (
+            <Aviso tom="danger" papel="alert">
+              {erroDoBanco}
+            </Aviso>
+          ) : null}
         </div>
-        <div className="entrevistas-gaveta-rodape">
+        <div className="ui-gaveta-rodape">
           <span className="entrevistas-rodape-resumo">
             {rotuloDaEscala(r.escala)} · {r.competencias.length}{" "}
             {r.competencias.length === 1 ? "competência" : "competências"}

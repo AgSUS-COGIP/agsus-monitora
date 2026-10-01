@@ -10,9 +10,9 @@ import {
 import { Selo, TabelaInfinita } from "../../ui/index.js";
 
 /*
-  "Entrevistas": a tabela do painel, na tabela de carregamento contínuo dos
-  painéis (TabelaInfinita, src/ui/). A busca do cabeçalho vale só para a
-  tabela. Clique na linha (ou Enter) abre a gaveta.
+  "Entrevistas": a tabela da visão "Resultados", na tabela de carregamento
+  contínuo das telas (TabelaInfinita, src/ui/). A busca do cabeçalho vale só
+  para a tabela. Clique na linha (ou Enter/Espaço) abre a gaveta.
 */
 
 const COLUNAS = [
@@ -37,8 +37,8 @@ export function ResumoDaAnalise({ analise }) {
   if (!analise) return <Selo>Sem análise</Selo>;
   return (
     <div>
-      <div className="primary-text">{formatarNota(analise.nota)}</div>
-      <span className="secondary-text">{analise.resultado || "—"}</span>
+      <div className="ui-texto-principal">{formatarNota(analise.nota)}</div>
+      <span className="ui-texto-secundario">{analise.resultado || "—"}</span>
     </div>
   );
 }
@@ -64,23 +64,23 @@ function LinhaDaEntrevista({ entrevista: e, aoAbrir }) {
       aria-label={`Entrevista de ${e.candidato}`}
     >
       <td>
-        <div className="primary-text">{e.candidato}</div>
-        <span className="secondary-text">
+        <div className="ui-texto-principal">{e.candidato}</div>
+        <span className="ui-texto-secundario">
           {e.codigo ? `Cód. ${e.codigo}` : "Sem código"}
         </span>
       </td>
       <td>
-        <div className="primary-text">{e.unidade || "—"}</div>
-        <span className="secondary-text">{e.edital}</span>
+        <div className="ui-texto-principal">{e.unidade || "—"}</div>
+        <span className="ui-texto-secundario">{e.edital}</span>
         {e.semEdital ? <Selo tom="pendente">Sem edital</Selo> : null}
       </td>
       <td>
-        <div className="primary-text">{e.vaga || "—"}</div>
-        <span className="secondary-text">{e.cargo}</span>
+        <div className="ui-texto-principal">{e.vaga || "—"}</div>
+        <span className="ui-texto-secundario">{e.cargo}</span>
       </td>
       <td>{e.modalidade || "—"}</td>
       <td>
-        <div className="primary-text">{formatarNota(e.nota)}</div>
+        <div className="ui-texto-principal">{formatarNota(e.nota)}</div>
         {e.divergente ? (
           <Selo
             tom="revisar"
@@ -124,15 +124,15 @@ export function TabelaDeEntrevistas({
       )}
       total={total}
       vazio={MENSAGEM_SEM_ENTREVISTAS}
-      informacao={(quantos) =>
-        `${
-          quantos === null
+      informacao={(quantos) => (
+        <span className="entrevistas-contagem">
+          {quantos === null
             ? "Carregando…"
             : quantos === total
               ? `${formatNumberBR(total)} ${total === 1 ? "entrevista" : "entrevistas"}`
-              : `${formatNumberBR(quantos)} de ${formatNumberBR(total)}`
-        } · Carregamento contínuo`
-      }
+              : `${formatNumberBR(quantos)} de ${formatNumberBR(total)}`}
+        </span>
+      )}
     />
   );
 }

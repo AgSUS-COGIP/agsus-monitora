@@ -1,6 +1,6 @@
 /*
-  Tema claro/escuro dos painéis no quadro (análises curriculares, entrevistas
-  e seleção).
+  Tema claro/escuro dos painéis no quadro (análises curriculares e seleção).
+  As telas do app (Recursos, Entrevistas) seguem o tema do app (src/app/tema.js).
 
   Os painéis dividem a escolha: o botão de tema de um vale para os outros
   (a mesma chave no localStorage) e o escuro é `html[data-theme="dark"]`, que

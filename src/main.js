@@ -60,6 +60,7 @@ import "./styles/configuracoes.css";
 // Componentes de src/ui/ e, depois, o CSS próprio de cada módulo de src/modulos/.
 import "./ui/ui.css";
 import "./modulos/recursos/recursos.css";
+import "./modulos/entrevistas/entrevistas.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -101,6 +102,7 @@ import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprova
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 import { montarRecursos } from "./modulos/recursos/recursos.jsx";
+import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
@@ -181,6 +183,15 @@ window.calendarioEditaisController = montarCalendarioEditais({
   banco e comemorações relidas).
 */
 window.recursosController = montarRecursos({
+  toast: window.monitoraToast,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+});
+
+/*
+  Entrevistas: módulo de src/modulos/, na própria <section>, como Recursos
+  (área do app, render() a cada abertura, comemorações relidas).
+*/
+window.entrevistasController = montarEntrevistas({
   toast: window.monitoraToast,
   comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });
