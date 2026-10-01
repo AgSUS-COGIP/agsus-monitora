@@ -138,6 +138,10 @@ Migrations de 29/09 (`20260929121000` a `121300`, já aplicadas; `190000` a `190
 
 ## Front
 
+> **Substituído em 01/10/2026 por [`docs/arquitetura-react.md`](arquitetura-react.md)** (app
+> React único com `src/app/`, `src/ui/`, `src/modulos/`; JavaScript, sem biblioteca nova de
+> estado/dados; ordem das etapas). O texto abaixo fica como histórico da proposta.
+
 - React 19 + Vite (já no projeto), **TypeScript no código novo**, React Router
   para rotas por área, TanStack Query para cache das RPCs.
 - Pastas por funcionalidade:
@@ -164,7 +168,7 @@ Banco:
 | 0     | Correções: jobs do pg_cron, RPCs fora do contrato, registro de migrations                                                                                                                                                                                                       |
 | 1     | **Feita em 25/09.** Lixo certo: `get_analises_dashboard_payload` (v1) e suas 4 views e cache, gatilho de invalidação, `VW_AUDITORIA_ACESSOS_DIARIA`, `TL_NOTIFICACAO`, funções sem referência; `pwa-lifecycle.css`; dependências `echarts`, `pdfjs-dist`, `tesseract.js`        |
 | 2     | **Feita em 25/09**: `bench/`, o PDF do padrão e `pwa-lifecycle.css` saíram; `TA_ANALISE_QUARENTENA` foi para o schema `arquivo`. Falta: funções sem chamador                                                                                                                    |
-| 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). **Sync de análises por planilha: migration de 28/09 pronta, a aplicar** (`TB_PLANILHA_ANALISE`, `TA_ORIGEM_ANALISE`, `"CO_PLANILHA"`). Falta: schema `monitora`                                                            |
+| 3     | **Áreas feitas em 25/09** (`TB_AREA`, `TA_UNIDADE_AREA`, `"CO_AREA"` no edital e nas análises, gatilhos). **Sync de análises por planilha: migration de 28/09 pronta, a aplicar** (`TB_PLANILHA_ANALISE`, `TA_ORIGEM_ANALISE`, `"CO_PLANILHA"`). Falta: schema `monitora`       |
 | 4     | Nomes neutros e `FC_`, função própria de sessão (em lotes)                                                                                                                                                                                                                      |
 | 5     | **Leitura recortada por área desde 25/09** (`RL_PERFIL_USUARIO_AREA`, policies restritivas, 9 RPCs; todo não-admin começou em Saúde Indígena). Gravação por área e colunas de área em Configurações → Acessos desde 25/09. Falta: sair `ehEditalDaSaudeIndigena`, menu por área |
 
