@@ -26,21 +26,28 @@ import {
   pontuacaoMaxima,
   textoDaPontuacao,
 } from "../../lib/roteiro-de-entrevista.js";
-import { Aviso, Campo, Carregando, classes, Gaveta } from "../../ui/index.js";
+import {
+  Aviso,
+  Campo,
+  Carregando,
+  classes,
+  Gaveta,
+  Segmentado,
+  Selo,
+} from "../../ui/index.js";
 import { FichaDoCandidato } from "./ficha.jsx";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,
   numeroBR,
   RegraDeConvocacao,
-  Segmentado,
   trocarNaLista,
 } from "./partes.jsx";
 import { SeloDoParecer } from "./tabela.jsx";
 
 /*
-  Visão "Conduzir entrevistas" do painel: escolhido o edital (da área do
-  painel), três passos em cartões —
+  Visão "Conduzir entrevistas" da tela de Entrevistas: escolhido o edital (da
+  área atual do app), três passos em cartões (`.ui-card`) —
 
   1. Configuração: o roteiro (a versão exata; pré-preenche a convocação e a
      banca com o padrão dele), a regra de convocação, a composição da banca,
@@ -51,7 +58,9 @@ import { SeloDoParecer } from "./tabela.jsx";
      motivo, só sem notas).
   3. Ficha de notas: os convocados; cada um abre a ficha (ficha.jsx).
 
-  Quem não edita as entrevistas (`pode_editar` falso) vê tudo sem os botões.
+  Quem não edita as entrevistas (`pode_editar` falso) vê tudo sem os botões
+  (sem selo "Somente consulta"). O administrador global vê "Mostrar todos os
+  editais da área" e libera um edital fora da janela.
 */
 
 /* ── Passo 1: configuração ─────────────────────────────────────────── */
@@ -427,22 +436,20 @@ function PassoDeConfiguracao({ dados, roteiros, salvando, aoSalvar }) {
   }, [configurado, dados.pode_editar]);
   return (
     <section
-      className="panel panel-pad entrevistas-passo"
+      className="ui-card entrevistas-passo"
       data-passo="configuracao"
       aria-labelledby="entrevistasPasso1"
     >
       <div className="entrevistas-passo-topo">
         <div>
-          <span className="eyebrow">Passo 1</span>
-          <h2 className="title" id="entrevistasPasso1">
+          <span className="entrevistas-sobretitulo">Passo 1</span>
+          <h2 className="ui-titulo" id="entrevistasPasso1">
             Configuração
           </h2>
         </div>
-        <span
-          className={classes("badge", configurado ? "aprovado" : "pendente")}
-        >
+        <Selo tom={configurado ? "aprovado" : "pendente"}>
           {configurado ? "Configurada" : "A configurar"}
-        </span>
+        </Selo>
       </div>
       {editando ? (
         <FormularioDeConfiguracao
@@ -499,7 +506,7 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
       rotuloDoFechar="Fechar"
     >
       <form
-        className="entrevistas-formulario entrevistas-formulario-curto"
+        className="entrevistas-formulario-da-gaveta"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!valido) return;
@@ -507,21 +514,23 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
           if (resultado?.erro) setErro(resultado.erro);
         }}
       >
-        <Campo
-          rotulo="Motivo"
-          obrigatorio
-          dica="3 a 500 caracteres"
-          erro={erro}
-          largo
-        >
-          <textarea
-            rows={3}
-            value={motivo}
-            data-foco-inicial
-            onChange={(e) => setMotivo(e.target.value)}
-          />
-        </Campo>
-        <div className="entrevistas-acoes">
+        <div className="ui-gaveta-corpo">
+          <Campo
+            rotulo="Motivo"
+            obrigatorio
+            dica="3 a 500 caracteres"
+            erro={erro}
+            largo
+          >
+            <textarea
+              rows={3}
+              value={motivo}
+              data-foco-inicial
+              onChange={(e) => setMotivo(e.target.value)}
+            />
+          </Campo>
+        </div>
+        <div className="ui-gaveta-rodape">
           <button type="button" className="btn secondary" onClick={aoFechar}>
             Cancelar
           </button>
@@ -559,20 +568,20 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
 
   return (
     <section
-      className="panel panel-pad entrevistas-passo"
+      className="ui-card entrevistas-passo"
       data-passo="convocacao"
       aria-labelledby="entrevistasPasso2"
     >
       <div className="entrevistas-passo-topo">
         <div>
-          <span className="eyebrow">Passo 2</span>
-          <h2 className="title" id="entrevistasPasso2">
+          <span className="entrevistas-sobretitulo">Passo 2</span>
+          <h2 className="ui-titulo" id="entrevistasPasso2">
             Convocação
           </h2>
         </div>
-        <span className="badge neutro">
+        <Selo>
           {totalConvocados} {totalConvocados === 1 ? "convocado" : "convocados"}
-        </span>
+        </Selo>
       </div>
       {!configurado ? (
         <Aviso tom="warning">
@@ -632,24 +641,24 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                           </td>
                           <td>{c.posicao}ª</td>
                           <td>
-                            <div className="primary-text">{c.candidato}</div>
-                            <span className="secondary-text">
+                            <div className="ui-texto-principal">
+                              {c.candidato}
+                            </div>
+                            <span className="ui-texto-secundario">
                               {c.codigo ? `Cód. ${c.codigo}` : "Sem código"}
                             </span>
                           </td>
                           <td>
                             {c.modalidade || "—"}
                             {ehPcd(c.pcd) ? (
-                              <span className="badge neutro">PcD</span>
+                              <Selo className="entrevistas-selo-pcd">PcD</Selo>
                             ) : null}
                           </td>
                           <td>{numeroBR(c.nota_analise)}</td>
                           <td>
                             {convocado ? (
                               <span className="entrevistas-situacao">
-                                <span className="badge aprovado">
-                                  Convocado
-                                </span>
+                                <Selo tom="aprovado">Convocado</Selo>
                                 {podeEditar && !convocado.avaliacoes?.length ? (
                                   <button
                                     type="button"
@@ -661,9 +670,9 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                                 ) : null}
                               </span>
                             ) : c.sugerido ? (
-                              <span className="badge revisar">Sugerido</span>
+                              <Selo tom="revisar">Sugerido</Selo>
                             ) : (
-                              <span className="secondary-text">
+                              <span className="ui-texto-secundario">
                                 Além da regra
                               </span>
                             )}
@@ -683,8 +692,10 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                         </td>
                         <td>—</td>
                         <td>
-                          <div className="primary-text">{c.candidato}</div>
-                          <span className="secondary-text">
+                          <div className="ui-texto-principal">
+                            {c.candidato}
+                          </div>
+                          <span className="ui-texto-secundario">
                             Fora dos aprovados atuais
                           </span>
                         </td>
@@ -692,7 +703,7 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                         <td>{numeroBR(c.nota_analise)}</td>
                         <td>
                           <span className="entrevistas-situacao">
-                            <span className="badge aprovado">Convocado</span>
+                            <Selo tom="aprovado">Convocado</Selo>
                             {podeEditar && !c.avaliacoes?.length ? (
                               <button
                                 type="button"
@@ -776,14 +787,14 @@ function PassoDaFicha({ dados, aoAbrir }) {
 
   return (
     <section
-      className="panel panel-pad entrevistas-passo"
+      className="ui-card entrevistas-passo"
       data-passo="ficha"
       aria-labelledby="entrevistasPasso3"
     >
       <div className="entrevistas-passo-topo">
         <div>
-          <span className="eyebrow">Passo 3</span>
-          <h2 className="title" id="entrevistasPasso3">
+          <span className="entrevistas-sobretitulo">Passo 3</span>
+          <h2 className="ui-titulo" id="entrevistasPasso3">
             Ficha de notas
           </h2>
         </div>
@@ -870,14 +881,14 @@ function PassoDaFicha({ dados, aoAbrir }) {
                       }}
                     >
                       <td>
-                        <div className="primary-text">{c.candidato}</div>
-                        <span className="secondary-text">
+                        <div className="ui-texto-principal">{c.candidato}</div>
+                        <span className="ui-texto-secundario">
                           {c.codigo ? `Cód. ${c.codigo}` : "Sem código"}
                         </span>
                       </td>
                       <td>
-                        <div className="primary-text">{c.vaga}</div>
-                        <span className="secondary-text">
+                        <div className="ui-texto-principal">{c.vaga}</div>
+                        <span className="ui-texto-secundario">
                           {nomeDoCargo(c.cargo)}
                         </span>
                       </td>
@@ -889,7 +900,7 @@ function PassoDaFicha({ dados, aoAbrir }) {
                       <td>
                         {numeroBR(c.nota)}
                         {c.nota !== null && c.nota !== undefined && maxima ? (
-                          <span className="secondary-text">
+                          <span className="ui-texto-secundario">
                             {" "}
                             / {numeroBR(maxima)}
                           </span>
@@ -903,7 +914,7 @@ function PassoDaFicha({ dados, aoAbrir }) {
                 })}
                 {!visiveis.length ? (
                   <tr>
-                    <td colSpan={7} className="empty">
+                    <td colSpan={7} className="ui-vazio">
                       Nenhum convocado no filtro.
                     </td>
                   </tr>
@@ -931,7 +942,7 @@ function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
   const motivoValido = motivo.trim().length >= 3;
   return (
     <div className="entrevistas-liberacao" id="entrevistasLiberacao">
-      <p>
+      <p className="entrevistas-liberacao-texto">
         <strong>Fora da janela</strong> — {textoDaJanela(item)}.{" "}
         {liberado
           ? `Liberado para a equipe até ${item.liberadoAte.split("-").reverse().join("/")} (${item.motivoLiberacao}).`
@@ -939,17 +950,15 @@ function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
       </p>
       <div className="entrevistas-liberacao-campos">
         {!liberado ? (
-          <label>
-            Liberar até
+          <Campo rotulo="Liberar até">
             <input
               type="date"
               value={ate}
               onChange={(ev) => setAte(ev.target.value)}
             />
-          </label>
+          </Campo>
         ) : null}
-        <label className="entrevistas-liberacao-motivo">
-          Motivo
+        <Campo rotulo="Motivo">
           <input
             type="text"
             maxLength={500}
@@ -959,7 +968,7 @@ function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
             value={motivo}
             onChange={(ev) => setMotivo(ev.target.value)}
           />
-        </label>
+        </Campo>
         <button
           type="button"
           className="btn secondary"
@@ -1007,12 +1016,12 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
   return (
     <div className="entrevistas-visao entrevistas-conducao">
       <section
-        className="panel panel-pad"
+        className="ui-card entrevistas-passo"
         aria-labelledby="entrevistasEditalTitulo"
       >
         <div className="entrevistas-passo-topo">
           <div>
-            <h2 className="title" id="entrevistasEditalTitulo">
+            <h2 className="ui-titulo" id="entrevistasEditalTitulo">
               Edital
             </h2>
           </div>

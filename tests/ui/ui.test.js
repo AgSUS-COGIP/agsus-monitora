@@ -13,11 +13,15 @@ import {
   GradeDeKpis,
   Kpi,
   Kv,
+  LinhaDoRecorte,
+  ListaDePendencias,
   PainelDeFiltros,
   PainelNoQuadro,
   Secao,
+  Segmentado,
   Selo,
   TabelaInfinita,
+  textoDoRecorte,
   TopoDoPainel,
 } from "../../src/ui/index.js";
 import { clicar, digitar, teclar } from "../componentes/interacoes.js";
@@ -741,5 +745,117 @@ describe("Dentro do app (sem PainelNoQuadro): classes .ui-* e nenhum id fixo", (
     await montarNoApp(h(Campo, { rotulo: "Busca" }, h("input", null)));
     expect($(".ui-campo label").htmlFor).toBe($("input").id);
     expect($(".field")).toBeNull();
+  });
+});
+
+describe("Segmentado, LinhaDoRecorte e ListaDePendencias (só dentro do app)", () => {
+  const OPCOES = [
+    { valor: "a", rotulo: "Alfa", icone: "fa-chart-column" },
+    { valor: "b", rotulo: "Beta" },
+    { valor: "c", rotulo: "Gama" },
+  ];
+
+  it("Segmentado: radiogroup, só a escolhida no Tab, setas movem e dão a volta", async () => {
+    const aoMudar = vi.fn();
+    await montarNoApp(
+      h(Segmentado, {
+        rotulo: "Visão",
+        opcoes: OPCOES,
+        valor: "a",
+        aoMudar,
+        className: "extra",
+      }),
+    );
+    const grupo = $(".ui-segmentado.extra[role=radiogroup]");
+    expect(grupo.getAttribute("aria-label")).toBe("Visão");
+    const botoes = [...grupo.querySelectorAll("button[role=radio]")];
+    expect(botoes.map((b) => b.tabIndex)).toEqual([0, -1, -1]);
+    expect(botoes[0].getAttribute("aria-checked")).toBe("true");
+    expect(botoes[0].classList.contains("is-ativo")).toBe(true);
+    expect(botoes[0].querySelector("i.fa-chart-column")).not.toBeNull();
+    await teclar(botoes[0], "ArrowLeft");
+    expect(aoMudar).toHaveBeenLastCalledWith("c");
+    expect(document.activeElement).toBe(botoes[2]);
+    await teclar(botoes[2], "ArrowRight");
+    expect(aoMudar).toHaveBeenLastCalledWith("a");
+    await clicar(grupo.querySelector('[data-valor="b"]'));
+    expect(aoMudar).toHaveBeenLastCalledWith("b");
+  });
+
+  it("Segmentado: sem escolha, a primeira entra no Tab; desabilitado não muda", async () => {
+    const aoMudar = vi.fn();
+    await montarNoApp(
+      h(Segmentado, {
+        rotulo: "Comparecimento",
+        opcoes: OPCOES,
+        valor: null,
+        aoMudar,
+        desabilitado: true,
+      }),
+    );
+    const botoes = [...document.querySelectorAll(".ui-segmentado button")];
+    expect(botoes.map((b) => b.tabIndex)).toEqual([0, -1, -1]);
+    expect(botoes.every((b) => b.disabled)).toBe(true);
+    await teclar(botoes[0], "ArrowRight");
+    expect(aoMudar).not.toHaveBeenCalled();
+  });
+
+  it("LinhaDoRecorte: diz os filtros ativos (ou 'Sem filtros') e leva os filhos", async () => {
+    await montarNoApp(
+      h(
+        LinhaDoRecorte,
+        {
+          ativos: [
+            ["edital", "Edital", "01/2026"],
+            ["busca", "Busca", "ana"],
+          ],
+        },
+        h("span", { className: "marca" }, "3 vencidos"),
+      ),
+    );
+    expect($(".ui-card.ui-recorte [data-recorte]").textContent).toBe(
+      "Recorte ativo: Edital: 01/2026 · Busca: ana",
+    );
+    expect($(".ui-recorte .marca").textContent).toBe("3 vencidos");
+    expect(textoDoRecorte([])).toBe("Sem filtros");
+  });
+
+  it("ListaDePendencias: botões com tom, filtro com aria-pressed, atalho sem; skeleton e vazio", async () => {
+    const filtrar = vi.fn();
+    const abrir = vi.fn();
+    const itens = [
+      {
+        chave: "x",
+        titulo: "Sem edital",
+        detalhe: "2 entrevistas",
+        tom: "perigo",
+        ativo: true,
+        aoClicar: filtrar,
+      },
+      { chave: "y", titulo: "Sem entrevista", detalhe: "1", aoClicar: abrir },
+    ];
+    await montarNoApp(h(ListaDePendencias, { itens, vazio: "Nada" }));
+    const [primeiro, segundo] = document.querySelectorAll(".ui-pendencia");
+    expect(primeiro.dataset.tom).toBe("perigo");
+    expect(primeiro.getAttribute("aria-pressed")).toBe("true");
+    expect(primeiro.classList.contains("is-ativo")).toBe(true);
+    expect(primeiro.textContent).toBe("Sem edital2 entrevistas");
+    expect(segundo.dataset.tom).toBe("alerta");
+    expect(segundo.hasAttribute("aria-pressed")).toBe(false);
+    await clicar(primeiro);
+    await clicar(segundo);
+    expect(filtrar).toHaveBeenCalledTimes(1);
+    expect(abrir).toHaveBeenCalledTimes(1);
+
+    await act(async () =>
+      raiz.render(h(ListaDePendencias, { itens, carregando: true })),
+    );
+    expect(
+      document.querySelectorAll(".ui-pendencias .ui-esqueleto"),
+    ).toHaveLength(4);
+    await act(async () =>
+      raiz.render(h(ListaDePendencias, { itens: [], vazio: "Nada" })),
+    );
+    expect($(".ui-pendencias .ui-vazio").textContent).toBe("Nada");
   });
 });
