@@ -48,7 +48,7 @@ import {
   aplicarAreaNaVisaoGeral,
   criarCarregadorDeMunicipios,
   desenharMunicipiosDaArea,
-  legendaDosMunicipios,
+  desenharLegendaDosMunicipios,
 } from "./municipios-da-visao-geral.js";
 import {
   ehEditalEncerrado as isEncerrado,
@@ -10804,6 +10804,7 @@ function desenharMunicipiosNoMapa() {
     podeFlutuar: () =>
       window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
       true,
+    aoDesenhar: syncMapLevelUI,
   });
 }
 
@@ -10970,7 +10971,7 @@ function syncMapLevelUI() {
       mapaDaVisaoGeral(areaAtual()) === MAPA_DOS_MUNICIPIOS
     ) {
       titulo.innerHTML = '<b style="color:#22577a">Legenda</b>';
-      corpo.innerHTML = legendaDosMunicipios();
+      desenharLegendaDosMunicipios(corpo);
     } else if (titulo && corpo) {
       titulo.innerHTML = showingPolos
         ? '<b style="color:#22577a">Polos base do DSEI</b>'
