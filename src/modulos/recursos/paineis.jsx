@@ -28,8 +28,8 @@ import {
 /*
   Os blocos da tela de Recursos, com os componentes de src/ui/: o topo (só
   status e ações — o título e a área estão no cabeçalho do app), "Refinar
-  resultados", as duas fileiras de KPIs em card compacto (as que filtram são
-  botões), o recorte ativo, os gráficos Chart.js e as pendências prioritárias.
+  resultados", os quatro KPIs em card compacto (botões que filtram), o
+  recorte ativo, os gráficos Chart.js e as pendências prioritárias.
 */
 
 const truncar = (valor, limite) => {
@@ -176,6 +176,14 @@ function Kpi({ valor, sufixo = "", aoFiltrar, carregado, ...props }) {
   );
 }
 
+/*
+  Quatro KPIs, os que pedem decisão: o que espera o parecer jurídico (em
+  destaque), o prazo vencido e o que já se decidiu (deferidos, com os
+  parcialmente, e indeferidos). Cada um filtra a tela. O total fica na
+  contagem da fila; o resto (sem SEI, sem resposta, respostas em revisão,
+  mudou a nota, prazo vencendo, registrados sem envio) virou pendência,
+  filtro ou gráfico — nada se perdeu.
+*/
 export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
   const filtro = (campo, valor) =>
     carregado
@@ -187,29 +195,13 @@ export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
   return (
     <GradeDeKpis className="recursos-kpis" rotulo="Indicadores">
       <Kpi
-        cor="k-cyan"
-        icone="fa-layer-group"
-        chave="total"
-        rotulo="Total de recursos"
-        valor={k.total}
+        cor="k-purple"
+        icone="fa-scale-balanced"
+        chave="aguardando-parecer"
+        rotulo="Aguardando parecer"
+        valor={k.aguardandoParecer}
         carregado={carregado}
-      />
-      <Kpi
-        cor="k-yellow"
-        icone="fa-clock"
-        chave="em-analise"
-        rotulo="Em análise"
-        valor={k.pendentes}
-        carregado={carregado}
-        {...filtro("situacao", "EM_ANALISE")}
-      />
-      <Kpi
-        cor="k-green"
-        icone="fa-gavel"
-        chave="decididos"
-        rotulo="Decididos"
-        valor={k.concluidos}
-        carregado={carregado}
+        {...filtro("situacao", "EM_ANALISE_JURIDICA")}
       />
       <Kpi
         cor="k-red"
@@ -221,93 +213,23 @@ export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
         {...filtro("pendencia", "prazo_vencido")}
       />
       <Kpi
-        cor="k-red"
-        icone="fa-file-circle-xmark"
-        chave="sem-sei"
-        rotulo="Sem processo SEI"
-        valor={k.semSei}
+        cor="k-green"
+        icone="fa-circle-check"
+        chave="deferidos"
+        rotulo="Deferidos"
+        titulo="Deferidos, inclusive os parcialmente"
+        valor={k.deferidos}
         carregado={carregado}
-        {...filtro("pendencia", "sem_sei")}
-      />
-      <Kpi
-        cor="k-yellow"
-        icone="fa-envelope-open-text"
-        chave="sem-resposta"
-        rotulo="Sem resposta enviada"
-        valor={k.semResposta}
-        carregado={carregado}
-      />
-      <Kpi
-        cor="k-purple"
-        icone="fa-right-left"
-        chave="mudou-resultado"
-        rotulo="Mudou nota/classificação"
-        valor={k.mudouResultado}
-        carregado={carregado}
-        {...filtro("pendencia", "mudou_resultado")}
+        {...filtro("situacao", "deferidos")}
       />
       <Kpi
         cor="k-slate"
-        icone="fa-chart-simple"
-        chave="taxa"
-        rotulo="Taxa de conclusão"
-        valor={k.taxaConclusao}
-        sufixo="%"
+        icone="fa-circle-xmark"
+        chave="indeferidos"
+        rotulo="Indeferidos"
+        valor={k.indeferidos}
         carregado={carregado}
-      />
-    </GradeDeKpis>
-  );
-}
-
-/*
-  A resposta escrita no sistema (resposta-do-recurso.js): em revisão,
-  aprovadas aguardando envio e devolvidas. Uma segunda fileira de KPIs; cada
-  um filtra pela pendência dele.
-*/
-export function IndicadoresDasRespostas({
-  indicadores: k,
-  carregado,
-  filtros,
-  aoFiltrar,
-}) {
-  const filtro = (valor) =>
-    carregado
-      ? {
-          ativo: filtros.pendencia === valor,
-          aoFiltrar: () => aoFiltrar("pendencia", valor),
-        }
-      : {};
-  return (
-    <GradeDeKpis
-      className="recursos-kpis recursos-kpis-respostas"
-      rotulo="Indicadores das respostas"
-    >
-      <Kpi
-        cor="k-yellow"
-        icone="fa-file-pen"
-        chave="respostas-em-revisao"
-        rotulo="Respostas em revisão"
-        valor={k.respostasEmRevisao}
-        carregado={carregado}
-        {...filtro("resposta_em_revisao")}
-      />
-      <Kpi
-        cor="k-green"
-        icone="fa-file-circle-check"
-        chave="respostas-aprovadas"
-        rotulo="Aprovadas aguardando envio"
-        valor={k.respostasAprovadas}
-        carregado={carregado}
-        {...filtro("resposta_aprovada")}
-      />
-      <Kpi
-        cor="k-red"
-        icone="fa-rotate-left"
-        chave="respostas-devolvidas"
-        rotulo="Respostas devolvidas"
-        valor={k.respostasDevolvidas}
-        carregado={carregado}
-        {...filtro("resposta_devolvida")}
+        {...filtro("situacao", "INDEFERIDO")}
       />
     </GradeDeKpis>
   );
@@ -317,6 +239,10 @@ export function IndicadoresDasRespostas({
 
 export function Recorte({ ativos, recursos, carregado }) {
   const vencidos = recursos.filter((r) => r.atrasado).length;
+  const decididos = recursos.filter((r) => r.decidido).length;
+  const taxa = recursos.length
+    ? Math.round((decididos / recursos.length) * 100)
+    : 0;
   const semPrazo = recursos.filter((r) => !r.prazo.data).length;
   const pelaAbertura = recursos.filter(
     (r) => r.prazo.fonte === "abertura",
@@ -327,6 +253,11 @@ export function Recorte({ ativos, recursos, carregado }) {
       tom: vencidos ? "alerta" : "sucesso",
       icone: vencidos ? "fa-triangle-exclamation" : "fa-circle-check",
       texto: `${formatNumberBR(vencidos)} recurso(s) com o prazo de resposta vencido`,
+    },
+    {
+      chave: "decididos",
+      icone: "fa-gavel",
+      texto: `${formatNumberBR(taxa)}% decididos (${formatNumberBR(decididos)} de ${formatNumberBR(recursos.length)})`,
     },
     semPrazo && {
       chave: "sem-prazo",
@@ -360,7 +291,7 @@ function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
       itens={pendencias.map((p) => ({
         chave: p.chave,
         titulo: p.titulo,
-        detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? "recurso" : "recursos"}${p.subtitulo ? ` · ${p.subtitulo}` : ""}`,
+        detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? "recurso" : "recursos"}`,
         tom: TOM_DA_SEVERIDADE[p.severidade],
         ativo: filtros.pendencia === p.chave,
         aoClicar: () => aoFiltrar("pendencia", p.chave),
@@ -459,7 +390,7 @@ export function Graficos({
           <Grafico
             id="chartAnalista"
             tipo="bar"
-            rotulo="Recursos por analista: em análise e decididos"
+            rotulo="Recursos por analista: sem decisão e decididos"
             dependencias={[analistas, tema]}
             montar={() => {
               const p = paleta(escuro);
@@ -468,7 +399,7 @@ export function Graficos({
                   labels: analistas.map((a) => truncar(a.rotulo, 22)),
                   datasets: [
                     {
-                      label: "Em análise",
+                      label: "Sem decisão",
                       data: analistas.map((a) => a.pendentes),
                       backgroundColor: p.warn,
                       borderRadius: 6,

@@ -12,7 +12,6 @@ import {
   RASCUNHO_VAZIO,
   rascunhoDoRecurso,
   recursoDuplicado,
-  SITUACOES,
 } from "../../lib/recursos-dos-candidatos.js";
 import {
   Aviso,
@@ -34,7 +33,7 @@ import { nota } from "./partes.jsx";
   escolher, cargo, vaga, código, nota atual e resultado da análise aparecem
   sozinhos, e o analista vem preenchido com o responsável pela análise (pode
   trocar). "Não encontrei o candidato" é a exceção: nome digitado, e o recurso
-  fica marcado como fora das análises. Outro recurso em análise do mesmo
+  fica marcado como fora das análises. Outro recurso sem decisão do mesmo
   candidato, edital e origem gera um aviso, e só grava confirmando.
 
   Edição: o edital e o candidato não mudam (para isso, exclua e cadastre de
@@ -486,7 +485,7 @@ export function FormularioDoRecurso({
                     className="fa-solid fa-triangle-exclamation"
                     aria-hidden="true"
                   />{" "}
-                  Já existe o recurso nº {numeroDuplicado} em análise para este
+                  Já existe o recurso nº {numeroDuplicado} sem decisão para este
                   candidato, edital e origem.
                 </p>
                 <label className="recursos-check">
@@ -536,19 +535,6 @@ export function FormularioDoRecurso({
                     <option key={nome} value={nome} />
                   ))}
                 </datalist>
-              </Campo>
-              <Campo rotulo="Situação">
-                <select
-                  name="situacao"
-                  value={rascunho.situacao}
-                  onChange={(evento) => mudar("situacao", evento.target.value)}
-                >
-                  {SITUACOES.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.rotulo}
-                    </option>
-                  ))}
-                </select>
               </Campo>
               <Campo rotulo="Nº do processo SEI">
                 <input

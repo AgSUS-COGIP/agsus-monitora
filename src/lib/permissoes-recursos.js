@@ -6,6 +6,7 @@ export const RESOURCES = Object.freeze([
   ["aprovados", "Lista de aprovados"],
   ["entrevistas", "Entrevistas"],
   ["recursos", "Recursos"],
+  ["recursos_parecer", "Parecer jurídico (Recursos)"],
   ["selecao", "Seleção"],
   ["importacao", "Importação e convocação"],
   ["paineis", "Painéis externos"],
@@ -34,6 +35,17 @@ export function tipoDoRecurso(recurso) {
   return "modulo";
 }
 
+/*
+  Módulos de dois níveis (Sem acesso | Editor). "recursos_parecer"
+  (20261001170000_recursos_parecer_juridico.sql) é quem decide os recursos:
+  deferir, deferir parcialmente, indeferir, devolver, reabrir e aprovar o
+  texto da resposta.
+*/
+export const RECURSOS_SIM_OU_NAO = Object.freeze([
+  "acessos",
+  "recursos_parecer",
+]);
+
 /** Níveis que a célula aceita (as mesmas regras do banco). */
 export function niveisDoRecurso(recurso) {
   const tipo = tipoDoRecurso(recurso);
@@ -41,7 +53,8 @@ export function niveisDoRecurso(recurso) {
   if (tipo === "painel") return LEVELS.slice(0, 2);
   if (recurso === "configuracoes")
     return LEVELS.filter(([nivel]) => nivel !== "leitor");
-  if (recurso === "acessos")
+  // Decide ou não decide (CK_GRUPACESSOREC_ACESSOS / _PARECER no banco).
+  if (RECURSOS_SIM_OU_NAO.includes(recurso))
     return LEVELS.filter(([nivel]) => ["sem_acesso", "editor"].includes(nivel));
   return LEVELS;
 }

@@ -5,7 +5,6 @@ import {
   valoresDoRecurso,
   MARCADORES,
 } from "../../lib/modelos-de-resposta.js";
-import { rotuloDaSituacao } from "../../lib/recursos-dos-candidatos.js";
 import {
   acoesDaResposta,
   erroDoComentario,
@@ -21,7 +20,9 @@ import { SeloDaResposta } from "./tabela.jsx";
   os marcadores preenchidos, escrever a fundamentação e salvar o rascunho; daí
   enviar para revisão (opcional), aprovar ou devolver com comentário, gerar o
   documento (impressão/PDF e .docx, que pode virar anexo) e marcar a resposta
-  como enviada — o que marca também a etapa do recurso.
+  como enviada — o que marca também a etapa do recurso. Aprovar e devolver
+  são do parecer jurídico: sem `podeDecidir`, os botões nem aparecem. Marcar
+  enviada é de quem edita, só com o recurso decidido.
 
   O banco decide (transicionar_resposta_recurso); os botões seguem
   resposta-do-recurso.js só para dizer antes por que uma ação não vale. Tudo
@@ -214,6 +215,7 @@ export function SecaoDaResposta({
   origens,
   area,
   podeEditar,
+  podeDecidir = false,
   acao,
 }) {
   const resposta = detalhe?.resposta || null;
@@ -248,6 +250,7 @@ export function SecaoDaResposta({
     resposta,
     eu,
     podeEditar,
+    podeDecidir,
     situacao: r.situacao,
     alterada: editavel && Boolean(resposta) && alterada,
   });
@@ -395,11 +398,6 @@ export function SecaoDaResposta({
                   </option>
                 ))}
               </select>
-              {r.decidido ? null : (
-                <small className="recursos-motivo">
-                  Aprovar exige a decisão ({rotuloDaSituacao(r.situacao)}).
-                </small>
-              )}
             </div>
             <div className="ui-campo">
               <label htmlFor="recursosFundamentacao">Fundamentação</label>

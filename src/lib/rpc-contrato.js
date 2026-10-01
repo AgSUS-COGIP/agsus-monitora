@@ -582,6 +582,14 @@ export const CONTRATO_RPC = {
     resumo: "Exclusão lógica de um recurso, com motivo no histórico.",
   },
 
+  // ── Recursos: parecer jurídico (20261001170000) ──────────────────────────
+  transicionar_recurso_candidato: {
+    argumentos: ["p_id", "p_acao", "p_revisao", "p_texto"],
+    critica: false,
+    resumo:
+      "Fluxo do parecer: enviar para parecer (editor); deferir, deferir parcialmente, indeferir (parecer obrigatório), devolver e reabrir só com recursos_parecer (42501).",
+  },
+
   // ── Recursos: modelos, resposta e anexos (20260929230000) ────────────────
   listar_modelos_resposta_recurso: {
     argumentos: [],
