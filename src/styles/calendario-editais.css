@@ -415,45 +415,50 @@
 
 /* ── Linha do tempo ──────────────────────────────────────────────────── */
 
+/*
+  Vertical: o cartão ocupa meia largura e, na horizontal, as etapas de um edital
+  (10 a 15) passavam da borda e os nomes longos quebravam em até 6 linhas
+  (relato do usuário em 01/10/2026). Uma etapa por linha, ponto e traço à
+  esquerda, nome inteiro e data à direita; a lista rola dentro do cartão.
+*/
 .cal-timeline {
   list-style: none;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
   margin: 0;
-  padding: 6px 0 4px;
-  overflow-x: auto;
+  padding: 6px 4px 4px 0;
+  max-height: 520px;
+  overflow-y: auto;
 }
 
 .cal-passo {
   position: relative;
-  flex: 1 0 128px;
-  padding-top: 22px;
-  text-align: center;
+  padding: 0 0 14px 30px;
+  text-align: left;
 }
 
-/* A linha que liga os passos; o primeiro não tem nada à esquerda. */
+/* O traço que liga um ponto ao seguinte; o último não tem nada abaixo. */
 .cal-passo::before {
   content: "";
   position: absolute;
-  top: 8px;
-  left: -50%;
-  width: 100%;
-  height: 2px;
-  background: var(--color-border-subtle);
+  top: 16px;
+  bottom: -2px;
+  left: 9px;
+  width: 2px;
+  background: var(--border-subtle);
 }
 
-.cal-passo:first-child::before {
+.cal-passo:last-child::before {
   display: none;
 }
 
 .cal-passo-marca {
   position: absolute;
   top: 2px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 2px;
   width: 15px;
   height: 15px;
-  border: 3px solid #fff;
+  border: 3px solid var(--surface-card);
   border-radius: 50%;
   background: var(--cal-cor, var(--cal-neutro));
   outline: 1px solid var(--border-subtle);
@@ -476,15 +481,15 @@
 }
 
 .cal-passo[data-situacao="futura"] .cal-passo-marca {
-  background: #cbd5e1;
+  background: var(--state-neutral);
 }
 
 .cal-passo strong {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .cal-passo small {
