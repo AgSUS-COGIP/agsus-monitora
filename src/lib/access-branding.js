@@ -3,7 +3,6 @@ export const DEFAULT_ACCESS_BRANDING = Object.freeze({
   backgroundUrl: "/assets/access-background-default.svg",
   panelColor: "#c296eb",
   greeting: "Bem-vindo(a) ao MONITORA",
-  instruction: "Acesse com sua conta institucional.",
 });
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;

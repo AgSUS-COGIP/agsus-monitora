@@ -332,7 +332,6 @@ const DEFAULT_CONFIG = {
   auth_access_logo_url: DEFAULT_ACCESS_BRANDING.logoUrl,
   auth_access_panel_color: DEFAULT_ACCESS_BRANDING.panelColor,
   auth_access_greeting: DEFAULT_ACCESS_BRANDING.greeting,
-  auth_access_instruction: DEFAULT_ACCESS_BRANDING.instruction,
 };
 
 const DEFAULT_PANELS = [];
@@ -1760,7 +1759,6 @@ function applyConfigToUi() {
   const painelDoBanco = marcaDoBanco("auth_access_panel_color");
   const logoDoBanco = marcaDoBanco("auth_access_logo_url");
   const saudacaoDoBanco = marcaDoBanco("auth_access_greeting");
-  const instrucaoDoBanco = marcaDoBanco("auth_access_instruction");
 
   const loginScreen = $("loginScreen");
   const marcaParaGuardar = {};
@@ -1795,14 +1793,8 @@ function applyConfigToUi() {
     marcaParaGuardar.greeting = saudacao;
   }
 
-  if (instrucaoDoBanco !== null) {
-    const instrucao = instrucaoDoBanco || DEFAULT_ACCESS_BRANDING.instruction;
-    setText("loginDescription", instrucao);
-    marcaParaGuardar.instruction = instrucao;
-  }
-
   /*
-    Guarda os cinco campos juntos, e só os que vieram do banco. Guardar apenas
+    Guarda os campos juntos, e só os que vieram do banco. Guardar apenas
     fundo e cor — como antes — produzia tela híbrida: arte de uma configuração
     com saudação de outra.
   */
@@ -11469,10 +11461,6 @@ function renderConfigForm() {
   $("cfgAccessGreeting") &&
     ($("cfgAccessGreeting").value =
       cfgValue("auth_access_greeting") || DEFAULT_ACCESS_BRANDING.greeting);
-  $("cfgAccessInstruction") &&
-    ($("cfgAccessInstruction").value =
-      cfgValue("auth_access_instruction") ||
-      DEFAULT_ACCESS_BRANDING.instruction);
   $("cfgFilterTitle") && ($("cfgFilterTitle").value = cfgValue("filter_title"));
   $("cfgFilterSubtitle") &&
     ($("cfgFilterSubtitle").value = cfgValue("filter_subtitle"));

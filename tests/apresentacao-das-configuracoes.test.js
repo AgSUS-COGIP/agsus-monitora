@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   DICAS_DOS_CAMPOS,
   GRUPOS_POR_SECAO,
-  primeiroDominio,
   tomDoAviso,
   urlDeImagem,
 } from "../src/lib/apresentacao-das-configuracoes.js";
@@ -35,12 +34,6 @@ describe("regras da apresentação", () => {
     expect(urlDeImagem("javascript:alert(1)")).toBe("");
     expect(urlDeImagem("data:image/png;base64,AAA")).toBe("");
     expect(urlDeImagem("//outro.site/l.png")).toBe("");
-  });
-
-  it("primeiro domínio da lista", () => {
-    expect(primeiroDominio(" @AgenciaSUS.org.br, agsus.org.br")).toBe(
-      "agenciasus.org.br",
-    );
   });
 
   it("Painéis externos e Operação saíram do legado (são React)", () => {

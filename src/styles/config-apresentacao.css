@@ -438,11 +438,6 @@
   font-size: var(--text-body);
   font-weight: 500;
 }
-.previa-acesso__cartao p {
-  margin: 0;
-  font-size: var(--text-caption);
-  opacity: 0.9;
-}
 .previa-acesso__google {
   display: inline-flex;
   align-items: center;
@@ -466,11 +461,6 @@
   color: var(--brand-primary);
   font-size: var(--text-caption);
   font-weight: 600;
-}
-.previa-acesso__dominio {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
 }
 
 /* Painéis externos: resumo (src/componentes/configuracoes/paineis-externos.jsx) */
