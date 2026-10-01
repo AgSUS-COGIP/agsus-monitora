@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import {
@@ -105,6 +111,20 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
     () => etapasDoEdital(etapas, editalDaLinha),
     [etapas, editalDaLinha],
   );
+  const linhaDoTempo = useRef(null);
+
+  // A linha do tempo é vertical e rola dentro do cartão: ao trocar de edital,
+  // a etapa em andamento (ou a próxima) aparece sem a pessoa procurar.
+  useEffect(() => {
+    const lista = linhaDoTempo.current;
+    if (!lista) return;
+    const alvo =
+      lista.querySelector('[data-situacao="em-andamento"]') ||
+      lista.querySelector('[data-situacao="futura"]');
+    lista.scrollTop = alvo
+      ? Math.max(0, alvo.offsetTop - lista.offsetTop - 8)
+      : 0;
+  }, [editalDaLinha, etapasDaLinha]);
 
   const mudarFiltro = (chave, valor) =>
     setFiltros((atuais) => ({ ...atuais, [chave]: valor }));
@@ -296,7 +316,7 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
               aoMudar={setEditalEscolhido}
             />
           </div>
-          <ol id="calTimeline" className="cal-timeline">
+          <ol id="calTimeline" className="cal-timeline" ref={linhaDoTempo}>
             <LinhaDoTempo
               editalId={editalDaLinha}
               etapas={etapasDaLinha}
