@@ -4,7 +4,9 @@ import { classes } from "./classes.js";
   Indicador em card compacto (~78px; DESIGN.md, "Indicador"): o ícone num tile
   na cor do estado, o rótulo e o número já formatado. Com `aoClicar`, o card
   vira botão — filtro (`ativo` liga `aria-pressed`) ou atalho. `carregando`:
-  o número vira skeleton (carregando não é zero).
+  o número vira skeleton (carregando não é zero). O rótulo para em duas
+  linhas, com reticências, e o texto inteiro fica no `title`: todos os
+  cards de uma grade têm a mesma altura.
 
   `cor` é o nome de antes (k-cyan, k-green, k-yellow, k-orange, k-red,
   k-purple, k-slate) e vira o tom do tile (`data-tom`: info, sucesso, alerta,
@@ -39,7 +41,12 @@ export function Kpi({
         <span className="ui-kpi-icone" aria-hidden="true">
           <i className={`fa-solid ${icone}`} />
         </span>
-        {rotulo}
+        <span
+          className="ui-kpi-texto"
+          title={typeof rotulo === "string" ? rotulo : undefined}
+        >
+          {rotulo}
+        </span>
       </span>
       {carregando ? (
         <span className="ui-kpi-valor ui-esqueleto" aria-hidden="true" />

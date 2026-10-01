@@ -88,7 +88,7 @@ export function PainelOperacional({ estado, nucleo }) {
             <i className={`fa-solid ${cartao.icon}`} aria-hidden="true" />
           </span>
           <span>
-            <small>{cartao.label}</small>
+            <small title={cartao.label}>{cartao.label}</small>
             <strong>{cartao.value.toLocaleString("pt-BR")}</strong>
           </span>
         </button>

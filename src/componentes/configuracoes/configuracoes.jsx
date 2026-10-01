@@ -519,7 +519,7 @@ function CorpoDoHistorico({ estado, historico }) {
             </div>
             <button
               type="button"
-              className="btn secondary"
+              className="btn secondary config-history-restore"
               onClick={() => estado.abrirRestauracao(item.id)}
             >
               <Icone nome="rotate-ccw" tamanho={16} /> Restaurar

@@ -167,6 +167,28 @@ describe("Kpi e GradeDeKpis", () => {
     expect(total.querySelector("button")).toBeNull();
   });
 
+  it("o texto do rótulo fica num span próprio, com o texto inteiro no title", async () => {
+    const longo = "Aprovados na análise sem entrevista";
+    await montarNoApp(
+      h(GradeDeKpis, { rotulo: "Indicadores" }, [
+        h(Kpi, { key: "a", chave: "a", rotulo: longo, valor: "3" }),
+        h(Kpi, {
+          key: "b",
+          chave: "b",
+          rotulo: longo,
+          valor: "4",
+          aoClicar: () => {},
+        }),
+      ]),
+    );
+    for (const chave of ["a", "b"]) {
+      const texto = $(`[data-kpi="${chave}"] .ui-kpi-rotulo .ui-kpi-texto`);
+      expect(texto.textContent).toBe(longo);
+      expect(texto.title).toBe(longo);
+      expect(texto.parentElement.querySelector(".ui-kpi-icone")).not.toBeNull();
+    }
+  });
+
   it("atalho (sem `ativo`) não leva aria-pressed", async () => {
     await montarNoApp(
       h(Kpi, {

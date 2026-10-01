@@ -581,13 +581,22 @@
 .config-galeria__grade {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  /* Cartões iguais: todas as linhas com a altura do cartão mais alto. */
+  grid-auto-rows: 1fr;
   gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
+/*
+  Coluna presa à largura do cartão e linhas no topo: esticada na altura, a
+  miniatura do cartão "Em uso" (só ela no botão) tirava a largura do
+  aspect-ratio e estourava o cartão para os lados.
+*/
 .config-galeria__cartao {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
   justify-items: stretch;
   gap: var(--space-1-5);
   padding: var(--space-1-5);
@@ -618,6 +627,7 @@
 }
 .config-galeria__miniatura {
   display: block;
+  width: 100%;
   border-radius: var(--radius-sm);
   background-color: var(--surface-raised);
   background-position: center;
