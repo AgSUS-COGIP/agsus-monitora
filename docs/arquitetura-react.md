@@ -34,40 +34,38 @@ src/
 
 ## Ordem das etapas
 
-| Etapa | O quê                                                                                    |
-| ----- | ---------------------------------------------------------------------------------------- |
-| 1     | **Fundação (feita):** `src/app/`, `src/ui/`, pastas `modulos/` e `legado/`, checagem     |
-| 2     | Entrevistas, Recursos e Seleção saem do iframe (**Recursos e Entrevistas feitos**)       |
-| 3     | Configurações: todas as seções já são React; falta mudar para `src/modulos/`             |
-| 4     | Análises (**feita**: `src/modulos/analises/`; sobra o CSS de `src/analises/` da Seleção) |
-| 5     | Visão geral: primeiro o que não é mapa, depois os mapas                                  |
-| 6     | Login e entrada; fim do `legacy-app.js`                                                  |
-| 7     | Aya                                                                                      |
+| Etapa | O quê                                                                                |
+| ----- | ------------------------------------------------------------------------------------ |
+| 1     | **Fundação (feita):** `src/app/`, `src/ui/`, pastas `modulos/` e `legado/`, checagem |
+| 2     | Entrevistas, Recursos e Seleção saem do iframe (**feita**)                           |
+| 3     | Configurações: todas as seções já são React; falta mudar para `src/modulos/`         |
+| 4     | Análises (**feita**: `src/modulos/analises/`)                                        |
+| 5     | Visão geral: primeiro o que não é mapa, depois os mapas                              |
+| 6     | Login e entrada; fim do `legacy-app.js`                                              |
+| 7     | Aya                                                                                  |
 
 A mudança de pasta acontece **módulo a módulo**, na etapa de cada um — mover tudo de uma vez
 gera conflito com quem está trabalhando em paralelo.
 
 ## Onde está cada coisa hoje → para onde vai
 
-| Hoje                                                                                                                               | Alvo                                                      | Quando     |
-| ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
-| `src/app/` (`montar-modulo.jsx`, `ErrorBoundary.jsx`)                                                                              | fica                                                      | —          |
-| `src/ui/` (design system)                                                                                                          | fica                                                      | —          |
-| `src/componentes/modal.jsx` (só reexporta `src/ui/modal.jsx`)                                                                      | sai quando ninguém importar daqui                         | ao tocar   |
-| `src/componentes/icone.jsx`, `multi-select-busca.jsx`                                                                              | `src/ui/`                                                 | ao tocar   |
-| `src/componentes/selecao/` + `src/selecao/` (`main.jsx`, CSS) + `selecao.html` (Recursos e Entrevistas já estão em `src/modulos/`) | `src/modulos/selecao/`                                    | 2          |
-| `src/modules/pagina-do-painel.js` (o iframe dos painéis)                                                                           | sai (vira rota)                                           | 2          |
-| `src/componentes/configuracoes/`, `acessos/`, `modulos/`, `saude-das-cargas/` + `src/modules/config-secoes.js`                     | `src/modulos/configuracoes/`                              | 3          |
-| `src/analises/` (só o CSS e o skeleton da Seleção no quadro; Análises já é `src/modulos/analises/`)                                | sai com a Seleção                                         | 2          |
-| `src/componentes/nucleo/`, `calendario-editais/`, `lista-aprovados/`                                                               | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | ao tocar   |
-| `src/modules/map-*`, `health-*`, `indigenous-*`, trechos do `legacy-app.js` (dashboard)                                            | `src/modulos/visao-geral/`                                | 5          |
-| `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.js`, `usar-area-atual.js`                   | `src/app/` (entrada, layout, área atual)                  | 6          |
-| `src/modules/legacy-app.js`, `auth-*`, `access-*`, login do `index.html`                                                           | `src/app/` (login); o resto sai                           | 6          |
-| `src/modules/aya-*`                                                                                                                | `src/app/` (Aya no layout)                                | 7          |
-| `src/lib/`                                                                                                                         | fica                                                      | —          |
-| `src/styles/tokens.css`                                                                                                            | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
+| Hoje                                                                                                             | Alvo                                                      | Quando     |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
+| `src/app/` (`montar-modulo.jsx`, `ErrorBoundary.jsx`)                                                            | fica                                                      | —          |
+| `src/ui/` (design system)                                                                                        | fica                                                      | —          |
+| `src/componentes/modal.jsx` (só reexporta `src/ui/modal.jsx`)                                                    | sai quando ninguém importar daqui                         | ao tocar   |
+| `src/componentes/icone.jsx`, `multi-select-busca.jsx`                                                            | `src/ui/`                                                 | ao tocar   |
+| `src/componentes/configuracoes/`, `acessos/`, `modulos/`, `saude-das-cargas/` + `src/modules/config-secoes.js`   | `src/modulos/configuracoes/`                              | 3          |
+| `src/componentes/nucleo/`, `calendario-editais/`, `lista-aprovados/`                                             | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | ao tocar   |
+| `src/modules/map-*`, `health-*`, `indigenous-*`, trechos do `legacy-app.js` (dashboard)                          | `src/modulos/visao-geral/`                                | 5          |
+| `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.js`, `usar-area-atual.js` | `src/app/` (entrada, layout, área atual)                  | 6          |
+| `src/modules/legacy-app.js`, `auth-*`, `access-*`, login do `index.html`                                         | `src/app/` (login); o resto sai                           | 6          |
+| `src/modules/aya-*`                                                                                              | `src/app/` (Aya no layout)                                | 7          |
+| `src/lib/`                                                                                                       | fica                                                      | —          |
+| `src/styles/tokens.css`                                                                                          | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
 
-`src/modules/` e `src/analises/` (o CSS do quadro) **são** o legado de hoje. `src/legado/` fica vazio por enquanto:
+`src/modules/` **é** o legado de hoje (`src/analises/` ficou só com o `CLAUDE.md`: o painel de
+Análises e o CSS do quadro saíram). `src/legado/` fica vazio por enquanto:
 só recebe código antigo numa mudança em bloco combinada antes (ver `src/legado/README.md`).
 
 ## Como criar um módulo novo
@@ -109,11 +107,10 @@ export function montarTela({
 ```
 
 `montarModulo(elemento, <Componente/>, { flushSync, nome })` = `createRoot` + `StrictMode` +
-`ErrorBoundary`; devolve `{ raiz, desmontar }`. Todas as ilhas React de hoje (as de `src/main.js`
-e a entrada `src/selecao/main.jsx`) montam por ele. Usam `flushSync`: a barra lateral (o legado
-lê `#nav` logo depois) e o painel no quadro (sai com o skeleton desenhado).
+`ErrorBoundary`; devolve `{ raiz, desmontar }`. Todas as ilhas React de hoje (as de `src/main.js`)
+montam por ele. Usa `flushSync` a barra lateral (o legado lê `#nav` logo depois).
 
-**Tela de página inteira** (modelos: `src/modulos/recursos/`, `src/modulos/entrevistas/`, esta com visões num `Segmentado` no topo, e `src/modulos/analises/`): monta na `<section id="page-<view>">`
+**Tela de página inteira** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`, `src/modulos/entrevistas/`, esta com visões num `Segmentado` no topo, e `src/modulos/analises/`): monta na `<section id="page-<view>">`
 vazia do `index.html`, sem pedir nada ao banco; `src/main.js` guarda o controlador em `window`
 (`recursosController`) e o legado chama `render()` ao navegar (tabela `TELAS_REACT` do `navigate`).
 A área vem de `usarAreaAtual()`/`obterDadosDoMonitoramento()`, o tema de `usarTemaEscuro()`
@@ -123,10 +120,10 @@ ficam no cabeçalho do app (`setPageTitle`); a tela não repete.
 ## Como usar `ui/`
 
 Importe do índice: `import { Kpi, GradeDeKpis, Aviso } from "../../ui/index.js";`. O `ui.css` é
-importado uma vez no ponto de entrada (`src/main.js`; nos painéis do quadro, depois do CSS de
-`src/analises/`); o CSS próprio de um módulo de `src/modulos/` entra no `src/main.js` logo depois.
+importado uma vez no ponto de entrada (`src/main.js`); o CSS próprio de um módulo de
+`src/modulos/` entra no `src/main.js` logo depois.
 
-Dentro do app, os componentes emitem só classes `.ui-*` (prefixo para não colidir com `.panel`,
+Os componentes emitem só classes `.ui-*` (prefixo para não colidir com `.panel`,
 `.kpi`, `.card`… de `app.css`) e nenhum id fixo. Peças de layout em CSS, sem componente:
 `.ui-tela` (raiz da tela), `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards` (dois cards lado a lado),
 `.ui-pilha` (card com título e lista embaixo),
@@ -136,8 +133,7 @@ Dentro do app, os componentes emitem só classes `.ui-*` (prefixo para não coli
 
 | Componente                           | API (uma linha)                                                                                                                                                                                                                                                                                         |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TopoDoPainel`                       | `{ titulo?, subtitulo?, visoes?, status, escuro?, aoTema?, aoTelaCheia?, aoAtualizar, atualizarDesativado?, aoExportar?, exportarDesativado?, children? }` — no app, sem título nem tema/tela cheia (são do app); filhos são botões extras                                                              |
-| `usarAlturaDoTopo(ref, ligado)`      | no quadro, publica a altura do `.topbar` em `--topbar-height`                                                                                                                                                                                                                                           |
+| `TopoDoPainel`                       | `{ visoes?, status, aoAtualizar, atualizarDesativado?, aoExportar?, exportarDesativado?, children? }` — sem título, tema nem tela cheia (são do app); filhos são botões extras                                                                                                                          |
 | `PainelDeFiltros`                    | `{ idDoTitulo, className?, recolhivel = true, quantos, escopo = "Todos", podeLimpar?, aoLimpar, aoRecolher?(recolhido), children }` — "Refinar resultados" com resumo, recolher e Limpar tudo                                                                                                           |
 | `ChipsDeFiltro` / `ChipDeFiltro`     | `{ children }` / `{ rotulo, aoTirar, children }` — filtros aplicados                                                                                                                                                                                                                                    |
 | `Kpi`                                | `{ cor?, tom?, icone?, rotulo, valor, chave, titulo?, ativo?, aoClicar?, carregando? }` — card de 78px, tile do ícone no tom; com `aoClicar` vira botão (filtro com `ativo`, atalho sem); `carregando` = skeleton                                                                                       |
@@ -157,21 +153,12 @@ Dentro do app, os componentes emitem só classes `.ui-*` (prefixo para não coli
 | `LinhaDoRecorte` / `MarcasDoRecorte` | `{ ativos?: [[campo, rótulo, valor]], texto?, children? }` — "Recorte ativo: …" ou "Sem filtros" (`textoDoRecorte(ativos)`; `texto` troca a frase); filhos abaixo / `{ marcas: [{ chave, tom?, icone?, texto }] }` — as marcas (sucesso, alerta, neutro)                                                |
 | `ListaDePendencias`                  | `{ itens: [{ chave, titulo, detalhe, tom? ("alerta" \| "perigo"), ativo?, aoClicar }], carregando?, vazio }` — botões que filtram (`ativo` → `aria-pressed`) ou abrem uma lista; skeleton                                                                                                               |
 | `MaisOpcoes`                         | `{ id, aberto, aoAlternar, quantos?, titulo, children }` — botão "Mais opções" com a contagem e o bloco dos filtros adicionais (controlado)                                                                                                                                                             |
-| `PainelNoQuadro`                     | transição: dentro dele, os componentes devolvem a marcação do painel de análises (ver abaixo)                                                                                                                                                                                                           |
 | `classes(...)`                       | junta classes ignorando as vazias                                                                                                                                                                                                                                                                       |
 
 Componente entra em `ui/` quando **duas telas ou mais** repetem a mesma peça; o que é de uma tela
 só fica no módulo.
 
-### Transição: Seleção ainda no quadro
-
-Seleção monta dentro de `<PainelNoQuadro>` (`src/ui/no-quadro.jsx`): ali os
-componentes de `ui/` devolvem a marcação de antes, idêntica — `.topbar`, `.kpis`/`.kpi`,
-`.filter-panel`, `.chips`/`.chip-filter`, `.panel`, `.chart-wrap`, `.table-card`/`.table-wrap`,
-`.analises-drawer*`, `.analises-detail-section`, `.kv`, `.badge`, `.empty`, `.field` e os ids
-(`topbar`, `refreshBtn`, `tableBody`, `filterSummary`…) —, desenhada por `analises.css`,
-`analises-layout-modern.css`, `analises-painel.css`, `analises-esqueleto.css`,
-`analises-infinite-table.css` e `analises-responsive-fixes.css`. Quando a Seleção sair do quadro,
-`no-quadro.jsx`, o ramo "no quadro" de cada componente e o que sobrou em `src/analises/` saem
-juntos. `Segmentado`, `LinhaDoRecorte`/`MarcasDoRecorte`, `ListaDePendencias` e `MaisOpcoes` já
-nasceram só para dentro do app (sem ramo no quadro).
+O modo "no quadro" (`<PainelNoQuadro>`, a marcação do antigo painel de análises para as telas que
+rodavam em iframe) saiu com a Seleção, a última delas, ao fim da Etapa 2 — junto com o CSS que
+sobrava em `src/analises/` e `src/modules/pagina-do-painel.js`. Nenhuma tela do app abre mais em
+iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.

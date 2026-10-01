@@ -1,21 +1,17 @@
 import { Modal } from "./modal.jsx";
 import { classes } from "./classes.js";
-import { usarNoQuadro } from "./no-quadro.jsx";
 
 /*
   A gaveta lateral: um <Modal> (portal, Esc, foco preso) com o topo —
   sobretítulo, título, resumo e fechar — e o corpo como filhos.
 
-  Dentro do app: `.ui-gaveta-fundo` > `.ui-gaveta` (`.ui-gaveta-topo`…). No
-  quadro (<PainelNoQuadro>): `.analises-drawer-backdrop` > `.analises-drawer`,
-  do painel de análises. `usarClassesDaGaveta()` dá as duas, para quem monta a
-  gaveta direto no <Modal> (o formulário de Recursos).
+  Marcação: `.ui-gaveta-fundo` > `.ui-gaveta` (`.ui-gaveta-topo`…).
+  `usarClassesDaGaveta()` dá as duas classes, para quem monta a gaveta direto
+  no <Modal> (o formulário de Recursos).
 */
 
 export function usarClassesDaGaveta() {
-  return usarNoQuadro()
-    ? { fundo: "analises-drawer-backdrop", cartao: "analises-drawer" }
-    : { fundo: "ui-gaveta-fundo", cartao: "ui-gaveta" };
+  return { fundo: "ui-gaveta-fundo", cartao: "ui-gaveta" };
 }
 
 /* O topo da gaveta (e do formulário): sobretítulo, título, resumo e fechar. */
@@ -27,26 +23,18 @@ export function TopoDaGaveta({
   aoFechar,
   rotuloDoFechar,
 }) {
-  const noQuadro = usarNoQuadro();
-  const c = (antiga, nova) => (noQuadro ? antiga : nova);
   return (
-    <div className={c("analises-drawer-head", "ui-gaveta-topo")}>
+    <div className="ui-gaveta-topo">
       <div>
         {sobretitulo ? (
-          <span className={c("eyebrow", "ui-gaveta-sobretitulo")}>
-            {sobretitulo}
-          </span>
+          <span className="ui-gaveta-sobretitulo">{sobretitulo}</span>
         ) : null}
         <h2 id={tituloId}>{titulo}</h2>
-        {resumo ? (
-          <div className={c("analises-drawer-summary", "ui-gaveta-resumo")}>
-            {resumo}
-          </div>
-        ) : null}
+        {resumo ? <div className="ui-gaveta-resumo">{resumo}</div> : null}
       </div>
       <button
         type="button"
-        className={c("analises-drawer-close", "ui-gaveta-fechar")}
+        className="ui-gaveta-fechar"
         aria-label={rotuloDoFechar}
         title="Fechar"
         onClick={aoFechar}

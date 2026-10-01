@@ -17,7 +17,6 @@ import {
   rotuloDaUnidade,
   somar,
   taxaDeContratacao,
-  textoDoRecorte,
   topUnidades,
   triadosEReprovados,
 } from "../src/lib/selecao-do-painel.js";
@@ -156,7 +155,7 @@ describe("filtros de escolha múltipla (DSEI, edital, cargo, vaga)", () => {
     expect(soXingu.unidades).toHaveLength(3);
   });
 
-  it("chips e recorte descrevem o que foi escolhido; fora da SI a unidade não é DSEI", () => {
+  it("os filtros ativos (chips e recorte) dizem o que foi escolhido; fora da SI a unidade não é DSEI", () => {
     const filtros = {
       ...FILTROS_VAZIOS,
       editais: ["06/2026"],
@@ -166,12 +165,12 @@ describe("filtros de escolha múltipla (DSEI, edital, cargo, vaga)", () => {
       "Nome DSEI",
       "Edital",
     ]);
-    expect(textoDoRecorte(filtros, "saude-indigena")).toBe(
-      "Recorte ativo: Nome DSEI: DSEI Xingu · Edital: 06/2026",
-    );
-    expect(textoDoRecorte(FILTROS_VAZIOS)).toBe(
-      "Sem filtros aplicados. Visualizando toda a base carregada.",
-    );
+    expect(filtrosAtivos(filtros, "sede")[0]).toEqual({
+      campo: "unidades",
+      rotulo: "Unidade",
+      valores: ["DSEI Xingu"],
+    });
+    expect(filtrosAtivos(FILTROS_VAZIOS)).toEqual([]);
     expect(rotuloDaUnidade("sede")).toBe("Unidade");
   });
 });
@@ -266,9 +265,8 @@ describe("registro da aba", async () => {
   const { canViewSelecao, paginasPermitidas } =
     await import("../src/lib/access-roles.js");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.js");
-  const { PAGINAS_DO_PAINEL } = await import("../src/lib/pagina-do-painel.js");
 
-  it("Seleção é a última etapa, depois da Lista de aprovados, como beta, com a página própria", () => {
+  it("Seleção é a última etapa, depois da Lista de aprovados, como beta", () => {
     const lista = ABAS_DO_MENU.map((aba) => aba.id);
     expect(lista.indexOf("selecao")).toBe(lista.indexOf("aprovados") + 1);
     expect(ABAS_DO_MENU.find((aba) => aba.id === "selecao")).toMatchObject({
@@ -280,7 +278,6 @@ describe("registro da aba", async () => {
     });
     expect(NOMES_DE_ICONES).toContain("funnel");
     expect(RESOURCES).toContainEqual(["selecao", "Seleção"]);
-    expect(PAGINAS_DO_PAINEL.selecao.endereco).toBe("/selecao.html");
   });
 
   it("leitor vê; sem a chave na matriz, a aba some", () => {

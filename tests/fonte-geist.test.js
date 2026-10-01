@@ -16,7 +16,7 @@ const cssDe = (pasta) =>
 */
 describe("fonte Geist no sistema todo", () => {
   it("as páginas carregam Geist, e nenhuma carrega Inter", () => {
-    for (const pagina of ["index.html", "selecao.html"]) {
+    for (const pagina of ["index.html"]) {
       const html = ler(pagina);
       expect(html, pagina).toContain("family=Geist:wght@400..900&display=swap");
       expect(html, pagina).not.toContain("family=Inter");
@@ -30,24 +30,17 @@ describe("fonte Geist no sistema todo", () => {
   it("tokens.css é o primeiro CSS dos pontos de entrada", () => {
     const primeiroCss = (fonte) => fonte.match(/import\s+"([^"]+\.css)"/)?.[1];
     expect(primeiroCss(ler("src/main.js"))).toBe("./styles/tokens.css");
-    expect(primeiroCss(ler("src/selecao/main.jsx"))).toBe(
-      "../styles/tokens.css",
-    );
   });
 
-  it("o corpo das duas aplicações usa o token", () => {
+  it("o corpo do app usa o token", () => {
     expect(ler("src/styles/app.css")).toMatch(
       /body\s*\{[^}]*font-family:\s*var\(--font-sans,/,
-    );
-    expect(ler("src/analises/analises.css")).toMatch(
-      /font-family:\s*var\(--font-sans,/,
     );
   });
 
   it("não sobra Inter em CSS, no aviso de sessão nem na página offline", () => {
     const arquivos = [
       ...cssDe("src/styles"),
-      ...cssDe("src/analises"),
       "src/lib/session-lifecycle.js",
       "offline.html",
     ];

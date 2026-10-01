@@ -5,9 +5,8 @@
   rota de saúde. Não há regra de negócio aqui — os dados vão do navegador ao
   Supabase, sob RLS. Substitui o antigo servidor Laravel/PHP com o mesmo contrato:
 
-  - páginas: `/`, `/index.html`, `/selecao`, `/selecao.html`, `/auth/callback`,
-    `/auth/callback.html`, idênticas byte
-    a byte ao build e sem cache;
+  - páginas: `/`, `/index.html`, `/auth/callback`, `/auth/callback.html`,
+    idênticas byte a byte ao build e sem cache;
   - `/up` responde 200 (saúde para Docker e CI);
   - estáticos só das pastas e arquivos listados abaixo; todo o resto é 404,
     inclusive `/.env`, pastas e arquivos que começam com ponto;
@@ -46,8 +45,6 @@ export type OpcoesDoServidor = {
 const PAGINAS: ReadonlyMap<string, string> = new Map([
   ["/", "index.html"],
   ["/index.html", "index.html"],
-  ["/selecao", "selecao.html"],
-  ["/selecao.html", "selecao.html"],
   ["/auth/callback", "auth/callback.html"],
   ["/auth/callback.html", "auth/callback.html"],
 ]);

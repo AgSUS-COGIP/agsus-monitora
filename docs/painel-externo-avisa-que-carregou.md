@@ -16,10 +16,8 @@ painel avisa o MONITORA com duas mensagens:
 Painel que não manda nada continua como sempre: o skeleton sai no `load`. Um painel que avisou e
 nunca mandou o "pronto" é descoberto depois de 45 s.
 
-O painel do próprio MONITORA que ainda roda no quadro (Seleção) já manda os
-dois avisos, por `src/analises/analises-loading-feedback.js`: o "pronto" sai quando os dados (ou o
-erro) estão na tela. Entrevistas e Análises curriculares saíram do quadro: são módulos de `src/modulos/`, sem
-avisos (o skeleton é o da própria tela).
+Nenhuma página do próprio MONITORA roda mais no quadro: Recursos, Entrevistas, Análises curriculares e
+Seleção são módulos de `src/modulos/`, sem avisos (o skeleton é o da própria tela).
 
 ## O que colar no Apps Script
 
