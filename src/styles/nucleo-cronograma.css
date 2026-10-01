@@ -26,18 +26,6 @@
   font-size: 17px;
 }
 
-.cronograma-heading p {
-  margin: 0;
-  color: #718198;
-  font-size: 12px;
-}
-
-.cronograma-eyebrow {
-  color: #2563eb;
-  font-size: var(--text-caption);
-  font-weight: 500;
-}
-
 .cronograma-auto-toggle {
   display: inline-flex;
   align-items: center;

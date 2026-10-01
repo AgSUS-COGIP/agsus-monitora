@@ -204,7 +204,7 @@ export function Solicitacoes({ estado, atual }) {
           ) : (
             <tr>
               <td colSpan={5} className="acessos-vazio">
-                Nenhum pedido pendente. Quem pedir acesso aparece aqui.
+                Nenhum pedido pendente.
               </td>
             </tr>
           )}

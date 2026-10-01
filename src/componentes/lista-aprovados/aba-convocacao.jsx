@@ -437,10 +437,6 @@ export function AbaConvocacao({
           />
         </div>
       </div>
-      <div className="table-meta" id="convocacaoAviso">
-        A ordem vem do quadro de vagas de cada edital, configurado no formulário
-        da lista de aprovados.
-      </div>
       <div className="table-wrap" ref={tabela}>
         <div id="convocacaoRows" className="convocacao-grupos">
           {erroAoCarregar ? (

@@ -143,7 +143,7 @@ export function AvisoDeDatasARevisar({ editais }) {
       <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
       <span>
         {editais.length} edita{editais.length === 1 ? "l" : "is"} com data
-        impossível no cronograma (ano digitado errado):{" "}
+        impossível no cronograma:{" "}
         {editais.map((item) => item.edital).join("; ")}. Corrija em Editais.
       </span>
     </p>
@@ -169,12 +169,7 @@ export function ProximasEtapas({ etapas, hoje, aoEscolher }) {
 }
 
 export function LinhaDoTempo({ editalId, etapas, hoje }) {
-  if (!editalId)
-    return (
-      <li className="cal-vazio">
-        Selecione um edital, ou clique numa etapa do calendário.
-      </li>
-    );
+  if (!editalId) return <li className="cal-vazio">Selecione um edital.</li>;
   if (!etapas.length)
     return <li className="cal-vazio">Este edital não tem etapas com data.</li>;
   return etapas.map((etapa, indice) => (

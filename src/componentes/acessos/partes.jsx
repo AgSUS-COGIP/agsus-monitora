@@ -159,7 +159,6 @@ export function CampoMotivo({
         required
         minLength={3}
         maxLength={500}
-        placeholder="Vai para o histórico"
         aria-invalid={erro || undefined}
       />
       {erro ? (
@@ -211,12 +210,11 @@ export function AvisoSemArea({ nome }) {
   );
 }
 
-export function AvisoSemCoordenacao({ nome, nomeDoGrupo }) {
+export function AvisoSemCoordenacao() {
   return (
     <p className="alert warn acessos-sem-area" role="alert">
-      <Icone nome="triangle-alert" tamanho={16} /> O grupo {nomeDoGrupo}{" "}
-      gerencia acessos, e o coordenador gerencia só a própria coordenação.
-      Escolha a coordenação de {nome} (ou outro grupo) para poder salvar.
+      <Icone nome="triangle-alert" tamanho={16} /> Este grupo exige coordenação.
+      Escolha uma (ou outro grupo).
     </p>
   );
 }

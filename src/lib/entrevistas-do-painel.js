@@ -471,13 +471,6 @@ export function dataHoraBR(valor) {
   return `${dois(data.getDate())}/${dois(data.getMonth() + 1)}/${data.getFullYear()} ${dois(data.getHours())}:${dois(data.getMinutes())}`;
 }
 
-export function textoDaUltimaCarga(ultimaCarga) {
-  const quando = dataHoraBR(ultimaCarga?.em);
-  return quando
-    ? `Dados da planilha de entrevistas · última carga ${quando}`
-    : "Dados da planilha de entrevistas · sem carga concluída";
-}
-
 const COLUNAS_DO_CSV = Object.freeze([
   ["Candidato", (e) => e.candidato],
   ["Código", (e) => e.codigo || ""],

@@ -21,7 +21,6 @@ const GRUPOS = Object.freeze([
   {
     id: "equipe",
     titulo: "Equipe responsável",
-    descricao: "Quem mantém o sistema; aparece no pé da barra lateral.",
     icone: "users",
     tom: "petroleo",
     campos: ["cogip_nome", "cogip_funcao", "cogip_dept", "cogip_logo_url"],
@@ -29,7 +28,6 @@ const GRUPOS = Object.freeze([
   {
     id: "rodape",
     titulo: "Rodapé",
-    descricao: "Texto no pé das páginas.",
     icone: "file-text",
     tom: "neutro",
     campos: ["footer_text"],
@@ -43,23 +41,29 @@ function Campo({ estado, chave }) {
   const campo = CAMPOS.get(chave);
   const erro = estado.obter().errosDosCampos.get(chave);
   const id = idDoCampo(chave);
-  const idDaDica = `${id}-dica`;
+  const idDaDica = campo.dica ? `${id}-dica` : "";
   const idDoErro = `${id}-erro`;
+  const descritoPor =
+    [idDaDica, erro ? idDoErro : ""].filter(Boolean).join(" ") || undefined;
   return (
     <div className={campo.largo ? "form-row full" : "form-row"}>
       <div className="config-rotulo">
         <label htmlFor={id}>{campo.rotulo}</label>
-        <button
-          type="button"
-          className="config-dica"
-          aria-label={`Ajuda: ${campo.rotulo}`}
-          data-dica={campo.dica}
-        >
-          <Icone nome="circle-help" tamanho={14} />
-        </button>
-        <span id={idDaDica} className="sr-only">
-          {campo.dica}
-        </span>
+        {campo.dica ? (
+          <>
+            <button
+              type="button"
+              className="config-dica"
+              aria-label={`Ajuda: ${campo.rotulo}`}
+              data-dica={campo.dica}
+            >
+              <Icone nome="circle-help" tamanho={14} />
+            </button>
+            <span id={idDaDica} className="sr-only">
+              {campo.dica}
+            </span>
+          </>
+        ) : null}
       </div>
       <input
         id={id}
@@ -68,7 +72,7 @@ function Campo({ estado, chave }) {
         value={estado.valor(chave)}
         className={erro ? "config-field-invalid" : undefined}
         aria-invalid={erro ? true : undefined}
-        aria-describedby={erro ? `${idDaDica} ${idDoErro}` : idDaDica}
+        aria-describedby={descritoPor}
         onChange={(evento) => estado.mudarCampo(chave, evento.target.value)}
       />
       {erro ? (
@@ -194,7 +198,6 @@ export function SecaoMarca({ estado }) {
                 </span>
                 <div>
                   <h4 id={tituloId}>{grupo.titulo}</h4>
-                  <p>{grupo.descricao}</p>
                 </div>
               </header>
               <div className="config-grupo__campos form-grid">

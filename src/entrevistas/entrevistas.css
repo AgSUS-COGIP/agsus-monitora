@@ -355,9 +355,6 @@
   gap: 2px;
   font-size: 13px;
 }
-.entrevistas-sublista-topo small {
-  color: var(--muted);
-}
 .entrevistas-linhas {
   display: grid;
   gap: 8px;

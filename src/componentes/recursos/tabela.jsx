@@ -207,14 +207,9 @@ export function TabelaDeRecursos({
     <section className="panel table-card" aria-labelledby="recursosFilaTitulo">
       <div className="table-head">
         <div>
-          <span className="eyebrow">Detalhes</span>
           <h2 className="title" id="recursosFilaTitulo">
             Fila de recursos
           </h2>
-          <p className="hint">
-            Abra um registro para consultar o prazo, as etapas (quem fez e
-            quando) e o histórico.
-          </p>
         </div>
         <div className="table-tools">
           <input
@@ -241,8 +236,7 @@ export function TabelaDeRecursos({
                 ? `${formatNumberBR(total)} ${total === 1 ? "recurso" : "recursos"}`
                 : `${formatNumberBR(naFila.length)} de ${formatNumberBR(total)}`
               : "Carregando…"}
-          </span>{" "}
-          · Carregamento contínuo
+          </span>
         </span>
       </div>
       <div className="table-wrap" onScroll={aoRolar}>
@@ -364,7 +358,7 @@ export function TabelaDeRecursos({
           aria-live="polite"
         >
           {faltam > 0
-            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naFila.length)} registros · role a fila para carregar mais`
+            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naFila.length)} registros`
             : `Todos os ${formatNumberBR(naFila.length)} registros do recorte foram carregados`}
         </div>
       ) : null}

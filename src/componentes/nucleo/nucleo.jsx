@@ -221,9 +221,6 @@ export function Nucleo({ estado, agora }) {
             ) : null}
           </div>
         </div>
-        <div className="table-meta">
-          Campos calculados automaticamente não podem ser editados.
-        </div>
         <PainelOperacional estado={estado} nucleo={nucleo} />
         <div className="table-wrap">
           <table>

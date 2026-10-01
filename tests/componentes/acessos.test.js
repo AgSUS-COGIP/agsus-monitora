@@ -449,8 +449,7 @@ describe("Configurações › Acessos", () => {
     const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
     await clicar(document.querySelector(".acessos-nome"));
     const gaveta = document.getElementById("acessosGaveta");
-    const rotulo =
-      "Esta conta é de um setor (e-mail compartilhado)? Transformar em coordenação";
+    const rotulo = "Transformar em coordenação";
     // Não fica no rodapé: lá, só "Desativar acesso".
     const rodape = gaveta.querySelector(".acessos-gaveta-rodape");
     expect(
@@ -744,7 +743,9 @@ describe("Acessos: visão simples, trava de área e convite", () => {
     expect(ana.querySelector(".acessos-chip-grupo").textContent).toBe(
       "Usuário",
     );
-    expect(ana.querySelector(".acessos-grupo small").textContent).toMatch(
+    // A explicação do grupo não ocupa a linha: fica só no title.
+    expect(ana.querySelector(".acessos-grupo small")).toBeNull();
+    expect(ana.querySelector(".acessos-grupo").title).toMatch(
       /^Leitura: vê .*não altera nada\.$/,
     );
     expect(ana.textContent).toContain("Saúde Indígena");
@@ -789,7 +790,13 @@ describe("Acessos: visão simples, trava de área e convite", () => {
     expect(gaveta().querySelector(".acessos-sem-area").textContent).toContain(
       "Sem área e sem coordenação, Conta Admin entra e não vê nada.",
     );
-    expect(gaveta().textContent).toContain(
+    // A explicação do grupo fica no title do select, não no texto da gaveta.
+    expect(
+      gaveta().querySelector('select[aria-label="Grupo de Conta Admin"]').title,
+    ).toBe(
+      "Leitura: vê visão geral, editais e lista de aprovados, não altera nada.",
+    );
+    expect(gaveta().textContent).not.toContain(
       "Leitura: vê visão geral, editais e lista de aprovados, não altera nada.",
     );
     const barra = document.querySelector(".acessos-salvar");
@@ -864,7 +871,9 @@ describe("Acessos: visão simples, trava de área e convite", () => {
         .find((a) => a.textContent.trim() === "Abrir no e-mail")
         .getAttribute("href"),
     ).toMatch(/^mailto:coord@agenciasus\.org\.br\?subject=/);
-    expect(secao.textContent).toContain("O link sozinho não dá acesso");
+    expect(secao.textContent).toContain(
+      "Só funciona com coord@agenciasus.org.br.",
+    );
     // "Desativar acesso" some: para quem nunca entrou, é "Cancelar convite".
     expect(botao("Desativar acesso")).toBeUndefined();
     await clicar(botao("Cancelar convite"));
@@ -1010,7 +1019,7 @@ describe("Acessos: contas desativadas e reativação", () => {
     expect(avisos.join(" ")).toContain(
       "Sem área e sem coordenação, Caio entra e não vê nada.",
     );
-    expect(avisos.join(" ")).toContain("O grupo Coordenador gerencia acessos");
+    expect(avisos.join(" ")).toContain("Este grupo exige coordenação.");
     expect(botaoNo(modal(), "Reativar").disabled).toBe(true);
     await escolher(
       document.getElementById("acessosReativarCoordenacao"),

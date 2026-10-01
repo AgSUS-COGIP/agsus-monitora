@@ -113,11 +113,12 @@ afterEach(async () => {
 });
 
 describe("cabeçalho da seção", () => {
-  it("mostra o nome e a descrição da seção aberta, sem o cabeçalho repetido", async () => {
+  it("mostra só o nome da seção aberta, sem descrição nem cabeçalho repetido", async () => {
     await montar();
     const cabecalho = document.querySelector(".config-cabecalho");
     expect(cabecalho.querySelector("h2").textContent).toBe("Marca");
-    expect(cabecalho.textContent).toContain(
+    expect(cabecalho.querySelector("p")).toBeNull();
+    expect(cabecalho.textContent).not.toContain(
       "Nomes, versão e identidade que aparecem em todo o sistema.",
     );
     expect(document.body.textContent).not.toContain("Ajustes do sistema");

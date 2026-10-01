@@ -19,7 +19,6 @@ import {
   filtrarEntrevistas,
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
-  textoDaUltimaCarga,
 } from "../../lib/entrevistas-do-painel.js";
 import {
   alternarTemaDoPainel,
@@ -75,7 +74,7 @@ function textoDoStatus(e) {
   if (e.atualizando) return "Atualizando...";
   const carga = dataHoraBR(e.dados?.ultimaCarga?.em);
   return carga
-    ? `Última carga em ${carga}`
+    ? `Carga ${carga}`
     : `Atualizado em ${dataHoraBR(e.carregadoEm)}`;
 }
 
@@ -166,7 +165,6 @@ export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
   );
   const ativos = filtrosAtivos(filtros, opcoes);
   const aberta = e.gaveta ? entrevistas.find((x) => x.id === e.gaveta) : null;
-  const textoDaCarga = textoDaUltimaCarga(dados?.ultimaCarga);
   const vazio = carregado && !entrevistas.length;
 
   const alternarFiltro = (campo, valor) =>
@@ -181,13 +179,7 @@ export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
     <>
       <div className="shell">
         <Topo
-          subtitulo={`${nomeDaArea} · ${
-            visao === "resultados"
-              ? "Resultado das entrevistas dos candidatos"
-              : visao === "conduzir"
-                ? "Configuração, convocação e notas por edital"
-                : "Roteiros de entrevista"
-          }`}
+          subtitulo={nomeDaArea}
           status={textoDoStatus(e)}
           escuro={escuro}
           aoTema={() => setEscuro(alternarTemaDoPainel())}
@@ -248,11 +240,7 @@ export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
                 aoFiltrar={alternarFiltro}
                 aoAbrirSemEntrevista={estado.abrirSemEntrevista}
               />
-              <Recorte
-                ativos={ativos}
-                textoDaCarga={textoDaCarga}
-                carregado={carregado}
-              />
+              <Recorte ativos={ativos} />
               <Graficos
                 entrevistas={filtradas}
                 criterios={criterios}

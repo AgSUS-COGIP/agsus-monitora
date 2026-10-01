@@ -97,14 +97,9 @@ export function TabelaDeEntrevistas({
     >
       <div className="table-head">
         <div>
-          <span className="eyebrow">Detalhes</span>
           <h2 className="title" id="entrevistasTabelaTitulo">
             Entrevistas
           </h2>
-          <p className="hint">
-            Abra um registro para ver a nota por critério e o caminho do
-            candidato: análise curricular, entrevista e recurso.
-          </p>
         </div>
         <div className="table-tools">
           <input
@@ -222,7 +217,7 @@ export function TabelaDeEntrevistas({
           aria-live="polite"
         >
           {faltam > 0
-            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros · role a tabela para carregar mais`
+            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros`
             : `Todos os ${formatNumberBR(naTabela.length)} registros do recorte foram carregados`}
         </div>
       ) : null}

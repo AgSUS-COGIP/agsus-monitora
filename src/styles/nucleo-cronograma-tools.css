@@ -13,21 +13,10 @@
   gap: 12px;
   margin-bottom: 11px;
 }
-.cronograma-copy-heading span {
-  display: block;
-  font-size: var(--text-caption);
-  font-weight: 850;
-  color: #3974a8;
-}
 .cronograma-copy-heading strong {
   display: block;
   margin: 2px 0 3px;
   color: #173b60;
-}
-.cronograma-copy-heading small {
-  display: block;
-  color: #6f8296;
-  line-height: 1.4;
 }
 .cronograma-copy-controls {
   display: grid;
@@ -158,9 +147,6 @@ html[data-theme="dark"] .cronograma-copy-box {
 }
 html[data-theme="dark"] .cronograma-copy-heading strong {
   color: #edf6ff;
-}
-html[data-theme="dark"] .cronograma-copy-heading small {
-  color: #9fb2c4;
 }
 html[data-theme="dark"] .cronograma-copy-controls select {
   background: #0d2032;

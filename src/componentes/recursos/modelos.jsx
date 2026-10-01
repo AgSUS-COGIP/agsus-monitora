@@ -298,17 +298,10 @@ export function PainelDeModelos({ estado }) {
       cartaoClassName="analises-drawer"
     >
       <TopoDaGaveta
-        sobretitulo="Administração de Recursos"
         titulo="Modelos de resposta"
         tituloId="recursosModelosTitulo"
         rotuloDoFechar="Fechar modelos de resposta"
         aoFechar={estado.fecharModelos}
-        resumo={
-          <span>
-            <i className="fa-solid fa-code-branch" aria-hidden="true" />
-            Editar grava uma versão nova; as respostas guardam a versão usada.
-          </span>
-        }
       />
       <div id="analisesDrawerBody">
         <div className="detail-shell">

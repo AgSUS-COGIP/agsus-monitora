@@ -114,11 +114,7 @@ function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
     <section id="cronogramaCopyBox" className="cronograma-copy-box">
       <div className="cronograma-copy-heading">
         <div>
-          <span>Reaproveitamento</span>
           <strong>Copiar cronograma de outro edital</strong>
-          <small>
-            Serão copiadas somente atividades, datas e observações das etapas.
-          </small>
         </div>
       </div>
       <div className="cronograma-copy-controls">
@@ -229,12 +225,8 @@ function LoteDeDatas({ aberto, aoFechar, aoAplicar, campo }) {
     >
       <div className="cronograma-bulk-head">
         <div>
-          <span className="cronograma-eyebrow">Preenchimento recomendado</span>
           <h5>Colar datas do cronograma</h5>
-          <p>
-            Cole uma data ou intervalo por linha, seguindo a ordem das
-            atividades do modelo.
-          </p>
+          <p>Uma data ou intervalo por linha.</p>
         </div>
         <button
           id="cronogramaBulkClose"
@@ -321,9 +313,7 @@ function HistoricoDoCronograma({ historico }) {
             </article>
           ))
         ) : (
-          <div className="cronograma-history-empty">
-            O histórico aparecerá após o primeiro salvamento.
-          </div>
+          <div className="cronograma-history-empty">Sem histórico.</div>
         )}
       </div>
     </section>
@@ -404,14 +394,7 @@ export function EditorDeCronograma({
     <section id="cronogramaEditor" className="cronograma-editor full">
       <div className="cronograma-heading">
         <div>
-          <span className="cronograma-eyebrow">
-            Automação de acompanhamento
-          </span>
           <h4>Cronograma do edital</h4>
-          <p>
-            Cadastre as etapas manualmente ou use o modelo padrão. Status e
-            etapa serão calculados pelas datas salvas.
-          </p>
         </div>
         <label className="cronograma-auto-toggle">
           <input
@@ -502,14 +485,6 @@ export function EditorDeCronograma({
         aoFechar={() => setLoteAberto(false)}
         aoAplicar={aplicarLote}
       />
-
-      <div className="cronograma-view-hint">
-        <i className="fa-solid fa-calendar-days" aria-hidden="true" />
-        <span>
-          Este é o cronograma oficial do edital. Para consultá-lo novamente,
-          abra o edital pelo botão <strong>Editar</strong>.
-        </span>
-      </div>
 
       <div className="cronograma-table-wrap" ref={tabela}>
         <table className="cronograma-table">
@@ -627,7 +602,7 @@ export function EditorDeCronograma({
           <label htmlFor="mEtapaOverride">Etapa manual excepcional</label>
           <input
             id="mEtapaOverride"
-            placeholder="Use somente quando o cronograma não refletir a situação real"
+            placeholder="Só em exceção"
             value={c.etapaExcepcional}
             onChange={(evento) =>
               mudar({ etapaExcepcional: evento.target.value })
@@ -682,10 +657,8 @@ export function EditorDeCronograma({
       <section className="cronograma-governance">
         <div className="cronograma-governance-heading">
           <div>
-            <span>Governança</span>
             <strong>Registro da alteração</strong>
           </div>
-          <small>O motivo será armazenado no histórico do edital.</small>
         </div>
         <div className="cronograma-governance-grid">
           <div className="form-row">
@@ -694,7 +667,7 @@ export function EditorDeCronograma({
               id="mCronogramaMotivo"
               rows={2}
               maxLength={500}
-              placeholder="Ex.: cadastro inicial, ajuste de datas ou atualização conforme publicação"
+              placeholder="Ex.: ajuste de datas"
               value={c.motivo}
               onChange={(evento) => mudar({ motivo: evento.target.value })}
             />

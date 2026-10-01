@@ -13,24 +13,6 @@ export const RESOURCES = Object.freeze([
   ["acessos", "Gestão de acessos"],
 ]);
 
-/** O que cada nível libera em cada módulo, em uma frase (tela de grupos). */
-export const DESCRICOES_DOS_MODULOS = Object.freeze({
-  dashboard: "Mapa e indicadores da Saúde Indígena.",
-  analises: "Painel de análises curriculares.",
-  nucleo: "Editais: consultar; Editor cadastra e edita editais e cronogramas.",
-  calendario: "Cronograma dos editais; Editor altera etapas.",
-  aprovados:
-    "Lista de aprovados; Editor muda status; Administrador desfaz status e anexa documentos.",
-  entrevistas: "Painel das entrevistas por área (somente consulta).",
-  recursos: "Recursos dos candidatos por área; Editor registra a análise.",
-  selecao: "Funil da seleção por vaga, por área (somente consulta).",
-  importacao:
-    "Importar listas e configurar convocação; Administrador substitui listas.",
-  paineis: "Abrir os painéis externos liberados à pessoa.",
-  configuracoes: "Marca, textos, aparência e operação do sistema.",
-  acessos: "Gerenciar os acessos da própria coordenação.",
-});
-
 export const LEVELS = Object.freeze([
   ["sem_acesso", "Sem acesso"],
   ["leitor", "Leitor"],

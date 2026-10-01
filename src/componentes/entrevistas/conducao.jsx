@@ -158,7 +158,7 @@ function FormularioDeConfiguracao({
               ? "Já há notas lançadas: o roteiro não pode mais ser trocado."
               : escolhido
                 ? `${textoDaPontuacao(escolhido)} · ${escolhido.competencias?.length ?? 0} competências`
-                : "Escolher o roteiro preenche a convocação e a banca com o padrão dele."
+                : undefined
           }
         >
           <select
@@ -318,7 +318,7 @@ function FormularioDeConfiguracao({
                     dica={
                       a.perfil && a.perfil === dados.meu_perfil
                         ? "Ligado ao seu perfil"
-                        : "Para o próprio avaliador lançar as notas"
+                        : undefined
                     }
                   >
                     <input
@@ -379,7 +379,7 @@ function FormularioDeConfiguracao({
             <button
               type="button"
               className="btn secondary small"
-              title="Acrescenta as linhas que faltam para a composição da banca"
+              title="Completar banca"
               onClick={() =>
                 mudar({
                   avaliadores: completarMembrosPelaComposicao(
@@ -394,10 +394,6 @@ function FormularioDeConfiguracao({
             </button>
           ) : null}
         </div>
-        <small className="entrevistas-dica">
-          Quem sai da lista deixa a banca (as notas que já deu ficam no
-          histórico).
-        </small>
       </div>
 
       {tentou && quantos ? (
@@ -522,7 +518,7 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
         <Campo
           rotulo="Motivo"
           obrigatorio
-          dica="Fica no histórico da convocação (3 a 500 caracteres)."
+          dica="3 a 500 caracteres"
           erro={erro}
           largo
         >
@@ -581,10 +577,6 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
           <h2 className="title" id="entrevistasPasso2">
             Convocação
           </h2>
-          <p className="hint">
-            Aprovados na análise curricular, na ordem de cada vaga. A regra da
-            configuração marca a sugestão; ajuste e convoque.
-          </p>
         </div>
         <span className="badge neutro">
           {totalConvocados} {totalConvocados === 1 ? "convocado" : "convocados"}
@@ -802,11 +794,6 @@ function PassoDaFicha({ dados, aoAbrir }) {
           <h2 className="title" id="entrevistasPasso3">
             Ficha de notas
           </h2>
-          <p className="hint">
-            Abra um convocado para lançar o comparecimento e as notas. O
-            resultado é recalculado pelo banco a cada gravação e aparece em
-            “Resultados”.
-          </p>
         </div>
       </div>
       {dados.convocados.length ? (
@@ -1033,21 +1020,10 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
       >
         <div className="entrevistas-passo-topo">
           <div>
-            <span className="eyebrow">Conduzir entrevistas</span>
             <h2 className="title" id="entrevistasEditalTitulo">
               Edital
             </h2>
           </div>
-          {dados ? (
-            <span
-              className={classes(
-                "badge",
-                dados.pode_editar ? "aprovado" : "neutro",
-              )}
-            >
-              {dados.pode_editar ? "Você edita" : "Somente consulta"}
-            </span>
-          ) : null}
         </div>
         <div className="entrevistas-filtros">
           <Campo rotulo="Edital da área" largo>
@@ -1098,7 +1074,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
                 })
               }
             />{" "}
-            Mostrar todos os editais da área (só administrador global)
+            Mostrar todos os editais da área
           </label>
         ) : null}
         {editais.admin ? (

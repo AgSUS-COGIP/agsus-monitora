@@ -19,24 +19,11 @@
   gap: var(--space-4);
   margin-bottom: var(--space-3);
 }
-/* "Acompanhamento operacional": rótulo em sentence case (DS 4), não eyebrow em maiúsculas. */
-.nucleo-operational-heading span {
-  display: block;
-  font-size: var(--text-caption);
-  line-height: var(--leading-caption);
-  font-weight: 500;
-  color: var(--text-secondary);
-}
 .nucleo-operational-heading h3 {
-  margin: 2px 0 3px;
+  margin: 0;
   color: var(--text-primary);
   font-size: var(--text-lg);
   font-weight: 600;
-}
-.nucleo-operational-heading p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-md);
 }
 /* Uma linha quando cabe, quebrando para menos colunas; 2 abaixo de 768px (fim do arquivo). */
 .nucleo-kpi-grid {
@@ -350,11 +337,6 @@
 .nucleo-timeline-card .modal-head {
   align-items: flex-start;
 }
-.nucleo-timeline-eyebrow {
-  font-size: var(--text-caption);
-  font-weight: 500;
-  color: #3577ad;
-}
 .nucleo-timeline-card .modal-head h3 {
   margin: 3px 0;
 }
@@ -586,7 +568,6 @@
   gap: 12px;
   margin-bottom: 11px;
 }
-.cronograma-governance-heading span,
 .cronograma-history-heading span {
   display: block;
   font-size: var(--text-caption);
@@ -597,9 +578,6 @@
 .cronograma-history-heading strong {
   display: block;
   color: #183651;
-}
-.cronograma-governance-heading small {
-  color: #778a9d;
 }
 .cronograma-governance-grid {
   display: grid;

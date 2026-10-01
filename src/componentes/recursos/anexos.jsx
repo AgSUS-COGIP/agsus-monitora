@@ -95,7 +95,7 @@ function LinhaDoAnexo({ estado, recursoId, anexo, podeEditar, acao }) {
         >
           <div className="field">
             <label htmlFor={`recursosMotivoAnexo-${anexo.id}`}>
-              Motivo do arquivamento (o arquivo continua guardado)
+              Motivo do arquivamento
             </label>
             <input
               id={`recursosMotivoAnexo-${anexo.id}`}

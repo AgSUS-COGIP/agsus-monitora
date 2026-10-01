@@ -1017,9 +1017,8 @@ describe("edital sempre na área certa", () => {
     expect($("mUnidadeNova")).not.toBeNull();
     expect($("mUf").readOnly).toBe(false);
     await digitar($("mUnidadeNova"), "Projeto Mais Médicos Especialistas");
-    expect($("mUnidadeNovaAjuda").textContent).toContain(
-      "fica registrada na área Projetos",
-    );
+    // Unidade da própria área: sem aviso.
+    expect($("mUnidadeNovaAjuda")).toBeNull();
     await clicar($("mCronogramaAutomatico"));
     supabase.rpc.mockClear();
     await clicar($("saveEditalBtn"));
