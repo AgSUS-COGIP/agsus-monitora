@@ -110,11 +110,16 @@
   box-shadow: var(--shadow-overlay);
 }
 
-/* ── KPIs: os seis numa fileira em tela larga ────────────────────────── */
+/* ── KPIs: seis numa fileira em tela larga, três por linha no meio (nunca 5 + 1) ── */
 
 @media (min-width: 1280px) {
   .visao-geral-kpis {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@media (min-width: 641px) and (max-width: 1279px) {
+  .visao-geral-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -258,14 +263,18 @@
 
 .visao-geral-status-corpo {
   display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
-  align-items: center;
+  grid-template-columns: minmax(140px, 180px) minmax(0, 1fr);
+  align-items: start;
   gap: var(--space-4);
-  height: 100%;
+}
+/* Até 30 processos: a lista rola dentro do card, ao lado da rosca. */
+.visao-geral-atencao .ui-pendencias {
+  max-height: 360px;
+  overflow-y: auto;
 }
 .visao-geral-rosca {
   position: relative;
-  height: 220px;
+  height: 180px;
 }
 .visao-geral-rosca-centro {
   position: absolute;
