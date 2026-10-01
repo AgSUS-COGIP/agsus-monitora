@@ -1,6 +1,6 @@
 /*
   Painel de seleção (`selecao.html`): o bootstrap, como o do painel de
-  recursos (src/recursos/main.jsx). O desenho é o do painel de análises —
+  análises (src/analises/main.js). O desenho é o do painel de análises —
   selecao.html carrega os mesmos arquivos de src/analises/ e aqui entram,
   na mesma ordem, os que o main de análises importa. Por cima, o ui.css (os
   componentes de src/ui/) e o selecao.css, com o que é só da seleção.

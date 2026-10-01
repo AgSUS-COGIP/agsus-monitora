@@ -57,8 +57,9 @@ import "./styles/modulos-e-manutencao.css";
 import "./styles/saude-das-cargas.css";
 import "./styles/config-apresentacao.css";
 import "./styles/configuracoes.css";
-// Componentes de src/ui/ (por ora, o aviso do ErrorBoundary de src/app/).
+// Componentes de src/ui/ e, depois, o CSS próprio de cada módulo de src/modulos/.
 import "./ui/ui.css";
+import "./modulos/recursos/recursos.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -101,6 +102,8 @@ import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.js
 import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
+import { montarRecursos } from "./modulos/recursos/recursos.jsx";
+import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.jsx";
@@ -180,6 +183,16 @@ window.aprovadosController = montarListaAprovados({
 // Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
 window.calendarioEditaisController = montarCalendarioEditais({
   toast: window.monitoraToast,
+});
+
+/*
+  Recursos dos candidatos: módulo de src/modulos/, na própria <section>. A
+  área é a atual do app; `render()` recarrega a cada abertura (permissões do
+  banco e comemorações relidas).
+*/
+window.recursosController = montarRecursos({
+  toast: window.monitoraToast,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });
 
 // Configurações › Acessos: abre pela seção (config-secoes.js → render()).

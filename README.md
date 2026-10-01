@@ -34,7 +34,7 @@ acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `T
 | Análises | `analises.html` | análises curriculares vindas das planilhas |
 | Seleção | `selecao.html` | funil por vaga (inscritos, aptos, eliminados) |
 | Entrevistas | `entrevistas.html` | resultados, condução (roteiro, convocação, banca, notas) e roteiros |
-| Recursos | `recursos.html` | recursos dos candidatos |
+| Recursos | `index.html` (`src/modulos/recursos/`) | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos |
 | Lista de aprovados | `index.html` (`src/componentes/lista-aprovados/`) | aprovados e convocação |
 | Acessos | `index.html` (`src/componentes/acessos/`) | convites, grupos, contas desativadas e reativação |
 
@@ -107,7 +107,7 @@ Escolha o caminho conforme o que você vai fazer:
 | **D. Docker** | `docker compose up --build -d` | http://127.0.0.1:8000 | subir como em produção, isolado da máquina |
 
 As páginas existem em todos os caminhos: `/` (painel principal), `/analises.html`,
-`/selecao.html`, `/entrevistas.html`, `/recursos.html` e `/auth/callback.html` (retorno do
+`/selecao.html`, `/entrevistas.html` e `/auth/callback.html` (retorno do
 login).
 
 As rotas `/api/*` (AYA, proxies da FUNAI e leitura do PDF de anexos) **só existem na Vercel**.
@@ -166,13 +166,13 @@ Leva poucos segundos. Os limites do orçamento podem ser ajustados por variável
 ```text
 dist/
 ├── index.html, analises.html, selecao.html,
-│   entrevistas.html, recursos.html, auth/callback.html   as páginas (entradas do Vite)
+│   entrevistas.html, auth/callback.html   as páginas (entradas do Vite)
 ├── assets/          JS e CSS com hash no nome + tudo de public/assets/
 ├── data/            JSON geográfico de public/data/ (terras indígenas, lotações)
 ├── icons/, manifest.webmanifest, offline.html, sw.js, sw-policy.js   PWA
 ```
 
-- O JS é dividido por página (`main`, `analises`, `selecao`, `entrevistas`, `recursos`) e pacotes de terceiros (`vendor-supabase`,
+- O JS é dividido por página (`main`, `analises`, `selecao`, `entrevistas`) e pacotes de terceiros (`vendor-supabase`,
   `vendor-react`, `vendor-charts` e `vendor`), definidos em `vite.config.js`.
 - **Tudo em `public/` é copiado como está e fica público.** Não coloque ali nada que não possa ser
   baixado por qualquer pessoa.
@@ -249,7 +249,7 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 .
 ├── index.html              painel principal
 ├── analises.html           painel de análises
-├── selecao.html, entrevistas.html, recursos.html   páginas dos módulos
+├── selecao.html, entrevistas.html   páginas dos módulos (ainda no quadro)
 ├── auth/callback.html      retorno do login
 ├── DESIGN.md               guia de interface (tokens, componentes, contraste)
 ├── src/
@@ -258,7 +258,7 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 │   ├── componentes/        telas em React (menu lateral, editais, entrevistas, acessos…)
 │   ├── modules/            funcionalidades de tela legadas, um arquivo por feature
 │   ├── styles/             CSS do painel principal
-│   ├── analises/, selecao/, entrevistas/, recursos/   entradas e CSS de cada página
+│   ├── analises/, selecao/, entrevistas/   entradas e CSS de cada página no quadro
 │   └── auth/               callback do login
 ├── api/                    funções serverless da Vercel (AYA, proxies FUNAI, anexos do edital em Python)
 ├── requirements.txt        dependências das funções Python da Vercel
@@ -310,7 +310,7 @@ Não coloque chaves secretas, tokens, senhas ou credenciais no repositório.
 ## Checklist antes de publicar em produção
 
 - O build passou.
-- `index.html`, `analises.html`, `selecao.html`, `entrevistas.html` e `recursos.html` abrem corretamente.
+- `index.html`, `analises.html`, `selecao.html` e `entrevistas.html` abrem corretamente.
 - O login Google funciona para conta autorizada.
 - Usuário sem perfil cai no fluxo de solicitação de acesso.
 - As solicitações aparecem para a administração.

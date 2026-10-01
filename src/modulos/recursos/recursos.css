@@ -1,0 +1,441 @@
+/*
+  O que é só da tela de Recursos (src/modulos/recursos/), só com tokens de
+  src/styles/tokens.css — o tema escuro vem dos próprios tokens
+  (`html[data-theme="dark"]`). Topo, filtros, KPIs, cards de gráfico, fila,
+  gaveta, seções e selos são de src/ui/ (ui.css). Aqui: as marcas das etapas,
+  o tom do prazo, o recorte, as pendências, a lista de etapas e o histórico
+  da gaveta, o formulário, a resposta, os anexos e os modelos.
+
+  Importado pelo src/main.js, depois do ui.css.
+*/
+
+/* Oito KPIs numa fileira em tela larga; abaixo disso, a grade de src/ui/. */
+@media (min-width: 1380px) {
+  .recursos-kpis {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* Filtros: o "Mais opções" e a busca em toda a tela. */
+.ui-grade-de-campos[hidden] {
+  display: none;
+}
+.recursos-contagem-avancada {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-size: var(--text-caption);
+}
+
+/* Recorte ativo e as marcas de prazo do recorte. */
+.recursos-recorte {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+}
+.recursos-recorte-texto {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+}
+.recursos-recorte-marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.recursos-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-success-soft);
+  color: var(--state-success);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.recursos-marca[data-tom="alerta"] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.recursos-marca:not([data-tom]) + .recursos-marca:not([data-tom]) {
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+}
+
+/* Pendências prioritárias: cada uma é um botão que filtra a tela. */
+.recursos-bloco-de-pendencias {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+.recursos-pendencias {
+  display: grid;
+  gap: var(--space-2);
+}
+.recursos-pendencia {
+  display: grid;
+  gap: var(--space-0-5);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.recursos-pendencia[data-tom="perigo"] {
+  border-left-color: var(--state-danger);
+}
+.recursos-pendencia:hover {
+  background: var(--surface-hover);
+}
+.recursos-pendencia.is-ativo {
+  border-color: var(--brand-primary);
+  background: var(--state-info-soft);
+}
+.recursos-pendencia b {
+  font-weight: var(--font-weight-semibold);
+}
+.recursos-pendencia small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.recursos-pendencia-esqueleto {
+  height: 52px;
+}
+
+/* Fila: a linha abre a gaveta. */
+.recursos-linha {
+  cursor: pointer;
+}
+.recursos-linha:focus-visible td {
+  background: var(--state-info-soft);
+}
+.recursos-linha td .ui-selo + .ui-selo,
+.recursos-linha .ui-texto-secundario + .ui-selo {
+  margin-top: var(--space-1-5);
+}
+
+/* Prazo: vencido em vermelho, perto de vencer em âmbar. */
+.recursos-prazo[data-tone="danger"] {
+  color: var(--state-danger);
+  font-weight: var(--font-weight-semibold);
+}
+.recursos-prazo[data-tone="warning"] {
+  color: var(--state-warning);
+  font-weight: var(--font-weight-semibold);
+}
+/* "No prazo" / "Fora do prazo" do recurso decidido, abaixo do prazo. */
+.recursos-no-prazo {
+  display: flex;
+  margin-top: var(--space-1);
+}
+
+/* Etapas na fila: uma bolinha por etapa, cheia quando feita. */
+.recursos-etapas {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+.recursos-etapa-marca {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-control);
+  border-radius: var(--radius-full);
+}
+.recursos-etapa-marca.is-feita {
+  border-color: var(--state-success);
+  background: var(--state-success);
+}
+
+/* Gaveta: o corpo, as etapas com quem e quando, e o histórico. */
+.recursos-corpo {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.recursos-checklist,
+.recursos-historico {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.recursos-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.recursos-check input {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: var(--space-0-5) 0 0;
+  padding: 0;
+  accent-color: var(--state-success);
+}
+.recursos-check span {
+  display: grid;
+  gap: var(--space-0-5);
+}
+.recursos-check small,
+.recursos-historico small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
+}
+.recursos-historico li {
+  display: grid;
+  gap: var(--space-0-5);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-subtle);
+}
+.recursos-destaque {
+  color: var(--state-info);
+}
+.recursos-aviso p {
+  margin: 0 0 var(--space-2);
+}
+.recursos-bloco {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.recursos-exclusao {
+  border-color: var(--state-danger);
+}
+
+/* Formulário (na gaveta). */
+.recursos-formulario-grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.recursos-erro-campo {
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+.recursos-check--campo {
+  align-self: end;
+  min-height: 40px;
+}
+.recursos-busca,
+.recursos-fora {
+  display: grid;
+  gap: var(--space-2);
+}
+.recursos-busca-status {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.recursos-busca-lista {
+  display: grid;
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  list-style: none;
+}
+.recursos-busca-lista li + li {
+  border-top: 1px solid var(--border-subtle);
+}
+.recursos-busca-item {
+  display: grid;
+  gap: var(--space-0-5);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.recursos-busca-item:hover,
+.recursos-busca-item:focus-visible {
+  background: var(--surface-hover);
+}
+.recursos-busca-item b {
+  font-weight: var(--font-weight-semibold);
+}
+.recursos-busca-item small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.recursos-link {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-link);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+html[data-theme="dark"] .recursos-link {
+  color: var(--brand-primary);
+}
+.recursos-escolhido {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--state-success);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.recursos-escolhido-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.recursos-girando {
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-top-color: currentColor;
+  border-radius: var(--radius-full);
+  animation: recursos-girando 0.75s linear infinite;
+}
+@keyframes recursos-girando {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Resposta ao candidato e anexos (gaveta). */
+.recursos-resposta,
+.recursos-anexos,
+.recursos-resposta-editor,
+.recursos-previa,
+.recursos-acoes-da-resposta,
+.recursos-documento,
+.recursos-confirmacao,
+.recursos-anexo-arquivar {
+  display: grid;
+  gap: var(--space-3);
+}
+.recursos-documento {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.recursos-texto-final {
+  max-height: 420px;
+  padding: var(--space-3);
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  line-height: var(--leading-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.recursos-motivo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.recursos-historico-resposta summary,
+.recursos-anexos-arquivados summary {
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+.recursos-historico-resposta .recursos-historico {
+  padding-top: var(--space-2);
+}
+
+/* Anexos (gaveta) e a lista de modelos de resposta. */
+.recursos-lista-de-anexos {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.recursos-anexos-arquivados .recursos-lista-de-anexos {
+  margin-top: var(--space-2);
+}
+.recursos-anexo,
+.recursos-modelo {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.recursos-anexo:not([data-ativo]),
+.recursos-modelo:not([data-ativo]) {
+  background: var(--surface-raised);
+}
+.recursos-anexo-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+}
+.recursos-anexo-nome {
+  display: grid;
+  flex: 1 1 220px;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.recursos-anexo-nome b {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+.recursos-anexo-nome small {
+  font-size: var(--text-caption);
+}
+.recursos-anexo-envio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  align-items: end;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border-control);
+}
+.recursos-marcadores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-1-5);
+}
+
+@media (max-width: 720px) {
+  .recursos-anexo-envio,
+  .recursos-formulario-grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,9 +1,9 @@
 /*
-  O visual comum dos painéis (análises curriculares e recursos).
+  O visual comum dos painéis (análises curriculares, entrevistas e seleção).
 
   Antes, estes blocos eram injetados em <style> por módulos do painel de
-  análises, cada um na sua vez. Agora são CSS de verdade, carregado pelos dois
-  painéis (`analises.html` e `recursos.html`) depois dos outros arquivos de
+  análises, cada um na sua vez. Agora são CSS de verdade, carregado pelos
+  painéis (`analises.html`, `entrevistas.html` e `selecao.html`) depois dos outros arquivos de
   src/analises/, na mesma ordem em que os blocos entravam na página:
 
   1. resumo e barra dos filtros (vinha de analises-filter-layout.js);

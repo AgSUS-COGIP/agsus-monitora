@@ -12,7 +12,10 @@ import {
   Gaveta,
   GradeDeKpis,
   Kpi,
+  Kv,
   PainelDeFiltros,
+  PainelNoQuadro,
+  Secao,
   Selo,
   TabelaInfinita,
   TopoDoPainel,
@@ -21,13 +24,17 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 
 /*
   Os componentes de src/ui/ (o design system): render básico e a interação
-  principal de cada um. O DOM (ids, classes) é contrato do CSS de
-  src/analises/ e dos testes dos painéis — por isso é conferido aqui.
+  principal de cada um, nos dois modos. Dentro do app (o padrão): classes
+  `.ui-*` e nenhum id fixo. No quadro (<PainelNoQuadro>, Entrevistas e
+  Seleção, ainda em iframe): a marcação do painel de análises, cujos ids e
+  classes são contrato do CSS de src/analises/ — por isso conferidos aqui.
 */
 
 let raiz = null;
 
-async function montar(elemento) {
+const noQuadro = (elemento) => h(PainelNoQuadro, null, elemento);
+
+async function montarNoApp(elemento) {
   document.body.innerHTML = `<div id="raiz"></div>`;
   await act(async () => {
     raiz = createRoot(document.getElementById("raiz"));
@@ -35,8 +42,11 @@ async function montar(elemento) {
   });
 }
 
+/* Os blocos abaixo, até "Dentro do app", são o modo no quadro. */
+const montar = (elemento) => montarNoApp(noQuadro(elemento));
+
 async function redesenhar(elemento) {
-  await act(async () => raiz.render(elemento));
+  await act(async () => raiz.render(noQuadro(elemento)));
 }
 
 afterEach(async () => {
@@ -495,5 +505,241 @@ describe("Aviso, Campo, Selo e estados", () => {
     expect(blocos[0].textContent).toBe("Nada aqui.");
     expect(blocos[1].textContent).toBe("Carregando…");
     expect(blocos[2].className).toBe("analises-detail-analysis");
+  });
+});
+
+describe("Dentro do app (sem PainelNoQuadro): classes .ui-* e nenhum id fixo", () => {
+  const IDS_DO_QUADRO = [
+    "topbar",
+    "updatedText",
+    "themeBtn",
+    "fullBtn",
+    "refreshBtn",
+    "exportBtn",
+    "filterSummary",
+    "toggleFiltersBtn",
+    "clearBtn",
+    "filtersBody",
+    "filterChips",
+    "tableSearch",
+    "tableInfo",
+    "pageInfo",
+    "tableBody",
+  ];
+  const idsDoQuadroNaTela = () =>
+    IDS_DO_QUADRO.filter((id) => document.getElementById(id));
+
+  it("TopoDoPainel: só status e ações; sem tema e tela cheia, sem esses botões", async () => {
+    const aoAtualizar = vi.fn();
+    const aoExportar = vi.fn();
+    await montarNoApp(
+      h(
+        TopoDoPainel,
+        { status: "Atualizado em 01/10/2026", aoAtualizar, aoExportar },
+        h("button", { id: "extra" }, "Extra"),
+      ),
+    );
+    const topo = $("header.ui-topo");
+    expect(topo).not.toBeNull();
+    expect(topo.querySelector("h1, h2")).toBeNull();
+    expect($(".ui-topo .status-discreto").textContent).toBe(
+      "Atualizado em 01/10/2026",
+    );
+    expect($('[aria-label="Usar tema escuro"]')).toBeNull();
+    expect($('[aria-label="Alternar tela cheia"]')).toBeNull();
+    const exportar = $('[data-acao="exportar"]');
+    expect(exportar.nextElementSibling.id).toBe("extra");
+    await clicar($('[data-acao="atualizar"]'));
+    await clicar(exportar);
+    expect(aoAtualizar).toHaveBeenCalledTimes(1);
+    expect(aoExportar).toHaveBeenCalledTimes(1);
+    expect(idsDoQuadroNaTela()).toEqual([]);
+  });
+
+  it("TopoDoPainel: com título e tema pedidos, eles aparecem", async () => {
+    const aoTema = vi.fn();
+    await montarNoApp(
+      h(TopoDoPainel, {
+        titulo: "Tela",
+        subtitulo: "SEDE",
+        status: "",
+        escuro: true,
+        aoTema,
+        aoAtualizar: () => {},
+      }),
+    );
+    expect($(".ui-topo-titulo h2").textContent).toBe("Tela");
+    expect($(".ui-topo-titulo p").textContent).toBe("SEDE");
+    await clicar($('[aria-label="Usar tema claro"]'));
+    expect(aoTema).toHaveBeenCalledTimes(1);
+  });
+
+  it("PainelDeFiltros e chips: card .ui-filtros, recolhe, limpa", async () => {
+    const aoLimpar = vi.fn();
+    const aoTirar = vi.fn();
+    await montarNoApp(
+      h(
+        PainelDeFiltros,
+        { idDoTitulo: "t", quantos: 1, aoLimpar },
+        h(
+          ChipsDeFiltro,
+          null,
+          h(ChipDeFiltro, { rotulo: "Edital", aoTirar }, "1"),
+        ),
+      ),
+    );
+    const painel = $("section.ui-card.ui-filtros");
+    expect(painel.querySelector("h2.ui-titulo").textContent).toBe(
+      "Refinar resultados",
+    );
+    expect($(".ui-filtros-resumo.tem-filtros").textContent).toContain(
+      "1 filtro adicional",
+    );
+    await clicar($(".ui-chips .ui-chip"));
+    expect(aoTirar).toHaveBeenCalledTimes(1);
+    await clicar($('[data-acao="recolher-filtros"]'));
+    expect(painel.classList.contains("is-recolhido")).toBe(true);
+    expect($(".ui-filtros-corpo").hidden).toBe(true);
+    await clicar($('[data-acao="limpar-filtros"]'));
+    expect(aoLimpar).toHaveBeenCalledTimes(1);
+    expect(idsDoQuadroNaTela()).toEqual([]);
+    expect($(".panel, .filter-panel, .chip-filter")).toBeNull();
+  });
+
+  it("Kpi: card compacto com tile no tom da cor, filtro e skeleton ao carregar", async () => {
+    const aoClicar = vi.fn();
+    await montarNoApp(
+      h(
+        GradeDeKpis,
+        { rotulo: "Indicadores" },
+        h(Kpi, {
+          chave: "a",
+          cor: "k-red",
+          icone: "fa-clock",
+          rotulo: "Atrasados",
+          valor: "4",
+          ativo: true,
+          aoClicar,
+        }),
+        h(Kpi, { chave: "b", rotulo: "Total", valor: "9", carregando: true }),
+      ),
+    );
+    expect($("section.ui-kpis")).not.toBeNull();
+    const a = $('[data-kpi="a"]');
+    expect(a.className).toBe("ui-kpi ui-kpi-clicavel is-ativo");
+    expect(a.dataset.tom).toBe("perigo");
+    expect(a.querySelector(".ui-kpi-icone i").className).toContain("fa-clock");
+    expect(a.querySelector(".ui-kpi-valor").textContent).toBe("4");
+    const botao = a.querySelector("button.ui-kpi-alvo");
+    expect(botao.getAttribute("aria-pressed")).toBe("true");
+    await clicar(botao);
+    expect(aoClicar).toHaveBeenCalledTimes(1);
+    const b = $('[data-kpi="b"]');
+    expect(b.dataset.tom).toBe("info");
+    expect(b.getAttribute("aria-busy")).toBe("true");
+    expect(b.querySelector(".ui-kpi-valor.ui-esqueleto").textContent).toBe("");
+    expect($(".kpi, .kpis")).toBeNull();
+  });
+
+  it("CardDeGrafico, Selo, Kv, Secao e estados com as classes .ui-*", async () => {
+    await montarNoApp(
+      h(
+        "div",
+        null,
+        h(CardDeGrafico, { titulo: "G", altura: "short", carregando: true }),
+        h(Selo, { tom: "aprovado" }, "No prazo"),
+        h(
+          Secao,
+          { icone: "fa-list-check", titulo: "Etapas", secao: "e" },
+          h(Kv, { rotulo: "Nota" }, ""),
+        ),
+        h(EstadoVazio, null, "Nada."),
+        h(Carregando),
+      ),
+    );
+    expect(
+      $("article.ui-card.ui-card-de-grafico h2.ui-titulo").textContent,
+    ).toBe("G");
+    expect($(".ui-grafico.is-carregando").dataset.altura).toBe("short");
+    expect($(".ui-selo").dataset.tom).toBe("sucesso");
+    expect($(".ui-secao .ui-secao-topo").textContent).toBe("Etapas");
+    expect($(".ui-kv[data-empty] .ui-kv-valor").textContent).toBe("—");
+    expect(
+      [...document.querySelectorAll(".ui-vazio")].map((e) => e.textContent),
+    ).toEqual(["Nada.", "Carregando…"]);
+    expect(
+      $(".panel, .badge, .kv, .empty, .analises-detail-section"),
+    ).toBeNull();
+  });
+
+  it("TabelaInfinita: .ui-tabela, sem ids, e avisa agsus:content-updated ao desenhar", async () => {
+    const avisos = vi.fn();
+    document.addEventListener("agsus:content-updated", avisos);
+    await montarNoApp(
+      h(TabelaInfinita, {
+        idDoTitulo: "tt",
+        titulo: "Fila",
+        busca: { placeholder: "Buscar", rotulo: "Buscar na fila" },
+        carregado: true,
+        itens: [{ nome: "Ana" }, { nome: "Bia" }],
+        filtrarPelaBusca: (itens, busca) =>
+          itens.filter((i) => i.nome.includes(busca)),
+        colunas: [{ rotulo: "Nome" }],
+        linha: (item) => h("tr", { key: item.nome }, h("td", null, item.nome)),
+        informacao: (quantos) => `${quantos}`,
+        total: 2,
+        vazio: "Nada.",
+      }),
+    );
+    expect($("section.ui-card.ui-tabela h2.ui-titulo").textContent).toBe(
+      "Fila",
+    );
+    expect(
+      document.querySelectorAll(".ui-tabela-rolagem tbody tr"),
+    ).toHaveLength(2);
+    expect($("[data-tabela-mostrando]").textContent).toBe(
+      "Mostrando 2 de 2 registros",
+    );
+    expect(avisos).toHaveBeenCalled();
+    await digitar($(".ui-tabela-busca"), "Bi");
+    expect($("[data-tabela-contagem]").textContent).toBe("1");
+    expect($(".ui-tabela-status").textContent).toBe(
+      "Todos os 1 registros do recorte foram carregados",
+    );
+    expect(idsDoQuadroNaTela()).toEqual([]);
+    document.removeEventListener("agsus:content-updated", avisos);
+  });
+
+  it("Gaveta: encostada à direita (.ui-gaveta), fecha pelo X e pelo Esc", async () => {
+    const aoFechar = vi.fn();
+    await montarNoApp(
+      h(Gaveta, {
+        id: "g",
+        tituloId: "gt",
+        aoFechar,
+        sobretitulo: "Recurso nº 1",
+        titulo: "Fulana",
+        resumo: h("span", null, "Em análise"),
+        rotuloDoFechar: "Fechar detalhe",
+      }),
+    );
+    expect(document.getElementById("g").className).toBe(
+      "modal ui-gaveta-fundo show",
+    );
+    expect(
+      $(".modal-card.ui-gaveta .ui-gaveta-topo .ui-gaveta-sobretitulo")
+        .textContent,
+    ).toBe("Recurso nº 1");
+    expect($(".ui-gaveta-resumo").textContent).toBe("Em análise");
+    await clicar($('.ui-gaveta-fechar[aria-label="Fechar detalhe"]'));
+    await teclar(document, "Escape");
+    expect(aoFechar).toHaveBeenCalledTimes(2);
+    expect($(".analises-drawer, .eyebrow")).toBeNull();
+  });
+
+  it("Campo: .ui-campo no lugar de .field", async () => {
+    await montarNoApp(h(Campo, { rotulo: "Busca" }, h("input", null)));
+    expect($(".ui-campo label").htmlFor).toBe($("input").id);
+    expect($(".field")).toBeNull();
   });
 });

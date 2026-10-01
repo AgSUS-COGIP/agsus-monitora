@@ -17,7 +17,7 @@ import {
   alternarTemaDoPainel,
   temaEscuroDoPainel,
 } from "../../lib/tema-do-painel.js";
-import { EstadoVazio } from "../../ui/index.js";
+import { EstadoVazio, PainelNoQuadro } from "../../ui/index.js";
 import { criarAvisoDoPainel } from "../aviso-do-painel.js";
 import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import {
@@ -214,7 +214,14 @@ export function montarPainelDeSelecao({
   const raizDoReact = raiz
     ? montarModulo(
         raiz,
-        <PainelDeSelecao estado={estado} area={area} nomeDaArea={nomeDaArea} />,
+        // Ainda no quadro (iframe): src/ui/ desenha a marcação do painel de análises.
+        <PainelNoQuadro>
+          <PainelDeSelecao
+            estado={estado}
+            area={area}
+            nomeDaArea={nomeDaArea}
+          />
+        </PainelNoQuadro>,
         { flushSync: true, nome: "o painel de seleção" },
       ).raiz
     : null;

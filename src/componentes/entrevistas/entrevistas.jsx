@@ -17,7 +17,7 @@ import {
   alternarTemaDoPainel,
   temaEscuroDoPainel,
 } from "../../lib/tema-do-painel.js";
-import { EstadoVazio } from "../../ui/index.js";
+import { EstadoVazio, PainelNoQuadro } from "../../ui/index.js";
 import { criarAvisoDoPainel } from "../aviso-do-painel.js";
 import { VisaoDeConducao } from "./conducao.jsx";
 import { criarEstadoDaConducao } from "./estado-da-conducao.js";
@@ -300,12 +300,15 @@ export function montarPainelDeEntrevistas({
   const raizDoReact = raiz
     ? montarModulo(
         raiz,
-        <PainelDeEntrevistas
-          estado={estado}
-          conducao={conducao}
-          area={area}
-          nomeDaArea={nomeDaArea}
-        />,
+        // Ainda no quadro (iframe): src/ui/ desenha a marcação do painel de análises.
+        <PainelNoQuadro>
+          <PainelDeEntrevistas
+            estado={estado}
+            conducao={conducao}
+            area={area}
+            nomeDaArea={nomeDaArea}
+          />
+        </PainelNoQuadro>,
         { flushSync: true, nome: "o painel de entrevistas" },
       ).raiz
     : null;

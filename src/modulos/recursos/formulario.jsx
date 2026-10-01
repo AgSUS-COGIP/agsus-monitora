@@ -14,13 +14,20 @@ import {
   recursoDuplicado,
   SITUACOES,
 } from "../../lib/recursos-dos-candidatos.js";
-import { Aviso, Campo, Modal, TopoDaGaveta } from "../../ui/index.js";
-import { Kv, nota } from "./partes.jsx";
+import {
+  Aviso,
+  Campo,
+  classes,
+  Kv,
+  Modal,
+  TopoDaGaveta,
+  usarClassesDaGaveta,
+} from "../../ui/index.js";
+import { nota } from "./partes.jsx";
 
 /*
-  Cadastro e edição de recurso, na gaveta do painel (`.analises-drawer`),
-  com os campos do painel de análises (`.field`: rótulo em cima, controle
-  embaixo).
+  Cadastro e edição de recurso, numa gaveta (src/ui/, `usarClassesDaGaveta`),
+  com os campos de src/ui/ (Campo: rótulo em cima, controle embaixo).
 
   Cadastro: edital (só os da área atual) → origem → candidato, buscado nas
   análises curriculares daquele edital (a base de nomes das três origens). Ao
@@ -40,7 +47,7 @@ const ESPERA_DA_BUSCA_MS = 300;
 function ResumoDoCandidato({ analise }) {
   return (
     <div
-      className="analises-detail-section-grid recursos-resumo"
+      className="ui-kv-grade recursos-resumo"
       aria-label="Dados da análise do candidato"
     >
       <Kv rotulo="Cargo">{analise.cargo}</Kv>
@@ -182,6 +189,7 @@ export function FormularioDoRecurso({
   origens,
 }) {
   const { acao } = useSyncExternalStore(estado.assinar, estado.obter);
+  const gaveta = usarClassesDaGaveta();
   const edicao = Boolean(recurso);
   const [rascunho, setRascunho] = useState(() =>
     edicao ? rascunhoDoRecurso(recurso, detalhe || {}) : RASCUNHO_VAZIO,
@@ -289,8 +297,8 @@ export function FormularioDoRecurso({
       rotuloId="recursosFormularioTitulo"
       aoFechar={estado.fecharFormulario}
       fecharAoClicarFora={false}
-      className="analises-drawer-backdrop recursos-formulario-gaveta"
-      cartaoClassName="analises-drawer recursos-formulario-cartao"
+      className={classes(gaveta.fundo, "recursos-formulario-gaveta")}
+      cartaoClassName={classes(gaveta.cartao, "recursos-formulario-cartao")}
     >
       <form onSubmit={enviar} noValidate>
         <TopoDaGaveta
@@ -301,7 +309,7 @@ export function FormularioDoRecurso({
           aoFechar={estado.fecharFormulario}
         />
         {edicao ? (
-          <div className="analises-drawer-context">
+          <div className="ui-gaveta-contexto">
             <div>
               <small>Candidato</small>
               <strong>{recurso.candidato}</strong>
@@ -330,8 +338,8 @@ export function FormularioDoRecurso({
             </div>
           </div>
         ) : null}
-        <div id="analisesDrawerBody">
-          <div className="detail-shell recursos-formulario">
+        <div className="ui-gaveta-corpo">
+          <div className="recursos-corpo recursos-formulario">
             {edicao ? null : (
               <div className="recursos-formulario-grade">
                 <Campo rotulo="Edital" obrigatorio erro={erro("edital_id")}>
@@ -578,7 +586,7 @@ export function FormularioDoRecurso({
             </div>
           </div>
         </div>
-        <div className="recursos-gaveta-rodape">
+        <div className="ui-gaveta-rodape">
           <button
             type="button"
             className="btn secondary"

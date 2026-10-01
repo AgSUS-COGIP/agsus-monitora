@@ -767,8 +767,9 @@ html[data-theme="dark"] .sidebar {
   `external-clean`, que também escondia a navegação lateral: a sidebar fica, é
   por ela que se volta.
 
-  As páginas com painel do app (`.pagina-do-painel`: Análises curriculares e
-  Recursos) usam o mesmo estado: os dois painéis trazem o próprio cabeçalho.
+  As páginas com painel do app (`.pagina-do-painel`: Análises curriculares,
+  Entrevistas e Seleção) usam o mesmo estado: os painéis trazem o próprio
+  cabeçalho.
 */
 body.external-panel-mode .main > header.top {
   display: none;

@@ -5,7 +5,7 @@ import {
   performExplicitLogout,
   themeControlState,
 } from "../../modules/nielsen-shell-ux.js";
-import { temaEscuro, usarTemaEscuro } from "./usar-ambiente.js";
+import { temaEscuro, usarTemaEscuro } from "../../app/tema.js";
 
 /*
   Rodapé da barra, de cima para baixo: o seletor Claro/Escuro (único controle

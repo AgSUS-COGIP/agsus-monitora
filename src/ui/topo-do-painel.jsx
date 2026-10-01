@@ -1,23 +1,31 @@
 import { useLayoutEffect, useRef } from "react";
+import { usarNoQuadro } from "./no-quadro.jsx";
 
 /*
-  O cabeçalho fixo dos painéis (`.topbar`, desenho do painel de análises):
-  título, subtítulo da área, abas de visão opcionais, a data da última carga
-  discreta (`.status-discreto`) e os botões de tema, tela cheia, atualizar e
-  exportar. Botões próprios do painel entram como filhos, depois de Exportar.
-  Os ids (topbar, updatedText, themeBtn, fullBtn, refreshBtn, exportBtn) são
-  contrato do CSS de src/analises/ e dos testes.
+  O topo de uma tela: a data da última carga, discreta e uma vez só
+  (`.status-discreto`), e as ações (Atualizar, Exportar e os botões da tela,
+  que entram como filhos, depois de Exportar).
+
+  Dentro do app (`.ui-topo`) o título e a área já estão no cabeçalho do app:
+  `titulo` é opcional e, sem ele, o topo é só a faixa de ações. Tema e tela
+  cheia são do app (barra lateral e menu da conta): sem `aoTema` e
+  `aoTelaCheia`, os botões não aparecem.
+
+  No quadro (<PainelNoQuadro>, Entrevistas e Seleção): o cabeçalho fixo do
+  painel de análises (`.topbar`), com título, subtítulo, visões e os botões
+  de tema e tela cheia; os ids (topbar, updatedText, themeBtn, fullBtn,
+  refreshBtn, exportBtn) são contrato do CSS de src/analises/ e dos testes.
 */
 
 /*
-  O `.topbar` é fixo; a altura dele vira `--topbar-height`, que empurra o
-  conteúdo (`.shell`) e o cabeçalho da tabela — como o `setupFixedTopbar` do
-  painel de análises, acompanhando também a quebra de linha dos botões.
+  No quadro, o `.topbar` é fixo; a altura dele vira `--topbar-height`, que
+  empurra o conteúdo (`.shell`) e o cabeçalho da tabela — acompanhando também
+  a quebra de linha dos botões. `ligado` falso não mede nada.
 */
-export function usarAlturaDoTopo(topo) {
+export function usarAlturaDoTopo(topo, ligado = true) {
   useLayoutEffect(() => {
     const barra = topo.current;
-    if (!barra) return undefined;
+    if (!ligado || !barra) return undefined;
     const medir = () =>
       document.documentElement.style.setProperty(
         "--topbar-height",
@@ -31,7 +39,41 @@ export function usarAlturaDoTopo(topo) {
     }
     window.addEventListener("resize", medir);
     return () => window.removeEventListener("resize", medir);
-  }, [topo]);
+  }, [topo, ligado]);
+}
+
+function BotaoDeTema({ escuro, aoTema, id }) {
+  const rotulo = escuro ? "Usar tema claro" : "Usar tema escuro";
+  return (
+    <button
+      type="button"
+      className="btn secondary icon"
+      id={id}
+      title={rotulo}
+      aria-label={rotulo}
+      onClick={aoTema}
+    >
+      <i
+        className={`fa-solid ${escuro ? "fa-sun" : "fa-moon"}`}
+        aria-hidden="true"
+      />
+    </button>
+  );
+}
+
+function BotaoDeTelaCheia({ aoTelaCheia, id }) {
+  return (
+    <button
+      type="button"
+      className="btn secondary icon"
+      id={id}
+      title="Tela cheia"
+      aria-label="Alternar tela cheia"
+      onClick={aoTelaCheia}
+    >
+      <i className="fa-solid fa-expand" aria-hidden="true" />
+    </button>
+  );
 }
 
 /**
@@ -51,49 +93,70 @@ export function TopoDoPainel({
   exportarDesativado,
   children,
 }) {
+  const noQuadro = usarNoQuadro();
   const topo = useRef(null);
-  usarAlturaDoTopo(topo);
-  const rotuloDoTema = escuro ? "Usar tema claro" : "Usar tema escuro";
+  usarAlturaDoTopo(topo, noQuadro);
+
+  if (noQuadro)
+    return (
+      <header className="topbar" id="topbar" ref={topo}>
+        <div className="brand">
+          <div>
+            <h1>{titulo}</h1>
+            <p className="sub">{subtitulo}</p>
+            {visoes}
+          </div>
+        </div>
+        <div className="top-actions">
+          <span id="updatedText" className="status-discreto">
+            {status}
+          </span>
+          <BotaoDeTema escuro={escuro} aoTema={aoTema} id="themeBtn" />
+          <BotaoDeTelaCheia aoTelaCheia={aoTelaCheia} id="fullBtn" />
+          <button
+            type="button"
+            className="btn"
+            id="refreshBtn"
+            disabled={atualizarDesativado}
+            onClick={aoAtualizar}
+          >
+            <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
+          </button>
+          {aoExportar ? (
+            <button
+              type="button"
+              className="btn green"
+              id="exportBtn"
+              disabled={exportarDesativado}
+              onClick={aoExportar}
+            >
+              <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
+            </button>
+          ) : null}
+          {children}
+        </div>
+      </header>
+    );
+
   return (
-    <header className="topbar" id="topbar" ref={topo}>
-      <div className="brand">
-        <div>
-          <h1>{titulo}</h1>
-          <p className="sub">{subtitulo}</p>
+    <header className="ui-topo" ref={topo}>
+      {titulo || visoes ? (
+        <div className="ui-topo-titulo">
+          {titulo ? <h2>{titulo}</h2> : null}
+          {titulo && subtitulo ? <p>{subtitulo}</p> : null}
           {visoes}
         </div>
-      </div>
-      <div className="top-actions">
-        <span id="updatedText" className="status-discreto">
+      ) : null}
+      <div className="ui-topo-acoes">
+        <span className="status-discreto" data-status-da-carga="">
           {status}
         </span>
+        {aoTema ? <BotaoDeTema escuro={escuro} aoTema={aoTema} /> : null}
+        {aoTelaCheia ? <BotaoDeTelaCheia aoTelaCheia={aoTelaCheia} /> : null}
         <button
           type="button"
-          className="btn secondary icon"
-          id="themeBtn"
-          title={rotuloDoTema}
-          aria-label={rotuloDoTema}
-          onClick={aoTema}
-        >
-          <i
-            className={`fa-solid ${escuro ? "fa-sun" : "fa-moon"}`}
-            aria-hidden="true"
-          />
-        </button>
-        <button
-          type="button"
-          className="btn secondary icon"
-          id="fullBtn"
-          title="Tela cheia"
-          aria-label="Alternar tela cheia"
-          onClick={aoTelaCheia}
-        >
-          <i className="fa-solid fa-expand" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="btn"
-          id="refreshBtn"
+          className="btn secondary"
+          data-acao="atualizar"
           disabled={atualizarDesativado}
           onClick={aoAtualizar}
         >
@@ -102,8 +165,8 @@ export function TopoDoPainel({
         {aoExportar ? (
           <button
             type="button"
-            className="btn green"
-            id="exportBtn"
+            className="btn secondary"
+            data-acao="exportar"
             disabled={exportarDesativado}
             onClick={aoExportar}
           >

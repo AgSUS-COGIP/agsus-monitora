@@ -1,14 +1,11 @@
 import { useSyncExternalStore } from "react";
-import {
-  EVENTO_BARRA_ALTERNADA,
-  EVENTO_TEMA_ALTERADO,
-} from "../../lib/eventos-da-barra-lateral.js";
+import { EVENTO_BARRA_ALTERNADA } from "../../lib/eventos-da-barra-lateral.js";
 
 /*
   O que a barra lê do ambiente que o legado controla: a classe de `body` que
-  recolhe a barra, a largura em que ela vira gaveta e o tema de `html`. Quem
-  muda essas coisas avisa por evento (`eventos-da-barra-lateral.js`); não há
-  `MutationObserver`.
+  recolhe a barra e a largura em que ela vira gaveta (o tema é de
+  src/app/tema.js, comum a todo o app). Quem muda essas coisas avisa por
+  evento (`eventos-da-barra-lateral.js`); não há `MutationObserver`.
 */
 
 /* O corte da gaveta: o mesmo de `SIDEBAR_MOBILE_BREAKPOINT` e do CSS (900px). */
@@ -28,13 +25,10 @@ function assinarEventos(doDocumento, daJanela) {
 }
 
 const assinarBarra = assinarEventos([EVENTO_BARRA_ALTERNADA], ["resize"]);
-const assinarTema = assinarEventos([EVENTO_TEMA_ALTERADO], ["storage"]);
 
 export const barraRecolhida = () =>
   document.body.classList.contains("sidebar-collapsed");
 export const emGaveta = () => window.innerWidth <= LARGURA_DE_GAVETA;
-export const temaEscuro = () =>
-  document.documentElement.getAttribute("data-theme") === "dark";
 
 export function usarBarraRecolhida() {
   return useSyncExternalStore(assinarBarra, barraRecolhida);
@@ -42,8 +36,4 @@ export function usarBarraRecolhida() {
 
 export function usarGaveta() {
   return useSyncExternalStore(assinarBarra, emGaveta);
-}
-
-export function usarTemaEscuro() {
-  return useSyncExternalStore(assinarTema, temaEscuro);
 }

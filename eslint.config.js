@@ -26,7 +26,7 @@ export default [
       "src/app/**/*.{js,jsx}",
       "src/ui/**/*.{js,jsx}",
       "src/componentes/**/*.{js,jsx}",
-      "src/recursos/**/*.{js,jsx}",
+      "src/modulos/**/*.{js,jsx}",
       "src/entrevistas/**/*.{js,jsx}",
       "src/selecao/**/*.{js,jsx}",
       "scripts/**/*.mjs",

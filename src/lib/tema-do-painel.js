@@ -1,7 +1,8 @@
 /*
-  Tema claro/escuro dos painéis (análises curriculares e recursos).
+  Tema claro/escuro dos painéis no quadro (análises curriculares, entrevistas
+  e seleção).
 
-  Os dois painéis dividem a escolha: o botão de tema de um vale para o outro
+  Os painéis dividem a escolha: o botão de tema de um vale para os outros
   (a mesma chave no localStorage) e o escuro é `html[data-theme="dark"]`, que
   o CSS de src/analises/ (analises-painel.css) sabe desenhar. A paleta dos
   gráficos (Chart.js) acompanha o tema — é a do painel de análises.

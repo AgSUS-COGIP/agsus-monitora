@@ -11,8 +11,8 @@ import {
   erroDoComentario,
   podeEditarTexto,
 } from "../../lib/resposta-do-recurso.js";
-import { Aviso } from "../../ui/index.js";
-import { dataHora, Kv, Secao } from "./partes.jsx";
+import { Aviso, Kv, Secao } from "../../ui/index.js";
+import { dataHora } from "./partes.jsx";
 import { SeloDaResposta } from "./tabela.jsx";
 
 /*
@@ -68,14 +68,14 @@ function ConfirmarAcao({ escolhida, emCurso, aoConfirmar, aoCancelar }) {
   const pede = escolhida.comentario !== "nao";
   return (
     <form
-      className="detail-block recursos-confirmacao"
+      className="recursos-bloco recursos-confirmacao"
       onSubmit={(evento) => {
         evento.preventDefault();
         if (!erro) aoConfirmar(comentario.trim());
       }}
     >
       {pede ? (
-        <div className="field">
+        <div className="ui-campo">
           <label htmlFor="recursosComentarioDaResposta">
             {escolhida.comentario === "obrigatorio"
               ? escolhida.acao === "devolver"
@@ -100,7 +100,7 @@ function ConfirmarAcao({ escolhida, emCurso, aoConfirmar, aoCancelar }) {
             : `Confirmar: ${escolhida.rotulo.toLowerCase()}?`}
         </Aviso>
       )}
-      <div className="detail-actions">
+      <div className="ui-acoes">
         <button
           type="button"
           className="btn secondary small"
@@ -141,7 +141,7 @@ function AcoesDaResposta({ estado, recurso, resposta, acoes, acao }) {
     );
   return (
     <div className="recursos-acoes-da-resposta">
-      <div className="detail-actions">
+      <div className="ui-acoes">
         {acoes.map((a) => (
           <button
             key={a.acao}
@@ -172,7 +172,7 @@ function Documento({ estado, recurso, resposta, podeEditar, acao }) {
   return (
     <div className="recursos-documento" aria-label="Documento da resposta">
       <strong>Documento</strong>
-      <div className="detail-actions">
+      <div className="ui-acoes">
         <button
           type="button"
           className="btn secondary small"
@@ -261,8 +261,8 @@ export function SecaoDaResposta({
         titulo="Resposta ao candidato"
         secao="resposta"
       >
-        <div className="analises-detail-analysis">
-          <span className="analises-detail-empty">
+        <div className="ui-secao-texto">
+          <span className="ui-secao-vazio">
             Nenhuma resposta escrita no sistema.
           </span>
         </div>
@@ -289,7 +289,7 @@ export function SecaoDaResposta({
     >
       <div className="recursos-resposta">
         {resposta ? (
-          <div className="analises-detail-section-grid">
+          <div className="ui-kv-grade">
             <Kv rotulo="Estado">
               <SeloDaResposta estado={resposta.estado} />
             </Kv>
@@ -358,7 +358,7 @@ export function SecaoDaResposta({
               });
             }}
           >
-            <div className="field">
+            <div className="ui-campo">
               <label htmlFor="recursosModeloDaResposta">
                 Modelo de resposta
               </label>
@@ -401,7 +401,7 @@ export function SecaoDaResposta({
                 </small>
               )}
             </div>
-            <div className="field">
+            <div className="ui-campo">
               <label htmlFor="recursosFundamentacao">Fundamentação</label>
               <textarea
                 id="recursosFundamentacao"
@@ -419,7 +419,7 @@ export function SecaoDaResposta({
               />
             </div>
             {renderizado ? <PreviaDoTexto renderizado={renderizado} /> : null}
-            <div className="detail-actions">
+            <div className="ui-acoes">
               <button
                 type="submit"
                 className="btn small"

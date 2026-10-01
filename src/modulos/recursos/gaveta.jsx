@@ -6,17 +6,23 @@ import {
   rotuloDaSituacao,
 } from "../../lib/recursos-dos-candidatos.js";
 import { rotuloDoEstado } from "../../lib/resposta-do-recurso.js";
-import { Aviso, Carregando, classes, Gaveta } from "../../ui/index.js";
+import {
+  Aviso,
+  Carregando,
+  classes,
+  Gaveta,
+  Kv,
+  Secao,
+} from "../../ui/index.js";
 import { SecaoDeAnexos } from "./anexos.jsx";
-import { dataHora, Kv, nota, Secao } from "./partes.jsx";
+import { dataHora, nota } from "./partes.jsx";
 import { SecaoDaResposta } from "./resposta.jsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
 
 /*
-  Gaveta de detalhe do recurso: a mesma do painel de análises
-  (`.analises-drawer-backdrop` > `.analises-drawer`, com `.analises-drawer-head`,
-  o resumo em pílulas, o contexto em cartões e as seções
-  `.analises-detail-section` com `.kv`). Traz os dados do candidato (vindos da
+  Gaveta de detalhe do recurso (Gaveta, src/ui/): o topo com o resumo em
+  pílulas, o contexto em cartões e as seções (Secao, Kv). Traz os dados do
+  candidato (vindos da
   análise), a nota e o resultado do cadastro contra os de hoje, o prazo do
   cronograma, as etapas com quem e quando, a resposta ao candidato
   (resposta.jsx), os anexos (anexos.jsx), a observação e o histórico. Quem
@@ -115,7 +121,7 @@ export function GavetaDoRecurso({
         </>
       }
     >
-      <div className="analises-drawer-context">
+      <div className="ui-gaveta-contexto">
         <div>
           <small>Edital</small>
           <strong>{r.edital}</strong>
@@ -143,10 +149,10 @@ export function GavetaDoRecurso({
         </div>
       </div>
 
-      <div id="analisesDrawerBody">
-        <div className="detail-shell">
+      <div className="ui-gaveta-corpo">
+        <div className="recursos-corpo">
           {podeEditar && !excluindo ? (
-            <div className="detail-actions">
+            <div className="ui-acoes">
               <button
                 type="button"
                 className="btn small"
@@ -246,7 +252,7 @@ export function GavetaDoRecurso({
               titulo="Resultado da análise"
               secao="result"
             >
-              <div className="analises-detail-section-grid">
+              <div className="ui-kv-grade">
                 <Kv rotulo="Nota atual">
                   <span className={classes(r.mudouNota && "recursos-destaque")}>
                     {nota(r.nota_atual)}
@@ -260,7 +266,7 @@ export function GavetaDoRecurso({
           )}
 
           <Secao icone="fa-user-check" titulo="Candidato e vaga" secao="score">
-            <div className="analises-detail-section-grid">
+            <div className="ui-kv-grade">
               <Kv rotulo="Código do candidato">{r.codigo}</Kv>
               <Kv rotulo="Cargo">{r.cargo}</Kv>
               <Kv rotulo="Vaga">{r.vaga}</Kv>
@@ -282,7 +288,7 @@ export function GavetaDoRecurso({
             titulo="Prazo de resposta"
             secao="prazo"
           >
-            <div className="analises-detail-section-grid">
+            <div className="ui-kv-grade">
               <Kv rotulo="Prazo">
                 {prazo.data ? `${prazo.data} · ${prazo.texto}` : prazo.texto}
               </Kv>
@@ -313,13 +319,13 @@ export function GavetaDoRecurso({
           </Secao>
 
           <Secao icone="fa-circle-info" titulo="Observação" secao="observacao">
-            <div className="analises-detail-analysis">
+            <div className="ui-secao-texto">
               {carregando ? (
                 "Carregando…"
               ) : detalhe?.observacao ? (
                 detalhe.observacao
               ) : (
-                <span className="analises-detail-empty">Sem observação.</span>
+                <span className="ui-secao-vazio">Sem observação.</span>
               )}
             </div>
           </Secao>
@@ -334,7 +340,7 @@ export function GavetaDoRecurso({
                 Não foi possível carregar o histórico. <small>{erro}</small>
               </Aviso>
             ) : carregando ? (
-              <Carregando className="analises-detail-analysis" />
+              <Carregando className="ui-secao-texto" />
             ) : (
               <ol className="recursos-historico">
                 {(detalhe.historico || []).map((h, indice) => (
@@ -352,13 +358,13 @@ export function GavetaDoRecurso({
 
           {podeEditar && excluindo ? (
             <form
-              className="detail-block recursos-exclusao"
+              className="recursos-bloco recursos-exclusao"
               onSubmit={(evento) => {
                 evento.preventDefault();
                 void estado.excluir(r.id, motivo.trim());
               }}
             >
-              <div className="field">
+              <div className="ui-campo">
                 <label htmlFor="recursosMotivoDaExclusao">
                   Motivo da exclusão do recurso nº {r.nu}
                 </label>
@@ -374,7 +380,7 @@ export function GavetaDoRecurso({
                   onChange={(evento) => setMotivo(evento.target.value)}
                 />
               </div>
-              <div className="detail-actions">
+              <div className="ui-acoes">
                 <button
                   type="button"
                   className="btn secondary small"

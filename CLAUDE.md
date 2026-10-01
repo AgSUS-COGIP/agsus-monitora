@@ -65,7 +65,8 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 | Seleção múltipla (React) | `src/componentes/multi-select-busca.jsx` |
 | Busca global (Ctrl+K, React) | `src/componentes/busca-global/`, `src/lib/busca-global.js`; a escolha vai ao legado pelo evento `agsus:busca-global-escolhida` |
 | Configurações (React: moldura, Marca, Painéis externos, Operação; as demais seções ainda legadas) | `src/componentes/configuracoes/`, `src/lib/publicacao-de-configuracoes.js`, `src/lib/paineis-externos-das-configuracoes.js`, `src/modules/config-secoes.js` (distribui os campos legados) |
-| **Entrevistas** / **Recursos** (React, em página própria aberta em iframe até a etapa 2) | `src/componentes/entrevistas/`, `src/componentes/recursos/`, entradas `src/entrevistas/main.jsx`, `src/recursos/main.jsx` |
+| **Recursos** (módulo do app, sem iframe: montarRecursos na `#page-recursos`, área e tema do app) | `src/modulos/recursos/`, `src/lib/recursos-dos-candidatos.js`; o legado abre por `window.recursosController` |
+| **Entrevistas** (React, ainda em página própria aberta em iframe; sai na etapa 2) | `src/componentes/entrevistas/`, entrada `src/entrevistas/main.jsx`; `src/ui/no-quadro.jsx` mantém a marcação antiga enquanto houver painel no iframe |
 | **Planilhas** (links, modelo, bucket) | **`src/lib/planilhas.js`** — único lugar com endereço de planilha |
 | Visual / CSS | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/tokens.css`, `src/styles/CLAUDE.md` |
 | Análises | `src/analises/main.js` → `analises-*.js` |
