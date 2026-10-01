@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
+import {
+  CHAVES_DAS_SECOES,
+  linhasDasSecoes,
+  normalizarValoresCarregados,
+} from "../src/lib/publicacao-de-configuracoes.js";
 
 const app = readFileSync("src/modules/legacy-app.js", "utf8");
 const governance = readFileSync(
@@ -40,31 +45,32 @@ describe("as chaves da barra lateral chegam ao caminho que realmente salva", () 
   });
 
   it("as linhas da publicação incluem as da barra lateral", () => {
-    const codigo = semComentarios(governance);
-    expect(codigo).toContain(
-      'import { linhasDeConfiguracaoDaSidebar } from "../../modules/sidebar-branding.js"',
+    const fn = semComentarios(governance).slice(
+      semComentarios(governance).indexOf("const linhasDaPublicacao"),
+      semComentarios(governance).indexOf("async function revisar"),
     );
-    const fn = codigo.slice(
-      codigo.indexOf("const linhasDaPublicacao"),
-      codigo.indexOf("async function revisar"),
-    );
-    expect(fn).toContain("...linhasDeConfiguracaoDaSidebar()");
-  });
-
-  it("as duas chaves saem de uma função da barra lateral", () => {
-    expect(sidebar).toContain("chave: KEY_LOGO");
-    expect(sidebar).toContain("chave: KEY_COLOR");
+    expect(fn).toContain("linhasDasSecoes(valoresAtuais())");
+    expect(CHAVES_DAS_SECOES).toContain("ui_sidebar_logo_url");
+    expect(CHAVES_DAS_SECOES).toContain("ui_sidebar_background_color");
   });
 
   /*
-    Sem a guarda, um salvamento feito com a secção da barra lateral ausente do
-    DOM gravaria os valores padrão por cima de uma personalização existente.
+    A guarda de antes (sem os campos no DOM, nenhuma linha) existia para um
+    salvamento não gravar os valores padrão por cima de uma personalização.
+    Agora os valores vêm do que o banco devolveu: a personalização volta
+    intacta na publicação.
   */
-  it("não emite linhas quando os campos não estão no DOM", () => {
-    const fn = sidebar.slice(
-      sidebar.indexOf("export function linhasDeConfiguracaoDaSidebar"),
+  it("publicar outra coisa não troca a personalização da barra pelo padrão", () => {
+    const linhas = new Map(
+      linhasDasSecoes(
+        normalizarValoresCarregados({
+          ui_sidebar_logo_url: "https://cdn.test/logo.png",
+          ui_sidebar_background_color: "#123456",
+        }),
+      ).map((linha) => [linha.chave, linha.valor]),
     );
-    expect(fn).toContain("if (!logoInput && !colorInput) return [];");
+    expect(linhas.get("ui_sidebar_logo_url")).toBe("https://cdn.test/logo.png");
+    expect(linhas.get("ui_sidebar_background_color")).toBe("#123456");
   });
 });
 
@@ -91,7 +97,7 @@ describe("a logo da barra lateral é o <img> real", () => {
   it("sidebar-branding define o src diretamente", () => {
     const fn = sidebar.slice(
       sidebar.indexOf("function aplicarLogoNaBarraLateral"),
-      sidebar.indexOf("function errorMessage"),
+      sidebar.indexOf("export function aplicarMarcaDaBarraLateral"),
     );
     expect(fn).toContain('document.getElementById("sideLogo")');
     expect(fn).toContain('img.setAttribute("src", logo)');
@@ -100,10 +106,10 @@ describe("a logo da barra lateral é o <img> real", () => {
   it("o onerror devolve o padrão em vez de esconder", () => {
     const fn = sidebar.slice(
       sidebar.indexOf("function aplicarLogoNaBarraLateral"),
-      sidebar.indexOf("function errorMessage"),
+      sidebar.indexOf("export function aplicarMarcaDaBarraLateral"),
     );
     expect(fn).toContain("img.onerror");
-    expect(fn).toContain('img.setAttribute("src", DEFAULT_LOGO)');
+    expect(fn).toContain('img.setAttribute("src", LOGO_PADRAO_DA_BARRA)');
     expect(fn).not.toMatch(/display\s*=\s*["']none["']/);
   });
 

@@ -1,25 +1,14 @@
 /*
-  Configurações organizada em seções, como no SIGAV.
+  Configurações organizada em seções, como no SIGAV: o esqueleto das seções
+  (um <article class="config-secao"> por seção, com o corpo vazio), a seção
+  aberta e as permissões de cada perfil.
 
-  A página era um formulário corrido: um card com 47 campos, três subtítulos
-  soltos e mais dois cards no fim. Achar um ajuste exigia rolar tudo.
-
-  DECISÃO DE ARQUITETURA — classificar, não reescrever.
-
-  Os 45 campos têm `id` fixo, e meio sistema depende deles: `saveAdminSettings`,
-  o `FIELD_MAP` da governança, `applyConfigToUi`, o aviso de contraste, a
-  validação. Reescrever o HTML em sete cards significaria mexer em 45 âncoras de
-  uma vez, com o salvamento no meio do caminho.
-
-  Em vez disso, este módulo **move os nós existentes**. `appendChild` reparenta
-  sem destruir: os mesmos elementos, com os mesmos `id`, os mesmos listeners e
-  os mesmos valores, passam a viver dentro da seção certa. Nada que consulta o
-  DOM por `id` percebe a diferença — e é por isso que a reorganização não toca
-  em nenhum caminho de gravação.
-
-  As sete seções são as do SIGAV. Os campos, porém, são outros: o Monitora tem
-  KPIs, filtros e painéis externos que o SIGAV não tem. O mapa abaixo é a
-  tradução, e é o único lugar onde ela existe.
+  O conteúdo é todo React: as seções que publicam pela barra fixa (Marca,
+  Página inicial, Tela de acesso, Aparência, Painéis externos e Operação)
+  entram por portal no corpo da própria seção
+  (src/componentes/configuracoes/configuracoes.jsx); Acessos, Módulos e abas
+  e Status das atualizações são ilhas próprias, cujos blocos do index.html
+  este módulo move para a seção certa (SECAO_POR_BLOCO).
 */
 
 /* Disparado a cada troca de seção, com { detail: { secao } }. */
@@ -108,77 +97,12 @@ const controladorDaSecao = (documento, secao) =>
     ? documento.defaultView?.[CONTROLADOR_DA_SECAO[secao]]
     : null;
 
-/*
-  Onde cada campo vai parar. Um campo sem entrada aqui cai em "Operação", que é
-  o balde honesto: melhor aparecer numa seção discutível do que sumir da tela.
-*/
-export const SECAO_POR_CAMPO = Object.freeze({
-  // Marca: em React (src/componentes/configuracoes/marca.jsx), sem campo aqui.
-
-  // Página inicial
-  cfgPageTitle: "inicio",
-  cfgPageSubtitle: "inicio",
-  cfgBroadcastType: "inicio",
-  cfgBroadcastMsg: "inicio",
-  cfgFilterTitle: "inicio",
-  cfgFilterSubtitle: "inicio",
-  cfgFilterToggleShow: "inicio",
-  cfgFilterToggleHide: "inicio",
-  cfgKpiProcessos: "inicio",
-  cfgKpiVagas: "inicio",
-  cfgKpiContratados: "inicio",
-  cfgKpiOciosas: "inicio",
-  cfgKpiCriticos: "inicio",
-  cfgKpiInscritos: "inicio",
-
-  // Tela de acesso
-  cfgSubtitle: "acesso",
-  cfgLoginEyebrow: "acesso",
-  cfgLoginEmailLabel: "acesso",
-  cfgLoginEmailPlaceholder: "acesso",
-  cfgLoginPasswordLabel: "acesso",
-  cfgLoginPasswordPlaceholder: "acesso",
-  cfgLoginButtonText: "acesso",
-  cfgPasswordResetMessage: "acesso",
-  cfgGoogleEnabled: "acesso",
-  cfgGoogleButtonText: "acesso",
-  cfgGoogleDomainHint: "acesso",
-  cfgGoogleAllowedDomains: "acesso",
-  cfgAccessGreeting: "acesso",
-
-  // Aparência
-  cfgAccessBackgroundPreview: "aparencia",
-  cfgAccessLogoUrl: "aparencia",
-  cfgAccessPanelColor: "aparencia",
-  cfgAccessTextoModo: "aparencia",
-  cfgLoginLogo: "aparencia",
-  cfgLoginBg: "aparencia",
-  // Barra lateral (sidebar-branding.js): a linha vai pela primeira peça dela que
-  // aparecer na página, então todas as peças precisam estar aqui.
-  cfgSidebarLogoUrl: "aparencia",
-  cfgSidebarLogoPreview: "aparencia",
-  cfgSidebarLogoFile: "aparencia",
-  cfgSidebarLogoRestore: "aparencia",
-  cfgSidebarLogoStatus: "aparencia",
-  cfgSidebarLogoGallery: "aparencia",
-  cfgSidebarBackgroundColor: "aparencia",
-  cfgSidebarColorAviso: "aparencia",
-
-  // Painéis externos e Operação: em React (paineis-externos.jsx e operacao.jsx), sem campo aqui.
-});
-
-/* Blocos inteiros que não são campos de formulário, e a seção que os recebe. */
+/* As ilhas React com bloco próprio no index.html, e a seção que as recebe. */
 export const SECAO_POR_BLOCO = Object.freeze({
   acessosApp: "acessos",
   modulosApp: "modulos",
   saudeDasCargasApp: "cargas",
 });
-
-export const SECAO_PADRAO = "operacao";
-
-export function secaoDoCampo(id) {
-  return SECAO_POR_CAMPO[id] || SECAO_PADRAO;
-}
 
 /*
   O cabeçalho da seção (ícone, nome e descrição) é da moldura React
@@ -195,35 +119,14 @@ function criarCartaoDaSecao(documento, secao) {
   return artigo;
 }
 
-/*
-  Move o que já existe para dentro das seções. A ordem original é preservada
-  dentro de cada seção: os campos aparecem na sequência em que estavam.
-*/
+/* Move os blocos das ilhas React para dentro das seções. */
 function distribuir(documento, corpos) {
-  let movidos = 0;
-
   for (const [id, secao] of Object.entries(SECAO_POR_BLOCO)) {
     const bloco = documento.getElementById(id);
     const destino = corpos.get(secao);
     if (!bloco || !destino) continue;
-    const caixa = bloco.closest(".card") || bloco;
-    destino.appendChild(caixa);
-    movidos += 1;
+    destino.appendChild(bloco.closest(".card") || bloco);
   }
-
-  for (const campo of documento.querySelectorAll(
-    '#page-config [id^="cfg"], #page-config [id^="prev"]',
-  )) {
-    const linha = campo.closest(".form-row");
-    if (!linha || linha.dataset.secaoAplicada === "1") continue;
-    const destino = corpos.get(secaoDoCampo(campo.id));
-    if (!destino) continue;
-    linha.dataset.secaoAplicada = "1";
-    destino.appendChild(linha);
-    movidos += 1;
-  }
-
-  return movidos;
 }
 
 function selecionarSubgrupo(documento, secao) {
@@ -310,16 +213,16 @@ export function organizarConfiguracoesEmSecoes(
   }
 
   grade.insertAdjacentElement("beforebegin", layout);
-  const movidos = distribuir(documento, corpos);
+  distribuir(documento, corpos);
 
   /*
-    O que sobrou na grade antiga são títulos soltos e cards já esvaziados. A
-    grade só sai da tela se de facto não restar conteúdo — nunca às cegas.
+    A grade antiga fica vazia depois de os blocos saírem. Ela só sai da tela
+    se de facto não restar conteúdo — nunca às cegas.
   */
   if (!grade.querySelector("input, select, textarea, button")) {
     grade.hidden = true;
   }
 
   selecionarSubgrupo(documento, pagina.dataset.subgrupo || "marca");
-  return movidos > 0;
+  return true;
 }

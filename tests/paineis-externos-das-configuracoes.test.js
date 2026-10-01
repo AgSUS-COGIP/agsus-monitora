@@ -10,7 +10,6 @@ import {
   situacaoDoPainel,
 } from "../src/lib/paineis-externos-das-configuracoes.js";
 import {
-  CAMPOS_DO_LEGADO,
   CHAVES_DAS_SECOES,
   errosDasSecoes,
   linhasDasSecoes,
@@ -181,14 +180,11 @@ describe("Operação: campos em React", () => {
     "access_heartbeat_minutos",
   ];
 
-  it("saíram dos campos legados e entraram nas seções (monit_id, morto, saiu)", () => {
-    const legados = CAMPOS_DO_LEGADO.map(([, chave]) => chave);
-    for (const chave of [...OPERACAO, "monit_id"])
-      expect(legados).not.toContain(chave);
+  it("entraram nas seções (monit_id, morto, saiu)", () => {
     for (const chave of OPERACAO) expect(CHAVES_DAS_SECOES).toContain(chave);
     expect(CHAVES_DAS_SECOES).not.toContain("monit_id");
-    // O aviso global continua na Página inicial (legada).
-    expect(legados).toContain("broadcast_msg");
+    // O aviso global é da Página inicial, também em React.
+    expect(CHAVES_DAS_SECOES).toContain("broadcast_msg");
   });
 
   it("normaliza como cfgBool/cfgInt do legado", () => {

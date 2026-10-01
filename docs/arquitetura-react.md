@@ -38,7 +38,7 @@ src/
 | ----- | ---------------------------------------------------------------------------------------- |
 | 1     | **Fundação (feita):** `src/app/`, `src/ui/`, pastas `modulos/` e `legado/`, checagem     |
 | 2     | Entrevistas, Recursos e Seleção saem do iframe (**Recursos e Entrevistas feitos**)       |
-| 3     | Configurações restantes (as seções legadas de `config-*.js`)                             |
+| 3     | Configurações: todas as seções já são React; falta mudar para `src/modulos/`             |
 | 4     | Análises (**feita**: `src/modulos/analises/`; sobra o CSS de `src/analises/` da Seleção) |
 | 5     | Visão geral: primeiro o que não é mapa, depois os mapas                                  |
 | 6     | Login e entrada; fim do `legacy-app.js`                                                  |
@@ -57,7 +57,7 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/componentes/icone.jsx`, `multi-select-busca.jsx`                                                                              | `src/ui/`                                                 | ao tocar   |
 | `src/componentes/selecao/` + `src/selecao/` (`main.jsx`, CSS) + `selecao.html` (Recursos e Entrevistas já estão em `src/modulos/`) | `src/modulos/selecao/`                                    | 2          |
 | `src/modules/pagina-do-painel.js` (o iframe dos painéis)                                                                           | sai (vira rota)                                           | 2          |
-| `src/componentes/configuracoes/`, `acessos/`, `modulos/`, `saude-das-cargas/` + `src/modules/config-*.js`                          | `src/modulos/configuracoes/`                              | 3          |
+| `src/componentes/configuracoes/`, `acessos/`, `modulos/`, `saude-das-cargas/` + `src/modules/config-secoes.js`                     | `src/modulos/configuracoes/`                              | 3          |
 | `src/analises/` (só o CSS e o skeleton da Seleção no quadro; Análises já é `src/modulos/analises/`)                                | sai com a Seleção                                         | 2          |
 | `src/componentes/nucleo/`, `calendario-editais/`, `lista-aprovados/`                                                               | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | ao tocar   |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, trechos do `legacy-app.js` (dashboard)                                            | `src/modulos/visao-geral/`                                | 5          |

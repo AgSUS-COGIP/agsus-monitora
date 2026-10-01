@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { criarImagensDaAparencia } from "../src/componentes/configuracoes/imagens.js";
 import {
   ACCESS_BACKGROUND_MAX_BYTES,
   validateAccessBackgroundFile,
@@ -55,43 +56,62 @@ describe("imagens da tela de acesso até 6 MB", () => {
   });
 });
 
+/*
+  Apagar a arte ativa deixaria `auth_access_background_url` a apontar para um
+  objeto inexistente, e o cache guardado no navegador de cada pessoa
+  continuaria a pedir essa imagem. A galeria (Configurações › Aparência, em
+  React) não oferece Apagar para a arte em uso, e o estado das imagens recusa
+  por garantia, caso a interface e o estado divirjam por um instante.
+*/
 describe("exclusão de artes guardadas", () => {
-  it("a galeria oferece apagar", () => {
-    expect(app).toContain("deleteStoredAccessBackground");
-    expect(app).toContain("access-background-gallery-delete");
+  function montar({ confirmar = () => true } = {}) {
+    const armazenamento = {
+      list: vi.fn(async () => ({ data: [], error: null })),
+      remove: vi.fn(async () => ({ error: null })),
+      getPublicUrl: (c) => ({ data: { publicUrl: `https://cdn.test/${c}` } }),
+    };
+    const avisar = vi.fn();
+    const imagens = criarImagensDaAparencia({
+      supabase: () => ({ storage: { from: () => armazenamento } }),
+      configuracoes: {
+        obter: () => ({
+          valores: new Map([
+            ["auth_access_background_path", "branding/acesso-ativa.png"],
+          ]),
+        }),
+      },
+      documento: document,
+      avisar,
+      confirmar,
+    });
+    return { imagens, armazenamento, avisar };
+  }
+
+  it("a exclusão recusa a arte ativa mesmo se a interface divergir", async () => {
+    const { imagens, armazenamento, avisar } = montar();
+    expect(
+      await imagens.apagarFundo({
+        caminho: "branding/acesso-ativa.png",
+        nome: "acesso-ativa.png",
+      }),
+    ).toBe(false);
+    expect(armazenamento.remove).not.toHaveBeenCalled();
+    expect(avisar).toHaveBeenCalledWith(
+      expect.stringContaining("Esta arte está em uso"),
+      "warn",
+    );
   });
 
-  /*
-    Apagar a arte ativa deixaria `auth_access_background_url` a apontar para um
-    objeto inexistente, e o cache guardado no navegador de cada pessoa
-    continuaria a pedir essa imagem.
-  */
-  it("a arte em uso não recebe botão de apagar", () => {
-    const codigo = semComentarios(app);
-    const galeria = codigo.slice(
-      codigo.indexOf("items.forEach((item)"),
-      codigo.indexOf("gallery.appendChild(list)"),
-    );
-    expect(galeria).toContain("if (emUso)");
-    expect(galeria).toContain("access-background-gallery-hint");
-  });
-
-  it("a exclusão recusa a arte ativa mesmo se a interface divergir", () => {
-    const fn = app.slice(
-      app.indexOf("async function deleteStoredAccessBackground"),
-      app.indexOf("async function loadAccessBackgroundGallery"),
-    );
-    expect(fn).toContain("auth_access_background_path");
-    expect(fn).toContain("Esta arte está em uso");
-  });
-
-  it("pede confirmação antes de apagar", () => {
-    const fn = app.slice(
-      app.indexOf("async function deleteStoredAccessBackground"),
-      app.indexOf("async function loadAccessBackgroundGallery"),
-    );
-    expect(fn).toContain("window.confirm");
-    expect(fn).toContain("loadAccessBackgroundGallery()");
+  it("pede confirmação antes de apagar e recarrega a galeria", async () => {
+    let resposta = false;
+    const { imagens, armazenamento } = montar({ confirmar: () => resposta });
+    const outra = { caminho: "branding/acesso-velha.png", nome: "velha" };
+    expect(await imagens.apagarFundo(outra)).toBe(false);
+    expect(armazenamento.remove).not.toHaveBeenCalled();
+    resposta = true;
+    expect(await imagens.apagarFundo(outra)).toBe(true);
+    expect(armazenamento.remove).toHaveBeenCalledWith([outra.caminho]);
+    expect(armazenamento.list).toHaveBeenCalled();
   });
 });
 

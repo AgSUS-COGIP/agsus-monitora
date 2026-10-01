@@ -1,16 +1,16 @@
-import { useState, useSyncExternalStore } from "react";
-import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.js";
+import { useSyncExternalStore } from "react";
 import { corDoTextoPara } from "../../lib/contraste.js";
 import { CAMPOS_DAS_SECOES } from "../../lib/publicacao-de-configuracoes.js";
 import { Icone } from "../icone.jsx";
+import { Imagem } from "./partes.jsx";
 
 /*
   Configurações › Marca: a equipe responsável (pé da barra lateral) e o
   rodapé, com a prévia da barra lateral ao lado. Os valores são do rascunho
   de `estado.js` e vão na publicação da barra fixa.
 
-  A cor e o logo da barra vêm do valor publicado (os campos são da seção
-  Aparência, que ainda é legada: `sidebar-branding.js`).
+  A cor e o logo da barra são os da seção Aparência (com o rascunho, se
+  houver).
 */
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -81,23 +81,6 @@ function Campo({ estado, chave }) {
         </small>
       ) : null}
     </div>
-  );
-}
-
-/* Imagem da prévia; se o endereço não carrega, fica a reserva. */
-function Imagem({ url, alt, className, reserva }) {
-  const src = urlDeImagem(url);
-  const [falhou, setFalhou] = useState("");
-  if (!src || falhou === src) return reserva;
-  return (
-    <img
-      className={className}
-      src={src}
-      alt={alt}
-      loading="lazy"
-      referrerPolicy="no-referrer"
-      onError={() => setFalhou(src)}
-    />
   );
 }
 

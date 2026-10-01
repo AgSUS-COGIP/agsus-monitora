@@ -4,83 +4,27 @@
   as validações de formato. O estado e as RPCs são de
   src/componentes/configuracoes/estado.js.
 
-  A página está migrando para React por seção. Enquanto houver seção legada,
-  a publicação junta dois lados numa chamada só (uma transação):
-    - CAMPOS_DO_LEGADO: os campos `cfg*` que ainda moram no index.html (o
-      estado lê o valor no DOM);
-    - CAMPOS_DAS_SECOES: os campos das seções já em React (o valor vem do
-      rascunho do estado).
-  Seção migrada: suas chaves saem de CAMPOS_DO_LEGADO e entram aqui. Os
-  painéis externos (p_paineis) são de paineis-externos-das-configuracoes.js.
+  Todas as seções que publicam pela barra fixa são React: o valor de cada
+  campo vem do rascunho do estado (CAMPOS_DAS_SECOES), e a publicação manda
+  todas as chaves numa chamada só (uma transação). Os painéis externos
+  (p_paineis) são de paineis-externos-das-configuracoes.js.
 */
 
-const txt = (valor) => String(valor ?? "").trim();
+import {
+  DEFAULT_ACCESS_BRANDING,
+  normalizeAccessBackgroundUrl,
+  normalizeAccessLogoUrl,
+  normalizeAccessPanelColor,
+} from "./access-branding.js";
+import { isValidAccessAssetUrl } from "./config-validation.js";
+import { normalizarModo } from "./contraste.js";
+import {
+  corDaBarraSegura,
+  logoDaBarraSegura,
+} from "./marca-da-barra-lateral.js";
+import { normalizeAllowedDomains } from "./platform-context.js";
 
-/* [id do campo no index.html, chave, descrição, valor se o campo faltar] */
-export const CAMPOS_DO_LEGADO = Object.freeze([
-  ["cfgPageTitle", "page_title", "Título da página inicial"],
-  ["cfgPageSubtitle", "page_subtitle", "Subtítulo da página inicial"],
-  [
-    "cfgGoogleEnabled",
-    "auth_google_enabled",
-    "Exibe ou oculta o login com Google",
-    "true",
-  ],
-  [
-    "cfgGoogleButtonText",
-    "auth_google_button_text",
-    "Texto do botão de autenticação Google",
-  ],
-  [
-    "cfgGoogleDomainHint",
-    "auth_google_domain_hint",
-    "Domínio sugerido no login Google",
-  ],
-  [
-    "cfgGoogleAllowedDomains",
-    "auth_google_allowed_domains",
-    "Domínios institucionais autorizados",
-  ],
-  [
-    "cfgAccessBackgroundUrl",
-    "auth_access_background_url",
-    "Arte institucional da tela de acesso",
-  ],
-  [
-    "cfgAccessBackgroundPath",
-    "auth_access_background_path",
-    "Caminho da arte institucional da tela de acesso",
-  ],
-  [
-    "cfgAccessLogoUrl",
-    "auth_access_logo_url",
-    "Logo da AgSUS na tela de acesso",
-  ],
-  [
-    "cfgAccessPanelColor",
-    "auth_access_panel_color",
-    "Cor do painel da tela de acesso",
-  ],
-  [
-    "cfgAccessTextoModo",
-    "auth_access_texto_modo",
-    "Texto sobre o painel de acesso",
-    "auto",
-  ],
-  ["cfgAccessGreeting", "auth_access_greeting", "Saudação da tela de acesso"],
-  ["cfgFilterTitle", "filter_title", "Título dos filtros"],
-  ["cfgFilterSubtitle", "filter_subtitle", "Subtítulo dos filtros"],
-  ["cfgFilterToggleShow", "filter_toggle_show", "Texto para mostrar filtros"],
-  ["cfgFilterToggleHide", "filter_toggle_hide", "Texto para ocultar filtros"],
-  ["cfgKpiProcessos", "kpi_processos_label", "Rótulo do KPI processos"],
-  ["cfgKpiVagas", "kpi_vagas_label", "Rótulo do KPI vagas"],
-  ["cfgKpiContratados", "kpi_contratados_label", "Rótulo do KPI contratações"],
-  ["cfgKpiOciosas", "kpi_ociosas_label", "Rótulo do KPI vagas ociosas"],
-  ["cfgKpiCriticos", "kpi_criticos_label", "Rótulo do KPI críticos"],
-  ["cfgKpiInscritos", "kpi_inscritos_label", "Rótulo do KPI inscritos"],
-  ["cfgBroadcastType", "broadcast_type", "Tipo do aviso global", "info"],
-  ["cfgBroadcastMsg", "broadcast_msg", "Mensagem do aviso global"],
-]);
+const txt = (valor) => String(valor ?? "").trim();
 
 const BOOLEANO_VERDADEIRO = ["true", "1", "sim", "yes", "on"];
 const BOOLEANO_FALSO = ["false", "0", "nao", "não", "no", "off"];
@@ -99,10 +43,30 @@ export function normalizarInteiro(valor, padrao, minimo = 1) {
   return String(Math.max(minimo, Number.isFinite(numero) ? numero : padrao));
 }
 
+const ATIVO_INATIVO = Object.freeze([
+  ["true", "Ativo"],
+  ["false", "Inativo"],
+]);
+
+const texto = (chave, descricao, rotulo, extra = {}) =>
+  Object.freeze({ chave, descricao, rotulo, ...extra });
+
 /*
-  Campos das seções em React, por seção. `tipo: "url"` valida como endereço
-  http(s) (vazio passa). `rotulo`, `dica` (opcional) e `placeholder` são os
-  da tela.
+  Campos das seções, por seção. `rotulo` e `placeholder` são os da tela;
+  `descricao` é a da TB_CONFIGURACAO (vai na linha publicada e na revisão).
+
+  `tipo`: "url" (http/https; vazio passa), "inteiro" (minimo..maximo),
+  "dominio" (agenciasus.org.br), "url-de-acesso" (caminho do site ou https),
+  "booleano"/"opcoes" (lista `opcoes`), "cor" (seletor) e "gerenciado" (sem
+  campo de texto: a seção escolhe o valor por botões — imagens).
+  `obrigatorio` recusa vazio. `erro` é a mensagem dos tipos sem mensagem
+  própria.
+
+  `normalizar` repete o que o formulário legado mostrava ao carregar
+  (cfgBool/cfgInt, os normalizadores de access-branding.js e os padrões de
+  DEFAULT_CONFIG do legacy-app.js): o valor que a tela mostra é o que a
+  publicação envia, como antes. `padrao` é o valor de DEFAULT_CONFIG quando a
+  chave não veio do banco (o `cfgValue` do legado).
 */
 export const CAMPOS_DAS_SECOES = Object.freeze({
   marca: Object.freeze([
@@ -138,11 +102,149 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       rotulo: "Rodapé",
     },
   ]),
-  /*
-    Operação. `normalizar` repete o que o formulário legado mostrava ao
-    carregar (cfgBool/cfgInt e os padrões de DEFAULT_CONFIG): o valor que a
-    tela mostra é o que a publicação envia, como antes.
-  */
+
+  inicio: Object.freeze([
+    texto("page_title", "Título da página inicial", "Título", {
+      placeholder: "Ex: Saúde Indígena",
+      obrigatorio: true,
+      erro: "Informe o título da página inicial.",
+    }),
+    texto("page_subtitle", "Subtítulo da página inicial", "Subtítulo", {
+      placeholder: "Ex: Monitoramento DSEI/CASAI",
+    }),
+    texto("broadcast_type", "Tipo do aviso global", "Tipo", {
+      tipo: "opcoes",
+      opcoes: Object.freeze([
+        ["info", "Informação"],
+        ["warning", "Alerta"],
+        ["danger", "Crítico"],
+      ]),
+      normalizar: (valor) => valor || "info",
+    }),
+    texto("broadcast_msg", "Mensagem do aviso global", "Mensagem", {
+      placeholder: "Mensagem global",
+      largo: true,
+    }),
+    texto("filter_title", "Título dos filtros", "Título"),
+    texto("filter_subtitle", "Subtítulo dos filtros", "Subtítulo"),
+    texto("filter_toggle_show", "Texto para mostrar filtros", "Mostrar"),
+    texto("filter_toggle_hide", "Texto para ocultar filtros", "Ocultar"),
+    texto("kpi_processos_label", "Rótulo do KPI processos", "Processos"),
+    texto("kpi_vagas_label", "Rótulo do KPI vagas", "Vagas"),
+    texto(
+      "kpi_contratados_label",
+      "Rótulo do KPI contratações",
+      "Contratações",
+    ),
+    texto("kpi_ociosas_label", "Rótulo do KPI vagas ociosas", "Ociosas"),
+    texto("kpi_criticos_label", "Rótulo do KPI críticos", "Críticos"),
+    texto("kpi_inscritos_label", "Rótulo do KPI inscritos", "Inscritos"),
+  ]),
+
+  acesso: Object.freeze([
+    texto("auth_access_greeting", "Saudação da tela de acesso", "Saudação", {
+      placeholder: DEFAULT_ACCESS_BRANDING.greeting,
+      largo: true,
+      normalizar: (valor) => valor || DEFAULT_ACCESS_BRANDING.greeting,
+    }),
+    texto(
+      "auth_google_enabled",
+      "Exibe ou oculta o login com Google",
+      "Login Google",
+      {
+        tipo: "booleano",
+        opcoes: ATIVO_INATIVO,
+        normalizar: (valor) => normalizarBooleano(valor, true),
+      },
+    ),
+    texto(
+      "auth_google_button_text",
+      "Texto do botão de autenticação Google",
+      "Texto do botão",
+      { placeholder: "Entrar com sua conta institucional" },
+    ),
+    texto(
+      "auth_google_domain_hint",
+      "Domínio sugerido no login Google",
+      "Domínio sugerido",
+      {
+        tipo: "dominio",
+        placeholder: "agenciasus.org.br",
+        erro: "O domínio Google deve estar no formato agenciasus.org.br, sem https://, @ ou barras.",
+      },
+    ),
+    texto(
+      "auth_google_allowed_domains",
+      "Domínios institucionais autorizados",
+      "Domínios permitidos",
+      {
+        placeholder: "agenciasus.org.br,agsus.org.br",
+        largo: true,
+        padrao: "agenciasus.org.br,agsus.org.br",
+        normalizar: (valor) => normalizeAllowedDomains(valor).join(","),
+      },
+    ),
+  ]),
+
+  aparencia: Object.freeze([
+    texto(
+      "auth_access_background_url",
+      "Arte institucional da tela de acesso",
+      "Arte de fundo",
+      { tipo: "gerenciado", normalizar: normalizeAccessBackgroundUrl },
+    ),
+    texto(
+      "auth_access_background_path",
+      "Caminho da arte institucional da tela de acesso",
+      "Caminho da arte de fundo",
+      { tipo: "gerenciado" },
+    ),
+    texto(
+      "auth_access_logo_url",
+      "Logo da AgSUS na tela de acesso",
+      "Logo no acesso",
+      {
+        tipo: "url-de-acesso",
+        placeholder: "/assets/agsus-logo.webp",
+        largo: true,
+        erro: "URL inválida no campo Logo da AgSUS no acesso.",
+        normalizar: normalizeAccessLogoUrl,
+      },
+    ),
+    texto(
+      "auth_access_panel_color",
+      "Cor do painel da tela de acesso",
+      "Cor do painel",
+      { tipo: "cor", normalizar: normalizeAccessPanelColor },
+    ),
+    texto(
+      "auth_access_texto_modo",
+      "Texto sobre o painel de acesso",
+      "Texto sobre o painel",
+      {
+        tipo: "opcoes",
+        opcoes: Object.freeze([
+          ["auto", "Automático"],
+          ["claro", "Sempre claro"],
+          ["escuro", "Sempre escuro"],
+        ]),
+        normalizar: normalizarModo,
+      },
+    ),
+    texto(
+      "ui_sidebar_logo_url",
+      "Logo independente da barra lateral do AgSUS Monitora",
+      "Logo da barra lateral",
+      { tipo: "gerenciado", normalizar: logoDaBarraSegura },
+    ),
+    texto(
+      "ui_sidebar_background_color",
+      "Cor de fundo da barra lateral do AgSUS Monitora",
+      "Cor da barra lateral",
+      { tipo: "cor", normalizar: corDaBarraSegura },
+    ),
+  ]),
+
   operacao: Object.freeze([
     {
       chave: "cogip_versao",
@@ -161,10 +263,7 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       descricao: "Habilita atualização em tempo real do monitoramento",
       rotulo: "Realtime do monitoramento",
       tipo: "booleano",
-      opcoes: Object.freeze([
-        ["true", "Ativo"],
-        ["false", "Inativo"],
-      ]),
+      opcoes: ATIVO_INATIVO,
       normalizar: (valor) => normalizarBooleano(valor, true),
     },
     {
@@ -193,6 +292,10 @@ const CAMPO_POR_CHAVE = new Map(
     .map((campo) => [campo.chave, campo]),
 );
 
+/** Os campos de uma seção, por chave (para as telas). */
+export const camposDaSecao = (secao) =>
+  new Map((CAMPOS_DAS_SECOES[secao] || []).map((c) => [c.chave, c]));
+
 export function urlHttpValida(valor) {
   const bruto = txt(valor);
   if (!bruto) return true;
@@ -210,7 +313,7 @@ export function dominioValido(valor) {
   return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(bruto);
 }
 
-/** Linhas de `p_config_rows` dos campos em React: { chave, valor, descricao }. */
+/** Linhas de `p_config_rows`: { chave, valor, descricao }, uma por chave. */
 export function linhasDasSecoes(valores) {
   return CHAVES_DAS_SECOES.map((chave) => ({
     chave,
@@ -220,16 +323,22 @@ export function linhasDasSecoes(valores) {
 }
 
 /**
- * Os valores lidos da TB_CONFIGURACAO como a tela os mostra: cada campo com
- * `normalizar` recebe o valor normalizado (e o padrão, se a chave falta).
+ * Os valores lidos da TB_CONFIGURACAO como a tela os mostra: chave ausente
+ * recebe o `padrao` (como o `cfgValue` do legado) e cada campo com
+ * `normalizar` recebe o valor normalizado.
  */
 export function normalizarValoresCarregados(config = {}) {
   const valores = new Map(
     Object.entries(config || {}).map(([chave, valor]) => [chave, valor ?? ""]),
   );
-  for (const [chave, campo] of CAMPO_POR_CHAVE)
-    if (campo.normalizar)
-      valores.set(chave, campo.normalizar(valores.get(chave)));
+  for (const [chave, campo] of CAMPO_POR_CHAVE) {
+    const bruto =
+      !valores.has(chave) && campo.padrao !== undefined
+        ? campo.padrao
+        : valores.get(chave);
+    if (campo.normalizar) valores.set(chave, campo.normalizar(bruto));
+    else if (bruto !== undefined) valores.set(chave, bruto);
+  }
   return valores;
 }
 
@@ -238,16 +347,27 @@ function inteiroValido(valor, { minimo, maximo }) {
   return Number.isInteger(numero) && numero >= minimo && numero <= maximo;
 }
 
-/** Erros dos campos em React: Map chave → mensagem. */
+const VALIDACAO_POR_TIPO = Object.freeze({
+  inteiro: inteiroValido,
+  dominio: dominioValido,
+  "url-de-acesso": isValidAccessAssetUrl,
+});
+
+/** Erros dos campos: Map chave → mensagem. */
 export function errosDasSecoes(valores) {
   const erros = new Map();
   for (const [chave, campo] of CAMPO_POR_CHAVE) {
-    if (campo.tipo === "url" && !urlHttpValida(valores.get(chave)))
+    const valor = valores.get(chave);
+    if (campo.obrigatorio && !txt(valor)) erros.set(chave, campo.erro);
+    else if (campo.tipo === "url" && !urlHttpValida(valor))
       erros.set(
         chave,
         `URL inválida no campo ${campo.rotulo}: use https:// ou http://.`,
       );
-    if (campo.tipo === "inteiro" && !inteiroValido(valores.get(chave), campo))
+    else if (
+      VALIDACAO_POR_TIPO[campo.tipo] &&
+      !VALIDACAO_POR_TIPO[campo.tipo](valor, campo)
+    )
       erros.set(chave, campo.erro);
   }
   return erros;
