@@ -7,8 +7,7 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.js";
-import { EstadoVazio, Gaveta } from "../../ui/index.js";
-import { Kv, Secao } from "../recursos/partes.jsx";
+import { EstadoVazio, Gaveta, Kv, Secao } from "../../ui/index.js";
 import { SeloDoParecer } from "./tabela.jsx";
 
 /*

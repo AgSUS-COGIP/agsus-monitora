@@ -10,6 +10,7 @@ import {
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
   CardDeGrafico,
+  Grafico,
   ChipDeFiltro,
   ChipsDeFiltro,
   classes,
@@ -19,7 +20,6 @@ import {
   PainelDeFiltros,
   TopoDoPainel,
 } from "../../ui/index.js";
-import { Grafico } from "./grafico.jsx";
 
 /*
   Os blocos do painel de recursos, com a marcação e as classes do painel de

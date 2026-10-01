@@ -6,7 +6,8 @@ import {
   TIPOS_DE_ANEXO,
   validarArquivoDoAnexo,
 } from "../../lib/anexos-do-recurso.js";
-import { dataHora, Secao } from "./partes.jsx";
+import { Secao } from "../../ui/index.js";
+import { dataHora } from "./partes.jsx";
 
 /*
   "Anexos", na gaveta do recurso: os arquivos do recurso (o recurso do

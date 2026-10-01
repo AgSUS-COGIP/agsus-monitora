@@ -18,7 +18,7 @@ import {
   alternarTemaDoPainel,
   temaEscuroDoPainel,
 } from "../../lib/tema-do-painel.js";
-import { criarAvisoDoPainel } from "../aviso-do-painel.js";
+import { criarAvisoDoPainel } from "../../componentes/aviso-do-painel.js";
 import { criarEstadoDosRecursos } from "./estado.js";
 import { FormularioDoRecurso } from "./formulario.jsx";
 import { GavetaDoRecurso } from "./gaveta.jsx";

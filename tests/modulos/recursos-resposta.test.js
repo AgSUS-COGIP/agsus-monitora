@@ -1,6 +1,11 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+import {
+  clicar,
+  digitar,
+  escolher,
+  esperar,
+} from "../componentes/interacoes.js";
 import { proximoEstado } from "../../src/lib/resposta-do-recurso.js";
 
 /*
@@ -25,7 +30,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarPainelDeRecursos } =
-  await import("../../src/componentes/recursos/recursos.jsx");
+  await import("../../src/modulos/recursos/recursos.jsx");
 
 const RECURSO_ID = "527c2b8c-7744-4a4b-bc06-108f6683297b";
 const AUTORA = "00000000-0000-4000-8000-0000000000a2";

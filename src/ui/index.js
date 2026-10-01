@@ -9,6 +9,7 @@ export { CardDeGrafico } from "./card-de-grafico.jsx";
 export { classes } from "./classes.js";
 export { Carregando, EstadoVazio } from "./estados.jsx";
 export { Gaveta, TopoDaGaveta } from "./gaveta.jsx";
+export { Grafico } from "./grafico.jsx";
 export { GradeDeKpis, Kpi } from "./kpi.jsx";
 export { Modal } from "./modal.jsx";
 export {
@@ -16,6 +17,7 @@ export {
   ChipsDeFiltro,
   PainelDeFiltros,
 } from "./painel-de-filtros.jsx";
+export { Kv, Secao } from "./secao.jsx";
 export { Selo } from "./selo.jsx";
 export { TabelaInfinita } from "./tabela-infinita.jsx";
 export { TopoDoPainel, usarAlturaDoTopo } from "./topo-do-painel.jsx";

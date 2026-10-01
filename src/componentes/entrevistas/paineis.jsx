@@ -20,8 +20,8 @@ import {
   Kpi,
   PainelDeFiltros,
   TopoDoPainel,
+  Grafico,
 } from "../../ui/index.js";
-import { Grafico } from "../recursos/grafico.jsx";
 import { Segmentado } from "./partes.jsx";
 
 /*

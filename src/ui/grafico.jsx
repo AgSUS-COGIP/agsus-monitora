@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { Chart } from "../../lib/chartjs-global.js";
+import { Chart } from "../lib/chartjs-global.js";
 
 /*
   Um gráfico Chart.js do painel de recursos, como os do painel de análises:

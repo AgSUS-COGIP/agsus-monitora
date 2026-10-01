@@ -7,6 +7,7 @@ import {
   Kpi,
   PainelDeFiltros,
   TopoDoPainel,
+  Grafico,
 } from "../../ui/index.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
@@ -22,7 +23,6 @@ import {
 } from "../../lib/selecao-do-painel.js";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
-import { Grafico } from "../recursos/grafico.jsx";
 
 /*
   Os blocos do painel de seleção, na ordem e com os textos do antigo painel

@@ -6,9 +6,16 @@ import {
   rotuloDaSituacao,
 } from "../../lib/recursos-dos-candidatos.js";
 import { rotuloDoEstado } from "../../lib/resposta-do-recurso.js";
-import { Aviso, Carregando, classes, Gaveta } from "../../ui/index.js";
+import {
+  Aviso,
+  Carregando,
+  classes,
+  Gaveta,
+  Kv,
+  Secao,
+} from "../../ui/index.js";
 import { SecaoDeAnexos } from "./anexos.jsx";
-import { dataHora, Kv, nota, Secao } from "./partes.jsx";
+import { dataHora, nota } from "./partes.jsx";
 import { SecaoDaResposta } from "./resposta.jsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
 

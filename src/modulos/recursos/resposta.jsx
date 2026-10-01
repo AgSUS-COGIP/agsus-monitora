@@ -11,8 +11,8 @@ import {
   erroDoComentario,
   podeEditarTexto,
 } from "../../lib/resposta-do-recurso.js";
-import { Aviso } from "../../ui/index.js";
-import { dataHora, Kv, Secao } from "./partes.jsx";
+import { Aviso, Kv, Secao } from "../../ui/index.js";
+import { dataHora } from "./partes.jsx";
 import { SeloDaResposta } from "./tabela.jsx";
 
 /*

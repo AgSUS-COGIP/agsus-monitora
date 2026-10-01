@@ -14,8 +14,8 @@ import {
   recursoDuplicado,
   SITUACOES,
 } from "../../lib/recursos-dos-candidatos.js";
-import { Aviso, Campo, Modal, TopoDaGaveta } from "../../ui/index.js";
-import { Kv, nota } from "./partes.jsx";
+import { Aviso, Campo, Kv, Modal, TopoDaGaveta } from "../../ui/index.js";
+import { nota } from "./partes.jsx";
 
 /*
   Cadastro e edição de recurso, na gaveta do painel (`.analises-drawer`),

@@ -1,6 +1,11 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+import {
+  clicar,
+  digitar,
+  escolher,
+  esperar,
+} from "../componentes/interacoes.js";
 
 /*
   O painel de recursos (recursos.html) em React, com a marcação do painel de
@@ -32,7 +37,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 }));
 
 const { montarPainelDeRecursos } =
-  await import("../../src/componentes/recursos/recursos.jsx");
+  await import("../../src/modulos/recursos/recursos.jsx");
 
 const RECURSO_EXISTENTE = {
   id: "r1",

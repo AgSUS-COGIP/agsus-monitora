@@ -32,7 +32,7 @@ import {
 } from "../lib/area-do-painel-de-analises.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { aplicarTemaSalvoDoPainel } from "../lib/tema-do-painel.js";
-import { montarPainelDeRecursos } from "../componentes/recursos/recursos.jsx";
+import { montarPainelDeRecursos } from "../modulos/recursos/recursos.jsx";
 import { comemoracoesLigadasNoPainel } from "../modules/comemoracao.js";
 
 const area = areaDaUrlDoPainel(window.location.search);
