@@ -64,7 +64,7 @@ const RECURSO_EXISTENTE = {
   resultado_anterior: "Reprovado",
   resultado_atual: "Aprovado",
   analista: "Carla",
-  situacao: "EM_ANALISE",
+  situacao: "REGISTRADO",
   processo_sei: null,
   mudou_classificacao: false,
   download_empregare_em: null,
@@ -259,7 +259,7 @@ describe("a tela dentro do app", () => {
     ).toBe("Refinar resultados");
     expect(
       document.querySelectorAll(".recursos-kpis")[0].children,
-    ).toHaveLength(8);
+    ).toHaveLength(4);
     expect(kpi("prazo-vencido").dataset.tom).toBe("perigo");
     expect(
       [...secao.querySelectorAll(".ui-card .ui-titulo")].map((e) =>
@@ -304,7 +304,7 @@ describe("a tela dentro do app", () => {
     expect(grafico.config.type).toBe("bar");
     expect(grafico.data.labels).toEqual(["Carla"]);
     expect(grafico.data.datasets.map((d) => d.label)).toEqual([
-      "Em análise",
+      "Sem decisão",
       "Decididos",
     ]);
     expect(grafico.options.scales.x.stacked).toBe(true);
@@ -439,8 +439,10 @@ describe("carga", () => {
       },
     });
     await montar(supabase);
-    expect(kpi("total").getAttribute("aria-busy")).toBe("true");
-    expect(kpi("total").querySelector(".ui-esqueleto")).not.toBeNull();
+    expect(kpi("aguardando-parecer").getAttribute("aria-busy")).toBe("true");
+    expect(
+      kpi("aguardando-parecer").querySelector(".ui-esqueleto"),
+    ).not.toBeNull();
     expect(secao.querySelectorAll(".ui-grafico.is-carregando")).toHaveLength(4);
     expect(
       secao.querySelectorAll('.ui-tabela tbody tr[aria-hidden="true"]'),
@@ -449,7 +451,9 @@ describe("carga", () => {
 
     await esperar(() => responder({ data: payload(), error: null }));
     expect(contagem()).toBe("1 recurso");
-    expect(kpi("total").querySelector(".ui-kpi-valor").textContent).toBe("1");
+    expect(
+      kpi("prazo-vencido").querySelector(".ui-kpi-valor").textContent,
+    ).toBe("1");
     expect(secao.querySelector(".ui-grafico.is-carregando")).toBeNull();
     // Prazo vencido (22/09) e nota que mudou (50 → 55) viram pendência.
     expect(naTela("Prazo de resposta vencido")).toBe(true);
@@ -693,7 +697,7 @@ describe("cadastro", () => {
     expect(document.activeElement).toBe(botao("Novo recurso"));
   });
 
-  it("outro recurso em análise do mesmo candidato, edital e origem: avisa e só grava confirmando", async () => {
+  it("outro recurso sem decisão do mesmo candidato, edital e origem: avisa e só grava confirmando", async () => {
     const supabase = supabaseFalso();
     const form = await abrirNovo(supabase);
     await escolher(form.querySelector("select[name=edital_id]"), "e1");
@@ -704,7 +708,7 @@ describe("cadastro", () => {
     await digitar(form.querySelector("input[name=busca_candidato]"), "ana");
     await esperarBusca();
     await clicar(botao("Ana Ribeiro"));
-    expect(naTela("Já existe o recurso nº 7 em análise")).toBe(true);
+    expect(naTela("Já existe o recurso nº 7 sem decisão")).toBe(true);
     expect(botao("Cadastrar recurso").disabled).toBe(true);
     await clicar(form.querySelector("input[name=confirma_duplicado]"));
     await clicar(botao("Cadastrar recurso"));
@@ -737,7 +741,7 @@ describe("cadastro", () => {
     await clicar(botao("Bruno Lima"));
     await clicar(botao("Cadastrar recurso"));
     await esperar();
-    expect(naTela("Já existe o recurso nº 9 em análise")).toBe(true);
+    expect(naTela("Já existe o recurso nº 9 sem decisão")).toBe(true);
     expect(
       document.querySelector(".recursos-formulario-cartao"),
     ).not.toBeNull();

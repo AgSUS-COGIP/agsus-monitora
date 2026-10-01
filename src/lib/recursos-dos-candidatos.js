@@ -20,16 +20,49 @@ import {
   prazoDoRecurso,
 } from "./prazo-do-recurso.js";
 
+/*
+  As situações do fluxo com parecer jurídico
+  (20261001170000_recursos_parecer_juridico.sql; transições em
+  parecer-do-recurso.js). PARCIALMENTE_INDEFERIDO é o código de sempre (os
+  modelos de resposta o usam); na tela, "Deferido parcialmente".
+*/
 export const SITUACOES = Object.freeze([
-  Object.freeze({ id: "EM_ANALISE", rotulo: "Em análise", tom: "warning" }),
+  Object.freeze({ id: "REGISTRADO", rotulo: "Registrado", tom: "neutral" }),
+  Object.freeze({
+    id: "EM_ANALISE_JURIDICA",
+    rotulo: "Em análise jurídica",
+    tom: "warning",
+  }),
   Object.freeze({ id: "DEFERIDO", rotulo: "Deferido", tom: "success" }),
-  Object.freeze({ id: "INDEFERIDO", rotulo: "Indeferido", tom: "danger" }),
   Object.freeze({
     id: "PARCIALMENTE_INDEFERIDO",
-    rotulo: "Parcialmente indeferido",
+    rotulo: "Deferido parcialmente",
     tom: "info",
   }),
+  Object.freeze({ id: "INDEFERIDO", rotulo: "Indeferido", tom: "danger" }),
 ]);
+
+export const SITUACAO_INICIAL = "REGISTRADO";
+export const SITUACAO_EM_PARECER = "EM_ANALISE_JURIDICA";
+export const SITUACOES_DECIDIDAS = Object.freeze([
+  "DEFERIDO",
+  "PARCIALMENTE_INDEFERIDO",
+  "INDEFERIDO",
+]);
+/** Deferido, inclusive o parcialmente. */
+export const SITUACOES_DEFERIDAS = Object.freeze([
+  "DEFERIDO",
+  "PARCIALMENTE_INDEFERIDO",
+]);
+export const situacaoDecidida = (id) => SITUACOES_DECIDIDAS.includes(id);
+
+/* Filtro de situação que junta mais de uma (o KPI "Deferidos"). */
+export const GRUPOS_DE_SITUACAO = Object.freeze({
+  deferidos: Object.freeze({
+    rotulo: "Deferidos (com parcialmente)",
+    situacoes: SITUACOES_DEFERIDAS,
+  }),
+});
 
 /* As etapas da esteira, na ordem do trabalho. `campo` é a data que o banco devolve. */
 export const ETAPAS = Object.freeze([
@@ -87,7 +120,7 @@ export function normalizarBusca(valor) {
 }
 
 export const rotuloDaSituacao = (id) =>
-  SITUACOES.find((s) => s.id === id)?.rotulo || texto(id) || "Em análise";
+  SITUACOES.find((s) => s.id === id)?.rotulo || texto(id) || "Registrado";
 export const tomDaSituacao = (id) =>
   SITUACOES.find((s) => s.id === id)?.tom || "neutral";
 export const rotuloDaOrigem = (id, origens = ORIGENS_PADRAO) =>
@@ -139,7 +172,8 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
   const etapas = Object.fromEntries(
     ETAPAS.map((etapa) => [etapa.id, Boolean(recurso[etapa.campo])]),
   );
-  const decidido = texto(recurso.situacao || "EM_ANALISE") !== "EM_ANALISE";
+  const situacao = texto(recurso.situacao) || SITUACAO_INICIAL;
+  const decidido = situacaoDecidida(situacao);
   const mudouNota = notaMudou(recurso);
   const mudouClassificacao = Boolean(recurso.mudou_classificacao);
   const prazo = prazoDoRecurso(
@@ -154,6 +188,7 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
   const semResposta = !etapas.resposta_candidato;
   return {
     ...recurso,
+    situacao,
     analista: texto(recurso.analista),
     etapas,
     decidido,
@@ -165,6 +200,15 @@ export function enriquecerRecurso(recurso, { cronogramas, hoje }) {
     diasParaPrazo,
     // Atrasado: a resposta ainda não saiu e o prazo já passou.
     atrasado: semResposta && diasParaPrazo !== null && diasParaPrazo < 0,
+    // Vencendo: sem resposta e o prazo vence hoje ou em até 2 dias.
+    vencendo:
+      semResposta &&
+      diasParaPrazo !== null &&
+      diasParaPrazo >= 0 &&
+      diasParaPrazo <= 2,
+    // O fluxo do parecer: aguardando o jurídico, ou devolvido por ele para ajuste.
+    aguardandoParecer: situacao === SITUACAO_EM_PARECER,
+    devolvido: situacao === SITUACAO_INICIAL && Boolean(recurso.devolvido_em),
     // Decidido dentro do prazo do cronograma (true/false); null sem decisão ou prazo.
     noPrazo:
       decidido && recurso.decisao_em
@@ -191,6 +235,24 @@ export const PENDENCIAS = Object.freeze([
     titulo: "Prazo de resposta vencido",
     severidade: "alta",
     teste: (r) => r.atrasado,
+  }),
+  Object.freeze({
+    chave: "prazo_vencendo",
+    titulo: "Prazo vence em até 2 dias",
+    severidade: "alta",
+    teste: (r) => r.vencendo,
+  }),
+  Object.freeze({
+    chave: "devolvido",
+    titulo: "Devolvidos pelo jurídico",
+    severidade: "alta",
+    teste: (r) => r.devolvido,
+  }),
+  Object.freeze({
+    chave: "sem_envio_parecer",
+    titulo: "Registrados sem envio ao jurídico",
+    severidade: "media",
+    teste: (r) => r.situacao === SITUACAO_INICIAL,
   }),
   Object.freeze({
     chave: "sem_analista",
@@ -237,22 +299,18 @@ export const PENDENCIAS = Object.freeze([
   Object.freeze({
     chave: "mudou_resultado",
     titulo: "Mudança de nota ou classificação",
-    subtitulo: "Conferir no resultado final.",
     severidade: "media",
     teste: (r) => r.mudouResultado,
   }),
   Object.freeze({
     chave: "sem_prazo",
     titulo: "Prazo não encontrado no cronograma",
-    subtitulo:
-      "O cronograma do edital não traz o prazo de recurso desta origem.",
     severidade: "baixa",
     teste: (r) => !r.prazo.data,
   }),
   Object.freeze({
     chave: "fora_analise",
     titulo: "Candidato fora das análises",
-    subtitulo: "Cadastrado com o nome digitado; confira os dados.",
     severidade: "baixa",
     teste: (r) => r.fora_analise,
   }),
@@ -266,26 +324,25 @@ export function pendenciasPrioritarias(recursos) {
   })).filter((pendencia) => pendencia.valor > 0);
 }
 
+/*
+  Os números da tela. Os 4 KPIs usam aguardandoParecer, atrasados, deferidos
+  (com os parcialmente) e indeferidos; total e taxa de decisão vão para a
+  contagem da fila e o recorte; o resto é pendência ou gráfico.
+*/
 export function calcularIndicadores(recursos) {
   const total = recursos.length;
   const concluidos = recursos.filter((r) => r.decidido).length;
+  const conta = (teste) => recursos.filter(teste).length;
   return {
     total,
-    pendentes: total - concluidos,
+    registrados: conta((r) => r.situacao === SITUACAO_INICIAL),
+    aguardandoParecer: conta((r) => r.aguardandoParecer),
     concluidos,
-    semSei: recursos.filter((r) => !r.etapas.processo_sei).length,
-    semResposta: recursos.filter((r) => !r.etapas.resposta_candidato).length,
-    mudouResultado: recursos.filter((r) => r.mudouResultado).length,
-    atrasados: recursos.filter((r) => r.atrasado).length,
+    deferidos: conta((r) => SITUACOES_DEFERIDAS.includes(r.situacao)),
+    indeferidos: conta((r) => r.situacao === "INDEFERIDO"),
+    atrasados: conta((r) => r.atrasado),
+    vencendo: conta((r) => r.vencendo),
     taxaConclusao: total ? Math.round((concluidos / total) * 100) : 0,
-    respostasEmRevisao: recursos.filter(
-      (r) => r.respostaEstado === "em_revisao",
-    ).length,
-    respostasAprovadas: recursos.filter((r) => r.respostaEstado === "aprovada")
-      .length,
-    respostasDevolvidas: recursos.filter(
-      (r) => r.respostaEstado === "devolvida",
-    ).length,
   };
 }
 
@@ -328,7 +385,13 @@ export function filtrarRecursos(recursos, filtros = FILTROS_VAZIOS) {
     if (filtros.origem && r.origem !== filtros.origem) return false;
     if (filtros.analista && nomeDoAnalista(r) !== filtros.analista)
       return false;
-    if (filtros.situacao && r.situacao !== filtros.situacao) return false;
+    if (filtros.situacao) {
+      const grupo = GRUPOS_DE_SITUACAO[filtros.situacao];
+      const vale = grupo
+        ? grupo.situacoes.includes(r.situacao)
+        : r.situacao === filtros.situacao;
+      if (!vale) return false;
+    }
     if (pendencia && !pendencia.teste(r)) return false;
     if (!busca) return true;
     return normalizarBusca(
@@ -376,7 +439,13 @@ export function opcoesDosFiltros(recursos, origens = ORIGENS_PADRAO) {
     analistas: [...new Set(recursos.map(nomeDoAnalista))]
       .sort(porTexto)
       .map((nome) => ({ valor: nome, rotulo: nome })),
-    situacoes: SITUACOES.map((s) => ({ valor: s.id, rotulo: s.rotulo })),
+    situacoes: [
+      ...SITUACOES.map((s) => ({ valor: s.id, rotulo: s.rotulo })),
+      ...Object.entries(GRUPOS_DE_SITUACAO).map(([valor, grupo]) => ({
+        valor,
+        rotulo: grupo.rotulo,
+      })),
+    ],
     pendencias: PENDENCIAS.map((p) => ({ valor: p.chave, rotulo: p.titulo })),
   };
 }
@@ -450,7 +519,7 @@ export function recursoDuplicado(
       (r) =>
         String(r.edital_id) === String(editalId) &&
         r.origem === origem &&
-        (r.situacao || "EM_ANALISE") === "EM_ANALISE" &&
+        !situacaoDecidida(r.situacao) &&
         (analiseId
           ? String(r.analise_id) === String(analiseId)
           : r.fora_analise && normalizarBusca(r.candidato) === nome),
@@ -470,7 +539,6 @@ export const RASCUNHO_VAZIO = Object.freeze({
   cargo_informado: "",
   vaga_informada: "",
   analista: "",
-  situacao: "EM_ANALISE",
   processo_sei: "",
   mudou_classificacao: false,
   observacao: "",
@@ -496,7 +564,6 @@ export function rascunhoDoRecurso(recurso, detalhe = {}) {
       detalhe.vaga_informada ??
       (recurso.fora_analise ? recurso.vaga || "" : ""),
     analista: recurso.analista || "",
-    situacao: recurso.situacao || "EM_ANALISE",
     processo_sei: recurso.processo_sei || "",
     mudou_classificacao: Boolean(recurso.mudou_classificacao),
     observacao: detalhe.observacao ?? "",
@@ -529,7 +596,6 @@ export function dadosParaSalvar(
   const comuns = {
     origem: rascunho.origem,
     analista: texto(rascunho.analista),
-    situacao: rascunho.situacao || "EM_ANALISE",
     processo_sei: texto(rascunho.processo_sei),
     mudou_classificacao: Boolean(rascunho.mudou_classificacao),
     observacao: texto(rascunho.observacao),
@@ -583,6 +649,7 @@ export const COLUNAS_DO_CSV = Object.freeze([
   ["Vaga", (r) => r.vaga],
   ["Analista", (r) => r.analista],
   ["Situação", (r) => rotuloDaSituacao(r.situacao)],
+  ["Decidido em", (r) => dataBR(r.decisao_em)],
   ...ETAPAS.map((etapa) => [etapa.rotulo, (r) => dataBR(r[etapa.campo])]),
   ["Nº processo SEI", (r) => r.processo_sei],
   ["Nota no cadastro", (r) => numeroBR(r.nota_anterior)],

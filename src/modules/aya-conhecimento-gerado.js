@@ -552,6 +552,79 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "conhecimento geral",
   },
   {
+    titulo: "Tela de Seleção",
+    perguntas: [
+      "tela de selecao",
+      "aba selecao",
+      "funil por vaga",
+      "painel de selecao",
+    ],
+    resposta:
+      "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada todo dia no banco: inscritos, aptos para análise, eliminados, triados, convocados para entrevista, aprovados e contratados. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Convocados para entrevista",
+    perguntas: [
+      "convocados entrevista",
+      "convocados para entrevista",
+      "origem dos convocados",
+    ],
+    resposta:
+      'Na Seleção, os convocados para entrevista vêm das entrevistas registradas no MONITORA quando o edital as tem; quando não tem, vêm da planilha Auditoria, que é o dado antigo. O CSV exportado traz a origem de cada vaga na coluna "Origem dos convocados".',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Aprovados e contratados na Seleção",
+    perguntas: [
+      "aprovados na selecao",
+      "contratados na selecao",
+      "nao contratados",
+    ],
+    resposta:
+      "Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração. Sem lista de aprovados, a vaga não soma aprovados nem contratados.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Taxa de contratação",
+    perguntas: [
+      "taxa de contratacao",
+      "taxa contratacao",
+      "percentual de contratados",
+    ],
+    resposta:
+      'Na Seleção, a taxa de contratação é o número de contratados dividido pelo número de aprovados, em porcentagem. Sem aprovados no recorte, a taxa aparece como 0%. O medidor "Contratados" mostra a mesma conta, com quantos foram contratados de quantos aprovados.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Eliminados antes da análise",
+    perguntas: [
+      "eliminados antes da analise",
+      "questionario nao finalizado",
+      "eliminados por nota",
+    ],
+    resposta:
+      'Na Seleção, os eliminados antes da análise são a soma de três grupos: os cancelados, os reprovados por não finalizar o questionário e os eliminados por nota. O gráfico "Aptos na análise e eliminados" compara os aptos para análise com o total de eliminados, e "Triados e reprovados na análise" mostra o resultado da análise curricular.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Alertas da coluna Observação",
+    perguntas: [
+      "alertas identificados no recorte",
+      "observacao da selecao",
+      "alertas da selecao",
+    ],
+    resposta:
+      "Na Seleção, os alertas identificados no recorte são as observações da coluna Observação da planilha Auditoria. Cada observação aparece uma vez, sem diferenciar maiúsculas, com quantas vagas a têm e em quais unidades e editais.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
     titulo: "Página inicial nas Configurações",
     perguntas: [
       "configuracao da pagina inicial",
@@ -689,6 +762,109 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A logo e a cor da barra lateral são escolhidas em Configurações › Aparência. A logo aceita JPG, PNG ou WEBP de até 6 MB; enviar guarda o arquivo em Logos enviadas, mas a escolha só vale depois de "Salvar alterações". Enquanto a escolha está pendente, a barra lateral já mostra a logo e a cor escolhidas; descartada a alteração, ela volta ao que está publicado. Os textos e ícones da barra mudam sozinhos para claro ou escuro conforme a cor. A logo selecionada não pode ser apagada: escolha outra ou restaure o padrão antes.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Fluxo do parecer jurídico",
+    perguntas: [
+      "parecer jurídico",
+      "fluxo do recurso",
+      "quem decide o recurso",
+      "quem defere o recurso",
+      "em análise jurídica",
+      "enviar para parecer",
+    ],
+    resposta:
+      'No MONITORA, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer, ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Aguardando parecer",
+    perguntas: [
+      "aguardando parecer",
+      "o que é aguardando parecer",
+      "kpi aguardando parecer",
+    ],
+    resposta:
+      'No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Deferido parcialmente",
+    perguntas: [
+      "deferido parcialmente",
+      "parcialmente indeferido",
+      "deferidos inclui parcialmente",
+    ],
+    resposta:
+      'No MONITORA, "Deferido parcialmente" é o mesmo que "parcialmente indeferido" (o código no banco continua PARCIALMENTE_INDEFERIDO, usado pelos modelos de resposta). O indicador "Deferidos" soma os deferidos e os deferidos parcialmente.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Devolvido para ajuste",
+    perguntas: [
+      "devolvido para ajuste",
+      "recurso devolvido",
+      "devolvidos pelo jurídico",
+    ],
+    resposta:
+      'No MONITORA, o jurídico pode devolver um recurso Em análise jurídica para ajuste, dizendo o que falta. Ele volta a Registrado, com o comentário em destaque no detalhe, e aparece na pendência "Devolvidos pelo jurídico" até ser reenviado.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Reabrir a decisão",
+    perguntas: [
+      "reabrir decisão",
+      "desfazer decisão do recurso",
+      "mudar a decisão do recurso",
+    ],
+    resposta:
+      "No MONITORA, só o jurídico reabre uma decisão, com motivo, e só enquanto a resposta não foi enviada ao candidato. O recurso volta a Em análise jurídica; o parecer anterior continua no histórico.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Resposta ao candidato e parecer",
+    perguntas: [
+      "aprovar resposta do recurso",
+      "publicar resposta do recurso",
+      "marcar resposta enviada",
+      "aprovar exige a decisão",
+    ],
+    resposta:
+      'No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão. Marcar a resposta como enviada ao candidato (e a etapa "Resposta enviada ao candidato") é de quem edita, mas só com o recurso já decidido; depois disso a decisão não reabre.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Indicadores da aba Recursos",
+    perguntas: [
+      "indicadores dos recursos",
+      "kpis dos recursos",
+      "onde está o total de recursos",
+      "taxa de conclusão dos recursos",
+      "sem processo sei",
+    ],
+    resposta:
+      'No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Pendências da aba Recursos",
+    perguntas: [
+      "pendências dos recursos",
+      "prazo não encontrado no cronograma",
+      "candidato fora das análises",
+      "mudança de nota ou classificação",
+    ],
+    resposta:
+      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com o nome digitado, que vale conferir; "Mudança de nota ou classificação" pede conferência no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias.',
     fato: "",
     fonte: "interface do MONITORA",
   },

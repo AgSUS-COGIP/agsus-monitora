@@ -36,7 +36,6 @@ import {
 import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
 import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.js";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
-import { abrirPaginaDoPainel, quadroDoPainel } from "./pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import {
   MAPA_DOS_DSEIS,
@@ -2180,15 +2179,6 @@ function setActiveNav(view) {
 }
 
 /*
-  Páginas que são um painel do app num quadro, com o próprio cabeçalho
-  (selecao.html; src/lib/pagina-do-painel.js): a permissão para abrir e o
-  título da página.
-*/
-const PAINEIS_EM_PAGINA = Object.freeze({
-  selecao: { titulo: "Seleção", pode: canViewSelecao },
-});
-
-/*
   Telas React de página inteira (montadas por src/main.js na própria
   `#page-<view>`): título, subtítulo (depois da área) e o controlador.
 */
@@ -2211,6 +2201,7 @@ const TELAS_REACT = Object.freeze({
   recursos: () => ["Recursos", "", window.recursosController],
   entrevistas: () => ["Entrevistas", "", window.entrevistasController],
   analises: () => ["Análises curriculares", "", window.analisesController],
+  selecao: () => ["Seleção", "", window.selecaoController],
 });
 
 function navigate(view) {
@@ -2259,11 +2250,8 @@ function navigate(view) {
     toast("Sem permissão para Entrevistas.", "warn");
     return;
   }
-  const painelEmPagina = Object.hasOwn(PAINEIS_EM_PAGINA, requestedView)
-    ? PAINEIS_EM_PAGINA[requestedView]
-    : null;
-  if (painelEmPagina && !painelEmPagina.pode(profile)) {
-    toast(`Sem permissão para ${painelEmPagina.titulo}.`, "warn");
+  if (requestedView === "selecao" && !canViewSelecao(profile)) {
+    toast("Sem permissão para Seleção.", "warn");
     return;
   }
   if (requestedView === "config" && !podeAbrirConfiguracoes(profile)) {
@@ -2337,16 +2325,6 @@ function navigate(view) {
     $("page-" + requestedView).classList.add("active");
     setPageTitle(titulo, subtituloDaArea(subtitulo));
     void controlador?.render();
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (painelEmPagina) {
-    // O painel (selecao.html) também traz o próprio cabeçalho.
-    document.body.classList.add("external-panel-mode");
-    $("page-" + requestedView).classList.add("active");
-    setPageTitle(painelEmPagina.titulo, subtituloDaArea(""));
-    abrirPaginaDoPainel($("page-" + requestedView));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -11428,10 +11406,6 @@ function exitExternalPanel() {
 }
 
 function getFullscreenTarget() {
-  if (Object.hasOwn(PAINEIS_EM_PAGINA, currentView)) {
-    const frame = quadroDoPainel($("page-" + currentView));
-    if (frame) return frame;
-  }
   if (currentView && currentView.startsWith("panel:") && currentPanel) {
     const holder = document.getElementById(
       "external-panel-" + currentPanel.codigo,

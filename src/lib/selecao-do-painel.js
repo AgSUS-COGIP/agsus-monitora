@@ -1,7 +1,7 @@
 /*
-  Regras do painel de seleção (`selecao.html`), sem React e sem banco: o que
-  chega de `get_selecao_da_area` (migration 20261001090000_selecao.sql) vira a
-  lista de vagas que o painel desenha. Nada aqui escreve.
+  Regras da tela de Seleção (src/modulos/selecao/), sem React e sem banco: o
+  que chega de `get_selecao_da_area` (migration 20261001090000_selecao.sql)
+  vira a lista de vagas que a tela desenha. Nada aqui escreve.
 
   O painel repete o antigo painel externo "AgSUS Monitora Recrutamento e
   Seleção" (Apps Script sobre a planilha "Auditoria"): quatro filtros de
@@ -174,7 +174,7 @@ export function rotuloDaUnidade(area) {
   return area === "saude-indigena" ? "Nome DSEI" : "Unidade";
 }
 
-/** Os filtros escolhidos, como os chips e o recorte os descrevem. */
+/** Os filtros escolhidos, como os chips e o recorte (LinhaDoRecorte, src/ui/) os descrevem. */
 export function filtrosAtivos(filtros, area = "saude-indigena") {
   return CAMPOS_DO_FILTRO.filter(({ campo }) => filtros[campo]?.length).map(
     ({ campo, rotulo }) => ({
@@ -183,13 +183,6 @@ export function filtrosAtivos(filtros, area = "saude-indigena") {
       valores: filtros[campo],
     }),
   );
-}
-
-export function textoDoRecorte(filtros, area) {
-  const ativos = filtrosAtivos(filtros, area);
-  if (!ativos.length)
-    return "Sem filtros aplicados. Visualizando toda a base carregada.";
-  return `Recorte ativo: ${ativos.map((a) => `${a.rotulo}: ${a.valores.join(", ")}`).join(" · ")}`;
 }
 
 /* ── KPIs ───────────────────────────────────────────────────────────── */

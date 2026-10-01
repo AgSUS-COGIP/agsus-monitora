@@ -46,14 +46,13 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(projectDirectory, "index.html"),
-        selecao: resolve(projectDirectory, "selecao.html"),
         authCallback: resolve(projectDirectory, "auth/callback.html"),
       },
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return undefined;
           if (id.includes("@supabase")) return "vendor-supabase";
-          // A página principal e o painel de Seleção usam React; Análises não baixa.
+          // A página principal usa React; Análises não baixa.
           // O Vite normaliza o id com "/", também no Windows.
           if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
             return "vendor-react";

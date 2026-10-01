@@ -15,6 +15,7 @@ import {
   Secao,
 } from "../../ui/index.js";
 import { SecaoDeAnexos } from "./anexos.jsx";
+import { SecaoDoParecer } from "./parecer.jsx";
 import { dataHora, nota } from "./partes.jsx";
 import { SecaoDaResposta } from "./resposta.jsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
@@ -24,7 +25,8 @@ import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
   pílulas, o contexto em cartões e as seções (Secao, Kv). Traz os dados do
   candidato (vindos da
   análise), a nota e o resultado do cadastro contra os de hoje, o prazo do
-  cronograma, as etapas com quem e quando, a resposta ao candidato
+  cronograma, o parecer jurídico (parecer.jsx), as etapas com quem e quando,
+  a resposta ao candidato
   (resposta.jsx), os anexos (anexos.jsx), a observação e o histórico. Quem
   edita marca as etapas aqui, escreve a resposta, anexa, edita e exclui.
 */
@@ -40,6 +42,15 @@ const CAMPOS_DO_HISTORICO = {
   codigo_informado: "Código do candidato",
   cargo_informado: "Cargo",
   vaga_informada: "Vaga",
+};
+
+const ACOES_DO_PARECER_NO_HISTORICO = {
+  enviar_parecer: "Enviou para parecer jurídico",
+  devolver: "Devolveu para ajuste",
+  deferir: "Deferiu",
+  deferir_parcialmente: "Deferiu parcialmente",
+  indeferir: "Indeferiu",
+  reabrir: "Reabriu a decisão",
 };
 
 const ACOES_DA_RESPOSTA_NO_HISTORICO = {
@@ -61,6 +72,12 @@ function textoDoHistorico(h, origens) {
     const texto =
       ACOES_DA_RESPOSTA_NO_HISTORICO[h.campo] ||
       `Resposta: ${rotuloDoEstado(h.novo).toLowerCase()}`;
+    return `${texto}${h.motivo ? `: ${h.motivo}` : ""}`;
+  }
+  if (h.acao === "parecer") {
+    const texto =
+      ACOES_DO_PARECER_NO_HISTORICO[h.campo] ||
+      `Situação: ${rotuloDaSituacao(h.novo)}`;
     return `${texto}${h.motivo ? `: ${h.motivo}` : ""}`;
   }
   if (h.acao === "exclusao")
@@ -85,9 +102,17 @@ export function GavetaDoRecurso({
   detalhe,
   origens,
   podeEditar,
+  podeDecidir = false,
   modelos = [],
   area = "",
 }) {
+  // Recurso decidido: excluir é do parecer jurídico. A etapa "resposta
+  // enviada" é de quem edita, mas só marca com o recurso decidido.
+  const podeExcluir = podeEditar && (!r.decidido || podeDecidir);
+  const podeMarcar = (etapa) =>
+    etapa.id === "resposta_candidato"
+      ? podeEditar && (r.decidido || r.etapas[etapa.id])
+      : podeEditar;
   const { acao } = useSyncExternalStore(estado.assinar, estado.obter);
   const resposta = detalhe?.resposta;
   const [excluindo, setExcluindo] = useState(false);
@@ -162,16 +187,28 @@ export function GavetaDoRecurso({
                 <i className="fa-solid fa-pen-to-square" aria-hidden="true" />{" "}
                 Editar
               </button>
-              <button
-                type="button"
-                className="btn secondary small"
-                disabled={Boolean(acao)}
-                onClick={() => setExcluindo(true)}
-              >
-                <i className="fa-solid fa-trash" aria-hidden="true" /> Excluir
-              </button>
+              {podeExcluir ? (
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  disabled={Boolean(acao)}
+                  onClick={() => setExcluindo(true)}
+                >
+                  <i className="fa-solid fa-trash" aria-hidden="true" /> Excluir
+                </button>
+              ) : null}
             </div>
           ) : null}
+
+          <SecaoDoParecer
+            key={`${r.id}:${r.revisao}`}
+            estado={estado}
+            recurso={r}
+            detalhe={detalhe}
+            podeEditar={podeEditar}
+            podeDecidir={podeDecidir}
+            acao={acao}
+          />
 
           <Secao icone="fa-list-check" titulo="Etapas" secao="etapas">
             <ul className="recursos-checklist">
@@ -187,7 +224,7 @@ export function GavetaDoRecurso({
                         type="checkbox"
                         name={etapa.id}
                         checked={feita}
-                        disabled={!podeEditar || Boolean(acao)}
+                        disabled={!podeMarcar(etapa) || Boolean(acao)}
                         aria-busy={emCurso || undefined}
                         onChange={(evento) =>
                           void estado.marcarEtapa(
@@ -234,6 +271,7 @@ export function GavetaDoRecurso({
               origens={origens}
               area={area}
               podeEditar={podeEditar}
+              podeDecidir={podeDecidir}
               acao={acao}
             />
           )}
@@ -356,7 +394,7 @@ export function GavetaDoRecurso({
             )}
           </Secao>
 
-          {podeEditar && excluindo ? (
+          {podeExcluir && excluindo ? (
             <form
               className="recursos-bloco recursos-exclusao"
               onSubmit={(evento) => {

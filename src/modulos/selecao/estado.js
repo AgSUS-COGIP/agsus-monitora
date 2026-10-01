@@ -1,16 +1,20 @@
 /*
-  Estado do painel de seleção (`selecao.html`), fora do React: o que o banco
-  devolve para a área do painel (`?area=`). Os componentes leem com
+  Estado da tela de Seleção (`#page-selecao`), fora do React: o que o banco
+  devolve para a área atual do app. Os componentes leem com
   `useSyncExternalStore`. Este arquivo não importa React.
 
-  O painel só lê: uma RPC, `get_selecao_da_area` (json), que confere permissão
+  A tela só lê: uma RPC, `get_selecao_da_area` (json), que confere permissão
   (recurso `selecao` >= leitor), área e o recorte da coordenação
   (supabase/migrations/20261001090000_selecao.sql).
 
   Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.js, a
-  mesma do painel de entrevistas): na primeira carga da área, a cópia do
+  mesma da tela de Entrevistas): na primeira carga da área, a cópia do
   navegador (do mesmo usuário e da mesma publicação) aparece na hora e a
   versão nova é pedida por trás. Acesso revogado (42501) apaga as cópias.
+
+  Sessão: o cliente Supabase único do app; sem sessão, `semSessao`. Outro
+  usuário entrou na mesma aba (ou saiu da conta): tudo volta ao início, e a
+  próxima abertura da tela recarrega.
 */
 import {
   criarCacheDePayload,
@@ -31,7 +35,7 @@ import {
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
 
 export const MENSAGEM_SEM_SESSAO =
-  "Sessão não localizada. Abra este painel pelo menu do MONITORA para compartilhar a sessão do Supabase Auth.";
+  "Sessão não localizada. Entre de novo no MONITORA.";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Seleção";
 
 /* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */
@@ -109,6 +113,23 @@ export function criarEstadoDaSelecao({
       semAcesso: erro?.code === "42501",
       erroAoCarregar: mensagemDaCarga(erro),
     });
+
+  /*
+    Outro usuário na mesma aba (ou saiu da conta): o que era do anterior sai e
+    um pedido em curso deixa de valer.
+  */
+  function reiniciar() {
+    pedido += 1;
+    publicar(ESTADO_INICIAL);
+  }
+  let identidade;
+  supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
+    const atual = sessao?.user?.id || null;
+    if (atual === identidade) return;
+    // O primeiro aviso da página só registra quem é; não há o que limpar.
+    if (identidade !== undefined || !atual) reiniciar();
+    identidade = atual;
+  });
 
   /* O payload da área; lança o erro do banco (ou o de rede/tempo). */
   async function buscar(area) {
@@ -225,5 +246,6 @@ export function criarEstadoDaSelecao({
     },
     carregar,
     exportarCsv,
+    reiniciar,
   };
 }

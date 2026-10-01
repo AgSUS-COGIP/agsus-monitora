@@ -9,6 +9,7 @@ import {
   rotuloDaOrigem,
   rotuloDaSituacao,
   SITUACOES,
+  situacaoDecidida,
 } from "../../lib/recursos-dos-candidatos.js";
 import { Aviso, Carregando, Gaveta, Secao } from "../../ui/index.js";
 import { dataHora } from "./partes.jsx";
@@ -22,7 +23,7 @@ import { dataHora } from "./partes.jsx";
   botão (no cursor); o banco recusa marcador fora da lista.
 */
 
-const SITUACOES_DO_MODELO = SITUACOES.filter((s) => s.id !== "EM_ANALISE");
+const SITUACOES_DO_MODELO = SITUACOES.filter((s) => situacaoDecidida(s.id));
 
 function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
   const [rascunho, setRascunho] = useState(() => rascunhoDoModelo(modelo));

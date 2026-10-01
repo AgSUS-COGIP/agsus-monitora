@@ -7,9 +7,10 @@ A tela `#page-recursos` (view `recursos`), módulo do app desde a Etapa 2: monta
 ```
 recursos.jsx    <TelaDeRecursos> e montarRecursos() (área atual, troca de área, controlador)
 estado.js       store sem React: carga da área, gaveta, formulário, escritas (RPC e Storage)
-paineis.jsx     topo (status e ações), filtros, KPIs, recorte, gráficos, pendências
+paineis.jsx     topo (status e ações), filtros, 4 KPIs, recorte, gráficos, pendências
 tabela.jsx      fila (TabelaInfinita), selos de situação, resposta e prazo
-gaveta.jsx      detalhe: etapas, resposta, anexos, resultado, prazo, observação, histórico
+gaveta.jsx      detalhe: parecer, etapas, resposta, anexos, resultado, prazo, observação, histórico
+parecer.jsx     parecer jurídico: enviar, deferir/deferir parcialmente/indeferir, devolver, reabrir
 formulario.jsx  cadastro e edição (candidato buscado nas análises do edital)
 resposta.jsx    resposta ao candidato: modelo, prévia, revisão, documento
 anexos.jsx      anexos com download registrado (URL assinada de 60 s)
@@ -19,5 +20,9 @@ recursos.css    só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
 Regras puras em `src/lib/` (`recursos-dos-candidatos.js`, `prazo-do-recurso.js`,
-`resposta-do-recurso.js`, `anexos-do-recurso.js`, `modelos-de-resposta.js`,
-`documento-da-resposta.js`). Testes: `tests/modulos/recursos*.test.js`.
+`resposta-do-recurso.js`, `parecer-do-recurso.js`, `anexos-do-recurso.js`,
+`modelos-de-resposta.js`, `documento-da-resposta.js`). Testes: `tests/modulos/recursos*.test.js`.
+
+Decidir é só de quem tem `recursos_parecer` (Acessos › "Parecer jurídico (Recursos)", grupo
+"Jurídico"); o banco confere (`20261001170000_recursos_parecer_juridico.sql`). As regras
+explicadas à pessoa ficam com a Aya (`docs/aya/regras-dos-recursos.md`).

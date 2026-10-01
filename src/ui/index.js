@@ -19,7 +19,6 @@ export {
 export { ListaDePendencias } from "./lista-de-pendencias.jsx";
 export { MaisOpcoes } from "./mais-opcoes.jsx";
 export { Modal } from "./modal.jsx";
-export { PainelNoQuadro, usarNoQuadro } from "./no-quadro.jsx";
 export {
   ChipDeFiltro,
   ChipsDeFiltro,
@@ -29,4 +28,4 @@ export { GradeDeKv, Kv, Secao } from "./secao.jsx";
 export { Segmentado } from "./segmentado.jsx";
 export { Selo } from "./selo.jsx";
 export { TabelaInfinita } from "./tabela-infinita.jsx";
-export { TopoDoPainel, usarAlturaDoTopo } from "./topo-do-painel.jsx";
+export { TopoDoPainel } from "./topo-do-painel.jsx";
