@@ -1,0 +1,245 @@
+/*
+  Configurações › Status das atualizações (React: src/componentes/saude-das-cargas/).
+  A frase do topo (tudo em dia / precisa de atenção), uma linha por aba do
+  sistema e, em "Detalhes", cada script ou tarefa com o histórico. Só tokens
+  (src/styles/tokens.css), que o tema escuro já troca.
+*/
+
+/* A seção é uma coluna só (o corpo das seções é uma grade de duas). */
+.config-secao[data-secao="cargas"] .config-secao__corpo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ── A frase do topo ─────────────────────────────────────────────────── */
+.saude-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.saude-resumo--ok {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.saude-resumo--atencao {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.saude-resumo__texto {
+  display: grid;
+  flex: 1 1 280px;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.saude-resumo__texto strong {
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.saude-resumo__texto span {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  overflow-wrap: anywhere;
+}
+.saude-resumo__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.saude-resumo__acoes small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* ── Selos de situação ───────────────────────────────────────────────── */
+.saude-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+.saude-selo--sucesso {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.saude-selo--aviso {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.saude-selo--perigo {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.saude-selo--info {
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.saude-selo--neutro {
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+}
+
+/* ── Uma linha por aba do sistema ────────────────────────────────────── */
+.saude-lista {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+}
+.saude-item {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.saude-item:first-child {
+  border-top: 0;
+}
+.saude-item--falhou {
+  box-shadow: inset 4px 0 0 var(--state-danger);
+}
+.saude-item--atrasada {
+  box-shadow: inset 4px 0 0 var(--state-warning);
+}
+.saude-item__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+.saude-item__nome {
+  display: grid;
+  flex: 1 1 320px;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.saude-item__nome strong {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+.saude-item__nome small {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.saude-item__estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.saude-item__quando {
+  min-width: 9rem;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.saude-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.saude-erro {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--state-danger-soft);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  overflow-wrap: anywhere;
+}
+
+/* ── Detalhes: cada script ou tarefa, com o histórico ────────────────── */
+.saude-item__detalhes {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.saude-parte {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+.saude-parte__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.saude-parte__onde,
+.saude-parte__vazio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.saude-historico {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.saude-historico table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body-sm);
+}
+.saude-historico th,
+.saude-historico td {
+  padding: var(--space-1-5) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+.saude-historico th {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.saude-historico tbody tr:last-child td {
+  border-bottom: 0;
+}
+.saude-historico .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.saude-historico td:first-child,
+.saude-historico td:nth-child(2) {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.saude-resultado {
+  font-weight: 600;
+}
+.saude-resultado--ok {
+  color: var(--state-success);
+}
+.saude-resultado--falha {
+  color: var(--state-danger);
+}
+.saude-resultado--andamento {
+  color: var(--state-info);
+}
+.saude-mensagem {
+  min-width: 16rem;
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+}

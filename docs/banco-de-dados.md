@@ -847,3 +847,20 @@ e `20261001090500_liga_aba_selecao.sql` a liga junto com o front. **Ainda não e
     `Migração`; sem lista vigente, nulos.
 - Permissão `selecao` com os níveis de `entrevistas`. O painel externo "Seleção" continua ativo até
   a aba nova ser aprovada.
+
+## 15. Status das atualizações (antes "Saúde das cargas"; Configurações, só administrador global)
+
+Migration `20261001120000_saude_das_cargas.sql` (rollback em `supabase/rollback/`). **Só leitura.**
+
+- `get_saude_das_cargas()` (json; `private.is_master()`, 42501 para os demais): as últimas 10
+  execuções de cada origem das análises (`TL_SYNC_ANALISE` × `TA_ORIGEM_ANALISE` ×
+  `TB_PLANILHA_ANALISE`; colunas lidas pelo json da linha, porque a tabela é anterior às
+  migrations), de `TL_SYNC_ENTREVISTA`, de `TL_SYNC_SELECAO` e das tarefas `agsus_*` do pg_cron
+  (`cron.job` × `cron.job_run_details`; nulas sem acesso ao pg_cron).
+- Índice `IN_SYNCANALISE_ORIGEM` (`origem`, `started_at desc`) para a leitura por origem.
+- A tela mostra uma linha por aba (análises por área, entrevistas, seleção, tarefas do banco) e uma
+  frase no topo; o selo (em dia, atrasada, falhou, em andamento, ainda sem carga — este não pede
+  atenção: a SEDE ainda não tem planilha de análise) e os prazos ficam no front, em
+  `src/lib/saude-das-cargas.js`: análises incrementais atrasadas depois de 1 h; entrevistas e
+  seleção, de 26 h; tarefas a cada 2 min, de 15 min. A seção é
+  `src/componentes/saude-das-cargas/`.
