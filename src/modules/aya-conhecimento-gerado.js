@@ -552,17 +552,175 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "conhecimento geral",
   },
   {
+    titulo: "O que a Aya faz",
+    perguntas: [
+      "o que voce consegue fazer",
+      "o que voce faz",
+      "o que a aya faz",
+      "como a aya ajuda",
+      "para que serve a aya",
+    ],
+    resposta:
+      "Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Também converso sobre saúde indígena com fontes oficiais. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.",
+    fato: "A interface do MONITORA não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.",
+    fonte: "comportamento da Aya",
+  },
+  {
+    titulo: "Dados e privacidade da Aya",
+    perguntas: [
+      "voce consulta meus dados",
+      "a aya ve meus dados",
+      "privacidade da aya",
+      "a conversa fica guardada",
+    ],
+    resposta:
+      'Eu uso só o que já está disponível para você no MONITORA e não amplio seu acesso. A conversa fica guardada só nesta aba do navegador e some quando ela fecha; "Limpar conversa" apaga antes. A avaliação "Isso ajudou?" fica só no seu navegador.',
+    fato: "",
+    fonte: "src/modules/aya-memoria.js; src/modulos/aya/",
+  },
+  {
+    titulo: "Alterações pela Aya",
+    perguntas: [
+      "voce pode alterar algo por mim",
+      "a aya pode salvar",
+      "a aya pode editar",
+    ],
+    resposta:
+      "Não. Eu oriento o caminho e posso abrir a tela certa, mas a confirmação e qualquer alteração continuam com você.",
+    fato: "",
+    fonte: "comportamento da Aya",
+  },
+  {
+    titulo: "Abrir chamado ao suporte",
+    perguntas: [
+      "como abrir um chamado",
+      "abrir chamado",
+      "falar com o suporte",
+      "contato do suporte",
+      "chamado ao suporte",
+    ],
+    resposta:
+      'Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o seu e-mail já preenchido para o suporte, com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
+    fato: "",
+    fonte: "src/lib/chamado-da-aya.js; src/modulos/aya/",
+  },
+  {
+    titulo: "Tela da Lista de aprovados",
+    perguntas: [
+      "tela da lista de aprovados",
+      "lista de aprovados",
+      "aba lista de aprovados",
+      "para que serve lista de aprovados",
+      "para que serve a lista de aprovados",
+      "status do candidato",
+    ],
+    resposta:
+      "A Lista de aprovados mostra a lista vigente de cada edital da área atual. Os status do candidato são Contratado, Desistente, Migração, Documentação Rejeitada e Fim de Fila; Contratado e Migração exigem matrícula. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado). Quem tem Editor em Aprovados muda status; o grupo Edital gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
+    fato: "",
+    fonte:
+      "src/lib/lista-aprovados-rules.js; src/componentes/lista-aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
+    abrir: "approved",
+  },
+  {
+    titulo: "Lista inativa",
+    perguntas: [
+      "o que acontece com uma lista inativa",
+      "lista inativa",
+      "listas inativas",
+      "ativar lista",
+      "inativar lista",
+    ],
+    resposta:
+      "Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Edital gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.",
+    fato: "",
+    fonte: "src/lib/lista-aprovados-rules.js; src/lib/access-roles.js",
+  },
+  {
+    titulo: "Importar a lista",
+    perguntas: [
+      "importar lista de aprovados",
+      "importacao do xlsx",
+      "colunas do xlsx",
+      "substituir lista",
+    ],
+    resposta:
+      "A importação aceita só .xlsx e usa a primeira aba, com as colunas obrigatórias codigo_vaga, cargo, classificacao, nota, nome e modalidade (classificação inteira maior que 0; nota numérica, 0 ou mais); mostra até 12 erros por vez. Importa quem tem Editor em Importação (ou o grupo Edital gestor); substituir uma lista existente é do Administrador. A importação liga os candidatos ao edital pelo ID do edital.",
+    fato: "",
+    fonte: "src/lib/aprovados-import.js; src/lib/access-roles.js",
+  },
+  {
+    titulo: "Modelo de convocação",
+    perguntas: [
+      "como funciona o modelo de convocacao",
+      "modelo de convocacao",
+      "cotas intercaladas",
+      "ordem da convocacao",
+      "sem modelo de convocacao",
+    ],
+    resposta:
+      'O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota; cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente e Documentação Rejeitada não ocupam vaga; Fim de Fila vai para depois de todos. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX.',
+    fato: "",
+    fonte:
+      "src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.js; src/lib/configuracao-de-convocacao.js",
+  },
+  {
+    titulo: "Candidato sub judice",
+    perguntas: [
+      "como funciona o candidato sub judice",
+      "sub judice",
+      "decisao judicial",
+      "incluir sub judice",
+    ],
+    resposta:
+      "Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional.",
+    fato: "",
+    fonte:
+      "src/lib/access-roles.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20261001150000_sub_judice_alteracao.sql",
+  },
+  {
+    titulo: "Anexos do candidato",
+    perguntas: [
+      "quem pode anexar documentos ao candidato",
+      "anexos do candidato",
+      "anexar pdf ao candidato",
+      "documentos do candidato",
+    ],
+    resposta:
+      "Só quem tem Administrador em Aprovados inclui e remove anexos do candidato, e só em lista ativa: PDF de até 2 MB, no máximo 5 por candidato. Ver e baixar os anexos é para quem lê a lista.",
+    fato: "",
+    fonte:
+      "src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20260928235000_anexos_so_admin.sql",
+  },
+  {
     titulo: "Tela de Seleção",
     perguntas: [
       "tela de selecao",
       "aba selecao",
       "funil por vaga",
       "painel de selecao",
+      "como funciona a tela de selecao",
+      "para que serve selecao",
+      "para que serve a tela de selecao",
     ],
     resposta:
-      "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada todo dia no banco: inscritos, aptos para análise, eliminados, triados, convocados para entrevista, aprovados e contratados. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
+      "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada todo dia no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "src/modulos/selecao/; src/lib/selecao-do-painel.js",
+    abrir: "selecao",
+  },
+  {
+    titulo: "Atualização da Seleção",
+    perguntas: [
+      "quando a selecao e atualizada",
+      "carga da selecao",
+      "planilha auditoria",
+      "atualizacao da selecao",
+    ],
+    resposta:
+      "A Seleção é carregada todo dia às 9h de Brasília pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.",
+    fato: "",
+    fonte:
+      ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql",
   },
   {
     titulo: "Convocados para entrevista",
@@ -570,11 +728,13 @@ export const VERBETES_AYA = Object.freeze([
       "convocados entrevista",
       "convocados para entrevista",
       "origem dos convocados",
+      "de onde vem os convocados para entrevista",
     ],
     resposta:
-      'Na Seleção, os convocados para entrevista vêm das entrevistas registradas no MONITORA quando o edital as tem; quando não tem, vêm da planilha Auditoria, que é o dado antigo. O CSV exportado traz a origem de cada vaga na coluna "Origem dos convocados".',
+      'Na Seleção, os convocados para entrevista vêm das entrevistas registradas no MONITORA quando o edital as tem (a vaga sem nenhuma entrevista fica com 0); quando o edital não tem, vêm da planilha Auditoria, que é o dado antigo. O CSV exportado traz a origem de cada vaga na coluna "Origem dos convocados".',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte:
+      "supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao-do-painel.js",
   },
   {
     titulo: "Aprovados e contratados na Seleção",
@@ -584,9 +744,10 @@ export const VERBETES_AYA = Object.freeze([
       "nao contratados",
     ],
     resposta:
-      "Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração. Sem lista de aprovados, a vaga não soma aprovados nem contratados.",
+      "Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração, e os não contratados são aprovados menos contratados. Sem lista de aprovados, a vaga não soma aprovados nem contratados. Nas vagas de outras bancas (sem código da vaga), a ligação com a lista é pelo nome do cargo, sem diferenciar acento, maiúsculas ou pontuação.",
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte:
+      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql",
   },
   {
     titulo: "Taxa de contratação",
@@ -594,11 +755,12 @@ export const VERBETES_AYA = Object.freeze([
       "taxa de contratacao",
       "taxa contratacao",
       "percentual de contratados",
+      "como e calculada a taxa de contratacao",
     ],
     resposta:
       'Na Seleção, a taxa de contratação é o número de contratados dividido pelo número de aprovados, em porcentagem. Sem aprovados no recorte, a taxa aparece como 0%. O medidor "Contratados" mostra a mesma conta, com quantos foram contratados de quantos aprovados.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "src/lib/selecao-do-painel.js",
   },
   {
     titulo: "Eliminados antes da análise",
@@ -610,7 +772,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Seleção, os eliminados antes da análise são a soma de três grupos: os cancelados, os reprovados por não finalizar o questionário e os eliminados por nota. O gráfico "Aptos na análise e eliminados" compara os aptos para análise com o total de eliminados, e "Triados e reprovados na análise" mostra o resultado da análise curricular.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "src/lib/selecao-do-painel.js",
   },
   {
     titulo: "Alertas da coluna Observação",
@@ -622,11 +784,19 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Na Seleção, os alertas identificados no recorte são as observações da coluna Observação da planilha Auditoria. Cada observação aparece uma vez, sem diferenciar maiúsculas, com quantas vagas a têm e em quais unidades e editais.",
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "src/lib/selecao-do-painel.js",
   },
   {
     titulo: "Visão geral",
-    perguntas: ["visao geral", "pagina inicial", "dashboard", "painel inicial"],
+    perguntas: [
+      "visao geral",
+      "pagina inicial",
+      "dashboard",
+      "painel inicial",
+      "para que serve visao geral",
+      "para que serve a visao geral",
+      "tela da visao geral",
+    ],
     resposta:
       "A Visão geral do MONITORA é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu: os indicadores, os filtros, as unidades com mais de um processo seletivo, o mapa, o resumo por etapa, o status operacional, os processos que pedem atenção e a tabela de processos. Na Saúde Indígena o mapa mostra os DSEIs e as CASAIs; em Projetos, os municípios das vagas; a SEDE não tem mapa.",
     fato: "",
@@ -641,7 +811,7 @@ export const VERBETES_AYA = Object.freeze([
       "vagas ociosas da visao geral",
     ],
     resposta:
-      "Na Visão geral, os seis indicadores contam os editais do recorte: Processos (quantos editais), Vagas (vagas imediatas previstas), Contratações, Vagas ociosas (vagas ainda sem contratação), Críticos (editais abertos com risco Médio ou Alto; concluídos e cancelados não contam) e Inscritos. Sem nenhum filtro, quando a área tem todos os editais da base, os números vêm do resumo calculado no servidor. Clicar em Críticos filtra a página pelos riscos Médio e Alto; clicar de novo tira o filtro. Os rótulos podem ser trocados em Configurações › Página inicial.",
+      "Na Visão geral, os seis indicadores contam os editais do recorte: Processos (quantos editais), Vagas (vagas imediatas previstas), Contratações, Vagas ociosas (vagas ainda sem contratação), Críticos (editais abertos com risco Médio ou Alto; concluídos e cancelados não contam) e Inscritos. Sem nenhum filtro, quando a área tem todos os editais da base, os números (menos Críticos, sempre calculado na tela) vêm do resumo calculado no servidor. Clicar em Críticos filtra a página pelos riscos Médio e Alto; clicar de novo tira o filtro. Os rótulos podem ser trocados em Configurações › Página inicial.",
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -649,6 +819,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Filtros da Visão geral",
     perguntas: [
       "filtros da visao geral",
+      "como funcionam os filtros da visao geral",
       "filtro por ano",
       "filtrar editais de 2026",
       "busca da tabela da visao geral",
@@ -688,6 +859,8 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Tabela de processos da Visão geral",
     perguntas: [
       "tabela de processos da visao geral",
+      "como leio a tabela de processos",
+      "tabela de processos",
       "prazo do edital",
       "proxima etapa do cronograma",
       "colunas da tabela",
@@ -699,9 +872,151 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    titulo: "De onde vêm os KPIs da Visão geral",
+    perguntas: [
+      "de onde vem os kpis da visao geral",
+      "de onde vem os indicadores da visao geral",
+      "de onde vem os numeros da visao geral",
+      "origem dos kpis",
+      "kpis do edital",
+      "de onde vem os kpis",
+    ],
+    resposta:
+      "Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco uma vez por dia, às 7h de Brasília, a partir da Seleção: as vagas da planilha Auditoria somadas por edital, as análises com status Aprovado, as entrevistas com parecer e a lista de aprovados vigente (Contratado ou Migração). Só mudam os editais ativos que têm vaga na Seleção; sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte; sem nenhum filtro, usa o resumo calculado no servidor.",
+    fato: "Os KPIs dos editais na Visão geral são recalculados pelo banco uma vez por dia, às 7h de Brasília, a partir da Seleção, das análises, das entrevistas e da lista de aprovados; as vagas vêm do cadastro do edital.",
+    fonte:
+      "supabase/migrations/20260930235800_kpis_do_edital_pela_selecao.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; src/lib/visao-geral.js",
+  },
+  {
+    titulo: "Tela de Análises curriculares",
+    perguntas: [
+      "tela de analises curriculares",
+      "tela de analises",
+      "aba analises curriculares",
+      "para que serve analises curriculares",
+      "para que serve a tela de analises",
+      "painel de analises curriculares",
+    ],
+    resposta:
+      'Análises curriculares mostra a análise curricular dos candidatos da área atual, vinda das planilhas de análise: indicadores (Total de aptos p/ análise, Análises realizadas, Pendentes, Em revisão, Aprovados e Reprovados), pendências prioritárias, carga por responsável, evolução diária e a lista. Os filtros são Unidade, Município/UF (só em SEDE e Projetos), Edital, Código da vaga, Status e Responsável, e em "Mais opções" Categoria, Modalidade e Validação da janela; as opções de cada filtro seguem os outros. A taxa de conclusão é aprovados mais reprovados sobre o total.',
+    fato: "",
+    fonte: "src/lib/analises-curriculares.js; src/modulos/analises/",
+    abrir: "analises",
+  },
+  {
+    titulo: "Escopo Ativo, Inativo e Todos",
+    perguntas: [
+      "o que e o escopo ativo, inativo e todos",
+      "escopo ativo",
+      "escopo inativo",
+      "situacao do processo",
+      "ativo inativo todos",
+    ],
+    resposta:
+      "Nas Análises curriculares, o campo Situação do processo começa em Ativo. Ativo são as análises ativas de editais ativos; Inativo são as análises de editais encerrados (inativos); Todos junta os dois e as análises desativadas de editais ainda ativos. Só o Ativo fica pronto num cache do banco, remontado a cada 2 minutos; Inativo e Todos são montados na hora do pedido.",
+    fato: "",
+    fonte:
+      "src/lib/analises-curriculares.js; supabase/migrations/20260929150000_analises_lista_enxuta.sql; supabase/migrations/20260930234000_cache_sem_atropelo.sql",
+  },
+  {
+    titulo: "Pendências das análises",
+    perguntas: [
+      "quais sao as pendencias das analises curriculares",
+      "pendencias das analises",
+      "data no futuro",
+      "data fora do periodo",
+      "sem responsavel",
+      "validacao da janela",
+    ],
+    resposta:
+      "Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Etapa sem data. Cada uma tem um atalho que aplica o filtro. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.",
+    fato: "",
+    fonte: "src/lib/analises-curriculares.js; src/lib/data-de-analise.js",
+  },
+  {
+    titulo: "Atualização das análises",
+    perguntas: [
+      "como as analises curriculares sao atualizadas",
+      "sincronizacao das analises",
+      "de onde vem as analises",
+      "quem saiu da planilha",
+      "atualizacao das analises",
+    ],
+    resposta:
+      "As três planilhas de análise (Saúde Indígena, Projetos e SEDE) enviam para o mesmo banco por Apps Script; em Projetos e SEDE o envio incremental roda a cada 20 minutos. Quem sai da planilha sai do MONITORA: no fim de cada sincronização, as análises ativas daquela planilha (de editais ativos) que não vieram no envio são desativadas, nada é apagado. Há travas: nada é desativado se o envio vier vazio ou incompleto, ou se a remoção passar de 2% das análises ativas da planilha (mínimo de 25). Se o mesmo candidato aparece de novo na mesma vaga e edital, só o registro mais recente fica ativo. Análises de editais encerrados ficam como histórico. O andamento das cargas aparece em Configurações › Status das atualizações.",
+    fato: "",
+    fonte:
+      "apps-script/LEIA-ME.md; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
+  },
+  {
+    titulo: "Áreas do sistema",
+    perguntas: [
+      "areas do sistema",
+      "area do sistema",
+      "o que muda entre as areas do sistema",
+      "quais sao as areas",
+      "quais areas existem",
+      "o que e area atual",
+      "area atual",
+    ],
+    resposta:
+      "O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
+    fato: "O MONITORA tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.",
+    fonte:
+      "src/lib/menu-lateral.js; supabase/migrations/20260925170000_areas_do_sistema.sql",
+  },
+  {
+    titulo: "Trocar de área",
+    perguntas: [
+      "trocar de area",
+      "como mudo de area",
+      "como trocar de area",
+      "seletor de area",
+      "mudar de area",
+      "nao vejo a area",
+    ],
+    resposta:
+      'Quem tem mais de uma área vê o seletor "Área" no topo da barra lateral; abaixo dele ficam só as páginas da área escolhida. Trocar de área abre a mesma página na área nova (ou a primeira página dela, se não tiver essa). Com a barra recolhida, o seletor vira o ícone da área atual. A área escolhida fica guardada na aba do navegador: recarregar volta a ela, e uma aba nova começa na primeira área da pessoa. Quem tem uma área só não vê seletor. O administrador global vê todas as áreas; os demais veem as áreas liberadas para eles em Configurações › Acessos (com coordenação, só a área dela).',
+    fato: "",
+    fonte:
+      "src/componentes/barra-lateral/menu-de-areas.jsx; src/componentes/dados-do-monitoramento.js; supabase/migrations/20260925180000_areas_do_usuario.sql",
+  },
+  {
+    titulo: "Ordem do menu",
+    perguntas: [
+      "ordem do menu",
+      "qual e a ordem do menu",
+      "ordem das abas",
+      "paginas do menu",
+      "menu lateral",
+    ],
+    resposta:
+      "O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.",
+    fato: "O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados e Seleção.",
+    fonte:
+      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; src/lib/menu-lateral.js",
+  },
+  {
+    titulo: "Recorte por área no banco",
+    perguntas: [
+      "recorte por area",
+      "por que nao vejo editais de outra area",
+      "dados de outra area",
+      "editais de outra area",
+    ],
+    resposta:
+      "Quem não é administrador global só recebe do banco os dados das suas áreas: editais, cronogramas, listas de aprovados, candidatos, convocação, vagas e análises. A gravação também confere a área: ninguém cria edital nem move edital para uma área que não é sua. Para ver outra área, peça a liberação a quem administra os acessos.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20260925181000_recorta_dados_por_area.sql; supabase/migrations/20260925190000_gravacao_e_matriz_por_area.sql",
+  },
+  {
     titulo: "Página inicial nas Configurações",
     perguntas: [
       "configuracao da pagina inicial",
+      "o que a secao pagina inicial define",
+      "para que serve pagina inicial",
+      "para que serve a secao pagina inicial",
       "configurar pagina inicial",
       "titulo da pagina inicial",
       "subtitulo da pagina inicial",
@@ -715,6 +1030,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Aviso global",
     perguntas: [
       "aviso global",
+      "como funciona o aviso global",
       "aviso no topo",
       "faixa de aviso",
       "mensagem global",
@@ -743,6 +1059,9 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Tela de acesso nas Configurações",
     perguntas: [
       "configurar tela de acesso",
+      "o que a secao tela de acesso define",
+      "para que serve tela de acesso",
+      "para que serve a secao tela de acesso",
       "configurar tela de login",
       "saudacao do login",
       "saudacao da tela de acesso",
@@ -757,6 +1076,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Login com Google desligado",
     perguntas: [
       "desligar login google",
+      "o que acontece se desligar o login google",
       "login google inativo",
       "desativar google",
       "botao do google sumiu",
@@ -778,6 +1098,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Domínios permitidos",
     perguntas: [
       "dominios permitidos",
+      "quais dominios podem entrar",
       "dominios institucionais",
       "quem pode entrar",
       "email de outro dominio",
@@ -791,6 +1112,8 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Arte de fundo da tela de acesso",
     perguntas: [
       "arte de fundo",
+      "como trocar a arte de fundo da tela de acesso",
+      "como trocar a arte de fundo",
       "imagem de fundo do acesso",
       "fundo da tela de login",
       "artes enviadas",
@@ -818,6 +1141,7 @@ export const VERBETES_AYA = Object.freeze([
       "cor do painel de acesso",
       "texto sobre o painel",
       "contraste do painel",
+      "o que significa o contraste da cor do painel",
       "sempre claro",
       "sempre escuro",
     ],
@@ -830,6 +1154,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Logo e cor da barra lateral",
     perguntas: [
       "logo da barra lateral",
+      "como trocar a logo da barra lateral",
       "cor da barra lateral",
       "logos enviadas",
       "trocar logo do menu",
@@ -840,19 +1165,831 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
-    titulo: "Fluxo do parecer jurídico",
+    titulo: "Quem abre as Configurações",
     perguntas: [
-      "parecer jurídico",
-      "fluxo do recurso",
-      "quem decide o recurso",
-      "quem defere o recurso",
-      "em análise jurídica",
-      "enviar para parecer",
+      "para que serve configuracoes",
+      "tela de configuracoes",
+      "quem pode ver as configuracoes",
+      "secoes das configuracoes",
+      "administracao",
     ],
     resposta:
-      'No MONITORA, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer, ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.',
+      "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "src/lib/access-roles.js; src/modules/config-secoes.js",
+  },
+  {
+    titulo: "Publicar uma alteração",
+    perguntas: [
+      "como publicar uma alteracao nas configuracoes",
+      "publicar alteracao",
+      "salvar alteracoes",
+      "motivo da alteracao",
+      "nada a publicar",
+    ],
+    resposta:
+      'Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra fixa, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.',
+    fato: "",
+    fonte:
+      "src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx",
+  },
+  {
+    titulo: "Restaurar uma versão publicada",
+    perguntas: [
+      "como restaurar uma versao publicada",
+      "restaurar versao",
+      "historico de configuracoes",
+      "historico de publicacoes",
+      "desfazer publicacao",
+    ],
+    resposta:
+      'Em Configurações › Operação fica o histórico de configurações, com as 30 últimas publicações. Cada item tem "Restaurar", que pede o motivo da restauração e publica de novo aqueles valores; o histórico não perde nada.',
+    fato: "",
+    fonte:
+      "src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx",
+    abrir: "config:operacao",
+  },
+  {
+    titulo: "Seção Marca",
+    perguntas: [
+      "o que a secao marca define",
+      "secao marca",
+      "para que serve marca",
+      "para que serve a secao marca",
+      "nome da equipe",
+      "logo da equipe",
+      "texto do rodape",
+    ],
+    resposta:
+      'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, e o texto do rodapé. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".',
+    fato: "",
+    fonte:
+      "src/componentes/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",
+    abrir: "config:marca",
+  },
+  {
+    titulo: "Seção Aparência",
+    perguntas: [
+      "secao aparencia",
+      "para que serve aparencia",
+      "para que serve a secao aparencia",
+      "o que a secao aparencia define",
+    ],
+    resposta:
+      'Em Configurações › Aparência ficam a arte de fundo e o logo da tela de acesso, a cor do painel de acesso e do texto sobre ele, e a logo e a cor da barra lateral. Cada cor mostra a razão de contraste. A arte de fundo vale na hora; o resto, depois de "Salvar alterações".',
+    fato: "",
+    fonte:
+      "src/componentes/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js",
+    abrir: "config:aparencia",
+  },
+  {
+    titulo: "Painéis externos",
+    perguntas: [
+      "o que sao os paineis externos",
+      "paineis externos",
+      "para que serve paineis externos",
+      "para que serve a secao paineis externos",
+      "como por um painel em manutencao",
+      "painel externo",
+    ],
+    resposta:
+      "Painéis externos são páginas de fora do MONITORA abertas pelo grupo Painéis do menu. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, o grupo Painéis some do menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.",
+    fato: "",
+    fonte:
+      "src/lib/paineis-externos-das-configuracoes.js; src/componentes/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
+    abrir: "config:recursos",
+  },
+  {
+    titulo: "Seção Operação",
+    perguntas: [
+      "secao operacao",
+      "para que serve operacao",
+      "para que serve a secao operacao",
+      "versao do sistema",
+      "realtime do monitoramento",
+      "heartbeat de auditoria",
+      "email do suporte",
+    ],
+    resposta:
+      "Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.",
+    fato: "",
+    fonte:
+      "src/componentes/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js",
+    abrir: "config:operacao",
+  },
+  {
+    titulo: "Tela de Entrevistas",
+    perguntas: [
+      "tela de entrevistas",
+      "tela entrevistas",
+      "aba entrevistas",
+      "para que serve entrevistas",
+      "para que serve a tela de entrevistas",
+    ],
+    resposta:
+      "Entrevistas tem três visões, escolhidas no topo: Resultados (só consulta), Conduzir entrevistas (Passo 1 Configuração, Passo 2 Convocação e Passo 3 Ficha de notas, por edital) e Roteiros. Tudo é da área atual; trocar de área recomeça filtros e edital aberto. Quem não tem nível Editor vê tudo, sem os botões. Lançar notas, convocar, configurar o edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital.",
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+    abrir: "entrevistas",
+  },
+  {
+    titulo: "Janela da entrevista",
+    perguntas: [
+      "como funciona a janela da entrevista",
+      "janela da entrevista",
+      "janela do cronograma da entrevista",
+      "7 dias antes",
+      "15 dias depois",
+    ],
+    resposta:
+      'Em Conduzir entrevistas, cada edital tem uma janela: começa 7 dias antes da data de início mais antiga das etapas de entrevista do cronograma e termina 15 dias depois da data de fim mais tardia (sem data de fim, vale a de início). Conta como etapa de entrevista toda atividade cujo nome tenha "entrevista" ou "comportamental". O dia de hoje é o de Brasília, e os dois extremos contam. O edital aparece na lista se estiver na janela, se tiver uma liberação vigente ou se tiver convocado ainda sem parecer.',
+    fato: "Conduzir entrevistas mostra o edital de 7 dias antes a 15 dias depois das etapas de entrevista do cronograma, quando liberado pelo administrador global ou quando há convocado sem parecer.",
+    fonte: "supabase/migrations/20260930235000_janela_da_entrevista.sql",
+  },
+  {
+    titulo: "Edital que não aparece em Conduzir entrevistas",
+    perguntas: [
+      "por que um edital nao aparece em conduzir entrevistas",
+      "por que o edital nao aparece em conduzir entrevistas",
+      "edital nao aparece em conduzir entrevistas",
+      "nenhum edital na janela da entrevista",
+      "edital sumiu de conduzir entrevistas",
+    ],
+    resposta:
+      'Um edital fica fora de Conduzir entrevistas quando: o cronograma não tem atividade com "entrevista" ou "comportamental" (aparece "sem etapa de entrevista no cronograma"); hoje está fora da janela (antes de 7 dias do início ou depois de 15 dias do fim das etapas de entrevista); não há liberação vigente (nunca liberado, vencida ou encerrada); e não há convocado sem parecer. Também some se o edital é de outra área, está inativo ou fica fora do recorte da sua coordenação, ou se você não tem acesso a Entrevistas ou à área. Ter entrevistas em Resultados não faz o edital entrar. Para incluir um edital fora da janela, peça ao administrador global que o libere; ele também tem a caixa "Mostrar todos os editais da área".',
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930235000_janela_da_entrevista.sql; src/lib/conducao-de-entrevista.js",
+    abrir: "entrevistas",
+  },
+  {
+    titulo: "Liberar edital fora da janela",
+    perguntas: [
+      "como liberar um edital fora da janela",
+      "liberar edital fora da janela",
+      "liberacao fora da janela",
+      "encerrar liberacao",
+      "mostrar todos os editais da area",
+    ],
+    resposta:
+      'Só o administrador global libera um edital fora da janela: em Conduzir entrevistas, escolhe o edital e preenche "Liberar até" (de hoje até no máximo 180 dias) e o Motivo (3 a 500 caracteres). A liberação vence sozinha depois da data e pode ser encerrada antes, também com motivo. Só existe uma liberação vigente por edital; a anterior fica guardada no histórico. A caixa "Mostrar todos os editais da área" também é só do administrador global e traz todos os editais ativos da área, ignorando a janela.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930235000_janela_da_entrevista.sql; src/modulos/entrevistas/conducao.jsx",
+  },
+  {
+    titulo: "Roteiros e versões",
+    perguntas: [
+      "como funcionam as versoes dos roteiros",
+      "roteiro de entrevista",
+      "roteiros de entrevista",
+      "versao do roteiro",
+      "o que e um roteiro",
+    ],
+    resposta:
+      'O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação, critérios de desempate, convocação padrão e banca padrão; serve a vários editais. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js",
+  },
+  {
+    titulo: "Escalas e aprovação na entrevista",
+    perguntas: [
+      "escala do roteiro",
+      "escala faixa",
+      "escala lista",
+      "escala niveis",
+      "notas eliminatorias",
+      "quando o candidato e apto",
+      "como o candidato fica apto",
+    ],
+    resposta:
+      "A escala do roteiro pode ser FAIXA (de 0 até a nota máxima, de passo em passo; passo até 5, padrão 0,5), LISTA (só as notas cadastradas) ou NIVEIS (níveis com nome e descrição). O candidato fica APTO quando compareceu, todas as competências têm nota, o total chega ao mínimo total, cada competência chega ao seu mínimo e nenhuma média é eliminatória (se a média da banca numa competência for uma das notas eliminatórias, ele fica INAPTO). Faltou e o roteiro diz que ausência elimina: INAPTO. Falta nota ou comparecimento: SEM_PARECER. A nota da competência é a média dos avaliadores vezes o peso.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js",
+  },
+  {
+    titulo: "Banca da entrevista",
+    perguntas: [
+      "banca da entrevista",
+      "completar banca",
+      "completar pela composicao",
+      "quem sai da banca",
+      "modo avaliador",
+      "secretaria passa a limpo",
+    ],
+    resposta:
+      'Na configuração do edital, escolher o roteiro preenche a regra de convocação e a composição da banca com o padrão dele. "Completar pela composição" acrescenta as linhas que faltam, com o nome vazio; "Sou eu" liga o membro ao seu perfil. Quem sai da banca deixa de avaliar, mas as notas que já deu ficam na ficha, com a marca "saiu da banca". O modo de lançamento pode ser "Secretaria passa a limpo" (padrão) ou "Cada avaliador lança a sua": nesse caso cada avaliador só edita a própria coluna (o administrador global lança por qualquer um). A troca de roteiro fica bloqueada quando já há notas lançadas com outro roteiro.',
+    fato: "",
+    fonte:
+      "src/lib/conducao-de-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+  },
+  {
+    titulo: "Convocação para a entrevista",
+    perguntas: [
+      "como funciona a regra de convocacao da entrevista",
+      "regra de convocacao da entrevista",
+      "convocacao da entrevista",
+      "desconvocar",
+      "convocar candidatos",
+      "sugerido",
+      "alem da regra",
+    ],
+    resposta:
+      'Na convocação aparecem só os candidatos aprovados na análise curricular, da mesma área e edital, na ordem de cada vaga (nota final, depois nome). A regra marca a sugestão: com vaga imediata, até a posição múltiplo × vagas imediatas; sem vaga imediata, até a posição X do cadastro reserva. Uma exceção vale quando o termo dela aparece no nome do cargo, sem diferenciar maiúsculas e acentos. Os de fora aparecem como "Além da regra", e "Voltar à sugestão" refaz a seleção. Convocar exige a configuração salva. Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota.',
+    fato: "",
+    fonte:
+      "src/lib/conducao-de-entrevista.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+  },
+  {
+    titulo: "Ficha de notas",
+    perguntas: [
+      "ficha de notas",
+      "como lancar notas da entrevista",
+      "lancar notas",
+      "comparecimento",
+      "resultado recalculado",
+    ],
+    resposta:
+      'Na ficha de notas, abra um convocado para lançar o comparecimento (Compareceu ou Faltou) e as notas; a nota precisa estar na escala do roteiro. A cada gravação o banco recalcula o resultado, que aparece em Resultados; toda nota lançada, corrigida ou apagada vai para o histórico. Enter passa para a próxima nota, Ctrl+Enter salva, e há "Salvar e abrir o próximo". A coluna Notas mostra lançadas sobre esperadas (competências × avaliadores da banca).',
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/ficha.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js",
+  },
+  {
+    titulo: "Resultados das entrevistas",
+    perguntas: [
+      "resultados das entrevistas",
+      "indicadores das entrevistas",
+      "aprovados sem entrevista",
+      "nota divergente",
+      "entrevista sem analise",
+    ],
+    resposta:
+      "Resultados é só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. Pendências: aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios). A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.",
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/paineis.jsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql",
+  },
+  {
+    titulo: "Carga das entrevistas",
+    perguntas: [
+      "quando as entrevistas sao atualizadas",
+      "carga das entrevistas",
+      "planilha de entrevistados",
+      "atualizacao das entrevistas",
+    ],
+    resposta:
+      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada todo dia às 9h de Brasília pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
+    fato: "",
+    fonte:
+      ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
+  },
+  {
+    titulo: "Tela de Cronograma",
+    perguntas: [
+      "tela de cronograma",
+      "tela cronograma",
+      "aba cronograma",
+      "para que serve cronograma",
+      "para que serve a tela de cronograma",
+      "o que o cronograma mostra",
+      "calendario de editais",
+    ],
+    resposta:
+      'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. A tela é só de leitura e se atualiza quando um cronograma é salvo. O mês mostra quantas etapas de cada tipo há em cada dia (uma etapa conta no dia em que começa e no dia em que termina), e há filtros por unidade, edital, tipo de etapa e busca. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
+    fato: "",
+    fonte:
+      "src/componentes/calendario-editais/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
+    abrir: "calendario",
+  },
+  {
+    titulo: "Quem altera o cronograma",
+    perguntas: [
+      "quem pode alterar as etapas do cronograma",
+      "quem altera o cronograma",
+      "como editar uma etapa do cronograma",
+      "editar cronograma",
+    ],
+    resposta:
+      "As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.",
+    fato: "",
+    fonte:
+      "src/lib/access-roles.js; src/componentes/nucleo/modal-do-edital.jsx",
+    abrir: "nucleo",
+  },
+  {
+    titulo: "Pessoas online",
+    perguntas: [
+      "o que mostra pessoas online",
+      "pessoas online",
+      "quem esta online",
+      "presenca online",
+    ],
+    resposta:
+      'Pessoas online fica no cabeçalho e só o administrador global vê. Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). Atualiza a cada 45 segundos com a aba visível, e trocar de página, área ou seção avisa na hora.',
+    fato: "",
+    fonte: "src/lib/online-presence.js; src/modules/legacy-app.js",
+  },
+  {
+    titulo: "Atualização do sistema",
+    perguntas: [
+      "como funciona a atualizacao do sistema",
+      "atualizacao do sistema",
+      "versao nova do sistema",
+      "o sistema recarregou sozinho",
+      "nova versao",
+    ],
+    resposta:
+      "O MONITORA procura versão nova ao voltar para a aba ou reconectar (no máximo a cada 15 minutos), sem aviso na tela. A versão nova fica esperando e só entra na próxima troca de página: depois da pergunta sobre alterações não salvas, a página recarrega e abre a tela que você pediu (com a permissão conferida de novo). Assim ninguém perde o que está digitando, como notas de entrevista ou a resposta de um recurso.",
+    fato: "",
+    fonte: "src/modules/pwa-lifecycle.js; src/modules/legacy-app.js (navigate)",
+  },
+  {
+    titulo: "Busca global",
+    perguntas: [
+      "busca global",
+      "ctrl k",
+      "como buscar um edital",
+      "atalho de busca",
+    ],
+    resposta:
+      "Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.",
+    fato: "",
+    fonte:
+      "src/lib/busca-global.js; src/componentes/busca-global/busca-global.jsx; src/lib/responsavel-do-edital.js",
+  },
+  {
+    titulo: "Seção Status das atualizações",
+    perguntas: [
+      "o que e o status das atualizacoes",
+      "status das atualizacoes",
+      "para que serve status das atualizacoes",
+      "para que serve a secao status das atualizacoes",
+      "saude das cargas",
+    ],
+    resposta:
+      'Em Configurações › Status das atualizações (só o administrador global) aparece, para cada carga de dados, a última execução e um selo: "Falhou" (a execução terminada mais recente deu erro), "Em andamento", "Atrasada" (a última que deu certo passou do prazo), "Em dia" ou "Ainda sem carga". Mostra as 10 últimas execuções de cada uma.',
+    fato: "",
+    fonte:
+      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql",
+    abrir: "config:cargas",
+  },
+  {
+    titulo: "Horários das atualizações",
+    perguntas: [
+      "quando cada atualizacao de dados roda",
+      "horarios das atualizacoes",
+      "quando os dados sao atualizados",
+      "carga atrasada",
+      "cargas de dados",
+    ],
+    resposta:
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions às 9h de Brasília e ficam atrasadas depois de 26 horas. As tarefas do banco que rodam a cada 2 minutos (como o pacote do painel de análises e o das entrevistas) atrasam depois de 15 minutos; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Os KPIs dos editais são recalculados às 7h de Brasília.',
+    fato: "",
+    fonte:
+      "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",
+  },
+  {
+    titulo: "Seção Acessos",
+    perguntas: [
+      "secao acessos",
+      "tela de acessos",
+      "para que serve acessos",
+      "para que serve a secao acessos",
+      "quem gerencia acessos",
+      "gestao de acessos",
+    ],
+    resposta:
+      "Em Configurações › Acessos ficam as pessoas (Usuários, com Pendentes e Desativadas), os Grupos de permissões e as Coordenações. Gerenciam acessos o administrador global e o coordenador (Gestão de acessos como Editor e uma coordenação); Grupos, Coordenações e Desativadas aparecem só para o administrador global. Ninguém altera o próprio acesso: outra pessoa precisa fazer. Toda mudança pede motivo (3 a 500 caracteres) e fica auditada.",
+    fato: "",
+    fonte:
+      "src/lib/teto-de-acessos.js; src/lib/access-roles.js; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
+    abrir: "config:acessos",
+  },
+  {
+    titulo: "Como dar acesso",
+    perguntas: [
+      "como dar acesso a alguem",
+      "como dar acesso",
+      "dar acesso",
+      "adicionar pessoa",
+      "convidar pessoa",
+      "como convidar alguem",
+      "liberar acesso",
+      "acesso so por convite",
+    ],
+    resposta:
+      'Em Configurações › Acessos › Usuários, clique em "Adicionar pessoa" e informe o e-mail institucional, o nome, o grupo (padrão Usuário), a coordenação (ou, sem coordenação, pelo menos uma área) e o motivo. O cadastro fica pronto antes de a pessoa entrar, e a tela mostra o "Convite pronto", com a mensagem para copiar ou abrir no e-mail. O link sozinho não dá acesso: só funciona entrando com a conta Google do e-mail convidado, e aí a pessoa entra sem precisar pedir acesso. Enquanto ela não entra, a situação mostra "Convidado · ainda não entrou" e dá para reenviar o convite; cancelar o convite (só o administrador global) desativa o cadastro, com motivo. O coordenador só cadastra na própria coordenação, com grupo dentro do teto dele.',
+    fato: "O acesso ao MONITORA é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.",
+    fonte:
+      "src/componentes/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
+    abrir: "config:acessos",
+  },
+  {
+    titulo: "Grupos de permissões",
+    perguntas: [
+      "o que sao os grupos de permissoes",
+      "grupos de permissoes",
+      "grupo de acesso",
+      "niveis de acesso",
+      "o que e editor",
+      "o que e leitor",
+      "excecao por modulo",
+    ],
+    resposta:
+      'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Edital gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
+    fato: "",
+    fonte:
+      "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/componentes/acessos/gaveta-do-usuario.jsx",
+  },
+  {
+    titulo: "Coordenações",
+    perguntas: [
+      "o que e uma coordenacao nos acessos",
+      "coordenacao",
+      "coordenacoes",
+      "teto do coordenador",
+      "o que o coordenador pode",
+    ],
+    resposta:
+      "Coordenação é uma subdivisão de uma área; cada pessoa fica em no máximo uma. Ela limita o que a pessoa vê aos editais da área da coordenação: sem responsável, unidades nem editais, a área inteira; só com editais listados, só esses; com responsável ou unidades, os editais que casam a regra mais os listados. Vale para cronograma, listas, candidatos, convocação, vagas, anexos, histórico, análises e recursos. O coordenador gerencia só a própria coordenação e concede no máximo o próprio nível, nunca Gestão de acessos, sem mexer em área ou coordenação. Só o administrador global cria e muda coordenações.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20260929121100_coordenacoes.sql; src/lib/teto-de-acessos.js; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
+  },
+  {
+    titulo: "Como a pessoa vê",
+    perguntas: [
+      "como a pessoa ve",
+      "ver como a pessoa",
+      "o que a pessoa vai ver",
+    ],
+    resposta:
+      'No modal da pessoa, a coluna "Como a pessoa vê" monta o menu dela com as mesmas regras da barra lateral; com alteração pendente, mostra o resultado com o selo "Depois de salvar". É só leitura: não é entrar como a pessoa.',
+    fato: "",
+    fonte: "src/lib/ver-como.js; src/componentes/acessos/gaveta-do-usuario.jsx",
+  },
+  {
+    titulo: "Pedidos de acesso",
+    perguntas: [
+      "como funcionam os pedidos de acesso",
+      "pedidos de acesso",
+      "pedido de acesso",
+      "pedir acesso",
+      "solicitacao de acesso",
+      "pendentes",
+    ],
+    resposta:
+      "Quem entra com Google sem perfil ativo vê a tela de pedido e informa nome, setor, coordenação e justificativa (20 a 2.000 caracteres). Os pedidos ficam em Acessos › Usuários › Pendentes: o administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. Quem recebeu convite não precisa pedir: basta entrar com o e-mail convidado.",
+    fato: "",
+    fonte:
+      "src/lib/solicitacao-de-acesso.js; src/componentes/acessos/solicitacoes.jsx",
+  },
+  {
+    titulo: "Contas desativadas",
+    perguntas: [
+      "como reativar uma conta desativada",
+      "conta desativada",
+      "contas desativadas",
+      "desativar conta",
+      "reativar conta",
+      "acesso desativado",
+    ],
+    resposta:
+      'Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/componentes/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js",
+    abrir: "config:acessos",
+  },
+  {
+    titulo: "Trava de área e conta de setor",
+    perguntas: [
+      "trava de area",
+      "pessoa sem area",
+      "conta de setor",
+      "email compartilhado",
+      "mover para coordenacoes",
+    ],
+    resposta:
+      'O banco recusa salvar uma pessoa ativa sem nenhuma área (menos o administrador global, que já vê todas); o modal avisa e o salvar espera a área. Uma conta de setor (e-mail compartilhado) pode virar coordenação em "Avançado" › "Mover para Coordenações" (só o administrador global, com confirmação escrita): cria a coordenação com o nome da conta e desativa a conta, de forma reversível.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930130000_acessos_trava_de_area_e_convite.sql; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
+  },
+  {
+    titulo: "Tela de Editais",
+    perguntas: [
+      "tela de editais",
+      "tela editais",
+      "aba editais",
+      "para que serve editais",
+      "para que serve a tela de editais",
+      "equipe nucleo",
+    ],
+    resposta:
+      "Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Editais ativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.",
+    fato: "",
+    fonte:
+      "src/componentes/nucleo/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js",
+    abrir: "nucleo",
+  },
+  {
+    titulo: "Status e etapa calculados pelo cronograma",
+    perguntas: [
+      "como o status do edital e calculado",
+      "status do edital",
+      "status calculado",
+      "etapa calculada",
+      "cronograma pendente",
+      "como a etapa do edital e calculada",
+    ],
+    resposta:
+      'Com o cálculo automático ligado, o status e a etapa do edital saem das datas do cronograma: antes da primeira etapa, "Planejado" e "Aguardando: …"; durante, "Em andamento" e o nome da etapa atual; depois da última, "Concluído". Sem etapas válidas (ou com o automático desligado), aparece "Cronograma pendente". Ao salvar, vale o calculado; o status excepcional (Suspenso, Cancelado ou Paralisado) é a única forma de contrariar o cálculo, e pede motivo e data da decisão.',
+    fato: "",
+    fonte: "src/lib/cronograma-do-edital.js; src/lib/editais-do-nucleo.js",
+  },
+  {
+    titulo: "Status excepcional",
+    perguntas: [
+      "status excepcional",
+      "suspenso",
+      "paralisado",
+      "edital cancelado",
+      "como suspender um edital",
+    ],
+    resposta:
+      "Status excepcional (Suspenso, Cancelado ou Paralisado) é para quando o cronograma não reflete a situação real do edital. Ele passa por cima do status calculado, exige motivo e data da decisão, e o motivo vai para o histórico do edital.",
+    fato: "",
+    fonte: "src/lib/cronograma-do-edital.js",
+  },
+  {
+    titulo: "Validações do cronograma",
+    perguntas: [
+      "validacoes do cronograma",
+      "por que o cronograma nao salva",
+      "erro no cronograma",
+      "etapas sobrepostas",
+    ],
+    resposta:
+      'O cronograma não salva com etapa sem atividade ou sem datas, data final antes da inicial, ano fora de 2015 a 2100 ou atividade repetida. Só geram aviso: data fora do ano do edital, falta de etapa de resultado final e etapas sobrepostas. Em edital já cadastrado, mexer no cronograma pede o motivo da alteração, que vai para o histórico; edital novo não pede justificativa (o histórico registra "Cadastro do edital").',
+    fato: "",
+    fonte:
+      "src/lib/cronograma-do-edital.js; src/componentes/nucleo/modal-do-edital.jsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql",
+  },
+  {
+    titulo: "Copiar cronograma e preencher em lote",
+    perguntas: [
+      "copiar cronograma",
+      "preenchimento em lote",
+      "preencher em lote",
+      "colar datas do cronograma",
+      "modelo padrao do cronograma",
+    ],
+    resposta:
+      '"Copiar cronograma" lista os outros editais que já têm etapas e copia só atividades, datas e observações. O preenchimento em lote aceita uma data ou intervalo por linha, na ordem das atividades do modelo padrão (12 etapas, que precisa ser criado antes), nos formatos 17/06/2026, 18/06/2026 a 20/06/2026 ou 18 a 20/06/2026.',
+    fato: "",
+    fonte: "src/lib/editais-do-nucleo.js; src/lib/cronograma-do-edital.js",
+  },
+  {
+    titulo: "Anexos do edital em PDF",
+    perguntas: [
+      "anexos do edital",
+      "como importar o cronograma e o quadro de vagas do pdf",
+      "importar pdf do edital",
+      "anexo i",
+      "anexo ii",
+      "usar no cronograma",
+      "salvar quadro de vagas",
+    ],
+    resposta:
+      'No formulário do edital, os anexos em PDF (só PDF, até 4 MB, pode escolher mais de um quando cada anexo vem separado) são lidos no servidor sem gravar nada: o Anexo I vira as etapas do cronograma e o Anexo II, o quadro de vagas (em Projetos o quadro vem no Anexo I, sem modalidades). "Usar no cronograma" troca as etapas (pede confirmação se já houver). "Salvar quadro de vagas" grava na hora em edital já cadastrado (confirma antes de substituir o atual); em edital novo, o quadro vai junto no salvar do edital. As datas do PDF vêm sem ano: o ano começa no do edital e avança quando a data volta de dezembro para janeiro.',
+    fato: "",
+    fonte:
+      "src/componentes/nucleo/importar-anexos.jsx; api/anexos-do-edital.py; src/lib/anexos-do-edital.js",
+    abrir: "nucleo",
+  },
+  {
+    titulo: "Quadro de vagas do edital",
+    perguntas: [
+      "quadro de vagas",
+      "quadro de vagas do edital",
+      "o que e o quadro de vagas",
+      "cadastro reserva no quadro",
+    ],
+    resposta:
+      "O quadro de vagas do edital tem uma linha por cargo e lotação, com as vagas por modalidade e o total de vagas imediatas (zero quer dizer só cadastro reserva), vindo do PDF ou digitado. Salvar de novo desativa o quadro anterior. Para ligar uma vaga ao quadro, todas as palavras do cargo precisam estar no nome da vaga (vale o cargo mais específico, a lotação desempata e o texto entre parênteses é ignorado); sem ligação única, a vaga não liga.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql; supabase/migrations/20260930235950_quadro_ignora_parenteses.sql",
+  },
+  {
+    titulo: "Vagas imediatas",
+    perguntas: [
+      "vagas imediatas",
+      "de onde vem as vagas imediatas",
+      "origem das vagas imediatas",
+      "vaga imediata",
+    ],
+    resposta:
+      'Nas Entrevistas, as vagas imediatas de cada vaga seguem esta ordem: primeiro o número digitado na configuração da entrevista (manual), depois o quadro de vagas do edital ("do quadro do edital") e, por último, a lista de vagas imediatas da convocação. Só é gravado como manual o número que a pessoa digitou ou alterou; o que veio do quadro ou da lista continua seguindo a fonte. Na Lista de aprovados, as vagas imediatas são informadas por vaga no modelo de convocação, e zero vira cadastro reserva.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql (obter_entrevistas_do_edital); src/lib/conducao-de-entrevista.js",
+  },
+  {
+    titulo: "Mover edital de área",
+    perguntas: [
+      "como mover um edital de area",
+      "mover edital de area",
+      "trocar a area do edital",
+      "edital na area errada",
+    ],
+    resposta:
+      "Só o administrador global move um edital para outra área, com motivo obrigatório e confirmação; o banco confere de novo e registra a mudança no histórico. O edital leva junto a lista de aprovados, o cronograma e a convocação. O botão só fica ativo depois de salvar ou descartar as alterações do formulário. Edital novo nasce na área do menu, e unidade de outra área é recusada.",
+    fato: "",
+    fonte:
+      "src/componentes/nucleo/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js",
+  },
+  {
+    titulo: "Campos calculados do edital",
+    perguntas: [
+      "campos calculados do edital",
+      "por que nao consigo editar inscritos",
+      "indicadores do edital no formulario",
+    ],
+    resposta:
+      "No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.",
+    fato: "",
+    fonte: "src/componentes/nucleo/modal-do-edital.jsx",
+  },
+  {
+    titulo: "Mapa de Projetos",
+    perguntas: [
+      "de onde vem os pontos do mapa de projetos",
+      "mapa de projetos",
+      "mapa dos projetos",
+      "municipios das vagas",
+      "municipios por vagas",
+    ],
+    resposta:
+      'Na Visão geral de Projetos, o mapa mostra um ponto por lugar das vagas de todos os projetos (Caminhoneiros, Saúde nas Fronteiras, Escritório Distrital e Regional, Rio Doce, MFC e CCE), na cor do projeto, com legenda, filtro e agrupamento por projeto; o tamanho do ponto segue as vagas. Os lugares foram lidos dos PDFs dos editais (município do IBGE ou só a UF, com o arquivo e a página como prova) e se juntam aos "UBS móvel" do nome da vaga. Lugar só com UF aparece como estado e não tem candidatos. A SEDE não tem mapa.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral-da-area.js; src/modules/municipios-da-visao-geral.js",
+  },
+  {
+    titulo: "Mapa da Saúde Indígena",
+    perguntas: [
+      "como uso o mapa dos dseis",
+      "mapa dos dseis",
+      "mapa da saude indigena",
+      "territorios por vagas",
+    ],
+    resposta:
+      'Na Visão geral da Saúde Indígena, o mapa mostra os DSEIs e as CASAIs, com as Terras Indígenas, e a lista "Territórios por vagas". Escolher um DSEI recorta a página inteira por ele e mostra polos e unidades; voltar ao Brasil sai do território e mantém os outros filtros. Trocar Mapa ou Satélite muda só o fundo cartográfico.',
+    fato: "",
+    fonte: "src/lib/visao-geral-da-area.js; docs/aya/regras-da-visao-geral.md",
+  },
+  {
+    titulo: "Coordenadas do mapa",
+    perguntas: [
+      "de onde vem as coordenadas do mapa",
+      "coordenadas do mapa",
+      "auditoria das coordenadas",
+      "ponto errado no mapa",
+      "localizacao validada",
+      "em validacao",
+    ],
+    resposta:
+      'As coordenadas das unidades da Saúde Indígena foram auditadas em 01/10/2026 contra fontes oficiais: CNES (Ministério da Saúde), malhas municipais do IBGE e aldeias e terras indígenas da Funai. Foram conferidos 1.500 pontos (OK, Corrigir, Revisar ou Sem fonte); 62 correções de confiança alta foram aplicadas, com backup, e 67 pontos ficaram para revisão com a área técnica. No mapa, uma posição só é "validada" quando duas fontes independentes concordam a menos de 5 km e as duas caem dentro da UF; nenhuma coordenada é inventada, e ponto sem essa confirmação continua "em validação".',
+    fato: "",
+    fonte:
+      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/modules/lotacoes-geograficas-transport.js; scripts/validar-localizacoes.mjs; src/lib/localizacoes-validadas.js",
+  },
+  {
+    titulo: "Seção Módulos e abas",
+    perguntas: [
+      "secao modulos e abas",
+      "modulos e abas",
+      "para que serve modulos e abas",
+      "para que serve a secao modulos e abas",
+    ],
+    resposta:
+      'Em Configurações › Módulos e abas (só o administrador global), dá para pôr o sistema inteiro em manutenção, ativar, desativar ou pôr em manutenção cada área, cada aba (em todas as áreas ou só numa) e cada painel externo, e ligar o selo BETA de uma aba. Nada grava na hora: as mudanças vão juntas em "Revisar e salvar", com motivo (3 a 500 caracteres). O histórico mostra as 50 últimas mudanças. Pelo menos uma área precisa ficar ativa.',
+    fato: "",
+    fonte:
+      "src/componentes/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
+    abrir: "config:modulos",
+  },
+  {
+    titulo: "Manutenção",
+    perguntas: [
+      "o que acontece quando uma aba fica em manutencao",
+      "aba em manutencao",
+      "sistema em manutencao",
+      "em manutencao",
+      "tela de manutencao",
+      "como por uma aba em manutencao",
+    ],
+    resposta:
+      'Em manutenção, a aba (ou a área, ou o sistema inteiro) continua no menu com o aviso, mas quem não é administrador global vê a tela de manutenção com a mensagem e a previsão configuradas; o administrador global entra normalmente, com a faixa "Em manutenção para os demais usuários". Vale a mensagem do nível mais alto: sistema, depois área, depois aba em todas as áreas, depois aba naquela área. O sistema inteiro não se desativa, só entra ou sai de manutenção. Se a situação não puder ser lida do banco, tudo vale como ativo.',
+    fato: "",
+    fonte:
+      "src/lib/situacao-dos-modulos.js; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
+  },
+  {
+    titulo: "Área ou aba desativada",
+    perguntas: [
+      "o que acontece quando uma area e desativada",
+      "area desativada",
+      "aba desativada",
+      "desativar aba",
+    ],
+    resposta:
+      "Desativada, a área (ou a aba, ou o painel) some do menu de todos. Pelo menos uma área precisa continuar ativa.",
+    fato: "",
+    fonte:
+      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.js",
+  },
+  {
+    titulo: "Selo BETA",
+    perguntas: ["o que e o selo beta", "selo beta", "aba beta", "beta"],
+    resposta:
+      "O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.",
+    fato: "",
+    fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.js",
+  },
+  {
+    titulo: "Comemorações",
+    perguntas: [
+      "comemoracoes",
+      "confete",
+      "marcos do ano",
+      "o que sao as comemoracoes",
+    ],
+    resposta:
+      "As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000) e acesso liberado ou reativado. Aparecem como confete por cerca de 3 segundos e um aviso no topo (só o aviso com movimento reduzido), uma vez por pessoa. Liga e desliga em Módulos e abas › Sistema inteiro; desligado, ninguém vê.",
+    fato: "",
+    fonte:
+      "src/lib/comemoracao.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
+  },
+  {
+    titulo: "Tela de Recursos",
+    perguntas: [
+      "tela de recursos",
+      "tela recursos",
+      "aba recursos",
+      "para que serve recursos",
+      "para que serve a tela de recursos",
+      "recursos dos candidatos",
+    ],
+    resposta:
+      "Recursos acompanha os recursos dos candidatos da área atual, do registro à resposta enviada: indicadores, pendências prioritárias, gráficos, a fila e o detalhe de cada recurso (dados, anexos, etapas, parecer e resposta). Leitor vê; Editor registra, anexa, escreve a resposta e envia para o parecer jurídico; quem tem a permissão Parecer jurídico decide. Quem está numa coordenação vê só os recursos dos editais dela. As origens ativas são análise curricular, entrevista e resultado final, e não pode haver dois recursos sem decisão para o mesmo candidato, edital e origem.",
+    fato: "",
+    fonte:
+      "src/modulos/recursos/; supabase/migrations/20260929120000_recursos.sql; supabase/migrations/20260929190200_recorte_por_coordenacao_nos_recursos.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
+    abrir: "recursos",
+  },
+  {
+    titulo: "Fluxo do parecer jurídico",
+    perguntas: [
+      "parecer juridico",
+      "fluxo do recurso",
+      "como funciona o fluxo do parecer juridico",
+      "fluxo do parecer juridico",
+      "em analise juridica",
+      "enviar para parecer",
+      "situacoes do recurso",
+    ],
+    resposta:
+      'No MONITORA, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.',
+    fato: "No MONITORA, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.",
+    fonte:
+      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.js",
+  },
+  {
+    titulo: "Quem pode decidir um recurso",
+    perguntas: [
+      "quem pode decidir um recurso",
+      "quem pode decidir o recurso",
+      "quem decide o recurso",
+      "quem decide um recurso",
+      "quem defere o recurso",
+      "quem pode deferir",
+      "quem pode indeferir",
+      "grupo juridico",
+      "permissao parecer juridico",
+    ],
+    resposta:
+      'Decide o recurso (deferir, deferir parcialmente ou indeferir), devolve para ajuste e reabre a decisão só quem tem a permissão "Parecer jurídico (Recursos)", que tem dois níveis: Sem acesso ou Editor. Ela é dada por grupo ou individualmente em Configurações › Acessos. O grupo Jurídico já vem com ela (e com Editor em Recursos), e o grupo do administrador global também; os outros grupos não. O nível Administrador em Recursos não decide: serve para manter os modelos de resposta. O banco recusa qualquer mudança de situação ou parecer feita sem a permissão.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/permissoes-recursos.js",
+    abrir: "config:acessos",
   },
   {
     titulo: "Aguardando parecer",
@@ -864,7 +2001,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte:
+      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js",
   },
   {
     titulo: "Deferido parcialmente",
@@ -876,19 +2014,19 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'No MONITORA, "Deferido parcialmente" é o mesmo que "parcialmente indeferido" (o código no banco continua PARCIALMENTE_INDEFERIDO, usado pelos modelos de resposta). O indicador "Deferidos" soma os deferidos e os deferidos parcialmente.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
     titulo: "Devolvido para ajuste",
     perguntas: [
       "devolvido para ajuste",
       "recurso devolvido",
-      "devolvidos pelo jurídico",
+      "devolvidos pelo juridico",
     ],
     resposta:
-      'No MONITORA, o jurídico pode devolver um recurso Em análise jurídica para ajuste, dizendo o que falta. Ele volta a Registrado, com o comentário em destaque no detalhe, e aparece na pendência "Devolvidos pelo jurídico" até ser reenviado.',
+      'No MONITORA, o jurídico pode devolver um recurso Em análise jurídica para ajuste, dizendo o que falta (3 a 2.000 caracteres). Ele volta a Registrado, com o comentário em destaque no detalhe, e aparece na pendência "Devolvidos pelo jurídico" até ser reenviado.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
     titulo: "Reabrir a decisão",
@@ -900,25 +2038,42 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "No MONITORA, só o jurídico reabre uma decisão, com motivo, e só enquanto a resposta não foi enviada ao candidato. O recurso volta a Em análise jurídica; o parecer anterior continua no histórico.",
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
     titulo: "Resposta ao candidato e parecer",
     perguntas: [
       "aprovar resposta do recurso",
       "publicar resposta do recurso",
-      "marcar resposta enviada",
       "aprovar exige a decisão",
+      "quem marca a resposta como enviada",
+      "marcar resposta enviada",
+      "resposta enviada ao candidato",
     ],
     resposta:
-      'No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão. Marcar a resposta como enviada ao candidato (e a etapa "Resposta enviada ao candidato") é de quem edita, mas só com o recurso já decidido; depois disso a decisão não reabre.',
+      'No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão (quem escreveu ou enviou para revisão não aprova). Marcar a resposta como enviada ao candidato é de quem edita, só com a resposta aprovada e o recurso decidido: isso marca a etapa "Resposta enviada ao candidato" com o nome de quem marcou e a hora. Depois disso a decisão não reabre.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte:
+      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql (transicionar_resposta_recurso, marcar_etapa_recurso)",
+  },
+  {
+    titulo: "Prazo do recurso",
+    perguntas: [
+      "de onde vem o prazo do recurso",
+      "prazo do recurso",
+      "prazo estimado",
+      "prazo vencido",
+    ],
+    resposta:
+      'O prazo do recurso vem do cronograma do edital: é o fim da atividade de resposta aos recursos daquela origem (análise curricular, entrevista ou resultado final); havendo mais de uma, vale a mais tardia. Sem atividade de resposta, usa o fim do prazo de abertura dos recursos (o prazo estimado, com asterisco). Sem nenhuma das duas, entra a pendência "Prazo não encontrado no cronograma". "Prazo vencido" é o recurso sem resposta enviada com o prazo já passado; "vencendo" é o que vence hoje ou nos próximos dois dias.',
+    fato: "",
+    fonte: "src/lib/prazo-do-recurso.js; src/lib/recursos-dos-candidatos.js",
   },
   {
     titulo: "Indicadores da aba Recursos",
     perguntas: [
       "indicadores dos recursos",
+      "quais sao os indicadores dos recursos",
       "kpis dos recursos",
       "onde está o total de recursos",
       "taxa de conclusão dos recursos",
@@ -927,7 +2082,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte:
+      "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js",
   },
   {
     titulo: "Pendências da aba Recursos",
@@ -936,10 +2092,27 @@ export const VERBETES_AYA = Object.freeze([
       "prazo não encontrado no cronograma",
       "candidato fora das análises",
       "mudança de nota ou classificação",
+      "nota mudou",
     ],
     resposta:
-      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com o nome digitado, que vale conferir; "Mudança de nota ou classificação" pede conferência no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias.',
+      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação marcada, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte:
+      "src/lib/recursos-dos-candidatos.js; supabase/migrations/20260929120000_recursos.sql",
+  },
+  {
+    titulo: "Anexos e modelos de resposta",
+    perguntas: [
+      "anexos do recurso",
+      "arquivar anexo",
+      "modelos de resposta",
+      "versao do modelo de resposta",
+      "fundamentacao",
+    ],
+    resposta:
+      'Os anexos do recurso (pdf, docx, doc, jpg, png ou odt, até 20 MB) não se apagam: arquivar exige motivo (3 a 500 caracteres) e o arquivo continua guardado; todo download fica registrado. Os modelos de resposta são mantidos por quem tem Administrador em Recursos: editar grava uma versão nova, e cada resposta guarda a versão usada. O texto da fundamentação entra no lugar marcado {fundamentacao}, e campo sem valor aparece como "[não informado: …]".',
+    fato: "",
+    fonte:
+      "supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql",
   },
 ]);

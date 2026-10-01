@@ -1,0 +1,508 @@
+/*
+  A Aya (src/modulos/aya/aya.jsx): a arara flutuante e o painel de conversa.
+  Só tokens (src/styles/tokens.css); o tema escuro vem deles.
+
+  Camada: 10042 — acima do cabeçalho (.top 10030) e da barra lateral do
+  celular (10036), abaixo do aviso de parabéns (comemoracao.css, 10045) e dos
+  modais (--z-overlay). Fica fora da escada de app.css de propósito: entre o
+  cabeçalho e o parabéns não há token.
+*/
+
+.aya {
+  position: fixed;
+  z-index: 10042;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.aya-visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- A arara (botão flutuante) ---------- */
+
+.aya-arara {
+  position: fixed;
+  right: clamp(14px, 2vw, 24px);
+  bottom: clamp(16px, 2vw, 24px);
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.aya-arara img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  user-select: none;
+}
+
+.aya-arara:focus-visible,
+.aya-painel :focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.aya-selo-beta {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary);
+  color: var(--surface-card);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* ---------- O painel ---------- */
+
+.aya-painel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  width: min(416px, calc(100vw - 32px));
+  height: min(680px, calc(100vh - 32px));
+  height: min(680px, calc(100dvh - 32px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  pointer-events: auto;
+  animation: aya-entra var(--duration-base) var(--ease-standard);
+}
+
+@keyframes aya-entra {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.aya-painel__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 12px 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.aya-apresentacao {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+}
+
+.aya-avatar {
+  position: relative;
+  flex: none;
+}
+
+.aya-avatar img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.aya-apresentacao__textos {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aya-balao {
+  position: relative;
+  width: fit-content;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.aya-painel__pagina {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aya-painel__acoes {
+  display: flex;
+  align-self: flex-start;
+  gap: 4px;
+}
+
+.aya-icone-botao {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.aya-icone-botao:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.aya-icone-botao:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* As mensagens rolam dentro do cartão; o rodapé fica fixo embaixo. */
+.aya-painel__corpo {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.aya-mensagens {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aya-mensagem {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.aya-mensagem--aya {
+  align-self: flex-start;
+  border-top-left-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.aya-mensagem--pessoa {
+  align-self: flex-end;
+  border-top-right-radius: var(--radius-sm);
+  background: var(--brand-primary);
+  color: var(--surface-card);
+}
+
+.aya-mensagem__texto p,
+.aya-mensagem__texto ul,
+.aya-mensagem__texto ol {
+  margin: 0;
+}
+
+.aya-mensagem__texto > * + * {
+  margin-top: 8px;
+}
+
+.aya-mensagem__texto ul,
+.aya-mensagem__texto ol {
+  padding-left: 20px;
+}
+
+.aya-mensagem__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.aya-mensagem__meta a {
+  color: var(--brand-primary);
+}
+
+.aya-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aya-acao:hover {
+  background: var(--surface-hover);
+}
+
+.aya-avaliacao {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.aya-avaliacao__botao {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.aya-avaliacao__botao:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.aya-avaliacao__obrigado {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.aya-chamado {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.aya-chamado p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+}
+
+.aya-chamado__botao {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary);
+  color: var(--surface-card);
+  font-size: var(--text-md);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.aya-mensagem--pendente {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.aya-pontos {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.aya-pontos i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  animation: aya-ponto 1s infinite ease-in-out;
+}
+
+.aya-pontos i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.aya-pontos i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes aya-ponto {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ---------- Sugestões ---------- */
+
+.aya-sugestoes h3 {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.aya-sugestoes__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aya-sugestao {
+  padding: 6px 12px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+
+.aya-sugestao:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.aya-sugestao:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ---------- Rodapé: aviso e campo ---------- */
+
+.aya-painel__rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.aya-aviso {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.aya-compositor {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 4px 4px 4px 14px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+}
+
+.aya-compositor:focus-within {
+  border-color: var(--brand-primary);
+}
+
+.aya-compositor textarea {
+  box-sizing: border-box;
+  min-height: 36px;
+  max-height: 120px;
+  flex: 1;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-base);
+  resize: none;
+  field-sizing: content;
+}
+
+.aya-compositor textarea:focus {
+  outline: none;
+}
+
+.aya-enviar {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary);
+  color: var(--surface-card);
+  cursor: pointer;
+}
+
+.aya-enviar:disabled {
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+/* ---------- Celular: o painel ocupa a tela ---------- */
+
+@media (max-width: 600px) {
+  .aya-painel {
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .aya-arara {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aya-painel,
+  .aya-pontos i {
+    animation: none;
+  }
+}
+
+@media print {
+  .aya {
+    display: none;
+  }
+}

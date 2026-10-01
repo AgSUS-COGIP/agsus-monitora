@@ -11,8 +11,6 @@ import "./lib/supabase-legacy-bridge.js";
 import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
-import "./styles/arara-guide.css";
-import "./styles/nina-conversation.css";
 import "./styles/loading-experience.css";
 import "./styles/health-map-contrast.css";
 import "./styles/health-reference-kpis.css";
@@ -56,6 +54,7 @@ import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
 import "./modulos/visao-geral/visao-geral.css";
+import "./modulos/aya/aya.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -68,8 +67,6 @@ import { instalarCarregamento } from "./modules/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initHealthMapImmersiveWorkspace } from "./modules/health-map-immersive-workspace.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
-import { initAraraSpeakingEffects } from "./modules/arara-speaking-effects.js";
-import { initNinaPanelDrag } from "./modules/nina-panel-drag.js";
 import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
 import {
   organizarConfiguracoesEmSecoes,
@@ -98,6 +95,7 @@ import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.jsx";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
+import { montarAya } from "./modulos/aya/aya.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -128,8 +126,6 @@ window.visaoGeralController = montarVisaoGeral({
 instalarCarregamento();
 initLoadingExperience();
 initVisualPolish();
-initAraraSpeakingEffects();
-initNinaPanelDrag();
 initHealthMapImmersiveWorkspace();
 aplicarLegendaDoMapaDetalhado();
 // A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
@@ -228,6 +224,13 @@ window.saudeDasCargasController = montarSaudeDasCargas({
 montarBuscaGlobal({
   estaConectado: () => Boolean(window.getMonitoraUser?.()),
 });
+
+/*
+  A Aya (src/modulos/aya/): a arara flutuante e o painel de conversa. Sabe a
+  página pelo estado que o legado atualiza a cada navegação (setPageTitle →
+  definirPaginaDaAya) e a área pelo estado do monitoramento.
+*/
+montarAya();
 
 if (!hasSupabaseEnv()) {
   console.warn(

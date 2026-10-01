@@ -1,9 +1,9 @@
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { exigirSessao } from "../lib/sessao.js";
 import {
+  acaoDaResposta,
   curatedAnswerForQuestion,
   officialSourcesForQuestion,
-  questionNeedsAyaAi,
 } from "./aya-knowledge.js";
 
 // Medido pelo túnel com o prompt real: 22,4s na primeira pergunta depois de
@@ -54,6 +54,25 @@ function normalizeQuestion(value) {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/*
+  O edital aberto agora (formulário de Editais ou gaveta de outra tela), para a
+  Aya saber de qual registro se fala. Só o número do edital ("101/2026"): o
+  título de uma gaveta pode ser o nome de um candidato, e nome de terceiro não
+  vai para o contexto.
+*/
+const NUMERO_DO_EDITAL = /\b\d{1,4}\/\d{4}\b/;
+
+function editalAberto(doc) {
+  const formulario = doc.querySelector("#editModal #mEdital");
+  const doFormulario = compactText(formulario?.value, 40);
+  if (doFormulario) return `Edital ${doFormulario}`;
+  for (const topo of doc.querySelectorAll(".ui-gaveta-topo")) {
+    const numero = String(topo.textContent || "").match(NUMERO_DO_EDITAL);
+    if (numero) return `Edital ${numero[0]}`;
+  }
+  return "";
 }
 
 export function collectAyaPageContext(doc = document) {
@@ -118,6 +137,7 @@ export function collectAyaPageContext(doc = document) {
   );
 
   return {
+    registroAberto: editalAberto(doc),
     pathname: doc.defaultView?.location?.pathname || "",
     pageTitle: compactText(doc.title, 160),
     mapSummary: textOf(doc, "#masterMapCount", 120),
@@ -274,18 +294,21 @@ function unavailableAnswer(question, context, reason, detalhe) {
   return `${base} ${COMPLEMENTO_LOCAL}${notaTecnica(detalhe)}`;
 }
 
-export function shouldAskAyaAi(question, localMatched = false) {
-  return questionNeedsAyaAi(question, localMatched);
-}
-
+/*
+  `area` e `secao` vêm do painel da Aya (a área atual do app e a seção de
+  Configurações aberta) e vão no contexto: o servidor monta o contexto fixo da
+  página com eles (aya-page-context.js), em vez de supor a Saúde Indígena.
+*/
 export async function askAyaAi({
   question,
   section,
   title,
+  area = "",
+  secao = "",
   history = [],
   doc = document,
 } = {}) {
-  const context = collectAyaPageContext(doc);
+  const context = { ...collectAyaPageContext(doc), area, secao };
   const pergunta = resolverReferencia(question, history);
   const curated = curatedAnswerForQuestion(pergunta);
   if (curated) {
@@ -294,6 +317,7 @@ export async function askAyaAi({
       sources: officialSourcesForQuestion(pergunta),
       unavailable: false,
       provider: "curated-official",
+      acao: acaoDaResposta(curated),
     };
   }
 
