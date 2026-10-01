@@ -442,6 +442,21 @@ describe("mapa do DSEI", () => {
     expect(fase.getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("o nacional não enquadra escondido; ao voltar, enquadra com a medida nova", async () => {
+    await montar({
+      dseiSelecionado: "ALAGOAS E SERGIPE",
+      filtroAtivo: true,
+      linhas: [LINHAS[0]],
+    });
+    const nacional = mapaVivo("map");
+    const antes = nacional.chamadas.length;
+    expect(nacional.chamadas.some(([n]) => n === "setView")).toBe(false);
+    await rerender({ dseiSelecionado: null });
+    const depois = nacional.chamadas.slice(antes).map(([n]) => n);
+    expect(depois).toContain("invalidateSize");
+    expect(depois).toContain("fitBounds");
+  });
+
   it("desmontar remove os dois mapas", async () => {
     await abrirAlse();
     expect(leaflet.vivos()).toHaveLength(2);

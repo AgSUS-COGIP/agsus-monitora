@@ -233,11 +233,16 @@ export function MapaNacional({
     leque();
   }, [L, mapa, bolhas, casais, calor, resumoDaRede, chamadas]);
 
-  // Enquadramento: só quando muda o que enquadrar.
+  /*
+    Enquadramento: só quando muda o que enquadrar, e só com o mapa à vista —
+    escondido (DSEI aberto) ele não tem tamanho; ao voltar, a chave difere e
+    o enquadramento acontece com a medida nova.
+  */
   useEffect(() => {
-    if (!mapa || !camadas.current) return;
+    if (!mapa || !camadas.current || !visivel) return;
     if (enquadramento.chave === ultimoEnquadramento.current) return;
     ultimoEnquadramento.current = enquadramento.chave;
+    remedir(mapa);
     try {
       if (enquadramento.modo === "ponto")
         mapa.setView(enquadramento.pontos[0], 7, { animate: false });
@@ -256,7 +261,7 @@ export function MapaNacional({
     }
     // Se o enquadramento não mudou o zoom, o `zoomend` não dispara.
     camadas.current.leque();
-  }, [L, mapa, enquadramento]);
+  }, [L, mapa, enquadramento, visivel]);
 
   // Voltou a aparecer, ou mudou para tela cheia: o Leaflet remede.
   useEffect(() => {
