@@ -259,7 +259,9 @@ export function Desativadas({ estado, atual, busca, campoDeBusca }) {
                   <tr key={conta.id}>
                     <th scope="row">
                       <span className="acessos-pessoa-textos">
-                        <strong>{conta.nome || conta.email}</strong>
+                        <strong title={conta.nome || conta.email}>
+                          {conta.nome || conta.email}
+                        </strong>
                         {conta.nome ? <small>{conta.email}</small> : null}
                         {conta.pedido_pendente ? (
                           <span className="acessos-selo acessos-selo-convite">

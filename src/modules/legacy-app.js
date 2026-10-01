@@ -1,3 +1,4 @@
+import { aplicarAtualizacaoPendente } from "./pwa-lifecycle.js";
 import { ordenarUnidades as sortUnits } from "../lib/editais-do-nucleo.js";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
 import { resumoDoRelatorio } from "../lib/visao-geral.js";
@@ -2031,6 +2032,16 @@ function navigate(view) {
     (window.acessosController?.confirmarSaida() === false ||
       window.modulosController?.confirmarSaida() === false ||
       !estadoDasConfiguracoes.confirmarSaida())
+  )
+    return;
+  // Versão nova do sistema esperando: entra agora. A tela pedida fica guardada
+  // e abre depois da recarga (startView confere a permissão).
+  if (
+    requestedView !== currentView &&
+    aplicarAtualizacaoPendente(() => {
+      rememberView(requestedView);
+      window.location.reload();
+    })
   )
     return;
 

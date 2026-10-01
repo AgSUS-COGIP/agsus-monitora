@@ -1,5 +1,7 @@
 let refreshingForUpdate = false;
 let updateReloadRequested = false;
+/* Versão nova já ativa, esperando a próxima troca de página para recarregar. */
+let atualizacaoPendente = false;
 let lastUpdateCheckAt = 0;
 
 const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000;
@@ -78,6 +80,12 @@ function bindServiceWorkerUpdates() {
     })
     .catch(() => {});
 
+  /*
+    Antes recarregava aqui, na hora: quem estava digitando (notas de
+    entrevista, resposta de recurso) perdia o texto. Agora a versão nova fica
+    pendente e entra na próxima troca de página (aplicarAtualizacaoPendente,
+    chamada pelo navigate do legado depois da guarda de alterações não salvas).
+  */
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     const shouldReload = shouldReloadAfterControllerChange({
       updateRequested: updateReloadRequested,
@@ -86,9 +94,30 @@ function bindServiceWorkerUpdates() {
     if (!shouldReload) return;
 
     updateReloadRequested = false;
-    refreshingForUpdate = true;
-    window.location.reload();
+    atualizacaoPendente = true;
   });
+}
+
+/**
+ * Se há versão nova esperando, recarrega agora (a pessoa acabou de pedir
+ * outra página: nada digitado se perde) e devolve true — quem chamou não segue
+ * com a navegação; a tela pedida abre depois da recarga, porque o legado já
+ * guardou a última tela. Sem versão nova, devolve false.
+ */
+export function aplicarAtualizacaoPendente(
+  recarregar = () => window.location.reload(),
+) {
+  if (!atualizacaoPendente || refreshingForUpdate) return false;
+  atualizacaoPendente = false;
+  refreshingForUpdate = true;
+  recarregar();
+  return true;
+}
+
+/** Só para teste: simula a versão nova ativa esperando a troca de página. */
+export function marcarAtualizacaoPendenteParaTeste(valor = true) {
+  atualizacaoPendente = valor;
+  refreshingForUpdate = false;
 }
 
 export function initPwaLifecycle() {
