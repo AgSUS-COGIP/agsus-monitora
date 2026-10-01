@@ -1,3 +1,5 @@
+import { escapeHtml } from "../lib/sanitize.js";
+
 const state = {
   initialized: false,
   refreshTimer: 0,
@@ -126,7 +128,7 @@ function decorateExpiryBadge(badge) {
   const icon =
     badge.querySelector("i")?.outerHTML ||
     '<i class="fa-solid fa-calendar-days" aria-hidden="true"></i>';
-  badge.innerHTML = `${icon}<span>${label}</span>`;
+  badge.innerHTML = `${icon}<span>${escapeHtml(label)}</span>`;
 }
 
 function decorateOperationalBadge(badge) {
@@ -142,7 +144,7 @@ function decorateOperationalBadge(badge) {
   const icon =
     badge.querySelector("i")?.outerHTML ||
     '<i class="fa-solid fa-route" aria-hidden="true"></i>';
-  badge.innerHTML = `${icon}<span class="health-operational-copy"><small>Cronograma</small><strong>${text}</strong></span>`;
+  badge.innerHTML = `${icon}<span class="health-operational-copy"><small>Cronograma</small><strong>${escapeHtml(text)}</strong></span>`;
 }
 
 function ensureDeadlineLegend(documentRef) {

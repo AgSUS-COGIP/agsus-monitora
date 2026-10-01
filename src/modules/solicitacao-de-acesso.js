@@ -1,13 +1,10 @@
 /*
-  Pedidos de acesso — o único módulo de UI do assunto:
-    1. a tela "Solicitar acesso" (quem entrou com Google e não tem perfil
-       ativo): situação do pedido, formulário, validação e envio, tudo por RPC;
-    2. o item de pedido pendente da lista administrativa antiga de
-       Configurações (renderAccessRequestAdminItemHTML).
+  Pedidos de acesso — a tela "Solicitar acesso" (quem entrou com Google e não
+  tem perfil ativo): situação do pedido, formulário, validação e envio, tudo
+  por RPC. A análise dos pedidos é do Acessos em React (src/componentes/acessos/).
   Regras e textos em src/lib/solicitacao-de-acesso.js.
 */
 
-import { ACCESS_ROLES, normalizeRole } from "../lib/access-roles.js";
 import { normalizePlatformContext } from "../lib/platform-context.js";
 import {
   argumentosDaSolicitacao,
@@ -352,61 +349,4 @@ export async function enviarSolicitacao(sb, campos, doc = document) {
   if (error) return { ok: false, mensagem: error.message, erros: {} };
   await carregarMinhaSolicitacao(sb, doc, { carregando: false });
   return { ok: true, mensagem: "", erros: {} };
-}
-
-// ── Lista administrativa antiga (Configurações) ─────────────────────────────
-
-const ESC_MAP = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#039;",
-};
-const esc = (value) =>
-  String(value ?? "").replace(/[&<>"']/g, (char) => ESC_MAP[char]);
-const attr = (value) => esc(value).replaceAll("`", "&#096;");
-
-function profileOptionsHTML(value) {
-  const normalized = normalizeRole({ perfil: value, ativo: true }) || "usuario";
-  return ACCESS_ROLES.map(
-    (role) =>
-      `<option value="${attr(role.value)}" ${normalized === role.value ? "selected" : ""}>${esc(role.label)}</option>`,
-  ).join("");
-}
-
-export function renderAccessRequestAdminItemHTML(req) {
-  const editable = req.status === "pendente";
-  const disabled = editable ? "" : "disabled";
-
-  return `<div class="access-admin-item" data-access-request="${attr(req.id)}">
-    <div class="access-admin-head">
-      <div>
-        <strong>${esc(req.nome || req.email)}</strong>
-        <span>${esc(req.email)}${req.setor ? " · " + esc(req.setor) : ""}</span>
-        ${req.justificativa ? `<span>${esc(req.justificativa)}</span>` : ""}
-      </div>
-      <div class="access-status-pill ${attr(req.status)}">${esc(req.status)}</div>
-    </div>
-    <div class="access-admin-controls access-admin-controls--profile-only">
-      <div class="form-row">
-        <label for="accessPerfil${attr(req.id)}">Perfil</label>
-        <select id="accessPerfil${attr(req.id)}" ${disabled}>
-          ${profileOptionsHTML(req.perfil_solicitado)}
-        </select>
-      </div>
-    </div>
-    <div class="form-row access-admin-observation">
-      <label for="accessObs${attr(req.id)}">Observação administrativa</label>
-      <input id="accessObs${attr(req.id)}" value="${attr(req.observacao_admin || "")}" placeholder="Opcional" ${disabled}>
-    </div>
-    <div class="access-admin-actions">
-      ${
-        editable
-          ? `<button class="btn green" type="button" onclick="approveAccessRequest('${attr(req.id)}')"><i class="fa-solid fa-check"></i> Aprovar acesso</button>
-      <button class="btn red" type="button" onclick="denyAccessRequest('${attr(req.id)}')"><i class="fa-solid fa-xmark"></i> Recusar</button>`
-          : ""
-      }
-    </div>
-  </div>`;
 }

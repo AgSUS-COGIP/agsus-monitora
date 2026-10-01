@@ -27,7 +27,7 @@ const fontes = [
   "recursos.html",
   "selecao.html",
   "auth/callback.html",
-].filter((f) => !f.replace(/\\/g, "/").endsWith("src/analises/index.html"));
+];
 
 const usados = new Set(
   fontes.flatMap((f) =>

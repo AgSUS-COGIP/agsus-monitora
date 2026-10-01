@@ -91,8 +91,8 @@ const classes = (...lista) => lista.filter(Boolean).join(" ");
 
 /*
   Os itens chamam `window.navigate` na hora do clique, como fazia o `onclick`
-  inline: `config-governance.js` (alterações não salvas) e `nielsen-shell-ux.js`
-  embrulham essa função, e o embrulho só vale para quem a procura na janela.
+  inline: quem a procura na janela na hora pega sempre a versão atual do
+  legado, mesmo que ela seja trocada depois da montagem.
 */
 const navegarPelaJanela = (view) => window.navigate?.(view);
 const paginaAtivaPadrao = (view) =>

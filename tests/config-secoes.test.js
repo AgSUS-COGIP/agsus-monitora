@@ -113,7 +113,7 @@ describe("organizar move sem destruir", () => {
             </div>
           </div>
           <div class="card"><div id="panelAdmin"></div></div>
-          <div class="card"><div id="accessMonitorCard"></div></div>
+          <div id="acessosApp" class="full" data-acessos></div>
         </div>
       </section>`;
   };
@@ -185,7 +185,7 @@ describe("organizar move sem destruir", () => {
     expect(
       document
         .querySelector('.config-secao[data-secao="acessos"]')
-        .contains(document.getElementById("accessMonitorCard")),
+        .contains(document.getElementById("acessosApp")),
     ).toBe(true);
   });
 

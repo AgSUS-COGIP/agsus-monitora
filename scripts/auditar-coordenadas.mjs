@@ -11,7 +11,7 @@ import {
   AUDITORIA DAS COORDENADAS DO MAPA — SOMENTE LEITURA.
 
   Este script não escreve nada: nem no banco, nem no payload. Ele lê as duas
-  linhas de `mapa_saude_indigena_config` (`lmap` e `rede_cnes`), classifica a
+  linhas de `TB_CONFIG_MAPA_SAUDE_INDIG` (`lmap` e `rede_cnes`), classifica a
   procedência de cada coordenada e lista os problemas.
 
   DUAS ENTRADAS POSSÍVEIS
@@ -96,7 +96,7 @@ async function lerDoBanco() {
     // Sessão somente-leitura: a auditoria não pode alterar produção nem por engano.
     await cliente.query("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY");
     const { rows } = await cliente.query(
-      "SELECT chave, payload FROM mapa_saude_indigena_config WHERE chave IN ('lmap','rede_cnes')",
+      `SELECT chave, payload FROM public."TB_CONFIG_MAPA_SAUDE_INDIG" WHERE chave IN ('lmap','rede_cnes')`,
     );
     return Object.fromEntries(rows.map((r) => [r.chave, r.payload]));
   } finally {

@@ -1,3 +1,4 @@
+import { escapeHtml } from "../lib/sanitize.js";
 import { buscarParecerDaLinha } from "./analises-pareceres-sob-demanda.js";
 
 const state = {
@@ -189,9 +190,10 @@ function buildDrawerContent(row, detailRow) {
   const body = backdrop.querySelector("#analisesDrawerBody");
 
   backdrop.querySelector("#analisesDrawerTitle").textContent = candidate;
+  // Textos lidos das células voltam como HTML: sempre escapados.
   backdrop.querySelector("#analisesDrawerSummary").innerHTML = `
-    <span class="status"><i class="fa-solid fa-circle-info"></i>${status}</span>
-    <span><i class="fa-solid fa-user-check"></i>${responsible}</span>`;
+    <span class="status"><i class="fa-solid fa-circle-info"></i>${escapeHtml(status)}</span>
+    <span><i class="fa-solid fa-user-check"></i>${escapeHtml(responsible)}</span>`;
   const source = detailRow?.querySelector(".detail-shell");
   backdrop.dataset.analiseAtual = "";
   backdrop.querySelector("#analisesDrawerContext").innerHTML = contextItems(
@@ -200,7 +202,7 @@ function buildDrawerContent(row, detailRow) {
   )
     .map(
       ([label, value]) =>
-        `<div><small>${label}</small><strong>${value}</strong></div>`,
+        `<div><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong></div>`,
     )
     .join("");
   body.replaceChildren();

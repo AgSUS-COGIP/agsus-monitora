@@ -1022,8 +1022,12 @@ describe("rodapé", () => {
   });
 });
 
+// CRLF vira LF: no Windows o checkout pode trazer \r\n, e as buscas por "\n" passariam por vacuidade.
 const semComentarios = (fonte) =>
-  fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  fonte
+    .replace(/\r\n/g, "\n")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
 const bloco = (css, seletor) => {
   const i = css.indexOf(seletor);
   return i < 0 ? "" : css.slice(i, css.indexOf("}", i));

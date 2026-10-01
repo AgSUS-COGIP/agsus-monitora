@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hasResource, matrixChanges } from "../src/lib/permissoes-recursos.js";
+import { hasResource } from "../src/lib/permissoes-recursos.js";
 import {
   canManageEditais,
   canChangeCandidateStatus,
@@ -31,32 +31,5 @@ describe("permissões por recurso", () => {
     expect(canChangeCandidateStatus(p)).toBe(false);
     expect(canImportApprovedList(p)).toBe(true);
     expect(canManageAccess(p)).toBe(false);
-  });
-  it("envia somente diferenças com revisão original, incluindo revogação", () => {
-    const users = [
-      {
-        id: "u1",
-        permissoes: {
-          nucleo: { nivel: "leitor", revisao: 4 },
-          calendario: { nivel: "editor", revisao: 2 },
-        },
-      },
-    ];
-    expect(
-      matrixChanges(
-        users,
-        new Map([
-          ["u1/nucleo", "leitor"],
-          ["u1/calendario", "sem_acesso"],
-        ]),
-      ),
-    ).toEqual([
-      {
-        usuario_id: "u1",
-        recurso: "calendario",
-        nivel: "sem_acesso",
-        revisao: 2,
-      },
-    ]);
   });
 });
