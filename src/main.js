@@ -55,6 +55,7 @@ import "./styles/multi-select-busca.css";
 import "./styles/carregamento.css";
 import "./styles/acessos.css";
 import "./styles/modulos-e-manutencao.css";
+import "./styles/saude-das-cargas.css";
 import "./styles/config-apresentacao.css";
 import "./styles/configuracoes.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
@@ -102,6 +103,7 @@ import { montarCalendarioEditais } from "./componentes/calendario-editais/calend
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
+import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -190,6 +192,11 @@ window.acessosController = montarAcessos({
 // Configurações › Módulos e abas (só admin global): abre pela seção (config-secoes.js → render()).
 window.modulosController = montarModulos({
   toast: window.monitoraToast,
+  getProfile: window.getMonitoraProfile,
+});
+
+// Configurações › Status das atualizações (só admin global): relê a cada abertura da seção.
+window.saudeDasCargasController = montarSaudeDasCargas({
   getProfile: window.getMonitoraProfile,
 });
 

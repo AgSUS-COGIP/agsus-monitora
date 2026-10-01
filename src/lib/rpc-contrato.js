@@ -454,6 +454,13 @@ export const CONTRATO_RPC = {
       "Aba Entrevistas de uma área (json, só leitura): entrevistas com as notas por critério, a análise ligada, a última carga da planilha e os aprovados na análise sem entrevista.",
   },
   // ── Seleção (aba Seleção, 20261001090000_selecao.sql) ──────────────────
+  // ── Status das atualizações (Configurações, 20261001120000_saude_das_cargas.sql) ──
+  get_saude_das_cargas: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
+  },
   get_selecao_da_area: {
     argumentos: ["p_area"],
     critica: false,

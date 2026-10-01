@@ -28,7 +28,7 @@ const modulo = readFileSync("src/modules/config-secoes.js", "utf8");
   **move** os nós existentes em vez de reescrever o HTML — os mesmos elementos,
   com os mesmos `id` e os mesmos listeners.
 */
-describe("as seções (as sete do SIGAV + Módulos e abas)", () => {
+describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualizações)", () => {
   it("são exatamente essas, nessa ordem", () => {
     expect(SECOES.map((s) => s.rotulo)).toEqual([
       "Marca",
@@ -39,6 +39,7 @@ describe("as seções (as sete do SIGAV + Módulos e abas)", () => {
       "Operação",
       "Acessos",
       "Módulos e abas",
+      "Status das atualizações",
     ]);
   });
 
@@ -119,9 +120,9 @@ describe("organizar move sem destruir", () => {
 
   beforeEach(montarPagina);
 
-  it("cria as oito seções e distribui os campos", () => {
+  it("cria as nove seções e distribui os campos", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(8);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(9);
     expect(
       document
         .querySelector('.config-secao[data-secao="operacao"]')
@@ -211,7 +212,7 @@ describe("organizar move sem destruir", () => {
   it("não organiza duas vezes", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
     expect(organizarConfiguracoesEmSecoes(document)).toBe(false);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(8);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(9);
   });
 });
 

@@ -167,12 +167,14 @@ export function podeAbrirConfiguracoes(profile) {
 
 /**
  * Seção de Configurações liberada: "acessos" é de quem gerencia acessos;
- * "modulos" (Módulos e abas: ativar, desativar, manutenção), só do admin
- * global; as demais, de quem edita configurações.
+ * "modulos" (Módulos e abas: ativar, desativar, manutenção) e "cargas"
+ * (Status das atualizações), só do admin global; as demais, de quem edita
+ * configurações.
  */
 export function secaoDeConfiguracaoPermitida(profile, secao) {
   if (secao === "acessos") return canManageAccess(profile);
   if (secao === "modulos") return isAdminGlobal(profile);
+  if (secao === "cargas") return isAdminGlobal(profile);
   return canManageSettings(profile);
 }
 

@@ -83,6 +83,14 @@ export const SECOES = Object.freeze([
     descricao:
       "Ativar, desativar e pôr em manutenção o sistema, as áreas, as abas e os painéis; selo BETA.",
   },
+  {
+    id: "cargas",
+    rotulo: "Status das atualizações",
+    icone: "fa-clock",
+    iconeDoMenu: "heart-pulse",
+    descricao:
+      "Se os dados de cada aba estão atualizados: quando rodou cada atualização, o que atrasou e o que falhou.",
+  },
 ]);
 
 /*
@@ -93,6 +101,7 @@ export const SECOES = Object.freeze([
 const CONTROLADOR_DA_SECAO = Object.freeze({
   acessos: "acessosController",
   modulos: "modulosController",
+  cargas: "saudeDasCargasController",
 });
 const controladorDaSecao = (documento, secao) =>
   CONTROLADOR_DA_SECAO[secao]
@@ -165,6 +174,7 @@ export const SECAO_POR_BLOCO = Object.freeze({
   accessMonitorCard: "acessos",
   acessosApp: "acessos",
   modulosApp: "modulos",
+  saudeDasCargasApp: "cargas",
 });
 
 export const SECAO_PADRAO = "operacao";
