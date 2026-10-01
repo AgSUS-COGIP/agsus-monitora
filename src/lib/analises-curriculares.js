@@ -148,24 +148,39 @@ const editalAtivo = (edital) =>
   número; senão o único com esse número. `match` diz qual regra casou.
 */
 export function editalDaLinha(linha, editais) {
-  const lista = Array.isArray(editais) ? editais : [];
-  const chave = chaveDoEdital(linha.grupo, linha.unidade, linha.edital);
-  const exato = lista.find(
-    (e) => chaveDoEdital(e.grupo, e.unidade, e.edital) === chave,
-  );
-  if (exato) return { ...exato, match: "full" };
-  const mesmoNumero = lista.filter(
-    (e) => normalizar(e.edital) === normalizar(linha.edital),
-  );
-  const naUnidade = mesmoNumero.filter(
-    (e) => normalizar(e.unidade) === normalizar(linha.unidade),
-  );
-  if (naUnidade.length === 1) return { ...naUnidade[0], match: "unit_edital" };
-  const ativos = mesmoNumero.filter(editalAtivo);
-  if (ativos.length === 1) return { ...ativos[0], match: "edital_ativo_unico" };
-  if (mesmoNumero.length === 1)
-    return { ...mesmoNumero[0], match: "edital_unico" };
-  return null;
+  return buscaDeEditais(editais)(linha);
+}
+
+/* A mesma regra, com os editais indexados uma vez (para muitas linhas). */
+function buscaDeEditais(editais) {
+  const porChave = new Map();
+  const porNumero = new Map();
+  for (const e of Array.isArray(editais) ? editais : []) {
+    const chave = chaveDoEdital(e.grupo, e.unidade, e.edital);
+    if (!porChave.has(chave)) porChave.set(chave, e);
+    const numero = normalizar(e.edital);
+    if (!porNumero.has(numero)) porNumero.set(numero, []);
+    porNumero.get(numero).push(e);
+  }
+  return (linha) => {
+    const exato = porChave.get(
+      chaveDoEdital(linha.grupo, linha.unidade, linha.edital),
+    );
+    if (exato) return { ...exato, match: "full" };
+    const mesmoNumero = porNumero.get(normalizar(linha.edital)) || [];
+    const unidade = normalizar(linha.unidade);
+    const naUnidade = mesmoNumero.filter(
+      (e) => normalizar(e.unidade) === unidade,
+    );
+    if (naUnidade.length === 1)
+      return { ...naUnidade[0], match: "unit_edital" };
+    const ativos = mesmoNumero.filter(editalAtivo);
+    if (ativos.length === 1)
+      return { ...ativos[0], match: "edital_ativo_unico" };
+    if (mesmoNumero.length === 1)
+      return { ...mesmoNumero[0], match: "edital_unico" };
+    return null;
+  };
 }
 
 /* Rótulo curto (filtro e chip) e a descrição (gaveta) de cada validação. */
@@ -204,9 +219,12 @@ export function validacaoDaJanela(linha, agora = new Date()) {
 
 /* Os índices da busca geral (inclui o parecer, quando já veio) e da fila. */
 export function comIndicesDeBusca(linha) {
+  return indexar({ ...linha });
+}
+
+function indexar(linha) {
   const juntar = (campos) => normalizar(campos.map((c) => linha[c]).join(" "));
-  return {
-    ...linha,
+  return Object.assign(linha, {
     __busca: juntar([
       "grupo",
       "unidade",
@@ -233,7 +251,7 @@ export function comIndicesDeBusca(linha) {
       "analise",
       "modalidade_concorrencia",
     ]),
-  };
+  });
 }
 
 /**
@@ -247,11 +265,12 @@ export function prepararLinhas(
   { editais = [], area, agora = new Date() } = {},
 ) {
   const saudeIndigena = ehAreaSaudeIndigena(area);
+  const editalDe = buscaDeEditais(editais);
   return (Array.isArray(linhas) ? linhas : []).map((original, indice) => {
     const linha = { ...original };
     linha.__chave =
       texto(linha.id) || texto(linha.chave_natural) || `linha-${indice}`;
-    const edital = editalDaLinha(linha, editais);
+    const edital = editalDe(linha);
     if (edital) {
       if (!texto(linha.data_inicio_analise))
         linha.data_inicio_analise = edital.data_inicio_analise ?? null;
@@ -262,7 +281,7 @@ export function prepararLinhas(
     linha.data_validacao_status = validacao.status;
     linha.data_validacao_label = validacao.rotulo;
     if (!saudeIndigena) linha.municipio_uf = municipioUfDaLinha(linha, area);
-    return comIndicesDeBusca(linha);
+    return indexar(linha);
   });
 }
 

@@ -964,6 +964,27 @@ describe("área, usuário, reabertura e comemorações", () => {
     relogio.mockRestore();
   });
 
+  it("abrir de novo no meio da primeira carga não pede outra vez", async () => {
+    let soltar;
+    const supabase = supabaseFalso({
+      respostas: {
+        get_analises_dashboard_payload_v2: () =>
+          new Promise((ok) => {
+            soltar = () => ok({ data: payload(), error: null });
+          }),
+      },
+    });
+    await montar(supabase, { abrir: false });
+    await act(async () => void painel.render());
+    await act(async () => void painel.render());
+    expect(
+      chamadas(supabase, "get_analises_dashboard_payload_v2"),
+    ).toHaveLength(1);
+    await act(async () => soltar());
+    await esperar();
+    expect(linhasDaFila()).toHaveLength(4);
+  });
+
   it("outro usuário na mesma aba: tudo volta ao início", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);

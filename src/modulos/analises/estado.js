@@ -207,11 +207,13 @@ export function criarEstadoDasAnalises({
       limparCacheAntigo();
     }
     if (outraArea || escopo !== estado.escopo || !estado.carregado)
+      // `atualizando`: uma segunda abertura no meio da carga não pede de novo.
       publicar({
         ...ESTADO_INICIAL,
         area,
         escopo,
         detalhes: new Map(),
+        atualizando: true,
       });
     else publicar({ atualizando: true, erroAoCarregar: "" });
 

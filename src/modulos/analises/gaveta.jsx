@@ -30,17 +30,8 @@ function SecoesEsqueleto() {
   );
 }
 
-function Parecer({ linha, situacao }) {
-  if (linhaSemParecer(linha)) {
-    if (situacao === "erro") return null;
-    return (
-      <Secao icone="fa-file-lines" titulo="Parecer da análise" secao="parecer">
-        <p className="ui-secao-texto" aria-busy="true">
-          Carregando parecer…
-        </p>
-      </Secao>
-    );
-  }
+/* O parecer (texto da planilha, como texto). Sem parecer no banco, a seção some. */
+function Parecer({ linha }) {
   const texto = String(linha.analise ?? "").trim();
   if (!texto) return null;
   return (
@@ -160,7 +151,7 @@ export function GavetaDaAnalise({
               </GradeDeKv>
             </Secao>
           ))}
-          <Parecer linha={completa} situacao={situacao} />
+          <Parecer linha={completa} />
         </div>
       )}
     </Gaveta>
