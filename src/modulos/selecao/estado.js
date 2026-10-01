@@ -16,6 +16,7 @@
   usuário entrou na mesma aba (ou saiu da conta): tudo volta ao início, e a
   próxima abertura da tela recarrega.
 */
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import {
   criarCacheDePayload,
   ehErroDeAcesso,
@@ -234,7 +235,7 @@ export function criarEstadoDaSelecao({
   }
 
   function exportarCsv(vagas) {
-    const dia = new Date(agora()).toISOString().slice(0, 10);
+    const dia = hojeEmBrasilia(new Date(agora()));
     baixar(csvDaSelecao(vagas), `selecao-${estado.area}-${dia}.csv`);
   }
 

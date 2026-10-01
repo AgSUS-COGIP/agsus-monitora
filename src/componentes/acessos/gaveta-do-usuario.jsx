@@ -88,7 +88,11 @@ function ComoAPessoaVe({
     let vivo = true;
     estado
       .lerContextoDoUsuario(usuario.id)
-      .then((dados) => vivo && setSalvo(dados))
+      .then((dados) => {
+        if (!vivo) return;
+        setErro(""); // a falha de uma leitura anterior não fica na tela
+        setSalvo(dados);
+      })
       .catch((falha) => vivo && setErro(falha?.message || "Tente novamente."));
     return () => {
       vivo = false;
