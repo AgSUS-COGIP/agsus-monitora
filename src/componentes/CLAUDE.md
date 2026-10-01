@@ -4,7 +4,7 @@ O front está migrando para **um único app React** (alvo, regras e ordem em
 `docs/arquitetura-react.md`). Já são React: barra lateral, Núcleo (Editais), Calendário, Lista de
 Aprovados, Acessos, Módulos e abas, Status das atualizações, busca global (Ctrl+K), Configurações
 (moldura, Marca, Painéis externos, Operação) e os painéis de Entrevistas e Seleção (ainda em
-página própria/iframe; Recursos já mudou para `src/modulos/recursos/`). Toda tela monta por
+página própria/iframe; Recursos e Análises curriculares já mudaram para `src/modulos/`). Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
 (`.jsx`), sem TypeScript. Nomes em português, arquivo em kebab-case, componente em PascalCase.
