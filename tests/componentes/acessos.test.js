@@ -303,6 +303,41 @@ describe("Configurações › Acessos", () => {
     expect(gaveta.textContent).toContain("Como a pessoa vê");
   });
 
+  it("gaveta: depois de uma falha, a releitura que dá certo tira o erro", async () => {
+    let falhar = true;
+    const contexto = {
+      profile: {
+        id: "u1",
+        perfil: "usuario",
+        areas: ["saude-indigena"],
+        permissoes: { nucleo: "leitor" },
+      },
+      panel_ids: [],
+      escopo: {},
+    };
+    await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: {
+        obter_contexto_de_usuario: () =>
+          falhar
+            ? { data: null, error: { message: "falhou" } }
+            : { data: contexto, error: null },
+      },
+    });
+    await clicar(document.querySelector(".acessos-nome"));
+    const gaveta = document.getElementById("acessosGaveta");
+    expect(gaveta.textContent).toContain(
+      "Não foi possível ler o acesso salvo.",
+    );
+    // Nova carga da matriz (como depois de salvar) relê o contexto.
+    falhar = false;
+    await esperar(() => controlador.estado.carregarMatriz());
+    expect(gaveta.textContent).not.toContain(
+      "Não foi possível ler o acesso salvo.",
+    );
+  });
+
   it("entra no grupo, muda o nível do módulo e salva com motivo", async () => {
     const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
     await clicar(document.getElementById("acessos-aba-grupos"));
