@@ -6,7 +6,7 @@
   Supabase, sob RLS. Substitui o antigo servidor Laravel/PHP com o mesmo contrato:
 
   - páginas: `/`, `/index.html`, `/analises`, `/analises.html`, `/entrevistas`,
-    `/entrevistas.html`, `/recursos`, `/recursos.html`, `/selecao`, `/selecao.html`, `/auth/callback`,
+    `/entrevistas.html`, `/selecao`, `/selecao.html`, `/auth/callback`,
     `/auth/callback.html`, idênticas byte
     a byte ao build e sem cache;
   - `/up` responde 200 (saúde para Docker e CI);
@@ -51,8 +51,6 @@ const PAGINAS: ReadonlyMap<string, string> = new Map([
   ["/analises.html", "analises.html"],
   ["/entrevistas", "entrevistas.html"],
   ["/entrevistas.html", "entrevistas.html"],
-  ["/recursos", "recursos.html"],
-  ["/recursos.html", "recursos.html"],
   ["/selecao", "selecao.html"],
   ["/selecao.html", "selecao.html"],
   ["/auth/callback", "auth/callback.html"],

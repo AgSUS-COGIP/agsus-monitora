@@ -20,7 +20,6 @@ describe("fonte Geist no sistema todo", () => {
       "index.html",
       "analises.html",
       "entrevistas.html",
-      "recursos.html",
       "selecao.html",
     ]) {
       const html = ler(pagina);
@@ -37,9 +36,6 @@ describe("fonte Geist no sistema todo", () => {
     const primeiroCss = (fonte) => fonte.match(/import\s+"([^"]+\.css)"/)?.[1];
     expect(primeiroCss(ler("src/main.js"))).toBe("./styles/tokens.css");
     expect(primeiroCss(ler("src/analises/main.js"))).toBe(
-      "../styles/tokens.css",
-    );
-    expect(primeiroCss(ler("src/recursos/main.jsx"))).toBe(
       "../styles/tokens.css",
     );
     expect(primeiroCss(ler("src/entrevistas/main.jsx"))).toBe(

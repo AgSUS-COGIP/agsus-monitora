@@ -6,7 +6,7 @@
   O recurso chega de `get_recursos_da_area` (supabase/migrations/
   20260929120000_recursos.sql) já com o candidato, a vaga, a nota e o resultado
   da análise curricular ligada; o prazo sai do cronograma do edital por
-  `prazo-do-recurso.js`. O desenho é de `src/componentes/recursos/`.
+  `prazo-do-recurso.js`. A tela é `src/modulos/recursos/`.
 
   Substitui o painel de recursos do Apps Script: mesmas colunas (edital, cargo,
   vaga, origem, analista, código e nome do candidato, situação e as etapas), os

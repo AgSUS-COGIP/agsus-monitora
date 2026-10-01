@@ -54,7 +54,7 @@ function LinhaDoAnexo({ estado, recursoId, anexo, podeEditar, acao }) {
             </small>
           ) : null}
         </span>
-        <span className="detail-actions">
+        <span className="ui-acoes">
           {podeBaixar ? (
             <button
               type="button"
@@ -94,7 +94,7 @@ function LinhaDoAnexo({ estado, recursoId, anexo, podeEditar, acao }) {
             if (ok) setArquivando(false);
           }}
         >
-          <div className="field">
+          <div className="ui-campo">
             <label htmlFor={`recursosMotivoAnexo-${anexo.id}`}>
               Motivo do arquivamento
             </label>
@@ -109,7 +109,7 @@ function LinhaDoAnexo({ estado, recursoId, anexo, podeEditar, acao }) {
               onChange={(evento) => setMotivo(evento.target.value)}
             />
           </div>
-          <div className="detail-actions">
+          <div className="ui-acoes">
             <button
               type="button"
               className="btn secondary small"
@@ -150,7 +150,7 @@ function EnviarAnexo({ estado, recursoId, acao }) {
         }
       }}
     >
-      <div className="field">
+      <div className="ui-campo">
         <label htmlFor="recursosTipoDoAnexo">Tipo</label>
         <select
           id="recursosTipoDoAnexo"
@@ -165,7 +165,7 @@ function EnviarAnexo({ estado, recursoId, acao }) {
           ))}
         </select>
       </div>
-      <div className="field">
+      <div className="ui-campo">
         <label htmlFor="recursosArquivoDoAnexo">Arquivo</label>
         <input
           id="recursosArquivoDoAnexo"
@@ -179,7 +179,7 @@ function EnviarAnexo({ estado, recursoId, acao }) {
           {erro || "PDF, DOCX, DOC, JPG, PNG ou ODT, até 20 MB."}
         </small>
       </div>
-      <div className="detail-actions">
+      <div className="ui-acoes">
         <button
           type="submit"
           className="btn small"
@@ -214,8 +214,8 @@ export function SecaoDeAnexos({ estado, recurso, detalhe, podeEditar, acao }) {
         {ativos.length ? (
           <ul className="recursos-lista-de-anexos">{ativos.map(linha)}</ul>
         ) : (
-          <div className="analises-detail-analysis">
-            <span className="analises-detail-empty">Nenhum anexo.</span>
+          <div className="ui-secao-texto">
+            <span className="ui-secao-vazio">Nenhum anexo.</span>
           </div>
         )}
         {arquivados.length ? (

@@ -9,27 +9,25 @@ import {
 } from "../../lib/recursos-dos-candidatos.js";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
+  Campo,
   CardDeGrafico,
-  Grafico,
   ChipDeFiltro,
   ChipsDeFiltro,
   classes,
   EstadoVazio,
+  Grafico,
   GradeDeKpis,
   Kpi as CardDeKpi,
+  paletaDosGraficos,
   PainelDeFiltros,
   TopoDoPainel,
 } from "../../ui/index.js";
 
 /*
-  Os blocos do painel de recursos, com a marcação e as classes do painel de
-  análises curriculares (analises.html + src/analises/*.css): o cabeçalho fixo
-  (`.topbar`), "Refinar resultados" (`.filter-panel`), os KPIs (`.kpis` >
-  `.kpi` com a barra colorida em cima), o recorte ativo (`.context-line`), os
-  gráficos Chart.js em `.panel` (`.oper-grid`, `.trend`) e as pendências
-  prioritárias (`.attention-list`). Os ids que o CSS de análises usa (kpiGrid,
-  attentionList, tableBody, topbar…) são os mesmos, e o skeleton é o dele
-  (`body.analises-is-loading`, analises-esqueleto.css).
+  Os blocos da tela de Recursos, com os componentes de src/ui/: o topo (só
+  status e ações — o título e a área estão no cabeçalho do app), "Refinar
+  resultados", as duas fileiras de KPIs em card compacto (as que filtram são
+  botões), o recorte ativo, os gráficos Chart.js e as pendências prioritárias.
 */
 
 const truncar = (valor, limite) => {
@@ -37,16 +35,16 @@ const truncar = (valor, limite) => {
   return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
 };
 
-/* ── Cabeçalho ──────────────────────────────────────────────────────── */
+/* ── Topo ───────────────────────────────────────────────────────────── */
 
 export function Topo({ aoNovo, novoDesativado, aoModelos, ...props }) {
   return (
-    <TopoDoPainel titulo="Painel de recursos" {...props}>
+    <TopoDoPainel {...props}>
       {aoModelos ? (
         <button
           type="button"
           className="btn secondary"
-          id="modelosRespostaBtn"
+          data-acao="modelos"
           title="Modelos de resposta aos recursos (administração)"
           onClick={aoModelos}
         >
@@ -58,7 +56,7 @@ export function Topo({ aoNovo, novoDesativado, aoModelos, ...props }) {
         <button
           type="button"
           className="btn"
-          id="novoRecursoBtn"
+          data-acao="novo-recurso"
           disabled={novoDesativado}
           onClick={aoNovo}
         >
@@ -108,36 +106,9 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
       aoLimpar={aoLimpar}
       aoRecolher={() => setMaisOpcoes(false)}
     >
-      <div id="filtersToolbar" className="filters-toolbar">
-        <div className="filters-toolbar-copy">
-          <strong>Filtros principais</strong>
-        </div>
-        <button
-          type="button"
-          className="btn secondary"
-          id="advancedBtn"
-          aria-expanded={maisOpcoes}
-          title={
-            maisOpcoes
-              ? "Ocultar filtros adicionais"
-              : "Mostrar a busca em todo o painel"
-          }
-          onClick={() => setMaisOpcoes((atual) => !atual)}
-        >
-          <i
-            className={`fa-solid ${maisOpcoes ? "fa-chevron-up" : "fa-sliders"}`}
-            aria-hidden="true"
-          />{" "}
-          {maisOpcoes ? "Menos opções" : "Mais opções"}{" "}
-          {avancados ? (
-            <span className="advanced-count">{avancados}</span>
-          ) : null}
-        </button>
-      </div>
-      <div className="filter-grid">
+      <div className="ui-grade-de-campos">
         {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
-          <div className="field" key={campo}>
-            <label htmlFor={`filtro-${campo}`}>{rotulo}</label>
+          <Campo rotulo={rotulo} key={campo}>
             <select
               id={`filtro-${campo}`}
               name={campo}
@@ -152,15 +123,39 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
                 </option>
               ))}
             </select>
-          </div>
+          </Campo>
         ))}
       </div>
+      <div className="recursos-mais-opcoes">
+        <button
+          type="button"
+          className="btn secondary small"
+          data-acao="mais-opcoes"
+          aria-expanded={maisOpcoes}
+          aria-controls="recursosFiltrosAdicionais"
+          title={
+            maisOpcoes
+              ? "Ocultar filtros adicionais"
+              : "Mostrar a busca em toda a tela"
+          }
+          onClick={() => setMaisOpcoes((atual) => !atual)}
+        >
+          <i
+            className={`fa-solid ${maisOpcoes ? "fa-chevron-up" : "fa-sliders"}`}
+            aria-hidden="true"
+          />{" "}
+          {maisOpcoes ? "Menos opções" : "Mais opções"}
+          {avancados ? (
+            <span className="recursos-contagem-avancada">{avancados}</span>
+          ) : null}
+        </button>
+      </div>
       <div
-        id="advancedFilters"
-        className={classes("advanced filter-grid", maisOpcoes && "show")}
+        id="recursosFiltrosAdicionais"
+        className="ui-grade-de-campos"
+        hidden={!maisOpcoes}
       >
-        <div className="field">
-          <label htmlFor="filtro-busca">Buscar em todo o painel</label>
+        <Campo rotulo="Buscar em toda a tela">
           <input
             id="filtro-busca"
             type="search"
@@ -170,7 +165,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
             placeholder="Candidato, código, vaga, nº ou processo SEI"
             onChange={(evento) => aoMudar("busca", evento.target.value)}
           />
-        </div>
+        </Campo>
       </div>
       <ChipsDeFiltro>
         {ativos.map(([campo, rotulo, valor]) => (
@@ -190,11 +185,12 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
 /* O card de KPI de src/ui/ com o número formatado; os que filtram são botões. */
-function Kpi({ valor, sufixo = "", aoFiltrar, ...props }) {
+function Kpi({ valor, sufixo = "", aoFiltrar, carregado, ...props }) {
   return (
     <CardDeKpi
       valor={`${formatNumberBR(valor)}${sufixo}`}
       aoClicar={aoFiltrar}
+      carregando={!carregado}
       {...props}
     />
   );
@@ -209,58 +205,75 @@ export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
         }
       : {};
   return (
-    <GradeDeKpis id="kpiGrid" rotulo="Indicadores">
+    <GradeDeKpis className="recursos-kpis" rotulo="Indicadores">
       <Kpi
         cor="k-cyan"
+        icone="fa-layer-group"
         chave="total"
         rotulo="Total de recursos"
         valor={k.total}
+        carregado={carregado}
       />
       <Kpi
         cor="k-yellow"
+        icone="fa-clock"
         chave="em-analise"
         rotulo="Em análise"
         valor={k.pendentes}
+        carregado={carregado}
         {...filtro("situacao", "EM_ANALISE")}
       />
       <Kpi
         cor="k-green"
+        icone="fa-gavel"
         chave="decididos"
         rotulo="Decididos"
         valor={k.concluidos}
+        carregado={carregado}
       />
       <Kpi
         cor="k-red"
+        icone="fa-triangle-exclamation"
         chave="prazo-vencido"
         rotulo="Prazo vencido"
         valor={k.atrasados}
+        carregado={carregado}
         {...filtro("pendencia", "prazo_vencido")}
       />
       <Kpi
         cor="k-red"
+        icone="fa-file-circle-xmark"
         chave="sem-sei"
         rotulo="Sem processo SEI"
         valor={k.semSei}
+        carregado={carregado}
         {...filtro("pendencia", "sem_sei")}
       />
       <Kpi
         cor="k-yellow"
+        icone="fa-envelope-open-text"
         chave="sem-resposta"
         rotulo="Sem resposta enviada"
         valor={k.semResposta}
+        carregado={carregado}
       />
       <Kpi
         cor="k-purple"
+        icone="fa-right-left"
         chave="mudou-resultado"
         rotulo="Mudou nota/classificação"
         valor={k.mudouResultado}
+        carregado={carregado}
         {...filtro("pendencia", "mudou_resultado")}
       />
       <Kpi
+        cor="k-slate"
+        icone="fa-chart-simple"
         chave="taxa"
         rotulo="Taxa de conclusão"
         valor={k.taxaConclusao}
         sufixo="%"
+        carregado={carregado}
       />
     </GradeDeKpis>
   );
@@ -268,8 +281,8 @@ export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
 
 /*
   A resposta escrita no sistema (resposta-do-recurso.js): em revisão,
-  aprovadas aguardando envio e devolvidas. Uma segunda fileira de `.kpi`,
-  alinhada às colunas da primeira; cada uma filtra pela pendência dela.
+  aprovadas aguardando envio e devolvidas. Uma segunda fileira de KPIs; cada
+  um filtra pela pendência dele.
 */
 export function IndicadoresDasRespostas({
   indicadores: k,
@@ -286,29 +299,34 @@ export function IndicadoresDasRespostas({
       : {};
   return (
     <GradeDeKpis
-      className="recursos-kpis-respostas"
-      id="kpiGridRespostas"
+      className="recursos-kpis recursos-kpis-respostas"
       rotulo="Indicadores das respostas"
     >
       <Kpi
         cor="k-yellow"
+        icone="fa-file-pen"
         chave="respostas-em-revisao"
         rotulo="Respostas em revisão"
         valor={k.respostasEmRevisao}
+        carregado={carregado}
         {...filtro("resposta_em_revisao")}
       />
       <Kpi
         cor="k-green"
+        icone="fa-file-circle-check"
         chave="respostas-aprovadas"
         rotulo="Aprovadas aguardando envio"
         valor={k.respostasAprovadas}
+        carregado={carregado}
         {...filtro("resposta_aprovada")}
       />
       <Kpi
         cor="k-red"
+        icone="fa-rotate-left"
         chave="respostas-devolvidas"
         rotulo="Respostas devolvidas"
         valor={k.respostasDevolvidas}
+        carregado={carregado}
         {...filtro("resposta_devolvida")}
       />
     </GradeDeKpis>
@@ -324,67 +342,63 @@ export function Recorte({ ativos, recursos, carregado }) {
     (r) => r.prazo.fonte === "abertura",
   ).length;
   return (
-    <section className="panel panel-pad">
-      <div id="contextLine" className="context-line">
+    <section className="ui-card recursos-recorte" aria-label="Recorte ativo">
+      <p className="recursos-recorte-texto" data-recorte="">
         {ativos.length
           ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
           : "Sem filtros"}
-      </div>
-      <div id="windowMeta" className="meta-line">
-        {carregado ? (
-          <>
-            <span className={classes("meta-chip", vencidos && "warning")}>
-              <i
-                className={`fa-solid ${vencidos ? "fa-triangle-exclamation" : "fa-circle-check"}`}
-                aria-hidden="true"
-              />{" "}
-              {formatNumberBR(vencidos)} recurso(s) com o prazo de resposta
-              vencido
+      </p>
+      {carregado ? (
+        <div className="recursos-recorte-marcas">
+          <span
+            className="recursos-marca"
+            data-tom={vencidos ? "alerta" : undefined}
+          >
+            <i
+              className={`fa-solid ${vencidos ? "fa-triangle-exclamation" : "fa-circle-check"}`}
+              aria-hidden="true"
+            />{" "}
+            {formatNumberBR(vencidos)} recurso(s) com o prazo de resposta
+            vencido
+          </span>
+          {semPrazo ? (
+            <span className="recursos-marca" data-tom="alerta">
+              <i className="fa-solid fa-circle-info" aria-hidden="true" />{" "}
+              {formatNumberBR(semPrazo)} sem prazo no cronograma
             </span>
-            {semPrazo ? (
-              <span className="meta-chip warning">
-                <i className="fa-solid fa-circle-info" aria-hidden="true" />{" "}
-                {formatNumberBR(semPrazo)} sem prazo no cronograma
-              </span>
-            ) : null}
-            {pelaAbertura ? (
-              <span className="meta-chip">
-                <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
-                {formatNumberBR(pelaAbertura)} com prazo estimado (*)
-              </span>
-            ) : null}
-          </>
-        ) : null}
-      </div>
+          ) : null}
+          {pelaAbertura ? (
+            <span className="recursos-marca">
+              <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
+              {formatNumberBR(pelaAbertura)} com prazo estimado (*)
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }
 
 /* ── Pendências prioritárias ────────────────────────────────────────── */
 
-/*
-  Severidade → classe do `.attention-item` de análises: alta é `high` (borda
-  vermelha); média e baixa ficam na borda âmbar (a classe `low` de lá esconde
-  o item, e aqui as de baixa — prazo não encontrado, fora das análises —
-  precisam aparecer).
-*/
-const CLASSE_DA_SEVERIDADE = { alta: "high", media: "", baixa: "" };
+/* Severidade → tom da borda do item: alta em vermelho; média e baixa em âmbar. */
+const TOM_DA_SEVERIDADE = { alta: "perigo", media: "alerta", baixa: "alerta" };
 const ITENS_DO_ESQUELETO = 4;
 
 function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
   if (!carregado)
     return (
-      <div id="attentionList" className="attention-list" aria-hidden="true">
+      <div className="recursos-pendencias" aria-hidden="true">
         {Array.from({ length: ITENS_DO_ESQUELETO }, (_, indice) => (
-          <div className="attention-item" key={indice}>
-            <b>&nbsp;</b>
-            <small>&nbsp;</small>
-          </div>
+          <span
+            className="ui-esqueleto recursos-pendencia-esqueleto"
+            key={indice}
+          />
         ))}
       </div>
     );
   return (
-    <div id="attentionList" className="attention-list">
+    <div className="recursos-pendencias">
       {pendencias.length ? (
         pendencias.map((p) => {
           const ativo = filtros.pendencia === p.chave;
@@ -392,11 +406,8 @@ function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
             <button
               type="button"
               key={p.chave}
-              className={classes(
-                "attention-item",
-                CLASSE_DA_SEVERIDADE[p.severidade],
-                ativo && "is-active",
-              )}
+              className={classes("recursos-pendencia", ativo && "is-ativo")}
+              data-tom={TOM_DA_SEVERIDADE[p.severidade]}
               data-action="pendencia"
               aria-pressed={ativo}
               onClick={() => aoFiltrar("pendencia", p.chave)}
@@ -421,7 +432,7 @@ function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
 
 /* ── Gráficos ───────────────────────────────────────────────────────── */
 
-/* Eixos, legenda e dica dos gráficos de barra do painel de análises. */
+/* Eixos, legenda e dica dos gráficos de barra. */
 function opcoesDeBarras(
   p,
   { empilhado = false, legenda = false, deitado = false, aoClicar, dica } = {},
@@ -470,6 +481,9 @@ const coresDaSituacao = (p) => ({
   info: p.review,
 });
 
+/* As cores dos tokens do app (com a paleta dos painéis de reserva). */
+const paleta = (escuro) => paletaDosGraficos(escuro, paletaDoPainel(escuro));
+
 export function Graficos({
   recursos,
   pendencias,
@@ -487,6 +501,7 @@ export function Graficos({
   const esteira = useMemo(() => esteiraDosRecursos(recursos), [recursos]);
   const total = recursos.length;
   const tema = escuro ? "escuro" : "claro";
+  const carregando = !carregado;
 
   // O clique do Chart.js chega aqui, sempre com o filtro mais recente.
   const filtrar = useRef(aoFiltrar);
@@ -496,15 +511,19 @@ export function Graficos({
 
   return (
     <>
-      <section className="oper-grid">
-        <CardDeGrafico titulo="Recursos por analista" altura="short">
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico
+          titulo="Recursos por analista"
+          altura="short"
+          carregando={carregando}
+        >
           <Grafico
             id="chartAnalista"
             tipo="bar"
             rotulo="Recursos por analista: em análise e decididos"
             dependencias={[analistas, tema]}
             montar={() => {
-              const p = paletaDoPainel(escuro);
+              const p = paleta(escuro);
               return {
                 data: {
                   labels: analistas.map((a) => truncar(a.rotulo, 22)),
@@ -513,13 +532,13 @@ export function Graficos({
                       label: "Em análise",
                       data: analistas.map((a) => a.pendentes),
                       backgroundColor: p.warn,
-                      borderRadius: 7,
+                      borderRadius: 6,
                     },
                     {
                       label: "Decididos",
                       data: analistas.map((a) => a.concluidos),
                       backgroundColor: p.ok,
-                      borderRadius: 7,
+                      borderRadius: 6,
                     },
                   ],
                 },
@@ -541,8 +560,8 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-        <article className="panel panel-pad">
-          <h2 className="title">Pendências prioritárias</h2>
+        <article className="ui-card recursos-bloco-de-pendencias">
+          <h2 className="ui-titulo">Pendências prioritárias</h2>
           <Pendencias
             pendencias={pendencias}
             carregado={carregado}
@@ -550,17 +569,17 @@ export function Graficos({
             aoFiltrar={aoFiltrar}
           />
         </article>
-      </section>
+      </div>
 
-      <section className="oper-grid">
-        <CardDeGrafico titulo="Situação" altura="short">
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico titulo="Situação" altura="short" carregando={carregando}>
           <Grafico
             id="chartSituacao"
             tipo="bar"
             rotulo="Recursos por situação"
             dependencias={[situacoes, tema]}
             montar={() => {
-              const p = paletaDoPainel(escuro);
+              const p = paleta(escuro);
               const cores = coresDaSituacao(p);
               return {
                 data: {
@@ -572,7 +591,7 @@ export function Graficos({
                       backgroundColor: situacoes.map(
                         (s) => cores[s.tom] || p.blue,
                       ),
-                      borderRadius: 7,
+                      borderRadius: 6,
                     },
                   ],
                 },
@@ -585,41 +604,41 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-        <article className="panel panel-pad">
-          <h2 className="title">Impacto no resultado</h2>
-          <p className="hint">Nota atual × nota do cadastro</p>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartImpacto"
-              tipo="bar"
-              rotulo="Impacto dos recursos na nota e na classificação"
-              dependencias={[impacto, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: impacto.map((i) => i.rotulo),
-                    datasets: [
-                      {
-                        label: "Recursos",
-                        data: impacto.map((i) => i.valor),
-                        backgroundColor: [p.review, p.warn, p.ok],
-                        borderRadius: 7,
-                      },
-                    ],
-                  },
-                  options: opcoesDeBarras(p),
-                };
-              }}
-            />
-          </div>
-        </article>
-      </section>
+        <CardDeGrafico
+          titulo="Impacto no resultado: nota atual × nota do cadastro"
+          altura="short"
+          carregando={carregando}
+        >
+          <Grafico
+            id="chartImpacto"
+            tipo="bar"
+            rotulo="Impacto dos recursos na nota e na classificação"
+            dependencias={[impacto, tema]}
+            montar={() => {
+              const p = paleta(escuro);
+              return {
+                data: {
+                  labels: impacto.map((i) => i.rotulo),
+                  datasets: [
+                    {
+                      label: "Recursos",
+                      data: impacto.map((i) => i.valor),
+                      backgroundColor: [p.review, p.warn, p.ok],
+                      borderRadius: 6,
+                    },
+                  ],
+                },
+                options: opcoesDeBarras(p),
+              };
+            }}
+          />
+        </CardDeGrafico>
+      </div>
 
       <CardDeGrafico
         elemento="section"
-        className="trend"
         titulo="Esteira do recurso"
+        carregando={carregando}
       >
         <Grafico
           id="chartEsteira"
@@ -627,7 +646,7 @@ export function Graficos({
           rotulo="Recursos por etapa da esteira"
           dependencias={[esteira, tema]}
           montar={() => {
-            const p = paletaDoPainel(escuro);
+            const p = paleta(escuro);
             return {
               data: {
                 labels: esteira.map((etapa) => etapa.rotulo),
@@ -636,7 +655,7 @@ export function Graficos({
                     label: "Recursos",
                     data: esteira.map((etapa) => etapa.valor),
                     backgroundColor: p.blue,
-                    borderRadius: 7,
+                    borderRadius: 6,
                   },
                 ],
               },

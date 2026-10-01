@@ -36,7 +36,7 @@ export function dataBR(valor) {
     : "";
 }
 
-/* O tom da situação no `.badge` do painel de análises. */
+/* O tom da situação no selo (Selo, src/ui/). */
 const BADGE_DO_TOM = {
   warning: "pendente",
   success: "aprovado",
@@ -52,7 +52,7 @@ export function SeloDaSituacao({ situacao }) {
   );
 }
 
-/* O estado da resposta escrita (resposta-do-recurso.js), no mesmo `.badge`. */
+/* O estado da resposta escrita (resposta-do-recurso.js), no mesmo selo. */
 export function SeloDaResposta({ estado }) {
   if (!estado) return null;
   return (
@@ -122,8 +122,8 @@ function Prazo({ recurso, comemoracoes }) {
   const { data, texto, tom } = detalheDoPrazo(recurso);
   return (
     <div title={recurso.prazo.aviso || recurso.prazo.atividade || undefined}>
-      <div className="primary-text">{data || "—"}</div>
-      <span className="secondary-text recursos-prazo" data-tone={tom}>
+      <div className="ui-texto-principal">{data || "—"}</div>
+      <span className="ui-texto-secundario recursos-prazo" data-tone={tom}>
         {texto}
       </span>
       <SeloDoPrazoCumprido recurso={recurso} ligado={comemoracoes} />
@@ -173,11 +173,11 @@ function LinhaDoRecurso({ recurso: r, origens, comemoracoes, aoAbrir }) {
       aria-label={`Recurso nº ${r.nu} de ${r.candidato}`}
     >
       <td>
-        <div className="primary-text">{r.nu}</div>
+        <div className="ui-texto-principal">{r.nu}</div>
       </td>
       <td>
-        <div className="primary-text">{r.candidato}</div>
-        <span className="secondary-text">
+        <div className="ui-texto-principal">{r.candidato}</div>
+        <span className="ui-texto-secundario">
           {[r.codigo && `Cód. ${r.codigo}`, r.vaga && `Vaga ${r.vaga}`]
             .filter(Boolean)
             .join(" · ") || r.cargo}
@@ -185,8 +185,8 @@ function LinhaDoRecurso({ recurso: r, origens, comemoracoes, aoAbrir }) {
         {r.fora_analise ? <MarcaForaDasAnalises /> : null}
       </td>
       <td>
-        <div className="primary-text">{r.edital}</div>
-        <span className="secondary-text">{r.unidade}</span>
+        <div className="ui-texto-principal">{r.edital}</div>
+        <span className="ui-texto-secundario">{r.unidade}</span>
       </td>
       <td>{rotuloDaOrigem(r.origem, origens)}</td>
       <td>{r.analista || "Sem analista"}</td>
@@ -269,7 +269,7 @@ export function TabelaDeRecursos({
         </>
       }
       informacao={(quantos) => (
-        <span id="recursosContagem">
+        <span className="recursos-contagem">
           {quantos === null
             ? "Carregando…"
             : quantos === total

@@ -1,6 +1,6 @@
 /*
-  Estado do painel de recursos (`recursos.html`), fora do React: o que o
-  banco devolve para a área do painel (`?area=`), o recurso aberto na gaveta
+  Estado da tela de Recursos (`#page-recursos`), fora do React: o que o banco
+  devolve para a área atual do app, o recurso aberto na gaveta
   (com o detalhe e o histórico), o formulário aberto e as ações que escrevem
   no banco. Os componentes leem com `useSyncExternalStore`. Este arquivo não
   importa React.
@@ -15,9 +15,10 @@
 
   Sem tela de carregamento: antes da primeira carga o painel é o skeleton
   (`carregado` falso); uma falha nela vira `erroAoCarregar`, com "Tentar
-  novamente". Sem sessão do Supabase Auth (painel aberto fora do MONITORA),
-  `semSessao`. Uma ação por vez (`executar`): o botão dela mostra o rótulo, os
-  outros ficam desativados.
+  novamente". Sessão vencida (o cliente Supabase do app sem sessão):
+  `semSessao`. Outro usuário entrou na mesma aba: tudo volta ao início (nada
+  do anterior fica na tela). Uma ação por vez (`executar`): o botão dela
+  mostra o rótulo, os outros ficam desativados.
 */
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.js";
 import {
@@ -35,7 +36,7 @@ import {
 import { dadosDoModelo } from "../../lib/modelos-de-resposta.js";
 
 export const MENSAGEM_SEM_SESSAO =
-  "Sessão não localizada. Abra este painel pelo menu do MONITORA para compartilhar a sessão do Supabase Auth.";
+  "Sessão não localizada. Entre de novo no MONITORA.";
 
 const ESTADO_INICIAL = Object.freeze({
   area: "",
@@ -58,7 +59,8 @@ const ESTADO_INICIAL = Object.freeze({
   /** `listar_modelos_resposta_recurso` ou `{ erro }`; `null` antes de pedir. */
   modelosAdmin: null,
   /*
-    Comemorações ligadas (obter_situacao_do_sistema, lida pelo main.jsx):
+    Comemorações ligadas (a situação do sistema que o app leu na entrada;
+    o controlador relê a cada abertura da tela):
     mostra o selo "No prazo" / "Fora do prazo" nos recursos decididos.
   */
   comemoracoes: false,
@@ -165,6 +167,23 @@ export function criarEstadoDosRecursos({
       publicar({ acao: null });
     }
   }
+
+  /*
+    Outro usuário na mesma aba (ou saiu da conta): o que era do anterior sai e
+    um pedido em curso deixa de valer. A próxima abertura da tela recarrega.
+  */
+  function reiniciar() {
+    pedido += 1;
+    publicar({ ...ESTADO_INICIAL, detalhes: new Map() });
+  }
+  let identidade;
+  supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
+    const atual = sessao?.user?.id || null;
+    if (atual === identidade) return;
+    // O primeiro aviso da página só registra quem é; não há o que limpar.
+    if (identidade !== undefined || !atual) reiniciar();
+    identidade = atual;
+  });
 
   // ── Leitura ─────────────────────────────────────────────────────────────
 
@@ -692,6 +711,7 @@ export function criarEstadoDosRecursos({
     marcarEtapa,
     excluir,
     exportarCsv,
+    reiniciar,
     definirComemoracoes: (ligadas) =>
       publicar({ comemoracoes: ligadas === true }),
   };

@@ -52,7 +52,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
 
   return (
     <form
-      className="detail-block recursos-formulario recursos-modelo-form"
+      className="recursos-bloco recursos-formulario recursos-modelo-form"
       onSubmit={async (evento) => {
         evento.preventDefault();
         setTentou(true);
@@ -67,7 +67,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
           : "Novo modelo"}
       </strong>
       <div className="recursos-formulario-grade">
-        <div className="field recursos-campo-largo">
+        <div className="ui-campo ui-campo-largo">
           <label htmlFor="recursosModeloNome">Nome</label>
           <input
             id="recursosModeloNome"
@@ -81,7 +81,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
             <small className="recursos-erro-campo">{erro("nome")}</small>
           ) : null}
         </div>
-        <div className="field">
+        <div className="ui-campo">
           <label htmlFor="recursosModeloSituacao">Situação</label>
           <select
             id="recursosModeloSituacao"
@@ -96,7 +96,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
             ))}
           </select>
         </div>
-        <div className="field">
+        <div className="ui-campo">
           <label htmlFor="recursosModeloOrigem">Origem</label>
           <select
             id="recursosModeloOrigem"
@@ -112,7 +112,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
             ))}
           </select>
         </div>
-        <div className="field">
+        <div className="ui-campo">
           <label htmlFor="recursosModeloArea">Área</label>
           <select
             id="recursosModeloArea"
@@ -128,7 +128,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
             ))}
           </select>
         </div>
-        <div className="field recursos-campo-largo">
+        <div className="ui-campo ui-campo-largo">
           <label htmlFor="recursosModeloCorpo">Texto do modelo</label>
           <div
             className="recursos-marcadores"
@@ -139,7 +139,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
               <button
                 key={m.chave}
                 type="button"
-                className="chip-filter"
+                className="ui-chip"
                 title={m.rotulo}
                 onClick={() => inserirMarcador(m.chave)}
               >
@@ -161,7 +161,7 @@ function FormularioDoModelo({ estado, modelo, dados, acao, aoFechar }) {
           ) : null}
         </div>
       </div>
-      <div className="detail-actions">
+      <div className="ui-acoes">
         <button
           type="button"
           className="btn secondary small"
@@ -213,7 +213,7 @@ function CartaoDoModelo({ estado, modelo, dados, acao, aoEditar }) {
             </small>
           ) : null}
         </span>
-        <span className="detail-actions">
+        <span className="ui-acoes">
           <button
             type="button"
             className="btn secondary small"
@@ -243,7 +243,7 @@ function CartaoDoModelo({ estado, modelo, dados, acao, aoEditar }) {
             if (ok) setArquivando(false);
           }}
         >
-          <div className="field">
+          <div className="ui-campo">
             <label htmlFor={`recursosMotivoModelo-${modelo.id}`}>
               Motivo do arquivamento
             </label>
@@ -258,7 +258,7 @@ function CartaoDoModelo({ estado, modelo, dados, acao, aoEditar }) {
               onChange={(evento) => setMotivo(evento.target.value)}
             />
           </div>
-          <div className="detail-actions">
+          <div className="ui-acoes">
             <button
               type="button"
               className="btn secondary small"
@@ -298,10 +298,10 @@ export function PainelDeModelos({ estado }) {
       titulo="Modelos de resposta"
       rotuloDoFechar="Fechar modelos de resposta"
     >
-      <div id="analisesDrawerBody">
-        <div className="detail-shell">
+      <div className="ui-gaveta-corpo">
+        <div className="recursos-corpo">
           {!dados ? (
-            <Carregando className="analises-detail-analysis" />
+            <Carregando className="ui-secao-texto" />
           ) : dados.erro ? (
             <Aviso como="p" className="recursos-aviso" tom="danger">
               Não foi possível carregar os modelos. <small>{dados.erro}</small>
@@ -317,7 +317,7 @@ export function PainelDeModelos({ estado }) {
             />
           ) : (
             <>
-              <div className="detail-actions">
+              <div className="ui-acoes">
                 <button
                   type="button"
                   className="btn small"

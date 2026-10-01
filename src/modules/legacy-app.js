@@ -2199,13 +2199,35 @@ function setActiveNav(view) {
 
 /*
   Páginas que são um painel do app num quadro, com o próprio cabeçalho
-  (entrevistas.html, recursos.html, selecao.html; src/lib/pagina-do-painel.js):
+  (entrevistas.html, selecao.html; src/lib/pagina-do-painel.js):
   a permissão para abrir e o título da página.
 */
 const PAINEIS_EM_PAGINA = Object.freeze({
   entrevistas: { titulo: "Entrevistas", pode: canViewEntrevistas },
-  recursos: { titulo: "Recursos", pode: canViewRecursos },
   selecao: { titulo: "Seleção", pode: canViewSelecao },
+});
+
+/*
+  Telas React de página inteira (montadas por src/main.js na própria
+  `#page-<view>`): título, subtítulo (depois da área) e o controlador.
+*/
+const TELAS_REACT = Object.freeze({
+  nucleo: () => [
+    "Editais",
+    cfgValue("nucleo_page_subtitle"),
+    window.nucleoController,
+  ],
+  calendario: () => [
+    "Cronograma",
+    "Etapas dos editais, por data.",
+    window.calendarioEditaisController,
+  ],
+  approved: () => [
+    "Lista de Aprovados",
+    "Candidatos por edital e situação de contratação.",
+    window.aprovadosController,
+  ],
+  recursos: () => ["Recursos", "", window.recursosController],
 });
 
 function navigate(view) {
@@ -2244,6 +2266,10 @@ function navigate(view) {
   }
   if (requestedView === "analises" && !can("analises")) {
     toast("Sem permissão para Análises curriculares.", "warn");
+    return;
+  }
+  if (requestedView === "recursos" && !canViewRecursos(profile)) {
+    toast("Sem permissão para Recursos.", "warn");
     return;
   }
   const painelEmPagina = Object.hasOwn(PAINEIS_EM_PAGINA, requestedView)
@@ -2319,32 +2345,11 @@ function navigate(view) {
       trackAccess("abertura_tela", { tela: requestedView });
     return;
   }
-  if (requestedView === "nucleo") {
-    $("page-nucleo").classList.add("active");
-    setPageTitle("Editais", subtituloDaArea(cfgValue("nucleo_page_subtitle")));
-    void window.nucleoController?.render();
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (requestedView === "calendario") {
-    $("page-calendario").classList.add("active");
-    setPageTitle(
-      "Cronograma",
-      subtituloDaArea("Etapas dos editais, por data."),
-    );
-    void window.calendarioEditaisController?.render();
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (requestedView === "approved") {
-    $("page-approved").classList.add("active");
-    setPageTitle(
-      "Lista de Aprovados",
-      subtituloDaArea("Candidatos por edital e situação de contratação."),
-    );
-    void window.aprovadosController?.render();
+  if (Object.hasOwn(TELAS_REACT, requestedView)) {
+    const [titulo, subtitulo, controlador] = TELAS_REACT[requestedView]();
+    $("page-" + requestedView).classList.add("active");
+    setPageTitle(titulo, subtituloDaArea(subtitulo));
+    void controlador?.render();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -2360,7 +2365,7 @@ function navigate(view) {
     return;
   }
   if (painelEmPagina) {
-    // O painel (entrevistas.html, recursos.html…) também traz o próprio cabeçalho.
+    // O painel (entrevistas.html, selecao.html) também traz o próprio cabeçalho.
     document.body.classList.add("external-panel-mode");
     $("page-" + requestedView).classList.add("active");
     setPageTitle(painelEmPagina.titulo, subtituloDaArea(""));

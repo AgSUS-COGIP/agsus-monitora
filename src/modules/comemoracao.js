@@ -157,7 +157,7 @@ export function comemorar({
 }
 
 /*
-  Painéis (análises, entrevistas, recursos) são apps à parte, em iframe: cada
+  Painéis (análises, entrevistas, seleção) são apps à parte, em iframe: cada
   um lê o liga/desliga por conta própria, uma vez por página. Falhou (rede,
   sem sessão), desligado — e nada mais depende disso.
 */

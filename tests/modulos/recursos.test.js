@@ -1,18 +1,25 @@
 import { act } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  definirAreaAtual,
+  redefinirDadosDoMonitoramento,
+} from "../../src/componentes/dados-do-monitoramento.js";
+import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
 import {
   clicar,
   digitar,
   escolher,
   esperar,
+  teclar,
 } from "../componentes/interacoes.js";
 
 /*
-  O painel de recursos (recursos.html) em React, com a marcação do painel de
-  análises: carga ao montar (skeleton de análises antes), consulta só de
-  leitura para quem não edita, cadastro com o candidato das análises
-  (autopreenchimento), aviso de duplicado, etapa marcada pela gaveta, KPI que
-  filtra e o gráfico Chart.js de recursos por analista.
+  A tela de Recursos como módulo do app (src/modulos/recursos/): monta na
+  própria `#page-recursos`, carrega a área atual do app quando o legado abre a
+  tela (`render()`), segue o tema do app, usa o aviso global e os componentes
+  de src/ui/ (classes .ui-*). Consulta só de leitura para quem não edita,
+  cadastro com o candidato das análises (autopreenchimento), aviso de
+  duplicado, etapa marcada pela gaveta, KPI que filtra e os gráficos Chart.js.
 */
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
@@ -36,7 +43,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
   },
 }));
 
-const { montarPainelDeRecursos } =
+const { montarRecursos } =
   await import("../../src/modulos/recursos/recursos.jsx");
 
 const RECURSO_EXISTENTE = {
@@ -159,26 +166,31 @@ function supabaseFalso({ dados = payload(), respostas = {}, auth } = {}) {
   return auth ? { rpc, auth } : { rpc };
 }
 
-let raiz;
+let secao;
 let painel;
 const toast = vi.fn();
 const baixar = vi.fn();
 
-async function montar(supabase) {
-  raiz = document.createElement("div");
-  document.body.append(raiz);
+/*
+  Como o app monta: o módulo nasce na `<section id="page-recursos">` (vazia,
+  sem pedir nada ao banco) e o legado chama `render()` ao navegar para a
+  tela. A área é a área atual do app (dados-do-monitoramento.js).
+*/
+async function montar(supabase, { abrir = true, ...opcoes } = {}) {
+  secao = document.createElement("section");
+  secao.id = "page-recursos";
+  secao.className = "page active";
+  document.body.append(secao);
   await act(async () => {
-    painel = montarPainelDeRecursos({
-      raiz,
-      supabase,
-      area: "saude-indigena",
-      nomeDaArea: "Saúde Indígena",
-      toast,
-      baixar,
-    });
+    painel = montarRecursos({ supabase, toast, baixar, ...opcoes });
   });
-  await esperar();
+  if (abrir) await abrirATela();
   return painel;
+}
+
+async function abrirATela() {
+  await act(async () => void painel.render());
+  await esperar();
 }
 
 const naTela = (texto) => document.body.textContent.includes(texto);
@@ -186,58 +198,71 @@ const botao = (texto) =>
   [...document.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
   );
-const kpi = (chave) => document.querySelector(`#kpiGrid [data-kpi="${chave}"]`);
+const kpi = (chave) =>
+  document.querySelector(`.recursos-kpis [data-kpi="${chave}"]`);
+const contagem = () => document.querySelector(".recursos-contagem").textContent;
+const status = () => document.querySelector(".ui-topo .status-discreto");
 const esperarBusca = () =>
   esperar(() => new Promise((ok) => setTimeout(ok, 350)));
 
+beforeEach(() => {
+  redefinirDadosDoMonitoramento();
+  definirAreaAtual("saude-indigena");
+});
+
 afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());
-  raiz?.remove();
+  secao?.remove();
   document.body.innerHTML = "";
   document.body.className = "";
-  delete document.documentElement.dataset.theme;
+  document.documentElement.removeAttribute("data-theme");
+  redefinirDadosDoMonitoramento();
+  sessionStorage.clear();
   localStorage.clear();
   toast.mockClear();
   baixar.mockClear();
 });
 
-describe("a cara do painel de análises", () => {
-  it("topbar, filtros, KPIs, blocos e fila com as classes de análises", async () => {
+describe("a tela dentro do app", () => {
+  it("monta na seção sem pedir nada; a primeira abertura (render) carrega a área atual", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase, { abrir: false });
+    expect(secao.querySelector(".ui-tela.recursos-tela")).not.toBeNull();
+    expect(supabase.rpc).not.toHaveBeenCalled();
+
+    await abrirATela();
+    expect(supabase.rpc).toHaveBeenCalledWith("get_recursos_da_area", {
+      p_area: "saude-indigena",
+    });
+    expect(contagem()).toBe("1 recurso");
+  });
+
+  it("não repete o cabeçalho do app: topo só com status e ações, sem tema nem tela cheia", async () => {
     await montar(supabaseFalso());
-    expect(document.querySelector("#topbar.topbar h1").textContent).toBe(
-      "Painel de recursos",
-    );
-    expect(document.querySelector("#topbar .sub").textContent).toBe(
-      "Saúde Indígena",
-    );
-    for (const id of ["themeBtn", "fullBtn", "refreshBtn", "exportBtn"])
-      expect(document.getElementById(id), id).not.toBeNull();
-    expect(document.getElementById("exportBtn").className).toBe("btn green");
-    // O botão de cadastro fica no topo, ao lado de Atualizar e Exportar.
+    const topo = secao.querySelector("header.ui-topo");
+    expect(topo.querySelector("h1, h2")).toBeNull();
+    expect(status().textContent).toMatch(/^Atualizado em 20\/09\/2026/);
     expect(
-      document.querySelector("#topbar .top-actions #novoRecursoBtn"),
-    ).not.toBeNull();
+      [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
+    ).toEqual(["Atualizar", "Exportar", "Novo recurso"]);
+    expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
+    expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
+    // Uma data de carga só, e sem selo "Somente consulta".
+    expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
+    expect(naTela("Somente consulta")).toBe(false);
+  });
 
-    const filtros = document.querySelector("section.panel.filter-panel");
-    // Sem eyebrow nem texto de ajuda: só o título (quem explica é a Aya).
-    expect(filtros.querySelector(".eyebrow")).toBeNull();
-    expect(filtros.querySelector(".hint")).toBeNull();
-    expect(filtros.querySelector("h2.title").textContent).toBe(
-      "Refinar resultados",
-    );
-    expect(document.getElementById("filterSummary").textContent).toBe(
-      "Todos · nenhum filtro adicional",
-    );
-    expect(botao("Ocultar filtros")).toBeTruthy();
-
-    expect(document.querySelectorAll("#kpiGrid > article.kpi")).toHaveLength(8);
-    expect(kpi("prazo-vencido").className).toContain("k-red");
-    expect(document.getElementById("contextLine").className).toBe(
-      "context-line",
-    );
-    expect(document.querySelectorAll(".panel .eyebrow")).toHaveLength(0);
+  it("usa src/ui/ com as classes .ui-*, sem o CSS nem os ids do painel de análises", async () => {
+    await montar(supabaseFalso());
     expect(
-      [...document.querySelectorAll(".panel h2.title")].map((e) =>
+      secao.querySelector("section.ui-card.ui-filtros h2").textContent,
+    ).toBe("Refinar resultados");
+    expect(
+      document.querySelectorAll(".recursos-kpis")[0].children,
+    ).toHaveLength(8);
+    expect(kpi("prazo-vencido").dataset.tom).toBe("perigo");
+    expect(
+      [...secao.querySelectorAll(".ui-card .ui-titulo")].map((e) =>
         e.textContent.trim(),
       ),
     ).toEqual(
@@ -248,14 +273,30 @@ describe("a cara do painel de análises", () => {
         "Fila de recursos",
       ]),
     );
+    for (const id of [
+      "topbar",
+      "themeBtn",
+      "fullBtn",
+      "refreshBtn",
+      "exportBtn",
+      "kpiGrid",
+      "tableBody",
+      "tableSearch",
+      "contextLine",
+      "attentionList",
+      "toastHost",
+      "recursosPainel",
+    ])
+      expect(document.getElementById(id), id).toBeNull();
     expect(
-      document.querySelector(".table-card .table-head h2.title").textContent,
-    ).toBe("Fila de recursos");
-    // Sem rodapé institucional (Agência ©, Atualizado, SECURE) desde 30/09/2026.
-    expect(document.querySelector("footer.footer")).toBeNull();
+      secao.querySelector(
+        ".topbar, .kpi, .panel, .filter-panel, .table-card, .chart-wrap, .attention-list, .badge",
+      ),
+    ).toBeNull();
+    expect(document.body.classList.contains("analises-is-loading")).toBe(false);
   });
 
-  it("recursos por analista é o Chart.js de barras empilhadas de análises", async () => {
+  it("recursos por analista é o Chart.js de barras empilhadas", async () => {
     await montar(supabaseFalso());
     const grafico = graficos.find(
       (g) => g.canvas.id === "chartAnalista" && g.canvas.isConnected,
@@ -279,23 +320,115 @@ describe("a cara do painel de análises", () => {
       "chartSituacao",
     ]);
   });
+});
 
-  it("o botão de tema troca para o escuro, guarda a escolha e redesenha os gráficos", async () => {
+describe("tema do app", () => {
+  it("segue o tema do app: o escuro (data-theme + agsus:tema-alterado) redesenha os gráficos", async () => {
     await montar(supabaseFalso());
     const grafico = graficos.find(
       (g) => g.canvas.id === "chartAnalista" && g.canvas.isConnected,
     );
     const antes = grafico.atualizacoes;
-    await clicar(document.getElementById("themeBtn"));
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(localStorage.getItem("agsus_analises_theme_v3")).toBe("dark");
+    expect(grafico.options.scales.y.ticks.color).toBe("#526780");
+
+    await act(async () => {
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.dispatchEvent(new CustomEvent(EVENTO_TEMA_ALTERADO));
+    });
     expect(grafico.atualizacoes).toBeGreaterThan(antes);
     expect(grafico.options.scales.y.ticks.color).toBe("#dbe8f5");
+    // Não guarda tema próprio: quem guarda é o app.
+    expect(localStorage.getItem("agsus_analises_theme_v3")).toBeNull();
+  });
+
+  it("as cores dos gráficos vêm dos tokens do app quando eles existem", async () => {
+    document.documentElement.style.setProperty("--text-secondary", "#123456");
+    try {
+      await montar(supabaseFalso());
+      const grafico = graficos.find(
+        (g) => g.canvas.id === "chartSituacao" && g.canvas.isConnected,
+      );
+      expect(grafico.options.scales.y.ticks.color).toBe("#123456");
+    } finally {
+      document.documentElement.style.removeProperty("--text-secondary");
+    }
+  });
+});
+
+describe("área atual do app", () => {
+  it("trocar a área com a tela aberta recarrega com a nova e zera os filtros", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await clicar(kpi("prazo-vencido").querySelector("button"));
+    expect(kpi("prazo-vencido").classList.contains("is-ativo")).toBe(true);
+
+    await act(async () => definirAreaAtual("sede"));
+    await esperar();
+    expect(supabase.rpc).toHaveBeenLastCalledWith("get_recursos_da_area", {
+      p_area: "sede",
+    });
+    expect(painel.estado.obter().area).toBe("sede");
+    expect(kpi("prazo-vencido").classList.contains("is-ativo")).toBe(false);
+  });
+
+  it("cada abertura pega a área de agora; na mesma área, relê por trás (permissões do banco)", async () => {
+    let podeEditar = false;
+    const supabase = supabaseFalso({
+      respostas: {
+        get_recursos_da_area: () => ({
+          data: payload({ pode_editar: podeEditar }),
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase);
+    expect(botao("Novo recurso")).toBeUndefined();
+
+    podeEditar = true;
+    await abrirATela();
+    expect(supabase.rpc).toHaveBeenCalledTimes(2);
+    expect(botao("Novo recurso")).toBeTruthy();
+
+    definirAreaAtual("projetos");
+    await abrirATela();
+    expect(supabase.rpc).toHaveBeenLastCalledWith("get_recursos_da_area", {
+      p_area: "projetos",
+    });
+  });
+
+  it("render relê as comemorações do app (selo do prazo cumprido)", async () => {
+    let ligadas = false;
+    await montar(supabaseFalso(), { comemoracoesLigadas: () => ligadas });
+    expect(painel.estado.obter().comemoracoes).toBe(false);
+    ligadas = true;
+    await abrirATela();
+    expect(painel.estado.obter().comemoracoes).toBe(true);
+  });
+
+  it("outro usuário na mesma aba: o que era do anterior sai da tela", async () => {
+    let avisar;
+    const supabase = supabaseFalso({
+      auth: {
+        getSession: async () => ({ data: { session: { user: { id: "a" } } } }),
+        onAuthStateChange: (ouvinte) => {
+          avisar = ouvinte;
+          return { data: { subscription: { unsubscribe() {} } } };
+        },
+      },
+    });
+    await montar(supabase);
+    await act(async () => avisar("SIGNED_IN", { user: { id: "a" } }));
+    expect(contagem()).toBe("1 recurso");
+
+    await act(async () => avisar("SIGNED_IN", { user: { id: "b" } }));
+    expect(painel.estado.obter().carregado).toBe(false);
+    expect(painel.estado.obter().area).toBe("");
+    expect(naTela("Ana Ribeiro")).toBe(false);
   });
 });
 
 describe("carga", () => {
-  it("pede ao banco ao montar, com a área do painel; antes do dado, o skeleton de análises", async () => {
+  it("antes do dado, o skeleton dos KPIs, gráficos e fila; depois, os números", async () => {
     let responder;
     const supabase = supabaseFalso({
       respostas: {
@@ -306,27 +439,24 @@ describe("carga", () => {
       },
     });
     await montar(supabase);
-    expect(supabase.rpc).toHaveBeenCalledWith("get_recursos_da_area", {
-      p_area: "saude-indigena",
-    });
-    expect(document.body.classList.contains("analises-is-loading")).toBe(true);
-    expect(document.querySelectorAll("#tableBody > tr")).toHaveLength(8);
+    expect(kpi("total").getAttribute("aria-busy")).toBe("true");
+    expect(kpi("total").querySelector(".ui-esqueleto")).not.toBeNull();
+    expect(secao.querySelectorAll(".ui-grafico.is-carregando")).toHaveLength(4);
+    expect(
+      secao.querySelectorAll('.ui-tabela tbody tr[aria-hidden="true"]'),
+    ).toHaveLength(8);
+    expect(status().textContent).toBe("Carregando dados...");
 
     await esperar(() => responder({ data: payload(), error: null }));
-    expect(document.body.classList.contains("analises-is-loading")).toBe(false);
-    expect(document.getElementById("recursosContagem").textContent).toBe(
-      "1 recurso",
-    );
-    expect(kpi("total").querySelector("b").textContent).toBe("1");
+    expect(contagem()).toBe("1 recurso");
+    expect(kpi("total").querySelector(".ui-kpi-valor").textContent).toBe("1");
+    expect(secao.querySelector(".ui-grafico.is-carregando")).toBeNull();
     // Prazo vencido (22/09) e nota que mudou (50 → 55) viram pendência.
     expect(naTela("Prazo de resposta vencido")).toBe(true);
     expect(naTela("Mudança de nota ou classificação")).toBe(true);
-    expect(document.getElementById("updatedText").textContent).toMatch(
-      /^Atualizado em 20\/09\/2026/,
-    );
   });
 
-  it("falha na primeira carga mostra o aviso de erro de análises, com “Tentar novamente”", async () => {
+  it("falha na primeira carga: aviso com “Tentar novamente”", async () => {
     let falhar = true;
     const supabase = supabaseFalso({
       respostas: {
@@ -337,33 +467,55 @@ describe("carga", () => {
       },
     });
     await montar(supabase);
-    expect(naTela("Seu acesso não inclui os recursos desta área.")).toBe(true);
+    const aviso = secao.querySelector(".ui-aviso[role=alert]");
+    expect(aviso.textContent).toContain(
+      "Seu acesso não inclui os recursos desta área.",
+    );
     falhar = false;
     await clicar(botao("Tentar novamente"));
     await esperar();
-    expect(document.getElementById("recursosContagem").textContent).toBe(
-      "1 recurso",
-    );
+    expect(contagem()).toBe("1 recurso");
+    expect(secao.querySelector(".ui-aviso[role=alert]")).toBeNull();
   });
 
-  it("sem sessão do Supabase Auth, avisa e não pede os recursos", async () => {
+  it("falha ao atualizar com a tela carregada: o aviso global do app (toast)", async () => {
+    let falhar = false;
+    const supabase = supabaseFalso({
+      respostas: {
+        get_recursos_da_area: () =>
+          falhar
+            ? { data: null, error: { message: "rede" } }
+            : { data: payload(), error: null },
+      },
+    });
+    await montar(supabase);
+    falhar = true;
+    await clicar(document.querySelector('[data-acao="atualizar"]'));
+    await esperar();
+    expect(toast).toHaveBeenCalledWith(
+      "Não foi possível atualizar os recursos: rede",
+      "error",
+    );
+    expect(contagem()).toBe("1 recurso");
+  });
+
+  it("sem sessão no cliente do app, avisa e não pede os recursos", async () => {
     const supabase = supabaseFalso({
       auth: { getSession: async () => ({ data: { session: null } }) },
     });
     await montar(supabase);
-    expect(document.getElementById("authWarning").textContent).toContain(
-      "Sessão não localizada",
+    expect(secao.querySelector(".ui-aviso[role=alert]").textContent).toBe(
+      "Sessão não localizada. Entre de novo no MONITORA.",
     );
     expect(supabase.rpc).not.toHaveBeenCalledWith(
       "get_recursos_da_area",
       expect.anything(),
     );
-    expect(document.body.classList.contains("analises-is-loading")).toBe(false);
   });
 });
 
 describe("filtros", () => {
-  it("o KPI filtra o painel e o recorte ativo diz o quê; clicar de novo tira", async () => {
+  it("o KPI filtra a tela e o recorte ativo diz o quê; clicar de novo tira", async () => {
     await montar(
       supabaseFalso({
         dados: payload({
@@ -386,25 +538,36 @@ describe("filtros", () => {
     const botaoDoKpi = kpi("prazo-vencido").querySelector("button");
     await clicar(botaoDoKpi);
     expect(botaoDoKpi.getAttribute("aria-pressed")).toBe("true");
-    expect(kpi("prazo-vencido").className).toContain("is-active");
-    expect(document.getElementById("contextLine").textContent).toBe(
+    expect(kpi("prazo-vencido").classList.contains("is-ativo")).toBe(true);
+    expect(document.querySelector("[data-recorte]").textContent).toBe(
       "Recorte ativo: Pendência: Prazo de resposta vencido",
     );
-    expect(document.getElementById("recursosContagem").textContent).toBe(
-      "1 de 2",
-    );
-    expect(document.getElementById("filterSummary").textContent).toBe(
+    expect(contagem()).toBe("1 de 2");
+    expect(document.querySelector(".ui-filtros-resumo").textContent).toBe(
       "Todos · 1 filtro adicional",
     );
-    await clicar(botaoDoKpi);
-    expect(document.getElementById("recursosContagem").textContent).toBe(
-      "2 recursos",
+    expect(document.querySelector(".ui-chip").textContent).toContain(
+      "Prazo de resposta vencido",
     );
+    await clicar(botaoDoKpi);
+    expect(contagem()).toBe("2 recursos");
+  });
+
+  it("“Mais opções” mostra a busca em toda a tela, que vira filtro", async () => {
+    await montar(supabaseFalso());
+    const adicionais = document.getElementById("recursosFiltrosAdicionais");
+    expect(adicionais.hidden).toBe(true);
+    await clicar(document.querySelector('[data-acao="mais-opcoes"]'));
+    expect(adicionais.hidden).toBe(false);
+    await digitar(document.getElementById("filtro-busca"), "zzz");
+    expect(contagem()).toBe("0 de 1");
+    await clicar(document.querySelector('[data-acao="limpar-filtros"]'));
+    expect(contagem()).toBe("1 recurso");
   });
 
   it("Exportar baixa o CSV do recorte, com a área no nome", async () => {
     await montar(supabaseFalso());
-    await clicar(document.getElementById("exportBtn"));
+    await clicar(document.querySelector('[data-acao="exportar"]'));
     expect(baixar).toHaveBeenCalledTimes(1);
     const [conteudo, nome] = baixar.mock.calls[0];
     expect(conteudo).toContain("Ana Ribeiro");
@@ -431,9 +594,9 @@ describe("selo do prazo cumprido", () => {
       ],
     });
   const selos = () =>
-    [...document.querySelectorAll("#tableBody .recursos-no-prazo")].map((s) => [
+    [...document.querySelectorAll(".ui-tabela .recursos-no-prazo")].map((s) => [
       s.textContent,
-      s.classList.contains("aprovado"),
+      s.dataset.tom === "sucesso",
     ]);
 
   it("com as comemorações ligadas: No prazo (verde) e Fora do prazo (neutro), só nos decididos", async () => {
@@ -458,9 +621,9 @@ describe("permissão", () => {
     expect(naTela("Somente consulta")).toBe(false);
     await clicar(document.querySelector(".recursos-linha"));
     await esperar();
-    const gaveta = document.querySelector(".recursos-gaveta");
+    const gaveta = document.getElementById("recursosGaveta");
     expect(gaveta).not.toBeNull();
-    expect(gaveta.querySelector(".analises-drawer")).not.toBeNull();
+    expect(gaveta.querySelector(".ui-gaveta")).not.toBeNull();
     expect(
       [...gaveta.querySelectorAll("input[type=checkbox]")].every(
         (c) => c.disabled,
@@ -480,7 +643,7 @@ describe("cadastro", () => {
   it("escolher o candidato preenche cargo, vaga, nota e analista; salvar manda o p_dados", async () => {
     const supabase = supabaseFalso();
     const form = await abrirNovo(supabase);
-    expect(form.classList.contains("analises-drawer")).toBe(true);
+    expect(form.classList.contains("ui-gaveta")).toBe(true);
     await escolher(form.querySelector("select[name=edital_id]"), "e1");
     await escolher(form.querySelector("select[name=origem]"), "entrevista");
     await digitar(form.querySelector("input[name=busca_candidato]"), "bru");
@@ -511,13 +674,23 @@ describe("cadastro", () => {
     expect(toast).toHaveBeenCalledWith("Recurso nº 8 cadastrado.", "ok");
   });
 
-  it("cada campo tem o rótulo ligado ao controle (.field de análises)", async () => {
+  it("cada campo tem o rótulo ligado ao controle (.ui-campo)", async () => {
     const form = await abrirNovo(supabaseFalso());
     const edital = form.querySelector("select[name=edital_id]");
-    expect(edital.closest(".field")).not.toBeNull();
+    expect(edital.closest(".ui-campo")).not.toBeNull();
     expect(form.querySelector(`label[for="${edital.id}"]`).textContent).toBe(
       "Edital *",
     );
+  });
+
+  it("Esc fecha o formulário e o foco volta para “Novo recurso”", async () => {
+    await montar(supabaseFalso());
+    botao("Novo recurso").focus();
+    await clicar(botao("Novo recurso"));
+    expect(document.activeElement.name).toBe("edital_id");
+    await teclar(document, "Escape");
+    expect(document.querySelector(".recursos-formulario-cartao")).toBeNull();
+    expect(document.activeElement).toBe(botao("Novo recurso"));
   });
 
   it("outro recurso em análise do mesmo candidato, edital e origem: avisa e só grava confirmando", async () => {
@@ -607,18 +780,20 @@ describe("cadastro", () => {
 });
 
 describe("gaveta", () => {
-  it("é a gaveta de análises e quem edita marca a etapa, que entra na hora", async () => {
+  it("abre pela linha (clique ou Enter); quem edita marca a etapa, que entra na hora", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    await clicar(document.querySelector(".recursos-linha"));
+    const linha = document.querySelector(".recursos-linha");
+    linha.focus();
+    await teclar(linha, "Enter");
     await esperar();
-    const gaveta = document.querySelector(".recursos-gaveta");
-    expect(gaveta.classList.contains("analises-drawer-backdrop")).toBe(true);
-    expect(gaveta.querySelector(".analises-drawer-head h2").textContent).toBe(
+    const gaveta = document.getElementById("recursosGaveta");
+    expect(gaveta.classList.contains("ui-gaveta-fundo")).toBe(true);
+    expect(gaveta.querySelector(".ui-gaveta-topo h2").textContent).toBe(
       "Ana Ribeiro",
     );
     expect(
-      [...gaveta.querySelectorAll(".analises-detail-section-head")].map((h) =>
+      [...gaveta.querySelectorAll(".ui-secao-topo")].map((h) =>
         h.textContent.trim(),
       ),
     ).toEqual(
@@ -634,8 +809,10 @@ describe("gaveta", () => {
       p_feita: true,
     });
     expect(
-      document.querySelector(".recursos-gaveta input[name=download_empregare]")
+      document.querySelector("#recursosGaveta input[name=download_empregare]")
         .checked,
     ).toBe(true);
+    await teclar(document, "Escape");
+    expect(document.getElementById("recursosGaveta")).toBeNull();
   });
 });

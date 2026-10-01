@@ -24,7 +24,6 @@ const fontes = [
   "index.html",
   "analises.html",
   "entrevistas.html",
-  "recursos.html",
   "selecao.html",
   "auth/callback.html",
 ];
@@ -63,7 +62,6 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
       "index.html",
       "analises.html",
       "entrevistas.html",
-      "recursos.html",
       "selecao.html",
     ]) {
       expect(readFileSync(pagina, "utf8")).not.toContain("font-awesome");
@@ -77,9 +75,6 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
       main.indexOf("visual-polish.css"),
     );
     expect(readFileSync("src/analises/main.js", "utf8")).toContain(
-      "icones-lucide.css",
-    );
-    expect(readFileSync("src/recursos/main.jsx", "utf8")).toContain(
       "icones-lucide.css",
     );
     expect(readFileSync("src/entrevistas/main.jsx", "utf8")).toContain(

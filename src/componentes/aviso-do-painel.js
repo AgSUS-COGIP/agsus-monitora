@@ -1,5 +1,5 @@
 /*
-  Aviso (toast) dos painéis do app num quadro (recursos, entrevistas), com o
+  Aviso (toast) dos painéis do app num quadro (entrevistas, seleção), com o
   visual do painel de análises.
 */
 const ICONE_DO_AVISO = {

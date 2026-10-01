@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { PainelNoQuadro } from "../../ui/index.js";
-import {
-  definirCarregamentoDoPainel,
-  mostrarErroDoCarregamento,
-} from "../../analises/analises-loading-feedback.js";
+import { usarTemaEscuro } from "../../app/tema.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import {
   calcularIndicadores,
   diaLocal,
@@ -15,11 +13,8 @@ import {
   ORIGENS_PADRAO,
   pendenciasPrioritarias,
 } from "../../lib/recursos-dos-candidatos.js";
-import {
-  alternarTemaDoPainel,
-  temaEscuroDoPainel,
-} from "../../lib/tema-do-painel.js";
-import { criarAvisoDoPainel } from "../../componentes/aviso-do-painel.js";
+import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { Aviso } from "../../ui/index.js";
 import { criarEstadoDosRecursos } from "./estado.js";
 import { FormularioDoRecurso } from "./formulario.jsx";
 import { GavetaDoRecurso } from "./gaveta.jsx";
@@ -37,27 +32,26 @@ import { PainelDeModelos } from "./modelos.jsx";
 import { TabelaDeRecursos } from "./tabela.jsx";
 
 /*
-  Painel de recursos (`recursos.html?area=`), em React, com a cara e as
-  classes do painel de análises curriculares: é o mesmo desenho de página
-  (src/analises/*.css), não uma imitação dele. Aberto dentro do MONITORA pela
-  view `recursos` (src/modules/pagina-do-painel.js), num quadro, como o de
-  análises; sozinho numa aba, funciona do mesmo jeito (a sessão do Supabase é a
-  do navegador).
+  A tela de Recursos dos candidatos (view `recursos`), um módulo do app:
+  monta direto na `<section id="page-recursos">` do index.html, como Editais,
+  Cronograma e Lista de aprovados. O legado continua dono da classe `.active`
+  da seção e chama `render()` do controlador ao navegar.
 
-  A área vem da URL e não muda: trocar de área no menu refaz o quadro. Admin e
-  gestor de edital (recurso de permissão `recursos` >= editor; `pode_editar`
-  vem do banco) cadastram, editam, escrevem e revisam a resposta e anexam; quem
-  só lê consulta (e baixa os anexos). Quem administra Recursos
-  (`pode_administrar_modelos`) mantém os modelos de resposta.
+  - Área: a área atual do app (menu lateral → dados-do-monitoramento.js). Cada
+    abertura carrega a área de agora; trocar de área com a tela aberta
+    recarrega (e o que era da outra área sai: filtros, busca, gaveta).
+  - Sessão: o cliente Supabase único do app (src/lib/supabaseClient.js).
+  - Tema: o do app (`html[data-theme="dark"]`, o seletor da barra lateral);
+    os gráficos acompanham. Tela cheia: a do app (menu da conta).
+  - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).
+  - Permissões: vêm do banco a cada carga (`pode_editar`,
+    `pode_administrar_modelos`); `render()` recarrega, então mudam sem
+    recarregar a página. Quem só lê não vê os controles de edição.
 
-  O carregamento é o skeleton do painel de análises
-  (analises-loading-feedback.js + analises-esqueleto.css): liga na primeira
-  carga, desliga quando os dados entram — e aí avisa o MONITORA
-  (`agsus:painel-pronto`) para tirar o skeleton de lá. Falha na primeira carga
-  vira o aviso de erro dele, com "Tentar novamente".
+  Sem tela de carregamento: antes da primeira carga, os KPIs, os gráficos, as
+  pendências e a fila são o skeleton deles; falha na primeira carga vira um
+  aviso com "Tentar novamente".
 */
-
-export { criarAvisoDoPainel };
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);
 
@@ -74,33 +68,14 @@ function textoDoStatus(e, recursos) {
   return `Atualizado em ${dataHora(ultima || e.carregadoEm)}`;
 }
 
-function alternarTelaCheia() {
-  if (!document.fullscreenElement)
-    document.documentElement.requestFullscreen?.();
-  else document.exitFullscreen?.();
-}
-
-export function PainelDeRecursos({ estado, area, nomeDaArea }) {
-  const e = useSyncExternalStore(estado.assinar, estado.obter);
+/*
+  A tela de uma área. Monta de novo quando a área muda (`key`): filtros, busca
+  da fila e filtros recolhidos recomeçam, como recomeçavam no antigo quadro.
+*/
+function TelaDaArea({ estado, e }) {
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
-  const [escuro, setEscuro] = useState(() => temaEscuroDoPainel());
-  const { carregado, dados } = e;
-
-  // A área é a do quadro (`?area=`): a primeira carga começa ao montar.
-  useEffect(() => {
-    void estado.carregar(area);
-  }, [estado, area]);
-
-  // O skeleton e o aviso de erro são os do painel de análises.
-  useEffect(() => {
-    if (carregado || e.semSessao) definirCarregamentoDoPainel(false);
-    else if (e.erroAoCarregar)
-      mostrarErroDoCarregamento(
-        `Não foi possível carregar os recursos: ${e.erroAoCarregar}`,
-        () => void estado.carregar(area),
-      );
-    else definirCarregamentoDoPainel(true);
-  }, [carregado, e.semSessao, e.erroAoCarregar, estado, area]);
+  const escuro = usarTemaEscuro();
+  const { carregado, dados, area } = e;
 
   const origens = dados?.origens?.length ? dados.origens : ORIGENS_PADRAO;
   const podeEditar = Boolean(carregado && dados?.pode_editar);
@@ -143,71 +118,76 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
     }));
   const trocarFiltro = (campo, valor) =>
     setFiltros((atuais) => ({ ...atuais, [campo]: valor }));
+  const recarregar = () => void estado.carregar(area);
 
   return (
-    <>
-      <div className="shell">
-        <Topo
-          subtitulo={nomeDaArea}
-          status={textoDoStatus(e, recursos)}
-          escuro={escuro}
-          aoTema={() => setEscuro(alternarTemaDoPainel())}
-          aoTelaCheia={alternarTelaCheia}
-          aoAtualizar={() => void estado.carregar(area)}
-          atualizarDesativado={e.atualizando || e.semSessao}
-          aoExportar={() => estado.exportarCsv(filtrados, origens)}
-          exportarDesativado={!carregado || !filtrados.length}
-          aoNovo={podeEditar ? estado.abrirNovo : null}
-          novoDesativado={Boolean(e.acao)}
-          aoModelos={podeAdministrarModelos ? estado.abrirModelos : null}
-        />
-        <main className="content">
-          {e.semSessao ? (
-            <section id="authWarning" className="auth-warning" role="alert">
-              {e.erroAoCarregar}
-            </section>
-          ) : null}
+    <div className="ui-tela recursos-tela">
+      <Topo
+        status={textoDoStatus(e, recursos)}
+        aoAtualizar={recarregar}
+        atualizarDesativado={!area || e.atualizando || e.semSessao}
+        aoExportar={() => estado.exportarCsv(filtrados, origens)}
+        exportarDesativado={!carregado || !filtrados.length}
+        aoNovo={podeEditar ? estado.abrirNovo : null}
+        novoDesativado={Boolean(e.acao)}
+        aoModelos={podeAdministrarModelos ? estado.abrirModelos : null}
+      />
 
-          <Filtros
-            filtros={filtros}
-            opcoes={opcoes}
-            carregado={carregado}
-            aoMudar={trocarFiltro}
-            aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
-          />
-          <Indicadores
-            indicadores={indicadores}
-            carregado={carregado}
-            filtros={filtros}
-            aoFiltrar={alternarFiltro}
-          />
-          <IndicadoresDasRespostas
-            indicadores={indicadores}
-            carregado={carregado}
-            filtros={filtros}
-            aoFiltrar={alternarFiltro}
-          />
-          <Recorte ativos={ativos} recursos={filtrados} carregado={carregado} />
-          <Graficos
-            recursos={filtrados}
-            pendencias={pendencias}
-            carregado={carregado}
-            filtros={filtros}
-            aoFiltrar={alternarFiltro}
-            escuro={escuro}
-          />
-          <TabelaDeRecursos
-            recursos={filtrados}
-            total={recursos.length}
-            origens={origens}
-            carregado={carregado}
-            podeEditar={podeEditar}
-            aoAbrir={estado.abrirGaveta}
-            aoNovo={estado.abrirNovo}
-            comemoracoes={e.comemoracoes}
-          />
-        </main>{" "}
-      </div>
+      {e.semSessao ? (
+        <Aviso tom="warning" papel="alert" className="recursos-aviso-da-tela">
+          {e.erroAoCarregar}
+        </Aviso>
+      ) : e.erroAoCarregar && !carregado ? (
+        <Aviso tom="danger" papel="alert" className="recursos-aviso-da-tela">
+          Não foi possível carregar os recursos: {e.erroAoCarregar}{" "}
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={recarregar}
+          >
+            Tentar novamente
+          </button>
+        </Aviso>
+      ) : null}
+
+      <Filtros
+        filtros={filtros}
+        opcoes={opcoes}
+        carregado={carregado}
+        aoMudar={trocarFiltro}
+        aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
+      />
+      <Indicadores
+        indicadores={indicadores}
+        carregado={carregado}
+        filtros={filtros}
+        aoFiltrar={alternarFiltro}
+      />
+      <IndicadoresDasRespostas
+        indicadores={indicadores}
+        carregado={carregado}
+        filtros={filtros}
+        aoFiltrar={alternarFiltro}
+      />
+      <Recorte ativos={ativos} recursos={filtrados} carregado={carregado} />
+      <Graficos
+        recursos={filtrados}
+        pendencias={pendencias}
+        carregado={carregado}
+        filtros={filtros}
+        aoFiltrar={alternarFiltro}
+        escuro={escuro}
+      />
+      <TabelaDeRecursos
+        recursos={filtrados}
+        total={recursos.length}
+        origens={origens}
+        carregado={carregado}
+        podeEditar={podeEditar}
+        aoAbrir={estado.abrirGaveta}
+        aoNovo={estado.abrirNovo}
+        comemoracoes={e.comemoracoes}
+      />
 
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}
       {aberto && !e.formulario && !e.modelosAbertos ? (
@@ -233,21 +213,39 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
         />
       ) : null}
       {e.modelosAbertos ? <PainelDeModelos estado={estado} /> : null}
-    </>
+    </div>
   );
 }
 
+export function TelaDeRecursos({ estado }) {
+  const e = useSyncExternalStore(estado.assinar, estado.obter);
+  const { area: areaDoApp } = usarAreaAtual();
+
+  /*
+    A área do app mudou com a tela já aberta (o menu corrige a área, ou outra
+    aba): recarrega com a nova. Quem abre a tela é o `render()` do controlador
+    — antes dele (`e.area` vazio), nada é pedido.
+  */
+  useEffect(() => {
+    const { area } = estado.obter();
+    if (area && areaDoApp && area !== areaDoApp)
+      void estado.carregar(areaDoApp);
+  }, [estado, areaDoApp]);
+
+  return <TelaDaArea key={e.area || "sem-area"} estado={estado} e={e} />;
+}
+
 /**
- * Monta o painel no `raiz` (o `#recursosPainel` de recursos.html) e devolve o
- * estado e a raiz do React. `flushSync`: a página já sai desenhada (o
- * skeleton) desta chamada.
+ * Monta a tela na `<section id="page-recursos">` e devolve o controlador do
+ * legado: `render()` a cada abertura (carrega a área atual do app e relê as
+ * comemorações), mais o estado e a raiz do React (os testes desmontam por ela).
  */
-export function montarPainelDeRecursos({
-  raiz = document.getElementById("recursosPainel"),
-  supabase,
-  area,
-  nomeDaArea,
-  toast = criarAvisoDoPainel(document.getElementById("toastHost")),
+export function montarRecursos({
+  secao = document.getElementById("page-recursos"),
+  supabase = getSupabaseClient(),
+  toast,
+  comemoracoesLigadas = () => false,
+  areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   baixar,
   baixarArquivo,
   abrirUrl,
@@ -256,25 +254,24 @@ export function montarPainelDeRecursos({
 } = {}) {
   const estado = criarEstadoDosRecursos({
     supabase,
-    toast,
+    ...(toast ? { toast } : {}),
     baixar,
     baixarArquivo,
     abrirUrl,
     imprimir,
     novoId,
   });
-  const raizDoReact = raiz
-    ? montarModulo(
-        raiz,
-        <PainelNoQuadro>
-          <PainelDeRecursos
-            estado={estado}
-            area={area}
-            nomeDaArea={nomeDaArea}
-          />
-        </PainelNoQuadro>,
-        { flushSync: true, nome: "o painel de recursos" },
-      ).raiz
+  const raiz = secao
+    ? montarModulo(secao, <TelaDeRecursos estado={estado} />, {
+        nome: "a tela de recursos",
+      }).raiz
     : null;
-  return { estado, raiz: raizDoReact };
+  return {
+    estado,
+    raiz,
+    render() {
+      estado.definirComemoracoes(comemoracoesLigadas());
+      return estado.carregar(String(areaAtual() ?? "").trim());
+    },
+  };
 }

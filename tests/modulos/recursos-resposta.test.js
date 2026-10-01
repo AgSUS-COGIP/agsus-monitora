@@ -29,7 +29,7 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
   },
 }));
 
-const { montarPainelDeRecursos } =
+const { montarRecursos } =
   await import("../../src/modulos/recursos/recursos.jsx");
 
 const RECURSO_ID = "527c2b8c-7744-4a4b-bc06-108f6683297b";
@@ -285,11 +285,10 @@ async function montar(servidor) {
   raiz = document.createElement("div");
   document.body.append(raiz);
   await act(async () => {
-    painel = montarPainelDeRecursos({
-      raiz,
+    painel = montarRecursos({
+      secao: raiz,
       supabase: servidor.supabase,
-      area: "saude-indigena",
-      nomeDaArea: "Saúde Indígena",
+      areaAtual: () => "saude-indigena",
       toast,
       baixarArquivo,
       abrirUrl,
@@ -297,6 +296,8 @@ async function montar(servidor) {
       novoId,
     });
   });
+  // O legado abre a tela (navigate → render()).
+  await act(async () => void painel.render());
   await esperar();
 }
 
@@ -307,13 +308,15 @@ async function abrirGaveta() {
 }
 
 const secao = (nome) =>
-  document.querySelector(`.analises-detail-section[data-section="${nome}"]`);
+  document.querySelector(`.ui-secao[data-section="${nome}"]`);
 const botaoEm = (onde, texto) =>
   [...(onde || document).querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
   );
 const kpi = (chave) =>
-  document.querySelector(`#kpiGridRespostas [data-kpi="${chave}"] b`);
+  document.querySelector(
+    `.recursos-kpis-respostas [data-kpi="${chave}"] .ui-kpi-valor`,
+  );
 
 afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());
@@ -672,13 +675,13 @@ describe("modelos de resposta (administração)", () => {
   it("só o admin vê o botão; o novo modelo confere marcadores antes de salvar", async () => {
     const semAdmin = criarServidor();
     await montar(semAdmin);
-    expect(document.getElementById("modelosRespostaBtn")).toBeNull();
+    expect(document.querySelector('[data-acao="modelos"]')).toBeNull();
     await act(async () => painel.raiz.unmount());
     raiz.remove();
 
     const servidor = criarServidor({ admin: true });
     await montar(servidor);
-    await clicar(document.getElementById("modelosRespostaBtn"));
+    await clicar(document.querySelector('[data-acao="modelos"]'));
     await esperar();
     const gaveta = document.getElementById("recursosModelos");
     expect(gaveta.textContent).toContain("Deferido — Análise curricular");

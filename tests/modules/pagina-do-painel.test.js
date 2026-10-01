@@ -139,31 +139,11 @@ describe("a página Seleção", () => {
   });
 });
 
-describe("a página Recursos", () => {
-  beforeEach(() => {
-    pagina = criarPagina("recursos");
-  });
-
-  it("abre o painel de recursos com a área, pelo mesmo módulo", () => {
-    pagina.classList.add("active");
-    definirAreaAtual("projetos");
-
-    const quadro = abrirPaginaDoPainel(pagina, { origem: ORIGEM });
-
-    expect(quadro.classList.contains("external-panel")).toBe(true);
-    expect(endereco().pathname).toBe("/recursos.html");
-    expect(endereco().searchParams.get("area")).toBe("projetos");
-    expect(quadroDoPainel(pagina).title).toBe("Recursos dos candidatos");
-  });
-
-  it("trocar de área refaz o quadro de recursos", () => {
-    pagina.classList.add("active");
-    definirAreaAtual("sede");
-    const antigo = abrirPaginaDoPainel(pagina, { origem: ORIGEM });
-    definirAreaAtual("saude-indigena");
-    expect(antigo.isConnected).toBe(false);
-    expect(endereco().searchParams.get("area")).toBe("saude-indigena");
-  });
+it("Recursos não é mais quadro: é o módulo src/modulos/recursos/", () => {
+  pagina = criarPagina("recursos");
+  pagina.classList.add("active");
+  expect(abrirPaginaDoPainel(pagina, { origem: ORIGEM })).toBeNull();
+  expect(quadros()).toHaveLength(0);
 });
 
 it("seção sem painel conhecido não ganha quadro", () => {
