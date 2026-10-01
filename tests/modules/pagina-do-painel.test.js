@@ -10,9 +10,10 @@ import {
 } from "../../src/modules/pagina-do-painel.js";
 
 /*
-  As páginas com painel do app (Análises curriculares e Recursos) são donas do
+  As páginas com painel do app no quadro (Entrevistas e Seleção) são donas do
   quadro: endereço fixo do app, com a área atual, criado na primeira abertura e
   refeito quando a área muda. Um módulo só, com o painel dito pela seção.
+  Recursos e Análises curriculares saíram do quadro (src/modulos/).
 */
 const ORIGEM = "https://previa.vercel.app";
 let pagina;
@@ -28,7 +29,7 @@ function criarPagina(painel) {
 beforeEach(() => {
   sessionStorage.clear();
   redefinirDadosDoMonitoramento();
-  pagina = criarPagina("analises");
+  pagina = criarPagina("selecao");
 });
 
 afterEach(() => {
@@ -37,7 +38,7 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-describe("a página Análises curriculares", () => {
+describe("o quadro de um painel (Seleção)", () => {
   it("nasce vazia e cria o quadro só na primeira abertura", () => {
     expect(quadros()).toHaveLength(0);
     pagina.classList.add("active");
@@ -47,9 +48,9 @@ describe("a página Análises curriculares", () => {
 
     expect(quadros()).toHaveLength(1);
     expect(endereco().origin).toBe(ORIGEM);
-    expect(endereco().pathname).toBe("/analises.html");
+    expect(endereco().pathname).toBe("/selecao.html");
     expect(endereco().searchParams.get("area")).toBe("sede");
-    expect(quadroDoPainel(pagina).title).toBe("Análises curriculares");
+    expect(quadroDoPainel(pagina).title).toBe("Seleção");
   });
 
   it("cobre o quadro com o skeleton do painel até ele avisar que carregou", () => {
@@ -137,6 +138,13 @@ describe("a página Seleção", () => {
     expect(endereco().searchParams.get("area")).toBe("projetos");
     expect(quadroDoPainel(pagina).title).toBe("Seleção");
   });
+});
+
+it("Análises curriculares não é mais quadro: é o módulo src/modulos/analises/", () => {
+  pagina = criarPagina("analises");
+  pagina.classList.add("active");
+  expect(abrirPaginaDoPainel(pagina, { origem: ORIGEM })).toBeNull();
+  expect(quadros()).toHaveLength(0);
 });
 
 it("Recursos não é mais quadro: é o módulo src/modulos/recursos/", () => {

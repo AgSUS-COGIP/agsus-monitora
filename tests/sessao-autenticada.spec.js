@@ -161,10 +161,13 @@ test.describe("sessão autenticada", () => {
   test("Análises carrega com dados", async ({ page }) => {
     const erros = [];
     page.on("pageerror", (e) => erros.push(e.message));
-    await page.goto("/analises.html", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("#kpiGrid")).toBeVisible({
-      timeout: 30_000,
-    });
+    // Análises é uma tela do app (src/modulos/analises/), aberta pelo menu.
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#appScreen")).toBeVisible({ timeout: 30_000 });
+    await page.locator('#nav [data-view="analises"]').first().click();
+    await expect(
+      page.locator('#page-analises [data-acao="detalhes"]').first(),
+    ).toBeVisible({ timeout: 30_000 });
     expect(erros).toEqual([]);
   });
 });

@@ -11,11 +11,11 @@
   consulta era redundante e, quando falhava, o painel mostrava um aviso de
   janela indisponível que não correspondia a problema nenhum.
 
-  POR QUE NUM MÓDULO PRÓPRIO, E NÃO DENTRO DO PAINEL
+  POR QUE NUM MÓDULO PRÓPRIO
 
-  `src/analises/analises-app.js` está na lista de ignorados do ESLint e não é
-  importável por teste. Uma função com coerção de tipo e regra de mesclagem
-  precisa das duas redes; aqui ela tem.
+  Uma função com coerção de tipo e regra de mesclagem precisa de lint e de
+  teste; aqui ela tem. Quem usa: a tela de Análises curriculares
+  (src/modulos/analises/estado.js), quando o payload vem sem `editais[]`.
 */
 
 const VALORES_DE_ATIVO = ["sim", "s", "ativo", "1", "true", "x"];

@@ -8,7 +8,6 @@ export default [
       "coverage/**",
       "node_modules/**",
       "src/modules/legacy-app.js",
-      "src/analises/analises-app.js",
     ],
   },
   {

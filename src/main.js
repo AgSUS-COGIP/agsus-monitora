@@ -103,6 +103,7 @@ import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprova
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 import { montarRecursos } from "./modulos/recursos/recursos.jsx";
+import { montarAnalises } from "./modulos/analises/analises.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
@@ -191,6 +192,16 @@ window.calendarioEditaisController = montarCalendarioEditais({
   banco e comemorações relidas).
 */
 window.recursosController = montarRecursos({
+  toast: window.monitoraToast,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+});
+
+/*
+  Análises curriculares: módulo de src/modulos/, na própria <section>. A área
+  é a atual do app; `render()` carrega na primeira abertura (e relê por trás
+  se a carga tiver mais de 5 minutos).
+*/
+window.analisesController = montarAnalises({
   toast: window.monitoraToast,
   comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });

@@ -23,7 +23,6 @@ import {
 const PAGINAS = {
   "index.html":
     '<!doctype html><title>MONITORA</title><script src="/assets/main-AbCd1234.js"></script>',
-  "analises.html": "<!doctype html><title>Análises</title>",
   "entrevistas.html": "<!doctype html><title>Entrevistas</title>",
   "selecao.html": "<!doctype html><title>Seleção</title>",
   "auth/callback.html": "<!doctype html><title>Callback</title>",
@@ -91,8 +90,6 @@ describe("servidor web do MONITORA", () => {
   it.each([
     ["/", "index.html"],
     ["/index.html", "index.html"],
-    ["/analises", "analises.html"],
-    ["/analises.html", "analises.html"],
     ["/entrevistas", "entrevistas.html"],
     ["/entrevistas.html", "entrevistas.html"],
     ["/selecao", "selecao.html"],
@@ -149,6 +146,8 @@ describe("servidor web do MONITORA", () => {
     "/unknown",
     "/recursos",
     "/recursos.html",
+    "/analises",
+    "/analises.html",
     "/assets/",
     "/icons/",
     "/assets/../.env",
@@ -160,7 +159,7 @@ describe("servidor web do MONITORA", () => {
   });
 
   it("recusa escrita nas páginas", async () => {
-    const res = await pedir("/analises", { method: "POST" });
+    const res = await pedir("/selecao", { method: "POST" });
     expect(res.status).toBe(405);
     expect(res.headers.allow).toBe("GET, HEAD");
   });

@@ -46,7 +46,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(projectDirectory, "index.html"),
-        analises: resolve(projectDirectory, "analises.html"),
         entrevistas: resolve(projectDirectory, "entrevistas.html"),
         selecao: resolve(projectDirectory, "selecao.html"),
         authCallback: resolve(projectDirectory, "auth/callback.html"),
