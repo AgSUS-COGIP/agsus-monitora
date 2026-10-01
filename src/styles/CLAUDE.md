@@ -14,7 +14,7 @@
 ## Antes de escrever
 
 ```bash
-grep -rn "nome-da-classe" src/styles src/analises | grep -E "important|#"   # quem manda no elemento
+grep -rn "nome-da-classe" src/styles src/modulos | grep -E "important|#"   # quem manda no elemento
 ```
 
 Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
