@@ -1,23 +1,20 @@
 /*
   Endereço em que um painel externo abre.
 
-  O painel Análises é uma página do próprio MONITORA (`analises.html`), mas foi
-  cadastrado com o endereço completo de produção. Aberto de outro lugar — o
-  localhost, uma prévia da Vercel — ele carregava em outro domínio, não via a
-  sessão e mostrava "Sessão não localizada". Página deste app abre sempre no
-  domínio atual, qualquer que seja o host gravado no banco.
+  Os painéis do próprio MONITORA (`entrevistas.html`, `selecao.html`) podem
+  estar cadastrados com o endereço completo de produção. Aberto de outro
+  lugar — o localhost, uma prévia da Vercel — o painel carregaria em outro
+  domínio, sem a sessão. Página deste app abre sempre no domínio atual,
+  qualquer que seja o host gravado no banco.
 
   Painéis de fora (Apps Script, outros sites) ficam como estão.
 */
-export const PAGINAS_DO_APP = Object.freeze([
-  "/analises.html",
-  "/selecao.html",
-]);
+export const PAGINAS_DO_APP = Object.freeze(["/selecao.html"]);
 
 /*
   O endereço com a área do menu (`?area=`), para a página do app que serve
-  várias áreas (Análises curriculares e Seleção: Saúde Indígena, SEDE e
-  Projetos, abertas por `src/modules/pagina-do-painel.js`). Só página do app
+  várias áreas (Seleção: Saúde Indígena, SEDE e Projetos, aberta por
+  `src/modules/pagina-do-painel.js`). Só página do app
   recebe a área; sem área, fica o endereço de `enderecoDoPainel`.
 */
 export function enderecoDoPainelNaArea(url, origemAtual, area) {

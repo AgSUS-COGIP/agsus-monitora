@@ -18,6 +18,8 @@ import {
   Kpi as CardDeKpi,
   LinhaDoRecorte,
   ListaDePendencias,
+  MaisOpcoes,
+  MarcasDoRecorte,
   paletaDosGraficos,
   PainelDeFiltros,
   TopoDoPainel,
@@ -126,34 +128,12 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
           </Campo>
         ))}
       </div>
-      <div className="recursos-mais-opcoes">
-        <button
-          type="button"
-          className="btn secondary small"
-          data-acao="mais-opcoes"
-          aria-expanded={maisOpcoes}
-          aria-controls="recursosFiltrosAdicionais"
-          title={
-            maisOpcoes
-              ? "Ocultar filtros adicionais"
-              : "Mostrar a busca em toda a tela"
-          }
-          onClick={() => setMaisOpcoes((atual) => !atual)}
-        >
-          <i
-            className={`fa-solid ${maisOpcoes ? "fa-chevron-up" : "fa-sliders"}`}
-            aria-hidden="true"
-          />{" "}
-          {maisOpcoes ? "Menos opções" : "Mais opções"}
-          {avancados ? (
-            <span className="recursos-contagem-avancada">{avancados}</span>
-          ) : null}
-        </button>
-      </div>
-      <div
+      <MaisOpcoes
         id="recursosFiltrosAdicionais"
-        className="ui-grade-de-campos"
-        hidden={!maisOpcoes}
+        aberto={maisOpcoes}
+        aoAlternar={() => setMaisOpcoes((atual) => !atual)}
+        quantos={avancados}
+        titulo="Mostrar a busca em toda a tela"
       >
         <Campo rotulo="Buscar em toda a tela">
           <input
@@ -166,7 +146,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
             onChange={(evento) => aoMudar("busca", evento.target.value)}
           />
         </Campo>
-      </div>
+      </MaisOpcoes>
       <ChipsDeFiltro>
         {ativos.map(([campo, rotulo, valor]) => (
           <ChipDeFiltro
@@ -341,35 +321,28 @@ export function Recorte({ ativos, recursos, carregado }) {
   const pelaAbertura = recursos.filter(
     (r) => r.prazo.fonte === "abertura",
   ).length;
+  const marcas = [
+    {
+      chave: "vencidos",
+      tom: vencidos ? "alerta" : "sucesso",
+      icone: vencidos ? "fa-triangle-exclamation" : "fa-circle-check",
+      texto: `${formatNumberBR(vencidos)} recurso(s) com o prazo de resposta vencido`,
+    },
+    semPrazo && {
+      chave: "sem-prazo",
+      tom: "alerta",
+      icone: "fa-circle-info",
+      texto: `${formatNumberBR(semPrazo)} sem prazo no cronograma`,
+    },
+    pelaAbertura && {
+      chave: "pela-abertura",
+      icone: "fa-calendar-days",
+      texto: `${formatNumberBR(pelaAbertura)} com prazo estimado (*)`,
+    },
+  ].filter(Boolean);
   return (
     <LinhaDoRecorte ativos={ativos}>
-      {carregado ? (
-        <div className="recursos-recorte-marcas">
-          <span
-            className="recursos-marca"
-            data-tom={vencidos ? "alerta" : undefined}
-          >
-            <i
-              className={`fa-solid ${vencidos ? "fa-triangle-exclamation" : "fa-circle-check"}`}
-              aria-hidden="true"
-            />{" "}
-            {formatNumberBR(vencidos)} recurso(s) com o prazo de resposta
-            vencido
-          </span>
-          {semPrazo ? (
-            <span className="recursos-marca" data-tom="alerta">
-              <i className="fa-solid fa-circle-info" aria-hidden="true" />{" "}
-              {formatNumberBR(semPrazo)} sem prazo no cronograma
-            </span>
-          ) : null}
-          {pelaAbertura ? (
-            <span className="recursos-marca">
-              <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
-              {formatNumberBR(pelaAbertura)} com prazo estimado (*)
-            </span>
-          ) : null}
-        </div>
-      ) : null}
+      {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}
     </LinhaDoRecorte>
   );
 }
@@ -526,7 +499,7 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-        <article className="ui-card recursos-bloco-de-pendencias">
+        <article className="ui-card ui-pilha">
           <h2 className="ui-titulo">Pendências prioritárias</h2>
           <Pendencias
             pendencias={pendencias}

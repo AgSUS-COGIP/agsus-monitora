@@ -8,12 +8,14 @@ import { usarNoQuadro } from "./no-quadro.jsx";
   busca do cabeçalho vale só para a tabela.
 
   `itens` já vem recortado pelos filtros da tela; `filtrarPelaBusca(itens,
-  busca)` aplica a busca da tabela — passe uma função estável (de módulo), ela
+  busca)` aplica a busca da tabela (que a tela pode controlar: `busca.valor` e
+  `busca.aoMudar`, para limpá-la junto com os filtros ou reagir a ela) — passe uma função estável (de módulo), ela
   entra na memória do recorte. `linha(item)` devolve o `<tr>` com `key`.
 
   Dentro do app: `.ui-card.ui-tabela` (topo, meta, rolagem, status); depois de
   desenhar, avisa `agsus:content-updated` (o modo cartão do celular,
-  src/modules/mobile-table-cards.js, põe os rótulos). No quadro
+  src/modules/mobile-table-cards.js, põe os rótulos); enquanto falta linha,
+  "Carregar mais" faz o mesmo que rolar (teclado e leitor de tela). No quadro
   (<PainelNoQuadro>): a "Fila operacional consolidada" do painel de análises
   (`.table-card`, `tbody#tableBody`, `#tableSearch`, `#tableInfo`,
   `#pageInfo`, `.analises-infinite-status`).
@@ -43,7 +45,7 @@ function LinhasDoEsqueleto({ colunas, noQuadro }) {
  * @param {object} p
  * @param {string} p.idDoTitulo
  * @param {string} p.titulo
- * @param {{ placeholder: string, rotulo: string }} p.busca
+ * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void }} p.busca
  * @param {Array<{ rotulo: string, largura?: string, numero?: boolean }>} p.colunas
  * @param {(quantos: number | null) => import("react").ReactNode} p.informacao
  *   a contagem do recorte: recebe quantos estão na tabela, ou `null`
@@ -53,7 +55,7 @@ function LinhasDoEsqueleto({ colunas, noQuadro }) {
 export function TabelaInfinita({
   idDoTitulo,
   titulo,
-  busca: { placeholder, rotulo },
+  busca: { placeholder, rotulo, valor, aoMudar },
   carregado,
   itens,
   filtrarPelaBusca,
@@ -65,7 +67,13 @@ export function TabelaInfinita({
   vazio,
 }) {
   const noQuadro = usarNoQuadro();
-  const [busca, setBusca] = useState("");
+  const [buscaPropria, setBuscaPropria] = useState("");
+  const controlada = valor !== undefined;
+  const busca = controlada ? valor : buscaPropria;
+  const setBusca = (nova) => {
+    if (!controlada) setBuscaPropria(nova);
+    aoMudar?.(nova);
+  };
   const [limite, setLimite] = useState(POR_VEZ);
   const naTabela = useMemo(
     () => filtrarPelaBusca(itens, busca),
@@ -176,6 +184,17 @@ export function TabelaInfinita({
             ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros`
             : `Todos os ${formatNumberBR(naTabela.length)} registros do recorte foram carregados`}
         </div>
+      ) : null}
+      {!noQuadro && carregado && faltam > 0 ? (
+        <button
+          type="button"
+          className="btn secondary small ui-tabela-mais"
+          data-acao="carregar-mais"
+          onClick={() => setLimite((atual) => atual + POR_VEZ)}
+        >
+          <i className="fa-solid fa-plus" aria-hidden="true" /> Carregar mais{" "}
+          {formatNumberBR(Math.min(POR_VEZ, faltam))}
+        </button>
       ) : null}
     </section>
   );

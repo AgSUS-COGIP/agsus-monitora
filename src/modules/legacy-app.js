@@ -2210,6 +2210,7 @@ const TELAS_REACT = Object.freeze({
   ],
   recursos: () => ["Recursos", "", window.recursosController],
   entrevistas: () => ["Entrevistas", "", window.entrevistasController],
+  analises: () => ["Análises curriculares", "", window.analisesController],
 });
 
 function navigate(view) {
@@ -2336,16 +2337,6 @@ function navigate(view) {
     $("page-" + requestedView).classList.add("active");
     setPageTitle(titulo, subtituloDaArea(subtitulo));
     void controlador?.render();
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (requestedView === "analises") {
-    // O app de análises traz o próprio cabeçalho: o de cima sai, como no painel.
-    document.body.classList.add("external-panel-mode");
-    $("page-analises").classList.add("active");
-    setPageTitle("Análises curriculares", subtituloDaArea(""));
-    abrirPaginaDoPainel($("page-analises"));
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -11436,10 +11427,7 @@ function exitExternalPanel() {
 }
 
 function getFullscreenTarget() {
-  if (
-    currentView === "analises" ||
-    Object.hasOwn(PAINEIS_EM_PAGINA, currentView)
-  ) {
+  if (Object.hasOwn(PAINEIS_EM_PAGINA, currentView)) {
     const frame = quadroDoPainel($("page-" + currentView));
     if (frame) return frame;
   }

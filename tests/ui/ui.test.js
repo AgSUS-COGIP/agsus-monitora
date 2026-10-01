@@ -15,8 +15,11 @@ import {
   Kv,
   LinhaDoRecorte,
   ListaDePendencias,
+  MaisOpcoes,
+  MarcasDoRecorte,
   PainelDeFiltros,
   PainelNoQuadro,
+  Recorte,
   Secao,
   Segmentado,
   Selo,
@@ -745,6 +748,118 @@ describe("Dentro do app (sem PainelNoQuadro): classes .ui-* e nenhum id fixo", (
     await montarNoApp(h(Campo, { rotulo: "Busca" }, h("input", null)));
     expect($(".ui-campo label").htmlFor).toBe($("input").id);
     expect($(".field")).toBeNull();
+  });
+});
+
+describe("peças de Análises curriculares e Recursos", () => {
+  it("LinhaDoRecorte com `texto` e MarcasDoRecorte: marcas com tom (neutro por padrão)", async () => {
+    await montarNoApp(
+      h(
+        LinhaDoRecorte,
+        { texto: "Recorte ativo: Situação do processo: Ativo" },
+        h(MarcasDoRecorte, {
+          marcas: [
+            { chave: "j", icone: "fa-calendar-days", texto: "Janela" },
+            { chave: "f", tom: "alerta", texto: "2 fora" },
+          ],
+        }),
+      ),
+    );
+    expect($("[data-recorte]").textContent).toBe(
+      "Recorte ativo: Situação do processo: Ativo",
+    );
+    expect(
+      [...document.querySelectorAll(".ui-recorte-marcas .ui-marca")].map(
+        (m) => m.dataset.tom,
+      ),
+    ).toEqual(["neutro", "alerta"]);
+    await act(async () => raiz.render(h(MarcasDoRecorte, { marcas: [] })));
+    expect($(".ui-recorte-marcas")).toBeNull();
+  });
+
+  it("MaisOpcoes: alterna o bloco e mostra quantos filtros adicionais estão em uso", async () => {
+    const aoAlternar = vi.fn();
+    await montarNoApp(
+      h(
+        MaisOpcoes,
+        {
+          id: "extra",
+          aberto: false,
+          aoAlternar,
+          quantos: 2,
+          titulo: "Mostrar mais",
+        },
+        h("span", null, "campo"),
+      ),
+    );
+    const botao = $('[data-acao="mais-opcoes"]');
+    expect(botao.getAttribute("aria-controls")).toBe("extra");
+    expect(botao.getAttribute("aria-expanded")).toBe("false");
+    expect(botao.textContent).toContain("Mais opções");
+    expect($(".ui-contagem").textContent).toBe("2");
+    expect(document.getElementById("extra").hidden).toBe(true);
+    await clicar(botao);
+    expect(aoAlternar).toHaveBeenCalled();
+  });
+
+  it("PainelDeFiltros: o resumo começa pelo escopo e o Limpar segue `podeLimpar`", async () => {
+    await montarNoApp(
+      h(PainelDeFiltros, {
+        idDoTitulo: "f",
+        quantos: 0,
+        escopo: "Inativo",
+        podeLimpar: true,
+        aoLimpar: vi.fn(),
+      }),
+    );
+    expect($(".ui-filtros-resumo").textContent).toContain(
+      "Inativo · nenhum filtro adicional",
+    );
+    expect($('[data-acao="limpar-filtros"]').disabled).toBe(false);
+  });
+
+  it("TabelaInfinita: busca controlada pela tela e Carregar mais", async () => {
+    const aoMudar = vi.fn();
+    const itens = Array.from({ length: 70 }, (_, i) => ({ nome: `P${i}` }));
+    const props = (valor) => ({
+      idDoTitulo: "t",
+      titulo: "Fila",
+      busca: { placeholder: "Buscar", rotulo: "Buscar", valor, aoMudar },
+      carregado: true,
+      itens,
+      filtrarPelaBusca: (lista, busca) =>
+        lista.filter((i) => i.nome.includes(busca)),
+      colunas: [{ rotulo: "Nome" }],
+      linha: (item) => h("tr", { key: item.nome }, h("td", null, item.nome)),
+      informacao: () => "",
+      total: 70,
+      vazio: "Nada.",
+    });
+    await montarNoApp(h(TabelaInfinita, props("")));
+    expect(document.querySelectorAll("tbody tr")).toHaveLength(50);
+    expect($('[data-acao="carregar-mais"]').textContent).toContain(
+      "Carregar mais 20",
+    );
+    await clicar($('[data-acao="carregar-mais"]'));
+    expect(document.querySelectorAll("tbody tr")).toHaveLength(70);
+    expect($('[data-acao="carregar-mais"]')).toBeNull();
+
+    await digitar($(".ui-tabela-busca"), "P6");
+    expect(aoMudar).toHaveBeenCalledWith("P6");
+    await act(async () => raiz.render(h(TabelaInfinita, props("P69"))));
+    expect(document.querySelectorAll("tbody tr")).toHaveLength(1);
+    expect($(".ui-tabela-busca").value).toBe("P69");
+  });
+
+  it("Campo: `idDoControle` liga o rótulo a um controle que não é input/select", async () => {
+    await montarNoApp(
+      h(
+        Campo,
+        { rotulo: "Unidade", idDoControle: "x-unidade" },
+        h("button", { id: "x-unidade", type: "button" }, "Todas"),
+      ),
+    );
+    expect($(".ui-campo label").htmlFor).toBe("x-unidade");
   });
 });
 

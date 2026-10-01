@@ -6,7 +6,9 @@ import { usarNoQuadro } from "./no-quadro.jsx";
   "Refinar resultados": os filtros de uma tela, num card. Os campos vêm como
   filhos. Recolhível (o padrão): resumo de quantos filtros estão ativos,
   "Ocultar/Mostrar filtros" e "Limpar tudo". `recolhivel={false}`: só o título
-  e os filhos (o painel de seleção).
+  e os filhos (o painel de seleção). `escopo` abre o resumo ("Ativo · 2
+  filtros adicionais"; o padrão é "Todos"); `podeLimpar` liga o "Limpar tudo"
+  quando há o que limpar além dos filtros contados (o padrão é `quantos`).
 
   Dentro do app: `.ui-card.ui-filtros`. No quadro (<PainelNoQuadro>): o
   `.filter-panel` do painel de análises, com os ids de antes (filterSummary,
@@ -17,6 +19,8 @@ export function PainelDeFiltros({
   className,
   recolhivel = true,
   quantos = 0,
+  escopo = "Todos",
+  podeLimpar,
   aoLimpar,
   aoRecolher,
   children,
@@ -75,7 +79,7 @@ export function PainelDeFiltros({
               aria-hidden="true"
             />
             <span>
-              Todos ·{" "}
+              {escopo} ·{" "}
               {quantos
                 ? `${quantos} ${quantos === 1 ? "filtro adicional" : "filtros adicionais"}`
                 : "nenhum filtro adicional"}
@@ -107,7 +111,7 @@ export function PainelDeFiltros({
             className={c("btn secondary", "btn secondary small")}
             id={noQuadro ? "clearBtn" : undefined}
             data-acao={noQuadro ? undefined : "limpar-filtros"}
-            disabled={!quantos}
+            disabled={!(podeLimpar ?? quantos)}
             title="Limpar filtros"
             onClick={aoLimpar}
           >
