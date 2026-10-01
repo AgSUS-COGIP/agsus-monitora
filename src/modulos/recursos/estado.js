@@ -22,6 +22,7 @@
   do anterior fica na tela). Uma ação por vez (`executar`): o botão dela
   mostra o rótulo, os outros ficam desativados.
 */
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.js";
 import {
   BUCKET_DOS_ANEXOS,
@@ -417,7 +418,7 @@ export function criarEstadoDosRecursos({
   }
 
   function exportarCsv(recursos, origens) {
-    const dia = new Date(agora()).toISOString().slice(0, 10);
+    const dia = hojeEmBrasilia(new Date(agora()));
     baixar(
       csvDosRecursos(recursos, origens),
       `recursos-${estado.area}-${dia}.csv`,
