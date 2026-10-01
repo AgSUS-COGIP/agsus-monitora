@@ -8,8 +8,8 @@
 
   Achado da varredura de bugs de 01/10/2026. Não muda o corpo da função.
 
-  Rollback: supabase/rollback/20261001180000_registrar_evento_acesso_so_autenticado.sql
-  Ensaio:   supabase/ensaios/20261001180000_registrar_evento_acesso_so_autenticado.sql
+  Rollback: supabase/rollback/20261001190000_registrar_evento_acesso_so_autenticado.sql
+  Ensaio:   supabase/ensaios/20261001190000_registrar_evento_acesso_so_autenticado.sql
 */
 begin;
 

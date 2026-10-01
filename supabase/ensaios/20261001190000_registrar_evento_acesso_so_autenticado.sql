@@ -1,5 +1,5 @@
 /*
-  ENSAIO de 20261001180000_registrar_evento_acesso_so_autenticado.sql — begin … rollback.
+  ENSAIO de 20261001190000_registrar_evento_acesso_so_autenticado.sql — begin … rollback.
 
   Como rodar: cole o arquivo inteiro no SQL Editor do Supabase (papel postgres)
   e execute. Aplica o corpo da migration numa transação, confere os privilégios
