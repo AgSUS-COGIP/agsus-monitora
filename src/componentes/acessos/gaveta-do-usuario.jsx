@@ -56,10 +56,11 @@ import {
 import { AcoesDoConvite } from "./convite.jsx";
 
 /*
-  Gaveta da pessoa, aberta pela linha na tabela: o ÚNICO lugar para mudar
-  alguém. Na ordem em que se pensa: grupo (e o que ele deixa fazer), áreas,
-  coordenação e "como a pessoa vê" — que, com alteração pendente, já mostra o
-  resultado ("Depois de salvar"). O rodapé tem o próprio "Salvar" com motivo
+  Modal da pessoa (centralizado; o nome "gaveta" ficou dos ids e das classes),
+  aberto pela linha na tabela: o ÚNICO lugar para mudar alguém. Duas colunas:
+  à esquerda, na ordem em que se pensa, grupo (e o que ele deixa fazer),
+  coordenação e áreas; à direita, "como a pessoa vê" — que, com alteração
+  pendente, já mostra o resultado ("Depois de salvar"). O rodapé tem o próprio "Salvar" com motivo
   (grava só esta pessoa) e "Desativar acesso". Quem ainda não entrou tem o
   convite para reenviar ou cancelar.
 
@@ -370,12 +371,17 @@ function ExcecoesPorModulo({
           gruposPorCodigo,
         );
         return (
-          <li key={modulo.id}>
+          <li
+            key={modulo.id}
+            className={classes(
+              celula.individual && "acessos-modulo-individual",
+            )}
+          >
             <div>
               <strong>{modulo.rotulo}</strong>
               <small>
                 {celula.individual
-                  ? "Individual: vale só para esta pessoa"
+                  ? `Individual · no grupo: ${rotuloDoNivel(celula.nivelGrupo, modulo.id)}`
                   : "Segue o grupo"}
               </small>
             </div>
@@ -546,6 +552,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
       <CabecalhoDaGaveta
         tituloId="acessosGavetaTitulo"
         titulo={nome}
+        avatar={nome}
         subtitulo={
           usuario.setor
             ? `${usuario.email} · setor informado: ${usuario.setor}`
@@ -558,103 +565,113 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
           <p className="acessos-secundario">{edicao.motivo}</p>
         ) : null}
 
-        <section aria-labelledby="acessosGavetaGrupo">
-          <h4 id="acessosGavetaGrupo">Grupo</h4>
-          <select
-            aria-label={`Grupo de ${nome}`}
-            title={explicacaoDoGrupo(grupo) || undefined}
-            value={codigoDoGrupo || ""}
-            disabled={!edicao.pode}
-            className={classes(
-              codigoDoGrupo !== usuario.grupo && "acessos-pendente",
-            )}
-            onChange={(e) =>
-              estado.registrar(usuario, ALVO_GRUPO, e.target.value)
-            }
-          >
-            <OpcoesDoGrupo
-              grupos={grupos}
-              atribuiveis={gruposAtribuiveis(teto, grupos)}
-              atual={codigoDoGrupo}
-            />
-          </select>
-        </section>
+        <div className="acessos-gaveta-colunas">
+          <div className="acessos-gaveta-coluna">
+            <section aria-labelledby="acessosGavetaGrupo">
+              <h4 id="acessosGavetaGrupo">Grupo</h4>
+              <select
+                aria-label={`Grupo de ${nome}`}
+                title={explicacaoDoGrupo(grupo) || undefined}
+                value={codigoDoGrupo || ""}
+                disabled={!edicao.pode}
+                className={classes(
+                  codigoDoGrupo !== usuario.grupo && "acessos-pendente",
+                )}
+                onChange={(e) =>
+                  estado.registrar(usuario, ALVO_GRUPO, e.target.value)
+                }
+              >
+                <OpcoesDoGrupo
+                  grupos={grupos}
+                  atribuiveis={gruposAtribuiveis(teto, grupos)}
+                  atual={codigoDoGrupo}
+                />
+              </select>
+            </section>
 
-        <section aria-labelledby="acessosGavetaAreas">
-          <h4 id="acessosGavetaAreas">Áreas</h4>
-          {adminGlobal ? (
-            <p className="acessos-secundario">
-              Administrador global: vê todas as áreas.
-            </p>
-          ) : coordenacao ? (
-            <p className="acessos-secundario">
-              Vê só o recorte da coordenação {nomeDaCoordenacao || coordenacao}.
-            </p>
-          ) : (
-            <CaixasDeArea
-              areas={areas}
-              marcadas={areasMarcadasDaLinha(usuario, rascunho, areas)}
-              desabilitado={!edicao.pode || !podeEditarAreas(teto)}
-              aoAlternar={(id, ligar) => alternar(`area:${id}`, ligar)}
-            />
-          )}
-          {semArea ? <AvisoSemArea nome={nome} /> : null}
-        </section>
-
-        {!adminGlobal ? (
-          <section aria-labelledby="acessosGavetaCoordenacao">
-            <h4 id="acessosGavetaCoordenacao">Coordenação</h4>
-            <select
-              aria-label={`Coordenação de ${nome}`}
-              value={coordenacao || ""}
-              disabled={!edicao.pode || !podeMudarCoordenacao(teto)}
-              onChange={(e) =>
-                estado.registrar(
-                  usuario,
-                  ALVO_COORDENACAO,
-                  e.target.value || null,
-                )
-              }
-            >
-              <option value="">Sem coordenação</option>
-              <OpcoesDeCoordenacao
-                coordenacoes={matriz.coordenacoes || []}
-                areas={areas}
-                atual={coordenacao}
-              />
-            </select>
-            {semCoordenacao ? <AvisoSemCoordenacao /> : null}
-          </section>
-        ) : null}
-
-        <section aria-labelledby="acessosGavetaVe">
-          <h4 id="acessosGavetaVe">
-            Como a pessoa vê
-            {pendentes ? (
-              <span className="acessos-selo acessos-selo-rascunho">
-                Depois de salvar
-              </span>
+            {!adminGlobal ? (
+              <section aria-labelledby="acessosGavetaCoordenacao">
+                <h4 id="acessosGavetaCoordenacao">Coordenação</h4>
+                <select
+                  aria-label={`Coordenação de ${nome}`}
+                  value={coordenacao || ""}
+                  disabled={!edicao.pode || !podeMudarCoordenacao(teto)}
+                  onChange={(e) =>
+                    estado.registrar(
+                      usuario,
+                      ALVO_COORDENACAO,
+                      e.target.value || null,
+                    )
+                  }
+                >
+                  <option value="">Sem coordenação</option>
+                  <OpcoesDeCoordenacao
+                    coordenacoes={matriz.coordenacoes || []}
+                    areas={areas}
+                    atual={coordenacao}
+                  />
+                </select>
+                {semCoordenacao ? <AvisoSemCoordenacao /> : null}
+              </section>
             ) : null}
-          </h4>
-          <ComoAPessoaVe
-            estado={estado}
-            usuario={usuario}
-            matriz={matriz}
-            rascunho={rascunho}
-            secoesDeConfiguracao={secoesDeConfiguracao}
-          />
-        </section>
 
-        {usuario.convite_pendente ? (
-          <Convite
-            estado={estado}
-            usuario={usuario}
-            podeCancelar={adminPodeAgir}
-          />
-        ) : null}
+            <section aria-labelledby="acessosGavetaAreas">
+              <h4 id="acessosGavetaAreas">Áreas</h4>
+              {adminGlobal ? (
+                <p className="acessos-secundario">
+                  Administrador global: vê todas as áreas.
+                </p>
+              ) : coordenacao ? (
+                <p className="acessos-secundario">
+                  Vê só o recorte da coordenação{" "}
+                  {nomeDaCoordenacao || coordenacao}.
+                </p>
+              ) : (
+                <CaixasDeArea
+                  areas={areas}
+                  marcadas={areasMarcadasDaLinha(usuario, rascunho, areas)}
+                  desabilitado={!edicao.pode || !podeEditarAreas(teto)}
+                  aoAlternar={(id, ligar) => alternar(`area:${id}`, ligar)}
+                />
+              )}
+              {semArea ? <AvisoSemArea nome={nome} /> : null}
+            </section>
+
+            {usuario.convite_pendente ? (
+              <Convite
+                estado={estado}
+                usuario={usuario}
+                podeCancelar={adminPodeAgir}
+              />
+            ) : null}
+          </div>
+          <section
+            className="acessos-gaveta-previa"
+            aria-labelledby="acessosGavetaVe"
+          >
+            <h4 id="acessosGavetaVe">
+              Como a pessoa vê
+              {pendentes ? (
+                <span className="acessos-selo acessos-selo-rascunho">
+                  Depois de salvar
+                </span>
+              ) : null}
+            </h4>
+            <ComoAPessoaVe
+              estado={estado}
+              usuario={usuario}
+              matriz={matriz}
+              rascunho={rascunho}
+              secoesDeConfiguracao={secoesDeConfiguracao}
+            />
+          </section>
+        </div>
 
         <details className="acessos-avancado">
-          <summary>Avançado</summary>
+          <summary>
+            <Icone nome="chevron-right" tamanho={16} />
+            <span>Avançado</span>
+          </summary>
           <h5>Exceções por módulo</h5>
           <ExcecoesPorModulo
             estado={estado}

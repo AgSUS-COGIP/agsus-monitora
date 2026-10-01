@@ -763,8 +763,8 @@ describe("Acessos: visão simples, trava de área e convite", () => {
     );
     expect(titulos.slice(0, 4)).toEqual([
       "Grupo",
-      "Áreas",
       "Coordenação",
+      "Áreas",
       "Como a pessoa vê",
     ]);
     expect(

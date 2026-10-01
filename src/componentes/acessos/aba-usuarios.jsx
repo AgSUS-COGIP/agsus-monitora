@@ -33,6 +33,7 @@ import {
   OpcoesDoGrupo,
   OpcoesDoModulo,
   classes,
+  iniciais,
   motivoValido,
 } from "./partes.jsx";
 import { Solicitacoes } from "./solicitacoes.jsx";
@@ -41,18 +42,6 @@ import { resumoDeContas } from "../../lib/contas-desativadas.js";
 import { ModalAdicionarPessoa } from "./modal-adicionar-pessoa.jsx";
 
 const POR_PAGINA = 30;
-
-/** "Ana Luísa Costa" → "AC": primeira e última palavra. */
-export function iniciais(nome) {
-  const partes = String(nome || "")
-    .replace(/[^\p{L}\s]/gu, " ")
-    .split(/\s+/)
-    .filter((parte) => parte.length > 2 || /^[A-ZÀ-Ý]/.test(parte));
-  if (!partes.length) return "?";
-  const primeira = partes[0][0];
-  const ultima = partes.length > 1 ? partes.at(-1)[0] : "";
-  return (primeira + ultima).toLocaleUpperCase("pt-BR");
-}
 
 /*
   Usuários. Por padrão, a visão SIMPLES: uma linha por pessoa com grupo (e o
