@@ -249,7 +249,13 @@ async function servirEstatico(
 
 export function criarServidor({ dist, cabecalhos }: OpcoesDoServidor): Server {
   return createServer((req, res) => {
-    const pathname = new URL(req.url ?? "/", "http://monitora.local").pathname;
+    // Alvo que não vira URL (ex.: "//["): exceção aqui derrubaria o processo.
+    let pathname: string;
+    try {
+      pathname = new URL(req.url ?? "/", "http://monitora.local").pathname;
+    } catch {
+      return texto(res, 400, "Requisição inválida.");
+    }
     aplicarSeguranca(req, res, cabecalhos, pathname);
 
     const pagina = PAGINAS.get(pathname);

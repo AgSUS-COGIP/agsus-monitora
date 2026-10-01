@@ -125,6 +125,18 @@ export function MultiSelectBusca({
     <div
       ref={raiz}
       /*
+        Esc com o foco aqui dentro fecha só o menu: para antes de chegar ao
+        `document`, onde o <Modal> em volta (ex.: "Adicionar pessoa") fecharia
+        o formulário inteiro.
+      */
+      onKeyDown={(evento) => {
+        if (evento.key !== "Escape" || !aberto) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        setAberto(false);
+        gatilho.current?.focus();
+      }}
+      /*
         `multi-select-busca` separa este componente do filtro legado da Saúde
         Indígena, que usa as mesmas classes mas abre por `.open`, não por
         `hidden`: sem ela, `.multi-select-menu { display: grid }` valia para

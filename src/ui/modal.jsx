@@ -60,7 +60,8 @@ export function Modal({
 
     function aoTeclar(evento) {
       if (evento.key === "Escape") {
-        fechar.current?.();
+        // Um controle de dentro (menu aberto) já tratou o Esc: só ele fecha.
+        if (!evento.defaultPrevented) fechar.current?.();
         return;
       }
       if (evento.key !== "Tab" || !cartao.current) return;

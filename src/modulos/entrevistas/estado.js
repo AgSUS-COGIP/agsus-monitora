@@ -21,6 +21,7 @@
   usuário entrou na mesma aba: tudo volta ao início. Falha de rede usa a
   mensagem de src/lib/falha-de-rede.js.
 */
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import {
   criarCacheDePayload,
   ehErroDeAcesso,
@@ -274,7 +275,7 @@ export function criarEstadoDasEntrevistas({
   const fecharSemEntrevista = () => publicar({ semEntrevistaAberta: false });
 
   function exportarCsv(entrevistas) {
-    const dia = new Date(agora()).toISOString().slice(0, 10);
+    const dia = hojeEmBrasilia(new Date(agora()));
     baixar(
       csvDasEntrevistas(entrevistas),
       `entrevistas-${estado.area}-${dia}.csv`,
