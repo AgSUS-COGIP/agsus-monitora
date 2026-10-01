@@ -28,7 +28,7 @@ const modulo = readFileSync("src/modules/config-secoes.js", "utf8");
   **move** os nós existentes em vez de reescrever o HTML — os mesmos elementos,
   com os mesmos `id` e os mesmos listeners.
 */
-describe("as seções (as sete do SIGAV + Módulos e abas)", () => {
+describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualizações)", () => {
   it("são exatamente essas, nessa ordem", () => {
     expect(SECOES.map((s) => s.rotulo)).toEqual([
       "Marca",
@@ -39,6 +39,7 @@ describe("as seções (as sete do SIGAV + Módulos e abas)", () => {
       "Operação",
       "Acessos",
       "Módulos e abas",
+      "Status das atualizações",
     ]);
   });
 
@@ -70,6 +71,19 @@ describe("o mapa de campos", () => {
       expect(ids, `${bloco} aponta para "${secao}"`).toContain(secao);
     }
     expect(ids).toContain(SECAO_PADRAO);
+  });
+
+  /*
+    Cada bloco precisa existir no index.html: sem ele a seção abre vazia (foi
+    o que um merge fez com `saudeDasCargasApp`, em 01/10/2026).
+  */
+  it("todo bloco das seções existe no index.html", () => {
+    const html = readFileSync("index.html", "utf8");
+    for (const bloco of Object.keys(SECAO_POR_BLOCO)) {
+      expect(html, `index.html sem o bloco #${bloco}`).toContain(
+        `id="${bloco}"`,
+      );
+    }
   });
 
   it("um campo desconhecido cai no padrão, não no vazio", () => {
@@ -119,9 +133,9 @@ describe("organizar move sem destruir", () => {
 
   beforeEach(montarPagina);
 
-  it("cria as oito seções e distribui os campos", () => {
+  it("cria as nove seções e distribui os campos", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(8);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(9);
     expect(
       document
         .querySelector('.config-secao[data-secao="operacao"]')
@@ -211,7 +225,7 @@ describe("organizar move sem destruir", () => {
   it("não organiza duas vezes", () => {
     expect(organizarConfiguracoesEmSecoes(document)).toBe(true);
     expect(organizarConfiguracoesEmSecoes(document)).toBe(false);
-    expect(document.querySelectorAll(".config-secao")).toHaveLength(8);
+    expect(document.querySelectorAll(".config-secao")).toHaveLength(9);
   });
 });
 
