@@ -529,6 +529,169 @@
   white-space: nowrap;
 }
 
+/*
+  PROJETOS NO MAPA DE PROJETOS (`municipios-da-visao-geral.js`)
+
+  Cada projeto tem uma série do design system, em ordem fixa (DESIGN.md §6;
+  a ordem está em PROJETOS_DO_MAPA, src/lib/visao-geral-da-area.js). Os
+  pontos do Leaflet são SVG: a classe pinta por cima do atributo. O nome do
+  projeto vai sempre ao lado da cor (legenda, lista, popup), porque magenta e
+  oliva ficam na faixa mínima de separação.
+*/
+.marcador-de-projeto {
+  fill: var(--border-control);
+  stroke: var(--surface-card);
+  stroke-width: 2px;
+}
+
+.marcador-de-projeto.is-varios-projetos {
+  stroke: var(--text-primary);
+  stroke-dasharray: 3 2;
+}
+
+.mapa-projeto__cor {
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-control);
+  vertical-align: middle;
+}
+
+.mapa-projeto__cor--varios {
+  background: transparent;
+  border: 1.5px dashed var(--text-primary);
+}
+
+.marcador-de-projeto--1 {
+  fill: var(--series-1);
+}
+.mapa-projeto__cor--1 {
+  background: var(--series-1);
+}
+.marcador-de-projeto--2 {
+  fill: var(--series-2);
+}
+.mapa-projeto__cor--2 {
+  background: var(--series-2);
+}
+.marcador-de-projeto--3 {
+  fill: var(--series-3);
+}
+.mapa-projeto__cor--3 {
+  background: var(--series-3);
+}
+.marcador-de-projeto--4 {
+  fill: var(--series-4);
+}
+.mapa-projeto__cor--4 {
+  background: var(--series-4);
+}
+.marcador-de-projeto--5 {
+  fill: var(--series-5);
+}
+.mapa-projeto__cor--5 {
+  background: var(--series-5);
+}
+.marcador-de-projeto--6 {
+  fill: var(--series-6);
+}
+.mapa-projeto__cor--6 {
+  background: var(--series-6);
+}
+
+.mapa-projeto__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--space-2, 8px);
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm, 12px);
+}
+
+.mapa-projeto__nome,
+.mapa-projetos__grupo,
+.mapa-projetos__popup-edital,
+.mapa-projetos__legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapa-projetos__filtros {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px) var(--space-3, 12px);
+  margin-bottom: var(--space-2, 8px);
+  padding: var(--space-2, 8px) 0;
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font-size: var(--text-sm, 12px);
+}
+
+.mapa-projetos__campo,
+.mapa-projetos__agrupar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapa-projetos__campo {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.mapa-projetos__seletor {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.mapa-projetos__agrupar input {
+  margin: 0;
+  accent-color: var(--brand-primary);
+}
+
+.mapa-projetos__grupo {
+  margin: var(--space-3, 12px) 0 var(--space-1, 4px);
+  color: var(--text-primary);
+  font-size: var(--text-sm, 12px);
+}
+
+.mapa-projetos__grupo span:last-child {
+  color: var(--text-secondary);
+}
+
+.mapa-projetos__popup {
+  display: grid;
+  gap: 2px;
+  max-width: 280px;
+  white-space: normal;
+}
+
+.mapa-projetos__popup-titulo {
+  margin-bottom: 2px;
+}
+
+.mapa-projetos__popup-edital {
+  align-items: baseline;
+}
+
+.mapa-projetos__legenda-item + .mapa-projetos__legenda-item {
+  margin-top: 4px;
+}
+
 .health-map-unit__vagas b {
   display: block;
   color: var(--text-primary, #17324a);

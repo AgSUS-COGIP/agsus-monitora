@@ -5,6 +5,7 @@ import {
   RPC_DOS_MUNICIPIOS,
   aplicarAreaNaVisaoGeral,
   criarCarregadorDeMunicipios,
+  desenharLegendaDosMunicipios,
   desenharMunicipiosDaArea,
 } from "../../src/modules/municipios-da-visao-geral.js";
 
@@ -339,5 +340,269 @@ describe("municípios no mapa e na lista", () => {
       }),
     );
     expect(document.querySelector("#lista img")).toBeNull();
+  });
+});
+
+describe("todos os projetos no mapa", () => {
+  const PROJETOS = {
+    data: [
+      {
+        municipio_uf: "Boa Vista/RR",
+        uf: "RR",
+        codigo_ibge: 1400100,
+        vagas_edital: 38,
+        projetos: ["Saúde nas Fronteiras", "Escritório Distrital e Regional"],
+        editais: [
+          {
+            edital: "23/2025",
+            projeto: "Saúde nas Fronteiras",
+            vagas: 22,
+            lotacoes: ["Boa Vista/RR"],
+          },
+          {
+            edital: "62/2025",
+            projeto: "Escritório Distrital e Regional",
+            vagas: 16,
+          },
+        ],
+      },
+      {
+        municipio_uf: "Brasília/DF",
+        uf: "DF",
+        codigo_ibge: 5300108,
+        vagas_edital: 5,
+        cadastro_reserva: true,
+        projetos: ["MFC", "Rio Doce"],
+        editais: [
+          { edital: "05/2026", projeto: "MFC", vagas: 5 },
+          {
+            edital: "04/2026",
+            projeto: "Rio Doce",
+            vagas: null,
+            cadastro_reserva: true,
+          },
+        ],
+      },
+      {
+        municipio_uf: null,
+        uf: "PA",
+        nivel: "uf",
+        vagas_edital: 1,
+        projetos: ["CCE"],
+        editais: [{ edital: "97/2025", projeto: "CCE", vagas: 1 }],
+      },
+      {
+        municipio_uf: "Irati/PR",
+        uf: "PR",
+        vagas: 5,
+        candidatos: 70,
+        aprovados: 43,
+        reprovados: 27,
+        projetos: ["Projeto Agora Tem Especialistas Caminhoneiros"],
+        editais: [
+          {
+            edital: "30/2026",
+            projeto: "Projeto Agora Tem Especialistas Caminhoneiros",
+            cadastro_reserva: true,
+          },
+        ],
+      },
+    ],
+    error: null,
+  };
+
+  function leaflet() {
+    const marcadores = [];
+    return {
+      marcadores,
+      L: {
+        circleMarker: (coordenadas, opcoes) => {
+          const marcador = {
+            coordenadas,
+            opcoes,
+            bindTooltip: vi.fn(() => marcador),
+            bindPopup: vi.fn((conteudo) => {
+              marcador.popup = conteudo;
+              return marcador;
+            }),
+            openPopup: vi.fn(),
+          };
+          marcadores.push(marcador);
+          return marcador;
+        },
+        latLngBounds: (pontos) => ({ pontos }),
+      },
+      camada: {
+        camadas: [],
+        clearLayers() {
+          this.camadas = [];
+        },
+        addLayer(nova) {
+          this.camadas.push(nova);
+        },
+      },
+      mapa: { fitBounds: vi.fn(), setView: vi.fn(), getZoom: () => 5 },
+    };
+  }
+
+  async function desenhar(falso, extra = {}) {
+    document.body.innerHTML = `<b id="conta"></b><span id="contador"></span><div id="lista"></div><div id="legenda"></div>`;
+    await desenharMunicipiosDaArea({
+      ...falso,
+      area: "projetos",
+      carregador: criarCarregadorDeMunicipios({
+        obterSupabase: () => supabaseFalso(PROJETOS),
+      }),
+      lista: document.getElementById("lista"),
+      conta: document.getElementById("conta"),
+      contador: document.getElementById("contador"),
+      ...extra,
+    });
+  }
+
+  const nomes = () =>
+    [...document.querySelectorAll("#lista [data-municipio] strong")].map(
+      (nome) => nome.textContent,
+    );
+
+  it("um ponto por lugar, na cor do projeto, e UF no meio do estado", async () => {
+    const falso = leaflet();
+    const aoDesenhar = vi.fn();
+    await desenhar(falso, { aoDesenhar });
+    expect(aoDesenhar).toHaveBeenCalledTimes(1);
+    expect(falso.camada.camadas).toHaveLength(4);
+    // Irati e Brasília empatam em 5 vagas: os candidatos desempatam.
+    expect(nomes()).toEqual([
+      "Boa Vista/RR",
+      "Irati/PR",
+      "Brasília/DF",
+      "Pará (estado)",
+    ]);
+    const classe = (indice) => falso.marcadores[indice].opcoes.className;
+    // Boa Vista: Fronteiras (série 2) e mais um projeto (contorno tracejado).
+    expect(classe(0)).toBe(
+      "marcador-de-projeto marcador-de-projeto--2 is-varios-projetos",
+    );
+    expect(classe(1)).toBe("marcador-de-projeto marcador-de-projeto--1");
+    // Brasília: Rio Doce (série 4) vem antes de MFC (série 5).
+    expect(classe(2)).toBe(
+      "marcador-de-projeto marcador-de-projeto--4 is-varios-projetos",
+    );
+    expect(classe(3)).toBe("marcador-de-projeto marcador-de-projeto--6");
+    // Popup montado no DOM: projeto, edital, vagas, lotação.
+    const popup = falso.marcadores[0].popup;
+    expect(popup).toBeInstanceOf(HTMLElement);
+    expect(normalizar(popup.textContent)).toContain(
+      "Saúde nas Fronteiras · Edital 23/2025 · 22 vagas · Boa Vista/RR",
+    );
+    expect(popup.querySelector(".mapa-projeto__cor--3")).not.toBeNull();
+    // A linha da lista diz os projetos e as vagas publicadas.
+    const primeira = document.querySelector("#lista [data-municipio]");
+    expect(normalizar(primeira.textContent)).toContain("38 vagas");
+    expect(
+      [...primeira.querySelectorAll(".mapa-projeto__nome")].map((projeto) =>
+        normalizar(projeto.textContent),
+      ),
+    ).toEqual(["Saúde nas Fronteiras", "Escritório Distrital e Regional"]);
+  });
+
+  it("filtrar por projeto redesenha sem novo pedido e mantém a cor do projeto", async () => {
+    const falso = leaflet();
+    await desenhar(falso);
+    const seletor = document.querySelector(".mapa-projetos__seletor");
+    expect([...seletor.options].map((opcao) => opcao.textContent)).toEqual([
+      "Todos os projetos",
+      "Caminhoneiros (1)",
+      "Saúde nas Fronteiras (1)",
+      "Escritório Distrital e Regional (1)",
+      "Rio Doce (1)",
+      "MFC (1)",
+      "CCE (1)",
+    ]);
+    seletor.value = "Escritório Distrital e Regional";
+    seletor.dispatchEvent(new Event("change"));
+    expect(nomes()).toEqual(["Boa Vista/RR"]);
+    expect(falso.camada.camadas).toHaveLength(1);
+    expect(falso.marcadores.at(-1).opcoes.className).toBe(
+      "marcador-de-projeto marcador-de-projeto--3",
+    );
+    expect(document.getElementById("contador").textContent).toBe("1 município");
+    // O foco fica no seletor novo.
+    expect(document.activeElement).toBe(
+      document.querySelector(".mapa-projetos__seletor"),
+    );
+    // Volta a todos para não vazar a escolha para os outros testes.
+    const novo = document.querySelector(".mapa-projetos__seletor");
+    novo.value = "";
+    novo.dispatchEvent(new Event("change"));
+    expect(nomes()).toHaveLength(4);
+  });
+
+  it("agrupar por projeto: um bloco por projeto, lugar de dois projetos nos dois", async () => {
+    const falso = leaflet();
+    await desenhar(falso);
+    const agrupar = document.querySelector(".mapa-projetos__agrupar input");
+    agrupar.checked = true;
+    agrupar.dispatchEvent(new Event("change"));
+    const grupos = [
+      ...document.querySelectorAll("#lista .mapa-projetos__grupo strong"),
+    ].map((grupo) => grupo.textContent);
+    expect(grupos).toEqual([
+      "Caminhoneiros",
+      "Saúde nas Fronteiras",
+      "Escritório Distrital e Regional",
+      "Rio Doce",
+      "MFC",
+      "CCE",
+    ]);
+    expect(nomes().filter((nome) => nome === "Boa Vista/RR")).toHaveLength(2);
+    // Clicar na linha do grupo abre o ponto certo.
+    const linhas = [...document.querySelectorAll("#lista [data-municipio]")];
+    linhas.find((linha) => linha.textContent.includes("Irati/PR")).click();
+    expect(falso.mapa.setView).toHaveBeenCalledWith([-25.4697, -50.6493], 7, {
+      animate: true,
+    });
+    const desligar = document.querySelector(".mapa-projetos__agrupar input");
+    desligar.checked = false;
+    desligar.dispatchEvent(new Event("change"));
+  });
+
+  it("a legenda mostra a cor e o nome de cada projeto, sem HTML em texto", async () => {
+    await desenhar(leaflet());
+    const corpo = document.getElementById("legenda");
+    desenharLegendaDosMunicipios(corpo);
+    const itens = [...corpo.querySelectorAll(".mapa-projetos__legenda-item")];
+    expect(itens.map((item) => normalizar(item.textContent))).toEqual([
+      "Caminhoneiros",
+      "Saúde nas Fronteiras",
+      "Escritório Distrital e Regional",
+      "Rio Doce",
+      "MFC",
+      "CCE",
+      "tamanho = nº de vagas",
+      "mais de um projeto",
+    ]);
+    expect(itens[0].querySelector(".mapa-projeto__cor--1")).not.toBeNull();
+  });
+
+  it("as cores são as séries do design system", () => {
+    const semQuebra = css.replace(/\r\n/g, "\n");
+    for (let serie = 1; serie <= 6; serie += 1) {
+      expect(semQuebra).toContain(
+        `.marcador-de-projeto--${serie} {\n  fill: var(--series-${serie});`,
+      );
+      expect(semQuebra).toContain(
+        `.mapa-projeto__cor--${serie} {\n  background: var(--series-${serie});`,
+      );
+    }
+  });
+
+  it("o módulo não monta HTML em string", () => {
+    const modulo = readFileSync(
+      "src/modules/municipios-da-visao-geral.js",
+      "utf8",
+    );
+    expect(modulo).not.toMatch(/innerHTML/);
+    expect(legado).not.toContain("legendaDosMunicipios()");
   });
 });

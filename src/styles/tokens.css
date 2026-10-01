@@ -265,12 +265,14 @@
   --state-neutral-soft: var(--color-status-neutral-bg);
 
   /* Até 5 categorias (seção 13.4); a 6ª é a escala sequencial clara. */
-  --series-1: var(--color-chart-1);
-  --series-2: var(--color-chart-2);
-  --series-3: var(--color-chart-3);
-  --series-4: var(--color-chart-4);
-  --series-5: var(--color-chart-5);
-  --series-6: var(--color-blue-200);
+  /* Séries de gráfico e mapa: DESIGN.md seção 6 (azul, laranja, ciano,
+     violeta, magenta, oliva). Antes eram três azuis e um cinza. */
+  --series-1: #0f5db7;
+  --series-2: #eb6834;
+  --series-3: #0090bc;
+  --series-4: #6d5efc;
+  --series-5: #d55181;
+  --series-6: #8a6d00;
 }
 
 html[data-theme="dark"] {
@@ -304,5 +306,6 @@ html[data-theme="dark"] {
   --series-2: #d95f2b;
   --series-3: #1a9fc8;
   --series-4: #8e6cf2;
+  --series-5: #d55181;
   --series-6: #a8861a;
 }
