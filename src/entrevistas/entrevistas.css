@@ -242,10 +242,7 @@
   margin-top: 8px;
 }
 
-/* Campos. */
-.entrevistas-campo-largo {
-  grid-column: 1 / -1;
-}
+/* Campos (o <Campo> de src/ui/ traz o seu; estas servem à marcação avulsa). */
 .entrevistas-dica {
   color: var(--muted);
   font-size: 12px;
@@ -322,25 +319,8 @@
   color: var(--muted);
 }
 
-/* Aviso em faixa. */
-.entrevistas-aviso {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--blue2);
-  border-radius: 12px;
-  background: var(--card2);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.45;
-}
-.entrevistas-aviso[data-tone="warning"] {
-  border-left-color: var(--yellow);
-}
-.entrevistas-aviso[data-tone="danger"] {
-  border-left-color: var(--red);
-}
-.table-card > .entrevistas-aviso {
+/* O <Aviso> de src/ui/ (desenho em ui.css); aqui, só o espaçamento na tabela. */
+.table-card > .ui-aviso {
   margin: 0 12px 12px;
 }
 

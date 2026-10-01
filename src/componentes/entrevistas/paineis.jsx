@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   contagemPorComparecimento,
@@ -10,8 +10,18 @@ import {
   topUnidades,
 } from "../../lib/entrevistas-do-painel.js";
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import {
+  CardDeGrafico,
+  ChipDeFiltro,
+  ChipsDeFiltro,
+  classes,
+  EstadoVazio,
+  GradeDeKpis,
+  Kpi,
+  PainelDeFiltros,
+  TopoDoPainel,
+} from "../../ui/index.js";
 import { Grafico } from "../recursos/grafico.jsx";
-import { classes, usarAlturaDoTopo } from "../recursos/paineis.jsx";
 import { Segmentado } from "./partes.jsx";
 
 /*
@@ -31,90 +41,31 @@ const truncar = (valor, limite) => {
 
 /* ── Cabeçalho ──────────────────────────────────────────────────────── */
 
+/* Exportar só na visão "Resultados". */
 export function Topo({
-  subtitulo,
-  status,
-  escuro,
-  aoTema,
-  aoTelaCheia,
-  aoAtualizar,
-  atualizarDesativado,
-  aoExportar,
-  exportarDesativado,
   visoes = null,
   visao = "resultados",
   aoTrocarVisao,
+  aoExportar,
+  ...props
 }) {
-  const topo = useRef(null);
-  usarAlturaDoTopo(topo);
-  const rotuloDoTema = escuro ? "Usar tema claro" : "Usar tema escuro";
-  const resultados = visao === "resultados";
   return (
-    <header className="topbar" id="topbar" ref={topo}>
-      <div className="brand">
-        <div>
-          <h1>Painel de entrevistas</h1>
-          <p className="sub">{subtitulo}</p>
-          {visoes ? (
-            <Segmentado
-              rotulo="Visão do painel"
-              className="entrevistas-visoes"
-              opcoes={visoes}
-              valor={visao}
-              aoMudar={aoTrocarVisao}
-            />
-          ) : null}
-        </div>
-      </div>
-      <div className="top-actions">
-        <span id="updatedText" className="status-discreto">
-          {status}
-        </span>
-        <button
-          type="button"
-          className="btn secondary icon"
-          id="themeBtn"
-          title={rotuloDoTema}
-          aria-label={rotuloDoTema}
-          onClick={aoTema}
-        >
-          <i
-            className={`fa-solid ${escuro ? "fa-sun" : "fa-moon"}`}
-            aria-hidden="true"
+    <TopoDoPainel
+      titulo="Painel de entrevistas"
+      visoes={
+        visoes ? (
+          <Segmentado
+            rotulo="Visão do painel"
+            className="entrevistas-visoes"
+            opcoes={visoes}
+            valor={visao}
+            aoMudar={aoTrocarVisao}
           />
-        </button>
-        <button
-          type="button"
-          className="btn secondary icon"
-          id="fullBtn"
-          title="Tela cheia"
-          aria-label="Alternar tela cheia"
-          onClick={aoTelaCheia}
-        >
-          <i className="fa-solid fa-expand" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="btn"
-          id="refreshBtn"
-          disabled={atualizarDesativado}
-          onClick={aoAtualizar}
-        >
-          <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
-        </button>
-        {resultados ? (
-          <button
-            type="button"
-            className="btn green"
-            id="exportBtn"
-            disabled={exportarDesativado}
-            onClick={aoExportar}
-          >
-            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
-          </button>
-        ) : null}
-      </div>
-    </header>
+        ) : null
+      }
+      aoExportar={visao === "resultados" ? aoExportar : undefined}
+      {...props}
+    />
   );
 }
 
@@ -148,146 +99,63 @@ export function filtrosAtivos(filtros, opcoes) {
 }
 
 export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
-  const [recolhido, setRecolhido] = useState(false);
   const ativos = filtrosAtivos(filtros, opcoes);
-  const quantos = ativos.length;
 
   return (
-    <section
-      className={classes("panel filter-panel", recolhido && "is-collapsed")}
-      aria-labelledby="entrevistasFiltrosTitulo"
+    <PainelDeFiltros
+      idDoTitulo="entrevistasFiltrosTitulo"
+      quantos={ativos.length}
+      aoLimpar={aoLimpar}
     >
-      <div className="filter-head">
-        <div>
-          <h2 className="title" id="entrevistasFiltrosTitulo">
-            Refinar resultados
-          </h2>
+      <div className="filter-grid">
+        <div className="field">
+          <label htmlFor="filtro-busca">Buscar candidato</label>
+          <input
+            id="filtro-busca"
+            type="search"
+            name="busca"
+            value={filtros.busca}
+            disabled={!carregado}
+            placeholder="Nome ou código do candidato"
+            onChange={(evento) => aoMudar("busca", evento.target.value)}
+          />
         </div>
-        <div className="filter-actions">
-          <span
-            id="filterSummary"
-            className={classes("filter-summary", quantos && "has-filters")}
-            aria-live="polite"
-          >
-            <i
-              className={`fa-solid ${quantos ? "fa-filter-circle-check" : "fa-layer-group"}`}
-              aria-hidden="true"
-            />
-            <span>
-              Todos ·{" "}
-              {quantos
-                ? `${quantos} filtro${quantos === 1 ? "" : "s"} adicional${quantos === 1 ? "" : "is"}`
-                : "nenhum filtro adicional"}
-            </span>
-          </span>
-          <button
-            type="button"
-            className="btn secondary"
-            id="toggleFiltersBtn"
-            aria-expanded={!recolhido}
-            onClick={() => setRecolhido((atual) => !atual)}
-          >
-            <i
-              className={`fa-solid ${recolhido ? "fa-filter" : "fa-chevron-up"}`}
-              aria-hidden="true"
-            />
-            <span className="toggle-label">
-              {recolhido ? "Mostrar filtros" : "Ocultar filtros"}
-            </span>
-          </button>
-          <button
-            type="button"
-            className="btn secondary"
-            id="clearBtn"
-            disabled={!quantos}
-            title="Limpar filtros"
-            onClick={aoLimpar}
-          >
-            Limpar tudo
-          </button>
-        </div>
-      </div>
-
-      <div id="filtersBody" className="filters-body" hidden={recolhido}>
-        <div className="filter-grid">
-          <div className="field">
-            <label htmlFor="filtro-busca">Buscar candidato</label>
-            <input
-              id="filtro-busca"
-              type="search"
-              name="busca"
-              value={filtros.busca}
+        {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
+          <div className="field" key={campo}>
+            <label htmlFor={`filtro-${campo}`}>{rotulo}</label>
+            <select
+              id={`filtro-${campo}`}
+              name={campo}
+              value={filtros[campo]}
               disabled={!carregado}
-              placeholder="Nome ou código do candidato"
-              onChange={(evento) => aoMudar("busca", evento.target.value)}
-            />
-          </div>
-          {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
-            <div className="field" key={campo}>
-              <label htmlFor={`filtro-${campo}`}>{rotulo}</label>
-              <select
-                id={`filtro-${campo}`}
-                name={campo}
-                value={filtros[campo]}
-                disabled={!carregado}
-                onChange={(evento) => aoMudar(campo, evento.target.value)}
-              >
-                <option value="">{todos}</option>
-                {opcoes[lista].map((opcao) => (
-                  <option key={opcao.valor} value={opcao.valor}>
-                    {opcao.rotulo}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-        <div id="filterChips" className="chips" aria-label="Filtros aplicados">
-          {ativos.map(([campo, rotulo, valor]) => (
-            <button
-              key={campo}
-              type="button"
-              className="chip-filter"
-              title={`Tirar o filtro ${rotulo}`}
-              onClick={() => aoMudar(campo, FILTROS_VAZIOS[campo])}
+              onChange={(evento) => aoMudar(campo, evento.target.value)}
             >
-              <b>{rotulo}</b> {valor}{" "}
-              <i className="fa-solid fa-xmark" aria-hidden="true" />
-            </button>
-          ))}
-        </div>
+              <option value="">{todos}</option>
+              {opcoes[lista].map((opcao) => (
+                <option key={opcao.valor} value={opcao.valor}>
+                  {opcao.rotulo}
+                </option>
+              ))}
+            </select>
+          </div>
+        ))}
       </div>
-    </section>
+      <ChipsDeFiltro>
+        {ativos.map(([campo, rotulo, valor]) => (
+          <ChipDeFiltro
+            key={campo}
+            rotulo={rotulo}
+            aoTirar={() => aoMudar(campo, FILTROS_VAZIOS[campo])}
+          >
+            {valor}
+          </ChipDeFiltro>
+        ))}
+      </ChipsDeFiltro>
+    </PainelDeFiltros>
   );
 }
 
 /* ── KPIs ───────────────────────────────────────────────────────────── */
-
-function Kpi({ cor, rotulo, valor, chave, ativo, aoClicar, titulo }) {
-  if (!aoClicar)
-    return (
-      <article className={classes("kpi", cor)} data-kpi={chave}>
-        <span>{rotulo}</span>
-        <b>{valor}</b>
-      </article>
-    );
-  return (
-    <article
-      className={classes("kpi", cor, ativo && "is-active")}
-      data-kpi={chave}
-    >
-      <button
-        type="button"
-        aria-pressed={ativo === undefined ? undefined : ativo}
-        title={titulo || "Filtrar o painel"}
-        onClick={aoClicar}
-      >
-        <span>{rotulo}</span>
-        <b>{valor}</b>
-      </button>
-    </article>
-  );
-}
 
 export function Indicadores({
   indicadores: k,
@@ -305,7 +173,7 @@ export function Indicadores({
       : {};
   const n = (valor) => formatNumberBR(valor);
   return (
-    <section className="kpis" id="kpiGrid" aria-label="Indicadores">
+    <GradeDeKpis id="kpiGrid" rotulo="Indicadores">
       <Kpi
         cor="k-cyan"
         chave="vagas"
@@ -348,7 +216,7 @@ export function Indicadores({
         titulo="Ver a lista dos aprovados sem entrevista"
         aoClicar={carregado ? aoAbrirSemEntrevista : undefined}
       />
-    </section>
+    </GradeDeKpis>
   );
 }
 
@@ -422,7 +290,7 @@ function Pendencias({
           );
         })
       ) : (
-        <div className="empty">Nenhuma pendência no recorte atual.</div>
+        <EstadoVazio>Nenhuma pendência no recorte atual.</EstadoVazio>
       )}
     </div>
   );
@@ -521,73 +389,67 @@ export function Graficos({
   return (
     <>
       <section className="oper-grid entrevistas-grade-dupla">
-        <article className="panel panel-pad">
-          <h2 className="title">Aptos x Inaptos</h2>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartParecer"
-              tipo="doughnut"
-              rotulo="Entrevistas por parecer: aptos, inaptos e sem parecer"
-              dependencias={[pareceres, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: pareceres.map((x) => x.rotulo),
-                    datasets: [
-                      {
-                        data: pareceres.map((x) => x.valor),
-                        backgroundColor: [p.ok, p.bad, CINZA],
-                        borderColor: p.surface,
-                        borderWidth: 2,
-                      },
-                    ],
-                  },
-                  options: opcoesDeRosca(p, {
-                    aoClicar: (indice) =>
-                      pareceres[indice] &&
-                      filtrar.current("parecer", pareceres[indice].id),
-                  }),
-                };
-              }}
-            />
-          </div>
-        </article>
-        <article className="panel panel-pad">
-          <h2 className="title">Comparecimento</h2>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartComparecimento"
-              tipo="doughnut"
-              rotulo="Entrevistas por comparecimento"
-              dependencias={[comparecimentos, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: comparecimentos.map((x) => x.rotulo),
-                    datasets: [
-                      {
-                        data: comparecimentos.map((x) => x.valor),
-                        backgroundColor: [p.review, p.warn, CINZA],
-                        borderColor: p.surface,
-                        borderWidth: 2,
-                      },
-                    ],
-                  },
-                  options: opcoesDeRosca(p, {
-                    aoClicar: (indice) =>
-                      comparecimentos[indice] &&
-                      filtrar.current(
-                        "comparecimento",
-                        comparecimentos[indice].id,
-                      ),
-                  }),
-                };
-              }}
-            />
-          </div>
-        </article>
+        <CardDeGrafico titulo="Aptos x Inaptos" altura="short">
+          <Grafico
+            id="chartParecer"
+            tipo="doughnut"
+            rotulo="Entrevistas por parecer: aptos, inaptos e sem parecer"
+            dependencias={[pareceres, tema]}
+            montar={() => {
+              const p = paletaDoPainel(escuro);
+              return {
+                data: {
+                  labels: pareceres.map((x) => x.rotulo),
+                  datasets: [
+                    {
+                      data: pareceres.map((x) => x.valor),
+                      backgroundColor: [p.ok, p.bad, CINZA],
+                      borderColor: p.surface,
+                      borderWidth: 2,
+                    },
+                  ],
+                },
+                options: opcoesDeRosca(p, {
+                  aoClicar: (indice) =>
+                    pareceres[indice] &&
+                    filtrar.current("parecer", pareceres[indice].id),
+                }),
+              };
+            }}
+          />
+        </CardDeGrafico>
+        <CardDeGrafico titulo="Comparecimento" altura="short">
+          <Grafico
+            id="chartComparecimento"
+            tipo="doughnut"
+            rotulo="Entrevistas por comparecimento"
+            dependencias={[comparecimentos, tema]}
+            montar={() => {
+              const p = paletaDoPainel(escuro);
+              return {
+                data: {
+                  labels: comparecimentos.map((x) => x.rotulo),
+                  datasets: [
+                    {
+                      data: comparecimentos.map((x) => x.valor),
+                      backgroundColor: [p.review, p.warn, CINZA],
+                      borderColor: p.surface,
+                      borderWidth: 2,
+                    },
+                  ],
+                },
+                options: opcoesDeRosca(p, {
+                  aoClicar: (indice) =>
+                    comparecimentos[indice] &&
+                    filtrar.current(
+                      "comparecimento",
+                      comparecimentos[indice].id,
+                    ),
+                }),
+              };
+            }}
+          />
+        </CardDeGrafico>
       </section>
 
       <section className="oper-grid">
@@ -674,44 +536,41 @@ export function Graficos({
             />
           </div>
         </article>
-        <article className="panel panel-pad">
-          <h2 className="title">Top unidades por entrevistados</h2>
-          <div className="chart-wrap short">
-            <Grafico
-              id="chartUnidades"
-              tipo="bar"
-              rotulo="Unidades com mais entrevistados"
-              dependencias={[unidades, tema]}
-              montar={() => {
-                const p = paletaDoPainel(escuro);
-                return {
-                  data: {
-                    labels: unidades.map((u) => truncar(u.rotulo, 24)),
-                    datasets: [
-                      {
-                        label: "Entrevistados",
-                        data: unidades.map((u) => u.valor),
-                        backgroundColor: p.review,
-                        borderRadius: 7,
-                      },
-                    ],
-                  },
-                  options: opcoesDeBarras(p, {
-                    deitado: true,
-                    dica: {
-                      title: (itens) =>
-                        unidades[itens[0].dataIndex]?.rotulo || "",
+        <CardDeGrafico titulo="Top unidades por entrevistados" altura="short">
+          <Grafico
+            id="chartUnidades"
+            tipo="bar"
+            rotulo="Unidades com mais entrevistados"
+            dependencias={[unidades, tema]}
+            montar={() => {
+              const p = paletaDoPainel(escuro);
+              return {
+                data: {
+                  labels: unidades.map((u) => truncar(u.rotulo, 24)),
+                  datasets: [
+                    {
+                      label: "Entrevistados",
+                      data: unidades.map((u) => u.valor),
+                      backgroundColor: p.review,
+                      borderRadius: 7,
                     },
-                    aoClicar: (indice) =>
-                      unidades[indice] &&
-                      unidades[indice].rotulo !== "Sem unidade" &&
-                      filtrar.current("unidade", unidades[indice].rotulo),
-                  }),
-                };
-              }}
-            />
-          </div>
-        </article>
+                  ],
+                },
+                options: opcoesDeBarras(p, {
+                  deitado: true,
+                  dica: {
+                    title: (itens) =>
+                      unidades[itens[0].dataIndex]?.rotulo || "",
+                  },
+                  aoClicar: (indice) =>
+                    unidades[indice] &&
+                    unidades[indice].rotulo !== "Sem unidade" &&
+                    filtrar.current("unidade", unidades[indice].rotulo),
+                }),
+              };
+            }}
+          />
+        </CardDeGrafico>
       </section>
     </>
   );

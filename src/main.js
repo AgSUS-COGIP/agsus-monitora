@@ -57,6 +57,8 @@ import "./styles/modulos-e-manutencao.css";
 import "./styles/saude-das-cargas.css";
 import "./styles/config-apresentacao.css";
 import "./styles/configuracoes.css";
+// Componentes de src/ui/ (por ora, o aviso do ErrorBoundary de src/app/).
+import "./ui/ui.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";

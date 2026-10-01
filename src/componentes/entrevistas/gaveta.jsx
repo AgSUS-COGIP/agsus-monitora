@@ -7,8 +7,8 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.js";
-import { Modal } from "../modal.jsx";
-import { Kv, Secao, TopoDaGaveta } from "../recursos/partes.jsx";
+import { EstadoVazio, Gaveta } from "../../ui/index.js";
+import { Kv, Secao } from "../recursos/partes.jsx";
 import { SeloDoParecer } from "./tabela.jsx";
 
 /*
@@ -87,34 +87,29 @@ function BarraDoCriterio({ nota }) {
 export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
   const link = linkSeguro(e.link);
   return (
-    <Modal
+    <Gaveta
       id="entrevistasGaveta"
-      rotuloId="entrevistasGavetaTitulo"
+      tituloId="entrevistasGavetaTitulo"
       aoFechar={aoFechar}
-      className="analises-drawer-backdrop entrevistas-gaveta"
-      cartaoClassName="analises-drawer"
+      className="entrevistas-gaveta"
+      sobretitulo={e.codigo ? `Candidato · cód. ${e.codigo}` : "Candidato"}
+      titulo={e.candidato}
+      rotuloDoFechar="Fechar detalhe"
+      resumo={
+        <>
+          <span className="status">
+            <i className="fa-solid fa-circle-info" aria-hidden="true" />
+            {rotuloDoParecer(e.parecer)}
+          </span>
+          <span>
+            <i className="fa-solid fa-user-check" aria-hidden="true" />
+            Compareceu: {rotuloDoComparecimento(e.compareceu)}
+          </span>
+          {e.divergente ? <span>Nota divergente</span> : null}
+          {e.semEdital ? <span>Sem edital cadastrado</span> : null}
+        </>
+      }
     >
-      <TopoDaGaveta
-        sobretitulo={e.codigo ? `Candidato · cód. ${e.codigo}` : "Candidato"}
-        titulo={e.candidato}
-        tituloId="entrevistasGavetaTitulo"
-        rotuloDoFechar="Fechar detalhe"
-        aoFechar={aoFechar}
-        resumo={
-          <>
-            <span className="status">
-              <i className="fa-solid fa-circle-info" aria-hidden="true" />
-              {rotuloDoParecer(e.parecer)}
-            </span>
-            <span>
-              <i className="fa-solid fa-user-check" aria-hidden="true" />
-              Compareceu: {rotuloDoComparecimento(e.compareceu)}
-            </span>
-            {e.divergente ? <span>Nota divergente</span> : null}
-            {e.semEdital ? <span>Sem edital cadastrado</span> : null}
-          </>
-        }
-      />
       <div className="analises-drawer-context">
         <div>
           <small>Edital</small>
@@ -228,36 +223,31 @@ export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
           </Secao>
         </div>
       </div>
-    </Modal>
+    </Gaveta>
   );
 }
 
 export function GavetaDosSemEntrevista({ aprovados, aoFechar }) {
   const grupos = agruparAprovadosSemEntrevista(aprovados);
   return (
-    <Modal
+    <Gaveta
       id="entrevistasSemEntrevista"
-      rotuloId="entrevistasSemEntrevistaTitulo"
+      tituloId="entrevistasSemEntrevistaTitulo"
       aoFechar={aoFechar}
-      className="analises-drawer-backdrop entrevistas-gaveta"
-      cartaoClassName="analises-drawer"
+      className="entrevistas-gaveta"
+      sobretitulo="Pendência"
+      titulo="Aprovados na análise sem entrevista registrada"
+      rotuloDoFechar="Fechar lista"
+      resumo={
+        <span>
+          <i className="fa-solid fa-user-clock" aria-hidden="true" />
+          {formatNumberBR(aprovados.length)}{" "}
+          {aprovados.length === 1 ? "candidato" : "candidatos"} em{" "}
+          {formatNumberBR(grupos.length)}{" "}
+          {grupos.length === 1 ? "vaga" : "vagas"}
+        </span>
+      }
     >
-      <TopoDaGaveta
-        sobretitulo="Pendência"
-        titulo="Aprovados na análise sem entrevista registrada"
-        tituloId="entrevistasSemEntrevistaTitulo"
-        rotuloDoFechar="Fechar lista"
-        aoFechar={aoFechar}
-        resumo={
-          <span>
-            <i className="fa-solid fa-user-clock" aria-hidden="true" />
-            {formatNumberBR(aprovados.length)}{" "}
-            {aprovados.length === 1 ? "candidato" : "candidatos"} em{" "}
-            {formatNumberBR(grupos.length)}{" "}
-            {grupos.length === 1 ? "vaga" : "vagas"}
-          </span>
-        }
-      />
       <div id="analisesDrawerBody">
         <div className="detail-shell">
           {grupos.length ? (
@@ -291,12 +281,12 @@ export function GavetaDosSemEntrevista({ aprovados, aoFechar }) {
               </Secao>
             ))
           ) : (
-            <div className="empty">
+            <EstadoVazio>
               Nenhum aprovado na análise sem entrevista no recorte atual.
-            </div>
+            </EstadoVazio>
           )}
         </div>
       </div>
-    </Modal>
+    </Gaveta>
   );
 }

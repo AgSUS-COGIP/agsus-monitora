@@ -27,6 +27,8 @@ export default [
       "src/ui/**/*.{js,jsx}",
       "src/componentes/**/*.{js,jsx}",
       "src/recursos/**/*.{js,jsx}",
+      "src/entrevistas/**/*.{js,jsx}",
+      "src/selecao/**/*.{js,jsx}",
       "scripts/**/*.mjs",
       "tests/**/*.js",
       "vite.config.js",

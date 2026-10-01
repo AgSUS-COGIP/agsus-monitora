@@ -2,9 +2,9 @@
   Painel de entrevistas (`entrevistas.html`): o bootstrap, como o do painel de
   recursos (src/recursos/main.jsx). O desenho é o do painel de análises —
   entrevistas.html carrega os mesmos arquivos de src/analises/ e aqui entram,
-  na mesma ordem, os que o main de análises importa. Por cima, só
-  entrevistas.css, com o que é só de entrevistas (caminho do candidato, notas
-  por critério).
+  na mesma ordem, os que o main de análises importa. Por cima, o ui.css (os
+  componentes de src/ui/) e o entrevistas.css, com o que é só de entrevistas
+  (caminho do candidato, notas por critério).
 
   A área vem de `?area=`; a sessão é a do Supabase Auth guardada no
   navegador, a mesma do MONITORA.
@@ -21,6 +21,7 @@ import "../analises/analises-responsive-fixes.css";
 import "../analises/analises-esqueleto.css";
 import "../analises/analises-infinite-table.css";
 import "../analises/analises-painel.css";
+import "../ui/ui.css";
 import "./entrevistas.css";
 import {
   areaDaUrlDoPainel,

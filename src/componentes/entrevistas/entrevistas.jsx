@@ -17,6 +17,7 @@ import {
   alternarTemaDoPainel,
   temaEscuroDoPainel,
 } from "../../lib/tema-do-painel.js";
+import { EstadoVazio } from "../../ui/index.js";
 import { criarAvisoDoPainel } from "../aviso-do-painel.js";
 import { VisaoDeConducao } from "./conducao.jsx";
 import { criarEstadoDaConducao } from "./estado-da-conducao.js";
@@ -216,7 +217,7 @@ export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
                   className="panel panel-pad entrevistas-vazio"
                   role="status"
                 >
-                  <div className="empty">{MENSAGEM_SEM_ENTREVISTAS}</div>
+                  <EstadoVazio>{MENSAGEM_SEM_ENTREVISTAS}</EstadoVazio>
                 </section>
               ) : null}
               <Filtros

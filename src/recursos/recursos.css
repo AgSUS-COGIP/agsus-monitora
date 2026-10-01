@@ -142,23 +142,9 @@ html[data-theme="dark"] .recursos-prazo[data-tone="warning"] {
 .recursos-destaque {
   color: var(--blue2);
 }
+/* O <Aviso> de src/ui/ (desenho em ui.css); aqui, só o espaçamento nos blocos. */
 .recursos-aviso {
   margin: 0 12px 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--blue2);
-  border-radius: 12px;
-  background: var(--card2);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.45;
-}
-.recursos-aviso[data-tone="warning"] {
-  border-left-color: var(--yellow);
-}
-.recursos-aviso[data-tone="danger"] {
-  border-left-color: var(--red);
 }
 .recursos-aviso p {
   margin: 0 0 8px;

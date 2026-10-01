@@ -17,6 +17,7 @@ import {
   alternarTemaDoPainel,
   temaEscuroDoPainel,
 } from "../../lib/tema-do-painel.js";
+import { EstadoVazio } from "../../ui/index.js";
 import { criarAvisoDoPainel } from "../aviso-do-painel.js";
 import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import {
@@ -157,7 +158,7 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
                   className="panel panel-pad selecao-vazio"
                   role="status"
                 >
-                  <div className="empty">{MENSAGEM_SEM_VAGAS}</div>
+                  <EstadoVazio>{MENSAGEM_SEM_VAGAS}</EstadoVazio>
                 </section>
               ) : null}
               <Filtros

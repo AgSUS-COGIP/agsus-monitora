@@ -1,4 +1,13 @@
 import { useEffect, useMemo, useRef } from "react";
+import {
+  CardDeGrafico,
+  ChipDeFiltro,
+  ChipsDeFiltro,
+  GradeDeKpis,
+  Kpi,
+  PainelDeFiltros,
+  TopoDoPainel,
+} from "../../ui/index.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   aptosEEliminados,
@@ -14,7 +23,6 @@ import {
 import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import { Grafico } from "../recursos/grafico.jsx";
-import { classes, usarAlturaDoTopo } from "../recursos/paineis.jsx";
 
 /*
   Os blocos do painel de seleção, na ordem e com os textos do antigo painel
@@ -32,75 +40,9 @@ const truncar = (valor, limite) => {
 
 /* ── Cabeçalho ──────────────────────────────────────────────────────── */
 
-export function Topo({
-  subtitulo,
-  status,
-  escuro,
-  aoTema,
-  aoTelaCheia,
-  aoAtualizar,
-  atualizarDesativado,
-  aoExportar,
-  exportarDesativado,
-}) {
-  const topo = useRef(null);
-  usarAlturaDoTopo(topo);
-  const rotuloDoTema = escuro ? "Usar tema claro" : "Usar tema escuro";
+export function Topo(props) {
   return (
-    <header className="topbar" id="topbar" ref={topo}>
-      <div className="brand">
-        <div>
-          <h1>AgSUS Monitora Recrutamento e Seleção</h1>
-          <p className="sub">{subtitulo}</p>
-        </div>
-      </div>
-      <div className="top-actions">
-        <span id="updatedText" className="status-discreto">
-          {status}
-        </span>
-        <button
-          type="button"
-          className="btn secondary icon"
-          id="themeBtn"
-          title={rotuloDoTema}
-          aria-label={rotuloDoTema}
-          onClick={aoTema}
-        >
-          <i
-            className={`fa-solid ${escuro ? "fa-sun" : "fa-moon"}`}
-            aria-hidden="true"
-          />
-        </button>
-        <button
-          type="button"
-          className="btn secondary icon"
-          id="fullBtn"
-          title="Tela cheia"
-          aria-label="Alternar tela cheia"
-          onClick={aoTelaCheia}
-        >
-          <i className="fa-solid fa-expand" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="btn"
-          id="refreshBtn"
-          disabled={atualizarDesativado}
-          onClick={aoAtualizar}
-        >
-          <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
-        </button>
-        <button
-          type="button"
-          className="btn green"
-          id="exportBtn"
-          disabled={exportarDesativado}
-          onClick={aoExportar}
-        >
-          <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
-        </button>
-      </div>
-    </header>
+    <TopoDoPainel titulo="AgSUS Monitora Recrutamento e Seleção" {...props} />
   );
 }
 
@@ -109,18 +51,11 @@ export function Topo({
 export function Filtros({ filtros, opcoes, area, carregado, aoMudar }) {
   const ativos = filtrosAtivos(filtros, area);
   return (
-    <section
-      className="panel filter-panel selecao-filtros"
-      aria-labelledby="selecaoFiltrosTitulo"
+    <PainelDeFiltros
+      idDoTitulo="selecaoFiltrosTitulo"
+      className="selecao-filtros"
+      recolhivel={false}
     >
-      <div className="filter-head">
-        <div>
-          <h2 className="title" id="selecaoFiltrosTitulo">
-            Refinar resultados
-          </h2>
-        </div>
-      </div>
-
       <div className="selecao-filtros-grade">
         {CAMPOS_DO_FILTRO.map(({ campo, rotulo, todos }) => (
           <div className="field" key={campo}>
@@ -148,45 +83,32 @@ export function Filtros({ filtros, opcoes, area, carregado, aoMudar }) {
         ))}
       </div>
 
-      <div id="filterChips" className="chips" aria-label="Filtros aplicados">
+      <ChipsDeFiltro>
         {ativos.map(({ campo, rotulo, valores }) => (
-          <button
+          <ChipDeFiltro
             key={campo}
-            type="button"
-            className="chip-filter"
-            title={`Tirar o filtro ${rotulo}`}
-            onClick={() => aoMudar(campo, [])}
+            rotulo={rotulo}
+            aoTirar={() => aoMudar(campo, [])}
           >
-            <b>{rotulo}</b>{" "}
             {valores.length > 2
               ? `${valores.length} selecionados`
-              : valores.join(", ")}{" "}
-            <i className="fa-solid fa-xmark" aria-hidden="true" />
-          </button>
+              : valores.join(", ")}
+          </ChipDeFiltro>
         ))}
-      </div>
-    </section>
+      </ChipsDeFiltro>
+    </PainelDeFiltros>
   );
 }
 
 /* ── KPIs ───────────────────────────────────────────────────────────── */
 
-function Kpi({ cor, rotulo, valor, chave, titulo }) {
-  return (
-    <article className={classes("kpi", cor)} data-kpi={chave} title={titulo}>
-      <span>{rotulo}</span>
-      <b>{valor}</b>
-    </article>
-  );
-}
-
 export function Indicadores({ indicadores: k }) {
   const n = formatarQuantidade;
   return (
-    <section
-      className="kpis selecao-kpis"
+    <GradeDeKpis
+      className="selecao-kpis"
       id="kpiGrid"
-      aria-label="Indicadores do recorte"
+      rotulo="Indicadores do recorte"
     >
       <Kpi chave="inscritos" rotulo="Inscritos" valor={n(k.inscritos)} />
       <Kpi cor="k-green" chave="aptos" rotulo="Aptos" valor={n(k.aptos)} />
@@ -223,7 +145,7 @@ export function Indicadores({ indicadores: k }) {
         valor={formatarTaxa(k.taxa)}
         titulo="Contratados / aprovados"
       />
-    </section>
+    </GradeDeKpis>
   );
 }
 
@@ -341,13 +263,8 @@ function opcoesDeRosca(p, extra = {}) {
 
 const CINZA = "#cbd2dc";
 
-function Bloco({ titulo, classe, altura, children }) {
-  return (
-    <article className={classes("panel panel-pad selecao-grafico", classe)}>
-      <h2 className="title">{titulo}</h2>
-      <div className={classes("chart-wrap", altura)}>{children}</div>
-    </article>
-  );
+function Bloco({ classe, ...props }) {
+  return <CardDeGrafico className={`selecao-grafico ${classe}`} {...props} />;
 }
 
 export function Graficos({

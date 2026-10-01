@@ -1,9 +1,5 @@
 import {
-  Children,
-  cloneElement,
-  isValidElement,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -18,9 +14,8 @@ import {
   recursoDuplicado,
   SITUACOES,
 } from "../../lib/recursos-dos-candidatos.js";
-import { Modal } from "../modal.jsx";
-import { Kv, nota, TopoDaGaveta } from "./partes.jsx";
-import { classes } from "./paineis.jsx";
+import { Aviso, Campo, Modal, TopoDaGaveta } from "../../ui/index.js";
+import { Kv, nota } from "./partes.jsx";
 
 /*
   Cadastro e edição de recurso, na gaveta do painel (`.analises-drawer`),
@@ -41,35 +36,6 @@ import { classes } from "./paineis.jsx";
 */
 
 const ESPERA_DA_BUSCA_MS = 300;
-
-const CONTROLES = ["input", "select", "textarea"];
-
-/* O `.field` do painel de análises; o primeiro controle ganha o id do rótulo. */
-function Campo({ rotulo, erro, obrigatorio, children, largo }) {
-  const id = useId();
-  let ligado = false;
-  const filhos = Children.map(children, (filho) => {
-    if (ligado || !isValidElement(filho) || !CONTROLES.includes(filho.type))
-      return filho;
-    ligado = true;
-    return cloneElement(filho, { id });
-  });
-  return (
-    <div className={classes("field", largo && "recursos-campo-largo")}>
-      <label htmlFor={id}>
-        {rotulo}
-        {obrigatorio ? <abbr title="obrigatório"> *</abbr> : null}
-      </label>
-      {filhos}
-      {erro ? (
-        <small className="recursos-erro-campo" role="alert">
-          <i className="fa-solid fa-circle-exclamation" aria-hidden="true" />{" "}
-          {erro}
-        </small>
-      ) : null}
-    </div>
-  );
-}
 
 function ResumoDoCandidato({ analise }) {
   return (
@@ -153,9 +119,9 @@ function BuscaDoCandidato({
       </Campo>
       {buscando ? <p className="recursos-busca-status">Buscando…</p> : null}
       {resultado.erro ? (
-        <p className="recursos-aviso" data-tone="danger">
+        <Aviso como="p" className="recursos-aviso" tom="danger">
           Não foi possível buscar: {resultado.erro}
-        </p>
+        </Aviso>
       ) : null}
       {!buscando &&
       resultado.buscado &&
@@ -440,7 +406,7 @@ export function FormularioDoRecurso({
             {rascunho.fora_analise ? (
               <div className="recursos-fora">
                 {!edicao ? (
-                  <p className="recursos-aviso" data-tone="warning">
+                  <Aviso como="p" className="recursos-aviso" tom="warning">
                     <i
                       className="fa-solid fa-triangle-exclamation"
                       aria-hidden="true"
@@ -453,7 +419,7 @@ export function FormularioDoRecurso({
                     >
                       Voltar à busca
                     </button>
-                  </p>
+                  </Aviso>
                 ) : null}
                 <div className="recursos-formulario-grade">
                   <Campo
@@ -506,7 +472,7 @@ export function FormularioDoRecurso({
             ) : null}
 
             {numeroDuplicado ? (
-              <div className="recursos-aviso" data-tone="warning" role="alert">
+              <Aviso className="recursos-aviso" tom="warning" papel="alert">
                 <p>
                   <i
                     className="fa-solid fa-triangle-exclamation"
@@ -526,7 +492,7 @@ export function FormularioDoRecurso({
                   />
                   <span>Cadastrar mesmo assim</span>
                 </label>
-              </div>
+              </Aviso>
             ) : null}
 
             <div className="recursos-formulario-grade">

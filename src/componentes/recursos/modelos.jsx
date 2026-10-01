@@ -10,8 +10,8 @@ import {
   rotuloDaSituacao,
   SITUACOES,
 } from "../../lib/recursos-dos-candidatos.js";
-import { Modal } from "../modal.jsx";
-import { dataHora, Secao, TopoDaGaveta } from "./partes.jsx";
+import { Aviso, Carregando, Gaveta } from "../../ui/index.js";
+import { dataHora, Secao } from "./partes.jsx";
 
 /*
   "Modelos de resposta" (só para quem administra Recursos, nível admin), na
@@ -290,27 +290,22 @@ export function PainelDeModelos({ estado }) {
   const modelos = dados?.modelos || [];
 
   return (
-    <Modal
+    <Gaveta
       id="recursosModelos"
-      rotuloId="recursosModelosTitulo"
+      tituloId="recursosModelosTitulo"
       aoFechar={estado.fecharModelos}
-      className="analises-drawer-backdrop recursos-gaveta"
-      cartaoClassName="analises-drawer"
+      className="recursos-gaveta"
+      titulo="Modelos de resposta"
+      rotuloDoFechar="Fechar modelos de resposta"
     >
-      <TopoDaGaveta
-        titulo="Modelos de resposta"
-        tituloId="recursosModelosTitulo"
-        rotuloDoFechar="Fechar modelos de resposta"
-        aoFechar={estado.fecharModelos}
-      />
       <div id="analisesDrawerBody">
         <div className="detail-shell">
           {!dados ? (
-            <div className="analises-detail-analysis">Carregando…</div>
+            <Carregando className="analises-detail-analysis" />
           ) : dados.erro ? (
-            <p className="recursos-aviso" data-tone="danger">
+            <Aviso como="p" className="recursos-aviso" tom="danger">
               Não foi possível carregar os modelos. <small>{dados.erro}</small>
-            </p>
+            </Aviso>
           ) : editando ? (
             <FormularioDoModelo
               key={editando.id || "novo"}
@@ -355,6 +350,6 @@ export function PainelDeModelos({ estado }) {
           )}
         </div>
       </div>
-    </Modal>
+    </Gaveta>
   );
 }

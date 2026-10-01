@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useState } from "react";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
   ETAPAS,
@@ -9,32 +8,25 @@ import {
   tomDaSituacao,
 } from "../../lib/recursos-dos-candidatos.js";
 import { rotuloDoEstado, tomDoEstado } from "../../lib/resposta-do-recurso.js";
-import { classes } from "./paineis.jsx";
+import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
 
 /*
-  "Fila de recursos": a tabela do painel, com a marcação da "Fila operacional
-  consolidada" do painel de análises (`.table-card` > `.table-head`,
-  `.table-meta`, `.table-wrap` com `tbody#tableBody`) e o carregamento
-  contínuo dele: 50 linhas por vez, e mais 50 quando a rolagem da fila chega
-  perto do fim (a faixa `.analises-infinite-status` diz quanto falta). A busca
-  do cabeçalho vale só para a fila, como lá. Clique na linha (ou Enter) ou em
-  "Detalhes" abre a gaveta.
+  "Fila de recursos": a tabela do painel, na tabela de carregamento contínuo
+  dos painéis (TabelaInfinita, src/ui/). A busca do cabeçalho vale só para a
+  fila. Clique na linha (ou Enter) ou em "Detalhes" abre a gaveta.
 */
 
-const POR_VEZ = 50;
-const PERTO_DO_FIM_PX = 160;
-const LINHAS_DO_ESQUELETO = 8;
 const COLUNAS = [
-  ["Nº", "6%"],
-  ["Candidato", "19%"],
-  ["Edital", "13%"],
-  ["Origem", "10%"],
-  ["Analista", "11%"],
-  ["Situação", "10%"],
-  ["Etapas", "8%"],
-  ["Prazo", "11%"],
-  ["Aberto há", "6%"],
-  ["Ações", "8%"],
+  { rotulo: "Nº", largura: "6%" },
+  { rotulo: "Candidato", largura: "19%" },
+  { rotulo: "Edital", largura: "13%" },
+  { rotulo: "Origem", largura: "10%" },
+  { rotulo: "Analista", largura: "11%" },
+  { rotulo: "Situação", largura: "10%" },
+  { rotulo: "Etapas", largura: "8%" },
+  { rotulo: "Prazo", largura: "11%" },
+  { rotulo: "Aberto há", largura: "6%" },
+  { rotulo: "Ações", largura: "8%" },
 ];
 
 export function dataBR(valor) {
@@ -54,11 +46,9 @@ const BADGE_DO_TOM = {
 
 export function SeloDaSituacao({ situacao }) {
   return (
-    <span
-      className={`badge ${BADGE_DO_TOM[tomDaSituacao(situacao)] || "neutro"}`}
-    >
+    <Selo tom={BADGE_DO_TOM[tomDaSituacao(situacao)]}>
       {rotuloDaSituacao(situacao)}
-    </span>
+    </Selo>
   );
 }
 
@@ -66,17 +56,17 @@ export function SeloDaSituacao({ situacao }) {
 export function SeloDaResposta({ estado }) {
   if (!estado) return null;
   return (
-    <span
-      className={`badge ${BADGE_DO_TOM[tomDoEstado(estado)] || "neutro"}`}
-      title="Resposta ao candidato"
+    <Selo
+      tom={BADGE_DO_TOM[tomDoEstado(estado)]}
+      titulo="Resposta ao candidato"
     >
       Resposta: {rotuloDoEstado(estado).toLowerCase()}
-    </span>
+    </Selo>
   );
 }
 
 export function MarcaForaDasAnalises() {
-  return <span className="badge neutro">Fora das análises</span>;
+  return <Selo>Fora das análises</Selo>;
 }
 
 /* Prazo com o destaque de atraso: vencido (vermelho), vence em até 2 dias (âmbar). */
@@ -111,19 +101,20 @@ export function detalheDoPrazo(recurso) {
 export function SeloDoPrazoCumprido({ recurso, ligado = true }) {
   if (!ligado || typeof recurso?.noPrazo !== "boolean") return null;
   return recurso.noPrazo ? (
-    <span
-      className="badge aprovado recursos-no-prazo"
-      title="Decidido dentro do prazo de resposta"
+    <Selo
+      tom="aprovado"
+      className="recursos-no-prazo"
+      titulo="Decidido dentro do prazo de resposta"
     >
       No prazo
-    </span>
+    </Selo>
   ) : (
-    <span
-      className="badge neutro recursos-no-prazo"
-      title="Decidido depois do prazo de resposta"
+    <Selo
+      className="recursos-no-prazo"
+      titulo="Decidido depois do prazo de resposta"
     >
       Fora do prazo
-    </span>
+    </Selo>
   );
 }
 
@@ -161,16 +152,73 @@ export function MarcasDasEtapas({ etapas }) {
   );
 }
 
-function LinhasDoEsqueleto() {
-  return Array.from({ length: LINHAS_DO_ESQUELETO }, (_, linha) => (
-    <tr key={linha} aria-hidden="true">
-      {COLUNAS.map(([rotulo]) => (
-        <td key={rotulo}>
-          <span>&nbsp;</span>
-        </td>
-      ))}
+const pelaBusca = (recursos, busca) =>
+  filtrarRecursos(recursos, { ...FILTROS_VAZIOS, busca });
+
+function LinhaDoRecurso({ recurso: r, origens, comemoracoes, aoAbrir }) {
+  return (
+    <tr
+      className="recursos-linha"
+      tabIndex={0}
+      onClick={() => aoAbrir(r.id)}
+      onKeyDown={(evento) => {
+        if (
+          evento.target === evento.currentTarget &&
+          (evento.key === "Enter" || evento.key === " ")
+        ) {
+          evento.preventDefault();
+          aoAbrir(r.id);
+        }
+      }}
+      aria-label={`Recurso nº ${r.nu} de ${r.candidato}`}
+    >
+      <td>
+        <div className="primary-text">{r.nu}</div>
+      </td>
+      <td>
+        <div className="primary-text">{r.candidato}</div>
+        <span className="secondary-text">
+          {[r.codigo && `Cód. ${r.codigo}`, r.vaga && `Vaga ${r.vaga}`]
+            .filter(Boolean)
+            .join(" · ") || r.cargo}
+        </span>
+        {r.fora_analise ? <MarcaForaDasAnalises /> : null}
+      </td>
+      <td>
+        <div className="primary-text">{r.edital}</div>
+        <span className="secondary-text">{r.unidade}</span>
+      </td>
+      <td>{rotuloDaOrigem(r.origem, origens)}</td>
+      <td>{r.analista || "Sem analista"}</td>
+      <td>
+        <SeloDaSituacao situacao={r.situacao} />
+        <SeloDaResposta estado={r.respostaEstado} />
+      </td>
+      <td>
+        <MarcasDasEtapas etapas={r.etapas} />
+      </td>
+      <td>
+        <Prazo recurso={r} comemoracoes={comemoracoes} />
+      </td>
+      <td>
+        {r.diasEmAberto === null || r.diasEmAberto === undefined
+          ? "—"
+          : `${formatNumberBR(r.diasEmAberto)} d`}
+      </td>
+      <td>
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={(evento) => {
+            evento.stopPropagation();
+            aoAbrir(r.id);
+          }}
+        >
+          <i className="fa-solid fa-chevron-down" aria-hidden="true" /> Detalhes
+        </button>
+      </td>
     </tr>
-  ));
+  );
 }
 
 export function TabelaDeRecursos({
@@ -183,185 +231,52 @@ export function TabelaDeRecursos({
   aoNovo,
   comemoracoes = false,
 }) {
-  const [busca, setBusca] = useState("");
-  const [limite, setLimite] = useState(POR_VEZ);
-  const naFila = useMemo(
-    () => filtrarRecursos(recursos, { ...FILTROS_VAZIOS, busca }),
-    [recursos, busca],
-  );
-  useEffect(() => setLimite(POR_VEZ), [naFila]);
-  const visiveis = naFila.slice(0, limite);
-  const faltam = naFila.length - visiveis.length;
-
-  function aoRolar(evento) {
-    const caixa = evento.currentTarget;
-    if (
-      faltam > 0 &&
-      caixa.scrollTop + caixa.clientHeight >=
-        caixa.scrollHeight - PERTO_DO_FIM_PX
-    )
-      setLimite((atual) => atual + POR_VEZ);
-  }
-
   return (
-    <section className="panel table-card" aria-labelledby="recursosFilaTitulo">
-      <div className="table-head">
-        <div>
-          <h2 className="title" id="recursosFilaTitulo">
-            Fila de recursos
-          </h2>
-        </div>
-        <div className="table-tools">
-          <input
-            type="search"
-            id="tableSearch"
-            value={busca}
-            disabled={!carregado}
-            placeholder="Buscar somente na fila de recursos"
-            aria-label="Buscar somente na fila de recursos"
-            onChange={(evento) => setBusca(evento.target.value)}
-          />
-        </div>
-      </div>
-      <div className="table-meta">
-        <span id="tableInfo">
-          {carregado
-            ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(naFila.length)} registros`
-            : "Mostrando 0 de 0 registros"}
+    <TabelaInfinita
+      idDoTitulo="recursosFilaTitulo"
+      titulo="Fila de recursos"
+      busca={{
+        placeholder: "Buscar somente na fila de recursos",
+        rotulo: "Buscar somente na fila de recursos",
+      }}
+      carregado={carregado}
+      itens={recursos}
+      filtrarPelaBusca={pelaBusca}
+      colunas={COLUNAS}
+      linha={(r) => (
+        <LinhaDoRecurso
+          key={r.id}
+          recurso={r}
+          origens={origens}
+          comemoracoes={comemoracoes}
+          aoAbrir={aoAbrir}
+        />
+      )}
+      total={total}
+      vazio={
+        <>
+          Nenhum recurso cadastrado nesta área.{" "}
+          {podeEditar ? (
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={aoNovo}
+            >
+              <i className="fa-solid fa-plus" aria-hidden="true" /> Cadastrar o
+              primeiro
+            </button>
+          ) : null}
+        </>
+      }
+      informacao={(quantos) => (
+        <span id="recursosContagem">
+          {quantos === null
+            ? "Carregando…"
+            : quantos === total
+              ? `${formatNumberBR(total)} ${total === 1 ? "recurso" : "recursos"}`
+              : `${formatNumberBR(quantos)} de ${formatNumberBR(total)}`}
         </span>
-        <span id="pageInfo">
-          <span id="recursosContagem">
-            {carregado
-              ? naFila.length === total
-                ? `${formatNumberBR(total)} ${total === 1 ? "recurso" : "recursos"}`
-                : `${formatNumberBR(naFila.length)} de ${formatNumberBR(total)}`
-              : "Carregando…"}
-          </span>
-        </span>
-      </div>
-      <div className="table-wrap" onScroll={aoRolar}>
-        <table>
-          <thead>
-            <tr>
-              {COLUNAS.map(([rotulo, largura]) => (
-                <th key={rotulo} scope="col" style={{ width: largura }}>
-                  {rotulo}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            {!carregado ? (
-              <LinhasDoEsqueleto />
-            ) : visiveis.length ? (
-              visiveis.map((r) => (
-                <tr
-                  key={r.id}
-                  className="recursos-linha"
-                  tabIndex={0}
-                  onClick={() => aoAbrir(r.id)}
-                  onKeyDown={(evento) => {
-                    if (
-                      evento.target === evento.currentTarget &&
-                      (evento.key === "Enter" || evento.key === " ")
-                    ) {
-                      evento.preventDefault();
-                      aoAbrir(r.id);
-                    }
-                  }}
-                  aria-label={`Recurso nº ${r.nu} de ${r.candidato}`}
-                >
-                  <td>
-                    <div className="primary-text">{r.nu}</div>
-                  </td>
-                  <td>
-                    <div className="primary-text">{r.candidato}</div>
-                    <span className="secondary-text">
-                      {[
-                        r.codigo && `Cód. ${r.codigo}`,
-                        r.vaga && `Vaga ${r.vaga}`,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ") || r.cargo}
-                    </span>
-                    {r.fora_analise ? <MarcaForaDasAnalises /> : null}
-                  </td>
-                  <td>
-                    <div className="primary-text">{r.edital}</div>
-                    <span className="secondary-text">{r.unidade}</span>
-                  </td>
-                  <td>{rotuloDaOrigem(r.origem, origens)}</td>
-                  <td>{r.analista || "Sem analista"}</td>
-                  <td>
-                    <SeloDaSituacao situacao={r.situacao} />
-                    <SeloDaResposta estado={r.respostaEstado} />
-                  </td>
-                  <td>
-                    <MarcasDasEtapas etapas={r.etapas} />
-                  </td>
-                  <td>
-                    <Prazo recurso={r} comemoracoes={comemoracoes} />
-                  </td>
-                  <td>
-                    {r.diasEmAberto === null || r.diasEmAberto === undefined
-                      ? "—"
-                      : `${formatNumberBR(r.diasEmAberto)} d`}
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn secondary small"
-                      onClick={(evento) => {
-                        evento.stopPropagation();
-                        aoAbrir(r.id);
-                      }}
-                    >
-                      <i
-                        className="fa-solid fa-chevron-down"
-                        aria-hidden="true"
-                      />{" "}
-                      Detalhes
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={COLUNAS.length} className="empty">
-                  {total ? (
-                    "Nenhum registro encontrado."
-                  ) : (
-                    <>
-                      Nenhum recurso cadastrado nesta área.{" "}
-                      {podeEditar ? (
-                        <button
-                          type="button"
-                          className="btn secondary small"
-                          onClick={aoNovo}
-                        >
-                          <i className="fa-solid fa-plus" aria-hidden="true" />{" "}
-                          Cadastrar o primeiro
-                        </button>
-                      ) : null}
-                    </>
-                  )}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {carregado && naFila.length ? (
-        <div
-          className="analises-infinite-status"
-          role="status"
-          aria-live="polite"
-        >
-          {faltam > 0
-            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naFila.length)} registros`
-            : `Todos os ${formatNumberBR(naFila.length)} registros do recorte foram carregados`}
-        </div>
-      ) : null}
-    </section>
+      )}
+    />
   );
 }

@@ -3,7 +3,8 @@ import { formatNumberBR } from "../../lib/formatters.js";
 /*
   Peças comuns da gaveta do painel de recursos (detalhe, formulário, resposta,
   anexos e modelos): data e nota formatadas, o `.kv` e a seção
-  `.analises-detail-section` do painel de análises e o topo da gaveta.
+  `.analises-detail-section` do painel de análises. O topo da gaveta e a
+  gaveta inteira estão em src/ui/ (TopoDaGaveta, Gaveta).
 */
 
 export const dataHora = (valor) =>
@@ -50,36 +51,5 @@ export function Secao({ icone, titulo, secao, children }) {
       </div>
       {children}
     </section>
-  );
-}
-
-/* O topo da gaveta (e do formulário): sobretítulo, título, resumo e fechar. */
-export function TopoDaGaveta({
-  sobretitulo,
-  titulo,
-  tituloId,
-  resumo,
-  aoFechar,
-  rotuloDoFechar,
-}) {
-  return (
-    <div className="analises-drawer-head">
-      <div>
-        {sobretitulo ? <span className="eyebrow">{sobretitulo}</span> : null}
-        <h2 id={tituloId}>{titulo}</h2>
-        {resumo ? (
-          <div className="analises-drawer-summary">{resumo}</div>
-        ) : null}
-      </div>
-      <button
-        type="button"
-        className="analises-drawer-close"
-        aria-label={rotuloDoFechar}
-        title="Fechar"
-        onClick={aoFechar}
-      >
-        <i className="fa-solid fa-xmark" aria-hidden="true" />
-      </button>
-    </div>
   );
 }
