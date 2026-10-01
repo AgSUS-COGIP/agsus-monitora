@@ -1,4 +1,5 @@
 import {
+  canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,
   canManageCandidateAttachments,
   canManageSubJudice,
@@ -53,11 +54,57 @@ export function canEditCandidateAttachments(profile, candidate) {
   );
 }
 
+/*
+  Remover vale só para quem entrou como sub judice (inclusão). Quem teve a nota
+  ou a modalidade alterada por decisão judicial sai pelo "Desfazer alteração",
+  que devolve os valores do resultado publicado.
+*/
 export function canEditSubJudice(profile, candidate) {
   return (
     Boolean(candidate?.lista_ativa && candidate?.sub_judice) &&
+    !candidate?.alterado_judicialmente &&
     canManageSubJudice(profile)
   );
+}
+
+/** Alterar nota/modalidade por decisão judicial: candidato de lista ativa, só o admin. */
+export function canAlterarCandidatoSubJudice(profile, candidate) {
+  return (
+    Boolean(candidate?.lista_ativa) && canAlterarPorDecisaoJudicial(profile)
+  );
+}
+
+export function canDesfazerAlteracaoSubJudice(profile, candidate) {
+  return (
+    Boolean(candidate?.alterado_judicialmente) &&
+    canAlterarCandidatoSubJudice(profile, candidate)
+  );
+}
+
+/*
+  O que a decisão judicial mudou: `{ nota, modalidade, classificacaoOriginal }`,
+  com nota e modalidade em `{ de, para }`, ou nulas quando não mudaram. Nulo de
+  todo quando o candidato não foi alterado.
+*/
+export function alteracaoJudicial(candidate) {
+  if (!candidate?.alterado_judicialmente) return null;
+  const notaDe = Number(candidate.nota_original);
+  const notaPara = Number(candidate.nota);
+  const modalidadeDe = modalidadeSemAspas(candidate.modalidade_original);
+  const modalidadePara = modalidadeSemAspas(candidate.modalidade);
+  return {
+    nota:
+      candidate.nota_original != null &&
+      Number.isFinite(notaDe) &&
+      notaDe !== notaPara
+        ? { de: notaDe, para: notaPara }
+        : null,
+    modalidade:
+      modalidadeDe !== modalidadePara
+        ? { de: modalidadeDe, para: modalidadePara }
+        : null,
+    classificacaoOriginal: candidate.classificacao_original ?? null,
+  };
 }
 
 export function filterApprovedCandidates(rows, filters = {}) {

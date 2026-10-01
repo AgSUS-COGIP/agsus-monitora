@@ -1206,7 +1206,7 @@ async function loginWithGoogle() {
       btn.disabled = false;
       btn.removeAttribute("aria-busy");
     }
-    if (btnText) btnText.textContent = "Entrar com Google institucional";
+    if (btnText) btnText.textContent = "Entrar com sua conta institucional";
     showAlert(
       "loginMsg",
       "Falha ao iniciar login Google: " + error.message,
@@ -1226,7 +1226,7 @@ function resetGoogleLoginButton() {
     btn.disabled = false;
     btn.removeAttribute("aria-busy");
   }
-  setText("googleLoginText", "Entrar com Google institucional");
+  setText("googleLoginText", "Entrar com sua conta institucional");
 }
 
 /*
@@ -1813,7 +1813,7 @@ function applyConfigToUi() {
     googleBtn.style.display = enabled ? "flex" : "none";
     setText(
       "googleLoginText",
-      cfgValue("auth_google_button_text") || "Entrar com Google institucional",
+      cfgValue("auth_google_button_text") || "Entrar com sua conta institucional",
     );
   }
   setText("sidebarUserLabel", cfgValue("sidebar_user_label"));

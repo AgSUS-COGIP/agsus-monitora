@@ -29,7 +29,7 @@ const RESPOSTA_DA_RPC = {
   auth_access_panel_color: "#ffffff",
   auth_access_greeting: "Bem-vindo ao Agosto Lilás",
   auth_access_instruction: "Entre com sua conta institucional.",
-  auth_google_button_text: "Entrar com Google institucional",
+  auth_google_button_text: "Entrar com sua conta institucional",
 };
 
 const IDENTIDADE_ATUAL = {
@@ -38,7 +38,7 @@ const IDENTIDADE_ATUAL = {
   panelColor: "#ffffff",
   greeting: "Bem-vindo ao Agosto Lilás",
   instruction: "Entre com sua conta institucional.",
-  buttonText: "Entrar com Google institucional",
+  buttonText: "Entrar com sua conta institucional",
 };
 
 const MARCA_ANTIGA = {
@@ -320,7 +320,7 @@ describe("os seis cenários de identidade", () => {
 
     const naTela = identidadeNaTela();
     expect(naTela.saudacao).toBe(IDENTIDADE_ATUAL.greeting);
-    expect(naTela.saudacao).not.toBe("Seja bem-vindo(a) à AgSUS");
+    expect(naTela.saudacao).not.toBe("Bem-vindo(a) ao MONITORA");
     expect(lerMarcaGuardada().backgroundUrl).toBe(
       IDENTIDADE_ATUAL.backgroundUrl,
     );

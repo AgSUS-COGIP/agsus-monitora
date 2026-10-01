@@ -25,20 +25,38 @@ const COLUNAS = [
   "sub_judice",
   "codigo_vaga",
 ];
+/*
+  Alteração por decisão judicial (migration 20261001150000): só a linha
+  alterada leva estas 4 posições a mais; as outras ficam com 12.
+*/
+const COLUNAS_DA_ALTERACAO = [
+  "alterado_judicialmente",
+  "nota_original",
+  "modalidade_original",
+  "classificacao_original",
+];
+const TODAS_AS_COLUNAS = [...COLUNAS, ...COLUNAS_DA_ALTERACAO];
+const daAlteracao = (candidato) =>
+  candidato.alterado_judicialmente
+    ? COLUNAS_DA_ALTERACAO.map((coluna) => candidato[coluna] ?? null)
+    : [];
 
 export function compactarCandidatos(candidatos) {
   const listas = {};
   const linhas = candidatos.map((candidato, i) => {
     const lista = candidato.lista_id ?? `lista-${i}`;
     listas[lista] = COLUNAS_DA_LISTA.map((coluna) => candidato[coluna] ?? null);
-    return COLUNAS.map((coluna) =>
-      coluna === "lista_id" ? lista : (candidato[coluna] ?? null),
-    );
+    return [
+      ...COLUNAS.map((coluna) =>
+        coluna === "lista_id" ? lista : (candidato[coluna] ?? null),
+      ),
+      ...daAlteracao(candidato),
+    ];
   });
   return {
     colunas_da_lista: COLUNAS_DA_LISTA,
     listas,
-    colunas: COLUNAS,
+    colunas: TODAS_AS_COLUNAS,
     linhas,
     total: linhas.length,
   };
@@ -79,15 +97,16 @@ export function compactarPorArea(
       ].sort(),
     ]),
   );
-  const linhas = candidatos.map((candidato, i) =>
-    COLUNAS.map((coluna) => {
+  const linhas = candidatos.map((candidato, i) => [
+    ...COLUNAS.map((coluna) => {
       if (coluna === "lista_id")
         return ids.indexOf(candidato.lista_id ?? `lista-${i}`);
       const valor = candidato[coluna] ?? null;
       if (!DICIONARIZADAS.includes(coluna) || valor === null) return valor;
       return dicionarios[coluna].indexOf(valor);
     }),
-  );
+    ...daAlteracao(candidato),
+  ]);
   return {
     formato: 2,
     area,
@@ -95,7 +114,7 @@ export function compactarPorArea(
     inalterado: false,
     colunas_da_lista: ["lista_id", ...COLUNAS_DA_LISTA],
     listas,
-    colunas: COLUNAS,
+    colunas: TODAS_AS_COLUNAS,
     dicionarios,
     linhas,
     total: linhas.length,

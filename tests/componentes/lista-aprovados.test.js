@@ -893,6 +893,9 @@ describe("sub judice", () => {
       p_cargo: "Médico",
       p_nome: "Elza Martins",
       p_nota: 87.5,
+      p_modalidade: null,
+      p_processo: null,
+      p_observacao: null,
     });
     expect($("subJudiceModal")).toBeNull();
   });
@@ -934,6 +937,135 @@ describe("sub judice", () => {
       ),
     );
     expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("sub judice: candidato já aprovado (decisão judicial)", () => {
+  const ADMIN = { perfil: "admin" };
+  const martelo = (nome) =>
+    linhaDe(nome)?.querySelector('[data-approved-action="alteracao-judicial"]');
+  /* Tirou 33, a Justiça deu 40: o banco já guardou o resultado publicado. */
+  const ALTERADA = () =>
+    candidato({
+      candidato_id: "elza",
+      nome: "Elza Martins",
+      nota: 40,
+      sub_judice: true,
+      alterado_judicialmente: true,
+      nota_original: 33,
+      modalidade_original: "Ampla concorrência",
+      classificacao_original: 7,
+    });
+
+  it("o editor só vê a aba de novo candidato e nenhum martelo", async () => {
+    await montar();
+    expect(martelo("Ana Ribeiro")).toBeNull();
+    await clicar($("approvedAddSubJudiceBtn"));
+    expect($("subJudiceTabAprovado")).toBeNull();
+    expect($("subJudicePainelAprovado")).toBeNull();
+    expect($("subJudiceSave")).not.toBeNull();
+  });
+
+  it("o admin escolhe edital, cargo e candidato e registra a nota nova", async () => {
+    const { supabase } = await montar({ perfil: ADMIN });
+    await clicar($("approvedAddSubJudiceBtn"));
+    await clicar($("subJudiceTabAprovado"));
+    expect($("subJudiceTabAprovado").getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    await escolher($("subJudiceAprovadoCargo"), "Médico");
+    expect(
+      [...$("subJudiceAprovadoCandidato").options].map((opcao) => opcao.value),
+    ).toEqual(["", "bruno"]);
+    await escolher($("subJudiceAprovadoCandidato"), "bruno");
+    // Começa com a nota e a modalidade atuais.
+    expect($("alteracaoJudicialNota").value).toBe("90,5");
+    expect($("alteracaoJudicialModalidade").value).toBe("Pessoa negra");
+    await digitar($("alteracaoJudicialNota"), "95");
+    await digitar($("alteracaoJudicialProcesso"), "1000000-00.2026.4.01.3400");
+
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialSalvar"));
+    expect(supabase.rpc).toHaveBeenCalledWith("alterar_candidato_sub_judice", {
+      p_candidato_id: "bruno",
+      p_nota: 95,
+      p_modalidade: null,
+      p_processo: "1000000-00.2026.4.01.3400",
+      p_observacao: null,
+    });
+    expect($("subJudiceModal")).toBeNull();
+  });
+
+  it("muda só a modalidade, sem mandar a nota", async () => {
+    const { supabase } = await montar({ perfil: ADMIN });
+    await clicar(martelo("Ana Ribeiro"));
+    await escolher($("alteracaoJudicialModalidade"), "Pessoa negra");
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialSalvar"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "alterar_candidato_sub_judice",
+      expect.objectContaining({
+        p_candidato_id: "ana",
+        p_nota: null,
+        p_modalidade: "Pessoa negra",
+      }),
+    );
+  });
+
+  it("o martelo da linha abre na aba do candidato já aprovado, com ele escolhido", async () => {
+    await montar({ perfil: ADMIN });
+    await clicar(martelo("Ana Ribeiro"));
+    expect($("subJudiceTabAprovado").getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect($("subJudicePainelNovo").classList.contains("hidden")).toBe(true);
+    expect($("subJudiceAprovadoCandidato").value).toBe("ana");
+  });
+
+  it("sem mudar nota nem modalidade, não sai para o banco", async () => {
+    const { supabase, toast } = await montar({ perfil: ADMIN });
+    await clicar(martelo("Ana Ribeiro"));
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialSalvar"));
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      "Informe uma nota ou modalidade diferente da atual.",
+      "warn",
+    );
+  });
+
+  it("o alterado mostra 33 → 40 e não tem o botão de remover", async () => {
+    await montar({
+      supabase: supabaseFalso({ candidatos: [...CANDIDATOS(), ALTERADA()] }),
+    });
+    const linha = linhaDe("Elza Martins");
+    expect(linha.querySelector(".approved-de-para s").textContent).toBe("33");
+    expect(linha.querySelector(".approved-de-para strong").textContent).toBe(
+      "40",
+    );
+    expect(
+      linha.querySelector('[data-approved-action="remove-subjudice"]'),
+    ).toBeNull();
+  });
+
+  it("o admin desfaz a alteração, com confirmação", async () => {
+    const confirmar = vi.fn(() => true);
+    const { supabase } = await montar({
+      perfil: ADMIN,
+      confirmar,
+      supabase: supabaseFalso({ candidatos: [...CANDIDATOS(), ALTERADA()] }),
+    });
+    await clicar(martelo("Elza Martins"));
+    expect(
+      document.querySelector(".approved-decisao-original").textContent,
+    ).toContain("33");
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialDesfazer"));
+    expect(confirmar.mock.calls[0][0]).toContain("Elza Martins");
+    expect(supabase.rpc).toHaveBeenCalledWith("desfazer_alteracao_sub_judice", {
+      p_candidato_id: "elza",
+      p_observacao: null,
+    });
   });
 });
 

@@ -130,6 +130,16 @@ export function canManageSubJudice(profile) {
   return hasLevel(profile, "contratador");
 }
 
+/*
+  Alterar nota ou modalidade de quem já está na lista por decisão judicial, e
+  desfazer a alteração (20261001150000_sub_judice_alteracao.sql): só o admin
+  do módulo. Incluir sub judice continua com o editor.
+*/
+export function canAlterarPorDecisaoJudicial(profile) {
+  if (profile?.permissoes) return hasResource(profile, "aprovados", 3);
+  return hasLevel(profile, "admin");
+}
+
 export function canManageSettings(profile) {
   if (profile?.permissoes) return hasResource(profile, "configuracoes", 2);
   return hasLevel(profile, "admin");
