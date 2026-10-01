@@ -51,10 +51,12 @@ acessos/                     Configurações › Acessos (#acessosApp, dentro da
   aba-usuarios.jsx           Ativos: grupo (tag) + um select por módulo ("Do grupo" ou individual),
                              filtros, barra de salvar com motivo · Pendentes: solicitacoes.jsx
   solicitacoes.jsx           pedidos de acesso: aprovar com grupo + coordenação (ou áreas) / recusar
-  gaveta-do-usuario.jsx      gaveta da pessoa: áreas, painéis e "como a pessoa vê" (só leitura)
+  gaveta-do-usuario.jsx      modal da pessoa (centralizado, 880px; ids/classes ainda "gaveta"): grupo,
+                             coordenação e áreas | "como a pessoa vê"; Avançado: exceções, painéis
   aba-grupos.jsx             lista + detalhe: nível de cada módulo no grupo (só admin global)
   aba-coordenacoes.jsx       lista + detalhe: área, responsável, unidades, editais (só admin global)
-  partes.jsx                 controle segmentado, lista mestre, cabeçalho da gaveta, campo de motivo
+  partes.jsx                 controle segmentado, lista mestre, cabeçalho da gaveta (com avatar e
+                             iniciais()), campo de motivo
 lista-aprovados/             a página #page-approved e os seus modais
   lista-aprovados.jsx        <ListaAprovados> e montarListaAprovados() → window.aprovadosController
   estado.js                  candidatos, listas, configuração de convocação, modal aberto e as ações

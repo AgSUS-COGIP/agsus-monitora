@@ -122,10 +122,36 @@ export function ListaMestre({
   );
 }
 
-export function CabecalhoDaGaveta({ tituloId, titulo, subtitulo, aoFechar }) {
+/** "Ana Luísa Costa" → "AC": primeira e última palavra. */
+export function iniciais(nome) {
+  const partes = String(nome || "")
+    .replace(/[^\p{L}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((parte) => parte.length > 2 || /^[A-ZÀ-Ý]/.test(parte));
+  if (!partes.length) return "?";
+  const primeira = partes[0][0];
+  const ultima = partes.length > 1 ? partes.at(-1)[0] : "";
+  return (primeira + ultima).toLocaleUpperCase("pt-BR");
+}
+
+export function CabecalhoDaGaveta({
+  tituloId,
+  titulo,
+  subtitulo,
+  avatar,
+  aoFechar,
+}) {
   return (
     <div className="acessos-gaveta-cabecalho">
-      <div>
+      {avatar ? (
+        <span
+          className="acessos-avatar acessos-avatar-grande"
+          aria-hidden="true"
+        >
+          {iniciais(avatar)}
+        </span>
+      ) : null}
+      <div className="acessos-gaveta-titulo">
         <h3 id={tituloId}>{titulo}</h3>
         {subtitulo ? <p>{subtitulo}</p> : null}
       </div>

@@ -2,7 +2,7 @@
   Configurações › Acessos (React: src/componentes/acessos/). Segue o design.md
   do Design System AgSUS: hierarquia e espaço em vez de caixas — tabela sem
   moldura nem grade, lista + detalhe sem cards, controle segmentado (10.5),
-  grupo como tag, gaveta lateral (11.11) e barra de salvar fixa só quando há
+  grupo como tag, modal da pessoa e barra de salvar fixa só quando há
   alteração. As abas usam .approved-tabs/.approved-tab (lista-convocacao.css).
 */
 
@@ -98,6 +98,7 @@ td.acessos-vazio {
 }
 .acessos-tela input:not([type="checkbox"]),
 .acessos-tela select,
+.acessos-gaveta input:not([type="checkbox"]),
 .acessos-gaveta select {
   min-height: 36px;
   padding: 0 var(--space-3);
@@ -465,20 +466,37 @@ td.acessos-vazio {
   max-width: 560px;
 }
 
-/* ── Gaveta lateral (design.md 11.11) ─────────────────────────────────────── */
-.modal.acessos-gaveta {
-  place-items: stretch end;
-  padding: 0;
-}
+/*
+  ── Modal da pessoa (DESIGN.md 4, "detalhe": até 880px) ───────────────────────
+  Centralizado, cabeçalho e rodapé fixos, só o corpo rola (nunca na
+  horizontal). O nome "gaveta" ficou das classes e dos ids.
+*/
 .acessos-gaveta .acessos-gaveta-cartao {
   display: flex;
   flex-direction: column;
-  width: min(480px, 100vw);
-  height: 100dvh;
-  max-height: none;
+  width: min(880px, calc(100vw - 32px));
+  max-height: min(92dvh, 960px);
+  overflow: hidden;
   border: 0;
-  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-overlay);
+}
+.acessos-gaveta .acessos-gaveta-cabecalho {
+  align-items: center;
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.acessos-gaveta-titulo {
+  flex: 1;
+  min-width: 0;
+}
+.acessos-gaveta-titulo p {
+  overflow-wrap: anywhere;
+}
+.acessos-avatar.acessos-avatar-grande {
+  width: 44px;
+  height: 44px;
+  font-size: var(--text-body-sm);
 }
 .acessos-gaveta-cabecalho {
   display: flex;
@@ -500,14 +518,52 @@ td.acessos-vazio {
 .acessos-gaveta-corpo {
   display: grid;
   align-content: start;
-  gap: var(--space-8);
+  gap: var(--space-6);
   flex: 1;
-  overflow: auto;
-  padding: 0 var(--space-6) var(--space-6);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden auto;
+  padding: var(--space-6);
 }
 .acessos-gaveta-corpo section {
   display: grid;
   gap: var(--space-3);
+  min-width: 0;
+}
+/* Configurar à esquerda; o resultado ("como a pessoa vê") à direita, à vista. */
+.acessos-gaveta-colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: var(--space-8);
+  align-items: start;
+}
+.acessos-gaveta-coluna {
+  display: grid;
+  gap: var(--space-6);
+  min-width: 0;
+}
+/* O select cresce até a coordenação de nome mais longo: preso à coluna. */
+.acessos-gaveta .acessos-gaveta-coluna select {
+  width: 100%;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+.acessos-gaveta .acessos-gaveta-coluna .acessos-opcoes {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+.acessos-gaveta-previa {
+  position: sticky;
+  top: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.acessos-gaveta-previa .acessos-menu {
+  gap: var(--space-3);
+}
+.acessos-gaveta-previa .acessos-menu > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-0-5);
 }
 .acessos-gaveta-corpo h4 {
   margin: 0;
@@ -575,7 +631,7 @@ td.acessos-vazio {
 }
 .acessos-gaveta .acessos-avancado h5 {
   margin: 0;
-  font-size: var(--text-body-sm);
+  font-size: var(--text-body);
   font-weight: 600;
 }
 .acessos-conta-de-setor {
@@ -597,8 +653,20 @@ td.acessos-vazio {
   .acessos-mestre {
     position: static;
   }
-  .acessos-gaveta .acessos-gaveta-cartao {
-    border-radius: 0;
+  .acessos-gaveta-colunas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .acessos-gaveta-previa {
+    position: static;
+  }
+}
+/* Abaixo de 640px o mobile-app.css faz do modal uma folha inferior. */
+@media (max-width: 640px) {
+  .acessos-gaveta-corpo {
+    padding: var(--space-4);
+  }
+  .acessos-gaveta .acessos-modulos {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -633,6 +701,7 @@ td.acessos-vazio {
 }
 .acessos-tela select,
 .acessos-tela input:not([type="checkbox"]),
+.acessos-gaveta input:not([type="checkbox"]),
 .acessos-gaveta select {
   width: auto;
   font-weight: 400;
@@ -643,7 +712,8 @@ td.acessos-vazio {
 .acessos-tela .acessos-busca input {
   width: 100%;
 }
-.acessos-tela .acessos-campo input {
+.acessos-tela .acessos-campo input,
+.acessos-gaveta .acessos-campo input {
   width: 100%;
 }
 .acessos-filtros select {
@@ -979,6 +1049,55 @@ td.acessos-vazio {
 .acessos-gaveta .acessos-reenviar > summary {
   font-weight: 600;
   cursor: pointer;
+}
+.acessos-gaveta .acessos-avancado {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+.acessos-gaveta .acessos-avancado > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  list-style: none;
+}
+.acessos-gaveta .acessos-avancado > summary::-webkit-details-marker {
+  display: none;
+}
+.acessos-gaveta .acessos-avancado > summary > .icone {
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+}
+.acessos-gaveta .acessos-avancado[open] > summary > .icone {
+  transform: rotate(90deg);
+}
+/* Exceções em duas colunas: nome e origem à esquerda, o nível à direita. */
+.acessos-gaveta .acessos-modulos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-8);
+}
+.acessos-gaveta .acessos-modulos li,
+.acessos-gaveta .acessos-modulos li:last-child {
+  flex-wrap: nowrap;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.acessos-gaveta .acessos-modulos li > div:first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.acessos-gaveta .acessos-modulos select.acessos-nivel {
+  flex: none;
+  width: 160px;
+}
+.acessos-gaveta select.acessos-nivel.individual {
+  border-color: var(--state-info);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.acessos-gaveta .acessos-modulo-individual small {
+  color: var(--state-info);
 }
 .acessos-gaveta .acessos-avancado[open] > summary,
 .acessos-gaveta .acessos-reenviar[open] > summary {
