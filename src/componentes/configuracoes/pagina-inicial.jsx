@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { tomDoAviso } from "../../lib/apresentacao-das-configuracoes.js";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.js";
+import { INDICADORES } from "../../lib/visao-geral.js";
 import { GradeDeKpis, Kpi } from "../../ui/index.js";
 import { Icone } from "../icone.jsx";
 import { CampoDaSecao, Grupo, Previa } from "./partes.jsx";
@@ -56,16 +57,6 @@ const GRUPOS = Object.freeze([
       "kpi_inscritos_label",
     ],
   },
-]);
-
-/* Os indicadores na ordem da página inicial: chave, rótulo padrão, ícone e tom. */
-const INDICADORES = Object.freeze([
-  ["kpi_processos_label", "Processos", "fa-folder-open", "info"],
-  ["kpi_vagas_label", "Vagas", "fa-users", "info"],
-  ["kpi_contratados_label", "Contratações", "fa-circle-check", "sucesso"],
-  ["kpi_ociosas_label", "Vagas ociosas", "fa-circle-exclamation", "alerta"],
-  ["kpi_criticos_label", "Críticos", "fa-fire", "perigo"],
-  ["kpi_inscritos_label", "Inscritos", "fa-file-lines", "destaque"],
 ]);
 
 const txt = (valor) => String(valor ?? "").trim();

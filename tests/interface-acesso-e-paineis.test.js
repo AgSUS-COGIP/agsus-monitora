@@ -7,7 +7,6 @@ import {
 } from "../src/lib/access-background-storage.js";
 
 const app = readFileSync("src/modules/legacy-app.js", "utf8");
-const healthUx = readFileSync("src/modules/health-details-ux.js", "utf8");
 const shellCss = readFileSync("src/styles/platform-shell.css", "utf8");
 
 const semComentarios = (fonte) =>
@@ -156,13 +155,8 @@ describe("uma única confirmação de saída", () => {
     `nielsen-shell-ux` — carregado depois — capturava a versão já embrulhada e
     somava o seu. Quem clicava em Sair via dois diálogos seguidos.
   */
-  it("o embrulho antigo de window.logout não existe mais", () => {
-    expect(healthUx).not.toContain("installConfirmedLogout");
-    expect(semComentarios(healthUx)).not.toContain("__agsusConfirmedLogout");
-  });
-
   it("nenhum módulo redefine window.logout", () => {
-    const codigo = semComentarios(app) + semComentarios(healthUx);
+    const codigo = semComentarios(app);
     expect(codigo).not.toMatch(/windowRef\.logout\s*=/);
     expect(codigo).not.toMatch(/window\.logout\s*=\s*(?!null)/);
   });

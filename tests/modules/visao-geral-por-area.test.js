@@ -12,12 +12,16 @@ import {
   Saúde Indígena, SEDE e Projetos abrem a mesma Visão geral (#page-dashboard).
   A Saúde Indígena fica exatamente como era; a SEDE não tem o bloco do mapa;
   Projetos troca DSEIs por municípios das vagas.
+
+  A página é React (src/modulos/visao-geral/); o bloco do mapa continua no
+  index.html (#mapaDaVisaoGeral, na reserva) e a tela o muda para dentro da
+  página ao montar. Aqui ele entra direto na <section>, como fica no app.
 */
 
 const indexHtml = readFileSync("index.html", "utf8");
-const secao = indexHtml.match(
-  /<section id="page-dashboard"[\s\S]*?<\/section>\s*<!-- React: src\/componentes\/nucleo/,
-)[0];
+const blocoDoMapa = indexHtml.match(
+  /<div id="reservaDoMapaDaVisaoGeral" hidden>([\s\S]*)<\/div>\s*<!-- \/reservaDoMapaDaVisaoGeral -->/,
+)[1];
 const css = readFileSync("src/styles/health-map-workspace.css", "utf8");
 const legado = readFileSync("src/modules/legacy-app.js", "utf8");
 
@@ -25,7 +29,7 @@ const normalizar = (texto) => texto.replace(/\s+/g, " ").trim();
 
 function montarPagina() {
   document.head.innerHTML = `<style>${css}</style>`;
-  document.body.innerHTML = `<div class="content">${secao.replace(/<!-- React:[\s\S]*$/, "")}</div>`;
+  document.body.innerHTML = `<div class="content"><section id="page-dashboard" class="page active">${blocoDoMapa}</section></div>`;
   return document.getElementById("page-dashboard");
 }
 
@@ -45,13 +49,10 @@ describe("a mesma página nas três áreas", () => {
     expect(visivel(pagina.querySelector(".health-map-workspace"))).toBe(true);
   });
 
-  it("na SEDE o bloco do mapa some e o resto da página fica", () => {
+  it("na SEDE o bloco do mapa some (o resto da página é React, fora dele)", () => {
     aplicarAreaNaVisaoGeral(pagina, "sede");
     expect(pagina.dataset.mapaDaArea).toBe("nenhum");
     expect(visivel(pagina.querySelector(".health-map-workspace"))).toBe(false);
-    expect(visivel(pagina.querySelector(".kpis-main"))).toBe(true);
-    expect(visivel(pagina.querySelector("#multiUnitsCard"))).toBe(true);
-    expect(visivel(pagina.querySelector(".table-card"))).toBe(true);
   });
 
   it("em Projetos o mapa fala de municípios e esconde o que é da Saúde Indígena", () => {
@@ -101,7 +102,10 @@ describe("a mesma página nas três áreas", () => {
 
 describe("o legado usa a área atual", () => {
   it("filtros, KPIs, mapa e tabela partem dos editais da área atual", () => {
-    expect(legado).toContain("return linhasDaArea(rows, areaAtual());");
+    // O recorte é do estado da Visão geral (React); o mapa lê dele.
+    const estado = readFileSync("src/modulos/visao-geral/estado.js", "utf8");
+    expect(estado).toContain("linhasDaArea(linhas, areaAtual)");
+    expect(legado).toContain("estadoDaVisaoGeral.obter()");
     expect(legado).not.toMatch(/rows\.filter\(ehEditalDaSaudeIndigena\)/);
   });
 
@@ -119,7 +123,7 @@ describe("o legado usa a área atual", () => {
     const troca = legado.match(
       /function aoMudarDadosDoMonitoramento\(\) \{[\s\S]*?\n\}/,
     )[0];
-    expect(troca).toContain("populateFilters();");
+    // Os filtros são podados pelo estado da Visão geral, que ouve os mesmos dados.
     expect(troca).toContain("applyFilters();");
     expect(troca).toContain("prepararVisaoGeralDaArea();");
   });

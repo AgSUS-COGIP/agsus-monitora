@@ -116,10 +116,7 @@ describe("resumoDasLinhas", () => {
 
 describe("as leituras de editais pedem a área", () => {
   // As colunas são listadas uma a uma; sem CO_AREA, SEDE e Projetos ficavam vazios.
-  it.each([
-    ["src/modules/legacy-app.js"],
-    ["src/modules/health-status-details.js"],
-  ])("%s", (arquivo) => {
+  it.each([["src/modules/legacy-app.js"]])("%s", (arquivo) => {
     const fonte = readFileSync(arquivo, "utf8");
     const selects = [
       ...fonte.matchAll(

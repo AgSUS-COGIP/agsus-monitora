@@ -149,7 +149,7 @@ function visibleDseiSummaries(doc) {
 
 function visibleEditalSummaries(doc) {
   if (!doc?.querySelectorAll) return [];
-  const rows = Array.from(doc.querySelectorAll("#monitorRows tr"));
+  const rows = Array.from(doc.querySelectorAll(".visao-geral-tabela tbody tr"));
   return uniqueTexts(
     rows.map((row) => {
       const cells = Array.from(row.querySelectorAll("td"));

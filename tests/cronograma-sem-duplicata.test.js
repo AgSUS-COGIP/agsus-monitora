@@ -1,11 +1,7 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const app = readFileSync("src/modules/legacy-app.js", "utf8");
-const detalhes = readFileSync("src/modules/health-status-details.js", "utf8");
-
-const semComentarios = (fonte) =>
-  fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 const CRONOGRAMA = [
   "cronograma_automatico",
@@ -25,13 +21,7 @@ const CRONOGRAMA = [
   Supabase e desvia os `select` da tabela para a view, deixando as escritas na
   tabela. Ler o `.from()` aqui e concluir que falta coluna é o erro natural, e a
   razão de este comentário existir.
-
-  O `throw` abaixo veio do mesmo episódio: quando o nome não era encontrado, a
-  busca devolvia uma lista vazia em silêncio e o teste acusava "faltam as seis
-  colunas de cronograma" — mandando quem investiga para o lado errado.
 */
-const TABELA_MONITORAMENTO = '.from("TB_MONITORAMENTO_INDIGENA")';
-
 function colunasDoSelect(fonte) {
   const i = fonte.indexOf('.from("TB_MONITORAMENTO_INDIGENA")');
   if (i < 0) return [];
@@ -46,16 +36,13 @@ function colunasDoSelect(fonte) {
 }
 
 /*
-  O servidor não era o gargalo.
-
-  Medido no Supabase principal em 09/09/2026: a view inteira devolve as 94
-  linhas em 31.2 ms, com 2141 shared hit blocks e 0 reads. As 94 execuções de
-  `get_monitoramento_cronograma_estado` custam ~0.307 ms cada.
-
-  O atraso visível estava no navegador: a tabela era desenhada pela requisição
-  principal, que não pedia nenhuma coluna de cronograma, e o badge de cada linha
-  só nascia quando uma **segunda leitura completa da mesma view** voltava. Nesse
-  intervalo cada linha exibia "Carregando cronograma...".
+  O servidor não era o gargalo (medido em 09/09/2026: a view inteira em 31 ms).
+  O atraso estava no navegador: a tabela era desenhada pela requisição
+  principal, sem as colunas de cronograma, e o selo de cada linha só nascia
+  quando uma SEGUNDA leitura completa da mesma view voltava
+  (`health-status-details.js`, que saiu com a Visão geral em React). Hoje há uma
+  leitura só: a da carga principal, que a Visão geral lê de
+  dados-do-monitoramento.js.
 */
 describe("uma leitura só do monitoramento", () => {
   it("a requisição principal traz as seis colunas de cronograma", () => {
@@ -66,74 +53,28 @@ describe("uma leitura só do monitoramento", () => {
     }
   });
 
-  it("a carga principal publica as linhas para quem precisar", () => {
-    expect(semComentarios(app)).toContain(
-      'new CustomEvent("agsus:monitoramento-carregado", { detail: { rows } })',
-    );
-  });
-
-  it("os detalhes consomem o evento em vez de reler", () => {
-    const codigo = semComentarios(detalhes);
-    expect(codigo).toContain(
-      'window.addEventListener("agsus:monitoramento-carregado"',
-    );
-    expect(codigo).toContain("aplicarLinhasDeMonitoramento(linhas)");
-  });
-
-  /*
-    A leitura própria continua existindo como contingência — numa página que não
-    roda a carga principal —, mas não pode disparar junto com o arranque.
-  */
-  it("a leitura de contingência só corre se o evento não vier", () => {
-    const bloco = detalhes.slice(
-      detalhes.indexOf("const sb = client();"),
-      detalhes.indexOf('document.addEventListener("click", handleClick)'),
-    );
-    expect(bloco).toContain(
-      "if (!state.recebeuPorEvento) void loadOperationalRows()",
-    );
-    expect(bloco).toContain("setTimeout");
-  });
-
-  /*
-    O refetch a cada foco relia as 94 linhas sempre que a pessoa voltava para a
-    aba, e os badges sumiam durante a releitura.
-  */
-  it("não relê a view a cada foco da janela", () => {
-    const codigo = semComentarios(detalhes);
-    expect(codigo).not.toMatch(
-      /addEventListener\(\s*["']focus["'][\s\S]{0,160}loadOperationalRows/,
-    );
-  });
-
-  it("só resta uma releitura, e é depois de salvar um cronograma", () => {
-    const codigo = semComentarios(detalhes);
-    const chamadas = (codigo.match(/void loadOperationalRows\(\)/g) || [])
-      .length;
-    expect(chamadas).toBe(2); // a contingência do arranque e a de após salvar
-    expect(codigo).toMatch(
-      /agsus:nucleo-cronograma-saved[\s\S]{0,120}loadOperationalRows/,
-    );
-  });
-
-  /*
-    Antes, das 21 colunas pedidas pela segunda requisição, 15 eram cópia exata
-    da primeira. Com as seis de cronograma na principal, não sobra motivo para a
-    segunda no caminho normal.
-  */
-  it("nenhuma coluna usada pelos badges falta na carga principal", () => {
+  it("nenhuma coluna usada pela tabela e pelos detalhes falta na carga principal", () => {
     const colunas = new Set(colunasDoSelect(app));
     for (const usada of [
-      "cronograma_automatico",
-      "cronograma_dias_para_proxima",
-      "cronograma_proxima_atividade",
+      ...CRONOGRAMA,
       "status",
       "unidade",
       "edital",
+      "link_edital",
+      "responsavel",
+      "observacoes",
     ]) {
-      expect(colunas, `${usada} é lida por urgencyMeta/rowData`).toContain(
+      expect(colunas, `${usada} é lida por src/lib/visao-geral.js`).toContain(
         usada,
       );
+    }
+  });
+
+  it("a Visão geral não relê a view por conta própria", () => {
+    const pasta = "src/modulos/visao-geral";
+    for (const arquivo of readdirSync(pasta)) {
+      const fonte = readFileSync(`${pasta}/${arquivo}`, "utf8");
+      expect(fonte, arquivo).not.toContain('.from("TB_');
     }
   });
 });

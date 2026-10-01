@@ -122,8 +122,8 @@ function syncThemeState() {
 
 /*
   `toggleDarkMode` (legado) inverte o tema. Embrulhada aqui, avisa depois de
-  cada troca; o embrulho de `health-dashboard-interaction-fixes.js` mantém o
-  espelho `body.dark-mode`. A troca feita em outra aba chega pelo `storage`.
+  cada troca; o espelho `body.dark-mode` é do próprio `applyDarkMode`. A troca
+  feita em outra aba chega pelo `storage`.
 */
 function installThemeSync() {
   const originalToggle = window.toggleDarkMode;

@@ -81,7 +81,7 @@ describe("legenda recolhível do mapa nacional", () => {
   it("o legado reescreve título e corpo, não a caixa inteira", () => {
     const sync = app.slice(
       app.indexOf("function syncMapLevelUI()"),
-      app.indexOf("function renderRisks()"),
+      app.indexOf("function clearExternalPanelCache()"),
     );
     expect(sync).toContain('box.querySelector("[data-legenda-titulo]")');
     expect(sync).toContain('box.querySelector("[data-legenda-corpo]")');

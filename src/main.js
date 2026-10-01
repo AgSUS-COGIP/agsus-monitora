@@ -14,15 +14,8 @@ import "./styles/visual-polish.css";
 import "./styles/arara-guide.css";
 import "./styles/nina-conversation.css";
 import "./styles/loading-experience.css";
-import "./styles/health-indigenous.css";
 import "./styles/health-map-contrast.css";
 import "./styles/health-reference-kpis.css";
-import "./styles/health-dashboard-refinements.css";
-import "./styles/health-dashboard-interaction-fixes.css";
-import "./styles/health-status-details.css";
-import "./styles/health-status-details-refinement.css";
-import "./styles/health-details-ux.css";
-import "./styles/health-details-runtime-fix.css";
 import "./styles/config-page.css";
 import "./styles/config-governance.css";
 import "./styles/nucleo-cronograma.css";
@@ -62,6 +55,7 @@ import "./ui/ui.css";
 import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
+import "./modulos/visao-geral/visao-geral.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -72,13 +66,7 @@ import "./modules/legacy-app.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
 import { instalarCarregamento } from "./modules/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
-import { initHealthDashboardRefinementsSafe } from "./modules/health-dashboard-refinements.js";
-import { initHealthDashboardInteractionFixes } from "./modules/health-dashboard-interaction-fixes.js";
 import { initHealthMapImmersiveWorkspace } from "./modules/health-map-immersive-workspace.js";
-import { initHealthStatusDetails } from "./modules/health-status-details.js";
-import { initHealthStatusDetailsRefinement } from "./modules/health-status-details-refinement.js";
-import { initHealthDetailsUx } from "./modules/health-details-ux.js";
-import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fix.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import { initAraraSpeakingEffects } from "./modules/arara-speaking-effects.js";
 import { initNinaPanelDrag } from "./modules/nina-panel-drag.js";
@@ -96,8 +84,6 @@ import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
-import { initBoasVindas } from "./modules/boas-vindas.js";
-import { initMarcosDoAno } from "./modules/marcos-do-ano.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
 import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
 import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
@@ -106,6 +92,7 @@ import { montarRecursos } from "./modulos/recursos/recursos.jsx";
 import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
 import { montarAnalises } from "./modulos/analises/analises.jsx";
 import { montarSelecao } from "./modulos/selecao/selecao.jsx";
+import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
@@ -129,19 +116,22 @@ installCspReportMonitor();
   legado e o menu do celular a encontram no DOM quando rodam.
 */
 montarBarraLateral();
+/*
+  A Visão geral (React, src/modulos/visao-geral/) também monta já, de forma
+  síncrona: ela põe o bloco do mapa (legado) no lugar dele antes de o resto do
+  app procurá-lo. O legado fala com ela pelo estado (estado.js), não pelo DOM.
+*/
+window.visaoGeralController = montarVisaoGeral({
+  toast: window.monitoraToast,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+});
 instalarCarregamento();
 initLoadingExperience();
 initVisualPolish();
 initAraraSpeakingEffects();
 initNinaPanelDrag();
-initHealthDashboardRefinementsSafe();
-initHealthDashboardInteractionFixes();
 initHealthMapImmersiveWorkspace();
-initHealthStatusDetails();
 aplicarLegendaDoMapaDetalhado();
-initHealthStatusDetailsRefinement();
-initHealthDetailsUx();
-initHealthDetailsRuntimeFix();
 // A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
 initSidebarBranding();
 // O esqueleto das seções de Configurações, depois a moldura e as seções em React (portais).
@@ -152,8 +142,6 @@ initMobileBottomNavigation();
 initMobileGoogleOAuth();
 initMobileTableCards();
 initPwaLifecycle();
-initBoasVindas();
-initMarcosDoAno();
 initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
