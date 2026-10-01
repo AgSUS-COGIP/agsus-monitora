@@ -1,19 +1,16 @@
 /*
-  Grupos, dicas e prévias das seções de Configurações: as legadas
-  (src/modules/config-apresentacao.js) e as em React (Marca, Painéis externos
-  e Operação), com as mesmas classes. Tokens do design.md: a cor marca o assunto de cada grupo (paleta de gráficos e estados), a hierarquia vem da
+  Grupos, dicas, prévias e imagens das seções de Configurações em React
+  (src/componentes/configuracoes/). Tokens do design.md: a cor marca o assunto de cada grupo (paleta de gráficos e estados), a hierarquia vem da
   tipografia e do espaço, e a prévia usa superfície sutil, sem moldura.
 */
 
 /* ── Seção com prévia: campos à esquerda, prévia fixa à direita ─────────── */
-.config-secao--com-previa,
 .config-secao-react--com-previa {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
   column-gap: var(--space-8);
   align-items: start;
 }
-.config-secao--com-previa > .config-secao__corpo,
 .config-secao-react__campos {
   grid-column: 1;
   min-width: 0;
@@ -38,7 +35,6 @@
   font-weight: 500;
 }
 @media (max-width: 1220px) {
-  .config-secao--com-previa,
   .config-secao-react--com-previa {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -188,12 +184,6 @@
 /* ── Peças comuns das prévias ────────────────────────────────────────────── */
 .config-previa__conteudo {
   min-width: 0;
-}
-.previa-vazio,
-.previa-nota {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
 }
 
 /* Marca: barra lateral + rodapé */
@@ -400,6 +390,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Página inicial: os indicadores (Kpi de src/ui/) em duas colunas na prévia */
+.previa-inicio__kpis.ui-kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
 /* Tela de acesso: o cartão sobre a arte de fundo */
 .previa-acesso {
   display: grid;
@@ -427,8 +423,14 @@
   object-fit: contain;
 }
 .previa-acesso__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--text-body);
   font-weight: 500;
+}
+.previa-acesso__desligado {
+  font-style: italic;
 }
 .previa-acesso__cartao small {
   font-size: var(--text-caption);
@@ -521,4 +523,163 @@
   width: 8px;
   height: 8px;
   border-radius: var(--radius-full);
+}
+
+/* ── Aparência: imagens (arte de fundo, logo da barra) e galerias ───────── */
+.config-imagem {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.config-imagem__rotulo {
+  color: var(--text-primary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-medium);
+}
+.config-imagem__linha {
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+.config-imagem__previa {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-raised);
+  background-position: center;
+  background-size: cover;
+}
+.config-imagem__previa--arte {
+  aspect-ratio: 16 / 9;
+}
+.config-imagem__previa--logo {
+  height: 72px;
+  padding: var(--space-2);
+  object-fit: contain;
+}
+.config-imagem__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.config-imagem__acoes .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+.config-galeria {
+  display: grid;
+  gap: var(--space-2);
+}
+.config-galeria__titulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.config-galeria__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.config-galeria__cartao {
+  display: grid;
+  justify-items: stretch;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.config-galeria__cartao[data-ativa] {
+  border-color: var(--state-success);
+}
+.config-galeria__cartao .ui-selo {
+  justify-self: center;
+}
+.config-galeria__item {
+  display: grid;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.config-galeria__item:disabled {
+  cursor: default;
+}
+.config-galeria__miniatura {
+  display: block;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-raised);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.config-galeria__grade[data-formato="paisagem"] .config-galeria__miniatura {
+  aspect-ratio: 16 / 9;
+}
+.config-galeria__grade[data-formato="quadrado"] .config-galeria__miniatura {
+  height: 48px;
+  background-size: contain;
+}
+.config-galeria__apagar {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--state-danger);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--state-danger);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.config-galeria__apagar:hover:not(:disabled) {
+  background: var(--state-danger-soft);
+}
+@media (max-width: 640px) {
+  .config-imagem__linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+  Contraste de cada cor: a prévia (fundo na cor, texto no primeiro plano que a
+  tela vai usar) e o aviso com o número escrito — não só a cor do aviso.
+*/
+.config-contraste {
+  display: grid;
+  gap: var(--space-2);
+}
+.config-contraste__previa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.config-contraste__previa strong {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+.config-contraste__botao {
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+.config-contraste__aviso {
+  font-weight: var(--font-weight-medium);
 }

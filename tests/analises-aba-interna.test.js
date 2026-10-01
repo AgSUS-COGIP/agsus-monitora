@@ -105,7 +105,7 @@ describe("o legado trata Análises como página", () => {
   it("o caminho do painel externo não tem mais caso de área", () => {
     const painel = trecho(
       "function openPanel(code)",
-      "function renderConfigForm",
+      "function syncDisplayModeButtons",
     );
     expect(painel).not.toMatch(/area/i);
     expect(legado).not.toContain("recarregarPainelNaAreaAtual");

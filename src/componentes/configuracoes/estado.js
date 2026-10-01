@@ -1,28 +1,19 @@
 /*
   Estado das Configurações, fora do React: os valores carregados (o legado
   lê a TB_CONFIGURACAO em `loadConfig` e a TB_PAINEL_EXTERNO em `loadPanels`
-  e publica aqui), o rascunho das seções já em React (campos e painéis
-  externos), a seção aberta, a publicação versionada com motivo
+  e publica aqui), o rascunho das seções (campos e painéis externos), a seção
+  aberta, a publicação versionada com motivo
   (salvar_configuracoes_e_paineis_v2), o histórico e a restauração. Este
   arquivo não importa React; as RPCs ficam aqui (o check:rpc-contract só lê
   `.js`). A regra da publicação é de `src/lib/publicacao-de-configuracoes.js`
-  e a dos painéis, de `src/lib/paineis-externos-das-configuracoes.js`.
-
-  TRANSIÇÃO. Enquanto houver seção legada (Página inicial, Tela de acesso,
-  Aparência), a publicação também lê os campos `cfg*` do index.html
-  (CAMPOS_DO_LEGADO) e as chaves da barra lateral (`sidebar-branding.js`), e
-  digitar num campo legado marca a página como alterada. Cada seção migrada
-  tira daqui a sua parte de DOM; quando não restar nenhuma, as funções
-  `…DoLegado` saem.
+  e a dos painéis, de `src/lib/paineis-externos-das-configuracoes.js`. As
+  imagens da Aparência (arte de fundo e logo da barra) são de `imagens.js`.
 */
 
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
-import { isValidAccessAssetUrl } from "../../lib/config-validation.js";
 import {
   alteracoesDaVersao,
   buildChanges,
-  CAMPOS_DO_LEGADO,
-  dominioValido,
   errosDasSecoes,
   linhasDasSecoes,
   normalizarValoresCarregados,
@@ -35,7 +26,6 @@ import {
   normalizarPaineis,
   paineisComRascunho,
 } from "../../lib/paineis-externos-das-configuracoes.js";
-import { linhasDeConfiguracaoDaSidebar } from "../../modules/sidebar-branding.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 
 const RPC_SNAPSHOT = "get_configuracoes_snapshot";
@@ -49,91 +39,22 @@ export const SECOES_COM_SALVAR_PROPRIO = Object.freeze(["acessos", "modulos"]);
 
 const txt = (valor) => String(valor ?? "").trim();
 
-// ── Legado (transição) ─────────────────────────────────────────────────────
-
-/**
- * Só os campos de configuração legados (`cfg*`) marcam a página como
- * alterada pelo DOM. Busca, matriz de acessos e os campos das seções em
- * React (ids `config…`, sem o prefixo `cfg`) não: estes vão pelo estado.
- */
-export function ehCampoDeConfiguracao(campo) {
-  const Janela = campo?.ownerDocument?.defaultView;
-  if (
-    !Janela ||
-    !(
-      campo instanceof Janela.HTMLInputElement ||
-      campo instanceof Janela.HTMLTextAreaElement ||
-      campo instanceof Janela.HTMLSelectElement
-    )
-  )
-    return false;
-  if (campo.closest("[data-acessos], [data-configuracoes]")) return false;
-  return /^cfg/.test(campo.id);
-}
-
-function linhasDoLegado(documento) {
-  return CAMPOS_DO_LEGADO.map(([id, chave, descricao, reserva = ""]) => ({
-    chave,
-    valor: txt(documento.getElementById(id)?.value ?? reserva),
-    descricao,
-  }));
-}
-
-/** [{ campo, mensagem }] dos campos legados. */
-function errosDoLegado(documento) {
-  const $ = (id) => documento.getElementById(id);
-  const erros = [];
-  const erro = (campo, mensagem) => erros.push({ campo, mensagem });
-
-  const titulo = $("cfgPageTitle");
-  if (titulo && !txt(titulo.value))
-    erro(titulo, "Informe o título da página inicial.");
-
-  const dominio = $("cfgGoogleDomainHint");
-  if (dominio && !dominioValido(dominio.value))
-    erro(
-      dominio,
-      "O domínio Google deve estar no formato agenciasus.org.br, sem https://, @ ou barras.",
-    );
-
-  const logo = $("cfgAccessLogoUrl");
-  if (logo && !isValidAccessAssetUrl(logo.value))
-    erro(logo, "URL inválida no campo Logo da AgSUS no acesso.");
-
-  return erros;
-}
-
-function marcarInvalidosDoLegado(documento, erros) {
-  for (const campo of documento.querySelectorAll(
-    "#page-config .config-field-invalid",
-  )) {
-    campo.classList.remove("config-field-invalid");
-    campo.removeAttribute("aria-invalid");
-  }
-  for (const { campo } of erros) {
-    campo?.classList.add("config-field-invalid");
-    campo?.setAttribute("aria-invalid", "true");
-  }
-}
-
 // ── Estado ─────────────────────────────────────────────────────────────────
 
 const ESTADO_INICIAL = Object.freeze({
   /** Valores lidos da TB_CONFIGURACAO: Map chave → valor. */
   valores: new Map(),
   carregado: false,
-  /** Alterações das seções em React: Map chave → valor. */
+  /** Alterações das seções: Map chave → valor. */
   rascunho: new Map(),
   /** Painéis externos lidos da TB_PAINEL_EXTERNO (normalizarPaineis). */
   paineis: Object.freeze([]),
   /** Alterações dos painéis: Map id → { titulo?, url?, ativo?, em_manutencao? }. */
   rascunhoDosPaineis: new Map(),
-  /** Algum campo legado foi alterado desde a carga. */
-  legadoAlterado: false,
   /** Seção aberta (id de SECOES, config-secoes.js). */
   secao: "",
   salvando: false,
-  /** Mensagens da última validação, e o erro de cada campo em React. */
+  /** Mensagens da última validação, e o erro de cada campo. */
   errosDaValidacao: [],
   errosDosCampos: new Map(),
   /*
@@ -168,9 +89,7 @@ export function criarEstadoDasConfiguracoes({
   }
 
   const temAlteracoes = () =>
-    estado.rascunho.size > 0 ||
-    estado.rascunhoDosPaineis.size > 0 ||
-    estado.legadoAlterado;
+    estado.rascunho.size > 0 || estado.rascunhoDosPaineis.size > 0;
 
   /** Os painéis como a tela os mostra (carregados + rascunho). */
   const paineisAtuais = () =>
@@ -193,10 +112,23 @@ export function criarEstadoDasConfiguracoes({
       valores: normalizarValoresCarregados(config),
       carregado: true,
       rascunho: new Map(),
-      legadoAlterado: false,
       errosDosCampos: new Map(),
       errosDaValidacao: [],
     });
+  }
+
+  /*
+    Valores gravados fora da publicação (a arte de fundo da tela de acesso,
+    aplicada na hora por imagens.js): passam a ser os publicados.
+  */
+  function definirValoresPublicados(novos) {
+    const valores = new Map(estado.valores);
+    const rascunho = new Map(estado.rascunho);
+    for (const [chave, novo] of Object.entries(novos)) {
+      valores.set(chave, novo);
+      rascunho.delete(chave);
+    }
+    publicar({ valores, rascunho });
   }
 
   function mudarCampo(chave, novo) {
@@ -231,10 +163,6 @@ export function criarEstadoDasConfiguracoes({
     });
   }
 
-  function marcarLegadoAlterado() {
-    if (!estado.legadoAlterado) publicar({ legadoAlterado: true });
-  }
-
   function definirSecao(secao) {
     if (secao !== estado.secao) publicar({ secao });
   }
@@ -243,7 +171,6 @@ export function criarEstadoDasConfiguracoes({
     publicar({
       rascunho: new Map(),
       rascunhoDosPaineis: new Map(),
-      legadoAlterado: false,
       errosDosCampos: new Map(),
       errosDaValidacao: [],
     });
@@ -261,28 +188,22 @@ export function criarEstadoDasConfiguracoes({
   // ── Publicação ───────────────────────────────────────────────────────────
 
   function validar() {
-    const legado = errosDoLegado(documento);
-    marcarInvalidosDoLegado(documento, legado);
     const errosDosCampos = new Map([
       ...errosDasSecoes(valoresAtuais()),
       ...errosDosPaineis(paineisAtuais()),
     ]);
-    const errosDaValidacao = [
-      ...new Set([
-        ...errosDosCampos.values(),
-        ...legado.map((erro) => erro.mensagem),
-      ]),
-    ];
+    const errosDaValidacao = [...new Set(errosDosCampos.values())];
     publicar({ errosDosCampos, errosDaValidacao });
     return errosDaValidacao;
   }
 
-  /* As chaves da barra lateral viajam no mesmo `p_config_rows` (uma chamada, uma transação). */
-  const linhasDaPublicacao = () => [
-    ...linhasDoLegado(documento),
-    ...linhasDasSecoes(valoresAtuais()),
-    ...linhasDeConfiguracaoDaSidebar(),
-  ];
+  /* Todas as chaves das seções no mesmo `p_config_rows` (uma chamada, uma transação). */
+  const linhasDaPublicacao = () => linhasDasSecoes(valoresAtuais());
+
+  /* Desligar o login Google (o acesso institucional principal) pede confirmação. */
+  const desligaOGoogle = () =>
+    valor("auth_google_enabled") === "false" &&
+    estado.valores.get("auth_google_enabled") !== "false";
 
   /** O "Salvar alterações" (botão da barra e Ctrl+S): valida e abre a revisão. */
   async function revisar() {
@@ -294,7 +215,7 @@ export function criarEstadoDasConfiguracoes({
     }
 
     if (
-      documento.getElementById("cfgGoogleEnabled")?.value === "false" &&
+      desligaOGoogle() &&
       !confirmar(
         "O login Google será desativado. Como este é o acesso institucional principal, usuários podem ficar sem conseguir entrar. Deseja continuar?",
       )
@@ -499,12 +420,6 @@ export function criarEstadoDasConfiguracoes({
   /* Liga os eventos de página; devolve a função que os desliga. */
   function instalar(pagina) {
     const janela = documento.defaultView;
-    const aoMudarLegado = (evento) => {
-      if (!ehCampoDeConfiguracao(evento.target)) return;
-      marcarLegadoAlterado();
-      evento.target.classList.remove("config-field-invalid");
-      evento.target.removeAttribute("aria-invalid");
-    };
     const aoTeclar = (evento) => {
       if (
         !(evento.ctrlKey || evento.metaKey) ||
@@ -521,13 +436,9 @@ export function criarEstadoDasConfiguracoes({
       evento.preventDefault();
       evento.returnValue = "";
     };
-    pagina.addEventListener("input", aoMudarLegado);
-    pagina.addEventListener("change", aoMudarLegado);
     documento.addEventListener("keydown", aoTeclar);
     janela?.addEventListener("beforeunload", aoSairDaPagina);
     return () => {
-      pagina.removeEventListener("input", aoMudarLegado);
-      pagina.removeEventListener("change", aoMudarLegado);
       documento.removeEventListener("keydown", aoTeclar);
       janela?.removeEventListener("beforeunload", aoSairDaPagina);
     };
@@ -544,6 +455,7 @@ export function criarEstadoDasConfiguracoes({
     temAlteracoes,
     definirValoresCarregados,
     definirPaineisCarregados,
+    definirValoresPublicados,
     mudarCampo,
     mudarPainel,
     definirSecao,

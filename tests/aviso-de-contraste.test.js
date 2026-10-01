@@ -1,5 +1,9 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, describe, expect, it } from "vitest";
+import { AvisoDeContraste } from "../src/componentes/configuracoes/partes.jsx";
+import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.js";
 import {
   MINIMO_AA,
   MODO_AUTO,
@@ -12,15 +16,30 @@ import {
   normalizarModo,
   razaoDeContraste,
 } from "../src/lib/contraste.js";
-import {
-  aplicarAviso,
-  htmlDaPrevia,
-  ligarAvisoDeContraste,
-} from "../src/modules/aviso-de-contraste.js";
 
-const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
-const main = readFileSync("src/main.js", "utf8");
-const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+const aparencia = readFileSync(
+  "src/componentes/configuracoes/aparencia.jsx",
+  "utf8",
+);
+
+/* Desenha o <AvisoDeContraste> (Configurações › Aparência) num contêiner. */
+let raiz = null;
+function desenhar(props) {
+  const contenedor = document.createElement("div");
+  document.body.appendChild(contenedor);
+  act(() => {
+    raiz = createRoot(contenedor);
+    raiz.render(createElement(AvisoDeContraste, props));
+  });
+  return contenedor;
+}
+afterEach(() => {
+  act(() => raiz?.unmount());
+  raiz = null;
+  document.body.innerHTML = "";
+});
 
 /*
   A Configurações tinha só um `<input type="color">` cru: escolhia-se um tom,
@@ -106,94 +125,57 @@ describe("avaliação da cor escolhida", () => {
 
 describe("a prévia mostra o que a cor produz", () => {
   it("usa a cor escolhida como fundo e o texto derivado", () => {
-    const html = htmlDaPrevia(avaliarCor("#6c009e"));
-    expect(html).toContain("background:#6c009e");
-    expect(html).toContain(`color:${TEXTO_CLARO}`);
+    const caixa = desenhar({ cor: "#6c009e" });
+    const previa = caixa.querySelector(".config-contraste__previa");
+    expect(previa.style.background).toBe("rgb(108, 0, 158)");
+    expect(previa.style.color).not.toBe("");
   });
 
   it("a barra lateral não mostra o botão de acesso, que ela não tem", () => {
     expect(
-      htmlDaPrevia(avaliarCor("#c090eb"), { comBotao: false }),
-    ).not.toContain("contraste-previa__botao");
-    expect(htmlDaPrevia(avaliarCor("#c090eb"))).toContain(
-      "contraste-previa__botao",
-    );
+      desenhar({ cor: "#c090eb" }).querySelector(".config-contraste__botao"),
+    ).toBeNull();
+    act(() => raiz.unmount());
+    expect(
+      desenhar({ cor: "#c090eb", comBotao: true }).querySelector(
+        ".config-contraste__botao",
+      ),
+    ).not.toBeNull();
   });
 });
 
 describe("o aviso no formulário", () => {
-  const criarInput = (valor) => {
-    const input = document.createElement("input");
-    input.type = "color";
-    input.value = valor;
-    document.body.appendChild(input);
-    return input;
-  };
-
-  it("desenha prévia e aviso no container", () => {
-    const container = document.createElement("div");
-    const avaliacao = aplicarAviso(container, "#8a7fb0");
-    expect(avaliacao.passa).toBe(false);
-    expect(container.hidden).toBe(false);
-    expect(container.querySelector(".contraste-previa")).toBeTruthy();
-    expect(
-      container.querySelector('.contraste-aviso[data-nivel="alerta"]'),
-    ).toBeTruthy();
+  it("desenha prévia e aviso de atenção quando reprova", () => {
+    const caixa = desenhar({ cor: "#8a7fb0" });
+    expect(caixa.querySelector(".config-contraste__previa")).toBeTruthy();
+    const aviso = caixa.querySelector(".config-contraste__aviso");
+    expect(aviso.dataset.tone).toBe("warning");
+    expect(aviso.textContent).toContain("Abaixo do mínimo");
   });
 
-  it("marca como ok quando passa", () => {
-    const container = document.createElement("div");
-    aplicarAviso(container, "#c090eb");
-    expect(
-      container.querySelector('.contraste-aviso[data-nivel="ok"]'),
-    ).toBeTruthy();
+  it("aviso informativo quando passa, com o número escrito", () => {
+    const aviso = desenhar({ cor: "#c090eb" }).querySelector(
+      ".config-contraste__aviso",
+    );
+    expect(aviso.dataset.tone).toBe("info");
+    expect(aviso.textContent).toContain("5.88");
   });
 
   it("some quando a cor é inválida", () => {
-    const container = document.createElement("div");
-    expect(aplicarAviso(container, "nada")).toBeNull();
-    expect(container.hidden).toBe(true);
-    expect(container.innerHTML).toBe("");
-  });
-
-  /*
-    `input` e não só `change`: o seletor nativo dispara `input` enquanto a
-    pessoa arrasta, e é aí que o número precisa acompanhar.
-  */
-  it("acompanha o arrasto do seletor", () => {
-    const input = criarInput("#c090eb");
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    ligarAvisoDeContraste(input, container);
-    expect(container.textContent).toContain("5.88");
-
-    input.value = "#8a7fb0";
-    input.dispatchEvent(new Event("input"));
-    expect(container.textContent).toContain("Abaixo do mínimo");
-  });
-
-  it("não liga duas vezes no mesmo campo", () => {
-    const input = criarInput("#c090eb");
-    const container = document.createElement("div");
-    expect(ligarAvisoDeContraste(input, container)).toBe(true);
-    expect(ligarAvisoDeContraste(input, container)).toBe(true);
-    expect(input.dataset.avisoDeContraste).toBe("1");
+    expect(desenhar({ cor: "nada" }).textContent).toBe("");
   });
 });
 
 describe("os dois campos de cor recebem o aviso", () => {
-  it("o painel de acesso é ligado no arranque", () => {
-    expect(main).toContain("instalarAvisoDoPainelDeAcesso()");
-  });
-
-  it("a barra lateral tem o seu container e a sua ligação", () => {
-    expect(sidebar).toContain('id="cfgSidebarColorAviso"');
-    expect(sidebar).toContain("ligarAvisoDeContraste(");
-    expect(sidebar).toContain("comBotao: false");
+  it("o painel de acesso (com o botão e o modo) e a barra lateral (sem botão)", () => {
+    expect(aparencia).toContain(
+      'modo={estado.valor("auth_access_texto_modo")}',
+    );
+    expect(aparencia.match(/<AvisoDeContraste/g)).toHaveLength(2);
+    expect(aparencia).toContain("comBotao");
   });
 
   it("o aviso não depende só de cor para se distinguir", () => {
-    expect(css).toContain('.contraste-aviso[data-nivel="alerta"]');
     // O número vai escrito na mensagem, não só no realce.
     expect(avaliarCor("#8a7fb0").mensagem).toMatch(/\d\.\d{2}/);
   });
@@ -250,22 +232,13 @@ describe("modo do texto sobre o painel", () => {
   });
 
   it("o aviso reage à troca de modo, não só à de cor", () => {
-    const input = document.createElement("input");
-    input.type = "color";
-    input.value = "#c090eb";
-    const seletor = document.createElement("select");
-    for (const v of ["auto", "claro", "escuro"]) {
-      const o = document.createElement("option");
-      o.value = v;
-      seletor.appendChild(o);
-    }
-    const container = document.createElement("div");
-    ligarAvisoDeContraste(input, container, { seletorDeModo: seletor });
-    expect(container.textContent).toContain("Acima do mínimo");
-
-    seletor.value = "claro";
-    seletor.dispatchEvent(new Event("change"));
-    expect(container.textContent).toContain("Abaixo do mínimo");
+    expect(desenhar({ cor: "#c090eb", modo: "auto" }).textContent).toContain(
+      "Acima do mínimo",
+    );
+    act(() => raiz.unmount());
+    expect(desenhar({ cor: "#c090eb", modo: "claro" }).textContent).toContain(
+      "Abaixo do mínimo",
+    );
   });
 
   it("a tela aplica o modo, e não só a luminância", () => {
@@ -324,9 +297,13 @@ describe("modo do texto sobre o painel", () => {
   });
 
   it("o campo existe no formulário com as três opções", () => {
-    expect(html).toContain('id="cfgAccessTextoModo"');
-    for (const valor of ["auto", "claro", "escuro"]) {
-      expect(html).toContain(`value="${valor}"`);
-    }
+    const campo = CAMPOS_DAS_SECOES.aparencia.find(
+      (c) => c.chave === "auth_access_texto_modo",
+    );
+    expect(campo.opcoes.map(([valor]) => valor)).toEqual([
+      "auto",
+      "claro",
+      "escuro",
+    ]);
   });
 });
