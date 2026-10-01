@@ -1,12 +1,22 @@
 import { Modal } from "./modal.jsx";
 import { classes } from "./classes.js";
+import { usarNoQuadro } from "./no-quadro.jsx";
 
 /*
-  A gaveta lateral dos painéis (`.analises-drawer-backdrop` >
-  `.analises-drawer`, desenho do painel de análises): um <Modal> (portal, Esc,
-  foco preso) com o topo — sobretítulo, título, resumo e fechar — e o corpo
-  como filhos.
+  A gaveta lateral: um <Modal> (portal, Esc, foco preso) com o topo —
+  sobretítulo, título, resumo e fechar — e o corpo como filhos.
+
+  Dentro do app: `.ui-gaveta-fundo` > `.ui-gaveta` (`.ui-gaveta-topo`…). No
+  quadro (<PainelNoQuadro>): `.analises-drawer-backdrop` > `.analises-drawer`,
+  do painel de análises. `usarClassesDaGaveta()` dá as duas, para quem monta a
+  gaveta direto no <Modal> (o formulário de Recursos).
 */
+
+export function usarClassesDaGaveta() {
+  return usarNoQuadro()
+    ? { fundo: "analises-drawer-backdrop", cartao: "analises-drawer" }
+    : { fundo: "ui-gaveta-fundo", cartao: "ui-gaveta" };
+}
 
 /* O topo da gaveta (e do formulário): sobretítulo, título, resumo e fechar. */
 export function TopoDaGaveta({
@@ -17,18 +27,26 @@ export function TopoDaGaveta({
   aoFechar,
   rotuloDoFechar,
 }) {
+  const noQuadro = usarNoQuadro();
+  const c = (antiga, nova) => (noQuadro ? antiga : nova);
   return (
-    <div className="analises-drawer-head">
+    <div className={c("analises-drawer-head", "ui-gaveta-topo")}>
       <div>
-        {sobretitulo ? <span className="eyebrow">{sobretitulo}</span> : null}
+        {sobretitulo ? (
+          <span className={c("eyebrow", "ui-gaveta-sobretitulo")}>
+            {sobretitulo}
+          </span>
+        ) : null}
         <h2 id={tituloId}>{titulo}</h2>
         {resumo ? (
-          <div className="analises-drawer-summary">{resumo}</div>
+          <div className={c("analises-drawer-summary", "ui-gaveta-resumo")}>
+            {resumo}
+          </div>
         ) : null}
       </div>
       <button
         type="button"
-        className="analises-drawer-close"
+        className={c("analises-drawer-close", "ui-gaveta-fechar")}
         aria-label={rotuloDoFechar}
         title="Fechar"
         onClick={aoFechar}
@@ -56,14 +74,15 @@ export function Gaveta({
   rotuloDoFechar,
   children,
 }) {
+  const { fundo, cartao } = usarClassesDaGaveta();
   return (
     <Modal
       id={id}
       rotuloId={tituloId}
       aoFechar={aoFechar}
       fecharAoClicarFora={fecharAoClicarFora}
-      className={classes("analises-drawer-backdrop", className)}
-      cartaoClassName={classes("analises-drawer", cartaoClassName)}
+      className={classes(fundo, className)}
+      cartaoClassName={classes(cartao, cartaoClassName)}
     >
       <TopoDaGaveta
         sobretitulo={sobretitulo}

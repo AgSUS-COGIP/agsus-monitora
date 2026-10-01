@@ -1,29 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatNumberBR } from "../lib/formatters.js";
+import { usarNoQuadro } from "./no-quadro.jsx";
 
 /*
-  A tabela dos painéis, com a marcação da "Fila operacional consolidada" do
-  painel de análises (`.table-card` > `.table-head`, `.table-meta`,
-  `.table-wrap` com `tbody#tableBody`) e o carregamento contínuo dele: 50
-  linhas por vez, e mais 50 quando a rolagem chega perto do fim (a faixa
-  `.analises-infinite-status` diz quanto falta). A busca do cabeçalho vale só
-  para a tabela.
+  A tabela das telas, com carregamento contínuo: 50 linhas por vez, e mais 50
+  quando a rolagem chega perto do fim (a faixa de status diz quanto falta). A
+  busca do cabeçalho vale só para a tabela.
 
-  `itens` já vem recortado pelos filtros do painel; `filtrarPelaBusca(itens,
+  `itens` já vem recortado pelos filtros da tela; `filtrarPelaBusca(itens,
   busca)` aplica a busca da tabela — passe uma função estável (de módulo), ela
   entra na memória do recorte. `linha(item)` devolve o `<tr>` com `key`.
+
+  Dentro do app: `.ui-card.ui-tabela` (topo, meta, rolagem, status); depois de
+  desenhar, avisa `agsus:content-updated` (o modo cartão do celular,
+  src/modules/mobile-table-cards.js, põe os rótulos). No quadro
+  (<PainelNoQuadro>): a "Fila operacional consolidada" do painel de análises
+  (`.table-card`, `tbody#tableBody`, `#tableSearch`, `#tableInfo`,
+  `#pageInfo`, `.analises-infinite-status`).
 */
 
 const POR_VEZ = 50;
 const PERTO_DO_FIM_PX = 160;
 const LINHAS_DO_ESQUELETO = 8;
 
-function LinhasDoEsqueleto({ colunas }) {
+function LinhasDoEsqueleto({ colunas, noQuadro }) {
   return Array.from({ length: LINHAS_DO_ESQUELETO }, (_, linha) => (
     <tr key={linha} aria-hidden="true">
       {Array.from({ length: colunas }, (__, coluna) => (
         <td key={coluna}>
-          <span>&nbsp;</span>
+          {noQuadro ? (
+            <span>&nbsp;</span>
+          ) : (
+            <span className="ui-esqueleto ui-esqueleto-linha" />
+          )}
         </td>
       ))}
     </tr>
@@ -37,7 +46,7 @@ function LinhasDoEsqueleto({ colunas }) {
  * @param {{ placeholder: string, rotulo: string }} p.busca
  * @param {Array<{ rotulo: string, largura?: string, numero?: boolean }>} p.colunas
  * @param {(quantos: number | null) => import("react").ReactNode} p.informacao
- *   o conteúdo de `#pageInfo`: recebe quantos estão na tabela, ou `null`
+ *   a contagem do recorte: recebe quantos estão na tabela, ou `null`
  *   enquanto carrega
  * @param {import("react").ReactNode} p.vazio o que aparece quando não há nada carregado
  */
@@ -55,6 +64,7 @@ export function TabelaInfinita({
   total,
   vazio,
 }) {
+  const noQuadro = usarNoQuadro();
   const [busca, setBusca] = useState("");
   const [limite, setLimite] = useState(POR_VEZ);
   const naTabela = useMemo(
@@ -64,6 +74,13 @@ export function TabelaInfinita({
   useEffect(() => setLimite(POR_VEZ), [naTabela]);
   const visiveis = naTabela.slice(0, limite);
   const faltam = naTabela.length - visiveis.length;
+
+  // Dentro do app, o modo cartão do celular relê os cabeçalhos a cada desenho.
+  const desenhadas = carregado ? visiveis.length : -1;
+  useEffect(() => {
+    if (noQuadro) return;
+    document.dispatchEvent(new CustomEvent("agsus:content-updated"));
+  }, [noQuadro, desenhadas, naTabela]);
 
   function aoRolar(evento) {
     const caixa = evento.currentTarget;
@@ -75,18 +92,25 @@ export function TabelaInfinita({
       setLimite((atual) => atual + POR_VEZ);
   }
 
+  const c = (antiga, nova) => (noQuadro ? antiga : nova);
+  const id = (valor) => (noQuadro ? valor : undefined);
+
   return (
-    <section className="panel table-card" aria-labelledby={idDoTitulo}>
-      <div className="table-head">
+    <section
+      className={c("panel table-card", "ui-card ui-tabela")}
+      aria-labelledby={idDoTitulo}
+    >
+      <div className={c("table-head", "ui-tabela-topo")}>
         <div>
-          <h2 className="title" id={idDoTitulo}>
+          <h2 className={c("title", "ui-titulo")} id={idDoTitulo}>
             {titulo}
           </h2>
         </div>
-        <div className="table-tools">
+        <div className={c("table-tools", "ui-tabela-ferramentas")}>
           <input
             type="search"
-            id="tableSearch"
+            id={id("tableSearch")}
+            className={c(undefined, "ui-tabela-busca")}
             value={busca}
             disabled={!carregado}
             placeholder={placeholder}
@@ -95,17 +119,23 @@ export function TabelaInfinita({
           />
         </div>
       </div>
-      <div className="table-meta">
-        <span id="tableInfo">
+      <div className={c("table-meta", "ui-tabela-meta")}>
+        <span
+          id={id("tableInfo")}
+          data-tabela-mostrando={noQuadro ? undefined : ""}
+        >
           {carregado
             ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros`
             : "Mostrando 0 de 0 registros"}
         </span>
-        <span id="pageInfo">
+        <span
+          id={id("pageInfo")}
+          data-tabela-contagem={noQuadro ? undefined : ""}
+        >
           {informacao(carregado ? naTabela.length : null)}
         </span>
       </div>
-      <div className="table-wrap" onScroll={aoRolar}>
+      <div className={c("table-wrap", "ui-tabela-rolagem")} onScroll={aoRolar}>
         <table className={classeDaTabela}>
           <thead>
             <tr>
@@ -121,14 +151,14 @@ export function TabelaInfinita({
               ))}
             </tr>
           </thead>
-          <tbody id="tableBody">
+          <tbody id={id("tableBody")}>
             {!carregado ? (
-              <LinhasDoEsqueleto colunas={colunas.length} />
+              <LinhasDoEsqueleto colunas={colunas.length} noQuadro={noQuadro} />
             ) : visiveis.length ? (
               visiveis.map(linha)
             ) : (
               <tr>
-                <td colSpan={colunas.length} className="empty">
+                <td colSpan={colunas.length} className={c("empty", "ui-vazio")}>
                   {total ? "Nenhum registro encontrado." : vazio}
                 </td>
               </tr>
@@ -138,7 +168,7 @@ export function TabelaInfinita({
       </div>
       {carregado && naTabela.length ? (
         <div
-          className="analises-infinite-status"
+          className={c("analises-infinite-status", "ui-tabela-status")}
           role="status"
           aria-live="polite"
         >

@@ -8,16 +8,17 @@ export { Campo } from "./campo.jsx";
 export { CardDeGrafico } from "./card-de-grafico.jsx";
 export { classes } from "./classes.js";
 export { Carregando, EstadoVazio } from "./estados.jsx";
-export { Gaveta, TopoDaGaveta } from "./gaveta.jsx";
-export { Grafico } from "./grafico.jsx";
+export { Gaveta, TopoDaGaveta, usarClassesDaGaveta } from "./gaveta.jsx";
+export { Grafico, paletaDosGraficos } from "./grafico.jsx";
 export { GradeDeKpis, Kpi } from "./kpi.jsx";
 export { Modal } from "./modal.jsx";
+export { PainelNoQuadro, usarNoQuadro } from "./no-quadro.jsx";
 export {
   ChipDeFiltro,
   ChipsDeFiltro,
   PainelDeFiltros,
 } from "./painel-de-filtros.jsx";
-export { Kv, Secao } from "./secao.jsx";
+export { GradeDeKv, Kv, Secao } from "./secao.jsx";
 export { Selo } from "./selo.jsx";
 export { TabelaInfinita } from "./tabela-infinita.jsx";
 export { TopoDoPainel, usarAlturaDoTopo } from "./topo-do-painel.jsx";

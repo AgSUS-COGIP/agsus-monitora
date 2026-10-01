@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { classes } from "./classes.js";
+import { usarNoQuadro } from "./no-quadro.jsx";
 
 /*
-  "Refinar resultados" dos painéis (`.filter-panel`, desenho do painel de
-  análises). Os campos vêm como filhos. Recolhível (o padrão): resumo de
-  quantos filtros estão ativos, "Ocultar/Mostrar filtros" e "Limpar tudo", com
-  os filhos dentro de `#filtersBody`. `recolhivel={false}`: só o título e os
-  filhos (o painel de seleção).
+  "Refinar resultados": os filtros de uma tela, num card. Os campos vêm como
+  filhos. Recolhível (o padrão): resumo de quantos filtros estão ativos,
+  "Ocultar/Mostrar filtros" e "Limpar tudo". `recolhivel={false}`: só o título
+  e os filhos (o painel de seleção).
+
+  Dentro do app: `.ui-card.ui-filtros`. No quadro (<PainelNoQuadro>): o
+  `.filter-panel` do painel de análises, com os ids de antes (filterSummary,
+  toggleFiltersBtn, clearBtn, filtersBody).
 */
 export function PainelDeFiltros({
   idDoTitulo,
@@ -17,41 +21,53 @@ export function PainelDeFiltros({
   aoRecolher,
   children,
 }) {
+  const noQuadro = usarNoQuadro();
   const [recolhido, setRecolhido] = useState(false);
+  const c = (antiga, nova) => (noQuadro ? antiga : nova);
   const titulo = (
     <div>
-      <h2 className="title" id={idDoTitulo}>
+      <h2 className={c("title", "ui-titulo")} id={idDoTitulo}>
         Refinar resultados
       </h2>
     </div>
   );
+  const moldura = c("panel filter-panel", "ui-card ui-filtros");
 
   if (!recolhivel)
     return (
       <section
-        className={classes("panel filter-panel", className)}
+        className={classes(moldura, className)}
         aria-labelledby={idDoTitulo}
       >
-        <div className="filter-head">{titulo}</div>
+        <div className={c("filter-head", "ui-filtros-topo")}>{titulo}</div>
         {children}
       </section>
     );
 
+  const alternar = () => {
+    const novo = !recolhido;
+    setRecolhido(novo);
+    aoRecolher?.(novo);
+  };
+
   return (
     <section
       className={classes(
-        "panel filter-panel",
+        moldura,
         className,
-        recolhido && "is-collapsed",
+        recolhido && c("is-collapsed", "is-recolhido"),
       )}
       aria-labelledby={idDoTitulo}
     >
-      <div className="filter-head">
+      <div className={c("filter-head", "ui-filtros-topo")}>
         {titulo}
-        <div className="filter-actions">
+        <div className={c("filter-actions", "ui-filtros-acoes")}>
           <span
-            id="filterSummary"
-            className={classes("filter-summary", quantos && "has-filters")}
+            id={noQuadro ? "filterSummary" : undefined}
+            className={classes(
+              c("filter-summary", "ui-filtros-resumo"),
+              quantos && c("has-filters", "tem-filtros"),
+            )}
             aria-live="polite"
           >
             <i
@@ -67,32 +83,30 @@ export function PainelDeFiltros({
           </span>
           <button
             type="button"
-            className="btn secondary"
-            id="toggleFiltersBtn"
+            className={c("btn secondary", "btn secondary small")}
+            id={noQuadro ? "toggleFiltersBtn" : undefined}
+            data-acao={noQuadro ? undefined : "recolher-filtros"}
             aria-expanded={!recolhido}
             title={
               recolhido
                 ? "Mostrar os filtros da visualização"
                 : "Ocultar os filtros da visualização"
             }
-            onClick={() => {
-              const novo = !recolhido;
-              setRecolhido(novo);
-              aoRecolher?.(novo);
-            }}
+            onClick={alternar}
           >
             <i
               className={`fa-solid ${recolhido ? "fa-filter" : "fa-chevron-up"}`}
               aria-hidden="true"
             />
-            <span className="toggle-label">
+            <span className={noQuadro ? "toggle-label" : undefined}>
               {recolhido ? "Mostrar filtros" : "Ocultar filtros"}
             </span>
           </button>
           <button
             type="button"
-            className="btn secondary"
-            id="clearBtn"
+            className={c("btn secondary", "btn secondary small")}
+            id={noQuadro ? "clearBtn" : undefined}
+            data-acao={noQuadro ? undefined : "limpar-filtros"}
             disabled={!quantos}
             title="Limpar filtros"
             onClick={aoLimpar}
@@ -102,17 +116,26 @@ export function PainelDeFiltros({
         </div>
       </div>
 
-      <div id="filtersBody" className="filters-body" hidden={recolhido}>
+      <div
+        id={noQuadro ? "filtersBody" : undefined}
+        className={c("filters-body", "ui-filtros-corpo")}
+        hidden={recolhido}
+      >
         {children}
       </div>
     </section>
   );
 }
 
-/** A faixa de filtros aplicados (`#filterChips`). */
+/** A faixa de filtros aplicados. */
 export function ChipsDeFiltro({ children }) {
+  const noQuadro = usarNoQuadro();
   return (
-    <div id="filterChips" className="chips" aria-label="Filtros aplicados">
+    <div
+      id={noQuadro ? "filterChips" : undefined}
+      className={noQuadro ? "chips" : "ui-chips"}
+      aria-label="Filtros aplicados"
+    >
       {children}
     </div>
   );
@@ -120,10 +143,11 @@ export function ChipsDeFiltro({ children }) {
 
 /** Um filtro aplicado: rótulo em negrito, o valor e o "x" que o tira. */
 export function ChipDeFiltro({ rotulo, aoTirar, children }) {
+  const noQuadro = usarNoQuadro();
   return (
     <button
       type="button"
-      className="chip-filter"
+      className={noQuadro ? "chip-filter" : "ui-chip"}
       title={`Tirar o filtro ${rotulo}`}
       onClick={aoTirar}
     >

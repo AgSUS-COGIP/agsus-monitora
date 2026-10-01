@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import { PainelNoQuadro } from "../../ui/index.js";
 import {
   definirCarregamentoDoPainel,
   mostrarErroDoCarregamento,
@@ -265,11 +266,13 @@ export function montarPainelDeRecursos({
   const raizDoReact = raiz
     ? montarModulo(
         raiz,
-        <PainelDeRecursos
-          estado={estado}
-          area={area}
-          nomeDaArea={nomeDaArea}
-        />,
+        <PainelNoQuadro>
+          <PainelDeRecursos
+            estado={estado}
+            area={area}
+            nomeDaArea={nomeDaArea}
+          />
+        </PainelNoQuadro>,
         { flushSync: true, nome: "o painel de recursos" },
       ).raiz
     : null;
