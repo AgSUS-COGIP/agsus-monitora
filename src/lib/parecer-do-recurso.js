@@ -77,7 +77,12 @@ export function proximaSituacao(situacao, acao) {
  */
 export function avaliarAcaoDoParecer(
   acao,
-  { situacao, podeEditar = false, podeDecidir = false, respostaEnviada = false } = {},
+  {
+    situacao,
+    podeEditar = false,
+    podeDecidir = false,
+    respostaEnviada = false,
+  } = {},
 ) {
   const regra = ACOES_DO_PARECER[acao];
   if (!regra) return { permitida: false, motivo: "Ação desconhecida." };

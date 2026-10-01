@@ -318,7 +318,7 @@ function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
       itens={pendencias.map((p) => ({
         chave: p.chave,
         titulo: p.titulo,
-        detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? "recurso" : "recursos"}${p.subtitulo ? ` · ${p.subtitulo}` : ""}`,
+        detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? "recurso" : "recursos"}`,
         tom: TOM_DA_SEVERIDADE[p.severidade],
         ativo: filtros.pendencia === p.chave,
         aoClicar: () => aoFiltrar("pendencia", p.chave),

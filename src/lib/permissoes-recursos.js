@@ -40,7 +40,10 @@ export function tipoDoRecurso(recurso) {
   (20261001170000_recursos_parecer_juridico.sql) é quem decide os recursos:
   deferir, deferir parcialmente, indeferir, devolver e publicar a resposta.
 */
-export const RECURSOS_SIM_OU_NAO = Object.freeze(["acessos", "recursos_parecer"]);
+export const RECURSOS_SIM_OU_NAO = Object.freeze([
+  "acessos",
+  "recursos_parecer",
+]);
 
 /** Níveis que a célula aceita (as mesmas regras do banco). */
 export function niveisDoRecurso(recurso) {

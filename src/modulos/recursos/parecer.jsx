@@ -131,8 +131,8 @@ export function SecaoDoParecer({
 
         {esperando ? (
           <p className="recursos-aguardando" data-aguardando-parecer="">
-            <i className="fa-solid fa-hourglass-half" aria-hidden="true" />{" "}
-            Aguardando parecer jurídico
+            <i className="fa-solid fa-clock" aria-hidden="true" /> Aguardando
+            parecer jurídico
           </p>
         ) : null}
 

@@ -485,8 +485,8 @@ export function FormularioDoRecurso({
                     className="fa-solid fa-triangle-exclamation"
                     aria-hidden="true"
                   />{" "}
-                  Já existe o recurso nº {numeroDuplicado} sem decisão para
-                  este candidato, edital e origem.
+                  Já existe o recurso nº {numeroDuplicado} sem decisão para este
+                  candidato, edital e origem.
                 </p>
                 <label className="recursos-check">
                   <input

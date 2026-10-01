@@ -315,9 +315,12 @@ const botaoEm = (onde, texto) =>
   [...(onde || document).querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
   );
-const kpi = (chave) =>
-  document.querySelector(
-    `.recursos-kpis-respostas [data-kpi="${chave}"] .ui-kpi-valor`,
+/* As respostas em revisão, aprovadas e devolvidas são pendências (os KPIs delas saíram). */
+const pendencia = (chave) =>
+  Number.parseInt(
+    document.querySelector(`.ui-pendencias [data-pendencia="${chave}"] small`)
+      ?.textContent || "0",
+    10,
   );
 
 afterEach(async () => {
@@ -332,7 +335,7 @@ describe("resposta ao candidato", () => {
   it("modelo → prévia → rascunho → revisão → aprovação por outra pessoa → documento → enviada", async () => {
     const servidor = criarServidor();
     await montar(servidor);
-    expect(kpi("respostas-em-revisao").textContent).toBe("0");
+    expect(pendencia("resposta_em_revisao")).toBe(0);
     await abrirGaveta();
     const resposta = secao("resposta");
     expect(resposta).not.toBeNull();
@@ -396,7 +399,7 @@ describe("resposta ao candidato", () => {
         p_comentario: null,
       },
     );
-    expect(kpi("respostas-em-revisao").textContent).toBe("1");
+    expect(pendencia("resposta_em_revisao")).toBe(1);
 
     // Em revisão: sem editor de texto; a autora não aprova.
     expect(
@@ -422,7 +425,7 @@ describe("resposta ao candidato", () => {
     );
     await esperar();
     expect(servidor.resposta.estado).toBe("aprovada");
-    expect(kpi("respostas-aprovadas").textContent).toBe("1");
+    expect(pendencia("resposta_aprovada")).toBe(1);
 
     // Documento: .docx, impressão e anexo ao recurso.
     await clicar(botaoEm(secaoAtual(), "Baixar"));
@@ -526,7 +529,7 @@ describe("resposta ao candidato", () => {
     await clicar(confirmar);
     await esperar();
     expect(servidor.resposta.estado).toBe("devolvida");
-    expect(kpi("respostas-devolvidas").textContent).toBe("1");
+    expect(pendencia("resposta_devolvida")).toBe(1);
     expect(secao("resposta").textContent).toContain(
       "Ajuste pedido na revisão: Cite o item do edital.",
     );
