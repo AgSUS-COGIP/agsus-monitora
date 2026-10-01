@@ -191,14 +191,7 @@ function Alerta({ titulo, detalhe, tom = "error" }) {
   );
 }
 
-function CampoDoMotivo({
-  id,
-  rotulo,
-  placeholder,
-  valor,
-  invalido,
-  aoMudar,
-}) {
+function CampoDoMotivo({ id, rotulo, placeholder, valor, invalido, aoMudar }) {
   return (
     <label className="config-reason-field" htmlFor={id}>
       <span>
