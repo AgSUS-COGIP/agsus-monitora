@@ -216,8 +216,8 @@ describe("áreas abertas por padrão", () => {
       ["Visão geral", "saude-indigena"],
       ["Editais", "saude-indigena"],
       ["Cronograma", "saude-indigena"],
-      ["Lista de aprovados", "saude-indigena"],
       ["Análises curriculares", "saude-indigena"],
+      ["Lista de aprovados", "saude-indigena"],
     ]);
   });
 });
@@ -520,9 +520,9 @@ describe("barra recolhida: páginas da área como ícones", () => {
       ["Visão geral", "map", "Visão geral"],
       ["Editais", "file-text", "Editais"],
       ["Cronograma", "calendar-days", "Cronograma"],
-      ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
       ["Análises curriculares", "file-search", "Análises curriculares"],
       ["Recursos", "scale", "Recursos · BETA"],
+      ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
     ]);
     // O nome continua no botão para o leitor de tela.
     expect(

@@ -13,11 +13,11 @@ import {
   CardDeGrafico,
   ChipDeFiltro,
   ChipsDeFiltro,
-  classes,
-  EstadoVazio,
   Grafico,
   GradeDeKpis,
   Kpi as CardDeKpi,
+  LinhaDoRecorte,
+  ListaDePendencias,
   paletaDosGraficos,
   PainelDeFiltros,
   TopoDoPainel,
@@ -268,12 +268,7 @@ export function Recorte({ ativos, recursos, carregado }) {
     (r) => r.prazo.fonte === "abertura",
   ).length;
   return (
-    <section className="ui-card recursos-recorte" aria-label="Recorte ativo">
-      <p className="recursos-recorte-texto" data-recorte="">
-        {ativos.length
-          ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
-          : "Sem filtros"}
-      </p>
+    <LinhaDoRecorte ativos={ativos}>
       {carregado ? (
         <div className="recursos-recorte-marcas">
           <span
@@ -306,7 +301,7 @@ export function Recorte({ ativos, recursos, carregado }) {
           ) : null}
         </div>
       ) : null}
-    </section>
+    </LinhaDoRecorte>
   );
 }
 
@@ -314,50 +309,21 @@ export function Recorte({ ativos, recursos, carregado }) {
 
 /* Severidade → tom da borda do item: alta em vermelho; média e baixa em âmbar. */
 const TOM_DA_SEVERIDADE = { alta: "perigo", media: "alerta", baixa: "alerta" };
-const ITENS_DO_ESQUELETO = 4;
 
 function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
-  if (!carregado)
-    return (
-      <div className="recursos-pendencias" aria-hidden="true">
-        {Array.from({ length: ITENS_DO_ESQUELETO }, (_, indice) => (
-          <span
-            className="ui-esqueleto recursos-pendencia-esqueleto"
-            key={indice}
-          />
-        ))}
-      </div>
-    );
   return (
-    <div className="recursos-pendencias">
-      {pendencias.length ? (
-        pendencias.map((p) => {
-          const ativo = filtros.pendencia === p.chave;
-          return (
-            <button
-              type="button"
-              key={p.chave}
-              className={classes("recursos-pendencia", ativo && "is-ativo")}
-              data-tom={TOM_DA_SEVERIDADE[p.severidade]}
-              data-action="pendencia"
-              aria-pressed={ativo}
-              onClick={() => aoFiltrar("pendencia", p.chave)}
-            >
-              <b>{p.titulo}</b>
-              <small>
-                {formatNumberBR(p.valor)}{" "}
-                {p.valor === 1 ? "recurso" : "recursos"}
-                {p.subtitulo ? ` · ${p.subtitulo}` : ""}
-              </small>
-            </button>
-          );
-        })
-      ) : (
-        <EstadoVazio>
-          Nenhuma pendência prioritária no recorte atual.
-        </EstadoVazio>
-      )}
-    </div>
+    <ListaDePendencias
+      carregando={!carregado}
+      vazio="Nenhuma pendência prioritária no recorte atual."
+      itens={pendencias.map((p) => ({
+        chave: p.chave,
+        titulo: p.titulo,
+        detalhe: `${formatNumberBR(p.valor)} ${p.valor === 1 ? "recurso" : "recursos"}${p.subtitulo ? ` · ${p.subtitulo}` : ""}`,
+        tom: TOM_DA_SEVERIDADE[p.severidade],
+        ativo: filtros.pendencia === p.chave,
+        aoClicar: () => aoFiltrar("pendencia", p.chave),
+      }))}
+    />
   );
 }
 

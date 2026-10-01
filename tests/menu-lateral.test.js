@@ -111,13 +111,13 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       "Visão geral",
       "Editais",
       "Cronograma",
-      "Lista de aprovados",
       "Análises curriculares",
+      "Lista de aprovados",
     ]);
     expect(grupos["saude-indigena"].at(-1)).toEqual({
-      view: "analises",
-      rotulo: "Análises curriculares",
-      icone: "file-search",
+      view: "approved",
+      rotulo: "Lista de aprovados",
+      icone: "user-round-check",
       area: "saude-indigena",
     });
     expect(
@@ -165,11 +165,11 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
         "dashboard",
         "nucleo",
         "calendario",
-        "approved",
         "analises",
+        "approved",
       ]);
       expect(grupos[area][0].rotulo).toBe("Visão geral");
-      expect(grupos[area].at(-1).rotulo).toBe("Análises curriculares");
+      expect(grupos[area].at(-1).rotulo).toBe("Lista de aprovados");
       expect(grupos[area].every((item) => item.area === area)).toBe(true);
     }
     // A mesma página, uma vez em cada área; Painéis só tem os externos.

@@ -1,70 +1,16 @@
-import { useRef } from "react";
 import {
   novaExcecao,
   novaOrigemDaBanca,
 } from "../../lib/roteiro-de-entrevista.js";
-import { Campo, classes } from "../../ui/index.js";
+import { Campo } from "../../ui/index.js";
 
 /*
-  Peças que as visões "Conduzir entrevistas" e "Roteiros" repetem, no desenho
-  do painel de análises: o controle segmentado, os botões pequenos de linha
-  (subir, descer, remover) e os dois blocos que o roteiro e a configuração do
-  edital têm iguais — a regra de convocação e a composição da banca. O campo
-  (`Campo`) e o aviso em faixa (`Aviso`) estão em src/ui/.
+  Peças que as visões "Conduzir entrevistas" e "Roteiros" repetem: os botões
+  pequenos de linha (subir, descer, remover) e os dois blocos que o roteiro e
+  a configuração do edital têm iguais — a regra de convocação e a composição
+  da banca. O campo (`Campo`), o aviso (`Aviso`) e o controle segmentado
+  (`Segmentado`) são de src/ui/.
 */
-
-/** Controle segmentado: setas movem a escolha. */
-export function Segmentado({
-  rotulo,
-  opcoes,
-  valor,
-  aoMudar,
-  desabilitado = false,
-  className = "",
-}) {
-  const botoes = useRef([]);
-  function aoTeclar(evento, indice) {
-    const passo = { ArrowRight: 1, ArrowLeft: -1 }[evento.key];
-    if (!passo || desabilitado) return;
-    evento.preventDefault();
-    const proximo = (indice + passo + opcoes.length) % opcoes.length;
-    aoMudar(opcoes[proximo].valor);
-    botoes.current[proximo]?.focus();
-  }
-  return (
-    <div
-      className={classes("entrevistas-segmentado", className)}
-      role="radiogroup"
-      aria-label={rotulo}
-    >
-      {opcoes.map((opcao, indice) => (
-        <button
-          key={opcao.valor}
-          ref={(el) => (botoes.current[indice] = el)}
-          type="button"
-          role="radio"
-          aria-checked={valor === opcao.valor}
-          tabIndex={
-            valor === opcao.valor ||
-            (indice === 0 && !opcoes.some((o) => o.valor === valor))
-              ? 0
-              : -1
-          }
-          disabled={desabilitado}
-          className={classes(valor === opcao.valor && "ativo")}
-          data-valor={opcao.valor}
-          onClick={() => aoMudar(opcao.valor)}
-          onKeyDown={(evento) => aoTeclar(evento, indice)}
-        >
-          {opcao.icone ? (
-            <i className={`fa-solid ${opcao.icone}`} aria-hidden="true" />
-          ) : null}
-          {opcao.rotulo}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export function BotaoDeLinha({ icone, rotulo, aoClicar, desabilitado }) {
   return (

@@ -1,7 +1,7 @@
 /*
-  Estado das visões "Conduzir entrevistas" e "Roteiros" do painel de
-  entrevistas, fora do React (como estado.js, o da visão "Resultados"): os
-  roteiros da área, os editais, o edital aberto (o payload de
+  Estado das visões "Conduzir entrevistas" e "Roteiros" da tela de
+  Entrevistas, fora do React (como estado.js, o da visão "Resultados"): os
+  roteiros da área atual do app, os editais, o edital aberto (o payload de
   `obter_entrevistas_do_edital`) e as ações que escrevem no banco, uma por
   vez (`acao`). Os componentes leem com `useSyncExternalStore`. Este arquivo
   não importa React.
@@ -16,6 +16,10 @@
   liberados pelo administrador global e os com convocado sem parecer. O
   administrador global pode pedir todos (`todos`) e liberar um edital fora
   da janela até uma data (`liberarEdital`).
+
+  A área é a do app: `trocarArea` (chamado pelo controlador e na troca de
+  área com a tela aberta) descarta o que era da outra. Outro usuário na mesma
+  aba também zera tudo.
 */
 import {
   comTempoLimite,
@@ -123,6 +127,18 @@ export function criarEstadoDaConducao({
     }
   }
 
+  let identidade;
+  supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
+    const atual = sessao?.user?.id || null;
+    if (atual === identidade) return;
+    // O primeiro aviso da página só registra quem é; não há o que limpar.
+    if (identidade !== undefined || !atual) {
+      pedidoDoEdital += 1;
+      publicar(ESTADO_INICIAL);
+    }
+    identidade = atual;
+  });
+
   // ── Roteiros ────────────────────────────────────────────────────────
 
   async function carregarRoteiros(area = estado.area) {
@@ -193,9 +209,7 @@ export function criarEstadoDaConducao({
           carregado: true,
           admin,
           todos: admin && Boolean(todos),
-          erro: lista.length
-            ? ""
-            : "Nenhum edital na janela da entrevista. O edital aparece 7 dias antes da primeira etapa de entrevista do cronograma.",
+          erro: lista.length ? "" : "Nenhum edital na janela da entrevista.",
         },
       });
       return lista;
@@ -330,6 +344,7 @@ export function criarEstadoDaConducao({
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
+    trocarArea,
     carregarRoteiros,
     salvarRoteiro,
     carregarEditais,

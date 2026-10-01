@@ -16,12 +16,7 @@ const cssDe = (pasta) =>
 */
 describe("fonte Geist no sistema todo", () => {
   it("as páginas carregam Geist, e nenhuma carrega Inter", () => {
-    for (const pagina of [
-      "index.html",
-      "analises.html",
-      "entrevistas.html",
-      "selecao.html",
-    ]) {
+    for (const pagina of ["index.html", "analises.html", "selecao.html"]) {
       const html = ler(pagina);
       expect(html, pagina).toContain("family=Geist:wght@400..900&display=swap");
       expect(html, pagina).not.toContain("family=Inter");
@@ -38,7 +33,7 @@ describe("fonte Geist no sistema todo", () => {
     expect(primeiroCss(ler("src/analises/main.js"))).toBe(
       "../styles/tokens.css",
     );
-    expect(primeiroCss(ler("src/entrevistas/main.jsx"))).toBe(
+    expect(primeiroCss(ler("src/selecao/main.jsx"))).toBe(
       "../styles/tokens.css",
     );
   });
