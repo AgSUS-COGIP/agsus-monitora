@@ -551,4 +551,107 @@ export const VERBETES_AYA = Object.freeze([
     fato: "Fotossíntese é a conversão de energia luminosa em energia química por plantas, algas e alguns microrganismos, com uso de água e dióxido de carbono e liberação de oxigênio.",
     fonte: "conhecimento geral",
   },
+  {
+    titulo: "Fluxo do parecer jurídico",
+    perguntas: [
+      "parecer jurídico",
+      "fluxo do recurso",
+      "quem decide o recurso",
+      "quem defere o recurso",
+      "em análise jurídica",
+      "enviar para parecer",
+    ],
+    resposta:
+      'No MONITORA, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer, ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Aguardando parecer",
+    perguntas: [
+      "aguardando parecer",
+      "o que é aguardando parecer",
+      "kpi aguardando parecer",
+    ],
+    resposta:
+      'No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. Quem não tem o parecer jurídico vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Deferido parcialmente",
+    perguntas: [
+      "deferido parcialmente",
+      "parcialmente indeferido",
+      "deferidos inclui parcialmente",
+    ],
+    resposta:
+      'No MONITORA, "Deferido parcialmente" é o mesmo que "parcialmente indeferido" (o código no banco continua PARCIALMENTE_INDEFERIDO, usado pelos modelos de resposta). O indicador "Deferidos" soma os deferidos e os deferidos parcialmente.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Devolvido para ajuste",
+    perguntas: [
+      "devolvido para ajuste",
+      "recurso devolvido",
+      "devolvidos pelo jurídico",
+    ],
+    resposta:
+      'No MONITORA, o jurídico pode devolver um recurso Em análise jurídica para ajuste, dizendo o que falta. Ele volta a Registrado, com o comentário em destaque no detalhe, e aparece na pendência "Devolvidos pelo jurídico" até ser reenviado.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Reabrir a decisão",
+    perguntas: [
+      "reabrir decisão",
+      "desfazer decisão do recurso",
+      "mudar a decisão do recurso",
+    ],
+    resposta:
+      "No MONITORA, só o jurídico reabre uma decisão, com motivo, e só enquanto a resposta não foi enviada ao candidato. O recurso volta a Em análise jurídica; o parecer anterior continua no histórico.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Resposta ao candidato e parecer",
+    perguntas: [
+      "aprovar resposta do recurso",
+      "publicar resposta do recurso",
+      "marcar resposta enviada",
+      "aprovar exige a decisão",
+    ],
+    resposta:
+      'No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar, devolver e marcar a resposta como enviada (publicar) são do parecer jurídico. Aprovar exige o recurso decidido e um modelo da mesma situação da decisão. Marcar a etapa "Resposta enviada ao candidato" também é do jurídico, com o recurso decidido.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Indicadores da aba Recursos",
+    perguntas: [
+      "indicadores dos recursos",
+      "kpis dos recursos",
+      "onde está o total de recursos",
+      "taxa de conclusão dos recursos",
+      "sem processo sei",
+    ],
+    resposta:
+      'No MONITORA, a aba Recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Pendências da aba Recursos",
+    perguntas: [
+      "pendências dos recursos",
+      "prazo não encontrado no cronograma",
+      "candidato fora das análises",
+      "mudança de nota ou classificação",
+    ],
+    resposta:
+      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com o nome digitado, que vale conferir; "Mudança de nota ou classificação" pede conferência no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
 ]);

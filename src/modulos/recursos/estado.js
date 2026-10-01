@@ -11,7 +11,9 @@
   permissão e área em todas; `pode_editar` vem dele. A resposta escrita, os
   anexos (bucket privado `recursos-anexos`, com URL assinada depois do registro
   do download) e os modelos de resposta são de
-  20260929230000_recursos_modelos_anexos_respostas.sql.
+  20260929230000_recursos_modelos_anexos_respostas.sql; o fluxo do parecer
+  jurídico (`transicionar_recurso_candidato`, `pode_decidir`), de
+  20261001170000_recursos_parecer_juridico.sql.
 
   Sem tela de carregamento: antes da primeira carga o painel é o skeleton
   (`carregado` falso); uma falha nela vira `erroAoCarregar`, com "Tentar
@@ -376,6 +378,44 @@ export function criarEstadoDosRecursos({
     });
   }
 
+  // ── Parecer jurídico (20261001170000) ──────────────────────────────────
+
+  const AVISO_DO_PARECER = {
+    enviar_parecer: "Recurso enviado para parecer jurídico.",
+    deferir: "Recurso deferido.",
+    deferir_parcialmente: "Recurso deferido parcialmente.",
+    indeferir: "Recurso indeferido.",
+    devolver: "Recurso devolvido para ajuste.",
+    reabrir: "Decisão reaberta.",
+  };
+
+  /*
+    Enviar para parecer, decidir, devolver ou reabrir. O banco confere quem
+    pode (recursos_parecer) e a revisão; a aba é relida inteira (situação,
+    KPIs e o detalhe da gaveta).
+  */
+  function transicionarRecurso(recurso, acao, texto = "") {
+    return executar(`parecer:${acao}`, "Salvando…", async () => {
+      const { error } = await supabase.rpc("transicionar_recurso_candidato", {
+        p_id: recurso.id,
+        p_acao: acao,
+        p_revisao: recurso.revisao,
+        p_texto: String(texto || "").trim() || null,
+      });
+      if (error) {
+        const mensagem =
+          error.code === "40001"
+            ? "Outra pessoa alterou este recurso. Recarregue e tente de novo."
+            : mensagemDe(error);
+        toast(`Não foi possível concluir: ${mensagem}`, "error");
+        return false;
+      }
+      toast(AVISO_DO_PARECER[acao] || "Recurso atualizado.", "ok");
+      await carregar();
+      return true;
+    });
+  }
+
   function exportarCsv(recursos, origens) {
     const dia = new Date(agora()).toISOString().slice(0, 10);
     baixar(
@@ -681,6 +721,7 @@ export function criarEstadoDosRecursos({
   }
 
   return {
+    transicionarRecurso,
     salvarResposta,
     transicionarResposta,
     enviarAnexo,

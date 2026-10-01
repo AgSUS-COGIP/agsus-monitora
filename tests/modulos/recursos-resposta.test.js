@@ -54,6 +54,7 @@ const OUTRO_MODELO = {
 
 function criarServidor({
   podeEditar = true,
+  podeDecidir = true,
   admin = false,
   resposta = null,
   anexos = [],
@@ -98,6 +99,7 @@ function criarServidor({
     schema_version: 1,
     area: "saude-indigena",
     pode_editar: podeEditar,
+    pode_decidir: podeDecidir,
     pode_administrar_modelos: admin,
     origens: [
       { id: "analise-curricular", rotulo: "Análise curricular", ativo: true },

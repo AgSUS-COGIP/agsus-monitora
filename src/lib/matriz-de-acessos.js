@@ -266,8 +266,10 @@ export function rebasearRascunho(rascunho, usuariosRecarregados = []) {
 
 // ── Visão simples: grupo em uma frase, áreas da pessoa e a trava de área ───────
 
-/** Módulos que contam para a frase do grupo ("acessos" vira frase à parte). */
-const MODULOS_DA_FRASE = MODULOS.filter((m) => m.id !== "acessos");
+/** Módulos que contam para a frase do grupo ("acessos" e o parecer viram frase à parte). */
+const MODULOS_DA_FRASE = MODULOS.filter(
+  (m) => !["acessos", "recursos_parecer"].includes(m.id),
+);
 /* "Tudo" não conta Configurações: o módulo não tem nível de leitura. */
 const MODULOS_DE_TUDO = MODULOS_DA_FRASE.filter(
   (m) => m.id !== "configuracoes",
@@ -296,7 +298,10 @@ export function explicacaoDoGrupo(grupo) {
   const ve = MODULOS_DA_FRASE.filter((m) => nivelDe(m.id) !== "sem_acesso");
   const altera = ve.filter((m) => ["editor", "admin"].includes(nivelDe(m.id)));
   const gerencia = nivelDe("acessos") === "editor";
-  const extra = gerencia ? " Gerencia os acessos da coordenação." : "";
+  const decide = nivelDe("recursos_parecer") === "editor";
+  const extra = `${gerencia ? " Gerencia os acessos da coordenação." : ""}${
+    decide ? " Dá o parecer jurídico dos recursos." : ""
+  }`;
   if (!ve.length)
     return gerencia
       ? `Só gestão de acessos.${extra}`

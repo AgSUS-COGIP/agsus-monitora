@@ -69,7 +69,7 @@ const recurso = (extra = {}) => {
     nota_anterior: 10,
     nota_atual: 10,
     analista: "Ana",
-    situacao: "EM_ANALISE",
+    situacao: "REGISTRADO",
     processo_sei: null,
     mudou_classificacao: false,
     download_empregare_em: null,
@@ -158,27 +158,63 @@ describe("o que se calcula de cada recurso", () => {
 });
 
 describe("indicadores e pendências", () => {
-  it("indicadores do painel antigo, com prazo vencido e taxa de conclusão", () => {
+  it("os números dos 4 KPIs (e o total e a taxa, que vão para a fila e o recorte)", () => {
     expect(calcularIndicadores(enriquecidos())).toEqual({
       total: 5,
-      pendentes: 3,
+      registrados: 3,
+      aguardandoParecer: 0,
       concluidos: 2,
-      semSei: 2,
-      semResposta: 4,
-      mudouResultado: 2,
+      deferidos: 1,
+      indeferidos: 1,
       atrasados: 2,
+      vencendo: 1,
       taxaConclusao: 40,
-      respostasEmRevisao: 0,
-      respostasAprovadas: 0,
-      respostasDevolvidas: 0,
     });
     expect(calcularIndicadores([]).taxaConclusao).toBe(0);
+  });
+
+  it("deferidos somam os deferidos parcialmente; aguardando parecer é a análise jurídica", () => {
+    const todos = enriquecerRecursos(
+      {
+        recursos: [
+          recurso({ nu: 1, situacao: "EM_ANALISE_JURIDICA" }),
+          recurso({ nu: 2, situacao: "EM_ANALISE_JURIDICA" }),
+          recurso({
+            nu: 3,
+            situacao: "PARCIALMENTE_INDEFERIDO",
+            decisao_em: "2026-05-15T12:00:00Z",
+          }),
+          recurso({
+            nu: 4,
+            situacao: "DEFERIDO",
+            decisao_em: "2026-05-15T12:00:00Z",
+          }),
+          recurso({ nu: 5, devolvido_em: "2026-05-16T12:00:00Z" }),
+        ],
+        cronogramas: CRONOGRAMAS,
+      },
+      HOJE,
+    );
+    const k = calcularIndicadores(todos);
+    expect(k.aguardandoParecer).toBe(2);
+    expect(k.deferidos).toBe(2);
+    expect(k.indeferidos).toBe(0);
+    expect(todos[4].devolvido).toBe(true);
+    const nus = (filtros) =>
+      filtrarRecursos(todos, { ...FILTROS_VAZIOS, ...filtros }).map(
+        (r) => r.nu,
+      );
+    expect(nus({ situacao: "deferidos" })).toEqual([3, 4]);
+    expect(nus({ situacao: "EM_ANALISE_JURIDICA" })).toEqual([1, 2]);
+    expect(nus({ pendencia: "devolvido" })).toEqual([5]);
   });
 
   it("pendências com ocorrência, na ordem de prioridade", () => {
     const pendencias = pendenciasPrioritarias(enriquecidos());
     expect(pendencias.map((p) => [p.chave, p.valor])).toEqual([
       ["prazo_vencido", 2],
+      ["prazo_vencendo", 1],
+      ["sem_envio_parecer", 3],
       ["sem_analista", 1],
       ["sem_sei", 2],
       ["sem_upload_sei", 2],
@@ -200,7 +236,7 @@ describe("filtros", () => {
       );
     expect(nus({ origem: "entrevista" })).toEqual([3]);
     expect(nus({ analista: "Sem analista" })).toEqual([3]);
-    expect(nus({ situacao: "EM_ANALISE" })).toEqual([1, 3, 5]);
+    expect(nus({ situacao: "REGISTRADO" })).toEqual([1, 3, 5]);
     expect(nus({ pendencia: "prazo_vencido" })).toEqual([1, 2]);
     expect(nus({ busca: "jose" })).toEqual([5]);
     expect(nus({ busca: "C3" })).toEqual([3]);
@@ -233,8 +269,9 @@ describe("gráficos", () => {
       { rotulo: "Ana", total: 4, pendentes: 2, concluidos: 2 },
       { rotulo: "Sem analista", total: 1, pendentes: 1, concluidos: 0 },
     ]);
+    // Registrado, em análise jurídica, deferido, deferido parcialmente, indeferido.
     expect(recursosPorSituacao(todos).map((s) => s.valor)).toEqual([
-      3, 1, 1, 0,
+      3, 0, 1, 0, 1,
     ]);
     expect(impactoNoResultado(todos).map((i) => i.valor)).toEqual([1, 1, 3]);
     expect(esteiraDosRecursos(todos).map((e) => e.valor)).toEqual([
@@ -308,7 +345,6 @@ describe("duplicado e formulário", () => {
       permitir_duplicado: false,
       origem: "entrevista",
       analista: "Bia",
-      situacao: "EM_ANALISE",
       processo_sei: "1",
       mudou_classificacao: false,
       observacao: "",

@@ -14,7 +14,12 @@
     em_revisao ─devolver→ devolvida    (com comentário; não pelo autor)
     aprovada ─reabrir→ rascunho        (com comentário)
     aprovada ─marcar_enviada→ enviada  (marca a etapa "resposta enviada" do recurso)
+
+  Aprovar, devolver e marcar enviada (publicar a resposta final) são do
+  parecer jurídico (`juridico: true`; 20261001170000_recursos_parecer_juridico.sql):
+  quem não tem `recursos_parecer` não vê esses botões.
 */
+import { situacaoDecidida } from "./recursos-dos-candidatos.js";
 
 export const ESTADOS_DA_RESPOSTA = Object.freeze([
   Object.freeze({ id: "rascunho", rotulo: "Rascunho", tom: "neutral" }),
@@ -36,12 +41,14 @@ export const ACOES_DA_RESPOSTA = Object.freeze({
     de: Object.freeze(["rascunho", "em_revisao"]),
     para: "aprovada",
     comentario: "opcional",
+    juridico: true,
   }),
   devolver: Object.freeze({
     rotulo: "Devolver",
     de: Object.freeze(["em_revisao"]),
     para: "devolvida",
     comentario: "obrigatorio",
+    juridico: true,
   }),
   reabrir: Object.freeze({
     rotulo: "Reabrir",
@@ -54,6 +61,7 @@ export const ACOES_DA_RESPOSTA = Object.freeze({
     de: Object.freeze(["aprovada"]),
     para: "enviada",
     comentario: "nao",
+    juridico: true,
   }),
 });
 
@@ -77,16 +85,25 @@ const mesmo = (a, b) => Boolean(a) && Boolean(b) && String(a) === String(b);
 /**
  * Pode fazer `acao`? `{ permitida, motivo }`. `resposta` é a do detalhe
  * (`get_recurso_candidato_detalhe`), `eu` o id de quem usa (o `eu` do
- * detalhe), `situacao` a do recurso.
+ * detalhe), `situacao` a do recurso, `podeDecidir` = recursos_parecer.
  */
 export function avaliarAcao(
   acao,
-  { resposta, eu, podeEditar, situacao, alterada = false } = {},
+  {
+    resposta,
+    eu,
+    podeEditar,
+    podeDecidir = false,
+    situacao,
+    alterada = false,
+  } = {},
 ) {
   const regra = ACOES_DA_RESPOSTA[acao];
   if (!regra) return { permitida: false, motivo: "Ação desconhecida." };
   if (!podeEditar)
     return { permitida: false, motivo: "Sem permissão para responder." };
+  if (regra.juridico && !podeDecidir)
+    return { permitida: false, motivo: "É do parecer jurídico." };
   if (!resposta?.id)
     return { permitida: false, motivo: "Salve o rascunho primeiro." };
   if (!regra.de.includes(resposta.estado))
@@ -111,7 +128,7 @@ export function avaliarAcao(
         motivo:
           "Quem escreveu ou enviou a resposta para revisão não pode aprová-la.",
       };
-    if (!situacao || situacao === "EM_ANALISE")
+    if (!situacaoDecidida(situacao))
       return {
         permitida: false,
         motivo: "Registre a decisão do recurso antes de aprovar a resposta.",
@@ -130,11 +147,15 @@ export function avaliarAcao(
   return { permitida: true, motivo: "" };
 }
 
-/** As ações que fazem sentido no estado atual, com a avaliação de cada uma. */
+/**
+ * As ações que fazem sentido no estado atual, com a avaliação de cada uma.
+ * As do parecer jurídico nem aparecem para quem não o tem.
+ */
 export function acoesDaResposta(contexto = {}) {
   const estado = contexto.resposta?.estado;
   return Object.entries(ACOES_DA_RESPOSTA)
     .filter(([, regra]) => estado && regra.de.includes(estado))
+    .filter(([, regra]) => !regra.juridico || contexto.podeDecidir)
     .map(([acao, regra]) => ({
       acao,
       rotulo: regra.rotulo,

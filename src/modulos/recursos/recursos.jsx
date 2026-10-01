@@ -24,7 +24,6 @@ import {
   filtrosAtivos,
   Graficos,
   Indicadores,
-  IndicadoresDasRespostas,
   Recorte,
   Topo,
 } from "./paineis.jsx";
@@ -44,9 +43,10 @@ import { TabelaDeRecursos } from "./tabela.jsx";
   - Tema: o do app (`html[data-theme="dark"]`, o seletor da barra lateral);
     os gráficos acompanham. Tela cheia: a do app (menu da conta).
   - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).
-  - Permissões: vêm do banco a cada carga (`pode_editar`,
-    `pode_administrar_modelos`); `render()` recarrega, então mudam sem
-    recarregar a página. Quem só lê não vê os controles de edição.
+  - Permissões: vêm do banco a cada carga (`pode_editar`, `pode_decidir` —
+    o parecer jurídico — e `pode_administrar_modelos`); `render()` recarrega,
+    então mudam sem recarregar a página. Quem só lê não vê os controles de
+    edição; quem não decide não vê os botões de decisão.
 
   Sem tela de carregamento: antes da primeira carga, os KPIs, os gráficos, as
   pendências e a fila são o skeleton deles; falha na primeira carga vira um
@@ -79,6 +79,8 @@ function TelaDaArea({ estado, e }) {
 
   const origens = dados?.origens?.length ? dados.origens : ORIGENS_PADRAO;
   const podeEditar = Boolean(carregado && dados?.pode_editar);
+  // Quem decide (recursos_parecer): o banco diz a cada carga.
+  const podeDecidir = Boolean(carregado && dados?.pode_decidir);
   const podeAdministrarModelos = Boolean(
     carregado && dados?.pode_administrar_modelos,
   );
@@ -163,12 +165,6 @@ function TelaDaArea({ estado, e }) {
         filtros={filtros}
         aoFiltrar={alternarFiltro}
       />
-      <IndicadoresDasRespostas
-        indicadores={indicadores}
-        carregado={carregado}
-        filtros={filtros}
-        aoFiltrar={alternarFiltro}
-      />
       <Recorte ativos={ativos} recursos={filtrados} carregado={carregado} />
       <Graficos
         recursos={filtrados}
@@ -197,6 +193,7 @@ function TelaDaArea({ estado, e }) {
           detalhe={e.detalhes.get(aberto.id)}
           origens={origens}
           podeEditar={podeEditar}
+          podeDecidir={podeDecidir}
           modelos={dados?.modelos || []}
           area={area}
         />

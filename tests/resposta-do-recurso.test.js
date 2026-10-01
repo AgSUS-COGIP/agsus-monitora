@@ -36,6 +36,7 @@ const contexto = (extra = {}) => ({
   resposta: resposta(),
   eu: AUTORA,
   podeEditar: true,
+  podeDecidir: true,
   situacao: "DEFERIDO",
   ...extra,
 });
@@ -142,7 +143,11 @@ describe("permissões", () => {
 
   it("aprovar exige o recurso decidido e com a situação do modelo", () => {
     expect(
-      avaliarAcao("aprovar", contexto({ situacao: "EM_ANALISE" })).motivo,
+      avaliarAcao("aprovar", contexto({ situacao: "EM_ANALISE_JURIDICA" }))
+        .motivo,
+    ).toMatch(/decisão do recurso/);
+    expect(
+      avaliarAcao("aprovar", contexto({ situacao: "REGISTRADO" })).motivo,
     ).toMatch(/decisão do recurso/);
     expect(
       avaliarAcao("aprovar", contexto({ situacao: "INDEFERIDO" })).motivo,
@@ -167,6 +172,29 @@ describe("permissões", () => {
     ).toEqual(["reabrir", "marcar_enviada"]);
     expect(
       acoesDaResposta(contexto({ resposta: resposta({ estado: "enviada" }) })),
+    ).toEqual([]);
+  });
+
+  it("aprovar, devolver e marcar enviada são do parecer jurídico: sem ele, nem aparecem", () => {
+    const semParecer = (extra) => contexto({ podeDecidir: false, ...extra });
+    for (const acao of ["aprovar", "devolver", "marcar_enviada"]) {
+      expect(ACOES_DA_RESPOSTA[acao].juridico).toBe(true);
+      expect(avaliarAcao(acao, semParecer()).motivo).toBe(
+        "É do parecer jurídico.",
+      );
+    }
+    expect(acoesDaResposta(semParecer()).map((a) => a.acao)).toEqual([
+      "enviar_revisao",
+    ]);
+    expect(
+      acoesDaResposta(
+        semParecer({ resposta: resposta({ estado: "aprovada" }) }),
+      ).map((a) => a.acao),
+    ).toEqual(["reabrir"]);
+    expect(
+      acoesDaResposta(
+        semParecer({ resposta: resposta({ estado: "em_revisao" }) }),
+      ),
     ).toEqual([]);
   });
 
