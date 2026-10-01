@@ -10,14 +10,14 @@
       estado lê o valor no DOM);
     - CAMPOS_DAS_SECOES: os campos das seções já em React (o valor vem do
       rascunho do estado).
-  Seção migrada: suas chaves saem de CAMPOS_DO_LEGADO e entram aqui.
+  Seção migrada: suas chaves saem de CAMPOS_DO_LEGADO e entram aqui. Os
+  painéis externos (p_paineis) são de paineis-externos-das-configuracoes.js.
 */
 
 const txt = (valor) => String(valor ?? "").trim();
 
 /* [id do campo no index.html, chave, descrição, valor se o campo faltar] */
 export const CAMPOS_DO_LEGADO = Object.freeze([
-  ["cfgMonitId", "monit_id", "ID / referência da base"],
   ["cfgPageTitle", "page_title", "Título da página inicial"],
   ["cfgPageSubtitle", "page_subtitle", "Subtítulo da página inicial"],
   [
@@ -83,23 +83,26 @@ export const CAMPOS_DO_LEGADO = Object.freeze([
   ["cfgKpiOciosas", "kpi_ociosas_label", "Rótulo do KPI vagas ociosas"],
   ["cfgKpiCriticos", "kpi_criticos_label", "Rótulo do KPI críticos"],
   ["cfgKpiInscritos", "kpi_inscritos_label", "Rótulo do KPI inscritos"],
-  ["cfgCogipVersao", "cogip_versao", "Versão do sistema"],
-  ["cfgAppVersionCurrent", "app_version_current", "Versão corrente publicada"],
   ["cfgBroadcastType", "broadcast_type", "Tipo do aviso global", "info"],
   ["cfgBroadcastMsg", "broadcast_msg", "Mensagem do aviso global"],
-  [
-    "cfgRealtimeEnabled",
-    "feature_realtime_monitoramento",
-    "Habilita atualização em tempo real do monitoramento",
-    "true",
-  ],
-  [
-    "cfgAccessHeartbeatMinutos",
-    "access_heartbeat_minutos",
-    "Intervalo de auditoria heartbeat, em minutos",
-    "5",
-  ],
 ]);
+
+const BOOLEANO_VERDADEIRO = ["true", "1", "sim", "yes", "on"];
+const BOOLEANO_FALSO = ["false", "0", "nao", "não", "no", "off"];
+
+/** "true"/"false" na regra do `cfgBool` do legado; desconhecido vira `padrao`. */
+export function normalizarBooleano(valor, padrao = true) {
+  const bruto = txt(valor).toLowerCase();
+  if (BOOLEANO_VERDADEIRO.includes(bruto)) return "true";
+  if (BOOLEANO_FALSO.includes(bruto)) return "false";
+  return String(padrao);
+}
+
+/** Inteiro ≥ `minimo` na regra do `cfgInt` do legado; sem número vira `padrao`. */
+export function normalizarInteiro(valor, padrao, minimo = 1) {
+  const numero = parseInt(txt(valor), 10);
+  return String(Math.max(minimo, Number.isFinite(numero) ? numero : padrao));
+}
 
 /*
   Campos das seções em React, por seção. `tipo: "url"` valida como endereço
@@ -138,6 +141,47 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       chave: "footer_text",
       descricao: "Texto do rodapé (fallback)",
       rotulo: "Rodapé",
+    },
+  ]),
+  /*
+    Operação. `normalizar` repete o que o formulário legado mostrava ao
+    carregar (cfgBool/cfgInt e os padrões de DEFAULT_CONFIG): o valor que a
+    tela mostra é o que a publicação envia, como antes.
+  */
+  operacao: Object.freeze([
+    {
+      chave: "cogip_versao",
+      descricao: "Versão do sistema",
+      rotulo: "Versão do sistema",
+      placeholder: "Ex: V.2.7.3",
+    },
+    {
+      chave: "app_version_current",
+      descricao: "Versão corrente publicada",
+      rotulo: "Versão publicada",
+      placeholder: "Ex: MONITORA Web V2.9.35",
+    },
+    {
+      chave: "feature_realtime_monitoramento",
+      descricao: "Habilita atualização em tempo real do monitoramento",
+      rotulo: "Realtime do monitoramento",
+      tipo: "booleano",
+      opcoes: Object.freeze([
+        ["true", "Ativo"],
+        ["false", "Inativo"],
+      ]),
+      normalizar: (valor) => normalizarBooleano(valor, true),
+    },
+    {
+      chave: "access_heartbeat_minutos",
+      descricao: "Intervalo de auditoria heartbeat, em minutos",
+      rotulo: "Heartbeat de auditoria (min)",
+      tipo: "inteiro",
+      minimo: 1,
+      maximo: 60,
+      placeholder: "5",
+      erro: "O heartbeat deve ser um número inteiro entre 1 e 60.",
+      normalizar: (valor) => normalizarInteiro(valor, 5, 1),
     },
   ]),
 });
@@ -180,6 +224,25 @@ export function linhasDasSecoes(valores) {
   }));
 }
 
+/**
+ * Os valores lidos da TB_CONFIGURACAO como a tela os mostra: cada campo com
+ * `normalizar` recebe o valor normalizado (e o padrão, se a chave falta).
+ */
+export function normalizarValoresCarregados(config = {}) {
+  const valores = new Map(
+    Object.entries(config || {}).map(([chave, valor]) => [chave, valor ?? ""]),
+  );
+  for (const [chave, campo] of CAMPO_POR_CHAVE)
+    if (campo.normalizar)
+      valores.set(chave, campo.normalizar(valores.get(chave)));
+  return valores;
+}
+
+function inteiroValido(valor, { minimo, maximo }) {
+  const numero = Number(txt(valor));
+  return Number.isInteger(numero) && numero >= minimo && numero <= maximo;
+}
+
 /** Erros dos campos em React: Map chave → mensagem. */
 export function errosDasSecoes(valores) {
   const erros = new Map();
@@ -189,6 +252,8 @@ export function errosDasSecoes(valores) {
         chave,
         `URL inválida no campo ${campo.rotulo}: use https:// ou http://.`,
       );
+    if (campo.tipo === "inteiro" && !inteiroValido(valores.get(chave), campo))
+      erros.set(chave, campo.erro);
   }
   return erros;
 }

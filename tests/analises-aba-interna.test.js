@@ -7,9 +7,9 @@ import {
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
 import {
-  collectPanelRows,
-  renderPanelAdminHTML,
-} from "../src/modules/config-ui.js";
+  linhasDosPaineis,
+  normalizarPaineis,
+} from "../src/lib/paineis-externos-das-configuracoes.js";
 
 /*
   Análises curriculares deixou de ser o painel externo `analises` e virou a
@@ -47,10 +47,9 @@ describe("o endereço e a lista de painéis", () => {
   });
 
   it("Painéis externos da Administração não mostram Análises, e o salvar lê as linhas certas", () => {
-    const lista = semOPainelAntigoDeAnalises(PAINEIS);
-    document.body.innerHTML = `<div id="panelAdmin">${renderPanelAdminHTML(lista)}</div>`;
-    expect(document.body.textContent).not.toContain("Analises");
-    expect(collectPanelRows(lista).map((linha) => linha.id)).toEqual([
+    const lista = normalizarPaineis(semOPainelAntigoDeAnalises(PAINEIS));
+    expect(lista.map((painel) => painel.titulo)).not.toContain("Analises");
+    expect(linhasDosPaineis(lista).map((linha) => linha.id)).toEqual([
       "1",
       "3",
     ]);

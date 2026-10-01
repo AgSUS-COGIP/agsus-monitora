@@ -76,7 +76,6 @@ import {
   mostrarStatus,
 } from "./solicitacao-de-acesso.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
-import { renderPanelAdminHTML } from "./config-ui.js";
 import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
 import {
   isAllowedInstitutionalEmail,
@@ -1949,7 +1948,8 @@ async function loadPanels(options = {}) {
   if (!error && Array.isArray(data) && data.length)
     panels = semOPainelAntigoDeAnalises(data);
   else panels = [...DEFAULT_PANELS];
-  renderPanelAdmin();
+  // Configurações › Painéis externos (React) lê daqui.
+  estadoDasConfiguracoes.definirPaineisCarregados(panels);
 }
 
 async function loadPanelPermissions() {
@@ -11411,7 +11411,6 @@ function reloadExternal() {
 }
 
 function renderConfigForm() {
-  $("cfgMonitId").value = cfgValue("monit_id");
   $("cfgSubtitle") && ($("cfgSubtitle").value = cfgValue("app_subtitle"));
   $("cfgPageTitle") && ($("cfgPageTitle").value = cfgValue("page_title"));
   $("cfgPageSubtitle") &&
@@ -11494,26 +11493,12 @@ function renderConfigForm() {
     ($("cfgKpiInscritos").value = cfgValue("kpi_inscritos_label"));
   $("cfgLoginLogo").value = cfgValue("login_logo_url");
   $("cfgLoginBg").value = cfgValue("login_bg_url");
-  $("cfgCogipVersao") && ($("cfgCogipVersao").value = cfgValue("cogip_versao"));
-  $("cfgAppVersionCurrent") && ($("cfgAppVersionCurrent").value = appVersion());
   $("cfgBroadcastType").value = cfgValue("broadcast_type") || "info";
   $("cfgBroadcastMsg").value = cfgValue("broadcast_msg");
-  $("cfgRealtimeEnabled") &&
-    ($("cfgRealtimeEnabled").value = String(
-      cfgBool("feature_realtime_monitoramento", true),
-    ));
-  $("cfgAccessHeartbeatMinutos") &&
-    ($("cfgAccessHeartbeatMinutos").value = String(
-      Math.max(
-        1,
-        cfgInt("access_heartbeat_minutos", DEFAULT_ACCESS_HEARTBEAT_MINUTES),
-      ),
-    ));
   previewImg("cfgLoginLogo", "prevLoginLogo");
   previewImg("cfgLoginBg", "prevLoginBg");
   renderAccessBackgroundPreview();
   void loadAccessBackgroundGallery();
-  renderPanelAdmin();
 }
 
 function renderAccessBackgroundPreview(
@@ -11743,11 +11728,6 @@ async function loadAccessBackgroundGallery() {
   gallery.appendChild(list);
 }
 
-function renderPanelAdmin() {
-  const box = $("panelAdmin");
-  if (!box) return;
-  box.innerHTML = renderPanelAdminHTML(panels);
-}
 
 function syncDisplayModeButtons() {
   const fullscreenActive =

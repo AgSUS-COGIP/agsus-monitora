@@ -1,7 +1,7 @@
 /*
-  Apresentação das seções legadas de Configurações (Página inicial, Tela de
-  acesso e Recursos), sem DOM: como os campos se agrupam, as dicas de cada
-  campo e os resumos que as prévias mostram. O desenho é de
+  Apresentação das seções legadas de Configurações (Página inicial e Tela de
+  acesso), sem DOM: como os campos se agrupam, as dicas de cada campo e o
+  que as prévias mostram. O desenho é de
   src/modules/config-apresentacao.js.
 
   Os campos continuam sendo os mesmos elementos, com os mesmos ids: o módulo
@@ -129,8 +129,6 @@ export const DICAS_DOS_CAMPOS = Object.freeze({
     "Domínio sugerido na tela do Google, para quem tem mais de uma conta conectada.",
   cfgGoogleAllowedDomains:
     "Separe por vírgula. Quem entra com e-mail de outro domínio não passa da tela de entrada.",
-  cfgRealtimeEnabled:
-    "Ligado, os dados do monitoramento se atualizam na tela quando mudam no banco, sem recarregar a página.",
 });
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -171,26 +169,4 @@ export function primeiroDominio(lista) {
       .map((d) => d.replace(/^@/, "").toLowerCase())
       .find(Boolean) || ""
   );
-}
-
-/**
- * Situação de cada painel externo, na mesma regra do selo da tabela
- * (config-ui.js): inativo > manutenção > ativo com URL > sem URL.
- */
-export function situacaoDoPainel({ ativo, manutencao, url }) {
-  if (!ativo) return "inativo";
-  if (manutencao) return "manutencao";
-  return txt(url) ? "ativo" : "semUrl";
-}
-
-export function resumoDosPaineis(paineis = []) {
-  const resumo = {
-    total: paineis.length,
-    ativo: 0,
-    manutencao: 0,
-    inativo: 0,
-    semUrl: 0,
-  };
-  for (const painel of paineis) resumo[situacaoDoPainel(painel)] += 1;
-  return resumo;
 }
