@@ -1,11 +1,5 @@
-import {
-  StrictMode,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createRoot } from "react-dom/client";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { safeHttpUrl } from "../../lib/sanitize.js";
 import {
@@ -298,15 +292,11 @@ export function montarNucleo({
     confirmar,
     aoSalvar,
   });
-  let raiz = null;
-  if (secao) {
-    raiz = createRoot(secao);
-    raiz.render(
-      <StrictMode>
-        <Nucleo estado={estado} agora={agora} />
-      </StrictMode>,
-    );
-  }
+  const raiz = secao
+    ? montarModulo(secao, <Nucleo estado={estado} agora={agora} />, {
+        nome: "Editais (Núcleo)",
+      }).raiz
+    : null;
   return {
     estado,
     raiz,

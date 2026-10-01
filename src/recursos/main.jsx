@@ -4,8 +4,9 @@
   carrega os mesmos arquivos de src/analises/ (analises.css e
   analises-layout-modern.css) e aqui entram, na mesma ordem, os que o main de
   análises importa (tokens, ícones, responsivo, skeleton, a fila contínua e o
-  visual comum dos painéis, por último). Por cima, só recursos.css, com o que é só de
-  recursos (etapas, prazo, formulário).
+  visual comum dos painéis, por último). Por cima, o ui.css (os componentes de
+  src/ui/) e o recursos.css, com o que é só de recursos (etapas, prazo,
+  formulário).
 
   A área vem de `?area=` (a mesma regra do painel de análises); a sessão é a
   do Supabase Auth guardada no navegador, a mesma do MONITORA — dentro do
@@ -23,6 +24,7 @@ import "../analises/analises-responsive-fixes.css";
 import "../analises/analises-esqueleto.css";
 import "../analises/analises-infinite-table.css";
 import "../analises/analises-painel.css";
+import "../ui/ui.css";
 import "./recursos.css";
 import {
   areaDaUrlDoPainel,

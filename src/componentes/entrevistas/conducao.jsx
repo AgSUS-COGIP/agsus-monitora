@@ -26,14 +26,10 @@ import {
   pontuacaoMaxima,
   textoDaPontuacao,
 } from "../../lib/roteiro-de-entrevista.js";
-import { Modal } from "../modal.jsx";
-import { TopoDaGaveta } from "../recursos/partes.jsx";
+import { Aviso, Campo, Carregando, classes, Gaveta } from "../../ui/index.js";
 import { FichaDoCandidato } from "./ficha.jsx";
 import {
-  Aviso,
   BotaoDeLinha,
-  Campo,
-  classes,
   ComposicaoDaBanca,
   numeroBR,
   RegraDeConvocacao,
@@ -492,20 +488,16 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
   const [erro, setErro] = useState("");
   const valido = motivo.trim().length >= 3 && motivo.trim().length <= 500;
   return (
-    <Modal
+    <Gaveta
       id="entrevistasDesconvocar"
-      rotuloId="entrevistasDesconvocarTitulo"
+      tituloId="entrevistasDesconvocarTitulo"
       aoFechar={aoFechar}
-      className="analises-drawer-backdrop entrevistas-gaveta"
-      cartaoClassName="analises-drawer entrevistas-gaveta-estreita"
+      className="entrevistas-gaveta"
+      cartaoClassName="entrevistas-gaveta-estreita"
+      sobretitulo="Retirar da entrevista"
+      titulo={convocado.candidato}
+      rotuloDoFechar="Fechar"
     >
-      <TopoDaGaveta
-        sobretitulo="Retirar da entrevista"
-        titulo={convocado.candidato}
-        tituloId="entrevistasDesconvocarTitulo"
-        rotuloDoFechar="Fechar"
-        aoFechar={aoFechar}
-      />
       <form
         className="entrevistas-formulario entrevistas-formulario-curto"
         onSubmit={async (e) => {
@@ -542,7 +534,7 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
           </button>
         </div>
       </form>
-    </Modal>
+    </Gaveta>
   );
 }
 
@@ -1098,7 +1090,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
           <Aviso tom="warning">Roteiros indisponíveis: {roteiros.erro}</Aviso>
         ) : null}
         {e.carregandoEdital ? (
-          <div className="empty">Carregando o edital…</div>
+          <Carregando>Carregando o edital…</Carregando>
         ) : null}
       </section>
 

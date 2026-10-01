@@ -1,12 +1,5 @@
-import {
-  StrictMode,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import {
   definirCarregamentoDoPainel,
   mostrarErroDoCarregamento,
@@ -269,20 +262,16 @@ export function montarPainelDeRecursos({
     imprimir,
     novoId,
   });
-  let raizDoReact = null;
-  if (raiz) {
-    raizDoReact = createRoot(raiz);
-    flushSync(() =>
-      raizDoReact.render(
-        <StrictMode>
-          <PainelDeRecursos
-            estado={estado}
-            area={area}
-            nomeDaArea={nomeDaArea}
-          />
-        </StrictMode>,
-      ),
-    );
-  }
+  const raizDoReact = raiz
+    ? montarModulo(
+        raiz,
+        <PainelDeRecursos
+          estado={estado}
+          area={area}
+          nomeDaArea={nomeDaArea}
+        />,
+        { flushSync: true, nome: "o painel de recursos" },
+      ).raiz
+    : null;
   return { estado, raiz: raizDoReact };
 }

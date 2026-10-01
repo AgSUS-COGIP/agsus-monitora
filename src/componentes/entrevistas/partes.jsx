@@ -1,55 +1,17 @@
-import { Children, cloneElement, isValidElement, useId, useRef } from "react";
+import { useRef } from "react";
 import {
   novaExcecao,
   novaOrigemDaBanca,
 } from "../../lib/roteiro-de-entrevista.js";
+import { Campo, classes } from "../../ui/index.js";
 
 /*
   Peças que as visões "Conduzir entrevistas" e "Roteiros" repetem, no desenho
-  do painel de análises: o `.field` (rótulo em cima, controle embaixo, erro
-  embaixo), o controle segmentado, o aviso em faixa, os botões pequenos de
-  linha (subir, descer, remover) e os dois blocos que o roteiro e a
-  configuração do edital têm iguais — a regra de convocação e a composição da
-  banca.
+  do painel de análises: o controle segmentado, os botões pequenos de linha
+  (subir, descer, remover) e os dois blocos que o roteiro e a configuração do
+  edital têm iguais — a regra de convocação e a composição da banca. O campo
+  (`Campo`) e o aviso em faixa (`Aviso`) estão em src/ui/.
 */
-
-export const classes = (...lista) => lista.filter(Boolean).join(" ");
-
-const CONTROLES = ["input", "select", "textarea"];
-
-/* O `.field` do painel de análises; o primeiro controle ganha o id do rótulo. */
-export function Campo({ rotulo, erro, dica, obrigatorio, largo, children }) {
-  const gerado = useId();
-  let id = gerado;
-  let ligado = false;
-  const filhos = Children.map(children, (filho) => {
-    if (ligado || !isValidElement(filho) || !CONTROLES.includes(filho.type))
-      return filho;
-    ligado = true;
-    // O controle que já tem id (contrato de teste/DOM) fica com ele.
-    id = filho.props.id || gerado;
-    return cloneElement(filho, {
-      id,
-      "aria-invalid": erro ? true : undefined,
-    });
-  });
-  return (
-    <div className={classes("field", largo && "entrevistas-campo-largo")}>
-      <label htmlFor={id}>
-        {rotulo}
-        {obrigatorio ? <abbr title="obrigatório"> *</abbr> : null}
-      </label>
-      {filhos}
-      {dica ? <small className="entrevistas-dica">{dica}</small> : null}
-      {erro ? (
-        <small className="entrevistas-erro-campo" role="alert">
-          <i className="fa-solid fa-circle-exclamation" aria-hidden="true" />{" "}
-          {erro}
-        </small>
-      ) : null}
-    </div>
-  );
-}
 
 /** Controle segmentado: setas movem a escolha. */
 export function Segmentado({
@@ -100,14 +62,6 @@ export function Segmentado({
           {opcao.rotulo}
         </button>
       ))}
-    </div>
-  );
-}
-
-export function Aviso({ tom, children, papel }) {
-  return (
-    <div className="entrevistas-aviso" data-tone={tom} role={papel}>
-      {children}
     </div>
   );
 }

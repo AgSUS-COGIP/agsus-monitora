@@ -18,9 +18,8 @@ import {
   pontuacaoMaxima,
   rotuloDoPeso,
 } from "../../lib/roteiro-de-entrevista.js";
-import { Modal } from "../modal.jsx";
-import { TopoDaGaveta } from "../recursos/partes.jsx";
-import { Aviso, classes, numeroBR, Segmentado } from "./partes.jsx";
+import { Aviso, classes, Gaveta } from "../../ui/index.js";
+import { numeroBR, Segmentado } from "./partes.jsx";
 import { SeloDoParecer } from "./tabela.jsx";
 
 /*
@@ -233,38 +232,34 @@ export function FichaDoCandidato({
   let indiceDaCelula = 0;
 
   return (
-    <Modal
+    <Gaveta
       id="entrevistasFichaDoCandidato"
-      rotuloId="entrevistasFichaTitulo"
+      tituloId="entrevistasFichaTitulo"
       aoFechar={aoFechar}
       fecharAoClicarFora={false}
-      className="analises-drawer-backdrop entrevistas-gaveta"
-      cartaoClassName="analises-drawer entrevistas-gaveta-larga"
+      className="entrevistas-gaveta"
+      cartaoClassName="entrevistas-gaveta-larga"
+      sobretitulo={
+        convocado.codigo
+          ? `Ficha de notas · cód. ${convocado.codigo}`
+          : "Ficha de notas"
+      }
+      titulo={convocado.candidato}
+      rotuloDoFechar="Fechar a ficha"
+      resumo={
+        <>
+          <span className="status">
+            <i className="fa-solid fa-database" aria-hidden="true" />
+            Gravado: {numeroBR(convocado.nota)} ·{" "}
+            <SeloDoParecer parecer={convocado.parecer} />
+          </span>
+          <span>
+            <i className="fa-solid fa-pen-to-square" aria-hidden="true" />
+            {rotuloDoLancamento(dados.configuracao?.lancamento)}
+          </span>
+        </>
+      }
     >
-      <TopoDaGaveta
-        sobretitulo={
-          convocado.codigo
-            ? `Ficha de notas · cód. ${convocado.codigo}`
-            : "Ficha de notas"
-        }
-        titulo={convocado.candidato}
-        tituloId="entrevistasFichaTitulo"
-        rotuloDoFechar="Fechar a ficha"
-        aoFechar={aoFechar}
-        resumo={
-          <>
-            <span className="status">
-              <i className="fa-solid fa-database" aria-hidden="true" />
-              Gravado: {numeroBR(convocado.nota)} ·{" "}
-              <SeloDoParecer parecer={convocado.parecer} />
-            </span>
-            <span>
-              <i className="fa-solid fa-pen-to-square" aria-hidden="true" />
-              {rotuloDoLancamento(dados.configuracao?.lancamento)}
-            </span>
-          </>
-        }
-      />
       <div className="analises-drawer-context">
         <div>
           <small>Vaga</small>
@@ -534,6 +529,6 @@ export function FichaDoCandidato({
           ) : null}
         </div>
       </form>
-    </Modal>
+    </Gaveta>
   );
 }

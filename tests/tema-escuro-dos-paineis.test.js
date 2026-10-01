@@ -28,7 +28,9 @@ describe("tema escuro dos painéis", () => {
     expect(lista).not.toContain(".status-discreto");
   });
 
-  it("o status discreto é uma regra própria", () => {
-    expect(listaDoBloco(".status-discreto {")).toEqual([".status-discreto"]);
+  it("o status discreto é uma regra própria, no design system", () => {
+    expect(css).not.toContain(".status-discreto");
+    const ui = readFileSync("src/ui/ui.css", "utf8");
+    expect(ui).toMatch(/(^|\}|\n)\s*\.status-discreto\s*\{/);
   });
 });

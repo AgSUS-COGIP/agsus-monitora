@@ -1,15 +1,20 @@
 # `src/componentes/` — componentes React
 
-O front está migrando para React **por componente**. Já migraram a barra lateral, o Núcleo
-(Editais, com o formulário e o cronograma), o Calendário de Editais e a Lista de Aprovados (com a
-convocação e os modais); o resto continua em `src/modules/` até migrar. JavaScript com JSX (`.jsx`), sem TypeScript. Nomes em
-português, arquivo em kebab-case, componente em PascalCase.
+O front está migrando para **um único app React** (alvo, regras e ordem em
+`docs/arquitetura-react.md`). Já são React: barra lateral, Núcleo (Editais), Calendário, Lista de
+Aprovados, Acessos, Módulos e abas, Status das atualizações, busca global (Ctrl+K), Configurações
+(moldura, Marca, Painéis externos, Operação) e os painéis de Entrevistas, Recursos e Seleção (ainda em
+página própria/iframe). Toda tela monta por `montarModulo` (`src/app/`) e usa os componentes visuais de
+`src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
+(`.jsx`), sem TypeScript. Nomes em português, arquivo em kebab-case, componente em PascalCase.
 
 ## Mapa
 
 ```
 icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
-modal.jsx                    <Modal>: portal no body, Esc, clique no fundo, foco preso e devolvido
+modal.jsx                    só reexporta o <Modal> de src/ui/modal.jsx (importe de src/ui/ no código novo)
+busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
+entrevistas/, recursos/, selecao/  painéis (entradas em src/entrevistas|recursos|selecao/main.jsx)
 multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
 dados-do-monitoramento.js    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
                              carrega e publica aqui (loadData / loadUnidades), e a área atual
@@ -41,8 +46,11 @@ configuracoes/               moldura de Configurações (#configuracoesApp), mig
   configuracoes.jsx          montarConfiguracoes(): cabeçalho da seção aberta, barra fixa de salvar,
                              diálogos de publicar/restaurar e o histórico (portal na seção Operação)
   estado.js                  estadoDasConfiguracoes: valores (o legado publica em loadConfig), rascunho,
-                             publicação com motivo e histórico; sem React. Ainda lê os campos cfg* legados
+                             publicação com motivo e histórico; sem React. Ainda lê os campos cfg* das
+                             seções legadas (Página inicial, Tela de acesso, Aparência)
   marca.jsx                  seção Marca (portal no corpo da seção) com a prévia da barra lateral
+  paineis-externos.jsx       seção Painéis externos (lista editável; payload igual ao de antes)
+  operacao.jsx               seção Operação (versões, Realtime, heartbeat) + histórico
 acessos/                     Configurações › Acessos (#acessosApp, dentro da seção "acessos")
   acessos.jsx                <Acessos> (abas Usuários · Grupos · Coordenações) e montarAcessos()
                              → window.acessosController
@@ -109,9 +117,12 @@ Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.j
 - Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo, trecho do
   `legacy-app.js`, marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
 
-- Handler de navegação chama `window.navigate` **na hora do clique**: `nielsen-shell-ux.js` embrulha
-  essa função.
-- Monte com `flushSync` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
+- Handler de navegação chama `window.navigate` **na hora do clique** (não guarde a referência na
+  montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
+- Monte sempre por `montarModulo` (`src/app/montar-modulo.jsx`: StrictMode + ErrorBoundary); passe
+  `{ flushSync: true }` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
+- Visual novo vem de `src/ui/` (Topo, Filtros, Kpi, CardDeGrafico, TabelaInfinita, Gaveta, Modal,
+  Aviso, Campo, Selo…), só com tokens; não recrie em cada tela. Sem textos genéricos (ver o CLAUDE.md raiz).
 - `StrictMode` ligado: efeito tem de limpar o que instala.
 - Sem `innerHTML` e sem `dangerouslySetInnerHTML`: texto vai como filho.
 - Modal em React é sempre `<Modal>` (portal): um modal dentro da `<section>` sumiria com a página

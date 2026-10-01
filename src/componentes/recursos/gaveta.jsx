@@ -6,10 +6,9 @@ import {
   rotuloDaSituacao,
 } from "../../lib/recursos-dos-candidatos.js";
 import { rotuloDoEstado } from "../../lib/resposta-do-recurso.js";
-import { Modal } from "../modal.jsx";
+import { Aviso, Carregando, classes, Gaveta } from "../../ui/index.js";
 import { SecaoDeAnexos } from "./anexos.jsx";
-import { classes } from "./paineis.jsx";
-import { dataHora, Kv, nota, Secao, TopoDaGaveta } from "./partes.jsx";
+import { dataHora, Kv, nota, Secao } from "./partes.jsx";
 import { SecaoDaResposta } from "./resposta.jsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
 
@@ -92,35 +91,30 @@ export function GavetaDoRecurso({
   const prazo = detalheDoPrazo(r);
 
   return (
-    <Modal
+    <Gaveta
       id="recursosGaveta"
-      rotuloId="recursosGavetaTitulo"
+      tituloId="recursosGavetaTitulo"
       aoFechar={estado.fecharGaveta}
-      className="analises-drawer-backdrop recursos-gaveta"
-      cartaoClassName="analises-drawer"
+      className="recursos-gaveta"
+      sobretitulo={`Recurso nº ${r.nu} · ${rotuloDaOrigem(r.origem, origens)}`}
+      titulo={r.candidato}
+      rotuloDoFechar="Fechar detalhe"
+      resumo={
+        <>
+          <span className="status">
+            <i className="fa-solid fa-circle-info" aria-hidden="true" />
+            {rotuloDaSituacao(r.situacao)}
+          </span>
+          <span>
+            <i className="fa-solid fa-user-check" aria-hidden="true" />
+            {r.analista || "Sem analista"}
+          </span>
+          {r.fora_analise ? <MarcaForaDasAnalises /> : null}
+          {r.mudouNota ? <span>Nota mudou</span> : null}
+          {r.mudouClassificacao ? <span>Classificação mudou</span> : null}
+        </>
+      }
     >
-      <TopoDaGaveta
-        sobretitulo={`Recurso nº ${r.nu} · ${rotuloDaOrigem(r.origem, origens)}`}
-        titulo={r.candidato}
-        tituloId="recursosGavetaTitulo"
-        rotuloDoFechar="Fechar detalhe"
-        aoFechar={estado.fecharGaveta}
-        resumo={
-          <>
-            <span className="status">
-              <i className="fa-solid fa-circle-info" aria-hidden="true" />
-              {rotuloDaSituacao(r.situacao)}
-            </span>
-            <span>
-              <i className="fa-solid fa-user-check" aria-hidden="true" />
-              {r.analista || "Sem analista"}
-            </span>
-            {r.fora_analise ? <MarcaForaDasAnalises /> : null}
-            {r.mudouNota ? <span>Nota mudou</span> : null}
-            {r.mudouClassificacao ? <span>Classificação mudou</span> : null}
-          </>
-        }
-      />
       <div className="analises-drawer-context">
         <div>
           <small>Edital</small>
@@ -307,13 +301,14 @@ export function GavetaDoRecurso({
               ) : null}
             </div>
             {r.prazo.aviso ? (
-              <p
+              <Aviso
+                como="p"
                 className="recursos-aviso"
-                data-tone={r.prazo.data ? "info" : "warning"}
+                tom={r.prazo.data ? "info" : "warning"}
               >
                 <i className="fa-solid fa-circle-info" aria-hidden="true" />{" "}
                 {r.prazo.aviso}
-              </p>
+              </Aviso>
             ) : null}
           </Secao>
 
@@ -335,11 +330,11 @@ export function GavetaDoRecurso({
             secao="historico"
           >
             {erro ? (
-              <p className="recursos-aviso" data-tone="danger">
+              <Aviso como="p" className="recursos-aviso" tom="danger">
                 Não foi possível carregar o histórico. <small>{erro}</small>
-              </p>
+              </Aviso>
             ) : carregando ? (
-              <div className="analises-detail-analysis">Carregando…</div>
+              <Carregando className="analises-detail-analysis" />
             ) : (
               <ol className="recursos-historico">
                 {(detalhe.historico || []).map((h, indice) => (
@@ -399,6 +394,6 @@ export function GavetaDoRecurso({
           ) : null}
         </div>
       </div>
-    </Modal>
+    </Gaveta>
   );
 }

@@ -2,8 +2,8 @@
   Painel de seleção (`selecao.html`): o bootstrap, como o do painel de
   recursos (src/recursos/main.jsx). O desenho é o do painel de análises —
   selecao.html carrega os mesmos arquivos de src/analises/ e aqui entram,
-  na mesma ordem, os que o main de análises importa. Por cima, só
-  selecao.css, com o que é só da seleção.
+  na mesma ordem, os que o main de análises importa. Por cima, o ui.css (os
+  componentes de src/ui/) e o selecao.css, com o que é só da seleção.
 
   A área vem de `?area=`; a sessão é a do Supabase Auth guardada no
   navegador, a mesma do MONITORA.
@@ -21,6 +21,7 @@ import "../analises/analises-esqueleto.css";
 import "../analises/analises-infinite-table.css";
 import "../analises/analises-painel.css";
 import "../styles/multi-select-busca.css";
+import "../ui/ui.css";
 import "./selecao.css";
 import {
   areaDaUrlDoPainel,

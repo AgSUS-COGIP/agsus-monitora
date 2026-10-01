@@ -1,11 +1,13 @@
-# `src/modules/` — features de UI
+# `src/modules/` — LEGADO (só encolhe)
 
-Um arquivo por feature, instalado por `src/main.js` (a ordem importa). Pode tocar o DOM;
-a lógica pura correspondente mora em `src/lib/`. O CSS da feature fica em `src/styles/`.
+Features de UI sem framework, instaladas por `src/main.js` (a ordem importa). **Nada novo aqui:**
+tela ou feature nova é React (`src/componentes/` → `src/modulos/`, com `src/ui/` e `src/app/`; ver
+`docs/arquitetura-react.md`). `scripts/check-legado-so-encolhe.mjs` quebra o build e o CI se surgir
+arquivo novo nesta pasta. Ao migrar uma tela, o módulo dela sai daqui.
 
 **Não ler por inteiro:**
-- `legacy-app.js` — **394 KB, legado.** `grep -n "termo" src/modules/legacy-app.js` e ler a faixa
-  com `sed -n`. Não crescer: feature nova = arquivo novo aqui.
+- `legacy-app.js` — **legado.** `grep -n "termo" src/modules/legacy-app.js` e ler a faixa
+  com `sed -n`. Não crescer; a cada tela migrada, ele encolhe.
 - `indigenous-territories-layer.js` — 53 KB.
 - `aya-conhecimento-gerado.js` — **gerado** por `npm run aya:conhecimento` a partir de `docs/aya/`.
 

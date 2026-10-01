@@ -1,6 +1,5 @@
-import { StrictMode, useEffect, useSyncExternalStore } from "react";
-import { flushSync } from "react-dom";
-import { createRoot } from "react-dom/client";
+import { useEffect, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.jsx";
 import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.js";
 import { Navegacao } from "./menu-de-areas.jsx";
@@ -107,13 +106,8 @@ export function montarBarraLateral(
   aside = document.querySelector("#appScreen .sidebar"),
 ) {
   if (!aside) return null;
-  const raiz = createRoot(aside);
-  flushSync(() => {
-    raiz.render(
-      <StrictMode>
-        <BarraLateral />
-      </StrictMode>,
-    );
-  });
-  return raiz;
+  return montarModulo(aside, <BarraLateral />, {
+    flushSync: true,
+    nome: "a barra lateral",
+  }).raiz;
 }

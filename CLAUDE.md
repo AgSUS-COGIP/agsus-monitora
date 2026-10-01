@@ -1,10 +1,11 @@
 # MONITORA (`agsus-monitora/`)
 
 App de monitoramento: mapas da saúde indígena, editais, análises e lista de aprovados.
-Vite + JavaScript modular + React (migração em andamento: barra lateral, Núcleo, Calendário e
-Lista de aprovados já são React) + Supabase
-(RPC) + servidor web em TypeScript (`server/`). Front em JavaScript — JSX nos componentes React de
-`src/componentes/`; só o servidor é TypeScript. **Português** em nomes de arquivo, funções e commits.
+Vite + React + Supabase (RPC) + servidor web em TypeScript (`server/`). O front está migrando,
+tela por tela, para **um único app React** (rotas por área, visual único em `src/ui/`); o alvo, as
+regras e a ordem estão em **`docs/arquitetura-react.md`** — leia antes de criar ou migrar tela.
+Front em JavaScript — JSX nos componentes React; só o servidor é TypeScript. **Português** em nomes
+de arquivo, funções e commits.
 
 Cada diretório relevante tem o próprio `CLAUDE.md`. Leia o do diretório onde vai
 trabalhar; **não rode `find`/`ls`/`tree` para descobrir a estrutura** — ela está aqui.
@@ -18,10 +19,13 @@ auth/callback.html      callback OAuth (JS em src/auth/callback.js)
 DESIGN.md               guia de interface: tokens, componentes, contraste, plano de migração
 api/                    funções serverless Vercel (proxy FUNAI, AYA)          → api/CLAUDE.md
 src/lib/                lógica pura e testável                                → src/lib/CLAUDE.md
-src/componentes/        componentes React (barra, Núcleo, calendário, aprovados) → src/componentes/CLAUDE.md
-src/modules/            features de UI, 1 arquivo por feature                 → src/modules/CLAUDE.md
+src/app/                base do app React: montarModulo, ErrorBoundary         → docs/arquitetura-react.md
+src/ui/                 design system: Topo, Filtros, Kpi, Gráfico, Tabela, Gaveta, Modal… (ui.css)
+src/componentes/        telas React (alvo: src/modulos/<nome>/, módulo a módulo) → src/componentes/CLAUDE.md
+src/modulos/            destino dos módulos React (vazio por enquanto; ver README)
+src/modules/            LEGADO: só encolhe, nada novo (check-legado-so-encolhe) → src/modules/CLAUDE.md
 src/styles/             CSS do app principal (ordem de import em main.js)     → src/styles/CLAUDE.md
-src/analises/           app de análises, JS + CSS próprios                    → src/analises/CLAUDE.md
+src/analises/           LEGADO: app de análises, JS + CSS próprios (só encolhe) → src/analises/CLAUDE.md
 src/main.js             bootstrap: importa CSS e instala módulos, em ordem
 supabase/               migrations/ e correcoes/ (SQL de dados)               → supabase/CLAUDE.md
 apps-script/            código das planilhas de análises (colado no Google)   → apps-script/LEIA-ME.md
@@ -56,7 +60,12 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 | Branding / acesso | `src/lib/access-branding*.js`, `src/modules/sidebar-branding.js`, `access-request-ui.js` |
 | **Barra lateral** (React: áreas, trilho, rodapé) | `src/componentes/barra-lateral/`, `src/lib/menu-lateral.js` (catálogo e estado do flutuante), `src/lib/eventos-da-barra-lateral.js`, `src/styles/barra-lateral.css`; o legado alimenta por `buildNav`/`setActiveNav` |
 | Ícones (Lucide) | `src/modules/icones.js` (registro único) e `src/componentes/icone.jsx`; o resto do app ainda usa Font Awesome |
-| Modal e seleção múltipla (React) | `src/componentes/modal.jsx`, `src/componentes/multi-select-busca.jsx` |
+| **Arquitetura React** (alvo, regras, ordem, como criar módulo) | `docs/arquitetura-react.md`, `src/app/montar-modulo.jsx`, `src/app/ErrorBoundary.jsx` |
+| **Design system** (componentes visuais padrão) | `src/ui/index.js`, `src/ui/ui.css` (só tokens); `Modal` em `src/ui/modal.jsx` (`src/componentes/modal.jsx` só reexporta) |
+| Seleção múltipla (React) | `src/componentes/multi-select-busca.jsx` |
+| Busca global (Ctrl+K, React) | `src/componentes/busca-global/`, `src/lib/busca-global.js`; a escolha vai ao legado pelo evento `agsus:busca-global-escolhida` |
+| Configurações (React: moldura, Marca, Painéis externos, Operação; as demais seções ainda legadas) | `src/componentes/configuracoes/`, `src/lib/publicacao-de-configuracoes.js`, `src/lib/paineis-externos-das-configuracoes.js`, `src/modules/config-secoes.js` (distribui os campos legados) |
+| **Entrevistas** / **Recursos** (React, em página própria aberta em iframe até a etapa 2) | `src/componentes/entrevistas/`, `src/componentes/recursos/`, entradas `src/entrevistas/main.jsx`, `src/recursos/main.jsx` |
 | **Planilhas** (links, modelo, bucket) | **`src/lib/planilhas.js`** — único lugar com endereço de planilha |
 | Visual / CSS | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/tokens.css`, `src/styles/CLAUDE.md` |
 | Análises | `src/analises/main.js` → `analises-*.js` |
@@ -81,7 +90,7 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 ```bash
 npx vitest run tests/<arquivo>.test.js   # 1 teste — padrão ao editar
 npm run lint                             # só arquivos alterados
-npm run check:architecture               # auth + rpc + MutationObserver + remendos
+npm run check:architecture               # auth + rpc + MutationObserver + remendos + legado só encolhe
 npm test                                 # Vitest completo (lento)
 npm run typecheck                        # tipos do servidor (server/*.ts)
 npm run dev                              # vite build --watch + servidor em 127.0.0.1:8000
@@ -98,11 +107,18 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - Nenhum `MutationObserver` novo (`check-no-new-mutation-observer.mjs`).
 - Nenhum remendo novo (`check-no-new-patch-layers.mjs`): nada de arquivo `*-fix`, `*-refinement`, `*-enhancements`, `post-N…` nem `window.navigate = …`/`window.saveAdminSettings = …` por outro módulo. Mude a fonte onde o comportamento é definido; ao passar por um remendo existente, prefira absorvê-lo na fonte e apagá-lo.
 - HTML dinâmico passa por `src/lib/sanitize.js` / `html-security.js`. Nunca `innerHTML` cru.
-- Feature nova = arquivo novo em `src/modules/` (+ lógica em `src/lib/` + teste). Não crescer
-  `legacy-app.js`; a cada parte migrada, ele encolhe (ver "Código legado" abaixo).
-- O front está migrando para React, por componente, com pedido. Componente React mora em
-  `src/componentes/` (lógica pura segue em `src/lib/`); o legado fala com ele por estado externo e
-  eventos, nunca pelo DOM dele (ver `src/componentes/CLAUDE.md`).
+- Tela ou feature nova = **React**: módulo em `src/componentes/<nome>/` (destino final
+  `src/modulos/<nome>/`), montado por `montarModulo` (`src/app/`), visual com os componentes de
+  `src/ui/` e tokens, lógica pura em `src/lib/` + teste. **Nada novo em `src/modules/` nem em
+  `src/analises/`** (`scripts/check-legado-so-encolhe.mjs` quebra o build e o CI); não crescer
+  `legacy-app.js` — a cada parte migrada, ele encolhe (ver "Código legado" abaixo).
+- O legado fala com o React por estado externo e eventos, nunca pelo DOM dele (ver
+  `src/componentes/CLAUDE.md`). Ao migrar uma tela: levante tudo o que a antiga faz (checklist),
+  cumpra com testes, confira no navegador e só então apague o legado.
+- Interface sem textos genéricos: nada de parágrafo de ajuda, subtítulo que descreve o óbvio, dica
+  longa nem selo "Somente consulta" (quem só lê não vê os controles). Explicação é com a assistente
+  AYA (`docs/aya/`). Ficam rótulos, erros, confirmações, estados vazios curtos e avisos que pedem ação.
+  Data de atualização: discreta e uma vez só.
 - Arquivo gerado se edita **na fonte** e se regenera com o script (ver `scripts/CLAUDE.md`).
 - Link, caminho ou bucket de planilha só em `src/lib/planilhas.js`; o consumidor importa de lá
   (`tests/planilhas.test.js` falha se aparecer em outro arquivo).

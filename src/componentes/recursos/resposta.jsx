@@ -11,6 +11,7 @@ import {
   erroDoComentario,
   podeEditarTexto,
 } from "../../lib/resposta-do-recurso.js";
+import { Aviso } from "../../ui/index.js";
 import { dataHora, Kv, Secao } from "./partes.jsx";
 import { SeloDaResposta } from "./tabela.jsx";
 
@@ -93,11 +94,11 @@ function ConfirmarAcao({ escolhida, emCurso, aoConfirmar, aoCancelar }) {
           />
         </div>
       ) : (
-        <p className="recursos-aviso" data-tone="info">
+        <Aviso como="p" className="recursos-aviso" tom="info">
           {escolhida.acao === "marcar_enviada"
             ? "Confirme que a resposta aprovada já foi enviada ao candidato."
             : `Confirmar: ${escolhida.rotulo.toLowerCase()}?`}
-        </p>
+        </Aviso>
       )}
       <div className="detail-actions">
         <button
@@ -328,9 +329,10 @@ export function SecaoDaResposta({
         ) : null}
 
         {resposta?.comentario_revisao ? (
-          <p
+          <Aviso
+            como="p"
             className="recursos-aviso"
-            data-tone={resposta.estado === "devolvida" ? "danger" : "info"}
+            tom={resposta.estado === "devolvida" ? "danger" : "info"}
           >
             <strong>
               {resposta.estado === "devolvida"
@@ -338,7 +340,7 @@ export function SecaoDaResposta({
                 : "Comentário: "}
             </strong>
             {resposta.comentario_revisao}
-          </p>
+          </Aviso>
         ) : null}
 
         {editavel ? (
@@ -491,15 +493,15 @@ function PreviaDoTexto({ renderizado }) {
     <div className="recursos-previa">
       <strong>Prévia do texto</strong>
       {renderizado.faltando.length ? (
-        <p className="recursos-aviso" data-tone="warning">
+        <Aviso como="p" className="recursos-aviso" tom="warning">
           Sem valor no recurso: {renderizado.faltando.map(rotulo).join(", ")}.
-        </p>
+        </Aviso>
       ) : null}
       {renderizado.desconhecidos.length ? (
-        <p className="recursos-aviso" data-tone="danger">
+        <Aviso como="p" className="recursos-aviso" tom="danger">
           Marcador desconhecido no modelo:{" "}
           {renderizado.desconhecidos.map((c) => `{${c}}`).join(", ")}.
-        </p>
+        </Aviso>
       ) : null}
       <div className="recursos-texto-final" aria-label="Prévia da resposta">
         {renderizado.texto}

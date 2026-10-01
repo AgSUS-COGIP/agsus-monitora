@@ -18,14 +18,13 @@
 */
 
 import {
-  StrictMode,
   useEffect,
   useId,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import { createRoot } from "react-dom/client";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import {
   buscarLinhas,
   ehAtalhoDaBusca,
@@ -218,14 +217,11 @@ export function montarBuscaGlobal({
   estaConectado = () => false,
   aoEscolher = avisarEscolha,
 } = {}) {
-  let raiz = null;
-  if (raizDaTela) {
-    raiz = createRoot(raizDaTela);
-    raiz.render(
-      <StrictMode>
-        <BuscaGlobal estaConectado={estaConectado} aoEscolher={aoEscolher} />
-      </StrictMode>,
-    );
-  }
+  if (!raizDaTela) return { raiz: null };
+  const { raiz } = montarModulo(
+    raizDaTela,
+    <BuscaGlobal estaConectado={estaConectado} aoEscolher={aoEscolher} />,
+    { nome: "Busca global" },
+  );
   return { raiz };
 }

@@ -18,12 +18,15 @@ import {
   TIPOS_DE_AVALIACAO,
   TIPOS_DE_MINIMO,
 } from "../../lib/roteiro-de-entrevista.js";
-import { Modal } from "../modal.jsx";
-import { TopoDaGaveta } from "../recursos/partes.jsx";
 import {
   Aviso,
-  BotaoDeLinha,
   Campo,
+  Carregando,
+  EstadoVazio,
+  Gaveta,
+} from "../../ui/index.js";
+import {
+  BotaoDeLinha,
   ComposicaoDaBanca,
   numeroBR,
   RegraDeConvocacao,
@@ -154,7 +157,7 @@ export function VisaoDeRoteiros({ conducao, area }) {
       ) : null}
       <div className="entrevistas-cartoes" aria-busy={roteiros.carregando}>
         {!roteiros.carregado && roteiros.carregando ? (
-          <div className="empty">Carregando roteiros…</div>
+          <Carregando>Carregando roteiros…</Carregando>
         ) : roteiros.lista.length ? (
           roteiros.lista.map((r) => (
             <CartaoDoRoteiro
@@ -165,7 +168,7 @@ export function VisaoDeRoteiros({ conducao, area }) {
             />
           ))
         ) : roteiros.carregado ? (
-          <div className="empty">Nenhum roteiro ativo para esta área.</div>
+          <EstadoVazio>Nenhum roteiro ativo para esta área.</EstadoVazio>
         ) : null}
       </div>
       {aberto ? (
@@ -662,27 +665,23 @@ export function EditorDeRoteiro({
   }
 
   return (
-    <Modal
+    <Gaveta
       id="entrevistasEditorDeRoteiro"
-      rotuloId="entrevistasEditorDeRoteiroTitulo"
+      tituloId="entrevistasEditorDeRoteiroTitulo"
       aoFechar={aoFechar}
       fecharAoClicarFora={somenteLeitura}
-      className="analises-drawer-backdrop entrevistas-gaveta"
-      cartaoClassName="analises-drawer entrevistas-gaveta-larga"
+      className="entrevistas-gaveta"
+      cartaoClassName="entrevistas-gaveta-larga"
+      sobretitulo={sobretitulo}
+      titulo={titulo}
+      rotuloDoFechar="Fechar o roteiro"
+      resumo={
+        <span className="status" id="entrevistasPreviaDoRoteiro">
+          <i className="fa-solid fa-chart-simple" aria-hidden="true" />
+          {textoDaPontuacao(r)}
+        </span>
+      }
     >
-      <TopoDaGaveta
-        sobretitulo={sobretitulo}
-        titulo={titulo}
-        tituloId="entrevistasEditorDeRoteiroTitulo"
-        rotuloDoFechar="Fechar o roteiro"
-        aoFechar={aoFechar}
-        resumo={
-          <span className="status" id="entrevistasPreviaDoRoteiro">
-            <i className="fa-solid fa-chart-simple" aria-hidden="true" />
-            {textoDaPontuacao(r)}
-          </span>
-        }
-      />
       <form className="entrevistas-formulario" onSubmit={salvar} noValidate>
         <div id="analisesDrawerBody">
           <div className="detail-shell">
@@ -924,6 +923,6 @@ export function EditorDeRoteiro({
           )}
         </div>
       </form>
-    </Modal>
+    </Gaveta>
   );
 }

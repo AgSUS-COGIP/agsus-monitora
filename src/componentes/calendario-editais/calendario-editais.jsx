@@ -1,11 +1,5 @@
-import {
-  StrictMode,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createRoot } from "react-dom/client";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import {
   FILTROS_VAZIOS,
@@ -336,15 +330,11 @@ export function montarCalendarioEditais({
   agora,
 } = {}) {
   const estado = criarEstadoDoCalendario({ supabase, toast });
-  let raiz = null;
-  if (secao) {
-    raiz = createRoot(secao);
-    raiz.render(
-      <StrictMode>
-        <CalendarioEditais estado={estado} agora={agora} />
-      </StrictMode>,
-    );
-  }
+  const raiz = secao
+    ? montarModulo(secao, <CalendarioEditais estado={estado} agora={agora} />, {
+        nome: "o calendário de editais",
+      }).raiz
+    : null;
   return {
     estado,
     raiz,
