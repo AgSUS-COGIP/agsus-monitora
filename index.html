@@ -1786,35 +1786,8 @@
       </main>
     </section>
 
-    <div
-      id="searchModal"
-      class="search-modal"
-      role="dialog"
-      aria-label="Busca global"
-      aria-modal="true"
-    >
-      <div class="search-modal-card">
-        <div class="search-modal-input-wrap">
-          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input
-            id="searchModalInput"
-            type="text"
-            placeholder="Buscar edital, unidade, etapa, UF..."
-            autocomplete="off"
-            oninput="runGlobalSearch(this.value)"
-            onkeydown="searchModalKey(event)"
-            aria-label="Campo de busca global"
-          />
-          <kbd onclick="closeSearchModal()">Esc</kbd>
-        </div>
-        <div id="searchResults" class="search-results"></div>
-        <div class="search-footer">
-          <span><kbd>↑↓</kbd> navegar</span>
-          <span><kbd>↵</kbd> selecionar</span>
-          <span><kbd>Esc</kbd> fechar</span>
-        </div>
-      </div>
-    </div>
+    <!-- Busca global (Ctrl+K), React: src/componentes/busca-global/ (o diálogo vai por portal no body). -->
+    <div id="buscaGlobalApp"></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -15,6 +15,8 @@ import { createPortal } from "react-dom";
   `fecharAoClicarFora={false}` desliga o clique no fundo: formulário longo (o
   do edital) não pode sumir com um clique perdido fora do cartão. O `Esc`
   continua chamando `aoFechar`, e quem usa decide se pergunta antes de fechar.
+
+  Sem título visível (a busca global), `rotulo` dá o nome do diálogo.
 */
 
 const FOCAVEIS = [
@@ -37,6 +39,7 @@ const classes = (...lista) => lista.filter(Boolean).join(" ");
 export function Modal({
   id,
   rotuloId,
+  rotulo,
   aoFechar,
   fecharAoClicarFora = true,
   className = "",
@@ -96,6 +99,7 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-labelledby={rotuloId}
+      aria-label={rotuloId ? undefined : rotulo}
       onClick={(evento) => {
         // Clique no fundo escuro fecha (se permitido); dentro do cartão, não.
         if (fecharAoClicarFora && evento.target === evento.currentTarget)
