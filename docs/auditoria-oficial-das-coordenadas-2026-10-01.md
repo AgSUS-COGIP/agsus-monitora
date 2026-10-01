@@ -57,3 +57,27 @@ terra indígena (ex. Posto Tanguro, DSEI Xavante → Parque do Xingu).
 - Polos sem CNES próprio foram casados por nome (normalizado, mesmo numeral romano).
 - A camada de aldeias da Funai é rala fora da Amazônia; o teste "unidade de aldeia longe
   de aldeia" só rodou na Amazônia Legal.
+
+## Segunda e terceira rodadas (mesmo dia)
+
+Para reduzir o que dependeria de revisão manual, duas rodadas a mais, sempre com
+duas fontes independentes concordando:
+
+- **2ª rodada** — `supabase/correcoes/20261001-corrige-61-coordenadas-segunda-rodada.sql`:
+  61 polos. Endereço do CNES geocodificado no OpenStreetMap (Nominatim) perto do
+  ponto do CNES, ou CNES junto da aldeia Funai homônima (46 para o CNES); aldeia
+  Funai homônima única no DSEI quando o CNES não servia (15). 17 confirmados como
+  estavam.
+- **3ª rodada** — `supabase/correcoes/20261001-corrige-41-coordenadas-terceira-rodada.sql`:
+  41 polos. Localidades Indígenas do Censo 2022 (IBGE, geoftp, versão 17/09/2025),
+  PDSI 2024-2027 de cada DSEI (aldeia-sede, coordenada ou TI do polo), aldeias Funai
+  e OpenStreetMap. Inclui 11 dos polos empilhados do Alto Rio Negro. 7 confirmados.
+
+Cada rodada guardou backup das chaves antes (`*_backup_20261001_pre_segunda_rodada`,
+`*_backup_20261001_pre_terceira_rodada`). No total, 162 polos e 2 CASAIs corrigidos.
+
+Restam 93 pontos sem duas fontes: só uma fonte (29), fontes que discordam (22),
+nenhum homônimo em fonte oficial (20, sobretudo Ceará, Minas Gerais/Espírito Santo,
+Interior Sul e Litoral Sul), homônimos fora das TIs do DSEI (18) e casos ambíguos.
+33 deles têm o nome do próprio município, mas o PDSI não diz que o polo fica na sede.
+Não existe lista oficial de polos com coordenadas em dados abertos.
