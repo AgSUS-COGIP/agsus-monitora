@@ -2,7 +2,7 @@ export const DEFAULT_ACCESS_BRANDING = Object.freeze({
   logoUrl: "/assets/agsus-logo.webp",
   backgroundUrl: "/assets/access-background-default.svg",
   panelColor: "#c296eb",
-  greeting: "Seja bem-vindo(a) à AgSUS",
+  greeting: "Bem-vindo(a) ao MONITORA",
   instruction: "Acesse com sua conta institucional.",
 });
 

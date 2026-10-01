@@ -27,11 +27,11 @@ export function htmlDaPrevia(avaliacao, { comBotao = true } = {}) {
   if (!avaliacao) return "";
   const { cor, corDoTexto } = avaliacao;
   const botao = comBotao
-    ? `<span class="contraste-previa__botao">Entrar com Google institucional</span>`
+    ? `<span class="contraste-previa__botao">Entrar com sua conta institucional</span>`
     : "";
   return (
     `<div class="contraste-previa" style="background:${escapar(cor)};color:${escapar(corDoTexto)}">` +
-    `<strong>Seja bem-vindo(a) à AgSUS</strong>${botao}` +
+    `<strong>Bem-vindo(a) ao MONITORA</strong>${botao}` +
     `</div>`
   );
 }
