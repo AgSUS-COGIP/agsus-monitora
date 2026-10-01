@@ -119,13 +119,12 @@ describe("organizar move sem destruir", () => {
         <div class="admin-grid">
           <div class="admin-card">
             <div class="form-grid">
-              <div class="form-row"><label>Título</label><input id="cfgMonitId" value="AgSUS" /></div>
+              <div class="form-row"><label>Título</label><input id="cfgPageTitle" value="AgSUS" /></div>
               <div class="form-row"><label>KPI vagas</label><input id="cfgKpiVagas" value="Vagas" /></div>
               <div class="form-row"><label>Cor</label><input id="cfgAccessPanelColor" type="color" /></div>
-              <div class="form-row"><label>Heartbeat</label><input id="cfgAccessHeartbeatMinutos" value="5" /></div>
+              <div class="form-row"><label>Sem mapa</label><input id="cfgInventadoAgora" value="x" /></div>
             </div>
           </div>
-          <div class="card"><div id="panelAdmin"></div></div>
           <div id="acessosApp" class="full" data-acessos></div>
         </div>
       </section>`;
@@ -138,15 +137,22 @@ describe("organizar move sem destruir", () => {
     expect(document.querySelectorAll(".config-secao")).toHaveLength(9);
     expect(
       document
-        .querySelector('.config-secao[data-secao="operacao"]')
-        .contains(document.getElementById("cfgMonitId")),
+        .querySelector('.config-secao[data-secao="inicio"]')
+        .contains(document.getElementById("cfgPageTitle")),
     ).toBe(true);
-    // A Marca é React (src/componentes/configuracoes/marca.jsx): o corpo chega vazio.
+    // Campo sem mapa cai no balde (Operação), em vez de sumir.
     expect(
-      document.querySelector(
-        '.config-secao[data-secao="marca"] .config-secao__corpo',
-      ).children,
-    ).toHaveLength(0);
+      document
+        .querySelector(`.config-secao[data-secao="${SECAO_PADRAO}"]`)
+        .contains(document.getElementById("cfgInventadoAgora")),
+    ).toBe(true);
+    // Marca e Painéis externos são React (src/componentes/configuracoes/): o corpo chega vazio.
+    for (const secao of ["marca", "recursos"])
+      expect(
+        document.querySelector(
+          `.config-secao[data-secao="${secao}"] .config-secao__corpo`,
+        ).children,
+      ).toHaveLength(0);
     // O cabeçalho é da moldura React, um só para a página.
     expect(document.querySelector(".config-secao__cabecalho")).toBeNull();
     expect(
@@ -166,14 +172,14 @@ describe("organizar move sem destruir", () => {
     reconstruído, o valor digitado e os listeners iriam junto com ele.
   */
   it("preserva o mesmo nó, com valor e listener", () => {
-    const antes = document.getElementById("cfgMonitId");
+    const antes = document.getElementById("cfgPageTitle");
     let ouviu = 0;
     antes.addEventListener("input", () => (ouviu += 1));
     antes.value = "digitado";
 
     organizarConfiguracoesEmSecoes(document);
 
-    const depois = document.getElementById("cfgMonitId");
+    const depois = document.getElementById("cfgPageTitle");
     expect(depois).toBe(antes);
     expect(depois.value).toBe("digitado");
     depois.dispatchEvent(new Event("input"));
@@ -190,11 +196,6 @@ describe("organizar move sem destruir", () => {
 
   it("blocos inteiros vão para a seção certa", () => {
     organizarConfiguracoesEmSecoes(document);
-    expect(
-      document
-        .querySelector('.config-secao[data-secao="recursos"]')
-        .contains(document.getElementById("panelAdmin")),
-    ).toBe(true);
     expect(
       document
         .querySelector('.config-secao[data-secao="acessos"]')
@@ -239,7 +240,7 @@ describe("as seções como páginas de Administração", () => {
   beforeEach(() => {
     document.body.className = "";
     document.body.innerHTML =
-      '<section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgMonitId" value="AgSUS"></div></div></section>';
+      '<section id="page-config" class="page"><div class="admin-grid"><div class="form-row"><input id="cfgPageTitle" value="AgSUS"></div></div></section>';
     organizarConfiguracoesEmSecoes(document);
   });
   afterEach(() => {
@@ -262,7 +263,7 @@ describe("as seções como páginas de Administração", () => {
   });
 
   it("troca a seção sem recriar campos nem perder valores pendentes", () => {
-    const campo = document.getElementById("cfgMonitId");
+    const campo = document.getElementById("cfgPageTitle");
     campo.value = "Rascunho";
 
     expect(abrirSecaoDeConfiguracao(document, "acessos")).toBe(true);
@@ -275,7 +276,7 @@ describe("as seções como páginas de Administração", () => {
     ).toBe(true);
 
     abrirSecaoDeConfiguracao(document, "marca");
-    expect(document.getElementById("cfgMonitId")).toBe(campo);
+    expect(document.getElementById("cfgPageTitle")).toBe(campo);
     expect(campo.value).toBe("Rascunho");
   });
 
@@ -369,45 +370,30 @@ describe("um navegador só", () => {
   });
 });
 
-describe("agrupadores que ficam vazios depois de distribuir", () => {
-  it("escondem-se (título órfão e caixa sem campos); com campo, continuam", async () => {
-    const { esconderAgrupadoresVazios } =
-      await import("../src/modules/config-secoes.js");
-    document.body.innerHTML = `
-      <div id="raiz">
-        <div class="admin-card card config-main-card" id="orfao">
-          <div class="config-card-title"><h3>Aviso global</h3></div>
-          <div class="form-grid"><details id="vazia"><summary>Avançado técnico</summary></details></div>
-        </div>
-        <div class="admin-card card config-main-card" id="cheio">
-          <div class="config-card-title"><h3>Com campo</h3></div>
-          <div class="form-grid"><details id="cheia"><summary>X</summary><input id="c"></details></div>
-        </div>
-      </div>`;
-    expect(esconderAgrupadoresVazios(document.getElementById("raiz"))).toBe(2);
-    expect(document.querySelector("#orfao .config-card-title").hidden).toBe(
-      true,
-    );
-    expect(document.getElementById("vazia").hidden).toBe(true);
-    expect(document.querySelector("#cheio .config-card-title").hidden).toBe(
-      false,
-    );
-    expect(document.getElementById("cheia").hidden).toBe(false);
-  });
-});
-
-describe("campos técnicos ficam em Operação", () => {
-  it("o Realtime do monitoramento não cai na seção de painéis externos", () => {
-    document.body.innerHTML = `
-      <section id="page-config" class="page active">
-        <div class="admin-grid">
-          <div class="form-row"><select id="cfgRealtimeEnabled"></select></div>
-        </div>
-      </section>`;
-    organizarConfiguracoesEmSecoes(document);
-    const secao = document
-      .getElementById("cfgRealtimeEnabled")
-      .closest(".config-secao");
-    expect(secao.dataset.secao).toBe("operacao");
+/*
+  Painéis externos e Operação são React (src/componentes/configuracoes/):
+  nenhum campo nem bloco do index.html vai para elas pelo mapa, e o legado
+  não tem mais a marcação delas.
+*/
+describe("Painéis externos e Operação saíram do legado", () => {
+  it("o mapa não manda nada para elas e o index.html não tem a marcação antiga", () => {
+    const destinos = [
+      ...Object.values(SECAO_POR_CAMPO),
+      ...Object.values(SECAO_POR_BLOCO),
+    ];
+    expect(destinos).not.toContain("recursos");
+    expect(destinos).not.toContain("operacao");
+    for (const id of [
+      "panelAdmin",
+      "cfgRealtimeEnabled",
+      "cfgAccessHeartbeatMinutos",
+      "cfgCogipVersao",
+      "cfgAppVersionCurrent",
+      "cfgMonitId",
+      "cfgCnesJson",
+      "cnesImportResumo",
+    ])
+      expect(html, id).not.toContain(`id="${id}"`);
+    expect(modulo).not.toContain("esconderAgrupadoresVazios");
   });
 });

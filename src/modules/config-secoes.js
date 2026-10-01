@@ -66,7 +66,7 @@ export const SECOES = Object.freeze([
     rotulo: "Operação",
     icone: "fa-sliders",
     iconeDoMenu: "sliders-horizontal",
-    descricao: "Referência da base, auditoria e importação de dados.",
+    descricao: "Versão, atualização em tempo real e histórico de publicações.",
   },
   {
     id: "acessos",
@@ -157,19 +157,11 @@ export const SECAO_POR_CAMPO = Object.freeze({
   cfgSidebarLogoUrl: "aparencia",
   cfgSidebarBackgroundColor: "aparencia",
 
-  // Operação (o Realtime é ajuste técnico, não painel externo)
-  cfgRealtimeEnabled: "operacao",
-  cfgMonitId: "operacao",
-  cfgCogipVersao: "operacao",
-  cfgAppVersionCurrent: "operacao",
-  cfgAccessHeartbeatMinutos: "operacao",
-  cfgCnesJson: "operacao",
+  // Painéis externos e Operação: em React (paineis-externos.jsx e operacao.jsx), sem campo aqui.
 });
 
 /* Blocos inteiros que não são campos de formulário, e a seção que os recebe. */
 export const SECAO_POR_BLOCO = Object.freeze({
-  panelAdmin: "recursos",
-  cnesImportResumo: "operacao",
   acessosApp: "acessos",
   modulosApp: "modulos",
   saudeDasCargasApp: "cargas",
@@ -320,34 +312,7 @@ export function organizarConfiguracoesEmSecoes(
   if (!grade.querySelector("input, select, textarea, button")) {
     grade.hidden = true;
   }
-  esconderAgrupadoresVazios(painel);
 
   selecionarSubgrupo(documento, pagina.dataset.subgrupo || "marca");
   return movidos > 0;
-}
-
-/*
-  Os campos saem dos agrupadores antigos para as seções, e alguns agrupadores
-  ficam vazios dentro de uma seção: o título "Aviso global" (os campos do
-  aviso foram para Página inicial) e a caixa "Avançado técnico" (os dois
-  campos foram para Recursos e Operação). Só se escondem — nada é apagado, e
-  um agrupador que ainda tenha campo continua à vista.
-*/
-const TEM_CAMPO = "input:not([type=hidden]), select, textarea";
-
-export function esconderAgrupadoresVazios(raiz) {
-  let escondidos = 0;
-  for (const caixa of raiz.querySelectorAll("details")) {
-    if (caixa.querySelector(TEM_CAMPO)) continue;
-    caixa.hidden = true;
-    escondidos += 1;
-  }
-  for (const cartao of raiz.querySelectorAll(".config-main-card")) {
-    const titulo = cartao.querySelector(":scope > .config-card-title");
-    const grade = cartao.querySelector(":scope > .form-grid");
-    if (!titulo || !grade || grade.querySelector(TEM_CAMPO)) continue;
-    titulo.hidden = true;
-    escondidos += 1;
-  }
-  return escondidos;
 }

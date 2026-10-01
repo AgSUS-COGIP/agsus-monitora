@@ -14,6 +14,8 @@ import { Icone } from "../icone.jsx";
 import { Modal } from "../modal.jsx";
 import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.js";
 import { SecaoMarca } from "./marca.jsx";
+import { SecaoOperacao } from "./operacao.jsx";
+import { SecaoPaineisExternos } from "./paineis-externos.jsx";
 
 /*
   A moldura de Configurações em React, a mesma para todas as seções:
@@ -27,9 +29,10 @@ import { SecaoMarca } from "./marca.jsx";
                     restaurar uma versão
     Histórico       publicações auditadas, na seção Operação
 
-  As seções em React (Marca) entram por portal no corpo da própria seção
-  (`.config-secao__corpo`, criado por config-secoes.js); as legadas ainda são
-  os campos do index.html. O estado é de `estado.js`.
+  As seções em React (Marca, Painéis externos e Operação) entram por portal
+  no corpo da própria seção (`.config-secao__corpo`, criado por
+  config-secoes.js); as legadas ainda são os campos do index.html. O estado
+  é de `estado.js`.
 */
 
 const classes = (...lista) => lista.filter(Boolean).join(" ");
@@ -557,8 +560,17 @@ function Configuracoes({ estado, alvos }) {
       {alvos.marca
         ? createPortal(<SecaoMarca estado={estado} />, alvos.marca)
         : null}
-      {alvos.historico
-        ? createPortal(<Historico estado={estado} />, alvos.historico)
+      {alvos.paineis
+        ? createPortal(<SecaoPaineisExternos estado={estado} />, alvos.paineis)
+        : null}
+      {alvos.operacao
+        ? createPortal(
+            <>
+              <SecaoOperacao estado={estado} />
+              <Historico estado={estado} />
+            </>,
+            alvos.operacao,
+          )
         : null}
     </>
   );
@@ -594,7 +606,8 @@ export function montarConfiguracoes({
         estado={estado}
         alvos={{
           marca: corpoDaSecao(pagina, "marca"),
-          historico: corpoDaSecao(pagina, "operacao"),
+          paineis: corpoDaSecao(pagina, "recursos"),
+          operacao: corpoDaSecao(pagina, "operacao"),
         }}
       />
     </StrictMode>,

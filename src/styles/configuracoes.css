@@ -1,7 +1,9 @@
 /*
   Moldura React de Configurações (src/componentes/configuracoes/): o
-  cabeçalho da seção aberta e a seção Marca. A barra fixa e o histórico
-  continuam em config-page.css e config-governance.css.
+  cabeçalho da seção aberta e as seções Marca, Painéis externos e Operação
+  (a tabela de painéis usa .painel-externo-tabela, de app.css; o resumo, as
+  classes .previa-recursos de config-apresentacao.css). A barra fixa e o
+  histórico continuam em config-page.css e config-governance.css.
 */
 
 /* ── Cabeçalho: ícone, nome e descrição da seção, com divisória ─────────── */
@@ -100,4 +102,11 @@
   margin-top: var(--space-1);
   color: var(--state-danger);
   font-size: var(--text-caption);
+}
+
+/* Lista vazia (Painéis externos sem painel cadastrado). */
+.config-vazio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
 }

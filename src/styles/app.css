@@ -1954,8 +1954,7 @@ th.sorted-desc .sort-icon::before {
   margin: 0 0 4px;
   color: var(--color-text-primary);
 }
-.config-card-title p,
-.config-help {
+.config-card-title p {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
@@ -1972,11 +1971,6 @@ th.sorted-desc .sort-icon::before {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-.config-subpanel {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
 }
 /* Selo de situação = badge do design.md 11.8: 20px, raio sm, caption, sem borda. */
 .config-status {
@@ -2006,7 +2000,7 @@ th.sorted-desc .sort-icon::before {
   color: var(--state-neutral);
 }
 /*
-  Painéis externos (Configurações › Recursos): tabela leve do design.md 11.4,
+  Painéis externos (Configurações, src/componentes/configuracoes/paineis-externos.jsx): tabela leve do design.md 11.4,
   uma linha por painel, sem cartão por item e sem rolagem interna. Vence a
   tabela global (min-width 1180px, th em caixa alta) e o input global.
 */
@@ -2071,35 +2065,6 @@ th.sorted-desc .sort-icon::before {
 }
 .painel-externo-tabela .config-status {
   margin-top: var(--space-2);
-}
-.cnes-status-card {
-  grid-column: 1/-1;
-}
-.cnes-status-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 10px 0 12px;
-}
-.cnes-status-grid div {
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fbfdff;
-}
-.cnes-status-grid span {
-  display: block;
-  color: var(--muted);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 900;
-}
-.cnes-status-grid strong {
-  display: block;
-  margin-top: 5px;
-  color: var(--color-text-primary);
-  font-size: 14px;
 }
 .access-request-card {
   margin-top: 10px;
@@ -2482,7 +2447,6 @@ body.sidebar-locked #page-dashboard .details-table {
     grid-template-columns: 1fr;
   }
   .access-request-grid,
-  .cnes-status-grid,
   .access-account-actions {
     grid-template-columns: 1fr;
   }

@@ -1,6 +1,6 @@
 /*
-  Apresentação das seções legadas Página inicial, Tela de acesso e Recursos
-  (a Marca já é React: src/componentes/configuracoes/marca.jsx).
+  Apresentação das seções legadas Página inicial e Tela de acesso (Marca,
+  Painéis externos e Operação já são React: src/componentes/configuracoes/).
 
   Três coisas, sem trocar nenhum campo (os ids, os valores, os listeners e o
   salvamento continuam os de sempre — os nós só mudam de lugar, como em
@@ -12,8 +12,7 @@
   2. DICAS: um "?" ao lado do rótulo abre a explicação do campo (tooltip do
      design.md 11.10). O mesmo texto vai para o aria-describedby do campo.
   3. PRÉVIA: ao lado dos campos, como aquilo aparece de verdade — a página
-     inicial, o cartão de entrada e o resumo dos painéis
-     externos (o Realtime fica em Operação).
+     inicial e o cartão de entrada.
      Atualiza enquanto se digita e sempre que a seção é aberta
      (evento agsus:secao-de-configuracao-aberta, de config-secoes.js), porque
      o legado preenche os campos por código, sem evento de input.
@@ -25,7 +24,6 @@ import {
   DICAS_DOS_CAMPOS,
   GRUPOS_POR_SECAO,
   primeiroDominio,
-  resumoDosPaineis,
   tomDoAviso,
   urlDeImagem,
 } from "../lib/apresentacao-das-configuracoes.js";
@@ -333,82 +331,9 @@ function previaDaTelaDeAcesso(documento) {
   );
 }
 
-function paineisNaTela(documento) {
-  return [
-    ...documento.querySelectorAll('#panelAdmin input[id^="panelId"]'),
-  ].map((oculto) => {
-    const indice = oculto.id.slice("panelId".length);
-    return {
-      ativo: documento.getElementById(`panelAtivo${indice}`)?.value !== "false",
-      manutencao:
-        documento.getElementById(`panelManut${indice}`)?.value === "true",
-      url: documento.getElementById(`panelUrl${indice}`)?.value,
-    };
-  });
-}
-
-function previaDosRecursos(documento) {
-  const resumo = resumoDosPaineis(paineisNaTela(documento));
-  const faixas = [
-    ["ativo", "Ativos", "sucesso"],
-    ["manutencao", "Em manutenção", "atencao"],
-    ["semUrl", "Sem endereço", "neutro"],
-    ["inativo", "Inativos", "perigo"],
-  ];
-  return el(
-    documento,
-    "div",
-    { className: "previa-recursos" },
-    el(documento, "strong", {
-      className: "previa-recursos__titulo",
-      texto: `${resumo.total} ${resumo.total === 1 ? "painel externo" : "painéis externos"}`,
-    }),
-    resumo.total
-      ? el(
-          documento,
-          "div",
-          {
-            className: "previa-recursos__barra",
-            role: "img",
-            "aria-label": faixas
-              .map(([k, r]) => `${r}: ${resumo[k]}`)
-              .join(", "),
-          },
-          faixas
-            .filter(([k]) => resumo[k])
-            .map(([k, , tom]) =>
-              el(documento, "span", {
-                "data-tom": tom,
-                estilo: { flex: String(resumo[k]) },
-              }),
-            ),
-        )
-      : null,
-    el(
-      documento,
-      "ul",
-      { className: "previa-recursos__lista" },
-      faixas.map(([k, rotulo, tom]) =>
-        el(
-          documento,
-          "li",
-          { "data-tom": tom },
-          el(documento, "span", {
-            className: "previa-recursos__marca",
-            "aria-hidden": "true",
-          }),
-          rotulo,
-          el(documento, "strong", { texto: String(resumo[k]) }),
-        ),
-      ),
-    ),
-  );
-}
-
 const PREVIAS = Object.freeze({
   inicio: ["Prévia da página inicial", previaDaPaginaInicial],
   acesso: ["Prévia do cartão de entrada", previaDaTelaDeAcesso],
-  recursos: ["Resumo dos painéis externos", previaDosRecursos],
 });
 
 function montarPrevia(documento, secao) {

@@ -60,7 +60,7 @@ async function montar({ secao = "marca", confirmar = () => true } = {}) {
         <div class="admin-card card config-main-card"><div class="form-grid">
           <div class="form-row"><label>Título</label><input id="cfgPageTitle" value="Saúde Indígena" /></div>
           <div class="form-row"><label>Outro</label><input id="campoSolto" /></div>
-          <div class="form-row"><label>Monitoramento</label><input id="cfgMonitId" value="" /></div>
+          <div class="form-row"><label>Filtros</label><input id="cfgFilterTitle" value="" /></div>
         </div></div>
       </div>
     </section>`;

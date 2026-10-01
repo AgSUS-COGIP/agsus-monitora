@@ -178,8 +178,7 @@
   letter-spacing: 0;
 }
 
-#page-config .config-card-title p,
-#page-config .config-help {
+#page-config .config-card-title p {
   margin: var(--space-1) 0 0;
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
@@ -259,22 +258,6 @@
   border-color: var(--config-danger) !important;
   background: #fff9f9 !important;
   box-shadow: 0 0 0 3px rgba(220, 63, 73, 0.1) !important;
-}
-
-#page-config details.form-row.full {
-  border-color: var(--config-border) !important;
-  border-radius: 10px !important;
-  background: var(--config-surface-soft) !important;
-}
-
-#page-config details.form-row.full summary {
-  color: #395b84 !important;
-}
-
-#page-config .cnes-status-grid > div {
-  border: 1px solid var(--config-border);
-  border-radius: 10px;
-  background: var(--config-surface-soft);
 }
 
 #page-config .config-filter-hidden {
