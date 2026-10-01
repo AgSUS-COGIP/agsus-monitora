@@ -154,8 +154,16 @@ export const SECAO_POR_CAMPO = Object.freeze({
   cfgAccessTextoModo: "aparencia",
   cfgLoginLogo: "aparencia",
   cfgLoginBg: "aparencia",
+  // Barra lateral (sidebar-branding.js): a linha vai pela primeira peça dela que
+  // aparecer na página, então todas as peças precisam estar aqui.
   cfgSidebarLogoUrl: "aparencia",
+  cfgSidebarLogoPreview: "aparencia",
+  cfgSidebarLogoFile: "aparencia",
+  cfgSidebarLogoRestore: "aparencia",
+  cfgSidebarLogoStatus: "aparencia",
+  cfgSidebarLogoGallery: "aparencia",
   cfgSidebarBackgroundColor: "aparencia",
+  cfgSidebarColorAviso: "aparencia",
 
   // Painéis externos e Operação: em React (paineis-externos.jsx e operacao.jsx), sem campo aqui.
 });
