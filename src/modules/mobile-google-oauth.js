@@ -20,7 +20,9 @@ export function isMobileOAuthContext({
 function safeSessionMarkerClear(sessionStorageRef) {
   try {
     sessionStorageRef?.removeItem?.("agsus_oauth_callback_ok");
-  } catch (_) {}
+  } catch (_) {
+    // Armazenamento bloqueado (aba privada): não há marcador para limpar.
+  }
 }
 
 function timeoutAfter(timeoutMs) {
@@ -54,7 +56,9 @@ export async function startMobileGoogleOAuth({
 
   try {
     authStorage?.clearAuthState?.();
-  } catch (_) {}
+  } catch (_) {
+    // Sem acesso ao armazenamento: o login segue e o Supabase grava o estado novo.
+  }
   safeSessionMarkerClear(sessionStorageRef);
 
   const redirectTo = getOAuthCallbackUrl(locationRef);
