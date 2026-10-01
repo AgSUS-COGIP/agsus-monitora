@@ -206,9 +206,9 @@ describe("uma resposta parcial não apaga o cache", () => {
   });
 
   it("quem aplica usa o resultado da mescla", () => {
-    const boot = readFileSync("src/lib/access-branding-boot.js", "utf8");
+    const boot = readFileSync("src/app/entrada/marca.js", "utf8");
     expect(boot).toContain("const completa = guardarMarca(marca) || marca");
-    expect(boot).toContain("aplicarMarcaNaTela(completa, documento)");
+    expect(boot).toContain("aplicarMarcaNaTela(completa, documento, estado)");
   });
 });
 

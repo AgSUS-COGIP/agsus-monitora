@@ -431,229 +431,30 @@
             .classList.add("login-panel-dark");
         }
       </script>
-      <div class="login-outer">
-        <div class="login-card">
-          <div class="login-brand-lockup" aria-label="MONITORA">
-            <div class="login-organization-mark">
-              <img
-                id="loginLogo"
-                src="/assets/agsus-logo.webp"
-                alt=""
-                onerror="this.style.display = 'none'"
-              />
-              <strong>AgSUS</strong>
+      <!--
+        A tela de acesso é React (src/app/entrada/entrada.jsx) e monta aqui,
+        no lugar do cartão abaixo. Ele só segura a marca e o slogan no
+        primeiro quadro, com a cor do painel já aplicada, até o JavaScript
+        chegar.
+      -->
+      <div id="telaDeEntrada">
+        <div class="login-outer">
+          <div class="login-card" aria-hidden="true">
+            <div class="login-brand-lockup">
+              <div class="login-organization-mark">
+                <img src="/assets/agsus-logo.webp" alt="" />
+                <strong>AgSUS</strong>
+              </div>
+              <span class="login-brand-divider"></span>
+              <div class="login-product-mark">
+                <i class="fa-solid fa-chart-line"></i>
+                <strong>MONITORA</strong>
+              </div>
             </div>
-            <span class="login-brand-divider" aria-hidden="true"></span>
-            <div class="login-product-mark">
-              <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-              <strong id="loginTitle">MONITORA</strong>
-            </div>
+            <p class="login-subtitle">Monitoramento de Processos Seletivos</p>
           </div>
-          <p class="login-subtitle" id="loginSubtitle">
-            Monitoramento de Processos Seletivos
-          </p>
-          <h1 id="loginGreeting">Bem-vindo(a) ao MONITORA</h1>
-          <div id="configMsg" class="alert error hidden"></div>
-          <div id="loginMsg" class="alert hidden"></div>
-          <div class="login-form google-only-login">
-            <button
-              id="googleLoginBtn"
-              type="button"
-              class="google-login-btn"
-              onclick="loginWithGoogle()"
-            >
-              <span class="gmark">G</span
-              ><span id="googleLoginText">Entrar com sua conta institucional</span>
-            </button>
-            <div id="accessRequestCard" class="access-request-card hidden">
-              <div class="access-request-head compact">
-                <div>
-                  <h2 id="accessRequestTitulo">Solicitar acesso</h2>
-                  <p class="access-request-subtitle">
-                    Sua conta Google entrou, mas ainda não tem acesso ao
-                    MONITORA. Envie o pedido e um administrador avalia.
-                  </p>
-                  <p class="access-request-invite">
-                    Se você recebeu um convite, entre com o e-mail convidado.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Enquanto a situação não é conhecida: nada de formulário (solicitacao-de-acesso.js). -->
-              <div
-                id="accessRequestCarregando"
-                class="access-request-carregando hidden"
-                aria-hidden="true"
-              >
-                <span class="esqueleto"></span>
-                <span class="esqueleto"></span>
-              </div>
-
-              <div class="access-authenticated-user">
-                <span>E-mail autenticado</span>
-                <strong id="accessReqEmail">-</strong>
-              </div>
-
-              <!-- Situação do pedido: src/modules/solicitacao-de-acesso.js -->
-              <div
-                id="accessRequestStatus"
-                class="access-status hidden"
-                role="status"
-                aria-live="polite"
-              >
-                <span
-                  id="accessRequestIlustracao"
-                  class="access-status-ilustracao hidden"
-                  aria-hidden="true"
-                  >😢</span
-                >
-                <strong id="accessRequestStatusTitulo" class="hidden"></strong>
-                <span id="accessRequestStatusTexto"></span>
-                <button
-                  id="accessRequestEnterBtn"
-                  type="button"
-                  class="btn green access-enter-btn hidden"
-                >
-                  <i class="fa-solid fa-arrow-right"></i> Entrar
-                  agora
-                </button>
-                <div id="accessRequestReativar" class="access-reativar hidden">
-                  <span>Precisa do acesso de novo?</span>
-                  <button
-                    id="accessRequestReativarBtn"
-                    type="button"
-                    class="btn secondary"
-                  >
-                    <i class="fa-solid fa-rotate-left"></i> Pedir reativação
-                  </button>
-                </div>
-              </div>
-
-              <div id="accessRequestForm" class="access-request-grid">
-                <div class="form-row">
-                  <label for="accessReqNome"
-                    >Nome <span class="access-required">(obrigatório)</span></label
-                  >
-                  <input
-                    id="accessReqNome"
-                    type="text"
-                    autocomplete="name"
-                    maxlength="120"
-                    aria-describedby="accessReqNomeErro"
-                  />
-                  <small
-                    id="accessReqNomeErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-
-                <div id="accessReqSetorLinha" class="form-row">
-                  <label for="accessReqSetor">Área / setor</label>
-                  <input
-                    id="accessReqSetor"
-                    type="text"
-                    maxlength="200"
-                    placeholder="Ex.: COGIP, DSEI Yanomami"
-                    aria-describedby="accessReqSetorDica accessReqSetorErro"
-                  />
-                  <small id="accessReqSetorDica" class="access-field-hint"
-                    >Obrigatório se você não escolher a coordenação.</small
-                  >
-                  <small
-                    id="accessReqSetorErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-
-                <div class="form-row full">
-                  <label for="accessReqCoordenacao">Coordenação</label>
-                  <select
-                    id="accessReqCoordenacao"
-                    aria-describedby="accessReqCoordenacaoErro"
-                  >
-                    <option value="">Não sei — o administrador define</option>
-                  </select>
-                  <small
-                    id="accessReqCoordenacaoErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-
-                <div class="form-row full">
-                  <label for="accessReqJustificativa"
-                    >Justificativa
-                    <span class="access-required">(obrigatória)</span></label
-                  >
-                  <textarea
-                    id="accessReqJustificativa"
-                    rows="3"
-                    maxlength="2000"
-                    placeholder="Para que você vai usar o MONITORA?"
-                    aria-describedby="accessReqJustificativaDica accessReqJustificativaErro"
-                  ></textarea>
-                  <small
-                    id="accessReqJustificativaDica"
-                    class="access-field-hint"
-                    >Mínimo de 20 caracteres.</small
-                  >
-                  <small
-                    id="accessReqJustificativaErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-              </div>
-
-              <button
-                id="accessRequestBtn"
-                type="button"
-                class="btn green access-submit-btn"
-                onclick="submitAccessRequest()"
-              >
-                <i class="fa-solid fa-paper-plane"></i>
-                <span id="accessRequestBtnTexto">Enviar pedido</span>
-              </button>
-
-              <div class="access-account-actions">
-                <button
-                  id="accessSwitchAccountBtn"
-                  type="button"
-                  class="google-login-btn"
-                  onclick="loginWithGoogle()"
-                >
-                  <span class="gmark">G</span
-                  ><span>Usar outra conta Google</span>
-                </button>
-                <button
-                  id="accessReturnLoginBtn"
-                  type="button"
-                  class="btn secondary"
-                  onclick="returnToLogin()"
-                >
-                  <i class="fa-solid fa-arrow-right-from-bracket"></i> Voltar ao
-                  login
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="login-cogip">
-            <img
-              class="login-cogip-logo"
-              id="loginCogipLogo"
-              src=""
-              alt=""
-              onerror="this.style.display = 'none'"
-              style="display: none"
-            />
-            <div class="login-cogip-info">
-              <div class="login-cogip-name" id="loginCogipName"></div>
-              <div class="login-cogip-role" id="loginCogipRole">
-                <span id="loginVersion"></span>
-              </div>
-              <div class="login-cogip-dept" id="loginFoot"></div>
-            </div>
-          </div>
+          <div class="login-stripe"></div>
         </div>
-        <div class="login-stripe" aria-hidden="true"></div>
       </div>
     </section>
 

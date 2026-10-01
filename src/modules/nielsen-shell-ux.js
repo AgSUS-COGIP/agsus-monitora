@@ -3,6 +3,7 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
+import { sessaoDoApp } from "../app/sessao.js";
 
 const THEME_STORAGE_KEY = "agsus_dark_mode_v1";
 const PRESENCE_SYNC_GRACE_MS = 12000;
@@ -298,7 +299,8 @@ function installLogoutFlow() {
     }
   });
 
-  logoutAction = typeof window.logout === "function" ? window.logout : null;
+  // Quem sai é a sessão do app (src/app/sessao.js), depois da confirmação.
+  logoutAction = () => sessaoDoApp.sair();
 }
 
 function setPresenceMessage(message) {

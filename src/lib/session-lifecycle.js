@@ -42,6 +42,8 @@ let currentIdleLimitMs = SESSION_IDLE_LIMIT_MS;
   auditoria, e reconstruir isso custaria muito mais do que a bandeira custa.
 */
 let encerrarPorInatividadeAtivo = false;
+/* Quem mostra a frase na tela de acesso (a sessão do app, src/app/sessao.js). */
+let avisarExpiracao = null;
 
 export function formatSessionRemaining(milliseconds) {
   const totalSeconds = Math.max(0, Math.ceil(Number(milliseconds || 0) / 1000));
@@ -243,12 +245,7 @@ function hideSessionUi() {
 function renderExpiredMessage() {
   showNotice(EXPIRED_MESSAGE, "critical", 0);
 
-  const loginMessage = document.getElementById("loginMsg");
-  if (loginMessage) {
-    loginMessage.textContent = EXPIRED_MESSAGE;
-    loginMessage.className = "alert warn";
-    loginMessage.classList.remove("hidden");
-  }
+  avisarExpiracao?.(EXPIRED_MESSAGE);
 
   const authWarning = document.getElementById("authWarning");
   if (authWarning) {
@@ -492,11 +489,13 @@ export function installSessionLifecycle({
   idleLimitMs = SESSION_IDLE_LIMIT_MS,
   // Padrão desligado desde 08/09/2026. Ver a nota no topo do arquivo.
   encerrarPorInatividade = false,
+  aoExpirar = null,
 } = {}) {
   if (installed || typeof window === "undefined") return;
   installed = true;
   currentIdleLimitMs = Math.max(60 * 1000, Number(idleLimitMs));
   encerrarPorInatividadeAtivo = Boolean(encerrarPorInatividade);
+  avisarExpiracao = typeof aoExpirar === "function" ? aoExpirar : null;
   ensureSessionUi();
 
   for (const eventName of ACTIVITY_EVENTS) {
