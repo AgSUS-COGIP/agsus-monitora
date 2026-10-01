@@ -95,7 +95,7 @@ export function collectAyaPageContext(doc = document) {
   const editais = uniqueTexts(
     Array.from(
       doc.querySelectorAll(
-        "#monitorRows tr, #nucleoTableBody tr, #nucleoRows tr, .nucleo-table tbody tr",
+        ".visao-geral-tabela tbody tr, #nucleoTableBody tr, #nucleoRows tr, .nucleo-table tbody tr",
       ),
     ).map((row) => {
       const cells = Array.from(row.querySelectorAll("td"));
@@ -109,23 +109,10 @@ export function collectAyaPageContext(doc = document) {
     400,
   );
 
-  const kpis = visibleTextList(
-    doc,
-    ".kpis.kpis-main .kpi, [data-health-kpi], .health-reference-kpi",
-    12,
-    180,
-  );
+  const kpis = visibleTextList(doc, ".visao-geral-kpis .ui-kpi", 12, 180);
 
   const activeFilters = uniqueTexts(
-    [
-      textOf(doc, "#activeFiltersBar", 500),
-      ...visibleTextList(
-        doc,
-        ".active-filters-bar .pill, .filter-chip",
-        12,
-        120,
-      ),
-    ],
+    [...visibleTextList(doc, ".visao-geral-filtros .ui-chip", 12, 120)],
     12,
     180,
   );
@@ -135,7 +122,10 @@ export function collectAyaPageContext(doc = document) {
     pageTitle: compactText(doc.title, 160),
     mapSummary: textOf(doc, "#masterMapCount", 120),
     activeFilters,
-    search: compactText(doc.querySelector("#tableSearch")?.value, 120),
+    search: compactText(
+      doc.querySelector(".visao-geral-tela .ui-tabela-busca")?.value,
+      120,
+    ),
     kpis,
     territories,
     dseis,

@@ -199,7 +199,6 @@ textarea,
   .panel,
   .widget,
   .kpi-card,
-  .filter-card,
   .table-card,
   .chart-card {
     min-width: 0;
@@ -210,7 +209,6 @@ textarea,
   .card,
   .panel,
   .widget,
-  .filter-card,
   .table-card,
   .chart-card {
     padding: 14px !important;
@@ -226,8 +224,7 @@ textarea,
   }
 
   .filters,
-  .filter-panel,
-  .filter-card {
+  .filter-panel {
     width: 100%;
   }
 
@@ -351,7 +348,6 @@ textarea,
   .card,
   .panel,
   .widget,
-  .filter-card,
   .table-card,
   .chart-card {
     border-radius: 14px !important;

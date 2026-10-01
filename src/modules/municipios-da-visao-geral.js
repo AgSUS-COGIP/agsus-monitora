@@ -10,29 +10,37 @@
     do bloco "Visão nacional". O CSS (`health-map-workspace.css`) esconde o
     bloco na SEDE e, em Projetos, o que é só da Saúde Indígena (painel do
     DSEI, "Calor", "Terras Indígenas");
-  - `desenharMunicipiosDaArea`: em Projetos, os pontos dos municípios das
-    vagas no mapa nacional e a lista "Municípios por vagas", no mesmo formato
-    de "Territórios por vagas".
+  - `desenharMunicipiosDaArea`: em Projetos, os lugares das vagas de todos os
+    projetos no mapa nacional, um ponto por lugar na cor do projeto, e a lista
+    "Municípios por vagas" (mesmo formato de "Territórios por vagas"), com
+    filtro por projeto e agrupamento por projeto;
+  - `desenharLegendaDosMunicipios`: a legenda do mapa com a cor de cada
+    projeto presente.
 
+  Tudo montado com nós do DOM (texto por textContent), sem HTML em string.
   Lógica pura em `src/lib/visao-geral-da-area.js`; coordenadas em
-  `src/lib/coordenadas-dos-municipios.js`.
+  `src/lib/coordenadas-dos-municipios.js`; cores em `health-map-workspace.css`
+  (séries do design system).
 
-  CUSTO DE REDE: um pedido por área, pequeno (uma linha por município),
-  guardado por CACHE_TTL_MS. Reabrir a página, filtrar ou trocar de área e
-  voltar não repete o pedido enquanto o cache está fresco. O banco ainda sem a
-  função (PGRST202) não é erro da página: a lista diz que falta a atualização
-  do banco e o resto segue normal.
+  CUSTO DE REDE: um pedido por área, pequeno (uma linha por lugar), guardado
+  por CACHE_TTL_MS. Reabrir a página, filtrar ou trocar de área e voltar não
+  repete o pedido enquanto o cache está fresco; trocar o filtro de projeto
+  só redesenha. O banco ainda sem a função (PGRST202) não é erro da página: a
+  lista diz que falta a atualização do banco e o resto segue normal.
 */
 
-import { escapeHtml } from "../lib/sanitize.js";
 import { exigirSessao } from "../lib/sessao.js";
 import {
   MAPA_DOS_DSEIS,
+  gruposPorProjeto,
   mapaDaVisaoGeral,
   municipiosDaResposta,
   plural,
   pontosDosMunicipios,
+  projetosDosMunicipios,
   resultadoDoMunicipio,
+  resumoDoLugar,
+  textoDasVagas,
   textosDoMapa,
 } from "../lib/visao-geral-da-area.js";
 
@@ -153,75 +161,304 @@ export function criarCarregadorDeMunicipios({
   };
 }
 
+// ── Peças do DOM ─────────────────────────────────────────────────────────
+
+/* Elemento com classe e filhos (nós ou texto). */
+function el(documento, tag, classe = "", ...filhos) {
+  const elemento = documento.createElement(tag);
+  if (classe) elemento.className = classe;
+  for (const filho of filhos) {
+    if (filho === null || filho === undefined || filho === "") continue;
+    elemento.append(filho);
+  }
+  return elemento;
+}
+
+/* A bolinha com a cor do projeto (série do design system). */
+function corDoProjeto(documento, serie) {
+  const cor = el(
+    documento,
+    "span",
+    `mapa-projeto__cor mapa-projeto__cor--${serie || 0}`,
+  );
+  cor.setAttribute("aria-hidden", "true");
+  return cor;
+}
+
+function vazio(documento, icone, titulo, texto) {
+  const caixa = el(documento, "div", "health-map-empty");
+  const simbolo = el(documento, "i", `fa-solid ${icone}`);
+  simbolo.setAttribute("aria-hidden", "true");
+  caixa.append(
+    simbolo,
+    el(documento, "strong", "", titulo),
+    el(documento, "span", "", texto),
+  );
+  return caixa;
+}
+
 // ── Lista "Municípios por vagas" ─────────────────────────────────────────
 
-function vazio(icone, titulo, texto) {
-  return `<div class="health-map-empty"><i class="fa-solid ${icone}"></i><strong>${escapeHtml(titulo)}</strong><span>${escapeHtml(texto)}</span></div>`;
-}
+/*
+  Filtro e agrupamento escolhidos na lista. Ficam enquanto a página vive:
+  trocar de área e voltar mantém a escolha (projeto que sumiu volta a "todos").
+*/
+const escolha = { projeto: "", agrupar: false };
 
 /*
   Mesma linha de ranking de "Territórios por vagas": posição, nome, detalhes
-  e vagas à direita. A barra é o resultado das análises: a parte aprovada
-  entre aprovados e reprovados (o resto da barra, em vermelho claro, são os
-  reprovados); o percentual escrito ao lado não deixa a leitura só na cor.
+  e vagas à direita. Os detalhes começam pelos projetos do lugar (cor e
+  nome). A barra é o resultado das análises: a parte aprovada entre aprovados
+  e reprovados (o resto da barra, em vermelho claro, são os reprovados); o
+  percentual escrito ao lado não deixa a leitura só na cor.
 */
-function linhaDoMunicipio(ponto, indice) {
-  const { municipioUf, vagas, candidatos, aprovados, reprovados } = ponto;
+function linhaDoLugar(documento, ponto, indice, posicao) {
+  const { candidatos, aprovados, reprovados } = ponto;
+  const vagasPublicadas = textoDasVagas({
+    vagas: ponto.vagasEdital,
+    cadastroReserva: ponto.cadastroReserva,
+  });
+  const resultado = resultadoDoMunicipio(ponto);
+
+  const projetos = el(documento, "span", "mapa-projeto__lista");
+  for (const projeto of ponto.projetos) {
+    projetos.append(
+      el(
+        documento,
+        "span",
+        "mapa-projeto__nome",
+        corDoProjeto(documento, projeto.serie),
+        projeto.nome,
+      ),
+    );
+  }
   const meta = [
+    vagasPublicadas && ponto.vagasEdital === null ? vagasPublicadas : "",
     plural(candidatos, "candidato", "candidatos"),
-    plural(aprovados, "aprovado", "aprovados"),
-    plural(reprovados, "reprovado", "reprovados"),
+    aprovados || reprovados
+      ? `${plural(aprovados, "aprovado", "aprovados")} · ${plural(reprovados, "reprovado", "reprovados")}`
+      : "",
     ponto.coordenadas ? "" : "sem coordenada no mapa",
   ]
     .filter(Boolean)
     .join(" · ");
-  const resultado = resultadoDoMunicipio(ponto);
-  const barra = resultado
-    ? `<span class="health-map-unit__preench is-resultado"><span class="health-map-unit__barra" aria-hidden="true"><i style="width:${resultado.pct}%"></i></span><span class="health-map-unit__pct">${resultado.pct}% aprovados</span></span>`
-    : "";
-  const rotulo = `${municipioUf}: ${plural(vagas, "vaga", "vagas")}, ${plural(candidatos, "candidato", "candidatos")}${resultado ? `, ${resultado.pct}% aprovados` : ""}`;
-  return `<button class="health-map-unit health-map-unit--ranking${vagas ? "" : " is-sem-vagas"}" type="button" data-municipio="${indice}" aria-label="${escapeHtml(rotulo)}"${ponto.coordenadas ? "" : " disabled"}>
-        <span class="health-map-unit__rank" aria-hidden="true">${indice + 1}</span>
-        <span class="health-map-unit__corpo">
-          <strong>${escapeHtml(municipioUf)}</strong>
-          <small>${escapeHtml(meta)}</small>
-          ${barra}
-        </span>
-        <span class="health-map-unit__vagas"><b>${fmt(vagas)}</b> vaga${vagas === 1 ? "" : "s"}</span>
-      </button>`;
+
+  const corpo = el(
+    documento,
+    "span",
+    "health-map-unit__corpo",
+    el(documento, "strong", "", ponto.rotulo),
+    ponto.projetos.length ? projetos : "",
+    el(documento, "small", "", meta),
+  );
+  if (resultado) {
+    const preenchimento = el(documento, "i", "");
+    preenchimento.style.width = `${resultado.pct}%`;
+    const barra = el(
+      documento,
+      "span",
+      "health-map-unit__barra",
+      preenchimento,
+    );
+    barra.setAttribute("aria-hidden", "true");
+    corpo.append(
+      el(
+        documento,
+        "span",
+        "health-map-unit__preench is-resultado",
+        barra,
+        el(
+          documento,
+          "span",
+          "health-map-unit__pct",
+          `${resultado.pct}% aprovados`,
+        ),
+      ),
+    );
+  }
+
+  const tamanho = ponto.tamanho ?? ponto.vagas;
+  const vagas = el(documento, "span", "health-map-unit__vagas");
+  if (tamanho) {
+    vagas.append(
+      el(documento, "b", "", fmt(tamanho)),
+      ` vaga${tamanho === 1 ? "" : "s"}`,
+    );
+  } else if (ponto.cadastroReserva) {
+    vagas.append(el(documento, "b", "", "CR"));
+    vagas.title = "Cadastro reserva";
+  } else {
+    vagas.append(el(documento, "b", "", "0"), " vagas");
+  }
+
+  const rank = el(documento, "span", "health-map-unit__rank", String(posicao));
+  rank.setAttribute("aria-hidden", "true");
+
+  const botao = el(
+    documento,
+    "button",
+    `health-map-unit health-map-unit--ranking${tamanho ? "" : " is-sem-vagas"}`,
+    rank,
+    corpo,
+    vagas,
+  );
+  botao.type = "button";
+  botao.dataset.municipio = String(indice);
+  botao.disabled = !ponto.coordenadas;
+  botao.setAttribute(
+    "aria-label",
+    [
+      ponto.rotulo,
+      ponto.projetos.map((projeto) => projeto.nome).join(", "),
+      vagasPublicadas ||
+        (ponto.vagas ? plural(ponto.vagas, "vaga", "vagas") : ""),
+      plural(candidatos, "candidato", "candidatos"),
+      resultado ? `${resultado.pct}% aprovados` : "",
+    ]
+      .filter(Boolean)
+      .join(", "),
+  );
+  return botao;
+}
+
+/* Projeto e "Agrupar por projeto", no alto da lista (só com dois ou mais projetos). */
+function filtrosDaLista(documento, projetos, aoMudar) {
+  const seletor = el(documento, "select", "mapa-projetos__seletor");
+  seletor.name = "projeto-do-mapa";
+  seletor.append(el(documento, "option", "", "Todos os projetos"));
+  seletor.firstChild.value = "";
+  for (const projeto of projetos) {
+    const opcao = el(
+      documento,
+      "option",
+      "",
+      `${projeto.nome} (${projeto.lugares})`,
+    );
+    opcao.value = projeto.nome;
+    seletor.append(opcao);
+  }
+  seletor.value = escolha.projeto;
+  seletor.addEventListener("change", () => {
+    escolha.projeto = seletor.value;
+    aoMudar("projeto");
+  });
+
+  const agrupar = el(documento, "input", "");
+  agrupar.type = "checkbox";
+  agrupar.name = "agrupar-por-projeto";
+  agrupar.checked = escolha.agrupar;
+  agrupar.addEventListener("change", () => {
+    escolha.agrupar = agrupar.checked;
+    aoMudar("agrupar");
+  });
+
+  return el(
+    documento,
+    "div",
+    "mapa-projetos__filtros",
+    el(
+      documento,
+      "label",
+      "mapa-projetos__campo",
+      el(documento, "span", "", "Projeto"),
+      seletor,
+    ),
+    el(
+      documento,
+      "label",
+      "mapa-projetos__agrupar",
+      agrupar,
+      el(documento, "span", "", "Agrupar por projeto"),
+    ),
+  );
 }
 
 export function desenharListaDeMunicipios(
   lista,
   pontos,
-  { erro = "", indisponivel = false, aoEscolher } = {},
+  {
+    erro = "",
+    indisponivel = false,
+    aoEscolher,
+    projetos = [],
+    aoMudarFiltro,
+  } = {},
 ) {
   if (!lista) return;
+  const documento = lista.ownerDocument;
   if (indisponivel) {
-    lista.innerHTML = vazio(
-      "fa-database",
-      "Municípios ainda indisponíveis",
-      "Depende de uma atualização do banco.",
+    lista.replaceChildren(
+      vazio(
+        documento,
+        "fa-database",
+        "Municípios ainda indisponíveis",
+        "Depende de uma atualização do banco.",
+      ),
     );
     return;
   }
   if (erro) {
-    lista.innerHTML = vazio(
-      "fa-triangle-exclamation",
-      "Não foi possível carregar os municípios",
-      "Tente de novo em Atualizar dados.",
+    lista.replaceChildren(
+      vazio(
+        documento,
+        "fa-triangle-exclamation",
+        "Não foi possível carregar os municípios",
+        "Tente de novo em Atualizar dados.",
+      ),
     );
     return;
   }
+  const filtros =
+    projetos.length > 1 && aoMudarFiltro
+      ? filtrosDaLista(documento, projetos, aoMudarFiltro)
+      : null;
   if (!pontos.length) {
-    lista.innerHTML = vazio(
-      "fa-map-location-dot",
-      "Nenhum município nas vagas da área",
-      "Os municípios vêm do nome das vagas nas análises curriculares.",
+    lista.replaceChildren(
+      ...[
+        filtros,
+        vazio(
+          documento,
+          "fa-map-location-dot",
+          "Nenhum município nas vagas da área",
+          "Os lugares vêm dos editais e do nome das vagas.",
+        ),
+      ].filter(Boolean),
     );
     return;
   }
-  lista.innerHTML = pontos.map(linhaDoMunicipio).join("");
+
+  const indiceDe = new Map(pontos.map((ponto, indice) => [ponto, indice]));
+  const filhos = filtros ? [filtros] : [];
+  if (escolha.agrupar) {
+    for (const grupo of gruposPorProjeto(pontos)) {
+      const cabecalho = el(
+        documento,
+        "div",
+        "mapa-projetos__grupo",
+        corDoProjeto(documento, grupo.serie),
+        el(documento, "strong", "", grupo.nome),
+        el(
+          documento,
+          "span",
+          "",
+          plural(grupo.pontos.length, "lugar", "lugares"),
+        ),
+      );
+      cabecalho.setAttribute("role", "heading");
+      cabecalho.setAttribute("aria-level", "4");
+      filhos.push(cabecalho);
+      grupo.pontos.forEach((ponto, posicao) =>
+        filhos.push(
+          linhaDoLugar(documento, ponto, indiceDe.get(ponto), posicao + 1),
+        ),
+      );
+    }
+  } else {
+    pontos.forEach((ponto, indice) =>
+      filhos.push(linhaDoLugar(documento, ponto, indice, indice + 1)),
+    );
+  }
+  lista.replaceChildren(...filhos);
   lista.querySelectorAll("[data-municipio]").forEach((botao) => {
     botao.addEventListener("click", () =>
       aoEscolher?.(pontos[Number(botao.dataset.municipio)]),
@@ -231,31 +468,74 @@ export function desenharListaDeMunicipios(
 
 // ── Mapa ─────────────────────────────────────────────────────────────────
 
-function resumoDoMunicipio(ponto) {
-  const resultado = resultadoDoMunicipio(ponto);
-  return [
-    `<b>${escapeHtml(ponto.municipioUf)}</b>`,
-    `Vagas: ${fmt(ponto.vagas)}`,
-    `Candidatos: ${fmt(ponto.candidatos)}`,
-    `Aprovados: ${fmt(ponto.aprovados)} · Reprovados: ${fmt(ponto.reprovados)}`,
-    resultado ? `${resultado.pct}% aprovados entre os analisados` : "",
-  ]
-    .filter(Boolean)
-    .join("<br>");
-}
-
-/* A legenda do mapa nacional em Projetos (corpo da caixa recolhível). */
-export function legendaDosMunicipios() {
-  const ponto =
-    '<span style="width:12px;height:12px;border-radius:50%;background:#0b8f58;border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15);display:inline-block;vertical-align:middle;margin-right:6px;"></span>';
-  return `${ponto}município das vagas (tamanho = nº de vagas)`;
+/* O conteúdo do popup (e da dica) do lugar: título, editais e contagens. */
+function resumoNoDom(documento, ponto) {
+  const resumo = resumoDoLugar(ponto);
+  const caixa = el(
+    documento,
+    "div",
+    "mapa-projetos__popup",
+    el(documento, "strong", "mapa-projetos__popup-titulo", resumo.titulo),
+  );
+  for (const edital of resumo.editais) {
+    caixa.append(
+      el(
+        documento,
+        "div",
+        "mapa-projetos__popup-edital",
+        corDoProjeto(documento, edital.serie),
+        el(documento, "b", "", edital.projeto),
+        edital.texto ? ` · ${edital.texto}` : "",
+      ),
+    );
+  }
+  for (const linha of resumo.linhas)
+    caixa.append(el(documento, "div", "", linha));
+  return caixa;
 }
 
 /*
-  Desenha os municípios da área em `camada` (a dos DSEIs, já limpa pelo
-  legado), a lista ao lado e as contagens. Assíncrona só na primeira vez de
-  cada área (depois, cache). `aindaVale()` diz se a página ainda quer este
-  desenho — a área ou o mapa podem ter mudado enquanto a resposta vinha.
+  A legenda do mapa nacional em Projetos (corpo da caixa recolhível): a cor
+  de cada projeto do último desenho, o que o tamanho quer dizer e o contorno
+  dos lugares com mais de um projeto.
+*/
+let projetosDaLegenda = [];
+
+export function desenharLegendaDosMunicipios(corpo) {
+  if (!corpo) return;
+  const documento = corpo.ownerDocument;
+  const itens = projetosDaLegenda.map((projeto) =>
+    el(
+      documento,
+      "div",
+      "mapa-projetos__legenda-item",
+      corDoProjeto(documento, projeto.serie),
+      projeto.nome,
+    ),
+  );
+  const tamanho = el(
+    documento,
+    "div",
+    "mapa-projetos__legenda-item",
+    "tamanho = nº de vagas",
+  );
+  const varios = el(
+    documento,
+    "div",
+    "mapa-projetos__legenda-item",
+    el(documento, "span", "mapa-projeto__cor mapa-projeto__cor--varios"),
+    "mais de um projeto",
+  );
+  varios.firstChild.setAttribute("aria-hidden", "true");
+  corpo.replaceChildren(...itens, tamanho, varios);
+}
+
+/*
+  Desenha os lugares da área em `camada` (a dos DSEIs, já limpa pelo legado),
+  a lista ao lado e as contagens. Assíncrona só na primeira vez de cada área
+  (depois, cache). `aindaVale()` diz se a página ainda quer este desenho — a
+  área ou o mapa podem ter mudado enquanto a resposta vinha. Trocar o filtro
+  de projeto na lista redesenha com os mesmos dados e reenquadra.
 */
 export async function desenharMunicipiosDaArea({
   L,
@@ -270,6 +550,7 @@ export async function desenharMunicipiosDaArea({
   limitesDoBrasil = null,
   aindaVale = () => true,
   podeFlutuar = () => true,
+  aoDesenhar = () => {},
 }) {
   if (!L || !mapa || !camada || !carregador) return;
   if (!carregador.emCache(area)) {
@@ -277,67 +558,96 @@ export async function desenharMunicipiosDaArea({
       conta.textContent = "…";
       conta.setAttribute("aria-label", "Carregando");
     }
-    if (lista)
-      lista.innerHTML = vazio(
+    lista?.replaceChildren(
+      vazio(
+        lista.ownerDocument,
         "fa-map-location-dot",
         "Carregando os municípios",
-        "Das vagas nas análises curriculares.",
-      );
+        "Dos editais e das vagas da área.",
+      ),
+    );
   }
   const { municipios, indisponivel, erro } = await carregador.carregar(area);
   if (!aindaVale()) return;
 
-  const pontos = pontosDosMunicipios(municipios);
-  const noMapa = pontos.filter((ponto) => ponto.coordenadas);
-  const marcadores = new Map();
-  camada.clearLayers();
-  for (const ponto of noMapa) {
-    const marcador = L.circleMarker(ponto.coordenadas, {
-      radius: ponto.raio,
-      color: "#f2b705",
-      weight: 3,
-      fillColor: "#0b8f58",
-      fillOpacity: 0.7,
+  const projetos = projetosDosMunicipios(municipios);
+  if (!projetos.some((projeto) => projeto.nome === escolha.projeto))
+    escolha.projeto = "";
+  projetosDaLegenda = projetos;
+
+  const pintar = (reenquadrar) => {
+    const pontos = pontosDosMunicipios(municipios, {
+      projeto: escolha.projeto,
     });
-    if (podeFlutuar())
-      marcador.bindTooltip(resumoDoMunicipio(ponto), { direction: "top" });
-    marcador.bindPopup(resumoDoMunicipio(ponto));
-    camada.addLayer(marcador);
-    marcadores.set(ponto.municipioUf, marcador);
-  }
-
-  if (conta) {
-    conta.textContent = fmt(pontos.length);
-    conta.removeAttribute("aria-label");
-  }
-  if (contador)
-    contador.textContent = plural(pontos.length, "município", "municípios");
-
-  desenharListaDeMunicipios(lista, pontos, {
-    erro,
-    indisponivel,
-    aoEscolher: (ponto) => {
-      const marcador = marcadores.get(ponto?.municipioUf);
-      if (!marcador) return;
-      mapa.setView(ponto.coordenadas, Math.max(mapa.getZoom(), 7), {
-        animate: true,
+    const noMapa = pontos.filter((ponto) => ponto.coordenadas);
+    const marcadores = new Map();
+    camada.clearLayers();
+    for (const ponto of noMapa) {
+      const marcador = L.circleMarker(ponto.coordenadas, {
+        radius: ponto.raio,
+        weight: 2,
+        fillOpacity: 0.78,
+        className: `marcador-de-projeto marcador-de-projeto--${ponto.serie}${ponto.variosProjetos ? " is-varios-projetos" : ""}`,
       });
-      marcador.openPopup();
-    },
-  });
-
-  if (!enquadrar) return;
-  try {
-    if (noMapa.length) {
-      mapa.fitBounds(L.latLngBounds(noMapa.map((ponto) => ponto.coordenadas)), {
-        padding: [60, 60],
-        maxZoom: 7,
-        animate: false,
-      });
-    } else if (limitesDoBrasil) {
-      mapa.fitBounds(limitesDoBrasil, { animate: false });
+      const documento = lista?.ownerDocument ?? document;
+      if (podeFlutuar())
+        marcador.bindTooltip(resumoNoDom(documento, ponto), {
+          direction: "top",
+        });
+      marcador.bindPopup(resumoNoDom(documento, ponto));
+      camada.addLayer(marcador);
+      marcadores.set(ponto.chave ?? ponto.municipioUf, marcador);
     }
-  } catch {
-    // Mapa ainda sem tamanho (página escondida): o próximo desenho enquadra.
-  }
+
+    if (conta) {
+      conta.textContent = fmt(pontos.length);
+      conta.removeAttribute("aria-label");
+    }
+    if (contador)
+      contador.textContent = plural(pontos.length, "município", "municípios");
+
+    desenharListaDeMunicipios(lista, pontos, {
+      erro,
+      indisponivel,
+      projetos,
+      aoMudarFiltro: (oQue) => {
+        if (!aindaVale()) return;
+        pintar(oQue === "projeto");
+        const campo =
+          oQue === "projeto"
+            ? lista?.querySelector(".mapa-projetos__seletor")
+            : lista?.querySelector(".mapa-projetos__agrupar input");
+        campo?.focus();
+      },
+      aoEscolher: (ponto) => {
+        const marcador = marcadores.get(ponto?.chave ?? ponto?.municipioUf);
+        if (!marcador) return;
+        mapa.setView(ponto.coordenadas, Math.max(mapa.getZoom(), 7), {
+          animate: true,
+        });
+        marcador.openPopup();
+      },
+    });
+
+    if (!reenquadrar) return;
+    try {
+      if (noMapa.length) {
+        mapa.fitBounds(
+          L.latLngBounds(noMapa.map((ponto) => ponto.coordenadas)),
+          {
+            padding: [60, 60],
+            maxZoom: 7,
+            animate: false,
+          },
+        );
+      } else if (limitesDoBrasil) {
+        mapa.fitBounds(limitesDoBrasil, { animate: false });
+      }
+    } catch {
+      // Mapa ainda sem tamanho (página escondida): o próximo desenho enquadra.
+    }
+  };
+
+  pintar(enquadrar);
+  aoDesenhar();
 }

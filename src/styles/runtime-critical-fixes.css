@@ -45,18 +45,10 @@ html[data-theme="dark"] .app .metric-readonly span {
   color: #9db0c6 !important;
 }
 
-html[data-theme="dark"] .app .multi-unit-chip {
-  background: #162f4b !important;
-  border-color: #31547a !important;
-  color: #8fd8ff !important;
-}
-
 html[data-theme="dark"] .app input,
 html[data-theme="dark"] .app select,
 html[data-theme="dark"] .app textarea,
-html[data-theme="dark"] .app .multi-select-toggle,
-html[data-theme="dark"] .app .multi-select-menu,
-html[data-theme="dark"] .app .multi-mini-btn {
+html[data-theme="dark"] .app .multi-select-menu {
   background: #16283f !important;
   border-color: #31506f !important;
   color: #e2ecf6 !important;

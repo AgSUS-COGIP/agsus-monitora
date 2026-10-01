@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { request } from "node:http";
+import { connect } from "node:net";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -160,6 +161,25 @@ describe("servidor web do MONITORA", () => {
     const res = await pedir("/index.html", { method: "POST" });
     expect(res.status).toBe(405);
     expect(res.headers.allow).toBe("GET, HEAD");
+  });
+
+  it("responde 400 a um alvo que não vira URL, sem derrubar o processo", async () => {
+    // `new URL("//[", base)` lança: antes, a exceção escapava do handler e
+    // encerrava o servidor inteiro com uma única requisição.
+    const resposta = await new Promise((ok, falha) => {
+      const { port } = servidor.address();
+      const socket = connect(port, "127.0.0.1", () =>
+        socket.write(
+          "GET //[ HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
+        ),
+      );
+      let texto = "";
+      socket.on("data", (parte) => (texto += parte));
+      socket.on("end", () => ok(texto));
+      socket.on("error", falha);
+    });
+    expect(resposta).toMatch(/^HTTP\/1\.1 400/);
+    expect((await pedir("/up")).status).toBe(200);
   });
 
   it("responde à rota de saúde", async () => {

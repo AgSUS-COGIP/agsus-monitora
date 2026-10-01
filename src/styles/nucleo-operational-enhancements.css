@@ -29,6 +29,8 @@
 .nucleo-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  /* Linhas de altura igual: um rótulo que quebra não deixa um card mais alto. */
+  grid-auto-rows: 1fr;
   gap: var(--space-3);
 }
 /*
@@ -41,7 +43,8 @@
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
-  align-content: start;
+  /* Rótulo no topo e valor preso ao pé quando a linha da grade é mais alta. */
+  align-content: space-between;
   column-gap: var(--space-1-5);
   row-gap: var(--space-1);
   width: 100%;
@@ -77,14 +80,19 @@
 .nucleo-kpi-card > span:last-child {
   display: contents;
 }
-/* O texto encolhe e quebra dentro da coluna, em vez de descer para baixo do ícone. */
+/*
+  O texto encolhe e quebra dentro da coluna, em vez de descer para baixo do
+  ícone, e para em duas linhas com reticências (o texto inteiro vai no title).
+*/
 .nucleo-kpi-card small {
   grid-column: 2;
   grid-row: 1;
-  display: flex;
-  align-items: center;
+  display: -webkit-box;
   min-width: 0;
-  min-height: 24px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   margin: 0;
   font-size: var(--text-caption);
   font-weight: 500;

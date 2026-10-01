@@ -11,7 +11,8 @@ import "../styles/comemoracao.css";
   prefers-reduced-motion, só o aviso. A regra de quando comemorar é de
   src/lib/comemoracao.js; quem usa: o acesso liberado
   (comemoracao-do-acesso.js), o painel de análises, a tela de Entrevistas
-  (src/modulos/entrevistas/marcos.js) e os marcos do ano (marcos-do-ano.js).
+  (src/modulos/entrevistas/marcos.js) e os marcos do ano
+  (src/modulos/visao-geral/boas-vindas.jsx).
 */
 
 const CORES = [

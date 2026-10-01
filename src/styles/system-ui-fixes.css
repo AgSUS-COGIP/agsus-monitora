@@ -54,54 +54,6 @@ body.mobile-app .app .top {
   }
 }
 
-/* A tabela de Detalhes deve crescer pelo conteúdo das células, nunca pela
-   altura disponível no painel. Regras legadas e o reprocessamento das linhas
-   podiam fazer a primeira linha absorver o espaço livre do tbody. */
-#page-dashboard .table-wrap:has(.details-table) {
-  display: block;
-  height: auto;
-  min-height: 0;
-  max-height: 560px;
-  overflow: auto;
-}
-
-#page-dashboard .details-table,
-#page-dashboard .details-table tbody,
-#page-dashboard #monitorRows {
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-}
-
-#page-dashboard #monitorRows tr,
-#page-dashboard #monitorRows tr.health-detail-row,
-#page-dashboard #monitorRows tr.health-details-row-refined {
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  block-size: auto !important;
-}
-
-#page-dashboard #monitorRows td,
-#page-dashboard #monitorRows .health-details-row-refined td {
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  block-size: auto !important;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-  vertical-align: middle !important;
-}
-
-#page-dashboard #monitorRows .health-stage-cell {
-  line-height: 1.3;
-}
-
-/* Exportação permanece no menu de ações, sem ocupar o cabeçalho. */
-#exportCsvBtn[hidden] {
-  display: none !important;
-}
-
 /* Fundo neutro, também durante a recuperação das imagens do mapa (sem
    gradiente: DS 3.5). O contorno vetorial do Brasil continua visível mesmo se
    o provedor principal oscilar. */

@@ -8,7 +8,9 @@ import { classes } from "./classes.js";
   tudo". `recolhivel={false}`: só o título e os filhos. `escopo` abre o
   resumo ("Ativo · 2 filtros adicionais"; o padrão é "Todos"); `podeLimpar`
   liga o "Limpar tudo" quando há o que limpar além dos filtros contados (o
-  padrão é `quantos`).
+  padrão é `quantos`). `titulo`, `subtitulo`, `rotuloMostrar` e
+  `rotuloOcultar` trocam os textos (a Visão geral os lê de Configurações ›
+  Página inicial).
 */
 export function PainelDeFiltros({
   idDoTitulo,
@@ -19,14 +21,19 @@ export function PainelDeFiltros({
   podeLimpar,
   aoLimpar,
   aoRecolher,
+  titulo: textoDoTitulo = "Refinar resultados",
+  subtitulo,
+  rotuloMostrar = "Mostrar filtros",
+  rotuloOcultar = "Ocultar filtros",
   children,
 }) {
   const [recolhido, setRecolhido] = useState(false);
   const titulo = (
     <div>
       <h2 className="ui-titulo" id={idDoTitulo}>
-        Refinar resultados
+        {textoDoTitulo}
       </h2>
+      {subtitulo ? <p className="ui-filtros-subtitulo">{subtitulo}</p> : null}
     </div>
   );
 
@@ -90,7 +97,7 @@ export function PainelDeFiltros({
               className={`fa-solid ${recolhido ? "fa-filter" : "fa-chevron-up"}`}
               aria-hidden="true"
             />
-            <span>{recolhido ? "Mostrar filtros" : "Ocultar filtros"}</span>
+            <span>{recolhido ? rotuloMostrar : rotuloOcultar}</span>
           </button>
           <button
             type="button"

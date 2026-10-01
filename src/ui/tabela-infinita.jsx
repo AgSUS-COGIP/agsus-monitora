@@ -20,6 +20,8 @@ import { formatNumberBR } from "../lib/formatters.js";
 const POR_VEZ = 50;
 const PERTO_DO_FIM_PX = 160;
 const LINHAS_DO_ESQUELETO = 8;
+const ARIA_SORT = { asc: "ascending", desc: "descending" };
+const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
 
 function LinhasDoEsqueleto({ colunas }) {
   return Array.from({ length: LINHAS_DO_ESQUELETO }, (_, linha) => (
@@ -38,11 +40,14 @@ function LinhasDoEsqueleto({ colunas }) {
  * @param {string} p.idDoTitulo
  * @param {string} p.titulo
  * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void }} p.busca
- * @param {Array<{ rotulo: string, largura?: string, numero?: boolean }>} p.colunas
+ * @param {Array<{ rotulo: string, largura?: string, numero?: boolean, ordem?: string, aoOrdenar?: () => void }>} p.colunas
+ *   com `aoOrdenar`, o cabeçalho vira botão de ordenar (`ordem`: "asc",
+ *   "desc" ou "", liga o `aria-sort`)
  * @param {(quantos: number | null) => import("react").ReactNode} p.informacao
  *   a contagem do recorte: recebe quantos estão na tabela, ou `null`
  *   enquanto carrega
  * @param {import("react").ReactNode} p.vazio o que aparece quando não há nada carregado
+ * @param {import("react").ReactNode} [p.ferramentas] botões ao lado da busca
  */
 export function TabelaInfinita({
   idDoTitulo,
@@ -57,6 +62,7 @@ export function TabelaInfinita({
   informacao,
   total,
   vazio,
+  ferramentas = null,
 }) {
   const [buscaPropria, setBuscaPropria] = useState("");
   const controlada = valor !== undefined;
@@ -108,6 +114,7 @@ export function TabelaInfinita({
             aria-label={rotulo}
             onChange={(evento) => setBusca(evento.target.value)}
           />
+          {ferramentas}
         </div>
       </div>
       <div className="ui-tabela-meta">
@@ -124,16 +131,36 @@ export function TabelaInfinita({
         <table className={classeDaTabela}>
           <thead>
             <tr>
-              {colunas.map(({ rotulo: nome, largura, numero }) => (
-                <th
-                  key={nome}
-                  scope="col"
-                  style={{ width: largura }}
-                  className={numero ? "num" : undefined}
-                >
-                  {nome}
-                </th>
-              ))}
+              {colunas.map(
+                ({ rotulo: nome, largura, numero, ordem, aoOrdenar }) => (
+                  <th
+                    key={nome}
+                    scope="col"
+                    style={{ width: largura }}
+                    className={numero ? "num" : undefined}
+                    aria-sort={
+                      aoOrdenar ? ARIA_SORT[ordem] || "none" : undefined
+                    }
+                  >
+                    {aoOrdenar ? (
+                      <button
+                        type="button"
+                        className="ui-ordenar"
+                        title={`Ordenar por ${nome}`}
+                        onClick={aoOrdenar}
+                      >
+                        {nome}
+                        <i
+                          className={`fa-solid ${ICONE_DA_ORDEM[ordem] || "fa-sort"}`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    ) : (
+                      nome
+                    )}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>

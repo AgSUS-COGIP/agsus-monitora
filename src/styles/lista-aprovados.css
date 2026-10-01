@@ -8,6 +8,8 @@
 .approved-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  /* Linhas de altura igual: um rótulo que quebra não deixa um card mais alto. */
+  grid-auto-rows: 1fr;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   /* O fundo é o do card da página, também no escuro. */
@@ -25,7 +27,8 @@
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
-  align-content: start;
+  /* Rótulo no topo e valor preso ao pé quando a linha da grade é mais alta. */
+  align-content: space-between;
   column-gap: var(--space-1-5);
   row-gap: var(--space-1);
   min-width: 0;
@@ -73,14 +76,19 @@
 .approved-kpi > div {
   display: contents;
 }
-/* O texto encolhe e quebra dentro da coluna, em vez de descer para baixo do ícone. */
+/*
+  O texto encolhe e quebra dentro da coluna, em vez de descer para baixo do
+  ícone, e para em duas linhas com reticências (o texto inteiro vai no title).
+*/
 .approved-kpi-label {
   grid-column: 2;
   grid-row: 1;
-  display: flex;
-  align-items: center;
+  display: -webkit-box;
   min-width: 0;
-  min-height: 24px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 500;

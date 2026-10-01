@@ -234,9 +234,9 @@ describe("o legado recebe a escolha", () => {
       legado.indexOf("function localizarLinhaDoMonitoramento"),
     );
     expect(corpo).toMatch(/if \(!can\("ind"\)\)/);
-    expect(corpo).toMatch(/filterState\.unidade = new Set/);
-    expect(corpo).toMatch(/filterState\.edital = new Set/);
     expect(corpo).toMatch(/navigate\("dashboard"\)/);
+    // O recorte (unidade e edital da linha) e o destaque são da Visão geral.
+    expect(corpo).toMatch(/estadoDaVisaoGeral\.localizar\(r\)/);
   });
 
   it("a busca antiga saiu", () => {

@@ -435,7 +435,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_area"],
     critica: false,
     resumo:
-      "Municípios das vagas da área (UBS móvel no nome da vaga), com vagas, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migration 20260929090000).",
+      "Lugares das vagas da área (TB_LOCAL_VAGA_EDITAL, lidos dos PDFs dos editais, + UBS móvel no nome da vaga): município ou UF, projetos e editais de cada um, vagas publicadas e nas análises, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migrations 20260929090000 e 20261001180000).",
   },
   get_analises_dashboard_payload_v2: {
     argumentos: ["p_scope", "p_area"],

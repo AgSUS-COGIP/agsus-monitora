@@ -292,8 +292,12 @@ describe("KPIs, recorte, observações e tabela", () => {
     expect(
       secao.querySelector('.selecao-kpis [data-kpi="aptos"]').dataset.tom,
     ).toBe("sucesso");
-    // As regras dos números ficaram com a Aya (docs/aya/regras-da-selecao.md).
-    expect(secao.querySelector(".selecao-kpis [title]")).toBeNull();
+    // As regras dos números ficaram com a Aya (docs/aya/regras-da-selecao.md):
+    // o único title é o do próprio rótulo (que para em duas linhas).
+    for (const comTitulo of secao.querySelectorAll(".selecao-kpis [title]")) {
+      expect(comTitulo.className).toBe("ui-kpi-texto");
+      expect(comTitulo.title).toBe(comTitulo.textContent);
+    }
   });
 
   it("sem filtros, o recorte diz só 'Sem filtros'", async () => {
