@@ -6,6 +6,7 @@ import {
   linkDoEmailDoConvite,
   mensagemDoConvite,
   situacaoDoAcesso,
+  dataHoraCurta,
 } from "../src/lib/convite-de-acesso.js";
 import {
   areasDaLinha,
@@ -35,10 +36,12 @@ describe("situação do acesso", () => {
     ).toEqual({ tipo: "convite", rotulo: "Convidado · ainda não entrou" });
   });
 
-  it("último acesso em dd/mm/aaaa, no horário de Brasília", () => {
+  it("último acesso com data e hora, no horário de Brasília", () => {
     expect(
       situacaoDoAcesso({ ultimo_acesso: "2026-09-30T15:00:00Z" }).rotulo,
-    ).toBe("Último acesso em 30/09/2026");
+    ).toBe("Último acesso em 30/09/2026 às 12:00");
+    expect(dataHoraCurta("2026-10-01T12:13:09Z")).toBe("01/10/2026 às 09:13");
+    expect(dataHoraCurta("inválida")).toBe("");
     // 01h UTC ainda é o dia anterior em Brasília.
     expect(dataCurta("2026-10-01T01:00:00Z")).toBe("30/09/2026");
   });
