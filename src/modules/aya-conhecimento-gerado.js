@@ -1865,7 +1865,7 @@ export const VERBETES_AYA = Object.freeze([
       "em validacao",
     ],
     resposta:
-      'As coordenadas das unidades da Saúde Indígena foram auditadas em 01/10/2026 contra fontes oficiais: CNES (Ministério da Saúde), malhas municipais do IBGE e aldeias e terras indígenas da Funai. Foram conferidos 1.500 pontos (OK, Corrigir, Revisar ou Sem fonte); 62 correções de confiança alta foram aplicadas, com backup, e 67 pontos ficaram para revisão com a área técnica. No mapa, uma posição só é "validada" quando duas fontes independentes concordam a menos de 5 km e as duas caem dentro da UF; nenhuma coordenada é inventada, e ponto sem essa confirmação continua "em validação".',
+      'As coordenadas das unidades da Saúde Indígena foram auditadas em 01/10/2026 contra fontes oficiais: CNES (Ministério da Saúde), malhas municipais e Localidades Indígenas do Censo 2022 do IBGE, aldeias e terras indígenas da Funai e os PDSI 2024–2027 de cada DSEI. Em três rodadas, sempre com duas fontes independentes concordando, foram corrigidos 162 polos e 2 CASAIs, com backup antes de cada rodada. Restam 93 pontos sem duas fontes (só uma fonte, fontes que discordam ou nenhum homônimo oficial), que ficam para revisão com a área técnica; não existe lista oficial de polos com coordenadas em dados abertos. No mapa, uma posição só é "validada" quando duas fontes independentes concordam a menos de 5 km e as duas caem dentro da UF; nenhuma coordenada é inventada, e ponto sem essa confirmação continua "em validação".',
     fato: "",
     fonte:
       "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/modules/lotacoes-geograficas-transport.js; scripts/validar-localizacoes.mjs; src/lib/localizacoes-validadas.js",
