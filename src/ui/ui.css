@@ -42,6 +42,12 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
 }
+/* Card com título e uma lista embaixo (as pendências prioritárias). */
+.ui-pilha {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
 
 /*
   Botões das telas: o `.btn` de app.css, mais o pequeno (ações de linha, de
@@ -189,7 +195,12 @@
   color: var(--state-danger);
   text-decoration: none;
 }
-.ui-campo :is(input, select, textarea) {
+/*
+  Caixa de marcar e botão de rádio ficam de fora (`:where` não pesa na
+  especificidade): a seleção múltipla do campo tem caixas por dentro.
+*/
+.ui-campo
+  :is(input:not(:where([type="checkbox"], [type="radio"])), select, textarea) {
   min-height: 40px;
   border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
@@ -202,7 +213,12 @@
   min-height: 88px;
   padding: var(--space-2) var(--space-3);
 }
-.ui-campo :is(input, select, textarea):focus {
+.ui-campo
+  :is(
+    input:not(:where([type="checkbox"], [type="radio"])),
+    select,
+    textarea
+  ):focus {
   border-color: var(--focus-ring);
   box-shadow: none;
 }
@@ -682,6 +698,24 @@
   overflow-wrap: anywhere;
 }
 
+/* ── MaisOpcoes ─────────────────────────────────────────────────────── */
+
+.ui-grade-de-campos[hidden] {
+  display: none;
+}
+.ui-contagem {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-size: var(--text-caption);
+}
+
 /* ── Segmentado ────────────────────────────────────────────────────── */
 
 .ui-segmentado {
@@ -735,6 +769,32 @@
   margin: 0;
   font-weight: var(--font-weight-medium);
 }
+.ui-recorte-marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.ui-marca {
+  --marca-cor: var(--state-neutral);
+  --marca-fundo: var(--state-neutral-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--marca-fundo);
+  color: var(--marca-cor);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.ui-marca[data-tom="sucesso"] {
+  --marca-cor: var(--state-success);
+  --marca-fundo: var(--state-success-soft);
+}
+.ui-marca[data-tom="alerta"] {
+  --marca-cor: var(--state-warning);
+  --marca-fundo: var(--state-warning-soft);
+}
 
 /* ── ListaDePendencias ─────────────────────────────────────────────── */
 
@@ -775,6 +835,11 @@
 }
 .ui-pendencia-esqueleto {
   height: 52px;
+}
+
+/* TabelaInfinita: "Carregar mais", centrado embaixo do status. */
+.ui-tabela-mais {
+  justify-self: center;
 }
 
 /* ── Celular ───────────────────────────────────────────────────────── */

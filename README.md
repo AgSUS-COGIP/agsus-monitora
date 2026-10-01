@@ -26,17 +26,17 @@ acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `T
 área em `RL_ABA_AREA`). Módulos e abas podem ser desligados ou postos em manutenção em
 **Configurações → Módulos e abas**, sem deploy.
 
-| Módulo              | Onde                                                 | O que faz                                                                                 |
-| ------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Visão geral e mapas | `index.html`                                         | terras indígenas, DSEIs e editais no mapa                                                 |
-| Editais             | `index.html` (`src/componentes/nucleo/`)             | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos |
-| Cronograma          | `index.html` (`src/componentes/calendario-editais/`) | calendário das etapas de todos os editais                                                 |
-| Análises            | `analises.html`                                      | análises curriculares vindas das planilhas                                                |
-| Seleção             | `index.html` (`src/modulos/selecao/`)                | funil por vaga (inscritos, aptos, eliminados)                                             |
-| Entrevistas         | `index.html` (`src/modulos/entrevistas/`)            | resultados, condução (roteiro, convocação, banca, notas) e roteiros                       |
-| Recursos            | `index.html` (`src/modulos/recursos/`)               | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos                       |
-| Lista de aprovados  | `index.html` (`src/componentes/lista-aprovados/`)    | aprovados e convocação                                                                    |
-| Acessos             | `index.html` (`src/componentes/acessos/`)            | convites, grupos, contas desativadas e reativação                                         |
+| Módulo              | Onde                                                 | O que faz                                                                                                 |
+| ------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Visão geral e mapas | `index.html`                                         | terras indígenas, DSEIs e editais no mapa                                                                 |
+| Editais             | `index.html` (`src/componentes/nucleo/`)             | cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos                 |
+| Cronograma          | `index.html` (`src/componentes/calendario-editais/`) | calendário das etapas de todos os editais                                                                 |
+| Análises            | `index.html` (`src/modulos/analises/`)               | análises curriculares vindas das planilhas: filtros, KPIs, gráficos, pendências, fila e gaveta de detalhe |
+| Seleção             | `index.html` (`src/modulos/selecao/`)                | funil por vaga (inscritos, aptos, eliminados)                                                             |
+| Entrevistas         | `index.html` (`src/modulos/entrevistas/`)            | resultados, condução (roteiro, convocação, banca, notas) e roteiros                                       |
+| Recursos            | `index.html` (`src/modulos/recursos/`)               | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos                                       |
+| Lista de aprovados  | `index.html` (`src/componentes/lista-aprovados/`)    | aprovados e convocação                                                                                    |
+| Acessos             | `index.html` (`src/componentes/acessos/`)            | convites, grupos, contas desativadas e reativação                                                         |
 
 Em **Conduzir entrevistas** aparecem só os editais na janela da entrevista pelo cronograma (de 7
 dias antes a 15 dias depois das etapas de entrevista), os liberados pelo administrador global e os
@@ -106,8 +106,8 @@ Escolha o caminho conforme o que você vai fazer:
 | **C. Build de produção**             | `npm run build` e depois `npm start` | http://127.0.0.1:8000 | conferir exatamente o que vai para produção, com todas as checagens            |
 | **D. Docker**                        | `docker compose up --build -d`       | http://127.0.0.1:8000 | subir como em produção, isolado da máquina                                     |
 
-As páginas existem em todos os caminhos: `/` (painel principal), `/analises.html` e
-`/auth/callback.html` (retorno do login).
+As páginas existem em todos os caminhos: `/` (painel principal) e `/auth/callback.html` (retorno
+do login).
 
 As rotas `/api/*` (AYA, proxies da FUNAI e leitura do PDF de anexos) **só existem na Vercel**.
 Nos caminhos A a D elas respondem 404, e a tela avisa que o recurso só funciona na versão
@@ -164,14 +164,14 @@ Leva poucos segundos. Os limites do orçamento podem ser ajustados por variável
 
 ```text
 dist/
-├── index.html, analises.html,
+├── index.html,
 │   auth/callback.html   as páginas (entradas do Vite)
 ├── assets/          JS e CSS com hash no nome + tudo de public/assets/
 ├── data/            JSON geográfico de public/data/ (terras indígenas, lotações)
 ├── icons/, manifest.webmanifest, offline.html, sw.js, sw-policy.js   PWA
 ```
 
-- O JS é dividido por página (`main`, `analises`) e pacotes de terceiros (`vendor-supabase`,
+- O JS é dividido por página (`main`) e pacotes de terceiros (`vendor-supabase`,
   `vendor-react`, `vendor-charts` e `vendor`), definidos em `vite.config.js`.
 - **Tudo em `public/` é copiado como está e fica público.** Não coloque ali nada que não possa ser
   baixado por qualquer pessoa.
@@ -247,7 +247,6 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 ```text
 .
 ├── index.html              painel principal
-├── analises.html           painel de análises
 ├── auth/callback.html      retorno do login
 ├── DESIGN.md               guia de interface (tokens, componentes, contraste)
 ├── src/
@@ -256,8 +255,7 @@ Supabase de verdade, mesmo com o `.env.local` preenchido.
 │   ├── componentes/        telas em React (menu lateral, editais, entrevistas, acessos…)
 │   ├── modules/            funcionalidades de tela legadas, um arquivo por feature
 │   ├── styles/             CSS do painel principal
-│   ├── modulos/            telas React migradas (Recursos, Entrevistas, Seleção)
-│   ├── analises/           entrada e CSS do painel de análises (no quadro)
+│   ├── modulos/            telas React migradas (Recursos, Entrevistas, Análises curriculares, Seleção)
 │   └── auth/               callback do login
 ├── api/                    funções serverless da Vercel (AYA, proxies FUNAI, anexos do edital em Python)
 ├── requirements.txt        dependências das funções Python da Vercel
@@ -309,7 +307,7 @@ Não coloque chaves secretas, tokens, senhas ou credenciais no repositório.
 ## Checklist antes de publicar em produção
 
 - O build passou.
-- `index.html` e `analises.html` abrem corretamente.
+- `index.html` (com Análises curriculares, Entrevistas, Recursos e Seleção) abre corretamente.
 - O login Google funciona para conta autorizada.
 - Usuário sem perfil cai no fluxo de solicitação de acesso.
 - As solicitações aparecem para a administração.

@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 
 const DIST_DIR = "dist";
-const SOURCE_HTML_FILES = ["index.html", "analises.html", "auth/callback.html"];
+const SOURCE_HTML_FILES = ["index.html", "auth/callback.html"];
 const violations = [];
 
 function walk(directory) {

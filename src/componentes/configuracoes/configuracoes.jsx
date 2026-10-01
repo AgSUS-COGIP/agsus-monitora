@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import {
   resumoDaVersao,
   valorParaExibir,
@@ -12,10 +13,14 @@ import {
 } from "../../modules/config-secoes.js";
 import { Icone } from "../icone.jsx";
 import { Modal } from "../modal.jsx";
+import { SecaoAparencia } from "./aparencia.jsx";
 import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.js";
+import { criarImagensDaAparencia } from "./imagens.js";
 import { SecaoMarca } from "./marca.jsx";
 import { SecaoOperacao } from "./operacao.jsx";
+import { SecaoPaginaInicial } from "./pagina-inicial.jsx";
 import { SecaoPaineisExternos } from "./paineis-externos.jsx";
+import { SecaoTelaDeAcesso } from "./tela-de-acesso.jsx";
 
 /*
   A moldura de Configurações em React, a mesma para todas as seções:
@@ -29,10 +34,10 @@ import { SecaoPaineisExternos } from "./paineis-externos.jsx";
                     restaurar uma versão
     Histórico       publicações auditadas, na seção Operação
 
-  As seções em React (Marca, Painéis externos e Operação) entram por portal
-  no corpo da própria seção (`.config-secao__corpo`, criado por
-  config-secoes.js); as legadas ainda são os campos do index.html. O estado
-  é de `estado.js`.
+  As seções (Marca, Página inicial, Tela de acesso, Aparência, Painéis
+  externos e Operação) entram por portal no corpo da própria seção
+  (`.config-secao__corpo`, criado por config-secoes.js). O estado é de
+  `estado.js`; as imagens da Aparência, de `imagens.js`.
 */
 
 const classes = (...lista) => lista.filter(Boolean).join(" ");
@@ -528,18 +533,30 @@ function CorpoDoHistorico({ estado, historico }) {
 
 // ── Montagem ───────────────────────────────────────────────────────────────
 
-function Configuracoes({ estado, alvos }) {
+/* Seção → componente que entra por portal no corpo dela. */
+const SECOES_NO_PORTAL = Object.freeze([
+  ["marca", SecaoMarca],
+  ["inicio", SecaoPaginaInicial],
+  ["acesso", SecaoTelaDeAcesso],
+  ["aparencia", SecaoAparencia],
+  ["recursos", SecaoPaineisExternos],
+]);
+
+function Configuracoes({ estado, imagens, alvos }) {
   return (
     <>
       <Cabecalho estado={estado} />
       <BarraDeSalvar estado={estado} />
       <Dialogos estado={estado} />
-      {alvos.marca
-        ? createPortal(<SecaoMarca estado={estado} />, alvos.marca)
-        : null}
-      {alvos.paineis
-        ? createPortal(<SecaoPaineisExternos estado={estado} />, alvos.paineis)
-        : null}
+      {SECOES_NO_PORTAL.map(([secao, Secao]) =>
+        alvos[secao]
+          ? createPortal(
+              <Secao estado={estado} imagens={imagens} />,
+              alvos[secao],
+              secao,
+            )
+          : null,
+      )}
       {alvos.operacao
         ? createPortal(
             <>
@@ -565,6 +582,11 @@ const corpoDaSecao = (pagina, secao) =>
 export function montarConfiguracoes({
   documento = document,
   estado = estadoDasConfiguracoes,
+  imagens = criarImagensDaAparencia({
+    supabase: getSupabaseClient,
+    configuracoes: estado,
+    documento,
+  }),
 } = {}) {
   const pagina = documento.getElementById("page-config");
   const raizDaTela = documento.getElementById("configuracoesApp");
@@ -580,13 +602,14 @@ export function montarConfiguracoes({
     raizDaTela,
     <Configuracoes
       estado={estado}
-      alvos={{
-        marca: corpoDaSecao(pagina, "marca"),
-        paineis: corpoDaSecao(pagina, "recursos"),
-        operacao: corpoDaSecao(pagina, "operacao"),
-      }}
+      imagens={imagens}
+      alvos={Object.fromEntries(
+        [...SECOES_NO_PORTAL.map(([secao]) => secao), "operacao"].map(
+          (secao) => [secao, corpoDaSecao(pagina, secao)],
+        ),
+      )}
     />,
     { nome: "Configurações" },
   );
-  return { estado, raiz };
+  return { estado, imagens, raiz };
 }

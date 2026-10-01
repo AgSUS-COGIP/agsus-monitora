@@ -5,13 +5,18 @@ import { classes } from "./classes.js";
   "Refinar resultados": os filtros de uma tela, num card
   (`.ui-card.ui-filtros`). Os campos vêm como filhos. Recolhível (o padrão):
   resumo de quantos filtros estão ativos, "Ocultar/Mostrar filtros" e "Limpar
-  tudo". `recolhivel={false}`: só o título e os filhos.
+  tudo". `recolhivel={false}`: só o título e os filhos. `escopo` abre o
+  resumo ("Ativo · 2 filtros adicionais"; o padrão é "Todos"); `podeLimpar`
+  liga o "Limpar tudo" quando há o que limpar além dos filtros contados (o
+  padrão é `quantos`).
 */
 export function PainelDeFiltros({
   idDoTitulo,
   className,
   recolhivel = true,
   quantos = 0,
+  escopo = "Todos",
+  podeLimpar,
   aoLimpar,
   aoRecolher,
   children,
@@ -63,7 +68,7 @@ export function PainelDeFiltros({
               aria-hidden="true"
             />
             <span>
-              Todos ·{" "}
+              {escopo} ·{" "}
               {quantos
                 ? `${quantos} ${quantos === 1 ? "filtro adicional" : "filtros adicionais"}`
                 : "nenhum filtro adicional"}
@@ -91,7 +96,7 @@ export function PainelDeFiltros({
             type="button"
             className="btn secondary small"
             data-acao="limpar-filtros"
-            disabled={!quantos}
+            disabled={!(podeLimpar ?? quantos)}
             title="Limpar filtros"
             onClick={aoLimpar}
           >

@@ -22,7 +22,6 @@ function arquivos(pasta, extensoes) {
 const fontes = [
   ...arquivos("src", [".js", ".jsx", ".html"]),
   "index.html",
-  "analises.html",
   "auth/callback.html",
 ];
 
@@ -56,7 +55,7 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
   });
 
   it("o Font Awesome não é mais carregado", () => {
-    for (const pagina of ["index.html", "analises.html"]) {
+    for (const pagina of ["index.html"]) {
       expect(readFileSync(pagina, "utf8")).not.toContain("font-awesome");
     }
   });
@@ -66,9 +65,6 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
     expect(main.indexOf("icones-lucide.css")).toBeGreaterThan(-1);
     expect(main.indexOf("icones-lucide.css")).toBeLessThan(
       main.indexOf("visual-polish.css"),
-    );
-    expect(readFileSync("src/analises/main.js", "utf8")).toContain(
-      "icones-lucide.css",
     );
   });
 });

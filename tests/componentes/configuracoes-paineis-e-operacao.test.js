@@ -2,6 +2,7 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarConfiguracoes } from "../../src/componentes/configuracoes/configuracoes.jsx";
 import { criarEstadoDasConfiguracoes } from "../../src/componentes/configuracoes/estado.js";
+import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.js";
 import {
   abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
@@ -54,10 +55,13 @@ const PAINEIS = [
 ];
 
 const snapshot = () => ({
-  configuracoes: Object.entries(PUBLICADO).map(([chave, valor]) => ({
-    chave,
-    valor,
-  })),
+  // O banco igual à tela: as chaves que faltam vêm com o padrão que a tela mostra.
+  configuracoes: [...normalizarValoresCarregados(PUBLICADO)].map(
+    ([chave, valor]) => ({
+      chave,
+      valor,
+    }),
+  ),
   paineis: PAINEIS.map((painel) => ({ ...painel })),
 });
 
@@ -86,9 +90,6 @@ async function montar({ secao = "recursos", config = PUBLICADO } = {}) {
     <section id="page-config" class="page active">
       <div id="configuracoesApp" data-configuracoes></div>
       <div class="admin-grid">
-        <div class="admin-card card config-main-card"><div class="form-grid">
-          <div class="form-row"><label>Título</label><input id="cfgPageTitle" value="Saúde Indígena" /></div>
-        </div></div>
       </div>
     </section>`;
   organizarConfiguracoesEmSecoes(document);

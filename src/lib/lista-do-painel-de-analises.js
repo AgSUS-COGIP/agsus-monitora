@@ -1,5 +1,5 @@
 /*
-  A lista enxuta do painel de análises (`analises.html`), desde 20260929150000.
+  A lista enxuta de Análises curriculares (src/modulos/analises/), desde 20260929150000.
 
   O payload da lista (get_analises_dashboard_payload_v2, schema_version 4) só
   traz o que a lista, os filtros, os KPIs, os gráficos e a tabela usam. O resto
@@ -7,8 +7,9 @@
 
   - `grupo` e `edital_status` vêm uma vez no envelope, não em cada linha;
   - a janela oficial (data_inicio/fim_analise) sai de `editais[]`: o
-    analises-app.js já casava a linha com o edital quando a linha vinha sem
-    janela (resolveEditalMeta), com uma regra que cobre a da view;
+    tela casa a linha com o edital quando a linha vem sem janela
+    (`editalDaLinha` de analises-curriculares.js), com uma regra que cobre a
+    da view;
   - "tem PDF?" vem como `tem_pdf`; o link, no detalhe e no CSV;
   - pontuações, experiências, links e datas ficam no detalhamento
     (get_analise_detalhe_do_painel), buscado ao abrir o registro;

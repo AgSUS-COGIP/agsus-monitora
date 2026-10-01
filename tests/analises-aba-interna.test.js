@@ -1,9 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import {
-  enderecoDasAnalises,
-  semOPainelAntigoDeAnalises,
-} from "../src/lib/pagina-do-painel.js";
+import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel.js";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
 import {
@@ -13,7 +10,8 @@ import {
 
 /*
   Análises curriculares deixou de ser o painel externo `analises` e virou a
-  view `analises`, com permissão só do recurso `analises`.
+  view `analises`, com permissão só do recurso `analises`; desde a Etapa 4, é
+  o módulo React src/modulos/analises/, sem quadro.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
 const legado = ler("src/modules/legacy-app.js");
@@ -29,16 +27,7 @@ const PAINEIS = [
   { id: "3", codigo: "recursos", titulo: "Recursos", url: "https://b" },
 ];
 
-describe("o endereço e a lista de painéis", () => {
-  it("o quadro abre no domínio atual, com a área", () => {
-    expect(enderecoDasAnalises("http://localhost:5173", "sede")).toBe(
-      "http://localhost:5173/analises.html?area=sede",
-    );
-    expect(enderecoDasAnalises("https://previa.vercel.app", "")).toBe(
-      "https://previa.vercel.app/analises.html",
-    );
-  });
-
+describe("a lista de painéis", () => {
   it("o painel antigo sai da lista (banco antes da migration, cópia da sessão)", () => {
     expect(
       semOPainelAntigoDeAnalises(PAINEIS).map((painel) => painel.codigo),
@@ -87,13 +76,19 @@ describe("o legado trata Análises como página", () => {
     ).toMatch(/requestedView === "analises" && !can\("analises"\)/);
   });
 
-  it("navegar abre a página e o quadro dela", () => {
+  it("navegar abre a tela React (TELAS_REACT → analisesController.render())", () => {
+    const telas = trecho("const TELAS_REACT", "function navigate(view)");
+    expect(telas).toContain(
+      'analises: () => ["Análises curriculares", "", window.analisesController],',
+    );
     const navegar = trecho(
       "function navigate(view)",
       "function subtituloDaArea",
     );
-    expect(navegar).toContain('$("page-analises").classList.add("active");');
-    expect(navegar).toContain('abrirPaginaDoPainel($("page-analises"));');
+    expect(navegar).not.toContain('abrirPaginaDoPainel($("page-analises"))');
+    expect(ler("src/main.js")).toContain(
+      "window.analisesController = montarAnalises({",
+    );
   });
 
   it("os painéis carregados perdem o antigo de análises", () => {
@@ -105,15 +100,15 @@ describe("o legado trata Análises como página", () => {
   it("o caminho do painel externo não tem mais caso de área", () => {
     const painel = trecho(
       "function openPanel(code)",
-      "function renderConfigForm",
+      "function syncDisplayModeButtons",
     );
     expect(painel).not.toMatch(/area/i);
     expect(legado).not.toContain("recarregarPainelNaAreaAtual");
   });
 
-  it("o index.html tem a seção da página", () => {
+  it("o index.html tem a seção da página, sem quadro", () => {
     expect(ler("index.html")).toContain(
-      '<section id="page-analises" class="page pagina-do-painel" data-painel="analises"></section>',
+      '<section id="page-analises" class="page"></section>',
     );
   });
 });

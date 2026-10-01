@@ -4,12 +4,11 @@ import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../src/componentes/dados-do-monitoramento.js";
-import { avaliarMarcosDasAnalises } from "../src/analises/analises-marcos.js";
-import { esquecerComemoracoesDoPainel } from "../src/modules/comemoracao.js";
+import { avaliarMarcosDasAnalises } from "../src/modulos/analises/marcos.js";
 
 /*
   Onde os marcos aparecem: o card de marcos do ano na Visão geral e o aviso
-  de edital concluído / fila zerada no painel de análises.
+  de edital concluído / fila zerada na tela de Análises curriculares.
 */
 
 const PERFIL = { id: "p1", user_id: "u1", nome: "Ana" };
@@ -98,10 +97,9 @@ describe("marcos do ano na Visão geral", () => {
   });
 });
 
-describe("marcos do painel de análises", () => {
+describe("marcos de Análises curriculares", () => {
   beforeEach(() => {
     localStorage.clear();
-    esquecerComemoracoesDoPainel();
     window.matchMedia = () => ({ matches: true });
   });
   afterEach(() => {
@@ -113,9 +111,9 @@ describe("marcos do painel de análises", () => {
     { edital: "05/2026", unidade: "SEDE", status_consolidado: "Aprovado" },
     { edital: "05/2026", unidade: "SEDE", status_consolidado: status },
   ];
-  const avaliar = (status, escopo = "ativo") =>
+  const avaliar = (status, escopo = "ativo", ligadas = true) =>
     avaliarMarcosDasAnalises({
-      supabase: supabaseComMarcos(0),
+      ligadas,
       usuarioId: "u1",
       area: "sede",
       nomeDaArea: "SEDE",
@@ -133,6 +131,13 @@ describe("marcos do painel de análises", () => {
       "Fila de análises zerada na SEDE! Parabéns, equipe. 🎉",
     ]);
     expect(document.querySelector(".comemoracao")).not.toBeNull();
+  });
+
+  it("comemorações desligadas: guarda o estado em silêncio, sem aviso", async () => {
+    expect(await avaliar("Pendente", "ativo", false)).toBeNull();
+    expect(await avaliar("Reprovado", "ativo", false)).toBeNull();
+    expect(document.querySelector(".comemoracao")).toBeNull();
+    expect(localStorage.length).toBe(1);
   });
 
   it("fora do escopo Ativo, não avalia", async () => {

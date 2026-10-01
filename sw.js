@@ -6,7 +6,6 @@ const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/analises.html",
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/sw-policy.js",

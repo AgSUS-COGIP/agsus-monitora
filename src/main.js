@@ -83,12 +83,10 @@ import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import { initAraraSpeakingEffects } from "./modules/arara-speaking-effects.js";
 import { initNinaPanelDrag } from "./modules/nina-panel-drag.js";
 import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
-import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
 import {
   organizarConfiguracoesEmSecoes,
   SECOES,
 } from "./modules/config-secoes.js";
-import { instalarApresentacaoDasConfiguracoes } from "./modules/config-apresentacao.js";
 import { montarConfiguracoes } from "./componentes/configuracoes/configuracoes.jsx";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
@@ -106,6 +104,7 @@ import { montarCalendarioEditais } from "./componentes/calendario-editais/calend
 import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 import { montarRecursos } from "./modulos/recursos/recursos.jsx";
 import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
+import { montarAnalises } from "./modulos/analises/analises.jsx";
 import { montarSelecao } from "./modulos/selecao/selecao.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
@@ -140,21 +139,13 @@ initHealthDashboardInteractionFixes();
 initHealthMapImmersiveWorkspace();
 initHealthStatusDetails();
 aplicarLegendaDoMapaDetalhado();
-instalarAvisoDoPainelDeAcesso();
 initHealthStatusDetailsRefinement();
 initHealthDetailsUx();
 initHealthDetailsRuntimeFix();
-// Instala antes da moldura de Configurações para que o botão global salve também
-// as duas chaves independentes da sidebar usando a RPC existente.
+// A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
 initSidebarBranding();
-/*
-  Depois da sidebar: ela injeta os proprios campos em Configuracoes, e so
-  existe o que organizar quando eles ja estao no DOM.
-*/
+// O esqueleto das seções de Configurações, depois a moldura e as seções em React (portais).
 organizarConfiguracoesEmSecoes();
-// Grupos, dicas e prévias das seções legadas (Página inicial, Tela de acesso e Recursos).
-instalarApresentacaoDasConfiguracoes();
-// A moldura React de Configurações (cabeçalho, salvar, histórico) e a seção Marca.
 montarConfiguracoes();
 initMobileAppExperience();
 initMobileBottomNavigation();
@@ -204,6 +195,16 @@ window.recursosController = montarRecursos({
   (área do app, render() a cada abertura, comemorações relidas).
 */
 window.entrevistasController = montarEntrevistas({
+  toast: window.monitoraToast,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+});
+
+/*
+  Análises curriculares: módulo de src/modulos/, na própria <section>. A área
+  é a atual do app; `render()` carrega na primeira abertura (e relê por trás
+  se a carga tiver mais de 5 minutos).
+*/
+window.analisesController = montarAnalises({
   toast: window.monitoraToast,
   comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });

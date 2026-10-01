@@ -39,7 +39,7 @@ export const PLANILHAS = Object.freeze({
   origemDaAnalise: Object.freeze({
     nome: "Planilha de origem de cada análise (Google Sheets)",
     onde: "id por linha, no campo origem_arquivo_id da análise",
-    usadaEm: Object.freeze(["src/analises/analises-app.js"]),
+    usadaEm: Object.freeze(["src/lib/analises-curriculares.js"]),
   }),
 
   lotacoes: Object.freeze({

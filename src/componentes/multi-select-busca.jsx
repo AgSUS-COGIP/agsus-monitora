@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
   Tom Select; DESIGN.md, seção 4). Controlado: a tela guarda a seleção e a
   recebe de volta por `aoMudar`.
 
-  O padrão vem da tela de Análises (`src/analises/analises-app.js`). As classes
+  Usado também nos filtros de Análises curriculares (src/modulos/analises/). As classes
   são as de `src/styles/multi-select-busca.css`.
 
   - O `id` vai no botão que abre o menu, para o `<label htmlFor>` da linha
