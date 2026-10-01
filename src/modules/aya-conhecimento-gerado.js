@@ -766,6 +766,171 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    titulo: "Como usar o mapa da Saúde Indígena",
+    perguntas: [
+      "como usar o mapa",
+      "como abrir um dsei no mapa",
+      "ver polos e unidades",
+      "abrir o territorio",
+      "mapa detalhado do dsei",
+    ],
+    resposta:
+      'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "Brasil", no trilho acima do mapa, volta à visão nacional sem apagar os outros filtros.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Bolhas dos DSEIs no mapa",
+    perguntas: [
+      "bolha do mapa",
+      "tamanho da bolha",
+      "cor da bolha",
+      "bolha verde",
+      "bolha azul",
+      "dsei com processo ativo",
+    ],
+    resposta:
+      "No MONITORA, cada bolha da visão nacional fica na sede do DSEI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital no recorte atual; azul, sem edital. Com algum filtro ativo, só aparecem os DSEIs que têm edital no resultado. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Botão Calor do mapa",
+    perguntas: [
+      "botao calor",
+      "modo calor",
+      "cores do mapa de calor",
+      "faixas do mapa de calor",
+    ],
+    resposta:
+      "No MONITORA, o botão Calor pinta cada bolha pela porcentagem de vagas ociosas do DSEI no recorte: verde abaixo de 20%, amarelo de 20% a 39%, laranja de 40% a 59% e vermelho a partir de 60%. DSEI sem edital fica cinza. Com o calor ligado, a legenda mostra as faixas.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Territórios por vagas",
+    perguntas: [
+      "territorios por vagas",
+      "lista ao lado do mapa",
+      "ranking dos dseis",
+      "barra de preenchidas",
+      "porcentagem preenchidas",
+    ],
+    resposta:
+      'No MONITORA, "Territórios por vagas" lista os mesmos DSEIs que o mapa desenha, do que tem mais vagas para o que tem menos (empate decidido pela população). A barra é o preenchimento: vagas menos ociosas, divididas pelas vagas. Acima de 80% preenchidas fica verde, de 41% a 80% amarela e até 40% vermelha. Clicar na linha abre o DSEI, como clicar na bolha.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Duas bolhas no mesmo lugar do mapa",
+    perguntas: [
+      "bolhas sobrepostas",
+      "leque no mapa",
+      "traco ate o ponto",
+      "yanomami e leste de roraima no mapa",
+    ],
+    resposta:
+      "No MONITORA, quando duas sedes caem no mesmo ponto da tela (Yanomami e Leste de Roraima, ambas em Boa Vista), as bolhas abrem num pequeno leque em volta do ponto real, com um traço até ele. A coordenada não muda; ao aproximar o zoom, cada bolha volta ao seu lugar. No mapa do DSEI vale o mesmo para unidades a menos de 14 pixels uma da outra.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "CASAI Nacional no mapa",
+    perguntas: [
+      "casai nacional no mapa",
+      "losango roxo",
+      "clicar na casai nacional",
+    ],
+    resposta:
+      'No MONITORA, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do cadastro do CNES. Clicar nele filtra a página pela busca "CASAI" mais o nome da cidade. Com filtro ativo, a CASAI só aparece se tiver edital no resultado.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Formas dos marcadores no mapa do DSEI",
+    perguntas: [
+      "estrela no mapa",
+      "formas do mapa",
+      "legenda do mapa do dsei",
+      "circulo laranja",
+      "cruz roxa",
+      "casa vermelha",
+    ],
+    resposta:
+      "No MONITORA, o mapa do DSEI usa forma além de cor, para quem não distingue as cores: estrela grafite é a sede do DSEI, círculo laranja é polo base, casa vermelha é CASAI, cruz violeta é UBSI e losango verde-azulado é outra unidade de saúde. Os botões acima da lista de unidades escondem ou mostram cada tipo, na lista e no mapa.",
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Vínculo fora da área do DSEI",
+    perguntas: [
+      "vinculo fora da area",
+      "linha pontilhada no mapa",
+      "mostrar vinculos externos",
+      "unidade fora da area do dsei",
+    ],
+    resposta:
+      'No MONITORA, a UF de cada unidade vem do CNES; quando ela não está entre as UFs de abrangência do DSEI, a unidade fica no lugar verdadeiro com um anel tracejado e uma linha pontilhada até a sede. A linha é vínculo administrativo, não trajeto. O mapa abre enquadrando só o território; "Mostrar vínculos externos" amplia para incluir essas unidades. Unidade sem UF no CNES não é tratada como externa.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Polos base e pontos no mapa",
+    perguntas: [
+      "polos base e pontos no mapa",
+      "por que o numero de polos diverge",
+      "no mapa pontos",
+      "contagem da dica do dsei",
+    ],
+    resposta:
+      'No MONITORA, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos o distrito tem na planilha de lotações; "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mesmo polo pode vir da planilha e do CNES com nomes ou posições diferentes; quando a reconciliação não tem certeza de que são o mesmo, os dois continuam desenhados.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Confiança da localização no popup",
+    perguntas: [
+      "localizacao validada",
+      "fontes discordam",
+      "localizacao em validacao",
+      "fonte unica",
+      "uf nao determinada",
+      "coordenada fora da uf",
+    ],
+    resposta:
+      'No MONITORA, a última linha do popup de cada unidade diz quanto a posição foi conferida: "validada" quando duas fontes independentes concordam ou a UF declarada arbitrou; "fontes discordam" quando a planilha e o CNES apontam lugares diferentes (com a distância); "fora da UF" ou "fora do município" quando a coordenada contradiz o próprio registro; "fonte única" quando só há uma fonte e ela não se contradiz; "dentro da Terra Indígena" quando o ponto cai numa terra publicada pela Funai; e "UF não determinada" quando não houve como conferir. Sem veredito, fica "Localização em validação".',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Terras Indígenas no mapa",
+    perguntas: [
+      "terras indigenas no mapa",
+      "fases das terras",
+      "homologada no mapa",
+      "em estudo no mapa",
+      "lista de terras e povos",
+      "povo nao declarado",
+    ],
+    resposta:
+      'No MONITORA, as Terras Indígenas vêm da Funai e aparecem em três fases, cada uma um interruptor na legenda: homologada ou regularizada (limite contínuo), em processo (tracejado) e em estudo (círculo tracejado, sem limite publicado). No mapa do DSEI, a lista "Terras Indígenas e povos" traz as terras que caem na área do distrito; clicar leva o mapa até a terra. Quando a Funai não declara o povo, a lista diz isso em vez de inventar.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    titulo: "Tela cheia e mapa no celular",
+    perguntas: [
+      "mapa em tela cheia",
+      "expandir o mapa",
+      "mapa no celular",
+      "legenda fechada no celular",
+    ],
+    resposta:
+      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Recolher" ou a tecla Esc voltam. No celular, a lista fica abaixo do mapa e a legenda começa fechada (o botão "Legenda" abre). Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
     titulo: "Fluxo do parecer jurídico",
     perguntas: [
       "parecer jurídico",

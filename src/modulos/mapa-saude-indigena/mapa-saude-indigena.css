@@ -1,0 +1,577 @@
+/*
+  Mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/). Só o que é deste
+  bloco; card, título, vazio e esqueleto vêm de src/ui/ (ui.css). Cores do
+  domínio (formas, bolhas, terras) vêm de src/lib/mapa-saude-indigena/formas.js
+  e das variáveis --terra-* (legenda-das-terras.css; ver README ao ligar).
+*/
+.mapa-si {
+  --mapa-si-altura: clamp(460px, 64vh, 760px);
+  --mapa-si-lista: clamp(320px, 28%, 400px);
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.mapa-si-painel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.mapa-si-painel__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.mapa-si-painel__titulos {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mapa-si-painel__contagem {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.mapa-si-painel__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.mapa-si-painel__acoes .btn[aria-pressed="true"] {
+  border-color: var(--color-border-focus);
+  background: var(--color-bg-selected);
+}
+
+.mapa-si-painel__corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--mapa-si-lista);
+  gap: var(--space-3);
+  height: var(--mapa-si-altura);
+  min-height: 0;
+}
+
+.mapa-si-moldura {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-muted);
+}
+
+.mapa-si-mapa {
+  width: 100%;
+  height: 100%;
+}
+
+.mapa-si-sem-mapa {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  text-align: center;
+}
+
+/* Escuro: o fundo do mapa recua para não ofuscar; bolhas e formas ficam. */
+.mapa-si--escuro .mapa-si-mapa .leaflet-tile-pane {
+  filter: saturate(0.48) brightness(0.78) contrast(1.08);
+}
+
+/* Tela cheia: o painel visível ocupa a janela; Esc ou "Recolher" sai. */
+.mapa-si--tela-cheia .mapa-si-painel:not([hidden]) {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  border-radius: 0;
+  overflow: auto;
+}
+
+.mapa-si--tela-cheia .mapa-si-painel__corpo {
+  height: calc(100vh - var(--space-20));
+}
+
+/* Trilho "Brasil › DSEI X". */
+.mapa-si-trilho {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-trilho__voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-link);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.mapa-si-trilho__voltar:hover {
+  color: var(--color-text-link-hover);
+  text-decoration: underline;
+}
+
+.mapa-si-chip-externo {
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-warning-soft);
+  color: var(--color-status-warning-text);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Lista ao lado do mapa: territórios por vagas, unidades, terras. */
+.mapa-si-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.mapa-si-lista__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-1) 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caption);
+}
+
+.mapa-si-lista__topo b {
+  color: var(--text-primary);
+}
+
+.mapa-si-lista__itens {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapa-si-lista__esqueleto {
+  height: var(--space-20);
+}
+
+.mapa-si-territorio,
+.mapa-si-unidade,
+.mapa-si-terra {
+  display: grid;
+  width: 100%;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mapa-si-territorio:hover,
+.mapa-si-unidade:hover,
+.mapa-si-terra:hover:not(:disabled) {
+  border-color: var(--border-subtle);
+  background: var(--surface-hover);
+}
+
+.mapa-si-territorio:focus-visible,
+.mapa-si-unidade:focus-visible,
+.mapa-si-terra:focus-visible,
+.mapa-si-filtros button:focus-visible,
+.mapa-si-terra-fase:focus-visible,
+.mapa-si-legenda__alternar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.mapa-si-territorio {
+  grid-template-columns: var(--space-6) minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.mapa-si-territorio__posicao {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+.mapa-si-territorio__corpo,
+.mapa-si-unidade__corpo {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.mapa-si-territorio__corpo strong,
+.mapa-si-unidade__corpo strong,
+.mapa-si-terra strong {
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-body-sm);
+}
+
+.mapa-si-territorio small,
+.mapa-si-unidade small,
+.mapa-si-terra small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-territorio--sem-vagas strong {
+  color: var(--text-secondary);
+}
+
+.mapa-si-territorio__preenchimento {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-territorio__barra {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+}
+
+.mapa-si-territorio__barra i {
+  display: block;
+  height: 100%;
+  background: var(--state-success);
+}
+
+[data-situacao="atencao"] .mapa-si-territorio__barra i {
+  background: var(--state-warning);
+}
+
+[data-situacao="critico"] .mapa-si-territorio__barra i {
+  background: var(--state-danger);
+}
+
+.mapa-si-territorio__vagas {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+
+.mapa-si-territorio__vagas b {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+}
+
+.mapa-si-unidade {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.mapa-si-unidade__corpo strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mapa-si-unidade__tipo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-unidade__externo {
+  color: var(--color-status-warning-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-terra {
+  gap: var(--space-0-5);
+}
+
+.mapa-si-terra:disabled {
+  cursor: default;
+}
+
+.mapa-si-terra__povos {
+  font-size: var(--text-caption);
+}
+
+.mapa-si-terra__povos--ausente {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Chips dos tipos: interruptores (aria-pressed), desligado esmaece e risca. */
+.mapa-si-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.mapa-si-filtros button,
+.mapa-si-terra-fase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.mapa-si-filtros button[aria-pressed="false"],
+.mapa-si-terra-fase[aria-pressed="false"] {
+  opacity: 0.55;
+}
+
+.mapa-si-filtros button[aria-pressed="false"] b,
+.mapa-si-terra-fase[aria-pressed="false"] span {
+  text-decoration: line-through;
+}
+
+.mapa-si-terra-fase:disabled {
+  cursor: default;
+}
+
+/* Legenda. */
+.mapa-si-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.mapa-si-legenda--flutuante {
+  position: absolute;
+  z-index: 800;
+  bottom: var(--space-3);
+  left: var(--space-3);
+  display: grid;
+  max-width: 240px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-md);
+}
+
+.mapa-si-legenda__alternar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.mapa-si-legenda__corpo {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.mapa-si-legenda__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.mapa-si-legenda__terras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mapa-si-legenda--flutuante .mapa-si-legenda__terras {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.mapa-si-legenda__subtitulo {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-amostra {
+  display: inline-block;
+  flex: none;
+}
+
+.mapa-si-amostra--bolha {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--surface-card);
+  border-radius: var(--radius-full);
+  background: var(--mapa-si-amostra);
+  box-shadow: 0 0 0 1px var(--border-subtle);
+}
+
+.mapa-si-amostra--casai-nacional {
+  width: 10px;
+  height: 10px;
+  margin: 0 1px;
+  border: 1.5px solid var(--surface-card);
+  background: var(--mapa-si-amostra);
+  transform: rotate(45deg);
+}
+
+.mapa-si-amostra--abrangencia {
+  width: 18px;
+  border-top: 3px solid var(--color-blue-600);
+}
+
+.mapa-si-amostra--vinculo {
+  width: 18px;
+  border-top: 2px dashed var(--text-secondary);
+}
+
+.mapa-si-terra-fase__amostra {
+  display: inline-block;
+  flex: none;
+  box-sizing: border-box;
+  width: 16px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.mapa-si-terra-fase__amostra--definitiva {
+  border: 2px solid var(--terra-definitiva);
+  background: color-mix(in srgb, var(--terra-fundo) 60%, transparent);
+}
+
+.mapa-si-terra-fase__amostra--em_processo {
+  border: 2px dashed var(--terra-em-processo);
+}
+
+.mapa-si-terra-fase__amostra--em_estudo {
+  width: 12px;
+  height: 12px;
+  border: 2px dashed var(--terra-em-processo);
+  border-radius: 50%;
+}
+
+.mapa-si-terra-fase[aria-pressed="false"] .mapa-si-terra-fase__amostra {
+  background: transparent;
+}
+
+.mapa-si-legenda--rodape {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Marcadores (ícones do Leaflet montados em leaflet.js). */
+.mapa-si-marcador-wrap {
+  border: 0;
+  background: none;
+}
+
+.mapa-si-marcador {
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 1px 2px rgb(15 35 60 / 35%));
+}
+
+.mapa-si-marcador--externo svg {
+  border-radius: 50%;
+  outline: 2px dashed var(--text-secondary);
+  outline-offset: 2px;
+}
+
+.mapa-si-casai-nacional {
+  display: block;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 2px solid var(--color-neutral-0);
+  box-shadow: var(--shadow-sm);
+  transform: rotate(45deg);
+}
+
+.mapa-si-forma {
+  flex: none;
+}
+
+/* Popups e dicas: texto em linhas, a nota da coordenada menor. */
+.mapa-si-balao {
+  display: grid;
+  gap: var(--space-0-5);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+}
+
+.mapa-si-balao__titulo {
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-balao__nota {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.mapa-si--escuro .leaflet-popup-content-wrapper,
+.mapa-si--escuro .leaflet-popup-tip,
+.mapa-si--escuro .leaflet-tooltip {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+@media (max-width: 1220px) {
+  .mapa-si {
+    --mapa-si-lista: clamp(280px, 32%, 360px);
+  }
+}
+
+/* Celular: mapa em cima, lista embaixo; a legenda começa fechada (legenda.jsx). */
+@media (max-width: 900px) {
+  .mapa-si-painel__corpo {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: clamp(320px, 56vh, 520px) auto;
+    height: auto;
+  }
+
+  .mapa-si-lista {
+    max-height: 60vh;
+  }
+
+  .mapa-si-painel__acoes {
+    margin-left: 0;
+  }
+}
