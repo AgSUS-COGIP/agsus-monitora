@@ -181,13 +181,7 @@ export function PainelDeEntrevistas({ estado, conducao, area, nomeDaArea }) {
     <>
       <div className="shell">
         <Topo
-          subtitulo={`${nomeDaArea} · ${
-            visao === "resultados"
-              ? "Resultado das entrevistas dos candidatos"
-              : visao === "conduzir"
-                ? "Configuração, convocação e notas por edital"
-                : "Roteiros de entrevista"
-          }`}
+          subtitulo={nomeDaArea}
           status={textoDoStatus(e)}
           escuro={escuro}
           aoTema={() => setEscuro(alternarTemaDoPainel())}

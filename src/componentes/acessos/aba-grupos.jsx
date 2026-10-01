@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import {
-  DESCRICOES_DOS_MODULOS,
-  RESOURCES,
-  niveisDoRecurso,
-} from "../../lib/permissoes-recursos.js";
+import { RESOURCES, niveisDoRecurso } from "../../lib/permissoes-recursos.js";
 import {
   grupoParaSalvar,
   grupoVazio,
@@ -130,8 +126,8 @@ function Editor({
 
       {somenteLeitura ? (
         <p className="alert info">
-          <Icone nome="settings" tamanho={16} /> Grupo do sistema: acesso total
-          a todos os módulos e áreas. Não é editável.
+          <Icone nome="settings" tamanho={16} /> Grupo do sistema (não
+          editável).
         </p>
       ) : null}
 
@@ -141,7 +137,6 @@ function Editor({
           <li key={recurso}>
             <div>
               <strong id={`acessosModulo-${recurso}`}>{rotulo}</strong>
-              <small>{DESCRICOES_DOS_MODULOS[recurso]}</small>
             </div>
             <ControleSegmentado
               rotulo={`${rotulo}: nível no grupo`}

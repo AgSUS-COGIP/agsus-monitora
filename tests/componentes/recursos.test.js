@@ -203,7 +203,7 @@ describe("a cara do painel de análises", () => {
       "Painel de recursos",
     );
     expect(document.querySelector("#topbar .sub").textContent).toBe(
-      "Saúde Indígena · Acompanhamento dos recursos dos candidatos",
+      "Saúde Indígena",
     );
     for (const id of ["themeBtn", "fullBtn", "refreshBtn", "exportBtn"])
       expect(document.getElementById(id), id).not.toBeNull();
@@ -214,9 +214,9 @@ describe("a cara do painel de análises", () => {
     ).not.toBeNull();
 
     const filtros = document.querySelector("section.panel.filter-panel");
-    expect(filtros.querySelector(".eyebrow").textContent).toBe(
-      "Filtros da visualização",
-    );
+    // Sem eyebrow nem texto de ajuda: só o título (quem explica é a Aya).
+    expect(filtros.querySelector(".eyebrow")).toBeNull();
+    expect(filtros.querySelector(".hint")).toBeNull();
     expect(filtros.querySelector("h2.title").textContent).toBe(
       "Refinar resultados",
     );
@@ -230,16 +230,17 @@ describe("a cara do painel de análises", () => {
     expect(document.getElementById("contextLine").className).toBe(
       "context-line",
     );
+    expect(document.querySelectorAll(".panel .eyebrow")).toHaveLength(0);
     expect(
-      [...document.querySelectorAll(".panel .eyebrow")].map((e) =>
+      [...document.querySelectorAll(".panel h2.title")].map((e) =>
         e.textContent.trim(),
       ),
     ).toEqual(
       expect.arrayContaining([
-        "Carga operacional",
-        "Ação imediata",
-        "Evolução",
-        "Detalhes",
+        "Recursos por analista",
+        "Pendências prioritárias",
+        "Esteira do recurso",
+        "Fila de recursos",
       ]),
     );
     expect(
@@ -570,7 +571,7 @@ describe("cadastro", () => {
     await escolher(form.querySelector("select[name=edital_id]"), "e1");
     await escolher(form.querySelector("select[name=origem]"), "entrevista");
     await clicar(botao("Não encontrei o candidato"));
-    expect(naTela("fora das análises")).toBe(true);
+    expect(naTela("Fora das análises (dados digitados).")).toBe(true);
     await digitar(
       form.querySelector("input[name=nome_informado]"),
       "Maria Souza",

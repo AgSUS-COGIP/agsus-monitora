@@ -122,15 +122,9 @@ export function VisaoDeRoteiros({ conducao, area }) {
     >
       <div className="table-head">
         <div>
-          <span className="eyebrow">Modelos reutilizáveis</span>
           <h2 className="title" id="entrevistasRoteirosTitulo">
             Roteiros de entrevista
           </h2>
-          <p className="hint">
-            Competências, escala das notas, regra de aprovação e desempate. O
-            mesmo roteiro serve a vários editais; editar grava uma versão nova e
-            os editais que já usam a anterior continuam nela.
-          </p>
         </div>
         <div className="table-tools">
           <button
@@ -154,10 +148,7 @@ export function VisaoDeRoteiros({ conducao, area }) {
         </div>
       </div>
       {podeEditar === false ? (
-        <Aviso tom="info">
-          Somente consulta: editar roteiros exige o nível de editor nas
-          Entrevistas.
-        </Aviso>
+        <Aviso tom="info">Somente consulta.</Aviso>
       ) : null}
       {roteiros.erro ? (
         <Aviso tom="danger" papel="alert">
@@ -213,11 +204,7 @@ function EscalaDoRoteiro({ r, mudar, erros, somenteLeitura }) {
       />
       {r.escala === "FAIXA" ? (
         <div className="entrevistas-grade">
-          <Campo
-            rotulo="Passo das notas"
-            dica="De 0 até a nota máxima de cada competência, de passo em passo."
-            erro={erros.passo}
-          >
+          <Campo rotulo="Passo das notas" erro={erros.passo}>
             <input
               type="number"
               min="0.01"
@@ -233,7 +220,7 @@ function EscalaDoRoteiro({ r, mudar, erros, somenteLeitura }) {
       {r.escala === "LISTA" ? (
         <Campo
           rotulo="Notas permitidas"
-          dica="Separadas por ponto e vírgula, ex.: 0; 1; 2,5; 5."
+          dica="Ex.: 0; 1; 2,5; 5"
           erro={erros.notas_permitidas}
           largo
         >
@@ -543,10 +530,7 @@ function NotasEliminatorias({ valor, aoMudar, somenteLeitura }) {
           </button>
         </div>
       )}
-      <small className="entrevistas-dica">
-        Se a média da banca numa competência for uma destas, o candidato é
-        inapto.
-      </small>
+      <small className="entrevistas-dica">Média nestes níveis = inapto.</small>
     </div>
   );
 }
@@ -709,8 +693,7 @@ export function EditorDeRoteiro({
               <Aviso tom="info">
                 {roteiro.editais_em_uso === 1
                   ? "1 edital usa esta versão e continua nela."
-                  : `${roteiro.editais_em_uso} editais usam esta versão e continuam nela.`}{" "}
-                A versão nova vale para as próximas configurações.
+                  : `${roteiro.editais_em_uso} editais usam esta versão e continuam nela.`}
               </Aviso>
             ) : null}
             <SecaoDoFormulario titulo="Identificação" icone="fa-file-lines">

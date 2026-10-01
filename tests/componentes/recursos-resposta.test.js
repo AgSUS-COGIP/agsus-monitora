@@ -458,7 +458,9 @@ describe("resposta ao candidato", () => {
     await clicar(
       secaoAtual().querySelector('button[data-acao="marcar_enviada"]'),
     );
-    expect(secaoAtual().textContent).toContain("Resposta enviada ao candidato");
+    expect(
+      secaoAtual().querySelector(".recursos-confirmacao").textContent,
+    ).toContain("Confirme que a resposta aprovada já foi enviada");
     await clicar(
       botaoEm(
         secaoAtual().querySelector(".recursos-confirmacao"),

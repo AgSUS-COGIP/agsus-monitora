@@ -154,7 +154,7 @@ export function PainelDeRecursos({ estado, area, nomeDaArea }) {
     <>
       <div className="shell">
         <Topo
-          subtitulo={`${nomeDaArea} · Acompanhamento dos recursos dos candidatos`}
+          subtitulo={nomeDaArea}
           status={textoDoStatus(e, recursos)}
           somenteConsulta={carregado && !podeEditar}
           escuro={escuro}

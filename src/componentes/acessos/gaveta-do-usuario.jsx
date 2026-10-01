@@ -167,8 +167,7 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
           className="btn outline acessos-ghost acessos-perigo"
           onClick={() => setAberto(true)}
         >
-          Esta conta é de um setor (e-mail compartilhado)? Transformar em
-          coordenação
+          Transformar em coordenação
         </button>
       </div>
     );
@@ -220,7 +219,6 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
           value={motivo}
           maxLength={500}
           onChange={(e) => setMotivo(e.target.value)}
-          placeholder="Vai para o histórico"
         />
       </div>
       <div className="acessos-acoes">
@@ -333,7 +331,7 @@ function Convite({ estado, usuario, podeCancelar }) {
           estado={estado}
           usuario={usuario}
           id="acessosCancelarConviteMotivo"
-          texto={`O cadastro de ${nome} é desativado e o e-mail deixa de entrar. Dá para convidar de novo depois.`}
+          texto={`O cadastro de ${nome} é desativado e o e-mail deixa de entrar.`}
           rotulo="Cancelar convite"
           convite
           aoVoltar={() => setCancelando(false)}
@@ -564,6 +562,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
           <h4 id="acessosGavetaGrupo">Grupo</h4>
           <select
             aria-label={`Grupo de ${nome}`}
+            title={explicacaoDoGrupo(grupo) || undefined}
             value={codigoDoGrupo || ""}
             disabled={!edicao.pode}
             className={classes(
@@ -579,7 +578,6 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               atual={codigoDoGrupo}
             />
           </select>
-          <p className="acessos-secundario">{explicacaoDoGrupo(grupo)}</p>
         </section>
 
         <section aria-labelledby="acessosGavetaAreas">
@@ -625,15 +623,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
                 atual={coordenacao}
               />
             </select>
-            {semCoordenacao ? (
-              <AvisoSemCoordenacao
-                nome={nome}
-                nomeDoGrupo={grupo?.nome || codigoDoGrupo}
-              />
-            ) : null}
-            <p className="acessos-secundario">
-              Com coordenação, a pessoa vê só os dados dela.
-            </p>
+            {semCoordenacao ? <AvisoSemCoordenacao /> : null}
           </section>
         ) : null}
 
@@ -666,10 +656,6 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
         <details className="acessos-avancado">
           <summary>Avançado</summary>
           <h5>Exceções por módulo</h5>
-          <p className="acessos-secundario">
-            Só para casos especiais: o nível escolhido aqui vale só para esta
-            pessoa e passa por cima do grupo.
-          </p>
           <ExcecoesPorModulo
             estado={estado}
             usuario={usuario}
@@ -726,7 +712,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               estado={estado}
               usuario={usuario}
               id="acessosDesativarMotivo"
-              texto={`${nome} perde o acesso agora. A conta vai para "Desativadas", onde dá para reativar depois.`}
+              texto={`${nome} perde o acesso agora.`}
               rotulo="Desativar acesso"
               aoVoltar={() => setDesativando(false)}
             />

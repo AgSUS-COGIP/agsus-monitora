@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import {
   canImportApprovedList,
   canReplaceApprovedList,
-  normalizeRole,
 } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
@@ -34,7 +33,6 @@ function ResumoDaListaAtual({ lista, podeSubstituir }) {
           <strong className="approved-import-summary-title">
             Lista atual cadastrada
           </strong>
-          <span>Este edital já possui uma lista de aprovados importada.</span>
         </div>
         <span
           className={`approved-status ${lista.ativo ? "success" : "neutral"}`}
@@ -93,11 +91,11 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
       >
         <ResumoDaListaAtual lista={lista} podeSubstituir={podeSubstituir} />
       </div>
-      <p id="approvedImportPermissionNote" className="modal-note">
-        {soLeitura
-          ? `A lista já foi importada. O perfil ${normalizeRole(perfil) || "atual"} pode ativar/inativar, mas somente admin pode substituir ou remover o XLSX.`
-          : "A importação cria candidatos vinculados a este edital pelo ID do edital."}
-      </p>
+      {soLeitura ? (
+        <p id="approvedImportPermissionNote" className="modal-note">
+          Só admin substitui ou remove o XLSX.
+        </p>
+      ) : null}
       <div className="form-grid">
         <div
           id="approvedImportFileRow"

@@ -75,13 +75,9 @@ export function TabelaDeVagas({ vagas, total, carregado, area }) {
     <section className="panel table-card" aria-labelledby="selecaoTabelaTitulo">
       <div className="table-head">
         <div>
-          <span className="eyebrow">Detalhes</span>
           <h2 className="title" id="selecaoTabelaTitulo">
             Base operacional consolidada
           </h2>
-          <p className="hint">
-            {`Consulta por ${daUnidade}, edital, cargo, vaga e indicadores principais.`}
-          </p>
         </div>
         <div className="table-tools">
           <input
@@ -106,8 +102,7 @@ export function TabelaDeVagas({ vagas, total, carregado, area }) {
             ? naTabela.length === total
               ? `${formatNumberBR(total)} ${total === 1 ? "vaga" : "vagas"}`
               : `${formatNumberBR(naTabela.length)} de ${formatNumberBR(total)}`
-            : "Carregando…"}{" "}
-          · Carregamento contínuo
+            : "Carregando…"}
         </span>
       </div>
       <div className="table-wrap" onScroll={aoRolar}>
@@ -171,7 +166,7 @@ export function TabelaDeVagas({ vagas, total, carregado, area }) {
           aria-live="polite"
         >
           {faltam > 0
-            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros · role a tabela para carregar mais`
+            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros`
             : `Todos os ${formatNumberBR(naTabela.length)} registros do recorte foram carregados`}
         </div>
       ) : null}

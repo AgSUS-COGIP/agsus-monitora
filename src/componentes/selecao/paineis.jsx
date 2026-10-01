@@ -116,7 +116,6 @@ export function Filtros({ filtros, opcoes, area, carregado, aoMudar }) {
     >
       <div className="filter-head">
         <div>
-          <span className="eyebrow">Filtros da visualização</span>
           <h2 className="title" id="selecaoFiltrosTitulo">
             Refinar resultados
           </h2>
@@ -343,12 +342,10 @@ function opcoesDeRosca(p, extra = {}) {
 
 const CINZA = "#cbd2dc";
 
-function Bloco({ sobretitulo, titulo, texto, classe, altura, children }) {
+function Bloco({ titulo, classe, altura, children }) {
   return (
     <article className={classes("panel panel-pad selecao-grafico", classe)}>
-      <span className="eyebrow">{sobretitulo}</span>
       <h2 className="title">{titulo}</h2>
-      <p className="hint">{texto}</p>
       <div className={classes("chart-wrap", altura)}>{children}</div>
     </article>
   );
@@ -376,12 +373,7 @@ export function Graficos({
 
   return (
     <section className="selecao-graficos" id="chartsArea">
-      <Bloco
-        classe="metade"
-        sobretitulo="Eliminações"
-        titulo="Eliminados antes da análise"
-        texto="Cancelados, questionários não finalizados e eliminados por nota."
-      >
+      <Bloco classe="metade" titulo="Eliminados antes da análise">
         <Grafico
           id="chartEliminados"
           tipo="bar"
@@ -408,12 +400,7 @@ export function Graficos({
         />
       </Bloco>
 
-      <Bloco
-        classe="metade"
-        sobretitulo="Análise curricular"
-        titulo="Aptos na análise e eliminados"
-        texto="Composição entre aptos para análise e eliminados totais."
-      >
+      <Bloco classe="metade" titulo="Aptos na análise e eliminados">
         <Grafico
           id="chartAptos"
           tipo="doughnut"
@@ -439,12 +426,7 @@ export function Graficos({
         />
       </Bloco>
 
-      <Bloco
-        classe="metade"
-        sobretitulo="Contratação"
-        titulo="Contratados"
-        texto="Percentual de contratados em relação ao total de aprovados."
-      >
+      <Bloco classe="metade" titulo="Contratados">
         <Grafico
           id="chartContratados"
           tipo="doughnut"
@@ -496,12 +478,7 @@ export function Graficos({
         />
       </Bloco>
 
-      <Bloco
-        classe="metade"
-        sobretitulo="Resultado da análise"
-        titulo="Triados e reprovados na análise"
-        texto="Comparativo operacional da etapa de análise."
-      >
+      <Bloco classe="metade" titulo="Triados e reprovados na análise">
         <Grafico
           id="chartAnalise"
           tipo="bar"
@@ -531,9 +508,7 @@ export function Graficos({
       <Bloco
         classe="inteiro"
         altura="alto"
-        sobretitulo="Distribuição"
         titulo={`Top ${unidade} por inscritos`}
-        texto="Ranking do recorte ativo para identificar concentração de volume. Clique numa barra para filtrar."
       >
         <Grafico
           id="chartDsei"
@@ -583,13 +558,9 @@ export function Observacoes({ observacoes }) {
       id="observationsSection"
       aria-labelledby="selecaoObservacoesTitulo"
     >
-      <span className="eyebrow">Observações</span>
       <h2 className="title" id="selecaoObservacoesTitulo">
         Alertas identificados no recorte
       </h2>
-      <p className="hint">
-        Lista única das observações informadas na planilha Auditoria.
-      </p>
       <ul className="selecao-observacoes-lista" id="observationsList">
         {observacoes.map((o) => (
           <li key={o.texto}>

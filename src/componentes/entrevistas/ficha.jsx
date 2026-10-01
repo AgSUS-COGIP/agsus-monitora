@@ -343,26 +343,20 @@ export function FichaDoCandidato({
                       </option>
                     ))}
                   </select>
-                  <small className="entrevistas-dica">
-                    A banca que entrevistou este candidato.
-                  </small>
                 </div>
               ) : null}
             </div>
 
             {modoAvaliador && dados.pode_editar && !dados.admin_global ? (
               <Aviso tom="info">
-                Neste edital cada avaliador lança a própria nota: só a coluna
-                ligada ao seu perfil fica aberta.
+                Você só edita a sua coluna.
                 {algumEditavel
                   ? ""
                   : " Nenhum membro desta banca está ligado ao seu perfil."}
               </Aviso>
             ) : null}
             {!dados.pode_editar ? (
-              <Aviso tom="info">
-                Somente consulta: lançar notas exige o nível de editor.
-              </Aviso>
+              <Aviso tom="info">Somente consulta.</Aviso>
             ) : null}
 
             {roteiro && avaliadores.length ? (

@@ -715,7 +715,7 @@ describe("visões de condução e roteiros", () => {
     expect(
       celulas.every((c) => c.getAttribute("aria-label").includes("Ana")),
     ).toBe(true);
-    expect(ficha.textContent).toContain("só a coluna ligada ao seu perfil");
+    expect(ficha.textContent).toContain("Você só edita a sua coluna.");
   });
 
   it("administrador global: mostra todos e libera edital fora da janela", async () => {

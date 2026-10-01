@@ -72,10 +72,7 @@ export function Topo({
           <span id="updatedText">{status}</span>
         </span>
         {resultados ? (
-          <span
-            className="status-pill"
-            title="Os resultados são só de consulta; a condução fica em “Conduzir entrevistas”"
-          >
+          <span className="status-pill" title="Somente consulta">
             <i className="fa-solid fa-eye" aria-hidden="true" /> Somente
             consulta
           </span>
@@ -169,14 +166,9 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
     >
       <div className="filter-head">
         <div>
-          <span className="eyebrow">Filtros da visualização</span>
           <h2 className="title" id="entrevistasFiltrosTitulo">
             Refinar resultados
           </h2>
-          <p className="hint">
-            Indicadores, gráficos, pendências, a tabela e o CSV seguem o recorte
-            selecionado.
-          </p>
         </div>
         <div className="filter-actions">
           <span
@@ -215,7 +207,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
             className="btn secondary"
             id="clearBtn"
             disabled={!quantos}
-            title="Remove os filtros e volta a todas as entrevistas da área."
+            title="Limpar filtros"
             onClick={aoLimpar}
           >
             Limpar tudo
@@ -375,7 +367,7 @@ export function Recorte({ ativos, textoDaCarga, carregado }) {
       <div id="contextLine" className="context-line">
         {ativos.length
           ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
-          : "Sem filtros aplicados. Recorte base: todas as entrevistas da área."}
+          : "Sem filtros"}
       </div>
       <div id="windowMeta" className="meta-line">
         {carregado ? (
@@ -545,9 +537,7 @@ export function Graficos({
     <>
       <section className="oper-grid entrevistas-grade-dupla">
         <article className="panel panel-pad">
-          <span className="eyebrow">Parecer</span>
           <h2 className="title">Aptos x Inaptos</h2>
-          <p className="hint">Clique em uma fatia para recortar o painel.</p>
           <div className="chart-wrap short">
             <Grafico
               id="chartParecer"
@@ -579,9 +569,7 @@ export function Graficos({
           </div>
         </article>
         <article className="panel panel-pad">
-          <span className="eyebrow">Presença</span>
           <h2 className="title">Comparecimento</h2>
-          <p className="hint">Clique em uma fatia para recortar o painel.</p>
           <div className="chart-wrap short">
             <Grafico
               id="chartComparecimento"
@@ -619,11 +607,8 @@ export function Graficos({
 
       <section className="oper-grid">
         <article className="panel panel-pad">
-          <span className="eyebrow">Desempenho</span>
           <h2 className="title">Faixas de nota final</h2>
-          <p className="hint">
-            Nota total da entrevista (0 a 20), entre quem compareceu.
-          </p>
+          <p className="hint">0 a 20 · presentes</p>
           <div className="chart-wrap short">
             <Grafico
               id="chartFaixas"
@@ -651,12 +636,7 @@ export function Graficos({
           </div>
         </article>
         <article className="panel panel-pad">
-          <span className="eyebrow">Ação imediata</span>
           <h2 className="title">Pendências</h2>
-          <p className="hint">
-            Clique em um item para recortar a tabela (ou ver a lista dos
-            aprovados sem entrevista).
-          </p>
           <Pendencias
             pendencias={pendencias}
             carregado={carregado}
@@ -669,12 +649,8 @@ export function Graficos({
 
       <section className="oper-grid entrevistas-grade-dupla">
         <article className="panel panel-pad">
-          <span className="eyebrow">Critérios</span>
           <h2 className="title">Média por critério</h2>
-          <p className="hint">
-            Média das notas lançadas em cada critério (em geral, de 0 a 5).
-            Passe o mouse para ver o texto completo.
-          </p>
+          <p className="hint">Escala 0–5</p>
           <div className="chart-wrap short">
             <Grafico
               id="chartCriterios"
@@ -714,9 +690,7 @@ export function Graficos({
           </div>
         </article>
         <article className="panel panel-pad">
-          <span className="eyebrow">Território</span>
           <h2 className="title">Top unidades por entrevistados</h2>
-          <p className="hint">Clique em uma unidade para recortar o painel.</p>
           <div className="chart-wrap short">
             <Grafico
               id="chartUnidades"

@@ -91,8 +91,7 @@ export function ModalAdicionarPessoa({ estado }) {
             <p>
               {convite.reativada
                 ? `O acesso de ${convite.nome} foi reativado.`
-                : `${convite.nome} já pode entrar.`}{" "}
-              Mande a mensagem abaixo para avisar.
+                : `${convite.nome} já pode entrar.`}
             </p>
           </div>
           <button
@@ -133,7 +132,6 @@ export function ModalAdicionarPessoa({ estado }) {
       <div className="acessos-gaveta-cabecalho">
         <div>
           <h3 id="acessosAdicionarTitulo">Adicionar pessoa</h3>
-          <p>Ela entra com o e-mail informado, sem precisar pedir acesso.</p>
         </div>
         <button
           type="button"
