@@ -29,7 +29,12 @@ export function Kpi({ id, tom, icone, rotulo, valor, carregado = true }) {
         <i className={`fa-solid ${icone}`} aria-hidden="true" />
       </span>
       <div>
-        <span className="approved-kpi-label">{rotulo}</span>
+        <span
+          className="approved-kpi-label"
+          title={typeof rotulo === "string" ? rotulo : undefined}
+        >
+          {rotulo}
+        </span>
         <strong id={id} aria-busy={carregado ? undefined : true}>
           {carregado ? (
             formatNumberBR(valor)

@@ -163,7 +163,10 @@ function LinhaSimples({ estado, matriz, usuario, rascunho, gruposPorCodigo }) {
         {adminGlobal ? (
           <span className="acessos-vazio">—</span>
         ) : (
-          <span className={classes(!coordenacao && "acessos-secundario")}>
+          <span
+            className={classes(!coordenacao && "acessos-secundario")}
+            title={nomeDaCoordenacao || coordenacao || undefined}
+          >
             {nomeDaCoordenacao || coordenacao || "Sem coordenação"}
           </span>
         )}

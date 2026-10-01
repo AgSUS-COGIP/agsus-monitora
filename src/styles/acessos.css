@@ -250,6 +250,18 @@ td.acessos-vazio {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/*
+  Nome longo: uma linha com reticências, nunca cortado seco (no celular o
+  mobile-app.css põe `nowrap` nas células). O nome inteiro vai no title.
+*/
+.acessos-nome,
+.acessos-pessoa-textos > strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .acessos-nome {
   padding: 0;
   border: 0;
@@ -744,6 +756,7 @@ td.acessos-vazio {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
 }
 .acessos-avatar {
   display: inline-grid;

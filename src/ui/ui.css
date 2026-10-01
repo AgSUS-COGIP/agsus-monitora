@@ -296,9 +296,11 @@
 
 /* ── Kpi: card compacto de ~78px (DESIGN.md, "Indicador") ───────────── */
 
+/* Linhas de altura igual: um rótulo que quebra não deixa um card mais alto. */
 .ui-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-auto-rows: 1fr;
   gap: var(--space-3);
 }
 .ui-kpi {
@@ -344,6 +346,15 @@
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   line-height: var(--leading-caption);
+}
+/* No máximo duas linhas, com reticências (o texto inteiro vai no title). */
+.ui-kpi-texto {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .ui-kpi-icone {
   display: inline-grid;
