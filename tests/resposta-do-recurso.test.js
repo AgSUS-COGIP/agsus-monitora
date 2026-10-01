@@ -86,7 +86,7 @@ describe("permissões", () => {
     for (const acao of Object.keys(ACOES_DA_RESPOSTA))
       expect(avaliarAcao(acao, contexto({ podeEditar: false }))).toEqual({
         permitida: false,
-        motivo: "Seu acesso só consulta.",
+        motivo: "Sem permissão para responder.",
       });
   });
 

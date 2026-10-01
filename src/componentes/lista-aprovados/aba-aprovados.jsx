@@ -163,10 +163,6 @@ export function AbaAprovados({
           />
         </div>
       </div>
-      <div className="table-meta">
-        Listas inativas permanecem consultáveis, mas seus candidatos não podem
-        ser alterados.
-      </div>
       <div className="table-wrap" ref={tabela}>
         <table className="approved-table">
           <thead>

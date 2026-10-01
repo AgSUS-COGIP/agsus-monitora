@@ -161,8 +161,7 @@ export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
             ) : (
               <div className="analises-detail-analysis">
                 <span className="analises-detail-empty">
-                  Nenhuma análise curricular ligada a esta entrevista (nem pelo
-                  código, nem pelo nome do candidato).
+                  Nenhuma análise curricular ligada a esta entrevista.
                 </span>
               </div>
             )}

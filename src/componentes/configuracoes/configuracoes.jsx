@@ -56,7 +56,6 @@ function Cabecalho({ estado }) {
         </span>
         <div className="config-cabecalho__texto">
           <h2>{secao.rotulo}</h2>
-          <p>{secao.descricao}</p>
         </div>
         {comSalvar && estado.temAlteracoes() ? (
           <span className="config-cabecalho__pendente">
@@ -102,7 +101,6 @@ function situacaoDaBarra(atual, alterado) {
   return {
     tom: "limpo",
     titulo: "Nenhuma alteração pendente",
-    texto: "As configurações carregadas estão preservadas.",
   };
 }
 
@@ -129,7 +127,7 @@ function BarraDeSalvar({ estado }) {
         </span>
         <div className="config-barra__texto">
           <strong>{situacao.titulo}</strong>
-          <span>{situacao.texto}</span>
+          {situacao.texto ? <span>{situacao.texto}</span> : null}
         </div>
       </div>
       <div className="config-barra__acoes">
@@ -193,15 +191,7 @@ function Alerta({ titulo, detalhe, tom = "error" }) {
   );
 }
 
-function CampoDoMotivo({
-  id,
-  rotulo,
-  placeholder,
-  valor,
-  invalido,
-  aoMudar,
-  ajuda,
-}) {
+function CampoDoMotivo({ id, rotulo, placeholder, valor, invalido, aoMudar }) {
   return (
     <label className="config-reason-field" htmlFor={id}>
       <span>
@@ -218,7 +208,6 @@ function CampoDoMotivo({
         data-foco-inicial
         onChange={(evento) => aoMudar(evento.target.value)}
       />
-      {ajuda ? <small>{ajuda}</small> : null}
     </label>
   );
 }
@@ -235,9 +224,6 @@ function Dialogo({ estado, titulo, children, rodape }) {
     >
       <header>
         <div>
-          <span className="config-governance-eyebrow">
-            Governança de alterações
-          </span>
           <h2 id="configGovernanceTitle">{titulo}</h2>
         </div>
         <button
@@ -305,14 +291,12 @@ function DialogoDeRevisao({ estado, modal }) {
         <strong>
           {plural(total, "alteração encontrada", "alterações encontradas")}
         </strong>
-        <span>Confira exatamente o que será publicado.</span>
       </div>
       <ListaDeAlteracoes alteracoes={modal.alteracoes} />
       <CampoDoMotivo
         id="configPublishReason"
         rotulo="Motivo da alteração"
-        placeholder="Ex.: Atualização dos rótulos e manutenção do painel de análises"
-        ajuda="Obrigatório para auditoria."
+        placeholder="Ex.: ajuste de rótulos"
         valor={motivo}
         invalido={tentou && !motivo.trim()}
         aoMudar={setMotivo}
@@ -363,7 +347,6 @@ function DialogoDeRestauracao({ estado, modal }) {
       <Alerta
         tom="warning"
         titulo="Esta ação publicará novamente os valores dessa versão."
-        detalhe="Uma nova entrada de auditoria será criada. Nada será apagado do histórico."
       />
       <ListaDeAlteracoes alteracoes={modal.alteracoes.slice(0, 20)} />
       {excedente > 0 ? (
@@ -417,7 +400,6 @@ function Dialogos({ estado }) {
         <div className="config-governance-empty">
           <Icone nome="circle-check" tamanho={28} />
           <strong>Nada para publicar.</strong>
-          <span>Os valores da tela já são iguais aos publicados.</span>
         </div>
       </Dialogo>
     );
@@ -457,10 +439,6 @@ function Historico({ estado }) {
       <div className="config-card-title">
         <div>
           <h3 id="configHistoryTitle">Histórico de configurações</h3>
-          <p>
-            Publicações auditadas, responsáveis e restauração de versões
-            anteriores.
-          </p>
         </div>
         <button
           type="button"
@@ -496,7 +474,6 @@ function CorpoDoHistorico({ estado, historico }) {
       <div className="config-history-empty">
         <Icone nome="history" tamanho={22} />
         <strong>Nenhuma publicação auditada ainda.</strong>
-        <span>O próximo salvamento aparecerá aqui.</span>
       </div>
     );
   return (

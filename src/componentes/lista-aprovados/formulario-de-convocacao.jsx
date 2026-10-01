@@ -180,10 +180,6 @@ export function FormularioDeConvocacao({
           />
           <span className="convocacao-tipo-copy">
             <strong>Com proporcionalidade</strong>
-            <small>
-              As vagas de cota entram intercaladas às de ampla ao longo da
-              convocação.
-            </small>
           </span>
         </label>
         <label className="convocacao-tipo-card">
@@ -197,9 +193,6 @@ export function FormularioDeConvocacao({
           />
           <span className="convocacao-tipo-copy">
             <strong>Sem proporcionalidade</strong>
-            <small>
-              A convocação segue a lista de aprovados, pela classificação.
-            </small>
           </span>
         </label>
       </fieldset>
@@ -215,10 +208,6 @@ export function FormularioDeConvocacao({
         <div className="convocacao-bloco-head">
           <div>
             <strong>Modelo de regras</strong>
-            <small>
-              As regras de reserva deste edital: categorias, percentuais,
-              arredondamento e cascata.
-            </small>
           </div>
           <div className="convocacao-bloco-acoes">
             <select
@@ -335,10 +324,7 @@ export function FormularioDeConvocacao({
           <div className="convocacao-bloco-head">
             <div>
               <strong>Vagas do edital</strong>
-              <small>
-                Informe quantas vagas imediatas cada uma tem. Zero vira cadastro
-                de reserva.
-              </small>
+              <small>Zero = cadastro de reserva.</small>
             </div>
             <div className="convocacao-bloco-acoes">
               <label
@@ -462,11 +448,11 @@ export function FormularioDeConvocacao({
           </div>
         </div>
       </div>
-      <p id="convocacaoPermissionNote" className="modal-note">
-        {editavel
-          ? "O modelo e as vagas valem para o edital e sobrevivem à substituição do XLSX."
-          : "Sem permissão para configurar a convocação deste edital."}
-      </p>
+      {editavel ? null : (
+        <p id="convocacaoPermissionNote" className="modal-note">
+          Sem permissão para configurar a convocação deste edital.
+        </p>
+      )}
       <div className="approved-modal-actions approved-import-actions">
         <span className="approved-action-spacer" />
         {editavel ? (

@@ -65,7 +65,7 @@ export function TopoDaGaveta({
   return (
     <div className="analises-drawer-head">
       <div>
-        <span className="eyebrow">{sobretitulo}</span>
+        {sobretitulo ? <span className="eyebrow">{sobretitulo}</span> : null}
         <h2 id={tituloId}>{titulo}</h2>
         {resumo ? (
           <div className="analises-drawer-summary">{resumo}</div>

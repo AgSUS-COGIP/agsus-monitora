@@ -187,9 +187,6 @@ export function ModalLinhaDoTempo({ estado, id, agora = () => new Date() }) {
     >
       <div className="modal-head">
         <div>
-          <span className="nucleo-timeline-eyebrow">
-            Acompanhamento do edital
-          </span>
           <h3 id="nucleoTimelineTitle">
             {carga.estado === "pronto"
               ? monitor.edital || "Cronograma do edital"

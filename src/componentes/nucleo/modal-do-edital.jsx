@@ -475,10 +475,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             aria-labelledby="editalMoverTitulo"
           >
             <h4 id="editalMoverTitulo">Mover para outra área</h4>
-            <p className="modal-note">
-              Só o edital muda de área (com a lista de aprovados, o cronograma e
-              a convocação dele). A mudança fica registrada com o motivo.
-            </p>
+            <p className="modal-note">Leva lista, cronograma e convocação.</p>
             {mexido && (
               <p id="editalMoverBloqueio" className="edital-mover-aviso">
                 Salve ou descarte as alterações do formulário antes de mover.
@@ -610,22 +607,20 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
                 id="mUnidadeNova"
                 placeholder="Nome da unidade"
                 maxLength={150}
-                aria-describedby="mUnidadeNovaAjuda"
+                aria-describedby={
+                  digitadaDeOutraArea ? "mUnidadeNovaAjuda" : undefined
+                }
                 value={formulario.unidadeNova}
                 onChange={mudar("unidadeNova")}
               />
-              <small
-                id="mUnidadeNovaAjuda"
-                className={
-                  digitadaDeOutraArea
-                    ? "edital-unidade-ajuda is-erro"
-                    : "edital-unidade-ajuda"
-                }
-              >
-                {digitadaDeOutraArea
-                  ? `Esta unidade é da área ${nomeDaArea(digitadaDeOutraArea) || digitadaDeOutraArea}: o banco vai recusar. Escolha uma unidade de ${nomeDaArea(areaDoEdital) || areaDoEdital}.`
-                  : `Ao salvar, a unidade fica registrada na área ${nomeDaArea(areaDoEdital) || areaDoEdital}.`}
-              </small>
+              {digitadaDeOutraArea ? (
+                <small
+                  id="mUnidadeNovaAjuda"
+                  className="edital-unidade-ajuda is-erro"
+                >
+                  {`Esta unidade é da área ${nomeDaArea(digitadaDeOutraArea) || digitadaDeOutraArea}: o banco vai recusar. Escolha uma unidade de ${nomeDaArea(areaDoEdital) || areaDoEdital}.`}
+                </small>
+              ) : null}
             </Campo>
           )}
           <Campo id="mUf" rotulo="UF">
@@ -634,11 +629,6 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               maxLength={2}
               placeholder="UF"
               readOnly={!digitandoUnidade}
-              title={
-                digitandoUnidade
-                  ? "UF da nova unidade (opcional)"
-                  : "Preenchida automaticamente pela unidade selecionada"
-              }
               value={formulario.uf}
               onChange={(evento) =>
                 setFormulario((atual) => ({
@@ -717,10 +707,6 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
           </Campo>
 
           <div className="subsection">Indicadores automáticos</div>
-          <p className="modal-note">
-            Campos calculados ou sincronizados automaticamente. Eles aparecem
-            para conferência, mas não são alterados por este formulário.
-          </p>
           <div className="readonly-metrics full">
             {INDICADORES.map(([chave, rotulo, coluna]) => (
               <div key={chave} className="metric-readonly">

@@ -22,9 +22,7 @@ export function AcoesDoConvite({ nome, email }) {
   return (
     <div className="acessos-convite">
       <p className="acessos-convite-mensagem">{mensagem}</p>
-      <p className="acessos-secundario">
-        O link sozinho não dá acesso: só funciona entrando com o e-mail {email}.
-      </p>
+      <p className="acessos-secundario">Só funciona com {email}.</p>
       <div className="acessos-acoes">
         <button
           type="button"
@@ -43,7 +41,7 @@ export function AcoesDoConvite({ nome, email }) {
           className={copiado ? "acessos-secundario" : "acessos-erro"}
         >
           {copiado
-            ? "Mensagem copiada. Cole no e-mail ou no chat da pessoa."
+            ? "Mensagem copiada."
             : "Não foi possível copiar. Selecione o texto acima e copie."}
         </small>
       )}

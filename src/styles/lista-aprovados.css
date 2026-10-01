@@ -570,11 +570,6 @@ table.mobile-card-table td.approved-actions {
   font-size: 15px;
   font-weight: 600;
 }
-.approved-import-summary-copy > span {
-  color: #607080;
-  font-size: 12px;
-  font-weight: 600;
-}
 .approved-import-summary-details {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -646,7 +641,6 @@ table.mobile-card-table td.approved-actions {
 [data-theme="dark"] .approved-import-summary-detail > strong {
   color: #e6eef7;
 }
-[data-theme="dark"] .approved-import-summary-copy > span,
 [data-theme="dark"] .approved-import-summary-detail > span {
   color: #a8b4c4;
 }

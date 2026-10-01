@@ -235,8 +235,7 @@ export function resumirQuadro(quadro, modelo) {
 
 /** "PP 25% · IND 3% · usado por 6 editais — editar muda todos" */
 export function resumoDoModelo(modelo) {
-  if (!modelo)
-    return "Sem modelo escolhido: não há cota nenhuma, e as vagas imediatas saem todas como ampla concorrência.";
+  if (!modelo) return "Sem modelo: tudo como ampla.";
   const reservas = categoriasDeReserva(modelo)
     .map(
       (categoria) => `${categoria.sigla} ${formatarTaxa(categoria.percentual)}`,

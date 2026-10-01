@@ -26,9 +26,11 @@ function Cabecalho({ tituloId, titulo, subtitulo, subtituloId, aoFechar }) {
     <div className="modal-head">
       <div>
         <h3 id={tituloId}>{titulo}</h3>
-        <p id={subtituloId} className="approved-modal-subtitle">
-          {subtitulo}
-        </p>
+        {subtitulo ? (
+          <p id={subtituloId} className="approved-modal-subtitle">
+            {subtitulo}
+          </p>
+        ) : null}
       </div>
       <button className="btn secondary" type="button" onClick={aoFechar}>
         Fechar
@@ -37,7 +39,7 @@ function Cabecalho({ tituloId, titulo, subtitulo, subtituloId, aoFechar }) {
   );
 }
 
-const DICA_DOS_ANEXOS = "Aceito apenas no formato PDF de até 2 MB";
+const DICA_DOS_ANEXOS = "PDF, até 2 MB";
 
 /*
   Os PDFs escolhidos ficam no rascunho do modal e só sobem ao salvar o status.
@@ -351,7 +353,6 @@ export function ModalSubJudice({ estado, listas, candidatos }) {
       <Cabecalho
         tituloId="subJudiceTitle"
         titulo="Incluir candidato sub judice"
-        subtitulo="O candidato será identificado como sub judice e ficará vinculado à lista vigente do edital."
         aoFechar={fechar}
       />
       <div className="modal-body">

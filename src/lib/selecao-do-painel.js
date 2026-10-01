@@ -336,11 +336,6 @@ export function observacoesDoRecorte(vagas) {
 
 /* ── Datas e CSV ────────────────────────────────────────────────────── */
 
-export function textoDaUltimaCarga(ultimaCarga) {
-  const quando = dataHoraBR(ultimaCarga?.em);
-  return quando ? `Atualizado: ${quando}` : "Atualizado: --";
-}
-
 const numeroDoCsv = (valor) => (valor === null ? "" : String(valor));
 
 const COLUNAS_DO_CSV = Object.freeze([

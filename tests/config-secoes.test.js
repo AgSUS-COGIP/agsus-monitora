@@ -73,6 +73,19 @@ describe("o mapa de campos", () => {
     expect(ids).toContain(SECAO_PADRAO);
   });
 
+  /*
+    Cada bloco precisa existir no index.html: sem ele a seção abre vazia (foi
+    o que um merge fez com `saudeDasCargasApp`, em 01/10/2026).
+  */
+  it("todo bloco das seções existe no index.html", () => {
+    const html = readFileSync("index.html", "utf8");
+    for (const bloco of Object.keys(SECAO_POR_BLOCO)) {
+      expect(html, `index.html sem o bloco #${bloco}`).toContain(
+        `id="${bloco}"`,
+      );
+    }
+  });
+
   it("um campo desconhecido cai no padrão, não no vazio", () => {
     expect(secaoDoCampo("cfgInventadoAgora")).toBe(SECAO_PADRAO);
   });

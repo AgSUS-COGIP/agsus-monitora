@@ -199,12 +199,7 @@ export function ImportarAnexos({
     <section id="anexosDoEdital" className="cronograma-copy-box anexos-box">
       <div className="cronograma-copy-heading">
         <div>
-          <span>Importar do PDF</span>
           <strong>Anexos do edital</strong>
-          <small>
-            Envie o PDF de anexos (cronograma e quadro de vagas). Dá para
-            escolher mais de um arquivo quando cada anexo vem separado.
-          </small>
         </div>
       </div>
       <div className="cronograma-copy-controls">

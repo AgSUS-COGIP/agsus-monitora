@@ -17,7 +17,6 @@ import {
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
   rotuloCurtoDoCriterio,
-  textoDaUltimaCarga,
   topUnidades,
 } from "../src/lib/entrevistas-do-painel.js";
 
@@ -313,10 +312,6 @@ describe("pendências, datas e CSV", () => {
 
   it("formata a última carga", () => {
     expect(dataHoraBR("2026-09-29T10:30:00")).toBe("29/09/2026 10:30");
-    expect(textoDaUltimaCarga(ultimaCarga)).toBe(
-      "Dados da planilha de entrevistas · última carga 29/09/2026 10:30",
-    );
-    expect(textoDaUltimaCarga(null)).toContain("sem carga");
     expect(dataHoraBR("x")).toBe("");
   });
 
