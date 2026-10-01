@@ -23,6 +23,8 @@ export default [
       "api/**/*.js",
       "src/lib/**/*.js",
       "src/modules/**/*.js",
+      "src/app/**/*.{js,jsx}",
+      "src/ui/**/*.{js,jsx}",
       "src/componentes/**/*.{js,jsx}",
       "src/recursos/**/*.{js,jsx}",
       "scripts/**/*.mjs",

@@ -1,6 +1,6 @@
-import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { createRoot } from "react-dom/client";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import {
   resumoDaVersao,
   valorParaExibir,
@@ -564,17 +564,16 @@ export function montarConfiguracoes({
     estado.definirSecao(evento.detail?.secao),
   );
 
-  const raiz = createRoot(raizDaTela);
-  raiz.render(
-    <StrictMode>
-      <Configuracoes
-        estado={estado}
-        alvos={{
-          marca: corpoDaSecao(pagina, "marca"),
-          historico: corpoDaSecao(pagina, "operacao"),
-        }}
-      />
-    </StrictMode>,
+  const { raiz } = montarModulo(
+    raizDaTela,
+    <Configuracoes
+      estado={estado}
+      alvos={{
+        marca: corpoDaSecao(pagina, "marca"),
+        historico: corpoDaSecao(pagina, "operacao"),
+      }}
+    />,
+    { nome: "Configurações" },
   );
   return { estado, raiz };
 }

@@ -1,5 +1,5 @@
-import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
-import { createRoot } from "react-dom/client";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import {
@@ -538,15 +538,11 @@ export function montarModulos({
     getProfile,
     confirmar,
   });
-  let raiz = null;
-  if (raizDaTela) {
-    raiz = createRoot(raizDaTela);
-    raiz.render(
-      <StrictMode>
-        <ModulosEAbas estado={estado} />
-      </StrictMode>,
-    );
-  }
+  const raiz = raizDaTela
+    ? montarModulo(raizDaTela, <ModulosEAbas estado={estado} />, {
+        nome: "Módulos e abas",
+      }).raiz
+    : null;
   return {
     estado,
     raiz,

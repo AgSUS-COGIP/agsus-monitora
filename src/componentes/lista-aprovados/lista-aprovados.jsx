@@ -1,5 +1,5 @@
-import { StrictMode, useMemo, useState, useSyncExternalStore } from "react";
-import { createRoot } from "react-dom/client";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { canManageSubJudice } from "../../lib/access-roles.js";
 import {
@@ -333,15 +333,11 @@ export function montarListaAprovados({
     novaAba,
     armazenamento,
   });
-  let raiz = null;
-  if (secao) {
-    raiz = createRoot(secao);
-    raiz.render(
-      <StrictMode>
-        <ListaAprovados estado={estado} />
-      </StrictMode>,
-    );
-  }
+  const raiz = secao
+    ? montarModulo(secao, <ListaAprovados estado={estado} />, {
+        nome: "a lista de aprovados",
+      }).raiz
+    : null;
   return {
     estado,
     raiz,

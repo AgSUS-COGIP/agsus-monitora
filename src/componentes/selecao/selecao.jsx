@@ -1,12 +1,5 @@
-import {
-  StrictMode,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import {
   definirCarregamentoDoPainel,
   mostrarErroDoCarregamento,
@@ -217,20 +210,12 @@ export function montarPainelDeSelecao({
     baixar,
     ...(armazenamento ? { armazenamento } : {}),
   });
-  let raizDoReact = null;
-  if (raiz) {
-    raizDoReact = createRoot(raiz);
-    flushSync(() =>
-      raizDoReact.render(
-        <StrictMode>
-          <PainelDeSelecao
-            estado={estado}
-            area={area}
-            nomeDaArea={nomeDaArea}
-          />
-        </StrictMode>,
-      ),
-    );
-  }
+  const raizDoReact = raiz
+    ? montarModulo(
+        raiz,
+        <PainelDeSelecao estado={estado} area={area} nomeDaArea={nomeDaArea} />,
+        { flushSync: true, nome: "o painel de seleção" },
+      ).raiz
+    : null;
   return { estado, raiz: raizDoReact };
 }

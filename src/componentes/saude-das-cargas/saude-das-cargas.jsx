@@ -1,5 +1,5 @@
-import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
-import { createRoot } from "react-dom/client";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
@@ -304,15 +304,11 @@ export function montarSaudeDasCargas({
     getProfile,
     ...(agora ? { agora } : {}),
   });
-  let raiz = null;
-  if (raizDaTela) {
-    raiz = createRoot(raizDaTela);
-    raiz.render(
-      <StrictMode>
-        <SaudeDasCargas estado={estado} />
-      </StrictMode>,
-    );
-  }
+  const raiz = raizDaTela
+    ? montarModulo(raizDaTela, <SaudeDasCargas estado={estado} />, {
+        nome: "Status das atualizações",
+      }).raiz
+    : null;
   return {
     estado,
     raiz,

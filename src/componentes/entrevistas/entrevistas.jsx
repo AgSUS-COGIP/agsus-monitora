@@ -1,12 +1,5 @@
-import {
-  StrictMode,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import {
   definirCarregamentoDoPainel,
   mostrarErroDoCarregamento,
@@ -303,21 +296,17 @@ export function montarPainelDeEntrevistas({
     // Notas, convocação e desconvocação mudam o que "Resultados" mostra.
     aoMudarResultados: () => void estado.carregar(),
   });
-  let raizDoReact = null;
-  if (raiz) {
-    raizDoReact = createRoot(raiz);
-    flushSync(() =>
-      raizDoReact.render(
-        <StrictMode>
-          <PainelDeEntrevistas
-            estado={estado}
-            conducao={conducao}
-            area={area}
-            nomeDaArea={nomeDaArea}
-          />
-        </StrictMode>,
-      ),
-    );
-  }
+  const raizDoReact = raiz
+    ? montarModulo(
+        raiz,
+        <PainelDeEntrevistas
+          estado={estado}
+          conducao={conducao}
+          area={area}
+          nomeDaArea={nomeDaArea}
+        />,
+        { flushSync: true, nome: "o painel de entrevistas" },
+      ).raiz
+    : null;
   return { estado, conducao, raiz: raizDoReact };
 }

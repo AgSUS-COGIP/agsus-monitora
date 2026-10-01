@@ -1,11 +1,5 @@
-import {
-  StrictMode,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import { createRoot } from "react-dom/client";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { abasDeAcessos } from "../../lib/teto-de-acessos.js";
 import { criarEstadoDosAcessos } from "./estado.js";
@@ -185,15 +179,13 @@ export function montarAcessos({
     getProfile,
     confirmar,
   });
-  let raiz = null;
-  if (raizDaTela) {
-    raiz = createRoot(raizDaTela);
-    raiz.render(
-      <StrictMode>
-        <Acessos estado={estado} secoesDeConfiguracao={secoesDeConfiguracao} />
-      </StrictMode>,
-    );
-  }
+  const raiz = raizDaTela
+    ? montarModulo(
+        raizDaTela,
+        <Acessos estado={estado} secoesDeConfiguracao={secoesDeConfiguracao} />,
+        { nome: "Acessos" },
+      ).raiz
+    : null;
   return {
     estado,
     raiz,
