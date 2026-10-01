@@ -3,8 +3,9 @@
 O front está migrando para **um único app React** (alvo, regras e ordem em
 `docs/arquitetura-react.md`). Já são React: barra lateral, Núcleo (Editais), Calendário, Lista de
 Aprovados, Acessos, Módulos e abas, Status das atualizações, busca global (Ctrl+K), Configurações
-(moldura, Marca, Painéis externos, Operação) e os painéis de Entrevistas, Recursos e Seleção (ainda em
-página própria/iframe). Toda tela monta por `montarModulo` (`src/app/`) e usa os componentes visuais de
+(moldura, Marca, Painéis externos, Operação) e os painéis de Entrevistas e Seleção (ainda em
+página própria/iframe; Recursos já mudou para `src/modulos/recursos/`). Toda tela monta por
+`montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
 (`.jsx`), sem TypeScript. Nomes em português, arquivo em kebab-case, componente em PascalCase.
 
@@ -14,7 +15,7 @@ página própria/iframe). Toda tela monta por `montarModulo` (`src/app/`) e usa 
 icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
 modal.jsx                    só reexporta o <Modal> de src/ui/modal.jsx (importe de src/ui/ no código novo)
 busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
-entrevistas/, recursos/, selecao/  painéis (entradas em src/entrevistas|recursos|selecao/main.jsx)
+entrevistas/, selecao/       painéis no quadro (entradas em src/entrevistas|selecao/main.jsx), dentro de <PainelNoQuadro>
 multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
 dados-do-monitoramento.js    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
                              carrega e publica aqui (loadData / loadUnidades), e a área atual
@@ -27,7 +28,7 @@ barra-lateral/
   menu-de-areas.jsx          áreas (acordeão; recolhida, painel flutuante) e itens
   alca-de-recolher.jsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
   rodape.jsx                 seletor Claro/Escuro, Sair e versão
-  usar-ambiente.js           hooks do que o legado controla: classe de body, largura, tema
+  usar-ambiente.js           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
 nucleo/                      a página #page-nucleo (Editais da Equipe Núcleo)
   nucleo.jsx                 <Nucleo> (tabela e busca) e montarNucleo() → window.nucleoController
   estado.js                  resumo dos cronogramas, filtro dos indicadores, modal aberto, reinício
