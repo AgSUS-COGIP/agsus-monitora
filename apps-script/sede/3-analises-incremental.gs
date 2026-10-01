@@ -272,7 +272,13 @@ function compararEEnviarAlteradosAnalisesIncremental_(state, snapshot, deadline)
       };
     });
 
-    const diff = rpcAnalisesIncremental_('comparar_analises_incremental', { p_itens: manifesto }, true);
+    // v2: anota as linhas no manifesto do sync; no fim, o banco desativa quem saiu
+    // da planilha (20261001140000). O primeiro lote (index 0) recomeça o manifesto.
+    const diff = rpcAnalisesIncremental_('comparar_analises_incremental_v2', {
+      p_sync_id: state.sync_id,
+      p_itens: manifesto,
+      p_reiniciar: index === 0
+    }, true);
     if (!diff || diff.ok !== true || !Array.isArray(diff.linhas_alteradas)) {
       throw new Error('Resposta invalida da comparacao incremental.');
     }
