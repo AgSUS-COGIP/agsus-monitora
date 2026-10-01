@@ -2191,11 +2191,10 @@ function setActiveNav(view) {
 
 /*
   Páginas que são um painel do app num quadro, com o próprio cabeçalho
-  (entrevistas.html, selecao.html; src/lib/pagina-do-painel.js):
-  a permissão para abrir e o título da página.
+  (selecao.html; src/lib/pagina-do-painel.js): a permissão para abrir e o
+  título da página.
 */
 const PAINEIS_EM_PAGINA = Object.freeze({
-  entrevistas: { titulo: "Entrevistas", pode: canViewEntrevistas },
   selecao: { titulo: "Seleção", pode: canViewSelecao },
 });
 
@@ -2220,6 +2219,7 @@ const TELAS_REACT = Object.freeze({
     window.aprovadosController,
   ],
   recursos: () => ["Recursos", "", window.recursosController],
+  entrevistas: () => ["Entrevistas", "", window.entrevistasController],
 });
 
 function navigate(view) {
@@ -2262,6 +2262,10 @@ function navigate(view) {
   }
   if (requestedView === "recursos" && !canViewRecursos(profile)) {
     toast("Sem permissão para Recursos.", "warn");
+    return;
+  }
+  if (requestedView === "entrevistas" && !canViewEntrevistas(profile)) {
+    toast("Sem permissão para Entrevistas.", "warn");
     return;
   }
   const painelEmPagina = Object.hasOwn(PAINEIS_EM_PAGINA, requestedView)
@@ -2357,7 +2361,7 @@ function navigate(view) {
     return;
   }
   if (painelEmPagina) {
-    // O painel (entrevistas.html, selecao.html) também traz o próprio cabeçalho.
+    // O painel (selecao.html) também traz o próprio cabeçalho.
     document.body.classList.add("external-panel-mode");
     $("page-" + requestedView).classList.add("active");
     setPageTitle(painelEmPagina.titulo, subtituloDaArea(""));

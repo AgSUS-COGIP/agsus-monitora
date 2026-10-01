@@ -7,15 +7,15 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.js";
-import { EstadoVazio, Gaveta, Kv, Secao } from "../../ui/index.js";
+import { EstadoVazio, Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.js";
 import { SeloDoParecer } from "./tabela.jsx";
 
 /*
-  Gavetas do painel de entrevistas, com o desenho da gaveta do painel de
-  análises (`.analises-drawer-backdrop` > `.analises-drawer`): o detalhe de uma
-  entrevista (o caminho Análise curricular → Entrevista → Recurso, a nota de
-  cada critério e o link da planilha) e a lista dos aprovados na análise sem
-  entrevista registrada. Tudo em JSX, com texto — nada de HTML vindo dos dados.
+  Gavetas da visão "Resultados" (a Gaveta de src/ui/, encostada à direita): o
+  detalhe de uma entrevista (o caminho Análise curricular → Entrevista →
+  Recurso, a nota de cada critério e o link da planilha) e a lista dos
+  aprovados na análise sem entrevista registrada. Tudo em JSX, com texto —
+  nada de HTML vindo dos dados.
 */
 
 const ROTULO_DA_LIGACAO = {
@@ -96,7 +96,7 @@ export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
       rotuloDoFechar="Fechar detalhe"
       resumo={
         <>
-          <span className="status">
+          <span>
             <i className="fa-solid fa-circle-info" aria-hidden="true" />
             {rotuloDoParecer(e.parecer)}
           </span>
@@ -109,7 +109,7 @@ export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
         </>
       }
     >
-      <div className="analises-drawer-context">
+      <div className="ui-gaveta-contexto">
         <div>
           <small>Edital</small>
           <strong>{e.edital || "—"}</strong>
@@ -130,97 +130,87 @@ export function GavetaDaEntrevista({ entrevista: e, aoFechar }) {
         </div>
       </div>
 
-      <div id="analisesDrawerBody">
-        <div className="detail-shell">
-          <Caminho entrevista={e} />
+      <div className="ui-gaveta-corpo">
+        <Caminho entrevista={e} />
 
-          <Secao
-            icone="fa-file-lines"
-            titulo="Análise curricular"
-            secao="analise"
-          >
-            {e.analise ? (
-              <div className="analises-detail-section-grid">
-                <Kv rotulo="Nota da análise">{formatarNota(e.analise.nota)}</Kv>
-                <Kv rotulo="Resultado">{e.analise.resultado}</Kv>
-                <Kv rotulo="Etapa">{e.analise.etapa}</Kv>
-                <Kv rotulo="Responsável">{e.analise.responsavel}</Kv>
-                <Kv rotulo="Ligação">
-                  {ROTULO_DA_LIGACAO[e.analise.ligacao] || e.analise.ligacao}
-                </Kv>
-                {e.analise.ativo ? null : (
-                  <Kv rotulo="Situação">Análise inativa</Kv>
-                )}
-              </div>
-            ) : (
-              <div className="analises-detail-analysis">
-                <span className="analises-detail-empty">
-                  Nenhuma análise curricular ligada a esta entrevista.
+        <Secao
+          icone="fa-file-lines"
+          titulo="Análise curricular"
+          secao="analise"
+        >
+          {e.analise ? (
+            <GradeDeKv>
+              <Kv rotulo="Nota da análise">{formatarNota(e.analise.nota)}</Kv>
+              <Kv rotulo="Resultado">{e.analise.resultado}</Kv>
+              <Kv rotulo="Etapa">{e.analise.etapa}</Kv>
+              <Kv rotulo="Responsável">{e.analise.responsavel}</Kv>
+              <Kv rotulo="Ligação">
+                {ROTULO_DA_LIGACAO[e.analise.ligacao] || e.analise.ligacao}
+              </Kv>
+              {e.analise.ativo ? null : (
+                <Kv rotulo="Situação">Análise inativa</Kv>
+              )}
+            </GradeDeKv>
+          ) : (
+            <p className="ui-secao-vazio">
+              Nenhuma análise curricular ligada a esta entrevista.
+            </p>
+          )}
+        </Secao>
+
+        <Secao icone="fa-comments" titulo="Entrevista" secao="entrevista">
+          <GradeDeKv>
+            <Kv rotulo="Nota total">
+              {e.nota === null
+                ? ""
+                : `${formatarNota(e.nota)} / ${formatNumberBR(NOTA_MAXIMA)}`}
+            </Kv>
+            <Kv rotulo="Parecer">
+              <SeloDoParecer parecer={e.parecer} />
+            </Kv>
+            <Kv rotulo="Compareceu">{rotuloDoComparecimento(e.compareceu)}</Kv>
+            {e.somaDasNotas !== null ? (
+              <Kv rotulo="Soma dos critérios">
+                <span className={e.divergente ? "entrevistas-divergente" : ""}>
+                  {formatarNota(e.somaDasNotas)}
                 </span>
-              </div>
-            )}
-          </Secao>
-
-          <Secao icone="fa-comments" titulo="Entrevista" secao="entrevista">
-            <div className="analises-detail-section-grid">
-              <Kv rotulo="Nota total">
-                {e.nota === null
-                  ? ""
-                  : `${formatarNota(e.nota)} / ${formatNumberBR(NOTA_MAXIMA)}`}
               </Kv>
-              <Kv rotulo="Parecer">
-                <SeloDoParecer parecer={e.parecer} />
-              </Kv>
-              <Kv rotulo="Compareceu">
-                {rotuloDoComparecimento(e.compareceu)}
-              </Kv>
-              {e.somaDasNotas !== null ? (
-                <Kv rotulo="Soma dos critérios">
-                  <span
-                    className={e.divergente ? "entrevistas-divergente" : ""}
-                  >
-                    {formatarNota(e.somaDasNotas)}
-                  </span>
-                </Kv>
-              ) : null}
-              <Kv rotulo="Edital na planilha">{e.edital_planilha}</Kv>
-            </div>
-            {e.notas.length ? (
-              <ul className="entrevistas-criterios">
-                {e.notas.map((n) => (
-                  <li key={n.indice} title={n.criterio}>
-                    <span className="entrevistas-criterio-rotulo">
-                      {n.curto}
-                    </span>
-                    <BarraDoCriterio nota={n.nota} />
-                    {/* Critério fora da escala 0–5 (planilha mal lida): a nota, sem o "/ 5". */}
-                    <b>
-                      {formatarNota(n.nota)}
-                      {n.nota <= NOTA_MAXIMA_DO_CRITERIO
-                        ? ` / ${formatNumberBR(NOTA_MAXIMA_DO_CRITERIO)}`
-                        : ""}
-                    </b>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="analises-detail-empty">
-                Sem notas por critério na planilha.
-              </p>
-            )}
-            {link ? (
-              <p className="entrevistas-link">
-                <a href={link} target="_blank" rel="noopener noreferrer">
-                  <i
-                    className="fa-solid fa-arrow-up-right-from-square"
-                    aria-hidden="true"
-                  />{" "}
-                  Abrir planilha da entrevista
-                </a>
-              </p>
             ) : null}
-          </Secao>
-        </div>
+            <Kv rotulo="Edital na planilha">{e.edital_planilha}</Kv>
+          </GradeDeKv>
+          {e.notas.length ? (
+            <ul className="entrevistas-criterios">
+              {e.notas.map((n) => (
+                <li key={n.indice} title={n.criterio}>
+                  <span className="entrevistas-criterio-rotulo">{n.curto}</span>
+                  <BarraDoCriterio nota={n.nota} />
+                  {/* Critério fora da escala 0–5 (planilha mal lida): a nota, sem o "/ 5". */}
+                  <b>
+                    {formatarNota(n.nota)}
+                    {n.nota <= NOTA_MAXIMA_DO_CRITERIO
+                      ? ` / ${formatNumberBR(NOTA_MAXIMA_DO_CRITERIO)}`
+                      : ""}
+                  </b>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="ui-secao-vazio">
+              Sem notas por critério na planilha.
+            </p>
+          )}
+          {link ? (
+            <p className="entrevistas-link">
+              <a href={link} target="_blank" rel="noopener noreferrer">
+                <i
+                  className="fa-solid fa-arrow-up-right-from-square"
+                  aria-hidden="true"
+                />{" "}
+                Abrir planilha da entrevista
+              </a>
+            </p>
+          ) : null}
+        </Secao>
       </div>
     </Gaveta>
   );
@@ -247,44 +237,42 @@ export function GavetaDosSemEntrevista({ aprovados, aoFechar }) {
         </span>
       }
     >
-      <div id="analisesDrawerBody">
-        <div className="detail-shell">
-          {grupos.length ? (
-            grupos.map((g) => (
-              <Secao
-                key={g.chave}
-                icone="fa-briefcase"
-                titulo={[g.edital, g.vaga && `Vaga ${g.vaga}`]
-                  .filter(Boolean)
-                  .join(" · ")}
-                secao="sem-entrevista"
-              >
-                <p className="analises-detail-empty">
-                  {[g.cargo, g.unidade].filter(Boolean).join(" · ")}
-                </p>
-                <ul className="entrevistas-sem-entrevista">
-                  {g.candidatos.map((a, indice) => (
-                    <li key={a.analise_id ?? `${g.chave}-${indice}`}>
-                      <span>
-                        <strong>{a.candidato}</strong>
-                        <small>
-                          {[a.codigo && `Cód. ${a.codigo}`, a.modalidade]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </small>
-                      </span>
-                      <b title="Nota da análise">{formatarNota(a.nota)}</b>
-                    </li>
-                  ))}
-                </ul>
-              </Secao>
-            ))
-          ) : (
-            <EstadoVazio>
-              Nenhum aprovado na análise sem entrevista no recorte atual.
-            </EstadoVazio>
-          )}
-        </div>
+      <div className="ui-gaveta-corpo">
+        {grupos.length ? (
+          grupos.map((g) => (
+            <Secao
+              key={g.chave}
+              icone="fa-briefcase"
+              titulo={[g.edital, g.vaga && `Vaga ${g.vaga}`]
+                .filter(Boolean)
+                .join(" · ")}
+              secao="sem-entrevista"
+            >
+              <p className="ui-secao-vazio">
+                {[g.cargo, g.unidade].filter(Boolean).join(" · ")}
+              </p>
+              <ul className="entrevistas-sem-entrevista">
+                {g.candidatos.map((a, indice) => (
+                  <li key={a.analise_id ?? `${g.chave}-${indice}`}>
+                    <span>
+                      <strong>{a.candidato}</strong>
+                      <small>
+                        {[a.codigo && `Cód. ${a.codigo}`, a.modalidade]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </small>
+                    </span>
+                    <b title="Nota da análise">{formatarNota(a.nota)}</b>
+                  </li>
+                ))}
+              </ul>
+            </Secao>
+          ))
+        ) : (
+          <EstadoVazio>
+            Nenhum aprovado na análise sem entrevista no recorte atual.
+          </EstadoVazio>
+        )}
       </div>
     </Gaveta>
   );

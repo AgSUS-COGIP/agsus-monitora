@@ -1,12 +1,13 @@
 /*
   Páginas do MONITORA que são um painel do próprio app num quadro.
 
-  Análises curriculares (`analises.html`), Entrevistas (`entrevistas.html`) e
-  Seleção (`selecao.html`) são apps separados, com cabeçalho, filtros, KPIs e
-  gráficos próprios, abertos dentro da página da view pelo mesmo módulo
-  (`src/modules/pagina-do-painel.js`): endereço fixo do app e a área atual do
-  menu na URL (`?area=`). A tabela abaixo é tudo o que muda de um para outro.
-  Recursos dos candidatos saiu do quadro: é o módulo src/modulos/recursos/.
+  Análises curriculares (`analises.html`) e Seleção (`selecao.html`) são apps
+  separados, com cabeçalho, filtros, KPIs e gráficos próprios, abertos dentro
+  da página da view pelo mesmo módulo (`src/modules/pagina-do-painel.js`):
+  endereço fixo do app e a área atual do menu na URL (`?area=`). A tabela
+  abaixo é tudo o que muda de um para outro. Recursos dos candidatos e
+  Entrevistas saíram do quadro: são os módulos src/modulos/recursos/ e
+  src/modulos/entrevistas/.
 
   Análises curriculares, antes, era a linha `analises` de `TB_PAINEL_EXTERNO`:
   aberta como painel externo, repetida em cada área pelo menu, e só para quem
@@ -29,10 +30,6 @@ export const PAGINAS_DO_PAINEL = Object.freeze({
   analises: Object.freeze({
     endereco: "/analises.html",
     titulo: "Análises curriculares",
-  }),
-  entrevistas: Object.freeze({
-    endereco: "/entrevistas.html",
-    titulo: "Entrevistas",
   }),
   selecao: Object.freeze({
     endereco: "/selecao.html",

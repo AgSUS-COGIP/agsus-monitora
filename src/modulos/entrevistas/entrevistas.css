@@ -1,68 +1,60 @@
 /*
-  O que é só do painel de entrevistas. Todo o resto — cabeçalho, filtros, KPIs,
-  blocos, gráficos, pendências, tabela, gaveta, tema escuro, celular — é o CSS
-  do painel de análises (src/analises/), que entrevistas.html e
-  src/entrevistas/main.jsx carregam antes deste arquivo. Aqui só entram as
-  peças que análises não tem: o caminho do candidato, as notas por critério, a
-  lista dos aprovados sem entrevista e o aviso de sem acesso. As cores são as
-  variáveis de análises (--line, --muted, --red…), que o tema escuro já troca.
+  O que é só da tela de Entrevistas (src/modulos/entrevistas/), só com tokens
+  de src/styles/tokens.css — o tema escuro vem dos próprios tokens
+  (`html[data-theme="dark"]`). Topo, segmentado, filtros, KPIs, recorte,
+  pendências, cards de gráfico, tabela, gaveta, seções, campos e selos são de
+  src/ui/ (ui.css). Aqui: o caminho do candidato e as notas por critério da
+  gaveta, a lista dos aprovados sem entrevista, os passos de "Conduzir
+  entrevistas" (resumo, tabelas de vagas/convocação/ficha, liberação do
+  edital), a ficha de notas, os cartões e o formulário dos roteiros.
+
+  Os controles soltos (fora de um <Campo>: notas da ficha, vagas imediatas)
+  e as gavetas (portais no fim do body) também ganham o desenho dos campos
+  de src/ui/. Importado pelo src/main.js, depois do ui.css.
 */
 
-/* Duas roscas (ou duas barras) lado a lado, do mesmo tamanho. */
-.oper-grid.entrevistas-grade-dupla {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-@media (max-width: 1100px) {
-  .oper-grid.entrevistas-grade-dupla {
-    grid-template-columns: 1fr;
+/* ── Resultados ─────────────────────────────────────────────────────── */
+
+/* Sete KPIs numa fileira em tela larga; abaixo disso, a grade de src/ui/. */
+@media (min-width: 1380px) {
+  .entrevistas-kpis {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }
 
-/* Topo no celular: "Somente consulta" desce para uma linha inteira. */
-@media (max-width: 820px) {
-  #topbar .top-actions > .status-pill + .status-pill {
-    order: 1;
-    grid-column: 1 / -1;
-    width: 100%;
-  }
+.entrevistas-sem-acesso {
+  display: grid;
+  gap: var(--space-1);
+}
+.entrevistas-sem-acesso span {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
-/* Pendência clicável é botão (teclado e leitor de tela), com o visual do item. */
-#attentionList button.attention-item {
-  width: 100%;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
+.entrevistas-bloco-de-pendencias {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
 }
 
 /* Tabela: a linha abre a gaveta. */
-#tableBody tr.entrevistas-linha {
+.entrevistas-linha {
   cursor: pointer;
 }
-#tableBody tr.entrevistas-linha:focus-visible td {
-  background: color-mix(in srgb, var(--blue2) 8%, var(--card));
+.entrevistas-linha:focus-visible td {
+  background: var(--state-info-soft);
 }
-#tableBody td .secondary-text + .badge,
-#tableBody td .primary-text + .badge {
-  display: inline-block;
-  margin-top: 6px;
+.entrevistas-linha td .ui-selo {
+  margin-top: var(--space-1-5);
 }
 
-.entrevistas-vazio .empty {
-  padding: 12px;
-}
-
-.entrevistas-sem-acesso p {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-weight: 600;
-}
+/* ── Gaveta da entrevista ───────────────────────────────────────────── */
 
 /* Caminho do candidato: Análise curricular → Entrevista → Recurso. */
 .entrevistas-caminho {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -70,48 +62,44 @@
 .entrevistas-caminho li {
   position: relative;
   display: grid;
-  gap: 4px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card);
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
 }
 .entrevistas-caminho li.is-feita {
-  border-color: color-mix(in srgb, var(--blue2) 45%, var(--line));
+  border-color: var(--state-info);
 }
 .entrevistas-caminho li + li::before {
-  content: "→";
   position: absolute;
-  left: -11px;
   top: 50%;
+  left: calc(-1 * var(--space-3));
+  width: var(--space-3);
+  color: var(--text-secondary);
+  text-align: center;
   transform: translateY(-50%);
-  color: var(--muted);
-  font-weight: 800;
+  content: "→";
 }
 .entrevistas-caminho small {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 750;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
 .entrevistas-caminho strong {
-  font-size: 13px;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
 }
-@media (max-width: 620px) {
-  .entrevistas-caminho {
-    grid-template-columns: 1fr;
-  }
-  .entrevistas-caminho li + li::before {
-    content: none;
-  }
+
+.entrevistas-gaveta .ui-secao-vazio {
+  margin: 0;
 }
 
 /* Notas por critério: rótulo curto, barra (0 a 5) e a nota. */
 .entrevistas-criterios {
   display: grid;
-  gap: 8px;
-  margin: 12px 0 0;
+  gap: var(--space-2);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -119,44 +107,47 @@
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(80px, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  font-size: 13px;
+  gap: var(--space-3);
+  font-size: var(--text-body-sm);
 }
 .entrevistas-criterio-rotulo {
   overflow: hidden;
+  font-weight: var(--font-weight-medium);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 700;
 }
 .entrevistas-barra {
   height: 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--line) 70%, transparent);
   overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
 }
 .entrevistas-barra > span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--blue2);
+  background: var(--series-1);
 }
 .entrevistas-divergente {
-  color: var(--red);
-  font-weight: 800;
+  color: var(--state-danger);
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-link {
-  margin: 12px 0 0;
+  margin: 0;
 }
 .entrevistas-link a {
-  color: var(--blue2);
-  font-weight: 750;
+  color: var(--color-text-link);
+  font-weight: var(--font-weight-medium);
+}
+html[data-theme="dark"] .entrevistas-link a {
+  color: var(--brand-primary);
 }
 
 /* Aprovados na análise sem entrevista, por edital e vaga. */
 .entrevistas-sem-entrevista {
   display: grid;
-  gap: 6px;
-  margin: 8px 0 0;
+  gap: var(--space-1-5);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -164,180 +155,137 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 .entrevistas-sem-entrevista span {
   display: grid;
-  gap: 2px;
+  gap: var(--space-0-5);
   min-width: 0;
 }
 .entrevistas-sem-entrevista small {
-  color: var(--muted);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
 }
 
-/* ─────────────────────────────────────────────────────────────────────
-   Visões "Conduzir entrevistas" e "Roteiros" (conducao.jsx, ficha.jsx,
-   roteiros.jsx, partes.jsx): os mesmos cartões, campos e gaveta do painel
-   de análises; aqui só o que eles não têm.
-   ───────────────────────────────────────────────────────────────────── */
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+/* Gaveta: formulário longo e ficha de notas precisam de mais largura. */
+.modal-card.ui-gaveta.entrevistas-gaveta-larga {
+  width: min(1040px, 100vw);
+}
+.modal-card.ui-gaveta.entrevistas-gaveta-estreita {
+  width: min(520px, 100vw);
+}
+/* O formulário ocupa a gaveta inteira: o rodapé fica preso embaixo. */
+.entrevistas-formulario-da-gaveta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+.entrevistas-rodape-resumo {
+  align-self: center;
+  margin-right: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
 }
 
-/* Controle segmentado (visões do cabeçalho, escala, lançamento, comparecimento). */
-.entrevistas-segmentado {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card2);
-}
-.entrevistas-segmentado button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 750;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.entrevistas-segmentado button:hover:not(:disabled) {
-  color: var(--text);
-}
-.entrevistas-segmentado button.ativo {
-  background: var(--card);
-  color: var(--blue2);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
-}
-.entrevistas-segmentado button:focus-visible {
-  outline: none;
-  box-shadow: var(--ring);
-}
-.entrevistas-segmentado button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-.entrevistas-visoes {
-  margin-top: 8px;
-}
+/* ── Controles soltos e campos (tela e gavetas) ─────────────────────── */
 
-/* Campos (o <Campo> de src/ui/ traz o seu; estas servem à marcação avulsa). */
-.entrevistas-dica {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 650;
+:is(.entrevistas-tela, .entrevistas-gaveta)
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-height: 40px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
 }
-.entrevistas-erro-campo {
-  color: var(--red);
-  font-size: 12px;
-  font-weight: 800;
+:is(.entrevistas-tela, .entrevistas-gaveta) textarea {
+  min-height: 64px;
+  padding: var(--space-2) var(--space-3);
+}
+:is(.entrevistas-tela, .entrevistas-gaveta) :is(input, select, textarea):focus {
+  border-color: var(--focus-ring);
+  box-shadow: none;
+}
+:is(.entrevistas-tela, .entrevistas-gaveta) [aria-invalid="true"] {
+  border-color: var(--state-danger);
+}
+:is(.entrevistas-tela, .entrevistas-gaveta) input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  accent-color: var(--brand-primary);
+}
+.entrevistas-dica,
+.entrevistas-origem-vaga {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
 .entrevistas-origem-vaga {
   display: block;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 650;
 }
-.entrevistas-formulario [aria-invalid="true"] {
-  border-color: var(--red);
+.entrevistas-erro-campo {
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
 }
-.entrevistas-formulario textarea {
-  width: 100%;
-  min-height: 60px;
-  padding: 10px 13px;
-  border: 1px solid var(--line2);
-  border-radius: 12px;
-  background: var(--card2);
-  color: var(--text);
-  font: inherit;
-  font-weight: 650;
-  resize: vertical;
+.entrevistas-rotulo {
+  color: var(--text-primary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-medium);
 }
-.entrevistas-formulario textarea:focus {
-  border-color: rgba(15, 93, 183, 0.55);
-  box-shadow: var(--ring);
-  outline: none;
+/* Vence o `label` de app.css (caixa alta, 900): rótulo em sentence case. */
+label.entrevistas-marcar,
+label.entrevistas-todos {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
 }
-.field abbr {
-  color: var(--red);
-  text-decoration: none;
-}
-.entrevistas-visao input[type="checkbox"],
-.entrevistas-gaveta input[type="checkbox"] {
-  width: 18px;
-  min-height: 18px;
-  height: 18px;
-  accent-color: var(--blue2);
+label.entrevistas-todos {
+  color: var(--text-secondary);
 }
 .entrevistas-grade {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 .entrevistas-em-linha {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .entrevistas-em-linha input {
   flex: 1 1 120px;
   width: auto;
-}
-.entrevistas-marcar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.entrevistas-rotulo {
-  font-size: 12px;
-  font-weight: 850;
-  color: var(--muted);
-}
-
-/* O <Aviso> de src/ui/ (desenho em ui.css); aqui, só o espaçamento na tabela. */
-.table-card > .ui-aviso {
-  margin: 0 12px 12px;
 }
 
 /* Listas editáveis (exceções, banca, níveis, membros, desempate). */
 .entrevistas-bloco,
 .entrevistas-sublista {
   display: grid;
-  gap: 10px;
+  gap: var(--space-2);
 }
 .entrevistas-sublista-topo {
-  display: grid;
-  gap: 2px;
-  font-size: 13px;
+  font-size: var(--text-body-sm);
+}
+.entrevistas-sublista-topo strong {
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-linhas {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -345,11 +293,11 @@
 .entrevistas-linhas > li {
   display: grid;
   align-items: end;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
 }
 .entrevistas-linhas > li > * {
   min-width: 0;
@@ -371,17 +319,17 @@
 }
 .entrevistas-ordem {
   align-self: center;
-  color: var(--muted);
-  font-weight: 850;
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-vazio-linha {
   margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 650;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
 }
-.entrevistas-botao-linha {
+.btn.entrevistas-botao-linha {
   width: 36px;
+  min-width: 36px;
   min-height: 36px;
   padding: 0;
 }
@@ -389,218 +337,151 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-}
-@media (max-width: 720px) {
-  .entrevistas-linha-excecao,
-  .entrevistas-linha-banca,
-  .entrevistas-linha-nivel,
-  .entrevistas-linha-membro {
-    grid-template-columns: 1fr;
-  }
+  gap: var(--space-1-5);
 }
 
-/* Roteiros: cartões compactos. */
-.entrevistas-cartoes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
-  padding: 0 12px 12px;
-}
-.entrevistas-cartao {
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  padding: 14px;
-}
-.entrevistas-cartao-topo {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-.entrevistas-cartao h3 {
-  margin: 2px 0 0;
-  color: var(--strong);
-  font-size: 15px;
-  line-height: 1.3;
-}
-.entrevistas-cartao-linha {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-.entrevistas-cartao-acoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
+/* ── Conduzir entrevistas: passos em cards ──────────────────────────── */
 
-/* Gaveta: formulário longo e ficha de notas precisam de mais largura. */
-.analises-drawer.entrevistas-gaveta-larga {
-  width: min(1040px, 98vw) !important;
-}
-.analises-drawer.entrevistas-gaveta-estreita {
-  width: min(520px, 96vw) !important;
-}
-.entrevistas-formulario {
-  display: grid;
-  gap: 12px;
-}
-.entrevistas-formulario-curto {
-  padding: 16px 24px 20px;
-}
-.entrevistas-secao-corpo {
-  display: grid;
-  gap: 12px;
-}
-.entrevistas-competencias {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.entrevistas-competencia {
-  display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--blue2);
-  border-radius: 12px;
-  background: var(--card);
-}
-.entrevistas-competencia-topo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--strong);
-}
-.entrevistas-gaveta-rodape {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 14px 24px;
-  border-top: 1px solid var(--line);
-  background: var(--card);
-}
-.entrevistas-rodape-resumo {
-  margin-right: auto;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-/* Conduzir: passos em cartões. */
 .entrevistas-conducao {
   display: grid;
-  gap: 14px;
+  gap: var(--space-4);
 }
 .entrevistas-passo {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .entrevistas-passo-topo {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2) var(--space-3);
+}
+.entrevistas-sobretitulo {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
 .entrevistas-subtitulo {
-  margin: 6px 0 0;
-  color: var(--strong);
-  font-size: 13px;
-  font-weight: 850;
+  margin: var(--space-1) 0 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-formulario {
+  display: grid;
+  gap: var(--space-3);
 }
 .entrevistas-acoes {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .entrevistas-filtros {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   align-items: end;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .entrevistas-botao-alinhado {
   justify-self: start;
-  min-height: 44px;
+  min-height: 40px;
 }
 .entrevistas-resumo {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 10px;
+  gap: var(--space-2);
   margin: 0;
 }
 .entrevistas-resumo > div {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
 }
 .entrevistas-resumo dt {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
 .entrevistas-resumo dd {
   display: grid;
-  gap: 2px;
-  margin: 4px 0 0;
-  color: var(--strong);
-  font-size: 13px;
-  font-weight: 750;
+  gap: var(--space-0-5);
+  margin: var(--space-1) 0 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-resumo dd small {
-  color: var(--muted);
-  font-weight: 650;
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-regular);
 }
 
-/* Tabelas das visões (convocação, vagas, ficha). */
+/* Administrador global: liberação de um edital fora da janela. */
+.entrevistas-liberacao {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  background: var(--state-warning-soft);
+  font-size: var(--text-body-sm);
+}
+.entrevistas-liberacao-texto {
+  margin: 0;
+}
+.entrevistas-liberacao-campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.entrevistas-liberacao-campos > .ui-campo:last-of-type {
+  flex: 1 1 220px;
+}
+
+/* Tabelas das visões (vagas, convocação, ficha). Vencem `table`, `th` e `td`
+   de app.css (largura mínima, cabeçalho preso, caixa alta). */
 .entrevistas-tabela-rolagem {
   overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
-/* Campo numérico estreito: a coluna "Vagas imediatas" cabe em telas médias. */
-.entrevistas-tabela input[type="number"] {
-  width: 88px;
-  max-width: 100%;
-}
-.entrevistas-tabela {
+table.entrevistas-tabela {
   width: 100%;
+  min-width: 0;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--text-body-sm);
 }
 .entrevistas-tabela th,
 .entrevistas-tabela td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--line);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-regular);
   text-align: left;
   vertical-align: middle;
 }
 .entrevistas-tabela thead th {
-  background: var(--card2);
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  position: static;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
+}
+.entrevistas-tabela tbody th {
+  position: static;
+  background: transparent;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
 }
 .entrevistas-tabela tbody tr:last-child > * {
   border-bottom: 0;
@@ -608,35 +489,33 @@
 .entrevistas-tabela th small,
 .entrevistas-tabela td small {
   display: block;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 650;
-  text-transform: none;
-  letter-spacing: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
 }
-.entrevistas-tabela input:not([type="checkbox"]),
-.entrevistas-tabela select {
+.entrevistas-tabela :is(input:not([type="checkbox"]), select) {
   min-height: 36px;
   max-width: 180px;
 }
-.entrevistas-tabela .badge {
-  margin-left: 4px;
+.entrevistas-tabela input[type="number"] {
+  width: 88px;
+  max-width: 100%;
+}
+.entrevistas-selo-pcd {
+  margin-left: var(--space-1);
 }
 .entrevistas-col-marca {
   width: 40px;
 }
 .entrevistas-tabela tr.entrevistas-sugerido td {
-  background: color-mix(in srgb, var(--blue2) 5%, transparent);
+  background: color-mix(in srgb, var(--state-info-soft) 60%, transparent);
 }
 .entrevistas-tabela tr.entrevistas-convocado td {
-  background: color-mix(in srgb, var(--green) 7%, transparent);
-}
-.entrevistas-tabela tr.entrevistas-linha {
-  cursor: pointer;
+  background: color-mix(in srgb, var(--state-success-soft) 70%, transparent);
 }
 .entrevistas-tabela tr.entrevistas-linha:hover td,
 .entrevistas-tabela tr.entrevistas-linha:focus-visible td {
-  background: color-mix(in srgb, var(--blue2) 8%, var(--card));
+  background: var(--state-info-soft);
 }
 .entrevistas-tabela tr.entrevistas-linha:focus-visible {
   outline: none;
@@ -645,148 +524,199 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 .entrevistas-vaga {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .entrevistas-vaga-topo {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 6px;
-  color: var(--strong);
-  font-size: 13px;
+  gap: var(--space-1-5);
+  font-size: var(--text-body-sm);
+}
+.entrevistas-vaga-topo strong {
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-vaga-topo small {
-  color: var(--muted);
-  font-weight: 700;
+  color: var(--text-secondary);
 }
 
-/* Ficha de notas. */
+/* ── Ficha de notas ─────────────────────────────────────────────────── */
+
 .entrevistas-ficha-topo {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 18px;
+  gap: var(--space-4);
+}
+.entrevistas-campo-da-ficha {
+  display: grid;
+  gap: var(--space-1);
 }
 .entrevistas-ficha thead th.is-editavel {
-  color: var(--blue2);
+  color: var(--state-info);
 }
 .entrevistas-ficha tbody th {
   min-width: 180px;
-  font-weight: 800;
 }
 .entrevistas-ficha tfoot th,
 .entrevistas-ficha tfoot td {
-  border-top: 2px solid var(--line2);
+  border-top: 2px solid var(--border-control);
   border-bottom: 0;
-  font-size: 14px;
+  font-size: var(--text-body);
+  letter-spacing: 0;
+  text-transform: none;
 }
 .entrevistas-ficha tfoot th {
+  position: static;
+  background: transparent;
   text-align: right;
 }
 .entrevistas-nota {
   width: 100%;
   min-width: 90px;
 }
-.entrevistas-nota.is-invalida {
-  border-color: var(--red);
+.entrevistas-tabela .entrevistas-nota.is-invalida {
+  border-color: var(--state-danger);
 }
 .entrevistas-nota-fixa {
   display: grid;
-  font-weight: 800;
+  font-weight: var(--font-weight-semibold);
 }
-.entrevistas-reprova strong {
-  color: var(--red);
-}
-.entrevistas-reprova small {
-  color: var(--red) !important;
+.entrevistas-reprova :is(strong, small) {
+  color: var(--state-danger);
 }
 .entrevistas-previa {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card);
-  font-size: 13px;
-  font-weight: 750;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
 }
 .entrevistas-previa ul {
   flex-basis: 100%;
   margin: 0;
-  padding-left: 18px;
-  color: var(--muted);
-  font-weight: 650;
+  padding-left: var(--space-4);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-regular);
 }
 .entrevistas-niveis {
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card);
-  font-size: 13px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  font-size: var(--text-body-sm);
 }
 .entrevistas-niveis summary {
-  font-weight: 800;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
 .entrevistas-niveis dl {
   display: grid;
-  gap: 8px;
-  margin: 10px 0 0;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
 }
 .entrevistas-niveis dt {
-  font-weight: 800;
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-niveis dd {
-  margin: 2px 0 0;
-  color: var(--muted);
+  margin: var(--space-0-5) 0 0;
+  color: var(--text-secondary);
 }
 
-/* Conduzir entrevistas: filtro do administrador e liberação fora da janela. */
-.entrevistas-todos {
+/* ── Roteiros: cartões compactos e o formulário ─────────────────────── */
+
+.entrevistas-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-3);
+}
+.entrevistas-cartao {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: none;
+}
+.entrevistas-cartao-topo {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 650;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
-.entrevistas-liberacao {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border: 1px solid #f0d99a;
-  border-radius: 10px;
-  background: #fff8e6;
-  font-size: 13px;
+.entrevistas-cartao h3 {
+  margin: var(--space-0-5) 0 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-body);
 }
-.entrevistas-liberacao p {
-  margin: 0 0 8px;
+.entrevistas-cartao-linha {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
 }
-.entrevistas-liberacao-campos {
+.entrevistas-cartao-acoes {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 8px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-1);
 }
-.entrevistas-liberacao-campos label {
+.entrevistas-secao-corpo {
   display: grid;
-  gap: 3px;
-  font-size: 12px;
-  font-weight: 700;
+  gap: var(--space-3);
 }
-.entrevistas-liberacao-motivo {
-  flex: 1 1 220px;
+.entrevistas-competencias {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.entrevistas-liberacao-campos input {
-  min-height: 36px;
-  padding: 6px 8px;
-  border: 1px solid #d7e1ec;
-  border-radius: 8px;
+.entrevistas-competencia {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--state-info);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.entrevistas-competencia-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.entrevistas-competencia-topo strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── Celular ───────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .entrevistas-linha-excecao,
+  .entrevistas-linha-banca,
+  .entrevistas-linha-nivel,
+  .entrevistas-linha-membro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 620px) {
+  .entrevistas-caminho {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .entrevistas-caminho li + li::before {
+    content: none;
+  }
 }

@@ -23,7 +23,6 @@ const fontes = [
   ...arquivos("src", [".js", ".jsx", ".html"]),
   "index.html",
   "analises.html",
-  "entrevistas.html",
   "selecao.html",
   "auth/callback.html",
 ];
@@ -58,12 +57,7 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
   });
 
   it("o Font Awesome não é mais carregado", () => {
-    for (const pagina of [
-      "index.html",
-      "analises.html",
-      "entrevistas.html",
-      "selecao.html",
-    ]) {
+    for (const pagina of ["index.html", "analises.html", "selecao.html"]) {
       expect(readFileSync(pagina, "utf8")).not.toContain("font-awesome");
     }
   });
@@ -77,7 +71,7 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
     expect(readFileSync("src/analises/main.js", "utf8")).toContain(
       "icones-lucide.css",
     );
-    expect(readFileSync("src/entrevistas/main.jsx", "utf8")).toContain(
+    expect(readFileSync("src/selecao/main.jsx", "utf8")).toContain(
       "icones-lucide.css",
     );
   });

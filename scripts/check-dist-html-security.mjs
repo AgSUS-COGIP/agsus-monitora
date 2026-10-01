@@ -5,7 +5,6 @@ const DIST_DIR = "dist";
 const SOURCE_HTML_FILES = [
   "index.html",
   "analises.html",
-  "entrevistas.html",
   "selecao.html",
   "auth/callback.html",
 ];
