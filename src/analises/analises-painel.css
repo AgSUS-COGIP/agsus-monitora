@@ -460,6 +460,13 @@ html[data-theme="dark"] .topbar {
 
 html[data-theme="dark"] .panel,
 html[data-theme="dark"] .kpi,
+.status-discreto {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 html[data-theme="dark"] .status-pill,
 html[data-theme="dark"] .table-card,
 html[data-theme="dark"] .table-wrap,

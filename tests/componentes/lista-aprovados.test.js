@@ -971,13 +971,14 @@ describe("modal de listas do edital", () => {
     expect($("approvedImportSubmit")).toBeNull();
     expect($("approvedImportRemove")).toBeNull();
     expect($("approvedImportPermissionNote").textContent).toContain(
-      "O perfil edital_gestor pode ativar/inativar",
+      "Só admin substitui ou remove o XLSX.",
     );
   });
 
   it("o admin pode substituir e remover", async () => {
     await montar({ perfil: { perfil: "admin" } });
     await abrir();
+    expect($("approvedImportPermissionNote")).toBeNull();
     expect($("approvedImportSubmit").textContent).toContain("Substituir XLSX");
     expect($("approvedImportRemove")).not.toBeNull();
     expect(

@@ -144,7 +144,7 @@ function LinhaDoItem({
   );
 }
 
-function Cartao({ titulo, descricao, icone, controles = null, children }) {
+function Cartao({ titulo, icone, controles = null, children }) {
   return (
     <section className="modulos-cartao">
       <header className="modulos-cartao__cabecalho">
@@ -153,7 +153,6 @@ function Cartao({ titulo, descricao, icone, controles = null, children }) {
         </span>
         <div className="modulos-cartao__titulo">
           <h4>{titulo}</h4>
-          {descricao ? <p>{descricao}</p> : null}
         </div>
         {controles ? (
           <div className="modulos-cartao__controles">{controles}</div>
@@ -254,7 +253,6 @@ function BarraDeRevisao({ estado, atual }) {
           required
           minLength={3}
           maxLength={500}
-          placeholder="Vai para o histórico"
           aria-invalid={(tentou && !motivoValido(motivo)) || undefined}
         />
         {tentou && !motivoValido(motivo) ? (
@@ -289,11 +287,7 @@ function BarraDeRevisao({ estado, atual }) {
 function Historico({ arvore }) {
   const registros = (arvore?.historico || []).slice(0, 50);
   return (
-    <Cartao
-      titulo="Histórico"
-      descricao="As 50 últimas mudanças, da mais recente para a mais antiga."
-      icone="rotate-ccw"
-    >
+    <Cartao titulo="Histórico" icone="rotate-ccw">
       {registros.length ? (
         <ul className="modulos-historico">
           {registros.map((registro, indice) => {
@@ -389,7 +383,6 @@ export function ModulosEAbas({ estado }) {
 
       <Cartao
         titulo="Sistema inteiro"
-        descricao="Em manutenção, só o administrador global entra; os demais veem a tela de manutenção."
         icone="gauge"
         controles={
           <ControleSegmentado
@@ -417,11 +410,6 @@ export function ModulosEAbas({ estado }) {
           />
           <span>Comemorações (marcos do processo)</span>
         </label>
-        <p className="acessos-secundario modulos-comemoracoes__dica">
-          Confete discreto quando um edital é todo analisado, a fila zera ou uma
-          vaga fica pronta, e os marcos do ano da equipe. Nunca ranking
-          individual. Desligado, ninguém vê.
-        </p>
       </Cartao>
 
       {(arvore.areas || []).map((area) => {
@@ -431,7 +419,6 @@ export function ModulosEAbas({ estado }) {
           <Cartao
             key={area.co_area}
             titulo={area.no_area || area.co_area}
-            descricao="Desativada, a área some do menu de todos. Em manutenção, as abas dela mostram a tela de manutenção."
             icone="layout-dashboard"
             controles={
               <>
@@ -475,11 +462,7 @@ export function ModulosEAbas({ estado }) {
         );
       })}
 
-      <Cartao
-        titulo="Abas (em todas as áreas)"
-        descricao="Vale para a aba em todas as áreas, antes da situação dela em cada área. O selo BETA aparece ao lado do nome no menu."
-        icone="list-filter"
-      >
+      <Cartao titulo="Abas (em todas as áreas)" icone="list-filter">
         <ul className="modulos-lista" aria-label="Abas em todas as áreas">
           {(arvore.abas || []).map((aba) => {
             const alvo = { escopo: "aba", aba: aba.co_aba };
@@ -514,11 +497,7 @@ export function ModulosEAbas({ estado }) {
         </ul>
       </Cartao>
 
-      <Cartao
-        titulo="Painéis externos"
-        descricao="Em manutenção, o painel mostra o aviso de manutenção configurado; desativado, sai do menu."
-        icone="square-arrow-out-up-right"
-      >
+      <Cartao titulo="Painéis externos" icone="square-arrow-out-up-right">
         {(arvore.paineis || []).length ? (
           <ul className="modulos-lista" aria-label="Painéis externos">
             {arvore.paineis.map((painel) => (

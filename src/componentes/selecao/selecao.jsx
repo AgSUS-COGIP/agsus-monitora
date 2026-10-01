@@ -139,7 +139,7 @@ export function PainelDeSelecao({ estado, area, nomeDaArea }) {
     <>
       <div className="shell">
         <Topo
-          subtitulo={`Acompanhamento estratégico dos processos seletivos · ${nomeDaArea}`}
+          subtitulo={nomeDaArea}
           status={textoDoStatus(e)}
           escuro={escuro}
           aoTema={() => setEscuro(alternarTemaDoPainel())}

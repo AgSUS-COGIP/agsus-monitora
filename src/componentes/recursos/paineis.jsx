@@ -58,7 +58,6 @@ export function usarAlturaDoTopo(topo) {
 export function Topo({
   subtitulo,
   status,
-  somenteConsulta,
   escuro,
   aoTema,
   aoTelaCheia,
@@ -82,16 +81,9 @@ export function Topo({
         </div>
       </div>
       <div className="top-actions">
-        <span className="status-pill">
-          <span className="dot" />
-          <span id="updatedText">{status}</span>
+        <span id="updatedText" className="status-discreto">
+          {status}
         </span>
-        {somenteConsulta ? (
-          <span className="status-pill" title="Seu acesso só consulta">
-            <i className="fa-solid fa-eye" aria-hidden="true" /> Somente
-            consulta
-          </span>
-        ) : null}
         <button
           type="button"
           className="btn secondary icon"
@@ -202,15 +194,9 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
     >
       <div className="filter-head">
         <div>
-          <span className="eyebrow">Filtros da visualização</span>
           <h2 className="title" id="recursosFiltrosTitulo">
             Refinar resultados
           </h2>
-          <p className="hint">
-            Use os filtros para refinar os recursos exibidos. Indicadores,
-            gráficos, a fila e o CSV são atualizados conforme o recorte
-            selecionado.
-          </p>
         </div>
         <div className="filter-actions">
           <span
@@ -257,7 +243,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
             className="btn secondary"
             id="clearBtn"
             disabled={!quantos}
-            title="Remove os filtros e volta a todos os recursos da área."
+            title="Limpar filtros"
             onClick={aoLimpar}
           >
             Limpar tudo
@@ -269,7 +255,6 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
         <div id="filtersToolbar" className="filters-toolbar">
           <div className="filters-toolbar-copy">
             <strong>Filtros principais</strong>
-            <small>Edital, origem, analista, situação e pendência.</small>
           </div>
           <button
             type="button"
@@ -512,7 +497,7 @@ export function Recorte({ ativos, recursos, carregado }) {
       <div id="contextLine" className="context-line">
         {ativos.length
           ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
-          : "Sem filtros aplicados. Recorte base: todos os recursos da área."}
+          : "Sem filtros"}
       </div>
       <div id="windowMeta" className="meta-line">
         {carregado ? (
@@ -534,8 +519,7 @@ export function Recorte({ ativos, recursos, carregado }) {
             {pelaAbertura ? (
               <span className="meta-chip">
                 <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
-                {formatNumberBR(pelaAbertura)} com o prazo pelo fim do prazo de
-                recurso (*)
+                {formatNumberBR(pelaAbertura)} com prazo estimado (*)
               </span>
             ) : null}
           </>
@@ -589,7 +573,8 @@ function Pendencias({ pendencias, carregado, filtros, aoFiltrar }) {
               <b>{p.titulo}</b>
               <small>
                 {formatNumberBR(p.valor)}{" "}
-                {p.valor === 1 ? "recurso" : "recursos"} · {p.subtitulo}
+                {p.valor === 1 ? "recurso" : "recursos"}
+                {p.subtitulo ? ` · ${p.subtitulo}` : ""}
               </small>
             </button>
           );
@@ -682,12 +667,7 @@ export function Graficos({
     <>
       <section className="oper-grid">
         <article className="panel panel-pad">
-          <span className="eyebrow">Carga operacional</span>
           <h2 className="title">Recursos por analista</h2>
-          <p className="hint">
-            Barras empilhadas por situação. Clique em um analista para recortar
-            a fila.
-          </p>
           <div className="chart-wrap short">
             <Grafico
               id="chartAnalista"
@@ -734,11 +714,7 @@ export function Graficos({
           </div>
         </article>
         <article className="panel panel-pad">
-          <span className="eyebrow">Ação imediata</span>
           <h2 className="title">Pendências prioritárias</h2>
-          <p className="hint">
-            Clique em um item para aplicar o recorte correspondente na fila.
-          </p>
           <Pendencias
             pendencias={pendencias}
             carregado={carregado}
@@ -750,11 +726,7 @@ export function Graficos({
 
       <section className="oper-grid">
         <article className="panel panel-pad">
-          <span className="eyebrow">Decisão</span>
           <h2 className="title">Situação</h2>
-          <p className="hint">
-            Recursos por situação. Clique em uma barra para recortar a fila.
-          </p>
           <div className="chart-wrap short">
             <Grafico
               id="chartSituacao"
@@ -789,11 +761,8 @@ export function Graficos({
           </div>
         </article>
         <article className="panel panel-pad">
-          <span className="eyebrow">Resultado</span>
           <h2 className="title">Impacto no resultado</h2>
-          <p className="hint">
-            A nota mudou quando a nota atual da análise difere da do cadastro.
-          </p>
+          <p className="hint">Nota atual × nota do cadastro</p>
           <div className="chart-wrap short">
             <Grafico
               id="chartImpacto"
@@ -823,12 +792,7 @@ export function Graficos({
       </section>
 
       <section className="panel panel-pad trend">
-        <span className="eyebrow">Evolução</span>
         <h2 className="title">Esteira do recurso</h2>
-        <p className="hint">
-          Quantos recursos do recorte já passaram por cada etapa, do cadastro à
-          resposta ao candidato.
-        </p>
         <div className="chart-wrap">
           <Grafico
             id="chartEsteira"

@@ -87,7 +87,6 @@ html[data-theme="dark"] #page-config .config-barra__texto strong {
 
 html[data-theme="dark"] #page-config .form-row small,
 html[data-theme="dark"] #page-config .config-card-title p,
-html[data-theme="dark"] #page-config .config-cabecalho p,
 html[data-theme="dark"] #page-config .config-barra__texto span {
   color: #aab9c8 !important;
 }

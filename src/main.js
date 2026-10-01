@@ -102,6 +102,7 @@ import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.jsx";
+import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -195,6 +196,14 @@ window.modulosController = montarModulos({
 // Configurações › Status das atualizações (só admin global): relê a cada abertura da seção.
 window.saudeDasCargasController = montarSaudeDasCargas({
   getProfile: window.getMonitoraProfile,
+});
+
+/*
+  Busca global (Ctrl+K / Cmd+K): só abre com usuário conectado. A escolha vai
+  ao legado por evento (filtros e navegação continuam lá).
+*/
+montarBuscaGlobal({
+  estaConectado: () => Boolean(window.getMonitoraUser?.()),
 });
 
 if (!hasSupabaseEnv()) {

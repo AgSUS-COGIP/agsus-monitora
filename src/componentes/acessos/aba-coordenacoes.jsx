@@ -152,8 +152,7 @@ function Editor({
 
       <h4>Recorte</h4>
       <p className="acessos-secundario">
-        Vê: <strong>{resumoDaCoordenacao(rascunho)}</strong>. Sem responsável,
-        unidades nem editais, a coordenação vê a área inteira.
+        Vê: <strong>{resumoDaCoordenacao(rascunho)}</strong>.
       </p>
       <div className="acessos-grade-campos">
         <div className="acessos-campo">

@@ -86,7 +86,7 @@ export function avaliarAcao(
   const regra = ACOES_DA_RESPOSTA[acao];
   if (!regra) return { permitida: false, motivo: "Ação desconhecida." };
   if (!podeEditar)
-    return { permitida: false, motivo: "Seu acesso só consulta." };
+    return { permitida: false, motivo: "Sem permissão para responder." };
   if (!resposta?.id)
     return { permitida: false, motivo: "Salve o rascunho primeiro." };
   if (!regra.de.includes(resposta.estado))

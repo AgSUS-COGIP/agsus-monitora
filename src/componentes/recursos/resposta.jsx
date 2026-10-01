@@ -95,7 +95,7 @@ function ConfirmarAcao({ escolhida, emCurso, aoConfirmar, aoCancelar }) {
       ) : (
         <p className="recursos-aviso" data-tone="info">
           {escolhida.acao === "marcar_enviada"
-            ? "Confirme que a resposta aprovada já foi enviada ao candidato. A etapa “Resposta enviada ao candidato” será marcada com o seu nome e a hora de agora."
+            ? "Confirme que a resposta aprovada já foi enviada ao candidato."
             : `Confirmar: ${escolhida.rotulo.toLowerCase()}?`}
         </p>
       )}
@@ -395,9 +395,7 @@ export function SecaoDaResposta({
               </select>
               {r.decidido ? null : (
                 <small className="recursos-motivo">
-                  O recurso ainda está em análise: todos os modelos da origem
-                  aparecem, mas a aprovação exige a decisão (
-                  {rotuloDaSituacao(r.situacao)}).
+                  Aprovar exige a decisão ({rotuloDaSituacao(r.situacao)}).
                 </small>
               )}
             </div>
@@ -409,7 +407,7 @@ export function SecaoDaResposta({
                 rows={6}
                 maxLength={20000}
                 value={rascunho.fundamentacao}
-                placeholder="Os motivos da decisão, com os itens do edital e os documentos analisados."
+                placeholder="Motivos da decisão"
                 onChange={(evento) =>
                   setRascunho((atual) => ({
                     ...atual,
@@ -417,9 +415,6 @@ export function SecaoDaResposta({
                   }))
                 }
               />
-              <small className="recursos-motivo">
-                Entra no lugar de {"{fundamentacao}"} no modelo.
-              </small>
             </div>
             {renderizado ? <PreviaDoTexto renderizado={renderizado} /> : null}
             <div className="detail-actions">
@@ -497,9 +492,7 @@ function PreviaDoTexto({ renderizado }) {
       <strong>Prévia do texto</strong>
       {renderizado.faltando.length ? (
         <p className="recursos-aviso" data-tone="warning">
-          Sem valor no recurso: {renderizado.faltando.map(rotulo).join(", ")}. O
-          texto mostra “[não informado: …]” no lugar — complete o recurso ou
-          ajuste a fundamentação.
+          Sem valor no recurso: {renderizado.faltando.map(rotulo).join(", ")}.
         </p>
       ) : null}
       {renderizado.desconhecidos.length ? (

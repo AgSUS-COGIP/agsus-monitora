@@ -445,8 +445,7 @@ export function FormularioDoRecurso({
                       className="fa-solid fa-triangle-exclamation"
                       aria-hidden="true"
                     />{" "}
-                    O recurso será marcado como <b>fora das análises</b>: os
-                    dados abaixo são os digitados.{" "}
+                    <b>Fora das análises</b> (dados digitados).{" "}
                     <button
                       type="button"
                       className="recursos-link"
@@ -597,12 +596,7 @@ export function FormularioDoRecurso({
                     mudar("mudou_classificacao", evento.target.checked)
                   }
                 />
-                <span>
-                  O recurso mudou a classificação
-                  <small>
-                    A mudança de nota é conferida sozinha, pela nota da análise.
-                  </small>
-                </span>
+                <span>O recurso mudou a classificação</span>
               </label>
               <Campo rotulo="Observação" erro={erro("observacao")} largo>
                 <textarea

@@ -132,7 +132,6 @@ function LinhaSimples({ estado, matriz, usuario, rascunho, gruposPorCodigo }) {
           <span className="acessos-chip acessos-chip-grupo">
             {grupo?.nome || codigoDoGrupo || "—"}
           </span>
-          {explicacao ? <small>{explicacao}</small> : null}
         </span>
       </td>
       <td>

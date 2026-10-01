@@ -145,11 +145,11 @@ describe("painel de entrevistas", () => {
     expect(kpi("inaptos")).toBe("1");
     expect(kpi("media")).toBe("6,00");
     expect(kpi("sem-entrevista")).toBe("1");
-    expect(
-      naTela(
-        "Dados da planilha de entrevistas · última carga 29/09/2026 10:30",
-      ),
-    ).toBe(true);
+    // A última carga aparece uma vez só, discreta, no topo.
+    expect(document.getElementById("updatedText").textContent).toBe(
+      "Carga 29/09/2026 10:30",
+    );
+    expect(document.getElementById("windowMeta")).toBeNull();
     expect(
       document.querySelectorAll("#tableBody tr.entrevistas-linha"),
     ).toHaveLength(2);
@@ -715,7 +715,7 @@ describe("visões de condução e roteiros", () => {
     expect(
       celulas.every((c) => c.getAttribute("aria-label").includes("Ana")),
     ).toBe(true);
-    expect(ficha.textContent).toContain("só a coluna ligada ao seu perfil");
+    expect(ficha.textContent).toContain("Você só edita a sua coluna.");
   });
 
   it("administrador global: mostra todos e libera edital fora da janela", async () => {
@@ -788,7 +788,8 @@ describe("visões de condução e roteiros", () => {
     await montar(supabaseDaConducao({ edital }));
     await abrirEdital();
     expect(document.getElementById("entrevistasConvocar")).toBeNull();
-    expect(naTela("Somente consulta")).toBe(true);
+    // Sem selo "Somente consulta": quem só lê não vê os controles de edição.
+    expect(naTela("Somente consulta")).toBe(false);
     await clicar(
       document.querySelector("#entrevistasFicha tr.entrevistas-linha"),
     );

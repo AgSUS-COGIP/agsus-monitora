@@ -56,12 +56,6 @@
   font-size: var(--text-body);
   font-weight: 600;
 }
-.modulos-cartao__titulo p {
-  margin: var(--space-0-5) 0 0;
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: 1.5;
-}
 .modulos-cartao__controles {
   display: flex;
   flex-wrap: wrap;
@@ -135,11 +129,6 @@
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
   cursor: pointer;
-}
-
-.modulos-comemoracoes__dica {
-  margin: calc(-1 * var(--space-2)) 0 0;
-  font-size: var(--text-caption);
 }
 
 /* Mensagem e previsão, quando em manutenção. */

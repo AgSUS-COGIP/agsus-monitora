@@ -106,7 +106,8 @@ export function normalizarInteiro(valor, padrao, minimo = 1) {
 
 /*
   Campos das seções em React, por seção. `tipo: "url"` valida como endereço
-  http(s) (vazio passa). `rotulo`, `dica` e `placeholder` são os da tela.
+  http(s) (vazio passa). `rotulo`, `dica` (opcional) e `placeholder` são os
+  da tela.
 */
 export const CAMPOS_DAS_SECOES = Object.freeze({
   marca: Object.freeze([
@@ -115,21 +116,18 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       descricao: "Nome da equipe (COGIP)",
       rotulo: "Nome da equipe",
       placeholder: "Ex: COGIP",
-      dica: "Nome da equipe que mantém o sistema. Aparece no pé da barra lateral.",
     },
     {
       chave: "cogip_funcao",
       descricao: "Função / área da equipe",
       rotulo: "Função / área",
       placeholder: "Ex: Desenvolvimento e sustentação",
-      dica: "Linha curta abaixo do nome da equipe, como a área ou a função.",
     },
     {
       chave: "cogip_dept",
       descricao: "Texto institucional",
       rotulo: "Texto institucional",
       placeholder: "Ex: Gestão da Informação de Pessoal",
-      dica: "Texto institucional exibido junto da equipe.",
     },
     {
       chave: "cogip_logo_url",
@@ -137,13 +135,12 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       rotulo: "Logo da equipe (URL)",
       tipo: "url",
       largo: true,
-      dica: "Endereço de uma imagem (PNG, JPG, WEBP ou SVG): https:// ou um caminho do próprio site, como /assets/logo.png.",
+      dica: "PNG/JPG/WEBP/SVG; https:// ou /caminho",
     },
     {
       chave: "footer_text",
       descricao: "Texto do rodapé (fallback)",
       rotulo: "Rodapé",
-      dica: "Texto no pé das páginas, como créditos.",
     },
   ]),
   /*

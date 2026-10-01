@@ -73,7 +73,6 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
       <CabecalhoDaGaveta
         tituloId="acessosReativarTitulo"
         titulo={`Reativar ${nome}`}
-        subtitulo="Confira o grupo, a coordenação e as áreas: vêm como estavam antes."
         aoFechar={aoFechar}
       />
       <form className="acessos-modal-corpo" onSubmit={salvar} noValidate>
@@ -83,6 +82,7 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
             <select
               id="acessosReativarGrupo"
               data-foco-inicial
+              title={explicacaoDoGrupo(grupo) || undefined}
               value={valores.grupo}
               onChange={(e) => mudar({ grupo: e.target.value })}
             >
@@ -92,9 +92,6 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
                 atual={valores.grupo}
               />
             </select>
-            <small className="acessos-secundario">
-              {explicacaoDoGrupo(grupo)}
-            </small>
           </div>
           {!adminGlobal ? (
             <div className="acessos-campo">
@@ -140,12 +137,7 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
           )}
         </div>
         {erros.semArea ? <AvisoSemArea nome={nome} /> : null}
-        {erros.semCoordenacao ? (
-          <AvisoSemCoordenacao
-            nome={nome}
-            nomeDoGrupo={grupo?.nome || valores.grupo}
-          />
-        ) : null}
+        {erros.semCoordenacao ? <AvisoSemCoordenacao /> : null}
         <CampoMotivo
           id="acessosReativarMotivo"
           rotulo="Motivo da reativação"

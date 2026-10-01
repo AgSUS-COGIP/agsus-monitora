@@ -152,7 +152,7 @@ export function RegraDeConvocacao({
       <div className="entrevistas-grade">
         <Campo
           rotulo="Múltiplo das vagas imediatas"
-          dica="Com vaga imediata: convoca até N × vagas imediatas."
+          dica="N × vagas imediatas"
           erro={erros[`${prefixo}.multiplo`]}
         >
           <input
@@ -167,7 +167,7 @@ export function RegraDeConvocacao({
         </Campo>
         <Campo
           rotulo="Posição do cadastro reserva"
-          dica="Sem vaga imediata: convoca até esta posição."
+          dica="Sem vaga imediata: até esta posição"
           erro={erros[`${prefixo}.posicao`]}
         >
           <input
@@ -184,10 +184,6 @@ export function RegraDeConvocacao({
       <div className="entrevistas-sublista" aria-label="Exceções por cargo">
         <div className="entrevistas-sublista-topo">
           <strong>Exceções por cargo</strong>
-          <small>
-            Vale quando o termo aparece no nome do cargo (sem diferenciar
-            maiúsculas e acentos).
-          </small>
         </div>
         {valor.excecoes.length ? (
           <ul className="entrevistas-linhas">
