@@ -451,12 +451,16 @@ const abrirSecaoPadrao = (secao) =>
 const configuracaoPublicada = (chave) =>
   estadoDasConfiguracoes.obter().valores?.get?.(chave) ?? "";
 
-/* O balão da oferta fica ao lado da arara (no canto, ou onde ela foi arrastada). */
+/*
+  O balão da oferta fica junto da arara compacta (46px): em cima dela, ou
+  embaixo quando ela foi arrastada para o alto da tela (o cabeçalho).
+*/
 function estiloDaOferta(posicao) {
   if (!posicao) return undefined;
+  const emCima = posicao.top > 150;
   return {
-    left: `${Math.max(MARGEM, posicao.left - 260)}px`,
-    top: `${Math.max(MARGEM, posicao.top - 120)}px`,
+    left: `${Math.max(MARGEM, posicao.left - 234)}px`,
+    top: `${emCima ? posicao.top - 130 : posicao.top + 56}px`,
     right: "auto",
     bottom: "auto",
   };

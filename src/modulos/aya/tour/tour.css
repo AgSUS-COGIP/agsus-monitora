@@ -266,7 +266,7 @@
 .aya-oferta--balao {
   position: fixed;
   right: clamp(14px, 2vw, 24px);
-  bottom: calc(clamp(16px, 2vw, 24px) + 64px);
+  bottom: calc(clamp(16px, 2vw, 24px) + 58px);
   width: min(280px, calc(100vw - 32px));
   box-shadow: var(--shadow-overlay);
   pointer-events: auto;
@@ -315,7 +315,7 @@
 
 @media (max-width: 900px) {
   .aya-oferta--balao {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px + 64px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px + 58px);
   }
 }
 
