@@ -33,8 +33,8 @@ Termos da própria interface e das instituições que a Aya representa.
 ## Taxa de ociosidade
 
 **perguntas:** taxa de ociosidade | ociosidade | percentual de ociosas
-**resposta:** A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. É esse percentual que define a cor de cada território no mapa de calor.
-**fato:** A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e é ela que colore o mapa de calor por território.
+**resposta:** A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. Na tabela da Visão geral, ela aparece ao lado das Ociosas de cada edital.
+**fato:** A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e aparece ao lado das Ociosas na tabela da Visão geral.
 **fonte:** interface do MONITORA
 
 ## Contratados

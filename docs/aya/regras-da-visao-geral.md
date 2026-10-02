@@ -32,7 +32,7 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 
 ## Mapa e filtros da Visão geral
 
-**perguntas:** dsei aberto no mapa | voltar ao brasil | casai no mapa filtra
+**perguntas:** dsei aberto no mapa | filtro dsei da pagina | casai no mapa filtra
 **resposta:** Na Visão geral da Saúde Indígena, escolher um DSEI no mapa recorta a página inteira por ele (aparece o filtro "DSEI" entre os filtros aplicados). Tirar esse filtro, ou voltar ao Brasil pelo mapa, sai do território e mantém os outros filtros. Clicar numa CASAI no mapa busca por ela na página.
 **fonte:** interface do MONITORA
 

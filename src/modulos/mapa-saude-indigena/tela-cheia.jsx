@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 /*
   A tela cheia dos mapas da Visão geral (Saúde Indígena e Projetos): o
   estado, o botão "Tela cheia"/"Sair da tela cheia" do cabeçalho e o Esc que
-  sai. O CSS é o `.mapa-si--tela-cheia` (mapa-saude-indigena.css).
+  sai. Esc já usado por outro (`defaultPrevented`: a volta do DSEI ao Brasil,
+  volta-ao-brasil.js) não sai — o segundo Esc sai. O CSS é o
+  `.mapa-si--tela-cheia` (mapa-saude-indigena.css).
 */
 export function usarTelaCheia() {
   const [telaCheia, definirTelaCheia] = useState(false);
@@ -13,7 +15,7 @@ export function usarTelaCheia() {
     const overflowAnterior = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const aoTeclar = (evento) => {
-      if (evento.key !== "Escape") return;
+      if (evento.key !== "Escape" || evento.defaultPrevented) return;
       evento.preventDefault();
       definirTelaCheia(false);
     };

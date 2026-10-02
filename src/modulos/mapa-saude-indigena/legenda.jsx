@@ -7,7 +7,6 @@ import {
 import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,
-  FAIXAS_DO_CALOR,
   TIPOS_DA_LEGENDA,
   formaDoTipo,
 } from "../../lib/mapa-saude-indigena/formas.js";
@@ -127,31 +126,20 @@ export function LegendaFlutuante({ children }) {
 }
 
 /*
-  Legenda do mapa nacional da Saúde Indígena. Com o calor ligado, as faixas
-  de ociosidade entram no lugar das cores da bolha.
+  Legenda do mapa nacional da Saúde Indígena: as cores da bolha, a
+  abrangência, a CASAI nacional e as terras.
 */
-export function LegendaNacional({ mapa, calor, temAbrangencia }) {
+export function LegendaNacional({ mapa, temAbrangencia }) {
   return (
     <LegendaFlutuante>
-      {calor ? (
-        FAIXAS_DO_CALOR.map((faixa) => (
-          <span key={faixa.minimo} className="mapa-si-legenda__item">
-            <Amostra tipo="bolha" cor={faixa.cor} />
-            {faixa.rotulo}
-          </span>
-        ))
-      ) : (
-        <>
-          <span className="mapa-si-legenda__item">
-            <Amostra tipo="bolha" cor={CORES_DO_MAPA.semEdital.preenchimento} />
-            DSEI (sede; tamanho = nº de indígenas)
-          </span>
-          <span className="mapa-si-legenda__item">
-            <Amostra tipo="bolha" cor={CORES_DO_MAPA.comEdital.preenchimento} />
-            DSEI com processo ativo
-          </span>
-        </>
-      )}
+      <span className="mapa-si-legenda__item">
+        <Amostra tipo="bolha" cor={CORES_DO_MAPA.semEdital.preenchimento} />
+        DSEI (sede; tamanho = nº de indígenas)
+      </span>
+      <span className="mapa-si-legenda__item">
+        <Amostra tipo="bolha" cor={CORES_DO_MAPA.comEdital.preenchimento} />
+        DSEI com processo ativo
+      </span>
       {temAbrangencia ? (
         <span className="mapa-si-legenda__item">
           <Amostra tipo="abrangencia" />
