@@ -2,6 +2,7 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.js";
+import { LEI_15142_ESPALHADA } from "../modelos-de-convocacao-antigos.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";
 import { compactarCandidatos } from "./candidatos-compactos-falsos.js";
 import {
@@ -51,8 +52,9 @@ const candidato = (nome, modalidade, extra = {}) => {
 const MODELO_ID = "11111111-1111-1111-1111-111111111111";
 
 /** O modelo de referência na forma que `listar_modelos_convocacao` devolve. */
-const linhaDoModelo = (mudancas = {}) => {
-  const base = modeloDeReferencia("lei-15142-2025");
+/* `base`: um id do catálogo, ou o próprio modelo (por omissão, um salvo na ordem espalhada). */
+const linhaDoModelo = (mudancas = {}, base0 = LEI_15142_ESPALHADA) => {
+  const base = typeof base0 === "string" ? modeloDeReferencia(base0) : base0;
   return {
     modelo_id: MODELO_ID,
     nome: base.nome,
@@ -541,7 +543,7 @@ describe("editor do modelo de regras", () => {
     expect(
       ampla.querySelector("[data-convocacao-remover-categoria]"),
     ).toBeNull();
-    expect(ampla.textContent).toContain("recebe o resto");
+    expect(ampla.textContent).toContain("fica com o resto");
   });
 
   /* Trocar a distribuição faz aparecer os campos de posição do edital da FCC. */
@@ -834,7 +836,11 @@ describe("escolha da base de um modelo novo", () => {
     const bases = [...document.querySelectorAll("[data-convocacao-base]")].map(
       (botao) => botao.dataset.convocacaoBase,
     );
-    expect(bases).toContain("lei-15142-2025");
+    expect(bases).toContain("mgi-simulador");
+    expect(bases).toContain("saude-indigena-91-2026");
+    // Os que repetiam o do MGI saíram do catálogo.
+    expect(bases).not.toContain("lei-15142-2025");
+    expect(bases).not.toContain("fgv-minimos-por-cargo");
     expect(bases).toContain("lei-15142-reserva-unica");
     expect(bases).toContain("etnico-racial-posicoes");
     expect(bases).toContain("");
@@ -872,5 +878,125 @@ describe("escolha da base de um modelo novo", () => {
   it("não oferece base ao editar um modelo existente", async () => {
     await clicar($("convocacaoEditarModelo"));
     expect(document.querySelector("[data-convocacao-base]")).toBeNull();
+  });
+});
+
+describe("prévia da ordem de chamada", () => {
+  const faixa = (id) =>
+    [...document.querySelectorAll(`#${id} .convocacao-previa-posicao`)].map(
+      (item) => item.textContent,
+    );
+  const vaga = (codigo, imediatas) => ({
+    codigo_vaga: codigo,
+    cargo: null,
+    imediatas,
+    manual: false,
+    quadro: {},
+  });
+
+  it("mostra a ordem do modelo escolhido com as vagas da maior vaga", async () => {
+    await montar({
+      modelo: linhaDoModelo({}, "mgi-simulador"),
+      vagas: [vaga("VG-001", 10), vaga("VG-002", 45)],
+    });
+    await abrirFormulario();
+    expect($("convocacaoPreviaDoModeloTotal").value).toBe("45");
+    const posicoes = faixa("convocacaoPreviaDoModelo");
+    expect(posicoes).toHaveLength(45);
+    expect(posicoes[1]).toBe("2ªPP");
+    expect(posicoes[4]).toBe("5ªPCD");
+    expect(posicoes[16]).toBe("17ªIND");
+    expect($("convocacaoPreviaDoModelo").textContent).toContain(
+      "1ª vaga na 25ª posição",
+    );
+
+    // 25% de 6 = 1,5, que sobe para 2: pretos e pardos na 2ª e na 6ª.
+    await digitar($("convocacaoPreviaDoModeloTotal"), "6");
+    expect(faixa("convocacaoPreviaDoModelo")).toEqual([
+      "1ªAC",
+      "2ªPP",
+      "3ªAC",
+      "4ªAC",
+      "5ªPCD",
+      "6ªPP",
+    ]);
+  });
+
+  it("no editor, acompanha o rascunho e a troca para a ordem do MGI", async () => {
+    await montar({ vagas: [vaga("VG-001", 45)] });
+    await abrirFormulario();
+    await clicar($("convocacaoEditarModelo"));
+    expect(faixa("convocacaoPreviaDoEditor")[4]).toBe("5ªAC");
+    await escolher(
+      document.querySelector('[data-convocacao-modelo="distribuicao"]'),
+      "serie_mgi",
+    );
+    expect(faixa("convocacaoPreviaDoEditor")[4]).toBe("5ªPCD");
+    // A série da PCD fica escrita na ficha, e não escondida no cálculo.
+    expect(
+      document.querySelector('[data-convocacao-regras="pcd"]').textContent,
+    ).toContain("posições 5ª, 21ª e depois de 20 em 20");
+  });
+
+  it("os modelos prontos aparecem em cartões com o que cada um faz", async () => {
+    await montar();
+    await abrirFormulario();
+    await clicar($("convocacaoNovoModelo"));
+    const cartao = (id) =>
+      document.querySelector(`[data-convocacao-base="${id}"]`);
+    expect(cartao("mgi-simulador").getAttribute("aria-pressed")).toBe("true");
+    expect(cartao("saude-indigena-91-2026").textContent).toContain(
+      "PCD vaga vai para os indígenas",
+    );
+    expect(cartao("saude-indigena-2026").textContent).toContain(
+      "PCD vaga vai para a ampla",
+    );
+    await clicar(cartao("saude-indigena-91-2026"));
+    expect(cartao("saude-indigena-91-2026").getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(cartao("mgi-simulador").getAttribute("aria-pressed")).toBe("false");
+    expect(
+      document.querySelector('[data-convocacao-modelo="distribuicao"]').value,
+    ).toBe("serie_mgi");
+  });
+});
+
+/* O modelo salvo antes da ordem do MGI não muda sozinho: a prévia diz a regra e oferece a troca. */
+describe("modelo salvo com a ordem antiga", () => {
+  it("a prévia diz a regra e o botão abre o editor já na ordem do MGI", async () => {
+    await montar({
+      vagas: [
+        {
+          codigo_vaga: "VG-001",
+          cargo: null,
+          imediatas: 45,
+          manual: false,
+          quadro: {},
+        },
+      ],
+    });
+    await abrirFormulario();
+    const regra = () =>
+      document.querySelector(
+        "#convocacaoPreviaDoModelo [data-convocacao-previa-regra]",
+      );
+    expect(regra().dataset.convocacaoPreviaRegra).toBe("proporcional");
+    await clicar($("convocacaoUsarOrdemDoMgi"));
+    expect(
+      document.querySelector('[data-convocacao-modelo="distribuicao"]').value,
+    ).toBe("serie_mgi");
+    const quinta = document.querySelectorAll(
+      "#convocacaoPreviaDoEditor .convocacao-previa-posicao",
+    )[4];
+    expect(quinta.textContent).toBe("5ªPCD");
+    // É o mesmo modelo, editado: salvar muda a regra dele.
+    expect($("convocacaoDuplicarModelo")).not.toBeNull();
+  });
+
+  it("modelo já na ordem do MGI não oferece a troca", async () => {
+    await montar({ modelo: linhaDoModelo({}, "mgi-simulador") });
+    await abrirFormulario();
+    expect($("convocacaoUsarOrdemDoMgi")).toBeNull();
   });
 });

@@ -10,12 +10,13 @@ import {
   resumirConvocacao,
   sequenciaDeConvocacao,
 } from "../src/lib/lista-convocacao-rules.js";
+import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
 
 /*
   A MECÂNICA do cálculo: ordenação, sequência, preenchimento e agrupamento. As
   cláusulas de cada edital estão em `lista-convocacao-regras-do-edital.test.js`.
 */
-const MODELO = normalizarModelo(modeloDeReferencia("lei-15142-2025"));
+const MODELO = normalizarModelo(LEI_15142_ESPALHADA);
 
 /*
   Candidatos falsos com o mínimo que o cálculo lê. A nota decresce com o índice

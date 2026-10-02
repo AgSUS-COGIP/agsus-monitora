@@ -7,6 +7,7 @@ import {
 } from "../../lib/modelo-de-convocacao.js";
 import { totalDoQuadro } from "../../lib/lista-convocacao-rules.js";
 import {
+  comDistribuicao,
   copiaDoModelo,
   lerInteiro,
   modeloPorId,
@@ -16,6 +17,7 @@ import {
   resumoDoModelo,
 } from "../../lib/configuracao-de-convocacao.js";
 import { EditorDeModelo } from "./editor-de-modelo.jsx";
+import { PreviaDaConvocacao } from "./previa-da-convocacao.jsx";
 import { BotaoDeAcao, CampoEditavel, classes, plural } from "./partes.jsx";
 
 /*
@@ -26,8 +28,8 @@ import { BotaoDeAcao, CampoEditavel, classes, plural } from "./partes.jsx";
   vaga); o quadro por categoria é derivado na hora.
 */
 
-/* Abre já no formato mais comum — sete dos dezasseis editais lidos usam este. */
-const BASE_DE_MODELO_NOVO = "lei-15142-2025";
+/* Abre já na regra comum: Lei 15.142/2025 na ordem do simulador do MGI. */
+const BASE_DE_MODELO_NOVO = "mgi-simulador";
 
 function QuadroDaVaga({ vaga, modelo, editavel, aoMudarCota }) {
   if (vaga.manual)
@@ -97,6 +99,14 @@ export function FormularioDeConvocacao({
     partir de um modelo ainda por salvar seria mentira.
   */
   const bloqueado = Boolean(editor) || !escolhido;
+  /*
+    A prévia começa com as vagas da maior vaga do edital: é a que mais mostra
+    da ordem. Sem vagas informadas, o padrão do edital, e por fim 10.
+  */
+  const totalDaPrevia =
+    Math.max(0, ...formulario.vagas.map((vaga) => vaga.imediatas || 0)) ||
+    formulario.padraoImediata ||
+    10;
 
   const mudar = (mudancas) =>
     setFormulario((atual) => ({ ...atual, ...mudancas }));
@@ -108,11 +118,13 @@ export function FormularioDeConvocacao({
       ),
     }));
 
-  function abrirEditor(base, { novo = false } = {}) {
+  function abrirEditor(base, { novo = false, origem = null } = {}) {
     const copia = copiaDoModelo(base);
     if (novo) copia.id = "";
     setEditor((anterior) => ({
       novo,
+      // O modelo pronto de onde o rascunho partiu (o cartão marcado).
+      base: origem,
       modelo: copia,
       editais: novo ? 0 : (modeloPorId(modelos, base.id)?.editais ?? 0),
       abertura: (anterior?.abertura ?? 0) + 1,
@@ -179,7 +191,11 @@ export function FormularioDeConvocacao({
             onChange={() => mudar({ proporcionalidade: true })}
           />
           <span className="convocacao-tipo-copy">
-            <strong>Com proporcionalidade</strong>
+            <strong>Com reserva de vagas</strong>
+            <small>
+              As cotas do edital entram na ordem de chamada, pelas regras do
+              modelo abaixo.
+            </small>
           </span>
         </label>
         <label className="convocacao-tipo-card">
@@ -192,7 +208,8 @@ export function FormularioDeConvocacao({
             onChange={() => mudar({ proporcionalidade: false })}
           />
           <span className="convocacao-tipo-copy">
-            <strong>Sem proporcionalidade</strong>
+            <strong>Só pela classificação</strong>
+            <small>Sem cotas: chama pela ordem da nota, do 1º ao último.</small>
           </span>
         </label>
       </fieldset>
@@ -247,6 +264,7 @@ export function FormularioDeConvocacao({
                 onClick={() =>
                   abrirEditor(modeloDeReferencia(BASE_DE_MODELO_NOVO), {
                     novo: true,
+                    origem: BASE_DE_MODELO_NOVO,
                   })
                 }
               >
@@ -264,6 +282,34 @@ export function FormularioDeConvocacao({
         >
           {resumoDoModelo(escolhido)}
         </p>
+        {escolhido && !editor ? (
+          <PreviaDaConvocacao
+            key={escolhido.id}
+            id="convocacaoPreviaDoModelo"
+            modelo={modelo}
+            totalInicial={totalDaPrevia}
+            acao={
+              /*
+                O modelo salvo não muda sozinho de regra: o botão abre o editor
+                já com a ordem do MGI (e a série 5ª, 21ª… da PCD), para conferir
+                na prévia e salvar.
+              */
+              editavel && modelo.distribuicao !== "serie_mgi" ? (
+                <button
+                  id="convocacaoUsarOrdemDoMgi"
+                  className="btn outline"
+                  type="button"
+                  onClick={() =>
+                    abrirEditor(comDistribuicao(escolhido, "serie_mgi"))
+                  }
+                >
+                  <i className="fa-solid fa-list-ol" aria-hidden="true" /> Usar
+                  a ordem do MGI
+                </button>
+              ) : null
+            }
+          />
+        ) : null}
         <div
           id="convocacaoEditorModelo"
           className={classes("convocacao-editor", !editor && "hidden")}
@@ -273,6 +319,7 @@ export function FormularioDeConvocacao({
               key={editor.abertura}
               estado={estado}
               editor={editor}
+              totalDaPrevia={totalDaPrevia}
               aoAlterar={(transformar) =>
                 setEditor((atual) => ({
                   ...atual,
@@ -284,7 +331,7 @@ export function FormularioDeConvocacao({
                 // O nome já digitado sobrevive à troca de base: é do edital, não da regra.
                 abrirEditor(
                   { ...partida, id: "", nome: editor.modelo.nome },
-                  { novo: true },
+                  { novo: true, origem: id },
                 );
               }}
               aoDuplicar={() => {

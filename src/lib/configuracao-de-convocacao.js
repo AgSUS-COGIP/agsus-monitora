@@ -31,6 +31,7 @@ import {
   derivarQuadro,
   normalizarQuadro,
   quadroVazio,
+  sequenciaDeConvocacao,
 } from "./lista-convocacao-rules.js";
 
 const text = (value) => String(value ?? "").trim();
@@ -251,6 +252,81 @@ export function resumoDoModelo(modelo) {
 /* "1ª", "2ª" — feminino, porque o que se numera é a vaga. */
 export const ordinalFeminino = (numero) => `${numero}ª`;
 
+/*
+  As regras de uma reserva numa frase, para a ficha da categoria mostrar sem
+  abrir os detalhes: "Fração de 0,5 sobe · sem limite máximo · vale com
+  qualquer número de vagas".
+*/
+export function resumoDasRegrasDaCategoria(categoria) {
+  const partes = [
+    categoria.arredondamento === "sempre_acima"
+      ? "Arredonda sempre para cima"
+      : "Fração de 0,5 sobe",
+    categoria.teto > 0
+      ? `no máximo ${formatarTaxa(categoria.teto)} das vagas`
+      : "sem limite máximo",
+    categoria.minimo > 1
+      ? `só com ${categoria.minimo} vagas ou mais`
+      : "vale com qualquer número de vagas",
+  ];
+  if (categoria.posicoes?.length)
+    partes.push(
+      `posições ${categoria.posicoes.map(ordinalFeminino).join(", ")}${
+        categoria.intervalo
+          ? ` e depois de ${categoria.intervalo} em ${categoria.intervalo}`
+          : ""
+      }`,
+    );
+  return partes.join(" · ");
+}
+
+/** Maior total que a prévia desenha: acima disso, a faixa de posições não ajuda. */
+export const LIMITE_DA_PREVIA = 300;
+
+/*
+  A prévia da ordem de chamada: com `total` vagas imediatas, quantas vão para
+  cada categoria (o quadro derivado do modelo, com arredondamento, limite e
+  mínimo) e quem é chamado em cada posição. É a mesma conta da convocação, sem
+  candidato nenhum — o que se vê aqui é o que a lista vai seguir.
+
+  `primeiras` traz a 1ª posição de cada reserva ("PCD na 5ª"), que é o que se
+  confere contra o edital ou o simulador do MGI.
+*/
+export function previaDaConvocacao(total, modelo) {
+  const vagas = Math.min(lerInteiro(total), LIMITE_DA_PREVIA);
+  const quadro = derivarQuadro(vagas, modelo);
+  const sequencia = sequenciaDeConvocacao(quadro, modelo);
+  const contagem = {};
+  const posicoes = sequencia.map((id, indice) => {
+    contagem[id] = (contagem[id] || 0) + 1;
+    const categoria = modelo.categorias.find((item) => item.id === id);
+    return {
+      posicao: indice + 1,
+      id,
+      sigla: categoria?.sigla || "—",
+      rotulo: categoria?.rotulo || "—",
+      reserva: !categoria?.ampla,
+      tom: modelo.categorias.indexOf(categoria),
+      noGrupo: contagem[id],
+      doGrupo: quadro[id] || 0,
+    };
+  });
+  const primeiras = categoriasDeReserva(modelo).map((categoria) => ({
+    id: categoria.id,
+    sigla: categoria.sigla,
+    posicao: posicoes.find((item) => item.id === categoria.id)?.posicao ?? null,
+    vagas: quadro[categoria.id] || 0,
+    minimo: categoria.minimo,
+  }));
+  return {
+    vagas,
+    quadro,
+    resumo: resumirQuadro(quadro, modelo),
+    posicoes,
+    primeiras,
+  };
+}
+
 // ── Leitura dos campos ───────────────────────────────────────────────────
 
 export function lerInteiro(valor) {
@@ -314,6 +390,41 @@ export function acrescentarCategoria(modelo) {
         ordem: modelo.categorias.length,
       },
     ],
+  };
+}
+
+/*
+  Troca a distribuição do modelo. Ao escolher a ordem do simulador do MGI, a
+  cota de PCD que ainda não tem posições recebe a série dele — 5ª, 21ª e de 20
+  em 20, a ordem que o STF fixou —, que não sai do percentual (100 ÷ 5
+  daria a 10ª). Fica escrita nos
+  campos da ficha, à vista, e não escondida no cálculo.
+*/
+export const SERIE_DA_PCD_NO_MGI = Object.freeze({
+  posicoes: Object.freeze([5, 21]),
+  intervalo: 20,
+});
+
+const ePcd = (categoria) =>
+  categoria.id === "pcd" ||
+  /(^| )(pcd|deficien[a-z]*)( |$)/.test(
+    normalizarTexto(`${categoria.sigla} ${categoria.rotulo}`),
+  );
+
+export function comDistribuicao(modelo, distribuicao) {
+  if (distribuicao !== "serie_mgi") return { ...modelo, distribuicao };
+  return {
+    ...modelo,
+    distribuicao,
+    categorias: modelo.categorias.map((categoria) =>
+      !categoria.ampla && ePcd(categoria) && !categoria.posicoes?.length
+        ? {
+            ...categoria,
+            posicoes: [...SERIE_DA_PCD_NO_MGI.posicoes],
+            intervalo: SERIE_DA_PCD_NO_MGI.intervalo,
+          }
+        : categoria,
+    ),
   };
 }
 

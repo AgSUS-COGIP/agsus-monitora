@@ -1,22 +1,27 @@
+import { useMemo } from "react";
 import {
   ARREDONDAMENTOS,
   COTAS_MULTIPLAS,
   DISTRIBUICOES,
   MODELOS_DE_REFERENCIA,
   lerTermos,
+  normalizarModelo,
 } from "../../lib/modelo-de-convocacao.js";
 import {
   acrescentarCategoria,
   alterarCategoria,
   alternarNaCascata,
+  comDistribuicao,
   destinosDaCascata,
   faltaCategoriaAcumulavel,
   lerInteiro,
   lerPosicoes,
   lerTaxa,
   removerCategoria,
+  resumoDasRegrasDaCategoria,
 } from "../../lib/configuracao-de-convocacao.js";
 import { BotaoDeAcao, CampoEditavel, classes } from "./partes.jsx";
+import { PreviaDaConvocacao } from "./previa-da-convocacao.jsx";
 
 /*
   Editor do modelo de regras de convocação, dentro do formulário do edital.
@@ -24,6 +29,11 @@ import { BotaoDeAcao, CampoEditavel, classes } from "./partes.jsx";
   modelo guardado continua a valer para a tabela de vagas. Quem guarda o
   rascunho e salva é `formulario-de-convocacao.jsx`; `aoAlterar` recebe uma
   função do modelo atual para o próximo.
+
+  O que se vê primeiro é o que muda o resultado: nome, sigla e percentual de
+  cada cota, para onde vai a vaga sem candidato e a prévia da ordem de chamada.
+  Arredondamento, limite, mínimo, posições e os termos que reconhecem a cota na
+  planilha ficam em "Ajustar regras", com o resumo delas numa frase por fora.
 */
 
 const juntar = (lista) => lista.join("; ");
@@ -65,9 +75,92 @@ function Aviso({ children }) {
   );
 }
 
-function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
+function CampoDosTermos({ categoria, aoMudar }) {
+  return (
+    <label className="convocacao-editor-campo largo">
+      <span>
+        Como reconhecer na planilha{" "}
+        <small>
+          palavras da coluna modalidade, separadas por ponto e vírgula; termine
+          em <code>*</code> para alcançar as flexões (preto* acha
+          &quot;pretos&quot;)
+        </small>
+      </span>
+      <CampoEditavel
+        type="text"
+        valor={categoria.termos}
+        ler={lerTermos}
+        escrever={juntar}
+        data-convocacao-cat="termos"
+        aoMudar={(termos) => aoMudar({ termos })}
+      />
+    </label>
+  );
+}
+
+/* Para onde vai a vaga desta cota quando não há candidato dela. */
+function CascataDaCategoria({ categoria, modelo, aoMudar }) {
   const destinos = destinosDaCascata(categoria, modelo);
-  const posicaoFixa = modelo.distribuicao === "posicao_fixa";
+  return (
+    <div
+      className="convocacao-categoria-cascata"
+      role="group"
+      aria-label="Se ficar sem candidato, tenta nesta ordem"
+    >
+      <span className="convocacao-categoria-cascata-titulo">
+        Sem candidato, a vaga vai para
+      </span>
+      <span className="convocacao-cascata">
+        {destinos.map((item) => {
+          // A posição na cascata é o que decide quem vem primeiro;
+          // mostrá-la é a única forma de a ordem ser escolhida, e
+          // não apenas o resultado da ordem em que se clicou.
+          const posicao = categoria.cascata.indexOf(item.id);
+          return (
+            <label
+              key={item.id}
+              className={classes(
+                "convocacao-cascata-item",
+                posicao >= 0 && "marcada",
+              )}
+            >
+              <input
+                type="checkbox"
+                data-convocacao-cascata={item.id}
+                checked={posicao >= 0}
+                onChange={(evento) => {
+                  const marcar = evento.target.checked;
+                  aoMudar((atual) => ({
+                    cascata: alternarNaCascata(atual.cascata, item.id, marcar),
+                  }));
+                }}
+              />
+              {posicao >= 0 ? (
+                <span className="convocacao-cascata-ordem">{posicao + 1}º</span>
+              ) : null}{" "}
+              {item.sigla}
+            </label>
+          );
+        })}
+        <span className="convocacao-cascata-final">
+          {categoria.cascata.length ? "e por fim" : ""} ampla concorrência
+        </span>
+      </span>
+      <small className="convocacao-editor-ajuda">
+        Marque na ordem em que o edital manda tentar. A vaga não se divide: só
+        passa para a seguinte se a anterior também não tiver candidato.
+      </small>
+    </div>
+  );
+}
+
+function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
+  const comPosicoes =
+    modelo.distribuicao === "posicao_fixa" ||
+    modelo.distribuicao === "serie_mgi";
+  const arredondamento =
+    ARREDONDAMENTOS.find((item) => item.id === categoria.arredondamento) ||
+    ARREDONDAMENTOS[0];
 
   return (
     <div
@@ -93,7 +186,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
           onChange={(evento) => aoMudar({ sigla: evento.target.value })}
         />
         {categoria.ampla ? (
-          <span className="convocacao-categoria-tag">recebe o resto</span>
+          <span className="convocacao-categoria-tag">fica com o resto</span>
         ) : (
           <>
             <label className="convocacao-categoria-taxa">
@@ -124,169 +217,195 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
           </>
         )}
       </div>
-      <label className="convocacao-editor-campo largo">
-        <span>
-          Reconhece por{" "}
-          <small>
-            termos separados por ponto e vírgula; termine em <code>*</code> para
-            alcançar as flexões
-          </small>
-        </span>
-        <CampoEditavel
-          type="text"
-          valor={categoria.termos}
-          ler={lerTermos}
-          escrever={juntar}
-          data-convocacao-cat="termos"
-          aoMudar={(termos) => aoMudar({ termos })}
-        />
-      </label>
-      {categoria.ampla ? null : (
-        <div className="convocacao-categoria-avancado">
-          <label className="convocacao-editor-campo">
-            <span>Arredondamento</span>
-            <select
-              data-convocacao-cat="arredondamento"
-              value={categoria.arredondamento}
-              onChange={(evento) =>
-                aoMudar({ arredondamento: evento.target.value })
-              }
-            >
-              {ARREDONDAMENTOS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.rotulo}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="convocacao-editor-campo estreito">
-            <span>Teto (%)</span>
-            <CampoEditavel
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              valor={categoria.teto}
-              ler={lerTaxa}
-              data-convocacao-cat="teto"
-              aoMudar={(teto) => aoMudar({ teto })}
-            />
-          </label>
-          <label className="convocacao-editor-campo estreito">
-            <span>
-              Mín. de vagas <small>para esta reserva valer</small>
-            </span>
-            <CampoEditavel
-              type="number"
-              min="0"
-              step="1"
-              valor={categoria.minimo}
-              ler={lerInteiro}
-              data-convocacao-cat="minimo"
-              aoMudar={(minimo) => aoMudar({ minimo })}
-            />
-          </label>
-          {posicaoFixa ? (
-            <>
-              <label className="convocacao-editor-campo estreito">
-                <span>Posições</span>
-                <CampoEditavel
-                  type="text"
-                  valor={categoria.posicoes}
-                  ler={lerPosicoes}
-                  escrever={juntar}
-                  data-convocacao-cat="posicoes"
-                  placeholder="3; 8"
-                  aoMudar={(posicoes) => aoMudar({ posicoes })}
-                />
-              </label>
-              <label className="convocacao-editor-campo estreito">
-                <span>A cada</span>
-                <CampoEditavel
-                  type="number"
-                  min="0"
-                  step="1"
-                  valor={categoria.intervalo}
-                  ler={lerInteiro}
-                  data-convocacao-cat="intervalo"
-                  aoMudar={(intervalo) => aoMudar({ intervalo })}
-                />
-              </label>
-            </>
-          ) : null}
-          {/* Um grupo de caixas, e não um <label>: label dentro de label não vale. */}
-          <div
-            className="convocacao-editor-campo larga"
-            role="group"
-            aria-label="Se ficar sem candidato, tenta nesta ordem"
+      {categoria.ampla ? (
+        <p className="convocacao-categoria-regras">
+          Recebe as vagas que sobram depois das cotas e as que ficarem sem
+          candidato.
+        </p>
+      ) : (
+        <>
+          <CascataDaCategoria
+            categoria={categoria}
+            modelo={modelo}
+            aoMudar={aoMudar}
+          />
+          <p
+            className="convocacao-categoria-regras"
+            data-convocacao-regras={categoria.id}
           >
-            <span>Se ficar sem candidato, tenta nesta ordem</span>
-            <span className="convocacao-cascata">
-              {destinos.length ? (
-                destinos.map((item) => {
-                  // A posição na cascata é o que decide quem vem primeiro;
-                  // mostrá-la é a única forma de a ordem ser escolhida, e
-                  // não apenas o resultado da ordem em que se clicou.
-                  const posicao = categoria.cascata.indexOf(item.id);
-                  return (
-                    <label
-                      key={item.id}
-                      className={classes(
-                        "convocacao-cascata-item",
-                        posicao >= 0 && "marcada",
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        data-convocacao-cascata={item.id}
-                        checked={posicao >= 0}
-                        onChange={(evento) => {
-                          const marcar = evento.target.checked;
-                          aoMudar((atual) => ({
-                            cascata: alternarNaCascata(
-                              atual.cascata,
-                              item.id,
-                              marcar,
-                            ),
-                          }));
-                        }}
-                      />
-                      {posicao >= 0 ? (
-                        <span className="convocacao-cascata-ordem">
-                          {posicao + 1}º
-                        </span>
-                      ) : null}{" "}
-                      {item.sigla}
-                    </label>
-                  );
-                })
-              ) : (
-                <em className="convocacao-cascata-vazia">
-                  nenhuma outra reserva
-                </em>
-              )}
-            </span>
-            <small className="convocacao-editor-ajuda">
-              A vaga não se divide: tenta a 1ª; só se ela também não tiver
-              candidato é que passa à 2ª. A ampla concorrência é sempre o último
-              destino, e não precisa de ser marcada.
-            </small>
-          </div>
-          {modelo.cotaMultipla === "acumula_com_acumulavel" ? (
-            <label className="convocacao-editor-campo estreito">
-              <span>Acumulável</span>
-              <input
-                type="checkbox"
-                data-convocacao-cat="acumulavel"
-                checked={categoria.acumulavel}
-                onChange={(evento) =>
-                  aoMudar({ acumulavel: evento.target.checked })
-                }
-              />
-            </label>
-          ) : null}
-        </div>
+            {resumoDasRegrasDaCategoria(categoria)}
+          </p>
+        </>
       )}
+      <details className="convocacao-categoria-detalhes">
+        <summary>
+          {categoria.ampla
+            ? "Como reconhecer na planilha"
+            : "Ajustar regras e reconhecimento"}
+        </summary>
+        {categoria.ampla ? (
+          <CampoDosTermos categoria={categoria} aoMudar={aoMudar} />
+        ) : (
+          <div className="convocacao-categoria-avancado">
+            <label className="convocacao-editor-campo">
+              <span>Arredondamento</span>
+              <select
+                data-convocacao-cat="arredondamento"
+                value={categoria.arredondamento}
+                onChange={(evento) =>
+                  aoMudar({ arredondamento: evento.target.value })
+                }
+              >
+                {ARREDONDAMENTOS.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.rotulo}
+                  </option>
+                ))}
+              </select>
+              <small className="convocacao-editor-ajuda">
+                {arredondamento.ajuda}
+              </small>
+            </label>
+            <label className="convocacao-editor-campo estreito">
+              <span>
+                Limite máximo (%) <small>0 = sem limite</small>
+              </span>
+              <CampoEditavel
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                valor={categoria.teto}
+                ler={lerTaxa}
+                data-convocacao-cat="teto"
+                aoMudar={(teto) => aoMudar({ teto })}
+              />
+              <small className="convocacao-editor-ajuda">
+                A reserva nunca passa desta fatia das vagas. Ex.: PCD 5% com
+                limite de 20% numa vaga de 2: o arredondamento daria 1 (50%) e o
+                limite corta para 0.
+              </small>
+            </label>
+            <label className="convocacao-editor-campo estreito">
+              <span>
+                Só vale com pelo menos <small>vagas · 0 = sempre</small>
+              </span>
+              <CampoEditavel
+                type="number"
+                min="0"
+                step="1"
+                valor={categoria.minimo}
+                ler={lerInteiro}
+                data-convocacao-cat="minimo"
+                aoMudar={(minimo) => aoMudar({ minimo })}
+              />
+              <small className="convocacao-editor-ajuda">
+                Abaixo disso a cota não existe naquela vaga, e a vaga é da
+                ampla. Ex.: o 91/2026 só reserva para cota racial com 2 vagas ou
+                mais.
+              </small>
+            </label>
+            {comPosicoes ? (
+              <>
+                <label className="convocacao-editor-campo estreito">
+                  <span>
+                    Posições{" "}
+                    <small>
+                      {modelo.distribuicao === "serie_mgi"
+                        ? "vazio = pelo percentual"
+                        : "as que o edital lista"}
+                    </small>
+                  </span>
+                  <CampoEditavel
+                    type="text"
+                    valor={categoria.posicoes}
+                    ler={lerPosicoes}
+                    escrever={juntar}
+                    data-convocacao-cat="posicoes"
+                    placeholder="5; 21"
+                    aoMudar={(posicoes) => aoMudar({ posicoes })}
+                  />
+                </label>
+                <label className="convocacao-editor-campo estreito">
+                  <span>
+                    Depois, a cada <small>posições</small>
+                  </span>
+                  <CampoEditavel
+                    type="number"
+                    min="0"
+                    step="1"
+                    valor={categoria.intervalo}
+                    ler={lerInteiro}
+                    data-convocacao-cat="intervalo"
+                    aoMudar={(intervalo) => aoMudar({ intervalo })}
+                  />
+                </label>
+              </>
+            ) : null}
+            {modelo.cotaMultipla === "acumula_com_acumulavel" ? (
+              <label className="convocacao-editor-campo estreito">
+                <span>
+                  Soma com outra cota <small>(acumulável)</small>
+                </span>
+                <input
+                  type="checkbox"
+                  data-convocacao-cat="acumulavel"
+                  checked={categoria.acumulavel}
+                  onChange={(evento) =>
+                    aoMudar({ acumulavel: evento.target.checked })
+                  }
+                />
+              </label>
+            ) : null}
+            <CampoDosTermos categoria={categoria} aoMudar={aoMudar} />
+          </div>
+        )}
+      </details>
+    </div>
+  );
+}
+
+/*
+  Modelo novo começa de um dos conjuntos de regras já lidos, e não de uma folha
+  em branco: reescrever um edital à mão convida ao erro. Cada cartão diz em
+  uma frase o que o modelo faz. Só aparece na criação — trocar a base de um
+  modelo em uso apagaria o que já está configurado.
+*/
+function EscolhaDaBase({ base, aoEscolherBase }) {
+  return (
+    <div className="convocacao-editor-base">
+      <span>Comece de um modelo pronto e ajuste o que o seu edital mudar</span>
+      <div className="convocacao-editor-base-lista">
+        {MODELOS_DE_REFERENCIA.map((referencia) => (
+          <button
+            key={referencia.id}
+            className={classes(
+              "convocacao-base-cartao",
+              base === referencia.id && "escolhido",
+            )}
+            type="button"
+            aria-pressed={base === referencia.id}
+            data-convocacao-base={referencia.id}
+            onClick={() => aoEscolherBase(referencia.id)}
+          >
+            <strong>{referencia.nome}</strong>
+            <small>{referencia.descricao}</small>
+          </button>
+        ))}
+        <button
+          className={classes(
+            "convocacao-base-cartao",
+            base === "" && "escolhido",
+          )}
+          type="button"
+          aria-pressed={base === ""}
+          data-convocacao-base=""
+          onClick={() => aoEscolherBase("")}
+        >
+          <strong>Em branco</strong>
+          <small>Só a ampla concorrência; você acrescenta as cotas.</small>
+        </button>
+      </div>
     </div>
   );
 }
@@ -294,6 +413,7 @@ function FichaDaCategoria({ categoria, modelo, aoMudar, aoRemover }) {
 export function EditorDeModelo({
   estado,
   editor,
+  totalDaPrevia,
   aoAlterar,
   aoEscolherBase,
   aoDuplicar,
@@ -303,40 +423,14 @@ export function EditorDeModelo({
 }) {
   const modelo = editor.modelo;
   const salvo = !editor.novo && Boolean(modelo.id);
+  // A prévia lê o rascunho como a convocação o lerá depois de salvo.
+  const normalizado = useMemo(() => normalizarModelo(modelo), [modelo]);
 
   return (
     <>
       <div className="convocacao-editor-head">
-        {/*
-          Modelo novo começa de um dos conjuntos de regras já lidos, e não de
-          uma folha em branco: são quatro formatos distintos entre os dezasseis
-          editais da AgSUS analisados, e reescrever um deles à mão convida ao
-          erro. Só aparece na criação — trocar a base de um modelo em uso
-          apagaria o que já está configurado.
-        */}
         {editor.novo ? (
-          <div className="convocacao-editor-base">
-            <span>Começar de</span>
-            {MODELOS_DE_REFERENCIA.map((referencia) => (
-              <button
-                key={referencia.id}
-                className="btn outline"
-                type="button"
-                data-convocacao-base={referencia.id}
-                onClick={() => aoEscolherBase(referencia.id)}
-              >
-                {referencia.nome}
-              </button>
-            ))}
-            <button
-              className="btn outline"
-              type="button"
-              data-convocacao-base=""
-              onClick={() => aoEscolherBase("")}
-            >
-              Em branco
-            </button>
-          </div>
+          <EscolhaDaBase base={editor.base} aoEscolherBase={aoEscolherBase} />
         ) : null}
         <label className="convocacao-editor-campo largo">
           <span>Nome do modelo</span>
@@ -344,7 +438,7 @@ export function EditorDeModelo({
             type="text"
             value={modelo.nome}
             data-convocacao-modelo="nome"
-            placeholder="Ex.: Lei 15.142/2025 — 25/3/2 e 5% PCD"
+            placeholder="Ex.: Saúde Indígena — DSEI Alagoas e Sergipe (91/2026)"
             onChange={(evento) =>
               aoAlterar((atual) => ({ ...atual, nome: evento.target.value }))
             }
@@ -363,9 +457,9 @@ export function EditorDeModelo({
           chave="distribuicao"
           lista={DISTRIBUICOES}
           valor={modelo.distribuicao}
-          rotulo="Como as vagas de cota entram na ordem"
+          rotulo="Em que posições as cotas são chamadas"
           aoMudar={(distribuicao) =>
-            aoAlterar((atual) => ({ ...atual, distribuicao }))
+            aoAlterar((atual) => comDistribuicao(atual, distribuicao))
           }
         />
         <CampoDeEscolha
@@ -382,10 +476,16 @@ export function EditorDeModelo({
         <Aviso>
           Nenhuma categoria está marcada como <strong>acumulável</strong>.
           Enquanto isso, quem declarar duas cotas vai valer só a de maior
-          percentual. Marque a caixa &quot;Acumulável&quot; na ficha da cota que
-          pode somar-se às outras — nos editais da AgSUS, a de PCD.
+          percentual. Em &quot;Ajustar regras&quot; da cota que pode somar-se às
+          outras — nos editais da AgSUS, a de PCD —, marque &quot;Soma com outra
+          cota&quot;.
         </Aviso>
       ) : null}
+      <PreviaDaConvocacao
+        id="convocacaoPreviaDoEditor"
+        modelo={normalizado}
+        totalInicial={totalDaPrevia}
+      />
       <div className="convocacao-categorias">
         {modelo.categorias.map((categoria) => (
           <FichaDaCategoria
