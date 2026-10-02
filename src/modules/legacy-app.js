@@ -62,6 +62,7 @@ import {
   canViewRecursos,
   canViewSelecao,
   canViewClassificacao,
+  podeUsarChat,
   canImportApprovedList,
   isAdminGlobal,
   paginasPermitidas,
@@ -388,7 +389,12 @@ function renderOnlinePresence(people, synchronized = true) {
         .map(
           (person) => `<div class="online-presence-person">
             <span class="online-presence-avatar">${onlinePresenceAvatar(person)}<i aria-hidden="true"></i></span>
-            <span><strong>${esc(person.fullName)}</strong><small>${esc(person.profileLabel)}${person.currentView ? ` · ${esc(person.currentView)}` : ""}</small></span>
+            <span><strong>${esc(person.fullName)}</strong><small>${esc(person.profileLabel)}${person.currentView ? ` · ${esc(person.currentView)}` : ""}</small></span>${
+              /* "Mensagem" abre a conversa direta (src/modulos/chat/ escuta o clique). */
+              podeUsarChat(profile) && person.userId !== currentUser?.id
+                ? `<button type="button" class="online-presence-mensagem" data-chat-usuario="${attr(person.userId)}">Mensagem</button>`
+                : ""
+            }
           </div>`,
         )
         .join("")
