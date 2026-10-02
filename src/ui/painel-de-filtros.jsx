@@ -27,7 +27,9 @@ export function PainelDeFiltros({
   rotuloOcultar = "Ocultar filtros",
   children,
 }) {
-  const [recolhido, setRecolhido] = useState(false);
+  // Nasce recolhido (pedido de 02/10): a tela abre com os dados; os filtros
+  // aparecem no botão. Quem tem filtro ativo vê o resumo ao lado.
+  const [recolhido, setRecolhido] = useState(true);
   const titulo = (
     <div>
       <h2 className="ui-titulo" id={idDoTitulo}>
