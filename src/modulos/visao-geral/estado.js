@@ -1,13 +1,18 @@
 /*
-  Estado da Visão geral (`#page-dashboard`), fora do React: o recorte (seis
-  filtros, a busca e o DSEI aberto no mapa), a ordenação e as colunas da
-  tabela, e o resumo do servidor. Os componentes leem com
-  `useSyncExternalStore`; o legado também importa este arquivo (ele não
-  importa React).
+  Estado da Visão geral (`#page-dashboard`), fora do React: o recorte (cinco
+  filtros, a busca, o DSEI aberto no mapa e o atalho — Críticos ou uma
+  pendência do Pós-resultado), a ordenação e as colunas da tabela. Os
+  componentes leem com `useSyncExternalStore`; o legado também importa este
+  arquivo (ele não importa React).
 
   As linhas são as que o legado carrega e publica em
-  `dados-do-monitoramento.js` (loadData), recortadas pela área atual. Nada é
-  pedido ao banco aqui.
+  `dados-do-monitoramento.js` (loadData), recortadas pela área atual e
+  enriquecidas (`enriquecerLinhas`: fase, motivos de atenção, pendências
+  pós-resultado). O único pedido ao banco daqui é o acompanhamento da área
+  (`listar_acompanhamento_da_visao_geral`: etapas do cronograma e resumo das
+  listas de aprovados), a cada carga das linhas ou troca de área, pela função
+  que a tela entrega (`definirBuscaDoAcompanhamento`). Sem ele (erro, banco
+  sem a função), a página funciona só com as linhas.
 
   O mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/) lê daqui: as
   linhas recortadas (`filtradas`), `temRecorte`, o DSEI aberto (`dsei`) e
@@ -25,12 +30,14 @@ import {
   linhasDaArea,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.js";
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
 import {
+  acompanhamentoDaResposta,
   alternarColuna,
   camposAtivos,
   csvDaVisaoGeral,
-  filtroDeRiscoCriticoAtivo,
+  enriquecerLinhas,
   filtrosVazios,
   indicadoresDaVisaoGeral,
   nomeDoCsv,
@@ -38,17 +45,28 @@ import {
   normalizarFiltros,
   opcoesDosFiltros,
   podarFiltros,
-  podeUsarResumoDoServidor,
   proximaOrdenacao,
   recortar,
-  riscosCriticos,
-  valoresDoStatus,
+  rotuloDoAtalho,
 } from "../../lib/visao-geral.js";
 
 export const CHAVE_DOS_FILTROS = "agsus_monitora_filters_v1";
 export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v1";
+/** Etapas do cronograma e resumo das listas de aprovados da área. */
+export const RPC_ACOMPANHAMENTO = "listar_acompanhamento_da_visao_geral";
 
 const txt = (valor) => String(valor ?? "").trim();
+
+/** A busca do acompanhamento pelo cliente Supabase da tela. */
+export function buscarAcompanhamentoNoSupabase(supabase) {
+  return async (area) => {
+    const { data, error } = await supabase.rpc(RPC_ACOMPANHAMENTO, {
+      p_area: area,
+    });
+    if (error) throw error;
+    return data;
+  };
+}
 
 function lerGuardado(armazenamento, chave) {
   try {
@@ -101,55 +119,96 @@ export function criarEstadoDaVisaoGeral({
 } = {}) {
   const ouvintes = new Set();
   let aviso = (mensagem) => console.info(mensagem);
+  let buscarAcompanhamento = null;
 
   let proprio = {
     filtros: normalizarFiltros(lerGuardado(armazenamento, CHAVE_DOS_FILTROS)),
     busca: "",
     dsei: { chave: "", nome: "" },
+    atalho: "",
     mapa: { lmap: null, redeCnes: null },
     ordenacao: { campo: "", direcao: "" },
     colunas: normalizarColunas(lerGuardado(armazenamento, CHAVE_DAS_COLUNAS)),
-    resumo: null,
+    /* { area, linhas, dados } — o acompanhamento vale para aquela carga. */
+    acompanhamento: null,
     destaque: null,
     carregadoEm: 0,
   };
   let instantaneo = null;
   let fonte = { linhas: null, area: "" };
+  let enriquecidas = { chave: null, linhas: [] };
+  let pedido = null;
+
+  const hoje = () => hojeEmBrasilia(new Date(agora()));
+
+  /*
+    O acompanhamento vale para a área de que ele foi pedido; numa recarga, o
+    anterior fica até o novo chegar.
+  */
+  function acompanhamentoAtual(area) {
+    const a = proprio.acompanhamento;
+    return a && a.area === area ? a.dados : null;
+  }
+  const acompanhamentoEmDia = (linhas, area) =>
+    proprio.acompanhamento?.area === area &&
+    proprio.acompanhamento?.linhas === linhas;
+
+  /* As linhas da área, enriquecidas uma vez por carga, área, acompanhamento e dia. */
+  function linhasEnriquecidas() {
+    const { linhas, areaAtual } = dados.obter();
+    const acompanhamento = acompanhamentoAtual(areaAtual);
+    const dia = hoje();
+    const chave = enriquecidas.chave;
+    if (
+      !chave ||
+      chave.linhas !== linhas ||
+      chave.area !== areaAtual ||
+      chave.acompanhamento !== acompanhamento ||
+      chave.dia !== dia
+    )
+      enriquecidas = {
+        chave: { linhas, area: areaAtual, acompanhamento, dia },
+        linhas: enriquecerLinhas(linhasDaArea(linhas, areaAtual), {
+          hoje: dia,
+          acompanhamento,
+        }),
+      };
+    return { daArea: enriquecidas.linhas, acompanhamento, dia };
+  }
 
   /* O que a tela mostra, calculado uma vez por mudança. */
   function calcular() {
-    const { linhas, areaAtual, carregado } = dados.obter();
-    const daArea = linhasDaArea(linhas, areaAtual);
+    const { areaAtual, carregado } = dados.obter();
+    const { daArea, acompanhamento, dia } = linhasEnriquecidas();
     const filtradas = recortar(daArea, {
       filtros: proprio.filtros,
       busca: proprio.busca,
       dsei: proprio.dsei.chave,
       chaveDsei: (linha) => chaveDoDsei(linha?.unidade),
       ordenacao: proprio.ordenacao,
+      atalho: proprio.atalho,
     });
     const quantosFiltros = camposAtivos(proprio.filtros);
     const temRecorte = Boolean(
-      quantosFiltros || txt(proprio.busca) || proprio.dsei.chave,
+      quantosFiltros ||
+      txt(proprio.busca) ||
+      proprio.dsei.chave ||
+      proprio.atalho,
     );
-    const resumo = podeUsarResumoDoServidor({
-      resumo: proprio.resumo,
-      temRecorte,
-      linhasDaArea: daArea.length,
-      totalDeLinhas: (linhas || []).length,
-    })
-      ? proprio.resumo
-      : null;
     instantaneo = {
       ...proprio,
       area: areaAtual,
       carregado,
+      hoje: dia,
       linhasDaArea: daArea,
+      etapasPorEdital: acompanhamento?.etapasPorEdital || null,
+      comListas: Boolean(acompanhamento?.listasPorEdital),
       opcoes: opcoesDosFiltros(daArea, proprio.filtros),
       filtradas,
       temRecorte,
       quantosFiltros,
-      riscoCriticoAtivo: filtroDeRiscoCriticoAtivo(proprio.filtros),
-      indicadores: indicadoresDaVisaoGeral(filtradas, resumo),
+      criticosAtivo: proprio.atalho === "criticos",
+      indicadores: indicadoresDaVisaoGeral(filtradas),
     };
   }
 
@@ -163,10 +222,10 @@ export function criarEstadoDaVisaoGeral({
     const anteriores = proprio.filtros;
     proprio = { ...proprio, ...mudancas };
     if (mudancas.filtros) {
-      const { linhas, areaAtual, carregado } = dados.obter();
+      const { carregado } = dados.obter();
       if (carregado)
         proprio.filtros = podarFiltros(
-          linhasDaArea(linhas, areaAtual),
+          linhasEnriquecidas().daArea,
           proprio.filtros,
         );
       if (!mesmosFiltros(anteriores, proprio.filtros))
@@ -176,36 +235,75 @@ export function criarEstadoDaVisaoGeral({
   }
 
   /*
+    Pede o acompanhamento da área para esta carga das linhas. Resposta de uma
+    carga ou área que já passou é descartada; erro deixa a página só com as
+    linhas.
+  */
+  function pedirAcompanhamento() {
+    const { linhas, areaAtual, carregado } = dados.obter();
+    if (!buscarAcompanhamento || !carregado || !areaAtual) return;
+    if (pedido && pedido.linhas === linhas && pedido.area === areaAtual) return;
+    if (acompanhamentoEmDia(linhas, areaAtual)) return;
+    const este = { linhas, area: areaAtual };
+    pedido = este;
+    Promise.resolve()
+      .then(() => buscarAcompanhamento(areaAtual))
+      .then(
+        (resposta) => {
+          if (pedido !== este) return;
+          pedido = null;
+          const atual = dados.obter();
+          if (atual.linhas !== linhas || atual.areaAtual !== areaAtual) return;
+          publicar({
+            acompanhamento: {
+              area: areaAtual,
+              linhas,
+              dados: acompanhamentoDaResposta(resposta),
+            },
+          });
+        },
+        (erro) => {
+          if (pedido === este) pedido = null;
+          console.warn(
+            "Acompanhamento da Visão geral indisponível; usando só as linhas:",
+            erro?.message || erro,
+          );
+        },
+      );
+  }
+
+  /*
     Os dados do legado mudaram (carga, recarga ou troca de área). Na troca de
-    área o DSEI aberto sai (o mapa volta ao Brasil); filtros sem opção
-    na área nova são podados — só com os dados já carregados, para não apagar
-    os guardados antes da primeira carga.
+    área o DSEI aberto e o atalho saem (o mapa volta ao Brasil); filtros sem
+    opção na área nova são podados — só com os dados já carregados, para não
+    apagar os guardados antes da primeira carga.
   */
   function aoMudarDados() {
     const { linhas, areaAtual, carregado } = dados.obter();
     const mudancas = {};
     if (fonte.linhas !== linhas && carregado) mudancas.carregadoEm = agora();
-    if (fonte.area && fonte.area !== areaAtual)
+    if (fonte.area && fonte.area !== areaAtual) {
       mudancas.dsei = { chave: "", nome: "" };
+      mudancas.atalho = "";
+    }
     fonte = { linhas, area: areaAtual };
+    proprio = { ...proprio, ...mudancas };
     if (carregado) {
       const podados = podarFiltros(
-        linhasDaArea(linhas, areaAtual),
+        linhasEnriquecidas().daArea,
         proprio.filtros,
       );
       if (podados !== proprio.filtros) {
-        mudancas.filtros = podados;
+        proprio = { ...proprio, filtros: podados };
         guardar(armazenamento, CHAVE_DOS_FILTROS, podados);
       }
     }
-    proprio = { ...proprio, ...mudancas };
     avisarOuvintes();
+    pedirAcompanhamento();
   }
   dados.assinar(aoMudarDados);
   fonte = { linhas: dados.obter().linhas, area: dados.obter().areaAtual };
   calcular();
-
-  const opcoesDe = (campo) => instantaneo.opcoes[campo] || [];
 
   function definirFiltro(campo, valores) {
     publicar({
@@ -217,8 +315,8 @@ export function criarEstadoDaVisaoGeral({
   }
 
   /*
-    Um clique num bloco (etapa do resumo, unidade com mais de um processo):
-    filtra só aquele valor; o mesmo clique de novo tira o filtro.
+    Um clique num bloco (fase, projeto): filtra só aquele valor; o mesmo
+    clique de novo tira o filtro.
   */
   function alternarFiltroUnico(campo, valor, rotulo) {
     const limpo = txt(valor);
@@ -228,42 +326,29 @@ export function criarEstadoDaVisaoGeral({
     aviso(tirando ? `${rotulo} removido.` : `${rotulo}: ${limpo}`);
   }
 
-  /* A legenda do gráfico: todos os valores de Status daquele status (canônico). */
-  function alternarStatus(status) {
-    const valores = valoresDoStatus(status, opcoesDe("status"));
-    if (!valores.length) return;
-    const atuais = proprio.filtros.status || [];
-    const tirando = mesmaLista([...atuais].sort(), [...valores].sort());
-    definirFiltro("status", tirando ? [] : valores);
+  /*
+    O KPI Críticos e as pendências do Pós-resultado: um atalho por vez; o
+    mesmo clique de novo tira.
+  */
+  function alternarAtalho(atalho) {
+    const tirando = proprio.atalho === atalho;
+    publicar({ atalho: tirando ? "" : atalho });
     aviso(
-      tirando ? "Filtro de status removido." : `Filtro de status: ${status}`,
-    );
-  }
-
-  /* O KPI Críticos: risco Médio/Alto; de novo, tira. */
-  function alternarRiscoCritico() {
-    const ativo = filtroDeRiscoCriticoAtivo(proprio.filtros);
-    const existentes = riscosCriticos(opcoesDe("risco"));
-    if (!ativo && !existentes.length) {
-      aviso("Nenhum processo com risco Médio ou Alto no recorte atual.");
-      return;
-    }
-    definirFiltro("risco", ativo ? [] : existentes);
-    aviso(
-      ativo
-        ? "Filtro de risco removido."
-        : "Filtro aplicado: risco Médio/Alto.",
+      tirando
+        ? "Filtro removido."
+        : `Filtro aplicado: ${rotuloDoAtalho(atalho)}.`,
     );
   }
 
   /*
-    "Limpar tudo": zera filtros, busca e o DSEI (o mapa volta ao Brasil). É o
-    único caminho que apaga o recorte.
+    "Limpar tudo": zera filtros, busca, atalho e o DSEI (o mapa volta ao
+    Brasil). É o único caminho que apaga o recorte.
   */
   function limparTudo() {
     publicar({
       filtros: filtrosVazios(),
       busca: "",
+      atalho: "",
       dsei: { chave: "", nome: "" },
     });
     aviso("Filtros limpos.");
@@ -276,7 +361,8 @@ export function criarEstadoDaVisaoGeral({
 
   /*
     Busca global (Ctrl+K): a linha escolhida fica à vista — filtros trocados
-    pela unidade e pelo edital dela, sem busca nem DSEI, e a linha em destaque.
+    pela unidade e pelo edital dela, sem busca, atalho nem DSEI, e a linha em
+    destaque.
   */
   function localizar(linha) {
     if (!linha) return;
@@ -286,6 +372,7 @@ export function criarEstadoDaVisaoGeral({
     publicar({
       filtros,
       busca: "",
+      atalho: "",
       dsei: { chave: "", nome: "" },
       destaque: { id: String(linha.id), vez: agora() },
     });
@@ -300,10 +387,17 @@ export function criarEstadoDaVisaoGeral({
     definirAviso(funcao) {
       if (typeof funcao === "function") aviso = funcao;
     },
+    /* A tela entrega a busca do acompanhamento (com o cliente dela). */
+    definirBuscaDoAcompanhamento(funcao) {
+      buscarAcompanhamento = typeof funcao === "function" ? funcao : null;
+      pedido = null;
+      pedirAcompanhamento();
+    },
     definirFiltro,
     alternarFiltroUnico,
-    alternarStatus,
-    alternarRiscoCritico,
+    alternarAtalho,
+    alternarCriticos: () => alternarAtalho("criticos"),
+    tirarAtalho: () => publicar({ atalho: "" }),
     limparTudo,
     tirarDsei,
     localizar,
@@ -316,7 +410,6 @@ export function criarEstadoDaVisaoGeral({
     /* `lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG (o legado carrega). */
     definirDadosDoMapa: ({ lmap = null, redeCnes = null } = {}) =>
       publicar({ mapa: { lmap, redeCnes } }),
-    definirResumoDoServidor: (resumo) => publicar({ resumo: resumo || null }),
     ordenarPor: (campo) =>
       publicar({ ordenacao: proximaOrdenacao(proprio.ordenacao, campo) }),
     alternarColuna(campo, visivel) {

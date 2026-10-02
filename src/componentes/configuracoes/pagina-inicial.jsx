@@ -8,7 +8,7 @@ import { CampoDaSecao, Grupo, Previa } from "./partes.jsx";
 
 /*
   Configurações › Página inicial: título e subtítulo, o aviso global (faixa
-  no topo, para todos), os textos dos filtros e os rótulos dos seis
+  no topo, para todos), os textos dos filtros e os rótulos dos sete
   indicadores, com a prévia da página ao lado. Os valores são do rascunho de
   `estado.js` e vão na publicação da barra fixa.
 */
@@ -49,10 +49,11 @@ const GRUPOS = Object.freeze([
     icone: "gauge",
     tom: "sucesso",
     campos: [
-      "kpi_processos_label",
       "kpi_vagas_label",
-      "kpi_contratados_label",
+      "kpi_contratadas_label",
+      "kpi_em_selecao_label",
       "kpi_ociosas_label",
+      "kpi_cadastro_reserva_label",
       "kpi_criticos_label",
       "kpi_inscritos_label",
     ],

@@ -1,9 +1,11 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { usarTemaEscuro } from "../../app/tema.js";
 import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
-import { textosDaVisaoGeral } from "../../lib/visao-geral.js";
+import {
+  temProcessosPorProjeto,
+  textosDaVisaoGeral,
+} from "../../lib/visao-geral.js";
 import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
@@ -13,16 +15,20 @@ import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.js";
 import { MapaDeProjetos } from "../mapa-de-projetos/mapa-de-projetos.jsx";
 import { MapaSaudeIndigena } from "../mapa-saude-indigena/mapa-saude-indigena.jsx";
 import { BoasVindas, MarcosDoAno } from "./boas-vindas.jsx";
-import { estadoDaVisaoGeral } from "./estado.js";
+import {
+  buscarAcompanhamentoNoSupabase,
+  estadoDaVisaoGeral,
+} from "./estado.js";
 import { GavetaDoProcesso } from "./gaveta.jsx";
 import {
   Atencao,
+  Fases,
   Filtros,
   Indicadores,
-  ResumoPorEtapa,
-  StatusOperacional,
+  PosResultado,
+  ProcessosPorProjeto,
+  ProximosDias,
   Topo,
-  UnidadesComVariosProcessos,
 } from "./paineis.jsx";
 import { TabelaDeProcessos } from "./tabela.jsx";
 
@@ -32,12 +38,14 @@ import { TabelaDeProcessos } from "./tabela.jsx";
   navegação (classe `.active`, título do cabeçalho por área com
   `cabecalhoDaVisaoGeral`, permissão `ind`) e da carga das linhas
   (`loadData` → dados-do-monitoramento.js); a tela lê o estado
-  (`estado.js`) e não pede nada ao banco, fora os marcos do ano.
+  (`estado.js`); do banco, só os marcos do ano, o mapa de Projetos e o
+  acompanhamento da área (etapas do cronograma e resumo das listas, pedido
+  pelo estado com o cliente da tela).
 
   Ordem: boas-vindas e marcos do ano, topo (hora da carga, Atualizar,
-  Exportar CSV), filtros, indicadores, "Unidades com mais de um processo
-  seletivo", o MAPA DA ÁREA, resumo por etapa, status operacional,
-  "Atenção" e a tabela de processos, com os detalhes numa gaveta.
+  Exportar CSV), filtros, indicadores, "Próximos 7 dias" e "Atenção",
+  "Processos por projeto" (só Projetos), o MAPA DA ÁREA, "Fases" e
+  "Pós-resultado" e a tabela de processos, com os detalhes numa gaveta.
 
   O MAPA DA ÁREA (`mapaDaVisaoGeral`):
   - Saúde Indígena: `<MapaSaudeIndigena>` (src/modulos/mapa-saude-indigena/),
@@ -49,8 +57,8 @@ import { TabelaDeProcessos } from "./tabela.jsx";
     (`carregadoEm`);
   - SEDE: sem mapa.
 
-  Textos de Configurações › Página inicial (publicados): filtros, rótulos
-  dos indicadores e títulos dos blocos (`textosDaVisaoGeral`).
+  Textos de Configurações › Página inicial (publicados): filtros e rótulos
+  dos indicadores (`textosDaVisaoGeral`).
 */
 
 /* O mapa da Saúde Indígena lendo e pedindo ao estado da Visão geral. */
@@ -95,10 +103,10 @@ export function TelaDaVisaoGeral({
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const textos = usarTextos(configuracoes);
-  const escuro = usarTemaEscuro();
   const mapa = mapaDaVisaoGeral(e.area);
   const [aberta, setAberta] = useState(null);
   // A linha aberta segue os dados: recarga atualiza a gaveta; se sumir, fecha.
+  const abrir = (linha) => setAberta(String(linha.id));
   const linhaAberta = aberta
     ? e.linhasDaArea.find((linha) => String(linha.id) === aberta) || null
     : null;
@@ -114,7 +122,13 @@ export function TelaDaVisaoGeral({
       <Topo e={e} aoExportar={estado.exportarCsv} />
       <Filtros e={e} estado={estado} textos={textos} />
       <Indicadores e={e} estado={estado} textos={textos} />
-      <UnidadesComVariosProcessos e={e} estado={estado} />
+      <div className="ui-linha-de-cards">
+        <ProximosDias e={e} aoAbrir={abrir} />
+        <Atencao e={e} aoAbrir={abrir} />
+      </div>
+      {temProcessosPorProjeto(e.area) ? (
+        <ProcessosPorProjeto e={e} estado={estado} />
+      ) : null}
       {mapa === MAPA_DOS_DSEIS ? (
         <MapaDaSaudeIndigena e={e} estado={estado} />
       ) : null}
@@ -127,26 +141,16 @@ export function TelaDaVisaoGeral({
           />
         </div>
       ) : null}
-      <ResumoPorEtapa e={e} estado={estado} textos={textos} />
       <div className="ui-linha-de-cards">
-        <StatusOperacional
-          e={e}
-          estado={estado}
-          textos={textos}
-          escuro={escuro}
-        />
-        <Atencao
-          e={e}
-          textos={textos}
-          aoAbrir={(linha) => setAberta(String(linha.id))}
-        />
+        <Fases e={e} estado={estado} />
+        <PosResultado e={e} estado={estado} />
       </div>
       <TabelaDeProcessos
         e={e}
         estado={estado}
         textos={textos}
         agora={agora}
-        aoAbrir={(linha) => setAberta(String(linha.id))}
+        aoAbrir={abrir}
       />
       {linhaAberta ? (
         <GavetaDoProcesso
@@ -182,6 +186,9 @@ export function montarVisaoGeral({
   }),
 } = {}) {
   estado.definirAviso(toast);
+  estado.definirBuscaDoAcompanhamento(
+    supabase ? buscarAcompanhamentoNoSupabase(supabase) : null,
+  );
   const raiz = secao
     ? montarModulo(
         secao,
