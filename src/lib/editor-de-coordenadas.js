@@ -90,11 +90,20 @@ export const GRAVIDADES = Object.freeze({
   confirmar: { ordem: 3, rotulo: "Só confirmar", tom: "revisar" },
 });
 
-/** O nível da régua: "erro", "confirmar", "revisar" ou "sem" (sem sugestão). */
-export function nivelDaGravidade({ temSugestao, motivoDeErro, km }) {
+/**
+ * O nível da régua: "erro", "confirmar", "revisar" ou "sem" (sem sugestão).
+ * `revisar` (motivo que pede revisão mesmo com a régua perto) nunca deixa
+ * chegar a "confirmar".
+ */
+export function nivelDaGravidade({
+  temSugestao,
+  motivoDeErro,
+  km,
+  revisar = false,
+}) {
   if (!temSugestao) return "sem";
   if (motivoDeErro || km > LIMITES_DA_GRAVIDADE.erroKm) return "erro";
-  if (Number.isFinite(km) && km <= LIMITES_DA_GRAVIDADE.certoKm)
+  if (!revisar && Number.isFinite(km) && km <= LIMITES_DA_GRAVIDADE.certoKm)
     return "confirmar";
   return "revisar";
 }

@@ -115,6 +115,8 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
     m.stop = registrar("stop");
     m.invalidateSize = registrar("invalidateSize");
     m.getZoom = () => m.zoom;
+    // Centro fixo (o meio do Brasil): o editor põe ali o pin de um lugar sem coordenada.
+    m.getCenter = () => [-15, -50];
     m.getContainer = () => elemento;
     m.addLayer = (c) => {
       m.camadas.add(c);

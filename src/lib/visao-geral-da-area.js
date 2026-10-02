@@ -139,7 +139,22 @@ const numeroOuNulo = (valor) => {
   `municipio_uf`). Normaliza números, põe o nome curto de cada projeto e
   descarta linha sem lugar. `vagas` são as vagas nas análises; `vagasEdital`,
   as publicadas nos editais (nulo se nenhum diz).
+
+  Coordenada: desde a migration 20261002170000 a RPC devolve `lugar` (a chave
+  do lugar) e `latitude`/`longitude` do banco (public."TB_COORDENADA_LOCAL_VAGA",
+  corrigida no editor de coordenadas). `coordenada` é `{ latitude, longitude,
+  origem }`, `null` quando o banco ainda não tem a do lugar, ou `undefined`
+  quando a resposta não traz o campo (banco antes da migration: o mapa usa a
+  tabela de src/lib/coordenadas-dos-municipios.js — tirar depois de aplicada).
 */
+const coordenadaDaLinha = (linha) => {
+  if (!linha || !Object.hasOwn(linha, "latitude")) return undefined;
+  const latitude = numeroOuNulo(linha.latitude);
+  const longitude = numeroOuNulo(linha.longitude);
+  if (latitude === null || longitude === null) return null;
+  return { latitude, longitude, origem: texto(linha.coordenada_origem) };
+};
+
 export function municipiosDaResposta(dados) {
   return (Array.isArray(dados) ? dados : [])
     .map((linha) => {
@@ -179,6 +194,8 @@ export function municipiosDaResposta(dados) {
         });
       return {
         chave: nivel === "uf" ? `uf:${uf}` : municipioUf,
+        lugar: texto(linha?.lugar),
+        coordenada: coordenadaDaLinha(linha),
         municipioUf,
         uf,
         nivel,
@@ -261,7 +278,7 @@ const tamanhoDoLugar = (lugar) => Math.max(num(lugar.vagasEdital), lugar.vagas);
 
 /*
   Os lugares por vagas, decrescente (candidatos desempatam), cada um com a
-  coordenada (ou `null`, se a tabela ainda não o tem), o raio do ponto, o
+  coordenada do banco (ou `null`, se o lugar ainda não tem), o raio do ponto, o
   rótulo e a série da cor. Com `projeto`, só os lugares dele, pintados com a
   cor dele; sem filtro, a cor é a do primeiro projeto do lugar e
   `variosProjetos` diz que há outros (o ponto ganha contorno tracejado).
@@ -293,9 +310,11 @@ export function pontosDosMunicipios(municipios, { projeto = "" } = {}) {
   const maior = Math.max(0, ...lista.map((item) => item.tamanho));
   return lista.map((item) => {
     const lugar =
-      item.nivel === "uf"
-        ? coordenadasDaUf(item.uf)
-        : coordenadasDoMunicipio(item.municipioUf, item.codigoIbge);
+      item.coordenada !== undefined
+        ? item.coordenada
+        : item.nivel === "uf"
+          ? coordenadasDaUf(item.uf)
+          : coordenadasDoMunicipio(item.municipioUf, item.codigoIbge);
     const principal = filtro
       ? item.projetos.find((projetoDoLugar) => projetoDoLugar.nome === filtro)
       : item.projetos[0];

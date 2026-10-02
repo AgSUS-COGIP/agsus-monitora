@@ -16,12 +16,17 @@ import { EditorDeCoordenadas as EditorComum } from "../editor-de-coordenadas/edi
   (migrations 20261002143323 e 20261002160000). A RPC devolve o lmap e o
   rede_cnes novos, que o mapa recebe por `aoAtualizarMapa`.
 */
+const RPC_SALVAR = "salvar_coordenada_mapa_saude_indigena";
+const RPC_DESFAZER = "desfazer_coordenada_mapa_saude_indigena";
+const RPC_PENDENCIAS = "listar_pendencias_coordenada_mapa_saude_indigena";
+const RPC_HISTORICO = "listar_historico_coordenada_mapa_saude_indigena";
+
 export const FONTE_DA_SAUDE_INDIGENA = Object.freeze({
   rpc: Object.freeze({
-    salvar: "salvar_coordenada_mapa_saude_indigena",
-    desfazer: "desfazer_coordenada_mapa_saude_indigena",
-    pendencias: "listar_pendencias_coordenada_mapa_saude_indigena",
-    historico: "listar_historico_coordenada_mapa_saude_indigena",
+    salvar: RPC_SALVAR,
+    desfazer: RPC_DESFAZER,
+    pendencias: RPC_PENDENCIAS,
+    historico: RPC_HISTORICO,
   }),
   fila: filaDeCoordenadas,
   chaveDoPonto: (ponto) => chaveDaPendencia(ponto.alvo),
