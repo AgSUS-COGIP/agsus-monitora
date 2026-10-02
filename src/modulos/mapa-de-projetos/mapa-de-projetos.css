@@ -1,0 +1,178 @@
+/*
+  Mapa de Projetos (src/modulos/mapa-de-projetos/). O painel, a moldura do
+  mapa, a lista, a legenda flutuante, os balões, o tema escuro, a tela cheia
+  e o celular são os do mapa da Saúde Indígena (`.mapa-si-*`,
+  mapa-saude-indigena.css); card, título e vazio, de src/ui/. Aqui só o que é
+  de Projetos: a cor de cada projeto, o filtro e os grupos da lista.
+
+  Cada projeto tem uma série do design system, em ordem fixa (DESIGN.md §6;
+  a ordem está em PROJETOS_DO_MAPA, src/lib/visao-geral-da-area.js). Os
+  pontos do Leaflet são SVG: a classe pinta por cima do atributo. O nome do
+  projeto vai sempre ao lado da cor (legenda, lista, balão), porque magenta e
+  oliva ficam na faixa mínima de separação.
+*/
+.marcador-de-projeto {
+  fill: var(--border-control);
+  stroke: var(--surface-card);
+  stroke-width: 2px;
+}
+
+.marcador-de-projeto.is-varios-projetos {
+  stroke: var(--text-primary);
+  stroke-dasharray: 3 2;
+}
+
+.mapa-projeto__cor {
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--border-control);
+  vertical-align: middle;
+}
+
+.mapa-projeto__cor--varios {
+  background: transparent;
+  border: 1.5px dashed var(--text-primary);
+}
+
+.marcador-de-projeto--1 {
+  fill: var(--series-1);
+}
+.mapa-projeto__cor--1 {
+  background: var(--series-1);
+}
+.marcador-de-projeto--2 {
+  fill: var(--series-2);
+}
+.mapa-projeto__cor--2 {
+  background: var(--series-2);
+}
+.marcador-de-projeto--3 {
+  fill: var(--series-3);
+}
+.mapa-projeto__cor--3 {
+  background: var(--series-3);
+}
+.marcador-de-projeto--4 {
+  fill: var(--series-4);
+}
+.mapa-projeto__cor--4 {
+  background: var(--series-4);
+}
+.marcador-de-projeto--5 {
+  fill: var(--series-5);
+}
+.mapa-projeto__cor--5 {
+  background: var(--series-5);
+}
+.marcador-de-projeto--6 {
+  fill: var(--series-6);
+}
+.mapa-projeto__cor--6 {
+  background: var(--series-6);
+}
+
+/* Linha da lista: os projetos do lugar (cor e nome) e a barra do resultado. */
+.mapa-projetos-lugar:disabled {
+  cursor: default;
+}
+
+.mapa-projetos-lugar__projetos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5) var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-projetos-lugar__projeto,
+.mapa-projetos__balao-edital,
+.mapa-projetos__grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+/* Aprovados em verde sobre o trilho dos reprovados; o "NN% aprovados" ao lado diz o mesmo. */
+.mapa-projetos-lugar__resultado .mapa-si-territorio__barra {
+  background: var(--state-danger-soft);
+}
+
+/* Projeto e "Agrupar por projeto", no alto da lista (fica à vista ao rolar). */
+.mapa-projetos__filtros {
+  position: sticky;
+  top: calc(-1 * var(--space-2));
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-1);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-projetos__campo,
+.mapa-projetos__agrupar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.mapa-projetos__campo {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.mapa-projetos__seletor {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.mapa-projetos__agrupar input {
+  margin: 0;
+  accent-color: var(--brand-primary);
+}
+
+.mapa-projetos__seletor:focus-visible,
+.mapa-projetos__agrupar input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* "Agrupar por projeto": um bloco por projeto. */
+.mapa-projetos__grupo {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.mapa-projetos__grupo-titulo {
+  margin: var(--space-2) var(--space-1) 0;
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.mapa-projetos__grupo-titulo span:last-child {
+  color: var(--text-secondary);
+}
+
+/* Balão (dica e popup): as linhas dos editais quebram na palavra. */
+.mapa-projetos__balao {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mapa-projetos__balao-edital {
+  align-items: baseline;
+}

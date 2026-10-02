@@ -16,7 +16,7 @@
   - SEDE: sem o bloco — a equipe fica em Brasília.
 
   Aqui ficam essa escolha, os textos do bloco de Projetos e a conta dos
-  municípios. O desenho é de `src/modules/municipios-da-visao-geral.js`.
+  municípios. O desenho é de `src/modulos/mapa-de-projetos/` (React).
 */
 
 import {
@@ -63,8 +63,10 @@ export function cabecalhoDaVisaoGeral(
 }
 
 /*
-  Os textos do bloco do mapa de Projetos (o do `index.html`, legado). O mapa
-  da Saúde Indígena tem os dele (src/modulos/mapa-saude-indigena/).
+  Os textos do mapa de Projetos (src/modulos/mapa-de-projetos/): a região,
+  o título do painel, o rótulo do mapa e o título da lista. A explicação de
+  como usar ("clique num município…") fica com a Aya
+  (docs/aya/regras-dos-mapas.md). O mapa da Saúde Indígena tem os dele.
 */
 export const TEXTOS_DO_MAPA = Object.freeze({
   [MAPA_DOS_MUNICIPIOS]: Object.freeze({
@@ -72,7 +74,6 @@ export const TEXTOS_DO_MAPA = Object.freeze({
     titulo: "Municípios das vagas",
     mapa: "Mapa do Brasil com os municípios das vagas da área",
     lista: "Municípios por vagas",
-    dica: "Clique num município para ver projeto, edital, vagas e candidatos.",
   }),
 });
 

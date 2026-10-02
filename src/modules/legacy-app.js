@@ -33,17 +33,7 @@ import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
 import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.js";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
-import {
-  MAPA_DOS_MUNICIPIOS,
-  cabecalhoDaVisaoGeral,
-  mapaDaVisaoGeral,
-} from "../lib/visao-geral-da-area.js";
-import {
-  criarCarregadorDeMunicipios,
-  criarMapaDosMunicipios,
-  desenharMunicipiosDaArea,
-  desenharLegendaDosMunicipios,
-} from "./municipios-da-visao-geral.js";
+import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
 import { definirPaginaDaAya } from "../modulos/aya/estado.js";
 import {
@@ -2097,9 +2087,8 @@ function navigate(view) {
 
   if (requestedView === "dashboard") {
     $("page-dashboard").classList.add("active");
+    // A página, com os mapas, é React (src/modulos/visao-geral/); aqui só o título.
     prepararVisaoGeralDaArea();
-    // O resto da página é React (src/modulos/visao-geral/); o mapa, daqui.
-    renderMap();
     if (previousView !== requestedView)
       trackAccess("abertura_tela", { tela: requestedView });
     return;
@@ -2145,10 +2134,8 @@ const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
   A VISÃO GERAL É UMA SÓ PARA AS TRÊS ÁREAS
 
   Saúde Indígena, SEDE e Projetos abrem esta mesma página (React,
-  src/modulos/visao-geral/), com os editais da área atual. Muda o bloco do
-  mapa — DSEIs na Saúde Indígena, municípios das vagas em Projetos, nenhum na
-  SEDE — e o cabeçalho (`src/lib/visao-geral-da-area.js`,
-  `src/modules/municipios-da-visao-geral.js`).
+  src/modulos/visao-geral/, com o mapa de cada área), com os editais da área
+  atual. Daqui sai só o cabeçalho (`cabecalhoDaVisaoGeral`).
 */
 function prepararVisaoGeralDaArea() {
   const area = areaAtual();
@@ -2161,9 +2148,8 @@ function prepararVisaoGeralDaArea() {
 }
 
 /*
-  Trocou a área (menu): o cabeçalho e, em Projetos, o mapa dos municípios (o
-  estado da Visão geral tira o DSEI aberto e poda os filtros). Roda também
-  fora da Visão geral.
+  Trocou a área (menu): o cabeçalho (o estado da Visão geral tira o DSEI
+  aberto, poda os filtros e troca o mapa). Roda também fora da Visão geral.
 */
 let areaDaVisaoGeral = areaAtual();
 function aoMudarDadosDoMonitoramento() {
@@ -2171,7 +2157,6 @@ function aoMudarDadosDoMonitoramento() {
   if (area === areaDaVisaoGeral) return;
   areaDaVisaoGeral = area;
   prepararVisaoGeralDaArea();
-  if (dataLoadedAtLeastOnce) renderMap();
 }
 assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento);
 
@@ -2226,7 +2211,6 @@ function toggleSidebar() {
   if (shouldLockSidebar()) {
     document.body.classList.add("sidebar-collapsed");
     syncSidebarToggle();
-    if (currentView === "dashboard") scheduleMapResize(240);
     return;
   }
   document.body.classList.toggle("sidebar-collapsed");
@@ -2237,66 +2221,6 @@ function toggleSidebar() {
       document.body.classList.contains("sidebar-collapsed") ? "1" : "0",
     );
   } catch (e) {}
-  if (currentView === "dashboard") scheduleMapResize(240);
-}
-
-/*
-  O MAPA DE PROJETOS (municípios das vagas) — o que sobrou de mapa no legado.
-  O da Saúde Indígena é React (src/modulos/mapa-saude-indigena/), ligado na
-  Visão geral ao estado dela; a SEDE não tem mapa. Este é criado na primeira
-  abertura da Visão geral em Projetos (`criarMapaDosMunicipios`, em
-  `municipios-da-visao-geral.js`), e a carga é por área, com cache.
-*/
-let mapaDosMunicipios = null;
-const carregadorDeMunicipios = criarCarregadorDeMunicipios({
-  obterSupabase: () => sb,
-});
-let desenhoDosMunicipios = 0;
-
-function renderMap() {
-  if (currentView !== "dashboard") return;
-  if (mapaDaVisaoGeral(areaAtual()) !== MAPA_DOS_MUNICIPIOS) return;
-  mapaDosMunicipios ??= criarMapaDosMunicipios({
-    L: window.L,
-    elemento: $("mapaDosProjetos"),
-    legenda: document.querySelector(".mapa-projetos__legenda"),
-    botaoBrasil: $("mapaDosProjetosBrasil"),
-    aoAparecer: () => renderMap(),
-  });
-  if (!mapaDosMunicipios) return;
-  scheduleMapResize(60);
-  desenharMunicipiosNoMapa();
-}
-
-function desenharMunicipiosNoMapa() {
-  const { mapa, camada, limitesDoBrasil, corpoDaLegenda } = mapaDosMunicipios;
-  const area = areaAtual();
-  const desenho = ++desenhoDosMunicipios;
-  void desenharMunicipiosDaArea({
-    L: window.L,
-    mapa,
-    camada,
-    area,
-    carregador: carregadorDeMunicipios,
-    lista: $("brasilDseiList"),
-    conta: $("brasilDseiCount"),
-    contador: $("masterMapCount"),
-    limitesDoBrasil,
-    aindaVale: () =>
-      desenho === desenhoDosMunicipios &&
-      area === areaAtual() &&
-      currentView === "dashboard",
-    aoDesenhar: () => desenharLegendaDosMunicipios(corpoDaLegenda),
-  });
-}
-
-function scheduleMapResize(delay = 80) {
-  clearTimeout(window.__mapResizeTimer);
-  window.__mapResizeTimer = setTimeout(() => {
-    try {
-      mapaDosMunicipios?.mapa?.invalidateSize?.({ animate: false, pan: false });
-    } catch (e) {}
-  }, delay);
 }
 
 function clearExternalPanelCache() {
@@ -2443,7 +2367,6 @@ function toggleAppFullscreenFallback(force) {
     active || !!document.fullscreenElement,
   );
   syncDisplayModeButtons();
-  if (currentView === "dashboard") scheduleMapResize(220);
   toast(active ? "Modo expandido ativado." : "Modo expandido desativado.");
 }
 
@@ -2479,7 +2402,6 @@ document.addEventListener("fullscreenchange", () => {
       document.body.classList.contains("app-fullscreen-fallback"),
   );
   syncDisplayModeButtons();
-  if (currentView === "dashboard") scheduleMapResize(220);
 });
 
 // Exporta relatório em PDF (via diálogo de impressão do navegador — funciona offline)
@@ -2582,10 +2504,6 @@ function toggleDarkMode() {
     localStorage.setItem("agsus_dark_mode_v1", next ? "1" : "0");
   } catch (e) {}
   applyDarkMode(next);
-  // re-renderiza o mapa para adaptar ao fundo
-  setTimeout(() => {
-    if (currentView === "dashboard") scheduleMapResize(80);
-  }, 200);
 }
 function loadDarkModePreference() {
   try {
@@ -2695,13 +2613,11 @@ window.addEventListener("resize", () => {
   clearTimeout(window.__responsiveResize);
   window.__responsiveResize = setTimeout(() => {
     enforceResponsiveSidebar();
-    if (currentView === "dashboard") scheduleMapResize(80);
   }, 220);
 });
 window.addEventListener("orientationchange", () => {
   setTimeout(() => {
     enforceResponsiveSidebar();
-    if (currentView === "dashboard") scheduleMapResize(80);
   }, 300);
 });
 

@@ -19,8 +19,8 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
   própria `#page-dashboard`, lê as linhas que o legado publica
   (dados-do-monitoramento.js) recortadas pela área atual e não pede nada ao
-  banco (fora os marcos do ano). O bloco do mapa é uma folha do legado: a tela
-  só reserva o lugar e muda o nó para dentro dele.
+  banco (fora os marcos do ano e os lugares do mapa de Projetos). Os mapas
+  da área são React: Saúde Indígena e Projetos; a SEDE não tem.
 */
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
@@ -45,6 +45,8 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
 
 const { montarVisaoGeral } =
   await import("../../src/modulos/visao-geral/visao-geral.jsx");
+const { criarCarregadorDeMunicipios } =
+  await import("../../src/modulos/mapa-de-projetos/carregador.js");
 const { criarEstadoDaVisaoGeral, CHAVE_DAS_COLUNAS, CHAVE_DOS_FILTROS } =
   await import("../../src/modulos/visao-geral/estado.js");
 
@@ -130,8 +132,6 @@ function configuracoesFalsas(valores = {}) {
 }
 
 let secao;
-let reserva;
-let bloco;
 let tela;
 let estado;
 let armazenamento;
@@ -145,6 +145,7 @@ async function montar({
   supabase = null,
   comemoracoes = false,
   carregar = true,
+  carregadorDeMunicipios,
 } = {}) {
   armazenamento ||= memoria();
   estado = criarEstadoDaVisaoGeral({
@@ -155,19 +156,10 @@ async function montar({
   secao = document.createElement("section");
   secao.id = "page-dashboard";
   secao.className = "page active";
-  reserva = document.createElement("div");
-  reserva.hidden = true;
-  bloco = document.createElement("div");
-  bloco.className = "health-map-workspace";
-  bloco.id = "mapaDaVisaoGeral";
-  bloco.textContent = "Mapa do legado";
-  reserva.append(bloco);
-  document.body.append(secao, reserva);
+  document.body.append(secao);
   await act(async () => {
     tela = montarVisaoGeral({
       secao,
-      blocoDoMapa: bloco,
-      reservaDoMapa: reserva,
       estado,
       configuracoes: configuracoesFalsas(valores),
       toast,
@@ -175,6 +167,7 @@ async function montar({
       supabase,
       comemoracoesLigadas: () => comemoracoes,
       agora: () => new Date(2026, 9, 1, 9, 30),
+      ...(carregadorDeMunicipios ? { carregadorDeMunicipios } : {}),
     });
   });
   if (carregar) await act(async () => publicarLinhasDoMonitoramento(LINHAS));
@@ -251,28 +244,21 @@ describe("a tela dentro do app", () => {
     expect(valorDoKpi("processos")).toBe("99");
   });
 
-  it("o mapa é da área: Saúde Indígena em React, Projetos o bloco legado, SEDE nenhum", async () => {
+  it("o mapa é da área: Saúde Indígena e Projetos em React, SEDE nenhum", async () => {
     await montar();
-    // Saúde Indígena: o componente React; o bloco de Projetos fica escondido.
+    // Saúde Indígena: o componente dos DSEIs.
     expect(secao.querySelectorAll(".mapa-si")).toHaveLength(1);
-    expect(bloco.parentElement.classList.contains("visao-geral-mapa")).toBe(
-      true,
-    );
-    expect(bloco.parentElement.hidden).toBe(true);
+    expect(secao.querySelector(".mapa-projetos")).toBeNull();
 
     await act(async () => definirAreaAtual("projetos"));
-    expect(secao.querySelector(".mapa-si")).toBeNull();
-    expect(bloco.parentElement.hidden).toBe(false);
-    expect(bloco.textContent).toBe("Mapa do legado");
+    expect(secao.querySelectorAll(".mapa-si")).toHaveLength(1);
+    expect(secao.querySelectorAll(".mapa-projetos")).toHaveLength(1);
+    expect(secao.textContent).toContain("Municípios por vagas");
+    expect(secao.textContent).not.toContain("Territórios por vagas");
 
     await act(async () => definirAreaAtual("sede"));
     expect(secao.querySelector(".mapa-si")).toBeNull();
-    expect(bloco.parentElement.hidden).toBe(true);
-
-    // Ao desmontar, o bloco legado volta à reserva, intacto.
-    await act(async () => tela.raiz.unmount());
-    expect(reserva.firstChild).toBe(bloco);
-    tela = null;
+    expect(secao.querySelector(".visao-geral-mapa")).toBeNull();
   });
 
   it("troca de área: só os editais dela, e o DSEI aberto sai", async () => {
@@ -667,7 +653,9 @@ describe("regras do código da tela", () => {
       "filterBody",
     ])
       expect(html, id).not.toContain(`id="${id}"`);
-    expect(html).toContain('id="mapaDaVisaoGeral"');
+    // Nenhum mapa legado: os dois mapas são React.
+    for (const id of ["mapaDaVisaoGeral", "mapaDosProjetos", "map"])
+      expect(html, id).not.toContain(`id="${id}"`);
   });
 });
 
@@ -788,7 +776,89 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
     );
     expect(leaflet.vivos()).toHaveLength(1);
     await act(async () => definirAreaAtual("projetos"));
-    expect(leaflet.vivos()).toHaveLength(0);
+    expect(vivo("map")).toBeNull();
     expect(secao.querySelector("#map")).toBeNull();
+    // No lugar, o mapa de Projetos (outro Leaflet).
+    expect(leaflet.vivos().map((m) => m.elemento.id)).toEqual([
+      "mapaDosProjetos",
+    ]);
+  });
+});
+
+/*
+  A Etapa 5, parte 3: o mapa de Projetos (src/modulos/mapa-de-projetos/)
+  ligado na Visão geral. Pede os lugares pelo carregador da tela depois da
+  primeira carga da página (`carregadoEm`) e some fora de Projetos.
+*/
+describe("o mapa de Projetos na Visão geral", () => {
+  let leaflet;
+  const vivo = (id) =>
+    leaflet.vivos().find((m) => m.elemento.id === id) || null;
+
+  function carregadorFalso() {
+    const supabase = {
+      auth: {
+        getSession: async () => ({
+          data: { session: { access_token: "teste" } },
+          error: null,
+        }),
+      },
+      rpc: vi.fn(async () => ({
+        data: [
+          {
+            municipio_uf: "Irati/PR",
+            uf: "PR",
+            vagas: 5,
+            candidatos: 70,
+            projetos: ["Projeto Agora Tem Especialistas Caminhoneiros"],
+          },
+        ],
+        error: null,
+      })),
+    };
+    return {
+      supabase,
+      carregador: criarCarregadorDeMunicipios({
+        obterSupabase: () => supabase,
+      }),
+    };
+  }
+
+  beforeEach(() => {
+    leaflet = criarLeafletFalso();
+    globalThis.L = leaflet.L;
+  });
+  afterEach(() => {
+    delete globalThis.L;
+  });
+
+  it("só depois da carga pede os lugares, uma vez, e desenha o ponto e a lista", async () => {
+    const { supabase, carregador } = carregadorFalso();
+    await act(async () => definirAreaAtual("projetos"));
+    await montar({ carregar: false, carregadorDeMunicipios: carregador });
+    expect(vivo("mapaDosProjetos")).not.toBeNull();
+    expect(supabase.rpc).not.toHaveBeenCalled();
+
+    await act(async () => publicarLinhasDoMonitoramento(LINHAS));
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "listar_municipios_das_vagas_da_area",
+      { p_area: "projetos" },
+    );
+    expect(
+      leaflet.desenhadas(vivo("mapaDosProjetos"), "circleMarker"),
+    ).toHaveLength(1);
+    expect(secao.querySelector(".mapa-projetos-lugar strong").textContent).toBe(
+      "Irati/PR",
+    );
+
+    // Trocar de área desmonta o mapa (remove do Leaflet); voltar usa o cache.
+    await act(async () => definirAreaAtual("sede"));
+    expect(leaflet.vivos()).toHaveLength(0);
+    await act(async () => definirAreaAtual("projetos"));
+    await esperar();
+    expect(vivo("mapaDosProjetos")).not.toBeNull();
+    expect(supabase.rpc).toHaveBeenCalledTimes(1);
   });
 });

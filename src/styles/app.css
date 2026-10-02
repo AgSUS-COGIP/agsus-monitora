@@ -1166,10 +1166,6 @@ body.external-clean #externalReturnBar {
     min-width: 0 !important;
     font-size: 11px !important;
   }
-  #mapaDosProjetos {
-    height: 280px !important;
-    min-height: 280px !important;
-  }
   .print-only {
     display: block !important;
   }

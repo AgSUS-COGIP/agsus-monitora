@@ -1,8 +1,9 @@
 # `src/modulos/mapa-saude-indigena/` — Mapa da Saúde Indígena
 
 O mapa da Visão geral da área Saúde Indígena em React (Etapa 5, a parte "mapas"), ligado na Visão
-geral (`src/modulos/visao-geral/`) e lendo o estado dela. O legado não desenha mais mapa da Saúde
-Indígena; só o de Projetos (municípios das vagas) continua legado.
+geral (`src/modulos/visao-geral/`) e lendo o estado dela. O legado não desenha mais mapa nenhum: o
+de Projetos é o módulo irmão `src/modulos/mapa-de-projetos/` (ver "Projetos/SEDE"), que reaproveita
+daqui `leaflet.js`, a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
 
 ```
 mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (calor, tela cheia), contas memorizadas,
@@ -11,8 +12,11 @@ mapa-nacional.jsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, l
                           "Territórios por vagas", Brasil/Calor/Tela cheia, legenda flutuante
 mapa-do-dsei.jsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
                           vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos
-legenda.jsx               <Forma>, legenda nacional (recolhível), legenda do DSEI, fases das terras
-leaflet.js                fábrica do mapa, fundo com recurso, contornos, ícones/popup/dica em DOM seguro
+legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
+                          nacional, legenda do DSEI, fases das terras
+leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
+                          contornos, ícones/popup/dica em DOM seguro
+tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Recolher" e Esc (os dois mapas)
 usar-ultimo.js            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```
@@ -58,15 +62,39 @@ Saúde Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO esta
 (`idDoMapaNacional`/`idDoMapaDoDsei`), porque `indigenous-territories-layer.js` e
 `map-base-layer-switcher.js` só enfeitam mapas com esses ids (Terras Indígenas, abrangência,
 Mapa/Satélite). A marcação antiga saiu do `index.html`: nenhum outro `#map`/`#detailMap` na página.
-O mapa de Projetos (legado) usa `#mapaDosProjetos`. O `map-guard.js` e o `map-zoom-range.js` valem
+O mapa de Projetos usa `#mapaDosProjetos` (só o Mapa/Satélite o enfeita). O `map-guard.js` e o `map-zoom-range.js` valem
 para qualquer mapa. Ganchos da camada de terras usados (todos opcionais): `__agsusSetDseiCoverage`,
 `__agsusAoMudarTerras`, `__agsusEnquadrarTerra`, `__agsusDseiCoverageBounds`,
 `agsus:dsei-coverage-ready`, `__agsusDseiCoverageLayer`, `__agsusFaseDaTerraVisivel`,
 `__agsusAlternarFaseDaTerra`, `agsus:terras-mudaram`, `__agsusSuspenderCamadasIndigenas`.
 
-**Projetos/SEDE.** O componente é só da Saúde Indígena. Em Projetos a Visão geral mostra o bloco
-legado do `index.html` (`#mapaDaVisaoGeral`: `criarMapaDosMunicipios` e `desenharMunicipiosDaArea`
-em `src/modules/municipios-da-visao-geral.js`); na SEDE, nenhum.
+**Projetos/SEDE.** Este componente é só da Saúde Indígena. Em Projetos a Visão geral mostra
+`<MapaDeProjetos>` (`src/modulos/mapa-de-projetos/`); na SEDE, nenhum mapa.
+
+```
+mapa-de-projetos.jsx   <MapaDeProjetos area carregador carregadoEm>: Leaflet (#mapaDosProjetos), um ponto
+                       por lugar na cor do projeto, enquadramento, legenda, Brasil e Tela cheia
+lista.jsx              "Municípios por vagas" (formato de "Territórios por vagas"), filtro "Projeto" e
+                       "Agrupar por projeto"
+balao.js               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
+carregador.js          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
+                       escolha da lista (sobrevive à troca de área)
+mapa-de-projetos.css   cores dos projetos (--series-1…6), filtro e grupos; o resto é o .mapa-si-*
+```
+
+Ligado em `visao-geral.jsx`: `<MapaDeProjetos area={e.area} carregador={…} carregadoEm={e.carregadoEm}>`.
+O carregador é criado por `montarVisaoGeral` (um por montagem). O pedido só sai depois da primeira
+carga da página (`carregadoEm`, com sessão); Atualizar dados pede de novo e o cache decide. Lógica
+pura em `src/lib/visao-geral-da-area.js` (projetos, pontos, raio, grupos, resumo do popup) e
+`src/lib/coordenadas-dos-municipios.js`. Testes: `tests/visao-geral-da-area.test.js` (regras) e
+`tests/modulos/mapa-de-projetos.test.js` (componente e carregador). Explicações para a Aya:
+`docs/aya/regras-dos-mapas.md`. O que saiu do legado: `src/modules/municipios-da-visao-geral.js`, o
+bloco `#mapaDaVisaoGeral`/`#reservaDoMapaDaVisaoGeral` do `index.html`, `renderMap`,
+`desenharMunicipiosNoMapa`, `scheduleMapResize` e o carregador do `legacy-app.js`,
+`health-map-workspace.css`, `health-reference-kpis.css` e os `#mapaDosProjetos` de `app.css` e
+`mobile-app.css`. Mudou: Tela cheia própria (Esc sai), contagem no cabeçalho, linhas no formato
+de "Territórios por vagas", estados vazios em uma linha e o rodapé "Clique num município…" foi
+para a Aya.
 
 **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.js`,
 também no mapa de Projetos): a dica que abre perto da borda troca de direção (em cima → embaixo →
@@ -84,7 +112,8 @@ na palavra (`.dica-no-mapa`, `src/ui/ui.css`); o popup tem `autoPan` com folga p
   vínculos externos, `resetDetailMap`, `voltarAoBrasil`, `syncMapLevelUI`, o código morto
   (`drawPolos`, `drawRedeAssistencial`, `polosCorrigidosPorCnes`…), `dseiSelecionado`,
   `applyFilters`/`aoMudarRecorte` e o `ligarMapa` do estado. Ficou o mapa de Projetos (`renderMap`,
-  `desenharMunicipiosNoMapa`, `scheduleMapResize`) e `loadMapaConfig`, que publica no estado.
+  `desenharMunicipiosNoMapa`, `scheduleMapResize`; saiu na parte 3) e `loadMapaConfig`, que publica no
+  estado.
 - `src/modules/`: `vinculos-territoriais.js`, `controles-do-mapa.js`, `legenda-das-terras.js`,
   `health-map-immersive-workspace.js`.
 - CSS: `health-map-size-tuning.css`, `health-map-immersive-workspace.css`,
@@ -109,3 +138,7 @@ na palavra (`.dica-no-mapa`, `src/ui/ui.css`); o popup tem `autoPan` com folga p
 - O DSEI ativo é verde com borda amarela, como a legenda diz (`CORES_DO_MAPA`). O legado pintava
   de azul por cima, com o `health-map-contrast.css` (que saiu), e a legenda dele dizia verde.
 - Dicas que não saem do mapa perto da borda; popups que cabem no celular.
+- Enquadramento do Brasil com folga da maior bolha (raio + traço + 12 px) e zoom mínimo que desce
+  em quartos até o país caber (`src/lib/enquadramento-do-brasil.js`, usado pelo `map-guard`); os
+  mapas React têm `enquadramentoProprio` (o guarda não reenquadra por cima) e reenquadram ao
+  mudar de tamanho até a pessoa mexer (`criarMapaDoBrasil`). A legenda começa recolhida.

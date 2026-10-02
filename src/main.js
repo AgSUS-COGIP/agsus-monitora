@@ -12,7 +12,6 @@ import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
 import "./styles/loading-experience.css";
-import "./styles/health-reference-kpis.css";
 import "./styles/config-page.css";
 import "./styles/config-governance.css";
 import "./styles/nucleo-cronograma.css";
@@ -27,7 +26,6 @@ import "./styles/mobile-table-cards.css";
 import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
-import "./styles/health-map-workspace.css";
 import "./styles/map-base-layer-switcher.css";
 import "./styles/indigenous-territories-layer.css";
 import "./styles/system-ui-fixes.css";
@@ -52,6 +50,7 @@ import "./modulos/selecao/selecao.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";
 import "./modulos/mapa-saude-indigena/mapa-saude-indigena.css";
+import "./modulos/mapa-de-projetos/mapa-de-projetos.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -110,9 +109,9 @@ installCspReportMonitor();
 */
 montarBarraLateral();
 /*
-  A Visão geral (React, src/modulos/visao-geral/) também monta já, de forma
-  síncrona: ela põe o bloco do mapa de Projetos (legado) no lugar dele antes de o resto do
-  app procurá-lo. O legado fala com ela pelo estado (estado.js), não pelo DOM.
+  A Visão geral (React, src/modulos/visao-geral/, com os mapas da Saúde
+  Indígena e de Projetos) também monta já, de forma síncrona. O legado fala
+  com ela pelo estado (estado.js), não pelo DOM.
 */
 window.visaoGeralController = montarVisaoGeral({
   toast: window.monitoraToast,

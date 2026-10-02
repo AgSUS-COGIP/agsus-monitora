@@ -2,7 +2,7 @@
 
 O mapa da Visão geral em cada área: DSEIs e CASAIs na Saúde Indígena, os locais das vagas em
 Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-geral-da-area.js`,
-`src/modules/municipios-da-visao-geral.js`, `src/modules/lotacoes-geograficas-transport.js`,
+`src/modulos/mapa-de-projetos/`, `src/modules/lotacoes-geograficas-transport.js`,
 `scripts/validar-localizacoes.mjs`, `src/lib/localizacoes-validadas.js`,
 `docs/auditoria-oficial-das-coordenadas-2026-10-01.md` e a migration
 `20261001180000_locais_das_vagas_dos_projetos.sql`.
@@ -11,7 +11,13 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** de onde vem os pontos do mapa de projetos | mapa de projetos | mapa dos projetos | municipios das vagas | municipios por vagas
 **resposta:** Na Visão geral de Projetos, o mapa mostra um ponto por lugar das vagas de todos os projetos (Caminhoneiros, Saúde nas Fronteiras, Escritório Distrital e Regional, Rio Doce, MFC e CCE), na cor do projeto, com legenda, filtro e agrupamento por projeto; o tamanho do ponto segue as vagas. Os lugares foram lidos dos PDFs dos editais (município do IBGE ou só a UF, com o arquivo e a página como prova) e se juntam aos "UBS móvel" do nome da vaga. Lugar só com UF aparece como estado e não tem candidatos. A SEDE não tem mapa.
-**fonte:** supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral-da-area.js; src/modules/municipios-da-visao-geral.js
+**fonte:** supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral-da-area.js; src/modulos/mapa-de-projetos/mapa-de-projetos.jsx
+
+## Como usar o mapa de Projetos
+
+**perguntas:** como uso o mapa de projetos | clicar no municipio do mapa | filtrar o mapa por projeto | agrupar por projeto | lista municipios por vagas
+**resposta:** Clique num ponto do mapa, ou num lugar da lista "Municípios por vagas", para ver o projeto, o edital, as vagas publicadas, as lotações e os candidatos daquele lugar; o mapa aproxima e abre o resumo. A lista vem ordenada pelas vagas e a barra mostra a parte aprovada entre os já analisados. Com dois ou mais projetos, o campo "Projeto" mostra só os lugares de um projeto (o mapa reenquadra) e "Agrupar por projeto" separa a lista em um bloco por projeto — um lugar de dois projetos aparece nos dois. Ponto com contorno tracejado tem mais de um projeto; lugar sem coordenada aparece na lista, mas não no mapa. "Brasil" volta ao país inteiro e "Tela cheia" amplia o painel (Esc sai).
+**fonte:** src/modulos/mapa-de-projetos/mapa-de-projetos.jsx; src/modulos/mapa-de-projetos/lista.jsx; src/lib/visao-geral-da-area.js
 
 ## Mapa da Saúde Indígena
 

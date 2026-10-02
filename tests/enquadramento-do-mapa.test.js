@@ -19,7 +19,14 @@ const cssDoModulo = readFileSync(
   "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css",
   "utf8",
 );
-const css = readFileSync("src/styles/health-map-workspace.css", "utf8");
+const css = readFileSync(
+  "src/modulos/mapa-de-projetos/mapa-de-projetos.css",
+  "utf8",
+);
+const projetosJsx = readFileSync(
+  "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx",
+  "utf8",
+);
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -118,12 +125,10 @@ describe("o container do mapa preenche o card", () => {
   });
 
   it("o mapa de Projetos e os da Saúde Indígena ocupam a largura toda", () => {
-    const projetos = css.slice(
-      css.indexOf("#mapaDosProjetos {"),
-      css.indexOf("}", css.indexOf("#mapaDosProjetos {")),
-    );
-    expect(projetos).toContain("width: 100%");
-    expect(projetos).toContain("height: var(--health-map-height)");
+    // O de Projetos usa a mesma moldura e o mesmo contêiner do nacional da Saúde Indígena.
+    expect(projetosJsx).toContain('className="mapa-si-mapa"');
+    expect(projetosJsx).toContain('className="mapa-si-moldura"');
+    expect(css).not.toMatch(/.mapa-si-mapa|#mapaDosProjetos/);
     const modulo = cssDoModulo.slice(
       cssDoModulo.indexOf(".mapa-si-mapa {"),
       cssDoModulo.indexOf("}", cssDoModulo.indexOf(".mapa-si-mapa {")),
