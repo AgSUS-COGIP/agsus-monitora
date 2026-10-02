@@ -799,6 +799,10 @@ begin
 end;
 $$;
 
+-- As tabelas não têm grant direto: as conferências de E4 em diante leem como
+-- o dono (o papel authenticated de E3 só valia para o teste de permissão).
+reset role;
+
 -- E4. Admin no lugar A: corrigir, validar, desfazer, conferir sem e com mudança.
 do $$
 declare

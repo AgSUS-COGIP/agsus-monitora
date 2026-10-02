@@ -97,7 +97,7 @@ lista.jsx              "Municípios por vagas" (formato de "Territórios por vag
 balao.js               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
 editor-de-coordenadas.jsx  "Coordenadas" (só admin global): o editor comum com os lugares das vagas, as
                        regras de src/lib/coordenadas-dos-projetos.js e as RPCs *_coordenada_mapa_projetos
-                       (migration 20261002170000)
+                       (migration 20261002190000)
 carregador.js          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
                        escolha da lista (sobrevive à troca de área)
 mapa-de-projetos.css   cores dos projetos (--series-1…6), filtro e grupos; o resto é o .mapa-si-*
