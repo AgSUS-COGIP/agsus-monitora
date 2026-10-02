@@ -1,4 +1,8 @@
 import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.js";
+import {
+  FOLGA_DO_BRASIL,
+  zoomQueCabe,
+} from "../lib/enquadramento-do-brasil.js";
 import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
 
 /*
@@ -124,6 +128,40 @@ function hardenMapInstance(L, map) {
   map.__agsusMapGuarded = true;
   map.__agsusOverviewMode = true;
 
+  /*
+    O Brasil inteiro, com folga para as bolhas da borda
+    (src/lib/enquadramento-do-brasil.js). O zoom mínimo é a escala nacional
+    (HEALTH_MAP_MIN_ZOOM) ou, numa moldura baixa, o zoom em quartos em que o
+    país cabe com a folga — antes, preso em 4.5, o norte e o sul saíam
+    cortados num mapa de 640 px. Recalculado a cada enquadramento do país:
+    a moldura que cresce volta a 4.5.
+  */
+  const folgaDoBrasil = [FOLGA_DO_BRASIL, FOLGA_DO_BRASIL];
+  const liberarZoomParaCaber = (bounds, padding) => {
+    const tamanho = map.getSize?.();
+    if (!originalSetMinZoom || !tamanho?.x || !tamanho?.y) return;
+    const caixa = L.latLngBounds(bounds);
+    const folga = Math.max(
+      ...(Array.isArray(padding) ? padding : [padding?.x, padding?.y]).map(
+        (valor) => Number(valor) || 0,
+      ),
+    );
+    originalSetMinZoom(
+      Math.min(
+        HEALTH_MAP_MIN_ZOOM,
+        zoomQueCabe({
+          largura: tamanho.x,
+          altura: tamanho.y,
+          folga,
+          limites: [
+            [caixa.getSouth(), caixa.getWest()],
+            [caixa.getNorth(), caixa.getEast()],
+          ],
+        }),
+      ),
+    );
+  };
+
   map.setMaxBounds = function setGuardedMaxBounds() {
     return originalSetMaxBounds(maxBounds);
   };
@@ -172,10 +210,12 @@ function hardenMapInstance(L, map) {
       : Number.isFinite(requestedMax)
         ? requestedMax
         : 8;
+    const padding = options.padding ?? (overview ? folgaDoBrasil : [24, 24]);
+    if (overview) liberarZoomParaCaber(limited, padding);
     const resultado = originalFitBounds(limited, {
-      padding: overview ? [10, 10] : [24, 24],
       animate: false,
       ...options,
+      padding,
       maxZoom,
     });
     map.__agsusOverviewMode = overview;
@@ -186,12 +226,13 @@ function hardenMapInstance(L, map) {
     map.flyToBounds = function flyToGuardedBounds(bounds, options = {}) {
       const limited = limitBounds(L, bounds, maxBounds);
       const overview = isBrazilOverviewBounds(L, limited);
+      if (overview) liberarZoomParaCaber(limited, folgaDoBrasil);
       /* Mesma razão do `fitBounds`: a animação termina em `setView`. */
       window.setTimeout(() => {
         map.__agsusOverviewMode = overview;
       }, 0);
       return originalFlyToBounds(limited, {
-        padding: overview ? [10, 10] : [32, 32],
+        padding: overview ? folgaDoBrasil : [32, 32],
         duration: 0.35,
         ...options,
         maxZoom: overview
@@ -241,8 +282,9 @@ function hardenMapInstance(L, map) {
   const fitBrazilOverview = () => {
     try {
       map.invalidateSize({ animate: false, pan: false });
+      liberarZoomParaCaber(viewBounds, folgaDoBrasil);
       originalFitBounds(viewBounds, {
-        padding: [10, 10],
+        padding: folgaDoBrasil,
         maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM,
         animate: false,
       });
@@ -265,22 +307,33 @@ function hardenMapInstance(L, map) {
     container e reenquadra quando as medidas param de mudar; enquanto estiver em
     overview e ninguém tiver aproximado, o enquadramento acompanha. Ao primeiro
     gesto de zoom da pessoa, `__agsusOverviewMode` cai e o observador se cala.
+
+    ENQUADRAMENTO PRÓPRIO: os mapas React da Visão geral (`criarMapa`,
+    src/modulos/mapa-saude-indigena/leaflet.js) enquadram sozinhos — filtro,
+    DSEI, pontos de Projetos — e refazem ao aparecer ou mudar de tamanho. Com
+    `enquadramentoProprio`, este guarda não reenquadra o Brasil por cima deles
+    (a corrida apagava o enquadramento dos pontos) nem fixa o mínimo em 4.5
+    depois do primeiro enquadramento (o `setMinZoom` aproximava o mapa e
+    cortava o norte e o sul); o mínimo é o de `liberarZoomParaCaber`.
   */
+  const enquadramentoProprio = Boolean(map.options?.enquadramentoProprio);
   map.whenReady(() => {
     originalSetMaxBounds(maxBounds);
-    originalSetMinZoom?.(HEALTH_MAP_MIN_ZOOM);
-    fitBrazilOverview();
+    if (!enquadramentoProprio) {
+      originalSetMinZoom?.(HEALTH_MAP_MIN_ZOOM);
+      fitBrazilOverview();
+    }
     ensureFullManualZoomRange(map);
     addScaleControl(L, map);
     stabilizeMap(map, maxBounds);
-    observarTamanhoDoCard(map, fitBrazilOverview);
+    if (!enquadramentoProprio) observarTamanhoDoCard(map, fitBrazilOverview);
   });
 
   // Se o card muda de tamanho ainda em overview, recalcula com o tamanho final.
   // Se a pessoa já aproximou o mapa, o enquadramento manual é preservado.
   map.on("resize", () => {
     stabilizeMap(map, maxBounds);
-    if (!emOverview(map)) return;
+    if (enquadramentoProprio || !emOverview(map)) return;
     window.requestAnimationFrame(fitBrazilOverview);
   });
   map.on("drag move zoomend moveend layeradd", () =>
@@ -362,8 +415,8 @@ function enhanceMapAccessibility(L, map) {
       map.zoomOut(1);
     } else if (event.key === "0") {
       event.preventDefault();
+      // A folga e o zoom que cabe são os do `fitGuardedBounds`.
       map.fitBounds(toViewBounds(L), {
-        padding: [10, 10],
         maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM,
         animate: false,
       });

@@ -1,5 +1,4 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import { BRASIL_BOUNDS } from "../../lib/brasil-bounds.js";
 import { calcularLeque } from "../../lib/leque-de-marcadores.js";
 import {
   dicaDaBolha,
@@ -15,15 +14,14 @@ import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.js
 import { EstadoVazio, classes } from "../../ui/index.js";
 import { LegendaNacional } from "./legenda.jsx";
 import {
-  adicionarFundo,
   conteudoEmElemento,
-  criarMapa,
-  desenharContornos,
+  criarMapaDoBrasil,
   iconeDaCasaiNacional,
+  enquadrarNoBrasil,
   ligarDicaEPopup,
-  observarTamanho,
   podeFlutuar,
   remedir,
+  voltarAoBrasil,
 } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.js";
 
@@ -159,7 +157,7 @@ export function MapaNacional({
   const [mapa, definirMapa] = useState(null);
   const camadas = useRef(null);
   const ultimoEnquadramento = useRef("");
-  // Quantas vezes o contêiner passou de escondido (medida zero) a visível.
+  // Quantas vezes o enquadramento teve de ser refeito (apareceu, mudou de tamanho).
   const [aparecimentos, aparecer] = useReducer((n) => n + 1, 0);
   const chamadas = usarUltimo({ aoEscolherDsei, aoFiltrarPorBusca });
   const avisosDasTerras = usarAvisosDasTerras(mapa);
@@ -168,33 +166,33 @@ export function MapaNacional({
   useEffect(() => {
     const elemento = refDoMapa.current;
     if (!L || !elemento) return undefined;
-    const novo = criarMapa(L, elemento);
-    novo.fitBounds(L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]));
-    adicionarFundo(L, novo, elemento);
     /*
       Criado escondido (antes do login, noutra tela) o enquadramento usa a
-      medida zero: ao aparecer, enquadra de novo.
+      medida zero: ao aparecer, enquadra de novo. Também ao mudar de tamanho
+      (tela cheia, barra lateral), se a pessoa não mexeu no mapa.
     */
-    const pararDeObservar = observarTamanho(novo, elemento, {
-      aoAparecer: () => {
+    const {
+      mapa: novo,
+      soltar,
+      parar,
+    } = criarMapaDoBrasil(L, elemento, {
+      aoReenquadrar: () => {
         ultimoEnquadramento.current = "";
         aparecer();
       },
     });
-    const contornos = L.layerGroup().addTo(novo);
     const dsei = L.layerGroup().addTo(novo);
     const casai = L.layerGroup().addTo(novo);
-    desenharContornos(L, contornos, "nacional");
     novo.__agsusSuspenderCamadasIndigenas?.(false);
     const marcadores = [];
     const tracos = [];
     const leque = () => aplicarLeque(L, novo, dsei, marcadores, tracos);
     novo.on("zoomend", leque);
-    camadas.current = { dsei, casai, marcadores, tracos, leque };
+    camadas.current = { dsei, casai, marcadores, tracos, leque, soltar };
     ultimoEnquadramento.current = "";
     definirMapa(novo);
     return () => {
-      pararDeObservar();
+      parar();
       novo.off("zoomend", leque);
       novo.remove();
       camadas.current = null;
@@ -263,13 +261,11 @@ export function MapaNacional({
           maxZoom: 7,
           animate: false,
         });
-      else
-        mapa.fitBounds(L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]), {
-          animate: false,
-        });
+      else enquadrarNoBrasil(L, mapa);
     } catch {
       // mapa sem tamanho ainda; o ResizeObserver reenquadra
     }
+    camadas.current.soltar();
     // Se o enquadramento não mudou o zoom, o `zoomend` não dispara.
     camadas.current.leque();
   }, [L, mapa, enquadramento, visivel, aparecimentos]);
@@ -280,18 +276,6 @@ export function MapaNacional({
     const quadro = requestAnimationFrame(() => remedir(mapa));
     return () => cancelAnimationFrame(quadro);
   }, [mapa, visivel, telaCheia]);
-
-  const voltarAoBrasil = () => {
-    if (!mapa) return;
-    try {
-      mapa.stop?.();
-      mapa.fitBounds(L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]), {
-        animate: false,
-      });
-    } catch {
-      // mapa sem tamanho
-    }
-  };
 
   const temAbrangencia =
     avisosDasTerras >= 0 &&
@@ -316,7 +300,10 @@ export function MapaNacional({
           <button
             type="button"
             className="btn small"
-            onClick={voltarAoBrasil}
+            onClick={() => {
+              voltarAoBrasil(L, mapa);
+              camadas.current?.soltar();
+            }}
             disabled={!mapa}
             title="Voltar à visão do Brasil inteiro"
           >

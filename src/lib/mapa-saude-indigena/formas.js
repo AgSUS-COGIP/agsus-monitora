@@ -122,11 +122,3 @@ export const ESTILO_DA_LINHA_DE_VINCULO = Object.freeze({
 
 export const TEXTO_DA_LINHA_DE_VINCULO =
   "Vínculo territorial — não representa trajeto";
-
-/* A legenda começa aberta no computador e fechada no celular (< 768 px). */
-export const LARGURA_MINIMA_DA_LEGENDA_ABERTA = 768;
-
-export function legendaComecaAberta(largura) {
-  const n = Number(largura);
-  return !Number.isFinite(n) || n >= LARGURA_MINIMA_DA_LEGENDA_ABERTA;
-}

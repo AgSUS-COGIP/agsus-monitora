@@ -46,10 +46,11 @@ import {
   adicionarFundo,
   criarMapa,
   desenharContornos,
+  enquadrarNoBrasil,
   observarTamanho,
   podeFlutuar,
+  voltarAoBrasil,
 } from "../modulos/mapa-saude-indigena/leaflet.js";
-import { legendaComecaAberta } from "../lib/mapa-saude-indigena/formas.js";
 
 export const RPC_DOS_MUNICIPIOS = "listar_municipios_das_vagas_da_area";
 export const CACHE_TTL_MS = 5 * 60_000;
@@ -600,7 +601,7 @@ export async function desenharMunicipiosDaArea({
           },
         );
       } else if (limitesDoBrasil) {
-        mapa.fitBounds(limitesDoBrasil, { animate: false });
+        enquadrarNoBrasil(L, mapa);
       }
     } catch {
       // Mapa ainda sem tamanho (página escondida): o próximo desenho enquadra.
@@ -620,35 +621,27 @@ export async function desenharMunicipiosDaArea({
   montado: ao reaparecer com tamanho, `aoAparecer` redesenha e reenquadra (o
   enquadramento feito escondido usa a medida zero).
 
-  `legenda` é o `<details>` da legenda (aberto no computador, fechado no
-  celular); `botaoBrasil`, o "Brasil" do cabeçalho.
+  `legenda` é o `<details>` da legenda (começa recolhido: aberto, tapava
+  o Sul); `botaoBrasil`, o "Brasil" do cabeçalho.
 */
 export function criarMapaDosMunicipios({
   L,
   elemento,
   legenda = null,
   botaoBrasil = null,
-  largura = globalThis.innerWidth,
   aoAparecer = () => {},
 }) {
   if (!L || !elemento) return null;
   const mapa = criarMapa(L, elemento);
   const limitesDoBrasil = L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]);
-  mapa.fitBounds(limitesDoBrasil);
+  enquadrarNoBrasil(L, mapa);
   adicionarFundo(L, mapa, elemento);
   desenharContornos(L, L.layerGroup().addTo(mapa), "nacional");
   const camada = L.layerGroup().addTo(mapa);
   observarTamanho(mapa, elemento, { aoAparecer });
 
-  if (legenda) legenda.open = legendaComecaAberta(largura);
-  botaoBrasil?.addEventListener("click", () => {
-    try {
-      mapa.stop?.();
-      mapa.fitBounds(limitesDoBrasil, { animate: false });
-    } catch {
-      // mapa sem tamanho
-    }
-  });
+  if (legenda) legenda.open = false;
+  botaoBrasil?.addEventListener("click", () => voltarAoBrasil(L, mapa));
   return {
     mapa,
     camada,

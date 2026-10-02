@@ -559,7 +559,7 @@
   }
 }
 
-/* Celular: mapa em cima, lista embaixo; a legenda começa fechada (legenda.jsx). */
+/* Celular: mapa em cima, lista embaixo. */
 @media (max-width: 900px) {
   .mapa-si-painel__corpo {
     grid-template-columns: minmax(0, 1fr);

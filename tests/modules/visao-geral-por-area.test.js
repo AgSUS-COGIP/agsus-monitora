@@ -97,10 +97,8 @@ describe("o mapa de Projetos", () => {
     expect(mapa.ouvintes("popupopen")).toBe(1);
   });
 
-  it("a legenda começa aberta no computador e fechada no celular", () => {
+  it("a legenda começa recolhida (aberta, tapava o Sul)", () => {
     expect(criar({ largura: 1280 }).criado).toBeTruthy();
-    expect(document.querySelector(".mapa-projetos__legenda").open).toBe(true);
-    criar({ largura: 390 });
     expect(document.querySelector(".mapa-projetos__legenda").open).toBe(false);
   });
 

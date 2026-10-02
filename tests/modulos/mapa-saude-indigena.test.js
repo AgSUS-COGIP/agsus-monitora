@@ -233,6 +233,7 @@ describe("visão nacional", () => {
       .map((b) => b.opcoes.fillColor);
     expect(cores).toContain("#d92d3a");
     expect(cores).toContain(CORES_DO_MAPA.semEditalNoCalor.preenchimento);
+    await clicar(host.querySelector(".mapa-si-legenda__alternar"));
     expect(host.querySelector(".mapa-si-legenda").textContent).toContain(
       "60% ou mais ociosas",
     );
@@ -256,18 +257,15 @@ describe("visão nacional", () => {
     ).toEqual(["stop", "fitBounds"]);
   });
 
-  it("a legenda recolhe e começa fechada no celular", async () => {
-    const largura = window.innerWidth;
-    window.innerWidth = 390;
-    try {
-      await montar();
-      const alternar = host.querySelector(".mapa-si-legenda__alternar");
-      expect(alternar.getAttribute("aria-expanded")).toBe("false");
-      await clicar(alternar);
-      expect(alternar.getAttribute("aria-expanded")).toBe("true");
-    } finally {
-      window.innerWidth = largura;
-    }
+  it("a legenda começa recolhida, também no computador, e abre no botão", async () => {
+    // Aberta, ela tapava parte do Sul e do Sudeste no enquadramento do Brasil.
+    await montar();
+    const alternar = host.querySelector(".mapa-si-legenda__alternar");
+    expect(window.innerWidth).toBeGreaterThanOrEqual(1024);
+    expect(alternar.getAttribute("aria-expanded")).toBe("false");
+    expect(host.querySelector(".mapa-si-legenda__corpo").hidden).toBe(true);
+    await clicar(alternar);
+    expect(alternar.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("dica da bolha só com ponteiro que flutua, e sem HTML", async () => {
@@ -297,6 +295,86 @@ describe("visão nacional", () => {
     expect(host.querySelector(".mapa-si--tela-cheia")).not.toBeNull();
     await teclar(document, "Escape");
     expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
+  });
+});
+
+/*
+  O enquadramento nacional acompanha o tamanho do contêiner (tela cheia,
+  barra lateral, janela) até a pessoa mexer no mapa; "Brasil" volta a
+  acompanhar. ResizeObserver e medidas falsos: o jsdom não tem layout.
+*/
+describe("enquadramento e tamanho do contêiner", () => {
+  let observadores;
+  let medida;
+  const originais = {};
+
+  beforeEach(() => {
+    observadores = [];
+    medida = { largura: 870, altura: 600 };
+    originais.ResizeObserver = globalThis.ResizeObserver;
+    originais.raf = globalThis.requestAnimationFrame;
+    globalThis.ResizeObserver = class {
+      constructor(aoMudar) {
+        this.aoMudar = aoMudar;
+        observadores.push(this);
+      }
+      observe() {}
+      disconnect() {}
+    };
+    globalThis.requestAnimationFrame = (fn) => {
+      fn();
+      return 1;
+    };
+    for (const [prop, chave] of [
+      ["offsetWidth", "largura"],
+      ["offsetHeight", "altura"],
+    ])
+      Object.defineProperty(HTMLElement.prototype, prop, {
+        configurable: true,
+        get: () => medida[chave],
+      });
+  });
+
+  afterEach(() => {
+    globalThis.ResizeObserver = originais.ResizeObserver;
+    globalThis.requestAnimationFrame = originais.raf;
+    delete HTMLElement.prototype.offsetWidth;
+    delete HTMLElement.prototype.offsetHeight;
+  });
+
+  const enquadramentos = (mapa) =>
+    mapa.chamadas.filter(([nome]) => nome === "fitBounds");
+
+  async function redimensionar(largura, altura) {
+    medida = { largura, altura };
+    await act(async () => observadores.forEach((o) => o.aoMudar([])));
+  }
+
+  it("o Brasil é enquadrado com folga para a maior bolha (padding >= raio + 12)", async () => {
+    await montar();
+    const [, , opcoes] = enquadramentos(mapaVivo("map"))[0];
+    expect(opcoes.padding[0]).toBeGreaterThanOrEqual(15 + 12);
+    expect(opcoes.padding[1]).toBeGreaterThanOrEqual(15 + 12);
+  });
+
+  it("reenquadra ao mudar de tamanho (e ao sair da tela cheia) até a pessoa mexer", async () => {
+    await montar();
+    const mapa = mapaVivo("map");
+    mapa.chamadas.length = 0;
+    await redimensionar(1170, 600);
+    expect(enquadramentos(mapa)).toHaveLength(1);
+    mapa.elemento.dispatchEvent(new Event("wheel"));
+    mapa.chamadas.length = 0;
+    await redimensionar(870, 600);
+    expect(enquadramentos(mapa)).toHaveLength(0);
+    await clicar(
+      [...host.querySelectorAll("button")].find(
+        (b) => b.textContent === "Brasil",
+      ),
+    );
+    mapa.chamadas.length = 0;
+    await redimensionar(1170, 600);
+    expect(enquadramentos(mapa)).toHaveLength(1);
   });
 });
 

@@ -10,7 +10,6 @@ import {
   FAIXAS_DO_CALOR,
   TIPOS_DA_LEGENDA,
   formaDoTipo,
-  legendaComecaAberta,
 } from "../../lib/mapa-saude-indigena/formas.js";
 
 /* A forma de um tipo (sede, polo, CASAI, UBSI, unidade) em SVG, decorativa. */
@@ -89,7 +88,7 @@ export function LegendaDasTerras({ mapa }) {
   );
 }
 
-function Amostra({ tipo, cor }) {
+export function Amostra({ tipo, cor }) {
   return (
     <i
       className={`mapa-si-amostra mapa-si-amostra--${tipo}`}
@@ -100,13 +99,13 @@ function Amostra({ tipo, cor }) {
 }
 
 /*
-  Legenda do mapa nacional, recolhível (começa fechada no celular). Com o
-  calor ligado, as faixas de ociosidade entram no lugar das cores da bolha.
+  A caixa da legenda sobre o canto do mapa, recolhível. Começa recolhida —
+  só o botão "Legenda" — também no computador: aberta, ela tapava parte do
+  Sul e do Sudeste no enquadramento do Brasil. Usada pelos mapas nacionais da
+  Saúde Indígena e de Projetos.
 */
-export function LegendaNacional({ mapa, calor, temAbrangencia }) {
-  const [aberta, definirAberta] = useState(() =>
-    legendaComecaAberta(globalThis.innerWidth),
-  );
+export function LegendaFlutuante({ children }) {
+  const [aberta, definirAberta] = useState(false);
   const idDoCorpo = useId();
   return (
     <div className="mapa-si-legenda mapa-si-legenda--flutuante">
@@ -121,44 +120,50 @@ export function LegendaNacional({ mapa, calor, temAbrangencia }) {
         <Icone nome={aberta ? "chevron-up" : "chevron-down"} tamanho={16} />
       </button>
       <div id={idDoCorpo} className="mapa-si-legenda__corpo" hidden={!aberta}>
-        {calor ? (
-          FAIXAS_DO_CALOR.map((faixa) => (
-            <span key={faixa.minimo} className="mapa-si-legenda__item">
-              <Amostra tipo="bolha" cor={faixa.cor} />
-              {faixa.rotulo}
-            </span>
-          ))
-        ) : (
-          <>
-            <span className="mapa-si-legenda__item">
-              <Amostra
-                tipo="bolha"
-                cor={CORES_DO_MAPA.semEdital.preenchimento}
-              />
-              DSEI (sede; tamanho = nº de indígenas)
-            </span>
-            <span className="mapa-si-legenda__item">
-              <Amostra
-                tipo="bolha"
-                cor={CORES_DO_MAPA.comEdital.preenchimento}
-              />
-              DSEI com processo ativo
-            </span>
-          </>
-        )}
-        {temAbrangencia ? (
-          <span className="mapa-si-legenda__item">
-            <Amostra tipo="abrangencia" />
-            abrangência oficial do DSEI
-          </span>
-        ) : null}
-        <span className="mapa-si-legenda__item">
-          <Amostra tipo="casai-nacional" cor={CORES_DO_MAPA.casaiNacional} />
-          CASAI Nacional
-        </span>
-        <LegendaDasTerras mapa={mapa} />
+        {children}
       </div>
     </div>
+  );
+}
+
+/*
+  Legenda do mapa nacional da Saúde Indígena. Com o calor ligado, as faixas
+  de ociosidade entram no lugar das cores da bolha.
+*/
+export function LegendaNacional({ mapa, calor, temAbrangencia }) {
+  return (
+    <LegendaFlutuante>
+      {calor ? (
+        FAIXAS_DO_CALOR.map((faixa) => (
+          <span key={faixa.minimo} className="mapa-si-legenda__item">
+            <Amostra tipo="bolha" cor={faixa.cor} />
+            {faixa.rotulo}
+          </span>
+        ))
+      ) : (
+        <>
+          <span className="mapa-si-legenda__item">
+            <Amostra tipo="bolha" cor={CORES_DO_MAPA.semEdital.preenchimento} />
+            DSEI (sede; tamanho = nº de indígenas)
+          </span>
+          <span className="mapa-si-legenda__item">
+            <Amostra tipo="bolha" cor={CORES_DO_MAPA.comEdital.preenchimento} />
+            DSEI com processo ativo
+          </span>
+        </>
+      )}
+      {temAbrangencia ? (
+        <span className="mapa-si-legenda__item">
+          <Amostra tipo="abrangencia" />
+          abrangência oficial do DSEI
+        </span>
+      ) : null}
+      <span className="mapa-si-legenda__item">
+        <Amostra tipo="casai-nacional" cor={CORES_DO_MAPA.casaiNacional} />
+        CASAI Nacional
+      </span>
+      <LegendaDasTerras mapa={mapa} />
+    </LegendaFlutuante>
   );
 }
 

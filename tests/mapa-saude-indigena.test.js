@@ -14,7 +14,6 @@ import {
   FORMAS,
   TIPOS_DA_LEGENDA,
   corDoCalor,
-  legendaComecaAberta,
   tipoDaUnidade,
 } from "../src/lib/mapa-saude-indigena/formas.js";
 import {
@@ -504,11 +503,5 @@ describe("formas, cores e contornos (a cópia única, desde que o legado saiu)",
       [...BRASIL_BOUNDS[0]],
       [...BRASIL_BOUNDS[1]],
     ]);
-  });
-
-  it("legenda aberta no computador, fechada no celular", () => {
-    expect(legendaComecaAberta(1280)).toBe(true);
-    expect(legendaComecaAberta(390)).toBe(false);
-    expect(legendaComecaAberta(undefined)).toBe(true);
   });
 });
