@@ -143,6 +143,9 @@
 }
 .visao-geral-item {
   display: grid;
+  /* A coluna não cresce com o nome: sem isso, o nome longo vazava sobre o
+     cartão vizinho (Processos por projeto, 02/10). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
   width: 100%;
   min-width: 0;
@@ -173,17 +176,21 @@
 }
 .visao-geral-item-topo {
   display: flex;
-  align-items: center;
+  min-width: 0;
+  align-items: flex-start;
   gap: var(--space-2);
 }
-/* Nome longo: reticências (o nome inteiro fica no title), sem transbordar. */
+/* Nome longo: até duas linhas, depois reticências (o nome inteiro fica no title). */
 .visao-geral-item-topo b {
+  display: -webkit-box;
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   font-weight: var(--font-weight-semibold);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 .visao-geral-item small {
   color: var(--text-secondary);
