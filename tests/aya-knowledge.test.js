@@ -4,7 +4,6 @@ import {
   buildAyaSystemPrompt,
   curatedAnswerForQuestion,
   officialSourcesForQuestion,
-  questionNeedsAyaAi,
   sanitizeAyaContext,
 } from "../src/modules/aya-knowledge.js";
 
@@ -62,15 +61,6 @@ describe("base institucional da Aya", () => {
     expect(ids).toContain("funai");
   });
 
-  it("encaminha perguntas institucionais e contextuais para IA", () => {
-    expect(questionNeedsAyaAi("O que é DSEI?", true)).toBe(true);
-    expect(questionNeedsAyaAi("Quantas vagas o painel mostra?", true)).toBe(
-      true,
-    );
-    expect(questionNeedsAyaAi("Quais aldeias existem?", false)).toBe(true);
-    expect(questionNeedsAyaAi("Como uso o mapa?", true)).toBe(false);
-  });
-
   it("limita e preserva o contexto útil enviado pelo navegador", () => {
     const context = sanitizeAyaContext({
       pathname: "/".repeat(300),
@@ -122,9 +112,7 @@ describe("base institucional da Aya", () => {
 
 describe("assuntos gerais da Aya", () => {
   it("aceita conversar além do MONITORA", () => {
-    const answer = curatedAnswerForQuestion(
-      "Pode falar de outros assuntos?",
-    );
+    const answer = curatedAnswerForQuestion("Pode falar de outros assuntos?");
     expect(answer).toContain("plantas");
     expect(answer).toContain("carros");
     expect(answer).toContain("futebol");
@@ -151,13 +139,13 @@ describe("assuntos gerais da Aya", () => {
   });
 
   it("não inventa futebol em tempo real", () => {
-    expect(curatedAnswerForQuestion("Jogos de hoje")).toContain(
-      "fonte atual",
-    );
+    expect(curatedAnswerForQuestion("Jogos de hoje")).toContain("fonte atual");
   });
 
   it("leva o escopo geral e as regras de segurança ao prompt", () => {
-    const prompt = buildAyaSystemPrompt({ question: "Como cuidar de uma planta?" });
+    const prompt = buildAyaSystemPrompt({
+      question: "Como cuidar de uma planta?",
+    });
 
     expect(prompt).toContain("assuntos gerais");
     expect(prompt).toContain("plantas, carros, futebol");

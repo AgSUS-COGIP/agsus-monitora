@@ -19,7 +19,7 @@ React), `mobile-*`, `nielsen-shell-ux.js` (shell e responsivo; tema, logout e pr
 entrada e barra do "Atualizar dados"; a antiga tela `#loader` ficou só para salvamentos) · a barra
 lateral, o Núcleo (Editais), o Calendário de Editais e a Lista de Aprovados são React, em
 `src/componentes/` · `access-*`,
-`sidebar-branding.js` (acesso e marca) · `arara-*`, `nina-panel-drag.js` (guia interativo).
+`sidebar-branding.js` (acesso e marca). O painel da Aya é React, em `src/modulos/aya/`.
 
 Regras: sem `innerHTML` cru (use `src/lib/sanitize.js`). Nenhum `MutationObserver` novo.
 Dados só por RPC. Marcação nova segue os componentes do `DESIGN.md` (seção 4): reutilize

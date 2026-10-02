@@ -60,7 +60,7 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/modules/map-*`, `health-*`, `indigenous-*`, trechos do `legacy-app.js` (dashboard)                          | `src/modulos/visao-geral/`                                | 5          |
 | `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.js`, `usar-area-atual.js` | `src/app/` (entrada, layout, área atual)                  | 6          |
 | `src/modules/legacy-app.js`, `auth-storage.js`, `sidebar-branding.js` (o login já está em `src/app/`)            | `src/app/`; o resto sai                                   | 6 (fase 2) |
-| `src/modules/aya-*`                                                                                              | `src/app/` (Aya no layout)                                | 7          |
+| `src/modules/aya-*` (IA, base e memória; o painel já é `src/modulos/aya/`)                                       | `src/app/` (Aya no layout)                                | 7          |
 | `src/lib/`                                                                                                       | fica                                                      | —          |
 | `src/styles/tokens.css`                                                                                          | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
 

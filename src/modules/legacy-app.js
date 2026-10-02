@@ -44,10 +44,10 @@ import {
   desenharMunicipiosDaArea,
   desenharLegendaDosMunicipios,
 } from "./municipios-da-visao-geral.js";
-import { updateAraraGuide } from "./arara-guide.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { sessaoDoApp } from "../app/sessao.js";
 import { definirMarcaDaConfiguracao } from "../app/entrada/marca.js";
+import { definirPaginaDaAya } from "../modulos/aya/estado.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
 import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
 import { profileDisplayName } from "../lib/platform-context.js";
@@ -1447,11 +1447,8 @@ function setPageTitle(title, sub) {
   $("pageSubtitle").textContent = sub;
   // O nome da aba tem um dono só; aqui entra apenas a metade da página.
   definirPaginaDaAba(title);
-  updateAraraGuide(
-    currentView,
-    title,
-    document.getElementById("araraGuideHost"),
-  );
+  // A Aya (src/modulos/aya/) acompanha a página: saudação, sugestões e contexto.
+  definirPaginaDaAya(currentView, title);
 }
 
 function isSidebarLockedViewport() {

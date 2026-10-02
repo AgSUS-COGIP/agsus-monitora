@@ -37,6 +37,5 @@ Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
 `nielsen-shell-ux.css` (tema da página, foco, feedback) · `mobile-*.css` · `health-*.css` (Saúde Indígena e mapa) · `nucleo-*.css` ·
 `config-*.css` e `configuracoes.css` (moldura React de Configurações) · `lista-aprovados.css`, `lista-convocacao.css`, `calendario-editais.css`,
 `multi-select-busca.css` (páginas React; as classes são as de antes) · `carregamento.css` (skeleton da
-entrada, bloco `.esqueleto` e barra de atualização) · `arara-guide.css`,
-`nina-conversation.css` (guia) · `system-ui-fixes.css`, `post-152-regression-fixes.css`,
+entrada, bloco `.esqueleto` e barra de atualização) · `system-ui-fixes.css`, `post-152-regression-fixes.css`,
 `post157-interface-tuning.css` (dívida, a dissolver — `DESIGN.md` seção 8, fase 5).
