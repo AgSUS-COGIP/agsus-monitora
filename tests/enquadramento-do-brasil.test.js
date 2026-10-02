@@ -110,3 +110,22 @@ describe("o map-guard usa a regra", () => {
     expect(fit).toContain("liberarZoomParaCaber(viewBounds, folgaDoBrasil)");
   });
 });
+
+describe("altura do mapa da Saúde Indígena", () => {
+  /* Regressão de 02/10: a altura caiu para clamp(440px, 65vh, 640px) e a régua
+     voltou de 500 km para 1000 km. Até a altura máxima, o Brasil cabe inteiro
+     no zoom nacional. */
+  it("a altura máxima deixa o Brasil inteiro no zoom nacional (≈ 500 km)", () => {
+    const css = readFileSync(
+      "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css",
+      "utf8",
+    );
+    const [, minimo, maximo] =
+      css.match(/--mapa-si-altura:\s*clamp\((\d+)px,[^,]+,\s*(\d+)px\)/) || [];
+    expect(Number(minimo)).toBeGreaterThanOrEqual(560);
+    expect(Number(maximo)).toBeGreaterThanOrEqual(780);
+    expect(zoomQueCabe({ largura: 1000, altura: Number(maximo) })).toBe(
+      ZOOM_NACIONAL,
+    );
+  });
+});

@@ -692,15 +692,11 @@ describe("tabela de processos", () => {
 });
 
 describe("boas-vindas e marcos do ano", () => {
-  it("saúda quando o perfil e os editais chegaram; fechar vale até o fim do dia", async () => {
+  it("saúda quando o perfil e os editais chegaram, sem botão de fechar", async () => {
     await montar({ comPerfil: true });
     const card = secao.querySelector(".boas-vindas");
     expect(card.textContent).toContain("Bom dia, Ana");
-    await clicar(card.querySelector('[data-boas-vindas="fechar"]'));
-    expect(secao.querySelector(".boas-vindas")).toBeNull();
-    await act(async () => tela.raiz.unmount());
-    await montar({ comPerfil: true });
-    expect(secao.querySelector(".boas-vindas:not(.marcos-do-ano)")).toBeNull();
+    expect(card.querySelector('[data-boas-vindas="fechar"]')).toBeNull();
   });
 
   it("sem perfil, sem card", async () => {
