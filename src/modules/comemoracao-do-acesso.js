@@ -25,27 +25,6 @@ import { comemorar } from "./comemoracao.js";
   são consumidas do mesmo jeito, mas nada aparece.
 */
 
-/** Chamado por "Entrar agora", antes de recarregar a página. */
-export function marcarBoasVindasPendentes(janela = globalThis.window) {
-  gravar(janela?.sessionStorage, CHAVE_PENDENTE, "1");
-}
-
-/** A tela de acesso desativado foi mostrada: na volta, é "reativado". */
-export function lembrarContaDesativada(usuarioId, janela = globalThis.window) {
-  if (usuarioId)
-    gravar(janela?.localStorage, chaveDaDesativacao(usuarioId), "1");
-}
-
-/** A tela de conta desativada já foi mostrada a esta pessoa (e ela não voltou)? */
-export function contaMarcadaComoDesativada(
-  usuarioId,
-  janela = globalThis.window,
-) {
-  return Boolean(
-    usuarioId && ler(janela?.localStorage, chaveDaDesativacao(usuarioId)),
-  );
-}
-
 /**
  * Depois de abrir o app: comemora se for a hora e apaga/grava as marcas.
  * Devolve o tipo mostrado ("liberado" | "reativado") ou null.

@@ -1,17 +1,14 @@
 /*
   Solicitação de acesso (tela de quem entrou com Google e não tem perfil
   ativo): em que situação a pessoa está, o que a tela mostra, a validação e os
-  argumentos de registrar_solicitacao_acesso. Sem DOM; o desenho é de
-  src/modules/solicitacao-de-acesso.js.
+  argumentos de registrar_solicitacao_acesso. Sem DOM; o estado do cartão é de
+  src/app/entrada/pedido-de-acesso.js e o desenho, de pedido-de-acesso.jsx.
 
   De onde vem cada situação (só dados que o banco já expõe):
     - obter_minha_solicitacao_acesso → o pedido mais recente (ou null);
-    - garantir_acesso_basico → { criado, motivo }. "existente" quer dizer que
-      há perfil para o e-mail; como a tela só abre quando
-      obter_contexto_monitora não achou perfil ATIVO, esse perfil está
-      desativado. Hoje o banco confere o domínio antes e só responde isso para
-      @agenciasus.org.br; o campo `conta_desativada` fica pronto para quando
-      o banco o devolver para qualquer e-mail;
+    - minha_conta_desativada → true quando a conta existe no MONITORA e está
+      desativada. O acesso é só por convite: o front não cria acesso básico
+      (garantir_acesso_basico saiu do front em 01/10/2026);
     - pedido "aprovado" sem perfil ativo: foi aprovado e o acesso saiu depois
       (desativado). Com perfil ativo (o contexto relido achou), é "liberado".
 
@@ -55,16 +52,6 @@ export function diaEMes(valor) {
   if (!valor) return "";
   const data = new Date(valor);
   return Number.isNaN(data.getTime()) ? "" : FORMATO_DIA_E_MES.format(data);
-}
-
-/** A resposta de garantir_acesso_basico diz que a conta existe e está desativada? */
-export function contaDesativadaNaResposta(resposta) {
-  if (!resposta || typeof resposta !== "object") return false;
-  if (resposta.conta_desativada === true) return true;
-  return (
-    resposta.criado !== true &&
-    ["existente", "desativada"].includes(txt(resposta.motivo).toLowerCase())
-  );
 }
 
 /**
