@@ -4,10 +4,11 @@
     período de inscrição; com prorrogação, o fim mais tarde);
   - os indicadores (KPIs) de um resultado;
   - o recorte da tela (vaga, lista, busca pelo nome) sobre o resultado;
-  - os avisos agrupados por tipo, para o topo.
+  - os avisos agrupados por tipo, para o topo;
+  - a lista em que a tela abre, pela fase do edital.
 */
 import { semAcento } from "./catalogo.js";
-import { lerData } from "./numeros.js";
+import { lerData, numeroBR } from "./numeros.js";
 
 /** "AAAA-MM-DD" do fim das inscrições, ou null. */
 export function dataDeCorteDoCronograma(cronograma = []) {
@@ -117,4 +118,16 @@ export function filtrosAtivosDoRecorte(recorte) {
     recorte.lista !== "geral" ? recorte.lista : "",
     recorte.busca.trim(),
   ].filter(Boolean).length;
+}
+
+/**
+ * A lista em que a tela abre: o resultado final quando já há nota de
+ * entrevista lançada; senão a preliminar (o edital ainda está na avaliação
+ * documental ou nas entrevistas, e o final sairia vazio).
+ */
+export function listaDaFase(dados) {
+  const comNota = (dados?.entrevistas || []).some(
+    (e) => numeroBR(e?.nota) !== null,
+  );
+  return comNota ? "FINAL" : "PRELIMINAR";
 }
