@@ -1,7 +1,8 @@
 /*
   Desfaz 20261002170000_classificacao_lista_da_entrevista.sql: volta o CHECK e
-  o RPC a PRELIMINAR, CONVOCACAO e FINAL. Recusa se já houver lista
-  ENTREVISTA registrada (o histórico não é apagado).
+  o RPC a PRELIMINAR, CONVOCACAO e FINAL e tira do catálogo os quatro critérios
+  acrescentados. Recusa se já houver lista ENTREVISTA registrada ou regra que
+  use um dos critérios novos (o histórico não é apagado).
 */
 begin;
 
@@ -9,6 +10,10 @@ do $$
 begin
   if exists (select 1 from public."TB_LISTA_CLASSIFICACAO" where "TP_LISTA" = 'ENTREVISTA') then
     raise exception 'Há lista ENTREVISTA registrada; o rollback não apaga histórico.';
+  end if;
+  if exists (select 1 from public."RL_REGRA_CRITERIO_DESEMPATE"
+              where "CO_CRITERIO" in ('EXP_ALTA_COMPLEXIDADE', 'EXP_SAUDE_DIGITAL', 'MAIOR_ESCOLARIDADE', 'NOTA_CONHECIMENTOS_ESPECIFICOS')) then
+    raise exception 'Há regra usando os critérios novos; desfaça antes o seed das regras (supabase/rollback/20261002-regras-de-classificacao-todos-os-editais.sql).';
   end if;
 end;
 $$;
@@ -18,6 +23,9 @@ alter table public."TB_LISTA_CLASSIFICACAO"
   add constraint "CK_LISTACLASSIF_TPLISTA" check ("TP_LISTA" in ('PRELIMINAR', 'CONVOCACAO', 'FINAL'));
 comment on constraint "CK_LISTACLASSIF_TPLISTA" on public."TB_LISTA_CLASSIFICACAO" is 'Tipos de lista válidos.';
 comment on column public."TB_LISTA_CLASSIFICACAO"."TP_LISTA" is 'PRELIMINAR (avaliação documental), CONVOCACAO (para entrevista) ou FINAL (resultado final).';
+
+delete from public."TB_CRITERIO_CLASSIFICACAO"
+ where "CO_CRITERIO" in ('EXP_ALTA_COMPLEXIDADE', 'EXP_SAUDE_DIGITAL', 'MAIOR_ESCOLARIDADE', 'NOTA_CONHECIMENTOS_ESPECIFICOS');
 
 create or replace function public.registrar_lista_classificacao(p_edital uuid, p_tipo text, p_versao integer, p_resultado jsonb)
 returns json

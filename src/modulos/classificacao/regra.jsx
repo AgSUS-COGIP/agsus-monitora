@@ -261,6 +261,7 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
             <th scope="col">Recomeça a posição</th>
             <th scope="col">Também na geral</th>
             <th scope="col">Vaga sem candidato vai para</th>
+            <th scope="col">Reúne (reserva conjunta)</th>
             {desabilitado ? null : <th scope="col" aria-label="Ações" />}
           </tr>
         </thead>
@@ -359,6 +360,17 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
                   }
                 />
               </td>
+              <td>
+                <input
+                  aria-label="Reúne as modalidades"
+                  value={(m.agrupa || []).join(", ")}
+                  disabled={desabilitado || m.codigo === "AC"}
+                  placeholder="PP, PI, PQ"
+                  onChange={(e) =>
+                    mudar(i, { agrupa: lista(e.target.value.toUpperCase()) })
+                  }
+                />
+              </td>
               {desabilitado ? null : (
                 <td>
                   {m.codigo === "AC" ? null : (
@@ -395,6 +407,7 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
                 recomeca_posicao: true,
                 aparece_na_geral: true,
                 remanejar_para: ["AC"],
+                agrupa: [],
               },
             ])
           }
@@ -700,6 +713,12 @@ export function Regra({ estado, e, dataDeCorte }) {
             marcado={r.entrevista.inapto_elimina}
             desabilitado={leitura}
             aoMudar={(v) => mudar(["entrevista", "inapto_elimina"], v)}
+          />
+          <Caixa
+            rotulo="Entrevista só com parecer (apto/inapto, sem nota)"
+            marcado={r.entrevista.so_parecer}
+            desabilitado={leitura}
+            aoMudar={(v) => mudar(["entrevista", "so_parecer"], v)}
           />
         </div>
         {r.entrevista.competencias.length ? (

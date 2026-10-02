@@ -12,6 +12,16 @@
   Muda: o CHECK de TB_LISTA_CLASSIFICACAO."TP_LISTA" e o tipo aceito por
   registrar_lista_classificacao (mesma assinatura, mesmo corpo).
 
+  E acrescenta ao catálogo (TB_CRITERIO_CLASSIFICACAO) os critérios de desempate
+  que apareceram na leitura de todos os editais (02/10/2026) e não estavam lá —
+  os mesmos de src/lib/classificacao/catalogo.js, na mesma ordem:
+    EXP_ALTA_COMPLEXIDADE           53/2025 (9.4.3)
+    EXP_SAUDE_DIGITAL               05/2026 (MFC)
+    MAIOR_ESCOLARIDADE              23/2025 (Saúde nas Fronteiras)
+    NOTA_CONHECIMENTOS_ESPECIFICOS  96/2025, 97/2025, 04/2026 (prova objetiva)
+  O seed supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql
+  usa esses códigos: aplique esta migration antes dele.
+
   Rollback: supabase/rollback/20261002170000_classificacao_lista_da_entrevista.sql
   (só se não houver lista ENTREVISTA registrada).
 */
@@ -24,6 +34,13 @@ comment on constraint "CK_LISTACLASSIF_TPLISTA" on public."TB_LISTA_CLASSIFICACA
   'Tipos de lista: PRELIMINAR, CONVOCACAO, ENTREVISTA ou FINAL.';
 comment on column public."TB_LISTA_CLASSIFICACAO"."TP_LISTA" is
   'PRELIMINAR (avaliação documental e de títulos), CONVOCACAO (para entrevista), ENTREVISTA (resultado da etapa de entrevista) ou FINAL (resultado final).';
+
+insert into public."TB_CRITERIO_CLASSIFICACAO" ("CO_CRITERIO", "NO_CRITERIO", "TP_VALOR", "TP_DIRECAO_PADRAO", "DS_ORIGEM", "NU_ORDEM") values
+  ('EXP_ALTA_COMPLEXIDADE', 'Maior tempo de experiência em média e alta complexidade', 'NUMERO', 'MAIOR_PRIMEIRO', 'experiencia_alta_complexidade_total (53/2025, 9.4.3)', 14),
+  ('EXP_SAUDE_DIGITAL', 'Maior tempo de experiência profissional em saúde digital', 'NUMERO', 'MAIOR_PRIMEIRO', 'experiencia_saude_digital_total (05/2026)', 15),
+  ('MAIOR_ESCOLARIDADE', 'Maior nível de escolaridade relacionado ao cargo', 'NUMERO', 'MAIOR_PRIMEIRO', 'nivel_escolaridade (1 fundamental … 6 doutorado; 23/2025)', 16),
+  ('NOTA_CONHECIMENTOS_ESPECIFICOS', 'Maior nota em conhecimentos específicos (prova)', 'NUMERO', 'MAIOR_PRIMEIRO', 'nota_conhecimentos_especificos (prova objetiva; 96/2025, 97/2025, 04/2026)', 17)
+on conflict ("CO_CRITERIO") do nothing;
 
 create or replace function public.registrar_lista_classificacao(p_edital uuid, p_tipo text, p_versao integer, p_resultado jsonb)
 returns json

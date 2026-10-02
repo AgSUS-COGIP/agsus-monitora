@@ -169,6 +169,52 @@ export const CATALOGO_DE_CRITERIOS = Object.freeze(
       ler: (c) => sim(c.pcd),
       falta: () => "PcD",
     },
+    /*
+      Critérios que apareceram nos editais lidos em 02/10/2026 e não estavam no
+      catálogo. O valor vem de campos que a análise ainda não grava: até lá, o
+      critério fica "sem dado" (atrás de quem tem) e a tela avisa.
+    */
+    {
+      codigo: "EXP_ALTA_COMPLEXIDADE",
+      nome: "Maior tempo de experiência em média e alta complexidade",
+      rotuloCurto: "exp. alta complexidade",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem: "experiencia_alta_complexidade_total (53/2025, 9.4.3)",
+      ler: (c) => c.expAltaComplexidade,
+      falta: () => "tempo de experiência em média e alta complexidade",
+    },
+    {
+      codigo: "EXP_SAUDE_DIGITAL",
+      nome: "Maior tempo de experiência profissional em saúde digital",
+      rotuloCurto: "exp. saúde digital",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem: "experiencia_saude_digital_total (05/2026)",
+      ler: (c) => c.expSaudeDigital,
+      falta: () => "tempo de experiência em saúde digital",
+    },
+    {
+      codigo: "MAIOR_ESCOLARIDADE",
+      nome: "Maior nível de escolaridade relacionado ao cargo",
+      rotuloCurto: "escolaridade",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem: "nivel_escolaridade (1 fundamental … 6 doutorado; 23/2025)",
+      ler: (c) => c.nivelEscolaridade,
+      falta: () => "nível de escolaridade",
+    },
+    {
+      codigo: "NOTA_CONHECIMENTOS_ESPECIFICOS",
+      nome: "Maior nota em conhecimentos específicos (prova)",
+      rotuloCurto: "conhecimentos específicos",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem:
+        "nota_conhecimentos_especificos (prova objetiva; 96/2025, 97/2025, 04/2026)",
+      ler: (c) => c.notaConhecimentosEspecificos,
+      falta: () => "nota de conhecimentos específicos",
+    },
   ].map((criterio) => Object.freeze(criterio)),
 );
 
@@ -257,6 +303,7 @@ export const MOTIVOS_DE_ELIMINACAO = Object.freeze({
   ABAIXO_NOTA_MINIMA_ENTREVISTA: "Abaixo da nota mínima da entrevista",
   COMPETENCIA_ABAIXO_MINIMO: "Competência da entrevista abaixo do mínimo",
   COMPETENCIA_ELIMINATORIA: "Nota eliminatória em competência da entrevista",
+  SEM_PARECER_ENTREVISTA: "Entrevista sem parecer de apto",
 });
 
 /* As modalidades conhecidas. A regra de cada edital diz quais valem e como. */
@@ -266,6 +313,7 @@ export const MODALIDADES_CONHECIDAS = Object.freeze([
   ["PP", "Pretos e pardos"],
   ["PI", "Indígenas"],
   ["PQ", "Quilombolas"],
+  ["TRANS", "Pessoas trans"],
 ]);
 
 const semAcento = (valor) =>
@@ -287,6 +335,7 @@ export function codigosDaModalidade(texto) {
   if (/pret|pard|\bpp\b|negr/.test(t)) codigos.push("PP");
   if (/indigen|\bpi\b/.test(t)) codigos.push("PI");
   if (/quilomb|\bpq\b/.test(t)) codigos.push("PQ");
+  if (/\btrans\b|transgener|travesti/.test(t)) codigos.push("TRANS");
   return codigos;
 }
 

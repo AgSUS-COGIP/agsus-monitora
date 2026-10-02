@@ -97,10 +97,10 @@ export function modeloDaRegra(regraBruta) {
 }
 
 /* `{ AC: 2, PP: 1 }` a partir do quadro por categoria do modelo. */
-export function vagasPorCodigo(quadro, modelo) {
+export function vagasPorCodigo(quadro, modelo, codigoDe = codigoDaCategoria) {
   const saida = {};
   for (const categoria of modelo?.categorias || []) {
-    const codigo = codigoDaCategoria(categoria);
+    const codigo = codigoDe(categoria);
     if (!codigo) continue;
     const n = Math.max(0, Math.trunc(Number(quadro?.[categoria.id]) || 0));
     saida[codigo] = (saida[codigo] || 0) + n;
@@ -111,7 +111,10 @@ export function vagasPorCodigo(quadro, modelo) {
 
 /* As vagas por modalidade de `total` vagas imediatas pela conta da convocação. */
 export function vagasPelaConta(total, modelo) {
-  return vagasPorCodigo(derivarQuadro(total, modelo), modelo);
+  // O modelo montado da regra guarda o código da modalidade na sigla (PPIQ, TRANS…).
+  return vagasPorCodigo(derivarQuadro(total, modelo), modelo, (c) =>
+    c.ampla ? "AC" : c.sigla,
+  );
 }
 
 /*

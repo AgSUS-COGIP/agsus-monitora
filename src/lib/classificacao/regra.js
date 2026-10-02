@@ -49,6 +49,7 @@ const MODALIDADE_AMPLA = Object.freeze({
   recomeca_posicao: true,
   aparece_na_geral: true,
   remanejar_para: [],
+  agrupa: [],
 });
 
 export const REGRA_VAZIA = Object.freeze({
@@ -70,6 +71,7 @@ export const REGRA_VAZIA = Object.freeze({
     competencias: Object.freeze([]),
     exige_comparecimento: true,
     inapto_elimina: true,
+    so_parecer: false,
   }),
   composicao: Object.freeze({
     componentes: Object.freeze([
@@ -135,6 +137,12 @@ function normalizarModalidade(m) {
     recomeca_posicao: booleano(o.recomeca_posicao, true),
     aparece_na_geral: booleano(o.aparece_na_geral, true),
     remanejar_para: codigos(o.remanejar_para).filter((c) => c !== codigo),
+    /*
+      Reserva conjunta: as modalidades declaradas que esta reúne (ex.: PPIQ =
+      PP + PI + PQ, uma reserva única de 30% nos editais de 2025). O candidato
+      que declarou uma delas entra na lista desta.
+    */
+    agrupa: codigos(o.agrupa).filter((c) => c !== codigo),
   };
 }
 
@@ -198,6 +206,8 @@ export function normalizarRegra(bruta) {
         .filter((c) => c.ordem > 0),
       exige_comparecimento: booleano(ent.exige_comparecimento, true),
       inapto_elimina: booleano(ent.inapto_elimina, true),
+      // Entrevista só com parecer (apto/inapto), sem nota: não entra na nota final.
+      so_parecer: booleano(ent.so_parecer, false),
     },
     composicao: {
       componentes: (lista(comp.componentes).length

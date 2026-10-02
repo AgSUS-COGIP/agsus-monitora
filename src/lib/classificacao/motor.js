@@ -107,6 +107,19 @@ export function prepararCandidatos(brutos = [], avisos = []) {
       "experiência na atenção básica",
     );
     c.expProfissional = ler("exp_profissional", "experiência profissional");
+    c.expAltaComplexidade = ler(
+      "exp_alta_complexidade",
+      "experiência em alta complexidade",
+    );
+    c.expSaudeDigital = ler(
+      "exp_saude_digital",
+      "experiência em saúde digital",
+    );
+    c.nivelEscolaridade = ler("nivel_escolaridade", "nível de escolaridade");
+    c.notaConhecimentosEspecificos = ler(
+      "nota_conhecimentos_especificos",
+      "nota de conhecimentos específicos",
+    );
     const codigos = codigosDaModalidade(c.modalidadeTexto);
     if (c.pcd && !codigos.includes("PCD")) codigos.push("PCD");
     c.modalidadeIdentificada = codigos.length > 0;
@@ -203,6 +216,25 @@ export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
   return candidatos;
 }
 
+/*
+  Reservas conjuntas da regra (`agrupa`): quem declarou PP, PI ou PQ entra na
+  PPIQ quando a regra tem uma reserva única para os três (e não as separadas).
+*/
+export function aplicarAgrupamentos(candidatos, regra) {
+  const proprias = new Set(regra.modalidades.map((m) => m.codigo));
+  const destino = new Map();
+  for (const m of regra.modalidades)
+    for (const codigo of m.agrupa)
+      if (!proprias.has(codigo) && !destino.has(codigo))
+        destino.set(codigo, m.codigo);
+  if (!destino.size) return candidatos;
+  for (const c of candidatos) {
+    const novos = c.modalidades.map((m) => destino.get(m) || m);
+    c.modalidades = novos.filter((m, i) => novos.indexOf(m) === i);
+  }
+  return candidatos;
+}
+
 /* ── Etapas ─────────────────────────────────────────────────────────── */
 
 function situacaoApta(c, regra) {
@@ -246,6 +278,10 @@ function eliminacaoEntrevista(c, regra, ctx) {
     return { motivo: "AUSENTE", detalhe: "" };
   if (ent.inapto_elimina && e.parecer === "INAPTO")
     return { motivo: "INAPTO_ENTREVISTA", detalhe: "" };
+  if (ent.so_parecer)
+    return e.parecer === "APTO"
+      ? null
+      : { motivo: "SEM_PARECER_ENTREVISTA", detalhe: "" };
   if (e.nota === null) return { motivo: "SEM_NOTA_ENTREVISTA", detalhe: "" };
   if (
     ent.nota_minima !== null &&
@@ -750,7 +786,7 @@ export function classificar({
   const regra = normalizarRegra(regraBruta);
   const avisos = [];
   const candidatos = ligarEntrevistas(
-    prepararCandidatos(candidatosBrutos, avisos),
+    aplicarAgrupamentos(prepararCandidatos(candidatosBrutos, avisos), regra),
     entrevistas,
     avisos,
   );
@@ -932,8 +968,10 @@ export function classificar({
             });
           continue;
         }
+        // Entrevista só com parecer: a lista dos aptos segue a nota documental.
         c.nota = arredondar(
-          c.notaEntrevista ?? 0,
+          (regra.entrevista.so_parecer ? c.notaDocumental : c.notaEntrevista) ??
+            0,
           ctx.casas,
           regra.composicao.arredondamento,
         );
