@@ -67,6 +67,7 @@
   width: min(1180px, 96vw);
 }
 .editais-formulario .subsection {
+  grid-column: 1 / -1;
   margin-top: var(--space-2);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
@@ -94,6 +95,7 @@
   background: var(--surface-card);
 }
 .editais-formulario .metric-readonly span {
+  display: block;
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
@@ -101,6 +103,7 @@
   text-transform: none;
 }
 .editais-formulario .metric-readonly b {
+  display: block;
   margin-top: var(--space-1);
   color: var(--text-primary);
   font-size: var(--text-metric-sm);

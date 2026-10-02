@@ -37,6 +37,14 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* Aviso de permissão nos formulários do edital (importação e convocação). */
+.modal-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-secondary);
+  font-weight: 800;
+  font-size: var(--text-body-sm);
+}
 .approved-modal-subtitle {
   margin: var(--space-1) 0 0;
   color: var(--text-secondary);
