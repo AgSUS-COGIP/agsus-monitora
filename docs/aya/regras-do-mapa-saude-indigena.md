@@ -87,7 +87,7 @@ valendo", e os textos longos das listas vazias.
 
 ## Pontos pendentes de conferência
 
-**perguntas:** pontos pendentes | so pendentes | fila de coordenadas | conferir coordenada | marcar como conferido | botao conferido | 248 pendencias | 249 pendencias | 93 polos e 156 ubsi | ponto em validacao
+**perguntas:** pontos pendentes | filtro so pendentes | fila de coordenadas | conferir coordenada | marcar como conferido | botao conferido | 248 pendencias | 249 pendencias | 93 polos e 156 ubsi | ponto em validacao
 **resposta:** A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor.
 **fonte:** src/lib/coordenadas-do-mapa.js; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql
 

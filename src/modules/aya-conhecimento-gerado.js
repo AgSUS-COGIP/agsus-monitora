@@ -1929,7 +1929,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Pontos pendentes de conferência",
     perguntas: [
       "pontos pendentes",
-      "so pendentes",
+      "filtro so pendentes",
       "fila de coordenadas",
       "conferir coordenada",
       "marcar como conferido",
