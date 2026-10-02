@@ -378,7 +378,7 @@ export function Graficos({
             }}
           />
         </CardDeGrafico>
-        <article className="ui-card ui-pilha">
+        <article className="ui-card ui-pilha" data-tour="analises-pendencias">
           <h2 className="ui-titulo">Pendências prioritárias</h2>
           <ListaDePendencias
             carregando={carregando}

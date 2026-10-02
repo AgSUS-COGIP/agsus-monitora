@@ -47,6 +47,11 @@ import {
   SEGUNDA_MENSAGEM,
   VIEWS_DA_AYA,
 } from "../../lib/aya-paginas.js";
+import {
+  passoParaRetomar,
+  tourDaPagina,
+  trilhasDoPerfil,
+} from "../../lib/aya-tours.js";
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
 import { nomeDaArea } from "../../lib/menu-lateral.js";
 import { abrirSecaoDeConfiguracao } from "../../modules/config-secoes.js";
@@ -60,6 +65,15 @@ import {
   salvarConversa,
 } from "../../modules/aya-memoria.js";
 import { assinarPaginaDaAya, obterPaginaDaAya } from "./estado.js";
+import { OfertaDePrimeirosPassos, SecaoAprender } from "./tour/aprender.jsx";
+import {
+  concluirTrilha,
+  lerProgressoDasTrilhas,
+  marcarOfertaDePrimeirosPassos,
+  ofertaDePrimeirosPassosFeita,
+  salvarPassoDaTrilha,
+} from "./tour/progresso.js";
+import { Tour } from "./tour/tour.jsx";
 
 /* As mesmas chaves do painel antigo: quem fechou a Aya ou moveu a arara continua assim. */
 export const CHAVE_OCULTA = "agsus_monitora_arara_oculta_v1";
@@ -437,11 +451,27 @@ const abrirSecaoPadrao = (secao) =>
 const configuracaoPublicada = (chave) =>
   estadoDasConfiguracoes.obter().valores?.get?.(chave) ?? "";
 
+/* O balão da oferta fica ao lado da arara (no canto, ou onde ela foi arrastada). */
+function estiloDaOferta(posicao) {
+  if (!posicao) return undefined;
+  return {
+    left: `${Math.max(MARGEM, posicao.left - 260)}px`,
+    top: `${Math.max(MARGEM, posicao.top - 120)}px`,
+    right: "auto",
+    bottom: "auto",
+  };
+}
+
+const perfilDoLegado = () => globalThis.window?.getMonitoraProfile?.() || null;
+
+export const ID_DOS_PRIMEIROS_PASSOS = "primeiros-passos";
+
 export function Aya({
   perguntar = askAyaAi,
   navegar = navegarPelaJanela,
   abrirSecao = abrirSecaoPadrao,
   configuracao = configuracaoPublicada,
+  obterPerfil = perfilDoLegado,
   janela = globalThis.window,
 }) {
   const local = useSyncExternalStore(assinarPaginaDaAya, obterPaginaDaAya);
@@ -473,6 +503,99 @@ export function Aya({
     janela,
     refArara,
   );
+
+  /* ---------- Tour da tela e trilhas ---------- */
+
+  const tourDaTela = tourDaPagina(local);
+  const perfil = obterPerfil();
+  const trilhas = trilhasDoPerfil(perfil);
+  const [tour, setTour] = useState(null);
+  const [progresso, setProgresso] = useState(() =>
+    lerProgressoDasTrilhas(janela),
+  );
+  const [oferta, setOferta] = useState(false);
+  const temPrimeirosPassos = trilhas.some(
+    (t) => t.id === ID_DOS_PRIMEIROS_PASSOS,
+  );
+
+  // Primeira entrada: oferece "Primeiros passos" uma vez, sem abrir nada.
+  useEffect(() => {
+    if (!local.view || !temPrimeirosPassos || tour || oferta) return;
+    if (ofertaDePrimeirosPassosFeita(janela)) return;
+    marcarOfertaDePrimeirosPassos(janela);
+    setOferta(true);
+  }, [local.view, temPrimeirosPassos, tour, oferta, janela]);
+
+  /* Leva à tela do passo da trilha; diz se precisou trocar de tela. */
+  const irParaOPasso = useCallback(
+    (passo) => {
+      const [view, secao = ""] = String(passo.pagina || "").split(":");
+      const agora = obterPaginaDaAya();
+      if (agora.view === view && (!secao || agora.secao === secao))
+        return false;
+      if (agora.view !== view) navegar(view);
+      if (secao) abrirSecao(secao);
+      return true;
+    },
+    [navegar, abrirSecao],
+  );
+
+  function comecarTour(novo) {
+    setOferta(false);
+    setAberta(false);
+    setTour(novo);
+  }
+
+  function mostrarEstaTela() {
+    if (!tourDaTela) return;
+    comecarTour({
+      chave: `tela:${tourDaTela.chave}`,
+      rotulo: `Tour: ${tourDaTela.titulo}`,
+      passos: tourDaTela.passos,
+      inicio: 0,
+    });
+  }
+
+  function iniciarTrilha(trilha) {
+    comecarTour({
+      chave: `trilha:${trilha.id}`,
+      trilha: trilha.id,
+      rotulo: `Trilha: ${trilha.titulo}`,
+      passos: trilha.passos,
+      inicio: passoParaRetomar(progresso[trilha.id], trilha.passos.length),
+    });
+  }
+
+  const aoMudarPassoDoTour = useCallback(
+    (indice) => {
+      if (tour?.trilha)
+        setProgresso(salvarPassoDaTrilha(janela, tour.trilha, indice));
+    },
+    [tour, janela],
+  );
+
+  const aoFecharTour = useCallback(
+    (motivo) => {
+      if (tour?.trilha && motivo === "concluiu")
+        setProgresso(concluirTrilha(janela, tour.trilha));
+      setTour(null);
+      devolverFocoAArara.current = true;
+      // A arara volta a existir no próximo desenho; o foco vai para ela.
+      janela.setTimeout?.(() => {
+        if (devolverFocoAArara.current) {
+          devolverFocoAArara.current = false;
+          refArara.current?.focus();
+        }
+      }, 0);
+    },
+    [tour, janela],
+  );
+
+  function aceitarOferta() {
+    const trilha = trilhas.find((t) => t.id === ID_DOS_PRIMEIROS_PASSOS);
+    setOferta(false);
+    if (trilha) iniciarTrilha(trilha);
+  }
 
   // A conversa vai para a aba a cada mudança (a apresentação nunca entra).
   useEffect(() => {
@@ -679,6 +802,28 @@ export function Aya({
         </button>
       ) : null}
 
+      {oferta && !aberta && !tour ? (
+        <OfertaDePrimeirosPassos
+          estilo={estiloDaOferta(posicao)}
+          aoAceitar={aceitarOferta}
+          aoRecusar={() => setOferta(false)}
+        />
+      ) : null}
+
+      {tour ? (
+        <Tour
+          key={tour.chave}
+          passos={tour.passos}
+          inicio={tour.inicio}
+          rotulo={tour.rotulo}
+          irPara={irParaOPasso}
+          aoMudarPasso={aoMudarPassoDoTour}
+          aoFechar={aoFecharTour}
+          janela={janela}
+          documento={janela.document}
+        />
+      ) : null}
+
       {aberta ? (
         <section
           ref={refPainel}
@@ -704,6 +849,17 @@ export function Aya({
               </div>
             </div>
             <div className="aya-painel__acoes">
+              {tourDaTela ? (
+                <button
+                  type="button"
+                  className="aya-icone-botao"
+                  aria-label="Me mostra esta tela"
+                  title="Me mostra esta tela"
+                  onClick={mostrarEstaTela}
+                >
+                  <Icone nome="compass" tamanho={17} />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="aya-icone-botao"
@@ -740,10 +896,28 @@ export function Aya({
               </li>
             </ol>
 
-            {semPergunta && pagina.sugestoes.length ? (
+            {oferta && !tour ? (
+              <OfertaDePrimeirosPassos
+                noPainel
+                aoAceitar={aceitarOferta}
+                aoRecusar={() => setOferta(false)}
+              />
+            ) : null}
+
+            {semPergunta && (pagina.sugestoes.length || tourDaTela) ? (
               <section className="aya-sugestoes" aria-label="Sugestões">
                 <h3>Sugestões</h3>
                 <div className="aya-sugestoes__lista">
+                  {tourDaTela ? (
+                    <button
+                      type="button"
+                      className="aya-sugestao aya-sugestao--tour"
+                      onClick={mostrarEstaTela}
+                    >
+                      <Icone nome="compass" tamanho={14} />
+                      Me mostra esta tela
+                    </button>
+                  ) : null}
                   {pagina.sugestoes.map((sugestao) => (
                     <button
                       key={sugestao.pergunta}
@@ -758,6 +932,15 @@ export function Aya({
                   ))}
                 </div>
               </section>
+            ) : null}
+
+            {semPergunta ? (
+              <SecaoAprender
+                trilhas={trilhas}
+                progresso={progresso}
+                aoIniciar={iniciarTrilha}
+                desabilitada={ocupada}
+              />
             ) : null}
 
             <ol
