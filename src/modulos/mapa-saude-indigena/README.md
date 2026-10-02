@@ -8,7 +8,7 @@ daqui `leaflet.js`, a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
 Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela cheia,
 o painel cobre o shell, mantém o botão "Sair da tela cheia" visível e bloqueia a
 rolagem da página até sair (pelo botão ou Esc). O editor de coordenadas, restrito
-ao administrador global, substitui a lista lateral e oferece "Voltar à lista";
+ao administrador global e ao Gestor, substitui a lista lateral e oferece "Voltar à lista";
 no celular, esse painel fica abaixo do mapa. Ele tem a fila de pontos (busca e
 "Só pendentes", com as pendências da auditoria), "Conferido", as sugestões de
 posição e o histórico com "Desfazer" — RPCs de

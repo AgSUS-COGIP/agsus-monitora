@@ -221,13 +221,19 @@ async function escolher(nome) {
 }
 
 describe("Coordenadas no mapa de Projetos", () => {
-  it("só o administrador global vê o botão; ninguém mais lê as pendências", async () => {
+  it("só o administrador global e o Gestor veem o botão; ninguém mais lê as pendências", async () => {
     await montar({ ativo: true, perfil: "usuario" });
+    expect(botao("Coordenadas")).toBeUndefined();
+    await montar({ ativo: true, perfil: "leitor" });
     expect(botao("Coordenadas")).toBeUndefined();
     expect(chamadas(RPC_PENDENCIAS)).toHaveLength(0);
     await montar(ADMIN);
     expect(botao("Coordenadas")).toBeTruthy();
     expect(chamadas(RPC_PENDENCIAS)).toHaveLength(0);
+    await montar({ ativo: true, perfil: "edital_gestor", admin_global: false });
+    expect(botao("Coordenadas")).toBeTruthy();
+    await abrirEditor();
+    expect(chamadas(RPC_PENDENCIAS).length).toBeGreaterThan(0);
   });
 
   it("abre a fila no lugar da lista, com gravidade e o lugar sem coordenada", async () => {

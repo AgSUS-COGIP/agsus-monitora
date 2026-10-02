@@ -47,27 +47,27 @@ export const CONTRATO_RPC = {
     ],
     critica: true,
     resumo:
-      "Corrige a coordenada de um ponto existente e/ou o marca como conferido (p_conferido), com histórico privado. Só administrador global.",
+      "Corrige a coordenada de um ponto existente e/ou o marca como conferido (p_conferido), com histórico privado. Só administrador global ou Gestor.",
   },
   desfazer_coordenada_mapa_saude_indigena: {
     argumentos: ["p_historico", "p_motivo"],
     critica: false,
     resumo:
-      "Volta a última alteração de um ponto do mapa como alteração nova, com motivo. Só administrador global.",
+      "Volta a última alteração de um ponto do mapa como alteração nova, com motivo. Só administrador global ou Gestor.",
   },
   listar_historico_coordenada_mapa_saude_indigena: {
     argumentos: ["p_alvo", "p_limite"],
     critica: false,
     resumo:
-      "Últimas alterações de um ponto do mapa (quem, quando, de/para, motivo). Só administrador global.",
+      "Últimas alterações de um ponto do mapa (quem, quando, de/para, motivo). Só administrador global ou Gestor.",
   },
   listar_pendencias_coordenada_mapa_saude_indigena: {
     argumentos: [],
     critica: false,
     resumo:
-      "Pontos do mapa ainda não conferidos depois da auditoria, com candidatos. Só administrador global.",
+      "Pontos do mapa ainda não conferidos depois da auditoria, com candidatos. Só administrador global ou Gestor.",
   },
-  // ── Editor de coordenadas do mapa de Projetos (só admin global) ─────────
+  // ── Editor de coordenadas do mapa de Projetos (admin global ou Gestor) ──
   salvar_coordenada_mapa_projetos: {
     argumentos: [
       "p_lugar",
@@ -80,32 +80,32 @@ export const CONTRATO_RPC = {
     ],
     critica: true,
     resumo:
-      "Corrige a coordenada de um lugar das vagas de Projetos (cria a linha se não havia) e/ou o marca como conferido (p_conferido), com concorrência pela posição anterior e histórico privado. Só administrador global (migration 20261002190000).",
+      "Corrige a coordenada de um lugar das vagas de Projetos (cria a linha se não havia) e/ou o marca como conferido (p_conferido), com concorrência pela posição anterior e histórico privado. Só administrador global ou Gestor (migrations 20261002190000 e 20261002200000).",
   },
   desfazer_coordenada_mapa_projetos: {
     argumentos: ["p_historico", "p_motivo"],
     critica: false,
     resumo:
-      "Volta a última alteração de um lugar do mapa de Projetos como alteração nova, com motivo. Só administrador global.",
+      "Volta a última alteração de um lugar do mapa de Projetos como alteração nova, com motivo. Só administrador global ou Gestor.",
   },
   listar_historico_coordenada_mapa_projetos: {
     argumentos: ["p_lugar", "p_limite"],
     critica: false,
     resumo:
-      "Últimas alterações de um lugar do mapa de Projetos (quem, quando, de/para, motivo). Só administrador global.",
+      "Últimas alterações de um lugar do mapa de Projetos (quem, quando, de/para, motivo). Só administrador global ou Gestor.",
   },
   listar_pendencias_coordenada_mapa_projetos: {
     argumentos: [],
     critica: false,
     resumo:
-      "Lugares do mapa de Projetos com coordenada duvidosa (sem coordenada, só a sede do município, só a UF, município/UF que não batem…), com candidatos e situação. Só administrador global.",
+      "Lugares do mapa de Projetos com coordenada duvidosa (sem coordenada, só a sede do município, só a UF, município/UF que não batem…), com candidatos e situação. Só administrador global ou Gestor.",
   },
   // ── Configurações › Acessos (admin global ou coordenador, com teto) ──────
   obter_matriz_acessos: {
     argumentos: ["p_busca", "p_offset", "p_coordenacao", "p_grupo"],
     critica: true,
     resumo:
-      "Pessoas paginadas (célula: do grupo ou individual), grupos, coordenações, teto de quem pede e histórico.",
+      "Pessoas paginadas (célula: do grupo ou individual; último acesso real: login, uso ou presença), grupos, coordenações, teto de quem pede e histórico.",
   },
   salvar_matriz_acessos: {
     argumentos: ["p_alteracoes", "p_motivo"],
@@ -270,7 +270,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_busca"],
     critica: false,
     resumo:
-      "Aba Desativadas de Acessos (admin global): quando, por quem, motivo, grupo/áreas de antes e pedido pendente.",
+      "Aba Desativadas de Acessos (admin global): quando, por quem, motivo, grupo/áreas de antes, pedido pendente e último acesso real.",
   },
   reativar_acesso_usuario: {
     argumentos: [

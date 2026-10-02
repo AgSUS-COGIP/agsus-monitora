@@ -60,6 +60,7 @@ const historicoDoPoloA = () => [
   },
 ];
 const admin = { ativo: true, perfil: "admin", admin_global: true };
+const gestor = { ativo: true, perfil: "edital_gestor", admin_global: false };
 
 let host, raiz, leaflet, mapa, props, respostas;
 beforeEach(() => {
@@ -156,6 +157,15 @@ describe("editor de coordenadas: permissão e prévia", () => {
     await renderizar({ ...props, perfil: { perfil: "usuario" } });
     expect(host.textContent).toBe("");
     expect([...mapa.camadas].filter((c) => c.opcoes.draggable)).toHaveLength(0);
+  });
+
+  it("o Gestor também edita: lê as pendências e escolhe o ponto; leitor não", async () => {
+    await renderizar({ ...props, perfil: gestor });
+    expect(chamadas(RPC_PENDENCIAS)).toHaveLength(1);
+    await escolher("Polo · Polo A");
+    expect([...mapa.camadas].filter((c) => c.opcoes.draggable)).toHaveLength(1);
+    await renderizar({ ...props, perfil: { ativo: true, perfil: "leitor" } });
+    expect(host.textContent).toBe("");
   });
 
   it("arrasta só o pin de prévia, desfaz sem gravar e exige confirmação antes de salvar", async () => {
@@ -440,7 +450,7 @@ describe("editor de coordenadas: histórico e desfazer", () => {
 });
 
 describe("entrada do editor no mapa", () => {
-  it("mostra Coordenadas apenas para admin nos mapas nacional e do distrito", async () => {
+  it("mostra Coordenadas para admin e Gestor nos mapas nacional e do distrito", async () => {
     globalThis.L = leaflet.L;
     const renderMapa = async (perfil, dseiSelecionado) =>
       act(async () =>
@@ -463,5 +473,15 @@ describe("entrada do editor no mapa", () => {
     expect(
       host.querySelector(".mapa-si-painel--nacional").textContent,
     ).toContain("Coordenadas");
+    await renderMapa(gestor, "A");
+    expect(host.querySelector(".mapa-si-painel--dsei").textContent).toContain(
+      "Coordenadas",
+    );
+    await renderMapa(gestor, null);
+    expect(
+      host.querySelector(".mapa-si-painel--nacional").textContent,
+    ).toContain("Coordenadas");
+    await renderMapa({ ativo: true, perfil: "leitor" }, null);
+    expect(botao("Coordenadas")).toBeUndefined();
   });
 });
