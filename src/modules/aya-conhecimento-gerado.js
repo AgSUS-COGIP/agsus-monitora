@@ -1166,7 +1166,7 @@ export const VERBETES_AYA = Object.freeze([
       "blocos da visao geral",
     ],
     resposta:
-      'Na Visão geral, "Próximos 7 dias" lista os editais com etapa do cronograma começando de hoje até daqui a 7 dias, do mais perto ao mais longe (em vermelho até 3 dias); o clique abre os detalhes. "Atenção" lista até 30 editais críticos com o motivo. "Fases" conta os editais em cada fase fixa — Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação e Concluído, mais Cancelado, Sem cronograma e Outra quando houver —, lida do status e da atividade do cronograma; o clique filtra a fase. "Pós-resultado" mostra, nos editais com resultado, os concluídos sem lista de aprovados vigente, as listas sem nenhum status, a contratação abaixo de 50% e as desistências; o clique filtra a página por aquela pendência. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
+      'Na Visão geral, as boas-vindas dizem quantos editais têm etapa nos próximos 7 dias, com o atalho para o Cronograma; o indicador "Processos Críticos" filtra a tabela pelos críticos, e o motivo aparece nos detalhes de cada processo. "Fases" conta os editais em cada fase fixa — Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação e Concluído, mais Cancelado, Sem cronograma e Outra quando houver —, lida do status e da atividade do cronograma; o clique filtra a fase. "Pós-resultado" mostra, nos editais com resultado, os concluídos sem lista de aprovados vigente, as listas sem nenhum status, a contratação abaixo de 50% e as desistências; o clique filtra a página por aquela pendência. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -2026,7 +2026,7 @@ export const VERBETES_AYA = Object.freeze([
       "legenda fechada no celular",
     ],
     resposta:
-      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Recolher" ou a tecla Esc voltam. No celular, a lista fica abaixo do mapa e a legenda começa fechada (o botão "Legenda" abre). Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
+      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam. Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
     fato: "",
     fonte: "interface do MONITORA",
   },

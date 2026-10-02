@@ -312,9 +312,6 @@ describe("a tela dentro do app", () => {
     ]);
     // 11/2025: sem etapa em curso desde 11/09 → parado há 20 dias.
     expect(valorDoKpi("criticos")).toBe("2");
-    expect(secao.querySelector(".visao-geral-atencao").textContent).toContain(
-      "Parado há 20 dias",
-    );
     expect(
       secao.querySelector(".visao-geral-pos-resultado").textContent,
     ).toContain("Lista sem status");
@@ -338,9 +335,6 @@ describe("a tela dentro do app", () => {
     await montar({ supabase });
     await esperar();
     expect(valorDoKpi("criticos")).toBe("1");
-    expect(
-      secao.querySelectorAll(".visao-geral-atencao .ui-pendencia"),
-    ).toHaveLength(1);
     expect(aviso).toHaveBeenCalled();
     aviso.mockRestore();
   });
@@ -475,29 +469,10 @@ describe("filtros e recorte", () => {
 });
 
 describe("blocos", () => {
-  it("Próximos 7 dias: a etapa da agenda, do mais perto, e o clique abre os detalhes", async () => {
+  it("sem os blocos repetidos: a semana fica nas boas-vindas e os críticos no indicador", async () => {
     await montar();
-    const itens = secao.querySelectorAll(".visao-geral-agenda .ui-pendencia");
-    expect(itens).toHaveLength(1);
-    expect(itens[0].textContent).toContain("03/2026 · DSEI Xingu");
-    expect(itens[0].textContent).toContain(
-      "Em 2 dias · 03/10/2026 · Resultado preliminar das entrevistas",
-    );
-    expect(itens[0].dataset.tom).toBe("perigo");
-    await clicar(itens[0]);
-    expect(document.querySelector("#visaoGeralGaveta")).not.toBeNull();
-  });
-
-  it("Atenção lista os críticos com o motivo e abre os detalhes", async () => {
-    await montar();
-    const itens = secao.querySelectorAll(".visao-geral-atencao .ui-pendencia");
-    expect(itens).toHaveLength(1);
-    expect(itens[0].textContent).toContain("03/2026");
-    expect(itens[0].textContent).toContain("Etapa em 2 dias");
-    await clicar(itens[0]);
-    expect(document.querySelector("#visaoGeralGaveta").textContent).toContain(
-      "Etapa em 2 dias",
-    );
+    expect(secao.querySelector(".visao-geral-agenda")).toBeNull();
+    expect(secao.querySelector(".visao-geral-atencao")).toBeNull();
   });
 
   it("Fases: fixas, o clique filtra a fase; texto vindo do dado não vira HTML", async () => {

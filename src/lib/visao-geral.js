@@ -455,68 +455,6 @@ export function fasesDosProcessos(linhas) {
   }));
 }
 
-/** "Atenção": os críticos do recorte, na fila da Visão geral (até `limite`). */
-export function processosEmAtencao(linhas, limite = 30) {
-  return (linhas || [])
-    .filter(ehCritica)
-    .sort(compararPelaAtencao)
-    .slice(0, limite);
-}
-
-const MS_POR_DIA = 86400000;
-const diaParaChave = (dia) =>
-  new Date(dia * MS_POR_DIA).toISOString().slice(0, 10);
-
-/**
- * "Próximos 7 dias": os editais com etapa começando de hoje até `dias` dias,
- * do mais perto ao mais longe. Com as etapas do cronograma, todas as que
- * começam na janela; sem elas, a próxima etapa da linha.
- * `[{ linha, data, dias, atividades }]`.
- */
-export function agendaDosProximosDias(
-  linhas,
-  { hoje, etapasPorEdital = null, dias = 7 } = {},
-) {
-  const inicio = diaDoCalendario(hoje);
-  if (inicio === null) return [];
-  const fim = inicio + dias;
-  const agenda = [];
-  for (const linha of linhas || []) {
-    if (ehCancelado(linha)) continue;
-    const etapas = etapasPorEdital?.get(txt(linha?.id));
-    const candidatas = etapas
-      ? etapas.map((etapa) => ({
-          dia: diaDoCalendario(etapa?.data_inicio),
-          atividade: txt(etapa?.atividade),
-        }))
-      : [
-          {
-            dia: diaDoCalendario(linha?.cronograma_proxima_data),
-            atividade: txt(linha?.cronograma_proxima_atividade),
-          },
-        ];
-    const naJanela = candidatas
-      .filter((c) => c.dia !== null && c.dia >= inicio && c.dia <= fim)
-      .sort((a, b) => a.dia - b.dia);
-    if (!naJanela.length) continue;
-    agenda.push({
-      linha,
-      data: diaParaChave(naJanela[0].dia),
-      dias: naJanela[0].dia - inicio,
-      atividades: naJanela.map((c) => c.atividade).filter(Boolean),
-    });
-  }
-  return agenda.sort(
-    (a, b) =>
-      a.dias - b.dias ||
-      compararValoresDoFiltro("edital", a.linha?.edital, b.linha?.edital),
-  );
-}
-
-/** "Hoje", "Amanhã" ou "Em N dias". */
-export const quandoNaAgenda = (dias) =>
-  dias === 0 ? "Hoje" : dias === 1 ? "Amanhã" : `Em ${dias} dias`;
-
 /**
  * "Pós-resultado": cada pendência com os editais que a têm.
  * `quantos`: editais; em Desistências, `pessoas` é o total de desistentes.

@@ -5,18 +5,13 @@ import {
   anosDosEditais,
   editaisDoAno,
 } from "../../lib/atalhos-de-filtro.js";
-import { LIMITES_DO_CRITICO } from "../../lib/criticos-da-visao-geral.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
-  agendaDosProximosDias,
   CAMPOS_DO_FILTRO,
-  dataCurta,
   fasesDosProcessos,
   INDICADORES,
   posResultado,
-  processosEmAtencao,
   processosPorProjeto,
-  quandoNaAgenda,
   rotuloDoAtalho,
   VALOR_DO_INDICADOR,
 } from "../../lib/visao-geral.js";
@@ -36,8 +31,8 @@ import {
   Os blocos da Visão geral, com os componentes de src/ui/: o topo (a hora da
   carga, discreta, Atualizar e Exportar), os filtros (Ano e os cinco campos,
   dois deles em "Mais opções", e os chips do recorte), os sete indicadores,
-  "Próximos 7 dias", "Atenção" (os críticos e o motivo), "Processos por
-  projeto" (só Projetos), "Fases" e "Pós-resultado".
+  "Processos por projeto" (só Projetos), "Fases" e "Pós-resultado". Os
+  prazos da semana ficam nas boas-vindas e os críticos no indicador.
 */
 
 const fmt = (valor) => formatNumberBR(valor);
@@ -248,68 +243,6 @@ function Bloco({ id, titulo, className, children }) {
       </h2>
       {children}
     </section>
-  );
-}
-
-const nomeDoEdital = (linha) =>
-  [linha.edital || "-", linha.unidade].filter(Boolean).join(" · ");
-
-/* ── Próximos 7 dias ────────────────────────────────────────────────── */
-
-export function ProximosDias({ e, aoAbrir }) {
-  const itens = agendaDosProximosDias(e.filtradas, {
-    hoje: e.hoje,
-    etapasPorEdital: e.etapasPorEdital,
-  }).map(({ linha, data, dias, atividades }) => ({
-    chave: String(linha.id),
-    titulo: nomeDoEdital(linha),
-    detalhe: [
-      `${quandoNaAgenda(dias)} · ${dataCurta(data)}`,
-      atividades[0],
-      atividades.length > 1 ? `+${atividades.length - 1}` : "",
-    ]
-      .filter(Boolean)
-      .join(" · "),
-    tom: dias <= LIMITES_DO_CRITICO.diasDoPrazo ? "perigo" : "alerta",
-    aoClicar: () => aoAbrir(linha),
-  }));
-  return (
-    <Bloco
-      id="visaoGeralAgendaTitulo"
-      titulo="Próximos 7 dias"
-      className="visao-geral-agenda"
-    >
-      <ListaDePendencias
-        itens={itens}
-        carregando={!e.carregado}
-        vazio="Nenhuma etapa nos próximos 7 dias."
-      />
-    </Bloco>
-  );
-}
-
-/* ── Atenção ────────────────────────────────────────────────────────── */
-
-export function Atencao({ e, aoAbrir }) {
-  const itens = processosEmAtencao(e.filtradas).map((linha) => ({
-    chave: String(linha.id),
-    titulo: nomeDoEdital(linha),
-    detalhe: linha.atencao.map((m) => m.rotulo).join(" · "),
-    tom: linha.atencao[0]?.tom || "alerta",
-    aoClicar: () => aoAbrir(linha),
-  }));
-  return (
-    <Bloco
-      id="visaoGeralAtencaoTitulo"
-      titulo="Atenção"
-      className="visao-geral-atencao"
-    >
-      <ListaDePendencias
-        itens={itens}
-        carregando={!e.carregado}
-        vazio="Nenhum processo crítico."
-      />
-    </Bloco>
   );
 }
 

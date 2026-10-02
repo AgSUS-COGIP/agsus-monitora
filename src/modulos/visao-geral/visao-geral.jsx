@@ -22,13 +22,11 @@ import {
 } from "./estado.js";
 import { GavetaDoProcesso } from "./gaveta.jsx";
 import {
-  Atencao,
   Fases,
   Filtros,
   Indicadores,
   PosResultado,
   ProcessosPorProjeto,
-  ProximosDias,
   Topo,
 } from "./paineis.jsx";
 import { TabelaDeProcessos } from "./tabela.jsx";
@@ -44,9 +42,11 @@ import { TabelaDeProcessos } from "./tabela.jsx";
   pelo estado com o cliente da tela).
 
   Ordem: boas-vindas e marcos do ano, topo (hora da carga, Atualizar,
-  Exportar CSV), filtros, indicadores, "Próximos 7 dias" e "Atenção",
-  "Processos por projeto" (só Projetos), o MAPA DA ÁREA, "Fases" e
-  "Pós-resultado" e a tabela de processos, com os detalhes numa gaveta.
+  Exportar CSV), filtros, indicadores, o MAPA DA ÁREA, "Processos por
+  projeto" (só Projetos), "Fases" e "Pós-resultado" e a tabela de
+  processos, com os detalhes numa gaveta. Os prazos dos próximos 7 dias
+  ficam nas boas-vindas e os processos críticos no indicador que filtra a
+  tabela.
 
   O MAPA DA ÁREA (`mapaDaVisaoGeral`):
   - Saúde Indígena: `<MapaSaudeIndigena>` (src/modulos/mapa-saude-indigena/),
@@ -133,13 +133,6 @@ export function TelaDaVisaoGeral({
       <Topo e={e} aoExportar={estado.exportarCsv} />
       <Filtros e={e} estado={estado} textos={textos} />
       <Indicadores e={e} estado={estado} textos={textos} />
-      <div className="ui-linha-de-cards">
-        <ProximosDias e={e} aoAbrir={abrir} />
-        <Atencao e={e} aoAbrir={abrir} />
-      </div>
-      {temProcessosPorProjeto(e.area) ? (
-        <ProcessosPorProjeto e={e} estado={estado} />
-      ) : null}
       {mapa === MAPA_DOS_DSEIS ? (
         <MapaDaSaudeIndigena
           e={e}
@@ -156,6 +149,9 @@ export function TelaDaVisaoGeral({
             carregadoEm={e.carregadoEm}
           />
         </div>
+      ) : null}
+      {temProcessosPorProjeto(e.area) ? (
+        <ProcessosPorProjeto e={e} estado={estado} />
       ) : null}
       <div className="ui-linha-de-cards">
         <Fases e={e} estado={estado} />

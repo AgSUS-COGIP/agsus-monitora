@@ -5,6 +5,12 @@ geral (`src/modulos/visao-geral/`) e lendo o estado dela. O legado não desenha 
 de Projetos é o módulo irmão `src/modulos/mapa-de-projetos/` (ver "Projetos/SEDE"), que reaproveita
 daqui `leaflet.js`, a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
 
+Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela cheia,
+o painel cobre o shell, mantém o botão "Sair da tela cheia" visível e bloqueia a
+rolagem da página até sair (pelo botão ou Esc). O editor de coordenadas, restrito
+ao administrador global, substitui a lista lateral e oferece "Voltar à lista";
+no celular, esse painel fica abaixo do mapa.
+
 ```
 mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (calor, tela cheia), contas memorizadas,
                           um mapa principal de cada vez
@@ -16,7 +22,7 @@ legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de
                           nacional, legenda do DSEI, fases das terras
 leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
                           contornos, ícones/popup/dica em DOM seguro
-tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Recolher" e Esc (os dois mapas)
+tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas)
 usar-ultimo.js            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```

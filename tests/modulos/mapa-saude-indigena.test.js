@@ -293,8 +293,45 @@ describe("visão nacional", () => {
     );
     await clicar(botao);
     expect(host.querySelector(".mapa-si--tela-cheia")).not.toBeNull();
+    expect(botao.textContent).toBe("Sair da tela cheia");
+    expect(document.body.style.overflow).toBe("hidden");
     await teclar(document, "Escape");
     expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("abre coordenadas na lateral e volta à lista sem sair da tela cheia", async () => {
+    await montar({ perfil: { admin_global: true } });
+    const botao = (texto) =>
+      [...host.querySelectorAll("button")].find((b) => b.textContent === texto);
+    await clicar(botao("Tela cheia"));
+    await clicar(botao("Coordenadas"));
+    expect(botao("Coordenadas").getAttribute("aria-expanded")).toBe("true");
+    expect(
+      host.querySelector('[aria-label="Corrigir coordenadas"]'),
+    ).not.toBeNull();
+    await clicar(botao("Voltar à lista"));
+    expect(
+      host.querySelector('[aria-label="Corrigir coordenadas"]'),
+    ).toBeNull();
+    expect(host.querySelectorAll(".mapa-si-territorio")).toHaveLength(3);
+    await clicar(botao("Sair da tela cheia"));
+    expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("restaura a rolagem anterior ao desmontar em tela cheia", async () => {
+    document.body.style.overflow = "auto";
+    await montar();
+    await clicar(
+      [...host.querySelectorAll("button")].find(
+        (b) => b.textContent === "Tela cheia",
+      ),
+    );
+    await act(async () => raiz.unmount());
+    raiz = null;
+    expect(document.body.style.overflow).toBe("auto");
+    document.body.style.overflow = "";
   });
 });
 

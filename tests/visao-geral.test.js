@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   acompanhamentoDaResposta,
-  agendaDosProximosDias,
   alternarColuna,
   compararValoresDoFiltro,
   csvDaVisaoGeral,
@@ -20,10 +19,8 @@ import {
   podarFiltros,
   posResultado,
   prazoDoEdital,
-  processosEmAtencao,
   processosPorProjeto,
   proximaOrdenacao,
-  quandoNaAgenda,
   recortar,
   resumoDoRelatorio,
   rotuloDoAtalho,
@@ -39,7 +36,7 @@ import {
 /*
   As regras da Visão geral (src/lib/visao-geral.js): filtros, recorte com
   atalho, linhas enriquecidas (fase, crítico, pós-resultado), blocos
-  (Próximos 7 dias, Atenção, Fases, Pós-resultado, Processos por projeto),
+  (Fases, Pós-resultado, Processos por projeto),
   tabela e exportação.
 */
 
@@ -343,33 +340,6 @@ describe("indicadores", () => {
 });
 
 describe("blocos", () => {
-  it("Próximos 7 dias: pelas etapas do cronograma; sem elas, pela próxima da linha", () => {
-    const comEtapas = agendaDosProximosDias(COM_ACOMPANHAMENTO, {
-      hoje: HOJE,
-      etapasPorEdital: ACOMPANHAMENTO.etapasPorEdital,
-    });
-    expect(comEtapas).toHaveLength(1);
-    expect(comEtapas[0]).toMatchObject({
-      data: "2026-10-03",
-      dias: 2,
-      atividades: [
-        "Resultado preliminar das entrevistas",
-        "Prazo para recursos das entrevistas",
-      ],
-    });
-    const semEtapas = agendaDosProximosDias(LINHAS, { hoje: HOJE });
-    expect(semEtapas.map((a) => [a.linha.id, a.data])).toEqual([
-      [1, "2026-10-03"],
-    ]);
-    expect(quandoNaAgenda(0)).toBe("Hoje");
-    expect(quandoNaAgenda(1)).toBe("Amanhã");
-    expect(quandoNaAgenda(5)).toBe("Em 5 dias");
-  });
-
-  it("Atenção: os críticos na fila", () => {
-    expect(ids(processosEmAtencao(LINHAS))).toEqual([1, 3]);
-  });
-
   it("Fases: as do fluxo sempre, as de fora só com edital", () => {
     const fases = fasesDosProcessos(LINHAS);
     expect(fases.map((f) => f.fase)).toEqual([

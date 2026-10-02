@@ -127,8 +127,6 @@
 
 /* ── Blocos: listas que rolam dentro do card ─────────────────────────── */
 
-.visao-geral-agenda .ui-pendencias,
-.visao-geral-atencao .ui-pendencias,
 .visao-geral-pos-resultado .ui-pendencias {
   max-height: 360px;
   overflow-y: auto;

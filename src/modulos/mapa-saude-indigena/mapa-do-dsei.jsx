@@ -320,12 +320,18 @@ export function MapaDoDsei({
             Mapa do DSEI {dsei.n}
           </h2>
         </div>
-        <div className="mapa-si-painel__acoes">
+        <div
+          className="mapa-si-painel__acoes"
+          role="group"
+          aria-label="Controles do mapa"
+        >
           {podeEditar ? (
             <button
               type="button"
               className="btn small"
               aria-pressed={editandoCoordenadas}
+              aria-expanded={editandoCoordenadas}
+              aria-controls={`${idDoMapa}-painel-lateral`}
               onClick={() => definirEditandoCoordenadas((atual) => !atual)}
             >
               Coordenadas
@@ -370,6 +376,7 @@ export function MapaDoDsei({
         </div>
         <aside
           className="mapa-si-lista"
+          id={`${idDoMapa}-painel-lateral`}
           aria-label={`Polos e unidades do DSEI ${dsei.n}`}
         >
           {podeEditar && editandoCoordenadas ? (
@@ -382,6 +389,7 @@ export function MapaDoDsei({
               perfil={perfil}
               supabase={supabase}
               aoAtualizarMapa={aoAtualizarMapa}
+              aoFechar={() => definirEditandoCoordenadas(false)}
             />
           ) : (
             <>

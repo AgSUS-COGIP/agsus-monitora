@@ -5,10 +5,7 @@
   e das variáveis --terra-* (tokens.css).
 */
 .mapa-si {
-  /* Mais espaço para o mapa (pedido de 02/10): no zoom nacional (≈ 500 km na
-     régua) o Brasil precisa de ~722px com folga; até 780px ele cabe inteiro
-     nesse zoom, e em telas baixas o zoom desce um quarto em vez de cortar. */
-  --mapa-si-altura: clamp(560px, calc(100vh - 120px), 780px);
+  --mapa-si-altura: clamp(440px, 65vh, 640px);
   --mapa-si-lista: clamp(320px, 28%, 400px);
   display: grid;
   gap: var(--space-4);
@@ -41,6 +38,16 @@
   gap: var(--space-2);
 }
 
+.mapa-si-coordenadas__topo {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.mapa-si-coordenadas > .ui-campo-dica {
+  margin: 0;
+}
+
 /* O estado pressionado usa o par de cores do botão primário. */
 .mapa-si-painel__acoes .btn[aria-pressed="true"] {
   background: var(--brand-primary);
@@ -53,11 +60,17 @@
   min-width: 0;
 }
 
+.mapa-si-painel[hidden] {
+  display: none;
+}
+
 .mapa-si-painel__topo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .mapa-si-painel__titulos {
@@ -82,7 +95,7 @@
 
 .mapa-si-painel__acoes .btn[aria-pressed="true"] {
   border-color: var(--color-border-focus);
-  background: var(--color-bg-selected);
+  background: var(--brand-primary);
 }
 
 .mapa-si-painel__corpo {
@@ -120,17 +133,27 @@
   filter: saturate(0.48) brightness(0.78) contrast(1.08);
 }
 
-/* Tela cheia: o painel visível ocupa a janela; Esc ou "Recolher" sai. */
+/* Acima do cabeçalho e da navegação; o topo fica fora da rolagem do mapa. */
 .mapa-si--tela-cheia .mapa-si-painel:not([hidden]) {
   position: fixed;
-  z-index: 1200;
+  z-index: calc(var(--z-overlay, 20000) - 1);
   inset: 0;
+  grid-template-rows: auto minmax(0, 1fr);
   border-radius: 0;
-  overflow: auto;
+  overflow: hidden;
+}
+
+.mapa-si--tela-cheia .mapa-si-painel--dsei {
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .mapa-si--tela-cheia .mapa-si-painel__corpo {
-  height: calc(100vh - var(--space-20));
+  height: 100%;
+}
+
+.mapa-si--tela-cheia .mapa-si-tela-cheia {
+  border-color: var(--brand-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* Trilho "Brasil › DSEI X". */
@@ -608,5 +631,22 @@
 
   .mapa-si-painel__acoes {
     margin-left: 0;
+  }
+
+  .mapa-si--tela-cheia .mapa-si-painel__corpo {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .mapa-si--tela-cheia .mapa-si-lista {
+    max-height: none;
+  }
+
+  .mapa-si--tela-cheia .mapa-si-painel {
+    padding: var(--space-3);
+  }
+
+  .mapa-si--tela-cheia .mapa-si-legenda--rodape {
+    max-height: 96px;
+    overflow: auto;
   }
 }
