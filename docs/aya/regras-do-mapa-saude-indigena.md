@@ -64,7 +64,7 @@ valendo", e os textos longos das listas vazias.
 ## O que o popup de uma unidade mostra
 
 **perguntas:** popup da unidade | o que o popup mostra | localizacao validada | fontes discordam | localizacao em validacao | coordenada confirmada | ponto do polo esta certo
-**resposta:** No MONITORA, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); 93 polos ainda aguardam confirmação do DSEI. Se um ponto parecer errado, a correção é feita no banco.
+**resposta:** No MONITORA, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global vê, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco.
 **fonte:** docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js
 
 ## Terras Indígenas no mapa
@@ -81,6 +81,24 @@ valendo", e os textos longos das listas vazias.
 
 ## Corrigir coordenadas de um ponto
 
-**perguntas:** corrigir coordenadas | editar latitude e longitude | arrastar o pin | mover ponto no mapa | alterar localizacao da unidade
-**resposta:** O administrador global pode usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. Escolha o ponto, digite latitude e longitude ou arraste o pin de prévia. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. A alteração fica no histórico. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.
-**fonte:** src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002143323_editar_coordenadas_mapa_admin.sql
+**perguntas:** corrigir coordenadas | editar latitude e longitude | arrastar o pin | mover ponto no mapa | alterar localizacao da unidade | como usar o editor de coordenadas
+**resposta:** O administrador global pode usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. A lista do editor substitui a lista lateral: busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa centraliza nele e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.
+**fonte:** src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql
+
+## Pontos pendentes de conferência
+
+**perguntas:** pontos pendentes | filtro so pendentes | fila de coordenadas | conferir coordenada | marcar como conferido | botao conferido | 248 pendencias | 249 pendencias | 93 polos e 156 ubsi | ponto em validacao
+**resposta:** A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor.
+**fonte:** src/lib/coordenadas-do-mapa.js; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql
+
+## Sugestões de posição de um ponto pendente
+
+**perguntas:** sugestoes de posicao | usar esta | candidatos da coordenada | posicao do cnes | aldeia do ibge | aldeia da funai | distancia da posicao atual
+**resposta:** Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.
+**fonte:** src/lib/coordenadas-do-mapa.js; src/modulos/mapa-saude-indigena/sugestoes-do-ponto.jsx
+
+## Histórico e desfazer de uma correção
+
+**perguntas:** historico da coordenada | quem mudou o ponto | desfazer correcao | desfazer conferencia | voltar posicao anterior
+**resposta:** Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).
+**fonte:** src/modulos/mapa-saude-indigena/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql

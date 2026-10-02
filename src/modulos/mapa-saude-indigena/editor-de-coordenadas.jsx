@@ -1,14 +1,80 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import {
+  chaveDaPendencia,
+  filaDeCoordenadas,
   formatarCoordenada,
   lerCoordenada,
   pontosEditaveisDoMapa,
   validarCorrecaoDoMapa,
 } from "../../lib/coordenadas-do-mapa.js";
-import { Aviso, Campo } from "../../ui/index.js";
+import { Aviso, Campo, Selo } from "../../ui/index.js";
+import { FilaDeCoordenadas } from "./fila-de-coordenadas.jsx";
+import { HistoricoDoPonto } from "./historico-do-ponto.jsx";
+import { SugestoesDoPonto } from "./sugestoes-do-ponto.jsx";
 import { usarUltimo } from "./usar-ultimo.js";
 
+const RPC_SALVAR = "salvar_coordenada_mapa_saude_indigena";
+const RPC_DESFAZER = "desfazer_coordenada_mapa_saude_indigena";
+const RPC_PENDENCIAS = "listar_pendencias_coordenada_mapa_saude_indigena";
+const RPC_HISTORICO = "listar_historico_coordenada_mapa_saude_indigena";
+const LIMITE_DO_HISTORICO = 5;
+
+const textoDaPosicao = (valor) => (valor == null ? "" : String(valor));
+const mensagemDoErro = (erro, reserva) => erro?.message || reserva;
+
+/* Lê uma RPC de lista (pendências, histórico) com o estado de carga. */
+function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
+  const [estado, definirEstado] = useState(() => ({
+    lista: [],
+    carregando: Boolean(ativo),
+    erro: "",
+  }));
+  useEffect(() => {
+    if (!ativo) {
+      definirEstado({ lista: [], carregando: false, erro: "" });
+      return undefined;
+    }
+    const cliente = ultimos.current.supabase;
+    if (!cliente?.rpc) {
+      definirEstado({ lista: [], carregando: false, erro: "" });
+      return undefined;
+    }
+    let vivo = true;
+    definirEstado((atual) => ({ ...atual, carregando: true, erro: "" }));
+    Promise.resolve(cliente.rpc(nome, argumentos?.()))
+      .then((resposta) => {
+        if (resposta?.error) throw resposta.error;
+        if (vivo)
+          definirEstado({
+            lista: Array.isArray(resposta?.data) ? resposta.data : [],
+            carregando: false,
+            erro: "",
+          });
+      })
+      .catch((falha) => {
+        if (vivo)
+          definirEstado({
+            lista: [],
+            carregando: false,
+            erro: mensagemDoErro(falha, erroPadrao),
+          });
+      });
+    return () => {
+      vivo = false;
+    };
+    // `argumentos` é derivado de `chave` (só ela dispara nova leitura).
+  }, [ativo, nome, chave, ultimos, erroPadrao]);
+  return [estado, definirEstado];
+}
+
+/*
+  O editor de coordenadas (só administrador global): a fila de pontos com
+  busca e "Só pendentes", o formulário da prévia (pin arrastável), as
+  sugestões do ponto pendente, "Conferido" (com ou sem mudar a posição) e o
+  histórico com "Desfazer". Tudo grava por RPC; o mapa recebe o lmap e o
+  rede_cnes que a RPC devolve (`aoAtualizarMapa`).
+*/
 export function EditorDeCoordenadas({
   L,
   mapa,
@@ -21,19 +87,49 @@ export function EditorDeCoordenadas({
   aoFechar,
 }) {
   const permitido = isAdminGlobal(perfil);
+  const ultimos = usarUltimo({ permitido, supabase, aoAtualizarMapa });
   const pontos = useMemo(
     () => pontosEditaveisDoMapa(lmap, redeCnes, dsei),
     [lmap, redeCnes, dsei],
   );
+  const [pendencias, definirPendencias] = usarLista(
+    ultimos,
+    permitido,
+    RPC_PENDENCIAS,
+    null,
+    "pendencias",
+    "Não foi possível carregar as pendências.",
+  );
+  const [busca, definirBusca] = useState("");
+  const [soPendentes, definirSoPendentes] = useState(true);
+  const fila = useMemo(
+    () => filaDeCoordenadas(pontos, pendencias.lista, { busca, soPendentes }),
+    [pontos, pendencias.lista, busca, soPendentes],
+  );
   const [id, definirId] = useState("");
   const ponto = pontos.find((p) => p.id === id) || null;
+  const pendencia = ponto
+    ? pendencias.lista.find(
+        (p) => chaveDaPendencia(p) === chaveDaPendencia(ponto.alvo),
+      ) || null
+    : null;
+  const pendente = Boolean(pendencia && !pendencia.conferido);
+  const [versaoDoHistorico, definirVersaoDoHistorico] = useState(0);
+  const [historico] = usarLista(
+    ultimos,
+    permitido && Boolean(id),
+    RPC_HISTORICO,
+    () => ({ p_alvo: JSON.parse(id), p_limite: LIMITE_DO_HISTORICO }),
+    `${id}#${versaoDoHistorico}`,
+    "Não foi possível carregar o histórico.",
+  );
   const [latitude, definirLatitude] = useState("");
   const [longitude, definirLongitude] = useState("");
   const [motivo, definirMotivo] = useState("");
   const [erro, definirErro] = useState("");
   const [mensagem, definirMensagem] = useState("");
   const [salvando, definirSalvando] = useState(false);
-  const [confirmando, definirConfirmando] = useState(false);
+  const [confirmando, definirConfirmando] = useState(null);
   const marcador = useRef(null);
   const montado = useRef(true);
   const latitudeNumero = lerCoordenada(latitude);
@@ -41,7 +137,6 @@ export function EditorDeCoordenadas({
   const mudou =
     ponto &&
     (latitudeNumero !== ponto.latitude || longitudeNumero !== ponto.longitude);
-  const ultimos = usarUltimo({ permitido, supabase, aoAtualizarMapa });
 
   useEffect(() => {
     montado.current = true;
@@ -50,12 +145,14 @@ export function EditorDeCoordenadas({
     };
   }, []);
   useEffect(() => {
-    definirLatitude(ponto?.latitude == null ? "" : String(ponto.latitude));
-    definirLongitude(ponto?.longitude == null ? "" : String(ponto.longitude));
-    definirMotivo("");
+    definirLatitude(textoDaPosicao(ponto?.latitude));
+    definirLongitude(textoDaPosicao(ponto?.longitude));
     definirErro("");
-    definirConfirmando(false);
+    definirConfirmando(null);
   }, [ponto]);
+  useEffect(() => {
+    definirMotivo("");
+  }, [id]);
 
   useEffect(() => {
     if (!permitido || !mapa || !L || !ponto) return undefined;
@@ -77,7 +174,7 @@ export function EditorDeCoordenadas({
       const posicaoAtual = pin.getLatLng();
       definirLatitude(posicaoAtual.lat.toFixed(6));
       definirLongitude(posicaoAtual.lng.toFixed(6));
-      definirConfirmando(false);
+      definirConfirmando(null);
       definirErro("");
       definirMensagem("");
     };
@@ -101,21 +198,68 @@ export function EditorDeCoordenadas({
   }, [salvando]);
 
   if (!permitido) return null;
+  const limparAvisos = () => {
+    definirConfirmando(null);
+    definirErro("");
+    definirMensagem("");
+  };
   const editar = (definir, valor) => {
     definir(valor);
-    definirConfirmando(false);
-    definirErro("");
-    definirMensagem("");
+    limparAvisos();
   };
-  const desfazer = () => {
-    definirLatitude(ponto?.latitude == null ? "" : String(ponto.latitude));
-    definirLongitude(ponto?.longitude == null ? "" : String(ponto.longitude));
-    definirConfirmando(false);
-    definirErro("");
-    definirMensagem("");
+  const usarSugestao = (sugestao) => {
+    definirLatitude(sugestao.latitude.toFixed(6));
+    definirLongitude(sugestao.longitude.toFixed(6));
+    limparAvisos();
   };
-  const salvar = async (evento) => {
-    evento.preventDefault();
+  const desfazerPrevia = () => {
+    definirLatitude(textoDaPosicao(ponto?.latitude));
+    definirLongitude(textoDaPosicao(ponto?.longitude));
+    limparAvisos();
+  };
+  const aplicarResposta = (data, alvo) => {
+    ultimos.current.aoAtualizarMapa?.(data);
+    if (typeof data?.conferido === "boolean") {
+      const chave = chaveDaPendencia(alvo);
+      definirPendencias((atual) => ({
+        ...atual,
+        lista: atual.lista.map((p) =>
+          chaveDaPendencia(p) === chave
+            ? { ...p, conferido: data.conferido }
+            : p,
+        ),
+      }));
+    }
+    definirVersaoDoHistorico((v) => v + 1);
+  };
+  const chamar = async (nome, argumentos, sucesso) => {
+    const alvo = ponto.alvo;
+    definirSalvando(true);
+    definirErro("");
+    try {
+      if (!ultimos.current.supabase?.rpc)
+        throw new Error("Conexão indisponível. Tente novamente.");
+      const { data, error } = await ultimos.current.supabase.rpc(
+        nome,
+        argumentos,
+      );
+      if (error) throw error;
+      if (!ultimos.current.permitido) return;
+      aplicarResposta(data, alvo);
+      if (!montado.current) return;
+      definirConfirmando(null);
+      definirMotivo("");
+      definirMensagem(sucesso);
+    } catch (falha) {
+      if (montado.current)
+        definirErro(
+          mensagemDoErro(falha, "Não foi possível salvar. Tente novamente."),
+        );
+    } finally {
+      if (montado.current) definirSalvando(false);
+    }
+  };
+  const enviar = async (acao) => {
     if (salvando || !ponto || !ultimos.current.permitido) return;
     const falha = validarCorrecaoDoMapa(
       latitudeNumero,
@@ -126,48 +270,47 @@ export function EditorDeCoordenadas({
       definirErro(falha);
       return;
     }
-    if (!mudou) {
+    if (acao === "corrigir" && !mudou) {
       definirErro("A coordenada não mudou.");
       return;
     }
-    if (!confirmando) {
-      definirConfirmando(true);
+    if (confirmando !== acao) {
+      definirConfirmando(acao);
       return;
     }
-    definirSalvando(true);
-    definirErro("");
-    try {
-      if (!ultimos.current.supabase?.rpc)
-        throw new Error("Conexão indisponível. Tente novamente.");
-      const { data, error } = await ultimos.current.supabase.rpc(
-        "salvar_coordenada_mapa_saude_indigena",
-        {
-          p_alvo: ponto.alvo,
-          p_latitude: latitudeNumero,
-          p_longitude: longitudeNumero,
-          p_latitude_anterior: ponto.latitude,
-          p_longitude_anterior: ponto.longitude,
-          p_motivo: motivo.trim(),
-        },
-      );
-      if (error) throw error;
-      ultimos.current.aoAtualizarMapa?.(data);
-      if (!montado.current || !ultimos.current.permitido) return;
-      definirConfirmando(false);
-      definirMensagem("Coordenada salva.");
-    } catch (falhaAoSalvar) {
-      if (montado.current)
-        definirErro(
-          falhaAoSalvar?.message || "Não foi possível salvar. Tente novamente.",
-        );
-    } finally {
-      if (montado.current) definirSalvando(false);
-    }
+    const conferir = acao === "conferir";
+    await chamar(
+      RPC_SALVAR,
+      {
+        p_alvo: ponto.alvo,
+        p_latitude: latitudeNumero,
+        p_longitude: longitudeNumero,
+        p_latitude_anterior: ponto.latitude,
+        p_longitude_anterior: ponto.longitude,
+        p_motivo: motivo.trim(),
+        p_conferido: conferir,
+      },
+      conferir ? "Ponto conferido." : "Coordenada salva.",
+    );
   };
+  const desfazerAlteracao = async (alteracao, motivoDoDesfazer) => {
+    if (salvando || !ponto || !alteracao || !ultimos.current.permitido) return;
+    await chamar(
+      RPC_DESFAZER,
+      { p_historico: alteracao.id, p_motivo: motivoDoDesfazer },
+      "Alteração desfeita.",
+    );
+  };
+  const textoDoBotao = (acao, rotulo, confirmacao) =>
+    confirmando === acao ? (salvando ? "Salvando…" : confirmacao) : rotulo;
+
   return (
     <form
       className="mapa-si-coordenadas"
-      onSubmit={salvar}
+      onSubmit={(evento) => {
+        evento.preventDefault();
+        enviar("corrigir");
+      }}
       aria-label="Corrigir coordenadas"
     >
       <div className="mapa-si-coordenadas__topo">
@@ -183,34 +326,32 @@ export function EditorDeCoordenadas({
           </button>
         ) : null}
       </div>
-      <p className="ui-campo-dica">
-        Escolha um ponto para ajustar sua posição no mapa. Você pode digitar as
-        coordenadas ou arrastar o pin de prévia.
-      </p>
-      <Campo rotulo="Ponto do mapa">
-        <select
-          value={id}
-          disabled={salvando}
-          onChange={(e) => {
-            definirId(e.target.value);
-            definirMensagem("");
-          }}
-        >
-          <option value="">Escolha o ponto</option>
-          {pontos.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nome}
-              {p.localidade ? ` · ${p.localidade}` : ""}
-            </option>
-          ))}
-        </select>
-      </Campo>
+      <FilaDeCoordenadas
+        itens={fila.itens}
+        pendentes={fila.pendentes}
+        busca={busca}
+        soPendentes={soPendentes}
+        escolhido={id}
+        carregando={pendencias.carregando}
+        erro={pendencias.erro}
+        desabilitado={salvando}
+        aoBuscar={definirBusca}
+        aoAlternarPendentes={definirSoPendentes}
+        aoEscolher={(novo) => {
+          definirId(novo);
+          definirMensagem("");
+        }}
+      />
       {ponto ? (
         <>
-          <p className="ui-campo-dica">
-            Arraste o pin de prévia ou altere os campos. A posição atual só muda
-            ao confirmar.
-          </p>
+          <div className="mapa-si-coordenadas__escolhido">
+            <b>{ponto.nome}</b>
+            {pendente ? (
+              <Selo tom="pendente">Pendente</Selo>
+            ) : pendencia ? (
+              <Selo tom="aprovado">Conferido</Selo>
+            ) : null}
+          </div>
           <Campo rotulo="Latitude" obrigatorio>
             <input
               inputMode="decimal"
@@ -239,6 +380,14 @@ export function EditorDeCoordenadas({
               {formatarCoordenada(longitudeNumero)}
             </dd>
           </dl>
+          {pendente ? (
+            <SugestoesDoPonto
+              ponto={ponto}
+              pendencia={pendencia}
+              desabilitado={salvando}
+              aoUsar={usarSugestao}
+            />
+          ) : null}
           <Campo rotulo="Motivo e fonte da correção" obrigatorio>
             <textarea
               value={motivo}
@@ -253,9 +402,16 @@ export function EditorDeCoordenadas({
             </Aviso>
           ) : null}
           {mensagem ? <Aviso papel="status">{mensagem}</Aviso> : null}
-          {confirmando ? (
+          {confirmando === "corrigir" ? (
             <Aviso tom="warning">
               Confirme a nova posição para {ponto.nome}.
+            </Aviso>
+          ) : null}
+          {confirmando === "conferir" ? (
+            <Aviso tom="warning">
+              {mudou
+                ? `Confirme a nova posição e a conferência de ${ponto.nome}.`
+                : `Confirme que a posição atual de ${ponto.nome} está certa.`}
             </Aviso>
           ) : null}
           <div className="mapa-si-coordenadas__acoes">
@@ -263,22 +419,39 @@ export function EditorDeCoordenadas({
               className="btn"
               type="button"
               disabled={salvando || !mudou}
-              onClick={desfazer}
+              onClick={desfazerPrevia}
             >
               Desfazer prévia
             </button>
             <button
-              className="btn primary"
+              className={pendente ? "btn" : "btn primary"}
               type="submit"
               disabled={salvando || !mudou}
             >
-              {salvando
-                ? "Salvando…"
-                : confirmando
-                  ? "Confirmar correção"
-                  : "Salvar coordenada"}
+              {textoDoBotao(
+                "corrigir",
+                "Salvar coordenada",
+                "Confirmar correção",
+              )}
             </button>
+            {pendente ? (
+              <button
+                className="btn primary"
+                type="button"
+                disabled={salvando}
+                onClick={() => enviar("conferir")}
+              >
+                {textoDoBotao("conferir", "Conferido", "Confirmar conferência")}
+              </button>
+            ) : null}
           </div>
+          <HistoricoDoPonto
+            historico={historico.lista}
+            carregando={historico.carregando}
+            erro={historico.erro}
+            desabilitado={salvando}
+            aoDesfazer={desfazerAlteracao}
+          />
         </>
       ) : null}
     </form>
