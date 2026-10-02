@@ -24,8 +24,10 @@ Os roteiros dos tours ("Me mostra esta tela") e das trilhas ficam em `src/lib/ay
 seletores `data-tour="…"` das telas existem só para eles.
 
 O que a Aya diz em cada página (saudação, sugestões, botões de navegação) fica em
-`src/lib/aya-paginas.js`; o chamado ao suporte (`mailto:`), em `src/lib/chamado-da-aya.js`. As
-respostas vêm de `src/modules/aya-ai-client.js` (verbetes de `docs/aya/`, contexto da tela e IA
-por `/api/aya`). Testes: `tests/modulos/aya.test.js`, `tests/aya-paginas.test.js`,
+`src/lib/aya-paginas.js`; o chamado ao suporte (Gmail, com alternativa `mailto:`), em `src/lib/chamado-da-aya.js`. As
+respostas vêm de `src/lib/busca-da-aya.js`: base de `docs/aya/`, normalização, sinônimos e
+busca com tolerância a erros e preferência pela tela. `contexto.js` lê apenas dados já
+visíveis; não há endpoint de IA, modelo, serviço local ou túnel. Dúvidas oferecem até
+três perguntas em botões e chamado pelo Gmail. Testes: `tests/modulos/aya.test.js`, `tests/aya-paginas.test.js`,
 `tests/aya-respostas-chave.test.js`, `tests/chamado-da-aya.test.js`, `tests/aya-tours.test.js`,
 `tests/modulos/aya-tour.test.js` e `tests/modulos/aya-trilhas.test.js`.

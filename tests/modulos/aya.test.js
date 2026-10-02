@@ -112,7 +112,7 @@ describe("abrir e fechar", () => {
     await montar();
     await abrirPainel();
     expect(textoDe(".aya-aviso")).toBe(
-      "Solução experimental de IA. As informações podem conter imprecisões.",
+      "Respostas da base do MONITORA. Se precisar de ajuda, abra um chamado.",
     );
     expect($(".aya-aviso").getAttribute("role")).toBe("note");
     expect($("textarea").getAttribute("placeholder")).toBe("Pergunte à Aya…");
@@ -236,6 +236,31 @@ describe("conversa", () => {
 });
 
 describe("avaliação e chamado", () => {
+  it("na dúvida oferece perguntas clicáveis e Gmail em outra aba", async () => {
+    perguntar.mockResolvedValueOnce({
+      answer: "Não encontrei exatamente isso. Você quis dizer…?",
+      sugestoes: [
+        {
+          rotulo: "Prazo do recurso",
+          pergunta: "De onde vem o prazo do recurso?",
+        },
+      ],
+      oferecerChamado: true,
+    });
+    await montar();
+    await abrirPainel();
+    await digitar($("textarea"), "prazo");
+    await clicar(botao("Enviar pergunta"));
+    const principal = $(".aya-chamado__botao");
+    expect(principal.getAttribute("target")).toBe("_blank");
+    expect(principal.getAttribute("rel")).toContain("noopener");
+    expect($(".aya-chamado a[href^='mailto:']")).not.toBeNull();
+    await clicar(botao("Prazo do recurso"));
+    expect(perguntar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ question: "De onde vem o prazo do recurso?" }),
+    );
+  });
+
   it("'não ajudou' guarda a avaliação no navegador e mostra o cartão do chamado", async () => {
     await montar();
     await abrirPainel();
@@ -244,14 +269,16 @@ describe("avaliação e chamado", () => {
     await clicar(botao("Não ajudou"));
     const cartao = $(".aya-chamado");
     expect(cartao.textContent).toContain(
-      "Vou abrir o seu e-mail com a conversa preenchida.",
+      "Vou abrir o Gmail com a conversa preenchida.",
     );
     const link = cartao.querySelector("a");
     expect(link.textContent).toContain("Abrir chamado");
     const href = link.getAttribute("href");
-    expect(href.startsWith("mailto:suporte@agenciasus.org.br?subject=")).toBe(
-      true,
-    );
+    expect(
+      href.startsWith(
+        "https://mail.google.com/mail/?view=cm&fs=1&to=suporte%40agenciasus.org.br",
+      ),
+    ).toBe(true);
     expect(decodeURIComponent(href)).toContain(
       "MONITORA · Chamado · Recursos · SEDE",
     );

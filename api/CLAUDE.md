@@ -1,11 +1,10 @@
 # `api/` — funções serverless (Vercel)
 
-Quatro arquivos, cada um é um endpoint `/api/<nome>`:
+Três arquivos, cada um é um endpoint `/api/<nome>`:
 
-- `aya.js` — assistente AYA. Valida o usuário no Supabase, monta o prompt a partir de
-  `src/modules/aya-knowledge.js` (`buildAyaSystemPrompt`, `curatedAnswerForQuestion`,
-  `sanitizeAyaContext`) e encaminha ao bridge local do Ollama (`scripts/aya-local-bridge.mjs`), cujo
-  endereço vem da RPC `obter_bridge_aya`. Ver `docs/aya-ollama-local.md`.
+A Aya responde no navegador pela base de conhecimento (`src/lib/busca-da-aya.js`);
+o endpoint de IA e o bridge local foram retirados.
+
 - `funai-geodata.js` — proxy do GeoServer OWS da FUNAI (polígonos de terras indígenas).
 - `funai-wms.js` — proxy do WMS da FUNAI (camada `Funai:tis_poligonais`).
 - `anexos-do-edital.py` — Python (pdfplumber, `requirements.txt` na raiz): lê o PDF de anexos do

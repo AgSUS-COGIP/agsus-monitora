@@ -7,6 +7,7 @@
 
 export const VERBETES_AYA = Object.freeze([
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "SasiSUS",
     perguntas: [
       "sasisus",
@@ -19,6 +20,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.planalto.gov.br/ccivil_03/leis/l9836.htm",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "Lei Arouca",
     perguntas: ["lei arouca", "lei 9836", "lei 9.836"],
     resposta:
@@ -27,6 +29,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.planalto.gov.br/ccivil_03/leis/l9836.htm",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "Divisão de responsabilidades",
     perguntas: [
       "quem e responsavel pela saude indigena",
@@ -40,6 +43,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/atuacao/povos-indigenas/direitos-sociais/saude",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "SESAI",
     perguntas: ["sesai", "secretaria especial de saude indigena"],
     resposta:
@@ -48,6 +52,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "SIASI",
     perguntas: ["siasi", "sistema de informacao da atencao a saude indigena"],
     resposta:
@@ -57,6 +62,7 @@ export const VERBETES_AYA = Object.freeze([
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/sistemasdeinformacao.html",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "População indígena",
     perguntas: [
       "populacao indigena",
@@ -70,6 +76,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://educa.ibge.gov.br/criancas/brasil/2848-nosso-povo/22324-os-indigenas-no-censo-2022.html",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "Povos e línguas indígenas",
     perguntas: [
       "quantos povos indigenas",
@@ -84,6 +91,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/assuntos/noticias/2025/censo-2022-identifica-391-povos-e-295-linguas-indigenas-e-reforca-necessidade-de-atuacao-integrada-entre-os-entes-federados",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "Criação da Funai",
     perguntas: [
       "quando criou a funai",
@@ -98,6 +106,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/acesso-a-informacao/institucional/Institucional",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "Terra Indígena",
     perguntas: [
       "terra indigena",
@@ -112,6 +121,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
   },
   {
+    arquivo: "01-saude-indigena.md",
     titulo: "Indígenas em contexto urbano",
     perguntas: [
       "indigena na cidade",
@@ -125,6 +135,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/atuacao/povos-indigenas/direitos-sociais/saude",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "DSEI",
     perguntas: ["dsei", "distrito sanitario especial indigena", "o que e dsei"],
     resposta:
@@ -133,6 +144,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "Rede do SasiSUS em números",
     perguntas: [
       "quantos polos base",
@@ -147,6 +159,7 @@ export const VERBETES_AYA = Object.freeze([
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "Polo Base",
     perguntas: ["polo base", "polos base", "pb"],
     resposta:
@@ -156,6 +169,7 @@ export const VERBETES_AYA = Object.freeze([
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "UBSI",
     perguntas: ["ubsi", "unidade basica de saude indigena"],
     resposta:
@@ -165,6 +179,7 @@ export const VERBETES_AYA = Object.freeze([
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "CASAI",
     perguntas: ["casai", "casa de saude indigena"],
     resposta:
@@ -174,6 +189,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2017/prt1317_08_08_2017.html",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "EMSI",
     perguntas: [
       "emsi",
@@ -187,6 +203,7 @@ export const VERBETES_AYA = Object.freeze([
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "AIS e AISAN",
     perguntas: [
       "ais",
@@ -201,6 +218,7 @@ export const VERBETES_AYA = Object.freeze([
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "DSEI não é Terra Indígena",
     perguntas: [
       "diferenca entre dsei e terra indigena",
@@ -213,6 +231,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "Base geoespacial da Funai",
     perguntas: [],
     resposta: "",
@@ -221,6 +240,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
   },
   {
+    arquivo: "02-dsei-e-rede.md",
     titulo: "Plano Nacional de Saúde",
     perguntas: [],
     resposta: "",
@@ -228,6 +248,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "MONITORA",
     perguntas: ["monitora", "o que e o monitora", "monitora e sigla"],
     resposta:
@@ -236,6 +257,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "AgSUS",
     perguntas: ["agsus", "agencia brasileira de apoio a gestao do sus"],
     resposta:
@@ -245,6 +267,7 @@ export const VERBETES_AYA = Object.freeze([
       "http://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14621.htm",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "SUS",
     perguntas: ["sus", "sistema unico de saude"],
     resposta:
@@ -253,6 +276,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.planalto.gov.br/ccivil_03/leis/l8080.htm",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "Vaga ociosa",
     perguntas: ["vaga ociosa", "vagas ociosas", "ociosa", "ociosas"],
     resposta:
@@ -261,6 +285,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "Taxa de ociosidade",
     perguntas: ["taxa de ociosidade", "ociosidade", "percentual de ociosas"],
     resposta:
@@ -269,6 +294,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "Contratados",
     perguntas: ["contratados", "contratado"],
     resposta:
@@ -277,6 +303,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "Edital no MONITORA",
     perguntas: ["edital", "editais"],
     resposta:
@@ -285,6 +312,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "Cores e leitura da tabela",
     perguntas: [],
     resposta: "",
@@ -292,6 +320,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "34 DSEIs e 36 pontos no mapa",
     perguntas: [],
     resposta: "",
@@ -299,6 +328,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "03-monitora.md",
     titulo: "Comparação entre territórios",
     perguntas: [],
     resposta: "",
@@ -306,6 +336,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "04-dseis.md",
     titulo: "DSEI Alagoas e Sergipe",
     perguntas: [
       "dsei alagoas",
@@ -321,6 +352,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/saude/pt-br/composicao/sesai/planos-distritais-2024-2027/plano-distrital-alagoas-e-sergipe",
   },
   {
+    arquivo: "04-dseis.md",
     titulo: "Povo Kariri-Xocó",
     perguntas: ["kariri xoco", "kariri-xoco", "povo kariri"],
     resposta:
@@ -330,6 +362,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/saude/pt-br/composicao/sesai/planos-distritais-2024-2027/plano-distrital-alagoas-e-sergipe",
   },
   {
+    arquivo: "04-dseis.md",
     titulo: "Os 34 DSEIs",
     perguntas: [
       "quais sao os 34 dseis",
@@ -344,6 +377,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei",
   },
   {
+    arquivo: "04-dseis.md",
     titulo: "DSEI Vale do Javari",
     perguntas: ["dsei vale do javari", "vale do javari", "dsei javari"],
     resposta:
@@ -353,6 +387,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/saude/pt-br/composicao/sesai/planos-distritais-2024-2027/plano-distrital-vale-do-javari",
   },
   {
+    arquivo: "05-politica-e-controle-social.md",
     titulo: "PNASPI",
     perguntas: [
       "pnaspi",
@@ -366,6 +401,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/saude/pt-br/composicao/sesai/publicacoes/folder-pnaspi.pdf",
   },
   {
+    arquivo: "05-politica-e-controle-social.md",
     titulo: "Dever da União na saúde indígena",
     perguntas: [
       "quem custeia a saude indigena",
@@ -378,6 +414,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/saude/pt-br/composicao/sesai/publicacoes/folder-pnaspi.pdf",
   },
   {
+    arquivo: "05-politica-e-controle-social.md",
     titulo: "Diretrizes da PNASPI",
     perguntas: ["diretrizes da pnaspi", "portaria 70 2004"],
     resposta:
@@ -387,6 +424,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/saude/pt-br/composicao/sesai/publicacoes/folder-pnaspi.pdf",
   },
   {
+    arquivo: "05-politica-e-controle-social.md",
     titulo: "CONDISI",
     perguntas: ["condisi", "conselho distrital de saude indigena"],
     resposta:
@@ -396,6 +434,7 @@ export const VERBETES_AYA = Object.freeze([
       "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi/conselhos-distritais-de-saude-indigena-condisis",
   },
   {
+    arquivo: "05-politica-e-controle-social.md",
     titulo: "Conselho Local de Saúde Indígena",
     perguntas: ["clsi", "conselho local de saude indigena", "conselho local"],
     resposta:
@@ -404,6 +443,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
   },
   {
+    arquivo: "05-politica-e-controle-social.md",
     titulo: "Fórum de Presidentes dos CONDISI",
     perguntas: ["fpcondisi", "forum de presidentes", "forum dos condisi"],
     resposta:
@@ -412,6 +452,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
   },
   {
+    arquivo: "05-politica-e-controle-social.md",
     titulo: "As três instâncias de controle social",
     perguntas: [
       "instancias de controle social",
@@ -423,6 +464,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Assuntos gerais",
     perguntas: [
       "assuntos gerais",
@@ -435,6 +477,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "comportamento da Aya",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Cuidados gerais com plantas",
     perguntas: [
       "como cuidar de plantas",
@@ -447,6 +490,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "conhecimento geral",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Plantas e ingestão",
     perguntas: [
       "planta pode ser toxica",
@@ -459,6 +503,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "conhecimento geral",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Medicamentos",
     perguntas: [
       "o que e medicamento",
@@ -471,6 +516,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Uso seguro de medicamentos",
     perguntas: [
       "como usar remedio com seguranca",
@@ -483,6 +529,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Manutenção preventiva do carro",
     perguntas: [
       "como cuidar do carro",
@@ -495,6 +542,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "manual do veículo",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Segurança automotiva",
     perguntas: [
       "problema no freio do carro",
@@ -507,6 +555,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "manual do veículo",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Impedimento no futebol",
     perguntas: [
       "o que e impedimento no futebol",
@@ -519,6 +568,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.theifab.com/laws/latest/offside/",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Jogadores no futebol",
     perguntas: [
       "quantos jogadores tem um time de futebol",
@@ -531,6 +581,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "https://www.theifab.com/laws/latest/the-players/",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Futebol atual",
     perguntas: [
       "resultado de futebol de hoje",
@@ -544,6 +595,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "comportamento da Aya",
   },
   {
+    arquivo: "06-assuntos-gerais.md",
     titulo: "Fotossíntese",
     perguntas: ["o que e fotossintese", "como funciona a fotossintese"],
     resposta:
@@ -552,6 +604,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "conhecimento geral",
   },
   {
+    arquivo: "assistente-aya.md",
     titulo: "O que a Aya faz",
     perguntas: [
       "o que voce consegue fazer",
@@ -561,11 +614,12 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a aya",
     ],
     resposta:
-      "Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Também converso sobre saúde indígena com fontes oficiais. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.",
+      "Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Uso a base de conhecimento, sem IA local, máquina ou túnel. Reconheço sinônimos, perguntas sem acento e pequenos erros de digitação. Quando não tenho certeza, ofereço até três perguntas parecidas e a opção de abrir chamado; perguntas fora do MONITORA recebem sugestões do que posso explicar. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.",
     fato: "A interface do MONITORA não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.",
     fonte: "comportamento da Aya",
   },
   {
+    arquivo: "assistente-aya.md",
     titulo: "Dados e privacidade da Aya",
     perguntas: [
       "voce consulta meus dados",
@@ -579,6 +633,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/modules/aya-memoria.js; src/modulos/aya/",
   },
   {
+    arquivo: "assistente-aya.md",
     titulo: "Alterações pela Aya",
     perguntas: [
       "voce pode alterar algo por mim",
@@ -591,6 +646,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "comportamento da Aya",
   },
   {
+    arquivo: "assistente-aya.md",
     titulo: "Abrir chamado ao suporte",
     perguntas: [
       "como abrir um chamado",
@@ -600,11 +656,12 @@ export const VERBETES_AYA = Object.freeze([
       "chamado ao suporte",
     ],
     resposta:
-      'Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o seu e-mail já preenchido para o suporte, com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
+      'Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o Gmail no navegador, em uma nova aba, já preenchido para o suporte (há também um link para usar o programa de e-mail), com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
     fato: "",
     fonte: "src/lib/chamado-da-aya.js; src/modulos/aya/",
   },
   {
+    arquivo: "assistente-aya.md",
     titulo: "Tour guiado da tela",
     perguntas: [
       "me mostra esta tela",
@@ -620,6 +677,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/modulos/aya/tour/; src/lib/aya-tours.js",
   },
   {
+    arquivo: "assistente-aya.md",
     titulo: "Trilhas da Aya",
     perguntas: [
       "trilhas",
@@ -636,6 +694,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/modulos/aya/tour/; src/lib/aya-tours.js",
   },
   {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Tela da Lista de aprovados",
     perguntas: [
       "tela da lista de aprovados",
@@ -653,6 +712,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "approved",
   },
   {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Lista inativa",
     perguntas: [
       "o que acontece com uma lista inativa",
@@ -667,6 +727,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/lista-aprovados-rules.js; src/lib/access-roles.js",
   },
   {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Importar a lista",
     perguntas: [
       "importar lista de aprovados",
@@ -680,6 +741,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/aprovados-import.js; src/lib/access-roles.js",
   },
   {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Modelo de convocação",
     perguntas: [
       "como funciona o modelo de convocacao",
@@ -695,6 +757,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/lista-convocacao-rules.js; src/lib/modelo-de-convocacao.js; src/lib/configuracao-de-convocacao.js",
   },
   {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Candidato sub judice",
     perguntas: [
       "como funciona o candidato sub judice",
@@ -709,6 +772,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/access-roles.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20261001150000_sub_judice_alteracao.sql",
   },
   {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Anexos do candidato",
     perguntas: [
       "quem pode anexar documentos ao candidato",
@@ -723,6 +787,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20260928235000_anexos_so_admin.sql",
   },
   {
+    arquivo: "regras-da-selecao.md",
     titulo: "Tela de Seleção",
     perguntas: [
       "tela de selecao",
@@ -740,6 +805,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "selecao",
   },
   {
+    arquivo: "regras-da-selecao.md",
     titulo: "Atualização da Seleção",
     perguntas: [
       "quando a selecao e atualizada",
@@ -754,6 +820,7 @@ export const VERBETES_AYA = Object.freeze([
       ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql",
   },
   {
+    arquivo: "regras-da-selecao.md",
     titulo: "Convocados para entrevista",
     perguntas: [
       "convocados entrevista",
@@ -768,6 +835,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao-do-painel.js",
   },
   {
+    arquivo: "regras-da-selecao.md",
     titulo: "Aprovados e contratados na Seleção",
     perguntas: [
       "aprovados na selecao",
@@ -781,6 +849,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql",
   },
   {
+    arquivo: "regras-da-selecao.md",
     titulo: "Taxa de contratação",
     perguntas: [
       "taxa de contratacao",
@@ -794,6 +863,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/selecao-do-painel.js",
   },
   {
+    arquivo: "regras-da-selecao.md",
     titulo: "Eliminados antes da análise",
     perguntas: [
       "eliminados antes da analise",
@@ -806,6 +876,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/selecao-do-painel.js",
   },
   {
+    arquivo: "regras-da-selecao.md",
     titulo: "Alertas da coluna Observação",
     perguntas: [
       "alertas identificados no recorte",
@@ -818,6 +889,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/selecao-do-painel.js",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Visão geral",
     perguntas: [
       "visao geral",
@@ -834,6 +906,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Indicadores da Visão geral",
     perguntas: [
       "indicadores da visao geral",
@@ -847,6 +920,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Filtros da Visão geral",
     perguntas: [
       "filtros da visao geral",
@@ -862,6 +936,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Mapa e filtros da Visão geral",
     perguntas: [
       "dsei aberto no mapa",
@@ -874,6 +949,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Blocos da Visão geral",
     perguntas: [
       "resumo por etapa",
@@ -887,6 +963,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Tabela de processos da Visão geral",
     perguntas: [
       "tabela de processos da visao geral",
@@ -903,6 +980,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "De onde vêm os KPIs da Visão geral",
     perguntas: [
       "de onde vem os kpis da visao geral",
@@ -919,8 +997,11 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930235800_kpis_do_edital_pela_selecao.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; src/lib/visao-geral.js",
   },
   {
+    arquivo: "regras-das-analises.md",
     titulo: "Tela de Análises curriculares",
     perguntas: [
+      "analises curriculares",
+      "analise curricular",
       "tela de analises curriculares",
       "tela de analises",
       "aba analises curriculares",
@@ -935,6 +1016,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "analises",
   },
   {
+    arquivo: "regras-das-analises.md",
     titulo: "Escopo Ativo, Inativo e Todos",
     perguntas: [
       "o que e o escopo ativo, inativo e todos",
@@ -950,6 +1032,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/analises-curriculares.js; supabase/migrations/20260929150000_analises_lista_enxuta.sql; supabase/migrations/20260930234000_cache_sem_atropelo.sql",
   },
   {
+    arquivo: "regras-das-analises.md",
     titulo: "Pendências das análises",
     perguntas: [
       "quais sao as pendencias das analises curriculares",
@@ -965,6 +1048,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/analises-curriculares.js; src/lib/data-de-analise.js",
   },
   {
+    arquivo: "regras-das-analises.md",
     titulo: "Atualização das análises",
     perguntas: [
       "como as analises curriculares sao atualizadas",
@@ -980,6 +1064,7 @@ export const VERBETES_AYA = Object.freeze([
       "apps-script/LEIA-ME.md; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
   },
   {
+    arquivo: "regras-das-areas.md",
     titulo: "Áreas do sistema",
     perguntas: [
       "areas do sistema",
@@ -997,6 +1082,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/menu-lateral.js; supabase/migrations/20260925170000_areas_do_sistema.sql",
   },
   {
+    arquivo: "regras-das-areas.md",
     titulo: "Trocar de área",
     perguntas: [
       "trocar de area",
@@ -1013,6 +1099,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/componentes/barra-lateral/menu-de-areas.jsx; src/componentes/dados-do-monitoramento.js; supabase/migrations/20260925180000_areas_do_usuario.sql",
   },
   {
+    arquivo: "regras-das-areas.md",
     titulo: "Ordem do menu",
     perguntas: [
       "ordem do menu",
@@ -1028,6 +1115,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; src/lib/menu-lateral.js",
   },
   {
+    arquivo: "regras-das-areas.md",
     titulo: "Recorte por área no banco",
     perguntas: [
       "recorte por area",
@@ -1042,6 +1130,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260925181000_recorta_dados_por_area.sql; supabase/migrations/20260925190000_gravacao_e_matriz_por_area.sql",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Página inicial nas Configurações",
     perguntas: [
       "configuracao da pagina inicial",
@@ -1058,6 +1147,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Aviso global",
     perguntas: [
       "aviso global",
@@ -1073,6 +1163,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Textos dos filtros e rótulos dos indicadores",
     perguntas: [
       "texto do botao de filtros",
@@ -1087,6 +1178,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Tela de acesso nas Configurações",
     perguntas: [
       "configurar tela de acesso",
@@ -1104,6 +1196,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Login com Google desligado",
     perguntas: [
       "desligar login google",
@@ -1118,6 +1211,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Domínio sugerido no login Google",
     perguntas: ["dominio sugerido", "dica de dominio", "dominio do google"],
     resposta:
@@ -1126,6 +1220,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Domínios permitidos",
     perguntas: [
       "dominios permitidos",
@@ -1140,6 +1235,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Arte de fundo da tela de acesso",
     perguntas: [
       "arte de fundo",
@@ -1155,6 +1251,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Logo da tela de acesso",
     perguntas: [
       "logo no acesso",
@@ -1167,6 +1264,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Cor do painel e texto sobre o painel",
     perguntas: [
       "cor do painel de acesso",
@@ -1182,6 +1280,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Logo e cor da barra lateral",
     perguntas: [
       "logo da barra lateral",
@@ -1196,6 +1295,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Quem abre as Configurações",
     perguntas: [
       "para que serve configuracoes",
@@ -1210,6 +1310,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/access-roles.js; src/modules/config-secoes.js",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Publicar uma alteração",
     perguntas: [
       "como publicar uma alteracao nas configuracoes",
@@ -1225,6 +1326,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Restaurar uma versão publicada",
     perguntas: [
       "como restaurar uma versao publicada",
@@ -1241,6 +1343,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:operacao",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Seção Marca",
     perguntas: [
       "o que a secao marca define",
@@ -1259,6 +1362,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:marca",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Seção Aparência",
     perguntas: [
       "secao aparencia",
@@ -1274,6 +1378,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:aparencia",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Painéis externos",
     perguntas: [
       "o que sao os paineis externos",
@@ -1291,6 +1396,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:recursos",
   },
   {
+    arquivo: "regras-das-configuracoes.md",
     titulo: "Seção Operação",
     perguntas: [
       "secao operacao",
@@ -1309,6 +1415,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:operacao",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Tela de Entrevistas",
     perguntas: [
       "tela de entrevistas",
@@ -1325,6 +1432,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "entrevistas",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Janela da entrevista",
     perguntas: [
       "como funciona a janela da entrevista",
@@ -1339,6 +1447,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "supabase/migrations/20260930235000_janela_da_entrevista.sql",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Edital que não aparece em Conduzir entrevistas",
     perguntas: [
       "por que um edital nao aparece em conduzir entrevistas",
@@ -1355,6 +1464,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "entrevistas",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Liberar edital fora da janela",
     perguntas: [
       "como liberar um edital fora da janela",
@@ -1370,6 +1480,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930235000_janela_da_entrevista.sql; src/modulos/entrevistas/conducao.jsx",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Roteiros e versões",
     perguntas: [
       "como funcionam as versoes dos roteiros",
@@ -1385,6 +1496,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Escalas e aprovação na entrevista",
     perguntas: [
       "escala do roteiro",
@@ -1402,6 +1514,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Banca da entrevista",
     perguntas: [
       "banca da entrevista",
@@ -1418,6 +1531,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/conducao-de-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Convocação para a entrevista",
     perguntas: [
       "como funciona a regra de convocacao da entrevista",
@@ -1435,6 +1549,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/conducao-de-entrevista.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Ficha de notas",
     perguntas: [
       "ficha de notas",
@@ -1450,6 +1565,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/modulos/entrevistas/ficha.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/conducao-de-entrevista.js",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Resultados das entrevistas",
     perguntas: [
       "resultados das entrevistas",
@@ -1465,6 +1581,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/modulos/entrevistas/paineis.jsx; src/lib/entrevistas-do-painel.js; supabase/migrations/20260929235000_entrevistas.sql",
   },
   {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Carga das entrevistas",
     perguntas: [
       "quando as entrevistas sao atualizadas",
@@ -1479,6 +1596,7 @@ export const VERBETES_AYA = Object.freeze([
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
   },
   {
+    arquivo: "regras-do-cronograma.md",
     titulo: "Tela de Cronograma",
     perguntas: [
       "tela de cronograma",
@@ -1497,6 +1615,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "calendario",
   },
   {
+    arquivo: "regras-do-cronograma.md",
     titulo: "Quem altera o cronograma",
     perguntas: [
       "quem pode alterar as etapas do cronograma",
@@ -1512,6 +1631,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "nucleo",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Como usar o mapa da Saúde Indígena",
     perguntas: [
       "como usar o mapa",
@@ -1526,6 +1646,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Bolhas dos DSEIs no mapa",
     perguntas: [
       "bolha do mapa",
@@ -1541,6 +1662,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Botão Calor do mapa",
     perguntas: [
       "botao calor",
@@ -1554,6 +1676,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Territórios por vagas",
     perguntas: [
       "territorios por vagas",
@@ -1568,6 +1691,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Duas bolhas no mesmo lugar do mapa",
     perguntas: [
       "bolhas sobrepostas",
@@ -1581,6 +1705,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "CASAI Nacional no mapa",
     perguntas: [
       "casai nacional no mapa",
@@ -1593,6 +1718,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Formas dos marcadores no mapa do DSEI",
     perguntas: [
       "estrela no mapa",
@@ -1608,6 +1734,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Vínculo fora da área do DSEI",
     perguntas: [
       "vinculo fora da area",
@@ -1621,6 +1748,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Polos base e pontos no mapa",
     perguntas: [
       "polos base e pontos no mapa",
@@ -1634,6 +1762,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "O que o popup de uma unidade mostra",
     perguntas: [
       "popup da unidade",
@@ -1651,6 +1780,7 @@ export const VERBETES_AYA = Object.freeze([
       "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Terras Indígenas no mapa",
     perguntas: [
       "terras indigenas no mapa",
@@ -1666,6 +1796,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Tela cheia e mapa no celular",
     perguntas: [
       "mapa em tela cheia",
@@ -1679,6 +1810,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "interface do MONITORA",
   },
   {
+    arquivo: "regras-do-sistema.md",
     titulo: "Pessoas online",
     perguntas: [
       "o que mostra pessoas online",
@@ -1692,6 +1824,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/online-presence.js; src/modules/legacy-app.js",
   },
   {
+    arquivo: "regras-do-sistema.md",
     titulo: "Atualização do sistema",
     perguntas: [
       "como funciona a atualizacao do sistema",
@@ -1706,6 +1839,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/modules/pwa-lifecycle.js; src/modules/legacy-app.js (navigate)",
   },
   {
+    arquivo: "regras-do-sistema.md",
     titulo: "Busca global",
     perguntas: [
       "busca global",
@@ -1720,6 +1854,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/busca-global.js; src/componentes/busca-global/busca-global.jsx; src/lib/responsavel-do-edital.js",
   },
   {
+    arquivo: "regras-do-status-das-atualizacoes.md",
     titulo: "Seção Status das atualizações",
     perguntas: [
       "o que e o status das atualizacoes",
@@ -1736,6 +1871,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:cargas",
   },
   {
+    arquivo: "regras-do-status-das-atualizacoes.md",
     titulo: "Horários das atualizações",
     perguntas: [
       "quando cada atualizacao de dados roda",
@@ -1751,6 +1887,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/saude-das-cargas.js; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Seção Acessos",
     perguntas: [
       "secao acessos",
@@ -1768,6 +1905,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acessos",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Como dar acesso",
     perguntas: [
       "como dar acesso a alguem",
@@ -1787,6 +1925,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acessos",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Grupos de permissões",
     perguntas: [
       "o que sao os grupos de permissoes",
@@ -1804,6 +1943,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/componentes/acessos/gaveta-do-usuario.jsx",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Coordenações",
     perguntas: [
       "o que e uma coordenacao nos acessos",
@@ -1819,6 +1959,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260929121100_coordenacoes.sql; src/lib/teto-de-acessos.js; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Como a pessoa vê",
     perguntas: [
       "como a pessoa ve",
@@ -1831,6 +1972,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/ver-como.js; src/componentes/acessos/gaveta-do-usuario.jsx",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Pedidos de acesso",
     perguntas: [
       "como funcionam os pedidos de acesso",
@@ -1847,6 +1989,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/solicitacao-de-acesso.js; src/componentes/acessos/solicitacoes.jsx",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Contas desativadas",
     perguntas: [
       "como reativar uma conta desativada",
@@ -1864,6 +2007,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acessos",
   },
   {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Trava de área e conta de setor",
     perguntas: [
       "trava de area",
@@ -1879,6 +2023,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930130000_acessos_trava_de_area_e_convite.sql; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Tela de Editais",
     perguntas: [
       "tela de editais",
@@ -1896,6 +2041,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "nucleo",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Status e etapa calculados pelo cronograma",
     perguntas: [
       "como o status do edital e calculado",
@@ -1911,6 +2057,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/cronograma-do-edital.js; src/lib/editais-do-nucleo.js",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Status excepcional",
     perguntas: [
       "status excepcional",
@@ -1925,6 +2072,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/cronograma-do-edital.js",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Validações do cronograma",
     perguntas: [
       "validacoes do cronograma",
@@ -1939,6 +2087,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/cronograma-do-edital.js; src/componentes/nucleo/modal-do-edital.jsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Copiar cronograma e preencher em lote",
     perguntas: [
       "copiar cronograma",
@@ -1953,6 +2102,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/editais-do-nucleo.js; src/lib/cronograma-do-edital.js",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Anexos do edital em PDF",
     perguntas: [
       "anexos do edital",
@@ -1971,6 +2121,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "nucleo",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Quadro de vagas do edital",
     perguntas: [
       "quadro de vagas",
@@ -1985,6 +2136,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql; supabase/migrations/20260930235950_quadro_ignora_parenteses.sql",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Vagas imediatas",
     perguntas: [
       "vagas imediatas",
@@ -1999,6 +2151,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql (obter_entrevistas_do_edital); src/lib/conducao-de-entrevista.js",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Mover edital de área",
     perguntas: [
       "como mover um edital de area",
@@ -2013,6 +2166,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/componentes/nucleo/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js",
   },
   {
+    arquivo: "regras-dos-editais.md",
     titulo: "Campos calculados do edital",
     perguntas: [
       "campos calculados do edital",
@@ -2025,6 +2179,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/componentes/nucleo/modal-do-edital.jsx",
   },
   {
+    arquivo: "regras-dos-mapas.md",
     titulo: "Mapa de Projetos",
     perguntas: [
       "de onde vem os pontos do mapa de projetos",
@@ -2040,6 +2195,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral-da-area.js; src/modulos/mapa-de-projetos/mapa-de-projetos.jsx",
   },
   {
+    arquivo: "regras-dos-mapas.md",
     titulo: "Como usar o mapa de Projetos",
     perguntas: [
       "como uso o mapa de projetos",
@@ -2055,6 +2211,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx; src/modulos/mapa-de-projetos/lista.jsx; src/lib/visao-geral-da-area.js",
   },
   {
+    arquivo: "regras-dos-mapas.md",
     titulo: "Mapa da Saúde Indígena",
     perguntas: [
       "como uso o mapa dos dseis",
@@ -2067,6 +2224,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/visao-geral-da-area.js; docs/aya/regras-da-visao-geral.md",
   },
   {
+    arquivo: "regras-dos-mapas.md",
     titulo: "Coordenadas do mapa",
     perguntas: [
       "de onde vem as coordenadas do mapa",
@@ -2082,6 +2240,7 @@ export const VERBETES_AYA = Object.freeze([
       "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/pontos-so-na-planilha-de-lotacoes.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js",
   },
   {
+    arquivo: "regras-dos-modulos-e-abas.md",
     titulo: "Seção Módulos e abas",
     perguntas: [
       "secao modulos e abas",
@@ -2097,6 +2256,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:modulos",
   },
   {
+    arquivo: "regras-dos-modulos-e-abas.md",
     titulo: "Manutenção",
     perguntas: [
       "o que acontece quando uma aba fica em manutencao",
@@ -2113,6 +2273,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/situacao-dos-modulos.js; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
   },
   {
+    arquivo: "regras-dos-modulos-e-abas.md",
     titulo: "Área ou aba desativada",
     perguntas: [
       "o que acontece quando uma area e desativada",
@@ -2127,6 +2288,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20260930140000_modulos_e_manutencao.sql; src/lib/menu-lateral.js",
   },
   {
+    arquivo: "regras-dos-modulos-e-abas.md",
     titulo: "Selo BETA",
     perguntas: ["o que e o selo beta", "selo beta", "aba beta", "beta"],
     resposta:
@@ -2135,6 +2297,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/menu-lateral.js; src/lib/modulos-e-abas.js",
   },
   {
+    arquivo: "regras-dos-modulos-e-abas.md",
     titulo: "Comemorações",
     perguntas: [
       "comemoracoes",
@@ -2149,6 +2312,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/comemoracao.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Tela de Recursos",
     perguntas: [
       "tela de recursos",
@@ -2166,6 +2330,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "recursos",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Fluxo do parecer jurídico",
     perguntas: [
       "parecer juridico",
@@ -2183,6 +2348,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.js",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Quem pode decidir um recurso",
     perguntas: [
       "quem pode decidir um recurso",
@@ -2203,6 +2369,7 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acessos",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Aguardando parecer",
     perguntas: [
       "aguardando parecer",
@@ -2216,6 +2383,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Deferido parcialmente",
     perguntas: [
       "deferido parcialmente",
@@ -2228,6 +2396,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Devolvido para ajuste",
     perguntas: [
       "devolvido para ajuste",
@@ -2240,6 +2409,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Reabrir a decisão",
     perguntas: [
       "reabrir decisão",
@@ -2252,6 +2422,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Resposta ao candidato e parecer",
     perguntas: [
       "aprovar resposta do recurso",
@@ -2268,6 +2439,7 @@ export const VERBETES_AYA = Object.freeze([
       "supabase/migrations/20261001170000_recursos_parecer_juridico.sql (transicionar_resposta_recurso, marcar_etapa_recurso)",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Prazo do recurso",
     perguntas: [
       "de onde vem o prazo do recurso",
@@ -2281,6 +2453,7 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/prazo-do-recurso.js; src/lib/recursos-dos-candidatos.js",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Indicadores da aba Recursos",
     perguntas: [
       "indicadores dos recursos",
@@ -2297,6 +2470,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/modulos/recursos/paineis.jsx; src/lib/recursos-dos-candidatos.js",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Pendências da aba Recursos",
     perguntas: [
       "pendências dos recursos",
@@ -2312,6 +2486,7 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/recursos-dos-candidatos.js; supabase/migrations/20260929120000_recursos.sql",
   },
   {
+    arquivo: "regras-dos-recursos.md",
     titulo: "Anexos e modelos de resposta",
     perguntas: [
       "anexos do recurso",

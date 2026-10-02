@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { collectAyaPageContext } from "../src/modulos/aya/contexto.js";
 import {
-  ayaFailureMessage,
-  collectAyaPageContext,
   contextualAyaAnswer,
   resolverReferencia,
-} from "../src/modules/aya-ai-client.js";
+} from "../src/lib/contexto-da-aya.js";
 
 describe("contexto da tela para a Aya", () => {
   beforeEach(() => {
@@ -82,81 +81,6 @@ describe("contexto da tela para a Aya", () => {
 
     expect(answer).toContain("2 DSEIs");
     expect(answer).toContain("filtros ativos");
-  });
-});
-
-describe("mensagens de falha da Aya", () => {
-  it("distingue cada causa de indisponibilidade", () => {
-    expect(ayaFailureMessage("local_ai_not_configured")).toContain(
-      "AYA_LOCAL_BRIDGE_URL",
-    );
-    expect(ayaFailureMessage("local_ai_unavailable")).toContain("túnel");
-    // Sem número fixo: a mensagem não deve repetir AI_TIMEOUT_MS, senão as duas
-    // divergem no primeiro ajuste de limite.
-    expect(ayaFailureMessage("timeout")).toContain("cancelada pelo navegador");
-    expect(ayaFailureMessage("timeout")).not.toMatch(/d+ segundos/);
-    expect(ayaFailureMessage("http_404")).toContain("/api/aya");
-    expect(ayaFailureMessage("sessao_expirada")).toContain("sessão expirou");
-  });
-
-  it("cai numa mensagem genérica para causa desconhecida", () => {
-    expect(ayaFailureMessage("causa_nova")).toBe(
-      "A IA da Aya está temporariamente indisponível.",
-    );
-    expect(ayaFailureMessage()).toBe(
-      "A IA da Aya está temporariamente indisponível.",
-    );
-  });
-});
-
-describe("falha de autenticação do servidor", () => {
-  it("separa configuração do servidor de sessão do usuário", () => {
-    expect(ayaFailureMessage("auth_not_configured")).toContain(
-      "configuração do ambiente",
-    );
-    expect(ayaFailureMessage("auth_not_configured")).toContain(
-      "entrar novamente não resolve",
-    );
-    expect(ayaFailureMessage("unauthorized")).toContain(
-      "Entre novamente no MONITORA",
-    );
-  });
-});
-
-describe("máquina que hospeda a IA fora do ar", () => {
-  it("distingue serviço não subiu de túnel quebrado", () => {
-    expect(ayaFailureMessage("local_ai_offline")).toContain("sem dar sinal");
-    expect(ayaFailureMessage("local_ai_offline")).toContain("reiniciado");
-    expect(ayaFailureMessage("local_ai_unavailable")).toContain("túnel");
-  });
-});
-
-describe("detalhe técnico da falha", () => {
-  it("acrescenta a razão informada pelo servidor", () => {
-    const msg = ayaFailureMessage("unauthorized", "token is expired");
-    expect(msg).toContain("Entre novamente no MONITORA");
-    expect(msg).toContain("Detalhe técnico: token is expired");
-  });
-
-  it("não inventa nota quando o servidor não mandou razão", () => {
-    expect(ayaFailureMessage("unauthorized")).not.toContain("Detalhe técnico");
-    expect(ayaFailureMessage("unauthorized", "   ")).not.toContain(
-      "Detalhe técnico",
-    );
-  });
-
-  it("trunca detalhe longo em vez de despejar na tela", () => {
-    const msg = ayaFailureMessage("unauthorized", "x".repeat(500));
-    expect(msg.length).toBeLessThan(400);
-  });
-});
-
-describe("chave do bridge divergente", () => {
-  it("não culpa a sessão do usuário por erro de configuração", () => {
-    const msg = ayaFailureMessage("local_ai_key_mismatch");
-    expect(msg).toContain("AYA_LOCAL_BRIDGE_KEY");
-    expect(msg).toContain("não da sua conta");
-    expect(msg).not.toContain("Entre novamente no MONITORA.");
   });
 });
 
