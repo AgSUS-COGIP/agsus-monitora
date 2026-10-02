@@ -171,6 +171,12 @@
   animation: aya-entra var(--duration-base) var(--ease-standard);
 }
 
+/* A regra dos diálogos no celular ([role="dialog"] { align-items: flex-end
+   !important }, até 900px) encolhia o cabeçalho e o campo da Aya. */
+.aya-painel[role="dialog"] {
+  align-items: stretch !important;
+}
+
 @keyframes aya-entra {
   from {
     opacity: 0;
