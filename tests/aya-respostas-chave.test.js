@@ -33,7 +33,7 @@ describe("respostas sobre as regras do sistema", () => {
 
   it("de onde vêm os KPIs da Visão geral", () => {
     const texto = resposta("De onde vêm os KPIs da Visão geral?");
-    expect(texto).toContain("7h de Brasília");
+    expect(texto).toContain("10h de Brasília");
     expect(texto).toContain("Seleção");
     expect(texto).toContain("cadastro do edital");
   });
