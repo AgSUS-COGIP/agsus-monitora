@@ -9,13 +9,13 @@
   `dados-do-monitoramento.js` (loadData), recortadas pela área atual. Nada é
   pedido ao banco aqui.
 
-  O MAPA CONTINUA NO LEGADO (Etapa 5, parte 2). A conversa com ele:
-  - o legado liga o mapa (`ligarMapa`): a chave do DSEI de cada linha
-    (`dseiKey`), sair do território e "voltar ao Brasil" ao limpar tudo;
-  - o legado empurra o DSEI aberto (`definirDsei`, a cada `applyFilters` do
-    mapa) e o termo que um clique numa CASAI procura (`definirBusca`);
-  - o legado assina e lê `obter().filtradas` (as bolhas e a lista dos
-    territórios) e `obter().temRecorte`.
+  O mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/) lê daqui: as
+  linhas recortadas (`filtradas`), `temRecorte`, o DSEI aberto (`dsei`) e
+  os dados do mapa (`mapa.lmap`, `mapa.redeCnes`), que o legado carrega
+  (`loadMapaConfig`, com a cópia da sessão) e publica em
+  `definirDadosDoMapa`. O DSEI de cada linha é `chaveDoDsei(linha.unidade)`.
+  O mapa pede `definirDsei` (bolha, ranking), `tirarDsei` (trilho
+  "Brasil") e `definirBusca` (CASAI nacional).
 
   Guardado no navegador, como antes: os filtros (`agsus_monitora_filters_v1`)
   e as colunas visíveis da tabela (`agsus_visible_cols_v1`).
@@ -25,6 +25,7 @@ import {
   linhasDaArea,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.js";
+import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
 import {
   alternarColuna,
   camposAtivos,
@@ -100,12 +101,12 @@ export function criarEstadoDaVisaoGeral({
 } = {}) {
   const ouvintes = new Set();
   let aviso = (mensagem) => console.info(mensagem);
-  let mapa = { chaveDsei: null, sairDoTerritorio: null, aoLimpar: null };
 
   let proprio = {
     filtros: normalizarFiltros(lerGuardado(armazenamento, CHAVE_DOS_FILTROS)),
     busca: "",
     dsei: { chave: "", nome: "" },
+    mapa: { lmap: null, redeCnes: null },
     ordenacao: { campo: "", direcao: "" },
     colunas: normalizarColunas(lerGuardado(armazenamento, CHAVE_DAS_COLUNAS)),
     resumo: null,
@@ -123,7 +124,7 @@ export function criarEstadoDaVisaoGeral({
       filtros: proprio.filtros,
       busca: proprio.busca,
       dsei: proprio.dsei.chave,
-      chaveDsei: mapa.chaveDsei,
+      chaveDsei: (linha) => chaveDoDsei(linha?.unidade),
       ordenacao: proprio.ordenacao,
     });
     const quantosFiltros = camposAtivos(proprio.filtros);
@@ -176,7 +177,7 @@ export function criarEstadoDaVisaoGeral({
 
   /*
     Os dados do legado mudaram (carga, recarga ou troca de área). Na troca de
-    área o DSEI aberto sai (o legado volta o mapa ao Brasil); filtros sem opção
+    área o DSEI aberto sai (o mapa volta ao Brasil); filtros sem opção
     na área nova são podados — só com os dados já carregados, para não apagar
     os guardados antes da primeira carga.
   */
@@ -256,8 +257,8 @@ export function criarEstadoDaVisaoGeral({
   }
 
   /*
-    "Limpar tudo": zera filtros, busca e o DSEI e volta o mapa ao Brasil (o
-    legado avisa "Filtros limpos."). É o único caminho que apaga o recorte.
+    "Limpar tudo": zera filtros, busca e o DSEI (o mapa volta ao Brasil). É o
+    único caminho que apaga o recorte.
   */
   function limparTudo() {
     publicar({
@@ -265,19 +266,17 @@ export function criarEstadoDaVisaoGeral({
       busca: "",
       dsei: { chave: "", nome: "" },
     });
-    if (mapa.aoLimpar) mapa.aoLimpar();
-    else aviso("Filtros limpos.");
+    aviso("Filtros limpos.");
   }
 
-  /* O chip do DSEI: sai do território (o mapa volta ao Brasil), filtros ficam. */
+  /* O chip do DSEI e o trilho "Brasil" do mapa: sai do território, filtros ficam. */
   function tirarDsei() {
-    if (mapa.sairDoTerritorio) mapa.sairDoTerritorio();
-    else publicar({ dsei: { chave: "", nome: "" } });
+    publicar({ dsei: { chave: "", nome: "" } });
   }
 
   /*
     Busca global (Ctrl+K): a linha escolhida fica à vista — filtros trocados
-    pela unidade e pelo edital dela, sem busca, e a linha em destaque.
+    pela unidade e pelo edital dela, sem busca nem DSEI, e a linha em destaque.
   */
   function localizar(linha) {
     if (!linha) return;
@@ -287,6 +286,7 @@ export function criarEstadoDaVisaoGeral({
     publicar({
       filtros,
       busca: "",
+      dsei: { chave: "", nome: "" },
       destaque: { id: String(linha.id), vez: agora() },
     });
   }
@@ -300,11 +300,6 @@ export function criarEstadoDaVisaoGeral({
     definirAviso(funcao) {
       if (typeof funcao === "function") aviso = funcao;
     },
-    /* O legado liga o mapa uma vez (ver o comentário do topo). */
-    ligarMapa(ligacoes = {}) {
-      mapa = { ...mapa, ...ligacoes };
-      avisarOuvintes();
-    },
     definirFiltro,
     alternarFiltroUnico,
     alternarStatus,
@@ -315,9 +310,12 @@ export function criarEstadoDaVisaoGeral({
     /* "Voltar à linha" (detalhes do processo): rola até ela e destaca. */
     destacar: (id) => publicar({ destaque: { id: String(id), vez: agora() } }),
     definirBusca: (busca) => publicar({ busca: String(busca ?? "") }),
-    /* O DSEI aberto no mapa. Sempre avisa: o legado redesenha a partir daqui. */
+    /* O DSEI aberto no mapa (chave do `lmap` ou nome; guarda a chave normalizada). */
     definirDsei: (chave, nome = "") =>
-      publicar({ dsei: { chave: txt(chave), nome: txt(nome) } }),
+      publicar({ dsei: { chave: chaveDoDsei(chave), nome: txt(nome) } }),
+    /* `lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG (o legado carrega). */
+    definirDadosDoMapa: ({ lmap = null, redeCnes = null } = {}) =>
+      publicar({ mapa: { lmap, redeCnes } }),
     definirResumoDoServidor: (resumo) => publicar({ resumo: resumo || null }),
     ordenarPor: (campo) =>
       publicar({ ordenacao: proximaOrdenacao(proprio.ordenacao, campo) }),
@@ -338,7 +336,7 @@ export function criarEstadoDaVisaoGeral({
 }
 
 /*
-  A instância da página: o legado (mapa, carga, busca global, PDF) e o React
+  A instância da página: o legado (carga, busca global, PDF) e o React
   (src/modulos/visao-geral/) falam com ela.
 */
 export const estadoDaVisaoGeral = criarEstadoDaVisaoGeral();

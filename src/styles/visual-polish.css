@@ -9,22 +9,8 @@
 
 /* Os KPIs e a grade de baixo da Visão geral são de health-reference-kpis.css e app.css. */
 
-.visual-polish-ready #map {
-  width: 100%;
-  height: clamp(430px, 50vh, 590px) !important;
-  min-height: 430px !important;
-  background: #b7dce7;
-}
-
-.visual-polish-ready #map .leaflet-container,
 .visual-polish-ready .leaflet-container {
   background: #b7dce7;
-}
-
-.visual-polish-ready #map .leaflet-pane,
-.visual-polish-ready #map .leaflet-map-pane,
-.visual-polish-ready #map .leaflet-tile-pane {
-  will-change: transform;
 }
 
 .visual-polish-ready .leaflet-control-container .leaflet-top.leaflet-right {
@@ -35,13 +21,6 @@
 .visual-polish-ready .leaflet-control-container .leaflet-bottom.leaflet-left {
   bottom: 10px;
   left: 10px;
-}
-
-.visual-polish-ready #mapLegendBox {
-  max-width: min(230px, calc(100vw - 110px));
-  border-radius: 10px !important;
-  box-shadow: 0 8px 22px rgba(15, 35, 60, 0.14) !important;
-  font-size: 11px !important;
 }
 
 .visual-polish-ready .leaflet-control-attribution {
@@ -85,22 +64,4 @@ body.access-request-mode #googleLoginBtn + #accessRequestCard::before {
 
 .visual-polish-ready .status-pill {
   box-shadow: 0 6px 18px rgba(15, 35, 60, 0.08);
-}
-
-@media (max-width: 900px) {
-  .visual-polish-ready #map {
-    height: 420px !important;
-    min-height: 420px !important;
-  }
-}
-
-@media (max-width: 560px) {
-  .visual-polish-ready #map {
-    height: 360px !important;
-    min-height: 360px !important;
-  }
-
-  .visual-polish-ready #mapLegendBox {
-    max-width: calc(100vw - 92px);
-  }
 }

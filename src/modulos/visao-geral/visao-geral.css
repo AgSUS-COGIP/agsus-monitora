@@ -6,8 +6,10 @@
   marcos do ano, os campos dos filtros numa linha, os seis KPIs numa fileira,
   as unidades com mais de um processo, o resumo por etapa, a rosca com a
   legenda, as células da tabela (prazo, cronograma, taxa de ociosas,
-  observação) e o andamento do cronograma na gaveta. O bloco do mapa
-  (`.visao-geral-mapa`) é do legado: health-map-workspace.css.
+  observação) e o andamento do cronograma na gaveta. O mapa da área
+  (`.visao-geral-mapa`) tem o CSS dele: o da Saúde Indígena em
+  src/modulos/mapa-saude-indigena/, o de Projetos (legado) em
+  health-map-workspace.css.
   Importado pelo src/main.js, depois do ui.css.
 */
 
@@ -498,14 +500,15 @@
   font-size: var(--text-body-sm);
 }
 
-/* ── O lugar do bloco do mapa (legado) ───────────────────────────────── */
+/* ── O lugar do mapa da área ─────────────────────────────────────────── */
 
-/* Sem altura própria: quem dá o tamanho é o bloco (health-map-workspace.css). */
+/* Sem altura própria: quem dá o tamanho é o mapa. */
 .visao-geral-mapa {
   min-width: 0;
 }
-/* Sem o bloco (SEDE, ou fora do app) o lugar não deixa um vão na grade. */
+/* Sem mapa (SEDE, o de Projetos fora de Projetos, ou fora do app) o lugar
+   não deixa um vão na grade. */
 .visao-geral-mapa:empty,
-.page[data-mapa-da-area="nenhum"] .visao-geral-mapa {
+.visao-geral-mapa[hidden] {
   display: none;
 }

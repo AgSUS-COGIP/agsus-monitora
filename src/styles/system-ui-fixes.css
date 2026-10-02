@@ -54,14 +54,6 @@ body.mobile-app .app .top {
   }
 }
 
-/* Fundo neutro, também durante a recuperação das imagens do mapa (sem
-   gradiente: DS 3.5). O contorno vetorial do Brasil continua visível mesmo se
-   o provedor principal oscilar. */
-#page-dashboard #map,
-#page-dashboard #detailMap {
-  background: #eaf3f5 !important;
-}
-
 /* A marca deve repousar diretamente sobre a sidebar. O contorno anterior
    parecia um botão e criava a caixa branca apontada na revisão visual. */
 .app .side-logo-wrap,

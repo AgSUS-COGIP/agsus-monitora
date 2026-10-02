@@ -13,6 +13,7 @@ import {
   escolher,
   esperar,
 } from "../componentes/interacoes.js";
+import { criarLeafletFalso } from "./leaflet-falso.js";
 
 /*
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
@@ -250,11 +251,25 @@ describe("a tela dentro do app", () => {
     expect(valorDoKpi("processos")).toBe("99");
   });
 
-  it("o bloco do mapa (legado) entra no lugar reservado e volta à reserva ao desmontar", async () => {
+  it("o mapa é da área: Saúde Indígena em React, Projetos o bloco legado, SEDE nenhum", async () => {
     await montar();
-    const lugar = secao.querySelector(".visao-geral-mapa");
-    expect(lugar.firstChild).toBe(bloco);
+    // Saúde Indígena: o componente React; o bloco de Projetos fica escondido.
+    expect(secao.querySelectorAll(".mapa-si")).toHaveLength(1);
+    expect(bloco.parentElement.classList.contains("visao-geral-mapa")).toBe(
+      true,
+    );
+    expect(bloco.parentElement.hidden).toBe(true);
+
+    await act(async () => definirAreaAtual("projetos"));
+    expect(secao.querySelector(".mapa-si")).toBeNull();
+    expect(bloco.parentElement.hidden).toBe(false);
     expect(bloco.textContent).toBe("Mapa do legado");
+
+    await act(async () => definirAreaAtual("sede"));
+    expect(secao.querySelector(".mapa-si")).toBeNull();
+    expect(bloco.parentElement.hidden).toBe(true);
+
+    // Ao desmontar, o bloco legado volta à reserva, intacto.
     await act(async () => tela.raiz.unmount());
     expect(reserva.firstChild).toBe(bloco);
     tela = null;
@@ -322,11 +337,8 @@ describe("filtros e recorte", () => {
     expect(mais.hidden).toBe(false);
   });
 
-  it("'Limpar tudo' zera o recorte e volta o mapa ao Brasil (pelo legado)", async () => {
+  it("'Limpar tudo' zera o recorte e o mapa volta ao Brasil", async () => {
     await montar();
-    const aoLimpar = vi.fn();
-    const sairDoTerritorio = vi.fn();
-    await act(async () => estado.ligarMapa({ aoLimpar, sairDoTerritorio }));
     await act(async () => {
       estado.definirFiltro("uf", ["MT"]);
       estado.definirBusca("xingu");
@@ -337,12 +349,15 @@ describe("filtros e recorte", () => {
       c.textContent.includes("DSEI Xingu"),
     );
     await clicar(chipDoDsei);
-    expect(sairDoTerritorio).toHaveBeenCalledTimes(1);
+    expect(estado.obter().dsei.chave).toBe("");
+    expect(estado.obter().filtros.uf).toEqual(["MT"]);
+    expect(estado.obter().busca).toBe("xingu");
+    await act(async () => estado.definirDsei("xingu", "DSEI Xingu"));
     await clicar(botao("Limpar tudo", secao));
     expect(estado.obter().filtros.uf).toEqual([]);
     expect(estado.obter().busca).toBe("");
     expect(estado.obter().dsei.chave).toBe("");
-    expect(aoLimpar).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenLastCalledWith("Filtros limpos.");
   });
 
   it("a busca da tabela vale para a página toda, depois de uma pausa", async () => {
@@ -653,5 +668,127 @@ describe("regras do código da tela", () => {
     ])
       expect(html, id).not.toContain(`id="${id}"`);
     expect(html).toContain('id="mapaDaVisaoGeral"');
+  });
+});
+
+/*
+  A Etapa 5, parte 2: o mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/)
+  ligado na Visão geral, lendo o MESMO estado (linhas recortadas, DSEI aberto,
+  busca) e pedindo a ele. Leaflet falso, sem rede.
+*/
+describe("o mapa da Saúde Indígena na Visão geral", () => {
+  const LMAP = {
+    dsei: [
+      {
+        k: "XINGU",
+        n: "Xingu",
+        lat: -11.5,
+        lon: -53.3,
+        pop: 8000,
+        ufs: ["MT"],
+      },
+      {
+        k: "YANOMAMI",
+        n: "Yanomami",
+        lat: 2.8,
+        lon: -60.7,
+        pop: 30000,
+        ufs: ["RR", "AM"],
+      },
+    ],
+  };
+  const REDE = {
+    rede: {},
+    nac: [["CASAI DF", "", -15.8, -47.9, "BRASILIA", 53]],
+  };
+  let leaflet;
+  const vivo = (id) =>
+    leaflet.vivos().find((m) => m.elemento.id === id) || null;
+  const bolhas = (mapa) =>
+    leaflet
+      .desenhadas(mapa, "circleMarker")
+      .filter((b) => b.opcoes.interactive !== false);
+
+  beforeEach(() => {
+    leaflet = criarLeafletFalso();
+    globalThis.L = leaflet.L;
+  });
+  afterEach(() => {
+    delete globalThis.L;
+  });
+
+  it("espera os dados do mapa e desenha um #map só, com as bolhas do recorte", async () => {
+    await montar();
+    expect(secao.querySelectorAll("#map")).toHaveLength(1);
+    expect(secao.querySelector(".mapa-si-lista__esqueleto")).not.toBeNull();
+    await act(async () =>
+      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
+    );
+    const mapa = vivo("map");
+    expect(bolhas(mapa)).toHaveLength(2);
+    const territorios = [...secao.querySelectorAll(".mapa-si-territorio")];
+    expect(
+      territorios.map((t) => t.querySelector("strong").textContent),
+    ).toEqual(["Xingu", "Yanomami"]);
+    // Filtro da página (UF RR): o ranking segue o recorte.
+    await act(async () => estado.definirFiltro("uf", ["RR"]));
+    expect(
+      secao.querySelector(".mapa-si-territorio .mapa-si-territorio__vagas b")
+        .textContent,
+    ).toBe("8");
+  });
+
+  it("a bolha recorta a página pelo DSEI; o trilho Brasil sai sem limpar os filtros", async () => {
+    await montar();
+    await act(async () =>
+      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
+    );
+    await act(async () => estado.definirFiltro("risco", ["Alto", "Médio"]));
+    const xingu = bolhas(vivo("map")).find((b) => b.latlng[0] === -11.5);
+    await act(async () => xingu.fire("click"));
+    expect(estado.obter().dsei).toEqual({ chave: "XINGU", nome: "Xingu" });
+    expect(valorDoKpi("processos")).toBe("2");
+    // O mapa do DSEI abre no #detailMap; o chip do DSEI aparece nos filtros.
+    expect(vivo("detailMap")).not.toBeNull();
+    expect(secao.querySelectorAll("#detailMap")).toHaveLength(1);
+    expect(secao.textContent).toContain("Mapa do DSEI Xingu");
+
+    await clicar(secao.querySelector(".mapa-si-trilho__voltar"));
+    expect(estado.obter().dsei.chave).toBe("");
+    expect(estado.obter().filtros.risco).toEqual(["Alto", "Médio"]);
+    expect(vivo("detailMap")).toBeNull();
+  });
+
+  it("o DSEI aberto pelo chip ou por 'Limpar tudo' fecha o mapa do distrito", async () => {
+    await montar();
+    await act(async () =>
+      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
+    );
+    await act(async () => estado.definirDsei("DSEI Xingu", "Xingu"));
+    expect(vivo("detailMap")).not.toBeNull();
+    await clicar(botao("Limpar tudo", secao));
+    expect(vivo("detailMap")).toBeNull();
+    expect(vivo("map")).not.toBeNull();
+  });
+
+  it("a CASAI nacional procura pela cidade na busca da página", async () => {
+    await montar();
+    await act(async () =>
+      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
+    );
+    const [casai] = leaflet.desenhadas(vivo("map"), "marker");
+    await act(async () => casai.fire("click"));
+    expect(estado.obter().busca).toBe("CASAI BRASILIA");
+  });
+
+  it("trocar de área destrói o mapa da Saúde Indígena (cleanup do Leaflet)", async () => {
+    await montar();
+    await act(async () =>
+      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
+    );
+    expect(leaflet.vivos()).toHaveLength(1);
+    await act(async () => definirAreaAtual("projetos"));
+    expect(leaflet.vivos()).toHaveLength(0);
+    expect(secao.querySelector("#map")).toBeNull();
   });
 });

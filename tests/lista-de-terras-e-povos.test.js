@@ -146,23 +146,25 @@ describe("contra o catálogo compilado", () => {
   código do painel — é a camada que sabe que terras sobreviveram ao filtro.
 */
 describe("o painel está ligado", () => {
-  const html = readFileSync("index.html", "utf8");
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
+  // O mapa do DSEI em React (src/modulos/mapa-saude-indigena/).
+  const doDsei = readFileSync(
+    "src/modulos/mapa-saude-indigena/mapa-do-dsei.jsx",
+    "utf8",
+  );
   const camada = readFileSync(
     "src/modules/indigenous-territories-layer.js",
     "utf8",
   );
 
-  it("o painel existe no HTML", () => {
-    expect(html).toContain('id="detailTerraList"');
-    expect(html).toContain('id="detailTerraCount"');
+  it("o painel existe no mapa do DSEI", () => {
+    expect(doDsei).toContain("<span>Terras Indígenas e povos</span>");
   });
 
   it("a camada avisa quem desenha", () => {
     expect(camada).toContain(
       "__agsusAoMudarTerras?.(resumoDasTerras(doDistritoInteiro))",
     );
-    expect(app).toContain("__agsusAoMudarTerras = renderDetailTerraList");
+    expect(doDsei).toContain("novo.__agsusAoMudarTerras = (lista) =>");
   });
 
   /*
@@ -183,17 +185,16 @@ describe("o painel está ligado", () => {
     );
   });
 
-  it("voltar ao Brasil esvazia a lista", () => {
-    expect(app).toContain("renderDetailTerraList([])");
+  it("voltar ao Brasil desliga a lista com o mapa do DSEI", () => {
+    expect(doDsei).toContain("novo.__agsusAoMudarTerras = null;");
   });
 
   /*
-    O nome da terra e o do povo vêm da Funai. Entram no DOM como HTML, e HTML
-    de terceiro sem escapar é injeção.
+    O nome da terra e o do povo vêm da Funai: HTML de terceiro sem escapar é
+    injeção. No React eles são texto.
   */
-  it("o que vem da Funai é escapado antes de virar HTML", () => {
-    expect(app).toContain("esc(t.nome)");
-    expect(app).toContain("esc(t.povos.join");
-    expect(app).toContain("esc(t.ufs.join");
+  it("o que vem da Funai entra como texto, nunca como HTML", () => {
+    expect(doDsei).not.toContain("innerHTML");
+    expect(doDsei).not.toContain("dangerouslySetInnerHTML");
   });
 });

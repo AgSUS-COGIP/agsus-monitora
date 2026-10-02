@@ -10,6 +10,12 @@ import { usarTemaEscuro } from "../../app/tema.js";
 import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { textosDaVisaoGeral } from "../../lib/visao-geral.js";
+import {
+  MAPA_DOS_DSEIS,
+  MAPA_DOS_MUNICIPIOS,
+  mapaDaVisaoGeral,
+} from "../../lib/visao-geral-da-area.js";
+import { MapaSaudeIndigena } from "../mapa-saude-indigena/mapa-saude-indigena.jsx";
 import { BoasVindas, MarcosDoAno } from "./boas-vindas.jsx";
 import { estadoDaVisaoGeral } from "./estado.js";
 import { GavetaDoProcesso } from "./gaveta.jsx";
@@ -34,22 +40,27 @@ import { TabelaDeProcessos } from "./tabela.jsx";
 
   Ordem: boas-vindas e marcos do ano, topo (hora da carga, Atualizar,
   Exportar CSV), filtros, indicadores, "Unidades com mais de um processo
-  seletivo", o BLOCO DO MAPA, resumo por etapa, status operacional,
+  seletivo", o MAPA DA ÁREA, resumo por etapa, status operacional,
   "Atenção" e a tabela de processos, com os detalhes numa gaveta.
 
-  O BLOCO DO MAPA É UMA FOLHA DO LEGADO (Etapa 5, parte 2): a marcação fica
-  no index.html (`#mapaDaVisaoGeral`, guardada em
-  `#reservaDoMapaDaVisaoGeral`) e o React só reserva o lugar
-  (`.visao-geral-mapa`) e muda o nó para dentro dele ao montar — sem prop que
-  mude e sem filhos React, para não desfazer o que o legado desenha. Ao
-  desmontar (ou se a tela quebrar), o nó volta para a reserva, com o Leaflet
-  intacto.
+  O MAPA DA ÁREA (`mapaDaVisaoGeral`):
+  - Saúde Indígena: `<MapaSaudeIndigena>` (src/modulos/mapa-saude-indigena/),
+    com o mesmo estado da página — linhas recortadas, DSEI aberto, busca — e
+    os dados do mapa que o legado publica no estado;
+  - Projetos: o mapa dos municípios, ainda uma folha do legado: a marcação
+    fica no index.html (`#mapaDaVisaoGeral`, guardada em
+    `#reservaDoMapaDaVisaoGeral`) e o React só reserva o lugar
+    (`.visao-geral-mapa`) e muda o nó para dentro dele ao montar — sem filhos
+    React, para não desfazer o que o legado desenha. Fora de Projetos o lugar
+    fica escondido (o Leaflet continua montado); ao desmontar, o nó volta para
+    a reserva;
+  - SEDE: sem mapa.
 
   Textos de Configurações › Página inicial (publicados): filtros, rótulos
   dos indicadores e títulos dos blocos (`textosDaVisaoGeral`).
 */
 
-function EspacoDoMapa({ bloco, reserva }) {
+function EspacoDoMapa({ bloco, reserva, visivel }) {
   const espaco = useRef(null);
   useLayoutEffect(() => {
     const destino = espaco.current;
@@ -60,7 +71,27 @@ function EspacoDoMapa({ bloco, reserva }) {
       else bloco.remove();
     };
   }, [bloco, reserva]);
-  return <div className="visao-geral-mapa" ref={espaco} />;
+  return <div className="visao-geral-mapa" ref={espaco} hidden={!visivel} />;
+}
+
+/* O mapa da Saúde Indígena lendo e pedindo ao estado da Visão geral. */
+function MapaDaSaudeIndigena({ e, estado }) {
+  const { lmap, redeCnes } = e.mapa || {};
+  return (
+    <div className="visao-geral-mapa">
+      <MapaSaudeIndigena
+        lmap={lmap}
+        redeCnes={redeCnes}
+        linhas={e.filtradas}
+        filtroAtivo={e.temRecorte}
+        dseiSelecionado={e.dsei.chave || null}
+        carregando={!lmap}
+        aoEscolherDsei={(dsei) => estado.definirDsei(dsei.k, dsei.n)}
+        aoSairDoDsei={estado.tirarDsei}
+        aoFiltrarPorBusca={estado.definirBusca}
+      />
+    </div>
+  );
 }
 
 function usarTextos(configuracoes) {
@@ -87,6 +118,7 @@ export function TelaDaVisaoGeral({
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const textos = usarTextos(configuracoes);
   const escuro = usarTemaEscuro();
+  const mapa = mapaDaVisaoGeral(e.area);
   const [aberta, setAberta] = useState(null);
   // A linha aberta segue os dados: recarga atualiza a gaveta; se sumir, fecha.
   const linhaAberta = aberta
@@ -105,7 +137,14 @@ export function TelaDaVisaoGeral({
       <Filtros e={e} estado={estado} textos={textos} />
       <Indicadores e={e} estado={estado} textos={textos} />
       <UnidadesComVariosProcessos e={e} estado={estado} />
-      <EspacoDoMapa bloco={blocoDoMapa} reserva={reservaDoMapa} />
+      {mapa === MAPA_DOS_DSEIS ? (
+        <MapaDaSaudeIndigena e={e} estado={estado} />
+      ) : null}
+      <EspacoDoMapa
+        bloco={blocoDoMapa}
+        reserva={reservaDoMapa}
+        visivel={mapa === MAPA_DOS_MUNICIPIOS}
+      />
       <ResumoPorEtapa e={e} estado={estado} textos={textos} />
       <div className="ui-linha-de-cards">
         <StatusOperacional
@@ -145,7 +184,7 @@ export function TelaDaVisaoGeral({
  * Monta a tela na `<section id="page-dashboard">` e devolve o controlador do
  * legado (`window.visaoGeralController`): o estado e a raiz do React (os
  * testes desmontam por ela). Desenha na hora (`flushSync`): o bloco do mapa
- * já está no lugar quando o resto do app inicia.
+ * de Projetos já está no lugar quando o resto do app inicia.
  */
 export function montarVisaoGeral({
   secao = document.getElementById("page-dashboard"),

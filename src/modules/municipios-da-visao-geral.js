@@ -1,16 +1,16 @@
 /*
-  A VISÃO GERAL DE CADA ÁREA — O QUE MUDA NA PÁGINA DA SAÚDE INDÍGENA
+  O MAPA DE PROJETOS NA VISÃO GERAL (legado)
 
-  Saúde Indígena, SEDE e Projetos usam a mesma Visão geral (`#page-dashboard`,
-  `legacy-app.js`), com os editais da área atual. Este módulo faz o que é de
-  cada área, sem que o legado cresça:
+  Saúde Indígena, SEDE e Projetos usam a mesma Visão geral (React,
+  src/modulos/visao-geral/), com os editais da área atual. O mapa é da área:
+  o da Saúde Indígena é React (src/modulos/mapa-saude-indigena/), a SEDE não
+  tem, e o de Projetos é este — a marcação no `index.html`
+  (`#mapaDaVisaoGeral`), que a Visão geral só mostra em Projetos:
 
-  - `aplicarAreaNaVisaoGeral`: marca a página com o mapa da área
-    (`data-mapa-da-area`: `dsei`, `municipios` ou `nenhum`) e troca os textos
-    do bloco "Visão nacional". O CSS (`health-map-workspace.css`) esconde o
-    bloco na SEDE e, em Projetos, o que é só da Saúde Indígena (painel do
-    DSEI, "Calor", "Terras Indígenas");
-  - `desenharMunicipiosDaArea`: em Projetos, os lugares das vagas de todos os
+  - `criarMapaDosMunicipios`: o Leaflet em `#mapaDosProjetos`, com o fundo,
+    os contornos e as dicas/popups que não saem do mapa do módulo React
+    (`leaflet.js`), o botão "Brasil" e a legenda;
+  - `desenharMunicipiosDaArea`: os lugares das vagas de todos os
     projetos no mapa nacional, um ponto por lugar na cor do projeto, e a lista
     "Municípios por vagas" (mesmo formato de "Territórios por vagas"), com
     filtro por projeto e agrupamento por projeto;
@@ -29,11 +29,11 @@
   lista diz que falta a atualização do banco e o resto segue normal.
 */
 
+import { BRASIL_BOUNDS } from "../lib/brasil-bounds.js";
+import { opcoesDoPopup } from "../lib/dica-dentro-do-mapa.js";
 import { exigirSessao } from "../lib/sessao.js";
 import {
-  MAPA_DOS_DSEIS,
   gruposPorProjeto,
-  mapaDaVisaoGeral,
   municipiosDaResposta,
   plural,
   pontosDosMunicipios,
@@ -41,61 +41,20 @@ import {
   resultadoDoMunicipio,
   resumoDoLugar,
   textoDasVagas,
-  textosDoMapa,
 } from "../lib/visao-geral-da-area.js";
+import {
+  adicionarFundo,
+  criarMapa,
+  desenharContornos,
+  observarTamanho,
+  podeFlutuar,
+} from "../modulos/mapa-saude-indigena/leaflet.js";
+import { legendaComecaAberta } from "../lib/mapa-saude-indigena/formas.js";
 
 export const RPC_DOS_MUNICIPIOS = "listar_municipios_das_vagas_da_area";
 export const CACHE_TTL_MS = 5 * 60_000;
 
 const fmt = (valor) => Number(valor || 0).toLocaleString("pt-BR");
-
-// ── Textos e marcação da página ──────────────────────────────────────────
-
-/* Troca o texto que vem depois do ícone (`<i>`) sem recriar o ícone. */
-function trocarTextoDepoisDoIcone(elemento, novo) {
-  if (!elemento) return;
-  if (elemento.textContent.replace(/\s+/g, " ").trim() === novo) return;
-  for (const no of [...elemento.childNodes]) {
-    if (no.nodeType === 3) no.remove();
-  }
-  elemento.append(elemento.ownerDocument.createTextNode(` ${novo}`));
-}
-
-function trocarTexto(elemento, novo) {
-  if (elemento && elemento.textContent !== novo) elemento.textContent = novo;
-}
-
-/*
-  Marca a página com o mapa da área e põe os textos do bloco do mapa. Na
-  Saúde Indígena os textos são os do `index.html` (nada muda); ao voltar de
-  outra área, eles voltam.
-*/
-export function aplicarAreaNaVisaoGeral(pagina, area) {
-  if (!pagina) return "";
-  const mapa = mapaDaVisaoGeral(area);
-  pagina.dataset.mapaDaArea = mapa || "nenhum";
-  const textos = textosDoMapa(mapa || MAPA_DOS_DSEIS);
-  const mestre = pagina.querySelector(".health-map-pane--master");
-  pagina
-    .querySelector(".health-map-workspace")
-    ?.setAttribute("aria-label", textos.area);
-  trocarTexto(
-    mestre?.querySelector(".health-map-pane__header h3"),
-    textos.titulo,
-  );
-  pagina.querySelector("#map")?.setAttribute("aria-label", textos.mapa);
-  const painel = pagina.querySelector(".health-map-brasil-painel");
-  painel?.setAttribute("aria-label", textos.lista);
-  trocarTextoDepoisDoIcone(
-    painel?.querySelector(".health-map-units__header > span"),
-    textos.lista,
-  );
-  trocarTextoDepoisDoIcone(
-    mestre?.querySelector(".health-map-pane__hint"),
-    textos.dica,
-  );
-  return mapa;
-}
 
 // ── Carga dos municípios ─────────────────────────────────────────────────
 
@@ -549,7 +508,7 @@ export async function desenharMunicipiosDaArea({
   enquadrar = true,
   limitesDoBrasil = null,
   aindaVale = () => true,
-  podeFlutuar = () => true,
+  flutua = podeFlutuar,
   aoDesenhar = () => {},
 }) {
   if (!L || !mapa || !camada || !carregador) return;
@@ -590,11 +549,11 @@ export async function desenharMunicipiosDaArea({
         className: `marcador-de-projeto marcador-de-projeto--${ponto.serie}${ponto.variosProjetos ? " is-varios-projetos" : ""}`,
       });
       const documento = lista?.ownerDocument ?? document;
-      if (podeFlutuar())
+      if (flutua())
         marcador.bindTooltip(resumoNoDom(documento, ponto), {
           direction: "top",
         });
-      marcador.bindPopup(resumoNoDom(documento, ponto));
+      marcador.bindPopup(resumoNoDom(documento, ponto), opcoesDoPopup());
       camada.addLayer(marcador);
       marcadores.set(ponto.chave ?? ponto.municipioUf, marcador);
     }
@@ -650,4 +609,50 @@ export async function desenharMunicipiosDaArea({
 
   pintar(enquadrar);
   aoDesenhar();
+}
+
+/*
+  O Leaflet do mapa de Projetos, criado uma vez (na primeira abertura da
+  Visão geral em Projetos). É o mapa do módulo React (`criarMapa`: dicas e
+  popups que não saem do mapa, zoom em quartos), com o fundo com recurso e os
+  contornos; os limites, o zoom e o Mapa/Satélite são do `map-guard.js` e do
+  `map-base-layer-switcher.js`. O bloco fica escondido fora de Projetos e o mapa continua
+  montado: ao reaparecer com tamanho, `aoAparecer` redesenha e reenquadra (o
+  enquadramento feito escondido usa a medida zero).
+
+  `legenda` é o `<details>` da legenda (aberto no computador, fechado no
+  celular); `botaoBrasil`, o "Brasil" do cabeçalho.
+*/
+export function criarMapaDosMunicipios({
+  L,
+  elemento,
+  legenda = null,
+  botaoBrasil = null,
+  largura = globalThis.innerWidth,
+  aoAparecer = () => {},
+}) {
+  if (!L || !elemento) return null;
+  const mapa = criarMapa(L, elemento);
+  const limitesDoBrasil = L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]);
+  mapa.fitBounds(limitesDoBrasil);
+  adicionarFundo(L, mapa, elemento);
+  desenharContornos(L, L.layerGroup().addTo(mapa), "nacional");
+  const camada = L.layerGroup().addTo(mapa);
+  observarTamanho(mapa, elemento, { aoAparecer });
+
+  if (legenda) legenda.open = legendaComecaAberta(largura);
+  botaoBrasil?.addEventListener("click", () => {
+    try {
+      mapa.stop?.();
+      mapa.fitBounds(limitesDoBrasil, { animate: false });
+    } catch {
+      // mapa sem tamanho
+    }
+  });
+  return {
+    mapa,
+    camada,
+    limitesDoBrasil,
+    corpoDaLegenda: legenda?.querySelector("[data-legenda-dos-municipios]"),
+  };
 }

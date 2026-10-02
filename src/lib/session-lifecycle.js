@@ -290,7 +290,7 @@ function createClientSessionId() {
   try {
     let value = window.sessionStorage.getItem(key);
     if (!value) {
-      value = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      value = globalThis.crypto.randomUUID();
       window.sessionStorage.setItem(key, value);
     }
     return value;

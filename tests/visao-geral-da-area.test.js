@@ -53,8 +53,8 @@ describe("uma Visão geral para as três áreas", () => {
     );
   });
 
-  it("os textos do mapa da Saúde Indígena são os do index.html", () => {
-    const textos = TEXTOS_DO_MAPA[MAPA_DOS_DSEIS];
+  it("os textos do mapa de Projetos são os do index.html", () => {
+    const textos = TEXTOS_DO_MAPA[MAPA_DOS_MUNICIPIOS];
     for (const valor of Object.values(textos)) expect(html).toContain(valor);
   });
 });

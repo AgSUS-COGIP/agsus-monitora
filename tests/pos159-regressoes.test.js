@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
 import {
   CHAVES_DAS_SECOES,
   linhasDasSecoes,
@@ -15,14 +14,12 @@ const governance = readFileSync(
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const lifecycle = readFileSync("src/lib/session-lifecycle.js", "utf8");
-const html = readFileSync("index.html", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
 const barraLateral = readFileSync(
   "src/componentes/barra-lateral/barra-lateral.jsx",
   "utf8",
 );
 const tuning = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
-const workspace = readFileSync("src/styles/health-map-workspace.css", "utf8");
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -143,37 +140,11 @@ describe("a logo da barra lateral é o <img> real", () => {
   3 — Área desperdiçada nos mapas.
 */
 describe("enquadramento do Brasil medido no contorno real", () => {
-  it("a constante bate com os vértices de BR_OUTLINE", () => {
-    const inicio = app.indexOf("const BR_OUTLINE = {");
-    expect(inicio).toBeGreaterThan(-1);
-    const corpo = app.slice(inicio + "const BR_OUTLINE = ".length);
-
-    let profundidade = 0;
-    let fim = 0;
-    for (let i = 0; i < corpo.length; i += 1) {
-      if (corpo[i] === "{") profundidade += 1;
-      else if (corpo[i] === "}") {
-        profundidade -= 1;
-        if (profundidade === 0) {
-          fim = i + 1;
-          break;
-        }
-      }
-    }
-
-    const medido = boundsDoGeoJson(
-      new Function(`return ${corpo.slice(0, fim)}`)(),
-    );
-    expect(medido).not.toBeNull();
-    expect(medido.vertices).toBeGreaterThan(1000);
-
-    const arredondar = (v) => Number(v.toFixed(2));
-    expect(medido.bounds.map((par) => par.map(arredondar))).toEqual([
-      [...BRASIL_BOUNDS[0]],
-      [...BRASIL_BOUNDS[1]],
-    ]);
-  });
-
+  /*
+    A constante contra os vértices do contorno (a cópia única, em
+    src/lib/mapa-saude-indigena/contornos.js) é conferida em
+    tests/mapa-saude-indigena.test.js.
+  */
   it("o map-guard usa a medição, não um retângulo à mão", () => {
     expect(mapGuard).toContain(
       'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.js"',
@@ -216,61 +187,10 @@ describe("um dono só para o enquadramento inicial", () => {
   });
 });
 
-describe("um mapa principal de cada vez", () => {
-  /*
-    Antes o card de detalhe ficava sempre visível ao lado do nacional e, sem
-    seleção, mostrava **outro Brasil**. A `sem-selecao` só colapsava a coluna
-    de polos dentro dele: continuavam a ser dois mapas a dividir a largura.
-  */
-  it("o card de detalhe não existe até haver DSEI", () => {
-    const regra = workspace.slice(
-      workspace.indexOf(".health-map-workspace .health-map-pane--detail"),
-      workspace.indexOf(".health-map-pane {"),
-    );
-    expect(regra).toContain("display: none");
-    expect(regra).toContain(
-      ".health-map-workspace.com-dsei .health-map-pane--master",
-    );
-  });
-
-  it("a classe morta saiu do HTML e do JS", () => {
-    expect(html).toContain('class="health-map-detail-layout"');
-    expect(html).not.toContain("sem-selecao");
-    expect(
-      app.slice(
-        app.indexOf("function definirSelecaoDoMapaDetalhado"),
-        app.indexOf("function definirSelecaoDoMapaDetalhado") + 700,
-      ),
-    ).not.toContain('classList.toggle("sem-selecao"');
-  });
-
-  it("os dois caminhos de seleção avisam o layout", () => {
-    const render = app.slice(
-      app.indexOf("function renderDetailMap"),
-      app.indexOf("function renderDetailMap") + 900,
-    );
-    expect(render).toContain("definirSelecaoDoMapaDetalhado(true)");
-
-    const reset = app.slice(
-      app.indexOf("function resetDetailMap"),
-      app.indexOf("function scheduleMapResize"),
-    );
-    expect(reset).toContain("definirSelecaoDoMapaDetalhado(false)");
-  });
-
-  /*
-    O Leaflet guarda o tamanho que mediu por último. Sem remedir depois da troca
-    de classe, o mapa continuaria desenhado na largura antiga.
-  */
-  it("o mapa é remedido depois da mudança de largura", () => {
-    const fn = app.slice(
-      app.indexOf("function definirSelecaoDoMapaDetalhado"),
-      app.indexOf("function resetDetailMap"),
-    );
-    expect(fn).toContain("requestAnimationFrame");
-    expect(fn).toContain("invalidateSize");
-  });
-});
+/*
+  Um mapa principal de cada vez (o nacional ou o do DSEI) é do componente
+  React: tests/modulos/mapa-saude-indigena.test.js.
+*/
 
 /*
   5 — "Sessão: 01:00:00" anunciava um encerramento desligado desde 08/09/2026.

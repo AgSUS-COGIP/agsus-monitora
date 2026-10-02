@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { linhaDaTerra } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
 
 /*
   O QUE O PAINEL LOGADO MOSTROU
@@ -13,7 +14,6 @@ const camada = readFileSync(
   "utf8",
 );
 const css = readFileSync("src/styles/indigenous-territories-layer.css", "utf8");
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
 
 /*
   "QUANDO COLOCO O CURSOR DÁ UMA BUGADA"
@@ -84,13 +84,10 @@ describe("a abrangência que falhou não se pede de novo", () => {
 
 // A lista mostrava "· AL · Regularizada", com o separador à frente.
 describe("a linha da terra na lista", () => {
-  const fn = app.slice(
-    app.indexOf("function renderDetailTerraList"),
-    app.indexOf("function renderDetailUnitList"),
-  );
-
   it("o separador vai entre as partes", () => {
-    expect(fn).toContain('.join(" · ")');
-    expect(fn).not.toContain("` · ${esc(t.ufs");
+    expect(linhaDaTerra({ ufs: ["AL"], fase: "Regularizada" }).detalhe).toBe(
+      "AL · Regularizada",
+    );
+    expect(linhaDaTerra({ fase: "Regularizada" }).detalhe).toBe("Regularizada");
   });
 });

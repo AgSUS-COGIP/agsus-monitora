@@ -222,10 +222,10 @@ describe("legibilidade e contraste dos mapas", () => {
     )[1];
   };
 
-  it("legenda, dica e vazio passam o AA sobre o painel escuro", () => {
+  it("dica e vazio passam o AA sobre o painel escuro", () => {
     const cor = valor(
       mapaCss,
-      '[data-theme="dark"] .health-map-detail-legend',
+      '[data-theme="dark"] .health-map-empty',
       "color",
     );
     expect(contraste(cor, fundoDoPainelEscuro())).toBeGreaterThanOrEqual(AA);

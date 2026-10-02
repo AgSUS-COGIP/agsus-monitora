@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { popupDaSede } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
 import {
   SEDES_DOCUMENTADAS,
   afinidadeComODsei,
@@ -298,10 +299,16 @@ describe("a correção gerada", () => {
 });
 
 describe("o popup da estrela", () => {
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
-
   it("diz o endereço e de onde ele vem", () => {
-    expect(app).toContain("d.sede_endereco");
-    expect(app).toContain("d.sede_cnes");
+    const popup = popupDaSede({
+      n: "Potiguara",
+      sede_endereco: "Rua X, 10",
+      sede_municipio: "João Pessoa",
+      sede_uf: "PB",
+      sede_cnes: "1234567",
+    });
+    expect(popup.titulo).toBe("Sede do DSEI Potiguara");
+    expect(popup.linhas).toEqual(["Rua X, 10", "João Pessoa – PB"]);
+    expect(popup.nota).toBe("Endereço do CNES 1234567");
   });
 });

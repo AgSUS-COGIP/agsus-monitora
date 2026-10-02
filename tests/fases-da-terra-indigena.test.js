@@ -320,8 +320,10 @@ describe("contra o catálogo real", () => {
   verde, e depois verde enquanto o mapa desenhava magenta.
 */
 describe("a legenda descreve as três", () => {
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
-  const vinculos = readFileSync("src/modules/vinculos-territoriais.js", "utf8");
+  const legenda = readFileSync(
+    "src/modulos/mapa-saude-indigena/legenda.jsx",
+    "utf8",
+  );
 
   it("nomeia a homologada, a em processo e a em estudo", () => {
     const rotulos = FASES_DAS_TERRAS.map((f) => f.rotulo).join(" | ");
@@ -334,14 +336,9 @@ describe("a legenda descreve as três", () => {
     As amostras escritas à mão, em `style` inline, foram o que deixou a
     legenda magenta depois de o mapa mudar. Não voltam.
   */
-  it("o legacy não escreve mais amostra de terra à mão", () => {
-    expect(app).not.toContain("border:2px dashed #f9a8d4");
-    expect(app).not.toContain("border:2px solid #e030a6");
-  });
-
-  it("as duas legendas do mapa montam o mesmo módulo", () => {
-    expect(app.match(/\$\{terras\}/g) ?? []).toHaveLength(2);
-    expect(app).toContain("montarLegendaDasTerras(");
-    expect(vinculos).toContain("data-legenda-das-terras");
+  it("a legenda não escreve amostra de terra à mão: sai das fases da camada", () => {
+    expect(legenda).not.toContain("#f9a8d4");
+    expect(legenda).not.toContain("#e030a6");
+    expect(legenda).toContain("FASES_DAS_TERRAS.map(");
   });
 });
