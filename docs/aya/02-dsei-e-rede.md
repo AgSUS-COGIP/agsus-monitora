@@ -60,10 +60,14 @@ O que é um DSEI e as estruturas que ficam dentro dele.
 
 ## Base geoespacial da Funai
 
+**perguntas:** base geoespacial da funai | mapa oficial das terras indigenas | geoprocessamento da funai
+**resposta:** A Funai mantém a base geoespacial oficial de Terras Indígenas, aldeias, áreas de atuação e sedes de DSEIs, com atualização mensal informada na própria página. É a referência para listas e limites de Terras Indígenas e aldeias.
 **fato:** A Funai mantém a base geoespacial oficial de Terras Indígenas, aldeias, áreas de atuação e sedes de DSEIs, com atualização mensal informada na própria página.
 **fonte:** https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas
 
 ## Plano Nacional de Saúde
 
+**perguntas:** plano nacional de saude | pns 2024-2027
+**resposta:** O Plano Nacional de Saúde 2024-2027 registra 34 Distritos Sanitários Especiais Indígenas.
 **fato:** O Plano Nacional de Saúde 2024-2027 registra 34 Distritos Sanitários Especiais Indígenas.
 **fonte:** https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei
