@@ -43,8 +43,6 @@
   com agrupamento. Ver `agruparPorPontoDeRender` no fim deste ficheiro.
 */
 
-import { veredictoQuePrevalece } from "./forca-do-veredito.js";
-
 export const RECONCILIACAO = Object.freeze({
   AUTOMATICA: "automatica",
   AMBIGUA: "ambigua",
@@ -204,12 +202,9 @@ export function classificarDivergencia(km) {
 
   O CNES confirma a IDENTIDADE do estabelecimento, mas isso não prova que a
   latitude/longitude cadastrada seja a posição física exata do Polo Base.
-  Em vários casos a coordenada da planilha de Lotações coincide com a do CNES,
-  portanto as duas não são confirmação independente.
-
-  Quando o polo já existia no lmap, preserva-se a posição que estava sendo
-  exibida antes do enriquecimento e mantêm-se CNES/Lotações como fontes de
-  comparação. Só uma validação independente deve substituir a posição.
+  A posição do polo é a do `lmap`, que a auditoria de 01–02/10/2026 corrigiu
+  no banco contra fontes oficiais; o CNES fica só como comparação. Sem
+  coordenada no `lmap`, vale a do próprio estabelecimento no `rede_cnes`.
 */
 function coordenadaDeExibicao(polo, estab) {
   if (Number.isFinite(polo?.lat) && Number.isFinite(polo?.lon)) {
@@ -239,15 +234,6 @@ function registrarReconciliacao({
     dsei: dseiChave,
     canonico,
     tipo: tipoP,
-    /*
-      Dois vereditos, um popup. Assumir o do polo escolhia a pior das duas
-      respostas — ver `veredictoQuePrevalece`, e o caso do KARAPOTÓ TERRA NOVA
-      que o obrigou a existir.
-    */
-    veredicto: veredictoQuePrevalece(
-      polo.veredicto_localizacao || null,
-      estab.veredicto_localizacao || null,
-    ),
     nome_exibicao: estab.nome || polo.nome,
     nomes: { lmap: polo.nome, rede_cnes: estab.nome },
     cnes: estab.cnes || polo.cnes || "",
@@ -258,22 +244,11 @@ function registrarReconciliacao({
     coordenada_exibida: exibicao.fonte,
     coordenadas: {
       lmap: { lat: polo.lat, lon: polo.lon },
-      lotacoes:
-        polo.coord_lotacoes &&
-        Number.isFinite(Number(polo.coord_lotacoes.lat)) &&
-        Number.isFinite(Number(polo.coord_lotacoes.lon))
-          ? {
-              lat: Number(polo.coord_lotacoes.lat),
-              lon: Number(polo.coord_lotacoes.lon),
-            }
-          : null,
       rede_cnes: { lat: estab.lat, lon: estab.lon },
     },
     distancia_entre_fontes_km: km == null ? null : Number(km.toFixed(1)),
     divergencia: classificarDivergencia(km),
-    validacao_coordenada: polo.coord_validacao || "pendente",
-    confirmacao_independente: polo.confirmacao_independente === true,
-    municipio: estab.municipio || polo.mun_lotacao || "",
+    municipio: estab.municipio || "",
     uf: estab.uf || polo.uf || "",
     reconciliacao: RECONCILIACAO.AUTOMATICA,
   });
@@ -323,7 +298,7 @@ export function reconciliarDsei({
     const tipoP = p.tipo || "polo";
     const poloCnes = identificadorCnes(p.cnes);
 
-    // Quando o transporte CNES × Lotações já identificou o estabelecimento,
+    // Quando o polo já traz o código CNES do estabelecimento,
     // o código CNES é a identidade mais forte. O nome pode conter ordinal,
     // nome histórico ou razão cadastral diferente sem voltar a duplicar o ponto.
     if (poloCnes && porCnes.has(poloCnes)) {
@@ -599,47 +574,4 @@ export function unirEstabelecimentosRepetidos(estabelecimentos = []) {
   }
 
   return { estabelecimentos: [...resultado, ...soltos], unidos };
-}
-
-/*
-  A UNIDADE DE LOTAÇÃO QUE É O PRÓPRIO POLO
-
-  A planilha de Lotações traz 79 linhas do tipo "UNIDADE DE LOTAÇÃO". Setenta e
-  cinco delas são subpolos, aldeias e UBSIs — equipamento próprio, que o mapa
-  deve continuar a mostrar. Quatro repetem o nome de um polo base do mesmo
-  DSEI, e três estão em cima dele:
-
-      CEARÁ             UN TERESINA (SEDE)          = PB TERESINA (SEDE)   0 m
-      MÉDIO RIO PURUS   UN FUNAI/MPI                = PB FUNAI/MPI         9 m
-      LESTE DE RORAIMA  FLEXAL (SUBPOLO - CARACANÃ) = PB FLEXAL            0 m
-
-  Os dois primeiros são o mesmo equipamento escrito duas vezes — foi este o
-  segundo ponto de Teresina que aparecia na lista do DSEI Ceará. O terceiro
-  não: o parêntese diz "subpolo de Caracanã", outra estrutura que herdou a
-  coordenada do polo. E o quarto, UN SANTA MARIA no Guamá, está a 18,9 km do
-  PB SANTA MARIA — outro lugar com o mesmo nome.
-
-  Daí as duas exigências: o qualificador entre parênteses tem de ser o mesmo —
-  é ele que separa o duplicado do vizinho — e os dois pontos têm de coincidir.
-*/
-const PREFIXO_DE_LOTACAO = /^\s*UN\s+/i;
-
-function baseDoNomeDeLotacao(nome) {
-  return nomeCanonico(String(nome ?? "").replace(PREFIXO_DE_LOTACAO, ""));
-}
-
-function qualificadorDoNome(nome) {
-  const partes = String(nome ?? "").match(/\(([^)]*)\)/g) || [];
-  return partes
-    .map((p) => nomeCanonico(p.slice(1, -1)))
-    .filter(Boolean)
-    .sort()
-    .join("|");
-}
-
-export function unidadeDeLotacaoEhOPolo(nomeDaUnidade, nomeDoPolo) {
-  const base = baseDoNomeDeLotacao(nomeDaUnidade);
-  if (!canonicoUtilizavel(base)) return false;
-  if (base !== baseDoNomeDeLotacao(nomeDoPolo)) return false;
-  return qualificadorDoNome(nomeDaUnidade) === qualificadorDoNome(nomeDoPolo);
 }

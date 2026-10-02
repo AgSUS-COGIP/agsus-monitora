@@ -130,16 +130,6 @@ export function territoriosPorVagas(bolhas) {
     });
 }
 
-/* Frase da confiança da coordenada de um estabelecimento do `rede_cnes`. */
-export function textoDaFonteDaCoordenada(meta) {
-  const compartilhada = numero(meta?.coordenada_compartilhada_qtd);
-  if (meta?.confirmacao_independente === true)
-    return "Localização validada por fonte independente";
-  if (compartilhada > 1)
-    return `Localização em validação · ${compartilhada} estabelecimentos usam este ponto`;
-  return "Localização em validação · coordenada cadastral CNES";
-}
-
 /*
   CASAIs nacionais (Brasília, São Paulo…): direto do `rede_cnes.nac`, a fonte
   de verdade, não da lista fixa do `lmap`. O clique filtra a página pela busca
@@ -155,7 +145,6 @@ export function casaisNacionais({
     .map((a) => {
       const nome = texto(a[0]);
       const cidade = texto(a[4]);
-      const meta = a[9] && typeof a[9] === "object" ? a[9] : null;
       return {
         chave: `${nome}|${a[2]}|${a[3]}`,
         nome,
@@ -165,7 +154,6 @@ export function casaisNacionais({
         cidade,
         uf: siglaDaUf(a[5]) || texto(a[5]),
         editais: (contagens.get(chaveDoDsei(nome)) || VAZIO).editais,
-        fonteDaCoordenada: textoDaFonteDaCoordenada(meta),
         termoDeBusca: `CASAI ${cidade}`.trim(),
       };
     })
@@ -227,8 +215,8 @@ export function popupDaCasaiNacional(casai) {
     linhas: [
       "Casa de Saúde Indígena (referência nacional)",
       [casai.cidade, casai.uf].filter(Boolean).join(" – "),
+      casai.cnes ? `CNES: ${casai.cnes}` : "",
       `Processos seletivos: ${formatarNumero(casai.editais)}`,
-    ],
-    nota: casai.fonteDaCoordenada,
+    ].filter(Boolean),
   };
 }

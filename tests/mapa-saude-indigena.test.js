@@ -42,48 +42,13 @@ import {
   enquadramentoNacional,
   popupDaCasaiNacional,
   territoriosPorVagas,
-  textoDaFonteDaCoordenada,
 } from "../src/lib/mapa-saude-indigena/mapa-nacional.js";
-import { applyLotacoesGeograficas } from "../src/modules/lotacoes-geograficas-transport.js";
 
 /*
   O mapa da Saúde Indígena sem Leaflet (src/lib/mapa-saude-indigena/): as
   regras do `legacy-app.js` (bolhas, CASAIs nacionais, "Territórios por
   vagas", pontos do DSEI, vínculos, resumo da dica) como entrada → saída.
 */
-
-/* Fixture com dados reais: as Lotações públicas sobre um `lmap` só com os 34 DSEIs. */
-function dadosReais() {
-  const dataset = Object.assign(
-    {},
-    ...Array.from({ length: 8 }, (_, i) =>
-      JSON.parse(
-        readFileSync(
-          `public/data/lotacoes-geograficas-${String(i + 1).padStart(2, "0")}.json`,
-          "utf8",
-        ),
-      ),
-    ),
-  );
-  const dsei = Object.entries(dataset)
-    .filter(([k]) => !k.startsWith("CASAI "))
-    .map(([k, registros]) => ({
-      k,
-      n: k,
-      sedeuf: (registros.find((r) => r[0] === "SEDE") || registros[0])[5],
-      ufs: [...new Set(registros.map((r) => r[5]).filter(Boolean))],
-      pop: registros.length * 100,
-      polos: [],
-    }));
-  const [lmap, rede] = applyLotacoesGeograficas(
-    [
-      { chave: "lmap", payload: { dsei } },
-      { chave: "rede_cnes", payload: { rede: {}, nac: [] } },
-    ],
-    dataset,
-  );
-  return { lmap: lmap.payload, redeCnes: rede.payload };
-}
 
 const edital = (unidade, vagas_total, vagas_ociosas) => ({
   unidade,
@@ -234,9 +199,15 @@ describe("CASAIs nacionais", () => {
       ["DF", "CASAI BRASILIA"],
       ["SP", "CASAI SAO PAULO"],
     ]);
-    expect(popupDaCasaiNacional(casais[1]).nota).toBe(
-      "Localização em validação · 3 estabelecimentos usam este ponto",
-    );
+    expect(popupDaCasaiNacional(casais[1])).toEqual({
+      titulo: "CASAI SÃO PAULO",
+      linhas: [
+        "Casa de Saúde Indígena (referência nacional)",
+        "SAO PAULO – SP",
+        "CNES: 123",
+        "Processos seletivos: 0",
+      ],
+    });
   });
 
   it("com filtro, só a que tem edital no recorte", () => {
@@ -246,15 +217,6 @@ describe("CASAIs nacionais", () => {
       filtroAtivo: true,
     });
     expect(casais.map((c) => c.nome)).toEqual(["CASAI DF"]);
-  });
-
-  it("frase da coordenada", () => {
-    expect(textoDaFonteDaCoordenada({ confirmacao_independente: true })).toBe(
-      "Localização validada por fonte independente",
-    );
-    expect(textoDaFonteDaCoordenada(null)).toBe(
-      "Localização em validação · coordenada cadastral CNES",
-    );
   });
 });
 
@@ -335,7 +297,7 @@ describe("pontos de um DSEI", () => {
     expect(resumoDaRede({ k: "X" }, [])).toEqual(["Sem unidades cadastradas"]);
   });
 
-  it("popups e dicas são texto (sem HTML) e dizem o veredito", () => {
+  it("popups e dicas são texto (sem HTML) e não falam de validação", () => {
     const [registro] = classificarRegistros(
       registrosDoDsei(dsei, redeCnes).filter((r) => r.name.includes("ALDEIA")),
       dsei,
@@ -347,7 +309,7 @@ describe("pontos de um DSEI", () => {
       "PORTO REAL – AL",
       "CNES: 222",
     ]);
-    expect(popup.nota).toBe("Localização em validação");
+    expect(popup.nota).toBeUndefined();
     expect(dicaDoRegistro(registro, dsei).linhas).toEqual([
       "Vinculado ao DSEI Teste",
       "Localização: AL",
@@ -381,79 +343,6 @@ describe("pontos de um DSEI", () => {
       detalhe: "PE · Regularizada",
       caixa: { oeste: 1, sul: 2, leste: 3, norte: 4 },
     });
-  });
-});
-
-describe("com os dados reais das Lotações (fixture de public/data)", () => {
-  const { lmap, redeCnes } = dadosReais();
-
-  it("34 DSEIs, todos com sede desenhável, e as duas CASAIs nacionais", () => {
-    expect(lmap.dsei).toHaveLength(34);
-    expect(lmap.dsei.every((d) => temCoordenada(d.lat, d.lon))).toBe(true);
-    expect(
-      casaisNacionais({ nac: redeCnes.nac }).map((c) => c.termoDeBusca),
-    ).toEqual(["CASAI BRASILIA", "CASAI SAO PAULO"]);
-  });
-
-  it("os pontos de cada DSEI têm coordenada e não se repetem", () => {
-    let total = 0;
-    for (const d of lmap.dsei) {
-      const registros = registrosDoDsei(d, redeCnes);
-      total += registros.length;
-      const chaves = registros.map((r) => `${r.name}|${r.lat}|${r.lon}`);
-      expect(new Set(chaves).size, d.k).toBe(chaves.length);
-      expect(
-        registros.every(
-          (r) => Number.isFinite(r.lat) && Number.isFinite(r.lon),
-        ),
-        d.k,
-      ).toBe(true);
-    }
-    expect(total).toBe(550);
-  });
-
-  it("Alagoas e Sergipe e Yanomami: o que o mapa mostra", () => {
-    const alse = lmap.dsei.find((d) => d.k === "ALAGOAS E SERGIPE");
-    expect(resumoDaRede(alse, registrosDoDsei(alse, redeCnes))).toEqual([
-      "Polos base: 13",
-      "No mapa: 14 pontos (13 polos, 1 CASAIs)",
-    ]);
-    const yanomami = lmap.dsei.find((d) => d.k === "YANOMAMI");
-    expect(
-      tiposDoTerritorio(registrosDoDsei(yanomami, redeCnes)).map((t) => [
-        t.tipo.key,
-        t.quantidade,
-      ]),
-    ).toEqual([
-      ["polo", 37],
-      ["ubsi", 24],
-      ["unit", 20],
-      ["casai", 1],
-    ]);
-  });
-
-  it("os editais da área viram bolhas, ranking e enquadramento", () => {
-    const linhas = [
-      edital("DSEI Yanomami", 40, 10),
-      edital("DSEI Alagoas e Sergipe", 12, 0),
-      edital("DSEI Kaiapó do Pará", 3, 3),
-    ];
-    const bolhas = bolhasDosDsei({
-      dseis: lmap.dsei,
-      contagens: contarPorDsei(linhas),
-      filtroAtivo: true,
-    });
-    expect(bolhas).toHaveLength(3);
-    expect(
-      territoriosPorVagas(bolhas).map((t) => [t.dsei.k, t.situacao]),
-    ).toEqual([
-      ["YANOMAMI", "atencao"],
-      ["ALAGOAS E SERGIPE", "ok"],
-      ["KAIAPO DO PARA", "critico"],
-    ]);
-    expect(
-      enquadramentoNacional({ bolhas, filtroAtivo: true }).pontos,
-    ).toHaveLength(3);
   });
 });
 
