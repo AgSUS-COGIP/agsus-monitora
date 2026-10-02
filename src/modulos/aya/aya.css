@@ -236,6 +236,7 @@
 
 .aya-painel__acoes {
   display: flex;
+  align-items: center;
   align-self: flex-start;
   gap: 4px;
 }
