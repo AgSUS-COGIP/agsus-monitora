@@ -27,7 +27,7 @@ import {
   voltarAoBrasil,
 } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.js";
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 
 /*
@@ -174,7 +174,7 @@ export function MapaNacional({
   aoFiltrarPorBusca,
 }) {
   const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
-  const podeEditar = isAdminGlobal(perfil);
+  const podeEditar = podeEditarCoordenadas(perfil);
   const refDoMapa = useRef(null);
   const refDaLista = useRef(null);
   const [mapa, definirMapa] = useState(null);

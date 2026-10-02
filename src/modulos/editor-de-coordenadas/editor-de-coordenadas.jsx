@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import {
   formatarCoordenada,
   formatarDistancia,
@@ -67,7 +67,7 @@ function usarLista(ultimos, ativo, nome, argumentos, chave, erroPadrao) {
 }
 
 /*
-  O EDITOR DE COORDENADAS (só administrador global), comum aos dois mapas: a
+  O EDITOR DE COORDENADAS (administrador global e Gestor), comum aos dois mapas: a
   fila de pontos com busca, "Só pendentes" e gravidade, o formulário da
   prévia (pin arrastável), as sugestões do ponto pendente, "Conferido" (com ou
   sem mudar a posição) e o histórico com "Desfazer". Tudo grava por RPC; o
@@ -93,7 +93,7 @@ export function EditorDeCoordenadas({
   aoAtualizarMapa,
   aoFechar,
 }) {
-  const permitido = isAdminGlobal(perfil);
+  const permitido = podeEditarCoordenadas(perfil);
   const ultimos = usarUltimo({ permitido, supabase, aoAtualizarMapa, fonte });
   const [pendencias, definirPendencias] = usarLista(
     ultimos,

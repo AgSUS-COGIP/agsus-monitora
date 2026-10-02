@@ -19,7 +19,7 @@ const ROLE_LEVEL = Object.freeze({
 
 export const ACCESS_ROLES = Object.freeze([
   { value: "usuario", label: "Usuário" },
-  { value: "edital_gestor", label: "Edital gestor" },
+  { value: "edital_gestor", label: "Gestor" },
   { value: "contratador", label: "Contratador" },
   { value: "admin", label: "Admin" },
 ]);
@@ -128,7 +128,7 @@ export function canViewEntrevistas(profile) {
   return normalizeRole(profile) !== "";
 }
 
-/* Aba Recursos: ver (leitor) e cadastrar/editar (editor). Por padrão, admin e edital gestor editam. */
+/* Aba Recursos: ver (leitor) e cadastrar/editar (editor). Por padrão, admin e gestor editam. */
 export function canViewRecursos(profile) {
   if (profile?.permissoes) return hasResource(profile, "recursos");
   return normalizeRole(profile) !== "";
@@ -167,6 +167,15 @@ export function isAdminGlobal(profile) {
   if (!profile || profile.ativo === false) return false;
   if (typeof profile.admin_global === "boolean") return profile.admin_global;
   return hasLevel(profile, "admin");
+}
+
+/**
+ * Corrige coordenadas dos mapas (Saúde Indígena e Projetos): admin global ou
+ * Gestor (perfil edital_gestor ativo). Espelho de private."FC_PODE_EDITAR_COORDENADA"
+ * (20261002200000); a escrita direta no cadastro do mapa segue só do admin global.
+ */
+export function podeEditarCoordenadas(profile) {
+  return isAdminGlobal(profile) || normalizeRole(profile) === "edital_gestor";
 }
 
 /** Gerencia acessos: admin global, ou coordenador (módulo "acessos" ≥ editor). */

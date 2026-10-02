@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.js";
 import {
   MAPA_DOS_MUNICIPIOS,
@@ -43,7 +43,7 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
   o cache decide se vai ao banco.
 
   As coordenadas vêm do banco (public."TB_COORDENADA_LOCAL_VAGA", na resposta da
-  RPC). O administrador global vê "Coordenadas": o editor comum
+  RPC). O administrador global e o Gestor veem "Coordenadas": o editor comum
   (src/modulos/editor-de-coordenadas/, aqui com as regras de
   src/lib/coordenadas-dos-projetos.js) toma o lugar da lista; o que ele grava
   vale na hora no mapa e no cache do carregador.
@@ -91,7 +91,7 @@ export function MapaDeProjetos({
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
   const resultado = usarLugares(carregador, area, carregadoEm);
   const carregando = !resultado;
-  const podeEditar = isAdminGlobal(perfil);
+  const podeEditar = podeEditarCoordenadas(perfil);
   const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
   // O que o editor gravou nesta montagem, por cima do que o carregador leu.
   const [corrigidas, definirCorrigidas] = useState([]);
