@@ -171,6 +171,12 @@
   animation: aya-entra var(--duration-base) var(--ease-standard);
 }
 
+/* A regra dos diálogos no celular ([role="dialog"] { align-items: flex-end
+   !important }, até 900px) encolhia o cabeçalho e o campo da Aya. */
+.aya-painel[role="dialog"] {
+  align-items: stretch !important;
+}
+
 @keyframes aya-entra {
   from {
     opacity: 0;
@@ -178,11 +184,22 @@
   }
 }
 
+/*
+  Cabeçalho limpo (pedido de 02/10): retrato com aro em degradê, o nome sem
+  caixa em volta, o selo Beta ao lado do nome (fora do rosto), a tela atual
+  embaixo (quebra a linha em vez de cortar) e uma linha separando da conversa.
+*/
 .aya-painel__cabecalho {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 18px 14px 6px 18px;
+  padding: 16px 12px 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--brand-accent) 12%, var(--surface-card)),
+    var(--surface-card)
+  );
 }
 
 .aya-apresentacao {
@@ -190,48 +207,46 @@
   min-width: 0;
   flex: 1;
   align-items: center;
-  padding-bottom: 6px;
   gap: 12px;
 }
 
-/*
-  Avatar como o da referência (Bel, EV.G): círculo com aro na cor da marca e a
-  arara inteira dentro; o selo Beta fica na borda de baixo, fora do rosto. Antes,
-  com 48px e o selo no canto de cima, o selo tapava a cabeça (relato de 02/10).
-*/
 .aya-avatar.aya-retrato {
   flex: none;
-  width: 84px;
-  height: 84px;
+  width: 64px;
+  height: 64px;
 }
 
 .aya-apresentacao__textos {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+}
+
+.aya-apresentacao__nome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
 }
 
 .aya-balao {
-  position: relative;
-  width: fit-content;
-  margin: 0;
-  padding: 8px 16px;
-  border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--brand-accent) 22%, var(--surface-card));
-  box-shadow: var(--shadow-overlay);
   color: var(--brand-primary);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+.aya-selo-beta.aya-selo-beta--nome {
+  position: static;
+  border: 0;
 }
 
 .aya-painel__pagina {
-  overflow: hidden;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
 
 .aya-painel__acoes {
@@ -454,16 +469,9 @@
   }
 }
 
-/* ---------- Sugestões ---------- */
+/* ---------- Opções na conversa ("Você quis dizer…?") ---------- */
 
-.aya-sugestoes h3 {
-  margin: 0 0 8px;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-.aya-sugestoes__lista {
+.aya-sugestoes {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;

@@ -8,8 +8,9 @@
   - `intro`: a primeira mensagem do painel, do que ela pode explicar ali — muda
     com a área atual (a Visão geral de Projetos fala do mapa dos projetos; a da
     SEDE não tem mapa);
-  - `sugestoes`: 3 a 5 perguntas prontas. O `rotulo` é o texto curto do botão;
-    a `pergunta` é o que vai para a Aya. Toda pergunta daqui tem resposta
+  - `sugestoes`: 3 a 5 perguntas típicas da página (o painel não mostra mais
+    os botões, pedido de 02/10; ficam como garantia de cobertura da base). O
+    `rotulo` é o texto curto; a `pergunta` é o que vai para a Aya. Toda pergunta daqui tem resposta
     direta num verbete de `docs/aya/` (teste em tests/aya-paginas.test.js), para
     a sugestão nunca cair no "não sei".
 
@@ -26,8 +27,7 @@ const AREA_SAUDE_INDIGENA = "saude-indigena";
 
 const sug = (rotulo, pergunta) => Object.freeze({ rotulo, pergunta });
 
-const SEGUNDA_MENSAGEM =
-  "Para começar, escolha uma sugestão ou digite sua pergunta.";
+const SEGUNDA_MENSAGEM = "Para começar, digite sua pergunta.";
 
 export { SEGUNDA_MENSAGEM };
 

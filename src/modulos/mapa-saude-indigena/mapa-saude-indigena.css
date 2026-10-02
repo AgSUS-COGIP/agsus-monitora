@@ -5,7 +5,11 @@
   e das variáveis --terra-* (tokens.css).
 */
 .mapa-si {
-  --mapa-si-altura: clamp(440px, 65vh, 640px);
+  /* Mais espaço para o mapa (pedido de 02/10): no zoom nacional (≈ 500 km na
+     régua) o Brasil precisa de ~722px com folga; até 780px ele cabe inteiro
+     nesse zoom, e em telas baixas o zoom desce um quarto em vez de cortar.
+     Baixar esta altura volta a régua para 1000 km. */
+  --mapa-si-altura: clamp(560px, calc(100vh - 120px), 780px);
   --mapa-si-lista: clamp(320px, 28%, 400px);
   display: grid;
   gap: var(--space-4);

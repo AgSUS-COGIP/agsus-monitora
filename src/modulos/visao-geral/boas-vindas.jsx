@@ -5,7 +5,6 @@ import {
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.js";
 import {
-  chaveDoDia,
   editaisComEtapaNaSemana,
   primeiroNome,
   resumoDoDia,
@@ -24,11 +23,10 @@ import { lerMarcosDaArea } from "./marcos.js";
 /*
   O topo da Visão geral (a mesma página nas três áreas), antes do resto:
 
-  - Boas-vindas: aparece quando o perfil e os editais já chegaram. Fechar (×)
-    esconde até o fim do dia (a data fica no navegador; sem armazenamento,
-    fecha só nesta visita) e vale para as três áreas. A conta é dos editais
-    da área atual com etapa na semana; "Ver cronograma" abre o Cronograma da
-    área pelo item do menu.
+  - Boas-vindas: aparece quando o perfil e os editais já chegaram, sem botão
+    de fechar — é onde fica a conta dos editais da área atual com etapa na
+    semana (o bloco "Próximos 7 dias" saiu por isso); "Ver cronograma" abre o
+    Cronograma da área pelo item do menu.
   - Marcos do ano: "🎉 A equipe da Saúde Indígena passou de 7.500 análises
     concluídas em 2026!", num card igual, com ×. Números só da equipe
     (obter_marcos_da_area), nunca de uma pessoa; uma leitura por área e por
@@ -36,24 +34,6 @@ import { lerMarcosDaArea } from "./marcos.js";
     base na primeira vez, marco novo contra o guardado, uma vez por marco) é
     de src/lib/comemoracao.js. Qualquer falha: o card não aparece.
 */
-
-const CHAVE_FECHADA = "agsus_monitora_boas_vindas_fechada";
-
-function fechadaHoje(agora) {
-  try {
-    return localStorage.getItem(CHAVE_FECHADA) === chaveDoDia(agora());
-  } catch {
-    return false;
-  }
-}
-
-function lembrarFechada(agora) {
-  try {
-    localStorage.setItem(CHAVE_FECHADA, chaveDoDia(agora()));
-  } catch {
-    // Sem armazenamento: some agora e volta na próxima visita.
-  }
-}
 
 /* Abre o Cronograma da área pelo item do menu (troca a área e a tela). */
 function abrirCronogramaDaArea(area) {
@@ -67,9 +47,8 @@ const usarDados = () =>
 
 export function BoasVindas({ obterPerfil, agora }) {
   const { linhas, carregado, areaAtual } = usarDados();
-  const [fechada, setFechada] = useState(() => fechadaHoje(agora));
   const perfil = obterPerfil();
-  if (fechada || !perfil || !carregado) return null;
+  if (!perfil || !carregado) return null;
 
   const nome = primeiroNome(perfil.nome || perfil.email?.split("@")[0]);
   const quantidade = editaisComEtapaNaSemana(
@@ -95,18 +74,6 @@ export function BoasVindas({ obterPerfil, agora }) {
           Ver cronograma
         </button>
       ) : null}
-      <button
-        type="button"
-        className="boas-vindas__fechar"
-        data-boas-vindas="fechar"
-        aria-label="Fechar mensagem de boas-vindas"
-        onClick={() => {
-          lembrarFechada(agora);
-          setFechada(true);
-        }}
-      >
-        ×
-      </button>
     </div>
   );
 }
