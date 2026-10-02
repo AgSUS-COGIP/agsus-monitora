@@ -95,10 +95,10 @@ valendo", e os textos longos das listas vazias.
 
 **perguntas:** sugestoes de posicao | usar esta | candidatos da coordenada | posicao do cnes | aldeia do ibge | aldeia da funai | distancia da posicao atual
 **resposta:** Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.
-**fonte:** src/lib/coordenadas-do-mapa.js; src/modulos/mapa-saude-indigena/sugestoes-do-ponto.jsx
+**fonte:** src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.jsx
 
 ## Histórico e desfazer de uma correção
 
 **perguntas:** historico da coordenada | quem mudou o ponto | desfazer correcao | desfazer conferencia | voltar posicao anterior
 **resposta:** Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).
-**fonte:** src/modulos/mapa-saude-indigena/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql
+**fonte:** src/modulos/editor-de-coordenadas/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql

@@ -1981,7 +1981,7 @@ export const VERBETES_AYA = Object.freeze([
       'Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-do-mapa.js; src/modulos/mapa-saude-indigena/sugestoes-do-ponto.jsx",
+      "src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.jsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -1997,7 +1997,7 @@ export const VERBETES_AYA = Object.freeze([
       'Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
     fato: "",
     fonte:
-      "src/modulos/mapa-saude-indigena/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+      "src/modulos/editor-de-coordenadas/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
   },
   {
     arquivo: "regras-do-sistema.md",
