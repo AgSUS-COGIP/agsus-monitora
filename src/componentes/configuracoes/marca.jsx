@@ -6,7 +6,8 @@ import { Imagem } from "./partes.jsx";
 
 /*
   Configurações › Marca: a equipe responsável (pé da barra lateral) e o
-  rodapé, com a prévia da barra lateral ao lado. Os valores são do rascunho
+  rodapé e o cabeçalho da agência nos documentos oficiais (Classificação),
+  com a prévia da barra lateral ao lado. Os valores são do rascunho
   de `estado.js` e vão na publicação da barra fixa.
 
   A cor e o logo da barra são os da seção Aparência (com o rascunho, se
@@ -31,6 +32,13 @@ const GRUPOS = Object.freeze([
     icone: "file-text",
     tom: "neutro",
     campos: ["footer_text"],
+  },
+  {
+    id: "documentos",
+    titulo: "Documentos oficiais",
+    icone: "file-text",
+    tom: "neutro",
+    campos: ["documento_cabecalho"],
   },
 ]);
 
@@ -65,16 +73,29 @@ function Campo({ estado, chave }) {
           </>
         ) : null}
       </div>
-      <input
-        id={id}
-        type={campo.tipo === "url" ? "url" : "text"}
-        placeholder={campo.placeholder}
-        value={estado.valor(chave)}
-        className={erro ? "config-field-invalid" : undefined}
-        aria-invalid={erro ? true : undefined}
-        aria-describedby={descritoPor}
-        onChange={(evento) => estado.mudarCampo(chave, evento.target.value)}
-      />
+      {campo.tipo === "texto-longo" ? (
+        <textarea
+          id={id}
+          rows={3}
+          placeholder={campo.placeholder}
+          value={estado.valor(chave)}
+          className={erro ? "config-field-invalid" : undefined}
+          aria-invalid={erro ? true : undefined}
+          aria-describedby={descritoPor}
+          onChange={(evento) => estado.mudarCampo(chave, evento.target.value)}
+        />
+      ) : (
+        <input
+          id={id}
+          type={campo.tipo === "url" ? "url" : "text"}
+          placeholder={campo.placeholder}
+          value={estado.valor(chave)}
+          className={erro ? "config-field-invalid" : undefined}
+          aria-invalid={erro ? true : undefined}
+          aria-describedby={descritoPor}
+          onChange={(evento) => estado.mudarCampo(chave, evento.target.value)}
+        />
+      )}
       {erro ? (
         <small id={idDoErro} className="config-campo-erro">
           {erro}
