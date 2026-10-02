@@ -43,10 +43,29 @@ export const CONTRATO_RPC = {
       "p_latitude_anterior",
       "p_longitude_anterior",
       "p_motivo",
+      "p_conferido",
     ],
     critica: true,
     resumo:
-      "Corrige a coordenada de um ponto existente, com revisão e histórico privado. Só administrador global.",
+      "Corrige a coordenada de um ponto existente e/ou o marca como conferido (p_conferido), com histórico privado. Só administrador global.",
+  },
+  desfazer_coordenada_mapa_saude_indigena: {
+    argumentos: ["p_historico", "p_motivo"],
+    critica: false,
+    resumo:
+      "Volta a última alteração de um ponto do mapa como alteração nova, com motivo. Só administrador global.",
+  },
+  listar_historico_coordenada_mapa_saude_indigena: {
+    argumentos: ["p_alvo", "p_limite"],
+    critica: false,
+    resumo:
+      "Últimas alterações de um ponto do mapa (quem, quando, de/para, motivo). Só administrador global.",
+  },
+  listar_pendencias_coordenada_mapa_saude_indigena: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Pontos do mapa ainda não conferidos depois da auditoria, com candidatos. Só administrador global.",
   },
   // ── Configurações › Acessos (admin global ou coordenador, com teto) ──────
   obter_matriz_acessos: {
