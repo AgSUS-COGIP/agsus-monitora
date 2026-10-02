@@ -7,7 +7,7 @@ import {
   validarGrupo,
 } from "../../lib/grupos-e-coordenacoes.js";
 import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../modulos/aprovados/partes.jsx";
+import { BotaoDeAcao } from "../../ui/index.js";
 import {
   CampoMotivo,
   ControleSegmentado,

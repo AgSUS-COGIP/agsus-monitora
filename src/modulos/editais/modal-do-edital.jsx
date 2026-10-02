@@ -40,7 +40,7 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.js";
-import { Modal } from "../../componentes/modal.jsx";
+import { Aviso, Campo, Modal } from "../../ui/index.js";
 import { EditorDeCronograma } from "./editor-de-cronograma.jsx";
 import { ImportarAnexos } from "./importar-anexos.jsx";
 
@@ -118,15 +118,6 @@ function cronogramaDoBanco(dados) {
     dataExcepcional: txt(monitor.status_override_data),
     retomada: txt(monitor.status_override_previsao_retomada),
   };
-}
-
-function Campo({ id, rotulo, children, largo = false }) {
-  return (
-    <div className={largo ? "form-row full" : "form-row"}>
-      <label htmlFor={id}>{rotulo}</label>
-      {children}
-    </div>
-  );
 }
 
 export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
@@ -475,14 +466,19 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             aria-labelledby="editalMoverTitulo"
           >
             <h4 id="editalMoverTitulo">Mover para outra área</h4>
-            <p className="modal-note">Leva lista, cronograma e convocação.</p>
             {mexido && (
-              <p id="editalMoverBloqueio" className="edital-mover-aviso">
-                Salve ou descarte as alterações do formulário antes de mover.
-              </p>
+              <Aviso
+                tom="warning"
+                papel="status"
+                className="edital-mover-aviso"
+              >
+                <span id="editalMoverBloqueio">
+                  Salve ou descarte as alterações do formulário antes de mover.
+                </span>
+              </Aviso>
             )}
-            <div className="form-grid">
-              <Campo id="mMoverArea" rotulo="Nova área">
+            <div className="ui-grade-de-campos editais-formulario">
+              <Campo rotulo="Nova área">
                 <select
                   id="mMoverArea"
                   value={destino}
@@ -498,7 +494,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
                   ))}
                 </select>
               </Campo>
-              <Campo id="mMoverMotivo" rotulo="Motivo da mudança" largo>
+              <Campo rotulo="Motivo da mudança" largo>
                 <textarea
                   id="mMoverMotivo"
                   placeholder="Ex.: edital cadastrado na área errada"
@@ -530,9 +526,9 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             </div>
           </section>
         )}
-        <div className="form-grid">
+        <div className="ui-grade-de-campos editais-formulario">
           <div className="subsection">Identificação do edital</div>
-          <Campo id="mProcesso" rotulo="Processo">
+          <Campo rotulo="Processo">
             <input
               id="mProcesso"
               data-foco-inicial
@@ -541,7 +537,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("processo")}
             />
           </Campo>
-          <Campo id="mEdital" rotulo="Edital">
+          <Campo rotulo="Edital">
             <input
               id="mEdital"
               placeholder="Número do edital"
@@ -549,7 +545,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("edital")}
             />
           </Campo>
-          <Campo id="mResponsavel" rotulo="Responsável">
+          <Campo rotulo="Responsável">
             {/*
               O responsável decide de que catálogo vêm as unidades. Trocá-lo
               limpa a unidade: a escolhida não existe na outra lista.
@@ -574,7 +570,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               ))}
             </select>
           </Campo>
-          <Campo id="mUnidade" rotulo="Unidade">
+          <Campo rotulo="Unidade">
             {/* Só as unidades da área do edital; "Outra unidade" abre o campo para digitar. */}
             <select
               id="mUnidade"
@@ -602,7 +598,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             </select>
           </Campo>
           {digitandoUnidade && (
-            <Campo id="mUnidadeNova" rotulo="Nome da nova unidade">
+            <Campo rotulo="Nome da nova unidade">
               <input
                 id="mUnidadeNova"
                 placeholder="Nome da unidade"
@@ -623,7 +619,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               ) : null}
             </Campo>
           )}
-          <Campo id="mUf" rotulo="UF">
+          <Campo rotulo="UF">
             <input
               id="mUf"
               maxLength={2}
@@ -638,7 +634,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               }
             />
           </Campo>
-          <Campo id="mLink" rotulo="Link do edital">
+          <Campo rotulo="Link do edital">
             <input
               id="mLink"
               placeholder="https://..."
@@ -648,7 +644,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
           </Campo>
 
           <div className="subsection">Situação operacional</div>
-          <Campo id="mVagas" rotulo="Vagas previstas">
+          <Campo rotulo="Vagas previstas">
             <input
               id="mVagas"
               type="number"
@@ -657,7 +653,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("vagas")}
             />
           </Campo>
-          <Campo id="mDataInicio" rotulo="Data de início">
+          <Campo rotulo="Data de início">
             <input
               id="mDataInicio"
               type="date"
@@ -665,7 +661,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("dataInicio")}
             />
           </Campo>
-          <Campo id="mDataFim" rotulo="Data de encerramento">
+          <Campo rotulo="Data de encerramento">
             <input
               id="mDataFim"
               type="date"
@@ -674,7 +670,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             />
           </Campo>
           {/* Com o cronograma automático, status e etapa são o que as datas dizem. */}
-          <Campo id="mStatus" rotulo="Status">
+          <Campo rotulo="Status">
             <input
               id="mStatus"
               placeholder="Ex.: Em andamento, Concluído"
@@ -683,7 +679,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("status")}
             />
           </Campo>
-          <Campo id="mEtapa" rotulo="Etapa">
+          <Campo rotulo="Etapa">
             <input
               id="mEtapa"
               placeholder="Ex.: Análise Curricular"
@@ -692,7 +688,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("etapa")}
             />
           </Campo>
-          <Campo id="mRisco" rotulo="Risco">
+          <Campo rotulo="Risco">
             <select
               id="mRisco"
               value={formulario.risco}
@@ -707,7 +703,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
           </Campo>
 
           <div className="subsection">Indicadores automáticos</div>
-          <div className="readonly-metrics full">
+          <div className="readonly-metrics ui-campo-largo">
             {INDICADORES.map(([chave, rotulo, coluna]) => (
               <div key={chave} className="metric-readonly">
                 <span>{rotulo}</span>
@@ -743,7 +739,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
           />
 
           <div className="subsection">Observações</div>
-          <Campo id="mObs" rotulo="Observações gerenciais" largo>
+          <Campo rotulo="Observações gerenciais" largo>
             <textarea
               id="mObs"
               placeholder="Resumo visível no painel"
@@ -751,7 +747,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("observacoes")}
             />
           </Campo>
-          <Campo id="mObsInternas" rotulo="Observações internas" largo>
+          <Campo rotulo="Observações internas" largo>
             <textarea
               id="mObsInternas"
               placeholder="Notas internas da equipe"
@@ -760,14 +756,7 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             />
           </Campo>
         </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-            marginTop: 18,
-          }}
-        >
+        <div className="ui-acoes editais-formulario-rodape">
           <button
             className="btn secondary"
             type="button"

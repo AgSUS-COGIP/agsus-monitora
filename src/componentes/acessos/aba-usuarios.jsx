@@ -24,10 +24,7 @@ import {
   valorDoSelect,
 } from "../../lib/teto-de-acessos.js";
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
-import {
-  BotaoDeAcao,
-  LinhasEsqueleto,
-} from "../../modulos/aprovados/partes.jsx";
+import { BotaoDeAcao, LinhasEsqueleto } from "../../ui/index.js";
 import { Icone } from "../icone.jsx";
 import {
   CampoMotivo,

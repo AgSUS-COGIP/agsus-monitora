@@ -18,7 +18,8 @@ import {
 } from "../../lib/configuracao-de-convocacao.js";
 import { EditorDeModelo } from "./editor-de-modelo.jsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.jsx";
-import { BotaoDeAcao, CampoEditavel, classes, plural } from "./partes.jsx";
+import { BotaoDeAcao, classes } from "../../ui/index.js";
+import { CampoEditavel, plural } from "./partes.jsx";
 
 /*
   A aba "Lista de convocação" do modal de listas do edital: o MODELO de regras

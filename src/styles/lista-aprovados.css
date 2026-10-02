@@ -1,201 +1,46 @@
 /*
-  Indicadores da Lista de Aprovados no mesmo card compacto da Visão geral
-  (health-reference-kpis.css; DESIGN.md seção 4, "Indicador", e seção 12,
-  exceção aceita): fundo claro, borda sutil, raio de 8px, sem sombra; tile de
-  24px na cor do estado, rótulo 12px/500 e valor 20px/600 tabular. Só tokens:
-  o tema escuro troca os valores sem regra própria.
+  Lista de aprovados (src/modulos/aprovados/): nome, selo de status, ações da
+  linha, paginação e os modais (status, anexos, sub judice, listas do
+  edital). Topo, KPIs, filtros, tabela, skeleton e avisos vêm de src/ui/
+  (ui.css). Só tokens: o tema escuro vem deles.
 */
-.approved-kpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  /* Linhas de altura igual: um rótulo que quebra não deixa um card mais alto. */
-  grid-auto-rows: 1fr;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  /* O fundo é o do card da página, também no escuro. */
-  background: transparent;
-  border-bottom: 1px solid var(--border-subtle);
+
+/* As tabelas das duas abas, no card da TabelaInfinita (.ui-tabela-rolagem). */
+.ui-tabela-rolagem table.approved-table {
+  min-width: 920px;
 }
-/*
-  O JSX (partes.jsx, <Kpi>) põe o ícone num <span> e o par rótulo/valor num
-  <div>; com `display: contents` no <div>, os três entram na mesma grade: ícone
-  e rótulo na primeira linha (6px entre eles), valor embaixo, na largura toda.
-*/
-.approved-kpi {
-  --kpi-accent: var(--state-info);
-  --kpi-soft: var(--state-info-soft);
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  align-items: center;
-  /* Rótulo no topo e valor preso ao pé quando a linha da grade é mais alta. */
-  align-content: space-between;
-  column-gap: var(--space-1-5);
-  row-gap: var(--space-1);
-  min-width: 0;
-  /* A linha de 3px à esquerda come 2px a mais que a borda de 1px: o padding compensa, para o rótulo mais longo não quebrar. */
-  padding: var(--space-3) var(--space-4) var(--space-3)
-    calc(var(--space-4) - 2px);
-  border: 1px solid var(--border-subtle);
-  /* Cor do KPI (pedido do responsável, como no SIGAV): linha de 3px à esquerda e o número na cor do estado. */
-  border-left: 3px solid var(--kpi-accent);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  box-shadow: none;
-  color: var(--text-primary);
-}
-.approved-kpi[data-tone="success"] {
-  --kpi-accent: var(--state-success);
-  --kpi-soft: var(--state-success-soft);
-}
-.approved-kpi[data-tone="danger"] {
-  --kpi-accent: var(--state-danger);
-  --kpi-soft: var(--state-danger-soft);
-}
-.approved-kpi[data-tone="warning"] {
-  --kpi-accent: var(--state-warning);
-  --kpi-soft: var(--state-warning-soft);
-}
-/* "Fim de fila" não é estado bom nem ruim: neutro (DS 11.8). */
-.approved-kpi[data-tone="fila"] {
-  --kpi-accent: var(--state-neutral);
-  --kpi-soft: var(--state-neutral-soft);
-}
-.approved-kpi-icon {
-  grid-column: 1;
-  grid-row: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-md);
-  background: var(--kpi-soft);
-  color: var(--kpi-accent);
-  font-size: 13px;
-}
-.approved-kpi > div {
-  display: contents;
-}
-/*
-  O texto encolhe e quebra dentro da coluna, em vez de descer para baixo do
-  ícone, e para em duas linhas com reticências (o texto inteiro vai no title).
-*/
-.approved-kpi-label {
-  grid-column: 2;
-  grid-row: 1;
-  display: -webkit-box;
-  min-width: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  line-height: var(--leading-caption);
-}
-.approved-kpi strong {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  color: var(--kpi-accent);
-  font-size: var(--text-metric-sm);
-  line-height: 1.2;
-  font-weight: 600;
-  letter-spacing: var(--tracking-metric);
-  font-variant-numeric: tabular-nums;
-}
-/* 2 colunas no celular, como na Visão geral (DESIGN.md seção 4). */
-@media (max-width: 767px) {
-  .approved-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: var(--space-3);
-  }
-}
-/*
-  O card da página: fica o card (exceção aceita, DESIGN.md seção 12), no DS
-  11.6 — borda sutil, raio de 8px, sem sombra. Vence `.card` (app.css) e
-  `.visual-polish-ready .table-card` (visual-polish.css): mesma
-  especificidade deste, carregado antes.
-*/
-.table-card.approved-page-card {
-  overflow: visible;
-  border-color: var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: none;
-}
-/*
-  Tabelas das duas abas no DS 11.4. As regras de app.css (`th` em maiúsculas
-  e peso 800, `td` 650, `.num` centralizado, `.chip` 900) valem para o
-  sistema todo; aqui perdem por especificidade só nesta página. O cabeçalho
-  continua sticky, por isso tem o fundo do card.
-*/
-.approved-page-card th {
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.approved-page-card td {
-  border-bottom-color: var(--border-subtle);
-  font-weight: 400;
-}
-.approved-page-card tr:hover td {
-  background: var(--surface-hover);
-}
-.approved-page-card .num {
+.approved-table .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.approved-page-card .chip {
-  font-weight: 500;
+.approved-th-acoes {
+  text-align: center;
 }
-.approved-page-card .table-meta {
-  color: var(--text-secondary);
-  font-weight: 500;
+.approved-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
-/* Rótulos dos filtros em sentence case (o `label` de app.css é em maiúsculas, 900). */
-.approved-filters .form-row > label {
-  color: var(--text-primary);
-  font-size: var(--text-label);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+.approved-head-actions.hidden {
+  display: none;
 }
-.approved-page-head {
-  gap: 18px;
-  align-items: flex-start;
+.approved-contagem {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
+
 .approved-modal-subtitle {
   margin: 4px 0 0;
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
-}
-.approved-head-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-.approved-filters {
-  display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 3fr) minmax(0, 2.5fr) minmax(
-      0,
-      2.5fr
-    );
-  /* 12px entre filtros (DS 11.3); a faixa fica no fundo do card, sem cor própria. */
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border-top: 0;
-  border-bottom: 1px solid var(--border-subtle);
-  background: transparent;
-}
-.approved-filters .form-row {
-  margin: 0;
-  /* Permite que a coluna do grid encolha mesmo com cargos de nome longo. */
-  min-width: 0;
 }
 .approved-table td {
   vertical-align: middle;
@@ -300,32 +145,27 @@ table.mobile-card-table td.approved-actions {
   text-align: start;
 }
 .approved-no-action {
-  color: #9aa8b6;
+  color: var(--text-secondary);
 }
 .approved-empty {
   text-align: center;
-  padding: 26px !important;
-  color: #718096;
-}
-/* A primeira carga falhou (`ErroAoCarregar`): o motivo e "Tentar de novo". */
-.approved-erro {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-3);
-  color: var(--text-primary);
-}
-.approved-erro p {
-  margin: 0;
-}
-.approved-erro small {
-  display: block;
+  padding: var(--space-6);
   color: var(--text-secondary);
 }
 .approved-modal-card {
   width: min(620px, calc(100vw - 32px));
 }
+/*
+  O formulário do edital (importação + convocação) é largo: a aba de
+  convocação tem a tabela de vagas e o editor do modelo. O painel da
+  importação fica com a largura que usa, e o modal não muda de tamanho ao
+  trocar de aba.
+*/
 .approved-import-card {
-  width: min(760px, calc(100vw - 32px));
+  width: min(1180px, calc(100vw - 28px));
+}
+.approved-import-painel-arquivo {
+  max-width: 760px;
 }
 .approved-modal-actions {
   display: flex;
@@ -347,7 +187,6 @@ table.mobile-card-table td.approved-actions {
   font-size: var(--text-sm);
   font-weight: 500;
 }
-
 /* Anexos do candidato: os PDFs escolhidos no modal de status e o modal de anexos. */
 .approved-anexos-escolhidos,
 .approved-anexos-lista {
@@ -392,7 +231,6 @@ table.mobile-card-table td.approved-actions {
   color: var(--text-secondary);
   cursor: help;
 }
-
 /*
   Tooltip do campo de anexos: o texto de `data-dica`, na hora, no hover e no
   foco. O `title` nativo demora e às vezes nem aparece dentro do modal.
@@ -433,7 +271,6 @@ table.mobile-card-table td.approved-actions {
     transition: none;
   }
 }
-
 /* "Fazer upload": o botão secundário do app, com o input nativo escondido dentro. */
 .approved-anexar-linha {
   display: flex;
@@ -468,7 +305,6 @@ table.mobile-card-table td.approved-actions {
   transform: none;
   box-shadow: none;
 }
-
 /*
   Ação só de ícone, sem moldura nem fundo: a cor é a do próprio ícone. O PDF
   da tabela é cinza sem anexo e vermelho com anexo.
@@ -511,7 +347,7 @@ table.mobile-card-table td.approved-actions {
 }
 .approved-import-state > span:not(.approved-status) {
   font-size: 12px;
-  color: #607080;
+  color: var(--text-secondary);
 }
 .approved-import-links {
   display: flex;
@@ -520,7 +356,7 @@ table.mobile-card-table td.approved-actions {
   margin-top: 14px;
 }
 .approved-import-actions {
-  border-top: 1px solid #e5ebf1;
+  border-top: 1px solid var(--border-subtle);
   padding-top: 16px;
 }
 .approved-action-spacer {
@@ -530,25 +366,14 @@ table.mobile-card-table td.approved-actions {
   font-weight: 500;
 }
 .btn.red {
-  background: #b43b33;
-  color: white;
-  border-color: #b43b33;
+  background: var(--color-action-danger);
+  color: var(--text-inverse);
+  border-color: var(--color-action-danger);
 }
 .btn.red:hover {
   filter: brightness(0.95);
 }
-@media (max-width: 1180px) {
-  .approved-filters {
-    grid-template-columns: 1fr 1fr;
-  }
-}
 @media (max-width: 700px) {
-  .approved-filters {
-    grid-template-columns: 1fr;
-  }
-  .approved-page-head {
-    align-items: stretch;
-  }
   .approved-head-actions {
     justify-content: space-between;
   }
@@ -562,7 +387,6 @@ table.mobile-card-table td.approved-actions {
     flex: 1 1 100%;
   }
 }
-
 /* Lista ativa do edital: superfície de sucesso, sem gradiente e sem sombra. */
 .approved-import-state.has-list {
   display: block;
@@ -586,8 +410,8 @@ table.mobile-card-table td.approved-actions {
   height: 40px;
   flex: 0 0 40px;
   border-radius: 12px;
-  background: #dff7eb;
-  color: #0c8f5b;
+  background: var(--surface-card);
+  color: var(--state-success);
   font-size: 18px;
 }
 .approved-import-summary-copy {
@@ -598,7 +422,7 @@ table.mobile-card-table td.approved-actions {
   gap: 2px;
 }
 .approved-import-summary-title {
-  color: #17324d;
+  color: var(--text-primary);
   font-size: 15px;
   font-weight: 600;
 }
@@ -608,7 +432,7 @@ table.mobile-card-table td.approved-actions {
   gap: 12px;
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid rgba(15, 118, 82, 0.14);
+  border-top: 1px solid var(--border-subtle);
 }
 .approved-import-summary-detail {
   display: flex;
@@ -617,13 +441,13 @@ table.mobile-card-table td.approved-actions {
   gap: 3px;
 }
 .approved-import-summary-detail > span {
-  color: #708399;
+  color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 500;
 }
 .approved-import-summary-detail > strong {
   overflow: hidden;
-  color: #253b53;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -639,13 +463,13 @@ table.mobile-card-table td.approved-actions {
   margin-top: 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: #fff6e6;
-  color: #8a5a00;
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
   font-size: 11px;
   font-weight: 500;
 }
 .approved-import-replace-warning i {
-  color: #d38800;
+  color: var(--state-warning);
 }
 @media (max-width: 700px) {
   .approved-import-summary-head {
@@ -665,22 +489,6 @@ table.mobile-card-table td.approved-actions {
     min-width: 0;
   }
 }
-[data-theme="dark"] .approved-import-summary-icon {
-  background: #164f3c;
-  color: #7ee1b5;
-}
-[data-theme="dark"] .approved-import-summary-title,
-[data-theme="dark"] .approved-import-summary-detail > strong {
-  color: #e6eef7;
-}
-[data-theme="dark"] .approved-import-summary-detail > span {
-  color: #a8b4c4;
-}
-[data-theme="dark"] .approved-import-replace-warning {
-  background: #4a3616;
-  color: #ffd98b;
-}
-
 /* Paginação da tabela. Só aparece quando há mais de uma página — ver renderPaginacao. */
 .approved-paginacao {
   display: flex;
@@ -688,7 +496,7 @@ table.mobile-card-table td.approved-actions {
   justify-content: space-between;
   gap: var(--space-3);
   flex-wrap: wrap;
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-3) 0 0;
   border-top: 1px solid var(--border-subtle);
 }
 .approved-paginacao[hidden] {

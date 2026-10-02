@@ -10,7 +10,8 @@ import { classes } from "./classes.js";
 
   `cor` é o nome de antes (k-cyan, k-green, k-yellow, k-orange, k-red,
   k-purple, k-slate) e vira o tom do tile (`data-tom`: info, sucesso, alerta,
-  perigo, destaque, neutro); `icone` é a classe `fa-*` do tile.
+  perigo, destaque, neutro); `icone` é a classe `fa-*` do tile. `idDoValor`
+  põe um id no número (contrato de teste/DOM de telas antigas).
 */
 
 const TOM_DA_COR = {
@@ -34,6 +35,7 @@ export function Kpi({
   ativo,
   aoClicar,
   carregando = false,
+  idDoValor,
 }) {
   const conteudo = (
     <>
@@ -49,9 +51,15 @@ export function Kpi({
         </span>
       </span>
       {carregando ? (
-        <span className="ui-kpi-valor ui-esqueleto" aria-hidden="true" />
+        <span
+          id={idDoValor}
+          className="ui-kpi-valor ui-esqueleto"
+          aria-hidden="true"
+        />
       ) : (
-        <b className="ui-kpi-valor">{valor}</b>
+        <b id={idDoValor} className="ui-kpi-valor">
+          {valor}
+        </b>
       )}
     </>
   );

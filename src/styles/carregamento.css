@@ -346,30 +346,8 @@ html[data-esqueleto="calendario"] [data-formato="calendario"] {
 }
 
 /*
-  Tabela antes da primeira carga (Lista de aprovados): linhas de skeleton no
-  lugar das de verdade, com a mesma grade de colunas do `<thead>`.
-*/
-.esqueleto-da-tabela td .esqueleto {
-  width: 70%;
-  height: 12px;
-}
-.esqueleto-da-tabela td:first-child .esqueleto {
-  width: 85%;
-  height: 14px;
-}
-.esqueleto-da-tabela td:nth-child(3n) .esqueleto {
-  width: 50%;
-}
-.esqueleto-da-tabela td:last-child .esqueleto {
-  width: 32px;
-  height: 32px;
-  margin: 0 auto;
-  border-radius: var(--radius-md);
-}
-
-/*
-  Ação em curso dentro do próprio botão (`BotaoDeAcao`), no lugar da tela
-  cheia. Gira por `transform`; com movimento reduzido, fica parado.
+  Ação em curso dentro do próprio botão (`BotaoDeAcao`, src/ui/), no lugar
+  da tela cheia. Gira por `transform`; com movimento reduzido, fica parado.
 */
 .botao-girando {
   display: inline-block;

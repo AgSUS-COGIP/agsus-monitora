@@ -4,10 +4,13 @@
   ponto de entrada). Guia: docs/arquitetura-react.md, seção "Como usar ui/".
 */
 export { Aviso } from "./aviso.jsx";
+export { BotaoDeAcao } from "./botao-de-acao.jsx";
 export { Campo } from "./campo.jsx";
 export { CardDeGrafico } from "./card-de-grafico.jsx";
 export { classes } from "./classes.js";
 export { Carregando, EstadoVazio } from "./estados.jsx";
+export { ErroAoCarregar } from "./erro-ao-carregar.jsx";
+export { BlocosEsqueleto, LinhasEsqueleto } from "./esqueleto.jsx";
 export { Gaveta, TopoDaGaveta, usarClassesDaGaveta } from "./gaveta.jsx";
 export { Grafico, paletaDosGraficos } from "./grafico.jsx";
 export { GradeDeKpis, Kpi } from "./kpi.jsx";

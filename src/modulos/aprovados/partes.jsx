@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { canChangeCandidateStatus } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
@@ -13,110 +13,14 @@ import { Icone } from "../../componentes/icone.jsx";
 
 /*
   Peças que as duas abas (aprovados e convocação) e os modais repetem. As
-  classes são as de `lista-aprovados.css` e `lista-convocacao.css`.
+  classes são as de `lista-aprovados.css` e `lista-convocacao.css`. As genéricas
+  (BotaoDeAcao, LinhasEsqueleto, ErroAoCarregar, Kpi) vêm de src/ui/.
 */
 
-export const classes = (...lista) => lista.filter(Boolean).join(" ");
+export { classes } from "../../ui/index.js";
 
 export const plural = (total, singular, varios) =>
   `${formatNumberBR(total)} ${total === 1 ? singular : varios}`;
-
-/** Indicador da fileira de KPIs. Antes do dado chegar, skeleton: carregando não é zero. */
-export function Kpi({ id, tom, icone, rotulo, valor, carregado = true }) {
-  return (
-    <div className="approved-kpi" data-tone={tom}>
-      <span className="approved-kpi-icon">
-        <i className={`fa-solid ${icone}`} aria-hidden="true" />
-      </span>
-      <div>
-        <span
-          className="approved-kpi-label"
-          title={typeof rotulo === "string" ? rotulo : undefined}
-        >
-          {rotulo}
-        </span>
-        <strong id={id} aria-busy={carregado ? undefined : true}>
-          {carregado ? (
-            formatNumberBR(valor)
-          ) : (
-            <span className="esqueleto esqueleto--numero" aria-hidden="true" />
-          )}
-        </strong>
-      </div>
-    </div>
-  );
-}
-
-/** Linhas de skeleton da tabela, antes da primeira carga. */
-export function LinhasEsqueleto({ colunas, linhas = 8 }) {
-  return Array.from({ length: linhas }, (_, linha) => (
-    <tr key={linha} className="esqueleto-da-tabela" aria-hidden="true">
-      {Array.from({ length: colunas }, (_, coluna) => (
-        <td key={coluna}>
-          <span className="esqueleto" />
-        </td>
-      ))}
-    </tr>
-  ));
-}
-
-/** A primeira carga falhou: o que houve e como tentar de novo. */
-export function ErroAoCarregar({ estado, mensagem, oQue }) {
-  return (
-    <div className="approved-empty approved-erro" role="alert">
-      <p>
-        Não foi possível carregar {oQue}. <small>{mensagem}</small>
-      </p>
-      <button
-        type="button"
-        className="btn secondary"
-        onClick={() => void estado.carregar()}
-      >
-        <i className="fa-solid fa-rotate-right" aria-hidden="true" /> Tentar de
-        novo
-      </button>
-    </div>
-  );
-}
-
-/*
-  Botão de uma ação que escreve no banco (`estado.executar`). Enquanto ela
-  corre, mostra o rótulo dela e fica desativado; enquanto outra corre, só
-  desativado. É o que a tela de carregamento fazia, sem cobrir a página.
-  `soIcone`: o botão da tabela, que não tem espaço para o rótulo.
-*/
-export function BotaoDeAcao({
-  estado,
-  acao,
-  soIcone = false,
-  disabled = false,
-  children,
-  ...atributos
-}) {
-  const { acao: emCurso } = useSyncExternalStore(estado.assinar, estado.obter);
-  const minha = emCurso?.tipo === acao;
-  return (
-    <button
-      type="button"
-      {...atributos}
-      disabled={disabled || Boolean(emCurso)}
-      aria-busy={minha || undefined}
-    >
-      {minha ? (
-        <>
-          <span className="botao-girando" aria-hidden="true" />
-          {soIcone ? (
-            <span className="sr-only">{emCurso.rotulo}</span>
-          ) : (
-            ` ${emCurso.rotulo}`
-          )}
-        </>
-      ) : (
-        children
-      )}
-    </button>
-  );
-}
 
 export function SeloDeStatus({ status }) {
   return (

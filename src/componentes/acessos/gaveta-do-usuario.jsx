@@ -40,7 +40,7 @@ import {
 } from "../../lib/ver-como.js";
 import { Modal } from "../modal.jsx";
 import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../modulos/aprovados/partes.jsx";
+import { BotaoDeAcao } from "../../ui/index.js";
 import {
   AvisoSemArea,
   AvisoSemCoordenacao,

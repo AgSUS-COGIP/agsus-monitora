@@ -1,15 +1,10 @@
 /*
-  Estilos da lista de convocação: as abas que a página e o formulário do edital
-  passaram a ter, o quadro de vagas imediatas do modal e a tabela agrupada por
-  vaga.
-
-  Ficheiro à parte de `lista-aprovados.css` de propósito. Aquele está escrito
-  denso, uma regra por linha, e não passa pelo Prettier; anexar aqui obrigaria a
-  reformatá-lo inteiro para atravessar `npm run format:check`, trocando 60
-  linhas novas por 900 de ruído em cima de código que ninguém mexeu.
+  Lista de convocação (src/modulos/aprovados/): as abas dos modais (também
+  usadas por Acessos), o tipo de convocação e o quadro de vagas do formulário
+  do edital, a tabela agrupada por vaga e o editor do modelo de regras. Só
+  tokens: o tema escuro vem deles.
 */
 
-/* ── Abas: página de aprovados e formulário do edital ───────────────────── */
 /*
   Abas do DS 10.5: sublinhado, sem caixas. Divisor inferior sutil no
   contêiner; aba de 40px, texto 500 em cinza; a ativa fica na cor do texto com
@@ -72,15 +67,10 @@
     padding-inline: 8px;
     white-space: nowrap;
   }
-  /* "Lista de" sai no celular: "Aprovados" e "Convocação" bastam lado a lado. */
-  .approved-tabs:not(.approved-tabs-modal) .approved-tab-prefixo {
-    display: none;
-  }
   .approved-tabs:not(.approved-tabs-modal) .approved-tab {
     text-transform: capitalize;
   }
 }
-
 /* ── Formulário: tipo de convocação e quadro de vagas ───────────────────── */
 .convocacao-tipo {
   display: grid;
@@ -92,7 +82,7 @@
 }
 .convocacao-tipo legend {
   padding: 0 0 8px;
-  color: #708399;
+  color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 500;
 }
@@ -101,9 +91,9 @@
   align-items: flex-start;
   gap: 10px;
   padding: 13px 14px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
-  background: #fff;
+  background: var(--surface-card);
   cursor: pointer;
 }
 /* Escolhido: contorno de 2px (1px da borda + 1px de outline), sem sombra. */
@@ -119,7 +109,7 @@
 }
 .convocacao-tipo-card input {
   margin-top: 3px;
-  accent-color: #0b69b7;
+  accent-color: var(--state-info);
 }
 .convocacao-tipo-copy {
   display: flex;
@@ -128,7 +118,7 @@
   min-width: 0;
 }
 .convocacao-tipo-copy strong {
-  color: #17324d;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -145,14 +135,14 @@
 }
 .convocacao-bloco-head strong {
   display: block;
-  color: #17324d;
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
 }
 .convocacao-bloco-head small {
   display: block;
   margin-top: 2px;
-  color: #66788d;
+  color: var(--text-secondary);
   font-size: 11px;
 }
 .convocacao-bloco-head .btn {
@@ -166,7 +156,7 @@
 .convocacao-vagas-wrap {
   max-height: min(52vh, 620px);
   overflow: auto;
-  border: 1px solid var(--border, #e3e9ef);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
 }
 /* Cabeçalho da tabela no DS 11.4: sem fundo colorido (o do card, por ser sticky). */
@@ -188,59 +178,23 @@
 .convocacao-vagas-table input {
   width: 62px;
   padding: 6px 8px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: #fff;
-  color: #13233a;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 .convocacao-vagas-table input:disabled {
-  background: #f2f5f8;
-  color: #8b9aab;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
 }
 @media (max-width: 700px) {
   .convocacao-tipo {
     grid-template-columns: 1fr;
   }
-}
-[data-theme="dark"] .convocacao-tipo-card {
-  background: #111c2d;
-  border-color: #2b3a50;
-}
-[data-theme="dark"] .convocacao-tipo-card:has(input:checked) {
-  background: rgba(11, 105, 183, 0.18);
-}
-[data-theme="dark"] .convocacao-tipo-copy strong,
-[data-theme="dark"] .convocacao-bloco-head strong {
-  color: #e6eef7;
-}
-[data-theme="dark"] .convocacao-bloco-head small {
-  color: #a8b4c4;
-}
-[data-theme="dark"] .convocacao-vagas-table input {
-  background: #111c2d;
-  border-color: #2b3a50;
-  color: #e6eef7;
-}
-[data-theme="dark"] .convocacao-vagas-wrap {
-  border-color: #2b3a50;
-}
-[data-theme="dark"] .convocacao-vagas-table input:disabled {
-  background: #1b2740;
-  color: #7b8ba0;
-}
-
-/* ── Tabela da convocação ───────────────────────────────────────────────── */
-.convocacao-filters {
-  grid-template-columns: minmax(0, 4fr) minmax(0, 3fr) minmax(0, 3fr);
-  width: 100%;
-  min-width: 0;
-}
-.convocacao-filters > .form-row {
-  min-width: 0;
 }
 /*
   O bloco por vaga não é mais uma linha da tabela: é um <div> que antecede o
@@ -297,12 +251,12 @@
 .convocacao-reversao {
   display: block;
   margin-top: 3px;
-  color: #b66a00;
+  color: var(--state-warning);
   font-size: 10px;
   font-weight: 500;
 }
 .convocacao-linha-imediata td {
-  background: rgba(231, 248, 239, 0.32);
+  background: color-mix(in srgb, var(--state-success-soft) 45%, transparent);
 }
 .convocacao-linha-fora td {
   opacity: 0.62;
@@ -315,11 +269,11 @@
   font-size: 12px;
 }
 .convocacao-modalidade.vazia {
-  color: #9aa8b6;
+  color: var(--text-secondary);
   font-style: italic;
 }
 .convocacao-siglas {
-  color: #0b69b7;
+  color: var(--state-info);
   font-size: var(--text-caption);
   font-weight: 500;
 }
@@ -330,17 +284,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #b66a00;
+  color: var(--state-warning);
   font-size: 10px;
   font-weight: 500;
 }
-[data-theme="dark"] .convocacao-linha-imediata td {
-  background: rgba(22, 79, 60, 0.22);
-}
-[data-theme="dark"] .convocacao-siglas {
-  color: #8ec8ff;
-}
-
 /* ── Percentuais, total por vaga e quadro derivado ──────────────────────── */
 .convocacao-bloco-acoes {
   display: flex;
@@ -352,17 +299,17 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #708399;
+  color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 500;
 }
 .convocacao-padrao-campo input {
   width: 68px;
   padding: 6px 8px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: #fff;
-  color: #13233a;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 500;
   text-align: right;
@@ -376,13 +323,13 @@
   min-width: 260px;
 }
 .convocacao-quadro-derivado {
-  color: #11643a;
+  color: var(--state-success);
   font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .convocacao-quadro-derivado.vazio {
-  color: #8b9aab;
+  color: var(--text-secondary);
   font-weight: 600;
   font-style: italic;
 }
@@ -392,7 +339,7 @@
   gap: 3px;
 }
 .convocacao-quadro-campo > span {
-  color: #8b9aab;
+  color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 500;
 }
@@ -402,11 +349,11 @@
 .convocacao-vagas-table input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #0b69b7;
+  accent-color: var(--state-info);
   cursor: pointer;
 }
 .convocacao-multipla {
-  color: #0b69b7;
+  color: var(--state-info);
   font-size: 10px;
   font-weight: 500;
 }
@@ -415,48 +362,32 @@
     min-width: 0;
   }
 }
-[data-theme="dark"] .convocacao-padrao-campo,
-[data-theme="dark"] .convocacao-quadro-campo > span {
-  color: #a8b4c4;
-}
-[data-theme="dark"] .convocacao-padrao-campo input {
-  background: #111c2d;
-  border-color: #2b3a50;
-  color: #e6eef7;
-}
-[data-theme="dark"] .convocacao-quadro-derivado {
-  color: #7ee1b5;
-}
-[data-theme="dark"] .convocacao-multipla {
-  color: #8ec8ff;
-}
-
 /* ── Seleção e edição do modelo de regras ───────────────────────────────── */
 .convocacao-modelo-select {
   min-width: 260px;
   padding: 7px 10px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  background: #fff;
-  color: #13233a;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
 }
 .convocacao-modelo-resumo {
   margin: 0 0 14px;
-  color: #66788d;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 500;
 }
 .convocacao-modelo-resumo.compartilhado {
-  color: #b66a00;
+  color: var(--state-warning);
 }
 .convocacao-editor {
   margin: 0 0 18px;
   padding: 16px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
-  background: rgba(248, 250, 252, 0.8);
+  background: var(--surface-raised);
 }
 .convocacao-editor.hidden {
   display: none;
@@ -473,8 +404,8 @@
   margin: 0;
   padding: 9px 11px;
   border-radius: 10px;
-  background: #fff6e6;
-  color: #8a5a00;
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
   font-size: 11px;
   font-weight: 500;
   line-height: 1.4;
@@ -492,14 +423,14 @@
   min-width: 0;
 }
 .convocacao-editor-campo > span {
-  color: #708399;
+  color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 500;
 }
 .convocacao-editor-campo > span small {
   display: block;
   margin-top: 2px;
-  color: #8b9aab;
+  color: var(--text-secondary);
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0;
@@ -508,17 +439,17 @@
 .convocacao-editor-campo code {
   padding: 0 3px;
   border-radius: 3px;
-  background: #e7edf4;
+  background: var(--surface-raised);
   font-size: 9px;
 }
 .convocacao-editor-campo input,
 .convocacao-editor-campo select {
   width: 100%;
   padding: 7px 9px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 9px;
-  background: #fff;
-  color: #13233a;
+  background: var(--surface-card);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 500;
 }
@@ -545,9 +476,9 @@
 }
 .convocacao-categoria {
   padding: 12px;
-  border: 1px solid var(--border, #e3e9ef);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface-card);
 }
 .convocacao-categoria-topo {
   display: flex;
@@ -559,7 +490,7 @@
   flex: 1 1 180px;
   min-width: 0;
   padding: 7px 9px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 9px;
   font-size: 13px;
   font-weight: 500;
@@ -567,7 +498,7 @@
 .convocacao-categoria-sigla {
   width: 64px;
   padding: 7px 9px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 9px;
   font-size: 12px;
   font-weight: 500;
@@ -583,7 +514,7 @@
 .convocacao-categoria-taxa input {
   width: 74px;
   padding: 7px 9px;
-  border: 1px solid var(--border, #dbe6f1);
+  border: 1px solid var(--border-subtle);
   border-radius: 9px;
   font-size: 12px;
   font-weight: 600;
@@ -591,15 +522,15 @@
   font-variant-numeric: tabular-nums;
 }
 .convocacao-categoria-taxa span {
-  color: #8b9aab;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
 }
 .convocacao-categoria-tag {
   padding: 4px 9px;
   border-radius: 999px;
-  background: #e9f4ff;
-  color: #0b69b7;
+  background: var(--state-info-soft);
+  color: var(--state-info);
   font-size: 10px;
   font-weight: 500;
 }
@@ -609,7 +540,7 @@
   gap: 10px;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px dashed var(--border, #e3e9ef);
+  border-top: 1px dashed var(--border-subtle);
 }
 .convocacao-cascata {
   display: flex;
@@ -622,7 +553,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #445;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -634,7 +565,7 @@
   flex-wrap: wrap;
   margin-top: 16px;
   padding-top: 14px;
-  border-top: 1px solid var(--border, #e5ebf1);
+  border-top: 1px solid var(--border-subtle);
 }
 .convocacao-editor-acoes .btn {
   padding: 7px 13px;
@@ -649,61 +580,6 @@
     width: 100%;
   }
 }
-[data-theme="dark"] .convocacao-editor {
-  background: rgba(15, 23, 42, 0.58);
-  border-color: #2b3a50;
-}
-[data-theme="dark"] .convocacao-categoria {
-  background: #111c2d;
-  border-color: #2b3a50;
-}
-[data-theme="dark"] .convocacao-modelo-select,
-[data-theme="dark"] .convocacao-editor-campo input,
-[data-theme="dark"] .convocacao-editor-campo select,
-[data-theme="dark"] .convocacao-categoria-rotulo,
-[data-theme="dark"] .convocacao-categoria-sigla,
-[data-theme="dark"] .convocacao-categoria-taxa input {
-  background: #111c2d;
-  border-color: #2b3a50;
-  color: #e6eef7;
-}
-[data-theme="dark"] .convocacao-modelo-resumo,
-[data-theme="dark"] .convocacao-editor-campo > span,
-[data-theme="dark"] .convocacao-cascata-item {
-  color: #a8b4c4;
-}
-[data-theme="dark"] .convocacao-editor-aviso {
-  background: #4a3616;
-  color: #ffd98b;
-}
-[data-theme="dark"] .convocacao-categoria-tag {
-  background: rgba(11, 105, 183, 0.22);
-  color: #8ec8ff;
-}
-
-/* ── Largura do formulário do edital ────────────────────────────────────── */
-/*
-  O modal base já vale 1040px, mas `.approved-import-card` o estreitava para
-  760 — largura pensada para a aba de importação, que é meia dúzia de campos. A
-  aba de convocação é outra coisa: tabela de vagas com quatro colunas e um
-  editor com uma ficha por categoria, e a 760px tudo isso vivia em scroll dentro
-  de scroll.
-
-  Alargar o cartão e limitar o painel da importação ao que ele já usava resolve
-  os dois sem o modal mudar de tamanho ao trocar de aba — um diálogo que salta
-  quando se clica noutro separador incomoda mais do que a largura antiga.
-
-  Esta regra vence a de `lista-aprovados.css` por ordem de carregamento, e não
-  por especificidade: `main.js` importa aquele ficheiro primeiro.
-*/
-.approved-import-card {
-  width: min(1180px, calc(100vw - 28px));
-}
-#approvedImportPanelArquivo {
-  max-width: 760px;
-}
-
-/* ── Ajuda visível e ordem da cascata ───────────────────────────────────── */
 /*
   A ajuda fica na tela em vez de num `title`: são escolhas que o rótulo sozinho
   não explica — "quando a pessoa declara duas cotas" não diz o que acontece —, e
@@ -711,20 +587,17 @@
 */
 .convocacao-editor-ajuda {
   margin-top: 2px;
-  color: #66788d;
+  color: var(--text-secondary);
   font-size: 10px;
   font-weight: 600;
   line-height: 1.45;
   letter-spacing: 0;
   text-transform: none;
 }
-.convocacao-editor-campo.larga {
-  grid-column: 1 / -1;
-}
 /* A ordem da cascata decide quem recebe a vaga primeiro; sem o número, era
    invisível — dependia da ordem em que se clicou nas caixas. */
 .convocacao-cascata-item.marcada {
-  color: #0b69b7;
+  color: var(--state-info);
 }
 .convocacao-cascata-ordem {
   display: inline-flex;
@@ -733,22 +606,11 @@
   min-width: 18px;
   padding: 1px 4px;
   border-radius: 999px;
-  background: #e9f4ff;
-  color: #0b69b7;
+  background: var(--state-info-soft);
+  color: var(--state-info);
   font-size: 9px;
   font-weight: 500;
 }
-[data-theme="dark"] .convocacao-editor-ajuda {
-  color: #98a6b8;
-}
-[data-theme="dark"] .convocacao-cascata-item.marcada {
-  color: #8ec8ff;
-}
-[data-theme="dark"] .convocacao-cascata-ordem {
-  background: rgba(11, 105, 183, 0.24);
-  color: #8ec8ff;
-}
-
 /*
   O aviso que substitui as vagas do edital enquanto não há regra: o quadro de
   cada vaga é derivado do modelo, e pedir números antes disso mostraria um
@@ -757,22 +619,16 @@
 .convocacao-vagas-bloqueadas {
   margin: 18px 0 0;
   padding: 14px 16px;
-  border: 1px dashed var(--border, #dbe6f1);
+  border: 1px dashed var(--border-subtle);
   border-radius: 12px;
-  background: rgba(248, 250, 252, 0.8);
-  color: #66788d;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
 }
 .convocacao-vagas-bloqueadas.hidden {
   display: none;
 }
-[data-theme="dark"] .convocacao-vagas-bloqueadas {
-  border-color: #2b3a50;
-  background: rgba(15, 23, 42, 0.58);
-  color: #a8b4c4;
-}
-
 /* Escolha da base de um modelo novo, entre os formatos de edital já lidos. */
 .convocacao-editor-base {
   display: flex;
@@ -781,20 +637,13 @@
   flex-wrap: wrap;
   padding-bottom: 12px;
   margin-bottom: 4px;
-  border-bottom: 1px dashed var(--border, #e3e9ef);
+  border-bottom: 1px dashed var(--border-subtle);
 }
 .convocacao-editor-base > span {
-  color: #708399;
+  color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: 500;
 }
-[data-theme="dark"] .convocacao-editor-base {
-  border-color: #2b3a50;
-}
-[data-theme="dark"] .convocacao-editor-base > span {
-  color: #a8b4c4;
-}
-
 /* ── Prévia da ordem de chamada (previa-da-convocacao.jsx) ─────────────── */
 .convocacao-previa {
   display: grid;
@@ -899,7 +748,6 @@
   background: var(--state-danger-soft);
   color: var(--state-danger);
 }
-
 /* ── Cartões de modelo pronto (editor de modelo novo) ──────────────────── */
 .convocacao-editor-base-lista {
   display: grid;
@@ -934,7 +782,6 @@
   font-size: var(--text-caption);
   line-height: 1.4;
 }
-
 /* ── Ficha da categoria: o essencial por fora, os ajustes em detalhes ──── */
 .convocacao-categoria-cascata {
   display: grid;

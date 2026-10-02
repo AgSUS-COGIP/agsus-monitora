@@ -1,5 +1,4 @@
-import { PainelDeFiltros } from "../../ui/painel-de-filtros.jsx";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { safeHttpUrl } from "../../lib/sanitize.js";
@@ -7,6 +6,7 @@ import {
   canImportApprovedList,
   canManageEditais,
 } from "../../lib/access-roles.js";
+import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import {
   alertaDoTipo,
   filtrarEditais,
@@ -18,14 +18,16 @@ import {
   tomDoRisco,
   tomDoStatusDoEdital,
 } from "../../lib/editais-do-nucleo.js";
+import { formatNumberBR } from "../../lib/formatters.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.js";
 import { criarEstadoDoNucleo } from "./estado.js";
+import { PainelOperacional } from "./painel-operacional.jsx";
 import { ModalDoEdital } from "./modal-do-edital.jsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.jsx";
-import { PainelOperacional } from "./painel-operacional.jsx";
 
 /*
-  "Editais" (Equipe Núcleo), em React — a página `#page-nucleo` e os seus
+  Editais (view `nucleo`), módulo do app — a página `#page-nucleo` e os seus
   modais: o formulário do edital com o cronograma e a linha do tempo.
 
   O React é dono de tudo dentro da `<section>`; o legado só troca a classe
@@ -33,14 +35,55 @@ import { PainelOperacional } from "./painel-operacional.jsx";
   (`window.nucleoController`) ao abrir a página. As linhas são as mesmas do
   mapa, carregadas pelo legado e publicadas em `dados-do-monitoramento.js`.
 
+  Padrão das telas de src/modulos/: topo com a data do resumo, Atualizar e
+  "Novo edital"; os indicadores (KPIs que filtram); a tabela de carregamento
+  contínuo (TabelaInfinita) com a busca. Antes da primeira carga, KPIs e
+  linhas são skeleton.
+
   O corpo da tabela mantém o id `nucleoRows`: a AYA lê as linhas dali para
   saber o que está na tela.
 */
 
-const COLUNAS = 9;
+/* As cores de antes (`.chip.<tom>`, editais-do-nucleo.js) no tom do Selo. */
+const SELO = {
+  green: "aprovado",
+  red: "reprovado",
+  yellow: "pendente",
+  blue: "revisar",
+  cyan: "revisar",
+};
 
-function Chip({ tom, children }) {
-  return <span className={`chip ${tom}`}>{children}</span>;
+const COLUNAS = [
+  { rotulo: "Unidade", largura: "16%" },
+  { rotulo: "Edital", largura: "12%" },
+  { rotulo: "Status", largura: "11%" },
+  { rotulo: "Etapa", largura: "19%" },
+  { rotulo: "Vagas", largura: "7%", numero: true },
+  { rotulo: "Contratados", largura: "8%", numero: true },
+  { rotulo: "Ociosas", largura: "7%", numero: true },
+  { rotulo: "Risco", largura: "8%" },
+  { rotulo: "Ações", largura: "12%" },
+];
+
+/* A busca da tabela: edital, unidade, status, etapa, risco ou processo. */
+function pelaBusca(itens, busca) {
+  if (!String(busca ?? "").trim()) return itens;
+  const achadas = new Set(
+    filtrarEditais(
+      itens.map(({ linha }) => linha),
+      busca,
+    ),
+  );
+  return itens.filter(({ linha }) => achadas.has(linha));
+}
+
+function textoDoStatus(nucleo, carregado) {
+  if (!nucleo.carregadoEm)
+    return carregado && nucleo.statusDoResumo === "error"
+      ? "Alertas indisponíveis"
+      : "Carregando dados...";
+  if (nucleo.atualizandoResumo) return "Atualizando...";
+  return `Atualizado em ${formatarDataHora(nucleo.carregadoEm)}`;
 }
 
 function LinhaDoEdital({ linha, item, perfil, estado }) {
@@ -57,7 +100,9 @@ function LinhaDoEdital({ linha, item, perfil, estado }) {
       data-monitoramento-id={item?.id ?? undefined}
       data-alert-type={item?.alerta_tipo ?? undefined}
     >
-      <td>{linha.unidade}</td>
+      <td>
+        <span className="ui-texto-principal">{linha.unidade}</span>
+      </td>
       <td>
         {url ? (
           <a className="link" href={url} target="_blank" rel="noopener">
@@ -68,9 +113,9 @@ function LinhaDoEdital({ linha, item, perfil, estado }) {
         )}
       </td>
       <td>
-        <Chip tom={tomDoStatusDoEdital(linha.status)}>
+        <Selo tom={SELO[tomDoStatusDoEdital(linha.status)]}>
           {linha.status || "-"}
-        </Chip>
+        </Selo>
       </td>
       <td>
         {linha.etapa}
@@ -82,12 +127,16 @@ function LinhaDoEdital({ linha, item, perfil, estado }) {
         ) : null}
       </td>
       <td className="num">{formatarNumero(linha.vagas_total)}</td>
-      <td className="num green-text">{formatarNumero(linha.contratados)}</td>
-      <td className="num red-text">{formatarNumero(linha.vagas_ociosas)}</td>
-      <td>
-        <Chip tom={tomDoRisco(linha.risco)}>{linha.risco || "-"}</Chip>
+      <td className="num editais-contratados">
+        {formatarNumero(linha.contratados)}
       </td>
-      <td style={{ textAlign: "center" }}>
+      <td className="num editais-ociosas">
+        {formatarNumero(linha.vagas_ociosas)}
+      </td>
+      <td>
+        <Selo tom={SELO[tomDoRisco(linha.risco)]}>{linha.risco || "-"}</Selo>
+      </td>
+      <td>
         <div className="nucleo-row-actions">
           {podeEditar ? (
             <button
@@ -170,110 +219,78 @@ export function Nucleo({ estado, agora }) {
     () => ({ ...doResumo, resumo: resumoDaArea }),
     [doResumo, resumoDaArea],
   );
-  const [busca, setBusca] = useState("");
 
   const indice = useMemo(() => indexarResumo(nucleo.resumo), [nucleo.resumo]);
-  const editais = useMemo(() => filtrarEditais(linhas, busca), [linhas, busca]);
-  const visiveis = useMemo(
+  // A ordem é a de sempre (filtrarEditais ordena); a busca recorta depois.
+  const editais = useMemo(() => filtrarEditais(linhas, ""), [linhas]);
+  const noFiltro = useMemo(
     () =>
       editais
         .map((linha) => ({ linha, item: resumoDoEdital(indice, linha) }))
         .filter(({ item }) => passaNoFiltroOperacional(item, nucleo.filtro)),
     [editais, indice, nucleo.filtro],
   );
-
-  // As linhas novas precisam dos rótulos do modo cartão (≤ 900px).
-  useEffect(() => {
-    document.dispatchEvent(new CustomEvent("agsus:content-updated"));
-  }, [visiveis]);
+  const podeEditar = canManageEditais(nucleo.perfil);
 
   return (
-    <>
-      <div className="table-card card wide-table nucleo-page-card">
-        <div className="table-head">
-          <h3>
-            <i className="fa-solid fa-pen-to-square" aria-hidden="true" />{" "}
-            Controle de editais
-          </h3>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {canManageEditais(nucleo.perfil) ? (
-              <button
-                id="newEditalBtn"
-                className="btn green"
-                type="button"
-                onClick={() => estado.abrirEdital()}
-              >
-                + Novo
-              </button>
-            ) : null}
-          </div>
-        </div>
-        <PainelDeFiltros
-          idDoTitulo="editaisFiltros"
-          quantos={busca.trim() ? 1 : 0}
-          aoLimpar={() => setBusca("")}
-        >
-          <input
-            id="nucleoSearch"
-            type="search"
-            placeholder="Pesquisar edital, unidade, status..."
-            aria-label="Pesquisar edital, unidade, status, etapa ou risco"
-            value={busca}
-            onChange={(evento) => setBusca(evento.target.value)}
+    <div className="ui-tela editais-tela">
+      <TopoDoPainel
+        status={textoDoStatus(nucleo, carregado)}
+        aoAtualizar={() =>
+          void estado.carregarResumo({ force: true }).catch(() => {})
+        }
+        idDaAtualizacao="nucleoOperationalRefresh"
+        atualizarDesativado={nucleo.atualizandoResumo}
+      >
+        {podeEditar ? (
+          <button
+            id="newEditalBtn"
+            className="btn green"
+            type="button"
+            onClick={() => estado.abrirEdital()}
+          >
+            <i className="fa-solid fa-plus" aria-hidden="true" /> Novo edital
+          </button>
+        ) : null}
+      </TopoDoPainel>
+
+      <PainelOperacional estado={estado} nucleo={nucleo} />
+
+      <TabelaInfinita
+        idDoTitulo="editaisTabelaTitulo"
+        titulo="Controle de editais"
+        className="nucleo-page-card"
+        idDoCorpo="nucleoRows"
+        busca={{
+          id: "nucleoSearch",
+          placeholder: "Pesquisar edital, unidade, status...",
+          rotulo: "Pesquisar edital, unidade, status, etapa ou risco",
+        }}
+        carregado={carregado}
+        itens={noFiltro}
+        filtrarPelaBusca={pelaBusca}
+        colunas={COLUNAS}
+        classeDaTabela="editais-tabela"
+        linha={({ linha, item }) => (
+          <LinhaDoEdital
+            key={linha.id}
+            linha={linha}
+            item={item}
+            perfil={nucleo.perfil}
+            estado={estado}
           />
-        </PainelDeFiltros>
-        <PainelOperacional estado={estado} nucleo={nucleo} />
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Unidade</th>
-                <th>Edital</th>
-                <th>Status</th>
-                <th>Etapa</th>
-                <th className="num">Vagas</th>
-                <th className="num">Contratados</th>
-                <th className="num">Ociosas</th>
-                <th>Risco</th>
-                <th style={{ textAlign: "center" }}>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="nucleoRows">
-              {!carregado ? (
-                <tr>
-                  <td
-                    colSpan={COLUNAS}
-                    style={{ textAlign: "center", padding: 22 }}
-                  >
-                    Carregando editais...
-                  </td>
-                </tr>
-              ) : visiveis.length ? (
-                visiveis.map(({ linha, item }) => (
-                  <LinhaDoEdital
-                    key={linha.id}
-                    linha={linha}
-                    item={item}
-                    perfil={nucleo.perfil}
-                    estado={estado}
-                  />
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={COLUNAS}
-                    style={{ textAlign: "center", padding: 22 }}
-                  >
-                    Nenhum registro encontrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        )}
+        total={noFiltro.length}
+        vazio="Nenhum registro encontrado."
+        informacao={(quantos) =>
+          quantos === null
+            ? "Carregando…"
+            : `${formatNumberBR(quantos)} ${quantos === 1 ? "edital" : "editais"}`
+        }
+      />
+
       <ModalAberto estado={estado} modal={nucleo.modal} agora={agora} />
-    </>
+    </div>
   );
 }
 
@@ -301,7 +318,7 @@ export function montarNucleo({
   });
   const raiz = secao
     ? montarModulo(secao, <Nucleo estado={estado} agora={agora} />, {
-        nome: "Editais (Núcleo)",
+        nome: "a tela de editais",
       }).raiz
     : null;
   return {
