@@ -9,7 +9,7 @@ import {
   it,
 } from "vitest";
 import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.js";
-import { SECOES } from "../../src/modules/config-secoes.js";
+import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
 import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.jsx";
 import {
   atualizarMenuLateral,

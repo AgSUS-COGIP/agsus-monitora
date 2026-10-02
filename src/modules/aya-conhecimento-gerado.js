@@ -1469,7 +1469,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
     fato: "",
-    fonte: "src/lib/access-roles.js; src/modules/config-secoes.js",
+    fonte: "src/lib/access-roles.js; src/modulos/configuracoes/secoes.js",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -1485,7 +1485,7 @@ export const VERBETES_AYA = Object.freeze([
       'Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra fixa, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx",
+      "src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -1501,7 +1501,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Operação fica o histórico de configurações, com as 30 últimas publicações. Cada item tem "Restaurar", que pede o motivo da restauração e publica de novo aqueles valores; o histórico não perde nada.',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx",
+      "src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx",
     abrir: "config:operacao",
   },
   {
@@ -1520,7 +1520,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, e o texto do rodapé. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",
     abrir: "config:marca",
   },
   {
@@ -1536,7 +1536,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Aparência ficam a arte de fundo e o logo da tela de acesso, a cor do painel de acesso e do texto sobre ele, e a logo e a cor da barra lateral. Cada cor mostra a razão de contraste. A arte de fundo vale na hora; o resto, depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js",
     abrir: "config:aparencia",
   },
   {
@@ -1554,7 +1554,7 @@ export const VERBETES_AYA = Object.freeze([
       "Painéis externos são páginas de fora do MONITORA abertas pelo grupo Painéis do menu. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, o grupo Painéis some do menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.",
     fato: "",
     fonte:
-      "src/lib/paineis-externos-das-configuracoes.js; src/componentes/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
+      "src/lib/paineis-externos-das-configuracoes.js; src/modulos/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
     abrir: "config:recursos",
   },
   {
@@ -1573,7 +1573,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.",
     fato: "",
     fonte:
-      "src/componentes/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js",
     abrir: "config:operacao",
   },
   {

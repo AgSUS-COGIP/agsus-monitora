@@ -1,17 +1,22 @@
 import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/componentes/configuracoes/configuracoes.jsx";
-import { criarEstadoDasConfiguracoes } from "../../src/componentes/configuracoes/estado.js";
+import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.jsx";
+import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.js";
 import {
   criarImagensDaAparencia,
   EVENTO_FUNDO_DO_ACESSO,
-} from "../../src/componentes/configuracoes/imagens.js";
+} from "../../src/modulos/configuracoes/imagens.js";
 import {
   abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
-} from "../../src/modules/config-secoes.js";
-import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+} from "../../src/modulos/configuracoes/secoes.js";
+import {
+  clicar,
+  digitar,
+  escolher,
+  esperar,
+} from "../componentes/interacoes.js";
 
 /*
   Configurações › Página inicial, Tela de acesso e Aparência em React (etapa
@@ -545,9 +550,7 @@ describe("regras do código", () => {
     "partes.jsx",
     "imagens.js",
     "estado.js",
-  ].map((nome) =>
-    readFileSync(`src/componentes/configuracoes/${nome}`, "utf8"),
-  );
+  ].map((nome) => readFileSync(`src/modulos/configuracoes/${nome}`, "utf8"));
 
   it("sem innerHTML, sem dangerouslySetInnerHTML e sem ler campos cfg* do DOM", () => {
     for (const fonte of arquivos) {

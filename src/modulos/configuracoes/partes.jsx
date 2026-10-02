@@ -3,13 +3,14 @@ import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.js";
 import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.js";
 import { avaliarCor, corDoTextoPara } from "../../lib/contraste.js";
 import { Aviso, Campo } from "../../ui/index.js";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../../componentes/icone.jsx";
 
 /*
-  Peças comuns das seções de Configurações em React (Página inicial, Tela de
-  acesso e Aparência): o grupo de campos com título e ícone, o campo ligado
-  ao rascunho do estado, a prévia ao lado, o aviso de contraste das cores e a
-  prévia da tela de acesso (a mesma nas duas seções que a mudam).
+  Peças comuns das seções de Configurações (Marca, Página inicial, Tela de
+  acesso, Aparência e Operação): o grupo de campos com título e ícone, o
+  campo ligado ao rascunho do estado (o `Campo` de src/ui/), a prévia ao
+  lado, o aviso de contraste das cores e a prévia da tela de acesso (a mesma
+  nas duas seções que a mudam).
 */
 
 const camelo = (chave) =>
@@ -18,7 +19,7 @@ const camelo = (chave) =>
 /** Id estável do campo: `config<Secao>-<chaveEmCamelo>` (contrato dos testes). */
 export const idDoCampo = (prefixo, chave) => `${prefixo}-${camelo(chave)}`;
 
-/** Um grupo de campos com o ícone colorido do assunto (config-apresentacao.css). */
+/** Um grupo de campos com o ícone colorido do assunto (configuracoes.css). */
 export function Grupo({ secao, id, titulo, icone, tom, children }) {
   const tituloId = `configGrupo-${secao}-${id}`;
   return (
@@ -41,10 +42,15 @@ export function Grupo({ secao, id, titulo, icone, tom, children }) {
   );
 }
 
+const TIPO_DO_INPUT = Object.freeze({
+  url: "url",
+  email: "email",
+});
+
 /**
- * Um campo da seção (definido em CAMPOS_DAS_SECOES): texto, lista de opções
- * ou cor. O valor é o do rascunho (ou o publicado) e a mudança vai para o
- * rascunho; o erro é o da última validação.
+ * Um campo da seção (definido em CAMPOS_DAS_SECOES): texto, endereço,
+ * e-mail, número, lista de opções ou cor. O valor é o do rascunho (ou o
+ * publicado) e a mudança vai para o rascunho; o erro é o da última validação.
  */
 export function CampoDaSecao({ estado, campos, prefixo, chave }) {
   const campo = campos.get(chave);
@@ -68,8 +74,25 @@ export function CampoDaSecao({ estado, campos, prefixo, chave }) {
     );
   else if (campo.tipo === "cor")
     controle = <input {...comum} type="color" className="config-cor" />;
+  else if (campo.tipo === "inteiro")
+    controle = (
+      <input
+        {...comum}
+        type="number"
+        min={campo.minimo}
+        max={campo.maximo}
+        step={1}
+        placeholder={campo.placeholder}
+      />
+    );
   else
-    controle = <input {...comum} type="text" placeholder={campo.placeholder} />;
+    controle = (
+      <input
+        {...comum}
+        type={TIPO_DO_INPUT[campo.tipo] || "text"}
+        placeholder={campo.placeholder}
+      />
+    );
   return (
     <Campo
       rotulo={campo.rotulo}

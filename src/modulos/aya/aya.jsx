@@ -36,7 +36,7 @@ import {
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { comemorar } from "../../modules/comemoracao.js";
-import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { Icone } from "../../componentes/icone.jsx";
 import {
   acaoDaAya,
@@ -55,7 +55,7 @@ import {
 } from "../../lib/aya-tours.js";
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
 import { nomeDaArea } from "../../lib/menu-lateral.js";
-import { abrirSecaoDeConfiguracao } from "../../modules/config-secoes.js";
+import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
 import { collectAyaPageContext } from "./contexto.js";
 import { responderAya } from "../../lib/busca-da-aya.js";
 import {

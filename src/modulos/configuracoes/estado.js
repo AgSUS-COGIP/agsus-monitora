@@ -51,7 +51,7 @@ const ESTADO_INICIAL = Object.freeze({
   paineis: Object.freeze([]),
   /** Alterações dos painéis: Map id → { titulo?, url?, ativo?, em_manutencao? }. */
   rascunhoDosPaineis: new Map(),
-  /** Seção aberta (id de SECOES, config-secoes.js). */
+  /** Seção aberta (id de SECOES, secoes.js). */
   secao: "",
   salvando: false,
   /** Mensagens da última validação, e o erro de cada campo. */

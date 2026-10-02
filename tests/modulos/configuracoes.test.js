@@ -1,16 +1,16 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/componentes/configuracoes/configuracoes.jsx";
-import { criarEstadoDasConfiguracoes } from "../../src/componentes/configuracoes/estado.js";
+import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.jsx";
+import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.js";
 import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.js";
 import {
   abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
-} from "../../src/modules/config-secoes.js";
-import { clicar, digitar, esperar, teclar } from "./interacoes.js";
+} from "../../src/modulos/configuracoes/secoes.js";
+import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
 
 /*
-  Moldura React de Configurações (src/componentes/configuracoes/): o
+  Moldura React de Configurações (src/modulos/configuracoes/): o
   cabeçalho da seção aberta, a barra fixa de salvar, a publicação com motivo,
   o histórico com restauração e a seção Marca. Pedidos de 29/09 e 30/09:
   - o cabeçalho é o da seção (nome e descrição), sem "Ajustes do sistema";

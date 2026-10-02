@@ -116,7 +116,7 @@ describe("Acessos: nomes longos com reticências", () => {
 });
 
 describe("Aparência: cartões da galeria", () => {
-  const css = ler("src/styles/config-apresentacao.css");
+  const css = ler("src/modulos/configuracoes/configuracoes.css");
 
   it("o cartão prende a coluna à própria largura e não estica a miniatura", () => {
     const cartao = regra(css, ".config-galeria__cartao");
@@ -138,11 +138,11 @@ describe("Aparência: cartões da galeria", () => {
 
 describe("Operação: botão Restaurar do histórico", () => {
   it("leva a classe que o põe na linha de baixo, na largura toda, no celular", () => {
-    expect(ler("src/componentes/configuracoes/configuracoes.jsx")).toContain(
+    expect(ler("src/modulos/configuracoes/configuracoes.jsx")).toContain(
       'className="btn secondary config-history-restore"',
     );
-    const css = ler("src/styles/config-governance.css");
-    const d = regra(css, "#page-config .config-history-restore");
+    const css = ler("src/modulos/configuracoes/configuracoes.css");
+    const d = regra(css, ".config-history-restore");
     expect(d["grid-column"]).toBe("1/-1");
     expect(d["justify-self"]).toBe("stretch");
   });

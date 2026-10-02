@@ -2,7 +2,7 @@ import {
   avisar,
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
-import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { sessaoDoApp } from "../app/sessao.js";
 
 const THEME_STORAGE_KEY = "agsus_dark_mode_v1";

@@ -10,9 +10,16 @@ import {
   EVENTO_SECAO_ABERTA,
   SECOES,
   secaoAtualDeConfiguracao,
-} from "../../modules/config-secoes.js";
-import { Icone } from "../icone.jsx";
-import { Modal } from "../modal.jsx";
+} from "./secoes.js";
+import { Icone } from "../../componentes/icone.jsx";
+import {
+  Aviso,
+  BlocosEsqueleto,
+  Campo,
+  classes,
+  ErroAoCarregar,
+  Modal,
+} from "../../ui/index.js";
 import { SecaoAparencia } from "./aparencia.jsx";
 import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.js";
 import { criarImagensDaAparencia } from "./imagens.js";
@@ -36,11 +43,10 @@ import { SecaoTelaDeAcesso } from "./tela-de-acesso.jsx";
 
   As seções (Marca, Página inicial, Tela de acesso, Aparência, Painéis
   externos e Operação) entram por portal no corpo da própria seção
-  (`.config-secao__corpo`, criado por config-secoes.js). O estado é de
+  (`.config-secao__corpo`, criado por secoes.js). O estado é de
   `estado.js`; as imagens da Aparência, de `imagens.js`.
 */
 
-const classes = (...lista) => lista.filter(Boolean).join(" ");
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 
 function usarEstado(estado) {
@@ -73,19 +79,16 @@ function Cabecalho({ estado }) {
         ) : null}
       </div>
       {comSalvar && erros.length ? (
-        <div className="config-validation-summary" role="alert">
-          <div>
-            <Icone nome="triangle-alert" tamanho={16} />
-            <strong>
-              Revise {plural(erros.length, "campo", "campos")} antes de salvar.
-            </strong>
-          </div>
+        <Aviso tom="danger" papel="alert" className="config-validation-summary">
+          <strong>
+            Revise {plural(erros.length, "campo", "campos")} antes de salvar.
+          </strong>
           <ul>
             {erros.map((mensagem) => (
               <li key={mensagem}>{mensagem}</li>
             ))}
           </ul>
-        </div>
+        </Aviso>
       ) : null}
     </header>
   );
@@ -190,33 +193,38 @@ function ListaDeAlteracoes({ alteracoes }) {
   );
 }
 
-function Alerta({ titulo, detalhe, tom = "error" }) {
+function Alerta({ titulo, detalhe, tom = "danger", children }) {
   return (
-    <div className={`config-governance-alert is-${tom}`} role="alert">
+    <Aviso tom={tom} papel="alert" className="config-alerta">
       <strong>{titulo}</strong>
       {detalhe ? <span>{detalhe}</span> : null}
-    </div>
+      {children}
+    </Aviso>
   );
 }
 
+/* O motivo vai para o histórico: obrigatório para publicar e restaurar. */
 function CampoDoMotivo({ id, rotulo, placeholder, valor, invalido, aoMudar }) {
   return (
-    <label className="config-reason-field" htmlFor={id}>
-      <span>
-        {rotulo} <b>*</b>
-      </span>
-      <textarea
-        id={id}
-        rows={3}
-        maxLength={500}
-        placeholder={placeholder}
-        value={valor}
-        className={invalido ? "config-field-invalid" : undefined}
-        aria-invalid={invalido || undefined}
-        data-foco-inicial
-        onChange={(evento) => aoMudar(evento.target.value)}
-      />
-    </label>
+    <div className="config-motivo">
+      <Campo
+        rotulo={rotulo}
+        obrigatorio
+        largo
+        erro={invalido ? "Informe o motivo." : undefined}
+      >
+        <textarea
+          id={id}
+          rows={3}
+          maxLength={500}
+          placeholder={placeholder}
+          value={valor}
+          className={invalido ? "config-field-invalid" : undefined}
+          data-foco-inicial
+          onChange={(evento) => aoMudar(evento.target.value)}
+        />
+      </Campo>
+    </div>
   );
 }
 
@@ -388,14 +396,13 @@ function Dialogos({ estado }) {
         titulo="Corrigir configurações"
         rodape={<BotaoFechar estado={estado} />}
       >
-        <div className="config-governance-alert is-error" role="alert">
-          <strong>Não foi possível publicar.</strong>
+        <Alerta titulo="Não foi possível publicar.">
           <ul>
             {modal.mensagens.map((mensagem) => (
               <li key={mensagem}>{mensagem}</li>
             ))}
           </ul>
-        </div>
+        </Alerta>
       </Dialogo>
     );
   if (modal.tipo === "vazio")
@@ -441,7 +448,7 @@ function Historico({ estado }) {
   return (
     <section
       id="configHistoryCard"
-      className="admin-card card full config-history-card"
+      className="config-historico"
       aria-labelledby="configHistoryTitle"
     >
       <div className="config-card-title">
@@ -471,12 +478,18 @@ function Historico({ estado }) {
 function CorpoDoHistorico({ estado, historico }) {
   if (historico.status === "error")
     return (
-      <div className="alert error" role="alert">
-        Erro ao carregar histórico: {historico.erro}
-      </div>
+      <ErroAoCarregar
+        oQue="o histórico"
+        mensagem={historico.erro}
+        aoTentar={() => void estado.carregarHistorico(true)}
+      />
     );
   if (historico.status !== "ready" && !historico.itens.length)
-    return <div className="config-history-empty">Carregando histórico...</div>;
+    return (
+      <div className="config-history-list" aria-busy="true">
+        <BlocosEsqueleto quantos={3} className="config-history-esqueleto" />
+      </div>
+    );
   if (!historico.itens.length)
     return (
       <div className="config-history-empty">

@@ -195,15 +195,6 @@
   line-height: 1.5;
 }
 
-#page-config .admin-grid {
-  gap: 12px;
-}
-
-/* Sem moldura, o bloco alinha com o título da seção (config-page.css). */
-#page-config .admin-card {
-  padding: 0 !important;
-}
-
 /* Tema escuro: tokens e superficies principais, sem branco residual. */
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -298,21 +289,6 @@ html[data-theme="dark"] textarea {
 html[data-theme="dark"] input::placeholder,
 html[data-theme="dark"] textarea::placeholder {
   color: #8799aa !important;
-}
-
-html[data-theme="dark"] #page-config {
-  --config-surface: var(--ux-dark-surface);
-  --config-surface-soft: var(--ux-dark-surface-soft);
-  --config-border: var(--ux-dark-border);
-  --config-border-strong: #3b566f;
-  --config-text: var(--ux-dark-text);
-  --config-muted: var(--ux-dark-muted);
-}
-
-html[data-theme="dark"] #page-config .config-barra {
-  border-color: var(--ux-dark-border) !important;
-  background: var(--ux-dark-surface) !important;
-  color: var(--ux-dark-text) !important;
 }
 
 html[data-theme="dark"] .shell-confirm-dialog,

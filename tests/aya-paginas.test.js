@@ -13,7 +13,7 @@ import {
   AREAS_DO_SISTEMA,
   nomeDaArea,
 } from "../src/lib/menu-lateral.js";
-import { SECOES } from "../src/modules/config-secoes.js";
+import { SECOES } from "../src/modulos/configuracoes/secoes.js";
 import { responderAya } from "../src/lib/busca-da-aya.js";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
 

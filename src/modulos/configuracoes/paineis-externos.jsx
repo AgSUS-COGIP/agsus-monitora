@@ -5,7 +5,8 @@ import {
   SELO_DA_SITUACAO,
   situacaoDoPainel,
 } from "../../lib/paineis-externos-das-configuracoes.js";
-import { Icone } from "../icone.jsx";
+import { EstadoVazio, Selo } from "../../ui/index.js";
+import { Previa } from "./partes.jsx";
 
 /*
   Configurações › Painéis externos: título, endereço, ativo e manutenção de
@@ -52,7 +53,7 @@ function LinhaDoPainel({ estado, painel, indice }) {
           onChange={mudar("url")}
         />
         {erro ? (
-          <small id={`${idDaUrl}-erro`} className="config-campo-erro">
+          <small id={`${idDaUrl}-erro`} className="ui-campo-erro">
             {erro}
           </small>
         ) : null}
@@ -80,7 +81,7 @@ function LinhaDoPainel({ estado, painel, indice }) {
         </select>
       </td>
       <td>
-        <span className={`config-status ${selo.tom}`}>{selo.rotulo}</span>
+        <Selo tom={selo.tom}>{selo.rotulo}</Selo>
       </td>
     </tr>
   );
@@ -96,47 +97,39 @@ const FAIXAS = Object.freeze([
 function ResumoDosPaineis({ paineis }) {
   const resumo = resumoDosPaineis(paineis);
   return (
-    <aside className="config-previa" aria-label="Resumo dos painéis externos">
-      <p className="config-previa__rotulo">
-        <Icone nome="eye" tamanho={14} />
-        Resumo dos painéis externos
-      </p>
-      <div className="config-previa__conteudo" aria-live="polite">
-        <div className="previa-recursos">
-          <strong className="previa-recursos__titulo">
-            {plural(resumo.total, "painel externo", "painéis externos")}
-          </strong>
-          {resumo.total ? (
-            <div
-              className="previa-recursos__barra"
-              role="img"
-              aria-label={FAIXAS.map(
-                ([chave, rotulo]) => `${rotulo}: ${resumo[chave]}`,
-              ).join(", ")}
-            >
-              {FAIXAS.filter(([chave]) => resumo[chave]).map(
-                ([chave, , tom]) => (
-                  <span
-                    key={chave}
-                    data-tom={tom}
-                    style={{ flex: String(resumo[chave]) }}
-                  />
-                ),
-              )}
-            </div>
-          ) : null}
-          <ul className="previa-recursos__lista">
-            {FAIXAS.map(([chave, rotulo, tom]) => (
-              <li key={chave} data-tom={tom}>
-                <span className="previa-recursos__marca" aria-hidden="true" />
-                {rotulo}
-                <strong>{resumo[chave]}</strong>
-              </li>
+    <Previa rotulo="Resumo dos painéis externos">
+      <div className="previa-recursos">
+        <strong className="previa-recursos__titulo">
+          {plural(resumo.total, "painel externo", "painéis externos")}
+        </strong>
+        {resumo.total ? (
+          <div
+            className="previa-recursos__barra"
+            role="img"
+            aria-label={FAIXAS.map(
+              ([chave, rotulo]) => `${rotulo}: ${resumo[chave]}`,
+            ).join(", ")}
+          >
+            {FAIXAS.filter(([chave]) => resumo[chave]).map(([chave, , tom]) => (
+              <span
+                key={chave}
+                data-tom={tom}
+                style={{ flex: String(resumo[chave]) }}
+              />
             ))}
-          </ul>
-        </div>
+          </div>
+        ) : null}
+        <ul className="previa-recursos__lista">
+          {FAIXAS.map(([chave, rotulo, tom]) => (
+            <li key={chave} data-tom={tom}>
+              <span className="previa-recursos__marca" aria-hidden="true" />
+              {rotulo}
+              <strong>{resumo[chave]}</strong>
+            </li>
+          ))}
+        </ul>
       </div>
-    </aside>
+    </Previa>
   );
 }
 
@@ -172,7 +165,7 @@ export function SecaoPaineisExternos({ estado }) {
             </table>
           </div>
         ) : (
-          <p className="config-vazio">Nenhum painel externo cadastrado.</p>
+          <EstadoVazio>Nenhum painel externo cadastrado.</EstadoVazio>
         )}
       </div>
       <ResumoDosPaineis paineis={paineis} />

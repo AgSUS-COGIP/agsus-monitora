@@ -6,7 +6,7 @@
   O conteúdo é todo React: as seções que publicam pela barra fixa (Marca,
   Página inicial, Tela de acesso, Aparência, Painéis externos e Operação)
   entram por portal no corpo da própria seção
-  (src/componentes/configuracoes/configuracoes.jsx); Acessos, Módulos e abas
+  (src/modulos/configuracoes/configuracoes.jsx); Acessos, Módulos e abas
   e Status das atualizações são ilhas próprias, cujos blocos do index.html
   este módulo move para a seção certa (SECAO_POR_BLOCO).
 */
@@ -106,7 +106,7 @@ export const SECAO_POR_BLOCO = Object.freeze({
 
 /*
   O cabeçalho da seção (ícone, nome e descrição) é da moldura React
-  (src/componentes/configuracoes/configuracoes.jsx), um só para a página.
+  (src/modulos/configuracoes/configuracoes.jsx), um só para a página.
 */
 function criarCartaoDaSecao(documento, secao) {
   const artigo = documento.createElement("article");

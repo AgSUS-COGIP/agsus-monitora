@@ -5,7 +5,7 @@
   Sem React (o legado importa daqui): `setPageTitle` do legacy-app.js chama
   `definirPaginaDaAya` a cada navegação; a área vem de
   `dados-do-monitoramento.js` (trocar de área no menu avisa aqui) e a seção,
-  do evento que `config-secoes.js` dispara ao abrir cada seção. O componente
+  do evento que `configuracoes/secoes.js` dispara ao abrir cada seção. O componente
   lê com `useSyncExternalStore(assinarPaginaDaAya, obterPaginaDaAya)`.
 */
 
@@ -16,7 +16,7 @@ import {
 import {
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
-} from "../../modules/config-secoes.js";
+} from "../configuracoes/secoes.js";
 
 const ouvintes = new Set();
 

@@ -1,13 +1,18 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/componentes/configuracoes/configuracoes.jsx";
-import { criarEstadoDasConfiguracoes } from "../../src/componentes/configuracoes/estado.js";
+import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.jsx";
+import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.js";
 import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.js";
 import {
   abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
-} from "../../src/modules/config-secoes.js";
-import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+} from "../../src/modulos/configuracoes/secoes.js";
+import {
+  clicar,
+  digitar,
+  escolher,
+  esperar,
+} from "../componentes/interacoes.js";
 
 /*
   Configurações › Painéis externos e Operação em React (01/10). Antes, a
@@ -164,7 +169,7 @@ describe("Painéis externos", () => {
     expect($("configPainel-1-ativo").value).toBe("false");
     expect($("configPainel-1-manutencao").value).toBe("false");
     expect(tabela.textContent).toContain("Código: bi");
-    const selos = [...tabela.querySelectorAll(".config-status")].map(
+    const selos = [...tabela.querySelectorAll(".ui-selo")].map(
       (selo) => selo.textContent,
     );
     expect(selos).toEqual(["Ativo", "Inativo"]);
@@ -202,7 +207,7 @@ describe("Painéis externos", () => {
     await escolher($("configPainel-0-manutencao"), "true");
     expect(sujo()).toBe(true);
     expect(
-      secao("recursos").querySelector("tbody tr .config-status").textContent,
+      secao("recursos").querySelector("tbody tr .ui-selo").textContent,
     ).toBe("Manutenção");
   });
 

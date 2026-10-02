@@ -1,0 +1,1315 @@
+/*
+  Configurações (src/modulos/configuracoes/), só com tokens de
+  src/styles/tokens.css — o tema escuro vem dos próprios tokens.
+
+    Moldura        seções de secoes.js, cabeçalho da seção aberta, barra fixa
+    Seções         grupos, prévias, imagens e galerias, contraste, painéis
+    Publicação     diálogos de revisar e restaurar, histórico (Operação)
+
+  As seções são a superfície (design.md 2.1 e 9.4): sem borda, fundo ou
+  sombra por bloco; a hierarquia vem da tipografia e do espaço. Campos e
+  avisos são os de src/ui/ (Campo, Aviso, Selo, ErroAoCarregar).
+*/
+
+/* ── Moldura: a grade antiga e as seções ─────────────────────────────── */
+
+/* Só até secoes.js distribuir os blocos; depois a grade fica escondida. */
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Espaço no pé da página para a barra fixa de salvar não cobrir o fim. */
+.config-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  padding-bottom: calc(var(--space-20) + var(--space-3));
+}
+
+.config-painel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.config-secao {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* start: campo curto não estica até a altura do bloco vizinho na linha. */
+.config-secao__corpo {
+  align-items: start;
+  padding: 0;
+}
+
+/* Painéis externos: uma coluna. */
+.config-secao[data-secao="recursos"] .config-secao__corpo {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-6);
+}
+
+.config-secao__corpo:empty {
+  display: none;
+}
+
+/* O seletor de cor é uma amostra compacta (não uma faixa na linha inteira). */
+.config-secao input[type="color"] {
+  width: 52px;
+  height: 36px;
+  padding: var(--space-0-5);
+}
+
+.config-layout option {
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+
+/* ── Cabeçalho: ícone e nome da seção aberta, com divisória ──────────── */
+
+.config-cabecalho {
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.config-cabecalho__linha {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.config-cabecalho__icone {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+
+/* A cor de cada seção no tile do cabeçalho. */
+.config-cabecalho[data-secao="marca"] .config-cabecalho__icone {
+  background: color-mix(in srgb, var(--color-chart-1) 12%, var(--surface-card));
+  color: var(--color-chart-1);
+}
+.config-cabecalho[data-secao="inicio"] .config-cabecalho__icone {
+  background: color-mix(in srgb, var(--color-chart-4) 14%, var(--surface-card));
+  color: var(--color-chart-4);
+}
+.config-cabecalho[data-secao="acesso"] .config-cabecalho__icone {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.config-cabecalho[data-secao="recursos"] .config-cabecalho__icone {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+
+.config-cabecalho__texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.config-cabecalho h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+.config-cabecalho__pendente {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.config-cabecalho__ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+
+/* O resumo da validação é um Aviso (src/ui/); a lista fica embaixo do título. */
+.config-validation-summary {
+  margin-top: var(--space-3);
+}
+.config-validation-summary ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+  font-weight: var(--font-weight-regular);
+}
+
+/* Campo inválido: borda e fundo de erro (vence o tema escuro dos campos). */
+#page-config .config-field-invalid,
+#page-config .config-field-invalid:focus {
+  border-color: var(--state-danger) !important;
+  background: var(--state-danger-soft) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-danger) 12%, transparent) !important;
+}
+
+/* ── Barra fixa de salvar (configuracoes.jsx, <BarraDeSalvar>) ────────── */
+/*
+  O texto mora em .config-barra__texto: a regra de `span` dele não alcança o
+  ícone, que é um tile centralizado.
+*/
+.config-barra {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  left: calc(var(--sidebar-mini) + var(--space-4));
+  z-index: calc(var(--z-header) - 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--surface-card) 96%, transparent);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-overlay);
+  backdrop-filter: blur(12px);
+}
+
+body:not(.sidebar-collapsed) .config-barra {
+  left: calc(var(--sidebar) + var(--space-4));
+}
+
+.page:not(.active) .config-barra {
+  display: none;
+}
+
+.config-barra__situacao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.config-barra__icone {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-lg);
+}
+
+.config-barra__icone--limpo {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+
+.config-barra__icone--alterado {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+
+.config-barra__icone--salvando {
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+
+.config-barra__texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.config-barra__texto strong {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.config-barra__texto span {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-barra__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.config-barra__atalho {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.config-barra__atalho kbd {
+  padding: var(--space-0-5) var(--space-1);
+  border: 1px solid var(--border-subtle);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font: inherit;
+}
+
+.config-barra__salvar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 154px;
+  min-height: 40px;
+}
+
+.config-barra__salvar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Seções: campos à esquerda, prévia fixa à direita ────────────────── */
+
+/* O corpo da seção é uma .form-grid; a seção React ocupa a linha toda. */
+.config-secao-react {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.config-secao-react__campos {
+  display: grid;
+  grid-column: 1;
+  min-width: 0;
+}
+
+.config-secao-react--com-previa {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  column-gap: var(--space-8);
+  align-items: start;
+}
+
+.config-previa {
+  position: sticky;
+  top: var(--space-4);
+  display: grid;
+  grid-column: 2;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.config-previa__rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.config-previa__conteudo {
+  min-width: 0;
+}
+
+/* ── Grupos de campos ─────────────────────────────────────────────────── */
+
+.config-grupo {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.config-grupo:not([hidden]) ~ .config-grupo:not([hidden]) {
+  margin-top: var(--space-4);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.config-grupo__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.config-grupo__cabecalho h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+}
+
+.config-grupo__icone {
+  display: grid;
+  flex: 0 0 28px;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+}
+
+.config-grupo[data-tom="azul"] .config-grupo__icone {
+  background: var(--state-info-soft);
+  color: var(--color-chart-1);
+}
+.config-grupo[data-tom="petroleo"] .config-grupo__icone {
+  background: color-mix(in srgb, var(--color-chart-4) 14%, var(--surface-card));
+  color: var(--color-chart-4);
+}
+.config-grupo[data-tom="sucesso"] .config-grupo__icone {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+.config-grupo[data-tom="atencao"] .config-grupo__icone {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.config-grupo[data-tom="neutro"] .config-grupo__icone {
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+}
+
+/* A grade é a .ui-grade-de-campos; o recuo alinha os campos ao título. */
+.config-grupo__campos {
+  margin-left: calc(28px + var(--space-3));
+}
+
+/* ── Prévias ──────────────────────────────────────────────────────────── */
+
+/* Marca: barra lateral + rodapé */
+.previa-marca {
+  display: grid;
+  gap: var(--space-3);
+}
+.previa-marca__barra {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.previa-marca__topo,
+.previa-marca__equipe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.previa-marca__topo strong {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+}
+.previa-marca__logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.previa-marca__logo-reserva {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--brand-primary);
+}
+.previa-marca__menu {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-body-sm);
+  list-style: none;
+}
+.previa-marca__menu li {
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-md);
+  opacity: 0.8;
+}
+.previa-marca__menu li.ativo {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  font-weight: var(--font-weight-medium);
+  opacity: 1;
+}
+.previa-marca__equipe {
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+.previa-marca__equipe > div {
+  display: grid;
+  min-width: 0;
+}
+.previa-marca__equipe strong {
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.previa-marca__equipe small {
+  overflow: hidden;
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+.previa-marca__avatar {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-chart-4) 16%, var(--surface-card));
+  color: var(--color-chart-4);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  object-fit: cover;
+}
+.previa-marca__rodape {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+
+/* Página inicial */
+.previa-inicio {
+  display: grid;
+  gap: var(--space-3);
+}
+.previa-inicio__titulo {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+}
+.previa-inicio__subtitulo {
+  margin-top: calc(var(--space-2) * -1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.previa-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+.previa-aviso strong {
+  font-weight: var(--font-weight-medium);
+}
+.previa-aviso > .icone {
+  flex: none;
+  margin-top: 1px;
+}
+.previa-aviso[data-tom="info"] {
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.previa-aviso[data-tom="warning"] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.previa-aviso[data-tom="danger"] {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.previa-inicio__filtros {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--color-chart-4);
+}
+.previa-inicio__filtros > div {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.previa-inicio__filtros strong {
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.previa-inicio__filtros small {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.previa-inicio__botao {
+  flex: none;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-action-secondary);
+  color: var(--color-action-secondary-text);
+  font-size: var(--text-caption);
+  line-height: 22px;
+}
+/* Os indicadores (Kpi de src/ui/) em duas colunas na prévia. */
+.previa-inicio__kpis.ui-kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+/* Tela de acesso: o cartão sobre a arte de fundo */
+.previa-acesso {
+  display: grid;
+  min-height: 300px;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-primary);
+  background-position: center;
+  background-size: cover;
+  place-items: center start;
+}
+.previa-acesso__cartao {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  width: min(100%, 230px);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.previa-acesso__logo {
+  max-width: 96px;
+  max-height: 32px;
+  object-fit: contain;
+}
+.previa-acesso__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+}
+.previa-acesso__desligado {
+  font-style: italic;
+}
+.previa-acesso__cartao small {
+  font-size: var(--text-caption);
+  opacity: 0.85;
+}
+.previa-acesso__saudacao {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+}
+.previa-acesso__google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-1-5) var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.previa-acesso__g {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--state-info-soft);
+  color: var(--brand-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Painéis externos: o resumo */
+.previa-recursos {
+  display: grid;
+  gap: var(--space-3);
+}
+.previa-recursos__titulo {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.previa-recursos__barra {
+  display: flex;
+  gap: var(--space-0-5);
+  overflow: hidden;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+}
+.previa-recursos__barra span[data-tom="sucesso"],
+.previa-recursos__lista li[data-tom="sucesso"] .previa-recursos__marca {
+  background: var(--state-success);
+}
+.previa-recursos__barra span[data-tom="atencao"],
+.previa-recursos__lista li[data-tom="atencao"] .previa-recursos__marca {
+  background: var(--state-warning);
+}
+.previa-recursos__barra span[data-tom="neutro"],
+.previa-recursos__lista li[data-tom="neutro"] .previa-recursos__marca {
+  background: var(--state-neutral);
+}
+.previa-recursos__barra span[data-tom="perigo"],
+.previa-recursos__lista li[data-tom="perigo"] .previa-recursos__marca {
+  background: var(--state-danger);
+}
+.previa-recursos__lista {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.previa-recursos__lista li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.previa-recursos__lista strong {
+  margin-left: auto;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.previa-recursos__marca {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Painéis externos: a tabela leve (design.md 11.4) ─────────────────── */
+/*
+  Uma linha por painel, sem cartão por item e sem rolagem interna. Vence a
+  tabela global (min-width 1180px, th em caixa alta) e o input global.
+*/
+.painel-externo-tabela {
+  overflow-x: auto;
+}
+.painel-externo-tabela table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+}
+.painel-externo-tabela th {
+  position: static;
+  padding: 0 var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--border-control);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+}
+.painel-externo-tabela th:nth-child(1) {
+  width: 26%;
+}
+.painel-externo-tabela th:nth-child(3),
+.painel-externo-tabela th:nth-child(4) {
+  width: 120px;
+}
+.painel-externo-tabela th:nth-child(5) {
+  width: 110px;
+}
+.painel-externo-tabela td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-regular);
+  vertical-align: top;
+}
+.painel-externo-tabela tr:last-child td {
+  border-bottom: 0;
+}
+.painel-externo-tabela input,
+.painel-externo-tabela select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
+}
+.painel-externo-tabela small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.painel-externo-tabela .ui-selo {
+  margin-top: var(--space-2);
+}
+
+/* ── Aparência: imagens (arte de fundo, logo da barra) e galerias ─────── */
+
+.config-imagem {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.config-imagem__rotulo {
+  color: var(--text-primary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-medium);
+}
+.config-imagem__linha {
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+.config-imagem__previa {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-raised);
+  background-position: center;
+  background-size: cover;
+}
+.config-imagem__previa--arte {
+  aspect-ratio: 16 / 9;
+}
+.config-imagem__previa--logo {
+  height: 72px;
+  padding: var(--space-2);
+  object-fit: contain;
+}
+.config-imagem__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.config-imagem__acoes .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+.config-galeria {
+  display: grid;
+  gap: var(--space-2);
+}
+.config-galeria__titulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.config-galeria__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  /* Cartões iguais: todas as linhas com a altura do cartão mais alto. */
+  grid-auto-rows: 1fr;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/*
+  Coluna presa à largura do cartão e linhas no topo: esticada na altura, a
+  miniatura do cartão "Em uso" (só ela no botão) tirava a largura do
+  aspect-ratio e estourava o cartão para os lados.
+*/
+.config-galeria__cartao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  justify-items: stretch;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.config-galeria__cartao[data-ativa] {
+  border-color: var(--state-success);
+}
+.config-galeria__cartao .ui-selo {
+  justify-self: center;
+}
+.config-galeria__item {
+  display: grid;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.config-galeria__item:disabled {
+  cursor: default;
+}
+.config-galeria__miniatura {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-raised);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.config-galeria__grade[data-formato="paisagem"] .config-galeria__miniatura {
+  aspect-ratio: 16 / 9;
+}
+.config-galeria__grade[data-formato="quadrado"] .config-galeria__miniatura {
+  height: 48px;
+  background-size: contain;
+}
+.config-galeria__apagar {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--state-danger);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--state-danger);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.config-galeria__apagar:hover:not(:disabled) {
+  background: var(--state-danger-soft);
+}
+
+/*
+  Contraste de cada cor: a prévia (fundo na cor, texto no primeiro plano que a
+  tela vai usar) e o aviso com o número escrito — não só a cor do aviso.
+*/
+.config-contraste {
+  display: grid;
+  gap: var(--space-2);
+}
+.config-contraste__previa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.config-contraste__previa strong {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+.config-contraste__botao {
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ── Diálogos de publicar e restaurar ─────────────────────────────────── */
+
+.config-governance-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: min(960px, calc(100vw - 32px));
+  max-height: min(840px, calc(100vh - 48px));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-overlay);
+}
+
+.config-governance-dialog > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+}
+
+.config-governance-dialog h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+}
+
+.config-governance-body {
+  display: grid;
+  gap: var(--space-4);
+  overflow: auto;
+  padding: var(--space-5) var(--space-6);
+}
+
+.config-governance-body > p {
+  margin: 0;
+}
+
+.config-governance-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+}
+
+.config-governance-footer .btn.danger {
+  border-color: var(--color-action-danger);
+  background: var(--color-action-danger);
+  color: var(--color-text-inverse);
+}
+
+/* O aviso do diálogo (Aviso de src/ui/): título, detalhe e lista. */
+.config-alerta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.config-alerta span,
+.config-alerta ul {
+  font-weight: var(--font-weight-regular);
+}
+.config-alerta ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.config-governance-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--state-info-soft);
+}
+
+.config-governance-summary strong {
+  color: var(--state-info);
+}
+
+.config-change-list {
+  display: grid;
+  gap: var(--space-2);
+  overflow: auto;
+  max-height: 430px;
+  padding-right: var(--space-1);
+}
+
+.config-change-row {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1fr) minmax(150px, 1.2fr) 20px
+    minmax(150px, 1.2fr);
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.config-change-name {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.config-change-name span,
+.config-change-name small,
+.config-change-value span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.config-change-name strong {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-change-value {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+}
+
+.config-change-value.is-before {
+  border: 1px solid color-mix(in srgb, var(--state-danger) 24%, transparent);
+  background: var(--state-danger-soft);
+}
+
+.config-change-value.is-after {
+  border: 1px solid color-mix(in srgb, var(--state-success) 24%, transparent);
+  background: var(--state-success-soft);
+}
+
+.config-change-value code {
+  display: block;
+  overflow: hidden;
+  margin-top: var(--space-1);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-change-arrow {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.config-governance-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--state-success-soft);
+  color: var(--state-success);
+  text-align: center;
+}
+
+.config-governance-more {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+
+/* ── Histórico (seção Operação) ───────────────────────────────────────── */
+
+.config-historico {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-top: var(--space-4);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.config-card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-4);
+}
+
+.config-card-title h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+}
+
+.config-history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 120px;
+  padding: var(--space-6);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.config-history-empty > svg {
+  color: var(--brand-primary);
+}
+
+.config-history-empty strong {
+  color: var(--text-primary);
+}
+
+.config-history-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.config-history-esqueleto {
+  height: var(--space-16);
+}
+
+.config-history-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+}
+
+.config-history-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+
+.config-history-icon.is-restaurar {
+  background: color-mix(in srgb, var(--series-4) 14%, var(--surface-card));
+  color: var(--series-4);
+}
+
+.config-history-main {
+  min-width: 0;
+}
+
+.config-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.config-history-head strong {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+}
+
+.config-history-head span,
+.config-history-meta,
+.config-history-main small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.config-history-main p {
+  margin: var(--space-1) 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+
+.config-history-main small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.config-history-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ── Telas menores ────────────────────────────────────────────────────── */
+
+@media (max-width: 1220px) {
+  .admin-grid,
+  .config-secao-react--com-previa {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .config-previa {
+    position: static;
+    grid-column: 1;
+    margin-top: var(--space-6);
+  }
+}
+
+@media (max-width: 900px) {
+  .config-barra,
+  body:not(.sidebar-collapsed) .config-barra {
+    right: var(--space-2);
+    left: var(--space-2);
+  }
+}
+
+@media (max-width: 640px) {
+  .config-layout {
+    padding-bottom: calc(var(--space-20) + var(--space-12));
+  }
+  .config-barra {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .config-barra__acoes {
+    justify-content: space-between;
+  }
+  .config-barra__atalho {
+    display: none;
+  }
+  .config-barra__salvar {
+    width: 100%;
+  }
+  .config-grupo__campos {
+    margin-left: 0;
+  }
+  .config-imagem__linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .config-history-item {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+  .config-history-restore {
+    grid-column: 1/-1;
+    justify-self: stretch;
+  }
+  .config-change-row {
+    grid-template-columns: 1fr;
+  }
+  .config-change-arrow {
+    transform: rotate(90deg);
+  }
+  .config-governance-footer {
+    flex-wrap: wrap;
+  }
+  .config-governance-footer .btn {
+    flex: 1 1 180px;
+  }
+}
