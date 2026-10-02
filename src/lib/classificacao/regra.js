@@ -97,15 +97,6 @@ export const REGRA_VAZIA = Object.freeze({
     excecoes: Object.freeze([]),
   }),
   rodape: "",
-  documento: Object.freeze({
-    edital: "",
-    processo: "",
-    unidade: "",
-    autoridade: "",
-    local: "",
-    data: null,
-    modelos: Object.freeze({}),
-  }),
   importacao: null,
 });
 
@@ -160,7 +151,9 @@ function normalizarModalidade(m) {
   gestor ajustou neste edital: número do edital e processo SEI, a unidade e a
   autoridade do item 1.1, local e data, e os modelos (título, disposições
   preliminares e finais) de cada tipo de lista. Vazio = o padrão das
-  publicações (src/lib/classificacao/documento-sei.js).
+  publicações (src/lib/classificacao/documento-sei.js). Na regra só aparece
+  quando o gestor ajustou algo (as regras sem textos próprios continuam
+  iguais); `documentoDaRegra` devolve sempre o formato completo.
 */
 const CHAVE_DE_MODELO = /^[A-Z_]{3,60}$/;
 const CAMPOS_DO_MODELO = ["titulo", "preliminares", "finais"];
@@ -191,6 +184,16 @@ function normalizarDocumento(bruto) {
     data: lerData(d.data) ? texto(d.data).slice(0, 10) : null,
     modelos,
   };
+}
+
+const documentoVazio = (d) =>
+  !Object.keys(d.modelos).length &&
+  !d.data &&
+  ["edital", "processo", "unidade", "autoridade", "local"].every((c) => !d[c]);
+
+/** Os textos do documento oficial da regra, sempre no formato completo. */
+export function documentoDaRegra(regra) {
+  return normalizarDocumento(objeto(regra).documento);
 }
 
 /** A regra completa, com os campos que faltarem neutros (nunca os de outro edital). */
@@ -334,7 +337,9 @@ export function normalizarRegra(bruta) {
         .filter((e) => e.termos.length),
     },
     rodape: texto(r.rodape),
-    documento: normalizarDocumento(r.documento),
+    ...(documentoVazio(normalizarDocumento(r.documento))
+      ? {}
+      : { documento: normalizarDocumento(r.documento) }),
     importacao:
       r.importacao && typeof r.importacao === "object" ? r.importacao : null,
   };
@@ -448,7 +453,7 @@ export function validarRegra(bruta) {
       erro("convocacao.excecoes", "Exceção com valores inválidos.");
 
   if (r.rodape.length > 1000) erro("rodape", "Rodapé com até 1000 caracteres.");
-  const doc = r.documento;
+  const doc = documentoDaRegra(r);
   if (
     ["edital", "processo", "unidade", "local"].some(
       (c) => doc[c].length > 300,

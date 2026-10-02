@@ -20,6 +20,7 @@ import {
 import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.js";
 import { classificar } from "../../src/lib/classificacao/motor.js";
 import {
+  documentoDaRegra,
   normalizarRegra,
   validarRegra,
 } from "../../src/lib/classificacao/regra.js";
@@ -551,7 +552,9 @@ describe("textos do edital (regra.documento)", () => {
       data: null,
       modelos: { FINAL_FINAL: { finais: "x" } },
     });
-    expect(normalizarRegra({}).documento.modelos).toEqual({});
+    // Sem textos próprios, a regra continua igual (sem a chave).
+    expect(normalizarRegra({})).not.toHaveProperty("documento");
+    expect(documentoDaRegra({}).modelos).toEqual({});
     expect(
       validarRegra({
         documento: { modelos: { FINAL_FINAL: { finais: "x".repeat(10001) } } },

@@ -7,7 +7,7 @@ import {
   textosDoModelo,
   unidadeDoEdital,
 } from "../../lib/classificacao/documento-sei.js";
-import { normalizarRegra } from "../../lib/classificacao/regra.js";
+import { documentoDaRegra } from "../../lib/classificacao/regra.js";
 import { Campo, Modal } from "../../ui/index.js";
 
 /*
@@ -65,10 +65,7 @@ export function DocumentoDoSei({
   aoFechar,
 }) {
   const regraSalva = estado.obter().dados?.regra?.configuracao;
-  const salvo = useMemo(
-    () => normalizarRegra(regraSalva).documento,
-    [regraSalva],
-  );
+  const salvo = useMemo(() => documentoDaRegra(regraSalva), [regraSalva]);
   const chave = chaveDoModelo(registrado.retrato.tipo, fase, lista);
   const [rascunho, setRascunho] = useState(() => rascunhoInicial(salvo, chave));
   const [salvando, setSalvando] = useState(false);

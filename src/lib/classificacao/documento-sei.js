@@ -45,7 +45,7 @@
 */
 import { MOTIVOS_DE_ELIMINACAO, PARCIAIS_DA_DOCUMENTAL } from "./catalogo.js";
 import { formatarNota, lerData, ordinal } from "./numeros.js";
-import { normalizarRegra } from "./regra.js";
+import { documentoDaRegra, normalizarRegra } from "./regra.js";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
 
 export { CABECALHO_PADRAO };
@@ -740,7 +740,7 @@ export function documentoOficial(
   { lista = "todas", fase = null, regra = null, hoje = new Date() } = {},
 ) {
   const r = normalizarRegra(regra);
-  const doc = r.documento;
+  const doc = documentoDaRegra(r);
   const f = faseDaPublicacao(retrato.tipo, fase);
   const listaEfetiva =
     retrato.tipo === "CONVOCACAO" && lista === "eliminados" ? "todas" : lista;
