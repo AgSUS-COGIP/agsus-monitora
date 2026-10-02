@@ -578,18 +578,18 @@ export function Aya({
     (motivo) => {
       if (tour?.trilha && motivo === "concluiu")
         setProgresso(concluirTrilha(janela, tour.trilha));
-      setTour(null);
       devolverFocoAArara.current = true;
-      // A arara volta a existir no próximo desenho; o foco vai para ela.
-      janela.setTimeout?.(() => {
-        if (devolverFocoAArara.current) {
-          devolverFocoAArara.current = false;
-          refArara.current?.focus();
-        }
-      }, 0);
+      setTour(null);
     },
     [tour, janela],
   );
+
+  // Ao sair do tour, o foco volta para a arara (depois que o tour sai da tela).
+  useEffect(() => {
+    if (tour || aberta || !devolverFocoAArara.current) return;
+    devolverFocoAArara.current = false;
+    refArara.current?.focus();
+  }, [tour, aberta]);
 
   function aceitarOferta() {
     const trilha = trilhas.find((t) => t.id === ID_DOS_PRIMEIROS_PASSOS);

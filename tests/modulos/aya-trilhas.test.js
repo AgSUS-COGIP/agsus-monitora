@@ -141,6 +141,7 @@ describe("Me mostra esta tela", () => {
     expect(tituloDoPasso()).toBe("Indicadores");
     await teclar(document.activeElement, "Escape");
     expect($(".aya-tour")).toBeNull();
+    expect(document.activeElement).toBe($(".aya-arara"));
   });
 
   it("tela sem roteiro não oferece o tour", async () => {

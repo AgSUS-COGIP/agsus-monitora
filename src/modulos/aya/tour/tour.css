@@ -18,7 +18,8 @@
 /* As faixas escurecem e seguram o clique; o recorte fica livre. */
 .aya-tour__faixa {
   position: fixed;
-  background: color-mix(in srgb, var(--text-primary) 58%, transparent);
+  /* O mesmo véu dos modais (src/ui/ui.css), escuro nos dois temas. */
+  background: var(--color-bg-overlay);
   pointer-events: auto;
 }
 
@@ -44,13 +45,17 @@
   position: fixed;
   box-sizing: border-box;
   width: min(340px, calc(100vw - 24px));
-  padding: 14px 16px 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   background: var(--surface-card);
   box-shadow: var(--shadow-overlay);
   color: var(--text-primary);
   pointer-events: auto;
+}
+
+.aya-tour__conteudo {
+  display: block;
+  padding: 14px 16px 12px;
 }
 
 .aya-tour__balao--medindo {

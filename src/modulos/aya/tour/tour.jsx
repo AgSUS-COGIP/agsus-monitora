@@ -408,40 +408,43 @@ export function Tour({
         tabIndex={-1}
         onKeyDown={prenderFoco}
       >
-        <p className="aya-tour__contador">{contador}</p>
-        <h2 id={idTitulo} className="aya-tour__titulo">
-          {passo.titulo}
-        </h2>
-        <p id={idTexto} className="aya-tour__texto">
-          {passo.texto}
-        </p>
-        <div className="aya-tour__acoes">
-          <button
-            type="button"
-            className="aya-tour__pular"
-            onClick={() => fechar("pulou")}
-          >
-            {ultimo ? "Fechar" : "Pular"}
-          </button>
-          <span className="aya-tour__navegacao">
+        {/* Sem <div> filho direto: mobile-app.css estiliza "[role=dialog] > div" com !important. */}
+        <article className="aya-tour__conteudo">
+          <p className="aya-tour__contador">{contador}</p>
+          <h2 id={idTitulo} className="aya-tour__titulo">
+            {passo.titulo}
+          </h2>
+          <p id={idTexto} className="aya-tour__texto">
+            {passo.texto}
+          </p>
+          <div className="aya-tour__acoes">
             <button
               type="button"
-              className="aya-tour__voltar"
-              onClick={voltar}
-              disabled={atual.indice === 0}
+              className="aya-tour__pular"
+              onClick={() => fechar("pulou")}
             >
-              Voltar
+              {ultimo ? "Fechar" : "Pular"}
             </button>
-            <button
-              ref={refProximo}
-              type="button"
-              className="aya-tour__proximo"
-              onClick={proximo}
-            >
-              {ultimo ? "Concluir" : "Próximo"}
-            </button>
-          </span>
-        </div>
+            <span className="aya-tour__navegacao">
+              <button
+                type="button"
+                className="aya-tour__voltar"
+                onClick={voltar}
+                disabled={atual.indice === 0}
+              >
+                Voltar
+              </button>
+              <button
+                ref={refProximo}
+                type="button"
+                className="aya-tour__proximo"
+                onClick={proximo}
+              >
+                {ultimo ? "Concluir" : "Próximo"}
+              </button>
+            </span>
+          </div>
+        </article>
       </section>
       <p className="aya-visualmente-oculto" role="status" aria-live="polite">
         {`Passo ${contador}: ${passo.titulo}. ${passo.texto}`}
