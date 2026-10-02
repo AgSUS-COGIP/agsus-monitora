@@ -18,6 +18,24 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 **resposta:** Clique num ponto do mapa, ou num lugar da lista "Municípios por vagas", para ver o projeto, o edital, as vagas publicadas, as lotações e os candidatos daquele lugar; o mapa aproxima e abre o resumo. A lista vem ordenada pelas vagas e a barra mostra a parte aprovada entre os já analisados. Com dois ou mais projetos, o campo "Projeto" mostra só os lugares de um projeto (o mapa reenquadra) e "Agrupar por projeto" separa a lista em um bloco por projeto — um lugar de dois projetos aparece nos dois. Ponto com contorno tracejado tem mais de um projeto; lugar sem coordenada aparece na lista, mas não no mapa. "Brasil" volta ao país inteiro e "Tela cheia" amplia o painel (Esc sai).
 **fonte:** src/modulos/mapa-de-projetos/mapa-de-projetos.jsx; src/modulos/mapa-de-projetos/lista.jsx; src/lib/visao-geral-da-area.js
 
+## Coordenadas dos lugares do mapa de Projetos
+
+**perguntas:** de onde vem a coordenada de um lugar de projetos | coordenadas do mapa de projetos | ponto do municipio no mapa de projetos | por que o ponto fica no meio do estado | lugar sem coordenada no mapa de projetos
+**resposta:** Cada ponto do mapa de Projetos é um lugar das vagas, e a coordenada dele fica no banco do MONITORA. Na carga inicial, o município vai para a sede municipal do IBGE (pelo código do IBGE do edital ou pelo nome do "UBS móvel" da vaga) e o lugar que o edital só diz a UF (a CCE, por exemplo) vai para o centro do estado, calculado pela média das sedes municipais. Depois disso, quem muda a posição é o administrador global, pelo editor de coordenadas, e cada alteração fica registrada com autoria e motivo. Lugar sem coordenada no banco aparece na lista, mas não no mapa.
+**fonte:** supabase/migrations/20261002170000_coordenadas_mapa_projetos.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql; src/lib/visao-geral-da-area.js
+
+## Corrigir a coordenada de um lugar de Projetos
+
+**perguntas:** corrigir lugar no mapa de projetos | editor de coordenadas de projetos | mover ponto do mapa de projetos | botao coordenadas no mapa de projetos | conferir lugar de projetos
+**resposta:** No mapa de Projetos, o administrador global vê o botão "Coordenadas", que troca a lista "Municípios por vagas" pelo editor; "Voltar à lista" fecha. Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa vai até ele e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. O histórico abaixo mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.
+**fonte:** src/modulos/mapa-de-projetos/editor-de-coordenadas.jsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx; supabase/migrations/20261002170000_coordenadas_mapa_projetos.sql
+
+## Lugares pendentes no mapa de Projetos
+
+**perguntas:** lugares pendentes de projetos | gravidade dos lugares de projetos | sede do municipio ou endereco | sugestoes do lugar de projetos | lugar duvidoso no mapa de projetos
+**resposta:** A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida por um administrador. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.
+**fonte:** src/lib/coordenadas-dos-projetos.js; src/lib/editor-de-coordenadas.js; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
+
 ## Mapa da Saúde Indígena
 
 **perguntas:** como uso o mapa dos dseis | mapa dos dseis | mapa da saude indigena
