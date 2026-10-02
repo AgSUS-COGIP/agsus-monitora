@@ -1,0 +1,566 @@
+import { StrictMode, act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
+import { CORES_DO_MAPA } from "../../src/lib/mapa-saude-indigena/formas.js";
+import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.js";
+import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.jsx";
+import { clicar, teclar } from "../componentes/interacoes.js";
+import { criarLeafletFalso } from "./leaflet-falso.js";
+
+/*
+  O mapa da Saúde Indígena em React (src/modulos/mapa-saude-indigena/), com o
+  Leaflet falso: visão nacional (bolhas, CASAIs nacionais, Territórios por
+  vagas, calor, legenda, tela cheia), o mapa do DSEI (unidades, filtros por
+  tipo, vínculos externos, Terras Indígenas), o contrato com o pai (eventos
+  e DSEI controlado), StrictMode limpo, tema e conteúdo sem HTML.
+*/
+
+const LMAP = {
+  dsei: [
+    {
+      k: "ALAGOAS E SERGIPE",
+      n: "Alagoas e Sergipe",
+      lat: -9.6,
+      lon: -35.7,
+      pop: 12000,
+      sedeuf: "AL",
+      ufs: ["AL", "SE"],
+      polos: [
+        { n: "XITEI", lat: -9.9, lon: -36.0, uf: "AL" },
+        { n: "LONGE", lat: -8.0, lon: -35.0, uf: "PE" },
+      ],
+    },
+    {
+      k: "YANOMAMI",
+      n: "Yanomami",
+      lat: 2.81,
+      lon: -60.67,
+      pop: 30000,
+      sedeuf: "RR",
+      ufs: ["RR", "AM"],
+      polos: [],
+    },
+    {
+      k: "LESTE DE RORAIMA",
+      n: "Leste de Roraima",
+      lat: 2.82,
+      lon: -60.67,
+      pop: 50000,
+      sedeuf: "RR",
+      ufs: ["RR"],
+      polos: [],
+    },
+  ],
+};
+
+const REDE = {
+  rede: {
+    "ALAGOAS E SERGIPE": {
+      u: [
+        ["POLO BASE XITEI", "111", -9.9, -36.0, "TRAIPU", 27],
+        [
+          "UBSI <img src=x onerror=alert(1)>",
+          "222",
+          -10.1,
+          -36.4,
+          "PORTO REAL",
+          27,
+        ],
+      ],
+      c: [["CASAI AL/SE", "333", -9.62, -35.73, "MACEIO", 27]],
+    },
+  },
+  nac: [["CASAI DF", "", -15.8, -47.9, "BRASILIA", 53]],
+};
+
+const LINHAS = [
+  { unidade: "DSEI Alagoas e Sergipe", vagas_total: 10, vagas_ociosas: 1 },
+  { unidade: "DSEI Yanomami", vagas_total: 40, vagas_ociosas: 30 },
+];
+
+let raiz = null;
+let host = null;
+let leaflet = null;
+
+function Pai(props) {
+  return createElement(
+    StrictMode,
+    null,
+    createElement(MapaSaudeIndigena, {
+      lmap: LMAP,
+      redeCnes: REDE,
+      linhas: LINHAS,
+      ...props,
+    }),
+  );
+}
+
+async function montar(props = {}) {
+  host = document.createElement("div");
+  document.body.append(host);
+  raiz = createRoot(host);
+  await act(async () => raiz.render(createElement(Pai, props)));
+  return host;
+}
+
+async function rerender(props) {
+  await act(async () => raiz.render(createElement(Pai, props)));
+}
+
+/* As bolhas dos DSEIs (sem os pontinhos do leque, que não recebem clique). */
+const bolhas = (mapa) =>
+  leaflet
+    .desenhadas(mapa, "circleMarker")
+    .filter((b) => b.opcoes.interactive !== false);
+
+const mapaVivo = (id) =>
+  leaflet.vivos().find((m) => m.elemento.id === id) || null;
+
+beforeEach(() => {
+  leaflet = criarLeafletFalso();
+  globalThis.L = leaflet.L;
+});
+
+afterEach(async () => {
+  if (raiz) await act(async () => raiz.unmount());
+  raiz = null;
+  host?.remove();
+  host = null;
+  delete globalThis.L;
+  delete window.matchMedia;
+  document.documentElement.removeAttribute("data-theme");
+  vi.restoreAllMocks();
+});
+
+describe("visão nacional", () => {
+  it("cria um mapa só no #map, mesmo com o StrictMode desfazendo e refazendo", async () => {
+    await montar();
+    expect(leaflet.vivos()).toHaveLength(1);
+    expect(leaflet.mapas.length).toBeGreaterThanOrEqual(1);
+    expect(leaflet.mapas.filter((m) => m.removido)).toHaveLength(
+      leaflet.mapas.length - 1,
+    );
+    const mapa = mapaVivo("map");
+    expect(mapa).not.toBeNull();
+    expect(host.querySelectorAll("#map")).toHaveLength(1);
+    expect(host.querySelector("#detailMap")).toBeNull();
+  });
+
+  it("desenha uma bolha por DSEI e o losango da CASAI nacional", async () => {
+    await montar();
+    const mapa = mapaVivo("map");
+    expect(bolhas(mapa)).toHaveLength(3);
+    const casais = leaflet.desenhadas(mapa, "marker");
+    expect(casais).toHaveLength(1);
+    expect(casais[0].opcoes.title).toBe("CASAI DF");
+    expect(casais[0].popup.textContent).toContain(
+      "Casa de Saúde Indígena (referência nacional)",
+    );
+  });
+
+  it("Territórios por vagas: ordem por vagas, contagem e clique que escolhe o DSEI", async () => {
+    const aoEscolherDsei = vi.fn();
+    await montar({ aoEscolherDsei });
+    const itens = [...host.querySelectorAll(".mapa-si-territorio")];
+    expect(itens.map((b) => b.querySelector("strong").textContent)).toEqual([
+      "Yanomami",
+      "Alagoas e Sergipe",
+      "Leste de Roraima",
+    ]);
+    expect(itens[0].getAttribute("aria-label")).toBe(
+      "Abrir o DSEI Yanomami: 40 vagas, 25% preenchidas",
+    );
+    expect(host.textContent).toContain("3 territórios");
+    await clicar(itens[1]);
+    expect(aoEscolherDsei).toHaveBeenCalledWith(LMAP.dsei[0]);
+  });
+
+  it("clicar na bolha escolhe o DSEI; na CASAI nacional, filtra pela busca", async () => {
+    const aoEscolherDsei = vi.fn();
+    const aoFiltrarPorBusca = vi.fn();
+    await montar({ aoEscolherDsei, aoFiltrarPorBusca });
+    const mapa = mapaVivo("map");
+    const bolha = bolhas(mapa).find((b) => b.latlng[0] === -9.6);
+    await act(async () => bolha.fire("click"));
+    expect(aoEscolherDsei).toHaveBeenCalledTimes(1);
+    const [casai] = leaflet.desenhadas(mapa, "marker");
+    await act(async () => casai.fire("click"));
+    expect(aoFiltrarPorBusca).toHaveBeenCalledWith("CASAI BRASILIA");
+  });
+
+  it("sedes no mesmo pixel abrem em leque, com traço até o ponto real", async () => {
+    await montar();
+    const mapa = mapaVivo("map");
+    const roraima = leaflet
+      .desenhadas(mapa, "circleMarker")
+      .filter((b) => b.opcoes.radius && Math.abs(b.latlng[1] + 60.67) < 2);
+    expect(roraima.length).toBeGreaterThanOrEqual(2);
+    expect(
+      roraima.some((b) => b.latlng[0] !== 2.81 && b.latlng[0] !== 2.82),
+    ).toBe(true);
+    expect(leaflet.desenhadas(mapa, "polyline").length).toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(mapa.ouvintes("zoomend")).toBeGreaterThanOrEqual(1);
+  });
+
+  it("com filtro ativo, só os DSEIs do recorte e o mapa enquadra neles", async () => {
+    await montar({
+      filtroAtivo: true,
+      linhas: [{ unidade: "DSEI Yanomami", vagas_total: 4, vagas_ociosas: 0 }],
+    });
+    const mapa = mapaVivo("map");
+    expect(bolhas(mapa)).toHaveLength(1);
+    expect(leaflet.desenhadas(mapa, "marker")).toHaveLength(0);
+    expect(
+      mapa.chamadas.some(([nome, , z]) => nome === "setView" && z === 7),
+    ).toBe(true);
+    expect(host.textContent).toContain("1 território");
+  });
+
+  it("Calor liga a cor por ociosidade e troca a legenda pelas faixas", async () => {
+    await montar();
+    const calor = [...host.querySelectorAll("button")].find(
+      (b) => b.textContent === "Calor",
+    );
+    expect(calor.getAttribute("aria-pressed")).toBe("false");
+    await clicar(calor);
+    expect(calor.getAttribute("aria-pressed")).toBe("true");
+    const mapa = mapaVivo("map");
+    const cores = leaflet
+      .desenhadas(mapa, "circleMarker")
+      .map((b) => b.opcoes.fillColor);
+    expect(cores).toContain("#d92d3a");
+    expect(cores).toContain(CORES_DO_MAPA.semEditalNoCalor.preenchimento);
+    expect(host.querySelector(".mapa-si-legenda").textContent).toContain(
+      "60% ou mais ociosas",
+    );
+  });
+
+  it("Brasil volta à vista do país", async () => {
+    await montar();
+    const mapa = mapaVivo("map");
+    const antes = mapa.chamadas.length;
+    await clicar(
+      [...host.querySelectorAll("button")].find(
+        (b) => b.textContent === "Brasil",
+      ),
+    );
+    // O remedir do requestAnimationFrame pode cair no meio (suíte carregada).
+    expect(
+      mapa.chamadas
+        .slice(antes)
+        .map(([n]) => n)
+        .filter((n) => n !== "invalidateSize"),
+    ).toEqual(["stop", "fitBounds"]);
+  });
+
+  it("a legenda recolhe e começa fechada no celular", async () => {
+    const largura = window.innerWidth;
+    window.innerWidth = 390;
+    try {
+      await montar();
+      const alternar = host.querySelector(".mapa-si-legenda__alternar");
+      expect(alternar.getAttribute("aria-expanded")).toBe("false");
+      await clicar(alternar);
+      expect(alternar.getAttribute("aria-expanded")).toBe("true");
+    } finally {
+      window.innerWidth = largura;
+    }
+  });
+
+  it("dica da bolha só com ponteiro que flutua, e sem HTML", async () => {
+    window.matchMedia = () => ({ matches: true });
+    await montar();
+    const mapa = mapaVivo("map");
+    const bolha = leaflet
+      .desenhadas(mapa, "circleMarker")
+      .find((b) => b.dica?.textContent.includes("Alagoas"));
+    expect(bolha.dica.textContent).toContain("Polos base: 2");
+    expect(bolha.dica.textContent).toContain("No mapa:");
+  });
+
+  it("sem o Leaflet (offline), avisa e a lista continua", async () => {
+    delete globalThis.L;
+    await montar();
+    expect(host.textContent).toContain("Mapa indisponível sem conexão");
+    expect(host.querySelectorAll(".mapa-si-territorio")).toHaveLength(3);
+  });
+
+  it("tela cheia liga e o Esc desliga", async () => {
+    await montar();
+    const botao = [...host.querySelectorAll("button")].find(
+      (b) => b.textContent === "Tela cheia",
+    );
+    await clicar(botao);
+    expect(host.querySelector(".mapa-si--tela-cheia")).not.toBeNull();
+    await teclar(document, "Escape");
+    expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
+  });
+});
+
+describe("mapa do DSEI", () => {
+  async function abrirAlse(props = {}) {
+    await montar({ dseiSelecionado: "ALAGOAS E SERGIPE", ...props });
+    return mapaVivo("detailMap");
+  }
+
+  it("com DSEI escolhido, o nacional some e o #detailMap mostra o território", async () => {
+    const mapa = await abrirAlse();
+    expect(mapa).not.toBeNull();
+    expect(host.querySelector(".mapa-si-painel--nacional").hidden).toBe(true);
+    expect(host.querySelector("h2#detailMap-titulo").textContent).toBe(
+      "Mapa do DSEI Alagoas e Sergipe",
+    );
+    expect(leaflet.vivos()).toHaveLength(2);
+  });
+
+  it("unidades: sede em estrela, polo reconciliado uma vez, UBSI sem HTML", async () => {
+    const mapa = await abrirAlse();
+    const marcadores = leaflet.desenhadas(mapa, "marker");
+    const titulos = marcadores.map((m) => m.opcoes.title);
+    expect(titulos).toContain("Sede do DSEI Alagoas e Sergipe");
+    expect(titulos.filter((t) => t.includes("XITEI"))).toHaveLength(1);
+    const ubsi = marcadores.find((m) => m.opcoes.title.startsWith("UBSI"));
+    expect(ubsi.popup.querySelector("img")).toBeNull();
+    expect(ubsi.popup.textContent).toContain("<img src=x onerror=alert(1)>");
+    expect(ubsi.opcoes.icon.html.querySelector("svg")).not.toBeNull();
+    const sede = marcadores.find((m) => m.opcoes.title.startsWith("Sede"));
+    expect(sede.opcoes.zIndexOffset).toBe(400);
+  });
+
+  it("vínculo fora da área: chip, linha pontilhada e enquadramento completo", async () => {
+    const mapa = await abrirAlse();
+    expect(host.querySelector(".mapa-si-chip-externo").textContent).toBe(
+      "1 vínculo fora da área",
+    );
+    const linhas = leaflet
+      .desenhadas(mapa, "polyline")
+      .filter((l) => l.opcoes.dashArray);
+    expect(linhas).toHaveLength(1);
+    const alternar = [...host.querySelectorAll("button")].find((b) =>
+      b.textContent.includes("vínculos externos"),
+    );
+    const antes = mapa.chamadas.length;
+    await clicar(alternar);
+    expect(alternar.textContent).toBe("Voltar ao território");
+    const [, caixa] = mapa.chamadas
+      .slice(antes)
+      .find(([nome]) => nome === "fitBounds");
+    expect(caixa.pontos).toContainEqual([-8, -35]);
+  });
+
+  it("filtros por tipo escondem da lista e do mapa; lista vazia diz por quê", async () => {
+    const mapa = await abrirAlse();
+    const chips = [...host.querySelectorAll(".mapa-si-filtros button")];
+    expect(chips.map((c) => c.textContent)).toEqual([
+      "Polo base 2",
+      "CASAI 1",
+      "UBSI 1",
+    ]);
+    for (const chip of chips) await clicar(chip);
+    expect(chips.every((c) => c.getAttribute("aria-pressed") === "false")).toBe(
+      true,
+    );
+    expect(host.textContent).toContain("Nada a mostrar com estes filtros.");
+    const titulos = leaflet
+      .desenhadas(mapa, "marker")
+      .map((m) => m.opcoes.title);
+    expect(titulos).toEqual(["Sede do DSEI Alagoas e Sergipe"]);
+  });
+
+  it("clicar na unidade leva o mapa até ela e avisa o pai", async () => {
+    const aoEscolherUnidade = vi.fn();
+    const mapa = await abrirAlse({ aoEscolherUnidade });
+    const botao = [...host.querySelectorAll(".mapa-si-unidade")].find((b) =>
+      b.textContent.includes("CASAI AL/SE"),
+    );
+    await clicar(botao);
+    const voo = mapa.chamadas.find(([nome]) => nome === "flyTo");
+    expect(voo[1]).toEqual([-9.62, -35.73]);
+    expect(voo[2]).toBe(11);
+    expect(aoEscolherUnidade).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "CASAI AL/SE" }),
+    );
+  });
+
+  it("trilho Brasil pede para sair do DSEI; o pai decide", async () => {
+    const aoSairDoDsei = vi.fn();
+    await abrirAlse({ aoSairDoDsei });
+    await clicar(host.querySelector(".mapa-si-trilho__voltar"));
+    expect(aoSairDoDsei).toHaveBeenCalledTimes(1);
+    await rerender({ dseiSelecionado: null, aoSairDoDsei });
+    expect(mapaVivo("detailMap")).toBeNull();
+    expect(host.querySelector(".mapa-si-painel--nacional").hidden).toBe(false);
+  });
+
+  it("Terras Indígenas: recorte pela camada, lista, enquadrar e legenda das fases", async () => {
+    const ocultas = new Set();
+    leaflet = criarLeafletFalso({
+      aoCriarMapa: (m) => {
+        m.__agsusSetDseiCoverage = vi.fn();
+        m.__agsusEnquadrarTerra = vi.fn();
+        m.__agsusFaseDaTerraVisivel = (fase) => !ocultas.has(fase);
+        m.__agsusAlternarFaseDaTerra = (fase) => {
+          if (ocultas.has(fase)) ocultas.delete(fase);
+          else ocultas.add(fase);
+          m.fire(EVENTO_DAS_TERRAS);
+        };
+      },
+    });
+    globalThis.L = leaflet.L;
+    const mapa = await abrirAlse();
+    const [nome, pontos, ufs] = mapa.__agsusSetDseiCoverage.mock.calls[0];
+    expect(nome).toBe("Alagoas e Sergipe");
+    expect(pontos[0]).toEqual({ lat: -9.6, lon: -35.7 });
+    expect(ufs).toEqual(["AL", "SE"]);
+
+    await act(async () =>
+      mapa.__agsusAoMudarTerras([
+        {
+          nome: "Xucuru-Kariri",
+          povos: [],
+          ufs: ["AL"],
+          fase: "Regularizada",
+          caixa: { oeste: -37, sul: -10, leste: -36, norte: -9 },
+        },
+      ]),
+    );
+    const terra = host.querySelector(".mapa-si-terra");
+    expect(terra.textContent).toContain("povo não declarado pela Funai");
+    await clicar(terra);
+    expect(mapa.__agsusEnquadrarTerra).toHaveBeenCalledWith("Xucuru-Kariri", {
+      oeste: -37,
+      sul: -10,
+      leste: -36,
+      norte: -9,
+    });
+
+    const fase = host.querySelector(
+      ".mapa-si-legenda--rodape .mapa-si-terra-fase",
+    );
+    expect(fase.getAttribute("aria-pressed")).toBe("true");
+    await clicar(fase);
+    expect(fase.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("o nacional não enquadra escondido; ao voltar, enquadra com a medida nova", async () => {
+    await montar({
+      dseiSelecionado: "ALAGOAS E SERGIPE",
+      filtroAtivo: true,
+      linhas: [LINHAS[0]],
+    });
+    const nacional = mapaVivo("map");
+    const antes = nacional.chamadas.length;
+    expect(nacional.chamadas.some(([n]) => n === "setView")).toBe(false);
+    await rerender({ dseiSelecionado: null });
+    const depois = nacional.chamadas.slice(antes).map(([n]) => n);
+    expect(depois).toContain("invalidateSize");
+    expect(depois).toContain("fitBounds");
+  });
+
+  it("desmontar remove os dois mapas", async () => {
+    await abrirAlse();
+    expect(leaflet.vivos()).toHaveLength(2);
+    await act(async () => raiz.unmount());
+    raiz = null;
+    expect(leaflet.vivos()).toHaveLength(0);
+  });
+});
+
+describe("tema", () => {
+  it("segue o tema do app e aceita o tema forçado pelo pai", async () => {
+    await montar();
+    expect(host.querySelector(".mapa-si--escuro")).toBeNull();
+    await act(async () => {
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.dispatchEvent(new Event(EVENTO_TEMA_ALTERADO));
+    });
+    expect(host.querySelector(".mapa-si--escuro")).not.toBeNull();
+    await rerender({ tema: "claro" });
+    expect(host.querySelector(".mapa-si--escuro")).toBeNull();
+  });
+});
+
+/*
+  "O mapa quebra o nome quando passo o mouse ou clico em algum extremo": a
+  dica centrada acima de um ponto na borda saía do contêiner do mapa. Os dois
+  mapas (nacional e do DSEI) ligam src/lib/dica-dentro-do-mapa.js.
+*/
+describe("dicas e popups dentro do mapa", () => {
+  /* Mede como o navegador: contêiner 600 × 400, dica 268 × 58. */
+  function comMedidas(mapa, caixaDaDica) {
+    const moldura = mapa.elemento;
+    Object.defineProperty(moldura, "clientWidth", { value: 600 });
+    Object.defineProperty(moldura, "clientHeight", { value: 400 });
+    moldura.getBoundingClientRect = () => ({ left: 0, top: 0 });
+    const elemento = document.createElement("div");
+    elemento.getBoundingClientRect = () => caixaDaDica;
+    return {
+      elemento,
+      options: { direction: "top" },
+      getElement: () => elemento,
+      getLatLng: () => [-6.9, -35.1],
+      setLatLng: vi.fn(),
+    };
+  }
+
+  it("a dica de um DSEI na borda leste vai para o lado em vez de ser cortada", async () => {
+    window.matchMedia = () => ({ matches: true });
+    await montar();
+    const mapa = mapaVivo("map");
+    expect(mapa.ouvintes("tooltipopen")).toBe(1);
+    // Centrada acima de um ponto a 10 px da borda direita (x = 590).
+    const dica = comMedidas(mapa, {
+      left: 590 - 134,
+      top: 200 - 6 - 58,
+      width: 268,
+      height: 58,
+    });
+    await act(async () => mapa.fire("tooltipopen", { tooltip: dica }));
+    expect(dica.options.direction).toBe("left");
+    expect(dica.setLatLng).toHaveBeenCalled();
+    expect(dica.elemento.classList.contains("dica-no-mapa")).toBe(true);
+  });
+
+  it("no meio do mapa a dica continua em cima", async () => {
+    window.matchMedia = () => ({ matches: true });
+    await montar();
+    const mapa = mapaVivo("map");
+    const dica = comMedidas(mapa, {
+      left: 300 - 134,
+      top: 200 - 6 - 58,
+      width: 268,
+      height: 58,
+    });
+    await act(async () => mapa.fire("tooltipopen", { tooltip: dica }));
+    expect(dica.options.direction).toBe("top");
+  });
+
+  it("popups com autoPan e largura relativa ao mapa, também no mapa do DSEI", async () => {
+    await montar({ dseiSelecionado: "ALAGOAS E SERGIPE" });
+    const mapa = mapaVivo("detailMap");
+    expect(mapa.ouvintes("popupopen")).toBe(1);
+    const [unidade] = leaflet.desenhadas(mapa, "marker");
+    expect(unidade.opcoesDoPopup).toMatchObject({
+      autoPan: true,
+      keepInView: true,
+      className: "popup-no-mapa",
+    });
+    // Aberto num mapa estreito (celular), o popup encolhe e refaz o autoPan.
+    Object.defineProperty(mapa.elemento, "clientWidth", { value: 343 });
+    Object.defineProperty(mapa.elemento, "clientHeight", { value: 360 });
+    const popup = { options: { maxWidth: 300 }, update: vi.fn() };
+    await act(async () => mapa.fire("popupopen", { popup }));
+    expect(popup.options.maxWidth).toBeLessThan(343);
+    expect(popup.options.maxHeight).toBeLessThan(360);
+    expect(popup.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("a CASAI nacional também abre o popup com autoPan", async () => {
+    await montar();
+    const [casai] = leaflet.desenhadas(mapaVivo("map"), "marker");
+    expect(casai.opcoesDoPopup).toMatchObject({ autoPan: true });
+  });
+});

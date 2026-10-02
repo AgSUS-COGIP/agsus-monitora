@@ -791,17 +791,19 @@
 
         <div class="content">
           <!--
-            Visão geral em React (src/modulos/visao-geral/): montarVisaoGeral() monta
-            a página e muda o bloco do mapa (#mapaDaVisaoGeral, legado: mapas dos
-            DSEIs/CASAIs e dos municípios, "Territórios por vagas") para o lugar que
-            ela reserva. Antes disso, ou se a tela quebrar, ele fica na reserva.
+            Visão geral em React (src/modulos/visao-geral/). Na Saúde Indígena o
+            mapa é React (src/modulos/mapa-saude-indigena/); o de Projetos, os
+            municípios das vagas, ainda é legado (src/modules/municipios-da-visao-geral.js):
+            montarVisaoGeral() muda o bloco abaixo (#mapaDaVisaoGeral) para o
+            lugar que ela reserva e só o mostra em Projetos. Antes disso, ou se a
+            tela quebrar, ele fica na reserva. SEDE não tem mapa.
           -->
           <section id="page-dashboard" class="page active"></section>
           <div id="reservaDoMapaDaVisaoGeral" hidden>
             <div
               id="mapaDaVisaoGeral"
               class="health-map-workspace"
-              aria-label="Mapas da rede de saúde indígena"
+              aria-label="Mapa dos municípios das vagas"
             >
               <section class="card health-map-pane health-map-pane--master">
                 <header class="health-map-pane__header">
@@ -810,166 +812,59 @@
                       ><i class="fa-solid fa-earth-americas"></i> Visão
                       nacional</span
                     >
-                    <h3>DSEIs / CASAIs do Brasil</h3>
+                    <h3>Municípios das vagas</h3>
                   </div>
                   <span class="health-map-pane__count" id="masterMapCount"
                     >Brasil</span
                   >
+                  <button
+                    id="mapaDosProjetosBrasil"
+                    class="btn small"
+                    type="button"
+                    title="Voltar à visão do Brasil inteiro"
+                  >
+                    Brasil
+                  </button>
                 </header>
                 <!-- O mapa fica na proporção que o Brasil preenche; a largura
-                     que sobra leva a lista dos territórios, não oceano. -->
+                     que sobra leva a lista dos municípios, não oceano. -->
                 <div class="health-map-brasil-layout">
-                  <div
-                    id="map"
-                    role="img"
-                    aria-label="Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI"
-                  ></div>
+                  <div class="mapa-projetos__moldura">
+                    <div
+                      id="mapaDosProjetos"
+                      role="img"
+                      aria-label="Mapa do Brasil com os municípios das vagas da área"
+                    ></div>
+                    <details class="mapa-projetos__legenda">
+                      <summary>Legenda</summary>
+                      <div data-legenda-dos-municipios></div>
+                    </details>
+                  </div>
                   <aside
                     class="health-map-units health-map-brasil-painel"
-                    aria-label="Territórios por vagas"
+                    aria-label="Municípios por vagas"
                   >
                     <div class="health-map-units__header">
                       <span
-                        ><i class="fa-solid fa-ranking-star"></i> Territórios
-                        por vagas</span
+                        ><i class="fa-solid fa-ranking-star"></i> Municípios por
+                        vagas</span
                       >
                       <b id="brasilDseiCount" aria-label="Carregando">…</b>
                     </div>
                     <div id="brasilDseiList" class="health-map-units__list">
                       <div class="health-map-empty">
                         <i class="fa-solid fa-map-location-dot"></i>
-                        <strong>Carregando os territórios</strong>
-                        <span>Segue os filtros da página.</span>
+                        <strong>Carregando os municípios</strong>
+                        <span>Dos editais e das vagas da área.</span>
                       </div>
                     </div>
                   </aside>
                 </div>
                 <footer class="health-map-pane__hint">
                   <i class="fa-solid fa-arrow-pointer"></i>
-                  Escolha um DSEI no mapa para ver polos e unidades.
+                  Clique num município para ver projeto, edital, vagas e
+                  candidatos.
                 </footer>
-                <span id="mapLegendMin" class="hidden">0</span>
-                <span id="mapLegendMax" class="hidden"></span>
-                <span id="mapLegendScale" class="hidden"></span>
-                <span id="mapLegendDsei" class="hidden"></span>
-              </section>
-              <section class="card health-map-pane health-map-pane--detail">
-                <header class="health-map-pane__header">
-                  <div>
-                    <!-- O trilho guarda a referência nacional sem gastar um
-                         mapa inteiro a repetir o Brasil ao lado. -->
-                    <nav class="health-map-breadcrumb" aria-label="Onde estou">
-                      <button
-                        type="button"
-                        class="health-map-breadcrumb__voltar"
-                        onclick="resetDetailMap()"
-                      >
-                        Brasil
-                      </button>
-                      <span aria-hidden="true">›</span>
-                      <span id="detailBreadcrumbDsei">território</span>
-                    </nav>
-                    <h3 id="detailMapTitle">Mapa do Brasil</h3>
-                  </div>
-                  <div class="health-map-detail-actions">
-                    <!-- O chip só aparece quando há vínculo fora da abrangência
-                         do DSEI; o botão alterna entre o enquadramento do
-                         território e o que inclui as unidades externas. -->
-                    <span
-                      id="detailExternalChip"
-                      class="health-map-external-chip"
-                      hidden
-                    ></span>
-                    <button
-                      id="detailExternalToggle"
-                      class="health-map-external-toggle"
-                      type="button"
-                      onclick="toggleVinculosExternos()"
-                      hidden
-                    >
-                      Mostrar vínculos externos
-                    </button>
-                    <button
-                      id="detailMapReset"
-                      class="health-map-reset hidden"
-                      type="button"
-                      onclick="resetDetailMap()"
-                    >
-                      <i class="fa-solid fa-arrow-left"></i> Voltar à visão
-                      nacional
-                    </button>
-                  </div>
-                </header>
-                <!-- Território à esquerda, painel de unidades à direita. O card
-                     inteiro só aparece quando houver um DSEI escolhido. -->
-                <div class="health-map-detail-layout">
-                  <div
-                    id="detailMap"
-                    role="img"
-                    aria-label="Mapa detalhado dos polos e unidades do DSEI selecionado"
-                  ></div>
-                  <aside
-                    class="health-map-units"
-                    aria-label="Polos e unidades do território selecionado"
-                  >
-                    <div class="health-map-units__header">
-                      <span
-                        ><i class="fa-solid fa-house-medical"></i> Polos e
-                        unidades</span
-                      >
-                      <b id="detailUnitCount">0</b>
-                    </div>
-                    <div
-                      id="detailFiltros"
-                      class="health-map-filtros"
-                      role="group"
-                      aria-label="Filtrar as unidades por tipo"
-                      hidden
-                    ></div>
-                    <div id="detailUnitList" class="health-map-units__list">
-                      <div class="health-map-empty">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <strong>Selecione um DSEI</strong>
-                        <span
-                          >Os polos, CASAIs e unidades aparecerão aqui.</span
-                        >
-                      </div>
-                    </div>
-                    <!--
-                      O mapa desenhava as terras e não as nomeava em lugar
-                      nenhum: para saber quais eram e que povos vivem nelas era
-                      preciso passar o ponteiro por cima de cada uma, uma a uma.
-                      Esta lista é preenchida pela própria camada, com as terras
-                      que sobreviveram ao filtro do distrito.
-                    -->
-                    <div class="health-map-units__header">
-                      <span
-                        ><i class="fa-solid fa-mountain-sun"></i> Terras
-                        Indígenas e povos</span
-                      >
-                      <b id="detailTerraCount">0</b>
-                    </div>
-                    <div id="detailTerraList" class="health-map-units__list">
-                      <div class="health-map-empty">
-                        <i class="fa-solid fa-mountain-sun"></i>
-                        <strong>Selecione um DSEI</strong>
-                        <span
-                          >As Terras Indígenas atendidas aparecerão aqui.</span
-                        >
-                      </div>
-                    </div>
-                  </aside>
-                </div>
-                <!--
-                  Preenchida por `aplicarLegendaDoMapaDetalhado()`, a partir da
-                  mesma tabela que decide a forma e a cor de cada marcador.
-                  Escrita à mão, ela ficou descrevendo bolinhas redondas
-                  enquanto o mapa já desenhava círculo, casa, cruz e losango.
-                -->
-                <footer
-                  class="health-map-detail-legend"
-                  aria-label="Legenda do mapa detalhado"
-                ></footer>
               </section>
             </div>
           </div>

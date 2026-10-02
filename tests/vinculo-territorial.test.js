@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   UF_POR_CODIGO_IBGE,
@@ -9,16 +8,29 @@ import {
   siglaDaUf,
 } from "../src/lib/uf-ibge.js";
 import {
-  ESTILO_DA_LINHA,
-  TOOLTIP_DA_LINHA,
-  classificarRegistros,
+  DESENHO_DAS_FORMAS,
+  ESTILO_DA_LINHA_DE_VINCULO as ESTILO_DA_LINHA,
+  TEXTO_DA_LINHA_DE_VINCULO as TOOLTIP_DA_LINHA,
   formaDoTipo,
-  htmlDoMarcador,
+} from "../src/lib/mapa-saude-indigena/formas.js";
+import {
+  classificarRegistros,
+  dicaDoRegistro,
+  limitesDoDsei,
   registrosExternos,
   registrosLocais,
-  textoDoChip,
-  tooltipDoRegistro,
-} from "../src/modules/vinculos-territoriais.js";
+  textoDosVinculosExternos as textoDoChip,
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
+
+/*
+  As regras do vínculo territorial no mapa do DSEI (src/modulos/mapa-saude-indigena/,
+  regras em src/lib/mapa-saude-indigena/). A dica é `{ titulo, linhas }`, em
+  nós de texto; aqui, lida como uma linha só.
+*/
+const tooltipDoRegistro = (registro, dsei) => {
+  const { titulo, linhas } = dicaDoRegistro(registro, dsei);
+  return [titulo, ...linhas].join(" · ");
+};
 
 describe("conversão de código IBGE para sigla", () => {
   it("cobre as 27 unidades da federação", () => {
@@ -291,68 +303,45 @@ describe("apresentação", () => {
       [{ name: "Uruçuí", uf: 22, type: { key: "casai", color: "#d92d3a" } }],
       dsei,
     );
-    const html = htmlDoMarcador(externo);
-    expect(html).toContain("mapa-marcador--externo");
+    expect(externo.vinculo).toBe(VINCULO_EXTERNO);
     // A casa (CASAI) continua sendo desenhada, não substituída por outro símbolo.
-    expect(html).toContain("M9 2.6 15.2 8v8.2H2.8V8Z");
+    expect(DESENHO_DAS_FORMAS[formaDoTipo(externo.type.key).forma]).toContain(
+      "M9 2.6 15.2 8v8.2H2.8V8Z",
+    );
   });
 });
 
-describe("integração no mapa detalhado", () => {
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
-  const html = readFileSync("index.html", "utf8");
-
+describe("enquadramento do mapa do DSEI", () => {
   /*
-    Incluir os remotos no fit inicial encolheria o território: no Ceará a caixa
-    passaria de 3.01 x 2.75 para 4.31 x 6.28 graus.
+    Incluir os remotos no enquadramento inicial encolheria o território: no
+    Ceará a caixa passaria de 3.01 x 2.75 para 4.31 x 6.28 graus.
   */
-  it("o enquadramento inicial usa só sede e unidades locais", () => {
-    const fn = app.slice(
-      app.indexOf("_detailBounds = {"),
-      app.indexOf("function enquadrarDetalhe"),
+  it("o inicial usa só sede e unidades locais; o completo inclui as externas", () => {
+    const dsei = { n: "Ceará", ufs: ["CE"], lat: -3.7, lon: -38.5 };
+    const classificados = classificarRegistros(
+      [
+        { name: "Local", uf: 23, lat: -4, lon: -39 },
+        { name: "Uruçuí", uf: 22, lat: -7.2, lon: -44.5 },
+      ],
+      dsei,
     );
-    expect(fn).toContain("territorio: [[d.lat, d.lon], ...locais.map(");
-    expect(fn).toContain("completo: [[d.lat, d.lon], ...classificados.map(");
-    expect(fn).toContain('enquadrarDetalhe("territorio")');
-  });
-
-  it("o botão alterna entre os dois escopos", () => {
-    const fn = app.slice(
-      app.indexOf("function toggleVinculosExternos"),
-      app.indexOf("function toggleVinculosExternos") + 260,
-    );
-    expect(fn).toContain(
-      '_detailEscopo === "completo" ? "territorio" : "completo"',
-    );
-    expect(app).toContain('"Voltar ao território"');
-  });
-
-  it("voltar ao Brasil limpa o estado de vínculos", () => {
-    const fn = app.slice(
-      app.indexOf("function resetDetailMap"),
-      app.indexOf("function scheduleMapResize"),
-    );
-    expect(fn).toContain("atualizarChipDeVinculos(0)");
-    expect(fn).toContain("_detailBounds = null");
-  });
-
-  it("o chip e o botão nascem ocultos no HTML", () => {
-    expect(html).toContain('id="detailExternalChip"');
-    expect(html).toContain('id="detailExternalToggle"');
-    const bloco = html.slice(
-      html.indexOf('id="detailExternalChip"'),
-      html.indexOf('id="detailMapReset"'),
-    );
-    expect(bloco).toContain("hidden");
+    const limites = limitesDoDsei(dsei, classificados);
+    expect(limites.territorio).toEqual([
+      [-3.7, -38.5],
+      [-4, -39],
+    ]);
+    expect(limites.completo).toEqual([
+      [-3.7, -38.5],
+      [-4, -39],
+      [-7.2, -44.5],
+    ]);
   });
 
   it("a coordenada real nunca é ajustada para a UF declarada", () => {
-    const fn = app.slice(
-      app.indexOf("const classificados = classificarRegistros"),
-      app.indexOf("function enquadrarDetalhe"),
+    const [externo] = classificarRegistros(
+      [{ name: "Uruçuí", uf: 22, lat: -7.2, lon: -44.5 }],
+      { n: "Ceará", ufs: ["CE"] },
     );
-    expect(fn).toContain("[record.lat, record.lon]");
-    expect(fn).not.toMatch(/lat\s*=\s*[^=]/);
-    expect(fn).not.toMatch(/lon\s*=\s*[^=]/);
+    expect([externo.lat, externo.lon]).toEqual([-7.2, -44.5]);
   });
 });

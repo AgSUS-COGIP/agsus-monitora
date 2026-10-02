@@ -103,9 +103,10 @@ function healthMapElementId(element) {
   return String(element?.id || "");
 }
 
+/* Os mapas da Visão geral: os dois da Saúde Indígena e o de Projetos. */
 function isHealthMapElement(element) {
   const id = healthMapElementId(element);
-  return id === "map" || id === "detailMap";
+  return id === "map" || id === "detailMap" || id === "mapaDosProjetos";
 }
 
 export function normalizeMapZoomOptions(element, options = {}) {

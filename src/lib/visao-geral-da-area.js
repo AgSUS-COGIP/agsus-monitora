@@ -1,22 +1,22 @@
 /*
   A Visão geral de cada área, sem DOM nem rede.
 
-  Saúde Indígena, SEDE e Projetos abrem a MESMA página (`dashboard`, no
-  legado): indicadores, filtros, "Unidades com mais de um processo seletivo",
+  Saúde Indígena, SEDE e Projetos abrem a MESMA página (`dashboard`, React em
+  src/modulos/visao-geral/): indicadores, filtros, "Unidades com mais de um processo seletivo",
   resumo, gráfico, atenção e tabela, sempre com os editais da área atual. O
   que muda é o bloco "Visão nacional":
 
   - Saúde Indígena: o mapa dos DSEIs e CASAIs, com as Terras Indígenas, e a
-    lista "Territórios por vagas" — como sempre foi;
-  - Projetos: o mesmo mapa, sem nada da Saúde Indígena, com um ponto por
+    lista "Territórios por vagas" (src/modulos/mapa-saude-indigena/);
+  - Projetos: um mapa do Brasil, sem nada da Saúde Indígena, com um ponto por
     lugar das vagas de todos os projetos, na cor do projeto (RPC
     `listar_municipios_das_vagas_da_area`: os locais lidos dos PDFs dos
     editais, em TB_LOCAL_VAGA_EDITAL, e o "UBS móvel" do nome da vaga), e a
     lista "Municípios por vagas", com filtro e agrupamento por projeto;
   - SEDE: sem o bloco — a equipe fica em Brasília.
 
-  Aqui ficam essa escolha, os textos de cada bloco e a conta dos municípios.
-  O desenho é de `src/modules/municipios-da-visao-geral.js` e do legado.
+  Aqui ficam essa escolha, os textos do bloco de Projetos e a conta dos
+  municípios. O desenho é de `src/modules/municipios-da-visao-geral.js`.
 */
 
 import {
@@ -63,17 +63,10 @@ export function cabecalhoDaVisaoGeral(
 }
 
 /*
-  Os textos do bloco do mapa, por tipo de mapa. Os da Saúde Indígena são os
-  do `index.html`: trocar de área e voltar deixa o bloco como estava.
+  Os textos do bloco do mapa de Projetos (o do `index.html`, legado). O mapa
+  da Saúde Indígena tem os dele (src/modulos/mapa-saude-indigena/).
 */
 export const TEXTOS_DO_MAPA = Object.freeze({
-  [MAPA_DOS_DSEIS]: Object.freeze({
-    area: "Mapas da rede de saúde indígena",
-    titulo: "DSEIs / CASAIs do Brasil",
-    mapa: "Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI",
-    lista: "Territórios por vagas",
-    dica: "Escolha um DSEI no mapa para ver polos e unidades.",
-  }),
   [MAPA_DOS_MUNICIPIOS]: Object.freeze({
     area: "Mapa dos municípios das vagas",
     titulo: "Municípios das vagas",
@@ -82,10 +75,6 @@ export const TEXTOS_DO_MAPA = Object.freeze({
     dica: "Clique num município para ver projeto, edital, vagas e candidatos.",
   }),
 });
-
-export function textosDoMapa(mapa) {
-  return TEXTOS_DO_MAPA[mapa] ?? TEXTOS_DO_MAPA[MAPA_DOS_DSEIS];
-}
 
 export const plural = (total, um, varios) =>
   `${num(total).toLocaleString("pt-BR")} ${num(total) === 1 ? um : varios}`;

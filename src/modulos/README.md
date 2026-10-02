@@ -8,5 +8,6 @@ Cada tela do MONITORA, quando migra, mora aqui: `<nome>/<nome>.jsx` (componente 
 Já aqui: `recursos/` (Recursos dos candidatos, o modelo de tela de página inteira),
 `entrevistas/` (Entrevistas: resultados, condução e roteiros, com as visões no topo), `analises/`
 (Análises curriculares) e `selecao/` (Seleção: funil por vaga, só leitura). As outras mudam uma a
-uma, na etapa de cada uma.
+uma, na etapa de cada uma. `mapa-saude-indigena/` é uma peça, não uma tela: o mapa da Visão geral
+da Saúde Indígena, pronto e ainda não ligado (contrato no README dela).
 Guia completo, com o mapa de hoje → alvo: `docs/arquitetura-react.md`.

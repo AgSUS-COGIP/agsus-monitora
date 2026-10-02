@@ -14,7 +14,6 @@ import "./styles/visual-polish.css";
 import "./styles/arara-guide.css";
 import "./styles/nina-conversation.css";
 import "./styles/loading-experience.css";
-import "./styles/health-map-contrast.css";
 import "./styles/health-reference-kpis.css";
 import "./styles/config-page.css";
 import "./styles/config-governance.css";
@@ -31,11 +30,8 @@ import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
 import "./styles/health-map-workspace.css";
-import "./styles/health-map-size-tuning.css";
-import "./styles/health-map-immersive-workspace.css";
 import "./styles/map-base-layer-switcher.css";
 import "./styles/indigenous-territories-layer.css";
-import "./styles/legenda-das-terras.css";
 import "./styles/system-ui-fixes.css";
 import "./styles/nielsen-shell-ux.css";
 import "./styles/post-152-regression-fixes.css";
@@ -56,6 +52,7 @@ import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
 import "./modulos/visao-geral/visao-geral.css";
+import "./modulos/mapa-saude-indigena/mapa-saude-indigena.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
@@ -66,11 +63,9 @@ import "./modules/legacy-app.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
 import { instalarCarregamento } from "./modules/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
-import { initHealthMapImmersiveWorkspace } from "./modules/health-map-immersive-workspace.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import { initAraraSpeakingEffects } from "./modules/arara-speaking-effects.js";
 import { initNinaPanelDrag } from "./modules/nina-panel-drag.js";
-import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
 import {
   organizarConfiguracoesEmSecoes,
   SECOES,
@@ -118,7 +113,7 @@ installCspReportMonitor();
 montarBarraLateral();
 /*
   A Visão geral (React, src/modulos/visao-geral/) também monta já, de forma
-  síncrona: ela põe o bloco do mapa (legado) no lugar dele antes de o resto do
+  síncrona: ela põe o bloco do mapa de Projetos (legado) no lugar dele antes de o resto do
   app procurá-lo. O legado fala com ela pelo estado (estado.js), não pelo DOM.
 */
 window.visaoGeralController = montarVisaoGeral({
@@ -130,8 +125,6 @@ initLoadingExperience();
 initVisualPolish();
 initAraraSpeakingEffects();
 initNinaPanelDrag();
-initHealthMapImmersiveWorkspace();
-aplicarLegendaDoMapaDetalhado();
 // A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
 initSidebarBranding();
 // O esqueleto das seções de Configurações, depois a moldura e as seções em React (portais).

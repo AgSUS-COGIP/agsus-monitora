@@ -917,3 +917,31 @@ th[aria-sort="descending"] .ui-ordenar i {
     animation: none;
   }
 }
+
+/* ── Dicas e popups dos mapas (src/lib/dica-dentro-do-mapa.js) ───────── */
+
+/*
+  A dica do Leaflet vive numa camada de largura zero: com `white-space:
+  normal` e sem largura ela encolheria até a palavra mais comprida. Com
+  `max-content` o texto ocupa a linha inteira até o teto (o JS reduz o teto
+  em mapa estreito) e só então quebra, na palavra.
+*/
+.leaflet-tooltip.dica-no-mapa {
+  width: max-content;
+  max-width: min(280px, calc(100vw - 2 * var(--space-4)));
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* Empurrada para caber (canto de mapa pequeno): a seta não apontaria o ponto. */
+.leaflet-tooltip.dica-no-mapa--deslocada::before {
+  display: none;
+}
+
+/* Popup alto rola por dentro (o `maxHeight` vem do tamanho do mapa). */
+.popup-no-mapa .leaflet-popup-content {
+  overflow-wrap: break-word;
+}
+.popup-no-mapa .leaflet-popup-scrolled {
+  overscroll-behavior: contain;
+}
