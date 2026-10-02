@@ -196,12 +196,11 @@ export function ImportarAnexos({
   const linhasSalvas = salvo?.linhas || [];
 
   return (
-    <section id="anexosDoEdital" className="cronograma-copy-box anexos-box">
-      <div className="cronograma-copy-heading">
-        <div>
-          <strong>Anexos do edital</strong>
-        </div>
-      </div>
+    <section
+      id="anexosDoEdital"
+      className="cronograma-copy-box anexos-box ui-campo-largo"
+    >
+      <strong className="cronograma-copy-heading">Anexos do edital</strong>
       <div className="cronograma-copy-controls">
         <input
           ref={entrada}

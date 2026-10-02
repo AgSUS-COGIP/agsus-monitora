@@ -1,4 +1,3 @@
-import { PainelDeFiltros } from "../../ui/painel-de-filtros.jsx";
 import { useEffect, useRef } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
@@ -6,29 +5,37 @@ import {
   canEditSubJudice,
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
+import { formatNumberBR } from "../../lib/formatters.js";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import {
+  BotaoDeAcao,
+  Campo,
+  GradeDeKpis,
+  Kpi,
+  LinhasEsqueleto,
+  PainelDeFiltros,
+  classes,
+} from "../../ui/index.js";
 import {
   AcaoDeAnexos,
   AcaoDeStatus,
-  Kpi,
   ModalidadeDoCandidato,
   NomeDoCandidato,
   NotaDoCandidato,
-  BotaoDeAcao,
-  ErroAoCarregar,
-  LinhasEsqueleto,
   Paginacao,
   SeloDeStatus,
-  classes,
 } from "./partes.jsx";
 
 /*
   A aba "Lista de aprovados": indicadores, filtros e a tabela paginada.
 
-  Os filtros e a página moram em `lista-aprovados.jsx`, porque o contador do
-  cabeçalho da página também os lê. A lista inteira continua em memória; o que
-  a paginação corta é o custo de DESENHAR — com milhares de candidatos, montar
+  Os filtros e a página moram em `lista-aprovados.jsx`, porque o contador do topo
+  da página também os lê. A lista inteira continua em memória; o que a
+  paginação corta é o custo de DESENHAR — com milhares de candidatos, montar
   todas as linhas a cada escolha num filtro travava o navegador.
+
+  Antes da primeira carga, KPIs e linhas são skeleton; se ela falha, o aviso
+  com "Tentar novamente" fica no topo da tela e a tabela diz "Sem dados.".
 */
 
 const text = (value) => String(value ?? "").trim();
@@ -46,6 +53,7 @@ export function AbaAprovados({
   opcoes,
   filtros,
   aoMudarFiltro,
+  aoLimparFiltros,
   pagina,
   tamanho,
   aoIrPara,
@@ -53,6 +61,8 @@ export function AbaAprovados({
 }) {
   const tabela = useRef(null);
   const resumo = summarizeApprovedCandidates(candidatos, filtros);
+  const carregando = !carregado && !erroAoCarregar;
+  const quantos = Object.values(filtros).filter((lista) => lista.length).length;
 
   // As linhas novas precisam dos rótulos do modo cartão (menu ≤ 900px).
   useEffect(() => {
@@ -65,6 +75,18 @@ export function AbaAprovados({
     tabela.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }
 
+  const kpi = (idDoValor, chave, tom, icone, rotulo, valor) => (
+    <Kpi
+      idDoValor={idDoValor}
+      chave={chave}
+      tom={tom}
+      icone={icone}
+      rotulo={rotulo}
+      valor={formatNumberBR(valor)}
+      carregando={carregando}
+    />
+  );
+
   return (
     <div
       id="approvedPanelAprovados"
@@ -72,65 +94,68 @@ export function AbaAprovados({
       role="tabpanel"
       aria-labelledby="approvedTabAprovados"
     >
-      <div className="approved-kpis" aria-label="Resumo da lista de aprovados">
-        <Kpi
-          id="approvedKpiTotal"
-          tom="total"
-          icone="fa-users"
-          rotulo="Total de aprovados"
-          valor={resumo.total}
-          carregado={carregado}
-        />
-        <Kpi
-          id="approvedKpiContratado"
-          tom="success"
-          icone="fa-user-check"
-          rotulo="Contratados"
-          valor={resumo.contratado}
-          carregado={carregado}
-        />
-        <Kpi
-          id="approvedKpiDesistente"
-          tom="danger"
-          icone="fa-user-xmark"
-          rotulo="Desistentes"
-          valor={resumo.desistente}
-          carregado={carregado}
-        />
-        <Kpi
-          id="approvedKpiMigracao"
-          tom="info"
-          icone="fa-right-left"
-          rotulo="Migração"
-          valor={resumo.migracao}
-          carregado={carregado}
-        />
-        <Kpi
-          id="approvedKpiDocumentacaoRejeitada"
-          tom="warning"
-          icone="fa-file-circle-xmark"
-          rotulo="Documentação rejeitada"
-          valor={resumo.documentacaoRejeitada}
-          carregado={carregado}
-        />
-        <Kpi
-          id="approvedKpiFimDeFila"
-          tom="fila"
-          icone="fa-arrow-turn-down"
-          rotulo="Fim de fila"
-          valor={resumo.fimDeFila}
-          carregado={carregado}
-        />
-      </div>
+      <GradeDeKpis
+        className="approved-kpis"
+        rotulo="Resumo da lista de aprovados"
+      >
+        {kpi(
+          "approvedKpiTotal",
+          "total",
+          "info",
+          "fa-users",
+          "Total de aprovados",
+          resumo.total,
+        )}
+        {kpi(
+          "approvedKpiContratado",
+          "contratado",
+          "sucesso",
+          "fa-user-check",
+          "Contratados",
+          resumo.contratado,
+        )}
+        {kpi(
+          "approvedKpiDesistente",
+          "desistente",
+          "perigo",
+          "fa-user-xmark",
+          "Desistentes",
+          resumo.desistente,
+        )}
+        {kpi(
+          "approvedKpiMigracao",
+          "migracao",
+          "destaque",
+          "fa-right-left",
+          "Migração",
+          resumo.migracao,
+        )}
+        {kpi(
+          "approvedKpiDocumentacaoRejeitada",
+          "documentacao-rejeitada",
+          "alerta",
+          "fa-file-circle-xmark",
+          "Documentação rejeitada",
+          resumo.documentacaoRejeitada,
+        )}
+        {kpi(
+          "approvedKpiFimDeFila",
+          "fim-de-fila",
+          "neutro",
+          "fa-arrow-turn-down",
+          "Fim de fila",
+          resumo.fimDeFila,
+        )}
+      </GradeDeKpis>
 
       <PainelDeFiltros
-        idDoTitulo="aprovadosFiltros"
-        quantos={Object.values(filtros).filter((v) => v.length).length}
-        aoLimpar={() => aoMudarFiltro("limpar", [])}
+        idDoTitulo="approvedFiltrosTitulo"
+        className="approved-filters"
+        quantos={quantos}
+        aoLimpar={aoLimparFiltros}
       >
-        <div className="approved-filters">
-          <div className="form-row">
-            <label htmlFor="approvedFilterEdital">Edital</label>
+        <div className="ui-grade-de-campos">
+          <Campo rotulo="Edital" idDoControle="approvedFilterEdital">
             <MultiSelectBusca
               id="approvedFilterEdital"
               placeholder="Todos os editais"
@@ -138,9 +163,8 @@ export function AbaAprovados({
               selecionados={filtros.editalId}
               aoMudar={(valores) => aoMudarFiltro("editalId", valores)}
             />
-          </div>
-          <div className="form-row">
-            <label htmlFor="approvedFilterCargo">Cargo</label>
+          </Campo>
+          <Campo rotulo="Cargo" idDoControle="approvedFilterCargo">
             <MultiSelectBusca
               id="approvedFilterCargo"
               placeholder="Todos os cargos"
@@ -148,9 +172,8 @@ export function AbaAprovados({
               selecionados={filtros.cargo}
               aoMudar={(valores) => aoMudarFiltro("cargo", valores)}
             />
-          </div>
-          <div className="form-row">
-            <label htmlFor="approvedFilterModalidade">Modalidade</label>
+          </Campo>
+          <Campo rotulo="Modalidade" idDoControle="approvedFilterModalidade">
             <MultiSelectBusca
               id="approvedFilterModalidade"
               placeholder="Todas as modalidades"
@@ -158,9 +181,8 @@ export function AbaAprovados({
               selecionados={filtros.modalidade}
               aoMudar={(valores) => aoMudarFiltro("modalidade", valores)}
             />
-          </div>
-          <div className="form-row">
-            <label htmlFor="approvedFilterStatus">Status</label>
+          </Campo>
+          <Campo rotulo="Status" idDoControle="approvedFilterStatus">
             <MultiSelectBusca
               id="approvedFilterStatus"
               placeholder="Todos os status"
@@ -168,124 +190,135 @@ export function AbaAprovados({
               selecionados={filtros.status}
               aoMudar={(valores) => aoMudarFiltro("status", valores)}
             />
-          </div>
+          </Campo>
         </div>
       </PainelDeFiltros>
-      <div className="table-wrap" ref={tabela}>
-        <table className="approved-table">
-          <thead>
-            <tr>
-              {/* Nome primeiro: é por ele que se procura; na última coluna
-                  ficava cortado pela rolagem horizontal. */}
-              <th>Nome</th>
-              <th>Cargo</th>
-              <th>Modalidade</th>
-              <th className="num">Classificação</th>
-              <th className="num">Nota</th>
-              <th>Status</th>
-              <th style={{ textAlign: "center" }}>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="approvedRows" aria-busy={carregado ? undefined : true}>
-            {erroAoCarregar ? (
+
+      <section
+        className="ui-card ui-tabela approved-page-card"
+        aria-label="Candidatos aprovados"
+      >
+        <div className="ui-tabela-rolagem" ref={tabela}>
+          <table className="approved-table">
+            <thead>
               <tr>
-                <td colSpan={COLUNAS}>
-                  <ErroAoCarregar
-                    estado={estado}
-                    mensagem={erroAoCarregar}
-                    oQue="a lista de aprovados"
-                  />
-                </td>
+                {/* Nome primeiro: é por ele que se procura; na última coluna
+                    ficava cortado pela rolagem horizontal. */}
+                <th scope="col">Nome</th>
+                <th scope="col">Cargo</th>
+                <th scope="col">Modalidade</th>
+                <th scope="col" className="num">
+                  Classificação
+                </th>
+                <th scope="col" className="num">
+                  Nota
+                </th>
+                <th scope="col">Status</th>
+                <th scope="col" className="approved-th-acoes">
+                  Ações
+                </th>
               </tr>
-            ) : !carregado ? (
-              <LinhasEsqueleto colunas={COLUNAS} />
-            ) : pagina.rows.length ? (
-              pagina.rows.map((row) => (
-                <tr key={row.candidato_id}>
-                  <td>
-                    <NomeDoCandidato candidato={row} />
-                  </td>
-                  <td>{row.cargo || "-"}</td>
-                  <td>
-                    <ModalidadeDoCandidato candidato={row} />
-                  </td>
-                  <td className="num">{row.classificacao ?? "-"}</td>
-                  <td className="num">
-                    <NotaDoCandidato candidato={row} />
-                  </td>
-                  <td>
-                    <SeloDeStatus status={text(row.status)} />
-                  </td>
-                  <td className="approved-actions">
-                    <div className="approved-actions-grupo">
-                      <AcaoDeAnexos
-                        candidato={row}
-                        anexos={anexos.get(String(row.candidato_id))}
-                        aoAbrir={estado.abrirAnexos}
-                      />
-                      <AcaoDeStatus
-                        perfil={perfil}
-                        candidato={row}
-                        atributos={{ "data-approved-action": "status" }}
-                        aoAbrir={estado.abrirStatus}
-                      />
-                      {canAlterarCandidatoSubJudice(perfil, row) ? (
-                        <button
-                          type="button"
-                          className="approved-icone-acao"
-                          data-approved-action="alteracao-judicial"
-                          data-candidate-id={row.candidato_id}
-                          title="Alterar nota ou modalidade por decisão judicial"
-                          aria-label={`Alterar nota ou modalidade de ${row.nome} por decisão judicial`}
-                          onClick={() =>
-                            estado.abrirAlteracaoJudicial(row.candidato_id)
-                          }
-                        >
-                          <i className="fa-solid fa-gavel" aria-hidden="true" />
-                        </button>
-                      ) : null}
-                      {canEditSubJudice(perfil, row) ? (
-                        <BotaoDeAcao
-                          estado={estado}
-                          acao={`remover-sub-judice:${row.candidato_id}`}
-                          soIcone
-                          className="btn icon red"
-                          data-approved-action="remove-subjudice"
-                          data-candidate-id={row.candidato_id}
-                          title="Remover sub judice"
-                          aria-label={`Remover ${row.nome} da lista como sub judice`}
-                          onClick={() =>
-                            void estado.removerSubJudice(row.candidato_id)
-                          }
-                        >
-                          <i
-                            className="fa-solid fa-user-minus"
-                            aria-hidden="true"
-                          />
-                        </BotaoDeAcao>
-                      ) : null}
-                    </div>
+            </thead>
+            <tbody id="approvedRows" aria-busy={carregando || undefined}>
+              {carregando ? (
+                <LinhasEsqueleto colunas={COLUNAS} />
+              ) : erroAoCarregar ? (
+                <tr>
+                  <td colSpan={COLUNAS} className="ui-vazio">
+                    Sem dados.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={COLUNAS} className="approved-empty">
-                  Nenhum candidato encontrado para os filtros selecionados.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      <Paginacao
-        prefixo="approved"
-        pagina={pagina}
-        tamanho={tamanho}
-        unidade="candidatos"
-        aoIrPara={irPara}
-        aoMudarTamanho={aoMudarTamanho}
-      />
+              ) : pagina.rows.length ? (
+                pagina.rows.map((row) => (
+                  <tr key={row.candidato_id}>
+                    <td>
+                      <NomeDoCandidato candidato={row} />
+                    </td>
+                    <td>{row.cargo || "-"}</td>
+                    <td>
+                      <ModalidadeDoCandidato candidato={row} />
+                    </td>
+                    <td className="num">{row.classificacao ?? "-"}</td>
+                    <td className="num">
+                      <NotaDoCandidato candidato={row} />
+                    </td>
+                    <td>
+                      <SeloDeStatus status={text(row.status)} />
+                    </td>
+                    <td className="approved-actions">
+                      <div className="approved-actions-grupo">
+                        <AcaoDeAnexos
+                          candidato={row}
+                          anexos={anexos.get(String(row.candidato_id))}
+                          aoAbrir={estado.abrirAnexos}
+                        />
+                        <AcaoDeStatus
+                          perfil={perfil}
+                          candidato={row}
+                          atributos={{ "data-approved-action": "status" }}
+                          aoAbrir={estado.abrirStatus}
+                        />
+                        {canAlterarCandidatoSubJudice(perfil, row) ? (
+                          <button
+                            type="button"
+                            className="approved-icone-acao"
+                            data-approved-action="alteracao-judicial"
+                            data-candidate-id={row.candidato_id}
+                            title="Alterar nota ou modalidade por decisão judicial"
+                            aria-label={`Alterar nota ou modalidade de ${row.nome} por decisão judicial`}
+                            onClick={() =>
+                              estado.abrirAlteracaoJudicial(row.candidato_id)
+                            }
+                          >
+                            <i
+                              className="fa-solid fa-gavel"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        ) : null}
+                        {canEditSubJudice(perfil, row) ? (
+                          <BotaoDeAcao
+                            estado={estado}
+                            acao={`remover-sub-judice:${row.candidato_id}`}
+                            soIcone
+                            className="btn icon red"
+                            data-approved-action="remove-subjudice"
+                            data-candidate-id={row.candidato_id}
+                            title="Remover sub judice"
+                            aria-label={`Remover ${row.nome} da lista como sub judice`}
+                            onClick={() =>
+                              void estado.removerSubJudice(row.candidato_id)
+                            }
+                          >
+                            <i
+                              className="fa-solid fa-user-minus"
+                              aria-hidden="true"
+                            />
+                          </BotaoDeAcao>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={COLUNAS} className="ui-vazio">
+                    Nenhum candidato encontrado para os filtros selecionados.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <Paginacao
+          prefixo="approved"
+          pagina={pagina}
+          tamanho={tamanho}
+          unidade="candidatos"
+          aoIrPara={irPara}
+          aoMudarTamanho={aoMudarTamanho}
+        />
+      </section>
     </div>
   );
 }

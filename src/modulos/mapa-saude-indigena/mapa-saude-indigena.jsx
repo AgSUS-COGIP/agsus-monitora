@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
 import {
@@ -17,6 +17,7 @@ import { obterLeaflet } from "./leaflet.js";
 import { MapaDoDsei } from "./mapa-do-dsei.jsx";
 import { MapaNacional } from "./mapa-nacional.jsx";
 import { usarTelaCheia } from "./tela-cheia.jsx";
+import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.js";
 
 /*
   MAPA DA SAÚDE INDÍGENA (React)
@@ -51,8 +52,8 @@ export function MapaSaudeIndigena({
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
   const L = obterLeaflet();
-  const [calor, definirCalor] = useState(false);
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
+  const regiao = useRef(null);
 
   const dseis = useMemo(
     () => (Array.isArray(lmap?.dsei) ? lmap.dsei : []),
@@ -63,10 +64,22 @@ export function MapaSaudeIndigena({
     return chave ? dseis.find((d) => chaveDoDsei(d.k) === chave) || null : null;
   }, [dseis, dseiSelecionado]);
 
+  const [voltaDoDsei, pedirVolta] = usarVoltaDoDsei(dsei);
+  const voltarAoBrasil = () => {
+    pedirVolta();
+    aoSairDoDsei?.();
+  };
+  usarEscParaVoltar({
+    ativo: Boolean(dsei),
+    regiao,
+    telaCheia,
+    aoVoltar: voltarAoBrasil,
+  });
+
   const contagens = useMemo(() => contarPorDsei(linhas), [linhas]);
   const bolhas = useMemo(
-    () => bolhasDosDsei({ dseis, contagens, filtroAtivo, calor }),
-    [dseis, contagens, filtroAtivo, calor],
+    () => bolhasDosDsei({ dseis, contagens, filtroAtivo }),
+    [dseis, contagens, filtroAtivo],
   );
   const casais = useMemo(
     () => casaisNacionais({ nac: redeCnes?.nac, contagens, filtroAtivo }),
@@ -94,6 +107,7 @@ export function MapaSaudeIndigena({
 
   return (
     <div
+      ref={regiao}
       className={classes(
         "mapa-si",
         escuro && "mapa-si--escuro",
@@ -116,25 +130,12 @@ export function MapaSaudeIndigena({
         casais={casais}
         territorios={territorios}
         enquadramento={enquadramento}
-        calor={calor}
+        voltaDoDsei={voltaDoDsei}
         resumoDaRede={resumoDaRedeDoDsei}
         carregando={carregando}
         aoEscolherDsei={aoEscolherDsei}
         aoFiltrarPorBusca={aoFiltrarPorBusca}
-        acoes={
-          <>
-            <button
-              type="button"
-              className="btn small"
-              aria-pressed={calor}
-              onClick={() => definirCalor((valor) => !valor)}
-              title="Cor por % de vagas ociosas"
-            >
-              Calor
-            </button>
-            {botaoDeTelaCheia}
-          </>
-        }
+        acoes={botaoDeTelaCheia}
       />
       {dsei ? (
         <MapaDoDsei
@@ -148,7 +149,7 @@ export function MapaSaudeIndigena({
           dsei={dsei}
           redeCnes={redeCnes}
           telaCheia={telaCheia}
-          aoSairDoDsei={aoSairDoDsei}
+          aoVoltarAoBrasil={voltarAoBrasil}
           aoEscolherUnidade={aoEscolherUnidade}
           acoes={botaoDeTelaCheia}
         />

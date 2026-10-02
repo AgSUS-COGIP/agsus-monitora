@@ -48,8 +48,196 @@
   justify-items: start;
 }
 
-.mapa-si-coordenadas > .ui-campo-dica {
+.mapa-si-coordenadas__fila,
+.mapa-si-coordenadas__bloco {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.mapa-si-coordenadas__filtro,
+.mapa-si-coordenadas__escolhido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.mapa-si-coordenadas__caixa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+}
+
+/* O app.css estica todo input (100%, 40px); a caixa volta ao tamanho natural. */
+.mapa-si-coordenadas__caixa input {
+  width: auto;
+  min-height: 0;
   margin: 0;
+}
+
+.mapa-si-coordenadas__contagem {
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Filtro por gravidade: botões que quebram a linha, com a contagem. */
+.mapa-si-coordenadas__niveis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.mapa-si-coordenadas__nivel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.mapa-si-coordenadas__nivel b {
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-coordenadas__nivel[aria-pressed="true"] {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.mapa-si-coordenadas__nivel:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mapa-si-coordenadas__item .mapa-si-coordenadas__resumo {
+  color: var(--text-primary);
+}
+
+.mapa-si-coordenadas__gravidade {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin: 0;
+}
+
+.mapa-si-coordenadas__sugestoes li[data-melhor] {
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.mapa-si-coordenadas__sugestoes .ui-selo {
+  justify-self: start;
+}
+
+.mapa-si-coordenadas__lista,
+.mapa-si-coordenadas__sugestoes,
+.mapa-si-coordenadas__historico {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapa-si-coordenadas__lista {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.mapa-si-coordenadas__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mapa-si-coordenadas__item small {
+  grid-column: 1;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.mapa-si-coordenadas__item .ui-selo {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.mapa-si-coordenadas__item:hover,
+.mapa-si-coordenadas__item[aria-pressed="true"] {
+  background: var(--surface-muted);
+}
+
+.mapa-si-coordenadas__item[aria-pressed="true"] .mapa-si-coordenadas__nome {
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-coordenadas__nome {
+  overflow-wrap: anywhere;
+}
+
+.mapa-si-coordenadas__subtitulo {
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.mapa-si-coordenadas__motivo,
+.mapa-si-coordenadas__mais {
+  color: var(--text-secondary);
+}
+
+.mapa-si-coordenadas__sugestoes li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.mapa-si-coordenadas__sugestoes li > span,
+.mapa-si-coordenadas__historico li {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-caption);
+}
+
+.mapa-si-coordenadas__sugestoes small,
+.mapa-si-coordenadas__historico small {
+  color: var(--text-secondary);
+}
+
+.mapa-si-coordenadas__historico li {
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mapa-si-coordenadas__desfazer {
+  display: grid;
+  gap: var(--space-2);
 }
 
 /* O estado pressionado usa o par de cores do botão primário. */
@@ -160,31 +348,10 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* Trilho "Brasil › DSEI X". */
-.mapa-si-trilho {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-
-.mapa-si-trilho__voltar {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-0-5);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--color-text-link);
-  font: inherit;
+/* "← Voltar ao Brasil", no topo do mapa do DSEI: o botão primário, do tamanho do texto. */
+.mapa-si-voltar {
+  justify-self: start;
   font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-}
-
-.mapa-si-trilho__voltar:hover {
-  color: var(--color-text-link-hover);
-  text-decoration: underline;
 }
 
 .mapa-si-chip-externo {

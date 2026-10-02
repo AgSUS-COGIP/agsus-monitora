@@ -9,13 +9,18 @@ Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela chei
 o painel cobre o shell, mantém o botão "Sair da tela cheia" visível e bloqueia a
 rolagem da página até sair (pelo botão ou Esc). O editor de coordenadas, restrito
 ao administrador global, substitui a lista lateral e oferece "Voltar à lista";
-no celular, esse painel fica abaixo do mapa.
+no celular, esse painel fica abaixo do mapa. Ele tem a fila de pontos (busca e
+"Só pendentes", com as pendências da auditoria), "Conferido", as sugestões de
+posição e o histórico com "Desfazer" — RPCs de
+`supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql`, regras em
+`src/lib/coordenadas-do-mapa.js`, testes em `tests/coordenadas-do-mapa.test.js` e
+`tests/modulos/editor-de-coordenadas.test.js`.
 
 ```
-mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (calor, tela cheia), contas memorizadas,
+mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,
                           um mapa principal de cada vez
 mapa-nacional.jsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, leque, enquadramento,
-                          "Territórios por vagas", Brasil/Calor/Tela cheia, legenda flutuante
+                          "Territórios por vagas", Brasil/Tela cheia, legenda flutuante
 mapa-do-dsei.jsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
                           vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos
 legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
@@ -23,12 +28,17 @@ legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de
 leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
                           contornos, ícones/popup/dica em DOM seguro
 tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas)
+volta-ao-brasil.js        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
 usar-ultimo.js            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
+editor-de-coordenadas.jsx editor (só admin global): prévia arrastável, Salvar/Conferido, leitura das RPCs
+fila-de-coordenadas.jsx   busca, "Só pendentes" e a lista ordenada por DSEI
+sugestoes-do-ponto.jsx    posições candidatas do ponto pendente com a distância e "Usar esta"
+historico-do-ponto.jsx    últimas alterações do ponto e "Desfazer última alteração"
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```
 
 Regras puras: `src/lib/mapa-saude-indigena/` — `chaves.js` (chave do DSEI), `formas.js` (formas,
-cores, tipos, faixas do calor), `mapa-nacional.js` (contagens, bolhas, CASAIs nacionais,
+cores, tipos), `mapa-nacional.js` (contagens, bolhas, CASAIs nacionais,
 territórios por vagas, enquadramento, dicas/popups), `mapa-do-dsei.js` (pontos do DSEI com a
 prioridade lmap → reconciliação → rede_cnes, vínculo, tipos, resumo da dica, enquadramentos,
 popups), `contornos.js` (UF_GEO e BR_OUTLINE). Explicações para a Aya:
@@ -52,7 +62,7 @@ Saúde Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO esta
   dseiSelecionado={e.dsei.chave} // chave normalizada (chaveDoDsei)
   carregando={!e.mapa.lmap}
   aoEscolherDsei={(d) => estado.definirDsei(d.k, d.n)} // bolha ou ranking
-  aoSairDoDsei={estado.tirarDsei} // trilho "Brasil"
+  aoSairDoDsei={estado.tirarDsei} // "← Voltar ao Brasil" ou Esc
   aoFiltrarPorBusca={estado.definirBusca} // CASAI nacional: "CASAI <cidade>"
 />
 ```
@@ -60,8 +70,8 @@ Saúde Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO esta
 - **Dados.** `loadMapaConfig` (legado) continua lendo a tabela — ela faz parte da cópia da sessão
   e da recarga — e publica `estado.definirDadosDoMapa({ lmap, redeCnes })`.
 - **DSEI.** `definirDsei` guarda `chaveDoDsei(chave)`; o recorte compara com
-  `chaveDoDsei(linha.unidade)`. O chip "DSEI X ×" e o trilho "Brasil" chamam `tirarDsei` (os
-  filtros ficam); "Limpar tudo", a busca global (`localizar`) e a troca de área tiram o DSEI.
+  `chaveDoDsei(linha.unidade)`. O chip "DSEI X ×" e o "← Voltar ao Brasil" (ou Esc) chamam
+  `tirarDsei` (os filtros ficam); "Limpar tudo", a busca global (`localizar`) e a troca de área tiram o DSEI.
 - **Ciclo de vida.** Trocar de área desmonta o componente e o `remove` do Leaflet (StrictMode limpo).
 
 **Ids.** Os contêineres dos mapas recebem `id="map"` (nacional) e `id="detailMap"` (DSEI)
@@ -131,13 +141,31 @@ na palavra (`.dica-no-mapa`, `src/ui/ui.css`); o popup tem `autoPan` com folga p
 
 ## O que mudou em relação ao legado
 
-- Controles Brasil, Calor e Tela cheia no cabeçalho do painel, não dentro do mapa; "Tela cheia" é do
+- Controles Brasil e Tela cheia no cabeçalho do painel, não dentro do mapa; "Tela cheia" é do
   componente (Esc sai).
-- Com Calor ligado, a legenda mostra as faixas de ociosidade (antes não mudava).
+- Sem o modo Calor (saiu em 02/10/2026, a pedido da gestão): a bolha só diz se há edital no recorte.
 - Lista de unidades com a forma do tipo (a mesma da legenda) em vez do ícone Font Awesome.
 - Sem textos de ajuda: rodapé "Escolha um DSEI…", "clique para abrir o território" e os avisos ao
-  ligar o calor ou voltar ao Brasil foram para a Aya; estados vazios em uma linha.
-- O DSEI fecha pelo trilho "Brasil" (o botão duplicado "Voltar à visão nacional" saiu).
+  voltar ao Brasil foram para a Aya; estados vazios em uma linha.
+- O DSEI fecha por "← Voltar ao Brasil" (botão primário no topo do painel; o trilho "Brasil › DSEI"
+  saiu) ou por Esc.
+
+## A volta ao Brasil
+
+Ao sair do DSEI — "← Voltar ao Brasil", Esc, o chip "DSEI" da Visão geral, "Limpar tudo" —
+`usarVoltaDoDsei` entrega ao mapa nacional `{ k, lat, lon, focar, vez }`, que parte da sede do
+distrito (zoom 7, sem animar) e voa em 0,8 s (`DURACAO_DA_VOLTA_AO_BRASIL`) até o enquadramento:
+o Brasil por `voarAoBrasil` (folga das bolhas, `maxZoom` ZOOM_NACIONAL 4.5, e o `map-guard` desce
+o mínimo se a altura atual não couber) ou, se ficaram filtros, a caixa/ponto do recorte. Com
+`prefers-reduced-motion: reduce`, enquadra sem animação. Durante o voo, o "apareceu" do
+ResizeObserver não reenquadra por cima.
+
+- **Foco.** Pelo botão ou Esc (`focar`), o foco vai à linha do DSEI em "Territórios por vagas"
+  (`data-dsei`) ou, se ela não estiver na lista, ao mapa. Pelo chip da página, fica onde está.
+- **Esc.** Ligado só com DSEI aberto, na captura do `document`; volta com o foco no mapa ou no
+  `body` (nunca num campo, numa janela, no painel da Aya ou com um modal aberto). Na tela cheia, o
+  primeiro Esc volta ao Brasil (`preventDefault`) e o `usarTelaCheia`, que ignora Esc já usado
+  (`defaultPrevented`), só sai no segundo.
 - Enquadramento do Brasil por `BRASIL_BOUNDS` (contorno real), como o `map-guard`, em vez do
   retângulo antigo que cortava a ponta leste.
 - O mapa do DSEI é criado ao abrir o distrito e destruído ao sair (antes ficava montado escondido).

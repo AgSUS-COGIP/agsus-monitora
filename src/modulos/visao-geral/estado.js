@@ -19,8 +19,8 @@
   os dados do mapa (`mapa.lmap`, `mapa.redeCnes`), que o legado carrega
   (`loadMapaConfig`, com a cópia da sessão) e publica em
   `definirDadosDoMapa`. O DSEI de cada linha é `chaveDoDsei(linha.unidade)`.
-  O mapa pede `definirDsei` (bolha, ranking), `tirarDsei` (trilho
-  "Brasil") e `definirBusca` (CASAI nacional).
+  O mapa pede `definirDsei` (bolha, ranking), `tirarDsei` ("Voltar
+  ao Brasil" ou Esc) e `definirBusca` (CASAI nacional).
 
   Guardado no navegador, como antes: os filtros (`agsus_monitora_filters_v1`)
   e as colunas visíveis da tabela (`agsus_visible_cols_v1`).
@@ -354,7 +354,7 @@ export function criarEstadoDaVisaoGeral({
     aviso("Filtros limpos.");
   }
 
-  /* O chip do DSEI e o trilho "Brasil" do mapa: sai do território, filtros ficam. */
+  /* O chip do DSEI e o "Voltar ao Brasil" do mapa: sai do território, filtros ficam. */
   function tirarDsei() {
     publicar({ dsei: { chave: "", nome: "" } });
   }

@@ -78,16 +78,11 @@ export function tipoDaUnidade(nome) {
 
 /*
   Cores do mapa nacional. Bolha de DSEI: verde com borda amarela quando há
-  edital no recorte, azul quando não há. No modo calor, a cor é a faixa de
-  ociosidade das vagas; sem edital, cinza.
+  edital no recorte, azul quando não há.
 */
 export const CORES_DO_MAPA = Object.freeze({
   comEdital: Object.freeze({ preenchimento: "#0b8f58", borda: "#f2b705" }),
   semEdital: Object.freeze({ preenchimento: "#5b9bd5", borda: "#1f6f4a" }),
-  semEditalNoCalor: Object.freeze({
-    preenchimento: "#cfd8e3",
-    borda: "#9fb0c4",
-  }),
   casaiNacional: "#7b2ff7",
   traco: "#4a6b80",
   contornoDoBrasil: "#0d3b66",
@@ -95,21 +90,10 @@ export const CORES_DO_MAPA = Object.freeze({
   contornoNoDetalhe: "#0d6f7b",
   divisasNoDetalhe: "#7798ad",
   fundoDasUfsNoDetalhe: "#dce9ee",
+  // Editor de coordenadas: as posições sugeridas do ponto escolhido.
+  sugestaoDeAldeia: "#c2410c",
+  sugestaoDoCnes: "#2f6fb0",
 });
-
-/* Faixas do modo calor, pela % de vagas ociosas do DSEI. */
-export const FAIXAS_DO_CALOR = Object.freeze([
-  Object.freeze({ minimo: 60, cor: "#d92d3a", rotulo: "60% ou mais ociosas" }),
-  Object.freeze({ minimo: 40, cor: "#f2730c", rotulo: "40% a 59%" }),
-  Object.freeze({ minimo: 20, cor: "#f2b705", rotulo: "20% a 39%" }),
-  Object.freeze({ minimo: 0, cor: "#0b8f58", rotulo: "menos de 20%" }),
-]);
-
-export function corDoCalor(porcentagem) {
-  const pct = Number(porcentagem) || 0;
-  return (FAIXAS_DO_CALOR.find((f) => pct >= f.minimo) || FAIXAS_DO_CALOR[3])
-    .cor;
-}
 
 /* A linha do vínculo fora da área: secundária, pontilhada — não é trajeto. */
 export const ESTILO_DA_LINHA_DE_VINCULO = Object.freeze({

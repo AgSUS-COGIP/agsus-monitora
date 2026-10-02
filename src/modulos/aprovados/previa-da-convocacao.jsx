@@ -6,7 +6,8 @@ import {
   ordinalFeminino,
   previaDaConvocacao,
 } from "../../lib/configuracao-de-convocacao.js";
-import { CampoEditavel, classes } from "./partes.jsx";
+import { classes } from "../../ui/index.js";
+import { CampoEditavel } from "./partes.jsx";
 
 /*
   "Como fica a ordem de chamada": com N vagas imediatas (a pessoa escolhe), o

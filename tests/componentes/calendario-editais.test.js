@@ -189,13 +189,74 @@ describe("carregamento", () => {
     expect(supabase.rpc).toHaveBeenCalledTimes(8);
   });
 
-  it("mostra o erro no lugar da grade", async () => {
-    await montar({
-      supabase: supabaseFalso({ erroNoResumo: "RPC fora do ar" }),
+  it("antes da primeira carga, a grade, as listas e o contador são skeleton", async () => {
+    let entregar;
+    const supabase = supabaseFalso();
+    const rpc = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(async (nome, argumentos) => {
+      if (nome === "get_nucleo_cronograma_resumo")
+        await new Promise((resolver) => (entregar = resolver));
+      return rpc(nome, argumentos);
     });
-    expect($("calGrade").querySelector(".alert.warn").textContent).toBe(
-      "RPC fora do ar",
+    document.body.innerHTML = `<section id="page-calendario" class="page active"></section>`;
+    await act(async () => {
+      controlador = montarCalendarioEditais({
+        secao: document.getElementById("page-calendario"),
+        supabase,
+        toast: vi.fn(),
+        agora: () => new Date(HOJE),
+      });
+    });
+    const pendente = controlador.render();
+    await esperar();
+    expect($("calGrade").getAttribute("aria-busy")).toBe("true");
+    expect(
+      $("calGrade").querySelectorAll(".cal-celula-esqueleto"),
+    ).toHaveLength(35);
+    expect($("calGrade").querySelector("[data-dia]")).toBeNull();
+    expect($("calProximas").querySelectorAll(".ui-esqueleto").length).toBe(4);
+    expect($("calTimeline").querySelectorAll(".ui-esqueleto").length).toBe(4);
+    expect(contador()).toBe("");
+    expect(
+      document.querySelector("#page-calendario [data-status-da-carga]")
+        .textContent,
+    ).toBe("Carregando dados...");
+
+    await esperar(async () => {
+      entregar();
+      await pendente;
+    });
+    expect($("calGrade").querySelector(".cal-celula-esqueleto")).toBeNull();
+    expect(contador()).toBe("3 etapas no mês");
+    expect(
+      document.querySelector("#page-calendario [data-status-da-carga]")
+        .textContent,
+    ).toMatch(/^Atualizado em /);
+  });
+
+  it("os filtros nascem recolhidos em Refinar resultados, com os ids de sempre", async () => {
+    await montar();
+    const filtros = document.querySelector("#page-calendario .cal-filtros");
+    expect(filtros.classList.contains("ui-filtros")).toBe(true);
+    expect(filtros.querySelector(".ui-filtros-corpo").hidden).toBe(true);
+    expect(filtros.querySelector("#calBusca")).not.toBeNull();
+    await clicar(filtros.querySelector('[data-acao="recolher-filtros"]'));
+    expect(filtros.querySelector(".ui-filtros-corpo").hidden).toBe(false);
+    expect(
+      document.querySelector("#page-calendario .cal-barra #calHoje"),
+    ).not.toBeNull();
+  });
+
+  it("mostra o erro no lugar da grade, com Tentar novamente", async () => {
+    const supabase = supabaseFalso({ erroNoResumo: "RPC fora do ar" });
+    await montar({ supabase });
+    const aviso = $("calGrade").querySelector('[role="alert"]');
+    expect(aviso.textContent).toContain(
+      "Não foi possível carregar os cronogramas: RPC fora do ar",
     );
+    supabase.rpc.mockClear();
+    await clicar(aviso.querySelector('[data-acao="tentar-novamente"]'));
+    expect(supabase.rpc).toHaveBeenCalledWith("get_nucleo_cronograma_resumo");
   });
 
   it("avisa quando um edital não pôde ser lido, e mostra os outros", async () => {
@@ -268,7 +329,9 @@ describe("filtros", () => {
     expect(celula("2026-09-10").classList.contains("vazio")).toBe(true);
 
     await digitar($("calBusca"), "entrevista");
-    await clicar($("calLimparFiltros"));
+    await clicar(
+      document.querySelector('.cal-filtros [data-acao="limpar-filtros"]'),
+    );
     expect($("calBusca").value).toBe("");
     expect($("calOcultarConcluidas").checked).toBe(false);
     expect(pontos("2026-09-10")).toEqual([1]);

@@ -233,8 +233,13 @@ export const VERBETES_AYA = Object.freeze([
   {
     arquivo: "02-dsei-e-rede.md",
     titulo: "Base geoespacial da Funai",
-    perguntas: [],
-    resposta: "",
+    perguntas: [
+      "base geoespacial da funai",
+      "mapa oficial das terras indigenas",
+      "geoprocessamento da funai",
+    ],
+    resposta:
+      "A Funai mantém a base geoespacial oficial de Terras Indígenas, aldeias, áreas de atuação e sedes de DSEIs, com atualização mensal informada na própria página. É a referência para listas e limites de Terras Indígenas e aldeias.",
     fato: "A Funai mantém a base geoespacial oficial de Terras Indígenas, aldeias, áreas de atuação e sedes de DSEIs, com atualização mensal informada na própria página.",
     fonte:
       "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
@@ -242,8 +247,9 @@ export const VERBETES_AYA = Object.freeze([
   {
     arquivo: "02-dsei-e-rede.md",
     titulo: "Plano Nacional de Saúde",
-    perguntas: [],
-    resposta: "",
+    perguntas: ["plano nacional de saude", "pns 2024-2027"],
+    resposta:
+      "O Plano Nacional de Saúde 2024-2027 registra 34 Distritos Sanitários Especiais Indígenas.",
     fato: "O Plano Nacional de Saúde 2024-2027 registra 34 Distritos Sanitários Especiais Indígenas.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei",
   },
@@ -289,8 +295,8 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Taxa de ociosidade",
     perguntas: ["taxa de ociosidade", "ociosidade", "percentual de ociosas"],
     resposta:
-      "A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. É esse percentual que define a cor de cada território no mapa de calor.",
-    fato: "A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e é ela que colore o mapa de calor por território.",
+      "A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. Na tabela da Visão geral, ela aparece ao lado das Ociosas de cada edital.",
+    fato: "A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e aparece ao lado das Ociosas na tabela da Visão geral.",
     fonte: "interface do MONITORA",
   },
   {
@@ -314,24 +320,35 @@ export const VERBETES_AYA = Object.freeze([
   {
     arquivo: "03-monitora.md",
     titulo: "Cores e leitura da tabela",
-    perguntas: [],
-    resposta: "",
+    perguntas: [
+      "cores da tabela",
+      "por que contratados em verde",
+      "por que ociosas em vermelho",
+    ],
+    resposta:
+      "O MONITORA destaca Contratados em verde e Ociosas em vermelho, porque ociosidade alta indica vaga prevista que ainda não virou contratação.",
     fato: "O MONITORA destaca Contratados em verde e Ociosas em vermelho, porque ociosidade alta indica vaga prevista que ainda não virou contratação.",
     fonte: "interface do MONITORA",
   },
   {
     arquivo: "03-monitora.md",
     titulo: "34 DSEIs e 36 pontos no mapa",
-    perguntas: [],
-    resposta: "",
+    perguntas: ["36 pontos no mapa", "por que 36 pontos", "36 dseis"],
+    resposta:
+      "Na visão nacional do MONITORA, os 34 DSEIs são distintos das 2 CASAIs nacionais; quando ambos estão desenhados, são 36 pontos no mapa, não 36 DSEIs.",
     fato: "Na visão nacional do MONITORA, os 34 DSEIs são distintos das 2 CASAIs nacionais; quando ambos estão desenhados, são 36 pontos no mapa, não 36 DSEIs.",
     fonte: "interface do MONITORA",
   },
   {
     arquivo: "03-monitora.md",
     titulo: "Comparação entre territórios",
-    perguntas: [],
-    resposta: "",
+    perguntas: [
+      "comparar dseis",
+      "comparacao entre territorios",
+      "comparar territorios",
+    ],
+    resposta:
+      "O MONITORA organiza vagas, contratações e ociosidade por território, o que permite comparar os DSEIs entre si.",
     fato: "O MONITORA organiza vagas, contratações e ociosidade por território, o que permite comparar DSEIs entre si.",
     fonte: "interface do MONITORA",
   },
@@ -462,146 +479,6 @@ export const VERBETES_AYA = Object.freeze([
       "São três, da aldeia para cima: o Conselho Local de Saúde Indígena (CLSI), consultivo, com representantes eleitos pelas comunidades; o Conselho Distrital de Saúde Indígena (CONDISI), um por DSEI, deliberativo e de composição paritária; e o Fórum de Presidentes dos CONDISI (FPCONDISI), consultivo, que reúne os 34 presidentes e assessora a SESAI.",
     fato: "O controle social da saúde indígena tem três instâncias: CLSI na aldeia, CONDISI no distrito e FPCONDISI no âmbito nacional.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Assuntos gerais",
-    perguntas: [
-      "assuntos gerais",
-      "pode falar de outros assuntos",
-      "pode falar de qualquer assunto",
-    ],
-    resposta:
-      "Sim. A Aya pode conversar sobre assuntos gerais, como plantas, carros, futebol, ciência, tecnologia, história e temas do dia a dia. Quando a pergunta depender de informação atual, de uma especificação exata ou de orientação profissional, ela deve deixar essa limitação clara em vez de inventar.",
-    fato: "A Aya pode responder assuntos gerais além do MONITORA, desde que diferencie conhecimento geral de informação atual, dado técnico exato ou orientação profissional.",
-    fonte: "comportamento da Aya",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Cuidados gerais com plantas",
-    perguntas: [
-      "como cuidar de plantas",
-      "cuidados com plantas",
-      "como cuidar de uma planta",
-    ],
-    resposta:
-      "Para cuidar de uma planta, observe principalmente luz, rega, drenagem, tipo de substrato, ventilação e sinais da própria espécie. A necessidade muda bastante entre espécies; por isso, quando você disser qual planta é, a orientação pode ser mais específica. Evite regar apenas por calendário: confira a umidade do substrato e as condições do ambiente.",
-    fato: "Em cuidados com plantas, a Aya deve considerar espécie, luz, rega, drenagem, substrato e ambiente, e evitar transformar uma regra geral em recomendação universal.",
-    fonte: "conhecimento geral",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Plantas e ingestão",
-    perguntas: [
-      "planta pode ser toxica",
-      "planta e venenosa",
-      "posso comer uma planta",
-    ],
-    resposta:
-      "Não é seguro concluir que uma planta pode ser ingerida apenas pela aparência ou por um nome popular. Espécies parecidas podem ter riscos diferentes. Para ingestão, uso medicinal ou suspeita de intoxicação, a espécie precisa estar identificada com segurança e a orientação deve vir de fonte especializada.",
-    fato: "A Aya não deve declarar uma planta segura para ingestão, uso medicinal ou preparo caseiro sem identificação confiável da espécie e fonte adequada.",
-    fonte: "conhecimento geral",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Medicamentos",
-    perguntas: [
-      "o que e medicamento",
-      "o que sao medicamentos",
-      "diferenca entre remedio e medicamento",
-    ],
-    resposta:
-      "Medicamento é um produto desenvolvido para prevenir, diagnosticar, tratar ou aliviar condições de saúde e deve ser usado conforme indicação, bula e orientação profissional quando necessária. A palavra “remédio” é mais ampla e pode ser usada no dia a dia para outras medidas de cuidado que não são medicamentos.",
-    fato: "Sobre medicamentos, a Aya pode explicar informações gerais, mas não deve diagnosticar, prescrever nem definir dose individualizada. Para uso específico, deve orientar a consulta à bula e a profissional de saúde.",
-    fonte: "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Uso seguro de medicamentos",
-    perguntas: [
-      "como usar remedio com seguranca",
-      "como usar medicamento com seguranca",
-      "uso seguro de medicamentos",
-    ],
-    resposta:
-      "Use medicamentos conforme a bula e a orientação de profissional de saúde quando indicada. Não altere dose, intervalo, combinação ou duração por conta própria. Se houver reação importante, suspeita de intoxicação, uso acidental ou dúvida sobre interação, procure orientação profissional adequada.",
-    fato: "A Aya não deve fornecer prescrição, diagnóstico ou dose individualizada de medicamento; deve manter a informação em nível educativo e recomendar fonte profissional quando houver risco ou dúvida clínica.",
-    fonte: "https://www.gov.br/anvisa/pt-br/assuntos/medicamentos",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Manutenção preventiva do carro",
-    perguntas: [
-      "como cuidar do carro",
-      "manutencao preventiva do carro",
-      "cuidados com o carro",
-    ],
-    resposta:
-      "A manutenção preventiva inclui acompanhar pneus, freios, fluidos, iluminação, bateria, filtros e os itens previstos no manual do veículo. Intervalos e especificações variam por modelo, versão, uso e mercado; para valores exatos, siga o manual do proprietário ou a documentação técnica do fabricante.",
-    fato: "Em perguntas sobre carros, a Aya pode explicar manutenção e funcionamento em termos gerais, mas não deve inventar pressão de pneus, torque, capacidade, intervalo ou especificação de um modelo sem fonte técnica.",
-    fonte: "manual do veículo",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Segurança automotiva",
-    perguntas: [
-      "problema no freio do carro",
-      "luz de airbag acesa",
-      "carro com falha de freio",
-    ],
-    resposta:
-      "Falhas em freios, direção, pneus, combustível, airbag ou outros sistemas de segurança exigem cautela. A Aya pode explicar o significado geral de sintomas e alertas, mas não deve incentivar continuar dirigindo quando houver risco evidente; nesses casos, o correto é consultar o manual e buscar avaliação técnica.",
-    fato: "Em sistemas automotivos de segurança, a Aya deve priorizar cautela e não substituir inspeção técnica por uma conclusão à distância.",
-    fonte: "manual do veículo",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Impedimento no futebol",
-    perguntas: [
-      "o que e impedimento no futebol",
-      "como funciona o impedimento",
-      "regra do impedimento",
-    ],
-    resposta:
-      "Em termos simples, um jogador pode estar em posição de impedimento quando, no momento em que um companheiro toca ou joga a bola, ele está no campo adversário e mais perto da linha de gol do que a bola e o penúltimo adversário. Estar nessa posição, sozinho, não basta: a infração depende de participação ativa na jogada conforme a regra.",
-    fato: "No futebol, posição de impedimento não é automaticamente infração; a decisão também depende de participação ativa na jogada.",
-    fonte: "https://www.theifab.com/laws/latest/offside/",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Jogadores no futebol",
-    perguntas: [
-      "quantos jogadores tem um time de futebol",
-      "quantos jogadores jogam futebol",
-      "numero de jogadores no futebol",
-    ],
-    resposta:
-      "Uma equipe começa uma partida de futebol com até 11 jogadores em campo, incluindo o goleiro. Regras de substituição e número mínimo para a partida continuar dependem da competição e das Leis do Jogo aplicáveis.",
-    fato: "No futebol de campo, uma equipe começa com até 11 jogadores, incluindo o goleiro; detalhes de substituição e continuidade dependem da competição e das Leis do Jogo.",
-    fonte: "https://www.theifab.com/laws/latest/the-players/",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Futebol atual",
-    perguntas: [
-      "resultado de futebol de hoje",
-      "jogos de hoje",
-      "placar de hoje",
-      "quem ganhou hoje no futebol",
-    ],
-    resposta:
-      "Para placares, jogos do dia, classificação, transferências e notícias recentes, eu preciso de uma fonte atual. A Aya do MONITORA não deve inventar informação em tempo real quando ela não estiver disponível no contexto carregado.",
-    fato: "A Aya não deve inventar placares, jogos do dia, classificação, transferências ou notícias atuais de futebol sem uma fonte atual disponível.",
-    fonte: "comportamento da Aya",
-  },
-  {
-    arquivo: "06-assuntos-gerais.md",
-    titulo: "Fotossíntese",
-    perguntas: ["o que e fotossintese", "como funciona a fotossintese"],
-    resposta:
-      "Fotossíntese é o processo pelo qual plantas, algas e alguns microrganismos usam energia da luz para produzir matéria orgânica a partir de água e dióxido de carbono, liberando oxigênio como parte do processo.",
-    fato: "Fotossíntese é a conversão de energia luminosa em energia química por plantas, algas e alguns microrganismos, com uso de água e dióxido de carbono e liberação de oxigênio.",
-    fonte: "conhecimento geral",
   },
   {
     arquivo: "assistente-aya.md",
@@ -1182,8 +1059,8 @@ export const VERBETES_AYA = Object.freeze([
       "sem inscritos",
     ],
     resposta:
-      'Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: a próxima etapa do cronograma começa em até 3 dias ("Etapa hoje", "Etapa amanhã", "Etapa em N dias"); o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. O KPI Críticos, o bloco Atenção e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.',
-    fato: "Crítico na Visão geral: etapa em até 3 dias, cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.",
+      'Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda, não problema: não faz o edital crítico — aparece nas boas-vindas ("N editais têm etapa nos próximos 7 dias") e em vermelho na coluna de cronograma da tabela. O KPI Críticos, os detalhes do processo e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.',
+    fato: "Crítico na Visão geral: cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.",
     fonte: "src/lib/criticos-da-visao-geral.js",
   },
   {
@@ -1208,7 +1085,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Mapa e filtros da Visão geral",
     perguntas: [
       "dsei aberto no mapa",
-      "voltar ao brasil",
+      "filtro dsei da pagina",
       "casai no mapa filtra",
     ],
     resposta:
@@ -1916,6 +1793,23 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "nucleo",
   },
   {
+    arquivo: "regras-do-cronograma.md",
+    titulo: "Filtros do Cronograma",
+    perguntas: [
+      "filtros do cronograma",
+      "ocultar concluidas",
+      "etapas concluidas sumiram",
+      "limpar filtros do cronograma",
+      "por que nao vejo etapas passadas",
+    ],
+    resposta:
+      'Os filtros ficam recolhidos em "Refinar resultados" (o botão "Mostrar filtros" abre): busca por etapa, edital ou unidade, unidade, edital, tipo de etapa e "Ocultar concluídas". "Ocultar concluídas" começa ligada, porque o que já terminou raramente é o que se procura; "Limpar tudo" tira os filtros e mostra também as concluídas. A linha do tempo oferece só os editais que restaram no filtro, e clicar numa etapa (nas próximas etapas ou no dia) mostra o edital dela na linha do tempo.',
+    fato: "",
+    fonte:
+      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js",
+    abrir: "calendario",
+  },
+  {
     arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Como usar o mapa da Saúde Indígena",
     perguntas: [
@@ -1926,7 +1820,7 @@ export const VERBETES_AYA = Object.freeze([
       "mapa detalhado do dsei",
     ],
     resposta:
-      'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "Brasil", no trilho acima do mapa, volta à visão nacional sem apagar os outros filtros.',
+      'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -1948,15 +1842,10 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
-    titulo: "Botão Calor do mapa",
-    perguntas: [
-      "botao calor",
-      "modo calor",
-      "cores do mapa de calor",
-      "faixas do mapa de calor",
-    ],
+    titulo: "Mapa de calor",
+    perguntas: ["botao calor", "modo calor", "mapa de calor", "mapa sem calor"],
     resposta:
-      "No MONITORA, o botão Calor pinta cada bolha pela porcentagem de vagas ociosas do DSEI no recorte: verde abaixo de 20%, amarelo de 20% a 39%, laranja de 40% a 59% e vermelho a partir de 60%. DSEI sem edital fica cinza. Com o calor ligado, a legenda mostra as faixas.",
+      'No MONITORA, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital no recorte (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -2059,7 +1948,7 @@ export const VERBETES_AYA = Object.freeze([
       "ponto do polo esta certo",
     ],
     resposta:
-      'No MONITORA, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); 93 polos ainda aguardam confirmação do DSEI. Se um ponto parecer errado, a correção é feita no banco.',
+      'No MONITORA, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global vê, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco.',
     fato: "",
     fonte:
       "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js",
@@ -2082,6 +1971,22 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Voltar ao Brasil",
+    perguntas: [
+      "voltar ao brasil",
+      "sair do dsei",
+      "voltar para a visao geral do mapa",
+      "voltar ao mapa nacional",
+      "esc no mapa",
+      "fechar o dsei",
+    ],
+    resposta:
+      'No MONITORA, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro, o filtro de DSEI sai da página e os outros filtros continuam. O foco volta à linha do DSEI em "Territórios por vagas". O chip "DSEI" dos filtros faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Tela cheia e mapa no celular",
     perguntas: [
       "mapa em tela cheia",
@@ -2090,7 +1995,7 @@ export const VERBETES_AYA = Object.freeze([
       "legenda fechada no celular",
     ],
     resposta:
-      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam. Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
+      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -2103,12 +2008,71 @@ export const VERBETES_AYA = Object.freeze([
       "arrastar o pin",
       "mover ponto no mapa",
       "alterar localizacao da unidade",
+      "como usar o editor de coordenadas",
     ],
     resposta:
-      'O administrador global pode usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. Escolha o ponto, digite latitude e longitude ou arraste o pin de prévia. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. A alteração fica no histórico. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
+      'O administrador global pode usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. A lista do editor substitui a lista lateral: busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa centraliza nele e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
     fato: "",
     fonte:
-      "src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002143323_editar_coordenadas_mapa_admin.sql",
+      "src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Pontos pendentes de conferência",
+    perguntas: [
+      "pontos pendentes",
+      "filtro so pendentes",
+      "provavel erro",
+      "gravidade das pendencias",
+      "so confirmar",
+      "fila de coordenadas",
+      "conferir coordenada",
+      "marcar como conferido",
+      "botao conferido",
+      "248 pendencias",
+      "249 pendencias",
+      "93 polos e 156 ubsi",
+      "ponto em validacao",
+    ],
+    resposta:
+      'A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor. A fila separa as pendências por gravidade, com a contagem de cada uma e o provável erro primeiro: Provável erro (o ponto está na sede do município, num ponto coletor, na posição do nome do município ou numa aldeia de mesmo nome fora do DSEI, ou a aldeia sugerida mais perto está a mais de 10 km), Revisar (aldeia sugerida entre 2 e 10 km, ou só o CNES), Sem sugestão (nenhuma posição candidata: buscar a aldeia à mão) e Só confirmar (há aldeia sugerida a até 2 km: a posição bate e falta só o Conferido). O CNES não serve de régua porque quase sempre é a própria posição atual. Ao escolher um ponto, as sugestões aparecem no mapa (aldeias em laranja, CNES em azul) e a mais provável fica ligada à posição atual por uma linha tracejada; clicar numa sugestão do mapa ou em Usar esta preenche a prévia.',
+    fato: "",
+    fonte:
+      "src/lib/coordenadas-do-mapa.js; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Sugestões de posição de um ponto pendente",
+    perguntas: [
+      "sugestoes de posicao",
+      "usar esta",
+      "candidatos da coordenada",
+      "posicao do cnes",
+      "aldeia do ibge",
+      "aldeia da funai",
+      "distancia da posicao atual",
+    ],
+    resposta:
+      'Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.',
+    fato: "",
+    fonte:
+      "src/lib/coordenadas-do-mapa.js; src/modulos/mapa-saude-indigena/sugestoes-do-ponto.jsx",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Histórico e desfazer de uma correção",
+    perguntas: [
+      "historico da coordenada",
+      "quem mudou o ponto",
+      "desfazer correcao",
+      "desfazer conferencia",
+      "voltar posicao anterior",
+    ],
+    resposta:
+      'Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
+    fato: "",
+    fonte:
+      "src/modulos/mapa-saude-indigena/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
   },
   {
     arquivo: "regras-do-sistema.md",

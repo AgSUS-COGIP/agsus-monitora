@@ -235,17 +235,66 @@ const opcoesDoFiltro = (filtro) =>
       .querySelectorAll(".multi-select-option"),
   ].map((opcao) => opcao.textContent);
 
+describe("topo e visões", () => {
+  it("as duas visões são abas (tablist) com o visual do controle segmentado, no topo", async () => {
+    await montar();
+    const visoes = document.querySelector(
+      "#page-approved .ui-topo .ui-segmentado[role='tablist']",
+    );
+    expect(visoes).not.toBeNull();
+    const [aprovados, convocacao] = visoes.querySelectorAll("[role='tab']");
+    expect(aprovados.id).toBe("approvedTabAprovados");
+    expect(aprovados.getAttribute("aria-selected")).toBe("true");
+    expect(aprovados.classList.contains("is-ativo")).toBe(true);
+    expect(aprovados.getAttribute("aria-controls")).toBe(
+      "approvedPanelAprovados",
+    );
+    await clicar(convocacao);
+    expect(convocacao.getAttribute("aria-selected")).toBe("true");
+    expect($("approvedPanelConvocacao").classList.contains("hidden")).toBe(
+      false,
+    );
+    expect($("approvedPanelAprovados").classList.contains("hidden")).toBe(true);
+    expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
+    expect(
+      document.querySelector("#page-approved [data-status-da-carga]")
+        .textContent,
+    ).toMatch(/^Atualizado em /);
+  });
+
+  it("KPIs no Kpi compacto de src/ui, nas duas abas", async () => {
+    await montar();
+    for (const painel of [
+      "approvedPanelAprovados",
+      "approvedPanelConvocacao",
+    ]) {
+      const grade = $(painel).querySelector(".approved-kpis.ui-kpis");
+      expect(grade.querySelectorAll(".ui-kpi").length).toBeGreaterThanOrEqual(
+        5,
+      );
+    }
+    expect($("approvedKpiTotal").classList.contains("ui-kpi-valor")).toBe(true);
+  });
+});
+
 describe("carregamento", () => {
   it("antes do dado chegar, mostra skeleton — e não zero", async () => {
     await montar({ carregar: false });
     expect($("approvedKpiTotal").textContent).toBe("");
-    expect($("approvedKpiTotal").querySelector(".esqueleto")).not.toBeNull();
+    expect($("approvedKpiTotal").classList.contains("ui-esqueleto")).toBe(true);
+    expect($("convocacaoKpiVagas").classList.contains("ui-esqueleto")).toBe(
+      true,
+    );
     expect($("approvedCount").textContent).toBe("Carregando…");
     expect(
-      document.querySelectorAll("#approvedRows tr.esqueleto-da-tabela"),
+      document.querySelector("#page-approved [data-status-da-carga]")
+        .textContent,
+    ).toBe("Carregando dados...");
+    expect(
+      document.querySelectorAll("#approvedRows tr.ui-esqueleto-tr"),
     ).toHaveLength(8);
     expect(
-      $("convocacaoRows").querySelector("tr.esqueleto-da-tabela"),
+      $("convocacaoRows").querySelector("tr.ui-esqueleto-tr"),
     ).not.toBeNull();
   });
 
@@ -260,18 +309,17 @@ describe("carregamento", () => {
     const erros = { listar_listas_aprovados: "sem rede" };
     const supabase = supabaseFalso({ erros });
     await montar({ supabase });
-    expect($("approvedRows").textContent).toContain(
-      "Não foi possível carregar a lista de aprovados",
+    expect($("approvedErro").textContent).toContain(
+      "Não foi possível carregar a lista de aprovados: sem rede",
     );
-    expect($("approvedRows").textContent).toContain("sem rede");
-    expect($("approvedRows").querySelector(".esqueleto-da-tabela")).toBeNull();
+    expect($("approvedRows").textContent).toBe("Sem dados.");
+    expect($("approvedRows").querySelector(".ui-esqueleto-tr")).toBeNull();
+    expect($("convocacaoRows").textContent).toBe("Sem dados.");
     expect($("approvedCount").textContent).toBe("Sem dados");
 
     delete erros.listar_listas_aprovados;
     await clicar(
-      [...$("approvedRows").querySelectorAll("button")].find(
-        (botao) => botao.textContent.trim() === "Tentar de novo",
-      ),
+      $("approvedErro").querySelector('[data-acao="tentar-novamente"]'),
     );
     await esperar(() => new Promise((resolver) => setTimeout(resolver, 0)));
     expect(nomes()).toContain("Ana Ribeiro");
@@ -350,7 +398,8 @@ describe("carregamento", () => {
 describe("filtros e paginação", () => {
   it("abre filtros recolhidos, permite filtrar e limpa todo o recorte", async () => {
     await montar();
-    const painel = $("aprovadosFiltros").closest(".ui-filtros");
+    const painel = $("approvedFiltrosTitulo").closest(".ui-filtros");
+    expect(painel.classList.contains("approved-filters")).toBe(true);
     expect(painel.querySelector(".ui-filtros-corpo").hidden).toBe(true);
     await clicar(painel.querySelector('[data-acao="recolher-filtros"]'));
     expect(painel.querySelector(".ui-filtros-corpo").hidden).toBe(false);

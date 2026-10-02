@@ -61,30 +61,24 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
       "src/modulos/entrevistas/entrevistas.css",
       "src/modulos/recursos/recursos.css",
       "src/modulos/selecao/selecao.css",
+      "src/styles/nucleo-cronograma.css",
+      "src/styles/calendario-editais.css",
+      "src/styles/lista-aprovados.css",
+      "src/styles/lista-convocacao.css",
     ])
       expect(semComentarios(ler(caminho))).not.toMatch(/grid-auto-rows/);
   });
 
-  it("Lista de aprovados (.approved-kpi)", () => {
-    const css = ler("src/styles/lista-aprovados.css");
-    expect(regra(css, ".approved-kpis")["grid-auto-rows"]).toBe("1fr");
-    expect(regra(css, ".approved-kpi")["align-content"]).toBe("space-between");
-    esperaDuasLinhas(regra(css, ".approved-kpi-label"));
-    expect(ler("src/modulos/aprovados/partes.jsx")).toMatch(
-      /className="approved-kpi-label"\s+title=\{typeof rotulo === "string" \? rotulo : undefined\}/,
-    );
-  });
-
-  it("Editais (.nucleo-kpi-card)", () => {
-    const css = ler("src/styles/nucleo-operational-enhancements.css");
-    expect(regra(css, ".nucleo-kpi-grid")["grid-auto-rows"]).toBe("1fr");
-    expect(regra(css, ".nucleo-kpi-card")["align-content"]).toBe(
-      "space-between",
-    );
-    esperaDuasLinhas(regra(css, ".nucleo-kpi-card small"));
-    expect(ler("src/modulos/editais/painel-operacional.jsx")).toContain(
-      "<small title={cartao.label}>{cartao.label}</small>",
-    );
+  it("Editais e Lista de aprovados usam o Kpi de src/ui (sem KPI próprio)", () => {
+    for (const caminho of [
+      "src/modulos/editais/painel-operacional.jsx",
+      "src/modulos/aprovados/aba-aprovados.jsx",
+      "src/modulos/aprovados/aba-convocacao.jsx",
+    ]) {
+      const jsx = ler(caminho);
+      expect(jsx, caminho).toContain("<GradeDeKpis");
+      expect(jsx, caminho).toContain("<Kpi");
+    }
   });
 });
 

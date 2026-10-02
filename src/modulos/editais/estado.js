@@ -35,6 +35,8 @@ const ESTADO_INICIAL = Object.freeze({
   /** "idle" (nada pedido), "loading", "ready" ou "error". */
   statusDoResumo: "idle",
   atualizandoResumo: false,
+  /** Quando o último resumo chegou (ISO), para a data discreta do topo. */
+  carregadoEm: "",
   filtro: "todos",
   /*
     O modal aberto, ou `null`. `abertura` muda a cada abertura, e o componente
@@ -101,6 +103,7 @@ export function criarEstadoDoNucleo({
         publicar({
           resumo: Array.isArray(linhas) ? linhas : [],
           statusDoResumo: "ready",
+          carregadoEm: new Date().toISOString(),
         });
         return linhas;
       })
@@ -137,6 +140,7 @@ export function criarEstadoDoNucleo({
       resumo: [],
       statusDoResumo: "idle",
       atualizandoResumo: false,
+      carregadoEm: "",
       filtro: "todos",
       geracao: estado.geracao + 1,
     });

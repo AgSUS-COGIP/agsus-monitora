@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatNumberBR } from "../lib/formatters.js";
+import { classes } from "./classes.js";
+import { LinhasEsqueleto } from "./esqueleto.jsx";
 
 /*
   A tabela das telas, com carregamento contínuo: 50 linhas por vez, e mais 50
@@ -19,27 +21,14 @@ import { formatNumberBR } from "../lib/formatters.js";
 
 const POR_VEZ = 50;
 const PERTO_DO_FIM_PX = 160;
-const LINHAS_DO_ESQUELETO = 8;
 const ARIA_SORT = { asc: "ascending", desc: "descending" };
 const ICONE_DA_ORDEM = { asc: "fa-arrow-up", desc: "fa-arrow-down" };
-
-function LinhasDoEsqueleto({ colunas }) {
-  return Array.from({ length: LINHAS_DO_ESQUELETO }, (_, linha) => (
-    <tr key={linha} aria-hidden="true">
-      {Array.from({ length: colunas }, (__, coluna) => (
-        <td key={coluna}>
-          <span className="ui-esqueleto ui-esqueleto-linha" />
-        </td>
-      ))}
-    </tr>
-  ));
-}
 
 /**
  * @param {object} p
  * @param {string} p.idDoTitulo
  * @param {string} p.titulo
- * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void }} p.busca
+ * @param {{ placeholder: string, rotulo: string, valor?: string, aoMudar?: (busca: string) => void, id?: string }} p.busca
  * @param {Array<{ rotulo: string, largura?: string, numero?: boolean, ordem?: string, aoOrdenar?: () => void }>} p.colunas
  *   com `aoOrdenar`, o cabeçalho vira botão de ordenar (`ordem`: "asc",
  *   "desc" ou "", liga o `aria-sort`)
@@ -48,11 +37,13 @@ function LinhasDoEsqueleto({ colunas }) {
  *   enquanto carrega
  * @param {import("react").ReactNode} p.vazio o que aparece quando não há nada carregado
  * @param {import("react").ReactNode} [p.ferramentas] botões ao lado da busca
+ * @param {string} [p.className] classe a mais no card (seletor de tour)
+ * @param {string} [p.idDoCorpo] id do `<tbody>` (contrato com o legado e a Aya)
  */
 export function TabelaInfinita({
   idDoTitulo,
   titulo,
-  busca: { placeholder, rotulo, valor, aoMudar },
+  busca: { placeholder, rotulo, valor, aoMudar, id: idDaBusca },
   carregado,
   itens,
   filtrarPelaBusca,
@@ -63,6 +54,8 @@ export function TabelaInfinita({
   total,
   vazio,
   ferramentas = null,
+  className,
+  idDoCorpo,
 }) {
   const [buscaPropria, setBuscaPropria] = useState("");
   const controlada = valor !== undefined;
@@ -97,7 +90,10 @@ export function TabelaInfinita({
   }
 
   return (
-    <section className="ui-card ui-tabela" aria-labelledby={idDoTitulo}>
+    <section
+      className={classes("ui-card ui-tabela", className)}
+      aria-labelledby={idDoTitulo}
+    >
       <div className="ui-tabela-topo">
         <div>
           <h2 className="ui-titulo" id={idDoTitulo}>
@@ -106,6 +102,7 @@ export function TabelaInfinita({
         </div>
         <div className="ui-tabela-ferramentas">
           <input
+            id={idDaBusca}
             type="search"
             className="ui-tabela-busca"
             value={busca}
@@ -163,9 +160,9 @@ export function TabelaInfinita({
               )}
             </tr>
           </thead>
-          <tbody>
+          <tbody id={idDoCorpo} aria-busy={carregado ? undefined : true}>
             {!carregado ? (
-              <LinhasDoEsqueleto colunas={colunas.length} />
+              <LinhasEsqueleto colunas={colunas.length} />
             ) : visiveis.length ? (
               visiveis.map(linha)
             ) : (

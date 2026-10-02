@@ -1268,12 +1268,6 @@ tr:hover td {
 .num {
   text-align: center;
 }
-.green-text {
-  color: #087246;
-}
-.red-text {
-  color: #b91c1c;
-}
 .link {
   color: #005fec;
   font-weight: 900;
@@ -1378,27 +1372,6 @@ tr:hover td {
 #page-external #externalMount {
   border-radius: var(--radius);
   overflow: hidden;
-}
-
-#page-nucleo .table-card {
-  height: calc(100vh - 138px);
-  min-height: 680px;
-  display: flex;
-  flex-direction: column;
-  margin-top: 0;
-}
-#page-nucleo .table-wrap {
-  flex: 1;
-  max-height: none;
-  min-height: 0;
-}
-#page-nucleo table {
-  min-width: 1320px;
-}
-#page-nucleo th,
-#page-nucleo td {
-  padding-top: 12px;
-  padding-bottom: 12px;
 }
 
 .admin-grid {

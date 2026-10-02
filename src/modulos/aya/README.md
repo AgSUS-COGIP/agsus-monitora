@@ -29,5 +29,6 @@ respostas vêm de `src/lib/busca-da-aya.js`: base de `docs/aya/`, normalização
 busca com tolerância a erros e preferência pela tela. `contexto.js` lê apenas dados já
 visíveis; não há endpoint de IA, modelo, serviço local ou túnel. Dúvidas oferecem até
 três perguntas em botões e chamado pelo Gmail. Testes: `tests/modulos/aya.test.js`, `tests/aya-paginas.test.js`,
-`tests/aya-respostas-chave.test.js`, `tests/chamado-da-aya.test.js`, `tests/aya-tours.test.js`,
+`tests/aya-respostas-chave.test.js`, `tests/busca-da-aya.test.js`, `tests/termos-da-aya.test.js`,
+`tests/conversa-da-aya.test.js`, `tests/chamado-da-aya.test.js`, `tests/aya-tours.test.js`,
 `tests/modulos/aya-tour.test.js` e `tests/modulos/aya-trilhas.test.js`.

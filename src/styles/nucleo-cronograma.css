@@ -1,239 +1,129 @@
+/*
+  Editais (src/modulos/editais/): só o que é desta tela — a tabela (alerta da
+  linha e ações), o formulário do edital com o editor de cronograma e os
+  anexos, e a linha do tempo. Topo, KPIs, filtros, tabela, skeleton e avisos
+  vêm de src/ui/ (ui.css). Só tokens: o tema escuro vem deles, sem regra
+  própria.
+*/
+
+/* ── Tabela ─────────────────────────────────────────────────────────── */
+
+.ui-tabela-rolagem table.editais-tabela {
+  min-width: 1180px;
+}
+.editais-tabela .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.editais-tabela .link {
+  font-weight: var(--font-weight-medium);
+}
+.editais-contratados {
+  color: var(--state-success);
+}
+.editais-ociosas {
+  color: var(--state-danger);
+}
+.nucleo-row-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+/* Alerta da linha: badge (caption 500, raio pequeno, cor do estado). */
+.nucleo-row-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 20px;
+  margin-top: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.nucleo-row-alert.tone-danger {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.nucleo-row-alert.tone-warning {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.nucleo-row-alert.tone-purple {
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+}
+.nucleo-row-alert.tone-success {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+
+/* ── Formulário do edital ───────────────────────────────────────────── */
+
 #editModal .modal-card {
   width: min(1180px, 96vw);
 }
-
-.cronograma-editor {
-  grid-column: 1/-1;
-  margin-top: 8px;
-  padding: 18px;
-  border: 1px solid #dbe6f1;
-  border-top: 3px solid #2563eb;
-  border-radius: 14px;
-  background: #fff;
-}
-
-.cronograma-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 15px;
-}
-
-.cronograma-heading h4 {
-  margin: 3px 0 4px;
-  color: #13233a;
-  font-size: 17px;
-}
-
-.cronograma-auto-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #cfe0f6;
-  border-radius: 999px;
-  background: #f4f8ff;
-  color: #174d8c;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.cronograma-auto-toggle input {
-  width: 17px;
-  height: 17px;
-  accent-color: #2563eb;
-}
-
-.cronograma-status-preview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.cronograma-status-preview > div {
-  min-height: 76px;
-  padding: 12px 14px;
-  border: 1px solid #e0e8f1;
-  border-radius: 11px;
-  background: #f8fafc;
-}
-
-.cronograma-status-preview span {
-  display: block;
-  margin-bottom: 6px;
-  color: #8290a4;
-  font-size: var(--text-caption);
-  font-weight: 500;
-}
-
-.cronograma-status-preview strong {
-  display: block;
-  color: #17263d;
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.cronograma-actions-box {
-  padding: 14px;
-  border: 1px dashed #cbd9e8;
-  border-radius: 11px;
-  background: #fbfdff;
-}
-
-.cronograma-actions-box {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  gap: 8px;
-}
-
-.cronograma-table-wrap {
-  overflow: auto;
-  border: 1px solid #dde6f0;
-  border-radius: 11px;
-}
-
-.cronograma-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 760px;
-}
-
-/* Cabeçalho no DS 11.4: sem fundo colorido, caption 500 em cinza. */
-.cronograma-table th {
-  padding: 9px 10px;
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  text-align: left;
-}
-
-.cronograma-table td {
-  padding: 8px 10px;
-  border-top: 1px solid #e6edf5;
-  vertical-align: middle;
-}
-
-.cronograma-table td:first-child {
-  width: 42px;
-  text-align: center;
-  color: var(--color-text-secondary);
-}
-
-.cronograma-table input {
-  width: 100%;
-  min-height: 36px;
-  padding: 7px 9px;
-  border: 1px solid #d7e1ec;
-  border-radius: 7px;
-  background: #fff;
-  color: #17263d;
-  font: inherit;
-  font-size: 12px;
-}
-
-.cronograma-table input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  outline: 0;
-}
-
-.cronograma-origin {
-  display: inline-flex;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #eef4ff;
-  color: #2563eb;
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.cronograma-remove {
-  width: 30px;
-  height: 30px;
-  border: 1px solid #f0ccd0;
-  border-radius: 7px;
-  background: #fff5f6;
-  color: #d43b45;
-  cursor: pointer;
-}
-
-.cronograma-empty {
-  padding: 22px !important;
-  text-align: center;
-  color: #8b99aa;
-  font-size: 12px;
-}
-
-.cronograma-overrides {
-  display: grid;
+.editais-formulario {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #e6edf5;
 }
-
-#mStatus[readonly],
-#mEtapa[readonly] {
-  background: #f1f5f9;
-  color: #516174;
+.editais-formulario .subsection {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.editais-formulario input[readonly] {
+  background: var(--surface-raised);
+  color: var(--text-secondary);
   cursor: not-allowed;
 }
-
-html[data-theme="dark"] .cronograma-editor {
-  background: #122337;
-  border-color: #2d435a;
+.editais-formulario .readonly-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-2);
 }
-
-html[data-theme="dark"] .cronograma-heading h4,
-html[data-theme="dark"] .cronograma-status-preview strong,
-html[data-theme="dark"] .cronograma-table input {
-  color: #edf4fb;
+.editais-formulario .metric-readonly {
+  min-height: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
 }
-
-html[data-theme="dark"] .cronograma-status-preview > div,
-html[data-theme="dark"] .cronograma-actions-box,
-html[data-theme="dark"] .cronograma-table input {
-  background: #172a3f;
-  border-color: #334b63;
+.editais-formulario .metric-readonly span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
 }
-
-html[data-theme="dark"] .cronograma-table td {
-  border-top-color: #294158;
+.editais-formulario .metric-readonly b {
+  margin-top: var(--space-1);
+  color: var(--text-primary);
+  font-size: var(--text-metric-sm);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
 }
-
-@media (max-width: 900px) {
-  .cronograma-status-preview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 600px) {
-  .cronograma-heading {
-    flex-direction: column;
-  }
-  .cronograma-status-preview,
-  .cronograma-overrides {
-    grid-template-columns: 1fr;
-  }
+.editais-formulario-rodape {
+  justify-content: flex-end;
+  margin-top: var(--space-5);
 }
 
 /*
-  Cabeçalho do formulário do edital: o rascunho à espera e a pergunta
-  "Descartar as alterações?" moram nele (sticky), para aparecerem onde quer
-  que a pessoa esteja no formulário. Os tokens de estado já trocam no escuro.
+  Cabeçalho do formulário: o rascunho à espera e a pergunta "Descartar as
+  alterações?" moram nele (sticky), para aparecerem onde quer que a pessoa
+  esteja no formulário.
 */
 .edital-cabecalho {
   flex-wrap: wrap;
   row-gap: var(--space-3);
 }
-
 .edital-aviso {
   flex-basis: 100%;
   display: flex;
@@ -247,41 +137,34 @@ html[data-theme="dark"] .cronograma-table td {
   color: var(--state-info);
   font-size: var(--text-body);
 }
-
 .edital-aviso p {
   margin: var(--space-1) 0 0;
   font-size: var(--text-body-sm);
 }
-
 .edital-aviso--perigo {
   background: var(--state-danger-soft);
   color: var(--state-danger);
 }
-
 .edital-aviso-acoes {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
 }
-
 .edital-aviso-acoes .btn.danger {
   border: 0;
-  background: var(--state-danger);
+  background: var(--color-action-danger);
   color: var(--text-inverse);
 }
-
 .edital-aviso-acoes .btn.danger:hover {
-  background: color-mix(in srgb, var(--state-danger) 88%, black);
+  background: var(--color-action-danger-hover);
 }
-
-/* A área do edital: em destaque, junto do título (badge do DS 11.8, um pouco maior). */
+/* A área do edital, em destaque junto do título. */
 .edital-titulo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
 }
-
 .edital-area {
   display: inline-flex;
   align-items: center;
@@ -293,47 +176,620 @@ html[data-theme="dark"] .cronograma-table td {
   font-size: var(--text-body-sm);
   font-weight: var(--font-weight-medium);
 }
-
 .edital-area strong {
   font-weight: var(--font-weight-semibold);
 }
-
 .edital-unidade-ajuda {
   display: block;
   margin-top: var(--space-1);
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
-
 .edital-unidade-ajuda.is-erro {
   color: var(--state-danger);
 }
-
 /* "Mover para outra área" (só administradores), no topo do formulário. */
 .edital-mover {
+  display: grid;
+  gap: var(--space-3);
   margin-bottom: var(--space-5);
   padding: var(--space-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
 }
-
 .edital-mover h4 {
-  margin: 0 0 var(--space-1);
+  margin: 0;
   font-size: var(--text-h4);
   font-weight: var(--font-weight-semibold);
 }
-
-.edital-mover-aviso {
-  margin: var(--space-2) 0;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
-  font-size: var(--text-body-sm);
-}
-
 .edital-mover-acoes {
   justify-content: flex-end;
+}
+
+/* ── Editor de cronograma ───────────────────────────────────────────── */
+
+.cronograma-editor {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-top: 3px solid var(--brand-primary);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.cronograma-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.cronograma-heading h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-semibold);
+}
+.cronograma-auto-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.cronograma-auto-toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--brand-primary);
+}
+.cronograma-status-preview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.cronograma-status-preview > div,
+.nucleo-timeline-summary > div {
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.cronograma-status-preview span,
+.nucleo-timeline-summary span {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.cronograma-status-preview strong,
+.nucleo-timeline-summary strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-body-sm);
+}
+.cronograma-manual-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px dashed var(--border-control);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.cronograma-manual-actions .btn {
+  margin: 0;
+}
+.cronograma-recommended-badge {
+  margin-left: var(--space-2);
+}
+
+/* Caixas de ferramenta: copiar cronograma, anexos (PDF), colar datas. */
+.cronograma-copy-box,
+.cronograma-bulk-dates {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--state-info);
+  border-radius: var(--radius-lg);
+  background: var(--state-info-soft);
+}
+.cronograma-bulk-dates[hidden] {
+  display: none;
+}
+.cronograma-copy-heading {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+.cronograma-copy-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+.anexos-box .cronograma-copy-controls {
+  grid-template-columns: auto;
+  justify-content: start;
+}
+.cronograma-copy-controls select,
+.cronograma-bulk-dates textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.cronograma-copy-controls .btn {
+  white-space: nowrap;
+}
+.cronograma-copy-feedback,
+.cronograma-bulk-feedback {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.cronograma-copy-feedback[hidden],
+.cronograma-bulk-feedback[hidden] {
+  display: none;
+}
+:is(.cronograma-copy-feedback, .cronograma-bulk-feedback).is-info {
+  background: var(--surface-card);
+  color: var(--state-info);
+}
+:is(.cronograma-copy-feedback, .cronograma-bulk-feedback).is-success {
+  background: var(--state-success-soft);
+  color: var(--state-success);
+}
+:is(.cronograma-copy-feedback, .cronograma-bulk-feedback).is-warning {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+:is(.cronograma-copy-feedback, .cronograma-bulk-feedback).is-error {
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
+.cronograma-bulk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.cronograma-bulk-head h5 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+.cronograma-bulk-dates textarea {
+  min-height: 150px;
+  resize: vertical;
+  font: 500 var(--text-body-sm) / 1.55 var(--font-mono);
+}
+.cronograma-bulk-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cronograma-validation {
+  display: grid;
+  gap: var(--space-2);
+}
+.cronograma-validation[hidden] {
+  display: none;
+}
+.cronograma-validation strong {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.cronograma-validation ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.cronograma-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.cronograma-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+.cronograma-table th {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+}
+.cronograma-table td {
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+.cronograma-table td:first-child {
+  width: 42px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.cronograma-table input {
+  width: 100%;
+  min-height: 36px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+}
+.cronograma-table input:focus {
+  border-color: var(--focus-ring);
+  outline: 0;
+}
+.cronograma-origin {
+  display: inline-flex;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.cronograma-remove {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--state-danger-soft);
+  border-radius: var(--radius-md);
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+  cursor: pointer;
+}
+
+.cronograma-overrides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.cronograma-override-detail[hidden] {
+  display: none;
+}
+
+.cronograma-governance,
+.cronograma-history-section {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.cronograma-governance-heading,
+.cronograma-history-heading strong {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+.cronograma-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.cronograma-history-heading > span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.cronograma-governance-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-3);
+}
+.cronograma-governance textarea {
+  resize: vertical;
+}
+
+/* Histórico (no formulário e na linha do tempo): ícone, título, data, motivo. */
+.cronograma-history-list,
+.nucleo-timeline-history {
+  display: grid;
+  gap: var(--space-2);
+}
+.cronograma-history-item,
+.nucleo-timeline-history article {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.cronograma-history-icon,
+.nucleo-timeline-history article > i {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.cronograma-history-content > div,
+.nucleo-timeline-history article > div > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.cronograma-history-content p,
+.nucleo-timeline-history p {
+  margin: var(--space-1) 0;
+  color: var(--text-primary);
+}
+.cronograma-history-content :is(span, small),
+.nucleo-timeline-history :is(span, small) {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.cronograma-history-empty,
+.nucleo-timeline-empty {
+  padding: var(--space-4);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ── Anexos do edital (PDF) ─────────────────────────────────────────── */
+
+.anexos-resultado {
+  display: grid;
+  gap: var(--space-2);
+}
+.anexos-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+.anexos-linha .btn {
+  white-space: nowrap;
+}
+.anexos-quadro {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.anexos-tabela {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: var(--text-caption);
+}
+.anexos-tabela th {
+  position: sticky;
+  top: 0;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+}
+.anexos-tabela td {
+  padding: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+.anexos-tabela .anexos-num {
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── Linha do tempo (consulta do cronograma) ────────────────────────── */
+
+.nucleo-timeline-card {
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 94vw);
+  max-height: 90vh;
+  overflow: hidden;
+}
+.nucleo-timeline-card .modal-head {
+  align-items: flex-start;
+}
+.nucleo-timeline-card .modal-head h3 {
+  margin: var(--space-1) 0;
+}
+.nucleo-timeline-card .modal-head p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.nucleo-timeline-content {
+  min-height: 180px;
+  max-height: calc(90vh - 100px);
+  padding: var(--space-5);
+  overflow: auto;
+}
+.nucleo-timeline-loading {
+  display: grid;
+  gap: var(--space-3);
+}
+.nucleo-timeline-esqueleto {
+  height: 56px;
+}
+.nucleo-timeline-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+.nucleo-timeline-exception {
+  display: flex;
+  gap: var(--space-3);
   margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+}
+.nucleo-timeline-exception > i {
+  font-size: var(--text-lg);
+}
+.nucleo-timeline-exception p {
+  margin: var(--space-1) 0;
+  color: var(--text-primary);
+}
+.nucleo-timeline-exception small {
+  color: var(--text-secondary);
+}
+.nucleo-timeline-section {
+  margin-top: var(--space-5);
+}
+.nucleo-timeline-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.nucleo-timeline-section-title span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.nucleo-timeline-list {
+  padding: var(--space-3) var(--space-1);
+}
+.nucleo-timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: var(--space-2);
+  min-height: 72px;
+}
+.nucleo-timeline-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 32px;
+  bottom: -4px;
+  left: 18px;
+  width: 2px;
+  background: var(--border-subtle);
+}
+.nucleo-timeline-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--surface-card);
+  border-radius: var(--radius-full);
+  outline: 1px solid var(--border-subtle);
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+}
+.nucleo-timeline-item > div > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.nucleo-timeline-item > div > div span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.nucleo-timeline-item p {
+  margin: var(--space-1) 0;
+  color: var(--text-secondary);
+}
+.nucleo-timeline-item small {
+  color: var(--text-secondary);
+}
+.nucleo-timeline-item.is-done .nucleo-timeline-dot {
+  background: var(--state-success);
+  color: var(--text-inverse);
+}
+.nucleo-timeline-item.is-done > div > div span {
+  color: var(--state-success);
+}
+.nucleo-timeline-item.is-current .nucleo-timeline-dot {
+  background: var(--state-info);
+  color: var(--text-inverse);
+}
+.nucleo-timeline-item.is-current > div > div span {
+  color: var(--state-info);
+}
+.nucleo-timeline-item.is-next .nucleo-timeline-dot {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.nucleo-timeline-item.is-next > div > div span {
+  color: var(--state-warning);
+}
+
+/* ── Celular ────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .cronograma-status-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .editais-formulario,
+  .cronograma-overrides,
+  .cronograma-governance-grid,
+  .cronograma-copy-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cronograma-heading,
+  .cronograma-bulk-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cronograma-copy-controls .btn,
+  .cronograma-bulk-actions .btn {
+    width: 100%;
+  }
+  .nucleo-timeline-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 420px) {
+  .cronograma-status-preview,
+  .nucleo-timeline-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

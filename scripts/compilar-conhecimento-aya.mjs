@@ -16,6 +16,7 @@ import prettier from "prettier";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { acaoDaAya } from "../src/lib/aya-paginas.js";
+import { palavrasDe } from "../src/lib/termos-da-aya.js";
 
 /*
   Sob o vitest este módulo pode chegar por uma URL que não é `file:`, e aí
@@ -44,8 +45,8 @@ function lerCampo(bloco, nome) {
 }
 
 /*
-  O termo é comparado com a pergunta já sem acento (`normalizeText` em
-  aya-knowledge.js). Guardar "parecer jurídico" com acento fazia o termo nunca
+  O termo é comparado com a pergunta já sem acento (src/lib/termos-da-aya.js e
+  `curatedAnswerForQuestion` em aya-knowledge.js). Guardar "parecer jurídico" com acento fazia o termo nunca
   casar; por isso ele sai daqui do mesmo jeito que a pergunta chega lá.
 */
 export function normalizarTermo(termo) {
@@ -57,8 +58,9 @@ export function normalizarTermo(termo) {
     .trim();
 }
 
-export function compilarVerbetes() {
-  const arquivos = readdirSync(ORIGEM)
+// `origem` muda só nos testes, que compilam uma pasta de exemplo.
+export function compilarVerbetes(origem = ORIGEM) {
+  const arquivos = readdirSync(origem)
     .filter((nome) => nome.endsWith(".md") && nome !== "README.md")
     .sort();
 
@@ -66,7 +68,7 @@ export function compilarVerbetes() {
   const problemas = [];
 
   for (const arquivo of arquivos) {
-    const texto = readFileSync(join(ORIGEM, arquivo), "utf8");
+    const texto = readFileSync(join(origem, arquivo), "utf8");
     // Cada `##` abre um verbete; o que vem antes do primeiro é introdução.
     const blocos = texto.split(/^## /m).slice(1);
 
@@ -83,9 +85,10 @@ export function compilarVerbetes() {
       const abrir = lerCampo(bloco, "abrir");
 
       if (!titulo) continue;
-      if (!perguntas.length && resposta) {
+      // Sem perguntas, nenhuma busca chega ao verbete.
+      if (!perguntas.length) {
         problemas.push(
-          `${arquivo} › ${titulo}: tem resposta mas não tem perguntas que a disparem`,
+          `${arquivo} › ${titulo}: não tem perguntas que o disparem`,
         );
       }
       if (resposta && !fonte) {
@@ -113,16 +116,24 @@ export function compilarVerbetes() {
     }
   }
 
-  // Dois verbetes com o mesmo termo fariam o primeiro vencer em silêncio.
+  /*
+    Dois verbetes com o mesmo termo empatariam na busca. A comparação é como a
+    busca vê o termo (sem stopwords, no singular): "quem pode gerar a lista" e
+    "gerar lista" são a mesma frase para ela.
+  */
   const vistos = new Map();
   for (const verbete of verbetes) {
+    const doVerbete = new Set();
     for (const termo of verbete.perguntas) {
-      if (vistos.has(termo)) {
+      const chave = palavrasDe(termo).join(" ") || termo;
+      const anterior = vistos.get(chave);
+      if (anterior && (anterior !== verbete.titulo || doVerbete.has(termo))) {
         problemas.push(
-          `termo "${termo}" repetido em "${vistos.get(termo)}" e "${verbete.titulo}"`,
+          `termo "${termo}" repetido em "${anterior}" e "${verbete.titulo}"`,
         );
       }
-      vistos.set(termo, verbete.titulo);
+      vistos.set(chave, verbete.titulo);
+      doVerbete.add(termo);
     }
   }
 
@@ -182,8 +193,7 @@ if (executadoDiretamente()) {
   }
   writeFileSync(DESTINO, await gerarModulo({ verbetes }));
   const comResposta = verbetes.filter((v) => v.resposta).length;
-  const comFato = verbetes.filter((v) => v.fato).length;
   console.log(
-    `${verbetes.length} verbetes compilados: ${comResposta} com resposta direta, ${comFato} com fato no prompt.`,
+    `${verbetes.length} verbetes compilados: ${comResposta} com resposta direta.`,
   );
 }

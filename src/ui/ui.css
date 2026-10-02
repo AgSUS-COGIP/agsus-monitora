@@ -79,6 +79,27 @@
   width: 80%;
   height: var(--space-3);
 }
+/* Bloco de uma lista, cartão ou dia (`BlocosEsqueleto`); quem usa dá a altura. */
+.ui-esqueleto-bloco {
+  width: 100%;
+  min-height: var(--space-8);
+  border-radius: var(--radius-md);
+}
+/* Linhas de tabela (`LinhasEsqueleto`): a 1ª coluna mais larga, a 3ª curta. */
+.ui-esqueleto-tr td:first-child .ui-esqueleto {
+  width: 90%;
+}
+.ui-esqueleto-tr td:nth-child(3n) .ui-esqueleto {
+  width: 50%;
+}
+/* A primeira carga falhou (`ErroAoCarregar`): o motivo e "Tentar novamente". */
+.ui-erro-ao-carregar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
 @keyframes ui-esqueleto-pulso {
   50% {
     opacity: 0.45;

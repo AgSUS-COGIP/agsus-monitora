@@ -85,8 +85,15 @@
   /*
     Editais e Lista de aprovados no Design System: cartão sem sombra (DS 11.6,
     raio de 8px, borda sutil) e rótulo em sentence case, caption 500 em cinza.
-    As demais tabelas continuam com as regras acima.
+    No modo cartão, a tabela perde a largura mínima da tela (o cartão ocupa a
+    largura do celular). Só estas duas telas: as demais tabelas continuam com
+    as regras acima.
   */
+  .nucleo-page-card .ui-tabela-rolagem table.mobile-card-table,
+  .approved-page-card .ui-tabela-rolagem table.mobile-card-table {
+    min-width: 0;
+  }
+
   .nucleo-page-card table.mobile-card-table tr,
   .approved-page-card table.mobile-card-table tr {
     border-color: var(--border-subtle);

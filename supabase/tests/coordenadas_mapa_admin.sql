@@ -1,4 +1,5 @@
 -- Ensaio no projeto: não persiste correções ou histórico de teste.
+-- Nomes do histórico e assinatura de 20261002160000_conferir_coordenadas_mapa.sql (rode depois dela).
 begin;
 do $$
 declare
@@ -63,9 +64,9 @@ begin
     assert (select payload from public."TB_CONFIG_MAPA_SAUDE_INDIG" where chave=v_fonte)=v_esperado, 'Só as duas coordenadas do ponto selecionado podem mudar.';
     assert (select count(*) from private."TH_COORDENADA_MAPA_SAUDE_INDIG")=v_antes+1, 'Correção precisa de histórico.';
     assert v_resultado->'lmap' is not null and v_resultado->'rede_cnes' is not null, 'Retorno deve permitir atualizar o mapa.';
-    assert exists (select 1 from private."TH_COORDENADA_MAPA_SAUDE_INDIG" where "ID_USUARIO"=v_admin and "JS_ALVO"=v_alvo
-      and "NU_LATITUDE_ANTERIOR"=v_lat and "NU_LONGITUDE_ANTERIOR"=v_lon
-      and "NU_LATITUDE"=v_lat+0.000001 and "NU_LONGITUDE"=v_lon+0.000001), 'Histórico deve preservar autoria e antes/depois.';
+    assert exists (select 1 from private."TH_COORDENADA_MAPA_SAUDE_INDIG" where "CO_USUARIO"=v_admin and "DS_ALVO"=v_alvo
+      and "CG_LATITUDE_ANTERIOR"=v_lat and "CG_LONGITUDE_ANTERIOR"=v_lon
+      and "CG_LATITUDE"=v_lat+0.000001 and "CG_LONGITUDE"=v_lon+0.000001), 'Histórico deve preservar autoria e antes/depois.';
     begin
       perform public.salvar_coordenada_mapa_saude_indigena(v_alvo,v_lat+0.000002,v_lon+0.000002,v_lat,v_lon,'Ensaio conflito de coordenada');
       raise exception 'Aceitou coordenada anterior desatualizada';
@@ -88,7 +89,7 @@ begin
     perform public.salvar_coordenada_mapa_saude_indigena(v_alvo,-10,-40,null,null,'curto');
     raise exception 'Aceitou motivo curto';
   exception when invalid_parameter_value then null; end;
-  assert not has_function_privilege('anon','public.salvar_coordenada_mapa_saude_indigena(jsonb,double precision,double precision,double precision,double precision,text)','EXECUTE'), 'Anon não pode chamar a função.';
+  assert not has_function_privilege('anon','public.salvar_coordenada_mapa_saude_indigena(jsonb,double precision,double precision,double precision,double precision,text,boolean)','EXECUTE'), 'Anon não pode chamar a função.';
   assert not has_table_privilege('authenticated','private."TH_COORDENADA_MAPA_SAUDE_INDIG"','SELECT'), 'Histórico não pode ficar acessível por API.';
   assert (select qual like '%is_master%' and with_check like '%is_master%'
     from pg_policies where tablename='TB_CONFIG_MAPA_SAUDE_INDIG' and policyname='mapa_saude_indigena_update_config'), 'RLS exige admin nos cadastros ativos.';
