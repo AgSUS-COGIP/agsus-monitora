@@ -4,7 +4,7 @@
   fica no componente. Este arquivo não importa React.
 
   Esta tela não escreve nada. Ela apenas reorganiza, por data, as etapas que já
-  existem em `nucleo-cronograma.js`. Quem edita continua a ser a Equipe Núcleo.
+  existem nos cronogramas de Editais (src/modulos/editais/), quem edita.
 
   CUSTO DE REDE — ler antes de mexer no carregamento.
   Há duas fontes possíveis:
@@ -47,6 +47,8 @@ const ESTADO_INICIAL = Object.freeze({
   editais: Object.freeze([]),
   carregando: false,
   carregado: false,
+  /** Quando a última carga chegou (ISO), para a data discreta do topo. */
+  carregadoEm: "",
   erro: "",
 });
 
@@ -115,7 +117,13 @@ export function criarEstadoDoCalendario({
       try {
         const { etapas, editais, falhas } = await buscar();
         carregadoEm = relogio();
-        publicar({ etapas, editais, carregando: false, carregado: true });
+        publicar({
+          etapas,
+          editais,
+          carregando: false,
+          carregado: true,
+          carregadoEm: new Date(relogio()).toISOString(),
+        });
         if (falhas)
           toast(
             `${falhas} edital(is) não puderam ser lidos. O calendário está incompleto.`,

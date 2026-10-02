@@ -7,22 +7,19 @@ import {
   periodoDaEtapa,
   tituloDoDia,
 } from "../../lib/calendario-editais.js";
-import { Modal } from "../../componentes/modal.jsx";
+import { Aviso, classes, Modal } from "../../ui/index.js";
 
 /*
-  As peças do calendário: a grade do mês, a linha de uma etapa (usada nas
-  próximas etapas e no popup do dia), a linha do tempo e o popup do dia. As
-  classes são as de `src/styles/calendario-editais.css`; a cor de cada tipo sai
-  de `data-cor`, e o CSS decide o que é "rosa".
+  As peças do calendário: a grade do mês (e o skeleton dela), a linha de uma
+  etapa (usada nas próximas etapas e no popup do dia), a linha do tempo e o
+  popup do dia. As classes são as de `src/styles/calendario-editais.css`; a
+  cor de cada tipo sai de `data-cor`, e o CSS decide o que é "rosa".
 */
 
-const classes = (...lista) => lista.filter(Boolean).join(" ");
-
-export function Seletor({ id, title, vazio, opcoes, valor, aoMudar }) {
+export function Seletor({ id, vazio, opcoes, valor, aoMudar }) {
   return (
     <select
       id={id}
-      title={title}
       value={valor}
       onChange={(evento) => aoMudar(evento.target.value)}
     >
@@ -85,6 +82,26 @@ export function GradeDoMes({ celulas, selecionado, aoEscolherDia }) {
   );
 }
 
+/* A grade antes da primeira carga: os dias da semana e 35 dias em skeleton. */
+export function GradeEsqueleto() {
+  return (
+    <>
+      <div className="cal-semana">
+        {DIAS_SEMANA.map((dia) => (
+          <span key={dia}>{dia}</span>
+        ))}
+      </div>
+      <div className="cal-dias" aria-hidden="true">
+        {Array.from({ length: 35 }, (_, indice) => (
+          <span key={indice} className="cal-celula cal-celula-esqueleto">
+            <span className="ui-esqueleto cal-numero-esqueleto" />
+          </span>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export function ItemDeEtapa({
   etapa,
   marco = "",
@@ -139,14 +156,14 @@ const chaveDaEtapa = (etapa, indice) =>
 export function AvisoDeDatasARevisar({ editais }) {
   if (!editais.length) return null;
   return (
-    <p className="cal-aviso-datas" role="status">
-      <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
+    <Aviso tom="warning" papel="status" como="p" className="cal-aviso-datas">
+      <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />{" "}
       <span>
         {editais.length} edita{editais.length === 1 ? "l" : "is"} com data
         impossível no cronograma:{" "}
         {editais.map((item) => item.edital).join("; ")}. Corrija em Editais.
       </span>
-    </p>
+    </Aviso>
   );
 }
 
