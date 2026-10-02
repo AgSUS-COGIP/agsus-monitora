@@ -1,0 +1,205 @@
+/*
+  O que é só da tela de Classificação (src/modulos/classificacao/), só com
+  tokens de src/styles/tokens.css (o tema escuro vem dos próprios tokens).
+  Topo, KPIs, filtros, gaveta, modal e tabela são de src/ui/ (ui.css). Aqui: a
+  fileira de cinco KPIs, as tabelas estreitas das vagas, os avisos do topo, a
+  lista ordenável dos critérios, a tabela das modalidades e o registro do
+  empate. Importado pelo src/main.js, depois do ui.css.
+*/
+
+.classificacao-tela {
+  display: grid;
+  gap: var(--space-4);
+}
+.classificacao-listas,
+.classificacao-regra {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.classificacao-edital select {
+  width: min(640px, 100%);
+}
+
+@media (min-width: 1100px) {
+  .classificacao-kpis {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* ── Avisos e pendências ────────────────────────────────────────────── */
+
+.classificacao-avisos details + details,
+.classificacao-pendencias + details {
+  margin-top: var(--space-2);
+}
+.classificacao-avisos summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+}
+.classificacao-avisos ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-5);
+}
+.classificacao-pendencias {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.classificacao-pendencias li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* ── Geração e exportação ───────────────────────────────────────────── */
+
+.classificacao-acoes {
+  display: grid;
+  gap: var(--space-2);
+}
+.classificacao-acoes-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.classificacao-acoes-linha .ui-campo {
+  min-width: 200px;
+}
+
+/* ── Vagas ──────────────────────────────────────────────────────────── */
+
+.classificacao-vaga {
+  display: grid;
+  gap: var(--space-3);
+}
+.classificacao-vaga .ui-tabela-rolagem table,
+.classificacao-modalidades table {
+  min-width: 560px;
+}
+.classificacao-nome {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-link, var(--text-primary));
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.classificacao-nome:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.classificacao-empate {
+  color: var(--text-secondary);
+}
+.classificacao-eliminados summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+.classificacao-eliminados .ui-tabela-rolagem {
+  margin-top: var(--space-2);
+}
+.classificacao-posicoes,
+.classificacao-explicacao {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.classificacao-explicacao p {
+  margin: 0 0 var(--space-1);
+}
+
+/* ── Regra ──────────────────────────────────────────────────────────── */
+
+.classificacao-caixas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: var(--space-2) 0;
+}
+.classificacao-caixa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.classificacao-componente {
+  display: grid;
+  gap: var(--space-1);
+}
+.classificacao-lista-ordenavel {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+.classificacao-lista-ordenavel li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+.classificacao-lista-ordenavel li.is-arrastando {
+  opacity: 0.5;
+}
+.classificacao-alca {
+  color: var(--text-secondary);
+  cursor: grab;
+}
+.classificacao-criterio-nome {
+  flex: 1 1 260px;
+}
+.classificacao-empate-final {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+.classificacao-excecao {
+  align-items: end;
+}
+.classificacao-versoes-lista {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.classificacao-versoes-lista button {
+  margin-left: var(--space-2);
+}
+
+/* ── Registro do empate ─────────────────────────────────────────────── */
+
+.classificacao-desempate form {
+  display: grid;
+  gap: var(--space-3);
+  min-width: min(520px, 90vw);
+}
+.classificacao-ordem {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.classificacao-ordem li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.classificacao-ordem li span {
+  flex: 1;
+}
+.classificacao-semente code {
+  word-break: break-all;
+}

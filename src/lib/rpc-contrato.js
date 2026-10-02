@@ -671,6 +671,48 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo: "Registo de auditoria de acesso. Nunca deve bloquear a interface.",
   },
+  // ── Classificação (20261002150000_classificacao.sql) ─────────────────────
+  listar_editais_classificacao: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Editais da área para a aba Classificação: candidatos nas análises, versão da regra e a última lista gerada; pode_editar.",
+  },
+  obter_classificacao_do_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "O que o motor de classificação precisa: regra vigente e versões, catálogo, cronograma, quadro de vagas, análises (sem CPF), entrevistas ligadas por CO_ANALISE_CURRICULAR, listas geradas e desempates.",
+  },
+  salvar_regra_classificacao: {
+    argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
+    critica: false,
+    resumo:
+      "Salva a regra do edital como versão nova (40001 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante). Editor.",
+  },
+  registrar_lista_classificacao: {
+    argumentos: ["p_edital", "p_tipo", "p_versao", "p_resultado"],
+    critica: false,
+    resumo:
+      "Registra a lista gerada (retrato, versão da regra, quem, quando) e devolve o hash SHA-256 calculado no banco. Editor.",
+  },
+  publicar_lista_classificacao: {
+    argumentos: ["p_lista"],
+    critica: false,
+    resumo:
+      "Marca a lista gerada como publicada (sem empate pendente). Editor.",
+  },
+  obter_lista_classificacao: {
+    argumentos: ["p_lista"],
+    critica: false,
+    resumo: "Uma lista gerada com o retrato, para exportar de novo. Leitor.",
+  },
+  registrar_desempate_classificacao: {
+    argumentos: ["p_edital", "p_dados"],
+    critica: false,
+    resumo:
+      "Registra o empate final de um grupo: sorteio (semente do servidor ou informada, reprodutível) ou decisão manual com justificativa. Editor.",
+  },
   registrar_presenca_monitora: {
     argumentos: ["p_current_view"],
     critica: false,

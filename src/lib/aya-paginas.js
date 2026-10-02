@@ -127,6 +127,21 @@ const PAGINAS = Object.freeze({
       sug("Convocação", "Como funciona a regra de convocação da entrevista?"),
     ],
   },
+  classificacao: {
+    nome: "Classificação",
+    intro: () =>
+      "Posso explicar a regra de classificação do edital, os critérios de desempate, o empate final, as listas e a exportação.",
+    sugestoes: () => [
+      sug(
+        "Regra do edital",
+        "Como funciona a regra de classificação do edital?",
+      ),
+      sug("Desempate", "Como funcionam os critérios de desempate?"),
+      sug("Empate final", "Como funciona o empate final e o sorteio?"),
+      sug("60 anos", "Como é calculado o critério de 60 anos ou mais?"),
+      sug("Exportar", "Como exportar a lista de classificação?"),
+    ],
+  },
   approved: {
     nome: "Lista de aprovados",
     intro: () =>
@@ -268,6 +283,10 @@ export const ACOES_DA_AYA = Object.freeze({
   entrevistas: Object.freeze({
     rotulo: "Abrir Entrevistas",
     view: "entrevistas",
+  }),
+  classificacao: Object.freeze({
+    rotulo: "Abrir Classificação",
+    view: "classificacao",
   }),
   approved: Object.freeze({
     rotulo: "Abrir Lista de aprovados",

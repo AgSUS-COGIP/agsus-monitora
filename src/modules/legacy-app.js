@@ -61,6 +61,7 @@ import {
   canViewEntrevistas,
   canViewRecursos,
   canViewSelecao,
+  canViewClassificacao,
   canImportApprovedList,
   isAdminGlobal,
   paginasPermitidas,
@@ -748,6 +749,7 @@ function systemHomeView() {
   if (can("analises")) return "analises";
   if (canViewRecursos(profile)) return "recursos";
   if (canViewEntrevistas(profile)) return "entrevistas";
+  if (canViewClassificacao(profile)) return "classificacao";
   if (canViewSelecao(profile)) return "selecao";
   if (podeAbrirConfiguracoes(profile)) return "config";
   const firstPanel = panels.find(panelAllowed);
@@ -1228,6 +1230,7 @@ const TELAS_REACT = Object.freeze({
   ],
   recursos: () => ["Recursos", "", window.recursosController],
   entrevistas: () => ["Entrevistas", "", window.entrevistasController],
+  classificacao: () => ["Classificação", "", window.classificacaoController],
   analises: () => ["Análises curriculares", "", window.analisesController],
   selecao: () => ["Seleção", "", window.selecaoController],
 });
@@ -1286,6 +1289,10 @@ function navigate(view) {
   }
   if (requestedView === "entrevistas" && !canViewEntrevistas(profile)) {
     toast("Sem permissão para Entrevistas.", "warn");
+    return;
+  }
+  if (requestedView === "classificacao" && !canViewClassificacao(profile)) {
+    toast("Sem permissão para Classificação.", "warn");
     return;
   }
   if (requestedView === "selecao" && !canViewSelecao(profile)) {
