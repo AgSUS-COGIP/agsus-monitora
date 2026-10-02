@@ -67,6 +67,39 @@ export const CONTRATO_RPC = {
     resumo:
       "Pontos do mapa ainda não conferidos depois da auditoria, com candidatos. Só administrador global.",
   },
+  // ── Editor de coordenadas do mapa de Projetos (só admin global) ─────────
+  salvar_coordenada_mapa_projetos: {
+    argumentos: [
+      "p_lugar",
+      "p_latitude",
+      "p_longitude",
+      "p_latitude_anterior",
+      "p_longitude_anterior",
+      "p_motivo",
+      "p_conferido",
+    ],
+    critica: true,
+    resumo:
+      "Corrige a coordenada de um lugar das vagas de Projetos (cria a linha se não havia) e/ou o marca como conferido (p_conferido), com concorrência pela posição anterior e histórico privado. Só administrador global (migration 20261002170000).",
+  },
+  desfazer_coordenada_mapa_projetos: {
+    argumentos: ["p_historico", "p_motivo"],
+    critica: false,
+    resumo:
+      "Volta a última alteração de um lugar do mapa de Projetos como alteração nova, com motivo. Só administrador global.",
+  },
+  listar_historico_coordenada_mapa_projetos: {
+    argumentos: ["p_lugar", "p_limite"],
+    critica: false,
+    resumo:
+      "Últimas alterações de um lugar do mapa de Projetos (quem, quando, de/para, motivo). Só administrador global.",
+  },
+  listar_pendencias_coordenada_mapa_projetos: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Lugares do mapa de Projetos com coordenada duvidosa (sem coordenada, só a sede do município, só a UF, município/UF que não batem…), com candidatos e situação. Só administrador global.",
+  },
   // ── Configurações › Acessos (admin global ou coordenador, com teto) ──────
   obter_matriz_acessos: {
     argumentos: ["p_busca", "p_offset", "p_coordenacao", "p_grupo"],
@@ -467,7 +500,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_area"],
     critica: false,
     resumo:
-      "Lugares das vagas da área (TB_LOCAL_VAGA_EDITAL, lidos dos PDFs dos editais, + UBS móvel no nome da vaga): município ou UF, projetos e editais de cada um, vagas publicadas e nas análises, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migrations 20260929090000 e 20261001180000).",
+      "Lugares das vagas da área (TB_LOCAL_VAGA_EDITAL, lidos dos PDFs dos editais, + UBS móvel no nome da vaga): chave do lugar, município ou UF, coordenada do banco (TB_COORDENADA_LOCAL_VAGA, nula se ainda não há), projetos e editais de cada um, vagas publicadas e nas análises, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migrations 20260929090000, 20261001180000 e 20261002170000).",
   },
   get_analises_dashboard_payload_v2: {
     argumentos: ["p_scope", "p_area"],
