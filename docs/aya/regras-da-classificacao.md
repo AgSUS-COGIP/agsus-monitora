@@ -89,7 +89,7 @@ dos PDFs oficiais).
 
 ## Regras dos editais lidas dos PDFs
 
-**perguntas:** regras dos editais | de onde vieram as regras dos editais | modelo do edital | regra lida do edital | conferir a regra do edital
+**perguntas:** de onde vieram as regras dos editais | modelo do edital | regra lida do edital | conferir a regra do edital
 **resposta:** As regras de todos os editais com PDF no site da AgSUS foram lidas dos editais e das retificações oficiais e cadastradas como versão 1, com o motivo "Regra lida do edital (PDF oficial) — conferir". A maioria segue um texto-base (modelo): Saúde Indígena 2026 no padrão do 83/2026, no padrão do 100/2026 (ART e lote) e o do Sanitarista; Saúde Indígena 2025 com entrevista e só curricular; Sede 2025 (entrevista só apto/inapto, barema, prova); e os de Projetos. Em cada regra, "importação" guarda o modelo, os PDFs lidos, a pontuação e o que ficou em aberto. O gestor confere e decide sobretudo o empate depois de todos os critérios (os editais não definem; ficou "mesma posição"). Editais com prova objetiva ainda não têm a prova na nota final.
 **fato:** No MONITORA, a regra inicial de cada edital foi lida do PDF oficial e marcada para o gestor conferir; o empate final ficou "mesma posição" até ele decidir.
 **fonte:** supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql

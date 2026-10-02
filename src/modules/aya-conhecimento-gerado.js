@@ -755,7 +755,6 @@ export const VERBETES_AYA = Object.freeze([
     arquivo: "regras-da-classificacao.md",
     titulo: "Regras dos editais lidas dos PDFs",
     perguntas: [
-      "regras dos editais",
       "de onde vieram as regras dos editais",
       "modelo do edital",
       "regra lida do edital",
