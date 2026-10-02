@@ -591,85 +591,8 @@
         ></div>
 
         <div class="content">
-          <!--
-            Visão geral em React (src/modulos/visao-geral/). Na Saúde Indígena o
-            mapa é React (src/modulos/mapa-saude-indigena/); o de Projetos, os
-            municípios das vagas, ainda é legado (src/modules/municipios-da-visao-geral.js):
-            montarVisaoGeral() muda o bloco abaixo (#mapaDaVisaoGeral) para o
-            lugar que ela reserva e só o mostra em Projetos. Antes disso, ou se a
-            tela quebrar, ele fica na reserva. SEDE não tem mapa.
-          -->
+          <!-- React: src/modulos/visao-geral/ (com os mapas da Saúde Indígena e de Projetos; SEDE não tem mapa). -->
           <section id="page-dashboard" class="page active"></section>
-          <div id="reservaDoMapaDaVisaoGeral" hidden>
-            <div
-              id="mapaDaVisaoGeral"
-              class="health-map-workspace"
-              aria-label="Mapa dos municípios das vagas"
-            >
-              <section class="card health-map-pane health-map-pane--master">
-                <header class="health-map-pane__header">
-                  <div>
-                    <span class="health-map-pane__eyebrow"
-                      ><i class="fa-solid fa-earth-americas"></i> Visão
-                      nacional</span
-                    >
-                    <h3>Municípios das vagas</h3>
-                  </div>
-                  <span class="health-map-pane__count" id="masterMapCount"
-                    >Brasil</span
-                  >
-                  <button
-                    id="mapaDosProjetosBrasil"
-                    class="btn small"
-                    type="button"
-                    title="Voltar à visão do Brasil inteiro"
-                  >
-                    Brasil
-                  </button>
-                </header>
-                <!-- O mapa fica na proporção que o Brasil preenche; a largura
-                     que sobra leva a lista dos municípios, não oceano. -->
-                <div class="health-map-brasil-layout">
-                  <div class="mapa-projetos__moldura">
-                    <div
-                      id="mapaDosProjetos"
-                      role="img"
-                      aria-label="Mapa do Brasil com os municípios das vagas da área"
-                    ></div>
-                    <details class="mapa-projetos__legenda">
-                      <summary>Legenda</summary>
-                      <div data-legenda-dos-municipios></div>
-                    </details>
-                  </div>
-                  <aside
-                    class="health-map-units health-map-brasil-painel"
-                    aria-label="Municípios por vagas"
-                  >
-                    <div class="health-map-units__header">
-                      <span
-                        ><i class="fa-solid fa-ranking-star"></i> Municípios por
-                        vagas</span
-                      >
-                      <b id="brasilDseiCount" aria-label="Carregando">…</b>
-                    </div>
-                    <div id="brasilDseiList" class="health-map-units__list">
-                      <div class="health-map-empty">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <strong>Carregando os municípios</strong>
-                        <span>Dos editais e das vagas da área.</span>
-                      </div>
-                    </div>
-                  </aside>
-                </div>
-                <footer class="health-map-pane__hint">
-                  <i class="fa-solid fa-arrow-pointer"></i>
-                  Clique num município para ver projeto, edital, vagas e
-                  candidatos.
-                </footer>
-              </section>
-            </div>
-          </div>
-          <!-- /reservaDoMapaDaVisaoGeral -->
 
           <!-- React: src/componentes/nucleo/ (o modal do edital e a linha do tempo são portais no fim do body). -->
           <section id="page-nucleo" class="page"></section>

@@ -8,8 +8,8 @@
   legenda, as células da tabela (prazo, cronograma, taxa de ociosas,
   observação) e o andamento do cronograma na gaveta. O mapa da área
   (`.visao-geral-mapa`) tem o CSS dele: o da Saúde Indígena em
-  src/modulos/mapa-saude-indigena/, o de Projetos (legado) em
-  health-map-workspace.css.
+  src/modulos/mapa-saude-indigena/, o de Projetos em
+  src/modulos/mapa-de-projetos/.
   Importado pelo src/main.js, depois do ui.css.
 */
 
@@ -506,9 +506,7 @@
 .visao-geral-mapa {
   min-width: 0;
 }
-/* Sem mapa (SEDE, o de Projetos fora de Projetos, ou fora do app) o lugar
-   não deixa um vão na grade. */
-.visao-geral-mapa:empty,
-.visao-geral-mapa[hidden] {
+/* Sem mapa (fora do app) o lugar não deixa um vão na grade. */
+.visao-geral-mapa:empty {
   display: none;
 }

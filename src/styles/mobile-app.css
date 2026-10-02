@@ -302,12 +302,6 @@ textarea,
     max-width: none !important;
   }
 
-  #mapaDosProjetos {
-    min-height: 320px;
-    height: min(52dvh, 480px) !important;
-    border-radius: 16px;
-  }
-
   iframe {
     max-width: 100%;
     min-height: 70dvh;

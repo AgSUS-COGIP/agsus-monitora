@@ -1,10 +1,4 @@
-import {
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
@@ -15,6 +9,8 @@ import {
   MAPA_DOS_MUNICIPIOS,
   mapaDaVisaoGeral,
 } from "../../lib/visao-geral-da-area.js";
+import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.js";
+import { MapaDeProjetos } from "../mapa-de-projetos/mapa-de-projetos.jsx";
 import { MapaSaudeIndigena } from "../mapa-saude-indigena/mapa-saude-indigena.jsx";
 import { BoasVindas, MarcosDoAno } from "./boas-vindas.jsx";
 import { estadoDaVisaoGeral } from "./estado.js";
@@ -47,32 +43,15 @@ import { TabelaDeProcessos } from "./tabela.jsx";
   - Saúde Indígena: `<MapaSaudeIndigena>` (src/modulos/mapa-saude-indigena/),
     com o mesmo estado da página — linhas recortadas, DSEI aberto, busca — e
     os dados do mapa que o legado publica no estado;
-  - Projetos: o mapa dos municípios, ainda uma folha do legado: a marcação
-    fica no index.html (`#mapaDaVisaoGeral`, guardada em
-    `#reservaDoMapaDaVisaoGeral`) e o React só reserva o lugar
-    (`.visao-geral-mapa`) e muda o nó para dentro dele ao montar — sem filhos
-    React, para não desfazer o que o legado desenha. Fora de Projetos o lugar
-    fica escondido (o Leaflet continua montado); ao desmontar, o nó volta para
-    a reserva;
+  - Projetos: `<MapaDeProjetos>` (src/modulos/mapa-de-projetos/), os
+    lugares das vagas de todos os projetos, pedidos pelo carregador da tela
+    (um por montagem, com cache) depois da primeira carga da página
+    (`carregadoEm`);
   - SEDE: sem mapa.
 
   Textos de Configurações › Página inicial (publicados): filtros, rótulos
   dos indicadores e títulos dos blocos (`textosDaVisaoGeral`).
 */
-
-function EspacoDoMapa({ bloco, reserva, visivel }) {
-  const espaco = useRef(null);
-  useLayoutEffect(() => {
-    const destino = espaco.current;
-    if (!destino || !bloco) return undefined;
-    destino.append(bloco);
-    return () => {
-      if (reserva) reserva.append(bloco);
-      else bloco.remove();
-    };
-  }, [bloco, reserva]);
-  return <div className="visao-geral-mapa" ref={espaco} hidden={!visivel} />;
-}
 
 /* O mapa da Saúde Indígena lendo e pedindo ao estado da Visão geral. */
 function MapaDaSaudeIndigena({ e, estado }) {
@@ -108,8 +87,7 @@ function usarTextos(configuracoes) {
 export function TelaDaVisaoGeral({
   estado,
   configuracoes,
-  blocoDoMapa,
-  reservaDoMapa,
+  carregadorDeMunicipios,
   obterPerfil,
   supabase,
   comemoracoesLigadas,
@@ -140,11 +118,15 @@ export function TelaDaVisaoGeral({
       {mapa === MAPA_DOS_DSEIS ? (
         <MapaDaSaudeIndigena e={e} estado={estado} />
       ) : null}
-      <EspacoDoMapa
-        bloco={blocoDoMapa}
-        reserva={reservaDoMapa}
-        visivel={mapa === MAPA_DOS_MUNICIPIOS}
-      />
+      {mapa === MAPA_DOS_MUNICIPIOS ? (
+        <div className="visao-geral-mapa">
+          <MapaDeProjetos
+            area={e.area}
+            carregador={carregadorDeMunicipios}
+            carregadoEm={e.carregadoEm}
+          />
+        </div>
+      ) : null}
       <ResumoPorEtapa e={e} estado={estado} textos={textos} />
       <div className="ui-linha-de-cards">
         <StatusOperacional
@@ -183,13 +165,11 @@ export function TelaDaVisaoGeral({
 /**
  * Monta a tela na `<section id="page-dashboard">` e devolve o controlador do
  * legado (`window.visaoGeralController`): o estado e a raiz do React (os
- * testes desmontam por ela). Desenha na hora (`flushSync`): o bloco do mapa
- * de Projetos já está no lugar quando o resto do app inicia.
+ * testes desmontam por ela). Desenha na hora (`flushSync`), antes de o resto
+ * do app iniciar.
  */
 export function montarVisaoGeral({
   secao = document.getElementById("page-dashboard"),
-  blocoDoMapa = document.getElementById("mapaDaVisaoGeral"),
-  reservaDoMapa = document.getElementById("reservaDoMapaDaVisaoGeral"),
   estado = estadoDaVisaoGeral,
   configuracoes = estadoDasConfiguracoes,
   toast,
@@ -197,6 +177,9 @@ export function montarVisaoGeral({
   supabase = getSupabaseClient(),
   comemoracoesLigadas = () => false,
   agora = () => new Date(),
+  carregadorDeMunicipios = criarCarregadorDeMunicipios({
+    obterSupabase: () => supabase,
+  }),
 } = {}) {
   estado.definirAviso(toast);
   const raiz = secao
@@ -205,8 +188,7 @@ export function montarVisaoGeral({
         <TelaDaVisaoGeral
           estado={estado}
           configuracoes={configuracoes}
-          blocoDoMapa={blocoDoMapa}
-          reservaDoMapa={reservaDoMapa}
+          carregadorDeMunicipios={carregadorDeMunicipios}
           obterPerfil={obterPerfil}
           supabase={supabase}
           comemoracoesLigadas={comemoracoesLigadas}

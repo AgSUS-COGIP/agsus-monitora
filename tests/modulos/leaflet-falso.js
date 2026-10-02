@@ -49,7 +49,11 @@ function camada(tipo, latlng, opcoes = {}) {
     return c;
   };
   c.closeTooltip = () => c;
-  c.isPopupOpen = () => false;
+  c.openPopup = () => {
+    c.popupAberto = true;
+    return c;
+  };
+  c.isPopupOpen = () => Boolean(c.popupAberto);
   c.setLatLng = (novo) => {
     c.latlng = novo;
     return c;

@@ -1,16 +1,20 @@
 /*
-  O LEAFLET DO MAPA DA SAÚDE INDÍGENA (sem React)
+  O LEAFLET DOS MAPAS DA VISÃO GERAL (sem React)
 
-  O Leaflet vem do CDN como `window.L`, envolvido no arranque por
-  `map-guard.js` (limites do Brasil, zoom, régua, teclado),
-  `map-base-layer-switcher.js` (Mapa/Satélite), `map-zoom-range.js` e
-  `indigenous-territories-layer.js` (Terras Indígenas e abrangência dos DSEI).
-  Os dois últimos só enfeitam mapas cujo contêiner tem id `map` ou
-  `detailMap` — por isso os ids do componente (ver README).
+  Usado pelo mapa da Saúde Indígena e pelo de Projetos
+  (src/modulos/mapa-de-projetos/). O Leaflet vem do CDN como `window.L`,
+  envolvido no arranque por `map-guard.js` (limites do Brasil, zoom, régua,
+  teclado), `map-base-layer-switcher.js` (Mapa/Satélite), `map-zoom-range.js`
+  e `indigenous-territories-layer.js` (Terras Indígenas e abrangência dos
+  DSEI). Os dois últimos só enfeitam mapas cujo contêiner tem id `map` ou
+  `detailMap` (o Mapa/Satélite também `mapaDosProjetos`) — por isso os ids
+  dos componentes (ver README).
 
   Tudo o que entra no mapa é montado com a API do DOM (`textContent`,
   `createElementNS`): popups, dicas e ícones, sem `innerHTML`.
 */
+import { BRASIL_BOUNDS } from "../../lib/brasil-bounds.js";
+import { FOLGA_DO_BRASIL } from "../../lib/enquadramento-do-brasil.js";
 import { criarCamadaComRecuo } from "../../modules/map-base-layer-switcher.js";
 import {
   CORES_DO_MAPA,
@@ -52,6 +56,8 @@ export function criarMapa(L, elemento) {
     zoomSnap: 0.25,
     zoomDelta: 0.5,
     worldCopyJump: false,
+    // O enquadramento é do componente; o map-guard não reenquadra por cima.
+    enquadramentoProprio: true,
   });
   manterDicasDentroDoMapa(mapa);
   return mapa;
@@ -117,13 +123,20 @@ export function adicionarFundo(L, mapa, elemento) {
   O mapa pode nascer escondido — a Visão geral monta antes do login, e fica
   montada noutra tela ou ao trocar de área — e o enquadramento feito com
   medida zero sai no zoom errado (o do `map-guard` também desiste). Quando o
-  contêiner passa de zero para um tamanho, `aoAparecer` reenquadra.
+  contêiner passa de zero para um tamanho, `aoAparecer` reenquadra; quando
+  muda de medida já visível (tela cheia, barra lateral, janela),
+  `aoMudarDeTamanho`.
 */
-export function observarTamanho(mapa, elemento, { aoAparecer } = {}) {
+export function observarTamanho(
+  mapa,
+  elemento,
+  { aoAparecer, aoMudarDeTamanho } = {},
+) {
   if (typeof ResizeObserver === "undefined") return () => {};
   const temTamanho = () =>
     Boolean(elemento.offsetWidth && elemento.offsetHeight);
   let visivel = temTamanho();
+  let medida = `${elemento.offsetWidth}x${elemento.offsetHeight}`;
   let quadro = 0;
   const observador = new ResizeObserver(() => {
     cancelAnimationFrame(quadro);
@@ -137,7 +150,12 @@ export function observarTamanho(mapa, elemento, { aoAparecer } = {}) {
       } catch {
         // mapa já removido
       }
-      if (visivel) return;
+      const anterior = medida;
+      medida = `${elemento.offsetWidth}x${elemento.offsetHeight}`;
+      if (visivel) {
+        if (medida !== anterior) aoMudarDeTamanho?.();
+        return;
+      }
       visivel = true;
       aoAparecer?.();
     });
@@ -155,6 +173,79 @@ export function remedir(mapa) {
   } catch {
     // mapa já removido
   }
+}
+
+/* O Brasil pelo contorno real (`BRASIL_BOUNDS`), como o `map-guard`. */
+export function limitesDoBrasil(L) {
+  return L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]);
+}
+
+/*
+  O país inteiro com folga para as bolhas da borda (raio + traço + 12 px,
+  src/lib/enquadramento-do-brasil.js); numa moldura baixa o `map-guard` deixa
+  o zoom descer, em quartos, até caber — o norte não sai cortado.
+*/
+export function enquadrarNoBrasil(L, mapa) {
+  mapa.fitBounds(limitesDoBrasil(L), {
+    padding: [FOLGA_DO_BRASIL, FOLGA_DO_BRASIL],
+    animate: false,
+  });
+}
+
+/* O botão "Brasil": para a animação e volta ao país inteiro. */
+export function voltarAoBrasil(L, mapa) {
+  if (!L || !mapa) return;
+  try {
+    mapa.stop?.();
+    enquadrarNoBrasil(L, mapa);
+  } catch {
+    // mapa sem tamanho
+  }
+}
+
+/* Gestos que mostram que a pessoa pegou o mapa (arrastar, zoom, teclado, clique). */
+const GESTOS = ["pointerdown", "touchstart", "wheel", "keydown"];
+
+/*
+  O mapa nacional dos dois módulos: o mapa (`criarMapa`) enquadrado no
+  Brasil, o fundo com recurso, os contornos e o observador de tamanho.
+
+  `aoReenquadrar` é chamado quando o enquadramento do app precisa ser
+  refeito: o mapa apareceu (estava sem medida) ou mudou de tamanho — tela
+  cheia, barra lateral, janela — enquanto a pessoa não mexeu nele. Depois de
+  um gesto dela, o redimensionamento só remede (a vista dela fica); `soltar()`,
+  chamado pelo app depois de enquadrar de novo (filtro, "Brasil"), volta a
+  acompanhar, e `pegar()` conta como gesto (a lista que leva a um ponto).
+  `parar()` e o `mapa.remove()` desfazem tudo.
+*/
+export function criarMapaDoBrasil(L, elemento, { aoReenquadrar } = {}) {
+  const mapa = criarMapa(L, elemento);
+  enquadrarNoBrasil(L, mapa);
+  adicionarFundo(L, mapa, elemento);
+  let mexido = false;
+  const aoMexer = () => {
+    mexido = true;
+  };
+  for (const gesto of GESTOS)
+    elemento.addEventListener(gesto, aoMexer, { passive: true });
+  const pararDeObservar = observarTamanho(mapa, elemento, {
+    aoAparecer: () => aoReenquadrar?.(),
+    aoMudarDeTamanho: () => {
+      if (!mexido) aoReenquadrar?.();
+    },
+  });
+  desenharContornos(L, L.layerGroup().addTo(mapa), "nacional");
+  return {
+    mapa,
+    pegar: aoMexer,
+    soltar: () => {
+      mexido = false;
+    },
+    parar: () => {
+      pararDeObservar();
+      for (const gesto of GESTOS) elemento.removeEventListener(gesto, aoMexer);
+    },
+  };
 }
 
 /* Contorno do Brasil e divisas das UFs: referência, sem clique. */
@@ -280,13 +371,15 @@ export function iconeDaCasaiNacional(L, documento) {
 /*
   Dica e popup no mesmo marcador: a dica fecha quando o popup abre e não
   reabre enquanto ele estiver aberto (o autopan traz o marcador de volta para
-  baixo do cursor).
+  baixo do cursor). `dica` e `popup` são `{ titulo, linhas, nota }` ou um
+  elemento já montado (cada um o seu: um nó não fica em dois lugares).
 */
 export function ligarDicaEPopup(marcador, documento, { dica, popup }) {
-  if (popup)
-    marcador.bindPopup(conteudoEmElemento(documento, popup), opcoesDoPopup());
+  const emElemento = (conteudo) =>
+    conteudo?.nodeType ? conteudo : conteudoEmElemento(documento, conteudo);
+  if (popup) marcador.bindPopup(emElemento(popup), opcoesDoPopup());
   if (dica && podeFlutuar()) {
-    marcador.bindTooltip(conteudoEmElemento(documento, dica), {
+    marcador.bindTooltip(emElemento(dica), {
       direction: "top",
       opacity: 0.96,
     });

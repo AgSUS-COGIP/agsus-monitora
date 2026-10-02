@@ -53,9 +53,16 @@ describe("uma Visão geral para as três áreas", () => {
     );
   });
 
-  it("os textos do mapa de Projetos são os do index.html", () => {
+  it("os textos do mapa de Projetos são do componente React, não do index.html", () => {
     const textos = TEXTOS_DO_MAPA[MAPA_DOS_MUNICIPIOS];
-    for (const valor of Object.values(textos)) expect(html).toContain(valor);
+    expect(Object.keys(textos)).toEqual(["area", "titulo", "mapa", "lista"]);
+    for (const valor of Object.values(textos))
+      expect(html).not.toContain(valor);
+    const componente = readFileSync(
+      "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx",
+      "utf8",
+    );
+    expect(componente).toContain("TEXTOS_DO_MAPA[MAPA_DOS_MUNICIPIOS]");
   });
 });
 

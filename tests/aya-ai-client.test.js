@@ -9,7 +9,7 @@ import {
 describe("contexto da tela para a Aya", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <div id="masterMapCount">34 DSEIs · 2 CASAIs</div>
+      <span class="mapa-si-painel__contagem">34 DSEIs · 2 CASAIs</span>
       <section class="ui-tela visao-geral-tela">
         <div class="visao-geral-filtros"><div class="ui-chips">
           <button class="ui-chip"><b>UF</b> AM</button>
@@ -54,7 +54,8 @@ describe("contexto da tela para a Aya", () => {
 
   it("responde a contagem de DSEIs pela lista de DSEIs, não pelo total de pontos", () => {
     document.querySelector(".visao-geral-filtros").textContent = "";
-    document.querySelector("#masterMapCount").textContent = "36 pontos";
+    document.querySelector(".mapa-si-painel__contagem").textContent =
+      "36 pontos";
     document.body.insertAdjacentHTML(
       "beforeend",
       Array.from(

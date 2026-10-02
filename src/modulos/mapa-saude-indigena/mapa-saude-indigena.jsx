@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
 import {
@@ -16,6 +16,7 @@ import { classes } from "../../ui/index.js";
 import { obterLeaflet } from "./leaflet.js";
 import { MapaDoDsei } from "./mapa-do-dsei.jsx";
 import { MapaNacional } from "./mapa-nacional.jsx";
+import { usarTelaCheia } from "./tela-cheia.jsx";
 
 /*
   MAPA DA SAÚDE INDÍGENA (React)
@@ -48,7 +49,7 @@ export function MapaSaudeIndigena({
   const escuro = tema ? tema === "escuro" : escuroDoApp;
   const L = obterLeaflet();
   const [calor, definirCalor] = useState(false);
-  const [telaCheia, definirTelaCheia] = useState(false);
+  const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
 
   const dseis = useMemo(
     () => (Array.isArray(lmap?.dsei) ? lmap.dsei : []),
@@ -86,29 +87,6 @@ export function MapaSaudeIndigena({
       return resumos.get(d.k);
     },
     [resumos, redeCnes],
-  );
-
-  // Esc sai da tela cheia.
-  useEffect(() => {
-    if (!telaCheia) return undefined;
-    const aoTeclar = (evento) => {
-      if (evento.key !== "Escape") return;
-      evento.preventDefault();
-      definirTelaCheia(false);
-    };
-    document.addEventListener("keydown", aoTeclar);
-    return () => document.removeEventListener("keydown", aoTeclar);
-  }, [telaCheia]);
-
-  const botaoDeTelaCheia = (
-    <button
-      type="button"
-      className="btn small"
-      aria-pressed={telaCheia}
-      onClick={() => definirTelaCheia((valor) => !valor)}
-    >
-      {telaCheia ? "Recolher" : "Tela cheia"}
-    </button>
   );
 
   return (

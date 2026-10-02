@@ -1524,10 +1524,10 @@ function enhanceMap(L, map) {
   };
 
   /*
-    SUSPENDER — a Visão geral de outra área (Projetos) usa este mesmo mapa.
-    Tira as terras, as em estudo e a abrangência dos DSEIs sem mexer na
-    preferência guardada; o botão "Terras Indígenas" some pelo CSS da página
-    (`health-map-workspace.css`). Voltar (`false`) redesenha o que estava.
+    SUSPENDER — tira as terras, as em estudo e a abrangência dos DSEIs sem
+    mexer na preferência guardada. Voltar (`false`) redesenha o que estava.
+    O mapa nacional da Saúde Indígena (React) chama com `false` ao nascer; o
+    de Projetos é outro mapa (`#mapaDosProjetos`), sem camadas indígenas.
   */
   map.__agsusSuspenderCamadasIndigenas = (suspender) => {
     const alvo = Boolean(suspender);

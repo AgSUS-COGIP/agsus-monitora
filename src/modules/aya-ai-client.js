@@ -92,10 +92,8 @@ export function collectAyaPageContext(doc = document) {
   const dseis = territories.length
     ? territories
     : uniqueTexts(
-        // Unidades do DSEI aberto ou municípios de Projetos.
-        Array.from(
-          doc.querySelectorAll(".mapa-si-unidade, .health-map-unit"),
-        ).map((item) => {
+        // Unidades do DSEI aberto (os municípios de Projetos são .mapa-si-territorio).
+        Array.from(doc.querySelectorAll(".mapa-si-unidade")).map((item) => {
           const name = item.querySelector("strong")?.textContent || "";
           const detail = item.querySelector("small")?.textContent || "";
           return [name, detail].filter(Boolean).join(" — ");
@@ -133,7 +131,7 @@ export function collectAyaPageContext(doc = document) {
     registroAberto: editalAberto(doc),
     pathname: doc.defaultView?.location?.pathname || "",
     pageTitle: compactText(doc.title, 160),
-    mapSummary: textOf(doc, ".mapa-si-painel__contagem, #masterMapCount", 120),
+    mapSummary: textOf(doc, ".mapa-si-painel__contagem", 120),
     activeFilters,
     search: compactText(
       doc.querySelector(".visao-geral-tela .ui-tabela-busca")?.value,

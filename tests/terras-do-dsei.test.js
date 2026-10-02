@@ -48,7 +48,7 @@ describe("uma cor só para a Terra Indígena", () => {
     "utf8",
   );
   const cssLegenda = readFileSync(
-    "src/styles/health-map-workspace.css",
+    "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css",
     "utf8",
   );
 
