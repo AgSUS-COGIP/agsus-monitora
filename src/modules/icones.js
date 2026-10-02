@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  ArrowUp,
   Building2,
   CalendarDays,
   ChevronDown,
@@ -53,6 +54,8 @@ import {
   SlidersHorizontal,
   SquareArrowOutUpRight,
   Sun,
+  ThumbsDown,
+  ThumbsUp,
   TriangleAlert,
   Type,
   UserRound,
@@ -95,6 +98,7 @@ const ArquivoPdf = [
 
 export const ICONES = Object.freeze({
   "arrow-right": ArrowRight,
+  "arrow-up": ArrowUp,
   "building-2": Building2,
   "calendar-days": CalendarDays,
   "chevron-down": ChevronDown,
@@ -148,6 +152,8 @@ export const ICONES = Object.freeze({
   "sliders-horizontal": SlidersHorizontal,
   "square-arrow-out-up-right": SquareArrowOutUpRight,
   sun: Sun,
+  "thumbs-down": ThumbsDown,
+  "thumbs-up": ThumbsUp,
   "triangle-alert": TriangleAlert,
   type: Type,
   "user-round": UserRound,

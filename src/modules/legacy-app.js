@@ -45,7 +45,7 @@ import {
   desenharLegendaDosMunicipios,
 } from "./municipios-da-visao-geral.js";
 import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
-import { updateAraraGuide } from "./arara-guide.js";
+import { definirPaginaDaAya } from "../modulos/aya/estado.js";
 import {
   getOAuthCallbackUrl,
   isUsableSession,
@@ -1599,7 +1599,8 @@ function applyConfigToUi() {
     googleBtn.style.display = enabled ? "flex" : "none";
     setText(
       "googleLoginText",
-      cfgValue("auth_google_button_text") || "Entrar com sua conta institucional",
+      cfgValue("auth_google_button_text") ||
+        "Entrar com sua conta institucional",
     );
   }
   setText("sidebarUserLabel", cfgValue("sidebar_user_label"));
@@ -2179,11 +2180,8 @@ function setPageTitle(title, sub) {
   $("pageSubtitle").textContent = sub;
   // O nome da aba tem um dono só; aqui entra apenas a metade da página.
   definirPaginaDaAba(title);
-  updateAraraGuide(
-    currentView,
-    title,
-    document.getElementById("araraGuideHost"),
-  );
+  // A Aya (src/modulos/aya/) acompanha a página: saudação, sugestões e contexto.
+  definirPaginaDaAya(currentView, title);
 }
 
 function isSidebarLockedViewport() {

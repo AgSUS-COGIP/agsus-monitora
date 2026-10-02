@@ -155,8 +155,9 @@ A escada já existe em parte (`app.css:40-42`). Formalizada:
 | `--z-loader` | 20025 | skeleton da entrada e a tela de carregamento dos salvamentos |
 | `--z-toast` | 20050 | toast (o topo) |
 
-Nada acima de `--z-toast`. Os `2147483000` de `nina-conversation.css` e
-`analises-residual-ui-fixes.js` devem descer para essa escada. Quem precisa ficar acima da barra
+Nada acima de `--z-toast`. O `2147483000` de `analises-residual-ui-fixes.js` deve descer para essa
+escada. A Aya (`src/modulos/aya/aya.css`) fica em 10042: acima do cabeçalho e da barra lateral do
+celular, abaixo do aviso de parabéns (10045). Quem precisa ficar acima da barra
 lateral usa os tokens de overlay: modal de busca (`--z-overlay`); link de pular, faixa offline,
 aviso de conectividade e aviso de sessão (`--z-toast`). `tests/camadas-acima-da-barra.test.js`
 guarda essa ordem.

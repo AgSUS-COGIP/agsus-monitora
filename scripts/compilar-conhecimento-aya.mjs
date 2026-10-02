@@ -17,6 +17,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import prettier from "prettier";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { acaoDaAya } from "../src/lib/aya-paginas.js";
 
 /*
   Sob o vitest este módulo pode chegar por uma URL que não é `file:`, e aí
@@ -44,6 +45,20 @@ function lerCampo(bloco, nome) {
   return achado ? achado[1].trim() : "";
 }
 
+/*
+  O termo é comparado com a pergunta já sem acento (`normalizeText` em
+  aya-knowledge.js). Guardar "parecer jurídico" com acento fazia o termo nunca
+  casar; por isso ele sai daqui do mesmo jeito que a pergunta chega lá.
+*/
+export function normalizarTermo(termo) {
+  return String(termo || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function compilarVerbetes() {
   const arquivos = readdirSync(ORIGEM)
     .filter((nome) => nome.endsWith(".md") && nome !== "README.md")
@@ -66,6 +81,8 @@ export function compilarVerbetes() {
       const resposta = lerCampo(bloco, "resposta");
       const fato = lerCampo(bloco, "fato");
       const fonte = lerCampo(bloco, "fonte");
+      // O botão de navegação que a resposta oferece (ACOES_DA_AYA em src/lib/aya-paginas.js).
+      const abrir = lerCampo(bloco, "abrir");
 
       if (!titulo) continue;
       if (!perguntas.length && resposta) {
@@ -80,7 +97,21 @@ export function compilarVerbetes() {
         problemas.push(`${arquivo} › ${titulo}: não define resposta nem fato`);
       }
 
-      verbetes.push({ arquivo, titulo, perguntas, resposta, fato, fonte });
+      if (abrir && !acaoDaAya(abrir)) {
+        problemas.push(
+          `${arquivo} › ${titulo}: abrir "${abrir}" não é uma ação da Aya`,
+        );
+      }
+
+      verbetes.push({
+        arquivo,
+        titulo,
+        perguntas,
+        resposta,
+        fato,
+        fonte,
+        abrir,
+      });
     }
   }
 
@@ -113,6 +144,7 @@ export async function gerarModulo({ verbetes }) {
     resposta: verbete.resposta,
     fato: verbete.fato,
     fonte: verbete.fonte,
+    ...(verbete.abrir ? { abrir: verbete.abrir } : {}),
   }));
 
   const bruto = `/*

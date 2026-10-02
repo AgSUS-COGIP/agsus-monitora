@@ -23,6 +23,7 @@ import {
   logoDaBarraSegura,
 } from "./marca-da-barra-lateral.js";
 import { normalizeAllowedDomains } from "./platform-context.js";
+import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.js";
 
 const txt = (valor) => String(valor ?? "").trim();
 
@@ -55,7 +56,7 @@ const texto = (chave, descricao, rotulo, extra = {}) =>
   Campos das seções, por seção. `rotulo` e `placeholder` são os da tela;
   `descricao` é a da TB_CONFIGURACAO (vai na linha publicada e na revisão).
 
-  `tipo`: "url" (http/https; vazio passa), "inteiro" (minimo..maximo),
+  `tipo`: "url" (http/https; vazio passa), "inteiro" (minimo..maximo), "email",
   "dominio" (agenciasus.org.br), "url-de-acesso" (caminho do site ou https),
   "booleano"/"opcoes" (lista `opcoes`), "cor" (seletor) e "gerenciado" (sem
   campo de texto: a seção escolhe o valor por botões — imagens).
@@ -277,6 +278,19 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       erro: "O heartbeat deve ser um número inteiro entre 1 e 60.",
       normalizar: (valor) => normalizarInteiro(valor, 5, 1),
     },
+    {
+      /* Para onde o "Abrir chamado" da Aya abre o e-mail (src/lib/chamado-da-aya.js). */
+      chave: "support_email",
+      descricao: "E-mail do suporte (chamados abertos pela Aya)",
+      rotulo: "E-mail do suporte",
+      tipo: "email",
+      obrigatorio: true,
+      padrao: EMAIL_DO_SUPORTE_PADRAO,
+      placeholder: EMAIL_DO_SUPORTE_PADRAO,
+      largo: true,
+      erro: "Informe um e-mail válido, como nome@agenciasus.org.br.",
+      normalizar: (valor) => txt(valor),
+    },
   ]),
 });
 
@@ -348,6 +362,7 @@ function inteiroValido(valor, { minimo, maximo }) {
 }
 
 const VALIDACAO_POR_TIPO = Object.freeze({
+  email: emailValido,
   inteiro: inteiroValido,
   dominio: dominioValido,
   "url-de-acesso": isValidAccessAssetUrl,

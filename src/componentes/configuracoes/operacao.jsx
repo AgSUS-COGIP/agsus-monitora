@@ -3,8 +3,9 @@ import { CAMPOS_DAS_SECOES } from "../../lib/publicacao-de-configuracoes.js";
 import { Icone } from "../icone.jsx";
 
 /*
-  Configurações › Operação: a versão do sistema, o Realtime do
-  monitoramento e o heartbeat da auditoria. Os valores são do rascunho de
+  Configurações › Operação: a versão do sistema, o e-mail do suporte (para
+  onde a Aya abre chamados), o Realtime do monitoramento e o heartbeat da
+  auditoria. Os valores são do rascunho de
   `estado.js` e vão na publicação da barra fixa. O histórico de publicações
   fica logo abaixo (configuracoes.jsx).
 */
@@ -18,6 +19,13 @@ const GRUPOS = Object.freeze([
     icone: "info",
     tom: "azul",
     campos: ["cogip_versao", "app_version_current"],
+  },
+  {
+    id: "suporte",
+    titulo: "Suporte",
+    icone: "mail",
+    tom: "azul",
+    campos: ["support_email"],
   },
   {
     id: "tecnico",
@@ -58,7 +66,13 @@ function Campo({ estado, chave }) {
       ) : (
         <input
           {...comum}
-          type={campo.tipo === "inteiro" ? "number" : "text"}
+          type={
+            campo.tipo === "inteiro"
+              ? "number"
+              : campo.tipo === "email"
+                ? "email"
+                : "text"
+          }
           min={campo.tipo === "inteiro" ? campo.minimo : undefined}
           max={campo.tipo === "inteiro" ? campo.maximo : undefined}
           step={campo.tipo === "inteiro" ? 1 : undefined}

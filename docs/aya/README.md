@@ -17,12 +17,13 @@ importa; o que falta é simplesmente omitido.
 **fonte:** interface do MONITORA
 ```
 
-| Campo       | Para que serve                                                               |
-| ----------- | ---------------------------------------------------------------------------- |
-| `perguntas` | termos que disparam o verbete, separados por `\|`                            |
-| `resposta`  | texto devolvido **sem passar pela IA**, quando a pergunta pede uma definição |
-| `fato`      | frase curta que entra no prompt, para a IA usar ao redigir outras respostas  |
-| `fonte`     | de onde veio; obrigatório quando não for a própria interface                 |
+| Campo       | Para que serve                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `perguntas` | termos que disparam o verbete, separados por `\|`                                                                       |
+| `resposta`  | texto devolvido **sem passar pela IA**, quando a pergunta pede uma definição                                            |
+| `fato`      | frase curta que entra no prompt, para a IA usar ao redigir outras respostas                                             |
+| `fonte`     | de onde veio; obrigatório quando não for a própria interface                                                            |
+| `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya-paginas.js`) |
 
 ## As duas camadas, e por que elas são diferentes
 
