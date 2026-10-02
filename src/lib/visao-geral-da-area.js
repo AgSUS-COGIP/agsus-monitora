@@ -273,6 +273,15 @@ export function resultadoDoMunicipio({ aprovados = 0, reprovados = 0 } = {}) {
   return { pct: Math.round((num(aprovados) / decididos) * 100), decididos };
 }
 
+/*
+  Candidatos por lugar só existem quando o lugar casou com alguma vaga das
+  análises (o nome da vaga cita o lugar: "UBS móvel <Município>/<UF>" ou o
+  município de um local do mesmo edital) — aí `vagas` (as vagas nas
+  análises) passa de zero. Sem isso, "0 candidatos" seria um zero falso: a
+  lista e o popup não mostram a linha.
+*/
+export const temCandidatosPorLugar = (lugar) => num(lugar?.vagas) > 0;
+
 /* O tamanho do lugar: as vagas publicadas ou, se forem mais, as das análises. */
 const tamanhoDoLugar = (lugar) => Math.max(num(lugar.vagasEdital), lugar.vagas);
 
@@ -365,10 +374,11 @@ export function resumoDoLugar(ponto) {
       .join(" · "),
   }));
   const resultado = resultadoDoMunicipio(ponto);
+  const comCandidatos = temCandidatosPorLugar(ponto);
   const linhas = [
-    ponto?.vagas ? `Vagas nas análises: ${fmtNumero(ponto.vagas)}` : "",
-    `Candidatos: ${fmtNumero(ponto?.candidatos)}`,
-    ponto?.aprovados || ponto?.reprovados
+    comCandidatos ? `Vagas nas análises: ${fmtNumero(ponto.vagas)}` : "",
+    comCandidatos ? `Candidatos: ${fmtNumero(ponto?.candidatos)}` : "",
+    comCandidatos && (ponto?.aprovados || ponto?.reprovados)
       ? `Aprovados: ${fmtNumero(ponto.aprovados)} · Reprovados: ${fmtNumero(ponto.reprovados)}`
       : "",
     resultado ? `${resultado.pct}% aprovados entre os analisados` : "",

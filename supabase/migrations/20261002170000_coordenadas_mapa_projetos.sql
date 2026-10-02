@@ -45,7 +45,12 @@
      listar_pendencias_coordenada_mapa_projetos: leitura só para admin global.
   7. listar_municipios_das_vagas_da_area: nova versão, igual à de 20261001180000
      com lugar, latitude, longitude e coordenada_origem de cada linha (nulos
-     enquanto o lugar não tem coordenada no banco).
+     enquanto o lugar não tem coordenada no banco) e com as análises da área
+     escolhidas também pela coluna "CO_AREA" (a área canônica da análise), não
+     só pelo grupo da planilha — o mapa mostrava 0 candidato em todo lugar.
+     Candidato por lugar continua dependendo de o nome da vaga citar o lugar
+     ("UBS móvel <Município>/<UF>" ou o município de um local do mesmo
+     edital); o front só mostra candidatos quando o lugar casou com alguma vaga.
 
   Ensaio (begin … rollback): supabase/ensaios/20261002170000_coordenadas_mapa_projetos.sql.
   Rollback: supabase/rollback/20261002170000_coordenadas_mapa_projetos.sql.
@@ -227,8 +232,9 @@ as $$
      cross join lateral regexp_match(ac.nome_vaga, 'UBS m[óo]vel ([^/]+)/([A-Z]{2})') as mu(partes)
      where ac.ativo is true
        and coalesce(e.ativo, true) is true
-       and ac.grupo_norm = (select public.analises_norm_key(a."NO_GRUPO_PLANILHA")
-                              from public."TB_AREA" a where a."CO_AREA" = 'projetos')
+       and (ac."CO_AREA" = 'projetos'
+            or ac.grupo_norm = (select public.analises_norm_key(a."NO_GRUPO_PLANILHA")
+                                  from public."TB_AREA" a where a."CO_AREA" = 'projetos'))
        and btrim(mu.partes[1]) <> ''
   ),
   todos as (
@@ -563,7 +569,8 @@ begin
          and private."FC_NUMERO_EDITAL"(m.edital) is not null
        order by private."FC_NUMERO_EDITAL"(m.edital), m.ativo desc nulls last, m.id
     ),
-    -- Análises da área no recorte "ativo" do painel.
+    -- Análises da área no recorte "ativo" do painel: pela área da análise
+    -- (CO_AREA, a fonte canônica) ou pelo grupo da planilha, como antes.
     analise as (
       select ac.id, ac.codigo_vaga, ac.nome_vaga, ac.status_consolidado, ac.unidade, ac.edital,
              private."FC_NUMERO_EDITAL"(ac.edital) as numero
@@ -572,7 +579,7 @@ begin
           on e.grupo_norm = ac.grupo_norm
          and e.unidade_norm = ac.unidade_norm
          and e.edital_norm = ac.edital_norm
-       where ac.grupo_norm = any (v_grupos_norm)
+       where (ac."CO_AREA" = v_area or ac.grupo_norm = any (v_grupos_norm))
          and ac.ativo is true
          and coalesce(e.ativo, true) is true
     ),

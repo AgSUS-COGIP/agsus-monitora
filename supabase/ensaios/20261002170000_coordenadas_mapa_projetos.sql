@@ -198,8 +198,9 @@ as $$
      cross join lateral regexp_match(ac.nome_vaga, 'UBS m[óo]vel ([^/]+)/([A-Z]{2})') as mu(partes)
      where ac.ativo is true
        and coalesce(e.ativo, true) is true
-       and ac.grupo_norm = (select public.analises_norm_key(a."NO_GRUPO_PLANILHA")
-                              from public."TB_AREA" a where a."CO_AREA" = 'projetos')
+       and (ac."CO_AREA" = 'projetos'
+            or ac.grupo_norm = (select public.analises_norm_key(a."NO_GRUPO_PLANILHA")
+                                  from public."TB_AREA" a where a."CO_AREA" = 'projetos'))
        and btrim(mu.partes[1]) <> ''
   ),
   todos as (
@@ -534,7 +535,8 @@ begin
          and private."FC_NUMERO_EDITAL"(m.edital) is not null
        order by private."FC_NUMERO_EDITAL"(m.edital), m.ativo desc nulls last, m.id
     ),
-    -- Análises da área no recorte "ativo" do painel.
+    -- Análises da área no recorte "ativo" do painel: pela área da análise
+    -- (CO_AREA, a fonte canônica) ou pelo grupo da planilha, como antes.
     analise as (
       select ac.id, ac.codigo_vaga, ac.nome_vaga, ac.status_consolidado, ac.unidade, ac.edital,
              private."FC_NUMERO_EDITAL"(ac.edital) as numero
@@ -543,7 +545,7 @@ begin
           on e.grupo_norm = ac.grupo_norm
          and e.unidade_norm = ac.unidade_norm
          and e.edital_norm = ac.edital_norm
-       where ac.grupo_norm = any (v_grupos_norm)
+       where (ac."CO_AREA" = v_area or ac.grupo_norm = any (v_grupos_norm))
          and ac.ativo is true
          and coalesce(e.ativo, true) is true
     ),
@@ -981,6 +983,14 @@ begin
   exception when unique_violation then null;
   end;
   raise notice 'ok E6: 2 correções, 2 conferências e 2 desfazer no histórico; UK do desfazer';
+  -- Diagnóstico dos candidatos por lugar (o mapa mostrava 0 em todo lugar).
+  raise notice 'candidatos: % análises ativas com CO_AREA projetos, % pelo grupo da planilha, % com "UBS móvel <Município>/<UF>" no nome da vaga, % lugares vindos do nome da vaga',
+    (select count(*) from public."TB_ANALISE_CURRICULAR" ac where ac.ativo is true and ac."CO_AREA" = 'projetos'),
+    (select count(*) from public."TB_ANALISE_CURRICULAR" ac where ac.ativo is true
+        and ac.grupo_norm = (select public.analises_norm_key(a."NO_GRUPO_PLANILHA") from public."TB_AREA" a where a."CO_AREA" = 'projetos')),
+    (select count(*) from public."TB_ANALISE_CURRICULAR" ac where ac.ativo is true and ac."CO_AREA" = 'projetos'
+        and ac.nome_vaga ~ 'UBS m[óo]vel ([^/]+)/([A-Z]{2})'),
+    (select count(*) from private."FC_LUGARES_VAGA_PROJETO"() f where 'NOME_VAGA' = any (f.origens));
   raise notice 'ENSAIO OK';
 end;
 $$;

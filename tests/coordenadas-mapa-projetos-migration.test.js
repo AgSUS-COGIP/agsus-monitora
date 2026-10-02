@@ -190,6 +190,10 @@ describe("migration das coordenadas do mapa de Projetos", () => {
     expect(corpo).toContain(
       'left join public."TB_COORDENADA_LOCAL_VAGA" c on c."DS_CHAVE_LUGAR" = k.chave',
     );
+    // As análises da área também pela coluna "CO_AREA" (antes só pelo grupo).
+    expect(corpo).toContain(
+      'where (ac."CO_AREA" = v_area or ac.grupo_norm = any (v_grupos_norm))',
+    );
     expect(ROLLBACK).toContain(
       "create or replace function public.listar_municipios_das_vagas_da_area(",
     );
