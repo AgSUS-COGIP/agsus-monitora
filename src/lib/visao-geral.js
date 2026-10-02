@@ -400,7 +400,7 @@ export const INDICADORES = Object.freeze([
   Object.freeze([
     "kpi_em_selecao_label",
     "Em seleção",
-    "fa-hourglass-half",
+    "fa-clock",
     "destaque",
   ]),
   Object.freeze([
@@ -661,8 +661,9 @@ export function diasAte(data, hoje = new Date()) {
 
 /*
   O prazo do edital, na célula do edital: cancelado e concluído dizem isso;
-  encerrado; "Edital encerra em N dias" até 7 (perigo) e até 30 (alerta);
-  mais longe, nada. `{ tom, rotulo, icone }` ou `null`.
+  "Edital encerra em N dias" até 7 (perigo) e até 30 (alerta); mais longe,
+  nada. Prazo vencido sem concluir não repete aqui: o selo do cronograma diz
+  "Etapa atrasada". `{ tom, rotulo, icone }` ou `null`.
 */
 export function prazoDoEdital(linha, hoje = new Date()) {
   const status = low(linha?.status);
@@ -671,13 +672,7 @@ export function prazoDoEdital(linha, hoje = new Date()) {
   if (["concluído", "concluido"].includes(status))
     return { tom: "neutro", rotulo: "Processo concluído", icone: "fa-check" };
   const dias = diasAte(linha?.data_fim, hoje);
-  if (dias === null) return null;
-  if (dias < 0)
-    return {
-      tom: "neutro",
-      rotulo: "Prazo do edital encerrado",
-      icone: "fa-calendar-days",
-    };
+  if (dias === null || dias < 0) return null;
   const rotulo = `Edital encerra em ${dias} ${dias === 1 ? "dia" : "dias"}`;
   if (dias <= 7) return { tom: "perigo", rotulo, icone: "fa-fire" };
   if (dias <= 30) return { tom: "alerta", rotulo, icone: "fa-clock" };

@@ -440,6 +440,8 @@ describe("tabela", () => {
     });
     expect(prazoDoEdital({ data_fim: "2026-10-20" }, hoje).tom).toBe("alerta");
     expect(prazoDoEdital({ data_fim: "2026-12-20" }, hoje)).toBeNull();
+    // Vencido sem concluir: o selo do cronograma diz "Etapa atrasada".
+    expect(prazoDoEdital({ data_fim: "2026-09-20" }, hoje)).toBeNull();
     expect(prazoDoEdital({ status: "Cancelada" }, hoje).rotulo).toBe(
       "Processo cancelado",
     );
