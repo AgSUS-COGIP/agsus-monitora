@@ -38,7 +38,7 @@
 }
 
 .approved-modal-subtitle {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
 }
@@ -48,12 +48,12 @@
 .approved-name {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 240px;
 }
 /* Coluna principal: nome em peso 500 (DS 11.4). */
 .approved-name strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .approved-name small {
   color: var(--text-secondary);
@@ -68,7 +68,7 @@
   padding: 0 var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .approved-tag.subjudice {
   background: var(--state-warning-soft);
@@ -87,7 +87,7 @@
 }
 .approved-de-para strong {
   color: var(--state-warning);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 /* Modal da decisão judicial: o resultado publicado de quem já foi alterado. */
 .approved-decisao-original {
@@ -107,7 +107,7 @@
   padding: 0 var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
 .approved-status.success {
@@ -172,7 +172,7 @@ table.mobile-card-table td.approved-actions {
   justify-content: flex-end;
   gap: 10px;
   align-items: center;
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 .approved-field-hint {
   display: block;
@@ -185,7 +185,7 @@ table.mobile-card-table td.approved-actions {
   margin-top: var(--space-1);
   color: var(--state-danger);
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 /* Anexos do candidato: os PDFs escolhidos no modal de status e o modal de anexos. */
 .approved-anexos-escolhidos,
@@ -249,7 +249,7 @@ table.mobile-card-table td.approved-actions {
   background: var(--text-primary);
   color: var(--surface-card);
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 1.4;
   letter-spacing: 0;
   text-transform: none;
@@ -340,13 +340,13 @@ table.mobile-card-table td.approved-actions {
 }
 .approved-import-state {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 .approved-import-state > span:not(.approved-status) {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--text-secondary);
 }
 .approved-import-links {
@@ -357,13 +357,13 @@ table.mobile-card-table td.approved-actions {
 }
 .approved-import-actions {
   border-top: 1px solid var(--border-subtle);
-  padding-top: 16px;
+  padding-top: var(--space-4);
 }
 .approved-action-spacer {
   flex: 1;
 }
 .approved-modal .form-row small {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .btn.red {
   background: var(--color-action-danger);
@@ -390,8 +390,8 @@ table.mobile-card-table td.approved-actions {
 /* Lista ativa do edital: superfície de sucesso, sem gradiente e sem sombra. */
 .approved-import-state.has-list {
   display: block;
-  margin: 0 0 16px;
-  padding: 16px;
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
   border: 0;
   border-radius: var(--radius-lg);
   background: var(--state-success-soft);
@@ -400,7 +400,7 @@ table.mobile-card-table td.approved-actions {
 .approved-import-summary-head {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 .approved-import-summary-icon {
   display: inline-flex;
@@ -409,7 +409,7 @@ table.mobile-card-table td.approved-actions {
   width: 40px;
   height: 40px;
   flex: 0 0 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   color: var(--state-success);
   font-size: 18px;
@@ -419,19 +419,19 @@ table.mobile-card-table td.approved-actions {
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 .approved-import-summary-title {
   color: var(--text-primary);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .approved-import-summary-details {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: var(--space-3);
   margin-top: 14px;
-  padding-top: 12px;
+  padding-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
 }
 .approved-import-summary-detail {
@@ -443,13 +443,13 @@ table.mobile-card-table td.approved-actions {
 .approved-import-summary-detail > span {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .approved-import-summary-detail > strong {
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -459,14 +459,14 @@ table.mobile-card-table td.approved-actions {
 .approved-import-replace-warning {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 10px 12px;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: 10px var(--space-3);
   border-radius: 10px;
   background: var(--state-warning-soft);
   color: var(--state-warning);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .approved-import-replace-warning i {
   color: var(--state-warning);
@@ -505,7 +505,7 @@ table.mobile-card-table td.approved-actions {
 .approved-paginacao-info {
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .approved-paginacao-controles {
   display: flex;
@@ -520,7 +520,7 @@ table.mobile-card-table td.approved-actions {
   gap: var(--space-1-5);
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0;
   text-transform: none;
 }
@@ -532,19 +532,19 @@ table.mobile-card-table td.approved-actions {
   background: var(--surface-card);
   color: var(--text-primary);
   font-size: var(--text-body-sm);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 .approved-paginacao-pagina {
   min-width: 132px;
   color: var(--text-primary);
   font-size: var(--text-body-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 .approved-paginacao .btn {
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--text-caption);
 }
 .approved-paginacao .btn:disabled {
   opacity: 0.45;

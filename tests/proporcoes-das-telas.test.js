@@ -61,10 +61,10 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
       "src/modulos/entrevistas/entrevistas.css",
       "src/modulos/recursos/recursos.css",
       "src/modulos/selecao/selecao.css",
-      "src/styles/nucleo-cronograma.css",
-      "src/styles/calendario-editais.css",
-      "src/styles/lista-aprovados.css",
-      "src/styles/lista-convocacao.css",
+      "src/modulos/editais/editais.css",
+      "src/modulos/cronograma/cronograma.css",
+      "src/modulos/aprovados/aprovados.css",
+      "src/modulos/aprovados/convocacao.css",
     ])
       expect(semComentarios(ler(caminho))).not.toMatch(/grid-auto-rows/);
   });
