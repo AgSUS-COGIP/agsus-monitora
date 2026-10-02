@@ -167,7 +167,7 @@ dist/
 ├── index.html,
 │   auth/callback.html   as páginas (entradas do Vite)
 ├── assets/          JS e CSS com hash no nome + tudo de public/assets/
-├── data/            JSON geográfico de public/data/ (terras indígenas, lotações)
+├── data/            JSON geográfico de public/data/ (terras indígenas)
 ├── icons/, manifest.webmanifest, offline.html, sw.js, sw-policy.js   PWA
 ```
 
@@ -177,7 +177,7 @@ dist/
   baixado por qualquer pessoa.
 - **As variáveis `VITE_*` ficam gravadas no JS gerado.** Mudou o `.env`, precisa de novo build.
   Por isso nunca use chave secreta num `VITE_*`.
-- Os dados de `public/data/` e `src/lib/localizacoes-validadas-gerado.js` **não** são regenerados
+- Os dados de `public/data/` **não** são regenerados
   pelo build. Se a fonte mudou, rode antes o script correspondente (`scripts/CLAUDE.md`).
 
 ### Servir o build

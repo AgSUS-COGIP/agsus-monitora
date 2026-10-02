@@ -111,12 +111,6 @@ export const CONTRATO_RPC = {
     resumo:
       "Conta que é uma coordenação vira coordenação e é desativada. Só admin global.",
   },
-  garantir_acesso_basico: {
-    argumentos: [],
-    critica: false,
-    resumo:
-      "Cria o acesso básico (grupo usuario) para conta @agenciasus.org.br sem perfil.",
-  },
   obter_minha_solicitacao_acesso: {
     argumentos: [],
     critica: false,

@@ -1696,7 +1696,7 @@ tr:hover td {
 .access-request-carregando .esqueleto + .esqueleto {
   width: 60%;
 }
-/* Conta desativada: pedir reativação (src/modules/solicitacao-de-acesso.js). */
+/* Conta desativada: pedir reativação (src/app/entrada/pedido-de-acesso.jsx). */
 .access-reativar {
   display: flex;
   flex-wrap: wrap;

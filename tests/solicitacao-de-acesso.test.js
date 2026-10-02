@@ -6,20 +6,22 @@ import {
   TEXTO_DESATIVADA,
   TITULO_DESATIVADA,
   argumentosDaSolicitacao,
-  contaDesativadaNaResposta,
   diaEMes,
   situacaoDaSolicitacao,
   telaDaSolicitacao,
   validarSolicitacao,
 } from "../src/lib/solicitacao-de-acesso.js";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
 import {
-  carregarMinhaSolicitacao,
-  enviarSolicitacao,
-  garantirAcessoBasico,
-  lerCampos,
+  AVISO_SEM_CONSULTA,
   TITULO_VERIFICANDO,
-} from "../src/modules/solicitacao-de-acesso.js";
-import { lembrarContaDesativada } from "../src/modules/comemoracao-do-acesso.js";
+  criarPedidoDeAcesso,
+  visaoDoPedido,
+} from "../src/app/entrada/pedido-de-acesso.js";
+import { CartaoDoPedido } from "../src/app/entrada/pedido-de-acesso.jsx";
+import { lembrarContaDesativada } from "../src/lib/acesso-liberado.js";
+import { clicar, digitar } from "./componentes/interacoes.js";
 
 /*
   Tela "Solicitar acesso". Em 30/09, uma conta DESATIVADA com um pedido
@@ -130,18 +132,6 @@ describe("situação do pedido de acesso", () => {
     expect(tela.texto).not.toMatch(/recarregue/i);
   });
 
-  it("garantir_acesso_basico: 'existente' (ou o campo novo) marca a conta desativada", () => {
-    expect(
-      contaDesativadaNaResposta({ criado: false, motivo: "existente" }),
-    ).toBe(true);
-    expect(contaDesativadaNaResposta({ conta_desativada: true })).toBe(true);
-    expect(
-      contaDesativadaNaResposta({ criado: false, motivo: "dominio" }),
-    ).toBe(false);
-    expect(contaDesativadaNaResposta({ criado: true })).toBe(false);
-    expect(contaDesativadaNaResposta(null)).toBe(false);
-  });
-
   it("dia e mês no fuso de Brasília", () => {
     expect(diaEMes("2026-09-30T02:00:00Z")).toBe("29/09");
     expect(diaEMes("")).toBe("");
@@ -232,55 +222,35 @@ describe("validação do pedido", () => {
   });
 });
 
-// ── Tela: conta desativada pede reativação ──────────────────────────────────
+// ── O cartão (src/app/entrada/): estado e desenho ───────────────────────────
 
-const CARTAO = `
-  <div id="accessRequestCard">
-    <h2 id="accessRequestTitulo">Solicitar acesso</h2>
-    <p class="access-request-subtitle">Envie o pedido.</p>
-    <p class="access-request-invite">Convite.</p>
-    <div id="accessRequestCarregando" class="hidden"></div>
-    <div id="accessRequestStatus" class="hidden">
-      <span id="accessRequestIlustracao" class="hidden">:(</span>
-      <strong id="accessRequestStatusTitulo" class="hidden"></strong>
-      <span id="accessRequestStatusTexto"></span>
-      <button id="accessRequestEnterBtn" class="hidden"></button>
-      <div id="accessRequestReativar" class="hidden">
-        <span>Precisa do acesso de novo?</span>
-        <button id="accessRequestReativarBtn" type="button">Pedir reativação</button>
-      </div>
-    </div>
-    <div id="accessRequestForm">
-      <input id="accessReqNome" />
-      <small id="accessReqNomeErro" class="hidden"></small>
-      <div id="accessReqSetorLinha">
-        <input id="accessReqSetor" />
-        <small id="accessReqSetorErro" class="hidden"></small>
-      </div>
-      <select id="accessReqCoordenacao"><option value="">Não sei</option></select>
-      <small id="accessReqCoordenacaoErro" class="hidden"></small>
-      <textarea id="accessReqJustificativa"></textarea>
-      <small id="accessReqJustificativaErro" class="hidden"></small>
-    </div>
-    <button id="accessRequestBtn"><span id="accessRequestBtnTexto">Enviar pedido</span></button>
-  </div>`;
-
-const $ = (id) => document.getElementById(id);
-const visivel = (id) => !$(id).classList.contains("hidden");
-
-/** RPCs da tela; `pedidos` responde obter_minha_solicitacao_acesso em fila. */
-function supabaseDaTela({ basico, pedidos, desativadaNoBanco = false }) {
+/** RPCs do cartão; `pedidos` responde obter_minha_solicitacao_acesso em fila. */
+function supabaseDaTela({
+  pedidos,
+  desativadaNoBanco = false,
+  contexto = null,
+}) {
   const fila = [...pedidos];
   return {
     rpc: vi.fn(async (nome) => {
       if (nome === "minha_conta_desativada")
         return { data: desativadaNoBanco, error: null };
-      if (nome === "garantir_acesso_basico")
-        return { data: basico, error: null };
       if (nome === "obter_minha_solicitacao_acesso")
         return { data: fila.length > 1 ? fila.shift() : fila[0], error: null };
       if (nome === "listar_coordenacoes_ativas")
-        return { data: [], error: null };
+        return {
+          data: [
+            {
+              area: "si",
+              area_nome: "Saúde Indígena",
+              codigo: "norte",
+              nome: "Norte",
+            },
+          ],
+          error: null,
+        };
+      if (nome === "obter_contexto_monitora")
+        return { data: contexto, error: null };
       if (nome === "registrar_solicitacao_acesso")
         return { data: { ok: true, status: "pendente" }, error: null };
       return { data: null, error: null };
@@ -288,19 +258,42 @@ function supabaseDaTela({ basico, pedidos, desativadaNoBanco = false }) {
   };
 }
 
-describe("tela de acesso desativado: pedir reativação", () => {
-  beforeEach(() => {
-    document.body.innerHTML = CARTAO;
-    localStorage.clear();
-  });
-  afterEach(() => {
-    document.body.innerHTML = "";
-    localStorage.clear();
-  });
+const USUARIO = (id) => ({
+  id,
+  email: `${id}@agenciasus.org.br`,
+  user_metadata: { full_name: "Ana Souza" },
+});
 
+let raiz = null;
+let pedido = null;
+const sessaoFalsa = { entrarComGoogle: vi.fn(), limparSessao: vi.fn() };
+
+async function desenharCartao(sb) {
+  pedido = criarPedidoDeAcesso({ cliente: () => sb, janela: window });
+  document.body.innerHTML = `<div id="raiz"></div>`;
+  raiz = createRoot(document.getElementById("raiz"));
+  await act(async () => {
+    raiz.render(createElement(CartaoDoPedido, { pedido, sessao: sessaoFalsa }));
+  });
+  return pedido;
+}
+
+const $ = (id) => document.getElementById(id);
+const existe = (id) => Boolean($(id));
+
+beforeEach(() => localStorage.clear());
+afterEach(async () => {
+  if (raiz) await act(async () => raiz.unmount());
+  raiz = null;
+  document.body.innerHTML = "";
+  localStorage.clear();
+  sessionStorage.clear();
+});
+
+describe("tela de acesso desativado: pedir reativação", () => {
   it("oferece 'Pedir reativação', abre o formulário sem setor e, enviado, mostra o pedido aguardando", async () => {
     const sb = supabaseDaTela({
-      basico: { criado: false, motivo: "existente" },
+      desativadaNoBanco: true,
       pedidos: [
         { status: "aprovado" },
         {
@@ -311,39 +304,43 @@ describe("tela de acesso desativado: pedir reativação", () => {
         },
       ],
     });
-    await garantirAcessoBasico(sb);
-    await carregarMinhaSolicitacao(sb, document, { usuarioId: "u1" });
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("u1") }));
     expect($("accessRequestTitulo").textContent).toBe("Acesso desativado");
-    expect(visivel("accessRequestIlustracao")).toBe(true);
-    expect(visivel("accessRequestReativar")).toBe(true);
+    expect(existe("accessRequestIlustracao")).toBe(true);
     expect($("accessRequestReativar").textContent).toContain(
       PERGUNTA_DA_REATIVACAO,
     );
-    expect(visivel("accessRequestForm")).toBe(false);
+    expect(existe("accessRequestForm")).toBe(false);
+    expect(document.querySelector(".access-request-subtitle")).toBeNull();
 
-    $("accessRequestReativarBtn").click();
-    expect(visivel("accessRequestForm")).toBe(true);
-    expect(visivel("accessReqSetorLinha")).toBe(false);
-    expect(visivel("accessRequestReativar")).toBe(false);
+    await clicar($("accessRequestReativarBtn"));
+    expect(existe("accessRequestForm")).toBe(true);
+    expect(existe("accessReqSetor")).toBe(false);
+    expect(existe("accessRequestReativar")).toBe(false);
     expect($("accessRequestBtnTexto").textContent).toBe("Pedir reativação");
     expect($("accessRequestTitulo").textContent).toBe("Acesso desativado");
+    expect(document.activeElement).toBe($("accessReqJustificativa"));
 
-    $("accessReqNome").value = "Ana";
-    $("accessReqJustificativa").value = "curta";
-    const curta = await enviarSolicitacao(sb, lerCampos(document));
-    expect(curta.ok).toBe(false);
-    expect(Object.keys(curta.erros)).toEqual(["justificativa"]);
+    // O nome veio do Google; justificativa curta não vai ao banco.
+    expect($("accessReqNome").value).toBe("Ana Souza");
+    await digitar($("accessReqJustificativa"), "curta");
+    await clicar($("accessRequestBtn"));
+    expect(Object.keys(pedido.obter().erros)).toEqual(["justificativa"]);
+    expect(document.body.textContent).toContain("Escreva ao menos");
     expect(
       sb.rpc.mock.calls.some(([n]) => n === "registrar_solicitacao_acesso"),
     ).toBe(false);
 
-    $("accessReqJustificativa").value = "Voltei para a equipe de editais.";
-    const enviado = await enviarSolicitacao(sb, lerCampos(document));
-    expect(enviado.ok).toBe(true);
+    await digitar(
+      $("accessReqJustificativa"),
+      "Voltei para a equipe de editais.",
+    );
+    await clicar($("accessRequestBtn"));
     expect(
       sb.rpc.mock.calls.find(([n]) => n === "registrar_solicitacao_acesso")[1],
     ).toEqual({
-      p_nome: "Ana",
+      p_nome: "Ana Souza",
       p_setor: null,
       p_justificativa: "Voltei para a equipe de editais.",
       p_coordenacao: null,
@@ -352,34 +349,33 @@ describe("tela de acesso desativado: pedir reativação", () => {
       "Pedido de reativação enviado em 30/09, aguardando um administrador.",
     );
     expect($("accessRequestTitulo").textContent).toBe("Acesso desativado");
-    expect(visivel("accessRequestReativar")).toBe(false);
-    expect(visivel("accessRequestBtn")).toBe(false);
+    expect(existe("accessRequestReativar")).toBe(false);
+    expect(existe("accessRequestBtn")).toBe(false);
     expect($("accessReqJustificativa").readOnly).toBe(true);
   });
 
   it("pedido pendente de conta desativada: mostra direto o pedido de reativação aguardando", async () => {
     const sb = supabaseDaTela({
-      basico: { criado: false, motivo: "existente" },
+      desativadaNoBanco: true,
       pedidos: [{ status: "pendente", created_at: "2026-09-29T13:00:00Z" }],
     });
-    await garantirAcessoBasico(sb);
-    await carregarMinhaSolicitacao(sb, document, { usuarioId: "u1" });
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("u1") }));
     expect($("accessRequestTitulo").textContent).toBe("Acesso desativado");
     expect($("accessRequestStatusTexto").textContent).toBe(
       "Pedido de reativação enviado em 29/09, aguardando um administrador.",
     );
-    expect(visivel("accessRequestReativar")).toBe(false);
-    expect(visivel("accessReqSetorLinha")).toBe(false);
+    expect(existe("accessRequestReativar")).toBe(false);
+    expect(existe("accessReqSetor")).toBe(false);
   });
 
-  it("fora do domínio: a marca da tela de desativada segura o pedido de reativação", async () => {
+  it("sem resposta do banco: a marca da tela de desativada segura o pedido de reativação", async () => {
     lembrarContaDesativada("u2");
     const sb = supabaseDaTela({
-      basico: { criado: false, motivo: "dominio" },
       pedidos: [{ status: "pendente", created_at: "2026-09-29T13:00:00Z" }],
     });
-    await garantirAcessoBasico(sb);
-    await carregarMinhaSolicitacao(sb, document, { usuarioId: "u2" });
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("u2") }));
     expect($("accessRequestStatusTexto").textContent).toMatch(
       /^Pedido de reativação enviado em 29\/09/,
     );
@@ -387,40 +383,42 @@ describe("tela de acesso desativado: pedir reativação", () => {
 
   it("sem conta desativada, o pedido pendente continua o comum", async () => {
     const sb = supabaseDaTela({
-      basico: { criado: false, motivo: "dominio" },
       pedidos: [{ status: "pendente", created_at: "2026-09-29T13:00:00Z" }],
     });
-    await garantirAcessoBasico(sb);
-    await carregarMinhaSolicitacao(sb, document, { usuarioId: "u3" });
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("u3") }));
     expect($("accessRequestTitulo").textContent).toBe("Solicitar acesso");
     expect($("accessRequestStatusTexto").textContent).toBe(
       "Pedido enviado em 29/09, aguardando um administrador.",
     );
-    expect(visivel("accessReqSetorLinha")).toBe(true);
+    expect(existe("accessReqSetor")).toBe(true);
+    expect(document.querySelector(".access-request-invite").textContent).toBe(
+      "Se você recebeu um convite, entre com o e-mail convidado.",
+    );
+  });
+
+  it("conta desativada mostrada deixa a marca para o 'Bem-vindo(a) de volta'", async () => {
+    const sb = supabaseDaTela({ desativadaNoBanco: true, pedidos: [null] });
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("u4") }));
+    expect(localStorage.getItem("agsus_monitora_acesso_desativado:u4")).toBe(
+      "1",
+    );
   });
 });
 
 describe("tela de acesso: sem formulário antes de saber a situação", () => {
-  beforeEach(() => {
-    document.body.innerHTML = CARTAO;
-    localStorage.clear();
-  });
-  afterEach(() => {
-    document.body.innerHTML = "";
-    localStorage.clear();
-  });
-
   /** obter_minha_solicitacao_acesso só responde quando o teste mandar. */
-  function supabaseEmEspera(basico) {
+  function supabaseEmEspera({ desativada = false } = {}) {
     let responder;
-    const pedido = new Promise((resolve) => (responder = resolve));
+    const resposta = new Promise((resolve) => (responder = resolve));
     return {
       responder,
       sb: {
         rpc: vi.fn((nome) => {
-          if (nome === "garantir_acesso_basico")
-            return Promise.resolve({ data: basico, error: null });
-          if (nome === "obter_minha_solicitacao_acesso") return pedido;
+          if (nome === "obter_minha_solicitacao_acesso") return resposta;
+          if (nome === "minha_conta_desativada")
+            return Promise.resolve({ data: desativada, error: null });
           return Promise.resolve({ data: [], error: null });
         }),
       },
@@ -429,65 +427,71 @@ describe("tela de acesso: sem formulário antes de saber a situação", () => {
 
   const esperando = () => {
     expect($("accessRequestTitulo").textContent).toBe(TITULO_VERIFICANDO);
-    expect(visivel("accessRequestCarregando")).toBe(true);
-    expect(visivel("accessRequestForm")).toBe(false);
-    expect(visivel("accessRequestBtn")).toBe(false);
-    expect(
-      document.querySelector(".access-request-subtitle").className,
-    ).toContain("hidden");
+    expect(existe("accessRequestCarregando")).toBe(true);
+    expect(existe("accessRequestForm")).toBe(false);
+    expect(existe("accessRequestBtn")).toBe(false);
+    expect(document.querySelector(".access-request-subtitle")).toBeNull();
     expect($("accessRequestCard").getAttribute("aria-busy")).toBe("true");
   };
 
-  it("conta desativada: não passa pelo formulário de 'Solicitar acesso'", async () => {
-    const { sb, responder } = supabaseEmEspera({
-      criado: false,
-      motivo: "existente",
+  async function carregarEsperando(sb, id) {
+    await desenharCartao(sb);
+    let carga;
+    await act(async () => {
+      carga = pedido.carregar({ usuario: USUARIO(id) });
     });
-    await garantirAcessoBasico(sb);
-    const carga = carregarMinhaSolicitacao(sb, document, { usuarioId: "u9" });
     esperando();
-    responder({ data: { status: "aprovado" }, error: null });
-    await carga;
+    // Num objeto: devolver a promessa direto a faria ser esperada aqui.
+    return { carga };
+  }
+
+  it("conta desativada: não passa pelo formulário de 'Solicitar acesso'", async () => {
+    const { sb, responder } = supabaseEmEspera({ desativada: true });
+    const { carga } = await carregarEsperando(sb, "u9");
+    await act(async () => {
+      responder({ data: { status: "aprovado" }, error: null });
+      await carga;
+    });
     expect($("accessRequestTitulo").textContent).toBe("Acesso desativado");
-    expect(visivel("accessRequestForm")).toBe(false);
-    expect(visivel("accessRequestCarregando")).toBe(false);
+    expect(existe("accessRequestForm")).toBe(false);
+    expect(existe("accessRequestCarregando")).toBe(false);
     expect($("accessRequestCard").hasAttribute("aria-busy")).toBe(false);
   });
 
   it("pedido pendente: sai da espera direto para o pedido, só leitura", async () => {
-    const { sb, responder } = supabaseEmEspera({
-      criado: false,
-      motivo: "dominio",
+    const { sb, responder } = supabaseEmEspera();
+    const { carga } = await carregarEsperando(sb, "u8");
+    await act(async () => {
+      responder({
+        data: {
+          status: "pendente",
+          created_at: "2026-09-29T13:00:00Z",
+          justificativa: "Acompanho os editais da região norte.",
+        },
+        error: null,
+      });
+      await carga;
     });
-    await garantirAcessoBasico(sb);
-    const carga = carregarMinhaSolicitacao(sb, document, { usuarioId: "u8" });
-    esperando();
-    responder({
-      data: { status: "pendente", created_at: "2026-09-29T13:00:00Z" },
-      error: null,
-    });
-    await carga;
-    expect(visivel("accessRequestForm")).toBe(true);
+    expect(existe("accessRequestForm")).toBe(true);
     expect($("accessReqJustificativa").readOnly).toBe(true);
-    expect(visivel("accessRequestBtn")).toBe(false);
+    expect($("accessReqJustificativa").value).toBe(
+      "Acompanho os editais da região norte.",
+    );
+    expect(existe("accessRequestBtn")).toBe(false);
   });
 
   it("sem pedido: o formulário aparece só depois de saber", async () => {
-    const { sb, responder } = supabaseEmEspera({
-      criado: false,
-      motivo: "dominio",
+    const { sb, responder } = supabaseEmEspera();
+    const { carga } = await carregarEsperando(sb, "u7");
+    await act(async () => {
+      responder({ data: null, error: null });
+      await carga;
     });
-    await garantirAcessoBasico(sb);
-    const carga = carregarMinhaSolicitacao(sb, document, { usuarioId: "u7" });
-    esperando();
-    responder({ data: null, error: null });
-    await carga;
     expect($("accessRequestTitulo").textContent).toBe("Solicitar acesso");
-    expect(visivel("accessRequestForm")).toBe(true);
-    expect(visivel("accessRequestBtn")).toBe(true);
-    expect(
-      document.querySelector(".access-request-subtitle").className,
-    ).not.toContain("hidden");
+    expect(existe("accessRequestForm")).toBe(true);
+    expect(existe("accessRequestBtn")).toBe(true);
+    expect(document.querySelector(".access-request-subtitle")).not.toBeNull();
+    expect($("accessReqEmail").textContent).toBe("u7@agenciasus.org.br");
   });
 
   it("consulta que falha (erro ou exceção): volta ao formulário, como antes", async () => {
@@ -495,42 +499,41 @@ describe("tela de acesso: sem formulário antes de saber a situação", () => {
       () => Promise.resolve({ data: null, error: { message: "x" } }),
       () => Promise.reject(new Error("rede")),
     ]) {
-      document.body.innerHTML = CARTAO;
       const sb = {
         rpc: vi.fn((nome) =>
           nome === "obter_minha_solicitacao_acesso"
             ? falha()
-            : Promise.resolve({
-                data: { criado: false, motivo: "dominio" },
-                error: null,
-              }),
+            : Promise.resolve({ data: null, error: null }),
         ),
       };
-      await garantirAcessoBasico(sb);
-      await carregarMinhaSolicitacao(sb, document, { usuarioId: "u6" });
-      expect(visivel("accessRequestForm")).toBe(true);
-      expect(visivel("accessRequestBtn")).toBe(true);
-      expect(visivel("accessRequestCarregando")).toBe(false);
-      expect($("accessRequestStatusTexto").textContent).toContain(
-        "Não foi possível consultar seu pedido anterior",
+      await desenharCartao(sb);
+      await act(() => pedido.carregar({ usuario: USUARIO("u6") }));
+      expect(existe("accessRequestForm")).toBe(true);
+      expect(existe("accessRequestBtn")).toBe(true);
+      expect(existe("accessRequestCarregando")).toBe(false);
+      expect($("accessRequestStatusTexto").textContent).toBe(
+        AVISO_SEM_CONSULTA,
       );
+      await act(async () => raiz.unmount());
+      raiz = null;
     }
+  });
+
+  it("a carga do login falhou: o formulário aparece sem consultar", async () => {
+    const sb = supabaseDaTela({ pedidos: [null] });
+    await desenharCartao(sb);
+    await act(() =>
+      pedido.carregar({ usuario: USUARIO("u5"), consultar: false }),
+    );
+    expect(existe("accessRequestForm")).toBe(true);
+    expect(existe("accessRequestBtn")).toBe(true);
+    expect(sb.rpc).not.toHaveBeenCalled();
   });
 });
 
 describe("conta desativada vinda do banco (minha_conta_desativada)", () => {
-  beforeEach(() => {
-    document.body.innerHTML = CARTAO;
-    localStorage.clear();
-  });
-  afterEach(() => {
-    document.body.innerHTML = "";
-    localStorage.clear();
-  });
-
   it("sem pista no navegador e com pedido pendente, mostra a reativação aguardando (não um pedido comum)", async () => {
     const sb = supabaseDaTela({
-      basico: null,
       desativadaNoBanco: true,
       pedidos: [
         {
@@ -541,9 +544,84 @@ describe("conta desativada vinda do banco (minha_conta_desativada)", () => {
         },
       ],
     });
-    await garantirAcessoBasico(sb);
-    await carregarMinhaSolicitacao(sb, document, { usuarioId: "sem-marca" });
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("sem-marca") }));
     expect($("accessRequestTitulo").textContent).toBe("Acesso desativado");
     expect(document.body.textContent).toContain("reativação");
+  });
+});
+
+describe("pedido liberado e acesso só por convite", () => {
+  it("pedido aprovado com perfil ativo: 'Entrar agora' marca as boas-vindas e recarrega", async () => {
+    const sb = supabaseDaTela({
+      pedidos: [{ status: "aprovado" }],
+      contexto: { profile: { id: "p1", ativo: true }, panel_ids: [] },
+    });
+    const recarregar = vi.fn();
+    const janela = {
+      sessionStorage: window.sessionStorage,
+      localStorage: window.localStorage,
+      location: { reload: recarregar },
+    };
+    pedido = criarPedidoDeAcesso({ cliente: () => sb, janela });
+    await pedido.carregar({ usuario: USUARIO("u10") });
+    expect(visaoDoPedido(pedido.obter()).status).toMatchObject({
+      titulo: "Acesso liberado",
+      entrar: true,
+    });
+    pedido.entrarAgora();
+    expect(
+      sessionStorage.getItem("agsus_monitora_acesso_liberado_pendente"),
+    ).toBe("1");
+    expect(recarregar).toHaveBeenCalled();
+  });
+
+  it("o front nunca pede acesso automático (garantir_acesso_basico)", async () => {
+    const sb = supabaseDaTela({ pedidos: [null] });
+    pedido = criarPedidoDeAcesso({ cliente: () => sb, janela: window });
+    await pedido.carregar({ usuario: USUARIO("u11") });
+    expect(
+      sb.rpc.mock.calls.some(([nome]) => nome === "garantir_acesso_basico"),
+    ).toBe(false);
+  });
+
+  it("a coordenação é escolhida numa lista agrupada por área", async () => {
+    const sb = supabaseDaTela({ pedidos: [null] });
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("u12") }));
+    const grupo = document.querySelector("#accessReqCoordenacao optgroup");
+    expect(grupo.label).toBe("Saúde Indígena");
+    expect(grupo.querySelector("option").value).toBe("norte");
+  });
+
+  it("os botões da conta chamam a sessão", async () => {
+    const sb = supabaseDaTela({ pedidos: [null] });
+    await desenharCartao(sb);
+    await clicar($("accessSwitchAccountBtn"));
+    await clicar($("accessReturnLoginBtn"));
+    expect(sessaoFalsa.entrarComGoogle).toHaveBeenCalled();
+    expect(sessaoFalsa.limparSessao).toHaveBeenCalled();
+  });
+
+  it("falha no envio: aviso em vermelho e o botão volta", async () => {
+    const sb = supabaseDaTela({ pedidos: [null] });
+    sb.rpc.mockImplementation(async (nome) =>
+      nome === "registrar_solicitacao_acesso"
+        ? { data: null, error: { message: "permission denied for function" } }
+        : { data: null, error: null },
+    );
+    await desenharCartao(sb);
+    await act(() => pedido.carregar({ usuario: USUARIO("u13") }));
+    await digitar($("accessReqSetor"), "COGIP");
+    await digitar(
+      $("accessReqJustificativa"),
+      "Acompanho os editais da região norte.",
+    );
+    await clicar($("accessRequestBtn"));
+    expect($("accessRequestStatus").className).toContain("danger");
+    expect($("accessRequestStatusTexto").textContent).toContain(
+      "Não foi possível enviar o pedido: Permissão insuficiente",
+    );
+    expect($("accessRequestBtn").disabled).toBe(false);
   });
 });

@@ -48,7 +48,7 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 | Mapa (Leaflet)                                                                                                                                    | `src/lib/fabrica-do-leaflet.js`, `mapa-render.js`, `brasil-bounds.js`, `src/modules/map-*.js`                                                                                                                                                                                                                                |
 | Filtros do mapa/tabela                                                                                                                            | `src/lib/filtros-do-mapa.js` (lógica pura) · estado em `legacy-app.js` (`filterState`, `dseiSelecionado`, `applyFilters`) · evento `agsus:filtros-alterados`                                                                                                                                                                 |
 | Terras indígenas                                                                                                                                  | `src/modules/indigenous-territories-layer.js`, `api/funai-*.js`, `scripts/compilar-terras-indigenas.mjs`                                                                                                                                                                                                                     |
-| Coordenadas / lotação                                                                                                                             | `src/lib/localizacoes-validadas.js`, `reconciliacao-unidades.js`, `src/modules/lotacoes-geograficas-transport.js`, `docs/auditoria-geografica.md`, `docs/auditoria-oficial-das-coordenadas-2026-10-01.md`                                                                                                                    |
+| Coordenadas / lotação                                                                                                                             | `reconciliacao-unidades.js`, `src/modules/lotacoes-geograficas-transport.js`, `docs/auditoria-geografica.md`, `docs/auditoria-oficial-das-coordenadas-2026-10-01.md`                                                                                                                                                         |
 | **Editais / Núcleo** (React: tabela, alertas, formulário com cronograma, linha do tempo)                                                          | `src/componentes/nucleo/`, `src/lib/editais-do-nucleo.js`, `cronograma-do-edital.js`, `responsavel-do-edital.js`, `etapas-de-edital.js`, `editais-das-linhas.js`; o legado abre por `window.nucleoController`                                                                                                                |
 | **Seleção** (módulo do app, sem iframe: montarSelecao na `#page-selecao`; funil por vaga da planilha Auditoria; carga diária pelo GitHub Actions) | `src/modulos/selecao/`, `src/lib/selecao-do-painel.js`, `selecao-da-planilha.js`, `scripts/sincronizar-selecao.mjs`, `supabase/migrations/20261001090000_selecao.sql`, `docs/sincronizacao-das-planilhas.md`                                                                                                                 |
 | Status das atualizações (Configurações, só admin global: última execução e atraso de cada carga)                                                  | `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.js`, `supabase/migrations/20261001120000_saude_das_cargas.sql`                                                                                                                                                                                                |
@@ -72,17 +72,16 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 
 ## Não ler por inteiro (grep -n → sed -n 'A,Bp')
 
-| Arquivo                                                                    | Tamanho    | Observação                                    |
-| -------------------------------------------------------------------------- | ---------- | --------------------------------------------- |
-| `public/data/*.json`                                                       | até 2,3 MB | gerados                                       |
-| `src/modules/legacy-app.js`                                                | 394 KB     | legado, não crescer                           |
-| `src/lib/localizacoes-validadas-gerado.js`                                 | 201 KB     | gerado por `scripts/recompilar-vereditos.mjs` |
-| `supabase/migrations/20260918160000_padronizacao_nomenclatura_tabelas.sql` | 148 KB     | renomeação em massa                           |
-| `src/styles/app.css`                                                       | 110 KB     | CSS base                                      |
-| `index.html`                                                               | 68 KB      |                                               |
-| `src/modules/indigenous-territories-layer.js`                              | 53 KB      |                                               |
-| `src/modules/aya-conhecimento-gerado.js`                                   | 27 KB      | gerado de `docs/aya/`                         |
-| `package-lock.json`, `dist/`, `node_modules/`                              |            | nunca                                         |
+| Arquivo                                                                    | Tamanho    | Observação            |
+| -------------------------------------------------------------------------- | ---------- | --------------------- |
+| `public/data/*.json`                                                       | até 2,3 MB | gerados               |
+| `src/modules/legacy-app.js`                                                | 394 KB     | legado, não crescer   |
+| `supabase/migrations/20260918160000_padronizacao_nomenclatura_tabelas.sql` | 148 KB     | renomeação em massa   |
+| `src/styles/app.css`                                                       | 110 KB     | CSS base              |
+| `index.html`                                                               | 68 KB      |                       |
+| `src/modules/indigenous-territories-layer.js`                              | 53 KB      |                       |
+| `src/modules/aya-conhecimento-gerado.js`                                   | 27 KB      | gerado de `docs/aya/` |
+| `package-lock.json`, `dist/`, `node_modules/`                              |            | nunca                 |
 
 ## Comandos (rode o mais barato que responda a pergunta)
 

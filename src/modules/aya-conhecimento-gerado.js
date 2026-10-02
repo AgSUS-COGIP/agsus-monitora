@@ -1598,24 +1598,26 @@ export const VERBETES_AYA = Object.freeze([
       "contagem da dica do dsei",
     ],
     resposta:
-      'No MONITORA, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos o distrito tem na planilha de lotações; "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mesmo polo pode vir da planilha e do CNES com nomes ou posições diferentes; quando a reconciliação não tem certeza de que são o mesmo, os dois continuam desenhados.',
+      'No MONITORA, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos o distrito tem no cadastro do mapa no banco (lmap); "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mesmo polo pode estar no lmap e no CNES com nomes ou posições diferentes; quando a reconciliação não tem certeza de que são o mesmo, os dois continuam desenhados. Quando são o mesmo, o ponto fica na posição do lmap.',
     fato: "",
     fonte: "interface do MONITORA",
   },
   {
-    titulo: "Confiança da localização no popup",
+    titulo: "O que o popup de uma unidade mostra",
     perguntas: [
+      "popup da unidade",
+      "o que o popup mostra",
       "localizacao validada",
       "fontes discordam",
       "localizacao em validacao",
-      "fonte unica",
-      "uf nao determinada",
-      "coordenada fora da uf",
+      "coordenada confirmada",
+      "ponto do polo esta certo",
     ],
     resposta:
-      'No MONITORA, a última linha do popup de cada unidade diz quanto a posição foi conferida: "validada" quando duas fontes independentes concordam ou a UF declarada arbitrou; "fontes discordam" quando a planilha e o CNES apontam lugares diferentes (com a distância); "fora da UF" ou "fora do município" quando a coordenada contradiz o próprio registro; "fonte única" quando só há uma fonte e ela não se contradiz; "dentro da Terra Indígena" quando o ponto cai numa terra publicada pela Funai; e "UF não determinada" quando não houve como conferir. Sem veredito, fica "Localização em validação".',
+      'No MONITORA, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); 93 polos ainda aguardam confirmação do DSEI. Se um ponto parecer errado, a correção é feita no banco.',
     fato: "",
-    fonte: "interface do MONITORA",
+    fonte:
+      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js",
   },
   {
     titulo: "Terras Indígenas no mapa",
@@ -2040,12 +2042,13 @@ export const VERBETES_AYA = Object.freeze([
       "coordenadas do mapa",
       "auditoria das coordenadas",
       "ponto errado no mapa",
+      "planilha de lotacoes no mapa",
     ],
     resposta:
-      'As coordenadas das unidades da Saúde Indígena foram auditadas em 01/10/2026 contra fontes oficiais: CNES (Ministério da Saúde), malhas municipais e Localidades Indígenas do Censo 2022 do IBGE, aldeias e terras indígenas da Funai e os PDSI 2024–2027 de cada DSEI. Em três rodadas, sempre com duas fontes independentes concordando, foram corrigidos 162 polos e 2 CASAIs, com backup antes de cada rodada. Restam 93 pontos sem duas fontes (só uma fonte, fontes que discordam ou nenhum homônimo oficial), que ficam para revisão com a área técnica; não existe lista oficial de polos com coordenadas em dados abertos. No mapa, uma posição só é "validada" quando duas fontes independentes concordam a menos de 5 km e as duas caem dentro da UF; nenhuma coordenada é inventada, e ponto sem essa confirmação continua "em validação".',
+      'No mapa da Saúde Indígena, toda coordenada vem do banco do MONITORA: os polos base e as sedes dos DSEIs do cadastro do mapa (lmap) e os estabelecimentos (UBSI, CASAI e demais unidades) do cadastro do CNES guardado no banco (rede_cnes). O mapa desenha exatamente o que está gravado; nada é recalculado na tela. Essas coordenadas foram auditadas em 01 e 02/10/2026 contra fontes oficiais: CNES (Ministério da Saúde), malhas municipais e Localidades Indígenas do Censo 2022 do IBGE, aldeias e terras indígenas da Funai, PDSI 2024–2027 de cada DSEI e OpenStreetMap. Em três rodadas, sempre com duas fontes independentes concordando, foram corrigidos no banco 162 polos e 2 CASAIs, com backup antes de cada rodada. 93 polos ainda aguardam confirmação do DSEI (só uma fonte, fontes que discordam ou nenhum homônimo oficial); eles aparecem na posição gravada no banco, sem aviso no popup. A planilha "Lotações, Meios de Acesso/Polo Base" não entra mais no mapa: ela tem erros e não há versão corrigida; os pontos que só existiam nela estão listados em docs/pontos-so-na-planilha-de-lotacoes.md para inclusão manual no banco, se a área confirmar. Para corrigir um ponto, a correção é feita no banco.',
     fato: "",
     fonte:
-      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/modules/lotacoes-geograficas-transport.js; scripts/validar-localizacoes.mjs; src/lib/localizacoes-validadas.js",
+      "docs/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/pontos-so-na-planilha-de-lotacoes.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js",
   },
   {
     titulo: "Seção Módulos e abas",

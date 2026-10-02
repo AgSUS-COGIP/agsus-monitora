@@ -1,6 +1,6 @@
 import { hasSupabaseEnv } from "./lib/env.js";
 // Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
-import "./lib/access-branding-boot.js";
+import "./app/entrada/marca.js";
 import { installCsvBlobSecurityGuard } from "./lib/csv-security.js";
 import { installSessionLifecycle } from "./lib/session-lifecycle.js";
 import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle.js";
@@ -56,7 +56,6 @@ import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.j
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
 import "./modules/monitoramento-operational-transport.js";
-import "./modules/lotacoes-geograficas-transport.js";
 import "./modules/legacy-app.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
 import { instalarCarregamento } from "./modules/carregamento.js";
@@ -69,7 +68,6 @@ import {
 import { montarConfiguracoes } from "./componentes/configuracoes/configuracoes.jsx";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
-import { initMobileGoogleOAuth } from "./modules/mobile-google-oauth.js";
 import { initMobileTableCards } from "./modules/mobile-table-cards.js";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
@@ -89,17 +87,29 @@ import { montarAcessos } from "./componentes/acessos/acessos.jsx";
 import { montarModulos } from "./componentes/modulos/modulos.jsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.jsx";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
+import { montarEntrada } from "./app/entrada/entrada.jsx";
+import { sessaoDoApp } from "./app/sessao.js";
+
 import { montarAya } from "./modulos/aya/aya.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
+
+/*
+  A tela de acesso (React, src/app/entrada/) monta primeiro: o cartão vazio do
+  index.html vira o de verdade. Quem entra é a sessão (src/app/sessao.js),
+  iniciada no fim, depois de o legado e as telas se ligarem a ela.
+*/
+montarEntrada();
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
 installMapBaseLayerSwitcher();
 installMapZoomRange();
 installIndigenousTerritoriesLayer();
-installSessionLifecycle();
+installSessionLifecycle({
+  aoExpirar: (mensagem) => sessaoDoApp.mostrarMensagem(mensagem, "warn"),
+});
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
@@ -127,7 +137,6 @@ organizarConfiguracoesEmSecoes();
 montarConfiguracoes();
 initMobileAppExperience();
 initMobileBottomNavigation();
-initMobileGoogleOAuth();
 initMobileTableCards();
 initPwaLifecycle();
 initConnectivityStatus();
@@ -214,8 +223,11 @@ window.saudeDasCargasController = montarSaudeDasCargas({
   ao legado por evento (filtros e navegação continuam lá).
 */
 montarBuscaGlobal({
-  estaConectado: () => Boolean(window.getMonitoraUser?.()),
+  estaConectado: () => Boolean(sessaoDoApp.obter().usuario),
 });
+
+// A entrada: sessão guardada, retorno do Google ou a tela de acesso.
+void sessaoDoApp.iniciar();
 
 /*
   A Aya (src/modulos/aya/): a arara flutuante e o painel de conversa. Sabe a

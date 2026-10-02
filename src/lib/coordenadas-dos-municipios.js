@@ -4,8 +4,7 @@
   O mapa recebe o lugar da RPC `listar_municipios_das_vagas_da_area`: o
   município ("Município/UF" e, quando vem da tabela de locais, o código do
   IBGE) ou só a UF (o edital da CCE, por exemplo, diz só o estado). O
-  repositório não tinha coordenada de município nenhum (as de
-  `localizacoes-validadas*` são de unidades da Saúde Indígena), e buscar na
+  repositório não tinha coordenada de município nenhum, e buscar na
   rede a cada abertura não vale a pena para poucas dezenas de pontos. Fica aqui
   uma tabela pequena, só com os municípios que existem nos editais
   (`supabase/correcoes/20261001-locais-das-vagas-dos-projetos.sql`) e nas

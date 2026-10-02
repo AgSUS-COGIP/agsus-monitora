@@ -42,16 +42,6 @@ export const PLANILHAS = Object.freeze({
     usadaEm: Object.freeze(["src/lib/analises-curriculares.js"]),
   }),
 
-  lotacoes: Object.freeze({
-    nome: "Planilha oficial de Lotações",
-    onde: "Google Sheets",
-    // PENDENTE: id da planilha (o trecho entre /d/ e /edit do link). Enquanto for
-    // null, `scripts/validar-localizacoes.mjs` exige o caminho de um .xlsx local.
-    // Para o download funcionar, a planilha precisa estar acessível por link.
-    idGoogle: null,
-    usadaEm: Object.freeze(["scripts/validar-localizacoes.mjs"]),
-  }),
-
   entrevistados: Object.freeze({
     nome: "[dash] entrevistados (Saúde Indígena)",
     onde: "Google Sheets",

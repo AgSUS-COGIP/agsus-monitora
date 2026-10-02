@@ -7,12 +7,6 @@ import {
   registroDaSede,
   registrosDoDsei,
 } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
-import {
-  chaveDaUnidade,
-  indexarVereditos,
-  veredictoDaUnidade,
-} from "../src/lib/localizacoes-validadas.js";
-import { LOCALIZACOES_VALIDADAS } from "../src/lib/localizacoes-validadas-gerado.js";
 
 /*
   A SEDE DO DSEI NÃO TINHA FORMA NENHUMA
@@ -74,81 +68,5 @@ describe("a sede tem forma própria", () => {
     );
     expect(registros.length).toBeGreaterThan(0);
     expect(registros.some((r) => r.type?.key === "sede")).toBe(false);
-  });
-});
-
-/*
-  A CASAI DE ALTAMIRA E O POLO DE ALTAMIRA NÃO SÃO A MESMA COISA
-
-  O canónico de "CASA DE SAUDE INDIGENA DE ALTAMIRA" reduz-se a ALTAMIRA, e o do
-  polo da mesma cidade também. A chave era DSEI + canónico, portanto as duas
-  colidiam — e chave repetida é ambiguidade, que faz o índice descartar AS DUAS.
-
-  Trinta e três das 34 colisões medidas eram exatamente isto, e por causa delas
-  30 das 83 CASAIs do mapa diziam "Localização em validação" tendo veredito.
-*/
-describe("a chave separa CASAI do resto", () => {
-  it("a CASAI e o polo da mesma cidade têm chaves diferentes", () => {
-    const daCasai = chaveDaUnidade(
-      "ALTAMIRA",
-      "CASA DE SAUDE INDIGENA DE ALTAMIRA",
-    );
-    const doPolo = chaveDaUnidade("ALTAMIRA", "POLO BASE ALTAMIRA");
-    expect(daCasai).not.toBe(doPolo);
-    expect(daCasai).toBeTruthy();
-    expect(doPolo).toBeTruthy();
-  });
-
-  it("as grafias da mesma CASAI continuam a convergir", () => {
-    expect(chaveDaUnidade("CUIABA", "CASAI CUIABÁ")).toBe(
-      chaveDaUnidade("Cuiabá", "CASA DE SAUDE INDIGENA DE CUIABA"),
-    );
-  });
-
-  it("o índice deixa de descartar as duas por ambiguidade", () => {
-    const indice = indexarVereditos([
-      {
-        dsei: "ALTAMIRA",
-        canonico: "ALTAMIRA",
-        estado: "coerente",
-        motivo: "fonte_unica_no_municipio",
-        casai: true,
-      },
-      {
-        dsei: "ALTAMIRA",
-        canonico: "ALTAMIRA",
-        estado: "conflito",
-        motivo: "duas_fontes_discordam_na_uf",
-        km: 12,
-      },
-    ]);
-    expect(
-      veredictoDaUnidade(
-        "ALTAMIRA",
-        "CASA DE SAUDE INDIGENA DE ALTAMIRA",
-        indice,
-      )?.estado,
-    ).toBe("coerente");
-    expect(
-      veredictoDaUnidade("ALTAMIRA", "POLO BASE ALTAMIRA", indice)?.estado,
-    ).toBe("conflito");
-  });
-
-  /*
-    Duas CASAIs com o mesmo nome no mesmo distrito continuam a ser ambiguidade:
-    a marca separa tipos, não resolve repetição dentro do mesmo tipo.
-  */
-  it("repetição dentro do mesmo tipo continua a não decidir nada", () => {
-    const indice = indexarVereditos([
-      { dsei: "X", canonico: "AAA", estado: "coerente", casai: true },
-      { dsei: "X", canonico: "AAA", estado: "erro", casai: true },
-    ]);
-    expect(veredictoDaUnidade("X", "CASAI AAA", indice)).toBeNull();
-  });
-
-  it("o ficheiro do pacote marca as CASAIs", () => {
-    const casais = LOCALIZACOES_VALIDADAS.filter((r) => r.casai === true);
-    expect(casais.length).toBeGreaterThan(80);
-    for (const r of casais) expect(r.canonico).toBeTruthy();
   });
 });

@@ -9,7 +9,8 @@ import {
   aplicarMarcaGuardadaNoArranque,
   aplicarMarcaNaTela,
   atualizarMarcaComBrandingPublico,
-} from "../src/lib/access-branding-boot.js";
+  marcaDaEntrada,
+} from "../src/app/entrada/marca.js";
 import {
   guardarMarca,
   lerMarcaGuardada,
@@ -106,13 +107,13 @@ const respostaErro = (status) => ({
 const buscarCom = (buscar) =>
   buscarMarcaPublica({ buscar, url: URL_FALSA, chave: CHAVE_PUBLICA });
 
+/*
+  A arte e a cor vão no `#loginScreen`; logo, saudação e texto do botão, no
+  estado da marca que a tela de entrada (React) desenha.
+*/
 function montarTelaDeAcesso() {
-  document.body.innerHTML = `
-    <div id="loginScreen">
-      <img id="loginLogo" src="" alt="" />
-      <h1 id="loginGreeting"></h1>
-      <button><span id="googleLoginText"></span></button>
-    </div>`;
+  document.body.innerHTML = `<div id="loginScreen"></div>`;
+  marcaDaEntrada.definir({ logoUrl: "", saudacao: "", textoDoBotao: "" });
 }
 
 function identidadeNaTela() {
@@ -120,9 +121,9 @@ function identidadeNaTela() {
   return {
     fundo: tela.style.getPropertyValue("--login-background-image"),
     painel: tela.style.getPropertyValue("--login-panel-color"),
-    logo: document.getElementById("loginLogo").getAttribute("src"),
-    saudacao: document.getElementById("loginGreeting").textContent,
-    botao: document.getElementById("googleLoginText").textContent,
+    logo: marcaDaEntrada.obter().logoUrl,
+    saudacao: marcaDaEntrada.obter().saudacao,
+    botao: marcaDaEntrada.obter().textoDoBotao,
   };
 }
 
@@ -495,13 +496,13 @@ describe("cor do painel e contraste são atómicos", () => {
         .replace(/^\s*\/\/.*$/gm, "");
     for (const ficheiro of [
       "src/modules/legacy-app.js",
-      "src/lib/access-branding-boot.js",
+      "src/app/entrada/marca.js",
     ]) {
       const codigo = semComentarios(ficheiro);
       const escritas = (
         codigo.match(/setProperty\(\s*"--login-panel-color"/g) || []
       ).length;
-      const esperado = ficheiro.endsWith("access-branding-boot.js") ? 1 : 0;
+      const esperado = ficheiro.endsWith("marca.js") ? 1 : 0;
       expect(
         escritas,
         `${ficheiro} escreve a cor fora da função partilhada`,

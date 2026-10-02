@@ -34,69 +34,28 @@ import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.js";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
 import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.js";
-import { SUPABASE_KEY, SUPABASE_URL } from "../lib/env.js";
+import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { sessaoDoApp } from "../app/sessao.js";
+import { definirMarcaDaConfiguracao } from "../app/entrada/marca.js";
 import { definirPaginaDaAya } from "../modulos/aya/estado.js";
-import {
-  getOAuthCallbackUrl,
-  isUsableSession,
-  LOGIN_POPUP_MESSAGE,
-  openLoginPopup,
-} from "../lib/auth-flow.js";
-import {
-  getSupabaseAuthStorage,
-  getSupabaseClient,
-} from "../lib/supabaseClient.js";
-import {
-  carregarMinhaSolicitacao,
-  enviarSolicitacao,
-  garantirAcessoBasico,
-  lerCampos,
-  mostrarStatus,
-} from "./solicitacao-de-acesso.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
 import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
-import {
-  isAllowedInstitutionalEmail,
-  normalizeAllowedDomains,
-  normalizePlatformContext,
-  profileDisplayName,
-} from "../lib/platform-context.js";
+import { profileDisplayName } from "../lib/platform-context.js";
 import {
   DEFAULT_ACCESS_BRANDING,
-  needsLightForeground,
-  normalizeAccessBackgroundUrl,
   normalizeAccessLogoUrl,
-  normalizeAccessPanelColor,
 } from "../lib/access-branding.js";
 import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,
 } from "../lib/online-presence.js";
-import { guardarMarca } from "../lib/access-branding-cache.js";
-import {
-  SAIDA_DESCONHECIDA,
-  SAIDA_MANUAL,
-  SAIDA_REVOGADA,
-  causaDaSaida,
-  declararSaida,
-  encerrarTransicaoDeSaida,
-  mensagemDaSaida,
-  reivindicarSaida,
-} from "../lib/estado-de-saida.js";
 import { avisoGlobal } from "../lib/aviso-global.js";
-import { aplicarCorDoPainel } from "../lib/access-branding-boot.js";
-import { normalizarModo } from "../lib/contraste.js";
 import {
   aplicarFaviconDaMarca,
   definirPaginaDaAba,
   definirSistemaDaAba,
 } from "../lib/identidade-da-aba.js";
-import {
-  SESSAO_ATIVA,
-  ehFalhaTransitoria,
-  ehSessaoEncerrada,
-  estadoDaSessao,
-} from "../lib/sessao.js";
+import { ehFalhaTransitoria, ehSessaoEncerrada } from "../lib/sessao.js";
 import {
   canViewCore,
   canViewEntrevistas,
@@ -159,7 +118,6 @@ import {
 const APP_VERSION_FALLBACK = "";
 
 const RPC_ACCESS_LOG = "registrar_evento_acesso";
-const RPC_PLATFORM_CONTEXT = "obter_contexto_monitora";
 const RPC_REGISTER_ONLINE_PRESENCE = "registrar_presenca_monitora";
 const RPC_LIST_ONLINE_PRESENCE = "listar_presenca_online_monitora";
 const RPC_MONITORAMENTO_DASHBOARD_PAYLOAD =
@@ -249,8 +207,11 @@ const DEFAULT_CONFIG = {
 
 const DEFAULT_PANELS = [];
 
-let sb = null;
-let authStorage = null;
+let sb = getSupabaseClient();
+/*
+  Usuário e perfil vêm da sessão do app (src/app/sessao.js): estas são cópias
+  locais, atualizadas por `receberSessao` a cada mudança dela.
+*/
 let currentUser = null;
 let profile = null;
 let appConfig = {};
@@ -261,36 +222,12 @@ let unidadesCatalog = [];
 const VIEW_STORAGE_KEY = "agsus_monitora_current_view_v268";
 let panels = [...DEFAULT_PANELS];
 let allowedPanelIds = new Set();
-let platformContextLoaded = false;
 let mapConfigLoadOk = false;
 let currentPanel = null;
 let currentView = "dashboard";
 let dataLoadedAtLeastOnce = false;
-/*
-  Dono único da transição para o estado deslogado.
-
-  Antes eram dois — `logout()` e o listener de `onAuthStateChange` — e um
-  booleano consumido no primeiro evento. `reivindicarSaida()` garante que a
-  transição só é aplicada uma vez; a causa, essa, dura até um novo `SIGNED_IN`.
-*/
-function aplicarSaida(opcoes = {}) {
-  if (opcoes.causa) declararSaida(opcoes.causa);
-  if (!reivindicarSaida()) return;
-  const mensagem =
-    opcoes.mensagem !== undefined ? opcoes.mensagem : mensagemDaSaida();
-  resetSignedOutState(mensagem, opcoes.tipo || "warn");
-}
-
-/** Há uma saída em curso? Enquanto houver, um `SIGNED_IN` não reabre o sistema. */
-function saidaEmCurso() {
-  return causaDaSaida() !== SAIDA_DESCONHECIDA;
-}
 let accessHeartbeatHandle = null;
 let onlinePresenceHandle = null;
-let activeSessionLoadPromise = null;
-let oauthExchangeInProgress = false;
-let sessionBootstrappedUserId = "";
-let lastSignedInEventAt = 0;
 let activeLoadDataPromise = null;
 let loadDataRunCounter = 0;
 let activeRefreshDataPromise = null;
@@ -336,11 +273,6 @@ function cfgInt(key, fallback = 0) {
 function appVersion() {
   return cfgValue("app_version_current") || APP_VERSION_FALLBACK;
 }
-function passwordResetMessage() {
-  return (
-    cfgValue("password_reset_message") || PASSWORD_RESET_ADMIN_MESSAGE_FALLBACK
-  );
-}
 function setText(id, value) {
   const el = $(id);
   if (el) el.textContent = value || "";
@@ -348,19 +280,6 @@ function setText(id, value) {
 function setAttr(id, name, value) {
   const el = $(id);
   if (el) el.setAttribute(name, value || "");
-}
-function setImg(id, url, alt = "") {
-  const el = $(id);
-  if (!el) return;
-  if (url) {
-    el.src = url;
-    el.alt = alt || "";
-    el.style.display = "";
-  } else {
-    el.removeAttribute("src");
-    el.alt = alt || "";
-    el.style.display = "none";
-  }
 }
 function fmt(v) {
   return n(v).toLocaleString("pt-BR");
@@ -378,12 +297,6 @@ function esc(v) {
 function attr(v) {
   return esc(v).replaceAll("`", "&#096;");
 }
-function rpcFirst(data) {
-  return Array.isArray(data) ? data[0] || null : data || null;
-}
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 function toast(message, type = "ok") {
   mostrarNotificacao($("toastBox"), message, type);
@@ -396,33 +309,6 @@ function loader(show, title = "Carregando", sub = "Aguarde...", pct = 0) {
   $("loaderSub").textContent = sub;
   $("loaderPct").textContent = Math.round(pct) + "%";
   $("loaderBar").style.width = Math.max(0, Math.min(100, pct)) + "%";
-}
-
-function showAlert(id, msg, type = "") {
-  const el = $(id);
-  el.textContent = msg || "";
-  el.className = "alert " + type;
-  el.classList.toggle("hidden", !msg);
-}
-
-function initSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_KEY.includes("COLE_AQUI")) {
-    showAlert(
-      "configMsg",
-      "Configure SUPABASE_URL e SUPABASE_KEY no arquivo index.html.",
-      "error",
-    );
-    return false;
-  }
-  authStorage = getSupabaseAuthStorage();
-  sb = getSupabaseClient();
-  if (sb) return true;
-  showAlert(
-    "configMsg",
-    "Não foi possível iniciar a conexão segura com o Supabase.",
-    "error",
-  );
-  return false;
 }
 
 function can(perm) {
@@ -596,325 +482,97 @@ function startAccessHeartbeat() {
   );
 }
 
-function resetSignedOutState(message = "", type = "warn") {
-  currentUser = null;
-  profile = null;
+/*
+  A sessão é do app (src/app/sessao.js). O legado recebe o usuário e o perfil
+  por assinatura e cuida, nesta fase, do que vem depois de entrar: a carga dos
+  dados, a navegação, a presença e a auditoria. Os ganchos abaixo são o
+  contrato (docs/arquitetura-react.md, "Sessão ↔ legado").
+*/
+let perfilRecebido = null;
+function receberSessao() {
+  const atual = sessaoDoApp.obter();
+  currentUser = atual.usuario;
+  // Só quando o perfil muda: `loadPanelPermissions` completa os painéis do legado.
+  if (atual.perfil !== perfilRecebido) {
+    perfilRecebido = atual.perfil;
+    profile = atual.perfil;
+    allowedPanelIds = new Set(atual.painelIds);
+  }
+}
+
+/* A pessoa saiu (ou a sessão acabou): nada dela fica na tela. */
+function limparEstadoDeslogado() {
   rows = [];
   dataLoadedAtLeastOnce = false;
-  sessionBootstrappedUserId = "";
-  lastSignedInEventAt = 0;
   allowedPanelIds = new Set();
-  platformContextLoaded = false;
+  copiaEmLeitura = null;
   stopAccessHeartbeat();
   stopOnlinePresence();
   clearExternalPanelCache();
   esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
-  document.body.classList.remove("access-request-mode");
   $("appScreen").classList.add("hidden");
-  $("loginScreen").classList.remove("hidden");
-  const accessCard = $("accessRequestCard");
-  if (accessCard) accessCard.classList.add("hidden");
-  const accessStatus = $("accessRequestStatus");
-  if (accessStatus) accessStatus.classList.add("hidden");
-  const accessBtn = $("accessRequestBtn");
-  if (accessBtn) accessBtn.disabled = false;
-  resetGoogleLoginButton();
-  if (message) showAlert("loginMsg", message, type);
-}
-async function clearLocalAuthState() {
-  currentUser = null;
-  profile = null;
-  activeSessionLoadPromise = null;
-  sessionBootstrappedUserId = "";
-  lastSignedInEventAt = 0;
-  try {
-    authStorage?.clearAuthState?.();
-  } catch (e) {}
-  try {
-    sessionStorage.removeItem("agsus_oauth_callback_ok");
-  } catch (e) {}
-  try {
-    await sb?.auth?.signOut({ scope: "local" });
-  } catch (e) {}
-  clearOAuthUrl();
-}
-async function returnToLogin() {
-  await clearLocalAuthState();
-  // "Limpar sessão" limpa tudo, inclusive a cópia que a saída comum mantém.
-  await apagarCopiaDaSessao();
-  declararSaida(SAIDA_MANUAL);
-  if (sb) await sb.auth.signOut();
-  aplicarSaida({ mensagem: "" });
-  showAlert("loginMsg", "Sessão limpa. Escolha como deseja entrar.", "ok");
 }
 
-async function refreshProfileAfterSessionUpdate(nextSession) {
-  currentUser = nextSession?.user || null;
-  if (!currentUser || $("appScreen").classList.contains("hidden")) return;
-  try {
-    const ok = await loadProfile();
-    if (!ok) {
-      await showAccessRequestState();
-      return;
-    }
-    await loadPanelPermissions();
-    buildNav();
-    if (!isViewAllowed(currentView)) navigate(startView());
-  } catch (error) {
-    console.error("Falha ao atualizar perfil:", error);
-  }
+/* Fim da espera da entrada, aconteça o que acontecer: sem skeleton. */
+function encerrarEspera() {
+  esconderEsqueleto();
+  document.body.classList.remove("config-loading");
 }
 
-function appAlreadyLoadedForSession(session) {
-  const uid = session?.user?.id || "";
-  return (
-    !!uid &&
-    currentUser?.id === uid &&
-    sessionBootstrappedUserId === uid &&
-    dataLoadedAtLeastOnce &&
-    !$("appScreen")?.classList.contains("hidden")
-  );
-}
-
-async function handleSignedInSession(nextSession, source = "auth") {
-  if (!isUsableSession(nextSession) || saidaEmCurso()) return;
-
-  const allowedDomains = normalizeAllowedDomains(
-    cfgValue("auth_google_allowed_domains"),
-  );
-  if (!isAllowedInstitutionalEmail(nextSession.user?.email, allowedDomains)) {
-    declararSaida(SAIDA_REVOGADA);
-    try {
-      await sb.auth.signOut({ scope: "local" });
-    } catch (e) {}
-    aplicarSaida({
-      mensagem: `Use uma conta institucional (${allowedDomains.map((domain) => `@${domain}`).join(" ou ")}).`,
-      tipo: "error",
-    });
-    const googleBtn = $("googleLoginBtn");
-    if (googleBtn) {
-      googleBtn.disabled = false;
-      googleBtn.removeAttribute("aria-busy");
-    }
-    return;
-  }
-
-  // O Supabase pode emitir SIGNED_IN novamente quando a aba volta ao foco
-  // ou quando a sessão é sincronizada entre abas. Se o app já está aberto
-  // para o mesmo usuário, não reinicia todo o AgSUS Monitora.
-  if (appAlreadyLoadedForSession(nextSession)) {
-    currentUser = nextSession.user;
-    return;
-  }
-
-  if (activeSessionLoadPromise) return activeSessionLoadPromise;
-  currentUser = nextSession.user;
-  activeSessionLoadPromise = (async () => {
-    const ready = await loadInitialData();
-    if (ready) {
-      sessionBootstrappedUserId = nextSession.user.id;
-      await trackAccess(
-        source === "boot" ? "sessao_restaurada" : "login_google",
-        { tela: source },
-      );
-      startAccessHeartbeat();
-      startOnlinePresence();
-      startRealtime();
-    }
-  })();
-  try {
-    await activeSessionLoadPromise;
-  } catch (error) {
-    console.error("Falha ao finalizar login:", error);
-    forceAccessRequestFallback(
-      "Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.",
-    );
-  } finally {
-    clearOAuthUrl();
-    activeSessionLoadPromise = null;
-    // Rede de segurança: aconteça o que acontecer, a entrada não fica no skeleton.
-    esconderEsqueleto();
-    document.body.classList.remove("config-loading");
-    const googleBtn = $("googleLoginBtn");
-    if (googleBtn) {
-      googleBtn.disabled = false;
-      googleBtn.removeAttribute("aria-busy");
-    }
-  }
-}
-
-async function handleOAuthCodeCallback() {
-  const qs = new URLSearchParams(window.location.search || "");
-  const code = qs.get("code");
-  if (!code) return false;
+/*
+  Sessão válida, perfil ainda chegando: o skeleton da entrada (no formato da
+  última tela) e a leitura local da cópia da sessão, que corre junto com a
+  consulta do perfil.
+*/
+let copiaEmLeitura = null;
+function prepararEntrada() {
   mostrarEsqueleto(storedView());
-  oauthExchangeInProgress = true;
-  try {
-    const { data, error } = await sb.auth.exchangeCodeForSession(code);
-    if (error) throw error;
-    const session = isUsableSession(data?.session)
-      ? data.session
-      : await waitForAuthSession(data?.user?.id || "");
-    if (isUsableSession(session)) {
-      await handleSignedInSession(session, "oauth_callback");
-      return true;
-    }
-    throw new Error("Sessão não encontrada após retorno do Google.");
-  } catch (error) {
-    console.error("Falha no callback OAuth:", error);
-    clearOAuthUrl();
-    esconderEsqueleto();
-    document.body.classList.remove("config-loading");
-    resetSignedOutState(
-      "Não foi possível finalizar o login Google. Tente novamente escolhendo a conta.",
-      "error",
-    );
-    return true;
-  } finally {
-    oauthExchangeInProgress = false;
-  }
+  copiaEmLeitura = lerCopiaDaSessao();
 }
 
-async function waitForAuthSession(expectedUserId = "", maxWaitMs = 5000) {
-  const started = Date.now();
-  while (Date.now() - started < maxWaitMs) {
-    const { data } = await sb.auth.getSession();
-    if (isUsableSession(data?.session, expectedUserId)) return data.session;
-    await sleep(150);
-  }
-  const { data } = await sb.auth.getSession();
-  return isUsableSession(data?.session, expectedUserId) ? data.session : null;
-}
-
-async function boot() {
-  if (!initSupabase()) return;
-  applyStoredSidebarState();
-  applyStoredDisplayModes();
-  sb.auth.onAuthStateChange((event, session) => {
-    if (event === "PASSWORD_RECOVERY") {
-      currentUser = null;
-      if (sb) sb.auth.signOut();
-      clearRecoveryUrl();
-      // Causa manual: o `SIGNED_OUT` que vem a seguir não é expiração.
-      aplicarSaida({
-        causa: SAIDA_MANUAL,
-        mensagem: passwordResetMessage(),
-        tipo: "warn",
-      });
-      return;
-    }
-    if (event === "SIGNED_OUT") {
-      /*
-        A causa não é consumida aqui. Antes era: o booleano zerava no primeiro
-        evento, e um segundo `SIGNED_OUT` — que o Supabase emite em mais de uma
-        situação — passava a ser lido como expiração. Era essa a mensagem
-        amarela que aparecia depois de sair pelo botão.
-      */
-      aplicarSaida();
-      return;
-    }
-    if (event === "TOKEN_REFRESHED") {
-      currentUser = session?.user || currentUser;
-      return;
-    }
-    if (event === "USER_UPDATED") {
-      setTimeout(() => refreshProfileAfterSessionUpdate(session), 0);
-    }
-    if (event === "SIGNED_IN") {
-      // Entrar encerra a transição: daqui em diante um SIGNED_OUT é evento novo.
-      encerrarTransicaoDeSaida();
-      if (oauthExchangeInProgress) return;
-      const uid = session?.user?.id || "";
-      const now = Date.now();
-
-      if (appAlreadyLoadedForSession(session)) {
-        currentUser = session.user;
-        return;
-      }
-
-      if (uid && currentUser?.id === uid && now - lastSignedInEventAt < 1500) {
-        return;
-      }
-
-      lastSignedInEventAt = now;
-      setTimeout(() => handleSignedInSession(session, "oauth"), 0);
-    }
+/* Perfil confirmado: carrega e abre o sistema. `true` = aberto. */
+async function abrirSistema({ origem }) {
+  mostrarUsuarioNaBarra();
+  const pronto = await loadInitialData();
+  if (!pronto) return false;
+  // Sem esperar: a tela já abriu (a sessão esconde a de acesso ao voltar daqui).
+  void trackAccess(origem === "boot" ? "sessao_restaurada" : "login_google", {
+    tela: origem,
   });
-  await loadConfig({ silent: true });
-  const handledOAuth = await handleOAuthCodeCallback();
-  if (handledOAuth) return;
-  const qs = new URLSearchParams(window.location.search || "");
-  const authError = qs.get("auth_error");
-  const authOk = qs.get("auth") === "google";
-  const sessionFromCallback = authOk ? await waitForAuthSession() : null;
-  const { data } = sessionFromCallback
-    ? { data: { session: sessionFromCallback } }
-    : await sb.auth.getSession();
-  if (hasPasswordRecoveryParams()) {
-    currentUser = null;
-    if (sb) await sb.auth.signOut();
-    clearRecoveryUrl();
-    aplicarSaida({
-      causa: SAIDA_MANUAL,
-      mensagem: passwordResetMessage(),
-      tipo: "warn",
-    });
-    return;
-  }
-  if (isUsableSession(data?.session)) {
-    await handleSignedInSession(data.session, "boot");
-  } else {
-    // A sessão guardada expirou: o skeleton ligado pelo <head> dá lugar ao login.
-    esconderEsqueleto();
-    document.body.classList.remove("config-loading");
-    if (authError) {
-      showAlert(
-        "loginMsg",
-        "Não foi possível finalizar o login Google. Tente novamente escolhendo a conta.",
-        "error",
-      );
-      clearOAuthUrl();
-    } else if (data?.session) {
-      resetSignedOutState(
-        "A sessão não foi concluída. Entre novamente com sua conta Google.",
-        "warn",
-      );
-    }
-  }
+  startAccessHeartbeat();
+  startOnlinePresence();
+  startRealtime();
+  return true;
 }
 
-function hasPasswordRecoveryParams() {
-  const qs = new URLSearchParams(window.location.search || "");
-  const hash = new URLSearchParams(
-    String(window.location.hash || "").replace(/^#/, ""),
-  );
-  // OAuth com Google tambem volta com ?code=...; isso nao e recuperacao de senha.
-  // So trate como recovery quando o tipo vier explicitamente como recovery ou reset=1.
-  return (
-    qs.get("reset") === "1" ||
-    qs.get("type") === "recovery" ||
-    hash.get("type") === "recovery"
-  );
+/* Sem acesso, ou acesso revogado: nada desta pessoa fica no navegador. */
+function ficarSemAcesso() {
+  copiaEmLeitura = null;
+  void apagarCopiaDaSessao();
+  stopRealtime();
+  stopAccessHeartbeat();
+  encerrarEspera();
+  $("appScreen").classList.add("hidden");
 }
 
-function clearRecoveryUrl() {
-  history.replaceState({}, document.title, window.location.pathname);
+/* O perfil mudou com o sistema aberto (USER_UPDATED). */
+async function atualizarPerfilAberto() {
+  mostrarUsuarioNaBarra();
+  await loadPanelPermissions();
+  buildNav();
+  if (!isViewAllowed(currentView)) navigate(startView());
 }
-function clearOAuthUrl() {
-  const qs = new URLSearchParams(window.location.search || "");
-  const hash = new URLSearchParams(
-    String(window.location.hash || "").replace(/^#/, ""),
-  );
-  if (
-    qs.has("code") ||
-    qs.has("auth") ||
-    qs.has("auth_error") ||
-    hash.has("access_token") ||
-    hash.has("refresh_token")
-  ) {
-    history.replaceState({}, document.title, window.location.pathname);
-  }
+
+/*
+  Antes do `signOut()` do botão Sair: auditoria e Realtime. A cópia da sessão
+  fica (entrar de novo é imediato); a do painel de análises, com nomes e notas
+  de candidatos, sai com a pessoa.
+*/
+async function antesDeSair() {
+  await trackAccess("logout", { detalhes: { current_view: currentView } });
+  stopRealtime();
+  await apagarCacheDePayload();
 }
 
 function applyStoredSidebarState() {
@@ -927,164 +585,8 @@ function applyStoredSidebarState() {
   syncSidebarToggle();
 }
 
-async function loginWithGoogle() {
-  if (!sb && !initSupabase()) return;
-  if (!cfgBool("auth_google_enabled", true)) {
-    showAlert(
-      "loginMsg",
-      "Login Google está desativado nas configurações do sistema.",
-      "error",
-    );
-    return;
-  }
-  const btn = $("googleLoginBtn");
-  const btnText = $("googleLoginText");
-  if (btn) {
-    btn.disabled = true;
-    btn.setAttribute("aria-busy", "true");
-  }
-  if (btnText) btnText.textContent = "Entrando no sistema...";
-  showAlert(
-    "loginMsg",
-    "Escolha sua conta institucional na janela do Google.",
-    "warn",
-  );
-  // Como no SIGAV, a janela vazia nasce no próprio clique para não ser
-  // bloqueada pelo navegador enquanto aguardamos a URL segura do Supabase.
-  const popup = openLoginPopup(window);
-  // Para testes e troca de perfil, limpe a sessao local antes do OAuth.
-  // O Google ainda pode ter conta ativa no navegador; prompt=select_account
-  // forca a tela de escolha de conta.
-  await clearLocalAuthState();
-  const redirectTo = getOAuthCallbackUrl(window.location);
-  const domainHint = txt(cfgValue("auth_google_domain_hint"));
-  const queryParams = { prompt: "select_account" };
-  if (domainHint) queryParams.hd = domainHint;
-  const options = {
-    redirectTo,
-    queryParams,
-    ...(popup ? { skipBrowserRedirect: true } : {}),
-  };
-  const { data, error } = await sb.auth.signInWithOAuth({
-    provider: "google",
-    options,
-  });
-  if (error) {
-    try {
-      popup?.close();
-    } catch (_) {}
-    if (btn) {
-      btn.disabled = false;
-      btn.removeAttribute("aria-busy");
-    }
-    if (btnText) btnText.textContent = "Entrar com sua conta institucional";
-    showAlert(
-      "loginMsg",
-      "Falha ao iniciar login Google: " + error.message,
-      "error",
-    );
-    return;
-  }
-  if (popup && data?.url) {
-    popup.location.replace(data.url);
-    monitorLoginPopup(popup);
-  }
-}
-
-function resetGoogleLoginButton() {
-  const btn = $("googleLoginBtn");
-  if (btn) {
-    btn.disabled = false;
-    btn.removeAttribute("aria-busy");
-  }
-  setText("googleLoginText", "Entrar com sua conta institucional");
-}
-
-/*
-  Devolve o botão de acesso quando a pessoa volta do Google sem concluir.
-
-  Abaixo de 768 px não há popup — `supportsLoginPopup` exige essa largura — e o
-  login é um redirecionamento de página inteira. Se a pessoa cancela ou usa o
-  botão Voltar, o navegador restaura esta página, muitas vezes do bfcache, com o
-  DOM exatamente como ficou: botão `disabled` e "Entrando no sistema…".
-
-  Nada o restaurava. `resetGoogleLoginButton()` só era chamado ao deslogar, no
-  monitor do popup e na mensagem do callback — nenhum deles dispara nesse
-  retorno. O botão ficava travado até um recarregamento forçado.
-
-  O listener é registado uma única vez, no carregamento do módulo, e só age
-  quando não há sessão: se o login deu certo, quem manda é o fluxo autenticado.
-*/
-window.addEventListener("pageshow", (event) => {
-  const restauradaDoCache = event.persisted;
-  const veioDoHistorico =
-    performance.getEntriesByType?.("navigation")?.[0]?.type === "back_forward";
-  if (!restauradaDoCache && !veioDoHistorico) return;
-
-  const botao = $("googleLoginBtn");
-  if (!botao?.disabled) return;
-
-  void (async () => {
-    const { estado } = await estadoDaSessao(sb);
-    if (estado === SESSAO_ATIVA) return;
-    resetGoogleLoginButton();
-  })();
-});
-
-function monitorLoginPopup(popup) {
-  const timer = window.setInterval(async () => {
-    if (!popup.closed) return;
-    window.clearInterval(timer);
-    const session = await waitForAuthSession("", 1400);
-    if (isUsableSession(session)) {
-      await handleSignedInSession(session, "oauth_popup");
-      return;
-    }
-    resetGoogleLoginButton();
-    showAlert(
-      "loginMsg",
-      "A janela do Google foi fechada antes de concluir o acesso.",
-      "warn",
-    );
-  }, 400);
-}
-
-window.addEventListener("message", async (event) => {
-  if (event.origin !== window.location.origin) return;
-  if (event.data?.type !== LOGIN_POPUP_MESSAGE) return;
-  const session = await waitForAuthSession("", 5000);
-  if (isUsableSession(session)) {
-    await handleSignedInSession(session, "oauth_popup");
-  } else {
-    resetGoogleLoginButton();
-    showAlert(
-      "loginMsg",
-      "Não foi possível concluir o acesso Google.",
-      "error",
-    );
-  }
-});
-
-/*
-  Saída voluntária. Declara a causa e pede o `signOut()`; quem transforma a
-  aplicação em estado deslogado é o listener de `onAuthStateChange`, dono único
-  dessa transição. A chamada final é rede de segurança, não segundo dono: só
-  age se o evento não tiver chegado, e nunca mostra mensagem.
-*/
-async function logout() {
-  await trackAccess("logout", { detalhes: { current_view: currentView } });
-  stopRealtime();
-  declararSaida(SAIDA_MANUAL);
-  // A cópia da sessão fica (entrar de novo é imediato); a do painel de análises,
-  // com nomes e notas de candidatos, sai com a pessoa.
-  await apagarCacheDePayload();
-  if (sb) await sb.auth.signOut();
-  aplicarSaida();
-}
-
 function openApp(user) {
   document.body.classList.remove("access-request-mode");
-  $("loginScreen").classList.add("hidden");
   $("appScreen").classList.remove("hidden");
   setText("userName", profileDisplayName(profile, user));
   setText("topUserPopoverName", profileDisplayName(profile, user));
@@ -1168,34 +670,12 @@ async function atualizarCopiaDaSessao(sessao, consultas, anteriores) {
 
 async function loadInitialData() {
   /*
-    O skeleton da entrada no lugar da antiga tela de carregamento: a pessoa vê
-    o formato da tela que vai abrir, e não um cartão com etapas. Na recarga,
-    o script do <head> já o ligou; aqui ele é ligado de novo para o login e o
-    retorno do Google, e ajustado ao formato da última tela.
+    O perfil já foi confirmado pela sessão (src/app/sessao.js). O skeleton da
+    entrada e a leitura da cópia começaram em `prepararEntrada`, junto com a
+    consulta do perfil.
   */
-  mostrarEsqueleto(storedView());
-  // Leitura local: corre junto com a consulta do perfil.
-  const copiaLida = lerCopiaDaSessao();
-  const profileOk = await loadProfile();
-  if (!profileOk) {
-    // Sem acesso, ou acesso revogado: nada desta pessoa fica no navegador.
-    void apagarCopiaDaSessao();
-    try {
-      await loadPanels();
-    } catch (error) {
-      console.warn("Falha ao carregar paineis para solicitacao:", error);
-      panels = [...DEFAULT_PANELS];
-    }
-    try {
-      await showAccessRequestState();
-    } catch (error) {
-      console.error("Falha ao exibir solicitacao de acesso:", error);
-      forceAccessRequestFallback(
-        "Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.",
-      );
-    }
-    return false;
-  }
+  const copiaLida = copiaEmLeitura || lerCopiaDaSessao();
+  copiaEmLeitura = null;
   const sessao = {
     usuarioId: currentUser.id,
     acesso: assinaturaDoAcesso(profile, allowedPanelIds),
@@ -1283,145 +763,18 @@ function startView() {
   return systemHomeView();
 }
 
-async function loadProfile() {
-  if (!currentUser?.id) return false;
-  const { data: contextData, error: contextError } =
-    await sb.rpc(RPC_PLATFORM_CONTEXT);
-  const context = !contextError ? normalizePlatformContext(contextData) : null;
-  if (contextError) {
-    profile = null;
-    allowedPanelIds = new Set();
-    platformContextLoaded = false;
-    toast(
-      "Não foi possível verificar suas permissões. Tente novamente.",
-      "error",
-    );
-    return false;
-  }
-  if (context) {
-    profile = context.profile;
-    allowedPanelIds = new Set(context.panelIds);
-    platformContextLoaded = true;
-  } else {
-    // Conta institucional sem perfil: o banco cria o acesso básico e o contexto é relido.
-    if (await garantirAcessoBasico(sb)) return loadProfile();
-    if (contextError)
-      console.info(
-        "Contexto unificado ainda não aplicado; usando contrato compatível.",
-        contextError.message || contextError,
-      );
-    const { data, error } = await sb.rpc("meu_usuario");
-    if (error) {
-      console.warn("Perfil indisponivel para o usuario atual:", error);
-      profile = null;
-      platformContextLoaded = false;
-      return false;
-    }
-    const row = rpcFirst(data);
-    if (!row) {
-      profile = null;
-      platformContextLoaded = false;
-      return false;
-    }
-    // A missing context cannot revive a disabled profile or legacy broad flags.
-    profile = { ...row, ativo: row.ativo !== false, permissoes: {} };
-    platformContextLoaded = false;
-  }
+/* Nome, e-mail e perfil de quem entrou, no topo e na barra. */
+function mostrarUsuarioNaBarra() {
   setText("userName", profileDisplayName(profile, currentUser));
   setText("topUserPopoverName", profileDisplayName(profile, currentUser));
   setText("userEmail", currentUser?.email || profile?.email || "-");
   const badge = $("userProfileBadge");
-  if (badge && profile.perfil) {
+  if (badge && profile?.perfil) {
     const label = roleLabel(profile);
     badge.textContent = label;
     badge.style.display = "inline-block";
     setText("topUserPopoverProfile", label);
   }
-  return true;
-}
-
-function userDisplayName() {
-  const meta = currentUser?.user_metadata || {};
-  return txt(
-    meta.full_name ||
-      meta.name ||
-      meta.nome ||
-      currentUser?.email?.split("@")[0] ||
-      "",
-  );
-}
-
-async function showAccessRequestState() {
-  stopRealtime();
-  stopAccessHeartbeat();
-  esconderEsqueleto();
-  document.body.classList.remove("config-loading");
-  $("appScreen").classList.add("hidden");
-  $("loginScreen").classList.remove("hidden");
-  document.body.classList.add("access-request-mode");
-  setText("accessReqEmail", currentUser?.email || "-");
-  showAlert("loginMsg", "", "");
-  const card = $("accessRequestCard");
-  if (card) card.classList.remove("hidden");
-  const nome = $("accessReqNome");
-  if (nome && !txt(nome.value)) nome.value = userDisplayName();
-  try {
-    await loadMyAccessRequest();
-  } catch (error) {
-    console.warn("Nao foi possivel consultar solicitacao anterior:", error);
-    mostrarStatus(document, {
-      tom: "warn",
-      texto:
-        "Não foi possível consultar seu pedido anterior. Você pode enviar um pedido agora.",
-    });
-    const btn = $("accessRequestBtn");
-    if (btn) btn.disabled = false;
-  }
-}
-
-function forceAccessRequestFallback(message) {
-  stopRealtime();
-  stopAccessHeartbeat();
-  esconderEsqueleto();
-  document.body.classList.remove("config-loading");
-  $("appScreen")?.classList.add("hidden");
-  $("loginScreen")?.classList.remove("hidden");
-  document.body.classList.add("access-request-mode");
-  setText("accessReqEmail", currentUser?.email || "-");
-  showAlert("loginMsg", message || "", message ? "warn" : "");
-  $("accessRequestCard")?.classList.remove("hidden");
-  const nome = $("accessReqNome");
-  if (nome && !txt(nome.value)) nome.value = userDisplayName();
-  const btn = $("accessRequestBtn");
-  if (btn) btn.disabled = false;
-}
-
-// Formulário de solicitação: src/modules/solicitacao-de-acesso.js (por RPC).
-async function loadMyAccessRequest() {
-  if (!sb || !currentUser?.id) return null;
-  return carregarMinhaSolicitacao(sb, document, { usuarioId: currentUser.id });
-}
-
-async function submitAccessRequest() {
-  if (!sb || !currentUser?.id)
-    return showAlert(
-      "loginMsg",
-      "Faça login com Google antes de solicitar acesso.",
-      "warn",
-    );
-  const btn = $("accessRequestBtn");
-  if (btn) btn.disabled = true;
-  // Validação por campo, envio e a situação depois: solicitacao-de-acesso.js.
-  const resultado = await enviarSolicitacao(sb, lerCampos(document));
-  if (resultado.ok) return;
-  if (btn) btn.disabled = false;
-  if (resultado.mensagem)
-    mostrarStatus(document, {
-      tom: "danger",
-      texto:
-        "Não foi possível enviar o pedido: " +
-        friendlyError({ message: resultado.mensagem }),
-    });
 }
 
 function consultaDeConfiguracao() {
@@ -1521,78 +874,16 @@ function applyConfigToUi() {
   setText("skipLink", cfgValue("skip_link_text"));
   setText("offlineBar", cfgValue("offline_message"));
   /*
-    A identidade da tela de acesso só é tocada quando veio do banco.
-
-    Antes, esta secção corria sempre — inclusive pelo caminho de erro de
-    `loadConfig()`, que chama `applyConfigToUi()` com `appConfig` vazio. Os
-    normalizadores devolviam os valores padrão, e `guardarMarca()` gravava-os no
-    cache como se fossem a identidade da instituição. Bastava uma visita não
-    autenticada para contaminar a próxima inicialização: a tela abria com a arte
-    antiga, e só depois do login — quando a configuração real finalmente
-    carregava — é que a identidade correta aparecia.
-
-    Agora exige-se prova dupla: a configuração carregou (`configLoadOk`) **e** a
-    chave em questão veio mesmo na resposta (`loadedConfigKeys`). Sem isso, a
-    tela fica como o arranque a deixou — a última marca válida, se existir, ou
-    neutra. Nunca a identidade antiga apresentada como institucional.
+    A tela de acesso (src/app/entrada/) é desenhada pelo React: a marca dela
+    (arte, cor, logo, saudação e rodapé) e as chaves do login vão para o app,
+    que só grava a identidade quando ela veio mesmo do banco.
   */
-  const marcaDoBanco = (chave) =>
-    configLoadOk && loadedConfigKeys.has(chave) ? cfgValue(chave) : null;
-
-  const fundoDoBanco = marcaDoBanco("auth_access_background_url");
-  const painelDoBanco = marcaDoBanco("auth_access_panel_color");
-  const logoDoBanco = marcaDoBanco("auth_access_logo_url");
-  const saudacaoDoBanco = marcaDoBanco("auth_access_greeting");
-
-  const loginScreen = $("loginScreen");
-  const marcaParaGuardar = {};
-
-  if (loginScreen && fundoDoBanco !== null) {
-    const url = normalizeAccessBackgroundUrl(fundoDoBanco);
-    loginScreen.style.setProperty(
-      "--login-background-image",
-      `url("${url.replace(/["\\]/g, "")}")`,
-    );
-    marcaParaGuardar.backgroundUrl = url;
-  }
-
-  if (loginScreen && painelDoBanco !== null) {
-    const cor = normalizeAccessPanelColor(painelDoBanco);
-    const modo = normalizarModo(cfgValue("auth_access_texto_modo"));
-    // Cor, modo e contraste juntos, pela mesma função que o arranque usa.
-    aplicarCorDoPainel(loginScreen, cor, modo);
-    marcaParaGuardar.panelColor = cor;
-    marcaParaGuardar.textoModo = modo;
-  }
-
-  if (logoDoBanco !== null) {
-    const logo = normalizeAccessLogoUrl(logoDoBanco);
-    setImg("loginLogo", logo, "AgSUS");
-    marcaParaGuardar.logoUrl = logo;
-  }
-
-  if (saudacaoDoBanco !== null) {
-    const saudacao = saudacaoDoBanco || DEFAULT_ACCESS_BRANDING.greeting;
-    setText("loginGreeting", saudacao);
-    marcaParaGuardar.greeting = saudacao;
-  }
-
-  /*
-    Guarda os campos juntos, e só os que vieram do banco. Guardar apenas
-    fundo e cor — como antes — produzia tela híbrida: arte de uma configuração
-    com saudação de outra.
-  */
-  if (Object.keys(marcaParaGuardar).length) guardarMarca(marcaParaGuardar);
-  const googleBtn = $("googleLoginBtn");
-  if (googleBtn) {
-    const enabled = cfgBool("auth_google_enabled", true);
-    googleBtn.style.display = enabled ? "flex" : "none";
-    setText(
-      "googleLoginText",
-      cfgValue("auth_google_button_text") ||
-        "Entrar com sua conta institucional",
-    );
-  }
+  definirMarcaDaConfiguracao({
+    valores: appConfig,
+    carregou: configLoadOk,
+    chaves: loadedConfigKeys,
+  });
+  sessaoDoApp.definirConfiguracao(appConfig);
   setText("sidebarUserLabel", cfgValue("sidebar_user_label"));
   setText("sidebarVersionLabel", cfgValue("sidebar_version_label"));
   setText("sidebarVersion", appVersion());
@@ -1620,30 +911,6 @@ function applyConfigToUi() {
     setAttr(id, "aria-label", cfgValue("external_back_text"));
   });
   aplicarAvisoGlobal();
-  // COGIP rodapé
-  const cogipBlock = document.querySelector(".login-cogip");
-  const cogipParts = [
-    cfgValue("cogip_nome"),
-    cfgValue("cogip_funcao"),
-    cfgValue("cogip_versao"),
-    cfgValue("cogip_dept"),
-    cfgValue("cogip_logo_url"),
-  ].filter(Boolean);
-  if (cogipBlock)
-    cogipBlock.style.display = cogipParts.length ? "flex" : "none";
-  const foot = $("loginFoot");
-  if (foot)
-    foot.textContent = cfgValue("cogip_dept") || cfgValue("footer_text");
-  const cogipName = $("loginCogipName");
-  if (cogipName) cogipName.textContent = cfgValue("cogip_nome");
-  const roleParts = [cfgValue("cogip_funcao"), cfgValue("cogip_versao")].filter(
-    Boolean,
-  );
-  const cogipRole = $("loginCogipRole");
-  if (cogipRole) cogipRole.textContent = roleParts.join(" · ");
-  const cogipVer = $("loginVersion");
-  if (cogipVer) cogipVer.textContent = cfgValue("cogip_versao");
-  setImg("loginCogipLogo", cfgValue("cogip_logo_url"), cfgValue("cogip_nome"));
   /*
     `#sideLogo` não entra mais aqui. A logo da barra lateral tem chave própria
     (`ui_sidebar_logo_url`) e um único dono: `sidebar-branding.js`. Enquanto esta
@@ -2641,16 +1908,27 @@ Object.assign(window, {
   monitoraLoader: loader,
   exitExternalPanel,
   exportPDF,
-  loginWithGoogle,
-  logout,
   navigate,
   refreshData,
   reloadExternal,
-  returnToLogin,
-  submitAccessRequest,
   toggleBrowserFullscreen,
   toggleDarkMode,
   toggleSidebar,
   toggleOnlinePresence,
 });
-boot();
+applyStoredSidebarState();
+applyStoredDisplayModes();
+// A entrada é da sessão do app (src/main.js chama sessaoDoApp.iniciar()).
+sessaoDoApp.assinar(receberSessao);
+sessaoDoApp.ligarSistema({
+  carregarConfiguracao: () => loadConfig({ silent: true }),
+  mostrarEsqueleto: () => mostrarEsqueleto(storedView()),
+  aoVerificar: prepararEntrada,
+  abrir: abrirSistema,
+  aoFicarSemAcesso: ficarSemAcesso,
+  aoAtualizarPerfil: atualizarPerfilAberto,
+  antesDeSair,
+  aoSair: limparEstadoDeslogado,
+  aoLimparSessao: () => apagarCopiaDaSessao(),
+  encerrarEspera,
+});

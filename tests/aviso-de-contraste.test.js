@@ -197,7 +197,7 @@ describe("modo do texto sobre o painel", () => {
     "src/lib/publicacao-de-configuracoes.js",
     "utf8",
   );
-  const boot = readFileSync("src/lib/access-branding-boot.js", "utf8");
+  const boot = readFileSync("src/app/entrada/marca.js", "utf8");
   const cache = readFileSync("src/lib/access-branding-cache.js", "utf8");
   const publico = readFileSync("src/lib/access-branding-publico.js", "utf8");
   const migracao = readFileSync(
