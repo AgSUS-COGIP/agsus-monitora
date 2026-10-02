@@ -42,6 +42,7 @@ import {
 } from "./catalogo.js";
 import { arredondar, escalar, formatarNota, numeroBR } from "./numeros.js";
 import { normalizarRegra } from "./regra.js";
+import { divergenciasDasCotas } from "./convocacao-do-edital.js";
 import { chaveDoGrupo } from "./sorteio.js";
 import { montarVagas, nivelDaVaga } from "./vagas.js";
 
@@ -744,6 +745,7 @@ export function classificar({
   unidade = "",
   dataCorte = null,
   desempates = [],
+  convocacao = null,
 } = {}) {
   const regra = normalizarRegra(regraBruta);
   const avisos = [];
@@ -781,7 +783,21 @@ export function classificar({
         "A regra usa a idade, mas não há data de corte (fim das inscrições): defina na regra ou no cronograma do edital.",
     });
 
-  const vagas = montarVagas({ candidatos, quadro, regra, unidade });
+  const vagas = montarVagas({ candidatos, quadro, regra, unidade, convocacao });
+  for (const frase of divergenciasDasCotas(regra, convocacao))
+    avisos.push({
+      codigo: "COTAS_DIFERENTES_DA_CONVOCACAO",
+      tom: "warning",
+      texto: `Cotas da regra × configuração de convocação do edital — ${frase}`,
+    });
+  for (const v of vagas)
+    if (v.totalNaConvocacao !== null && v.totalNaConvocacao !== undefined)
+      avisos.push({
+        codigo: "VAGAS_DIFERENTES_DA_CONVOCACAO",
+        tom: "warning",
+        vaga: v.chave,
+        texto: `Vaga ${v.codigo || v.cargo}: ${v.total} vaga(s) imediata(s) no quadro do edital × ${v.totalNaConvocacao} na configuração de convocação; valeu o quadro do edital.`,
+      });
   const porVaga = new Map(
     vagas.map((v) => [v.chave, { vaga: v, candidatos: [] }]),
   );
@@ -1165,6 +1181,7 @@ export function classificar({
       total: v.total ?? null,
       vagasPorModalidade: v.porModalidade || null,
       cadastroReserva: Boolean(v.cadastroReserva),
+      origemDasVagas: v.origemDasVagas || null,
       limiteConvocacao: tipo === "CONVOCACAO" ? { limite, origem } : null,
       geral: geral.map(linhaPublica),
       porModalidade: Object.fromEntries(

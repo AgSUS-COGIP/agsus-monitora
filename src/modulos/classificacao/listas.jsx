@@ -44,6 +44,7 @@ const SITUACOES = {
   VAGA: ["aprovado", "Vaga"],
   CR: ["neutro", "CR"],
   CONVOCADO: ["revisar", "Convocado"],
+  APTO: ["aprovado", "Apto"],
 };
 const VAGAS_POR_VEZ = 30;
 
@@ -210,6 +211,12 @@ function Filtros({ resultado, regra, recorte, aoMudar }) {
   );
 }
 
+const ORIGEM_DAS_VAGAS = Object.freeze({
+  CONVOCACAO:
+    "Vagas por modalidade: configuração de convocação do edital (Lista de aprovados).",
+  REGRA: "Vagas por modalidade: percentuais da regra de classificação.",
+});
+
 function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
   return (
     <article className="ui-card classificacao-vaga" data-vaga={vaga.chave}>
@@ -217,6 +224,14 @@ function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
       {vaga.limiteConvocacao ? (
         <p className="ui-texto-secundario">
           Limite da convocação: {vaga.limiteConvocacao.origem}
+        </p>
+      ) : null}
+      {vaga.origemDasVagas && vaga.origemDasVagas !== "QUADRO" ? (
+        <p
+          className="ui-texto-secundario"
+          data-origem-vagas={vaga.origemDasVagas}
+        >
+          {ORIGEM_DAS_VAGAS[vaga.origemDasVagas]}
         </p>
       ) : null}
       {vaga.linhas.length ? (

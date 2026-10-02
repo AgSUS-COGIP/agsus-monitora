@@ -12,6 +12,10 @@
     publicar_lista_classificacao(p_lista)
     obter_lista_classificacao(p_lista)       retrato de uma geração anterior
     registrar_desempate_classificacao(...)   sorteio ou decisão manual
+    listar_configuracao_convocacao()         a configuração de convocação
+    listar_modelos_convocacao()              dos editais (Lista de aprovados):
+                                             as vagas por modalidade saem da
+                                             mesma conta (convocacao-do-edital.js)
 
   A conta é do motor puro (src/lib/classificacao/motor.js), feita no
   componente a partir de `dados`; aqui só a carga, a gravação e a exportação.
@@ -29,6 +33,7 @@ import {
   montarPaginaDaLista,
   nomeDoArquivo,
 } from "../../lib/classificacao/exportacao.js";
+import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
 import { normalizarRegra } from "../../lib/classificacao/regra.js";
 import {
   comTempoLimite,
@@ -44,6 +49,8 @@ const RPC_REGISTRAR_LISTA = "registrar_lista_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
 const RPC_OBTER_LISTA = "obter_lista_classificacao";
 const RPC_REGISTRAR_DESEMPATE = "registrar_desempate_classificacao";
+const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
+const RPC_MODELOS_CONVOCACAO = "listar_modelos_convocacao";
 
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Classificação";
 const TEMPO_LIMITE_MS = 45000;
@@ -183,6 +190,22 @@ export function criarEstadoDaClassificacao({
     }
   }
 
+  /*
+    A configuração de convocação do edital (Lista de aprovados), se houver.
+    Sem acesso ou sem configuração → null: a classificação segue com a regra.
+  */
+  async function carregarConvocacao(id) {
+    try {
+      const [configuracoes, modelos] = await Promise.all([
+        rpc(RPC_CONFIGURACAO_CONVOCACAO),
+        rpc(RPC_MODELOS_CONVOCACAO),
+      ]);
+      return convocacaoDoEdital({ configuracoes, modelos }, id);
+    } catch {
+      return null;
+    }
+  }
+
   /* O edital escolhido: tudo o que o motor precisa. */
   async function escolherEdital(id) {
     const meu = ++pedidoDoEdital;
@@ -203,12 +226,13 @@ export function criarEstadoDaClassificacao({
       ...(outro ? { dados: null } : {}),
     });
     try {
-      const dados = await rpc(RPC_OBTER_EDITAL, {
-        p_edital: id,
-      });
+      const [dados, convocacao] = await Promise.all([
+        rpc(RPC_OBTER_EDITAL, { p_edital: id }),
+        carregarConvocacao(id),
+      ]);
       if (meu !== pedidoDoEdital) return false;
       publicar({
-        dados: dados || null,
+        dados: dados ? { ...dados, convocacao } : null,
         carregandoEdital: false,
         podeEditar: Boolean(dados?.pode_editar),
       });
