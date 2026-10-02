@@ -448,7 +448,9 @@ function getClientSessionId() {
     const key = "agsus_monitora_client_session_id";
     let value = sessionStorage.getItem(key);
     if (!value) {
-      value = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      // Identificador da aba para a auditoria: gerador criptográfico, não
+      // Math.random (apontado pelo CodeQL).
+      value = globalThis.crypto.randomUUID();
       sessionStorage.setItem(key, value);
     }
     return value;
