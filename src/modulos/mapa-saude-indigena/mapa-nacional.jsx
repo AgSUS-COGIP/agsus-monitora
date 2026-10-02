@@ -14,18 +14,30 @@ import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.js
 import { EstadoVazio, classes } from "../../ui/index.js";
 import { LegendaNacional } from "./legenda.jsx";
 import {
+  DURACAO_DA_VOLTA_AO_BRASIL,
   conteudoEmElemento,
   criarMapaDoBrasil,
   iconeDaCasaiNacional,
   enquadrarNoBrasil,
   ligarDicaEPopup,
   podeFlutuar,
+  podeVoar,
   remedir,
+  voarAoBrasil,
   voltarAoBrasil,
 } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.js";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
+
+/*
+  Enquadramento do recorte: o filtro que deixa um só DSEI ou CASAI vira zoom
+  7 nele; mais de um, a caixa deles. A volta de um DSEI parte da sede, no
+  zoom em que o mapa do distrito costuma estar, e voa até o enquadramento.
+*/
+const ZOOM_DO_PONTO = 7;
+const OPCOES_DA_CAIXA = Object.freeze({ padding: [60, 60], maxZoom: 7 });
+const ZOOM_DE_PARTIDA_DA_VOLTA = 7;
 
 /* O traço do leque usa o texto secundário do tema; o cinza-azulado é reserva. */
 function corDoTraco() {
@@ -106,6 +118,7 @@ function LinhaDoTerritorio({ territorio, aoEscolher }) {
           "mapa-si-territorio",
           !vagas && "mapa-si-territorio--sem-vagas",
         )}
+        data-dsei={dsei.k}
         aria-label={`Abrir o DSEI ${dsei.n}: ${plural(vagas, "vaga", "vagas")}${vagas ? `, ${preenchidas}% preenchidas` : ""}`}
         onClick={() => aoEscolher(dsei)}
       >
@@ -153,7 +166,7 @@ export function MapaNacional({
   casais,
   territorios,
   enquadramento,
-  calor,
+  voltaDoDsei = null,
   resumoDaRede,
   carregando,
   acoes,
@@ -163,9 +176,15 @@ export function MapaNacional({
   const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
   const podeEditar = isAdminGlobal(perfil);
   const refDoMapa = useRef(null);
+  const refDaLista = useRef(null);
   const [mapa, definirMapa] = useState(null);
   const camadas = useRef(null);
   const ultimoEnquadramento = useRef("");
+  // A última volta de DSEI já enquadrada e já com o foco devolvido (`vez`).
+  const voltaEnquadrada = useRef(0);
+  const voltaFocada = useRef(0);
+  // Enquanto voa de volta ao Brasil, o "apareceu" do ResizeObserver não salta.
+  const voando = useRef(null);
   // Quantas vezes o enquadramento teve de ser refeito (apareceu, mudou de tamanho).
   const [aparecimentos, aparecer] = useReducer((n) => n + 1, 0);
   const chamadas = usarUltimo({ aoEscolherDsei, aoFiltrarPorBusca });
@@ -186,6 +205,7 @@ export function MapaNacional({
       parar,
     } = criarMapaDoBrasil(L, elemento, {
       aoReenquadrar: () => {
+        if (voando.current) return;
         ultimoEnquadramento.current = "";
         aparecer();
       },
@@ -202,6 +222,7 @@ export function MapaNacional({
     definirMapa(novo);
     return () => {
       parar();
+      voando.current?.();
       novo.off("zoomend", leque);
       novo.remove();
       camadas.current = null;
@@ -224,7 +245,7 @@ export function MapaNacional({
         marcador.bindTooltip(
           conteudoEmElemento(
             document,
-            dicaDaBolha(bolha, resumoDaRede(bolha.dsei), { calor }),
+            dicaDaBolha(bolha, resumoDaRede(bolha.dsei)),
           ),
           { direction: "top" },
         );
@@ -249,35 +270,82 @@ export function MapaNacional({
       casai.addLayer(marcador);
     }
     leque();
-  }, [L, mapa, bolhas, casais, calor, resumoDaRede, chamadas]);
+  }, [L, mapa, bolhas, casais, resumoDaRede, chamadas]);
 
   /*
     Enquadramento: só quando muda o que enquadrar, e só com o mapa à vista —
-    escondido (DSEI aberto) ele não tem tamanho; ao voltar, a chave difere e
-    o enquadramento acontece com a medida nova.
+    escondido (DSEI aberto) ele não tem tamanho e enquadra com a medida nova
+    ao voltar. A volta de um DSEI (`voltaDoDsei`, uma `vez` nova a cada saída)
+    sempre reenquadra: parte do distrito e voa em ~0,8 s até o enquadramento
+    (o Brasil, ou o recorte dos filtros que ficaram). Com menos movimento
+    (prefers-reduced-motion), salta direto, sem animação.
   */
   useEffect(() => {
     if (!mapa || !camadas.current || !visivel) return;
-    if (enquadramento.chave === ultimoEnquadramento.current) return;
+    const volta =
+      voltaDoDsei && voltaDoDsei.vez !== voltaEnquadrada.current
+        ? voltaDoDsei
+        : null;
+    if (!volta && enquadramento.chave === ultimoEnquadramento.current) return;
+    if (volta) voltaEnquadrada.current = volta.vez;
     ultimoEnquadramento.current = enquadramento.chave;
     remedir(mapa);
+    const voar = Boolean(volta) && podeVoar(mapa);
     try {
-      if (enquadramento.modo === "ponto")
-        mapa.setView(enquadramento.pontos[0], 7, { animate: false });
-      else if (enquadramento.modo === "caixa")
-        mapa.fitBounds(L.latLngBounds(enquadramento.pontos), {
-          padding: [60, 60],
-          maxZoom: 7,
-          animate: false,
-        });
+      if (voar) {
+        voando.current?.();
+        mapa.stop?.();
+        if (volta.partida)
+          mapa.setView(volta.partida, ZOOM_DE_PARTIDA_DA_VOLTA, {
+            animate: false,
+          });
+        let prazo = 0;
+        const pousar = () => {
+          clearTimeout(prazo);
+          mapa.off("moveend", pousar);
+          voando.current = null;
+        };
+        // Se a animação for interrompida sem `moveend`, o prazo solta.
+        prazo = setTimeout(pousar, DURACAO_DA_VOLTA_AO_BRASIL * 1000 + 400);
+        mapa.on("moveend", pousar);
+        voando.current = pousar;
+      }
+      const duracao = { duration: DURACAO_DA_VOLTA_AO_BRASIL };
+      if (enquadramento.modo === "ponto") {
+        const [ponto] = enquadramento.pontos;
+        if (voar) mapa.flyTo(ponto, ZOOM_DO_PONTO, duracao);
+        else mapa.setView(ponto, ZOOM_DO_PONTO, { animate: false });
+      } else if (enquadramento.modo === "caixa") {
+        const caixa = L.latLngBounds(enquadramento.pontos);
+        if (voar) mapa.flyToBounds(caixa, { ...OPCOES_DA_CAIXA, ...duracao });
+        else mapa.fitBounds(caixa, { ...OPCOES_DA_CAIXA, animate: false });
+      } else if (voar) voarAoBrasil(L, mapa);
       else enquadrarNoBrasil(L, mapa);
     } catch {
       // mapa sem tamanho ainda; o ResizeObserver reenquadra
+      voando.current?.();
     }
     camadas.current.soltar();
     // Se o enquadramento não mudou o zoom, o `zoomend` não dispara.
     camadas.current.leque();
-  }, [L, mapa, enquadramento, visivel, aparecimentos]);
+  }, [L, mapa, enquadramento, visivel, aparecimentos, voltaDoDsei]);
+
+  /*
+    Quem saiu do DSEI pelo mapa ("Voltar ao Brasil" ou Esc) não perde o
+    foco: ele volta à linha do DSEI em "Territórios por vagas" ou, se ela não
+    estiver na lista, ao mapa. Pelo chip da página, o foco fica onde está.
+  */
+  useEffect(() => {
+    if (!visivel || !voltaDoDsei?.focar) return;
+    if (voltaDoDsei.vez === voltaFocada.current) return;
+    voltaFocada.current = voltaDoDsei.vez;
+    const linha = [
+      ...(refDaLista.current?.querySelectorAll(".mapa-si-territorio") || []),
+    ].find((botao) => botao.dataset.dsei === voltaDoDsei.k);
+    const alvo = linha || refDoMapa.current;
+    alvo?.focus?.({ preventScroll: true });
+    linha?.scrollIntoView?.({ block: "nearest" });
+  }, [visivel, voltaDoDsei]);
 
   // Voltou a aparecer, ou mudou para tela cheia: o Leaflet remede.
   useEffect(() => {
@@ -356,14 +424,11 @@ export function MapaNacional({
             </EstadoVazio>
           )}
           {mapa ? (
-            <LegendaNacional
-              mapa={mapa}
-              calor={calor}
-              temAbrangencia={temAbrangencia}
-            />
+            <LegendaNacional mapa={mapa} temAbrangencia={temAbrangencia} />
           ) : null}
         </div>
         <aside
+          ref={refDaLista}
           className="mapa-si-lista"
           id={`${idDoMapa}-painel-lateral`}
           aria-label={

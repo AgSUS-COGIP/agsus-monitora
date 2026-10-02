@@ -31,25 +31,11 @@ const codigos = (linha, opcoes = {}) =>
   motivosDeAtencao(linha, { hoje: HOJE, ...opcoes }).map((m) => m.codigo);
 
 describe("cada motivo", () => {
-  it("prazo: próxima etapa em até 3 dias (hoje, amanhã, em N dias)", () => {
-    expect(
-      motivosDeAtencao(aberto({ cronograma_dias_para_proxima: 3 }), {
-        hoje: HOJE,
-      }),
-    ).toEqual([{ codigo: "prazo", rotulo: "Etapa em 3 dias", tom: "perigo" }]);
-    expect(
-      motivosDeAtencao(aberto({ cronograma_dias_para_proxima: 0 }), {
-        hoje: HOJE,
-      })[0].rotulo,
-    ).toBe("Etapa hoje");
-    expect(
-      motivosDeAtencao(aberto({ cronograma_dias_para_proxima: 1 }), {
-        hoje: HOJE,
-      })[0].rotulo,
-    ).toBe("Etapa amanhã");
-    // 97/2026: "Resultado final da Entrevista" em 5 dias ainda não é crítico.
-    expect(codigos(aberto({ cronograma_dias_para_proxima: 5 }))).toEqual([]);
-    expect(codigos(aberto({ cronograma_dias_para_proxima: null }))).toEqual([]);
+  it("etapa chegando (hoje, amanhã, em até 3 dias) é agenda, não crítico", () => {
+    for (const dias of [0, 1, 3, 5, null])
+      expect(codigos(aberto({ cronograma_dias_para_proxima: dias }))).toEqual(
+        [],
+      );
   });
 
   it("atrasada: o fim do cronograma passou e o edital não concluiu", () => {
@@ -196,11 +182,7 @@ describe("regras gerais", () => {
       }),
       { hoje: HOJE },
     );
-    expect(motivos.map((m) => m.codigo)).toEqual([
-      "atrasada",
-      "prazo",
-      "sem_inscritos",
-    ]);
+    expect(motivos.map((m) => m.codigo)).toEqual(["atrasada", "sem_inscritos"]);
     expect(gravidade(motivos)).toBe(1);
     expect(gravidade([])).toBe(99);
   });
@@ -211,14 +193,7 @@ describe("regras gerais", () => {
       diasParado: 15,
       contratacaoMinima: 0.5,
     });
-    const limites = {
-      ...LIMITES_DO_CRITICO,
-      diasDoPrazo: 7,
-      contratacaoMinima: 0.8,
-    };
-    expect(
-      codigos(aberto({ cronograma_dias_para_proxima: 6 }), { limites }),
-    ).toEqual(["prazo"]);
+    const limites = { ...LIMITES_DO_CRITICO, contratacaoMinima: 0.8 };
     expect(
       motivosDeAtencao(
         { status: "Concluído", vagas_total: 10, contratados: 7 },

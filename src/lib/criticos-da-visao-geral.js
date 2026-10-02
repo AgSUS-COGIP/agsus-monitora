@@ -7,8 +7,6 @@
   Edital aberto (nem concluído nem cancelado):
   - atrasada — o fim do cronograma (`data_fim`) já passou e o edital não
     concluiu: "Etapa atrasada há N dias";
-  - prazo — a próxima etapa do cronograma começa em até 3 dias
-    (`cronograma_dias_para_proxima`): "Etapa hoje / amanhã / em N dias";
   - parado — em andamento, sem etapa em curso hoje e sem mudança de etapa
     (início ou fim de uma etapa do cronograma) há 15 dias ou mais: "Parado há
     N dias". Precisa das etapas do cronograma (`listar_acompanhamento_da_
@@ -17,7 +15,9 @@
     Edital e Inscrições) e com 0 inscritos.
   Edital concluído:
   - contratação baixa — vagas imediatas contratadas abaixo de 50% das vagas.
-  Cancelado nunca é crítico.
+  Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda,
+  não problema: não faz o edital crítico (pedido de 02/10) — fica nas
+  boas-vindas e na cor da próxima etapa da tabela.
 
   Os limites ficam em LIMITES_DO_CRITICO (e em docs/aya/regras-da-visao-geral.md).
 */
@@ -30,7 +30,7 @@ import {
 } from "./indicadores-do-monitoramento.js";
 
 export const LIMITES_DO_CRITICO = Object.freeze({
-  /** Próxima etapa em até N dias. */
+  /** Próxima etapa em até N dias: só a cor vermelha na tabela (não é crítico). */
   diasDoPrazo: 3,
   /** Sem mudança de etapa há N dias ou mais. */
   diasParado: 15,
@@ -41,10 +41,9 @@ export const LIMITES_DO_CRITICO = Object.freeze({
 /* Do mais grave ao menos grave: a ordem da tabela e dos selos. */
 export const MOTIVOS_DO_CRITICO = Object.freeze({
   atrasada: Object.freeze({ peso: 1, tom: "perigo" }),
-  prazo: Object.freeze({ peso: 2, tom: "perigo" }),
-  parado: Object.freeze({ peso: 3, tom: "alerta" }),
-  sem_inscritos: Object.freeze({ peso: 4, tom: "alerta" }),
-  contratacao_baixa: Object.freeze({ peso: 5, tom: "alerta" }),
+  parado: Object.freeze({ peso: 2, tom: "alerta" }),
+  sem_inscritos: Object.freeze({ peso: 3, tom: "alerta" }),
+  contratacao_baixa: Object.freeze({ peso: 4, tom: "alerta" }),
 });
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -103,12 +102,6 @@ const emAndamento = (linha) =>
     .toLowerCase()
     .includes("andamento");
 
-function rotuloDoPrazo(dias) {
-  if (dias === 0) return "Etapa hoje";
-  if (dias === 1) return "Etapa amanhã";
-  return `Etapa em ${dias} dias`;
-}
-
 /**
  * Os motivos de atenção do edital: `[{ codigo, rotulo, tom }]`, do mais grave
  * ao menos grave; vazio = não é crítico.
@@ -152,17 +145,6 @@ export function motivosDeAtencao(
         `Etapa atrasada há ${plural(dia - fim, "dia", "dias")}`,
       ),
     );
-
-  const bruto = linha.cronograma_dias_para_proxima;
-  const dias = Number(bruto);
-  if (
-    bruto !== null &&
-    bruto !== undefined &&
-    bruto !== "" &&
-    Number.isFinite(dias)
-  )
-    if (dias >= 0 && dias <= limites.diasDoPrazo)
-      motivos.push(motivo("prazo", rotuloDoPrazo(dias)));
 
   if (
     !atrasada &&

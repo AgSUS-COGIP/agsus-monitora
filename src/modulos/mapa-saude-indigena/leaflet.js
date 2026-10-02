@@ -14,7 +14,10 @@
   `createElementNS`): popups, dicas e ícones, sem `innerHTML`.
 */
 import { BRASIL_BOUNDS } from "../../lib/brasil-bounds.js";
-import { FOLGA_DO_BRASIL } from "../../lib/enquadramento-do-brasil.js";
+import {
+  FOLGA_DO_BRASIL,
+  ZOOM_NACIONAL,
+} from "../../lib/enquadramento-do-brasil.js";
 import { criarCamadaComRecuo } from "../../modules/map-base-layer-switcher.js";
 import {
   CORES_DO_MAPA,
@@ -36,6 +39,14 @@ export function obterLeaflet() {
 export function podeFlutuar() {
   return (
     globalThis.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches ===
+    true
+  );
+}
+
+/* Quem pediu menos movimento ao sistema não vê o mapa voar: ele salta. */
+export function prefereMenosMovimento() {
+  return (
+    globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ===
     true
   );
 }
@@ -189,6 +200,30 @@ export function enquadrarNoBrasil(L, mapa) {
   mapa.fitBounds(limitesDoBrasil(L), {
     padding: [FOLGA_DO_BRASIL, FOLGA_DO_BRASIL],
     animate: false,
+  });
+}
+
+/*
+  A volta de um DSEI ao Brasil: o mesmo enquadramento de `enquadrarNoBrasil`
+  (folga das bolhas, escala nacional de ≈ 500 km no máximo; o `map-guard`
+  desce o mínimo se a altura atual não couber), mas voando em `duracao`
+  segundos. Quem decide se anima é `podeVoar` (menos movimento não voa).
+*/
+export const DURACAO_DA_VOLTA_AO_BRASIL = 0.8;
+
+export function podeVoar(mapa) {
+  return typeof mapa?.flyToBounds === "function" && !prefereMenosMovimento();
+}
+
+export function voarAoBrasil(
+  L,
+  mapa,
+  { duracao = DURACAO_DA_VOLTA_AO_BRASIL } = {},
+) {
+  mapa.flyToBounds(limitesDoBrasil(L), {
+    padding: [FOLGA_DO_BRASIL, FOLGA_DO_BRASIL],
+    maxZoom: ZOOM_NACIONAL,
+    duration: duracao,
   });
 }
 

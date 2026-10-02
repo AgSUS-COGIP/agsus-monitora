@@ -13,7 +13,6 @@ import {
   CORES_DO_MAPA,
   FORMAS,
   TIPOS_DA_LEGENDA,
-  corDoCalor,
   tipoDaUnidade,
 } from "../src/lib/mapa-saude-indigena/formas.js";
 import {
@@ -102,7 +101,7 @@ describe("contagens e bolhas do mapa nacional", () => {
     const ceara = bolhas[1];
     expect(ceara.estilo.fillColor).toBe(CORES_DO_MAPA.comEdital.preenchimento);
     expect(ceara.estilo.weight).toBe(3);
-    expect(ceara.pctOciosas).toBe(47);
+    expect(ceara.ociosas).toBe(7);
   });
 
   it("com filtro ativo, só os DSEIs com edital no recorte", () => {
@@ -112,25 +111,6 @@ describe("contagens e bolhas do mapa nacional", () => {
       filtroAtivo: true,
     });
     expect(bolhas.map((b) => b.chave)).toEqual(["CEARA"]);
-  });
-
-  it("no calor, a cor é a faixa de ociosidade; sem edital, cinza", () => {
-    const bolhas = bolhasDosDsei({
-      dseis,
-      contagens: contarPorDsei([edital("DSEI Ceará", 10, 7)]),
-      calor: true,
-    });
-    const ceara = bolhas.find((b) => b.chave === "CEARA");
-    expect(ceara.estilo.fillColor).toBe(corDoCalor(70));
-    expect(ceara.estilo.fillColor).toBe("#d92d3a");
-    expect(bolhas.find((b) => b.chave === "YANOMAMI").estilo.fillColor).toBe(
-      CORES_DO_MAPA.semEditalNoCalor.preenchimento,
-    );
-    expect([corDoCalor(10), corDoCalor(25), corDoCalor(45)]).toEqual([
-      "#0b8f58",
-      "#f2b705",
-      "#f2730c",
-    ]);
   });
 
   it("territórios por vagas: ordem, preenchimento e situação", () => {
@@ -151,14 +131,14 @@ describe("contagens e bolhas do mapa nacional", () => {
       dseis: [dseis[0]],
       contagens: contarPorDsei(linhas),
     });
-    const dica = dicaDaBolha(ceara, ["Polos base: 12"], { calor: true });
+    const dica = dicaDaBolha(ceara, ["Polos base: 12"]);
     expect(dica.titulo).toBe("DSEI Ceará");
     expect(dica.linhas).toEqual([
       "População do DSEI: 400 indígenas",
       "Polos base: 12",
       "Estados administrativos: CE",
       "Processos seletivos: 2",
-      "Ociosidade: 47% (7 de 15 vagas)",
+      "Vagas ociosas: 7 de 15",
     ]);
   });
 
