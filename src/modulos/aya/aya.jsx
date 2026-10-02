@@ -667,7 +667,7 @@ export function Aya({
           }}
           {...manipuladores}
         >
-          <img src={AVATAR} alt="" width="64" height="64" draggable="false" />
+          <img src={AVATAR} alt="" width="52" height="52" draggable="false" />
           <span className="aya-selo-beta" aria-hidden="true">
             Beta
           </span>
@@ -690,7 +690,7 @@ export function Aya({
             </h2>
             <div className="aya-apresentacao">
               <span className="aya-avatar">
-                <img src={AVATAR} alt="" width="48" height="48" />
+                <img src={AVATAR} alt="" width="50" height="50" />
                 <span className="aya-selo-beta">Beta</span>
               </span>
               <div className="aya-apresentacao__textos">

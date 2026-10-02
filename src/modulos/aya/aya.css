@@ -33,21 +33,22 @@
   right: clamp(14px, 2vw, 24px);
   bottom: clamp(16px, 2vw, 24px);
   display: grid;
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
   place-items: center;
   padding: 0;
-  border: 0;
+  border: 3px solid var(--brand-primary);
   border-radius: var(--radius-full);
-  background: transparent;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
   cursor: grab;
   pointer-events: auto;
   touch-action: none;
 }
 
 .aya-arara img {
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
   user-select: none;
 }
@@ -58,11 +59,14 @@
   outline-offset: 2px;
 }
 
+/* Na borda de baixo do círculo, fora do rosto da arara (no botão e no painel). */
 .aya-selo-beta {
   position: absolute;
-  top: -2px;
-  right: -4px;
-  padding: 1px 6px;
+  right: 50%;
+  bottom: -9px;
+  transform: translateX(50%);
+  padding: 0 6px;
+  border: 2px solid var(--surface-card);
   border-radius: var(--radius-full);
   background: var(--brand-primary);
   color: var(--surface-card);
@@ -101,9 +105,9 @@
 
 .aya-painel__cabecalho {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  padding: 16px 12px 12px 16px;
+  padding: 18px 12px 14px 16px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -112,18 +116,31 @@
   min-width: 0;
   flex: 1;
   align-items: center;
+  padding-bottom: 6px;
   gap: 12px;
 }
 
+/*
+  Avatar como o da referência (Bel, EV.G): círculo com aro na cor da marca e a
+  arara inteira dentro; o selo Beta fica na borda de baixo, fora do rosto. Antes,
+  com 48px e o selo no canto de cima, o selo tapava a cabeça (relato de 02/10).
+*/
 .aya-avatar {
   position: relative;
+  display: grid;
   flex: none;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 3px solid var(--brand-primary);
+  border-radius: var(--radius-full);
+  background: var(--surface-raised);
 }
 
 .aya-avatar img {
   display: block;
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   object-fit: contain;
 }
 
@@ -504,5 +521,12 @@
 @media print {
   .aya {
     display: none;
+  }
+}
+
+/* Celular: acima do menu inferior, para não tapar o último item. */
+@media (max-width: 900px) {
+  .aya-arara {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
   }
 }
