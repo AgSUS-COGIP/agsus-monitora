@@ -290,6 +290,12 @@ export const CONTRATO_RPC = {
     resumo:
       "Todas as etapas de cronograma dos editais ativos, num pedido só (tela Cronograma).",
   },
+  listar_acompanhamento_da_visao_geral: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Visão geral de uma área: etapas do cronograma e, por edital com lista vigente, aprovados, com status, contratados e desistentes (crítico parado, Próximos 7 dias e Pós-resultado; migration 20261002131000). Sem ela, a tela usa só as linhas.",
+  },
   get_monitoramento_dashboard_payload: {
     argumentos: [],
     critica: false,

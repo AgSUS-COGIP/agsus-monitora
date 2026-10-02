@@ -1,5 +1,10 @@
 import { formatNumberBR } from "../../lib/formatters.js";
 import {
+  contratacoesDoCadastroReserva,
+  contratadasImediatas,
+  vagasSemContratacao,
+} from "../../lib/indicadores-do-monitoramento.js";
+import {
   dataCurta,
   linkSeguro,
   statusCanonico,
@@ -42,6 +47,7 @@ export function GavetaDoProcesso({ linha, aoFechar, aoVoltarALinha }) {
         >
           <GradeDeKv rotulo="Situação">
             <Kv rotulo="Status">{statusCanonico(linha.status)}</Kv>
+            <Kv rotulo="Fase">{linha.fase || "-"}</Kv>
             <Kv rotulo="Etapa atual">
               {linha.cronograma_atividade_atual || linha.etapa || "-"}
             </Kv>
@@ -49,14 +55,22 @@ export function GavetaDoProcesso({ linha, aoFechar, aoVoltarALinha }) {
               {linha.cronograma_proxima_atividade || "-"}
             </Kv>
             <Kv rotulo="Prazo">{urgencia.rotulo}</Kv>
+            {linha.atencao?.length ? (
+              <Kv rotulo="Atenção">
+                {linha.atencao.map((m) => m.rotulo).join(" · ")}
+              </Kv>
+            ) : null}
           </GradeDeKv>
         </div>
 
         <Secao icone="fa-briefcase" titulo="Provimento" secao="provimento">
           <GradeDeKv>
             <Kv rotulo="Vagas">{fmt(linha.vagas_total)}</Kv>
-            <Kv rotulo="Contratações">{fmt(linha.contratados)}</Kv>
-            <Kv rotulo="Ociosas">{fmt(linha.vagas_ociosas)}</Kv>
+            <Kv rotulo="Contratadas">{fmt(contratadasImediatas(linha))}</Kv>
+            <Kv rotulo="Cadastro reserva">
+              {fmt(contratacoesDoCadastroReserva(linha))}
+            </Kv>
+            <Kv rotulo="Sem contratação">{fmt(vagasSemContratacao(linha))}</Kv>
             <Kv rotulo="Inscritos">{fmt(linha.inscritos)}</Kv>
           </GradeDeKv>
         </Secao>

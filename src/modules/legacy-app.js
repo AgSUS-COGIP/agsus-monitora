@@ -1090,7 +1090,7 @@ async function loadData(options = {}) {
       buildNav();
       return true;
     }
-    const [payloadResponse, tableResponse] = await (options.consulta ||
+    const [, tableResponse] = await (options.consulta ||
       consultaDoMonitoramento());
     if (runId !== loadDataRunCounter) return false;
     const { data, error } = tableResponse;
@@ -1102,10 +1102,8 @@ async function loadData(options = {}) {
     dataLoadedAtLeastOnce = true;
     /*
       As linhas vão para dados-do-monitoramento.js; a Visão geral (React)
-      recorta, e o mapa da Saúde Indígena lê o recorte dela. O resumo do
-      servidor só vale sem recorte.
+      recorta, e o mapa da Saúde Indígena lê o recorte dela.
     */
-    estadoDaVisaoGeral.definirResumoDoServidor(payloadResponse || null);
     publicarLinhasDoMonitoramento(rows);
     return true;
   })();

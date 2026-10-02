@@ -1,36 +1,50 @@
 /*
   A VISÃO GERAL (página `dashboard`), sem DOM nem rede — as regras que
-  moravam em `legacy-app.js` (applyFilters, renderKpis, renderStatusSummary,
-  renderMultiUnits, renderChart, renderRisks, renderTable, exportCSV) e nos
-  remendos `health-*` da tabela e do gráfico.
+  moravam em `legacy-app.js` (applyFilters, renderKpis, renderTable,
+  exportCSV) e nos remendos `health-*` da tabela.
 
   Saúde Indígena, SEDE e Projetos abrem a mesma página, com os editais da
   área atual (`CO_AREA`, `linhasDaArea`). O que muda por área é o bloco do
-  mapa (`visao-geral-da-area.js`); o resto mora aqui.
+  mapa (`visao-geral-da-area.js`) e, em Projetos, "Processos por projeto"; o
+  resto mora aqui.
 
-  O recorte: seis filtros de escolha múltipla (Unidade, Edital, Etapa,
-  Status, Risco, UF; comparação sem acento nem caixa, `filtros-do-mapa.js`),
-  a busca livre e o DSEI aberto no mapa. KPIs, mapa, resumo, gráfico,
-  atenção, tabela e exportação partem do mesmo recorte.
+  Cada linha ganha, antes do recorte (`enriquecerLinhas`), a fase calculada
+  (`fases-do-processo.js`), os motivos de atenção (`criticos-da-visao-geral.js`)
+  e as pendências pós-resultado. O recorte: cinco filtros de escolha múltipla
+  (Unidade, Edital, Status, Fase, UF; comparação sem acento nem caixa,
+  `filtros-do-mapa.js`), a busca livre, o DSEI aberto no mapa e um atalho
+  (Críticos ou uma pendência do Pós-resultado). KPIs, mapa, blocos, tabela e
+  exportação partem do mesmo recorte.
 */
 
 import { hojeEmBrasilia } from "./cronograma-do-edital.js";
-import { sanitizeCsvCell } from "./csv-security.js";
 import {
-  compararEditais,
-  ordemDoRisco,
-  tomDoRisco,
-  tomDoStatusDoEdital,
-} from "./editais-do-nucleo.js";
+  diaDoCalendario,
+  gravidade,
+  LIMITES_DO_CRITICO,
+  motivosDeAtencao,
+} from "./criticos-da-visao-geral.js";
+import { sanitizeCsvCell } from "./csv-security.js";
+import { tomDoRisco, tomDoStatusDoEdital } from "./editais-do-nucleo.js";
+import {
+  faseDoEdital,
+  FASES,
+  ORDEM_DAS_FASES,
+  tomDaFase,
+} from "./fases-do-processo.js";
 import {
   linhaAtende,
   opcoesDoCampo,
   podarSelecoes,
 } from "./filtros-do-mapa.js";
 import {
-  ehRiscoAtivo,
+  contratadasImediatas,
+  ehCancelado,
+  ehConcluido,
+  ehCritica,
   indicadoresDoMonitoramento,
-  somarCampo,
+  temResultado,
+  vagasSemContratacao,
 } from "./indicadores-do-monitoramento.js";
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -43,23 +57,12 @@ const pct = (parte, total) => (total ? Math.round((parte / total) * 100) : 0);
 
 // ── Filtros ──────────────────────────────────────────────────────────────
 
-/* Os seis filtros, na ordem da página. `mais`: ficam em "Mais opções". */
+/* Os cinco filtros, na ordem da página. `mais`: ficam em "Mais opções". */
 export const CAMPOS_DO_FILTRO = Object.freeze([
   Object.freeze({ campo: "unidade", rotulo: "Unidade", todos: "Todas" }),
   Object.freeze({ campo: "edital", rotulo: "Edital", todos: "Todos" }),
   Object.freeze({ campo: "status", rotulo: "Status", todos: "Todos" }),
-  Object.freeze({
-    campo: "etapa",
-    rotulo: "Etapa",
-    todos: "Todas",
-    mais: true,
-  }),
-  Object.freeze({
-    campo: "risco",
-    rotulo: "Risco",
-    todos: "Todos",
-    mais: true,
-  }),
+  Object.freeze({ campo: "fase", rotulo: "Fase", todos: "Todas", mais: true }),
   Object.freeze({ campo: "uf", rotulo: "UF", todos: "Todas", mais: true }),
 ]);
 export const CAMPOS = Object.freeze(CAMPOS_DO_FILTRO.map((c) => c.campo));
@@ -92,17 +95,7 @@ const comoListas = (conjuntos) =>
 export const camposAtivos = (filtros) =>
   CAMPOS.filter((campo) => (filtros?.[campo] || []).length).length;
 
-/* A ordem das opções: edital por ano e número, etapa/status/risco pelo fluxo. */
-const ORDEM_DA_ETAPA = [
-  "Elaboração do Edital",
-  "Impugnação do Edital",
-  "Período de inscrição",
-  "Análise Curricular",
-  "Resultado Preliminar",
-  "Abertura do Prazo de Recurso",
-  "Entrevistas",
-  "Resultado final do Processo Seletivo",
-];
+/* A ordem das opções: edital por ano e número, status e fase pelo fluxo. */
 const ORDEM_DO_STATUS = [
   "Em Andamento",
   "Andamento",
@@ -111,7 +104,6 @@ const ORDEM_DO_STATUS = [
   "Cancelado",
   "Cancelada",
 ];
-const ORDEM_DO_RISCO = ["Alto", "Médio", "Medio", "Baixo"];
 
 /** Texto sem acento, sem caixa e com espaços colapsados (busca e ordem). */
 export function normalizarTexto(valor) {
@@ -145,13 +137,11 @@ export function compararValoresDoFiltro(campo, a, b) {
     if (!ea && eb) return 1;
   }
   const lista =
-    campo === "etapa"
-      ? ORDEM_DA_ETAPA
-      : campo === "status"
-        ? ORDEM_DO_STATUS
-        : campo === "risco"
-          ? ORDEM_DO_RISCO
-          : null;
+    campo === "status"
+      ? ORDEM_DO_STATUS
+      : campo === "fase"
+        ? ORDEM_DAS_FASES
+        : null;
   if (lista) {
     const diferenca = posicaoNaLista(a, lista) - posicaoNaLista(b, lista);
     if (diferenca) return diferenca;
@@ -187,6 +177,103 @@ export function podarFiltros(linhas, filtros) {
     : filtros;
 }
 
+// ── Linhas enriquecidas ──────────────────────────────────────────────────
+
+/*
+  O que vem de `listar_acompanhamento_da_visao_geral`: as etapas do cronograma
+  e o resumo das listas de aprovados, por edital. `null` enquanto não chega
+  (ou com o banco sem a função): crítico "parado", agenda completa e as
+  pendências de lista ficam de fora.
+*/
+export function acompanhamentoDaResposta(resposta) {
+  if (!resposta || typeof resposta !== "object") return null;
+  const etapasPorEdital = new Map();
+  for (const etapa of Array.isArray(resposta.etapas) ? resposta.etapas : []) {
+    const id = txt(etapa?.monitoramento_id);
+    if (!id) continue;
+    if (!etapasPorEdital.has(id)) etapasPorEdital.set(id, []);
+    etapasPorEdital.get(id).push(etapa);
+  }
+  const listasPorEdital = new Map();
+  for (const lista of Array.isArray(resposta.listas) ? resposta.listas : []) {
+    const id = txt(lista?.monitoramento_id);
+    if (id) listasPorEdital.set(id, lista);
+  }
+  return { etapasPorEdital, listasPorEdital };
+}
+
+/* As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO). */
+function pendenciasDaLinha(linha, lista, temListas, limites) {
+  if (ehCancelado(linha) || !temResultado(linha)) return [];
+  const codigos = [];
+  if (temListas && !lista) codigos.push("sem_lista");
+  if (lista && num(lista.aprovados) > 0 && num(lista.com_status) === 0)
+    codigos.push("sem_status");
+  const vagas = num(linha.vagas_total);
+  if (
+    ehConcluido(linha) &&
+    vagas > 0 &&
+    contratadasImediatas(linha) / vagas < limites.contratacaoMinima
+  )
+    codigos.push("contratacao_baixa");
+  if (lista && num(lista.desistentes) > 0) codigos.push("desistencias");
+  return codigos;
+}
+
+/**
+ * Cada linha com `fase`, `atencao` (motivos do crítico), `pos_resultado`
+ * (pendências) e `desistentes` (da lista vigente). `hoje`: "AAAA-MM-DD".
+ */
+export function enriquecerLinhas(
+  linhas,
+  { hoje, acompanhamento = null, limites = LIMITES_DO_CRITICO } = {},
+) {
+  const temListas = Boolean(acompanhamento?.listasPorEdital);
+  return (Array.isArray(linhas) ? linhas : []).map((linha) => {
+    const id = txt(linha?.id);
+    const fase = faseDoEdital(linha);
+    const comFase = { ...linha, fase };
+    const etapas = acompanhamento?.etapasPorEdital?.get(id) || null;
+    const lista = acompanhamento?.listasPorEdital?.get(id) || null;
+    return {
+      ...comFase,
+      atencao: motivosDeAtencao(comFase, { hoje, etapas, limites }),
+      pos_resultado: pendenciasDaLinha(comFase, lista, temListas, limites),
+      desistentes: lista ? num(lista.desistentes) : 0,
+    };
+  });
+}
+
+// ── Atalhos (KPI Críticos e pendências do Pós-resultado) ─────────────────
+
+export const PENDENCIAS_POS_RESULTADO = Object.freeze([
+  Object.freeze({ codigo: "sem_lista", rotulo: "Sem lista de aprovados" }),
+  Object.freeze({ codigo: "sem_status", rotulo: "Lista sem status" }),
+  Object.freeze({
+    codigo: "contratacao_baixa",
+    rotulo: `Contratação abaixo de ${Math.round(LIMITES_DO_CRITICO.contratacaoMinima * 100)}%`,
+  }),
+  Object.freeze({ codigo: "desistencias", rotulo: "Desistências" }),
+]);
+
+/** O rótulo do atalho no chip do recorte. */
+export function rotuloDoAtalho(atalho) {
+  if (atalho === "criticos") return "Críticos";
+  const codigo = txt(atalho).replace(/^pos:/, "");
+  return (
+    PENDENCIAS_POS_RESULTADO.find((p) => p.codigo === codigo)?.rotulo || ""
+  );
+}
+
+/** A linha entra no atalho? Sem atalho, sempre. */
+export function linhaAtendeAoAtalho(linha, atalho) {
+  if (!atalho) return true;
+  if (atalho === "criticos") return ehCritica(linha);
+  if (atalho.startsWith("pos:"))
+    return (linha?.pos_resultado || []).includes(atalho.slice(4));
+  return true;
+}
+
 // ── Busca e recorte ──────────────────────────────────────────────────────
 
 const CAMPOS_DA_BUSCA = [
@@ -197,9 +284,9 @@ const CAMPOS_DA_BUSCA = [
   "uf",
   "status",
   "etapa",
+  "fase",
   "responsavel",
   "cargos",
-  "risco",
   "observacoes",
   "observacoes_internas",
   "link_edital",
@@ -215,9 +302,10 @@ export function linhaCasaComBusca(linha, busca) {
 
 /* O valor de uma coluna para ordenar a tabela. */
 export function valorParaOrdenar(linha, campo) {
-  if (["vagas_total", "contratados", "vagas_ociosas"].includes(campo))
+  if (["vagas_total", "contratados"].includes(campo))
     return num(linha?.[campo]);
-  if (campo === "risco") return ordemDoRisco(linha?.risco);
+  if (campo === "vagas_ociosas") return vagasSemContratacao(linha);
+  if (campo === "atencao") return gravidade(linha?.atencao);
   if (campo === "data_inicio" || campo === "data_fim") {
     const valor = txt(linha?.[campo]);
     const tempo = valor ? Date.parse(valor) : NaN;
@@ -227,12 +315,24 @@ export function valorParaOrdenar(linha, campo) {
 }
 
 /*
-  Sem ordenação escolhida, a fila do Núcleo (risco, depois ociosas). Com ela,
-  a coluna, e a fila desempata.
+  A fila da Visão geral: os críticos primeiro (pelo motivo mais grave), depois
+  quem tem mais vagas sem contratação, depois o edital.
+*/
+export function compararPelaAtencao(a, b) {
+  const diferenca = gravidade(a?.atencao) - gravidade(b?.atencao);
+  if (diferenca) return diferenca;
+  const vagas = vagasSemContratacao(b) - vagasSemContratacao(a);
+  if (vagas) return vagas;
+  return compararValoresDoFiltro("edital", a?.edital, b?.edital);
+}
+
+/*
+  Sem ordenação escolhida, a fila da Visão geral. Com ela, a coluna, e a fila
+  desempata.
 */
 export function compararLinhas(ordenacao) {
   const { campo, direcao } = ordenacao || {};
-  if (!campo || !direcao) return compararEditais;
+  if (!campo || !direcao) return compararPelaAtencao;
   return (a, b) => {
     const va = valorParaOrdenar(a, campo);
     const vb = valorParaOrdenar(b, campo);
@@ -243,7 +343,7 @@ export function compararLinhas(ordenacao) {
             numeric: true,
             sensitivity: "base",
           });
-    if (resultado === 0) resultado = compararEditais(a, b);
+    if (resultado === 0) resultado = compararPelaAtencao(a, b);
     return direcao === "desc" ? -resultado : resultado;
   };
 }
@@ -258,11 +358,11 @@ export function proximaOrdenacao(atual, campo) {
 /**
  * As linhas do recorte, já ordenadas.
  * `dsei`: chave do DSEI aberto no mapa; `chaveDsei(linha)`, a chave da linha
- * (a do mapa, `dseiKey` do legado).
+ * (a do mapa, `dseiKey` do legado). `atalho`: "criticos" ou "pos:<código>".
  */
 export function recortar(
   linhas,
-  { filtros, busca = "", dsei = "", chaveDsei, ordenacao } = {},
+  { filtros, busca = "", dsei = "", chaveDsei, ordenacao, atalho = "" } = {},
 ) {
   const estado = comoConjuntos(filtros);
   return (Array.isArray(linhas) ? linhas : [])
@@ -272,47 +372,43 @@ export function recortar(
           campos: CAMPOS,
           dsei,
           chaveDsei: chaveDsei || (() => ""),
-        }) && linhaCasaComBusca(linha, busca),
+        }) &&
+        linhaCasaComBusca(linha, busca) &&
+        linhaAtendeAoAtalho(linha, atalho),
     )
     .sort(compararLinhas(ordenacao));
-}
-
-// ── Risco crítico (o KPI que filtra) ─────────────────────────────────────
-
-const ehRiscoCritico = (valor) =>
-  ["alto", "médio", "medio"].includes(low(valor));
-
-/** Os valores de risco Médio/Alto entre as opções do filtro. */
-export const riscosCriticos = (opcoesDeRisco) =>
-  (opcoesDeRisco || []).filter(ehRiscoCritico);
-
-/** O filtro de risco é só Médio/Alto? */
-export function filtroDeRiscoCriticoAtivo(filtros) {
-  const selecionados = filtros?.risco || [];
-  return selecionados.length > 0 && selecionados.every(ehRiscoCritico);
 }
 
 // ── Indicadores ──────────────────────────────────────────────────────────
 
 /*
-  Os seis indicadores, na ordem da página inicial: chave do rótulo em
+  Os sete indicadores, na ordem da página inicial: chave do rótulo em
   Configurações › Página inicial, rótulo padrão, ícone e tom. A prévia de
-  Configurações usa a mesma lista.
+  Configurações usa a mesma lista. As chaves que mantêm o significado de
+  antes continuam (vagas, ociosas, críticos, inscritos); "Contratadas" (só
+  as imediatas), "Em seleção" e "Cadastro reserva" têm chave nova — o rótulo
+  publicado de "Contratações" (imediatas + CR) não vale para elas.
 */
 export const INDICADORES = Object.freeze([
-  Object.freeze(["kpi_processos_label", "Processos", "fa-folder-open", "info"]),
-  Object.freeze(["kpi_vagas_label", "Vagas", "fa-users", "info"]),
+  Object.freeze(["kpi_vagas_label", "Vagas imediatas", "fa-users", "info"]),
   Object.freeze([
-    "kpi_contratados_label",
-    "Contratações",
+    "kpi_contratadas_label",
+    "Contratadas",
     "fa-circle-check",
     "sucesso",
   ]),
+  Object.freeze(["kpi_em_selecao_label", "Em seleção", "fa-clock", "destaque"]),
   Object.freeze([
     "kpi_ociosas_label",
-    "Vagas ociosas",
+    "Ociosas",
     "fa-circle-exclamation",
     "alerta",
+  ]),
+  Object.freeze([
+    "kpi_cadastro_reserva_label",
+    "Cadastro reserva",
+    "fa-user-plus",
+    "neutro",
   ]),
   Object.freeze(["kpi_criticos_label", "Críticos", "fa-fire", "perigo"]),
   Object.freeze([
@@ -325,80 +421,157 @@ export const INDICADORES = Object.freeze([
 
 /* A chave de cada indicador no objeto de `indicadoresDaVisaoGeral`. */
 export const VALOR_DO_INDICADOR = Object.freeze({
-  kpi_processos_label: "processos",
   kpi_vagas_label: "vagas",
-  kpi_contratados_label: "contratados",
+  kpi_contratadas_label: "contratadas",
+  kpi_em_selecao_label: "emSelecao",
   kpi_ociosas_label: "ociosas",
+  kpi_cadastro_reserva_label: "cadastroReserva",
   kpi_criticos_label: "criticos",
   kpi_inscritos_label: "inscritos",
 });
 
-/*
-  O resumo do servidor (`get_monitoramento_dashboard_payload`) soma todos os
-  editais, de todas as áreas: só vale sem recorte e quando a área atual tem
-  todas as linhas da base.
-*/
-export function podeUsarResumoDoServidor({
-  resumo,
-  temRecorte,
-  linhasDaArea,
-  totalDeLinhas,
-}) {
-  return Boolean(resumo?.kpis) && !temRecorte && linhasDaArea === totalDeLinhas;
-}
-
-/** Os seis números; `resumo` (do servidor) troca todos menos Críticos. */
-export function indicadoresDaVisaoGeral(linhas, resumo = null) {
-  const locais = indicadoresDoMonitoramento(linhas);
-  const k = resumo?.kpis;
-  if (!k) return locais;
-  return {
-    processos: num(k.processos_ativos),
-    vagas: num(k.vagas_total),
-    contratados: num(k.contratados),
-    ociosas: num(k.vagas_ociosas),
-    criticos: locais.criticos,
-    inscritos: num(k.inscritos),
-  };
+/** Os números da faixa, das linhas do recorte (já enriquecidas). */
+export function indicadoresDaVisaoGeral(linhas) {
+  return indicadoresDoMonitoramento(linhas);
 }
 
 // ── Blocos ───────────────────────────────────────────────────────────────
 
-/* Contagem por valor de um campo, do maior para o menor. */
-export function contarPorCampo(linhas, campo, vazio = "Não informado") {
-  const contagem = new Map();
-  (linhas || []).forEach((linha) => {
-    const chave = txt(linha?.[campo]) || vazio;
-    contagem.set(chave, (contagem.get(chave) || 0) + 1);
-  });
-  return [...contagem.entries()].sort((a, b) => b[1] - a[1]);
-}
-
-/** O tom da etapa (sucesso, info, alerta, perigo, neutro). */
-export function tomDaEtapa(etapa) {
-  const l = low(etapa);
-  if (l.includes("conclu")) return "sucesso";
-  if (l.includes("entrevista")) return "info";
-  if (l.includes("análise") || l.includes("analise")) return "destaque";
-  if (l.includes("resultado")) return "alerta";
-  if (l.includes("cancel")) return "perigo";
-  return "neutro";
-}
-
-/** "Resumo por etapa": `[{ etapa, quantos, pct, tom }]`. */
-export function resumoPorEtapa(linhas) {
-  const contagem = contarPorCampo(linhas, "etapa");
-  const total = contagem.reduce((soma, [, quantos]) => soma + quantos, 0);
-  return contagem.map(([etapa, quantos]) => ({
-    etapa,
-    quantos,
-    pct: pct(quantos, total),
-    tom: tomDaEtapa(etapa),
+/** "Fases": as fases do fluxo sempre, as de fora só com edital. */
+export function fasesDosProcessos(linhas) {
+  const contagem = new Map(ORDEM_DAS_FASES.map((fase) => [fase, 0]));
+  for (const linha of linhas || []) {
+    const fase = linha?.fase || faseDoEdital(linha);
+    contagem.set(fase, (contagem.get(fase) || 0) + 1);
+  }
+  const total = linhas?.length || 0;
+  return ORDEM_DAS_FASES.filter(
+    (fase) => FASES.includes(fase) || contagem.get(fase) > 0,
+  ).map((fase) => ({
+    fase,
+    quantos: contagem.get(fase),
+    pct: pct(contagem.get(fase), total),
+    tom: tomDaFase(fase),
   }));
 }
 
+/** "Atenção": os críticos do recorte, na fila da Visão geral (até `limite`). */
+export function processosEmAtencao(linhas, limite = 30) {
+  return (linhas || [])
+    .filter(ehCritica)
+    .sort(compararPelaAtencao)
+    .slice(0, limite);
+}
+
+const MS_POR_DIA = 86400000;
+const diaParaChave = (dia) =>
+  new Date(dia * MS_POR_DIA).toISOString().slice(0, 10);
+
+/**
+ * "Próximos 7 dias": os editais com etapa começando de hoje até `dias` dias,
+ * do mais perto ao mais longe. Com as etapas do cronograma, todas as que
+ * começam na janela; sem elas, a próxima etapa da linha.
+ * `[{ linha, data, dias, atividades }]`.
+ */
+export function agendaDosProximosDias(
+  linhas,
+  { hoje, etapasPorEdital = null, dias = 7 } = {},
+) {
+  const inicio = diaDoCalendario(hoje);
+  if (inicio === null) return [];
+  const fim = inicio + dias;
+  const agenda = [];
+  for (const linha of linhas || []) {
+    if (ehCancelado(linha)) continue;
+    const etapas = etapasPorEdital?.get(txt(linha?.id));
+    const candidatas = etapas
+      ? etapas.map((etapa) => ({
+          dia: diaDoCalendario(etapa?.data_inicio),
+          atividade: txt(etapa?.atividade),
+        }))
+      : [
+          {
+            dia: diaDoCalendario(linha?.cronograma_proxima_data),
+            atividade: txt(linha?.cronograma_proxima_atividade),
+          },
+        ];
+    const naJanela = candidatas
+      .filter((c) => c.dia !== null && c.dia >= inicio && c.dia <= fim)
+      .sort((a, b) => a.dia - b.dia);
+    if (!naJanela.length) continue;
+    agenda.push({
+      linha,
+      data: diaParaChave(naJanela[0].dia),
+      dias: naJanela[0].dia - inicio,
+      atividades: naJanela.map((c) => c.atividade).filter(Boolean),
+    });
+  }
+  return agenda.sort(
+    (a, b) =>
+      a.dias - b.dias ||
+      compararValoresDoFiltro("edital", a.linha?.edital, b.linha?.edital),
+  );
+}
+
+/** "Hoje", "Amanhã" ou "Em N dias". */
+export const quandoNaAgenda = (dias) =>
+  dias === 0 ? "Hoje" : dias === 1 ? "Amanhã" : `Em ${dias} dias`;
+
+/**
+ * "Pós-resultado": cada pendência com os editais que a têm.
+ * `quantos`: editais; em Desistências, `pessoas` é o total de desistentes.
+ * Sem o resumo das listas, só "Contratação abaixo de 50%".
+ */
+export function posResultado(linhas, { comListas = false } = {}) {
+  return PENDENCIAS_POS_RESULTADO.filter(
+    (p) => comListas || p.codigo === "contratacao_baixa",
+  ).map(({ codigo, rotulo }) => {
+    const editais = (linhas || []).filter((linha) =>
+      (linha?.pos_resultado || []).includes(codigo),
+    );
+    return {
+      codigo,
+      rotulo,
+      quantos: editais.length,
+      pessoas:
+        codigo === "desistencias"
+          ? editais.reduce((soma, linha) => soma + num(linha.desistentes), 0)
+          : null,
+    };
+  });
+}
+
+/** Só Projetos tem "Processos por projeto" (lá a unidade é o projeto). */
+export const temProcessosPorProjeto = (area) => area === "projetos";
+
+/** "Processos por projeto" (Projetos): a unidade é o projeto. */
+export function processosPorProjeto(linhas) {
+  const porProjeto = new Map();
+  for (const linha of linhas || []) {
+    const projeto = txt(linha?.unidade) || "Não informado";
+    const item = porProjeto.get(projeto) || {
+      projeto,
+      processos: 0,
+      abertos: 0,
+      vagas: 0,
+      contratadas: 0,
+    };
+    item.processos += 1;
+    if (!ehCancelado(linha) && !ehConcluido(linha)) item.abertos += 1;
+    if (!ehCancelado(linha)) {
+      item.vagas += num(linha?.vagas_total);
+      item.contratadas += contratadasImediatas(linha);
+    }
+    porProjeto.set(projeto, item);
+  }
+  return [...porProjeto.values()].sort(
+    (a, b) =>
+      b.processos - a.processos || a.projeto.localeCompare(b.projeto, "pt-BR"),
+  );
+}
+
 /*
-  O status como o gráfico agrupa ("em andamento", "Em Andamento" e
+  O status como a gaveta mostra ("em andamento", "Em Andamento" e
   "Andamento" são um só); vazio é "Cronograma pendente".
 */
 export function statusCanonico(valor) {
@@ -414,64 +587,6 @@ export function statusCanonico(valor) {
   return txt(valor) || "Não informado";
 }
 
-/** O tom de cada status no gráfico (cor dos tokens). */
-export function tomDoStatus(status) {
-  const chave = normalizarTexto(status);
-  if (chave.includes("conclu")) return "sucesso";
-  if (chave.includes("andamento")) return "info";
-  if (chave.includes("planejad")) return "destaque";
-  if (chave.includes("cancel")) return "perigo";
-  if (chave.includes("suspens") || chave.includes("paralis")) return "alerta";
-  return "neutro";
-}
-
-/** "Status operacional": `{ total, itens: [{ status, quantos, pct, tom }] }`. */
-export function statusOperacional(linhas) {
-  const contagem = new Map();
-  (linhas || []).forEach((linha) => {
-    const status = statusCanonico(linha?.status);
-    contagem.set(status, (contagem.get(status) || 0) + 1);
-  });
-  const total = linhas?.length || 0;
-  return {
-    total,
-    itens: [...contagem.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([status, quantos]) => ({
-        status,
-        quantos,
-        pct: pct(quantos, total),
-        tom: tomDoStatus(status),
-      })),
-  };
-}
-
-/* Os valores do filtro de Status que um status do gráfico representa. */
-export function valoresDoStatus(status, opcoesDeStatus) {
-  return (opcoesDeStatus || []).filter(
-    (valor) => statusCanonico(valor) === status,
-  );
-}
-
-/** Os status do gráfico que a seleção do filtro cobre (o destaque da legenda). */
-export function statusSelecionados(filtros) {
-  return new Set((filtros?.status || []).map(statusCanonico));
-}
-
-/** "Unidades com mais de um processo seletivo": as 8 com mais processos. */
-export function unidadesComMaisDeUmProcesso(linhas, limite = 8) {
-  return contarPorCampo(linhas, "unidade", "Não informada")
-    .filter(([, quantos]) => quantos > 1)
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
-    .slice(0, limite)
-    .map(([unidade, quantos]) => ({ unidade, quantos }));
-}
-
-/** "Atenção": os processos com risco Médio/Alto ainda abertos (até 30). */
-export function processosEmAtencao(linhas, limite = 30) {
-  return (linhas || []).filter(ehRiscoAtivo).slice(0, limite);
-}
-
 // ── Tabela ───────────────────────────────────────────────────────────────
 
 export const COLUNAS_DA_TABELA = Object.freeze([
@@ -481,10 +596,14 @@ export const COLUNAS_DA_TABELA = Object.freeze([
   Object.freeze({ campo: "data_fim", rotulo: "Encerramento" }),
   Object.freeze({ campo: "vagas_total", rotulo: "Vagas", numero: true }),
   Object.freeze({ campo: "contratados", rotulo: "Contratados", numero: true }),
-  Object.freeze({ campo: "vagas_ociosas", rotulo: "Ociosas", numero: true }),
+  Object.freeze({
+    campo: "vagas_ociosas",
+    rotulo: "Sem contratação",
+    numero: true,
+  }),
   Object.freeze({ campo: "status", rotulo: "Status" }),
-  Object.freeze({ campo: "etapa", rotulo: "Etapa" }),
-  Object.freeze({ campo: "risco", rotulo: "Risco" }),
+  Object.freeze({ campo: "fase", rotulo: "Fase" }),
+  Object.freeze({ campo: "atencao", rotulo: "Atenção" }),
   Object.freeze({ campo: "observacoes", rotulo: "Observações" }),
 ]);
 export const COLUNAS_PADRAO = Object.freeze(
@@ -537,8 +656,9 @@ export function diasAte(data, hoje = new Date()) {
 
 /*
   O prazo do edital, na célula do edital: cancelado e concluído dizem isso;
-  encerrado; "Edital encerra em N dias" até 7 (perigo) e até 30 (alerta);
-  mais longe, nada. `{ tom, rotulo, icone }` ou `null`.
+  "Edital encerra em N dias" até 7 (perigo) e até 30 (alerta); mais longe,
+  nada. Prazo vencido sem concluir não repete aqui: o selo do cronograma diz
+  "Etapa atrasada". `{ tom, rotulo, icone }` ou `null`.
 */
 export function prazoDoEdital(linha, hoje = new Date()) {
   const status = low(linha?.status);
@@ -547,13 +667,7 @@ export function prazoDoEdital(linha, hoje = new Date()) {
   if (["concluído", "concluido"].includes(status))
     return { tom: "neutro", rotulo: "Processo concluído", icone: "fa-check" };
   const dias = diasAte(linha?.data_fim, hoje);
-  if (dias === null) return null;
-  if (dias < 0)
-    return {
-      tom: "neutro",
-      rotulo: "Prazo do edital encerrado",
-      icone: "fa-calendar-days",
-    };
+  if (dias === null || dias < 0) return null;
   const rotulo = `Edital encerra em ${dias} ${dias === 1 ? "dia" : "dias"}`;
   if (dias <= 7) return { tom: "perigo", rotulo, icone: "fa-fire" };
   if (dias <= 30) return { tom: "alerta", rotulo, icone: "fa-clock" };
@@ -563,14 +677,21 @@ export function prazoDoEdital(linha, hoje = new Date()) {
 /*
   A situação do cronograma (Editais): `{ tom, rotulo }`. `tom`: "done"
   (concluído/cancelado), "warning", "danger", "info" ou "neutral" — também a
-  cor da linha na tabela.
+  cor da linha na tabela. Atrasada: o fim do cronograma (`data_fim`) passou e
+  o edital não concluiu (a mesma regra do crítico).
 */
-export function urgenciaDoCronograma(linha) {
+export function urgenciaDoCronograma(linha, hoje = new Date()) {
   if (!linha)
     return { tom: "neutral", rotulo: "Dados operacionais indisponíveis" };
   const status = statusCanonico(linha.status);
   if (["Concluído", "Cancelado"].includes(status))
     return { tom: "done", rotulo: status };
+  const fim = diasAte(linha.data_fim, hoje);
+  if (fim !== null && fim < 0)
+    return {
+      tom: "danger",
+      rotulo: `Etapa atrasada há ${Math.abs(fim)} dia(s)`,
+    };
   if (!linha.cronograma_automatico)
     return { tom: "warning", rotulo: "Sem cronograma estruturado" };
   const dias = Number(linha.cronograma_dias_para_proxima);
@@ -579,12 +700,7 @@ export function urgenciaDoCronograma(linha) {
     linha.cronograma_dias_para_proxima !== undefined &&
     linha.cronograma_dias_para_proxima !== "" &&
     Number.isFinite(dias);
-  if (temDias && dias < 0)
-    return {
-      tom: "danger",
-      rotulo: `Etapa atrasada há ${Math.abs(dias)} dia(s)`,
-    };
-  if (temDias && dias <= 3)
+  if (temDias && dias <= LIMITES_DO_CRITICO.diasDoPrazo)
     return { tom: "danger", rotulo: `Próxima etapa em ${dias} dia(s)` };
   if (temDias && dias <= 7)
     return { tom: "warning", rotulo: `Próxima etapa em ${dias} dia(s)` };
@@ -600,8 +716,8 @@ export function urgenciaDoCronograma(linha) {
   O selo do cronograma na célula do edital: some nos concluídos e cancelados
   (o prazo já diz) e "Sem cronograma estruturado" fica curto.
 */
-export function seloDoCronograma(linha) {
-  const urgencia = urgenciaDoCronograma(linha);
+export function seloDoCronograma(linha, hoje = new Date()) {
+  const urgencia = urgenciaDoCronograma(linha, hoje);
   if (urgencia.tom === "done") return null;
   if (urgencia.rotulo === "Sem cronograma estruturado")
     return {
@@ -612,11 +728,11 @@ export function seloDoCronograma(linha) {
   return { ...urgencia, titulo: `Cronograma: ${urgencia.rotulo}` };
 }
 
-/** A taxa de vagas ociosas da linha: `{ pct, nivel }` (low, medium, high, critical). */
+/** A taxa de vagas sem contratação da linha: `{ pct, nivel }` (low, medium, high, critical). */
 export function taxaDeOciosidade(linha) {
   const vagas = num(linha?.vagas_total);
   const taxa =
-    vagas > 0 ? Math.round((num(linha?.vagas_ociosas) / vagas) * 100) : 0;
+    vagas > 0 ? Math.round((vagasSemContratacao(linha) / vagas) * 100) : 0;
   const nivel =
     taxa >= 60
       ? "critical"
@@ -641,6 +757,9 @@ export const seloDoStatus = (status) =>
   SELO_DO_TOM[tomDoStatusDoEdital(status)] || "neutro";
 export const seloDoRisco = (risco) =>
   SELO_DO_TOM[tomDoRisco(risco)] || "neutro";
+/** O tom do `Selo` de um motivo de atenção (perigo → vermelho, alerta → âmbar). */
+export const seloDoMotivo = (motivo) =>
+  motivo?.tom === "perigo" ? "reprovado" : "pendente";
 
 /** Observação longa (mais de 180 caracteres) abre com "Ver mais". */
 export const observacaoLonga = (valor) => txt(valor).length > 180;
@@ -659,19 +778,23 @@ export function linkSeguro(valor) {
 
 // ── Exportação ───────────────────────────────────────────────────────────
 
+const motivosEmTexto = (linha) =>
+  (linha?.atencao || []).map((m) => m.rotulo).join("; ");
+
 const CAMPOS_DO_CSV = [
   ["unidade", "Unidade"],
   ["uf", "UF"],
   ["edital", "Edital"],
   ["processo", "Processo SEI"],
   ["ciclo", "Ciclo"],
-  ["vagas_total", "Vagas Previstas"],
+  ["vagas_total", "Vagas Imediatas"],
   ["contratados", "Contratados"],
-  ["vagas_ociosas", "Vagas Ociosas"],
+  ["vagas_ociosas", "Vagas Sem Contratação"],
   ["inscritos", "Inscritos"],
   ["status", "Status"],
+  ["fase", "Fase"],
   ["etapa", "Etapa"],
-  ["risco", "Risco"],
+  ["atencao", "Atenção", motivosEmTexto],
   ["data_inicio", "Data de Início"],
   ["data_fim", "Data de Encerramento"],
   ["responsavel", "Responsável"],
@@ -692,7 +815,9 @@ export function csvDaVisaoGeral(linhas) {
   const cabecalho = CAMPOS_DO_CSV.map(([, rotulo]) => `"${rotulo}"`).join(";");
   const corpo = (linhas || [])
     .map((linha) =>
-      CAMPOS_DO_CSV.map(([campo]) => celula(linha?.[campo])).join(";"),
+      CAMPOS_DO_CSV.map(([campo, , ler]) =>
+        celula(ler ? ler(linha) : linha?.[campo]),
+      ).join(";"),
     )
     .join("\r\n");
   return `${BOM}${cabecalho}\n${corpo}`;
@@ -714,33 +839,41 @@ export function nomeDoCsv(area, agora = new Date()) {
 
 /*
   O cabeçalho do relatório em PDF (impressão do navegador, menu da conta):
-  os filtros aplicados em uma linha e os números do recorte.
+  os filtros aplicados em uma linha e os números do recorte, com as contas
+  dos indicadores (contratações = contratadas imediatas; ociosas = editais
+  com resultado).
 */
-export function resumoDoRelatorio({ filtros, busca = "", linhas = [] } = {}) {
+export function resumoDoRelatorio({
+  filtros,
+  busca = "",
+  atalho = "",
+  linhas = [],
+} = {}) {
   const ativos = CAMPOS_DO_FILTRO.filter(
     ({ campo }) => (filtros?.[campo] || []).length,
   ).map(({ campo, rotulo }) => `${rotulo}: ${filtros[campo].join(", ")}`);
   if (txt(busca)) ativos.push(`Busca: ${txt(busca)}`);
-  const vagas = somarCampo(linhas, "vagas_total");
-  const ociosas = somarCampo(linhas, "vagas_ociosas");
+  if (rotuloDoAtalho(atalho)) ativos.push(rotuloDoAtalho(atalho));
+  const k = indicadoresDoMonitoramento(linhas);
   return {
     filtros: ativos.length
       ? ativos.join(" · ")
       : "Nenhum filtro aplicado (todos os processos)",
     processos: linhas.length,
-    vagas,
-    contratados: somarCampo(linhas, "contratados"),
-    ociosas,
-    pctOciosas: pct(ociosas, vagas),
+    vagas: k.vagas,
+    contratados: k.contratadas,
+    ociosas: k.ociosas,
+    pctOciosas: pct(k.ociosas, k.vagas),
   };
 }
 
 // ── Textos de Configurações ──────────────────────────────────────────────
 
 /*
-  Os textos da página que vêm de Configurações (TB_CONFIGURACAO, publicados).
-  `valor(chave)` lê o publicado; vazio cai no padrão. Título e subtítulo da
-  página (page_title, page_subtitle) são do cabeçalho do app (legado).
+  Os textos da página que vêm de Configurações › Página inicial
+  (TB_CONFIGURACAO, publicados). `valor(chave)` lê o publicado; vazio cai no
+  padrão. Título e subtítulo da página (page_title, page_subtitle) são do
+  cabeçalho do app (legado). Os títulos dos blocos são fixos.
 */
 export function textosDaVisaoGeral(valor = () => "") {
   const ler = (chave, padrao) => txt(valor(chave)) || padrao;
@@ -753,9 +886,6 @@ export function textosDaVisaoGeral(valor = () => "") {
     rotulos: Object.fromEntries(
       INDICADORES.map(([chave, padrao]) => [chave, ler(chave, padrao)]),
     ),
-    resumo: ler("panel_status_summary_title", "Resumo por etapa"),
-    status: ler("panel_operational_status_title", "Status operacional"),
-    atencao: ler("panel_attention_title", "Atenção"),
     tabela: ler("details_title", "Processos seletivos"),
     busca: ler(
       "table_search_placeholder",
