@@ -87,6 +87,63 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Filtro por gravidade: botões que quebram a linha, com a contagem. */
+.mapa-si-coordenadas__niveis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.mapa-si-coordenadas__nivel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.mapa-si-coordenadas__nivel b {
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-coordenadas__nivel[aria-pressed="true"] {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.mapa-si-coordenadas__nivel:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mapa-si-coordenadas__item .mapa-si-coordenadas__resumo {
+  color: var(--text-primary);
+}
+
+.mapa-si-coordenadas__gravidade {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin: 0;
+}
+
+.mapa-si-coordenadas__sugestoes li[data-melhor] {
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.mapa-si-coordenadas__sugestoes .ui-selo {
+  justify-self: start;
+}
+
 .mapa-si-coordenadas__lista,
 .mapa-si-coordenadas__sugestoes,
 .mapa-si-coordenadas__historico {

@@ -234,7 +234,11 @@ describe("editor de coordenadas: fila", () => {
     expect(caixaPendentes().checked).toBe(true);
     expect(contagem()).toBe("1 pendente");
     expect(itens()).toEqual(["Polo · Polo A"]);
-    expect(item("Polo · Polo A").textContent).toContain("Pendente");
+    // A aldeia sugerida está a 111 km: provável erro, com o resumo na fila.
+    expect(item("Polo · Polo A").textContent).toContain("Provável erro");
+    expect(item("Polo · Polo A").textContent).toContain(
+      "aldeia Aldeia A a 111 km (IBGE)",
+    );
     await clicar(caixaPendentes());
     expect(itens()).toEqual([
       "Polo · Polo A",
@@ -260,12 +264,28 @@ describe("editor de coordenadas: fila", () => {
     expect(host.textContent).toContain("Nenhum ponto.");
   });
 
-  it("ao escolher, centraliza o mapa no ponto", async () => {
+  it("ao escolher, enquadra o ponto e a sugestão mais provável, desenhadas no mapa", async () => {
     await renderizar();
     await escolher("Polo · Polo A");
     expect(item("Polo · Polo A").getAttribute("aria-pressed")).toBe("true");
-    const voo = mapa.chamadas.filter((c) => c[0] === "flyTo").at(-1);
-    expect(voo[1]).toEqual([-11, -51]);
+    const voo = mapa.chamadas.filter((c) => c[0] === "flyToBounds").at(-1);
+    expect(JSON.stringify(voo[1])).toContain("-11");
+    expect(JSON.stringify(voo[1])).toContain("-12");
+    expect(host.querySelector("[data-melhor] .ui-selo").textContent).toBe(
+      "Mais provável",
+    );
+  });
+
+  it("filtra por gravidade e desliga o filtro ao clicar de novo", async () => {
+    await renderizar();
+    const erro = host.querySelector('[data-nivel="erro"]');
+    expect(erro.textContent).toContain("1");
+    expect(host.querySelector('[data-nivel="confirmar"]').disabled).toBe(true);
+    await clicar(erro);
+    expect(erro.getAttribute("aria-pressed")).toBe("true");
+    expect(itens()).toEqual(["Polo · Polo A"]);
+    await clicar(erro);
+    expect(erro.getAttribute("aria-pressed")).toBe("false");
   });
 
   it("avisa quando as pendências não carregam e a lista completa continua", async () => {
@@ -348,14 +368,16 @@ describe("editor de coordenadas: sugestões", () => {
     const linhas = [...sugestoes.querySelectorAll("li")].map(
       (l) => l.textContent,
     );
-    expect(linhas[0]).toContain("CNES/DATASUS");
-    expect(linhas[0]).toContain("11 km da atual");
-    expect(linhas[1]).toContain("Aldeia · IBGE");
-    expect(linhas[1]).toContain("TI A");
+    // A mais provável (a aldeia) vem primeiro; depois o CNES.
+    expect(linhas[0]).toContain("Mais provável");
+    expect(linhas[0]).toContain("Aldeia · IBGE");
+    expect(linhas[0]).toContain("TI A");
+    expect(linhas[1]).toContain("CNES/DATASUS");
+    expect(linhas[1]).toContain("11 km da atual");
     await clicar(sugestoes.querySelector("button"));
-    expect(latitude().value).toBe("-11.100000");
+    expect(latitude().value).toBe("-12.000000");
     const pin = [...mapa.camadas].find((c) => c.opcoes.draggable);
-    expect(pin.latlng).toEqual([-11.1, -51]);
+    expect(pin.latlng).toEqual([-12, -51]);
     expect(chamadas(RPC_SALVAR)).toHaveLength(0);
   });
 });

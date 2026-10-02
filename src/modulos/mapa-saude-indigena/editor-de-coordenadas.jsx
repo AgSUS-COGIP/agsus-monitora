@@ -4,10 +4,14 @@ import {
   chaveDaPendencia,
   filaDeCoordenadas,
   formatarCoordenada,
+  formatarDistancia,
+  gravidadeDaPendencia,
   lerCoordenada,
   pontosEditaveisDoMapa,
+  sugestoesDaPendencia,
   validarCorrecaoDoMapa,
 } from "../../lib/coordenadas-do-mapa.js";
+import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.js";
 import { Aviso, Campo, Selo } from "../../ui/index.js";
 import { FilaDeCoordenadas } from "./fila-de-coordenadas.jsx";
 import { HistoricoDoPonto } from "./historico-do-ponto.jsx";
@@ -102,9 +106,15 @@ export function EditorDeCoordenadas({
   );
   const [busca, definirBusca] = useState("");
   const [soPendentes, definirSoPendentes] = useState(true);
+  const [gravidade, definirGravidade] = useState("");
   const fila = useMemo(
-    () => filaDeCoordenadas(pontos, pendencias.lista, { busca, soPendentes }),
-    [pontos, pendencias.lista, busca, soPendentes],
+    () =>
+      filaDeCoordenadas(pontos, pendencias.lista, {
+        busca,
+        soPendentes,
+        gravidade: soPendentes ? gravidade : "",
+      }),
+    [pontos, pendencias.lista, busca, soPendentes, gravidade],
   );
   const [id, definirId] = useState("");
   const ponto = pontos.find((p) => p.id === id) || null;
@@ -114,6 +124,15 @@ export function EditorDeCoordenadas({
       ) || null
     : null;
   const pendente = Boolean(pendencia && !pendencia.conferido);
+  const sugestoes = useMemo(
+    () => (pendencia ? sugestoesDaPendencia(pendencia, ponto) : []),
+    [pendencia, ponto],
+  );
+  const gravidadeDoPonto = useMemo(
+    () => (pendente ? gravidadeDaPendencia(pendencia, ponto) : null),
+    [pendente, pendencia, ponto],
+  );
+  const idDaMelhor = gravidadeDoPonto?.melhor?.id || "";
   const [versaoDoHistorico, definirVersaoDoHistorico] = useState(0);
   const [historico] = usarLista(
     ultimos,
@@ -180,13 +199,79 @@ export function EditorDeCoordenadas({
     };
     pin.on("dragend", aoArrastar);
     marcador.current = pin;
-    mapa.flyTo(posicao, Math.max(mapa.getZoom(), 11));
     return () => {
       pin.off("dragend", aoArrastar);
       mapa.removeLayer(pin);
       marcador.current = null;
     };
   }, [permitido, mapa, L, ponto]);
+
+  /*
+    As sugestões do ponto no mapa: um círculo por posição candidata (aldeia
+    em laranja, CNES em azul; a mais provável maior), com a dica da fonte e
+    da distância; clicar usa a posição na prévia. A mais provável liga-se à
+    posição atual por uma linha tracejada e o mapa enquadra as duas — senão,
+    vai até o ponto.
+  */
+  useEffect(() => {
+    if (!permitido || !mapa || !L || !ponto) return undefined;
+    const atual =
+      Number.isFinite(ponto.latitude) && Number.isFinite(ponto.longitude)
+        ? [ponto.latitude, ponto.longitude]
+        : null;
+    const camada = L.layerGroup().addTo(mapa);
+    let melhor = null;
+    for (const s of sugestoes) {
+      const destaque = s.id === idDaMelhor;
+      if (destaque) melhor = s;
+      const circulo = L.circleMarker([s.latitude, s.longitude], {
+        radius: destaque ? 9 : 6,
+        weight: destaque ? 3 : 2,
+        color:
+          s.fonte === "CNES"
+            ? CORES_DO_MAPA.sugestaoDoCnes
+            : CORES_DO_MAPA.sugestaoDeAldeia,
+        fillOpacity: 0.3,
+      });
+      circulo.bindTooltip(
+        [
+          destaque ? "Mais provável" : "",
+          s.rotulo,
+          s.nome,
+          formatarDistancia(s.distanciaKm),
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      );
+      circulo.on("click", () => {
+        definirLatitude(s.latitude.toFixed(6));
+        definirLongitude(s.longitude.toFixed(6));
+        definirConfirmando(null);
+        definirErro("");
+        definirMensagem("");
+      });
+      camada.addLayer(circulo);
+    }
+    if (atual && melhor) {
+      const destino = [melhor.latitude, melhor.longitude];
+      camada.addLayer(
+        L.polyline([atual, destino], {
+          color: CORES_DO_MAPA.traco,
+          weight: 2,
+          dashArray: "6 6",
+        }),
+      );
+      mapa.flyToBounds(L.latLngBounds([atual, destino]), {
+        padding: [48, 48],
+        maxZoom: 13,
+      });
+    } else {
+      mapa.flyTo(atual || mapa.getCenter(), Math.max(mapa.getZoom(), 11));
+    }
+    return () => {
+      mapa.removeLayer(camada);
+    };
+  }, [permitido, mapa, L, ponto, sugestoes, idDaMelhor]);
 
   useEffect(() => {
     if (Number.isFinite(latitudeNumero) && Number.isFinite(longitudeNumero))
@@ -329,6 +414,8 @@ export function EditorDeCoordenadas({
       <FilaDeCoordenadas
         itens={fila.itens}
         pendentes={fila.pendentes}
+        porGravidade={fila.porGravidade}
+        gravidade={gravidade}
         busca={busca}
         soPendentes={soPendentes}
         escolhido={id}
@@ -337,6 +424,7 @@ export function EditorDeCoordenadas({
         desabilitado={salvando}
         aoBuscar={definirBusca}
         aoAlternarPendentes={definirSoPendentes}
+        aoFiltrarGravidade={definirGravidade}
         aoEscolher={(novo) => {
           definirId(novo);
           definirMensagem("");
@@ -384,6 +472,7 @@ export function EditorDeCoordenadas({
             <SugestoesDoPonto
               ponto={ponto}
               pendencia={pendencia}
+              gravidade={gravidadeDoPonto}
               desabilitado={salvando}
               aoUsar={usarSugestao}
             />

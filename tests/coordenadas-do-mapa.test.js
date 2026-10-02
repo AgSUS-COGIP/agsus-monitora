@@ -4,6 +4,7 @@ import {
   correcaoDesfazivel,
   filaDeCoordenadas,
   formatarDistancia,
+  gravidadeDaPendencia,
   lerCoordenada,
   pontosEditaveisDoMapa,
   rotuloDaAcao,
@@ -269,5 +270,49 @@ describe("desfazer do histórico", () => {
     expect(
       correcaoDesfazivel([{ ...correcao, acao: "CONFERENCIA" }]).acao,
     ).toBe("CONFERENCIA");
+  });
+});
+
+describe("gravidade da pendência", () => {
+  const ponto = { latitude: -4.6, longitude: -52.6 };
+  const nivel = (pendencia) => gravidadeDaPendencia(pendencia, ponto)?.nivel;
+
+  it("provável erro pelo motivo da auditoria (sede do município), mesmo com aldeia perto", () => {
+    const g = gravidadeDaPendencia(
+      {
+        motivo_tipo: "SEDE_MUNICIPAL",
+        candidatos: [{ f: "FUNAI", n: "Koiupanká", lat: -4.6, lon: -52.61 }],
+      },
+      ponto,
+    );
+    expect(g.nivel).toBe("erro");
+    expect(g.resumo).toBe(
+      "Na sede do município · aldeia Koiupanká a 1,1 km (Funai)",
+    );
+    expect(g.melhor.nome).toBe("Koiupanká");
+  });
+
+  it("a régua é a aldeia mais perto, não o CNES (que costuma ser a posição atual)", () => {
+    const comCnes = (aldeiaLat) => ({
+      motivo_tipo: "FONTES_DIVERGEM",
+      candidatos: [
+        { f: "CNES", n: "Posto", lat: -4.6, lon: -52.6 },
+        { f: "IBGE", n: "Aldeia", lat: aldeiaLat, lon: -52.6 },
+      ],
+    });
+    expect(nivel(comCnes(-4.8))).toBe("erro"); // ~22 km
+    expect(nivel(comCnes(-4.65))).toBe("revisar"); // ~5,6 km
+    expect(nivel(comCnes(-4.61))).toBe("confirmar"); // ~1,1 km
+  });
+
+  it("só CNES, sem aldeia: revisar; sem candidato: sem sugestão; sem pendência: nada", () => {
+    expect(
+      nivel({
+        motivo_tipo: "UMA_FONTE",
+        candidatos: [{ f: "CNES", n: "Posto", lat: -4.6, lon: -52.6 }],
+      }),
+    ).toBe("revisar");
+    expect(nivel({ motivo_tipo: "SEM_CANDIDATO", candidatos: [] })).toBe("sem");
+    expect(gravidadeDaPendencia(null, ponto)).toBeNull();
   });
 });

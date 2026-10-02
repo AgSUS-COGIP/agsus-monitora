@@ -111,6 +111,7 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
     m.flyTo = registrar("flyTo", (_c, z) => {
       if (Number.isFinite(z)) m.zoom = z;
     });
+    m.flyToBounds = registrar("flyToBounds");
     m.stop = registrar("stop");
     m.invalidateSize = registrar("invalidateSize");
     m.getZoom = () => m.zoom;
