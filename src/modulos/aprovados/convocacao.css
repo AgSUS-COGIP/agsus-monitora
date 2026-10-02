@@ -32,7 +32,7 @@
   color: var(--text-secondary);
   font: inherit;
   font-size: var(--text-body);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
 }
 .approved-tab:hover {
@@ -43,11 +43,11 @@
   color: var(--text-primary);
 }
 .approved-tab i {
-  font-size: 14px;
+  font-size: var(--text-body);
 }
 .approved-tabs-modal {
   padding: 0;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 .approved-tabpanel.hidden {
   display: none;
@@ -75,16 +75,16 @@
 .convocacao-tipo {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--space-3);
   margin: 0 0 18px;
   padding: 0;
   border: none;
 }
 .convocacao-tipo legend {
-  padding: 0 0 8px;
+  padding: 0 0 var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-tipo-card {
   display: flex;
@@ -119,8 +119,8 @@
 }
 .convocacao-tipo-copy strong {
   color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-quadro.hidden {
   display: none;
@@ -129,25 +129,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   flex-wrap: wrap;
   margin: 18px 0 10px;
 }
 .convocacao-bloco-head strong {
   display: block;
   color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-bloco-head small {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
   color: var(--text-secondary);
   font-size: 11px;
 }
 .convocacao-bloco-head .btn {
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--text-caption);
 }
 /*
   A altura fica presa ao ecrã, e não a um valor fixo: com 320px, um edital de 18
@@ -157,7 +157,7 @@
   max-height: min(52vh, 620px);
   overflow: auto;
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 /* Cabeçalho da tabela no DS 11.4: sem fundo colorido (o do card, por ser sticky). */
 .convocacao-vagas-table th {
@@ -168,22 +168,22 @@
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-subtle);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0;
   text-transform: none;
 }
 .convocacao-vagas-table td {
-  padding: 8px 10px;
+  padding: var(--space-2) 10px;
 }
 .convocacao-vagas-table input {
   width: 62px;
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-2);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -215,14 +215,14 @@
   display: block;
   color: var(--text-primary);
   font-size: var(--text-body-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-grupo-copy small {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 /* Situação da vaga: badge do DS 11.8 (20px, raio pequeno, caption 500). */
 .convocacao-vaga {
@@ -233,7 +233,7 @@
   padding: 0 var(--space-2);
   border-radius: var(--radius-sm);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
 .convocacao-vaga.imediata {
@@ -253,7 +253,7 @@
   margin-top: 3px;
   color: var(--state-warning);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-linha-imediata td {
   background: color-mix(in srgb, var(--state-success-soft) 45%, transparent);
@@ -264,9 +264,9 @@
 .convocacao-modalidade {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-0-5);
   min-width: 150px;
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .convocacao-modalidade.vazia {
   color: var(--text-secondary);
@@ -275,18 +275,18 @@
 .convocacao-siglas {
   color: var(--state-info);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-siglas strong {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-alerta {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   color: var(--state-warning);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 /* ── Percentuais, total por vaga e quadro derivado ──────────────────────── */
 .convocacao-bloco-acoes {
@@ -298,39 +298,39 @@
 .convocacao-padrao-campo {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-padrao-campo input {
   width: 68px;
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-2);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 .convocacao-quadro-celula {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
   min-width: 260px;
 }
 .convocacao-quadro-derivado {
   color: var(--state-success);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 .convocacao-quadro-derivado.vazio {
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-style: italic;
 }
 .convocacao-quadro-campo {
@@ -341,7 +341,7 @@
 .convocacao-quadro-campo > span {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-quadro-campo input {
   width: 52px;
@@ -355,7 +355,7 @@
 .convocacao-multipla {
   color: var(--state-info);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 @media (max-width: 700px) {
   .convocacao-quadro-celula {
@@ -370,21 +370,21 @@
   border-radius: 10px;
   background: var(--surface-card);
   color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-modelo-resumo {
   margin: 0 0 14px;
   color: var(--text-secondary);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-modelo-resumo.compartilhado {
   color: var(--state-warning);
 }
 .convocacao-editor {
   margin: 0 0 18px;
-  padding: 16px;
+  padding: var(--space-4);
   border: 1px solid var(--border-subtle);
   border-radius: 14px;
   background: var(--surface-raised);
@@ -395,26 +395,26 @@
 .convocacao-editor-head {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .convocacao-editor-aviso {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
   padding: 9px 11px;
   border-radius: 10px;
   background: var(--state-warning-soft);
   color: var(--state-warning);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 1.4;
 }
 .convocacao-editor-linha {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr);
-  gap: 12px;
-  margin-top: 12px;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
 }
 .convocacao-editor-campo {
   display: flex;
@@ -425,14 +425,14 @@
 .convocacao-editor-campo > span {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-editor-campo > span small {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
   color: var(--text-secondary);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0;
   text-transform: none;
 }
@@ -450,11 +450,11 @@
   border-radius: 9px;
   background: var(--surface-card);
   color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-editor-campo.largo {
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 .convocacao-editor-campo.estreito input {
   text-align: right;
@@ -464,7 +464,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 /* Num modal largo cabem duas fichas lado a lado; num estreito, empilham. */
 @media (min-width: 900px) {
@@ -475,15 +475,15 @@
   }
 }
 .convocacao-categoria {
-  padding: 12px;
+  padding: var(--space-3);
   border: 1px solid var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
 }
 .convocacao-categoria-topo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 .convocacao-categoria-rotulo {
@@ -492,16 +492,16 @@
   padding: 7px 9px;
   border: 1px solid var(--border-subtle);
   border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-categoria-sigla {
   width: 64px;
   padding: 7px 9px;
   border: 1px solid var(--border-subtle);
   border-radius: 9px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
   text-align: center;
   /* Aqui fica: é a sigla digitada no campo (PCD, PPI), não um rótulo. */
   text-transform: uppercase;
@@ -509,30 +509,30 @@
 .convocacao-categoria-taxa {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .convocacao-categoria-taxa input {
   width: 74px;
   padding: 7px 9px;
   border: 1px solid var(--border-subtle);
   border-radius: 9px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 .convocacao-categoria-taxa span {
   color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-categoria-tag {
-  padding: 4px 9px;
+  padding: var(--space-1) 9px;
   border-radius: 999px;
   background: var(--state-info-soft);
   color: var(--state-info);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-categoria-avancado {
   display: grid;
@@ -545,17 +545,17 @@
 .convocacao-cascata {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
   min-height: 32px;
 }
 .convocacao-cascata-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   color: var(--text-secondary);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
 }
 .convocacao-editor-acoes {
@@ -563,13 +563,13 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: var(--space-4);
   padding-top: 14px;
   border-top: 1px solid var(--border-subtle);
 }
 .convocacao-editor-acoes .btn {
   padding: 7px 13px;
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 @media (max-width: 700px) {
   .convocacao-editor-linha {
@@ -586,10 +586,10 @@
   o preço de errar é uma convocação inteira calculada de outro jeito.
 */
 .convocacao-editor-ajuda {
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
   color: var(--text-secondary);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.45;
   letter-spacing: 0;
   text-transform: none;
@@ -604,12 +604,12 @@
   align-items: center;
   justify-content: center;
   min-width: 18px;
-  padding: 1px 4px;
+  padding: 1px var(--space-1);
   border-radius: 999px;
   background: var(--state-info-soft);
   color: var(--state-info);
   font-size: 9px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 /*
   O aviso que substitui as vagas do edital enquanto não há regra: o quadro de
@@ -618,13 +618,13 @@
 */
 .convocacao-vagas-bloqueadas {
   margin: 18px 0 0;
-  padding: 14px 16px;
+  padding: 14px var(--space-4);
   border: 1px dashed var(--border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--surface-raised);
   color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
 }
 .convocacao-vagas-bloqueadas.hidden {
   display: none;
@@ -633,16 +633,16 @@
 .convocacao-editor-base {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
-  padding-bottom: 12px;
-  margin-bottom: 4px;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-1);
   border-bottom: 1px dashed var(--border-subtle);
 }
 .convocacao-editor-base > span {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 /* ── Prévia da ordem de chamada (previa-da-convocacao.jsx) ─────────────── */
 .convocacao-previa {
@@ -700,7 +700,7 @@
 }
 .convocacao-previa-sigla {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-previa-faixa {
   display: grid;
@@ -719,11 +719,11 @@
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   font-size: var(--text-caption);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.3;
 }
 .convocacao-previa-numero {
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
 }
@@ -775,7 +775,7 @@
 }
 .convocacao-base-cartao strong {
   font-size: var(--text-body-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-base-cartao small {
   color: var(--text-secondary);
@@ -791,7 +791,7 @@
 .convocacao-categoria-cascata-titulo {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 .convocacao-cascata-final {
   color: var(--text-secondary);
@@ -808,7 +808,7 @@
 .convocacao-categoria-detalhes > summary {
   color: var(--brand-primary);
   font-size: var(--text-caption);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
 .convocacao-tipo-copy small {

@@ -304,6 +304,25 @@ html[data-theme="dark"] #page-config .form-row textarea {
   color: var(--config-text) !important;
 }
 
+/* Rótulos, títulos e a barra de salvar no tema escuro (vencem os tons de app.css). */
+html[data-theme="dark"] #page-config .form-row label,
+html[data-theme="dark"] #page-config .config-card-title h3,
+html[data-theme="dark"] #page-config .config-cabecalho h2,
+html[data-theme="dark"] #page-config .config-barra__texto strong {
+  color: #edf5ff !important;
+}
+
+html[data-theme="dark"] #page-config .form-row small,
+html[data-theme="dark"] #page-config .config-card-title p,
+html[data-theme="dark"] #page-config .config-barra__texto span {
+  color: #aab9c8 !important;
+}
+
+html[data-theme="dark"] #page-config option {
+  background: #102436;
+  color: #edf5ff;
+}
+
 @media (max-width: 900px) {
   #page-config .config-barra,
   body:not(.sidebar-collapsed) #page-config .config-barra {

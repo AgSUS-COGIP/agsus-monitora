@@ -217,11 +217,24 @@ html[data-theme="dark"] {
   --platform-hover: #172c40;
 }
 
-html[data-theme="dark"] body,
+/* Dentro do app, as variáveis antigas de app.css têm os tons do shell escuro. */
+html[data-theme="dark"] .app {
+  --bg: #0b1424;
+  --card: #111f33;
+  --soft: #16283f;
+  --line: #29405d;
+}
+
 html[data-theme="dark"] .app,
 html[data-theme="dark"] .main,
 html[data-theme="dark"] .content {
   background: var(--ux-dark-page) !important;
+  color: var(--ux-dark-text) !important;
+}
+
+/* O fundo da página (também o `body.mobile-app`, que mobile-app.css clareia). */
+html[data-theme="dark"] body {
+  background: #0b1424 !important;
   color: var(--ux-dark-text) !important;
 }
 
@@ -318,6 +331,14 @@ html[data-theme="dark"] .shell-confirm-cancel {
   border-color: var(--ux-dark-border);
   background: var(--ux-dark-surface-soft);
   color: var(--ux-dark-text);
+}
+
+/* Textos auxiliares do app que herdavam tons do tema claro. */
+html[data-theme="dark"] .app .muted,
+html[data-theme="dark"] .app .hint,
+html[data-theme="dark"] .app .small,
+html[data-theme="dark"] .app small {
+  color: #edf5ff !important;
 }
 
 @media (max-width: 640px) {

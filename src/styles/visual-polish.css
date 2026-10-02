@@ -61,7 +61,3 @@ body.access-request-mode #googleLoginBtn {
 body.access-request-mode #googleLoginBtn + #accessRequestCard::before {
   display: none;
 }
-
-.visual-polish-ready .status-pill {
-  box-shadow: 0 6px 18px rgba(15, 35, 60, 0.08);
-}
