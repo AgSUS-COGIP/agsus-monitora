@@ -22,16 +22,21 @@ import {
   resumirQuadro,
 } from "../../lib/configuracao-de-convocacao.js";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { formatNumberBR } from "../../lib/formatters.js";
+import {
+  Campo,
+  GradeDeKpis,
+  Kpi,
+  LinhasEsqueleto,
+  PainelDeFiltros,
+  classes,
+} from "../../ui/index.js";
 import {
   AcaoDeStatus,
-  Kpi,
   NomeDoCandidato,
   NotaDoCandidato,
-  ErroAoCarregar,
-  LinhasEsqueleto,
   Paginacao,
   SeloDeStatus,
-  classes,
 } from "./partes.jsx";
 
 /*
@@ -222,7 +227,7 @@ function TabelaDoGrupo({ grupo, linhas, perfil, aoAbrirStatus }) {
             <th className="num">Nota</th>
             <th>Modalidade declarada</th>
             <th>Status</th>
-            <th style={{ textAlign: "center" }}>Ações</th>
+            <th className="approved-th-acoes">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -351,12 +356,33 @@ export function AbaConvocacao({
     setPagina(1);
   }
 
+  function limparFiltros() {
+    setFiltros(FILTROS_INICIAIS);
+    setPagina(1);
+  }
+
   function irPara(destino) {
     const alvo = paginateApprovedCandidates(todas, destino, tamanho).page;
     if (alvo === paginaAtual.page) return;
     setPagina(alvo);
     tabela.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }
+
+  const carregando = !carregado && !erroAoCarregar;
+  const quantos = [editais, cargos, filtros.status].filter(
+    (lista) => lista.length,
+  ).length;
+  const kpi = (idDoValor, chave, tom, icone, rotulo, valor) => (
+    <Kpi
+      idDoValor={idDoValor}
+      chave={chave}
+      tom={tom}
+      icone={icone}
+      rotulo={rotulo}
+      valor={formatNumberBR(valor)}
+      carregando={carregando}
+    />
+  );
 
   return (
     <div
@@ -365,122 +391,135 @@ export function AbaConvocacao({
       role="tabpanel"
       aria-labelledby="approvedTabConvocacao"
     >
-      <div className="approved-kpis" aria-label="Resumo da lista de convocação">
-        <Kpi
-          id="convocacaoKpiVagas"
-          tom="total"
-          icone="fa-list-ol"
-          rotulo="Vagas na lista"
-          valor={resumo.vagas}
-          carregado={carregado}
-        />
-        <Kpi
-          id="convocacaoKpiImediatas"
-          tom="info"
-          icone="fa-bullseye"
-          rotulo="Vagas imediatas"
-          valor={resumo.imediatas}
-          carregado={carregado}
-        />
-        <Kpi
-          id="convocacaoKpiConvocaveis"
-          tom="success"
-          icone="fa-bell"
-          rotulo="Convocáveis agora"
-          valor={resumo.convocaveis}
-          carregado={carregado}
-        />
-        <Kpi
-          id="convocacaoKpiReserva"
-          tom="warning"
-          icone="fa-user-clock"
-          rotulo="Cadastro de reserva"
-          valor={resumo.reserva}
-          carregado={carregado}
-        />
-        <Kpi
-          id="convocacaoKpiForaDaFila"
-          tom="danger"
-          icone="fa-user-xmark"
-          rotulo="Fora da fila"
-          valor={resumo.foraDaFila}
-          carregado={carregado}
-        />
-      </div>
-      <div className="approved-filters convocacao-filters">
-        <div className="form-row">
-          <label htmlFor="convocacaoFilterEdital">Edital</label>
-          <MultiSelectBusca
-            id="convocacaoFilterEdital"
-            placeholder="Todos os editais"
-            opcoes={opcoesEditais}
-            selecionados={editais}
-            aoMudar={(valores) => mudarFiltro("editalId", valores)}
-          />
-        </div>
-        <div className="form-row">
-          <label htmlFor="convocacaoFilterCargo">Cargo</label>
-          <MultiSelectBusca
-            id="convocacaoFilterCargo"
-            placeholder="Todos os cargos"
-            opcoes={opcoesCargos}
-            selecionados={cargos}
-            aoMudar={(valores) => mudarFiltro("cargo", valores)}
-          />
-        </div>
-        <div className="form-row">
-          <label htmlFor="convocacaoFilterStatus">Status</label>
-          <MultiSelectBusca
-            id="convocacaoFilterStatus"
-            placeholder="Todos os status"
-            opcoes={OPCOES_DO_FILTRO_DE_STATUS}
-            selecionados={filtros.status}
-            aoMudar={(valores) => mudarFiltro("status", valores)}
-          />
-        </div>
-      </div>
-      <div className="table-wrap" ref={tabela}>
-        <div id="convocacaoRows" className="convocacao-grupos">
-          {erroAoCarregar ? (
-            <ErroAoCarregar
-              estado={estado}
-              mensagem={erroAoCarregar}
-              oQue="a lista de convocação"
+      <GradeDeKpis
+        className="approved-kpis"
+        rotulo="Resumo da lista de convocação"
+      >
+        {kpi(
+          "convocacaoKpiVagas",
+          "vagas",
+          "info",
+          "fa-list-ol",
+          "Vagas na lista",
+          resumo.vagas,
+        )}
+        {kpi(
+          "convocacaoKpiImediatas",
+          "imediatas",
+          "destaque",
+          "fa-bullseye",
+          "Vagas imediatas",
+          resumo.imediatas,
+        )}
+        {kpi(
+          "convocacaoKpiConvocaveis",
+          "convocaveis",
+          "sucesso",
+          "fa-bell",
+          "Convocáveis agora",
+          resumo.convocaveis,
+        )}
+        {kpi(
+          "convocacaoKpiReserva",
+          "reserva",
+          "alerta",
+          "fa-user-clock",
+          "Cadastro de reserva",
+          resumo.reserva,
+        )}
+        {kpi(
+          "convocacaoKpiForaDaFila",
+          "fora-da-fila",
+          "perigo",
+          "fa-user-xmark",
+          "Fora da fila",
+          resumo.foraDaFila,
+        )}
+      </GradeDeKpis>
+
+      <PainelDeFiltros
+        idDoTitulo="convocacaoFiltrosTitulo"
+        className="approved-filters convocacao-filters"
+        quantos={quantos}
+        aoLimpar={limparFiltros}
+      >
+        <div className="ui-grade-de-campos">
+          <Campo rotulo="Edital" idDoControle="convocacaoFilterEdital">
+            <MultiSelectBusca
+              id="convocacaoFilterEdital"
+              placeholder="Todos os editais"
+              opcoes={opcoesEditais}
+              selecionados={editais}
+              aoMudar={(valores) => mudarFiltro("editalId", valores)}
             />
-          ) : !carregado ? (
-            <table className="approved-table convocacao-table" aria-busy="true">
-              <tbody>
-                <LinhasEsqueleto colunas={8} />
-              </tbody>
-            </table>
-          ) : paginaAtual.rows.length ? (
-            emBlocos(paginaAtual.rows).map(({ grupo, linhas }, indice) => (
-              <TabelaDoGrupo
-                key={`${grupo.chave}\u0000${indice}`}
-                grupo={grupo}
-                linhas={linhas}
-                perfil={perfil}
-                aoAbrirStatus={estado.abrirStatus}
-              />
-            ))
-          ) : (
-            <p className="approved-empty">
-              Nenhum candidato encontrado para os filtros selecionados.
-            </p>
-          )}
+          </Campo>
+          <Campo rotulo="Cargo" idDoControle="convocacaoFilterCargo">
+            <MultiSelectBusca
+              id="convocacaoFilterCargo"
+              placeholder="Todos os cargos"
+              opcoes={opcoesCargos}
+              selecionados={cargos}
+              aoMudar={(valores) => mudarFiltro("cargo", valores)}
+            />
+          </Campo>
+          <Campo rotulo="Status" idDoControle="convocacaoFilterStatus">
+            <MultiSelectBusca
+              id="convocacaoFilterStatus"
+              placeholder="Todos os status"
+              opcoes={OPCOES_DO_FILTRO_DE_STATUS}
+              selecionados={filtros.status}
+              aoMudar={(valores) => mudarFiltro("status", valores)}
+            />
+          </Campo>
         </div>
-      </div>
-      <Paginacao
-        prefixo="convocacao"
-        pagina={paginaAtual}
-        tamanho={tamanho}
-        unidade="linhas"
-        aoIrPara={irPara}
-        aoMudarTamanho={(valor) => {
-          setTamanho(valor);
-          setPagina(1);
-        }}
-      />
+      </PainelDeFiltros>
+
+      <section
+        className="ui-card ui-tabela approved-page-card"
+        aria-label="Ordem de convocação"
+      >
+        <div className="ui-tabela-rolagem" ref={tabela}>
+          <div id="convocacaoRows" className="convocacao-grupos">
+            {carregando ? (
+              <table
+                className="approved-table convocacao-table"
+                aria-busy="true"
+              >
+                <tbody>
+                  <LinhasEsqueleto colunas={8} />
+                </tbody>
+              </table>
+            ) : erroAoCarregar ? (
+              <p className="ui-vazio">Sem dados.</p>
+            ) : paginaAtual.rows.length ? (
+              emBlocos(paginaAtual.rows).map(({ grupo, linhas }, indice) => (
+                <TabelaDoGrupo
+                  key={`${grupo.chave}\u0000${indice}`}
+                  grupo={grupo}
+                  linhas={linhas}
+                  perfil={perfil}
+                  aoAbrirStatus={estado.abrirStatus}
+                />
+              ))
+            ) : (
+              <p className="ui-vazio">
+                Nenhum candidato encontrado para os filtros selecionados.
+              </p>
+            )}
+          </div>
+        </div>
+        <Paginacao
+          prefixo="convocacao"
+          pagina={paginaAtual}
+          tamanho={tamanho}
+          unidade="linhas"
+          aoIrPara={irPara}
+          aoMudarTamanho={(valor) => {
+            setTamanho(valor);
+            setPagina(1);
+          }}
+        />
+      </section>
     </div>
   );
 }

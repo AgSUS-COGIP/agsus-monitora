@@ -20,7 +20,8 @@ import {
   removerCategoria,
   resumoDasRegrasDaCategoria,
 } from "../../lib/configuracao-de-convocacao.js";
-import { BotaoDeAcao, CampoEditavel, classes } from "./partes.jsx";
+import { BotaoDeAcao, classes } from "../../ui/index.js";
+import { CampoEditavel } from "./partes.jsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.jsx";
 
 /*

@@ -1,4 +1,3 @@
-import { TopoDoPainel } from "../../ui/topo-do-painel.jsx";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -15,22 +14,30 @@ import {
   paginateApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
+import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.js";
 import { AbaAprovados } from "./aba-aprovados.jsx";
 import { AbaConvocacao } from "./aba-convocacao.jsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
 import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.jsx";
 import { ModalListasDoEdital } from "./modal-listas-do-edital.jsx";
-import { classes, plural } from "./partes.jsx";
+import { plural } from "./partes.jsx";
 
 /*
-  Lista de Aprovados, em React — a página `#page-approved` e os seus modais.
+  Lista de aprovados (view `approved`), módulo do app — a página
+  `#page-approved` e os seus modais.
 
   O React é dono de tudo dentro da `<section>`; o legado só troca a classe
   `.active` dela e fala com o controlador (`window.aprovadosController`):
   `render()` ao abrir a página e `openImportModal(id, rótulo)` pelo botão de
-  listas da tabela do Núcleo.
+  listas da tabela de Editais.
+
+  Padrão das telas de src/modulos/: topo com as duas visões (abas com o visual
+  do controle segmentado), a data da carga e Atualizar; KPIs compactos;
+  filtros recolhíveis; skeleton antes da primeira carga e, se ela falha, um
+  aviso com "Tentar novamente".
 
   Os dados (candidatos, listas, configuração de convocação) e as ações vivem em
   `estado.js`; as duas abas leem os mesmos candidatos, então mudar o status de
@@ -52,16 +59,56 @@ const ABAS = [
     id: "approvedTabAprovados",
     painel: "approvedPanelAprovados",
     icone: "fa-user-check",
-    rotulo: "aprovados",
+    rotulo: "Aprovados",
   },
   {
     nome: "convocacao",
     id: "approvedTabConvocacao",
     painel: "approvedPanelConvocacao",
     icone: "fa-bullhorn",
-    rotulo: "convocação",
+    rotulo: "Convocação",
   },
 ];
+
+function textoDoStatus({ carregado, erroAoCarregar, carregadoEm, acao }) {
+  if (erroAoCarregar && !carregado) return "Sem dados";
+  if (!carregado) return "Carregando dados...";
+  if (acao) return "Atualizando...";
+  return carregadoEm
+    ? `Atualizado em ${formatarDataHora(carregadoEm)}`
+    : "Base carregada";
+}
+
+/* As duas visões: abas (tablist) com o visual do controle segmentado. */
+function Visoes({ aba, aoMudar }) {
+  return (
+    <div
+      className="ui-segmentado approved-visoes"
+      role="tablist"
+      aria-label="Visões da lista do edital"
+    >
+      {ABAS.map((item) => (
+        <button
+          key={item.nome}
+          id={item.id}
+          className={classes(
+            "ui-segmentado-opcao",
+            aba === item.nome && "is-ativo",
+          )}
+          type="button"
+          role="tab"
+          aria-selected={aba === item.nome}
+          aria-controls={item.painel}
+          data-approved-tab={item.nome}
+          onClick={() => aoMudar(item.nome)}
+        >
+          <i className={`fa-solid ${item.icone}`} aria-hidden="true" />
+          {item.rotulo}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function ModalAberto({ estado, dados, daArea }) {
   const { modal } = dados;
@@ -135,15 +182,6 @@ export function ListaAprovados({ estado }) {
     () => soDosEditais(dados.candidatos, ids),
     [dados.candidatos, ids],
   );
-  const [atualizando, setAtualizando] = useState(false);
-  async function atualizar() {
-    setAtualizando(true);
-    try {
-      await estado.carregar();
-    } finally {
-      setAtualizando(false);
-    }
-  }
   const [aba, setAba] = useState("aprovados");
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*
@@ -188,11 +226,6 @@ export function ListaAprovados({ estado }) {
   );
 
   function mudarFiltro(campo, valores) {
-    if (campo === "limpar") {
-      setFiltros(FILTROS_INICIAIS);
-      setPagina(1);
-      return;
-    }
     setFiltros((atuais) => {
       const proximos = { ...atuais, [campo]: valores };
       if (campo === "editalId") {
@@ -221,127 +254,105 @@ export function ListaAprovados({ estado }) {
     canManageSubJudice(perfil) || canAlterarPorDecisaoJudicial(perfil);
   const temListaAtiva = listas.some((item) => item.ativo);
 
+  function limparFiltros() {
+    setFiltros(FILTROS_INICIAIS);
+    setPagina(1);
+  }
+
   return (
-    <>
+    <div className="ui-tela aprovados-tela">
       <TopoDoPainel
-        status={
-          atualizando
-            ? "Atualizando…"
-            : erroAoCarregar
-              ? "Falha ao carregar"
-              : carregado
-                ? "Listas carregadas"
-                : "Carregando…"
+        visoes={<Visoes aba={aba} aoMudar={setAba} />}
+        status={textoDoStatus(dados)}
+        aoAtualizar={() => void estado.carregar()}
+        atualizarDesativado={
+          Boolean(dados.acao) || (!carregado && !erroAoCarregar)
         }
-        aoAtualizar={() => void atualizar()}
-        atualizarDesativado={atualizando}
-      />
-      <div className="table-card card approved-page-card">
-        <div className="table-head approved-page-head">
-          <div>
-            <h3>
-              <i className="fa-solid fa-user-check" aria-hidden="true" /> Lista
-              de Aprovados
-            </h3>
-          </div>
-          {/*
-            O contador e o botão de sub judice falam da lista de aprovados.
-            Deixá-los visíveis na outra aba prometeria uma ação que não
-            pertence àquela tabela.
-          */}
-          <div
-            className={classes(
-              "approved-head-actions",
-              aba !== "aprovados" && "hidden",
-            )}
-            id="approvedHeadActions"
-          >
-            <span id="approvedCount" className="chip blue">
-              {carregado
-                ? plural(filtrados.length, "candidato", "candidatos")
-                : erroAoCarregar
-                  ? "Sem dados"
-                  : "Carregando…"}
-            </span>
-            {podeSubJudice ? (
-              <button
-                id="approvedAddSubJudiceBtn"
-                className="btn green"
-                type="button"
-                disabled={!temListaAtiva}
-                title={
-                  temListaAtiva
-                    ? "Incluir candidato sub judice ou registrar decisão sobre candidato já aprovado"
-                    : "É necessário ter uma lista ativa"
-                }
-                onClick={estado.abrirSubJudice}
-              >
-                <i className="fa-solid fa-gavel" aria-hidden="true" /> Sub
-                judice
-              </button>
-            ) : null}
-          </div>
-        </div>
+      >
+        {/*
+          O contador e o botão de sub judice falam da lista de aprovados.
+          Deixá-los visíveis na outra aba prometeria uma ação que não
+          pertence àquela tabela.
+        */}
         <div
-          className="approved-tabs"
-          role="tablist"
-          aria-label="Visões da lista do edital"
+          className={classes(
+            "approved-head-actions",
+            aba !== "aprovados" && "hidden",
+          )}
+          id="approvedHeadActions"
         >
-          {ABAS.map((item) => (
+          <span id="approvedCount" className="approved-contagem">
+            {carregado
+              ? plural(filtrados.length, "candidato", "candidatos")
+              : erroAoCarregar
+                ? "Sem dados"
+                : "Carregando…"}
+          </span>
+          {podeSubJudice ? (
             <button
-              key={item.nome}
-              id={item.id}
-              className={classes("approved-tab", aba === item.nome && "active")}
+              id="approvedAddSubJudiceBtn"
+              className="btn green"
               type="button"
-              role="tab"
-              aria-selected={aba === item.nome}
-              aria-controls={item.painel}
-              data-approved-tab={item.nome}
-              onClick={() => setAba(item.nome)}
+              disabled={!temListaAtiva}
+              title={
+                temListaAtiva
+                  ? "Incluir candidato sub judice ou registrar decisão sobre candidato já aprovado"
+                  : "É necessário ter uma lista ativa"
+              }
+              onClick={estado.abrirSubJudice}
             >
-              <i className={`fa-solid ${item.icone}`} aria-hidden="true" />{" "}
-              <span className="approved-tab-prefixo">Lista de </span>
-              {item.rotulo}
+              <i className="fa-solid fa-gavel" aria-hidden="true" /> Sub judice
             </button>
-          ))}
+          ) : null}
         </div>
-        <AbaAprovados
-          ativa={aba === "aprovados"}
-          estado={estado}
-          perfil={perfil}
-          candidatos={candidatos}
-          anexos={dados.anexos}
-          carregado={carregado}
-          erroAoCarregar={erroAoCarregar}
-          opcoes={opcoes}
-          filtros={efetivos}
-          aoMudarFiltro={mudarFiltro}
-          pagina={paginaAtual}
-          tamanho={tamanho}
-          aoIrPara={irPara}
-          aoMudarTamanho={(valor) => {
-            setTamanho(valor);
-            setPagina(1);
-          }}
+      </TopoDoPainel>
+
+      {erroAoCarregar && !carregado ? (
+        <ErroAoCarregar
+          id="approvedErro"
+          oQue="a lista de aprovados"
+          mensagem={erroAoCarregar}
+          aoTentar={() => void estado.carregar()}
         />
-        <AbaConvocacao
-          ativa={aba === "convocacao"}
-          estado={estado}
-          perfil={perfil}
-          candidatos={candidatos}
-          listas={listas}
-          configs={dados.configs}
-          modelos={dados.modelos}
-          carregado={carregado}
-          erroAoCarregar={erroAoCarregar}
-        />
-      </div>
+      ) : null}
+
+      <AbaAprovados
+        ativa={aba === "aprovados"}
+        estado={estado}
+        perfil={perfil}
+        candidatos={candidatos}
+        anexos={dados.anexos}
+        carregado={carregado}
+        erroAoCarregar={erroAoCarregar}
+        opcoes={opcoes}
+        filtros={efetivos}
+        aoMudarFiltro={mudarFiltro}
+        aoLimparFiltros={limparFiltros}
+        pagina={paginaAtual}
+        tamanho={tamanho}
+        aoIrPara={irPara}
+        aoMudarTamanho={(valor) => {
+          setTamanho(valor);
+          setPagina(1);
+        }}
+      />
+      <AbaConvocacao
+        ativa={aba === "convocacao"}
+        estado={estado}
+        perfil={perfil}
+        candidatos={candidatos}
+        listas={listas}
+        configs={dados.configs}
+        modelos={dados.modelos}
+        carregado={carregado}
+        erroAoCarregar={erroAoCarregar}
+      />
       <ModalAberto
         estado={estado}
         dados={dados}
         daArea={{ listas, candidatos }}
       />
-    </>
+    </div>
   );
 }
 

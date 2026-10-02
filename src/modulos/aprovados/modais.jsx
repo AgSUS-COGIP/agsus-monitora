@@ -19,8 +19,8 @@ import {
   statusNeedsMatricula,
   uniqueCandidateCargos,
 } from "../../lib/lista-aprovados-rules.js";
-import { Modal } from "../../componentes/modal.jsx";
-import { BotaoDeAcao, IconeDePdf, classes } from "./partes.jsx";
+import { BotaoDeAcao, classes, Modal } from "../../ui/index.js";
+import { IconeDePdf } from "./partes.jsx";
 
 /*
   Os modais de status do candidato (com os anexos novos), dos anexos do

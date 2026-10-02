@@ -5,9 +5,8 @@ import {
 } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
-import { Modal } from "../../componentes/modal.jsx";
+import { BotaoDeAcao, classes, Modal } from "../../ui/index.js";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
-import { BotaoDeAcao, classes } from "./partes.jsx";
 
 /*
   O modal "Listas do edital", aberto pelo Núcleo (`openImportModal` do
@@ -81,7 +80,10 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
   return (
     <div
       id="approvedImportPanelArquivo"
-      className={classes("approved-tabpanel", !ativa && "hidden")}
+      className={classes(
+        "approved-tabpanel approved-import-painel-arquivo",
+        !ativa && "hidden",
+      )}
       role="tabpanel"
       aria-labelledby="approvedImportTabArquivo"
     >

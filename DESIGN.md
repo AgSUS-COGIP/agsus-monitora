@@ -197,13 +197,12 @@ Os valores de hoje (560, 680, 700, 720, 820, 1180) migram para o mais próximo q
 **Sem faixa colorida no topo** (`::before` de 3 a 4px): com seis cards lado a lado vira um arco-íris
 que compete com o conteúdo. A cor vai para o tile do ícone e para o indicador, onde tem significado.
 
-### Indicador — `.kpi`, `.approved-kpi`
+### Indicador — `Kpi` (`.ui-kpi`)
 
 **Card** — exceção aceita ao Design System 11.7 (que pede faixa sem card), por decisão do
 responsável em 25/09/2026: os KPIs em card leem melhor no MONITORA. O card segue o DS 11.6.
-Feito na Visão geral da Saúde Indígena (`health-reference-kpis.css`), em Editais
-(`.nucleo-kpi-card`, `nucleo-operational-enhancements.css`) e na Lista de aprovados, nas duas abas
-(`.approved-kpi`, `lista-aprovados.css`): card de 78px, padding `--space-3 --space-4`.
+Feito pelo `Kpi` de `src/ui/` (`.ui-kpi` em `GradeDeKpis`) em todas as telas React — Editais e Lista
+de aprovados (nas duas abas) inclusive: card de 78px, padding `--space-3 --space-4`.
 
 ```
 ┌──────────────────────────┐   --surface-card · borda 1px --border-subtle · --radius-lg · sem sombra

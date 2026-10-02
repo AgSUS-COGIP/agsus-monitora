@@ -108,6 +108,8 @@ const ESTADO_INICIAL = Object.freeze({
   anexos: new Map(),
   listas: Object.freeze([]),
   carregado: false,
+  /** Quando a última carga chegou (ISO), para a data discreta do topo. */
+  carregadoEm: "",
   /** A primeira carga falhou: a página mostra o erro e "Tentar de novo". */
   erroAoCarregar: "",
   /** A ação em curso, `{ tipo, rotulo }`, ou `null`. Uma por vez. */
@@ -418,6 +420,7 @@ export function criarEstadoDaListaDeAprovados({
             candidatos: Array.isArray(candidatos.data) ? candidatos.data : [],
           }),
       carregado: true,
+      carregadoEm: new Date().toISOString(),
       perfil: perfil(),
       ...(configuracao || {}),
       ...(anexos ? { anexos } : {}),
