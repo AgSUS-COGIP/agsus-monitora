@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarCalendarioEditais } from "../../src/componentes/calendario-editais/calendario-editais.jsx";
+import { montarCalendarioEditais } from "../../src/modulos/cronograma/calendario-editais.jsx";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
   definirAreaAtual,
@@ -137,6 +137,15 @@ const etapasDaLinhaDoTempo = () =>
   );
 
 describe("carregamento", () => {
+  it("Atualizar ignora o cache do minuto e mantém o mês aberto", async () => {
+    const { supabase } = await montar();
+    await clicar($("calMesSeguinte"));
+    const mes = $("calMesTitulo").textContent;
+    const chamadas = supabase.rpc.mock.calls.length;
+    await clicar(document.querySelector('[data-acao="atualizar"]'));
+    expect(supabase.rpc.mock.calls.length).toBeGreaterThan(chamadas);
+    expect($("calMesTitulo").textContent).toBe(mes);
+  });
   it("custa 2 + N chamadas quando o banco ainda não tem a RPC em lote", async () => {
     const { supabase } = await montar();
     const nomes = supabase.rpc.mock.calls.map(([nome, args]) =>

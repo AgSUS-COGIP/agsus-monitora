@@ -1,7 +1,7 @@
 /*
   Editais da Equipe Núcleo — a lógica da página "Editais", sem DOM nem rede.
 
-  A tela é `src/componentes/nucleo/`. As linhas são as do monitoramento
+  A tela é `src/modulos/editais/`. As linhas são as do monitoramento
   (`TB_MONITORAMENTO_INDIGENA`), carregadas pelo legado para o mapa e para esta
   página; o resumo de cronogramas vem de `get_nucleo_cronograma_resumo`.
 

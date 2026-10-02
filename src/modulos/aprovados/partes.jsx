@@ -9,7 +9,7 @@ import {
   statusTravado,
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.js";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../../componentes/icone.jsx";
 
 /*
   Peças que as duas abas (aprovados e convocação) e os modais repetem. As

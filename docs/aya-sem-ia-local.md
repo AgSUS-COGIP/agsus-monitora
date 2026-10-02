@@ -11,8 +11,9 @@ botões e a opção de abrir chamado; temas fora do MONITORA recebem sugestões 
 Contagens só são respondidas quando disponíveis no contexto, com o recorte indicado.
 
 O chamado abre `https://mail.google.com/mail/` em outra aba, com destinatário,
-assunto e corpo codificados. O usuário revisa e envia. O link secundário `mailto:`
-permite usar o programa de e-mail. As regras existentes de omissão de CPF/e-mail
+assunto e corpo codificados. O usuário revisa e envia. A opção permanente
+"Feedback e suporte" também abre o Gmail, mesmo antes da primeira pergunta.
+As regras existentes de omissão de CPF/e-mail
 e limite do corpo continuam valendo.
 
 Foram removidos endpoint, scripts de bridge, serviço e instalação do túnel, comandos

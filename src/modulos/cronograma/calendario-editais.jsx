@@ -1,3 +1,5 @@
+import { PainelDeFiltros } from "../../ui/painel-de-filtros.jsx";
+import { TopoDoPainel } from "../../ui/topo-do-painel.jsx";
 import {
   useEffect,
   useMemo,
@@ -26,8 +28,8 @@ import {
   somarMeses,
   unidadesDasEtapas,
 } from "../../lib/calendario-editais.js";
-import { soDosEditais } from "../dados-do-monitoramento.js";
-import { usarAreaAtual } from "../usar-area-atual.js";
+import { soDosEditais } from "../../componentes/dados-do-monitoramento.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import { criarEstadoDoCalendario } from "./estado.js";
 import {
   AvisoDeDatasARevisar,
@@ -151,6 +153,19 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
 
   return (
     <>
+      <TopoDoPainel
+        status={
+          carregando
+            ? "Atualizando…"
+            : erro
+              ? "Falha ao carregar"
+              : carregado
+                ? "Cronogramas carregados"
+                : "Carregando…"
+        }
+        aoAtualizar={() => void estado.carregar(true)}
+        atualizarDesativado={carregando}
+      />
       <div className="table-card card cal-card">
         <div className="cal-barra">
           <span className="cal-nav">
@@ -190,7 +205,13 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
               ? "Carregando…"
               : rotuloDaContagem(contarEtapasNoMes(filtradas, mes))}
           </span>
-
+        </div>
+        <PainelDeFiltros
+          idDoTitulo="cronogramaFiltros"
+          quantos={Object.values(filtros).filter(Boolean).length}
+          podeLimpar={ocultarConcluidas || Object.values(filtros).some(Boolean)}
+          aoLimpar={limparFiltros}
+        >
           <div className="cal-filtros">
             <label className="sr-only" htmlFor="calBusca">
               Pesquisar etapa, edital ou unidade
@@ -258,7 +279,7 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
               Limpar
             </button>
           </div>
-        </div>
+        </PainelDeFiltros>
 
         <div id="calLegenda" className="cal-legenda">
           {TIPOS_DA_LEGENDA.map((tipo) => (

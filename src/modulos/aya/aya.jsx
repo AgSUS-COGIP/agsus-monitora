@@ -264,7 +264,6 @@ function CartaoDoChamado({ chamado }) {
         <Icone nome="mail" tamanho={15} />
         Abrir chamado no Gmail
       </a>
-      <a href={chamado.mailto}>Usar meu programa de e-mail</a>
     </div>
   );
 }
@@ -686,7 +685,8 @@ export function Aya({
   }
 
   const chamadoDe = (mensagem) => {
-    const indice = mensagens.findIndex((m) => m.id === mensagem.id);
+    const encontrado = mensagens.findIndex((m) => m.id === mensagem.id);
+    const indice = encontrado < 0 ? mensagens.length : encontrado;
     const pergunta =
       [...mensagens.slice(0, indice)].reverse().find((m) => m.papel === "user")
         ?.texto || "";
@@ -1025,9 +1025,25 @@ export function Aya({
             }}
           >
             <p className="aya-aviso" role="note">
-              Respostas da base do MONITORA. Se precisar de ajuda, abra um
-              chamado.
+              Se precisar de ajuda, abra um chamado.
             </p>
+            <a
+              className="aya-suporte"
+              href={
+                chamadoDe(
+                  [...mensagens]
+                    .reverse()
+                    .find((m) => m.papel === "assistant") || {
+                    id: "",
+                    texto: "",
+                  },
+                ).href
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icone nome="mail" tamanho={15} /> Feedback e suporte
+            </a>
             <div className="aya-compositor">
               <label htmlFor={idDoCampo} className="aya-visualmente-oculto">
                 Pergunte à Aya

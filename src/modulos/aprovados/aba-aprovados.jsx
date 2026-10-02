@@ -1,3 +1,4 @@
+import { PainelDeFiltros } from "../../ui/painel-de-filtros.jsx";
 import { useEffect, useRef } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
@@ -5,7 +6,7 @@ import {
   canEditSubJudice,
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
-import { MultiSelectBusca } from "../multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import {
   AcaoDeAnexos,
   AcaoDeStatus,
@@ -122,48 +123,54 @@ export function AbaAprovados({
         />
       </div>
 
-      <div className="approved-filters">
-        <div className="form-row">
-          <label htmlFor="approvedFilterEdital">Edital</label>
-          <MultiSelectBusca
-            id="approvedFilterEdital"
-            placeholder="Todos os editais"
-            opcoes={opcoes.editais}
-            selecionados={filtros.editalId}
-            aoMudar={(valores) => aoMudarFiltro("editalId", valores)}
-          />
+      <PainelDeFiltros
+        idDoTitulo="aprovadosFiltros"
+        quantos={Object.values(filtros).filter((v) => v.length).length}
+        aoLimpar={() => aoMudarFiltro("limpar", [])}
+      >
+        <div className="approved-filters">
+          <div className="form-row">
+            <label htmlFor="approvedFilterEdital">Edital</label>
+            <MultiSelectBusca
+              id="approvedFilterEdital"
+              placeholder="Todos os editais"
+              opcoes={opcoes.editais}
+              selecionados={filtros.editalId}
+              aoMudar={(valores) => aoMudarFiltro("editalId", valores)}
+            />
+          </div>
+          <div className="form-row">
+            <label htmlFor="approvedFilterCargo">Cargo</label>
+            <MultiSelectBusca
+              id="approvedFilterCargo"
+              placeholder="Todos os cargos"
+              opcoes={opcoes.cargos}
+              selecionados={filtros.cargo}
+              aoMudar={(valores) => aoMudarFiltro("cargo", valores)}
+            />
+          </div>
+          <div className="form-row">
+            <label htmlFor="approvedFilterModalidade">Modalidade</label>
+            <MultiSelectBusca
+              id="approvedFilterModalidade"
+              placeholder="Todas as modalidades"
+              opcoes={opcoes.modalidades}
+              selecionados={filtros.modalidade}
+              aoMudar={(valores) => aoMudarFiltro("modalidade", valores)}
+            />
+          </div>
+          <div className="form-row">
+            <label htmlFor="approvedFilterStatus">Status</label>
+            <MultiSelectBusca
+              id="approvedFilterStatus"
+              placeholder="Todos os status"
+              opcoes={OPCOES_DO_FILTRO_DE_STATUS}
+              selecionados={filtros.status}
+              aoMudar={(valores) => aoMudarFiltro("status", valores)}
+            />
+          </div>
         </div>
-        <div className="form-row">
-          <label htmlFor="approvedFilterCargo">Cargo</label>
-          <MultiSelectBusca
-            id="approvedFilterCargo"
-            placeholder="Todos os cargos"
-            opcoes={opcoes.cargos}
-            selecionados={filtros.cargo}
-            aoMudar={(valores) => aoMudarFiltro("cargo", valores)}
-          />
-        </div>
-        <div className="form-row">
-          <label htmlFor="approvedFilterModalidade">Modalidade</label>
-          <MultiSelectBusca
-            id="approvedFilterModalidade"
-            placeholder="Todas as modalidades"
-            opcoes={opcoes.modalidades}
-            selecionados={filtros.modalidade}
-            aoMudar={(valores) => aoMudarFiltro("modalidade", valores)}
-          />
-        </div>
-        <div className="form-row">
-          <label htmlFor="approvedFilterStatus">Status</label>
-          <MultiSelectBusca
-            id="approvedFilterStatus"
-            placeholder="Todos os status"
-            opcoes={OPCOES_DO_FILTRO_DE_STATUS}
-            selecionados={filtros.status}
-            aoMudar={(valores) => aoMudarFiltro("status", valores)}
-          />
-        </div>
-      </div>
+      </PainelDeFiltros>
       <div className="table-wrap" ref={tabela}>
         <table className="approved-table">
           <thead>

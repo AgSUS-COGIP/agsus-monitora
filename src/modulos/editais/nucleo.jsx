@@ -1,3 +1,4 @@
+import { PainelDeFiltros } from "../../ui/painel-de-filtros.jsx";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -17,7 +18,7 @@ import {
   tomDoRisco,
   tomDoStatusDoEdital,
 } from "../../lib/editais-do-nucleo.js";
-import { usarAreaAtual } from "../usar-area-atual.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import { criarEstadoDoNucleo } from "./estado.js";
 import { ModalDoEdital } from "./modal-do-edital.jsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.jsx";
@@ -195,14 +196,6 @@ export function Nucleo({ estado, agora }) {
             Controle de editais
           </h3>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input
-              id="nucleoSearch"
-              type="search"
-              placeholder="Pesquisar edital, unidade, status..."
-              aria-label="Pesquisar edital, unidade, status, etapa ou risco"
-              value={busca}
-              onChange={(evento) => setBusca(evento.target.value)}
-            />
             {canManageEditais(nucleo.perfil) ? (
               <button
                 id="newEditalBtn"
@@ -215,6 +208,20 @@ export function Nucleo({ estado, agora }) {
             ) : null}
           </div>
         </div>
+        <PainelDeFiltros
+          idDoTitulo="editaisFiltros"
+          quantos={busca.trim() ? 1 : 0}
+          aoLimpar={() => setBusca("")}
+        >
+          <input
+            id="nucleoSearch"
+            type="search"
+            placeholder="Pesquisar edital, unidade, status..."
+            aria-label="Pesquisar edital, unidade, status, etapa ou risco"
+            value={busca}
+            onChange={(evento) => setBusca(evento.target.value)}
+          />
+        </PainelDeFiltros>
         <PainelOperacional estado={estado} nucleo={nucleo} />
         <div className="table-wrap">
           <table>
