@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { FASES, sessaoDoApp } from "../../app/sessao.js";
 import { podeUsarChat } from "../../lib/access-roles.js";
+import { totalDeNaoLidas } from "../../lib/chat.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { criarEstadoDoChat } from "./estado.js";
 import { EVENTO_ABRIR_CONVERSA } from "./ponte.js";
@@ -33,10 +34,7 @@ function rotuloDoBotao(total) {
 
 export function Chat({ estado }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const total = e.conversas.reduce(
-    (soma, c) => (c.silenciada ? soma : soma + (Number(c.nao_lidas) || 0)),
-    0,
-  );
+  const total = totalDeNaoLidas(e.conversas);
 
   if (!e.ligado) return null;
   return (
