@@ -13,6 +13,7 @@ export const RESOURCES = Object.freeze([
   ["paineis", "Painéis externos"],
   ["configuracoes", "Configurações"],
   ["acessos", "Gestão de acessos"],
+  ["chat", "Mensagens"],
 ]);
 
 export const LEVELS = Object.freeze([
@@ -61,6 +62,7 @@ export function niveisDoRecurso(recurso) {
   const tipo = tipoDoRecurso(recurso);
   if (tipo === "area") return NIVEIS_DE_AREA;
   if (tipo === "painel") return LEVELS.slice(0, 2);
+  if (recurso === "chat") return NIVEIS_DO_CHAT;
   if (recurso === "configuracoes")
     return LEVELS.filter(([nivel]) => nivel !== "leitor");
   // Decide ou não decide (CK_GRUPACESSOREC_ACESSOS / _PARECER no banco).
