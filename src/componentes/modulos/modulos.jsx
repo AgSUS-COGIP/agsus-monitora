@@ -14,7 +14,7 @@ import {
 } from "../../lib/modulos-e-abas.js";
 import { criarEstadoDosModulos } from "./estado.js";
 import { classes, ControleSegmentado } from "../acessos/partes.jsx";
-import { BotaoDeAcao } from "../../modulos/aprovados/partes.jsx";
+import { BotaoDeAcao } from "../../ui/index.js";
 import { Icone } from "../icone.jsx";
 
 /*

@@ -10,10 +10,7 @@ import { gruposAtribuiveis } from "../../lib/teto-de-acessos.js";
 import { explicacaoDoGrupo } from "../../lib/matriz-de-acessos.js";
 import { Modal } from "../modal.jsx";
 import { Icone } from "../icone.jsx";
-import {
-  BotaoDeAcao,
-  LinhasEsqueleto,
-} from "../../modulos/aprovados/partes.jsx";
+import { BotaoDeAcao, LinhasEsqueleto } from "../../ui/index.js";
 import {
   AvisoSemArea,
   AvisoSemCoordenacao,

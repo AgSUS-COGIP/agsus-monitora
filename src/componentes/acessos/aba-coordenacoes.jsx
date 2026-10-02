@@ -16,7 +16,7 @@ import {
 } from "../dados-do-monitoramento.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../modulos/aprovados/partes.jsx";
+import { BotaoDeAcao } from "../../ui/index.js";
 import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";
 
 /*

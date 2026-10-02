@@ -4,7 +4,7 @@ import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
 import { Modal } from "../modal.jsx";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
 import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../modulos/aprovados/partes.jsx";
+import { BotaoDeAcao } from "../../ui/index.js";
 import { CampoMotivo, motivoValido } from "./partes.jsx";
 import { AcoesDoConvite } from "./convite.jsx";
 

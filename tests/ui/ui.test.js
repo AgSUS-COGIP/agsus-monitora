@@ -3,17 +3,21 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   Aviso,
+  BlocosEsqueleto,
+  BotaoDeAcao,
   Campo,
   CardDeGrafico,
   Carregando,
   ChipDeFiltro,
   ChipsDeFiltro,
+  ErroAoCarregar,
   EstadoVazio,
   Gaveta,
   GradeDeKpis,
   Kpi,
   Kv,
   LinhaDoRecorte,
+  LinhasEsqueleto,
   ListaDePendencias,
   MaisOpcoes,
   MarcasDoRecorte,
@@ -870,5 +874,148 @@ describe("Segmentado, LinhaDoRecorte e ListaDePendencias (só dentro do app)", (
       raiz.render(h(ListaDePendencias, { itens: [], vazio: "Nada" })),
     );
     expect($(".ui-pendencias .ui-vazio").textContent).toBe("Nada");
+  });
+});
+
+describe("BotaoDeAcao, esqueletos e ErroAoCarregar", () => {
+  function criarEstado(acao = null) {
+    let atual = { acao };
+    const ouvintes = new Set();
+    return {
+      obter: () => atual,
+      assinar: (ouvinte) => {
+        ouvintes.add(ouvinte);
+        return () => ouvintes.delete(ouvinte);
+      },
+      definir(nova) {
+        atual = { acao: nova };
+        ouvintes.forEach((ouvinte) => ouvinte());
+      },
+    };
+  }
+
+  it("BotaoDeAcao: mostra o rótulo da própria ação e desativa durante qualquer outra", async () => {
+    const estado = criarEstado();
+    await montarNoApp(
+      h(
+        "div",
+        null,
+        h(BotaoDeAcao, { estado, acao: "salvar", id: "a" }, "Salvar"),
+        h(BotaoDeAcao, { estado, acao: "apagar", id: "b", soIcone: true }, "X"),
+      ),
+    );
+    expect($("#a").disabled).toBe(false);
+    expect($("#a").type).toBe("button");
+    await act(async () =>
+      estado.definir({ tipo: "salvar", rotulo: "Salvando…" }),
+    );
+    expect($("#a").textContent.trim()).toBe("Salvando…");
+    expect($("#a").getAttribute("aria-busy")).toBe("true");
+    expect($("#a .botao-girando")).not.toBeNull();
+    expect($("#b").disabled).toBe(true);
+    expect($("#b").textContent).toBe("X");
+    await act(async () =>
+      estado.definir({ tipo: "apagar", rotulo: "Apagando…" }),
+    );
+    expect($("#b .sr-only").textContent).toBe("Apagando…");
+  });
+
+  it("LinhasEsqueleto e BlocosEsqueleto: o formato do conteúdo, escondido do leitor de tela", async () => {
+    await montarNoApp(
+      h(
+        "div",
+        null,
+        h(
+          "table",
+          null,
+          h("tbody", null, h(LinhasEsqueleto, { colunas: 3, linhas: 2 })),
+        ),
+        h(
+          "ul",
+          null,
+          h(BlocosEsqueleto, { quantos: 4, como: "li", className: "extra" }),
+        ),
+        h("div", { id: "soltos" }, h(BlocosEsqueleto, {})),
+      ),
+    );
+    const linhas = document.querySelectorAll("tr.ui-esqueleto-tr");
+    expect(linhas).toHaveLength(2);
+    expect(linhas[0].getAttribute("aria-hidden")).toBe("true");
+    expect(linhas[0].querySelectorAll("td .ui-esqueleto-linha")).toHaveLength(
+      3,
+    );
+    const itens = document.querySelectorAll('ul li[aria-hidden="true"]');
+    expect(itens).toHaveLength(4);
+    expect(
+      itens[0].querySelector(".ui-esqueleto.ui-esqueleto-bloco.extra"),
+    ).not.toBeNull();
+    expect(
+      document.querySelectorAll("#soltos > .ui-esqueleto-bloco"),
+    ).toHaveLength(3);
+  });
+
+  it("ErroAoCarregar: Aviso danger com a mensagem e o Tentar novamente", async () => {
+    const aoTentar = vi.fn();
+    await montarNoApp(
+      h(ErroAoCarregar, {
+        id: "erro",
+        idDoBotao: "tentar",
+        oQue: "os dados",
+        mensagem: "sem rede",
+        aoTentar,
+      }),
+    );
+    const aviso = $(".ui-aviso");
+    expect(aviso.dataset.tone).toBe("danger");
+    expect(aviso.getAttribute("role")).toBe("alert");
+    expect($("#erro").textContent).toContain(
+      "Não foi possível carregar os dados: sem rede",
+    );
+    expect($("#tentar").textContent.trim()).toBe("Tentar novamente");
+    await clicar($("#tentar"));
+    expect(aoTentar).toHaveBeenCalledTimes(1);
+  });
+
+  it("ErroAoCarregar: sem aoTentar, só a frase com ponto final", async () => {
+    await montarNoApp(h(ErroAoCarregar, { oQue: "a lista" }));
+    expect($(".ui-erro-ao-carregar").textContent).toBe(
+      "Não foi possível carregar a lista.",
+    );
+    expect($("button")).toBeNull();
+  });
+
+  it("Kpi com idDoValor e TabelaInfinita com className, idDoCorpo e busca.id", async () => {
+    await montarNoApp(
+      h(
+        "div",
+        null,
+        h(Kpi, {
+          chave: "t",
+          rotulo: "Total",
+          valor: "3",
+          idDoValor: "valorTotal",
+        }),
+        h(TabelaInfinita, {
+          idDoTitulo: "t",
+          titulo: "T",
+          className: "minha-tabela",
+          idDoCorpo: "corpo",
+          busca: { id: "busca", placeholder: "B", rotulo: "Buscar" },
+          carregado: false,
+          itens: [],
+          filtrarPelaBusca: (itens) => itens,
+          colunas: [{ rotulo: "A" }, { rotulo: "B" }],
+          linha: () => null,
+          informacao: () => "",
+          total: 0,
+          vazio: "Nada",
+        }),
+      ),
+    );
+    expect($("#valorTotal").textContent).toBe("3");
+    expect($("section.ui-tabela.minha-tabela")).not.toBeNull();
+    expect($("tbody#corpo").getAttribute("aria-busy")).toBe("true");
+    expect($("#corpo tr.ui-esqueleto-tr")).not.toBeNull();
+    expect($("input#busca.ui-tabela-busca")).not.toBeNull();
   });
 });
