@@ -301,7 +301,7 @@ declare
   v_sem text;
   v_nome integer;
 begin
-  with pontos as (
+  create temp table pontos on commit drop as
     select 'lmap'::text fonte, 'polo'::text tipo, d.value ->> 'k' dsei, p.value ->> 'cod' codigo, p.value ->> 'n' nome
       from public."TB_CONFIG_MAPA_SAUDE_INDIG" c,
            jsonb_array_elements(c.payload -> 'dsei') d,
@@ -313,8 +313,7 @@ begin
            jsonb_each(c.payload -> 'rede') r,
            unnest(array['u', 'c']) t(tipo),
            jsonb_array_elements(coalesce(r.value -> t.tipo, '[]'::jsonb)) u
-     where c.chave = 'rede_cnes'
-  )
+     where c.chave = 'rede_cnes';
   select string_agg(format('%s/%s/%s/%s', p."TP_FONTE", p."NO_DSEI", p."CO_PONTO", p."NO_PONTO"), '; ')
     into v_sem
     from (select * from private."TB_PENDENCIA_COORDENADA_MAPA" x

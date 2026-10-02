@@ -615,28 +615,28 @@ begin
     raise exception 'FALHOU E4: pendência do polo não listada';
   end if;
 
-  v := public.salvar_coordenada_mapa_saude_indigena(v_alvo, v_lat + 0.001, v_lon, v_lat, v_lon, 'Ensaio: correção de teste');
+  v := public.salvar_coordenada_mapa_saude_indigena(v_alvo, (v_lat::numeric + 0.001)::float8, v_lon, v_lat, v_lon, 'Ensaio: correção de teste');
   v_h1 := (v ->> 'historico')::bigint;
-  if ((v -> 'lmap' #> v_caminho) ->> 'lat')::float8 <> v_lat + 0.001 or (v ->> 'conferido')::boolean then
+  if ((v -> 'lmap' #> v_caminho) ->> 'lat')::float8 <> (v_lat::numeric + 0.001)::float8 or (v ->> 'conferido')::boolean then
     raise exception 'FALHOU E4: correção não gravou ou conferiu sem pedir';
   end if;
   begin
-    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, v_lat + 0.001, v_lon, v_lat + 0.001, v_lon, 'Ensaio: mesma posição');
+    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, (v_lat::numeric + 0.001)::float8, v_lon, (v_lat::numeric + 0.001)::float8, v_lon, 'Ensaio: mesma posição');
     raise exception 'FALHOU E4: aceitou posição igual sem conferir';
   exception when sqlstate '22023' then null;
   end;
   begin
-    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, v_lat + 0.003, v_lon, v_lat, v_lon, 'Ensaio: anterior velha');
+    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, (v_lat::numeric + 0.003)::float8, v_lon, v_lat, v_lon, 'Ensaio: anterior velha');
     raise exception 'FALHOU E4: aceitou posição anterior desatualizada';
   exception when sqlstate '40001' then null;
   end;
   begin
-    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, v_lat + 0.003, v_lon, v_lat + 0.001, v_lon, 'curto');
+    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, (v_lat::numeric + 0.003)::float8, v_lon, (v_lat::numeric + 0.001)::float8, v_lon, 'curto');
     raise exception 'FALHOU E4: aceitou motivo curto';
   exception when sqlstate '22023' then null;
   end;
   begin
-    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, 10, v_lon, v_lat + 0.001, v_lon, 'Ensaio: fora do Brasil');
+    perform public.salvar_coordenada_mapa_saude_indigena(v_alvo, 10, v_lon, (v_lat::numeric + 0.001)::float8, v_lon, 'Ensaio: fora do Brasil');
     raise exception 'FALHOU E4: aceitou fora do Brasil';
   exception when sqlstate '22023' then null;
   end;
@@ -686,8 +686,8 @@ begin
   v := public.desfazer_coordenada_mapa_saude_indigena(v_h3, 'Ensaio: volta a pendente');
   if (v ->> 'conferido')::boolean then raise exception 'FALHOU E4: desfazer não voltou a pendente'; end if;
 
-  v := public.salvar_coordenada_mapa_saude_indigena(v_alvo, v_lat + 0.002, v_lon, v_lat, v_lon, 'Ensaio: conferida em outra posição', true);
-  if not (v ->> 'conferido')::boolean or ((v -> 'lmap' #> v_caminho) ->> 'lat')::float8 <> v_lat + 0.002 then
+  v := public.salvar_coordenada_mapa_saude_indigena(v_alvo, (v_lat::numeric + 0.002)::float8, v_lon, v_lat, v_lon, 'Ensaio: conferida em outra posição', true);
+  if not (v ->> 'conferido')::boolean or ((v -> 'lmap' #> v_caminho) ->> 'lat')::float8 <> (v_lat::numeric + 0.002)::float8 then
     raise exception 'FALHOU E4: conferência com mudança de posição';
   end if;
   raise notice 'ok E4: polo corrigido, validado (22023/40001), desfeito, conferido sem e com mudança';
@@ -705,8 +705,8 @@ declare
   v_caminho text[] := array['rede', v_alvo ->> 'dsei', 'u', v_alvo ->> 'indice'];
   v jsonb;
 begin
-  v := public.salvar_coordenada_mapa_saude_indigena(v_alvo, v_lat - 0.001, v_lon, v_lat, v_lon, 'Ensaio: UBSI conferida com ajuste', true);
-  if not (v ->> 'conferido')::boolean or ((v -> 'rede_cnes' #> v_caminho) ->> 2)::float8 <> v_lat - 0.001
+  v := public.salvar_coordenada_mapa_saude_indigena(v_alvo, (v_lat::numeric - 0.001)::float8, v_lon, v_lat, v_lon, 'Ensaio: UBSI conferida com ajuste', true);
+  if not (v ->> 'conferido')::boolean or ((v -> 'rede_cnes' #> v_caminho) ->> 2)::float8 <> (v_lat::numeric - 0.001)::float8
      or (v -> 'rede_cnes' #> v_caminho) ->> 0 <> v_alvo ->> 'nome' then
     raise exception 'FALHOU E5: UBSI conferida com ajuste';
   end if;
