@@ -17,6 +17,7 @@ import {
 } from "../../lib/classificacao/numeros.js";
 import { normalizarRegra } from "../../lib/classificacao/regra.js";
 import { conferirSorteio } from "../../lib/classificacao/sorteio.js";
+import { DocumentoDoSei } from "./documento.jsx";
 import {
   Aviso,
   Campo,
@@ -615,13 +616,27 @@ function Acoes({
     dados?.regra?.configuracao,
   ).modalidades.filter((m) => m.lista_propria);
 
-  async function exportar(formato) {
+  const [documento, setDocumento] = useState(null);
+
+  /* A lista registrada (a desta sessão ou a última gerada, lida do banco). */
+  async function alvoRegistrado() {
     let alvo = registro;
-    if (!alvo && geracoes[0]) alvo = await estado.obterLista(geracoes[0].id);
-    if (alvo) {
-      aoCarregarRegistro(alvo);
-      estado.exportar(alvo, formato, lista, fase || null);
-    }
+    if (!alvo?.retrato && geracoes[0])
+      alvo = await estado.obterLista(geracoes[0].id);
+    if (alvo) aoCarregarRegistro(alvo);
+    return alvo?.retrato ? alvo : null;
+  }
+  async function exportar(formato) {
+    const alvo = await alvoRegistrado();
+    if (alvo) await estado.exportar(alvo, formato, lista, fase || null);
+  }
+  async function copiarParaSei() {
+    const alvo = await alvoRegistrado();
+    if (alvo) await estado.copiarParaSei(alvo, { lista, fase: fase || null });
+  }
+  async function abrirDocumento() {
+    const alvo = await alvoRegistrado();
+    if (alvo) setDocumento(alvo);
   }
   async function gerar() {
     const novo = await estado.gerarLista(resultado);
@@ -683,7 +698,30 @@ function Acoes({
             </select>
           </Campo>
         ) : null}
-        {["pdf", "docx", "xlsx"].map((formato) => (
+        <button
+          type="button"
+          className="btn"
+          data-acao="copiar-sei"
+          disabled={!ultima}
+          onClick={copiarParaSei}
+        >
+          <i className="fa-solid fa-copy" aria-hidden="true" /> Copiar para o
+          SEI
+        </button>
+        <button
+          type="button"
+          className="btn secondary"
+          data-acao="ver-documento"
+          disabled={!ultima}
+          onClick={abrirDocumento}
+        >
+          <i className="fa-solid fa-eye" aria-hidden="true" /> Como fica no SEI
+        </button>
+        {[
+          ["docx", "Baixar DOCX"],
+          ["pdf", "PDF"],
+          ["xlsx", "XLSX"],
+        ].map(([formato, rotulo]) => (
           <button
             key={formato}
             type="button"
@@ -692,7 +730,7 @@ function Acoes({
             disabled={!ultima}
             onClick={() => exportar(formato)}
           >
-            {formato.toUpperCase()}
+            {rotulo}
           </button>
         ))}
         {e.podeEditar && ultima && !ultima.publicada ? (
@@ -718,6 +756,18 @@ function Acoes({
           {String(ultima.hash || "").slice(0, 12)}…
           {ultima.publicada ? " · publicada" : ""}
         </p>
+      ) : null}
+      {documento ? (
+        <DocumentoDoSei
+          estado={estado}
+          podeEditar={e.podeEditar}
+          registrado={documento}
+          lista={
+            tipo === "CONVOCACAO" && lista === "eliminados" ? "todas" : lista
+          }
+          fase={fase || null}
+          aoFechar={() => setDocumento(null)}
+        />
       ) : null}
     </section>
   );
