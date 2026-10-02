@@ -130,12 +130,11 @@ afterEach(async () => {
 });
 
 describe("Me mostra esta tela", () => {
-  it("botão no cabeçalho e sugestão; abrir fecha o painel e mostra o 1º passo existente", async () => {
+  it("botão no cabeçalho; abrir fecha o painel e mostra o 1º passo existente", async () => {
     await montar();
     await abrirPainel();
-    expect(botao("Me mostra esta tela")).toBeTruthy();
-    expect($(".aya-sugestao--tour")).not.toBeNull();
-    await clicar($(".aya-sugestao--tour"));
+    expect($(".aya-sugestao--tour")).toBeNull();
+    await clicar(botao("Me mostra esta tela"));
     expect($(".aya-painel")).toBeNull();
     // "Novo recurso" não existe para o leitor: o tour começa nos filtros/indicadores.
     expect(tituloDoPasso()).toBe("Indicadores");
@@ -153,6 +152,18 @@ describe("Me mostra esta tela", () => {
 });
 
 describe("Aprender", () => {
+  it("nasce recolhido: só o botão Aprender; clicar mostra as trilhas", async () => {
+    await montar();
+    await abrirPainel();
+    const abrir = $(".aya-aprender__abrir");
+    expect(abrir.textContent).toContain("Aprender");
+    expect(abrir.getAttribute("aria-expanded")).toBe("false");
+    expect($(".aya-aprender__lista").hidden).toBe(true);
+    await clicar(abrir);
+    expect(abrir.getAttribute("aria-expanded")).toBe("true");
+    expect($(".aya-aprender__lista").hidden).toBe(false);
+  });
+
   it("lista só as trilhas do perfil, com o total de passos", async () => {
     await montar();
     await abrirPainel();

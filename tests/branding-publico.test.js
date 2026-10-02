@@ -328,7 +328,7 @@ describe("os seis cenários de identidade", () => {
 
     const naTela = identidadeNaTela();
     expect(naTela.saudacao).toBe(IDENTIDADE_ATUAL.greeting);
-    expect(naTela.saudacao).not.toBe("Bem-vindo(a) ao MONITORA");
+    expect(naTela.saudacao).not.toBe("Boas-vindas!");
     expect(lerMarcaGuardada().backgroundUrl).toBe(
       IDENTIDADE_ATUAL.backgroundUrl,
     );
