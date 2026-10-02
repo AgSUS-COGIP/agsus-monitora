@@ -348,8 +348,12 @@ export function criarEstadoDaClassificacao({
     }
   }
 
-  /* Exporta uma lista registrada: formato pdf | docx | xlsx; lista = todas | geral | código. */
-  function exportar(registrado, formato, lista = "todas") {
+  /*
+    Exporta uma lista registrada: formato pdf | docx | xlsx; lista = todas |
+    geral | código da modalidade | eliminados; fase = PRELIMINAR | FINAL (o
+    título da publicação; null = o padrão da etapa).
+  */
+  function exportar(registrado, formato, lista = "todas", fase = null) {
     if (!registrado?.retrato) return false;
     const { retrato } = registrado;
     const nome = nomeDoArquivo(retrato, lista);
@@ -357,7 +361,11 @@ export function criarEstadoDaClassificacao({
       baixar(gerarXlsxDaLista(retrato), `${nome}.xlsx`, MIME_XLSX);
       return true;
     }
-    const doc = documentoDaLista(retrato, { lista, registro: registrado });
+    const doc = documentoDaLista(retrato, {
+      lista,
+      registro: registrado,
+      fase,
+    });
     if (formato === "docx")
       baixar(gerarDocxDaLista(doc), `${nome}.docx`, MIME_DOCX);
     else imprimir(doc);

@@ -196,10 +196,38 @@ export const EMPATE_NAS_LISTAS = Object.freeze([
   ["MESMA_POSICAO", "Mesma posição"],
 ]);
 
+/*
+  As listas, na ordem das publicações da AgSUS: resultado da avaliação
+  documental e de títulos (classificados por vaga e por modalidade, e os
+  eliminados com o motivo), convocação para entrevista (até o limite da regra,
+  com os empatados no limite), resultado da etapa de entrevista (os aptos com a
+  nota da entrevista) e resultado final (documental + entrevista, desempate,
+  vagas imediatas e cadastro reserva). Preliminar × final de cada etapa é a
+  mesma lista gerada antes e depois dos recursos (a exportação escolhe o título).
+*/
 export const TIPOS_DE_LISTA = Object.freeze([
-  ["PRELIMINAR", "Preliminar (documental)"],
+  ["PRELIMINAR", "Avaliação documental"],
   ["CONVOCACAO", "Convocação para entrevista"],
+  ["ENTREVISTA", "Resultado da entrevista"],
   ["FINAL", "Resultado final"],
+]);
+
+/* Fase da publicação de uma lista (título do documento). */
+export const FASES_DA_PUBLICACAO = Object.freeze([
+  ["PRELIMINAR", "Preliminar"],
+  ["FINAL", "Final"],
+]);
+
+/*
+  As parciais da avaliação documental que a lista publica (colunas), na ordem
+  das publicações. Cada edital escolhe as suas na regra (o 100/2026 não tem
+  cursos de aperfeiçoamento).
+*/
+export const PARCIAIS_DA_DOCUMENTAL = Object.freeze([
+  ["FORMACAO", "Formação Acadêmica"],
+  ["CURSOS", "Cursos de Aperfeiçoamento"],
+  ["EXPERIENCIA", "Experiência Profissional"],
+  ["ETNICO", "Pontuação Étnica"],
 ]);
 
 export const COMPONENTES_DA_NOTA = Object.freeze([

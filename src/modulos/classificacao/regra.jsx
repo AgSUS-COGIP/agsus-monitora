@@ -8,6 +8,7 @@ import {
   METODOS_DE_EMPATE_FINAL,
   NIVEIS,
   NUMERACOES,
+  PARCIAIS_DA_DOCUMENTAL,
 } from "../../lib/classificacao/catalogo.js";
 import { dataBR, ARREDONDAMENTOS } from "../../lib/classificacao/numeros.js";
 import {
@@ -645,6 +646,29 @@ export function Regra({ estado, e, dataDeCorte }) {
               }
             />
           </Campo>
+          <fieldset className="classificacao-parciais" data-campo="parciais">
+            <legend className="ui-texto-secundario">
+              Parciais publicadas na avaliação documental
+            </legend>
+            {PARCIAIS_DA_DOCUMENTAL.map(([codigo, rotulo]) => (
+              <Caixa
+                key={codigo}
+                rotulo={rotulo}
+                marcado={r.documental.parciais.includes(codigo)}
+                desabilitado={leitura}
+                aoMudar={(marcado) =>
+                  mudar(
+                    ["documental", "parciais"],
+                    PARCIAIS_DA_DOCUMENTAL.map(([c]) => c).filter((c) =>
+                      c === codigo
+                        ? marcado
+                        : r.documental.parciais.includes(c),
+                    ),
+                  )
+                }
+              />
+            ))}
+          </fieldset>
           <CampoNumero
             rotulo="Mínimo na entrevista"
             valor={r.entrevista.nota_minima}
@@ -716,6 +740,13 @@ export function Regra({ estado, e, dataDeCorte }) {
             opcoes={EMPATE_NAS_LISTAS}
             desabilitado={leitura}
             aoMudar={(v) => mudar(["listas", "PRELIMINAR", "empate"], v)}
+          />
+          <Escolha
+            rotulo="Empate no resultado da entrevista"
+            valor={r.listas.ENTREVISTA.empate}
+            opcoes={EMPATE_NAS_LISTAS}
+            desabilitado={leitura}
+            aoMudar={(v) => mudar(["listas", "ENTREVISTA", "empate"], v)}
           />
           <Escolha
             rotulo="Empate no resultado final"

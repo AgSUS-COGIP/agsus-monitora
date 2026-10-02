@@ -590,7 +590,9 @@ function Acoes({
   aoCarregarRegistro,
 }) {
   const [lista, setLista] = useState("todas");
+  const [fase, setFase] = useState("");
   const idLista = useId();
+  const idFase = useId();
   const dados = e.dados;
   const geracoes = (dados?.listas || []).filter((l) => l.tipo === tipo);
   const ultima = registro || geracoes[0] || null;
@@ -603,7 +605,7 @@ function Acoes({
     if (!alvo && geracoes[0]) alvo = await estado.obterLista(geracoes[0].id);
     if (alvo) {
       aoCarregarRegistro(alvo);
-      estado.exportar(alvo, formato, lista);
+      estado.exportar(alvo, formato, lista, fase || null);
     }
   }
   async function gerar() {
@@ -642,8 +644,30 @@ function Acoes({
                 Só {m.nome}
               </option>
             ))}
+            {tipo !== "CONVOCACAO" ? (
+              <option value="eliminados">Só os eliminados</option>
+            ) : null}
           </select>
         </Campo>
+        {tipo !== "CONVOCACAO" ? (
+          <Campo rotulo="Publicação">
+            <select
+              id={idFase}
+              value={fase}
+              data-campo="fase"
+              onChange={(ev) => setFase(ev.target.value)}
+            >
+              <option value="">
+                {tipo === "FINAL" ? "Resultado final" : "Preliminar"}
+              </option>
+              {tipo === "FINAL" ? (
+                <option value="PRELIMINAR">Resultado preliminar</option>
+              ) : (
+                <option value="FINAL">Final (após recursos)</option>
+              )}
+            </select>
+          </Campo>
+        ) : null}
         {["pdf", "docx", "xlsx"].map((formato) => (
           <button
             key={formato}

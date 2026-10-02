@@ -22,6 +22,7 @@ import {
   METODOS_DE_EMPATE_FINAL,
   NIVEIS,
   NUMERACOES,
+  PARCIAIS_DA_DOCUMENTAL,
 } from "./catalogo.js";
 import { ARREDONDAMENTOS, lerData, numeroBR } from "./numeros.js";
 
@@ -60,6 +61,7 @@ export const REGRA_VAZIA = Object.freeze({
     nota_minima_por_nivel: Object.freeze({}),
     niveis_por_cargo: Object.freeze([]),
     nivel_padrao: null,
+    parciais: Object.freeze([]),
   }),
   entrevista: Object.freeze({
     nota_minima: null,
@@ -80,6 +82,7 @@ export const REGRA_VAZIA = Object.freeze({
   desempate: Object.freeze([]),
   listas: Object.freeze({
     PRELIMINAR: Object.freeze({ empate: "MESMA_POSICAO" }),
+    ENTREVISTA: Object.freeze({ empate: "MESMA_POSICAO" }),
     FINAL: Object.freeze({ empate: "CRITERIOS" }),
   }),
   empate_final: Object.freeze({ metodo: "MESMA_POSICAO", numeracao: "DENSA" }),
@@ -178,6 +181,9 @@ export function normalizarRegra(bruta) {
         }))
         .filter((n) => n.termo && n.nivel),
       nivel_padrao: umDe(doc.nivel_padrao, NIVEIS, null),
+      parciais: codigos(doc.parciais).filter((c) =>
+        PARCIAIS_DA_DOCUMENTAL.some(([v]) => v === c),
+      ),
     },
     entrevista: {
       nota_minima: numeroOuNulo(ent.nota_minima),
@@ -228,6 +234,13 @@ export function normalizarRegra(bruta) {
       PRELIMINAR: {
         empate: umDe(
           objeto(listas.PRELIMINAR).empate,
+          EMPATE_NAS_LISTAS,
+          "MESMA_POSICAO",
+        ),
+      },
+      ENTREVISTA: {
+        empate: umDe(
+          objeto(listas.ENTREVISTA).empate,
           EMPATE_NAS_LISTAS,
           "MESMA_POSICAO",
         ),
