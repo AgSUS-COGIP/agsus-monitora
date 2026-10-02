@@ -6,6 +6,7 @@ import {
 import {
   avisosAgrupados,
   filtrosAtivosDoRecorte,
+  listaDaFase,
   recortarResultado,
   RECORTE_VAZIO,
 } from "../../lib/classificacao/dados.js";
@@ -684,7 +685,8 @@ function Acoes({
 }
 
 export function Listas({ estado, e, calcular }) {
-  const [tipo, setTipo] = useState("FINAL");
+  // Até a pessoa escolher, a lista acompanha a fase do edital.
+  const [escolhido, setEscolhido] = useState(null);
   const [recorte, setRecorte] = useState(RECORTE_VAZIO);
   const [aberto, setAberto] = useState("");
   const [pendencia, setPendencia] = useState(null);
@@ -692,6 +694,7 @@ export function Listas({ estado, e, calcular }) {
   const [quantasVagas, setQuantasVagas] = useState(VAGAS_POR_VEZ);
   const dados = e.dados;
   const regra = dados?.regra?.configuracao || null;
+  const tipo = escolhido || listaDaFase(dados);
 
   const resultado = useMemo(
     () => (dados && regra ? calcular(dados, tipo) : null),
@@ -714,7 +717,7 @@ export function Listas({ estado, e, calcular }) {
   const explicacao = aberto && resultado ? resultado.explicacoes[aberto] : null;
 
   const trocarTipo = (novo) => {
-    setTipo(novo);
+    setEscolhido(novo);
     setAberto("");
     setQuantasVagas(VAGAS_POR_VEZ);
   };

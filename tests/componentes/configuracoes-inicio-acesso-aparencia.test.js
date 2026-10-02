@@ -224,7 +224,7 @@ describe("o estado não depende mais do DOM legado", () => {
     expect(valor("auth_google_allowed_domains")).toBe(
       "agenciasus.org.br,agsus.org.br",
     );
-    expect(valor("auth_access_greeting")).toBe("Bem-vindo(a) ao MONITORA");
+    expect(valor("auth_access_greeting")).toBe("Boas-vindas!");
     expect(valor("auth_access_panel_color")).toBe("#c296eb");
     expect(valor("auth_access_texto_modo")).toBe("auto");
     expect(valor("auth_access_logo_url")).toMatch(

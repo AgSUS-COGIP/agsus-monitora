@@ -3,6 +3,7 @@ import {
   avisosAgrupados,
   dataDeCorteDoCronograma,
   filtrosAtivosDoRecorte,
+  listaDaFase,
   recortarResultado,
   RECORTE_VAZIO,
 } from "../../src/lib/classificacao/dados.js";
@@ -113,5 +114,20 @@ describe("avisos e recorte", () => {
       2,
     );
     expect(recortarResultado(null)).toEqual([]);
+  });
+});
+
+describe("listaDaFase", () => {
+  it("abre no resultado final só quando já há nota de entrevista", () => {
+    expect(listaDaFase(null)).toBe("PRELIMINAR");
+    expect(listaDaFase({ entrevistas: [] })).toBe("PRELIMINAR");
+    expect(
+      listaDaFase({
+        entrevistas: [{ nota: null }, { nota: "" }, { nota: "x" }],
+      }),
+    ).toBe("PRELIMINAR");
+    expect(
+      listaDaFase({ entrevistas: [{ nota: null }, { nota: "12,5" }] }),
+    ).toBe("FINAL");
   });
 });

@@ -19,8 +19,9 @@
 }
 
 /* O cartão "Solicitar acesso" é claro por dentro: fica com as cores de app.css. */
-#loginScreen.login-panel-dark .login-card p:not(.access-request-card *),
-#loginScreen.login-panel-dark .login-subtitle {
+#loginScreen.login-panel-dark
+  .login-card
+  p:not(.access-request-card *, .login-subtitle) {
   color: rgba(247, 251, 255, 0.82) !important;
 }
 

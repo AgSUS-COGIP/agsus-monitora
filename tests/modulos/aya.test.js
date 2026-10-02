@@ -8,9 +8,9 @@ import {
 import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 
 /*
-  O painel da Aya (src/modulos/aya/): abre com a saudação e as sugestões da
-  página e da área atuais; trocar de página troca as sugestões; clicar numa
-  sugestão envia a pergunta; o acesso ao suporte está no rodapé; Esc
+  O painel da Aya (src/modulos/aya/): abre com a saudação e a mensagem da
+  página e da área atuais, sem botões de sugestão; a pergunta vai pelo campo;
+  o acesso ao suporte é um ícone do cabeçalho; Aprender fica recolhido; Esc
   fecha e devolve o foco à arara; "não ajudou" mostra o cartão do chamado; a
   conversa fica na aba; a resposta pode trazer o botão da tela citada.
 */
@@ -35,7 +35,10 @@ const botao = (rotulo) =>
       b.getAttribute("aria-label") === rotulo ||
       b.textContent.trim() === rotulo,
   );
-const sugestoes = () => $$(".aya-sugestao").map((b) => b.textContent);
+async function perguntarNoCampo(texto) {
+  await digitar($("textarea"), texto);
+  await teclar($("textarea"), "Enter");
+}
 
 async function montar() {
   raiz = document.createElement("div");
@@ -90,7 +93,7 @@ describe("abrir e fechar", () => {
     expect(textoDe(".aya-arara")).toContain("Beta");
   });
 
-  it("abre com a saudação, a mensagem da página e as sugestões dela", async () => {
+  it("abre com a saudação e a mensagem da página, sem sugestões", async () => {
     await montar();
     await abrirPainel();
     const painel = $(".aya-painel");
@@ -100,29 +103,26 @@ describe("abrir e fechar", () => {
     expect(painel.textContent).toContain(
       "Posso explicar o fluxo do parecer jurídico, os prazos e os indicadores desta tela.",
     );
-    expect(painel.textContent).toContain(
-      "Para começar, escolha uma sugestão ou digite sua pergunta.",
-    );
-    expect(sugestoes()).toContain("Quem decide");
+    expect(painel.textContent).toContain("Para começar, digite sua pergunta.");
+    expect($(".aya-sugestao")).toBeNull();
+    expect($(".aya-selo-beta--nome").textContent).toContain("Beta");
     expect($(".aya-arara")).toBeNull();
     expect(localStorage.getItem(CHAVE_OCULTA)).toBe("0");
   });
 
-  it("oferece feedback e suporte pelo Gmail antes de perguntar", async () => {
+  it("feedback e suporte pelo Gmail num ícone do cabeçalho, sem rodapé fixo", async () => {
     await montar();
     await abrirPainel();
-    expect(textoDe(".aya-aviso")).toBe(
-      "Se precisar de ajuda, abra um chamado.",
-    );
-    const suporte = $(".aya-suporte");
-    expect(suporte.textContent).toContain("Feedback e suporte");
+    expect($(".aya-aviso")).toBeNull();
+    expect($(".aya-painel__rodape").textContent).not.toContain("chamado");
+    const suporte = $(".aya-painel__acoes .aya-suporte");
+    expect(suporte.getAttribute("aria-label")).toBe("Feedback e suporte");
     const gmail = new URL(suporte.href);
     expect(gmail.origin).toBe("https://mail.google.com");
     expect(gmail.searchParams.get("to")).toBe("suporte@agenciasus.org.br");
     expect(gmail.searchParams.get("body")).toContain("Página: Recursos");
     expect(suporte.target).toBe("_blank");
     expect($$("a[href^='mailto:']")).toHaveLength(0);
-    expect($(".aya-aviso").getAttribute("role")).toBe("note");
     expect($("textarea").getAttribute("placeholder")).toBe("Pergunte à Aya…");
     expect(botao("Enviar pergunta").disabled).toBe(true);
     await digitar($("textarea"), "oi");
@@ -147,13 +147,12 @@ describe("abrir e fechar", () => {
 });
 
 describe("página e área atuais", () => {
-  it("trocar de página troca a mensagem e as sugestões", async () => {
+  it("trocar de página troca a mensagem", async () => {
     await montar();
     await abrirPainel();
-    expect(sugestoes()).toContain("Quem decide");
+    expect($(".aya-painel").textContent).toContain("parecer jurídico");
     await act(async () => definirPaginaDaAya("entrevistas", "Entrevistas"));
-    expect(sugestoes()).toContain("Edital não aparece");
-    expect(sugestoes()).not.toContain("Quem decide");
+    expect($(".aya-painel").textContent).not.toContain("parecer jurídico");
     expect(textoDe(".aya-painel__pagina")).toBe("Entrevistas · SEDE");
   });
 
@@ -165,15 +164,15 @@ describe("página e área atuais", () => {
     expect($(".aya-painel").textContent).not.toContain("Saúde Indígena");
     await act(async () => definirAreaAtual("projetos"));
     expect(textoDe(".aya-painel__pagina")).toBe("Visão geral · Projetos");
-    expect(sugestoes()).toContain("Mapa dos projetos");
+    expect($(".aya-painel").textContent).toContain("mapa");
   });
 });
 
 describe("conversa", () => {
-  it("clicar numa sugestão envia a pergunta, com página, área e seção", async () => {
+  it("a pergunta vai com página, área e seção", async () => {
     await montar();
     await abrirPainel();
-    await clicar(botao("Quem decide"));
+    await perguntarNoCampo("Quem pode decidir um recurso?");
     expect(perguntar).toHaveBeenCalledTimes(1);
     expect(perguntar.mock.calls[0][0]).toMatchObject({
       question: "Quem pode decidir um recurso?",
@@ -188,8 +187,6 @@ describe("conversa", () => {
       "Resposta para: Quem pode decidir um recurso?",
     );
     expect(log.textContent).toContain("Fonte oficial");
-    // As sugestões somem depois da primeira pergunta.
-    expect($(".aya-sugestoes")).toBeNull();
   });
 
   it("Enter envia; a conversa fica guardada na aba", async () => {
@@ -207,7 +204,7 @@ describe("conversa", () => {
   it("a resposta traz o botão da tela citada, que navega no app", async () => {
     await montar();
     await abrirPainel();
-    await clicar(botao("Quem decide"));
+    await perguntarNoCampo("Quem pode decidir um recurso?");
     await clicar(botao("Ir para Configurações › Acessos"));
     expect(navegar).toHaveBeenCalledWith("config");
     expect(abrirSecao).toHaveBeenCalledWith("acessos");
@@ -224,7 +221,7 @@ describe("conversa", () => {
     expect(textoDe(".aya-painel__pagina")).toBe(
       "Configurações › Módulos e abas",
     );
-    await clicar(botao("Selo BETA"));
+    await perguntarNoCampo("O que é o selo BETA?");
     expect(perguntar.mock.calls[0][0]).toMatchObject({
       section: "config",
       secao: "modulos",
@@ -232,13 +229,12 @@ describe("conversa", () => {
     document.getElementById("page-config").remove();
   });
 
-  it("Limpar conversa apaga a conversa e volta as sugestões", async () => {
+  it("Limpar conversa apaga a conversa e volta o Aprender", async () => {
     await montar();
     await abrirPainel();
-    await clicar(botao("Quem decide"));
+    await perguntarNoCampo("Quem pode decidir um recurso?");
     await clicar(botao("Limpar conversa"));
     expect($('[role="log"]').textContent).toBe("");
-    expect($(".aya-sugestoes")).not.toBeNull();
     expect(sessionStorage.getItem("agsus_aya_conversa_v1")).toBe("[]");
   });
 });
@@ -272,7 +268,7 @@ describe("avaliação e chamado", () => {
   it("'não ajudou' guarda a avaliação no navegador e mostra o cartão do chamado", async () => {
     await montar();
     await abrirPainel();
-    await clicar(botao("Quem decide"));
+    await perguntarNoCampo("Quem pode decidir um recurso?");
     expect($(".aya-chamado")).toBeNull();
     await clicar(botao("Não ajudou"));
     const cartao = $(".aya-chamado");
@@ -306,7 +302,7 @@ describe("avaliação e chamado", () => {
   it("'ajudou' agradece, sem cartão", async () => {
     await montar();
     await abrirPainel();
-    await clicar(botao("Quem decide"));
+    await perguntarNoCampo("Quem pode decidir um recurso?");
     await clicar(botao("Ajudou"));
     expect($(".aya-chamado")).toBeNull();
     expect($(".aya-avaliacao__obrigado").textContent).toContain("Obrigada");
