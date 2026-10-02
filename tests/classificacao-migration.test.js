@@ -239,10 +239,19 @@ describe("permissão e catálogo", () => {
   });
 
   it("o catálogo do banco é o do código (código, ordem, tipo e direção)", () => {
-    const inicio = MIGRATION.indexOf(
-      'insert into public."TB_CRITERIO_CLASSIFICACAO"',
-    );
-    const insert = MIGRATION.slice(inicio, MIGRATION.indexOf(";\n", inicio));
+    // O seed da 20261002150000 e os critérios acrescentados na 20261002170000.
+    const inserts = [
+      MIGRATION,
+      ler(
+        "supabase/migrations/20261002170000_classificacao_lista_da_entrevista.sql",
+      ),
+    ].map((sql) => {
+      const inicio = sql.indexOf(
+        'insert into public."TB_CRITERIO_CLASSIFICACAO"',
+      );
+      return sql.slice(inicio, sql.indexOf(";\n", inicio));
+    });
+    const insert = inserts.join("\n");
     const linhas = [
       ...insert.matchAll(
         /\('([A-Z0-9_]+)', '[^']+', '(BOOLEANO|NUMERO)', '([A-Z_]+)', '[^']+', (\d+)\)/g,

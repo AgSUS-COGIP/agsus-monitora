@@ -146,10 +146,15 @@ describe("regra: nada de regra fixa", () => {
   });
 
   it("as regras de exemplo do 83 e do 100 são válidas e já vêm normalizadas", () => {
+    // O seed já aplicado é anterior às parciais e à lista da entrevista: os
+    // campos novos entram neutros (nada muda no que o seed gravou).
     for (const marca of ["regra83", "regra100"]) {
       const regra = regraDoSeed(marca);
       expect(validarRegra(regra), marca).toEqual([]);
-      expect(normalizarRegra(regra), marca).toEqual(regra);
+      const normal = normalizarRegra(regra);
+      expect(normal, marca).toMatchObject(regra);
+      expect(normal.documental.parciais).toEqual([]);
+      expect(normal.listas.ENTREVISTA).toEqual({ empate: "MESMA_POSICAO" });
     }
   });
 

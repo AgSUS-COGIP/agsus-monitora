@@ -8,8 +8,18 @@
 
   Toda linha do quadro aparece, mesmo sem candidato (a publicação lista todas
   as vagas, com "Não houve candidatos aptos.").
+
+  As vagas por modalidade vêm, nesta ordem: do quadro do edital (quando traz a
+  divisão), da configuração de convocação do edital (Lista de aprovados ›
+  Convocação) ou dos percentuais da regra — estas duas pela MESMA conta da
+  convocação (`derivarQuadro`; ver convocacao-do-edital.js).
 */
 import { codigosDaModalidade, semAcento } from "./catalogo.js";
+import {
+  modeloDaRegra,
+  vagasDaConvocacao,
+  vagasPelaConta,
+} from "./convocacao-do-edital.js";
 import { numeroBR } from "./numeros.js";
 import { normalizarRegra } from "./regra.js";
 
@@ -37,10 +47,14 @@ function arredondarCota(valor, modo) {
 
 /*
   Vagas por modalidade quando o quadro só traz o total: a reserva pelos
-  percentuais da regra (só com o mínimo de vagas da regra), o resto na ampla.
+  percentuais da regra (só com o mínimo de vagas da regra), o resto na ampla —
+  pela conta da convocação (`derivarQuadro`). Só "fração para baixo", que a
+  convocação não tem, usa a conta daqui.
 */
 export function vagasPelosPercentuais(total, regra) {
   const r = normalizarRegra(regra);
+  const modelo = modeloDaRegra(r);
+  if (modelo) return limparZeros(vagasPelaConta(total, modelo));
   const saida = { AC: total };
   if (!total || total < Math.max(1, r.cotas.minimo_vagas_reserva)) return saida;
   for (const m of r.modalidades) {
@@ -53,6 +67,12 @@ export function vagasPelosPercentuais(total, regra) {
   }
   saida.AC = Math.max(0, saida.AC);
   return saida;
+}
+
+function limparZeros(vagas) {
+  return Object.fromEntries(
+    Object.entries(vagas).filter(([codigo, n]) => codigo === "AC" || n > 0),
+  );
 }
 
 function nomeDaModalidade(codigo, regra) {
@@ -97,6 +117,7 @@ export function montarVagas({
   quadro = [],
   regra,
   unidade = "",
+  convocacao = null,
 }) {
   const r = normalizarRegra(regra);
   const linhas = new Map((quadro || []).map((q) => [String(q.id), q]));
@@ -120,17 +141,33 @@ export function montarVagas({
   const usados = new Set();
   const vagas = [];
   const completar = (base, linha) => {
-    if (!linha)
+    const daConvocacao = base.codigo
+      ? vagasDaConvocacao(convocacao, base.codigo)
+      : null;
+    if (!linha) {
+      if (daConvocacao)
+        return {
+          ...base,
+          total: daConvocacao.total,
+          porModalidade: daConvocacao.porModalidade,
+          cadastroReserva: false,
+          semQuadro: false,
+          origemDasVagas: "CONVOCACAO",
+        };
       return {
         ...base,
         total: null,
         porModalidade: null,
         cadastroReserva: false,
         semQuadro: true,
+        origemDasVagas: null,
       };
+    }
     usados.add(String(linha.id));
     const total = Math.max(0, Math.trunc(numeroBR(linha.vagas_imediatas) ?? 0));
     const explicitas = vagasDoQuadroPorModalidade(linha.modalidades);
+    // A configuração de convocação só vale se fala do mesmo total de vagas.
+    const convocacaoCasa = daConvocacao && daConvocacao.total === total;
     return {
       ...base,
       cargo: texto(linha.cargo) || base.cargo,
@@ -138,9 +175,20 @@ export function montarVagas({
       quadroId: String(linha.id),
       ordemQuadro: numeroBR(linha.ordem) ?? 0,
       total,
-      porModalidade: explicitas || vagasPelosPercentuais(total, r),
+      porModalidade:
+        explicitas ||
+        (convocacaoCasa
+          ? daConvocacao.porModalidade
+          : vagasPelosPercentuais(total, r)),
       cadastroReserva: Boolean(linha.cadastro_reserva),
       semQuadro: false,
+      origemDasVagas: explicitas
+        ? "QUADRO"
+        : convocacaoCasa
+          ? "CONVOCACAO"
+          : "REGRA",
+      totalNaConvocacao:
+        daConvocacao && !convocacaoCasa ? daConvocacao.total : null,
     };
   };
 

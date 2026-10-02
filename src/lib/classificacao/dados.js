@@ -33,6 +33,7 @@ export const ROTULOS_DOS_AVISOS = Object.freeze({
   NUMERO_INVALIDO: "Número inválido",
   ENTREVISTA_SEM_ANALISE: "Entrevista sem análise ligada",
   CONVOCADO_SEM_ENTREVISTA: "Convocado sem entrevista lançada",
+  ENTREVISTADO_NAO_CONVOCADO: "Entrevistado fora do limite de convocação",
   ENTREVISTADO_NAO_HABILITADO: "Entrevistado sem habilitação documental",
   SEM_NOTA_ENTREVISTA: "Entrevista sem nota",
   SEM_NOTAS_COMPETENCIA: "Sem notas por competência",
@@ -46,6 +47,8 @@ export const ROTULOS_DOS_AVISOS = Object.freeze({
   ENTREVISTA_PELO_NOME: "Entrevista ligada pelo nome",
   ENTREVISTA_REPETIDA: "Entrevista repetida",
   DESEMPATE_OBSOLETO: "Desempate registrado que não vale mais",
+  COTAS_DIFERENTES_DA_CONVOCACAO: "Cotas diferentes da convocação do edital",
+  VAGAS_DIFERENTES_DA_CONVOCACAO: "Vagas diferentes da convocação do edital",
 });
 
 const PESO_DO_TOM = { danger: 0, warning: 1, info: 2 };

@@ -8,6 +8,7 @@ import {
   METODOS_DE_EMPATE_FINAL,
   NIVEIS,
   NUMERACOES,
+  PARCIAIS_DA_DOCUMENTAL,
 } from "../../lib/classificacao/catalogo.js";
 import { dataBR, ARREDONDAMENTOS } from "../../lib/classificacao/numeros.js";
 import {
@@ -260,6 +261,7 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
             <th scope="col">Recomeça a posição</th>
             <th scope="col">Também na geral</th>
             <th scope="col">Vaga sem candidato vai para</th>
+            <th scope="col">Reúne (reserva conjunta)</th>
             {desabilitado ? null : <th scope="col" aria-label="Ações" />}
           </tr>
         </thead>
@@ -358,6 +360,17 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
                   }
                 />
               </td>
+              <td>
+                <input
+                  aria-label="Reúne as modalidades"
+                  value={(m.agrupa || []).join(", ")}
+                  disabled={desabilitado || m.codigo === "AC"}
+                  placeholder="PP, PI, PQ"
+                  onChange={(e) =>
+                    mudar(i, { agrupa: lista(e.target.value.toUpperCase()) })
+                  }
+                />
+              </td>
               {desabilitado ? null : (
                 <td>
                   {m.codigo === "AC" ? null : (
@@ -394,6 +407,7 @@ function Modalidades({ modalidades, aoMudar, desabilitado }) {
                 recomeca_posicao: true,
                 aparece_na_geral: true,
                 remanejar_para: ["AC"],
+                agrupa: [],
               },
             ])
           }
@@ -645,6 +659,29 @@ export function Regra({ estado, e, dataDeCorte }) {
               }
             />
           </Campo>
+          <fieldset className="classificacao-parciais" data-campo="parciais">
+            <legend className="ui-texto-secundario">
+              Parciais publicadas na avaliação documental
+            </legend>
+            {PARCIAIS_DA_DOCUMENTAL.map(([codigo, rotulo]) => (
+              <Caixa
+                key={codigo}
+                rotulo={rotulo}
+                marcado={r.documental.parciais.includes(codigo)}
+                desabilitado={leitura}
+                aoMudar={(marcado) =>
+                  mudar(
+                    ["documental", "parciais"],
+                    PARCIAIS_DA_DOCUMENTAL.map(([c]) => c).filter((c) =>
+                      c === codigo
+                        ? marcado
+                        : r.documental.parciais.includes(c),
+                    ),
+                  )
+                }
+              />
+            ))}
+          </fieldset>
           <CampoNumero
             rotulo="Mínimo na entrevista"
             valor={r.entrevista.nota_minima}
@@ -676,6 +713,12 @@ export function Regra({ estado, e, dataDeCorte }) {
             marcado={r.entrevista.inapto_elimina}
             desabilitado={leitura}
             aoMudar={(v) => mudar(["entrevista", "inapto_elimina"], v)}
+          />
+          <Caixa
+            rotulo="Entrevista só com parecer (apto/inapto, sem nota)"
+            marcado={r.entrevista.so_parecer}
+            desabilitado={leitura}
+            aoMudar={(v) => mudar(["entrevista", "so_parecer"], v)}
           />
         </div>
         {r.entrevista.competencias.length ? (
@@ -716,6 +759,13 @@ export function Regra({ estado, e, dataDeCorte }) {
             opcoes={EMPATE_NAS_LISTAS}
             desabilitado={leitura}
             aoMudar={(v) => mudar(["listas", "PRELIMINAR", "empate"], v)}
+          />
+          <Escolha
+            rotulo="Empate no resultado da entrevista"
+            valor={r.listas.ENTREVISTA.empate}
+            opcoes={EMPATE_NAS_LISTAS}
+            desabilitado={leitura}
+            aoMudar={(v) => mudar(["listas", "ENTREVISTA", "empate"], v)}
           />
           <Escolha
             rotulo="Empate no resultado final"

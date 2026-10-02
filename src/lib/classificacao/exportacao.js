@@ -6,18 +6,25 @@
   as de cada modalidade com posição, nome e nota, e os eliminados com motivo.
   SÓ NOME — sem CPF, data de nascimento, código de inscrição ou contato.
 
-  `documentoDaLista` monta o documento (título, um bloco por vaga com o
+  `documentoDaLista` monta o documento (título da etapa e da fase —
+  preliminar ou final —, o parágrafo de abertura, um bloco por vaga com o
   cabeçalho "VAGA código - cargo - lotação - N vagas (…)", as tabelas
-  Classificação | Nome | Nota — e Modalidade na geral quando as sublistas vêm no
-  mesmo documento —, "Não houve candidatos aptos." quando vazia, o rodapé da
-  regra). Dele saem, sem dependência nova:
+  Classificação | Nome | [parciais da documental] | Nota — e Modalidade na geral
+  quando as sublistas vêm no mesmo documento; Situação no resultado final —,
+  "Não houve candidatos aptos." quando vazia, o rodapé da regra). A lista
+  "eliminados" sai com Nome | [parciais | Nota] | Justificativa, como as listas
+  de reprovados/inaptos publicadas. Dele saem, sem dependência nova:
     - DOCX: o mesmo ZIP sem compressão de documento-da-resposta.js, com tabelas;
     - XLSX: SpreadsheetML mínimo (duas planilhas: Classificação e Eliminados);
     - PDF: página de impressão (o navegador salva em PDF — window.print), os
       elementos criados um a um, nunca como HTML.
 */
 import { escaparXml, zipSemCompressao } from "../documento-da-resposta.js";
-import { MOTIVOS_DE_ELIMINACAO, TIPOS_DE_LISTA } from "./catalogo.js";
+import {
+  MOTIVOS_DE_ELIMINACAO,
+  PARCIAIS_DA_DOCUMENTAL,
+  TIPOS_DE_LISTA,
+} from "./catalogo.js";
 import { formatarNota, ordinal } from "./numeros.js";
 import { normalizarRegra } from "./regra.js";
 
@@ -25,12 +32,36 @@ export const MIME_XLSX =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 export const VERSAO_DO_RETRATO = 1;
 
+/* O título da publicação por etapa; `fase` = PRELIMINAR ou FINAL. */
 const TITULOS = Object.freeze({
-  PRELIMINAR: "RESULTADO PRELIMINAR - AVALIAÇÃO DOCUMENTAL E DE TÍTULOS",
-  CONVOCACAO: "CONVOCAÇÃO PARA ENTREVISTA",
-  FINAL: "RESULTADO FINAL - PROCESSO SELETIVO",
+  PRELIMINAR: (fase) => `RESULTADO ${fase} - AVALIAÇÃO DOCUMENTAL E DE TÍTULOS`,
+  CONVOCACAO: () => "CONVOCAÇÃO PARA ENTREVISTA",
+  ENTREVISTA: (fase) => `RESULTADO ${fase} - ETAPA DE ENTREVISTA`,
+  FINAL: (fase) => `RESULTADO ${fase} - PROCESSO SELETIVO`,
+});
+const FASE_PADRAO = Object.freeze({ FINAL: "FINAL" });
+
+/* O parágrafo de abertura (o 1.2 das publicações). */
+const ABERTURAS = Object.freeze({
+  PRELIMINAR:
+    "Relação dos(as) candidatos(as) classificados(as) na Avaliação Documental e de Títulos, por vaga, em ordem decrescente de pontuação, com o nome completo e a respectiva nota.",
+  CONVOCACAO:
+    "Relação dos(as) candidatos(as) convocados(as) para a Entrevista, por vaga, em ordem de classificação, até o limite previsto no edital.",
+  ENTREVISTA:
+    "Relação dos(as) candidatos(as) aprovados(as) na Entrevista, por vaga, por ordem de classificação, com o nome completo e a respectiva nota.",
+  FINAL:
+    "Relação dos(as) candidatos(as) aprovados(as) no Processo Seletivo, por vaga, por ordem de classificação, com o nome completo e a nota final.",
+  eliminados:
+    "Relação dos(as) candidatos(as) eliminados(as) nesta etapa, por vaga, com a justificativa.",
+});
+const SITUACOES = Object.freeze({
+  VAGA: "Vaga imediata",
+  CR: "Cadastro reserva",
+  CONVOCADO: "Convocado",
+  APTO: "Apto",
 });
 const VAZIA = "Não houve candidatos aptos.";
+const VAZIA_ELIMINADOS = "Não houve candidatos eliminados.";
 
 /** O retrato que vai para o banco (e de onde sai a exportação). */
 export function instantaneoDaLista(
@@ -38,6 +69,16 @@ export function instantaneoDaLista(
   { edital = {}, regra, versao = null } = {},
 ) {
   const r = normalizarRegra(regra);
+  // Só as parciais que a regra publica, e só na avaliação documental.
+  const parciais = resultado.tipo === "PRELIMINAR" ? r.documental.parciais : [];
+  const soParciais = (valores) =>
+    parciais.length && valores
+      ? {
+          parciais: Object.fromEntries(
+            parciais.map((p) => [p, valores[p] ?? null]),
+          ),
+        }
+      : {};
   const linha = (l) => ({
     posicao: l.posicao,
     analise_id: l.analiseId,
@@ -45,6 +86,7 @@ export function instantaneoDaLista(
     nota: l.nota,
     modalidades: l.modalidades,
     situacao: l.situacao,
+    ...soParciais(l.parciais),
   });
   return {
     schema: VERSAO_DO_RETRATO,
@@ -62,6 +104,7 @@ export function instantaneoDaLista(
     modalidades: r.modalidades
       .filter((m) => m.lista_propria)
       .map((m) => ({ codigo: m.codigo, nome: m.nome })),
+    ...(parciais.length ? { parciais } : {}),
     vagas: resultado.vagas.map((v) => ({
       chave: v.chave,
       codigo: v.codigo,
@@ -80,6 +123,10 @@ export function instantaneoDaLista(
         nome: e.nome,
         motivo: e.motivo,
         detalhe: e.detalhe || "",
+        ...((parciais.length || resultado.tipo === "ENTREVISTA") &&
+        e.nota !== undefined
+          ? { nota: e.nota ?? null, ...soParciais(e.parciais) }
+          : {}),
       })),
     })),
     avisos: resultado.avisos.map((a) => ({
@@ -101,16 +148,25 @@ const rotuloDaModalidade = (codigo, modalidades) =>
     ? "AC"
     : modalidades.find((m) => m.codigo === codigo)?.nome || codigo;
 
+const rotuloDaParcial = (codigo) =>
+  PARCIAIS_DA_DOCUMENTAL.find(([v]) => v === codigo)?.[1] || codigo;
+
 /*
   O documento: `lista` = "todas" (geral + sublistas no mesmo documento, com a
-  coluna Modalidade na geral), "geral" ou o código de uma modalidade.
+  coluna Modalidade na geral), "geral", o código de uma modalidade ou
+  "eliminados". `fase` = PRELIMINAR ou FINAL (o título; padrão: PRELIMINAR nas
+  etapas e FINAL no resultado final).
 */
 export function documentoDaLista(
   retrato,
-  { lista = "todas", registro = null } = {},
+  { lista = "todas", registro = null, fase = null } = {},
 ) {
   const casas = retrato.casas ?? 2;
   const modalidades = retrato.modalidades || [];
+  const parciais = retrato.parciais || [];
+  const comSituacao = retrato.tipo === "FINAL";
+  const nota = (v) =>
+    v === null || v === undefined ? "-" : formatarNota(v, casas);
   const nomeDaLista = (codigo) =>
     codigo === "geral"
       ? "Classificação Geral"
@@ -118,11 +174,21 @@ export function documentoDaLista(
   const comModalidade = lista === "todas";
   const tabela = (codigo, linhas, coluna) => ({
     titulo: nomeDaLista(codigo),
-    colunas: coluna
-      ? ["Classificação", "Nome", "Nota", "Modalidade"]
-      : ["Classificação", "Nome", "Nota"],
+    colunas: [
+      "Classificação",
+      "Nome",
+      ...parciais.map(rotuloDaParcial),
+      retrato.tipo === "FINAL" ? "Nota Final" : "Nota",
+      ...(coluna ? ["Modalidade"] : []),
+      ...(comSituacao ? ["Situação"] : []),
+    ],
     linhas: linhas.map((l) => {
-      const base = [ordinal(l.posicao), l.nome, formatarNota(l.nota, casas)];
+      const base = [
+        ordinal(l.posicao),
+        l.nome,
+        ...parciais.map((p) => nota(l.parciais?.[p])),
+        formatarNota(l.nota, casas),
+      ];
       if (coluna)
         base.push(
           (l.modalidades || [])
@@ -130,12 +196,37 @@ export function documentoDaLista(
             .map((m) => rotuloDaModalidade(m, modalidades))
             .join(" / ") || "AC",
         );
+      if (comSituacao) base.push(SITUACOES[l.situacao] || "");
       return base;
     }),
     vazia: VAZIA,
   });
+  const tabelaDeEliminados = (v) => {
+    const comNota = (v.eliminados || []).some((e) => e.nota !== undefined);
+    return {
+      titulo: "Eliminados",
+      colunas: [
+        "Nome",
+        ...(comNota ? [...parciais.map(rotuloDaParcial), "Nota"] : []),
+        "Justificativa",
+      ],
+      linhas: (v.eliminados || []).map((e) => [
+        e.nome,
+        ...(comNota
+          ? [...parciais.map((p) => nota(e.parciais?.[p])), nota(e.nota)]
+          : []),
+        [MOTIVOS_DE_ELIMINACAO[e.motivo] || e.motivo, e.detalhe]
+          .filter(Boolean)
+          .join(". ")
+          .replace(/\.\./g, "."),
+      ]),
+      vazia: VAZIA_ELIMINADOS,
+      nomeNaColuna: 0,
+    };
+  };
   const blocos = retrato.vagas.map((v) => {
     const tabelas = [];
+    if (lista === "eliminados") tabelas.push(tabelaDeEliminados(v));
     if (lista === "todas" || lista === "geral")
       tabelas.push(tabela("geral", v.geral, comModalidade));
     for (const m of modalidades)
@@ -148,15 +239,24 @@ export function documentoDaLista(
     : "";
   const unidade = retrato.edital?.unidade || "";
   const tituloLista =
-    lista !== "todas" && lista !== "geral"
-      ? ` - ${nomeDaLista(lista).toUpperCase()}`
-      : "";
+    lista === "eliminados"
+      ? " - ELIMINADOS"
+      : lista !== "todas" && lista !== "geral"
+        ? ` - ${nomeDaLista(lista).toUpperCase()}`
+        : "";
   const controle = registro
     ? `Lista gerada em ${dataHora(registro.gerada_em)}${registro.por ? ` por ${registro.por}` : ""} · regra versão ${registro.versao_regra ?? retrato.regra_versao ?? "—"} · SHA-256 ${String(registro.hash || "").slice(0, 16)}`
     : "";
+  const faseDoTitulo =
+    fase === "FINAL" || fase === "PRELIMINAR"
+      ? fase
+      : FASE_PADRAO[retrato.tipo] || "PRELIMINAR";
+  const titulo = TITULOS[retrato.tipo]?.(faseDoTitulo) || "CLASSIFICAÇÃO";
   return {
-    titulo: `${TITULOS[retrato.tipo] || "CLASSIFICAÇÃO"}${tituloLista}`,
+    titulo: `${titulo}${tituloLista}`,
     subtitulo: [edital, unidade].filter(Boolean).join(" - "),
+    abertura:
+      ABERTURAS[lista === "eliminados" ? "eliminados" : retrato.tipo] || "",
     blocos,
     rodape: retrato.rodape || "",
     controle,
@@ -212,9 +312,26 @@ function celula(
   );
 }
 
-function tabelaXml({ colunas, linhas, vazia }) {
-  const larguras =
-    colunas.length === 4 ? [1500, 4700, 1200, 1600] : [1700, 5700, 1600];
+/* Larguras (dxa, total 9000): a coluna do nome fica com o que sobra. */
+export function largurasDasColunas(colunas, nomeNaColuna = 1) {
+  if (nomeNaColuna === 1 && colunas.length === 3) return [1700, 5700, 1600];
+  if (nomeNaColuna === 1 && colunas.length === 4)
+    return [1500, 4700, 1200, 1600];
+  const justificativa = colunas.includes("Justificativa") ? 2800 : 0;
+  const curtas = colunas.length - 1 - (justificativa ? 1 : 0);
+  const cada = Math.min(
+    1100,
+    Math.floor((9000 - 2000 - justificativa) / Math.max(curtas, 1)),
+  );
+  const larguras = colunas.map((c) =>
+    c === "Justificativa" ? justificativa : cada,
+  );
+  larguras[nomeNaColuna] = 9000 - cada * curtas - justificativa;
+  return larguras;
+}
+
+function tabelaXml({ colunas, linhas, vazia, nomeNaColuna = 1 }) {
+  const larguras = largurasDasColunas(colunas, nomeNaColuna);
   const borda = (lado) =>
     `<w:${lado} w:val="single" w:sz="4" w:space="0" w:color="000000"/>`;
   const propriedades =
@@ -228,7 +345,7 @@ function tabelaXml({ colunas, linhas, vazia }) {
     ? linhas
         .map(
           (l) =>
-            `<w:tr>${l.map((c, i) => celula(String(c), { largura: larguras[i], centro: i !== 1 })).join("")}</w:tr>`,
+            `<w:tr>${l.map((c, i) => celula(String(c), { largura: larguras[i], centro: i !== nomeNaColuna && colunas[i] !== "Justificativa" })).join("")}</w:tr>`,
         )
         .join("")
     : `<w:tr><w:tc><w:tcPr><w:tcW w:w="9000" w:type="dxa"/><w:gridSpan w:val="${colunas.length}"/></w:tcPr><w:p><w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/></w:pPr>${corrida(vazia, { tamanho: 18 })}</w:p></w:tc></w:tr>`;
@@ -253,6 +370,7 @@ export function documentoXmlDaLista(doc) {
         depois: 240,
       }),
     );
+  if (doc.abertura) partes.push(paragrafo(doc.abertura, { depois: 240 }));
   for (const bloco of doc.blocos) {
     partes.push(paragrafo(bloco.cabecalho, { negrito: true, depois: 120 }));
     for (const t of bloco.tabelas) {
@@ -338,6 +456,7 @@ export function linhasDaPlanilha(retrato) {
     VAGA: "Dentro das vagas",
     CR: "Cadastro reserva",
     CONVOCADO: "Convocado",
+    APTO: "Apto",
   };
   const classificacao = [
     [
@@ -456,6 +575,7 @@ const ESTILO_DA_IMPRESSAO = `
   td.nome { text-align: left; }
   tr { page-break-inside: avoid; }
   p.rodape { margin-top: 14pt; text-align: justify; }
+  p.abertura { margin: 0 0 10pt; text-align: justify; }
   p.controle { font-size: 7pt; color: #444; }
 `;
 
@@ -472,6 +592,7 @@ export function montarPaginaDaLista(documento, doc) {
   documento.head.replaceChildren(estilo, criar("title", doc.titulo));
   const corpo = [criar("h1", doc.titulo)];
   if (doc.subtitulo) corpo.push(criar("h2", doc.subtitulo));
+  if (doc.abertura) corpo.push(criar("p", doc.abertura, "abertura"));
   for (const bloco of doc.blocos) {
     corpo.push(criar("h3", bloco.cabecalho));
     for (const t of bloco.tabelas) {
@@ -490,7 +611,15 @@ export function montarPaginaDaLista(documento, doc) {
       for (const l of t.linhas) {
         const tr = criar("tr");
         l.forEach((valor, i) =>
-          tr.append(criar("td", String(valor), i === 1 ? "nome" : "")),
+          tr.append(
+            criar(
+              "td",
+              String(valor),
+              i === (t.nomeNaColuna ?? 1) || t.colunas[i] === "Justificativa"
+                ? "nome"
+                : "",
+            ),
+          ),
         );
         tabela.append(tr);
       }
