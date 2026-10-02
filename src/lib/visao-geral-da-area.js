@@ -140,7 +140,7 @@ const numeroOuNulo = (valor) => {
   descarta linha sem lugar. `vagas` são as vagas nas análises; `vagasEdital`,
   as publicadas nos editais (nulo se nenhum diz).
 
-  Coordenada: desde a migration 20261002170000 a RPC devolve `lugar` (a chave
+  Coordenada: desde a migration 20261002190000 a RPC devolve `lugar` (a chave
   do lugar) e `latitude`/`longitude` do banco (public."TB_COORDENADA_LOCAL_VAGA",
   corrigida no editor de coordenadas). `coordenada` é `{ latitude, longitude,
   origem }`, `null` quando o banco ainda não tem a do lugar, ou `undefined`

@@ -1,7 +1,7 @@
 /*
   ENSAIO de supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql — begin … rollback.
 
-  Como rodar: depois de aplicar a migration 20261002170000_coordenadas_mapa_projetos.sql, cole
+  Como rodar: depois de aplicar a migration 20261002190000_coordenadas_mapa_projetos.sql, cole
   este arquivo inteiro no SQL Editor do Supabase (papel postgres) e execute. Ele roda o corpo
   da carga (idêntico ao do arquivo da carga — tests/coordenadas-mapa-projetos-migration.test.js
   confere), confere que todo lugar das vagas tem coordenada ou pendência que diz por que não
@@ -19,7 +19,7 @@ do $$
 begin
   if to_regclass('public."TB_COORDENADA_LOCAL_VAGA"') is null
      or to_regclass('private."TB_PENDENCIA_COORDENADA_LOCAL"') is null then
-    raise exception 'Aplique antes supabase/migrations/20261002170000_coordenadas_mapa_projetos.sql.';
+    raise exception 'Aplique antes supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql.';
   end if;
 end;
 $$;

@@ -80,7 +80,7 @@ export const CONTRATO_RPC = {
     ],
     critica: true,
     resumo:
-      "Corrige a coordenada de um lugar das vagas de Projetos (cria a linha se não havia) e/ou o marca como conferido (p_conferido), com concorrência pela posição anterior e histórico privado. Só administrador global (migration 20261002170000).",
+      "Corrige a coordenada de um lugar das vagas de Projetos (cria a linha se não havia) e/ou o marca como conferido (p_conferido), com concorrência pela posição anterior e histórico privado. Só administrador global (migration 20261002190000).",
   },
   desfazer_coordenada_mapa_projetos: {
     argumentos: ["p_historico", "p_motivo"],
@@ -500,7 +500,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_area"],
     critica: false,
     resumo:
-      "Lugares das vagas da área (TB_LOCAL_VAGA_EDITAL, lidos dos PDFs dos editais, + UBS móvel no nome da vaga): chave do lugar, município ou UF, coordenada do banco (TB_COORDENADA_LOCAL_VAGA, nula se ainda não há), projetos e editais de cada um, vagas publicadas e nas análises, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migrations 20260929090000, 20261001180000 e 20261002170000).",
+      "Lugares das vagas da área (TB_LOCAL_VAGA_EDITAL, lidos dos PDFs dos editais, + UBS móvel no nome da vaga): chave do lugar, município ou UF, coordenada do banco (TB_COORDENADA_LOCAL_VAGA, nula se ainda não há), projetos e editais de cada um, vagas publicadas e nas análises, candidatos, aprovados e reprovados — mapa da Visão geral de Projetos (migrations 20260929090000, 20261001180000 e 20261002190000).",
   },
   get_analises_dashboard_payload_v2: {
     argumentos: ["p_scope", "p_area"],

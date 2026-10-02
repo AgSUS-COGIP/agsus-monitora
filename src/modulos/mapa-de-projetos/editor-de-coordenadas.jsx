@@ -14,7 +14,7 @@ import { EditorDeCoordenadas } from "../editor-de-coordenadas/editor-de-coordena
   (src/modulos/editor-de-coordenadas/) com os lugares das vagas (a chave
   `lugar` e a coordenada do banco que a RPC do mapa devolve), as regras deste
   mapa (src/lib/coordenadas-dos-projetos.js) e as RPCs
-  `*_coordenada_mapa_projetos` (migration 20261002170000). A gravação devolve
+  `*_coordenada_mapa_projetos` (migration 20261002190000). A gravação devolve
   { lugar, latitude, longitude, conferido }, que o mapa aplica por
   `aoAtualizarMapa(data, ponto)`.
 */

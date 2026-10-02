@@ -17,7 +17,7 @@ import { rotuloDoLugar } from "./visao-geral-da-area.js";
   quando o edital só diz o estado), com a chave que a RPC
   `listar_municipios_das_vagas_da_area` devolve em `lugar` ('seropedica/RJ',
   'uf:PA') e a coordenada gravada no banco (public."TB_COORDENADA_LOCAL_VAGA",
-  migration 20261002170000). As regras comuns (leitura, validação, fila,
+  migration 20261002190000). As regras comuns (leitura, validação, fila,
   sugestões, gravidade, histórico) estão em `editor-de-coordenadas.js`; aqui
   ficam os pontos editáveis, a ligação com a pendência
   (`listar_pendencias_coordenada_mapa_projetos`, pela chave do lugar), as

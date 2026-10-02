@@ -1,4 +1,4 @@
--- Desfaz 20261002170000_coordenadas_mapa_projetos.sql: tira o editor de coordenadas do mapa de
+-- Desfaz 20261002190000_coordenadas_mapa_projetos.sql: tira o editor de coordenadas do mapa de
 -- Projetos (RPCs, funções privadas, histórico, pendências e coordenadas dos lugares) e volta
 -- listar_municipios_das_vagas_da_area à versão de 20261001180000 (sem lugar/latitude/longitude).
 -- O front volta a usar a tabela fixa de src/lib/coordenadas-dos-municipios.js quando a resposta

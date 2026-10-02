@@ -17,7 +17,7 @@
   conjunto): cai no meio do estado, e não em cima da capital, que costuma ter
   ponto próprio.
 
-  Desde a migration 20261002170000 a coordenada que o mapa desenha vem do
+  Desde a migration 20261002190000 a coordenada que o mapa desenha vem do
   banco (public."TB_COORDENADA_LOCAL_VAGA", carregada com estas mesmas sedes
   e centros por supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
   e corrigida no editor de coordenadas). Esta tabela fica como referência:

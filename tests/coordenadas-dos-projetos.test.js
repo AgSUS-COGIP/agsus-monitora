@@ -23,7 +23,7 @@ import {
 */
 
 // Linhas como a RPC listar_municipios_das_vagas_da_area devolve depois da
-// migration 20261002170000 (lugar + coordenada do banco).
+// migration 20261002190000 (lugar + coordenada do banco).
 const RESPOSTA = [
   {
     lugar: "seropedica/RJ",

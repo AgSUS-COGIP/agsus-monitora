@@ -1,7 +1,7 @@
 /*
   COORDENADAS E PENDÊNCIAS DOS LUGARES DO MAPA DE PROJETOS (CARGA INICIAL)
 
-  Depois da migration 20261002170000_coordenadas_mapa_projetos.sql. Idempotente:
+  Depois da migration 20261002190000_coordenadas_mapa_projetos.sql. Idempotente:
   rodar de novo não duplica, não sobrescreve coordenada gravada no editor
   (TP_ORIGEM = MANUAL) nem pendência já conferida.
 
@@ -44,7 +44,7 @@ do $$
 begin
   if to_regclass('public."TB_COORDENADA_LOCAL_VAGA"') is null
      or to_regclass('private."TB_PENDENCIA_COORDENADA_LOCAL"') is null then
-    raise exception 'Aplique antes supabase/migrations/20261002170000_coordenadas_mapa_projetos.sql.';
+    raise exception 'Aplique antes supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql.';
   end if;
 end;
 $$;

@@ -1,27 +1,61 @@
 /*
-  ENSAIO de 20261002170000_coordenadas_mapa_projetos.sql — begin … rollback.
+  COORDENADAS DO MAPA DE PROJETOS (EDITOR, FILA E HISTÓRICO)
 
-  Como rodar: cole o arquivo inteiro no SQL Editor do Supabase (papel postgres) e
-  execute. Ele abre uma transação, aplica o corpo da migration (copiado sem
-  mudança, sem o begin/commit dela), confere o catálogo (nomes MAD, constraints,
-  RLS, COMMENT, SECURITY DEFINER com search_path vazio, grants), cria duas
-  pessoas sintéticas (admin global e leitor), dá ao lugar A (um lugar real das
-  vagas) uma coordenada e uma pendência sintéticas e tira a coordenada do lugar
-  B, e percorre correção, conferência (com e sem mudar a posição),
-  concorrência (inclusive a tolerância do arredondamento de JSON), limites,
-  motivo, histórico, desfazer, a criação da coordenada de um lugar que não
-  tinha e a RPC do mapa devolvendo a coordenada. Termina em ROLLBACK: nada fica
-  gravado. As coordenadas são comparadas com tolerância (1e-9 grau).
+  O mapa da Visão geral de Projetos desenha um ponto por lugar das vagas
+  (listar_municipios_das_vagas_da_area: TB_LOCAL_VAGA_EDITAL + "UBS móvel" do
+  nome da vaga). Até aqui a coordenada de cada lugar vinha de uma tabela fixa
+  no front (src/lib/coordenadas-dos-municipios.js: sede municipal do IBGE, ou a
+  média das sedes da UF quando o edital só diz o estado) — sem como corrigir,
+  conferir ou saber quem mudou. Esta migration leva a coordenada para o banco,
+  no mesmo padrão do editor da Saúde Indígena (20261002143323 e 20261002160000):
 
-  Resultado esperado: "ok E1" … "ok E6", "ENSAIO OK" e o resumo por ação.
-  Qualquer "FALHOU …" interrompe e desfaz tudo; copie a mensagem.
+  1. public."TB_COORDENADA_LOCAL_VAGA": a coordenada de cada lugar, pela mesma
+     chave da RPC do mapa ('uf:PA' ou município sem acento/UF, 'seropedica/RJ'),
+     com a origem (SEDE_IBGE, CENTRO_UF ou MANUAL). Sem acesso direto: RLS sem
+     policy; só as RPCs leem e gravam. A carga inicial (as sedes do IBGE e os
+     centros das UFs que o front usava) e as pendências estão em
+     supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql.
+  2. private."TB_PENDENCIA_COORDENADA_LOCAL": os lugares duvidosos (sem
+     coordenada, só pela sede do município, só a UF, município/UF que não
+     batem, fora do Brasil, lugar repetido com coordenadas diferentes), com as
+     posições candidatas e a conferência do administrador.
+  3. private."TH_COORDENADA_LOCAL_VAGA": histórico privado (CORRECAO,
+     CONFERENCIA, DESFAZER), com autoria, motivo e posição anterior.
 
-  Mantenha em sincronia: tests/coordenadas-mapa-projetos-migration.test.js
-  confere que o corpo da migration aqui é idêntico ao do arquivo da migration.
+     Por que tabelas irmãs, e não o histórico e as pendências da Saúde Indígena
+     generalizados com uma coluna de origem: a identidade é outra (aqui, a chave
+     do lugar; lá, fonte/tipo/DSEI/índice/código dentro do JSON do lmap e do
+     rede_cnes), o lugar onde a posição mora é outro (uma linha de tabela; lá,
+     um caminho no payload) e as constraints, as RPCs, o ensaio e o rollback de
+     20261002160000 ficam intactos — misturar faria
+     desfazer_coordenada_mapa_saude_indigena aceitar um histórico de Projetos.
+     O que é comum aos dois mapas está no front (src/lib/editor-de-coordenadas.js
+     e src/modulos/editor-de-coordenadas/); as tabelas repetem as mesmas colunas
+     e regras, com nomes do assunto.
+
+  4. private."FC_LUGARES_VAGA_PROJETO"(): os lugares das vagas de Projetos hoje
+     (mesma chave e mesmo recorte da RPC do mapa), usado pela gravação e pela
+     carga das pendências.
+  5. private."FC_APLICAR_COORDENADA_LOCAL": corpo único de gravação (admin
+     global, limites do Brasil, motivo de 10 a 1000 caracteres, lugar existente,
+     concorrência pela posição anterior — com tolerância de 1e-9 grau, porque a
+     coordenada que o front devolve passou por JSON — e trava por lugar),
+     usado por salvar_coordenada_mapa_projetos e desfazer_coordenada_mapa_projetos.
+  6. listar_historico_coordenada_mapa_projetos e
+     listar_pendencias_coordenada_mapa_projetos: leitura só para admin global.
+  7. listar_municipios_das_vagas_da_area: nova versão, igual à de 20261001180000
+     com lugar, latitude, longitude e coordenada_origem de cada linha (nulos
+     enquanto o lugar não tem coordenada no banco) e com as análises da área
+     escolhidas também pela coluna "CO_AREA" (a área canônica da análise), não
+     só pelo grupo da planilha — o mapa mostrava 0 candidato em todo lugar.
+     Candidato por lugar continua dependendo de o nome da vaga citar o lugar
+     ("UBS móvel <Município>/<UF>" ou o município de um local do mesmo
+     edital); o front só mostra candidatos quando o lugar casou com alguma vaga.
+
+  Ensaio (begin … rollback): supabase/ensaios/20261002190000_coordenadas_mapa_projetos.sql.
+  Rollback: supabase/rollback/20261002190000_coordenadas_mapa_projetos.sql.
 */
 begin;
-
--- ═══ CORPO DA MIGRATION (início) ═══
 
 -- 0. Pré-requisitos --------------------------------------------------------------------
 do $$
@@ -665,342 +699,4 @@ comment on function public.listar_municipios_das_vagas_da_area(text) is
 revoke all on function public.listar_municipios_das_vagas_da_area(text) from public, anon;
 grant execute on function public.listar_municipios_das_vagas_da_area(text) to authenticated, service_role;
 
--- ═══ CORPO DA MIGRATION (fim) ═══
-
--- E1. Catálogo: nomes MAD, constraints, RLS, COMMENT, SECURITY DEFINER e grants.
-do $$
-declare
-  v_falta text;
-begin
-  select string_agg(k, ', ') into v_falta
-    from unnest(array['PK_TB_COORDENADA_LOCAL_VAGA', 'UK_COORDLOCAL_LUGAR', 'CK_COORDLOCAL_LUGAR',
-                      'CK_COORDLOCAL_MUNICIPIO', 'CK_COORDLOCAL_UF', 'CK_COORDLOCAL_POSICAO', 'CK_COORDLOCAL_ORIGEM',
-                      'CK_COORDLOCAL_MANUAL', 'PK_PENDENCIA_COORDENADA_LOCAL', 'UK_PENDLOCAL_LUGAR',
-                      'CK_PENDLOCAL_MOTIVO', 'CK_PENDLOCAL_CANDIDATO', 'CK_PENDLOCAL_CONFERIDO',
-                      'CK_PENDLOCAL_CONFERENCIA', 'PK_TH_COORDENADA_LOCAL_VAGA', 'CK_THCOORDLOCAL_ACAO',
-                      'CK_THCOORDLOCAL_CONFERIDO', 'CK_THCOORDLOCAL_DESFEITO', 'CK_THCOORDLOCAL_ANTERIOR',
-                      'FK_THCOORDLOCAL_DESFEITO', 'UK_THCOORDLOCAL_DESFEITO']) k
-   where not exists (select 1 from pg_constraint c where c.conname = k);
-  if v_falta is not null then raise exception 'FALHOU E1: constraints ausentes: %', v_falta; end if;
-  select string_agg(t, ', ') into v_falta
-    from unnest(array['public."TB_COORDENADA_LOCAL_VAGA"', 'private."TB_PENDENCIA_COORDENADA_LOCAL"',
-                      'private."TH_COORDENADA_LOCAL_VAGA"']) t
-   where not (select c.relrowsecurity from pg_class c where c.oid = t::regclass)
-      or obj_description(t::regclass, 'pg_class') is null
-      or has_table_privilege('authenticated', t, 'select')
-      or has_table_privilege('anon', t, 'select');
-  if v_falta is not null then raise exception 'FALHOU E1: tabela sem RLS, sem COMMENT ou legível direto: %', v_falta; end if;
-  select string_agg(format('%s.%s', i.table_name, i.column_name), ', ') into v_falta
-    from information_schema.columns i
-   where i.table_schema in ('public', 'private')
-     and i.table_name in ('TB_COORDENADA_LOCAL_VAGA', 'TB_PENDENCIA_COORDENADA_LOCAL', 'TH_COORDENADA_LOCAL_VAGA')
-     and (i.column_name !~ '^(CO|NO|DS|SG|CG|TP|ST|DT)_[A-Z_]+$'
-          or col_description(format('%I.%I', i.table_schema, i.table_name)::regclass, i.ordinal_position::integer) is null);
-  if v_falta is not null then raise exception 'FALHOU E1: coluna fora do padrão MAD ou sem COMMENT: %', v_falta; end if;
-  select string_agg(f, ', ') into v_falta
-    from unnest(array[
-      'public.salvar_coordenada_mapa_projetos(text,double precision,double precision,double precision,double precision,text,boolean)',
-      'public.desfazer_coordenada_mapa_projetos(bigint,text)',
-      'public.listar_historico_coordenada_mapa_projetos(text,integer)',
-      'public.listar_pendencias_coordenada_mapa_projetos()']) f
-   where not exists (select 1 from pg_proc p
-                      where p.oid = to_regprocedure(f) and p.prosecdef
-                        and p.proconfig @> array['search_path=""'])
-      or has_function_privilege('anon', to_regprocedure(f), 'execute')
-      or not has_function_privilege('authenticated', to_regprocedure(f), 'execute');
-  if v_falta is not null then raise exception 'FALHOU E1: RPC sem SECURITY DEFINER/search_path vazio ou com grant errado: %', v_falta; end if;
-  if has_function_privilege('authenticated',
-       'private."FC_APLICAR_COORDENADA_LOCAL"(text,double precision,double precision,double precision,double precision,text,text,text,bigint)',
-       'execute')
-     or has_function_privilege('authenticated', 'private."FC_LUGARES_VAGA_PROJETO"()', 'execute') then
-    raise exception 'FALHOU E1: authenticated chama função privada direto';
-  end if;
-  if to_regprocedure('public.salvar_coordenada_mapa_saude_indigena(jsonb,double precision,double precision,double precision,double precision,text,boolean)') is null
-     and to_regprocedure('public.salvar_coordenada_mapa_saude_indigena(jsonb,double precision,double precision,double precision,double precision,text)') is null then
-    raise exception 'FALHOU E1: o editor da Saúde Indígena sumiu';
-  end if;
-  raise notice 'ok E1: nomes MAD, constraints, RLS, COMMENT, RPCs SECURITY DEFINER e permissões';
-end;
-$$;
-
--- E2. Atores sintéticos; dois lugares reais: A com coordenada e pendência sintéticas, B sem coordenada.
-do $$
-declare
-  v_admin_grupo text;
-  v_leitor_grupo text;
-  v_a record;
-  v_b record;
-begin
-  select a."CO_GRUPO_ACESSO" into v_admin_grupo from public."TB_GRUPO_ACESSO" a where a."ST_ADMIN_GLOBAL" limit 1;
-  select a."CO_GRUPO_ACESSO" into v_leitor_grupo from public."TB_GRUPO_ACESSO" a
-   where not a."ST_ADMIN_GLOBAL" order by (a."CO_GRUPO_ACESSO" = 'usuario') desc limit 1;
-  if v_admin_grupo is null or v_leitor_grupo is null then raise exception 'ENSAIO: grupos de acesso não encontrados'; end if;
-  insert into auth.users (id, instance_id, aud, role, email) values
-    ('00000000-0000-4000-a000-00000000d201', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.admin.projetos@ensaio.invalid'),
-    ('00000000-0000-4000-a000-00000000d202', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.leitor.projetos@ensaio.invalid');
-  insert into public."TB_PERFIL_USUARIO" (user_id, email, nome, perfil, ativo) values
-    ('00000000-0000-4000-a000-00000000d201', 'ensaio.admin.projetos@ensaio.invalid', 'Ensaio Admin', v_admin_grupo, true),
-    ('00000000-0000-4000-a000-00000000d202', 'ensaio.leitor.projetos@ensaio.invalid', 'Ensaio Leitor', v_leitor_grupo, true);
-
-  select f.* into v_a from private."FC_LUGARES_VAGA_PROJETO"() f
-   where not f.so_uf and 'TABELA' = any (f.origens) order by f.lugar limit 1;
-  select f.* into v_b from private."FC_LUGARES_VAGA_PROJETO"() f
-   where f.lugar is distinct from v_a.lugar order by f.so_uf, f.lugar limit 1;
-  if v_a.lugar is null or v_b.lugar is null then
-    raise exception 'ENSAIO: precisa de dois lugares em TB_LOCAL_VAGA_EDITAL (rode antes a carga dos locais)';
-  end if;
-
-  insert into public."TB_COORDENADA_LOCAL_VAGA"
-    ("DS_CHAVE_LUGAR", "CO_MUNICIPIO_IBGE", "NO_MUNICIPIO", "SG_UF", "CG_LATITUDE", "CG_LONGITUDE", "TP_ORIGEM")
-  values (v_a.lugar, v_a.ibge, v_a.municipio, v_a.uf, -15.123456789012345, -47.987654321098765, 'SEDE_IBGE');
-  insert into private."TB_PENDENCIA_COORDENADA_LOCAL"
-    ("DS_CHAVE_LUGAR", "NO_LUGAR", "CO_MUNICIPIO_IBGE", "SG_UF", "TP_MOTIVO", "DS_MOTIVO", "DS_CANDIDATO")
-  values (v_a.lugar, v_a.municipio || '/' || v_a.uf, v_a.ibge, v_a.uf, 'SEDE_MUNICIPAL', 'Ensaio',
-          jsonb_build_array(jsonb_build_object('f', 'MUNICIPIO', 'n', 'Sede de ensaio', 'lat', -15.1, 'lon', -47.9)));
-  delete from public."TB_COORDENADA_LOCAL_VAGA" where "DS_CHAVE_LUGAR" = v_b.lugar;
-  delete from private."TB_PENDENCIA_COORDENADA_LOCAL" where "DS_CHAVE_LUGAR" = v_b.lugar;
-
-  perform set_config('ensaio.a', v_a.lugar, true);
-  perform set_config('ensaio.b', v_b.lugar, true);
-  raise notice 'ok E2: atores; lugar A %, lugar B % (sem coordenada)', v_a.lugar, v_b.lugar;
-end;
-$$;
-
--- E3. Quem não é admin global não lê nem grava.
-set local role authenticated;
-do $$
-declare
-  v_a text := current_setting('ensaio.a');
-begin
-  perform set_config('request.jwt.claims',
-    '{"sub":"00000000-0000-4000-a000-00000000d202","role":"authenticated","email":"ensaio.leitor.projetos@ensaio.invalid"}', true);
-  begin
-    perform public.listar_pendencias_coordenada_mapa_projetos();
-    raise exception 'FALHOU E3: leitor listou pendências';
-  exception when sqlstate '42501' then null;
-  end;
-  begin
-    perform public.listar_historico_coordenada_mapa_projetos(v_a, 5);
-    raise exception 'FALHOU E3: leitor leu histórico';
-  exception when sqlstate '42501' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_a, -15.123456789012345, -47.987654321098765,
-      -15.123456789012345, -47.987654321098765, 'Ensaio sem permissão', true);
-    raise exception 'FALHOU E3: leitor conferiu';
-  exception when sqlstate '42501' then null;
-  end;
-  begin
-    perform public.desfazer_coordenada_mapa_projetos(1, 'Ensaio sem permissão');
-    raise exception 'FALHOU E3: leitor desfez';
-  exception when sqlstate '42501' then null;
-  end;
-  raise notice 'ok E3: leitor recebe 42501 nas quatro RPCs';
-end;
-$$;
-
--- E4. Admin no lugar A: corrigir, validar, desfazer, conferir sem e com mudança.
-do $$
-declare
-  v_a text := current_setting('ensaio.a');
-  v_lat float8 := -15.123456789012345;
-  v_lon float8 := -47.987654321098765;
-  v_nova float8 := -15.124456789012345;
-  v jsonb;
-  v_h1 bigint;
-  v_h2 bigint;
-  v_h3 bigint;
-  v_hist jsonb;
-  v_pend jsonb;
-  v_atual float8;
-begin
-  perform set_config('request.jwt.claims',
-    '{"sub":"00000000-0000-4000-a000-00000000d201","role":"authenticated","email":"ensaio.admin.projetos@ensaio.invalid"}', true);
-  select p into v_pend from jsonb_array_elements(public.listar_pendencias_coordenada_mapa_projetos()) p
-   where p ->> 'lugar' = v_a;
-  if v_pend is null or (v_pend ->> 'conferido')::boolean or jsonb_array_length(v_pend -> 'candidatos') < 1 then
-    raise exception 'FALHOU E4: pendência do lugar A não listada';
-  end if;
-
-  v := public.salvar_coordenada_mapa_projetos(v_a, v_nova, v_lon, v_lat, v_lon, 'Ensaio: correção de teste');
-  v_h1 := (v ->> 'historico')::bigint;
-  select "CG_LATITUDE" into v_atual from public."TB_COORDENADA_LOCAL_VAGA" where "DS_CHAVE_LUGAR" = v_a;
-  if abs(v_atual - v_nova) > 1e-9 or abs((v ->> 'latitude')::float8 - v_nova) > 1e-9 or (v ->> 'conferido')::boolean
-     or (select "TP_ORIGEM" from public."TB_COORDENADA_LOCAL_VAGA" where "DS_CHAVE_LUGAR" = v_a) <> 'MANUAL' then
-    raise exception 'FALHOU E4: correção não gravou, não virou MANUAL ou conferiu sem pedir';
-  end if;
-  -- Anterior que passou por JSON (diferença de arredondamento) vale; a posição igual é recusada.
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_a, v_nova, v_lon, v_nova + 1e-12, v_lon - 1e-12, 'Ensaio: mesma posição');
-    raise exception 'FALHOU E4: aceitou posição igual sem conferir';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_a, v_nova + 0.002, v_lon, v_lat, v_lon, 'Ensaio: anterior velha');
-    raise exception 'FALHOU E4: aceitou posição anterior desatualizada';
-  exception when sqlstate '40001' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_a, v_nova + 0.002, v_lon, null, null, 'Ensaio: anterior nula');
-    raise exception 'FALHOU E4: aceitou anterior nula com coordenada gravada';
-  exception when sqlstate '40001' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_a, v_nova + 0.002, v_lon, v_nova, v_lon, 'curto');
-    raise exception 'FALHOU E4: aceitou motivo curto';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_a, 10, v_lon, v_nova, v_lon, 'Ensaio: fora do Brasil');
-    raise exception 'FALHOU E4: aceitou fora do Brasil';
-  exception when sqlstate '22023' then null;
-  end;
-  v_hist := public.listar_historico_coordenada_mapa_projetos(v_a, 5);
-  if (v_hist -> 0 ->> 'id')::bigint <> v_h1 or v_hist -> 0 ->> 'acao' <> 'CORRECAO'
-     or v_hist -> 0 ->> 'por' <> 'Ensaio Admin'
-     or abs((v_hist -> 0 ->> 'latitude_anterior')::float8 - v_lat) > 1e-9 then
-    raise exception 'FALHOU E4: histórico da correção: %', v_hist -> 0;
-  end if;
-
-  v := public.desfazer_coordenada_mapa_projetos(v_h1, 'Ensaio: desfaz a correção');
-  v_h2 := (v ->> 'historico')::bigint;
-  select "CG_LATITUDE" into v_atual from public."TB_COORDENADA_LOCAL_VAGA" where "DS_CHAVE_LUGAR" = v_a;
-  if abs(v_atual - v_lat) > 1e-9 then raise exception 'FALHOU E4: desfazer não voltou a posição'; end if;
-  begin
-    perform public.desfazer_coordenada_mapa_projetos(v_h1, 'Ensaio: desfaz de novo');
-    raise exception 'FALHOU E4: desfez correção que não é a última';
-  exception when sqlstate '40001' then null;
-  end;
-  begin
-    perform public.desfazer_coordenada_mapa_projetos(v_h2, 'Ensaio: desfaz o desfazer');
-    raise exception 'FALHOU E4: desfez um desfazer';
-  exception when sqlstate '22023' then null;
-  end;
-  v_hist := public.listar_historico_coordenada_mapa_projetos(v_a, 5);
-  if v_hist -> 0 ->> 'acao' <> 'DESFAZER' or (v_hist -> 0 ->> 'desfaz')::bigint <> v_h1
-     or not (v_hist -> 1 ->> 'desfeito')::boolean then
-    raise exception 'FALHOU E4: histórico do desfazer: %', v_hist;
-  end if;
-
-  v := public.salvar_coordenada_mapa_projetos(v_a, v_lat, v_lon, v_lat, v_lon, 'Ensaio: posição conferida', true);
-  v_h3 := (v ->> 'historico')::bigint;
-  select "CG_LATITUDE" into v_atual from public."TB_COORDENADA_LOCAL_VAGA" where "DS_CHAVE_LUGAR" = v_a;
-  if not (v ->> 'conferido')::boolean or abs(v_atual - v_lat) > 1e-9 then
-    raise exception 'FALHOU E4: conferência sem mudar a posição';
-  end if;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_a, v_lat, v_lon, v_lat, v_lon, 'Ensaio: conferir de novo', true);
-    raise exception 'FALHOU E4: conferiu duas vezes';
-  exception when sqlstate '22023' then null;
-  end;
-  select p into v_pend from jsonb_array_elements(public.listar_pendencias_coordenada_mapa_projetos()) p
-   where p ->> 'lugar' = v_a;
-  if not (v_pend ->> 'conferido')::boolean or v_pend ->> 'conferido_em' is null then
-    raise exception 'FALHOU E4: pendência não ficou conferida';
-  end if;
-
-  v := public.desfazer_coordenada_mapa_projetos(v_h3, 'Ensaio: volta a pendente');
-  if (v ->> 'conferido')::boolean then raise exception 'FALHOU E4: desfazer não voltou a pendente'; end if;
-
-  v := public.salvar_coordenada_mapa_projetos(v_a, v_nova, v_lon, v_lat, v_lon, 'Ensaio: conferida em outra posição', true);
-  select "CG_LATITUDE" into v_atual from public."TB_COORDENADA_LOCAL_VAGA" where "DS_CHAVE_LUGAR" = v_a;
-  if not (v ->> 'conferido')::boolean or abs(v_atual - v_nova) > 1e-9 then
-    raise exception 'FALHOU E4: conferência com mudança de posição';
-  end if;
-  raise notice 'ok E4: lugar A corrigido, validado (22023/40001, tolerância de JSON), desfeito, conferido sem e com mudança';
-end;
-$$;
-
--- E5. Lugar B sem coordenada (cria a linha), lugares inválidos e a RPC do mapa com a coordenada.
-do $$
-declare
-  v_a text := current_setting('ensaio.a');
-  v_b text := current_setting('ensaio.b');
-  v jsonb;
-  v_linha json;
-begin
-  v := public.salvar_coordenada_mapa_projetos(v_b, -10.5, -50.25, null, null, 'Ensaio: lugar sem coordenada');
-  if (v ->> 'conferido') is not null
-     or not exists (select 1 from public."TB_COORDENADA_LOCAL_VAGA"
-                     where "DS_CHAVE_LUGAR" = v_b and "TP_ORIGEM" = 'MANUAL'
-                       and abs("CG_LATITUDE" + 10.5) < 1e-9 and abs("CG_LONGITUDE" + 50.25) < 1e-9) then
-    raise exception 'FALHOU E5: não criou a coordenada do lugar B';
-  end if;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_b, -10.6, -50.25, null, null, 'Ensaio: B de novo sem anterior');
-    raise exception 'FALHOU E5: aceitou anterior nula depois de criada';
-  exception when sqlstate '40001' then null;
-  end;
-  begin
-    perform public.desfazer_coordenada_mapa_projetos((v ->> 'historico')::bigint, 'Ensaio: desfaz a criação');
-    raise exception 'FALHOU E5: desfez a criação da coordenada';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos(v_b, -10.5, -50.25, -10.5, -50.25, 'Ensaio: B sem pendência', true);
-    raise exception 'FALHOU E5: conferiu lugar sem pendência';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos('lugar de ensaio inexistente/ZZ', -10.5, -50.25, null, null, 'Ensaio: lugar inexistente');
-    raise exception 'FALHOU E5: aceitou lugar inexistente';
-  exception when sqlstate '22023' then null;
-  end;
-  begin
-    perform public.salvar_coordenada_mapa_projetos('Fora Do Formato', -10.5, -50.25, null, null, 'Ensaio: lugar fora do formato');
-    raise exception 'FALHOU E5: aceitou chave fora do formato';
-  exception when sqlstate '22023' then null;
-  end;
-  select x into v_linha from json_array_elements(public.listar_municipios_das_vagas_da_area('projetos')) x
-   where x ->> 'lugar' = v_a;
-  if v_linha is null or abs((v_linha ->> 'latitude')::float8 + 15.124456789012345) > 1e-9
-     or v_linha ->> 'coordenada_origem' <> 'MANUAL' then
-    raise exception 'FALHOU E5: a RPC do mapa não trouxe a coordenada do lugar A: %', v_linha;
-  end if;
-  raise notice 'ok E5: lugar B criado (sem desfazer nem conferir), chaves inválidas recusadas, RPC do mapa com a coordenada';
-end;
-$$;
-
-reset role;
-
--- E6. O histórico guardou tudo; cada alteração só se desfaz uma vez.
-do $$
-declare
-  v_admin constant uuid := '00000000-0000-4000-a000-00000000d201';
-begin
-  if (select count(*) from private."TH_COORDENADA_LOCAL_VAGA" where "CO_USUARIO" = v_admin and "TP_ACAO" = 'CORRECAO') <> 2
-     or (select count(*) from private."TH_COORDENADA_LOCAL_VAGA" where "CO_USUARIO" = v_admin and "TP_ACAO" = 'CONFERENCIA') <> 2
-     or (select count(*) from private."TH_COORDENADA_LOCAL_VAGA" where "CO_USUARIO" = v_admin and "TP_ACAO" = 'DESFAZER') <> 2 then
-    raise exception 'FALHOU E6: contagem do histórico por ação';
-  end if;
-  begin
-    insert into private."TH_COORDENADA_LOCAL_VAGA"
-      ("CO_USUARIO", "DS_CHAVE_LUGAR", "CG_LATITUDE", "CG_LONGITUDE", "DS_MOTIVO", "TP_ACAO", "CO_HISTORICO_DESFEITO")
-    select v_admin, h."DS_CHAVE_LUGAR", h."CG_LATITUDE", h."CG_LONGITUDE", 'Ensaio: duplicado', 'DESFAZER', h."CO_HISTORICO_DESFEITO"
-      from private."TH_COORDENADA_LOCAL_VAGA" h
-     where h."CO_USUARIO" = v_admin and h."TP_ACAO" = 'DESFAZER' limit 1;
-    raise exception 'FALHOU E6: a mesma alteração foi desfeita duas vezes';
-  exception when unique_violation then null;
-  end;
-  raise notice 'ok E6: 2 correções, 2 conferências e 2 desfazer no histórico; UK do desfazer';
-  -- Diagnóstico dos candidatos por lugar (o mapa mostrava 0 em todo lugar).
-  raise notice 'candidatos: % análises ativas com CO_AREA projetos, % pelo grupo da planilha, % com "UBS móvel <Município>/<UF>" no nome da vaga, % lugares vindos do nome da vaga',
-    (select count(*) from public."TB_ANALISE_CURRICULAR" ac where ac.ativo is true and ac."CO_AREA" = 'projetos'),
-    (select count(*) from public."TB_ANALISE_CURRICULAR" ac where ac.ativo is true
-        and ac.grupo_norm = (select public.analises_norm_key(a."NO_GRUPO_PLANILHA") from public."TB_AREA" a where a."CO_AREA" = 'projetos')),
-    (select count(*) from public."TB_ANALISE_CURRICULAR" ac where ac.ativo is true and ac."CO_AREA" = 'projetos'
-        and ac.nome_vaga ~ 'UBS m[óo]vel ([^/]+)/([A-Z]{2})'),
-    (select count(*) from private."FC_LUGARES_VAGA_PROJETO"() f where 'NOME_VAGA' = any (f.origens));
-  raise notice 'ENSAIO OK';
-end;
-$$;
-
-select h."TP_ACAO" as acao, count(*) as alteracoes,
-       count(*) filter (where h."ST_CONFERIDO" = 'S') as deixaram_conferido,
-       (select count(*) from private."FC_LUGARES_VAGA_PROJETO"()) as lugares_das_vagas
-  from private."TH_COORDENADA_LOCAL_VAGA" h
- where h."CO_USUARIO" = '00000000-0000-4000-a000-00000000d201'
- group by h."TP_ACAO"
- order by h."TP_ACAO";
-
-rollback;
+commit;

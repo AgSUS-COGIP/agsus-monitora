@@ -11,7 +11,7 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
   das coordenadas e pendências. O editor da Saúde Indígena não é tocado.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261002170000_coordenadas_mapa_projetos.sql";
+const NOME = "20261002190000_coordenadas_mapa_projetos.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
