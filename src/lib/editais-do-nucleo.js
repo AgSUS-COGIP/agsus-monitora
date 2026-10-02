@@ -9,6 +9,7 @@
   mapa (`legacy-app.js`): as duas telas têm de concordar.
 */
 
+import { etapaComDatasValidas } from "./datas-do-cronograma.js";
 import {
   AREA_SAUDE_INDIGENA,
   ehResponsavelCores,
@@ -346,6 +347,22 @@ export function camposDaUnidade(unidade) {
  * @param {string} [area] a área pretendida (`co_area`): a do menu no edital novo,
  *   a do próprio edital ao editar. Sem ela, o banco deduz a área como antes.
  */
+/**
+ * Início e fim do edital pelo cronograma: a primeira data de início e a
+ * última de fim das etapas com datas possíveis; null sem etapa válida.
+ * Com o cronograma automático, são essas as datas do edital — digitadas à
+ * mão saíram "0202-10-09" e "20206-09-14" em 02/10/2026.
+ */
+export function periodoDoCronograma(etapas) {
+  const validas = (etapas || []).filter(etapaComDatasValidas);
+  if (!validas.length) return null;
+  const inicios = validas.map((e) => e.data_inicio.slice(0, 10)).sort();
+  const fins = validas
+    .map((e) => (e.data_fim || e.data_inicio).slice(0, 10))
+    .sort();
+  return { inicio: inicios[0], fim: fins[fins.length - 1] };
+}
+
 export function editalParaSalvar(
   formulario,
   unidade,
@@ -355,6 +372,7 @@ export function editalParaSalvar(
 ) {
   const f = formulario;
   const automatico = Boolean(cronograma.automatico);
+  const periodo = automatico ? periodoDoCronograma(cronograma.etapas) : null;
   return {
     id: txt(f.id) || null,
     processo: txt(f.processo),
@@ -366,8 +384,8 @@ export function editalParaSalvar(
     uf: txt(f.uf),
     ciclo: txt(f.ciclo),
     vagas_total: Number(f.vagas || 0),
-    data_inicio: txt(f.dataInicio) || null,
-    data_fim: txt(f.dataFim) || null,
+    data_inicio: periodo?.inicio || txt(f.dataInicio) || null,
+    data_fim: periodo?.fim || txt(f.dataFim) || null,
     status: automatico ? previa.status : txt(f.status),
     etapa: automatico ? previa.etapa : txt(f.etapa),
     risco: txt(f.risco) || "Baixo",

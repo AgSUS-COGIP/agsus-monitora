@@ -8,6 +8,7 @@ import {
   indicadoresDoResumo,
   mapaDeAreasDasUnidades,
   opcoesDeUnidade,
+  periodoDoCronograma,
   passaNoFiltroOperacional,
   resumoDoEdital,
   unidadesDaArea,
@@ -238,5 +239,53 @@ describe("unidades por área", () => {
     expect(
       editalParaSalvar(formulario, null, cronograma, previa),
     ).not.toHaveProperty("co_area");
+  });
+});
+
+describe("datas do edital pelo cronograma", () => {
+  const etapas = [
+    {
+      atividade: "Publicação",
+      data_inicio: "2026-09-14",
+      data_fim: "2026-09-15",
+    },
+    { atividade: "Erro", data_inicio: "0202-10-09", data_fim: "0202-10-09" },
+    {
+      atividade: "Resultado final",
+      data_inicio: "2026-11-12",
+      data_fim: "2026-11-12",
+    },
+  ];
+  it("primeira data e última, ignorando etapa com ano impossível", () => {
+    expect(periodoDoCronograma(etapas)).toEqual({
+      inicio: "2026-09-14",
+      fim: "2026-11-12",
+    });
+    expect(periodoDoCronograma([])).toBeNull();
+  });
+  it("com o automático, as datas digitadas não valem; sem ele, valem", () => {
+    const formulario = {
+      edital: "107/2026",
+      dataInicio: "0202-11-12",
+      dataFim: "20206-09-14",
+    };
+    const previa = { status: "Em andamento", etapa: "x" };
+    const auto = editalParaSalvar(
+      formulario,
+      null,
+      { automatico: true, etapas },
+      previa,
+    );
+    expect([auto.data_inicio, auto.data_fim]).toEqual([
+      "2026-09-14",
+      "2026-11-12",
+    ]);
+    const manual = editalParaSalvar(
+      formulario,
+      null,
+      { automatico: false, etapas },
+      previa,
+    );
+    expect(manual.data_inicio).toBe("0202-11-12");
   });
 });
