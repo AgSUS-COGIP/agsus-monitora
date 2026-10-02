@@ -5,7 +5,7 @@
   A árvore é a resposta de `obter_modulos_e_abas()` (só admin global):
   sistema, áreas (cada uma com as suas abas), abas (em todas as áreas),
   painéis externos e as 50 últimas mudanças. O desenho é de
-  `src/componentes/modulos/`.
+  `src/modulos/modulos/`.
 
   Cada campo editável é identificado por um ALVO — `{ escopo, area?, aba?,
   painel? }`, com escopo em 'sistema' | 'area' | 'aba' | 'aba_area' | 'painel'

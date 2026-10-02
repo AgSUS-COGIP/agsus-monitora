@@ -13,8 +13,18 @@ import {
   valorDoCampo,
 } from "../../lib/modulos-e-abas.js";
 import { criarEstadoDosModulos } from "./estado.js";
-import { BotaoDeAcao, classes, Segmentado } from "../../ui/index.js";
-import { Icone } from "../icone.jsx";
+import {
+  Aviso,
+  BlocosEsqueleto,
+  BotaoDeAcao,
+  Campo,
+  classes,
+  ErroAoCarregar,
+  EstadoVazio,
+  Segmentado,
+  Selo,
+} from "../../ui/index.js";
+import { Icone } from "../../componentes/icone.jsx";
 
 /*
   Configurações › Módulos e abas (só admin global): ativar, desativar e pôr
@@ -54,16 +64,12 @@ const idDoAlvo = (alvo) =>
 
 function SeloDoEstado({ estado }) {
   if (estado === "ativa") return null;
-  return (
-    <span className={classes("modulos-selo", `modulos-selo--${estado}`)}>
-      {estado === "manutencao" ? (
-        <>
-          <Icone nome="wrench" tamanho={12} /> Manutenção
-        </>
-      ) : (
-        "Desativada"
-      )}
-    </span>
+  return estado === "manutencao" ? (
+    <Selo tom="pendente" className="modulos-selo">
+      <Icone nome="wrench" tamanho={12} /> Manutenção
+    </Selo>
+  ) : (
+    <Selo className="modulos-selo">Desativada</Selo>
   );
 }
 
@@ -73,8 +79,10 @@ function CamposDaManutencao({ estado: estadoDaTela, alvo, valor }) {
   const mensagem = valor(alvo, "mensagem");
   return (
     <div className="modulos-manutencao">
-      <div className="acessos-campo modulos-manutencao__mensagem">
-        <label htmlFor={`${id}-mensagem`}>Mensagem para quem abrir</label>
+      <Campo
+        rotulo="Mensagem para quem abrir"
+        dica={`${mensagem.length}/${LIMITE_DA_MENSAGEM}`}
+      >
         <textarea
           id={`${id}-mensagem`}
           rows={2}
@@ -85,12 +93,8 @@ function CamposDaManutencao({ estado: estadoDaTela, alvo, valor }) {
             estadoDaTela.mudarCampo(alvo, "mensagem", evento.target.value)
           }
         />
-        <small className="acessos-secundario">
-          {mensagem.length}/{LIMITE_DA_MENSAGEM}
-        </small>
-      </div>
-      <div className="acessos-campo modulos-manutencao__previsao">
-        <label htmlFor={`${id}-previsao`}>Previsão de volta</label>
+      </Campo>
+      <Campo rotulo="Previsão de volta">
         <input
           id={`${id}-previsao`}
           type="date"
@@ -99,7 +103,7 @@ function CamposDaManutencao({ estado: estadoDaTela, alvo, valor }) {
             estadoDaTela.mudarCampo(alvo, "previsao", evento.target.value)
           }
         />
-      </div>
+      </Campo>
     </div>
   );
 }
@@ -145,7 +149,7 @@ function LinhaDoItem({
 
 function Cartao({ titulo, icone, controles = null, children }) {
   return (
-    <section className="modulos-cartao">
+    <section className="ui-card modulos-cartao">
       <header className="modulos-cartao__cabecalho">
         <span className="modulos-cartao__icone" aria-hidden="true">
           <Icone nome={icone} tamanho={16} />
@@ -188,12 +192,12 @@ function BarraDeRevisao({ estado, atual }) {
 
   if (!revisando)
     return (
-      <div className="acessos-salvar modulos-salvar">
+      <div className="ui-barra-de-salvar modulos-salvar">
         <strong className="modulos-salvar__contagem">{rotulo}</strong>
-        <div className="acessos-acoes">
+        <div className="ui-acoes">
           <button
             type="button"
-            className="btn outline acessos-ghost"
+            className="btn ghost"
             onClick={estado.descartar}
           >
             Descartar
@@ -211,7 +215,7 @@ function BarraDeRevisao({ estado, atual }) {
 
   return (
     <form
-      className="acessos-salvar modulos-salvar modulos-salvar--revisao"
+      className="ui-barra-de-salvar modulos-salvar modulos-salvar--revisao"
       aria-label="Revisar alterações"
       noValidate
       onSubmit={(evento) => {
@@ -236,15 +240,21 @@ function BarraDeRevisao({ estado, atual }) {
         {problemas.length ? (
           <ul className="modulos-problemas" role="alert">
             {problemas.map((problema) => (
-              <li key={problema} className="acessos-erro">
+              <li key={problema} className="ui-campo-erro">
                 <Icone nome="circle-alert" tamanho={14} /> {problema}
               </li>
             ))}
           </ul>
         ) : null}
       </div>
-      <div className="acessos-campo">
-        <label htmlFor="modulosMotivo">Motivo da alteração</label>
+      <Campo
+        rotulo="Motivo da alteração"
+        erro={
+          tentou && !motivoValido(motivo)
+            ? "Informe o motivo (de 3 a 500 caracteres)."
+            : undefined
+        }
+      >
         <input
           id="modulosMotivo"
           value={motivo}
@@ -252,19 +262,12 @@ function BarraDeRevisao({ estado, atual }) {
           required
           minLength={3}
           maxLength={500}
-          aria-invalid={(tentou && !motivoValido(motivo)) || undefined}
         />
-        {tentou && !motivoValido(motivo) ? (
-          <small className="acessos-erro">
-            <Icone nome="circle-alert" tamanho={14} /> Informe o motivo (de 3 a
-            500 caracteres).
-          </small>
-        ) : null}
-      </div>
-      <div className="acessos-acoes">
+      </Campo>
+      <div className="ui-acoes">
         <button
           type="button"
-          className="btn outline acessos-ghost"
+          className="btn ghost"
           onClick={() => setRevisando(false)}
         >
           Voltar
@@ -297,7 +300,7 @@ function Historico({ arvore }) {
                   <strong>{linha.onde}</strong> · {linha.campo}: {linha.de} →{" "}
                   {linha.para}
                 </div>
-                <small className="acessos-secundario">
+                <small className="ui-texto-secundario">
                   {[linha.quando, linha.autor, linha.motivo]
                     .filter(Boolean)
                     .join(" · ")}
@@ -307,7 +310,7 @@ function Historico({ arvore }) {
           })}
         </ul>
       ) : (
-        <p className="acessos-vazio">Nenhuma mudança registrada ainda.</p>
+        <EstadoVazio>Nenhuma mudança registrada ainda.</EstadoVazio>
       )}
     </Cartao>
   );
@@ -323,39 +326,30 @@ export function ModulosEAbas({ estado }) {
 
   if (atual.perfil && !isAdminGlobal(atual.perfil))
     return (
-      <p className="acessos-vazio" role="status">
+      <p className="ui-vazio" role="status">
         Só o administrador global gerencia módulos e abas.
       </p>
     );
 
   if (atual.status === "error" && !arvore)
     return (
-      <div className="alert error acessos-erro-da-carga" role="alert">
-        <Icone nome="circle-alert" tamanho={16} />
-        <div>
-          <strong>Não foi possível carregar módulos e abas.</strong>
-          <p>
-            {atual.erroCodigo === "PGRST202"
-              ? "O banco ainda não tem a atualização de módulos. Aplique a migration 20260930140000_modulos_e_manutencao.sql e recarregue a página."
-              : atual.erro}
-          </p>
-          {atual.erroCodigo ? <small>Código: {atual.erroCodigo}</small> : null}
-        </div>
-        <button
-          type="button"
-          className="btn secondary"
-          onClick={() => void estado.carregar()}
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <ErroAoCarregar
+        oQue="módulos e abas"
+        mensagem={
+          (atual.erroCodigo === "PGRST202"
+            ? "o banco ainda não tem a atualização de módulos. Aplique a migration 20260930140000_modulos_e_manutencao.sql e recarregue a página"
+            : atual.erro) +
+          (atual.erroCodigo ? ` (código ${atual.erroCodigo})` : "")
+        }
+        aoTentar={() => void estado.carregar()}
+      />
     );
 
   if (!arvore)
     return (
-      <p className="acessos-vazio" role="status">
-        Carregando módulos e abas…
-      </p>
+      <div className="modulos-tela" aria-busy="true">
+        <BlocosEsqueleto quantos={3} className="modulos-esqueleto" />
+      </div>
     );
 
   const valor = (alvo, campo) => valorDoCampo(rascunho, originais, alvo, campo);
@@ -369,15 +363,12 @@ export function ModulosEAbas({ estado }) {
   return (
     <div className="modulos-tela">
       {atual.aviso ? (
-        <div
-          className={classes(
-            "alert",
-            atual.aviso.tom === "danger" ? "error" : "warn",
-          )}
-          role="alert"
+        <Aviso
+          tom={atual.aviso.tom === "danger" ? "danger" : "warning"}
+          papel="alert"
         >
           {atual.aviso.texto}
-        </div>
+        </Aviso>
       ) : null}
 
       <Cartao
@@ -455,7 +446,7 @@ export function ModulosEAbas({ estado }) {
                 ))}
               </ul>
             ) : (
-              <p className="acessos-vazio">Nenhuma aba nesta área.</p>
+              <EstadoVazio>Nenhuma aba nesta área.</EstadoVazio>
             )}
           </Cartao>
         );
@@ -513,7 +504,7 @@ export function ModulosEAbas({ estado }) {
             ))}
           </ul>
         ) : (
-          <p className="acessos-vazio">Nenhum painel externo cadastrado.</p>
+          <EstadoVazio>Nenhum painel externo cadastrado.</EstadoVazio>
         )}
       </Cartao>
 

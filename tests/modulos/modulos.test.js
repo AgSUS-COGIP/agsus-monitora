@@ -1,7 +1,7 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { montarModulos } from "../../src/componentes/modulos/modulos.jsx";
-import { clicar, digitar, esperar } from "./interacoes.js";
+import { montarModulos } from "../../src/modulos/modulos/modulos.jsx";
+import { clicar, digitar, esperar } from "../componentes/interacoes.js";
 
 /*
   Configurações › Módulos e abas: só o admin global vê; as mudanças se
