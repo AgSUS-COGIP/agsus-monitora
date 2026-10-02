@@ -397,12 +397,7 @@ export const INDICADORES = Object.freeze([
     "fa-circle-check",
     "sucesso",
   ]),
-  Object.freeze([
-    "kpi_em_selecao_label",
-    "Em seleção",
-    "fa-clock",
-    "destaque",
-  ]),
+  Object.freeze(["kpi_em_selecao_label", "Em seleção", "fa-clock", "destaque"]),
   Object.freeze([
     "kpi_ociosas_label",
     "Ociosas",
