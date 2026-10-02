@@ -653,11 +653,17 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
               onChange={mudar("vagas")}
             />
           </Campo>
+          {/* Com o cronograma automático, início e encerramento vêm das etapas. */}
           <Campo rotulo="Data de início">
             <input
               id="mDataInicio"
               type="date"
-              value={formulario.dataInicio}
+              min="2015-01-01"
+              max="2100-12-31"
+              readOnly={automatico}
+              value={
+                automatico ? edital.data_inicio || "" : formulario.dataInicio
+              }
               onChange={mudar("dataInicio")}
             />
           </Campo>
@@ -665,7 +671,10 @@ export function ModalDoEdital({ estado, id, agora = () => new Date() }) {
             <input
               id="mDataFim"
               type="date"
-              value={formulario.dataFim}
+              min="2015-01-01"
+              max="2100-12-31"
+              readOnly={automatico}
+              value={automatico ? edital.data_fim || "" : formulario.dataFim}
               onChange={mudar("dataFim")}
             />
           </Campo>

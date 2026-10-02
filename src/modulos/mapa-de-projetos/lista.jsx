@@ -2,9 +2,10 @@ import {
   gruposPorProjeto,
   plural,
   resultadoDoMunicipio,
+  temCandidatosPorLugar,
   textoDasVagas,
 } from "../../lib/visao-geral-da-area.js";
-import { EstadoVazio, classes } from "../../ui/index.js";
+import { Campo, EstadoVazio, classes } from "../../ui/index.js";
 
 /*
   A lista "Municípios por vagas", ao lado do mapa de Projetos: o mesmo
@@ -25,13 +26,19 @@ export function CorDoProjeto({ serie }) {
 }
 
 /*
-  Uma linha: os detalhes começam pelos projetos do lugar (cor e nome). A
-  barra é o resultado das análises — a parte aprovada entre aprovados e
-  reprovados (o trilho, em vermelho claro, são os reprovados); o percentual
-  escrito ao lado não deixa a leitura só na cor. Sem coordenada, sem clique.
+  Uma linha, compacta: o nome do lugar e as vagas na primeira linha; na
+  segunda, os projetos como selos pequenos (só quando a lista mistura
+  projetos: com o filtro de um projeto ou agrupada, eles seriam iguais em
+  todas) e o detalhe curto. Candidatos só quando o lugar casou com alguma
+  vaga das análises (`temCandidatosPorLugar`): sem isso o número seria um
+  zero falso. A barra é o resultado das análises — a parte aprovada entre
+  aprovados e reprovados (o trilho, em vermelho claro, são os reprovados); o
+  percentual escrito ao lado não deixa a leitura só na cor. Sem coordenada,
+  sem clique.
 */
-function LinhaDoLugar({ ponto, posicao, aoEscolher }) {
+function LinhaDoLugar({ ponto, posicao, aoEscolher, mostrarProjetos = true }) {
   const { candidatos, aprovados, reprovados } = ponto;
+  const comCandidatos = temCandidatosPorLugar(ponto);
   const vagasPublicadas = textoDasVagas({
     vagas: ponto.vagasEdital,
     cadastroReserva: ponto.cadastroReserva,
@@ -40,8 +47,8 @@ function LinhaDoLugar({ ponto, posicao, aoEscolher }) {
   const tamanho = ponto.tamanho ?? ponto.vagas;
   const detalhe = [
     vagasPublicadas && ponto.vagasEdital === null ? vagasPublicadas : "",
-    plural(candidatos, "candidato", "candidatos"),
-    aprovados || reprovados
+    comCandidatos ? plural(candidatos, "candidato", "candidatos") : "",
+    comCandidatos && (aprovados || reprovados)
       ? `${plural(aprovados, "aprovado", "aprovados")} · ${plural(reprovados, "reprovado", "reprovados")}`
       : "",
     ponto.coordenadas ? "" : "sem coordenada no mapa",
@@ -53,7 +60,7 @@ function LinhaDoLugar({ ponto, posicao, aoEscolher }) {
     ponto.projetos.map((projeto) => projeto.nome).join(", "),
     vagasPublicadas ||
       (ponto.vagas ? plural(ponto.vagas, "vaga", "vagas") : ""),
-    plural(candidatos, "candidato", "candidatos"),
+    comCandidatos ? plural(candidatos, "candidato", "candidatos") : "",
     resultado ? `${resultado.pct}% aprovados` : "",
   ]
     .filter(Boolean)
@@ -77,20 +84,22 @@ function LinhaDoLugar({ ponto, posicao, aoEscolher }) {
         </span>
         <span className="mapa-si-territorio__corpo">
           <strong>{ponto.rotulo}</strong>
-          {ponto.projetos.length ? (
-            <span className="mapa-projetos-lugar__projetos">
-              {ponto.projetos.map((projeto) => (
-                <span
-                  key={projeto.nome}
-                  className="mapa-projetos-lugar__projeto"
-                >
-                  <CorDoProjeto serie={projeto.serie} />
-                  {projeto.nome}
-                </span>
-              ))}
+          {(mostrarProjetos && ponto.projetos.length) || detalhe ? (
+            <span className="mapa-projetos-lugar__segunda">
+              {mostrarProjetos
+                ? ponto.projetos.map((projeto) => (
+                    <span
+                      key={projeto.nome}
+                      className="mapa-projetos-lugar__projeto"
+                    >
+                      <CorDoProjeto serie={projeto.serie} />
+                      {projeto.nome}
+                    </span>
+                  ))
+                : null}
+              {detalhe ? <small>{detalhe}</small> : null}
             </span>
           ) : null}
-          <small>{detalhe}</small>
           {resultado ? (
             <span className="mapa-si-territorio__preenchimento mapa-projetos-lugar__resultado">
               <span className="mapa-si-territorio__barra" aria-hidden="true">
@@ -121,8 +130,7 @@ function LinhaDoLugar({ ponto, posicao, aoEscolher }) {
 function Filtros({ projetos, escolha, aoMudarEscolha }) {
   return (
     <div className="mapa-projetos__filtros">
-      <label className="mapa-projetos__campo">
-        <span>Projeto</span>
+      <Campo rotulo="Projeto">
         <select
           className="mapa-projetos__seletor"
           name="projeto-do-mapa"
@@ -138,7 +146,7 @@ function Filtros({ projetos, escolha, aoMudarEscolha }) {
             </option>
           ))}
         </select>
-      </label>
+      </Campo>
       <label className="mapa-projetos__agrupar">
         <input
           type="checkbox"
@@ -154,7 +162,7 @@ function Filtros({ projetos, escolha, aoMudarEscolha }) {
   );
 }
 
-function Itens({ pontos, agrupar, aoEscolher }) {
+function Itens({ pontos, agrupar, filtrado, aoEscolher }) {
   if (!agrupar) {
     return (
       <ol className="mapa-si-lista__itens">
@@ -164,6 +172,7 @@ function Itens({ pontos, agrupar, aoEscolher }) {
             ponto={ponto}
             posicao={indice + 1}
             aoEscolher={aoEscolher}
+            mostrarProjetos={!filtrado}
           />
         ))}
       </ol>
@@ -184,6 +193,7 @@ function Itens({ pontos, agrupar, aoEscolher }) {
             ponto={ponto}
             posicao={indice + 1}
             aoEscolher={aoEscolher}
+            mostrarProjetos={false}
           />
         ))}
       </ol>
@@ -225,6 +235,7 @@ export function ListaDeMunicipios({
       <Itens
         pontos={pontos}
         agrupar={escolha.agrupar}
+        filtrado={Boolean(escolha.projeto)}
         aoEscolher={aoEscolher}
       />
     );

@@ -147,6 +147,8 @@ export function TelaDaVisaoGeral({
             area={e.area}
             carregador={carregadorDeMunicipios}
             carregadoEm={e.carregadoEm}
+            perfil={obterPerfil?.()}
+            supabase={supabase}
           />
         </div>
       ) : null}

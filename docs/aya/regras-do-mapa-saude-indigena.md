@@ -3,14 +3,14 @@
 O mapa da Visão geral (Saúde Indígena) mostra só rótulos, números e controles;
 o porquê fica aqui, para a Aya explicar. Textos que saíram da tela com o mapa
 em React (01/10/2026): a dica "Escolha um DSEI no mapa para ver polos e
-unidades", o "clique para abrir o território" das bolhas, os avisos "Mapa de
-calor: cor por % de vagas ociosas" e "Visão do Brasil. Os filtros continuam
-valendo", e os textos longos das listas vazias.
+unidades", o "clique para abrir o território" das bolhas, o aviso "Visão do
+Brasil. Os filtros continuam valendo" e os textos longos das listas vazias. O
+modo Calor saiu em 02/10/2026.
 
 ## Como usar o mapa da Saúde Indígena
 
 **perguntas:** como usar o mapa | como abrir um dsei no mapa | ver polos e unidades | abrir o territorio | mapa detalhado do dsei
-**resposta:** No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "Brasil", no trilho acima do mapa, volta à visão nacional sem apagar os outros filtros.
+**resposta:** No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.
 **fonte:** interface do MONITORA
 
 ## Bolhas dos DSEIs no mapa
@@ -19,10 +19,10 @@ valendo", e os textos longos das listas vazias.
 **resposta:** No MONITORA, cada bolha da visão nacional fica na sede do DSEI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital no recorte atual; azul, sem edital. Com algum filtro ativo, só aparecem os DSEIs que têm edital no resultado. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.
 **fonte:** interface do MONITORA
 
-## Botão Calor do mapa
+## Mapa de calor
 
-**perguntas:** botao calor | modo calor | cores do mapa de calor | faixas do mapa de calor
-**resposta:** No MONITORA, o botão Calor pinta cada bolha pela porcentagem de vagas ociosas do DSEI no recorte: verde abaixo de 20%, amarelo de 20% a 39%, laranja de 40% a 59% e vermelho a partir de 60%. DSEI sem edital fica cinza. Com o calor ligado, a legenda mostra as faixas.
+**perguntas:** botao calor | modo calor | mapa de calor | mapa sem calor
+**resposta:** No MONITORA, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital no recorte (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.
 **fonte:** interface do MONITORA
 
 ## Territórios por vagas
@@ -73,10 +73,16 @@ valendo", e os textos longos das listas vazias.
 **resposta:** No MONITORA, as Terras Indígenas vêm da Funai e aparecem em três fases, cada uma um interruptor na legenda: homologada ou regularizada (limite contínuo), em processo (tracejado) e em estudo (círculo tracejado, sem limite publicado). No mapa do DSEI, a lista "Terras Indígenas e povos" traz as terras que caem na área do distrito; clicar leva o mapa até a terra. Quando a Funai não declara o povo, a lista diz isso em vez de inventar.
 **fonte:** interface do MONITORA
 
+## Voltar ao Brasil
+
+**perguntas:** voltar ao brasil | sair do dsei | voltar para a visao geral do mapa | voltar ao mapa nacional | esc no mapa | fechar o dsei
+**resposta:** No MONITORA, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro, o filtro de DSEI sai da página e os outros filtros continuam. O foco volta à linha do DSEI em "Territórios por vagas". O chip "DSEI" dos filtros faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.
+**fonte:** interface do MONITORA
+
 ## Tela cheia e mapa no celular
 
 **perguntas:** mapa em tela cheia | expandir o mapa | mapa no celular | legenda fechada no celular
-**resposta:** No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam. Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.
+**resposta:** No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.
 **fonte:** interface do MONITORA
 
 ## Corrigir coordenadas de um ponto
@@ -95,10 +101,10 @@ valendo", e os textos longos das listas vazias.
 
 **perguntas:** sugestoes de posicao | usar esta | candidatos da coordenada | posicao do cnes | aldeia do ibge | aldeia da funai | distancia da posicao atual
 **resposta:** Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.
-**fonte:** src/lib/coordenadas-do-mapa.js; src/modulos/mapa-saude-indigena/sugestoes-do-ponto.jsx
+**fonte:** src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.jsx
 
 ## Histórico e desfazer de uma correção
 
 **perguntas:** historico da coordenada | quem mudou o ponto | desfazer correcao | desfazer conferencia | voltar posicao anterior
 **resposta:** Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).
-**fonte:** src/modulos/mapa-saude-indigena/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql
+**fonte:** src/modulos/editor-de-coordenadas/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql

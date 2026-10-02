@@ -66,6 +66,8 @@ const LINHAS = [
     contratados: 4,
     vagas_ociosas: 6,
     inscritos: 80,
+    // Crítico por atraso (etapa chegando não faz crítico).
+    data_fim: "2026-09-28",
     cronograma_automatico: true,
     cronograma_dias_para_proxima: 2,
     cronograma_proxima_data: "2026-10-03",
@@ -568,7 +570,7 @@ describe("tabela de processos", () => {
     expect(primeira.dataset.urgencia).toBe("danger");
     expect(
       primeira.querySelector(".visao-geral-cronograma").textContent,
-    ).toContain("Próxima etapa em 2 dia(s)");
+    ).toContain("Etapa atrasada há 3 dia(s)");
     expect(primeira.querySelector(".visao-geral-taxa").textContent).toBe("60%");
     // javascript: não vira link.
     const yanomami = [...linhas()].find((tr) =>
@@ -856,7 +858,7 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
     ).toBe("8");
   });
 
-  it("a bolha recorta a página pelo DSEI; o trilho Brasil sai sem limpar os filtros", async () => {
+  it("a bolha recorta a página pelo DSEI; 'Voltar ao Brasil' sai sem limpar os filtros", async () => {
     await montar();
     await act(async () =>
       estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
@@ -871,10 +873,32 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
     expect(secao.querySelectorAll("#detailMap")).toHaveLength(1);
     expect(secao.textContent).toContain("Mapa do DSEI Xingu");
 
-    await clicar(secao.querySelector(".mapa-si-trilho__voltar"));
+    await clicar(secao.querySelector(".mapa-si-voltar"));
     expect(estado.obter().dsei.chave).toBe("");
     expect(estado.obter().filtros.uf).toEqual(["MT"]);
     expect(vivo("detailMap")).toBeNull();
+  });
+
+  it("o chip DSEI volta ao Brasil com o mesmo voo do botão, sem mexer no foco", async () => {
+    await montar();
+    await act(async () =>
+      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
+    );
+    await act(async () => estado.definirDsei("DSEI Xingu", "Xingu"));
+    expect(vivo("detailMap")).not.toBeNull();
+    const nacional = vivo("map");
+    nacional.chamadas.length = 0;
+    const chipDoDsei = [...secao.querySelectorAll(".ui-chip")].find((c) =>
+      c.textContent.includes("Xingu"),
+    );
+    chipDoDsei.focus();
+    await clicar(chipDoDsei);
+    expect(estado.obter().dsei.chave).toBe("");
+    expect(vivo("detailMap")).toBeNull();
+    const voos = nacional.chamadas.filter(([nome]) => nome === "flyToBounds");
+    expect(voos).toHaveLength(1);
+    expect(voos[0][2].duration).toBe(0.8);
+    expect(document.activeElement?.closest?.(".mapa-si")).toBeFalsy();
   });
 
   it("o DSEI aberto pelo chip ou por 'Limpar tudo' fecha o mapa do distrito", async () => {

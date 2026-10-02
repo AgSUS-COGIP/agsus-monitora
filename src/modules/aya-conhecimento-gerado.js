@@ -295,8 +295,8 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Taxa de ociosidade",
     perguntas: ["taxa de ociosidade", "ociosidade", "percentual de ociosas"],
     resposta:
-      "A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. É esse percentual que define a cor de cada território no mapa de calor.",
-    fato: "A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e é ela que colore o mapa de calor por território.",
+      "A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. Na tabela da Visão geral, ela aparece ao lado das Ociosas de cada edital.",
+    fato: "A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e aparece ao lado das Ociosas na tabela da Visão geral.",
     fonte: "interface do MONITORA",
   },
   {
@@ -581,7 +581,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a classificacao",
     ],
     resposta:
-      'A Classificação monta as listas de um edital — preliminar (avaliação documental), convocação para entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; "Exportar" sai em PDF, DOCX ou XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
+      'A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; "Exportar" sai em PDF, DOCX ou XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
     fato: "",
     fonte:
       "src/modulos/classificacao/; supabase/migrations/20261002150000_classificacao.sql",
@@ -616,7 +616,7 @@ export const VERBETES_AYA = Object.freeze([
       "ordem do desempate",
     ],
     resposta:
-      "O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.",
+      "O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Da leitura de todos os editais entraram mais quatro: tempo em média e alta complexidade, tempo em saúde digital, maior escolaridade e nota de conhecimentos específicos da prova — enquanto a análise não grava esses dados, eles não separam ninguém e a tela avisa. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.",
     fato: "",
     fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/motor.js",
     abrir: "classificacao",
@@ -681,7 +681,7 @@ export const VERBETES_AYA = Object.freeze([
       "quantos candidatos sao convocados",
     ],
     resposta:
-      "A lista de convocação são os primeiros da lista preliminar até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso.",
+      "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso.",
     fato: "",
     fonte: "src/lib/classificacao/motor.js",
     abrir: "classificacao",
@@ -697,7 +697,7 @@ export const VERBETES_AYA = Object.freeze([
       "acumulo de cotas",
     ],
     resposta:
-      "Cada modalidade da regra (PcD, pretos e pardos, indígenas, quilombolas…) tem percentual, lista própria, posição que recomeça em 1º ou mantém a da geral, se o cotista aparece também na geral e para onde vai a vaga reservada sem candidato. Na lista final, as vagas da ampla vão para os primeiros da geral (cotista aprovado na ampla não ocupa vaga reservada); cada reserva vai para os primeiros da modalidade; a reserva que sobra segue o remanejamento da regra e, por fim, a ampla. Com mais de uma cota, a regra diz se o candidato fica em todas, só na de maior percentual ou em PcD e mais uma (vale no resultado final). As vagas por modalidade vêm do quadro de vagas do edital.",
+      "Cada modalidade da regra (PcD, pretos e pardos, indígenas, quilombolas, trans…) tem percentual, lista própria, posição que recomeça em 1º ou mantém a da geral, se o cotista aparece também na geral, para onde vai a vaga reservada sem candidato e, se for uma reserva conjunta (como a PPIQ de 30% dos editais de 2025), quais modalidades ela reúne — quem declarou pretos e pardos, indígena ou quilombola entra nessa lista. Na lista final, as vagas da ampla vão para os primeiros da geral (cotista aprovado na ampla não ocupa vaga reservada); cada reserva vai para os primeiros da modalidade; a reserva que sobra segue o remanejamento da regra e, por fim, a ampla. Com mais de uma cota, a regra diz se o candidato fica em todas, só na de maior percentual ou em PcD e mais uma (vale no resultado final). As vagas por modalidade vêm do quadro de vagas do edital; quando ele só traz o total, da configuração de convocação do edital (Lista de aprovados › Convocação) ou dos percentuais da regra, pela mesma conta da convocação.",
     fato: "",
     fonte: "src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
     abrir: "classificacao",
@@ -729,9 +729,72 @@ export const VERBETES_AYA = Object.freeze([
       "docx da classificacao",
     ],
     resposta:
-      'A exportação sai de uma lista já gerada, no padrão das publicações: por vaga, o cabeçalho "VAGA código - cargo - lotação - N vagas (x AC + y Pretos e Pardos + CR)" e as colunas Classificação, Nome e Nota (com Modalidade na geral quando as sublistas vêm no mesmo documento); vaga sem candidato traz "Não houve candidatos aptos."; no fim, o rodapé da regra. Só o nome do candidato, sem CPF. Formatos: PDF (pela impressão do navegador, "Salvar como PDF"), DOCX e XLSX (planilhas Classificação e Eliminados). Dá para exportar tudo ou só a geral ou uma modalidade.',
+      'A exportação sai de uma lista já gerada, no padrão das publicações: o título da etapa (RESULTADO PRELIMINAR ou FINAL — escolha "Publicação" antes de exportar), o parágrafo de abertura e, por vaga, o cabeçalho "VAGA código - cargo - lotação - N vagas (x AC + y Pretos e Pardos + CR)" com as colunas Classificação, Nome, as parciais da avaliação documental que a regra publica (formação, cursos, experiência, étnico), Nota (Nota Final e Situação — vaga imediata ou cadastro reserva — no resultado final) e Modalidade na geral quando as sublistas vêm no mesmo documento; vaga sem candidato traz "Não houve candidatos aptos."; "Só os eliminados" sai com Nome, parciais, Nota e Justificativa, como as listas de reprovados; no fim, o rodapé da regra. Só o nome do candidato, sem CPF. Formatos: PDF (pela impressão do navegador, "Salvar como PDF"), DOCX e XLSX (planilhas Classificação e Eliminados). Dá para exportar tudo ou só a geral ou uma modalidade.',
     fato: "",
     fonte: "src/lib/classificacao/exportacao.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Listas por etapa",
+    perguntas: [
+      "listas da classificacao",
+      "quais listas a classificacao gera",
+      "resultado da entrevista na classificacao",
+      "lista da entrevista",
+      "resultado preliminar e final da classificacao",
+    ],
+    resposta:
+      "São quatro listas, como a AgSUS publica. 1) Avaliação documental e de títulos: quem passou na documental, por vaga e por modalidade, pela nota documental (com as parciais), e os eliminados com o motivo — a mesma lista vale como resultado preliminar ou final da etapa, antes e depois dos recursos. 2) Convocação para entrevista: os primeiros até o limite da regra (N vezes as vagas, ou até a k-ésima no cadastro reserva), com os empatados no limite se a regra mandar. 3) Resultado da entrevista: os convocados aptos pela nota da entrevista; o empate que sobra fica na mesma posição (o desempate do edital é do resultado final); os eliminados da entrevista com o motivo. 4) Resultado final: documental + entrevista (ou a composição da regra), desempate, vagas imediatas e cadastro reserva.",
+    fato: "",
+    fonte:
+      "src/lib/classificacao/motor.js; src/lib/classificacao/exportacao.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Regras dos editais lidas dos PDFs",
+    perguntas: [
+      "de onde vieram as regras dos editais",
+      "modelo do edital",
+      "regra lida do edital",
+      "conferir a regra do edital",
+    ],
+    resposta:
+      'As regras de todos os editais com PDF no site da AgSUS foram lidas dos editais e das retificações oficiais e cadastradas como versão 1, com o motivo "Regra lida do edital (PDF oficial) — conferir". A maioria segue um texto-base (modelo): Saúde Indígena 2026 no padrão do 83/2026, no padrão do 100/2026 (ART e lote) e o do Sanitarista; Saúde Indígena 2025 com entrevista e só curricular; Sede 2025 (entrevista só apto/inapto, barema, prova); e os de Projetos. Em cada regra, "importação" guarda o modelo, os PDFs lidos, a pontuação e o que ficou em aberto. O gestor confere e decide sobretudo o empate depois de todos os critérios (os editais não definem; ficou "mesma posição"). Editais com prova objetiva ainda não têm a prova na nota final.',
+    fato: 'No MONITORA, a regra inicial de cada edital foi lida do PDF oficial e marcada para o gestor conferir; o empate final ficou "mesma posição" até ele decidir.',
+    fonte:
+      "supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Entrevista só com parecer",
+    perguntas: [
+      "entrevista so com parecer",
+      "entrevista apto inapto sem nota",
+      "entrevista sem nota na classificacao",
+    ],
+    resposta:
+      'Nos editais em que a entrevista só diz apto ou inapto (os da Sede de 2025), a regra marca "Entrevista só com parecer": o apto segue sem nota, o inapto é eliminado e quem não tem parecer também sai, com o motivo; a nota final é só a da avaliação documental, e a lista do resultado da entrevista segue a ordem da documental.',
+    fato: "",
+    fonte: "src/lib/classificacao/regra.js; src/lib/classificacao/motor.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Vagas da classificação e a convocação do edital",
+    perguntas: [
+      "vagas por modalidade na classificacao",
+      "classificacao e convocacao",
+      "configuracao de convocacao na classificacao",
+      "de onde vem o numero de vagas da classificacao",
+    ],
+    resposta:
+      "A Classificação e a Lista de aprovados › Convocação usam a mesma conta das vagas por modalidade. Vale, nesta ordem: o quadro de vagas do edital quando traz a divisão; senão, a configuração de convocação do edital (quadro manual da vaga ou o total de vagas imediatas pelo modelo de cotas); senão, os percentuais da regra de classificação. A tela mostra de onde vieram as vagas da vaga e avisa quando os percentuais da regra e os do modelo de convocação divergem ou quando o total de vagas não bate. Quem fica em cada lista e para onde vai a vaga reservada sem candidato é da regra de classificação; a ordem de chamada para contratar é da Convocação.",
+    fato: "",
+    fonte:
+      "src/lib/classificacao/convocacao-do-edital.js; src/lib/configuracao-de-convocacao.js",
     abrir: "classificacao",
   },
   {
@@ -995,8 +1058,8 @@ export const VERBETES_AYA = Object.freeze([
       "sem inscritos",
     ],
     resposta:
-      'Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: a próxima etapa do cronograma começa em até 3 dias ("Etapa hoje", "Etapa amanhã", "Etapa em N dias"); o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. O KPI Críticos, o bloco Atenção e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.',
-    fato: "Crítico na Visão geral: etapa em até 3 dias, cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.",
+      'Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda, não problema: não faz o edital crítico — aparece nas boas-vindas ("N editais têm etapa nos próximos 7 dias") e em vermelho na coluna de cronograma da tabela. O KPI Críticos, os detalhes do processo e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.',
+    fato: "Crítico na Visão geral: cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.",
     fonte: "src/lib/criticos-da-visao-geral.js",
   },
   {
@@ -1021,7 +1084,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Mapa e filtros da Visão geral",
     perguntas: [
       "dsei aberto no mapa",
-      "voltar ao brasil",
+      "filtro dsei da pagina",
       "casai no mapa filtra",
     ],
     resposta:
@@ -1756,7 +1819,7 @@ export const VERBETES_AYA = Object.freeze([
       "mapa detalhado do dsei",
     ],
     resposta:
-      'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "Brasil", no trilho acima do mapa, volta à visão nacional sem apagar os outros filtros.',
+      'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -1778,15 +1841,10 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
-    titulo: "Botão Calor do mapa",
-    perguntas: [
-      "botao calor",
-      "modo calor",
-      "cores do mapa de calor",
-      "faixas do mapa de calor",
-    ],
+    titulo: "Mapa de calor",
+    perguntas: ["botao calor", "modo calor", "mapa de calor", "mapa sem calor"],
     resposta:
-      "No MONITORA, o botão Calor pinta cada bolha pela porcentagem de vagas ociosas do DSEI no recorte: verde abaixo de 20%, amarelo de 20% a 39%, laranja de 40% a 59% e vermelho a partir de 60%. DSEI sem edital fica cinza. Com o calor ligado, a legenda mostra as faixas.",
+      'No MONITORA, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital no recorte (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -1912,6 +1970,22 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Voltar ao Brasil",
+    perguntas: [
+      "voltar ao brasil",
+      "sair do dsei",
+      "voltar para a visao geral do mapa",
+      "voltar ao mapa nacional",
+      "esc no mapa",
+      "fechar o dsei",
+    ],
+    resposta:
+      'No MONITORA, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro, o filtro de DSEI sai da página e os outros filtros continuam. O foco volta à linha do DSEI em "Territórios por vagas". O chip "DSEI" dos filtros faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Tela cheia e mapa no celular",
     perguntas: [
       "mapa em tela cheia",
@@ -1920,7 +1994,7 @@ export const VERBETES_AYA = Object.freeze([
       "legenda fechada no celular",
     ],
     resposta:
-      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam. Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
+      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -1981,7 +2055,7 @@ export const VERBETES_AYA = Object.freeze([
       'Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-do-mapa.js; src/modulos/mapa-saude-indigena/sugestoes-do-ponto.jsx",
+      "src/lib/coordenadas-do-mapa.js; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.jsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -1997,7 +2071,7 @@ export const VERBETES_AYA = Object.freeze([
       'Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
     fato: "",
     fonte:
-      "src/modulos/mapa-saude-indigena/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+      "src/modulos/editor-de-coordenadas/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -2395,10 +2469,58 @@ export const VERBETES_AYA = Object.freeze([
       "lista municipios por vagas",
     ],
     resposta:
-      'Clique num ponto do mapa, ou num lugar da lista "Municípios por vagas", para ver o projeto, o edital, as vagas publicadas, as lotações e os candidatos daquele lugar; o mapa aproxima e abre o resumo. A lista vem ordenada pelas vagas e a barra mostra a parte aprovada entre os já analisados. Com dois ou mais projetos, o campo "Projeto" mostra só os lugares de um projeto (o mapa reenquadra) e "Agrupar por projeto" separa a lista em um bloco por projeto — um lugar de dois projetos aparece nos dois. Ponto com contorno tracejado tem mais de um projeto; lugar sem coordenada aparece na lista, mas não no mapa. "Brasil" volta ao país inteiro e "Tela cheia" amplia o painel (Esc sai).',
+      'Clique num ponto do mapa, ou num lugar da lista "Municípios por vagas", para ver o projeto, o edital, as vagas publicadas, as lotações e os candidatos daquele lugar; o mapa aproxima e abre o resumo. A lista vem ordenada pelas vagas e a barra mostra a parte aprovada entre os já analisados. Cada lugar mostra o nome e as vagas na primeira linha e os projetos como selos na segunda (com o filtro de um projeto ou agrupada, os selos saem, porque seriam iguais). Os candidatos só aparecem quando o nome da vaga nas análises diz o lugar (como "UBS móvel Irati/PR"); vagas como as dos escritórios não dizem o município, então o lugar fica sem a contagem, em vez de mostrar um zero que não é real. Com dois ou mais projetos, o campo "Projeto" mostra só os lugares de um projeto (o mapa reenquadra) e "Agrupar por projeto" separa a lista em um bloco por projeto — um lugar de dois projetos aparece nos dois. Ponto com contorno tracejado tem mais de um projeto; lugar sem coordenada aparece na lista, mas não no mapa. "Brasil" volta ao país inteiro e "Tela cheia" amplia o painel (Esc sai).',
     fato: "",
     fonte:
       "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx; src/modulos/mapa-de-projetos/lista.jsx; src/lib/visao-geral-da-area.js",
+  },
+  {
+    arquivo: "regras-dos-mapas.md",
+    titulo: "Coordenadas dos lugares do mapa de Projetos",
+    perguntas: [
+      "de onde vem a coordenada de um lugar de projetos",
+      "coordenadas do mapa de projetos",
+      "ponto do municipio no mapa de projetos",
+      "por que o ponto fica no meio do estado",
+      "lugar sem coordenada no mapa de projetos",
+    ],
+    resposta:
+      'Cada ponto do mapa de Projetos é um lugar das vagas, e a coordenada dele fica no banco do MONITORA. Na carga inicial, o município vai para a sede municipal do IBGE (pelo código do IBGE do edital ou pelo nome do "UBS móvel" da vaga) e o lugar que o edital só diz a UF (a CCE, por exemplo) vai para o centro do estado, calculado pela média das sedes municipais. Depois disso, quem muda a posição é o administrador global, pelo editor de coordenadas, e cada alteração fica registrada com autoria e motivo. Lugar sem coordenada no banco aparece na lista, mas não no mapa.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql; src/lib/visao-geral-da-area.js",
+  },
+  {
+    arquivo: "regras-dos-mapas.md",
+    titulo: "Corrigir a coordenada de um lugar de Projetos",
+    perguntas: [
+      "corrigir lugar no mapa de projetos",
+      "editor de coordenadas de projetos",
+      "mover ponto do mapa de projetos",
+      "botao coordenadas no mapa de projetos",
+      "conferir lugar de projetos",
+    ],
+    resposta:
+      'No mapa de Projetos, o administrador global vê o botão "Coordenadas", que troca a lista "Municípios por vagas" pelo editor; "Voltar à lista" fecha. Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa vai até ele e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. O histórico abaixo mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.',
+    fato: "",
+    fonte:
+      "src/modulos/mapa-de-projetos/editor-de-coordenadas.jsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx; supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql",
+  },
+  {
+    arquivo: "regras-dos-mapas.md",
+    titulo: "Lugares pendentes no mapa de Projetos",
+    perguntas: [
+      "lugares pendentes de projetos",
+      "gravidade dos lugares de projetos",
+      "sede do municipio ou endereco",
+      "sugestoes do lugar de projetos",
+      "lugar duvidoso no mapa de projetos",
+    ],
+    resposta:
+      'A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida por um administrador. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.',
+    fato: "",
+    fonte:
+      "src/lib/coordenadas-dos-projetos.js; src/lib/editor-de-coordenadas.js; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
   },
   {
     arquivo: "regras-dos-mapas.md",

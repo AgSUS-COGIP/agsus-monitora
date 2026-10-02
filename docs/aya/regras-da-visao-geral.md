@@ -20,8 +20,8 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 ## Processos críticos
 
 **perguntas:** processos criticos | o que e critico | quando um edital fica critico | criterio de critico | bloco atencao | edital parado | etapa atrasada | contratacao abaixo de 50 | sem inscritos
-**resposta:** Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: a próxima etapa do cronograma começa em até 3 dias ("Etapa hoje", "Etapa amanhã", "Etapa em N dias"); o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. O KPI Críticos, o bloco Atenção e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.
-**fato:** Crítico na Visão geral: etapa em até 3 dias, cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.
+**resposta:** Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda, não problema: não faz o edital crítico — aparece nas boas-vindas ("N editais têm etapa nos próximos 7 dias") e em vermelho na coluna de cronograma da tabela. O KPI Críticos, os detalhes do processo e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.
+**fato:** Crítico na Visão geral: cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.
 **fonte:** src/lib/criticos-da-visao-geral.js
 
 ## Filtros da Visão geral
@@ -32,7 +32,7 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 
 ## Mapa e filtros da Visão geral
 
-**perguntas:** dsei aberto no mapa | voltar ao brasil | casai no mapa filtra
+**perguntas:** dsei aberto no mapa | filtro dsei da pagina | casai no mapa filtra
 **resposta:** Na Visão geral da Saúde Indígena, escolher um DSEI no mapa recorta a página inteira por ele (aparece o filtro "DSEI" entre os filtros aplicados). Tirar esse filtro, ou voltar ao Brasil pelo mapa, sai do território e mantém os outros filtros. Clicar numa CASAI no mapa busca por ela na página.
 **fonte:** interface do MONITORA
 

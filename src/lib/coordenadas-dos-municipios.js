@@ -17,8 +17,15 @@
   conjunto): cai no meio do estado, e não em cima da capital, que costuma ter
   ponto próprio.
 
-  Município novo nas vagas: acrescente uma linha. Enquanto não tiver, ele
-  aparece na lista ao lado do mapa como "sem coordenada", em vez de sumir.
+  Desde a migration 20261002190000 a coordenada que o mapa desenha vem do
+  banco (public."TB_COORDENADA_LOCAL_VAGA", carregada com estas mesmas sedes
+  e centros por supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
+  e corrigida no editor de coordenadas). Esta tabela fica como referência:
+  a sugestão "Sede do município (IBGE)"/"Centro da UF" do editor
+  (src/lib/coordenadas-dos-projetos.js), o mapa da Saúde Indígena
+  (sede do município das pendências) e o mapa enquanto a RPC não traz a
+  coordenada do banco. Município novo nas vagas: acrescente uma linha aqui e
+  na carga (o teste da migration confere que as duas são iguais).
 */
 
 /** [Município, UF, código IBGE, latitude, longitude] */

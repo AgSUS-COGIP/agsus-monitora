@@ -74,17 +74,54 @@
   background: var(--series-6);
 }
 
-/* Linha da lista: os projetos do lugar (cor e nome) e a barra do resultado. */
+/*
+  Linha da lista, compacta (pedido de 02/10): nome e vagas na primeira linha
+  (posição e vagas alinhadas ao topo), os projetos como selos pequenos e o
+  detalhe na segunda, e a barra do resultado quando há análise.
+*/
+.mapa-projetos-lugar {
+  align-items: start;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
+}
+
+.mapa-projetos-lugar .mapa-si-territorio__posicao,
+.mapa-projetos-lugar .mapa-si-territorio__vagas {
+  line-height: var(--leading-body-sm);
+}
+
+.mapa-projetos-lugar .mapa-si-territorio__vagas b {
+  font-size: var(--text-body-sm);
+}
+
 .mapa-projetos-lugar:disabled {
   cursor: default;
 }
 
-.mapa-projetos-lugar__projetos {
+.mapa-projetos-lugar__segunda {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-0-5) var(--space-2);
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mapa-projetos-lugar__projeto {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
   color: var(--text-secondary);
   font-size: var(--text-caption);
+  line-height: var(--leading-label);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mapa-projetos-lugar__projeto .mapa-projeto__cor {
+  width: 8px;
+  height: 8px;
 }
 
 .mapa-projetos-lugar__projeto,
@@ -115,31 +152,42 @@
   font-size: var(--text-caption);
 }
 
-.mapa-projetos__campo,
-.mapa-projetos__agrupar {
-  display: flex;
+/* "Projeto": o Campo de src/ui (rótulo em sentence case), com o rótulo ao lado. */
+.mapa-projetos__filtros .ui-campo {
+  flex: 1 1 180px;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-1-5);
 }
 
-.mapa-projetos__campo {
-  flex: 1 1 180px;
-  min-width: 0;
-}
-
-.mapa-projetos__seletor {
-  flex: 1 1 auto;
+.mapa-projetos__filtros .mapa-projetos__seletor {
   min-width: 0;
   min-height: 32px;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
+  font-size: var(--text-caption);
+}
+
+/*
+  "Agrupar por projeto": o label de app.css é caixa alta e o input dele
+  estica para 100%/40px — aqui a caixa volta ao tamanho natural e o rótulo
+  fica normal numa linha (como .mapa-si-coordenadas__caixa).
+*/
+.mapa-projetos__agrupar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
   color: var(--text-primary);
-  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .mapa-projetos__agrupar input {
+  width: auto;
+  min-height: 0;
   margin: 0;
   accent-color: var(--brand-primary);
 }

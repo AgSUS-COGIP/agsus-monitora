@@ -4,7 +4,7 @@
   O que o `drawDSEIBubbles`, o `drawCasai`, o `procCounts` e o
   `renderPainelNacional` do `legacy-app.js` decidiam, agora como entrada →
   saída: as bolhas dos DSEIs (tamanho pela população, cor pelos editais do
-  recorte ou pela ociosidade no modo calor), as CASAIs nacionais, a lista
+  recorte), as CASAIs nacionais, a lista
   "Territórios por vagas" e o enquadramento.
 
   Os editais chegam já recortados (filtros, busca, área, DSEI escolhido): o
@@ -21,7 +21,7 @@ import {
   temCoordenada,
   texto,
 } from "./chaves.js";
-import { CORES_DO_MAPA, corDoCalor } from "./formas.js";
+import { CORES_DO_MAPA } from "./formas.js";
 
 /* Editais, vagas e ociosas por DSEI (chave de `chaveDoDsei`). */
 export function contarPorDsei(linhas) {
@@ -40,9 +40,6 @@ export function contarPorDsei(linhas) {
 
 const VAZIO = Object.freeze({ editais: 0, vagas: 0, ociosas: 0 });
 
-export const porcentagemOciosa = (vagas, ociosas) =>
-  vagas > 0 ? Math.round((ociosas / vagas) * 100) : 0;
-
 /*
   Uma bolha por DSEI com coordenada. Ordem: da maior para a menor, para que a
   menor fique por cima e as duas continuem clicáveis onde se sobrepõem (o
@@ -52,7 +49,6 @@ export function bolhasDosDsei({
   dseis = [],
   contagens = new Map(),
   filtroAtivo = false,
-  calor = false,
 } = {}) {
   const lista = Array.isArray(dseis) ? dseis : [];
   const populacaoMaxima = Math.max(0, ...lista.map((d) => numero(d?.pop))) || 1;
@@ -63,18 +59,10 @@ export function bolhasDosDsei({
       const chave = chaveDoDsei(d.k);
       const { editais, vagas, ociosas } = contagens.get(chave) || VAZIO;
       const comEdital = editais > 0;
-      const pctOciosas = porcentagemOciosa(vagas, ociosas);
       const raio = raioDaBolha(d.pop, populacaoMaxima);
-      const cores = calor
-        ? comEdital
-          ? {
-              preenchimento: corDoCalor(pctOciosas),
-              borda: corDoCalor(pctOciosas),
-            }
-          : CORES_DO_MAPA.semEditalNoCalor
-        : comEdital
-          ? CORES_DO_MAPA.comEdital
-          : CORES_DO_MAPA.semEdital;
+      const cores = comEdital
+        ? CORES_DO_MAPA.comEdital
+        : CORES_DO_MAPA.semEdital;
       return {
         dsei: d,
         chave,
@@ -84,14 +72,13 @@ export function bolhasDosDsei({
         editais,
         vagas,
         ociosas,
-        pctOciosas,
         comEdital,
         estilo: {
           radius: raio,
           color: cores.borda,
           weight: comEdital ? 3 : 1.5,
           fillColor: cores.preenchimento,
-          fillOpacity: calor ? 0.82 : 0.7,
+          fillOpacity: 0.7,
         },
       };
     })
@@ -102,7 +89,7 @@ export function bolhasDosDsei({
 /*
   "Territórios por vagas": os mesmos DSEIs que o mapa desenhou, por vagas
   (desempate pela população). A barra é o preenchimento, (vagas − ociosas) ÷
-  vagas, com as faixas do calor lidas pelo avesso.
+  vagas: acima de 80% ok, acima de 40% atenção, o resto crítico.
 */
 export function territoriosPorVagas(bolhas) {
   return [...(Array.isArray(bolhas) ? bolhas : [])]
@@ -181,7 +168,7 @@ export function enquadramentoNacional({
 }
 
 /* Texto da dica (tooltip) da bolha do DSEI. */
-export function dicaDaBolha(bolha, resumoDaRede = [], { calor = false } = {}) {
+export function dicaDaBolha(bolha, resumoDaRede = []) {
   const d = bolha?.dsei || {};
   const linhas = [
     `População do DSEI: ${formatarNumero(d.pop)} indígenas`,
@@ -191,9 +178,7 @@ export function dicaDaBolha(bolha, resumoDaRede = [], { calor = false } = {}) {
   ];
   if (bolha?.comEdital) {
     linhas.push(
-      calor
-        ? `Ociosidade: ${bolha.pctOciosas}% (${formatarNumero(bolha.ociosas)} de ${formatarNumero(bolha.vagas)} vagas)`
-        : `Vagas ociosas: ${formatarNumero(bolha.ociosas)} de ${formatarNumero(bolha.vagas)}`,
+      `Vagas ociosas: ${formatarNumero(bolha.ociosas)} de ${formatarNumero(bolha.vagas)}`,
     );
   }
   return { titulo: `DSEI ${texto(d.n)}`, linhas };

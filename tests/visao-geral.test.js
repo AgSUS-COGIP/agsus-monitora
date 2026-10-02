@@ -56,7 +56,8 @@ const BRUTAS = [
     contratados: 4,
     vagas_ociosas: 6,
     inscritos: 80,
-    data_fim: "2026-11-30",
+    // Crítico por atraso (etapa chegando não faz crítico).
+    data_fim: "2026-09-28",
     cronograma_automatico: true,
     cronograma_dias_para_proxima: 2,
     cronograma_proxima_data: "2026-10-03",
@@ -214,7 +215,9 @@ describe("linhas enriquecidas", () => {
   it("fase, motivos de atenção e pendências pós-resultado", () => {
     const [xingu, analise, yanomami, casai, cancelado] = LINHAS;
     expect(xingu.fase).toBe("Entrevistas");
-    expect(xingu.atencao.map((m) => m.rotulo)).toEqual(["Etapa em 2 dias"]);
+    expect(xingu.atencao.map((m) => m.rotulo)).toEqual([
+      "Etapa atrasada há 3 dias",
+    ]);
     expect(analise.fase).toBe("Análise curricular");
     expect(analise.atencao).toEqual([]);
     expect(yanomami.fase).toBe("Concluído");

@@ -12,13 +12,21 @@
   os avisos (entrevista sem análise, candidato convocado sem entrevista, dado
   que falta para um critério, empate que espera sorteio…).
 
-  Três listas (`tipo`):
-    PRELIMINAR  avaliação documental: quem passou na documental, pela nota
-                documental.
+  Quatro listas (`tipo`), as mesmas etapas das publicações da AgSUS:
+    PRELIMINAR  avaliação documental e de títulos: quem passou na documental,
+                pela nota documental (com as parciais), e os eliminados com o
+                motivo. "Preliminar" ou "final" da etapa é a mesma lista antes
+                e depois dos recursos.
     CONVOCACAO  os primeiros da preliminar até o limite da regra (N × vagas
-                imediatas, ou até a k-ésima posição no cadastro reserva).
+                imediatas, ou até a k-ésima posição no cadastro reserva), com
+                os empatados no limite se a regra mandar.
+    ENTREVISTA  resultado da etapa de entrevista: os convocados aptos, pela
+                nota da entrevista; eliminados da entrevista com o motivo. O
+                empate que sobra fica na mesma posição (como nas publicações:
+                o desempate do edital é do resultado final).
     FINAL       quem passou na documental e na entrevista, pela nota composta
-                (pesos e arredondamento da regra).
+                (pesos e arredondamento da regra), com o desempate, as vagas
+                imediatas e o cadastro reserva.
 
   O empate: primeiro a nota (na escala das casas publicadas); depois, se a regra
   manda usar critérios naquela lista, os critérios na ordem da regra; o que
@@ -34,6 +42,7 @@ import {
 } from "./catalogo.js";
 import { arredondar, escalar, formatarNota, numeroBR } from "./numeros.js";
 import { normalizarRegra } from "./regra.js";
+import { divergenciasDasCotas } from "./convocacao-do-edital.js";
 import { chaveDoGrupo } from "./sorteio.js";
 import { montarVagas, nivelDaVaga } from "./vagas.js";
 
@@ -98,6 +107,19 @@ export function prepararCandidatos(brutos = [], avisos = []) {
       "experiência na atenção básica",
     );
     c.expProfissional = ler("exp_profissional", "experiência profissional");
+    c.expAltaComplexidade = ler(
+      "exp_alta_complexidade",
+      "experiência em alta complexidade",
+    );
+    c.expSaudeDigital = ler(
+      "exp_saude_digital",
+      "experiência em saúde digital",
+    );
+    c.nivelEscolaridade = ler("nivel_escolaridade", "nível de escolaridade");
+    c.notaConhecimentosEspecificos = ler(
+      "nota_conhecimentos_especificos",
+      "nota de conhecimentos específicos",
+    );
     const codigos = codigosDaModalidade(c.modalidadeTexto);
     if (c.pcd && !codigos.includes("PCD")) codigos.push("PCD");
     c.modalidadeIdentificada = codigos.length > 0;
@@ -194,6 +216,25 @@ export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
   return candidatos;
 }
 
+/*
+  Reservas conjuntas da regra (`agrupa`): quem declarou PP, PI ou PQ entra na
+  PPIQ quando a regra tem uma reserva única para os três (e não as separadas).
+*/
+export function aplicarAgrupamentos(candidatos, regra) {
+  const proprias = new Set(regra.modalidades.map((m) => m.codigo));
+  const destino = new Map();
+  for (const m of regra.modalidades)
+    for (const codigo of m.agrupa)
+      if (!proprias.has(codigo) && !destino.has(codigo))
+        destino.set(codigo, m.codigo);
+  if (!destino.size) return candidatos;
+  for (const c of candidatos) {
+    const novos = c.modalidades.map((m) => destino.get(m) || m);
+    c.modalidades = novos.filter((m, i) => novos.indexOf(m) === i);
+  }
+  return candidatos;
+}
+
 /* ── Etapas ─────────────────────────────────────────────────────────── */
 
 function situacaoApta(c, regra) {
@@ -237,6 +278,10 @@ function eliminacaoEntrevista(c, regra, ctx) {
     return { motivo: "AUSENTE", detalhe: "" };
   if (ent.inapto_elimina && e.parecer === "INAPTO")
     return { motivo: "INAPTO_ENTREVISTA", detalhe: "" };
+  if (ent.so_parecer)
+    return e.parecer === "APTO"
+      ? null
+      : { motivo: "SEM_PARECER_ENTREVISTA", detalhe: "" };
   if (e.nota === null) return { motivo: "SEM_NOTA_ENTREVISTA", detalhe: "" };
   if (
     ent.nota_minima !== null &&
@@ -351,7 +396,10 @@ function codigoDeInscricao(c) {
   como foi resolvido (único, critérios, sorteio, manual, inscrição, mesma
   posição ou pendente).
 */
-function ordenarVaga(elegiveis, { usarCriterios, tipo, vaga, ctx }) {
+function ordenarVaga(
+  elegiveis,
+  { usarCriterios, tipo, vaga, ctx, residualNaMesmaPosicao = false },
+) {
   const { criterios, regra, desempates } = ctx;
   const porNota = new Map();
   for (const c of elegiveis) {
@@ -386,6 +434,10 @@ function ordenarVaga(elegiveis, { usarCriterios, tipo, vaga, ctx }) {
     for (const sub of subs) {
       if (sub.length === 1) {
         blocos.push({ membros: sub, resolucao: "CRITERIOS" });
+        continue;
+      }
+      if (residualNaMesmaPosicao) {
+        blocos.push({ membros: sub, resolucao: "MESMA_POSICAO" });
         continue;
       }
       blocos.push(
@@ -701,12 +753,23 @@ function explicar(c, linhaGeral, ctx, tipo) {
   return partes;
 }
 
+/* As parciais da documental que as publicações mostram (colunas). */
+function parciaisDe(c) {
+  return {
+    FORMACAO: c.pontuacaoFormacao,
+    CURSOS: c.pontuacaoCursos,
+    EXPERIENCIA: c.pontuacaoExperiencia,
+    ETNICO: c.pontuacaoEtnica,
+  };
+}
+
 /* ── Principal ──────────────────────────────────────────────────────── */
 
 const ordemDosMotivos = Object.keys(MOTIVOS_DE_ELIMINACAO);
 
 /**
- * Classifica o edital numa lista (`PRELIMINAR`, `CONVOCACAO` ou `FINAL`).
+ * Classifica o edital numa lista (`PRELIMINAR`, `CONVOCACAO`, `ENTREVISTA`
+ * ou `FINAL`).
  * Ver o comentário do topo para a entrada e a saída.
  */
 export function classificar({
@@ -718,11 +781,12 @@ export function classificar({
   unidade = "",
   dataCorte = null,
   desempates = [],
+  convocacao = null,
 } = {}) {
   const regra = normalizarRegra(regraBruta);
   const avisos = [];
   const candidatos = ligarEntrevistas(
-    prepararCandidatos(candidatosBrutos, avisos),
+    aplicarAgrupamentos(prepararCandidatos(candidatosBrutos, avisos), regra),
     entrevistas,
     avisos,
   );
@@ -755,7 +819,21 @@ export function classificar({
         "A regra usa a idade, mas não há data de corte (fim das inscrições): defina na regra ou no cronograma do edital.",
     });
 
-  const vagas = montarVagas({ candidatos, quadro, regra, unidade });
+  const vagas = montarVagas({ candidatos, quadro, regra, unidade, convocacao });
+  for (const frase of divergenciasDasCotas(regra, convocacao))
+    avisos.push({
+      codigo: "COTAS_DIFERENTES_DA_CONVOCACAO",
+      tom: "warning",
+      texto: `Cotas da regra × configuração de convocação do edital — ${frase}`,
+    });
+  for (const v of vagas)
+    if (v.totalNaConvocacao !== null && v.totalNaConvocacao !== undefined)
+      avisos.push({
+        codigo: "VAGAS_DIFERENTES_DA_CONVOCACAO",
+        tom: "warning",
+        vaga: v.chave,
+        texto: `Vaga ${v.codigo || v.cargo}: ${v.total} vaga(s) imediata(s) no quadro do edital × ${v.totalNaConvocacao} na configuração de convocação; valeu o quadro do edital.`,
+      });
   const porVaga = new Map(
     vagas.map((v) => [v.chave, { vaga: v, candidatos: [] }]),
   );
@@ -870,7 +948,49 @@ export function classificar({
 
     let elegiveis = aptosDoc;
     let tipoDaOrdem = "PRELIMINAR";
-    if (tipo === "CONVOCACAO") {
+    if (tipo === "ENTREVISTA") {
+      // Só os convocados: quem não passou na documental ou ficou fora do
+      // limite não é desta etapa (está nas listas anteriores).
+      eliminados.length = 0;
+      elegiveis = [];
+      for (const c of aptosDoc) {
+        if (!convocados.has(c.analiseId)) continue;
+        const e = eliminacaoEntrevista(c, regra, ctx);
+        if (e) {
+          eliminados.push({ c, ...e });
+          if (e.motivo === "SEM_ENTREVISTA" && regra.etapas.entrevista)
+            avisos.push({
+              codigo: "CONVOCADO_SEM_ENTREVISTA",
+              tom: "warning",
+              vaga: v.chave,
+              analiseId: c.analiseId,
+              texto: `${c.nome}: dentro do limite de convocação, mas sem entrevista lançada.`,
+            });
+          continue;
+        }
+        // Entrevista só com parecer: a lista dos aptos segue a nota documental.
+        c.nota = arredondar(
+          (regra.entrevista.so_parecer ? c.notaDocumental : c.notaEntrevista) ??
+            0,
+          ctx.casas,
+          regra.composicao.arredondamento,
+        );
+        elegiveis.push(c);
+      }
+      tipoDaOrdem = "ENTREVISTA";
+      blocos = ordenarVaga(elegiveis, {
+        usarCriterios: regra.listas.ENTREVISTA.empate === "CRITERIOS",
+        tipo: "ENTREVISTA",
+        vaga: v.chave,
+        ctx,
+        residualNaMesmaPosicao: true,
+      });
+      geral = numerar(
+        blocos,
+        (c) => naGeral(c, regra),
+        regra.empate_final.numeracao,
+      );
+    } else if (tipo === "CONVOCACAO") {
       elegiveis = aptosDoc.filter((c) => convocados.has(c.analiseId));
       for (const c of aptosDoc)
         if (!convocados.has(c.analiseId))
@@ -912,6 +1032,14 @@ export function classificar({
             });
           continue;
         }
+        if (!convocados.has(c.analiseId) && regra.etapas.entrevista)
+          avisos.push({
+            codigo: "ENTREVISTADO_NAO_CONVOCADO",
+            tom: "warning",
+            vaga: v.chave,
+            analiseId: c.analiseId,
+            texto: `${c.nome}: tem entrevista, mas está fora do limite de convocação da regra (${origem}); confira a convocação publicada.`,
+          });
         c.composicao = notaComposta(c, regra);
         c.nota = c.composicao.nota ?? 0;
         if (c.composicao.faltando.length)
@@ -949,9 +1077,7 @@ export function classificar({
     }
 
     // Dados faltando nos critérios que chegaram a ser usados (grupos de empate).
-    const usarCriterios =
-      regra.listas[tipoDaOrdem === "FINAL" ? "FINAL" : "PRELIMINAR"].empate ===
-      "CRITERIOS";
+    const usarCriterios = regra.listas[tipoDaOrdem].empate === "CRITERIOS";
     if (usarCriterios)
       for (const c of elegiveis) {
         if ((c.grupoDaNota || []).length < 2) continue;
@@ -1021,9 +1147,12 @@ export function classificar({
     const situacaoDe = (c) =>
       tipo === "CONVOCACAO"
         ? "CONVOCADO"
-        : tipo === "FINAL"
-          ? alocacao.get(c.analiseId)?.situacao || null
-          : null;
+        : tipo === "ENTREVISTA"
+          ? "APTO"
+          : tipo === "FINAL"
+            ? alocacao.get(c.analiseId)?.situacao || null
+            : null;
+    const comParciais = tipo === "PRELIMINAR";
     const linhaPublica = (l) => ({
       analiseId: l.c.analiseId,
       nome: l.c.nome,
@@ -1033,6 +1162,7 @@ export function classificar({
       modalidades: l.c.modalidadesNaLista,
       situacao: situacaoDe(l.c),
       vagaPor: alocacao.get(l.c.analiseId)?.modalidade || null,
+      ...(comParciais ? { parciais: parciaisDe(l.c) } : {}),
     });
 
     const linhaGeralDe = new Map(geral.map((l) => [l.c.analiseId, l]));
@@ -1089,6 +1219,7 @@ export function classificar({
       total: v.total ?? null,
       vagasPorModalidade: v.porModalidade || null,
       cadastroReserva: Boolean(v.cadastroReserva),
+      origemDasVagas: v.origemDasVagas || null,
       limiteConvocacao: tipo === "CONVOCACAO" ? { limite, origem } : null,
       geral: geral.map(linhaPublica),
       porModalidade: Object.fromEntries(
@@ -1102,6 +1233,11 @@ export function classificar({
         nome: e.c.nome,
         motivo: e.motivo,
         detalhe: e.detalhe,
+        ...(comParciais
+          ? { nota: e.c.notaDocumental, parciais: parciaisDe(e.c) }
+          : tipo === "ENTREVISTA"
+            ? { nota: e.c.notaEntrevista }
+            : {}),
       })),
     });
   }

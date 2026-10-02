@@ -169,6 +169,52 @@ export const CATALOGO_DE_CRITERIOS = Object.freeze(
       ler: (c) => sim(c.pcd),
       falta: () => "PcD",
     },
+    /*
+      Critérios que apareceram nos editais lidos em 02/10/2026 e não estavam no
+      catálogo. O valor vem de campos que a análise ainda não grava: até lá, o
+      critério fica "sem dado" (atrás de quem tem) e a tela avisa.
+    */
+    {
+      codigo: "EXP_ALTA_COMPLEXIDADE",
+      nome: "Maior tempo de experiência em média e alta complexidade",
+      rotuloCurto: "exp. alta complexidade",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem: "experiencia_alta_complexidade_total (53/2025, 9.4.3)",
+      ler: (c) => c.expAltaComplexidade,
+      falta: () => "tempo de experiência em média e alta complexidade",
+    },
+    {
+      codigo: "EXP_SAUDE_DIGITAL",
+      nome: "Maior tempo de experiência profissional em saúde digital",
+      rotuloCurto: "exp. saúde digital",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem: "experiencia_saude_digital_total (05/2026)",
+      ler: (c) => c.expSaudeDigital,
+      falta: () => "tempo de experiência em saúde digital",
+    },
+    {
+      codigo: "MAIOR_ESCOLARIDADE",
+      nome: "Maior nível de escolaridade relacionado ao cargo",
+      rotuloCurto: "escolaridade",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem: "nivel_escolaridade (1 fundamental … 6 doutorado; 23/2025)",
+      ler: (c) => c.nivelEscolaridade,
+      falta: () => "nível de escolaridade",
+    },
+    {
+      codigo: "NOTA_CONHECIMENTOS_ESPECIFICOS",
+      nome: "Maior nota em conhecimentos específicos (prova)",
+      rotuloCurto: "conhecimentos específicos",
+      tipo: "numero",
+      direcao: "MAIOR_PRIMEIRO",
+      origem:
+        "nota_conhecimentos_especificos (prova objetiva; 96/2025, 97/2025, 04/2026)",
+      ler: (c) => c.notaConhecimentosEspecificos,
+      falta: () => "nota de conhecimentos específicos",
+    },
   ].map((criterio) => Object.freeze(criterio)),
 );
 
@@ -196,10 +242,38 @@ export const EMPATE_NAS_LISTAS = Object.freeze([
   ["MESMA_POSICAO", "Mesma posição"],
 ]);
 
+/*
+  As listas, na ordem das publicações da AgSUS: resultado da avaliação
+  documental e de títulos (classificados por vaga e por modalidade, e os
+  eliminados com o motivo), convocação para entrevista (até o limite da regra,
+  com os empatados no limite), resultado da etapa de entrevista (os aptos com a
+  nota da entrevista) e resultado final (documental + entrevista, desempate,
+  vagas imediatas e cadastro reserva). Preliminar × final de cada etapa é a
+  mesma lista gerada antes e depois dos recursos (a exportação escolhe o título).
+*/
 export const TIPOS_DE_LISTA = Object.freeze([
-  ["PRELIMINAR", "Preliminar (documental)"],
+  ["PRELIMINAR", "Avaliação documental"],
   ["CONVOCACAO", "Convocação para entrevista"],
+  ["ENTREVISTA", "Resultado da entrevista"],
   ["FINAL", "Resultado final"],
+]);
+
+/* Fase da publicação de uma lista (título do documento). */
+export const FASES_DA_PUBLICACAO = Object.freeze([
+  ["PRELIMINAR", "Preliminar"],
+  ["FINAL", "Final"],
+]);
+
+/*
+  As parciais da avaliação documental que a lista publica (colunas), na ordem
+  das publicações. Cada edital escolhe as suas na regra (o 100/2026 não tem
+  cursos de aperfeiçoamento).
+*/
+export const PARCIAIS_DA_DOCUMENTAL = Object.freeze([
+  ["FORMACAO", "Formação Acadêmica"],
+  ["CURSOS", "Cursos de Aperfeiçoamento"],
+  ["EXPERIENCIA", "Experiência Profissional"],
+  ["ETNICO", "Pontuação Étnica"],
 ]);
 
 export const COMPONENTES_DA_NOTA = Object.freeze([
@@ -229,6 +303,7 @@ export const MOTIVOS_DE_ELIMINACAO = Object.freeze({
   ABAIXO_NOTA_MINIMA_ENTREVISTA: "Abaixo da nota mínima da entrevista",
   COMPETENCIA_ABAIXO_MINIMO: "Competência da entrevista abaixo do mínimo",
   COMPETENCIA_ELIMINATORIA: "Nota eliminatória em competência da entrevista",
+  SEM_PARECER_ENTREVISTA: "Entrevista sem parecer de apto",
 });
 
 /* As modalidades conhecidas. A regra de cada edital diz quais valem e como. */
@@ -238,6 +313,7 @@ export const MODALIDADES_CONHECIDAS = Object.freeze([
   ["PP", "Pretos e pardos"],
   ["PI", "Indígenas"],
   ["PQ", "Quilombolas"],
+  ["TRANS", "Pessoas trans"],
 ]);
 
 const semAcento = (valor) =>
@@ -259,6 +335,7 @@ export function codigosDaModalidade(texto) {
   if (/pret|pard|\bpp\b|negr/.test(t)) codigos.push("PP");
   if (/indigen|\bpi\b/.test(t)) codigos.push("PI");
   if (/quilomb|\bpq\b/.test(t)) codigos.push("PQ");
+  if (/\btrans\b|transgener|travesti/.test(t)) codigos.push("TRANS");
   return codigos;
 }
 

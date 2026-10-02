@@ -1,17 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
   chaveDaPendencia,
-  correcaoDesfazivel,
   filaDeCoordenadas,
-  formatarDistancia,
   gravidadeDaPendencia,
-  lerCoordenada,
   pontosEditaveisDoMapa,
-  rotuloDaAcao,
   sugestoesDaPendencia,
+} from "../src/lib/coordenadas-do-mapa.js";
+import {
+  correcaoDesfazivel,
+  formatarDistancia,
+  lerCoordenada,
+  rotuloDaAcao,
   textoDePendentes,
   validarCorrecaoDoMapa,
-} from "../src/lib/coordenadas-do-mapa.js";
+} from "../src/lib/editor-de-coordenadas.js";
 
 describe("coordenadas do mapa", () => {
   it("separa pontos de mesmo nome pelo endereço exato da fonte e preserva posição sem coordenada", () => {
