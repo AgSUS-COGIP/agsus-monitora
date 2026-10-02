@@ -5,12 +5,13 @@ import {
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
 } from "../../lib/cronograma-do-edital.js";
-import { Modal } from "../../componentes/modal.jsx";
+import { BlocosEsqueleto, ErroAoCarregar, Modal } from "../../ui/index.js";
 
 /*
   Consulta do cronograma de um edital, sem abrir o formulário: status atual,
   situação excepcional, a linha do tempo das etapas e o histórico de
-  alterações e erratas. Só leitura.
+  alterações e erratas. Só leitura. Enquanto carrega, skeleton; se falha, o
+  aviso com "Tentar novamente".
 */
 
 const ROTULOS = {
@@ -160,6 +161,7 @@ function Conteudo({ dados, agora }) {
 
 export function ModalLinhaDoTempo({ estado, id, agora = () => new Date() }) {
   const [carga, setCarga] = useState({ estado: "carregando" });
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
     let vivo = true;
@@ -174,7 +176,7 @@ export function ModalLinhaDoTempo({ estado, id, agora = () => new Date() }) {
     return () => {
       vivo = false;
     };
-  }, [estado, id]);
+  }, [estado, id, tentativa]);
 
   const monitor = carga.dados?.monitoramento || {};
   return (
@@ -205,14 +207,21 @@ export function ModalLinhaDoTempo({ estado, id, agora = () => new Date() }) {
       </div>
       <div id="nucleoTimelineContent" className="nucleo-timeline-content">
         {carga.estado === "carregando" ? (
-          <div className="nucleo-timeline-loading">
-            <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-            Carregando cronograma...
+          <div className="nucleo-timeline-loading" aria-busy="true">
+            <BlocosEsqueleto
+              quantos={4}
+              className="nucleo-timeline-esqueleto"
+            />
           </div>
         ) : carga.estado === "erro" ? (
-          <div className="nucleo-timeline-error">
-            Erro ao carregar cronograma: {carga.mensagem}
-          </div>
+          <ErroAoCarregar
+            oQue="o cronograma"
+            mensagem={carga.mensagem}
+            aoTentar={() => {
+              setCarga({ estado: "carregando" });
+              setTentativa((atual) => atual + 1);
+            }}
+          />
         ) : (
           <Conteudo dados={carga.dados} agora={agora} />
         )}

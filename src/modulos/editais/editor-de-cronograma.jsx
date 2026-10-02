@@ -8,6 +8,7 @@ import {
   renumerar,
 } from "../../lib/cronograma-do-edital.js";
 import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.js";
+import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.js";
 
 /*
   A seção "Cronograma do edital" do formulário. O rascunho (`cronograma`) e o
@@ -19,7 +20,8 @@ import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.js";
   - "copiar cronograma de outro edital", a partir do resumo do Núcleo (a mesma
     carga dos indicadores da página).
 
-  Classes de `nucleo-cronograma*.css` e `nucleo-operational-enhancements.css`.
+  Classes de `src/styles/nucleo-cronograma.css` (só tokens: o tema escuro vem
+  deles).
 */
 
 const txt = (valor) => String(valor ?? "").trim();
@@ -112,11 +114,9 @@ function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
 
   return (
     <section id="cronogramaCopyBox" className="cronograma-copy-box">
-      <div className="cronograma-copy-heading">
-        <div>
-          <strong>Copiar cronograma de outro edital</strong>
-        </div>
-      </div>
+      <strong className="cronograma-copy-heading">
+        Copiar cronograma de outro edital
+      </strong>
       <div className="cronograma-copy-controls">
         <select
           id="cronogramaCopySource"
@@ -169,9 +169,9 @@ function Validacao({ erroDeCarga, analise }) {
   if (erroDeCarga)
     return (
       <div id="cronogramaValidation" className="cronograma-validation">
-        <div className="cronograma-validation-errors">
+        <Aviso tom="danger" papel="alert">
           Erro ao carregar cronograma: {erroDeCarga}
-        </div>
+        </Aviso>
       </div>
     );
   const { erros, avisos } = analise;
@@ -182,7 +182,7 @@ function Validacao({ erroDeCarga, analise }) {
       hidden={!erros.length && !avisos.length}
     >
       {erros.length ? (
-        <div className="cronograma-validation-errors">
+        <Aviso tom="danger" className="cronograma-validation-errors">
           <strong>
             <i className="fa-solid fa-circle-xmark" aria-hidden="true" />{" "}
             Corrija antes de salvar
@@ -192,10 +192,10 @@ function Validacao({ erroDeCarga, analise }) {
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </div>
+        </Aviso>
       ) : null}
       {avisos.length ? (
-        <div className="cronograma-validation-warnings">
+        <Aviso tom="warning" className="cronograma-validation-warnings">
           <strong>
             <i
               className="fa-solid fa-triangle-exclamation"
@@ -208,7 +208,7 @@ function Validacao({ erroDeCarga, analise }) {
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </div>
+        </Aviso>
       ) : null}
     </div>
   );
@@ -224,10 +224,7 @@ function LoteDeDatas({ aberto, aoFechar, aoAplicar, campo }) {
       hidden={!aberto}
     >
       <div className="cronograma-bulk-head">
-        <div>
-          <h5>Colar datas do cronograma</h5>
-          <p>Uma data ou intervalo por linha.</p>
-        </div>
+        <h5>Colar datas do cronograma</h5>
         <button
           id="cronogramaBulkClose"
           type="button"
@@ -274,10 +271,7 @@ function HistoricoDoCronograma({ historico }) {
   return (
     <section className="cronograma-history-section">
       <div className="cronograma-history-heading">
-        <div>
-          <span>Auditoria</span>
-          <strong>Histórico do cronograma</strong>
-        </div>
+        <strong>Histórico do cronograma</strong>
         <span id="cronogramaHistoryCount">
           {plural(historico.length, "registro", "registros")}
         </span>
@@ -391,11 +385,9 @@ export function EditorDeCronograma({
   }
 
   return (
-    <section id="cronogramaEditor" className="cronograma-editor full">
+    <section id="cronogramaEditor" className="cronograma-editor ui-campo-largo">
       <div className="cronograma-heading">
-        <div>
-          <h4>Cronograma do edital</h4>
-        </div>
+        <h4>Cronograma do edital</h4>
         <label className="cronograma-auto-toggle">
           <input
             id="mCronogramaAutomatico"
@@ -449,7 +441,9 @@ export function EditorDeCronograma({
         >
           <i className="fa-solid fa-list-check" aria-hidden="true" /> Usar
           modelo padrão{" "}
-          <span className="cronograma-recommended-badge">Recomendado</span>
+          <Selo tom="aprovado" className="cronograma-recommended-badge">
+            Recomendado
+          </Selo>
         </button>
         <button
           id="cronogramaClear"
@@ -502,11 +496,7 @@ export function EditorDeCronograma({
           </thead>
           <tbody id="cronogramaRows">
             {c.carregando ? (
-              <tr>
-                <td colSpan={6} className="cronograma-empty">
-                  Carregando cronograma...
-                </td>
-              </tr>
+              <LinhasEsqueleto colunas={6} linhas={4} />
             ) : c.etapas.length ? (
               c.etapas.map((etapa, indice) => (
                 <tr key={indice} data-cronograma-index={indice}>
@@ -571,7 +561,7 @@ export function EditorDeCronograma({
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="cronograma-empty">
+                <td colSpan={6} className="ui-vazio">
                   Nenhuma etapa cadastrada.
                 </td>
               </tr>
@@ -581,8 +571,7 @@ export function EditorDeCronograma({
       </div>
 
       <div className="cronograma-overrides">
-        <div className="form-row">
-          <label htmlFor="mStatusOverride">Status manual excepcional</label>
+        <Campo rotulo="Status manual excepcional">
           <select
             id="mStatusOverride"
             value={c.statusExcepcional}
@@ -597,9 +586,8 @@ export function EditorDeCronograma({
               </option>
             ))}
           </select>
-        </div>
-        <div className="form-row">
-          <label htmlFor="mEtapaOverride">Etapa manual excepcional</label>
+        </Campo>
+        <Campo rotulo="Etapa manual excepcional">
           <input
             id="mEtapaOverride"
             placeholder="Só em exceção"
@@ -608,61 +596,50 @@ export function EditorDeCronograma({
               mudar({ etapaExcepcional: evento.target.value })
             }
           />
+        </Campo>
+        <div className="cronograma-override-detail" hidden={!excepcional}>
+          <Campo rotulo="Motivo do status excepcional" obrigatorio>
+            <input
+              id="mStatusOverrideMotivo"
+              maxLength={500}
+              placeholder="Informe o ato ou motivo da decisão"
+              value={c.motivoExcepcional}
+              onChange={(evento) =>
+                mudar({ motivoExcepcional: evento.target.value })
+              }
+            />
+          </Campo>
         </div>
-        <div
-          className="form-row cronograma-override-detail"
-          hidden={!excepcional}
-        >
-          <label htmlFor="mStatusOverrideMotivo">
-            Motivo do status excepcional *
-          </label>
-          <input
-            id="mStatusOverrideMotivo"
-            maxLength={500}
-            placeholder="Informe o ato ou motivo da decisão"
-            value={c.motivoExcepcional}
-            onChange={(evento) =>
-              mudar({ motivoExcepcional: evento.target.value })
-            }
-          />
+        <div className="cronograma-override-detail" hidden={!excepcional}>
+          <Campo rotulo="Data da decisão" obrigatorio>
+            <input
+              id="mStatusOverrideData"
+              type="date"
+              value={c.dataExcepcional}
+              onChange={(evento) =>
+                mudar({ dataExcepcional: evento.target.value })
+              }
+            />
+          </Campo>
         </div>
-        <div
-          className="form-row cronograma-override-detail"
-          hidden={!excepcional}
-        >
-          <label htmlFor="mStatusOverrideData">Data da decisão *</label>
-          <input
-            id="mStatusOverrideData"
-            type="date"
-            value={c.dataExcepcional}
-            onChange={(evento) =>
-              mudar({ dataExcepcional: evento.target.value })
-            }
-          />
-        </div>
-        <div
-          className="form-row cronograma-override-detail"
-          hidden={!excepcional}
-        >
-          <label htmlFor="mStatusOverrideRetomada">Previsão de retomada</label>
-          <input
-            id="mStatusOverrideRetomada"
-            type="date"
-            value={c.retomada}
-            onChange={(evento) => mudar({ retomada: evento.target.value })}
-          />
+        <div className="cronograma-override-detail" hidden={!excepcional}>
+          <Campo rotulo="Previsão de retomada">
+            <input
+              id="mStatusOverrideRetomada"
+              type="date"
+              value={c.retomada}
+              onChange={(evento) => mudar({ retomada: evento.target.value })}
+            />
+          </Campo>
         </div>
       </div>
 
       <section className="cronograma-governance">
-        <div className="cronograma-governance-heading">
-          <div>
-            <strong>Registro da alteração</strong>
-          </div>
-        </div>
+        <strong className="cronograma-governance-heading">
+          Registro da alteração
+        </strong>
         <div className="cronograma-governance-grid">
-          <div className="form-row">
-            <label htmlFor="mCronogramaMotivo">Motivo da alteração *</label>
+          <Campo rotulo="Motivo da alteração" obrigatorio>
             <textarea
               id="mCronogramaMotivo"
               rows={2}
@@ -671,9 +648,8 @@ export function EditorDeCronograma({
               value={c.motivo}
               onChange={(evento) => mudar({ motivo: evento.target.value })}
             />
-          </div>
-          <div className="form-row">
-            <label htmlFor="mCronogramaErrata">Número da errata</label>
+          </Campo>
+          <Campo rotulo="Número da errata">
             <input
               id="mCronogramaErrata"
               maxLength={100}
@@ -681,7 +657,7 @@ export function EditorDeCronograma({
               value={c.errata}
               onChange={(evento) => mudar({ errata: evento.target.value })}
             />
-          </div>
+          </Campo>
         </div>
       </section>
 
