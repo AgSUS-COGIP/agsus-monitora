@@ -12,7 +12,7 @@ import { Aviso, classes, Modal } from "../../ui/index.js";
 /*
   As peças do calendário: a grade do mês (e o skeleton dela), a linha de uma
   etapa (usada nas próximas etapas e no popup do dia), a linha do tempo e o
-  popup do dia. As classes são as de `src/styles/calendario-editais.css`; a
+  popup do dia. As classes são as de `cronograma.css`; a
   cor de cada tipo sai de `data-cor`, e o CSS decide o que é "rosa".
 */
 

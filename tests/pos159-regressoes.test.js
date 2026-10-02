@@ -75,7 +75,7 @@ describe("as chaves da barra lateral chegam ao caminho que realmente salva", () 
   2 — A logo sumia no shell.
 
   A apresentação dependia de `.side-logo-wrap { background-image: var(...) }`,
-  que `system-ui-fixes.css` anula com `background: transparent !important` — o
+  que o antigo `system-ui-fixes.css` anulava com `background: transparent !important` — o
   atalho `background` zera `background-image` e o `!important` vence a regra
   normal. Com o `<img>` em `opacity: 0`, não sobrava nada visível.
 */

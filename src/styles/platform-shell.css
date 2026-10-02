@@ -56,9 +56,10 @@
 .login-stripe {
   display: none;
 }
+/* O cartão tem a cor do painel (a mesma do `.login-outer`); sem ela, branco. */
 .login-card {
   padding: clamp(32px, 4vh, 46px) clamp(30px, 3vw, 42px);
-  background: transparent;
+  background: var(--login-panel-color, #ffffff);
   color: #132030;
 }
 .login-brand-lockup {
@@ -100,18 +101,6 @@
   font-size: 30px;
   filter: drop-shadow(0 4px 10px rgba(16, 80, 70, 0.22));
 }
-.login-panel-dark .login-organization-mark img {
-  filter: brightness(0) invert(1);
-}
-.login-panel-dark .login-organization-mark strong,
-.login-panel-dark .login-product-mark,
-.login-panel-dark .login-card h1,
-.login-panel-dark .login-card p {
-  color: #fff;
-}
-.login-panel-dark .login-brand-divider {
-  background: rgba(255, 255, 255, 0.5);
-}
 .login-product-mark strong {
   font-size: 25px;
   font-weight: 900;
@@ -129,44 +118,117 @@
   font-size: 13px;
   font-weight: 800;
 }
-.login-panel-dark .login-card h1,
-.login-panel-dark .login-card .login-subtitle {
-  color: #fff !important;
+
+/*
+  Painel escuro (`login-panel-dark`, aplicada no próprio `#loginScreen` pelo
+  script do index.html e por src/app/entrada/marca.js): texto claro onde a
+  própria configuração diz que a superfície é escura. O cartão "Solicitar
+  acesso" é claro por dentro e fica com as cores de app.css.
+*/
+#loginScreen.login-panel-dark .login-card,
+#loginScreen.login-panel-dark .login-card h1,
+#loginScreen.login-panel-dark .login-card p:not(.access-request-card *),
+#loginScreen.login-panel-dark .login-card strong:not(.access-request-card *),
+#loginScreen.login-panel-dark .login-card small:not(.access-request-card *),
+#loginScreen.login-panel-dark .login-subtitle,
+#loginScreen.login-panel-dark .login-organization-mark,
+#loginScreen.login-panel-dark .login-product-mark {
+  color: #f7fbff;
 }
-.login-panel-dark .login-product-mark i {
-  color: #bfffee;
+#loginScreen.login-panel-dark
+  .login-card
+  p:not(.access-request-card *, .login-subtitle) {
+  color: rgba(247, 251, 255, 0.82);
 }
-#googleLoginBtn,
-.google-login-btn {
+#loginScreen.login-panel-dark .login-brand-divider {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/*
+  A marca acompanha o contraste da superfície, como no AgSUS Pesquisas. O
+  filtro é restrito ao logotipo institucional; fotos e imagens de conteúdo não
+  são alteradas. O `img` sem id é o do cartão provisório do index.html, que
+  segura a marca até o React montar.
+
+  `body.sidebar-theme-dark` entra aqui porque a cor da barra lateral é
+  escolhida em Configurações e é **independente do tema do app**: dava para ter
+  uma barra escura com o tema claro, e aí a logo escura ficava sobre fundo
+  escuro. `.side-logo-wrap` não tem fundo próprio: a imagem repousa direto
+  sobre a cor da barra.
+*/
+#loginScreen.login-panel-dark #loginLogo,
+#loginScreen.login-panel-dark .login-organization-mark img,
+html[data-theme="dark"] .app #sideLogo,
+html[data-theme="dark"] .app .side-logo,
+body.sidebar-theme-dark .app #sideLogo,
+body.sidebar-theme-dark .app .side-logo {
+  filter: brightness(0) invert(0.96);
+}
+
+#loginScreen.login-panel-dark .login-product-mark i {
+  color: #8ff3d0;
+}
+
+/*
+  O alerta de sessão encerrada continua legível mesmo com o cartão de acesso
+  configurado numa cor escura.
+*/
+#loginScreen.login-panel-dark #loginMsg.alert,
+#loginScreen.login-panel-dark .alert.warn,
+#loginScreen.login-panel-dark .alert.warning {
+  background: #fff8e6;
+  border-color: #f1c75b;
+  color: #7c3b08;
+}
+
+/*
+  O botão de acesso, claro como no SIGAV (`bg-white text-[var(--color-blue-800)]
+  shadow-lg hover:bg-slate-100`). Vale para os dois botões da tela de acesso:
+  o principal e o de trocar de conta.
+
+  Medido contra os painéis em uso:
+
+    branco sobre #c090eb (atual)   2.49:1
+    branco sobre #c898eb (SIGAV)   2.30:1
+    branco sobre #6c009e (escuro)  9.85:1
+    texto var(--color-blue-800) sobre branco    11.29:1
+
+  O preenchimento branco fica abaixo do mínimo de 3:1 num painel claro — é assim
+  no SIGAV também. A WCAG pede que a **borda do componente** seja perceptível:
+  a borda var(--color-blue-800) dá 4.53:1 contra o painel atual e 4.92:1 contra
+  o do SIGAV. O SIGAV não tem essa borda e se apoia só na sombra; ela é a única
+  diferença deliberada. Num painel escuro o branco sozinho já dá 9.85:1.
+*/
+#loginScreen .google-login-btn {
   min-height: 62px;
-  border: 0;
+  border: 1px solid var(--color-blue-800);
   border-radius: 16px;
-  background: #101c2a;
-  color: #fff;
-  box-shadow: 0 14px 30px -18px rgba(0, 59, 112, 0.9);
+  background: #ffffff;
+  color: var(--color-blue-800);
+  box-shadow: 0 12px 26px -14px rgba(15, 23, 42, 0.5);
   transition:
     transform 0.18s ease,
     background 0.18s ease,
     box-shadow 0.18s ease;
 }
-#googleLoginBtn:hover,
-.google-login-btn:hover {
-  background: #172a3f;
+#loginScreen .google-login-btn:hover {
+  background: #f1f5f9;
   transform: translateY(-2px);
-  box-shadow: 0 18px 34px -18px rgba(0, 59, 112, 0.95);
 }
-#googleLoginBtn:disabled {
+#loginScreen #googleLoginBtn:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
 }
-.google-login-btn .gmark {
+/* Sobre um botão branco o disco branco do "G" sumiria: fica só o anel. */
+#loginScreen .google-login-btn .gmark {
   display: grid;
   width: 32px;
   height: 32px;
   place-items: center;
   border-radius: 999px;
-  background: #fff;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px #dadce0;
 }
 
 /* Shell e navegação lateral */
@@ -352,7 +414,7 @@ html[data-theme="dark"] .sidebar {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 400;
+  z-index: var(--z-popover);
   width: min(352px, calc(100vw - 24px));
   overflow: hidden;
   border: 1px solid var(--platform-border);
@@ -520,7 +582,7 @@ html[data-theme="dark"] .sidebar {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 420;
+  z-index: var(--z-popover);
   width: 280px;
   padding: 15px;
   border: 1px solid var(--platform-border);

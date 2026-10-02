@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.js";
@@ -1087,12 +1087,17 @@ describe("contrato de CSS e ligação no arranque", () => {
     expect(painel).toContain("visibility: visible");
   });
 
-  it("o system-ui-fixes não esconde mais o botão nem guarda folga para a alça", () => {
-    const fixes = semComentarios(
-      readFileSync("src/styles/system-ui-fixes.css", "utf8"),
+  it("nenhum remendo esconde o botão nem guarda folga para a alça", () => {
+    // O system-ui-fixes.css foi dissolvido: o cabeçalho é de app.css e platform-shell.css.
+    expect(existsSync("src/styles/system-ui-fixes.css")).toBe(false);
+    const cabecalho = semComentarios(
+      readFileSync("src/styles/app.css", "utf8") +
+        readFileSync("src/styles/platform-shell.css", "utf8"),
     );
-    expect(fixes).not.toContain(".global-side-toggle");
-    expect(fixes).not.toContain("padding-left: var(--space-6)");
+    expect(cabecalho).not.toMatch(
+      /\.top\s*\{[^}]*padding-left:\s*var\(--space-6\)/,
+    );
+    expect(cabecalho).not.toMatch(/\.app \.global-side-toggle\s*\{/);
   });
 
   it("recolhida, quem rola é a navegação, e só quando transborda", () => {
