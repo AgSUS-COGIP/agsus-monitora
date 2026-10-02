@@ -9,7 +9,12 @@ Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela chei
 o painel cobre o shell, mantém o botão "Sair da tela cheia" visível e bloqueia a
 rolagem da página até sair (pelo botão ou Esc). O editor de coordenadas, restrito
 ao administrador global, substitui a lista lateral e oferece "Voltar à lista";
-no celular, esse painel fica abaixo do mapa.
+no celular, esse painel fica abaixo do mapa. Ele tem a fila de pontos (busca e
+"Só pendentes", com as pendências da auditoria), "Conferido", as sugestões de
+posição e o histórico com "Desfazer" — RPCs de
+`supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql`, regras em
+`src/lib/coordenadas-do-mapa.js`, testes em `tests/coordenadas-do-mapa.test.js` e
+`tests/modulos/editor-de-coordenadas.test.js`.
 
 ```
 mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (calor, tela cheia), contas memorizadas,
@@ -24,6 +29,10 @@ leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasi
                           contornos, ícones/popup/dica em DOM seguro
 tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas)
 usar-ultimo.js            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
+editor-de-coordenadas.jsx editor (só admin global): prévia arrastável, Salvar/Conferido, leitura das RPCs
+fila-de-coordenadas.jsx   busca, "Só pendentes" e a lista ordenada por DSEI
+sugestoes-do-ponto.jsx    posições candidatas do ponto pendente com a distância e "Usar esta"
+historico-do-ponto.jsx    últimas alterações do ponto e "Desfazer última alteração"
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```
 
