@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
+import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.jsx";
 import { PLANILHAS } from "../../src/lib/planilhas.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
@@ -251,7 +251,7 @@ describe("carregamento", () => {
 
   it("carregar não cobre a tela: não há tela de carregamento a chamar", async () => {
     const fonte = await import("node:fs").then(({ readFileSync }) =>
-      readFileSync("src/componentes/lista-aprovados/estado.js", "utf8"),
+      readFileSync("src/modulos/aprovados/estado.js", "utf8"),
     );
     expect(fonte).not.toContain("loader");
   });
@@ -348,6 +348,17 @@ describe("carregamento", () => {
 });
 
 describe("filtros e paginação", () => {
+  it("abre filtros recolhidos, permite filtrar e limpa todo o recorte", async () => {
+    await montar();
+    const painel = $("aprovadosFiltros").closest(".ui-filtros");
+    expect(painel.querySelector(".ui-filtros-corpo").hidden).toBe(true);
+    await clicar(painel.querySelector('[data-acao="recolher-filtros"]'));
+    expect(painel.querySelector(".ui-filtros-corpo").hidden).toBe(false);
+    await clicar(opcaoDoFiltro("approvedFilterCargo", "Médico"));
+    expect(nomes()).toEqual(["Bruno Lima"]);
+    await clicar(painel.querySelector('[data-acao="limpar-filtros"]'));
+    expect(nomes()).toHaveLength(4);
+  });
   it("escolher um edital encolhe os cargos e descarta o cargo que sumiu", async () => {
     await montar();
     expect(opcoesDoFiltro("approvedFilterCargo")).toEqual([

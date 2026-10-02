@@ -5,7 +5,7 @@ import {
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
 } from "../../lib/cronograma-do-edital.js";
-import { Modal } from "../modal.jsx";
+import { Modal } from "../../componentes/modal.jsx";
 
 /*
   Consulta do cronograma de um edital, sem abrir o formulário: status atual,

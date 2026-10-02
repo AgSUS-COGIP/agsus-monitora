@@ -51,7 +51,7 @@ import {
   revalidarPayload,
 } from "../../lib/cache-de-payload.js";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
-import { obterDadosDoMonitoramento } from "../dados-do-monitoramento.js";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
 import {
   canAlterarPorDecisaoJudicial,
   canImportApprovedList,

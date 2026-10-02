@@ -1,3 +1,4 @@
+import { TopoDoPainel } from "../../ui/topo-do-painel.jsx";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
@@ -14,8 +15,8 @@ import {
   paginateApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
-import { soDosEditais } from "../dados-do-monitoramento.js";
-import { usarAreaAtual } from "../usar-area-atual.js";
+import { soDosEditais } from "../../componentes/dados-do-monitoramento.js";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import { AbaAprovados } from "./aba-aprovados.jsx";
 import { AbaConvocacao } from "./aba-convocacao.jsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
@@ -134,6 +135,15 @@ export function ListaAprovados({ estado }) {
     () => soDosEditais(dados.candidatos, ids),
     [dados.candidatos, ids],
   );
+  const [atualizando, setAtualizando] = useState(false);
+  async function atualizar() {
+    setAtualizando(true);
+    try {
+      await estado.carregar();
+    } finally {
+      setAtualizando(false);
+    }
+  }
   const [aba, setAba] = useState("aprovados");
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*
@@ -178,6 +188,11 @@ export function ListaAprovados({ estado }) {
   );
 
   function mudarFiltro(campo, valores) {
+    if (campo === "limpar") {
+      setFiltros(FILTROS_INICIAIS);
+      setPagina(1);
+      return;
+    }
     setFiltros((atuais) => {
       const proximos = { ...atuais, [campo]: valores };
       if (campo === "editalId") {
@@ -208,6 +223,19 @@ export function ListaAprovados({ estado }) {
 
   return (
     <>
+      <TopoDoPainel
+        status={
+          atualizando
+            ? "Atualizando…"
+            : erroAoCarregar
+              ? "Falha ao carregar"
+              : carregado
+                ? "Listas carregadas"
+                : "Carregando…"
+        }
+        aoAtualizar={() => void atualizar()}
+        atualizarDesativado={atualizando}
+      />
       <div className="table-card card approved-page-card">
         <div className="table-head approved-page-head">
           <div>

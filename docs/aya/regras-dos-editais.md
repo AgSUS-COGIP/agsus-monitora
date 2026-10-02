@@ -1,7 +1,7 @@
 # Regras dos Editais
 
 A tela Editais (view `nucleo`): cadastro do edital, cronograma, status calculado, anexos em PDF e
-quadro de vagas. Fontes: `src/componentes/nucleo/`, `src/lib/cronograma-do-edital.js`,
+quadro de vagas. Fontes: `src/modulos/editais/`, `src/lib/cronograma-do-edital.js`,
 `src/lib/editais-do-nucleo.js`, `src/lib/anexos-do-edital.js`, `api/anexos-do-edital.py` e as
 migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_na_area_certa.sql`,
 `20260930233000_quadro_de_vagas_do_edital.sql` e `20260930235950_quadro_ignora_parenteses.sql`.
@@ -10,7 +10,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** tela de editais | tela editais | aba editais | para que serve editais | para que serve a tela de editais | equipe nucleo
 **resposta:** Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Editais ativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.
-**fonte:** src/componentes/nucleo/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js
+**fonte:** src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js
 **abrir:** nucleo
 
 ## Status e etapa calculados pelo cronograma
@@ -29,7 +29,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** validacoes do cronograma | por que o cronograma nao salva | erro no cronograma | etapas sobrepostas
 **resposta:** O cronograma não salva com etapa sem atividade ou sem datas, data final antes da inicial, ano fora de 2015 a 2100 ou atividade repetida. Só geram aviso: data fora do ano do edital, falta de etapa de resultado final e etapas sobrepostas. Em edital já cadastrado, mexer no cronograma pede o motivo da alteração, que vai para o histórico; edital novo não pede justificativa (o histórico registra "Cadastro do edital").
-**fonte:** src/lib/cronograma-do-edital.js; src/componentes/nucleo/modal-do-edital.jsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql
+**fonte:** src/lib/cronograma-do-edital.js; src/modulos/editais/modal-do-edital.jsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql
 
 ## Copiar cronograma e preencher em lote
 
@@ -41,7 +41,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** anexos do edital | como importar o cronograma e o quadro de vagas do pdf | importar pdf do edital | anexo i | anexo ii | usar no cronograma | salvar quadro de vagas
 **resposta:** No formulário do edital, os anexos em PDF (só PDF, até 4 MB, pode escolher mais de um quando cada anexo vem separado) são lidos no servidor sem gravar nada: o Anexo I vira as etapas do cronograma e o Anexo II, o quadro de vagas (em Projetos o quadro vem no Anexo I, sem modalidades). "Usar no cronograma" troca as etapas (pede confirmação se já houver). "Salvar quadro de vagas" grava na hora em edital já cadastrado (confirma antes de substituir o atual); em edital novo, o quadro vai junto no salvar do edital. As datas do PDF vêm sem ano: o ano começa no do edital e avança quando a data volta de dezembro para janeiro.
-**fonte:** src/componentes/nucleo/importar-anexos.jsx; api/anexos-do-edital.py; src/lib/anexos-do-edital.js
+**fonte:** src/modulos/editais/importar-anexos.jsx; api/anexos-do-edital.py; src/lib/anexos-do-edital.js
 **abrir:** nucleo
 
 ## Quadro de vagas do edital
@@ -60,10 +60,10 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** como mover um edital de area | mover edital de area | trocar a area do edital | edital na area errada
 **resposta:** Só o administrador global move um edital para outra área, com motivo obrigatório e confirmação; o banco confere de novo e registra a mudança no histórico. O edital leva junto a lista de aprovados, o cronograma e a convocação. O botão só fica ativo depois de salvar ou descartar as alterações do formulário. Edital novo nasce na área do menu, e unidade de outra área é recusada.
-**fonte:** src/componentes/nucleo/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js
+**fonte:** src/modulos/editais/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js
 
 ## Campos calculados do edital
 
 **perguntas:** campos calculados do edital | por que nao consigo editar inscritos | indicadores do edital no formulario
 **resposta:** No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.
-**fonte:** src/componentes/nucleo/modal-do-edital.jsx
+**fonte:** src/modulos/editais/modal-do-edital.jsx

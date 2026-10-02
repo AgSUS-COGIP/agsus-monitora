@@ -656,7 +656,7 @@ export const VERBETES_AYA = Object.freeze([
       "chamado ao suporte",
     ],
     resposta:
-      'Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o Gmail no navegador, em uma nova aba, já preenchido para o suporte (há também um link para usar o programa de e-mail), com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
+      'Use também a opção Feedback e suporte no rodapé para enviar uma dúvida ou sugestão. Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o Gmail no navegador, em uma nova aba, já preenchido para o suporte, com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
     fato: "",
     fonte: "src/lib/chamado-da-aya.js; src/modulos/aya/",
   },
@@ -708,7 +708,7 @@ export const VERBETES_AYA = Object.freeze([
       "A Lista de aprovados mostra a lista vigente de cada edital da área atual. Os status do candidato são Contratado, Desistente, Migração, Documentação Rejeitada e Fim de Fila; Contratado e Migração exigem matrícula. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado). Quem tem Editor em Aprovados muda status; o grupo Edital gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
     fato: "",
     fonte:
-      "src/lib/lista-aprovados-rules.js; src/componentes/lista-aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
+      "src/lib/lista-aprovados-rules.js; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
     abrir: "approved",
   },
   {
@@ -1611,7 +1611,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. A tela é só de leitura e se atualiza quando um cronograma é salvo. O mês mostra quantas etapas de cada tipo há em cada dia (uma etapa conta no dia em que começa e no dia em que termina), e há filtros por unidade, edital, tipo de etapa e busca. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
     fato: "",
     fonte:
-      "src/componentes/calendario-editais/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
+      "src/modulos/cronograma/calendario-editais.jsx; src/lib/calendario-editais.js; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
     abrir: "calendario",
   },
   {
@@ -1626,8 +1626,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.",
     fato: "",
-    fonte:
-      "src/lib/access-roles.js; src/componentes/nucleo/modal-do-edital.jsx",
+    fonte: "src/lib/access-roles.js; src/modulos/editais/modal-do-edital.jsx",
     abrir: "nucleo",
   },
   {
@@ -1808,6 +1807,22 @@ export const VERBETES_AYA = Object.freeze([
       'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Recolher" ou a tecla Esc voltam. No celular, a lista fica abaixo do mapa e a legenda começa fechada (o botão "Legenda" abre). Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
     fato: "",
     fonte: "interface do MONITORA",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Corrigir coordenadas de um ponto",
+    perguntas: [
+      "corrigir coordenadas",
+      "editar latitude e longitude",
+      "arrastar o pin",
+      "mover ponto no mapa",
+      "alterar localizacao da unidade",
+    ],
+    resposta:
+      'O administrador global pode usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. Escolha o ponto, digite latitude e longitude ou arraste o pin de prévia. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. A alteração fica no histórico. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
+    fato: "",
+    fonte:
+      "src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002143323_editar_coordenadas_mapa_admin.sql",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -2037,7 +2052,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Editais ativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.",
     fato: "",
     fonte:
-      "src/componentes/nucleo/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js",
+      "src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js",
     abrir: "nucleo",
   },
   {
@@ -2084,7 +2099,7 @@ export const VERBETES_AYA = Object.freeze([
       'O cronograma não salva com etapa sem atividade ou sem datas, data final antes da inicial, ano fora de 2015 a 2100 ou atividade repetida. Só geram aviso: data fora do ano do edital, falta de etapa de resultado final e etapas sobrepostas. Em edital já cadastrado, mexer no cronograma pede o motivo da alteração, que vai para o histórico; edital novo não pede justificativa (o histórico registra "Cadastro do edital").',
     fato: "",
     fonte:
-      "src/lib/cronograma-do-edital.js; src/componentes/nucleo/modal-do-edital.jsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql",
+      "src/lib/cronograma-do-edital.js; src/modulos/editais/modal-do-edital.jsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -2117,7 +2132,7 @@ export const VERBETES_AYA = Object.freeze([
       'No formulário do edital, os anexos em PDF (só PDF, até 4 MB, pode escolher mais de um quando cada anexo vem separado) são lidos no servidor sem gravar nada: o Anexo I vira as etapas do cronograma e o Anexo II, o quadro de vagas (em Projetos o quadro vem no Anexo I, sem modalidades). "Usar no cronograma" troca as etapas (pede confirmação se já houver). "Salvar quadro de vagas" grava na hora em edital já cadastrado (confirma antes de substituir o atual); em edital novo, o quadro vai junto no salvar do edital. As datas do PDF vêm sem ano: o ano começa no do edital e avança quando a data volta de dezembro para janeiro.',
     fato: "",
     fonte:
-      "src/componentes/nucleo/importar-anexos.jsx; api/anexos-do-edital.py; src/lib/anexos-do-edital.js",
+      "src/modulos/editais/importar-anexos.jsx; api/anexos-do-edital.py; src/lib/anexos-do-edital.js",
     abrir: "nucleo",
   },
   {
@@ -2163,7 +2178,7 @@ export const VERBETES_AYA = Object.freeze([
       "Só o administrador global move um edital para outra área, com motivo obrigatório e confirmação; o banco confere de novo e registra a mudança no histórico. O edital leva junto a lista de aprovados, o cronograma e a convocação. O botão só fica ativo depois de salvar ou descartar as alterações do formulário. Edital novo nasce na área do menu, e unidade de outra área é recusada.",
     fato: "",
     fonte:
-      "src/componentes/nucleo/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js",
+      "src/modulos/editais/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -2176,7 +2191,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.",
     fato: "",
-    fonte: "src/componentes/nucleo/modal-do-edital.jsx",
+    fonte: "src/modulos/editais/modal-do-edital.jsx",
   },
   {
     arquivo: "regras-dos-mapas.md",

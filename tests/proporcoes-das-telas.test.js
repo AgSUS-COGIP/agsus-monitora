@@ -70,7 +70,7 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
     expect(regra(css, ".approved-kpis")["grid-auto-rows"]).toBe("1fr");
     expect(regra(css, ".approved-kpi")["align-content"]).toBe("space-between");
     esperaDuasLinhas(regra(css, ".approved-kpi-label"));
-    expect(ler("src/componentes/lista-aprovados/partes.jsx")).toMatch(
+    expect(ler("src/modulos/aprovados/partes.jsx")).toMatch(
       /className="approved-kpi-label"\s+title=\{typeof rotulo === "string" \? rotulo : undefined\}/,
     );
   });
@@ -82,7 +82,7 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
       "space-between",
     );
     esperaDuasLinhas(regra(css, ".nucleo-kpi-card small"));
-    expect(ler("src/componentes/nucleo/painel-operacional.jsx")).toContain(
+    expect(ler("src/modulos/editais/painel-operacional.jsx")).toContain(
       "<small title={cartao.label}>{cartao.label}</small>",
     );
   });

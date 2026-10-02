@@ -78,3 +78,9 @@ valendo", e os textos longos das listas vazias.
 **perguntas:** mapa em tela cheia | expandir o mapa | mapa no celular | legenda fechada no celular
 **resposta:** No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Recolher" ou a tecla Esc voltam. No celular, a lista fica abaixo do mapa e a legenda começa fechada (o botão "Legenda" abre). Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.
 **fonte:** interface do MONITORA
+
+## Corrigir coordenadas de um ponto
+
+**perguntas:** corrigir coordenadas | editar latitude e longitude | arrastar o pin | mover ponto no mapa | alterar localizacao da unidade
+**resposta:** O administrador global pode usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. Escolha o ponto, digite latitude e longitude ou arraste o pin de prévia. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. A alteração fica no histórico. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.
+**fonte:** src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002143323_editar_coordenadas_mapa_admin.sql

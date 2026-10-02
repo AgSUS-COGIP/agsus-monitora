@@ -5,7 +5,7 @@ import {
 } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
-import { Modal } from "../modal.jsx";
+import { Modal } from "../../componentes/modal.jsx";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
 import { BotaoDeAcao, classes } from "./partes.jsx";
 

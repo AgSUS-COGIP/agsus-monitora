@@ -38,6 +38,8 @@ import {
   remedir,
 } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.js";
+import { isAdminGlobal } from "../../lib/access-roles.js";
+import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 
 const OPCOES_DO_ENQUADRAMENTO = Object.freeze({
   padding: [34, 34],
@@ -58,6 +60,10 @@ export function MapaDoDsei({
   acoes,
   aoSairDoDsei,
   aoEscolherUnidade,
+  lmap,
+  perfil,
+  supabase,
+  aoAtualizarMapa,
 }) {
   const refDoMapa = useRef(null);
   const [mapa, definirMapa] = useState(null);
@@ -66,6 +72,8 @@ export function MapaDoDsei({
   const [comExternos, definirComExternos] = useState(false);
   const [ocultos, definirOcultos] = useState(() => new Set());
   const [terras, definirTerras] = useState([]);
+  const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
+  const podeEditar = isAdminGlobal(perfil);
   const chamadas = usarUltimo({ aoEscolherUnidade });
 
   const classificados = useMemo(
@@ -313,6 +321,16 @@ export function MapaDoDsei({
           </h2>
         </div>
         <div className="mapa-si-painel__acoes">
+          {podeEditar ? (
+            <button
+              type="button"
+              className="btn small"
+              aria-pressed={editandoCoordenadas}
+              onClick={() => definirEditandoCoordenadas((atual) => !atual)}
+            >
+              Coordenadas
+            </button>
+          ) : null}
           {externos.length ? (
             <>
               <span className="mapa-si-chip-externo">
@@ -354,98 +372,115 @@ export function MapaDoDsei({
           className="mapa-si-lista"
           aria-label={`Polos e unidades do DSEI ${dsei.n}`}
         >
-          <div className="mapa-si-lista__topo">
-            <span>Polos e unidades</span>
-            <b>{formatarNumero(mostrados.length)}</b>
-          </div>
-          {tipos.length > 1 ? (
-            <div
-              className="mapa-si-filtros"
-              role="group"
-              aria-label="Filtrar as unidades por tipo"
-            >
-              {tipos.map(({ tipo, quantidade }) => (
-                <button
-                  key={tipo.key}
-                  type="button"
-                  aria-pressed={!ocultos.has(tipo.key)}
-                  onClick={() => alternarTipo(tipo.key)}
+          {podeEditar && editandoCoordenadas ? (
+            <EditorDeCoordenadas
+              L={L}
+              mapa={mapa}
+              lmap={lmap}
+              redeCnes={redeCnes}
+              dsei={dsei.k}
+              perfil={perfil}
+              supabase={supabase}
+              aoAtualizarMapa={aoAtualizarMapa}
+            />
+          ) : (
+            <>
+              <div className="mapa-si-lista__topo">
+                <span>Polos e unidades</span>
+                <b>{formatarNumero(mostrados.length)}</b>
+              </div>
+              {tipos.length > 1 ? (
+                <div
+                  className="mapa-si-filtros"
+                  role="group"
+                  aria-label="Filtrar as unidades por tipo"
                 >
-                  <Forma tipo={tipo.key} tamanho={12} />
-                  {tipo.label} <b>{formatarNumero(quantidade)}</b>
-                </button>
-              ))}
-            </div>
-          ) : null}
-          {mostrados.length ? (
-            <ul className="mapa-si-lista__itens">
-              {mostrados.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    className="mapa-si-unidade"
-                    aria-label={`Localizar ${r.name} no mapa`}
-                    onClick={() => irParaUnidade(r)}
-                  >
-                    <Forma tipo={r.type.key} tamanho={16} />
-                    <span className="mapa-si-unidade__corpo">
-                      <strong title={r.name}>{r.name}</strong>
-                      <small>
-                        {r.city || "Localidade não informada"}
-                        {r.ufAdministrativa ? ` · ${r.ufAdministrativa}` : ""}
-                        {r.vinculo === "externo" ? (
-                          <b className="mapa-si-unidade__externo">
-                            {" "}
-                            · fora da área
-                          </b>
-                        ) : null}
-                      </small>
-                    </span>
-                    <span className="mapa-si-unidade__tipo">
-                      {r.type.label}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EstadoVazio>
-              {ocultos.size
-                ? "Nada a mostrar com estes filtros."
-                : "Nenhuma unidade georreferenciada."}
-            </EstadoVazio>
-          )}
-          <div className="mapa-si-lista__topo">
-            <span>Terras Indígenas e povos</span>
-            <b>{formatarNumero(linhasDasTerras.length)}</b>
-          </div>
-          {linhasDasTerras.length ? (
-            <ul className="mapa-si-lista__itens">
-              {linhasDasTerras.map((t, i) => (
-                <li key={`${t.nome}|${i}`}>
-                  <button
-                    type="button"
-                    className="mapa-si-terra"
-                    aria-label={`Localizar a Terra Indígena ${t.nome} no mapa`}
-                    disabled={!t.caixa}
-                    onClick={() => irParaTerra(t)}
-                  >
-                    <strong>{t.nome}</strong>
-                    <span
-                      className={classes(
-                        "mapa-si-terra__povos",
-                        !t.povoDeclarado && "mapa-si-terra__povos--ausente",
-                      )}
+                  {tipos.map(({ tipo, quantidade }) => (
+                    <button
+                      key={tipo.key}
+                      type="button"
+                      aria-pressed={!ocultos.has(tipo.key)}
+                      onClick={() => alternarTipo(tipo.key)}
                     >
-                      {t.povos}
-                    </span>
-                    {t.detalhe ? <small>{t.detalhe}</small> : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EstadoVazio>Nenhuma Terra Indígena no recorte.</EstadoVazio>
+                      <Forma tipo={tipo.key} tamanho={12} />
+                      {tipo.label} <b>{formatarNumero(quantidade)}</b>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              {mostrados.length ? (
+                <ul className="mapa-si-lista__itens">
+                  {mostrados.map((r) => (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        className="mapa-si-unidade"
+                        aria-label={`Localizar ${r.name} no mapa`}
+                        onClick={() => irParaUnidade(r)}
+                      >
+                        <Forma tipo={r.type.key} tamanho={16} />
+                        <span className="mapa-si-unidade__corpo">
+                          <strong title={r.name}>{r.name}</strong>
+                          <small>
+                            {r.city || "Localidade não informada"}
+                            {r.ufAdministrativa
+                              ? ` · ${r.ufAdministrativa}`
+                              : ""}
+                            {r.vinculo === "externo" ? (
+                              <b className="mapa-si-unidade__externo">
+                                {" "}
+                                · fora da área
+                              </b>
+                            ) : null}
+                          </small>
+                        </span>
+                        <span className="mapa-si-unidade__tipo">
+                          {r.type.label}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EstadoVazio>
+                  {ocultos.size
+                    ? "Nada a mostrar com estes filtros."
+                    : "Nenhuma unidade georreferenciada."}
+                </EstadoVazio>
+              )}
+              <div className="mapa-si-lista__topo">
+                <span>Terras Indígenas e povos</span>
+                <b>{formatarNumero(linhasDasTerras.length)}</b>
+              </div>
+              {linhasDasTerras.length ? (
+                <ul className="mapa-si-lista__itens">
+                  {linhasDasTerras.map((t, i) => (
+                    <li key={`${t.nome}|${i}`}>
+                      <button
+                        type="button"
+                        className="mapa-si-terra"
+                        aria-label={`Localizar a Terra Indígena ${t.nome} no mapa`}
+                        disabled={!t.caixa}
+                        onClick={() => irParaTerra(t)}
+                      >
+                        <strong>{t.nome}</strong>
+                        <span
+                          className={classes(
+                            "mapa-si-terra__povos",
+                            !t.povoDeclarado && "mapa-si-terra__povos--ausente",
+                          )}
+                        >
+                          {t.povos}
+                        </span>
+                        {t.detalhe ? <small>{t.detalhe}</small> : null}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EstadoVazio>Nenhuma Terra Indígena no recorte.</EstadoVazio>
+              )}
+            </>
           )}
         </aside>
       </div>

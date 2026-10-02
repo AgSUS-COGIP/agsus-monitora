@@ -6,7 +6,10 @@ import {
   linhaDoPedidoDeReativacao,
 } from "../../lib/contas-desativadas.js";
 import { MultiSelectBusca } from "../multi-select-busca.jsx";
-import { BotaoDeAcao, LinhasEsqueleto } from "../lista-aprovados/partes.jsx";
+import {
+  BotaoDeAcao,
+  LinhasEsqueleto,
+} from "../../modulos/aprovados/partes.jsx";
 import { Icone } from "../icone.jsx";
 
 /*

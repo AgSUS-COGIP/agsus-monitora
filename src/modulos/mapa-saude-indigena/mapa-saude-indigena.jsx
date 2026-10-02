@@ -44,6 +44,9 @@ export function MapaSaudeIndigena({
   aoSairDoDsei,
   aoFiltrarPorBusca,
   aoEscolherUnidade,
+  perfil,
+  supabase,
+  aoAtualizarMapa,
 }) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
@@ -100,6 +103,11 @@ export function MapaSaudeIndigena({
       role="region"
     >
       <MapaNacional
+        lmap={lmap}
+        redeCnes={redeCnes}
+        perfil={perfil}
+        supabase={supabase}
+        aoAtualizarMapa={aoAtualizarMapa}
         L={L}
         idDoMapa={idDoMapaNacional}
         visivel={!dsei}
@@ -130,6 +138,10 @@ export function MapaSaudeIndigena({
       />
       {dsei ? (
         <MapaDoDsei
+          lmap={lmap}
+          perfil={perfil}
+          supabase={supabase}
+          aoAtualizarMapa={aoAtualizarMapa}
           key={dsei.k}
           L={L}
           idDoMapa={idDoMapaDoDsei}

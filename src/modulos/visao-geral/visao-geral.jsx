@@ -3,6 +3,7 @@ import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.js";
 import { textosDaVisaoGeral } from "../../lib/visao-geral.js";
 import {
   MAPA_DOS_DSEIS,
@@ -54,11 +55,21 @@ import { TabelaDeProcessos } from "./tabela.jsx";
 */
 
 /* O mapa da Saúde Indígena lendo e pedindo ao estado da Visão geral. */
-function MapaDaSaudeIndigena({ e, estado }) {
+function MapaDaSaudeIndigena({ e, estado, perfil, supabase }) {
   const { lmap, redeCnes } = e.mapa || {};
   return (
     <div className="visao-geral-mapa">
       <MapaSaudeIndigena
+        perfil={perfil}
+        supabase={supabase}
+        aoAtualizarMapa={(configuracao) => {
+          if (!configuracao?.lmap || !configuracao?.rede_cnes) return;
+          estado.definirDadosDoMapa({
+            lmap: configuracao.lmap,
+            redeCnes: configuracao.rede_cnes,
+          });
+          void apagarCopiaDaSessao();
+        }}
         lmap={lmap}
         redeCnes={redeCnes}
         linhas={e.filtradas}
@@ -116,7 +127,12 @@ export function TelaDaVisaoGeral({
       <Indicadores e={e} estado={estado} textos={textos} />
       <UnidadesComVariosProcessos e={e} estado={estado} />
       {mapa === MAPA_DOS_DSEIS ? (
-        <MapaDaSaudeIndigena e={e} estado={estado} />
+        <MapaDaSaudeIndigena
+          e={e}
+          estado={estado}
+          perfil={obterPerfil?.()}
+          supabase={supabase}
+        />
       ) : null}
       {mapa === MAPA_DOS_MUNICIPIOS ? (
         <div className="visao-geral-mapa">
