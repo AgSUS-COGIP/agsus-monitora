@@ -17,7 +17,7 @@
 */
 import { needsLightForeground } from "./access-branding.js";
 
-/** As cores que a tela realmente usa, definidas em post-152-regression-fixes.css. */
+/** As cores que a tela realmente usa, definidas na seção Login de platform-shell.css. */
 export const TEXTO_CLARO = "#f7fbff";
 export const TEXTO_ESCURO = "#102a43";
 

@@ -828,17 +828,19 @@ body.external-clean #externalReturnBar {
 #externalBackBtn:hover {
   background: #f0f9ff;
 }
-.hamb {
-  display: none !important;
-}
-
 .main {
   min-width: 0;
 }
+/*
+  O cabeçalho fica acima do conteúdo e isola o próprio empilhamento: os
+  popovers dele (--z-popover) e os overlays (--z-overlay…) se ordenam a
+  partir daqui. No celular, mobile-app.css o sobe para 10030.
+*/
 .top {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: var(--z-header);
+  isolation: isolate;
   background: #f8fbfe;
   border-bottom: 1px solid var(--line);
   box-shadow: 0 1px 0 rgba(15, 35, 60, 0.03);
@@ -846,7 +848,7 @@ body.external-clean #externalReturnBar {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 18px 12px 10px;
+  padding: 12px 18px 12px 14px;
 }
 .title-row {
   display: flex;
@@ -1092,6 +1094,15 @@ body.external-clean #externalReturnBar {
   background: var(--card) !important;
   border-color: var(--line) !important;
 }
+/* Vence `html[data-theme="dark"] .table-wrap` de nielsen-shell-ux.css pela especificidade. */
+[data-theme="dark"] .app .table-wrap,
+[data-theme="dark"] .app .table-card,
+[data-theme="dark"] .app .modal-card,
+[data-theme="dark"] .app .modal-head {
+  background: #111f33 !important;
+  border-color: #29405d !important;
+  color: #c8d6e5 !important;
+}
 [data-theme="dark"] .app th {
   background: #1a2d47 !important;
   color: #b8d0e8 !important;
@@ -1111,14 +1122,21 @@ body.external-clean #externalReturnBar {
 }
 [data-theme="dark"] .app input,
 [data-theme="dark"] .app select,
-[data-theme="dark"] .app textarea {
-  background: #1a2d47 !important;
-  color: #d0e4f5 !important;
-  border-color: #1e3050 !important;
+[data-theme="dark"] .app textarea,
+[data-theme="dark"] .app .multi-select-menu {
+  background: #16283f !important;
+  border-color: #31506f !important;
+  color: #e2ecf6 !important;
+  -webkit-text-fill-color: #e2ecf6 !important;
 }
-[data-theme="dark"] .app .multi-select-menu,
+[data-theme="dark"] .app input::placeholder,
+[data-theme="dark"] .app textarea::placeholder {
+  color: #8399b1 !important;
+  -webkit-text-fill-color: #8399b1 !important;
+  opacity: 1;
+}
 [data-theme="dark"] .app .multi-select-actions {
-  background: #17253d !important;
+  background: #16283f !important;
   border-color: #1e3050 !important;
 }
 [data-theme="dark"] .app .table-head {
@@ -1840,8 +1858,7 @@ body.sidebar-locked .main {
   max-width: 100%;
   overflow-x: hidden;
 }
-body.sidebar-locked .global-side-toggle,
-body.sidebar-locked .hamb {
+body.sidebar-locked .global-side-toggle {
   display: none !important;
 }
 body.sidebar-locked .content {
@@ -1885,9 +1902,6 @@ body.sidebar-locked #page-dashboard table {
   }
   body.sidebar-collapsed .app {
     grid-template-columns: 1fr;
-  }
-  .hamb {
-    display: grid !important;
   }
   .top {
     position: relative;

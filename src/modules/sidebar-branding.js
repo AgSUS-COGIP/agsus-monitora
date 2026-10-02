@@ -27,7 +27,7 @@ let currentColor = COR_PADRAO_DA_BARRA;
   variável CSS.
 
   A apresentação por variável dependia de `.side-logo-wrap { background-image }`,
-  que `system-ui-fixes.css` já anulava com `background: transparent !important` —
+  que o antigo `system-ui-fixes.css` anulava com `background: transparent !important` —
   o atalho `background` zera `background-image`, e o `!important` ganha da regra
   normal. Com o `<img>` em `opacity: 0` por baixo, não sobrava nada para ver:
   o topo da barra lateral ficava branco.

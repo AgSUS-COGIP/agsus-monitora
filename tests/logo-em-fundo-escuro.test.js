@@ -1,12 +1,13 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { needsLightForeground } from "../src/lib/access-branding.js";
 
-const post152 = readFileSync(
-  "src/styles/post-152-regression-fixes.css",
-  "utf8",
+// A tela de acesso e a marca da barra lateral são de platform-shell.css (seção Login).
+const shell = readFileSync("src/styles/platform-shell.css", "utf8").replace(
+  /\r\n/g,
+  "\n",
 );
-const systemUi = readFileSync("src/styles/system-ui-fixes.css", "utf8");
+const semComentarios = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 
 /*
@@ -16,9 +17,8 @@ const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
   Configurações, não — e as duas são independentes. Dava para ter barra escura
   com tema claro, e aí a logo escura ficava sobre fundo escuro.
 
-  O fundo branco atrás dela não salvava: `system-ui-fixes.css` zera o fundo de
-  `.side-logo-wrap` com `background: transparent !important`, então a imagem
-  repousa direto sobre a cor da barra.
+  O fundo branco atrás dela não salvava: `.side-logo-wrap` não tem fundo
+  próprio, então a imagem repousa direto sobre a cor da barra.
 
   Medido no navegador, nas quatro combinações:
 
@@ -28,9 +28,9 @@ const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
     tudo claro                  -> none
 */
 describe("a marca acompanha o contraste da barra lateral", () => {
-  const regra = post152.slice(
-    post152.indexOf("#loginScreen.login-panel-dark #loginLogo"),
-    post152.indexOf("#loginScreen.login-panel-dark .login-product-mark i"),
+  const regra = shell.slice(
+    shell.indexOf("#loginScreen.login-panel-dark #loginLogo"),
+    shell.indexOf("#loginScreen.login-panel-dark .login-product-mark i"),
   );
 
   it("a cor escolhida da barra clareia a logo", () => {
@@ -39,7 +39,8 @@ describe("a marca acompanha o contraste da barra lateral", () => {
   });
 
   it("usa o mesmo filtro já aplicado ao tema escuro e ao login", () => {
-    expect(regra).toContain("filter: brightness(0) invert(0.96) !important");
+    // Sem !important: nenhuma outra regra dá filtro à logo.
+    expect(regra).toContain("filter: brightness(0) invert(0.96);");
     // Um filtro só, para as quatro situações — não uma variante por caso.
     expect(regra.match(/filter:/g)).toHaveLength(1);
   });
@@ -51,12 +52,26 @@ describe("a marca acompanha o contraste da barra lateral", () => {
 
   /*
     Se o fundo do invólucro voltasse a ser branco, a logo escura teria onde
-    repousar e o filtro deixaria de ser necessário — mas hoje ele é zerado.
+    repousar e o filtro deixaria de ser necessário — nenhum CSS lhe dá fundo.
   */
   it("o invólucro continua sem fundo próprio", () => {
-    expect(systemUi).toMatch(
-      /\.app \.side-logo-wrap[^{]*\{[^}]*background:\s*transparent\s*!important/,
-    );
+    const comFundo = readdirSync("src/styles")
+      .filter((nome) => nome.endsWith(".css"))
+      .flatMap((nome) =>
+        [
+          ...semComentarios(
+            readFileSync(`src/styles/${nome}`, "utf8"),
+          ).matchAll(/([^{}]*)\{([^}]*)\}/g),
+        ]
+          .filter(([, seletor]) =>
+            seletor.split(",").some((s) => /\.side-logo-wrap$/.test(s.trim())),
+          )
+          .filter(([, , corpo]) =>
+            /background(-color|-image)?\s*:\s*(?!transparent|none)/.test(corpo),
+          )
+          .map(([, seletor]) => `${nome}: ${seletor.trim()}`),
+      );
+    expect(comFundo).toEqual([]);
   });
 
   it("quem decide o contraste continua sendo a luminância da cor", () => {
@@ -92,8 +107,8 @@ describe("a marca acompanha o contraste da barra lateral", () => {
   garante isso aqui.
 */
 describe("o botão de acesso é claro, como no SIGAV", () => {
-  const regra = post152.slice(
-    post152.indexOf("#loginScreen .google-login-btn {"),
+  const regra = shell.slice(
+    shell.indexOf("#loginScreen .google-login-btn {"),
   );
 
   const canal = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -117,8 +132,8 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
   });
 
   it("o hover é o slate-100 do SIGAV", () => {
-    const hover = post152.slice(
-      post152.indexOf("#loginScreen .google-login-btn:hover {"),
+    const hover = shell.slice(
+      shell.indexOf("#loginScreen .google-login-btn:hover {"),
     );
     expect(hover).toContain("background: #f1f5f9");
     // O texto é escuro; o hover clareia, então continua legível.
@@ -149,8 +164,8 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
   });
 
   it("o disco branco do G ganha anel para não sumir", () => {
-    const gmark = post152.slice(
-      post152.indexOf("#loginScreen .google-login-btn .gmark {"),
+    const gmark = shell.slice(
+      shell.indexOf("#loginScreen .google-login-btn .gmark {"),
     );
     expect(gmark).toContain("box-shadow: inset 0 0 0 1px #dadce0");
   });
@@ -161,6 +176,6 @@ describe("o botão de acesso é claro, como no SIGAV", () => {
   */
   it("vale só na tela de acesso", () => {
     expect(regra).toContain("#loginScreen .google-login-btn");
-    expect(post152).not.toMatch(/^\.google-login-btn\s*\{/m);
+    expect(shell).not.toMatch(/^\.google-login-btn\s*\{/m);
   });
 });
