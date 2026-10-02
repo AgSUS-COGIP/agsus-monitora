@@ -667,9 +667,14 @@ export function Aya({
           }}
           {...manipuladores}
         >
-          <img src={AVATAR} alt="" width="52" height="52" draggable="false" />
-          <span className="aya-selo-beta" aria-hidden="true">
-            Beta
+          <span className="aya-retrato">
+            <img src={AVATAR} alt="" width="70" height="70" draggable="false" />
+            <span className="aya-selo-beta" aria-hidden="true">
+              Beta
+            </span>
+          </span>
+          <span className="aya-arara__etiqueta" aria-hidden="true">
+            Fale com a Aya
           </span>
         </button>
       ) : null}
@@ -689,8 +694,8 @@ export function Aya({
               Aya, assistente do MONITORA
             </h2>
             <div className="aya-apresentacao">
-              <span className="aya-avatar">
-                <img src={AVATAR} alt="" width="50" height="50" />
+              <span className="aya-avatar aya-retrato">
+                <img src={AVATAR} alt="" width="78" height="78" />
                 <span className="aya-selo-beta">Beta</span>
               </span>
               <div className="aya-apresentacao__textos">
