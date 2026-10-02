@@ -14,7 +14,11 @@ no celular, esse painel fica abaixo do mapa. Ele tem a fila de pontos (busca e
 posição e o histórico com "Desfazer" — RPCs de
 `supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql`, regras em
 `src/lib/coordenadas-do-mapa.js`, testes em `tests/coordenadas-do-mapa.test.js` e
-`tests/modulos/editor-de-coordenadas.test.js`.
+`tests/modulos/editor-de-coordenadas.test.js`. O editor, a fila, as sugestões e o histórico
+são comuns aos dois mapas (`src/modulos/editor-de-coordenadas/`, regras comuns em
+`src/lib/editor-de-coordenadas.js`); aqui fica só `editor-de-coordenadas.jsx`, que liga o
+editor comum aos pontos, às regras e às RPCs deste mapa. O de Projetos faz o mesmo em
+`src/modulos/mapa-de-projetos/editor-de-coordenadas.jsx`.
 
 ```
 mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,
@@ -30,10 +34,8 @@ leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasi
 tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas)
 volta-ao-brasil.js        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
 usar-ultimo.js            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
-editor-de-coordenadas.jsx editor (só admin global): prévia arrastável, Salvar/Conferido, leitura das RPCs
-fila-de-coordenadas.jsx   busca, "Só pendentes" e a lista ordenada por DSEI
-sugestoes-do-ponto.jsx    posições candidatas do ponto pendente com a distância e "Usar esta"
-historico-do-ponto.jsx    últimas alterações do ponto e "Desfazer última alteração"
+editor-de-coordenadas.jsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
+                          *_coordenada_mapa_saude_indigena (FONTE_DA_SAUDE_INDIGENA)
 mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio de src/ui/
 ```
 
@@ -93,6 +95,9 @@ mapa-de-projetos.jsx   <MapaDeProjetos area carregador carregadoEm>: Leaflet (#m
 lista.jsx              "Municípios por vagas" (formato de "Territórios por vagas"), filtro "Projeto" e
                        "Agrupar por projeto"
 balao.js               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
+editor-de-coordenadas.jsx  "Coordenadas" (só admin global): o editor comum com os lugares das vagas, as
+                       regras de src/lib/coordenadas-dos-projetos.js e as RPCs *_coordenada_mapa_projetos
+                       (migration 20261002190000)
 carregador.js          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
                        escolha da lista (sobrevive à troca de área)
 mapa-de-projetos.css   cores dos projetos (--series-1…6), filtro e grupos; o resto é o .mapa-si-*

@@ -11,7 +11,11 @@
   O carregador vive enquanto a Visão geral vive (um por montagem) e guarda
   também a escolha da lista (projeto e "Agrupar por projeto"): trocar de área
   desmonta o mapa, e voltar a Projetos mantém a escolha.
+
+  `corrigirCoordenada(lugar, latitude, longitude)`: o editor de coordenadas
+  gravou a posição de um lugar; o cache passa a ter a nova (sem novo pedido).
 */
+import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.js";
 import { exigirSessao } from "../../lib/sessao.js";
 import { municipiosDaResposta } from "../../lib/visao-geral-da-area.js";
 
@@ -75,6 +79,21 @@ export function criarCarregadorDeMunicipios({
         );
       }
       return emVoo.get(area);
+    },
+    corrigirCoordenada(lugar, latitude, longitude) {
+      for (const [area, guardado] of guardados)
+        guardados.set(area, {
+          ...guardado,
+          resultado: {
+            ...guardado.resultado,
+            municipios: aplicarCoordenada(
+              guardado.resultado.municipios,
+              lugar,
+              latitude,
+              longitude,
+            ),
+          },
+        });
     },
     obterEscolha: () => escolha,
     guardarEscolha(nova) {

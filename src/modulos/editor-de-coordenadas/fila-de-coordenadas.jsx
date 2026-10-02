@@ -1,4 +1,7 @@
-import { GRAVIDADES, textoDePendentes } from "../../lib/coordenadas-do-mapa.js";
+import {
+  GRAVIDADES,
+  textoDePendentes,
+} from "../../lib/editor-de-coordenadas.js";
 import { Aviso, Campo, Carregando, EstadoVazio, Selo } from "../../ui/index.js";
 
 /* Quantos itens a lista desenha de uma vez (a visão nacional tem milhares). */
@@ -9,8 +12,9 @@ export const LIMITE_DA_FILA = 200;
   a contagem de pendentes, o filtro por gravidade (Provável erro, Revisar,
   Sem sugestão, Só confirmar, com a contagem de cada) e a lista — o provável
   erro primeiro, cada pendente com o selo da gravidade e o resumo (motivo e
-  aldeia sugerida mais perto). Escolher um item é com o pai (centraliza o
-  mapa e abre o formulário).
+  sugestão que serve de régua). Escolher um item é com o pai (centraliza o
+  mapa e abre o formulário). Serve aos dois mapas: o texto da busca, o rótulo
+  da lista e a linha de detalhe de cada item vêm de quem usa.
 */
 export function FilaDeCoordenadas({
   itens,
@@ -20,6 +24,9 @@ export function FilaDeCoordenadas({
   busca,
   soPendentes,
   escolhido,
+  placeholder = "Nome ou município",
+  rotuloDaLista = "Pontos do mapa",
+  detalheDoItem = (item) => item.localidade || "",
   carregando,
   erro,
   desabilitado,
@@ -35,7 +42,7 @@ export function FilaDeCoordenadas({
         <input
           type="search"
           value={busca}
-          placeholder="Nome, CNES, município ou DSEI"
+          placeholder={placeholder}
           disabled={desabilitado}
           onChange={(e) => aoBuscar(e.target.value)}
         />
@@ -85,7 +92,7 @@ export function FilaDeCoordenadas({
       {carregando && soPendentes ? (
         <Carregando />
       ) : mostrados.length ? (
-        <ul className="mapa-si-coordenadas__lista" aria-label="Pontos do mapa">
+        <ul className="mapa-si-coordenadas__lista" aria-label={rotuloDaLista}>
           {mostrados.map((item) => (
             <li key={item.id}>
               <button
@@ -96,11 +103,7 @@ export function FilaDeCoordenadas({
                 onClick={() => aoEscolher(item.id)}
               >
                 <span className="mapa-si-coordenadas__nome">{item.nome}</span>
-                <small>
-                  {[item.alvo.dsei, item.localidade]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </small>
+                <small>{detalheDoItem(item)}</small>
                 {item.gravidade ? (
                   <>
                     <Selo tom={GRAVIDADES[item.gravidade.nivel].tom}>

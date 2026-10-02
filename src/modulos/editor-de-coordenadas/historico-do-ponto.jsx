@@ -3,7 +3,7 @@ import {
   correcaoDesfazivel,
   formatarCoordenada,
   rotuloDaAcao,
-} from "../../lib/coordenadas-do-mapa.js";
+} from "../../lib/editor-de-coordenadas.js";
 import { Aviso, Campo, Carregando, EstadoVazio } from "../../ui/index.js";
 
 const quando = (valor) => {
