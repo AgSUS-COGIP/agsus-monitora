@@ -55,6 +55,7 @@ export function calcularClassificacao(dados, tipo) {
     unidade: dados.edital?.unidade || "",
     dataCorte: dataDeCorteDoCronograma(dados.cronograma),
     desempates: dados.desempates || [],
+    convocacao: dados.convocacao || null,
   });
 }
 

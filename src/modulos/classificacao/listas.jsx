@@ -44,6 +44,7 @@ const SITUACOES = {
   VAGA: ["aprovado", "Vaga"],
   CR: ["neutro", "CR"],
   CONVOCADO: ["revisar", "Convocado"],
+  APTO: ["aprovado", "Apto"],
 };
 const VAGAS_POR_VEZ = 30;
 
@@ -210,6 +211,12 @@ function Filtros({ resultado, regra, recorte, aoMudar }) {
   );
 }
 
+const ORIGEM_DAS_VAGAS = Object.freeze({
+  CONVOCACAO:
+    "Vagas por modalidade: configuração de convocação do edital (Lista de aprovados).",
+  REGRA: "Vagas por modalidade: percentuais da regra de classificação.",
+});
+
 function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
   return (
     <article className="ui-card classificacao-vaga" data-vaga={vaga.chave}>
@@ -217,6 +224,14 @@ function TabelaDaVaga({ vaga, casas, rotulosDasModalidades, aoAbrir }) {
       {vaga.limiteConvocacao ? (
         <p className="ui-texto-secundario">
           Limite da convocação: {vaga.limiteConvocacao.origem}
+        </p>
+      ) : null}
+      {vaga.origemDasVagas && vaga.origemDasVagas !== "QUADRO" ? (
+        <p
+          className="ui-texto-secundario"
+          data-origem-vagas={vaga.origemDasVagas}
+        >
+          {ORIGEM_DAS_VAGAS[vaga.origemDasVagas]}
         </p>
       ) : null}
       {vaga.linhas.length ? (
@@ -590,7 +605,9 @@ function Acoes({
   aoCarregarRegistro,
 }) {
   const [lista, setLista] = useState("todas");
+  const [fase, setFase] = useState("");
   const idLista = useId();
+  const idFase = useId();
   const dados = e.dados;
   const geracoes = (dados?.listas || []).filter((l) => l.tipo === tipo);
   const ultima = registro || geracoes[0] || null;
@@ -603,7 +620,7 @@ function Acoes({
     if (!alvo && geracoes[0]) alvo = await estado.obterLista(geracoes[0].id);
     if (alvo) {
       aoCarregarRegistro(alvo);
-      estado.exportar(alvo, formato, lista);
+      estado.exportar(alvo, formato, lista, fase || null);
     }
   }
   async function gerar() {
@@ -642,8 +659,30 @@ function Acoes({
                 Só {m.nome}
               </option>
             ))}
+            {tipo !== "CONVOCACAO" ? (
+              <option value="eliminados">Só os eliminados</option>
+            ) : null}
           </select>
         </Campo>
+        {tipo !== "CONVOCACAO" ? (
+          <Campo rotulo="Publicação">
+            <select
+              id={idFase}
+              value={fase}
+              data-campo="fase"
+              onChange={(ev) => setFase(ev.target.value)}
+            >
+              <option value="">
+                {tipo === "FINAL" ? "Resultado final" : "Preliminar"}
+              </option>
+              {tipo === "FINAL" ? (
+                <option value="PRELIMINAR">Resultado preliminar</option>
+              ) : (
+                <option value="FINAL">Final (após recursos)</option>
+              )}
+            </select>
+          </Campo>
+        ) : null}
         {["pdf", "docx", "xlsx"].map((formato) => (
           <button
             key={formato}
