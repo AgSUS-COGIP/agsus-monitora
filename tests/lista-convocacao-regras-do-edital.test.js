@@ -10,6 +10,10 @@ import {
   reservasEfetivas,
   sequenciaDeConvocacao,
 } from "../src/lib/lista-convocacao-rules.js";
+import {
+  FGV_MINIMOS_POR_CARGO,
+  LEI_15142_ESPALHADA,
+} from "./modelos-de-convocacao-antigos.js";
 
 /*
   AS CLÁUSULAS DOS EDITAIS, UMA A UMA.
@@ -24,7 +28,7 @@ import {
   configurável, e cada um deles tem o seu bloco aqui.
 */
 
-const LEI_15142 = normalizarModelo(modeloDeReferencia("lei-15142-2025"));
+const LEI_15142 = normalizarModelo(LEI_15142_ESPALHADA);
 const PORTARIA_5801 = normalizarModelo(
   modeloDeReferencia("portaria-5801-trans"),
 );
@@ -33,30 +37,13 @@ const FCC_POSICOES = normalizarModelo(
 );
 
 /*
-  91/2026 não está no catálogo de referência porque é o caso singular: PCD com
-  arredondamento e cascata próprios, mínimo de duas vagas e acumulação. Montá-lo
-  aqui, a partir do modelo comum, mostra exatamente o que o edital muda.
+  91/2026 é o modelo "Saúde Indígena" do catálogo: PCD com arredondamento e
+  cascata próprios, mínimo de duas vagas e acumulação. As cláusulas abaixo
+  conferem o modelo que a tela oferece.
 */
-const EDITAL_91 = normalizarModelo({
-  ...modeloDeReferencia("lei-15142-2025"),
-  cotaMultipla: "acumula_com_acumulavel",
-  categorias: modeloDeReferencia("lei-15142-2025").categorias.map(
-    (categoria) => {
-      if (categoria.ampla) return categoria;
-      // Item 5.3: a reserva só se aplica havendo duas ou mais vagas.
-      if (categoria.id === "pcd")
-        return {
-          ...categoria,
-          arredondamento: "sempre_acima",
-          teto: 20,
-          minimo: 2,
-          acumulavel: true,
-          cascata: ["indigena"],
-        };
-      return { ...categoria, minimo: 2 };
-    },
-  ),
-});
+const EDITAL_91 = normalizarModelo(
+  modeloDeReferencia("saude-indigena-91-2026"),
+);
 
 let sequencial = 0;
 const candidato = (nome, modalidade, extra = {}) => {
@@ -167,12 +154,11 @@ describe("Lei 15.142/2025 — 96/2025, 30/2026, 93/2026, Cebraspe e FGV", () => 
   /* 5.2.3.2.2: percentuais iguais, decide a melhor posição relativa. */
   it("com percentual empatado, vale a melhor posição relativa", () => {
     const empatado = normalizarModelo({
-      ...modeloDeReferencia("lei-15142-2025"),
-      categorias: modeloDeReferencia("lei-15142-2025").categorias.map(
-        (categoria) =>
-          categoria.id === "indigena"
-            ? { ...categoria, percentual: 2 }
-            : categoria,
+      ...LEI_15142_ESPALHADA,
+      categorias: LEI_15142_ESPALHADA.categorias.map((categoria) =>
+        categoria.id === "indigena"
+          ? { ...categoria, percentual: 2 }
+          : categoria,
       ),
     });
     const posicoes = new Map([
@@ -552,7 +538,7 @@ describe("105/2026 e 110/2026 — o mesmo do 91/2026, menos a cascata do PCD", (
   (Decreto 9.508 §3), enquanto 7.1.1 aplica a regra dos 0,5 às raciais.
 */
 describe("FGV — mínimos e arredondamentos diferentes no mesmo edital", () => {
-  const FGV = normalizarModelo(modeloDeReferencia("fgv-minimos-por-cargo"));
+  const FGV = normalizarModelo(FGV_MINIMOS_POR_CARGO);
 
   it("com 3 vagas, vale a reserva racial e não a de PCD", () => {
     expect(derivarQuadro(3, FGV)).toMatchObject({

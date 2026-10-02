@@ -279,6 +279,70 @@ function sequenciaPorPosicao(quadro, modelo, total) {
   return slots.map((id) => id ?? ampla.id);
 }
 
+/*
+  Distribuição do simulador de reserva de vagas do MGI. Reproduz, posição por
+  posição, a simulação de 100 vagas que o simulador publica (PcD 5, PN 25, PI 3,
+  PQ 2, AC 65):
+
+    - categoria com posições informadas segue a série dela — no modelo, a PCD:
+      5ª, 21ª, 41ª… (de 20 em 20, a ordem que o STF fixou: MS 31.715/DF,
+      MS 30.861/DF, MS 26.310/DF e RMS 27.710/DF);
+    - as outras entram a cada 100 ÷ percentual posições, começando no meio do
+      primeiro intervalo e arredondando para cima: pretos e pardos (25%) na 2ª,
+      6ª, 10ª…; indígenas (3%) na 17ª, 50ª, 84ª; quilombolas (2%) na 25ª e 75ª;
+    - quem tem série publicada entra primeiro, depois o maior percentual; a
+      posição já ocupada fica com a livre ANTERIOR (o indígena da 50ª vai para a
+      49ª, porque a 50ª é de pretos e pardos), e só não havendo nenhuma antes é
+      que vai para a seguinte.
+
+  O passo vem do percentual, e não do total de vagas: numa vaga de 45, pretos e
+  pardos continuam de 4 em 4. Categoria sem percentual (quadro manual) usa o
+  passo total ÷ vagas da categoria.
+*/
+function serieDoMgi(categoria, quantidade, total) {
+  const serie = [...categoria.posicoes];
+  let proxima = serie.length ? serie[serie.length - 1] : 0;
+  while (serie.length && serie.length < quantidade && categoria.intervalo > 0) {
+    proxima += categoria.intervalo;
+    serie.push(proxima);
+  }
+  const passo =
+    categoria.percentual > 0 ? 100 / categoria.percentual : total / quantidade;
+  // O arredondamento para cima não pode tropeçar no erro da vírgula flutuante.
+  for (let k = serie.length; k < quantidade; k += 1)
+    serie.push(Math.ceil((k + 0.5) * passo - 1e-9));
+  return serie.slice(0, quantidade);
+}
+
+function livreMaisProxima(slots, alvo) {
+  const inicio = Math.min(Math.max(alvo, 0), slots.length - 1);
+  for (let indice = inicio; indice >= 0; indice -= 1)
+    if (slots[indice] === null) return indice;
+  for (let indice = inicio + 1; indice < slots.length; indice += 1)
+    if (slots[indice] === null) return indice;
+  return -1;
+}
+
+function sequenciaDoMgi(quadro, modelo, total) {
+  const slots = new Array(total).fill(null);
+  categoriasDeReserva(modelo)
+    .filter((categoria) => (quadro[categoria.id] || 0) > 0)
+    .sort(
+      (a, b) =>
+        Number(b.posicoes.length > 0) - Number(a.posicoes.length > 0) ||
+        b.percentual - a.percentual ||
+        a.ordem - b.ordem,
+    )
+    .forEach((categoria) => {
+      serieDoMgi(categoria, quadro[categoria.id], total).forEach((posicao) => {
+        const indice = livreMaisProxima(slots, posicao - 1);
+        if (indice >= 0) slots[indice] = categoria.id;
+      });
+    });
+  const ampla = categoriaDaAmpla(modelo);
+  return slots.map((id) => id ?? ampla.id);
+}
+
 /**
  * O ciclo de categorias, do 1º ao último chamado imediato.
  *
@@ -288,9 +352,11 @@ function sequenciaPorPosicao(quadro, modelo, total) {
 export function sequenciaDeConvocacao(quadro, modelo) {
   const total = totalDoQuadro(quadro);
   if (!total) return [];
-  return modelo.distribuicao === "posicao_fixa"
-    ? sequenciaPorPosicao(quadro, modelo, total)
-    : sequenciaProporcional(quadro, modelo, total);
+  if (modelo.distribuicao === "posicao_fixa")
+    return sequenciaPorPosicao(quadro, modelo, total);
+  if (modelo.distribuicao === "serie_mgi")
+    return sequenciaDoMgi(quadro, modelo, total);
+  return sequenciaProporcional(quadro, modelo, total);
 }
 
 /**

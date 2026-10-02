@@ -7,10 +7,13 @@ import {
   normalizarModelo,
   normalizarTexto,
 } from "../src/lib/modelo-de-convocacao.js";
+import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
 
-const padrao = normalizarModelo(modeloDeReferencia("lei-15142-2025"));
+const padrao = normalizarModelo(LEI_15142_ESPALHADA);
 const comTrans = normalizarModelo(modeloDeReferencia("portaria-5801-trans"));
-const etnicoRacial = normalizarModelo(modeloDeReferencia("etnico-racial-posicoes"));
+const etnicoRacial = normalizarModelo(
+  modeloDeReferencia("etnico-racial-posicoes"),
+);
 
 const reservas = (valor, modelo = padrao) =>
   lerModalidade(valor, modelo).reservas;

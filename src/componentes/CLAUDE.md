@@ -79,7 +79,9 @@ lista-aprovados/             a página #page-approved e os seus modais
                              (abas: novo candidato · candidato já aprovado, a decisão judicial)
   modal-listas-do-edital.jsx XLSX da lista (importar, situação, remover) + aba de convocação
   formulario-de-convocacao.jsx  modelo de regras e vagas imediatas do edital (rascunho local)
-  editor-de-modelo.jsx       categorias, percentuais, arredondamento e cascata
+  editor-de-modelo.jsx       cartões dos modelos prontos, categorias (percentual e cascata por fora;
+                             arredondamento, limite, mínimo, posições e termos em "Ajustar regras")
+  previa-da-convocacao.jsx   "Como fica a ordem de chamada": quadro e posição de cada cota para N vagas
   partes.jsx                 KPI, selo de status, ação de status, ícone de PDF dos anexos, paginação, CampoEditavel, e o carregamento
                              sem tela cheia: LinhasEsqueleto, ErroAoCarregar, BotaoDeAcao (estado no botão)
 ```

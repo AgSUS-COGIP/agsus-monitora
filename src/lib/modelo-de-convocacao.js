@@ -61,6 +61,12 @@ export const DISTRIBUICOES = Object.freeze([
       "Com 4 vagas de ampla e 2 de pretos e pardos, a ordem sai AC, PP, AC, AC, PP, AC — as cotas entram intercaladas em vez de ficarem no fim. É o que a maioria dos editais quer dizer por “alternância e proporcionalidade”, sem publicar a sequência.",
   },
   {
+    id: "serie_mgi",
+    rotulo: "Seguir o simulador do MGI",
+    ajuda:
+      "PCD na 5ª, 21ª, 41ª, 61ª, 81ª… (de 20 em 20, como fixou o STF). As outras cotas a cada 100 ÷ percentual posições, começando no meio: pretos e pardos (25%) na 2ª, 6ª, 10ª…; indígenas (3%) na 17ª, 50ª e 84ª; quilombolas (2%) na 25ª e 75ª. Posição já ocupada fica com a livre anterior. É a ordem do simulador de reserva de vagas do MGI (Lei 15.142/2025 e Decreto 12.536/2025).",
+  },
+  {
     id: "posicao_fixa",
     rotulo: "Usar as posições que o edital publica",
     ajuda:
@@ -84,19 +90,19 @@ export const COTAS_MULTIPLAS = Object.freeze([
     id: "maior_percentual",
     rotulo: "Não — vale só a cota de maior percentual",
     ajuda:
-      "ANA declarou pretos e pardos (25%) e quilombola (2%). Ela disputa só como pretos e pardos, e a vaga reservada a quilombolas fica para a próxima quilombola da lista. Percentuais iguais decidem pela melhor posição relativa. É o que dizem 96/2025, 97/2025, 30/2026, 93/2026 e o edital da FGV.",
+      "Maria declarou pretos e pardos (25%) e quilombola (2%). Ela disputa só como pretos e pardos, e a vaga reservada a quilombolas fica para a próxima quilombola da lista. Percentuais iguais decidem pela melhor posição relativa. É o que dizem 96/2025, 97/2025, 30/2026, 93/2026, 108/2026, 112/2026, 117/2026 e o edital da FGV.",
   },
   {
     id: "acumula_com_acumulavel",
     rotulo: "Só quando uma delas for a cota acumulável",
     ajuda:
-      "ANA declarou PCD e indígena, e PCD está marcada como acumulável numa das fichas abaixo: então ela guarda as DUAS reservas e ocupa a que vier primeiro na convocação. Quem declara duas cotas sem que nenhuma seja a acumulável continua valendo só a de maior percentual. É a regra do 91/2026, item 5.13.",
+      "Maria declarou PCD e indígena, e PCD está marcada como acumulável numa das fichas abaixo: então ela guarda as DUAS reservas e ocupa a que vier primeiro na convocação. Quem declara duas cotas sem que nenhuma seja a acumulável continua valendo só a de maior percentual. É a regra do 91/2026, item 5.13.",
   },
   {
     id: "todas",
     rotulo: "Sim — qualquer cota que tenha declarado",
     ajuda:
-      "ANA declarou pretos e pardos e quilombola, e ocupa a vaga que vier primeiro, de qualquer das duas. Nenhum dos oito editais lidos faz assim; existe como escape para um edital futuro.",
+      "Maria declarou pretos e pardos e quilombola, e ocupa a vaga que vier primeiro, de qualquer das duas. Nenhum dos oito editais lidos faz assim; existe como escape para um edital futuro.",
   },
 ]);
 
@@ -341,8 +347,9 @@ export function lerModalidade(modalidade, modelo) {
 /*
   CATÁLOGO DE REFERÊNCIA
 
-  Os três conjuntos de regras que os oito editais lidos usam, prontos para
-  servirem de ponto de partida a um modelo novo. Ficam no código, e não no
+  Os conjuntos de regras dos editais lidos, prontos para servirem de ponto de
+  partida a um modelo novo. A `descricao` é o que a tela mostra no cartão de
+  cada um, em linguagem de quem lê o edital. Ficam no código, e não no
   banco, de propósito: são a leitura de editais publicados, e mudá-los é dizer
   que se leu o edital de outra forma — coisa que merece revisão, não um campo de
   formulário. O que o gestor cria a partir daqui vira linha no banco e é dele.
@@ -354,10 +361,322 @@ export function lerModalidade(modalidade, modelo) {
 */
 export const MODELOS_DE_REFERENCIA = Object.freeze([
   Object.freeze({
-    // Regra dos editais 96/2025, 30/2026, 93/2026, Cebraspe 2026 e FGV.
-    id: "lei-15142-2025",
-    nome: "Lei 15.142/2025 — 25/3/2 e 5% PCD",
-    distribuicao: "proporcional",
+    /*
+      A ordem do simulador de reserva de vagas do MGI. Confere posição por
+      posição com a simulação de 100 vagas que ele publica. Percentuais da Lei
+      15.142/2025; PCD a 5% arredondando sempre para cima (Decreto 9.508/2018),
+      sem passar de 20% das vagas.
+
+      Ordem da PCD: 5ª, 21ª, 41ª, 61ª, 81ª… de 20 em 20, a fixada pelo STF para
+      os parâmetros federais (MS 31.715/DF, MS 30.861/DF, MS 26.310/DF e RMS
+      27.710/DF). Pela conta do percentual, a 1ª indígena é sempre a 17ª e a
+      1ª quilombola, a 25ª — e, com a fração de 0,5 subindo, a 1ª vaga de cada
+      uma só existe a partir de 17 e de 25 vagas.
+    */
+    id: "mgi-simulador",
+    nome: "Lei 15.142/2025 (simulador do MGI) — 25/3/2 e 5% PCD",
+    descricao:
+      "A regra comum: 25% pretos e pardos, 3% indígenas, 2% quilombolas e 5% PCD, na ordem do simulador do MGI (PCD na 5ª, 21ª, 41ª…; indígenas na 17ª; quilombolas na 25ª). Para a FGV, ajuste os mínimos: 2 vagas na cota racial e 5 na PCD.",
+    distribuicao: "serie_mgi",
+    cotaMultipla: "maior_percentual",
+    categorias: [
+      {
+        id: "ampla",
+        rotulo: "Ampla concorrência",
+        sigla: "AC",
+        ampla: true,
+        termos: ["ampla*", "geral*", "ac", "livre*", "universal*"],
+      },
+      {
+        id: "pretos_pardos",
+        rotulo: "Pretos e pardos",
+        sigla: "PP",
+        percentual: 25,
+        termos: ["preto*", "pardo*", "negro*", "negra*", "afro*", "pp", "ppi"],
+        cascata: [],
+      },
+      {
+        id: "indigena",
+        rotulo: "Indígena",
+        sigla: "IND",
+        percentual: 3,
+        termos: ["indigena*", "indio*", "ppi"],
+        cascata: ["quilombola", "pretos_pardos"],
+      },
+      {
+        id: "quilombola",
+        rotulo: "Quilombola",
+        sigla: "QUI",
+        percentual: 2,
+        termos: ["quilombol*", "quilombo*"],
+        cascata: ["indigena", "pretos_pardos"],
+      },
+      {
+        id: "pcd",
+        rotulo: "Pessoa com deficiência",
+        sigla: "PCD",
+        percentual: 5,
+        arredondamento: "sempre_acima",
+        teto: 20,
+        termos: ["pcd*", "deficien*", "pne*"],
+        posicoes: [5, 21],
+        intervalo: 20,
+        cascata: [],
+      },
+    ],
+  }),
+  Object.freeze({
+    /*
+      Saúde Indígena 2026, COM troca entre as cotas: editais 36, 37, 38, 71,
+      72, 74, 75, 76, 79, 81, 82 e 83/2026, e 101 a 103, 105, 107 a 112 e
+      117/2026 (lidos em 02/10/2026). Os de 101 em diante citam o art. 21 do
+      Decreto 12.536/2025 no 5.13; os de 36 a 83, não — a regra de quem declara
+      duas cotas é a mesma. Itens dos de 108/2026 (DSEI Alto Rio Negro),
+      112/2026 (DSEI Alto Rio Purus) e 117/2026 (DSEI Xingu):
+
+        4.1   PCD 5% por função e localidade;
+        4.1.1 PCD vazia vai para a AMPLA (no 91/2026, ia para os indígenas);
+        4.2   PCD arredonda sempre para cima, sem passar de 20% das vagas;
+        5.2   pretos e pardos 25%, indígenas 3%, quilombolas 2%;
+        5.2.1 quilombola vazia → indígena; 5.2.2 indígena vazia → quilombola;
+        5.2.3 e 5.2.5 sem as duas → pretos e pardos e, por último, ampla
+              (art. 3º, § 3º, do Decreto 12.536/2025);
+        5.2.4 pretos e pardos vazia → ampla;
+        5.3   reserva só com 2 ou mais vagas; 5.3.2 fração de 0,5 sobe;
+        5.13  concorre em quantas reservas declarar (art. 21 do Decreto
+              12.536/2025), qualquer combinação; 5.13.1 é classificado numa só
+              — a de maior percentual, e no empate a de melhor posição.
+
+      Os editais não publicam a ordem de chamada; segue a do simulador do MGI,
+      como o 91/2026.
+    */
+    id: "saude-indigena-2026",
+    nome: "Saúde Indígena 2026 — com troca entre cotas",
+    descricao:
+      "Editais 36, 37, 38, 71, 72, 74, 75, 76, 79, 81, 82, 83, 101, 102, 103, 105, 107, 108, 109, 110, 111, 112 e 117/2026: 25/3/2 e 5% PCD; quilombola e indígena se cobrem e depois vão para pretos e pardos; PCD vaga vai para a ampla; reserva só com 2 ou mais vagas; quem declara duas cotas fica na de maior percentual. Ordem do MGI.",
+    distribuicao: "serie_mgi",
+    cotaMultipla: "maior_percentual",
+    categorias: [
+      {
+        id: "ampla",
+        rotulo: "Ampla concorrência",
+        sigla: "AC",
+        ampla: true,
+        termos: ["ampla*", "geral*", "ac", "livre*", "universal*"],
+      },
+      {
+        id: "pretos_pardos",
+        rotulo: "Pretos e pardos",
+        sigla: "PP",
+        percentual: 25,
+        minimo: 2,
+        termos: ["preto*", "pardo*", "negro*", "negra*", "afro*", "pp", "ppi"],
+        cascata: [],
+      },
+      {
+        id: "indigena",
+        rotulo: "Indígena",
+        sigla: "IND",
+        percentual: 3,
+        minimo: 2,
+        termos: ["indigena*", "indio*", "ppi"],
+        cascata: ["quilombola", "pretos_pardos"],
+      },
+      {
+        id: "quilombola",
+        rotulo: "Quilombola",
+        sigla: "QUI",
+        percentual: 2,
+        minimo: 2,
+        termos: ["quilombol*", "quilombo*"],
+        cascata: ["indigena", "pretos_pardos"],
+      },
+      {
+        id: "pcd",
+        rotulo: "Pessoa com deficiência",
+        sigla: "PCD",
+        percentual: 5,
+        arredondamento: "sempre_acima",
+        teto: 20,
+        minimo: 2,
+        termos: ["pcd*", "deficien*", "pne*"],
+        posicoes: [5, 21],
+        intervalo: 20,
+        cascata: [],
+      },
+    ],
+  }),
+  Object.freeze({
+    /*
+      Saúde Indígena, pelo edital 91/2026 (DSEI Alagoas e Sergipe). Têm a
+      mesma regra os editais 88, 92, 94, 95, 97 e 100/2026 (o 94/2026 escreve o
+      5.13 de outro jeito: PCD com uma cota racial, nunca duas raciais, e ocupa
+      uma vaga só):
+
+        4.1   PCD 5% por função e localidade;
+        4.1.1 PCD vazia vai para os INDÍGENAS (e não direto para a ampla);
+        4.2   PCD arredonda sempre para cima, sem passar de 20% das vagas;
+        5.2   pretos e pardos 25%, indígenas 3%, quilombolas 2%;
+        5.2.1 quilombola vazia → indígena; 5.2.2 indígena vazia → quilombola;
+        5.2.3 sem as duas → pretos e pardos e, por último, ampla;
+        5.2.4 pretos e pardos vazia → ampla;
+        5.3   reserva só com 2 ou mais vagas; 5.3.2 fração de 0,5 sobe;
+        5.13  duas reservas ao mesmo tempo só se uma for PCD.
+
+      O edital não publica a ordem de chamada; segue a do simulador do MGI, que
+      é a da Lei 15.142/2025 e do Decreto 12.536/2025 que o 5.1 cita. Fica de
+      fora o 5.2.5 (ampla sem aprovados volta para as cotas): a convocação
+      daqui só reverte de cota para ampla.
+    */
+    id: "saude-indigena-91-2026",
+    nome: "Saúde Indígena 2026 — PCD vaga vai para indígenas",
+    descricao:
+      "Editais 88, 91, 92, 94, 95, 97 e 100/2026. Igual ao “com troca entre cotas”, com duas diferenças: PCD vaga vai para os indígenas, e só a PCD soma com outra cota. Ordem do MGI.",
+    distribuicao: "serie_mgi",
+    cotaMultipla: "acumula_com_acumulavel",
+    categorias: [
+      {
+        id: "ampla",
+        rotulo: "Ampla concorrência",
+        sigla: "AC",
+        ampla: true,
+        termos: ["ampla*", "geral*", "ac", "livre*", "universal*"],
+      },
+      {
+        id: "pretos_pardos",
+        rotulo: "Pretos e pardos",
+        sigla: "PP",
+        percentual: 25,
+        minimo: 2,
+        termos: ["preto*", "pardo*", "negro*", "negra*", "afro*", "pp", "ppi"],
+        cascata: [],
+      },
+      {
+        id: "indigena",
+        rotulo: "Indígena",
+        sigla: "IND",
+        percentual: 3,
+        minimo: 2,
+        termos: ["indigena*", "indio*", "ppi"],
+        cascata: ["quilombola", "pretos_pardos"],
+      },
+      {
+        id: "quilombola",
+        rotulo: "Quilombola",
+        sigla: "QUI",
+        percentual: 2,
+        minimo: 2,
+        termos: ["quilombol*", "quilombo*"],
+        cascata: ["indigena", "pretos_pardos"],
+      },
+      {
+        id: "pcd",
+        rotulo: "Pessoa com deficiência",
+        sigla: "PCD",
+        percentual: 5,
+        arredondamento: "sempre_acima",
+        teto: 20,
+        minimo: 2,
+        acumulavel: true,
+        termos: ["pcd*", "deficien*", "pne*"],
+        posicoes: [5, 21],
+        intervalo: 20,
+        cascata: ["indigena"],
+      },
+    ],
+  }),
+  Object.freeze({
+    /*
+      Saúde Indígena 2026, SEM troca entre as cotas: editais 34/2026, do 39 ao
+      60/2026 e do 63 ao 70/2026 (sanitaristas e DSEI, abril de 2026; o 61 e o
+      62/2026 não estavam na lista lida em 02/10/2026). Mesmas regras do modelo
+      "com troca", menos as cascatas — a reserva não preenchida vai direto
+      para a ampla (5.10), seja de quilombola, indígena, pretos e pardos ou PCD.
+
+        4.1   PCD 5%; 4.2 arredonda sempre para cima, até 20% das vagas;
+        5.2   pretos e pardos 25%, indígenas 3%, quilombolas 2%;
+        5.4   reserva só com 2 ou mais vagas; fração de 0,5 sobe;
+        5.13  quem declara duas cotas fica na de maior percentual; no empate,
+              na de melhor posição.
+    */
+    id: "saude-indigena-2026-sem-troca",
+    nome: "Saúde Indígena 2026 — sem troca entre cotas",
+    descricao:
+      "Editais 34/2026, do 39 ao 60/2026 e do 63 ao 70/2026: 25/3/2 e 5% PCD; vaga de cota sem candidato vai direto para a ampla; reserva só com 2 ou mais vagas; quem declara duas cotas fica na de maior percentual. Ordem do MGI.",
+    distribuicao: "serie_mgi",
+    cotaMultipla: "maior_percentual",
+    categorias: [
+      {
+        id: "ampla",
+        rotulo: "Ampla concorrência",
+        sigla: "AC",
+        ampla: true,
+        termos: ["ampla*", "geral*", "ac", "livre*", "universal*"],
+      },
+      {
+        id: "pretos_pardos",
+        rotulo: "Pretos e pardos",
+        sigla: "PP",
+        percentual: 25,
+        minimo: 2,
+        termos: ["preto*", "pardo*", "negro*", "negra*", "afro*", "pp", "ppi"],
+        cascata: [],
+      },
+      {
+        id: "indigena",
+        rotulo: "Indígena",
+        sigla: "IND",
+        percentual: 3,
+        minimo: 2,
+        termos: ["indigena*", "indio*", "ppi"],
+        cascata: [],
+      },
+      {
+        id: "quilombola",
+        rotulo: "Quilombola",
+        sigla: "QUI",
+        percentual: 2,
+        minimo: 2,
+        termos: ["quilombol*", "quilombo*"],
+        cascata: [],
+      },
+      {
+        id: "pcd",
+        rotulo: "Pessoa com deficiência",
+        sigla: "PCD",
+        percentual: 5,
+        arredondamento: "sempre_acima",
+        teto: 20,
+        minimo: 2,
+        termos: ["pcd*", "deficien*", "pne*"],
+        posicoes: [5, 21],
+        intervalo: 20,
+        cascata: [],
+      },
+    ],
+  }),
+  Object.freeze({
+    /*
+      Lei 15.142/2025 no padrão Cebraspe: editais 96/2025, 04/2026, 30/2026 e
+      93/2026.
+
+        5.1.1   PCD 5%; 5.1.1.1 (ou 5.1.2) a fração de 0,5 sobe também na PCD,
+                e não há mínimo de vagas nem limite de 20%;
+        5.2.1   (ou 5.6.1) 25% negros, 3% indígenas, 2% quilombolas;
+        5.2.5.1 quilombola vazia → indígena; 5.2.5.2 indígena → quilombola;
+        5.2.5.3 sem as duas → negros e, por último, ampla;
+        5.10.4  (93/2026) PCD vazia → ampla;
+        5.2.3.2 quem declara duas cotas fica na de maior percentual; no empate,
+                na de melhor posição relativa.
+
+      O 5.9.1 manda a "alternância e proporcionalidade" sem publicar a ordem;
+      segue a do simulador do MGI.
+    */
+    id: "cebraspe-lei-15142",
+    nome: "Lei 15.142/2025 (padrão Cebraspe) — 25/3/2 e 5% PCD",
+    descricao:
+      "Editais 96/2025, 04/2026, 30/2026 e 93/2026: 25/3/2 e 5% PCD, com a fração de 0,5 subindo também na PCD e sem mínimo de vagas; quilombola e indígena se cobrem. Ordem do MGI.",
+    distribuicao: "serie_mgi",
     cotaMultipla: "maior_percentual",
     categorias: [
       {
@@ -397,6 +716,8 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
         sigla: "PCD",
         percentual: 5,
         termos: ["pcd*", "deficien*", "pne*"],
+        posicoes: [5, 21],
+        intervalo: 20,
         cascata: [],
       },
     ],
@@ -405,6 +726,8 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
     // Regra do edital 97/2025, que acrescenta a reserva para candidatos trans.
     id: "portaria-5801-trans",
     nome: "Portaria GM/MS 5.801/2024 — 30/5/5/5 e 10% PCD",
+    descricao:
+      "Edital 97/2025: pretos e pardos, indígenas, quilombolas e pessoas trans, e 10% PCD.",
     distribuicao: "proporcional",
     cotaMultipla: "maior_percentual",
     categorias: [
@@ -459,85 +782,31 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
   }),
   Object.freeze({
     /*
-      Edital da FGV. Mesmos percentuais da Lei 15.142/2025, mas com dois
-      detalhes que nenhum outro tem juntos:
+      Reserva ÚNICA de 30%, sem dividir entre as cotas (lidos em 02/10/2026):
+      os editais DSEI de 2025 — 11 a 15, 39, 53, 64 a 66, 68, 70 a 74, 76,
+      78 a 81, 83, 84, 88 a 90, 92, 94 e 95/2025 — e 06, 14, 18, 22, 23 e
+      28/2026; e os de Projetos 29, 62 e 63/2025 e 05/2026.
 
-        6.4 — o PCD arredonda SEMPRE para cima (Decreto 9.508, §3), enquanto as
-              cotas raciais seguem a regra dos 0,5 (7.1.1);
-        6.5 — só há reserva de PCD em cargo com CINCO ou mais vagas, e
-        7.1.3 — só há reserva racial em cargo com DUAS ou mais.
+        4.1  PCD 5%; 4.2 só com 2 vagas ou mais; 4.3 arredonda sempre para cima
+             (Decreto 9.508, art. 1º, § 3º); 4.9 PCD vazia → ampla;
+        5.1  30% numa lista só, sem a repartição 25/3/2;
+        5.3  só com 2 vagas ou mais; 5.3.2 fração de 0,5 sobe;
+        5.8.3 a vaga não preenchida é do próximo da lista da reserva;
+        5.9  sem ninguém na lista → ampla.
 
-      É o edital que obrigou o mínimo a ser por categoria: numa vaga de três,
-      a reserva racial vale e a de PCD não.
-
-      Sem cascata: o 7.13 manda a reserva vazia direto para a ampla.
-    */
-    id: "fgv-minimos-por-cargo",
-    nome: "FGV — 25/3/2 e 5% PCD, com mínimos por cargo",
-    distribuicao: "proporcional",
-    cotaMultipla: "maior_percentual",
-    categorias: [
-      {
-        id: "ampla",
-        rotulo: "Ampla concorrência",
-        sigla: "AC",
-        ampla: true,
-        termos: ["ampla*", "geral*", "ac", "livre*", "universal*"],
-      },
-      {
-        id: "pretos_pardos",
-        rotulo: "Pessoas negras",
-        sigla: "PP",
-        percentual: 25,
-        minimo: 2,
-        termos: ["preto*", "pardo*", "negro*", "negra*", "afro*", "pp"],
-        cascata: [],
-      },
-      {
-        id: "indigena",
-        rotulo: "Indígena",
-        sigla: "IND",
-        percentual: 3,
-        minimo: 2,
-        termos: ["indigena*", "indio*"],
-        cascata: [],
-      },
-      {
-        id: "quilombola",
-        rotulo: "Quilombola",
-        sigla: "QUI",
-        percentual: 2,
-        minimo: 2,
-        termos: ["quilombol*", "quilombo*"],
-        cascata: [],
-      },
-      {
-        id: "pcd",
-        rotulo: "Pessoa com deficiência",
-        sigla: "PCD",
-        percentual: 5,
-        minimo: 5,
-        arredondamento: "sempre_acima",
-        termos: ["pcd*", "deficien*", "pne*"],
-        cascata: [],
-      },
-    ],
-  }),
-  Object.freeze({
-    /*
-      Reserva ÚNICA de 30%, sem dividir entre as cotas: é o que fazem o 65/2025
-      (DSEI Mato Grosso do Sul), o 05/2026 (MFC) e o 63/2025. A Lei 15.142/2025
-      é a mesma dos outros, mas estes editais não publicam a repartição 25/3/2 —
-      abrem uma lista única e chamam por ela.
-
-      O 65/2025 inclui indígenas na reserva; o 05/2026 e o 63/2025 falam só de
-      pretos, pardos e quilombolas. Para esses dois, basta apagar o termo
-      `indigena*` da categoria. Deixá-lo por omissão é o lado seguro: se ninguém
-      se declarou indígena naquele edital, o termo não acende nada.
+      Variações, para ajustar no modelo copiado:
+        - 28/2026: PCD só com 5 vagas ou mais ("em atenção ao teto de 20%");
+        - 05/2026, 29/2025 e 63/2025 falam só de pretos, pardos e quilombolas
+          (apagar `indigena*` e `indio*`) e não têm mínimo de vagas; no
+          05/2026, a PCD arredonda pela regra do 0,5.
+      Deixar indígenas por omissão é o lado seguro: se ninguém se declarou
+      indígena naquele edital, o termo não acende nada.
     */
     id: "lei-15142-reserva-unica",
     nome: "Lei 15.142/2025 — reserva única de 30% e 5% PCD",
-    distribuicao: "proporcional",
+    descricao:
+      "Uma lista só de 30% para pretos, pardos, indígenas e quilombolas, e 5% PCD arredondando para cima; cada reserva só com 2 ou mais vagas. Editais DSEI de 2025, 06 a 28/2026 e Projetos (29, 62 e 63/2025, 05/2026). Ordem do MGI.",
+    distribuicao: "serie_mgi",
     cotaMultipla: "maior_percentual",
     categorias: [
       {
@@ -552,6 +821,7 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
         rotulo: "Pretos, pardos, quilombolas e indígenas",
         sigla: "PPIQ",
         percentual: 30,
+        minimo: 2,
         termos: [
           "preto*",
           "pardo*",
@@ -572,7 +842,11 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
         rotulo: "Pessoa com deficiência",
         sigla: "PCD",
         percentual: 5,
+        arredondamento: "sempre_acima",
+        minimo: 2,
         termos: ["pcd*", "deficien*", "pne*"],
+        posicoes: [5, 21],
+        intervalo: 20,
         cascata: [],
       },
     ],
@@ -584,6 +858,8 @@ export const MODELOS_DE_REFERENCIA = Object.freeze([
     */
     id: "etnico-racial-posicoes",
     nome: "Grupo étnico-racial por posições — 20% e 5% PCD",
+    descricao:
+      "Edital FCC 125: cota étnico-racial de 20% na 3ª, 8ª, 13ª… e PCD na 5ª, 21ª, 41ª…, como o edital publica.",
     distribuicao: "posicao_fixa",
     cotaMultipla: "maior_percentual",
     categorias: [
