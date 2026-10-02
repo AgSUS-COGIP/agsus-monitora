@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDosAcessos } from "../../src/componentes/acessos/estado.js";
+import { criarEstadoDosAcessos } from "../../src/modulos/acessos/estado.js";
 
 /*
   Filtro, busca e página disparam cargas sem esperar a anterior. Antes, a

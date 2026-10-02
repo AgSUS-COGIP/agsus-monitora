@@ -1,11 +1,9 @@
 import { useState, useSyncExternalStore } from "react";
 import { gruposAtribuiveis } from "../../lib/teto-de-acessos.js";
 import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
-import { Modal } from "../modal.jsx";
-import { MultiSelectBusca } from "../multi-select-busca.jsx";
-import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../ui/index.js";
-import { CampoMotivo, motivoValido } from "./partes.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { BotaoDeAcao, Campo, Modal } from "../../ui/index.js";
+import { CabecalhoDaGaveta, CampoMotivo, motivoValido } from "./partes.jsx";
 import { AcoesDoConvite } from "./convite.jsx";
 
 /*
@@ -52,12 +50,7 @@ export function ModalAdicionarPessoa({ estado }) {
   };
   const valido =
     !erros.email && !erros.nome && !erros.areas && motivoValido(motivo);
-  const erro = (campo) =>
-    tentou && erros[campo] ? (
-      <small className="acessos-erro">
-        <Icone nome="circle-alert" tamanho={14} /> {erros[campo]}
-      </small>
-    ) : null;
+  const erro = (campo) => (tentou && erros[campo]) || undefined;
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -88,28 +81,19 @@ export function ModalAdicionarPessoa({ estado }) {
         cartaoClassName="acessos-modal-cartao"
         aoFechar={estado.fecharAdicionar}
       >
-        <div className="acessos-gaveta-cabecalho">
-          <div>
-            <h3 id="acessosAdicionarTitulo">Convite pronto</h3>
-            <p>
-              {convite.reativada
-                ? `O acesso de ${convite.nome} foi reativado.`
-                : `${convite.nome} já pode entrar.`}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="btn icon outline"
-            aria-label="Fechar"
-            title="Fechar"
-            onClick={estado.fecharAdicionar}
-          >
-            <Icone nome="x" tamanho={16} />
-          </button>
-        </div>
+        <CabecalhoDaGaveta
+          tituloId="acessosAdicionarTitulo"
+          titulo="Convite pronto"
+          subtitulo={
+            convite.reativada
+              ? `O acesso de ${convite.nome} foi reativado.`
+              : `${convite.nome} já pode entrar.`
+          }
+          aoFechar={estado.fecharAdicionar}
+        />
         <div className="acessos-modal-corpo">
           <AcoesDoConvite nome={convite.nome} email={convite.email} />
-          <div className="acessos-acoes acessos-modal-rodape">
+          <div className="ui-acoes acessos-modal-rodape">
             <button
               type="button"
               className="btn primary"
@@ -133,23 +117,13 @@ export function ModalAdicionarPessoa({ estado }) {
       aoFechar={estado.fecharAdicionar}
       fecharAoClicarFora={false}
     >
-      <div className="acessos-gaveta-cabecalho">
-        <div>
-          <h3 id="acessosAdicionarTitulo">Adicionar pessoa</h3>
-        </div>
-        <button
-          type="button"
-          className="btn icon outline"
-          aria-label="Fechar"
-          title="Fechar"
-          onClick={estado.fecharAdicionar}
-        >
-          <Icone nome="x" tamanho={16} />
-        </button>
-      </div>
+      <CabecalhoDaGaveta
+        tituloId="acessosAdicionarTitulo"
+        titulo="Adicionar pessoa"
+        aoFechar={estado.fecharAdicionar}
+      />
       <form className="acessos-modal-corpo" onSubmit={salvar} noValidate>
-        <div className="acessos-campo">
-          <label htmlFor="acessosAdicionarEmail">E-mail institucional</label>
+        <Campo rotulo="E-mail institucional" erro={erro("email")}>
           <input
             id="acessosAdicionarEmail"
             type="email"
@@ -157,24 +131,18 @@ export function ModalAdicionarPessoa({ estado }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="nome@agenciasus.org.br"
-            aria-invalid={(tentou && Boolean(erros.email)) || undefined}
           />
-          {erro("email")}
-        </div>
-        <div className="acessos-campo">
-          <label htmlFor="acessosAdicionarNome">Nome</label>
+        </Campo>
+        <Campo rotulo="Nome" erro={erro("nome")}>
           <input
             id="acessosAdicionarNome"
             value={nome}
             maxLength={120}
             onChange={(e) => setNome(e.target.value)}
-            aria-invalid={(tentou && Boolean(erros.nome)) || undefined}
           />
-          {erro("nome")}
-        </div>
+        </Campo>
         <div className="acessos-grade-campos">
-          <div className="acessos-campo">
-            <label htmlFor="acessosAdicionarGrupo">Grupo</label>
+          <Campo rotulo="Grupo">
             <select
               id="acessosAdicionarGrupo"
               value={grupo}
@@ -186,10 +154,9 @@ export function ModalAdicionarPessoa({ estado }) {
                 </option>
               ))}
             </select>
-          </div>
+          </Campo>
           {!adminGlobal ? (
-            <div className="acessos-campo">
-              <label htmlFor="acessosAdicionarCoordenacao">Coordenação</label>
+            <Campo rotulo="Coordenação">
               <select
                 id="acessosAdicionarCoordenacao"
                 value={coordenacao}
@@ -210,12 +177,15 @@ export function ModalAdicionarPessoa({ estado }) {
                   </optgroup>
                 ))}
               </select>
-            </div>
+            </Campo>
           ) : null}
         </div>
         {semCoordenacao ? (
-          <div className="acessos-campo">
-            <label htmlFor="acessosAdicionarAreas">Áreas que a pessoa vê</label>
+          <Campo
+            rotulo="Áreas que a pessoa vê"
+            erro={erro("areas")}
+            idDoControle="acessosAdicionarAreas"
+          >
             <MultiSelectBusca
               id="acessosAdicionarAreas"
               opcoes={areas.map((a) => ({ value: a.id, label: a.titulo }))}
@@ -223,8 +193,7 @@ export function ModalAdicionarPessoa({ estado }) {
               placeholder="Escolha as áreas"
               aoMudar={setAreasEscolhidas}
             />
-            {erro("areas")}
-          </div>
+          </Campo>
         ) : null}
         <CampoMotivo
           id="acessosAdicionarMotivo"
@@ -232,10 +201,10 @@ export function ModalAdicionarPessoa({ estado }) {
           aoMudar={setMotivo}
           erro={tentou && !motivoValido(motivo)}
         />
-        <div className="acessos-acoes acessos-modal-rodape">
+        <div className="ui-acoes acessos-modal-rodape">
           <button
             type="button"
-            className="btn outline acessos-ghost"
+            className="btn ghost"
             onClick={estado.fecharAdicionar}
           >
             Cancelar

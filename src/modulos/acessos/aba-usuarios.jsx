@@ -24,15 +24,20 @@ import {
   valorDoSelect,
 } from "../../lib/teto-de-acessos.js";
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
-import { BotaoDeAcao, LinhasEsqueleto } from "../../ui/index.js";
-import { Icone } from "../icone.jsx";
+import {
+  Aviso,
+  BotaoDeAcao,
+  classes,
+  LinhasEsqueleto,
+  Segmentado,
+  Selo,
+} from "../../ui/index.js";
+import { Icone } from "../../componentes/icone.jsx";
 import {
   CampoMotivo,
-  ControleSegmentado,
   OpcoesDeCoordenacao,
   OpcoesDoGrupo,
   OpcoesDoModulo,
-  classes,
   iniciais,
   motivoValido,
 } from "./partes.jsx";
@@ -173,9 +178,9 @@ function LinhaSimples({ estado, matriz, usuario, rascunho, gruposPorCodigo }) {
       </td>
       <td>
         {situacao.tipo === "convite" ? (
-          <span className="acessos-selo acessos-selo-convite">
+          <Selo tom="pendente" className="acessos-selo-convite">
             {situacao.rotulo}
-          </span>
+          </Selo>
         ) : (
           <span className="acessos-secundario">{situacao.rotulo}</span>
         )}
@@ -338,7 +343,7 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
   const semArea = pessoasSemAreaNoRascunho(rascunho, matriz);
   return (
     <form
-      className="acessos-salvar"
+      className="ui-barra-de-salvar acessos-salvar"
       onSubmit={(evento) => {
         evento.preventDefault();
         setTentou(true);
@@ -367,8 +372,7 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
         </ul>
       </details>
       {semArea.length ? (
-        <div className="alert warn acessos-sem-area" role="alert">
-          <Icone nome="triangle-alert" tamanho={16} />
+        <Aviso tom="warning" papel="alert" className="acessos-sem-area">
           <span>
             {semArea.map((u) => u.nome || u.email).join(", ")}{" "}
             {semArea.length === 1 ? "ficaria" : "ficariam"} sem nenhuma área e
@@ -377,12 +381,12 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
           </span>
           <button
             type="button"
-            className="btn outline acessos-ghost"
+            className="btn ghost"
             onClick={() => estado.abrirGaveta(semArea[0].id)}
           >
             Marcar área
           </button>
-        </div>
+        </Aviso>
       ) : null}
       <CampoMotivo
         id="acessosMotivo"
@@ -390,12 +394,8 @@ function BarraDeSalvar({ estado, rascunho, matriz }) {
         aoMudar={setMotivo}
         erro={tentou && !motivoValido(motivo)}
       />
-      <div className="acessos-acoes">
-        <button
-          type="button"
-          className="btn outline acessos-ghost"
-          onClick={estado.descartar}
-        >
+      <div className="ui-acoes">
+        <button type="button" className="btn ghost" onClick={estado.descartar}>
           Descartar
         </button>
         <BotaoDeAcao
@@ -501,7 +501,7 @@ function Ativos({ estado, atual, busca, setBusca, campoDeBusca }) {
         {filtrando ? (
           <button
             type="button"
-            className="btn outline acessos-ghost"
+            className="btn ghost"
             onClick={() => {
               setBusca("");
               void estado.carregarMatriz({
@@ -614,7 +614,7 @@ function Ativos({ estado, atual, busca, setBusca, campoDeBusca }) {
             {atual.offset + 1}–{Math.min(atual.offset + usuarios.length, total)}{" "}
             de {total.toLocaleString("pt-BR")}
           </span>
-          <span className="acessos-acoes">
+          <span className="ui-acoes">
             <button
               type="button"
               className="btn icon outline"
@@ -646,15 +646,13 @@ function Ativos({ estado, atual, busca, setBusca, campoDeBusca }) {
       ) : null}
 
       {atual.aviso ? (
-        <p
-          role="status"
-          className={classes(
-            "alert",
-            atual.aviso.tom === "danger" ? "error" : atual.aviso.tom,
-          )}
+        <Aviso
+          tom={atual.aviso.tom === "danger" ? "danger" : "warning"}
+          papel="status"
+          como="p"
         >
-          <Icone nome="triangle-alert" tamanho={16} /> {atual.aviso.texto}
-        </p>
+          {atual.aviso.texto}
+        </Aviso>
       ) : null}
       {matriz ? (
         <BarraDeSalvar estado={estado} rascunho={rascunho} matriz={matriz} />
@@ -693,7 +691,8 @@ export function AbaUsuarios({ estado }) {
     <section className="acessos-usuarios" aria-label="Usuários">
       <div className="acessos-topo">
         <span className="acessos-topo-inicio">
-          <ControleSegmentado
+          <Segmentado
+            className="acessos-segmentado"
             rotulo="Situação"
             valor={situacao}
             aoMudar={setSituacao}

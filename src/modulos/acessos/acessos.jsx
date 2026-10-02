@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { abasDeAcessos } from "../../lib/teto-de-acessos.js";
@@ -7,8 +7,7 @@ import { AbaUsuarios } from "./aba-usuarios.jsx";
 import { AbaGrupos } from "./aba-grupos.jsx";
 import { AbaCoordenacoes } from "./aba-coordenacoes.jsx";
 import { GavetaDoUsuario } from "./gaveta-do-usuario.jsx";
-import { classes } from "./partes.jsx";
-import { Icone } from "../icone.jsx";
+import { Abas, ErroAoCarregar } from "../../ui/index.js";
 
 /*
   Configurações › Acessos: permissões individuais + grupos de permissões.
@@ -22,76 +21,21 @@ import { Icone } from "../icone.jsx";
   sobrevivem à troca de aba.
 */
 
-function Abas({ abas, ativa, aoEscolher, contagens }) {
-  const botoes = useRef([]);
-  function aoTeclar(evento, indice) {
-    const passo = { ArrowRight: 1, ArrowLeft: -1 }[evento.key];
-    if (!passo) return;
-    evento.preventDefault();
-    const proximo = (indice + passo + abas.length) % abas.length;
-    aoEscolher(abas[proximo].id);
-    botoes.current[proximo]?.focus();
-  }
-  return (
-    <div
-      className="approved-tabs acessos-abas"
-      role="tablist"
-      aria-label="Acessos"
-    >
-      {abas.map((aba, indice) => (
-        <button
-          key={aba.id}
-          ref={(el) => (botoes.current[indice] = el)}
-          type="button"
-          role="tab"
-          id={`acessos-aba-${aba.id}`}
-          aria-controls={`acessos-painel-${aba.id}`}
-          aria-selected={ativa === aba.id}
-          tabIndex={ativa === aba.id ? 0 : -1}
-          className={classes("approved-tab", ativa === aba.id && "active")}
-          onClick={() => aoEscolher(aba.id)}
-          onKeyDown={(evento) => aoTeclar(evento, indice)}
-        >
-          {aba.rotulo}
-          {contagens[aba.id] ? (
-            <span className="acessos-contador">{contagens[aba.id]}</span>
-          ) : null}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 /*
   PGRST202: o PostgREST não achou a função com os parâmetros novos, ou seja,
   as migrations de acessos (20260929121000 a 121300) ainda não foram aplicadas.
 */
 function ErroDaCarga({ estado, codigo, mensagem }) {
-  const bancoDesatualizado = codigo === "PGRST202";
+  const texto =
+    codigo === "PGRST202"
+      ? "o banco ainda não tem a atualização de acessos. Aplique as migrations 20260929121000 a 20260929121300 (supabase/migrations) no SQL Editor e recarregue a página"
+      : mensagem;
   return (
-    <div className="alert error acessos-erro-da-carga" role="alert">
-      <Icone nome="circle-alert" tamanho={16} />
-      <div>
-        <strong>
-          {bancoDesatualizado
-            ? "O banco ainda não tem a atualização de acessos."
-            : "Não foi possível carregar os acessos."}
-        </strong>
-        <p>
-          {bancoDesatualizado
-            ? "Aplique as migrations 20260929121000 a 20260929121300 (supabase/migrations) no SQL Editor e recarregue a página."
-            : mensagem}
-        </p>
-        {codigo ? <small>Código: {codigo}</small> : null}
-      </div>
-      <button
-        type="button"
-        className="btn secondary"
-        onClick={() => void estado.carregarMatriz()}
-      >
-        Tentar novamente
-      </button>
-    </div>
+    <ErroAoCarregar
+      oQue="os acessos"
+      mensagem={codigo ? `${texto} (código ${codigo})` : texto}
+      aoTentar={() => void estado.carregarMatriz()}
+    />
   );
 }
 
@@ -143,10 +87,17 @@ export function Acessos({ estado, secoesDeConfiguracao = [] }) {
   return (
     <div className="acessos-tela">
       <Abas
-        abas={abas}
+        rotulo="Acessos"
+        className="acessos-abas"
         ativa={abaAtiva}
         aoEscolher={setAtiva}
-        contagens={{ usuarios: atual.solicitacoes.length || "" }}
+        abas={abas.map((aba) => ({
+          id: aba.id,
+          rotulo: aba.rotulo,
+          idDaAba: `acessos-aba-${aba.id}`,
+          idDoPainel: `acessos-painel-${aba.id}`,
+          contagem: aba.id === "usuarios" ? atual.solicitacoes.length : 0,
+        }))}
       />
       {painel("usuarios", <AbaUsuarios estado={estado} />)}
       {painel(

@@ -8,9 +8,16 @@ import {
 } from "../../lib/contas-desativadas.js";
 import { gruposAtribuiveis } from "../../lib/teto-de-acessos.js";
 import { explicacaoDoGrupo } from "../../lib/matriz-de-acessos.js";
-import { Modal } from "../modal.jsx";
-import { Icone } from "../icone.jsx";
-import { BotaoDeAcao, LinhasEsqueleto } from "../../ui/index.js";
+import {
+  Aviso,
+  BotaoDeAcao,
+  Campo,
+  classes,
+  ErroAoCarregar,
+  LinhasEsqueleto,
+  Modal,
+  Selo,
+} from "../../ui/index.js";
 import {
   AvisoSemArea,
   AvisoSemCoordenacao,
@@ -19,7 +26,6 @@ import {
   CampoMotivo,
   OpcoesDeCoordenacao,
   OpcoesDoGrupo,
-  classes,
   motivoValido,
 } from "./partes.jsx";
 
@@ -77,8 +83,7 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
       />
       <form className="acessos-modal-corpo" onSubmit={salvar} noValidate>
         <div className="acessos-grade-campos">
-          <div className="acessos-campo">
-            <label htmlFor="acessosReativarGrupo">Grupo</label>
+          <Campo rotulo="Grupo">
             <select
               id="acessosReativarGrupo"
               data-foco-inicial
@@ -92,10 +97,9 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
                 atual={valores.grupo}
               />
             </select>
-          </div>
+          </Campo>
           {!adminGlobal ? (
-            <div className="acessos-campo">
-              <label htmlFor="acessosReativarCoordenacao">Coordenação</label>
+            <Campo rotulo="Coordenação">
               <select
                 id="acessosReativarCoordenacao"
                 value={valores.coordenacao}
@@ -108,10 +112,10 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
                   atual={valores.coordenacao}
                 />
               </select>
-            </div>
+            </Campo>
           ) : null}
         </div>
-        <div className="acessos-campo">
+        <div className="acessos-areas">
           <span className="acessos-rotulo">Áreas</span>
           {adminGlobal ? (
             <p className="acessos-secundario">
@@ -146,16 +150,12 @@ function ModalReativarConta({ estado, conta, matriz, aoFechar }) {
           erro={tentou && !motivoValido(valores.motivo)}
         />
         {recusa ? (
-          <p className="alert error acessos-recusa" role="alert">
-            <Icone nome="circle-alert" tamanho={16} /> {recusa}
-          </p>
+          <Aviso tom="danger" papel="alert" como="p" className="acessos-recusa">
+            {recusa}
+          </Aviso>
         ) : null}
-        <div className="acessos-acoes acessos-modal-rodape">
-          <button
-            type="button"
-            className="btn outline acessos-ghost"
-            onClick={aoFechar}
-          >
+        <div className="ui-acoes acessos-modal-rodape">
+          <button type="button" className="btn ghost" onClick={aoFechar}>
             Cancelar
           </button>
           <BotaoDeAcao
@@ -215,17 +215,10 @@ export function Desativadas({ estado, atual, busca, campoDeBusca }) {
 
   if (statusDasDesativadas === "error")
     return (
-      <div className="alert error" role="alert">
-        <Icone nome="circle-alert" tamanho={16} /> Não foi possível carregar as
-        contas desativadas.{" "}
-        <button
-          type="button"
-          className="btn secondary"
-          onClick={() => void estado.carregarDesativadas()}
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <ErroAoCarregar
+        oQue="as contas desativadas"
+        aoTentar={() => void estado.carregarDesativadas()}
+      />
     );
   const carregando = statusDasDesativadas !== "ready" || !matriz;
   return (
@@ -264,9 +257,9 @@ export function Desativadas({ estado, atual, busca, campoDeBusca }) {
                         </strong>
                         {conta.nome ? <small>{conta.email}</small> : null}
                         {conta.pedido_pendente ? (
-                          <span className="acessos-selo acessos-selo-convite">
+                          <Selo tom="pendente" className="acessos-selo-convite">
                             Pediu reativação
-                          </span>
+                          </Selo>
                         ) : null}
                       </span>
                     </th>

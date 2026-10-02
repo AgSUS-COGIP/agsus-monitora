@@ -66,6 +66,23 @@
 :is(.ui-tela, .ui-gaveta) .btn.danger:hover {
   background: var(--color-action-danger-hover);
 }
+/* Fantasma (DS 11.1): sem fundo; `.perigo` põe o texto na cor de perigo. */
+.btn.ghost {
+  background: transparent;
+  color: var(--color-action-ghost-text);
+}
+.btn.ghost:hover:not(:disabled) {
+  background: var(--color-action-ghost-hover);
+}
+.btn.ghost:disabled {
+  background: transparent;
+}
+.btn.perigo {
+  color: var(--state-danger);
+}
+.btn.perigo:hover:not(:disabled) {
+  background: var(--state-danger-soft);
+}
 
 /* Skeleton: bloco que pulsa no tamanho do conteúdo (carregando não é zero). */
 .ui-esqueleto {
@@ -713,6 +730,48 @@ th[aria-sort="descending"] .ui-ordenar i {
   gap: var(--space-2);
 }
 
+/*
+  Barra de salvar com motivo (Acessos, Módulos e abas): presa ao pé da área,
+  só enquanto há alteração — o resumo do que mudou (`details`), o campo do
+  motivo e as ações.
+*/
+.ui-barra-de-salvar {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-sticky, 100);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+}
+.ui-barra-de-salvar details {
+  flex: 1 1 220px;
+  align-self: center;
+}
+.ui-barra-de-salvar summary {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.ui-barra-de-salvar ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  list-style: none;
+}
+.ui-barra-de-salvar li > span {
+  display: block;
+}
+.ui-barra-de-salvar .ui-campo {
+  flex: 1 1 280px;
+}
+
 /* ── Secao, Kv ─────────────────────────────────────────────────────── */
 
 .ui-secao {
@@ -780,6 +839,62 @@ th[aria-sort="descending"] .ui-ordenar i {
   background: var(--brand-primary);
   color: var(--text-inverse);
   font-size: var(--text-caption);
+}
+
+/* ── Abas (DS 10.5: sublinhado, sem caixas) ───────────────────────── */
+
+/*
+  Divisor inferior sutil no contêiner; aba de 40px, texto 500 em cinza; a
+  ativa fica na cor do texto com uma barra de 2px na cor da ação principal
+  (borda inferior, não sombra).
+*/
+.ui-abas {
+  display: flex;
+  gap: var(--space-6);
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+}
+.ui-abas-compactas {
+  margin-bottom: var(--space-4);
+  padding: 0;
+}
+.ui-aba {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  margin-bottom: -1px;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.ui-aba:hover {
+  color: var(--text-primary);
+}
+.ui-aba.is-ativo {
+  border-bottom-color: var(--brand-primary);
+  color: var(--text-primary);
+}
+.ui-aba i {
+  font-size: var(--text-body);
+}
+.ui-aba-contagem {
+  min-width: 20px;
+  padding: 0 var(--space-1-5);
+  border-radius: var(--radius-sm);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Segmentado ────────────────────────────────────────────────────── */
@@ -919,6 +1034,19 @@ th[aria-sort="descending"] .ui-ordenar i {
   }
 }
 @media (max-width: 640px) {
+  /* As abas dividem a largura: com rolagem lateral, a última ficava cortada. */
+  .ui-abas {
+    gap: var(--space-3);
+    overflow-x: auto;
+    padding: 0 var(--space-3);
+  }
+  .ui-aba {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    padding-inline: var(--space-2);
+    white-space: nowrap;
+  }
   .ui-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

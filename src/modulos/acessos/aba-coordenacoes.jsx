@@ -13,10 +13,9 @@ import {
   assinarDadosDoMonitoramento,
   linhasDaArea,
   obterDadosDoMonitoramento,
-} from "../dados-do-monitoramento.js";
-import { MultiSelectBusca } from "../multi-select-busca.jsx";
-import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../ui/index.js";
+} from "../../componentes/dados-do-monitoramento.js";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { BlocosEsqueleto, BotaoDeAcao, Campo } from "../../ui/index.js";
 import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";
 
 /*
@@ -115,12 +114,7 @@ function Editor({
       void estado.desativarCoordenacao(coordenacao, motivoDaDesativacao.trim());
   }
 
-  const erro = (campo) =>
-    tentou && erros[campo] ? (
-      <small className="acessos-erro">
-        <Icone nome="circle-alert" tamanho={14} /> {erros[campo]}
-      </small>
-    ) : null;
+  const erro = (campo) => (tentou && erros[campo]) || undefined;
 
   return (
     <form
@@ -130,17 +124,14 @@ function Editor({
       aria-label={nova ? "Nova coordenação" : `Coordenação ${coordenacao.nome}`}
     >
       <header className="acessos-detalhe-cabecalho">
-        <div className="acessos-campo">
-          <label htmlFor="acessosCoordNome">Nome da coordenação</label>
+        <Campo rotulo="Nome da coordenação" erro={erro("nome")}>
           <input
             id="acessosCoordNome"
             value={rascunho.nome}
             maxLength={120}
             onChange={(e) => mudar("nome", e.target.value)}
-            aria-invalid={(tentou && erros.nome) || undefined}
           />
-          {erro("nome")}
-        </div>
+        </Campo>
         {!nova ? (
           <p className="acessos-secundario">
             {coordenacao.usuarios || 0}{" "}
@@ -155,8 +146,7 @@ function Editor({
         Vê: <strong>{resumoDaCoordenacao(rascunho)}</strong>.
       </p>
       <div className="acessos-grade-campos">
-        <div className="acessos-campo">
-          <label htmlFor="acessosCoordArea">Área</label>
+        <Campo rotulo="Área" erro={erro("area")}>
           <select
             id="acessosCoordArea"
             value={rascunho.area}
@@ -168,10 +158,8 @@ function Editor({
               </option>
             ))}
           </select>
-          {erro("area")}
-        </div>
-        <div className="acessos-campo">
-          <label htmlFor="acessosCoordResponsavel">Responsável do edital</label>
+        </Campo>
+        <Campo rotulo="Responsável do edital">
           <select
             id="acessosCoordResponsavel"
             value={rascunho.responsavel}
@@ -184,10 +172,9 @@ function Editor({
               </option>
             ))}
           </select>
-        </div>
+        </Campo>
       </div>
-      <div className="acessos-campo">
-        <label htmlFor="acessosCoordUnidades">Unidades</label>
+      <Campo rotulo="Unidades" idDoControle="acessosCoordUnidades">
         <MultiSelectBusca
           id="acessosCoordUnidades"
           opcoes={opcoesDeUnidades}
@@ -195,12 +182,16 @@ function Editor({
           placeholder="Todas as unidades da área"
           aoMudar={(unidades) => mudar("unidades", unidades)}
         />
-      </div>
-      <div className="acessos-campo">
-        <label htmlFor="acessosCoordEditais">
-          Editais atribuídos{" "}
-          <span className="acessos-secundario">(além da regra)</span>
-        </label>
+      </Campo>
+      <Campo
+        rotulo={
+          <>
+            Editais atribuídos{" "}
+            <span className="acessos-secundario">(além da regra)</span>
+          </>
+        }
+        idDoControle="acessosCoordEditais"
+      >
         <MultiSelectBusca
           id="acessosCoordEditais"
           opcoes={opcoesDeEditais}
@@ -208,7 +199,7 @@ function Editor({
           placeholder="Nenhum"
           aoMudar={(editais) => mudar("editais", editais)}
         />
-      </div>
+      </Campo>
 
       <footer className="acessos-detalhe-rodape">
         {alterado || nova ? (
@@ -219,12 +210,12 @@ function Editor({
             erro={tentou && !motivoValido(motivo)}
           />
         ) : null}
-        <div className="acessos-acoes">
+        <div className="ui-acoes">
           {!nova && coordenacao.ativo ? (
             <BotaoDeAcao
               estado={estado}
               acao="desativar-coordenacao"
-              className="btn outline acessos-ghost acessos-perigo"
+              className="btn ghost perigo"
               disabled={Boolean(coordenacao.usuarios)}
               title={
                 coordenacao.usuarios
@@ -240,7 +231,7 @@ function Editor({
           {alterado ? (
             <button
               type="button"
-              className="btn outline acessos-ghost"
+              className="btn ghost"
               onClick={() => (setRascunho(inicial), setTentou(false))}
             >
               Descartar
@@ -283,9 +274,9 @@ export function AbaCoordenacoes({ estado }) {
 
   if (!atual.matriz)
     return (
-      <p aria-busy="true">
-        <span className="esqueleto" />
-      </p>
+      <div className="acessos-carregando" aria-busy="true">
+        <BlocosEsqueleto quantos={3} className="acessos-esqueleto" />
+      </div>
     );
 
   return (

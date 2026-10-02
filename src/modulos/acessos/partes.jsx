@@ -1,56 +1,18 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../../componentes/icone.jsx";
+import { Aviso, Campo, classes } from "../../ui/index.js";
 
 /*
-  Peças que as abas de Acessos repetem: controle segmentado (nível de um
-  módulo no grupo), lista mestre (grupos e coordenações, lista + detalhe),
-  cabeçalho de gaveta e campo de motivo (obrigatório em toda gravação de
-  acesso: vai para o histórico).
+  Peças que as abas de Acessos repetem e que não existem em src/ui/: lista
+  mestre (grupos e coordenações, lista + detalhe), cabeçalho do modal da
+  pessoa (com avatar), campo de motivo (obrigatório em toda gravação de
+  acesso: vai para o histórico), caixas de área, as travas da matriz e as
+  opções dos selects. O controle segmentado, as abas, os campos e os avisos
+  são os de src/ui/.
 */
 
-export const classes = (...lista) => lista.filter(Boolean).join(" ");
 export const motivoValido = (motivo) => String(motivo || "").trim().length >= 3;
-
-/** Controle segmentado (DS 10.5): até 4 opções, setas movem a escolha. */
-export function ControleSegmentado({
-  rotulo,
-  opcoes,
-  valor,
-  aoMudar,
-  desabilitado = false,
-}) {
-  const botoes = useRef([]);
-  function aoTeclar(evento, indice) {
-    const passo = { ArrowRight: 1, ArrowLeft: -1 }[evento.key];
-    if (!passo || desabilitado) return;
-    evento.preventDefault();
-    const proximo = (indice + passo + opcoes.length) % opcoes.length;
-    aoMudar(opcoes[proximo].valor);
-    botoes.current[proximo]?.focus();
-  }
-  return (
-    <div className="acessos-segmentado" role="radiogroup" aria-label={rotulo}>
-      {opcoes.map((opcao, indice) => (
-        <button
-          key={opcao.valor}
-          ref={(el) => (botoes.current[indice] = el)}
-          type="button"
-          role="radio"
-          data-valor={opcao.valor}
-          aria-checked={valor === opcao.valor}
-          tabIndex={valor === opcao.valor ? 0 : -1}
-          disabled={desabilitado}
-          className={classes(valor === opcao.valor && "ativo")}
-          onClick={() => aoMudar(opcao.valor)}
-          onKeyDown={(evento) => aoTeclar(evento, indice)}
-        >
-          {opcao.rotulo}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 /**
  * Lista da esquerda no padrão lista + detalhe: busca, botão de criar e os
@@ -177,8 +139,10 @@ export function CampoMotivo({
   rotulo = "Motivo da alteração",
 }) {
   return (
-    <div className="acessos-campo">
-      <label htmlFor={id}>{rotulo}</label>
+    <Campo
+      rotulo={rotulo}
+      erro={erro ? "Informe o motivo (mínimo de 3 caracteres)." : undefined}
+    >
       <input
         id={id}
         value={valor}
@@ -186,15 +150,8 @@ export function CampoMotivo({
         required
         minLength={3}
         maxLength={500}
-        aria-invalid={erro || undefined}
       />
-      {erro ? (
-        <small className="acessos-erro">
-          <Icone nome="circle-alert" tamanho={14} /> Informe o motivo (mínimo de
-          3 caracteres).
-        </small>
-      ) : null}
-    </div>
+    </Campo>
   );
 }
 
@@ -229,20 +186,18 @@ export function CaixasDeArea({
 /* As travas da matriz (23514 no banco), com o mesmo texto na gaveta e na reativação. */
 export function AvisoSemArea({ nome }) {
   return (
-    <p className="alert warn acessos-sem-area" role="alert">
-      <Icone nome="triangle-alert" tamanho={16} /> Sem área e sem coordenação,{" "}
-      {nome} entra e não vê nada. Marque ao menos uma área (ou escolha uma
-      coordenação) para poder salvar.
-    </p>
+    <Aviso tom="warning" papel="alert" como="p" className="acessos-sem-area">
+      Sem área e sem coordenação, {nome} entra e não vê nada. Marque ao menos
+      uma área (ou escolha uma coordenação) para poder salvar.
+    </Aviso>
   );
 }
 
 export function AvisoSemCoordenacao() {
   return (
-    <p className="alert warn acessos-sem-area" role="alert">
-      <Icone nome="triangle-alert" tamanho={16} /> Este grupo exige coordenação.
-      Escolha uma (ou outro grupo).
-    </p>
+    <Aviso tom="warning" papel="alert" como="p" className="acessos-sem-area">
+      Este grupo exige coordenação. Escolha uma (ou outro grupo).
+    </Aviso>
   );
 }
 

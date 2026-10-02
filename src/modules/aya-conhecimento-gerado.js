@@ -2185,7 +2185,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Acessos › Usuários, clique em "Adicionar pessoa" e informe o e-mail institucional, o nome, o grupo (padrão Usuário), a coordenação (ou, sem coordenação, pelo menos uma área) e o motivo. O cadastro fica pronto antes de a pessoa entrar, e a tela mostra o "Convite pronto", com a mensagem para copiar ou abrir no e-mail. O link sozinho não dá acesso: só funciona entrando com a conta Google do e-mail convidado, e aí a pessoa entra sem precisar pedir acesso. Enquanto ela não entra, a situação mostra "Convidado · ainda não entrou" e dá para reenviar o convite; cancelar o convite (só o administrador global) desativa o cadastro, com motivo. O coordenador só cadastra na própria coordenação, com grupo dentro do teto dele.',
     fato: "O acesso ao MONITORA é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.",
     fonte:
-      "src/componentes/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
+      "src/modulos/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
     abrir: "config:acessos",
   },
   {
@@ -2222,7 +2222,7 @@ export const VERBETES_AYA = Object.freeze([
       'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
     fato: "",
     fonte:
-      "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/componentes/acessos/gaveta-do-usuario.jsx",
+      "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/modulos/acessos/gaveta-do-usuario.jsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -2251,7 +2251,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'No modal da pessoa, a coluna "Como a pessoa vê" monta o menu dela com as mesmas regras da barra lateral; com alteração pendente, mostra o resultado com o selo "Depois de salvar". É só leitura: não é entrar como a pessoa.',
     fato: "",
-    fonte: "src/lib/ver-como.js; src/componentes/acessos/gaveta-do-usuario.jsx",
+    fonte: "src/lib/ver-como.js; src/modulos/acessos/gaveta-do-usuario.jsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -2268,7 +2268,7 @@ export const VERBETES_AYA = Object.freeze([
       "Quem entra com Google sem perfil ativo vê a tela de pedido e informa nome, setor, coordenação e justificativa (20 a 2.000 caracteres). Os pedidos ficam em Acessos › Usuários › Pendentes: o administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. Quem recebeu convite não precisa pedir: basta entrar com o e-mail convidado.",
     fato: "",
     fonte:
-      "src/lib/solicitacao-de-acesso.js; src/componentes/acessos/solicitacoes.jsx",
+      "src/lib/solicitacao-de-acesso.js; src/modulos/acessos/solicitacoes.jsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -2285,7 +2285,7 @@ export const VERBETES_AYA = Object.freeze([
       'Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/componentes/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js",
+      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js",
     abrir: "config:acessos",
   },
   {

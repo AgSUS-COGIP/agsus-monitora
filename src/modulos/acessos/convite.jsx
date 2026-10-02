@@ -4,7 +4,7 @@ import {
   linkDoEmailDoConvite,
   mensagemDoConvite,
 } from "../../lib/convite-de-acesso.js";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../../componentes/icone.jsx";
 
 /*
   Mensagem do convite com "Copiar mensagem" e "Abrir no e-mail": no passo
@@ -23,7 +23,7 @@ export function AcoesDoConvite({ nome, email }) {
     <div className="acessos-convite">
       <p className="acessos-convite-mensagem">{mensagem}</p>
       <p className="acessos-secundario">Só funciona com {email}.</p>
-      <div className="acessos-acoes">
+      <div className="ui-acoes">
         <button
           type="button"
           className="btn secondary"

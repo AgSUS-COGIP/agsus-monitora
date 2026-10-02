@@ -3,6 +3,7 @@
   os tokens de src/styles/tokens.css. Estilos em ui.css (importe uma vez, no
   ponto de entrada). Guia: docs/arquitetura-react.md, seção "Como usar ui/".
 */
+export { Abas } from "./abas.jsx";
 export { Aviso } from "./aviso.jsx";
 export { BotaoDeAcao } from "./botao-de-acao.jsx";
 export { Campo } from "./campo.jsx";

@@ -83,7 +83,7 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
 });
 
 describe("Acessos: nomes longos com reticências", () => {
-  const css = ler("src/styles/acessos.css");
+  const css = ler("src/modulos/acessos/acessos.css");
 
   it("o nome da pessoa (botão e, nas contas desativadas, o strong) para em reticências", () => {
     for (const seletor of [
@@ -102,14 +102,14 @@ describe("Acessos: nomes longos com reticências", () => {
   });
 
   it("o nome inteiro fica no title", () => {
-    const usuarios = ler("src/componentes/acessos/aba-usuarios.jsx");
+    const usuarios = ler("src/modulos/acessos/aba-usuarios.jsx");
     expect(usuarios).toContain(
       "titulo={`Abrir o acesso de ${usuario.nome || usuario.email}`}",
     );
     expect(usuarios).toContain(
       "title={nomeDaCoordenacao || coordenacao || undefined}",
     );
-    expect(ler("src/componentes/acessos/contas-desativadas.jsx")).toContain(
+    expect(ler("src/modulos/acessos/contas-desativadas.jsx")).toContain(
       "<strong title={conta.nome || conta.email}>",
     );
   });

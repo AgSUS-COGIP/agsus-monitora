@@ -6,14 +6,14 @@ import {
   lerGrupo,
   validarGrupo,
 } from "../../lib/grupos-e-coordenacoes.js";
-import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../ui/index.js";
 import {
-  CampoMotivo,
-  ControleSegmentado,
-  ListaMestre,
-  motivoValido,
-} from "./partes.jsx";
+  Aviso,
+  BlocosEsqueleto,
+  BotaoDeAcao,
+  Campo,
+  Segmentado,
+} from "../../ui/index.js";
+import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";
 
 /*
   Grupos de permissões (só admin global), no padrão lista + detalhe: a lista
@@ -77,27 +77,26 @@ function Editor({
       aria-label={novo ? "Novo grupo" : `Grupo ${grupo.nome}`}
     >
       <header className="acessos-detalhe-cabecalho">
-        <div className="acessos-campo">
-          <label htmlFor="acessosGrupoNome">Nome do grupo</label>
+        <Campo
+          rotulo="Nome do grupo"
+          erro={tentou && erros.nome ? erros.nome : undefined}
+        >
           <input
             id="acessosGrupoNome"
             value={rascunho.nome}
             maxLength={80}
             disabled={somenteLeitura}
             onChange={(e) => setRascunho({ ...rascunho, nome: e.target.value })}
-            aria-invalid={(tentou && erros.nome) || undefined}
           />
-          {tentou && erros.nome ? (
-            <small className="acessos-erro">
-              <Icone nome="circle-alert" tamanho={14} /> {erros.nome}
-            </small>
-          ) : null}
-        </div>
-        <div className="acessos-campo">
-          <label htmlFor="acessosGrupoDescricao">
-            Para que serve{" "}
-            <span className="acessos-secundario">(opcional)</span>
-          </label>
+        </Campo>
+        <Campo
+          rotulo={
+            <>
+              Para que serve{" "}
+              <span className="acessos-secundario">(opcional)</span>
+            </>
+          }
+        >
           <input
             id="acessosGrupoDescricao"
             value={rascunho.descricao}
@@ -107,7 +106,7 @@ function Editor({
               setRascunho({ ...rascunho, descricao: e.target.value })
             }
           />
-        </div>
+        </Campo>
         {!novo ? (
           <p className="acessos-secundario">
             {pessoas(grupo.usuarios)} neste grupo.{" "}
@@ -125,10 +124,7 @@ function Editor({
       </header>
 
       {somenteLeitura ? (
-        <p className="alert info">
-          <Icone nome="settings" tamanho={16} /> Grupo do sistema (não
-          editável).
-        </p>
+        <Aviso como="p">Grupo do sistema (não editável).</Aviso>
       ) : null}
 
       <h4>Permissões</h4>
@@ -138,7 +134,7 @@ function Editor({
             <div>
               <strong id={`acessosModulo-${recurso}`}>{rotulo}</strong>
             </div>
-            <ControleSegmentado
+            <Segmentado
               rotulo={`${rotulo}: nível no grupo`}
               valor={somenteLeitura ? "admin" : rascunho.niveis[recurso]}
               desabilitado={somenteLeitura}
@@ -167,12 +163,12 @@ function Editor({
               erro={tentou && !motivoValido(motivo)}
             />
           ) : null}
-          <div className="acessos-acoes">
+          <div className="ui-acoes">
             {!novo && !grupo.sistema ? (
               <BotaoDeAcao
                 estado={estado}
                 acao="remover-grupo"
-                className="btn outline acessos-ghost acessos-perigo"
+                className="btn ghost perigo"
                 disabled={Boolean(grupo.usuarios)}
                 title={
                   grupo.usuarios
@@ -188,7 +184,7 @@ function Editor({
             {alterado ? (
               <button
                 type="button"
-                className="btn outline acessos-ghost"
+                className="btn ghost"
                 onClick={() => (setRascunho(inicial), setTentou(false))}
               >
                 Descartar
@@ -245,9 +241,9 @@ export function AbaGrupos({ estado, aoVerPessoas }) {
 
   if (!atual.matriz)
     return (
-      <p aria-busy="true">
-        <span className="esqueleto" />
-      </p>
+      <div className="acessos-carregando" aria-busy="true">
+        <BlocosEsqueleto quantos={3} className="acessos-esqueleto" />
+      </div>
     );
 
   return (

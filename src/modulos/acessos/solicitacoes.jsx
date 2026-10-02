@@ -5,9 +5,13 @@ import {
   grupoInicialDoPedido,
   linhaDoPedidoDeReativacao,
 } from "../../lib/contas-desativadas.js";
-import { MultiSelectBusca } from "../multi-select-busca.jsx";
-import { BotaoDeAcao, LinhasEsqueleto } from "../../ui/index.js";
-import { Icone } from "../icone.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import {
+  BotaoDeAcao,
+  ErroAoCarregar,
+  LinhasEsqueleto,
+  Selo,
+} from "../../ui/index.js";
 
 /*
   Pedidos de acesso pendentes, na mesma seção de Usuários ("Pendentes"). O
@@ -44,9 +48,9 @@ function Pedido({ estado, solicitacao, matriz }) {
         <small>{solicitacao.email}</small>
         {solicitacao.reativacao ? (
           <>
-            <span className="acessos-selo acessos-selo-reativacao">
+            <Selo tom="revisar" className="acessos-selo-reativacao">
               Reativação
-            </span>
+            </Selo>
             <small className="acessos-linha-reativacao">
               {linhaDoPedidoDeReativacao(solicitacao)}
             </small>
@@ -115,11 +119,11 @@ function Pedido({ estado, solicitacao, matriz }) {
         )}
       </td>
       <td>
-        <span className="acessos-acoes">
+        <span className="ui-acoes">
           <BotaoDeAcao
             estado={estado}
             acao={`recusar:${solicitacao.id}`}
-            className="btn outline acessos-ghost acessos-perigo"
+            className="btn ghost perigo"
             onClick={() => {
               if (estado.confirmar(`Recusar o pedido de acesso de ${nome}?`))
                 void estado.recusar(solicitacao, "");
@@ -157,17 +161,10 @@ export function Solicitacoes({ estado, atual }) {
   const { solicitacoes, statusDasSolicitacoes, matriz } = atual;
   if (statusDasSolicitacoes === "error")
     return (
-      <div className="alert error" role="alert">
-        <Icone nome="circle-alert" tamanho={16} /> Não foi possível carregar os
-        pedidos de acesso.{" "}
-        <button
-          type="button"
-          className="btn secondary"
-          onClick={() => void estado.carregarSolicitacoes()}
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <ErroAoCarregar
+        oQue="os pedidos de acesso"
+        aoTentar={() => void estado.carregarSolicitacoes()}
+      />
     );
   const carregando = statusDasSolicitacoes !== "ready" || !matriz;
   return (

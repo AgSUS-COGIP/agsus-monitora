@@ -38,9 +38,16 @@ import {
   perfilDoContexto,
   resumoDoEscopo,
 } from "../../lib/ver-como.js";
-import { Modal } from "../modal.jsx";
-import { Icone } from "../icone.jsx";
-import { BotaoDeAcao } from "../../ui/index.js";
+import { Icone } from "../../componentes/icone.jsx";
+import {
+  Aviso,
+  BlocosEsqueleto,
+  BotaoDeAcao,
+  Campo,
+  classes,
+  Modal,
+  Selo,
+} from "../../ui/index.js";
 import {
   AvisoSemArea,
   AvisoSemCoordenacao,
@@ -50,7 +57,6 @@ import {
   OpcoesDeCoordenacao,
   OpcoesDoGrupo,
   OpcoesDoModulo,
-  classes,
   motivoValido,
 } from "./partes.jsx";
 import { AcoesDoConvite } from "./convite.jsx";
@@ -112,9 +118,9 @@ function ComoAPessoaVe({
   const perfil = contexto ? perfilDoContexto(contexto) : null;
   if (!perfil)
     return (
-      <p aria-busy="true">
-        <span className="esqueleto" />
-      </p>
+      <div className="acessos-carregando" aria-busy="true">
+        <BlocosEsqueleto quantos={2} className="acessos-esqueleto" />
+      </div>
     );
   const nomesDasAreas = new Map(
     (matriz.areas || []).map((a) => [a.id, a.titulo]),
@@ -169,7 +175,7 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
       <div className="acessos-conta-de-setor">
         <button
           type="button"
-          className="btn outline acessos-ghost acessos-perigo"
+          className="btn ghost perigo"
           onClick={() => setAberto(true)}
         >
           Transformar em coordenação
@@ -186,8 +192,7 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
           void estado.moverParaCoordenacoes(usuario, area, motivo.trim());
       }}
     >
-      <div className="acessos-campo">
-        <label htmlFor="acessosMoverArea">Área da coordenação</label>
+      <Campo rotulo="Área da coordenação">
         <select
           id="acessosMoverArea"
           value={area}
@@ -199,15 +204,13 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
             </option>
           ))}
         </select>
-      </div>
-      <p className="alert error acessos-aviso-perigo" role="alert">
-        <Icone nome="triangle-alert" tamanho={16} />{" "}
-        <span>{avisoDeTransformarEmCoordenacao(usuario, tituloDaArea)}</span>
-      </p>
-      <div className="acessos-campo">
-        <label htmlFor="acessosMoverConfirmacao">
-          Para confirmar, digite {PALAVRA_DE_CONFIRMACAO} ou o e-mail da conta
-        </label>
+      </Campo>
+      <Aviso tom="danger" papel="alert" como="p">
+        {avisoDeTransformarEmCoordenacao(usuario, tituloDaArea)}
+      </Aviso>
+      <Campo
+        rotulo={`Para confirmar, digite ${PALAVRA_DE_CONFIRMACAO} ou o e-mail da conta`}
+      >
         <input
           id="acessosMoverConfirmacao"
           value={confirmacao}
@@ -216,20 +219,19 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
           onChange={(e) => setConfirmacao(e.target.value)}
           placeholder={PALAVRA_DE_CONFIRMACAO}
         />
-      </div>
-      <div className="acessos-campo">
-        <label htmlFor="acessosMoverMotivo">Motivo</label>
+      </Campo>
+      <Campo rotulo="Motivo">
         <input
           id="acessosMoverMotivo"
           value={motivo}
           maxLength={500}
           onChange={(e) => setMotivo(e.target.value)}
         />
-      </div>
-      <div className="acessos-acoes">
+      </Campo>
+      <div className="ui-acoes">
         <button
           type="button"
-          className="btn outline acessos-ghost"
+          className="btn ghost"
           onClick={() => {
             setAberto(false);
             setConfirmacao("");
@@ -241,7 +243,7 @@ function TransformarEmCoordenacao({ estado, usuario, areas }) {
           estado={estado}
           acao={`mover:${usuario.id}`}
           type="submit"
-          className="btn outline acessos-perigo"
+          className="btn outline perigo"
           disabled={!pronto}
         >
           Desativar a conta e criar a coordenação
@@ -290,19 +292,15 @@ function ConfirmarDesativacao({
         aoMudar={setMotivo}
         erro={tentou && !motivoValido(motivo)}
       />
-      <div className="acessos-acoes">
-        <button
-          type="button"
-          className="btn outline acessos-ghost"
-          onClick={aoVoltar}
-        >
+      <div className="ui-acoes">
+        <button type="button" className="btn ghost" onClick={aoVoltar}>
           Voltar
         </button>
         <BotaoDeAcao
           estado={estado}
           acao={`desativar:${usuario.id}`}
           type="submit"
-          className="btn outline acessos-perigo"
+          className="btn outline perigo"
           disabled={!motivoValido(motivo)}
         >
           {rotulo}
@@ -320,9 +318,9 @@ function Convite({ estado, usuario, podeCancelar }) {
     <section aria-labelledby="acessosGavetaConvite">
       <h4 id="acessosGavetaConvite">Convite</h4>
       <p>
-        <span className="acessos-selo acessos-selo-convite">
+        <Selo tom="pendente" className="acessos-selo-convite">
           Convidado · ainda não entrou
-        </span>
+        </Selo>
         {desde ? (
           <span className="acessos-secundario"> Cadastrado em {desde}.</span>
         ) : null}
@@ -342,10 +340,10 @@ function Convite({ estado, usuario, podeCancelar }) {
           aoVoltar={() => setCancelando(false)}
         />
       ) : (
-        <div className="acessos-acoes">
+        <div className="ui-acoes">
           <button
             type="button"
-            className="btn outline acessos-ghost acessos-perigo"
+            className="btn ghost perigo"
             onClick={() => setCancelando(true)}
           >
             <Icone nome="user-x" tamanho={16} /> Cancelar convite
@@ -434,7 +432,7 @@ function SalvarNaGaveta({ estado, usuario, rascunho, matriz, semArea }) {
     })[0]?.itens || [];
   return (
     <form
-      className="acessos-salvar acessos-salvar-gaveta"
+      className="ui-barra-de-salvar acessos-salvar acessos-salvar-gaveta"
       aria-label={`Salvar alterações de ${usuario.nome || usuario.email}`}
       onSubmit={(evento) => {
         evento.preventDefault();
@@ -464,10 +462,10 @@ function SalvarNaGaveta({ estado, usuario, rascunho, matriz, semArea }) {
         aoMudar={setMotivo}
         erro={tentou && !motivoValido(motivo)}
       />
-      <div className="acessos-acoes">
+      <div className="ui-acoes">
         <button
           type="button"
-          className="btn outline acessos-ghost"
+          className="btn ghost"
           onClick={() => estado.descartarDaPessoa(usuario.id)}
         >
           Descartar
@@ -656,9 +654,9 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
             <h4 id="acessosGavetaVe">
               Como a pessoa vê
               {pendentes ? (
-                <span className="acessos-selo acessos-selo-rascunho">
+                <Selo tom="revisar" className="acessos-selo-rascunho">
                   Depois de salvar
-                </span>
+                </Selo>
               ) : null}
             </h4>
             <ComoAPessoaVe
@@ -741,7 +739,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
             <BotaoDeAcao
               estado={estado}
               acao={`desativar:${usuario.id}`}
-              className="btn outline acessos-ghost acessos-perigo"
+              className="btn ghost perigo"
               onClick={() => setDesativando(true)}
             >
               <Icone nome="user-x" tamanho={16} /> Desativar acesso

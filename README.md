@@ -36,7 +36,7 @@ acesso libera. O menu lateral mostra, por área, as abas ativas (catálogo em `T
 | Entrevistas         | `index.html` (`src/modulos/entrevistas/`)            | resultados, condução (roteiro, convocação, banca, notas) e roteiros                                       |
 | Recursos            | `index.html` (`src/modulos/recursos/`)               | recursos dos candidatos: fila, gaveta com etapas, resposta e anexos                                       |
 | Lista de aprovados  | `index.html` (`src/componentes/lista-aprovados/`)    | aprovados e convocação                                                                                    |
-| Acessos             | `index.html` (`src/componentes/acessos/`)            | convites, grupos, contas desativadas e reativação                                                         |
+| Acessos             | `index.html` (`src/modulos/acessos/`)            | convites, grupos, contas desativadas e reativação                                                         |
 
 Em **Conduzir entrevistas** aparecem só os editais na janela da entrevista pelo cronograma (de 7
 dias antes a 15 dias depois das etapas de entrevista), os liberados pelo administrador global e os

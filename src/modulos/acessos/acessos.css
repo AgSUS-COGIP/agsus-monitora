@@ -1,9 +1,10 @@
 /*
-  Configurações › Acessos (React: src/componentes/acessos/). Segue o design.md
-  do Design System AgSUS: hierarquia e espaço em vez de caixas — tabela sem
-  moldura nem grade, lista + detalhe sem cards, controle segmentado (10.5),
-  grupo como tag, modal da pessoa e barra de salvar fixa só quando há
-  alteração. As abas usam .approved-tabs/.approved-tab (lista-convocacao.css).
+  Configurações › Acessos (src/modulos/acessos/). Segue o design.md do Design
+  System AgSUS: hierarquia e espaço em vez de caixas — tabela sem moldura nem
+  grade, lista + detalhe sem cards, grupo como tag e modal da pessoa. Abas,
+  controle segmentado, campos, avisos, selos, botão fantasma e a barra de
+  salvar com motivo são os de src/ui/ (ui.css); aqui fica o que é só desta
+  tela. Só tokens: o tema escuro vem deles.
 */
 
 .acessos-tela {
@@ -18,16 +19,6 @@
   display: grid;
   gap: var(--space-4);
   min-width: 0;
-}
-.acessos-contador {
-  min-width: 20px;
-  padding: 0 var(--space-1-5);
-  border-radius: var(--radius-sm);
-  background: var(--state-info-soft);
-  color: var(--state-info);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
 }
 .acessos-vazio,
 .acessos-secundario {
@@ -45,33 +36,10 @@ td.acessos-vazio {
   color: var(--state-danger);
   font-size: var(--text-body-sm);
 }
-.acessos-acoes {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
 .acessos-espaco {
   flex: 1;
 }
 
-/* ── Botões: ghost e destrutivo ghost (design.md 11.1) ──────────────────────── */
-.acessos-tela .btn.acessos-ghost,
-.acessos-gaveta .btn.acessos-ghost {
-  background: transparent;
-  color: var(--color-action-ghost-text);
-}
-.acessos-tela .btn.acessos-ghost:hover:not(:disabled),
-.acessos-gaveta .btn.acessos-ghost:hover:not(:disabled) {
-  background: var(--color-action-ghost-hover);
-}
-.acessos-tela .btn.acessos-perigo,
-.acessos-gaveta .btn.acessos-perigo {
-  color: var(--state-danger);
-}
-.acessos-tela .btn.acessos-perigo:hover:not(:disabled),
-.acessos-gaveta .btn.acessos-perigo:hover:not(:disabled) {
-  background: var(--state-danger-soft);
-}
 .acessos-link {
   padding: 0;
   border: 0;
@@ -84,17 +52,16 @@ td.acessos-vazio {
   text-decoration: underline;
 }
 
-/* ── Campos ───────────────────────────────────────────────────────────────── */
-.acessos-campo {
+/* ── Campos (o Campo de src/ui/; aqui, o controle de 36px desta tela) ─────── */
+.acessos-areas {
   display: grid;
   gap: var(--space-1-5);
   min-width: 0;
 }
-.acessos-campo > label,
-.acessos-campo > .acessos-rotulo {
+.acessos-areas > .acessos-rotulo {
   color: var(--text-primary);
   font-size: var(--text-label);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .acessos-tela input:not([type="checkbox"]),
 .acessos-tela select,
@@ -130,40 +97,6 @@ td.acessos-vazio {
 .acessos-busca input {
   width: 100%;
   padding-left: calc(var(--space-3) + 16px + var(--space-2));
-}
-
-/* ── Controle segmentado (design.md 10.5) ─────────────────────────────────── */
-.acessos-segmentado {
-  display: inline-flex;
-  justify-self: start;
-  gap: var(--space-0-5);
-  padding: var(--space-0-5);
-  border-radius: var(--radius-md);
-  background: var(--surface-hover);
-}
-.acessos-segmentado button {
-  min-height: 32px;
-  padding: 0 var(--space-3);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.acessos-segmentado button:hover:not(:disabled) {
-  color: var(--text-primary);
-}
-.acessos-segmentado button.ativo {
-  background: var(--surface-card);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
-}
-.acessos-segmentado button:disabled {
-  cursor: not-allowed;
 }
 
 /* ── Filtros em linha (design.md 11.3) ────────────────────────────────────── */
@@ -321,44 +254,6 @@ td.acessos-vazio {
   font-variant-numeric: tabular-nums;
 }
 
-/* Barra de salvar: fixa no pé da área, só enquanto há alteração. */
-.acessos-salvar {
-  position: sticky;
-  bottom: 0;
-  z-index: var(--acessos-z-canto);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: var(--space-4);
-  padding: var(--space-4) 0;
-  border-top: 1px solid var(--border-subtle);
-  background: var(--surface-card);
-}
-.acessos-salvar details {
-  flex: 1 1 220px;
-  align-self: center;
-}
-.acessos-salvar summary {
-  color: var(--text-primary);
-  font-weight: 500;
-  cursor: pointer;
-}
-.acessos-salvar ul {
-  display: grid;
-  gap: var(--space-2);
-  margin: var(--space-2) 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
-}
-.acessos-salvar li > span {
-  display: block;
-}
-.acessos-salvar .acessos-campo {
-  flex: 1 1 280px;
-}
-
 /* ── Lista + detalhe (grupos e coordenações) ──────────────────────────────── */
 .acessos-mestre-detalhe {
   display: grid;
@@ -474,7 +369,7 @@ td.acessos-vazio {
   padding-top: var(--space-4);
   border-top: 1px solid var(--border-subtle);
 }
-.acessos-detalhe-rodape .acessos-campo {
+.acessos-detalhe-rodape .ui-campo {
   max-width: 560px;
 }
 
@@ -637,8 +532,6 @@ td.acessos-vazio {
 }
 .acessos-selo-rascunho {
   margin-left: var(--space-2);
-  background: var(--state-info-soft, var(--state-warning-soft));
-  color: var(--state-info, var(--text-primary));
   vertical-align: middle;
 }
 .acessos-gaveta .acessos-avancado h5 {
@@ -650,12 +543,6 @@ td.acessos-vazio {
   margin-top: var(--space-4);
   padding-top: var(--space-4);
   border-top: 1px dashed var(--border-subtle);
-}
-.acessos-aviso-perigo {
-  display: flex;
-  gap: var(--space-2);
-  align-items: flex-start;
-  margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -682,28 +569,6 @@ td.acessos-vazio {
   }
 }
 
-/* ── Erro da primeira carga (design.md 12.3) ──────────────────────────────── */
-.acessos-erro-da-carga {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-.acessos-erro-da-carga > .icone {
-  flex: none;
-  margin-top: var(--space-0-5);
-}
-.acessos-erro-da-carga > div {
-  display: grid;
-  gap: var(--space-1);
-  flex: 1;
-}
-.acessos-erro-da-carga p {
-  margin: 0;
-}
-.acessos-erro-da-carga small {
-  font-size: var(--text-caption);
-}
-
 /* ── Vence as regras globais do app.css ───────────────────────────────────────
    app.css:384 (input/select: largura 100%, peso 600, raio 14px), app.css th
    (caixa alta, peso 800, sticky no topo) e app.css table (min-width 1180px).
@@ -724,8 +589,8 @@ td.acessos-vazio {
 .acessos-tela .acessos-busca input {
   width: 100%;
 }
-.acessos-tela .acessos-campo input,
-.acessos-gaveta .acessos-campo input {
+.acessos-tela .ui-campo input,
+.acessos-gaveta .ui-campo input {
   width: 100%;
 }
 .acessos-filtros select {
@@ -808,13 +673,6 @@ td.acessos-vazio {
   display: grid;
   gap: var(--space-4);
   min-width: 0;
-}
-.acessos-segmentado {
-  flex-wrap: nowrap;
-}
-.acessos-segmentado button {
-  flex: none;
-  width: auto;
 }
 /* Coordenação na linha: discreta como os níveis (a borda aparece no hover/foco). */
 .acessos-tela td select:not(.acessos-tag):not(.acessos-nivel) {
@@ -934,7 +792,7 @@ td.acessos-vazio {
   gap: var(--space-3);
   width: 100%;
 }
-.acessos-mover p {
+.acessos-mover > p:not(.ui-aviso) {
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
@@ -944,14 +802,6 @@ td.acessos-vazio {
   width: 100%;
   min-height: 36px;
   font-weight: 400;
-}
-/* O modal fica num portal, fora de .acessos-tela: o ghost precisa valer lá também. */
-.acessos-modal .btn.acessos-ghost {
-  background: transparent;
-  color: var(--color-action-ghost-text);
-}
-.acessos-modal .btn.acessos-ghost:hover:not(:disabled) {
-  background: var(--color-action-ghost-hover);
 }
 
 /* ── Visão simples de Usuários: pessoa, grupo, áreas, coordenação, situação ── */
@@ -1011,20 +861,6 @@ td.acessos-vazio {
 }
 .acessos-chip-alerta {
   border-color: transparent;
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
-}
-.acessos-selo {
-  display: inline-flex;
-  align-items: center;
-  min-height: 22px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  white-space: nowrap;
-}
-.acessos-selo-convite {
   background: var(--state-warning-soft);
   color: var(--state-warning);
 }
@@ -1143,10 +979,6 @@ td.acessos-vazio {
 }
 
 /* ── Contas desativadas e pedido de reativação ────────────────────────────── */
-.acessos-selo-reativacao {
-  background: var(--state-info-soft);
-  color: var(--state-info);
-}
 .acessos-motivo-ausente {
   font-style: italic;
 }
@@ -1160,4 +992,68 @@ td.acessos-vazio {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* Skeleton de lista e de bloco antes da primeira carga (BlocosEsqueleto). */
+.acessos-carregando {
+  display: grid;
+  gap: var(--space-2);
+}
+.acessos-esqueleto {
+  height: var(--space-10);
+}
+
+/*
+  ── Ainda usados por Módulos e abas (src/componentes/modulos/) ──────────────
+  Saem quando ela passar para src/modulos/ com as peças de src/ui/.
+*/
+.acessos-campo {
+  display: grid;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+.acessos-campo > label {
+  color: var(--text-primary);
+  font-size: var(--text-label);
+  font-weight: 500;
+}
+.acessos-acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.acessos-salvar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+}
+.acessos-salvar .acessos-campo {
+  flex: 1 1 280px;
+}
+.acessos-erro-da-carga {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.acessos-erro-da-carga > .icone {
+  flex: none;
+  margin-top: var(--space-0-5);
+}
+.acessos-erro-da-carga > div {
+  display: grid;
+  gap: var(--space-1);
+  flex: 1;
+}
+.acessos-erro-da-carga p {
+  margin: 0;
+}
+.acessos-erro-da-carga small {
+  font-size: var(--text-caption);
 }

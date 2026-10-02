@@ -1,7 +1,12 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { montarAcessos } from "../../src/componentes/acessos/acessos.jsx";
-import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+import { montarAcessos } from "../../src/modulos/acessos/acessos.jsx";
+import {
+  clicar,
+  digitar,
+  escolher,
+  esperar,
+} from "../componentes/interacoes.js";
 
 /*
   Configurações › Acessos em React: grupo (tag) + um select por módulo em
@@ -408,7 +413,7 @@ describe("Configurações › Acessos", () => {
     await esperar(() => controlador.render());
     const alerta = document.querySelector('[role="alert"]');
     expect(alerta.textContent).toContain(
-      "O banco ainda não tem a atualização de acessos.",
+      "o banco ainda não tem a atualização de acessos.",
     );
     expect(alerta.textContent).toContain("20260929121000 a 20260929121300");
     expect(document.querySelector('[role="tab"]')).toBeNull();
@@ -885,8 +890,8 @@ describe("Acessos: visão simples, trava de área e convite", () => {
     await escolher(select("Editais de Ana <img src=x>"), "editor");
     await digitar(document.getElementById("acessosMotivo"), "Teste");
     await clicar(botao("Salvar alterações"));
-    const aviso = document.querySelector('p.alert[role="status"]');
-    expect(aviso.className).toContain("warn");
+    const aviso = document.querySelector('.ui-aviso[role="status"]');
+    expect(aviso.dataset.tone).toBe("warning");
     expect(aviso.textContent).toContain(mensagem);
     expect(aviso.textContent).toContain("Nada foi salvo");
     expect(controlador.estado.obter().rascunho.size).toBe(1);

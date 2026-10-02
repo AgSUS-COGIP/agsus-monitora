@@ -13,8 +13,7 @@ import {
   valorDoCampo,
 } from "../../lib/modulos-e-abas.js";
 import { criarEstadoDosModulos } from "./estado.js";
-import { classes, ControleSegmentado } from "../acessos/partes.jsx";
-import { BotaoDeAcao } from "../../ui/index.js";
+import { BotaoDeAcao, classes, Segmentado } from "../../ui/index.js";
 import { Icone } from "../icone.jsx";
 
 /*
@@ -129,7 +128,7 @@ function LinhaDoItem({
         </span>
         <div className="modulos-linha__controles">
           {extra}
-          <ControleSegmentado
+          <Segmentado
             rotulo={`Situação de ${titulo}`}
             opcoes={opcoes}
             valor={atual}
@@ -385,7 +384,7 @@ export function ModulosEAbas({ estado }) {
         titulo="Sistema inteiro"
         icone="gauge"
         controles={
-          <ControleSegmentado
+          <Segmentado
             rotulo="Situação do sistema inteiro"
             opcoes={OPCOES_DO_SISTEMA}
             valor={estadoDoSistema}
@@ -423,7 +422,7 @@ export function ModulosEAbas({ estado }) {
             controles={
               <>
                 <SeloDoEstado estado={estadoDaArea} />
-                <ControleSegmentado
+                <Segmentado
                   rotulo={`Situação da área ${area.no_area || area.co_area}`}
                   opcoes={OPCOES}
                   valor={estadoDaArea}
