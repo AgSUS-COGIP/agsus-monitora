@@ -108,6 +108,20 @@ export function canViewSelecao(profile) {
   return normalizeRole(profile) !== "";
 }
 
+/*
+  Aba Classificação (20261002120000_classificacao.sql): ver (leitor); salvar a
+  regra do edital, gerar e publicar listas e registrar sorteio (editor).
+*/
+export function canViewClassificacao(profile) {
+  if (profile?.permissoes) return hasResource(profile, "classificacao");
+  return normalizeRole(profile) !== "";
+}
+
+export function canEditClassificacao(profile) {
+  if (profile?.permissoes) return hasResource(profile, "classificacao", 2);
+  return ["admin", "edital_gestor"].includes(normalizeRole(profile));
+}
+
 /* Aba Entrevistas (20260929235000_entrevistas.sql): só consulta nesta fase (leitor). */
 export function canViewEntrevistas(profile) {
   if (profile?.permissoes) return hasResource(profile, "entrevistas");
@@ -225,6 +239,7 @@ export function paginasPermitidas(profile) {
     approved: canViewCore(profile),
     analises: pode("analises"),
     entrevistas: canViewEntrevistas(profile),
+    classificacao: canViewClassificacao(profile),
     recursos: canViewRecursos(profile),
     selecao: canViewSelecao(profile),
     config: podeAbrirConfiguracoes(profile),

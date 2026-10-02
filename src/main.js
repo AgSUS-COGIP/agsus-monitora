@@ -47,6 +47,7 @@ import "./ui/ui.css";
 import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
+import "./modulos/classificacao/classificacao.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";
 import "./modulos/aya/tour/tour.css";
@@ -82,6 +83,7 @@ import { montarRecursos } from "./modulos/recursos/recursos.jsx";
 import { montarEntrevistas } from "./modulos/entrevistas/entrevistas.jsx";
 import { montarAnalises } from "./modulos/analises/analises.jsx";
 import { montarSelecao } from "./modulos/selecao/selecao.jsx";
+import { montarClassificacao } from "./modulos/classificacao/classificacao.jsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarAcessos } from "./componentes/acessos/acessos.jsx";
@@ -200,6 +202,15 @@ window.analisesController = montarAnalises({
   Entrevistas (área do app, render() a cada abertura). Só leitura.
 */
 window.selecaoController = montarSelecao({ toast: window.monitoraToast });
+
+/*
+  Classificação: módulo de src/modulos/, na própria <section> (área do app,
+  render() a cada abertura). A regra é de cada edital; a conta, do motor puro
+  (src/lib/classificacao/).
+*/
+window.classificacaoController = montarClassificacao({
+  toast: window.monitoraToast,
+});
 
 // Configurações › Acessos: abre pela seção (config-secoes.js → render()).
 window.acessosController = montarAcessos({

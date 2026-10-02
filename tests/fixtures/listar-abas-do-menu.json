@@ -174,29 +174,58 @@
     ]
   },
   {
+    "co_aba": "classificacao",
+    "no_aba": "Classificação",
+    "ds_icone": "list-ordered",
+    "nu_ordem": 7,
+    "co_view": "classificacao",
+    "co_recurso": "classificacao",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 7,
+        "co_view": "classificacao",
+        "ds_icone": "list-ordered"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 7,
+        "co_view": "classificacao",
+        "ds_icone": "list-ordered"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 7,
+        "co_view": "classificacao",
+        "ds_icone": "list-ordered"
+      }
+    ]
+  },
+  {
     "co_aba": "aprovados",
     "no_aba": "Lista de aprovados",
     "ds_icone": "user-round-check",
-    "nu_ordem": 7,
+    "nu_ordem": 8,
     "co_view": "approved",
     "co_recurso": "aprovados",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       }
@@ -206,26 +235,26 @@
     "co_aba": "selecao",
     "no_aba": "Seleção",
     "ds_icone": "funnel",
-    "nu_ordem": 8,
+    "nu_ordem": 9,
     "co_view": "selecao",
     "co_recurso": "selecao",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "selecao",
         "ds_icone": "funnel"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "selecao",
         "ds_icone": "funnel"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "selecao",
         "ds_icone": "funnel"
       }

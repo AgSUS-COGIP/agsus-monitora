@@ -91,8 +91,10 @@ export const AREAS_DO_MENU = Object.freeze([
   Painéis até a aba nova ser aprovada.
 
   A ordem segue as etapas do processo seletivo (Editais → Cronograma →
-  Análises → Recursos → Entrevistas → Aprovados → Seleção), migration
-  `20261001160000_ordem_do_menu_por_etapa.sql`.
+  Análises → Recursos → Entrevistas → Classificação → Aprovados → Seleção),
+  migrations `20261001160000_ordem_do_menu_por_etapa.sql` e
+  `20261002120000_classificacao.sql` (Classificação entra na 7 e empurra
+  Aprovados e Seleção).
 
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
   por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
@@ -190,10 +192,21 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
+      id: "classificacao",
+      rotulo: "Classificação",
+      icone: "list-ordered",
+      ordem: 7,
+      view: "classificacao",
+      recurso: "classificacao",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
+    {
       id: "aprovados",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
-      ordem: 7,
+      ordem: 8,
       view: "approved",
       recurso: "aprovados",
       tipo: "nativa",
@@ -203,7 +216,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "selecao",
       rotulo: "Seleção",
       icone: "funnel",
-      ordem: 8,
+      ordem: 9,
       view: "selecao",
       recurso: "selecao",
       tipo: "nativa",
