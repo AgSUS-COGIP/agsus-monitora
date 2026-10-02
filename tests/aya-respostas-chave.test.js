@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { curatedAnswerForQuestion } from "../src/modules/aya-knowledge.js";
+import { responderAya } from "../src/lib/busca-da-aya.js";
 
 /*
   Perguntas-chave sobre as regras que saíram das telas. A resposta é direta
-  (verbete de docs/aya), sem passar pelo modelo, e tem de dizer a regra certa.
+  (verbete de docs/aya, pela busca) e tem de dizer a regra certa.
 */
-const resposta = (pergunta) => curatedAnswerForQuestion(pergunta);
+const resposta = (pergunta) => responderAya({ question: pergunta }).answer;
 
 describe("respostas sobre as regras do sistema", () => {
   it("quem pode decidir um recurso", () => {
@@ -64,11 +64,15 @@ describe("respostas sobre as regras do sistema", () => {
     expect(resposta("O que é parecer juridico?")).toBe(
       resposta("O que é parecer jurídico?"),
     );
-    expect(resposta("O que é parecer jurídico?")).not.toBe("");
+    expect(resposta("O que é parecer jurídico?")).toContain("parecer jurídico");
   });
 
   it("não sequestra pergunta factual sobre a tela", () => {
-    expect(resposta("quantos recursos aparecem aqui?")).toBe("");
-    expect(resposta("quantas vagas ociosas o DSEI tem?")).toBe("");
+    expect(resposta("quantos recursos aparecem aqui?")).toContain(
+      "Não encontrei esse número",
+    );
+    expect(resposta("quantas vagas ociosas o DSEI tem?")).toContain(
+      "Não encontrei esse número",
+    );
   });
 });

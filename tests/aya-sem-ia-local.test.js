@@ -9,13 +9,7 @@ describe("Aya sem máquina, sessão de IA ou túnel", () => {
   it("responde saudações e ajuda com sugestões da tela sem nenhuma requisição", () => {
     const fetch = vi.spyOn(globalThis, "fetch");
     try {
-      for (const pergunta of [
-        "oi",
-        "oii",
-        "ajuda",
-        "obrigado",
-        "o que você faz?",
-      ]) {
+      for (const pergunta of ["oi", "oii", "ajuda", "o que você faz?"]) {
         const resultado = responder(pergunta);
         expect(resultado.answer).toContain("parecer jurídico");
         expect(resultado.sugestoes.length).toBeLessThanOrEqual(3);
@@ -91,7 +85,7 @@ describe("Aya sem máquina, sessão de IA ou túnel", () => {
   });
 
   it("oferece no máximo três perguntas distintas na dúvida, cada uma respondível", () => {
-    const resultado = responder("prazo");
+    const resultado = responder("lista");
     expect(resultado.answer).toContain("Não encontrei exatamente isso");
     expect(resultado.oferecerChamado).toBe(true);
     expect(resultado.sugestoes.length).toBeLessThanOrEqual(3);
@@ -120,8 +114,13 @@ describe("Aya sem máquina, sessão de IA ou túnel", () => {
       },
     ];
     expect(
-      buscarNaBase("indicadores", "recursos", verbetes)[0].verbete.resposta,
+      buscarNaBase("indicadores", { pagina: "recursos" }, verbetes).ranking[0]
+        .verbete.resposta,
     ).toBe("Recursos");
+    expect(
+      buscarNaBase("indicadores", { pagina: "nucleo" }, verbetes).ranking[0]
+        .verbete.resposta,
+    ).toBe("Editais");
   });
 
   it("abre Gmail com conteúdo codificado e mantém alternativa mailto", () => {

@@ -14,10 +14,7 @@ import {
   nomeDaArea,
 } from "../src/lib/menu-lateral.js";
 import { SECOES } from "../src/modules/config-secoes.js";
-import {
-  acaoDaResposta,
-  curatedAnswerForQuestion,
-} from "../src/modules/aya-knowledge.js";
+import { responderAya } from "../src/lib/busca-da-aya.js";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
 
 /*
@@ -27,6 +24,15 @@ import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
 */
 
 const AREAS = AREAS_DO_SISTEMA.map((area) => area.id);
+
+/* A resposta, ou "" quando a Aya pede outra pergunta ou foge do tema. */
+function respostaDaBase(question, local = {}) {
+  const resultado = responderAya({ question, ...local });
+  return resultado.oferecerChamado ||
+    /foge do que eu sei/.test(resultado.answer)
+    ? ""
+    : resultado.answer;
+}
 
 describe("um verbete por página e por seção", () => {
   it("a Aya conhece as mesmas páginas do menu, na mesma ordem", () => {
@@ -42,7 +48,7 @@ describe("um verbete por página e por seção", () => {
   it.each(ABAS_DO_MENU.map((aba) => [aba.rotulo]))(
     "responde para que serve a página %s",
     (rotulo) => {
-      const resposta = curatedAnswerForQuestion(`Para que serve ${rotulo}?`);
+      const resposta = respostaDaBase(`Para que serve ${rotulo}?`);
       expect(resposta).not.toBe("");
       expect(resposta).toContain(rotulo);
     },
@@ -51,7 +57,7 @@ describe("um verbete por página e por seção", () => {
   it.each(SECOES.map((secao) => [secao.rotulo]))(
     "responde para que serve a seção %s",
     (rotulo) => {
-      const resposta = curatedAnswerForQuestion(`Para que serve ${rotulo}?`);
+      const resposta = respostaDaBase(`Para que serve ${rotulo}?`);
       expect(resposta).not.toBe("");
       expect(resposta).toContain(rotulo);
     },
@@ -59,16 +65,15 @@ describe("um verbete por página e por seção", () => {
 });
 
 describe("sugestões do painel", () => {
-  const todas = [
+  const locais = [
     ...VIEWS_DA_AYA.flatMap((view) =>
-      AREAS.map((area) =>
-        paginaDaAya({ view, area, nomeDaArea: nomeDaArea(area) }),
-      ),
+      AREAS.map((area) => ({ view, area, nomeDaArea: nomeDaArea(area) })),
     ),
-    ...SECOES.map((secao) => paginaDaAya({ view: "config", secao: secao.id })),
-    paginaDaAya({ view: "config" }),
-    paginaDaAya({ view: "panel:externo", titulo: "Painel" }),
+    ...SECOES.map((secao) => ({ view: "config", secao: secao.id })),
+    { view: "config" },
+    { view: "panel:externo", titulo: "Painel" },
   ];
+  const todas = locais.map((local) => paginaDaAya(local));
 
   it("toda página tem de 2 a 5 sugestões", () => {
     for (const pagina of todas) {
@@ -77,11 +82,21 @@ describe("sugestões do painel", () => {
     }
   });
 
-  it("toda sugestão tem resposta direta num verbete", () => {
-    const semResposta = todas
-      .flatMap((pagina) => pagina.sugestoes)
-      .filter((s) => !curatedAnswerForQuestion(s.pergunta))
-      .map((s) => s.pergunta);
+  it("toda sugestão tem resposta da base, na própria página", () => {
+    const semResposta = locais
+      .flatMap((local) =>
+        paginaDaAya(local).sugestoes.map((s) => ({ local, s })),
+      )
+      .filter(
+        ({ local, s }) =>
+          !respostaDaBase(s.pergunta, {
+            section: local.view,
+            title: local.titulo,
+            area: local.area,
+            secao: local.secao,
+          }),
+      )
+      .map(({ s }) => s.pergunta);
     expect(semResposta).toEqual([]);
   });
 
@@ -159,10 +174,11 @@ describe("ações das respostas", () => {
       expect(acaoDaAya(verbete.abrir)).not.toBeNull();
   });
 
-  it("a resposta direta traz a ação do verbete", () => {
-    const resposta = curatedAnswerForQuestion("Como dar acesso a alguém?");
-    expect(acaoDaResposta(resposta)).toBe("config:acessos");
-    expect(acaoDaResposta("texto da IA")).toBe("");
+  it("a resposta da base traz a ação do verbete", () => {
+    expect(responderAya({ question: "Como dar acesso a alguém?" }).acao).toBe(
+      "config:acessos",
+    );
+    expect(responderAya({ question: "oi" }).acao).toBeUndefined();
   });
 });
 
