@@ -1,4 +1,5 @@
 import { indicadoresDoResumo } from "../../lib/editais-do-nucleo.js";
+import { TopoDoPainel } from "../../ui/topo-do-painel.jsx";
 
 /*
   "Cronogramas e alertas": os indicadores do resumo, que também filtram a
@@ -102,20 +103,21 @@ export function PainelOperacional({ estado, nucleo }) {
 
   return (
     <section id="nucleoOperationalKpis" className="nucleo-operational-panel">
-      <div className="nucleo-operational-heading">
-        <div>
-          <h3>Cronogramas e alertas</h3>
-        </div>
-        <button
-          id="nucleoOperationalRefresh"
-          type="button"
-          className="btn outline"
-          disabled={atualizandoResumo}
-          onClick={atualizar}
-        >
-          <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
-        </button>
-      </div>
+      <TopoDoPainel
+        visoes={<h3>Cronogramas e alertas</h3>}
+        status={
+          atualizandoResumo
+            ? "Atualizando…"
+            : statusDoResumo === "error"
+              ? "Falha ao carregar"
+              : statusDoResumo === "ready"
+                ? "Resumo carregado"
+                : "Carregando…"
+        }
+        idDaAtualizacao="nucleoOperationalRefresh"
+        atualizarDesativado={atualizandoResumo}
+        aoAtualizar={atualizar}
+      />
       <div id="nucleoKpiGrid" className="nucleo-kpi-grid">
         {conteudo}
       </div>

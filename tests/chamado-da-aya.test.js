@@ -55,7 +55,7 @@ describe("montagem do chamado", () => {
   });
 
   it("codifica o mailto com CRLF (%0D%0A)", () => {
-    const { href, assunto, corpo } = montarChamado(base);
+    const { mailto: href, assunto, corpo } = montarChamado(base);
     expect(href.startsWith("mailto:suporte@agenciasus.org.br?subject=")).toBe(
       true,
     );
@@ -114,7 +114,7 @@ describe("montagem do chamado", () => {
     expect(corpo).not.toContain("98765432100");
     expect(corpo).toContain("[e-mail omitido]");
     expect(corpo).toContain("[CPF omitido]");
-    expect(href).not.toContain("gmail");
+    expect(href).not.toContain(encodeURIComponent("joao.silva@gmail.com"));
     expect(corpo.toLowerCase()).not.toMatch(/token|bearer|senha/);
   });
 

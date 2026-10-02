@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
+import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.jsx";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.js";
 import { LEI_15142_ESPALHADA } from "../modelos-de-convocacao-antigos.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";

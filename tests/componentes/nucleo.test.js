@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarNucleo } from "../../src/componentes/nucleo/nucleo.jsx";
+import { montarNucleo } from "../../src/modulos/editais/nucleo.jsx";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,

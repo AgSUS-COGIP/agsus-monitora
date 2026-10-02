@@ -1,7 +1,7 @@
 # Regras da Lista de aprovados
 
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
-judice e anexos. Fontes: `src/componentes/lista-aprovados/`, `src/lib/lista-aprovados-rules.js`,
+judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.js`,
 `src/lib/aprovados-import.js`, `src/lib/lista-convocacao-rules.js`,
 `src/lib/modelo-de-convocacao.js`, `src/lib/anexos-do-candidato.js`, `src/lib/access-roles.js` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`
@@ -11,7 +11,7 @@ e `20261001150000_sub_judice_alteracao.sql`.
 
 **perguntas:** tela da lista de aprovados | lista de aprovados | aba lista de aprovados | para que serve lista de aprovados | para que serve a lista de aprovados | status do candidato
 **resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual. Os status do candidato são Contratado, Desistente, Migração, Documentação Rejeitada e Fim de Fila; Contratado e Migração exigem matrícula. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado). Quem tem Editor em Aprovados muda status; o grupo Edital gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.
-**fonte:** src/lib/lista-aprovados-rules.js; src/componentes/lista-aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql
+**fonte:** src/lib/lista-aprovados-rules.js; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql
 **abrir:** approved
 
 ## Lista inativa

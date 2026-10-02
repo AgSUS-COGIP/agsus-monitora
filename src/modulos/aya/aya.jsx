@@ -6,15 +6,15 @@
 
   O que o painel antigo (src/modules/arara-guide.js, arara-speaking-effects.js
   e nina-panel-drag.js) fazia e continua aqui:
-  - a mesma IA: resposta direta dos verbetes de docs/aya, contexto da tela e,
-    por fim, a IA local/remota por /api/aya (askAyaAi, aya-ai-client.js);
+  - respostas da base: resposta direta dos verbetes de docs/aya, contexto da tela e,
+    busca na base de conhecimento, sem servidor nem modelo local;
   - a conversa guardada na aba (aya-memoria.js, sessionStorage), restaurada ao
     recarregar e apagada por "Limpar conversa";
   - aberto/fechado lembrado no navegador (mesma chave de antes);
   - a arara pode ser arrastada para outro lugar da tela, e a posição fica
     guardada (mesma chave de antes); clique sem arrastar abre o painel;
   - Enter envia, Shift+Enter quebra linha; até 1.200 caracteres;
-  - origem de cada resposta ("Fonte oficial", "IA local"…) e fontes oficiais;
+  - origem de cada resposta ("Fonte oficial", "Base do MONITORA"…) e fontes oficiais;
   - o texto aparece aos poucos ("digitando"), menos com movimento reduzido.
   Novo: saudação e sugestões da página e da área atuais; botão que abre a
   tela citada na resposta; "Isso ajudou?" guardado só no navegador; e o
@@ -56,10 +56,8 @@ import {
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
 import { nomeDaArea } from "../../lib/menu-lateral.js";
 import { abrirSecaoDeConfiguracao } from "../../modules/config-secoes.js";
-import {
-  askAyaAi,
-  collectAyaPageContext,
-} from "../../modules/aya-ai-client.js";
+import { collectAyaPageContext } from "./contexto.js";
+import { responderAya } from "../../lib/busca-da-aya.js";
 import {
   esquecerConversa,
   lerConversa,
@@ -90,9 +88,7 @@ const MARGEM = 8;
 const ROTULO_DA_ORIGEM = Object.freeze({
   "curated-official": "Fonte oficial",
   "monitora-local-context": "Dados desta tela",
-  "ollama-local": "IA local",
-  "recusa-por-numero-sem-lastro": "Validação de segurança",
-  "local-fallback": "Apoio local",
+  "base-monitora": "Base do MONITORA",
 });
 
 /* localStorage pode faltar (janela privada, bloqueio): a Aya funciona igual. */
@@ -256,10 +252,17 @@ function CartaoDoChamado({ chamado }) {
   return (
     <div className="aya-chamado" role="note" aria-label="Abrir chamado">
       <strong>Abrir chamado</strong>
-      <p>Vou abrir o seu e-mail com a conversa preenchida.</p>
-      <a className="aya-chamado__botao" href={chamado.href}>
+      <p>
+        Vou abrir o Gmail com a conversa preenchida. Revise antes de enviar.
+      </p>
+      <a
+        className="aya-chamado__botao"
+        href={chamado.href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <Icone nome="mail" tamanho={15} />
-        Abrir chamado
+        Abrir chamado no Gmail
       </a>
     </div>
   );
@@ -271,6 +274,7 @@ function Mensagem({
   aoTerminarRevelacao,
   aoAvaliar,
   aoAbrir,
+  aoPerguntar,
   chamado,
 }) {
   if (mensagem.papel === "user") {
@@ -320,6 +324,20 @@ function Mensagem({
           {acao.rotulo}
           <Icone nome="arrow-right" tamanho={14} />
         </button>
+      ) : null}
+      {mensagem.sugestoes?.length ? (
+        <div className="aya-sugestoes">
+          {mensagem.sugestoes.map((s) => (
+            <button
+              type="button"
+              className="aya-sugestao"
+              key={s.pergunta}
+              onClick={() => aoPerguntar(s.pergunta)}
+            >
+              {s.rotulo}
+            </button>
+          ))}
+        </div>
       ) : null}
       {!mensagem.restaurada ? (
         <Avaliacao mensagem={mensagem} aoAvaliar={aoAvaliar} />
@@ -472,7 +490,8 @@ const perfilDoLegado = () => globalThis.window?.getMonitoraProfile?.() || null;
 export const ID_DOS_PRIMEIROS_PASSOS = "primeiros-passos";
 
 export function Aya({
-  perguntar = askAyaAi,
+  perguntar = (opcoes) =>
+    responderAya({ ...opcoes, context: collectAyaPageContext(opcoes.doc) }),
   navegar = navegarPelaJanela,
   abrirSecao = abrirSecaoPadrao,
   configuracao = configuracaoPublicada,
@@ -666,7 +685,8 @@ export function Aya({
   }
 
   const chamadoDe = (mensagem) => {
-    const indice = mensagens.findIndex((m) => m.id === mensagem.id);
+    const encontrado = mensagens.findIndex((m) => m.id === mensagem.id);
+    const indice = encontrado < 0 ? mensagens.length : encontrado;
     const pergunta =
       [...mensagens.slice(0, indice)].reverse().find((m) => m.papel === "user")
         ?.texto || "";
@@ -710,7 +730,9 @@ export function Aya({
       });
     } catch {
       resultado = {
-        answer: "A IA da Aya está temporariamente indisponível.",
+        answer:
+          "Não consegui encontrar uma resposta. Escolha uma sugestão ou abra um chamado.",
+        oferecerChamado: true,
         unavailable: true,
       };
     }
@@ -723,15 +745,15 @@ export function Aya({
         texto:
           String(resultado?.answer || "").trim() ||
           "Não consegui responder agora.",
-        provider:
-          resultado?.provider ||
-          (resultado?.unavailable ? "local-fallback" : "ollama-local"),
+        provider: resultado?.provider || "base-monitora",
         fontes: resultado?.sources || [],
         acao: resultado?.acao || "",
+        sugestoes: resultado?.sugestoes || [],
+        oferecerChamado: !!resultado?.oferecerChamado,
       },
     ]);
     setRevelando(movimentoReduzido(janela) ? "" : id);
-    if (pedeSuporte(limpa)) setChamadoPara(id);
+    if (pedeSuporte(limpa) || resultado?.oferecerChamado) setChamadoPara(id);
     setOcupada(false);
   }
 
@@ -976,6 +998,7 @@ export function Aya({
                   aoTerminarRevelacao={terminarRevelacao}
                   aoAvaliar={avaliar}
                   aoAbrir={abrirTela}
+                  aoPerguntar={enviar}
                   chamado={
                     mensagem.id === chamadoPara ? chamadoDe(mensagem) : null
                   }
@@ -1002,9 +1025,25 @@ export function Aya({
             }}
           >
             <p className="aya-aviso" role="note">
-              Solução experimental de IA. As informações podem conter
-              imprecisões.
+              Se precisar de ajuda, abra um chamado.
             </p>
+            <a
+              className="aya-suporte"
+              href={
+                chamadoDe(
+                  [...mensagens]
+                    .reverse()
+                    .find((m) => m.papel === "assistant") || {
+                    id: "",
+                    texto: "",
+                  },
+                ).href
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icone nome="mail" tamanho={15} /> Feedback e suporte
+            </a>
             <div className="aya-compositor">
               <label htmlFor={idDoCampo} className="aya-visualmente-oculto">
                 Pergunte à Aya

@@ -506,6 +506,16 @@
   text-align: center;
 }
 
+.aya-suporte {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: var(--space-2);
+  color: var(--brand-primary);
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+
 .aya-compositor {
   display: flex;
   align-items: flex-end;

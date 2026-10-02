@@ -15,7 +15,7 @@ Leia **só o documento do assunto**. Nada aqui é carregado pelo build, exceto `
 | `auditoria-sedes-dsei-2026-09-16.md` | auditoria pontual das sedes de DSEI |
 | `handoff-codex-mapas.md` | contexto de transição do trabalho de mapas |
 | `padronizacao_nomenclatura_*.md` | aplicação do padrão MAD no banco e no front |
-| `aya-ollama-local.md` | rodar a AYA com Ollama local |
+| `aya-sem-ia-local.md` | busca da Aya no navegador e chamados pelo Gmail |
 | `aya/` | **base de conhecimento da AYA** (fonte de `src/modules/aya-conhecimento-gerado.js`) |
 | `propostas/` | SQL proposto, ainda não virou migration |
 

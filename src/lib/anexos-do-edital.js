@@ -6,7 +6,7 @@
   publica cada anexo num arquivo), transformar o Anexo I em etapas do editor e
   o Anexo II nas linhas que `salvar_quadro_de_vagas` grava.
 
-  A tela é `src/componentes/nucleo/importar-anexos.jsx`.
+  A tela é `src/modulos/editais/importar-anexos.jsx`.
 */
 
 import { novaEtapa } from "./cronograma-do-edital.js";

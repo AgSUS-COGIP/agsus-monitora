@@ -1,6 +1,6 @@
 /*
   Cronograma de um edital — o que o formulário do Núcleo calcula e valida antes
-  de salvar, sem DOM nem rede. A tela é `src/componentes/nucleo/`.
+  de salvar, sem DOM nem rede. A tela é `src/modulos/editais/`.
 
   O status e a etapa do edital saem das datas quando o cronograma é
   "automático": quem cadastra informa as etapas, e o sistema diz se o edital
