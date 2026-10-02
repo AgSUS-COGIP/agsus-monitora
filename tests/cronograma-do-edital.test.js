@@ -164,3 +164,24 @@ describe("linha do tempo", () => {
     ).toEqual(["done", "current", "next", "future"]);
   });
 });
+
+describe("datas do próprio edital", () => {
+  const base = { edital: "107/2026", unidade: "DSEI Vale do Javari" };
+  it("ano impossível e encerramento antes do início impedem salvar", () => {
+    const { erros } = analisarCronograma(
+      { ...base, data_inicio: "0202-11-12", data_fim: "20206-09-14" },
+      [],
+      "",
+      { exigirMotivo: false },
+    );
+    expect(erros.filter((e) => e.includes("não é possível"))).toHaveLength(2);
+    expect(
+      analisarCronograma(
+        { ...base, data_inicio: "2026-11-12", data_fim: "2026-09-14" },
+        [],
+        "",
+        { exigirMotivo: false },
+      ).erros,
+    ).toContain("A data de encerramento do edital é anterior à de início.");
+  });
+});

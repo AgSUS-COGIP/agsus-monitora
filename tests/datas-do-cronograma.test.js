@@ -62,3 +62,13 @@ describe("datas do cronograma", () => {
     ).toEqual([{ edital: "05/2026 • DSEI Xavante", etapasComProblema: 2 }]);
   });
 });
+
+describe("dataPlausivel: o formato inteiro conta", () => {
+  it("recusa ano de 5 dígitos e de 3, aceita AAAA-MM-DD nos limites", () => {
+    expect(dataPlausivel("20206-09-14")).toBe(false);
+    expect(dataPlausivel("0202-10-09")).toBe(false);
+    expect(dataPlausivel("2026-09-14")).toBe(true);
+    expect(dataPlausivel("2026-09-14T10:00:00Z")).toBe(true);
+    expect(dataPlausivel("")).toBe(false);
+  });
+});

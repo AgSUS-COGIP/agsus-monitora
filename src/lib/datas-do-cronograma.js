@@ -12,9 +12,13 @@
 export const ANO_MINIMO = 2015;
 export const ANO_MAXIMO = 2100;
 
+/* "AAAA-MM-DD" com o ano entre os limites. O formato inteiro conta: um ano de
+   cinco dígitos ("20206-09-14") passava como 2020 pelos 4 primeiros. */
 export function dataPlausivel(chave) {
-  const ano = Number(String(chave ?? "").slice(0, 4));
-  return Number.isInteger(ano) && ano >= ANO_MINIMO && ano <= ANO_MAXIMO;
+  const texto = String(chave ?? "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false;
+  const ano = Number(texto.slice(0, 4));
+  return ano >= ANO_MINIMO && ano <= ANO_MAXIMO;
 }
 
 /** A etapa tem início e fim possíveis, e o fim não vem antes do início? */
