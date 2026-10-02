@@ -900,6 +900,25 @@ export function Aya({
                   <Icone nome="compass" tamanho={17} />
                 </button>
               ) : null}
+              <a
+                className="aya-icone-botao aya-suporte"
+                aria-label="Feedback e suporte"
+                title="Feedback e suporte"
+                href={
+                  chamadoDe(
+                    [...mensagens]
+                      .reverse()
+                      .find((m) => m.papel === "assistant") || {
+                      id: "",
+                      texto: "",
+                    },
+                  ).href
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icone nome="mail" tamanho={16} />
+              </a>
               <button
                 type="button"
                 className="aya-icone-botao"
@@ -1024,26 +1043,6 @@ export function Aya({
               void enviar(texto);
             }}
           >
-            <p className="aya-aviso" role="note">
-              Se precisar de ajuda, abra um chamado.
-            </p>
-            <a
-              className="aya-suporte"
-              href={
-                chamadoDe(
-                  [...mensagens]
-                    .reverse()
-                    .find((m) => m.papel === "assistant") || {
-                    id: "",
-                    texto: "",
-                  },
-                ).href
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icone nome="mail" tamanho={15} /> Feedback e suporte
-            </a>
             <div className="aya-compositor">
               <label htmlFor={idDoCampo} className="aya-visualmente-oculto">
                 Pergunte à Aya

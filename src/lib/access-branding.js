@@ -2,7 +2,7 @@ export const DEFAULT_ACCESS_BRANDING = Object.freeze({
   logoUrl: "/assets/agsus-logo.webp",
   backgroundUrl: "/assets/access-background-default.svg",
   panelColor: "#c296eb",
-  greeting: "Bem-vindo(a) ao MONITORA",
+  greeting: "Boas-vindas!",
 });
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
