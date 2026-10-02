@@ -93,13 +93,19 @@ export function textoDasVagas(vaga, regraBruta) {
   return `${total} ${total === 1 ? "vaga" : "vagas"}${partes.length ? ` (${partes.join(" + ")})` : ""}`;
 }
 
-/** O cabeçalho da vaga na publicação. */
+/*
+  O cabeçalho da vaga na publicação: "VAGA 169673 - Analista … - DSEI Xingu
+  (Sede) - DSEI Xingu - 1 vaga (1 AC + CR)". A unidade vem mesmo quando a
+  lotação já a cita (como o 83/2026 publicou); só sai se for igual à lotação.
+*/
 export function cabecalhoDaVaga(vaga, regra, unidade = "") {
   const partes = [
     vaga.codigo ? `VAGA ${vaga.codigo}` : "VAGA",
     vaga.cargo,
     vaga.lotacao,
-    unidade && !semAcento(vaga.lotacao).includes(semAcento(unidade))
+    unidade &&
+    semAcento(texto(vaga.lotacao)).toLowerCase() !==
+      semAcento(texto(unidade)).toLowerCase()
       ? unidade
       : "",
     textoDasVagas(vaga, regra),
