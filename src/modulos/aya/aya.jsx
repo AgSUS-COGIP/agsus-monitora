@@ -35,6 +35,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import { comemorar } from "../../modules/comemoracao.js";
 import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
 import { Icone } from "../../componentes/icone.jsx";
 import {
@@ -544,6 +545,17 @@ export function Aya({
     [navegar, abrirSecao],
   );
 
+  function celebrarFimDoTour(concluido) {
+    if (!concluido) return;
+    const nome = String(concluido.rotulo || "").replace(/^(Tour|Trilha): /, "");
+    comemorar({
+      texto: concluido.trilha
+        ? `Parabéns! Você concluiu a trilha "${nome}".`
+        : `Parabéns! Você conheceu a tela ${nome}.`,
+      confete: concluido.trilha ? "festa" : "fogos",
+    });
+  }
+
   function comecarTour(novo) {
     setOferta(false);
     setAberta(false);
@@ -582,6 +594,8 @@ export function Aya({
     (motivo) => {
       if (tour?.trilha && motivo === "concluiu")
         setProgresso(concluirTrilha(janela, tour.trilha));
+      // Fim do tour com "Concluir": fogos; fim de uma trilha inteira: a festa.
+      if (motivo === "concluiu") celebrarFimDoTour(tour);
       devolverFocoAArara.current = true;
       setTour(null);
     },
