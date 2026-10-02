@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  chaveDaPendencia,
+  correcaoDesfazivel,
+  filaDeCoordenadas,
+  formatarDistancia,
   lerCoordenada,
   pontosEditaveisDoMapa,
+  rotuloDaAcao,
+  sugestoesDaPendencia,
+  textoDePendentes,
   validarCorrecaoDoMapa,
 } from "../src/lib/coordenadas-do-mapa.js";
 
@@ -61,5 +68,206 @@ describe("coordenadas do mapa", () => {
       validarCorrecaoDoMapa(45, -50, "Fonte oficial consultada"),
     ).toContain("Brasil");
     expect(validarCorrecaoDoMapa(-10, -50, "curto")).toContain("motivo");
+  });
+});
+
+const lmapDaFila = {
+  dsei: [
+    {
+      k: "XINGU",
+      n: "Xingu",
+      lat: -12,
+      lon: -53,
+      polos: [{ n: "Pavuru", cod: 10, lat: -11.5, lon: -53.2, uf: "MT" }],
+    },
+    {
+      k: "ALTAMIRA",
+      n: "Altamira",
+      lat: -3.2,
+      lon: -52.2,
+      polos: [{ n: "Laranjal", cod: 20, lat: -3.5, lon: -52.5 }],
+    },
+  ],
+  casai: [{ n: "CASAI Brasília", lat: -15.8, lon: -47.9 }],
+};
+const redeDaFila = {
+  rede: {
+    ALTAMIRA: {
+      u: [["POSTO DE SAÚDE IPIXUNA", "921106", -4.6, -52.6, "Altamira", "PA"]],
+    },
+  },
+};
+const pendenciasDaFila = [
+  {
+    fonte: "lmap",
+    tipo: "polo",
+    dsei: "XINGU",
+    codigo: "10",
+    nome: "Pavuru",
+    conferido: false,
+  },
+  {
+    fonte: "rede_cnes",
+    tipo: "u",
+    dsei: "ALTAMIRA",
+    codigo: "921106",
+    nome: "POSTO DE SAÚDE IPIXUNA",
+    municipio: "Altamira/PA",
+    conferido: false,
+  },
+  {
+    fonte: "lmap",
+    tipo: "polo",
+    dsei: "ALTAMIRA",
+    codigo: "20",
+    nome: "Laranjal",
+    conferido: true,
+  },
+];
+
+describe("fila do editor de coordenadas", () => {
+  const pontos = pontosEditaveisDoMapa(lmapDaFila, redeDaFila);
+
+  it("liga a pendência ao ponto por fonte, tipo, DSEI e código", () => {
+    expect(chaveDaPendencia(pendenciasDaFila[0])).toBe("lmap|polo|XINGU|10");
+    const polo = pontos.find((p) => p.nome === "Polo · Pavuru");
+    expect(chaveDaPendencia(polo.alvo)).toBe("lmap|polo|XINGU|10");
+  });
+
+  it("Só pendentes: tira conferidos e sem pendência, conta e ordena por DSEI", () => {
+    const { itens, pendentes } = filaDeCoordenadas(pontos, pendenciasDaFila);
+    expect(pendentes).toBe(2);
+    expect(itens.map((i) => i.nome)).toEqual([
+      "Unidade CNES · POSTO DE SAÚDE IPIXUNA",
+      "Polo · Pavuru",
+    ]);
+    expect(itens.every((i) => i.pendente)).toBe(true);
+  });
+
+  it("sem o filtro: todos, DSEI em ordem e os sem DSEI no fim", () => {
+    const { itens } = filaDeCoordenadas(pontos, pendenciasDaFila, {
+      soPendentes: false,
+    });
+    expect(itens.map((i) => i.nome)).toEqual([
+      "Polo · Laranjal",
+      "Sede · Altamira",
+      "Unidade CNES · POSTO DE SAÚDE IPIXUNA",
+      "Polo · Pavuru",
+      "Sede · Xingu",
+      "CASAI · CASAI Brasília",
+    ]);
+    const laranjal = itens[0];
+    expect(laranjal.pendencia.conferido).toBe(true);
+    expect(laranjal.pendente).toBe(false);
+  });
+
+  it("busca por nome, CNES, município e DSEI, sem acento nem caixa", () => {
+    const nomes = (busca) =>
+      filaDeCoordenadas(pontos, pendenciasDaFila, {
+        busca,
+        soPendentes: false,
+      }).itens.map((i) => i.nome);
+    expect(nomes("saude ipixuna")).toEqual([
+      "Unidade CNES · POSTO DE SAÚDE IPIXUNA",
+    ]);
+    expect(nomes("921106")).toEqual(["Unidade CNES · POSTO DE SAÚDE IPIXUNA"]);
+    expect(nomes("xingu")).toEqual(["Polo · Pavuru", "Sede · Xingu"]);
+    expect(nomes("ALTAMIRA PA")).toEqual([
+      "Unidade CNES · POSTO DE SAÚDE IPIXUNA",
+    ]);
+    expect(
+      filaDeCoordenadas(pontos, pendenciasDaFila, { busca: "zzz" }).pendentes,
+    ).toBe(2);
+  });
+
+  it("textos de contagem e de ação", () => {
+    expect(textoDePendentes(0)).toBe("0 pendentes");
+    expect(textoDePendentes(1)).toBe("1 pendente");
+    expect(textoDePendentes(249)).toBe("249 pendentes");
+    expect(rotuloDaAcao("CONFERENCIA")).toBe("Conferido");
+    expect(rotuloDaAcao("DESFAZER")).toBe("Desfeito");
+    expect(rotuloDaAcao("CORRECAO")).toBe("Correção");
+  });
+});
+
+describe("sugestões da pendência", () => {
+  const ponto = { latitude: -4.6, longitude: -52.6 };
+
+  it("CNES primeiro, depois aldeias por distância; repetidos saem", () => {
+    const sugestoes = sugestoesDaPendencia(
+      {
+        candidatos: [
+          { f: "IBGE", n: "Longe", lat: -5.6, lon: -52.6 },
+          { f: "FUNAI", n: "Perto", lat: -4.65, lon: -52.6, ti: "Araweté" },
+          { f: "CNES", n: "Cadastro", lat: -4.6, lon: -52.6 },
+          { f: "IBGE", n: "Longe de novo", lat: -5.6, lon: -52.6 },
+        ],
+      },
+      ponto,
+    );
+    expect(sugestoes.map((s) => s.nome)).toEqual([
+      "Cadastro",
+      "Perto",
+      "Longe",
+    ]);
+    expect(sugestoes.map((s) => s.rotulo)).toEqual([
+      "CNES/DATASUS",
+      "Aldeia · Funai",
+      "Aldeia · IBGE",
+    ]);
+    expect(sugestoes[0].distanciaKm).toBe(0);
+    expect(sugestoes[1].terra).toBe("Araweté");
+    expect(Math.round(sugestoes[2].distanciaKm)).toBe(111);
+  });
+
+  it("acrescenta a sede do município quando a tabela a conhece", () => {
+    const sugestoes = sugestoesDaPendencia(
+      { municipio: "Seropédica/RJ", candidatos: [] },
+      ponto,
+    );
+    expect(sugestoes).toHaveLength(1);
+    expect(sugestoes[0].rotulo).toBe("Sede do município");
+    expect(sugestoes[0].nome).toBe("Seropédica/RJ");
+    expect(sugestoesDaPendencia({ municipio: "Lugar/XX" }, ponto)).toEqual([]);
+  });
+
+  it("sem posição atual não há distância; sem pendência, nada", () => {
+    const [s] = sugestoesDaPendencia(
+      { candidatos: [{ f: "OSM", n: "Lugar", lat: -3, lon: -50 }] },
+      { latitude: null, longitude: null },
+    );
+    expect(s.distanciaKm).toBeNull();
+    expect(formatarDistancia(s.distanciaKm)).toBe("—");
+    expect(sugestoesDaPendencia(null, ponto)).toEqual([]);
+  });
+
+  it("formata a distância em metros ou quilômetros", () => {
+    expect(formatarDistancia(0.35)).toBe("350 m");
+    expect(formatarDistancia(4.21)).toBe("4,2 km");
+    expect(formatarDistancia(73.8)).toBe("74 km");
+  });
+});
+
+describe("desfazer do histórico", () => {
+  const correcao = {
+    id: 3,
+    acao: "CORRECAO",
+    latitude_anterior: -1,
+    longitude_anterior: -50,
+    desfeito: false,
+  };
+  it("só a mais recente, se não for desfazer, não desfeita e com posição anterior", () => {
+    expect(correcaoDesfazivel([correcao, { ...correcao, id: 2 }])).toBe(
+      correcao,
+    );
+    expect(correcaoDesfazivel([{ ...correcao, acao: "DESFAZER" }])).toBeNull();
+    expect(correcaoDesfazivel([{ ...correcao, desfeito: true }])).toBeNull();
+    expect(
+      correcaoDesfazivel([{ ...correcao, latitude_anterior: null }]),
+    ).toBeNull();
+    expect(correcaoDesfazivel([])).toBeNull();
+    expect(
+      correcaoDesfazivel([{ ...correcao, acao: "CONFERENCIA" }]).acao,
+    ).toBe("CONFERENCIA");
   });
 });
