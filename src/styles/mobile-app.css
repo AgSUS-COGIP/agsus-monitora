@@ -29,6 +29,11 @@ textarea,
   touch-action: manipulation;
 }
 
+/* No celular o cabeçalho sobe para 10030 (app.css: --z-header 10010). */
+body.mobile-app .app .top {
+  z-index: 10030;
+}
+
 @media (max-width: 900px) {
   body {
     background: #f4f7fb;
@@ -105,7 +110,7 @@ textarea,
     width: min(86vw, 320px) !important;
     max-width: 320px;
     height: auto !important;
-    /* Acima do cabeçalho (system-ui-fixes.css: body.mobile-app .app .top = 10030):
+    /* Acima do cabeçalho (body.mobile-app .app .top = 10030, no início deste arquivo):
        com 10020 o topo cobria a logo e o primeiro grupo da gaveta aberta. */
     z-index: 10036;
     transform: translateX(-105%);

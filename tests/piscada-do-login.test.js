@@ -59,8 +59,8 @@ describe("a marca é aplicada antes do primeiro paint", () => {
   });
 
   /*
-    A classe é exigida em `#loginScreen.login-panel-dark` por
-    post-152-regression-fixes.css. Aplicá-la no elemento — e não no <html> —
+    A classe é exigida em `#loginScreen.login-panel-dark` pela seção Login de
+    platform-shell.css. Aplicá-la no elemento — e não no <html> —
     reaproveita todos esses seletores sem duplicar nenhum.
   */
   it("a classe é aplicada logo depois do elemento existir", () => {

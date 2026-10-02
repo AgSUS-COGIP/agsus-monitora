@@ -1,28 +1,14 @@
 /*
   Cronograma (src/modulos/cronograma/): o mês, as listas de etapas, a linha do
   tempo e o popup do dia. Topo, filtros, cards, skeleton e avisos vêm de
-  src/ui/ (ui.css). Fora a paleta dos tipos de etapa, só tokens: o tema
-  escuro vem deles.
+  src/ui/ (ui.css). Só tokens: o tema escuro vem deles.
 
-  As cores dos tipos de etapa vivem aqui e são referenciadas pelo campo `cor`
-  de cada tipo em `src/lib/etapas-de-edital.js` — o JS escreve
-  `data-cor="rosa"` e o CSS decide o que é "rosa". Acrescentar um tipo lá
-  exige acrescentar a variável aqui, senão a etapa sai sem cor. O popup do dia
-  vive no fim do body, fora da página: a paleta vale para os dois.
+  As cores dos tipos de etapa são tokens de domínio (`--etapa-*`, em
+  src/styles/tokens.css), referenciados pelo campo `cor` de cada tipo em
+  `src/lib/etapas-de-edital.js` — o JS escreve `data-cor="rosa"` e a tabela
+  do fim deste arquivo decide o que é "rosa". Acrescentar um tipo lá exige
+  acrescentar o token e a linha da tabela, senão a etapa sai sem cor.
 */
-
-#page-calendario,
-.cal-modal-card {
-  --cal-laranja: #d97706;
-  --cal-rosa: #e11d48;
-  --cal-violeta: #7c3aed;
-  --cal-ambar: #eab308;
-  --cal-turquesa: #0f766e;
-  --cal-violeta-claro: #8b5cf6;
-  --cal-verde: #22c55e;
-  --cal-azul-escuro: #2563eb;
-  --cal-neutro: var(--text-secondary);
-}
 
 /* ── Filtros ─────────────────────────────────────────────────────────── */
 
@@ -72,9 +58,6 @@
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
-.cal-contador-esqueleto {
-  width: 72px;
-}
 
 /*
   Acima da grade: a legenda é a chave de leitura das bolinhas, e no rodapé
@@ -98,7 +81,7 @@
   width: 10px;
   height: 10px;
   border-radius: var(--radius-full);
-  background: var(--cal-cor, var(--cal-neutro));
+  background: var(--cal-cor, var(--text-secondary));
 }
 
 /* ── Grade do mês ────────────────────────────────────────────────────── */
@@ -216,7 +199,7 @@
   width: 8px;
   height: 8px;
   border-radius: var(--radius-full);
-  background: var(--cal-cor, var(--cal-neutro));
+  background: var(--cal-cor, var(--text-secondary));
 }
 
 /* ── Próximas etapas e popup do dia ──────────────────────────────────── */
@@ -253,7 +236,7 @@
   padding: var(--space-2) var(--space-3);
   border: 0;
   /* Larga o suficiente para a cor identificar o tipo de relance. */
-  border-left: 6px solid var(--cal-cor, var(--cal-neutro));
+  border-left: 6px solid var(--cal-cor, var(--text-secondary));
   border-bottom: 1px solid var(--border-subtle);
   background: none;
   color: var(--text-primary);
@@ -302,7 +285,7 @@
 .cal-marco {
   display: inline-block;
   margin-right: var(--space-2);
-  padding: 2px var(--space-2);
+  padding: var(--space-0-5) var(--space-2);
   border: 1px solid var(--state-neutral);
   border-radius: var(--radius-pill);
   font-size: var(--text-caption);
@@ -374,7 +357,7 @@
   height: 15px;
   border: 3px solid var(--surface-card);
   border-radius: var(--radius-full);
-  background: var(--cal-cor, var(--cal-neutro));
+  background: var(--cal-cor, var(--text-secondary));
   outline: 1px solid var(--border-subtle);
 }
 /*
@@ -382,7 +365,7 @@
   com halo para o que está a acontecer, cinzento para o que ainda vem.
 */
 .cal-passo[data-situacao="concluida"] .cal-passo-marca {
-  outline: 1px solid var(--cal-cor, var(--cal-neutro));
+  outline: 1px solid var(--cal-cor, var(--text-secondary));
 }
 .cal-passo[data-situacao="em-andamento"] .cal-passo-marca {
   outline: 3px solid color-mix(in srgb, var(--state-info) 30%, transparent);
@@ -399,7 +382,7 @@
 }
 .cal-passo small {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--space-0-5);
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
@@ -412,41 +395,37 @@
   font-size: var(--text-body-sm);
   text-align: center;
 }
-/* Aviso de etapas com ano digitado errado (src/lib/datas-do-cronograma.js). */
-.cal-aviso-datas {
-  margin: 0 0 var(--space-3);
-}
 
 /*
   Mapeia `data-cor` para a variável. Tabela de tradução, não estilo: cada
   linha existe para casar com um `cor:` do JS.
 */
 [data-cor="laranja"] {
-  --cal-cor: var(--cal-laranja);
+  --cal-cor: var(--etapa-laranja);
 }
 [data-cor="rosa"] {
-  --cal-cor: var(--cal-rosa);
+  --cal-cor: var(--etapa-rosa);
 }
 [data-cor="violeta"] {
-  --cal-cor: var(--cal-violeta);
+  --cal-cor: var(--etapa-violeta);
 }
 [data-cor="ambar"] {
-  --cal-cor: var(--cal-ambar);
+  --cal-cor: var(--etapa-ambar);
 }
 [data-cor="turquesa"] {
-  --cal-cor: var(--cal-turquesa);
+  --cal-cor: var(--etapa-turquesa);
 }
 [data-cor="violeta-claro"] {
-  --cal-cor: var(--cal-violeta-claro);
+  --cal-cor: var(--etapa-violeta-claro);
 }
 [data-cor="verde"] {
-  --cal-cor: var(--cal-verde);
+  --cal-cor: var(--etapa-verde);
 }
 [data-cor="azul-escuro"] {
-  --cal-cor: var(--cal-azul-escuro);
+  --cal-cor: var(--etapa-azul-escuro);
 }
 [data-cor="neutro"] {
-  --cal-cor: var(--cal-neutro);
+  --cal-cor: var(--text-secondary);
 }
 
 @media (max-width: 640px) {

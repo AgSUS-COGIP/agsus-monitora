@@ -13,7 +13,7 @@ import { Icone } from "../../componentes/icone.jsx";
 
 /*
   Peças que as duas abas (aprovados e convocação) e os modais repetem. As
-  classes são as de `lista-aprovados.css` e `lista-convocacao.css`. As genéricas
+  classes são as de `aprovados.css` e `convocacao.css`. As genéricas
   (BotaoDeAcao, LinhasEsqueleto, ErroAoCarregar, Kpi) vêm de src/ui/.
 */
 

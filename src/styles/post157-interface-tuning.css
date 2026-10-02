@@ -19,7 +19,7 @@
 
 /* A logo da barra lateral é o próprio <img id="sideLogo">, cujo `src` vem de
  * sidebar-branding.js. A apresentação por `background-image` foi removida: ela
- * nunca chegava a desenhar, porque system-ui-fixes.css zera o fundo deste
+ * nunca chegava a desenhar, porque o antigo system-ui-fixes.css zerava o fundo deste
  * elemento com `background: transparent !important`. */
 .side-logo-wrap .side-logo {
   object-fit: contain;
