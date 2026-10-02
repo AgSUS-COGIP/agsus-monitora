@@ -20,7 +20,7 @@ import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.js";
   - "copiar cronograma de outro edital", a partir do resumo do Núcleo (a mesma
     carga dos indicadores da página).
 
-  Classes de `src/styles/nucleo-cronograma.css` (só tokens: o tema escuro vem
+  Classes de `editais.css` (só tokens: o tema escuro vem
   deles).
 */
 

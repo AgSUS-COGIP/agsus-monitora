@@ -28,20 +28,6 @@ barra-lateral/
   alca-de-recolher.jsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
   rodape.jsx                 seletor Claro/Escuro, Sair e versão
   usar-ambiente.js           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
-nucleo/                      a página #page-nucleo (Editais da Equipe Núcleo)
-  nucleo.jsx                 <Nucleo> (tabela e busca) e montarNucleo() → window.nucleoController
-  estado.js                  resumo dos cronogramas, filtro dos indicadores, modal aberto, reinício
-                             na troca de usuário e o salvamento governado; sem React
-  resumo.js                  cache do get_nucleo_cronograma_resumo (30 s, uma carga por vez)
-  painel-operacional.jsx     "Cronogramas e alertas": indicadores que filtram a tabela
-  modal-do-edital.jsx        formulário do edital (unidades USI × CORES, indicadores automáticos)
-  editor-de-cronograma.jsx   etapas, modelo padrão, datas em lote, cópia de outro edital, validação,
-                             status excepcional, motivo e histórico
-  modal-linha-do-tempo.jsx   consulta do cronograma, só leitura
-calendario-editais/          a página #page-calendario (só leitura dos cronogramas do Núcleo)
-  calendario-editais.jsx     <CalendarioEditais> e montarCalendarioEditais() → window.calendarioEditaisController
-  estado.js                  etapas carregadas (1 + N RPCs, cache de 60 s); sem React
-  partes.jsx                 grade do mês, linha de etapa, linha do tempo, popup do dia
 configuracoes/               Configurações (#configuracoesApp): moldura e todas as seções
   configuracoes.jsx          montarConfiguracoes(): cabeçalho da seção aberta, barra fixa de salvar,
                              diálogos de publicar/restaurar e o histórico (portal na seção Operação)
@@ -69,29 +55,11 @@ acessos/                     Configurações › Acessos (#acessosApp, dentro da
   aba-coordenacoes.jsx       lista + detalhe: área, responsável, unidades, editais (só admin global)
   partes.jsx                 controle segmentado, lista mestre, cabeçalho da gaveta (com avatar e
                              iniciais()), campo de motivo
-lista-aprovados/             a página #page-approved e os seus modais
-  lista-aprovados.jsx        <ListaAprovados> e montarListaAprovados() → window.aprovadosController
-  estado.js                  candidatos, listas, configuração de convocação, modal aberto e as ações
-                             que escrevem no banco (RPC e Storage), uma por vez (`executar`, `acao`); sem React
-  aba-aprovados.jsx          KPIs, filtros e tabela paginada
-  aba-convocacao.jsx         ordem de convocação por vaga
-  modais.jsx                 status do candidato (com anexar PDF), anexos do candidato e sub judice
-                             (abas: novo candidato · candidato já aprovado, a decisão judicial)
-  modal-listas-do-edital.jsx XLSX da lista (importar, situação, remover) + aba de convocação
-  formulario-de-convocacao.jsx  modelo de regras e vagas imediatas do edital (rascunho local)
-  editor-de-modelo.jsx       cartões dos modelos prontos, categorias (percentual e cascata por fora;
-                             arredondamento, limite, mínimo, posições e termos em "Ajustar regras")
-  previa-da-convocacao.jsx   "Como fica a ordem de chamada": quadro e posição de cada cota para N vagas
-  partes.jsx                 KPI, selo de status, ação de status, ícone de PDF dos anexos, paginação, CampoEditavel, e o carregamento
-                             sem tela cheia: LinhasEsqueleto, ErroAoCarregar, BotaoDeAcao (estado no botão)
 ```
 
-Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.js` e
-`cronograma-do-edital.js` (Núcleo), `calendario-editais.js` (calendário),
-`lista-aprovados-rules.js`, `lista-convocacao-rules.js` e `configuracao-de-convocacao.js`
-(aprovados). CSS: `src/styles/barra-lateral.css` e `platform-shell.css` (barra);
-`calendario-editais.css`, `lista-aprovados.css`, `lista-convocacao.css` e `multi-select-busca.css`
-(páginas — as classes e os ids são os de antes da migração).
+Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra). CSS: `src/styles/barra-lateral.css`,
+`platform-shell.css` (barra) e `multi-select-busca.css`. Editais, Cronograma e Lista de aprovados
+moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS e testes lá).
 
 ## Como o legado fala com um componente
 
@@ -135,7 +103,7 @@ Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.j
 - Modal em React é sempre `<Modal>` (portal): um modal dentro da `<section>` sumiria com a página
   escondida — o de listas do edital abre a partir do Núcleo.
 - Campo cujo texto não é o valor (número, lista separada por `;`) usa `CampoEditavel`
-  (`lista-aprovados/partes.jsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
+  (`src/modulos/aprovados/partes.jsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
 - Tabela nova avisa `agsus:content-updated` depois de desenhar: é o que põe os rótulos do modo
   cartão (`src/modules/mobile-table-cards.js`, ≤ 900px).
 - Teste em `tests/componentes/` (`.test.js`, sem JSX, com `act`) — modelo em

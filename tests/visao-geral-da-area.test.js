@@ -358,7 +358,13 @@ describe("projetos no mapa de Projetos", () => {
         texto: "Edital 62/2025 · 16 vagas · Escritório Distrital Yanomami",
       },
     ]);
-    expect(resumo.linhas).toContain("Candidatos: 0");
+    // Boa Vista não casou com vaga nenhuma das análises: sem "Candidatos: 0" falso.
+    expect(resumo.linhas.join(" ")).not.toMatch(
+      /Candidatos|Vagas nas análises/,
+    );
+    expect(
+      resumoDoLugar({ ...boaVista, vagas: 2, candidatos: 9 }).linhas,
+    ).toContain("Candidatos: 9");
     expect(resumoDoLugar(para).linhas).toContain("O edital diz só o estado");
   });
 

@@ -7,7 +7,6 @@
 - `app.css` (110 KB, **não ler inteiro**) entra por `<link>` no `index.html` e carrega **antes** de todos
   os outros. Por isso perde empates e acumulou `!important`.
 - Os demais são importados por `src/main.js`, **em ordem**. Em empate de especificidade, vence o último.
-- `runtime-critical-fixes.css` é importado por `src/modules/connectivity-status.js`, não pelo `main.js`.
 - `barra-lateral.css` usa `#appScreen` de propósito (botão de recolher). Regra com só classe perde
   **em silêncio** para ele.
 
@@ -21,9 +20,9 @@ Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
 
 ## Onde colocar
 
-- Estilo de um módulo → o CSS daquele módulo (`lista-aprovados.css`, `calendario-editais.css`, `nucleo-*.css`, `health-*.css`…).
-- Arquivo novo só para módulo novo, com o mesmo nome do `src/modules/<modulo>.js` (ou da pasta do
-  componente em `src/componentes/`), importado no `main.js`.
+- Estilo de uma tela → o CSS do módulo dela, em `src/modulos/<nome>/<nome>.css` (ex.: `editais.css`,
+  `cronograma.css`, `aprovados.css` + `convocacao.css`), importado no `main.js` depois do `ui.css`.
+  Peça comum de várias telas → `src/ui/ui.css`. Legado que ainda mora aqui: `health-*.css`, `config-*.css`, `acessos.css`.
 - **Proibido** criar `*-fix.css`, `post-NNN-*.css`, `*-refinement.css`, `*-tuning.css`: corrija na origem.
 - Cor, raio, sombra, espaço e z-index **só por token**. Nenhum `!important` ou `#id` novo.
 - Tema escuro: `[data-theme="dark"]`. Não escreva regra nova com `body.dark-mode` (é um espelho).
@@ -34,8 +33,10 @@ Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
 `tokens.css` (tokens do `DESIGN.md` §3, primeiro import dos dois `main.js`) · `platform-shell.css`
 (shell institucional, contêiner da barra lateral e tokens `--menu-*`, login) · `barra-lateral.css`
 (peças dos componentes React da barra: alça de recolher, menu em áreas, tema e Sair) ·
-`nielsen-shell-ux.css` (tema da página, foco, feedback) · `mobile-*.css` · `health-*.css` (Saúde Indígena e mapa) · `nucleo-*.css` ·
-`config-*.css` e `configuracoes.css` (moldura React de Configurações) · `lista-aprovados.css`, `lista-convocacao.css`, `calendario-editais.css`,
-`multi-select-busca.css` (páginas React; as classes são as de antes) · `carregamento.css` (skeleton da
-entrada, bloco `.esqueleto` e barra de atualização) · `system-ui-fixes.css`, `post-152-regression-fixes.css`,
-`post157-interface-tuning.css` (dívida, a dissolver — `DESIGN.md` seção 8, fase 5).
+`nielsen-shell-ux.css` (dono do tema escuro da página, foco, feedback) · `mobile-*.css` · `health-*.css`
+(Saúde Indígena e mapa) · `config-*.css` e `configuracoes.css` (moldura React de Configurações) ·
+`multi-select-busca.css` · `carregamento.css` (skeleton da entrada, bloco `.esqueleto` e barra de
+atualização) · `post157-interface-tuning.css` (dívida, a dissolver — `DESIGN.md` seção 8, fase 5).
+A tela de acesso é da seção Login de `platform-shell.css`. Cores de etapa do calendário: tokens `--etapa-*`
+em `tokens.css`. Os remendos `system-ui-fixes`, `post-152-regression-fixes` e `runtime-critical-fixes`
+foram dissolvidos nas fontes (02/10/2026) — não recrie.

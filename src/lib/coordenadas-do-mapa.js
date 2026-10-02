@@ -1,5 +1,19 @@
 import { coordenadasDoMunicipio } from "./coordenadas-dos-municipios.js";
-import { distanciaKm } from "./reconciliacao-unidades.js";
+import {
+  filaDoEditor,
+  formatarDistancia,
+  listaDeSugestoes,
+  nivelDaGravidade,
+} from "./editor-de-coordenadas.js";
+
+/*
+  COORDENADAS DO MAPA DA SAÚDE INDÍGENA — as regras deste mapa no editor
+
+  As regras comuns (leitura, validação, fila, sugestões, gravidade,
+  histórico) estão em `editor-de-coordenadas.js`, que serve também ao mapa
+  de Projetos. Aqui: os pontos editáveis (lmap e rede_cnes), a ligação com a
+  pendência, as fontes das sugestões e os motivos de erro da auditoria.
+*/
 
 /* Identidade da fonte, sem reconciliação por nome: índice + nome + código são
    conferidos novamente pelo banco antes de gravar. */
@@ -105,33 +119,8 @@ export function pontosEditaveisDoMapa(lmap, redeCnes, chaveDsei) {
   return pontos;
 }
 
-export function lerCoordenada(valor) {
-  const texto = String(valor ?? "")
-    .trim()
-    .replace(",", ".");
-  return /^[-+]?\d+(?:\.\d+)?$/.test(texto) ? Number(texto) : NaN;
-}
-
-export function validarCorrecaoDoMapa(latitude, longitude, motivo) {
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude))
-    return "Informe latitude e longitude válidas.";
-  if (
-    latitude < -34.9 ||
-    latitude > 6.4 ||
-    longitude < -74.2 ||
-    longitude > -32
-  )
-    return "A coordenada deve ficar nos limites do Brasil.";
-  if (String(motivo ?? "").trim().length < 10)
-    return "Descreva o motivo da correção (mínimo de 10 caracteres).";
-  return "";
-}
-
-export const formatarCoordenada = (valor) =>
-  Number.isFinite(valor) ? valor.toFixed(6) : "Sem coordenada";
-
 /*
-  FILA DO EDITOR — pendências, sugestões e histórico (regras puras)
+  FILA DO EDITOR — pendências, sugestões e gravidade deste mapa
 
   As pendências vêm de `listar_pendencias_coordenada_mapa_saude_indigena`
   (private."TB_PENDENCIA_COORDENADA_MAPA"): um ponto é pendente enquanto não
@@ -143,26 +132,6 @@ export const formatarCoordenada = (valor) =>
 export const chaveDaPendencia = ({ fonte, tipo, dsei, codigo } = {}) =>
   [fonte, tipo, dsei ?? "", codigo ?? ""].join("|");
 
-const normalizar = (valor) =>
-  String(valor ?? "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
-
-const textoDeBusca = (item) =>
-  normalizar(
-    [
-      item.nome,
-      item.alvo?.codigo,
-      item.localidade,
-      item.alvo?.dsei,
-      item.pendencia?.municipio,
-    ]
-      .filter(Boolean)
-      .join(" "),
-  );
-
 const comparar = (a, b) => {
   const dseiA = a.alvo?.dsei || "";
   const dseiB = b.alvo?.dsei || "";
@@ -172,66 +141,6 @@ const comparar = (a, b) => {
     String(a.nome).localeCompare(String(b.nome), "pt-BR")
   );
 };
-
-const ordemDaGravidade = (item) =>
-  item.gravidade ? GRAVIDADES[item.gravidade.nivel].ordem : 9;
-
-/**
- * A fila do editor: os pontos com a pendência ligada e, nos pendentes, a
- * gravidade (`gravidadeDaPendencia`). Filtra pela busca (nome, CNES/código,
- * município, DSEI — sem acento nem caixa), com `soPendentes` só os ainda não
- * conferidos e com `gravidade` (chave de GRAVIDADES) só aquele nível.
- * Ordem: em Só pendentes, o provável erro primeiro; depois DSEI e nome. `pendentes` conta os
- * não conferidos de todos os pontos e `porGravidade` quantos há em cada
- * nível (os dois ignoram a busca e o filtro de nível).
- */
-export function filaDeCoordenadas(
-  pontos,
-  pendencias,
-  { busca = "", soPendentes = true, gravidade = "" } = {},
-) {
-  const porChave = new Map(
-    (pendencias || []).map((p) => [chaveDaPendencia(p), p]),
-  );
-  const termos = normalizar(busca).split(/\s+/).filter(Boolean);
-  const todos = (pontos || []).map((ponto) => {
-    const pendencia = porChave.get(chaveDaPendencia(ponto.alvo)) || null;
-    const pendente = Boolean(pendencia && !pendencia.conferido);
-    return {
-      ...ponto,
-      pendencia,
-      pendente,
-      gravidade: pendente ? gravidadeDaPendencia(pendencia, ponto) : null,
-    };
-  });
-  const porGravidade = Object.fromEntries(
-    Object.keys(GRAVIDADES).map((nivel) => [
-      nivel,
-      todos.filter((i) => i.gravidade?.nivel === nivel).length,
-    ]),
-  );
-  const itens = todos
-    .filter(
-      (item) =>
-        (!soPendentes || item.pendente) &&
-        (!gravidade || item.gravidade?.nivel === gravidade) &&
-        termos.every((termo) => textoDeBusca(item).includes(termo)),
-    )
-    .sort(
-      (a, b) =>
-        (soPendentes ? ordemDaGravidade(a) - ordemDaGravidade(b) : 0) ||
-        comparar(a, b),
-    );
-  return {
-    itens,
-    pendentes: todos.filter((i) => i.pendente).length,
-    porGravidade,
-  };
-}
-
-/** Uma pendência por linha da contagem: "1 pendente", "N pendentes". */
-export const textoDePendentes = (n) =>
-  `${n} ${n === 1 ? "pendente" : "pendentes"}`;
 
 const GRUPOS_DA_FONTE = Object.freeze({
   CNES: { ordem: 0, rotulo: "CNES/DATASUS" },
@@ -250,89 +159,31 @@ const GRUPOS_DA_FONTE = Object.freeze({
  */
 export function sugestoesDaPendencia(pendencia, ponto) {
   if (!pendencia) return [];
-  const candidatos = [...(pendencia.candidatos || [])].map((c) => ({
-    fonte: GRUPOS_DA_FONTE[c.f] ? c.f : "OUTRA",
-    nome: c.n || "",
-    terra: c.ti || "",
-    latitude: Number(c.lat),
-    longitude: Number(c.lon),
+  const candidatos = (pendencia.candidatos || []).map((c) => ({
+    fonte: c.f,
+    nome: c.n,
+    terra: c.ti,
+    latitude: c.lat,
+    longitude: c.lon,
   }));
   const municipio = coordenadasDoMunicipio(pendencia.municipio);
   if (municipio)
     candidatos.push({
       fonte: "MUNICIPIO",
       nome: `${municipio.municipio}/${municipio.uf}`,
-      terra: "",
       latitude: municipio.latitude,
       longitude: municipio.longitude,
     });
-  // Repetida: mesma fonte na mesma posição (até 50 m) ou com o mesmo nome a
-  // menos de 1 km (o IBGE traz a mesma aldeia em pontos vizinhos) — fica a
-  // primeira.
-  const aceitas = [];
-  return candidatos
-    .filter((c) => {
-      if (!Number.isFinite(c.latitude) || !Number.isFinite(c.longitude))
-        return false;
-      const repetida = aceitas.some((a) => {
-        if (a.fonte !== c.fonte) return false;
-        const km = distanciaKm(
-          a.latitude,
-          a.longitude,
-          c.latitude,
-          c.longitude,
-        );
-        return (
-          km < 0.05 || (normalizar(a.nome) === normalizar(c.nome) && km < 1)
-        );
-      });
-      if (repetida) return false;
-      aceitas.push(c);
-      return true;
-    })
-    .map((c) => ({
-      ...c,
-      id: `${c.fonte}|${c.latitude.toFixed(5)}|${c.longitude.toFixed(5)}`,
-      rotulo: GRUPOS_DA_FONTE[c.fonte]?.rotulo || "Outra fonte",
-      distanciaKm: distanciaKm(
-        ponto?.latitude,
-        ponto?.longitude,
-        c.latitude,
-        c.longitude,
-      ),
-    }))
-    .sort(
-      (a, b) =>
-        (GRUPOS_DA_FONTE[a.fonte]?.ordem ?? 3) -
-          (GRUPOS_DA_FONTE[b.fonte]?.ordem ?? 3) ||
-        (a.distanciaKm ?? Infinity) - (b.distanciaKm ?? Infinity),
-    );
+  return listaDeSugestoes(candidatos, ponto, GRUPOS_DA_FONTE);
 }
 
 /*
-  Gravidade de um ponto pendente, para a fila mostrar primeiro o que está
-  de fato errado (pedido de 02/10). A régua é a aldeia/lugar sugerido mais
+  Gravidade de um ponto pendente: a régua é a aldeia/lugar sugerido mais
   perto (IBGE, Funai, OSM, PDSI) — o CNES não serve de régua porque quase
   sempre é a própria posição atual — e o motivo que a auditoria registrou:
-
-  - "erro": o ponto está na sede do município, num ponto coletor, na
-    posição do nome do município ou numa aldeia homônima fora do DSEI; ou a
-    aldeia sugerida mais perto está a mais de 10 km;
-  - "revisar": a aldeia sugerida mais perto está entre 2 e 10 km, ou as
-    fontes divergem/só há uma e nenhuma é aldeia;
-  - "confirmar": há aldeia sugerida a até 2 km — a posição bate, falta só
-    o "Conferido";
-  - "sem": nenhuma posição candidata (buscar a aldeia à mão).
+  sede do município, ponto coletor, posição do nome do município ou aldeia
+  homônima fora do DSEI já são "erro". Sem aldeia sugerida, "revisar".
 */
-export const LIMITES_DA_GRAVIDADE = Object.freeze({ certoKm: 2, erroKm: 10 });
-
-export const GRAVIDADES = Object.freeze({
-  erro: { ordem: 0, rotulo: "Provável erro", tom: "reprovado" },
-  revisar: { ordem: 1, rotulo: "Revisar", tom: "pendente" },
-  sem: { ordem: 2, rotulo: "Sem sugestão", tom: "neutro" },
-  confirmar: { ordem: 3, rotulo: "Só confirmar", tom: "revisar" },
-});
-
 const MOTIVOS_DE_ERRO = Object.freeze({
   SEDE_MUNICIPAL: "Na sede do município",
   PONTO_COLETOR: "Em ponto coletor",
@@ -356,12 +207,11 @@ export function gravidadeDaPendencia(pendencia, ponto) {
   const melhor = aldeias[0] || sugestoes[0] || null;
   const km = aldeias[0]?.distanciaKm;
   const motivoDeErro = MOTIVOS_DE_ERRO[pendencia.motivo_tipo] || "";
-  let nivel;
-  if (!sugestoes.length) nivel = "sem";
-  else if (motivoDeErro || km > LIMITES_DA_GRAVIDADE.erroKm) nivel = "erro";
-  else if (Number.isFinite(km) && km <= LIMITES_DA_GRAVIDADE.certoKm)
-    nivel = "confirmar";
-  else nivel = "revisar";
+  const nivel = nivelDaGravidade({
+    temSugestao: sugestoes.length > 0,
+    motivoDeErro,
+    km,
+  });
   const sobreAMelhor = aldeias[0]
     ? `aldeia ${aldeias[0].nome || "sem nome"} a ${formatarDistancia(km)} (${aldeias[0].rotulo.replace(/^.*· /, "")})`
     : melhor
@@ -374,34 +224,27 @@ export function gravidadeDaPendencia(pendencia, ponto) {
   };
 }
 
-/** "350 m", "4,2 km", "73 km" ou "—" sem posição atual. */
-export function formatarDistancia(km) {
-  if (!Number.isFinite(km)) return "—";
-  if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(km < 10 ? 1 : 0).replace(".", ",")} km`;
-}
-
-const ACOES = Object.freeze({
-  CORRECAO: "Correção",
-  CONFERENCIA: "Conferido",
-  DESFAZER: "Desfeito",
+/** As regras deste mapa para a fila comum (`filaDoEditor`). */
+export const REGRAS_DA_FILA = Object.freeze({
+  chaveDoPonto: (ponto) => chaveDaPendencia(ponto.alvo),
+  chaveDaPendencia,
+  gravidade: gravidadeDaPendencia,
+  textoDeBusca: (item) =>
+    [
+      item.nome,
+      item.alvo?.codigo,
+      item.localidade,
+      item.alvo?.dsei,
+      item.pendencia?.municipio,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  comparar,
 });
-export const rotuloDaAcao = (acao) => ACOES[acao] || "Alteração";
 
 /**
- * A alteração que o "Desfazer" volta: a mais recente do ponto, se não for um
- * desfazer, ainda não tiver sido desfeita e o ponto tinha posição antes.
- * O banco confere de novo (só a última, uma vez só).
+ * A fila do editor deste mapa: busca por nome, CNES/código, município e
+ * DSEI; em Só pendentes, o provável erro primeiro; depois DSEI e nome.
  */
-export function correcaoDesfazivel(historico) {
-  const ultima = historico?.[0];
-  if (
-    !ultima ||
-    ultima.acao === "DESFAZER" ||
-    ultima.desfeito ||
-    ultima.latitude_anterior == null ||
-    ultima.longitude_anterior == null
-  )
-    return null;
-  return ultima;
-}
+export const filaDeCoordenadas = (pontos, pendencias, opcoes) =>
+  filaDoEditor(pontos, pendencias, opcoes, REGRAS_DA_FILA);

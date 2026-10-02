@@ -531,6 +531,42 @@ describe("todos os projetos no mapa", () => {
     expect(nomes()).toHaveLength(4);
   });
 
+  it('lista compacta: sem "0 candidatos" falso, selos só quando mistura projetos, filtros no padrão', async () => {
+    const { carregador } = await carregadorCom(PROJETOS);
+    await montar({ carregador });
+    const boaVista = linhas().find((l) =>
+      l.textContent.includes("Boa Vista/RR"),
+    );
+    // Boa Vista não casou com vaga das análises: nada de "0 candidatos".
+    expect(normalizar(boaVista.textContent)).not.toMatch(/candidato/);
+    expect(boaVista.getAttribute("aria-label")).not.toMatch(/candidato/);
+    // Irati casou (UBS móvel): os candidatos aparecem.
+    const irati = linhas().find((l) => l.textContent.includes("Irati/PR"));
+    expect(normalizar(irati.textContent)).toContain("70 candidatos");
+    // Nome e vagas na primeira linha; projetos como selos na segunda.
+    expect(
+      boaVista.querySelector(
+        ".mapa-projetos-lugar__segunda .mapa-projetos-lugar__projeto",
+      ),
+    ).not.toBeNull();
+    // "Projeto" é o Campo de src/ui; "Agrupar por projeto" é a caixa normal.
+    const campo = host.querySelector(".mapa-projetos__filtros .ui-campo");
+    expect(campo.querySelector("label").textContent).toBe("Projeto");
+    expect(campo.querySelector("select")).toBe(
+      host.querySelector(".mapa-projetos__seletor"),
+    );
+    expect(
+      normalizar(host.querySelector(".mapa-projetos__agrupar").textContent),
+    ).toBe("Agrupar por projeto");
+    // Com o filtro de um projeto, os selos (todos iguais) somem.
+    await escolher(host.querySelector(".mapa-projetos__seletor"), "MFC");
+    expect(host.querySelector(".mapa-projetos-lugar__projeto")).toBeNull();
+    // Agrupada, também.
+    await escolher(host.querySelector(".mapa-projetos__seletor"), "");
+    await clicar(host.querySelector(".mapa-projetos__agrupar input"));
+    expect(host.querySelector(".mapa-projetos-lugar__projeto")).toBeNull();
+  });
+
   it("agrupar por projeto: um bloco por projeto, lugar de dois projetos nos dois", async () => {
     const { carregador } = await carregadorCom(PROJETOS);
     await montar({ carregador });

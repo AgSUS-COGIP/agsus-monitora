@@ -29,6 +29,11 @@
     display: none;
   }
 
+  html[data-theme="dark"] .mobile-bottom-nav {
+    border-color: #29405d;
+    background: rgba(10, 22, 39, 0.97);
+  }
+
   .mobile-bottom-nav__item {
     display: inline-flex;
     min-width: 0;

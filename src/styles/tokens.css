@@ -281,6 +281,19 @@
   --terra-definitiva: #7a4a1f;
   --terra-fundo: #d6b07a;
   --terra-em-processo: #c8520f;
+
+  /* Tipos de etapa do edital (domínio, não paleta): o campo `cor` de
+     `src/lib/etapas-de-edital.js` escolhe um deles pelo `data-cor`
+     (src/modulos/cronograma/cronograma.css). São só preenchimento — bolinha
+     e barra —, nunca cor de texto. */
+  --etapa-laranja: #d97706;
+  --etapa-rosa: #e11d48;
+  --etapa-violeta: #7c3aed;
+  --etapa-ambar: #eab308;
+  --etapa-turquesa: #0f766e;
+  --etapa-violeta-claro: #8b5cf6;
+  --etapa-verde: #22c55e;
+  --etapa-azul-escuro: #2563eb;
 }
 
 html[data-theme="dark"] {

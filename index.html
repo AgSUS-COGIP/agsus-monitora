@@ -34,8 +34,8 @@
       em `#loginScreen`, que ainda não foi criado — variáveis CSS são herdadas,
       então `#loginScreen .login-card` já as resolve.
 
-      A classe de contraste não pode vir daqui: `post-152-regression-fixes.css`
-      a exige no próprio elemento, em `#loginScreen.login-panel-dark`. Ela fica
+      A classe de contraste não pode vir daqui: a seção Login de
+      `platform-shell.css` a exige no próprio elemento, em `#loginScreen.login-panel-dark`. Ela fica
       decidida nesta bandeira e é aplicada por um segundo script, logo depois do
       elemento — assim nenhum dos seletores existentes precisa ser duplicado.
 
@@ -65,7 +65,7 @@
             var b = parseInt(cor.slice(5, 7), 16);
             /*
               A classe, ao contrário, é exigida em `#loginScreen.login-panel-dark`
-              por post-152. Fica guardada aqui e um script logo depois do
+              (platform-shell.css). Fica guardada aqui e um script logo depois do
               elemento a aplica — assim nenhum seletor precisa ser duplicado.
             */
             /*

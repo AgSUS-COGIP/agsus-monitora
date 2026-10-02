@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
+import { isAdminGlobal } from "../../lib/access-roles.js";
+import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.js";
 import {
   MAPA_DOS_MUNICIPIOS,
   TEXTOS_DO_MAPA,
@@ -21,6 +23,7 @@ import { usarTelaCheia } from "../mapa-saude-indigena/tela-cheia.jsx";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
 import { balaoDoLugar } from "./balao.js";
 import { ESCOLHA_INICIAL } from "./carregador.js";
+import { EditorDeCoordenadasDosProjetos } from "./editor-de-coordenadas.jsx";
 import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
 
 /*
@@ -38,6 +41,12 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
   cache), só depois da primeira carga da página (`carregadoEm`: antes do
   login não há sessão); `carregadoEm` novo (Atualizar dados) pede de novo, e
   o cache decide se vai ao banco.
+
+  As coordenadas vêm do banco (public."TB_COORDENADA_LOCAL_VAGA", na resposta da
+  RPC). O administrador global vê "Coordenadas": o editor comum
+  (src/modulos/editor-de-coordenadas/, aqui com as regras de
+  src/lib/coordenadas-dos-projetos.js) toma o lugar da lista; o que ele grava
+  vale na hora no mapa e no cache do carregador.
 */
 
 const TEXTOS = TEXTOS_DO_MAPA[MAPA_DOS_MUNICIPIOS];
@@ -73,6 +82,8 @@ export function MapaDeProjetos({
   carregadoEm = 0,
   tema,
   idDoMapa = "mapaDosProjetos",
+  perfil,
+  supabase,
 }) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
@@ -80,7 +91,20 @@ export function MapaDeProjetos({
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
   const resultado = usarLugares(carregador, area, carregadoEm);
   const carregando = !resultado;
-  const municipios = resultado?.municipios;
+  const podeEditar = isAdminGlobal(perfil);
+  const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
+  // O que o editor gravou nesta montagem, por cima do que o carregador leu.
+  const [corrigidas, definirCorrigidas] = useState([]);
+  const lidos = resultado?.municipios;
+  const municipios = useMemo(
+    () =>
+      corrigidas.reduce(
+        (lista, c) =>
+          aplicarCoordenada(lista, c.lugar, c.latitude, c.longitude),
+        lidos,
+      ),
+    [lidos, corrigidas],
+  );
 
   const [escolhaGuardada, definirEscolha] = useState(
     () => carregador?.obterEscolha?.() ?? ESCOLHA_INICIAL,
@@ -211,6 +235,18 @@ export function MapaDeProjetos({
   }, [mapa, telaCheia]);
 
   const chamadas = usarUltimo({
+    aoAtualizarCoordenada: (data, ponto) => {
+      const lugar = data?.lugar || ponto?.alvo?.lugar;
+      const latitude = Number(data?.latitude);
+      const longitude = Number(data?.longitude);
+      if (!lugar || !Number.isFinite(latitude) || !Number.isFinite(longitude))
+        return;
+      carregador?.corrigirCoordenada?.(lugar, latitude, longitude);
+      definirCorrigidas((atual) => [
+        ...atual.filter((c) => c.lugar !== lugar),
+        { lugar, latitude, longitude },
+      ]);
+    },
     aoEscolher: (ponto) => {
       const marcador = marcadores.current.get(ponto?.chave);
       if (!mapa || !marcador) return;
@@ -247,6 +283,18 @@ export function MapaDeProjetos({
               : plural(pontos.length, "município", "municípios")}
           </span>
           <div className="mapa-si-painel__acoes">
+            {podeEditar ? (
+              <button
+                type="button"
+                className="btn small"
+                aria-pressed={editandoCoordenadas}
+                aria-expanded={editandoCoordenadas}
+                aria-controls={`${idDoMapa}-coordenadas`}
+                onClick={() => definirEditandoCoordenadas((atual) => !atual)}
+              >
+                Coordenadas
+              </button>
+            ) : null}
             <button
               type="button"
               className="btn small"
@@ -299,18 +347,38 @@ export function MapaDeProjetos({
               </LegendaFlutuante>
             ) : null}
           </div>
-          <ListaDeMunicipios
-            id={`${idDoMapa}-lista`}
-            titulo={TEXTOS.lista}
-            carregando={carregando}
-            indisponivel={resultado?.indisponivel}
-            erro={resultado?.erro}
-            pontos={pontos}
-            projetos={projetos}
-            escolha={escolha}
-            aoMudarEscolha={mudarEscolha}
-            aoEscolher={(ponto) => chamadas.current.aoEscolher(ponto)}
-          />
+          {podeEditar && editandoCoordenadas ? (
+            <aside
+              className="mapa-si-lista"
+              id={`${idDoMapa}-coordenadas`}
+              aria-label="Coordenadas do mapa"
+            >
+              <EditorDeCoordenadasDosProjetos
+                L={L}
+                mapa={mapa}
+                municipios={municipios}
+                perfil={perfil}
+                supabase={supabase}
+                aoAtualizarMapa={(data, ponto) =>
+                  chamadas.current.aoAtualizarCoordenada(data, ponto)
+                }
+                aoFechar={() => definirEditandoCoordenadas(false)}
+              />
+            </aside>
+          ) : (
+            <ListaDeMunicipios
+              id={`${idDoMapa}-lista`}
+              titulo={TEXTOS.lista}
+              carregando={carregando}
+              indisponivel={resultado?.indisponivel}
+              erro={resultado?.erro}
+              pontos={pontos}
+              projetos={projetos}
+              escolha={escolha}
+              aoMudarEscolha={mudarEscolha}
+              aoEscolher={(ponto) => chamadas.current.aoEscolher(ponto)}
+            />
+          )}
         </div>
       </section>
     </div>
