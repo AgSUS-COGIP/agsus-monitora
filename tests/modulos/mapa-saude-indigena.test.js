@@ -500,14 +500,113 @@ describe("mapa do DSEI", () => {
     );
   });
 
-  it("trilho Brasil pede para sair do DSEI; o pai decide", async () => {
+  it("'Voltar ao Brasil' só aparece com um DSEI aberto, no topo do painel", async () => {
+    await montar();
+    expect(host.querySelector(".mapa-si-voltar")).toBeNull();
+    await rerender({ dseiSelecionado: "ALAGOAS E SERGIPE" });
+    const voltar = host.querySelector(".mapa-si-voltar");
+    expect(voltar.textContent).toContain("Voltar ao Brasil");
+    expect(voltar.closest(".mapa-si-painel__topo")).not.toBeNull();
+  });
+
+  it("'Voltar ao Brasil' pede a saída; o nacional voa do distrito ao Brasil e o foco volta à linha do DSEI", async () => {
     const aoSairDoDsei = vi.fn();
     await abrirAlse({ aoSairDoDsei });
-    await clicar(host.querySelector(".mapa-si-trilho__voltar"));
+    const nacional = mapaVivo("map");
+    await clicar(host.querySelector(".mapa-si-voltar"));
     expect(aoSairDoDsei).toHaveBeenCalledTimes(1);
+    nacional.chamadas.length = 0;
     await rerender({ dseiSelecionado: null, aoSairDoDsei });
     expect(mapaVivo("detailMap")).toBeNull();
     expect(host.querySelector(".mapa-si-painel--nacional").hidden).toBe(false);
+    const nomes = nacional.chamadas.map(([nome]) => nome);
+    // Parte do distrito, sem animar, e voa até o país.
+    const partida = nacional.chamadas.find(([nome]) => nome === "setView");
+    expect(partida[1]).toEqual([-9.6, -35.7]);
+    expect(partida[3]).toEqual({ animate: false });
+    expect(nomes.indexOf("setView")).toBeLessThan(nomes.indexOf("flyToBounds"));
+    const [, , opcoes] = nacional.chamadas.find(
+      ([nome]) => nome === "flyToBounds",
+    );
+    expect(opcoes.duration).toBe(0.8);
+    expect(opcoes.maxZoom).toBe(4.5);
+    expect(opcoes.padding[0]).toBeGreaterThanOrEqual(15 + 12);
+    expect(nomes).not.toContain("fitBounds");
+    expect(document.activeElement.dataset.dsei).toBe("ALAGOAS E SERGIPE");
+  });
+
+  it("Esc volta ao Brasil com o foco no mapa, mas não num campo de fora", async () => {
+    const aoSairDoDsei = vi.fn();
+    await abrirAlse({ aoSairDoDsei });
+    const campo = document.createElement("input");
+    document.body.append(campo);
+    campo.focus();
+    await teclar(campo, "Escape");
+    expect(aoSairDoDsei).not.toHaveBeenCalled();
+    campo.remove();
+    host.querySelector(".mapa-si-voltar").focus();
+    await teclar(document.activeElement, "Escape");
+    expect(aoSairDoDsei).toHaveBeenCalledTimes(1);
+    const nacional = mapaVivo("map");
+    nacional.chamadas.length = 0;
+    await rerender({ dseiSelecionado: null, aoSairDoDsei });
+    expect(nacional.chamadas.some(([nome]) => nome === "flyToBounds")).toBe(
+      true,
+    );
+    expect(document.activeElement.dataset.dsei).toBe("ALAGOAS E SERGIPE");
+    // Sem DSEI, o Esc não pede nada.
+    await teclar(document, "Escape");
+    expect(aoSairDoDsei).toHaveBeenCalledTimes(1);
+  });
+
+  it("na tela cheia, o 1º Esc volta ao Brasil e o 2º sai da tela cheia", async () => {
+    const aoSairDoDsei = vi.fn();
+    await abrirAlse({ aoSairDoDsei });
+    await clicar(
+      [...host.querySelectorAll("button")].find(
+        (b) => b.textContent === "Tela cheia",
+      ),
+    );
+    // A tecla nasce no elemento com foco (aqui, nenhum: o body) e, como no
+    // navegador, pode ser cancelada.
+    const esc = () => teclar(document.body, "Escape", { cancelable: true });
+    await esc();
+    expect(aoSairDoDsei).toHaveBeenCalledTimes(1);
+    expect(host.querySelector(".mapa-si--tela-cheia")).not.toBeNull();
+    await rerender({ dseiSelecionado: null, aoSairDoDsei });
+    expect(host.querySelector(".mapa-si--tela-cheia")).not.toBeNull();
+    await esc();
+    expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
+    expect(aoSairDoDsei).toHaveBeenCalledTimes(1);
+  });
+
+  it("com menos movimento (prefers-reduced-motion), volta ao Brasil sem animação", async () => {
+    window.matchMedia = (consulta) => ({
+      matches: consulta.includes("prefers-reduced-motion"),
+    });
+    await abrirAlse();
+    const nacional = mapaVivo("map");
+    nacional.chamadas.length = 0;
+    await rerender({ dseiSelecionado: null });
+    const nomes = nacional.chamadas.map(([nome]) => nome);
+    expect(nomes).not.toContain("flyToBounds");
+    expect(nomes).not.toContain("flyTo");
+    const [, , opcoes] = nacional.chamadas.find(
+      ([nome]) => nome === "fitBounds",
+    );
+    expect(opcoes.animate).toBe(false);
+  });
+
+  it("o pai tirando o DSEI (chip da página) também voa, sem levar o foco", async () => {
+    await abrirAlse();
+    const nacional = mapaVivo("map");
+    nacional.chamadas.length = 0;
+    document.body.focus();
+    await rerender({ dseiSelecionado: null });
+    expect(nacional.chamadas.some(([nome]) => nome === "flyToBounds")).toBe(
+      true,
+    );
+    expect(document.activeElement).toBe(document.body);
   });
 
   it("Terras Indígenas: recorte pela camada, lista, enquadrar e legenda das fases", async () => {
@@ -571,8 +670,12 @@ describe("mapa do DSEI", () => {
     expect(nacional.chamadas.some(([n]) => n === "setView")).toBe(false);
     await rerender({ dseiSelecionado: null });
     const depois = nacional.chamadas.slice(antes).map(([n]) => n);
-    expect(depois).toContain("invalidateSize");
-    expect(depois).toContain("fitBounds");
+    // Remede antes de partir do distrito e voar até o Brasil.
+    expect(depois.indexOf("invalidateSize")).toBeGreaterThanOrEqual(0);
+    expect(depois.indexOf("invalidateSize")).toBeLessThan(
+      depois.indexOf("setView"),
+    );
+    expect(depois).toContain("flyToBounds");
   });
 
   it("desmontar remove os dois mapas", async () => {

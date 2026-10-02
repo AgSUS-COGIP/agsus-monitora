@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Icone } from "../../componentes/icone.jsx";
 import {
   agruparPorProximidadeNaTela,
   posicoesSpiderfy,
@@ -49,7 +48,8 @@ const OPCOES_DO_ENQUADRAMENTO = Object.freeze({
 /*
   O território de um DSEI: o mapa à esquerda, à direita as unidades (com os
   filtros por tipo) e as Terras Indígenas e povos. Monta uma vez por DSEI
-  (`key` no pai): trocar de distrito começa sem tipo escondido.
+  (`key` no pai): trocar de distrito começa sem tipo escondido. "Voltar ao
+  Brasil", no topo, pede a saída ao pai (o Esc faz o mesmo; volta-ao-brasil.js).
 */
 export function MapaDoDsei({
   L,
@@ -58,7 +58,7 @@ export function MapaDoDsei({
   redeCnes,
   telaCheia,
   acoes,
-  aoSairDoDsei,
+  aoVoltarAoBrasil,
   aoEscolherUnidade,
   lmap,
   perfil,
@@ -304,18 +304,14 @@ export function MapaDoDsei({
     >
       <header className="mapa-si-painel__topo">
         <div className="mapa-si-painel__titulos">
-          <nav className="mapa-si-trilho" aria-label="Onde estou">
-            <button
-              type="button"
-              className="mapa-si-trilho__voltar"
-              onClick={() => aoSairDoDsei?.()}
-            >
-              <Icone nome="chevron-left" tamanho={16} />
-              Brasil
-            </button>
-            <span aria-hidden="true">›</span>
-            <span aria-current="page">DSEI {dsei.n}</span>
-          </nav>
+          <button
+            type="button"
+            className="btn small mapa-si-voltar"
+            title="Voltar ao mapa do Brasil (Esc)"
+            onClick={() => aoVoltarAoBrasil?.()}
+          >
+            <span aria-hidden="true">←</span> Voltar ao Brasil
+          </button>
           <h2 className="ui-titulo" id={tituloId}>
             Mapa do DSEI {dsei.n}
           </h2>

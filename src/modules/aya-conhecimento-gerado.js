@@ -1021,7 +1021,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Mapa e filtros da Visão geral",
     perguntas: [
       "dsei aberto no mapa",
-      "voltar ao brasil",
+      "filtro dsei da pagina",
       "casai no mapa filtra",
     ],
     resposta:
@@ -1756,7 +1756,7 @@ export const VERBETES_AYA = Object.freeze([
       "mapa detalhado do dsei",
     ],
     resposta:
-      'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "Brasil", no trilho acima do mapa, volta à visão nacional sem apagar os outros filtros.',
+      'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -1907,6 +1907,22 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Voltar ao Brasil",
+    perguntas: [
+      "voltar ao brasil",
+      "sair do dsei",
+      "voltar para a visao geral do mapa",
+      "voltar ao mapa nacional",
+      "esc no mapa",
+      "fechar o dsei",
+    ],
+    resposta:
+      'No MONITORA, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro, o filtro de DSEI sai da página e os outros filtros continuam. O foco volta à linha do DSEI em "Territórios por vagas". O chip "DSEI" dos filtros faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.',
+    fato: "",
+    fonte: "interface do MONITORA",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Tela cheia e mapa no celular",
     perguntas: [
       "mapa em tela cheia",
@@ -1915,7 +1931,7 @@ export const VERBETES_AYA = Object.freeze([
       "legenda fechada no celular",
     ],
     resposta:
-      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam. Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
+      'No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
     fato: "",
     fonte: "interface do MONITORA",
   },
