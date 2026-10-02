@@ -166,37 +166,41 @@ describe("botão de acesso no retorno do navegador", () => {
   /*
     Abaixo de 768 px o login é redirecionamento de página inteira. Ao voltar do
     Google pelo botão Voltar, o navegador restaura a página do bfcache com o
-    botão ainda `disabled` e o texto "Entrando no sistema…".
+    botão ainda ocupado ("Entrando no sistema…"). Quem cuida é a sessão do app.
   */
+  const sessao = semComentarios(readFileSync("src/app/sessao.js", "utf8"));
+
   it("existe um listener de pageshow", () => {
-    expect(semComentarios(app)).toContain('addEventListener("pageshow"');
+    expect(sessao).toContain('addEventListener("pageshow"');
   });
 
   it("trata tanto bfcache como navegação de histórico", () => {
-    const fn = app.slice(app.indexOf('addEventListener("pageshow"'));
-    expect(fn).toContain("event.persisted");
+    const fn = sessao.slice(sessao.indexOf("function aoMostrarPagina"));
+    expect(fn).toContain("evento.persisted");
     expect(fn).toContain("back_forward");
   });
 
   it("só restaura o botão quando não há sessão ativa", () => {
-    const fn = app.slice(
-      app.indexOf('addEventListener("pageshow"'),
-      app.indexOf('addEventListener("pageshow"') + 900,
+    const fn = sessao.slice(
+      sessao.indexOf("function aoMostrarPagina"),
+      sessao.indexOf("function instalarOuvintesDaJanela"),
     );
     expect(fn).toContain("estadoDaSessao");
     expect(fn).toContain("SESSAO_ATIVA");
-    expect(fn).toContain("resetGoogleLoginButton()");
+    expect(fn).toContain("liberarBotao()");
   });
 
   /*
-    Registado uma única vez, no carregamento do módulo: se fosse registado a cada
-    tentativa de login, os listeners acumulariam e o botão seria restaurado
-    tantas vezes quantas a pessoa tentasse entrar.
+    Registado uma única vez: se fosse registado a cada tentativa de login, os
+    listeners acumulariam.
   */
   it("é registado uma única vez", () => {
-    const registos = (
-      semComentarios(app).match(/addEventListener\("pageshow"/g) || []
-    ).length;
-    expect(registos).toBe(1);
+    expect((sessao.match(/addEventListener\("pageshow"/g) || []).length).toBe(
+      1,
+    );
+    const fn = sessao.slice(
+      sessao.indexOf("function instalarOuvintesDaJanela"),
+    );
+    expect(fn).toContain("if (ouvintesDaJanela");
   });
 });

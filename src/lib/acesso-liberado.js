@@ -1,4 +1,5 @@
 import { primeiroNome } from "./boas-vindas.js";
+import { gravarArmazenamento, lerArmazenamento } from "./comemoracao.js";
 import {
   AREAS_DO_SISTEMA,
   areasDoUsuario,
@@ -11,6 +12,8 @@ import { LEVELS, RESOURCES } from "./permissoes-recursos.js";
   que a pessoa pode usar agora. Sem DOM; quem mostra é
   src/modules/comemoracao-do-acesso.js, com o confete e o aviso comuns a todas
   as comemorações (src/modules/comemoracao.js, regra em src/lib/comemoracao.js).
+  As marcas do fim do arquivo também são gravadas pela tela de pedido de
+  acesso (src/app/entrada/pedido-de-acesso.js).
 
   Quando comemorar, sem campo novo no banco:
     - "reativado": a tela de acesso desativado já foi mostrada a esta pessoa
@@ -132,4 +135,32 @@ export function oQuePodeUsar(perfil) {
   const lista = modulos.join(", ");
   const nomes = areas.map(nomeDaArea).filter(Boolean);
   return nomes.length ? nomes.map((nome) => `${nome}: ${lista}`) : [lista];
+}
+
+// ── Marcas no navegador (armazenamento em try/catch: janela privada, bloqueado) ──
+
+/** "Entrar agora" (pedido liberado), antes de recarregar a página. */
+export function marcarBoasVindasPendentes(janela = globalThis.window) {
+  gravarArmazenamento(janela?.sessionStorage, CHAVE_PENDENTE, "1");
+}
+
+/** A tela de acesso desativado foi mostrada: na volta, é "reativado". */
+export function lembrarContaDesativada(usuarioId, janela = globalThis.window) {
+  if (usuarioId)
+    gravarArmazenamento(
+      janela?.localStorage,
+      chaveDaDesativacao(usuarioId),
+      "1",
+    );
+}
+
+/** A tela de conta desativada já foi mostrada a esta pessoa (e ela não voltou)? */
+export function contaMarcadaComoDesativada(
+  usuarioId,
+  janela = globalThis.window,
+) {
+  return Boolean(
+    usuarioId &&
+    lerArmazenamento(janela?.localStorage, chaveDaDesativacao(usuarioId)),
+  );
 }

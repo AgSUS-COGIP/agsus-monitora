@@ -34,7 +34,8 @@ describe("platform shell invariants", () => {
     pertence, e a barra lateral não volta a ser sequestrada por ela.
   */
   it("normaliza a marca oficial na tela de acesso", () => {
-    expect(app).toContain("normalizeAccessLogoUrl(logoDoBanco)");
+    const marca = readFileSync("src/app/entrada/marca.js", "utf8");
+    expect(marca).toContain("normalizeAccessLogoUrl(logoDoBanco)");
   });
 
   it("não deixa a marca do login mandar na sidebar", () => {

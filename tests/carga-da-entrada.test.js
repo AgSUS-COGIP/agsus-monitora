@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const sessao = readFileSync("src/app/sessao.js", "utf8");
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -71,31 +72,47 @@ describe.each([
   });
 });
 
+/** Corpo de uma função de src/app/sessao.js (até a próxima do mesmo nível). */
+function funcaoDaSessao(cabecalho) {
+  const inicio = sessao.indexOf(cabecalho);
+  expect(inicio, cabecalho).toBeGreaterThan(-1);
+  const resto = sessao.slice(inicio + cabecalho.length);
+  const fim = resto.search(/\n {2}(async )?function /);
+  return semComentarios(cabecalho + resto.slice(0, fim < 0 ? undefined : fim));
+}
+
+/*
+  O perfil é da sessão do app (src/app/sessao.js); a cópia e a carga, do
+  legado. O gancho `aoVerificar` (prepararEntrada) liga o skeleton e começa a
+  ler a cópia ANTES da consulta do perfil, para as duas correrem juntas.
+*/
 describe("cópia da sessão na entrada", () => {
   const entrada = () => funcao("async function loadInitialData()");
 
   it("lê a cópia junto com o perfil, não depois", () => {
-    const fonte = entrada();
-    expect(fonte.indexOf("lerCopiaDaSessao()")).toBeGreaterThan(-1);
-    expect(fonte.indexOf("lerCopiaDaSessao()")).toBeLessThan(
-      fonte.indexOf("await loadProfile()"),
+    expect(funcao("function prepararEntrada()")).toContain(
+      "copiaEmLeitura = lerCopiaDaSessao()",
     );
+    const abrir = funcaoDaSessao("async function abrirSessao(");
+    expect(abrir.indexOf('chamar("aoVerificar"')).toBeGreaterThan(-1);
+    expect(abrir.indexOf('chamar("aoVerificar"')).toBeLessThan(
+      abrir.indexOf("await carregarPerfil()"),
+    );
+    expect(entrada()).toContain("copiaEmLeitura || lerCopiaDaSessao()");
   });
 
-  it("só abre pela cópia depois de confirmar o perfil", () => {
-    const fonte = entrada();
-    expect(fonte.indexOf("await loadProfile()")).toBeLessThan(
-      fonte.indexOf("copiaServe("),
+  it("só abre (e usa a cópia) depois de confirmar o perfil", () => {
+    const abrir = funcaoDaSessao("async function abrirSessao(");
+    expect(abrir.indexOf("await carregarPerfil()")).toBeLessThan(
+      abrir.indexOf('chamar("abrir"'),
     );
+    expect(entrada()).toContain("copiaServe(");
   });
 
   it("sem acesso, apaga a cópia", () => {
-    const fonte = entrada();
-    const semAcesso = fonte.slice(
-      fonte.indexOf("if (!profileOk)"),
-      fonte.indexOf("return false;"),
+    expect(funcao("function ficarSemAcesso()")).toContain(
+      "apagarCopiaDaSessao()",
     );
-    expect(semAcesso).toContain("apagarCopiaDaSessao()");
   });
 
   it("apaga a cópia de outra pessoa", () => {
@@ -109,16 +126,17 @@ describe("cópia da sessão na entrada", () => {
   });
 
   /*
-    `clearLocalAuthState` roda a cada clique em "Entrar com Google". Se apagasse
-    a cópia, ela nunca seria usada; quem apaga é o "Limpar sessão".
+    `limparAutenticacaoLocal` roda a cada clique em "Entrar com Google". Se
+    apagasse a cópia, ela nunca seria usada; quem apaga é o "Voltar ao login".
   */
-  it('"Limpar sessão" apaga a cópia; entrar com Google não', () => {
-    expect(funcao("async function returnToLogin()")).toContain(
-      "apagarCopiaDaSessao()",
+  it('"Voltar ao login" apaga a cópia; entrar com Google não', () => {
+    expect(app).toContain("aoLimparSessao: () => apagarCopiaDaSessao()");
+    expect(funcaoDaSessao("async function limparSessao()")).toContain(
+      'chamar("aoLimparSessao")',
     );
-    expect(funcao("async function clearLocalAuthState()")).not.toContain(
-      "apagarCopiaDaSessao",
-    );
+    expect(
+      funcaoDaSessao("async function limparAutenticacaoLocal()"),
+    ).not.toContain("aoLimparSessao");
   });
 });
 
@@ -126,36 +144,48 @@ describe("sem tela de carregamento na entrada e ao atualizar", () => {
   it.each([
     "async function loadInitialData()",
     "async function refreshData()",
-    "async function handleOAuthCodeCallback()",
-    "async function boot()",
+    "async function abrirSistema(",
+    "function prepararEntrada()",
     "async function loadData(options = {})",
   ])("%s não abre a tela de carregamento", (cabecalho) => {
     expect(funcao(cabecalho)).not.toContain("loader(");
   });
 
+  it("a sessão do app não abre a tela de carregamento", () => {
+    expect(semComentarios(sessao)).not.toContain("loader(");
+  });
+
   it("a entrada liga o skeleton antes do perfil e o desliga depois de abrir", () => {
-    const fonte = funcao("async function loadInitialData()");
-    expect(fonte.indexOf("mostrarEsqueleto(storedView())")).toBeLessThan(
-      fonte.indexOf("await loadProfile()"),
+    expect(funcao("function prepararEntrada()")).toContain(
+      "mostrarEsqueleto(storedView())",
     );
+    const fonte = funcao("async function loadInitialData()");
     expect(fonte.indexOf("navigate(startView())")).toBeLessThan(
       fonte.lastIndexOf("esconderEsqueleto()"),
     );
   });
 
-  it.each([
-    "function resetSignedOutState(",
-    "async function showAccessRequestState()",
-    "function forceAccessRequestFallback(",
-    "async function handleSignedInSession(",
-  ])("%s desliga o skeleton", (cabecalho) => {
-    expect(funcao(cabecalho)).toContain("esconderEsqueleto()");
+  it.each(["function limparEstadoDeslogado()", "function encerrarEspera()"])(
+    "%s desliga o skeleton",
+    (cabecalho) => {
+      expect(funcao(cabecalho)).toContain("esconderEsqueleto()");
+    },
+  );
+
+  it("sem acesso, a espera acaba", () => {
+    expect(funcao("function ficarSemAcesso()")).toContain("encerrarEspera()");
+  });
+
+  it("aconteça o que acontecer, a entrada encerra a espera", () => {
+    const entrar = funcaoDaSessao("async function entrar(");
+    const final = entrar.slice(entrar.indexOf("} finally {"));
+    expect(final).toContain('chamar("encerrarEspera")');
   });
 
   it("sessão guardada que expirou dá lugar ao login", () => {
-    const fonte = funcao("async function boot()");
-    const semSessao = fonte.slice(fonte.lastIndexOf("} else {"));
-    expect(semSessao).toContain("esconderEsqueleto()");
+    const fonte = funcaoDaSessao("async function iniciar()");
+    const semSessao = fonte.slice(fonte.lastIndexOf("await entrar("));
+    expect(semSessao).toContain('chamar("encerrarEspera")');
   });
 
   it("atualizar marca a barra e sempre a desmarca", () => {
