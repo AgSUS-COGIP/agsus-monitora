@@ -1,4 +1,4 @@
-import { textoDePendentes } from "../../lib/coordenadas-do-mapa.js";
+import { GRAVIDADES, textoDePendentes } from "../../lib/coordenadas-do-mapa.js";
 import { Aviso, Campo, Carregando, EstadoVazio, Selo } from "../../ui/index.js";
 
 /* Quantos itens a lista desenha de uma vez (a visão nacional tem milhares). */
@@ -6,12 +6,17 @@ export const LIMITE_DA_FILA = 200;
 
 /*
   A fila do editor de coordenadas: busca, "Só pendentes" (ligado por padrão),
-  a contagem de pendentes e a lista ordenada por DSEI. Escolher um item é com
-  o pai (centraliza o mapa e abre o formulário).
+  a contagem de pendentes, o filtro por gravidade (Provável erro, Revisar,
+  Sem sugestão, Só confirmar, com a contagem de cada) e a lista — o provável
+  erro primeiro, cada pendente com o selo da gravidade e o resumo (motivo e
+  aldeia sugerida mais perto). Escolher um item é com o pai (centraliza o
+  mapa e abre o formulário).
 */
 export function FilaDeCoordenadas({
   itens,
   pendentes,
+  porGravidade = {},
+  gravidade = "",
   busca,
   soPendentes,
   escolhido,
@@ -20,6 +25,7 @@ export function FilaDeCoordenadas({
   desabilitado,
   aoBuscar,
   aoAlternarPendentes,
+  aoFiltrarGravidade,
   aoEscolher,
 }) {
   const mostrados = itens.slice(0, LIMITE_DA_FILA);
@@ -48,6 +54,29 @@ export function FilaDeCoordenadas({
           {carregando ? "…" : textoDePendentes(pendentes)}
         </b>
       </div>
+      {soPendentes && pendentes ? (
+        <div
+          className="mapa-si-coordenadas__niveis"
+          role="group"
+          aria-label="Filtrar por gravidade"
+        >
+          {Object.entries(GRAVIDADES).map(([nivel, info]) => (
+            <button
+              key={nivel}
+              type="button"
+              className="mapa-si-coordenadas__nivel"
+              data-nivel={nivel}
+              aria-pressed={gravidade === nivel}
+              disabled={desabilitado || !porGravidade[nivel]}
+              onClick={() =>
+                aoFiltrarGravidade?.(gravidade === nivel ? "" : nivel)
+              }
+            >
+              {info.rotulo} <b>{porGravidade[nivel] || 0}</b>
+            </button>
+          ))}
+        </div>
+      ) : null}
       {erro ? (
         <Aviso tom="danger" papel="alert">
           {erro}
@@ -72,7 +101,16 @@ export function FilaDeCoordenadas({
                     .filter(Boolean)
                     .join(" · ")}
                 </small>
-                {item.pendente ? (
+                {item.gravidade ? (
+                  <>
+                    <Selo tom={GRAVIDADES[item.gravidade.nivel].tom}>
+                      {GRAVIDADES[item.gravidade.nivel].rotulo}
+                    </Selo>
+                    <small className="mapa-si-coordenadas__resumo">
+                      {item.gravidade.resumo}
+                    </small>
+                  </>
+                ) : item.pendente ? (
                   <Selo tom="pendente">Pendente</Selo>
                 ) : item.pendencia ? (
                   <Selo tom="aprovado">Conferido</Selo>

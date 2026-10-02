@@ -173,16 +173,22 @@ const comparar = (a, b) => {
   );
 };
 
+const ordemDaGravidade = (item) =>
+  item.gravidade ? GRAVIDADES[item.gravidade.nivel].ordem : 9;
+
 /**
- * A fila do editor: os pontos com a pendência ligada, filtrados pela busca
- * (nome, CNES/código, município, DSEI — sem acento nem caixa) e, com
- * `soPendentes`, só os ainda não conferidos; ordenada por DSEI e nome.
- * `pendentes` conta os não conferidos de todos os pontos (ignora a busca).
+ * A fila do editor: os pontos com a pendência ligada e, nos pendentes, a
+ * gravidade (`gravidadeDaPendencia`). Filtra pela busca (nome, CNES/código,
+ * município, DSEI — sem acento nem caixa), com `soPendentes` só os ainda não
+ * conferidos e com `gravidade` (chave de GRAVIDADES) só aquele nível.
+ * Ordem: em Só pendentes, o provável erro primeiro; depois DSEI e nome. `pendentes` conta os
+ * não conferidos de todos os pontos e `porGravidade` quantos há em cada
+ * nível (os dois ignoram a busca e o filtro de nível).
  */
 export function filaDeCoordenadas(
   pontos,
   pendencias,
-  { busca = "", soPendentes = true } = {},
+  { busca = "", soPendentes = true, gravidade = "" } = {},
 ) {
   const porChave = new Map(
     (pendencias || []).map((p) => [chaveDaPendencia(p), p]),
@@ -190,20 +196,37 @@ export function filaDeCoordenadas(
   const termos = normalizar(busca).split(/\s+/).filter(Boolean);
   const todos = (pontos || []).map((ponto) => {
     const pendencia = porChave.get(chaveDaPendencia(ponto.alvo)) || null;
+    const pendente = Boolean(pendencia && !pendencia.conferido);
     return {
       ...ponto,
       pendencia,
-      pendente: Boolean(pendencia && !pendencia.conferido),
+      pendente,
+      gravidade: pendente ? gravidadeDaPendencia(pendencia, ponto) : null,
     };
   });
+  const porGravidade = Object.fromEntries(
+    Object.keys(GRAVIDADES).map((nivel) => [
+      nivel,
+      todos.filter((i) => i.gravidade?.nivel === nivel).length,
+    ]),
+  );
   const itens = todos
     .filter(
       (item) =>
         (!soPendentes || item.pendente) &&
+        (!gravidade || item.gravidade?.nivel === gravidade) &&
         termos.every((termo) => textoDeBusca(item).includes(termo)),
     )
-    .sort(comparar);
-  return { itens, pendentes: todos.filter((i) => i.pendente).length };
+    .sort(
+      (a, b) =>
+        (soPendentes ? ordemDaGravidade(a) - ordemDaGravidade(b) : 0) ||
+        comparar(a, b),
+    );
+  return {
+    itens,
+    pendentes: todos.filter((i) => i.pendente).length,
+    porGravidade,
+  };
 }
 
 /** Uma pendência por linha da contagem: "1 pendente", "N pendentes". */
@@ -243,17 +266,28 @@ export function sugestoesDaPendencia(pendencia, ponto) {
       latitude: municipio.latitude,
       longitude: municipio.longitude,
     });
-  const vistos = new Set();
+  // Repetida: mesma fonte na mesma posição (até 50 m) ou com o mesmo nome a
+  // menos de 1 km (o IBGE traz a mesma aldeia em pontos vizinhos) — fica a
+  // primeira.
+  const aceitas = [];
   return candidatos
     .filter((c) => {
-      const chave = `${c.fonte}|${c.latitude.toFixed(5)}|${c.longitude.toFixed(5)}`;
-      if (
-        !Number.isFinite(c.latitude) ||
-        !Number.isFinite(c.longitude) ||
-        vistos.has(chave)
-      )
+      if (!Number.isFinite(c.latitude) || !Number.isFinite(c.longitude))
         return false;
-      vistos.add(chave);
+      const repetida = aceitas.some((a) => {
+        if (a.fonte !== c.fonte) return false;
+        const km = distanciaKm(
+          a.latitude,
+          a.longitude,
+          c.latitude,
+          c.longitude,
+        );
+        return (
+          km < 0.05 || (normalizar(a.nome) === normalizar(c.nome) && km < 1)
+        );
+      });
+      if (repetida) return false;
+      aceitas.push(c);
       return true;
     })
     .map((c) => ({
@@ -273,6 +307,71 @@ export function sugestoesDaPendencia(pendencia, ponto) {
           (GRUPOS_DA_FONTE[b.fonte]?.ordem ?? 3) ||
         (a.distanciaKm ?? Infinity) - (b.distanciaKm ?? Infinity),
     );
+}
+
+/*
+  Gravidade de um ponto pendente, para a fila mostrar primeiro o que está
+  de fato errado (pedido de 02/10). A régua é a aldeia/lugar sugerido mais
+  perto (IBGE, Funai, OSM, PDSI) — o CNES não serve de régua porque quase
+  sempre é a própria posição atual — e o motivo que a auditoria registrou:
+
+  - "erro": o ponto está na sede do município, num ponto coletor, na
+    posição do nome do município ou numa aldeia homônima fora do DSEI; ou a
+    aldeia sugerida mais perto está a mais de 10 km;
+  - "revisar": a aldeia sugerida mais perto está entre 2 e 10 km, ou as
+    fontes divergem/só há uma e nenhuma é aldeia;
+  - "confirmar": há aldeia sugerida a até 2 km — a posição bate, falta só
+    o "Conferido";
+  - "sem": nenhuma posição candidata (buscar a aldeia à mão).
+*/
+export const LIMITES_DA_GRAVIDADE = Object.freeze({ certoKm: 2, erroKm: 10 });
+
+export const GRAVIDADES = Object.freeze({
+  erro: { ordem: 0, rotulo: "Provável erro", tom: "reprovado" },
+  revisar: { ordem: 1, rotulo: "Revisar", tom: "pendente" },
+  sem: { ordem: 2, rotulo: "Sem sugestão", tom: "neutro" },
+  confirmar: { ordem: 3, rotulo: "Só confirmar", tom: "revisar" },
+});
+
+const MOTIVOS_DE_ERRO = Object.freeze({
+  SEDE_MUNICIPAL: "Na sede do município",
+  PONTO_COLETOR: "Em ponto coletor",
+  NOME_MUNICIPIO: "Na posição do nome do município",
+  HOMONIMO_FORA: "Aldeia de mesmo nome fora do DSEI",
+});
+const FONTES_DE_ALDEIA = new Set(["IBGE", "FUNAI", "OSM", "PDSI"]);
+
+/**
+ * `{ nivel, resumo, melhor }` de uma pendência: o nível (chave de
+ * GRAVIDADES), uma frase curta para a fila ("Na sede do município · aldeia
+ * Koiupanká a 18 km (Funai)") e a sugestão mais provável (a aldeia mais
+ * perto; sem aldeia, a primeira sugestão), ou null.
+ */
+export function gravidadeDaPendencia(pendencia, ponto) {
+  if (!pendencia) return null;
+  const sugestoes = sugestoesDaPendencia(pendencia, ponto);
+  const aldeias = sugestoes
+    .filter((s) => FONTES_DE_ALDEIA.has(s.fonte))
+    .sort((a, b) => (a.distanciaKm ?? Infinity) - (b.distanciaKm ?? Infinity));
+  const melhor = aldeias[0] || sugestoes[0] || null;
+  const km = aldeias[0]?.distanciaKm;
+  const motivoDeErro = MOTIVOS_DE_ERRO[pendencia.motivo_tipo] || "";
+  let nivel;
+  if (!sugestoes.length) nivel = "sem";
+  else if (motivoDeErro || km > LIMITES_DA_GRAVIDADE.erroKm) nivel = "erro";
+  else if (Number.isFinite(km) && km <= LIMITES_DA_GRAVIDADE.certoKm)
+    nivel = "confirmar";
+  else nivel = "revisar";
+  const sobreAMelhor = aldeias[0]
+    ? `aldeia ${aldeias[0].nome || "sem nome"} a ${formatarDistancia(km)} (${aldeias[0].rotulo.replace(/^.*· /, "")})`
+    : melhor
+      ? `só ${melhor.rotulo}`
+      : "nenhuma posição candidata";
+  return {
+    nivel,
+    resumo: [motivoDeErro, sobreAMelhor].filter(Boolean).join(" · "),
+    melhor,
+  };
 }
 
 /** "350 m", "4,2 km", "73 km" ou "—" sem posição atual. */

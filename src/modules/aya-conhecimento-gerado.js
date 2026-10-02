@@ -1947,6 +1947,9 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "pontos pendentes",
       "filtro so pendentes",
+      "provavel erro",
+      "gravidade das pendencias",
+      "so confirmar",
       "fila de coordenadas",
       "conferir coordenada",
       "marcar como conferido",
@@ -1957,7 +1960,7 @@ export const VERBETES_AYA = Object.freeze([
       "ponto em validacao",
     ],
     resposta:
-      'A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor.',
+      'A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor. A fila separa as pendências por gravidade, com a contagem de cada uma e o provável erro primeiro: Provável erro (o ponto está na sede do município, num ponto coletor, na posição do nome do município ou numa aldeia de mesmo nome fora do DSEI, ou a aldeia sugerida mais perto está a mais de 10 km), Revisar (aldeia sugerida entre 2 e 10 km, ou só o CNES), Sem sugestão (nenhuma posição candidata: buscar a aldeia à mão) e Só confirmar (há aldeia sugerida a até 2 km: a posição bate e falta só o Conferido). O CNES não serve de régua porque quase sempre é a própria posição atual. Ao escolher um ponto, as sugestões aparecem no mapa (aldeias em laranja, CNES em azul) e a mais provável fica ligada à posição atual por uma linha tracejada; clicar numa sugestão do mapa ou em Usar esta preenche a prévia.',
     fato: "",
     fonte:
       "src/lib/coordenadas-do-mapa.js; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql",
