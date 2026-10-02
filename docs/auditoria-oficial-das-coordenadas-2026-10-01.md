@@ -81,3 +81,16 @@ nenhum homônimo em fonte oficial (20, sobretudo Ceará, Minas Gerais/Espírito 
 Interior Sul e Litoral Sul), homônimos fora das TIs do DSEI (18) e casos ambíguos.
 33 deles têm o nome do próprio município, mas o PDSI não diz que o polo fica na sede.
 Não existe lista oficial de polos com coordenadas em dados abertos.
+
+## UBSI e postos (02/10)
+
+`supabase/correcoes/20261002-corrige-147-ubsi.sql`: 147 UBSI/postos da `rede_cnes`
+(lista "u") com duas fontes concordando (Localidades Indígenas IBGE 2022, aldeias
+Funai, OpenStreetMap); 63 estavam na sede municipal e 18 em ponto coletor. 251
+confirmadas como estavam; 156 seguem para revisão. Backup em
+`*_backup_20261002_pre_ubsi`.
+
+No mesmo dia o front passou a desenhar **só** a coordenada do banco: saíram os
+vereditos de 22/09 (que sobrepunham 16 polos corrigidos) e a planilha de
+Lotações (102 pontos que só existiam nela, listados em
+`docs/pontos-so-na-planilha-de-lotacoes.md`).

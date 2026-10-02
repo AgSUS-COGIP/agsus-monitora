@@ -18,10 +18,8 @@ Arquivos que exigem cuidado:
 - `publicacao-de-configuracoes.js` — publicação de Configurações sem DOM: chaves de cada seção (legado e
   React), comparação com o retrato do banco, validação de URL e domínio.
 - `sanitize.js`, `html-security.js`, `csv-security.js` — fronteira de segurança. Não afrouxar.
-- `localizacoes-validadas-gerado.js` — **201 KB, gerado.** Não editar nem ler inteiro; regenere com
-  `node scripts/recompilar-vereditos.mjs`. A API legível é `localizacoes-validadas.js`.
 - `reconciliacao-unidades.js`, `uf-ibge.js`, `brasil-bounds.js` — referência geográfica usada pelos
-  scripts de auditoria; mudar aqui muda o veredito das coordenadas.
+  scripts de auditoria (as coordenadas do mapa vêm só do banco).
 - `fabrica-do-leaflet.js` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
 - `filtros-do-mapa.js` — regra dos filtros da página do mapa: comparação sem acento, opções sem
   duplicata, poda até estabilizar. O `legacy-app.js` só guarda o estado e delega para cá.
