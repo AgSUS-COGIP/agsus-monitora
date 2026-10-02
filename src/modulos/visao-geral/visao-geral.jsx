@@ -36,8 +36,8 @@ import { TabelaDeProcessos } from "./tabela.jsx";
   (`estado.js`) e não pede nada ao banco, fora os marcos do ano.
 
   Ordem: boas-vindas e marcos do ano, topo (hora da carga, Atualizar,
-  Exportar CSV), filtros, indicadores, "Unidades com mais de um processo
-  seletivo", o MAPA DA ÁREA, resumo por etapa, status operacional,
+  Exportar CSV), filtros, indicadores, o MAPA DA ÁREA, resumo por etapa,
+  "Unidades com mais de um processo seletivo", status operacional,
   "Atenção" e a tabela de processos, com os detalhes numa gaveta.
 
   O MAPA DA ÁREA (`mapaDaVisaoGeral`):
@@ -125,7 +125,6 @@ export function TelaDaVisaoGeral({
       <Topo e={e} aoExportar={estado.exportarCsv} />
       <Filtros e={e} estado={estado} textos={textos} />
       <Indicadores e={e} estado={estado} textos={textos} />
-      <UnidadesComVariosProcessos e={e} estado={estado} />
       {mapa === MAPA_DOS_DSEIS ? (
         <MapaDaSaudeIndigena
           e={e}
@@ -144,6 +143,7 @@ export function TelaDaVisaoGeral({
         </div>
       ) : null}
       <ResumoPorEtapa e={e} estado={estado} textos={textos} />
+      <UnidadesComVariosProcessos e={e} estado={estado} />
       <div className="ui-linha-de-cards">
         <StatusOperacional
           e={e}

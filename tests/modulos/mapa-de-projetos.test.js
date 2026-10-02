@@ -678,7 +678,7 @@ describe("tamanho do contêiner", () => {
     await clicar(botao("Tela cheia"));
     mapa.chamadas.length = 0;
     await redimensionar(1400, 900);
-    await clicar(botao("Recolher"));
+    await clicar(botao("Sair da tela cheia"));
     await redimensionar(800, 500);
     expect(enquadramentos(mapa)).toBe(2);
 
@@ -703,7 +703,9 @@ describe("tela cheia e tema", () => {
     await montar({ carregador });
     await clicar(botao("Tela cheia"));
     expect(host.querySelector(".mapa-si--tela-cheia")).not.toBeNull();
-    expect(botao("Recolher").getAttribute("aria-pressed")).toBe("true");
+    expect(botao("Sair da tela cheia").getAttribute("aria-pressed")).toBe(
+      "true",
+    );
     await teclar(document, "Escape");
     expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
   });

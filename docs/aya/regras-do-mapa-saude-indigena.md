@@ -76,7 +76,7 @@ valendo", e os textos longos das listas vazias.
 ## Tela cheia e mapa no celular
 
 **perguntas:** mapa em tela cheia | expandir o mapa | mapa no celular | legenda fechada no celular
-**resposta:** No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Recolher" ou a tecla Esc voltam. No celular, a lista fica abaixo do mapa e a legenda começa fechada (o botão "Legenda" abre). Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.
+**resposta:** No MONITORA, "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam. Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.
 **fonte:** interface do MONITORA
 
 ## Corrigir coordenadas de um ponto

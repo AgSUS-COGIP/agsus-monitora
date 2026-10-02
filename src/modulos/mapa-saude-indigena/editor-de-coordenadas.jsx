@@ -18,6 +18,7 @@ export function EditorDeCoordenadas({
   perfil,
   supabase,
   aoAtualizarMapa,
+  aoFechar,
 }) {
   const permitido = isAdminGlobal(perfil);
   const pontos = useMemo(
@@ -169,6 +170,23 @@ export function EditorDeCoordenadas({
       onSubmit={salvar}
       aria-label="Corrigir coordenadas"
     >
+      <div className="mapa-si-coordenadas__topo">
+        <h3 className="ui-titulo">Corrigir coordenadas</h3>
+        {aoFechar ? (
+          <button
+            type="button"
+            className="btn small"
+            disabled={salvando}
+            onClick={aoFechar}
+          >
+            Voltar à lista
+          </button>
+        ) : null}
+      </div>
+      <p className="ui-campo-dica">
+        Escolha um ponto para ajustar sua posição no mapa. Você pode digitar as
+        coordenadas ou arrastar o pin de prévia.
+      </p>
       <Campo rotulo="Ponto do mapa">
         <select
           value={id}

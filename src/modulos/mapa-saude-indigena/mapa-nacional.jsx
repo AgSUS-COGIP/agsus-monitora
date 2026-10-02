@@ -297,20 +297,28 @@ export function MapaNacional({
       aria-labelledby={`${idDoMapa}-titulo`}
     >
       <header className="mapa-si-painel__topo">
-        <h2 className="ui-titulo" id={`${idDoMapa}-titulo`}>
-          DSEIs e CASAIs do Brasil
-        </h2>
-        <span className="mapa-si-painel__contagem">
-          {carregando
-            ? "…"
-            : plural(bolhas.length, "território", "territórios")}
-        </span>
-        <div className="mapa-si-painel__acoes">
+        <div className="mapa-si-painel__titulos">
+          <h2 className="ui-titulo" id={`${idDoMapa}-titulo`}>
+            DSEIs e CASAIs do Brasil
+          </h2>
+          <span className="mapa-si-painel__contagem">
+            {carregando
+              ? "…"
+              : plural(bolhas.length, "território", "territórios")}
+          </span>
+        </div>
+        <div
+          className="mapa-si-painel__acoes"
+          role="group"
+          aria-label="Controles do mapa"
+        >
           {podeEditar ? (
             <button
               type="button"
               className="btn small"
               aria-pressed={editandoCoordenadas}
+              aria-expanded={editandoCoordenadas}
+              aria-controls={`${idDoMapa}-painel-lateral`}
               onClick={() => definirEditandoCoordenadas((atual) => !atual)}
             >
               Coordenadas
@@ -355,7 +363,15 @@ export function MapaNacional({
             />
           ) : null}
         </div>
-        <aside className="mapa-si-lista" aria-labelledby={`${idDoMapa}-lista`}>
+        <aside
+          className="mapa-si-lista"
+          id={`${idDoMapa}-painel-lateral`}
+          aria-label={
+            editandoCoordenadas && podeEditar
+              ? "Coordenadas do mapa"
+              : "Territórios por vagas"
+          }
+        >
           {podeEditar && editandoCoordenadas && visivel ? (
             <EditorDeCoordenadas
               L={L}
@@ -365,6 +381,7 @@ export function MapaNacional({
               perfil={perfil}
               supabase={supabase}
               aoAtualizarMapa={aoAtualizarMapa}
+              aoFechar={() => definirEditandoCoordenadas(false)}
             />
           ) : (
             <>
