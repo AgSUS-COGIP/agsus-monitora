@@ -189,8 +189,10 @@ begin
   end if;
   if v_ponto is null or v_nome is distinct from p_alvo ->> 'nome'
      or v_codigo is distinct from p_alvo ->> 'codigo'
-     or v_lat is distinct from p_latitude_anterior
-     or v_lon is distinct from p_longitude_anterior then
+     -- Tolerância 1e-9 (como em Projetos): o jsonb arredonda o float gravado e o
+     -- histórico guarda o valor inteiro; igualdade exata recusava o desfazer.
+     or coalesce(abs(v_lat - p_latitude_anterior) > 1e-9, (v_lat is null) <> (p_latitude_anterior is null))
+     or coalesce(abs(v_lon - p_longitude_anterior) > 1e-9, (v_lon is null) <> (p_longitude_anterior is null)) then
     raise exception using errcode = '40001', message = 'O ponto mudou. Atualize o mapa e tente novamente.';
   end if;
 
@@ -207,7 +209,8 @@ begin
     end if;
   end if;
   v_conferido := case when v_pendencia is null then null else coalesce(p_conferido, v_conferido_anterior) end;
-  v_mudou := v_lat is distinct from p_latitude or v_lon is distinct from p_longitude;
+  v_mudou := coalesce(abs(v_lat - p_latitude) > 1e-9, (v_lat is null) <> (p_latitude is null))
+           or coalesce(abs(v_lon - p_longitude) > 1e-9, (v_lon is null) <> (p_longitude is null));
   if not v_mudou and v_conferido is not distinct from v_conferido_anterior then
     raise exception using errcode = '22023', message = 'A coordenada não mudou.';
   end if;

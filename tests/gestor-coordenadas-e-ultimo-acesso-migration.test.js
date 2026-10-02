@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*
-  20261002200000 (ainda não aplicada; o ensaio begin…rollback está em
+  20261002200000 (aplicada em 02/10/2026; o ensaio begin…rollback está em
   supabase/ensaios/): "Edital gestor" vira "Gestor" só no nome, o Gestor corrige
   coordenadas pelas RPCs dos dois mapas e o último acesso passa a ser real.
   Aqui, as invariantes estáticas.
@@ -92,6 +92,22 @@ describe("migration do Gestor nas coordenadas e do último acesso", () => {
         .replace(
           "Somente administrador pode",
           "Somente administrador ou gestor pode",
+        )
+        // Única mudança de corpo de propósito (FC_APLICAR_COORDENADA_MAPA):
+        // posição comparada com tolerância 1e-9, como em Projetos — o ensaio
+        // de desfazer acusava "O ponto mudou" com a igualdade exata.
+        .replace(
+          `     or v_lat is distinct from p_latitude_anterior
+     or v_lon is distinct from p_longitude_anterior then`,
+          `     -- Tolerância 1e-9 (como em Projetos): o jsonb arredonda o float gravado e o
+     -- histórico guarda o valor inteiro; igualdade exata recusava o desfazer.
+     or coalesce(abs(v_lat - p_latitude_anterior) > 1e-9, (v_lat is null) <> (p_latitude_anterior is null))
+     or coalesce(abs(v_lon - p_longitude_anterior) > 1e-9, (v_lon is null) <> (p_longitude_anterior is null)) then`,
+        )
+        .replace(
+          "  v_mudou := v_lat is distinct from p_latitude or v_lon is distinct from p_longitude;",
+          `  v_mudou := coalesce(abs(v_lat - p_latitude) > 1e-9, (v_lat is null) <> (p_latitude is null))
+           or coalesce(abs(v_lon - p_longitude) > 1e-9, (v_lon is null) <> (p_longitude is null));`,
         );
       expect(nova, cabecalho).toBe(esperado);
       // O rollback volta o corpo original.
