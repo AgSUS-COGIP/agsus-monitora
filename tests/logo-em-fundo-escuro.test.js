@@ -107,9 +107,7 @@ describe("a marca acompanha o contraste da barra lateral", () => {
   garante isso aqui.
 */
 describe("o botão de acesso é claro, como no SIGAV", () => {
-  const regra = shell.slice(
-    shell.indexOf("#loginScreen .google-login-btn {"),
-  );
+  const regra = shell.slice(shell.indexOf("#loginScreen .google-login-btn {"));
 
   const canal = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const linear = (v) => {
