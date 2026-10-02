@@ -37,7 +37,7 @@ import {
   remedir,
 } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.js";
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 
 const OPCOES_DO_ENQUADRAMENTO = Object.freeze({
@@ -73,7 +73,7 @@ export function MapaDoDsei({
   const [ocultos, definirOcultos] = useState(() => new Set());
   const [terras, definirTerras] = useState([]);
   const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
-  const podeEditar = isAdminGlobal(perfil);
+  const podeEditar = podeEditarCoordenadas(perfil);
   const chamadas = usarUltimo({ aoEscolherUnidade });
 
   const classificados = useMemo(
