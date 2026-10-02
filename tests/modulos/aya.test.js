@@ -108,21 +108,19 @@ describe("abrir e fechar", () => {
     expect(localStorage.getItem(CHAVE_OCULTA)).toBe("0");
   });
 
-  it("oferece feedback e suporte pelo Gmail antes de perguntar", async () => {
+  it("feedback e suporte pelo Gmail num ícone do cabeçalho, sem rodapé fixo", async () => {
     await montar();
     await abrirPainel();
-    expect(textoDe(".aya-aviso")).toBe(
-      "Se precisar de ajuda, abra um chamado.",
-    );
-    const suporte = $(".aya-suporte");
-    expect(suporte.textContent).toContain("Feedback e suporte");
+    expect($(".aya-aviso")).toBeNull();
+    expect($(".aya-painel__rodape").textContent).not.toContain("chamado");
+    const suporte = $(".aya-painel__acoes .aya-suporte");
+    expect(suporte.getAttribute("aria-label")).toBe("Feedback e suporte");
     const gmail = new URL(suporte.href);
     expect(gmail.origin).toBe("https://mail.google.com");
     expect(gmail.searchParams.get("to")).toBe("suporte@agenciasus.org.br");
     expect(gmail.searchParams.get("body")).toContain("Página: Recursos");
     expect(suporte.target).toBe("_blank");
     expect($$("a[href^='mailto:']")).toHaveLength(0);
-    expect($(".aya-aviso").getAttribute("role")).toBe("note");
     expect($("textarea").getAttribute("placeholder")).toBe("Pergunte à Aya…");
     expect(botao("Enviar pergunta").disabled).toBe(true);
     await digitar($("textarea"), "oi");

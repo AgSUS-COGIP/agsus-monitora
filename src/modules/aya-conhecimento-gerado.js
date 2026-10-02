@@ -533,7 +533,7 @@ export const VERBETES_AYA = Object.freeze([
       "chamado ao suporte",
     ],
     resposta:
-      'Use também a opção Feedback e suporte no rodapé para enviar uma dúvida ou sugestão. Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o Gmail no navegador, em uma nova aba, já preenchido para o suporte, com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
+      'Use também o ícone de envelope (Feedback e suporte), no alto do painel da Aya, para enviar uma dúvida ou sugestão. Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o Gmail no navegador, em uma nova aba, já preenchido para o suporte, com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
     fato: "",
     fonte: "src/lib/chamado-da-aya.js; src/modulos/aya/",
   },
