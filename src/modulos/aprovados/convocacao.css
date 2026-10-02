@@ -1,75 +1,12 @@
 /*
-  Lista de convocação (src/modulos/aprovados/): as abas dos modais (também
-  usadas por Acessos), o tipo de convocação e o quadro de vagas do formulário
+  Lista de convocação (src/modulos/aprovados/): os painéis das abas dos
+  modais (as abas são o `Abas` de src/ui/), o tipo de convocação e o quadro de vagas do formulário
   do edital, a tabela agrupada por vaga e o editor do modelo de regras. Só
   tokens: o tema escuro vem deles.
 */
 
-/*
-  Abas do DS 10.5: sublinhado, sem caixas. Divisor inferior sutil no
-  contêiner; aba de 40px, texto 500 em cinza; a ativa fica na cor do texto com
-  uma barra de 2px na cor da ação principal (borda inferior, não sombra).
-*/
-.approved-tabs {
-  display: flex;
-  gap: var(--space-6);
-  padding: 0 var(--space-5);
-  border-top: 0;
-  border-bottom: 1px solid var(--border-subtle);
-  background: transparent;
-}
-.approved-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 40px;
-  margin-bottom: -1px;
-  padding: 0;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-}
-.approved-tab:hover {
-  color: var(--text-primary);
-}
-.approved-tab.active {
-  border-bottom-color: var(--brand-primary);
-  color: var(--text-primary);
-}
-.approved-tab i {
-  font-size: var(--text-body);
-}
-.approved-tabs-modal {
-  padding: 0;
-  margin-bottom: var(--space-4);
-}
 .approved-tabpanel.hidden {
   display: none;
-}
-@media (max-width: 700px) {
-  .approved-tabs {
-    gap: var(--space-3);
-    padding: 0 var(--space-3);
-    overflow-x: auto;
-  }
-  /* As duas abas dividem a largura: com rolagem lateral, "Lista de
-     convocação" ficava cortada e ninguém sabia que dava para arrastar. */
-  .approved-tab {
-    flex: 1 1 0;
-    min-width: 0;
-    justify-content: center;
-    padding-inline: 8px;
-    white-space: nowrap;
-  }
-  .approved-tabs:not(.approved-tabs-modal) .approved-tab {
-    text-transform: capitalize;
-  }
 }
 /* ── Formulário: tipo de convocação e quadro de vagas ───────────────────── */
 .convocacao-tipo {

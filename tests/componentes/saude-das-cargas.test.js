@@ -161,7 +161,7 @@ describe("Status das atualizações", () => {
 });
 
 describe("a seção na Administração", async () => {
-  const { SECOES } = await import("../../src/modules/config-secoes.js");
+  const { SECOES } = await import("../../src/modulos/configuracoes/secoes.js");
   const { secaoDeConfiguracaoPermitida } =
     await import("../../src/lib/access-roles.js");
 

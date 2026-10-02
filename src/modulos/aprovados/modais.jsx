@@ -19,7 +19,7 @@ import {
   statusNeedsMatricula,
   uniqueCandidateCargos,
 } from "../../lib/lista-aprovados-rules.js";
-import { BotaoDeAcao, classes, Modal } from "../../ui/index.js";
+import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
 import { IconeDePdf } from "./partes.jsx";
 
 /*
@@ -486,30 +486,19 @@ export function ModalSubJudice({
       />
       <div className="modal-body">
         {abas.length > 1 ? (
-          <div
-            className="approved-tabs approved-tabs-modal"
-            role="tablist"
-            aria-label="Tipo de sub judice"
-          >
-            {abas.map((item) => (
-              <button
-                key={item.nome}
-                id={item.id}
-                className={classes(
-                  "approved-tab",
-                  aba === item.nome && "active",
-                )}
-                type="button"
-                role="tab"
-                aria-selected={aba === item.nome}
-                aria-controls={item.painel}
-                onClick={() => setAba(item.nome)}
-              >
-                <i className={`fa-solid ${item.icone}`} aria-hidden="true" />{" "}
-                {item.rotulo}
-              </button>
-            ))}
-          </div>
+          <Abas
+            rotulo="Tipo de sub judice"
+            compactas
+            ativa={aba}
+            aoEscolher={setAba}
+            abas={abas.map((item) => ({
+              id: item.nome,
+              rotulo: item.rotulo,
+              icone: item.icone,
+              idDaAba: item.id,
+              idDoPainel: item.painel,
+            }))}
+          />
         ) : null}
         {tem("novo") ? (
           <PainelDoNovoCandidato

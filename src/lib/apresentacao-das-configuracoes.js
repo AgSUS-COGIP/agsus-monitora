@@ -1,7 +1,7 @@
 /*
   Apresentação das seções de Configurações, sem DOM: o tom da faixa de aviso
   global e o endereço de imagem que pode ir para as prévias. As telas são de
-  src/componentes/configuracoes/.
+  src/modulos/configuracoes/.
 */
 
 const txt = (valor) => String(valor ?? "").trim();

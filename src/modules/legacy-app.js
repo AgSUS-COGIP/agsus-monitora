@@ -14,7 +14,7 @@ import {
   definirSecoesPermitidas,
   SECOES,
   secaoAtualDeConfiguracao,
-} from "./config-secoes.js";
+} from "../modulos/configuracoes/secoes.js";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
@@ -39,7 +39,7 @@ import { sessaoDoApp } from "../app/sessao.js";
 import { definirMarcaDaConfiguracao } from "../app/entrada/marca.js";
 import { definirPaginaDaAya } from "../modulos/aya/estado.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
-import { estadoDasConfiguracoes } from "../componentes/configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { profileDisplayName } from "../lib/platform-context.js";
 import {
   DEFAULT_ACCESS_BRANDING,
@@ -806,7 +806,7 @@ async function loadConfig(options = {}) {
     });
   configLoadOk = true;
   applyConfigToUi();
-  // As seções de Configurações (React, src/componentes/configuracoes/) leem daqui.
+  // As seções de Configurações (React, src/modulos/configuracoes/) leem daqui.
   estadoDasConfiguracoes.definirValoresCarregados(appConfig);
   document.body.classList.remove("config-loading");
   return true;

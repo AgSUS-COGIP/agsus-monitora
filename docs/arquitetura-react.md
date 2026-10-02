@@ -38,7 +38,7 @@ src/
 | ----- | ------------------------------------------------------------------------------------ |
 | 1     | **Fundação (feita):** `src/app/`, `src/ui/`, pastas `modulos/` e `legado/`, checagem |
 | 2     | Entrevistas, Recursos e Seleção saem do iframe (**feita**)                           |
-| 3     | Configurações: todas as seções já são React; falta mudar para `src/modulos/`         |
+| 3     | Configurações (**feita**: `configuracoes/`, `acessos/`, `modulos/`; falta Status)    |
 | 4     | Análises (**feita**: `src/modulos/analises/`)                                        |
 | 5     | Visão geral: primeiro o que não é mapa, depois os mapas                              |
 | 6     | Login e entrada (**fase 1 feita**, ver abaixo); fim do `legacy-app.js` (fase 2)      |
@@ -55,7 +55,8 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
 | `src/componentes/modal.jsx` (só reexporta `src/ui/modal.jsx`)                                                    | sai quando ninguém importar daqui                         | ao tocar   |
 | `src/componentes/icone.jsx`, `multi-select-busca.jsx`                                                            | `src/ui/`                                                 | ao tocar   |
-| `src/componentes/configuracoes/`, `acessos/`, `modulos/`, `saude-das-cargas/` + `src/modules/config-secoes.js`   | `src/modulos/configuracoes/`                              | 3          |
+| Configurações (moldura, seções e `secoes.js`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
+| `src/componentes/saude-das-cargas/` (Status das atualizações)                                                    | `src/modulos/`                                            | ao tocar   |
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, trechos do `legacy-app.js` (dashboard)                          | `src/modulos/visao-geral/`                                | 5          |
 | `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.js`, `usar-area-atual.js` | `src/app/` (entrada, layout, área atual)                  | 6          |
@@ -110,6 +111,8 @@ export function montarTela({
 `ErrorBoundary`; devolve `{ raiz, desmontar }`. Todas as ilhas React de hoje (as de `src/main.js`)
 montam por ele. Usa `flushSync` a barra lateral (o legado lê `#nav` logo depois).
 
+**Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`): monta no bloco do `index.html` (`#acessosApp`, `#modulosApp`) que `src/modulos/configuracoes/secoes.js` move para a seção; o controlador em `window` (`acessosController`) tem `render()` e `confirmarSaida()` (a guarda de saída). As seções que publicam pela barra fixa (Marca… Operação) entram por portal no corpo da seção, pela moldura `src/modulos/configuracoes/configuracoes.jsx`.
+
 **Tela de página inteira** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`, `src/modulos/entrevistas/`, esta com visões num `Segmentado` no topo, e `src/modulos/analises/`): monta na `<section id="page-<view>">`
 vazia do `index.html`, sem pedir nada ao banco; `src/main.js` guarda o controlador em `window`
 (`recursosController`) e o legado chama `render()` ao navegar (tabela `TELAS_REACT` do `navigate`).
@@ -127,9 +130,11 @@ Os componentes emitem só classes `.ui-*` (prefixo para não colidir com `.panel
 `.kpi`, `.card`… de `app.css`) e nenhum id fixo. Peças de layout em CSS, sem componente:
 `.ui-tela` (raiz da tela), `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards` (dois cards lado a lado),
 `.ui-pilha` (card com título e lista embaixo),
-`.ui-grade-de-campos`, `.ui-acoes`, `.ui-gaveta-contexto`, `.ui-gaveta-corpo`, `.ui-gaveta-rodape`,
+`.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar` (barra presa ao pé com o resumo, o motivo e as
+ações: Acessos, Módulos e abas), `.ui-gaveta-contexto`, `.ui-gaveta-corpo`, `.ui-gaveta-rodape`,
 `.ui-texto-principal`/`.ui-texto-secundario` (célula), `.ui-secao-texto`/`.ui-secao-vazio`,
-`.ui-esqueleto` (skeleton) e `.btn.small`/`.btn.danger` dentro de `.ui-tela`/`.ui-gaveta`.
+`.ui-esqueleto` (skeleton), `.btn.small`/`.btn.danger` dentro de `.ui-tela`/`.ui-gaveta` e `.btn.ghost`
+(fantasma) / `.btn.perigo` (texto na cor de perigo) em qualquer lugar.
 
 | Componente                            | API (uma linha)                                                                                                                                                                                                                                                                                                                      |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -153,6 +158,7 @@ Os componentes emitem só classes `.ui-*` (prefixo para não colidir com `.panel
 | `LinhasEsqueleto` / `BlocosEsqueleto` | `{ colunas, linhas = 8 }` (linhas `<tr>` de tabela; a `TabelaInfinita` usa) / `{ quantos = 3, className?, como? }` (blocos de lista, cartão ou dia) — skeleton antes da primeira carga                                                                                                                                               |
 | `BotaoDeAcao`                         | `{ estado, acao, soIcone?, disabled?, ...atributos }` — botão de ação que escreve no banco: com `estado.acao = { tipo, rotulo }` em curso, mostra o rótulo e desativa os outros (Aprovados, Acessos, Módulos)                                                                                                                        |
 | `Segmentado`                          | `{ rotulo, opcoes: [{ valor, rotulo, icone? }], valor, aoMudar, desabilitado?, className? }` — radiogroup, setas ← → movem a escolha (visões de Entrevistas no topo, escala, comparecimento)                                                                                                                                         |
+| `Abas`                                | `{ rotulo, abas: [{ id, rotulo, icone?, contagem?, idDaAba?, idDoPainel?, dados? }], ativa, aoEscolher, compactas?, className? }` — tablist sublinhado, setas ← → movem a escolha; `compactas` dentro de modal (Acessos, modais da Lista de aprovados)                                                                               |
 | `LinhaDoRecorte` / `MarcasDoRecorte`  | `{ ativos?: [[campo, rótulo, valor]], texto?, children? }` — "Recorte ativo: …" ou "Sem filtros" (`textoDoRecorte(ativos)`; `texto` troca a frase); filhos abaixo / `{ marcas: [{ chave, tom?, icone?, texto }] }` — as marcas (sucesso, alerta, neutro)                                                                             |
 | `ListaDePendencias`                   | `{ itens: [{ chave, titulo, detalhe, tom? ("alerta" \| "perigo"), ativo?, aoClicar }], carregando?, vazio }` — botões que filtram (`ativo` → `aria-pressed`) ou abrem uma lista; skeleton                                                                                                                                            |
 | `MaisOpcoes`                          | `{ id, aberto, aoAlternar, quantos?, titulo, children }` — botão "Mais opções" com a contagem e o bloco dos filtros adicionais (controlado)                                                                                                                                                                                          |

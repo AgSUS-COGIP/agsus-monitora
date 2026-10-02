@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { criarImagensDaAparencia } from "../src/componentes/configuracoes/imagens.js";
+import { criarImagensDaAparencia } from "../src/modulos/configuracoes/imagens.js";
 import {
   ACCESS_BACKGROUND_MAX_BYTES,
   validateAccessBackgroundFile,

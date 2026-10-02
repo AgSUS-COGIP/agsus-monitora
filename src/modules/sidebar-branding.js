@@ -13,7 +13,7 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
   Pinta a barra lateral com a logo e a cor gravadas (`ui_sidebar_logo_url`,
   `ui_sidebar_background_color`). A escolha (envio de logo, galeria, cor e o
   aviso de contraste) é de Configurações › Aparência, em React
-  (src/componentes/configuracoes/aparencia.jsx), que chama
+  (src/modulos/configuracoes/aparencia.jsx), que chama
   `aplicarMarcaDaBarraLateral` enquanto a pessoa experimenta.
 */
 

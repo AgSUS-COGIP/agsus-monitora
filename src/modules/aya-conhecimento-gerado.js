@@ -1469,7 +1469,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
     fato: "",
-    fonte: "src/lib/access-roles.js; src/modules/config-secoes.js",
+    fonte: "src/lib/access-roles.js; src/modulos/configuracoes/secoes.js",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -1485,7 +1485,7 @@ export const VERBETES_AYA = Object.freeze([
       'Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra fixa, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx",
+      "src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -1501,7 +1501,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Operação fica o histórico de configurações, com as 30 últimas publicações. Cada item tem "Restaurar", que pede o motivo da restauração e publica de novo aqueles valores; o histórico não perde nada.',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx",
+      "src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx",
     abrir: "config:operacao",
   },
   {
@@ -1520,7 +1520,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, e o texto do rodapé. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",
     abrir: "config:marca",
   },
   {
@@ -1536,7 +1536,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Aparência ficam a arte de fundo e o logo da tela de acesso, a cor do painel de acesso e do texto sobre ele, e a logo e a cor da barra lateral. Cada cor mostra a razão de contraste. A arte de fundo vale na hora; o resto, depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/componentes/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js",
     abrir: "config:aparencia",
   },
   {
@@ -1554,7 +1554,7 @@ export const VERBETES_AYA = Object.freeze([
       "Painéis externos são páginas de fora do MONITORA abertas pelo grupo Painéis do menu. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, o grupo Painéis some do menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.",
     fato: "",
     fonte:
-      "src/lib/paineis-externos-das-configuracoes.js; src/componentes/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
+      "src/lib/paineis-externos-das-configuracoes.js; src/modulos/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
     abrir: "config:recursos",
   },
   {
@@ -1573,7 +1573,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.",
     fato: "",
     fonte:
-      "src/componentes/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js",
     abrir: "config:operacao",
   },
   {
@@ -2185,7 +2185,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Acessos › Usuários, clique em "Adicionar pessoa" e informe o e-mail institucional, o nome, o grupo (padrão Usuário), a coordenação (ou, sem coordenação, pelo menos uma área) e o motivo. O cadastro fica pronto antes de a pessoa entrar, e a tela mostra o "Convite pronto", com a mensagem para copiar ou abrir no e-mail. O link sozinho não dá acesso: só funciona entrando com a conta Google do e-mail convidado, e aí a pessoa entra sem precisar pedir acesso. Enquanto ela não entra, a situação mostra "Convidado · ainda não entrou" e dá para reenviar o convite; cancelar o convite (só o administrador global) desativa o cadastro, com motivo. O coordenador só cadastra na própria coordenação, com grupo dentro do teto dele.',
     fato: "O acesso ao MONITORA é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.",
     fonte:
-      "src/componentes/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
+      "src/modulos/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
     abrir: "config:acessos",
   },
   {
@@ -2222,7 +2222,7 @@ export const VERBETES_AYA = Object.freeze([
       'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
     fato: "",
     fonte:
-      "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/componentes/acessos/gaveta-do-usuario.jsx",
+      "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/modulos/acessos/gaveta-do-usuario.jsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -2251,7 +2251,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'No modal da pessoa, a coluna "Como a pessoa vê" monta o menu dela com as mesmas regras da barra lateral; com alteração pendente, mostra o resultado com o selo "Depois de salvar". É só leitura: não é entrar como a pessoa.',
     fato: "",
-    fonte: "src/lib/ver-como.js; src/componentes/acessos/gaveta-do-usuario.jsx",
+    fonte: "src/lib/ver-como.js; src/modulos/acessos/gaveta-do-usuario.jsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -2268,7 +2268,7 @@ export const VERBETES_AYA = Object.freeze([
       "Quem entra com Google sem perfil ativo vê a tela de pedido e informa nome, setor, coordenação e justificativa (20 a 2.000 caracteres). Os pedidos ficam em Acessos › Usuários › Pendentes: o administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. Quem recebeu convite não precisa pedir: basta entrar com o e-mail convidado.",
     fato: "",
     fonte:
-      "src/lib/solicitacao-de-acesso.js; src/componentes/acessos/solicitacoes.jsx",
+      "src/lib/solicitacao-de-acesso.js; src/modulos/acessos/solicitacoes.jsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -2285,7 +2285,7 @@ export const VERBETES_AYA = Object.freeze([
       'Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/componentes/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js",
+      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js",
     abrir: "config:acessos",
   },
   {
@@ -2582,7 +2582,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Módulos e abas (só o administrador global), dá para pôr o sistema inteiro em manutenção, ativar, desativar ou pôr em manutenção cada área, cada aba (em todas as áreas ou só numa) e cada painel externo, e ligar o selo BETA de uma aba. Nada grava na hora: as mudanças vão juntas em "Revisar e salvar", com motivo (3 a 500 caracteres). O histórico mostra as 50 últimas mudanças. Pelo menos uma área precisa ficar ativa.',
     fato: "",
     fonte:
-      "src/componentes/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
+      "src/modulos/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
     abrir: "config:modulos",
   },
   {

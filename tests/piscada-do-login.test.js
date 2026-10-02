@@ -221,7 +221,7 @@ describe("fundo da tela de acesso sem arte configurada", () => {
   const folhas = [
     "src/styles/app.css",
     "src/styles/platform-shell.css",
-    "src/styles/config-page.css",
+    "src/modulos/configuracoes/configuracoes.css",
   ].map((arquivo) => [arquivo, readFileSync(arquivo, "utf8")]);
 
   it.each(folhas)("%s não carrega imagem de host externo", (_, css) => {

@@ -1,6 +1,6 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.js";
 import {

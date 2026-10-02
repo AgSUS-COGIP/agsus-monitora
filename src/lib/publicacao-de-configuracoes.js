@@ -2,7 +2,7 @@
   Publicação das Configurações, sem DOM: que chaves cada seção grava, como a
   publicação se compara com o retrato do banco (get_configuracoes_snapshot) e
   as validações de formato. O estado e as RPCs são de
-  src/componentes/configuracoes/estado.js.
+  src/modulos/configuracoes/estado.js.
 
   Todas as seções que publicam pela barra fixa são React: o valor de cada
   campo vem do rascunho do estado (CAMPOS_DAS_SECOES), e a publicação manda
@@ -95,7 +95,7 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       rotulo: "Logo da equipe (URL)",
       tipo: "url",
       largo: true,
-      dica: "PNG/JPG/WEBP/SVG; https:// ou /caminho",
+      placeholder: "https:// ou /caminho (PNG, JPG, WEBP ou SVG)",
     },
     {
       chave: "footer_text",

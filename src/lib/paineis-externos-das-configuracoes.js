@@ -3,7 +3,7 @@
   TB_PAINEL_EXTERNO (`loadPanels`), o rascunho das edições, as linhas que a
   publicação envia em `p_paineis` (salvar_configuracoes_e_paineis_v2), a
   validação e a situação de cada painel. O estado é de
-  src/componentes/configuracoes/estado.js; a tela, de paineis-externos.jsx.
+  src/modulos/configuracoes/estado.js; a tela, de paineis-externos.jsx.
 
   A RPC só atualiza painéis que já existem (por id) e só quatro colunas:
   titulo, url, ativo e em_manutencao. Por isso a linha enviada tem esses
@@ -115,10 +115,10 @@ export function situacaoDoPainel({ ativo, em_manutencao, url }) {
 }
 
 export const SELO_DA_SITUACAO = Object.freeze({
-  inativo: Object.freeze({ rotulo: "Inativo", tom: "danger" }),
-  manutencao: Object.freeze({ rotulo: "Manutenção", tom: "warn" }),
-  ativo: Object.freeze({ rotulo: "Ativo", tom: "ok" }),
-  semUrl: Object.freeze({ rotulo: "Sem URL", tom: "neutral" }),
+  inativo: Object.freeze({ rotulo: "Inativo", tom: "reprovado" }),
+  manutencao: Object.freeze({ rotulo: "Manutenção", tom: "pendente" }),
+  ativo: Object.freeze({ rotulo: "Ativo", tom: "aprovado" }),
+  semUrl: Object.freeze({ rotulo: "Sem URL", tom: "neutro" }),
 });
 
 export function resumoDosPaineis(paineis = []) {

@@ -3,7 +3,7 @@
   (`ui_sidebar_logo_url`, `ui_sidebar_background_color`) e onde ficam as
   logos enviadas no armazenamento. Quem pinta a barra é
   src/modules/sidebar-branding.js; quem escolhe é Configurações › Aparência
-  (src/componentes/configuracoes/aparencia.jsx).
+  (src/modulos/configuracoes/aparencia.jsx).
 */
 
 import { ACCESS_BACKGROUND_FOLDER } from "./access-background-storage.js";

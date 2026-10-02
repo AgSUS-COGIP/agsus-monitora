@@ -1,7 +1,7 @@
 # Regras dos Acessos
 
 Configurações › Acessos: pessoas, convites, grupos de permissões, coordenações, pedidos e contas
-desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/componentes/acessos/`,
+desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/modulos/acessos/`,
 `src/lib/permissoes-recursos.js`, `src/lib/teto-de-acessos.js`, `src/lib/convite-de-acesso.js`,
 `src/lib/solicitacao-de-acesso.js`, `src/lib/ver-como.js`, `src/lib/access-roles.js` e as migrations
 `20260929121000_grupos_de_acesso.sql`, `20260929121100_coordenacoes.sql`,
@@ -24,7 +24,7 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/componentes/a
 **perguntas:** como dar acesso a alguem | como dar acesso | dar acesso | adicionar pessoa | convidar pessoa | como convidar alguem | liberar acesso | acesso so por convite
 **resposta:** Em Configurações › Acessos › Usuários, clique em "Adicionar pessoa" e informe o e-mail institucional, o nome, o grupo (padrão Usuário), a coordenação (ou, sem coordenação, pelo menos uma área) e o motivo. O cadastro fica pronto antes de a pessoa entrar, e a tela mostra o "Convite pronto", com a mensagem para copiar ou abrir no e-mail. O link sozinho não dá acesso: só funciona entrando com a conta Google do e-mail convidado, e aí a pessoa entra sem precisar pedir acesso. Enquanto ela não entra, a situação mostra "Convidado · ainda não entrou" e dá para reenviar o convite; cancelar o convite (só o administrador global) desativa o cadastro, com motivo. O coordenador só cadastra na própria coordenação, com grupo dentro do teto dele.
 **fato:** O acesso ao MONITORA é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.
-**fonte:** src/componentes/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql
+**fonte:** src/modulos/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql
 **abrir:** config:acessos
 
 ## Último acesso
@@ -38,7 +38,7 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/componentes/a
 
 **perguntas:** o que sao os grupos de permissoes | grupos de permissoes | grupo de acesso | niveis de acesso | o que e editor | o que e leitor | excecao por modulo
 **resposta:** O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.
-**fonte:** src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/componentes/acessos/gaveta-do-usuario.jsx
+**fonte:** src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/modulos/acessos/gaveta-do-usuario.jsx
 
 ## Coordenações
 
@@ -50,19 +50,19 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/componentes/a
 
 **perguntas:** como a pessoa ve | ver como a pessoa | o que a pessoa vai ver
 **resposta:** No modal da pessoa, a coluna "Como a pessoa vê" monta o menu dela com as mesmas regras da barra lateral; com alteração pendente, mostra o resultado com o selo "Depois de salvar". É só leitura: não é entrar como a pessoa.
-**fonte:** src/lib/ver-como.js; src/componentes/acessos/gaveta-do-usuario.jsx
+**fonte:** src/lib/ver-como.js; src/modulos/acessos/gaveta-do-usuario.jsx
 
 ## Pedidos de acesso
 
 **perguntas:** como funcionam os pedidos de acesso | pedidos de acesso | pedido de acesso | pedir acesso | solicitacao de acesso | pendentes
 **resposta:** Quem entra com Google sem perfil ativo vê a tela de pedido e informa nome, setor, coordenação e justificativa (20 a 2.000 caracteres). Os pedidos ficam em Acessos › Usuários › Pendentes: o administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. Quem recebeu convite não precisa pedir: basta entrar com o e-mail convidado.
-**fonte:** src/lib/solicitacao-de-acesso.js; src/componentes/acessos/solicitacoes.jsx
+**fonte:** src/lib/solicitacao-de-acesso.js; src/modulos/acessos/solicitacoes.jsx
 
 ## Contas desativadas
 
 **perguntas:** como reativar uma conta desativada | conta desativada | contas desativadas | desativar conta | reativar conta | acesso desativado
 **resposta:** Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação.
-**fonte:** supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/componentes/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js
+**fonte:** supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.js
 **abrir:** config:acessos
 
 ## Trava de área e conta de setor
