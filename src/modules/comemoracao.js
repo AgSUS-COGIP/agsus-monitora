@@ -96,6 +96,82 @@ export function soltarConfete(
   return true;
 }
 
+/*
+  Fogos de artifício: estouros em pontos espalhados pela tela, cada um abrindo
+  um círculo de faíscas com rastro, um depois do outro. "fogos" (fim de um
+  tour) e "festa" (fim de uma trilha inteira, mais estouros e mais longo).
+  Mesmas guardas do confete: sem canvas 2D ou requestAnimationFrame, nada.
+*/
+const FOGOS = {
+  fogos: { estouros: 9, faiscas: 70, duracaoMs: 4200 },
+  festa: { estouros: 16, faiscas: 90, duracaoMs: 6000 },
+};
+
+export function soltarFogos(
+  doc = globalThis.document,
+  janela = globalThis.window,
+  { intensidade = "fogos" } = {},
+) {
+  if (!doc?.body) return false;
+  const config = FOGOS[intensidade] || FOGOS.fogos;
+  const canvas = doc.createElement("canvas");
+  canvas.className = "comemoracao__confete";
+  canvas.setAttribute("aria-hidden", "true");
+  let contexto = null;
+  try {
+    contexto = canvas.getContext?.("2d") || null;
+  } catch {
+    contexto = null;
+  }
+  if (!contexto || !janela?.requestAnimationFrame) return false;
+  doc.body.appendChild(canvas);
+  const largura = (canvas.width = janela.innerWidth || 800);
+  const altura = (canvas.height = janela.innerHeight || 600);
+  const intervalo = (config.duracaoMs * 0.6) / config.estouros;
+  const estouros = Array.from({ length: config.estouros }, (_, i) => ({
+    x: largura * (0.12 + Math.random() * 0.76),
+    y: altura * (0.12 + Math.random() * 0.45),
+    inicio: i * intervalo,
+    cor: CORES[i % CORES.length],
+    faiscas: Array.from({ length: config.faiscas }, (_, j) => {
+      const angulo = (j / config.faiscas) * Math.PI * 2;
+      const forca = 2.5 + Math.random() * 4.5;
+      return {
+        vx: Math.cos(angulo) * forca,
+        vy: Math.sin(angulo) * forca,
+      };
+    }),
+  }));
+  let comeco = null;
+  const quadro = (agora) => {
+    comeco ??= agora;
+    const passado = agora - comeco;
+    // Rastro: escurece o quadro anterior em vez de apagar de vez.
+    contexto.globalCompositeOperation = "destination-out";
+    contexto.fillStyle = "rgba(0, 0, 0, 0.22)";
+    contexto.fillRect(0, 0, largura, altura);
+    contexto.globalCompositeOperation = "lighter";
+    for (const estouro of estouros) {
+      const t = (passado - estouro.inicio) / 16;
+      if (t < 0 || t > 90) continue;
+      contexto.globalAlpha = Math.max(0, 1 - t / 90);
+      contexto.fillStyle = estouro.cor;
+      for (const f of estouro.faiscas) {
+        const x = estouro.x + f.vx * t * 0.98 ** t;
+        const y = estouro.y + f.vy * t * 0.98 ** t + 0.035 * t * t;
+        contexto.beginPath();
+        contexto.arc(x, y, 2.1, 0, Math.PI * 2);
+        contexto.fill();
+      }
+    }
+    contexto.globalAlpha = 1;
+    if (passado < config.duracaoMs) janela.requestAnimationFrame(quadro);
+    else canvas.remove();
+  };
+  janela.requestAnimationFrame(quadro);
+  return true;
+}
+
 /** O aviso no topo: a frase e, se houver, uma lista curta. */
 export function mostrarAviso(
   doc = globalThis.document,
@@ -150,10 +226,16 @@ export function comemorar({
   janela = globalThis.window,
 } = {}) {
   const aviso = mostrarAviso(doc, { texto, itens, tituloDosItens });
-  if (aviso && confete && !semMovimento(janela))
+  if (!aviso || !confete || semMovimento(janela)) return aviso;
+  if (FOGOS[confete]) {
+    // Fogos e confete juntos: a festa grande.
+    soltarFogos(doc, janela, { intensidade: confete });
+    soltarConfete(doc, janela, { quantidade: PEDACOS.cheio });
+  } else {
     soltarConfete(doc, janela, {
       quantidade: PEDACOS[confete] || PEDACOS.cheio,
     });
+  }
   return aviso;
 }
 
