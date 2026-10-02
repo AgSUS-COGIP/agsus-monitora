@@ -95,6 +95,46 @@
   outline-offset: 2px;
 }
 
+/*
+  Fechada, a Aya fica compacta: só o retrato de 46px, que cabe no cabeçalho do
+  app quando a pessoa a arrasta para lá; o selo Beta vira um ponto e a etiqueta
+  "Fale com a Aya" sai (o nome e a dica ficam no aria-label e no title do
+  botão). O retrato grande continua no cabeçalho do painel (pedido de 02/10).
+*/
+.aya-arara .aya-retrato {
+  width: 46px;
+  height: 46px;
+  padding: 2px;
+}
+
+.aya-arara .aya-retrato img {
+  border-width: 1.5px;
+}
+
+.aya-arara .aya-arara__etiqueta {
+  display: none;
+}
+
+.aya-arara .aya-selo-beta {
+  top: -1px;
+  right: -1px;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  overflow: hidden;
+  color: transparent;
+  font-size: 0;
+}
+
+.aya-arara:hover .aya-retrato,
+.aya-arara:focus-visible .aya-retrato {
+  transform: scale(1.06);
+}
+
+.aya-retrato {
+  transition: transform var(--duration-fast, 120ms) var(--ease-standard, ease);
+}
+
 /* No canto de cima do retrato, por fora do rosto (como na Bel). */
 .aya-selo-beta {
   position: absolute;
