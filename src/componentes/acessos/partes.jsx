@@ -37,6 +37,7 @@ export function ControleSegmentado({
           ref={(el) => (botoes.current[indice] = el)}
           type="button"
           role="radio"
+          data-valor={opcao.valor}
           aria-checked={valor === opcao.valor}
           tabIndex={valor === opcao.valor ? 0 : -1}
           disabled={desabilitado}

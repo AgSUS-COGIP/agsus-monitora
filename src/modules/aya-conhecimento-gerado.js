@@ -605,6 +605,37 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/lib/chamado-da-aya.js; src/modulos/aya/",
   },
   {
+    titulo: "Tour guiado da tela",
+    perguntas: [
+      "me mostra esta tela",
+      "tour guiado",
+      "tour da tela",
+      "como funciona o tour",
+      "mostrar a tela",
+      "me mostra a tela",
+    ],
+    resposta:
+      'Em Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados, Seleção, Visão geral e Configurações › Acessos, toque em "Me mostra esta tela" (a sugestão do painel ou o ícone de bússola no topo dele). Eu escureço a página e destaco uma parte por vez, com uma explicação curta. Use Próximo e Voltar (ou as setas do teclado), Pular ou Esc para sair. O que o seu perfil não vê, ou o que a tela ainda não tem, eu pulo. O tour só mostra: não altera nada.',
+    fato: 'A Aya tem um tour guiado ("Me mostra esta tela") que destaca as partes da página atual, uma por vez.',
+    fonte: "src/modulos/aya/tour/; src/lib/aya-tours.js",
+  },
+  {
+    titulo: "Trilhas da Aya",
+    perguntas: [
+      "trilhas",
+      "trilha",
+      "aprender",
+      "curso do monitora",
+      "como aprender a usar o monitora",
+      "primeiros passos",
+      "do edital ao aprovado",
+    ],
+    resposta:
+      'Na seção "Aprender" do meu painel ficam as trilhas: tours que atravessam várias telas na ordem do trabalho. São elas: Primeiros passos; Do edital ao aprovado; Conduzir uma entrevista; Registrar e decidir um recurso; e Dar acesso a alguém. Eu mostro só as que o seu perfil pode fazer. O progresso ("3 de 7", "Concluída") fica guardado só neste navegador: sair no meio e voltar depois retoma de onde parou, e uma trilha concluída pode ser refeita. Na primeira entrada eu ofereço "Primeiros passos" uma única vez, sem obrigar.',
+    fato: "As trilhas da Aya (seção Aprender) são Primeiros passos, Do edital ao aprovado, Conduzir uma entrevista, Registrar e decidir um recurso e Dar acesso a alguém; aparecem conforme as permissões do perfil.",
+    fonte: "src/modulos/aya/tour/; src/lib/aya-tours.js",
+  },
+  {
     titulo: "Tela da Lista de aprovados",
     perguntas: [
       "tela da lista de aprovados",

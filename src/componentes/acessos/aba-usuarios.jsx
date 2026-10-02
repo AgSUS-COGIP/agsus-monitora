@@ -712,6 +712,7 @@ export function AbaUsuarios({ estado }) {
           <button
             type="button"
             className="btn primary"
+            data-tour="acessos-adicionar"
             onClick={estado.abrirAdicionar}
           >
             <Icone nome="plus" tamanho={16} /> Adicionar pessoa
