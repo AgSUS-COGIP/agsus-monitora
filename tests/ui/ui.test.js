@@ -98,13 +98,16 @@ describe("PainelDeFiltros e chips", () => {
       "2 filtros adicionais",
     );
     expect($(".ui-filtros-corpo .campos").textContent).toBe("campos");
+    // Nasce recolhido: os campos ficam no corpo, escondido até abrir.
     const recolher = $('[data-acao="recolher-filtros"]');
-    await clicar(recolher);
     expect(recolher.getAttribute("aria-expanded")).toBe("false");
-    expect(aoRecolher).toHaveBeenLastCalledWith(true);
+    expect($(".ui-filtros-corpo").hidden).toBe(true);
     await clicar(recolher);
     expect($(".ui-filtros-corpo").hidden).toBe(false);
     expect(aoRecolher).toHaveBeenLastCalledWith(false);
+    await clicar(recolher);
+    expect(recolher.getAttribute("aria-expanded")).toBe("false");
+    expect(aoRecolher).toHaveBeenLastCalledWith(true);
   });
 
   it("sem filtro ativo, Limpar tudo fica desativado", async () => {
@@ -493,6 +496,10 @@ describe("Classes .ui-* e nenhum id fixo", () => {
     expect($(".ui-filtros-resumo.tem-filtros").textContent).toContain(
       "1 filtro adicional",
     );
+    // Nasce recolhido; abre para mexer nos filtros e recolhe de novo.
+    expect(painel.classList.contains("is-recolhido")).toBe(true);
+    await clicar($('[data-acao="recolher-filtros"]'));
+    expect($(".ui-filtros-corpo").hidden).toBe(false);
     await clicar($(".ui-chips .ui-chip"));
     expect(aoTirar).toHaveBeenCalledTimes(1);
     await clicar($('[data-acao="recolher-filtros"]'));
