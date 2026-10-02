@@ -2,12 +2,12 @@
 
 O que a Aya faz, o que ela não faz e como abrir um chamado ao suporte. Fontes:
 `src/modulos/aya/`, `src/lib/aya-paginas.js`, `src/lib/chamado-da-aya.js` e
-`src/modules/aya-ai-client.js`; tours e trilhas em `src/modulos/aya/tour/` e `src/lib/aya-tours.js`.
+`src/lib/busca-da-aya.js`; tours e trilhas em `src/modulos/aya/tour/` e `src/lib/aya-tours.js`.
 
 ## O que a Aya faz
 
 **perguntas:** o que voce consegue fazer | o que voce faz | o que a aya faz | como a aya ajuda | para que serve a aya
-**resposta:** Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Também converso sobre saúde indígena com fontes oficiais. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.
+**resposta:** Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Uso a base de conhecimento, sem IA local, máquina ou túnel. Reconheço sinônimos, perguntas sem acento e pequenos erros de digitação. Quando não tenho certeza, ofereço até três perguntas parecidas e a opção de abrir chamado; perguntas fora do MONITORA recebem sugestões do que posso explicar. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.
 **fato:** A interface do MONITORA não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.
 **fonte:** comportamento da Aya
 
@@ -26,7 +26,7 @@ O que a Aya faz, o que ela não faz e como abrir um chamado ao suporte. Fontes:
 ## Abrir chamado ao suporte
 
 **perguntas:** como abrir um chamado | abrir chamado | falar com o suporte | contato do suporte | chamado ao suporte
-**resposta:** Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o seu e-mail já preenchido para o suporte, com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.
+**resposta:** Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o Gmail no navegador, em uma nova aba, já preenchido para o suporte (há também um link para usar o programa de e-mail), com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.
 **fonte:** src/lib/chamado-da-aya.js; src/modulos/aya/
 
 ## Tour guiado da tela

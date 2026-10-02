@@ -1,8 +1,8 @@
 /*
   O chamado ao suporte que a Aya oferece, sem DOM nem rede.
 
-  Não há servidor de e-mail: o botão "Abrir chamado" abre o programa de e-mail
-  da pessoa (`mailto:`) com o assunto e o corpo preenchidos, e nada sai sem ela
+  O botão "Abrir chamado" abre o Gmail no navegador; um link secundário
+  abre o programa de e-mail (`mailto:`) com o assunto e o corpo preenchidos, e nada sai sem ela
   enviar. O endereço é a chave `support_email` de Configurações › Operação
   (padrão abaixo).
 
@@ -119,7 +119,8 @@ function caberNoLimite(texto, montar, limite) {
 }
 
 /**
- * O chamado: `{ para, assunto, corpo, href }`. `href` é o `mailto:` pronto,
+ * O chamado: `{ para, assunto, corpo, href, mailto }`. `href` abre o Gmail;
+ * `mailto` é a alternativa para o programa de e-mail,
  * com assunto e corpo codificados (quebras de linha em CRLF, %0D%0A).
  */
 export function montarChamado({
@@ -166,6 +167,7 @@ export function montarChamado({
     contexto,
   }).join(QUEBRA);
 
-  const href = `mailto:${para}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-  return { para, assunto, corpo, href };
+  const mailto = `mailto:${para}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+  const href = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(para)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+  return { para, assunto, corpo, href, mailto };
 }
