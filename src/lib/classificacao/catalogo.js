@@ -6,7 +6,7 @@
   NADA AQUI É REGRA FIXA. A regra de cada edital (src/lib/classificacao/regra.js,
   gravada em TH_REGRA_CLASSIFICACAO) escolhe do catálogo e decide a ordem. O
   catálogo é o mesmo do banco (TB_CRITERIO_CLASSIFICACAO, seed da migration
-  20261002120000_classificacao.sql); o teste `classificacao-migration.test.js`
+  20261002150000_classificacao.sql); o teste `classificacao-migration.test.js`
   confere que os dois são iguais.
 
   Cada critério sabe ler o próprio valor do candidato (`ler`), já com a data de

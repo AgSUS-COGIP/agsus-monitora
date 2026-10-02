@@ -93,7 +93,7 @@ export const AREAS_DO_MENU = Object.freeze([
   A ordem segue as etapas do processo seletivo (Editais → Cronograma →
   Análises → Recursos → Entrevistas → Classificação → Aprovados → Seleção),
   migrations `20261001160000_ordem_do_menu_por_etapa.sql` e
-  `20261002120000_classificacao.sql` (Classificação entra na 7 e empurra
+  `20261002150000_classificacao.sql` (Classificação entra na 7 e empurra
   Aprovados e Seleção).
 
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);

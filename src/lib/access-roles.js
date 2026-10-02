@@ -109,7 +109,7 @@ export function canViewSelecao(profile) {
 }
 
 /*
-  Aba Classificação (20261002120000_classificacao.sql): ver (leitor); salvar a
+  Aba Classificação (20261002150000_classificacao.sql): ver (leitor); salvar a
   regra do edital, gerar e publicar listas e registrar sorteio (editor).
 */
 export function canViewClassificacao(profile) {

@@ -2,7 +2,7 @@
   Estado da tela de Classificação (`#page-classificacao`), fora do React. Os
   componentes leem com `useSyncExternalStore`. Este arquivo não importa React.
 
-  RPCs (supabase/migrations/20261002120000_classificacao.sql; contrato em
+  RPCs (supabase/migrations/20261002150000_classificacao.sql; contrato em
   src/lib/rpc-contrato.js):
     listar_editais_classificacao(p_area)     os editais da área atual
     obter_classificacao_do_edital(p_edital)  regra, quadro, análises,

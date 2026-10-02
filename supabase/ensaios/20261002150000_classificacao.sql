@@ -1,5 +1,5 @@
 /*
-  ENSAIO de 20261002120000_classificacao.sql — begin … rollback.
+  ENSAIO de 20261002150000_classificacao.sql — begin … rollback.
 
   Como rodar: cole o arquivo inteiro no SQL Editor do Supabase (papel postgres)
   e execute. Ele abre uma transação, aplica o corpo da migration (copiado sem
@@ -1016,7 +1016,7 @@ grant execute on function public.registrar_desempate_classificacao(uuid, jsonb) 
 -- 9. Catálogo de abas -----------------------------------------------------------------------
 -- A aba entra DESLIGADA (ST_ATIVO = 'N'): o front publicado ainda não tem a
 -- view 'classificacao'. Liga junto com o merge do front
--- (20261002120500_liga_aba_classificacao.sql).
+-- (20261002150500_liga_aba_classificacao.sql).
 insert into public."TB_ABA" ("CO_ABA", "NO_ABA", "DS_ICONE", "NU_ORDEM", "CO_VIEW", "CO_RECURSO", "TP_ABA", "ST_ATIVO", "ST_BETA")
 values ('classificacao', 'Classificação', 'list-ordered', 7, 'classificacao', 'classificacao', 'nativa', 'N', 'S');
 insert into public."RL_ABA_AREA" ("CO_ABA", "CO_AREA", "ST_ATIVO")

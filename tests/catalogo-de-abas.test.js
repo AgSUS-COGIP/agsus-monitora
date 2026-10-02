@@ -62,15 +62,15 @@ const MIGRATION_QUE_LIGA_A_SELECAO = ler(
   "supabase/migrations/20261001090500_liga_aba_selecao.sql",
 );
 /*
-  Classificação (20261002120000_classificacao.sql): o mesmo formato — entra
+  Classificação (20261002150000_classificacao.sql): o mesmo formato — entra
   desligada, em todas as áreas, empurra Aprovados (8) e Seleção (9), e
-  20261002120500_liga_aba_classificacao.sql a liga.
+  20261002150500_liga_aba_classificacao.sql a liga.
 */
 const MIGRATION_DA_CLASSIFICACAO = ler(
-  "supabase/migrations/20261002120000_classificacao.sql",
+  "supabase/migrations/20261002150000_classificacao.sql",
 );
 const MIGRATION_QUE_LIGA_A_CLASSIFICACAO = ler(
-  "supabase/migrations/20261002120500_liga_aba_classificacao.sql",
+  "supabase/migrations/20261002150500_liga_aba_classificacao.sql",
 );
 /* A ordem por etapa do processo: só updates de "NU_ORDEM", aplicados por último. */
 const MIGRATION_DA_ORDEM = ler(

@@ -2,15 +2,15 @@
 
 A tela de Classificação mostra só rótulos, números e botões; o porquê das regras fica aqui, para a
 Aya explicar. Fontes: `src/modulos/classificacao/`, `src/lib/classificacao/` (motor, regra,
-catálogo, vagas, sorteio e exportação) e as migrations `20261002120000_classificacao.sql` e
-`20261002120500_liga_aba_classificacao.sql`. Regras de exemplo dos editais 83/2026 e 100/2026:
+catálogo, vagas, sorteio e exportação) e as migrations `20261002150000_classificacao.sql` e
+`20261002150500_liga_aba_classificacao.sql`. Regras de exemplo dos editais 83/2026 e 100/2026:
 `supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql`.
 
 ## Tela de Classificação
 
 **perguntas:** tela de classificacao | aba classificacao | para que serve classificacao | para que serve a tela de classificacao | para que serve a classificacao
 **resposta:** A Classificação monta as listas de um edital — preliminar (avaliação documental), convocação para entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; "Exportar" sai em PDF, DOCX ou XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.
-**fonte:** src/modulos/classificacao/; supabase/migrations/20261002120000_classificacao.sql
+**fonte:** src/modulos/classificacao/; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
 ## Regra de classificação do edital
@@ -18,7 +18,7 @@ catálogo, vagas, sorteio e exportação) e as migrations `20261002120000_classi
 **perguntas:** regra de classificacao | como funciona a regra de classificacao | como funciona a regra de classificacao do edital | versao da regra | versoes da regra | regra do edital
 **resposta:** No MONITORA não há regra de classificação fixa: cada edital tem a sua, decidida pelo gestor do edital na aba Classificação › Regra. Ela define as etapas consideradas, a composição da nota (componentes, pesos, casas decimais e arredondamento), as notas mínimas e eliminatórias (documental, por nível da vaga, total da entrevista e por competência), os critérios de desempate e a ordem deles, o empate final, as modalidades, a convocação para entrevista e o rodapé das listas. Salvar sempre cria uma versão nova (da segunda em diante, com o motivo); as anteriores ficam no histórico e podem voltar ao formulário. Cada lista gerada guarda a versão usada.
 **fato:** No MONITORA, a regra de classificação é de cada edital, versionada: salvar cria versão nova e a lista gerada guarda a versão usada.
-**fonte:** src/lib/classificacao/regra.js; supabase/migrations/20261002120000_classificacao.sql
+**fonte:** src/lib/classificacao/regra.js; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
 ## Critérios de desempate
@@ -33,7 +33,7 @@ catálogo, vagas, sorteio e exportação) e as migrations `20261002120000_classi
 **perguntas:** empate final | como funciona o empate final | como funciona o empate final e o sorteio | sorteio do empate | semente do sorteio | decisao manual do empate
 **resposta:** Quando o empate continua depois de todos os critérios, vale o que o gestor escolheu na regra: sorteio registrado, ordem de inscrição (código menor primeiro), mesma posição (1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º) ou decisão manual com justificativa. No sorteio, a semente é gerada no servidor ou informada pelo gestor; a ordem é a crescente do SHA-256 de "semente:id da análise", e ficam gravados semente, ordem, quem e quando — qualquer pessoa com a semente refaz a conta. Refazer um sorteio exige justificativa e guarda o anterior. Enquanto um empate espera sorteio ou decisão, a lista mostra os empatados na mesma posição, o aviso pede o registro e a lista não pode ser marcada como publicada.
 **fato:** No MONITORA, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).
-**fonte:** src/lib/classificacao/sorteio.js; supabase/migrations/20261002120000_classificacao.sql
+**fonte:** src/lib/classificacao/sorteio.js; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
 ## 60 anos ou mais
@@ -68,7 +68,7 @@ catálogo, vagas, sorteio e exportação) e as migrations `20261002120000_classi
 
 **perguntas:** gerar lista de classificacao | como gerar a lista de classificacao | publicar lista de classificacao | hash da lista
 **resposta:** "Gerar" registra a lista no banco: o retrato (por vaga, posição, nome, nota e modalidade; eliminados com motivo; só o nome, sem CPF), a versão da regra usada, quem e quando, e o SHA-256 do retrato, calculado no banco. Se a regra mudou desde que a tela abriu, o banco recusa e pede para gerar de novo. "Marcar como publicada" registra quem e quando publicou; lista com empate esperando sorteio ou decisão não pode ser publicada.
-**fonte:** supabase/migrations/20261002120000_classificacao.sql; src/lib/classificacao/exportacao.js
+**fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/classificacao/exportacao.js
 **abrir:** classificacao
 
 ## Exportar a lista de classificação
@@ -82,5 +82,5 @@ catálogo, vagas, sorteio e exportação) e as migrations `20261002120000_classi
 
 **perguntas:** quem pode mudar a regra de classificacao | quem pode gerar a lista de classificacao | permissao classificacao
 **resposta:** A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.
-**fonte:** supabase/migrations/20261002120000_classificacao.sql; src/lib/access-roles.js
+**fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.js
 **abrir:** config:acessos

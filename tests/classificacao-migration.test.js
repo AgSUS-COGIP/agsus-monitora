@@ -13,7 +13,7 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
   seeds fora da migration.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261002120000_classificacao.sql";
+const NOME = "20261002150000_classificacao.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);

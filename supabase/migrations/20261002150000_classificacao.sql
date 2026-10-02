@@ -63,7 +63,7 @@
   CATÁLOGO DE ABAS
     'classificacao' entra em TB_ABA DESLIGADA (ST_ATIVO = 'N', selo BETA), na
     ordem das etapas: depois de Entrevistas (6) e antes da Lista de aprovados,
-    que passa a 8 (Seleção, 9). 20261002120500_liga_aba_classificacao.sql liga
+    que passa a 8 (Seleção, 9). 20261002150500_liga_aba_classificacao.sql liga
     junto com o merge do front.
 
   PRÉ-REQUISITO: 20261001170000 (recursos_parecer) e 20260930233000 (quadro de
@@ -71,8 +71,8 @@
 
   Seeds de exemplo (regras dos editais 83/2026 e 100/2026):
     supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql
-  Ensaio: supabase/ensaios/20261002120000_classificacao.sql
-  Rollback: supabase/rollback/20261002120000_classificacao.sql
+  Ensaio: supabase/ensaios/20261002150000_classificacao.sql
+  Rollback: supabase/rollback/20261002150000_classificacao.sql
 */
 begin;
 
@@ -1073,7 +1073,7 @@ grant execute on function public.registrar_desempate_classificacao(uuid, jsonb) 
 -- 9. Catálogo de abas -----------------------------------------------------------------------
 -- A aba entra DESLIGADA (ST_ATIVO = 'N'): o front publicado ainda não tem a
 -- view 'classificacao'. Liga junto com o merge do front
--- (20261002120500_liga_aba_classificacao.sql).
+-- (20261002150500_liga_aba_classificacao.sql).
 insert into public."TB_ABA" ("CO_ABA", "NO_ABA", "DS_ICONE", "NU_ORDEM", "CO_VIEW", "CO_RECURSO", "TP_ABA", "ST_ATIVO", "ST_BETA")
 values ('classificacao', 'Classificação', 'list-ordered', 7, 'classificacao', 'classificacao', 'nativa', 'N', 'S');
 insert into public."RL_ABA_AREA" ("CO_ABA", "CO_AREA", "ST_ATIVO")

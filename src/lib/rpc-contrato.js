@@ -665,7 +665,7 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo: "Registo de auditoria de acesso. Nunca deve bloquear a interface.",
   },
-  // ── Classificação (20261002120000_classificacao.sql) ─────────────────────
+  // ── Classificação (20261002150000_classificacao.sql) ─────────────────────
   listar_editais_classificacao: {
     argumentos: ["p_area"],
     critica: false,

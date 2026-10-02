@@ -12,7 +12,7 @@
   nada desempata) — não com os do edital 83 ou 100: a regra "padrão" de um
   edital novo é vazia até o gestor decidir. `validarRegra` devolve os erros
   com as MESMAS regras que o banco confere em
-  private."FC_VALIDAR_REGRA_CLASSIFICACAO" (migration 20261002120000).
+  private."FC_VALIDAR_REGRA_CLASSIFICACAO" (migration 20261002150000).
 */
 import {
   COMPONENTES_DA_NOTA,

@@ -3,7 +3,7 @@
   100/2026 (CASAI Nacional Brasília), a partir do levantamento dos editais e
   das listas publicadas (regras-por-edital.md, regra-83-2026.json,
   regra-100-2026.json). Não é schema: roda uma vez, depois da migration
-  20261002120000_classificacao.sql, no SQL Editor (papel postgres).
+  20261002150000_classificacao.sql, no SQL Editor (papel postgres).
 
   IDEMPOTENTE: só cria a regra (versão 1) do edital que ainda NÃO tem regra.
   Edital com regra (de uma execução anterior ou já editada na tela) não muda.

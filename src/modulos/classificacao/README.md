@@ -20,7 +20,7 @@ classificacao.css  só o que é desta tela (tokens)
 
 Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.js`, `catalogo.js`, `vagas.js`,
 `numeros.js`, `sorteio.js`, `exportacao.js`, `dados.js`). Banco:
-`supabase/migrations/20261002120000_classificacao.sql` (+ `20261002120500_liga_aba_classificacao.sql`),
+`supabase/migrations/20261002150000_classificacao.sql` (+ `20261002150500_liga_aba_classificacao.sql`),
 seeds de exemplo em `supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql`.
 Explicações para a Aya: `docs/aya/regras-da-classificacao.md`. Testes: `tests/lib/classificacao-*.test.js`,
 `tests/modulos/classificacao.test.js`, `tests/classificacao-migration.test.js`.

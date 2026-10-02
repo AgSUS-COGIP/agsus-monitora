@@ -1,4 +1,4 @@
--- Desfaz 20261002120000_classificacao: tira a aba (e volta a ordem: aprovados 7,
+-- Desfaz 20261002150000_classificacao: tira a aba (e volta a ordem: aprovados 7,
 -- seleção 8), as funções, as tabelas e o recurso de permissão 'classificacao'.
 -- ATENÇÃO: apaga as regras, as versões, as listas geradas e os sorteios/decisões
 -- registrados. Exporte antes (obter_lista_classificacao) se precisar guardar.
