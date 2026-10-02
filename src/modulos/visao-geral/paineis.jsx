@@ -6,43 +6,37 @@ import {
   editaisDoAno,
 } from "../../lib/atalhos-de-filtro.js";
 import { formatNumberBR } from "../../lib/formatters.js";
-import { paletaDoPainel } from "../../lib/tema-do-painel.js";
 import {
   CAMPOS_DO_FILTRO,
+  fasesDosProcessos,
   INDICADORES,
+  posResultado,
+  processosPorProjeto,
+  rotuloDoAtalho,
   VALOR_DO_INDICADOR,
-  processosEmAtencao,
-  resumoPorEtapa,
-  statusOperacional,
-  statusSelecionados,
-  unidadesComMaisDeUmProcesso,
 } from "../../lib/visao-geral.js";
 import {
-  CardDeGrafico,
   ChipDeFiltro,
   ChipsDeFiltro,
-  classes,
   EstadoVazio,
-  Grafico,
   GradeDeKpis,
   Kpi,
   ListaDePendencias,
   MaisOpcoes,
-  paletaDosGraficos,
   PainelDeFiltros,
-  Selo,
   TopoDoPainel,
 } from "../../ui/index.js";
 
 /*
   Os blocos da Visão geral, com os componentes de src/ui/: o topo (a hora da
-  carga, discreta, Atualizar e Exportar), os filtros (Ano e os seis campos,
-  três deles em "Mais opções", e os chips do recorte), os seis indicadores,
-  "Unidades com mais de um processo seletivo", o resumo por etapa, o status
-  operacional (rosca e legenda que filtram) e "Atenção".
+  carga, discreta, Atualizar e Exportar), os filtros (Ano e os cinco campos,
+  dois deles em "Mais opções", e os chips do recorte), os sete indicadores,
+  "Processos por projeto" (só Projetos), "Fases" e "Pós-resultado". Os
+  prazos da semana ficam nas boas-vindas e os críticos no indicador.
 */
 
 const fmt = (valor) => formatNumberBR(valor);
+const plural = (n, um, varios) => `${fmt(n)} ${n === 1 ? um : varios}`;
 
 /* ── Topo ───────────────────────────────────────────────────────────── */
 
@@ -137,7 +131,10 @@ export function Filtros({ e, estado, textos }) {
   const extrasAtivos = extras.filter((c) => e.filtros[c.campo].length).length;
   const [maisAberto, setMaisAberto] = useState(extrasAtivos > 0);
   const quantos =
-    e.quantosFiltros + (e.busca.trim() ? 1 : 0) + (e.dsei.chave ? 1 : 0);
+    e.quantosFiltros +
+    (e.busca.trim() ? 1 : 0) +
+    (e.dsei.chave ? 1 : 0) +
+    (e.atalho ? 1 : 0);
   return (
     <PainelDeFiltros
       idDoTitulo="visaoGeralFiltrosTitulo"
@@ -160,7 +157,7 @@ export function Filtros({ e, estado, textos }) {
         aberto={maisAberto}
         aoAlternar={() => setMaisAberto((aberto) => !aberto)}
         quantos={extrasAtivos}
-        titulo="Mostrar Etapa, Risco e UF"
+        titulo="Mostrar Fase e UF"
       >
         {extras.map((c) => (
           <CampoDoFiltro key={c.campo} {...c} e={e} estado={estado} />
@@ -168,6 +165,11 @@ export function Filtros({ e, estado, textos }) {
       </MaisOpcoes>
       {quantos ? (
         <ChipsDeFiltro>
+          {e.atalho ? (
+            <ChipDeFiltro rotulo="Recorte" aoTirar={estado.tirarAtalho}>
+              {rotuloDoAtalho(e.atalho)}
+            </ChipDeFiltro>
+          ) : null}
           {e.dsei.chave ? (
             <ChipDeFiltro rotulo="DSEI" aoTirar={estado.tirarDsei}>
               {e.dsei.nome || e.dsei.chave}
@@ -216,9 +218,9 @@ export function Indicadores({ e, estado, textos }) {
             carregando={!e.carregado}
             {...(critico
               ? {
-                  titulo: "Filtrar por risco Médio e Alto",
-                  ativo: e.riscoCriticoAtivo,
-                  aoClicar: estado.alternarRiscoCritico,
+                  titulo: "Filtrar pelos críticos",
+                  ativo: e.criticosAtivo,
+                  aoClicar: estado.alternarCriticos,
                 }
               : {})}
           />
@@ -228,79 +230,101 @@ export function Indicadores({ e, estado, textos }) {
   );
 }
 
-/* ── Unidades com mais de um processo seletivo ──────────────────────── */
+/* ── Bloco com título e lista ───────────────────────────────────────── */
 
-export function UnidadesComVariosProcessos({ e, estado }) {
-  const unidades = unidadesComMaisDeUmProcesso(e.filtradas);
-  if (!unidades.length) return null;
-  const filtrada = e.filtros.unidade.length === 1 ? e.filtros.unidade[0] : null;
+function Bloco({ id, titulo, className, children }) {
   return (
     <section
-      className="ui-card visao-geral-unidades"
-      aria-labelledby="visaoGeralUnidadesTitulo"
+      className={`ui-card ui-pilha visao-geral-bloco ${className}`}
+      aria-labelledby={id}
     >
-      <h2 className="ui-titulo" id="visaoGeralUnidadesTitulo">
-        <i className="fa-solid fa-layer-group" aria-hidden="true" /> Unidades
-        com mais de um processo seletivo
+      <h2 className="ui-titulo" id={id}>
+        {titulo}
       </h2>
-      <div className="visao-geral-unidades-lista">
-        {unidades.map(({ unidade, quantos }) => (
-          <button
-            key={unidade}
-            type="button"
-            className="visao-geral-unidade"
-            aria-pressed={filtrada === unidade}
-            title={`Filtrar por ${unidade}`}
-            onClick={() =>
-              estado.alternarFiltroUnico(
-                "unidade",
-                unidade,
-                "Filtro de unidade",
-              )
-            }
-          >
-            <span>{unidade}</span>
-            <Selo tom="revisar">{fmt(quantos)}</Selo>
-          </button>
-        ))}
-      </div>
+      {children}
     </section>
   );
 }
 
-/* ── Resumo por etapa ───────────────────────────────────────────────── */
+/* ── Processos por projeto (Projetos) ───────────────────────────────── */
 
-export function ResumoPorEtapa({ e, estado, textos }) {
-  const etapas = resumoPorEtapa(e.filtradas);
-  const filtrada = e.filtros.etapa.length === 1 ? e.filtros.etapa[0] : null;
+export function ProcessosPorProjeto({ e, estado }) {
+  const projetos = processosPorProjeto(e.filtradas);
+  if (!e.carregado || !projetos.length) return null;
+  const filtrado = e.filtros.unidade.length === 1 ? e.filtros.unidade[0] : null;
   return (
-    <section
-      className="ui-card ui-pilha visao-geral-etapas"
-      aria-labelledby="visaoGeralEtapasTitulo"
+    <Bloco
+      id="visaoGeralProjetosTitulo"
+      titulo="Processos por projeto"
+      className="visao-geral-projetos"
     >
-      <h2 className="ui-titulo" id="visaoGeralEtapasTitulo">
-        {textos.resumo}
-      </h2>
+      <div className="visao-geral-itens visao-geral-itens-grade">
+        {projetos.map(({ projeto, processos, abertos, vagas, contratadas }) => (
+          <button
+            key={projeto}
+            type="button"
+            className="visao-geral-item"
+            aria-pressed={filtrado === projeto}
+            title={`Filtrar por ${projeto}`}
+            onClick={() =>
+              estado.alternarFiltroUnico(
+                "unidade",
+                projeto,
+                "Filtro de projeto",
+              )
+            }
+          >
+            <span className="visao-geral-item-topo">
+              <b title={projeto}>{projeto}</b>
+              <span className="visao-geral-item-conta">{fmt(processos)}</span>
+            </span>
+            <small>
+              {[
+                plural(abertos, "aberto", "abertos"),
+                plural(vagas, "vaga", "vagas"),
+                plural(contratadas, "contratada", "contratadas"),
+              ].join(" · ")}
+            </small>
+          </button>
+        ))}
+      </div>
+    </Bloco>
+  );
+}
+
+/* ── Fases ──────────────────────────────────────────────────────────── */
+
+export function Fases({ e, estado }) {
+  const fases = fasesDosProcessos(e.filtradas);
+  const filtrada = e.filtros.fase.length === 1 ? e.filtros.fase[0] : null;
+  return (
+    <Bloco
+      id="visaoGeralFasesTitulo"
+      titulo="Fases"
+      className="visao-geral-fases"
+    >
       {!e.carregado ? (
         <div className="ui-esqueleto ui-esqueleto-linha" aria-hidden="true" />
-      ) : etapas.length ? (
-        <div className="visao-geral-etapas-lista">
-          {etapas.map(({ etapa, quantos, pct, tom }) => (
+      ) : e.filtradas.length ? (
+        <div className="visao-geral-itens">
+          {fases.map(({ fase, quantos, pct, tom }) => (
             <button
-              key={etapa}
+              key={fase}
               type="button"
-              className="visao-geral-etapa"
+              className="visao-geral-item"
               data-tom={tom}
-              aria-pressed={filtrada === etapa}
-              title={`Filtrar pela etapa ${etapa}`}
+              data-fase={fase}
+              aria-pressed={filtrada === fase}
+              disabled={!quantos && filtrada !== fase}
+              title={`Filtrar pela fase ${fase}`}
               onClick={() =>
-                estado.alternarFiltroUnico("etapa", etapa, "Filtro de etapa")
+                estado.alternarFiltroUnico("fase", fase, "Filtro de fase")
               }
             >
-              <span className="visao-geral-etapa-topo">
-                <b title={etapa}>{etapa}</b>
+              <span className="visao-geral-item-topo">
+                <b title={fase}>{fase}</b>
                 <small>{pct}%</small>
-                <span className="visao-geral-etapa-conta">{fmt(quantos)}</span>
+                <span className="visao-geral-item-conta">{fmt(quantos)}</span>
               </span>
               <span className="visao-geral-barra" aria-hidden="true">
                 <i style={{ width: `${pct}%` }} />
@@ -311,146 +335,39 @@ export function ResumoPorEtapa({ e, estado, textos }) {
       ) : (
         <EstadoVazio>Sem dados.</EstadoVazio>
       )}
-    </section>
+    </Bloco>
   );
 }
 
-/* ── Status operacional ─────────────────────────────────────────────── */
+/* ── Pós-resultado ──────────────────────────────────────────────────── */
 
-function lerToken(nome, reserva) {
-  const estilo =
-    typeof getComputedStyle === "function"
-      ? getComputedStyle(document.documentElement)
-      : null;
-  return estilo?.getPropertyValue(nome).trim() || reserva;
-}
-
-/* A cor de cada tom do gráfico, dos tokens (o tema escuro vem junto). */
-export function coresDosTons(escuro) {
-  const p = paletaDosGraficos(escuro, paletaDoPainel(escuro));
-  return {
-    sucesso: p.ok,
-    info: p.blue,
-    destaque: lerToken("--series-3", "#1a9fc8"),
-    alerta: lerToken("--series-4", "#8e6cf2"),
-    perigo: p.bad,
-    neutro: p.neutro,
-    borda: p.surface,
-  };
-}
-
-export function StatusOperacional({ e, estado, textos, escuro }) {
-  const { total, itens } = statusOperacional(e.filtradas);
-  const ativos = statusSelecionados(e.filtros);
-  const cores = coresDosTons(escuro);
-  const assinatura = itens.map((i) => `${i.status}:${i.quantos}`).join("|");
-  return (
-    <CardDeGrafico
-      titulo={textos.status}
-      className="visao-geral-status"
-      carregando={!e.carregado}
-    >
-      <div className="visao-geral-status-corpo">
-        <div className="visao-geral-rosca">
-          <Grafico
-            tipo="doughnut"
-            rotulo="Processos por status operacional"
-            dependencias={[assinatura, escuro]}
-            montar={() => ({
-              data: {
-                labels: itens.map((i) => i.status),
-                datasets: [
-                  {
-                    data: itens.map((i) => i.quantos),
-                    backgroundColor: itens.map((i) => cores[i.tom]),
-                    borderColor: cores.borda,
-                    borderWidth: 3,
-                    hoverOffset: 6,
-                  },
-                ],
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                cutout: "72%",
-                plugins: {
-                  legend: { display: false },
-                  tooltip: { enabled: false },
-                },
-                onClick: (_evento, elementos) => {
-                  const item = itens[elementos?.[0]?.index];
-                  if (item) estado.alternarStatus(item.status);
-                },
-              },
-            })}
-          />
-          <div className="visao-geral-rosca-centro" aria-hidden="true">
-            <strong>{fmt(total)}</strong>
-            <span>processos</span>
-          </div>
-        </div>
-        <div className="visao-geral-legenda">
-          {itens.map(({ status, quantos, pct, tom }) => (
-            <button
-              key={status}
-              type="button"
-              className="visao-geral-legenda-item"
-              aria-pressed={ativos.has(status)}
-              title={`Filtrar por ${status}`}
-              onClick={() => estado.alternarStatus(status)}
-            >
-              <span
-                className="visao-geral-ponto"
-                style={{ background: cores[tom] }}
-                aria-hidden="true"
-              />
-              <span className="visao-geral-legenda-nome">{status}</span>
-              <strong>{fmt(quantos)}</strong>
-              <small>{pct}%</small>
-              <span className="visao-geral-barra" aria-hidden="true">
-                <i style={{ width: `${pct}%`, background: cores[tom] }} />
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </CardDeGrafico>
-  );
-}
-
-/* ── Atenção ────────────────────────────────────────────────────────── */
-
-export function Atencao({ e, textos, aoAbrir }) {
-  const itens = processosEmAtencao(e.filtradas).map((linha) => {
-    const alto = String(linha.risco || "").toLowerCase() === "alto";
-    return {
-      chave: String(linha.id),
-      titulo: linha.edital || "-",
+export function PosResultado({ e, estado }) {
+  const itens = posResultado(e.filtradas, { comListas: e.comListas })
+    .filter(({ quantos, codigo }) => quantos || e.atalho === `pos:${codigo}`)
+    .map(({ codigo, rotulo, quantos, pessoas }) => ({
+      chave: codigo,
+      titulo: rotulo,
       detalhe: [
-        `Risco ${String(linha.risco || "-").toLowerCase()}`,
-        linha.etapa || "Etapa não informada",
-        linha.unidade,
+        plural(quantos, "edital", "editais"),
+        pessoas !== null ? plural(pessoas, "pessoa", "pessoas") : "",
       ]
         .filter(Boolean)
         .join(" · "),
-      tom: alto ? "perigo" : "alerta",
-      aoClicar: () => aoAbrir(linha),
-    };
-  });
+      tom: codigo === "sem_lista" ? "perigo" : "alerta",
+      ativo: e.atalho === `pos:${codigo}`,
+      aoClicar: () => estado.alternarAtalho(`pos:${codigo}`),
+    }));
   return (
-    <section
-      className={classes("ui-card ui-pilha visao-geral-atencao")}
-      aria-labelledby="visaoGeralAtencaoTitulo"
+    <Bloco
+      id="visaoGeralPosResultadoTitulo"
+      titulo="Pós-resultado"
+      className="visao-geral-pos-resultado"
     >
-      <h2 className="ui-titulo" id="visaoGeralAtencaoTitulo">
-        {textos.atencao}
-      </h2>
       <ListaDePendencias
         itens={itens}
         carregando={!e.carregado}
-        vazio="Nenhum processo em risco médio ou alto."
+        vazio="Nenhuma pendência."
       />
-    </section>
+    </Bloco>
   );
 }

@@ -694,6 +694,185 @@ export const VERBETES_AYA = Object.freeze([
     fonte: "src/modulos/aya/tour/; src/lib/aya-tours.js",
   },
   {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Tela de Classificação",
+    perguntas: [
+      "tela de classificacao",
+      "aba classificacao",
+      "para que serve classificacao",
+      "para que serve a tela de classificacao",
+      "para que serve a classificacao",
+    ],
+    resposta:
+      'A Classificação monta as listas de um edital — preliminar (avaliação documental), convocação para entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; "Exportar" sai em PDF, DOCX ou XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/; supabase/migrations/20261002150000_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Regra de classificação do edital",
+    perguntas: [
+      "regra de classificacao",
+      "como funciona a regra de classificacao",
+      "como funciona a regra de classificacao do edital",
+      "versao da regra",
+      "versoes da regra",
+      "regra do edital",
+    ],
+    resposta:
+      "No MONITORA não há regra de classificação fixa: cada edital tem a sua, decidida pelo gestor do edital na aba Classificação › Regra. Ela define as etapas consideradas, a composição da nota (componentes, pesos, casas decimais e arredondamento), as notas mínimas e eliminatórias (documental, por nível da vaga, total da entrevista e por competência), os critérios de desempate e a ordem deles, o empate final, as modalidades, a convocação para entrevista e o rodapé das listas. Salvar sempre cria uma versão nova (da segunda em diante, com o motivo); as anteriores ficam no histórico e podem voltar ao formulário. Cada lista gerada guarda a versão usada.",
+    fato: "No MONITORA, a regra de classificação é de cada edital, versionada: salvar cria versão nova e a lista gerada guarda a versão usada.",
+    fonte:
+      "src/lib/classificacao/regra.js; supabase/migrations/20261002150000_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Critérios de desempate",
+    perguntas: [
+      "criterios de desempate",
+      "como funcionam os criterios de desempate",
+      "desempate da classificacao",
+      "catalogo de criterios",
+      "ordem do desempate",
+    ],
+    resposta:
+      "O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.",
+    fato: "",
+    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/motor.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Empate final e sorteio",
+    perguntas: [
+      "empate final",
+      "como funciona o empate final",
+      "como funciona o empate final e o sorteio",
+      "sorteio do empate",
+      "semente do sorteio",
+      "decisao manual do empate",
+    ],
+    resposta:
+      'Quando o empate continua depois de todos os critérios, vale o que o gestor escolheu na regra: sorteio registrado, ordem de inscrição (código menor primeiro), mesma posição (1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º) ou decisão manual com justificativa. No sorteio, a semente é gerada no servidor ou informada pelo gestor; a ordem é a crescente do SHA-256 de "semente:id da análise", e ficam gravados semente, ordem, quem e quando — qualquer pessoa com a semente refaz a conta. Refazer um sorteio exige justificativa e guarda o anterior. Enquanto um empate espera sorteio ou decisão, a lista mostra os empatados na mesma posição, o aviso pede o registro e a lista não pode ser marcada como publicada.',
+    fato: "No MONITORA, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).",
+    fonte:
+      "src/lib/classificacao/sorteio.js; supabase/migrations/20261002150000_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "60 anos ou mais",
+    perguntas: [
+      "60 anos ou mais",
+      "como e calculado o criterio de 60 anos",
+      "como e calculado o criterio de 60 anos ou mais",
+      "idoso no desempate",
+      "data de corte da idade",
+    ],
+    resposta:
+      'O critério "60 anos ou mais" usa a idade na data de corte — o último dia de inscrição, como mandam os editais (Estatuto da Pessoa Idosa) —, não a idade de hoje. A data de corte é a da regra do edital; sem ela, o fim do período de inscrição no cronograma do edital. Quem faz 60 anos no último dia de inscrição conta; no dia seguinte, não. Sem data de nascimento, o candidato fica atrás de quem tem e a tela avisa; sem data de corte, a tela avisa que o critério não pode ser aplicado.',
+    fato: "",
+    fonte: "src/lib/classificacao/catalogo.js; src/lib/classificacao/dados.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Nota final e eliminação",
+    perguntas: [
+      "nota final da classificacao",
+      "como e calculada a nota final da classificacao",
+      "motivo da eliminacao",
+      "eliminados da classificacao",
+      "por que o candidato foi eliminado",
+    ],
+    resposta:
+      "A nota final é a soma dos componentes da regra (nota documental, nota da entrevista e, se o edital usar, a nota da autodeclaração), cada um com o seu peso, arredondada nas casas da regra. A entrevista é ligada à análise do candidato só pelo identificador da análise — nunca pelo nome, como fazia a planilha antiga, que perdia candidatos sem avisar; nota com vírgula é lida como número. Fica fora da lista, com o motivo: não habilitado na análise, sem nota documental, abaixo da nota mínima documental (inclusive por nível da vaga), fora do limite de convocação, sem entrevista, ausente, inapto, sem nota da entrevista, abaixo do mínimo da entrevista, competência abaixo do mínimo ou nota eliminatória numa competência.",
+    fato: "",
+    fonte: "src/lib/classificacao/motor.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Convocação para entrevista",
+    perguntas: [
+      "convocacao para entrevista da classificacao",
+      "limite da convocacao",
+      "como funciona o limite da convocacao",
+      "quantos candidatos sao convocados",
+    ],
+    resposta:
+      "A lista de convocação são os primeiros da lista preliminar até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso.",
+    fato: "",
+    fonte: "src/lib/classificacao/motor.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Modalidades e vagas",
+    perguntas: [
+      "modalidades da classificacao",
+      "cotista na lista geral",
+      "lista por modalidade",
+      "remanejamento de vaga",
+      "acumulo de cotas",
+    ],
+    resposta:
+      "Cada modalidade da regra (PcD, pretos e pardos, indígenas, quilombolas…) tem percentual, lista própria, posição que recomeça em 1º ou mantém a da geral, se o cotista aparece também na geral e para onde vai a vaga reservada sem candidato. Na lista final, as vagas da ampla vão para os primeiros da geral (cotista aprovado na ampla não ocupa vaga reservada); cada reserva vai para os primeiros da modalidade; a reserva que sobra segue o remanejamento da regra e, por fim, a ampla. Com mais de uma cota, a regra diz se o candidato fica em todas, só na de maior percentual ou em PcD e mais uma (vale no resultado final). As vagas por modalidade vêm do quadro de vagas do edital.",
+    fato: "",
+    fonte: "src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Gerar e publicar a lista",
+    perguntas: [
+      "gerar lista de classificacao",
+      "como gerar a lista de classificacao",
+      "publicar lista de classificacao",
+      "hash da lista",
+    ],
+    resposta:
+      '"Gerar" registra a lista no banco: o retrato (por vaga, posição, nome, nota e modalidade; eliminados com motivo; só o nome, sem CPF), a versão da regra usada, quem e quando, e o SHA-256 do retrato, calculado no banco. Se a regra mudou desde que a tela abriu, o banco recusa e pede para gerar de novo. "Marcar como publicada" registra quem e quando publicou; lista com empate esperando sorteio ou decisão não pode ser publicada.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261002150000_classificacao.sql; src/lib/classificacao/exportacao.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Exportar a lista de classificação",
+    perguntas: [
+      "exportar a lista de classificacao",
+      "como exportar a lista de classificacao",
+      "exportar classificacao",
+      "pdf da classificacao",
+      "docx da classificacao",
+    ],
+    resposta:
+      'A exportação sai de uma lista já gerada, no padrão das publicações: por vaga, o cabeçalho "VAGA código - cargo - lotação - N vagas (x AC + y Pretos e Pardos + CR)" e as colunas Classificação, Nome e Nota (com Modalidade na geral quando as sublistas vêm no mesmo documento); vaga sem candidato traz "Não houve candidatos aptos."; no fim, o rodapé da regra. Só o nome do candidato, sem CPF. Formatos: PDF (pela impressão do navegador, "Salvar como PDF"), DOCX e XLSX (planilhas Classificação e Eliminados). Dá para exportar tudo ou só a geral ou uma modalidade.',
+    fato: "",
+    fonte: "src/lib/classificacao/exportacao.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Quem pode mudar a classificação",
+    perguntas: [
+      "quem pode mudar a regra de classificacao",
+      "quem pode gerar a lista de classificacao",
+      "permissao classificacao",
+    ],
+    resposta:
+      'A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.js",
+    abrir: "config:acessos",
+  },
+  {
     arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Tela da Lista de aprovados",
     perguntas: [
@@ -901,7 +1080,7 @@ export const VERBETES_AYA = Object.freeze([
       "tela da visao geral",
     ],
     resposta:
-      "A Visão geral do MONITORA é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu: os indicadores, os filtros, as unidades com mais de um processo seletivo, o mapa, o resumo por etapa, o status operacional, os processos que pedem atenção e a tabela de processos. Na Saúde Indígena o mapa mostra os DSEIs e as CASAIs; em Projetos, os municípios das vagas; a SEDE não tem mapa.",
+      'A Visão geral do MONITORA é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu: os indicadores, os filtros, os próximos 7 dias, os processos críticos (Atenção), o mapa, as fases, o pós-resultado e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena o mapa mostra os DSEIs e as CASAIs; em Projetos, os municípios das vagas; a SEDE não tem mapa.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -911,13 +1090,37 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "indicadores da visao geral",
       "kpis da visao geral",
-      "processos criticos",
       "vagas ociosas da visao geral",
+      "kpi vagas imediatas",
+      "contratadas",
+      "em selecao",
+      "cadastro reserva",
+      "como fecham os kpis",
+      "conta dos indicadores",
     ],
     resposta:
-      "Na Visão geral, os seis indicadores contam os editais do recorte: Processos (quantos editais), Vagas (vagas imediatas previstas), Contratações, Vagas ociosas (vagas ainda sem contratação), Críticos (editais abertos com risco Médio ou Alto; concluídos e cancelados não contam) e Inscritos. Sem nenhum filtro, quando a área tem todos os editais da base, os números (menos Críticos, sempre calculado na tela) vêm do resumo calculado no servidor. Clicar em Críticos filtra a página pelos riscos Médio e Alto; clicar de novo tira o filtro. Os rótulos podem ser trocados em Configurações › Página inicial.",
-    fato: "",
-    fonte: "interface do MONITORA",
+      "Na Visão geral, os sete indicadores contam os editais do recorte e fecham entre si: Vagas imediatas = Contratadas + Em seleção + Ociosas. Vagas imediatas é a soma das vagas do cadastro do edital. Contratadas são as contratações de cada edital limitadas às vagas imediatas dele (o que passa disso é Cadastro reserva, mostrado à parte). Em seleção são as vagas ainda sem contratação dos editais sem resultado (em andamento, planejados ou sem cronograma). Ociosas são as vagas sem contratação dos editais com resultado (concluídos ou na fase Contratação). Editais cancelados não entram em nenhum indicador, nem em Inscritos. Críticos conta os editais com algum motivo de atenção e Inscritos soma os inscritos. Os rótulos podem ser trocados em Configurações › Página inicial.",
+    fato: "Na Visão geral, Vagas imediatas = Contratadas (contratações limitadas às vagas de cada edital) + Em seleção (editais sem resultado) + Ociosas (editais concluídos ou na fase Contratação); contratações além das vagas são Cadastro reserva; cancelados não entram.",
+    fonte: "src/lib/indicadores-do-monitoramento.js",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Processos críticos",
+    perguntas: [
+      "processos criticos",
+      "o que e critico",
+      "quando um edital fica critico",
+      "criterio de critico",
+      "bloco atencao",
+      "edital parado",
+      "etapa atrasada",
+      "contratacao abaixo de 50",
+      "sem inscritos",
+    ],
+    resposta:
+      'Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: a próxima etapa do cronograma começa em até 3 dias ("Etapa hoje", "Etapa amanhã", "Etapa em N dias"); o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. O KPI Críticos, o bloco Atenção e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.',
+    fato: "Crítico na Visão geral: etapa em até 3 dias, cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.",
+    fonte: "src/lib/criticos-da-visao-geral.js",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -929,9 +1132,10 @@ export const VERBETES_AYA = Object.freeze([
       "filtrar editais de 2026",
       "busca da tabela da visao geral",
       "limpar filtros da visao geral",
+      "filtro de fase",
     ],
     resposta:
-      'Na Visão geral, os filtros Unidade, Edital e Status ficam à vista e Etapa, Risco e UF em "Mais opções". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, mapa, blocos e tabela. Os filtros ficam guardados no navegador. "Limpar tudo" apaga filtros, busca e o DSEI aberto e volta o mapa ao Brasil.',
+      'Na Visão geral, os filtros Unidade, Edital e Status ficam à vista e Fase e UF em "Mais opções". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, mapa, blocos e tabela. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca, recorte e o DSEI aberto e volta o mapa ao Brasil.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -952,15 +1156,33 @@ export const VERBETES_AYA = Object.freeze([
     arquivo: "regras-da-visao-geral.md",
     titulo: "Blocos da Visão geral",
     perguntas: [
-      "resumo por etapa",
-      "status operacional",
-      "unidades com mais de um processo seletivo",
-      "bloco atencao",
+      "proximos 7 dias",
+      "agenda da visao geral",
+      "fases",
+      "fases dos processos",
+      "pos-resultado",
+      "pos resultado",
+      "processos por projeto",
+      "blocos da visao geral",
     ],
     resposta:
-      'Na Visão geral, o Resumo por etapa conta os editais do recorte em cada etapa, com a porcentagem; clicar numa etapa filtra por ela e clicar de novo tira. O Status operacional agrupa os status (em andamento, concluído, cancelado, planejado, suspenso; sem status é "Cronograma pendente") e a legenda ou a fatia do gráfico filtram por ele. "Unidades com mais de um processo seletivo" mostra as oito unidades com mais editais no recorte; o clique filtra a unidade. "Atenção" lista até 30 editais abertos com risco Médio ou Alto; o clique abre os detalhes do processo.',
+      'Na Visão geral, as boas-vindas dizem quantos editais têm etapa nos próximos 7 dias, com o atalho para o Cronograma; o indicador "Processos Críticos" filtra a tabela pelos críticos, e o motivo aparece nos detalhes de cada processo. "Fases" conta os editais em cada fase fixa — Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação e Concluído, mais Cancelado, Sem cronograma e Outra quando houver —, lida do status e da atividade do cronograma; o clique filtra a fase. "Pós-resultado" mostra, nos editais com resultado, os concluídos sem lista de aprovados vigente, as listas sem nenhum status, a contratação abaixo de 50% e as desistências; o clique filtra a página por aquela pendência. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
     fato: "",
     fonte: "interface do MONITORA",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Fases dos processos",
+    perguntas: [
+      "como a fase e calculada",
+      "de onde vem a fase",
+      "fase do edital",
+      "etapa e fase",
+    ],
+    resposta:
+      'A fase do edital na Visão geral vem primeiro do status (cancelado é Cancelado, concluído é Concluído, planejado é Edital) e, nos demais, do texto da atividade do cronograma (a de hoje, ou a etapa mostrada), sem acento nem caixa: contratação, admissão ou posse é Contratação; prazo ou abertura de recurso é Recursos; resultado final ou homologação do resultado é Resultado; outro recurso é Recursos; entrevista é Entrevistas; análise curricular, documental, títulos, prova ou resultado preliminar é Análise curricular; inscrição é Inscrições; outro resultado é Resultado; edital, impugnação ou publicação é Edital. "Aguardando: X" conta como a fase de X; texto que nenhuma regra reconhece fica em Outra e "Cronograma pendente" em Sem cronograma.',
+    fato: "",
+    fonte: "src/lib/fases-do-processo.js",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -972,10 +1194,10 @@ export const VERBETES_AYA = Object.freeze([
       "prazo do edital",
       "proxima etapa do cronograma",
       "colunas da tabela",
-      "taxa de vagas ociosas",
+      "taxa de vagas sem contratacao",
     ],
     resposta:
-      'Na tabela de processos da Visão geral, a célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; encerrado, concluído ou cancelado em cinza) e a próxima etapa do cronograma de Editais (atrasada ou em até 3 dias em vermelho, em até 7 dias em amarelo; "Sem cronograma" quando o edital ainda não tem cronograma em Editais). A borda esquerda da linha segue a mesma cor. Ao lado das ociosas aparece a porcentagem das vagas que estão ociosas (a partir de 20% em amarelo, de 40% em vermelho). Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão: risco, depois ociosas). "Colunas" escolhe as colunas visíveis, guardadas no navegador. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma, a linha do tempo de Editais e o link do edital. Exportar baixa o CSV do recorte.',
+      'Na tabela de processos da Visão geral, a célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; concluído ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Sem cronograma" quando o edital ainda não tem cronograma em Editais). A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (do motivo mais grave: atrasada, prazo, parado, sem inscritos, contratação baixa) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma, a linha do tempo de Editais e o link do edital. Exportar baixa o CSV do recorte.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -991,10 +1213,10 @@ export const VERBETES_AYA = Object.freeze([
       "de onde vem os kpis",
     ],
     resposta:
-      "Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco uma vez por dia, às 10h de Brasília (depois da carga da Seleção, às 9h), a partir da Seleção: as vagas da planilha Auditoria somadas por edital, as análises com status Aprovado, as entrevistas com parecer e a lista de aprovados vigente (Contratado ou Migração). Só mudam os editais ativos que têm vaga na Seleção; sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte; sem nenhum filtro, usa o resumo calculado no servidor.",
-    fato: "Os KPIs dos editais na Visão geral são recalculados pelo banco uma vez por dia, às 10h de Brasília (depois da carga da Seleção, às 9h), a partir da Seleção, das análises, das entrevistas e da lista de aprovados; as vagas vêm do cadastro do edital.",
+      "Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h de Brasília. Valem para todo edital ativo que tem a fonte, com ou sem vaga na Seleção: as vagas da planilha Auditoria ligadas ao edital somadas, a lista de aprovados vigente do edital (Contratado ou Migração), as entrevistas do edital com parecer e as análises com status Aprovado do mesmo número de edital (ou do mesmo nome, para editais sem número, quando o nome é único na área). Sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte.",
+    fato: "Os KPIs dos editais na Visão geral são recalculados pelo banco no fim de cada carga da Seleção e às 10h de Brasília, para todo edital ativo que tem a fonte (Seleção, lista de aprovados vigente, entrevistas, análises); sem a fonte, o valor anterior fica; as vagas vêm do cadastro do edital.",
     fonte:
-      "supabase/migrations/20260930235800_kpis_do_edital_pela_selecao.sql; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; src/lib/visao-geral.js",
+      "supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.js",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -1952,7 +2174,7 @@ export const VERBETES_AYA = Object.freeze([
       "excecao por modulo",
     ],
     resposta:
-      'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Edital gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
+      'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Edital gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
     fato: "",
     fonte:
       "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/componentes/acessos/gaveta-do-usuario.jsx",

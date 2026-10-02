@@ -131,6 +131,7 @@ const GRUPOS = [
       calendario: "leitor",
       aprovados: "leitor",
       entrevistas: "leitor",
+      classificacao: "leitor",
       recursos: "leitor",
       selecao: "leitor",
       importacao: "leitor",

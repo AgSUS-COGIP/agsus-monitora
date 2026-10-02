@@ -6,7 +6,6 @@ import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.js";
-import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
 import {
   clicar,
   digitar,
@@ -18,8 +17,9 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 /*
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
   própria `#page-dashboard`, lê as linhas que o legado publica
-  (dados-do-monitoramento.js) recortadas pela área atual e não pede nada ao
-  banco (fora os marcos do ano e os lugares do mapa de Projetos). Os mapas
+  (dados-do-monitoramento.js) recortadas pela área atual; do banco, só os
+  marcos do ano, os lugares do mapa de Projetos e o acompanhamento da área
+  (etapas do cronograma e resumo das listas). Os mapas
   da área são React: Saúde Indígena e Projetos; a SEDE não tem.
 */
 
@@ -68,6 +68,8 @@ const LINHAS = [
     inscritos: 80,
     cronograma_automatico: true,
     cronograma_dias_para_proxima: 2,
+    cronograma_proxima_data: "2026-10-03",
+    cronograma_proxima_atividade: "Resultado preliminar das entrevistas",
     cronograma_percentual: 40,
     link_edital: "https://agsus.org.br/03-2026.pdf",
     observacoes: "x".repeat(200),
@@ -114,6 +116,20 @@ const LINHAS = [
     contratados: 0,
     vagas_ociosas: 2,
     inscritos: 9,
+  },
+  {
+    id: 5,
+    CO_AREA: "projetos",
+    unidade: "Projeto Mais Médicos",
+    edital: "05/2026",
+    etapa: "Resultado final do Processo Seletivo",
+    status: "Concluído",
+    risco: "Baixo",
+    uf: "DF",
+    vagas_total: 4,
+    contratados: 1,
+    vagas_ociosas: 3,
+    inscritos: 50,
   },
 ];
 
@@ -210,38 +226,117 @@ describe("a tela dentro do app", () => {
   it("antes da carga: skeleton nos KPIs e 'Carregando dados...' uma vez só", async () => {
     await montar({ carregar: false });
     expect(secao.querySelector(".ui-tela.visao-geral-tela")).not.toBeNull();
-    expect(kpi("processos").getAttribute("aria-busy")).toBe("true");
+    expect(kpi("vagas").getAttribute("aria-busy")).toBe("true");
     const status = secao.querySelectorAll(".status-discreto");
     expect(status).toHaveLength(1);
     expect(status[0].textContent).toBe("Carregando dados...");
   });
 
-  it("os seis KPIs da área atual, com os rótulos de Configurações", async () => {
-    await montar({ valores: { kpi_vagas_label: "Vagas imediatas" } });
-    expect(valorDoKpi("processos")).toBe("3");
+  it("os sete KPIs da área atual fecham, com os rótulos de Configurações", async () => {
+    await montar({
+      valores: {
+        kpi_vagas_label: "Vagas Imediatas Previstas",
+        kpi_contratados_label: "Contratações de Vagas Imediatas + CR",
+      },
+    });
+    const chaves = [
+      ...secao.querySelectorAll(".visao-geral-kpis [data-kpi]"),
+    ].map((k) => k.dataset.kpi);
+    expect(chaves).toEqual([
+      "vagas",
+      "contratadas",
+      "emSelecao",
+      "ociosas",
+      "cadastroReserva",
+      "criticos",
+      "inscritos",
+    ]);
     expect(valorDoKpi("vagas")).toBe("23");
-    expect(valorDoKpi("contratados")).toBe("17");
-    expect(valorDoKpi("ociosas")).toBe("6");
-    expect(valorDoKpi("criticos")).toBe("2");
+    expect(valorDoKpi("contratadas")).toBe("17");
+    expect(valorDoKpi("emSelecao")).toBe("6");
+    expect(valorDoKpi("ociosas")).toBe("0");
+    expect(valorDoKpi("cadastroReserva")).toBe("0");
+    expect(valorDoKpi("criticos")).toBe("1");
     expect(valorDoKpi("inscritos")).toBe("140");
-    expect(kpi("vagas").textContent).toContain("Vagas imediatas");
-    expect(kpi("processos").textContent).toContain("Processos");
+    expect(kpi("vagas").textContent).toContain("Vagas Imediatas Previstas");
+    // O rótulo antigo (imediatas + CR) não vale para Contratadas.
+    expect(kpi("contratadas").textContent).toContain("Contratadas");
     expect(secao.querySelector(".status-discreto").textContent).toBe(
       "Atualizado às 09:30",
     );
   });
 
-  it("o resumo do servidor só vale sem recorte e com a área inteira na base", async () => {
-    await montar();
-    await act(async () =>
-      estado.definirResumoDoServidor({ kpis: { processos_ativos: 99 } }),
-    );
-    // A base tem uma linha da SEDE: o resumo (de todas as áreas) não serve.
-    expect(valorDoKpi("processos")).toBe("3");
-    await act(async () =>
-      publicarLinhasDoMonitoramento(LINHAS.filter((l) => l.CO_AREA !== "sede")),
-    );
-    expect(valorDoKpi("processos")).toBe("99");
+  it("o acompanhamento da área chega uma vez por carga: parado e pós-resultado", async () => {
+    const supabase = {
+      rpc: vi.fn(async (nome) =>
+        nome === "listar_acompanhamento_da_visao_geral"
+          ? {
+              data: {
+                etapas: [
+                  {
+                    monitoramento_id: 2,
+                    atividade: "Análise",
+                    data_inicio: "2026-08-20",
+                    data_fim: "2026-09-10",
+                  },
+                  {
+                    monitoramento_id: 2,
+                    atividade: "Entrevistas",
+                    data_inicio: "2026-10-20",
+                    data_fim: "2026-10-25",
+                  },
+                ],
+                listas: [
+                  {
+                    monitoramento_id: 3,
+                    aprovados: 8,
+                    com_status: 0,
+                    contratados: 8,
+                    desistentes: 0,
+                  },
+                ],
+              },
+              error: null,
+            }
+          : { data: null, error: null },
+      ),
+    };
+    await montar({ supabase });
+    await esperar();
+    const pedidos = () =>
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_acompanhamento_da_visao_geral",
+      );
+    expect(pedidos()).toEqual([
+      ["listar_acompanhamento_da_visao_geral", { p_area: "saude-indigena" }],
+    ]);
+    // 11/2025: sem etapa em curso desde 11/09 → parado há 20 dias.
+    expect(valorDoKpi("criticos")).toBe("2");
+    expect(
+      secao.querySelector(".visao-geral-pos-resultado").textContent,
+    ).toContain("Lista sem status");
+    // Filtro não pede de novo; outra carga das linhas, sim.
+    await act(async () => estado.definirFiltro("uf", ["MT"]));
+    await esperar();
+    expect(pedidos()).toHaveLength(1);
+    await act(async () => publicarLinhasDoMonitoramento([...LINHAS]));
+    await esperar();
+    expect(pedidos()).toHaveLength(2);
+  });
+
+  it("sem o acompanhamento (erro ou banco sem a função), a página segue só com as linhas", async () => {
+    const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const supabase = {
+      rpc: vi.fn(async () => ({
+        data: null,
+        error: { code: "PGRST202", message: "função ausente" },
+      })),
+    };
+    await montar({ supabase });
+    await esperar();
+    expect(valorDoKpi("criticos")).toBe("1");
+    expect(aviso).toHaveBeenCalled();
+    aviso.mockRestore();
   });
 
   it("o mapa é da área: Saúde Indígena e Projetos em React, SEDE nenhum", async () => {
@@ -261,29 +356,35 @@ describe("a tela dentro do app", () => {
     expect(secao.querySelector(".visao-geral-mapa")).toBeNull();
   });
 
-  it("troca de área: só os editais dela, e o DSEI aberto sai", async () => {
+  it("troca de área: só os editais dela, e o DSEI aberto e o recorte saem", async () => {
     await montar();
     await act(async () => estado.definirDsei("xingu", "DSEI Xingu"));
+    await act(async () => estado.alternarCriticos());
     await act(async () => definirAreaAtual("sede"));
-    expect(valorDoKpi("processos")).toBe("1");
+    expect(valorDoKpi("vagas")).toBe("2");
     expect(estado.obter().dsei.chave).toBe("");
+    expect(estado.obter().atalho).toBe("");
     expect(linhas()).toHaveLength(1);
   });
 });
 
 describe("filtros e recorte", () => {
-  it("o KPI Críticos filtra Médio/Alto e tira no segundo clique", async () => {
+  it("o KPI Críticos recorta pelos críticos calculados e tira no segundo clique", async () => {
     await montar();
     const alvo = kpi("criticos").querySelector("button");
     await clicar(alvo);
-    expect(estado.obter().filtros.risco).toEqual(["Alto", "Médio"]);
+    expect(estado.obter().atalho).toBe("criticos");
     expect(alvo.getAttribute("aria-pressed")).toBe("true");
-    expect(toast).toHaveBeenLastCalledWith(
-      "Filtro aplicado: risco Médio/Alto.",
+    expect(toast).toHaveBeenLastCalledWith("Filtro aplicado: Críticos.");
+    expect(linhas()).toHaveLength(1);
+    expect(valorDoKpi("vagas")).toBe("10");
+    const chip = [...secao.querySelectorAll(".ui-chip")].find((c) =>
+      c.textContent.includes("Recorte"),
     );
-    expect(valorDoKpi("processos")).toBe("2");
+    expect(chip.textContent).toContain("Críticos");
     await clicar(alvo);
-    expect(estado.obter().filtros.risco).toEqual([]);
+    expect(estado.obter().atalho).toBe("");
+    expect(linhas()).toHaveLength(3);
   });
 
   it("Ano escolhe os editais daquele ano; os filtros ficam guardados no navegador", async () => {
@@ -307,18 +408,21 @@ describe("filtros e recorte", () => {
     armazenamento = memoria();
     armazenamento.setItem(
       CHAVE_DOS_FILTROS,
-      JSON.stringify({ uf: ["MT", "SP"], unidade: [] }),
+      JSON.stringify({ uf: ["MT", "SP"], unidade: [], risco: ["Alto"] }),
     );
     await montar();
     expect(estado.obter().filtros.uf).toEqual(["MT"]);
-    expect(valorDoKpi("processos")).toBe("2");
+    expect(estado.obter().filtros).not.toHaveProperty("risco");
+    expect(valorDoKpi("vagas")).toBe("15");
   });
 
-  it("'Mais opções' guarda Etapa, Risco e UF", async () => {
+  it("'Mais opções' guarda Fase e UF", async () => {
     await montar();
     const mais = secao.querySelector("#visaoGeralMaisFiltros");
     expect(mais.hidden).toBe(true);
+    expect(mais.querySelector("#visaoGeralFiltro-fase")).not.toBeNull();
     expect(mais.querySelector("#visaoGeralFiltro-uf")).not.toBeNull();
+    expect(secao.querySelector("#visaoGeralFiltro-risco")).toBeNull();
     await clicar(botao("Mais opções", secao));
     expect(mais.hidden).toBe(false);
   });
@@ -329,6 +433,7 @@ describe("filtros e recorte", () => {
       estado.definirFiltro("uf", ["MT"]);
       estado.definirBusca("xingu");
       estado.definirDsei("xingu", "DSEI Xingu");
+      estado.alternarCriticos();
     });
     // O chip do DSEI sai do território, sem limpar o resto.
     const chipDoDsei = [...secao.querySelectorAll(".ui-chip")].find((c) =>
@@ -342,6 +447,7 @@ describe("filtros e recorte", () => {
     await clicar(botao("Limpar tudo", secao));
     expect(estado.obter().filtros.uf).toEqual([]);
     expect(estado.obter().busca).toBe("");
+    expect(estado.obter().atalho).toBe("");
     expect(estado.obter().dsei.chave).toBe("");
     expect(toast).toHaveBeenLastCalledWith("Filtros limpos.");
   });
@@ -354,7 +460,7 @@ describe("filtros e recorte", () => {
     expect(estado.obter().busca).toBe("");
     await act(async () => vi.advanceTimersByTime(300));
     expect(estado.obter().busca).toBe("yanomami");
-    expect(valorDoKpi("processos")).toBe("1");
+    expect(valorDoKpi("vagas")).toBe("8");
     expect(campo.value).toBe("yanomami");
     // A busca vinda do mapa (clique numa CASAI) aparece no campo.
     await act(async () => estado.definirBusca("CASAI Brasília"));
@@ -363,74 +469,91 @@ describe("filtros e recorte", () => {
 });
 
 describe("blocos", () => {
-  it("unidades com mais de um processo: o clique filtra a unidade", async () => {
+  it("sem os blocos repetidos: a semana fica nas boas-vindas e os críticos no indicador", async () => {
     await montar();
-    const chip = secao.querySelector(".visao-geral-unidade");
-    expect(chip.textContent).toContain("DSEI Xingu");
-    expect(chip.textContent).toContain("2");
-    await clicar(chip);
-    expect(estado.obter().filtros.unidade).toEqual(["DSEI Xingu"]);
-    expect(chip.getAttribute("aria-pressed")).toBe("true");
-    expect(toast).toHaveBeenLastCalledWith("Filtro de unidade: DSEI Xingu");
+    expect(secao.querySelector(".visao-geral-agenda")).toBeNull();
+    expect(secao.querySelector(".visao-geral-atencao")).toBeNull();
   });
 
-  it("resumo por etapa: nome vindo do dado é texto (sem XSS) e o clique filtra a etapa exata", async () => {
+  it("Fases: fixas, o clique filtra a fase; texto vindo do dado não vira HTML", async () => {
     const alertas = vi.spyOn(window, "alert").mockImplementation(() => {});
     await montar();
-    const etapas = [...secao.querySelectorAll(".visao-geral-etapa")];
-    const perigosa = etapas.find((b) => b.textContent.includes("d'água"));
-    expect(perigosa).toBeTruthy();
-    expect(perigosa.querySelector("img")).toBeNull();
+    const fases = [
+      ...secao.querySelectorAll(".visao-geral-fases .visao-geral-item"),
+    ];
+    expect(fases.map((b) => b.dataset.fase)).toEqual([
+      "Edital",
+      "Inscrições",
+      "Análise curricular",
+      "Recursos",
+      "Entrevistas",
+      "Resultado",
+      "Contratação",
+      "Concluído",
+      "Outra",
+    ]);
+    // A etapa perigosa é "Outra" e fica como texto (title) na coluna Fase.
     expect(secao.querySelector("img")).toBeNull();
-    expect(perigosa.getAttribute("onclick")).toBeNull();
-    expect(perigosa.querySelector("b").textContent).toBe(ETAPA_PERIGOSA);
-    expect(perigosa.querySelector("b").title).toBe(ETAPA_PERIGOSA);
-    await clicar(perigosa);
-    expect(estado.obter().filtros.etapa).toEqual([ETAPA_PERIGOSA]);
-    expect(perigosa.getAttribute("aria-pressed")).toBe("true");
-    expect(valorDoKpi("processos")).toBe("1");
+    const celula = [...secao.querySelectorAll("td")].find(
+      (td) => td.title === ETAPA_PERIGOSA,
+    );
+    expect(celula.textContent).toBe("Outra");
+    const entrevistas = fases.find((b) => b.dataset.fase === "Entrevistas");
+    await clicar(entrevistas);
+    expect(estado.obter().filtros.fase).toEqual(["Entrevistas"]);
+    expect(entrevistas.getAttribute("aria-pressed")).toBe("true");
+    expect(linhas()).toHaveLength(1);
+    expect(toast).toHaveBeenLastCalledWith("Filtro de fase: Entrevistas");
+    // Fase sem edital não filtra.
+    expect(fases.find((b) => b.dataset.fase === "Recursos").disabled).toBe(
+      true,
+    );
     expect(alertas).not.toHaveBeenCalled();
     alertas.mockRestore();
   });
 
-  it("status operacional: rosca com o total e legenda que filtra todas as grafias", async () => {
+  it("Pós-resultado: contratação abaixo de 50% filtra; sem pendência, estado vazio", async () => {
     await montar();
-    const rosca = graficos.find((g) => g.canvas.isConnected);
-    expect(rosca.data.labels).toEqual(["Em andamento", "Concluído"]);
     expect(
-      secao.querySelector(".visao-geral-rosca-centro").textContent,
-    ).toContain("3");
-    const item = [...secao.querySelectorAll(".visao-geral-legenda-item")].find(
-      (b) => b.textContent.includes("Em andamento"),
+      secao.querySelector(".visao-geral-pos-resultado").textContent,
+    ).toContain("Nenhuma pendência.");
+    await act(async () =>
+      publicarLinhasDoMonitoramento([
+        ...LINHAS,
+        {
+          id: 6,
+          CO_AREA: "saude-indigena",
+          unidade: "DSEI Leste de Roraima",
+          edital: "81/2026",
+          status: "Concluído",
+          etapa: "Resultado final do Processo Seletivo",
+          vagas_total: 83,
+          contratados: 1,
+          uf: "RR",
+        },
+      ]),
     );
+    const item = secao.querySelector(
+      '.visao-geral-pos-resultado [data-pendencia="contratacao_baixa"]',
+    );
+    expect(item.textContent).toContain("Contratação abaixo de 50%");
+    expect(item.textContent).toContain("1 edital");
     await clicar(item);
-    // "Em Andamento" e "em andamento" são uma opção só, e a seleção pega as duas linhas.
-    expect(estado.obter().filtros.status).toEqual(["Em Andamento"]);
-    expect(valorDoKpi("processos")).toBe("2");
+    expect(estado.obter().atalho).toBe("pos:contratacao_baixa");
+    expect(linhas()).toHaveLength(1);
+    expect(valorDoKpi("ociosas")).toBe("82");
+  });
+
+  it("Processos por projeto só em Projetos; o clique filtra o projeto", async () => {
+    await montar();
+    expect(secao.querySelector(".visao-geral-projetos")).toBeNull();
+    await act(async () => definirAreaAtual("projetos"));
+    const item = secao.querySelector(".visao-geral-projetos .visao-geral-item");
+    expect(item.textContent).toContain("Projeto Mais Médicos");
+    expect(item.textContent).toContain("0 abertos · 4 vagas · 1 contratada");
+    await clicar(item);
+    expect(estado.obter().filtros.unidade).toEqual(["Projeto Mais Médicos"]);
     expect(item.getAttribute("aria-pressed")).toBe("true");
-    // O clique na fatia faz o mesmo.
-    await act(async () => rosca.options.onClick(null, [{ index: 0 }]));
-    expect(estado.obter().filtros.status).toEqual([]);
-  });
-
-  it("o gráfico acompanha o tema do app", async () => {
-    await montar();
-    const rosca = graficos.find((g) => g.canvas.isConnected);
-    const antes = rosca.atualizacoes;
-    await act(async () => {
-      document.documentElement.setAttribute("data-theme", "dark");
-      document.dispatchEvent(new Event(EVENTO_TEMA_ALTERADO));
-    });
-    expect(rosca.atualizacoes).toBeGreaterThan(antes);
-  });
-
-  it("Atenção lista os processos Médio/Alto abertos e abre os detalhes", async () => {
-    await montar();
-    const itens = secao.querySelectorAll(".visao-geral-atencao .ui-pendencia");
-    expect(itens).toHaveLength(2);
-    expect(itens[0].textContent).toContain("03/2026");
-    await clicar(itens[0]);
-    expect(document.querySelector("#visaoGeralGaveta")).not.toBeNull();
   });
 });
 
@@ -495,13 +618,17 @@ describe("tabela de processos", () => {
     remover.mockRestore();
 
     await clicar(abrir);
-    const risco = [...secao.querySelectorAll(".visao-geral-colunas-menu label")]
-      .find((l) => l.textContent.includes("Risco"))
-      .querySelector("input");
-    await clicar(risco);
+    expect(cabecalhos()).toContain("Fase");
     expect(cabecalhos()).not.toContain("Risco");
+    const atencao = [
+      ...secao.querySelectorAll(".visao-geral-colunas-menu label"),
+    ]
+      .find((l) => l.textContent.includes("Atenção"))
+      .querySelector("input");
+    await clicar(atencao);
+    expect(cabecalhos()).not.toContain("Atenção");
     expect(JSON.parse(armazenamento.getItem(CHAVE_DAS_COLUNAS))).not.toContain(
-      "risco",
+      "atencao",
     );
     // Clique fora fecha o menu.
     await clicar(document.body);
@@ -590,7 +717,11 @@ describe("boas-vindas e marcos do ano", () => {
     };
     await montar({ comPerfil: true, supabase, comemoracoes: true });
     await esperar();
-    expect(supabase.rpc).toHaveBeenCalledTimes(1);
+    expect(
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "obter_marcos_da_area",
+      ),
+    ).toHaveLength(1);
     expect(supabase.rpc).toHaveBeenCalledWith("obter_marcos_da_area", {
       p_area: "saude-indigena",
     });
@@ -604,7 +735,10 @@ describe("boas-vindas e marcos do ano", () => {
     const supabase = { rpc: vi.fn() };
     await montar({ comPerfil: true, supabase, comemoracoes: false });
     await esperar();
-    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(supabase.rpc).not.toHaveBeenCalledWith(
+      "obter_marcos_da_area",
+      expect.anything(),
+    );
   });
 });
 
@@ -731,11 +865,11 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
     await act(async () =>
       estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
     );
-    await act(async () => estado.definirFiltro("risco", ["Alto", "Médio"]));
+    await act(async () => estado.definirFiltro("uf", ["MT"]));
     const xingu = bolhas(vivo("map")).find((b) => b.latlng[0] === -11.5);
     await act(async () => xingu.fire("click"));
     expect(estado.obter().dsei).toEqual({ chave: "XINGU", nome: "Xingu" });
-    expect(valorDoKpi("processos")).toBe("2");
+    expect(valorDoKpi("vagas")).toBe("15");
     // O mapa do DSEI abre no #detailMap; o chip do DSEI aparece nos filtros.
     expect(vivo("detailMap")).not.toBeNull();
     expect(secao.querySelectorAll("#detailMap")).toHaveLength(1);
@@ -743,7 +877,7 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
 
     await clicar(secao.querySelector(".mapa-si-trilho__voltar"));
     expect(estado.obter().dsei.chave).toBe("");
-    expect(estado.obter().filtros.risco).toEqual(["Alto", "Médio"]);
+    expect(estado.obter().filtros.uf).toEqual(["MT"]);
     expect(vivo("detailMap")).toBeNull();
   });
 

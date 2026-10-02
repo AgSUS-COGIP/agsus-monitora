@@ -190,10 +190,11 @@ describe("o estado não depende mais do DOM legado", () => {
       filter_subtitle: "Subtítulo dos filtros",
       filter_toggle_show: "Texto para mostrar filtros",
       filter_toggle_hide: "Texto para ocultar filtros",
-      kpi_processos_label: "Rótulo do KPI processos",
-      kpi_vagas_label: "Rótulo do KPI vagas",
-      kpi_contratados_label: "Rótulo do KPI contratações",
+      kpi_vagas_label: "Rótulo do KPI vagas imediatas",
+      kpi_contratadas_label: "Rótulo do KPI contratadas",
+      kpi_em_selecao_label: "Rótulo do KPI em seleção",
       kpi_ociosas_label: "Rótulo do KPI vagas ociosas",
+      kpi_cadastro_reserva_label: "Rótulo do KPI cadastro reserva",
       kpi_criticos_label: "Rótulo do KPI críticos",
       kpi_inscritos_label: "Rótulo do KPI inscritos",
       broadcast_type: "Tipo do aviso global",
@@ -255,8 +256,8 @@ describe("Página inicial", () => {
     expect(previa("inicio").querySelector("img")).toBeNull();
     await digitar($("configInicio-kpiVagasLabel"), "Postos");
     const kpis = previa("inicio").querySelectorAll(".ui-kpi");
-    expect(kpis).toHaveLength(6);
-    expect(kpis[1].textContent).toContain("Postos");
+    expect(kpis).toHaveLength(7);
+    expect(kpis[0].textContent).toContain("Postos");
     expect(sujo()).toBe(true);
   });
 

@@ -325,6 +325,42 @@ const TOURS = Object.freeze({
       PASSO_DA_AYA,
     ]),
   }),
+  classificacao: Object.freeze({
+    titulo: "Classificação",
+    passos: Object.freeze([
+      passo(
+        "#page-classificacao .classificacao-edital",
+        "Edital",
+        "Escolha o edital: a regra de classificação é dele, decidida pelo gestor do edital.",
+      ),
+      passo(
+        "#page-classificacao .ui-topo .ui-segmentado",
+        "Listas e Regra",
+        "Listas mostra a classificação; Regra, o que vale neste edital e as versões.",
+      ),
+      passo(
+        "#page-classificacao .classificacao-tipos",
+        "Três listas",
+        "Preliminar (documental), convocação para entrevista e resultado final.",
+      ),
+      passo(
+        "#page-classificacao .classificacao-avisos",
+        "Avisos",
+        "O que falta para a lista ficar certa, como empate esperando sorteio ou entrevista sem análise.",
+      ),
+      passo(
+        "#page-classificacao .classificacao-acoes",
+        "Gerar e exportar",
+        "Gerar registra a lista com a versão da regra; a exportação sai em PDF, DOCX ou XLSX.",
+      ),
+      passo(
+        "#page-classificacao .classificacao-vaga",
+        "Por vaga",
+        "Clique no nome para ver por que o candidato está naquela posição.",
+      ),
+      PASSO_DA_AYA,
+    ]),
+  }),
   "config:acessos": Object.freeze({
     titulo: "Configurações › Acessos",
     passos: Object.freeze([

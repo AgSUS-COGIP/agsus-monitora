@@ -61,6 +61,7 @@ import {
   canViewEntrevistas,
   canViewRecursos,
   canViewSelecao,
+  canViewClassificacao,
   canImportApprovedList,
   isAdminGlobal,
   paginasPermitidas,
@@ -748,6 +749,7 @@ function systemHomeView() {
   if (can("analises")) return "analises";
   if (canViewRecursos(profile)) return "recursos";
   if (canViewEntrevistas(profile)) return "entrevistas";
+  if (canViewClassificacao(profile)) return "classificacao";
   if (canViewSelecao(profile)) return "selecao";
   if (podeAbrirConfiguracoes(profile)) return "config";
   const firstPanel = panels.find(panelAllowed);
@@ -1090,7 +1092,7 @@ async function loadData(options = {}) {
       buildNav();
       return true;
     }
-    const [payloadResponse, tableResponse] = await (options.consulta ||
+    const [, tableResponse] = await (options.consulta ||
       consultaDoMonitoramento());
     if (runId !== loadDataRunCounter) return false;
     const { data, error } = tableResponse;
@@ -1102,10 +1104,8 @@ async function loadData(options = {}) {
     dataLoadedAtLeastOnce = true;
     /*
       As linhas vão para dados-do-monitoramento.js; a Visão geral (React)
-      recorta, e o mapa da Saúde Indígena lê o recorte dela. O resumo do
-      servidor só vale sem recorte.
+      recorta, e o mapa da Saúde Indígena lê o recorte dela.
     */
-    estadoDaVisaoGeral.definirResumoDoServidor(payloadResponse || null);
     publicarLinhasDoMonitoramento(rows);
     return true;
   })();
@@ -1230,6 +1230,7 @@ const TELAS_REACT = Object.freeze({
   ],
   recursos: () => ["Recursos", "", window.recursosController],
   entrevistas: () => ["Entrevistas", "", window.entrevistasController],
+  classificacao: () => ["Classificação", "", window.classificacaoController],
   analises: () => ["Análises curriculares", "", window.analisesController],
   selecao: () => ["Seleção", "", window.selecaoController],
 });
@@ -1288,6 +1289,10 @@ function navigate(view) {
   }
   if (requestedView === "entrevistas" && !canViewEntrevistas(profile)) {
     toast("Sem permissão para Entrevistas.", "warn");
+    return;
+  }
+  if (requestedView === "classificacao" && !canViewClassificacao(profile)) {
+    toast("Sem permissão para Classificação.", "warn");
     return;
   }
   if (requestedView === "selecao" && !canViewSelecao(profile)) {

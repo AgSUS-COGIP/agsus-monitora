@@ -3,9 +3,9 @@
   src/styles/tokens.css — o tema escuro vem dos próprios tokens
   (`html[data-theme="dark"]`). Topo, filtros, chips, KPIs, cards, gráfico,
   pendências, tabela e gaveta são de src/ui/ (ui.css). Aqui: boas-vindas e
-  marcos do ano, os campos dos filtros numa linha, os seis KPIs numa fileira,
-  as unidades com mais de um processo, o resumo por etapa, a rosca com a
-  legenda, as células da tabela (prazo, cronograma, taxa de ociosas,
+  marcos do ano, os campos dos filtros numa linha, os sete KPIs numa fileira,
+  as listas dos blocos, as linhas de Fases e de Processos por projeto, as
+  células da tabela (prazo, cronograma, taxa sem contratação, motivos,
   observação) e o andamento do cronograma na gaveta. O mapa da área
   (`.visao-geral-mapa`) tem o CSS dele: o da Saúde Indígena em
   src/modulos/mapa-saude-indigena/, o de Projetos em
@@ -112,68 +112,40 @@
   box-shadow: var(--shadow-overlay);
 }
 
-/* ── KPIs: seis numa fileira em tela larga, três por linha no meio (nunca 5 + 1) ── */
+/* ── KPIs: sete numa fileira em tela larga, quatro por linha no meio ──── */
 
 @media (min-width: 1280px) {
   .visao-geral-kpis {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }
 @media (min-width: 641px) and (max-width: 1279px) {
   .visao-geral-kpis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-/* ── Unidades com mais de um processo seletivo ───────────────────────── */
+/* ── Blocos: listas que rolam dentro do card ─────────────────────────── */
 
-.visao-geral-unidades {
-  display: grid;
-  gap: var(--space-2);
-}
-.visao-geral-unidades-lista {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.visao-geral-unidade {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  max-width: 100%;
-  min-height: 32px;
-  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--text-body-sm);
-  cursor: pointer;
-}
-.visao-geral-unidade > span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.visao-geral-unidade:hover,
-.visao-geral-unidade[aria-pressed="true"] {
-  border-color: var(--focus-ring);
-  background: var(--surface-hover);
+.visao-geral-pos-resultado .ui-pendencias {
+  max-height: 360px;
+  overflow-y: auto;
 }
 
-/* ── Resumo por etapa e legenda do status: linha com barra ───────────── */
+/* ── Fases e projetos: linha com número (e barra) ────────────────────── */
 
-.visao-geral-etapas-lista,
-.visao-geral-legenda {
+.visao-geral-itens {
   display: grid;
   gap: var(--space-1);
 }
-.visao-geral-etapa,
-.visao-geral-legenda-item {
+.visao-geral-itens-grade {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.visao-geral-item {
   display: grid;
   gap: var(--space-1);
   width: 100%;
+  min-width: 0;
   padding: var(--space-2);
   border: 1px solid transparent;
   border-radius: var(--radius-md);
@@ -183,29 +155,29 @@
   text-align: left;
   cursor: pointer;
 }
-.visao-geral-etapa:hover,
-.visao-geral-legenda-item:hover {
+.visao-geral-item:hover:not(:disabled) {
   background: var(--surface-hover);
 }
-.visao-geral-etapa[aria-pressed="true"],
-.visao-geral-legenda-item[aria-pressed="true"] {
+.visao-geral-item:disabled {
+  color: var(--text-secondary);
+  cursor: default;
+}
+.visao-geral-item[aria-pressed="true"] {
   border-color: var(--focus-ring);
   background: var(--surface-hover);
 }
-.visao-geral-etapa:focus-visible,
-.visao-geral-legenda-item:focus-visible,
-.visao-geral-unidade:focus-visible,
+.visao-geral-item:focus-visible,
 .visao-geral-linha:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-.visao-geral-etapa-topo {
+.visao-geral-item-topo {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
-/* Etapa de nome longo: reticências (o nome inteiro fica no title), sem transbordar. */
-.visao-geral-etapa-topo b {
+/* Nome longo: reticências (o nome inteiro fica no title), sem transbordar. */
+.visao-geral-item-topo b {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -213,16 +185,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.visao-geral-etapa,
-.visao-geral-legenda-item {
-  min-width: 0;
-}
-.visao-geral-etapa-topo small,
-.visao-geral-legenda-item small {
+.visao-geral-item small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
-.visao-geral-etapa-conta {
+.visao-geral-item-conta {
   min-width: 2.25rem;
   padding: 0 var(--space-2);
   border-radius: var(--radius-pill);
@@ -245,80 +212,20 @@
   border-radius: inherit;
   background: var(--state-neutral);
 }
-.visao-geral-etapa[data-tom="sucesso"] .visao-geral-barra i {
+.visao-geral-item[data-tom="sucesso"] .visao-geral-barra i {
   background: var(--state-success);
 }
-.visao-geral-etapa[data-tom="info"] .visao-geral-barra i {
+.visao-geral-item[data-tom="info"] .visao-geral-barra i {
   background: var(--state-info);
 }
-.visao-geral-etapa[data-tom="destaque"] .visao-geral-barra i {
+.visao-geral-item[data-tom="destaque"] .visao-geral-barra i {
   background: var(--series-3);
 }
-.visao-geral-etapa[data-tom="alerta"] .visao-geral-barra i {
+.visao-geral-item[data-tom="alerta"] .visao-geral-barra i {
   background: var(--state-warning);
 }
-.visao-geral-etapa[data-tom="perigo"] .visao-geral-barra i {
+.visao-geral-item[data-tom="perigo"] .visao-geral-barra i {
   background: var(--state-danger);
-}
-
-/* ── Status operacional: rosca com o total no meio, legenda ao lado ──── */
-
-.visao-geral-status-corpo {
-  display: grid;
-  grid-template-columns: minmax(140px, 180px) minmax(0, 1fr);
-  align-items: start;
-  gap: var(--space-4);
-}
-/* Até 30 processos: a lista rola dentro do card, ao lado da rosca. */
-.visao-geral-atencao .ui-pendencias {
-  max-height: 360px;
-  overflow-y: auto;
-}
-.visao-geral-rosca {
-  position: relative;
-  height: 180px;
-}
-.visao-geral-rosca-centro {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  text-align: center;
-  pointer-events: none;
-}
-.visao-geral-rosca-centro strong {
-  font-size: var(--text-h3);
-  font-weight: var(--font-weight-semibold);
-}
-.visao-geral-rosca-centro span {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.visao-geral-legenda-item {
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  align-items: center;
-  column-gap: var(--space-2);
-}
-.visao-geral-legenda-item .visao-geral-barra {
-  grid-column: 1 / -1;
-}
-.visao-geral-ponto {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--radius-full);
-}
-.visao-geral-legenda-nome {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.visao-geral-status .ui-grafico {
-  height: auto;
-}
-@media (max-width: 600px) {
-  .visao-geral-status-corpo {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* ── Tabela ──────────────────────────────────────────────────────────── */
@@ -411,6 +318,12 @@
 }
 .visao-geral-obs-texto.is-aberta {
   display: block;
+}
+.visao-geral-motivos {
+  min-width: 140px;
+}
+.visao-geral-motivos .ui-selo + .ui-selo {
+  margin-left: var(--space-1);
 }
 .visao-geral-ver-mais {
   padding: 0;

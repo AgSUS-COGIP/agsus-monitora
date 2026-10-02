@@ -7,7 +7,7 @@ import {
   observacaoLonga,
   prazoDoEdital,
   seloDoCronograma,
-  seloDoRisco,
+  seloDoMotivo,
   seloDoStatus,
   taxaDeOciosidade,
   urgenciaDoCronograma,
@@ -18,8 +18,10 @@ import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
   A tabela de processos seletivos da Visão geral (TabelaInfinita, src/ui/):
   colunas que ordenam (crescente, decrescente, sem ordem), "Colunas" para
   escolher as visíveis (guardadas no navegador), o prazo do edital e o
-  cronograma na célula do edital, a taxa de ociosas e a observação longa com
-  "Ver mais". A linha abre os detalhes do processo (clique, Enter ou espaço).
+  cronograma na célula do edital, a taxa de vagas sem contratação, a fase, os
+  motivos de atenção (selos) e a observação longa com "Ver mais". Sem coluna
+  escolhida, os críticos vêm primeiro. A linha abre os detalhes do processo
+  (clique, Enter ou espaço).
 
   A busca do cabeçalho vale para a página toda (KPIs, mapa, blocos): ela vai
   para o estado com uma pausa de 300 ms, e a tabela já recebe as linhas
@@ -90,7 +92,7 @@ function MenuDeColunas({ colunas, aoAlternar, textos }) {
 function CelulaDoEdital({ linha, hoje }) {
   const link = linkSeguro(linha.link_edital);
   const prazo = prazoDoEdital(linha, hoje);
-  const cronograma = seloDoCronograma(linha);
+  const cronograma = seloDoCronograma(linha, hoje);
   return (
     <td className="visao-geral-edital">
       {link ? (
@@ -175,7 +177,7 @@ function celula(campo, linha, hoje) {
           <span
             className="visao-geral-taxa"
             data-nivel={taxa.nivel}
-            title={`${taxa.pct}% das vagas estão ociosas`}
+            title={`${taxa.pct}% das vagas sem contratação`}
           >
             {taxa.pct}%
           </span>
@@ -188,12 +190,20 @@ function celula(campo, linha, hoje) {
           <Selo tom={seloDoStatus(linha.status)}>{linha.status || "-"}</Selo>
         </td>
       );
-    case "etapa":
-      return <td key={campo}>{linha.etapa}</td>;
-    case "risco":
+    case "fase":
       return (
-        <td key={campo}>
-          <Selo tom={seloDoRisco(linha.risco)}>{linha.risco || "-"}</Selo>
+        <td key={campo} title={linha.etapa || undefined}>
+          {linha.fase}
+        </td>
+      );
+    case "atencao":
+      return (
+        <td key={campo} className="visao-geral-motivos">
+          {(linha.atencao || []).map((motivo) => (
+            <Selo key={motivo.codigo} tom={seloDoMotivo(motivo)}>
+              {motivo.rotulo}
+            </Selo>
+          ))}
         </td>
       );
     case "observacoes":
@@ -287,7 +297,7 @@ export function TabelaDeProcessos({ e, estado, textos, aoAbrir, agora }) {
             <tr
               key={id}
               data-linha={id}
-              data-urgencia={urgenciaDoCronograma(linha).tom}
+              data-urgencia={urgenciaDoCronograma(linha, hoje).tom}
               className={classes(
                 "visao-geral-linha",
                 destacada === id && "is-destacada",
