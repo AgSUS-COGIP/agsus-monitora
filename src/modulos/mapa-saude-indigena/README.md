@@ -17,10 +17,10 @@ posição e o histórico com "Desfazer" — RPCs de
 `tests/modulos/editor-de-coordenadas.test.js`.
 
 ```
-mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (calor, tela cheia), contas memorizadas,
+mapa-saude-indigena.jsx   <MapaSaudeIndigena>: estado da tela (tela cheia), contas memorizadas,
                           um mapa principal de cada vez
 mapa-nacional.jsx         visão nacional: bolhas dos DSEIs, CASAIs nacionais, leque, enquadramento,
-                          "Territórios por vagas", Brasil/Calor/Tela cheia, legenda flutuante
+                          "Territórios por vagas", Brasil/Tela cheia, legenda flutuante
 mapa-do-dsei.jsx          território do DSEI: unidades (agrupamento por proximidade + leque), sede,
                           vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos
 legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
@@ -37,7 +37,7 @@ mapa-saude-indigena.css   só o que é deste bloco (tokens); card/título/vazio 
 ```
 
 Regras puras: `src/lib/mapa-saude-indigena/` — `chaves.js` (chave do DSEI), `formas.js` (formas,
-cores, tipos, faixas do calor), `mapa-nacional.js` (contagens, bolhas, CASAIs nacionais,
+cores, tipos), `mapa-nacional.js` (contagens, bolhas, CASAIs nacionais,
 territórios por vagas, enquadramento, dicas/popups), `mapa-do-dsei.js` (pontos do DSEI com a
 prioridade lmap → reconciliação → rede_cnes, vínculo, tipos, resumo da dica, enquadramentos,
 popups), `contornos.js` (UF_GEO e BR_OUTLINE). Explicações para a Aya:
@@ -140,12 +140,12 @@ na palavra (`.dica-no-mapa`, `src/ui/ui.css`); o popup tem `autoPan` com folga p
 
 ## O que mudou em relação ao legado
 
-- Controles Brasil, Calor e Tela cheia no cabeçalho do painel, não dentro do mapa; "Tela cheia" é do
+- Controles Brasil e Tela cheia no cabeçalho do painel, não dentro do mapa; "Tela cheia" é do
   componente (Esc sai).
-- Com Calor ligado, a legenda mostra as faixas de ociosidade (antes não mudava).
+- Sem o modo Calor (saiu em 02/10/2026, a pedido da gestão): a bolha só diz se há edital no recorte.
 - Lista de unidades com a forma do tipo (a mesma da legenda) em vez do ícone Font Awesome.
 - Sem textos de ajuda: rodapé "Escolha um DSEI…", "clique para abrir o território" e os avisos ao
-  ligar o calor ou voltar ao Brasil foram para a Aya; estados vazios em uma linha.
+  voltar ao Brasil foram para a Aya; estados vazios em uma linha.
 - O DSEI fecha pelo trilho "Brasil" (o botão duplicado "Voltar à visão nacional" saiu).
 - Enquadramento do Brasil por `BRASIL_BOUNDS` (contorno real), como o `map-guard`, em vez do
   retângulo antigo que cortava a ponta leste.

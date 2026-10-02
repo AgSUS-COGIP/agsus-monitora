@@ -153,7 +153,6 @@ export function MapaNacional({
   casais,
   territorios,
   enquadramento,
-  calor,
   resumoDaRede,
   carregando,
   acoes,
@@ -224,7 +223,7 @@ export function MapaNacional({
         marcador.bindTooltip(
           conteudoEmElemento(
             document,
-            dicaDaBolha(bolha, resumoDaRede(bolha.dsei), { calor }),
+            dicaDaBolha(bolha, resumoDaRede(bolha.dsei)),
           ),
           { direction: "top" },
         );
@@ -249,7 +248,7 @@ export function MapaNacional({
       casai.addLayer(marcador);
     }
     leque();
-  }, [L, mapa, bolhas, casais, calor, resumoDaRede, chamadas]);
+  }, [L, mapa, bolhas, casais, resumoDaRede, chamadas]);
 
   /*
     Enquadramento: só quando muda o que enquadrar, e só com o mapa à vista —
@@ -356,11 +355,7 @@ export function MapaNacional({
             </EstadoVazio>
           )}
           {mapa ? (
-            <LegendaNacional
-              mapa={mapa}
-              calor={calor}
-              temAbrangencia={temAbrangencia}
-            />
+            <LegendaNacional mapa={mapa} temAbrangencia={temAbrangencia} />
           ) : null}
         </div>
         <aside

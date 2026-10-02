@@ -3,9 +3,9 @@
 O mapa da Visão geral (Saúde Indígena) mostra só rótulos, números e controles;
 o porquê fica aqui, para a Aya explicar. Textos que saíram da tela com o mapa
 em React (01/10/2026): a dica "Escolha um DSEI no mapa para ver polos e
-unidades", o "clique para abrir o território" das bolhas, os avisos "Mapa de
-calor: cor por % de vagas ociosas" e "Visão do Brasil. Os filtros continuam
-valendo", e os textos longos das listas vazias.
+unidades", o "clique para abrir o território" das bolhas, o aviso "Visão do
+Brasil. Os filtros continuam valendo" e os textos longos das listas vazias. O
+modo Calor saiu em 02/10/2026.
 
 ## Como usar o mapa da Saúde Indígena
 
@@ -19,10 +19,10 @@ valendo", e os textos longos das listas vazias.
 **resposta:** No MONITORA, cada bolha da visão nacional fica na sede do DSEI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital no recorte atual; azul, sem edital. Com algum filtro ativo, só aparecem os DSEIs que têm edital no resultado. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.
 **fonte:** interface do MONITORA
 
-## Botão Calor do mapa
+## Mapa de calor
 
-**perguntas:** botao calor | modo calor | cores do mapa de calor | faixas do mapa de calor
-**resposta:** No MONITORA, o botão Calor pinta cada bolha pela porcentagem de vagas ociosas do DSEI no recorte: verde abaixo de 20%, amarelo de 20% a 39%, laranja de 40% a 59% e vermelho a partir de 60%. DSEI sem edital fica cinza. Com o calor ligado, a legenda mostra as faixas.
+**perguntas:** botao calor | modo calor | mapa de calor | mapa sem calor
+**resposta:** No MONITORA, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital no recorte (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.
 **fonte:** interface do MONITORA
 
 ## Territórios por vagas

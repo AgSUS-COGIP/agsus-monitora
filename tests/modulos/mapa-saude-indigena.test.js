@@ -11,7 +11,7 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 /*
   O mapa da Saúde Indígena em React (src/modulos/mapa-saude-indigena/), com o
   Leaflet falso: visão nacional (bolhas, CASAIs nacionais, Territórios por
-  vagas, calor, legenda, tela cheia), o mapa do DSEI (unidades, filtros por
+  vagas, legenda, tela cheia), o mapa do DSEI (unidades, filtros por
   tipo, vínculos externos, Terras Indígenas), o contrato com o pai (eventos
   e DSEI controlado), StrictMode limpo, tema e conteúdo sem HTML.
 */
@@ -219,24 +219,24 @@ describe("visão nacional", () => {
     expect(host.textContent).toContain("1 território");
   });
 
-  it("Calor liga a cor por ociosidade e troca a legenda pelas faixas", async () => {
+  it("sem modo Calor: a bolha é verde com processo e azul sem, e a legenda diz isso", async () => {
     await montar();
-    const calor = [...host.querySelectorAll("button")].find(
-      (b) => b.textContent === "Calor",
+    const textos = [...host.querySelectorAll("button")].map(
+      (b) => b.textContent,
     );
-    expect(calor.getAttribute("aria-pressed")).toBe("false");
-    await clicar(calor);
-    expect(calor.getAttribute("aria-pressed")).toBe("true");
+    expect(textos).not.toContain("Calor");
     const mapa = mapaVivo("map");
-    const cores = leaflet
-      .desenhadas(mapa, "circleMarker")
-      .map((b) => b.opcoes.fillColor);
-    expect(cores).toContain("#d92d3a");
-    expect(cores).toContain(CORES_DO_MAPA.semEditalNoCalor.preenchimento);
-    await clicar(host.querySelector(".mapa-si-legenda__alternar"));
-    expect(host.querySelector(".mapa-si-legenda").textContent).toContain(
-      "60% ou mais ociosas",
+    const cores = new Set(bolhas(mapa).map((b) => b.opcoes.fillColor));
+    expect([...cores].sort()).toEqual(
+      [
+        CORES_DO_MAPA.comEdital.preenchimento,
+        CORES_DO_MAPA.semEdital.preenchimento,
+      ].sort(),
     );
+    await clicar(host.querySelector(".mapa-si-legenda__alternar"));
+    const legenda = host.querySelector(".mapa-si-legenda").textContent;
+    expect(legenda).toContain("DSEI com processo ativo");
+    expect(legenda).not.toContain("ociosas");
   });
 
   it("Brasil volta à vista do país", async () => {

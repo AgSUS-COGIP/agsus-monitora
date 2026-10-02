@@ -295,8 +295,8 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Taxa de ociosidade",
     perguntas: ["taxa de ociosidade", "ociosidade", "percentual de ociosas"],
     resposta:
-      "A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. É esse percentual que define a cor de cada território no mapa de calor.",
-    fato: "A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e é ela que colore o mapa de calor por território.",
+      "A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. Na tabela da Visão geral, ela aparece ao lado das Ociosas de cada edital.",
+    fato: "A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e aparece ao lado das Ociosas na tabela da Visão geral.",
     fonte: "interface do MONITORA",
   },
   {
@@ -1778,15 +1778,10 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
-    titulo: "Botão Calor do mapa",
-    perguntas: [
-      "botao calor",
-      "modo calor",
-      "cores do mapa de calor",
-      "faixas do mapa de calor",
-    ],
+    titulo: "Mapa de calor",
+    perguntas: ["botao calor", "modo calor", "mapa de calor", "mapa sem calor"],
     resposta:
-      "No MONITORA, o botão Calor pinta cada bolha pela porcentagem de vagas ociosas do DSEI no recorte: verde abaixo de 20%, amarelo de 20% a 39%, laranja de 40% a 59% e vermelho a partir de 60%. DSEI sem edital fica cinza. Com o calor ligado, a legenda mostra as faixas.",
+      'No MONITORA, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital no recorte (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.',
     fato: "",
     fonte: "interface do MONITORA",
   },

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.js";
 import {
@@ -51,7 +51,6 @@ export function MapaSaudeIndigena({
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
   const L = obterLeaflet();
-  const [calor, definirCalor] = useState(false);
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
 
   const dseis = useMemo(
@@ -65,8 +64,8 @@ export function MapaSaudeIndigena({
 
   const contagens = useMemo(() => contarPorDsei(linhas), [linhas]);
   const bolhas = useMemo(
-    () => bolhasDosDsei({ dseis, contagens, filtroAtivo, calor }),
-    [dseis, contagens, filtroAtivo, calor],
+    () => bolhasDosDsei({ dseis, contagens, filtroAtivo }),
+    [dseis, contagens, filtroAtivo],
   );
   const casais = useMemo(
     () => casaisNacionais({ nac: redeCnes?.nac, contagens, filtroAtivo }),
@@ -116,25 +115,11 @@ export function MapaSaudeIndigena({
         casais={casais}
         territorios={territorios}
         enquadramento={enquadramento}
-        calor={calor}
         resumoDaRede={resumoDaRedeDoDsei}
         carregando={carregando}
         aoEscolherDsei={aoEscolherDsei}
         aoFiltrarPorBusca={aoFiltrarPorBusca}
-        acoes={
-          <>
-            <button
-              type="button"
-              className="btn small"
-              aria-pressed={calor}
-              onClick={() => definirCalor((valor) => !valor)}
-              title="Cor por % de vagas ociosas"
-            >
-              Calor
-            </button>
-            {botaoDeTelaCheia}
-          </>
-        }
+        acoes={botaoDeTelaCheia}
       />
       {dsei ? (
         <MapaDoDsei
