@@ -51,6 +51,7 @@ import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";
+import "./modulos/aya/tour/tour.css";
 import "./modulos/mapa-saude-indigena/mapa-saude-indigena.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";

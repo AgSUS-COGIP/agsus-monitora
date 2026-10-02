@@ -294,6 +294,7 @@ describe("foco preso no painel", () => {
     const enviar = botao("Enviar pergunta");
     enviar.focus();
     await teclar(enviar, "Tab");
-    expect(document.activeElement).toBe(botao("Limpar conversa"));
+    // O primeiro do cabeçalho é "Me mostra esta tela" (Recursos tem tour).
+    expect(document.activeElement).toBe(botao("Me mostra esta tela"));
   });
 });
