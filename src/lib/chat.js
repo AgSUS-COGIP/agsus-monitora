@@ -321,15 +321,24 @@ export function mencaoEmDigitacao(valor, cursor) {
   if (em < 0) return null;
   if (em > 0 && !/\s/.test(antes[em - 1])) return null;
   const termo = antes.slice(em + 1);
-  if (termo.length > 40 || /[\n@]/.test(termo) || /\s{2,}/.test(termo))
+  // Termina em espaço: a menção já foi escrita (ou escolhida).
+  if (
+    termo.length > 40 ||
+    /[\n@]/.test(termo) ||
+    /\s{2,}/.test(termo) ||
+    /\s$/.test(termo)
+  )
     return null;
   return { inicio: em, termo };
 }
 
-/** Pessoas que combinam com o termo da menção (até 6). */
+/** Pessoas que combinam com o termo da menção (até 6); nome já completo não sugere. */
 export function sugestoesDeMencao(pessoas, termo) {
   const procura = semAcento(termo).trim();
-  return (Array.isArray(pessoas) ? pessoas : [])
+  const lista = Array.isArray(pessoas) ? pessoas : [];
+  if (procura && lista.some((p) => semAcento(p.nome).trim() === procura))
+    return [];
+  return lista
     .filter((p) => !procura || semAcento(p.nome).includes(procura))
     .slice(0, 6);
 }

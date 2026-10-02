@@ -264,6 +264,7 @@ describe("menções", () => {
     expect(mencaoEmDigitacao("Oi @an", 6)).toEqual({ inicio: 3, termo: "an" });
     expect(mencaoEmDigitacao("e-mail@an", 9)).toBeNull();
     expect(mencaoEmDigitacao("sem arroba", 10)).toBeNull();
+    expect(mencaoEmDigitacao("Oi @Ana ", 8)).toBeNull();
     const m = mencaoEmDigitacao("Oi @an fim", 6);
     expect(inserirMencao("Oi @an fim", 6, m, pessoas[1])).toEqual({
       texto: "Oi @Ana Paula  fim",
@@ -339,5 +340,14 @@ describe("permissão Mensagens (chat)", () => {
     expect(podeUsarChat({ ativo: true, permissoes: {} })).toBe(false);
     expect(podeUsarChat({ ativo: true, perfil: "admin" })).toBe(false);
     expect(podeUsarChat(null)).toBe(false);
+  });
+});
+
+describe("título da aba", () => {
+  it("mostra as não lidas na frente do nome", async () => {
+    const { tituloDaAba } = await import("../src/lib/identidade-da-aba.js");
+    expect(tituloDaAba(0)).toBe("MONITORA");
+    expect(tituloDaAba(3)).toBe("(3) MONITORA");
+    expect(tituloDaAba(150)).toBe("(99+) MONITORA");
   });
 });
