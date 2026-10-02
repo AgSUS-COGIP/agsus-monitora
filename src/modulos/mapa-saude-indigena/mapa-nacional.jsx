@@ -24,6 +24,8 @@ import {
   voltarAoBrasil,
 } from "./leaflet.js";
 import { usarUltimo } from "./usar-ultimo.js";
+import { isAdminGlobal } from "../../lib/access-roles.js";
+import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 
 /* O traço do leque usa o texto secundário do tema; o cinza-azulado é reserva. */
 function corDoTraco() {
@@ -138,6 +140,11 @@ function LinhaDoTerritorio({ territorio, aoEscolher }) {
   territórios por vagas (a mesma porta de entrada que a bolha).
 */
 export function MapaNacional({
+  lmap,
+  redeCnes,
+  perfil,
+  supabase,
+  aoAtualizarMapa,
   L,
   idDoMapa,
   visivel,
@@ -153,6 +160,8 @@ export function MapaNacional({
   aoEscolherDsei,
   aoFiltrarPorBusca,
 }) {
+  const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
+  const podeEditar = isAdminGlobal(perfil);
   const refDoMapa = useRef(null);
   const [mapa, definirMapa] = useState(null);
   const camadas = useRef(null);
@@ -297,6 +306,16 @@ export function MapaNacional({
             : plural(bolhas.length, "território", "territórios")}
         </span>
         <div className="mapa-si-painel__acoes">
+          {podeEditar ? (
+            <button
+              type="button"
+              className="btn small"
+              aria-pressed={editandoCoordenadas}
+              onClick={() => definirEditandoCoordenadas((atual) => !atual)}
+            >
+              Coordenadas
+            </button>
+          ) : null}
           <button
             type="button"
             className="btn small"
@@ -337,24 +356,38 @@ export function MapaNacional({
           ) : null}
         </div>
         <aside className="mapa-si-lista" aria-labelledby={`${idDoMapa}-lista`}>
-          <div className="mapa-si-lista__topo">
-            <span id={`${idDoMapa}-lista`}>Territórios por vagas</span>
-            <b>{carregando ? "…" : formatarNumero(territorios.length)}</b>
-          </div>
-          {carregando ? (
-            <div className="ui-esqueleto mapa-si-lista__esqueleto" />
-          ) : territorios.length ? (
-            <ol className="mapa-si-lista__itens">
-              {territorios.map((t) => (
-                <LinhaDoTerritorio
-                  key={t.chave}
-                  territorio={t}
-                  aoEscolher={(d) => chamadas.current.aoEscolherDsei?.(d)}
-                />
-              ))}
-            </ol>
+          {podeEditar && editandoCoordenadas && visivel ? (
+            <EditorDeCoordenadas
+              L={L}
+              mapa={mapa}
+              lmap={lmap}
+              redeCnes={redeCnes}
+              perfil={perfil}
+              supabase={supabase}
+              aoAtualizarMapa={aoAtualizarMapa}
+            />
           ) : (
-            <EstadoVazio>Nenhum território no recorte.</EstadoVazio>
+            <>
+              <div className="mapa-si-lista__topo">
+                <span id={`${idDoMapa}-lista`}>Territórios por vagas</span>
+                <b>{carregando ? "…" : formatarNumero(territorios.length)}</b>
+              </div>
+              {carregando ? (
+                <div className="ui-esqueleto mapa-si-lista__esqueleto" />
+              ) : territorios.length ? (
+                <ol className="mapa-si-lista__itens">
+                  {territorios.map((t) => (
+                    <LinhaDoTerritorio
+                      key={t.chave}
+                      territorio={t}
+                      aoEscolher={(d) => chamadas.current.aoEscolherDsei?.(d)}
+                    />
+                  ))}
+                </ol>
+              ) : (
+                <EstadoVazio>Nenhum território no recorte.</EstadoVazio>
+              )}
+            </>
           )}
         </aside>
       </div>

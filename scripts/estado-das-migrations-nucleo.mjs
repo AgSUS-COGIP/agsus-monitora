@@ -9,7 +9,7 @@ import { join } from "node:path";
   comando ao ser importado — um ficheiro assim não se testa. O que decide o
   resultado, porém, é uma comparação entre duas listas, e essa cabe aqui.
 
-  É o mesmo arranjo de `scripts/endereco-do-tunel.mjs`, e pelo mesmo motivo.
+  Permite importar as funções puras sem iniciar a consulta ao banco.
 */
 export const DIRETORIOS = ["migrations", "correcoes"];
 

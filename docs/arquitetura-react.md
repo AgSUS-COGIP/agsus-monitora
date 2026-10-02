@@ -56,7 +56,7 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/componentes/modal.jsx` (só reexporta `src/ui/modal.jsx`)                                                    | sai quando ninguém importar daqui                         | ao tocar   |
 | `src/componentes/icone.jsx`, `multi-select-busca.jsx`                                                            | `src/ui/`                                                 | ao tocar   |
 | `src/componentes/configuracoes/`, `acessos/`, `modulos/`, `saude-das-cargas/` + `src/modules/config-secoes.js`   | `src/modulos/configuracoes/`                              | 3          |
-| `src/componentes/nucleo/`, `calendario-editais/`, `lista-aprovados/`                                             | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | ao tocar   |
+| Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, trechos do `legacy-app.js` (dashboard)                          | `src/modulos/visao-geral/`                                | 5          |
 | `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.js`, `usar-area-atual.js` | `src/app/` (entrada, layout, área atual)                  | 6          |
 | `src/modules/legacy-app.js`, `auth-storage.js`, `sidebar-branding.js` (o login já está em `src/app/`)            | `src/app/`; o resto sai                                   | 6 (fase 2) |

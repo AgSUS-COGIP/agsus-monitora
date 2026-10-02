@@ -10,7 +10,7 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 /*
   O painel da Aya (src/modulos/aya/): abre com a saudação e as sugestões da
   página e da área atuais; trocar de página troca as sugestões; clicar numa
-  sugestão envia a pergunta; o aviso de IA experimental está no rodapé; Esc
+  sugestão envia a pergunta; o acesso ao suporte está no rodapé; Esc
   fecha e devolve o foco à arara; "não ajudou" mostra o cartão do chamado; a
   conversa fica na aba; a resposta pode trazer o botão da tela citada.
 */
@@ -108,12 +108,20 @@ describe("abrir e fechar", () => {
     expect(localStorage.getItem(CHAVE_OCULTA)).toBe("0");
   });
 
-  it("tem o aviso de IA experimental e o campo com enviar desabilitado vazio", async () => {
+  it("oferece feedback e suporte pelo Gmail antes de perguntar", async () => {
     await montar();
     await abrirPainel();
     expect(textoDe(".aya-aviso")).toBe(
-      "Solução experimental de IA. As informações podem conter imprecisões.",
+      "Se precisar de ajuda, abra um chamado.",
     );
+    const suporte = $(".aya-suporte");
+    expect(suporte.textContent).toContain("Feedback e suporte");
+    const gmail = new URL(suporte.href);
+    expect(gmail.origin).toBe("https://mail.google.com");
+    expect(gmail.searchParams.get("to")).toBe("suporte@agenciasus.org.br");
+    expect(gmail.searchParams.get("body")).toContain("Página: Recursos");
+    expect(suporte.target).toBe("_blank");
+    expect($$("a[href^='mailto:']")).toHaveLength(0);
     expect($(".aya-aviso").getAttribute("role")).toBe("note");
     expect($("textarea").getAttribute("placeholder")).toBe("Pergunte à Aya…");
     expect(botao("Enviar pergunta").disabled).toBe(true);
@@ -236,6 +244,31 @@ describe("conversa", () => {
 });
 
 describe("avaliação e chamado", () => {
+  it("na dúvida oferece perguntas clicáveis e Gmail em outra aba", async () => {
+    perguntar.mockResolvedValueOnce({
+      answer: "Não encontrei exatamente isso. Você quis dizer…?",
+      sugestoes: [
+        {
+          rotulo: "Prazo do recurso",
+          pergunta: "De onde vem o prazo do recurso?",
+        },
+      ],
+      oferecerChamado: true,
+    });
+    await montar();
+    await abrirPainel();
+    await digitar($("textarea"), "prazo");
+    await clicar(botao("Enviar pergunta"));
+    const principal = $(".aya-chamado__botao");
+    expect(principal.getAttribute("target")).toBe("_blank");
+    expect(principal.getAttribute("rel")).toContain("noopener");
+    expect($(".aya-chamado a[href^='mailto:']")).toBeNull();
+    await clicar(botao("Prazo do recurso"));
+    expect(perguntar).toHaveBeenLastCalledWith(
+      expect.objectContaining({ question: "De onde vem o prazo do recurso?" }),
+    );
+  });
+
   it("'não ajudou' guarda a avaliação no navegador e mostra o cartão do chamado", async () => {
     await montar();
     await abrirPainel();
@@ -244,14 +277,16 @@ describe("avaliação e chamado", () => {
     await clicar(botao("Não ajudou"));
     const cartao = $(".aya-chamado");
     expect(cartao.textContent).toContain(
-      "Vou abrir o seu e-mail com a conversa preenchida.",
+      "Vou abrir o Gmail com a conversa preenchida.",
     );
     const link = cartao.querySelector("a");
     expect(link.textContent).toContain("Abrir chamado");
     const href = link.getAttribute("href");
-    expect(href.startsWith("mailto:suporte@agenciasus.org.br?subject=")).toBe(
-      true,
-    );
+    expect(
+      href.startsWith(
+        "https://mail.google.com/mail/?view=cm&fs=1&to=suporte%40agenciasus.org.br",
+      ),
+    ).toBe(true);
     expect(decodeURIComponent(href)).toContain(
       "MONITORA · Chamado · Recursos · SEDE",
     );

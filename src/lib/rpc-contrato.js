@@ -35,6 +35,19 @@
 
 /** @type {Record<string, ContratoRpc>} */
 export const CONTRATO_RPC = {
+  salvar_coordenada_mapa_saude_indigena: {
+    argumentos: [
+      "p_alvo",
+      "p_latitude",
+      "p_longitude",
+      "p_latitude_anterior",
+      "p_longitude_anterior",
+      "p_motivo",
+    ],
+    critica: true,
+    resumo:
+      "Corrige a coordenada de um ponto existente, com revisão e histórico privado. Só administrador global.",
+  },
   // ── Configurações › Acessos (admin global ou coordenador, com teto) ──────
   obter_matriz_acessos: {
     argumentos: ["p_busca", "p_offset", "p_coordenacao", "p_grupo"],

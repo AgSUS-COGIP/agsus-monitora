@@ -3,10 +3,8 @@
 
   POR QUE COMPILAR, E NÃO LER EM TEMPO DE EXECUÇÃO
 
-  A `/api/aya` roda como função serverless na Vercel, onde nem todo arquivo do
-  repositório acompanha o bundle. Ler `.md` do disco ali funciona hoje e quebra
-  na próxima mudança de empacotamento, sem aviso. Gerar um módulo JavaScript
-  torna o conhecimento parte do código, com o mesmo destino do resto.
+  A Aya responde no navegador. Gerar um módulo JavaScript inclui os verbetes
+  no bundle e evita uma requisição para carregar cada documento.
 
   A verificação de sincronia vive nos testes: se alguém editar um `.md` e
   esquecer de regenerar, o CI reprova em vez de a Aya responder com a base
@@ -139,6 +137,7 @@ export function compilarVerbetes() {
 */
 export async function gerarModulo({ verbetes }) {
   const corpo = verbetes.map((verbete) => ({
+    arquivo: verbete.arquivo,
     titulo: verbete.titulo,
     perguntas: verbete.perguntas,
     resposta: verbete.resposta,

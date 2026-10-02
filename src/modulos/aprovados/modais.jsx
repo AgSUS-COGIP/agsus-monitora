@@ -19,7 +19,7 @@ import {
   statusNeedsMatricula,
   uniqueCandidateCargos,
 } from "../../lib/lista-aprovados-rules.js";
-import { Modal } from "../modal.jsx";
+import { Modal } from "../../componentes/modal.jsx";
 import { BotaoDeAcao, IconeDePdf, classes } from "./partes.jsx";
 
 /*

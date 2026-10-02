@@ -7,7 +7,7 @@ import {
   periodoDaEtapa,
   tituloDoDia,
 } from "../../lib/calendario-editais.js";
-import { Modal } from "../modal.jsx";
+import { Modal } from "../../componentes/modal.jsx";
 
 /*
   As peças do calendário: a grade do mês, a linha de uma etapa (usada nas

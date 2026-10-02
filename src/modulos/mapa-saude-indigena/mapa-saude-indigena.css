@@ -15,6 +15,38 @@
   min-width: 0;
 }
 
+.mapa-si-coordenadas {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.mapa-si-coordenadas dl {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-coordenadas dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-coordenadas__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* O estado pressionado usa o par de cores do botão primário. */
+.mapa-si-painel__acoes .btn[aria-pressed="true"] {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
 .mapa-si-painel {
   display: grid;
   gap: var(--space-3);

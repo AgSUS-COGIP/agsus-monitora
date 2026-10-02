@@ -94,3 +94,20 @@ No mesmo dia o front passou a desenhar **só** a coordenada do banco: saíram os
 vereditos de 22/09 (que sobrepunham 16 polos corrigidos) e a planilha de
 Lotações (102 pontos que só existiam nela, listados em
 `docs/pontos-so-na-planilha-de-lotacoes.md`).
+
+## Conferência do banco (02/10/2026)
+
+As quatro rodadas acima foram comparadas com uma exportação somente de leitura
+de `lmap` e `rede_cnes` do projeto `agsusmonitora-dais`. As **311 alterações**
+(162 polos, 2 CASAIs e 147 UBSI/postos) conferem com as coordenadas finais dos
+arquivos de correção; os backups das quatro rodadas também existem no banco.
+Nenhuma correção foi reaplicada.
+
+Essa conferência verifica a aplicação dos arquivos, não substitui a validação
+das localizações. Continuam documentados 93 polos e 156 UBSI para revisão com
+fontes independentes ou confirmação do DSEI.
+
+O script `scripts/auditar-coordenadas.mjs` ainda reproduz o antigo casamento
+difuso entre polo e CNES e pode auditar uma coordenada diferente da que o mapa
+atual desenha. Seus alertas de deslocamento e níveis de confiança não devem
+ser usados como diagnóstico do mapa atual nem para desfazer as correções acima.

@@ -1,7 +1,7 @@
 /*
   Calendário de Editais — a lógica, sem DOM nem rede.
 
-  A tela (`src/componentes/calendario-editais/`) só desenha o que sai daqui, e o
+  A tela (`src/modulos/cronograma/`) só desenha o que sai daqui, e o
   carregamento (`estado.js` de lá) só entrega as linhas cruas das RPCs. O que
   fica neste arquivo é o que decide o que aparece: como as etapas viram dias,
   quais passam nos filtros e o que cada célula do mês conta.

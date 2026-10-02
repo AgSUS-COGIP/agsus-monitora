@@ -21,7 +21,7 @@ import {
   ordinalFeminino,
   resumirQuadro,
 } from "../../lib/configuracao-de-convocacao.js";
-import { MultiSelectBusca } from "../multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import {
   AcaoDeStatus,
   Kpi,
