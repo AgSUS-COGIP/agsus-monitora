@@ -90,6 +90,9 @@ export const CORES_DO_MAPA = Object.freeze({
   contornoNoDetalhe: "#0d6f7b",
   divisasNoDetalhe: "#7798ad",
   fundoDasUfsNoDetalhe: "#dce9ee",
+  // Editor de coordenadas: as posições sugeridas do ponto escolhido.
+  sugestaoDeAldeia: "#c2410c",
+  sugestaoDoCnes: "#2f6fb0",
 });
 
 /* A linha do vínculo fora da área: secundária, pontilhada — não é trajeto. */
