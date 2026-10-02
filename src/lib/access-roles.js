@@ -122,6 +122,15 @@ export function canEditClassificacao(profile) {
   return ["admin", "edital_gestor"].includes(normalizeRole(profile));
 }
 
+/*
+  Mensagens (chat, 20261002210000_chat.sql): o ícone do cabeçalho, o painel e o
+  botão "Conversa" de Editais e Classificação. Sem a matriz (contexto antigo),
+  não aparece: o banco ainda não tem o recurso.
+*/
+export function podeUsarChat(profile) {
+  return Boolean(profile?.permissoes) && hasResource(profile, "chat");
+}
+
 /* Aba Entrevistas (20260929235000_entrevistas.sql): só consulta nesta fase (leitor). */
 export function canViewEntrevistas(profile) {
   if (profile?.permissoes) return hasResource(profile, "entrevistas");

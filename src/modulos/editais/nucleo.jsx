@@ -21,6 +21,8 @@ import {
 import { formatNumberBR } from "../../lib/formatters.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.js";
+import { abrirConversaDoEdital } from "../chat/ponte.js";
+import { usarChatLiberado } from "../chat/usar-chat-liberado.js";
 import { criarEstadoDoNucleo } from "./estado.js";
 import { PainelOperacional } from "./painel-operacional.jsx";
 import { ModalDoEdital } from "./modal-do-edital.jsx";
@@ -86,7 +88,7 @@ function textoDoStatus(nucleo, carregado) {
   return `Atualizado em ${formatarDataHora(nucleo.carregadoEm)}`;
 }
 
-function LinhaDoEdital({ linha, item, perfil, estado }) {
+function LinhaDoEdital({ linha, item, perfil, estado, chat }) {
   const url = safeHttpUrl(linha.link_edital);
   const nome = linha.edital || linha.unidade;
   const podeEditar = canManageEditais(perfil);
@@ -176,7 +178,23 @@ function LinhaDoEdital({ linha, item, perfil, estado }) {
               <i className="fa-solid fa-timeline" aria-hidden="true" />
             </button>
           ) : null}
-          {!podeEditar && !podeListas && !item ? (
+          {chat ? (
+            <button
+              type="button"
+              className="btn icon outline nucleo-conversa"
+              title="Conversa"
+              aria-label={`Conversa do edital ${nome || ""}`}
+              onClick={() =>
+                abrirConversaDoEdital({
+                  id: linha.id,
+                  titulo: linha.edital || linha.unidade,
+                })
+              }
+            >
+              <i className="fa-solid fa-comments" aria-hidden="true" />
+            </button>
+          ) : null}
+          {!podeEditar && !podeListas && !item && !chat ? (
             <span className="approved-no-action">—</span>
           ) : null}
         </div>
@@ -231,6 +249,7 @@ export function Nucleo({ estado, agora }) {
     [editais, indice, nucleo.filtro],
   );
   const podeEditar = canManageEditais(nucleo.perfil);
+  const chat = usarChatLiberado();
 
   return (
     <div className="ui-tela editais-tela">
@@ -278,6 +297,7 @@ export function Nucleo({ estado, agora }) {
             item={item}
             perfil={nucleo.perfil}
             estado={estado}
+            chat={chat}
           />
         )}
         total={noFiltro.length}

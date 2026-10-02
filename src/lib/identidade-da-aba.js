@@ -83,9 +83,29 @@ export function aplicarFaviconDaMarca(
 // A aba identifica o produto; o título de cada seção continua no conteúdo da tela.
 export const TITULO_MONITORA = "MONITORA";
 
+/* Mensagens não lidas do chat (src/modulos/chat/): "(3) MONITORA". */
+let naoLidasDaAba = 0;
+
+export function tituloDaAba(naoLidas = naoLidasDaAba) {
+  const quantas = Math.max(0, Math.floor(Number(naoLidas) || 0));
+  return quantas
+    ? `(${quantas > 99 ? "99+" : quantas}) ${TITULO_MONITORA}`
+    : TITULO_MONITORA;
+}
+
 export function definirPaginaDaAba(_pagina, documento = globalThis.document) {
-  if (documento) documento.title = TITULO_MONITORA;
-  return TITULO_MONITORA;
+  const titulo = tituloDaAba();
+  if (documento) documento.title = titulo;
+  return titulo;
+}
+
+/** O chat avisa quantas não lidas há; a aba mostra na frente do nome. */
+export function definirNaoLidasDaAba(
+  naoLidas,
+  documento = globalThis.document,
+) {
+  naoLidasDaAba = Math.max(0, Math.floor(Number(naoLidas) || 0));
+  return definirPaginaDaAba(null, documento);
 }
 
 export function definirSistemaDaAba(_sistema, documento = globalThis.document) {

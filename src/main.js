@@ -44,6 +44,7 @@ import "./modulos/selecao/selecao.css";
 import "./modulos/classificacao/classificacao.css";
 import "./modulos/visao-geral/visao-geral.css";
 import "./modulos/aya/aya.css";
+import "./modulos/chat/chat.css";
 import "./modulos/aya/tour/tour.css";
 import "./modulos/mapa-saude-indigena/mapa-saude-indigena.css";
 import "./modulos/mapa-de-projetos/mapa-de-projetos.css";
@@ -88,6 +89,7 @@ import { montarEntrada } from "./app/entrada/entrada.jsx";
 import { sessaoDoApp } from "./app/sessao.js";
 
 import { montarAya } from "./modulos/aya/aya.jsx";
+import { montarChat } from "./modulos/chat/chat.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -241,6 +243,12 @@ void sessaoDoApp.iniciar();
   definirPaginaDaAya) e a área pelo estado do monitoramento.
 */
 montarAya();
+
+/*
+  Mensagens (src/modulos/chat/): o ícone no cabeçalho (#chatHost), ligado pela
+  sessão e pelo recurso "chat"; o painel é baixado na primeira abertura.
+*/
+montarChat({ toast: window.monitoraToast });
 
 if (!hasSupabaseEnv()) {
   console.warn(
