@@ -21,11 +21,11 @@ describe("contexto da tela para a Aya", () => {
         </section>
         <input class="ui-tabela-busca" value="Xavante" />
       </section>
-      <div class="health-map-unit" data-dsei="0">
+      <button class="mapa-si-territorio">
         <strong>DSEI Xavante</strong>
-        <small>10 vagas · 2 ociosas · 1 processo</small>
-        <span class="health-map-unit__type">22.000</span>
-      </div>
+        <small>2 ociosas · 1 processo · 22.000 hab.</small>
+        <span class="mapa-si-territorio__vagas"><b>10</b> vagas</span>
+      </button>
       <table class="visao-geral-tabela"><tbody>
         <tr><td>Edital 01/2026</td><td>DSEI Xavante</td><td>Aberto</td></tr>
       </tbody></table>
@@ -60,7 +60,7 @@ describe("contexto da tela para a Aya", () => {
       Array.from(
         { length: 33 },
         (_, index) =>
-          `<div class="health-map-unit" data-dsei="${index + 1}"><strong>DSEI ${index + 2}</strong></div>`,
+          `<button class="mapa-si-territorio"><strong>DSEI ${index + 2}</strong></button>`,
       ).join(""),
     );
 

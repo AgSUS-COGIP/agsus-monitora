@@ -23,7 +23,13 @@ const modulo = readFileSync(
   "utf8",
 );
 const css = readFileSync("src/styles/indigenous-territories-layer.css", "utf8");
-const cssLegenda = readFileSync("src/styles/legenda-das-terras.css", "utf8");
+// Os tokens --terra-* (tokens.css) e a legenda do mapa da Saúde Indígena.
+const cssLegenda = [
+  "src/styles/tokens.css",
+  "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css",
+]
+  .map((caminho) => readFileSync(caminho, "utf8"))
+  .join(" ");
 
 const VERDE_DA_FUNAI = [0x4d, 0xaf, 0x4a];
 const VEGETACAO = "#add19e";
@@ -276,6 +282,6 @@ describe("os quadrados da legenda acompanham", () => {
   it("cada fase tem a sua amostra, com o traço da sua fase", () => {
     expect(cssLegenda).toContain("border: 2px solid var(--terra-definitiva)");
     expect(cssLegenda).toContain("border: 2px dashed var(--terra-em-processo)");
-    expect(cssLegenda).toContain(".legenda-terra__amostra--em_estudo");
+    expect(cssLegenda).toContain(".mapa-si-terra-fase__amostra--em_estudo");
   });
 });

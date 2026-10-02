@@ -1,23 +1,8 @@
 /*
-  UM MAPA PRINCIPAL DE CADA VEZ.
-
-  O que havia antes eram dois mapas a competir — 0.58fr contra 1.42fr — e, antes
-  de escolher um DSEI, o segundo mostrava **outro Brasil**, sem acrescentar
-  informação nenhuma. Pior: o `#detailMap` era limitado a `altura x 1.25` e
-  centrado com `margin-inline: auto`, de modo que sobravam faixas brancas de
-  centenas de pixels dentro do próprio card — na tela de produção, a 1920, a
-  faixa à esquerda media cerca de 310 px.
-
-  O workspace passa a ter dois estados, e mostra um mapa de cada vez:
-
-    sem DSEI  ->  só a visão nacional, a toda a largura útil
-    com DSEI  ->  só o território, com o painel de unidades ao lado
-
-  Quem alterna a classe `com-dsei` é `definirSelecaoDoMapaDetalhado()`.
-
-  O enquadramento geográfico deixa de ser resolvido encolhendo o container: o
-  container preenche o card, e quem enquadra é o `fitBounds` com padding e
-  `maxZoom`, que é onde esse problema pertence.
+  O MAPA DE PROJETOS NA VISÃO GERAL (legado: `#mapaDaVisaoGeral` no index.html,
+  `src/modules/municipios-da-visao-geral.js`). O mapa da Saúde Indígena é
+  React, com o CSS dele (src/modulos/mapa-saude-indigena/); a SEDE não tem
+  mapa. O container preenche o card e quem enquadra é o `fitBounds`.
 */
 .health-map-workspace {
   /*
@@ -49,47 +34,13 @@
   margin-top: var(--space-3);
 }
 
-/* Estado 1 — Brasil. O painel de detalhe nem ocupa espaço. */
-.health-map-workspace .health-map-pane--detail {
-  display: none;
-}
-
-/* Estado 2 — DSEI. O mapa nacional sai; o trilho guarda a referência. */
-.health-map-workspace.com-dsei .health-map-pane--master {
-  display: none;
-}
-
-.health-map-workspace.com-dsei .health-map-pane--detail {
-  display: block;
-}
-
-/*
-  A Visão geral é a mesma nas três áreas; o mapa é da área
-  (`data-mapa-da-area`, de `municipios-da-visao-geral.js`). SEDE: sem o bloco.
-  Projetos: o mapa nacional com os municípios, sem o que é só da Saúde
-  Indígena — o painel do DSEI, o modo calor (ociosas por DSEI) e o botão das
-  Terras Indígenas.
-*/
-.page[data-mapa-da-area="nenhum"] .health-map-workspace,
-.page[data-mapa-da-area="municipios"] .health-map-pane--detail,
-.page[data-mapa-da-area="municipios"] .health-map-botao--calor,
-.page[data-mapa-da-area="municipios"] .agsus-indigenous-territories-control {
-  display: none;
-}
-
 /* Fundo, borda e raio: health-reference-kpis.css (superfície do DS 11.6). */
 .health-map-pane {
   min-width: 0;
   overflow: hidden;
 }
 
-/*
-  `space-between` só funciona com dois filhos, e o cabeçalho ganha um terceiro
-  em tempo de execução: o "Expandir" que `health-map-immersive-workspace.js`
-  acrescenta. Com três, o botão ficava sozinho a meio. A margem automática
-  depois do bloco do título empurra tudo o resto para a direita, quantos
-  controlos venham a existir.
-*/
+/* A margem automática depois do título empurra contagem e "Brasil" para a direita. */
 .health-map-pane__header {
   min-height: 42px;
   display: flex;
@@ -116,33 +67,6 @@
   font-weight: 500;
 }
 
-.health-map-detail-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Trilho: guarda a referência nacional sem gastar um mapa inteiro nela. */
-.health-map-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #5f7288;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.health-map-breadcrumb__voltar {
-  border: 0;
-  padding: 0;
-  background: none;
-  color: #0d6ba8;
-  font: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
 /*
   "36 territórios": só contagem, então badge neutro do Design System (11.8).
   Os tokens `--state-neutral*` já mudam no tema escuro.
@@ -162,32 +86,47 @@
   white-space: nowrap;
 }
 
-.health-map-reset {
-  flex: 0 0 auto;
-  padding: 6px 10px;
-  border: 1px solid #cfe1eb;
-  border-radius: 999px;
-  background: #f7fbfd;
-  color: #17607b;
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.health-map-reset {
-  min-height: 32px;
-  cursor: pointer;
-}
-
 /*
   O mapa preenche a área que o card oferece — largura inteira, sem `max-width`
   e sem centragem. Era daí que vinham as faixas brancas.
 */
-#page-dashboard .health-map-pane--master #map,
-#page-dashboard .health-map-pane--detail #detailMap {
+.mapa-projetos__moldura {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#mapaDosProjetos {
   width: 100%;
-  height: var(--health-map-height) !important;
-  min-height: var(--health-map-height) !important;
+  height: var(--health-map-height);
+  min-height: 0;
   border-radius: 0;
+  background: var(--surface-sunken);
+}
+
+/* A legenda das cores dos projetos, recolhível, sobre o canto do mapa. */
+.mapa-projetos__legenda {
+  position: absolute;
+  z-index: 500;
+  left: var(--space-2);
+  bottom: var(--space-6, 24px);
+  max-width: min(240px, calc(100% - 2 * var(--space-2)));
+  padding: var(--space-1-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-raised);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+}
+
+.mapa-projetos__legenda summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-projetos__legenda[open] summary {
+  margin-bottom: var(--space-1);
 }
 
 .health-map-pane__hint {
@@ -257,44 +196,8 @@
   vezes mais alto. Com `min-height: 0` a coluna aceita a altura da linha e a
   lista rola dentro de si, que é o que o `overflow: auto` dela já pedia.
 */
-.health-map-brasil-layout > *,
-.health-map-detail-layout > * {
+.health-map-brasil-layout > * {
   min-height: 0;
-}
-
-/* Território à esquerda, unidades à direita — entre 280 e 340 px. */
-.health-map-detail-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--health-map-painel);
-  height: var(--health-map-height);
-  min-height: var(--health-map-height);
-}
-
-/* Filtros por tipo, dentro do painel. */
-.health-map-filtros {
-  flex: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px 10px;
-  border-bottom: 1px solid #dce8ef;
-}
-
-.health-map-filtros button {
-  padding: 4px 9px;
-  border: 1px solid #cfe1eb;
-  border-radius: 999px;
-  background: #fff;
-  color: #17607b;
-  font-size: 10px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.health-map-filtros button[aria-pressed="true"] {
-  border-color: #0f5ea8;
-  background: #0f5ea8;
-  color: #fff;
 }
 
 /*
@@ -365,16 +268,6 @@
   outline: none;
 }
 
-.health-map-unit__icon {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: #e8f6fa;
-  color: #0d8192;
-}
-
 .health-map-unit strong,
 .health-map-unit small {
   display: block;
@@ -399,12 +292,6 @@
   font-size: 10px;
   font-weight: 400;
   white-space: nowrap;
-}
-
-.health-map-unit__type {
-  color: #0d8192;
-  font-size: 10px;
-  font-weight: 500;
 }
 
 /*
@@ -733,169 +620,6 @@
   line-height: 1.45;
 }
 
-.health-map-detail-legend {
-  min-height: 34px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 13px;
-  padding: 7px 13px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  /* A legenda é o que explica o mapa: 12px é o mínimo do DESIGN.md, e 600 o
-     peso de destaque (800 não está na escala). */
-  font-size: 12px;
-  font-weight: 600;
-}
-
-/*
-  A legenda usa as MESMAS formas dos marcadores — círculo, casa, cruz, losango —
-  geradas por `svgDaForma()`. As bolinhas redondas que viviam aqui descreviam um
-  mapa que não existe mais desde que os marcadores ganharam forma própria.
-*/
-.health-map-legenda-forma {
-  display: inline-flex;
-  margin-right: 4px;
-  line-height: 0;
-  vertical-align: -2px;
-}
-
-.health-map-legenda-linha {
-  width: 18px;
-  height: 0;
-  display: inline-block;
-  margin-right: 5px;
-  border-top: 2px dashed rgba(74, 107, 128, 0.75);
-  vertical-align: 3px;
-}
-
-/*
-  BOTÕES "BRASIL" E "CALOR" DENTRO DO MAPA — `controles-do-mapa.js`
-
-  Botão `sm` do Design System (11.1): ícone Lucide de 16px antes do texto, sem
-  borda. A sombra média é porque o botão flutua sobre os azulejos, cuja cor
-  ninguém controla. O "Calor" ligado (vermelho) continua em
-  `#heatBtn.active` de `app.css`.
-*/
-.health-map-controles {
-  display: flex;
-  gap: var(--space-1-5);
-}
-
-.health-map-botao {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  height: 32px;
-  padding: 0 var(--space-3);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-md);
-  font: inherit;
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.health-map-botao:hover {
-  background: var(--surface-hover);
-}
-
-.health-map-botao .icone {
-  flex: none;
-}
-
-.health-map-botao--calor {
-  color: var(--state-danger);
-}
-
-/*
-  LEGENDA RECOLHÍVEL DO MAPA NACIONAL — `controles-do-mapa.js`
-
-  A caixa (`#mapLegendBox`) e as amostras seguem como estavam; aqui só o
-  cabeçalho que abre e fecha. Começa fechada abaixo de 768px.
-*/
-.health-map-legenda__alternar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  width: 100%;
-  min-height: 24px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.health-map-legenda__alternar .icone {
-  flex: none;
-}
-
-/*
-  A LISTA DAS TERRAS INDÍGENAS
-
-  Três linhas por terra, e a hierarquia é a da pergunta que se faz: qual é a
-  terra, que povos vivem nela, e só depois onde fica e em que fase está.
-*/
-/* Cada terra é um botão: clicar leva o mapa até ela (`__agsusEnquadrarTerra`). */
-.health-map-terra {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
-  color: inherit;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  font: inherit;
-  gap: 2px;
-  padding: 8px 10px;
-  text-align: left;
-  width: 100%;
-}
-
-.health-map-terra:hover {
-  background: color-mix(in srgb, var(--terra-fundo) 18%, transparent);
-}
-
-.health-map-terra:focus-visible {
-  outline: 2px solid var(--terra-definitiva);
-  outline-offset: -2px;
-}
-
-.health-map-terra:last-child {
-  border-bottom: 0;
-}
-
-.health-map-terra__nome {
-  color: #0f172a;
-  font-size: 12.5px;
-  line-height: 1.3;
-}
-
-/* O povo é a razão de o território existir: fica na cor da própria camada. */
-.health-map-terra__povos {
-  color: var(--terra-definitiva);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.health-map-terra__meta {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.3;
-}
-
-/* A amostra das terras na legenda saiu daqui: é `legenda-das-terras.css`,
-   que as duas legendas e o botão da camada partilham. */
-
 .health-status-summary-card {
   margin-top: var(--space-3);
   overflow: visible !important;
@@ -911,7 +635,6 @@
   .health-map-workspace {
     --health-map-height: 360px;
   }
-  .health-map-detail-layout,
   .health-map-brasil-layout {
     height: auto;
     min-height: 0;
@@ -941,7 +664,6 @@
 }
 [data-theme="dark"] .health-map-pane__header,
 [data-theme="dark"] .health-map-pane__hint,
-[data-theme="dark"] .health-map-detail-legend,
 [data-theme="dark"] .health-map-units__header {
   border-color: #253a56;
 }
@@ -971,17 +693,8 @@
   escrever uma regra que nunca vale.
 */
 [data-theme="dark"] .health-map-pane__hint,
-[data-theme="dark"] .health-map-detail-legend,
 [data-theme="dark"] .health-map-empty {
   color: #9fb4c9;
-}
-[data-theme="dark"] .health-map-reset {
-  border-color: #2f4a6b;
-  background: #1a2d47;
-  color: #a9d9e6;
-}
-[data-theme="dark"] .health-map-unit__type {
-  color: #5fd0e3;
 }
 [data-theme="dark"] .health-map-unit--ranking strong,
 [data-theme="dark"] .health-map-unit__vagas b {
@@ -1001,99 +714,4 @@
 }
 [data-theme="dark"] .health-map-unit__pct {
   color: var(--text-secondary, #9fb4c9);
-}
-/*
-  O trilho é novo e nasceu com as cores do tema claro. Medido no protótipo
-  sobre o cabeçalho escuro: o "Brasil" dava 2.96:1 e o nome do território
-  3.42:1 — ambos abaixo dos 4.5:1 de texto. Com os valores abaixo passam a
-  8.83:1 e 7.92:1, medidos no navegador (no tema claro dão 5.70:1 e 4.94:1).
-*/
-[data-theme="dark"] .health-map-breadcrumb {
-  color: #9fb4c9;
-}
-[data-theme="dark"] .health-map-breadcrumb__voltar {
-  color: #7fc4ea;
-}
-
-/*
-  Marcadores por forma, não só por cor: círculo (polo), casa (CASAI), cruz
-  (UBSI) e losango (demais). Quem não distingue as cores continua distinguindo
-  as formas.
-*/
-.mapa-marcador-wrap {
-  background: none;
-  border: 0;
-}
-
-.mapa-marcador {
-  display: block;
-  line-height: 0;
-  filter: drop-shadow(0 1px 2px rgba(15, 35, 60, 0.35));
-}
-
-/* A unidade externa mantém o ícone do seu tipo; o anel só a destaca. */
-.mapa-marcador--externo svg {
-  outline: 2px dashed rgba(74, 107, 128, 0.75);
-  outline-offset: 2px;
-  border-radius: 50%;
-}
-
-.health-map-detail-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.health-map-external-chip {
-  padding: 3px 9px;
-  border: 1px solid #c6d6e2;
-  border-radius: 999px;
-  background: #eef4f8;
-  color: #34556b;
-  font-size: 11.5px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.health-map-external-toggle {
-  padding: 4px 10px;
-  border: 1px solid #c6d6e2;
-  border-radius: 8px;
-  background: #fff;
-  color: #1f4258;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.health-map-external-toggle:hover {
-  border-color: #7fa3bb;
-  background: #f4f9fc;
-}
-
-.health-map-external-toggle:focus-visible {
-  outline: 2px solid #1769aa;
-  outline-offset: 2px;
-}
-
-html[data-theme="dark"] .health-map-external-chip {
-  border-color: #2f4457;
-  background: #14293a;
-  color: #b9cfe0;
-}
-
-html[data-theme="dark"] .health-map-external-toggle {
-  border-color: #2f4457;
-  background: #102436;
-  color: #cfe2f0;
-}
-
-.health-map-unit__externo {
-  color: #b25a12;
-  font-weight: 600;
-}
-
-html[data-theme="dark"] .health-map-unit__externo {
-  color: #e9a45c;
 }

@@ -136,11 +136,6 @@ summary:focus-visible,
     --line: #9bb4cc;
   }
 }
-#heatBtn.active {
-  background: #d92d3a !important;
-  color: #fff !important;
-  border-color: #d92d3a !important;
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1171,7 +1166,7 @@ body.external-clean #externalReturnBar {
     min-width: 0 !important;
     font-size: 11px !important;
   }
-  #map {
+  #mapaDosProjetos {
     height: 280px !important;
     min-height: 280px !important;
   }
@@ -1184,19 +1179,6 @@ body.external-clean #externalReturnBar {
   @page {
     margin: 1.2cm;
   }
-}
-#map {
-  width: 100%;
-  height: clamp(390px, 55vh, 680px);
-  min-height: 390px;
-  background: #aadaff;
-}
-#map .leaflet-container {
-  background: #aadaff;
-}
-#map svg {
-  display: block;
-  margin: auto;
 }
 
 .table-card {
@@ -1945,10 +1927,6 @@ body.sidebar-locked #page-dashboard table {
   }
   .actions {
     justify-content: flex-start;
-  }
-  #map {
-    min-height: 340px !important;
-    height: 340px !important;
   }
 }
 @media (max-width: 640px) {

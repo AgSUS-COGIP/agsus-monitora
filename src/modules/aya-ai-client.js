@@ -76,25 +76,15 @@ function editalAberto(doc) {
 }
 
 export function collectAyaPageContext(doc = document) {
+  // "Territórios por vagas" do mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/).
   const territories = uniqueTexts(
-    Array.from(doc.querySelectorAll(".health-map-unit[data-dsei]")).map(
-      (item) => {
-        const name = item.querySelector("strong")?.textContent || "";
-        const detail = item.querySelector("small")?.textContent || "";
-        const vacancies =
-          item.querySelector(".health-map-unit__vagas")?.textContent || "";
-        const population =
-          item.querySelector(".health-map-unit__type")?.textContent || "";
-        return [
-          name,
-          vacancies,
-          detail,
-          population ? `população ${population}` : "",
-        ]
-          .filter(Boolean)
-          .join(" — ");
-      },
-    ),
+    Array.from(doc.querySelectorAll(".mapa-si-territorio")).map((item) => {
+      const name = item.querySelector("strong")?.textContent || "";
+      const detail = item.querySelector("small")?.textContent || "";
+      const vacancies =
+        item.querySelector(".mapa-si-territorio__vagas")?.textContent || "";
+      return [name, vacancies, detail].filter(Boolean).join(" — ");
+    }),
     34,
     240,
   );
@@ -102,7 +92,10 @@ export function collectAyaPageContext(doc = document) {
   const dseis = territories.length
     ? territories
     : uniqueTexts(
-        Array.from(doc.querySelectorAll(".health-map-unit")).map((item) => {
+        // Unidades do DSEI aberto ou municípios de Projetos.
+        Array.from(
+          doc.querySelectorAll(".mapa-si-unidade, .health-map-unit"),
+        ).map((item) => {
           const name = item.querySelector("strong")?.textContent || "";
           const detail = item.querySelector("small")?.textContent || "";
           return [name, detail].filter(Boolean).join(" — ");
@@ -140,7 +133,7 @@ export function collectAyaPageContext(doc = document) {
     registroAberto: editalAberto(doc),
     pathname: doc.defaultView?.location?.pathname || "",
     pageTitle: compactText(doc.title, 160),
-    mapSummary: textOf(doc, "#masterMapCount", 120),
+    mapSummary: textOf(doc, ".mapa-si-painel__contagem, #masterMapCount", 120),
     activeFilters,
     search: compactText(
       doc.querySelector(".visao-geral-tela .ui-tabela-busca")?.value,

@@ -1,10 +1,12 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  DESENHO_DAS_FORMAS,
   formaDoTipo,
-  htmlDoMarcador,
-  svgDaForma,
-} from "../src/modules/vinculos-territoriais.js";
+} from "../src/lib/mapa-saude-indigena/formas.js";
+import {
+  registroDaSede,
+  registrosDoDsei,
+} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.js";
 import {
   chaveDaUnidade,
   indexarVereditos,
@@ -27,9 +29,8 @@ describe("a sede tem forma própria", () => {
   });
 
   it("a estrela tem desenho, e não cai no losango de reserva", () => {
-    const estrela = svgDaForma("estrela", "#1f2937");
-    expect(estrela).toContain("#1f2937");
-    expect(estrela).not.toBe(svgDaForma("coisa nenhuma", "#1f2937"));
+    expect(DESENHO_DAS_FORMAS.estrela).toBeTruthy();
+    expect(DESENHO_DAS_FORMAS.estrela).not.toBe(DESENHO_DAS_FORMAS.losango);
   });
 
   /*
@@ -49,37 +50,30 @@ describe("a sede tem forma própria", () => {
     }
   });
 
-  it("o marcador dela sai do mesmo caminho dos outros", () => {
-    const html = htmlDoMarcador({ type: { key: "sede" } });
-    expect(html).toContain("mapa-marcador");
-    expect(html).toContain("<svg");
-  });
-
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
-
-  it("o mapa deixou de a desenhar como um círculo azul à mão", () => {
-    expect(app).not.toContain('fillColor: "#1769aa"');
-    expect(app).toContain("htmlDoMarcador(registoDaSede)");
-  });
-
   /*
-    A cor vem da tabela, e não repetida aqui: onde ela tem uma fonte só, não há
-    o que manter em sincronia.
+    O marcador dela sai do mesmo caminho dos outros (o tipo, com a cor da
+    tabela de formas — uma fonte só, nada a manter em sincronia).
   */
-  it("a cor dela vem da tabela de formas", () => {
-    expect(app).toContain('color: formaDoTipo("sede").cor');
+  const dsei = { k: "ALTAMIRA", n: "Altamira", lat: -3.2, lon: -52.2 };
+
+  it("o marcador dela sai do mesmo caminho dos outros", () => {
+    const sede = registroDaSede(dsei);
+    expect(sede.type.key).toBe("sede");
+    expect(sede.type.color).toBe(formaDoTipo("sede").cor);
+    expect([sede.lat, sede.lon]).toEqual([-3.2, -52.2]);
   });
 
   /*
-    A sede não é unidade de saúde. Contá-la em `detailRecordsForDsei` mudaria os
+    A sede não é unidade de saúde. Contá-la nos registros do DSEI mudaria os
     totais da dica e criaria um filtro por tipo para uma coisa só.
   */
   it("não entra na contagem das unidades", () => {
-    const corpo = app.slice(
-      app.indexOf("function detailRecordsForDsei"),
-      app.indexOf("function renderDetailTerraList"),
+    const registros = registrosDoDsei(
+      { ...dsei, polos: [{ n: "POLO X", lat: -3.5, lon: -52.5 }] },
+      { rede: {}, nac: [] },
     );
-    expect(corpo).not.toContain("TIPO_SEDE");
+    expect(registros.length).toBeGreaterThan(0);
+    expect(registros.some((r) => r.type?.key === "sede")).toBe(false);
   });
 });
 
