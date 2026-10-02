@@ -880,11 +880,15 @@ export function Aya({
             </h2>
             <div className="aya-apresentacao">
               <span className="aya-avatar aya-retrato">
-                <img src={AVATAR} alt="" width="78" height="78" />
-                <span className="aya-selo-beta">Beta</span>
+                <img src={AVATAR} alt="" width="64" height="64" />
               </span>
               <div className="aya-apresentacao__textos">
-                <p className="aya-balao">Olá, sou a Aya.</p>
+                <p className="aya-apresentacao__nome">
+                  <span className="aya-balao">Olá, sou a Aya.</span>
+                  <span className="aya-selo-beta aya-selo-beta--nome">
+                    Beta
+                  </span>
+                </p>
                 <span className="aya-painel__pagina">{pagina.nome}</span>
               </div>
             </div>
@@ -961,36 +965,6 @@ export function Aya({
                 aoAceitar={aceitarOferta}
                 aoRecusar={() => setOferta(false)}
               />
-            ) : null}
-
-            {semPergunta && (pagina.sugestoes.length || tourDaTela) ? (
-              <section className="aya-sugestoes" aria-label="Sugestões">
-                <h3>Sugestões</h3>
-                <div className="aya-sugestoes__lista">
-                  {tourDaTela ? (
-                    <button
-                      type="button"
-                      className="aya-sugestao aya-sugestao--tour"
-                      onClick={mostrarEstaTela}
-                    >
-                      <Icone nome="compass" tamanho={14} />
-                      Me mostra esta tela
-                    </button>
-                  ) : null}
-                  {pagina.sugestoes.map((sugestao) => (
-                    <button
-                      key={sugestao.pergunta}
-                      type="button"
-                      className="aya-sugestao"
-                      title={sugestao.pergunta}
-                      disabled={ocupada}
-                      onClick={() => void enviar(sugestao.pergunta)}
-                    >
-                      {sugestao.rotulo}
-                    </button>
-                  ))}
-                </div>
-              </section>
             ) : null}
 
             {semPergunta ? (

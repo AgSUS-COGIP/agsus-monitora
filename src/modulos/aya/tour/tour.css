@@ -164,34 +164,41 @@
   }
 }
 
-/* ---------- No painel: "Me mostra esta tela" e a seção Aprender ---------- */
+/* ---------- No painel: a seção Aprender ---------- */
 
-.aya-sugestao.aya-sugestao--tour {
+/* Recolhida: só o botão "Aprender"; aberta, as trilhas logo abaixo. */
+.aya-aprender__abrir {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border-color: var(--brand-primary);
-  color: var(--brand-primary);
-  font-weight: 600;
-}
-
-.aya-aprender h3 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 8px;
-  color: var(--text-secondary);
+  padding: 6px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
+  cursor: pointer;
+}
+
+.aya-aprender__abrir:hover,
+.aya-aprender__abrir[aria-expanded="true"] {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
 }
 
 .aya-aprender__lista {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin: 0;
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
+}
+
+.aya-aprender__lista[hidden] {
+  display: none;
 }
 
 .aya-trilha {

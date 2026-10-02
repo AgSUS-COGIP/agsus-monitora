@@ -1,22 +1,33 @@
 /*
   O que a Aya mostra para ensinar: a seção "Aprender" do painel (as trilhas
-  que o perfil pode fazer, com o progresso de cada uma) e a oferta de
+  que o perfil pode fazer, com o progresso de cada uma, recolhidas atrás do
+  botão "Aprender" até a pessoa abrir) e a oferta de
   "Primeiros passos" da primeira entrada — um balão perto da arara (ou um
   cartão no painel, se ele estiver aberto), feito uma vez só e sem forçar.
 */
 
+import { useId, useState } from "react";
 import { Icone } from "../../../componentes/icone.jsx";
 import { passoParaRetomar, rotuloDoProgresso } from "../../../lib/aya-tours.js";
 
 export function SecaoAprender({ trilhas, progresso, aoIniciar, desabilitada }) {
+  const [aberta, setAberta] = useState(false);
+  const idDaLista = useId();
   if (!trilhas.length) return null;
   return (
     <section className="aya-aprender" aria-label="Aprender">
-      <h3>
-        <Icone nome="graduation-cap" tamanho={15} />
-        Aprender
-      </h3>
-      <ul className="aya-aprender__lista">
+      <button
+        type="button"
+        className="aya-aprender__abrir"
+        aria-expanded={aberta}
+        aria-controls={idDaLista}
+        onClick={() => setAberta((valor) => !valor)}
+      >
+        <Icone nome="graduation-cap" tamanho={16} />
+        <span>Aprender</span>
+        <Icone nome={aberta ? "chevron-up" : "chevron-down"} tamanho={15} />
+      </button>
+      <ul className="aya-aprender__lista" id={idDaLista} hidden={!aberta}>
         {trilhas.map((trilha) => {
           const entrada = progresso[trilha.id];
           const total = trilha.passos.length;
