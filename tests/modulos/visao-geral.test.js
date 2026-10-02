@@ -66,6 +66,8 @@ const LINHAS = [
     contratados: 4,
     vagas_ociosas: 6,
     inscritos: 80,
+    // Crítico por atraso (etapa chegando não faz crítico).
+    data_fim: "2026-09-28",
     cronograma_automatico: true,
     cronograma_dias_para_proxima: 2,
     cronograma_proxima_data: "2026-10-03",
@@ -568,7 +570,7 @@ describe("tabela de processos", () => {
     expect(primeira.dataset.urgencia).toBe("danger");
     expect(
       primeira.querySelector(".visao-geral-cronograma").textContent,
-    ).toContain("Próxima etapa em 2 dia(s)");
+    ).toContain("Etapa atrasada há 3 dia(s)");
     expect(primeira.querySelector(".visao-geral-taxa").textContent).toBe("60%");
     // javascript: não vira link.
     const yanomami = [...linhas()].find((tr) =>
