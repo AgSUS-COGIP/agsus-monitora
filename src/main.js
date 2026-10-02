@@ -57,7 +57,6 @@ import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.j
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
 import "./modules/monitoramento-operational-transport.js";
-import "./modules/lotacoes-geograficas-transport.js";
 import "./modules/legacy-app.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
 import { instalarCarregamento } from "./modules/carregamento.js";

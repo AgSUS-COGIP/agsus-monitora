@@ -1,16 +1,21 @@
 /*
   O MAPA DE UM DSEI (MODO DETALHADO), SEM LEAFLET
 
-  Junta as três fontes de pontos de um distrito com a prioridade de hoje:
+  Junta os pontos de um distrito, todos do banco (TB_CONFIG_MAPA_SAUDE_INDIG):
 
-    lmap (polos)        a posição do polo é a que já existia no lmap
-                        (`coord_lmap`), ou a apurada pela validação;
+    lmap (polos)        a posição do polo é a do `lmap`, exatamente como está
+                        gravada (auditada em 01–02/10/2026 contra fontes
+                        oficiais — ver docs/auditoria-oficial-das-coordenadas-
+                        2026-10-01.md);
     rede_cnes (u, c)    estabelecimentos do CNES (UBSI, CASAI, polos
-                        cadastrados), já com as Lotações mescladas pelo
-                        transporte (`applyLotacoesGeograficas`);
+                        cadastrados), na coordenada gravada no `rede_cnes`;
     reconciliação       polo do lmap + registro do CNES que são a mesma
-                        estrutura viram um ponto só (`reconciliarDsei`); o que
-                        ela não decide continua como dois registros.
+                        estrutura viram um ponto só (`reconciliarDsei`), na
+                        posição do lmap; o que ela não decide continua como
+                        dois registros.
+
+  Nenhuma outra fonte mexe na posição: a planilha de Lotações e os vereditos
+  da validação de 22/09 saíram do mapa em 02/10/2026.
 
   É o `detailRecordsForDsei` do `legacy-app.js`, mais o vínculo territorial
   (UF do CNES × UFs do DSEI), os filtros por tipo, o resumo da dica e os dois
@@ -20,16 +25,15 @@ import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
 } from "../reconciliacao-unidades.js";
-import { rotuloDaLocalizacao } from "../localizacoes-validadas.js";
 import {
   VINCULO_EXTERNO,
   VINCULO_INDETERMINADO,
   classificarVinculoTerritorial,
 } from "../uf-ibge.js";
-import { formatarNumero, numero, temCoordenada, texto } from "./chaves.js";
+import { formatarNumero, temCoordenada, texto } from "./chaves.js";
 import { TIPO_CASAI, TIPO_POLO, TIPO_SEDE, tipoDaUnidade } from "./formas.js";
 
-/* Estabelecimento compacto do `rede_cnes`: [nome, cnes, lat, lon, município, uf, …, meta]. */
+/* Estabelecimento compacto do `rede_cnes`: [nome, cnes, lat, lon, município, uf]. */
 export function abrirEstabelecimento(a) {
   return {
     n: a?.[0],
@@ -38,7 +42,6 @@ export function abrirEstabelecimento(a) {
     lon: a?.[3],
     mun: a?.[4],
     uf: a?.[5],
-    meta: a?.[9] && typeof a[9] === "object" ? a[9] : null,
   };
 }
 
@@ -60,12 +63,6 @@ export function registrosDoDsei(dsei, redeCnes) {
       lon: e.lon,
       municipio: e.mun,
       uf: e.uf,
-      validacao_coordenada: e.meta?.validacao_coordenada || "pendente",
-      veredicto: e.meta?.veredicto_localizacao || null,
-      confirmacao_independente: e.meta?.confirmacao_independente === true,
-      coordenada_compartilhada_qtd: numero(
-        e.meta?.coordenada_compartilhada_qtd,
-      ),
       _tipoVisual: forcado || tipoDaUnidade(e.n),
     };
   });
@@ -79,15 +76,10 @@ export function registrosDoDsei(dsei, redeCnes) {
     polos: (dsei.polos || []).map((p) => ({
       nome: p.n,
       cnes: p.cnes || "",
-      // Posição do polo: a que já existia no lmap; Lotações e CNES comparam.
-      lat: Number(p.coord_lmap?.lat ?? p.lat),
-      lon: Number(p.coord_lmap?.lon ?? p.lon),
-      coord_lotacoes: p.coord_lotacoes || null,
-      coord_validacao: p.coord_validacao || "pendente",
-      veredicto_localizacao: p.veredicto_localizacao || null,
-      confirmacao_independente: p.confirmacao_independente === true,
+      // Posição do polo: a do lmap, sem substituição.
+      lat: Number(p.lat),
+      lon: Number(p.lon),
       uf: p.uf,
-      mun_lotacao: p.mun_lotacao || "",
       cod: p.cod ?? null,
       tipo: "polo",
     })),
@@ -102,13 +94,8 @@ export function registrosDoDsei(dsei, redeCnes) {
     city: u.municipio,
     uf: u.uf || dsei.sedeuf,
     type: TIPO_POLO,
-    veredicto: u.veredicto || null,
     origens: u.origens,
     nomes: u.nomes,
-    distancia_entre_fontes_km: u.distancia_entre_fontes_km,
-    divergencia: u.divergencia,
-    validacao_coordenada: u.validacao_coordenada || "pendente",
-    confirmacao_independente: u.confirmacao_independente === true,
   }));
 
   // Polos que a reconciliação não casou continuam a existir.
@@ -118,15 +105,12 @@ export function registrosDoDsei(dsei, redeCnes) {
     .map((p) => ({
       name: p.n,
       cnes: "",
-      lat: p.lat,
-      lon: p.lon,
-      city: p.n,
+      lat: Number(p.lat),
+      lon: Number(p.lon),
+      city: "",
       uf: p.uf || dsei.sedeuf,
       type: TIPO_POLO,
-      veredicto: p.veredicto_localizacao || null,
       origens: ["lmap"],
-      validacao_coordenada: p.coord_validacao || "pendente",
-      confirmacao_independente: p.confirmacao_independente === true,
     }));
 
   // Estabelecimentos que nenhuma reconciliação absorveu.
@@ -140,11 +124,7 @@ export function registrosDoDsei(dsei, redeCnes) {
       city: e.municipio,
       uf: e.uf,
       type: e._tipoVisual,
-      veredicto: e.veredicto || null,
       origens: ["rede_cnes"],
-      validacao_coordenada: e.validacao_coordenada || "pendente",
-      confirmacao_independente: e.confirmacao_independente === true,
-      coordenada_compartilhada_qtd: e.coordenada_compartilhada_qtd || 0,
     }));
 
   const vistos = new Set();
@@ -241,7 +221,6 @@ export function registroDaSede(dsei) {
     uf: dsei.sede_uf || dsei.sedeuf || "",
     cnes: "",
     type: TIPO_SEDE,
-    veredicto: null,
   };
 }
 
@@ -280,7 +259,10 @@ export function textoDosVinculosExternos(quantidade) {
     : `${formatarNumero(quantidade)} vínculos fora da área`;
 }
 
-/* O popup diz o que a unidade é; uma linha só sobre a coordenada (o veredito). */
+/*
+  O popup diz o que a unidade é: nome, tipo, município/UF e CNES. Nada sobre
+  a procedência da coordenada — isso a Aya explica (docs/aya/).
+*/
 export function popupDoRegistro(registro) {
   return {
     titulo: registro.type?.label || "",
@@ -289,7 +271,6 @@ export function popupDoRegistro(registro) {
       [registro.city, registro.ufAdministrativa].filter(Boolean).join(" – "),
       registro.cnes ? `CNES: ${registro.cnes}` : "",
     ].filter(Boolean),
-    nota: rotuloDaLocalizacao(registro.veredicto),
   };
 }
 

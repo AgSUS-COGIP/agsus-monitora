@@ -58,14 +58,14 @@ valendo", e os textos longos das listas vazias.
 ## Polos base e pontos no mapa
 
 **perguntas:** polos base e pontos no mapa | por que o numero de polos diverge | no mapa pontos | contagem da dica do dsei
-**resposta:** No MONITORA, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos o distrito tem na planilha de lotações; "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mesmo polo pode vir da planilha e do CNES com nomes ou posições diferentes; quando a reconciliação não tem certeza de que são o mesmo, os dois continuam desenhados.
+**resposta:** No MONITORA, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos o distrito tem no cadastro do mapa no banco (lmap); "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mesmo polo pode estar no lmap e no CNES com nomes ou posições diferentes; quando a reconciliação não tem certeza de que são o mesmo, os dois continuam desenhados. Quando são o mesmo, o ponto fica na posição do lmap.
 **fonte:** interface do MONITORA
 
-## Confiança da localização no popup
+## O que o popup de uma unidade mostra
 
-**perguntas:** localizacao validada | fontes discordam | localizacao em validacao | fonte unica | uf nao determinada | coordenada fora da uf
-**resposta:** No MONITORA, a última linha do popup de cada unidade diz quanto a posição foi conferida: "validada" quando duas fontes independentes concordam ou a UF declarada arbitrou; "fontes discordam" quando a planilha e o CNES apontam lugares diferentes (com a distância); "fora da UF" ou "fora do município" quando a coordenada contradiz o próprio registro; "fonte única" quando só há uma fonte e ela não se contradiz; "dentro da Terra Indígena" quando o ponto cai numa terra publicada pela Funai; e "UF não determinada" quando não houve como conferir. Sem veredito, fica "Localização em validação".
-**fonte:** interface do MONITORA
+**perguntas:** popup da unidade | o que o popup mostra | localizacao validada | fontes discordam | localizacao em validacao | coordenada confirmada | ponto do polo esta certo
+**resposta:** No MONITORA, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); 93 polos ainda aguardam confirmação do DSEI. Se um ponto parecer errado, a correção é feita no banco.
+**fonte:** docs/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.js
 
 ## Terras Indígenas no mapa
 
