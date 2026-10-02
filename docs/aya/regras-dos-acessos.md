@@ -8,8 +8,9 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/componentes/a
 `20260929121300_gestao_de_acessos_delegada.sql`,
 `20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql`,
 `20260930130000_acessos_trava_de_area_e_convite.sql`,
-`20260930160000_coordenador_exige_coordenacao.sql` e
-`20260930180000_contas_desativadas_e_reativacao.sql`.
+`20260930160000_coordenador_exige_coordenacao.sql`,
+`20260930180000_contas_desativadas_e_reativacao.sql` e
+`20261002200000_gestor_coordenadas_e_ultimo_acesso.sql`.
 
 ## Seção Acessos
 
@@ -26,10 +27,17 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/componentes/a
 **fonte:** src/componentes/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql
 **abrir:** config:acessos
 
+## Último acesso
+
+**perguntas:** ultimo acesso | o que e ultimo acesso | ultimo acesso errado | ultimo acesso desatualizado | quando a pessoa usou o sistema | ultimo login
+**resposta:** Em Configurações › Acessos, "Último acesso em …" é a última vez que a pessoa usou o MONITORA: o mais recente entre o último login, a última tela ou ação registrada e o último sinal de presença (enviado enquanto o sistema está aberto). Antes de 02/10/2026 era só o último login, e como a sessão se renova sozinha por semanas, a data ficava velha para quem continuava usando. "Convidado · ainda não entrou" aparece para quem nunca teve nenhum acesso. A aba "Desativadas" usa a mesma conta.
+**fonte:** supabase/migrations/20261002200000_gestor_coordenadas_e_ultimo_acesso.sql; src/lib/convite-de-acesso.js
+**abrir:** config:acessos
+
 ## Grupos de permissões
 
 **perguntas:** o que sao os grupos de permissoes | grupos de permissoes | grupo de acesso | niveis de acesso | o que e editor | o que e leitor | excecao por modulo
-**resposta:** O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Edital gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.
+**resposta:** O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.
 **fonte:** src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/componentes/acessos/gaveta-do-usuario.jsx
 
 ## Coordenações
