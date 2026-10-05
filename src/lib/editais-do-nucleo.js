@@ -479,7 +479,35 @@ export const alertaDoTipo = (tipo) => ALERTAS[tipo] || ALERTAS.ok;
 const EM_ANDAMENTO = ["Em andamento", "Planejado"];
 const PROXIMAS = ["proxima_3d", "proxima_7d"];
 
-/** Os seis indicadores do painel operacional, contados sobre o resumo. */
+/*
+  Ativo ou inativo, pelo status do edital — o mesmo sentido da "Situação do
+  processo" das Análises: inativo é o processo que acabou (Concluído ou
+  Cancelado); os demais (Planejado, Em andamento, Suspenso, Paralisado, sem
+  status) seguem ativos. Os editais desligados no banco (`ativo = false`) nem
+  chegam à tela.
+*/
+export function situacaoDoEdital(status) {
+  const l = low(status);
+  return l.includes("conclu") || l.includes("cancel") ? "inativo" : "ativo";
+}
+
+/** Quantos editais ativos e inativos há no resumo (pelo status de cada um). */
+export function contarAtivosEInativos(resumo) {
+  return (resumo || []).reduce(
+    (acc, item) => {
+      if (situacaoDoEdital(item?.status) === "inativo") acc.inativos += 1;
+      else acc.ativos += 1;
+      return acc;
+    },
+    { ativos: 0, inativos: 0 },
+  );
+}
+
+/** O nome do filtro no chip: a situação (ativos/inativos) ou o alerta. */
+export const rotuloDoFiltroOperacional = (filtro) =>
+  filtro === "ativos" || filtro === "inativos" ? "Situação" : "Alerta";
+
+/** Os oito indicadores do painel operacional, contados sobre o resumo. */
 export function indicadoresDoResumo(resumo) {
   const contagem = (resumo || []).reduce(
     (acc, item) => {
@@ -490,13 +518,28 @@ export function indicadoresDoResumo(resumo) {
     },
     { total: 0, andamento: 0 },
   );
+  const { ativos, inativos } = contarAtivosEInativos(resumo);
   return [
     {
       key: "todos",
-      label: "Editais ativos",
+      label: "Total de editais",
       value: contagem.total,
       icon: "fa-folder-open",
       tone: "blue",
+    },
+    {
+      key: "ativos",
+      label: "Editais ativos",
+      value: ativos,
+      icon: "fa-signal",
+      tone: "green",
+    },
+    {
+      key: "inativos",
+      label: "Editais inativos",
+      value: inativos,
+      icon: "fa-box-archive",
+      tone: "slate",
     },
     {
       key: "andamento",
@@ -543,6 +586,8 @@ export function indicadoresDoResumo(resumo) {
 export function passaNoFiltroOperacional(item, filtro) {
   if (filtro === "todos") return true;
   if (!item) return false;
+  if (filtro === "ativos" || filtro === "inativos")
+    return `${situacaoDoEdital(item.status)}s` === filtro;
   if (filtro === "andamento") return EM_ANDAMENTO.includes(item.status);
   if (filtro === "proxima") return PROXIMAS.includes(item.alerta_tipo);
   return item.alerta_tipo === filtro;

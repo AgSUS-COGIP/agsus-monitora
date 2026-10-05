@@ -1,4 +1,7 @@
-import { indicadoresDoResumo } from "../../lib/editais-do-nucleo.js";
+import {
+  indicadoresDoResumo,
+  rotuloDoFiltroOperacional,
+} from "../../lib/editais-do-nucleo.js";
 import {
   ChipDeFiltro,
   ChipsDeFiltro,
@@ -10,7 +13,8 @@ import {
 
 /*
   "Cronogramas e alertas": os indicadores do resumo (`Kpi` de src/ui/, card
-  compacto de altura igual), que também filtram a tabela. Antes do primeiro
+  compacto de altura igual), que também filtram a tabela (clicar de novo no
+  mesmo indicador tira o filtro). Antes do primeiro
   pedido e enquanto ele corre, os cards são skeleton (carregando não é zero);
   sem edital ativo, um estado vazio curto; erro, o aviso com "Tentar
   novamente" — o detalhe técnico fica no console.
@@ -26,6 +30,7 @@ const TOM = {
   red: "perigo",
   amber: "alerta",
   purple: "neutro",
+  slate: "neutro",
 };
 
 /* Os indicadores de sempre, sem número: o formato do skeleton. */
@@ -52,7 +57,7 @@ export function PainelOperacional({ estado, nucleo }) {
     return (
       <section id="nucleoOperationalKpis" aria-label="Cronogramas e alertas">
         <EstadoVazio className="ui-card ui-vazio">
-          Nenhum edital ativo nesta área.
+          Nenhum edital nesta área.
         </EstadoVazio>
       </section>
     );
@@ -82,7 +87,12 @@ export function PainelOperacional({ estado, nucleo }) {
             ativo={carregando ? undefined : filtro === cartao.key}
             titulo={`Filtrar: ${cartao.label}`}
             aoClicar={
-              carregando ? undefined : () => estado.filtrarPor(cartao.key)
+              carregando
+                ? undefined
+                : () =>
+                    estado.filtrarPor(
+                      filtro === cartao.key ? "todos" : cartao.key,
+                    )
             }
           />
         ))}
@@ -91,7 +101,7 @@ export function PainelOperacional({ estado, nucleo }) {
         <div id="nucleoActiveAlertFilter" role="status">
           <ChipsDeFiltro>
             <ChipDeFiltro
-              rotulo="Alerta"
+              rotulo={rotuloDoFiltroOperacional(filtro)}
               aoTirar={() => estado.filtrarPor("todos")}
             >
               {filtroAtivo}

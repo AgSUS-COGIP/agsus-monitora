@@ -9,8 +9,15 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 ## Tela de Editais
 
 **perguntas:** tela de editais | tela editais | aba editais | para que serve editais | para que serve a tela de editais | equipe nucleo
-**resposta:** Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Editais ativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.
+**resposta:** Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Total de editais, Editais ativos, Editais inativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar; clicar de novo no mesmo indicador tira o filtro. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.
 **fonte:** src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js
+**abrir:** nucleo
+
+## Editais ativos e inativos
+
+**perguntas:** editais ativos | editais inativos | edital inativo | edital ativo | o que e edital inativo | o que e edital ativo | quantos editais ativos | total de editais
+**resposta:** Em Editais, edital inativo é o que teve o processo encerrado: status Concluído ou Cancelado — o mesmo sentido do Inativo da Situação do processo nas Análises curriculares. Os demais (Planejado, Em andamento, Suspenso, Paralisado ou sem status) são ativos. Total de editais é a soma dos dois, só da área atual. Clicar em Editais ativos ou Editais inativos mostra só esses na tabela, com o chip Situação; clicar de novo, ou no x do chip, volta a mostrar todos. Edital desligado no banco não aparece na tela.
+**fonte:** src/lib/editais-do-nucleo.js; src/modulos/editais/painel-operacional.jsx; docs/historias-de-usuario/editais.md
 **abrir:** nucleo
 
 ## Status e etapa calculados pelo cronograma

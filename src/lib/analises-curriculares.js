@@ -579,6 +579,7 @@ export function tendenciaDiaria(linhas) {
         fora: 0,
         futuras: 0,
         data: dataDaPlanilha(linha.data_analise),
+        chave: chaveDoDia(linha.data_analise),
       });
     const dia = porDia.get(rotulo);
     dia.valor += 1;
@@ -588,6 +589,92 @@ export function tendenciaDiaria(linhas) {
   return [...porDia.values()].sort(
     (a, b) => (a.data?.getTime() || 0) - (b.data?.getTime() || 0),
   );
+}
+
+/* ── Filtro por data (o dia clicado em "Análises por data") ────────── */
+
+const doisDigitos = (numero) => String(numero).padStart(2, "0");
+const CHAVE_DO_DIA = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * O dia da data da análise como chave `aaaa-mm-dd` (no fuso do navegador, o
+ * mesmo do rótulo do gráfico); "" sem data reconhecida. É o formato do
+ * `<input type="date">`, então o clique no gráfico e o campo falam a mesma
+ * língua.
+ */
+export function chaveDoDia(valor) {
+  const data = dataDaPlanilha(valor);
+  if (!data) return "";
+  return `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}`;
+}
+
+/** Sem filtro de data. */
+export const PERIODO_VAZIO = Object.freeze({ inicio: "", fim: "" });
+
+/** Só chaves válidas, com início ≤ fim (trocados, desvira). */
+export function normalizarPeriodo(periodo) {
+  const valida = (chave) =>
+    CHAVE_DO_DIA.test(texto(chave)) ? texto(chave) : "";
+  const inicio = valida(periodo?.inicio);
+  const fim = valida(periodo?.fim);
+  if (inicio && fim && inicio > fim) return { inicio: fim, fim: inicio };
+  return { inicio, fim };
+}
+
+export function temPeriodo(periodo) {
+  const { inicio, fim } = normalizarPeriodo(periodo);
+  return Boolean(inicio || fim);
+}
+
+/** O dia (chave) está dentro do período? As pontas contam; sem período, sim. */
+export function diaNoPeriodo(chave, periodo) {
+  const { inicio, fim } = normalizarPeriodo(periodo);
+  if (!inicio && !fim) return true;
+  if (!chave) return false;
+  return (!inicio || chave >= inicio) && (!fim || chave <= fim);
+}
+
+/**
+ * As linhas cuja data da análise cai no período — o mesmo campo do gráfico.
+ * Com período, a linha sem data sai; sem período, todas ficam (mesmo array).
+ */
+export function filtrarPorPeriodo(linhas, periodo) {
+  const lista = linhas || [];
+  if (!temPeriodo(periodo)) return lista;
+  return lista.filter((linha) =>
+    diaNoPeriodo(chaveDoDia(linha.data_analise), periodo),
+  );
+}
+
+/**
+ * O período depois de clicar num dia do gráfico: um dia só; o mesmo dia de
+ * novo tira o filtro. `estender` (Shift + clique): do início do período atual
+ * até o dia clicado, em qualquer ordem.
+ */
+export function periodoDoClique(atual, dia, { estender = false } = {}) {
+  if (!CHAVE_DO_DIA.test(texto(dia))) return normalizarPeriodo(atual);
+  const { inicio, fim } = normalizarPeriodo(atual);
+  if (estender && (inicio || fim))
+    return normalizarPeriodo({ inicio: inicio || fim, fim: dia });
+  if (inicio === dia && fim === dia) return PERIODO_VAZIO;
+  return { inicio: dia, fim: dia };
+}
+
+const dataDaChave = (chave) => {
+  const [ano, mes, dia] = chave.split("-");
+  return `${dia}/${mes}/${ano}`;
+};
+
+/** "28/09/2026", "01/09/2026 a 15/09/2026", "a partir de …" ou "até …"; "" sem período. */
+export function rotuloDoPeriodo(periodo) {
+  const { inicio, fim } = normalizarPeriodo(periodo);
+  if (inicio && fim)
+    return inicio === fim
+      ? dataDaChave(inicio)
+      : `${dataDaChave(inicio)} a ${dataDaChave(fim)}`;
+  if (inicio) return `a partir de ${dataDaChave(inicio)}`;
+  if (fim) return `até ${dataDaChave(fim)}`;
+  return "";
 }
 
 /* ── Pendências prioritárias ───────────────────────────────────────── */
@@ -670,6 +757,7 @@ export function descricaoDoRecorte({
   filtros,
   kpi = "",
   responsavel = "",
+  periodo = PERIODO_VAZIO,
 }) {
   const partes = [`Situação do processo: ${rotuloDoEscopo(escopo)}`];
   for (const { campo, rotulo } of FILTROS) {
@@ -682,6 +770,7 @@ export function descricaoDoRecorte({
   if (texto(filtros?.busca)) partes.push(`Busca: ${texto(filtros.busca)}`);
   if (STATUS_DO_KPI[kpi]) partes.push(`KPI: ${ROTULO_DO_KPI[kpi]}`);
   if (responsavel) partes.push(`Responsável no gráfico: ${responsavel}`);
+  if (temPeriodo(periodo)) partes.push(`Data: ${rotuloDoPeriodo(periodo)}`);
   return `Recorte ativo: ${partes.join(" · ")}`;
 }
 

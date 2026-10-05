@@ -438,6 +438,8 @@ describe("filtros", () => {
       "Categoria",
       "Modalidade de concorrência",
       "Validação da janela",
+      "Data da análise: de",
+      "Data da análise: até",
       "Buscar em toda a tela",
     ]);
 
@@ -617,6 +619,151 @@ describe("gráficos", () => {
       document.dispatchEvent(new CustomEvent(EVENTO_TEMA_ALTERADO)),
     );
     expect(grafico("chartTendencia").atualizacoes).toBeGreaterThan(antes);
+  });
+});
+
+/* Histórias em docs/historias-de-usuario/analises-curriculares.md. */
+describe("AC-1/AC-2 — filtro por data no gráfico Análises por data", () => {
+  // Os dias do gráfico: 0 = 01/09 (Bruno), 1 = 15/09 (Ana), 2 = 20/09 (Clara).
+  const clicarNoDia = (indice, shiftKey = false) =>
+    act(async () =>
+      grafico("chartTendencia").options.onClick({ native: { shiftKey } }, [
+        { index: indice },
+      ]),
+    );
+  const chipDaData = () =>
+    [...secao.querySelectorAll(".ui-recorte .ui-chip")].find((c) =>
+      c.textContent.includes("Data"),
+    );
+  const pendencia = (chave) =>
+    secao.querySelector(`[data-pendencia="${chave}"]`);
+
+  it("AC-1.1 — o dia clicado recorta KPIs, responsável, pendências e fila", async () => {
+    await montar(supabaseFalso());
+    expect(grafico("chartTendencia").options.interaction).toMatchObject({
+      mode: "index",
+      intersect: false,
+    });
+    await clicarNoDia(0);
+    expect(candidatos()).toEqual(["Bruno Lima"]);
+    expect(valorDoKpi("total")).toBe("1");
+    expect(valorDoKpi("revisar")).toBe("1");
+    expect(grafico("chartResponsavel").data.labels).toEqual(["Diego"]);
+    expect(pendencia("fora-do-periodo").textContent).toContain(
+      "1 análise(s) fora",
+    );
+    expect(pendencia("sem-responsavel")).toBeNull();
+  });
+
+  it("AC-1.2/AC-1.3 — chip Data no recorte e nos filtros; o gráfico guarda todos os dias e destaca o escolhido", async () => {
+    await montar(supabaseFalso());
+    await clicarNoDia(1);
+    expect(recorte()).toBe(
+      "Recorte ativo: Situação do processo: Ativo · Data: 15/09/2026",
+    );
+    expect(chipDaData().textContent).toContain("15/09/2026");
+    expect(
+      secao.querySelector('button[title="Tirar o filtro Data"]'),
+    ).not.toBeNull();
+    expect(
+      [...secao.querySelectorAll(".ui-filtros .ui-chip")].some((c) =>
+        c.textContent.includes("15/09/2026"),
+      ),
+    ).toBe(true);
+    const linha = grafico("chartTendencia");
+    expect(linha.data.labels).toEqual([
+      "01/09/2026",
+      "15/09/2026",
+      "20/09/2026",
+    ]);
+    expect(linha.data.datasets[0].pointRadius).toEqual([5, 8, 3]);
+    expect(linha.data.datasets[0].pointBorderWidth).toEqual([1, 3, 1]);
+  });
+
+  it("AC-1.4/AC-1.5 — o mesmo dia de novo tira; outro dia troca; o x do chip tira", async () => {
+    await montar(supabaseFalso());
+    await clicarNoDia(1);
+    expect(candidatos()).toEqual(["Ana Ribeiro"]);
+    await clicarNoDia(1);
+    expect(linhasDaFila()).toHaveLength(4);
+    expect(chipDaData()).toBeUndefined();
+
+    await clicarNoDia(1);
+    await clicarNoDia(2);
+    expect(candidatos()).toEqual(["Clara Souza"]);
+    await clicar(chipDaData());
+    expect(linhasDaFila()).toHaveLength(4);
+    expect(recorte()).toBe("Recorte ativo: Situação do processo: Ativo");
+  });
+
+  it("AC-1.6 — vale junto com os outros filtros; Limpar tudo tira a data; o CSV leva a data", async () => {
+    await montar(supabaseFalso());
+    await marcarNoFiltro("responsavel", "Diego");
+    expect(candidatos()).toEqual(["Bruno Lima", "Clara Souza"]);
+    // Só os dias de Diego no gráfico: 0 = 01/09, 1 = 20/09.
+    await clicarNoDia(1);
+    expect(candidatos()).toEqual(["Clara Souza"]);
+
+    await clicar(secao.querySelector('[data-acao="exportar"]'));
+    await esperar();
+    const [csv] = baixar.mock.calls.at(-1);
+    expect(csv).toContain("Clara Souza");
+    expect(csv).not.toContain("Bruno Lima");
+
+    await clicar(secao.querySelector('[data-acao="limpar-filtros"]'));
+    expect(linhasDaFila()).toHaveLength(4);
+    expect(chipDaData()).toBeUndefined();
+  });
+
+  it("AC-1.7 — a análise sem data sai com o filtro de data", async () => {
+    await montar(supabaseFalso());
+    await clicarNoDia(0);
+    await clicarNoDia(2, true);
+    expect(candidatos()).not.toContain("<img src=x onerror=alert(1)>");
+  });
+
+  it("AC-2.1 — Shift + clique estende o dia para um intervalo", async () => {
+    await montar(supabaseFalso());
+    await clicarNoDia(1);
+    await clicarNoDia(0, true);
+    expect([...candidatos()].sort()).toEqual(["Ana Ribeiro", "Bruno Lima"]);
+    expect(chipDaData().textContent).toContain("01/09/2026 a 15/09/2026");
+    expect(grafico("chartTendencia").data.datasets[0].pointRadius).toEqual([
+      8, 8, 3,
+    ]);
+  });
+
+  it("AC-2.2 — os campos de data em Mais opções aplicam o mesmo filtro e mostram o dia clicado", async () => {
+    await montar(supabaseFalso());
+    const inicio = document.getElementById("analises-filtro-data-inicio");
+    const fim = document.getElementById("analises-filtro-data-fim");
+    expect(inicio.type).toBe("date");
+    await clicarNoDia(1);
+    expect(inicio.value).toBe("2026-09-15");
+    expect(fim.value).toBe("2026-09-15");
+    await clicar(chipDaData());
+
+    await digitar(inicio, "2026-09-15");
+    expect([...candidatos()].sort()).toEqual(["Ana Ribeiro", "Clara Souza"]);
+    expect(chipDaData().textContent).toContain("a partir de 15/09/2026");
+    await digitar(fim, "2026-09-15");
+    expect(candidatos()).toEqual(["Ana Ribeiro"]);
+    expect(
+      secao.querySelector('[data-acao="mais-opcoes"] .ui-contagem').textContent,
+    ).toBe("1");
+  });
+
+  it("AC-2.3 — o rótulo do gráfico diz como filtrar e qual data está escolhida", async () => {
+    await montar(supabaseFalso());
+    const canvas = () => document.getElementById("chartTendencia");
+    expect(canvas().getAttribute("aria-label")).toContain(
+      "Clique num dia para filtrar a tela",
+    );
+    expect(canvas().getAttribute("aria-label")).toContain("Mais opções");
+    await clicarNoDia(1);
+    expect(canvas().getAttribute("aria-label")).toContain(
+      "Data escolhida: 15/09/2026",
+    );
   });
 });
 

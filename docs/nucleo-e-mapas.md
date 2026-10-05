@@ -8,26 +8,30 @@ que ela significa e o que fazer quando não aparece.
 ### Para que serve
 
 A Equipe Núcleo acompanha os cronogramas dos editais. O painel
-**Acompanhamento operacional**, no topo da fila, resume em seis indicadores o
-estado de todos os editais ativos e sinaliza quais deles exigem atenção.
+**Acompanhamento operacional**, no topo da fila, resume em oito indicadores o
+estado dos editais da área e sinaliza quais deles exigem atenção.
 
-### Os seis indicadores
+### Os oito indicadores
 
-| Indicador           | O que conta                                                               |
-| ------------------- | ------------------------------------------------------------------------- |
-| **Editais ativos**  | Todos os editais no resumo. É o total de referência.                      |
-| **Em andamento**    | Editais com situação _Em andamento_ ou _Planejado_.                       |
-| **Sem cronograma**  | Editais sem nenhuma etapa cadastrada.                                     |
-| **Incompletos**     | Editais com cronograma começado, mas com etapas em falta.                 |
-| **Próximos 7 dias** | Editais cuja próxima etapa vence em até 7 dias — inclui os de até 3 dias. |
-| **Excepcionais**    | Editais em situação excepcional, registrada manualmente.                  |
+| Indicador            | O que conta                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| **Total de editais** | Todos os editais no resumo. É o total de referência (ativos + inativos).                        |
+| **Editais ativos**   | Processo ainda em curso: status _Planejado_, _Em andamento_, _Suspenso_, _Paralisado_ ou vazio. |
+| **Editais inativos** | Processo que acabou: status _Concluído_ ou _Cancelado_.                                         |
+| **Em andamento**     | Editais com situação _Em andamento_ ou _Planejado_.                                             |
+| **Sem cronograma**   | Editais sem nenhuma etapa cadastrada.                                                           |
+| **Incompletos**      | Editais com cronograma começado, mas com etapas em falta.                                       |
+| **Próximos 7 dias**  | Editais cuja próxima etapa vence em até 7 dias — inclui os de até 3 dias.                       |
+| **Excepcionais**     | Editais em situação excepcional, registrada manualmente.                                        |
 
 ### Filtrar a fila
 
 Cada indicador é um botão. Clicar filtra a fila abaixo para mostrar apenas os
-editais daquele grupo; clicar de novo noutro indicador troca o filtro.
+editais daquele grupo; clicar de novo no mesmo indicador tira o filtro, e
+clicar noutro indicador troca o filtro.
 
-Com um filtro aplicado aparece o chip **Alerta: …**; o **x** dele volta a
+Com um filtro aplicado aparece o chip **Alerta: …** (ou **Situação: …**, para
+ativos e inativos); o **x** dele volta a
 mostrar tudo. O indicador aplicado fica marcado
 também para leitores de tela, não só pela cor.
 

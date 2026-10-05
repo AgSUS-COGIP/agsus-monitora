@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   areaDaUnidade,
   compararEditais,
+  contarAtivosEInativos,
   editalParaSalvar,
   formularioDoEdital,
   indexarResumo,
@@ -10,7 +11,10 @@ import {
   opcoesDeUnidade,
   periodoDoCronograma,
   passaNoFiltroOperacional,
+  resumoDasLinhas,
   resumoDoEdital,
+  rotuloDoFiltroOperacional,
+  situacaoDoEdital,
   unidadesDaArea,
   unidadesDisponiveis,
 } from "../src/lib/editais-do-nucleo.js";
@@ -154,6 +158,8 @@ describe("resumo e filtro operacional", () => {
     );
     expect(valores).toEqual({
       todos: 3,
+      ativos: 2,
+      inativos: 1,
       andamento: 2,
       sem_cronograma: 0,
       incompleto: 1,
@@ -165,7 +171,73 @@ describe("resumo e filtro operacional", () => {
   it("sem resumo, a linha só aparece sem filtro", () => {
     expect(passaNoFiltroOperacional(null, "todos")).toBe(true);
     expect(passaNoFiltroOperacional(null, "incompleto")).toBe(false);
+    expect(passaNoFiltroOperacional(null, "ativos")).toBe(false);
     expect(passaNoFiltroOperacional(resumo[1], "proxima")).toBe(true);
+  });
+});
+
+/* Histórias em docs/historias-de-usuario/editais.md. */
+describe("ED-1 — editais ativos e inativos (regra)", () => {
+  it("ED-1.1 — os cartões Editais ativos e Editais inativos, e o Total de editais é a soma", () => {
+    const resumo = [
+      { id: "1", status: "Em andamento" },
+      { id: "2", status: "Planejado" },
+      { id: "3", status: "Concluído" },
+    ];
+    const cartoes = Object.fromEntries(
+      indicadoresDoResumo(resumo).map((c) => [c.key, c]),
+    );
+    expect(cartoes.todos.label).toBe("Total de editais");
+    expect(cartoes.ativos).toMatchObject({ label: "Editais ativos", value: 2 });
+    expect(cartoes.inativos).toMatchObject({
+      label: "Editais inativos",
+      value: 1,
+    });
+    expect(cartoes.ativos.value + cartoes.inativos.value).toBe(
+      cartoes.todos.value,
+    );
+  });
+
+  it("ED-1.2 — cancelado é inativo; suspenso, paralisado e sem status são ativos (sem caixa nem acento)", () => {
+    expect(situacaoDoEdital("Cancelado")).toBe("inativo");
+    expect(situacaoDoEdital("concluido")).toBe("inativo");
+    expect(situacaoDoEdital("CONCLUÍDO")).toBe("inativo");
+    expect(situacaoDoEdital("Suspenso")).toBe("ativo");
+    expect(situacaoDoEdital("Paralisado")).toBe("ativo");
+    expect(situacaoDoEdital("")).toBe("ativo");
+    expect(situacaoDoEdital(null)).toBe("ativo");
+    expect(
+      contarAtivosEInativos([
+        { status: "Cancelado" },
+        { status: "Suspenso" },
+        {},
+        null,
+      ]),
+    ).toEqual({ ativos: 3, inativos: 1 });
+  });
+
+  it("ED-1.3 — conta só os editais da área (o resumo recortado pelas linhas da área)", () => {
+    const resumo = [
+      { id: "1", unidade: "DSEI", edital: "01", status: "Em andamento" },
+      { id: "2", unidade: "SEDE", edital: "02", status: "Concluído" },
+      { id: "3", unidade: "SEDE", edital: "03", status: "Cancelado" },
+    ];
+    const daArea = resumoDasLinhas(resumo, [{ id: "2" }, { id: "3" }]);
+    expect(contarAtivosEInativos(daArea)).toEqual({ ativos: 0, inativos: 2 });
+  });
+
+  it("ED-2.1 — o filtro de situação recorta pelo status e o chip diz Situação", () => {
+    expect(passaNoFiltroOperacional({ status: "Concluído" }, "inativos")).toBe(
+      true,
+    );
+    expect(passaNoFiltroOperacional({ status: "Concluído" }, "ativos")).toBe(
+      false,
+    );
+    expect(passaNoFiltroOperacional({ status: "Suspenso" }, "ativos")).toBe(
+      true,
+    );
+    expect(rotuloDoFiltroOperacional("inativos")).toBe("Situação");
+    expect(rotuloDoFiltroOperacional("sem_cronograma")).toBe("Alerta");
   });
 });
 
