@@ -125,7 +125,6 @@
 }
 
 .mapa-projetos-lugar__projeto,
-.mapa-projetos__balao-edital,
 .mapa-projetos__grupo-titulo {
   display: flex;
   align-items: center;
@@ -215,12 +214,21 @@
   color: var(--text-secondary);
 }
 
-/* Balão (dica e popup): as linhas dos editais quebram na palavra. */
-.mapa-projetos__balao {
-  white-space: normal;
-  overflow-wrap: anywhere;
+/*
+  Balão (dica e popup): cada edital é uma linha de texto corrido — bolinha,
+  projeto em negrito e o resto —, que quebra na palavra. Não é flex: o texto
+  solto virava um item ao lado do projeto e espremia o nome numa coluna de
+  uma letra ("Saúde nas Fronteiras" letra a letra). Nem `white-space: normal`
+  nem `overflow-wrap: anywhere` no balão: o Leaflet mede o popup sem quebra
+  para escolher a largura (até o `maxWidth`), e os dois reduziam essa medida
+  à de uma letra — o popup ficava na largura mínima. A dica quebra pela
+  `.dica-no-mapa` (src/ui/ui.css).
+*/
+.mapa-projetos__balao-edital {
+  display: block;
+  overflow-wrap: break-word;
 }
 
-.mapa-projetos__balao-edital {
-  align-items: baseline;
+.mapa-projetos__balao-edital .mapa-projeto__cor {
+  margin-right: var(--space-1-5);
 }
