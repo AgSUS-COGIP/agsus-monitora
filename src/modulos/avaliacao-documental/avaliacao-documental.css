@@ -190,3 +190,31 @@
     position: static;
   }
 }
+
+/* Aba Pré-classificação (fase F2). */
+.avd-pre {
+  display: grid;
+  gap: var(--space-4);
+}
+.avd-vaga,
+.avd-listas {
+  display: grid;
+  gap: var(--space-3);
+}
+.avd-vaga input[type="number"] {
+  width: 6rem;
+}
+.avd-linha-de-corte td {
+  border-top: 2px dashed var(--border-control);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+.avd-diverge {
+  color: var(--color-status-warning-text);
+  white-space: nowrap;
+}
+.avd-eliminados summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+}

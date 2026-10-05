@@ -12,7 +12,11 @@
   nome do arquivo.
 */
 import { escaparXml, zipSemCompressao } from "../documento-da-resposta.js";
-import { MOTIVOS_DE_ELIMINACAO, TIPOS_DE_LISTA } from "./catalogo.js";
+import {
+  MOTIVOS_DE_ELIMINACAO,
+  TIPOS_DE_LISTA,
+  TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO,
+} from "./catalogo.js";
 import { normalizarRegra } from "./regra.js";
 
 export const MIME_XLSX =
@@ -115,14 +119,18 @@ const rotuloDaModalidade = (codigo, modalidades) =>
 /** "classificacao-final-83-2026" (sem extensão). */
 export function nomeDoArquivo(retrato, lista = "todas") {
   const tipo =
-    TIPOS_DE_LISTA.find(([v]) => v === retrato.tipo)?.[0]?.toLowerCase() ||
-    "lista";
+    [...TIPOS_DE_LISTA, ...TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO]
+      .find(([v]) => v === retrato.tipo)?.[0]
+      ?.toLowerCase() || "lista";
+  const lote =
+    retrato.tipo === "LOTE" && retrato.lote ? `lote-${retrato.lote}` : "";
   const edital = String(retrato.edital?.edital || "edital")
     .replace(/[^0-9a-z]+/gi, "-")
     .replace(/^-+|-+$/g, "");
   return [
     "classificacao",
     tipo,
+    lote,
     edital,
     lista !== "todas" ? lista.toLowerCase() : "",
   ]
