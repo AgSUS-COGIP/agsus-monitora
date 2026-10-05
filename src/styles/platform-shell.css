@@ -35,11 +35,45 @@
   background-color: var(--surface-page);
   background-image: var(--login-background-image, none);
   background-size: cover;
-  background-position: center;
+  /*
+    A arte de acesso é 16:9 com o desenho à direita e o lado esquerdo livre
+    para o cartão: quando sobra largura, o corte cai à esquerda, não no logo.
+  */
+  background-position: right center;
   padding: clamp(28px, 5vh, 64px) clamp(24px, 3.2vw, 64px);
 }
 .login-screen::before {
   display: none;
+}
+/*
+  Tela mais larga que a arte (notebook, janela baixa): o "cover" cortava em
+  cima e embaixo (o logo da AgSUS sumia). Aqui a arte aparece inteira à
+  direita e o resto é a própria arte desfocada, sem faixa de cor solta.
+*/
+@media (min-aspect-ratio: 16/9) {
+  .login-screen {
+    background-image: none;
+  }
+  .login-screen::before,
+  .login-screen::after {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--login-background-image, none);
+    background-repeat: no-repeat;
+  }
+  .login-screen::before {
+    background-size: cover;
+    background-position: center;
+    filter: blur(28px);
+    transform: scale(1.08);
+  }
+  .login-screen::after {
+    background-size: contain;
+    background-position: right center;
+  }
 }
 .login-screen::after {
   display: none;
