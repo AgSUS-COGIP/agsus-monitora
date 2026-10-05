@@ -1023,6 +1023,19 @@ export const CONTRATO_RPC = {
     resumo:
       "Apaga de fato todas as mensagens e reações do chat (e, com p_incluir_conversas, as conversas sem participante ativo). p_confirmacao exatamente ZERAR e motivo de 3 a 500 (22023). Só administrador global (42501).",
   },
+  // ── Avaliação documental: pré-classificação e listas (20261006110000_pre_classificacao_e_lote.sql)
+  obter_pre_classificacao: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Leitor da Avaliação documental.",
+  },
+  registrar_lista_pre_classificacao: {
+    argumentos: ["p_edital", "p_tipo", "p_lote"],
+    critica: false,
+    resumo:
+      "Registra a lista PROVISORIA ou LOTE (p_lote = só aquela reposição) em TB_LISTA_CLASSIFICACAO, com o retrato montado no banco a partir da pré-classificação. Coordenação do edital ou Editor na Classificação; exige a regra de classificação.",
+  },
   // ── Avaliação documental: regra e equipe (20261006100000_regra_da_analise.sql)
   listar_editais_avaliacao: {
     argumentos: ["p_area"],
