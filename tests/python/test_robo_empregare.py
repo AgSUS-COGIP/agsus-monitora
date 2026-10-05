@@ -318,6 +318,21 @@ class FluxoDeUmaVaga(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.robo.argumentos(["--vagas", "17a979"])
 
+    def test_contagem_por_origem_das_vagas(self):
+        vagas = [
+            {"vaga": "999999101", "origem": "quadro"},
+            {"vaga": "999999102", "origem": "quadro"},
+            {"vaga": "999999103", "origem": "selecao"},
+            {"vaga": "999999104", "origem": "pedida"},
+            {"vaga": "999999105"},  # banco antes da migration 20261006080000: sem origem = Seleção
+        ]
+        self.assertEqual(
+            self.robo.contagem_por_origem(vagas),
+            "quadro do edital 2 · Seleção 2 · pedidas fora das duas 1",
+        )
+        self.assertEqual(self.robo.contagem_por_origem([]), "—")
+        self.assertEqual(self.robo.contagem_por_origem([{"vaga": "1", "origem": "outra"}]), "outra 1")
+
 
 if __name__ == "__main__":
     unittest.main()
