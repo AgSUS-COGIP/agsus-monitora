@@ -19,6 +19,7 @@ export function Segmentado({
   aoMudar,
   desabilitado = false,
   className,
+  tour,
 }) {
   const botoes = useRef([]);
   const temEscolha = opcoes.some((o) => o.valor === valor);
@@ -37,6 +38,7 @@ export function Segmentado({
       className={classes("ui-segmentado", className)}
       role="radiogroup"
       aria-label={rotulo}
+      data-tour={tour}
     >
       {opcoes.map((opcao, indice) => {
         const escolhida = valor === opcao.valor;

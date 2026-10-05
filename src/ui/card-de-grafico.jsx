@@ -14,12 +14,14 @@ export function CardDeGrafico({
   altura,
   carregando = false,
   elemento: Elemento = "article",
+  tour,
   children,
 }) {
   return (
     <Elemento
       className={classes("ui-card ui-card-de-grafico", className)}
       aria-busy={carregando || undefined}
+      data-tour={tour}
     >
       <h2 className="ui-titulo">{titulo}</h2>
       <div

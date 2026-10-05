@@ -36,6 +36,7 @@ export function Kpi({
   aoClicar,
   carregando = false,
   idDoValor,
+  tour,
 }) {
   const conteudo = (
     <>
@@ -71,6 +72,7 @@ export function Kpi({
         ativo && "is-ativo",
       )}
       data-kpi={chave}
+      data-tour={tour}
       data-tom={tom || TOM_DA_COR[cor] || "info"}
       title={aoClicar ? undefined : titulo}
       aria-busy={carregando || undefined}
@@ -93,12 +95,13 @@ export function Kpi({
 }
 
 /** A grade de indicadores. */
-export function GradeDeKpis({ id, className, rotulo, children }) {
+export function GradeDeKpis({ id, className, rotulo, tour, children }) {
   return (
     <section
       className={classes("ui-kpis", className)}
       id={id}
       aria-label={rotulo}
+      data-tour={tour}
     >
       {children}
     </section>
