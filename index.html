@@ -501,7 +501,7 @@
             <details id="topUserMenu" class="top-user-menu">
               <summary
                 class="top-user-button"
-                aria-label="Abrir perfil do usuário"
+                aria-label="Abrir informações da conta"
               >
                 <span
                   id="topUserAvatar"
@@ -526,11 +526,7 @@
                 <strong id="topUserPopoverName">-</strong>
                 <small id="userEmail">-</small>
                 <span id="topUserPopoverProfile"></span>
-                <!--
-                  Ações do antigo botão "⋮" do cabeçalho: agora ficam no menu da conta,
-                  um lugar só para o que é da pessoa e da sessão. Modo escuro e Sair são
-                  retirados daqui por nielsen-shell-ux.js (estão na barra lateral).
-                -->
+                <!-- Ações da conta. Tema e Sair ficam no rodapé da barra lateral. -->
                 <div class="top-user-popover-actions">
                   <button type="button" onclick="refreshData(); this.closest('details').removeAttribute('open')">
                     <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
@@ -543,17 +539,6 @@
                   <button type="button" onclick="this.closest('details').removeAttribute('open'); exportPDF()">
                     <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
                     <span id="exportPdfActionText">Exportar relatório (PDF)</span>
-                  </button>
-                  <button type="button" onclick="toggleDarkMode()">
-                    <i class="fa-solid fa-moon" aria-hidden="true"></i>
-                    <span>Alternar modo escuro</span>
-                  </button>
-                  <button type="button" onclick="logout()">
-                    <i
-                      class="fa-solid fa-right-from-bracket"
-                      aria-hidden="true"
-                    ></i>
-                    <span>Sair do sistema</span>
                   </button>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 import {
   CHAVES_DAS_SECOES,
@@ -6,7 +7,7 @@ import {
   normalizarValoresCarregados,
 } from "../src/lib/publicacao-de-configuracoes.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");

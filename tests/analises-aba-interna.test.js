@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel.js";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
@@ -16,7 +17,7 @@ import {
   o módulo React src/modulos/analises/, sem quadro.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const legado = ler("src/modules/legacy-app.js");
+const legado = fonteDoApp();
 const trecho = (inicio, fim) =>
   legado.slice(
     legado.indexOf(inicio),

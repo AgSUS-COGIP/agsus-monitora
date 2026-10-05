@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "../fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 
 /*
@@ -11,7 +12,7 @@ import { describe, expect, it } from "vitest";
 */
 
 const indexHtml = readFileSync("index.html", "utf8");
-const legado = readFileSync("src/modules/legacy-app.js", "utf8");
+const legado = fonteDoApp();
 
 describe("a Visão geral não tem mapa legado", () => {
   it("o index.html não tem o bloco do mapa nem a reserva", () => {

@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 
 const html = readFileSync("index.html", "utf8");
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 
 describe("platform shell invariants", () => {
   it("remove o modo executivo da interface e do runtime", () => {

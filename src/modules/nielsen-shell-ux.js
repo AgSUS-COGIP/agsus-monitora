@@ -1,11 +1,5 @@
-import {
-  avisar,
-  EVENTO_TEMA_ALTERADO,
-} from "../lib/eventos-da-barra-lateral.js";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { sessaoDoApp } from "../app/sessao.js";
-
-const THEME_STORAGE_KEY = "agsus_dark_mode_v1";
 
 let initialized = false;
 let logoutConfirmationResolver = null;
@@ -13,15 +7,11 @@ let logoutPreviousFocus = null;
 let logoutAction = null;
 let logoutRunning = false;
 
-function text(value) {
-  return String(value ?? "").trim();
-}
-
 /*
   Tema: o seletor Claro/Escuro mora no rodapé da barra lateral, junto do Sair
   (`src/componentes/barra-lateral/rodape.jsx`). É o único controle de tema — o
   botão que ficava no cabeçalho saiu. Daqui saem o estado e a regra que o
-  rodapé usa; este módulo só mantém o tema em dia e avisa quando ele troca.
+  rodapé usa; o tema em si (aplicar, alternar, outra aba) é de src/app/moldura.js.
 */
 export const OPCOES_DE_TEMA = Object.freeze([
   Object.freeze({ tema: "claro", rotulo: "Claro", icone: "sun" }),
@@ -49,72 +39,6 @@ export function themeControlState(isDark) {
         title: "Tema claro",
         pressed: "false",
       };
-}
-
-function isDarkTheme() {
-  return document.documentElement.getAttribute("data-theme") === "dark";
-}
-
-/*
-  Mantém `color-scheme` em dia e avisa a barra lateral (React), que lê o tema
-  de `html[data-theme]`.
-*/
-function syncThemeState() {
-  document.documentElement.style.colorScheme = isDarkTheme() ? "dark" : "light";
-  avisar(EVENTO_TEMA_ALTERADO);
-}
-
-/*
-  `toggleDarkMode` (legado) inverte o tema. Embrulhada aqui, avisa depois de
-  cada troca; o espelho `body.dark-mode` é do próprio `applyDarkMode`. A troca
-  feita em outra aba chega pelo `storage`.
-*/
-function installThemeSync() {
-  const originalToggle = window.toggleDarkMode;
-  if (
-    typeof originalToggle === "function" &&
-    !originalToggle.__nielsenUxWrapped
-  ) {
-    const wrappedToggle = (...args) => {
-      const result = originalToggle(...args);
-      window.setTimeout(syncThemeState, 0);
-      return result;
-    };
-    wrappedToggle.__nielsenUxWrapped = true;
-    wrappedToggle.__original = originalToggle;
-    window.toggleDarkMode = wrappedToggle;
-  }
-
-  window.addEventListener("storage", (event) => {
-    if (event.key && event.key !== THEME_STORAGE_KEY) return;
-    if (event.newValue !== "1" && event.newValue !== "0") return;
-    document.documentElement.setAttribute(
-      "data-theme",
-      event.newValue === "1" ? "dark" : "",
-    );
-    syncThemeState();
-  });
-
-  syncThemeState();
-}
-
-function removeLegacyAccountActions() {
-  const actions = document.querySelector(
-    "#topUserMenu .top-user-popover-actions",
-  );
-  if (!actions) return;
-
-  actions.querySelectorAll("button").forEach((button) => {
-    const handler = button.getAttribute("onclick") || "";
-    if (handler.includes("logout") || handler.includes("toggleDarkMode")) {
-      button.remove();
-    }
-  });
-
-  if (!actions.children.length) actions.remove();
-
-  const summary = document.querySelector("#topUserMenu > summary");
-  summary?.setAttribute("aria-label", "Abrir informações da conta");
 }
 
 function logoutDialogHTML() {
@@ -250,7 +174,5 @@ export function initNielsenShellUx() {
   if (initialized) return;
   initialized = true;
 
-  removeLegacyAccountActions();
-  installThemeSync();
   installLogoutFlow();
 }

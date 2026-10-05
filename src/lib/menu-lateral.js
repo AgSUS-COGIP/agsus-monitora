@@ -26,8 +26,8 @@
   mesmo catálogo no código, usado enquanto o do banco não chega ou falha. Aba
   nova = uma linha no banco E uma entrada em `ABAS_DO_MENU` (o teste
   `catalogo-de-abas.test.js` confere que o seed da migration e esta lista são
-  iguais). Quem decide o que o perfil pode ver continua sendo o `buildNav` de
-  `legacy-app.js`; este arquivo só organiza o que já foi permitido.
+  iguais). Quem decide o que o perfil pode ver é o `montarMenu` de
+  src/app/navegacao.js; este arquivo só organiza o que já foi permitido.
 */
 
 import {

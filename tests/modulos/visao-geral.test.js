@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
+import { fonteDoApp } from "../fonte-do-app.js";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -761,7 +762,7 @@ describe("regras do código da tela", () => {
   });
 
   it("o legado não guarda mais filtros, KPIs, tabela nem gráfico da página", () => {
-    const legado = readFileSync("src/modules/legacy-app.js", "utf8");
+    const legado = fonteDoApp();
     for (const nome of [
       "function renderKpis",
       "function renderTable",

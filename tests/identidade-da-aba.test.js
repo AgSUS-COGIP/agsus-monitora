@@ -10,7 +10,7 @@ import {
 } from "../src/lib/identidade-da-aba.js";
 
 const html = readFileSync("index.html", "utf8");
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 
 const semComentarios = (fonte) =>
   fonte.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");

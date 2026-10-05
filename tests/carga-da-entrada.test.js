@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
   com a sessão (src/app/sessao.js): a ordem dos ganchos e quem apaga a cópia.
 */
 
-const ligacao = readFileSync("src/modules/legacy-app.js", "utf8");
+const ligacao = readFileSync("src/app/sistema.js", "utf8");
 const sessao = readFileSync("src/app/sessao.js", "utf8");
 
 const semComentarios = (fonte) =>

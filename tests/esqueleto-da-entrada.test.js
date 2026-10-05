@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env.js";
 import {
@@ -20,7 +21,7 @@ import { CHAVE_DA_TELA_GUARDADA } from "../src/lib/navegacao.js";
 
 const html = readFileSync("index.html", "utf8");
 const css = readFileSync("src/styles/carregamento.css", "utf8");
-const legado = readFileSync("src/modules/legacy-app.js", "utf8");
+const legado = fonteDoApp();
 
 const inicio = html.indexOf("(function marcarSessaoGuardada()");
 const script = html.slice(inicio, html.indexOf("</script>", inicio));

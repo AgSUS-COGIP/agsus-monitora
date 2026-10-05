@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it, vi } from "vitest";
 import { criarImagensDaAparencia } from "../src/modulos/configuracoes/imagens.js";
 import {
@@ -6,7 +7,7 @@ import {
   validateAccessBackgroundFile,
 } from "../src/lib/access-background-storage.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 const shellCss = readFileSync("src/styles/platform-shell.css", "utf8");
 
 const semComentarios = (fonte) =>
