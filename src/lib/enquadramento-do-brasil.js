@@ -104,3 +104,35 @@ export function sobraNaMoldura({
     direita: horizontal,
   };
 }
+
+/*
+  O ENQUADRAMENTO DO RECORTE, a regra dos dois mapas da Visão geral (Saúde
+  Indígena e Projetos). Sem filtro: o Brasil. Com filtro: os pontos que
+  sobraram — um só vira zoom ZOOM_DO_PONTO nele; mais de um, a caixa deles
+  (OPCOES_DA_CAIXA). Filtro que não deixa ponto nenhum também é o Brasil. A
+  `chave` muda só quando muda o que enquadrar: o mapa não reenquadra a cada
+  redesenho (nem ao agrupar a lista, nem com um ponto a mais fora do mapa).
+
+  `pontos` são `[lat, lon]`; o mapa do DSEI tem o enquadramento dele.
+*/
+export const ZOOM_DO_PONTO = 7;
+export const OPCOES_DA_CAIXA = Object.freeze({ padding: [60, 60], maxZoom: 7 });
+
+export function enquadramentoDoRecorte({
+  pontos = [],
+  filtroAtivo = false,
+} = {}) {
+  const lista = (Array.isArray(pontos) ? pontos : []).filter(
+    (ponto) =>
+      Array.isArray(ponto) &&
+      Number.isFinite(Number(ponto[0])) &&
+      Number.isFinite(Number(ponto[1])),
+  );
+  const chave =
+    (filtroAtivo ? "F|" : "A|") +
+    lista.map((p) => p.map((v) => Number(v).toFixed(4)).join(",")).join("|");
+  if (!filtroAtivo || !lista.length)
+    return { modo: "brasil", pontos: [], chave };
+  if (lista.length === 1) return { modo: "ponto", pontos: lista, chave };
+  return { modo: "caixa", pontos: lista, chave };
+}

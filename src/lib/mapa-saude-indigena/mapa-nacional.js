@@ -11,7 +11,8 @@
   mapa só conta. Com filtro ativo, só aparecem os DSEIs e as CASAIs nacionais
   que têm edital no recorte.
 */
-import { raioDaBolha } from "../mapa-render.js";
+import { enquadramentoDoRecorte } from "../enquadramento-do-brasil.js";
+import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapa-render.js";
 import { siglaDaUf } from "../uf-ibge.js";
 import {
   chaveDoDsei,
@@ -78,7 +79,7 @@ export function bolhasDosDsei({
           color: cores.borda,
           weight: comEdital ? 3 : 1.5,
           fillColor: cores.preenchimento,
-          fillOpacity: 0.7,
+          fillOpacity: OPACIDADE_DA_BOLHA,
         },
       };
     })
@@ -148,23 +149,19 @@ export function casaisNacionais({
 }
 
 /*
-  Enquadramento do mapa nacional. Sem filtro: o Brasil. Com filtro: os DSEIs
-  e as CASAIs que sobraram (um ponto só vira zoom 7 nele). A `chave` muda só
-  quando muda o que enquadrar — o mapa não reenquadra a cada redesenho.
+  Enquadramento do mapa nacional: a regra comum aos mapas da Visão geral
+  (`enquadramentoDoRecorte`, src/lib/enquadramento-do-brasil.js) com os DSEIs
+  e as CASAIs que sobraram. Sem filtro, o Brasil; um ponto só, zoom 7 nele.
 */
 export function enquadramentoNacional({
   bolhas = [],
   casais = [],
   filtroAtivo = false,
 } = {}) {
-  const pontos = [...bolhas, ...casais].map((p) => [p.lat, p.lon]);
-  const chave =
-    (filtroAtivo ? "F|" : "A|") +
-    pontos.map((p) => p.map((v) => Number(v).toFixed(4)).join(",")).join("|");
-  if (!filtroAtivo || !pontos.length)
-    return { modo: "brasil", pontos: [], chave };
-  if (pontos.length === 1) return { modo: "ponto", pontos, chave };
-  return { modo: "caixa", pontos, chave };
+  return enquadramentoDoRecorte({
+    pontos: [...bolhas, ...casais].map((p) => [p.lat, p.lon]),
+    filtroAtivo,
+  });
 }
 
 /* Texto da dica (tooltip) da bolha do DSEI. */

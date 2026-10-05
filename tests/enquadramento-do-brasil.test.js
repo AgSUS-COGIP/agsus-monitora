@@ -10,9 +10,11 @@ import {
   projetar,
   sobraNaMoldura,
   zoomQueCabe,
+  OPCOES_DA_CAIXA,
+  ZOOM_DO_PONTO,
+  enquadramentoDoRecorte,
 } from "../src/lib/enquadramento-do-brasil.js";
 import { RAIO_MAXIMO as RAIO_DA_BOLHA } from "../src/lib/mapa-render.js";
-import { RAIO_MAXIMO as RAIO_DO_PONTO_DE_PROJETO } from "../src/lib/visao-geral-da-area.js";
 
 /*
   O enquadramento do Brasil nos mapas da Visão geral (Saúde Indígena e
@@ -24,9 +26,8 @@ import { RAIO_MAXIMO as RAIO_DO_PONTO_DE_PROJETO } from "../src/lib/visao-geral-
 const NORTE_DE_RORAIMA = BRASIL_BOUNDS[1][0];
 
 describe("a folga cobre o maior ponto do mapa", () => {
-  it("raio da bolha + traço + 12 px; o ponto de Projetos não é maior que a bolha", () => {
+  it("raio da bolha + traço + 12 px; o ponto de Projetos usa a mesma bolha", () => {
     expect(RAIO_MAXIMO_NO_MAPA).toBeGreaterThanOrEqual(RAIO_DA_BOLHA);
-    expect(RAIO_DO_PONTO_DE_PROJETO).toBeLessThanOrEqual(RAIO_DA_BOLHA);
     expect(FOLGA_DO_BRASIL).toBe(RAIO_MAXIMO_NO_MAPA + FOLGA_ALEM_DO_RAIO);
     expect(FOLGA_ALEM_DO_RAIO).toBe(12);
   });
@@ -127,5 +128,41 @@ describe("altura do mapa da Saúde Indígena", () => {
     expect(zoomQueCabe({ largura: 1000, altura: Number(maximo) })).toBe(
       ZOOM_NACIONAL,
     );
+  });
+});
+
+/*
+  A regra comum de enquadramento dos dois mapas nacionais (Saúde Indígena e
+  Projetos): sem filtro, o Brasil; com filtro, o ponto (zoom 7) ou a caixa.
+*/
+describe("o enquadramento do recorte", () => {
+  it("sem filtro (ou sem ponto) é o Brasil; um ponto, zoom 7; vários, a caixa", () => {
+    const pontos = [
+      [2.82, -60.67],
+      [-15.78, -47.93],
+    ];
+    expect(enquadramentoDoRecorte({ pontos }).modo).toBe("brasil");
+    expect(enquadramentoDoRecorte({ pontos: [], filtroAtivo: true }).modo).toBe(
+      "brasil",
+    );
+    expect(
+      enquadramentoDoRecorte({ pontos: pontos.slice(0, 1), filtroAtivo: true }),
+    ).toMatchObject({ modo: "ponto", pontos: [pontos[0]] });
+    const caixa = enquadramentoDoRecorte({ pontos, filtroAtivo: true });
+    expect(caixa.modo).toBe("caixa");
+    // A chave só muda quando muda o que enquadrar.
+    expect(caixa.chave).toBe(
+      enquadramentoDoRecorte({ pontos: [...pontos], filtroAtivo: true }).chave,
+    );
+    expect(caixa.chave).not.toBe(enquadramentoDoRecorte({ pontos }).chave);
+    // Ponto sem coordenada não entra.
+    expect(
+      enquadramentoDoRecorte({
+        pontos: [pontos[0], null, [Number.NaN, 1]],
+        filtroAtivo: true,
+      }).modo,
+    ).toBe("ponto");
+    expect(ZOOM_DO_PONTO).toBe(7);
+    expect(OPCOES_DA_CAIXA).toEqual({ padding: [60, 60], maxZoom: 7 });
   });
 });

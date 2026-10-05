@@ -16,8 +16,11 @@
 import { BRASIL_BOUNDS } from "../../lib/brasil-bounds.js";
 import {
   FOLGA_DO_BRASIL,
+  OPCOES_DA_CAIXA,
+  ZOOM_DO_PONTO,
   ZOOM_NACIONAL,
 } from "../../lib/enquadramento-do-brasil.js";
+import { calcularLeque } from "../../lib/leque-de-marcadores.js";
 import { criarCamadaComRecuo } from "../../modules/map-base-layer-switcher.js";
 import {
   CORES_DO_MAPA,
@@ -227,6 +230,26 @@ export function voarAoBrasil(
   });
 }
 
+/*
+  O enquadramento do recorte (`enquadramentoDoRecorte`,
+  src/lib/enquadramento-do-brasil.js) no Leaflet, igual nos dois mapas
+  nacionais: um ponto em ZOOM_DO_PONTO, a caixa com OPCOES_DA_CAIXA ou o
+  Brasil. Com `voar` (a volta de um DSEI), anima em DURACAO_DA_VOLTA_AO_BRASIL.
+*/
+export function enquadrar(L, mapa, enquadramento, { voar = false } = {}) {
+  const duracao = { duration: DURACAO_DA_VOLTA_AO_BRASIL };
+  if (enquadramento?.modo === "ponto") {
+    const [ponto] = enquadramento.pontos;
+    if (voar) mapa.flyTo(ponto, ZOOM_DO_PONTO, duracao);
+    else mapa.setView(ponto, ZOOM_DO_PONTO, { animate: false });
+  } else if (enquadramento?.modo === "caixa") {
+    const caixa = L.latLngBounds(enquadramento.pontos);
+    if (voar) mapa.flyToBounds(caixa, { ...OPCOES_DA_CAIXA, ...duracao });
+    else mapa.fitBounds(caixa, { ...OPCOES_DA_CAIXA, animate: false });
+  } else if (voar) voarAoBrasil(L, mapa);
+  else enquadrarNoBrasil(L, mapa);
+}
+
 /* O botão "Brasil": para a animação e volta ao país inteiro. */
 export function voltarAoBrasil(L, mapa) {
   if (!L || !mapa) return;
@@ -319,6 +342,89 @@ export function desenharContornos(L, camada, variante = "nacional") {
   } catch {
     // contorno é referência; sem ele o mapa continua útil
   }
+}
+
+/* O traço do leque usa o texto secundário do tema; o cinza-azulado é reserva. */
+function corDoTraco() {
+  try {
+    const cor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--text-secondary")
+      .trim();
+    if (cor) return cor;
+  } catch {
+    // sem estilos computados (teste)
+  }
+  return CORES_DO_MAPA.traco;
+}
+
+/*
+  O LEQUE dos dois mapas nacionais: as bolhas que caem no mesmo pixel
+  (Yanomami e Leste de Roraima em Boa Vista; dois lugares de Projetos na
+  mesma sede) são desenhadas num círculo de 16 px em volta do ponto real, com
+  um traço até ele (src/lib/leque-de-marcadores.js). A coordenada não muda;
+  recalcula a cada zoom e quando o app chama `aplicar()` depois de desenhar.
+
+  `adicionar(marcador, lat, lon)` registra a bolha; `limpar()` esquece as
+  bolhas e os traços (o app limpa a camada); `parar()` desliga o `zoomend`.
+*/
+export function criarLeque(L, mapa, camada) {
+  const marcadores = [];
+  const tracos = [];
+  const aplicar = () => {
+    tracos.forEach((traco) => camada.removeLayer(traco));
+    tracos.length = 0;
+    const vivos = marcadores.filter(({ marcador }) =>
+      camada.hasLayer(marcador),
+    );
+    if (!vivos.length) return;
+    const pontos = vivos.map(({ lat, lon }) =>
+      mapa.latLngToLayerPoint([lat, lon]),
+    );
+    const cor = corDoTraco();
+    calcularLeque(pontos).forEach((desvio, i) => {
+      const { marcador, lat, lon } = vivos[i];
+      if (!desvio.emLeque) {
+        marcador.setLatLng([lat, lon]);
+        return;
+      }
+      const destino = mapa.layerPointToLatLng(
+        pontos[i].add(L.point(desvio.dx, desvio.dy)),
+      );
+      marcador.setLatLng(destino);
+      tracos.push(
+        L.polyline([[lat, lon], destino], {
+          color: cor,
+          weight: 1,
+          opacity: 0.7,
+          interactive: false,
+        }),
+        L.circleMarker([lat, lon], {
+          radius: 2,
+          stroke: false,
+          fillColor: cor,
+          fillOpacity: 0.9,
+          interactive: false,
+        }),
+      );
+    });
+    if (!tracos.length) return;
+    tracos.forEach((traco) => camada.addLayer(traco));
+    vivos.forEach(({ marcador }) => marcador.bringToFront?.());
+  };
+  mapa.on("zoomend", aplicar);
+  return {
+    adicionar(marcador, lat, lon) {
+      marcadores.push({ marcador, lat, lon });
+    },
+    limpar() {
+      marcadores.length = 0;
+      tracos.length = 0;
+    },
+    aplicar,
+    parar() {
+      mapa.off("zoomend", aplicar);
+    },
+  };
 }
 
 /* Conteúdo de popup ou dica: { titulo, linhas, nota } em nós de texto. */

@@ -50,6 +50,12 @@ export function raioDaBolha(
 }
 
 /*
+  A transparência do preenchimento das bolhas dos mapas nacionais (DSEIs e
+  lugares de Projetos): deixa ver o contorno das UFs e a bolha de baixo.
+*/
+export const OPACIDADE_DA_BOLHA = 0.7;
+
+/*
   PONTOS COINCIDENTES — SEM MEXER NA COORDENADA
 
   O código antigo somava 0,55° à latitude e à longitude para "desempilhar"
