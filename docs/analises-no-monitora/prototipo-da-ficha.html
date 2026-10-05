@@ -3,24 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Protótipo — Ficha de análise</title>
+<title>Protótipo — Avaliação documental</title>
 <!--
   Protótipo ESTÁTICO para aprovar o desenho (docs/analises-no-monitora/README.md).
-  Dados 100% FICTÍCIOS. Não é código do app: os tokens abaixo foram copiados de
-  src/styles/tokens.css e src/ui/ui.css. A conta da nota roda aqui só para mostrar
-  o comportamento; no sistema, quem calcula e grava é o banco.
+  Dados 100% FICTÍCIOS (nomes, códigos, CPF, aldeias e empregadores inventados).
+  Não é código do app: os tokens foram copiados de src/styles/tokens.css e src/ui/ui.css.
+  A conta roda aqui só para mostrar o comportamento; no sistema, quem calcula e grava é o banco.
 -->
 <style>
 :root{
-  --color-blue-50:#f2f6fc;--color-blue-100:#e3ecf8;--color-blue-300:#97b8e3;--color-blue-600:#1f5aa8;--color-blue-700:#1a4a8b;--color-blue-800:#153b6f;--color-blue-950:#0b1f3d;
-  --color-neutral-0:#fff;--color-neutral-50:#f5f7fa;--color-neutral-100:#edf0f4;--color-neutral-200:#e0e5ec;--color-neutral-300:#cbd2dc;--color-neutral-400:#858f9f;--color-neutral-500:#677183;--color-neutral-600:#556070;--color-neutral-700:#3e4857;--color-neutral-900:#171c26;
-  --brand-primary:var(--color-blue-600);--brand-primary-strong:var(--color-blue-700);
-  --surface-page:var(--color-neutral-50);--surface-card:var(--color-neutral-0);--surface-raised:var(--color-neutral-50);--surface-hover:var(--color-neutral-100);
-  --text-primary:var(--color-neutral-900);--text-secondary:var(--color-neutral-600);--text-tertiary:var(--color-neutral-500);
-  --border-subtle:var(--color-neutral-200);--border-control:var(--color-neutral-400);--focus-ring:var(--color-blue-600);
+  --color-blue-800:#153b6f;--color-blue-950:#0b1f3d;
+  --brand-primary:#1f5aa8;--brand-primary-strong:#1a4a8b;
+  --surface-page:#f5f7fa;--surface-card:#fff;--surface-raised:#f5f7fa;--surface-hover:#edf0f4;
+  --text-primary:#171c26;--text-secondary:#556070;--text-tertiary:#677183;
+  --border-subtle:#e0e5ec;--border-control:#858f9f;--focus-ring:#1f5aa8;
   --state-success:#17613a;--state-success-soft:#eaf6ef;--state-warning:#7d4a00;--state-warning-soft:#fdf4e3;
   --state-danger:#a02e25;--state-danger-soft:#fdeeec;--state-info:#1a4a8b;--state-info-soft:#f2f6fc;--state-neutral:#3e4857;--state-neutral-soft:#edf0f4;
-  --sidebar-bg:var(--color-blue-950);--sidebar-text:#c3d0e4;--sidebar-active:var(--color-blue-800);
   --font-sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --text-caption:.75rem;--text-body-sm:.8125rem;--text-body:.875rem;--text-h4:1rem;--text-h3:1.125rem;--text-h2:1.375rem;--text-metric-sm:1.25rem;--text-metric:1.75rem;
   --space-1:.25rem;--space-1-5:.375rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;--space-6:1.5rem;--space-8:2rem;
@@ -37,33 +35,39 @@ html[data-theme="dark"]{
 body{margin:0;font-family:var(--font-sans);font-size:var(--text-body);line-height:1.375rem;color:var(--text-primary);background:var(--surface-page)}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
-.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
-.lateral{background:var(--sidebar-bg);color:var(--sidebar-text);padding:var(--space-4) var(--space-3)}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.lateral{background:var(--color-blue-950);color:#c3d0e4;padding:var(--space-4) var(--space-3)}
 .lateral .marca{color:#fff;font-weight:600;font-size:var(--text-h4);padding:0 var(--space-2) var(--space-4)}
 .lateral .grupo{font-size:var(--text-caption);text-transform:uppercase;letter-spacing:.04em;color:#8fa2bf;margin:var(--space-4) var(--space-2) var(--space-1)}
 .lateral a{display:block;color:inherit;text-decoration:none;padding:var(--space-1-5) var(--space-2);border-radius:var(--radius-md);font-size:var(--text-body-sm)}
-.lateral a.ativo{background:var(--sidebar-active);color:#fff}
+.lateral a.ativo{background:var(--color-blue-800);color:#fff}
+.lateral a small{display:block;color:#8fa2bf;font-size:11px}
 main{min-width:0;padding:var(--space-5) var(--space-6) var(--space-8)}
 .topo{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4)}
-.topo h1{margin:0;font-size:var(--text-h2);font-weight:600;letter-spacing:-.01em}
-.topo .espaco{flex:1}
+.topo h1{margin:0;font-size:var(--text-h2);font-weight:600}
+.espaco{flex:1}
 .abas{display:flex;gap:var(--space-1);border-bottom:1px solid var(--border-subtle);margin-bottom:var(--space-4);overflow-x:auto}
 .abas button{background:none;border:0;border-bottom:2px solid transparent;padding:var(--space-2) var(--space-3);cursor:pointer;color:var(--text-secondary);white-space:nowrap}
 .abas button[aria-selected="true"]{color:var(--brand-primary);border-color:var(--brand-primary);font-weight:600}
 .card{min-width:0;padding:var(--space-4) var(--space-5);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-card)}
-.card + .card{margin-top:var(--space-4)}
-.card h2{margin:0 0 var(--space-3);font-size:var(--text-h4);font-weight:600;display:flex;align-items:center;gap:var(--space-2)}
-.card h2 .item{font-weight:400;color:var(--text-tertiary);font-size:var(--text-caption)}
+.card + .card{margin-top:var(--space-3)}
+.card h2{margin:0 0 var(--space-2);font-size:var(--text-h4);font-weight:600;display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
+.item{font-weight:400;color:var(--text-tertiary);font-size:var(--text-caption)}
 .btn{display:inline-flex;align-items:center;gap:var(--space-1-5);min-height:36px;padding:0 var(--space-4);border-radius:var(--radius-md);border:1px solid transparent;background:var(--brand-primary);color:#fff;cursor:pointer;font-weight:500}
 .btn:hover{background:var(--brand-primary-strong)}
 html[data-theme="dark"] .btn{color:#071421}
-.btn.sec{background:var(--state-info-soft);color:var(--state-info);border-color:transparent}
+.btn.sec{background:var(--state-info-soft);color:var(--state-info)}
 .btn.ghost{background:transparent;color:var(--text-secondary);border-color:var(--border-subtle)}
 .btn.ghost:hover{background:var(--surface-hover)}
 .btn.small{min-height:30px;padding:0 var(--space-3);font-size:var(--text-body-sm)}
-input[type=text],input[type=search],input[type=number],select,textarea{border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--surface-card);padding:var(--space-1-5) var(--space-2);min-height:34px}
-textarea{width:100%;min-height:96px;resize:vertical}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));grid-auto-rows:1fr;gap:var(--space-3);margin-bottom:var(--space-4)}
+input[type=text],input[type=search],input[type=number],input[type=date],select,textarea{border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--surface-card);padding:var(--space-1) var(--space-2);min-height:32px;max-width:100%}
+textarea{width:100%;min-height:90px;resize:vertical}
+.selo{display:inline-flex;align-items:center;gap:4px;padding:1px var(--space-2);border-radius:var(--radius-full);font-size:var(--text-caption);font-weight:500;background:var(--state-neutral-soft);color:var(--state-neutral)}
+.selo[data-tom=sucesso]{background:var(--state-success-soft);color:var(--state-success)}
+.selo[data-tom=alerta]{background:var(--state-warning-soft);color:var(--state-warning)}
+.selo[data-tom=perigo]{background:var(--state-danger-soft);color:var(--state-danger)}
+.selo[data-tom=info]{background:var(--state-info-soft);color:var(--state-info)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));grid-auto-rows:1fr;gap:var(--space-3);margin-bottom:var(--space-4)}
 .kpi{--c:var(--state-info);--f:var(--state-info-soft);display:flex;flex-direction:column;gap:var(--space-1-5);min-height:78px;padding:var(--space-3) var(--space-4);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-card)}
 .kpi .r{display:flex;align-items:center;gap:var(--space-1-5);color:var(--text-secondary);font-size:var(--text-caption);font-weight:500}
 .kpi .i{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:var(--radius-md);background:var(--f);color:var(--c);font-size:12px}
@@ -72,153 +76,151 @@ textarea{width:100%;min-height:96px;resize:vertical}
 .kpi[data-tom=alerta]{--c:var(--state-warning);--f:var(--state-warning-soft)}
 .kpi[data-tom=perigo]{--c:var(--state-danger);--f:var(--state-danger-soft)}
 .kpi[data-tom=neutro]{--c:var(--state-neutral);--f:var(--state-neutral-soft)}
-.selo{display:inline-flex;align-items:center;gap:4px;padding:1px var(--space-2);border-radius:var(--radius-full);font-size:var(--text-caption);font-weight:500;background:var(--state-neutral-soft);color:var(--state-neutral);white-space:nowrap}
-.selo[data-tom=sucesso]{background:var(--state-success-soft);color:var(--state-success)}
-.selo[data-tom=alerta]{background:var(--state-warning-soft);color:var(--state-warning)}
-.selo[data-tom=perigo]{background:var(--state-danger-soft);color:var(--state-danger)}
-.selo[data-tom=info]{background:var(--state-info-soft);color:var(--state-info)}
-.faixa{display:flex;flex-wrap:wrap;align-items:stretch;gap:var(--space-2);margin-bottom:var(--space-4);padding:var(--space-3) var(--space-4);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-card)}
+.faixa{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-4);padding:var(--space-3) var(--space-4);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-card)}
 .faixa .cont{display:flex;flex-direction:column;padding:0 var(--space-3);border-right:1px solid var(--border-subtle)}
-.faixa .cont:last-of-type{border-right:0}
 .faixa .cont span{font-size:var(--text-caption);color:var(--text-secondary)}
 .faixa .cont b{font-size:var(--text-metric-sm);font-variant-numeric:tabular-nums}
 .faixa .cont.destaque b{color:var(--brand-primary)}
 .faixa .config{margin-left:auto;display:flex;flex-direction:column;gap:var(--space-1);justify-content:center}
-tr.corte td{padding:0;border-bottom:2px dashed var(--brand-primary)}
-tr.corte td div{padding:var(--space-1) var(--space-3);font-size:var(--text-caption);color:var(--brand-primary);font-weight:600}
-tr.fora{opacity:.55}
+.faixa .selo,.sinais .selo{white-space:normal}
 .filtros{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-3)}
 .tabela-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:var(--text-body-sm)}
-th,td{text-align:left;padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--border-subtle);white-space:nowrap}
-th{color:var(--text-secondary);font-weight:500;font-size:var(--text-caption)}
-tbody tr:hover{background:var(--surface-hover);cursor:pointer}
+th,td{text-align:left;padding:var(--space-1-5) var(--space-2);border-bottom:1px solid var(--border-subtle);vertical-align:top}
+th{color:var(--text-secondary);font-weight:500;font-size:var(--text-caption);white-space:nowrap}
+.fila tbody tr:not(.corte):hover{background:var(--surface-hover);cursor:pointer}
+.fila td{white-space:nowrap}
+tr.corte td{padding:0;border-bottom:2px dashed var(--brand-primary)}
+tr.corte td div{padding:var(--space-1) var(--space-3);font-size:var(--text-caption);color:var(--brand-primary);font-weight:600}
+tr.fora{opacity:.55}
 .num{text-align:right;font-variant-numeric:tabular-nums}
 /* Ficha */
-.cabecalho{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3) var(--space-5);padding:var(--space-3) var(--space-5);margin:0 0 var(--space-4);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-card);box-shadow:var(--shadow-md)}
+.cabecalho{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-4);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-3);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-card);box-shadow:var(--shadow-md)}
 .cabecalho .quem{min-width:220px;flex:1}
 .cabecalho .quem strong{font-size:var(--text-h3)}
-.cabecalho .meta{color:var(--text-secondary);font-size:var(--text-caption)}
+.meta{color:var(--text-secondary);font-size:var(--text-caption)}
 .parciais{display:flex;gap:var(--space-2);flex-wrap:wrap}
-.parcial{min-width:68px;padding:var(--space-1) var(--space-2);border-radius:var(--radius-md);background:var(--surface-raised);text-align:center}
+.parcial{min-width:64px;padding:var(--space-1) var(--space-2);border-radius:var(--radius-md);background:var(--surface-raised);text-align:center}
 .parcial span{display:block;font-size:var(--text-caption);color:var(--text-secondary)}
 .parcial b{font-variant-numeric:tabular-nums}
 .parcial.total{background:var(--state-info-soft);color:var(--state-info)}
+.reserva{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-3);margin-bottom:var(--space-3);border-radius:var(--radius-md);background:var(--state-info-soft);color:var(--state-info);font-size:var(--text-body-sm)}
 .grade{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:var(--space-4);align-items:start}
-.lado{position:sticky;top:96px}
-.sinais{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-4)}
-.sinais .selo,.faixa .selo{white-space:normal}
-.check{display:flex;align-items:flex-start;gap:var(--space-2);padding:var(--space-2) var(--space-3);border:1px solid var(--border-subtle);border-radius:var(--radius-md);margin-bottom:var(--space-2)}
-.check.nao{border-color:var(--state-danger);background:var(--state-danger-soft)}
-.check.inativo{opacity:.5}
-.check input{margin-top:4px;width:16px;height:16px}
-.check .t{flex:1}
-.check .t small{display:block;color:var(--text-tertiary)}
-.linha{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3)}
-.declarado{font-size:var(--text-caption);color:var(--text-secondary);background:var(--surface-raised);border-radius:var(--radius-md);padding:var(--space-1) var(--space-2)}
+.grade > *{min-width:0}
+.lado{position:sticky;top:110px}
+.sinais{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-3)}
+.bloco{border-left:4px solid var(--border-subtle)}
+.bloco[data-sit=CONFORME]{border-left-color:var(--state-success)}
+.bloco[data-sit=NAO_CONFORME],.bloco[data-sit=NAO_ENVIADO]{border-left-color:var(--state-danger)}
+.bloco[data-sit=NAO_SE_APLICA]{opacity:.7}
+.bloco.foco{box-shadow:0 0 0 2px var(--focus-ring)}
+.decl{font-size:var(--text-caption);color:var(--text-secondary);background:var(--surface-raised);border-radius:var(--radius-md);padding:var(--space-1) var(--space-2)}
+.linha{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
+.sit{display:inline-flex;border:1px solid var(--border-control);border-radius:var(--radius-md);overflow:hidden}
+.sit button{border:0;background:var(--surface-card);padding:var(--space-1) var(--space-2);cursor:pointer;font-size:var(--text-body-sm);border-right:1px solid var(--border-subtle)}
+.sit button:last-child{border-right:0}
+.sit button[aria-pressed=true][data-v=CONFORME]{background:var(--state-success-soft);color:var(--state-success);font-weight:600}
+.sit button[aria-pressed=true][data-v=NAO_CONFORME],.sit button[aria-pressed=true][data-v=NAO_ENVIADO]{background:var(--state-danger-soft);color:var(--state-danger);font-weight:600}
+.sit button[aria-pressed=true][data-v=NAO_SE_APLICA]{background:var(--state-neutral-soft);font-weight:600}
+.sit kbd{font-size:10px;color:var(--text-tertiary);margin-left:3px}
+.efeito{font-size:var(--text-caption)}
+.motivo{margin-top:var(--space-2);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-2)}
+.motivo[hidden]{display:none}
 .aviso{font-size:var(--text-caption);margin-top:var(--space-1)}
 .aviso.ok{color:var(--state-success)}.aviso.mau{color:var(--state-danger)}
-.contadores{display:flex;flex-wrap:wrap;gap:var(--space-3)}
-.contador{display:flex;flex-direction:column;align-items:center;gap:var(--space-1);padding:var(--space-2);border:1px solid var(--border-subtle);border-radius:var(--radius-md);min-width:120px}
-.contador .g{display:flex;align-items:center}
-.contador .g button{width:30px;height:30px;border:1px solid var(--border-control);background:var(--surface-raised);cursor:pointer}
-.contador .g button:first-child{border-radius:var(--radius-md) 0 0 var(--radius-md)}
-.contador .g button:last-child{border-radius:0 var(--radius-md) var(--radius-md) 0}
-.contador .g input{width:48px;text-align:center;border-radius:0;border-left:0;border-right:0;min-height:30px}
-.contador small{color:var(--text-secondary);font-size:var(--text-caption)}
-.vinculos td{white-space:normal}
-.vinculos input,.vinculos select{width:100%;min-width:110px}
-.cronologia{display:grid;gap:var(--space-1);margin-top:var(--space-3);padding:var(--space-3);border-radius:var(--radius-md);background:var(--surface-raised);font-size:var(--text-body-sm)}
+.tab-edit input,.tab-edit select{width:100%;min-width:90px}
+.tab-edit td{white-space:normal}
+.cronologia{display:grid;gap:2px;margin-top:var(--space-2);padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);background:var(--surface-raised);font-size:var(--text-body-sm)}
 .cronologia .tot{font-weight:600;color:var(--state-success)}
 .resultado .nota{font-size:var(--text-metric);font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
-.resultado .corte{font-size:var(--text-caption);color:var(--text-secondary);margin:var(--space-1) 0 var(--space-3)}
-.parecer{width:100%;min-height:260px;font-size:var(--text-body-sm);background:var(--surface-raised)}
+.parecer{width:100%;min-height:240px;font-size:var(--text-body-sm);background:var(--surface-raised)}
+.acoes{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)}
+.salvo{font-size:var(--text-caption);color:var(--text-tertiary)}
 .menu{position:relative;display:inline-block}
 .menu-lista{display:none;position:absolute;right:0;top:110%;z-index:10;min-width:260px;padding:var(--space-1);border:1px solid var(--border-subtle);border-radius:var(--radius-md);background:var(--surface-card);box-shadow:var(--shadow-md)}
 .menu-lista.aberto{display:block}
-.menu-lista button{display:block;width:100%;text-align:left;background:none;border:0;padding:var(--space-1-5) var(--space-2);border-radius:var(--radius-sm);cursor:pointer;font-size:var(--text-body-sm)}
+.menu-lista button{display:block;width:100%;text-align:left;background:none;border:0;padding:var(--space-1-5) var(--space-2);cursor:pointer;font-size:var(--text-body-sm)}
 .menu-lista button:hover{background:var(--surface-hover)}
-.menu-lista small{color:var(--text-tertiary)}
-.rodape-acoes{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)}
-.salvo{font-size:var(--text-caption);color:var(--text-tertiary)}
-details.hist summary{cursor:pointer;font-weight:600}
-details.hist li{margin:var(--space-1) 0;font-size:var(--text-body-sm)}
+.eventos{max-height:180px;overflow:auto;font-size:var(--text-caption);color:var(--text-secondary);margin:0;padding-left:var(--space-4)}
+dialog{border:1px solid var(--border-subtle);border-radius:var(--radius-lg);background:var(--surface-card);color:var(--text-primary);max-width:420px}
+dialog kbd{display:inline-block;min-width:22px;padding:0 4px;border:1px solid var(--border-control);border-radius:4px;text-align:center;font-size:12px}
 .nota-proto{font-size:var(--text-caption);color:var(--text-tertiary);margin-top:var(--space-6)}
 [hidden]{display:none!important}
-.grade > *{min-width:0}
 @media (max-width:1100px){.grade{grid-template-columns:minmax(0,1fr)}.lado{position:static}}
-@media (max-width:760px){.app{grid-template-columns:minmax(0,1fr)}.lateral{display:none}main{padding:var(--space-4)}.cabecalho{position:static}}
+@media (max-width:760px){.app{grid-template-columns:minmax(0,1fr)}.lateral{display:none}main{padding:var(--space-4)}.cabecalho{position:static}.motivo{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
 <div class="app">
   <nav class="lateral" aria-label="Menu">
     <div class="marca">MONITORA</div>
-    <div class="grupo">Saúde Indígena</div>
+    <div class="grupo">Projetos</div>
     <a href="#">Visão geral</a><a href="#">Editais</a><a href="#">Seleção</a>
-    <a href="#" class="ativo">Análises curriculares</a>
-    <a href="#">Entrevistas</a><a href="#">Classificação</a><a href="#">Recursos</a><a href="#">Lista de aprovados</a>
+    <a href="#">Painel das análises<small>leitura · recurso analises</small></a>
+    <a href="#" class="ativo">Avaliação documental<small>trabalho · recurso avaliacao_documental</small></a>
+    <a href="#">Recursos</a><a href="#">Entrevistas</a><a href="#">Classificação</a><a href="#">Lista de aprovados</a>
   </nav>
   <main>
     <div class="topo">
-      <h1>Análises curriculares</h1>
-      <span class="selo" data-tom="info">Edital 99/2026 · DSEI Exemplo Sul</span>
+      <h1>Avaliação documental</h1>
+      <span class="selo" data-tom="info">Edital 99/2026 · Projeto Exemplo</span>
       <span class="espaco"></span>
-      <button class="btn ghost small" id="tema" type="button">Tema escuro</button>
+      <button class="btn ghost small" type="button" id="atalhos">Atalhos (?)</button>
+      <button class="btn ghost small" type="button" id="tema">Tema escuro</button>
     </div>
     <div class="abas" role="tablist">
-      <button role="tab" aria-selected="false">Painel</button>
-      <button role="tab" aria-selected="true" data-aba="fila">Fichas</button>
+      <button role="tab" aria-selected="true" data-aba="fila">Lote e fila</button>
       <button role="tab" aria-selected="false" data-aba="ficha">Ficha aberta</button>
-      <button role="tab" aria-selected="false">Regra da análise</button>
-      <button role="tab" aria-selected="false">Equipe do edital</button>
+      <button role="tab" aria-selected="false">Provisória (ART)</button>
+      <button role="tab" aria-selected="false">Eliminados</button>
+      <button role="tab" aria-selected="false">Inaptos</button>
+      <button role="tab" aria-selected="false">Regra da avaliação</button>
+      <button role="tab" aria-selected="false">Equipe</button>
     </div>
 
-    <!-- ===================== FILA ===================== -->
+    <!-- ===================== LOTE E FILA ===================== -->
     <section id="aba-fila">
-      <div class="faixa" aria-label="Pré-classificação da vaga">
+      <div class="faixa" aria-label="Provisória e lote da vaga">
         <div class="cont"><span>Inscritos</span><b>183</b></div>
-        <div class="cont"><span>Cancelados / reprovados</span><b>22</b></div>
-        <div class="cont"><span>Ranqueados</span><b>161</b></div>
-        <div class="cont destaque"><span>Aptos para análise (linha de corte)</span><b>22 de 161</b></div>
+        <div class="cont"><span>Eliminados (cancelou / questionário / reprovado)</span><b>22</b></div>
+        <div class="cont"><span>Ranqueados na Provisória (ART)</span><b>161</b></div>
+        <div class="cont destaque"><span>Lote de convocação (aptos para análise)</span><b>22 de 161</b></div>
         <div class="config">
-          <span class="selo" data-tom="info">Linha: 5 × vagas imediatas + CR · a linha anda</span>
-          <span class="selo">Distribuição: Pegar próximo · Revisão: amostra 10% + inabilitações</span>
+          <span class="selo" data-tom="info">Lote: 5 × vagas imediatas + CR · a linha anda</span>
+          <span class="selo">Distribuição: Pegar próximo · Revisão: amostra 10% + inaptos</span>
         </div>
       </div>
       <div class="kpis">
-        <div class="kpi"><div class="r"><span class="i">◷</span>Na fila</div><div class="v">412</div></div>
-        <div class="kpi" data-tom="alerta"><div class="r"><span class="i">✎</span>Em análise</div><div class="v">37</div></div>
-        <div class="kpi" data-tom="neutro"><div class="r"><span class="i">⟲</span>Para revisar</div><div class="v">14</div></div>
-        <div class="kpi" data-tom="sucesso"><div class="r"><span class="i">✓</span>Habilitados</div><div class="v">188</div></div>
-        <div class="kpi" data-tom="perigo"><div class="r"><span class="i">✕</span>Não habilitados / Inabilitados</div><div class="v">96</div></div>
-        <div class="kpi" data-tom="neutro"><div class="r"><span class="i">⊘</span>Fora da fila</div><div class="v">29</div></div>
+        <div class="kpi"><div class="r"><span class="i">◷</span>No lote, pendentes</div><div class="v">9</div></div>
+        <div class="kpi" data-tom="alerta"><div class="r"><span class="i">✎</span>Em análise</div><div class="v">4</div></div>
+        <div class="kpi" data-tom="neutro"><div class="r"><span class="i">⟲</span>Para revisar</div><div class="v">2</div></div>
+        <div class="kpi" data-tom="sucesso"><div class="r"><span class="i">✓</span>Aptos</div><div class="v">5</div></div>
+        <div class="kpi" data-tom="perigo"><div class="r"><span class="i">✕</span>Inaptos</div><div class="v">3</div></div>
+        <div class="kpi" data-tom="neutro"><div class="r"><span class="i">↧</span>Encaminhamentos</div><div class="v">2</div></div>
       </div>
       <div class="card">
         <div class="filtros">
-          <input type="search" placeholder="Código Empregare ou nome" aria-label="Buscar" style="min-width:220px">
-          <select aria-label="Vaga"><option>900102 · Técnico(a) de Enfermagem</option><option>900101 · Enfermeiro(a)</option><option>900103 · Agente de Saneamento</option></select>
-          <select aria-label="Lista"><option>Fila (ordem da pré-classificação)</option><option>Eliminados (22)</option><option>Desclassificados</option></select>
-          <select aria-label="Situação"><option>Todas as situações</option><option>Pendente</option><option>Em análise</option><option>Revisar</option><option>Concluída</option></select>
-          <select aria-label="Sinais"><option>Qualquer sinal</option><option>Vínculo ativo</option><option>Parentesco</option></select>
+          <input type="search" placeholder="Código Empregare ou nome" aria-label="Buscar" style="min-width:200px">
+          <select aria-label="Vaga"><option>900201 · Analista de Dados — Brasília/DF · 4 vagas (3 AC + 1 PP + CR)</option></select>
+          <select aria-label="Situação"><option>Todas as situações</option><option>Pendente</option><option>Em análise</option><option>Revisar</option><option>Apto</option><option>Inapto</option></select>
           <label class="linha" style="gap:6px"><input type="checkbox"> Só as minhas</label>
-          <span style="flex:1"></span>
+          <span class="espaco"></span>
           <button class="btn" type="button" data-abrir-ficha>Pegar próximo</button>
-          <button class="btn ghost" type="button">Distribuir</button>
+          <button class="btn ghost" type="button">Redistribuir</button>
         </div>
         <div class="tabela-wrap">
-          <table>
-            <thead><tr><th class="num">Pos.</th><th>Código</th><th>Candidato(a)</th><th>Modalidade</th><th class="num">Nota declarada</th><th class="num">Nota Empregare</th><th>Sinais</th><th>Situação</th><th>Responsável</th><th>Parada há</th></tr></thead>
+          <table class="fila">
+            <thead><tr><th class="num">Pos.</th><th>Código</th><th>Candidato(a)</th><th>Modalidade</th><th class="num">ART</th><th class="num">Nota apurada</th><th>Sinais</th><th>Situação</th><th>Responsável</th><th>Reserva</th></tr></thead>
             <tbody>
-              <tr data-abrir-ficha><td class="num">1</td><td>7000123</td><td>Maria Exemplo da Silva</td><td>Indígenas</td><td class="num">23,0</td><td class="num">20/30</td><td><span class="selo" data-tom="alerta">Vínculo ativo</span></td><td><span class="selo" data-tom="alerta">Em análise</span></td><td>Ana Analista</td><td>hoje</td></tr>
-              <tr data-abrir-ficha><td class="num">2</td><td>7000321</td><td>Carlos Teste Lima</td><td>Ampla concorrência</td><td class="num">17,5</td><td class="num">16/30</td><td>—</td><td><span class="selo" data-tom="sucesso">Habilitado</span></td><td>Ana Analista</td><td>—</td></tr>
-              <tr data-abrir-ficha><td class="num">3</td><td>7000654</td><td>Luana Amostra Costa</td><td>PcD</td><td class="num">15,0</td><td class="num">14/30</td><td>—</td><td><span class="selo" data-tom="perigo">Inabilitado</span></td><td>Bruno Analista</td><td>—</td></tr>
-              <tr data-abrir-ficha><td class="num">…</td><td colspan="9" style="color:var(--text-tertiary)">… posições 4 a 21 …</td></tr>
-              <tr data-abrir-ficha><td class="num">22</td><td>7000789</td><td>Rita Modelo Santos</td><td>Pretos e pardos</td><td class="num">9,4</td><td class="num">6/30</td><td>—</td><td><span class="selo" data-tom="neutro">Revisar</span></td><td>Bruno Analista</td><td>1 dia</td></tr>
-              <tr data-abrir-ficha><td class="num">23</td><td>7000456</td><td>João Fictício Pereira</td><td>Ampla concorrência</td><td class="num">9,2</td><td class="num">8/30</td><td><span class="selo" data-tom="info">Entrou na fila: 7000654 foi inabilitado</span></td><td><span class="selo">Pendente</span></td><td>—</td><td>hoje</td></tr>
-              <tr class="corte"><td colspan="10"><div>Linha de corte · 22 vagas na linha + 1 que entrou porque a linha andou</div></td></tr>
-              <tr class="fora"><td class="num">24</td><td>7000987</td><td>Pedro Simulado Alves</td><td>Ampla concorrência</td><td class="num">9,0</td><td class="num">6/30</td><td>—</td><td><span class="selo">Entra se alguém sair</span></td><td>—</td><td>—</td></tr>
-              <tr class="fora"><td class="num">25</td><td>7000876</td><td>Bia Hipotética Rocha</td><td>Indígenas</td><td class="num">8,6</td><td class="num">4/30</td><td>—</td><td><span class="selo">Entra se alguém sair</span></td><td>—</td><td>—</td></tr>
+              <tr data-abrir-ficha><td class="num">1</td><td>7000123</td><td>Maria Exemplo da Silva</td><td>PP</td><td class="num">27,0</td><td class="num">—</td><td><span class="selo" data-tom="alerta">Vínculo ativo</span></td><td><span class="selo" data-tom="alerta">Em análise</span></td><td>Ana Analista</td><td>Ana · 10:15</td></tr>
+              <tr data-abrir-ficha><td class="num">2</td><td>7000321</td><td>Carlos Teste Lima</td><td>AC</td><td class="num">25,5</td><td class="num">23,0</td><td>—</td><td><span class="selo" data-tom="sucesso">Apto</span></td><td>Ana Analista</td><td>—</td></tr>
+              <tr data-abrir-ficha><td class="num">3</td><td>7000654</td><td>Luana Amostra Costa</td><td>PcD</td><td class="num">24,0</td><td class="num">0,0</td><td>—</td><td><span class="selo" data-tom="perigo">Inapto (requisito)</span></td><td>Bruno Analista</td><td>—</td></tr>
+              <tr><td class="num">…</td><td colspan="9" style="color:var(--text-tertiary)">… posições 4 a 21 …</td></tr>
+              <tr data-abrir-ficha><td class="num">22</td><td>7000789</td><td>Rita Modelo Santos</td><td>AC</td><td class="num">14,0</td><td class="num">—</td><td>—</td><td><span class="selo" data-tom="neutro">Revisar</span></td><td>Bruno Analista</td><td>—</td></tr>
+              <tr data-abrir-ficha><td class="num">23</td><td>7000456</td><td>João Fictício Pereira</td><td>AC</td><td class="num">13,8</td><td class="num">—</td><td><span class="selo" data-tom="info">Entrou no lote: 7000654 ficou inapto</span></td><td><span class="selo">Pendente</span></td><td>—</td><td>—</td></tr>
+              <tr class="corte"><td colspan="10"><div>Linha de corte do lote · lote 1 (22) + 1 reposição</div></td></tr>
+              <tr class="fora"><td class="num">24</td><td>7000987</td><td>Pedro Simulado Alves</td><td>AC</td><td class="num">13,5</td><td class="num">—</td><td>—</td><td><span class="selo">Entra se alguém sair</span></td><td>—</td><td>—</td></tr>
+              <tr class="fora"><td class="num">25</td><td>7000876</td><td>Bia Hipotética Rocha</td><td>PI</td><td class="num">13,0</td><td class="num">—</td><td>—</td><td><span class="selo">Entra se alguém sair</span></td><td>—</td><td>—</td></tr>
             </tbody>
           </table>
         </div>
@@ -230,140 +232,67 @@ details.hist li{margin:var(--space-1) 0;font-size:var(--text-body-sm)}
       <div class="cabecalho">
         <div class="quem">
           <strong>Maria Exemplo da Silva</strong>
-          <div class="meta">Código 7000123 · Vaga 900102 · Técnico(a) de Enfermagem · Polo Exemplo · nível <b>Técnico/Médio</b> · Indígenas · regra v2</div>
-          <div class="meta">Pré-classificação: 1º de 161 · nota declarada 23,0 · nota Empregare 20/30 (referência) · origem da convocação: Ampla · PcD: não · 60 anos ou mais: não</div>
+          <div class="meta">Código 7000123 · Vaga 900201 · Analista de Dados · nível <b>Superior</b> · modalidade <b>PP</b> · regra v3</div>
+          <div class="meta">Provisória: 1º de 161 · ART 27,0 (nota da Empregare) · lote 1 · 60 anos ou mais: não · PcD: não</div>
         </div>
         <div class="parciais" aria-live="polite">
           <div class="parcial total"><span>Nota</span><b id="h-total">0,0</b></div>
-          <div class="parcial"><span>Étnico</span><b id="h-etnico">0,0</b></div>
-          <div class="parcial"><span>Escol.</span><b id="h-esc">0,0</b></div>
-          <div class="parcial"><span>Cursos</span><b id="h-cur">0,0</b></div>
-          <div class="parcial"><span>Exp.</span><b id="h-exp">0,0</b></div>
+          <div class="parcial"><span>Formação</span><b id="h-for">0,0</b></div>
+          <div class="parcial"><span>Experiência</span><b id="h-exp">0,0</b></div>
+          <div class="parcial"><span>Étnico</span><b id="h-etn">0,0</b></div>
         </div>
-        <span class="selo" id="h-situacao">—</span>
-        <div class="linha" style="gap:6px"><button class="btn ghost small" type="button">‹ Anterior</button><button class="btn ghost small" type="button">Próxima ›</button></div>
+        <span class="selo" id="h-sit">—</span>
+        <span class="salvo" id="salvo">Salvo às 10:42</span>
+        <div class="linha"><button class="btn ghost small" type="button">‹ Anterior</button><button class="btn ghost small" type="button">Próxima ›</button></div>
       </div>
-
+      <div class="reserva" role="status">🔒 Esta ficha está reservada para você até 10:57 (renova enquanto a tela estiver aberta). Quem abrir agora vê "Em uso por Ana Analista", só para leitura.</div>
       <div class="sinais">
-        <span class="selo" data-tom="alerta">Vínculo ativo na AgSUS (pergunta 21: "Sim")</span>
-        <span class="selo" data-tom="info">Declarou: "4 anos e 2 meses" de experiência = 50 meses · 10,0 pts</span>
-        <span class="selo" data-tom="info">Nota declarada 23,0 = escolaridade 1 + experiência 10 + étnico 12 (pesos deste edital: +7/+5; outro edital pode usar +8/+6)</span>
+        <span class="selo" data-tom="alerta">Vínculo ativo na AgSUS (P21: "Sim")</span>
+        <span class="selo" data-tom="info">Experiência declarada (P17): "4 anos e 2 meses" = 50 meses</span>
+        <span class="selo" id="resumo-efeitos">—</span>
       </div>
 
       <div class="grade">
-        <div>
-          <div class="card">
-            <h2>Identificação</h2>
-            <div class="linha">
-              <span>CPF <b id="cpf">***.456.789-**</b> <button class="btn ghost small" type="button" id="mostrar-cpf">Mostrar</button></span>
-              <span>Idade na data de corte: <b>34</b></span>
-              <span>Cidade/UF: <b>Cidade Exemplo/RS</b></span>
-              <span>PcD: <b>Não</b></span>
-              <button class="btn sec small" type="button">Abrir na Empregare ↗</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Checklist de admissibilidade <span class="item">desmarque o que não foi cumprido</span></h2>
-            <div id="checklist"></div>
-          </div>
-
-          <div class="card">
-            <h2>Critério étnico <span class="item">item 7.2.2</span></h2>
-            <div class="linha">
-              <label class="linha" style="gap:6px"><input type="checkbox" id="indigena" checked> Autodeclarado(a) indígena <b>(+7)</b></label>
-              <label class="linha" style="gap:6px"><input type="checkbox" id="aldeia" checked> Mora em aldeia <b>(+5)</b></label>
-              <span class="declarado">Declarado: "Sou indígena", "Moro em aldeia"</span>
-            </div>
-            <div id="caixa-aldeia" style="margin-top:var(--space-2)">
-              <label for="aldeia-nome" style="font-size:var(--text-caption);color:var(--text-secondary)">Aldeia (lista oficial do DSEI Exemplo Sul)</label><br>
-              <input type="text" id="aldeia-nome" list="aldeias" value="ALDEIA SOL NASCENTE-(1001)" style="min-width:300px;max-width:100%">
-              <datalist id="aldeias">
-                <option value="ALDEIA SOL NASCENTE-(1001)"><option value="ALDEIA RIO CLARO-(1001)"><option value="ALDEIA PEDRA BRANCA-(1002)"><option value="ALDEIA BOA ESPERANÇA-(1003)"><option value="SEDE - ALDEIA CENTRAL-(1004)">
-              </datalist>
-              <div class="aviso" id="aldeia-status"></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Escolaridade <span class="item">nível da vaga: Técnico/Médio</span></h2>
-            <div class="linha">
-              <select id="titulacao" aria-label="Maior titulação comprovada">
-                <option value="0">Ensino médio/técnico (0)</option>
-                <option value="3" selected>Graduação (+3)</option>
-              </select>
-              <span class="declarado">Declarado: Graduação — Enfermagem</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Cursos de aperfeiçoamento <span class="item">teto 5,0</span></h2>
-            <div class="contadores" id="contadores"></div>
-            <div class="aviso" id="cursos-res"></div>
-          </div>
-
-          <div class="card">
-            <h2>Experiência profissional <span class="item">0,2 por mês completo · teto 10 · sobreposições não somam</span></h2>
-            <div class="tabela-wrap">
-              <table class="vinculos">
-                <thead><tr><th>#</th><th>Categoria do vínculo</th><th>Início</th><th>Fim</th><th>Local (opcional)</th><th>Aceito</th></tr></thead>
-                <tbody id="vinculos"></tbody>
-              </table>
-            </div>
-            <div class="rodape-acoes"><button class="btn ghost small" type="button" id="mais-vinculo">+ Vínculo</button></div>
-            <div class="cronologia" id="cronologia"></div>
-            <div id="caixa-estagio" style="margin-top:var(--space-3)">
-              <label style="font-size:var(--text-caption);color:var(--text-secondary)">Horas de estágio — candidato indígena sem experiência (item 7.5.7.2)</label><br>
-              <input type="number" id="horas-estagio" min="0" placeholder="Ex.: 800" style="width:140px">
-              <div class="aviso" id="estagio-res"></div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2>Observações do analista
-              <span style="flex:1"></span>
-              <span class="menu"><button class="btn ghost small" type="button" id="abrir-prontos">☰ Textos prontos</button>
-                <span class="menu-lista" id="prontos"></span></span>
-            </h2>
-            <textarea id="obs" placeholder="Ex.: Certificado X não aceito por não ter a carga horária."></textarea>
-          </div>
-
-          <div class="card">
-            <details class="hist">
-              <summary>Histórico (4 versões)</summary>
-              <ul>
-                <li><b>v4</b> · Salvar · Ana Analista · hoje 10:42 — cursos 41–80 h: 2 → 3</li>
-                <li><b>v3</b> · Salvar · Ana Analista · hoje 10:31 — vínculo 2 incluído</li>
-                <li><b>v2</b> · Pegar · Ana Analista · hoje 10:15</li>
-                <li><b>v1</b> · Abrir · robô da Empregare · ontem 06:41</li>
-              </ul>
-            </details>
-          </div>
-        </div>
+        <div id="blocos"></div>
 
         <aside class="lado">
           <div class="card resultado">
             <h2>Resultado</h2>
             <div class="nota" id="r-nota">0,0</div>
-            <div><span class="selo" id="r-situacao">—</span></div>
-            <div class="corte">Nota de corte: 8,0 pts (item 7.13.1) · vem da regra de classificação</div>
-            <label for="parecer" style="font-size:var(--text-caption);color:var(--text-secondary)">Parecer (gerado pela regra do edital)</label>
+            <div><span class="selo" id="r-sit">—</span></div>
+            <p class="meta" style="margin:var(--space-1) 0 var(--space-2)">Nota mínima: 10,0 (item 8.5) · vem da regra de classificação</p>
+            <label for="parecer" class="meta">Parecer (gerado pela regra do edital)</label>
             <textarea class="parecer" id="parecer" readonly></textarea>
-            <div class="rodape-acoes">
+            <div class="acoes">
               <button class="btn ghost small" type="button" id="copiar">Copiar parecer</button>
-              <span class="salvo" id="salvo">Salvo às 10:42</span>
+              <span class="menu"><button class="btn ghost small" type="button" id="abrir-prontos">☰ Observações prontas</button><span class="menu-lista" id="prontos"></span></span>
             </div>
-            <div class="rodape-acoes">
-              <button class="btn" type="button">Concluir e próxima</button>
+            <label for="obs" class="meta" style="display:block;margin-top:var(--space-2)">Observações do analista</label>
+            <textarea id="obs" placeholder="Entram no parecer."></textarea>
+            <div class="acoes">
+              <button class="btn" type="button" id="concluir">Concluir e próxima <kbd style="opacity:.7">Ctrl+Enter</kbd></button>
               <button class="btn ghost" type="button">Pedir revisão</button>
             </div>
-            <p class="salvo" style="margin:var(--space-2) 0 0">Responsável e data: do login (Ana Analista) e do dia da conclusão.</p>
+            <p class="aviso mau" id="falta"></p>
+            <p class="meta">Responsável e data: do login (Ana Analista) e do dia da conclusão.</p>
+          </div>
+          <div class="card">
+            <h2>Registro desta sessão <span class="item">TL_EVENTO_FICHA_ANALISE</span></h2>
+            <ol class="eventos" id="eventos"></ol>
           </div>
         </aside>
       </div>
     </section>
 
-    <p class="nota-proto">Protótipo para aprovar o desenho. Dados fictícios; nenhum nome, código, CPF ou aldeia é real. Ver docs/analises-no-monitora/README.md.</p>
+    <dialog id="dlg-atalhos">
+      <h3 style="margin-top:0">Atalhos de teclado</h3>
+      <p><kbd>C</kbd> Conforme · <kbd>N</kbd> Não conforme · <kbd>E</kbd> Não enviado · <kbd>A</kbd> Não se aplica (no bloco em foco)</p>
+      <p><kbd>J</kbd> / <kbd>K</kbd> próximo / anterior bloco</p>
+      <p><kbd>Ctrl</kbd>+<kbd>S</kbd> salvar · <kbd>Ctrl</kbd>+<kbd>E</kbd> abrir na Empregare · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> concluir e próxima</p>
+      <form method="dialog"><button class="btn small">Fechar</button></form>
+    </dialog>
+
+    <p class="nota-proto">Protótipo para aprovar o desenho. Dados fictícios. Os documentos ficam na Empregare: o botão "Abrir na Empregare" usa um modelo de endereço configurável por edital.</p>
   </main>
 </div>
 
@@ -372,163 +301,144 @@ details.hist li{margin:var(--space-1) 0;font-size:var(--text-body-sm)}
   "use strict";
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => n.toFixed(1).replace(".", ",");
-  const CORTE = 8;
-  const EDITAL = "Edital 99/2026";
+  const EDITAL = "Edital 99/2026", CORTE = 10;
+  const SIT = [["CONFORME", "Conforme", "C"], ["NAO_CONFORME", "Não conforme", "N"], ["NAO_ENVIADO", "Não enviado", "E"], ["NAO_SE_APLICA", "Não se aplica", "A"]];
+  const ALDEIAS = ["ALDEIA SOL NASCENTE-(1001)", "ALDEIA RIO CLARO-(1001)", "ALDEIA PEDRA BRANCA-(1002)"];
 
-  /* Regra da análise (no sistema vem do banco, por edital). */
-  const CHECKLIST = [
-    ["ID_CPF", "ID/CPF: documentos legíveis e válidos", "3.4.1 c/d", "Item 3.4.1 ('c' e 'd'): Ausência ou irregularidade no documento de identidade oficial com foto e/ou CPF.", false],
-    ["ESC_MIN", "Escolaridade mínima condizente com a vaga", "3.1.1", "Item 3.1.1: Não comprovação da escolaridade mínima exigida.", false],
-    ["EXP_MIN", "Experiência mínima: 1 mês comprovado na área", "3.1.1 c", "Item 3.1.1 ('c'): Não cumprimento do requisito de experiência mínima de 01 (um) mês na área.", false],
-    ["COMPROV", "Comprovação: CTPS sem páginas extras, declarações assinadas", "7.5", "Item 7.5: Comprovantes de experiência inválidos ou sem informações essenciais.", false],
-    ["ARQ_UNICO", "Todos os documentos em um único PDF", "7.7", "Item 7.7: Documentação enviada de forma fracionada (não unificada em arquivo PDF).", false],
-    ["DECL_ETNICA", "Declaração étnica (Anexo VI) assinada pelas lideranças", "7.3", "Item 7.3: Declaração de pertencimento étnico ausente, incompleta ou sem as assinaturas obrigatórias (Anexo VI).", true],
+  /* Blocos da regra do edital (no sistema vêm do banco). */
+  const BLOCOS = [
+    { c: "IDENTIDADE", t: "Documento de identidade com foto", item: "6.4 c", p: "P4", decl: "Anexo", efeito: { NAO_CONFORME: "ELIMINA", NAO_ENVIADO: "ELIMINA" }, motivos: [["Documento ilegível", "6.4 c"], ["Documento sem o verso", "6.4 c"], ["Documento de outra pessoa", "6.4 c"]], sit: "CONFORME" },
+    { c: "MODALIDADE", t: "Sistema de concorrência", item: "5.1", p: "P5", decl: "\"Pretos e pardos\"", tipo: "REGISTRO", sit: "CONFORME" },
+    { c: "ETNICO", t: "Critério étnico — indígena e aldeia (declaração Anexo VI)", item: "8.13", p: "P6 + P7", decl: "\"Não se aplica\" · Anexo: Resposta não informada", efeito: { NAO_CONFORME: "ZERA_PONTOS", NAO_ENVIADO: "ZERA_PONTOS" }, motivos: [["Declaração sem as assinaturas das lideranças (Anexo VI)", "7.3 a"], ["Aldeia fora da área do DSEI", "7.2.2"]], sit: "NAO_SE_APLICA", etnico: true },
+    { c: "COTA_PP", t: "Cota pretos e pardos — autodeclaração (Anexo IX), vídeo e fotos", item: "5.3", p: "P8 + P9 + P10", decl: "Anexo · Vídeo · Anexo", efeito: { CONFORME: "ENCAMINHA_HETEROIDENTIFICACAO", NAO_CONFORME: "SEGUE_AMPLA", NAO_ENVIADO: "SEGUE_AMPLA" }, motivos: [["Autodeclaração fora do modelo do Anexo IX", "5.3"], ["Vídeo acima de 20 segundos ou sem a frase", "5.3"]], sit: "CONFORME" },
+    { c: "COTA_QUILOMBOLA", t: "Cota quilombola — autodeclaração (Anexo XI)", item: "5.4", p: "P11", decl: "Resposta não informada", tipo: "COTA", sit: "NAO_SE_APLICA" },
+    { c: "COTA_PCD", t: "Cota PcD — laudo médico com CRM", item: "4", p: "P12", decl: "Resposta não informada", tipo: "COTA", sit: "NAO_SE_APLICA" },
+    { c: "GRADUACAO", t: "Graduação exigida e diploma (frente e verso)", item: "8.11.2", p: "P13 + P14", decl: "\"Sim\" · Anexo", efeito: { NAO_CONFORME: "ELIMINA", NAO_ENVIADO: "ELIMINA" }, motivos: [["Diploma sem o verso", "8.11.2"], ["Curso diverso do exigido para a vaga", "8.11"], ["Instituição não reconhecida pelo MEC", "8.11.2"]], sit: "CONFORME" },
+    { c: "FORMACAO", t: "Outras formações (títulos)", item: "8.12", p: "P15 + P16", decl: "\"Especialização na área à qual concorre\" · Anexo", tipo: "TITULOS", sit: "CONFORME" },
+    { c: "EXPERIENCIA", t: "Experiência profissional (vínculos)", item: "8.14", p: "P17 + P18", decl: "\"4 anos e 2 meses\" · Anexo", tipo: "VINCULOS", sit: "CONFORME" },
+    { c: "PARENTESCO", t: "Parentesco ou conhecido na AgSUS", item: "—", p: "P19 + P20", decl: "\"Não\"", tipo: "REGISTRO", sit: "CONFORME" },
+    { c: "VINCULO", t: "Contrato ativo ou desligado há menos de 6 meses", item: "—", p: "P21", decl: "\"Sim\" (alerta)", tipo: "REGISTRO", sit: "CONFORME" },
+    { c: "OUTROS_DSEI", t: "Interesse em outras localidades", item: "—", p: "P22", decl: "\"Sim\"", tipo: "REGISTRO", sit: "CONFORME" },
   ];
-  const ALDEIAS = Array.from($("aldeias").options).map((o) => o.value);
-  const CURSOS = [["c81", "≥ 81 horas", 0.5, 2], ["c41", "41 a 80 h", 0.3, 3], ["c40", "≤ 40 horas", 0.2, 1]];
-  const CATEGORIAS = [["SI", "Saúde Indígena (desempate 1)"], ["AB", "Atenção Básica (desempate 2)"], ["SG", "Saúde Geral / Residência"]];
-  const VINCULOS = [["SI", "2021-03-01", "2023-06-30", "UBSI Exemplo"], ["AB", "2023-05-01", "2025-02-28", "UBS Modelo"], ["SG", "", "", ""]];
-  const PRONTOS = [
-    ["Sem detalhamento", "7.5 b", "Conforme subitem 7.5 ('b'), comprovantes de experiência sem detalhamento das atividades foram desconsiderados."],
-    ["Sem data de término/declaração", "7.5 a/b", "Conforme subitem 7.5 ('a', 'b'), comprovantes com vínculo em aberto, sem data de término ou sem declaração do empregador, foram desconsiderados."],
-    ["Sem vínculo com o SUS", "7.2.1", "Conforme o subitem 7.2.1, experiência em instituição fora do âmbito do SUS/SasiSUS não é considerada para pontuação."],
-    ["Cargo diverso", "7.2.1", "Conforme o subitem 7.2.1, experiência em cargo diverso do concorrido não é considerada para pontuação."],
-    ["Nota de cursos diminuída", "", "Nota de cursos de aperfeiçoamento diminuída: a pontuação indicada pelo(a) candidato(a) difere da aferida."],
-    ["Nota de experiência diminuída", "", "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado."],
-    ["CTPS sem identificação", "7.5 a", "O(a) candidato(a) apresentou CTPS sem identificação civil, em desacordo com o item 7.5, alínea 'a'."],
-    ["Aldeia fora do DSEI", "7.2.2", "O(a) candidato(a) não comprovou residir em aldeia da área de abrangência do DSEI Exemplo Sul (subitem 7.2.2)."],
-    ["Falta de assinaturas da liderança", "7.3 a", "O(a) candidato(a) não apresentou as assinaturas das lideranças indígenas exigidas no subitem 7.3 ('a')."],
-  ];
+  const TITULOS = [["ESPECIALIZACAO", "Especialização em Ciência de Dados", "Universidade Fictícia", 360, "S"], ["MESTRADO", "Mestrado em Saúde Coletiva", "Instituto Exemplo", 0, "N"]];
+  const PONTOS_TIT = { ESPECIALIZACAO: 1, RESIDENCIA: 2, MESTRADO: 2, DOUTORADO: 3 };
+  const VINC = [["Secretaria Municipal Exemplo", "Analista de dados", "AREA", "2019-02-01", "2021-07-31", "CTPS", "S"], ["Projeto Modelo (contrato)", "Analista", "AREA", "2021-06-01", "2023-12-31", "Declaração", "S"], ["Empresa Hipotética", "Estagiária", "AREA", "2018-01-01", "2018-06-30", "Declaração", "N"]];
+  const PRONTOS = [["Sem detalhamento das atividades (8.14 b)", "Conforme o item 8.14 'b', comprovantes sem detalhamento das atividades foram desconsiderados."], ["Sem data de término (8.14 a)", "Conforme o item 8.14 'a', vínculo sem data de término ou sem declaração do empregador foi desconsiderado."], ["Cargo diverso", "Experiência em cargo diverso do concorrido não foi considerada para pontuação."], ["Nota de experiência diminuída", "Nota de experiência profissional diminuída em decorrência do tempo de serviço comprovado."]];
+  const ROT_EFEITO = { ELIMINA: ["Elimina (inapto por requisito)", "perigo"], ZERA_PONTOS: ["Zera os pontos do critério", "alerta"], ENCAMINHA_HETEROIDENTIFICACAO: ["Encaminha à heteroidentificação", "info"], ENCAMINHA_PERICIA: ["Encaminha à perícia", "info"], SEGUE_AMPLA: ["Segue na ampla concorrência", "alerta"], SO_REGISTRO: ["Só registro", ""] };
 
-  /* Montagem */
-  $("checklist").innerHTML = CHECKLIST.map(([c, r, item, , cond]) =>
-    `<label class="check" data-c="${c}" data-cond="${cond ? "1" : ""}"><input type="checkbox" checked data-chk="${c}"><span class="t">${r}<small>Item ${item}${cond ? " · só se indígena" : ""}</small></span><button class="btn ghost small" type="button">Comprovante</button></label>`).join("");
-  $("contadores").innerHTML = CURSOS.map(([id, r, p, v]) =>
-    `<div class="contador"><div class="g"><button type="button" data-q="${id}" data-d="-1" aria-label="Menos">−</button><input type="number" min="0" id="${id}" value="${v}" aria-label="${r}"><button type="button" data-q="${id}" data-d="1" aria-label="Mais">+</button></div><small>${r} · ${fmt(p).replace(",0", "")}${p < 1 ? "" : ""} cada</small></div>`).join("");
-  const linhaVinculo = (i, [cat, ini, fim, loc]) =>
-    `<tr><td>${i}</td><td><select data-v="cat">${CATEGORIAS.map(([v, r]) => `<option value="${v}"${v === cat ? " selected" : ""}>${r}</option>`).join("")}</select></td><td><input type="date" data-v="ini" value="${ini}"></td><td><input type="date" data-v="fim" value="${fim}"></td><td><input type="text" data-v="loc" value="${loc}" placeholder="Empregador"></td><td><input type="checkbox" data-v="ok" checked aria-label="Aceito"></td></tr>`;
-  $("vinculos").innerHTML = VINCULOS.map((v, i) => linhaVinculo(i + 1, v)).join("");
-  $("prontos").innerHTML = PRONTOS.map(([r, item], i) => `<button type="button" data-p="${i}">${r}${item ? ` <small>· ${item}</small>` : ""}</button>`).join("");
+  /* Montagem dos blocos */
+  function blocoHTML(b, i) {
+    const sitBtns = b.tipo === "REGISTRO" ? "" : `<span class="sit" role="group" aria-label="Situação">${SIT.map(([v, r, k]) => `<button type="button" data-v="${v}" aria-pressed="${b.sit === v}">${r}<kbd>${k}</kbd></button>`).join("")}</span>`;
+    const motivos = b.motivos ? `<div class="motivo" hidden><select data-motivo aria-label="Motivo padronizado"><option value="">Motivo padronizado…</option>${b.motivos.map(([t, it]) => `<option>${t} — item ${it}</option>`).join("")}</select><input type="text" data-livre placeholder="Texto livre (opcional)"></div>` : "";
+    let extra = "";
+    if (b.etnico) extra = `<div class="linha" style="margin-top:var(--space-2)"><label class="linha"><input type="checkbox" id="indigena"> Indígena (+8)</label><label class="linha"><input type="checkbox" id="aldeia" disabled> Mora em aldeia (+6)</label><input type="text" id="aldeia-nome" list="lista-aldeias" placeholder="Aldeia (lista do DSEI)" hidden><datalist id="lista-aldeias">${ALDEIAS.map((a) => `<option value="${a}">`).join("")}</datalist></div><div class="aviso" id="aldeia-status"></div>`;
+    if (b.tipo === "TITULOS") extra = `<div class="tabela-wrap"><table class="tab-edit"><thead><tr><th>Nível</th><th>Curso</th><th>Instituição</th><th>CH</th><th>Comprovante</th><th>Aceito</th><th>Motivo (se não)</th></tr></thead><tbody id="titulos">${TITULOS.map(linhaTitulo).join("")}</tbody></table></div><div class="aviso" id="tit-res"></div>`;
+    if (b.tipo === "VINCULOS") extra = `<div class="tabela-wrap"><table class="tab-edit"><thead><tr><th>Empregador / órgão</th><th>Cargo</th><th>Categoria</th><th>Início</th><th>Fim</th><th>Comprovante</th><th>Aceito</th><th>Motivo (se não)</th></tr></thead><tbody id="vinculos">${VINC.map(linhaVinculo).join("")}</tbody></table></div><div class="acoes" style="margin-top:var(--space-2)"><button class="btn ghost small" type="button" id="mais-vinculo">+ Vínculo</button></div><div class="cronologia" id="cronologia"></div>`;
+    return `<div class="card bloco" tabindex="0" data-bloco="${i}" data-sit="${b.sit}"><h2>${b.t} <span class="item">item ${b.item} · ${b.p}</span><span class="espaco"></span><button class="btn sec small" type="button" data-empregare>Abrir na Empregare ↗</button></h2><div class="linha"><span class="decl">Declarado: ${b.decl}</span>${sitBtns}<span class="efeito" data-efeito></span></div>${motivos}${extra}</div>`;
+  }
+  const linhaTitulo = ([n, c, ins, ch, ok]) => `<tr><td><select data-t="nivel">${Object.keys(PONTOS_TIT).map((k) => `<option${k === n ? " selected" : ""}>${k}</option>`).join("")}</select></td><td><input type="text" value="${c}"></td><td><input type="text" value="${ins}"></td><td><input type="number" value="${ch || ""}" style="width:70px"></td><td><select><option>P16 — diploma</option><option>P16 — certificado</option></select></td><td><select data-t="ok"><option value="S"${ok === "S" ? " selected" : ""}>Sim</option><option value="N"${ok === "N" ? " selected" : ""}>Não</option></select></td><td><select data-t="motivo"><option></option><option${ok === "N" ? " selected" : ""}>Sem diploma/ata de defesa — item 8.12</option><option>Área diversa da vaga</option></select></td></tr>`;
+  const linhaVinculo = ([e, c, cat, ini, fim, comp, ok]) => `<tr><td><input type="text" value="${e}"></td><td><input type="text" value="${c}"></td><td><select data-v="cat"><option value="SI"${cat === "SI" ? " selected" : ""}>Saúde Indígena (desempate 1)</option><option value="AB"${cat === "AB" ? " selected" : ""}>Atenção Básica (desempate 2)</option><option value="AREA"${cat === "AREA" ? " selected" : ""}>Na área da vaga</option></select></td><td><input type="date" data-v="ini" value="${ini}"></td><td><input type="date" data-v="fim" value="${fim}"></td><td><select><option${comp === "CTPS" ? " selected" : ""}>CTPS</option><option${comp === "Declaração" ? " selected" : ""}>Declaração</option><option>Contrato</option></select></td><td><select data-v="ok"><option value="S"${ok === "S" ? " selected" : ""}>Sim</option><option value="N"${ok === "N" ? " selected" : ""}>Não</option></select></td><td><select data-v="motivo"><option></option><option${ok === "N" ? " selected" : ""}>Estágio não conta como experiência — item 8.14 c</option><option>Sem data de término — item 8.14 a</option><option>Cargo diverso</option></select></td></tr>`;
+  $("blocos").innerHTML = BLOCOS.map(blocoHTML).join("");
+  $("prontos").innerHTML = PRONTOS.map(([r], i) => `<button type="button" data-p="${i}">${r}</button>`).join("");
 
-  /* Conta (a mesma ideia do simulador; no sistema, o banco é a fonte da verdade). */
+  /* Registro de eventos (no sistema: TL_EVENTO_FICHA_ANALISE) */
+  function evento(t) { const d = new Date(); $("eventos").insertAdjacentHTML("afterbegin", `<li>${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")} · ${t}</li>`); }
+
+  /* Conta */
   function diasUnidos(iv) {
     if (!iv.length) return 0;
     const s = iv.map(([a, b]) => [new Date(a + "T00:00:00"), new Date(b + "T00:00:00")]).sort((x, y) => x[0] - y[0]);
     const m = [s[0].slice()];
-    for (const [a, b] of s.slice(1)) {
-      const u = m[m.length - 1], prox = new Date(u[1]); prox.setDate(prox.getDate() + 1);
-      if (a <= prox) u[1] = new Date(Math.max(u[1], b)); else m.push([a, b]);
-    }
+    for (const [a, b] of s.slice(1)) { const u = m[m.length - 1], p = new Date(u[1]); p.setDate(p.getDate() + 1); if (a <= p) u[1] = new Date(Math.max(u[1], b)); else m.push([a, b]); }
     return m.reduce((t, [a, b]) => t + Math.round((b - a) / 864e5) + 1, 0);
   }
   const amd = (d) => `${Math.floor(d / 365)} ano(s), ${Math.floor((d % 365) / 30)} mês(es) e ${(d % 365) % 30} dia(s)`;
 
   function calcular() {
-    const indigena = $("indigena").checked;
-    $("aldeia").disabled = !indigena; if (!indigena) $("aldeia").checked = false;
-    $("caixa-aldeia").hidden = !$("aldeia").checked;
-    $("caixa-estagio").hidden = !indigena;
-
-    const motivos = [];
-    document.querySelectorAll("#checklist .check").forEach((el) => {
-      const inp = el.querySelector("input"), cond = el.dataset.cond === "1";
-      inp.disabled = cond && !indigena; if (inp.disabled) inp.checked = true;
-      el.classList.toggle("inativo", inp.disabled);
-      el.classList.toggle("nao", !inp.checked && !inp.disabled);
-      if (!inp.checked && !inp.disabled) motivos.push(CHECKLIST.find((c) => c[0] === el.dataset.c)[3]);
+    const motivosElim = [], efeitos = [];
+    document.querySelectorAll(".bloco").forEach((el) => {
+      const b = BLOCOS[Number(el.dataset.bloco)]; const sit = el.dataset.sit;
+      const ef = b.efeito ? (b.efeito[sit] || "SO_REGISTRO") : "SO_REGISTRO";
+      const box = el.querySelector("[data-efeito]"); const [rot, tom] = ROT_EFEITO[ef];
+      box.innerHTML = ef === "SO_REGISTRO" ? "" : `<span class="selo" data-tom="${tom}">${rot}</span>`;
+      const mot = el.querySelector(".motivo"); const precisa = sit === "NAO_CONFORME" || sit === "NAO_ENVIADO";
+      if (mot) mot.hidden = !precisa;
+      if (ef === "ELIMINA") { const m = el.querySelector("[data-motivo]")?.value || "(motivo pendente)"; motivosElim.push(`${b.t}: ${m}`); }
+      if (ef.startsWith("ENCAMINHA") || ef === "SEGUE_AMPLA") efeitos.push(rot);
     });
-
+    /* étnico */
+    const blEtn = document.querySelector('[data-bloco="2"]');
     let etn = 0, txtEtn = "Não optante / não aplicável";
-    const st = $("aldeia-status"); st.textContent = ""; st.className = "aviso";
-    if (indigena) {
-      etn = 7; txtEtn = "Indígena (+7)";
-      if ($("aldeia").checked) {
-        const nome = $("aldeia-nome").value.trim();
-        if (!nome) { st.textContent = "Escolha a aldeia: os +5 só entram com aldeia da lista."; st.classList.add("mau"); txtEtn += " — aldeia não informada"; }
-        else if (ALDEIAS.includes(nome)) { etn += 5; st.textContent = "✓ Aldeia confirmada na lista do DSEI (+5)."; st.classList.add("ok"); txtEtn = `Indígena residente em aldeia validada (${nome}) (+12)`; }
-        else { st.textContent = "⚠ Aldeia fora da lista do DSEI: +5 negados. Use o texto pronto \"Aldeia fora do DSEI\"."; st.classList.add("mau"); txtEtn += " — aldeia não localizada na lista do DSEI"; }
-      }
+    const ind = $("indigena"), ald = $("aldeia"), st = $("aldeia-status"); st.textContent = ""; st.className = "aviso";
+    ald.disabled = !ind.checked; if (!ind.checked) ald.checked = false; $("aldeia-nome").hidden = !ald.checked;
+    if (ind.checked && blEtn.dataset.sit === "CONFORME") {
+      etn = 8; txtEtn = "Indígena (+8)";
+      if (ald.checked) { const n = $("aldeia-nome").value.trim(); if (ALDEIAS.includes(n)) { etn += 6; st.textContent = "✓ Aldeia confirmada na lista do DSEI (+6)."; st.classList.add("ok"); txtEtn = `Indígena residente em aldeia validada (${n}) (+14)`; } else { st.textContent = "⚠ Aldeia fora da lista do DSEI: +6 negados."; st.classList.add("mau"); } }
     }
-
-    const tit = $("titulacao"); const esc = Number(tit.value); const txtEsc = tit.options[tit.selectedIndex].text;
-
-    const q = CURSOS.map(([id, , p]) => [Math.max(0, parseInt($(id).value || "0", 10)), p]);
-    const curBruto = q.reduce((t, [n, p]) => t + n * p, 0); const cur = Math.min(curBruto, 5);
-    $("cursos-res").textContent = `${fmt(cur)} de 5,0${curBruto > 5 ? " (teto)" : ""}`;
-
-    const por = { SI: [], AB: [], SG: [] }, todos = [];
-    document.querySelectorAll("#vinculos tr").forEach((tr) => {
-      const g = (k) => tr.querySelector(`[data-v="${k}"]`);
-      const a = g("ini").value, b = g("fim").value, ok = g("ok").checked;
-      const erro = a && b && b < a; tr.style.background = erro ? "var(--state-danger-soft)" : "";
-      if (a && b && !erro && ok) { por[g("cat").value].push([a, b]); todos.push([a, b]); }
-    });
-    const dSI = diasUnidos(por.SI), dAB = diasUnidos(por.AB), dSG = diasUnidos(por.SG), dTot = diasUnidos(todos);
-    const meses = Math.floor(dTot / 30);
-    let mesesEst = 0; const horas = Number($("horas-estagio").value || 0); const er = $("estagio-res"); er.textContent = "";
-    if (indigena && horas > 0) {
-      if (meses > 0) er.textContent = "Estágio não pontuado: o(a) candidato(a) já tem experiência profissional.";
-      else { const bruto = horas / 8 / 22; mesesEst = Math.floor(bruto); er.textContent = `${horas} h ÷ 8 = ${(horas / 8).toFixed(1)} dias ÷ 22 = ${bruto.toFixed(2)} → ${mesesEst} mês(es) completo(s).`; }
-    }
-    const mesesUsados = meses > 0 ? meses : mesesEst;
-    const exp = Math.min(mesesUsados * 0.2, 10);
-    $("cronologia").innerHTML =
-      `<div>Saúde Indígena (desempate 1): <b>${amd(dSI)}</b></div><div>Atenção Básica (desempate 2): <b>${amd(dAB)}</b></div><div>Saúde Geral: <b>${amd(dSG)}</b></div>` +
-      `<div class="tot">Tempo único validado: ${mesesUsados} meses = ${fmt(exp)} pts${meses === 0 && mesesEst ? " (estágio)" : ""} · declarado: 50 meses (10,0)</div>`;
-
-    const soma = etn + esc + cur + exp;
-    const elim = motivos.length > 0; const nota = elim ? 0 : soma;
-    let situacao, tom;
-    if (elim) { situacao = "Inabilitado (admissibilidade)"; tom = "perigo"; }
-    else if (nota >= CORTE) { situacao = "Habilitado"; tom = "sucesso"; }
-    else { situacao = "Não habilitado (nota de corte)"; tom = "alerta"; }
-
-    $("h-total").textContent = fmt(nota); $("h-etnico").textContent = fmt(etn); $("h-esc").textContent = fmt(esc);
-    $("h-cur").textContent = fmt(cur); $("h-exp").textContent = fmt(exp); $("r-nota").textContent = fmt(nota);
-    for (const id of ["h-situacao", "r-situacao"]) { $(id).textContent = situacao; $(id).dataset.tom = tom; }
-
-    const dist = `- Critério étnico: ${fmt(etn)} pontos (${txtEtn}).\n- Escolaridade: ${fmt(esc)} pontos (${txtEsc}).\n- Cursos de aperfeiçoamento: ${fmt(cur)} pontos (${q[0][0]} curso(s) ≥81h; ${q[1][0]} curso(s) 41-80h; ${q[2][0]} curso(s) ≤40h).\n- Experiência/estágio: ${fmt(exp)} pontos (${mesesUsados} meses completos).`;
-    let p;
-    if (elim) p = `${EDITAL}\nCandidato(a) INABILITADO(A) por descumprimento das normas de admissibilidade, pelo(s) seguinte(s) motivo(s):\n\n- ${motivos.join("\n- ")}`;
-    else if (nota >= CORTE) p = `${EDITAL}\nCandidato(a) HABILITADO(A) para a próxima etapa com a pontuação total de ${fmt(nota)} pontos, distribuídos da seguinte forma:\n\n${dist}`;
-    else p = `${EDITAL}\nCandidato(a) NÃO HABILITADO(A) por não atingir a nota de corte de 8,00 pontos (item 7.13.1). Nota obtida: ${fmt(nota)} pontos, distribuídos da seguinte forma:\n\n${dist}`;
+    /* títulos */
+    let melhor = 0, txtFor = "sem título aceito";
+    document.querySelectorAll("#titulos tr").forEach((tr) => { const n = tr.querySelector('[data-t="nivel"]').value, ok = tr.querySelector('[data-t="ok"]').value === "S"; if (ok && PONTOS_TIT[n] > melhor) { melhor = PONTOS_TIT[n]; txtFor = n.toLowerCase(); } });
+    const form = melhor; $("tit-res").textContent = `Não cumulativa: vale o maior título aceito → ${fmt(form)} (${txtFor})`;
+    /* vínculos */
+    const por = { SI: [], AB: [], AREA: [] }, todos = [];
+    document.querySelectorAll("#vinculos tr").forEach((tr) => { const g = (k) => tr.querySelector(`[data-v="${k}"]`); const a = g("ini").value, f = g("fim").value, ok = g("ok").value === "S"; const erro = a && f && f < a; tr.style.background = erro ? "var(--state-danger-soft)" : ""; if (a && f && !erro && ok) { por[g("cat").value].push([a, f]); todos.push([a, f]); } });
+    const dTot = diasUnidos(todos), meses = Math.floor(dTot / 30), exp = Math.min(meses * 0.2, 10);
+    const minimo = 6, abaixo = meses < minimo;
+    if (abaixo) motivosElim.push(`Experiência profissional: ${meses} mês(es), abaixo do mínimo de ${minimo} — item 8.11 c`);
+    $("cronologia").innerHTML = `<div>Saúde Indígena (desempate 1): <b>${amd(diasUnidos(por.SI))}</b></div><div>Atenção Básica (desempate 2): <b>${amd(diasUnidos(por.AB))}</b></div><div>Na área da vaga: <b>${amd(diasUnidos(por.AREA))}</b></div><div class="tot">Tempo único validado (sobreposições unidas): ${meses} meses = ${fmt(exp)} pts · declarado: 50 meses · mínimo: ${minimo} meses</div>`;
+    /* resultado */
+    const soma = form + exp + etn, elim = motivosElim.length > 0, nota = elim ? 0 : soma;
+    let sit, tom; if (elim) { sit = "Inapto (requisito)"; tom = "perigo"; } else if (nota < CORTE) { sit = "Inapto (nota mínima)"; tom = "alerta"; } else { sit = "Apto"; tom = "sucesso"; }
+    $("h-total").textContent = fmt(nota); $("h-for").textContent = fmt(form); $("h-exp").textContent = fmt(exp); $("h-etn").textContent = fmt(etn); $("r-nota").textContent = fmt(nota);
+    for (const id of ["h-sit", "r-sit"]) { $(id).textContent = sit; $(id).dataset.tom = tom; }
+    $("resumo-efeitos").textContent = `${motivosElim.length} eliminatório(s) · ${efeitos.length} encaminhamento(s)${efeitos.length ? ": " + efeitos.join(", ") : ""}`;
+    $("resumo-efeitos").dataset.tom = elim ? "perigo" : "info";
+    const dist = `- Formação Acadêmica: ${fmt(form)} ponto(s) (${txtFor}).\n- Experiência Profissional: ${fmt(exp)} ponto(s) (${meses} meses completos).\n- Critério Étnico: ${fmt(etn)} ponto(s) (${txtEtn}).`;
+    let p = elim ? `${EDITAL}\nCandidato(a) INABILITADO(A) na Avaliação Documental e de Títulos, pelo(s) seguinte(s) motivo(s):\n\n- ${motivosElim.join("\n- ")}`
+      : nota < CORTE ? `${EDITAL}\nCandidato(a) NÃO HABILITADO(A) por não atingir a nota mínima de ${fmt(CORTE)} pontos (item 8.5). Nota obtida: ${fmt(nota)}.\n\n${dist}`
+      : `${EDITAL}\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de ${fmt(nota)} pontos, distribuídos da seguinte forma:\n\n${dist}`;
+    if (efeitos.length) p += `\n\nEncaminhamentos: ${efeitos.join("; ")}.`;
     const obs = $("obs").value.trim(); if (obs) p += `\n\nObservações da análise:\n${obs}`;
     $("parecer").value = p;
+    const faltam = [...document.querySelectorAll(".bloco")].filter((el) => { const mot = el.querySelector("[data-motivo]"); return mot && !el.querySelector(".motivo").hidden && !mot.value && !el.querySelector("[data-livre]").value.trim(); }).map((el) => BLOCOS[el.dataset.bloco].t);
+    $("falta").textContent = faltam.length ? `Falta o motivo em: ${faltam.join("; ")}.` : "";
     $("salvo").textContent = "Salvando…"; clearTimeout(calcular.t);
     calcular.t = setTimeout(() => { const d = new Date(); $("salvo").textContent = `Salvo às ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} (exemplo)`; }, 700);
   }
 
   /* Eventos */
-  document.addEventListener("input", (e) => { if (e.target.closest("#aba-ficha")) calcular(); });
-  document.addEventListener("change", (e) => { if (e.target.closest("#aba-ficha")) calcular(); });
+  let foco = 0;
+  function focar(i) { const bl = document.querySelectorAll(".bloco"); foco = Math.max(0, Math.min(bl.length - 1, i)); bl.forEach((b) => b.classList.remove("foco")); bl[foco].classList.add("foco"); bl[foco].scrollIntoView({ block: "nearest" }); }
+  function situar(el, v) { if (!el.querySelector(".sit")) return; el.dataset.sit = v; el.querySelectorAll(".sit button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v))); evento(`Situação "${BLOCOS[el.dataset.bloco].t}" → ${v}`); calcular(); }
   document.addEventListener("click", (e) => {
-    const qb = e.target.closest("[data-q]");
-    if (qb) { const el = $(qb.dataset.q); el.value = Math.max(0, (parseInt(el.value || "0", 10)) + Number(qb.dataset.d)); calcular(); return; }
-    const pb = e.target.closest("[data-p]");
-    if (pb) { const t = PRONTOS[Number(pb.dataset.p)][2]; const o = $("obs"); o.value = o.value.trim() ? o.value + "\n\n" + t : t; $("prontos").classList.remove("aberto"); calcular(); return; }
+    const sb = e.target.closest(".sit button"); if (sb) { situar(sb.closest(".bloco"), sb.dataset.v); return; }
+    if (e.target.closest("[data-empregare]")) { evento(`Abrir na Empregare: ${BLOCOS[e.target.closest(".bloco").dataset.bloco].t}`); return; }
+    const pb = e.target.closest("[data-p]"); if (pb) { const t = PRONTOS[Number(pb.dataset.p)][1]; const o = $("obs"); o.value = o.value.trim() ? o.value + "\n\n" + t : t; $("prontos").classList.remove("aberto"); evento(`Observação pronta: ${PRONTOS[Number(pb.dataset.p)][0]}`); calcular(); return; }
     if (e.target.id === "abrir-prontos") { $("prontos").classList.toggle("aberto"); return; }
     if (!e.target.closest(".menu")) $("prontos").classList.remove("aberto");
+    const bl = e.target.closest(".bloco"); if (bl) focar(Number(bl.dataset.bloco));
     if (e.target.closest("[data-abrir-ficha]")) mostrar("ficha");
     const aba = e.target.closest("[data-aba]"); if (aba) mostrar(aba.dataset.aba);
   });
-  $("mais-vinculo").addEventListener("click", () => {
-    const n = $("vinculos").rows.length; if (n >= 10) return;
-    $("vinculos").insertAdjacentHTML("beforeend", linhaVinculo(n + 1, ["SG", "", "", ""]));
+  document.addEventListener("change", (e) => { if (!e.target.closest("#aba-ficha")) return; if (e.target.matches('[data-v="ok"],[data-t="ok"]')) evento(`${e.target.value === "S" ? "Aceitou" : "Recusou"} ${e.target.dataset.v ? "vínculo" : "título"}`); if (e.target.id === "aldeia-nome") evento(`Aldeia: ${e.target.value}`); calcular(); });
+  document.addEventListener("input", (e) => { if (e.target.closest("#aba-ficha")) calcular(); });
+  document.addEventListener("keydown", (e) => {
+    if ($("aba-ficha").hidden) return;
+    const emCampo = /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
+    if (e.ctrlKey && e.key === "Enter") { e.preventDefault(); $("concluir").click(); return; }
+    if (e.ctrlKey && (e.key === "s" || e.key === "S")) { e.preventDefault(); evento("Salvar (Ctrl+S)"); calcular(); return; }
+    if (e.ctrlKey && (e.key === "e" || e.key === "E")) { e.preventDefault(); evento("Abrir na Empregare (Ctrl+E)"); return; }
+    if (emCampo) return;
+    const mapa = { c: "CONFORME", n: "NAO_CONFORME", e: "NAO_ENVIADO", a: "NAO_SE_APLICA" };
+    if (mapa[e.key.toLowerCase()]) situar(document.querySelectorAll(".bloco")[foco], mapa[e.key.toLowerCase()]);
+    else if (e.key === "j") focar(foco + 1); else if (e.key === "k") focar(foco - 1); else if (e.key === "?") $("dlg-atalhos").showModal();
   });
-  $("copiar").addEventListener("click", () => { navigator.clipboard?.writeText($("parecer").value); });
-  $("mostrar-cpf").addEventListener("click", () => {
-    $("cpf").textContent = "000.456.789-00"; /* fictício; no sistema, revelar fica registrado */
-    setTimeout(() => { $("cpf").textContent = "***.456.789-**"; }, 4000);
-  });
-  $("tema").addEventListener("click", () => {
-    const h = document.documentElement, escuro = h.dataset.theme !== "dark";
-    h.dataset.theme = escuro ? "dark" : "light"; $("tema").textContent = escuro ? "Tema claro" : "Tema escuro";
-  });
-  function mostrar(qual) {
-    $("aba-fila").hidden = qual !== "fila"; $("aba-ficha").hidden = qual !== "ficha";
-    document.querySelectorAll("[data-aba]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aba === qual)));
-    window.scrollTo(0, 0);
-  }
+  $("concluir").addEventListener("click", () => { calcular(); evento($("falta").textContent ? "Concluir recusado: falta motivo" : "Concluir e próxima (exemplo)"); });
+  $("copiar").addEventListener("click", () => navigator.clipboard?.writeText($("parecer").value));
+  $("atalhos").addEventListener("click", () => $("dlg-atalhos").showModal());
+  $("tema").addEventListener("click", () => { const h = document.documentElement, esc = h.dataset.theme !== "dark"; h.dataset.theme = esc ? "dark" : "light"; $("tema").textContent = esc ? "Tema claro" : "Tema escuro"; });
+  document.addEventListener("click", (e) => { if (e.target.id === "mais-vinculo") { $("vinculos").insertAdjacentHTML("beforeend", linhaVinculo(["", "", "AREA", "", "", "CTPS", "S"])); evento("Incluiu vínculo"); } });
+  function mostrar(q) { $("aba-fila").hidden = q !== "fila"; $("aba-ficha").hidden = q !== "ficha"; document.querySelectorAll("[data-aba]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aba === q))); if (q === "ficha") { evento("Abriu e reservou a ficha"); focar(0); } window.scrollTo(0, 0); }
   calcular();
 })();
 </script>
