@@ -746,7 +746,7 @@ export const VERBETES_AYA = Object.freeze([
       "padrao das publicacoes da agsus",
     ],
     resposta:
-      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas como nas publicações: avaliação documental — Classificação, Nome, (Modalidade), Nota Final e as parciais da regra; eliminados — Nome, Nota, parciais e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora em branco para preencher no SEI; entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
+      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas como nas publicações: avaliação documental — Classificação, Nome, (Modalidade), Nota Final e as parciais da regra; eliminados — Nome, Nota, parciais e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
     fato: "No MONITORA, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.",
     fonte: "src/lib/classificacao/documento-sei.js",
     abrir: "classificacao",
@@ -762,7 +762,7 @@ export const VERBETES_AYA = Object.freeze([
       "numeracao sumiu no sei",
     ],
     resposta:
-      'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação, se for o caso, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
+      'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação se não houver agenda salva, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
     fato: "",
     fonte:
       "src/lib/classificacao/documento-sei.js; src/modulos/classificacao/documento-no-navegador.js",
@@ -1823,6 +1823,108 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Agenda das entrevistas",
+    perguntas: [
+      "agenda das entrevistas",
+      "como funciona a agenda das entrevistas",
+      "onde fica a agenda das entrevistas",
+      "gerar os horarios das entrevistas",
+      "marcar horario da entrevista",
+    ],
+    resposta:
+      'A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a agenda do dia em Entrevistas › Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/agenda.jsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Regra da agenda das entrevistas",
+    perguntas: [
+      "regra da agenda",
+      "como configurar a regra da agenda",
+      "bancas simultaneas",
+      "duracao de cada entrevista",
+      "intervalo entre entrevistas",
+      "pausa na agenda",
+      "reservar o primeiro horario",
+      "agrupar por cargo",
+      "ordem dos candidatos na agenda",
+    ],
+    resposta:
+      'A regra da agenda tem: os dias (um intervalo, com a opção "Só dias úteis", ou uma lista de dias, em dd/mm/aaaa) e os dias sem entrevista (feriados); de 1 a 6 períodos por dia (ex.: 08:00–12:00 e 14:00–18:00), no horário de Brasília; a duração de cada entrevista (5 a 240 minutos) e o intervalo entre elas (0 a 120); uma pausa opcional (ex.: almoço), em que nenhuma entrevista acontece; de 1 a 20 bancas simultâneas, com nome (os membros cadastrados na banca de Entrevistas aparecem junto); a ordem dos candidatos (classificação na convocação, vaga/cargo, alfabética ou modalidade, com a ampla primeiro); "Agrupar por cargo" (todos de um cargo antes do próximo, e cada cargo começa num horário novo); e "Reservar o primeiro horário de cada período" (fica livre para encaixe). Até 60 dias. Salvar cria uma versão nova; da segunda em diante, com motivo.',
+    fato: "",
+    fonte:
+      "src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Como a agenda é gerada",
+    perguntas: [
+      "como a agenda e gerada",
+      "convocado sem horario",
+      "a agenda nao cabe",
+      "sobram horarios na agenda",
+      "distribuicao pelas bancas",
+    ],
+    resposta:
+      '"Gerar agenda" monta os horários de cada dia a partir de cada período: começa no início, avança de duração mais intervalo e pula a pausa. Em cada horário cabe uma entrevista por banca. Os convocados, na ordem da regra, ocupam os horários em ordem: banca 1, banca 2… no mesmo horário, depois o próximo horário e o próximo dia. Se não couber, a tela diz quantos ficaram sem horário e quanto tempo de entrevista falta; se sobrar muito (30% dos lugares ou mais), diz quantos horários sobram e quantos dias bastam. O resultado é um rascunho: só vale depois de "Salvar agenda".',
+    fato: "",
+    fonte: "src/lib/agenda-das-entrevistas.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Ajuste manual da agenda",
+    perguntas: [
+      "ajustar a agenda",
+      "trocar o horario de um candidato",
+      "trocar dois candidatos de horario",
+      "conflito na agenda",
+      "gerar a agenda de novo",
+    ],
+    resposta:
+      'Na agenda, "Mudar" abre o ajuste de um convocado: escolher um horário livre (de qualquer banca, inclusive os reservados) ou "Sem horário", ou trocar de lugar com outro convocado (os dois trocam dia, hora e banca). O ajuste fica marcado como "Ajuste manual". Conflito é a mesma banca com horários que se sobrepõem no mesmo dia ou o mesmo candidato duas vezes: a tela lista os conflitos e não deixa salvar até resolver; o banco também recusa. "Gerar de novo" sobre uma agenda com ajustes manuais pergunta antes, porque a distribuição da regra substitui os ajustes. Cada gravação fica no histórico (Gravações), com quem, quando e o que mudou.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/agenda.jsx; src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Data e hora no documento da convocação",
+    perguntas: [
+      "data e hora na convocacao",
+      "preencher data e hora da convocacao",
+      "agenda no documento do sei",
+      "exportar a agenda",
+    ],
+    resposta:
+      "Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.",
+    fato: "",
+    fonte:
+      "src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Agenda do dia em Conduzir entrevistas",
+    perguntas: [
+      "agenda do dia",
+      "agenda da banca",
+      "quem entrevisto hoje",
+      "horarios de hoje da entrevista",
+    ],
+    resposta:
+      'Em Conduzir entrevistas, ao abrir o edital, o cartão "Agenda do dia" mostra a agenda salva por horário: escolha o dia (abre em hoje, no horário de Brasília, ou no próximo dia com entrevista) e, havendo mais de uma, a banca. A linha de quem já está convocado no sistema abre a ficha de notas. A agenda é só de consulta ali; ela é montada e ajustada na Classificação, visão Agenda. Sem agenda salva, o cartão não aparece.',
+    fato: "",
+    fonte: "src/modulos/entrevistas/agenda-do-dia.jsx",
+    abrir: "entrevistas",
   },
   {
     arquivo: "regras-do-chat.md",
