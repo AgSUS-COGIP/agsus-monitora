@@ -6,7 +6,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
