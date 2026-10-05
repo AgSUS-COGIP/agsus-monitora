@@ -81,9 +81,16 @@
   display: none;
 }
 
+/* Aberto, o filtro inteiro sobe para a camada dos menus suspensos: acima
+   dos outros filtros (todos em z-index 5 no app.css) e do cabeçalho fixo da
+   tabela. Sem isso, "Modalidade" e "Status" cobriam a lista de "Cargo". */
+.multi-select-busca.is-aberto {
+  z-index: var(--z-popover);
+}
+
 .multi-select-menu {
   position: absolute;
-  z-index: 60;
+  z-index: 1;
   top: calc(100% + 6px);
   left: 0;
   /*
@@ -192,7 +199,8 @@
 /*
   Em telas estreitas o menu passa a ocupar a largura da janela: ancorado ao
   campo ele ficaria com uns 150px, estreito demais para ler "03/2025 · DSEI
-  Yanomami".
+  Yanomami". O "top" vem do componente, logo abaixo do campo, e acompanha a
+  rolagem da página.
 */
 @media (max-width: 820px) {
   .multi-select-menu {
