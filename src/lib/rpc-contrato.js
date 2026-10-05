@@ -1010,6 +1010,55 @@ export const CONTRATO_RPC = {
     resumo:
       "Apaga de fato todas as mensagens e reações do chat (e, com p_incluir_conversas, as conversas sem participante ativo). p_confirmacao exatamente ZERAR e motivo de 3 a 500 (22023). Só administrador global (42501).",
   },
+  // ── Avaliação documental: regra e equipe (20261006100000_regra_da_analise.sql)
+  listar_editais_avaliacao: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Editais da área para a Avaliação documental: versão e situação da regra, dono da avaliação e o papel de quem está logado. avaliacao_documental >= leitor, área e coordenação.",
+  },
+  obter_regra_analise: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Regra da avaliação do edital (vigente e versões), modelos, nota mínima da regra de classificação, aldeias do DSEI e, só para a coordenação, as perguntas e respostas da última carga da Empregare (só as que aparecem 2+ vezes). Leitor.",
+  },
+  salvar_regra_analise: {
+    argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
+    critica: false,
+    resumo:
+      "Salva a regra como versão nova (40001 se a versão aberta não é a vigente; motivo de 10 a 2.000 da 2ª em diante) e volta para Conferir. Só a coordenação do edital.",
+  },
+  copiar_modelo_regra_analise: {
+    argumentos: ["p_edital", "p_modelo"],
+    critica: false,
+    resumo:
+      "Cria a versão 1 da regra copiando um modelo (Conferir); edital com regra = 23505. Só a coordenação do edital.",
+  },
+  conferir_regra_analise: {
+    argumentos: ["p_edital", "p_versao"],
+    critica: false,
+    resumo:
+      "Marca a versão vigente da regra como conferida (40001 se não é a vigente). Só a coordenação do edital.",
+  },
+  obter_equipe_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Equipe da avaliação do edital: gestores (coordenação automática), analistas, revisores e coordenação, vagas e, só para a coordenação, e-mails e pessoas que podem entrar. Leitor.",
+  },
+  salvar_equipe_edital: {
+    argumentos: ["p_edital", "p_equipe", "p_motivo"],
+    critica: false,
+    resumo:
+      "Grava a equipe inteira: quem sai é desativado (motivo obrigatório), quem entra precisa de Editor (analista, revisor) ou Administrador (coordenador) e ver o edital; 42501 diz a permissão que falta. Só a coordenação do edital.",
+  },
+  salvar_aldeias_dsei: {
+    argumentos: ["p_unidade", "p_aldeias", "p_fonte"],
+    critica: false,
+    resumo:
+      "Carrega a lista oficial de aldeias de um DSEI (a enviada vira a vigente; as que saem são desativadas). Só o administrador global.",
+  },
   registrar_presenca_monitora: {
     argumentos: ["p_current_view"],
     critica: false,
