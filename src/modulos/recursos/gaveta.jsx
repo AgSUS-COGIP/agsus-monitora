@@ -14,6 +14,7 @@ import {
   Kv,
   Secao,
 } from "../../ui/index.js";
+import { SecaoDoAjuste } from "./ajuste.jsx";
 import { SecaoDeAnexos } from "./anexos.jsx";
 import { SecaoDoParecer } from "./parecer.jsx";
 import { dataHora, nota } from "./partes.jsx";
@@ -25,7 +26,8 @@ import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.jsx";
   pílulas, o contexto em cartões e as seções (Secao, Kv). Traz os dados do
   candidato (vindos da
   análise), a nota e o resultado do cadastro contra os de hoje, o prazo do
-  cronograma, o parecer jurídico (parecer.jsx), as etapas com quem e quando,
+  cronograma, o parecer jurídico (parecer.jsx), o ajuste da pontuação
+  (ajuste.jsx), as etapas com quem e quando,
   a resposta ao candidato
   (resposta.jsx), os anexos (anexos.jsx), a observação e o histórico. Quem
   edita marca as etapas aqui, escreve a resposta, anexa, edita e exclui.
@@ -53,6 +55,12 @@ const ACOES_DO_PARECER_NO_HISTORICO = {
   reabrir: "Reabriu a decisão",
 };
 
+const ACOES_DO_AJUSTE_NO_HISTORICO = {
+  propor: "Propôs o ajuste da pontuação",
+  aprovar: "Aprovou o ajuste da pontuação",
+  cancelar: "Cancelou o ajuste da pontuação",
+};
+
 const ACOES_DA_RESPOSTA_NO_HISTORICO = {
   criacao: "Criou o rascunho da resposta",
   enviar_revisao: "Enviou a resposta para revisão",
@@ -78,6 +86,11 @@ function textoDoHistorico(h, origens) {
     const texto =
       ACOES_DO_PARECER_NO_HISTORICO[h.campo] ||
       `Situação: ${rotuloDaSituacao(h.novo)}`;
+    return `${texto}${h.motivo ? `: ${h.motivo}` : ""}`;
+  }
+  if (h.acao === "ajuste") {
+    const texto =
+      ACOES_DO_AJUSTE_NO_HISTORICO[h.campo] || "Ajuste da pontuação";
     return `${texto}${h.motivo ? `: ${h.motivo}` : ""}`;
   }
   if (h.acao === "exclusao")
@@ -209,6 +222,8 @@ export function GavetaDoRecurso({
             podeDecidir={podeDecidir}
             acao={acao}
           />
+
+          <SecaoDoAjuste estado={estado} recurso={r} acao={acao} />
 
           <Secao icone="fa-list-check" titulo="Etapas" secao="etapas">
             <ul className="recursos-checklist">

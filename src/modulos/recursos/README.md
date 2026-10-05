@@ -11,6 +11,8 @@ paineis.jsx     topo (status e ações), filtros, 4 KPIs, recorte, gráficos, pe
 tabela.jsx      fila (TabelaInfinita), selos de situação, resposta e prazo
 gaveta.jsx      detalhe: parecer, etapas, resposta, anexos, resultado, prazo, observação, histórico
 parecer.jsx     parecer jurídico: enviar, deferir/deferir parcialmente/indeferir, devolver, reabrir
+ajuste.jsx      ajuste da pontuação no recurso deferido: componentes da regra, prévia da posição,
+                propor, aprovar (prévia recalculada), cancelar, versões
 formulario.jsx  cadastro e edição (candidato buscado nas análises do edital)
 resposta.jsx    resposta ao candidato: modelo, prévia, revisão, documento
 anexos.jsx      anexos com download registrado (URL assinada de 60 s)
@@ -26,3 +28,8 @@ Regras puras em `src/lib/` (`recursos-dos-candidatos.js`, `prazo-do-recurso.js`,
 Decidir é só de quem tem `recursos_parecer` (Acessos › "Parecer jurídico (Recursos)", grupo
 "Jurídico"); o banco confere (`20261001170000_recursos_parecer_juridico.sql`). As regras
 explicadas à pessoa ficam com a Aya (`docs/aya/regras-dos-recursos.md`).
+
+Ajuste da pontuação (`20261005130000_recurso_ajusta_pontuacao.sql`): propor e aprovar são do
+parecer jurídico; aprovar exige o recurso deferido; reabrir/indeferir/devolver/excluir cancela
+(gatilho). A conta da prévia é a da Classificação (`src/lib/classificacao/ajustes.js`); a nota
+da planilha nunca muda. "O recurso mudou a classificação" é automática (aprovação do ajuste).
