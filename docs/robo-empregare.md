@@ -91,8 +91,8 @@ e não dispara o que já está rodando. O botão volta a ficar livre quando a ex
 | `vagas`   | opcional: códigos separados por vírgula                                                                                                                                                                                    |
 | `limite`  | máximo de vagas (padrão 60)                                                                                                                                                                                                |
 
-**Agenda de reserva:** de segunda a sexta às 6h30 de Brasília (`cron: "30 9 * * 1-5"`), antes das
-cargas das 9h. Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
+**Agenda de reserva:** de segunda a sexta às 6h30 de Brasília (`cron: "30 9 * * 1-5"`), antes da
+primeira carga de hora em hora das planilhas (7h). Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
 
 ### Teste de fumaça (depois de cadastrar os segredos)
 

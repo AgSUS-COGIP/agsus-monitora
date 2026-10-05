@@ -15,7 +15,9 @@
 
   OS PRAZOS (folga sobre o esperado, decisão de 01/10/2026)
     Análises, incremental   esperado a cada 20 min · atrasada depois de 1 h
-    Entrevistas e Seleção   esperado todo dia às 9h · atrasada depois de 26 h
+    Entrevistas e Seleção   esperado de hora em hora das 7h às 19h (Brasília) ·
+                            atrasada depois de 4 h das 9h às 20h; fora disso,
+                            depois de 14 h (a noite sem carga não conta)
     Robô da Empregare       esperado de segunda a sexta às 6h30 (Brasília) ·
                             atrasada depois de 26 h; do sábado até segunda 9h,
                             depois de 74 h (o fim de semana não conta)
@@ -29,6 +31,16 @@ export const PRAZO_DIARIO_MIN = 26 * 60;
 export const PRAZO_FREQUENTE_MIN = 15;
 export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
 export const PRAZO_FIM_DE_SEMANA_MIN = 74 * 60;
+export const PRAZO_DE_HORA_EM_HORA_MIN = 4 * 60;
+export const PRAZO_DA_NOITE_MIN = 14 * 60;
+
+/** Prazo das cargas de hora em hora (7h–19h de Brasília): 4 h das 9h às 20h, 14 h no resto. */
+export function prazoDeHoraEmHora(agora = new Date()) {
+  const hora = new Date(agora.getTime() - 3 * 60 * MINUTO).getUTCHours();
+  return hora >= 9 && hora <= 20
+    ? PRAZO_DE_HORA_EM_HORA_MIN
+    : PRAZO_DA_NOITE_MIN;
+}
 
 /** Prazo do robô da Empregare (dias úteis): 74 h do sábado até segunda 9h de Brasília, 26 h no resto. */
 export function prazoDosDiasUteis(agora = new Date()) {
@@ -216,8 +228,8 @@ export function normalizarSaude(dados, agora = new Date()) {
         id: "entrevistas",
         nome: "Entrevistas",
         onde: "GitHub Actions · Sincronizar entrevistas",
-        esperado: "todo dia às 9h",
-        prazoMin: PRAZO_DIARIO_MIN,
+        esperado: "de hora em hora, das 7h às 19h",
+        prazoMin: prazoDeHoraEmHora(agora),
         tipo: "planilha",
         execucoes: dados?.entrevistas,
       },
@@ -228,8 +240,8 @@ export function normalizarSaude(dados, agora = new Date()) {
         id: "selecao",
         nome: "Seleção (planilha Auditoria)",
         onde: "GitHub Actions · Sincronizar seleção",
-        esperado: "todo dia às 9h",
-        prazoMin: PRAZO_DIARIO_MIN,
+        esperado: "de hora em hora, das 7h às 19h",
+        prazoMin: prazoDeHoraEmHora(agora),
         tipo: "planilha",
         execucoes: dados?.selecao,
       },

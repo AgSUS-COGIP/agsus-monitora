@@ -5,6 +5,9 @@ import {
   prazoDosDiasUteis,
   PRAZO_FIM_DE_SEMANA_MIN,
   PRAZO_DIARIO_MIN,
+  PRAZO_DE_HORA_EM_HORA_MIN,
+  PRAZO_DA_NOITE_MIN,
+  prazoDeHoraEmHora,
   PRAZO_FREQUENTE_MIN,
   PRAZO_MENSAL_MIN,
   textoDaIdade,
@@ -136,7 +139,7 @@ describe("selo de cada carga", () => {
     );
   });
 
-  it("entrevistas e seleção: atrasada depois de 26 h; rodando agora aparece", () => {
+  it("entrevistas e seleção: atrasada pelo prazo de hora em hora; rodando agora aparece", () => {
     expect(carga("entrevistas")).toMatchObject({
       situacao: "em_dia",
       idadeMin: 180,
@@ -317,6 +320,20 @@ describe("robô da Empregare (20261005170000)", () => {
     ]);
     const robo = visaoSimples(s).linhas.find((l) => l.id === "empregare");
     expect(robo).toMatchObject({ situacao: "em_dia", emAndamento: true });
+  });
+
+  it("prazo de hora em hora: 4 h de dia, 14 h à noite", () => {
+    // 12h de Brasília = 15h UTC; 23h de Brasília = 02h UTC do dia seguinte.
+    expect(prazoDeHoraEmHora(new Date("2026-10-05T15:00:00Z"))).toBe(
+      PRAZO_DE_HORA_EM_HORA_MIN,
+    );
+    expect(prazoDeHoraEmHora(new Date("2026-10-06T02:00:00Z"))).toBe(
+      PRAZO_DA_NOITE_MIN,
+    );
+    // 8h de Brasília (11h UTC): a primeira carga das 7h pode atrasar; vale a noite.
+    expect(prazoDeHoraEmHora(new Date("2026-10-05T11:00:00Z"))).toBe(
+      PRAZO_DA_NOITE_MIN,
+    );
   });
 
   it("prazo dos dias úteis: o fim de semana não atrasa", () => {
