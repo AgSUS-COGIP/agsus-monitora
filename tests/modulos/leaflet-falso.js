@@ -112,6 +112,7 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
       if (Number.isFinite(z)) m.zoom = z;
     });
     m.flyToBounds = registrar("flyToBounds");
+    m.panInside = registrar("panInside");
     m.stop = registrar("stop");
     m.invalidateSize = registrar("invalidateSize");
     m.getZoom = () => m.zoom;

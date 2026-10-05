@@ -43,7 +43,7 @@ export function usarVoltaDoDsei(dsei) {
   return [volta, () => definirPedida(true)];
 }
 
-const CAMPOS_E_JANELAS =
+export const CAMPOS_E_JANELAS =
   'input, textarea, select, [contenteditable="true"], [role="dialog"], [aria-modal="true"], dialog';
 
 function escVoltaAoBrasil(evento, regiao, telaCheia) {

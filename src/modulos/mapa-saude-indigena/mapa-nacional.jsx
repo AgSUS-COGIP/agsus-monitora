@@ -29,6 +29,11 @@ import {
 import { usarUltimo } from "./usar-ultimo.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
+import {
+  BotaoDeRecolher,
+  PainelDoEditor,
+  usarModoDeEdicao,
+} from "../editor-de-coordenadas/modo-de-edicao.jsx";
 
 /*
   Enquadramento do recorte: o filtro que deixa um só DSEI ou CASAI vira zoom
@@ -173,12 +178,17 @@ export function MapaNacional({
   aoEscolherDsei,
   aoFiltrarPorBusca,
 }) {
-  const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
   const podeEditar = podeEditarCoordenadas(perfil);
   const refDoMapa = useRef(null);
   const refDaLista = useRef(null);
   const [mapa, definirMapa] = useState(null);
   const camadas = useRef(null);
+  const modo = usarModoDeEdicao({
+    mapa,
+    permitido: podeEditar && visivel,
+    pegar: () => camadas.current?.pegar(),
+  });
+  const idDoPainel = `${idDoMapa}-painel-lateral`;
   const ultimoEnquadramento = useRef("");
   // A última volta de DSEI já enquadrada e já com o foco devolvido (`vez`).
   const voltaEnquadrada = useRef(0);
@@ -201,6 +211,7 @@ export function MapaNacional({
     */
     const {
       mapa: novo,
+      pegar,
       soltar,
       parar,
     } = criarMapaDoBrasil(L, elemento, {
@@ -217,7 +228,15 @@ export function MapaNacional({
     const tracos = [];
     const leque = () => aplicarLeque(L, novo, dsei, marcadores, tracos);
     novo.on("zoomend", leque);
-    camadas.current = { dsei, casai, marcadores, tracos, leque, soltar };
+    camadas.current = {
+      dsei,
+      casai,
+      marcadores,
+      tracos,
+      leque,
+      pegar,
+      soltar,
+    };
     ultimoEnquadramento.current = "";
     definirMapa(novo);
     return () => {
@@ -360,7 +379,10 @@ export function MapaNacional({
 
   return (
     <section
-      className="ui-card mapa-si-painel mapa-si-painel--nacional"
+      className={classes(
+        "ui-card mapa-si-painel mapa-si-painel--nacional",
+        modo.editando && "mapa-si-painel--editando",
+      )}
       hidden={!visivel}
       aria-labelledby={`${idDoMapa}-titulo`}
     >
@@ -384,10 +406,11 @@ export function MapaNacional({
             <button
               type="button"
               className="btn small"
-              aria-pressed={editandoCoordenadas}
-              aria-expanded={editandoCoordenadas}
-              aria-controls={`${idDoMapa}-painel-lateral`}
-              onClick={() => definirEditandoCoordenadas((atual) => !atual)}
+              aria-pressed={modo.editando}
+              aria-expanded={modo.editando}
+              aria-controls={idDoPainel}
+              title={modo.editando ? "Sair da edição (Esc)" : undefined}
+              onClick={modo.alternar}
             >
               Coordenadas
             </button>
@@ -404,7 +427,7 @@ export function MapaNacional({
           >
             Brasil
           </button>
-          {acoes}
+          {modo.editando ? null : acoes}
         </div>
       </header>
       <div className="mapa-si-painel__corpo">
@@ -427,17 +450,12 @@ export function MapaNacional({
             <LegendaNacional mapa={mapa} temAbrangencia={temAbrangencia} />
           ) : null}
         </div>
-        <aside
-          ref={refDaLista}
-          className="mapa-si-lista"
-          id={`${idDoMapa}-painel-lateral`}
-          aria-label={
-            editandoCoordenadas && podeEditar
-              ? "Coordenadas do mapa"
-              : "Territórios por vagas"
-          }
-        >
-          {podeEditar && editandoCoordenadas && visivel ? (
+        {modo.editando ? (
+          <PainelDoEditor
+            id={idDoPainel}
+            rotulo="Coordenadas do mapa"
+            modo={modo}
+          >
             <EditorDeCoordenadas
               L={L}
               mapa={mapa}
@@ -446,9 +464,24 @@ export function MapaNacional({
               perfil={perfil}
               supabase={supabase}
               aoAtualizarMapa={aoAtualizarMapa}
-              aoFechar={() => definirEditandoCoordenadas(false)}
+              aoFechar={modo.fechar}
+              areaLivre={modo.areaLivre}
+              versaoDaArea={modo.versaoDaArea}
+              botaoDeRecolher={
+                <BotaoDeRecolher
+                  modo={modo}
+                  idDoConteudo={`${idDoPainel}-conteudo`}
+                />
+              }
             />
-          ) : (
+          </PainelDoEditor>
+        ) : (
+          <aside
+            ref={refDaLista}
+            className="mapa-si-lista"
+            id={idDoPainel}
+            aria-label="Territórios por vagas"
+          >
             <>
               <div className="mapa-si-lista__topo">
                 <span id={`${idDoMapa}-lista`}>Territórios por vagas</span>
@@ -470,8 +503,8 @@ export function MapaNacional({
                 <EstadoVazio>Nenhum território no recorte.</EstadoVazio>
               )}
             </>
-          )}
-        </aside>
+          </aside>
+        )}
       </div>
     </section>
   );

@@ -10,7 +10,8 @@ import { EstadoVazio, Selo } from "../../ui/index.js";
   sede do município, centro da UF e sede do DSEI em Projetos), com a
   distância até a posição atual. No alto, a gravidade (selo e resumo) e o
   motivo da pendência; a mais provável vem primeiro, marcada. "Usar esta" só
-  preenche a prévia; gravar continua com Salvar/Conferido.
+  preenche a prévia; gravar continua com Salvar/Conferido. Seção recolhível
+  (aberta), como a Correção e o Histórico, para caber no painel do editor.
 */
 export function SugestoesDoPonto({
   sugestoes,
@@ -24,8 +25,14 @@ export function SugestoesDoPonto({
     (a, b) => (b.id === idDaMelhor) - (a.id === idDaMelhor),
   );
   return (
-    <section className="mapa-si-coordenadas__bloco" aria-label="Sugestões">
-      <h4 className="mapa-si-coordenadas__subtitulo">Sugestões</h4>
+    <details
+      className="mapa-si-coordenadas__bloco mapa-si-coordenadas__secao"
+      aria-label="Sugestões"
+      open
+    >
+      <summary className="mapa-si-coordenadas__subtitulo">
+        Sugestões <b>{ordenadas.length}</b>
+      </summary>
       {gravidade ? (
         <p className="mapa-si-coordenadas__gravidade">
           <Selo tom={GRAVIDADES[gravidade.nivel].tom}>
@@ -67,6 +74,6 @@ export function SugestoesDoPonto({
       ) : (
         <EstadoVazio>Sem posição candidata.</EstadoVazio>
       )}
-    </section>
+    </details>
   );
 }

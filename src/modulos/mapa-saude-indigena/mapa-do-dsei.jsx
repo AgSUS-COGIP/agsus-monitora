@@ -39,6 +39,11 @@ import {
 import { usarUltimo } from "./usar-ultimo.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
+import {
+  BotaoDeRecolher,
+  PainelDoEditor,
+  usarModoDeEdicao,
+} from "../editor-de-coordenadas/modo-de-edicao.jsx";
 
 const OPCOES_DO_ENQUADRAMENTO = Object.freeze({
   padding: [34, 34],
@@ -72,8 +77,9 @@ export function MapaDoDsei({
   const [comExternos, definirComExternos] = useState(false);
   const [ocultos, definirOcultos] = useState(() => new Set());
   const [terras, definirTerras] = useState([]);
-  const [editandoCoordenadas, definirEditandoCoordenadas] = useState(false);
   const podeEditar = podeEditarCoordenadas(perfil);
+  const modo = usarModoDeEdicao({ mapa, permitido: podeEditar });
+  const idDoPainel = `${idDoMapa}-painel-lateral`;
   const chamadas = usarUltimo({ aoEscolherUnidade });
 
   const classificados = useMemo(
@@ -299,7 +305,10 @@ export function MapaDoDsei({
 
   return (
     <section
-      className="ui-card mapa-si-painel mapa-si-painel--dsei"
+      className={classes(
+        "ui-card mapa-si-painel mapa-si-painel--dsei",
+        modo.editando && "mapa-si-painel--editando",
+      )}
       aria-labelledby={tituloId}
     >
       <header className="mapa-si-painel__topo">
@@ -325,10 +334,11 @@ export function MapaDoDsei({
             <button
               type="button"
               className="btn small"
-              aria-pressed={editandoCoordenadas}
-              aria-expanded={editandoCoordenadas}
-              aria-controls={`${idDoMapa}-painel-lateral`}
-              onClick={() => definirEditandoCoordenadas((atual) => !atual)}
+              aria-pressed={modo.editando}
+              aria-expanded={modo.editando}
+              aria-controls={idDoPainel}
+              title={modo.editando ? "Sair da edição (Esc)" : undefined}
+              onClick={modo.alternar}
             >
               Coordenadas
             </button>
@@ -350,7 +360,7 @@ export function MapaDoDsei({
               </button>
             </>
           ) : null}
-          {acoes}
+          {modo.editando ? null : acoes}
         </div>
       </header>
       <div className="mapa-si-painel__corpo">
@@ -370,12 +380,12 @@ export function MapaDoDsei({
             </EstadoVazio>
           )}
         </div>
-        <aside
-          className="mapa-si-lista"
-          id={`${idDoMapa}-painel-lateral`}
-          aria-label={`Polos e unidades do DSEI ${dsei.n}`}
-        >
-          {podeEditar && editandoCoordenadas ? (
+        {modo.editando ? (
+          <PainelDoEditor
+            id={idDoPainel}
+            rotulo={`Coordenadas do DSEI ${dsei.n}`}
+            modo={modo}
+          >
             <EditorDeCoordenadas
               L={L}
               mapa={mapa}
@@ -385,9 +395,23 @@ export function MapaDoDsei({
               perfil={perfil}
               supabase={supabase}
               aoAtualizarMapa={aoAtualizarMapa}
-              aoFechar={() => definirEditandoCoordenadas(false)}
+              aoFechar={modo.fechar}
+              areaLivre={modo.areaLivre}
+              versaoDaArea={modo.versaoDaArea}
+              botaoDeRecolher={
+                <BotaoDeRecolher
+                  modo={modo}
+                  idDoConteudo={`${idDoPainel}-conteudo`}
+                />
+              }
             />
-          ) : (
+          </PainelDoEditor>
+        ) : (
+          <aside
+            className="mapa-si-lista"
+            id={idDoPainel}
+            aria-label={`Polos e unidades do DSEI ${dsei.n}`}
+          >
             <>
               <div className="mapa-si-lista__topo">
                 <span>Polos e unidades</span>
@@ -485,8 +509,8 @@ export function MapaDoDsei({
                 <EstadoVazio>Nenhuma Terra Indígena no recorte.</EstadoVazio>
               )}
             </>
-          )}
-        </aside>
+          </aside>
+        )}
       </div>
       <LegendaDoDsei mapa={mapa} />
     </section>

@@ -2397,10 +2397,28 @@ export const VERBETES_AYA = Object.freeze([
       "como usar o editor de coordenadas",
     ],
     resposta:
-      'O administrador global e o Gestor podem usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. A lista do editor substitui a lista lateral: busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa centraliza nele e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
+      'O administrador global e o Gestor podem usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. O mapa entra no modo de edição (veja "Modo de edição das coordenadas"): busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa enquadra o ponto e a sugestão mais provável na parte que o editor não cobre e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.',
     fato: "",
     fonte:
       "src/modulos/mapa-saude-indigena/editor-de-coordenadas.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Modo de edição das coordenadas",
+    perguntas: [
+      "modo de edicao das coordenadas",
+      "mapa pequeno no editor",
+      "recolher editor",
+      "abrir editor",
+      "sair do editor de coordenadas",
+      "editor de coordenadas no celular",
+      "painel do editor cobre o mapa",
+    ],
+    resposta:
+      'No MONITORA, "Coordenadas" (nos mapas da Saúde Indígena e de Projetos) leva o mapa para a tela inteira, como a tela cheia: o mapa ocupa quase tudo e o editor fica num painel à direita, com rolagem própria; no celular, o mapa fica em cima e o editor numa folha embaixo. "Recolher editor" deixa só uma faixa estreita para ver e arrastar o pin com o mapa inteiro — o ponto escolhido, a prévia e o motivo continuam lá — e "Abrir editor" volta. Ao escolher um ponto, o mapa enquadra o ponto e a sugestão na parte visível, sem escondê-los atrás do painel. No painel, a busca e "Só pendentes" ficam numa linha, a contagem e os níveis de gravidade na seguinte, e a lista ocupa o resto; com um ponto escolhido, Sugestões, Correção e Histórico são seções que abrem e fecham pelo título (o Histórico começa fechado, com a contagem). Para sair, use "Voltar à lista", o botão "Coordenadas" ou Esc (num campo, o Esc fica com o campo); o mapa volta ao tamanho de sempre da Visão geral. Se o mapa estava em tela cheia, ele continua em tela cheia depois de sair do editor.',
+    fato: "",
+    fonte:
+      "src/modulos/editor-de-coordenadas/modo-de-edicao.jsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -2455,7 +2473,7 @@ export const VERBETES_AYA = Object.freeze([
       "voltar posicao anterior",
     ],
     resposta:
-      'Abaixo do formulário, o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
+      'Na seção Histórico, abaixo da Correção (fechada de início; clique no título para abrir), o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).',
     fato: "",
     fonte:
       "src/modulos/editor-de-coordenadas/historico-do-ponto.jsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql",
@@ -2906,7 +2924,7 @@ export const VERBETES_AYA = Object.freeze([
       "conferir lugar de projetos",
     ],
     resposta:
-      'No mapa de Projetos, o administrador global e o Gestor veem o botão "Coordenadas", que troca a lista "Municípios por vagas" pelo editor; "Voltar à lista" fecha. Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa vai até ele e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. O histórico abaixo mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.',
+      'No mapa de Projetos, o administrador global e o Gestor veem o botão "Coordenadas", que leva o mapa para a tela inteira com o editor num painel à direita (no celular, embaixo), como no mapa da Saúde Indígena: "Recolher editor" deixa só uma faixa, e "Voltar à lista", o próprio "Coordenadas" ou Esc saem e devolvem a lista "Municípios por vagas". Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa enquadra o lugar e a sugestão na parte que o painel não cobre e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. A seção Histórico (fechada de início; abre pelo título) mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.',
     fato: "",
     fonte:
       "src/modulos/mapa-de-projetos/editor-de-coordenadas.jsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.jsx; supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql",
