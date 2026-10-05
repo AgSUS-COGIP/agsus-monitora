@@ -325,7 +325,7 @@ describe("folga do enquadramento no modo de edição", () => {
   it("painel à direita: desconta a largura coberta no padding de baixo/direita", () => {
     const painel = { left: 828, top: 72, right: 1228, bottom: 748 };
     expect(folgaDoEnquadramento(mapa, painel)).toEqual({
-      paddingTopLeft: [72, 72],
+      paddingTopLeft: [104, 104],
       paddingBottomRight: [412 + 72, 72],
     });
   });
@@ -333,12 +333,15 @@ describe("folga do enquadramento no modo de edição", () => {
     const celular = { left: 14, top: 100, right: 376, bottom: 831 };
     const folha = { left: 14, top: 578, right: 376, bottom: 831 };
     expect(folgaDoEnquadramento(celular, folha)).toEqual({
-      paddingTopLeft: [72, 72],
+      paddingTopLeft: [104, 104],
       paddingBottomRight: [72, 253 + 72],
     });
   });
   it("sem painel, painel fora do mapa, medida zero ou área livre pequena: só a base", () => {
-    const base = { paddingTopLeft: [72, 72], paddingBottomRight: [72, 72] };
+    const base = {
+      paddingTopLeft: [104, 104],
+      paddingBottomRight: [72, 72],
+    };
     expect(folgaDoEnquadramento(mapa, null)).toEqual(base);
     expect(folgaDoEnquadramento(undefined, mapa)).toEqual(base);
     expect(
@@ -358,7 +361,7 @@ describe("folga do enquadramento no modo de edição", () => {
       ),
     ).toEqual(base);
     expect(folgaDoEnquadramento(mapa, null, { base: 30 })).toEqual({
-      paddingTopLeft: [30, 30],
+      paddingTopLeft: [62, 62],
       paddingBottomRight: [30, 30],
     });
   });

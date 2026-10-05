@@ -191,7 +191,7 @@ describe("modo de edição no mapa da Saúde Indígena", () => {
       [-12, -51],
     ]);
     expect(voo[2]).toMatchObject({
-      paddingTopLeft: [72, 72],
+      paddingTopLeft: [104, 104],
       paddingBottomRight: [412 + 72, 72],
       maxZoom: 13,
     });
@@ -218,7 +218,7 @@ describe("modo de edição no mapa da Saúde Indígena", () => {
       [-11, -51],
     ]);
     expect(voo[2]).toMatchObject({
-      paddingTopLeft: [72, 72],
+      paddingTopLeft: [104, 104],
       paddingBottomRight: [72, 253 + 72],
       maxZoom: 11,
     });
@@ -346,7 +346,7 @@ describe("modo de edição no mapa de Projetos", () => {
     await clicar(item("Pará (estado)"));
     await aguardar();
     expect(chamadasDe(mapa, "flyToBounds").at(-1)[2]).toMatchObject({
-      paddingTopLeft: [72, 72],
+      paddingTopLeft: [104, 104],
       paddingBottomRight: [484, 72],
     });
     await clicar(botao("Recolher editor"));

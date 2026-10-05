@@ -262,8 +262,11 @@ export function correcaoDesfazivel(historico) {
   lado, mais o que o painel cobre do lado em que está — o que deixar a maior
   área livre (direita para o painel lateral, embaixo para a folha). Sem
   painel, painel fora do mapa, ou área livre menor que `minimo`, só a base.
+  Em cima e à esquerda a folga tem mais `FOLGA_DO_PIN`: o pin (41 px) e a
+  dica dele ficam acima do ponto, e o zoom do Leaflet fica nesse canto.
 */
 export const FOLGA_DO_ENQUADRAMENTO = 72;
+export const FOLGA_DO_PIN = 32;
 export const AREA_LIVRE_MINIMA = 120;
 
 export function folgaDoEnquadramento(
@@ -271,8 +274,9 @@ export function folgaDoEnquadramento(
   painel,
   { base = FOLGA_DO_ENQUADRAMENTO, minimo = AREA_LIVRE_MINIMA } = {},
 ) {
+  const topo = base + FOLGA_DO_PIN;
   const soBase = {
-    paddingTopLeft: [base, base],
+    paddingTopLeft: [topo, topo],
     paddingBottomRight: [base, base],
   };
   if (!mapa || !painel) return soBase;
@@ -288,15 +292,15 @@ export function folgaDoEnquadramento(
   const livreSeDireita = (largura - direita) * altura;
   const livreSeEmbaixo = largura * (altura - embaixo);
   if (livreSeDireita >= livreSeEmbaixo) {
-    if (largura - direita - 2 * base < minimo) return soBase;
+    if (largura - direita - topo - base < minimo) return soBase;
     return {
-      paddingTopLeft: [base, base],
+      paddingTopLeft: [topo, topo],
       paddingBottomRight: [Math.round(direita + base), base],
     };
   }
-  if (altura - embaixo - 2 * base < minimo) return soBase;
+  if (altura - embaixo - topo - base < minimo) return soBase;
   return {
-    paddingTopLeft: [base, base],
+    paddingTopLeft: [topo, topo],
     paddingBottomRight: [base, Math.round(embaixo + base)],
   };
 }
