@@ -112,9 +112,7 @@ def datas_com_ano(periodos, ano):
 
 def eh_cabecalho_cronograma(linha):
     celulas = [sem_acento(limpar(c)) for c in linha]
-    return any(c.startswith("atividade") for c in celulas) and any(
-        "data" in c for c in celulas
-    )
+    return any(c.startswith("atividade") for c in celulas) and any("data" in c for c in celulas)
 
 
 def extrair_cronograma(tabelas, ano):
@@ -138,7 +136,7 @@ def extrair_cronograma(tabelas, ano):
             break
     periodos = datas_com_ano([ler_periodo(d) for _, d in linhas], ano)
     etapas = []
-    for (atividade, texto_datas), par in zip(linhas, periodos):
+    for (atividade, texto_datas), par in zip(linhas, periodos, strict=False):
         etapas.append(
             {
                 "atividade": atividade,
@@ -293,9 +291,7 @@ def usuario_autenticado(autorizacao):
     """Confere o Bearer no Supabase. Devolve o id do usuário ou None."""
     token = autorizacao[7:].strip() if autorizacao.lower().startswith("bearer ") else ""
     base = os.environ.get("VITE_SUPABASE_URL", "").rstrip("/")
-    chave = os.environ.get("VITE_SUPABASE_PUBLISHABLE_KEY") or os.environ.get(
-        "VITE_SUPABASE_ANON_KEY", ""
-    )
+    chave = os.environ.get("VITE_SUPABASE_PUBLISHABLE_KEY") or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
     if not token or not base or not chave:
         return None
     pedido = urllib.request.Request(

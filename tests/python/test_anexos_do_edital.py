@@ -21,9 +21,7 @@ class Periodo(unittest.TestCase):
         self.assertEqual(ax.ler_periodo("30/09 a 02/10"), ((30, 9, None), (2, 10, None)))
         self.assertEqual(ax.ler_periodo("07 a 11/10"), ((7, 10, None), (11, 10, None)))
         self.assertEqual(ax.ler_periodo("24 e 25/10"), ((24, 10, None), (25, 10, None)))
-        self.assertEqual(
-            ax.ler_periodo("17/09/2026 a 19/09/2026"), ((17, 9, "2026"), (19, 9, "2026"))
-        )
+        self.assertEqual(ax.ler_periodo("17/09/2026 a 19/09/2026"), ((17, 9, "2026"), (19, 9, "2026")))
         self.assertIsNone(ax.ler_periodo("A definir"))
 
     def test_ano_vira_em_janeiro(self):
@@ -58,7 +56,16 @@ class Cronograma(unittest.TestCase):
 
 
 class Quadro(unittest.TestCase):
-    CABECALHO = ["Vagas", "Lotação", "Ampla\nConcorrência", "PcD", "Pretos e\nPardos", "Indígenas", "Quilombolas", "Total"]
+    CABECALHO = [
+        "Vagas",
+        "Lotação",
+        "Ampla\nConcorrência",
+        "PcD",
+        "Pretos e\nPardos",
+        "Indígenas",
+        "Quilombolas",
+        "Total",
+    ]
 
     def test_cargo_vale_para_as_lotacoes_e_continua_na_pagina_seguinte(self):
         tabelas = [
@@ -82,22 +89,31 @@ class Quadro(unittest.TestCase):
         self.assertTrue(all(v["cadastro_reserva"] for v in vagas))
 
     def test_sem_lotacao(self):
-        tabelas = [[
-            ["Vagas", "Ampla\nConcorrência", "PcD", "Pretos e\nPardos", "Indígenas", "Quilombolas", "Total"],
-            ["Técnico De\nEnfermagem", "1", "CR", "1", "CR", "CR", "2 + CR"],
-        ]]
+        tabelas = [
+            [
+                ["Vagas", "Ampla\nConcorrência", "PcD", "Pretos e\nPardos", "Indígenas", "Quilombolas", "Total"],
+                ["Técnico De\nEnfermagem", "1", "CR", "1", "CR", "CR", "2 + CR"],
+            ]
+        ]
         vagas, _ = ax.extrair_quadro(tabelas)
         self.assertEqual(vagas[0]["cargo"], "Técnico De Enfermagem")
         self.assertEqual(vagas[0]["lotacao"], "")
         self.assertEqual(vagas[0]["vagas_imediatas"], 2)
 
     def test_formato_de_projetos(self):
-        tabelas = [[
-            ["EDITAL DE PROCESSO SELETIVO SIMPLIFICADO Nº 93/2026", None, None, None],
-            ["VAGA", "QUANTIDADE DE\nVAGAS", "REQUISITOS", "ATRIBUIÇÕES"],
-            ["TÉCNICO DE\nSEGURANÇA\nDO TRABALHO\n(Nível Médio)", "06", "Requisitos Obrigatórios:", "Atribuições: …"],
-            [None, None, "● Registro", None],
-        ]]
+        tabelas = [
+            [
+                ["EDITAL DE PROCESSO SELETIVO SIMPLIFICADO Nº 93/2026", None, None, None],
+                ["VAGA", "QUANTIDADE DE\nVAGAS", "REQUISITOS", "ATRIBUIÇÕES"],
+                [
+                    "TÉCNICO DE\nSEGURANÇA\nDO TRABALHO\n(Nível Médio)",
+                    "06",
+                    "Requisitos Obrigatórios:",
+                    "Atribuições: …",
+                ],
+                [None, None, "● Registro", None],
+            ]
+        ]
         vagas, modalidades = ax.extrair_quadro(tabelas)
         self.assertEqual(modalidades, [])
         self.assertEqual(len(vagas), 1)
