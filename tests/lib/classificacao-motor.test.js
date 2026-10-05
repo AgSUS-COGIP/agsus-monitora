@@ -148,7 +148,7 @@ describe("edital 83/2026 — resultado final da vaga 169681 (Cirurgião Dentista
 
   it("cabeçalho no padrão da publicação", () => {
     expect(vaga.cabecalho).toBe(
-      "VAGA 169681 - Cirurgião Dentista - Área de abrangência DSEI Xingu - 3 vagas (2 AC + 1 Pretos e Pardos + CR)",
+      "VAGA 169681 - Cirurgião Dentista - Área de abrangência DSEI Xingu - DSEI Xingu - 3 vagas (2 AC + 1 Pretos e Pardos + CR)",
     );
   });
 

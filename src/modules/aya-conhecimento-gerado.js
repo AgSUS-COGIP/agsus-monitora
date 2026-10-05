@@ -581,7 +581,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a classificacao",
     ],
     resposta:
-      'A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; "Exportar" sai em PDF, DOCX ou XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
+      'A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; dela sai o documento oficial — "Copiar para o SEI", "Como fica no SEI", "Baixar DOCX" com papel timbrado, PDF — e a planilha XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
     fato: "",
     fonte:
       "src/modulos/classificacao/; supabase/migrations/20261002150000_classificacao.sql",
@@ -726,12 +726,79 @@ export const VERBETES_AYA = Object.freeze([
       "como exportar a lista de classificacao",
       "exportar classificacao",
       "pdf da classificacao",
-      "docx da classificacao",
+      "xlsx da classificacao",
     ],
     resposta:
-      'A exportação sai de uma lista já gerada, no padrão das publicações: o título da etapa (RESULTADO PRELIMINAR ou FINAL — escolha "Publicação" antes de exportar), o parágrafo de abertura e, por vaga, o cabeçalho "VAGA código - cargo - lotação - N vagas (x AC + y Pretos e Pardos + CR)" com as colunas Classificação, Nome, as parciais da avaliação documental que a regra publica (formação, cursos, experiência, étnico), Nota (Nota Final e Situação — vaga imediata ou cadastro reserva — no resultado final) e Modalidade na geral quando as sublistas vêm no mesmo documento; vaga sem candidato traz "Não houve candidatos aptos."; "Só os eliminados" sai com Nome, parciais, Nota e Justificativa, como as listas de reprovados; no fim, o rodapé da regra. Só o nome do candidato, sem CPF. Formatos: PDF (pela impressão do navegador, "Salvar como PDF"), DOCX e XLSX (planilhas Classificação e Eliminados). Dá para exportar tudo ou só a geral ou uma modalidade.',
+      'Tudo sai de uma lista já gerada (registrada com a versão da regra e o hash). Antes, escolha em "Exportar" o recorte — geral e modalidades no mesmo documento (como o 100/2026), só a geral, só uma modalidade (como o 83/2026, um documento por modalidade) ou só os eliminados — e, em "Publicação", se é o resultado preliminar ou o final (depois dos recursos). Saídas: "Copiar para o SEI" (o principal), "Como fica no SEI" (prévia e textos), "Baixar DOCX" (Word com papel timbrado), PDF (impressão da prévia, "Salvar como PDF") e XLSX (planilhas Classificação e Eliminados, para conferência). Só o nome do candidato, sem CPF, inscrição ou nascimento.',
     fato: "",
-    fonte: "src/lib/classificacao/exportacao.js",
+    fonte:
+      "src/lib/classificacao/exportacao.js; src/lib/classificacao/documento-sei.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Documento oficial da lista (modelo do SEI)",
+    perguntas: [
+      "documento oficial da classificacao",
+      "modelo do sei da classificacao",
+      "como fica o documento da lista",
+      "estrutura do documento da lista",
+      "padrao das publicacoes da agsus",
+    ],
+    resposta:
+      'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas como nas publicações: avaliação documental — Classificação, Nome, (Modalidade), Nota Final e as parciais da regra; eliminados — Nome, Nota, parciais e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora em branco para preencher no SEI; entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
+    fato: "No MONITORA, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.",
+    fonte: "src/lib/classificacao/documento-sei.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Copiar para o SEI",
+    perguntas: [
+      "copiar para o sei",
+      "como colar a lista no sei",
+      "colar a classificacao no sei",
+      "a lista colou sem tabela no sei",
+      "numeracao sumiu no sei",
+    ],
+    resposta:
+      'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação, se for o caso, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
+    fato: "",
+    fonte:
+      "src/lib/classificacao/documento-sei.js; src/modulos/classificacao/documento-no-navegador.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Textos do documento por edital",
+    perguntas: [
+      "textos do documento do sei",
+      "editar disposicoes preliminares",
+      "mudar o titulo do documento da lista",
+      "processo sei da classificacao",
+      "como fica no sei",
+    ],
+    resposta:
+      'Em "Como fica no SEI" aparecem a prévia (o timbrado simulado, o texto e as tabelas como ficam no SEI) e os textos que o gestor ajusta antes de copiar ou baixar: número do edital, processo SEI (vai no rodapé do Word), unidade por extenso (ex.: "Distrito Sanitário Especial Indígena Xingu (DSEI Xingu)"), autoridade do item 1.1 (ex.: "por intermédio da Diretoria de Atenção Integral à Saúde, no uso das atribuições que lhe foram conferidas pela Designação nº 28/2026/PRES/AgSUS"), local e data (vazia = "na data da assinatura digital"), o título e as disposições preliminares e finais do modelo daquela lista. Cada linha é um item; ">" no começo vira subitem (1.3.1) e ">>" sub-subitem (1.3.3.1); **texto** fica em negrito; campos entre chaves são trocados pelo do edital ({edital}, {unidade}, {fase}, {notas_minimas}…). Os padrões vêm das publicações do 83/2026 e do 100/2026; as notas mínimas do 1.3 vêm da regra. "Salvar no edital" grava na regra (nova versão, motivo "Textos do documento oficial (SEI)"), sem mudar a classificação; "Restaurar o padrão" volta ao texto das publicações.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/documento.jsx; src/lib/classificacao/regra.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "DOCX com papel timbrado",
+    perguntas: [
+      "docx da classificacao",
+      "word da lista de classificacao",
+      "papel timbrado da classificacao",
+      "baixar docx",
+    ],
+    resposta:
+      '"Baixar DOCX" gera o mesmo documento em Word para anexar ou ajustar: no cabeçalho, o logo da AgSUS e o nome, endereço e site da agência (Configurações › Marca › Documentos oficiais); no corpo, o título, os itens numerados com o recuo do SEI, as tabelas por vaga e a linha final "Brasília, <data por extenso>."; no rodapé, o nome do documento, o processo SEI e o número da página. Não tem bloco de assinatura: quem assina é o SEI.',
+    fato: "",
+    fonte:
+      "src/lib/classificacao/documento-docx.js; src/lib/cabecalho-dos-documentos.js",
     abrir: "classificacao",
   },
   {
@@ -1517,7 +1584,7 @@ export const VERBETES_AYA = Object.freeze([
       "texto do rodape",
     ],
     resposta:
-      'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, e o texto do rodapé. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".',
+      'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, o texto do rodapé e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".',
     fato: "",
     fonte:
       "src/componentes/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js",

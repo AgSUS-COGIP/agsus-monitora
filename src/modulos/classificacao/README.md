@@ -20,16 +20,23 @@ classificação decide listas, remanejamento e acúmulo; a ordem de chamada é d
 ```
 classificacao.jsx  <TelaDeClassificacao>, montarClassificacao() e calcularClassificacao()
 estado.js          store sem React: editais da área, dados do edital, salvar regra, gerar,
-                   publicar, desempate (sorteio/decisão) e exportação (PDF, DOCX, XLSX)
+                   publicar, desempate (sorteio/decisão), documento oficial (Copiar para o
+                   SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
 listas.jsx         visão "Listas": KPIs, avisos e pendências, gerar/exportar, filtros, uma
                    tabela por vaga, eliminados, gaveta com a explicação, registro do empate
 regra.jsx          visão "Regra": formulário (critérios ordenáveis do catálogo, empate final,
                    modalidades, convocação, rodapé) e versões
+documento.jsx      "Como fica no SEI": prévia (iframe sem script) e textos do edital
+documento-no-navegador.js  área de transferência (HTML + texto), logo em PNG, impressão
 classificacao.css  só o que é desta tela (tokens)
 ```
 
 Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.js`, `catalogo.js`, `vagas.js`,
-`numeros.js`, `sorteio.js`, `exportacao.js`, `dados.js`). Banco:
+`numeros.js`, `sorteio.js`, `exportacao.js`, `documento-sei.js` — o documento no modelo das
+publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
+timbrado —, `dados.js`). Os textos do documento ajustados pelo gestor ficam na regra
+(`DS_CONFIGURACAO.documento`, sem migration); o cabeçalho da agência, em Configurações › Marca
+(`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.js`). Banco:
 `supabase/migrations/20261002150000_classificacao.sql` (+ `20261002150500_liga_aba_classificacao.sql`),
 `20261002170000_classificacao_lista_da_entrevista.sql` (lista ENTREVISTA e critérios novos do
 catálogo). Regras dos editais: `supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql` e

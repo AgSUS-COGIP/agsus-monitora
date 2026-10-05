@@ -146,6 +146,56 @@ function normalizarModalidade(m) {
   };
 }
 
+/*
+  Os textos do documento oficial (o que vai para o SEI e para o Word) que o
+  gestor ajustou neste edital: número do edital e processo SEI, a unidade e a
+  autoridade do item 1.1, local e data, e os modelos (título, disposições
+  preliminares e finais) de cada tipo de lista. Vazio = o padrão das
+  publicações (src/lib/classificacao/documento-sei.js). Na regra só aparece
+  quando o gestor ajustou algo (as regras sem textos próprios continuam
+  iguais); `documentoDaRegra` devolve sempre o formato completo.
+*/
+const CHAVE_DE_MODELO = /^[A-Z_]{3,60}$/;
+const CAMPOS_DO_MODELO = ["titulo", "preliminares", "finais"];
+const textoLongo = (valor) =>
+  String(valor ?? "")
+    .replace(/\r\n?/g, "\n")
+    .trim();
+
+function normalizarDocumento(bruto) {
+  const d = objeto(bruto);
+  const modelos = {};
+  for (const [chave, valor] of Object.entries(objeto(d.modelos))) {
+    if (!CHAVE_DE_MODELO.test(chave)) continue;
+    const m = Object.fromEntries(
+      CAMPOS_DO_MODELO.map((campo) => [
+        campo,
+        textoLongo(objeto(valor)[campo]),
+      ]).filter(([, v]) => v),
+    );
+    if (Object.keys(m).length) modelos[chave] = m;
+  }
+  return {
+    edital: texto(d.edital),
+    processo: texto(d.processo),
+    unidade: texto(d.unidade),
+    autoridade: texto(d.autoridade),
+    local: texto(d.local),
+    data: lerData(d.data) ? texto(d.data).slice(0, 10) : null,
+    modelos,
+  };
+}
+
+const documentoVazio = (d) =>
+  !Object.keys(d.modelos).length &&
+  !d.data &&
+  ["edital", "processo", "unidade", "autoridade", "local"].every((c) => !d[c]);
+
+/** Os textos do documento oficial da regra, sempre no formato completo. */
+export function documentoDaRegra(regra) {
+  return normalizarDocumento(objeto(regra).documento);
+}
+
 /** A regra completa, com os campos que faltarem neutros (nunca os de outro edital). */
 export function normalizarRegra(bruta) {
   const r = objeto(bruta);
@@ -287,6 +337,9 @@ export function normalizarRegra(bruta) {
         .filter((e) => e.termos.length),
     },
     rodape: texto(r.rodape),
+    ...(documentoVazio(normalizarDocumento(r.documento))
+      ? {}
+      : { documento: normalizarDocumento(r.documento) }),
     importacao:
       r.importacao && typeof r.importacao === "object" ? r.importacao : null,
   };
@@ -400,6 +453,21 @@ export function validarRegra(bruta) {
       erro("convocacao.excecoes", "Exceção com valores inválidos.");
 
   if (r.rodape.length > 1000) erro("rodape", "Rodapé com até 1000 caracteres.");
+  const doc = documentoDaRegra(r);
+  if (
+    ["edital", "processo", "unidade", "local"].some(
+      (c) => doc[c].length > 300,
+    ) ||
+    doc.autoridade.length > 1000
+  )
+    erro("documento", "Dados do documento longos demais.");
+  if (
+    Object.keys(doc.modelos).length > 40 ||
+    Object.values(doc.modelos).some((m) =>
+      Object.values(m).some((v) => v.length > 10000),
+    )
+  )
+    erro("documento", "Textos do documento com até 10000 caracteres.");
   return erros;
 }
 

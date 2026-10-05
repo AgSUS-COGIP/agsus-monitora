@@ -22,17 +22,34 @@
 
   Sessão: o cliente Supabase único do app. Outro usuário na mesma aba: tudo
   volta ao início.
+
+  Documento oficial (SEI): o modelo sai de src/lib/classificacao/documento-sei.js
+  com os textos do edital (regra.documento); "Copiar para o SEI" leva HTML +
+  texto à área de transferência; DOCX com papel timbrado
+  (documento-docx.js); PDF = impressão da página "Como fica no SEI". O
+  cabeçalho da agência vem de Configurações › Marca (`documento_cabecalho`).
 */
 import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
 import {
-  documentoDaLista,
-  gerarDocxDaLista,
   gerarXlsxDaLista,
   instantaneoDaLista,
   MIME_XLSX,
-  montarPaginaDaLista,
   nomeDoArquivo,
 } from "../../lib/classificacao/exportacao.js";
+import {
+  CABECALHO_PADRAO,
+  documentoOficial,
+  htmlParaSei,
+  paginaDaPrevia,
+  textoParaSei,
+} from "../../lib/classificacao/documento-sei.js";
+import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.js";
+import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
+import {
+  copiarParaAreaDeTransferencia,
+  imprimirPagina,
+  logoEmPng,
+} from "./documento-no-navegador.js";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
 import { normalizarRegra } from "../../lib/classificacao/regra.js";
 import {
@@ -92,31 +109,15 @@ function baixarNoNavegador(bytes, nome, tipo) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/* Impressão ("Salvar como PDF") por um iframe escondido, montado com elementos e texto. */
-function imprimirNoNavegador(doc) {
-  const quadro = document.createElement("iframe");
-  quadro.setAttribute("aria-hidden", "true");
-  quadro.tabIndex = -1;
-  quadro.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-  document.body.append(quadro);
-  montarPaginaDaLista(quadro.contentDocument, doc);
-  const janela = quadro.contentWindow;
-  janela.addEventListener?.(
-    "afterprint",
-    () => setTimeout(() => quadro.remove(), 500),
-    { once: true },
-  );
-  janela.focus?.();
-  janela.print?.();
-  setTimeout(() => quadro.remove(), 60_000);
-}
-
 export function criarEstadoDaClassificacao({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
   baixar = baixarNoNavegador,
-  imprimir = imprimirNoNavegador,
+  imprimir = imprimirPagina,
+  copiar = copiarParaAreaDeTransferencia,
+  carregarLogo = logoEmPng,
+  cabecalho = () => CABECALHO_PADRAO,
+  enderecoDoLogo = LOGO_PADRAO_DA_BARRA,
   tempoLimiteMs = TEMPO_LIMITE_MS,
 } = {}) {
   let estado = ESTADO_INICIAL;
@@ -372,12 +373,48 @@ export function criarEstadoDaClassificacao({
     }
   }
 
+  /* O texto do cabeçalho da agência (Configurações › Marca) e o logo. */
+  function marcaDoDocumento() {
+    let texto = "";
+    try {
+      texto = String(cabecalho() ?? "").trim();
+    } catch {
+      texto = "";
+    }
+    return { cabecalho: texto || CABECALHO_PADRAO, logo: enderecoDoLogo };
+  }
+
+  /*
+    O documento oficial de uma lista registrada (documento-sei.js), com os
+    textos do edital — os salvos na regra ou, se vier `documento`, o rascunho
+    que o gestor está editando.
+  */
+  function documentoDaLista(
+    registrado,
+    { lista = "todas", fase = null, documento = null } = {},
+  ) {
+    if (!registrado?.retrato) return null;
+    const configuracao = estado.dados?.regra?.configuracao || {};
+    return documentoOficial(registrado.retrato, {
+      lista,
+      fase,
+      regra: documento ? { ...configuracao, documento } : configuracao,
+    });
+  }
+
   /*
     Exporta uma lista registrada: formato pdf | docx | xlsx; lista = todas |
     geral | código da modalidade | eliminados; fase = PRELIMINAR | FINAL (o
-    título da publicação; null = o padrão da etapa).
+    título da publicação; null = o padrão da etapa); documento = rascunho dos
+    textos (null = os da regra).
   */
-  function exportar(registrado, formato, lista = "todas", fase = null) {
+  async function exportar(
+    registrado,
+    formato,
+    lista = "todas",
+    fase = null,
+    documento = null,
+  ) {
     if (!registrado?.retrato) return false;
     const { retrato } = registrado;
     const nome = nomeDoArquivo(retrato, lista);
@@ -385,15 +422,58 @@ export function criarEstadoDaClassificacao({
       baixar(gerarXlsxDaLista(retrato), `${nome}.xlsx`, MIME_XLSX);
       return true;
     }
-    const doc = documentoDaLista(retrato, {
-      lista,
-      registro: registrado,
-      fase,
-    });
-    if (formato === "docx")
-      baixar(gerarDocxDaLista(doc), `${nome}.docx`, MIME_DOCX);
-    else imprimir(doc);
+    const doc = documentoDaLista(registrado, { lista, fase, documento });
+    const marca = marcaDoDocumento();
+    if (formato === "docx") {
+      const logo = await Promise.resolve()
+        .then(() => carregarLogo())
+        .catch(() => null);
+      baixar(
+        gerarDocxOficial(doc, { cabecalho: marca.cabecalho, logo }),
+        `${nome}.docx`,
+        MIME_DOCX,
+      );
+    } else imprimir(paginaDaPrevia(doc, marca));
     return true;
+  }
+
+  /* "Copiar para o SEI": HTML (classes do SEI) + texto na área de transferência. */
+  async function copiarParaSei(
+    registrado,
+    { lista = "todas", fase = null, documento = null } = {},
+  ) {
+    const doc = documentoDaLista(registrado, { lista, fase, documento });
+    if (!doc) return "";
+    const resultado = await copiar({
+      html: htmlParaSei(doc),
+      texto: textoParaSei(doc),
+    });
+    if (resultado === "html")
+      toast(
+        "Copiado. No SEI, cole no editor do documento (Ctrl+V).",
+        "success",
+      );
+    else if (resultado === "texto")
+      toast(
+        "Copiado só como texto: o navegador não liberou o formato com tabelas. Use o DOCX.",
+        "warn",
+      );
+    else
+      toast(
+        "Não foi possível copiar. Libere a área de transferência ou use o DOCX.",
+        "error",
+      );
+    return resultado;
+  }
+
+  /* Os textos do documento ficam na regra do edital (nova versão). */
+  function salvarTextosDoDocumento(documento) {
+    const configuracao = estado.dados?.regra?.configuracao;
+    if (!configuracao) return Promise.resolve(false);
+    return salvarRegra(
+      { ...configuracao, documento },
+      "Textos do documento oficial (SEI)",
+    );
   }
 
   /*
@@ -418,6 +498,10 @@ export function criarEstadoDaClassificacao({
     obterLista,
     registrarDesempate,
     exportar,
+    documentoDaLista,
+    marcaDoDocumento,
+    copiarParaSei,
+    salvarTextosDoDocumento,
     importarRegraDoEdital,
     reiniciar,
   };
