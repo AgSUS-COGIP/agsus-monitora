@@ -599,3 +599,71 @@ describe("tela de Classificação", () => {
     expect(seletorDoEdital()).toBeNull();
   });
 });
+
+describe("Classificação com ajuste da pontuação aprovado em recurso", () => {
+  const comAjuste = (extra = {}) =>
+    supabaseFalso({
+      obter_classificacao_do_edital: () => ({
+        ...structuredClone(EDITAL),
+        ajustes: [
+          {
+            id: "aj1",
+            recurso_id: "r7",
+            numero: 7,
+            analise_id: A(3),
+            aprovado_em: "2026-10-05T12:00:00Z",
+            itens: [{ codigo: "DOCUMENTAL", anterior: 9, novo: 12 }],
+          },
+        ],
+        ajustes_mudaram_em: "2026-10-05T12:00:00Z",
+        ...extra,
+      }),
+    });
+
+  it('o candidato aparece marcado "Recurso nº 7" na tabela e a explicação diz o que mudou', async () => {
+    await montar(comAjuste());
+    await abrirEdital();
+    const linha = secao.querySelector(
+      `.classificacao-vaga tr[data-candidato="${A(3)}"]`,
+    );
+    const marca = linha.querySelector(".classificacao-marca-recurso");
+    expect(marca.textContent).toBe("Recurso nº 7");
+    expect(marca.getAttribute("title")).toBe("Nota alterada pelo recurso nº 7");
+    expect(
+      secao.querySelectorAll(
+        ".classificacao-vaga .classificacao-marca-recurso",
+      ),
+    ).toHaveLength(1);
+    await clicar(botao("Caio Parda", secao));
+    const gaveta = document.getElementById("classificacaoCandidato");
+    expect(gaveta.textContent).toContain(
+      "Nota 22,00 (documental 12,00 + entrevista 10,00).",
+    );
+    expect(gaveta.textContent).toContain(
+      "Nota alterada pelo recurso nº 7: nota documental 9,00 → 12,00.",
+    );
+  });
+
+  it("lista gerada antes do ajuste aprovado: avisa para gerar de novo; gerada depois, não", async () => {
+    const lista = (gerada_em) => ({
+      id: "l0",
+      tipo: "FINAL",
+      versao_regra: 2,
+      hash: "a".repeat(64),
+      gerada_em,
+      por: "Gestora",
+      pendencias: 0,
+      publicada: false,
+    });
+    await montar(comAjuste({ listas: [lista("2026-10-04T12:00:00Z")] }));
+    await abrirEdital();
+    expect(
+      secao.querySelector(".classificacao-desatualizada").textContent,
+    ).toBe("Há recursos aprovados depois desta lista — gere de novo.");
+    await act(async () => painel?.raiz?.unmount());
+    secao.remove();
+    await montar(comAjuste({ listas: [lista("2026-10-06T12:00:00Z")] }));
+    await abrirEdital();
+    expect(secao.querySelector(".classificacao-desatualizada")).toBeNull();
+  });
+});

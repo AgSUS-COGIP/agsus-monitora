@@ -35,8 +35,10 @@
 */
 import {
   CRITERIO_POR_CODIGO,
+  ITEM_DO_AJUSTE_POR_CODIGO,
   MOTIVOS_DE_ELIMINACAO,
   codigosDaModalidade,
+  ordemDaCompetencia,
   semAcento,
   simOuNao,
 } from "./catalogo.js";
@@ -215,6 +217,110 @@ export function ligarEntrevistas(candidatos, brutas = [], avisos = []) {
   }
   return candidatos;
 }
+
+/*
+  Os ajustes da pontuação APROVADOS em recurso (TB_AJUSTE_PONTUACAO_RECURSO,
+  migration 20261005130000), por cima da nota da análise e da entrevista: o
+  valor novo de cada item substitui o do candidato (a planilha nunca é
+  sobrescrita). Mais de um recurso do mesmo candidato: na ordem da aprovação
+  (o mais recente vale no item repetido). O candidato guarda `ajustes` (o
+  número do recurso e os itens) para a marca na tabela e a explicação. Se o
+  valor da análise mudou depois do ajuste (o "antes" gravado é outro), avisa
+  — vale o ajuste.
+*/
+const quase = (a, b) => Math.abs(a - b) < 1e-9;
+
+export function aplicarAjustes(candidatos, ajustes = [], avisos = []) {
+  if (!Array.isArray(ajustes) || !ajustes.length) return candidatos;
+  const porAnalise = new Map(candidatos.map((c) => [c.analiseId, c]));
+  const ordenados = [...ajustes].sort((a, b) =>
+    String(a?.aprovado_em ?? "").localeCompare(String(b?.aprovado_em ?? "")),
+  );
+  for (const ajuste of ordenados) {
+    const c = porAnalise.get(texto(ajuste?.analise_id ?? ajuste?.analiseId));
+    if (!c) continue;
+    const numero = ajuste.numero ?? null;
+    const aplicados = [];
+    for (const item of Array.isArray(ajuste.itens) ? ajuste.itens : []) {
+      const novo = numeroBR(item?.novo);
+      if (novo === null) continue;
+      const codigo = texto(item.codigo).toUpperCase();
+      const competencia = ordemDaCompetencia(codigo);
+      const def = ITEM_DO_AJUSTE_POR_CODIGO[codigo];
+      if (!def && competencia === null) continue;
+      const precisaEntrevista = competencia !== null || codigo === "ENTREVISTA";
+      if (precisaEntrevista && !c.entrevista) {
+        avisos.push({
+          codigo: "AJUSTE_SEM_ENTREVISTA",
+          tom: "warning",
+          vaga: c.vaga,
+          analiseId: c.analiseId,
+          texto: `${c.nome}: o recurso nº ${numero ?? "—"} ajustou a entrevista, mas não há entrevista lançada; o ajuste desse item não entrou.`,
+        });
+        continue;
+      }
+      let atual;
+      if (competencia !== null) {
+        const notas = c.entrevista.notas.map((n) => ({ ...n }));
+        let alvo = notas.find((n) => n.ordem === competencia);
+        if (!alvo) {
+          alvo = { ordem: competencia, criterio: "", nota: null };
+          notas.push(alvo);
+          notas.sort((a, b) => a.ordem - b.ordem);
+        }
+        atual = alvo.nota;
+        alvo.nota = novo;
+        c.entrevista = { ...c.entrevista, notas };
+      } else if (codigo === "ENTREVISTA") {
+        atual = c.notaEntrevista;
+        c.entrevista = { ...c.entrevista, nota: novo };
+        c.notaEntrevista = novo;
+      } else {
+        atual = c[def.campo];
+        c[def.campo] = novo;
+      }
+      const anterior = numeroBR(item.anterior);
+      if (anterior !== null && atual !== null && !quase(anterior, atual))
+        avisos.push({
+          codigo: "AJUSTE_DIVERGENTE",
+          tom: "info",
+          vaga: c.vaga,
+          analiseId: c.analiseId,
+          texto: `${c.nome}: ${rotuloDoItem(codigo).toLowerCase()} era ${formatarNota(anterior, 2)} no recurso nº ${numero ?? "—"} e hoje é ${formatarNota(atual, 2)}; vale o ajuste (${formatarNota(novo, 2)}).`,
+        });
+      aplicados.push({ codigo, anterior: atual, novo });
+    }
+    if (aplicados.length)
+      c.ajustes = [
+        ...(c.ajustes || []),
+        { numero, recursoId: ajuste.recurso_id ?? null, itens: aplicados },
+      ];
+  }
+  return candidatos;
+}
+
+/** O rótulo de um item do ajuste ("Formação acadêmica", "Competência 2"). */
+export function rotuloDoItem(codigo) {
+  const competencia = ordemDaCompetencia(codigo);
+  if (competencia !== null) return `Competência ${competencia}`;
+  return ITEM_DO_AJUSTE_POR_CODIGO[codigo]?.rotulo || codigo;
+}
+
+/* A frase da explicação: "Nota alterada pelo recurso nº 12: formação 2,00 → 3,00." */
+function fraseDosAjustes(c, casas) {
+  return (c.ajustes || []).map(
+    (a) =>
+      `Nota alterada pelo recurso nº ${a.numero ?? "—"}: ${a.itens
+        .map(
+          (i) =>
+            `${rotuloDoItem(i.codigo).toLowerCase()} ${formatarNota(i.anterior, casas)} → ${formatarNota(i.novo, casas)}`,
+        )
+        .join("; ")}.`,
+  );
+}
+
+const recursosDoAjuste = (c) =>
+  (c.ajustes || []).map((a) => a.numero).filter((n) => n !== null);
 
 /*
   Reservas conjuntas da regra (`agrupa`): quem declarou PP, PI ou PQ entra na
@@ -782,12 +888,17 @@ export function classificar({
   dataCorte = null,
   desempates = [],
   convocacao = null,
+  ajustes = [],
 } = {}) {
   const regra = normalizarRegra(regraBruta);
   const avisos = [];
-  const candidatos = ligarEntrevistas(
-    aplicarAgrupamentos(prepararCandidatos(candidatosBrutos, avisos), regra),
-    entrevistas,
+  const candidatos = aplicarAjustes(
+    ligarEntrevistas(
+      aplicarAgrupamentos(prepararCandidatos(candidatosBrutos, avisos), regra),
+      entrevistas,
+      avisos,
+    ),
+    ajustes,
     avisos,
   );
   const corte = regra.data_corte || dataCorte || null;
@@ -854,6 +965,8 @@ export function classificar({
     porVaga.get(c.vaga).candidatos.push(c);
   }
 
+  // Itens do ajuste com ao menos 2 casas (as da planilha), não só as da nota final.
+  const casasDoAjuste = Math.max(2, ctx.casas);
   const saidaVagas = [];
   const explicacoes = {};
   const pendencias = [];
@@ -1163,6 +1276,7 @@ export function classificar({
       situacao: situacaoDe(l.c),
       vagaPor: alocacao.get(l.c.analiseId)?.modalidade || null,
       ...(comParciais ? { parciais: parciaisDe(l.c) } : {}),
+      ...(l.c.ajustes ? { recursos: recursosDoAjuste(l.c) } : {}),
     });
 
     const linhaGeralDe = new Map(geral.map((l) => [l.c.analiseId, l]));
@@ -1188,7 +1302,11 @@ export function classificar({
         posicoes,
         modalidades: c.modalidadesNaLista,
         situacao: situacaoDe(c),
-        explicacao: explicar(c, linhaGeral, ctx, tipo),
+        ...(c.ajustes ? { recursos: recursosDoAjuste(c) } : {}),
+        explicacao: [
+          ...explicar(c, linhaGeral, ctx, tipo),
+          ...fraseDosAjustes(c, casasDoAjuste),
+        ],
       };
     }
     eliminados.sort(
@@ -1203,9 +1321,12 @@ export function classificar({
         vaga: v.chave,
         elegivel: false,
         motivo: e.motivo,
-        explicacao: [`${MOTIVOS_DE_ELIMINACAO[e.motivo]}.`, e.detalhe].filter(
-          Boolean,
-        ),
+        ...(e.c.ajustes ? { recursos: recursosDoAjuste(e.c) } : {}),
+        explicacao: [
+          `${MOTIVOS_DE_ELIMINACAO[e.motivo]}.`,
+          e.detalhe,
+          ...fraseDosAjustes(e.c, casasDoAjuste),
+        ].filter(Boolean),
       };
 
     elegiveisTotal += elegiveis.length;
@@ -1233,6 +1354,7 @@ export function classificar({
         nome: e.c.nome,
         motivo: e.motivo,
         detalhe: e.detalhe,
+        ...(e.c.ajustes ? { recursos: recursosDoAjuste(e.c) } : {}),
         ...(comParciais
           ? { nota: e.c.notaDocumental, parciais: parciaisDe(e.c) }
           : tipo === "ENTREVISTA"

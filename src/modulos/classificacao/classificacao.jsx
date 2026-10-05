@@ -10,8 +10,8 @@ import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
+import { classificarEdital } from "../../lib/classificacao/ajustes.js";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.js";
-import { classificar } from "../../lib/classificacao/motor.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
 import { abrirConversaDoEdital, definirEditalDaTela } from "../chat/ponte.js";
@@ -48,19 +48,14 @@ function textoDoStatus(e) {
   return e.dados ? "Sem regra" : "";
 }
 
-/* A classificação de um edital numa lista (o motor, com a data de corte do cronograma). */
+/*
+  A classificação de um edital numa lista: o motor, com a data de corte do
+  cronograma e os ajustes da pontuação aprovados em recurso por cima da nota
+  da análise (src/lib/classificacao/ajustes.js — a mesma conta da prévia do
+  recurso).
+*/
 export function calcularClassificacao(dados, tipo) {
-  return classificar({
-    tipo,
-    regra: dados.regra?.configuracao,
-    candidatos: dados.candidatos || [],
-    entrevistas: dados.entrevistas || [],
-    quadro: dados.quadro || [],
-    unidade: dados.edital?.unidade || "",
-    dataCorte: dataDeCorteDoCronograma(dados.cronograma),
-    desempates: dados.desempates || [],
-    convocacao: dados.convocacao || null,
-  });
+  return classificarEdital(dados, tipo);
 }
 
 function TelaDaArea({ estado, e }) {

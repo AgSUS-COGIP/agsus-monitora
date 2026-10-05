@@ -8,7 +8,8 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 `src/lib/prazo-do-recurso.js` e as migrations `20260929120000_recursos.sql`,
 `20260929230000_recursos_modelos_anexos_respostas.sql`,
 `20260929190200_recorte_por_coordenacao_nos_recursos.sql` e
-`20261001170000_recursos_parecer_juridico.sql`.
+`20261001170000_recursos_parecer_juridico.sql` e
+`20261005130000_recurso_ajusta_pontuacao.sql` (ajuste da pontuação).
 
 ## Tela de Recursos
 
@@ -76,7 +77,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 ## Pendências da aba Recursos
 
 **perguntas:** pendências dos recursos | prazo não encontrado no cronograma | candidato fora das análises | mudança de nota ou classificação | nota mudou
-**resposta:** No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação marcada, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.
+**resposta:** No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.
 **fonte:** src/lib/recursos-dos-candidatos.js; supabase/migrations/20260929120000_recursos.sql
 
 ## Anexos e modelos de resposta
@@ -84,3 +85,25 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 **perguntas:** anexos do recurso | arquivar anexo | modelos de resposta | versao do modelo de resposta | fundamentacao
 **resposta:** Os anexos do recurso (pdf, docx, doc, jpg, png ou odt, até 20 MB) não se apagam: arquivar exige motivo (3 a 500 caracteres) e o arquivo continua guardado; todo download fica registrado. Os modelos de resposta são mantidos por quem tem Administrador em Recursos: editar grava uma versão nova, e cada resposta guarda a versão usada. O texto da fundamentação entra no lugar marcado {fundamentacao}, e campo sem valor aparece como "[não informado: …]".
 **fonte:** supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql
+
+## Ajuste da pontuação no recurso
+
+**perguntas:** ajuste da pontuacao | ajustar a pontuacao do candidato | mudar a pontuacao no recurso | mudar a nota no recurso | em recurso posso mudar a classificacao | como mudar a classificacao pelo recurso | alterar a nota do candidato no recurso | corrigir a nota do candidato
+**resposta:** Sim. No recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.
+**fato:** No MONITORA, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.
+**fonte:** src/modulos/recursos/ajuste.jsx; src/lib/classificacao/ajustes.js; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
+**abrir:** recursos
+
+## Aprovar ou cancelar o ajuste da pontuação
+
+**perguntas:** aprovar o ajuste da pontuacao | quem aprova o ajuste | ajuste proposto | ajuste aprovado | cancelar o ajuste da pontuacao | previa do ajuste | reabrir cancela o ajuste
+**resposta:** No MONITORA, o ajuste proposto ainda não vale. Aprova quem aprova a resposta hoje (Parecer jurídico) e só com o recurso deferido, total ou parcialmente: ao aprovar, a prévia é recalculada com os dados de agora e gravada junto, e o ajuste passa a valer na Classificação (o aprovado anterior do mesmo recurso, se houver, fica como versão cancelada). Cancelar pede motivo. Reabrir a decisão, indeferir, devolver para ajuste ou excluir o recurso cancela o ajuste proposto e o aprovado automaticamente, e tudo fica no histórico do recurso.
+**fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
+**abrir:** recursos
+
+## O recurso mudou a classificação
+
+**perguntas:** o recurso mudou a classificacao | caixa mudou a classificacao | classificacao mudou | marcar que mudou a classificacao
+**resposta:** No MONITORA, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.
+**fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.js
+**abrir:** recursos

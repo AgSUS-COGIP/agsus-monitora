@@ -32,7 +32,8 @@ classificacao.css  só o que é desta tela (tokens)
 ```
 
 Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.js`, `catalogo.js`, `vagas.js`,
-`numeros.js`, `sorteio.js`, `exportacao.js`, `documento-sei.js` — o documento no modelo das
+`numeros.js`, `sorteio.js`, `exportacao.js`, `ajustes.js` — o motor com os ajustes da pontuação
+aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
 timbrado —, `dados.js`). Os textos do documento ajustados pelo gestor ficam na regra
 (`DS_CONFIGURACAO.documento`, sem migration); o cabeçalho da agência, em Configurações › Marca

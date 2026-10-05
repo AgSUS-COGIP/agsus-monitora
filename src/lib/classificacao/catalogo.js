@@ -282,6 +282,63 @@ export const COMPONENTES_DA_NOTA = Object.freeze([
   ["ART", "Nota da autodeclaração (ART)"],
 ]);
 
+/*
+  Os componentes da nota que um recurso deferido pode ajustar
+  (TB_ITEM_AJUSTE_PONTUACAO."CO_ITEM", migration 20261005130000): as parciais
+  da documental, a nota documental, a da entrevista (e cada competência,
+  `COMPETENCIA_n`) e a ART. `campo` é o do candidato no motor; o valor novo do
+  ajuste aprovado SUBSTITUI o da análise na classificação (a planilha não muda).
+*/
+export const ITENS_DO_AJUSTE = Object.freeze(
+  [
+    {
+      codigo: "FORMACAO",
+      parcial: "FORMACAO",
+      rotulo: "Formação acadêmica",
+      campo: "pontuacaoFormacao",
+    },
+    {
+      codigo: "CURSOS",
+      parcial: "CURSOS",
+      rotulo: "Cursos de aperfeiçoamento",
+      campo: "pontuacaoCursos",
+    },
+    {
+      codigo: "EXPERIENCIA",
+      parcial: "EXPERIENCIA",
+      rotulo: "Experiência profissional",
+      campo: "pontuacaoExperiencia",
+    },
+    {
+      codigo: "ETNICO",
+      parcial: "ETNICO",
+      rotulo: "Pertencimento étnico",
+      campo: "pontuacaoEtnica",
+    },
+    {
+      codigo: "DOCUMENTAL",
+      rotulo: "Nota documental",
+      campo: "notaDocumental",
+    },
+    {
+      codigo: "ENTREVISTA",
+      rotulo: "Nota da entrevista",
+      campo: "notaEntrevista",
+    },
+    { codigo: "ART", rotulo: "Nota da ART", campo: "notaArt" },
+  ].map((item) => Object.freeze(item)),
+);
+
+export const ITEM_DO_AJUSTE_POR_CODIGO = Object.freeze(
+  Object.fromEntries(ITENS_DO_AJUSTE.map((i) => [i.codigo, i])),
+);
+
+/** "COMPETENCIA_3" → 3; outro código → null. */
+export function ordemDaCompetencia(codigo) {
+  const m = /^COMPETENCIA_(\d{1,2})$/.exec(String(codigo || ""));
+  return m ? Number(m[1]) : null;
+}
+
 export const NIVEIS = Object.freeze([
   ["superior", "Superior"],
   ["tecnico", "Técnico"],
