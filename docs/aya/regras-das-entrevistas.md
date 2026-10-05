@@ -75,7 +75,7 @@ migrations `20260929235000_entrevistas.sql`, `20260930220000_entrevistas_roteiro
 ## Carga das entrevistas
 
 **perguntas:** quando as entrevistas sao atualizadas | carga das entrevistas | planilha de entrevistados | atualizacao das entrevistas
-**resposta:** Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada todo dia às 9h de Brasília pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.
+**resposta:** Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.
 **fonte:** .github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql
 
 ## Agenda das entrevistas
