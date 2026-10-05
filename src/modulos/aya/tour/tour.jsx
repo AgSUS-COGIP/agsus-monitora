@@ -33,12 +33,15 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { posicaoDoBalao, rotuloDoPasso } from "../../../lib/aya-tours.js";
+import {
+  geometriaDoHolofote,
+  posicaoDoBalao,
+  rotuloDoPasso,
+} from "../../../lib/aya-tours.js";
 
 const FOCAVEIS =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 const INTERVALO_DA_PROCURA = 120;
-const MARGEM_DO_RECORTE = 6;
 
 /* O elemento está na tela? Escondido por `hidden`, página inativa ou display:none não conta. */
 export function elementoVisivel(elemento) {
@@ -82,14 +85,9 @@ function telaDeCelular(janela) {
   }
 }
 
+/* O recorte e as faixas saem do mesmo retângulo (moldura == área clara). */
 function medir(elemento) {
-  const caixa = elemento.getBoundingClientRect();
-  return {
-    top: caixa.top - MARGEM_DO_RECORTE,
-    left: caixa.left - MARGEM_DO_RECORTE,
-    width: caixa.width + MARGEM_DO_RECORTE * 2,
-    height: caixa.height + MARGEM_DO_RECORTE * 2,
-  };
+  return geometriaDoHolofote(elemento.getBoundingClientRect());
 }
 
 /** Dá para destacar? Sem passos com alvo visível ou sem alvo, não há o que mostrar. */
@@ -265,7 +263,7 @@ export function Tour({
     const balao = refBalao.current;
     setPosicao(
       posicaoDoBalao({
-        caixa,
+        caixa: caixa?.recorte ?? null,
         balao: {
           largura: balao?.offsetWidth || 0,
           altura: balao?.offsetHeight || 0,
@@ -355,51 +353,13 @@ export function Tour({
     <div className="aya-tour" data-tour-ativo="">
       {caixa ? (
         <>
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: 0,
-              left: 0,
-              right: 0,
-              height: Math.max(0, caixa.top),
-            }}
-          />
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: caixa.top + caixa.height,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          />
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: caixa.top,
-              left: 0,
-              width: Math.max(0, caixa.left),
-              height: caixa.height,
-            }}
-          />
-          <div
-            className="aya-tour__faixa"
-            style={{
-              top: caixa.top,
-              left: caixa.left + caixa.width,
-              right: 0,
-              height: caixa.height,
-            }}
-          />
+          {caixa.faixas.map((faixa, indice) => (
+            <div key={indice} className="aya-tour__faixa" style={faixa} />
+          ))}
           <div
             className="aya-tour__recorte"
             aria-hidden="true"
-            style={{
-              top: caixa.top,
-              left: caixa.left,
-              width: caixa.width,
-              height: caixa.height,
-            }}
+            style={caixa.recorte}
           />
         </>
       ) : (

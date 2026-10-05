@@ -15,6 +15,8 @@ import {
   chaveDoTour,
   convitesFeitos,
   deveConvidar,
+  geometriaDoHolofote,
+  MARGEM_DO_HOLOFOTE,
 } from "../src/lib/aya-tours.js";
 
 /*
@@ -360,5 +362,50 @@ describe("posição do balão", () => {
         celular: true,
       }),
     ).toEqual({ modo: "celular", lado: "cima" });
+  });
+});
+
+describe("holofote", () => {
+  // O buraco entre as quatro faixas tem de ser exatamente o recorte (moldura).
+  const buraco = ({ faixas }) => ({
+    top: faixas[0].height,
+    left: faixas[2].width,
+    width: faixas[3].left - faixas[2].width,
+    height: faixas[1].top - faixas[0].height,
+  });
+
+  it.each([
+    [{ top: 120, left: 326, width: 174, height: 38 }],
+    [{ top: 10.4, left: 0.6, width: 99.7, height: 20.2 }],
+    [{ top: 300.5, left: 375.49, width: 124.51, height: 44.5 }],
+  ])("moldura == área clara: %o", (retangulo) => {
+    const g = geometriaDoHolofote(retangulo);
+    expect(buraco(g)).toEqual(g.recorte);
+    expect(g.faixas[2].top).toBe(g.recorte.top);
+    expect(g.faixas[3].top).toBe(g.recorte.top);
+    expect(g.faixas[2].height).toBe(g.recorte.height);
+    expect(g.faixas[3].height).toBe(g.recorte.height);
+  });
+
+  it("a mesma folga dos quatro lados, em pixels inteiros", () => {
+    const g = geometriaDoHolofote({
+      top: 100,
+      left: 50,
+      width: 200,
+      height: 40,
+    });
+    expect(g.recorte).toEqual({
+      top: 100 - MARGEM_DO_HOLOFOTE,
+      left: 50 - MARGEM_DO_HOLOFOTE,
+      width: 200 + 2 * MARGEM_DO_HOLOFOTE,
+      height: 40 + 2 * MARGEM_DO_HOLOFOTE,
+    });
+    expect(geometriaDoHolofote(null)).toBeNull();
+  });
+
+  it("elemento colado na borda: faixa de largura zero, nunca negativa", () => {
+    const g = geometriaDoHolofote({ top: 2, left: 2, width: 10, height: 10 });
+    expect(g.faixas[0].height).toBe(0);
+    expect(g.faixas[2].width).toBe(0);
   });
 });

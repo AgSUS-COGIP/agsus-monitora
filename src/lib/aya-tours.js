@@ -1462,3 +1462,33 @@ export function posicaoDoBalao({
     left: limitar(left, largura, W),
   };
 }
+
+/* ---------- O holofote: recorte e véu do mesmo retângulo ---------- */
+
+/** A folga em volta do elemento destacado, em pixels. */
+export const MARGEM_DO_HOLOFOTE = 6;
+
+/*
+  `retangulo`: o getBoundingClientRect do elemento da vez. Devolve o recorte
+  (onde fica a moldura) e as quatro faixas escuras em volta dele, todos do
+  MESMO retângulo arredondado, para a moldura nunca ficar maior ou menor que
+  a área clara. Faixa: { top, left, width?, height?, right?, bottom? }.
+*/
+export function geometriaDoHolofote(retangulo, margem = MARGEM_DO_HOLOFOTE) {
+  if (!retangulo) return null;
+  // Não passa da borda de cima nem da esquerda: a moldura fica na tela.
+  const top = Math.max(0, Math.round(retangulo.top - margem));
+  const left = Math.max(0, Math.round(retangulo.left - margem));
+  const right = Math.round(retangulo.left + retangulo.width + margem);
+  const bottom = Math.round(retangulo.top + retangulo.height + margem);
+  const recorte = { top, left, width: right - left, height: bottom - top };
+  return {
+    recorte,
+    faixas: [
+      { top: 0, left: 0, right: 0, height: top },
+      { top: bottom, left: 0, right: 0, bottom: 0 },
+      { top, left: 0, width: left, height: recorte.height },
+      { top, left: right, right: 0, height: recorte.height },
+    ],
+  };
+}
