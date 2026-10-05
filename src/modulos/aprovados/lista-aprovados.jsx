@@ -3,8 +3,11 @@ import { montarModulo } from "../../app/montar-modulo.jsx";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import {
   canAlterarPorDecisaoJudicial,
+  canChangeCandidateStatus,
   canManageSubJudice,
 } from "../../lib/access-roles.js";
+import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import {
   candidateCargosForEdital,
   candidateModalidadesForEdital,
@@ -23,6 +26,9 @@ import { AbaConvocacao } from "./aba-convocacao.jsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
 import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.jsx";
 import { ModalListasDoEdital } from "./modal-listas-do-edital.jsx";
+import { GavetaDoCandidato } from "./gaveta-do-candidato.jsx";
+import { ModalDaCarta } from "./carta-de-convocacao/modal-da-carta.jsx";
+import { ModelosDaCarta } from "./carta-de-convocacao/modelos-da-carta.jsx";
 import { plural } from "./partes.jsx";
 
 /*
@@ -125,8 +131,43 @@ function ModalAberto({ estado, dados, daArea }) {
         perfil={dados.perfil}
         candidato={candidato}
         jaAnexados={anexos.length}
+        dataConvocacao={
+          dados.convocacoes.get(String(candidato.candidato_id))?.data
+        }
       />
     ) : null;
+  if (modal.tipo === "candidato")
+    return candidato ? (
+      <GavetaDoCandidato
+        key={modal.abertura}
+        estado={estado}
+        perfil={dados.perfil}
+        candidato={candidato}
+        convocacao={dados.convocacoes.get(String(candidato.candidato_id))}
+      />
+    ) : null;
+  if (modal.tipo === "carta")
+    return (
+      <ModalDaCarta
+        key={modal.abertura}
+        estado={estado}
+        candidatos={modal.candidatoIds
+          .map((id) =>
+            dados.candidatos.find((row) => String(row.candidato_id) === id),
+          )
+          .filter(Boolean)}
+        podeEditarModelos={canChangeCandidateStatus(dados.perfil)}
+      />
+    );
+  if (modal.tipo === "modelos-carta")
+    return (
+      <ModelosDaCarta
+        key={modal.abertura}
+        estado={estado}
+        listas={daArea.listas}
+        candidatos={daArea.candidatos}
+      />
+    );
   if (modal.tipo === "anexos")
     return candidato ? (
       <ModalDeAnexos
@@ -323,6 +364,7 @@ export function ListaAprovados({ estado }) {
         candidatos={candidatos}
         listas={listas}
         anexos={dados.anexos}
+        convocacoes={dados.convocacoes}
         carregado={carregado}
         erroAoCarregar={erroAoCarregar}
         opcoes={opcoes}
@@ -345,6 +387,7 @@ export function ListaAprovados({ estado }) {
         listas={listas}
         configs={dados.configs}
         modelos={dados.modelos}
+        convocacoes={dados.convocacoes}
         carregado={carregado}
         erroAoCarregar={erroAoCarregar}
       />
@@ -370,6 +413,13 @@ export function montarListaAprovados({
   lerPlanilha,
   novaAba,
   armazenamento,
+  copiar,
+  imprimir,
+  carregarLogo,
+  baixar,
+  hoje,
+  cabecalho = () =>
+    estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 } = {}) {
   const estado = criarEstadoDaListaDeAprovados({
     supabase,
@@ -379,6 +429,12 @@ export function montarListaAprovados({
     lerPlanilha,
     novaAba,
     armazenamento,
+    cabecalho,
+    ...(copiar ? { copiar } : {}),
+    ...(imprimir ? { imprimir } : {}),
+    ...(carregarLogo ? { carregarLogo } : {}),
+    ...(baixar ? { baixar } : {}),
+    ...(hoje ? { hoje } : {}),
   });
   const raiz = secao
     ? montarModulo(secao, <ListaAprovados estado={estado} />, {

@@ -19,6 +19,7 @@ import {
 } from "../../ui/index.js";
 import {
   AcaoDeAnexos,
+  AcaoDeCarta,
   AcaoDeStatus,
   ModalidadeDoCandidato,
   NomeDoCandidato,
@@ -53,6 +54,7 @@ export function AbaAprovados({
   candidatos,
   listas = [],
   anexos,
+  convocacoes = new Map(),
   carregado,
   erroAoCarregar,
   opcoes,
@@ -151,12 +153,12 @@ export function AbaAprovados({
           resumo.documentacaoRejeitada,
         )}
         {kpi(
-          "approvedKpiFimDeFila",
-          "fim-de-fila",
-          "neutro",
-          "fa-arrow-turn-down",
-          "Fim de fila",
-          resumo.fimDeFila,
+          "approvedKpiConvocado",
+          "convocado",
+          "alerta",
+          "fa-envelope-open-text",
+          "Convocados",
+          resumo.convocado,
         )}
       </GradeDeKpis>
 
@@ -249,7 +251,10 @@ export function AbaAprovados({
                 pagina.rows.map((row) => (
                   <tr key={row.candidato_id}>
                     <td>
-                      <NomeDoCandidato candidato={row} />
+                      <NomeDoCandidato
+                        candidato={row}
+                        aoAbrir={estado.abrirCandidato}
+                      />
                     </td>
                     <td>{row.cargo || "-"}</td>
                     <td>
@@ -260,7 +265,12 @@ export function AbaAprovados({
                       <NotaDoCandidato candidato={row} />
                     </td>
                     <td>
-                      <SeloDeStatus status={text(row.status)} />
+                      <SeloDeStatus
+                        status={text(row.status)}
+                        dataConvocacao={
+                          convocacoes.get(String(row.candidato_id))?.data
+                        }
+                      />
                     </td>
                     <td className="approved-actions">
                       <div className="approved-actions-grupo">
@@ -274,6 +284,12 @@ export function AbaAprovados({
                           candidato={row}
                           atributos={{ "data-approved-action": "status" }}
                           aoAbrir={estado.abrirStatus}
+                        />
+                        <AcaoDeCarta
+                          perfil={perfil}
+                          candidato={row}
+                          atributos={{ "data-approved-action": "carta" }}
+                          aoAbrir={estado.abrirCarta}
                         />
                         {canAlterarCandidatoSubJudice(perfil, row) ? (
                           <button

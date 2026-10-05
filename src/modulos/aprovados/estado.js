@@ -54,6 +54,7 @@ import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
 import {
   canAlterarPorDecisaoJudicial,
+  canChangeCandidateStatus,
   canImportApprovedList,
   canManageSubJudice,
   canReplaceApprovedList,
@@ -66,9 +67,12 @@ import {
   canEditCandidateStatus,
   canEditSubJudice,
   nomeDeArquivoSeguro,
+  podeTirarOStatus,
+  statusEhConvocado,
   statusNeedsMatricula,
   statusTravado,
 } from "../../lib/lista-aprovados-rules.js";
+import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.js";
 import {
   argumentosDaConfiguracao,
   fixarIdsNovos,
@@ -81,6 +85,12 @@ import {
 import { PLANILHAS } from "../../lib/planilhas.js";
 import { motivoValido } from "../../lib/publicacao-de-aprovados.js";
 import { irParaLink } from "../chat/ponte.js";
+import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.js";
+import {
+  copiarParaAreaDeTransferencia,
+  imprimirPagina,
+  logoEmPng,
+} from "../classificacao/documento-no-navegador.js";
 import {
   anexosPorCandidato,
   arquivoEmBase64,
@@ -108,6 +118,11 @@ const ESTADO_INICIAL = Object.freeze({
   candidatos: Object.freeze([]),
   /** candidato_id → anexos (PDF) dele. */
   anexos: new Map(),
+  /**
+   * candidato_id → { data, cartas, ultimaCarta }: a data da convocação e as
+   * cartas emitidas (listar_convocacoes_aprovados), para a tabela e o CSV.
+   */
+  convocacoes: new Map(),
   listas: Object.freeze([]),
   carregado: false,
   /** Quando a última carga chegou (ISO), para a data discreta do topo. */
@@ -128,6 +143,9 @@ const ESTADO_INICIAL = Object.freeze({
       { tipo: "anexos", candidatoId }
       { tipo: "sub-judice", aba?: "novo" | "aprovado", candidatoId? }
       { tipo: "listas", editalId, rotulo }
+      { tipo: "candidato", candidatoId }       a gaveta do candidato
+      { tipo: "carta", candidatoIds }          emitir a carta de convocação
+      { tipo: "modelos-carta" }                os modelos da carta
   */
   modal: null,
   /*
@@ -181,6 +199,11 @@ export function criarEstadoDaListaDeAprovados({
   novaAba = abrirEmNovaAba,
   armazenamento = armazenamentoDePayload,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
+  copiar = copiarParaAreaDeTransferencia,
+  imprimir = imprimirPagina,
+  carregarLogo = logoEmPng,
+  cabecalho = () => "",
+  hoje = () => hojeEmBrasilia(),
 } = {}) {
   let estado = ESTADO_INICIAL;
   let aberturas = 0;
@@ -224,6 +247,20 @@ export function criarEstadoDaListaDeAprovados({
       publicar({ acao: null });
     }
   }
+
+  const carta = criarEstadoDaCarta({
+    supabase,
+    toast,
+    perfil,
+    areaAtual: () => text(areaAtual()),
+    baixar,
+    imprimir,
+    copiar,
+    carregarLogo,
+    cabecalho,
+    hoje,
+    marcarConvocados: (...argumentos) => marcarConvocados(...argumentos),
+  });
 
   // ── Leitura ────────────────────────────────────────────────────────────
 
@@ -354,6 +391,31 @@ export function criarEstadoDaListaDeAprovados({
     return anexosPorCandidato(data);
   }
 
+  /*
+    A data da convocação e as cartas de cada candidato da área. Como os anexos,
+    não interrompe a carga: sem elas, a tabela só não mostra a data.
+  */
+  async function lerConvocacoes(area) {
+    if (!canViewCore(perfil()) || !area) return new Map();
+    const { data, error } = await supabase.rpc("listar_convocacoes_aprovados", {
+      p_area: area,
+    });
+    if (error) {
+      console.warn("Convocações dos candidatos indisponíveis:", error);
+      return null;
+    }
+    return new Map(
+      (Array.isArray(data) ? data : []).map((linha) => [
+        String(linha.candidato_id),
+        {
+          data: text(linha.data_convocacao),
+          cartas: Number(linha.cartas) || 0,
+          ultimaCarta: text(linha.ultima_carta),
+        },
+      ]),
+    );
+  }
+
   async function carregarConfiguracoes() {
     if (!supabase) return;
     const lidas = await lerConfiguracoes();
@@ -398,11 +460,12 @@ export function criarEstadoDaListaDeAprovados({
           : Promise.resolve({ data: [], error: null, versao: null }),
         lerConfiguracoes(),
         lerAnexos().catch(() => null),
+        lerConvocacoes(area).catch(() => null),
       ]);
     } catch (erro) {
-      resultados = [{ error: erro }, { error: null }, null, null];
+      resultados = [{ error: erro }, { error: null }, null, null, null];
     }
-    const [listas, candidatos, configuracao, anexos] = resultados;
+    const [listas, candidatos, configuracao, anexos, convocacoes] = resultados;
     if (emSegundoPlano && versao !== mudancasLocais) return false;
     // A área mudou enquanto a carga corria: a carga da área nova é que vale.
     if (text(areaAtual()) !== area) return false;
@@ -432,6 +495,7 @@ export function criarEstadoDaListaDeAprovados({
       perfil: perfil(),
       ...(configuracao || {}),
       ...(anexos ? { anexos } : {}),
+      ...(convocacoes ? { convocacoes } : {}),
     });
     avisar("agsus:listas-aprovados-loaded", { lists: estado.listas });
     if (candidatos.guardado) void revalidarCopia(area, candidatos.guardado);
@@ -475,6 +539,35 @@ export function criarEstadoDaListaDeAprovados({
       return;
     }
     abrir({ tipo: "status", candidatoId: String(candidatoId) });
+  }
+
+  /* A gaveta do candidato: os dados, o status e as cartas emitidas. */
+  function abrirCandidato(candidatoId) {
+    if (!candidatoPorId(candidatoId)) return;
+    abrir({ tipo: "candidato", candidatoId: String(candidatoId) });
+    void carta.carregarHistorico(candidatoId);
+  }
+
+  /* Emitir a carta para um ou vários candidatos. */
+  function abrirCarta(candidatoIds) {
+    if (!carta.podeEmitir()) {
+      toast("Sem permissão para emitir a carta de convocação.", "warn");
+      return;
+    }
+    const ids = [...new Set((candidatoIds || []).map(String))].filter((id) =>
+      candidatoPorId(id),
+    );
+    if (!ids.length) {
+      toast("Escolha ao menos um candidato.", "warn");
+      return;
+    }
+    abrir({ tipo: "carta", candidatoIds: ids });
+    void carta.carregarModelos();
+  }
+
+  function abrirModelosDaCarta() {
+    abrir({ tipo: "modelos-carta" });
+    void carta.carregarModelos();
   }
 
   function abrirAnexos(candidatoId) {
@@ -576,6 +669,17 @@ export function criarEstadoDaListaDeAprovados({
     return mapa;
   }
 
+  /* A data da convocação na tela, como o banco gravou. */
+  function comConvocacao(mapaAtual, candidatoId, data) {
+    const mapa = new Map(mapaAtual);
+    const id = String(candidatoId);
+    const atual = mapa.get(id) || { data: "", cartas: 0, ultimaCarta: "" };
+    const nova = { ...atual, data: text(data) };
+    if (!nova.data && !nova.cartas) mapa.delete(id);
+    else mapa.set(id, nova);
+    return mapa;
+  }
+
   const comCandidato = (atualizado) =>
     estado.candidatos.map((row) =>
       String(row.candidato_id) === String(atualizado.candidato_id)
@@ -630,6 +734,20 @@ export function criarEstadoDaListaDeAprovados({
     const status = text(campos.status);
     const processo = text(campos.processo);
     const matricula = text(campos.matricula);
+    const dataConvocacao = statusEhConvocado(status)
+      ? text(campos.dataConvocacao) || hoje()
+      : "";
+    if (!status && !podeTirarOStatus(perfil(), candidato)) {
+      toast(
+        "Só o admin pode deixar sem status um candidato que já tem status.",
+        "warn",
+      );
+      return false;
+    }
+    if (dataConvocacao && dataConvocacao > hoje()) {
+      toast("A data da convocação não pode ser futura.", "warn");
+      return false;
+    }
     const arquivos = Array.from(campos.anexos ?? []);
     if (arquivos.length && !canEditCandidateAttachments(perfil(), candidato)) {
       toast("Somente admin pode anexar documentos.", "warn");
@@ -655,6 +773,7 @@ export function criarEstadoDaListaDeAprovados({
           p_status: status || null,
           p_processo_sei: processo || null,
           p_matricula: matricula || null,
+          ...(dataConvocacao ? { p_data_convocacao: dataConvocacao } : {}),
         },
       );
       if (error) {
@@ -676,6 +795,15 @@ export function criarEstadoDaListaDeAprovados({
           ...anexosDe(candidato.candidato_id),
           ...novos,
         ]),
+        // Como o banco gravou: a data fica depois do Convocado; sem status, some.
+        convocacoes: comConvocacao(
+          estado.convocacoes,
+          candidato.candidato_id,
+          dataConvocacao ||
+            (status
+              ? estado.convocacoes.get(String(candidato.candidato_id))?.data
+              : ""),
+        ),
       });
       fecharModal();
       if (falhas.length)
@@ -693,6 +821,71 @@ export function criarEstadoDaListaDeAprovados({
     });
     if (salvo) void carregar({ emSegundoPlano: true });
     return salvo;
+  }
+
+  /*
+    Depois da carta: marca como Convocado, com a data, quem está sem status ou
+    já convocado (o banco devolve os demais em "ignorados", com o motivo).
+    `cartaId` liga a marcação à carta emitida.
+  */
+  async function marcarConvocados(candidatoIds, data, cartaId = null) {
+    const ids = (candidatoIds || []).map(String).filter(Boolean);
+    if (!ids.length || !supabase) return null;
+    if (!canChangeCandidateStatus(perfil())) {
+      toast("Sem permissão para alterar o status.", "warn");
+      return null;
+    }
+    const dia = text(data) || hoje();
+    if (dia > hoje()) {
+      toast("A data da convocação não pode ser futura.", "warn");
+      return null;
+    }
+    const resultado = await executar(
+      "marcar-convocados",
+      "Marcando…",
+      async () => {
+        const { data: resposta, error } = await supabase.rpc(
+          "marcar_candidatos_convocados",
+          {
+            p_candidatos: ids,
+            p_data_convocacao: dia,
+            p_carta: cartaId || null,
+          },
+        );
+        if (error) {
+          toast(`Erro ao marcar convocados: ${mensagemDe(error)}`, "error");
+          return null;
+        }
+        const ignorados = Array.isArray(resposta?.ignorados)
+          ? resposta.ignorados
+          : [];
+        const fora = new Set(ignorados.map((i) => String(i.candidato_id)));
+        const marcadosAgora = new Set(ids.filter((id) => !fora.has(id)));
+        let convocacoes = estado.convocacoes;
+        for (const id of marcadosAgora)
+          convocacoes = comConvocacao(convocacoes, id, dia);
+        aplicarLocal({
+          candidatos: estado.candidatos.map((row) =>
+            marcadosAgora.has(String(row.candidato_id))
+              ? { ...row, status: "Convocado", matricula: null }
+              : row,
+          ),
+          convocacoes,
+        });
+        const marcados = Number(resposta?.marcados) || 0;
+        toast(
+          ignorados.length
+            ? `${marcados} marcado(s) como Convocado. Ficaram de fora: ${ignorados
+                .map((i) => `${i.nome || "candidato"} (${i.motivo})`)
+                .join("; ")}.`
+            : `${marcados} marcado(s) como Convocado.`,
+          ignorados.length ? "warn" : "success",
+        );
+        return { marcados, ignorados };
+      },
+    );
+    if (resultado) void carregar({ emSegundoPlano: true });
+    return resultado;
   }
 
   /*
@@ -1114,5 +1307,12 @@ export function criarEstadoDaListaDeAprovados({
     salvarModelo,
     removerModelo,
     salvarConfiguracao,
+    abrirCandidato,
+    abrirCarta,
+    abrirModelosDaCarta,
+    marcarConvocados,
+    carta,
+    /* Baixa um arquivo gerado na tela (o CSV da ordem de convocação). */
+    baixarArquivo: (arquivo, nome) => baixar(arquivo, nome),
   };
 }

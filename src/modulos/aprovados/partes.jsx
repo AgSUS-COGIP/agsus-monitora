@@ -4,8 +4,10 @@ import { formatNumberBR } from "../../lib/formatters.js";
 import {
   alteracaoJudicial,
   canEditCandidateStatus,
+  formatarData,
   formatarNota,
   modalidadeSemAspas,
+  statusEhConvocado,
   statusTravado,
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.js";
@@ -22,18 +24,44 @@ export { classes } from "../../ui/index.js";
 export const plural = (total, singular, varios) =>
   `${formatNumberBR(total)} ${total === 1 ? singular : varios}`;
 
-export function SeloDeStatus({ status }) {
+/*
+  O selo do status; com a data da convocação (`dataConvocacao`, "AAAA-MM-DD"),
+  Convocado mostra o dia em que foi chamado.
+*/
+export function SeloDeStatus({ status, dataConvocacao = "" }) {
+  const data = statusEhConvocado(status) ? formatarData(dataConvocacao) : "";
   return (
-    <span className={`approved-status ${tomDoStatus(status)}`}>
-      {status || "Sem status"}
+    <span className="approved-status-celula">
+      <span className={`approved-status ${tomDoStatus(status)}`}>
+        {status || "Sem status"}
+      </span>
+      {data ? (
+        <small className="approved-status-data">em {data}</small>
+      ) : null}
     </span>
   );
 }
 
-export function NomeDoCandidato({ candidato }) {
+/*
+  O nome do candidato; com `aoAbrir`, o nome é o botão que abre a gaveta do
+  candidato (dados, status e cartas de convocação emitidas).
+*/
+export function NomeDoCandidato({ candidato, aoAbrir }) {
   return (
     <div className="approved-name">
-      <strong>{candidato.nome}</strong>
+      {aoAbrir ? (
+        <button
+          type="button"
+          className="approved-nome-botao"
+          data-approved-action="candidato"
+          data-candidate-id={candidato.candidato_id}
+          onClick={() => aoAbrir(candidato.candidato_id)}
+        >
+          <strong>{candidato.nome}</strong>
+        </button>
+      ) : (
+        <strong>{candidato.nome}</strong>
+      )}
       {candidato.sub_judice ? (
         <span className="approved-tag subjudice">SUB JUDICE</span>
       ) : null}
@@ -119,6 +147,27 @@ export function AcaoDeStatus({ perfil, candidato, atributos = {}, aoAbrir }) {
       </button>
     );
   return <span className="approved-no-action">—</span>;
+}
+
+/*
+  A carta de convocação da linha: só para quem emite (aprovados >= editor) e em
+  lista ativa; para os demais, nada.
+*/
+export function AcaoDeCarta({ perfil, candidato, atributos = {}, aoAbrir }) {
+  if (!candidato.lista_ativa || !canChangeCandidateStatus(perfil)) return null;
+  return (
+    <button
+      className="approved-icone-acao"
+      type="button"
+      title="Carta de convocação"
+      aria-label={`Carta de convocação de ${candidato.nome}`}
+      data-candidate-id={candidato.candidato_id}
+      {...atributos}
+      onClick={() => aoAbrir([candidato.candidato_id])}
+    >
+      <i className="fa-solid fa-envelope-open-text" aria-hidden="true" />
+    </button>
+  );
 }
 
 /** O ícone de PDF dos anexos; a cor vem do texto em volta. */

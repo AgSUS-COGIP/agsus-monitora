@@ -14,6 +14,8 @@ import {
   canDesfazerAlteracaoSubJudice,
   candidateModalidadesForEdital,
   canEditCandidateAttachments,
+  podeTirarOStatus,
+  statusEhConvocado,
   formatarNota,
   modalidadeSemAspas,
   statusNeedsMatricula,
@@ -140,14 +142,24 @@ function CampoDeAnexos({ jaAnexados, arquivos, aoMudar }) {
   );
 }
 
-export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
+export function ModalDeStatus({
+  estado,
+  perfil,
+  candidato,
+  jaAnexados = 0,
+  dataConvocacao = "",
+}) {
   // Anexar é só do admin do módulo; para os demais, o campo não aparece.
   const podeAnexar = canEditCandidateAttachments(perfil, candidato);
+  const hoje = estado.carta.hoje();
   const [status, setStatus] = useState(candidato.status || "");
   const [processo, setProcesso] = useState(candidato.processo_sei || "");
   const [matricula, setMatricula] = useState(candidato.matricula || "");
+  const [data, setData] = useState(dataConvocacao || hoje);
   const [anexos, setAnexos] = useState([]);
   const exigeMatricula = statusNeedsMatricula(status);
+  // Do Convocado, quem edita segue o fluxo; deixar sem status é do admin.
+  const semStatusBarrado = !podeTirarOStatus(perfil, candidato);
   const anexosInvalidos = Boolean(problemaDosAnexos(anexos, jaAnexados));
   const fechar = estado.fecharModal;
 
@@ -176,7 +188,9 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
               value={status}
               onChange={(evento) => setStatus(evento.target.value)}
             >
-              <option value="">Sem status</option>
+              <option value="" disabled={semStatusBarrado}>
+                Sem status
+              </option>
               {STATUS_DO_CANDIDATO.map((opcao) => (
                 <option key={opcao} value={opcao}>
                   {opcao}
@@ -184,6 +198,21 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
               ))}
             </select>
           </div>
+          {statusEhConvocado(status) ? (
+            <div className="form-row full">
+              <label htmlFor="approvedStatusDataConvocacao">
+                Data da convocação
+              </label>
+              <input
+                id="approvedStatusDataConvocacao"
+                type="date"
+                max={hoje}
+                required
+                value={data}
+                onChange={(evento) => setData(evento.target.value)}
+              />
+            </div>
+          ) : null}
           <div className="form-row full">
             <label htmlFor="approvedStatusSei">
               Processo SEI <small>(opcional)</small>
@@ -237,6 +266,7 @@ export function ModalDeStatus({ estado, perfil, candidato, jaAnexados = 0 }) {
                 processo,
                 matricula,
                 anexos,
+                dataConvocacao: data,
               })
             }
           >

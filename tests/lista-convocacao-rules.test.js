@@ -4,6 +4,7 @@ import {
   normalizarModelo,
 } from "../src/lib/modelo-de-convocacao.js";
 import {
+  csvDaConvocacao,
   estaAConvocar,
   jaFoiChamado,
   linhasDoCsvDaConvocacao,
@@ -409,5 +410,18 @@ describe("CSV da ordem de convocação", () => {
     expect(porNome.BRUNO[11]).toBe("Sem status");
     expect(porNome.CARLA[7]).toBe("Fora da fila");
     expect(linhas.at(-1)[8]).toBe("CARLA");
+  });
+});
+
+describe("csvDaConvocacao", () => {
+  it("usa ;, BOM e protege célula que parece fórmula", () => {
+    const grupos = montarListaDeConvocacao(
+      [candidato("=HYPERLINK(1)", "Ampla"), candidato("BRUNO; LIMA", "Ampla")],
+      () => ({ quadro: { ampla: 1 }, modelo: MODELO, proporcionalidade: true }),
+    );
+    const csv = csvDaConvocacao(grupos);
+    expect(csv.startsWith("﻿Edital;")).toBe(true);
+    expect(csv).toContain(";'=HYPERLINK(1);");
+    expect(csv).toContain(';"BRUNO; LIMA";');
   });
 });

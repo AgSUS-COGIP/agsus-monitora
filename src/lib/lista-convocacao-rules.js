@@ -53,6 +53,7 @@ import {
   lerModalidade,
   normalizarModelo,
 } from "./modelo-de-convocacao.js";
+import { sanitizeCsvCell } from "./csv-security.js";
 
 const texto = (valor) => String(valor ?? "").trim();
 
@@ -752,4 +753,16 @@ export function linhasDoCsvDaConvocacao(
     });
   });
   return linhas;
+}
+
+/** O CSV da ordem de convocação: `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
+export function csvDaConvocacao(grupos, opcoes = {}) {
+  const celula = (valor) => {
+    const seguro = sanitizeCsvCell(valor ?? "");
+    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
+  };
+  const linhas = linhasDoCsvDaConvocacao(grupos, opcoes).map((linha) =>
+    linha.map(celula).join(";"),
+  );
+  return `﻿${linhas.join("\r\n")}\r\n`;
 }
