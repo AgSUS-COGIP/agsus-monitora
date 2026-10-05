@@ -26,13 +26,17 @@ const texto = (valor) => (typeof valor === "string" ? valor : "");
  * `limite` caracteres com reticências.
  */
 export function previaDoAviso(valor, limite = LIMITE_DA_PREVIA) {
-  const corpo = texto(valor)
-    .replace(/<\/?(?:br|p|div|li|tr|h[1-6])\b[^>]*>/gi, " ")
-    .replace(/<[^>]*>/g, "")
-    // Sobra de marcação (ex.: "<scr<script>ipt>") não chega à prévia.
-    .replace(/[<>]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  let semMarcacao = texto(valor).replace(
+    /<\/?(?:br|p|div|li|tr|h[1-6])\b[^>]*>/gi,
+    " ",
+  );
+  // Repete até estabilizar: "<scr<script>ipt>" não deixa uma marcação nova.
+  let anterior;
+  do {
+    anterior = semMarcacao;
+    semMarcacao = semMarcacao.replace(/<[^>]*>/g, "");
+  } while (semMarcacao !== anterior);
+  const corpo = semMarcacao.replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
   if (corpo.length <= limite) return corpo;
   return `${corpo.slice(0, Math.max(1, limite - 1)).trimEnd()}…`;
 }
