@@ -2,7 +2,7 @@
   Onde a pessoa está, para a Aya: a página aberta (view do legado e título do
   cabeçalho), a área atual do app e, em Configurações, a seção aberta.
 
-  Sem React (o legado importa daqui): `setPageTitle` do legacy-app.js chama
+  Sem React: `definirTitulo` da navegação (src/app/navegacao.js) chama
   `definirPaginaDaAya` a cada navegação; a área vem de
   `dados-do-monitoramento.js` (trocar de área no menu avisa aqui) e a seção,
   do evento que `configuracoes/secoes.js` dispara ao abrir cada seção. O componente

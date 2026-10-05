@@ -4,7 +4,7 @@
   administrador global.
 
   Quem decide o que vale é `src/lib/situacao-dos-modulos.js` (sem DOM). O
-  legado (`legacy-app.js`) só:
+  app (src/app/carga.js e src/app/navegacao.js) só:
     - dispara a consulta junto com as outras da entrada
       (`consultaDaSituacaoDoSistema`) e aplica a resposta
       (`carregarSituacaoDoSistema`) antes do `buildNav`, que tira do menu as

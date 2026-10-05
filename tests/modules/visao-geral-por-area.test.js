@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "../fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 
 /*
@@ -11,7 +12,7 @@ import { describe, expect, it } from "vitest";
 */
 
 const indexHtml = readFileSync("index.html", "utf8");
-const legado = readFileSync("src/modules/legacy-app.js", "utf8");
+const legado = fonteDoApp();
 
 describe("a Visão geral não tem mapa legado", () => {
   it("o index.html não tem o bloco do mapa nem a reserva", () => {
@@ -82,23 +83,23 @@ describe("o legado usa a área atual", () => {
   });
 
   it("trocar de área refaz o cabeçalho (o mapa é do estado da Visão geral)", () => {
-    expect(legado).toContain(
-      "assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento)",
-    );
-    const troca = legado.match(
-      /function aoMudarDadosDoMonitoramento\(\) \{[\s\S]*?\n\}/,
-    )[0];
+    // A navegação (src/app/navegacao.js; comportamento em tests/app/navegacao.test.js).
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    const troca = navegacao.slice(navegacao.indexOf("function acompanharArea"));
+    expect(troca).toContain("assinarDadosDoMonitoramento(");
     // O DSEI aberto e os filtros são do estado da Visão geral, que ouve os mesmos dados.
-    expect(troca).toContain("prepararVisaoGeralDaArea();");
+    expect(troca).toContain("tituloDaVisaoGeral();");
     expect(troca).not.toContain("renderMap");
   });
 
   it("os dados do mapa da Saúde Indígena vão para o estado da Visão geral", () => {
-    const carga = legado.slice(
-      legado.indexOf("async function loadMapaConfig"),
-      legado.indexOf("async function loadMonitoramentoPayload"),
+    const fonte = readFileSync("src/app/carga.js", "utf8");
+    const carga = fonte.slice(
+      fonte.indexOf("async function carregarMapa"),
+      fonte.indexOf("async function carregarLinhas"),
     );
-    expect(carga).toContain("estadoDaVisaoGeral.definirDadosDoMapa(");
+    expect(carga).toContain("visaoGeral.definirDadosDoMapa(");
+    expect(fonte).toContain("visaoGeral = estadoDaVisaoGeral");
   });
 
   it("as terras saem sem apagar a preferência da pessoa", () => {

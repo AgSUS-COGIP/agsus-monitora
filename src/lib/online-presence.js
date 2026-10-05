@@ -1,4 +1,5 @@
 import { ABAS_DO_MENU, nomeDaArea } from "./menu-lateral.js";
+import { rotuloDoPerfil } from "./access-roles.js";
 
 function text(value) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
@@ -31,8 +32,10 @@ export function normalizeOnlinePresenceList(value) {
       fullName,
       initials: initials(fullName),
       avatarUrl: text(row.avatarUrl || row.avatar_url) || null,
-      profileLabel:
-        text(row.profileLabel || row.profile_label || row.perfil) || "Usuário",
+      // O banco manda o código do perfil ("Edital_gestor", "Admin"); a tela, o rótulo.
+      profileLabel: rotuloDoPerfil(
+        text(row.profileLabel || row.profile_label || row.perfil),
+      ),
       currentView: rotuloDoLocal(text(row.currentView || row.current_view)),
       onlineAt: text(row.onlineAt || row.online_at),
     });
@@ -82,4 +85,44 @@ export function ondeEstaNoMonitora({ view, area, rotuloDaSecao } = {}) {
 export function rotuloDoLocal(valor) {
   const local = text(valor);
   return rotuloDaView(local) || local;
+}
+
+/** Quanto tempo "Sincronizando" espera antes de virar "Presença indisponível". */
+export const ESPERA_DA_PRESENCA_MS = 12_000;
+
+/**
+ * O que o botão de "Pessoas online" mostra: `estado` (ready, loading, error,
+ * offline, para o CSS), o `rotulo` curto e o `detalhe` (título, leitor de
+ * tela e a mensagem da lista quando não há pessoas).
+ */
+export function situacaoDaPresenca({
+  sincronizado = false,
+  quantos = 0,
+  online = true,
+  esperaMs = 0,
+  limiteMs = ESPERA_DA_PRESENCA_MS,
+} = {}) {
+  if (!online)
+    return {
+      estado: "offline",
+      rotulo: "Offline",
+      detalhe: "Sem conexão com a internet.",
+    };
+  if (sincronizado)
+    return {
+      estado: "ready",
+      rotulo: `${quantos} online`,
+      detalhe: `${quantos} ${quantos === 1 ? "pessoa online" : "pessoas online"}.`,
+    };
+  if (esperaMs >= limiteMs)
+    return {
+      estado: "error",
+      rotulo: "Presença indisponível",
+      detalhe: "Não foi possível atualizar a presença agora.",
+    };
+  return {
+    estado: "loading",
+    rotulo: "Sincronizando",
+    detalhe: "Sincronizando presença.",
+  };
 }

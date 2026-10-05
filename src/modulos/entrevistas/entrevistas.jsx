@@ -32,9 +32,9 @@ import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
 
 /*
   A tela de Entrevistas (view `entrevistas`), um módulo do app: monta direto
-  na `<section id="page-entrevistas">` do index.html, como Recursos. O legado
-  continua dono da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` de legacy-app.js).
+  na `<section id="page-entrevistas">` do index.html, como Recursos. A navegação
+  é dona da classe `.active` da seção e chama `render()` do
+  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
 
   Três visões, no controle segmentado do topo da tela:
   - "Resultados" (a primeira, só leitura): os dados da planilha de

@@ -964,9 +964,10 @@
   }
 }
 
-/* "Mensagem" em cada pessoa de Pessoas online (marcação do legado, legacy-app.js). */
+/* "Mensagem" em cada pessoa de Pessoas online (src/componentes/pessoas-online/). */
 .online-presence-mensagem {
   flex: none;
+  white-space: nowrap;
   margin-left: auto;
   min-height: 28px;
   padding: 0 var(--space-2);

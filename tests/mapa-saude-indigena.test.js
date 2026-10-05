@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
 import {
@@ -358,7 +359,7 @@ describe("formas, cores e contornos (a cópia única, desde que o legado saiu)",
   });
 
   it("os contornos moram só em contornos.js (o legado não tem mais cópia)", () => {
-    const app = readFileSync("src/modules/legacy-app.js", "utf8");
+    const app = fonteDoApp();
     expect(app).not.toContain("const UF_GEO");
     expect(app).not.toContain("const BR_OUTLINE");
     expect(UF_GEO.features).toHaveLength(27);

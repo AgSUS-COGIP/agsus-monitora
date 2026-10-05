@@ -321,7 +321,7 @@ Regras:
 
 ## 5. Tema escuro
 
-- **Chave canônica: `html[data-theme="dark"]`**, definida em `src/modules/legacy-app.js`
+- **Chave canônica: `html[data-theme="dark"]`**, definida em `src/app/moldura.js`
   (`setAttribute("data-theme", …)`). A análise usa a mesma chave.
 - `body.dark-mode` é um **espelho** mantido por `syncHealthDarkModeClass()`
   (`src/modules/health-dashboard-interaction-fixes.js`). Não escreva regra nova com ele.

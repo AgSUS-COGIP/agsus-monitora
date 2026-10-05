@@ -237,7 +237,8 @@ describe("a marca vinda da configuração", () => {
 
   it("o logout não apaga nem troca a identidade", () => {
     for (const arquivo of [
-      "src/modules/legacy-app.js",
+      "src/app/sistema.js",
+      "src/app/perfil.js",
       "src/app/sessao.js",
       "src/app/entrada/marca.js",
     ])
