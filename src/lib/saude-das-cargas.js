@@ -65,6 +65,7 @@ const TAREFAS = Object.freeze({
   agsus_entrevistas_cache_do_painel: "Painel de entrevistas (pacote pronto)",
   agsus_analises_analyze_diario: "Estatísticas das tabelas de análises",
   agsus_eventos_acesso_limpeza_mensal: "Limpeza do registro de acessos",
+  agsus_chat_retencao_diaria: "Retenção das mensagens do chat",
 });
 
 /* O estado de cada tipo de execução, em ok / falha / andamento. */
