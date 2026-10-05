@@ -1,10 +1,10 @@
 # `src/componentes/` — componentes React
 
 O front está migrando para **um único app React** (alvo, regras e ordem em
-`docs/arquitetura-react.md`). Já são React: barra lateral, Núcleo (Editais), Calendário, Lista de
-Aprovados, Acessos, Módulos e abas, Status das atualizações, busca global (Ctrl+K), Configurações
-(todas as seções). Recursos, Entrevistas, Análises curriculares e Seleção já são módulos do app em
-`src/modulos/`, sem iframe. Toda tela monta por
+`docs/arquitetura-react.md`). Todas as telas são módulos do app em `src/modulos/` (Editais,
+Cronograma, Aprovados, Recursos, Entrevistas, Análises, Seleção, Classificação, Configurações, Acessos,
+Módulos e abas…). Aqui fica só a moldura: barra lateral, busca global (Ctrl+K), Status das
+atualizações e os dados compartilhados do monitoramento. Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
 (`.jsx`), sem TypeScript. Nomes em português, arquivo em kebab-case, componente em PascalCase.
@@ -28,33 +28,6 @@ barra-lateral/
   alca-de-recolher.jsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
   rodape.jsx                 seletor Claro/Escuro, Sair e versão
   usar-ambiente.js           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
-configuracoes/               Configurações (#configuracoesApp): moldura e todas as seções
-  configuracoes.jsx          montarConfiguracoes(): cabeçalho da seção aberta, barra fixa de salvar,
-                             diálogos de publicar/restaurar e o histórico (portal na seção Operação)
-  estado.js                  estadoDasConfiguracoes: valores (o legado publica em loadConfig), rascunho,
-                             publicação com motivo e histórico; sem React e sem ler o DOM
-  marca.jsx                  seção Marca (portal no corpo da seção) com a prévia da barra lateral
-  pagina-inicial.jsx         seção Página inicial (título, aviso global, filtros, rótulos dos KPIs) com prévia
-  tela-de-acesso.jsx         seção Tela de acesso (saudação, Google, domínios) com prévia
-  aparencia.jsx              seção Aparência (arte de fundo, logo e cores do acesso e da barra lateral)
-  imagens.js                 envio e galerias da arte de fundo e da logo da barra (Storage); sem React
-  partes.jsx                 grupo de campos, campo, prévia, aviso de contraste e imagem
-  paineis-externos.jsx       seção Painéis externos (lista editável; payload igual ao de antes)
-  operacao.jsx               seção Operação (versões, Realtime, heartbeat) + histórico
-acessos/                     Configurações › Acessos (#acessosApp, dentro da seção "acessos")
-  acessos.jsx                <Acessos> (abas Usuários · Grupos · Coordenações) e montarAcessos()
-                             → window.acessosController
-  estado.js                  pessoas, rascunho (a guarda de saída pergunta aqui), pedidos, gaveta e as
-                             RPCs de acesso, uma ação por vez; sem React
-  aba-usuarios.jsx           Ativos: grupo (tag) + um select por módulo ("Do grupo" ou individual),
-                             filtros, barra de salvar com motivo · Pendentes: solicitacoes.jsx
-  solicitacoes.jsx           pedidos de acesso: aprovar com grupo + coordenação (ou áreas) / recusar
-  gaveta-do-usuario.jsx      modal da pessoa (centralizado, 880px; ids/classes ainda "gaveta"): grupo,
-                             coordenação e áreas | "como a pessoa vê"; Avançado: exceções, painéis
-  aba-grupos.jsx             lista + detalhe: nível de cada módulo no grupo (só admin global)
-  aba-coordenacoes.jsx       lista + detalhe: área, responsável, unidades, editais (só admin global)
-  partes.jsx                 controle segmentado, lista mestre, cabeçalho da gaveta (com avatar e
-                             iniciais()), campo de motivo
 ```
 
 Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra). CSS: `src/styles/barra-lateral.css`,

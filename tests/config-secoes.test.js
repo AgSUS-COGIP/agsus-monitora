@@ -8,17 +8,17 @@ import {
   organizarConfiguracoesEmSecoes,
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
-} from "../src/modules/config-secoes.js";
+} from "../src/modulos/configuracoes/secoes.js";
 
 const html = readFileSync("index.html", "utf8");
 const main = readFileSync("src/main.js", "utf8");
-const modulo = readFileSync("src/modules/config-secoes.js", "utf8");
+const modulo = readFileSync("src/modulos/configuracoes/secoes.js", "utf8");
 
 /*
   A página era um formulário corrido: um card com 47 campos e três subtítulos
   soltos. Agora tem as mesmas sete seções do SIGAV, mais Módulos e abas e
   Status das atualizações (só admin global). O conteúdo de cada seção é
-  React (src/componentes/configuracoes/ e as ilhas de Acessos, Módulos e
+  React (src/modulos/configuracoes/ e as ilhas de Acessos, Módulos e
   Status); este módulo cria o esqueleto das seções, move os blocos das ilhas
   e controla a seção aberta.
 */

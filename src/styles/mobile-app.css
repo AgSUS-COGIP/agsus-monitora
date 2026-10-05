@@ -41,9 +41,11 @@ body.mobile-app .app .top {
     padding-bottom: var(--mobile-safe-bottom);
   }
 
+  /* Caixa de marcar e de opção ficam no tamanho natural: a área de toque é o
+     rótulo inteiro que as envolve. :where() mantém a especificidade de antes. */
   button,
   .btn,
-  input,
+  input:where(:not([type="checkbox"], [type="radio"])),
   select,
   textarea,
   [role="button"] {
@@ -51,7 +53,7 @@ body.mobile-app .app .top {
     font-size: 16px;
   }
 
-  input,
+  input:where(:not([type="checkbox"], [type="radio"])),
   select,
   textarea {
     width: 100%;

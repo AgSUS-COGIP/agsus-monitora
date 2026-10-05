@@ -8,7 +8,7 @@ import {
   EVENTO_MENU_ATUALIZADO,
   EVENTO_TEMA_ALTERADO,
 } from "../../src/lib/eventos-da-barra-lateral.js";
-import { SECOES } from "../../src/modules/config-secoes.js";
+import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
 import { performExplicitLogout } from "../../src/modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.jsx";
 import {

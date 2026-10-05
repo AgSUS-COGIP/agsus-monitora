@@ -1,6 +1,6 @@
 # Regras das Configurações
 
-<!-- Fontes: src/componentes/configuracoes/, src/lib/publicacao-de-configuracoes.js, src/lib/paineis-externos-das-configuracoes.js, src/modules/config-secoes.js e src/lib/access-roles.js. -->
+<!-- Fontes: src/modulos/configuracoes/, src/lib/publicacao-de-configuracoes.js, src/lib/paineis-externos-das-configuracoes.js, src/modulos/configuracoes/secoes.js e src/lib/access-roles.js. -->
 
 Regras de negócio das seções Página inicial, Tela de acesso e Aparência de
 Configurações. A tela mostra só rótulos curtos; a explicação de cada campo
@@ -78,45 +78,45 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** para que serve configuracoes | tela de configuracoes | quem pode ver as configuracoes | secoes das configuracoes | administracao
 **resposta:** Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.
-**fonte:** src/lib/access-roles.js; src/modules/config-secoes.js
+**fonte:** src/lib/access-roles.js; src/modulos/configuracoes/secoes.js
 
 ## Publicar uma alteração
 
 **perguntas:** como publicar uma alteracao nas configuracoes | publicar alteracao | salvar alteracoes | motivo da alteracao | nada a publicar
 **resposta:** Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra fixa, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.
-**fonte:** src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx
+**fonte:** src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx
 
 ## Restaurar uma versão publicada
 
 **perguntas:** como restaurar uma versao publicada | restaurar versao | historico de configuracoes | historico de publicacoes | desfazer publicacao
 **resposta:** Em Configurações › Operação fica o histórico de configurações, com as 30 últimas publicações. Cada item tem "Restaurar", que pede o motivo da restauração e publica de novo aqueles valores; o histórico não perde nada.
-**fonte:** src/componentes/configuracoes/estado.js; src/componentes/configuracoes/configuracoes.jsx
+**fonte:** src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx
 **abrir:** config:operacao
 
 ## Seção Marca
 
 **perguntas:** o que a secao marca define | secao marca | para que serve marca | para que serve a secao marca | nome da equipe | logo da equipe | texto do rodape
 **resposta:** Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, o texto do rodapé e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".
-**fonte:** src/componentes/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js
+**fonte:** src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js
 **abrir:** config:marca
 
 ## Seção Aparência
 
 **perguntas:** secao aparencia | para que serve aparencia | para que serve a secao aparencia | o que a secao aparencia define
 **resposta:** Em Configurações › Aparência ficam a arte de fundo e o logo da tela de acesso, a cor do painel de acesso e do texto sobre ele, e a logo e a cor da barra lateral. Cada cor mostra a razão de contraste. A arte de fundo vale na hora; o resto, depois de "Salvar alterações".
-**fonte:** src/componentes/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js
+**fonte:** src/modulos/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js
 **abrir:** config:aparencia
 
 ## Painéis externos
 
 **perguntas:** o que sao os paineis externos | paineis externos | para que serve paineis externos | para que serve a secao paineis externos | como por um painel em manutencao | painel externo
 **resposta:** Painéis externos são páginas de fora do MONITORA abertas pelo grupo Painéis do menu. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, o grupo Painéis some do menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.
-**fonte:** src/lib/paineis-externos-das-configuracoes.js; src/componentes/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql
+**fonte:** src/lib/paineis-externos-das-configuracoes.js; src/modulos/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql
 **abrir:** config:recursos
 
 ## Seção Operação
 
 **perguntas:** secao operacao | para que serve operacao | para que serve a secao operacao | versao do sistema | realtime do monitoramento | heartbeat de auditoria | email do suporte
 **resposta:** Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.
-**fonte:** src/componentes/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js
+**fonte:** src/modulos/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js
 **abrir:** config:operacao

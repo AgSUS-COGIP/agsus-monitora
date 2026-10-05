@@ -13,7 +13,7 @@ Arquivos que exigem cuidado:
 - `matriz-de-acessos.js` (rascunho; grupo × individual), `teto-de-acessos.js` (teto do coordenador),
   `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.js` — Configurações › Acessos.
 - `apresentacao-das-configuracoes.js` — tom da faixa de aviso global e endereço de imagem aceito nas
-  prévias de Configurações (telas em `src/componentes/configuracoes/`).
+  prévias de Configurações (telas em `src/modulos/configuracoes/`).
 - `marca-da-barra-lateral.js` — logo e cor da barra lateral publicadas e em rascunho, sem DOM.
 - `publicacao-de-configuracoes.js` — publicação de Configurações sem DOM: chaves de cada seção (legado e
   React), comparação com o retrato do banco, validação de URL e domínio.

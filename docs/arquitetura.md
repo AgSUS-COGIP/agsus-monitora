@@ -129,7 +129,7 @@ Migrations de 29/09 (`20260929121000` a `121300`, já aplicadas; `190000` a `190
 - **Gestão delegada com teto.** Módulo `acessos` (sem_acesso | editor): o coordenador gerencia só a
   própria coordenação, sem conceder mais do que tem, sem conceder `acessos`, sem mexer em área nem
   em coordenação.
-- **O banco decide**; a tela (Configurações → Acessos, React em `src/componentes/acessos/`) só esconde
+- **O banco decide**; a tela (Configurações → Acessos, React em `src/modulos/acessos/`) só esconde
   o que não pode. Usuários (grupo + um select por módulo, "Do grupo" ou nível individual; pedidos
   pendentes), Grupos e Coordenações (lista + detalhe); gaveta da pessoa com áreas, painéis e "como a
   pessoa vê" (só leitura).

@@ -3,7 +3,7 @@
   ativo: situação do pedido, formulário, validação e envio, tudo por RPC.
   Estado sem React (`obter`/`assinar`); o desenho é de pedido-de-acesso.jsx e
   as regras e textos, de src/lib/solicitacao-de-acesso.js. A análise dos
-  pedidos é de Configurações › Acessos (src/componentes/acessos/).
+  pedidos é de Configurações › Acessos (src/modulos/acessos/).
 
   O sistema não concede acesso automático: sem perfil ativo, a pessoa pede, e
   um administrador libera (ou ela foi convidada e entra com o e-mail

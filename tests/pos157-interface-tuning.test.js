@@ -7,22 +7,16 @@ const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 // A escolha da logo e da cor é de Configurações › Aparência (React).
 const marcaDaBarra = readFileSync("src/lib/marca-da-barra-lateral.js", "utf8");
-const imagens = readFileSync(
-  "src/componentes/configuracoes/imagens.js",
-  "utf8",
-);
+const imagens = readFileSync("src/modulos/configuracoes/imagens.js", "utf8");
 const aparencia = readFileSync(
-  "src/componentes/configuracoes/aparencia.jsx",
+  "src/modulos/configuracoes/aparencia.jsx",
   "utf8",
 );
 const publicacao = readFileSync(
   "src/lib/publicacao-de-configuracoes.js",
   "utf8",
 );
-const governance = readFileSync(
-  "src/componentes/configuracoes/estado.js",
-  "utf8",
-);
+const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
 const migration = readFileSync(
   "supabase/migrations/20260909114500_platform_assets_6mb.sql",
   "utf8",

@@ -1,0 +1,71 @@
+/*
+  A manutenção na tela (src/modules/situacao-dos-modulos.js): a tela "Em
+  manutenção" de quem não é administrador global e a faixa âmbar do
+  administrador global. Quem escolhe o que fica em manutenção é
+  Configurações › Módulos e abas (src/modulos/modulos/).
+*/
+
+/* ── Tela "Em manutenção" (quem não é administrador global) ──────────────── */
+.pagina-de-manutencao.active {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+  padding: var(--space-8) var(--space-4);
+}
+.pagina-de-manutencao__cartao {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 520px;
+  padding: var(--space-8) var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+.pagina-de-manutencao__icone {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.pagina-de-manutencao__cartao h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h3);
+  font-weight: 600;
+}
+.pagina-de-manutencao__mensagem {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.pagina-de-manutencao__previsao {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+}
+
+/* ── Faixa do administrador global ───────────────────────────────────────── */
+.faixa-de-manutencao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1-5) var(--space-4);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--state-warning) 30%, transparent);
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+}
+.faixa-de-manutencao[hidden] {
+  display: none;
+}

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
-import { AvisoDeContraste } from "../src/componentes/configuracoes/partes.jsx";
+import { AvisoDeContraste } from "../src/modulos/configuracoes/partes.jsx";
 import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.js";
 import {
   MINIMO_AA,
@@ -20,7 +20,7 @@ import {
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const aparencia = readFileSync(
-  "src/componentes/configuracoes/aparencia.jsx",
+  "src/modulos/configuracoes/aparencia.jsx",
   "utf8",
 );
 

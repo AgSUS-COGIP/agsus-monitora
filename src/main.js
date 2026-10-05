@@ -12,8 +12,6 @@ import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
 import "./styles/loading-experience.css";
-import "./styles/config-page.css";
-import "./styles/config-governance.css";
 import "./styles/mobile-app.css";
 import "./styles/mobile-bottom-navigation.css";
 import "./styles/mobile-table-cards.css";
@@ -27,13 +25,13 @@ import "./styles/post157-interface-tuning.css";
 import "./styles/barra-lateral.css";
 import "./styles/multi-select-busca.css";
 import "./styles/carregamento.css";
-import "./styles/acessos.css";
-import "./styles/modulos-e-manutencao.css";
+import "./styles/manutencao.css";
 import "./styles/saude-das-cargas.css";
-import "./styles/config-apresentacao.css";
-import "./styles/configuracoes.css";
 // Componentes de src/ui/ e, depois, o CSS próprio de cada módulo de src/modulos/.
 import "./ui/ui.css";
+import "./modulos/configuracoes/configuracoes.css";
+import "./modulos/acessos/acessos.css";
+import "./modulos/modulos/modulos.css";
 import "./modulos/editais/editais.css";
 import "./modulos/cronograma/cronograma.css";
 import "./modulos/aprovados/aprovados.css";
@@ -61,8 +59,8 @@ import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import {
   organizarConfiguracoesEmSecoes,
   SECOES,
-} from "./modules/config-secoes.js";
-import { montarConfiguracoes } from "./componentes/configuracoes/configuracoes.jsx";
+} from "./modulos/configuracoes/secoes.js";
+import { montarConfiguracoes } from "./modulos/configuracoes/configuracoes.jsx";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
 import { initMobileTableCards } from "./modules/mobile-table-cards.js";
@@ -81,8 +79,8 @@ import { montarSelecao } from "./modulos/selecao/selecao.jsx";
 import { montarClassificacao } from "./modulos/classificacao/classificacao.jsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.jsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
-import { montarAcessos } from "./componentes/acessos/acessos.jsx";
-import { montarModulos } from "./componentes/modulos/modulos.jsx";
+import { montarAcessos } from "./modulos/acessos/acessos.jsx";
+import { montarModulos } from "./modulos/modulos/modulos.jsx";
 import { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.jsx";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.jsx";
 import { montarEntrada } from "./app/entrada/entrada.jsx";
@@ -208,14 +206,14 @@ window.classificacaoController = montarClassificacao({
   toast: window.monitoraToast,
 });
 
-// Configurações › Acessos: abre pela seção (config-secoes.js → render()).
+// Configurações › Acessos: abre pela seção (configuracoes/secoes.js → render()).
 window.acessosController = montarAcessos({
   toast: window.monitoraToast,
   getProfile: window.getMonitoraProfile,
   secoesDeConfiguracao: SECOES,
 });
 
-// Configurações › Módulos e abas (só admin global): abre pela seção (config-secoes.js → render()).
+// Configurações › Módulos e abas (só admin global): abre pela seção (configuracoes/secoes.js → render()).
 window.modulosController = montarModulos({
   toast: window.monitoraToast,
   getProfile: window.getMonitoraProfile,

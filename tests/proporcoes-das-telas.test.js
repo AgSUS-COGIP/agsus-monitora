@@ -83,7 +83,7 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
 });
 
 describe("Acessos: nomes longos com reticências", () => {
-  const css = ler("src/styles/acessos.css");
+  const css = ler("src/modulos/acessos/acessos.css");
 
   it("o nome da pessoa (botão e, nas contas desativadas, o strong) para em reticências", () => {
     for (const seletor of [
@@ -102,21 +102,21 @@ describe("Acessos: nomes longos com reticências", () => {
   });
 
   it("o nome inteiro fica no title", () => {
-    const usuarios = ler("src/componentes/acessos/aba-usuarios.jsx");
+    const usuarios = ler("src/modulos/acessos/aba-usuarios.jsx");
     expect(usuarios).toContain(
       "titulo={`Abrir o acesso de ${usuario.nome || usuario.email}`}",
     );
     expect(usuarios).toContain(
       "title={nomeDaCoordenacao || coordenacao || undefined}",
     );
-    expect(ler("src/componentes/acessos/contas-desativadas.jsx")).toContain(
+    expect(ler("src/modulos/acessos/contas-desativadas.jsx")).toContain(
       "<strong title={conta.nome || conta.email}>",
     );
   });
 });
 
 describe("Aparência: cartões da galeria", () => {
-  const css = ler("src/styles/config-apresentacao.css");
+  const css = ler("src/modulos/configuracoes/configuracoes.css");
 
   it("o cartão prende a coluna à própria largura e não estica a miniatura", () => {
     const cartao = regra(css, ".config-galeria__cartao");
@@ -138,11 +138,11 @@ describe("Aparência: cartões da galeria", () => {
 
 describe("Operação: botão Restaurar do histórico", () => {
   it("leva a classe que o põe na linha de baixo, na largura toda, no celular", () => {
-    expect(ler("src/componentes/configuracoes/configuracoes.jsx")).toContain(
+    expect(ler("src/modulos/configuracoes/configuracoes.jsx")).toContain(
       'className="btn secondary config-history-restore"',
     );
-    const css = ler("src/styles/config-governance.css");
-    const d = regra(css, "#page-config .config-history-restore");
+    const css = ler("src/modulos/configuracoes/configuracoes.css");
+    const d = regra(css, ".config-history-restore");
     expect(d["grid-column"]).toBe("1/-1");
     expect(d["justify-self"]).toBe("stretch");
   });

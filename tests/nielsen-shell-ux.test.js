@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDasConfiguracoes } from "../src/componentes/configuracoes/estado.js";
+import { criarEstadoDasConfiguracoes } from "../src/modulos/configuracoes/estado.js";
 import {
   deveAlternarTema,
   hasUnsavedConfiguration,

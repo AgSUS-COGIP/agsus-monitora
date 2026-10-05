@@ -5,7 +5,7 @@ import {
 } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
-import { BotaoDeAcao, classes, Modal } from "../../ui/index.js";
+import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
 
 /*
@@ -253,28 +253,20 @@ export function ModalListasDoEdital({ estado, dados, editalId, rotulo }) {
         </button>
       </div>
       <div className="modal-body">
-        <div
-          className="approved-tabs approved-tabs-modal"
-          role="tablist"
-          aria-label="Seções do formulário do edital"
-        >
-          {ABAS.map((item) => (
-            <button
-              key={item.nome}
-              id={item.id}
-              className={classes("approved-tab", aba === item.nome && "active")}
-              type="button"
-              role="tab"
-              aria-selected={aba === item.nome}
-              aria-controls={item.painel}
-              data-import-tab={item.nome}
-              onClick={() => setAba(item.nome)}
-            >
-              <i className={`fa-solid ${item.icone}`} aria-hidden="true" />{" "}
-              {item.rotulo}
-            </button>
-          ))}
-        </div>
+        <Abas
+          rotulo="Seções do formulário do edital"
+          compactas
+          ativa={aba}
+          aoEscolher={setAba}
+          abas={ABAS.map((item) => ({
+            id: item.nome,
+            rotulo: item.rotulo,
+            icone: item.icone,
+            idDaAba: item.id,
+            idDoPainel: item.painel,
+            dados: { "data-import-tab": item.nome },
+          }))}
+        />
         <PainelDoArquivo
           ativa={aba === "arquivo"}
           estado={estado}

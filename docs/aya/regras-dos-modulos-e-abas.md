@@ -1,7 +1,7 @@
 # Regras de Módulos e abas
 
 Configurações › Módulos e abas: ativar, desativar e pôr em manutenção o sistema, as áreas, as abas
-e os painéis; selo BETA; comemorações. Fontes: `src/componentes/modulos/modulos.jsx`,
+e os painéis; selo BETA; comemorações. Fontes: `src/modulos/modulos/modulos.jsx`,
 `src/lib/situacao-dos-modulos.js`, `src/lib/modulos-e-abas.js`, `src/lib/access-roles.js` e a
 migration `20260930140000_modulos_e_manutencao.sql`.
 
@@ -9,7 +9,7 @@ migration `20260930140000_modulos_e_manutencao.sql`.
 
 **perguntas:** secao modulos e abas | modulos e abas | para que serve modulos e abas | para que serve a secao modulos e abas
 **resposta:** Em Configurações › Módulos e abas (só o administrador global), dá para pôr o sistema inteiro em manutenção, ativar, desativar ou pôr em manutenção cada área, cada aba (em todas as áreas ou só numa) e cada painel externo, e ligar o selo BETA de uma aba. Nada grava na hora: as mudanças vão juntas em "Revisar e salvar", com motivo (3 a 500 caracteres). O histórico mostra as 50 últimas mudanças. Pelo menos uma área precisa ficar ativa.
-**fonte:** src/componentes/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql
+**fonte:** src/modulos/modulos/modulos.jsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql
 **abrir:** config:modulos
 
 ## Manutenção

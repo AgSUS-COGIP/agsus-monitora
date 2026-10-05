@@ -6,8 +6,8 @@ import {
 
 /*
   Regras sem DOM das prévias de Configurações (os grupos e as prévias são
-  React: src/componentes/configuracoes/; o comportamento na tela está em
-  tests/componentes/configuracoes-inicio-acesso-aparencia.test.js).
+  React: src/modulos/configuracoes/; o comportamento na tela está em
+  tests/modulos/configuracoes-inicio-acesso-aparencia.test.js).
 */
 describe("regras da apresentação", () => {
   it("aviso: cada tipo tem tom, ícone e rótulo; desconhecido vira informação", () => {
