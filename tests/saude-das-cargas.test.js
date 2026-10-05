@@ -345,3 +345,57 @@ describe("robô da Empregare (20261005170000)", () => {
     expect(robo.situacao).toBe("em_dia");
   });
 });
+
+describe("conferências de consistência (20261005210000)", () => {
+  const comConferencias = (conferencias) =>
+    normalizarSaude({ ...PAYLOAD, empregare: [], conferencias }, AGORA);
+
+  it("sem a chave no payload (migration não aplicada), a linha não aparece", () => {
+    expect(
+      visaoSimples(
+        normalizarSaude({ ...PAYLOAD, empregare: [] }, AGORA),
+      ).linhas.map((l) => l.id),
+    ).not.toContain("conferencias");
+  });
+
+  it("vira uma linha depois do robô, com os avisos e quem disparou na mensagem", () => {
+    const s = comConferencias([
+      execucao("CONCLUIDA", 60, {
+        novos: 2,
+        abertos: 7,
+        resolvidos: 1,
+        falhas: [],
+        disparo: "AGENDA",
+      }),
+    ]);
+    const { linhas } = visaoSimples(s);
+    expect(linhas.map((l) => l.titulo).slice(-3)).toEqual([
+      "Robô da Empregare",
+      "Conferências de consistência",
+      "Atualização automática do banco",
+    ]);
+    const conf = linhas.find((l) => l.id === "conferencias");
+    expect(conf.situacao).toBe("em_dia");
+    expect(conf.partes[0].historico[0].mensagem).toBe(
+      "2 avisos novos · 7 abertos · 1 resolvidos · disparo: agenda",
+    );
+  });
+
+  it("diária: atrasada depois de 26 h; parcial conta como falha", () => {
+    const atrasada = comConferencias([
+      execucao("CONCLUIDA", PRAZO_DIARIO_MIN + 5),
+    ]);
+    expect(
+      visaoSimples(atrasada).linhas.find((l) => l.id === "conferencias")
+        .situacao,
+    ).toBe("atrasada");
+    const parcial = comConferencias([
+      execucao("PARCIAL", 10, { falhas: ["CARGA_VARIACAO_BRUSCA"] }),
+    ]);
+    const linha = visaoSimples(parcial).linhas.find(
+      (l) => l.id === "conferencias",
+    );
+    expect(linha.situacao).toBe("falhou");
+    expect(linha.erro.mensagem).toContain("1 conferências falharam");
+  });
+});

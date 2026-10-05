@@ -1,0 +1,90 @@
+{
+  "_leia": "Catálogo das conferências de consistência: a mesma lista é conferida pelo pytest (scripts/conferencias/catalogo.py) e pelo vitest (src/lib/avisos-de-conferencia.js). Mudou uma conferência: mude aqui e nos dois lados.",
+  "conferencias": {
+    "ANALISE_APROVADA_ABAIXO_DO_CORTE": {
+      "modulo": "analises",
+      "gravidade": "CRITICA",
+      "titulo": "Aprovada com nota abaixo da mínima"
+    },
+    "ANALISE_NOTA_DIFERENTE_DA_SOMA": {
+      "modulo": "analises",
+      "gravidade": "ATENCAO",
+      "titulo": "Nota final diferente da soma das parciais"
+    },
+    "ANALISE_EXPERIENCIA_ACIMA_DO_TETO": {
+      "modulo": "analises",
+      "gravidade": "ATENCAO",
+      "titulo": "Experiência acima do teto da regra"
+    },
+    "ANALISE_DATA_INVALIDA": {
+      "modulo": "analises",
+      "gravidade": "ATENCAO",
+      "titulo": "Data da análise no futuro ou antes da inscrição"
+    },
+    "ANALISE_EM_DOIS_EDITAIS": {
+      "modulo": "analises",
+      "gravidade": "INFORMATIVO",
+      "titulo": "Candidato analisado em dois editais ativos"
+    },
+    "ENTREVISTA_SEM_NOTA_APOS_DATA": {
+      "modulo": "entrevistas",
+      "gravidade": "ATENCAO",
+      "titulo": "Convocado sem nota depois da data da entrevista"
+    },
+    "ENTREVISTA_NOTA_FORA_DA_ESCALA": {
+      "modulo": "entrevistas",
+      "gravidade": "CRITICA",
+      "titulo": "Nota fora da escala do roteiro"
+    },
+    "ENTREVISTA_FORA_DA_CONVOCACAO": {
+      "modulo": "entrevistas",
+      "gravidade": "CRITICA",
+      "titulo": "Convocado fora da lista de convocação vigente"
+    },
+    "ENTREVISTA_HORARIO_DUPLICADO": {
+      "modulo": "entrevistas",
+      "gravidade": "ATENCAO",
+      "titulo": "Dois horários para o mesmo candidato"
+    },
+    "CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA": {
+      "modulo": "classificacao",
+      "gravidade": "CRITICA",
+      "titulo": "Lista final gerada antes da última mudança nas análises"
+    },
+    "CLASSIFICACAO_EMPATE_PENDENTE": {
+      "modulo": "classificacao",
+      "gravidade": "ATENCAO",
+      "titulo": "Empate sem desempate registrado"
+    },
+    "CLASSIFICACAO_VAGA_SEM_QUADRO": {
+      "modulo": "classificacao",
+      "gravidade": "ATENCAO",
+      "titulo": "Vaga sem linha no quadro de vagas"
+    },
+    "CLASSIFICACAO_AJUSTE_APOS_LISTA": {
+      "modulo": "classificacao",
+      "gravidade": "ATENCAO",
+      "titulo": "Ajuste de recurso aprovado depois da última lista"
+    },
+    "APROVADOS_CONTRATADO_DUPLICADO": {
+      "modulo": "aprovados",
+      "gravidade": "CRITICA",
+      "titulo": "Contratado em duas vagas"
+    },
+    "APROVADOS_CONVOCADO_SEM_DESFECHO": {
+      "modulo": "aprovados",
+      "gravidade": "ATENCAO",
+      "titulo": "Convocado há muitos dias sem desfecho"
+    },
+    "APROVADOS_PENDENCIA_DA_PUBLICACAO": {
+      "modulo": "aprovados",
+      "gravidade": "ATENCAO",
+      "titulo": "Pendência da publicação sem revisão"
+    },
+    "CARGA_VARIACAO_BRUSCA": {
+      "modulo": "cargas",
+      "gravidade": "ATENCAO",
+      "titulo": "Variação brusca de candidatos na Empregare"
+    }
+  }
+}
