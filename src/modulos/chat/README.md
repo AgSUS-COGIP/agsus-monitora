@@ -7,7 +7,9 @@ painel lateral. Monta por `montarChat()` (`src/main.js`); liga pela sessão do a
 ```
 chat.jsx               <Chat> (ícone + contador) e montarChat(); o painel vem por lazy + portal
 painel.jsx             painel (carregado sob demanda): lista, nova conversa, adicionar pessoas
-conversa.jsx           mensagens por dia, editar/apagar, digitando…, campo de escrita
+conversa.jsx           mensagens por dia, menu "⋯" (reagir, copiar, editar/apagar), reações,
+                       "↓ Novas mensagens", digitando…, campo de escrita, Limpar conversa
+seletor-de-emoji.jsx   seletor de emoji do campo (lista própria, busca, recentes); chunk do painel
 estado.js              store sem React: RPCs, Realtime, não lidas, avisos (som, notificação)
 ponte.js               sem React: abrir conversa de fora (evento), link da tela atual, irParaLink
 usar-chat-liberado.js  hook: a pessoa conectada pode usar (botão "Conversa" de Editais/Classificação)
@@ -20,11 +22,17 @@ chat.css               só tokens
 - "Compartilhar esta tela": página e área do estado da Aya (`src/modulos/aya/estado.js`, só
   leitura) e o edital aberto (`definirEditalDaTela`, hoje pela Classificação). Link conferido por
   `linkDaTela` (`src/lib/chat.js`) ao sair e ao chegar; nunca URL.
-- Tempo real: canal `chat-usuario:<eu>` (postgres_changes de `TB_MENSAGEM` e
-  `RL_CONVERSA_PARTICIPANTE`, com a RLS) e canal privado `chat:<conversa>` (broadcast "digitando").
-  Reconectou ou a aba voltou: relê a lista e a conversa aberta. Mensagens mescladas pelo id.
+- Tempo real: canal `chat-usuario:<eu>` (postgres_changes de `TB_MENSAGEM`,
+  `RL_CONVERSA_PARTICIPANTE` e `RL_MENSAGEM_REACAO`, com a RLS) e canal privado `chat:<conversa>`
+  (broadcast "digitando"). Reconectou ou a aba voltou: relê a lista e a conversa aberta. Mensagens
+  mescladas pelo id; o que a pessoa limpou (`limpa_em`) não volta pelo Realtime.
+- Limpar conversa (para mim): `limpar_conversa_chat` grava `DT_LIMPEZA` só na linha de quem limpou;
+  as listagens filtram. Reações: `alternar_reacao_chat`, na hora na tela e desfeita se falhar.
 
-Regras puras: `src/lib/chat.js`. Banco: `supabase/migrations/20261002210000_chat.sql` (ensaio em
-`supabase/ensaios/`, rollback em `supabase/rollback/`). Explicações: `docs/aya/regras-do-chat.md`.
-Testes: `tests/chat.test.js`, `tests/modulos/chat.test.js`, `tests/chat-migration.test.js`.
+Regras puras: `src/lib/chat.js` e `src/lib/emojis-do-chat.js`. Banco:
+`supabase/migrations/20261002210000_chat.sql` e `20261005100000_chat_limpar_e_reacoes.sql` (ensaios
+em `supabase/ensaios/`, rollbacks em `supabase/rollback/`). Explicações: `docs/aya/regras-do-chat.md`.
+Testes: `tests/chat.test.js`, `tests/chat-limpar-e-reacoes.test.js`, `tests/emojis-do-chat.test.js`,
+`tests/modulos/chat.test.js`, `tests/modulos/chat-estado-limpar-e-reacoes.test.js`,
+`tests/chat-migration.test.js`, `tests/chat-limpar-e-reacoes-migration.test.js`.
 Fica para a v2: anexos de arquivo.
