@@ -266,9 +266,12 @@ export function rebasearRascunho(rascunho, usuariosRecarregados = []) {
 
 // ── Visão simples: grupo em uma frase, áreas da pessoa e a trava de área ───────
 
-/** Módulos que contam para a frase do grupo ("acessos" e o parecer viram frase à parte). */
+/*
+  Módulos que contam para a frase do grupo ("acessos" e o parecer viram frase à
+  parte; Mensagens não é página nem dado).
+*/
 const MODULOS_DA_FRASE = MODULOS.filter(
-  (m) => !["acessos", "recursos_parecer"].includes(m.id),
+  (m) => !["acessos", "recursos_parecer", "chat"].includes(m.id),
 );
 /* "Tudo" não conta Configurações: o módulo não tem nível de leitura. */
 const MODULOS_DE_TUDO = MODULOS_DA_FRASE.filter(

@@ -14,6 +14,8 @@ import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.js";
 import { classificar } from "../../lib/classificacao/motor.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
+import { abrirConversaDoEdital, definirEditalDaTela } from "../chat/ponte.js";
+import { usarChatLiberado } from "../chat/usar-chat-liberado.js";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import { Listas } from "./listas.jsx";
 import { Regra } from "./regra.jsx";
@@ -71,6 +73,22 @@ function TelaDaArea({ estado, e }) {
     (dados, tipo) => calcularClassificacao(dados, tipo),
     [],
   );
+  const chat = usarChatLiberado();
+  const editalEscolhido = e.editais.find((ed) => ed.id === e.editalId);
+  const tituloDoEdital = editalEscolhido
+    ? editalEscolhido.edital || editalEscolhido.unidade || ""
+    : "";
+
+  /* O edital escolhido vale para "Compartilhar esta tela" do chat. */
+  useEffect(() => {
+    definirEditalDaTela(
+      e.editalId
+        ? { view: "classificacao", id: e.editalId, titulo: tituloDoEdital }
+        : null,
+    );
+    return () => definirEditalDaTela(null);
+  }, [e.editalId, tituloDoEdital]);
+
   const dataDeCorte = e.dados
     ? dataDeCorteDoCronograma(e.dados.cronograma)
     : null;
@@ -142,6 +160,21 @@ function TelaDaArea({ estado, e }) {
                 ))}
               </select>
             </Campo>
+            {chat && e.editalId ? (
+              <button
+                type="button"
+                className="btn secondary classificacao-conversa"
+                onClick={() =>
+                  abrirConversaDoEdital({
+                    id: e.editalId,
+                    titulo: tituloDoEdital,
+                  })
+                }
+              >
+                <i className="fa-solid fa-comments" aria-hidden="true" />{" "}
+                Conversa
+              </button>
+            ) : null}
           </section>
 
           {e.erroDoEdital ? (

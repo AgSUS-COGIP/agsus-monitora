@@ -13,6 +13,7 @@ export const RESOURCES = Object.freeze([
   ["paineis", "Painéis externos"],
   ["configuracoes", "Configurações"],
   ["acessos", "Gestão de acessos"],
+  ["chat", "Mensagens"],
 ]);
 
 export const LEVELS = Object.freeze([
@@ -26,6 +27,15 @@ export const LEVELS = Object.freeze([
 export const NIVEIS_DE_AREA = Object.freeze([
   ["sem_acesso", "Não"],
   ["leitor", "Sim"],
+]);
+
+/*
+  Mensagens (chat, 20261002210000_chat.sql): usa ou não usa. No banco o nível
+  "usar" é leitor (CK_GRUPACESSOREC_CHAT / CK_PERMISSAORECURSO_CHAT).
+*/
+export const NIVEIS_DO_CHAT = Object.freeze([
+  ["sem_acesso", "Sem acesso"],
+  ["leitor", "Usar"],
 ]);
 
 /** "area" (area:<código>), "painel" (painel:<id>) ou "modulo". */
@@ -52,6 +62,7 @@ export function niveisDoRecurso(recurso) {
   const tipo = tipoDoRecurso(recurso);
   if (tipo === "area") return NIVEIS_DE_AREA;
   if (tipo === "painel") return LEVELS.slice(0, 2);
+  if (recurso === "chat") return NIVEIS_DO_CHAT;
   if (recurso === "configuracoes")
     return LEVELS.filter(([nivel]) => nivel !== "leitor");
   // Decide ou não decide (CK_GRUPACESSOREC_ACESSOS / _PARECER no banco).
@@ -62,7 +73,12 @@ export function niveisDoRecurso(recurso) {
 
 export function rotuloDoNivel(nivel, recurso = "") {
   if (nivel === null) return "Padrão do perfil";
-  const lista = tipoDoRecurso(recurso) === "area" ? NIVEIS_DE_AREA : LEVELS;
+  const lista =
+    tipoDoRecurso(recurso) === "area"
+      ? NIVEIS_DE_AREA
+      : recurso === "chat"
+        ? NIVEIS_DO_CHAT
+        : LEVELS;
   return (
     lista.find(([valor]) => valor === nivel)?.[1] ||
     (tipoDoRecurso(recurso) === "area" ? "Não" : "Sem acesso")

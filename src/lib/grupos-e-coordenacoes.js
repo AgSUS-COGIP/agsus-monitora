@@ -33,7 +33,10 @@ export function grupoVazio() {
     nome: "",
     descricao: "",
     revisao: null,
-    niveis: Object.fromEntries(RESOURCES.map(([id]) => [id, "sem_acesso"])),
+    // Grupo novo nasce sem acesso a nada, menos Mensagens (o padrão é usar).
+    niveis: Object.fromEntries(
+      RESOURCES.map(([id]) => [id, id === "chat" ? "leitor" : "sem_acesso"]),
+    ),
   };
 }
 
