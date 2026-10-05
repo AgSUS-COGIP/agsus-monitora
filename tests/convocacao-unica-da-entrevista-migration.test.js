@@ -153,7 +153,9 @@ describe("migration da convocação única: as RPCs", () => {
 
   it("nada é apagado: sem drop table nem delete; o que ficou sem uso ganha comentário", () => {
     expect(MIGRATION).not.toMatch(/drop table|delete from|truncate/i);
-    expect(MIGRATION).toContain('comment on table public."TB_ENTREVISTA_VAGA" is');
+    expect(MIGRATION).toContain(
+      'comment on table public."TB_ENTREVISTA_VAGA" is',
+    );
     expect(MIGRATION).toContain(
       'comment on column public."TB_ENTREVISTA_EDITAL"."DS_CONVOCACAO" is',
     );
