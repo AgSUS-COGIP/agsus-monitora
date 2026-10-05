@@ -4,6 +4,7 @@ import { montarModulo } from "../../app/montar-modulo.jsx";
 import { FASES, sessaoDoApp } from "../../app/sessao.js";
 import { podeUsarChat } from "../../lib/access-roles.js";
 import { totalDeNaoLidas } from "../../lib/chat.js";
+import { importarComRecarga } from "../../lib/importar-com-recarga.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { AvisosDoChat } from "./avisos.jsx";
 import { criarEstadoDoChat } from "./estado.js";
@@ -25,7 +26,8 @@ import { EVENTO_ABRIR_CONVERSA } from "./ponte.js";
   legado).
 */
 
-const PainelDoChat = lazy(() => import("./painel.jsx"));
+// Versão nova publicada com a página aberta: recarrega em vez de quebrar a ilha.
+const PainelDoChat = lazy(importarComRecarga(() => import("./painel.jsx")));
 
 const ID_DO_PAINEL = "chatPainel";
 
