@@ -157,7 +157,7 @@ describe("sem tela de carregamento na entrada e ao atualizar", () => {
 
   it("a entrada liga o skeleton antes do perfil e o desliga depois de abrir", () => {
     expect(funcao("function prepararEntrada()")).toContain(
-      "mostrarEsqueleto(storedView())",
+      "mostrarEsqueleto(navegacao.telaGuardada())",
     );
     const fonte = funcao("async function loadInitialData()");
     expect(fonte.indexOf("navigate(startView())")).toBeLessThan(

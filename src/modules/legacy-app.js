@@ -1,29 +1,15 @@
-import { aplicarAtualizacaoPendente } from "./pwa-lifecycle.js";
 import { ordenarUnidades as sortUnits } from "../lib/editais-do-nucleo.js";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
 import { resumoDoRelatorio } from "../lib/visao-geral.js";
 import {
-  assinarDadosDoMonitoramento,
-  definirAreasDoUsuario,
   obterDadosDoMonitoramento,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
 } from "../componentes/dados-do-monitoramento.js";
 import {
-  abrirSecaoDeConfiguracao,
-  definirSecoesPermitidas,
   SECOES,
   secaoAtualDeConfiguracao,
 } from "../modulos/configuracoes/secoes.js";
-import {
-  atualizarMenuLateral,
-  marcarItemAtivoNoMenu,
-} from "../componentes/barra-lateral/estado.js";
-import {
-  areasDoUsuario,
-  montarArvoreDoMenu,
-  nomeDaArea,
-} from "../lib/menu-lateral.js";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
@@ -33,11 +19,10 @@ import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
 import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.js";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
 import { mostrarNotificacao } from "./notificacao.js";
-import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.js";
 import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { sessaoDoApp } from "../app/sessao.js";
+import { criarNavegacao } from "../app/navegacao.js";
 import { definirMarcaDaConfiguracao } from "../app/entrada/marca.js";
-import { definirPaginaDaAya } from "../modulos/aya/estado.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { profileDisplayName } from "../lib/platform-context.js";
@@ -52,25 +37,17 @@ import {
 import { avisoGlobal } from "../lib/aviso-global.js";
 import {
   aplicarFaviconDaMarca,
-  definirPaginaDaAba,
   definirSistemaDaAba,
 } from "../lib/identidade-da-aba.js";
 import { ehFalhaTransitoria, ehSessaoEncerrada } from "../lib/sessao.js";
 import {
   canViewCore,
-  canViewEntrevistas,
-  canViewRecursos,
-  canViewSelecao,
-  canViewClassificacao,
   podeUsarChat,
   canImportApprovedList,
   isAdminGlobal,
   podeVerPessoasOnline,
-  paginasPermitidas,
   permissaoLegada,
-  podeAbrirConfiguracoes,
   roleLabel,
-  secaoDeConfiguracaoPermitida,
 } from "../lib/access-roles.js";
 import {
   assinaturaDoAcesso,
@@ -89,18 +66,15 @@ import {
 } from "./copia-da-sessao-indexeddb.js";
 import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.js";
 import {
-  abasDoMenu,
   carregarCatalogoDeAbas,
   consultaDoCatalogoDeAbas,
 } from "./catalogo-de-abas.js";
 import {
-  aplicarManutencaoNaNavegacao,
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
 } from "./situacao-dos-modulos.js";
-import { filtrarAreasAtivas } from "../lib/situacao-dos-modulos.js";
 import {
   acompanharCarregamentoDoPainel,
   esconderEsqueleto,
@@ -227,7 +201,6 @@ let panels = [...DEFAULT_PANELS];
 let allowedPanelIds = new Set();
 let mapConfigLoadOk = false;
 let currentPanel = null;
-let currentView = "dashboard";
 let dataLoadedAtLeastOnce = false;
 let accessHeartbeatHandle = null;
 let onlinePresenceHandle = null;
@@ -236,6 +209,28 @@ let loadDataRunCounter = 0;
 let activeRefreshDataPromise = null;
 const SIDEBAR_MOBILE_BREAKPOINT = 900;
 const SIDEBAR_FORCE_LOCK_VIEWS = new Set([]);
+
+/* A navegação do app (src/app/navegacao.js), com o que o legado ainda guarda. */
+const navegacao = criarNavegacao({
+  obterPerfil: () => profile,
+  paineis: {
+    podeAbrir: (codigo) => canAccessPanelCode(codigo),
+    primeiro: () => panels.find(panelAllowed) || null,
+    doMenu: () =>
+      can("paineis")
+        ? panels.filter(panelAllowed).sort((a, b) => n(a.ordem) - n(b.ordem))
+        : [],
+    mostrar: (codigo) => openPanel(codigo),
+    esquecerAtual: () => {
+      currentPanel = null;
+    },
+  },
+  configuracao: (chave) => cfgValue(chave),
+  avisar: (texto, tom) => toast(texto, tom),
+  ajustarBarra: () => enforceResponsiveSidebar(),
+});
+const viewAtual = () => navegacao.obter().view;
+const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
 
 // Marcador de verificação em produção.
 // No console do navegador, rode:
@@ -318,9 +313,6 @@ function can(perm) {
   return permissaoLegada(profile, perm);
 }
 
-function isMasterProfile() {
-  return isAdminGlobal(profile);
-}
 
 function getClientSessionId() {
   try {
@@ -343,7 +335,7 @@ async function trackAccess(evento, options = {}) {
   try {
     await sb.rpc(RPC_ACCESS_LOG, {
       p_evento: evento,
-      p_tela: options.tela ?? currentView ?? null,
+      p_tela: options.tela ?? viewAtual() ?? null,
       p_origem: "index",
       p_detalhes: options.detalhes ?? {},
       p_client_session_id: getClientSessionId(),
@@ -407,7 +399,7 @@ function localAtualNaPresenca() {
   const secao = secaoAtualDeConfiguracao(document);
   return (
     ondeEstaNoMonitora({
-      view: currentView,
+      view: viewAtual(),
       area: areaAtual(),
       rotuloDaSecao: SECOES.find((s) => s.id === secao)?.rotulo,
     }) || null
@@ -484,7 +476,7 @@ function startAccessHeartbeat() {
   accessHeartbeatHandle = setInterval(
     () =>
       trackAccess("heartbeat", {
-        detalhes: { current_view: currentView, page_title: document.title },
+        detalhes: { current_view: viewAtual(), page_title: document.title },
       }),
     minutes * 60 * 1000,
   );
@@ -535,7 +527,7 @@ function encerrarEspera() {
 */
 let copiaEmLeitura = null;
 function prepararEntrada() {
-  mostrarEsqueleto(storedView());
+  mostrarEsqueleto(navegacao.telaGuardada());
   copiaEmLeitura = lerCopiaDaSessao();
 }
 
@@ -568,8 +560,8 @@ function ficarSemAcesso() {
 async function atualizarPerfilAberto() {
   mostrarUsuarioNaBarra();
   await loadPanelPermissions();
-  buildNav();
-  if (!isViewAllowed(currentView)) navigate(startView());
+  navegacao.montarMenu();
+  if (!navegacao.telaPermitida(viewAtual())) navegacao.irPara(navegacao.telaDeEntrada());
 }
 
 /*
@@ -578,7 +570,7 @@ async function atualizarPerfilAberto() {
   de candidatos, sai com a pessoa.
 */
 async function antesDeSair() {
-  await trackAccess("logout", { detalhes: { current_view: currentView } });
+  await trackAccess("logout", { detalhes: { current_view: viewAtual() } });
   stopRealtime();
   await apagarCacheDePayload();
 }
@@ -653,14 +645,14 @@ async function atualizarCopiaDaSessao(sessao, consultas, anteriores) {
     if (mudou.has("abas"))
       await carregarCatalogoDeAbas({ consulta: novas.abas });
     if (mudou.has("config") || mudou.has("paineis") || mudou.has("abas"))
-      buildNav();
+      navegacao.montarMenu();
     // Só painel: `isViewAllowed` não conhece todas as telas (Acessos, por exemplo).
-    if (currentView.startsWith("panel:") && !isViewAllowed(currentView))
-      navigate(startView());
+    if (viewAtual().startsWith("panel:") && !navegacao.telaPermitida(viewAtual()))
+      navegacao.irPara(navegacao.telaDeEntrada());
     // A cópia trazia o catálogo antigo: a manutenção das abas pode ter mudado.
     // Configurações fica (reabrir repreencheria os campos que a pessoa edita).
-    else if (mudou.has("abas") && currentView !== "config")
-      navigate(currentView);
+    else if (mudou.has("abas") && viewAtual() !== "config")
+      navegacao.irPara(viewAtual());
     if (mudou.has("mapa")) await loadMapaConfig({ consulta: novas.mapa });
     if (mudou.has("unidades")) await loadUnidades({ consulta: novas.unidades });
     if (
@@ -702,7 +694,7 @@ async function loadInitialData() {
   await loadPanelPermissions();
   await carregarCatalogoDeAbas({ consulta: fonte.abas });
   await carregarSituacaoDoSistema({ consulta: situacaoDoBanco });
-  buildNav();
+  navegacao.montarMenu();
   await loadMapaConfig({ consulta: fonte.mapa });
   await loadUnidades({ consulta: fonte.unidades });
   const dataOk = await loadData({ consulta: fonte.monitoramento });
@@ -711,7 +703,7 @@ async function loadInitialData() {
     return;
   }
   openApp(currentUser);
-  navigate(startView());
+  navegacao.irPara(navegacao.telaDeEntrada());
   esconderEsqueleto();
   comemorarAcessoLiberado({
     usuario: currentUser,
@@ -724,53 +716,6 @@ async function loadInitialData() {
   return true;
 }
 
-function isViewAllowed(view) {
-  if (!view) return false;
-  const paginas = paginasPermitidas(profile);
-  if (Object.hasOwn(paginas, view)) return paginas[view];
-  if (view.startsWith("panel:")) {
-    const code = view.split(":")[1];
-    return canAccessPanelCode(code);
-  }
-  return false;
-}
-function rememberView(view) {
-  if (!view) return;
-  try {
-    localStorage.setItem(VIEW_STORAGE_KEY, view);
-  } catch (e) {}
-}
-function storedView() {
-  try {
-    return localStorage.getItem(VIEW_STORAGE_KEY) || "";
-  } catch (e) {
-    return "";
-  }
-}
-function systemHomeView() {
-  // Tela inicial do SISTEMA (nunca um painel externo).
-  if (can("ind")) return "dashboard";
-  if (can("cores")) return "nucleo";
-  if (can("calendario")) return "calendario";
-  if (canViewCore(profile)) return "approved";
-  if (can("analises")) return "analises";
-  if (canViewRecursos(profile)) return "recursos";
-  if (canViewEntrevistas(profile)) return "entrevistas";
-  if (canViewClassificacao(profile)) return "classificacao";
-  if (canViewSelecao(profile)) return "selecao";
-  if (podeAbrirConfiguracoes(profile)) return "config";
-  const firstPanel = panels.find(panelAllowed);
-  if (firstPanel) return "panel:" + firstPanel.codigo;
-  return "sem-acesso";
-}
-function startView() {
-  // Restaura a última tela — EXCETO painéis externos, para o app nunca abrir
-  // "preso" num painel externo (sem menu para voltar) ao recarregar.
-  const stored = storedView();
-  if (stored && !stored.startsWith("panel:") && isViewAllowed(stored))
-    return stored;
-  return systemHomeView();
-}
 
 /* Nome, e-mail e perfil de quem entrou, no topo e na barra. */
 function mostrarUsuarioNaBarra() {
@@ -1096,7 +1041,7 @@ async function loadData(options = {}) {
     if (!podeCarregarMonitoramento()) {
       rows = [];
       publicarLinhasDoMonitoramento(rows);
-      buildNav();
+      navegacao.montarMenu();
       return true;
     }
     const [, tableResponse] = await (options.consulta ||
@@ -1143,20 +1088,21 @@ async function refreshData() {
     await loadMapaConfig({ consulta: consultas.mapa });
     await carregarCatalogoDeAbas({ consulta: consultas.abas });
     await carregarSituacaoDoSistema({ consulta: situacaoDoBanco });
-    buildNav();
+    navegacao.montarMenu();
     await loadUnidades({ consulta: consultas.unidades });
     const dataOk = await loadData({ consulta: consultas.monitoramento });
     if (!dataOk) return false;
     // Painel já aberto recarrega na próxima abertura; o atual, logo abaixo.
     document.querySelectorAll(".external-panel").forEach((el) => el.remove());
-    const painel = currentView.startsWith("panel:")
-      ? currentView.split(":")[1]
+    const painel = viewAtual().startsWith("panel:")
+      ? viewAtual().split(":")[1]
       : "";
-    if (painel && canAccessPanelCode(painel)) openPanel(painel);
-    else if (!painel && isViewAllowed(currentView)) navigate(currentView);
+    if (painel && canAccessPanelCode(painel))
+      navegacao.irPara("panel:" + painel);
+    else if (!painel && navegacao.telaPermitida(viewAtual())) navegacao.irPara(viewAtual());
     else {
       currentPanel = null;
-      navigate(startView());
+      navegacao.irPara(navegacao.telaDeEntrada());
     }
     toast("Dados atualizados.");
     return true;
@@ -1169,291 +1115,14 @@ async function refreshData() {
   }
 }
 
-/*
-  A barra lateral é React (`src/componentes/barra-lateral/`). Aqui só se decide
-  o que o perfil vê; a árvore vai para o estado da barra, que desenha o menu.
-*/
-function buildNav() {
-  // As mesmas regras do "Ver como" de Acessos (src/lib/access-roles.js).
-  const permitidas = paginasPermitidas(profile);
-  const paineis = can("paineis")
-    ? panels.filter(panelAllowed).sort((a, b) => n(a.ordem) - n(b.ordem))
-    : [];
-  // Seção "Acessos" só para quem gerencia acessos; as demais, para quem edita configurações.
-  const secoes = SECOES.filter((secao) =>
-    secaoDeConfiguracaoPermitida(profile, secao.id),
-  );
-  definirSecoesPermitidas(
-    document,
-    secoes.map((secao) => secao.id),
-  );
-  // Um grupo por área do usuário; a área atual passa a ser uma delas.
-  // Área desativada (Configurações › Módulos e abas) sai do menu.
-  const situacao = situacaoDoSistema();
-  const areas = areasDoUsuario(profile?.areas);
-  const ativas = filtrarAreasAtivas(areas, situacao);
-  definirAreasDoUsuario(ativas.length ? ativas : areas);
-  atualizarMenuLateral(
-    montarArvoreDoMenu({
-      permitidas,
-      paineis,
-      secoesDeConfiguracao: secoes,
-      areas,
-      abas: abasDoMenu(),
-      situacao,
-    }),
-    {
-      aoAbrirSecao: (_view, secao) => abrirSecaoDeConfiguracao(document, secao),
-      textoVazio: cfgValue("permissions_empty_text"),
-    },
-  );
-  setActiveNav(currentView);
-}
-
-function setActiveNav(view) {
-  marcarItemAtivoNoMenu(view, secaoAtualDeConfiguracao(document));
-  avisarTrocaDeLocalNaPresenca();
-}
-
-/*
-  Telas React de página inteira (montadas por src/main.js na própria
-  `#page-<view>`): título, subtítulo (depois da área) e o controlador.
-*/
-const TELAS_REACT = Object.freeze({
-  nucleo: () => [
-    "Editais",
-    cfgValue("nucleo_page_subtitle"),
-    window.nucleoController,
-  ],
-  calendario: () => [
-    "Cronograma",
-    "Etapas dos editais, por data.",
-    window.calendarioEditaisController,
-  ],
-  approved: () => [
-    "Lista de Aprovados",
-    "Candidatos por edital e situação de contratação.",
-    window.aprovadosController,
-  ],
-  recursos: () => ["Recursos", "", window.recursosController],
-  entrevistas: () => ["Entrevistas", "", window.entrevistasController],
-  classificacao: () => ["Classificação", "", window.classificacaoController],
-  analises: () => ["Análises curriculares", "", window.analisesController],
-  selecao: () => ["Seleção", "", window.selecaoController],
-});
-
-function navigate(view) {
-  const previousView = currentView;
-  const requestedView = txt(view) || startView();
-  // Sair com alteração não salva (Acessos, Módulos e abas ou campos de Configurações) pergunta antes.
-  if (
-    requestedView !== currentView &&
-    (window.acessosController?.confirmarSaida() === false ||
-      window.modulosController?.confirmarSaida() === false ||
-      !estadoDasConfiguracoes.confirmarSaida())
-  )
-    return;
-  // Versão nova do sistema esperando: entra agora. A tela pedida fica guardada
-  // e abre depois da recarga (startView confere a permissão).
-  if (
-    requestedView !== currentView &&
-    aplicarAtualizacaoPendente(() => {
-      rememberView(requestedView);
-      window.location.reload();
-    })
-  )
-    return;
-
-  // Valida permissão antes de alterar currentView e antes de esconder páginas.
-  // A versão anterior mudava o estado primeiro; se a permissão falhasse,
-  // o painel podia ficar sem página ativa.
-  if (requestedView === "dashboard" && !can("ind")) {
-    toast("Sem permissão para Saúde Indígena.", "warn");
-    return;
-  }
-  if (requestedView === "nucleo" && !can("cores")) {
-    toast("Sem permissão para Editais.", "warn");
-    return;
-  }
-  if (
-    requestedView === "calendario" &&
-    !(profile?.permissoes ? can("calendario") : can("cores"))
-  ) {
-    toast("Sem permissão para o Cronograma.", "warn");
-    return;
-  }
-  if (requestedView === "approved" && !canViewCore(profile)) {
-    toast("Sem permissão para Lista de Aprovados.", "warn");
-    return;
-  }
-  if (requestedView === "analises" && !can("analises")) {
-    toast("Sem permissão para Análises curriculares.", "warn");
-    return;
-  }
-  if (requestedView === "recursos" && !canViewRecursos(profile)) {
-    toast("Sem permissão para Recursos.", "warn");
-    return;
-  }
-  if (requestedView === "entrevistas" && !canViewEntrevistas(profile)) {
-    toast("Sem permissão para Entrevistas.", "warn");
-    return;
-  }
-  if (requestedView === "classificacao" && !canViewClassificacao(profile)) {
-    toast("Sem permissão para Classificação.", "warn");
-    return;
-  }
-  if (requestedView === "selecao" && !canViewSelecao(profile)) {
-    toast("Sem permissão para Seleção.", "warn");
-    return;
-  }
-  if (requestedView === "config" && !podeAbrirConfiguracoes(profile)) {
-    toast("Sem permissão para Configurações.", "warn");
-    return;
-  }
-  if (requestedView.startsWith("panel:")) {
-    const code = requestedView.split(":")[1];
-    const panelOk = canAccessPanelCode(code);
-    if (!panelOk) {
-      toast(
-        "Sem permissão para este painel externo ou painel inativo.",
-        "warn",
-      );
-      return;
-    }
-  }
-
-  document.body.classList.remove("external-clean");
-  document.body.classList.remove("external-panel-mode");
-  currentView = requestedView;
-  rememberView(requestedView);
-  if (!requestedView.startsWith("panel:")) currentPanel = null;
-  enforceResponsiveSidebar();
-  setActiveNav(requestedView);
-  document
-    .querySelectorAll(".page")
-    .forEach((p) => p.classList.remove("active"));
-
-  if (requestedView === "sem-acesso") {
-    let empty = $("page-sem-acesso");
-    if (!empty) {
-      empty = document.createElement("section");
-      empty.id = "page-sem-acesso";
-      empty.className = "page";
-      empty.innerHTML =
-        '<div class="alert warn">Seu usuário ainda não tem módulos liberados. Solicite a liberação a um administrador.</div>';
-      $("page-dashboard").parentElement.append(empty);
-    }
-    empty.classList.add("active");
-    setPageTitle(
-      "Acesso aos módulos",
-      "Nenhum módulo disponível para seu perfil.",
-    );
-    return;
-  }
-
-  // Sistema, área ou aba em manutenção: quem não é admin global vê a tela de manutenção.
-  if (
-    aplicarManutencaoNaNavegacao({
-      view: requestedView,
-      area: areaAtual(),
-      abas: abasDoMenu(),
-      adminGlobal: isMasterProfile(),
-    })
-  ) {
-    setPageTitle("Em manutenção", subtituloDaArea(""));
-    return;
-  }
-
-  if (requestedView === "dashboard") {
-    $("page-dashboard").classList.add("active");
-    // A página, com os mapas, é React (src/modulos/visao-geral/); aqui só o título.
-    prepararVisaoGeralDaArea();
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (Object.hasOwn(TELAS_REACT, requestedView)) {
-    const [titulo, subtitulo, controlador] = TELAS_REACT[requestedView]();
-    $("page-" + requestedView).classList.add("active");
-    setPageTitle(titulo, subtituloDaArea(subtitulo));
-    void controlador?.render();
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (requestedView === "config") {
-    $("page-config").classList.add("active");
-    setPageTitle(
-      cfgValue("config_nav_title"),
-      cfgValue("config_page_subtitle"),
-    );
-    // Reabre a seção guardada (ou a primeira permitida); em Acessos, carrega a tela React.
-    abrirSecaoDeConfiguracao(document, secaoAtualDeConfiguracao(document));
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-    return;
-  }
-  if (requestedView.startsWith("panel:")) {
-    openPanel(requestedView.split(":")[1]);
-    if (previousView !== requestedView)
-      trackAccess("abertura_tela", { tela: requestedView });
-  }
-  void syncOnlinePresence();
-}
-
-/* Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
-function subtituloDaArea(sub) {
-  const area = nomeDaArea(areaAtual());
-  return [area, sub].filter(Boolean).join(" · ");
-}
-
-const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
-
-/*
-  A VISÃO GERAL É UMA SÓ PARA AS TRÊS ÁREAS
-
-  Saúde Indígena, SEDE e Projetos abrem esta mesma página (React,
-  src/modulos/visao-geral/, com o mapa de cada área), com os editais da área
-  atual. Daqui sai só o cabeçalho (`cabecalhoDaVisaoGeral`).
-*/
-function prepararVisaoGeralDaArea() {
-  const area = areaAtual();
-  if (currentView !== "dashboard") return;
-  const { titulo, subtitulo } = cabecalhoDaVisaoGeral(area, {
-    titulo: cfgValue("page_title"),
-    subtitulo: cfgValue("page_subtitle"),
-  });
-  setPageTitle(titulo, subtitulo);
-}
-
-/*
-  Trocou a área (menu): o cabeçalho (o estado da Visão geral tira o DSEI
-  aberto, poda os filtros e troca o mapa). Roda também fora da Visão geral.
-*/
-let areaDaVisaoGeral = areaAtual();
-function aoMudarDadosDoMonitoramento() {
-  const area = areaAtual();
-  if (area === areaDaVisaoGeral) return;
-  areaDaVisaoGeral = area;
-  prepararVisaoGeralDaArea();
-}
-assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento);
-
-function setPageTitle(title, sub) {
-  $("pageTitle").textContent = title;
-  $("pageSubtitle").textContent = sub;
-  // O nome da aba tem um dono só; aqui entra apenas a metade da página.
-  definirPaginaDaAba(title);
-  // A Aya (src/modulos/aya/) acompanha a página: saudação, sugestões e contexto.
-  definirPaginaDaAya(currentView, title);
-}
+/* A navegação (troca de tela, menu, título, permissões) é de src/app/navegacao.js. */
 
 function isSidebarLockedViewport() {
   return window.matchMedia(`(max-width:${SIDEBAR_MOBILE_BREAKPOINT}px)`)
     .matches;
 }
 function shouldLockSidebar() {
-  return SIDEBAR_FORCE_LOCK_VIEWS.has(currentView);
+  return SIDEBAR_FORCE_LOCK_VIEWS.has(viewAtual());
 }
 function enforceResponsiveSidebar() {
   const locked = shouldLockSidebar();
@@ -1512,6 +1181,7 @@ function clearExternalPanelCache() {
   currentPanel = null;
 }
 
+/* A navegação (src/app/navegacao.js) já trocou a tela; aqui, o quadro do painel. */
 function openPanel(code) {
   const panel = panels.find((p) => p.codigo === code && panelAllowed(p));
   if (!panel) {
@@ -1529,15 +1199,8 @@ function openPanel(code) {
   document.body.classList.remove("external-clean");
   document.body.classList.add("external-panel-mode");
   currentPanel = panel;
-  currentView = "panel:" + code;
-  rememberView(currentView);
-  enforceResponsiveSidebar();
-  setActiveNav(currentView);
-  document
-    .querySelectorAll(".page")
-    .forEach((p) => p.classList.remove("active"));
   $("page-external").classList.add("active");
-  setPageTitle(panel.titulo, cfgValue("external_default_title"));
+  navegacao.definirTitulo(panel.titulo, cfgValue("external_default_title"));
   $("externalTitle").textContent = panel.titulo;
   $("externalOpen").href =
     enderecoDoPainel(panel.url, window.location.origin) || "#";
@@ -1587,7 +1250,7 @@ function reloadExternal() {
     "external-panel-" + currentPanel.codigo,
   );
   if (holder) holder.remove();
-  openPanel(currentPanel.codigo);
+  navegacao.irPara("panel:" + currentPanel.codigo);
 }
 
 function syncDisplayModeButtons() {
@@ -1621,11 +1284,11 @@ function exitExternalPanel() {
   document.body.classList.remove("external-clean");
   document.body.classList.remove("external-panel-mode");
   currentPanel = null;
-  navigate(systemHomeView());
+  navegacao.irPara(navegacao.telaInicialDoSistema());
 }
 
 function getFullscreenTarget() {
-  if (currentView && currentView.startsWith("panel:") && currentPanel) {
+  if (viewAtual() && viewAtual().startsWith("panel:") && currentPanel) {
     const holder = document.getElementById(
       "external-panel-" + currentPanel.codigo,
     );
@@ -1825,7 +1488,7 @@ function localizarLinhaDoMonitoramento(id) {
     troca o recorte pela unidade e pelo edital dela (sem DSEI aberto) e
     destaca a linha.
   */
-  navigate("dashboard");
+  navegacao.irPara("dashboard");
   estadoDaVisaoGeral.localizar(r);
 }
 document.addEventListener(EVENTO_ESCOLHA_DA_BUSCA, (e) =>
@@ -1920,7 +1583,7 @@ Object.assign(window, {
   monitoraLoader: loader,
   exitExternalPanel,
   exportPDF,
-  navigate,
+  navigate: navegacao.irPara,
   refreshData,
   reloadExternal,
   toggleBrowserFullscreen,
@@ -1932,9 +1595,15 @@ applyStoredSidebarState();
 applyStoredDisplayModes();
 // A entrada é da sessão do app (src/main.js chama sessaoDoApp.iniciar()).
 sessaoDoApp.assinar(receberSessao);
+navegacao.acompanharArea();
+navegacao.assinar((evento) => {
+  if (evento.tipo === "abertura" && evento.view !== evento.anterior)
+    void trackAccess("abertura_tela", { tela: evento.view });
+  avisarTrocaDeLocalNaPresenca();
+});
 sessaoDoApp.ligarSistema({
   carregarConfiguracao: () => loadConfig({ silent: true }),
-  mostrarEsqueleto: () => mostrarEsqueleto(storedView()),
+  mostrarEsqueleto: () => mostrarEsqueleto(navegacao.telaGuardada()),
   aoVerificar: prepararEntrada,
   abrir: abrirSistema,
   aoFicarSemAcesso: ficarSemAcesso,

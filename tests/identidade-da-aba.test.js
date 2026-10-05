@@ -176,12 +176,13 @@ describe("como o HTML e o app ficam", () => {
     expect(fn).toContain("aplicarFaviconDaMarca(");
   });
 
-  it("setPageTitle delega a metade da página", () => {
-    const fn = app.slice(
-      app.indexOf("function setPageTitle"),
-      app.indexOf("function isSidebarLockedViewport"),
+  it("o título da navegação delega a metade da página", () => {
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    const fn = navegacao.slice(
+      navegacao.indexOf("function definirTitulo"),
+      navegacao.indexOf("function subtituloDaArea"),
     );
-    expect(fn).toContain("definirPaginaDaAba(title)");
+    expect(fn).toContain("definirPaginaDaAba(titulo)");
     expect(fn).not.toContain("document.title");
   });
 

@@ -142,8 +142,10 @@ describe("painel externo com um cabeçalho só", () => {
   });
 
   it("o modo é removido ao sair do painel", () => {
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
     const remocoes = (
-      app.match(/classList\.remove\("external-panel-mode"\)/g) || []
+      (app + navegacao).match(/classList\.remove\("external-panel-mode"\)/g) ||
+      []
     ).length;
     expect(remocoes).toBeGreaterThanOrEqual(2);
   });

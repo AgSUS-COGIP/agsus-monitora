@@ -234,7 +234,7 @@ describe("o legado recebe a escolha", () => {
       legado.indexOf("function localizarLinhaDoMonitoramento"),
     );
     expect(corpo).toMatch(/if \(!can\("ind"\)\)/);
-    expect(corpo).toMatch(/navigate\("dashboard"\)/);
+    expect(corpo).toMatch(/irPara\("dashboard"\)/);
     // O recorte (unidade e edital da linha) e o destaque são da Visão geral.
     expect(corpo).toMatch(/estadoDaVisaoGeral\.localizar\(r\)/);
   });

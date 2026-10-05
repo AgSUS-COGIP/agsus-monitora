@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel.js";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
+import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao.js";
+import { TELAS_REACT } from "../src/app/navegacao.js";
 import {
   linhasDosPaineis,
   normalizarPaineis,
@@ -62,30 +64,19 @@ describe("o legado trata Análises como página", () => {
     expect(permissaoLegada(perfil("sem_acesso"), "analises")).toBe(false);
     expect(paginasPermitidas(perfil("leitor")).analises).toBe(true);
     expect(paginasPermitidas(perfil("sem_acesso")).analises).toBe(false);
-    expect(trecho("function can(perm)", "function isMasterProfile")).toContain(
-      "permissaoLegada(profile, perm)",
+    // A navegação (src/lib/navegacao.js) usa as mesmas regras de access-roles.js.
+    expect(telaPermitida("analises", perfil("leitor"))).toBe(true);
+    expect(bloqueioDaTela("analises", perfil("sem_acesso"))).toBe(
+      "Sem permissão para Análises curriculares.",
     );
-    expect(
-      trecho("function isViewAllowed(view)", "function rememberView"),
-    ).toContain("paginasPermitidas(profile)");
-    expect(trecho("function buildNav()", "function setActiveNav")).toContain(
-      "paginasPermitidas(profile)",
-    );
-    expect(
-      trecho("function navigate(view)", "function subtituloDaArea"),
-    ).toMatch(/requestedView === "analises" && !can\("analises"\)/);
   });
 
   it("navegar abre a tela React (TELAS_REACT → analisesController.render())", () => {
-    const telas = trecho("const TELAS_REACT", "function navigate(view)");
-    expect(telas).toContain(
-      'analises: () => ["Análises curriculares", "", window.analisesController],',
-    );
-    const navegar = trecho(
-      "function navigate(view)",
-      "function subtituloDaArea",
-    );
-    expect(navegar).not.toContain('abrirPaginaDoPainel($("page-analises"))');
+    const controlador = { render() {} };
+    expect(
+      TELAS_REACT.analises(() => "", { analisesController: controlador }),
+    ).toEqual(["Análises curriculares", "", controlador]);
+    expect(ler("src/app/navegacao.js")).not.toContain("abrirPaginaDoPainel");
     expect(ler("src/main.js")).toContain(
       "window.analisesController = montarAnalises({",
     );

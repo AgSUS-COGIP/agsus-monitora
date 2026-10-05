@@ -82,14 +82,12 @@ describe("o legado usa a área atual", () => {
   });
 
   it("trocar de área refaz o cabeçalho (o mapa é do estado da Visão geral)", () => {
-    expect(legado).toContain(
-      "assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento)",
-    );
-    const troca = legado.match(
-      /function aoMudarDadosDoMonitoramento\(\) \{[\s\S]*?\n\}/,
-    )[0];
+    // A navegação (src/app/navegacao.js; comportamento em tests/app/navegacao.test.js).
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    const troca = navegacao.slice(navegacao.indexOf("function acompanharArea"));
+    expect(troca).toContain("assinarDadosDoMonitoramento(");
     // O DSEI aberto e os filtros são do estado da Visão geral, que ouve os mesmos dados.
-    expect(troca).toContain("prepararVisaoGeralDaArea();");
+    expect(troca).toContain("tituloDaVisaoGeral();");
     expect(troca).not.toContain("renderMap");
   });
 
