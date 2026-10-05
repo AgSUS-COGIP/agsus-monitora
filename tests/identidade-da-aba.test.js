@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   FAVICON_PADRAO,
@@ -165,11 +166,13 @@ describe("como o HTML e o app ficam", () => {
     comentários com índices do original desloca tudo — erro que já me custou um
     falso vermelho antes.
   */
-  it("applyConfigToUi não escreve mais document.title", () => {
-    const codigo = semComentarios(app);
+  it("a configuração do app não escreve document.title", () => {
+    const codigo = semComentarios(
+      readFileSync("src/app/configuracao.js", "utf8"),
+    );
     const fn = codigo.slice(
-      codigo.indexOf("function applyConfigToUi"),
-      codigo.indexOf("function normalizeUnitName"),
+      codigo.indexOf("function aplicarNaTela"),
+      codigo.indexOf("const consulta = () =>"),
     );
     expect(fn).not.toContain("document.title");
     expect(fn).toContain("definirSistemaDaAba(");
@@ -191,8 +194,8 @@ describe("como o HTML e o app ficam", () => {
     o que saiu foi só o uso dela como nome de aba.
   */
   it("appVersion continua em uso onde faz sentido", () => {
-    const codigo = semComentarios(app);
-    expect(codigo).toContain("p_app_version: appVersion()");
-    expect(codigo).toContain('setText("sidebarVersion", appVersion())');
+    const codigo = semComentarios(fonteDoApp());
+    expect(codigo).toContain("p_app_version: configuracao.versao()");
+    expect(codigo).toContain('escrever("sidebarVersion", versao())');
   });
 });

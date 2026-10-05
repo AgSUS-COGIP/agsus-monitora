@@ -367,7 +367,9 @@ export function criarNavegacao({
       return;
     }
     if (ehPainelExterno(tela)) {
-      paineis.mostrar(codigoDoPainel(tela));
+      const painel = paineis.mostrar(codigoDoPainel(tela));
+      if (painel)
+        definirTitulo(painel.titulo, configuracao("external_default_title"));
       abriu(tela, anterior);
     }
   }

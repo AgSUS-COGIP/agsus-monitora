@@ -12,9 +12,10 @@ describe("platform shell invariants", () => {
   });
 
   it("mantém painéis no shell sem redirecionamento de página", () => {
-    const openPanel = app.slice(
-      app.indexOf("function openPanel"),
-      app.indexOf("function buildExternalPanel"),
+    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
+    const openPanel = paineis.slice(
+      paineis.indexOf("function mostrar(codigo)"),
+      paineis.indexOf("function descartar(codigo)"),
     );
     expect(openPanel).not.toContain("window.location.assign");
     expect(openPanel).not.toContain('classList.add("external-clean")');
@@ -39,10 +40,7 @@ describe("platform shell invariants", () => {
   });
 
   it("não deixa a marca do login mandar na sidebar", () => {
-    const applyConfig = app.slice(
-      app.indexOf("function applyConfigToUi"),
-      app.indexOf("function normalizeUnitName"),
-    );
+    const applyConfig = readFileSync("src/app/configuracao.js", "utf8");
     expect(applyConfig).not.toContain('"sideLogo"');
   });
 });

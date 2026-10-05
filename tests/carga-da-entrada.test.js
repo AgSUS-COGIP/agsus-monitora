@@ -1,76 +1,27 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+/*
+  A carga da entrada: o comportamento da carga (consultas em paralelo, cópia da
+  sessão, "Atualizar dados", Realtime) está em tests/app/carga.test.js e o dos
+  painéis externos em tests/app/paineis-externos.test.js. Aqui fica o contrato
+  com a sessão (src/app/sessao.js): a ordem dos ganchos e quem apaga a cópia.
+*/
+
+const ligacao = readFileSync("src/modules/legacy-app.js", "utf8");
 const sessao = readFileSync("src/app/sessao.js", "utf8");
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
-/** Corpo da função, do cabeçalho até a próxima função de topo. */
+/** Corpo de uma função de topo da ligação com a sessão. */
 function funcao(cabecalho) {
-  const inicio = app.indexOf(cabecalho);
+  const inicio = ligacao.indexOf(cabecalho);
   expect(inicio, cabecalho).toBeGreaterThan(-1);
-  const resto = app.slice(inicio + cabecalho.length);
+  const resto = ligacao.slice(inicio + cabecalho.length);
   const fim = resto.search(/\n(async )?function /);
-  return semComentarios(cabecalho + resto.slice(0, fim));
+  return semComentarios(cabecalho + resto.slice(0, fim < 0 ? undefined : fim));
 }
-
-const CONSULTAS = [
-  ["loadConfig", "config"],
-  ["loadPanels", "paineis"],
-  ["loadMapaConfig", "mapa"],
-  ["carregarCatalogoDeAbas", "abas"],
-  ["loadUnidades", "unidades"],
-  ["loadData", "monitoramento"],
-];
-
-describe("painéis externos só carregam quando abertos", () => {
-  it("a entrada não cria mais o iframe de todos os painéis", () => {
-    expect(app).not.toContain("warmExternalPanels");
-    expect(app).not.toContain("externalPanelsWarmed");
-  });
-
-  it("o iframe nasce na primeira abertura do painel", () => {
-    expect(funcao("function openPanel(code)")).toContain(
-      "buildExternalPanel(holder, panel)",
-    );
-  });
-
-  it("atualizar descarta os painéis já abertos para recarregarem", () => {
-    expect(funcao("async function refreshData()")).toContain(
-      'document.querySelectorAll(".external-panel").forEach((el) => el.remove())',
-    );
-  });
-});
-
-/*
-  Na entrada, cada `load*` recebe `fonte`: a cópia da sessão, quando serve, ou as
-  consultas já disparadas. No "Atualizar dados", sempre as consultas.
-*/
-describe.each([
-  ["entrada", "async function loadInitialData()", "fonte"],
-  ["atualizar dados", "async function refreshData()", "consultas"],
-])("consultas em paralelo: %s", (_, cabecalho, origem) => {
-  const corpo = () => funcao(cabecalho);
-
-  it("dispara todas as consultas antes da primeira espera", () => {
-    const fonte = corpo();
-    const disparo = fonte.indexOf("iniciarConsultasDaSessao()");
-    expect(disparo).toBeGreaterThan(-1);
-    expect(disparo).toBeLessThan(fonte.indexOf("await loadConfig("));
-  });
-
-  it.each(CONSULTAS)("%s usa a consulta já disparada", (carga, chave) => {
-    expect(corpo()).toMatch(
-      new RegExp(`${carga}\\(\\{[^}]*consulta: ${origem}\\.${chave}`),
-    );
-  });
-
-  it("não tem pausa fixa", () => {
-    expect(corpo()).not.toContain("sleep(");
-  });
-});
 
 /** Corpo de uma função de src/app/sessao.js (até a próxima do mesmo nível). */
 function funcaoDaSessao(cabecalho) {
@@ -82,23 +33,19 @@ function funcaoDaSessao(cabecalho) {
 }
 
 /*
-  O perfil é da sessão do app (src/app/sessao.js); a cópia e a carga, do
-  legado. O gancho `aoVerificar` (prepararEntrada) liga o skeleton e começa a
-  ler a cópia ANTES da consulta do perfil, para as duas correrem juntas.
+  O gancho `aoVerificar` (prepararEntrada) liga o skeleton e começa a ler a
+  cópia ANTES da consulta do perfil, para as duas correrem juntas.
 */
 describe("cópia da sessão na entrada", () => {
-  const entrada = () => funcao("async function loadInitialData()");
-
   it("lê a cópia junto com o perfil, não depois", () => {
     expect(funcao("function prepararEntrada()")).toContain(
-      "copiaEmLeitura = lerCopiaDaSessao()",
+      "carga.prepararEntrada()",
     );
     const abrir = funcaoDaSessao("async function abrirSessao(");
     expect(abrir.indexOf('chamar("aoVerificar"')).toBeGreaterThan(-1);
     expect(abrir.indexOf('chamar("aoVerificar"')).toBeLessThan(
       abrir.indexOf("await carregarPerfil()"),
     );
-    expect(entrada()).toContain("copiaEmLeitura || lerCopiaDaSessao()");
   });
 
   it("só abre (e usa a cópia) depois de confirmar o perfil", () => {
@@ -106,23 +53,15 @@ describe("cópia da sessão na entrada", () => {
     expect(abrir.indexOf("await carregarPerfil()")).toBeLessThan(
       abrir.indexOf('chamar("abrir"'),
     );
-    expect(entrada()).toContain("copiaServe(");
+    expect(funcao("async function abrirSistema(")).toContain(
+      "await carga.carregarEntrada()",
+    );
   });
 
   it("sem acesso, apaga a cópia", () => {
     expect(funcao("function ficarSemAcesso()")).toContain(
-      "apagarCopiaDaSessao()",
+      "carga.apagarCopia()",
     );
-  });
-
-  it("apaga a cópia de outra pessoa", () => {
-    expect(entrada()).toMatch(
-      /copia\.usuarioId !== sessao\.usuarioId\)\s*void apagarCopiaDaSessao\(\)/,
-    );
-  });
-
-  it("depois de abrir, atualiza por trás com as consultas reais", () => {
-    expect(entrada()).toContain("atualizarCopiaDaSessao(sessao, consultas,");
   });
 
   /*
@@ -130,7 +69,7 @@ describe("cópia da sessão na entrada", () => {
     apagasse a cópia, ela nunca seria usada; quem apaga é o "Voltar ao login".
   */
   it('"Voltar ao login" apaga a cópia; entrar com Google não', () => {
-    expect(app).toContain("aoLimparSessao: () => apagarCopiaDaSessao()");
+    expect(ligacao).toContain("aoLimparSessao: () => carga.apagarCopia()");
     expect(funcaoDaSessao("async function limparSessao()")).toContain(
       'chamar("aoLimparSessao")',
     );
@@ -140,28 +79,21 @@ describe("cópia da sessão na entrada", () => {
   });
 });
 
-describe("sem tela de carregamento na entrada e ao atualizar", () => {
-  it.each([
-    "async function loadInitialData()",
-    "async function refreshData()",
-    "async function abrirSistema(",
-    "function prepararEntrada()",
-    "async function loadData(options = {})",
-  ])("%s não abre a tela de carregamento", (cabecalho) => {
-    expect(funcao(cabecalho)).not.toContain("loader(");
-  });
+describe("sem tela de carregamento na entrada", () => {
+  it.each(["async function abrirSistema(", "function prepararEntrada()"])(
+    "%s não abre a tela de carregamento",
+    (cabecalho) => {
+      expect(funcao(cabecalho)).not.toContain("mostrarCarregamento(");
+    },
+  );
 
   it("a sessão do app não abre a tela de carregamento", () => {
     expect(semComentarios(sessao)).not.toContain("loader(");
   });
 
-  it("a entrada liga o skeleton antes do perfil e o desliga depois de abrir", () => {
+  it("a entrada liga o skeleton antes do perfil", () => {
     expect(funcao("function prepararEntrada()")).toContain(
       "mostrarEsqueleto(navegacao.telaGuardada())",
-    );
-    const fonte = funcao("async function loadInitialData()");
-    expect(fonte.indexOf("navigate(startView())")).toBeLessThan(
-      fonte.lastIndexOf("esconderEsqueleto()"),
     );
   });
 
@@ -187,33 +119,14 @@ describe("sem tela de carregamento na entrada e ao atualizar", () => {
     const semSessao = fonte.slice(fonte.lastIndexOf("await entrar("));
     expect(semSessao).toContain('chamar("encerrarEspera")');
   });
-
-  it("atualizar marca a barra e sempre a desmarca", () => {
-    const fonte = funcao("async function refreshData()");
-    expect(fonte).toContain("marcarAtualizacao(true)");
-    const final = fonte.slice(fonte.indexOf("} finally {"));
-    expect(final).toContain("marcarAtualizacao(false)");
-  });
 });
 
 describe("cada consulta sai para a rede na hora", () => {
   /*
     A consulta do Supabase só dispara quando alguém chama `then`. Sem o
-    `Promise.resolve`, ela ficaria parada até o `await` do seu `load*` e a
-    entrada voltaria a ser sequencial.
+    `Promise.resolve` (em `iniciarConsultas`, src/app/carga.js), ela ficaria
+    parada até o `await` da sua carga e a entrada voltaria a ser sequencial.
   */
-  it("iniciarConsultasDaSessao resolve cada consulta ao criá-la", () => {
-    const fonte = funcao("function iniciarConsultasDaSessao()");
-    for (const consulta of [
-      "consultaDeConfiguracao",
-      "consultaDePaineis",
-      "consultaDoMapa",
-      "consultaDeUnidades",
-    ])
-      expect(fonte).toContain(`iniciar(${consulta}())`);
-    expect(fonte).toContain("consultaDoMonitoramento()");
-  });
-
   it("a consulta preguiçosa começa ao passar por Promise.resolve", async () => {
     let chamadas = 0;
     const consulta = {

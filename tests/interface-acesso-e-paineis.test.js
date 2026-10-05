@@ -116,10 +116,8 @@ describe("exclusão de artes guardadas", () => {
 
 describe("painel externo com um cabeçalho só", () => {
   it("entra em external-panel-mode ao abrir o painel", () => {
-    const fn = app.slice(
-      app.indexOf("function openPanel(code)"),
-      app.indexOf("function openPanel(code)") + 1600,
-    );
+    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
+    const fn = paineis.slice(paineis.indexOf("function mostrar(codigo)"));
     expect(fn).toContain('classList.add("external-panel-mode")');
   });
 

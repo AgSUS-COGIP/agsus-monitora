@@ -92,11 +92,13 @@ describe("o legado usa a área atual", () => {
   });
 
   it("os dados do mapa da Saúde Indígena vão para o estado da Visão geral", () => {
-    const carga = legado.slice(
-      legado.indexOf("async function loadMapaConfig"),
-      legado.indexOf("async function loadMonitoramentoPayload"),
+    const fonte = readFileSync("src/app/carga.js", "utf8");
+    const carga = fonte.slice(
+      fonte.indexOf("async function carregarMapa"),
+      fonte.indexOf("async function carregarLinhas"),
     );
-    expect(carga).toContain("estadoDaVisaoGeral.definirDadosDoMapa(");
+    expect(carga).toContain("visaoGeral.definirDadosDoMapa(");
+    expect(fonte).toContain("visaoGeral = estadoDaVisaoGeral");
   });
 
   it("as terras saem sem apagar a preferência da pessoa", () => {

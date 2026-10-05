@@ -16,6 +16,7 @@ import {
   marcarAtualizacao,
   mostrarEsqueleto,
 } from "../src/modules/carregamento.js";
+import { CHAVE_DA_TELA_GUARDADA } from "../src/lib/navegacao.js";
 
 const html = readFileSync("index.html", "utf8");
 const css = readFileSync("src/styles/carregamento.css", "utf8");
@@ -77,7 +78,7 @@ describe("antes da primeira pintura (script do <head>)", () => {
   });
 
   it("usa as mesmas chaves que o legado", () => {
-    const chaveDaTela = legado.match(/const VIEW_STORAGE_KEY = "([^"]+)"/)[1];
+    const chaveDaTela = CHAVE_DA_TELA_GUARDADA;
     expect(script).toContain(`"${chaveDaTela}"`);
     expect(legado).toContain('"agsus_monitora_sidebar_collapsed_v1"');
     expect(script).toContain('"agsus_monitora_sidebar_collapsed_v1"');
@@ -315,12 +316,15 @@ describe("skeleton do painel externo", () => {
     expect(esqueleto()).toBeNull();
   });
 
-  it("o legado liga o skeleton ao criar o iframe do painel", () => {
-    const inicio = legado.indexOf("function buildExternalPanel(holder, panel)");
-    const fim = legado.slice(inicio + 1).search(/\n(async )?function /);
-    const corpo = legado.slice(inicio, inicio + 1 + fim);
+  it("o app liga o skeleton ao criar o iframe do painel", () => {
+    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
+    const inicio = paineis.indexOf("function montarQuadro(holder, painel)");
+    const corpo = paineis.slice(
+      inicio,
+      paineis.indexOf("function mostrar(", inicio),
+    );
     expect(
       corpo.indexOf("acompanharCarregamentoDoPainel(holder"),
-    ).toBeGreaterThan(corpo.indexOf('class="external-frame"'));
+    ).toBeGreaterThan(corpo.indexOf('createElement("iframe")'));
   });
 });

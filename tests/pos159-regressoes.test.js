@@ -124,11 +124,8 @@ describe("a logo da barra lateral é o <img> real", () => {
     expect(tag).not.toMatch(/onerror/i);
   });
 
-  it("applyConfigToUi não sobrescreve mais a logo da barra lateral", () => {
-    const fn = app.slice(
-      app.indexOf("function applyConfigToUi"),
-      app.indexOf("function normalizeUnitName"),
-    );
+  it("a configuração do app não sobrescreve mais a logo da barra lateral", () => {
+    const fn = readFileSync("src/app/configuracao.js", "utf8");
     expect(fn).not.toContain('"sideLogo"');
   });
 });
