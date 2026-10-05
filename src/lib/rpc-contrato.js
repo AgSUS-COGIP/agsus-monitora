@@ -370,7 +370,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: true,
     resumo:
-      "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou.",
+      "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou, a origem (XLSX ou CLASSIFICACAO) e a lista de classificação publicada.",
   },
   listar_candidatos_aprovados_compacto: {
     argumentos: ["p_area", "p_versao"],
@@ -386,9 +386,11 @@ export const CONTRATO_RPC = {
       "p_arquivo_path",
       "p_candidatos",
       "p_substituir",
+      "p_motivo",
     ],
     critica: true,
-    resumo: "Importa ou substitui a lista XLSX de aprovados de um edital.",
+    resumo:
+      "Importa ou substitui a lista XLSX de aprovados de um edital; sobre lista publicada da Classificação, exige p_motivo. Vai para o histórico das publicações.",
   },
   definir_lista_aprovados_ativa: {
     argumentos: ["p_lista_id", "p_ativo"],
@@ -790,6 +792,18 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Marca a lista gerada como publicada (sem empate pendente). Editor.",
+  },
+  obter_publicacao_lista_aprovados: {
+    argumentos: ["p_edital", "p_com_candidatos"],
+    critica: false,
+    resumo:
+      "Lista de aprovados vigente do edital (origem; com p_com_candidatos, os candidatos para a prévia), último resultado final da Classificação, se há análises e o histórico das publicações. Classificação, Aprovados ou Importação.",
+  },
+  publicar_lista_aprovados_da_classificacao: {
+    argumentos: ["p_lista_classificacao", "p_lista_vigente", "p_vinculos"],
+    critica: false,
+    resumo:
+      "Publica o resultado final da Classificação como a lista de aprovados vigente (a anterior fica no histórico), levando status, sub judice e anexos de quem casou (p_vinculos). 40001 se a lista vigente mudou. Classificação editor.",
   },
   obter_lista_classificacao: {
     argumentos: ["p_lista"],

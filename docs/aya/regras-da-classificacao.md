@@ -151,3 +151,11 @@ dos PDFs oficiais).
 **resposta:** No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.
 **fonte:** src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.js; src/modulos/classificacao/listas.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
 **abrir:** classificacao
+
+## Publicar como lista de aprovados
+
+**perguntas:** botao publicar como lista de aprovados na classificacao | resultado final vira lista de aprovados | classificacao e lista de aprovados | a classificacao alimenta a lista de aprovados
+**resposta:** No MONITORA, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.
+**fato:** No MONITORA, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".
+**fonte:** src/modulos/classificacao/publicar-aprovados.jsx; src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
+**abrir:** classificacao

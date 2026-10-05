@@ -321,6 +321,7 @@ export function ListaAprovados({ estado }) {
         estado={estado}
         perfil={perfil}
         candidatos={candidatos}
+        listas={listas}
         anexos={dados.anexos}
         carregado={carregado}
         erroAoCarregar={erroAoCarregar}

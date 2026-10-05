@@ -667,3 +667,110 @@ describe("Classificação com ajuste da pontuação aprovado em recurso", () => 
     expect(secao.querySelector(".classificacao-desatualizada")).toBeNull();
   });
 });
+
+describe("Classificação: publicar o resultado final como lista de aprovados", () => {
+  const VIGENTE = {
+    edital_id: "e83",
+    pode_publicar: true,
+    tem_analises: true,
+    vigente: {
+      lista_id: "lv1",
+      origem: "XLSX",
+      importado_em: "2026-09-20T12:00:00Z",
+      candidatos: [
+        {
+          candidato_id: "c1",
+          nome: "ANA EMPATADA",
+          codigo_vaga: "169681",
+          classificacao: 1,
+          nota: 20,
+          status: "Contratado",
+          matricula: "M1",
+        },
+        {
+          candidato_id: "c2",
+          nome: "Pessoa Que Saiu",
+          codigo_vaga: "169681",
+          classificacao: 2,
+          nota: 15,
+          status: "Desistente",
+        },
+      ],
+    },
+    publicacoes: [],
+  };
+
+  it("mostra o que muda, pede revisão de quem saiu com status e publica com os vínculos", async () => {
+    const supabase = supabaseFalso({
+      obter_publicacao_lista_aprovados: () => structuredClone(VIGENTE),
+      publicar_lista_aprovados_da_classificacao: () => ({
+        ok: true,
+        lista_id: "nova",
+        candidatos: 3,
+        pendencias: [],
+      }),
+    });
+    await montar(supabase);
+    await abrirEdital();
+    expect(secao.querySelector("[data-acao='publicar-aprovados']")).toBeNull();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    await clicar(secao.querySelector("[data-acao='publicar-aprovados']"));
+    await esperar();
+
+    const modal = document.getElementById("classificacaoPublicarAprovados");
+    expect(modal.textContent).toContain("Lista manual (planilha)");
+    const valor = (chave) =>
+      modal.querySelector(`[data-kpi='${chave}'] .ui-kpi-valor`).textContent;
+    expect(valor("entram")).toBe("2");
+    expect(valor("saem")).toBe("1");
+    expect(valor("preservados")).toBe("1");
+    // Quem saiu com status vai para a revisão; aqui a pessoa diz que é a Bia.
+    expect(modal.querySelector(".classificacao-revisao").textContent).toContain(
+      "Pessoa Que Saiu",
+    );
+    await escolher(modal.querySelector("#revisao-c2"), A(2));
+    await clicar(
+      modal.querySelector("[data-acao='confirmar-publicacao-aprovados']"),
+    );
+    await esperar();
+
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "publicar_lista_aprovados_da_classificacao",
+    );
+    expect(chamada[1]).toEqual({
+      p_lista_classificacao: "l1",
+      p_lista_vigente: "lv1",
+      p_vinculos: [
+        { candidato_id: "c2", analise_id: A(2), forma: "MANUAL" },
+        { candidato_id: "c1", analise_id: A(1), forma: "NOME" },
+      ],
+    });
+    expect(modal.textContent).toContain(
+      "Lista de aprovados publicada com 3 candidato(s).",
+    );
+  });
+
+  it("leitor não vê o botão de publicar", async () => {
+    const supabase = supabaseFalso({
+      obter_classificacao_do_edital: () => ({
+        ...structuredClone(EDITAL),
+        pode_editar: false,
+        listas: [
+          {
+            id: "l9",
+            tipo: "FINAL",
+            versao_regra: 2,
+            hash: "b".repeat(64),
+            gerada_em: "2026-10-02T13:00:00Z",
+            pendencias: 0,
+            publicada: false,
+          },
+        ],
+      }),
+    });
+    await montar(supabase);
+    await abrirEdital();
+    expect(secao.querySelector("[data-acao='publicar-aprovados']")).toBeNull();
+  });
+});
