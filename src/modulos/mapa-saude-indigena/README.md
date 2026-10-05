@@ -2,8 +2,9 @@
 
 O mapa da Visão geral da área Saúde Indígena em React (Etapa 5, a parte "mapas"), ligado na Visão
 geral (`src/modulos/visao-geral/`) e lendo o estado dela. O legado não desenha mais mapa nenhum: o
-de Projetos é o módulo irmão `src/modulos/mapa-de-projetos/` (ver "Projetos/SEDE"), que reaproveita
-daqui `leaflet.js`, a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
+de Projetos é o módulo irmão `src/modulos/mapa-de-projetos/` (ver "Projetos/SEDE"), com as
+mesmas regras: reaproveita daqui o painel do mapa nacional (`painel-do-mapa.jsx`), `leaflet.js`
+(leque, enquadramento), a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
 
 Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela cheia,
 o painel cobre o shell, mantém o botão "Sair da tela cheia" visível e bloqueia a
@@ -35,7 +36,11 @@ mapa-do-dsei.jsx          território do DSEI: unidades (agrupamento por proximi
 legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de Projetos), legenda
                           nacional, legenda do DSEI, fases das terras
 leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
-                          contornos, ícones/popup/dica em DOM seguro
+                          contornos, enquadrar (regra do recorte), criarLeque, ícones/popup/dica em DOM
+                          seguro (os dois mapas)
+painel-do-mapa.jsx        peças do mapa nacional comuns a este e ao de Projetos: usarMapaDoBrasil,
+                          TopoDoMapa (Coordenadas, Brasil, Tela cheia), MolduraDoMapa, ListaDoMapa,
+                          propsDoEditor
 tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas);
                           travarRolagemDaPagina (contada: tela cheia e modo de edição)
 volta-ao-brasil.js        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
@@ -95,33 +100,9 @@ para qualquer mapa. Ganchos da camada de terras usados (todos opcionais): `__ags
 **Projetos/SEDE.** Este componente é só da Saúde Indígena. Em Projetos a Visão geral mostra
 `<MapaDeProjetos>` (`src/modulos/mapa-de-projetos/`); na SEDE, nenhum mapa.
 
-```
-mapa-de-projetos.jsx   <MapaDeProjetos area carregador carregadoEm>: Leaflet (#mapaDosProjetos), um ponto
-                       por lugar na cor do projeto, enquadramento, legenda, Brasil e Tela cheia
-lista.jsx              "Municípios por vagas" (formato de "Territórios por vagas"), filtro "Projeto" e
-                       "Agrupar por projeto"
-balao.js               dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens)
-editor-de-coordenadas.jsx  "Coordenadas" (só admin global): o editor comum com os lugares das vagas, as
-                       regras de src/lib/coordenadas-dos-projetos.js e as RPCs *_coordenada_mapa_projetos
-                       (migration 20261002190000)
-carregador.js          RPC listar_municipios_das_vagas_da_area, um pedido por área, cache de 5 min, e a
-                       escolha da lista (sobrevive à troca de área)
-mapa-de-projetos.css   cores dos projetos (--series-1…6), filtro e grupos; o resto é o .mapa-si-*
-```
-
-Ligado em `visao-geral.jsx`: `<MapaDeProjetos area={e.area} carregador={…} carregadoEm={e.carregadoEm}>`.
-O carregador é criado por `montarVisaoGeral` (um por montagem). O pedido só sai depois da primeira
-carga da página (`carregadoEm`, com sessão); Atualizar dados pede de novo e o cache decide. Lógica
-pura em `src/lib/visao-geral-da-area.js` (projetos, pontos, raio, grupos, resumo do popup) e
-`src/lib/coordenadas-dos-municipios.js`. Testes: `tests/visao-geral-da-area.test.js` (regras) e
-`tests/modulos/mapa-de-projetos.test.js` (componente e carregador). Explicações para a Aya:
-`docs/aya/regras-dos-mapas.md`. O que saiu do legado: `src/modules/municipios-da-visao-geral.js`, o
-bloco `#mapaDaVisaoGeral`/`#reservaDoMapaDaVisaoGeral` do `index.html`, `renderMap`,
-`desenharMunicipiosNoMapa`, `scheduleMapResize` e o carregador do `legacy-app.js`,
-`health-map-workspace.css`, `health-reference-kpis.css` e os `#mapaDosProjetos` de `app.css` e
-`mobile-app.css`. Mudou: Tela cheia própria (Esc sai), contagem no cabeçalho, linhas no formato
-de "Territórios por vagas", estados vazios em uma linha e o rodapé "Clique num município…" foi
-para a Aya.
+Ele tem as mesmas regras deste e usa as mesmas peças (`painel-do-mapa.jsx`, `leaflet.js`,
+`legenda.jsx`, `tela-cheia.jsx`, o CSS `.mapa-si-*`); a tabela das regras lado a lado e as
+diferenças de propósito estão em `src/modulos/mapa-de-projetos/README.md`.
 
 **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.js`,
 também no mapa de Projetos): a dica que abre perto da borda troca de direção (em cima → embaixo →

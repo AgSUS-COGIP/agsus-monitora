@@ -23,6 +23,8 @@ import {
   coordenadasDaUf,
   coordenadasDoMunicipio,
 } from "./coordenadas-dos-municipios.js";
+import { numeroDoEdital } from "./anexos-do-edital.js";
+import { raioDaBolha } from "./mapa-render.js";
 import { nomeDaArea } from "./menu-lateral.js";
 import { AREA_SAUDE_INDIGENA } from "./responsavel-do-edital.js";
 
@@ -250,19 +252,6 @@ export function projetosDosMunicipios(municipios) {
   return [...porNome.values()].sort(ordemDoProjeto);
 }
 
-export const RAIO_MINIMO = 6;
-export const RAIO_MAXIMO = 15;
-
-/*
-  Raio do ponto pela raiz do valor: a ÁREA do círculo cresce com as vagas,
-  que é como o olho compara. O teto é o das bolhas dos DSEIs (15 px).
-*/
-export function raioDoPonto(valor, maior) {
-  if (!(maior > 0) || !(valor > 0)) return RAIO_MINIMO;
-  const proporcao = Math.sqrt(Math.min(valor, maior) / maior);
-  return Math.round(RAIO_MINIMO + (RAIO_MAXIMO - RAIO_MINIMO) * proporcao);
-}
-
 /*
   O resultado das análises do município: a parte aprovada entre as já
   decididas (aprovados + reprovados). Sem nenhuma decidida, sem barra.
@@ -285,23 +274,87 @@ export const temCandidatosPorLugar = (lugar) => num(lugar?.vagas) > 0;
 /* O tamanho do lugar: as vagas publicadas ou, se forem mais, as das análises. */
 const tamanhoDoLugar = (lugar) => Math.max(num(lugar.vagasEdital), lugar.vagas);
 
+const comPadroes = (lugar) => ({
+  projetos: [],
+  editais: [],
+  nivel: "municipio",
+  vagasEdital: null,
+  vagas: 0,
+  ...lugar,
+});
+
+/*
+  Os lugares no recorte da Visão geral (filtros, busca e atalho — os mesmos
+  editais que a tabela mostra), como o mapa da Saúde Indígena: só fica o
+  lugar com algum edital do recorte, e cada lugar só com esses editais (os
+  projetos e as vagas publicadas recontados a partir deles). O edital do lugar
+  é do recorte pelo id da linha do monitoramento (a RPC devolve o
+  `CO_MONITORAMENTO`) ou pelo número ("23/2025"), porque a RPC guarda um id
+  por número de edital. As contagens das análises são do lugar e ficam.
+*/
+export function lugaresDoRecorte(municipios, linhas) {
+  const ids = new Set();
+  const numeros = new Set();
+  for (const linha of Array.isArray(linhas) ? linhas : []) {
+    if (texto(linha?.id)) ids.add(texto(linha.id));
+    const numero = numeroDoEdital(linha?.edital);
+    if (numero) numeros.add(numero);
+  }
+  const doRecorte = (edital) =>
+    (texto(edital?.id) && ids.has(texto(edital.id))) ||
+    numeros.has(numeroDoEdital(edital?.edital));
+  return (Array.isArray(municipios) ? municipios : [])
+    .map((lugar) => {
+      const completo = comPadroes(lugar);
+      const editais = completo.editais.filter(doRecorte);
+      if (!editais.length) return null;
+      if (editais.length === completo.editais.length) return lugar;
+      const projetos = new Map(
+        editais.map((edital) => [
+          edital.projeto,
+          { nome: edital.projeto, serie: edital.serie },
+        ]),
+      );
+      const publicadas = editais.filter((edital) => edital.vagas !== null);
+      return {
+        ...completo,
+        editais,
+        projetos: [...projetos.values()].sort(ordemDoProjeto),
+        vagasEdital: publicadas.length
+          ? publicadas.reduce((soma, edital) => soma + num(edital.vagas), 0)
+          : null,
+        cadastroReserva: editais.some((edital) => edital.cadastroReserva),
+      };
+    })
+    .filter(Boolean);
+}
+
 /*
   Os lugares por vagas, decrescente (candidatos desempatam), cada um com a
   coordenada do banco (ou `null`, se o lugar ainda não tem), o raio do ponto, o
   rótulo e a série da cor. Com `projeto`, só os lugares dele, pintados com a
   cor dele; sem filtro, a cor é a do primeiro projeto do lugar e
   `variosProjetos` diz que há outros (o ponto ganha contorno tracejado).
+
+  O raio é a regra da bolha do DSEI (`raioDaBolha`, src/lib/mapa-render.js:
+  raiz do valor, de 5 a 15 px), medido nas vagas do lugar inteiro contra o
+  maior de `todos` (os lugares antes do recorte): filtrar não muda o tamanho
+  de quem fica, como filtrar não muda a bolha do DSEI (a população).
 */
-export function pontosDosMunicipios(municipios, { projeto = "" } = {}) {
+export function pontosDosMunicipios(
+  municipios,
+  { projeto = "", todos = municipios } = {},
+) {
   const filtro = texto(projeto);
+  const escala = new Map(
+    (Array.isArray(todos) ? todos : []).map((lugar) => [
+      lugar?.chave,
+      tamanhoDoLugar(comPadroes(lugar)),
+    ]),
+  );
+  const maior = Math.max(0, ...escala.values());
   const lista = (Array.isArray(municipios) ? municipios : [])
-    .map((lugar) => ({
-      projetos: [],
-      editais: [],
-      nivel: "municipio",
-      vagasEdital: null,
-      ...lugar,
-    }))
+    .map(comPadroes)
     .filter(
       (lugar) => !filtro || lugar.projetos.some((item) => item.nome === filtro),
     )
@@ -316,7 +369,6 @@ export function pontosDosMunicipios(municipios, { projeto = "" } = {}) {
         b.candidatos - a.candidatos ||
         a.rotulo.localeCompare(b.rotulo, "pt-BR"),
     );
-  const maior = Math.max(0, ...lista.map((item) => item.tamanho));
   return lista.map((item) => {
     const lugar =
       item.coordenada !== undefined
@@ -330,7 +382,10 @@ export function pontosDosMunicipios(municipios, { projeto = "" } = {}) {
     return {
       ...item,
       coordenadas: lugar ? [lugar.latitude, lugar.longitude] : null,
-      raio: raioDoPonto(item.tamanho, maior),
+      raio: raioDaBolha(
+        Math.max(item.tamanho, escala.get(item.chave) ?? 0),
+        Math.max(maior, item.tamanho),
+      ),
       serie: principal?.serie ?? 0,
       variosProjetos: !filtro && item.projetos.length > 1,
     };
