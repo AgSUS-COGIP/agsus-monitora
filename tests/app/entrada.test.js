@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_ACCESS_BRANDING } from "../../src/lib/access-branding.js";
 import {
   SLOGAN,
   ligarEntradaAPagina,
@@ -101,6 +103,38 @@ afterEach(async () => {
   tela = null;
   document.body.innerHTML = "";
   document.body.className = "";
+});
+
+describe("cartão provisório do index.html", () => {
+  /*
+    Ele segura o primeiro quadro até o React montar. Se tiver menos peças que o
+    cartão de verdade, o cartão cresce na troca e a tela de acesso "pisca".
+  */
+  const indice = readFileSync("index.html", "utf8");
+  const inicio = indice.indexOf('<div id="telaDeEntrada">');
+  const provisorio = indice.slice(inicio, indice.indexOf("</section>", inicio));
+
+  it("tem as mesmas peças do cartão do React: marca, slogan, saudação e botão", () => {
+    for (const classe of [
+      "login-brand-lockup",
+      "login-subtitle",
+      "login-form google-only-login",
+      "google-login-btn",
+    ])
+      expect(provisorio).toContain(`class="${classe}"`);
+    expect(provisorio).toContain(
+      `<h1>${DEFAULT_ACCESS_BRANDING.greeting}</h1>`,
+    );
+    expect(provisorio).toContain(`<span>${TEXTO_DO_BOTAO}</span>`);
+    expect(provisorio).toContain(SLOGAN);
+  });
+
+  it("o botão provisório é inerte (sem clique nem foco)", () => {
+    const botao = provisorio.slice(provisorio.indexOf("<button"));
+    expect(botao).toMatch(/^<button[^>]*\bdisabled\b/);
+    expect(botao).toMatch(/^<button[^>]*tabindex="-1"/);
+    expect(botao).not.toContain("id=");
+  });
 });
 
 describe("tela de acesso", () => {
