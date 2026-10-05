@@ -446,6 +446,43 @@
   background: var(--surface-hover);
 }
 
+.chat-conversa__confirmar {
+  gap: var(--space-2);
+  min-width: 240px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.chat-conversa__confirmar p {
+  margin: 0;
+}
+
+.chat-conversa__corpo {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chat-conversa__novas {
+  position: absolute;
+  bottom: var(--space-2);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text-link);
+  font: inherit;
+  font-size: var(--text-caption);
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+
 .chat-conversa__mensagens {
   flex: 1;
   min-height: 0;
@@ -555,19 +592,117 @@
   margin-top: var(--space-1);
 }
 
-.chat-msg__menu {
-  position: absolute;
-  top: -14px;
-  right: var(--space-1);
-  display: none;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
+/* "⋯" de cada mensagem: sempre à vista (funciona no toque). */
+.chat-msg.tem-menu {
+  padding-right: calc(var(--space-3) + 22px);
 }
 
-.chat-msg:hover .chat-msg__menu,
-.chat-msg:focus-within .chat-msg__menu {
+.chat-msg__botao-mais {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 26px;
+  height: 26px;
+  color: var(--text-secondary);
+}
+
+.chat-msg__menu {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% - 4px);
+  right: 0;
+  display: grid;
+  min-width: 200px;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+}
+
+.chat-msg:not(.is-minha) .chat-msg__menu {
+  right: auto;
+  left: 0;
+}
+
+.chat-msg__menu [role="menuitem"] {
   display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-msg__menu [role="menuitem"]:hover,
+.chat-msg__menu [role="menuitem"]:focus-visible {
+  background: var(--surface-hover);
+}
+
+.chat-msg__menu .is-perigo {
+  color: var(--color-status-danger-text);
+}
+
+.chat-msg__reagir {
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  padding-bottom: var(--space-1);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.chat-msg__reagir button {
+  min-width: 30px;
+  min-height: 30px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-msg__reagir button:hover,
+.chat-msg__reagir [aria-pressed="true"] {
+  background: var(--color-bg-selected);
+}
+
+/* Reações postas: o emoji, a contagem e quem reagiu (title). */
+.chat-reacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.chat-reacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.chat-reacao.is-minha {
+  border-color: var(--color-border-focus);
+  background: var(--color-bg-selected);
+}
+
+.chat-reacao__total {
+  font-weight: var(--font-weight-medium);
 }
 
 .chat-msg__edicao {
@@ -646,15 +781,83 @@
   box-shadow: var(--shadow-md);
 }
 
+/* Seletor de emoji (seletor-de-emoji.jsx), acima do campo. */
+.chat-escrita__emojis {
+  position: absolute;
+  z-index: 2;
+  bottom: 100%;
+  left: var(--space-3);
+  right: var(--space-3);
+}
+
+.chat-emojis {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+}
+
+.chat-emojis__abas {
+  display: flex;
+  gap: 2px;
+}
+
+.chat-emojis__abas button {
+  flex: 1;
+  min-height: 30px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.chat-emojis__abas [aria-selected="true"] {
+  background: var(--color-bg-selected);
+}
+
+.chat-emojis__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.chat-emojis__emoji {
+  min-height: 34px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-emojis__emoji:hover,
+.chat-emojis__emoji:focus-visible {
+  background: var(--surface-hover);
+}
+
+.chat-emojis__vazio {
+  margin: 0;
+  padding: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
 @media (max-width: 480px) {
   .chat-escrita__rodape .btn.secondary {
     flex: 1;
   }
 }
 
-/* "Mensagem" em cada pessoa de Pessoas online (marcação do legado, legacy-app.js). */
+/* "Mensagem" em cada pessoa de Pessoas online (src/componentes/pessoas-online/). */
 .online-presence-mensagem {
   flex: none;
+  white-space: nowrap;
   margin-left: auto;
   min-height: 28px;
   padding: 0 var(--space-2);

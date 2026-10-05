@@ -378,6 +378,9 @@ html[data-theme="dark"] .sidebar {
 }
 
 /* Presença online: batida autenticada e lista compacta, como no SIGAV. */
+.pessoas-online-app {
+  display: contents;
+}
 .online-presence {
   position: relative;
 }
@@ -441,6 +444,7 @@ html[data-theme="dark"] .sidebar {
 }
 .online-presence-list {
   max-height: 320px;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 8px;
 }
@@ -460,7 +464,23 @@ html[data-theme="dark"] .sidebar {
 .online-presence-person:hover {
   background: #f8fafc;
 }
-.online-presence-person > span:last-child {
+/*
+  No celular o botão fica à esquerda do cabeçalho: a lista abre presa ao
+  cabeçalho, de borda a borda, em vez de sair da tela pela esquerda.
+*/
+@media (max-width: 900px) {
+  .online-presence {
+    position: static;
+  }
+  .online-presence-popover {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+}
+/* O texto encolhe (reticências); o "Mensagem" fica inteiro à direita. */
+.online-presence-texto {
+  flex: 1 1 auto;
   min-width: 0;
 }
 .online-presence-person strong,

@@ -20,6 +20,7 @@ import {
   ultimaAtualizacao,
 } from "../../lib/analises-curriculares.js";
 import { getLoadingStage } from "../../lib/loading-copy.js";
+import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.js";
 import {
@@ -62,9 +63,10 @@ function textoDoStatus(e) {
   if (!e.carregado) return "Carregando dados...";
   if (e.atualizando) return "Atualizando...";
   const ultima = ultimaAtualizacao(e.linhas, e.payload);
-  return ultima
-    ? `Atualizado em ${formatarDataHora(ultima)}`
-    : "Base carregada";
+  return (
+    textoDaConferencia({ conferidoEm: e.conferidoEm, mudancaEm: ultima }) ||
+    (ultima ? `Atualizado em ${formatarDataHora(ultima)}` : "Base carregada")
+  );
 }
 
 /* Quanto tempo a primeira carga está levando: `null`, ou a etapa de demora. */

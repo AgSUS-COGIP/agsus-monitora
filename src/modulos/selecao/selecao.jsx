@@ -13,6 +13,7 @@ import {
 } from "../../lib/selecao-do-painel.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
+import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
 import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.js";
 import {
   ativosDoRecorte,
@@ -27,9 +28,9 @@ import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.jsx";
 
 /*
   A tela de Seleção (view `selecao`), um módulo do app: monta direto na
-  `<section id="page-selecao">` do index.html, como Recursos e Entrevistas. O
-  legado continua dono da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` de legacy-app.js).
+  `<section id="page-selecao">` do index.html, como Recursos e Entrevistas. A
+  navegação é dona da classe `.active` da seção e chama `render()` do
+  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
 
   A mesma tela do antigo painel externo "AgSUS Monitora Recrutamento e
   Seleção" (Apps Script sobre a planilha Auditoria), com os dados do banco
@@ -57,10 +58,10 @@ function textoDoStatus(e) {
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
   if (!e.carregado) return "Carregando dados...";
   if (e.atualizando) return "Atualizando...";
-  const carga = dataHoraBR(e.dados?.ultimaCarga?.em);
-  return carga
-    ? `Carga ${carga}`
-    : `Atualizado em ${dataHoraBR(e.carregadoEm)}`;
+  return (
+    textoDaConferencia({ conferidoEm: e.dados?.ultimaCarga?.em }) ||
+    `Atualizado em ${dataHoraBR(e.carregadoEm)}`
+  );
 }
 
 /*

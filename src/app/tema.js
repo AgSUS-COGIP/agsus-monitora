@@ -2,9 +2,9 @@ import { useSyncExternalStore } from "react";
 import { EVENTO_TEMA_ALTERADO } from "../lib/eventos-da-barra-lateral.js";
 
 /*
-  O tema do app (claro/escuro), para os componentes React. Quem manda é o
-  legado (`toggleDarkMode` em legacy-app.js, acionado pelo seletor da barra
-  lateral): ele marca `html[data-theme="dark"]` e avisa
+  O tema do app (claro/escuro), para os componentes React. Quem manda é a
+  moldura (`alternarTema` em src/app/moldura.js, `window.toggleDarkMode`,
+  acionado pelo seletor da barra lateral): ele marca `html[data-theme="dark"]` e avisa
   `agsus:tema-alterado`. Outra aba que trocou o tema avisa por `storage`.
   Sem `MutationObserver`.
 */

@@ -25,8 +25,8 @@ import { Regra } from "./regra.jsx";
 /*
   A tela de Classificação (view `classificacao`), módulo do app: monta direto
   na `<section id="page-classificacao">` do index.html, como Seleção e
-  Entrevistas. O legado é dono da classe `.active` da seção e chama `render()`
-  do controlador ao navegar (tabela `TELAS_REACT` de legacy-app.js).
+  Entrevistas. A navegação é dona da classe `.active` da seção e chama `render()`
+  do controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
 
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
   - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).

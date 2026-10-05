@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 import {
   CHAVES_DAS_SECOES,
@@ -6,7 +7,7 @@ import {
   normalizarValoresCarregados,
 } from "../src/lib/publicacao-de-configuracoes.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
@@ -124,11 +125,8 @@ describe("a logo da barra lateral é o <img> real", () => {
     expect(tag).not.toMatch(/onerror/i);
   });
 
-  it("applyConfigToUi não sobrescreve mais a logo da barra lateral", () => {
-    const fn = app.slice(
-      app.indexOf("function applyConfigToUi"),
-      app.indexOf("function normalizeUnitName"),
-    );
+  it("a configuração do app não sobrescreve mais a logo da barra lateral", () => {
+    const fn = readFileSync("src/app/configuracao.js", "utf8");
     expect(fn).not.toContain('"sideLogo"');
   });
 });

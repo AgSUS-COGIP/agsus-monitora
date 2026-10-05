@@ -51,7 +51,7 @@ const PAYLOAD = {
   schema_version: 1,
   area: "saude-indigena",
   gerado_em: "2026-09-29T12:00:00Z",
-  ultima_carga: { em: "2026-09-29T10:30:00", linhas: 2 },
+  ultima_carga: { em: "2026-09-29T10:30:00-03:00", linhas: 2 },
   criterios: ["HABILIDADE TÉCNICA (Conhecimentos gerais)", "POSTURA"],
   entrevistas: [
     {
@@ -211,7 +211,7 @@ describe("Resultados", () => {
     expect(kpi("media")).toBe("6,00");
     expect(kpi("sem-entrevista")).toBe("1");
     // A última carga aparece uma vez só, discreta, no topo.
-    expect(status().textContent).toBe("Carga 29/09/2026 10:30");
+    expect(status().textContent).toBe("Conferido em 29/09, 10:30");
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
     expect(linhasDaTabela()).toHaveLength(2);
     expect(document.querySelector(".ui-tabela tbody img")).toBeNull();

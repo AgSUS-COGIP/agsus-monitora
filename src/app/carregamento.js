@@ -6,7 +6,8 @@
   com etapas e percentual. A marcação está no HTML para sair na primeira
   pintura; quando há sessão guardada, o script `marcarSessaoGuardada` do
   <head> o liga antes de qualquer JavaScript do bundle. Daí em diante, quem
-  liga e desliga é o legado, por `mostrarEsqueleto` e `esconderEsqueleto`.
+  liga e desliga é o app (src/app/sistema.js e carga.js), por
+  `mostrarEsqueleto` e `esconderEsqueleto`.
   Na demora, nos mesmos tempos da antiga tela (`getLoadingStage`, em
   `lib/loading-copy.js`), aparece um aviso e, depois, "Tentar novamente".
 

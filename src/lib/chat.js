@@ -1,7 +1,8 @@
 /*
   Regras puras do chat do MONITORA (src/modulos/chat/), sem DOM e sem React.
 
-  Banco: supabase/migrations/20261002210000_chat.sql. O que o banco confere
+  Banco: supabase/migrations/20261002210000_chat.sql e
+  20261005100000_chat_limpar_e_reacoes.sql. O que o banco confere
   (tamanho do texto, formato do link da tela) é conferido aqui também, para a
   tela avisar antes de enviar — e o link que CHEGA também passa por
   `linkDaTela`: a navegação é só dentro do app (view, área, seção e edital),
@@ -144,7 +145,129 @@ export function mensagemDaLinha(linha) {
     criada_em: linha.DT_CRIACAO,
     editada_em: linha.DT_EDICAO ?? null,
     apagada: linha.ST_APAGADA === "S",
+    // As reações vêm por RL_MENSAGEM_REACAO; a apagada fica sem elas.
+    ...(linha.ST_APAGADA === "S" ? { reacoes: [] } : {}),
   };
+}
+
+/**
+ * A mensagem aparece para quem limpou a conversa? Só as enviadas depois da
+ * limpeza (`limpa_em` da conversa); a pendente na tela sempre aparece.
+ */
+export function depoisDaLimpeza(mensagem, limpaEm) {
+  if (!mensagem) return false;
+  if (!limpaEm || mensagem.pendente || mensagem.falhou) return true;
+  return instante(mensagem.criada_em) > instante(limpaEm);
+}
+
+// ── Reações ─────────────────────────────────────────────────────────────────
+
+/**
+ * As reações rápidas, na ordem da tela. Espelho de private."FC_CHAT_REACOES"
+ * e do CHECK CK_MENSREACAO_DSEMOJI (20261005100000_chat_limpar_e_reacoes.sql).
+ */
+export const REACOES_RAPIDAS = Object.freeze([
+  "👍",
+  "✅",
+  "❤️",
+  "😂",
+  "👀",
+  "🙏",
+]);
+
+const ordemDaReacao = (emoji) => {
+  const i = REACOES_RAPIDAS.indexOf(emoji);
+  return i < 0 ? REACOES_RAPIDAS.length : i;
+};
+
+/**
+ * As reações de uma mensagem com a de `usuario` posta (`ativa: true`), tirada
+ * (`false`) ou alternada (sem `ativa`): `[{ emoji, usuarios }]`, na ordem das
+ * reações rápidas, sem emoji vazio. Não muda a lista recebida.
+ */
+export function reacoesComAlternancia(reacoes, emoji, usuario, ativa) {
+  const lista = (Array.isArray(reacoes) ? reacoes : []).map((r) => ({
+    emoji: r.emoji,
+    usuarios: Array.isArray(r.usuarios) ? [...r.usuarios] : [],
+  }));
+  if (!emoji || !usuario) return lista;
+  let item = lista.find((r) => r.emoji === emoji);
+  if (!item) {
+    item = { emoji, usuarios: [] };
+    lista.push(item);
+  }
+  const tem = item.usuarios.some((u) => String(u) === String(usuario));
+  const por = ativa === undefined ? !tem : Boolean(ativa);
+  if (por && !tem) item.usuarios.push(usuario);
+  if (!por && tem)
+    item.usuarios = item.usuarios.filter((u) => String(u) !== String(usuario));
+  return lista
+    .filter((r) => r.usuarios.length)
+    .sort((a, b) => ordemDaReacao(a.emoji) - ordemDaReacao(b.emoji));
+}
+
+/**
+ * Linha do Realtime de RL_MENSAGEM_REACAO aplicada às mensagens da tela.
+ * Mensagem que não está na tela (ou linha incompleta): devolve a mesma lista.
+ */
+export function aplicarReacaoDaLinha(mensagens, linha) {
+  const lista = Array.isArray(mensagens) ? mensagens : [];
+  if (!linha?.CO_MENSAGEM || !linha?.CO_USUARIO || !linha?.DS_EMOJI)
+    return lista;
+  const id = String(linha.CO_MENSAGEM);
+  if (!lista.some((m) => String(m.id) === id)) return lista;
+  return lista.map((m) =>
+    String(m.id) === id
+      ? {
+          ...m,
+          reacoes: reacoesComAlternancia(
+            m.reacoes,
+            linha.DS_EMOJI,
+            linha.CO_USUARIO,
+            linha.ST_REGISTRO_ATIVO !== "N",
+          ),
+        }
+      : m,
+  );
+}
+
+/**
+ * Para desenhar: `[{ emoji, total, minha, quem }]` — `quem` é "Ana Souza,
+ * Você" (para o title). `nomeDe(id)` dá o nome de cada pessoa.
+ */
+export function resumoDasReacoes(reacoes, eu, nomeDe = () => "Pessoa") {
+  return (Array.isArray(reacoes) ? reacoes : [])
+    .filter((r) => r?.emoji && r.usuarios?.length)
+    .sort((a, b) => ordemDaReacao(a.emoji) - ordemDaReacao(b.emoji))
+    .map((r) => {
+      const minha = r.usuarios.some((u) => String(u) === String(eu));
+      const outros = r.usuarios
+        .filter((u) => String(u) !== String(eu))
+        .map((u) => nomeDe(u));
+      return {
+        emoji: r.emoji,
+        total: r.usuarios.length,
+        minha,
+        quem: [...outros, ...(minha ? ["Você"] : [])].join(", "),
+      };
+    });
+}
+
+// ── Campo de escrita ────────────────────────────────────────────────────────
+
+/**
+ * Põe `trecho` (um emoji) no lugar da seleção `[inicio, fim)` do texto e
+ * devolve o texto e o cursor logo depois. Passaria do limite: não muda.
+ */
+export function inserirNoCursor(valor, inicio, fim, trecho) {
+  const bruto = texto(valor);
+  const novo = texto(trecho);
+  const de = Math.max(0, Math.min(Number(inicio) || 0, bruto.length));
+  const ate = Math.max(de, Math.min(Number(fim ?? de) || de, bruto.length));
+  const resultado = bruto.slice(0, de) + novo + bruto.slice(ate);
+  if (!novo || resultado.length > LIMITE_DO_TEXTO)
+    return { texto: bruto, cursor: ate };
+  return { texto: resultado, cursor: de + novo.length };
 }
 
 /** Não lidas de uma conversa a partir das mensagens: de outras pessoas, depois da última leitura. */

@@ -224,19 +224,19 @@ describe("Busca global", () => {
 });
 
 describe("o legado recebe a escolha", () => {
-  const legado = readFileSync("src/modules/legacy-app.js", "utf8");
+  const legado = readFileSync("src/app/sistema.js", "utf8");
 
   it("escuta o evento e localiza a linha no painel", () => {
     expect(legado).toMatch(
-      /addEventListener\(EVENTO_ESCOLHA_DA_BUSCA,[\s\S]{0,80}localizarLinhaDoMonitoramento\(e\.detail\?\.id\)/,
+      /addEventListener\(EVENTO_ESCOLHA_DA_BUSCA,[\s\S]{0,80}localizarLinhaDoMonitoramento\(evento\.detail\?\.id\)/,
     );
     const corpo = legado.slice(
       legado.indexOf("function localizarLinhaDoMonitoramento"),
     );
-    expect(corpo).toMatch(/if \(!can\("ind"\)\)/);
-    expect(corpo).toMatch(/navigate\("dashboard"\)/);
+    expect(corpo).toMatch(/if \(!perfil\.pode\("ind"\)\)/);
+    expect(corpo).toMatch(/irPara\("dashboard"\)/);
     // O recorte (unidade e edital da linha) e o destaque são da Visão geral.
-    expect(corpo).toMatch(/estadoDaVisaoGeral\.localizar\(r\)/);
+    expect(corpo).toMatch(/estadoDaVisaoGeral\.localizar\(linha\)/);
   });
 
   it("a busca antiga saiu", () => {
