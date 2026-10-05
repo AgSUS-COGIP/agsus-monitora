@@ -655,6 +655,38 @@ export const CONTRATO_RPC = {
       "Fluxo do parecer: enviar para parecer (editor); deferir, deferir parcialmente, indeferir (parecer obrigatório), devolver e reabrir só com recursos_parecer (42501).",
   },
 
+  // ── Recursos: ajuste da pontuação (20261005130000) ────────────────────────
+  obter_ajustes_pontuacao_recurso: {
+    argumentos: ["p_recurso"],
+    critica: false,
+    resumo:
+      "Versões do ajuste da pontuação do recurso (itens antes/depois, justificativa, prévias, quem e quando); pode_propor, pode_aprovar e pode_cancelar. Recursos >= leitor.",
+  },
+  obter_dados_previa_ajuste: {
+    argumentos: ["p_recurso"],
+    critica: false,
+    resumo:
+      "Os dados da Classificação do edital do recurso (mesmo json de obter_classificacao_do_edital, com os ajustes aprovados) para a prévia. Só o parecer jurídico (42501).",
+  },
+  propor_ajuste_pontuacao: {
+    argumentos: ["p_recurso", "p_dados"],
+    critica: false,
+    resumo:
+      "Nova versão PROPOSTO do ajuste (a proposta em aberto vira cancelada): lista, justificativa, itens e prévia. Só o parecer jurídico, recurso em análise jurídica ou deferido.",
+  },
+  aprovar_ajuste_pontuacao: {
+    argumentos: ["p_ajuste", "p_previa"],
+    critica: false,
+    resumo:
+      "Aprova o ajuste proposto (passa a valer na Classificação) com a prévia recalculada; marca ou desmarca 'mudou a classificação'. Só o parecer jurídico e com o recurso deferido.",
+  },
+  cancelar_ajuste_pontuacao: {
+    argumentos: ["p_ajuste", "p_motivo"],
+    critica: false,
+    resumo:
+      "Cancela o ajuste proposto ou aprovado, com motivo (o aprovado sai da Classificação e a marca do recurso é desmarcada). Só o parecer jurídico.",
+  },
+
   // ── Recursos: modelos, resposta e anexos (20260929230000) ────────────────
   listar_modelos_resposta_recurso: {
     argumentos: [],
@@ -734,7 +766,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "O que o motor de classificação precisa: regra vigente e versões, catálogo, cronograma, quadro de vagas, análises (sem CPF), entrevistas ligadas por CO_ANALISE_CURRICULAR, listas geradas e desempates.",
+      "O que o motor de classificação precisa: regra vigente e versões, catálogo, cronograma, quadro de vagas, análises (sem CPF), entrevistas ligadas por CO_ANALISE_CURRICULAR, listas geradas, desempates e os ajustes da pontuação aprovados em recurso (ajustes, ajustes_mudaram_em).",
   },
   salvar_regra_classificacao: {
     argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
