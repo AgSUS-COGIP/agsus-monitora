@@ -6,6 +6,7 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.js";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
 import { urlDaPlanilhaGoogle } from "../../src/lib/planilhas.js";
+import { pedirFiltro } from "../../src/app/pedido-de-filtro.js";
 import {
   clicar,
   digitar,
@@ -389,6 +390,25 @@ describe("KPIs (7, os seis primeiros filtram)", () => {
     await clicar(kpi("total").querySelector("button"));
     expect(linhasDaFila()).toHaveLength(4);
     expect(kpi("taxa").querySelector("button")).toBeNull();
+  });
+});
+
+describe("Abrir pela Aya", () => {
+  it("o pedido de filtro da Aya recorta por edital e KPI, uma vez só", async () => {
+    await montar(supabaseFalso());
+    await act(async () =>
+      pedirFiltro("analises", { edital: "10/2026", metrica: "pendente" }),
+    );
+    await esperar();
+    expect(
+      kpi("pendente").querySelector("button").getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(linhasDaFila()).toHaveLength(1);
+    expect(recorte()).toContain("10/2026");
+    // Pedido de outra tela não mexe aqui.
+    await act(async () => pedirFiltro("recursos", { edital: "2/2026" }));
+    await esperar();
+    expect(linhasDaFila()).toHaveLength(1);
   });
 });
 

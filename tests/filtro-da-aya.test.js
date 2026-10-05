@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   filtrosDaSelecao,
+  filtrosDasAnalises,
   filtrosDeEntrevistas,
   filtrosDeRecursos,
   opcoesDoEdital,
@@ -59,5 +60,29 @@ describe("filtro pedido pela Aya", () => {
         { editais: ["Edital 93/2026", "Edital 1/2026"] },
       ),
     ).toEqual({ editais: ["Edital 93/2026"], unidades: [] });
+  });
+});
+
+describe("Análises", () => {
+  it("editais pelo valor da linha e o KPI da métrica", () => {
+    const linhas = [{ edital: "110/2026" }, { edital: "12/2026" }, {}];
+    expect(
+      filtrosDasAnalises(
+        { edital: [], status: [] },
+        { edital: "110/2026", metrica: "pendente" },
+        linhas,
+      ),
+    ).toEqual({
+      filtros: { edital: ["110/2026"], status: [] },
+      kpi: "pendente",
+    });
+    expect(
+      filtrosDasAnalises(
+        { edital: ["x"] },
+        { metrica: "total" },
+        linhas,
+        "revisar",
+      ),
+    ).toEqual({ filtros: { edital: ["x"] }, kpi: "revisar" });
   });
 });

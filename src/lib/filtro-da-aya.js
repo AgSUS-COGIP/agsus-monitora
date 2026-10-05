@@ -63,3 +63,33 @@ export function filtrosDaSelecao(atuais, pedido, opcoes) {
   const editais = opcoesDoEdital(opcoes?.editais, pedido?.edital);
   return editais.length ? { ...atuais, editais } : { ...atuais };
 }
+
+/* Análises: o indicador clicado (`kpi` da tela) para cada métrica da Aya. */
+const KPI_DAS_ANALISES = Object.freeze({
+  pendente: "pendente",
+  revisar: "revisar",
+  aprovado: "aprovado",
+  reprovado: "reprovado",
+  analisado: "analisado",
+});
+
+/**
+ * Análises: os editais (escolha múltipla, pelo valor da linha) e o KPI.
+ * Devolve `{ filtros, kpi }`; o KPI fica como estava se a métrica não tem um.
+ */
+export function filtrosDasAnalises(atuais, pedido, linhas, kpiAtual = "") {
+  const editais = [
+    ...new Set(
+      (linhas || [])
+        .map((linha) => String(linha?.edital ?? "").trim())
+        .filter(Boolean),
+    ),
+  ];
+  const escolhidos = opcoesDoEdital(editais, pedido?.edital);
+  return {
+    filtros: escolhidos.length
+      ? { ...atuais, edital: escolhidos }
+      : { ...atuais },
+    kpi: KPI_DAS_ANALISES[pedido?.metrica] ?? kpiAtual,
+  };
+}
