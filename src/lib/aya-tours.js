@@ -320,7 +320,7 @@ const TOURS = Object.freeze({
       passo(
         "[aria-labelledby='selecaoTabelaTitulo']",
         "Tabela de vagas",
-        "O funil de cada vaga. A tela é só de consulta e é carregada todo dia às 9h.",
+        "O funil de cada vaga. A tela é só de consulta e é carregada de hora em hora, das 7h às 19h.",
       ),
       PASSO_DA_AYA,
     ]),

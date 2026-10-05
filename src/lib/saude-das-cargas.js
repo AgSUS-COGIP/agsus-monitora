@@ -300,7 +300,7 @@ export function normalizarSaude(dados, agora = new Date()) {
       id: "planilhas",
       titulo: "Planilhas pelo GitHub Actions",
       descricao:
-        "Entrevistas e Seleção, todo dia às 9h. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
+        "Entrevistas e Seleção, de hora em hora das 7h às 19h. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
       cargas: planilhas,
     },
     {
@@ -430,8 +430,8 @@ export function visaoSimples(saude) {
         titulo: carga.id === "selecao" ? "Seleção" : "Entrevistas",
         explicacao:
           carga.id === "selecao"
-            ? "Atualiza a aba Seleção a partir da planilha Auditoria, todo dia às 9h."
-            : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, todo dia às 9h.",
+            ? "Atualiza a aba Seleção a partir da planilha Auditoria, de hora em hora das 7h às 19h."
+            : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, de hora em hora das 7h às 19h.",
         partes: [carga],
         situacoesQueContam: [carga.situacao],
       }),
