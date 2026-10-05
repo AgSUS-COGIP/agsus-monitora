@@ -7,8 +7,6 @@ arquivo novo nesta pasta. Ao migrar uma tela, o módulo dela sai daqui.
 
 **Não ler por inteiro:**
 
-- `legacy-app.js` — **legado.** `grep -n "termo" src/modules/legacy-app.js` e ler a faixa
-  com `sed -n`. Não crescer; a cada tela migrada, ele encolhe.
 - `indigenous-territories-layer.js` — 53 KB.
 - `aya-conhecimento-gerado.js` — **gerado** por `npm run aya:conhecimento` a partir de `docs/aya/`.
 

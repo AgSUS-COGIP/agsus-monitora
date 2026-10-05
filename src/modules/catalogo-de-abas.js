@@ -2,8 +2,8 @@
   O catálogo de abas do banco (`listar_abas_do_menu`: `TB_ABA` × `RL_ABA_AREA`)
   para o menu lateral.
 
-  A consulta sai junto com as outras da entrada (`iniciarConsultasDaSessao` em
-  `legacy-app.js`) e vai na cópia da sessão. Quem monta a árvore é
+  A consulta sai junto com as outras da entrada (`iniciarConsultas` em
+  src/app/carga.js) e vai na cópia da sessão. Quem monta a árvore é
   `montarArvoreDoMenu` (`src/lib/menu-lateral.js`), que recebe `abasDoMenu()`.
 
   Sem catálogo — função ainda não publicada no banco, erro de rede, resposta

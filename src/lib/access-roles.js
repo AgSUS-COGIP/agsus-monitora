@@ -21,7 +21,7 @@ export const ACCESS_ROLES = Object.freeze([
   { value: "usuario", label: "Usuário" },
   { value: "edital_gestor", label: "Gestor" },
   { value: "contratador", label: "Contratador" },
-  { value: "admin", label: "Admin" },
+  { value: "admin", label: "Administrador global" },
 ]);
 
 export function normalizeRole(profile) {
@@ -37,6 +37,18 @@ export function roleLabel(profile) {
   if (profile?.grupo?.nome) return profile.grupo.nome;
   const role = normalizeRole(profile);
   return ACCESS_ROLES.find((item) => item.value === role)?.label || "Usuário";
+}
+
+/**
+ * Rótulo de exibição de um código de perfil, venha como vier ("edital_gestor",
+ * "Edital_gestor", "Admin", "master"). O que não é código (nome de grupo) fica
+ * como veio; vazio vira "Usuário".
+ */
+export function rotuloDoPerfil(valor) {
+  const texto = String(valor ?? "").trim();
+  const papel = ROLE_ALIASES[texto.toLowerCase()];
+  if (papel) return ACCESS_ROLES.find((item) => item.value === papel).label;
+  return texto || "Usuário";
 }
 
 export function isOwnAccessProfile(currentUser, targetProfile) {

@@ -50,7 +50,7 @@ describe("aviso global", () => {
 
 describe("ligação do aviso global com a interface", () => {
   const html = readFileSync("index.html", "utf8");
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
+  const app = readFileSync("src/app/configuracao.js", "utf8");
 
   it("tem no HTML o elemento que recebe o aviso", () => {
     expect(html).toContain('id="broadcastBar"');
@@ -75,8 +75,8 @@ describe("ligação do aviso global com a interface", () => {
   */
   it("aplica o aviso sempre que a configuração é aplicada", () => {
     const aplica = app.slice(
-      app.indexOf("function applyConfigToUi() {"),
-      app.indexOf("function consultaDeUnidades() {"),
+      app.indexOf("function aplicarNaTela() {"),
+      app.indexOf("const consulta = () =>"),
     );
     expect(aplica).toContain("aplicarAvisoGlobal()");
   });
@@ -84,7 +84,7 @@ describe("ligação do aviso global com a interface", () => {
   it("escreve o aviso como texto, nunca como marcação", () => {
     const fn = app.slice(
       app.indexOf("function aplicarAvisoGlobal() {"),
-      app.indexOf("function applyConfigToUi() {"),
+      app.indexOf("function aplicarNaTela() {"),
     );
     expect(fn).toContain("barra.textContent =");
     expect(fn).not.toMatch(/.innerHTMLs*=/);

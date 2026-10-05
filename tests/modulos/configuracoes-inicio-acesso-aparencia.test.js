@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "../fonte-do-app.js";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.jsx";
@@ -561,7 +562,7 @@ describe("regras do código", () => {
 
   it("o legado não tem mais a marcação nem o código das três seções", () => {
     const html = readFileSync("index.html", "utf8");
-    const app = readFileSync("src/modules/legacy-app.js", "utf8");
+    const app = fonteDoApp();
     for (const id of [
       "cfgPageTitle",
       "cfgBroadcastMsg",

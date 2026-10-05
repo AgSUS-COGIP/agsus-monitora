@@ -41,7 +41,7 @@ src/
 | 3     | Configurações (**feita**: `configuracoes/`, `acessos/`, `modulos/`; falta Status)    |
 | 4     | Análises (**feita**: `src/modulos/analises/`)                                        |
 | 5     | Visão geral: primeiro o que não é mapa, depois os mapas                              |
-| 6     | Login e entrada (**fase 1 feita**, ver abaixo); fim do `legacy-app.js` (fase 2)      |
+| 6     | Login e entrada (**fases 1 e 2 feitas**, ver abaixo; falta o layout em React)        |
 | 7     | Aya                                                                                  |
 
 A mudança de pasta acontece **módulo a módulo**, na etapa de cada um — mover tudo de uma vez
@@ -58,9 +58,9 @@ gera conflito com quem está trabalhando em paralelo.
 | Configurações (moldura, seções e `secoes.js`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
 | `src/componentes/saude-das-cargas/` (Status das atualizações)                                                    | `src/modulos/`                                            | ao tocar   |
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
-| `src/modules/map-*`, `health-*`, `indigenous-*`, trechos do `legacy-app.js` (dashboard)                          | `src/modulos/visao-geral/`                                | 5          |
+| `src/modules/map-*`, `health-*`, `indigenous-*`, (o dashboard já saiu do legado)                                 | `src/modulos/visao-geral/`                                | 5          |
 | `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.js`, `usar-area-atual.js` | `src/app/` (entrada, layout, área atual)                  | 6          |
-| `src/modules/legacy-app.js`, `auth-storage.js`, `sidebar-branding.js` (o login já está em `src/app/`)            | `src/app/`; o resto sai                                   | 6 (fase 2) |
+| `auth-storage.js`, `sidebar-branding.js` (o login e o `legacy-app.js` já estão em `src/app/`)                    | `src/lib/` e barra lateral                                | 6          |
 | `src/modules/aya-*` (IA, base e memória; o painel já é `src/modulos/aya/`)                                       | `src/app/` (Aya no layout)                                | 7          |
 | `src/lib/`                                                                                                       | fica                                                      | —          |
 | `src/styles/tokens.css`                                                                                          | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
@@ -115,10 +115,10 @@ montam por ele. Usa `flushSync` a barra lateral (o legado lê `#nav` logo depois
 
 **Tela de página inteira** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`, `src/modulos/entrevistas/`, esta com visões num `Segmentado` no topo, e `src/modulos/analises/`): monta na `<section id="page-<view>">`
 vazia do `index.html`, sem pedir nada ao banco; `src/main.js` guarda o controlador em `window`
-(`recursosController`) e o legado chama `render()` ao navegar (tabela `TELAS_REACT` do `navigate`).
+(`recursosController`) e a navegação (`src/app/navegacao.js`) chama `render()` ao abrir (tabela `TELAS_REACT`).
 A área vem de `usarAreaAtual()`/`obterDadosDoMonitoramento()`, o tema de `usarTemaEscuro()`
 (`src/app/tema.js`), o aviso de `window.monitoraToast` (passado na montagem). O título e a área
-ficam no cabeçalho do app (`setPageTitle`); a tela não repete.
+ficam no cabeçalho do app (`navegacao.definirTitulo`); a tela não repete.
 
 ## Como usar `ui/`
 
@@ -208,73 +208,83 @@ Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicita
 Acesso só por convite: a sessão não chama mais `garantir_acesso_basico` (saiu do front e do
 contrato de RPC); quem não tem perfil ativo vê o pedido de acesso.
 
-### Sessão ↔ legado (o contrato da fase 1)
+### Sessão ↔ sistema (o contrato)
 
 `sessaoDoApp.obter()` devolve `{ fase, usuario, perfil, painelIds, contextoCarregado, mensagem,
 entrando, erroDeConfiguracao, consultarPedido, configuracao }`, com `fase` em `FASES`:
 `iniciando` → `deslogado` | `abrindo` → `conectado` | `sem-acesso`.
 
-- **O legado recebe** usuário e perfil por assinatura (`sessaoDoApp.assinar(receberSessao)`):
-  `currentUser`, `profile` e `allowedPanelIds` do `legacy-app.js` são cópias locais. O React lê
-  `sessaoDoApp.obter()` (a busca global já lê; `window.getMonitoraUser`/`getMonitoraProfile` ficam
-  para as telas que ainda os usam).
-- **O legado empurra a configuração**: `applyConfigToUi()` chama
-  `sessaoDoApp.definirConfiguracao(appConfig)` (domínios, Google ligado, texto do botão, dica de
-  domínio, mensagem de senha) e `definirMarcaDaConfiguracao({ valores, carregou, chaves })`.
-- **A sessão chama o legado** pelos ganchos de `sessaoDoApp.ligarSistema({...})`, registrados no
-  fim do `legacy-app.js`:
+O sistema depois de entrar é `src/app/sistema.js` (fase 2, abaixo): `ligarSistema()`, chamado no
+começo de `src/main.js`, cria as peças, publica os contratos em `window` e registra os ganchos de
+`sessaoDoApp.ligarSistema({...})`. `src/app/perfil.js` copia usuário e perfil da sessão; a
+configuração (`src/app/configuracao.js`) chama `sessaoDoApp.definirConfiguracao` e
+`definirMarcaDaConfiguracao`.
 
-| Gancho                 | Quando                                        | O legado faz                                                           |
-| ---------------------- | --------------------------------------------- | ---------------------------------------------------------------------- |
-| `carregarConfiguracao` | no arranque, antes de olhar a sessão          | `loadConfig({ silent: true })`                                         |
-| `mostrarEsqueleto`     | retorno do Google com `?code=`                | skeleton no formato da última tela                                     |
-| `aoVerificar`          | sessão válida, antes de consultar o perfil    | skeleton + começa a ler a cópia da sessão (`prepararEntrada`)          |
-| `abrir`                | perfil confirmado; `true` = sistema aberto    | `loadInitialData`, `openApp`, navegação, auditoria, presença, Realtime |
-| `aoFicarSemAcesso`     | sem perfil ativo                              | apaga a cópia, para Realtime e heartbeat, esconde `#appScreen`         |
-| `aoAtualizarPerfil`    | `USER_UPDATED` com o sistema aberto           | permissões dos painéis, menu, volta à tela inicial se preciso          |
-| `antesDeSair`          | botão Sair, antes do `signOut()`              | auditoria `logout`, para o Realtime, apaga o cache de análises         |
-| `aoSair`               | estado deslogado aplicado (uma vez por saída) | limpa linhas, presença, painéis externos, esconde `#appScreen`         |
-| `aoLimparSessao`       | "Voltar ao login" do pedido                   | apaga a cópia da sessão                                                |
-| `encerrarEspera`       | fim de toda entrada (deu certo ou não)        | esconde o skeleton e tira `body.config-loading`                        |
+| Gancho                 | Quando                                        | O sistema faz                                                       |
+| ---------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
+| `carregarConfiguracao` | no arranque, antes de olhar a sessão          | `configuracao.carregar({ silent: true })`                           |
+| `mostrarEsqueleto`     | retorno do Google com `?code=`                | skeleton no formato da última tela                                  |
+| `aoVerificar`          | sessão válida, antes de consultar o perfil    | skeleton + começa a ler a cópia da sessão (`carga.prepararEntrada`) |
+| `abrir`                | perfil confirmado; `true` = sistema aberto    | `carga.carregarEntrada`, auditoria, heartbeat, presença, Realtime   |
+| `aoFicarSemAcesso`     | sem perfil ativo                              | apaga a cópia, para Realtime e heartbeat, esconde `#appScreen`      |
+| `aoAtualizarPerfil`    | `USER_UPDATED` com o sistema aberto           | painéis liberados, menu, volta à tela de entrada se preciso         |
+| `antesDeSair`          | botão Sair, antes do `signOut()`              | auditoria `logout`, para o Realtime, apaga o cache de análises      |
+| `aoSair`               | estado deslogado aplicado (uma vez por saída) | limpa linhas, presença, painéis externos, esconde `#appScreen`      |
+| `aoLimparSessao`       | "Voltar ao login" do pedido                   | apaga a cópia da sessão                                             |
+| `encerrarEspera`       | fim de toda entrada (deu certo ou não)        | esconde o skeleton e tira `body.config-loading`                     |
 
 `#loginScreen` e `body.access-request-mode` são da entrada (`ligarEntradaAPagina`, pela fase);
-`#appScreen` ainda é do legado (`openApp`), porque a navegação precisa da tela visível.
+`#appScreen` é de `perfil.mostrarApp()`/`esconderApp()`.
 
-Melhorias de comportamento: a mensagem do domínio recusado e a da recuperação de senha deixaram de
-se perder (o `SIGNED_OUT` do próprio `signOut()` aplicava a saída antes, com a frase genérica); o
-botão do Google fica ocupado enquanto a janela do Google está aberta (antes o `signOut` local o
-liberava na hora); sair continua mesmo se a auditoria falhar; entrar sem `SIGNED_IN` nesta aba
-encerra a transição de saída; o pedido de acesso começa vazio para outra conta.
+### Fase 2 (feita): o fim do `legacy-app.js`
 
-### Fase 2 (plano): navegação, carga dos dados e o fim do `legacy-app.js`
+`src/modules/legacy-app.js` (1.946 linhas) saiu. Cada responsabilidade virou um módulo pequeno de
+`src/app/`, criado por fábrica (`criarX({ dependências })`, testável com dependências falsas em
+`tests/app/`) e ligado em `src/app/sistema.js`:
 
-Cada passo é um PR pequeno, e o legado encolhe a cada um:
+```
+src/app/sistema.js               cria as peças, contratos em window, ganchos da sessão, busca global
+src/app/navegacao.js             troca de tela (.active, título, menu marcado), permissões, guarda de
+                                 saída, versão nova esperando, tela guardada, menu (TELAS_REACT)
+src/lib/navegacao.js             regras puras: bloqueioDaTela, telaPermitida, telaInicialDoSistema…
+src/app/configuracao.js          TB_CONFIGURACAO, textos do app, aviso global, fundo do acesso
+src/app/paineis-externos.js      painéis externos: lista, liberados, quadro (iframe na 1ª abertura)
+src/app/carga.js                 consultas em paralelo, cópia da sessão, "Atualizar dados", Realtime
+src/app/presenca.js              auditoria, heartbeat, presença e a lista de Pessoas online
+src/componentes/pessoas-online/  o botão e a lista no cabeçalho (React)
+src/app/perfil.js                usuário e perfil (cópia da sessão), cabeçalho, #appScreen
+src/app/moldura.js               barra recolhida, tema, tela cheia, relatório em PDF
+src/app/avisos.js                toast (window.monitoraToast) e loader (window.monitoraLoader)
+src/app/carregamento.js          skeleton da entrada e do painel externo, barra do "Atualizar dados"
+src/lib/erro-amigavel.js         a frase do erro (antigo friendlyError)
+```
 
-1. **Layout em `src/app/`**: `#appScreen` (cabeçalho, barra lateral, conteúdo) vira o layout React;
-   `openApp`/`limparEstadoDeslogado` saem e a visibilidade segue a fase da sessão, como o
-   `#loginScreen`. `src/componentes/barra-lateral/`, `dados-do-monitoramento.js` e
-   `usar-area-atual.js` mudam para `src/app/`.
-2. **Navegação**: `navigate`, `TELAS_REACT`, `startView`/`systemHomeView`/`isViewAllowed`,
-   `rememberView`, `setPageTitle` e a guarda de saída das Configurações → um roteador simples em
-   `src/app/rotas.js` (estado + `history`), com `paginasPermitidas` de `src/lib/access-roles.js`. Os
-   controladores em `window` (`recursosController`…) viram rotas; `window.navigate` sai.
-3. **Configuração e carga da entrada**: `loadConfig`/`applyConfigToUi`, `loadPanels`,
-   `loadPanelPermissions`, catálogo de abas, situação do sistema, `iniciarConsultasDaSessao`, cópia
-   da sessão (`copia-da-sessao-indexeddb.js`) e `refreshData` → `src/app/carga.js`, que a sessão
-   chama no lugar do gancho `abrir`; `dados-do-monitoramento.js` passa a ser preenchido por ele.
-4. **Presença, auditoria e Realtime**: `trackAccess`, heartbeat, presença online (o popover e a
-   parte de `nielsen-shell-ux.js`), Realtime do monitoramento e `session-lifecycle.js` →
-   `src/app/presenca.js` e um componente no cabeçalho; os ganchos `antesDeSair`/`aoSair` somem.
-5. **O resto do `legacy-app.js`** (o mapa e a Visão geral são da Etapa 5): painéis externos
-   (`openPanel`, `buildExternalPanel`, `reloadExternal`), exportar PDF, tela cheia, tema escuro
-   (`toggleDarkMode`, `applyStoredDisplayModes`), barra recolhida (`toggleSidebar`,
-   `enforceResponsiveSidebar`), aviso global e `friendlyError` → `src/app/` e `src/lib/`. Os
-   `onclick` do `index.html` saem junto.
-6. **Limpeza final**: `legacy-app.js`, os `window.*` de compatibilidade (`getMonitoraProfile`,
-   `monitoraToast`, `$`…); o CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
+Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`), `refreshData`,
+`getMonitoraProfile`, `getMonitoraUser`, `monitoraToast`, `monitoraLoader`, `exitExternalPanel`,
+`reloadExternal`, `exportPDF`, `toggleBrowserFullscreen`, `toggleDarkMode`, `toggleSidebar`
+(saíram `window.$` e `toggleOnlinePresence`, sem uso). Os controladores das telas
+(`window.recursosController`…) continuam sendo chamados pela navegação (`render()` ao abrir).
+Quem acompanha a navegação assina `navegacao.assinar`: `{ tipo: "abertura", view, anterior }`
+(auditoria) e `{ tipo: "menu" }` (o lugar da pessoa na presença).
+
+Testes: `tests/app/navegacao.test.js`, `carga.test.js`, `configuracao.test.js`,
+`paineis-externos.test.js`, `presenca.test.js`, `perfil.test.js`, `moldura.test.js`,
+`sistema.test.js`, `tests/navegacao.test.js` e `tests/componentes/pessoas-online.test.js`. Os testes
+que conferem que algo antigo não voltou leem `src/app/` inteiro (`tests/fonte-do-app.js`).
+
+Ficou para depois (ainda em `src/modules/` ou no `index.html`):
+
+1. **Layout em React**: `#appScreen` (cabeçalho, barra lateral, conteúdo) ainda é marcação do
+   `index.html` com `onclick` (`refreshData`, `exportPDF`, `toggleSidebar`…); as telas ainda são
+   `<section class="page">` com `.active`. `src/componentes/barra-lateral/`,
+   `dados-do-monitoramento.js` e `usar-area-atual.js` mudam para `src/app/` junto.
+2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
+3. `nielsen-shell-ux.js` (diálogo de saída por `insertAdjacentHTML` e os estados do seletor de
+   tema), `mobile-bottom-navigation.js`, `mobile-app-experience.js`, `visual-polish.js`,
+   `loading-experience.js`, `connectivity-status.js`, `pwa-lifecycle.js`, `situacao-dos-modulos.js`,
+   `catalogo-de-abas.js`, `copia-da-sessao-indexeddb.js`, `cache-de-payload-indexeddb.js`,
+   `comemoracao-do-acesso.js`, `notificacao.js` → `src/app/` ou React.
+4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
    `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado em
-   `src/app/entrada/entrada.css` com tokens; `auth-storage.js` → `src/lib/`, `sidebar-branding.js`
-   → barra lateral.
-
-Ficou para a fase 2 de propósito: o CSS da tela de acesso (mexer agora mudaria a identidade visual
-configurável e os testes de contraste) e o `#appScreen` (a navegação do legado depende dele).
+   `src/app/entrada/entrada.css`; `auth-storage.js` → `src/lib/`, `sidebar-branding.js` → barra
+   lateral; o CSS morto de `body.sidebar-locked` (`app.css`).

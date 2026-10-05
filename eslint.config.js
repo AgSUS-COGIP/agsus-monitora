@@ -3,12 +3,7 @@ import globals from "globals";
 
 export default [
   {
-    ignores: [
-      "dist/**",
-      "coverage/**",
-      "node_modules/**",
-      "src/modules/legacy-app.js",
-    ],
+    ignores: ["dist/**", "coverage/**", "node_modules/**"],
   },
   {
     /*

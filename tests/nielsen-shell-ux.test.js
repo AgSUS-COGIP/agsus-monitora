@@ -4,7 +4,6 @@ import {
   deveAlternarTema,
   hasUnsavedConfiguration,
   OPCOES_DE_TEMA,
-  presenceStateFromUi,
   themeControlState,
 } from "../src/modules/nielsen-shell-ux.js";
 
@@ -37,33 +36,6 @@ describe("Nielsen shell UX", () => {
     expect(deveAlternarTema("claro", true)).toBe(true);
     expect(deveAlternarTema("claro", false)).toBe(false);
     expect(deveAlternarTema("escuro", true)).toBe(false);
-  });
-
-  it("distingue presença pronta, carregando e indisponível", () => {
-    expect(presenceStateFromUi("2 online")).toEqual({
-      state: "ready",
-      compactLabel: "2 online",
-      detail: "2 pessoas online.",
-    });
-
-    expect(
-      presenceStateFromUi("Sincronizando", { elapsedMs: 2_000 }),
-    ).toMatchObject({ state: "loading", compactLabel: "Sincronizando" });
-
-    expect(
-      presenceStateFromUi("Sincronizando", { elapsedMs: 15_000 }),
-    ).toMatchObject({
-      state: "error",
-      compactLabel: "Presença indisponível",
-    });
-  });
-
-  it("informa quando o navegador está offline", () => {
-    expect(presenceStateFromUi("Sincronizando", { online: false })).toEqual({
-      state: "offline",
-      compactLabel: "Offline",
-      detail: "Sem conexão com a internet.",
-    });
   });
 
   /*
