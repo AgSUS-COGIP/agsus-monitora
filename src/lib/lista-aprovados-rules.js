@@ -30,6 +30,18 @@ export function statusNeedsMatricula(status) {
   return status === "Contratado" || status === "Migração";
 }
 
+/*
+  Convocado: chamado para a contratação, aguardando apresentação e
+  documentos. É o status de passagem — segue para Contratado, Desistente ou
+  Documentação Rejeitada — e leva a data da convocação (DT_CONVOCACAO,
+  migration 20261005180000).
+*/
+export const STATUS_CONVOCADO = "Convocado";
+
+export function statusEhConvocado(status) {
+  return text(status) === STATUS_CONVOCADO;
+}
+
 export function canEditCandidateStatus(profile, candidate) {
   return (
     Boolean(candidate?.lista_ativa) &&
@@ -41,10 +53,23 @@ export function canEditCandidateStatus(profile, candidate) {
 /*
   A trava do status (migration 20260928180000): com status já definido, só o
   admin do módulo o altera — e o processo SEI e a matrícula, que vão na mesma
-  RPC.
+  RPC. Convocado não trava: quem edita segue o fluxo (Contratado,
+  Desistente…) ou corrige a data (migration 20261005180000).
 */
 export function statusTravado(profile, candidate) {
-  return Boolean(text(candidate?.status)) && !canUnlockCandidateStatus(profile);
+  return (
+    Boolean(text(candidate?.status)) &&
+    !statusEhConvocado(candidate?.status) &&
+    !canUnlockCandidateStatus(profile)
+  );
+}
+
+/*
+  Voltar a "Sem status" (desfazer a convocação, por exemplo) é só do admin do
+  módulo quando o candidato já tem status. O banco repete a regra.
+*/
+export function podeTirarOStatus(profile, candidate) {
+  return !text(candidate?.status) || canUnlockCandidateStatus(profile);
 }
 
 /** Anexos do candidato: só o admin do módulo inclui e remove, em lista ativa. */
@@ -141,16 +166,17 @@ export function summarizeApprovedCandidates(rows, filters = {}) {
     desistente: 0,
     migracao: 0,
     documentacaoRejeitada: 0,
-    fimDeFila: 0,
+    convocado: 0,
   };
 
+  // Convocado não é contratado: conta à parte, como na Seleção e nos KPIs.
   filtered.forEach((row) => {
     const status = text(row.status);
     if (status === "Contratado") summary.contratado += 1;
     if (status === "Desistente") summary.desistente += 1;
     if (status === "Migração") summary.migracao += 1;
     if (status === "Documentação Rejeitada") summary.documentacaoRejeitada += 1;
-    if (status === "Fim de Fila") summary.fimDeFila += 1;
+    if (status === STATUS_CONVOCADO) summary.convocado += 1;
   });
 
   return summary;
@@ -225,11 +251,11 @@ export function paginateApprovedCandidates(rows, page = 1, pageSize = 50) {
   "Sem status" (`SEM_STATUS`) à frente; o modal de status usa o valor vazio.
 */
 export const STATUS_DO_CANDIDATO = Object.freeze([
+  STATUS_CONVOCADO,
   "Contratado",
   "Desistente",
   "Migração",
   "Documentação Rejeitada",
-  "Fim de Fila",
 ]);
 
 export const OPCOES_DO_FILTRO_DE_STATUS = Object.freeze([
@@ -238,6 +264,12 @@ export const OPCOES_DO_FILTRO_DE_STATUS = Object.freeze([
     Object.freeze({ value: status, label: status }),
   ),
 ]);
+
+/** "2026-10-05" → "05/10/2026" (sem fuso: é uma data, não um instante). */
+export function formatarData(valor) {
+  const m = text(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+}
 
 /** Nota como a tela a escreve: "87,5"; "-" quando não há número. */
 export function formatarNota(value) {
@@ -261,7 +293,7 @@ export function tomDoStatus(status) {
   if (status === "Desistente" || status === "Documentação Rejeitada")
     return "danger";
   if (status === "Migração") return "info";
-  if (status === "Fim de Fila") return "warning";
+  if (status === STATUS_CONVOCADO) return "warning";
   return "neutral";
 }
 

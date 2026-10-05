@@ -36,8 +36,11 @@
 
     - Desistente e Documentação Rejeitada não ocupam vaga; quem vem a seguir na
       mesma fila toma o lugar. Continuam visíveis, fora da numeração.
-    - Fim de Fila é outra coisa: a pessoa CONTINUA na fila, e em todas as filas
-      em que estava, mas ordenada depois de todos os demais.
+    - Convocado, Contratado e Migração continuam na fila, na posição que o
+      cálculo lhes deu (a vaga é deles): já foram chamados e não são chamados
+      de novo — "a convocar" são só as vagas imediatas ainda sem status.
+
+  O status "Fim de Fila" saiu (migration 20261005180000): ninguém o usava.
 
   O ciclo de posições repete-se depois de esgotadas as vagas imediatas: é assim
   que o cadastro de reserva sai ordenado pelo mesmo critério da convocação, e
@@ -64,16 +67,22 @@ export function estaForaDaFila(candidato) {
 }
 
 /**
- * Quem pediu posicionamento no final da lista.
- *
- * Não sai da fila — é a diferença para Desistente, e o motivo de o status
- * existir: continua convocável, só que depois de todos os outros. O instituto
- * está no edital da FCC (125), item 13.7.
+ * Status de quem já foi chamado: ocupa a sua posição na fila e não é chamado
+ * de novo. Convocado ainda aguarda apresentação e documentos.
  */
-export const STATUS_FIM_DE_FILA = "Fim de Fila";
+export const STATUS_JA_CHAMADO = Object.freeze([
+  "Convocado",
+  "Contratado",
+  "Migração",
+]);
 
-export function vaiParaOFimDaFila(candidato) {
-  return texto(candidato?.status) === STATUS_FIM_DE_FILA;
+export function jaFoiChamado(candidato) {
+  return STATUS_JA_CHAMADO.includes(texto(candidato?.status));
+}
+
+/** Vaga imediata cujo candidato ainda não foi chamado. */
+export function estaAConvocar(linha) {
+  return Boolean(linha?.imediata) && !jaFoiChamado(linha?.candidato);
 }
 
 function inteiroNaoNegativo(valor) {
@@ -172,16 +181,6 @@ export function derivarQuadro(totalImediatas, modelo) {
 */
 export function ordenarPorClassificacao(candidatos) {
   return [...(candidatos || [])].sort((a, b) => {
-    /*
-      Quem pediu fim de fila vai para depois de todos, antes de qualquer outro
-      critério. Uma comparação só resolve TODAS as filas: as de cota são
-      recortes desta mesma ordem, então quem cai para o fim aqui cai para o fim
-      na sua reserva também. Entre eles, a ordem normal continua a valer.
-    */
-    const fimA = vaiParaOFimDaFila(a);
-    const fimB = vaiParaOFimDaFila(b);
-    if (fimA !== fimB) return fimA ? 1 : -1;
-
     const notaA = Number(a?.nota);
     const notaB = Number(b?.nota);
     const temA = Number.isFinite(notaA);
@@ -661,7 +660,10 @@ export function resumirConvocacao(grupos) {
   const resumo = {
     vagas: 0,
     imediatas: 0,
-    convocaveis: 0,
+    /** Vagas imediatas cujo candidato ainda não foi chamado. */
+    aConvocar: 0,
+    /** Chamados, aguardando apresentação e documentos. */
+    convocados: 0,
     reserva: 0,
     foraDaFila: 0,
     vagasRevertidas: 0,
@@ -670,11 +672,84 @@ export function resumirConvocacao(grupos) {
     resumo.vagas += 1;
     resumo.imediatas += grupo.totalImediatas;
     grupo.linhas.forEach((linha) => {
-      if (linha.imediata) resumo.convocaveis += 1;
-      else resumo.reserva += 1;
+      if (estaAConvocar(linha)) resumo.aConvocar += 1;
+      if (texto(linha.candidato?.status) === "Convocado")
+        resumo.convocados += 1;
+      if (!linha.imediata) resumo.reserva += 1;
       if (linha.categoriaReservada) resumo.vagasRevertidas += 1;
     });
     resumo.foraDaFila += grupo.foraDaFila.length;
   });
   return resumo;
+}
+
+/* "2026-10-05" → "05/10/2026". */
+const dataBr = (valor) => {
+  const m = texto(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+};
+
+/** Onde a linha está na chamada: a convocar, já chamado, reserva ou fora. */
+export function situacaoNaChamada(linha) {
+  if (!linha?.posicao) return "Fora da fila";
+  if (jaFoiChamado(linha.candidato)) return "Já chamado";
+  return linha.imediata ? "A convocar" : "Cadastro de reserva";
+}
+
+/**
+ * As linhas do CSV da ordem de convocação (cabeçalho primeiro), na ordem da
+ * tela: por vaga, os da fila e depois os de fora. `convocacoes` é o mapa
+ * candidato_id → { data } (listar_convocacoes_aprovados); `rotulo(grupo,
+ * categoria)` dá o nome da categoria da vaga. Quem gera o arquivo passa as
+ * células por sanitizeCsvCell (csv-security.js).
+ */
+export function linhasDoCsvDaConvocacao(
+  grupos,
+  { convocacoes = new Map(), rotulo = (_, categoria) => categoria || "" } = {},
+) {
+  const linhas = [
+    [
+      "Edital",
+      "Unidade",
+      "Código da vaga",
+      "Cargo",
+      "Ordem",
+      "Classificação geral",
+      "Vaga da convocação",
+      "Situação na chamada",
+      "Nome",
+      "Nota",
+      "Modalidade declarada",
+      "Status",
+      "Data da convocação",
+    ],
+  ];
+  (grupos || []).forEach((grupo) => {
+    [...grupo.linhas, ...grupo.foraDaFila].forEach((linha) => {
+      const c = linha.candidato || {};
+      const categoria = linha.categoria
+        ? ` · ${rotulo(grupo, linha.categoria)}`
+        : "";
+      const vaga = !linha.posicao
+        ? ""
+        : `${linha.imediata ? "Imediata" : "Reserva"}${categoria}`;
+      const nota = Number(c.nota);
+      linhas.push([
+        grupo.edital,
+        grupo.unidade,
+        grupo.codigoVaga,
+        grupo.cargo,
+        linha.posicao ?? "",
+        c.classificacao ?? "",
+        vaga,
+        situacaoNaChamada(linha),
+        texto(c.nome),
+        Number.isFinite(nota) ? String(nota).replace(".", ",") : "",
+        texto(c.modalidade),
+        texto(c.status) || "Sem status",
+        dataBr(convocacoes.get?.(String(c.candidato_id))?.data),
+      ]);
+    });
+  });
+  return linhas;
 }

@@ -133,11 +133,10 @@ describe("filterApprovedCandidates com escolha múltipla", () => {
 
 describe("summarizeApprovedCandidates com escolha múltipla", () => {
   /*
-    Fim de fila é estado próprio, e não uma variação de desistência: quem o
-    pediu continua na lista e será chamado depois de todos. O resumo tem de os
-    contar à parte para a equipa saber quantos são.
+    Convocado é estado próprio (chamado, aguardando apresentação): não é
+    contratado — a Seleção e os KPIs de contratados também não o contam.
   */
-  it("conta o fim de fila à parte, sem o somar a desistente", () => {
+  it("conta o convocado à parte, sem o somar a contratado", () => {
     const resumo = summarizeApprovedCandidates(
       [
         ...candidatos,
@@ -148,13 +147,13 @@ describe("summarizeApprovedCandidates com escolha múltipla", () => {
           cargo: "Enfermeiro",
           edital_id: "10",
           edital: "03/2025",
-          status: "Fim de Fila",
+          status: "Convocado",
         },
       ],
       {},
     );
-    expect(resumo.fimDeFila).toBe(1);
-    expect(resumo.desistente).toBe(1);
+    expect(resumo.convocado).toBe(1);
+    expect(resumo).not.toHaveProperty("fimDeFila");
   });
 
   it("conta dentro dos editais escolhidos, ignorando o filtro de status", () => {
