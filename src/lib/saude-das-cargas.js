@@ -10,7 +10,8 @@
     Em andamento    só há execução em curso, nenhuma terminada.
     Atrasada        a última que deu certo terminou há mais que o prazo.
     Em dia          a última que deu certo está dentro do prazo.
-  Carga sem prazo (a completa das análises, que roda quando alguém pede) só
+  Carga sem prazo (a completa das análises e o robô da Empregare, que rodam
+  quando alguém pede) só
   fica "em dia" ou "falhou".
 
   OS PRAZOS (folga sobre o esperado, decisão de 01/10/2026)
@@ -18,9 +19,7 @@
     Entrevistas e Seleção   esperado de hora em hora das 7h às 19h (Brasília) ·
                             atrasada depois de 4 h das 9h às 20h; fora disso,
                             depois de 14 h (a noite sem carga não conta)
-    Robô da Empregare       esperado de segunda a sexta às 6h30 (Brasília) ·
-                            atrasada depois de 26 h; do sábado até segunda 9h,
-                            depois de 74 h (o fim de semana não conta)
+    Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
     Tarefas a cada 2 min    atrasada depois de 15 min
     Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
 */
@@ -30,7 +29,6 @@ export const PRAZO_ANALISES_MIN = 60;
 export const PRAZO_DIARIO_MIN = 26 * 60;
 export const PRAZO_FREQUENTE_MIN = 15;
 export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
-export const PRAZO_FIM_DE_SEMANA_MIN = 74 * 60;
 export const PRAZO_DE_HORA_EM_HORA_MIN = 4 * 60;
 export const PRAZO_DA_NOITE_MIN = 14 * 60;
 
@@ -40,15 +38,6 @@ export function prazoDeHoraEmHora(agora = new Date()) {
   return hora >= 9 && hora <= 20
     ? PRAZO_DE_HORA_EM_HORA_MIN
     : PRAZO_DA_NOITE_MIN;
-}
-
-/** Prazo do robô da Empregare (dias úteis): 74 h do sábado até segunda 9h de Brasília, 26 h no resto. */
-export function prazoDosDiasUteis(agora = new Date()) {
-  const brasilia = new Date(agora.getTime() - 3 * 60 * MINUTO);
-  const dia = brasilia.getUTCDay();
-  const fimDeSemana =
-    dia === 6 || dia === 0 || (dia === 1 && brasilia.getUTCHours() < 9);
-  return fimDeSemana ? PRAZO_FIM_DE_SEMANA_MIN : PRAZO_DIARIO_MIN;
 }
 
 export const SITUACOES = Object.freeze({
@@ -257,8 +246,8 @@ export function normalizarSaude(dados, agora = new Date()) {
             id: "empregare",
             nome: "Robô da Empregare",
             onde: "GitHub Actions · Robô da Empregare",
-            esperado: "de segunda a sexta às 6h30",
-            prazoMin: prazoDosDiasUteis(agora),
+            esperado: "quando um administrador pede",
+            prazoMin: null,
             tipo: "robo",
             execucoes: dados.empregare.map(execucaoDoRobo),
           },
@@ -307,7 +296,7 @@ export function normalizarSaude(dados, agora = new Date()) {
       id: "robos",
       titulo: "Robô da Empregare",
       descricao:
-        "Candidatos de cada vaga, do Excel exportado da Empregare, de segunda a sexta às 6h30.",
+        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora).",
       cargas: robos,
     },
     {
@@ -444,7 +433,7 @@ export function visaoSimples(saude) {
         id: carga.id,
         titulo: "Robô da Empregare",
         explicacao:
-          "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, de segunda a sexta às 6h30.",
+          "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, quando um administrador clica em Rodar agora.",
         partes: [carga],
         situacoesQueContam: [carga.situacao],
       }),

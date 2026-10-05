@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   normalizarSaude,
   prazoDaAgenda,
-  prazoDosDiasUteis,
-  PRAZO_FIM_DE_SEMANA_MIN,
   PRAZO_DIARIO_MIN,
   PRAZO_DE_HORA_EM_HORA_MIN,
   PRAZO_DA_NOITE_MIN,
@@ -336,29 +334,14 @@ describe("robô da Empregare (20261005170000)", () => {
     );
   });
 
-  it("prazo dos dias úteis: o fim de semana não atrasa", () => {
-    // 01/10/2026 é quinta-feira.
-    expect(prazoDosDiasUteis(new Date("2026-10-01T12:00:00Z"))).toBe(
-      PRAZO_DIARIO_MIN,
-    );
-    expect(prazoDosDiasUteis(new Date("2026-10-03T15:00:00Z"))).toBe(
-      PRAZO_FIM_DE_SEMANA_MIN,
-    );
-    // Segunda 8h de Brasília (11h UTC): ainda vale o fim de semana; 10h, não.
-    expect(prazoDosDiasUteis(new Date("2026-10-05T11:00:00Z"))).toBe(
-      PRAZO_FIM_DE_SEMANA_MIN,
-    );
-    expect(prazoDosDiasUteis(new Date("2026-10-05T13:00:00Z"))).toBe(
-      PRAZO_DIARIO_MIN,
-    );
+  it("robô da Empregare sem prazo: só roda quando alguém pede, nunca fica atrasado", () => {
     const domingo = new Date("2026-10-04T15:00:00Z");
-    const sexta = new Date("2026-10-02T09:40:00Z").toISOString();
+    const umMesAntes = new Date("2026-09-02T09:40:00Z").toISOString();
     const s = comRobo(
-      [{ inicio: sexta, fim: sexta, situacao: "CONCLUIDA" }],
+      [{ inicio: umMesAntes, fim: umMesAntes, situacao: "CONCLUIDA" }],
       domingo,
     );
-    expect(
-      visaoSimples(s).linhas.find((l) => l.id === "empregare").situacao,
-    ).toBe("em_dia");
+    const robo = visaoSimples(s).linhas.find((l) => l.id === "empregare");
+    expect(robo.situacao).toBe("em_dia");
   });
 });
