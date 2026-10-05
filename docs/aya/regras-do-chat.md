@@ -3,7 +3,9 @@
 O chat do MONITORA: o ícone Mensagens no cabeçalho e o painel lateral. Fontes:
 `src/modulos/chat/`, `src/lib/chat.js`, `src/lib/emojis-do-chat.js`, `src/lib/access-roles.js`
 (`podeUsarChat`), `supabase/migrations/20261002210000_chat.sql` e
-`supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql`.
+`supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql` e, para a retenção,
+`src/modulos/configuracoes/mensagens-do-chat.jsx`, `src/lib/retencao-do-chat.js` e
+`supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql`.
 
 ## O que é o chat
 
@@ -82,3 +84,31 @@ O chat do MONITORA: o ícone Mensagens no cabeçalho e o painel lateral. Fontes:
 **perguntas:** quem pode usar o chat | nao vejo o icone de mensagens | permissao do chat | desligar o chat de um grupo
 **resposta:** Mensagens é um recurso da matriz de acessos (Configurações › Acessos), com dois níveis: Sem acesso ou Usar. Em teste, só os grupos Administrador global e Gestor estão com Usar (05/10/2026); o administrador liga ou desliga por grupo ou por pessoa. Pessoas online, de onde sai o botão Mensagem, também é só do administrador global e do Gestor. Sem o recurso, o ícone não aparece e o botão "Conversa" some de Editais e da Classificação. Em Pessoas online, cada pessoa tem o botão "Mensagem", que abre a conversa direta com ela.
 **fonte:** src/lib/permissoes-recursos.js; src/lib/access-roles.js; supabase/migrations/20261002210000_chat.sql
+
+## Seção Mensagens (chat) das Configurações
+
+**perguntas:** para que serve mensagens (chat) | para que serve a secao mensagens (chat) | configuracoes mensagens chat | retencao do chat | quem configura o chat | secao mensagens das configuracoes
+**resposta:** Em Configurações › Mensagens (chat), só o administrador global define por quanto tempo o chat guarda as mensagens, zera as mensagens e vê o histórico das limpezas. No topo aparecem quantas mensagens, reações e conversas existem e a data da mensagem mais antiga.
+**fonte:** src/modulos/configuracoes/mensagens-do-chat.jsx; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql
+**abrir:** config:mensagens
+
+## Prazo de retenção das mensagens
+
+**perguntas:** prazo de retencao das mensagens | como funciona o prazo de retencao das mensagens | por quanto tempo o chat guarda as mensagens | mensagens antigas somem | apagar mensagens antigas do chat | lgpd chat | guardar para sempre
+**resposta:** O padrão é "Guardar para sempre". O administrador global pode escolher 30, 90, 180 ou 365 dias, ou outro prazo de 7 a 3.650 dias, e informa o motivo. A tela mostra quantas mensagens o prazo escolhido apagaria; se apagar alguma, pede confirmação ("Isto apaga X mensagens com mais de N dias; não dá para desfazer"). Ao salvar, as mensagens mais antigas que o prazo e as reações delas são apagadas de fato, na hora (dado que passou do prazo deixa de existir, como pede a LGPD); as conversas continuam, sem essas mensagens. Depois, uma limpeza automática roda todo dia às 3h15 de Brasília e aparece em Status das atualizações como "Retenção das mensagens do chat". Quem está com o chat aberto vê as mensagens sumirem sozinhas.
+**fonte:** src/lib/retencao-do-chat.js; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql
+**abrir:** config:mensagens
+
+## Zerar mensagens
+
+**perguntas:** o que o zerar mensagens apaga | zerar mensagens | apagar todas as mensagens do chat | limpar o chat de todo mundo | apagar conversas sem participante
+**resposta:** "Zerar mensagens" apaga TODAS as mensagens e reações do chat, de todas as pessoas, sem volta. Antes, a tela mostra quanto vai ser apagado. Marcando "Apagar também as conversas sem participante ativo", saem ainda os grupos e as conversas de edital que todos deixaram; conversas diretas e as que ainda têm alguém continuam, vazias. Para confirmar, é preciso digitar ZERAR (em maiúsculas) e informar o motivo (de 3 a 500 caracteres). É diferente de "Limpar conversa", que só esconde o histórico para você.
+**fonte:** src/modulos/configuracoes/mensagens-do-chat.jsx; supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql
+**abrir:** config:mensagens
+
+## Histórico das limpezas do chat
+
+**perguntas:** historico das limpezas | quem apagou as mensagens do chat | quando as mensagens foram apagadas | auditoria do chat
+**resposta:** Em Configurações › Mensagens (chat), o histórico mostra cada limpeza: o tipo (prazo salvo, limpeza diária ou zerar), quando, quem pediu (ou "Tarefa diária"), quantas mensagens, reações e conversas saíram e o motivo. O histórico nunca guarda o conteúdo das mensagens apagadas.
+**fonte:** supabase/migrations/20261005190000_chat_retencao_das_mensagens.sql
+**abrir:** config:mensagens

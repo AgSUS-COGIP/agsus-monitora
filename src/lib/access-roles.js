@@ -226,14 +226,15 @@ export function podeAbrirConfiguracoes(profile) {
 
 /**
  * Seção de Configurações liberada: "acessos" é de quem gerencia acessos;
- * "modulos" (Módulos e abas: ativar, desativar, manutenção) e "cargas"
- * (Status das atualizações), só do admin global; as demais, de quem edita
+ * "modulos" (Módulos e abas: ativar, desativar, manutenção), "cargas"
+ * (Status das atualizações) e "mensagens" (retenção do chat), só do admin global; as demais, de quem edita
  * configurações.
  */
 export function secaoDeConfiguracaoPermitida(profile, secao) {
   if (secao === "acessos") return canManageAccess(profile);
   if (secao === "modulos") return isAdminGlobal(profile);
   if (secao === "cargas") return isAdminGlobal(profile);
+  if (secao === "mensagens") return isAdminGlobal(profile);
   return canManageSettings(profile);
 }
 

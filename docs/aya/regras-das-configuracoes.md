@@ -77,7 +77,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Quem abre as Configurações
 
 **perguntas:** para que serve configuracoes | tela de configuracoes | quem pode ver as configuracoes | secoes das configuracoes | administracao
-**resposta:** Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.
+**resposta:** Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas, Status das atualizações e Mensagens (chat). As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas, Status das atualizações e Mensagens (chat), só para o administrador global. Cada pessoa vê só as seções que pode abrir.
 **fonte:** src/lib/access-roles.js; src/modulos/configuracoes/secoes.js
 
 ## Publicar uma alteração

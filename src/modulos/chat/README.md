@@ -34,11 +34,22 @@ chat.css               só tokens
   Nada no carregamento inicial. Regras: `src/lib/avisos-do-chat.js`.
 - Limpar conversa (para mim): `limpar_conversa_chat` grava `DT_LIMPEZA` só na linha de quem limpou;
   as listagens filtram. Reações: `alternar_reacao_chat`, na hora na tela e desfeita se falhar.
+- Retenção e "Zerar mensagens" (Configurações › Mensagens (chat), só o administrador global:
+  `src/modulos/configuracoes/mensagens-do-chat.jsx`, regras em `src/lib/retencao-do-chat.js`):
+  prazo em dias (padrão: guardar para sempre) aplicado na hora e todo dia pela tarefa
+  `agsus_chat_retencao_diaria`; exclusão real das mensagens e reações, auditada em
+  `TH_LIMPEZA_CHAT` (sem conteúdo). No painel, o DELETE do Realtime (só a chave) tira a mensagem
+  (`tirarMensagens`) e a releitura da página mais nova tira o que sumiu do banco
+  (`reconciliarPagina`).
 
 Regras puras: `src/lib/chat.js`, `src/lib/avisos-do-chat.js` e `src/lib/emojis-do-chat.js`. Banco:
-`supabase/migrations/20261002210000_chat.sql` e `20261005100000_chat_limpar_e_reacoes.sql` (ensaios
+`supabase/migrations/20261002210000_chat.sql`, `20261005100000_chat_limpar_e_reacoes.sql` e
+`20261005190000_chat_retencao_das_mensagens.sql` (ensaios
 em `supabase/ensaios/`, rollbacks em `supabase/rollback/`). Explicações: `docs/aya/regras-do-chat.md`.
 Testes: `tests/chat.test.js`, `tests/avisos-do-chat.test.js`, `tests/chat-limpar-e-reacoes.test.js`, `tests/emojis-do-chat.test.js`,
 `tests/modulos/chat.test.js`, `tests/modulos/chat-estado-limpar-e-reacoes.test.js`,
-`tests/chat-migration.test.js`, `tests/chat-limpar-e-reacoes-migration.test.js`.
+`tests/chat-migration.test.js`, `tests/chat-limpar-e-reacoes-migration.test.js`;
+retenção: `tests/retencao-do-chat.test.js`, `tests/chat-retencao-migration.test.js`,
+`tests/modulos/chat-estado-retencao.test.js`, `tests/componentes/mensagens-do-chat.test.js`.
+Histórias de usuário: `docs/historias-de-usuario/chat.md`.
 Fica para a v2: anexos de arquivo.

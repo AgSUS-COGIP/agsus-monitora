@@ -991,6 +991,25 @@ export const CONTRATO_RPC = {
     resumo:
       "Põe ou tira a reação rápida (👍 ✅ ❤️ 😂 👀 🙏) de quem está logado na mensagem; devolve a mensagem com as reações. 42501 fora da conversa; 22023 emoji fora da lista ou mensagem apagada.",
   },
+  // ── Retenção das mensagens do chat (20261005190000_chat_retencao_das_mensagens.sql)
+  obter_retencao_chat: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Configurações › Mensagens (chat), só administrador global (42501): prazo de retenção (nulo = para sempre), contagens de mensagens, reações e conversas, a mais antiga, idades [{dias, mensagens}] e as últimas 50 limpezas.",
+  },
+  salvar_retencao_chat: {
+    argumentos: ["p_dias", "p_motivo"],
+    critica: false,
+    resumo:
+      "Define o prazo de retenção (nulo ou 7 a 3.650 dias) com motivo (3 a 500); com prazo, apaga de fato na hora as mensagens mais antigas e as reações delas e registra em TH_LIMPEZA_CHAT. Só administrador global (42501); fora das faixas, 22023.",
+  },
+  zerar_mensagens_chat: {
+    argumentos: ["p_confirmacao", "p_motivo", "p_incluir_conversas"],
+    critica: false,
+    resumo:
+      "Apaga de fato todas as mensagens e reações do chat (e, com p_incluir_conversas, as conversas sem participante ativo). p_confirmacao exatamente ZERAR e motivo de 3 a 500 (22023). Só administrador global (42501).",
+  },
   registrar_presenca_monitora: {
     argumentos: ["p_current_view"],
     critica: false,
