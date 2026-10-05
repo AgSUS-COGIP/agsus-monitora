@@ -62,8 +62,8 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 
 ## Regras
 
-- Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo, trecho do
-  `legacy-app.js`, marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
+- Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo,
+  marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
 
 - Handler de navegação chama `window.navigate` **na hora do clique** (não guarde a referência na
   montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
