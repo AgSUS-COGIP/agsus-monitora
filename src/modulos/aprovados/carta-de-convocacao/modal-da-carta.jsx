@@ -60,7 +60,8 @@ function Emitida({ estado, emissao, candidatos, hoje }) {
       {quem.length ? (
         <span className="carta-marcar">
           <label htmlFor="cartaDataConvocacao">
-            Marcar {quem.length === 1 ? quem[0].nome : `${quem.length} candidatos`}{" "}
+            Marcar{" "}
+            {quem.length === 1 ? quem[0].nome : `${quem.length} candidatos`}{" "}
             como Convocado em
           </label>
           <input
@@ -94,7 +95,11 @@ function Emitida({ estado, emissao, candidatos, hoje }) {
   );
 }
 
-export function ModalDaCarta({ estado, candidatos: iniciais, podeEditarModelos }) {
+export function ModalDaCarta({
+  estado,
+  candidatos: iniciais,
+  podeEditarModelos,
+}) {
   const carta = useSyncExternalStore(estado.carta.assinar, estado.carta.obter);
   const hoje = estado.carta.hoje();
   const [candidatos, setCandidatos] = useState(iniciais);
@@ -103,8 +108,7 @@ export function ModalDaCarta({ estado, candidatos: iniciais, podeEditarModelos }
     [carta.modelos, candidatos],
   );
   const [modeloId, setModeloId] = useState("");
-  const modelo =
-    opcoes.find((m) => m.id === modeloId) || opcoes[0] || null;
+  const modelo = opcoes.find((m) => m.id === modeloId) || opcoes[0] || null;
   const [valores, setValores] = useState({});
   const emissao = valores[modelo?.id] || emissaoInicial(modelo, hoje);
   const [agrupamento, setAgrupamento] = useState("UNICO");
@@ -282,7 +286,9 @@ export function ModalDaCarta({ estado, candidatos: iniciais, podeEditarModelos }
                       aria-label={`Tirar ${c.nome} da carta`}
                       onClick={() => {
                         setCandidatos((atuais) =>
-                          atuais.filter((o) => o.candidato_id !== c.candidato_id),
+                          atuais.filter(
+                            (o) => o.candidato_id !== c.candidato_id,
+                          ),
                         );
                         setIndice(0);
                       }}
@@ -392,7 +398,9 @@ export function ModalDaCarta({ estado, candidatos: iniciais, podeEditarModelos }
             onClick={() => void emitir("SEI")}
           >
             <i className="fa-solid fa-copy" aria-hidden="true" />{" "}
-            {porCandidato ? "Copiar esta carta para o SEI" : "Copiar para o SEI"}
+            {porCandidato
+              ? "Copiar esta carta para o SEI"
+              : "Copiar para o SEI"}
           </BotaoDeAcao>
         </div>
       ) : null}

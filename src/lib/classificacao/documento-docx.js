@@ -373,5 +373,8 @@ export function arquivosDoDocx(
 /** Os bytes do .docx (arquivosDoDocx zipado). */
 export function pacoteDocx(partes, opcoes = {}) {
   const quando = opcoes.quando || new Date();
-  return zipSemCompressao(arquivosDoDocx(partes, { ...opcoes, quando }), quando);
+  return zipSemCompressao(
+    arquivosDoDocx(partes, { ...opcoes, quando }),
+    quando,
+  );
 }

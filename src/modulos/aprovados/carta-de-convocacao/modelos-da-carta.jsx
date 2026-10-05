@@ -206,7 +206,11 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
             onChange={(evento) => mudar("texto", evento.target.value)}
           />
         </Campo>
-        <div className="carta-campos" role="group" aria-label="Inserir campo no texto">
+        <div
+          className="carta-campos"
+          role="group"
+          aria-label="Inserir campo no texto"
+        >
           {CAMPOS_DA_CARTA.map((campo) => (
             <button
               key={campo.chave}
@@ -257,7 +261,10 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
           />
         </Campo>
         {editando ? (
-          <Campo rotulo={`Motivo da alteração (versão ${modelo.versao + 1})`} obrigatorio>
+          <Campo
+            rotulo={`Motivo da alteração (versão ${modelo.versao + 1})`}
+            obrigatorio
+          >
             <input
               id="cartaModeloMotivo"
               maxLength={500}
@@ -303,7 +310,9 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
       </form>
       {pagina ? (
         <div className="carta-previa">
-          <small className="carta-previa-exemplo">Prévia com {exemplo.nome}</small>
+          <small className="carta-previa-exemplo">
+            Prévia com {exemplo.nome}
+          </small>
           <iframe
             className="carta-previa-folha"
             title="Prévia do modelo no SEI"
@@ -320,7 +329,8 @@ export function ModelosDaCarta({ estado, listas, candidatos }) {
   const carta = useSyncExternalStore(estado.carta.assinar, estado.carta.obter);
   const [editando, setEditando] = useState(null);
   const fechar = estado.fecharModal;
-  const exemplo = candidatos.find((c) => c.lista_ativa) || candidatos[0] || null;
+  const exemplo =
+    candidatos.find((c) => c.lista_ativa) || candidatos[0] || null;
   const podeEditar = carta.podeEditar;
 
   return (
@@ -341,7 +351,9 @@ export function ModelosDaCarta({ estado, listas, candidatos }) {
       </div>
       {editando ? (
         <Editor
-          key={editando === "novo" ? "novo" : `${editando.id}:${editando.versao}`}
+          key={
+            editando === "novo" ? "novo" : `${editando.id}:${editando.versao}`
+          }
           estado={estado}
           modelo={editando === "novo" ? null : editando}
           listas={listas}
@@ -367,14 +379,19 @@ export function ModelosDaCarta({ estado, listas, candidatos }) {
                 data-foco-inicial
                 onClick={() => setEditando("novo")}
               >
-                <i className="fa-solid fa-plus" aria-hidden="true" /> Novo modelo
+                <i className="fa-solid fa-plus" aria-hidden="true" /> Novo
+                modelo
               </button>
             </div>
           ) : null}
           {carta.modelos.length ? (
             <ul className="carta-lista-de-modelos" id="cartaListaDeModelos">
               {carta.modelos.map((modelo) => (
-                <li key={modelo.id} data-modelo={modelo.id} data-ativo={modelo.ativo || undefined}>
+                <li
+                  key={modelo.id}
+                  data-modelo={modelo.id}
+                  data-ativo={modelo.ativo || undefined}
+                >
                   <div className="carta-modelo-copy">
                     <strong>{modelo.nome}</strong>
                     <small>
@@ -401,7 +418,8 @@ export function ModelosDaCarta({ estado, listas, candidatos }) {
                         data-modelo-action="editar"
                         onClick={() => setEditando(modelo)}
                       >
-                        <i className="fa-solid fa-pen" aria-hidden="true" /> Editar
+                        <i className="fa-solid fa-pen" aria-hidden="true" />{" "}
+                        Editar
                       </button>
                     ) : null}
                     {podeEditar ? (

@@ -268,7 +268,9 @@ function TabelaDoGrupo({
                         data-candidate-id={candidato.candidato_id}
                         aria-label={`Escolher ${candidato.nome} para a carta de convocação`}
                         checked={selecao.tem(candidato.candidato_id)}
-                        onChange={() => selecao.alternar(candidato.candidato_id)}
+                        onChange={() =>
+                          selecao.alternar(candidato.candidato_id)
+                        }
                       />
                     ) : null}
                   </td>
@@ -614,7 +616,10 @@ export function AbaConvocacao({
               disabled={!escolhidosValidos.length}
               onClick={() => estado.abrirCarta(escolhidosValidos)}
             >
-              <i className="fa-solid fa-envelope-open-text" aria-hidden="true" />{" "}
+              <i
+                className="fa-solid fa-envelope-open-text"
+                aria-hidden="true"
+              />{" "}
               Carta de convocação
             </button>
             <button

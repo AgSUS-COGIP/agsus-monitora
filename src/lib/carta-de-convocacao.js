@@ -151,7 +151,9 @@ export function valoresDaCarta(candidato = {}, emissao = {}) {
     UNIDADE: texto(candidato.unidade),
     EDITAL: texto(candidato.edital),
     POSICAO:
-      Number.isFinite(posicao) && posicao > 0 ? String(Math.trunc(posicao)) : "",
+      Number.isFinite(posicao) && posicao > 0
+        ? String(Math.trunc(posicao))
+        : "",
     MODALIDADE: modalidadeSemAspas(candidato.modalidade),
     DATA_LIMITE: dataCurta(emissao.dataLimite),
     LOCAL: texto(emissao.local),
@@ -164,14 +166,17 @@ export function valoresDaCarta(candidato = {}, emissao = {}) {
 /** Troca os campos de uma linha; devolve o texto e os campos que ficaram sem valor. */
 export function trocarCampos(linha, valores) {
   const faltando = [];
-  const saida = String(linha ?? "").replace(PADRAO_DO_CAMPO, (inteiro, bruto) => {
-    const chave = chaveDoCampo(bruto);
-    if (!CHAVES.has(chave)) return inteiro;
-    const valor = texto(valores[chave]);
-    if (valor) return valor;
-    if (!faltando.includes(chave)) faltando.push(chave);
-    return ESPACO_EM_BRANCO;
-  });
+  const saida = String(linha ?? "").replace(
+    PADRAO_DO_CAMPO,
+    (inteiro, bruto) => {
+      const chave = chaveDoCampo(bruto);
+      if (!CHAVES.has(chave)) return inteiro;
+      const valor = texto(valores[chave]);
+      if (valor) return valor;
+      if (!faltando.includes(chave)) faltando.push(chave);
+      return ESPACO_EM_BRANCO;
+    },
+  );
   return { texto: saida, faltando };
 }
 
@@ -232,13 +237,18 @@ export function validarModelo(rascunho = {}, { versaoAtual = 0 } = {}) {
     erros.push("O título deve ter de 1 a 300 caracteres.");
   if (!corpo || corpo.length > 20000)
     erros.push("O texto da carta deve ter de 1 a 20.000 caracteres.");
-  if (texto(rascunho.local).length > 500 || texto(rascunho.contato).length > 500)
+  if (
+    texto(rascunho.local).length > 500 ||
+    texto(rascunho.contato).length > 500
+  )
     erros.push("Local e contato vão até 500 caracteres.");
   if (texto(rascunho.documentos).length > 5000)
     erros.push("Os documentos vão até 5.000 caracteres.");
   const prazo = texto(rascunho.prazoDias);
-  if (prazo && !/^\d{1,2}$/.test(prazo)) erros.push("O prazo vai de 0 a 90 dias.");
-  else if (prazo && Number(prazo) > 90) erros.push("O prazo vai de 0 a 90 dias.");
+  if (prazo && !/^\d{1,2}$/.test(prazo))
+    erros.push("O prazo vai de 0 a 90 dias.");
+  else if (prazo && Number(prazo) > 90)
+    erros.push("O prazo vai de 0 a 90 dias.");
   const desconhecidos = camposDesconhecidos(titulo, corpo);
   if (desconhecidos.length)
     erros.push(
@@ -275,7 +285,8 @@ export function validarEmissao({
   const avisos = [];
   if (!modelo) erros.push("Escolha o modelo da carta.");
   if (!candidatos.length) erros.push("Escolha ao menos um candidato.");
-  if (candidatos.length > 500) erros.push("No máximo 500 candidatos por carta.");
+  if (candidatos.length > 500)
+    erros.push("No máximo 500 candidatos por carta.");
   if (!modelo) return { erros, avisos };
   const usados = camposUsados(modelo.titulo, modelo.texto);
   if (usados.includes("DATA_LIMITE")) {
@@ -294,7 +305,11 @@ export function validarEmissao({
   for (const candidato of candidatos) {
     const { faltando } = preencherCarta(modelo, candidato, emissao);
     faltando
-      .filter((chave) => CAMPOS_DA_CARTA.find((c) => c.chave === chave)?.origem === "candidato")
+      .filter(
+        (chave) =>
+          CAMPOS_DA_CARTA.find((c) => c.chave === chave)?.origem ===
+          "candidato",
+      )
       .forEach((chave) => {
         if (!semValor.has(chave)) semValor.set(chave, []);
         semValor.get(chave).push(texto(candidato.nome));
@@ -400,8 +415,7 @@ export function modelosParaEmitir(modelos, candidatos) {
 
 /** O rascunho do formulário a partir de um modelo (ou do padrão, para criar). */
 export function rascunhoDoModelo(modelo = null) {
-  if (!modelo)
-    return { ...MODELO_PADRAO, editalId: "", motivo: "" };
+  if (!modelo) return { ...MODELO_PADRAO, editalId: "", motivo: "" };
   return {
     nome: modelo.nome,
     titulo: modelo.vigente.titulo,
@@ -421,7 +435,9 @@ export function conteudoParaSalvar(rascunho = {}) {
   return {
     nome: texto(rascunho.nome),
     titulo: texto(rascunho.titulo),
-    texto: String(rascunho.texto ?? "").replace(/\r\n?/g, "\n").trim(),
+    texto: String(rascunho.texto ?? "")
+      .replace(/\r\n?/g, "\n")
+      .trim(),
     local: texto(rascunho.local),
     documentos: listaDeDocumentos(rascunho.documentos).join("\n"),
     contato: texto(rascunho.contato),

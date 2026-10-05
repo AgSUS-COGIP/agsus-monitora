@@ -122,9 +122,7 @@ export function GavetaDoCandidato({ estado, perfil, candidato, convocacao }) {
             <Kv rotulo="Modalidade">
               {modalidadeSemAspas(candidato.modalidade)}
             </Kv>
-            <Kv rotulo="Classificação">
-              {candidato.classificacao ?? ""}
-            </Kv>
+            <Kv rotulo="Classificação">{candidato.classificacao ?? ""}</Kv>
             <Kv rotulo="Nota">
               {candidato.nota === null || candidato.nota === undefined
                 ? ""
@@ -143,7 +141,10 @@ export function GavetaDoCandidato({ estado, perfil, candidato, convocacao }) {
         >
           {!historico || historico.carregando ? (
             <div className="aprovados-cartas-emitidas" aria-busy="true">
-              <BlocosEsqueleto quantos={2} className="aprovados-carta-esqueleto" />
+              <BlocosEsqueleto
+                quantos={2}
+                className="aprovados-carta-esqueleto"
+              />
             </div>
           ) : historico.erro ? (
             <p className="ui-vazio">

@@ -23,7 +23,12 @@
   `montarCartas` preenche o modelo para cada candidato (carta-de-convocacao.js).
 */
 
-import { LOCAL_PADRAO, htmlDoTrecho, paginaNoModeloDoSei, trechos } from "./classificacao/documento-sei.js";
+import {
+  LOCAL_PADRAO,
+  htmlDoTrecho,
+  paginaNoModeloDoSei,
+  trechos,
+} from "./classificacao/documento-sei.js";
 import {
   arquivosDoDocx,
   corridas,
@@ -67,7 +72,10 @@ export function montarCartas({
 } = {}) {
   const vigente = modelo?.vigente || {};
   const cartas = candidatos.map((candidato) => {
-    const carta = preencherCarta(vigente, candidato, { ...emissao, data: hoje });
+    const carta = preencherCarta(vigente, candidato, {
+      ...emissao,
+      data: hoje,
+    });
     return {
       candidatoId: String(candidato.candidato_id ?? ""),
       nome: texto(candidato.nome),
@@ -76,7 +84,9 @@ export function montarCartas({
       faltando: carta.faltando,
     };
   });
-  const titulo = semMarcas(cartas[0]?.titulo || vigente.titulo || "Carta de convocação");
+  const titulo = semMarcas(
+    cartas[0]?.titulo || vigente.titulo || "Carta de convocação",
+  );
   return {
     nome:
       cartas.length === 1
@@ -129,7 +139,9 @@ function htmlDaCarta(doc, carta) {
 
 /** O HTML para colar no editor do SEI (sem timbrado, assinatura e rodapé). */
 export function htmlParaSei(doc) {
-  return doc.cartas.map((carta) => htmlDaCarta(doc, carta)).join(`\n${QUEBRA_DO_SEI}\n`);
+  return doc.cartas
+    .map((carta) => htmlDaCarta(doc, carta))
+    .join(`\n${QUEBRA_DO_SEI}\n`);
 }
 
 /** As cartas em texto puro, separadas por uma linha de traços. */
@@ -174,7 +186,10 @@ export function paginaDaPrevia(doc, marca = {}) {
 
 const RECUO = 1418; // 25 mm, como no SEI
 
-function paragrafoXml(conteudo, { alinhamento = "both", recuo = 0, antes = 0, depois = 120 } = {}) {
+function paragrafoXml(
+  conteudo,
+  { alinhamento = "both", recuo = 0, antes = 0, depois = 120 } = {},
+) {
   return (
     `<w:p><w:pPr><w:spacing w:before="${antes}" w:after="${depois}"/>` +
     `${recuo ? `<w:ind w:firstLine="${recuo}"/>` : ""}<w:jc w:val="${alinhamento}"/></w:pPr>${conteudo}</w:p>`
@@ -183,7 +198,10 @@ function paragrafoXml(conteudo, { alinhamento = "both", recuo = 0, antes = 0, de
 
 function partesDaCarta(doc, carta) {
   return [
-    paragrafoXml(corridas(doc.localDataPorExtenso), { alinhamento: "right", depois: 240 }),
+    paragrafoXml(corridas(doc.localDataPorExtenso), {
+      alinhamento: "right",
+      depois: 240,
+    }),
     paragrafoXml(corridas(carta.titulo, { tamanho: 26, caixaAlta: true }), {
       alinhamento: "center",
       depois: 240,
@@ -208,7 +226,10 @@ export function corpoDasCartasXml(doc) {
 
 /** Os bytes do .docx com todas as cartas (papel timbrado). */
 export function gerarDocxDasCartas(doc, opcoes = {}) {
-  return pacoteDocx({ nome: doc.nome, documento: corpoDasCartasXml(doc) }, opcoes);
+  return pacoteDocx(
+    { nome: doc.nome, documento: corpoDasCartasXml(doc) },
+    opcoes,
+  );
 }
 
 /** Nome de arquivo seguro: sem acento, barra nem símbolo. */
@@ -231,7 +252,10 @@ export function gerarZipDasCartas(doc, opcoes = {}) {
   const arquivos = doc.cartas.map((carta, i) => {
     const uma = soACarta(doc, i);
     const bytes = zipSemCompressao(
-      arquivosDoDocx({ nome: uma.nome, documento: corpoDasCartasXml(uma) }, { ...opcoes, quando }),
+      arquivosDoDocx(
+        { nome: uma.nome, documento: corpoDasCartasXml(uma) },
+        { ...opcoes, quando },
+      ),
       quando,
     );
     return {

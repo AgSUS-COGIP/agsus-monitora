@@ -63,7 +63,9 @@ describe("migration do Convocado: status", () => {
     expect(MIGRATION).toContain(
       "if exists (select 1 from public.\"TB_CANDIDATO_APROVADO\" where status = 'Fim de Fila') then",
     );
-    expect(MIGRATION).not.toMatch(/update public\."TB_CANDIDATO_APROVADO"\s+set status = null/i);
+    expect(MIGRATION).not.toMatch(
+      /update public\."TB_CANDIDATO_APROVADO"\s+set status = null/i,
+    );
   });
 
   it("Convocado sempre com data, nunca futura; do Convocado o editor segue o fluxo, sem status só o admin", () => {
@@ -91,14 +93,16 @@ describe("migration do Convocado: status", () => {
     );
     expect(funcao).toContain('"CO_CARTA_CONVOCACAO"');
     expect(funcao).toContain('set "DT_CONVOCACAO_MARCADA" = v_data');
-    expect(funcao.indexOf('private."FC_EXIGIR_AREA_EDITAL"(l.edital_id)')).toBeLessThan(
-      funcao.indexOf("for v_c in"),
-    );
+    expect(
+      funcao.indexOf('private."FC_EXIGIR_AREA_EDITAL"(l.edital_id)'),
+    ).toBeLessThan(funcao.indexOf("for v_c in"));
   });
 
   it("a lista publicada herda a data pelo candidato anterior, sem refazer a publicação", () => {
     expect(MIGRATION).toContain('create trigger "TG_CANDAPROVADO_CONVOCACAO"');
-    expect(MIGRATION).toContain("before insert on public.\"TB_CANDIDATO_APROVADO\"");
+    expect(MIGRATION).toContain(
+      'before insert on public."TB_CANDIDATO_APROVADO"',
+    );
     expect(MIGRATION).not.toContain(
       "function public.publicar_lista_aprovados_da_classificacao(",
     );
@@ -106,7 +110,9 @@ describe("migration do Convocado: status", () => {
 
   it("contratados continuam só Contratado e Migração (Seleção e KPIs intocados)", () => {
     expect(MIGRATION).not.toMatch(/get_selecao_da_area\s*\(/);
-    expect(MIGRATION).not.toMatch(/status in \('Contratado', 'Migração', 'Convocado'\)/);
+    expect(MIGRATION).not.toMatch(
+      /status in \('Contratado', 'Migração', 'Convocado'\)/,
+    );
   });
 });
 

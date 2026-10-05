@@ -47,7 +47,12 @@ const ANA = {
   modalidade: '"Pessoa negra"',
   status: "",
 };
-const BRUNO = { ...ANA, candidato_id: "bruno", nome: "Bruno Lima", classificacao: 3 };
+const BRUNO = {
+  ...ANA,
+  candidato_id: "bruno",
+  nome: "Bruno Lima",
+  classificacao: 3,
+};
 const EMISSAO = {
   dataLimite: "2026-10-12",
   local: "Sede do DSEI Manaus",
@@ -113,7 +118,10 @@ describe("campos do modelo", () => {
 
 describe("preencher a carta (história: Emitir a carta de convocação)", () => {
   it("troca os campos do candidato e da emissão; {DOCUMENTOS} sozinho vira itens", () => {
-    const carta = preencherCarta(VIGENTE, ANA, { ...EMISSAO, data: "2026-10-05" });
+    const carta = preencherCarta(VIGENTE, ANA, {
+      ...EMISSAO,
+      data: "2026-10-05",
+    });
     expect(carta.titulo).toBe("CARTA DE CONVOCAÇÃO");
     expect(carta.blocos[0]).toEqual({
       tipo: "paragrafo",
@@ -147,15 +155,21 @@ describe("preencher a carta (história: Emitir a carta de convocação)", () => 
     expect(carta.blocos[0].texto).toBe(`CPF ${ESPACO_EM_BRANCO}; {MATRICULA}`);
     expect(carta.faltando).toEqual(["CPF"]);
     expect(
-      preencherCarta({ titulo: "C", texto: "CPF {CPF}" }, { ...ANA, cpf: "12345678901" }, {})
-        .blocos[0].texto,
+      preencherCarta(
+        { titulo: "C", texto: "CPF {CPF}" },
+        { ...ANA, cpf: "12345678901" },
+        {},
+      ).blocos[0].texto,
     ).toBe("CPF ***.456.789-**");
   });
 });
 
 describe("validar o modelo (história: Manter o modelo da carta)", () => {
   it("o padrão é válido e avisa só do que importa", () => {
-    expect(validarModelo(rascunhoDoModelo(null))).toEqual({ erros: [], avisos: [] });
+    expect(validarModelo(rascunhoDoModelo(null))).toEqual({
+      erros: [],
+      avisos: [],
+    });
   });
 
   it("recusa nome curto, campo desconhecido e chave sem par", () => {
@@ -175,21 +189,27 @@ describe("validar o modelo (história: Manter o modelo da carta)", () => {
       "Informe o motivo da alteração (3 a 500 caracteres).",
     );
     expect(
-      validarModelo({ ...rascunho, motivo: "Prazo do edital" }, { versaoAtual: 1 }).erros,
+      validarModelo(
+        { ...rascunho, motivo: "Prazo do edital" },
+        { versaoAtual: 1 },
+      ).erros,
     ).toEqual([]);
   });
 
   it("{CPF} no modelo avisa que a lista não guarda CPF", () => {
     expect(
-      validarModelo({ ...rascunhoDoModelo(null), texto: "CPF {CPF}" }).avisos[0],
+      validarModelo({ ...rascunhoDoModelo(null), texto: "CPF {CPF}" })
+        .avisos[0],
     ).toMatch(/não guarda CPF/);
   });
 
   it("prazo de 0 a 90 dias", () => {
-    expect(validarModelo({ ...rascunhoDoModelo(null), prazoDias: "91" }).erros).toContain(
-      "O prazo vai de 0 a 90 dias.",
-    );
-    expect(validarModelo({ ...rascunhoDoModelo(null), prazoDias: "" }).erros).toEqual([]);
+    expect(
+      validarModelo({ ...rascunhoDoModelo(null), prazoDias: "91" }).erros,
+    ).toContain("O prazo vai de 0 a 90 dias.");
+    expect(
+      validarModelo({ ...rascunhoDoModelo(null), prazoDias: "" }).erros,
+    ).toEqual([]);
   });
 
   it("o conteúdo salvo: documentos um por linha, prazo número ou nulo", () => {
@@ -245,9 +265,30 @@ describe("modelos do banco", () => {
   const dados = {
     pode_editar: true,
     modelos: [
-      { modelo_id: "a", nome: "Da área", ativo: true, versao: 2, vigente: { titulo: "T", texto: "X", prazo_dias: 5 }, versoes: [{ versao: 2, motivo: "m" }] },
-      { modelo_id: "b", nome: "Do edital 10", edital_id: "10", ativo: true, versao: 1, vigente: { titulo: "T", texto: "Y" } },
-      { modelo_id: "c", nome: "Do edital 20", edital_id: "20", ativo: true, versao: 1, vigente: {} },
+      {
+        modelo_id: "a",
+        nome: "Da área",
+        ativo: true,
+        versao: 2,
+        vigente: { titulo: "T", texto: "X", prazo_dias: 5 },
+        versoes: [{ versao: 2, motivo: "m" }],
+      },
+      {
+        modelo_id: "b",
+        nome: "Do edital 10",
+        edital_id: "10",
+        ativo: true,
+        versao: 1,
+        vigente: { titulo: "T", texto: "Y" },
+      },
+      {
+        modelo_id: "c",
+        nome: "Do edital 20",
+        edital_id: "20",
+        ativo: true,
+        versao: 1,
+        vigente: {},
+      },
       { modelo_id: "d", nome: "Inativo", ativo: false, versao: 1, vigente: {} },
     ],
   };
@@ -266,23 +307,39 @@ describe("modelos do banco", () => {
 
   it("para emitir: ativos, os do edital (de todos os candidatos) primeiro", () => {
     const { modelos } = lerModelosDoBanco(dados);
-    expect(modelosParaEmitir(modelos, [ANA, BRUNO]).map((m) => m.id)).toEqual(["b", "a"]);
+    expect(modelosParaEmitir(modelos, [ANA, BRUNO]).map((m) => m.id)).toEqual([
+      "b",
+      "a",
+    ]);
     expect(
-      modelosParaEmitir(modelos, [ANA, { ...BRUNO, edital_id: "20" }]).map((m) => m.id),
+      modelosParaEmitir(modelos, [ANA, { ...BRUNO, edital_id: "20" }]).map(
+        (m) => m.id,
+      ),
     ).toEqual(["a"]);
   });
 
   it("a emissão começa com os valores da versão vigente e a data pelo prazo", () => {
     const { modelos } = lerModelosDoBanco(dados);
-    expect(emissaoInicial(modelos[0], "2026-10-05").dataLimite).toBe("2026-10-10");
+    expect(emissaoInicial(modelos[0], "2026-10-05").dataLimite).toBe(
+      "2026-10-10",
+    );
     expect(emissaoInicial(modelos[1], "2026-10-05").dataLimite).toBe("");
   });
 
   it("a mesma carta registra uma vez só (DOCX e PDF da mesma emissão)", () => {
-    const base = { modeloId: "a", versao: 2, candidatoIds: ["ana"], agrupamento: "UNICO", emissao: EMISSAO };
+    const base = {
+      modeloId: "a",
+      versao: 2,
+      candidatoIds: ["ana"],
+      agrupamento: "UNICO",
+      emissao: EMISSAO,
+    };
     expect(assinaturaDaEmissao(base)).toBe(assinaturaDaEmissao({ ...base }));
     expect(assinaturaDaEmissao(base)).not.toBe(
-      assinaturaDaEmissao({ ...base, emissao: { ...EMISSAO, dataLimite: "2026-10-13" } }),
+      assinaturaDaEmissao({
+        ...base,
+        emissao: { ...EMISSAO, dataLimite: "2026-10-13" },
+      }),
     );
     expect(camposParaRegistrar(EMISSAO)).toEqual({
       data_limite: "2026-10-12",
@@ -302,7 +359,10 @@ describe("o documento (SEI, PDF, DOCX)", () => {
   });
 
   it("uma carta por candidato, com local e data", () => {
-    expect(doc.cartas.map((c) => c.nome)).toEqual(["Ana Ribeiro", "Bruno Lima"]);
+    expect(doc.cartas.map((c) => c.nome)).toEqual([
+      "Ana Ribeiro",
+      "Bruno Lima",
+    ]);
     expect(doc.nome).toBe("Carta de convocação - 2 candidatos");
     expect(doc.localData).toBe("Brasília, na data da assinatura digital.");
     expect(doc.localDataPorExtenso).toBe("Brasília, 5 de outubro de 2026.");
@@ -311,15 +371,20 @@ describe("o documento (SEI, PDF, DOCX)", () => {
 
   it("HTML para o SEI com as classes do SEI, negrito e quebra de página entre as cartas", () => {
     const html = htmlParaSei(doc);
-    expect(html).toContain('<p class="Texto_Centralizado_Maiusculas">CARTA DE CONVOCAÇÃO</p>');
+    expect(html).toContain(
+      '<p class="Texto_Centralizado_Maiusculas">CARTA DE CONVOCAÇÃO</p>',
+    );
     expect(html).toContain(
       '<p class="Texto_Justificado_Recuo_Primeira_Linha">Prezado(a) <strong>Ana Ribeiro</strong>,</p>',
     );
     expect(html).toContain('<p class="Texto_Justificado">&bull; RG</p>');
     expect(html.match(/page-break-after: always/g)).toHaveLength(1);
-    expect(htmlParaSei({ ...doc, cartas: [{ ...doc.cartas[0], titulo: "<script>x</script>" }] })).not.toContain(
-      "<script>",
-    );
+    expect(
+      htmlParaSei({
+        ...doc,
+        cartas: [{ ...doc.cartas[0], titulo: "<script>x</script>" }],
+      }),
+    ).not.toContain("<script>");
   });
 
   it("texto puro sem as marcas de negrito", () => {
@@ -330,31 +395,39 @@ describe("o documento (SEI, PDF, DOCX)", () => {
   });
 
   it("prévia: timbrado, uma carta por página, sem script", () => {
-    const pagina = paginaDaPrevia(doc, { cabecalho: "AGÊNCIA X\nRua Y", logo: "/assets/agsus-logo.webp" });
+    const pagina = paginaDaPrevia(doc, {
+      cabecalho: "AGÊNCIA X\nRua Y",
+      logo: "/assets/agsus-logo.webp",
+    });
     const lida = new DOMParser().parseFromString(pagina, "text/html");
     expect(lida.querySelectorAll("section.carta")).toHaveLength(2);
     expect(lida.querySelectorAll("section.quebra-de-pagina")).toHaveLength(1);
-    expect([...lida.querySelectorAll(".timbrado p")].map((p) => p.textContent)).toEqual([
-      "AGÊNCIA X",
-      "Rua Y",
-    ]);
+    expect(
+      [...lida.querySelectorAll(".timbrado p")].map((p) => p.textContent),
+    ).toEqual(["AGÊNCIA X", "Rua Y"]);
     expect(lida.querySelector("script")).toBeNull();
   });
 
   it("DOCX: um arquivo com as duas cartas; ZIP: um .docx por candidato", () => {
     const leitor = new TextDecoder();
-    const docx = leitor.decode(gerarDocxDasCartas(doc, { quando: new Date("2026-10-05T12:00:00Z") }));
+    const docx = leitor.decode(
+      gerarDocxDasCartas(doc, { quando: new Date("2026-10-05T12:00:00Z") }),
+    );
     expect(docx).toContain("word/document.xml");
     expect(docx).toContain('<w:br w:type="page"/>');
     expect(docx).toContain("Ana Ribeiro");
     expect(docx).toContain("Bruno Lima");
     expect(docx).toContain('<w:ind w:firstLine="1418"/>');
-    const zip = leitor.decode(gerarZipDasCartas(doc, { quando: new Date("2026-10-05T12:00:00Z") }));
+    const zip = leitor.decode(
+      gerarZipDasCartas(doc, { quando: new Date("2026-10-05T12:00:00Z") }),
+    );
     expect(zip).toContain("01 - Ana Ribeiro.docx");
     expect(zip).toContain("02 - Bruno Lima.docx");
   });
 
   it("o modelo padrão preenche sem campo desconhecido", () => {
-    expect(camposDesconhecidos(MODELO_PADRAO.titulo, MODELO_PADRAO.texto)).toEqual([]);
+    expect(
+      camposDesconhecidos(MODELO_PADRAO.titulo, MODELO_PADRAO.texto),
+    ).toEqual([]);
   });
 });

@@ -35,9 +35,7 @@ export function SeloDeStatus({ status, dataConvocacao = "" }) {
       <span className={`approved-status ${tomDoStatus(status)}`}>
         {status || "Sem status"}
       </span>
-      {data ? (
-        <small className="approved-status-data">em {data}</small>
-      ) : null}
+      {data ? <small className="approved-status-data">em {data}</small> : null}
     </span>
   );
 }

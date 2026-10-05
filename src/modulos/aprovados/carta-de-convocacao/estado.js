@@ -136,34 +136,38 @@ export function criarEstadoDaCarta({
       toast(erros[0], "warn");
       return "";
     }
-    const resultado = await executar("salvar-modelo-carta", "Salvando…", async () => {
-      const { data, error } = await supabase.rpc(
-        "salvar_modelo_carta_convocacao",
-        {
-          p_modelo: modelo?.id || null,
-          p_area: modelo?.area || texto(areaAtual()),
-          p_edital: modelo ? null : texto(rascunho.editalId) || null,
-          p_conteudo: conteudoParaSalvar(rascunho),
-          p_versao_atual: modelo?.versao ?? null,
-          p_motivo: texto(rascunho.motivo) || null,
-        },
-      );
-      if (error) {
-        toast(
-          error.code === "40001"
-            ? "Outra pessoa salvou este modelo enquanto você editava. Reabra para ver a versão nova."
-            : `Erro ao salvar o modelo: ${mensagemDe(error)}`,
-          "error",
+    const resultado = await executar(
+      "salvar-modelo-carta",
+      "Salvando…",
+      async () => {
+        const { data, error } = await supabase.rpc(
+          "salvar_modelo_carta_convocacao",
+          {
+            p_modelo: modelo?.id || null,
+            p_area: modelo?.area || texto(areaAtual()),
+            p_edital: modelo ? null : texto(rascunho.editalId) || null,
+            p_conteudo: conteudoParaSalvar(rascunho),
+            p_versao_atual: modelo?.versao ?? null,
+            p_motivo: texto(rascunho.motivo) || null,
+          },
         );
-        return "";
-      }
-      toast(
-        modelo
-          ? `Modelo salvo (versão ${data?.versao ?? modelo.versao + 1}).`
-          : "Modelo criado.",
-      );
-      return texto(data?.modelo_id) || modelo?.id || "";
-    });
+        if (error) {
+          toast(
+            error.code === "40001"
+              ? "Outra pessoa salvou este modelo enquanto você editava. Reabra para ver a versão nova."
+              : `Erro ao salvar o modelo: ${mensagemDe(error)}`,
+            "error",
+          );
+          return "";
+        }
+        toast(
+          modelo
+            ? `Modelo salvo (versão ${data?.versao ?? modelo.versao + 1}).`
+            : "Modelo criado.",
+        );
+        return texto(data?.modelo_id) || modelo?.id || "";
+      },
+    );
     if (resultado) await carregarModelos({ forcar: true });
     return resultado || "";
   }
@@ -173,19 +177,26 @@ export function criarEstadoDaCarta({
       toast("Informe o motivo (3 a 500 caracteres).", "warn");
       return false;
     }
-    const feito = await executar("situacao-modelo-carta", "Salvando…", async () => {
-      const { error } = await supabase.rpc("definir_modelo_carta_ativo", {
-        p_modelo: modelo.id,
-        p_ativo: ativo,
-        p_motivo: texto(motivo),
-      });
-      if (error) {
-        toast(`Erro ao mudar a situação do modelo: ${mensagemDe(error)}`, "error");
-        return false;
-      }
-      toast(ativo ? "Modelo reativado." : "Modelo inativado.");
-      return true;
-    });
+    const feito = await executar(
+      "situacao-modelo-carta",
+      "Salvando…",
+      async () => {
+        const { error } = await supabase.rpc("definir_modelo_carta_ativo", {
+          p_modelo: modelo.id,
+          p_ativo: ativo,
+          p_motivo: texto(motivo),
+        });
+        if (error) {
+          toast(
+            `Erro ao mudar a situação do modelo: ${mensagemDe(error)}`,
+            "error",
+          );
+          return false;
+        }
+        toast(ativo ? "Modelo reativado." : "Modelo inativado.");
+        return true;
+      },
+    );
     if (feito) await carregarModelos({ forcar: true });
     return feito;
   }
@@ -204,7 +215,13 @@ export function criarEstadoDaCarta({
     Registra a emissão uma vez por carta (assinatura): baixar o DOCX e depois
     imprimir o PDF da mesma carta não duplica o histórico.
   */
-  async function registrar({ modelo, candidatos, emissao, agrupamento, saida }) {
+  async function registrar({
+    modelo,
+    candidatos,
+    emissao,
+    agrupamento,
+    saida,
+  }) {
     const assinatura = assinaturaDaEmissao({
       modeloId: modelo.id,
       versao: modelo.versao,
@@ -264,7 +281,9 @@ export function criarEstadoDaCarta({
     const porCandidato = agrupamento === "POR_CANDIDATO";
     // Copiar "uma por candidato" leva uma carta por vez: a emissão é dela.
     const daEmissao =
-      porCandidato && saida === "SEI" ? [candidatos[indice]].filter(Boolean) : candidatos;
+      porCandidato && saida === "SEI"
+        ? [candidatos[indice]].filter(Boolean)
+        : candidatos;
     const doc = documento({ modelo, candidatos: daEmissao, emissao });
     if (!doc?.cartas.length) return null;
 
@@ -288,11 +307,20 @@ export function criarEstadoDaCarta({
           texto: textoParaSei(doc),
         });
         if (resultado === "html")
-          toast("Copiado. No SEI, cole no editor do documento (Ctrl+V).", "success");
+          toast(
+            "Copiado. No SEI, cole no editor do documento (Ctrl+V).",
+            "success",
+          );
         else if (resultado === "texto")
-          toast("Copiado só como texto: o navegador não liberou a formatação. Use o DOCX.", "warn");
+          toast(
+            "Copiado só como texto: o navegador não liberou a formatação. Use o DOCX.",
+            "warn",
+          );
         else
-          toast("Não foi possível copiar. Libere a área de transferência ou use o DOCX.", "error");
+          toast(
+            "Não foi possível copiar. Libere a área de transferência ou use o DOCX.",
+            "error",
+          );
       } else if (saida === "DOCX") {
         const logo = await Promise.resolve()
           .then(() => carregarLogo())
@@ -300,7 +328,9 @@ export function criarEstadoDaCarta({
         const opcoes = { cabecalho: marca().cabecalho, logo };
         if (porCandidato && doc.cartas.length > 1)
           baixar(
-            new Blob([gerarZipDasCartas(doc, opcoes)], { type: "application/zip" }),
+            new Blob([gerarZipDasCartas(doc, opcoes)], {
+              type: "application/zip",
+            }),
             `${nomeDeArquivo(doc.nome)}.zip`,
           );
         else
@@ -309,7 +339,11 @@ export function criarEstadoDaCarta({
             `${nomeDeArquivo(doc.nome)}.docx`,
           );
       } else imprimir(paginaDe(doc));
-      return { cartaId: registro.cartaId, candidatos: daEmissao, nova: registro.nova };
+      return {
+        cartaId: registro.cartaId,
+        candidatos: daEmissao,
+        nova: registro.nova,
+      };
     });
   }
 
@@ -330,7 +364,12 @@ export function criarEstadoDaCarta({
     const atual = estado.historicos.get(id);
     if (atual && !forcar && (atual.carregando || !atual.erro)) return;
     const inicio = new Map(estado.historicos);
-    inicio.set(id, { carregando: true, cartas: atual?.cartas || [], dataConvocacao: "", erro: "" });
+    inicio.set(id, {
+      carregando: true,
+      cartas: atual?.cartas || [],
+      dataConvocacao: "",
+      erro: "",
+    });
     publicar({ historicos: inicio });
     const { data, error } = await supabase.rpc("listar_cartas_do_candidato", {
       p_candidato: id,
@@ -339,7 +378,12 @@ export function criarEstadoDaCarta({
     historicos.set(
       id,
       error
-        ? { carregando: false, cartas: [], dataConvocacao: "", erro: String(mensagemDe(error)) }
+        ? {
+            carregando: false,
+            cartas: [],
+            dataConvocacao: "",
+            erro: String(mensagemDe(error)),
+          }
         : {
             carregando: false,
             erro: "",
