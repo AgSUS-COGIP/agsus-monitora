@@ -5,7 +5,9 @@ ficha de notas) e Roteiros. Fontes: `src/modulos/entrevistas/`, `src/lib/conduca
 `src/lib/roteiro-de-entrevista.js`, `src/lib/entrevistas-do-painel.js`,
 `docs/sincronizacao-das-planilhas.md`, `.github/workflows/sincronizar-entrevistas.yml` e as
 migrations `20260929235000_entrevistas.sql`, `20260930220000_entrevistas_roteiros_e_notas.sql` e
-`20260930235000_janela_da_entrevista.sql`.
+`20260930235000_janela_da_entrevista.sql`; a agenda das entrevistas, em
+`src/modulos/classificacao/agenda.jsx`, `src/modulos/entrevistas/agenda-do-dia.jsx`,
+`src/lib/agenda-das-entrevistas.js` e `20261005120000_agenda_das_entrevistas.sql`.
 
 ## Tela de Entrevistas
 
@@ -75,3 +77,45 @@ migrations `20260929235000_entrevistas.sql`, `20260930220000_entrevistas_roteiro
 **perguntas:** quando as entrevistas sao atualizadas | carga das entrevistas | planilha de entrevistados | atualizacao das entrevistas
 **resposta:** Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada todo dia às 9h de Brasília pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.
 **fonte:** .github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql
+
+## Agenda das entrevistas
+
+**perguntas:** agenda das entrevistas | como funciona a agenda das entrevistas | onde fica a agenda das entrevistas | gerar os horarios das entrevistas | marcar horario da entrevista
+**resposta:** A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a agenda do dia em Entrevistas › Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.
+**fonte:** src/modulos/classificacao/agenda.jsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql
+**abrir:** classificacao
+
+## Regra da agenda das entrevistas
+
+**perguntas:** regra da agenda | como configurar a regra da agenda | bancas simultaneas | duracao de cada entrevista | intervalo entre entrevistas | pausa na agenda | reservar o primeiro horario | agrupar por cargo | ordem dos candidatos na agenda
+**resposta:** A regra da agenda tem: os dias (um intervalo, com a opção "Só dias úteis", ou uma lista de dias, em dd/mm/aaaa) e os dias sem entrevista (feriados); de 1 a 6 períodos por dia (ex.: 08:00–12:00 e 14:00–18:00), no horário de Brasília; a duração de cada entrevista (5 a 240 minutos) e o intervalo entre elas (0 a 120); uma pausa opcional (ex.: almoço), em que nenhuma entrevista acontece; de 1 a 20 bancas simultâneas, com nome (os membros cadastrados na banca de Entrevistas aparecem junto); a ordem dos candidatos (classificação na convocação, vaga/cargo, alfabética ou modalidade, com a ampla primeiro); "Agrupar por cargo" (todos de um cargo antes do próximo, e cada cargo começa num horário novo); e "Reservar o primeiro horário de cada período" (fica livre para encaixe). Até 60 dias. Salvar cria uma versão nova; da segunda em diante, com motivo.
+**fonte:** src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql
+**abrir:** classificacao
+
+## Como a agenda é gerada
+
+**perguntas:** como a agenda e gerada | convocado sem horario | a agenda nao cabe | sobram horarios na agenda | distribuicao pelas bancas
+**resposta:** "Gerar agenda" monta os horários de cada dia a partir de cada período: começa no início, avança de duração mais intervalo e pula a pausa. Em cada horário cabe uma entrevista por banca. Os convocados, na ordem da regra, ocupam os horários em ordem: banca 1, banca 2… no mesmo horário, depois o próximo horário e o próximo dia. Se não couber, a tela diz quantos ficaram sem horário e quanto tempo de entrevista falta; se sobrar muito (30% dos lugares ou mais), diz quantos horários sobram e quantos dias bastam. O resultado é um rascunho: só vale depois de "Salvar agenda".
+**fonte:** src/lib/agenda-das-entrevistas.js
+**abrir:** classificacao
+
+## Ajuste manual da agenda
+
+**perguntas:** ajustar a agenda | trocar o horario de um candidato | trocar dois candidatos de horario | conflito na agenda | gerar a agenda de novo
+**resposta:** Na agenda, "Mudar" abre o ajuste de um convocado: escolher um horário livre (de qualquer banca, inclusive os reservados) ou "Sem horário", ou trocar de lugar com outro convocado (os dois trocam dia, hora e banca). O ajuste fica marcado como "Ajuste manual". Conflito é a mesma banca com horários que se sobrepõem no mesmo dia ou o mesmo candidato duas vezes: a tela lista os conflitos e não deixa salvar até resolver; o banco também recusa. "Gerar de novo" sobre uma agenda com ajustes manuais pergunta antes, porque a distribuição da regra substitui os ajustes. Cada gravação fica no histórico (Gravações), com quem, quando e o que mudou.
+**fonte:** src/modulos/classificacao/agenda.jsx; src/lib/agenda-das-entrevistas.js; supabase/migrations/20261005120000_agenda_das_entrevistas.sql
+**abrir:** classificacao
+
+## Data e hora no documento da convocação
+
+**perguntas:** data e hora na convocacao | preencher data e hora da convocacao | agenda no documento do sei | exportar a agenda
+**resposta:** Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.
+**fonte:** src/lib/classificacao/documento-sei.js; src/lib/agenda-das-entrevistas.js
+**abrir:** classificacao
+
+## Agenda do dia em Conduzir entrevistas
+
+**perguntas:** agenda do dia | agenda da banca | quem entrevisto hoje | horarios de hoje da entrevista
+**resposta:** Em Conduzir entrevistas, ao abrir o edital, o cartão "Agenda do dia" mostra a agenda salva por horário: escolha o dia (abre em hoje, no horário de Brasília, ou no próximo dia com entrevista) e, havendo mais de uma, a banca. A linha de quem já está convocado no sistema abre a ficha de notas. A agenda é só de consulta ali; ela é montada e ajustada na Classificação, visão Agenda. Sem agenda salva, o cartão não aparece.
+**fonte:** src/modulos/entrevistas/agenda-do-dia.jsx
+**abrir:** entrevistas

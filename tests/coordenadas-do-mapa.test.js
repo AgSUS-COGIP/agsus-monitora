@@ -8,6 +8,7 @@ import {
 } from "../src/lib/coordenadas-do-mapa.js";
 import {
   correcaoDesfazivel,
+  folgaDoEnquadramento,
   formatarDistancia,
   lerCoordenada,
   rotuloDaAcao,
@@ -316,5 +317,52 @@ describe("gravidade da pendência", () => {
     ).toBe("revisar");
     expect(nivel({ motivo_tipo: "SEM_CANDIDATO", candidatos: [] })).toBe("sem");
     expect(gravidadeDaPendencia(null, ponto)).toBeNull();
+  });
+});
+
+describe("folga do enquadramento no modo de edição", () => {
+  const mapa = { left: 0, top: 60, right: 1240, bottom: 760 };
+  it("painel à direita: desconta a largura coberta no padding de baixo/direita", () => {
+    const painel = { left: 828, top: 72, right: 1228, bottom: 748 };
+    expect(folgaDoEnquadramento(mapa, painel)).toEqual({
+      paddingTopLeft: [104, 104],
+      paddingBottomRight: [412 + 72, 72],
+    });
+  });
+  it("folha embaixo (celular): desconta a altura coberta", () => {
+    const celular = { left: 14, top: 100, right: 376, bottom: 831 };
+    const folha = { left: 14, top: 578, right: 376, bottom: 831 };
+    expect(folgaDoEnquadramento(celular, folha)).toEqual({
+      paddingTopLeft: [104, 104],
+      paddingBottomRight: [72, 253 + 72],
+    });
+  });
+  it("sem painel, painel fora do mapa, medida zero ou área livre pequena: só a base", () => {
+    const base = {
+      paddingTopLeft: [104, 104],
+      paddingBottomRight: [72, 72],
+    };
+    expect(folgaDoEnquadramento(mapa, null)).toEqual(base);
+    expect(folgaDoEnquadramento(undefined, mapa)).toEqual(base);
+    expect(
+      folgaDoEnquadramento(mapa, {
+        left: 1300,
+        top: 0,
+        right: 1400,
+        bottom: 800,
+      }),
+    ).toEqual(base);
+    const zero = { left: 0, top: 0, right: 0, bottom: 0 };
+    expect(folgaDoEnquadramento(zero, zero)).toEqual(base);
+    expect(
+      folgaDoEnquadramento(
+        { left: 0, top: 0, right: 400, bottom: 300 },
+        { left: 120, top: 0, right: 400, bottom: 300 },
+      ),
+    ).toEqual(base);
+    expect(folgaDoEnquadramento(mapa, null, { base: 30 })).toEqual({
+      paddingTopLeft: [62, 62],
+      paddingBottomRight: [30, 30],
+    });
   });
 });

@@ -346,9 +346,12 @@ describe("duplicado e formulário", () => {
       origem: "entrevista",
       analista: "Bia",
       processo_sei: "1",
-      mudou_classificacao: false,
       observacao: "",
     });
+    // A marca "mudou a classificação" é automática (ajuste aprovado): não vai no salvar.
+    expect(
+      dadosParaSalvar({ ...rascunho, mudou_classificacao: true }),
+    ).not.toHaveProperty("mudou_classificacao");
     expect(dadosParaSalvar(rascunho, { id: "r1", revisao: 3 })).toMatchObject({
       id: "r1",
       revisao: 3,

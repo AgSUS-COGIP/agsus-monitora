@@ -24,6 +24,12 @@ estado.js          store sem React: editais da área, dados do edital, salvar re
                    SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
 listas.jsx         visão "Listas": KPIs, avisos e pendências, gerar/exportar, filtros, uma
                    tabela por vaga, eliminados, gaveta com a explicação, registro do empate
+agenda.jsx         visão "Agenda": regra da agenda das entrevistas (versões), gerar pela
+                   regra, avisos (não cabe, sobra), ajuste manual com conflito, XLSX;
+                   o botão "Agenda das entrevistas" da convocação abre esta visão
+estado-da-agenda.js  store da agenda (obter_agenda_entrevista, salvar_regra_agenda_entrevista,
+                   salvar_agenda_entrevista); a agenda salva preenche DATA e HORA do
+                   documento da convocação (agendaDoDocumento)
 regra.jsx          visão "Regra": formulário (critérios ordenáveis do catálogo, empate final,
                    modalidades, convocação, rodapé) e versões
 documento.jsx      "Como fica no SEI": prévia (iframe sem script) e textos do edital
@@ -32,7 +38,8 @@ classificacao.css  só o que é desta tela (tokens)
 ```
 
 Regras puras em `src/lib/classificacao/` (`motor.js`, `regra.js`, `catalogo.js`, `vagas.js`,
-`numeros.js`, `sorteio.js`, `exportacao.js`, `documento-sei.js` — o documento no modelo das
+`numeros.js`, `sorteio.js`, `exportacao.js`, `ajustes.js` — o motor com os ajustes da pontuação
+aprovados em recurso e a prévia do recurso —, `documento-sei.js` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.js` — Word com papel
 timbrado —, `dados.js`). Os textos do documento ajustados pelo gestor ficam na regra
 (`DS_CONFIGURACAO.documento`, sem migration); o cabeçalho da agência, em Configurações › Marca
@@ -43,7 +50,12 @@ catálogo). Regras dos editais: `supabase/correcoes/20261002-regras-de-classific
 `supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql` (131 editais lidos dos PDFs
 oficiais, 13 modelos; aplicar depois da migration 20261002170000, rodando antes o ensaio
 `supabase/ensaios/20261002-regras-de-classificacao-todos-os-editais.sql`).
-Explicações para a Aya: `docs/aya/regras-da-classificacao.md`. Testes: `tests/lib/classificacao-*.test.js`,
-`tests/modulos/classificacao.test.js`, `tests/classificacao-migration.test.js`,
+Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.js`, banco em
+`supabase/migrations/20261005120000_agenda_das_entrevistas.sql` (ensaio e rollback com o mesmo
+nome); Entrevistas › Conduzir mostra a agenda do dia (`src/modulos/entrevistas/agenda-do-dia.jsx`).
+Explicações para a Aya: `docs/aya/regras-da-classificacao.md` e `docs/aya/regras-das-entrevistas.md`. Testes: `tests/lib/classificacao-*.test.js`,
+`tests/modulos/classificacao.test.js`, `tests/modulos/agenda-das-entrevistas.test.js`,
+`tests/lib/agenda-das-entrevistas.test.js`, `tests/agenda-das-entrevistas-migration.test.js`,
+`tests/classificacao-migration.test.js`,
 `tests/classificacao-lista-entrevista-migration.test.js` e `tests/classificacao-regras-dos-editais.test.js`
 (seed e um edital por modelo).

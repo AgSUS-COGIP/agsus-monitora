@@ -540,7 +540,6 @@ export const RASCUNHO_VAZIO = Object.freeze({
   vaga_informada: "",
   analista: "",
   processo_sei: "",
-  mudou_classificacao: false,
   observacao: "",
 });
 
@@ -565,7 +564,6 @@ export function rascunhoDoRecurso(recurso, detalhe = {}) {
       (recurso.fora_analise ? recurso.vaga || "" : ""),
     analista: recurso.analista || "",
     processo_sei: recurso.processo_sei || "",
-    mudou_classificacao: Boolean(recurso.mudou_classificacao),
     observacao: detalhe.observacao ?? "",
   };
 }
@@ -588,7 +586,11 @@ export function errosDoRascunho(rascunho, { edicao = false } = {}) {
   return erros;
 }
 
-/** O `p_dados` de `salvar_recurso_candidato`. */
+/**
+ * O `p_dados` de `salvar_recurso_candidato`. Sem `mudou_classificacao`:
+ * desde 20261005130000 a marca é automática (aprovar o ajuste da pontuação
+ * que muda a posição a marca; cancelar desmarca) e o banco recusa mudá-la.
+ */
 export function dadosParaSalvar(
   rascunho,
   { id = null, revisao = null, permitirDuplicado = false } = {},
@@ -597,7 +599,6 @@ export function dadosParaSalvar(
     origem: rascunho.origem,
     analista: texto(rascunho.analista),
     processo_sei: texto(rascunho.processo_sei),
-    mudou_classificacao: Boolean(rascunho.mudou_classificacao),
     observacao: texto(rascunho.observacao),
   };
   const informados = rascunho.fora_analise

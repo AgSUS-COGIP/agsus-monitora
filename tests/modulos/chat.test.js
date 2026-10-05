@@ -167,6 +167,7 @@ const toast = vi.fn();
 async function montar({
   permissoes = { chat: "leitor" },
   supabase = supabaseFalso(),
+  ...opcoes
 } = {}) {
   host = document.createElement("div");
   host.id = "chatHost";
@@ -178,6 +179,7 @@ async function montar({
       toast,
       sessao: sessaoCom(permissoes),
       armazenamento: null,
+      ...opcoes,
     });
   });
   await esperar();
@@ -837,5 +839,153 @@ describe("rolagem", () => {
       for (const nome of ["scrollHeight", "clientHeight", "scrollTop"])
         delete HTMLElement.prototype[nome];
     }
+  });
+});
+
+describe("avisos de mensagem nova", () => {
+  const linha = (extra = {}) => ({
+    CO_MENSAGEM: "m9",
+    CO_CONVERSA: "c-direta",
+    CO_USUARIO_AUTOR: ANA,
+    DS_TEXTO: "Pode ver o <b>edital</b>?",
+    DT_CRIACAO: new Date().toISOString(),
+    ST_APAGADA: "N",
+    ...extra,
+  });
+  const chegar = (extra, eventType = "INSERT") =>
+    act(async () =>
+      controlador.estado._aoMudarMensagem({ eventType, new: linha(extra) }),
+    );
+  const avisos = () => [...document.querySelectorAll(".chat-aviso")];
+
+  it("mensagem de outra pessoa com o painel fechado: aviso com nome e prévia sem marcação, contador sobe e clicar abre a conversa", async () => {
+    await montar();
+    await chegar();
+    const [aviso] = avisos();
+    expect(aviso.textContent).toContain("Ana Souza");
+    expect(aviso.textContent).toContain("Pode ver o edital?");
+    expect(aviso.closest('[role="status"]').getAttribute("aria-live")).toBe(
+      "polite",
+    );
+    expect(host.querySelector(".chat-botao__contador").textContent).toBe("4");
+    // O foco não sai de onde estava.
+    expect(aviso.contains(document.activeElement)).toBe(false);
+    await clicar(aviso.querySelector(".chat-aviso__abrir"));
+    await aguardar(() => document.querySelector('[data-mensagem="m2"]'));
+    expect(avisos()).toHaveLength(0);
+  });
+
+  it("não avisa: a própria, a apagada, a silenciada nem a da conversa à vista", async () => {
+    await montar();
+    await chegar({ CO_USUARIO_AUTOR: EU });
+    await chegar({ CO_MENSAGEM: "x1", ST_APAGADA: "S" });
+    await chegar({ CO_MENSAGEM: "x2", CO_CONVERSA: "c-mudo" });
+    expect(avisos()).toHaveLength(0);
+    await abrirConversaDireta();
+    await chegar({ CO_MENSAGEM: "x3" });
+    expect(avisos()).toHaveLength(0);
+  });
+
+  it("mensagem apagada depois tira o aviso; Dispensar tira; some sozinho", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      await montar();
+      await chegar();
+      expect(avisos()).toHaveLength(1);
+      await chegar({ ST_APAGADA: "S", DS_TEXTO: "" }, "UPDATE");
+      expect(avisos()).toHaveLength(0);
+      await chegar({ CO_MENSAGEM: "m10" });
+      await clicar(avisos()[0].querySelector(".chat-aviso__fechar"));
+      expect(avisos()).toHaveLength(0);
+      await chegar({ CO_MENSAGEM: "m11" });
+      expect(avisos()).toHaveLength(1);
+      await act(async () => vi.advanceTimersByTime(8000));
+      expect(avisos()).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("no máximo 3 avisos, um por conversa", async () => {
+    const extras = ["c-a", "c-b", "c-c"].map((id) => ({
+      ...GRUPO,
+      id,
+      nome: `Grupo ${id}`,
+      participantes: [
+        { id: EU, nome: "Eu Mesma" },
+        { id: ANA, nome: "Ana Souza" },
+      ],
+    }));
+    await montar({
+      supabase: supabaseFalso({
+        listar_conversas_chat: () => ({
+          eu: EU,
+          conversas: [DIRETA, GRUPO, SILENCIADA, ...extras],
+        }),
+      }),
+    });
+    await chegar({ CO_MENSAGEM: "a1" });
+    await chegar({ CO_MENSAGEM: "a2" });
+    for (const [i, c] of extras.entries())
+      await chegar({ CO_MENSAGEM: `b${i}`, CO_CONVERSA: c.id });
+    expect(avisos().map((a) => a.getAttribute("data-aviso"))).toEqual([
+      "c-a",
+      "c-b",
+      "c-c",
+    ]);
+    expect(avisos()[0].textContent).toContain("Ana: ");
+  });
+
+  it("conversa nova que alguém começou: relê a lista e avisa", async () => {
+    const NOVA = { ...DIRETA, id: "c-nova", nao_lidas: 1 };
+    let conversas = [DIRETA, GRUPO, SILENCIADA];
+    await montar({
+      supabase: supabaseFalso({
+        listar_conversas_chat: () => ({ eu: EU, conversas }),
+      }),
+    });
+    conversas = [NOVA, ...conversas];
+    await chegar({ CO_MENSAGEM: "n1", CO_CONVERSA: "c-nova" });
+    await aguardar(() => avisos().length);
+    expect(avisos()[0].getAttribute("data-aviso")).toBe("c-nova");
+  });
+
+  it("aba em segundo plano: notificação do navegador (só se ativada), sem aviso na tela; clicar abre a conversa", async () => {
+    const notificacao = { close: vi.fn() };
+    const notificar = vi.fn(() => notificacao);
+    const janela = {
+      focus: vi.fn(),
+      Notification: {
+        permission: "default",
+        requestPermission: vi.fn(async () => "granted"),
+      },
+    };
+    await montar({ notificar, janela });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "hidden",
+    });
+    try {
+      await chegar({ CO_MENSAGEM: "h1" });
+      expect(notificar).not.toHaveBeenCalled();
+      expect(janela.Notification.requestPermission).not.toHaveBeenCalled();
+      // A permissão só é pedida quando a pessoa liga a preferência.
+      await act(async () => {
+        await controlador.estado.definirPreferencia("notificacoes", true);
+      });
+      expect(janela.Notification.requestPermission).toHaveBeenCalledTimes(1);
+      await chegar({ CO_MENSAGEM: "h2" });
+      expect(notificar).toHaveBeenCalledWith("Ana Souza", {
+        body: "Pode ver o edital?",
+        tag: "monitora-chat-c-direta",
+      });
+      expect(avisos()).toHaveLength(0);
+    } finally {
+      delete document.visibilityState;
+    }
+    await act(async () => notificacao.onclick());
+    expect(janela.focus).toHaveBeenCalled();
+    expect(notificacao.close).toHaveBeenCalled();
+    await aguardar(() => document.querySelector('[data-mensagem="m2"]'));
   });
 });

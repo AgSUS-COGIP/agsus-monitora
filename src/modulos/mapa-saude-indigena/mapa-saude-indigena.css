@@ -43,9 +43,56 @@
 }
 
 .mapa-si-coordenadas__topo {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
-  justify-items: start;
+}
+
+.mapa-si-coordenadas__topo-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* Latitude e longitude lado a lado. */
+.mapa-si-coordenadas__par {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+/* Sugestões, Correção e Histórico: seções recolhíveis (details/summary). */
+.mapa-si-coordenadas__secao {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mapa-si-coordenadas__secao > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.mapa-si-coordenadas__secao > summary b {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-coordenadas__secao > summary:focus-visible {
+  outline: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--focus-ring);
+}
+
+.mapa-si-coordenadas__busca {
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
 .mapa-si-coordenadas__fila,
@@ -87,11 +134,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Filtro por gravidade: botões que quebram a linha, com a contagem. */
-.mapa-si-coordenadas__niveis {
+/* A contagem e o filtro por gravidade: botões que quebram a linha. */
+.mapa-si-coordenadas__niveis,
+.mapa-si-coordenadas__grupo {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-1);
+}
+
+.mapa-si-coordenadas__niveis {
+  gap: var(--space-1) var(--space-2);
 }
 
 .mapa-si-coordenadas__nivel {
@@ -341,6 +394,122 @@
 
 .mapa-si--tela-cheia .mapa-si-painel__corpo {
   height: 100%;
+}
+
+/*
+  Modo de edição de coordenadas (src/modulos/editor-de-coordenadas/
+  modo-de-edicao.jsx): o painel cobre a página como a tela cheia, o mapa
+  ocupa todo o corpo e o editor flutua à direita, com rolagem própria. O
+  enquadramento desconta o painel (paddings do Leaflet). Fechar volta ao
+  layout de sempre (altura --mapa-si-altura).
+*/
+.mapa-si-painel--editando:not([hidden]) {
+  --mapa-si-editor: clamp(360px, 30vw, 400px);
+  position: fixed;
+  z-index: calc(var(--z-overlay, 20000) - 1);
+  inset: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.mapa-si-painel--editando.mapa-si-painel--dsei {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.mapa-si-painel--editando .mapa-si-painel__corpo {
+  position: relative;
+  display: block;
+  height: 100%;
+}
+
+.mapa-si-painel--editando .mapa-si-moldura {
+  height: 100%;
+}
+
+/* Acima dos controles do Leaflet (z-index 1000) e da legenda (800). */
+.mapa-si-editor {
+  position: absolute;
+  z-index: 1100;
+  top: var(--space-3);
+  right: var(--space-3);
+  bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  width: var(--mapa-si-editor);
+  max-width: calc(100% - 2 * var(--space-3));
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+}
+
+.mapa-si-editor__conteudo {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.mapa-si-editor__conteudo[hidden] {
+  display: none;
+}
+
+/* Recolhido: só a faixa estreita com "Abrir editor", em pé. */
+.mapa-si-editor--recolhido {
+  width: auto;
+  align-items: center;
+  padding: var(--space-2) var(--space-1);
+}
+
+.mapa-si-editor--recolhido .mapa-si-editor__recolher {
+  writing-mode: vertical-rl;
+  padding: var(--space-2) var(--space-1);
+}
+
+.mapa-si-editor__recolher::before {
+  content: "▸" / "";
+  margin-inline-end: var(--space-1);
+}
+
+.mapa-si-editor--recolhido .mapa-si-editor__recolher::before {
+  content: "◂" / "";
+  margin: 0 0 var(--space-1);
+  writing-mode: horizontal-tb;
+}
+
+/* O editor enche o painel: a fila estica até o ponto ser escolhido. */
+.mapa-si-editor .mapa-si-coordenadas {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mapa-si-editor .mapa-si-coordenadas__fila {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mapa-si-editor .mapa-si-coordenadas__lista {
+  flex: 1 1 0;
+  min-height: 160px;
+  max-height: none;
+}
+
+.mapa-si-editor .mapa-si-coordenadas--com-ponto .mapa-si-coordenadas__fila {
+  flex: none;
+}
+
+.mapa-si-editor .mapa-si-coordenadas--com-ponto .mapa-si-coordenadas__lista {
+  flex: none;
+  min-height: 0;
+  max-height: clamp(140px, 28vh, 280px);
 }
 
 .mapa-si--tela-cheia .mapa-si-tela-cheia {
@@ -819,5 +988,55 @@
   .mapa-si--tela-cheia .mapa-si-legenda--rodape {
     max-height: 96px;
     overflow: auto;
+  }
+
+  /* Modo de edição no celular: o mapa em cima, o editor numa folha embaixo. */
+  .mapa-si-painel--editando:not([hidden]) {
+    --mapa-si-folha: clamp(200px, 30vh, 400px);
+    --mapa-si-folha: clamp(200px, 30dvh, 400px);
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .mapa-si-painel--editando .mapa-si-painel__topo {
+    padding-bottom: var(--space-2);
+  }
+
+  .mapa-si-painel--editando .mapa-si-painel__contagem {
+    display: none;
+  }
+
+  .mapa-si-editor {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    height: var(--mapa-si-folha);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .mapa-si-editor--recolhido {
+    height: auto;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .mapa-si-editor--recolhido .mapa-si-editor__recolher {
+    writing-mode: horizontal-tb;
+    width: 100%;
+  }
+
+  .mapa-si-editor__recolher::before {
+    content: "▾" / "";
+  }
+
+  .mapa-si-editor--recolhido .mapa-si-editor__recolher::before {
+    content: "▴" / "";
+    margin: 0 var(--space-1) 0 0;
+  }
+
+  .mapa-si-editor .mapa-si-coordenadas--com-ponto .mapa-si-coordenadas__lista {
+    max-height: 120px;
   }
 }
