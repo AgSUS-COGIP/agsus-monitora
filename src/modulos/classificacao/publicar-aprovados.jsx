@@ -145,7 +145,7 @@ export function ModalDePublicacaoDeAprovados({
     [
       "mudam",
       "alerta",
-      "fa-arrows-up-down",
+      "fa-right-left",
       "Mudam de posição",
       resumo.mudam.length,
     ],
