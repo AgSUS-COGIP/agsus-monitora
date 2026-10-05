@@ -75,9 +75,7 @@ export function CampoDaSecao({ estado, campos, prefixo, chave }) {
   else if (campo.tipo === "cor")
     controle = <input {...comum} type="color" className="config-cor" />;
   else if (campo.tipo === "texto-longo")
-    controle = (
-      <textarea {...comum} rows={3} placeholder={campo.placeholder} />
-    );
+    controle = <textarea {...comum} rows={3} placeholder={campo.placeholder} />;
   else if (campo.tipo === "inteiro")
     controle = (
       <input
