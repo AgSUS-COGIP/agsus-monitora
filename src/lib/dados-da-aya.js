@@ -47,7 +47,13 @@ const doEdital = (lista, edital) =>
 /** Os números das Análises (linhas do painel) no recorte do edital. */
 export function contarAnalises(linhas, { edital = "" } = {}) {
   const recorte = doEdital(linhas, edital);
-  return { ...calcularKpis(recorte), vazio: !recorte.length };
+  const desativadas = recorte.filter((linha) => linha?.__desativada === true);
+  return {
+    ...calcularKpis(recorte),
+    vazio: !recorte.length,
+    // Quantas de cada número são análises desativadas (só em Todos na tela).
+    desativadas: calcularKpis(desativadas),
+  };
 }
 
 /** Os números de Recursos (já enriquecidos com prazo e situação). */
@@ -115,7 +121,9 @@ function resultadoDaContagem(intencao, numeros) {
     };
   return {
     valor: numeros[id] ?? 0,
-    ...(intencao.id === "analises" ? { total: numeros.total } : {}),
+    ...(intencao.id === "analises"
+      ? { total: numeros.total, desativadas: numeros.desativadas?.[id] ?? 0 }
+      : {}),
   };
 }
 

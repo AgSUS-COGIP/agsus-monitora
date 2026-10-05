@@ -391,7 +391,14 @@ export function textoDaIntencao(intencao, resultado = {}) {
     resultado.total !== undefined && metrica.id !== "total"
       ? `, de ${inteiro(resultado.total)} no total`
       : "";
-  return `Há ${inteiro(valor)} ${rotulo}${sufixo}${deTotal}.`;
+  const desativadas = Number(resultado.desativadas || 0);
+  const nota =
+    desativadas === 1
+      ? " Uma delas saiu da planilha (desativada) e só aparece na tela com a situação Todos."
+      : desativadas > 1
+        ? ` ${inteiro(desativadas)} delas saíram da planilha (desativadas) e só aparecem na tela com a situação Todos.`
+        : "";
+  return `Há ${inteiro(valor)} ${rotulo}${sufixo}${deTotal}.${nota}`;
 }
 
 /** O botão "Abrir" da resposta: a tela e o filtro que ela aplica ao abrir. */

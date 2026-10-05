@@ -5,8 +5,9 @@
   de novo em cada uma. Nenhuma RPC nova e nada de nome ou CPF na resposta: a
   Aya só conta.
 
-  Antes da rede, o que a tela já carregou: se a tela de Análises, Recursos,
-  Entrevistas ou Seleção está carregada na mesma área (o controlador que
+  Antes da rede, o que a tela já carregou: se a tela de Recursos ou Seleção
+  está carregada na mesma área (Análises não: a tela carrega só o pacote da
+  situação escolhida, e a Aya conta o edital ativo inteiro) (o controlador que
   src/main.js põe em window), os números saem do estado dela — o mesmo que o
   indicador mostra. Senão, uma chamada e a resposta fica guardada por um
   minuto, para a pergunta seguinte não chamar de novo.
@@ -48,16 +49,33 @@ export function criarFontesDaAya({
   }
 
   const LEITURAS = {
+    /*
+      Análises: os editais em situação Ativo, como no banco (situação do
+      processo = a do edital). São dois pacotes do painel: "ativo" (o que a
+      tela mostra em Ativo) e "desativadas" (análises de edital ativo que
+      saíram da planilha; a tela só mostra em Todos). As desativadas vão
+      marcadas, para a resposta dizer quantas são.
+    */
     async analises({ area }) {
-      const linhas = daTela(janela, "analisesController", area, "linhas");
-      if (linhas) return { linhas };
-      const payload = primeiro(
-        await chamar("get_analises_dashboard_payload_v2", {
-          p_scope: "ativo",
-          ...parametroDeAreaDaRpc(area),
-        }),
-      );
-      return { linhas: linhasDoPayload(payload) };
+      const pacote = async (escopo) =>
+        linhasDoPayload(
+          primeiro(
+            await chamar("get_analises_dashboard_payload_v2", {
+              p_scope: escopo,
+              ...parametroDeAreaDaRpc(area),
+            }),
+          ),
+        );
+      const [ativas, desativadas] = await Promise.all([
+        pacote("ativo"),
+        pacote("desativadas"),
+      ]);
+      return {
+        linhas: [
+          ...ativas,
+          ...desativadas.map((linha) => ({ ...linha, __desativada: true })),
+        ],
+      };
     },
     async recursos({ area }) {
       const carregados = daTela(janela, "recursosController", area, "dados");
