@@ -1016,4 +1016,45 @@ describe("o mapa de Projetos na Visão geral", () => {
     expect(vivo("mapaDosProjetos")).not.toBeNull();
     expect(supabase.rpc).toHaveBeenCalledTimes(1);
   });
+
+  it("os filtros da página recortam o mapa, como no da Saúde Indígena", async () => {
+    const { supabase, carregador } = carregadorFalso();
+    supabase.rpc.mockResolvedValue({
+      data: [
+        {
+          municipio_uf: "Irati/PR",
+          uf: "PR",
+          vagas: 5,
+          editais: [
+            { id: 5, edital: "05/2026", projeto: "Projeto Mais Médicos" },
+          ],
+        },
+        {
+          municipio_uf: "Seropédica/RJ",
+          uf: "RJ",
+          vagas: 12,
+          editais: [{ id: 77, edital: "99/2026", projeto: "Outro" }],
+        },
+      ],
+      error: null,
+    });
+    await act(async () => definirAreaAtual("projetos"));
+    await montar({ carregadorDeMunicipios: carregador });
+    await esperar();
+    const lugares = () =>
+      [...secao.querySelectorAll(".mapa-projetos-lugar strong")].map(
+        (nome) => nome.textContent,
+      );
+    expect(lugares()).toEqual(["Seropédica/RJ", "Irati/PR"]);
+
+    // A busca deixa só o edital 05/2026 (linha 5): só Irati fica no mapa.
+    await act(async () => estado.definirBusca("Mais Médicos"));
+    expect(lugares()).toEqual(["Irati/PR"]);
+    expect(
+      leaflet.desenhadas(vivo("mapaDosProjetos"), "circleMarker"),
+    ).toHaveLength(1);
+
+    await act(async () => estado.definirBusca(""));
+    expect(lugares()).toEqual(["Seropédica/RJ", "Irati/PR"]);
+  });
 });

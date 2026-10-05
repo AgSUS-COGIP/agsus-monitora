@@ -6,6 +6,7 @@ import {
   textoDasVagas,
 } from "../../lib/visao-geral-da-area.js";
 import { Campo, EstadoVazio, classes } from "../../ui/index.js";
+import { ListaDoMapa } from "../mapa-saude-indigena/painel-do-mapa.jsx";
 
 /*
   A lista "Municípios por vagas", ao lado do mapa de Projetos: o mesmo
@@ -201,22 +202,30 @@ function Itens({ pontos, agrupar, filtrado, aoEscolher }) {
   ));
 }
 
+/*
+  A lista lateral comum aos mapas nacionais (`ListaDoMapa`: topo com o total,
+  esqueleto enquanto carrega, vazio em uma linha), com os filtros de Projetos
+  entre o topo e os itens. `id` é o do painel (o "Coordenadas" o controla) e
+  `idDoTitulo` nomeia a lista, como em "Territórios por vagas". Com recorte da
+  Visão geral (`noRecorte`), o vazio diz "no recorte", como o da Saúde
+  Indígena.
+*/
 export function ListaDeMunicipios({
   id,
+  idDoTitulo,
   titulo,
   carregando,
   indisponivel,
   erro,
+  noRecorte = false,
   pontos,
   projetos,
   escolha,
   aoMudarEscolha,
   aoEscolher,
 }) {
-  let corpo;
-  if (carregando)
-    corpo = <div className="ui-esqueleto mapa-si-lista__esqueleto" />;
-  else if (indisponivel)
+  let corpo = null;
+  if (indisponivel)
     corpo = (
       <EstadoVazio>
         Municípios indisponíveis: falta uma atualização do banco.
@@ -228,9 +237,7 @@ export function ListaDeMunicipios({
         Não foi possível carregar os municípios. Tente em Atualizar dados.
       </EstadoVazio>
     );
-  else if (!pontos.length)
-    corpo = <EstadoVazio>Nenhum município nas vagas da área.</EstadoVazio>;
-  else
+  else if (pontos.length)
     corpo = (
       <Itens
         pontos={pontos}
@@ -240,23 +247,31 @@ export function ListaDeMunicipios({
       />
     );
 
-  const comFiltros =
-    !carregando && !indisponivel && !erro && projetos.length > 1;
+  const comFiltros = !indisponivel && !erro && projetos.length > 1;
 
   return (
-    <aside className="mapa-si-lista" aria-labelledby={id}>
-      <div className="mapa-si-lista__topo">
-        <span id={id}>{titulo}</span>
-        <b>{carregando ? "…" : fmt(pontos.length)}</b>
-      </div>
-      {comFiltros ? (
-        <Filtros
-          projetos={projetos}
-          escolha={escolha}
-          aoMudarEscolha={aoMudarEscolha}
-        />
-      ) : null}
+    <ListaDoMapa
+      id={id}
+      idDoTitulo={idDoTitulo}
+      titulo={titulo}
+      total={pontos.length}
+      carregando={carregando}
+      vazio={
+        noRecorte
+          ? "Nenhum município no recorte."
+          : "Nenhum município nas vagas da área."
+      }
+      antes={
+        comFiltros ? (
+          <Filtros
+            projetos={projetos}
+            escolha={escolha}
+            aoMudarEscolha={aoMudarEscolha}
+          />
+        ) : null
+      }
+    >
       {corpo}
-    </aside>
+    </ListaDoMapa>
   );
 }

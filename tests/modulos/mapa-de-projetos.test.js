@@ -349,14 +349,80 @@ describe("o mapa", () => {
     expect(marcador.popupAberto).toBe(true);
   });
 
-  it("enquadra os pontos na primeira carga", async () => {
-    const { carregador } = await carregadorCom(SIMPLES);
+  /*
+    A regra do mapa da Saúde Indígena: sem filtro, o Brasil (não a caixa dos
+    pontos); com o recorte da Visão geral, só os lugares com edital do
+    recorte, enquadrados na caixa deles (ou zoom 7 num lugar só).
+  */
+  it("sem filtro fica no Brasil; com o recorte da página, enquadra os lugares dele", async () => {
+    const { carregador } = await carregadorCom(PROJETOS);
     await montar({ carregador });
-    const enquadramentos = mapaVivo().chamadas.filter(
-      ([nome, , opcoes]) => nome === "fitBounds" && opcoes?.maxZoom === 7,
+    const caixas = () =>
+      mapaVivo().chamadas.filter(
+        ([nome, , opcoes]) => nome === "fitBounds" && opcoes?.maxZoom === 7,
+      );
+    expect(caixas()).toHaveLength(0);
+    expect(nomes()).toHaveLength(4);
+
+    const doRecorte = [
+      { id: 1, edital: "Edital 23/2025" },
+      { id: 2, edital: "05/2026" },
+    ];
+    await rerender({ carregador, linhas: doRecorte, filtroAtivo: true });
+    expect(nomes()).toEqual(["Boa Vista/RR", "Brasília/DF"]);
+    expect(pontos()).toHaveLength(2);
+    // Cada lugar só com o edital do recorte.
+    expect(
+      normalizar(
+        linhas()
+          .map((linha) => linha.textContent)
+          .join(" "),
+      ),
+    ).not.toContain("Rio Doce");
+    expect(caixas()).toHaveLength(1);
+    expect(caixas()[0][1].pontos).toHaveLength(2);
+
+    // Recorte sem lugar nenhum: vazio "no recorte" e o Brasil.
+    await rerender({
+      carregador,
+      linhas: [{ id: 3, edital: "1/2020" }],
+      filtroAtivo: true,
+    });
+    expect(nomes()).toEqual([]);
+    expect(host.querySelector(".mapa-si-lista").textContent).toContain(
+      "Nenhum município no recorte.",
     );
-    expect(enquadramentos).toHaveLength(1);
-    expect(enquadramentos[0][1].pontos).toHaveLength(2);
+  });
+
+  it("lugares no mesmo pixel abrem em leque, com traço até o ponto real", async () => {
+    const { carregador } = await carregadorCom({
+      data: [
+        {
+          lugar: "a",
+          municipio_uf: "Boa Vista/RR",
+          uf: "RR",
+          vagas: 3,
+          latitude: 2.82,
+          longitude: -60.67,
+        },
+        {
+          lugar: "b",
+          municipio_uf: "Cantá/RR",
+          uf: "RR",
+          vagas: 2,
+          latitude: 2.82,
+          longitude: -60.67,
+        },
+      ],
+      error: null,
+    });
+    await montar({ carregador });
+    const mapa = mapaVivo();
+    expect(leaflet.desenhadas(mapa, "polyline")).toHaveLength(2);
+    // A coordenada do dado não muda: o traço parte do ponto real.
+    expect(leaflet.desenhadas(mapa, "polyline")[0].latlng[0]).toEqual([
+      2.82, -60.67,
+    ]);
   });
 
   it("o botão Brasil volta ao país inteiro", async () => {
@@ -498,7 +564,7 @@ describe("todos os projetos no mapa", () => {
     expect(itens[0].querySelector(".mapa-projeto__cor--1")).not.toBeNull();
   });
 
-  it("filtrar por projeto redesenha sem novo pedido, mantém a cor e reenquadra", async () => {
+  it("filtrar por projeto redesenha sem novo pedido, mantém a cor e enquadra o recorte", async () => {
     const { carregador, supabase } = await carregadorCom(PROJETOS);
     await montar({ carregador });
     const seletor = host.querySelector(".mapa-projetos__seletor");
@@ -522,7 +588,13 @@ describe("todos os projetos no mapa", () => {
     expect(host.querySelector(".mapa-si-painel__contagem").textContent).toBe(
       "1 município",
     );
-    expect(mapa.chamadas.some(([nome]) => nome === "fitBounds")).toBe(true);
+    // Um lugar só no recorte: zoom 7 nele, como o DSEI único na Saúde Indígena.
+    expect(mapa.chamadas).toContainEqual([
+      "setView",
+      pontos()[0].latlng,
+      7,
+      { animate: false },
+    ]);
     expect(supabase.rpc).toHaveBeenCalledTimes(1);
     // O campo é o mesmo: o foco não se perde.
     expect(host.querySelector(".mapa-projetos__seletor")).toBe(seletor);

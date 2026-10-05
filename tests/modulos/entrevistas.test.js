@@ -438,39 +438,67 @@ const EDITAL = {
     area: "saude-indigena",
   },
   pode_editar: true,
+  pode_gerar_lista: true,
   admin_global: false,
   meu_perfil: PERFIL_DA_ANA,
   configuracao: {
     roteiro: ROTEIRO,
-    convocacao: {
-      multiplo_imediatas: 1,
-      posicao_cadastro_reserva: 1,
-      excecoes: [],
-    },
     banca: [{ origem: "AgSUS", quantidade: 1 }],
     lancamento: "SECRETARIA",
     atualizado_em: "2026-09-30T12:00:00Z",
   },
-  vagas: [
-    {
-      vaga: "V1",
-      cargo: "Enfermeiro",
-      aprovados: 3,
-      vagas_imediatas: 2,
-      vagas_imediatas_salvas: true,
+  regra_classificacao: {
+    versao: 2,
+    convocacao: {
+      multiplo_vagas: 1,
+      posicao_max_cr: 1,
+      incluir_empatados: true,
+      excecoes: [],
     },
-  ],
-  candidatos: [1, 2, 3].map((posicao) => ({
-    analise_id: `an${posicao}`,
-    candidato: `Candidato ${posicao}`,
-    codigo: `K${posicao}`,
-    vaga: "V1",
-    cargo: "Enfermeiro",
-    nota_analise: 90 - posicao,
-    modalidade: "Ampla",
-    pcd: false,
-    posicao,
-  })),
+  },
+  // A convocação é a lista CONVOCACAO da Classificação (1× 2 vagas: os dois primeiros).
+  lista_convocacao: {
+    lista: {
+      id: "lista1",
+      tipo: "CONVOCACAO",
+      versao_regra: 2,
+      gerada_em: "2026-10-05T13:30:00Z",
+      por: "Gestora",
+      publicada: false,
+    },
+    retrato: {
+      schema: 1,
+      tipo: "CONVOCACAO",
+      vagas: [
+        {
+          chave: "V1",
+          codigo: "V1",
+          cargo: "Enfermeiro",
+          lotacao: "Polo Base",
+          cabecalho: "VAGA V1 - Enfermeiro",
+          total: 2,
+          cadastro_reserva: false,
+          origem_das_vagas: "QUADRO",
+          limite_convocacao: { limite: 2, origem: "1 × 2 vaga(s)" },
+          geral: [1, 2].map((posicao) => ({
+            posicao,
+            analise_id: `an${posicao}`,
+            nome: `Candidato ${posicao}`,
+            nota: 90 - posicao,
+            modalidades: ["AC"],
+          })),
+          listas: {},
+          eliminados: [
+            {
+              analise_id: "an3",
+              nome: "Candidato 3",
+              motivo: "FORA_DO_LIMITE",
+            },
+          ],
+        },
+      ],
+    },
+  },
   avaliadores: [
     {
       id: "a1",
@@ -624,32 +652,209 @@ describe("visões de condução e roteiros", () => {
     expect(chamadas(supabase, "salvar_roteiro_entrevista")).toHaveLength(0);
   });
 
-  it("convoca os sugeridos pela regra e relê os resultados", async () => {
+  it("convoca os da lista de convocação da Classificação (com o id da lista) e relê os resultados", async () => {
     const supabase = supabaseDaConducao();
     await montar(supabase);
     await abrirEdital();
     expect(chamadas(supabase, "obter_entrevistas_do_edital")[0][1]).toEqual({
       p_edital: "m1",
     });
+    // Com a lista registrada, o cálculo da Classificação nem é pedido.
+    expect(chamadas(supabase, "obter_classificacao_do_edital")).toHaveLength(0);
     const passo = document.querySelector('[data-passo="convocacao"]');
+    expect(passo.dataset.fonte).toBe("LISTA");
+    expect(passo.textContent).toContain(
+      "Lista de convocação da Classificação · gerada em 05/10/2026, 10:30 por Gestora · regra v2",
+    );
     const caixas = passo.querySelectorAll('input[type="checkbox"]');
-    // 1× 2 vagas imediatas: até a 2ª posição; a 1ª já foi convocada.
+    // Só os dois da lista (o 3º está entre os eliminados); o 1º já está na ficha.
     expect([...caixas].map((c) => [c.checked, c.disabled])).toEqual([
       [true, true],
       [true, false],
-      [false, false],
     ]);
-    expect(passo.textContent).toContain("convocar até a 2ª posição");
+    expect(passo.textContent).toContain(
+      "2 vagas imediatas · até a 2ª (1 × 2 vaga(s))",
+    );
+    expect(passo.textContent).not.toContain("Candidato 3");
+    expect(passo.textContent).not.toContain("Além da regra");
     const antes = chamadas(supabase, "get_entrevistas_da_area").length;
     await clicar(document.getElementById("entrevistasConvocar"));
     await esperar();
     expect(chamadas(supabase, "convocar_para_entrevista")[0][1]).toEqual({
       p_edital: "m1",
+      p_lista: "lista1",
       p_analises: ["an2"],
     });
     expect(chamadas(supabase, "get_entrevistas_da_area").length).toBe(
       antes + 1,
     );
+  });
+
+  it("a lista mudou na Classificação (40001): avisa e relê o edital", async () => {
+    const supabase = supabaseDaConducao({
+      respostas: {
+        convocar_para_entrevista: () => ({
+          data: null,
+          error: {
+            code: "40001",
+            message: "A lista de convocação mudou na Classificação; recarregue",
+          },
+        }),
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(document.getElementById("entrevistasConvocar"));
+    await esperar();
+    expect(toast).toHaveBeenCalledWith(
+      "A lista de convocação mudou na Classificação; recarregue",
+      "error",
+    );
+    expect(chamadas(supabase, "obter_entrevistas_do_edital")).toHaveLength(2);
+  });
+
+  it("passo 1: regra e vagas da Classificação só para ler, com o caminho de onde se mudam; sem digitar vagas", async () => {
+    await montar(supabaseDaConducao());
+    await abrirEdital();
+    const passo = document.querySelector('[data-passo="configuracao"]');
+    expect(passo.textContent).toContain(
+      "Classificação, regra v2: 1× as vagas imediatas · até a 1ª no cadastro reserva",
+    );
+    const linha = document.querySelector(
+      '#entrevistasVagas tr[data-vaga="V1"]',
+    );
+    expect(
+      [...linha.querySelectorAll("td")].map((td) => td.textContent),
+    ).toEqual([
+      "V1",
+      "EnfermeiroPolo Base",
+      "2 vagas imediatas",
+      "até a 2ª (1 × 2 vaga(s))",
+      "quadro de vagas do editalEditais",
+    ]);
+    expect(linha.querySelector('[data-ir-para="nucleo"]')).not.toBeNull();
+    expect(
+      passo.querySelector('[data-ir-para="classificacao"]').textContent,
+    ).toBe("Regra na Classificação");
+    await clicar(
+      [...passo.querySelectorAll("button")].find((b) =>
+        b.textContent.includes("Editar configuração"),
+      ),
+    );
+    expect(
+      passo.querySelector('input[aria-label^="Vagas imediatas"]'),
+    ).toBeNull();
+    expect(passo.textContent).not.toContain("Múltiplo das vagas imediatas");
+  });
+
+  it("sem lista gerada: o cálculo atual com aviso e atalho para gerar; não convoca", async () => {
+    const UUID = "11111111-2222-4333-8444-555555555555";
+    const edital = {
+      ...EDITAL,
+      edital: { ...EDITAL.edital, id: UUID },
+      lista_convocacao: null,
+    };
+    const supabase = supabaseDaConducao({
+      edital,
+      respostas: {
+        obter_classificacao_do_edital: () => ({
+          data: {
+            edital: { id: UUID, edital: "100/2026", unidade: "CASAI Brasília" },
+            regra: {
+              versao: 2,
+              configuracao: {
+                convocacao: { multiplo_vagas: 1, posicao_max_cr: 1 },
+              },
+            },
+            quadro: [
+              {
+                id: "q1",
+                ordem: 1,
+                cargo: "Enfermeiro",
+                vagas_imediatas: 1,
+                cadastro_reserva: false,
+                modalidades: {},
+              },
+            ],
+            candidatos: [1, 2, 3].map((n) => ({
+              analise_id: `an${n}`,
+              nome: `Candidato ${n}`,
+              vaga: "V1",
+              cargo: "Enfermeiro",
+              status: "Aprovado",
+              nota_documental: 90 - n,
+              quadro: "q1",
+            })),
+            entrevistas: [],
+            cronograma: [],
+            desempates: [],
+            ajustes: [],
+          },
+          error: null,
+        }),
+        listar_configuracao_convocacao: () => ({ data: [], error: null }),
+        listar_modelos_convocacao: () => ({ data: [], error: null }),
+      },
+    });
+    await montar(supabase);
+    window.navigate = vi.fn();
+    window.classificacaoController = {
+      estado: { escolherEdital: vi.fn(async () => true) },
+    };
+    try {
+      await abrirEdital();
+      expect(chamadas(supabase, "obter_classificacao_do_edital")[0][1]).toEqual(
+        { p_edital: "m1" },
+      );
+      const passo = document.querySelector('[data-passo="convocacao"]');
+      expect(passo.dataset.fonte).toBe("CALCULO");
+      expect(passo.textContent).toContain(
+        "Lista ainda não gerada na Classificação",
+      );
+      // 1× 1 vaga: só o primeiro.
+      expect(passo.textContent).toContain("Candidato 1");
+      expect(passo.textContent).not.toContain("Candidato 2");
+      expect(document.getElementById("entrevistasConvocar")).toBeNull();
+      await clicar(
+        [...passo.querySelectorAll("button")].find(
+          (b) => b.textContent === "Gerar na Classificação",
+        ),
+      );
+      expect(window.navigate).toHaveBeenCalledWith("classificacao");
+      expect(
+        window.classificacaoController.estado.escolherEdital,
+      ).toHaveBeenCalledWith(UUID);
+    } finally {
+      delete window.navigate;
+      delete window.classificacaoController;
+    }
+  });
+
+  it("sem lista e sem acesso à Classificação: avisa, sem cálculo nem convocação", async () => {
+    const supabase = supabaseDaConducao({
+      edital: { ...EDITAL, lista_convocacao: null, pode_gerar_lista: false },
+      respostas: {
+        obter_classificacao_do_edital: () => ({
+          data: null,
+          error: { code: "42501", message: "Sem permissão" },
+        }),
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    const passo = document.querySelector('[data-passo="convocacao"]');
+    expect(passo.dataset.fonte).toBe("NENHUMA");
+    expect(passo.textContent).toContain(
+      "Lista ainda não gerada na Classificação.",
+    );
+    expect(passo.textContent).toContain(
+      "Seu acesso não inclui a Classificação deste edital.",
+    );
+    expect(passo.textContent).not.toContain("Gerar na Classificação");
+    expect(document.getElementById("entrevistasConvocar")).toBeNull();
+    // O convocado de antes continua (fora da lista vigente), e a ficha também.
+    expect(passo.textContent).toContain("Fora da lista vigente");
+    expect(document.querySelector("#entrevistasFicha")).not.toBeNull();
   });
 
   it("salva a configuração com o modo de lançamento e a banca", async () => {
@@ -668,10 +873,11 @@ describe("visões de condução e roteiros", () => {
     await esperar();
     const [[, argumentos]] = chamadas(supabase, "configurar_entrevista_edital");
     expect(argumentos.p_edital).toBe("m1");
+    expect(argumentos.p_dados).not.toHaveProperty("vagas");
+    expect(argumentos.p_dados).not.toHaveProperty("convocacao");
     expect(argumentos.p_dados).toMatchObject({
       roteiro: "r1",
       lancamento: "AVALIADOR",
-      vagas: [{ vaga: "V1", vagas_imediatas: 2 }],
       avaliadores: [
         {
           id: "a1",

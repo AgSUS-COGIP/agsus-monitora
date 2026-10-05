@@ -11,7 +11,8 @@ Já aqui: `recursos/` (Recursos dos candidatos, o modelo de tela de página inte
 (Classificação: regra por edital, listas, sorteio e exportação), `aprovados/` (Lista de
 aprovados: aprovados, convocação e carta de convocação) e `aya/` (o painel da
 assistente Aya). As outras mudam uma a uma, na etapa de cada uma. `mapa-saude-indigena/` é uma
-peça, não uma tela: o mapa da Visão geral da Saúde Indígena, ligado em `visao-geral/`.
+peça, não uma tela: o mapa da Visão geral da Saúde Indígena, ligado em `visao-geral/`;
+`mapa-de-projetos/` também, o de Projetos, com as mesmas regras e as peças comuns do primeiro.
 `editor-de-coordenadas/` também é peça: o editor de coordenadas (fila, sugestões, histórico e
 desfazer) comum aos mapas da Saúde Indígena e de Projetos. `chat/` (Mensagens) também não é
 tela: o ícone do cabeçalho e o painel lateral de conversas.

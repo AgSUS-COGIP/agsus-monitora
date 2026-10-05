@@ -55,7 +55,8 @@ import { TabelaDeProcessos } from "./tabela.jsx";
   - Projetos: `<MapaDeProjetos>` (src/modulos/mapa-de-projetos/), os
     lugares das vagas de todos os projetos, pedidos pelo carregador da tela
     (um por montagem, com cache) depois da primeira carga da página
-    (`carregadoEm`);
+    (`carregadoEm`), recortados pelas mesmas linhas filtradas da página, como
+    o da Saúde Indígena;
   - SEDE: sem mapa.
 
   Textos de Configurações › Página inicial (publicados): filtros e rótulos
@@ -147,6 +148,8 @@ export function TelaDaVisaoGeral({
             area={e.area}
             carregador={carregadorDeMunicipios}
             carregadoEm={e.carregadoEm}
+            linhas={e.filtradas}
+            filtroAtivo={e.temRecorte}
             perfil={obterPerfil?.()}
             supabase={supabase}
           />

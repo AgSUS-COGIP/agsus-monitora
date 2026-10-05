@@ -8,8 +8,6 @@ import {
 import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
-  RAIO_MAXIMO,
-  RAIO_MINIMO,
   TEXTOS_DO_MAPA,
   PROJETOS_DO_MAPA,
   cabecalhoDaVisaoGeral,
@@ -19,12 +17,17 @@ import {
   pontosDosMunicipios,
   projetoDoMapa,
   projetosDosMunicipios,
-  raioDoPonto,
+  lugaresDoRecorte,
   resultadoDoMunicipio,
   resumoDoLugar,
   rotuloDoLugar,
   textoDasVagas,
 } from "../src/lib/visao-geral-da-area.js";
+import {
+  RAIO_MAXIMO,
+  RAIO_MINIMO,
+  raioDaBolha,
+} from "../src/lib/mapa-render.js";
 
 const html = readFileSync("index.html", "utf8").replace(/\s+/g, " ");
 
@@ -128,12 +131,24 @@ describe("municípios do mapa", () => {
     expect(municipiosDaResposta(null)).toEqual([]);
   });
 
-  it("o raio cresce pela raiz e não passa o das bolhas dos DSEIs", () => {
-    expect(raioDoPonto(0, 100)).toBe(RAIO_MINIMO);
-    expect(raioDoPonto(100, 100)).toBe(RAIO_MAXIMO);
-    expect(RAIO_MAXIMO).toBe(15);
-    expect(raioDoPonto(25, 100)).toBe(11);
-    expect(raioDoPonto(10, 0)).toBe(RAIO_MINIMO);
+  it("o raio é o da bolha do DSEI (raiz do valor, 5 a 15 px) e não muda com o filtro", () => {
+    const lugares = municipiosDaResposta([
+      { municipio_uf: "Seropédica/RJ", vagas: 100 },
+      { municipio_uf: "Irati/PR", vagas: 25 },
+      { municipio_uf: "Cubatão/SP", vagas: 0 },
+    ]);
+    const pontos = pontosDosMunicipios(lugares);
+    expect(pontos.map((ponto) => ponto.raio)).toEqual([
+      RAIO_MAXIMO,
+      raioDaBolha(25, 100),
+      RAIO_MINIMO,
+    ]);
+    expect(raioDaBolha(25, 100)).toBe(10);
+    // Sem o maior (recortado), Irati continua do mesmo tamanho.
+    const recortados = pontosDosMunicipios(lugares.slice(1), {
+      todos: lugares,
+    });
+    expect(recortados[0].raio).toBe(raioDaBolha(25, 100));
   });
 
   it("ordena por vagas (candidatos desempatam) e marca quem não tem coordenada", () => {
@@ -392,5 +407,49 @@ describe("projetos no mapa de Projetos", () => {
       expect(coordenadasDaUf(uf), uf).not.toBeNull();
     }
     expect(coordenadasDaUf("XX")).toBeNull();
+  });
+});
+
+/*
+  Os filtros da Visão geral valem para o mapa de Projetos como para o da
+  Saúde Indígena: com recorte, só os lugares com edital do recorte, cada um só
+  com esses editais.
+*/
+describe("o recorte da Visão geral no mapa de Projetos", () => {
+  const lugares = municipiosDaResposta(RESPOSTA_COM_PROJETOS);
+
+  it("fica o lugar com edital do recorte, pelo id da linha ou pelo número", () => {
+    const porId = lugaresDoRecorte(lugares, [{ id: "e23", edital: "x" }]);
+    expect(porId.map((lugar) => lugar.chave)).toEqual(["Boa Vista/RR"]);
+    // Boa Vista só com o edital do recorte: projetos e vagas recontados.
+    expect(porId[0].editais.map((edital) => edital.edital)).toEqual([
+      "23/2025",
+    ]);
+    expect(porId[0].projetos).toEqual([
+      { nome: "Saúde nas Fronteiras", serie: 2 },
+    ]);
+    expect(porId[0].vagasEdital).toBe(22);
+    expect(porId[0].cadastroReserva).toBe(false);
+
+    const porNumero = lugaresDoRecorte(lugares, [
+      { id: 9, edital: "Edital nº 097/2025" },
+      { id: 10, edital: "30/2026" },
+    ]);
+    expect(porNumero.map((lugar) => lugar.chave)).toEqual([
+      "uf:PA",
+      "Seropédica/RJ",
+    ]);
+    // Com todos os editais no recorte, o lugar fica como veio.
+    expect(porNumero[0]).toBe(lugares[1]);
+    expect(lugaresDoRecorte(lugares, [])).toEqual([]);
+  });
+
+  it("o tamanho do ponto continua o do lugar inteiro", () => {
+    const recortados = lugaresDoRecorte(lugares, [{ id: "e23" }]);
+    const [antes] = pontosDosMunicipios(lugares);
+    const [depois] = pontosDosMunicipios(recortados, { todos: lugares });
+    expect(depois.chave).toBe(antes.chave);
+    expect(depois.tamanho).toBe(22);
+    expect(depois.raio).toBe(antes.raio);
   });
 });
