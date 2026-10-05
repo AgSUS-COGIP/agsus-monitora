@@ -1319,7 +1319,9 @@ begin
   if exists (select 1 from public."TB_REGRA_ANALISE" where "CO_MONITORAMENTO" = p_edital) then
     raise exception 'O edital já tem regra: carregue o modelo no formulário e salve uma versão nova com o motivo.' using errcode = '23505';
   end if;
-  select private."FC_NUMERO_EDITAL"(m.edital) into v_numero from public."TB_MONITORAMENTO_INDIGENA" m where m.id = p_edital;
+  -- O rótulo do parecer: o número do edital ("Edital 93/2026") ou, sem número, o nome cadastrado.
+  select coalesce(private."FC_NUMERO_EDITAL"(m.edital), nullif(left(btrim(m.edital), 100), ''))
+    into v_numero from public."TB_MONITORAMENTO_INDIGENA" m where m.id = p_edital;
   v_config := v_modelo."DS_CONFIGURACAO" || jsonb_build_object('modelo', v_modelo."CO_MODELO");
   if coalesce(btrim(v_config ->> 'edital_rotulo'), '') = '' and v_numero is not null then
     v_config := v_config || jsonb_build_object('edital_rotulo', 'Edital ' || v_numero);
