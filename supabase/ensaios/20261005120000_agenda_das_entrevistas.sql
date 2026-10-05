@@ -311,22 +311,22 @@ begin
     raise exception 'Os períodos não podem se sobrepor.' using errcode = '22023';
   end if;
 
-  if case when jsonb_typeof(p_regra -> 'duracao_min') is distinct from 'number' then true
-          else (p_regra ->> 'duracao_min')::numeric not between 5 and 240 end then
+  if (case when jsonb_typeof(p_regra -> 'duracao_min') is distinct from 'number' then true
+          else (p_regra ->> 'duracao_min')::numeric not between 5 and 240 end) then
     raise exception 'Duração de cada entrevista entre 5 e 240 minutos.' using errcode = '22023';
   end if;
   if not private."FC_JSON_NUMERO_ENTRE"(p_regra -> 'intervalo_min', 0, 120) then
     raise exception 'Intervalo entre entrevistas entre 0 e 120 minutos.' using errcode = '22023';
   end if;
   v_pausa := p_regra -> 'pausa';
-  if case when coalesce(jsonb_typeof(v_pausa), 'null') = 'null' then false
+  if (case when coalesce(jsonb_typeof(v_pausa), 'null') = 'null' then false
           when jsonb_typeof(v_pausa) <> 'object'
             or coalesce(v_pausa ->> 'inicio', '') !~ v_hora or coalesce(v_pausa ->> 'fim', '') !~ v_hora then true
-          else (v_pausa ->> 'inicio')::time >= (v_pausa ->> 'fim')::time end then
+          else (v_pausa ->> 'inicio')::time >= (v_pausa ->> 'fim')::time end) then
     raise exception 'A pausa precisa de início antes do fim (HH:MM).' using errcode = '22023';
   end if;
-  if case when jsonb_typeof(p_regra -> 'bancas') is distinct from 'number' then true
-          else (p_regra ->> 'bancas')::numeric not between 1 and 20 end then
+  if (case when jsonb_typeof(p_regra -> 'bancas') is distinct from 'number' then true
+          else (p_regra ->> 'bancas')::numeric not between 1 and 20 end) then
     raise exception 'De 1 a 20 bancas simultâneas.' using errcode = '22023';
   end if;
   if jsonb_typeof(coalesce(p_regra -> 'nomes_das_bancas', '[]'::jsonb)) <> 'array'
