@@ -531,7 +531,7 @@ export function indicadoresDoResumo(resumo) {
       key: "ativos",
       label: "Editais ativos",
       value: ativos,
-      icon: "fa-toggle-on",
+      icon: "fa-signal",
       tone: "green",
     },
     {
