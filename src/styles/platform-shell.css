@@ -42,7 +42,8 @@
   background-position: right center;
   padding: clamp(28px, 5vh, 64px) clamp(24px, 3.2vw, 64px);
 }
-.login-screen::before {
+.login-screen::before,
+.login-screen::after {
   display: none;
 }
 /*
@@ -74,9 +75,6 @@
     background-size: contain;
     background-position: right center;
   }
-}
-.login-screen::after {
-  display: none;
 }
 .login-outer {
   width: min(516px, 31vw);
