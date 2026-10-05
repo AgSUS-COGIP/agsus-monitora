@@ -326,7 +326,7 @@ describe("a tela dentro do app", () => {
     await montar(supabaseFalso());
     const topo = secao.querySelector("header.ui-topo");
     expect(topo.querySelector("h1, h2")).toBeNull();
-    expect(status().textContent).toMatch(/^Atualizado em 30\/09\/2026/);
+    expect(status().textContent).toMatch(/^Atualizado em 30\/09, \d{2}:\d{2}$/);
     expect(
       [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
     ).toEqual(["Atualizar", "Exportar"]);

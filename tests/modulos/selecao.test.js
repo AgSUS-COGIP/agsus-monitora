@@ -47,7 +47,7 @@ const PAYLOAD = {
   schema_version: 1,
   area: "saude-indigena",
   gerado_em: "2026-10-01T12:00:00Z",
-  ultima_carga: { em: "2026-10-01T09:02:00", linhas: 2, sem_edital: 1 },
+  ultima_carga: { em: "2026-10-01T09:02:00-03:00", linhas: 2, sem_edital: 1 },
   vagas: [
     {
       id: "v1",
@@ -205,11 +205,10 @@ describe("a tela dentro do app", () => {
     ).toEqual(["Atualizar", "Exportar"]);
     expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
     expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
-    // "Carga …": a última carga, discreta e uma vez só.
-    expect(status().textContent).toBe("Carga 01/10/2026 09:02");
+    // "Conferido …": a última carga, discreta e uma vez só.
+    expect(status().textContent).toBe("Conferido em 01/10, 09:02");
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
-    expect(naTela("Carga 01/10/2026")).toBe(true);
-    expect(document.body.textContent.match(/Carga \d/g)).toHaveLength(1);
+    expect(document.body.textContent.match(/Conferido em \d/g)).toHaveLength(1);
     for (const texto of [
       "AgSUS Monitora Recrutamento e Seleção",
       "Painel de seleção",
