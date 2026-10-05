@@ -21,7 +21,7 @@ import { criarEstadoDaSaude } from "./estado.js";
   "Detalhes". Só leitura: uma RPC, `get_saude_das_cargas`
   (20261001120000_saude_das_cargas.sql); as regras em src/lib/saude-das-cargas.js.
 
-  Abre pela seção (src/modules/config-secoes.js → `render()`), que relê a cada
+  Abre pela seção (src/modulos/configuracoes/secoes.js → `render()`), que relê a cada
   vez: o estado das cargas muda a cada poucos minutos.
 */
 
@@ -291,7 +291,7 @@ export function SaudeDasCargas({ estado }) {
 
 /**
  * Monta a seção no `#saudeDasCargasApp` e devolve o controlador que
- * config-secoes.js chama ao abrir a seção.
+ * src/modulos/configuracoes/secoes.js chama ao abrir a seção.
  */
 export function montarSaudeDasCargas({
   raizDaTela = document.getElementById("saudeDasCargasApp"),

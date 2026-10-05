@@ -14,7 +14,7 @@
 
 import { linkDaTela } from "../../lib/chat.js";
 import { definirAreaAtual } from "../../componentes/dados-do-monitoramento.js";
-import { abrirSecaoDeConfiguracao } from "../../modules/config-secoes.js";
+import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
 import { obterPaginaDaAya } from "../aya/estado.js";
 
 export const EVENTO_ABRIR_CONVERSA = "agsus:chat-abrir-conversa";
