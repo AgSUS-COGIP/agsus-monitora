@@ -4,11 +4,16 @@ import {
   normalizarModelo,
 } from "../src/lib/modelo-de-convocacao.js";
 import {
+  csvDaConvocacao,
+  estaAConvocar,
+  jaFoiChamado,
+  linhasDoCsvDaConvocacao,
   montarConvocacaoDaVaga,
   montarListaDeConvocacao,
   ordenarPorClassificacao,
   resumirConvocacao,
   sequenciaDeConvocacao,
+  situacaoNaChamada,
 } from "../src/lib/lista-convocacao-rules.js";
 import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
 
@@ -311,7 +316,7 @@ describe("resumirConvocacao", () => {
     expect(resumirConvocacao(grupos)).toMatchObject({
       vagas: 1,
       imediatas: 1,
-      convocaveis: 1,
+      aConvocar: 1,
       reserva: 1,
       foraDaFila: 1,
     });
@@ -319,72 +324,104 @@ describe("resumirConvocacao", () => {
 });
 
 /*
-  FIM DE FILA — o candidato que, convocado, pede posicionamento no final da
-  lista em vez de desistir (edital FCC 125, item 13.7).
-
-  É o oposto de Desistente, e a diferença é o ponto: continua na fila, e em
-  todas as filas em que estava, só que depois de todos os outros.
+  CONVOCADO — história "Marcar convocados" (docs/historias-de-usuario/
+  lista-de-aprovados.md): quem foi chamado continua na posição que o cálculo
+  lhe deu e não é chamado de novo; Desistente e Documentação Rejeitada saem da
+  fila e o próximo toma a vaga. "Fim de Fila" deixou de existir.
 */
-describe("status Fim de Fila", () => {
-  it("manda para o fim da ordem geral, sem sair dela", () => {
-    const { linhas, foraDaFila } = convocar(
+describe("status Convocado", () => {
+  it("continua na fila, na mesma posição, e não conta como a convocar", () => {
+    const grupos = montarListaDeConvocacao(
       [
-        candidato("ANA", "Ampla", { status: "Fim de Fila" }),
+        candidato("ANA", "Ampla", { status: "Convocado" }),
         candidato("BRUNO", "Ampla"),
         candidato("CARLA", "Ampla"),
       ],
-      { ampla: 3 },
+      () => ({ quadro: { ampla: 2 }, modelo: MODELO, proporcionalidade: true }),
     );
-    expect(nomes(linhas)).toEqual(["BRUNO", "CARLA", "ANA"]);
-    // Não é desistência: continua numerada e ocupando vaga.
-    expect(foraDaFila).toEqual([]);
-    expect(linhas.at(-1).posicao).toBe(3);
-    expect(linhas.at(-1).imediata).toBe(true);
+    const [grupo] = grupos;
+    expect(nomes(grupo.linhas)).toEqual(["ANA", "BRUNO", "CARLA"]);
+    expect(grupo.linhas[0].imediata).toBe(true);
+    expect(estaAConvocar(grupo.linhas[0])).toBe(false);
+    expect(estaAConvocar(grupo.linhas[1])).toBe(true);
+    expect(situacaoNaChamada(grupo.linhas[0])).toBe("Já chamado");
+    expect(situacaoNaChamada(grupo.linhas[2])).toBe("Cadastro de reserva");
+    expect(resumirConvocacao(grupos)).toMatchObject({
+      aConvocar: 1,
+      convocados: 1,
+      reserva: 1,
+    });
   });
 
-  /*
-    A fila da cota é um recorte da ordem geral, então cair para o fim ali leva
-    a pessoa para o fim da sua reserva também — sem código próprio para isso.
-  */
-  it("cai para o fim também dentro da própria reserva", () => {
-    const { linhas } = convocar(
-      [
-        candidato("ANA", '"Pretos e Pardos"', { status: "Fim de Fila" }),
-        candidato("BRUNO", "Ampla"),
-        candidato("PEDRO", '"Pretos e Pardos"'),
-      ],
-      { ampla: 1, pretos_pardos: 1 },
-    );
-    const reservada = linhas.find(
-      (linha) => linha.categoria === "pretos_pardos",
-    );
-    expect(reservada.candidato.nome).toBe("PEDRO");
-    expect(nomes(linhas).at(-1)).toBe("ANA");
-  });
-
-  it("entre dois que pediram fim de fila, a ordem normal continua a valer", () => {
-    const { linhas } = convocar(
-      [
-        candidato("ANA", "Ampla", { status: "Fim de Fila" }),
-        candidato("BRUNO", "Ampla", { status: "Fim de Fila" }),
-        candidato("CARLA", "Ampla"),
-      ],
-      { ampla: 3 },
-    );
-    // ANA tem nota maior que BRUNO, e mantém a frente entre os dois.
-    expect(nomes(linhas)).toEqual(["CARLA", "ANA", "BRUNO"]);
-  });
-
-  it("desistente sai da fila; fim de fila não", () => {
-    const { linhas, foraDaFila } = convocar(
+  it("convocado que desiste sai da fila e o próximo passa a ser a convocar", () => {
+    const grupos = montarListaDeConvocacao(
       [
         candidato("ANA", "Ampla", { status: "Desistente" }),
-        candidato("BRUNO", "Ampla", { status: "Fim de Fila" }),
+        candidato("BRUNO", "Ampla"),
         candidato("CARLA", "Ampla"),
+      ],
+      () => ({ quadro: { ampla: 1 }, modelo: MODELO, proporcionalidade: true }),
+    );
+    expect(nomes(grupos[0].foraDaFila)).toEqual(["ANA"]);
+    expect(nomes(grupos[0].linhas.filter(estaAConvocar))).toEqual(["BRUNO"]);
+  });
+
+  it("contratado e migração também já foram chamados", () => {
+    expect(jaFoiChamado({ status: "Contratado" })).toBe(true);
+    expect(jaFoiChamado({ status: "Migração" })).toBe(true);
+    expect(jaFoiChamado({ status: "Convocado" })).toBe(true);
+    expect(jaFoiChamado({ status: "" })).toBe(false);
+    expect(jaFoiChamado({ status: "Desistente" })).toBe(false);
+  });
+
+  it("não há mais tratamento de Fim de Fila: o status antigo não muda a ordem", () => {
+    const { linhas } = convocar(
+      [
+        candidato("ANA", "Ampla", { status: "Fim de Fila" }),
+        candidato("BRUNO", "Ampla"),
       ],
       { ampla: 2 },
     );
-    expect(nomes(foraDaFila)).toEqual(["ANA"]);
-    expect(nomes(linhas)).toEqual(["CARLA", "BRUNO"]);
+    expect(nomes(linhas)).toEqual(["ANA", "BRUNO"]);
+  });
+});
+
+describe("CSV da ordem de convocação", () => {
+  it("traz situação na chamada, status e data da convocação, na ordem da tela", () => {
+    const grupos = montarListaDeConvocacao(
+      [
+        candidato("ANA", "Ampla", { status: "Convocado" }),
+        candidato("BRUNO", "Ampla"),
+        candidato("CARLA", "Ampla", { status: "Desistente" }),
+      ],
+      () => ({ quadro: { ampla: 2 }, modelo: MODELO, proporcionalidade: true }),
+    );
+    const idDaAna = grupos[0].linhas[0].candidato.candidato_id;
+    const linhas = linhasDoCsvDaConvocacao(grupos, {
+      convocacoes: new Map([[idDaAna, { data: "2026-10-05" }]]),
+      rotulo: () => "Ampla",
+    });
+    expect(linhas[0]).toContain("Data da convocação");
+    expect(linhas[0]).toContain("Situação na chamada");
+    const porNome = Object.fromEntries(linhas.slice(1).map((l) => [l[8], l]));
+    expect(porNome.ANA.slice(6, 8)).toEqual(["Imediata · Ampla", "Já chamado"]);
+    expect(porNome.ANA.slice(11)).toEqual(["Convocado", "05/10/2026"]);
+    expect(porNome.BRUNO[7]).toBe("A convocar");
+    expect(porNome.BRUNO[11]).toBe("Sem status");
+    expect(porNome.CARLA[7]).toBe("Fora da fila");
+    expect(linhas.at(-1)[8]).toBe("CARLA");
+  });
+});
+
+describe("csvDaConvocacao", () => {
+  it("usa ;, BOM e protege célula que parece fórmula", () => {
+    const grupos = montarListaDeConvocacao(
+      [candidato("=HYPERLINK(1)", "Ampla"), candidato("BRUNO; LIMA", "Ampla")],
+      () => ({ quadro: { ampla: 1 }, modelo: MODELO, proporcionalidade: true }),
+    );
+    const csv = csvDaConvocacao(grupos);
+    expect(csv.startsWith("\uFEFFEdital;")).toBe(true);
+    expect(csv).toContain(";'=HYPERLINK(1);");
+    expect(csv).toContain(';"BRUNO; LIMA";');
   });
 });

@@ -1,0 +1,200 @@
+/*
+  Carta de convocação (modal-da-carta.jsx, modelos-da-carta.jsx) e a gaveta do
+  candidato (../gaveta-do-candidato.jsx). Só tokens; a folha da prévia é papel
+  e fica branca também no tema escuro, como a da Classificação.
+*/
+.carta-modal {
+  width: min(1280px, 96vw);
+  max-height: 94vh;
+  overflow: auto;
+  display: grid;
+  gap: var(--space-3);
+}
+.carta-corpo,
+.carta-editor {
+  display: grid;
+  gap: var(--space-3);
+}
+@media (min-width: 1100px) {
+  .carta-corpo,
+  .carta-editor {
+    grid-template-columns: minmax(320px, 2fr) 3fr;
+  }
+}
+.carta-formulario {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+.carta-formulario textarea {
+  width: 100%;
+  font-size: var(--text-body-sm);
+}
+.carta-previa {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+.carta-previa-folha {
+  width: 100%;
+  min-height: 60vh;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-0);
+}
+.carta-previa-exemplo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.carta-navegacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+}
+.carta-candidatos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.carta-candidatos li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 0 0 var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body-sm);
+}
+.carta-candidatos li small {
+  color: var(--text-secondary);
+}
+.carta-candidatos .approved-icone-acao {
+  width: 28px;
+  height: 28px;
+  font-size: var(--text-body-sm);
+}
+.carta-pendencias ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.carta-emitida .carta-marcar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.carta-acoes {
+  justify-content: flex-end;
+}
+.carta-sem-modelo {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+.carta-esqueleto {
+  height: 48px;
+}
+/* Os campos do modelo: clicar põe {CAMPO} onde está o cursor do texto. */
+.carta-campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.carta-campo {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+.carta-campo:hover,
+.carta-campo:focus-visible {
+  border-color: var(--brand-primary);
+}
+.carta-lista-de-modelos {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.carta-lista-de-modelos > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.carta-lista-de-modelos > li:not([data-ativo]) {
+  opacity: 0.75;
+}
+.carta-modelo-copy {
+  display: grid;
+  gap: var(--space-1);
+}
+.carta-modelo-copy small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.carta-modelo-acoes,
+.carta-situacao {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.carta-versoes summary {
+  color: var(--brand-primary);
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+.carta-versoes ol {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-caption);
+}
+
+/* Gaveta do candidato */
+.aprovados-gaveta-corpo {
+  display: grid;
+  gap: var(--space-3);
+}
+.aprovados-gaveta-acoes {
+  justify-content: flex-start;
+}
+.aprovados-cartas-emitidas {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.aprovados-carta-emitida {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.aprovados-carta-emitida div {
+  display: grid;
+  gap: 2px;
+}
+.aprovados-carta-emitida small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.aprovados-carta-esqueleto {
+  height: 52px;
+}

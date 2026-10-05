@@ -8,9 +8,12 @@ import {
   paginateApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import {
+  csvDaConvocacao,
+  estaAConvocar,
   montarListaDeConvocacao,
   resumirConvocacao,
 } from "../../lib/lista-convocacao-rules.js";
+import { canChangeCandidateStatus } from "../../lib/access-roles.js";
 import {
   lerModalidade,
   rotuloDaCategoria,
@@ -32,6 +35,7 @@ import {
   classes,
 } from "../../ui/index.js";
 import {
+  AcaoDeCarta,
   AcaoDeStatus,
   NomeDoCandidato,
   NotaDoCandidato,
@@ -213,13 +217,26 @@ function CabecalhoDoGrupo({ grupo }) {
   );
 }
 
-function TabelaDoGrupo({ grupo, linhas, perfil, aoAbrirStatus }) {
+function TabelaDoGrupo({
+  grupo,
+  linhas,
+  perfil,
+  estado,
+  convocacoes,
+  selecao,
+}) {
+  const podeEscolher = Boolean(selecao);
   return (
     <>
       <CabecalhoDoGrupo grupo={grupo} />
       <table className="approved-table convocacao-table">
         <thead>
           <tr>
+            {podeEscolher ? (
+              <th className="convocacao-th-escolha">
+                <span className="sr-only">Escolher para a carta</span>
+              </th>
+            ) : null}
             <th className="num">Ordem</th>
             <th className="num">Classificação geral</th>
             <th>Vaga da convocação</th>
@@ -240,14 +257,34 @@ function TabelaDoGrupo({ grupo, linhas, perfil, aoAbrirStatus }) {
                   linha.imediata && "convocacao-linha-imediata",
                   !linha.posicao && "convocacao-linha-fora",
                 )}
+                data-a-convocar={estaAConvocar(linha) ? "" : undefined}
               >
+                {podeEscolher ? (
+                  <td className="convocacao-escolha">
+                    {candidato.lista_ativa ? (
+                      <input
+                        type="checkbox"
+                        data-convocacao-action="escolher"
+                        data-candidate-id={candidato.candidato_id}
+                        aria-label={`Escolher ${candidato.nome} para a carta de convocação`}
+                        checked={selecao.tem(candidato.candidato_id)}
+                        onChange={() =>
+                          selecao.alternar(candidato.candidato_id)
+                        }
+                      />
+                    ) : null}
+                  </td>
+                ) : null}
                 <td className="num">{linha.posicao ?? "—"}</td>
                 <td className="num">{candidato.classificacao ?? "—"}</td>
                 <td>
                   <VagaDaConvocacao grupo={grupo} linha={linha} />
                 </td>
                 <td>
-                  <NomeDoCandidato candidato={candidato} />
+                  <NomeDoCandidato
+                    candidato={candidato}
+                    aoAbrir={estado.abrirCandidato}
+                  />
                 </td>
                 <td className="num">
                   <NotaDoCandidato candidato={candidato} />
@@ -260,7 +297,12 @@ function TabelaDoGrupo({ grupo, linhas, perfil, aoAbrirStatus }) {
                   />
                 </td>
                 <td>
-                  <SeloDeStatus status={text(candidato.status)} />
+                  <SeloDeStatus
+                    status={text(candidato.status)}
+                    dataConvocacao={
+                      convocacoes.get(String(candidato.candidato_id))?.data
+                    }
+                  />
                 </td>
                 <td className="approved-actions">
                   <div className="approved-actions-grupo">
@@ -268,7 +310,13 @@ function TabelaDoGrupo({ grupo, linhas, perfil, aoAbrirStatus }) {
                       perfil={perfil}
                       candidato={candidato}
                       atributos={{ "data-convocacao-action": "status" }}
-                      aoAbrir={aoAbrirStatus}
+                      aoAbrir={estado.abrirStatus}
+                    />
+                    <AcaoDeCarta
+                      perfil={perfil}
+                      candidato={candidato}
+                      atributos={{ "data-convocacao-action": "carta" }}
+                      aoAbrir={estado.abrirCarta}
                     />
                   </div>
                 </td>
@@ -289,10 +337,17 @@ export function AbaConvocacao({
   listas,
   configs,
   modelos,
+  convocacoes = new Map(),
   carregado,
   erroAoCarregar,
 }) {
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
+  /*
+    Os escolhidos para a carta: sobrevivem a trocar de página e de filtro (a
+    barra diz quantos são); quem saiu da lista carregada deixa de contar.
+  */
+  const [escolhidos, setEscolhidos] = useState(() => new Set());
+  const podeEmitir = canChangeCandidateStatus(perfil);
   const [pagina, setPagina] = useState(1);
   const [tamanho, setTamanho] = useState(50);
   const tabela = useRef(null);
@@ -329,6 +384,50 @@ export function AbaConvocacao({
   ]);
 
   const resumo = resumirConvocacao(grupos);
+  const ativos = useMemo(
+    () =>
+      new Set(
+        candidatos
+          .filter((row) => row.lista_ativa)
+          .map((row) => String(row.candidato_id)),
+      ),
+    [candidatos],
+  );
+  const escolhidosValidos = [...escolhidos].filter((id) => ativos.has(id));
+  const selecao = podeEmitir
+    ? {
+        tem: (id) => escolhidos.has(String(id)),
+        alternar: (id) =>
+          setEscolhidos((atuais) => {
+            const proximos = new Set(atuais);
+            const chave = String(id);
+            if (proximos.has(chave)) proximos.delete(chave);
+            else proximos.add(chave);
+            return proximos;
+          }),
+      }
+    : null;
+
+  /* "Escolher os a convocar": as vagas imediatas ainda sem chamada, no recorte. */
+  function escolherAConvocar() {
+    const ids = grupos.flatMap((grupo) =>
+      grupo.linhas
+        .filter((linha) => estaAConvocar(linha) && linha.candidato.lista_ativa)
+        .map((linha) => String(linha.candidato.candidato_id)),
+    );
+    setEscolhidos(new Set(ids));
+  }
+
+  function exportarCsv() {
+    const conteudo = csvDaConvocacao(grupos, {
+      convocacoes,
+      rotulo: (grupo, categoria) => rotuloDaCategoria(grupo.modelo, categoria),
+    });
+    estado.baixarArquivo(
+      new Blob([conteudo], { type: "text/csv;charset=utf-8" }),
+      "ordem-de-convocacao.csv",
+    );
+  }
   const todas = useMemo(
     () => linhasPlanas(grupos, filtroDeStatus(filtros.status)),
     [grupos, filtros.status],
@@ -412,12 +511,20 @@ export function AbaConvocacao({
           resumo.imediatas,
         )}
         {kpi(
-          "convocacaoKpiConvocaveis",
-          "convocaveis",
+          "convocacaoKpiAConvocar",
+          "a-convocar",
           "sucesso",
           "fa-bell",
-          "Convocáveis agora",
-          resumo.convocaveis,
+          "A convocar",
+          resumo.aConvocar,
+        )}
+        {kpi(
+          "convocacaoKpiConvocados",
+          "convocados",
+          "alerta",
+          "fa-envelope-open-text",
+          "Convocados",
+          resumo.convocados,
         )}
         {kpi(
           "convocacaoKpiReserva",
@@ -474,6 +581,70 @@ export function AbaConvocacao({
         </div>
       </PainelDeFiltros>
 
+      <div className="convocacao-acoes" id="convocacaoAcoes">
+        {podeEmitir ? (
+          <>
+            <span className="convocacao-escolhidos" aria-live="polite">
+              {escolhidosValidos.length
+                ? `${formatNumberBR(escolhidosValidos.length)} escolhido${escolhidosValidos.length === 1 ? "" : "s"}`
+                : ""}
+            </span>
+            <button
+              type="button"
+              className="btn secondary"
+              id="convocacaoEscolherAConvocar"
+              disabled={!carregado || !resumo.aConvocar}
+              onClick={escolherAConvocar}
+            >
+              <i className="fa-solid fa-list-check" aria-hidden="true" />{" "}
+              Escolher os a convocar
+            </button>
+            {escolhidosValidos.length ? (
+              <button
+                type="button"
+                className="btn secondary"
+                id="convocacaoLimparEscolha"
+                onClick={() => setEscolhidos(new Set())}
+              >
+                Limpar escolha
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="btn green"
+              id="convocacaoCartaBtn"
+              disabled={!escolhidosValidos.length}
+              onClick={() => estado.abrirCarta(escolhidosValidos)}
+            >
+              <i
+                className="fa-solid fa-envelope-open-text"
+                aria-hidden="true"
+              />{" "}
+              Carta de convocação
+            </button>
+            <button
+              type="button"
+              className="btn secondary"
+              id="convocacaoModelosBtn"
+              onClick={estado.abrirModelosDaCarta}
+            >
+              <i className="fa-solid fa-file-pen" aria-hidden="true" /> Modelos
+              da carta
+            </button>
+          </>
+        ) : null}
+        <button
+          type="button"
+          className="btn secondary"
+          id="convocacaoCsvBtn"
+          disabled={!carregado || !grupos.length}
+          onClick={exportarCsv}
+        >
+          <i className="fa-solid fa-file-excel" aria-hidden="true" /> Exportar
+          CSV
+        </button>
+      </div>
+
       <section
         className="ui-card ui-tabela approved-page-card"
         aria-label="Ordem de convocação"
@@ -486,7 +657,7 @@ export function AbaConvocacao({
                 aria-busy="true"
               >
                 <tbody>
-                  <LinhasEsqueleto colunas={8} />
+                  <LinhasEsqueleto colunas={podeEmitir ? 9 : 8} />
                 </tbody>
               </table>
             ) : erroAoCarregar ? (
@@ -498,7 +669,9 @@ export function AbaConvocacao({
                   grupo={grupo}
                   linhas={linhas}
                   perfil={perfil}
-                  aoAbrirStatus={estado.abrirStatus}
+                  estado={estado}
+                  convocacoes={convocacoes}
+                  selecao={selecao}
                 />
               ))
             ) : (

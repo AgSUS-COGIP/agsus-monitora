@@ -992,16 +992,21 @@ const ESTILO_DO_SEI = `
   table p { margin: 0; font-size: 10pt; }
   p.Tabela_Texto_Centralizado { text-align: center; }
   p.Tabela_Texto_Alinhado_Esquerda { text-align: left; }
+  p.Texto_Justificado_Recuo_Primeira_Linha { text-align: justify; text-indent: 25mm; }
+  p.Texto_Alinhado_Esquerda { text-align: left; }
+  .quebra-de-pagina { break-before: page; page-break-before: always; border-top: 1px dashed #999; margin-top: 18pt; padding-top: 12pt; }
+  @media print { .quebra-de-pagina { border-top: 0; margin-top: 0; padding-top: 0; } }
   .posto-pelo-sei { margin-top: 18pt; padding-top: 6pt; border-top: 1px dashed #999; color: #666; font-size: 8pt; text-align: center; }
 `;
 
 /**
- * A página "Como fica no SEI": o timbrado (logo e cabeçalho da agência), o
- * HTML do SEI e o aviso do que o SEI acrescenta. Vai num iframe sem script
- * (a prévia) ou na impressão (PDF).
+ * Uma página no modelo do SEI, para qualquer documento: o timbrado (logo e
+ * cabeçalho da agência), o HTML do SEI (`corpoHtml`) e, se vier, o aviso do
+ * que o SEI acrescenta. Vai num iframe sem script (a prévia) ou na impressão
+ * (PDF). A carta de convocação também a usa (carta-de-convocacao-documento.js).
  */
-export function paginaDaPrevia(
-  doc,
+export function paginaNoModeloDoSei(
+  { nome, corpoHtml, aviso = "" },
   { cabecalho = CABECALHO_PADRAO, logo = "" } = {},
 ) {
   const linhasDoCabecalho = String(cabecalho || CABECALHO_PADRAO)
@@ -1012,10 +1017,25 @@ export function paginaDaPrevia(
     ? `<img src="${escapar(logo)}" alt="AgSUS">`
     : "";
   return (
-    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapar(doc.nome)}</title><style>${ESTILO_DO_SEI}</style></head>` +
+    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapar(nome)}</title><style>${ESTILO_DO_SEI}</style></head>` +
     `<body><div class="folha"><div class="timbrado">${imagem}${linhasDoCabecalho.map((l) => `<p>${escapar(l)}</p>`).join("")}</div>` +
-    `${htmlParaSei(doc)}` +
-    `<p class="posto-pelo-sei">Assinatura eletrônica e rodapé "${escapar(doc.nome)} (nº SEI) SEI ${escapar(doc.processo || "<processo>")} / pg. N": postos pelo SEI.</p>` +
+    `${corpoHtml}` +
+    (aviso ? `<p class="posto-pelo-sei">${escapar(aviso)}</p>` : "") +
     "</div></body></html>"
+  );
+}
+
+/**
+ * A página "Como fica no SEI" da lista: o HTML do SEI e o aviso do que o SEI
+ * acrescenta (assinatura e rodapé).
+ */
+export function paginaDaPrevia(doc, marca = {}) {
+  return paginaNoModeloDoSei(
+    {
+      nome: doc.nome,
+      corpoHtml: htmlParaSei(doc),
+      aviso: `Assinatura eletrônica e rodapé "${doc.nome} (nº SEI) SEI ${doc.processo || "<processo>"} / pg. N": postos pelo SEI.`,
+    },
+    marca,
   );
 }

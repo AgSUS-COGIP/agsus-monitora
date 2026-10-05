@@ -36,6 +36,7 @@ import "./modulos/editais/editais.css";
 import "./modulos/cronograma/cronograma.css";
 import "./modulos/aprovados/aprovados.css";
 import "./modulos/aprovados/convocacao.css";
+import "./modulos/aprovados/carta-de-convocacao/carta.css";
 import "./modulos/recursos/recursos.css";
 import "./modulos/entrevistas/entrevistas.css";
 import "./modulos/selecao/selecao.css";

@@ -403,10 +403,72 @@ export const CONTRATO_RPC = {
     resumo: "Arquiva a lista vigente de aprovados preservando o histórico.",
   },
   alterar_status_candidato_aprovado: {
-    argumentos: ["p_candidato_id", "p_status", "p_processo_sei", "p_matricula"],
+    argumentos: [
+      "p_candidato_id",
+      "p_status",
+      "p_processo_sei",
+      "p_matricula",
+      "p_data_convocacao",
+    ],
     critica: true,
     resumo:
-      "Altera o status de um candidato e registra processo SEI e matrícula quando informados. Status já definido só o admin altera.",
+      "Altera o status de um candidato (Convocado, Contratado, Desistente, Migração, Documentação Rejeitada ou nulo), com processo SEI, matrícula e a data da convocação (Convocado). Status já definido só o admin altera, exceto do Convocado para outro status.",
+  },
+  marcar_candidatos_convocados: {
+    argumentos: ["p_candidatos", "p_data_convocacao", "p_carta"],
+    critica: false,
+    resumo:
+      "Marca como Convocado, com a data, os candidatos sem status ou já convocados (os demais voltam em ignorados); com p_carta, liga a marcação à carta emitida. Aprovados editor.",
+  },
+  listar_modelos_carta_convocacao: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Modelos da carta de convocação da área, com a versão vigente, as últimas versões e quantas cartas saíram de cada um; pode_editar.",
+  },
+  salvar_modelo_carta_convocacao: {
+    argumentos: [
+      "p_modelo",
+      "p_area",
+      "p_edital",
+      "p_conteudo",
+      "p_versao_atual",
+      "p_motivo",
+    ],
+    critica: false,
+    resumo:
+      "Cria o modelo da carta (área ou edital) ou grava a próxima versão: 40001 se a versão mudou; motivo obrigatório a partir da 2ª. Aprovados editor.",
+  },
+  definir_modelo_carta_ativo: {
+    argumentos: ["p_modelo", "p_ativo", "p_motivo"],
+    critica: false,
+    resumo:
+      "Inativa ou reativa um modelo da carta de convocação, com motivo. Aprovados editor.",
+  },
+  registrar_carta_convocacao: {
+    argumentos: [
+      "p_modelo",
+      "p_versao",
+      "p_candidatos",
+      "p_agrupamento",
+      "p_saida",
+      "p_campos",
+    ],
+    critica: false,
+    resumo:
+      "Registra a emissão da carta de convocação (modelo e versão, candidatos, agrupamento, saída SEI/DOCX/PDF e os valores usados). Aprovados editor.",
+  },
+  listar_cartas_do_candidato: {
+    argumentos: ["p_candidato"],
+    critica: false,
+    resumo:
+      "Cartas de convocação emitidas para o candidato (também nas listas anteriores do edital) e a data da convocação.",
+  },
+  listar_convocacoes_aprovados: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Data da convocação e cartas emitidas por candidato das listas vigentes da área.",
   },
   listar_anexos_candidatos_aprovados: {
     argumentos: [],
