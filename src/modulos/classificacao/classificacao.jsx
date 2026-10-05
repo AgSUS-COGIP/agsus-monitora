@@ -6,7 +6,9 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
+import { estadoDasConfiguracoes } from "../../componentes/configuracoes/estado.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.js";
+import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.js";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.js";
 import { classificar } from "../../lib/classificacao/motor.js";
@@ -208,12 +210,19 @@ export function montarClassificacao({
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   baixar,
   imprimir,
+  copiar,
+  carregarLogo,
+  cabecalho = () =>
+    estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 } = {}) {
   const estado = criarEstadoDaClassificacao({
     supabase,
     toast,
+    cabecalho,
     ...(baixar ? { baixar } : {}),
     ...(imprimir ? { imprimir } : {}),
+    ...(copiar ? { copiar } : {}),
+    ...(carregarLogo ? { carregarLogo } : {}),
   });
   const raiz = secao
     ? montarModulo(secao, <TelaDeClassificacao estado={estado} />, {

@@ -24,6 +24,10 @@ import {
 } from "./marca-da-barra-lateral.js";
 import { normalizeAllowedDomains } from "./platform-context.js";
 import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.js";
+import {
+  CABECALHO_PADRAO,
+  CHAVE_DO_CABECALHO,
+} from "./cabecalho-dos-documentos.js";
 
 const txt = (valor) => String(valor ?? "").trim();
 
@@ -56,7 +60,7 @@ const texto = (chave, descricao, rotulo, extra = {}) =>
   Campos das seções, por seção. `rotulo` e `placeholder` são os da tela;
   `descricao` é a da TB_CONFIGURACAO (vai na linha publicada e na revisão).
 
-  `tipo`: "url" (http/https; vazio passa), "inteiro" (minimo..maximo), "email",
+  `tipo`: "texto-longo" (várias linhas), "url" (http/https; vazio passa), "inteiro" (minimo..maximo), "email",
   "dominio" (agenciasus.org.br), "url-de-acesso" (caminho do site ou https),
   "booleano"/"opcoes" (lista `opcoes`), "cor" (seletor) e "gerenciado" (sem
   campo de texto: a seção escolhe o valor por botões — imagens).
@@ -101,6 +105,16 @@ export const CAMPOS_DAS_SECOES = Object.freeze({
       chave: "footer_text",
       descricao: "Texto do rodapé (fallback)",
       rotulo: "Rodapé",
+    },
+    {
+      /* O timbrado dos documentos oficiais da Classificação (Word e prévia do SEI). */
+      chave: CHAVE_DO_CABECALHO,
+      descricao: "Cabeçalho da agência nos documentos oficiais",
+      rotulo: "Cabeçalho da agência",
+      tipo: "texto-longo",
+      largo: true,
+      padrao: CABECALHO_PADRAO,
+      dica: "Uma linha por linha do timbrado: nome, endereço e site.",
     },
   ]),
 

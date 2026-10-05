@@ -2,11 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { TIPOS_DE_LISTA } from "../../src/lib/classificacao/catalogo.js";
 import {
-  documentoDaLista,
   instantaneoDaLista,
-  largurasDasColunas,
   linhasDaPlanilha,
 } from "../../src/lib/classificacao/exportacao.js";
+import { documentoOficial } from "../../src/lib/classificacao/documento-sei.js";
 import { classificar } from "../../src/lib/classificacao/motor.js";
 
 /*
@@ -134,60 +133,71 @@ describe("avaliação documental: parciais e eliminados com justificativa", () =
     });
   });
 
-  it("documento: colunas das parciais entre o nome e a nota", () => {
-    const doc = documentoDaLista(retrato, { lista: "geral" });
-    expect(doc.titulo).toBe(
-      "RESULTADO PRELIMINAR - AVALIAÇÃO DOCUMENTAL E DE TÍTULOS",
+  const rotulos = (t) => t.colunas.map((c) => c.rotulo);
+
+  it("documento (como o 83/2026): Classificação | Nome | Nota Final | parciais", () => {
+    const doc = documentoOficial(retrato, { lista: "geral", regra: REGRA_83 });
+    expect(doc.titulo).toEqual([
+      "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR",
+    ]);
+    expect(doc.preliminares[1].texto).toContain(
+      "ordem decrescente de pontuação",
     );
-    expect(doc.abertura).toContain("ordem decrescente de pontuação");
     const [geral] = doc.blocos[0].tabelas;
-    expect(geral.colunas).toEqual([
+    expect(rotulos(geral)).toEqual([
       "Classificação",
       "Nome",
+      "Nota Final",
       "Formação Acadêmica",
       "Cursos de Aperfeiçoamento",
       "Experiência Profissional",
       "Pontuação Étnica",
-      "Nota",
     ]);
     expect(geral.linhas[0]).toEqual([
       "1º",
       "Jucikely",
+      "14,0",
       "1,0",
       "2,0",
       "10,0",
       "0,0",
-      "14,0",
     ]);
   });
 
-  it("fase final no título (depois dos recursos)", () => {
-    expect(documentoDaLista(retrato, { fase: "FINAL" }).titulo).toBe(
-      "RESULTADO FINAL - AVALIAÇÃO DOCUMENTAL E DE TÍTULOS",
-    );
+  it("fase final no título (depois dos recursos) e as disposições finais da convocação", () => {
+    const doc = documentoOficial(retrato, { fase: "FINAL", regra: REGRA_83 });
+    expect(doc.titulo).toEqual([
+      "RESULTADO FINAL - ETAPA DE ANÁLISE CURRICULAR",
+    ]);
+    expect(doc.finais[0].texto).toContain("nos termos do item 8.24");
   });
 
-  it("lista de eliminados: nome, parciais, nota e justificativa", () => {
-    const doc = documentoDaLista(retrato, { lista: "eliminados" });
-    expect(doc.titulo).toBe(
-      "RESULTADO PRELIMINAR - AVALIAÇÃO DOCUMENTAL E DE TÍTULOS - ELIMINADOS",
+  it("lista de eliminados: nome, nota, parciais e justificativa", () => {
+    const doc = documentoOficial(retrato, {
+      lista: "eliminados",
+      regra: REGRA_83,
+    });
+    expect(doc.nome).toBe(
+      "Resultado Preliminar - Etapa de Análise Curricular - Eliminados",
+    );
+    expect(doc.preliminares[0].texto).toContain(
+      "**Resultado Preliminar da Etapa de Avaliação Documental e de Títulos dos Candidatos Eliminados**",
     );
     const [t] = doc.blocos[0].tabelas;
-    expect(t.colunas.at(0)).toBe("Nome");
-    expect(t.colunas.at(-1)).toBe("Justificativa");
+    expect(rotulos(t).at(0)).toBe("Nome");
+    expect(rotulos(t).at(-1)).toBe("Justificativa");
     expect(t.linhas).toEqual([
       [
         "Reprovada",
+        "4,0",
         "1,0",
         "2,0",
         "1,0",
         "0,0",
-        "4,0",
         "Abaixo da nota mínima da avaliação documental. Nota 4,0; mínimo 7,0 (superior).",
       ],
     ]);
-    const larguras = largurasDasColunas(t.colunas, 0);
-    expect(larguras.reduce((a, b) => a + b, 0)).toBe(9000);
+    expect(t.colunas.reduce((soma, c) => soma + c.largura, 0)).toBe(100);
   });
 });
 
@@ -233,12 +243,17 @@ describe("resultado da entrevista", () => {
       regra: REGRA_83,
     });
     expect(retrato.parciais).toBeUndefined();
-    const doc = documentoDaLista(retrato, { lista: "geral" });
-    expect(doc.titulo).toBe("RESULTADO PRELIMINAR - ETAPA DE ENTREVISTA");
-    expect(doc.blocos[0].tabelas[0].colunas).toEqual([
+    const doc = documentoOficial(retrato, { lista: "geral", regra: REGRA_83 });
+    expect(doc.titulo).toEqual(["RESULTADO PRELIMINAR - ETAPA DE ENTREVISTA"]);
+    expect(doc.blocos[0].tabelas[0].colunas.map((c) => c.rotulo)).toEqual([
       "Classificação",
-      "Nome",
-      "Nota",
+      "NOME",
+      "NOTA",
+    ]);
+    expect(doc.blocos[0].tabelas[0].linhas.map((l) => l[0])).toEqual([
+      "1º",
+      "1º",
+      "2º",
     ]);
     expect(linhasDaPlanilha(retrato).classificacao[1].at(-1)).toBe("Apto");
   });
@@ -260,27 +275,29 @@ describe("resultado da entrevista", () => {
 });
 
 describe("resultado final: vaga imediata e cadastro reserva", () => {
-  it("Nota Final e Situação no documento", () => {
+  it("documento como o 83/2026: CLASSIFICAÇÃO | NOME | NOTA FINAL (sem situação)", () => {
     const r = classificar({ ...base, tipo: "FINAL" });
     const retrato = instantaneoDaLista(r, {
       edital: { edital: "83/2026" },
       regra: REGRA_83,
     });
-    const doc = documentoDaLista(retrato, { lista: "geral" });
-    expect(doc.titulo).toBe("RESULTADO FINAL - PROCESSO SELETIVO");
+    const doc = documentoOficial(retrato, { lista: "geral", regra: REGRA_83 });
+    expect(doc.titulo).toEqual(["RESULTADO FINAL - PROCESSO SELETIVO"]);
     const [t] = doc.blocos[0].tabelas;
-    expect(t.colunas).toEqual([
-      "Classificação",
-      "Nome",
-      "Nota Final",
-      "Situação",
+    expect(t.colunas.map((c) => c.rotulo)).toEqual([
+      "CLASSIFICAÇÃO",
+      "NOME",
+      "NOTA FINAL",
     ]);
-    expect(t.linhas.map((l) => [l[0], l[1], l[2], l[3]])).toEqual([
-      ["1º", "Jucikely", "31,3", "Vaga imediata"],
-      ["2º", "Pedro", "30,3", "Cadastro reserva"],
-      ["3º", "Fora do limite", "29,0", "Cadastro reserva"],
-      ["4º", "Vanderlei", "28,0", "Cadastro reserva"],
+    expect(t.linhas).toEqual([
+      ["1º", "Jucikely", "31,3"],
+      ["2º", "Pedro", "30,3"],
+      ["3º", "Fora do limite", "29,0"],
+      ["4º", "Vanderlei", "28,0"],
     ]);
+    expect(linhasDaPlanilha(retrato).classificacao[1].at(-1)).toBe(
+      "Dentro das vagas",
+    );
   });
 
   it("entrevistado fora do limite de convocação vira aviso (não some, não entra calado)", () => {

@@ -96,7 +96,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Seção Marca
 
 **perguntas:** o que a secao marca define | secao marca | para que serve marca | para que serve a secao marca | nome da equipe | logo da equipe | texto do rodape
-**resposta:** Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, e o texto do rodapé. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".
+**resposta:** Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé da barra lateral, o texto do rodapé e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A prévia mostra a barra lateral; a cor e o logo da barra ficam em Aparência. Vale depois de "Salvar alterações".
 **fonte:** src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js
 **abrir:** config:marca
 

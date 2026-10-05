@@ -5,8 +5,9 @@ import { Icone } from "../../componentes/icone.jsx";
 import { CampoDaSecao, Grupo, Imagem, Previa } from "./partes.jsx";
 
 /*
-  Configurações › Marca: a equipe responsável (pé da barra lateral) e o
-  rodapé, com a prévia da barra lateral ao lado. Os valores são do rascunho
+  Configurações › Marca: a equipe responsável (pé da barra lateral), o
+  rodapé e o cabeçalho da agência nos documentos oficiais (Classificação),
+  com a prévia da barra lateral ao lado. Os valores são do rascunho
   de `estado.js` e vão na publicação da barra fixa.
 
   A cor e o logo da barra são os da seção Aparência (com o rascunho, se
@@ -32,6 +33,13 @@ const GRUPOS = Object.freeze([
     icone: "file-text",
     tom: "neutro",
     campos: ["footer_text"],
+  },
+  {
+    id: "documentos",
+    titulo: "Documentos oficiais",
+    icone: "file-text",
+    tom: "neutro",
+    campos: ["documento_cabecalho"],
   },
 ]);
 

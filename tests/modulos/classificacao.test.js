@@ -207,6 +207,12 @@ let painel;
 const toast = vi.fn();
 const baixar = vi.fn();
 const imprimir = vi.fn();
+const copiar = vi.fn(async () => "html");
+const carregarLogo = vi.fn(async () => ({
+  bytes: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+  largura: 320,
+  altura: 320,
+}));
 
 async function montar(supabase) {
   secao = document.createElement("section");
@@ -214,7 +220,15 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarClassificacao({ supabase, toast, baixar, imprimir });
+    painel = montarClassificacao({
+      supabase,
+      toast,
+      baixar,
+      imprimir,
+      copiar,
+      carregarLogo,
+      cabecalho: () => "AGÊNCIA DE TESTE\nRua A, 1",
+    });
   });
   await act(async () => void painel.render());
   await esperar();
@@ -382,9 +396,95 @@ describe("tela de Classificação", () => {
       expect.stringContaining("spreadsheetml"),
     );
     await clicar(secao.querySelector("[data-exportar='pdf']"));
-    expect(imprimir.mock.calls[0][0].rodape).toBe(
-      "Conforme item 10.4 do edital.",
+    const pagina = imprimir.mock.calls[0][0];
+    expect(pagina).toContain("RESULTADO FINAL - PROCESSO SELETIVO");
+    expect(pagina).toContain("Conforme item 10.4 do edital.");
+    expect(pagina).toContain("AGÊNCIA DE TESTE");
+  });
+
+  it("Copiar para o SEI: HTML com as classes do SEI e texto numerado, da lista registrada", async () => {
+    await montar(supabaseFalso());
+    await abrirEdital();
+    expect(secao.querySelector("[data-acao='copiar-sei']").disabled).toBe(true);
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    copiar.mockClear();
+    await clicar(secao.querySelector("[data-acao='copiar-sei']"));
+    await esperar();
+    const [{ html, texto }] = copiar.mock.calls[0];
+    expect(html).toContain(
+      '<p class="Item_Nivel1">Disposições Preliminares</p>',
     );
+    expect(html).toContain("VAGA 169681 - Cirurgião Dentista");
+    expect(html).toContain("<strong>CLASSIFICAÇÃO</strong>");
+    expect(html).not.toMatch(/<script|onerror/i);
+    expect(texto).toMatch(/^Brasília, na data da assinatura digital\./);
+    expect(texto).toContain("1. DISPOSIÇÕES PRELIMINARES");
+    expect(texto).toContain("2.1. Os(as) candidatos(as) aprovados(as)");
+    expect(toast).toHaveBeenCalledWith(
+      "Copiado. No SEI, cole no editor do documento (Ctrl+V).",
+      "success",
+    );
+  });
+
+  it("Como fica no SEI: prévia, textos editáveis, Baixar DOCX e Salvar no edital", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    await clicar(secao.querySelector("[data-acao='ver-documento']"));
+    await esperar();
+    const modal = document.getElementById("classificacaoDocumento");
+    const previa = () =>
+      modal.querySelector("iframe.classificacao-documento-previa");
+    expect(previa().getAttribute("sandbox")).toBe("");
+    expect(previa().getAttribute("srcdoc")).toContain(
+      "RESULTADO FINAL - PROCESSO SELETIVO",
+    );
+    expect(previa().getAttribute("srcdoc")).toContain("AGÊNCIA DE TESTE");
+    await digitar(
+      modal.querySelector("[data-campo-documento='processo']"),
+      "AGSUS.016954/2026-81",
+    );
+    expect(previa().getAttribute("srcdoc")).toContain(
+      "SEI AGSUS.016954/2026-81",
+    );
+    const finais = modal.querySelector("[data-campo-documento='finais']");
+    await digitar(finais, "Texto final do edital.");
+    expect(previa().getAttribute("srcdoc")).toContain(
+      '<p class="Item_Nivel2">Texto final do edital.</p>',
+    );
+
+    baixar.mockClear();
+    await clicar(modal.querySelector("[data-acao='baixar-docx']"));
+    await esperar();
+    const [bytes, nome] = baixar.mock.calls[0];
+    expect(nome).toBe("classificacao-final-83-2026.docx");
+    const conteudo = new TextDecoder().decode(bytes);
+    expect(conteudo).toContain("word/header1.xml");
+    expect(conteudo).toContain("word/media/logo.png");
+    expect(conteudo).toContain("SEI AGSUS.016954/2026-81");
+    expect(conteudo).toContain("Texto final do edital.");
+
+    copiar.mockClear();
+    await clicar(modal.querySelector("[data-acao='copiar-sei']"));
+    await esperar();
+    expect(copiar.mock.calls[0][0].html).toContain("Texto final do edital.");
+
+    await clicar(modal.querySelector("[data-acao='salvar-textos']"));
+    await esperar();
+    const chamada = supabase.rpc.mock.calls.find(
+      ([n]) => n === "salvar_regra_classificacao",
+    );
+    expect(chamada[1].p_motivo).toBe("Textos do documento oficial (SEI)");
+    expect(chamada[1].p_configuracao.documento).toMatchObject({
+      processo: "AGSUS.016954/2026-81",
+      modelos: { FINAL_FINAL: { finais: "Texto final do edital." } },
+    });
+    expect(
+      chamada[1].p_configuracao.documento.modelos.FINAL_FINAL,
+    ).not.toHaveProperty("preliminares");
   });
 
   it("sem geração, exportar fica desligado; leitor não vê Gerar", async () => {

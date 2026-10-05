@@ -1,14 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  documentoDaLista,
-  gerarDocxDaLista,
   gerarXlsxDaLista,
   instantaneoDaLista,
   linhasDaPlanilha,
-  montarPaginaDaLista,
   nomeDoArquivo,
 } from "../../src/lib/classificacao/exportacao.js";
+import {
+  documentoOficial,
+  htmlParaSei,
+} from "../../src/lib/classificacao/documento-sei.js";
+import { gerarDocxOficial } from "../../src/lib/classificacao/documento-docx.js";
 import { classificar } from "../../src/lib/classificacao/motor.js";
 
 /*
@@ -133,67 +135,69 @@ describe("retrato da lista", () => {
   });
 });
 
-describe("documento no padrão das publicações", () => {
-  const doc = documentoDaLista(retrato, {
-    registro: {
-      gerada_em: "2026-10-02T13:00:00Z",
-      por: "Gestora",
-      versao_regra: 3,
-      hash: "a".repeat(64),
-    },
-  });
+describe("documento no padrão das publicações (100/2026: modalidades no mesmo documento)", () => {
+  const doc = documentoOficial(retrato, { regra: REGRA_100 });
+  const rotulos = (t) => t.colunas.map((c) => c.rotulo);
 
-  it("título, edital, cabeçalho da vaga, geral com Modalidade e sublistas", () => {
-    expect(doc.titulo).toBe(
-      "RESULTADO PRELIMINAR - AVALIAÇÃO DOCUMENTAL E DE TÍTULOS",
-    );
-    expect(doc.subtitulo).toBe("EDITAL Nº 100/2026 - CASAI Nacional Brasília");
+  it("título, cabeçalho da vaga, geral com Modalidade e sublistas", () => {
+    expect(doc.titulo).toEqual([
+      "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR",
+    ]);
     expect(doc.blocos.map((b) => b.cabecalho)).toEqual([
       "VAGA 178529 - Analista Técnico de Saúde Indígena - CASAI Brasília - 2 vagas (2 AC + CR)",
       "VAGA - Nutricionista - CASAI Brasília - Cadastro Reserva",
     ]);
     const [geral, pp, pi] = doc.blocos[0].tabelas;
-    expect(geral.colunas).toEqual([
+    expect(geral.titulo).toBe("Classificação Geral");
+    expect(rotulos(geral)).toEqual([
       "Classificação",
       "Nome",
-      "Nota",
-      "Modalidade",
+      "Modalidade de Concorrência",
+      "Nota Final",
+      ...rotulos(geral).slice(4),
     ]);
-    expect(geral.linhas).toEqual([
-      ["1º", "Ana <img src=x onerror=alert(1)>", "15,50", "AC"],
-      ["2º", "Bruno Indígena", "13,00", "Indígenas"],
+    expect(geral.linhas.map((l) => l.slice(0, 4))).toEqual([
+      ["1º", "Ana <img src=x onerror=alert(1)>", "AC", "15,50"],
+      ["2º", "Bruno Indígena", "PI", "13,00"],
     ]);
     expect([pp.titulo, pp.linhas]).toEqual(["Pretos e Pardos", []]);
-    expect(pi.colunas).toEqual(["Classificação", "Nome", "Nota"]);
-    expect(doc.rodape).toBe(
-      "Os critérios de desempate foram considerados conforme item 10.4 do edital.",
+    expect(rotulos(pi).slice(0, 3)).toEqual([
+      "Classificação",
+      "Nome",
+      "Nota Final",
+    ]);
+    expect(doc.preliminares[0].texto).toContain(
+      "destinado à **Casa de Apoio à Saúde Indígena Nacional Brasília (CASAI Nacional Brasília)**",
     );
-    expect(doc.controle).toContain("regra versão 3 · SHA-256 aaaaaaaaaaaaaaaa");
   });
 
-  it("uma lista só (modalidade) sai sem a coluna Modalidade e com o nome no título", () => {
-    const so = documentoDaLista(retrato, { lista: "PI" });
-    expect(so.titulo).toBe(
-      "RESULTADO PRELIMINAR - AVALIAÇÃO DOCUMENTAL E DE TÍTULOS - INDÍGENAS",
-    );
+  it("uma lista só (modalidade): sem a coluna Modalidade, texto das vagas reservadas", () => {
+    const so = documentoOficial(retrato, { lista: "PI", regra: REGRA_100 });
     expect(so.blocos[0].tabelas).toHaveLength(1);
-    expect(so.blocos[0].tabelas[0].colunas).toHaveLength(3);
+    expect(so.blocos[0].tabelas[0].titulo).toBe("");
+    expect(so.preliminares[0].texto).toContain(
+      "das Vagas Reservadas para Indígenas (PI)",
+    );
+    expect(so.nome).toBe(
+      "Resultado Preliminar - Etapa de Análise Curricular - Indígenas",
+    );
     expect(nomeDoArquivo(retrato, "PI")).toBe(
       "classificacao-preliminar-100-2026-pi",
     );
   });
 
-  it("DOCX: zip com document.xml, nomes escapados, vazia = 'Não houve candidatos aptos.'", () => {
-    const bytes = gerarDocxDaLista(doc, new Date("2026-10-02T12:00:00"));
-    expect([...bytes.slice(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04]);
-    const conteudo = texto(bytes);
-    expect(conteudo).toContain("word/document.xml");
+  it("HTML do SEI e DOCX: nomes escapados, vazia = 'Não houve candidatos aptos.'", () => {
+    const html = htmlParaSei(doc);
+    expect(html).toContain("Ana &lt;img src=x onerror=alert(1)&gt;");
+    expect(html).not.toContain("<img");
+    expect(html).toContain("Não houve candidatos aptos.");
+    const conteudo = texto(
+      gerarDocxOficial(doc, { quando: new Date("2026-10-02T12:00:00") }),
+    );
+    expect([...conteudo.slice(0, 2)].join("")).toBe("PK");
     expect(conteudo).toContain("Ana &lt;img src=x onerror=alert(1)&gt;");
     expect(conteudo).not.toContain("<img");
     expect(conteudo).toContain("Não houve candidatos aptos.");
-    expect(conteudo).toContain(
-      "VAGA 178529 - Analista Técnico de Saúde Indígena",
-    );
   });
 
   it("XLSX: duas planilhas (Classificação e Eliminados), números como número", () => {
@@ -223,22 +227,5 @@ describe("documento no padrão das publicações", () => {
     expect(conteudo).toContain('<sheet name="Eliminados"');
     expect(conteudo).toContain("<v>15.5</v>");
     expect(conteudo).not.toContain("<img");
-  });
-
-  it("página de impressão: tabelas com textContent, nunca HTML", () => {
-    const pagina = document.implementation.createHTMLDocument("x");
-    montarPaginaDaLista(pagina, doc);
-    expect(pagina.title).toBe(doc.titulo);
-    expect(pagina.querySelectorAll("table")).toHaveLength(2 + 8);
-    expect(pagina.querySelector("img")).toBeNull();
-    expect(pagina.body.textContent).toContain(
-      "Ana <img src=x onerror=alert(1)>",
-    );
-    expect(
-      [...pagina.querySelectorAll("td")].some(
-        (td) =>
-          td.textContent === "Não houve candidatos aptos." && td.colSpan === 4,
-      ),
-    ).toBe(true);
   });
 });
