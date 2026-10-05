@@ -12,33 +12,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -60,9 +52,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -374,33 +364,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -422,9 +404,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -620,33 +600,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -668,9 +640,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -837,33 +807,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -885,9 +847,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -1054,33 +1014,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -1113,9 +1065,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -1271,9 +1221,7 @@
           "entraram": 4,
           "lote_novo": 1,
           "saidas": [],
-          "avisos": [
-            "ART_AUSENTE"
-          ]
+          "avisos": ["ART_AUSENTE"]
         }
       }
     },
@@ -1288,33 +1236,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -1336,9 +1276,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -1536,33 +1474,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -1584,9 +1514,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -1759,9 +1687,7 @@
           "entraram": 0,
           "lote_novo": null,
           "saidas": [],
-          "avisos": [
-            "FORA_DO_LOTE_ACIMA_DO_CORTE"
-          ]
+          "avisos": ["FORA_DO_LOTE_ACIMA_DO_CORTE"]
         }
       }
     },
@@ -1776,33 +1702,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -1824,9 +1742,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -1976,9 +1892,7 @@
               "motivo": "Cancelou a inscrição"
             }
           ],
-          "avisos": [
-            "LINHA_PARADA"
-          ]
+          "avisos": ["LINHA_PARADA"]
         }
       }
     },
@@ -1993,33 +1907,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -2041,9 +1947,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -2198,33 +2102,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -2246,9 +2142,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -2428,33 +2322,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -2476,9 +2362,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -2708,33 +2592,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -2756,9 +2632,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -2850,9 +2724,7 @@
           "entraram": 0,
           "lote_novo": null,
           "saidas": [],
-          "avisos": [
-            "SEM_QUADRO"
-          ]
+          "avisos": ["SEM_QUADRO"]
         }
       }
     },
@@ -2867,33 +2739,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -2918,9 +2782,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -3058,33 +2920,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -3106,9 +2960,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -3275,33 +3127,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -3323,9 +3167,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -3476,33 +3318,25 @@
             {
               "codigo": "CANCELADO",
               "coluna": "SITUAÇÃO",
-              "quando": [
-                "CANCELADO"
-              ],
+              "quando": ["CANCELADO"],
               "motivo": "Cancelou a inscrição"
             },
             {
               "codigo": "QUESTIONARIO",
               "coluna_prefixo": "SITUAÇÃO - ",
-              "exceto": [
-                "FINALIZADO"
-              ],
+              "exceto": ["FINALIZADO"],
               "motivo": "Não finalizou o questionário"
             },
             {
               "codigo": "REPROVADO_EMPREGARE",
               "coluna": "REPROVADO",
-              "quando": [
-                "SIM"
-              ],
+              "quando": ["SIM"],
               "motivo": "Reprovado na Empregare"
             },
             {
               "codigo": "TERMO",
               "pergunta": "Pergunta 23 -",
-              "quando": [
-                "Não estou de acordo"
-              ],
+              "quando": ["Não estou de acordo"],
               "motivo": "Recusou o termo de responsabilidade"
             }
           ],
@@ -3524,9 +3358,7 @@
             "codigo": "MODALIDADE",
             "titulo": "Sistema de concorrência",
             "tipo": "REGISTRO",
-            "perguntas": [
-              "Pergunta 5 -"
-            ]
+            "perguntas": ["Pergunta 5 -"]
           }
         ]
       },
@@ -3618,9 +3450,7 @@
           "entraram": 2,
           "lote_novo": 1,
           "saidas": [],
-          "avisos": [
-            "COLUNA_AUSENTE:REPROVADO_EMPREGARE"
-          ]
+          "avisos": ["COLUNA_AUSENTE:REPROVADO_EMPREGARE"]
         }
       }
     }

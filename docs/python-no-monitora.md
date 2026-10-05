@@ -44,9 +44,9 @@ Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferência
 (`scripts/conferencias/`) e a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,
 com a conta em `monitora.avaliacao_documental`).
 
-| Módulo de domínio                                 | O que faz                                                                                                  |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                   |
+| Módulo de domínio                                 | O que faz                                                                                                          |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                          |
 | `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`) |
 
 ### Importar a base
