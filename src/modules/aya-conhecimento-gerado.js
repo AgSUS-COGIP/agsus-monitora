@@ -1913,12 +1913,64 @@ export const VERBETES_AYA = Object.freeze([
       "mensagem apagada",
       "corrigir mensagem enviada",
       "excluir mensagem do chat",
+      "copiar texto da mensagem",
+      "menu da mensagem",
+      "tres pontinhos da mensagem",
     ],
     resposta:
-      'Passe o mouse (ou o foco) na sua mensagem para ver Editar e Apagar; só quem escreveu edita ou apaga. A mensagem editada mostra "editada" ao lado da hora. Apagar pede confirmação e deixa no lugar "Mensagem apagada" para todos: o texto some, mas o registro de que houve uma mensagem fica.',
+      'Cada mensagem tem o botão "⋯" (três pontinhos) no canto, sempre à vista — também no celular, com um toque. Ele abre as reações rápidas e "Copiar texto"; na sua mensagem, também Editar e Apagar (só quem escreveu edita ou apaga). A mensagem editada mostra "editada" ao lado da hora. Apagar pede confirmação e deixa no lugar "Mensagem apagada" para todos: o texto e as reações somem, mas o registro de que houve uma mensagem fica.',
     fato: "",
     fonte:
       "src/modulos/chat/conversa.jsx; supabase/migrations/20261002210000_chat.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Reações",
+    perguntas: [
+      "reagir a mensagem",
+      "reacao no chat",
+      "curtir mensagem",
+      "joinha na mensagem",
+      "quem reagiu",
+      "tirar reacao",
+    ],
+    resposta:
+      'No "⋯" da mensagem, a primeira linha tem as reações rápidas: 👍 ✅ ❤️ 😂 👀 🙏. Escolha uma e ela aparece embaixo da mensagem, com a contagem; passe o mouse sobre a reação para ver quem reagiu. Clicar numa reação que já está na mensagem põe a sua (ou tira, se já for sua). As reações chegam na hora para todos da conversa; mensagem apagada não tem reação.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/conversa.jsx; src/lib/chat.js; supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Emojis",
+    perguntas: [
+      "enviar emoji",
+      "emoji no chat",
+      "carinha no chat",
+      "botao de emoji",
+      "emojis recentes",
+      "procurar emoji",
+    ],
+    resposta:
+      'O botão da carinha, à esquerda de "Compartilhar esta tela", abre os emojis: carinhas, gestos, trabalho (pasta, clipe, calendário, alfinete…), símbolos (✅ ❌ ⚠️…) e celebração. Dá para procurar pelo nome em português, como "joinha", "café" ou "atenção" (Enter escolhe o primeiro). O emoji entra onde está o cursor e o seletor fica aberto para escolher mais; Esc ou um clique fora fecha. Os que você usa aparecem em "Recentes", guardados só neste navegador.',
+    fato: "",
+    fonte: "src/modulos/chat/seletor-de-emoji.jsx; src/lib/emojis-do-chat.js",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Limpar conversa",
+    perguntas: [
+      "limpar conversa",
+      "limpar historico do chat",
+      "apagar conversa",
+      "esconder mensagens antigas",
+      "zerar a conversa",
+    ],
+    resposta:
+      'No menu da conversa (os três pontinhos ao lado do nome), "Limpar conversa" esconde para você todas as mensagens até agora, depois de confirmar. Só para você: as outras pessoas continuam vendo tudo e nada é apagado. As mensagens que chegarem depois aparecem normalmente. Não existe apagar a conversa para todos; num grupo, você pode Sair do grupo.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/conversa.jsx; supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql",
   },
   {
     arquivo: "regras-do-chat.md",
@@ -1948,9 +2000,11 @@ export const VERBETES_AYA = Object.freeze([
       "ponto verde no chat",
       "quem esta online no chat",
       "reconectando",
+      "novas mensagens",
+      "botao seta para baixo no chat",
     ],
     resposta:
-      'As mensagens chegam na hora, sem recarregar a página, e aparece "está digitando…" quando alguém escreve na conversa aberta. Se a conexão cair, o painel mostra "Reconectando…" e, ao voltar, busca o que chegou; ao voltar para a aba do navegador, a lista também é relida. O ponto verde indica quem esteve com o MONITORA aberto nos últimos 2 minutos.',
+      'As mensagens chegam na hora, sem recarregar a página, e aparece "está digitando…" quando alguém escreve na conversa aberta. A conversa abre na última mensagem; se você estiver lendo mensagens antigas quando chegar uma nova, aparece o botão "↓ Nova mensagem", que leva ao fim. Se a conexão cair, o painel mostra "Reconectando…" e, ao voltar, busca o que chegou; ao voltar para a aba do navegador, a lista também é relida. O ponto verde indica quem esteve com o MONITORA aberto nos últimos 2 minutos.',
     fato: "",
     fonte:
       "src/modulos/chat/estado.js; supabase/migrations/20261002210000_chat.sql",

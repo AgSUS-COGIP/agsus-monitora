@@ -7,13 +7,17 @@
   listar_pessoas_chat, enviar_mensagem_chat, editar_mensagem_chat,
   apagar_mensagem_chat, marcar_conversa_lida_chat, abrir_conversa_direta_chat,
   criar_grupo_chat, adicionar_participantes_chat, sair_conversa_chat,
-  silenciar_conversa_chat e abrir_conversa_edital_chat.
+  silenciar_conversa_chat e abrir_conversa_edital_chat; e, da v1.1
+  (20261005100000_chat_limpar_e_reacoes.sql), limpar_conversa_chat e
+  alternar_reacao_chat.
 
   Tempo real (Supabase Realtime, com a RLS do banco):
     - canal "chat-usuario:<eu>": postgres_changes de TB_MENSAGEM (todas as que a
       pessoa pode ler) e de RL_CONVERSA_PARTICIPANTE (as linhas dela). Mensagem
       da conversa aberta entra na hora (sem duplicar: `mesclarMensagens`); a
-      lista é relida logo depois (contagem e prévia certas).
+      lista é relida logo depois (contagem e prévia certas). O que a pessoa
+      limpou (limpa_em) não volta pelo Realtime. Reações (RL_MENSAGEM_REACAO)
+      da conversa aberta entram na mensagem (aplicarReacaoDaLinha).
     - canal privado "chat:<conversa>" da conversa aberta: broadcast "digitando".
     - Caiu e voltou (SUBSCRIBED depois de erro) ou a aba voltou a ficar visível:
       relê a lista e a conversa aberta.
@@ -23,6 +27,8 @@
 */
 
 import {
+  aplicarReacaoDaLinha,
+  depoisDaLimpeza,
   deveAvisar,
   LIMITE_DO_TEXTO,
   linkDaTela,
@@ -31,6 +37,8 @@ import {
   mesclarMensagens,
   naoLidasDasMensagens,
   ordenarConversas,
+  REACOES_RAPIDAS,
+  reacoesComAlternancia,
   tituloDaConversa,
   totalDeNaoLidas,
   validarTexto,
@@ -55,6 +63,8 @@ const RPC_ADICIONAR = "adicionar_participantes_chat";
 const RPC_SAIR = "sair_conversa_chat";
 const RPC_SILENCIAR = "silenciar_conversa_chat";
 const RPC_ABRIR_EDITAL = "abrir_conversa_edital_chat";
+const RPC_LIMPAR = "limpar_conversa_chat";
+const RPC_REAGIR = "alternar_reacao_chat";
 
 const TEMPO_LIMITE_MS = 30000;
 const DIGITANDO_MS = 4000;
@@ -261,6 +271,9 @@ export function criarEstadoDoChat({
     const daAberta = mensagem.conversa === estado.conversaId;
     const conversa = estado.conversas.find((c) => c.id === mensagem.conversa);
     if (!daAberta && !conversa) return; // conversa do edital que a pessoa não acompanha
+    const limpaEm =
+      (daAberta ? estado.conversa?.limpa_em : null) ?? conversa?.limpa_em;
+    if (!depoisDaLimpeza(mensagem, limpaEm)) return; // a pessoa limpou
     if (daAberta) {
       publicar({ mensagens: mesclarMensagens(estado.mensagens, [mensagem]) });
       if (conversaAVista(mensagem.conversa)) agendarLeitura();
@@ -318,6 +331,13 @@ export function criarEstadoDoChat({
     }
   }
 
+  function aoMudarReacao(payload) {
+    const linha = payload?.new;
+    if (!linha?.CO_CONVERSA || linha.CO_CONVERSA !== estado.conversaId) return;
+    const mensagens = aplicarReacaoDaLinha(estado.mensagens, linha);
+    if (mensagens !== estado.mensagens) publicar({ mensagens });
+  }
+
   function aoMudarStatus(status) {
     if (status === "SUBSCRIBED") {
       if (caiu) {
@@ -354,6 +374,11 @@ export function criarEstadoDoChat({
           filter: `CO_USUARIO=eq.${estado.eu}`,
         },
         () => agendarReleitura(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "RL_MENSAGEM_REACAO" },
+        aoMudarReacao,
       )
       .subscribe(aoMudarStatus);
   }
@@ -704,6 +729,40 @@ export function criarEstadoDoChat({
     return true;
   }
 
+  async function alternarReacao(id, emoji) {
+    const mensagem = estado.mensagens.find((m) => m.id === id);
+    if (
+      !mensagem ||
+      mensagem.apagada ||
+      mensagem.pendente ||
+      mensagem.falhou ||
+      !REACOES_RAPIDAS.includes(emoji)
+    )
+      return false;
+    const antes = mensagem.reacoes || [];
+    const trocar = (reacoes) =>
+      publicar({
+        mensagens: estado.mensagens.map((m) =>
+          m.id === id ? { ...m, reacoes } : m,
+        ),
+      });
+    // Na hora, na tela; a resposta (ou o Realtime) confirma.
+    trocar(reacoesComAlternancia(antes, emoji, estado.eu));
+    try {
+      const gravada = await rpc(RPC_REAGIR, {
+        p_mensagem: id,
+        p_emoji: emoji,
+      });
+      if (gravada?.id && estado.conversaId === gravada.conversa)
+        publicar({ mensagens: mesclarMensagens(estado.mensagens, [gravada]) });
+      return true;
+    } catch (erro) {
+      if (estado.mensagens.some((m) => m.id === id)) trocar(antes);
+      toast(mensagemDoBanco(erro), "error");
+      return false;
+    }
+  }
+
   function avisarDigitando(nome) {
     if (!canalDaConversa || !estado.conversaId) return;
     const instante = Date.now();
@@ -779,6 +838,25 @@ export function criarEstadoDoChat({
     return true;
   }
 
+  /* Limpar conversa (para mim): o histórico até agora some só para a pessoa. */
+  async function limparConversa() {
+    const id = estado.conversaId;
+    if (!id) return false;
+    const conversa = await comAcao("limpar", "Limpando…", () =>
+      rpc(RPC_LIMPAR, { p_conversa: id }),
+    );
+    if (!conversa?.id || estado.conversaId !== id) return false;
+    trocarConversaNaLista(conversa);
+    publicar({
+      conversa: { ...estado.conversa, ...conversa },
+      mensagens: estado.mensagens.filter((m) =>
+        depoisDaLimpeza(m, conversa.limpa_em),
+      ),
+      temMais: false,
+    });
+    return true;
+  }
+
   async function silenciar(silenciada) {
     const id = estado.conversaId;
     if (!id) return false;
@@ -845,12 +923,16 @@ export function criarEstadoDoChat({
     adicionarParticipantes,
     sair,
     silenciar,
+    limparConversa,
+    alternarReacao,
     definirPreferencia,
     recarregarTudo,
     avisar: (mensagem) => toast(mensagem, "warn"),
+    informar: (mensagem) => toast(mensagem, "success"),
     /** Só para os testes: o que o Realtime entregaria. */
     _aoMudarMensagem: aoMudarMensagem,
     _aoMudarStatus: aoMudarStatus,
+    _aoMudarReacao: aoMudarReacao,
     _aoReceberDigitando: aoReceberDigitando,
   };
 }

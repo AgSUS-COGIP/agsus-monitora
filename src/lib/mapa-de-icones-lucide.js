@@ -69,6 +69,7 @@ export const FA_PARA_LUCIDE = Object.freeze({
   "fa-expand": "Maximize2",
   "fa-eye": "Eye",
   "fa-eye-slash": "EyeOff",
+  "fa-face-smile": "Smile",
   "fa-feather": "Feather",
   "fa-file": "File",
   "fa-file-arrow-up": "FileUp",
