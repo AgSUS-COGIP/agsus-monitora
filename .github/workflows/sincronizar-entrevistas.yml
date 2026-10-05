@@ -3,7 +3,8 @@ name: Sincronizar entrevistas
 # Lê a aba Entrevistados da planilha "[dash] entrevistados" com a conta de
 # serviço do Google e grava no Supabase (scripts/sincronizar-entrevistas.mjs).
 # Todo dia às 9h de Brasília (12h UTC; o Brasil não tem horário de verão) e,
-# quando precisar, pelo botão "Run workflow" na aba Actions.
+# quando precisar, pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora"
+# das Configurações › Status das atualizações (api/rodar-carga.js).
 # Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
 #
 # Secrets do repositório (Settings → Secrets and variables → Actions):
@@ -24,6 +25,11 @@ on:
           - seco
           - forcar
         default: normal
+      disparado_por:
+        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
