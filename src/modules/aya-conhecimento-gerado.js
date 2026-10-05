@@ -1264,6 +1264,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-das-analises.md",
+    titulo: "Filtrar por data no gráfico Análises por data",
+    perguntas: [
+      "filtrar por data",
+      "filtro por data",
+      "filtrar por dia",
+      "clicar no grafico de datas",
+      "analises por data",
+      "linha do tempo das analises",
+      "analises de um dia",
+      "intervalo de datas nas analises",
+      "data da analise de ate",
+    ],
+    resposta:
+      "Nas Análises curriculares, clicar num dia do gráfico Análises por data filtra a tela por aquele dia, pela data da análise: os indicadores, a carga por responsável, as pendências prioritárias, a fila e o CSV passam a mostrar só as análises daquele dia. O filtro aparece como o chip Data no Recorte ativo e nos filtros aplicados, e o ponto escolhido fica destacado; o gráfico continua com todos os dias. Clicar de novo no mesmo dia, no x do chip ou em Limpar tudo tira o filtro; outro dia troca. Shift + clique em outro dia escolhe o intervalo entre os dois. Sem mouse, o mesmo filtro está em Refinar resultados › Mais opções, nos campos Data da análise: de e até. Análise sem data de análise sai do recorte enquanto houver filtro de data.",
+    fato: "",
+    fonte:
+      "src/lib/analises-curriculares.js; src/modulos/analises/paineis.jsx; docs/historias-de-usuario/analises-curriculares.md",
+    abrir: "analises",
+  },
+  {
+    arquivo: "regras-das-analises.md",
     titulo: "Escopo Ativo, Inativo e Todos",
     perguntas: [
       "o que e o escopo ativo, inativo e todos",

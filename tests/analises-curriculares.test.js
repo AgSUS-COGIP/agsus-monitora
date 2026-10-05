@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   analisesPorResponsavel,
   apararSelecao,
+  chaveDoDia,
+  diaNoPeriodo,
+  filtrarPorPeriodo,
+  normalizarPeriodo,
+  PERIODO_VAZIO,
+  periodoDoClique,
+  rotuloDoPeriodo,
+  temPeriodo,
   calcularKpis,
   csvDasAnalises,
   dataDaPlanilha,
@@ -595,5 +603,112 @@ describe("CSV", () => {
   it("fora da Saúde Indígena, as colunas de experiência e município", () => {
     const [cabecalho] = csvDasAnalises([], "sede").split("\n");
     expect(cabecalho).toContain("experiencia_profissional_total;municipio_uf");
+  });
+});
+
+/* Histórias em docs/historias-de-usuario/analises-curriculares.md. */
+describe("AC-1/AC-2 — filtro por data da análise (regra)", () => {
+  const linhas = [
+    { id: "1", data_analise: "01/09/2026" },
+    { id: "2", data_analise: "2026-09-15" },
+    { id: "3", data_analise: "15/09/2026" },
+    { id: "4", data_analise: "2026-09-20T10:00:00" },
+    { id: "5", data_analise: "" },
+    { id: "6", data_analise: "data esquisita" },
+  ];
+  const ids = (lista) => lista.map((l) => l.id);
+
+  it("AC-1.1 — o dia do gráfico tem a chave aaaa-mm-dd do mesmo campo, e o filtro recorta por ela", () => {
+    expect(chaveDoDia("15/09/2026")).toBe("2026-09-15");
+    expect(chaveDoDia("2026-09-15")).toBe("2026-09-15");
+    expect(chaveDoDia("2026-09-20T10:00:00")).toBe("2026-09-20");
+    expect(chaveDoDia("")).toBe("");
+    expect(chaveDoDia("data esquisita")).toBe("");
+    const dias = tendenciaDiaria(linhas.slice(0, 4));
+    expect(dias.map((d) => [d.rotulo, d.chave, d.valor])).toEqual([
+      ["01/09/2026", "2026-09-01", 1],
+      ["15/09/2026", "2026-09-15", 2],
+      ["20/09/2026", "2026-09-20", 1],
+    ]);
+    const periodo = periodoDoClique(PERIODO_VAZIO, "2026-09-15");
+    expect(ids(filtrarPorPeriodo(linhas, periodo))).toEqual(["2", "3"]);
+  });
+
+  it("AC-1.2 — o rótulo do chip e a frase do recorte", () => {
+    const dia = { inicio: "2026-09-15", fim: "2026-09-15" };
+    expect(rotuloDoPeriodo(dia)).toBe("15/09/2026");
+    expect(
+      descricaoDoRecorte({
+        escopo: "ativo",
+        filtros: FILTROS_VAZIOS,
+        periodo: dia,
+      }),
+    ).toBe("Recorte ativo: Situação do processo: Ativo · Data: 15/09/2026");
+    expect(
+      descricaoDoRecorte({ escopo: "ativo", filtros: FILTROS_VAZIOS }),
+    ).toBe("Recorte ativo: Situação do processo: Ativo");
+  });
+
+  it("AC-1.3 — só o dia escolhido fica em destaque", () => {
+    const dia = { inicio: "2026-09-15", fim: "2026-09-15" };
+    expect(diaNoPeriodo("2026-09-15", dia)).toBe(true);
+    expect(diaNoPeriodo("2026-09-16", dia)).toBe(false);
+    expect(diaNoPeriodo("", dia)).toBe(false);
+    expect(diaNoPeriodo("2026-09-16", PERIODO_VAZIO)).toBe(true);
+  });
+
+  it("AC-1.4/AC-1.5 — o mesmo dia de novo tira; outro dia troca", () => {
+    const dia = periodoDoClique(PERIODO_VAZIO, "2026-09-15");
+    expect(dia).toEqual({ inicio: "2026-09-15", fim: "2026-09-15" });
+    expect(periodoDoClique(dia, "2026-09-15")).toEqual(PERIODO_VAZIO);
+    expect(periodoDoClique(dia, "2026-09-01")).toEqual({
+      inicio: "2026-09-01",
+      fim: "2026-09-01",
+    });
+    expect(temPeriodo(PERIODO_VAZIO)).toBe(false);
+    // Clique sem dia reconhecido não muda nada.
+    expect(periodoDoClique(dia, "")).toEqual(dia);
+  });
+
+  it("AC-1.7 — com filtro de data, a análise sem data sai; sem filtro, nada sai", () => {
+    expect(filtrarPorPeriodo(linhas, PERIODO_VAZIO)).toBe(linhas);
+    expect(
+      ids(
+        filtrarPorPeriodo(linhas, { inicio: "2026-01-01", fim: "2026-12-31" }),
+      ),
+    ).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("AC-2.1 — Shift + clique estende do início até o dia, em qualquer ordem", () => {
+    const dia = periodoDoClique(PERIODO_VAZIO, "2026-09-15");
+    const intervalo = periodoDoClique(dia, "2026-09-01", { estender: true });
+    expect(intervalo).toEqual({ inicio: "2026-09-01", fim: "2026-09-15" });
+    expect(rotuloDoPeriodo(intervalo)).toBe("01/09/2026 a 15/09/2026");
+    expect(ids(filtrarPorPeriodo(linhas, intervalo))).toEqual(["1", "2", "3"]);
+    // Sem período, Shift + clique escolhe só o dia.
+    expect(
+      periodoDoClique(PERIODO_VAZIO, "2026-09-01", { estender: true }),
+    ).toEqual({ inicio: "2026-09-01", fim: "2026-09-01" });
+  });
+
+  it("AC-2.2 — só uma das pontas, pontas trocadas e chave inválida", () => {
+    expect(rotuloDoPeriodo({ inicio: "2026-09-15", fim: "" })).toBe(
+      "a partir de 15/09/2026",
+    );
+    expect(rotuloDoPeriodo({ inicio: "", fim: "2026-09-15" })).toBe(
+      "até 15/09/2026",
+    );
+    expect(ids(filtrarPorPeriodo(linhas, { inicio: "2026-09-15" }))).toEqual([
+      "2",
+      "3",
+      "4",
+    ]);
+    expect(
+      normalizarPeriodo({ inicio: "2026-09-20", fim: "2026-09-01" }),
+    ).toEqual({ inicio: "2026-09-01", fim: "2026-09-20" });
+    expect(normalizarPeriodo({ inicio: "15/09/2026", fim: null })).toEqual(
+      PERIODO_VAZIO,
+    );
+    expect(rotuloDoPeriodo(PERIODO_VAZIO)).toBe("");
   });
 });

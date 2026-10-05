@@ -2,13 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import {
   analisesPorResponsavel,
+  diaNoPeriodo,
   ESCOPOS,
   FILTROS,
+  normalizarPeriodo,
   quantosFiltros,
   ROTULO_DO_KPI,
   rotuloDoEscopo,
+  rotuloDoPeriodo,
   rotuloDoValor,
   STATUS_DO_GRAFICO,
+  temPeriodo,
   tendenciaDiaria,
 } from "../../lib/analises-curriculares.js";
 import { formatNumberBR } from "../../lib/formatters.js";
@@ -30,9 +34,10 @@ import {
 /*
   Os blocos da tela de Análises curriculares, com os componentes de src/ui/:
   "Refinar resultados" (situação do processo, filtros de seleção múltipla em
-  cascata, "Mais opções" e os filtros aplicados), os 7 KPIs em card compacto
-  (os seis primeiros filtram), os gráficos (carga por responsável, clicável, e
-  a evolução diária) e as pendências prioritárias, que também filtram.
+  cascata, "Mais opções" — com o período da data da análise — e os filtros
+  aplicados), os 7 KPIs em card compacto (os seis primeiros filtram), os
+  gráficos (carga por responsável e análises por data, os dois clicáveis) e as
+  pendências prioritárias, que também filtram.
 */
 
 const truncar = (valor, limite) => {
@@ -61,7 +66,9 @@ function CampoDeFiltro({ filtro, opcoes, selecionados, aoMudar }) {
 /**
  * `chips`: os filtros aplicados, `[{ chave, rotulo, valor, aoTirar }]`.
  * `busca`/`aoBuscar`: o texto digitado da busca geral (o filtro aplica com
- * um respiro, em analises.jsx).
+ * um respiro, em analises.jsx). `periodo`/`aoPeriodo`: o período da data da
+ * análise (`{ inicio, fim }` em aaaa-mm-dd) — a alternativa de teclado ao
+ * clique no gráfico "Análises por data".
  */
 export function Filtros({
   escopo,
@@ -75,9 +82,15 @@ export function Filtros({
   podeLimpar,
   carregado,
   comMunicipio,
+  periodo,
+  aoPeriodo,
   chips,
 }) {
   const [maisOpcoes, setMaisOpcoes] = useState(false);
+  const { inicio, fim } = normalizarPeriodo(periodo);
+  const comData = temPeriodo(periodo) ? 1 : 0;
+  const mudarPeriodo = (ponta, valor) =>
+    aoPeriodo((atual) => normalizarPeriodo({ ...atual, [ponta]: valor }));
   const campos = (avancado) =>
     FILTROS.filter(
       (filtro) =>
@@ -96,7 +109,7 @@ export function Filtros({
   return (
     <PainelDeFiltros
       idDoTitulo="analisesFiltrosTitulo"
-      quantos={quantosFiltros(filtros)}
+      quantos={quantosFiltros(filtros) + comData}
       escopo={rotuloDoEscopo(escopo)}
       podeLimpar={podeLimpar}
       aoLimpar={aoLimpar}
@@ -123,10 +136,30 @@ export function Filtros({
         id="analisesFiltrosAdicionais"
         aberto={maisOpcoes}
         aoAlternar={() => setMaisOpcoes((atual) => !atual)}
-        quantos={quantosFiltros(filtros, { soAvancados: true })}
-        titulo="Mostrar categoria, modalidade, validação e busca"
+        quantos={quantosFiltros(filtros, { soAvancados: true }) + comData}
+        titulo="Mostrar categoria, modalidade, validação, data e busca"
       >
         {campos(true)}
+        <Campo rotulo="Data da análise: de">
+          <input
+            id="analises-filtro-data-inicio"
+            type="date"
+            value={inicio}
+            max={fim || undefined}
+            disabled={!carregado}
+            onChange={(evento) => mudarPeriodo("inicio", evento.target.value)}
+          />
+        </Campo>
+        <Campo rotulo="Data da análise: até">
+          <input
+            id="analises-filtro-data-fim"
+            type="date"
+            value={fim}
+            min={inicio || undefined}
+            disabled={!carregado}
+            onChange={(evento) => mudarPeriodo("fim", evento.target.value)}
+          />
+        </Campo>
         <Campo rotulo="Buscar em toda a tela">
           <input
             id="analises-filtro-busca"
@@ -155,11 +188,13 @@ export function chipsDosFiltros({
   filtros,
   kpi,
   responsavel,
+  periodo,
   aoTirarEscopo,
   aoMudar,
   aoBuscar,
   aoKpi,
   aoResponsavel,
+  aoTirarData,
 }) {
   const chips = [];
   if (escopo !== "ativo")
@@ -199,6 +234,13 @@ export function chipsDosFiltros({
       rotulo: "Responsável no gráfico",
       valor: responsavel,
       aoTirar: () => aoResponsavel(""),
+    });
+  if (temPeriodo(periodo))
+    chips.push({
+      chave: "data",
+      rotulo: "Data",
+      valor: rotuloDoPeriodo(periodo),
+      aoTirar: aoTirarData,
     });
   return chips;
 }
@@ -280,26 +322,36 @@ const CORES_DO_STATUS = (p) => ({
   Reprovado: p.bad,
 });
 
+/*
+  `linhas`: o recorte inteiro (com a data escolhida) — carga por responsável e
+  pendências. `linhasPorData`: o mesmo recorte sem a data, para o gráfico de
+  datas mostrar todos os dias e o escolhido em destaque. Clicar num dia chama
+  `aoClicarNoDia(chave, { estender })` (Shift + clique estende o período).
+*/
 export function Graficos({
   linhas,
+  linhasPorData = linhas,
   pendencias,
   carregado,
   responsavel,
   aoResponsavel,
+  periodo,
+  aoClicarNoDia,
   escuro,
 }) {
   const porResponsavel = useMemo(
     () => analisesPorResponsavel(linhas),
     [linhas],
   );
-  const porDia = useMemo(() => tendenciaDiaria(linhas), [linhas]);
+  const porDia = useMemo(() => tendenciaDiaria(linhasPorData), [linhasPorData]);
+  const comData = temPeriodo(periodo);
   const tema = escuro ? "escuro" : "claro";
   const carregando = !carregado;
 
   // O clique do Chart.js chega aqui, sempre com o filtro mais recente.
-  const clique = useRef({ responsavel, aoResponsavel });
+  const clique = useRef({ responsavel, aoResponsavel, aoClicarNoDia });
   useEffect(() => {
-    clique.current = { responsavel, aoResponsavel };
+    clique.current = { responsavel, aoResponsavel, aoClicarNoDia };
   });
 
   return (
@@ -396,11 +448,14 @@ export function Graficos({
         <Grafico
           id="chartTendencia"
           tipo="line"
-          rotulo="Análises por data; pontos em vermelho: fora da janela oficial ou com data no futuro"
-          dependencias={[porDia, tema]}
+          rotulo={`Análises por data; pontos em vermelho: fora da janela oficial ou com data no futuro. Clique num dia para filtrar a tela; o período também se escolhe em Mais opções${comData ? `. Data escolhida: ${rotuloDoPeriodo(periodo)}` : ""}`}
+          dependencias={[porDia, tema, periodo]}
           montar={() => {
             const p = paleta(escuro);
             const marcado = (dia) => dia.fora || dia.futuras;
+            const escolhido = (dia) =>
+              comData && diaNoPeriodo(dia.chave, periodo);
+            const raio = (dia) => (marcado(dia) ? 5 : 3);
             return {
               data: {
                 labels: porDia.map((dia) => dia.rotulo),
@@ -413,7 +468,18 @@ export function Graficos({
                     pointBackgroundColor: porDia.map((dia) =>
                       marcado(dia) ? p.bad : p.blue,
                     ),
-                    pointRadius: porDia.map((dia) => (marcado(dia) ? 5 : 3)),
+                    pointRadius: porDia.map((dia) =>
+                      escolhido(dia) ? 8 : raio(dia),
+                    ),
+                    pointHoverRadius: porDia.map((dia) =>
+                      escolhido(dia) ? 9 : raio(dia) + 2,
+                    ),
+                    pointBorderColor: porDia.map((dia) =>
+                      escolhido(dia) ? p.text : p.surface,
+                    ),
+                    pointBorderWidth: porDia.map((dia) =>
+                      escolhido(dia) ? 3 : 1,
+                    ),
                     borderWidth: 2.5,
                     tension: 0.22,
                     fill: true,
@@ -424,6 +490,20 @@ export function Graficos({
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: { duration: 380 },
+                // O dia mais perto do clique na horizontal (não exige acertar o ponto).
+                interaction: { mode: "index", intersect: false },
+                onClick: (evento, elementos) => {
+                  const dia = porDia[elementos[0]?.index];
+                  if (!dia?.chave) return;
+                  clique.current.aoClicarNoDia?.(dia.chave, {
+                    estender: Boolean(evento?.native?.shiftKey),
+                  });
+                },
+                onHover: (evento, elementos, grafico) => {
+                  const alvo = grafico?.canvas || evento?.native?.target;
+                  if (alvo?.style)
+                    alvo.style.cursor = elementos.length ? "pointer" : "";
+                },
                 plugins: {
                   legend: { display: false },
                   tooltip: {

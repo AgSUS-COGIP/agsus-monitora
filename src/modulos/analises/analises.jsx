@@ -9,14 +9,19 @@ import {
   descricaoDoRecorte,
   ESCOPO_PADRAO,
   filtrarLinhas,
+  filtrarPorPeriodo,
   FILTROS_VAZIOS,
   formatarDataHora,
   marcasDoRecorte,
   opcoesDosFiltros,
   pendenciasPrioritarias,
+  PERIODO_VAZIO,
+  periodoDoClique,
   quantosFiltros,
   recorteVisual,
+  rotuloDoPeriodo,
   temMunicipio,
+  temPeriodo,
   ultimaAtualizacao,
 } from "../../lib/analises-curriculares.js";
 import { getLoadingStage } from "../../lib/loading-copy.js";
@@ -25,6 +30,8 @@ import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.js";
 import {
   Aviso,
+  ChipDeFiltro,
+  ChipsDeFiltro,
   LinhaDoRecorte,
   MarcasDoRecorte,
   TopoDoPainel,
@@ -48,8 +55,12 @@ import { TabelaDeAnalises } from "./tabela.jsx";
   - Sem tela de carregamento: o skeleton dos KPIs, gráficos, pendências e
     fila; demora vira aviso discreto (12 s) e depois "Tentar novamente" (25 s).
 
-  O que é só da tela — filtros, busca, KPI e responsável escolhidos no
-  gráfico — é estado do componente; os dados e as ações moram em estado.js.
+  O que é só da tela — filtros, busca, KPI, responsável e data escolhidos nos
+  gráficos — é estado do componente; os dados e as ações moram em estado.js.
+
+  A data (o dia clicado em "Análises por data", ou o período dos campos de
+  "Mais opções") recorta KPIs, carga por responsável, pendências e fila; o
+  próprio gráfico de datas continua com todos os dias, para trocar de dia.
 */
 
 const ESPERA_DA_BUSCA_MS = 180;
@@ -148,6 +159,7 @@ function TelaDaArea({ estado, e }) {
   const [buscaDaFila, setBuscaDaFila] = useState("");
   const [kpi, setKpi] = useState("");
   const [responsavel, setResponsavel] = useState("");
+  const [periodo, setPeriodo] = useState(PERIODO_VAZIO);
   const busca = usarComEspera(buscaDigitada, ESPERA_DA_BUSCA_MS);
   const { carregado, linhas, area, escopo } = e;
 
@@ -186,10 +198,19 @@ function TelaDaArea({ estado, e }) {
     () => opcoesDosFiltros(linhas, filtros),
     [linhas, filtros],
   );
-  const recorte = useMemo(
+  // O gráfico de datas vê o recorte sem a data; o resto, com ela.
+  const recorteSemData = useMemo(
     () => recorteVisual(filtradas, { kpi, responsavel }),
     [filtradas, kpi, responsavel],
   );
+  const recorte = useMemo(
+    () => filtrarPorPeriodo(recorteSemData, periodo),
+    [recorteSemData, periodo],
+  );
+  const comData = temPeriodo(periodo);
+  const clicarNoDia = (dia, opcoes) =>
+    setPeriodo((atual) => periodoDoClique(atual, dia, opcoes));
+  const tirarData = () => setPeriodo(PERIODO_VAZIO);
   const kpis = useMemo(
     () => (carregado ? calcularKpis(recorte) : KPIS_ZERADOS),
     [carregado, recorte],
@@ -232,6 +253,7 @@ function TelaDaArea({ estado, e }) {
     setBuscaDaFila("");
     setKpi("");
     setResponsavel("");
+    setPeriodo(PERIODO_VAZIO);
     if (escopo !== ESCOPO_PADRAO) void estado.trocarEscopo(ESCOPO_PADRAO);
   }
   const podeLimpar = Boolean(
@@ -240,6 +262,7 @@ function TelaDaArea({ estado, e }) {
     buscaDaFila ||
     kpi ||
     responsavel ||
+    comData ||
     escopo !== ESCOPO_PADRAO,
   );
 
@@ -248,17 +271,22 @@ function TelaDaArea({ estado, e }) {
     filtros,
     kpi,
     responsavel,
+    periodo,
     aoTirarEscopo: () => void estado.trocarEscopo(ESCOPO_PADRAO),
     aoMudar: mudarFiltro,
     aoBuscar: buscar,
     aoKpi: setKpi,
     aoResponsavel: setResponsavel,
+    aoTirarData: tirarData,
   });
 
   // O CSV refaz o recorte com as linhas completas (com os pareceres).
   const exportar = () =>
     void estado.exportarCsv((todas) =>
-      recorteVisual(filtrarLinhas(todas, filtros), { kpi, responsavel }),
+      filtrarPorPeriodo(
+        recorteVisual(filtrarLinhas(todas, filtros), { kpi, responsavel }),
+        periodo,
+      ),
     );
   const recarregar = () => void estado.carregar(area);
   const aberto = e.gaveta ? linhas.find((l) => l.__chave === e.gaveta) : null;
@@ -289,20 +317,38 @@ function TelaDaArea({ estado, e }) {
         podeLimpar={podeLimpar}
         carregado={carregado}
         comMunicipio={temMunicipio(linhas, area)}
+        periodo={periodo}
+        aoPeriodo={setPeriodo}
         chips={chips}
       />
       <Indicadores kpis={kpis} carregado={carregado} kpi={kpi} aoKpi={setKpi} />
       <LinhaDoRecorte
-        texto={descricaoDoRecorte({ escopo, filtros, kpi, responsavel })}
+        texto={descricaoDoRecorte({
+          escopo,
+          filtros,
+          kpi,
+          responsavel,
+          periodo,
+        })}
       >
+        {comData ? (
+          <ChipsDeFiltro>
+            <ChipDeFiltro rotulo="Data" aoTirar={tirarData}>
+              {rotuloDoPeriodo(periodo)}
+            </ChipDeFiltro>
+          </ChipsDeFiltro>
+        ) : null}
         {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}
       </LinhaDoRecorte>
       <Graficos
         linhas={recorte}
+        linhasPorData={recorteSemData}
         pendencias={pendencias}
         carregado={carregado}
         responsavel={responsavel}
         aoResponsavel={setResponsavel}
+        periodo={periodo}
+        aoClicarNoDia={clicarNoDia}
         escuro={escuro}
       />
       <TabelaDeAnalises

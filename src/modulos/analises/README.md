@@ -9,7 +9,8 @@ os do app. Sem iframe, sem postMessage, sem `window.*` próprio.
 analises.jsx    <TelaDeAnalises> e montarAnalises(): filtros, KPI, busca e o responsável do
                 gráfico (estado do componente), avisos de sessão/acesso/erro/demora, controlador
 paineis.jsx     filtros (situação do processo, seleção múltipla em cascata, Mais opções, chips),
-                os 7 KPIs, gráficos (responsável empilhado clicável, evolução diária) e pendências
+                os 7 KPIs, gráficos (responsável empilhado clicável, análises por data clicável —
+                filtra pelo dia/período, também nos campos de data de Mais opções) e pendências
 tabela.jsx      fila (TabelaInfinita: 50 por vez, Carregar mais, busca só da fila)
 gaveta.jsx      detalhe: contexto, links (origem e PDF, só http/https), seções e parecer
 estado.js       store sem React: carga por área e escopo, cópia do navegador, porteiro, gaveta
