@@ -257,6 +257,15 @@ export const SECOES_DA_AYA = Object.freeze({
       sug("Horários", "Quando cada atualização de dados roda?"),
     ],
   }),
+  mensagens: Object.freeze({
+    nome: "Mensagens (chat)",
+    intro:
+      "Posso explicar o prazo de retenção das mensagens do chat, o Zerar mensagens e o histórico das limpezas.",
+    sugestoes: [
+      sug("Prazo", "Como funciona o prazo de retenção das mensagens?"),
+      sug("Zerar", "O que o Zerar mensagens apaga?"),
+    ],
+  }),
 });
 
 const GENERICA = Object.freeze({
