@@ -30,6 +30,7 @@ import { GavetaDoCandidato } from "./gaveta-do-candidato.jsx";
 import { ModalDaCarta } from "./carta-de-convocacao/modal-da-carta.jsx";
 import { ModelosDaCarta } from "./carta-de-convocacao/modelos-da-carta.jsx";
 import { plural } from "./partes.jsx";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.jsx";
 
 /*
   Lista de aprovados (view `approved`), módulo do app — a página
@@ -310,6 +311,7 @@ export function ListaAprovados({ estado }) {
           Boolean(dados.acao) || (!carregado && !erroAoCarregar)
         }
       >
+        <SeloDeAvisos modulo="aprovados" />
         {/*
           O contador e o botão de sub judice falam da lista de aprovados.
           Deixá-los visíveis na outra aba prometeria uma ação que não

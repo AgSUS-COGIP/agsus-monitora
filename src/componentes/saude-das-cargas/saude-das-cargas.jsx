@@ -10,6 +10,7 @@ import {
   visaoSimples,
 } from "../../lib/saude-das-cargas.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.jsx";
 import { Icone } from "../icone.jsx";
 import { criarEstadoDaSaude } from "./estado.js";
 
@@ -25,7 +26,10 @@ import { criarEstadoDaSaude } from "./estado.js";
   Abre pela seção (src/modulos/configuracoes/secoes.js → `render()`), que relê a cada
   vez: o estado das cargas muda a cada poucos minutos.
 
-  Empregare, Seleção e Entrevistas têm "Rodar agora": o botão chama
+  Abaixo da lista, o cartão "Avisos de conferência" (src/modulos/conferencias/):
+  os avisos que o job Python das conferências gravou, de todos os módulos.
+
+  Empregare, Seleção, Entrevistas e Conferências têm "Rodar agora": o botão chama
   /api/rodar-carga (api/rodar-carga.js), que dispara o workflow no GitHub;
   fica desabilitado enquanto a carga roda (src/lib/robos-de-carga.js).
 */
@@ -275,7 +279,7 @@ function Resumo({ atencao, geradoEm, carregando, aoAtualizar }) {
   );
 }
 
-export function SaudeDasCargas({ estado }) {
+export function SaudeDasCargas({ estado, supabase }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
 
   useEffect(() => {
@@ -334,6 +338,12 @@ export function SaudeDasCargas({ estado }) {
           <Linha key={linha.id} linha={linha} atual={atual} estado={estado} />
         ))}
       </ul>
+      {supabase ? (
+        <CartaoDeAvisos
+          key={atual.dados.geradoEm?.getTime() ?? 0}
+          supabase={supabase}
+        />
+      ) : null}
     </div>
   );
 }
@@ -360,9 +370,13 @@ export function montarSaudeDasCargas({
     ...(agendar ? { agendar } : {}),
   });
   const raiz = raizDaTela
-    ? montarModulo(raizDaTela, <SaudeDasCargas estado={estado} />, {
-        nome: "Status das atualizações",
-      }).raiz
+    ? montarModulo(
+        raizDaTela,
+        <SaudeDasCargas estado={estado} supabase={supabase} />,
+        {
+          nome: "Status das atualizações",
+        },
+      ).raiz
     : null;
   return {
     estado,
