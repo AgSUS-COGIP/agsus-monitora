@@ -54,6 +54,7 @@ export function MultiSelectBusca({
   const raiz = useRef(null);
   const gatilho = useRef(null);
   const campoDeBusca = useRef(null);
+  const menu = useRef(null);
   const lista = useRef(null);
   /* O que focar quando o menu acabar de abrir: a busca, ou a primeira opção. */
   const focoAoAbrir = useRef("busca");
@@ -102,11 +103,35 @@ export function MultiSelectBusca({
       setAberto(false);
       gatilho.current?.focus();
     }
+    /*
+      Tela estreita: o menu é fixo na largura da janela (multi-select-busca.css)
+      e precisa acompanhar o campo quando a página rola — antes ficava parado
+      onde abriu, longe do filtro (Lista de aprovados, 05/10/2026).
+    */
+    const estreita = globalThis.matchMedia?.("(max-width: 820px)");
+    function posicionar() {
+      const elemento = menu.current;
+      if (!elemento) return;
+      if (!estreita?.matches || !gatilho.current) {
+        elemento.style.top = "";
+        return;
+      }
+      const caixa = gatilho.current.getBoundingClientRect();
+      elemento.style.top = `${Math.round(caixa.bottom + 6)}px`;
+    }
+    posicionar();
     document.addEventListener("click", aoClicar);
     document.addEventListener("keydown", aoTeclar);
+    globalThis.addEventListener?.("scroll", posicionar, {
+      capture: true,
+      passive: true,
+    });
+    globalThis.addEventListener?.("resize", posicionar);
     return () => {
       document.removeEventListener("click", aoClicar);
       document.removeEventListener("keydown", aoTeclar);
+      globalThis.removeEventListener?.("scroll", posicionar, { capture: true });
+      globalThis.removeEventListener?.("resize", posicionar);
     };
   }, [aberto]);
 
@@ -147,6 +172,7 @@ export function MultiSelectBusca({
         "multi-select",
         "multi-select-busca",
         escolhidos.length && "is-filled",
+        aberto && "is-aberto",
       )}
     >
       <button
@@ -175,7 +201,7 @@ export function MultiSelectBusca({
         </span>
         <i className="fa-solid fa-chevron-down" aria-hidden="true" />
       </button>
-      <div className="multi-select-menu" hidden={!aberto}>
+      <div className="multi-select-menu" ref={menu} hidden={!aberto}>
         <input
           ref={campoDeBusca}
           type="search"

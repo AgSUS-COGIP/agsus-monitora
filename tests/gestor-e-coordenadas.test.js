@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ACCESS_ROLES,
   podeEditarCoordenadas,
+  podeVerPessoasOnline,
   roleLabel,
 } from "../src/lib/access-roles.js";
 
@@ -60,5 +61,24 @@ describe("podeEditarCoordenadas", () => {
     ).toBe(false);
     expect(podeEditarCoordenadas(null)).toBe(false);
     expect(podeEditarCoordenadas({})).toBe(false);
+  });
+});
+
+describe("Pessoas online (chat em teste)", () => {
+  it("só administrador global e Gestor veem", () => {
+    expect(
+      podeVerPessoasOnline({
+        ativo: true,
+        perfil: "admin",
+        admin_global: true,
+      }),
+    ).toBe(true);
+    expect(podeVerPessoasOnline({ ativo: true, perfil: "edital_gestor" })).toBe(
+      true,
+    );
+    expect(podeVerPessoasOnline({ ativo: true, perfil: "usuario" })).toBe(
+      false,
+    );
+    expect(podeVerPessoasOnline(null)).toBe(false);
   });
 });

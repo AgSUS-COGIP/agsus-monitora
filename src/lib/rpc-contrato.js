@@ -765,6 +765,87 @@ export const CONTRATO_RPC = {
     resumo:
       "Registra o empate final de um grupo: sorteio (semente do servidor ou informada, reprodutível) ou decisão manual com justificativa. Editor.",
   },
+  // ── Chat (20261002210000_chat.sql) — todas exigem o recurso 'chat' ────────
+  listar_conversas_chat: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Conversas de quem está logado (participa e pode ler), da mais recente para a mais antiga, com participantes (online), não lidas, menções e a última mensagem.",
+  },
+  listar_mensagens_chat: {
+    argumentos: ["p_conversa", "p_antes", "p_limite"],
+    critica: false,
+    resumo:
+      "Página de mensagens da conversa (antes de p_antes, até 100), em ordem de envio, com a conversa e tem_mais. 42501 sem acesso à conversa.",
+  },
+  listar_pessoas_chat: {
+    argumentos: ["p_busca"],
+    critica: false,
+    resumo:
+      "Pessoas ativas com o recurso chat (fora quem pergunta), por nome ou e-mail, até 30, com online.",
+  },
+  enviar_mensagem_chat: {
+    argumentos: [
+      "p_conversa",
+      "p_texto",
+      "p_link_tela",
+      "p_mencoes",
+      "p_mensagem",
+    ],
+    critica: false,
+    resumo:
+      "Envia mensagem (1 a 4.000 caracteres, link interno da tela opcional, menções de participantes); p_mensagem é o id do navegador (reenviar não duplica).",
+  },
+  editar_mensagem_chat: {
+    argumentos: ["p_mensagem", "p_texto"],
+    critica: false,
+    resumo: "Edita a própria mensagem (só o autor; 42501).",
+  },
+  apagar_mensagem_chat: {
+    argumentos: ["p_mensagem"],
+    critica: false,
+    resumo:
+      'Apaga a própria mensagem (lógico: "mensagem apagada"; só o autor; 42501).',
+  },
+  marcar_conversa_lida_chat: {
+    argumentos: ["p_conversa", "p_ate"],
+    critica: false,
+    resumo: "Marca a conversa como lida até p_ate (a leitura só avança).",
+  },
+  abrir_conversa_direta_chat: {
+    argumentos: ["p_usuario"],
+    critica: false,
+    resumo:
+      "Abre ou cria a conversa direta com a pessoa (uma por par; 22023 se ela não tem chat).",
+  },
+  criar_grupo_chat: {
+    argumentos: ["p_nome", "p_participantes"],
+    critica: false,
+    resumo:
+      "Cria grupo com nome (até 120) e participantes com o recurso chat; quem cria é CRIADOR.",
+  },
+  adicionar_participantes_chat: {
+    argumentos: ["p_conversa", "p_participantes"],
+    critica: false,
+    resumo: "Inclui pessoas no grupo (quem participa inclui).",
+  },
+  sair_conversa_chat: {
+    argumentos: ["p_conversa"],
+    critica: false,
+    resumo:
+      "Sai do grupo ou deixa de acompanhar a conversa do edital (direta: 22023).",
+  },
+  silenciar_conversa_chat: {
+    argumentos: ["p_conversa", "p_silenciada"],
+    critica: false,
+    resumo: "Silencia a conversa (não conta no contador nem avisa).",
+  },
+  abrir_conversa_edital_chat: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Abre ou cria a conversa do edital (uma por edital) para quem vê o edital pela área e coordenação (42501).",
+  },
   registrar_presenca_monitora: {
     argumentos: ["p_current_view"],
     critica: false,

@@ -21,6 +21,16 @@
 .classificacao-edital select {
   width: min(640px, 100%);
 }
+/* "Conversa" do edital (chat) ao lado da escolha. */
+.classificacao-edital {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.classificacao-edital > :first-child {
+  flex: 1 1 320px;
+}
 
 @media (min-width: 1100px) {
   .classificacao-kpis {
