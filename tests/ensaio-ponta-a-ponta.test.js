@@ -6,10 +6,16 @@ import { describe, expect, it } from "vitest";
   de produção: tem de abrir a transação, terminar em rollback e nunca ter
   commit — senão os dados sintéticos ficariam gravados.
 */
-const ENSAIO = readFileSync("supabase/ensaios/ponta-a-ponta.sql", "utf8").replace(/\r\n/g, "\n");
+const ENSAIO = readFileSync(
+  "supabase/ensaios/ponta-a-ponta.sql",
+  "utf8",
+).replace(/\r\n/g, "\n");
 
 // O SQL sem comentários de bloco e de linha (os textos entre aspas ficam).
-const semComentarios = ENSAIO.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--[^\n]*/g, "");
+const semComentarios = ENSAIO.replace(/\/\*[\s\S]*?\*\//g, "").replace(
+  /--[^\n]*/g,
+  "",
+);
 const comandos = semComentarios
   .split("\n")
   .map((linha) => linha.trim())
@@ -30,8 +36,13 @@ describe("ensaio de ponta a ponta", () => {
 
   it("não aplica DDL fora das funções do próprio ensaio", () => {
     const ddl = semComentarios.match(/^\s*(create|alter|drop)\s+\w+/gim) || [];
-    expect(ddl.map((c) => c.trim().toLowerCase())).toEqual(["create function", "create function"]);
-    expect(semComentarios).toMatch(/create function public\."FC_ENSAIO_P2P_RETRATO"/);
+    expect(ddl.map((c) => c.trim().toLowerCase())).toEqual([
+      "create function",
+      "create function",
+    ]);
+    expect(semComentarios).toMatch(
+      /create function public\."FC_ENSAIO_P2P_RETRATO"/,
+    );
   });
 
   it("usa só dados sintéticos e termina com ENSAIO OK", () => {
