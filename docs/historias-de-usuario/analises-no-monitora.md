@@ -98,6 +98,9 @@ parte, para não montar planilha (item 8.3.1).
 Como **coordenação**, quero que só o lote de convocação (item 8.4) ganhe ficha, e que o lote seja
 reposto quando alguém sai, para avaliar só quem o edital manda e não deixar vaga sem candidato.
 
+- **AM-5.0** — **Dado** a regra do edital, **quando** abro a configuração do lote, **então** a tela
+  **sugere** um tamanho (ex.: 3 × vagas imediatas + CR, pelo quadro de vagas) e eu edito à vontade,
+  sem padrão fixo, por edital e por vaga.
 - **AM-5.1** — **Dado** o lote "5 × vagas imediatas + CR" e 4 vagas, **então** os 20 primeiros da
   Provisória (mais os empatados na 20ª, se a regra mandar) ganham ficha Pendente.
 - **AM-5.2** — **Dado** o lote por modalidade, **então** ele é contado separadamente na ampla e em
@@ -108,6 +111,8 @@ reposto quando alguém sai, para avaliar só quem o edital manda e não deixar v
 - **AM-5.4** — **Dado** um Apto com nota apurada abaixo da ART do primeiro de fora, **então** esse
   primeiro de fora também entra.
 - **AM-5.5** — **Dado** um recálculo, **então** quem já tem ficha não sai do lote.
+- **AM-5.6** — **Dado** a regra "publica cada reposição", **então** cada reposição gera um novo
+  Lote de Convocação para publicar; com "não publica", a reposição só fica registrada.
 
 ### AM-6. Fila e distribuição configurável
 
@@ -135,8 +140,13 @@ decisão fique explicada item por item.
   (P11), PcD (P12), graduação e diploma (P13/P14), outras formações (P15/P16), experiência
   (P17/P18), parentesco (P19/P20), vínculo ativo (P21), outros DSEI (P22) e termos (P23/P24).
 - **AM-7.2** — **Dado** um bloco, **então** vejo a resposta declarada ("Anexo", "Vídeo", a opção
-  ou "Resposta não informada") e o botão "Abrir na Empregare", que abre o candidato na vaga pelo
-  modelo de endereço configurado e fica registrado.
+  ou "Resposta não informada") e o botão "Abrir na Empregare":
+  - com o endereço do currículo capturado pelo robô, ele abre **direto o currículo do candidato**;
+  - sem ele, abre as **candidaturas da vaga**, e a ficha mostra o código do candidato com
+    **"Copiar"**;
+  - cada abertura e cada cópia ficam registradas.
+- **AM-7.2b** — **Dado** alguém que não pode ver a ficha, **então** os endereços da Empregare
+  nunca chegam a essa pessoa: não aparecem em lista, CSV nem log.
 - **AM-7.3** — **Dado** um bloco, **quando** escolho Conforme, Não conforme, Não enviado ou Não se
   aplica (também pelas teclas C, N, E, A), **então** o efeito do bloco aparece ao lado.
 - **AM-7.4** — **Dado** "Não conforme" ou "Não enviado", **quando** tento concluir sem motivo,
@@ -280,12 +290,17 @@ colunas e o parecer certos.
   na coluna de justificativa (item 8.5 "b").
 - **AM-17.3** — **Dado** os recursos julgados, **quando** gero a fase Final, **então** saem os
   APTOS e INAPTOS finais, com os ajustes aprovados.
-- **AM-17.4** — **Dado** um edital que chama a etapa de "Avaliação Documental e de Títulos",
-  **então** o título padrão usa esse nome (configurável por edital).
+- **AM-17.4** — **Dado** qualquer edital, **então** o título padrão das listas da etapa é
+  "Avaliação Documental e de Títulos" (decidido em 05/10/2026), editável por edital.
 
 ### AM-18. Piloto em comparação e virada
 
-Como **admin**, quero rodar o piloto de Projetos em comparação e depois virar.
+Como **admin**, quero rodar o piloto, o **edital 93/2026** (SESMT, Projetos), em comparação e
+depois virar.
+
+- **AM-18.0** — **Dado** que o 93/2026 não tem vagas na Seleção nem candidatos no robô, **quando**
+  preparo o piloto, **então** as 5 vagas dele são ligadas ao edital e o robô carrega os candidatos
+  delas antes de tudo.
 
 - **AM-18.1** — **Dado** "Comparação", **então** vejo a Provisória e o lote comparados com a aba
   APTOS PARA ANÁLISE, e cada candidato (situação, parciais, nota) comparado com a planilha.
@@ -293,6 +308,25 @@ Como **admin**, quero rodar o piloto de Projetos em comparação e depois virar.
   banco recusa e diz o que fazer.
 - **AM-18.3** — **Dado** a virada, **então** as linhas da planilha são adotadas com o mesmo `id`, e
   entrevistas, recursos e aprovados continuam ligados.
+- **AM-18.4** — **Dado** as 86 linhas ativas do 93/2026 (71 Pendentes, 15 em Revisar com parecer),
+  **então**:
+  - as 15 viram fichas "importadas da planilha", na situação Revisar, com o parecer;
+  - as 71 viram fichas Pendentes, pré-preenchidas pela Empregare;
+  - todas passam para a origem `monitora-projetos`.
+
+### AM-18b. Robô captura os endereços da Empregare
+
+Como **analista**, quero que o robô guarde o endereço das candidaturas de cada vaga e o do currículo
+de cada candidato, para abrir o candidato na Empregare com um clique.
+
+- **AM-18b.1** — **Dado** uma execução do robô, **então** cada vaga ganha o endereço de
+  candidaturas (aba Todos, lista percorrida até o fim) e cada candidato, casado pelo
+  `data-pessoa-id` = código, ganha o endereço do currículo, com a data da captura.
+- **AM-18b.2** — **Dado** que um token mudou, **então** a execução seguinte sobrescreve o endereço.
+- **AM-18b.3** — **Dado** uma vaga sem endereço capturado, **então** o gestor ou o coordenador
+  cadastra o endereço de candidaturas à mão (só endereço da Empregare).
+- **AM-18b.4** — **Dado** o log público do Actions, **então** nenhum token ou endereço aparece
+  (mascaramento).
 
 ---
 
