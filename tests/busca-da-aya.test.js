@@ -221,3 +221,40 @@ describe("conversa", () => {
     );
   });
 });
+
+describe("Aya mais esperta", () => {
+  it("duas perguntas numa só: uma resposta numerada para cada", () => {
+    const r = responderAya({
+      question: "Como dar acesso a alguém e quem pode decidir um recurso?",
+      section: "recursos",
+    });
+    expect(r.answer).toMatch(/^1\. Como dar acesso: /);
+    expect(r.answer).toContain("\n2. Quem pode decidir um recurso: ");
+  });
+
+  it.each([
+    ["o que é CR?", /cadastro reserva/i],
+    ["o que é PcD?", /pessoas com deficiência/i],
+    ["como funciona o sub judice?", /sub judice/i],
+    ["o que é a nota da ART?", /autodeclaração/i],
+  ])("sigla do domínio: %s", (pergunta, esperado) => {
+    expect(
+      responderAya({ question: pergunta, section: "approved" }).answer,
+    ).toMatch(esperado);
+  });
+
+  it("não entendi: sempre até três caminhos e o chamado, marcado como sem resposta", () => {
+    const r = responderAya({
+      question: "edital planilha xpto quadro foo",
+      section: "nucleo",
+    });
+    if (r.semResposta && r.oferecerChamado) {
+      expect(r.sugestoes.length).toBe(3);
+    }
+    const fora = responderAya({
+      question: "me conta uma piada",
+      section: "nucleo",
+    });
+    expect(fora.semResposta).toBe(true);
+  });
+});

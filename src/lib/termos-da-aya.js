@@ -168,6 +168,23 @@ export const SINONIMOS = Object.freeze({
   chamado: ["chamado", "suporte", "ticket", "helpdesk"],
   indicador: ["indicador", "kpi", "metrica"],
   parecer: ["parecer juridico", "parecer", "juridico"],
+  // Siglas e jeitos de falar do processo seletivo.
+  art: ["art", "nota da art", "autodeclaracao", "nota da autodeclaracao"],
+  lote: ["lote de convocacao", "lote", "leva de convocacao"],
+  reserva: ["cr", "cadastro reserva", "cadastro de reserva"],
+  ampla: ["ac", "ampla concorrencia"],
+  negro: [
+    "pp",
+    "ppp",
+    "pretos e pardos",
+    "pessoas pretas e pardas",
+    "cota racial",
+    "negro",
+    "negra",
+  ],
+  cotaindigena: ["pi", "cota indigena", "vaga indigena", "candidato indigena"],
+  pcd: ["pcd", "pessoa com deficiencia", "deficiencia", "deficiente"],
+  subjudice: ["sub judice", "subjudice", "decisao judicial", "liminar"],
 });
 
 /** As palavras de um texto, sem stopwords, no singular. */

@@ -10,7 +10,7 @@ import {
 } from "../src/lib/termos-da-aya.js";
 
 describe("sinônimos em grupos", () => {
-  it("tem os 18 grupos do domínio", () => {
+  it("tem os 26 grupos do domínio, com as siglas do processo seletivo", () => {
     expect(Object.keys(SINONIMOS)).toEqual([
       "edital",
       "vaga",
@@ -30,12 +30,25 @@ describe("sinônimos em grupos", () => {
       "chamado",
       "indicador",
       "parecer",
+      "art",
+      "lote",
+      "reserva",
+      "ampla",
+      "negro",
+      "cotaindigena",
+      "pcd",
+      "subjudice",
     ]);
   });
 
   it.each([
     ["edital", "PSS", "certame", "processo seletivo", "processos seletivos"],
     ["vaga", "cargo", "cargos", "vagas"],
+    ["cadastro reserva", "CR", "cadastro de reserva"],
+    ["negro", "PP", "pretos e pardos", "cota racial"],
+    ["pcd", "PcD", "pessoa com deficiência", "pessoas com deficiência"],
+    ["subjudice", "sub judice", "decisão judicial", "liminar"],
+    ["art", "ART", "nota da ART", "autodeclaração"],
     ["candidato", "inscrito", "inscritos", "candidatas"],
     ["aprovado", "classificado", "aprovadas", "classificados"],
     ["recurso", "contestação", "impugnação", "contestar", "recorrer"],

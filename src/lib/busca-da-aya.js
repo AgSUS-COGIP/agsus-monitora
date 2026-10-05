@@ -43,6 +43,7 @@ import {
   toleranciaPara,
 } from "./termos-da-aya.js";
 import { intencaoDeConversa, textoDaConversa } from "./conversa-da-aya.js";
+import { explicarPermissao } from "./permissoes-da-aya.js";
 
 export const LIMIAR_CONFIANTE = 0.6;
 export const LIMIAR_INCERTO = 0.3;
@@ -315,6 +316,49 @@ const TEXTO_FORA_DO_ESCOPO =
 const FORA_DO_SISTEMA =
   /\b(previsao do tempo|tempo hoje|clima|futebol|placar|carros?|plantas?|medicamentos?|remedios?|fotossintese)\b/;
 
+/* ---------- Perguntas compostas ---------- */
+
+/*
+  "Como dou acesso e quem decide o recurso?": duas perguntas numa só. A
+  pergunta é cortada no "?" do meio, no ";" ou no "e" antes de outra
+  interrogativa; cada parte precisa achar o próprio verbete com confiança,
+  e os verbetes têm de ser diferentes. Senão, segue como uma pergunta só.
+*/
+const CORTE_DA_COMPOSTA =
+  /\?\s+|;\s*|\s+e\s+(?:tambem\s+|também\s+)?(?=(?:como|quem|quando|onde|por que|porque|o que|qual|quais|quanto|quantos|quantas|pode|posso)\s)/i;
+
+export function partesDaPergunta(pergunta) {
+  return String(pergunta || "")
+    .split(CORTE_DA_COMPOSTA)
+    .map((parte) => parte.replace(/[?]+$/, "").trim())
+    .filter((parte) => termosDe(parte).length >= 1 && parte.length >= 4);
+}
+
+function melhorConfiante(parte, opcoes) {
+  const { ranking } = buscarNaBase(parte, opcoes);
+  const [melhor, segundo] = ranking;
+  if (!melhor || melhor.pontuacao < LIMIAR_CONFIANTE) return null;
+  const destacado =
+    !segundo ||
+    melhor.bruta - segundo.bruta >= MARGEM_DE_EMPATE ||
+    (melhor.bruta >= 2 && segundo.bruta < 2);
+  return destacado ? melhor.verbete : null;
+}
+
+function responderComposta(pergunta, opcoes) {
+  const partes = partesDaPergunta(pergunta);
+  if (partes.length < 2) return null;
+  const verbetes = partes.slice(0, 3).map((p) => melhorConfiante(p, opcoes));
+  if (verbetes.some((v) => !v)) return null;
+  if (new Set(verbetes).size !== verbetes.length) return null;
+  return {
+    answer: verbetes
+      .map((v, i) => `${i + 1}. ${v.titulo}: ${v.resposta}`)
+      .join("\n"),
+    acao: verbetes.find((v) => v.abrir)?.abrir || "",
+  };
+}
+
 export function responderAya({
   question = "",
   section = "",
@@ -323,6 +367,7 @@ export function responderAya({
   secao = "",
   history = [],
   context = {},
+  perfil = undefined,
 } = {}) {
   const pagina = paginaDaAya({
     view: section,
@@ -354,7 +399,21 @@ export function responderAya({
     answer: `${prefixo}${resposta.answer}`,
   });
   const foraDoEscopo = () =>
-    responder({ answer: TEXTO_FORA_DO_ESCOPO, sugestoes: sugestoesDaTela });
+    responder({
+      answer: TEXTO_FORA_DO_ESCOPO,
+      sugestoes: sugestoesDaTela,
+      semResposta: true,
+    });
+
+  // "Não aparece o botão…": a permissão de quem pergunta (o perfil do app).
+  const permissao = explicarPermissao(original, perfil);
+  if (permissao)
+    return responder({
+      answer: permissao.answer,
+      acao: permissao.acao || "",
+      provider: perfil ? "monitora-perfil" : "base-monitora",
+      oferecerChamado: permissao.oferecerChamado ?? false,
+    });
 
   const contextual = contextualAyaAnswer(original, context);
   // Perguntas de contagem e filtros atuais não podem receber uma definição.
@@ -389,6 +448,13 @@ export function responderAya({
       sources: officialSourcesForQuestion(pergunta),
     });
 
+  // "Como dou acesso e quem decide o recurso?": cada parte com o seu verbete.
+  const variasPerguntas = responderComposta(pergunta, {
+    pagina: pagina.chave,
+    area,
+  });
+  if (variasPerguntas) return responder(variasPerguntas);
+
   const { ranking, dominio, termos, desconhecidos } = buscarNaBase(pergunta, {
     pagina: pagina.chave,
     area,
@@ -420,9 +486,17 @@ export function responderAya({
     .map(({ verbete }) => sugestaoDoVerbete(verbete))
     .filter((s) => !vistas.has(s.pergunta) && vistas.add(s.pergunta))
     .slice(0, MAXIMO_DE_SUGESTOES);
+  // Sempre até três caminhos: os verbetes mais próximos e, para completar,
+  // as perguntas da tela aberta.
+  for (const sugestao of sugestoesDaTela) {
+    if (sugestoes.length >= MAXIMO_DE_SUGESTOES) break;
+    if (!vistas.has(sugestao.pergunta) && vistas.add(sugestao.pergunta))
+      sugestoes.push(sugestao);
+  }
   return responder({
     answer: "Não encontrei exatamente isso. Você quis dizer…?",
-    sugestoes: sugestoes.length ? sugestoes : sugestoesDaTela,
+    sugestoes,
     oferecerChamado: true,
+    semResposta: true,
   });
 }
