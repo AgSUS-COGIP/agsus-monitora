@@ -285,7 +285,7 @@ A nota mínima continua **uma só**, a da regra de classificação, e a avaliaç
 | **Nota declarada** | o mapeamento "resposta → pontos" das perguntas, para recalcular a ART e avisar quando ela diverge da nota da Empregare |
 | **Situações e parecer** | Apto ("Triados"), Inapto por requisito, Inapto por nota mínima, Inapto por eliminação; um modelo de parecer por situação, com campos (`{edital}`, `{nota}`, `{distribuicao}`, `{motivos}`, `{observacoes}`…), e as observações prontas |
 | **Distribuição e revisão** | o modo de distribuição e as opções de revisão (seção 8) |
-| **Atalho da Empregare** | o modelo do endereço "Abrir na Empregare" (seção 7.3) |
+| **Atalho da Empregare** | os endereços capturados pelo robô (candidaturas da vaga em `TB_EMPREGARE_VAGA."DS_URL_CANDIDATURAS"`, currículo do candidato em `TB_EMPREGARE_CANDIDATO."DS_URL_CURRICULO"`) e o cadastro manual da vaga como alternativa (seção 7.3) |
 
 Modelos para começar:
 
@@ -309,14 +309,19 @@ Edital novo copia um modelo e fica "conferir". A tela da regra:
     coordenação.
   - Os eliminados automáticos ficam registrados com o motivo, sem ficha.
 - **Lote de convocação** (item 8.4): a avaliação documental é restrita aos classificados na
-  Provisória dentro do limite do lote. O lote é a **linha de corte**, configurável por edital e
-  vaga. Só o lote ganha ficha (decidido: fecha a antiga P1).
+  Provisória dentro do limite do lote. O lote é a **linha de corte**. Só o lote ganha ficha
+  (decidido: fecha a antiga P1).
+  - O tamanho é **personalizável por edital** e por vaga, sem padrão fixo (decidido em 05/10/2026).
+    A tela **sugere** um valor (ex.: 3 × vagas imediatas + CR, pelo quadro de vagas), que o gestor
+    ou o coordenador edita. Também se escolhe se o lote é geral ou por modalidade e se inclui os
+    empatados na linha.
 - **"A linha anda"**: quando um candidato do lote é concluído como **Inapto**, ou fica abaixo da
   nota mínima, ou a nota apurada fica abaixo da ART do primeiro de fora, o lote é **reposto** com o
   próximo da Provisória:
   - a troca é registrada ("entrou no lote porque 7000654 ficou inapto");
   - quem já tem ficha não sai do lote por recálculo, só pela conclusão;
-  - se o edital **publica** os lotes, cada reposição gera um novo lote para publicar (P1b).
+  - **publicar cada reposição** é personalizável por edital (decidido em 05/10/2026): "publica
+    cada reposição como um novo Lote de Convocação" ou "não publica, só registra".
 - A fila mostra os contadores: **Inscritos**, **Eliminados (cancelados/reprovados)**,
   **Ranqueados** e **Lote (aptos para análise)**, com "N de M".
 
@@ -381,15 +386,45 @@ A situação sai da regra: o analista não escolhe.
 
 O analista pode marcar **"Pedir revisão"** em caso de dúvida.
 
-### 7.3 "Abrir na Empregare"
+### 7.3 "Abrir na Empregare" (decidido em 05/10/2026, corrigido depois da inspeção do portal)
 
-- O endereço é um **modelo configurável** (na regra do edital ou nas Configurações), com campos,
-  por exemplo: `https://corporate.empregare.com/…/vaga/{codigo_vaga}/candidato/{codigo_candidato}`.
-- O modelo exato é confirmado no portal (P2); até lá, o atalho abre a vaga e a ficha mostra o
-  código para buscar.
-- Cada abertura fica em `TL_ACESSO_FICHA_ANALISE`.
-- Numa fase posterior, o robô pode baixar os documentos para um bucket privado (fase B), e a ficha
-  passa a mostrá-los ao lado.
+O portal da Empregare (estrutura vista com login, sem dados pessoais) tem dois endereços úteis.
+
+- **Candidaturas da vaga**: `/empresa/vagas/candidaturas/<token-da-vaga>?m=<etapa>`.
+  - O `m` filtra a etapa (as abas Todos, Interessados, Triados, Agendados, Entrevistados…; `m=2` é
+    Triados).
+  - O token é um identificador codificado da vaga, diferente do código numérico. A página da vaga
+    mostra "Código <número da vaga>" junto do token, e é assim que se liga um ao outro.
+- **Currículo do candidato**:
+  `/empresa/curriculo/detalhes?tokenCandidato=<tk>&id=<id-interno>&candidatura=<token-candidatura>`.
+  - Na lista de candidaturas, cada candidato traz no HTML `data-pessoa-id` (o código numérico de 7
+    dígitos, o mesmo "CÓDIGO" do Excel, ou seja, `CO_CANDIDATO_EMPREGARE`), `data-tokencandidato`
+    e `data-candidatura-id`, e no mesmo bloco o link para essa ficha.
+  - O `id` é interno (provavelmente da pessoa), **não** o token da vaga.
+  - **Os tokens não saem do código numérico**: o robô precisa capturá-los.
+
+Como fica no desenho:
+
+- **O robô captura os endereços** (fase F7 do plano), a cada execução, porque os tokens podem mudar.
+  - Por vaga: o token e o endereço de candidaturas, em `TB_EMPREGARE_VAGA."DS_URL_CANDIDATURAS"`.
+    Ele usa a aba **Todos** (valor de `m` a confirmar: provavelmente `-1` ou sem `m`) e percorre a
+    lista inteira, que carrega aos poucos.
+  - Por candidato (casando `data-pessoa-id` com `CO_CANDIDATO_EMPREGARE`): o endereço completo do
+    currículo, em `TB_EMPREGARE_CANDIDATO."DS_URL_CURRICULO"`.
+- **Na ficha**, o botão **"Abrir na Empregare"**:
+  - abre **direto o currículo do candidato**, quando o endereço já foi capturado;
+  - se não, abre as **candidaturas da vaga**, e a ficha mostra o **código do candidato** com o botão
+    **"Copiar"**, para colar na busca da Empregare;
+  - se a vaga também não tem endereço, o gestor ou o coordenador **cadastra à mão** o de
+    candidaturas. Até lá, fica só o "Copiar código".
+- **São dados restritos.** Os links só funcionam para quem está logado na Empregare e não expõem
+  nada sem login. Mesmo assim:
+  - só quem pode ver a ficha recebe os links, pela RPC da ficha; nunca aparecem em lista, CSV nem
+    log;
+  - cada abertura e cada cópia ficam em `TL_ACESSO_FICHA_ANALISE`;
+  - nenhum token real vai para docs, testes ou log do Actions (mascaramento do robô).
+- **Os documentos continuam na Empregare** no MVP (sem download). A fase B (documentos num bucket
+  privado) fica para depois, se for pedida.
 
 ### 7.4 Formação acadêmica: lista de títulos
 
@@ -602,8 +637,8 @@ Preliminar/Final e os modelos do SEI em `documento-sei.js`. O que falta criar:
    documentos. Colunas: Classificação, Nome, ART.
 2. **`LOTE`**: o lote de cada vaga (e as reposições), com a ordem e a ART.
 3. Na `PRELIMINAR`:
-   - o título padrão do 100/2026, "RESULTADO PRELIMINAR – ETAPA DE AVALIAÇÃO DOCUMENTAL E DE
-     TÍTULOS" (hoje "…ANÁLISE CURRICULAR"), configurável por edital pelos textos que já existem;
+   - o título padrão "RESULTADO PRELIMINAR – ETAPA DE AVALIAÇÃO DOCUMENTAL E DE TÍTULOS" (decidido
+     em 05/10/2026; hoje "…ANÁLISE CURRICULAR"), editável por edital pelos textos que já existem;
    - a coluna **Classificação na Modalidade**, se ainda não sair;
    - o **parecer da ficha** como "Justificativa" dos inaptos.
 
@@ -639,10 +674,10 @@ edital, como os demais.
 
 | Fase | O que entra | Saída |
 |---|---|---|
-| **0. Preparação** | o **edital piloto de Projetos** (decidido em 05/10/2026); a regra da avaliação dele (modelo PROJ26-CURRICULAR + blocos do questionário + motivos + lote + distribuição + revisão); a equipe; o recurso `avaliacao_documental` nos grupos | regra conferida pelo gestor ou pelo coordenador |
-| **1. Piloto em comparação** | o robô carrega as vagas do edital (`editais` = o número dele); o MONITORA faz a Provisória, o lote e as fichas em paralelo, sem publicar; a planilha continua oficial | Provisória e lote iguais aos da planilha? Situação, parciais e nota iguais por candidato? |
+| **0. Preparação** | o piloto é o **93/2026** (SESMT, Projetos; decidido em 05/10/2026). Antes de tudo: as 5 vagas do edital entram na Seleção, que hoje tem **0** vagas dele, ou o robô roda com `vagas` = os 5 códigos, ligando as vagas ao edital; a regra da avaliação vem do PROJ26-CURRICULAR + os blocos do questionário (lote sugerido 3 × 11 vagas imediatas + CR, editável); a equipe; o recurso `avaliacao_documental` nos grupos | regra conferida pelo gestor ou pelo coordenador; as vagas com candidatos no robô (hoje **0**) |
+| **1. Piloto em comparação** | o MONITORA monta a Provisória, o lote e as fichas do 93/2026 em paralelo, sem publicar, enquanto a planilha de Projetos continua oficial | a Provisória e o lote batem com a aba APTOS PARA ANÁLISE (86 linhas em 5 vagas)? A nota declarada bate com a ART? |
 | **1b. Segundo piloto** | um edital da Saúde Indígena (critério étnico com aldeias, cotas, desempates) | a mesma comparação |
-| **2. Virada** | 1) o edital fica inativo na `DIM_EDITAIS` da planilha; 2) a carga seguinte confirma; 3) o administrador global vira: as linhas da planilha são **adotadas** (mesmo `id`) e as fichas pré-preenchidas como "importada da planilha" | o piloto é 100% MONITORA |
+| **2. Virada do 93/2026** | 1) o 93/2026 fica inativo na `DIM_EDITAIS` da planilha de Projetos; 2) a carga seguinte confirma; 3) o administrador global vira: as **86 linhas ativas** são **adotadas** (o mesmo `id`, e a origem passa para `monitora-projetos`); as **15 em Revisar** viram fichas "importadas da planilha" com o parecer, na situação Revisar, para um revisor validar (P18); as **71 Pendentes** viram fichas Pendentes, pré-preenchidas pela Empregare, na Avaliação documental | o 93/2026 é 100% MONITORA; a Classificação, as entrevistas e os recursos continuam ligados pelo `id` |
 | **3. Editais novos** | nascem `MONITORA`, com a regra copiada de um modelo | as planilhas e o simulador param de receber editais |
 | **4. Em andamento** | edital a edital, entre etapas (nunca durante um prazo de recurso) | — |
 | **5. Desligamento** | desativar o simulador e o web app, desligar os gatilhos, arquivar as planilhas, retirar a carga do banco e `apps-script/` | fim da cadeia |
@@ -674,7 +709,7 @@ o robô.
 | Risco | Mitigação |
 |---|---|
 | **R1.** Há um risco de exposição no fluxo atual, descrito fora do repositório | a avaliação no MONITORA exige login, papel no edital e registro; o simulador e o web app são desativados na fase 5 |
-| R2. Documentos só na Empregare: o analista depende do login dela, e o atalho pode mudar | modelo de endereço configurável; fase B baixa os documentos para um bucket privado |
+| R2. Documentos só na Empregare (o analista precisa do login dela); os tokens dos endereços mudam e a tela do portal pode mudar | o robô recaptura os endereços a cada execução; sem currículo capturado, abre a vaga + "Copiar código"; links tratados como dado restrito; fase B opcional |
 | R3. A Empregare muda os enunciados e o bloco perde a pergunta | ligação pelo enunciado, conferida a cada carga; a ficha mostra "pergunta não encontrada" |
 | R4. Planilha e MONITORA no mesmo edital (recusa da carga inteira) | dono único por edital e virada em passos |
 | R5. Regra mal cadastrada | modelo + "conferir" + prévia + piloto em comparação + o banco recalcula |
@@ -697,13 +732,28 @@ o robô.
 - **Separação painel × trabalho:** "Painel das análises" (recurso `analises`) e "Avaliação
   documental" (recurso novo `avaliacao_documental`).
 
+- **P1b. Tamanho do lote** — **decidido em 05/10/2026**: personalizável por edital e vaga, sem
+  padrão fixo. A tela sugere um valor (ex.: 3 × vagas imediatas + CR), editável. Publicar ou não
+  cada reposição também é personalizável por edital.
+- **P2. Empregare** — **decidido em 05/10/2026**: o robô captura, a cada execução, o endereço de
+  candidaturas de cada vaga (`DS_URL_CANDIDATURAS`) e o do currículo de cada candidato
+  (`DS_URL_CURRICULO`). O botão abre direto o currículo; sem ele, abre a vaga e oferece "Copiar
+  código"; sem endereço da vaga, ele é cadastrado à mão. Os links são tratados como dado restrito,
+  e os documentos ficam na Empregare no MVP (seção 7.3).
+- **P6b. Edital piloto** — **decidido em 05/10/2026**: o **93/2026** (SESMT, área Projetos, ativo).
+  Situação no banco em 05/10/2026, só em contagens:
+  - 86 análises ativas da planilha de Projetos, em 5 vagas: 71 Pendentes e 15 em **Revisar**
+    (essas 15 têm parecer; nenhuma está com etapa Triados/Reprovado);
+  - regra de classificação cadastrada;
+  - quadro de vagas com 5 vagas e 11 vagas imediatas;
+  - **nenhuma vaga na Seleção** e **nenhum candidato no robô da Empregare**.
+
+  O plano está na seção 15 e em [`plano-de-construcao.md`](plano-de-construcao.md).
+- **P17. Título das listas** — **decidido em 05/10/2026**: "Avaliação Documental e de Títulos" é o
+  título padrão das listas da etapa (editável por edital).
+
 ### Em aberto
 
-- **P1b. Tamanho do lote:** qual é o padrão (quantas vezes as vagas, CR, por modalidade,
-  empatados)? O edital publica cada reposição do lote?
-- **P2. Empregare:** qual é o endereço do candidato na vaga no portal (para o atalho)? Começar só
-  com o atalho ou já baixar os documentos (e por quanto tempo guardar)?
-- **P6b.** Qual edital de Projetos será o piloto?
 - **P7.** Alguém usa o PDF no Drive, ou basta imprimir a ficha?
 - **P9. Cotas:** documentação de cota incompleta faz o candidato seguir na ampla? A
   heteroidentificação e a perícia vão ser registradas no MONITORA depois?
@@ -712,5 +762,6 @@ o robô.
 - **P13.** Quem tem as listas de aldeias dos outros DSEI?
 - **P14.** O recurso pode mudar os desempates?
 - **P15.** O que é a coluna "Origem convocação" da planilha (lote, reposição, cota)?
-- **P17. Títulos das listas:** usar "Etapa de Avaliação Documental e de Títulos" como padrão em
-  todos os editais novos, ou manter "Análise Curricular" onde o edital assim chamar?
+- **P18. As 15 em "Revisar" do 93/2026:** na planilha elas têm parecer, mas não têm etapa. Na
+  virada, entram na Avaliação documental como fichas "importadas da planilha", na situação Revisar,
+  para um revisor validar. Ou a equipe preenche a etapa na planilha antes da virada?
