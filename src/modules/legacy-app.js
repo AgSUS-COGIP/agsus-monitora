@@ -1,17 +1,11 @@
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
 import { resumoDoRelatorio } from "../lib/visao-geral.js";
-import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.js";
-import {
-  SECOES,
-  secaoAtualDeConfiguracao,
-} from "../modulos/configuracoes/secoes.js";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.js";
 import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.js";
-import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { sessaoDoApp } from "../app/sessao.js";
 import { criarNavegacao } from "../app/navegacao.js";
 import { configuracaoDoApp as configuracao } from "../app/configuracao.js";
@@ -20,16 +14,9 @@ import { criarCarga } from "../app/carga.js";
 import { avisar as toast, mostrarCarregamento } from "../app/avisos.js";
 import { comemorarAcessoLiberado } from "./comemoracao-do-acesso.js";
 import { profileDisplayName } from "../lib/platform-context.js";
-import {
-  normalizeOnlinePresenceList,
-  ondeEstaNoMonitora,
-} from "../lib/online-presence.js";
-import {
-  podeUsarChat,
-  podeVerPessoasOnline,
-  permissaoLegada,
-  roleLabel,
-} from "../lib/access-roles.js";
+import { criarPresenca } from "../app/presenca.js";
+import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
+import { permissaoLegada, roleLabel } from "../lib/access-roles.js";
 import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.js";
 import {
   esquecerSituacaoDoSistema,
@@ -45,22 +32,15 @@ import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
   presença, da auditoria e da moldura (barra recolhida, tema, tela cheia, PDF).
 */
 
-const RPC_ACCESS_LOG = "registrar_evento_acesso";
-const RPC_REGISTER_ONLINE_PRESENCE = "registrar_presenca_monitora";
-const RPC_LIST_ONLINE_PRESENCE = "listar_presenca_online_monitora";
-const DEFAULT_ACCESS_HEARTBEAT_MINUTES = 5;
 const SIDEBAR_MOBILE_BREAKPOINT = 900;
 const SIDEBAR_FORCE_LOCK_VIEWS = new Set([]);
 
-let sb = getSupabaseClient();
 /*
   Usuário e perfil vêm da sessão do app (src/app/sessao.js): estas são cópias
   locais, atualizadas por `receberSessao` a cada mudança dela.
 */
 let currentUser = null;
 let profile = null;
-let accessHeartbeatHandle = null;
-let onlinePresenceHandle = null;
 
 const paineis = criarPaineisExternos({
   obterPerfil: () => profile,
@@ -88,8 +68,13 @@ const carga = criarCarga({
       ligadas: situacaoDoSistema().comemoracoes,
     }),
 });
+const presenca = criarPresenca({
+  obterUsuario: () => currentUser,
+  obterPerfil: () => profile,
+  configuracao,
+  navegacao,
+});
 const viewAtual = () => navegacao.obter().view;
-const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
 
 function $(id) {
   return document.getElementById(id);
@@ -119,174 +104,6 @@ function can(perm) {
   return permissaoLegada(profile, perm);
 }
 
-function getClientSessionId() {
-  try {
-    const key = "agsus_monitora_client_session_id";
-    let value = sessionStorage.getItem(key);
-    if (!value) {
-      // Identificador da aba para a auditoria: gerador criptográfico, não
-      // Math.random (apontado pelo CodeQL).
-      value = globalThis.crypto.randomUUID();
-      sessionStorage.setItem(key, value);
-    }
-    return value;
-  } catch (e) {
-    return `${Date.now()}-fallback`;
-  }
-}
-
-async function trackAccess(evento, options = {}) {
-  if (!sb || !currentUser?.id || !evento) return;
-  try {
-    await sb.rpc(RPC_ACCESS_LOG, {
-      p_evento: evento,
-      p_tela: options.tela ?? viewAtual() ?? null,
-      p_origem: "index",
-      p_detalhes: options.detalhes ?? {},
-      p_client_session_id: getClientSessionId(),
-      p_user_agent: navigator.userAgent || "",
-      p_app_version: configuracao.versao(),
-    });
-  } catch (error) {
-    console.warn("Falha ao registrar auditoria:", error);
-  }
-}
-
-function stopAccessHeartbeat() {
-  if (accessHeartbeatHandle) {
-    clearInterval(accessHeartbeatHandle);
-    accessHeartbeatHandle = null;
-  }
-}
-
-/* "Pessoas online": administrador global e Gestor (o chat está em teste com os dois; 05/10/2026). */
-function canViewOnlinePresence() {
-  return podeVerPessoasOnline(profile);
-}
-
-function onlinePresenceAvatar(person) {
-  if (person.avatarUrl) {
-    return `<img src="${attr(person.avatarUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer">`;
-  }
-  return `<span aria-hidden="true">${esc(person.initials)}</span>`;
-}
-
-function renderOnlinePresence(people, synchronized = true) {
-  const root = $("onlinePresence");
-  const label = $("onlinePresenceLabel");
-  const dot = $("onlinePresenceDot");
-  const list = $("onlinePresenceList");
-  if (!root || !label || !dot || !list) return;
-  root.classList.toggle("hidden", !canViewOnlinePresence());
-  dot.classList.toggle("is-online", synchronized);
-  label.textContent = synchronized
-    ? `${people.length} ${people.length === 1 ? "online" : "online"}`
-    : "Sincronizando";
-  list.innerHTML = people.length
-    ? people
-        .map(
-          (person) => `<div class="online-presence-person">
-            <span class="online-presence-avatar">${onlinePresenceAvatar(person)}<i aria-hidden="true"></i></span>
-            <span><strong>${esc(person.fullName)}</strong><small>${esc(person.profileLabel)}${person.currentView ? ` · ${esc(person.currentView)}` : ""}</small></span>${
-              /* "Mensagem" abre a conversa direta (src/modulos/chat/ escuta o clique). */
-              podeUsarChat(profile) && person.userId !== currentUser?.id
-                ? `<button type="button" class="online-presence-mensagem" data-chat-usuario="${attr(person.userId)}">Mensagem</button>`
-                : ""
-            }
-          </div>`,
-        )
-        .join("")
-    : `<p>${synchronized ? "Ninguém mais com a plataforma aberta agora." : "Sincronizando presença…"}</p>`;
-}
-
-/* Onde a pessoa está agora, em texto para quem lê (página · área). */
-function localAtualNaPresenca() {
-  const secao = secaoAtualDeConfiguracao(document);
-  return (
-    ondeEstaNoMonitora({
-      view: viewAtual(),
-      area: areaAtual(),
-      rotuloDaSecao: SECOES.find((s) => s.id === secao)?.rotulo,
-    }) || null
-  );
-}
-
-let ultimoLocalNaPresenca = null;
-
-async function registrarLocalNaPresenca() {
-  if (!sb || !currentUser?.id || document.visibilityState !== "visible") return;
-  const local = localAtualNaPresenca();
-  const beat = await sb.rpc(RPC_REGISTER_ONLINE_PRESENCE, {
-    p_current_view: local,
-  });
-  if (beat.error) throw beat.error;
-  ultimoLocalNaPresenca = local;
-}
-
-/* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 45 s). */
-function avisarTrocaDeLocalNaPresenca() {
-  if (!onlinePresenceHandle) return;
-  if (localAtualNaPresenca() === ultimoLocalNaPresenca) return;
-  registrarLocalNaPresenca().catch(() => {});
-}
-
-async function syncOnlinePresence() {
-  if (!sb || !currentUser?.id || document.visibilityState !== "visible") return;
-  try {
-    await registrarLocalNaPresenca();
-    // Sem permissão (inclusive quem a perdeu nesta sessão): o indicador some.
-    if (!canViewOnlinePresence()) {
-      $("onlinePresence")?.classList.add("hidden");
-      return;
-    }
-    const result = await sb.rpc(RPC_LIST_ONLINE_PRESENCE);
-    if (result.error) throw result.error;
-    renderOnlinePresence(normalizeOnlinePresenceList(result.data), true);
-  } catch (_) {
-    if (canViewOnlinePresence()) renderOnlinePresence([], false);
-    else $("onlinePresence")?.classList.add("hidden");
-  }
-}
-
-function stopOnlinePresence() {
-  if (onlinePresenceHandle) clearInterval(onlinePresenceHandle);
-  onlinePresenceHandle = null;
-  $("onlinePresence")?.classList.add("hidden");
-  const popover = $("onlinePresencePopover");
-  if (popover) popover.hidden = true;
-}
-
-function startOnlinePresence() {
-  stopOnlinePresence();
-  if (!currentUser?.id) return;
-  void syncOnlinePresence();
-  onlinePresenceHandle = setInterval(syncOnlinePresence, 45_000);
-}
-
-function toggleOnlinePresence() {
-  const popover = $("onlinePresencePopover");
-  const button = $("onlinePresenceBtn");
-  if (!popover || !button) return;
-  popover.hidden = !popover.hidden;
-  button.setAttribute("aria-expanded", popover.hidden ? "false" : "true");
-  if (!popover.hidden) void syncOnlinePresence();
-}
-function startAccessHeartbeat() {
-  stopAccessHeartbeat();
-  if (!currentUser?.id) return;
-  const minutes = Math.max(
-    1,
-    configuracao.inteiro("access_heartbeat_minutos", DEFAULT_ACCESS_HEARTBEAT_MINUTES),
-  );
-  accessHeartbeatHandle = setInterval(
-    () =>
-      trackAccess("heartbeat", {
-        detalhes: { current_view: viewAtual(), page_title: document.title },
-      }),
-    minutes * 60 * 1000,
-  );
-}
-
 /*
   A sessão é do app (src/app/sessao.js). O legado recebe o usuário e o perfil
   por assinatura e liga a carga, a navegação, a presença e a auditoria aos
@@ -307,8 +124,7 @@ function receberSessao() {
 /* A pessoa saiu (ou a sessão acabou): nada dela fica na tela. */
 function limparEstadoDeslogado() {
   carga.esquecer();
-  stopAccessHeartbeat();
-  stopOnlinePresence();
+  presenca.pararTudo();
   paineis.limpar();
   esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
@@ -337,11 +153,12 @@ async function abrirSistema({ origem }) {
   const pronto = await carga.carregarEntrada();
   if (!pronto) return false;
   // Sem esperar: a tela já abriu (a sessão esconde a de acesso ao voltar daqui).
-  void trackAccess(origem === "boot" ? "sessao_restaurada" : "login_google", {
-    tela: origem,
-  });
-  startAccessHeartbeat();
-  startOnlinePresence();
+  void presenca.registrarEvento(
+    origem === "boot" ? "sessao_restaurada" : "login_google",
+    { tela: origem },
+  );
+  presenca.iniciarHeartbeat();
+  presenca.iniciar();
   carga.iniciarRealtime();
   return true;
 }
@@ -351,7 +168,7 @@ function ficarSemAcesso() {
   carga.esquecer();
   void carga.apagarCopia();
   carga.pararRealtime();
-  stopAccessHeartbeat();
+  presenca.pararHeartbeat();
   encerrarEspera();
   $("appScreen").classList.add("hidden");
 }
@@ -371,7 +188,9 @@ async function atualizarPerfilAberto() {
   de candidatos, sai com a pessoa.
 */
 async function antesDeSair() {
-  await trackAccess("logout", { detalhes: { current_view: viewAtual() } });
+  await presenca.registrarEvento("logout", {
+    detalhes: { current_view: viewAtual() },
+  });
   carga.pararRealtime();
   await apagarCacheDePayload();
 }
@@ -673,18 +492,14 @@ document.addEventListener(EVENTO_ESCOLHA_DA_BUSCA, (e) =>
 );
 
 window.addEventListener("agsus:background-suspend", () => {
-  stopAccessHeartbeat();
+  presenca.pararHeartbeat();
   carga.pararRealtime();
 });
 window.addEventListener("agsus:background-resume", () => {
   if (!currentUser?.id) return;
-  startAccessHeartbeat();
-  startOnlinePresence();
+  presenca.iniciarHeartbeat();
+  presenca.iniciar();
   carga.iniciarRealtime();
-});
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && currentUser?.id)
-    void syncOnlinePresence();
 });
 
 window.addEventListener("resize", () => {
@@ -725,7 +540,6 @@ Object.assign(window, {
   toggleBrowserFullscreen,
   toggleDarkMode,
   toggleSidebar,
-  toggleOnlinePresence,
 });
 applyStoredSidebarState();
 applyStoredDisplayModes();
@@ -733,11 +547,8 @@ applyStoredDisplayModes();
 sessaoDoApp.assinar(receberSessao);
 configuracao.acompanharFundoDoAcesso();
 navegacao.acompanharArea();
-navegacao.assinar((evento) => {
-  if (evento.tipo === "abertura" && evento.view !== evento.anterior)
-    void trackAccess("abertura_tela", { tela: evento.view });
-  avisarTrocaDeLocalNaPresenca();
-});
+presenca.acompanhar();
+montarPessoasOnline({ presenca });
 sessaoDoApp.ligarSistema({
   carregarConfiguracao: () => configuracao.carregar({ silent: true }),
   mostrarEsqueleto: () => mostrarEsqueleto(navegacao.telaGuardada()),

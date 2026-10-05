@@ -6,13 +6,8 @@ import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { sessaoDoApp } from "../app/sessao.js";
 
 const THEME_STORAGE_KEY = "agsus_dark_mode_v1";
-const PRESENCE_SYNC_GRACE_MS = 12000;
-const PRESENCE_WATCHDOG_MS = 5000;
 
 let initialized = false;
-let presenceTimer = null;
-let presenceObservedText = "";
-let presenceObservedAt = 0;
 let logoutConfirmationResolver = null;
 let logoutPreviousFocus = null;
 let logoutAction = null;
@@ -54,58 +49,6 @@ export function themeControlState(isDark) {
         title: "Tema claro",
         pressed: "false",
       };
-}
-
-export function presenceStateFromUi(
-  label,
-  { online = true, elapsedMs = 0, graceMs = PRESENCE_SYNC_GRACE_MS } = {},
-) {
-  const normalized = text(label);
-  if (!online) {
-    return {
-      state: "offline",
-      compactLabel: "Offline",
-      detail: "Sem conexão com a internet.",
-    };
-  }
-
-  if (/^\d+\s+online$/i.test(normalized)) {
-    const count = Number.parseInt(normalized, 10) || 0;
-    return {
-      state: "ready",
-      compactLabel: `${count} online`,
-      detail: `${count} ${count === 1 ? "pessoa online" : "pessoas online"}.`,
-    };
-  }
-
-  if (/presença indisponível/i.test(normalized)) {
-    return {
-      state: "error",
-      compactLabel: "Presença indisponível",
-      detail: "Não foi possível atualizar a presença agora.",
-    };
-  }
-
-  if (/sincronizando/i.test(normalized)) {
-    if (elapsedMs >= graceMs) {
-      return {
-        state: "error",
-        compactLabel: "Presença indisponível",
-        detail: "Não foi possível atualizar a presença agora.",
-      };
-    }
-    return {
-      state: "loading",
-      compactLabel: "Sincronizando",
-      detail: "Sincronizando presença.",
-    };
-  }
-
-  return {
-    state: "ready",
-    compactLabel: normalized || "Presença",
-    detail: normalized || "Presença online.",
-  };
 }
 
 function isDarkTheme() {
@@ -303,75 +246,6 @@ function installLogoutFlow() {
   logoutAction = () => sessaoDoApp.sair();
 }
 
-function setPresenceMessage(message) {
-  const list = document.getElementById("onlinePresenceList");
-  if (!list) return;
-  list.replaceChildren();
-  const paragraph = document.createElement("p");
-  paragraph.textContent = message;
-  list.appendChild(paragraph);
-}
-
-function updatePresenceUi() {
-  const root = document.getElementById("onlinePresence");
-  const label = document.getElementById("onlinePresenceLabel");
-  const button = document.getElementById("onlinePresenceBtn");
-  const headingDetail = document.querySelector(
-    ".online-presence-heading small",
-  );
-  if (!root || !label || !button) return;
-
-  if (headingDetail) headingDetail.hidden = true;
-  label.setAttribute("aria-live", "polite");
-
-  const currentText = text(label.textContent);
-  const now = Date.now();
-  if (currentText !== presenceObservedText) {
-    presenceObservedText = currentText;
-    presenceObservedAt = now;
-  }
-
-  const state = presenceStateFromUi(currentText, {
-    online: navigator.onLine !== false,
-    elapsedMs: Math.max(0, now - presenceObservedAt),
-  });
-
-  root.dataset.presenceState = state.state;
-  root.setAttribute("aria-busy", state.state === "loading" ? "true" : "false");
-  button.setAttribute("aria-label", `${state.detail} Ver lista.`);
-  button.title = state.detail;
-
-  if (state.compactLabel !== currentText) {
-    label.textContent = state.compactLabel;
-    presenceObservedText = state.compactLabel;
-    presenceObservedAt = now;
-  }
-
-  if (state.state === "error" || state.state === "offline") {
-    setPresenceMessage(state.detail);
-  }
-}
-
-function startPresenceWatchdog() {
-  if (presenceTimer) window.clearInterval(presenceTimer);
-  updatePresenceUi();
-  presenceTimer = window.setInterval(() => {
-    if (document.visibilityState === "visible") updatePresenceUi();
-  }, PRESENCE_WATCHDOG_MS);
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") updatePresenceUi();
-  });
-  window.addEventListener("offline", updatePresenceUi);
-  window.addEventListener("online", () => {
-    presenceObservedText = "";
-    presenceObservedAt = Date.now();
-    const label = document.getElementById("onlinePresenceLabel");
-    if (label?.textContent === "Offline") label.textContent = "Sincronizando";
-    updatePresenceUi();
-  });
-}
-
 export function initNielsenShellUx() {
   if (initialized) return;
   initialized = true;
@@ -379,5 +253,4 @@ export function initNielsenShellUx() {
   removeLegacyAccountActions();
   installThemeSync();
   installLogoutFlow();
-  startPresenceWatchdog();
 }

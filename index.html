@@ -496,31 +496,8 @@
           <div class="actions">
             <!-- Mensagens (chat, React: src/modulos/chat/) -->
             <div id="chatHost" class="chat-host"></div>
-            <div id="onlinePresence" class="online-presence hidden">
-              <button
-                id="onlinePresenceBtn"
-                class="online-presence-button"
-                type="button"
-                onclick="toggleOnlinePresence()"
-                aria-expanded="false"
-                aria-controls="onlinePresencePopover"
-              >
-                <span id="onlinePresenceDot" class="online-presence-dot"></span>
-                <i class="fa-solid fa-user-group" aria-hidden="true"></i>
-                <span id="onlinePresenceLabel">Sincronizando</span>
-              </button>
-              <div
-                id="onlinePresencePopover"
-                class="online-presence-popover"
-                hidden
-              >
-                <div class="online-presence-heading">
-                  <strong>Pessoas online</strong>
-                  <small>Ativas no MONITORA agora</small>
-                </div>
-                <div id="onlinePresenceList" class="online-presence-list"></div>
-              </div>
-            </div>
+            <!-- Pessoas online (React: src/componentes/pessoas-online/) -->
+            <div id="pessoasOnlineApp" class="pessoas-online-app"></div>
             <details id="topUserMenu" class="top-user-menu">
               <summary
                 class="top-user-button"
