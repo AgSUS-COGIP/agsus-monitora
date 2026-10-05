@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   FAVICON_PADRAO,
@@ -9,7 +10,7 @@ import {
 } from "../src/lib/identidade-da-aba.js";
 
 const html = readFileSync("index.html", "utf8");
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 
 const semComentarios = (fonte) =>
   fonte.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -165,23 +166,26 @@ describe("como o HTML e o app ficam", () => {
     comentários com índices do original desloca tudo — erro que já me custou um
     falso vermelho antes.
   */
-  it("applyConfigToUi não escreve mais document.title", () => {
-    const codigo = semComentarios(app);
+  it("a configuração do app não escreve document.title", () => {
+    const codigo = semComentarios(
+      readFileSync("src/app/configuracao.js", "utf8"),
+    );
     const fn = codigo.slice(
-      codigo.indexOf("function applyConfigToUi"),
-      codigo.indexOf("function normalizeUnitName"),
+      codigo.indexOf("function aplicarNaTela"),
+      codigo.indexOf("const consulta = () =>"),
     );
     expect(fn).not.toContain("document.title");
     expect(fn).toContain("definirSistemaDaAba(");
     expect(fn).toContain("aplicarFaviconDaMarca(");
   });
 
-  it("setPageTitle delega a metade da página", () => {
-    const fn = app.slice(
-      app.indexOf("function setPageTitle"),
-      app.indexOf("function isSidebarLockedViewport"),
+  it("o título da navegação delega a metade da página", () => {
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    const fn = navegacao.slice(
+      navegacao.indexOf("function definirTitulo"),
+      navegacao.indexOf("function subtituloDaArea"),
     );
-    expect(fn).toContain("definirPaginaDaAba(title)");
+    expect(fn).toContain("definirPaginaDaAba(titulo)");
     expect(fn).not.toContain("document.title");
   });
 
@@ -190,8 +194,8 @@ describe("como o HTML e o app ficam", () => {
     o que saiu foi só o uso dela como nome de aba.
   */
   it("appVersion continua em uso onde faz sentido", () => {
-    const codigo = semComentarios(app);
-    expect(codigo).toContain("p_app_version: appVersion()");
-    expect(codigo).toContain('setText("sidebarVersion", appVersion())');
+    const codigo = semComentarios(fonteDoApp());
+    expect(codigo).toContain("p_app_version: configuracao.versao()");
+    expect(codigo).toContain('escrever("sidebarVersion", versao())');
   });
 });

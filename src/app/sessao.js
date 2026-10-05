@@ -3,7 +3,7 @@
 
   Estado assinável (`obter()` / `assinar(ouvinte)`, lido pela tela de entrada
   com `useSyncExternalStore` e pelo legado por assinatura) com tudo o que
-  antes morava no começo do legacy-app.js:
+  antes morava no começo do antigo legacy-app.js:
 
     - o arranque (`iniciar`): eventos do Supabase Auth, retorno do Google com
       `?code=` (PKCE, `exchangeCodeForSession`), `?auth=google` e
@@ -16,9 +16,9 @@
       perfil ativo pede, e um administrador libera);
     - sair, limpar a sessão e a troca de usuário na mesma aba.
 
-  O resto (navegação, carga dos dados, presença, auditoria) ainda é do
-  legado nesta fase: ele se liga com `ligarSistema({...})` e é chamado nos
-  pontos do contrato (docs/arquitetura-react.md, "Sessão ↔ legado").
+  O resto (navegação, carga dos dados, presença, auditoria) é do sistema
+  (src/app/sistema.js): ele se liga com `ligarSistema({...})` e é chamado nos
+  pontos do contrato (docs/arquitetura-react.md, "Sessão ↔ sistema").
 
   Por que a sessão termina (manual, expirada, revogada) continua em
   src/lib/estado-de-saida.js; "a sessão acabou mesmo?", em src/lib/sessao.js.

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it, vi } from "vitest";
 import { criarImagensDaAparencia } from "../src/modulos/configuracoes/imagens.js";
 import {
@@ -6,7 +7,7 @@ import {
   validateAccessBackgroundFile,
 } from "../src/lib/access-background-storage.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 const shellCss = readFileSync("src/styles/platform-shell.css", "utf8");
 
 const semComentarios = (fonte) =>
@@ -116,10 +117,8 @@ describe("exclusão de artes guardadas", () => {
 
 describe("painel externo com um cabeçalho só", () => {
   it("entra em external-panel-mode ao abrir o painel", () => {
-    const fn = app.slice(
-      app.indexOf("function openPanel(code)"),
-      app.indexOf("function openPanel(code)") + 1600,
-    );
+    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
+    const fn = paineis.slice(paineis.indexOf("function mostrar(codigo)"));
     expect(fn).toContain('classList.add("external-panel-mode")');
   });
 
@@ -142,8 +141,10 @@ describe("painel externo com um cabeçalho só", () => {
   });
 
   it("o modo é removido ao sair do painel", () => {
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
     const remocoes = (
-      app.match(/classList\.remove\("external-panel-mode"\)/g) || []
+      (app + navegacao).match(/classList\.remove\("external-panel-mode"\)/g) ||
+      []
     ).length;
     expect(remocoes).toBeGreaterThanOrEqual(2);
   });

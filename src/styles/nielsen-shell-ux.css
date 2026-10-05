@@ -183,10 +183,6 @@
   color: #6b7280;
 }
 
-.online-presence-heading small[hidden] {
-  display: none !important;
-}
-
 .online-presence-list > p {
   margin: 0;
   padding: 16px;

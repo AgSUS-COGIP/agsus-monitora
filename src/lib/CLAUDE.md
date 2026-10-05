@@ -22,7 +22,7 @@ Arquivos que exigem cuidado:
   scripts de auditoria (as coordenadas do mapa vêm só do banco).
 - `fabrica-do-leaflet.js` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
 - `filtros-do-mapa.js` — regra dos filtros da página do mapa: comparação sem acento, opções sem
-  duplicata, poda até estabilizar. O `legacy-app.js` só guarda o estado e delega para cá.
+  duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá.
 - `planilhas.js` — **catálogo de todas as planilhas** (modelo de aprovados, bucket da lista importada,
   link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
 - `contraste.js` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
