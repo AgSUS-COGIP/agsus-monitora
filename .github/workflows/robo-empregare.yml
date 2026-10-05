@@ -7,8 +7,7 @@ name: Robô da Empregare
 # sem filtro, as vagas dos editais ativos em curso.
 #
 # Quando roda:
-#   - de segunda a sexta às 6h30 de Brasília (9h30 UTC; o Brasil não tem horário
-#     de verão), como reserva — antes das cargas das 9h;
+#   - só quando alguém pede (decisão de 05/10/2026: sem agenda automática);
 #   - pelo "Rodar agora" das Configurações › Status das atualizações
 #     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
 #   - pelo botão "Run workflow" desta aba Actions.
@@ -25,8 +24,6 @@ name: Robô da Empregare
 # (os dois últimos são os mesmos das sincronizações das planilhas).
 
 on:
-  schedule:
-    - cron: "30 9 * * 1-5"
   workflow_dispatch:
     inputs:
       modo:
@@ -105,7 +102,7 @@ jobs:
           EDITAIS: ${{ inputs.editais }}
           VAGAS: ${{ inputs.vagas }}
           LIMITE: ${{ inputs.limite || '60' }}
-          DISPARADO_POR: ${{ github.event_name == 'schedule' && 'agenda' || inputs.disparado_por }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
         run: |
           args=(--editais "$EDITAIS" --vagas "$VAGAS" --limite "$LIMITE")
           case "$MODO" in
