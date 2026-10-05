@@ -604,6 +604,7 @@ function Acoes({
   estado,
   aoGerado,
   aoCarregarRegistro,
+  aoAbrirAgenda,
 }) {
   const [lista, setLista] = useState("todas");
   const [fase, setFase] = useState("");
@@ -733,6 +734,17 @@ function Acoes({
             {rotulo}
           </button>
         ))}
+        {tipo === "CONVOCACAO" && aoAbrirAgenda ? (
+          <button
+            type="button"
+            className="btn secondary"
+            data-acao="abrir-agenda"
+            onClick={aoAbrirAgenda}
+          >
+            <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
+            Agenda das entrevistas
+          </button>
+        ) : null}
         {e.podeEditar && ultima && !ultima.publicada ? (
           <button
             type="button"
@@ -773,7 +785,7 @@ function Acoes({
   );
 }
 
-export function Listas({ estado, e, calcular }) {
+export function Listas({ estado, e, calcular, aoAbrirAgenda }) {
   // Até a pessoa escolher, a lista acompanha a fase do edital.
   const [escolhido, setEscolhido] = useState(null);
   const [recorte, setRecorte] = useState(RECORTE_VAZIO);
@@ -851,6 +863,7 @@ export function Listas({ estado, e, calcular }) {
             aoCarregarRegistro={(novo) =>
               setRegistros((r) => ({ ...r, [tipo]: { ...r[tipo], ...novo } }))
             }
+            aoAbrirAgenda={aoAbrirAgenda}
           />
           <Filtros
             resultado={resultado}
