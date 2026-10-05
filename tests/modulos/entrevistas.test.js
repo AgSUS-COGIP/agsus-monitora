@@ -1260,3 +1260,106 @@ describe("carga", () => {
     );
   });
 });
+
+describe("agenda do dia em Conduzir entrevistas", () => {
+  const AGENDA = {
+    edital: { id: "m1", edital: "100/2026" },
+    pode_editar: false,
+    regra: {
+      versao: 1,
+      configuracao: { bancas: 2, nomes_das_bancas: ["Sala A", "Sala B"] },
+    },
+    itens: [
+      {
+        analise_id: "an2",
+        nome: "Candidato 2",
+        vaga: "V1",
+        cargo: "Enfermeiro",
+        data: "2026-10-06",
+        inicio: "09:00",
+        fim: "09:30",
+        banca: 2,
+        origem: "GERADA",
+      },
+      {
+        analise_id: "an1",
+        nome: "Candidato 1",
+        vaga: "V1",
+        cargo: "Enfermeiro",
+        data: "2026-10-06",
+        inicio: "08:00",
+        fim: "08:30",
+        banca: 1,
+        origem: "MANUAL",
+      },
+      {
+        analise_id: "an3",
+        nome: "Candidato 3",
+        vaga: "V1",
+        cargo: "Enfermeiro",
+        data: "2026-10-07",
+        inicio: "08:00",
+        fim: "08:30",
+        banca: 1,
+        origem: "GERADA",
+      },
+    ],
+    bancas: [],
+    historico: [],
+  };
+
+  it("mostra a agenda salva por horário, filtra por dia e banca e abre a ficha do convocado", async () => {
+    const supabase = supabaseDaConducao({
+      respostas: {
+        obter_agenda_entrevista: () => ({ data: AGENDA, error: null }),
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    expect(chamadas(supabase, "obter_agenda_entrevista")[0][1]).toEqual({
+      p_edital: "m1",
+    });
+    const cartao = document.querySelector('[data-passo="agenda"]');
+    const linhas = () =>
+      [...cartao.querySelectorAll("tbody tr[data-candidato]")].map((tr) =>
+        [...tr.querySelectorAll("td")].slice(0, 3).map((td) => td.textContent),
+      );
+    // Hoje (fora da agenda) cai no próximo dia com entrevista ou no último.
+    await escolher(
+      cartao.querySelector("[data-campo='agenda-dia']"),
+      "2026-10-06",
+    );
+    expect(linhas()).toEqual([
+      ["08:00–08:30", "Sala A", "Candidato 1"],
+      ["09:00–09:30", "Sala B", "Candidato 2"],
+    ]);
+    await escolher(cartao.querySelector("[data-campo='agenda-banca']"), "2");
+    expect(linhas()).toEqual([["09:00–09:30", "Sala B", "Candidato 2"]]);
+    await escolher(cartao.querySelector("[data-campo='agenda-banca']"), "");
+    // Só quem já está convocado no sistema abre a ficha.
+    expect(
+      cartao
+        .querySelector("tr[data-candidato='an2']")
+        .classList.contains("entrevistas-linha"),
+    ).toBe(false);
+    await clicar(cartao.querySelector("tr[data-candidato='an1']"));
+    expect(
+      document.getElementById("entrevistasFichaTitulo").textContent,
+    ).toContain("Candidato 1");
+  });
+
+  it("sem agenda salva (ou sem a migration), o cartão não aparece e a condução segue", async () => {
+    const supabase = supabaseDaConducao({
+      respostas: {
+        obter_agenda_entrevista: () => ({
+          data: null,
+          error: { code: "PGRST202", message: "função ausente" },
+        }),
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    expect(document.querySelector('[data-passo="agenda"]')).toBeNull();
+    expect(document.querySelector('[data-passo="ficha"]')).not.toBeNull();
+  });
+});

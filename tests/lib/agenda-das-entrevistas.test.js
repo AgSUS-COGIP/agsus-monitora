@@ -449,3 +449,21 @@ describe("exportação", () => {
     expect(textoDaDuracao(150)).toBe("2 h 30 min");
   });
 });
+
+describe("agenda do dia (Entrevistas)", () => {
+  it("hoje é o dia de Brasília, mesmo de madrugada em UTC", async () => {
+    const { hojeEmBrasilia } =
+      await import("../../src/lib/agenda-das-entrevistas.js");
+    expect(hojeEmBrasilia(new Date("2026-10-06T02:30:00Z"))).toBe("2026-10-05");
+  });
+
+  it("abre em hoje, ou no próximo dia com entrevista, ou no último", async () => {
+    const { diaInicialDaAgenda } =
+      await import("../../src/lib/agenda-das-entrevistas.js");
+    const dias = ["2026-10-08", "2026-10-06", "2026-10-06"];
+    expect(diaInicialDaAgenda(dias, "2026-10-06")).toBe("2026-10-06");
+    expect(diaInicialDaAgenda(dias, "2026-10-07")).toBe("2026-10-08");
+    expect(diaInicialDaAgenda(dias, "2026-10-09")).toBe("2026-10-08");
+    expect(diaInicialDaAgenda([], "2026-10-09")).toBe("");
+  });
+});

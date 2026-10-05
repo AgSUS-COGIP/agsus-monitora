@@ -101,6 +101,26 @@ const somarDias = (data, n) => {
 };
 const diaDaSemanaNumero = (data) => new Date(`${data}T00:00:00Z`).getUTCDay();
 
+/** O dia de hoje no calendário de Brasília ("AAAA-MM-DD"). */
+export function hojeEmBrasilia(agora = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: FUSO_DA_AGENDA,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(agora);
+}
+
+/**
+ * O dia que a agenda do dia mostra primeiro: hoje, se houver entrevista;
+ * senão o próximo dia com entrevista; senão o último.
+ */
+export function diaInicialDaAgenda(dias, hoje) {
+  const ordenados = [...new Set(dias || [])].filter(Boolean).sort();
+  if (!ordenados.length) return "";
+  return ordenados.find((d) => d >= hoje) || ordenados.at(-1);
+}
+
 /** "2026-10-06" → "06/10/2026". */
 export function dataBR(data) {
   if (!dataValida(data)) return "";
