@@ -43,6 +43,8 @@ export function instantaneoDaLista(
     modalidades: l.modalidades,
     situacao: l.situacao,
     ...soParciais(l.parciais),
+    // Nota alterada em recurso (ajuste aprovado): o número do recurso.
+    ...(l.recursos?.length ? { recursos: l.recursos } : {}),
   });
   return {
     schema: VERSAO_DO_RETRATO,
@@ -79,6 +81,7 @@ export function instantaneoDaLista(
         nome: e.nome,
         motivo: e.motivo,
         detalhe: e.detalhe || "",
+        ...(e.recursos?.length ? { recursos: e.recursos } : {}),
         ...((parciais.length || resultado.tipo === "ENTREVISTA") &&
         e.nota !== undefined
           ? { nota: e.nota ?? null, ...soParciais(e.parciais) }

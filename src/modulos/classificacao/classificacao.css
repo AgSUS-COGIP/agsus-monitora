@@ -251,6 +251,10 @@
   width: 100%;
   font-size: 0.85rem;
 }
+/* Nota alterada por ajuste aprovado em recurso. */
+.classificacao-marca-recurso {
+  white-space: nowrap;
+}
 /* A folha da prévia é papel: fica branca também no tema escuro. */
 .classificacao-documento-previa {
   width: 100%;

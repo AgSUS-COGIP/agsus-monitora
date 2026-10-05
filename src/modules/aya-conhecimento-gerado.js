@@ -880,6 +880,24 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "config:acessos",
   },
   {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Nota alterada pelo recurso",
+    perguntas: [
+      "nota alterada pelo recurso",
+      "recurso mudou a nota na classificacao",
+      "ajuste aprovado na classificacao",
+      "ha recursos aprovados depois desta lista",
+      "gere de novo a lista",
+      "lista desatualizada",
+    ],
+    resposta:
+      'No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.',
+    fato: "",
+    fonte:
+      "src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.js; src/modulos/classificacao/listas.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+    abrir: "classificacao",
+  },
+  {
     arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Tela da Lista de aprovados",
     perguntas: [
@@ -3179,7 +3197,7 @@ export const VERBETES_AYA = Object.freeze([
       "nota mudou",
     ],
     resposta:
-      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação marcada, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
+      'No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
     fato: "",
     fonte:
       "src/lib/recursos-dos-candidatos.js; supabase/migrations/20260929120000_recursos.sql",
@@ -3199,5 +3217,59 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "Ajuste da pontuação no recurso",
+    perguntas: [
+      "ajuste da pontuacao",
+      "ajustar a pontuacao do candidato",
+      "mudar a pontuacao no recurso",
+      "mudar a nota no recurso",
+      "em recurso posso mudar a classificacao",
+      "como mudar a classificacao pelo recurso",
+      "alterar a nota do candidato no recurso",
+      "corrigir a nota do candidato",
+    ],
+    resposta:
+      'Sim. No recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.',
+    fato: "No MONITORA, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.",
+    fonte:
+      "src/modulos/recursos/ajuste.jsx; src/lib/classificacao/ajustes.js; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+    abrir: "recursos",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "Aprovar ou cancelar o ajuste da pontuação",
+    perguntas: [
+      "aprovar o ajuste da pontuacao",
+      "quem aprova o ajuste",
+      "ajuste proposto",
+      "ajuste aprovado",
+      "cancelar o ajuste da pontuacao",
+      "previa do ajuste",
+      "reabrir cancela o ajuste",
+    ],
+    resposta:
+      "No MONITORA, o ajuste proposto ainda não vale. Aprova quem aprova a resposta hoje (Parecer jurídico) e só com o recurso deferido, total ou parcialmente: ao aprovar, a prévia é recalculada com os dados de agora e gravada junto, e o ajuste passa a valer na Classificação (o aprovado anterior do mesmo recurso, se houver, fica como versão cancelada). Cancelar pede motivo. Reabrir a decisão, indeferir, devolver para ajuste ou excluir o recurso cancela o ajuste proposto e o aprovado automaticamente, e tudo fica no histórico do recurso.",
+    fato: "",
+    fonte: "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
+    abrir: "recursos",
+  },
+  {
+    arquivo: "regras-dos-recursos.md",
+    titulo: "O recurso mudou a classificação",
+    perguntas: [
+      "o recurso mudou a classificacao",
+      "caixa mudou a classificacao",
+      "classificacao mudou",
+      "marcar que mudou a classificacao",
+    ],
+    resposta:
+      'No MONITORA, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.js",
+    abrir: "recursos",
   },
 ]);
