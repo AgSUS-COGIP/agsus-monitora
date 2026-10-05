@@ -2,8 +2,8 @@
   O tour guiado da Aya ("Me mostra esta tela") e o motor das trilhas.
 
   Escurece a página com um recorte (spotlight) no elemento da vez e mostra um
-  balão curto ao lado dele: contador ("2 de 6"), título, uma ou duas frases e
-  os botões Pular · Voltar · Próximo. O roteiro vem de src/lib/aya-tours.js.
+  balão curto ao lado dele: contador ("Passo 2 de 6"), título, uma ou duas frases e
+  os botões Pular · Anterior · Próximo. O roteiro vem de src/lib/aya-tours.js.
 
   - O passo aponta para um seletor estável (id, data-tour, data-*). Se o
     elemento não existe ou está escondido (sem permissão, tela vazia, aba
@@ -15,6 +15,9 @@
     do recorte); o resto da página não recebe clique enquanto o tour corre.
   - Teclado: Esc sai, ← e → navegam, Tab fica preso no balão. O leitor de
     tela ouve "Passo 2 de 6: título. texto" a cada passo.
+  - O recorte acompanha o elemento: rolagem, redimensionar a janela e um
+    ResizeObserver no elemento da vez (o elemento é achado com
+    querySelector na hora do passo; nada de MutationObserver).
   - Celular (até 600px): balão com a largura da tela, embaixo ou em cima,
     do lado oposto ao elemento. Tema escuro: só tokens (tour.css).
 
@@ -30,7 +33,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { posicaoDoBalao } from "../../../lib/aya-tours.js";
+import { posicaoDoBalao, rotuloDoPasso } from "../../../lib/aya-tours.js";
 
 const FOCAVEIS =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
@@ -242,7 +245,13 @@ export function Tour({
     janela.addEventListener("scroll", atualizar, true);
     janela.addEventListener("resize", atualizar);
     documento.addEventListener("click", atualizar, true);
+    // O elemento mudou de tamanho (filtro aberto, lista carregou): mede de novo.
+    const Observador = janela.ResizeObserver;
+    const observador =
+      typeof Observador === "function" ? new Observador(atualizar) : null;
+    observador?.observe(elemento);
     return () => {
+      observador?.disconnect();
       janela.cancelAnimationFrame?.(quadro);
       janela.removeEventListener("scroll", atualizar, true);
       janela.removeEventListener("resize", atualizar);
@@ -327,7 +336,7 @@ export function Tour({
   if (!atual) return null;
   const passo = passos[atual.indice];
   const ultimo = atual.indice >= total - 1;
-  const contador = `${atual.indice + 1} de ${total}`;
+  const contador = rotuloDoPasso(atual.indice, total);
   const estiloDoBalao =
     posicao && posicao.modo !== "celular"
       ? { top: `${posicao.top}px`, left: `${posicao.left}px` }
@@ -432,7 +441,7 @@ export function Tour({
                 onClick={voltar}
                 disabled={atual.indice === 0}
               >
-                Voltar
+                Anterior
               </button>
               <button
                 ref={refProximo}
@@ -447,7 +456,7 @@ export function Tour({
         </article>
       </section>
       <p className="aya-visualmente-oculto" role="status" aria-live="polite">
-        {`Passo ${contador}: ${passo.titulo}. ${passo.texto}`}
+        {`${contador}: ${passo.titulo}. ${passo.texto}`}
       </p>
     </div>,
     documento.body,

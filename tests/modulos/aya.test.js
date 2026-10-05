@@ -104,7 +104,12 @@ describe("abrir e fechar", () => {
       "Posso explicar o fluxo do parecer jurídico, os prazos e os indicadores desta tela.",
     );
     expect(painel.textContent).toContain("Para começar, digite sua pergunta.");
-    expect($(".aya-sugestao")).toBeNull();
+    // Só o chip do tour da tela; as sugestões de pergunta não aparecem.
+    expect(
+      [...document.querySelectorAll(".aya-sugestao")].map((b) =>
+        b.textContent.trim(),
+      ),
+    ).toEqual(["Me mostra esta tela, item por item"]);
     expect($(".aya-selo-beta--nome").textContent).toContain("Beta");
     expect($(".aya-arara")).toBeNull();
     expect(localStorage.getItem(CHAVE_OCULTA)).toBe("0");

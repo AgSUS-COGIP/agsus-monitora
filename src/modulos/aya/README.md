@@ -9,19 +9,35 @@ aya.jsx     <Aya> e montarAya(): arara arrastável, painel, sugestões, conversa
             "Isso ajudou?", cartão "Abrir chamado", foco preso e Esc
 estado.js   store sem React: view e título (o legado chama definirPaginaDaAya em
             setPageTitle), área atual e seção de Configurações aberta
+contexto.js o que a tela já mostra: dados do mapa e da tabela, e estadoDaTela()
+            (a aba marcada e o número do edital escolhido; nunca nome)
+fontes.js   dados ao vivo das perguntas com número: o estado já carregado das
+            telas ou as RPCs de leitura que elas já usam (guardadas por 1 min)
 aya.css     só tokens; camada 10042 (acima do cabeçalho, abaixo do parabéns)
 tour/
-  tour.jsx      <Tour>: véu com recorte no elemento da vez, balão (Pular/Voltar/Próximo,
-                "2 de 6"), Esc, setas, foco preso, anúncio ao leitor de tela; pula o
-                elemento ausente e, na trilha, troca de tela e espera o elemento
+  tour.jsx      <Tour>: véu com recorte no elemento da vez, balão (Pular/Anterior/Próximo,
+                "Passo 2 de 6"), Esc, setas, foco preso, anúncio ao leitor de tela; pula o
+                elemento ausente e, na trilha, troca de tela e espera o elemento;
+                o recorte acompanha rolagem, redimensionamento e um ResizeObserver
+                no elemento da vez (nada de MutationObserver)
   aprender.jsx  seção "Aprender" (trilhas do perfil e progresso) e a oferta de
                 "Primeiros passos" da primeira entrada (uma vez)
-  progresso.js  passo e conclusão de cada trilha e a oferta, no localStorage (try/catch)
+  progresso.js  passo e conclusão de cada trilha, a oferta e os convites de tour de
+                cada tela (primeira visita), no localStorage (try/catch)
   tour.css      só tokens; camada 10044
 ```
 
-Os roteiros dos tours ("Me mostra esta tela") e das trilhas ficam em `src/lib/aya-tours.js`; os
-seletores `data-tour="…"` das telas existem só para eles.
+Os roteiros dos tours ("Me mostra esta tela", um por tela e por aba principal) e das trilhas
+ficam em `src/lib/aya-tours.js`; os atributos `data-tour="…"` das telas (e a prop `tour` dos
+componentes de `src/ui/`) existem só para eles.
+
+Perguntas com número ("quantas análises pendentes tem o 93/2026?"): o catálogo de intenções e
+entidades é `src/lib/intencoes-da-aya.js`; as contas e a resposta, `src/lib/dados-da-aya.js`
+(permissão conferida antes de buscar; só contagens e datas); o "Abrir" deixa o filtro em
+`src/app/pedido-de-filtro.js` e Recursos, Entrevistas e Seleção aplicam com
+`src/lib/filtro-da-aya.js`. "Não aparece o botão": `src/lib/permissoes-da-aya.js`, pelo perfil.
+"Não ajudou" e "não entendi" guardam a pergunta sem dado pessoal
+(`src/lib/perguntas-sem-resposta.js`) e o administrador global copia a lista pelo painel.
 
 O que a Aya diz em cada página (saudação, sugestões, botões de navegação) fica em
 `src/lib/aya-paginas.js`; o chamado ao suporte (Gmail, com alternativa `mailto:`), em `src/lib/chamado-da-aya.js`. As
