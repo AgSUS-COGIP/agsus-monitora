@@ -27,6 +27,11 @@ const projetosJsx = readFileSync(
   "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx",
   "utf8",
 );
+// A moldura, o topo e a lista comuns aos dois mapas nacionais.
+const painelComum = readFileSync(
+  "src/modulos/mapa-saude-indigena/painel-do-mapa.jsx",
+  "utf8",
+);
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -126,8 +131,10 @@ describe("o container do mapa preenche o card", () => {
 
   it("o mapa de Projetos e os da Saúde Indígena ocupam a largura toda", () => {
     // O de Projetos usa a mesma moldura e o mesmo contêiner do nacional da Saúde Indígena.
-    expect(projetosJsx).toContain('className="mapa-si-mapa"');
-    expect(projetosJsx).toContain('className="mapa-si-moldura"');
+    expect(projetosJsx).toContain("<MolduraDoMapa");
+    expect(nacional).toContain("<MolduraDoMapa");
+    expect(painelComum).toContain('className="mapa-si-mapa"');
+    expect(painelComum).toContain('className="mapa-si-moldura"');
     expect(css).not.toMatch(/.mapa-si-mapa|#mapaDosProjetos/);
     const modulo = cssDoModulo.slice(
       cssDoModulo.indexOf(".mapa-si-mapa {"),
@@ -257,7 +264,13 @@ describe("as cores dos marcadores se separam do mapa", () => {
   chamamento e não um sítio.
 */
 describe("o mapa não inventa coordenadas", () => {
-  const codigo = semComentarios(nacional) + semComentarios(doDsei);
+  // O leque dos mapas nacionais (Saúde Indígena e Projetos) mora no leaflet.js comum.
+  const comum = readFileSync(
+    "src/modulos/mapa-saude-indigena/leaflet.js",
+    "utf8",
+  );
+  const codigo =
+    semComentarios(nacional) + semComentarios(doDsei) + semComentarios(comum);
 
   it("não cria selo numérico para DSEIs que compartilham sede", () => {
     expect(codigo).not.toContain("mapa-cluster--sede");
@@ -272,7 +285,8 @@ describe("o mapa não inventa coordenadas", () => {
       "L.polyline([[grupo.lat, grupo.lon], destino]",
     );
     // Sedes no mesmo pixel (Boa Vista): leque com traço e o ponto real desenhado.
-    const leque = semComentarios(nacional);
+    const leque = semComentarios(comum);
+    expect(semComentarios(nacional)).toContain("criarLeque(L, novo, dsei)");
     expect(leque).toContain("L.polyline([[lat, lon], destino]");
     expect(leque).toContain("L.circleMarker([lat, lon]");
   });

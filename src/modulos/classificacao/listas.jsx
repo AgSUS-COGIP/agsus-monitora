@@ -19,6 +19,7 @@ import {
 import { normalizarRegra } from "../../lib/classificacao/regra.js";
 import { conferirSorteio } from "../../lib/classificacao/sorteio.js";
 import { DocumentoDoSei } from "./documento.jsx";
+import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.jsx";
 import {
   Aviso,
   Campo,
@@ -40,6 +41,8 @@ import {
   avisos no topo. "Gerar" registra a lista (versão da regra, quem, quando,
   hash); "Exportar" sai de uma lista registrada (PDF pela impressão, DOCX,
   XLSX). O empate que espera sorteio ou decisão abre o registro aqui.
+  No resultado final, "Publicar como lista de aprovados" faz dele a lista de
+  aprovados vigente do edital (publicar-aprovados.jsx).
   Nota alterada por ajuste aprovado em recurso: selo "Recurso nº X" na linha
   e a frase na explicação; lista gerada antes de um ajuste aprovado (ou do
   cancelamento de um aprovado): aviso para gerar de novo.
@@ -645,6 +648,17 @@ function Acoes({
   ).modalidades.filter((m) => m.lista_propria);
 
   const [documento, setDocumento] = useState(null);
+  const [publicando, setPublicando] = useState(null);
+  const analises = useMemo(
+    () =>
+      new Map(
+        (dados?.candidatos || []).map((c) => [
+          String(c.analise_id),
+          { vaga: c.vaga, cargo: c.cargo },
+        ]),
+      ),
+    [dados?.candidatos],
+  );
 
   /* A lista registrada (a desta sessão ou a última gerada, lida do banco). */
   async function alvoRegistrado() {
@@ -665,6 +679,10 @@ function Acoes({
   async function abrirDocumento() {
     const alvo = await alvoRegistrado();
     if (alvo) setDocumento(alvo);
+  }
+  function abrirPublicacaoDeAprovados() {
+    const alvo = registro?.id ? registro : geracoes[0];
+    if (alvo) setPublicando(alvo);
   }
   async function gerar() {
     const novo = await estado.gerarLista(resultado);
@@ -786,6 +804,18 @@ function Acoes({
             Marcar como publicada
           </button>
         ) : null}
+        {tipo === "FINAL" && e.podeEditar && ultima ? (
+          <button
+            type="button"
+            className="btn secondary"
+            data-acao="publicar-aprovados"
+            disabled={ultima.pendencias > 0}
+            onClick={abrirPublicacaoDeAprovados}
+          >
+            <i className="fa-solid fa-user-check" aria-hidden="true" /> Publicar
+            como lista de aprovados
+          </button>
+        ) : null}
       </div>
       {ultima ? (
         <p className="status-discreto" data-geracao={ultima.id}>
@@ -804,6 +834,14 @@ function Acoes({
         >
           Há recursos aprovados depois desta lista — gere de novo.
         </Aviso>
+      ) : null}
+      {publicando ? (
+        <ModalDePublicacaoDeAprovados
+          estado={estado}
+          registro={publicando}
+          analises={analises}
+          aoFechar={() => setPublicando(null)}
+        />
       ) : null}
       {documento ? (
         <DocumentoDoSei

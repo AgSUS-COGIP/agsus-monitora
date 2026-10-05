@@ -681,9 +681,10 @@ export const VERBETES_AYA = Object.freeze([
       "quantos candidatos sao convocados",
     ],
     resposta:
-      "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso.",
+      "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Entrevistas › Conduzir entrevistas convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.",
     fato: "",
-    fonte: "src/lib/classificacao/motor.js",
+    fonte:
+      "src/lib/classificacao/motor.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
     abrir: "classificacao",
   },
   {
@@ -898,6 +899,22 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "classificacao",
   },
   {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Publicar como lista de aprovados",
+    perguntas: [
+      "botao publicar como lista de aprovados na classificacao",
+      "resultado final vira lista de aprovados",
+      "classificacao e lista de aprovados",
+      "a classificacao alimenta a lista de aprovados",
+    ],
+    resposta:
+      'No MONITORA, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.',
+    fato: 'No MONITORA, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".',
+    fonte:
+      "src/modulos/classificacao/publicar-aprovados.jsx; src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
     arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Tela da Lista de aprovados",
     perguntas: [
@@ -991,6 +1008,91 @@ export const VERBETES_AYA = Object.freeze([
       "src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20260928235000_anexos_so_admin.sql",
   },
   {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Origem da lista de aprovados",
+    perguntas: [
+      "origem da lista de aprovados",
+      "de onde vem a lista de aprovados",
+      "lista manual planilha",
+      "publicada da classificacao",
+      "lista publicada da classificacao",
+      "o que e lista manual",
+    ],
+    resposta:
+      'No MONITORA, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.',
+    fato: "No MONITORA, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.",
+    fonte:
+      "src/lib/publicacao-de-aprovados.js; src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Publicar a lista de aprovados da Classificação",
+    perguntas: [
+      "publicar lista de aprovados da classificacao",
+      "como publicar a lista de aprovados",
+      "publicar da classificacao",
+      "lista de aprovados pela classificacao",
+    ],
+    resposta:
+      'Na Classificação, abra o edital, vá ao "Resultado final", gere a lista e clique em "Publicar como lista de aprovados" (Editor de Classificação, na área do edital; lista com empate pendente não publica, e só o resultado final mais recente). A confirmação compara com a lista vigente: quantos entram, saem, mudam de posição, quantos têm status ou sub judice preservados e quantos sub judice são mantidos. Publicar cria a nova lista vigente do edital; a anterior fica inativa no histórico, sem apagar nada. Pelo modal "Listas do edital" da Lista de aprovados, "Publicar da Classificação" leva à Classificação no edital.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/publicar-aprovados.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "O que a publicação preserva",
+    perguntas: [
+      "status preservado na publicacao",
+      "contratado continua contratado",
+      "publicar perde status",
+      "sub judice na publicacao",
+      "casamento dos candidatos",
+      "quem nao casou na publicacao",
+      "revisar candidatos da publicacao",
+    ],
+    resposta:
+      'Quem já estava na lista vigente leva para a lista nova o status (Contratado, Desistente…), a matrícula, o processo SEI, o sub judice e os anexos. A pessoa é reconhecida pela análise (lista já publicada da Classificação) ou, nas listas de planilha — que não trazem CPF nem código do candidato —, pelo nome sem acento e sem diferença de maiúsculas no mesmo edital, desempatando pela vaga. Quem tinha nota ou modalidade alterada por decisão judicial continua com a da decisão (a da Classificação vira a original, para desfazer) e é recolocado pela nota; quem foi incluído sub judice e não está no resultado continua na lista como sub judice. Homônimo que não se resolve e quem sai com status ou matrícula aparecem em "Revisar" na confirmação, para dizer quem é na lista nova ou que não está; quem sai continua na lista anterior, com tudo, e fica registrado na publicação. Sub judice segue editável na Lista de aprovados.',
+    fato: "",
+    fonte:
+      "src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Trocar pela planilha uma lista da Classificação",
+    perguntas: [
+      "importar xlsx sobre lista da classificacao",
+      "motivo para trocar pela planilha",
+      "substituir lista publicada da classificacao",
+      "planilha depois da classificacao",
+    ],
+    resposta:
+      "Se a lista vigente foi publicada da Classificação, o administrador de Importação ainda pode trocá-la por um XLSX, mas precisa informar o motivo (de 3 a 500 caracteres), que fica no histórico das publicações junto com quem e quando. Editais sem análise no sistema continuam importando a planilha como antes, sem motivo.",
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Histórico das publicações da lista",
+    perguntas: [
+      "historico das publicacoes da lista de aprovados",
+      "quem publicou a lista de aprovados",
+      "auditoria da lista de aprovados",
+      "versao da regra da lista de aprovados",
+    ],
+    resposta:
+      'Cada lista que entra em vigor num edital fica registrada: publicada da Classificação (quem, quando, a lista de classificação, a versão da regra, o hash, quantos entraram, saíram, mudaram de posição, preservados e sub judice mantidos, os vínculos aplicados e quem ficou para revisão) ou importada por planilha (quem, quando e o motivo, quando trocou uma lista da Classificação). O modal "Listas do edital" mostra as últimas publicações.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql (TH_PUBLICACAO_APROVADO)",
+    abrir: "approved",
+  },
+  {
     arquivo: "regras-da-selecao.md",
     titulo: "Tela de Seleção",
     perguntas: [
@@ -1003,7 +1105,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a tela de selecao",
     ],
     resposta:
-      "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada todo dia no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
+      "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada de hora em hora no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
     fato: "",
     fonte: "src/modulos/selecao/; src/lib/selecao-do-painel.js",
     abrir: "selecao",
@@ -1018,7 +1120,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao da selecao",
     ],
     resposta:
-      "A Seleção é carregada todo dia às 9h de Brasília pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.",
+      "A Seleção é carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.",
     fato: "",
     fonte:
       ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql",
@@ -1672,7 +1774,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a tela de entrevistas",
     ],
     resposta:
-      "Entrevistas tem três visões, escolhidas no topo: Resultados (só consulta), Conduzir entrevistas (Passo 1 Configuração, Passo 2 Convocação e Passo 3 Ficha de notas, por edital) e Roteiros. Tudo é da área atual; trocar de área recomeça filtros e edital aberto. Quem não tem nível Editor vê tudo, sem os botões. Lançar notas, convocar, configurar o edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital.",
+      "Entrevistas tem três visões, escolhidas no topo: Resultados (só consulta), Conduzir entrevistas (Passo 1 Configuração, Passo 2 Convocação — a lista de convocação da Classificação — e Passo 3 Ficha de notas, por edital) e Roteiros. Tudo é da área atual; trocar de área recomeça filtros e edital aberto. Quem não tem nível Editor vê tudo, sem os botões. Lançar notas, convocar, configurar o edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital.",
     fato: "",
     fonte:
       "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
@@ -1737,7 +1839,7 @@ export const VERBETES_AYA = Object.freeze([
       "o que e um roteiro",
     ],
     resposta:
-      'O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação, critérios de desempate, convocação padrão e banca padrão; serve a vários editais. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
+      'O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação, critérios de desempate e banca padrão; serve a vários editais. O roteiro não tem mais convocação padrão: quem é convocado sai da lista de convocação da Classificação, pela regra de classificação do edital. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
     fato: "",
     fonte:
       "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js",
@@ -1772,7 +1874,7 @@ export const VERBETES_AYA = Object.freeze([
       "secretaria passa a limpo",
     ],
     resposta:
-      'Na configuração do edital, escolher o roteiro preenche a regra de convocação e a composição da banca com o padrão dele. "Completar pela composição" acrescenta as linhas que faltam, com o nome vazio; "Sou eu" liga o membro ao seu perfil. Quem sai da banca deixa de avaliar, mas as notas que já deu ficam na ficha, com a marca "saiu da banca". O modo de lançamento pode ser "Secretaria passa a limpo" (padrão) ou "Cada avaliador lança a sua": nesse caso cada avaliador só edita a própria coluna (o administrador global lança por qualquer um). A troca de roteiro fica bloqueada quando já há notas lançadas com outro roteiro.',
+      'Na configuração do edital, escolher o roteiro preenche a composição da banca com o padrão dele. "Completar pela composição" acrescenta as linhas que faltam, com o nome vazio; "Sou eu" liga o membro ao seu perfil. Quem sai da banca deixa de avaliar, mas as notas que já deu ficam na ficha, com a marca "saiu da banca". O modo de lançamento pode ser "Secretaria passa a limpo" (padrão) ou "Cada avaliador lança a sua": nesse caso cada avaliador só edita a própria coluna (o administrador global lança por qualquer um). A troca de roteiro fica bloqueada quando já há notas lançadas com outro roteiro.',
     fato: "",
     fonte:
       "src/lib/conducao-de-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
@@ -1786,14 +1888,54 @@ export const VERBETES_AYA = Object.freeze([
       "convocacao da entrevista",
       "desconvocar",
       "convocar candidatos",
-      "sugerido",
-      "alem da regra",
+      "quem e convocado para a entrevista",
+      "lista de convocacao na entrevista",
+      "conduzir entrevistas nao esta funcionando",
+      "ninguem convocado na entrevista",
     ],
     resposta:
-      'Na convocação aparecem só os candidatos aprovados na análise curricular, da mesma área e edital, na ordem de cada vaga (nota final, depois nome). A regra marca a sugestão: com vaga imediata, até a posição múltiplo × vagas imediatas; sem vaga imediata, até a posição X do cadastro reserva. Uma exceção vale quando o termo dela aparece no nome do cargo, sem diferenciar maiúsculas e acentos. Os de fora aparecem como "Além da regra", e "Voltar à sugestão" refaz a seleção. Convocar exige a configuração salva. Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota.',
+      'Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas, o Passo 2 mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva (Passo 1). Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.',
+    fato: "No MONITORA, a convocação para a entrevista é a lista de convocação da Classificação; Entrevistas não tem ranking, regra nem vagas próprios.",
+    fonte:
+      "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
+    abrir: "entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Convocação sem lista gerada na Classificação",
+    perguntas: [
+      "lista ainda nao gerada na classificacao",
+      "gerar a lista de convocacao",
+      "convocar sem lista",
+      "por que nao consigo convocar",
+      "calculo atual da convocacao",
+      "a regra da classificacao mudou depois desta lista",
+    ],
+    resposta:
+      'Enquanto a Classificação não gerou a lista de convocação do edital, Conduzir entrevistas mostra o cálculo atual (a mesma conta da Classificação, com a regra e as vagas de agora) e o aviso "Lista ainda não gerada na Classificação", sem o botão de convocar: para convocar, gere a lista na Classificação (o botão "Gerar na Classificação" abre a tela já no edital, para quem é Editor de Classificação). Sem acesso à Classificação, a tela só avisa. Se a regra de classificação mudou depois da lista, aparece "A regra da Classificação mudou depois desta lista": gere a lista de novo.',
     fato: "",
     fonte:
-      "src/lib/conducao-de-entrevista.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+      "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/estado-da-conducao.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Vagas imediatas e regra de convocação na entrevista",
+    perguntas: [
+      "vagas imediatas da entrevista",
+      "onde digitar as vagas imediatas",
+      "vagas imediatas por vaga",
+      "regra de convocacao da entrevista onde muda",
+      "multiplo das vagas imediatas",
+      "posicao do cadastro reserva na entrevista",
+      "de onde vem o numero de vagas da entrevista",
+    ],
+    resposta:
+      'As vagas imediatas não se digitam na entrevista. O Passo 1 de Conduzir entrevistas mostra, só para ler, a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/conducao.jsx; src/lib/convocacao-da-entrevista.js; src/lib/classificacao/vagas.js",
+    abrir: "entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",
@@ -1837,7 +1979,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao das entrevistas",
     ],
     resposta:
-      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada todo dia às 9h de Brasília pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
+      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
     fato: "",
     fonte:
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
@@ -2971,6 +3113,22 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx; src/modulos/mapa-de-projetos/lista.jsx; src/lib/visao-geral-da-area.js",
+  },
+  {
+    arquivo: "regras-dos-mapas.md",
+    titulo: "Filtros e enquadramento do mapa de Projetos",
+    perguntas: [
+      "o mapa de projetos segue os filtros",
+      "filtro da visao geral no mapa de projetos",
+      "por que o mapa de projetos mostra o brasil inteiro",
+      "mapa de projetos igual ao da saude indigena",
+      "tamanho do ponto no mapa de projetos",
+    ],
+    resposta:
+      'O mapa de Projetos segue as mesmas regras do mapa da Saúde Indígena. Os filtros e a busca da Visão geral valem para ele: com algum filtro, só ficam os lugares que têm edital no recorte, e cada lugar mostra só esses editais; sem nenhum, a lista diz "Nenhum município no recorte.". Sem filtro, o mapa mostra o Brasil inteiro; com filtro da página ou com um projeto escolhido no campo "Projeto", ele aproxima do único lugar que sobrou ou enquadra todos os que sobraram. "Agrupar por projeto" não muda o enquadramento, e "Brasil" volta ao país inteiro. O tamanho do ponto segue as vagas do lugar com a mesma escala da bolha do DSEI e não muda quando se filtra. Lugares que caem no mesmo ponto abrem em leque, com um traço até a posição real.',
+    fato: "",
+    fonte:
+      "src/modulos/mapa-de-projetos/README.md; src/lib/enquadramento-do-brasil.js; src/lib/visao-geral-da-area.js",
   },
   {
     arquivo: "regras-dos-mapas.md",

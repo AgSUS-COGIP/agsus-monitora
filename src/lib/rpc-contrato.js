@@ -370,7 +370,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: true,
     resumo:
-      "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou.",
+      "Lista as listas vigentes de aprovados vinculadas aos editais, com nome e e-mail de quem importou, a origem (XLSX ou CLASSIFICACAO) e a lista de classificação publicada.",
   },
   listar_candidatos_aprovados_compacto: {
     argumentos: ["p_area", "p_versao"],
@@ -386,9 +386,11 @@ export const CONTRATO_RPC = {
       "p_arquivo_path",
       "p_candidatos",
       "p_substituir",
+      "p_motivo",
     ],
     critica: true,
-    resumo: "Importa ou substitui a lista XLSX de aprovados de um edital.",
+    resumo:
+      "Importa ou substitui a lista XLSX de aprovados de um edital; sobre lista publicada da Classificação, exige p_motivo. Vai para o histórico das publicações.",
   },
   definir_lista_aprovados_ativa: {
     argumentos: ["p_lista_id", "p_ativo"],
@@ -564,19 +566,19 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Condução da entrevista de um edital: configuração, vagas com vagas imediatas, aprovados na análise (posição por vaga), banca e convocados com as notas; pode_editar, admin_global e meu_perfil.",
+      "Condução da entrevista de um edital: configuração (roteiro, banca, lançamento), a lista de convocação vigente da Classificação com o retrato (lista_convocacao), a regra de convocação vigente da Classificação, banca e convocados com as notas; pode_editar, pode_gerar_lista, admin_global e meu_perfil.",
   },
   configurar_entrevista_edital: {
     argumentos: ["p_edital", "p_dados"],
     critica: false,
     resumo:
-      "Grava roteiro, convocação, banca, modo de lançamento, vagas imediatas e membros da banca do edital (23514 se trocar o roteiro com notas). Devolve o payload do edital.",
+      "Grava roteiro, composição da banca, modo de lançamento e membros da banca do edital (23514 se trocar o roteiro com notas); convocação e vagas são as da Classificação. Devolve o payload do edital.",
   },
   convocar_para_entrevista: {
-    argumentos: ["p_edital", "p_analises"],
+    argumentos: ["p_edital", "p_lista", "p_analises"],
     critica: false,
     resumo:
-      "Convoca aprovados da análise do edital para a entrevista (idempotente; 23514 sem configuração). Devolve {convocados, dados}.",
+      "Registra para a ficha de notas convocados da lista de convocação vigente da Classificação (idempotente; 40001 se p_lista não é a vigente; 23514 fora da lista, sem lista ou sem configuração). Devolve {convocados, lista, dados}.",
   },
   desconvocar_da_entrevista: {
     argumentos: ["p_entrevista", "p_motivo"],
@@ -790,6 +792,18 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Marca a lista gerada como publicada (sem empate pendente). Editor.",
+  },
+  obter_publicacao_lista_aprovados: {
+    argumentos: ["p_edital", "p_com_candidatos"],
+    critica: false,
+    resumo:
+      "Lista de aprovados vigente do edital (origem; com p_com_candidatos, os candidatos para a prévia), último resultado final da Classificação, se há análises e o histórico das publicações. Classificação, Aprovados ou Importação.",
+  },
+  publicar_lista_aprovados_da_classificacao: {
+    argumentos: ["p_lista_classificacao", "p_lista_vigente", "p_vinculos"],
+    critica: false,
+    resumo:
+      "Publica o resultado final da Classificação como a lista de aprovados vigente (a anterior fica no histórico), levando status, sub judice e anexos de quem casou (p_vinculos). 40001 se a lista vigente mudou. Classificação editor.",
   },
   obter_lista_classificacao: {
     argumentos: ["p_lista"],

@@ -79,6 +79,8 @@ import {
   somaDasReservas,
 } from "../../lib/configuracao-de-convocacao.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
+import { motivoValido } from "../../lib/publicacao-de-aprovados.js";
+import { irParaLink } from "../chat/ponte.js";
 import {
   anexosPorCandidato,
   arquivoEmBase64,
@@ -128,6 +130,12 @@ const ESTADO_INICIAL = Object.freeze({
       { tipo: "listas", editalId, rotulo }
   */
   modal: null,
+  /*
+    A situação do edital do modal de listas (obter_publicacao_lista_aprovados):
+    a origem da lista vigente, o resultado final da Classificação e o
+    histórico das publicações. { editalId, carregando, dados }.
+  */
+  publicacao: null,
 });
 
 function uuid() {
@@ -516,6 +524,44 @@ export function criarEstadoDaListaDeAprovados({
     if (!estado.carregado || text(areaAtual()) !== areaCarregada)
       await carregar();
     abrir({ tipo: "listas", editalId: String(editalId || ""), rotulo });
+    void carregarPublicacao(editalId);
+  }
+
+  /*
+    De onde vem a lista do edital e se a Classificação já tem o resultado
+    final (migration 20261005160000). Antes da migration (PGRST202) ou sem
+    acesso, o modal segue só com o XLSX.
+  */
+  async function carregarPublicacao(editalId) {
+    const id = String(editalId || "");
+    if (!supabase || !id) return null;
+    publicar({ publicacao: { editalId: id, carregando: true, dados: null } });
+    let dados = null;
+    try {
+      const resposta = await supabase.rpc("obter_publicacao_lista_aprovados", {
+        p_edital: id,
+        p_com_candidatos: false,
+      });
+      if (resposta.error) throw resposta.error;
+      dados = resposta.data || null;
+    } catch (erro) {
+      if (erro?.code !== "PGRST202")
+        console.warn("Origem da lista de aprovados indisponível:", erro);
+    }
+    if (estado.publicacao?.editalId !== id) return null;
+    publicar({ publicacao: { editalId: id, carregando: false, dados } });
+    return dados;
+  }
+
+  /* "Publicar da Classificação": a tela da Classificação, no edital. */
+  function irParaClassificacao(editalId, titulo = "") {
+    fecharModal();
+    const foi = irParaLink({
+      view: "classificacao",
+      edital: { id: String(editalId || ""), titulo },
+    });
+    // Edital sem id de monitoramento válido: a tela, sem o edital escolhido.
+    if (!foi) window.navigate?.("classificacao");
   }
 
   // ── Candidatos ─────────────────────────────────────────────────────────
@@ -835,10 +881,19 @@ export function criarEstadoDaListaDeAprovados({
 
   // ── Listas (XLSX) ──────────────────────────────────────────────────────
 
-  async function importarLista({ editalId, arquivo, ativo }) {
+  async function importarLista({ editalId, arquivo, ativo, motivo = "" }) {
     const atual = listaDoEdital(editalId);
     if (atual && !canReplaceApprovedList(perfil())) {
       toast("Somente admin pode substituir uma lista existente.", "warn");
+      return false;
+    }
+    const daClassificacao =
+      text(atual?.origem).toUpperCase() === "CLASSIFICACAO";
+    if (daClassificacao && !motivoValido(motivo)) {
+      toast(
+        "A lista vigente foi publicada da Classificação: informe o motivo (3 a 500 caracteres) para trocá-la pela planilha.",
+        "warn",
+      );
       return false;
     }
     if (!arquivo) {
@@ -873,6 +928,7 @@ export function criarEstadoDaListaDeAprovados({
         p_arquivo_path: caminho,
         p_candidatos: candidatos,
         p_substituir: Boolean(atual),
+        p_motivo: daClassificacao ? text(motivo) : null,
       });
       if (error) {
         toast(`Erro ao importar lista: ${mensagemDe(error)}`, "error");
@@ -1041,6 +1097,8 @@ export function criarEstadoDaListaDeAprovados({
     abrirSubJudice,
     abrirAlteracaoJudicial,
     abrirListasDoEdital,
+    carregarPublicacao,
+    irParaClassificacao,
     fecharModal,
     salvarStatus,
     abrirAnexo,

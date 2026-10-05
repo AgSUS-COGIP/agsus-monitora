@@ -6,6 +6,7 @@ import {
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.js";
 import { formatNumberBR } from "../../lib/formatters.js";
+import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.js";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import {
   BotaoDeAcao,
@@ -34,6 +35,9 @@ import {
   paginação corta é o custo de DESENHAR — com milhares de candidatos, montar
   todas as linhas a cada escolha num filtro travava o navegador.
 
+  A origem das listas (publicada da Classificação ou manual, por planilha) fica
+  numa linha discreta acima da tabela: a do edital, quando o filtro deixa um só.
+
   Antes da primeira carga, KPIs e linhas são skeleton; se ela falha, o aviso
   com "Tentar novamente" fica no topo da tela e a tabela diz "Sem dados.".
 */
@@ -47,6 +51,7 @@ export function AbaAprovados({
   estado,
   perfil,
   candidatos,
+  listas = [],
   anexos,
   carregado,
   erroAoCarregar,
@@ -63,6 +68,13 @@ export function AbaAprovados({
   const resumo = summarizeApprovedCandidates(candidatos, filtros);
   const carregando = !carregado && !erroAoCarregar;
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
+  const origens = carregado
+    ? resumoDasOrigens(
+        filtros.editalId?.length
+          ? listas.filter((l) => filtros.editalId.includes(String(l.edital_id)))
+          : listas,
+      )
+    : "";
 
   // As linhas novas precisam dos rótulos do modo cartão (menu ≤ 900px).
   useEffect(() => {
@@ -194,6 +206,11 @@ export function AbaAprovados({
         </div>
       </PainelDeFiltros>
 
+      {origens ? (
+        <p className="status-discreto" data-origem-das-listas>
+          {origens}
+        </p>
+      ) : null}
       <section
         className="ui-card ui-tabela approved-page-card"
         aria-label="Candidatos aprovados"

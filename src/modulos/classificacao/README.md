@@ -24,6 +24,9 @@ estado.js          store sem React: editais da área, dados do edital, salvar re
                    SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
 listas.jsx         visão "Listas": KPIs, avisos e pendências, gerar/exportar, filtros, uma
                    tabela por vaga, eliminados, gaveta com a explicação, registro do empate
+publicar-aprovados.jsx  "Publicar como lista de aprovados" (resultado final, editor): o que
+                   muda em relação à lista de aprovados vigente (entram, saem, mudam de
+                   posição, preservados, sub judice mantidos) e revisão de quem não casou
 agenda.jsx         visão "Agenda": regra da agenda das entrevistas (versões), gerar pela
                    regra, avisos (não cabe, sobra), ajuste manual com conflito, XLSX;
                    o botão "Agenda das entrevistas" da convocação abre esta visão
@@ -50,10 +53,23 @@ catálogo). Regras dos editais: `supabase/correcoes/20261002-regras-de-classific
 `supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql` (131 editais lidos dos PDFs
 oficiais, 13 modelos; aplicar depois da migration 20261002170000, rodando antes o ensaio
 `supabase/ensaios/20261002-regras-de-classificacao-todos-os-editais.sql`).
+Lista de aprovados: o resultado FINAL é a fonte da Lista de aprovados. "Publicar como lista de
+aprovados" cria a lista vigente do edital (`TB_LISTA_APROVADO` com `TP_ORIGEM` = `CLASSIFICACAO`),
+levando status, matrícula, sub judice e anexos de quem já estava na lista (o casamento das pessoas,
+o resumo e os candidatos do retrato em `src/lib/publicacao-de-aprovados.js`; o banco confere os
+vínculos e grava `TH_PUBLICACAO_APROVADO`). Banco:
+`supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql` (ensaio e rollback com
+o mesmo nome); a Lista de aprovados mostra a origem e, no modal do edital, oferece publicar daqui.
+Testes: `tests/lib/publicacao-de-aprovados.test.js`,
+`tests/lista-de-aprovados-da-classificacao-migration.test.js`.
 Agenda das entrevistas: motor em `src/lib/agenda-das-entrevistas.js`, banco em
 `supabase/migrations/20261005120000_agenda_das_entrevistas.sql` (ensaio e rollback com o mesmo
 nome); Entrevistas › Conduzir mostra a agenda do dia (`src/modulos/entrevistas/agenda-do-dia.jsx`).
-Explicações para a Aya: `docs/aya/regras-da-classificacao.md` e `docs/aya/regras-das-entrevistas.md`. Testes: `tests/lib/classificacao-*.test.js`,
+A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Entrevistas › Conduzir mostra
+a última gerada e registra para a ficha só quem está nela
+(`supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql`); o retrato guarda, por
+vaga, as vagas, a origem delas e o limite da convocação (`instantaneoDaLista`).
+Explicações para a Aya: `docs/aya/regras-da-classificacao.md`, `docs/aya/regras-da-lista-de-aprovados.md` e `docs/aya/regras-das-entrevistas.md`. Testes: `tests/lib/classificacao-*.test.js`,
 `tests/modulos/classificacao.test.js`, `tests/modulos/agenda-das-entrevistas.test.js`,
 `tests/lib/agenda-das-entrevistas.test.js`, `tests/agenda-das-entrevistas-migration.test.js`,
 `tests/classificacao-migration.test.js`,
