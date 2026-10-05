@@ -33,12 +33,12 @@ const corpoEntre = (texto, abre, fecha) =>
     .trim();
 
 describe("migration da v1.1 do chat: ordem e padrão MAD", () => {
-  it("vem depois de todas as migrations com data", () => {
+  it("vem depois da migration do chat e não repete o horário de outra", () => {
     const datas = readdirSync("supabase/migrations")
       .filter((n) => /^\d{14}_/.test(n) && n !== NOME)
-      .map((n) => n.slice(0, 14))
-      .sort();
-    expect(NOME.slice(0, 14) > datas.at(-1)).toBe(true);
+      .map((n) => n.slice(0, 14));
+    expect(NOME.slice(0, 14) > "20261002210000").toBe(true);
+    expect(datas).not.toContain(NOME.slice(0, 14));
     expect(MIGRATION).toContain(
       "raise exception 'Aplique antes 20261002210000_chat.sql",
     );

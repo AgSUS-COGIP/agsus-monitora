@@ -1,10 +1,10 @@
 /*
   Estado da barra lateral, fora do React.
 
-  O legado continua decidindo o que o perfil vê e qual página está aberta
-  (`buildNav` e `setActiveNav`, em `legacy-app.js`); ele só empurra isso para
-  cá, e os componentes leem com `useSyncExternalStore`. Este arquivo não
-  importa React: o legado pode importá-lo sem puxar o React para o grafo dele.
+  A navegação do app decide o que o perfil vê e qual página está aberta
+  (`montarMenu` e `marcarMenu`, em src/app/navegacao.js); ela só empurra isso
+  para cá, e os componentes leem com `useSyncExternalStore`. Este arquivo não
+  importa React.
 
   Quando o resto do front migrar para React, este estado vira estado do app.
 */

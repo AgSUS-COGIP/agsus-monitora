@@ -1,12 +1,11 @@
 /*
-  Os dados de monitoramento que o legado carrega, para os componentes React.
+  Os dados de monitoramento que o app carrega, para os componentes React.
 
-  `legacy-app.js` continua dono da carga: as linhas de
-  `TB_MONITORAMENTO_INDIGENA` (`loadData`) alimentam o mapa, a tabela da Saúde
-  Indígena e os editais do Núcleo, e o catálogo `TD_UNIDADE` (`loadUnidades`)
-  alimenta o formulário do edital. Ele só empurra o resultado para cá; os
-  componentes leem com `useSyncExternalStore`. Este arquivo não importa React:
-  o legado pode importá-lo sem puxar o React para o grafo dele.
+  A carga é de src/app/carga.js: as linhas de `TB_MONITORAMENTO_INDIGENA`
+  (`carregarLinhas`) alimentam o mapa, a Visão geral e os editais do Núcleo, e
+  o catálogo `TD_UNIDADE` (`carregarUnidades`) alimenta o formulário do
+  edital. Ela só empurra o resultado para cá; os componentes leem com
+  `useSyncExternalStore`. Este arquivo não importa React.
 
   Aqui também mora a ÁREA ATUAL (Saúde Indígena, SEDE ou Projetos): o menu tem
   um grupo por área, com as mesmas páginas em cada um, e Editais, Cronograma e

@@ -1,32 +1,17 @@
-import {
-  avisar,
-  EVENTO_TEMA_ALTERADO,
-} from "../lib/eventos-da-barra-lateral.js";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { sessaoDoApp } from "../app/sessao.js";
 
-const THEME_STORAGE_KEY = "agsus_dark_mode_v1";
-const PRESENCE_SYNC_GRACE_MS = 12000;
-const PRESENCE_WATCHDOG_MS = 5000;
-
 let initialized = false;
-let presenceTimer = null;
-let presenceObservedText = "";
-let presenceObservedAt = 0;
 let logoutConfirmationResolver = null;
 let logoutPreviousFocus = null;
 let logoutAction = null;
 let logoutRunning = false;
 
-function text(value) {
-  return String(value ?? "").trim();
-}
-
 /*
   Tema: o seletor Claro/Escuro mora no rodapé da barra lateral, junto do Sair
   (`src/componentes/barra-lateral/rodape.jsx`). É o único controle de tema — o
   botão que ficava no cabeçalho saiu. Daqui saem o estado e a regra que o
-  rodapé usa; este módulo só mantém o tema em dia e avisa quando ele troca.
+  rodapé usa; o tema em si (aplicar, alternar, outra aba) é de src/app/moldura.js.
 */
 export const OPCOES_DE_TEMA = Object.freeze([
   Object.freeze({ tema: "claro", rotulo: "Claro", icone: "sun" }),
@@ -54,124 +39,6 @@ export function themeControlState(isDark) {
         title: "Tema claro",
         pressed: "false",
       };
-}
-
-export function presenceStateFromUi(
-  label,
-  { online = true, elapsedMs = 0, graceMs = PRESENCE_SYNC_GRACE_MS } = {},
-) {
-  const normalized = text(label);
-  if (!online) {
-    return {
-      state: "offline",
-      compactLabel: "Offline",
-      detail: "Sem conexão com a internet.",
-    };
-  }
-
-  if (/^\d+\s+online$/i.test(normalized)) {
-    const count = Number.parseInt(normalized, 10) || 0;
-    return {
-      state: "ready",
-      compactLabel: `${count} online`,
-      detail: `${count} ${count === 1 ? "pessoa online" : "pessoas online"}.`,
-    };
-  }
-
-  if (/presença indisponível/i.test(normalized)) {
-    return {
-      state: "error",
-      compactLabel: "Presença indisponível",
-      detail: "Não foi possível atualizar a presença agora.",
-    };
-  }
-
-  if (/sincronizando/i.test(normalized)) {
-    if (elapsedMs >= graceMs) {
-      return {
-        state: "error",
-        compactLabel: "Presença indisponível",
-        detail: "Não foi possível atualizar a presença agora.",
-      };
-    }
-    return {
-      state: "loading",
-      compactLabel: "Sincronizando",
-      detail: "Sincronizando presença.",
-    };
-  }
-
-  return {
-    state: "ready",
-    compactLabel: normalized || "Presença",
-    detail: normalized || "Presença online.",
-  };
-}
-
-function isDarkTheme() {
-  return document.documentElement.getAttribute("data-theme") === "dark";
-}
-
-/*
-  Mantém `color-scheme` em dia e avisa a barra lateral (React), que lê o tema
-  de `html[data-theme]`.
-*/
-function syncThemeState() {
-  document.documentElement.style.colorScheme = isDarkTheme() ? "dark" : "light";
-  avisar(EVENTO_TEMA_ALTERADO);
-}
-
-/*
-  `toggleDarkMode` (legado) inverte o tema. Embrulhada aqui, avisa depois de
-  cada troca; o espelho `body.dark-mode` é do próprio `applyDarkMode`. A troca
-  feita em outra aba chega pelo `storage`.
-*/
-function installThemeSync() {
-  const originalToggle = window.toggleDarkMode;
-  if (
-    typeof originalToggle === "function" &&
-    !originalToggle.__nielsenUxWrapped
-  ) {
-    const wrappedToggle = (...args) => {
-      const result = originalToggle(...args);
-      window.setTimeout(syncThemeState, 0);
-      return result;
-    };
-    wrappedToggle.__nielsenUxWrapped = true;
-    wrappedToggle.__original = originalToggle;
-    window.toggleDarkMode = wrappedToggle;
-  }
-
-  window.addEventListener("storage", (event) => {
-    if (event.key && event.key !== THEME_STORAGE_KEY) return;
-    if (event.newValue !== "1" && event.newValue !== "0") return;
-    document.documentElement.setAttribute(
-      "data-theme",
-      event.newValue === "1" ? "dark" : "",
-    );
-    syncThemeState();
-  });
-
-  syncThemeState();
-}
-
-function removeLegacyAccountActions() {
-  const actions = document.querySelector(
-    "#topUserMenu .top-user-popover-actions",
-  );
-  if (!actions) return;
-
-  actions.querySelectorAll("button").forEach((button) => {
-    const handler = button.getAttribute("onclick") || "";
-    if (handler.includes("logout") || handler.includes("toggleDarkMode")) {
-      button.remove();
-    }
-  });
-
-  if (!actions.children.length) actions.remove();
-
-  const summary = document.querySelector("#topUserMenu > summary");
-  summary?.setAttribute("aria-label", "Abrir informações da conta");
 }
 
 function logoutDialogHTML() {
@@ -303,81 +170,9 @@ function installLogoutFlow() {
   logoutAction = () => sessaoDoApp.sair();
 }
 
-function setPresenceMessage(message) {
-  const list = document.getElementById("onlinePresenceList");
-  if (!list) return;
-  list.replaceChildren();
-  const paragraph = document.createElement("p");
-  paragraph.textContent = message;
-  list.appendChild(paragraph);
-}
-
-function updatePresenceUi() {
-  const root = document.getElementById("onlinePresence");
-  const label = document.getElementById("onlinePresenceLabel");
-  const button = document.getElementById("onlinePresenceBtn");
-  const headingDetail = document.querySelector(
-    ".online-presence-heading small",
-  );
-  if (!root || !label || !button) return;
-
-  if (headingDetail) headingDetail.hidden = true;
-  label.setAttribute("aria-live", "polite");
-
-  const currentText = text(label.textContent);
-  const now = Date.now();
-  if (currentText !== presenceObservedText) {
-    presenceObservedText = currentText;
-    presenceObservedAt = now;
-  }
-
-  const state = presenceStateFromUi(currentText, {
-    online: navigator.onLine !== false,
-    elapsedMs: Math.max(0, now - presenceObservedAt),
-  });
-
-  root.dataset.presenceState = state.state;
-  root.setAttribute("aria-busy", state.state === "loading" ? "true" : "false");
-  button.setAttribute("aria-label", `${state.detail} Ver lista.`);
-  button.title = state.detail;
-
-  if (state.compactLabel !== currentText) {
-    label.textContent = state.compactLabel;
-    presenceObservedText = state.compactLabel;
-    presenceObservedAt = now;
-  }
-
-  if (state.state === "error" || state.state === "offline") {
-    setPresenceMessage(state.detail);
-  }
-}
-
-function startPresenceWatchdog() {
-  if (presenceTimer) window.clearInterval(presenceTimer);
-  updatePresenceUi();
-  presenceTimer = window.setInterval(() => {
-    if (document.visibilityState === "visible") updatePresenceUi();
-  }, PRESENCE_WATCHDOG_MS);
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") updatePresenceUi();
-  });
-  window.addEventListener("offline", updatePresenceUi);
-  window.addEventListener("online", () => {
-    presenceObservedText = "";
-    presenceObservedAt = Date.now();
-    const label = document.getElementById("onlinePresenceLabel");
-    if (label?.textContent === "Offline") label.textContent = "Sincronizando";
-    updatePresenceUi();
-  });
-}
-
 export function initNielsenShellUx() {
   if (initialized) return;
   initialized = true;
 
-  removeLegacyAccountActions();
-  installThemeSync();
   installLogoutFlow();
-  startPresenceWatchdog();
 }

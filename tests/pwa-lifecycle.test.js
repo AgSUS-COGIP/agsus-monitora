@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { criarNavegacao } from "../src/app/navegacao.js";
 
 import {
   shouldCheckForUpdate,
@@ -122,17 +123,23 @@ describe("versão nova espera a troca de página", () => {
   });
 
   it("o navigate aplica a versão nova depois da guarda de alterações não salvas", () => {
-    const legado = readFileSync("src/modules/legacy-app.js", "utf8").replace(
-      /\r\n/g,
-      "\n",
-    );
-    const corpo = legado.slice(legado.indexOf("function navigate(view)"));
-    const guarda = corpo.indexOf("estadoDasConfiguracoes.confirmarSaida()");
-    const aplica = corpo.indexOf("aplicarAtualizacaoPendente(");
-    expect(guarda).toBeGreaterThan(-1);
-    expect(aplica).toBeGreaterThan(guarda);
-    expect(aplica).toBeLessThan(
-      corpo.indexOf("rememberView(requestedView)") + 1,
-    );
+    // src/app/navegacao.js: a guarda pergunta primeiro; recusada, nada recarrega.
+    const ordem = [];
+    const navegacao = criarNavegacao({
+      janela: { location: { reload() {} } },
+      confirmarSaida: () => {
+        ordem.push("guarda");
+        return ordem.length > 1;
+      },
+      aplicarAtualizacao: () => {
+        ordem.push("versao");
+        return true;
+      },
+    });
+    navegacao.irPara("nucleo");
+    expect(ordem).toEqual(["guarda"]);
+    navegacao.irPara("nucleo");
+    expect(ordem).toEqual(["guarda", "guarda", "versao"]);
+    expect(navegacao.obter().view).toBe("dashboard");
   });
 });

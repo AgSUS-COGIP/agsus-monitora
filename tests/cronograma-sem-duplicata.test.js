@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.js";
 
 const CRONOGRAMA = [
   "cronograma_automatico",
@@ -46,7 +46,7 @@ function colunasDoSelect(fonte) {
 */
 describe("uma leitura só do monitoramento", () => {
   it("a requisição principal traz as seis colunas de cronograma", () => {
-    const colunas = colunasDoSelect(app);
+    const colunas = COLUNAS_DO_MONITORAMENTO.split(",");
     expect(colunas.length).toBeGreaterThan(30);
     for (const coluna of CRONOGRAMA) {
       expect(colunas, `${coluna} ausente da carga principal`).toContain(coluna);
@@ -54,7 +54,7 @@ describe("uma leitura só do monitoramento", () => {
   });
 
   it("nenhuma coluna usada pela tabela e pelos detalhes falta na carga principal", () => {
-    const colunas = new Set(colunasDoSelect(app));
+    const colunas = new Set(COLUNAS_DO_MONITORAMENTO.split(","));
     for (const usada of [
       ...CRONOGRAMA,
       "status",

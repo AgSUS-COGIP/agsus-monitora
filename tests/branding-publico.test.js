@@ -495,7 +495,7 @@ describe("cor do painel e contraste são atómicos", () => {
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/^\s*\/\/.*$/gm, "");
     for (const ficheiro of [
-      "src/modules/legacy-app.js",
+      "src/app/configuracao.js",
       "src/app/entrada/marca.js",
     ]) {
       const codigo = semComentarios(ficheiro);

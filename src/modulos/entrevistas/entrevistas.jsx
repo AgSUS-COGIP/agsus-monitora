@@ -14,6 +14,7 @@ import {
 } from "../../lib/entrevistas-do-painel.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
+import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
 import { VisaoDeConducao } from "./conducao.jsx";
 import { criarEstadoDaConducao } from "./estado-da-conducao.js";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.js";
@@ -31,9 +32,9 @@ import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.jsx";
 
 /*
   A tela de Entrevistas (view `entrevistas`), um módulo do app: monta direto
-  na `<section id="page-entrevistas">` do index.html, como Recursos. O legado
-  continua dono da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` de legacy-app.js).
+  na `<section id="page-entrevistas">` do index.html, como Recursos. A navegação
+  é dona da classe `.active` da seção e chama `render()` do
+  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
 
   Três visões, no controle segmentado do topo da tela:
   - "Resultados" (a primeira, só leitura): os dados da planilha de
@@ -89,10 +90,10 @@ function textoDoStatus(e) {
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
   if (!e.carregado) return "Carregando dados...";
   if (e.atualizando) return "Atualizando...";
-  const carga = dataHoraBR(e.dados?.ultimaCarga?.em);
-  return carga
-    ? `Carga ${carga}`
-    : `Atualizado em ${dataHoraBR(e.carregadoEm)}`;
+  return (
+    textoDaConferencia({ conferidoEm: e.dados?.ultimaCarga?.em }) ||
+    `Atualizado em ${dataHoraBR(e.carregadoEm)}`
+  );
 }
 
 /*

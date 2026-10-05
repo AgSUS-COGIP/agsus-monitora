@@ -51,9 +51,10 @@ import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.j
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
 import "./modules/monitoramento-operational-transport.js";
-import "./modules/legacy-app.js";
+// O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.js.
+import { ligarSistema } from "./app/sistema.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
-import { instalarCarregamento } from "./modules/carregamento.js";
+import { instalarCarregamento } from "./app/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import {
@@ -91,6 +92,13 @@ import { montarChat } from "./modulos/chat/chat.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
+
+/*
+  O sistema se liga à sessão antes de tudo: tema e barra guardados, as funções
+  em window (monitoraToast, navigate…) que as telas abaixo recebem e os ganchos
+  da entrada.
+*/
+ligarSistema();
 
 /*
   A tela de acesso (React, src/app/entrada/) monta primeiro: o cartão vazio do

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 import {
   CONTRATO_RPC,
@@ -6,7 +7,7 @@ import {
   contratoDe,
 } from "../src/lib/rpc-contrato.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 const acessos = readFileSync("src/modulos/acessos/estado.js", "utf8");
 
 describe("contrato de RPC", () => {

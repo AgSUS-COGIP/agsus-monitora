@@ -3,7 +3,7 @@ import { extname } from "node:path";
 
 const BASE_REF = process.env.QUALITY_BASE_REF || "origin/main";
 const SUPPORTED_EXTENSIONS = new Set([".js", ".jsx", ".mjs", ".css", ".html"]);
-const EXCLUDED = new Set(["index.html", "src/modules/legacy-app.js"]);
+const EXCLUDED = new Set(["index.html"]);
 
 function git(...args) {
   return execFileSync("git", args, { encoding: "utf8" }).trim();

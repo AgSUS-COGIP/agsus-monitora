@@ -244,6 +244,11 @@ export function criarEstadoDasAnalises({
         return false;
       }
 
+      // A hora da última conferência vem à parte e não segura a carga.
+      void consultas.ultimaConferencia?.(area).then((conferidoEm) => {
+        if (meu === pedido) publicar({ conferidoEm });
+      });
+
       const resultado = await consultas.carregarEscopo({
         area,
         escopo,

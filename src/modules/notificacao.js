@@ -7,8 +7,8 @@ import { escapeHtml } from "../lib/sanitize.js";
   negrito. Agora é um cartão claro com um ícone na cor do estado — o mesmo
   padrão dos KPIs: a cor mora no ícone, o texto fica legível em qualquer tipo.
 
-  `toast(mensagem, tipo)` em legacy-app.js continua sendo a porta de entrada
-  (78 chamadas); ela só delega para cá.
+  A porta de entrada é `avisar(mensagem, tipo)` de src/app/avisos.js
+  (`window.monitoraToast`); ela só delega para cá.
 */
 
 export const DURACAO_MS = 4500;
