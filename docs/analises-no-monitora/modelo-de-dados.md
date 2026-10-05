@@ -158,7 +158,6 @@ superior), com textos encurtados e comentários `//` só para leitura:
   "schema": 1,
   "modelo": "SI26-100",
   "edital_rotulo": "Edital 100/2026",
-  "empregare": { "link_candidato": "https://corporate.empregare.com/…/{codigo_vaga}/…/{codigo_candidato}" },
 
   "provisoria": {
     "ordem": ["ART_DESC", "IDADE_60", "DATA_CANDIDATURA"],
@@ -174,8 +173,10 @@ superior), com textos encurtados e comentários `//` só para leitura:
       { "parcial": "ETNICO", "pergunta": "Pergunta 6 -", "tipo": "OPCOES_SOMADAS", "pontos": { "Sou indígena": 8, "Moro em aldeia": 6 }, "teto": 14 }
     ]
   },
-  "lote": { "base": "MULTIPLO_VAGAS", "multiplo": 5, "inclui_cr": true, "fixo": null,
-            "por_modalidade": false, "inclui_empatados": true, "linha_anda": true, "publica_reposicao": false },
+  "lote": { "base": "MULTIPLO_VAGAS", "multiplo": 3,   // sem padrão fixo: a tela sugere, o gestor/coordenador edita
+            "inclui_cr": true, "fixo": null,
+            "por_modalidade": false, "inclui_empatados": true, "linha_anda": true,
+            "publica_reposicao": false },   // personalizável por edital (decidido em 05/10/2026)
   "distribuicao": { "modo": "PEGAR_PROXIMO", "inicial": { "criterio": "PARTES_IGUAIS", "novos": "MENOS_PENDENTES" } },
   "revisao": { "amostra_percentual": 10, "minimo_por_analista": 5, "todas": false, "inaptos_requisito": true,
                "inaptos_nota": false, "divergencia_pontos": 2, "sinais": ["VINCULO_ATIVO"], "entrou_pela_linha": false,
@@ -577,6 +578,7 @@ create table public."TL_ACESSO_FICHA_ANALISE" (
     ('ABRIR_FICHA', 'REVELAR_CPF', 'REVELAR_PARENTE', 'ABRIR_EMPREGARE', 'ABRIR_ANEXO', 'IMPRIMIR'))
 );
 comment on table public."TL_ACESSO_FICHA_ANALISE" is 'Acessos a dado pessoal e a documentos (LGPD); imutável; só coordenação e administrador global leem.';
+-- TP_ACESSO ganha também COPIAR_CODIGO (o "Copiar" do código do candidato para a busca da Empregare).
 
 create table public."TB_ANEXO_EMPREGARE" (
   "CO_ANEXO_EMPREGARE" uuid not null default gen_random_uuid(),
@@ -600,6 +602,22 @@ comment on table public."TB_ANEXO_EMPREGARE" is 'Fase B: documentos do question�
 ## 12. Mudanças em tabelas existentes
 
 ```sql
+-- endereços da Empregare capturados pelo robô (fase F7): dados restritos, nunca em lista, CSV ou log
+alter table public."TB_EMPREGARE_VAGA"
+  add column "DS_URL_CANDIDATURAS" varchar(400),        -- /empresa/vagas/candidaturas/<token-da-vaga>?m=<aba Todos>
+  add column "TP_ORIGEM_URL" varchar(10),               -- ROBO | MANUAL
+  add column "DT_CAPTURA_URL" timestamptz,
+  add constraint "CK_EMPREGAREVAGA_ORIGEMURL" check ("TP_ORIGEM_URL" is null or "TP_ORIGEM_URL" in ('ROBO', 'MANUAL')),
+  add constraint "CK_EMPREGAREVAGA_URL" check ("DS_URL_CANDIDATURAS" is null
+    or "DS_URL_CANDIDATURAS" like 'https://corporate.empregare.com/empresa/vagas/candidaturas/%');
+alter table public."TB_EMPREGARE_CANDIDATO"
+  add column "DS_URL_CURRICULO" varchar(500),           -- /empresa/curriculo/detalhes?tokenCandidato=…&id=…&candidatura=…
+  add column "DT_CAPTURA_URL" timestamptz,
+  add constraint "CK_EMPREGARECAND_URL" check ("DS_URL_CURRICULO" is null
+    or "DS_URL_CURRICULO" like 'https://corporate.empregare.com/empresa/curriculo/detalhes?%');
+-- Os tokens mudam: o robô sobrescreve a cada execução e casa o candidato por data-pessoa-id = CO_CANDIDATO_EMPREGARE.
+-- Uma URL MANUAL da vaga só é trocada quando o robô captura uma nova.
+
 -- origens da Avaliação documental
 insert into public."TB_PLANILHA_ANALISE" ("CO_PLANILHA", "CO_AREA", "NO_PLANILHA", "DS_PLANILHA_ID") values
   ('monitora-saude-indigena', 'saude-indigena', 'MONITORA (Avaliação documental) - Saúde Indígena', null),
@@ -646,11 +664,13 @@ mostrar a mudança na hora.
 | `obter_provisoria(p_edital, p_vaga)` | Leitor+ | contadores, Provisória por ART, lote, primeiros de fora e eliminados com motivo |
 | `obter_fila_avaliacao(p_edital, p_filtros, p_pagina)` | Leitor+ | indicadores e fichas do lote (sem CPF) |
 | `abrir_ficha_por_codigo(p_edital, p_codigo)` | papel no edital | busca por código Empregare |
+| `salvar_url_candidaturas_vaga(p_vaga, p_url)` | gestor ou coordenador do edital da vaga | cadastro manual do endereço de candidaturas (só endereço da Empregare; `TP_ORIGEM_URL = MANUAL`) |
+| `gravar_urls_empregare(p_sync, p_lote jsonb)` | robô (`service_role`) | grava `DS_URL_CANDIDATURAS` por vaga e `DS_URL_CURRICULO` por candidato (casando `data-pessoa-id`), com `DT_CAPTURA_URL` |
 | `pegar_proxima_ficha(p_edital, p_vaga)` | analista (modo `PEGAR_PROXIMO`) | reserva atômica na ordem da Provisória |
 | `distribuir_fichas(p_edital, p_config)` | gestor ou coordenador | distribuição inicial ou redistribuição, com prévia |
 | `atribuir_fichas(p_fichas, p_usuario, p_motivo)` | gestor ou coordenador | atribui ou redistribui |
 | `reservar_ficha(p_ficha)` / `renovar_reserva(p_ficha)` / `liberar_reserva(p_ficha, p_motivo)` | responsável / coordenação | trava de concorrência (15 min) |
-| `obter_ficha(p_ficha)` | papel no edital (Leitor: só concluída) | ficha, blocos com o declarado, títulos, vínculos, regra da versão, sinais, histórico, link da Empregare montado; registra `ABRIR_FICHA` |
+| `obter_ficha(p_ficha)` | papel no edital (Leitor: só concluída) | ficha, blocos com o declarado, títulos, vínculos, regra da versão, sinais, histórico e o link "Abrir na Empregare" (o currículo, se capturado; senão, as candidaturas da vaga, mais o código para copiar); registra `ABRIR_FICHA` |
 | `buscar_aldeia_dsei(p_ficha, p_texto)` | papel no edital | autocompletar da aldeia |
 | `revelar_dado_ficha(p_ficha, p_campo)` / `registrar_acesso_ficha(p_ficha, p_tipo, p_alvo)` | papel na ficha | LGPD |
 | `salvar_ficha(p_ficha, p_versao, p_dados)` | quem tem a reserva | rascunho (blocos, títulos, vínculos, aldeia, estágio, observações); recalcula efeitos, nota, desempates, resultado e parecer; grava os eventos |
@@ -667,7 +687,7 @@ mostrar a mudança na hora.
 
 Funções privadas:
 
-- regra: `FC_VALIDAR_REGRA_ANALISE`, `FC_LINK_EMPREGARE`;
+- regra: `FC_VALIDAR_REGRA_ANALISE`, `FC_LINK_EMPREGARE` (escolhe currículo, vaga ou só o código);
 - Provisória e lote: `FC_NOTA_DECLARADA`, `FC_PRE_CLASSIFICAR_VAGA`, `FC_TAMANHO_LOTE`;
 - pontuação: `FC_EFEITO_DO_BLOCO`, `FC_PONTOS_DOS_TITULOS`, `FC_DIAS_SEM_SOBREPOSICAO`,
   `FC_FAIXA_EM_MESES`;
