@@ -854,10 +854,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
               disabled={!regra || !fonte || a.salvando}
               onClick={pedirGerar}
             >
-              <i
-                className="fa-solid fa-wand-magic-sparkles"
-                aria-hidden="true"
-              />{" "}
+              <i className="fa-solid fa-calendar-check" aria-hidden="true" />{" "}
               {salvos.length || rascunho ? "Gerar de novo" : "Gerar agenda"}
             </button>
             <button
