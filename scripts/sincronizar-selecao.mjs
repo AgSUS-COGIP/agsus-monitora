@@ -7,7 +7,7 @@
   edital, acerta a área, desativa o que saiu). A aba Seleção do MONITORA lê
   com `get_selecao_da_area`, que calcula na hora os convocados (TB_ENTREVISTA)
   e aprovados/contratados (lista de aprovados).
-  Roda todo dia às 9h pelo GitHub Actions (.github/workflows/sincronizar-selecao.yml).
+  Roda de hora em hora (7h–19h) pelo GitHub Actions (.github/workflows/sincronizar-selecao.yml).
 
   Onde está a planilha: `PLANILHAS.auditoriaDaSelecao` em src/lib/planilhas.js.
   Como a aba vira linhas: src/lib/selecao-da-planilha.js.
