@@ -236,6 +236,11 @@ export const CONTRATO_RPC = {
     resumo:
       "Identidade da tela de acesso, antes de autenticar. Só as seis chaves públicas de branding.",
   },
+  obter_ultima_conferencia: {
+    argumentos: ["p_fonte", "p_area"],
+    resumo:
+      "Hora em que a última carga da fonte (analises, selecao, entrevistas) terminou bem, mesmo sem mudanças; só quem pode ler a tela (migration 20261005140000).",
+  },
   usuario_pode_ler_analises: {
     argumentos: [],
     critica: true,
@@ -877,6 +882,19 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "Abre ou cria a conversa do edital (uma por edital) para quem vê o edital pela área e coordenação (42501).",
+  },
+  // ── Chat v1.1 (20261005100000_chat_limpar_e_reacoes.sql) ─────────────────
+  limpar_conversa_chat: {
+    argumentos: ["p_conversa"],
+    critica: false,
+    resumo:
+      "Limpa a conversa só para quem está logado (DT_LIMPEZA): o histórico até agora some para ela; nada é apagado para os outros. 42501 sem acesso.",
+  },
+  alternar_reacao_chat: {
+    argumentos: ["p_mensagem", "p_emoji"],
+    critica: false,
+    resumo:
+      "Põe ou tira a reação rápida (👍 ✅ ❤️ 😂 👀 🙏) de quem está logado na mensagem; devolve a mensagem com as reações. 42501 fora da conversa; 22023 emoji fora da lista ou mensagem apagada.",
   },
   registrar_presenca_monitora: {
     argumentos: ["p_current_view"],

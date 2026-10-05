@@ -1,8 +1,9 @@
 # Regras das Mensagens (chat)
 
 O chat do MONITORA: o ícone Mensagens no cabeçalho e o painel lateral. Fontes:
-`src/modulos/chat/`, `src/lib/chat.js`, `src/lib/access-roles.js` (`podeUsarChat`) e
-`supabase/migrations/20261002210000_chat.sql`.
+`src/modulos/chat/`, `src/lib/chat.js`, `src/lib/emojis-do-chat.js`, `src/lib/access-roles.js`
+(`podeUsarChat`), `supabase/migrations/20261002210000_chat.sql` e
+`supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql`.
 
 ## O que é o chat
 
@@ -36,9 +37,27 @@ O chat do MONITORA: o ícone Mensagens no cabeçalho e o painel lateral. Fontes:
 
 ## Editar e apagar mensagem
 
-**perguntas:** editar mensagem | apagar mensagem | mensagem apagada | corrigir mensagem enviada | excluir mensagem do chat
-**resposta:** Passe o mouse (ou o foco) na sua mensagem para ver Editar e Apagar; só quem escreveu edita ou apaga. A mensagem editada mostra "editada" ao lado da hora. Apagar pede confirmação e deixa no lugar "Mensagem apagada" para todos: o texto some, mas o registro de que houve uma mensagem fica.
+**perguntas:** editar mensagem | apagar mensagem | mensagem apagada | corrigir mensagem enviada | excluir mensagem do chat | copiar texto da mensagem | menu da mensagem | tres pontinhos da mensagem
+**resposta:** Cada mensagem tem o botão "⋯" (três pontinhos) no canto, sempre à vista — também no celular, com um toque. Ele abre as reações rápidas e "Copiar texto"; na sua mensagem, também Editar e Apagar (só quem escreveu edita ou apaga). A mensagem editada mostra "editada" ao lado da hora. Apagar pede confirmação e deixa no lugar "Mensagem apagada" para todos: o texto e as reações somem, mas o registro de que houve uma mensagem fica.
 **fonte:** src/modulos/chat/conversa.jsx; supabase/migrations/20261002210000_chat.sql
+
+## Reações
+
+**perguntas:** reagir a mensagem | reacao no chat | curtir mensagem | joinha na mensagem | quem reagiu | tirar reacao
+**resposta:** No "⋯" da mensagem, a primeira linha tem as reações rápidas: 👍 ✅ ❤️ 😂 👀 🙏. Escolha uma e ela aparece embaixo da mensagem, com a contagem; passe o mouse sobre a reação para ver quem reagiu. Clicar numa reação que já está na mensagem põe a sua (ou tira, se já for sua). As reações chegam na hora para todos da conversa; mensagem apagada não tem reação.
+**fonte:** src/modulos/chat/conversa.jsx; src/lib/chat.js; supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql
+
+## Emojis
+
+**perguntas:** enviar emoji | emoji no chat | carinha no chat | botao de emoji | emojis recentes | procurar emoji
+**resposta:** O botão da carinha, à esquerda de "Compartilhar esta tela", abre os emojis: carinhas, gestos, trabalho (pasta, clipe, calendário, alfinete…), símbolos (✅ ❌ ⚠️…) e celebração. Dá para procurar pelo nome em português, como "joinha", "café" ou "atenção" (Enter escolhe o primeiro). O emoji entra onde está o cursor e o seletor fica aberto para escolher mais; Esc ou um clique fora fecha. Os que você usa aparecem em "Recentes", guardados só neste navegador.
+**fonte:** src/modulos/chat/seletor-de-emoji.jsx; src/lib/emojis-do-chat.js
+
+## Limpar conversa
+
+**perguntas:** limpar conversa | limpar historico do chat | apagar conversa | esconder mensagens antigas | zerar a conversa
+**resposta:** No menu da conversa (os três pontinhos ao lado do nome), "Limpar conversa" esconde para você todas as mensagens até agora, depois de confirmar. Só para você: as outras pessoas continuam vendo tudo e nada é apagado. As mensagens que chegarem depois aparecem normalmente. Não existe apagar a conversa para todos; num grupo, você pode Sair do grupo.
+**fonte:** src/modulos/chat/conversa.jsx; supabase/migrations/20261005100000_chat_limpar_e_reacoes.sql
 
 ## Não lidas e avisos
 
@@ -48,8 +67,8 @@ O chat do MONITORA: o ícone Mensagens no cabeçalho e o painel lateral. Fontes:
 
 ## Tempo real e online
 
-**perguntas:** chat em tempo real | mensagem demora a chegar | digitando no chat | ponto verde no chat | quem esta online no chat | reconectando
-**resposta:** As mensagens chegam na hora, sem recarregar a página, e aparece "está digitando…" quando alguém escreve na conversa aberta. Se a conexão cair, o painel mostra "Reconectando…" e, ao voltar, busca o que chegou; ao voltar para a aba do navegador, a lista também é relida. O ponto verde indica quem esteve com o MONITORA aberto nos últimos 2 minutos.
+**perguntas:** chat em tempo real | mensagem demora a chegar | digitando no chat | ponto verde no chat | quem esta online no chat | reconectando | novas mensagens | botao seta para baixo no chat
+**resposta:** As mensagens chegam na hora, sem recarregar a página, e aparece "está digitando…" quando alguém escreve na conversa aberta. A conversa abre na última mensagem; se você estiver lendo mensagens antigas quando chegar uma nova, aparece o botão "↓ Nova mensagem", que leva ao fim. Se a conexão cair, o painel mostra "Reconectando…" e, ao voltar, busca o que chegou; ao voltar para a aba do navegador, a lista também é relida. O ponto verde indica quem esteve com o MONITORA aberto nos últimos 2 minutos.
 **fonte:** src/modulos/chat/estado.js; supabase/migrations/20261002210000_chat.sql
 
 ## Quem pode usar as Mensagens
