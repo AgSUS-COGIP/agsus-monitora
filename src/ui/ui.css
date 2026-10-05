@@ -1037,7 +1037,11 @@ th[aria-sort="descending"] .ui-ordenar i {
   /* As abas dividem a largura: com rolagem lateral, a última ficava cortada. */
   .ui-abas {
     gap: var(--space-3);
+    /* Só rola para o lado: com overflow-x, o y vira auto, e a aba que desce
+       1px sobre a linha (margin-bottom: -1px) fazia aparecer setas de
+       rolagem vertical (modal Sub judice, 05/10/2026). */
     overflow-x: auto;
+    overflow-y: hidden;
     padding: 0 var(--space-3);
   }
   .ui-aba {
