@@ -764,5 +764,5 @@ export function csvDaConvocacao(grupos, opcoes = {}) {
   const linhas = linhasDoCsvDaConvocacao(grupos, opcoes).map((linha) =>
     linha.map(celula).join(";"),
   );
-  return `﻿${linhas.join("\r\n")}\r\n`;
+  return `\uFEFF${linhas.join("\r\n")}\r\n`;
 }

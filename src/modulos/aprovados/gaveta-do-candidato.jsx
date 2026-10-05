@@ -115,7 +115,7 @@ export function GavetaDoCandidato({ estado, perfil, candidato, convocacao }) {
           </div>
         ) : null}
 
-        <Secao icone="fa-id-card" titulo="Na lista" secao="dados">
+        <Secao icone="fa-user" titulo="Na lista" secao="dados">
           <GradeDeKv rotulo="Dados do candidato na lista">
             <Kv rotulo="Cargo">{candidato.cargo}</Kv>
             <Kv rotulo="Código da vaga">{candidato.codigo_vaga}</Kv>

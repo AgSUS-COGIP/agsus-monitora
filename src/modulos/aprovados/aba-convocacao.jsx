@@ -640,7 +640,7 @@ export function AbaConvocacao({
           disabled={!carregado || !grupos.length}
           onClick={exportarCsv}
         >
-          <i className="fa-solid fa-file-csv" aria-hidden="true" /> Exportar CSV
+          <i className="fa-solid fa-file-excel" aria-hidden="true" /> Exportar CSV
         </button>
       </div>
 

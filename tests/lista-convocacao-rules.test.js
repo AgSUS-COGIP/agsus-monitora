@@ -420,7 +420,7 @@ describe("csvDaConvocacao", () => {
       () => ({ quadro: { ampla: 1 }, modelo: MODELO, proporcionalidade: true }),
     );
     const csv = csvDaConvocacao(grupos);
-    expect(csv.startsWith("﻿Edital;")).toBe(true);
+    expect(csv.startsWith("\uFEFFEdital;")).toBe(true);
     expect(csv).toContain(";'=HYPERLINK(1);");
     expect(csv).toContain(';"BRUNO; LIMA";');
   });
