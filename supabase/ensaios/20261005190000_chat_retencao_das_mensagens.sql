@@ -466,8 +466,7 @@ $$;
 do $$
 begin
   insert into public."TB_GRUPO_ACESSO" ("CO_GRUPO_ACESSO", "NO_GRUPO_ACESSO", "DS_GRUPO_ACESSO", "ST_SISTEMA", "ST_ADMIN_GLOBAL", "NU_ORDEM")
-  values ('ensaio_ret_chat', 'Ensaio retenção (chat)', 'Grupo do ensaio, só com o chat.', false, false, 998),
-         ('ensaio_ret_admin', 'Ensaio retenção (admin)', 'Grupo do ensaio, administrador global.', false, true, 999);
+  values ('ensaio_ret_chat', 'Ensaio retenção (chat)', 'Grupo do ensaio, só com o chat.', false, false, 998);
   insert into public."TA_GRUPO_ACESSO_RECURSO" ("CO_GRUPO_ACESSO", "NO_RECURSO", "TP_NIVEL")
   values ('ensaio_ret_chat', 'chat', 'leitor')
   on conflict ("CO_GRUPO_ACESSO", "NO_RECURSO") do update set "TP_NIVEL" = 'leitor';
@@ -479,7 +478,7 @@ begin
   insert into public."TB_PERFIL_USUARIO" (user_id, email, nome, perfil, ativo) values
     ('00000000-0000-4000-a000-00000000d301', 'ensaio.retencao.a@ensaio.invalid', 'Ensaio Ana', 'ensaio_ret_chat', true),
     ('00000000-0000-4000-a000-00000000d302', 'ensaio.retencao.b@ensaio.invalid', 'Ensaio Bruno', 'ensaio_ret_chat', true),
-    ('00000000-0000-4000-a000-00000000d303', 'ensaio.retencao.d@ensaio.invalid', 'Ensaio Diana', 'ensaio_ret_admin', true);
+    ('00000000-0000-4000-a000-00000000d303', 'ensaio.retencao.d@ensaio.invalid', 'Ensaio Diana', 'admin', true);
   raise notice 'ok E2: Ana e Bruno (chat = leitor) e Diana (administradora global)';
 end;
 $$;
@@ -669,7 +668,8 @@ begin
      or v->'historico'->0->'dias' <> 'null'::jsonb
      or v->'historico'->0->'corte' <> 'null'::jsonb
      or (v->'historico'->0->>'mensagens')::int <> 0
-     or not exists (select 1 from public."TB_MENSAGEM" where "CO_MENSAGEM" = v_m4) then
+     -- A RLS esconde a direta de quem não participa: a contagem vem da própria RPC.
+     or (v->>'mensagens')::int < 1 then
     raise exception 'FALHOU E7: guardar para sempre: %', v - 'idades';
   end if;
 
