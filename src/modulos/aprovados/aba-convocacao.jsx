@@ -486,11 +486,13 @@ export function AbaConvocacao({
   return (
     <div
       id="approvedPanelConvocacao"
+      data-tour="aprovados-painel-convocacao"
       className={classes("approved-tabpanel", !ativa && "hidden")}
       role="tabpanel"
       aria-labelledby="approvedTabConvocacao"
     >
       <GradeDeKpis
+        tour="aprovados-convocacao-kpis"
         className="approved-kpis"
         rotulo="Resumo da lista de convocação"
       >
@@ -545,6 +547,7 @@ export function AbaConvocacao({
       </GradeDeKpis>
 
       <PainelDeFiltros
+        tour="aprovados-convocacao-filtros"
         idDoTitulo="convocacaoFiltrosTitulo"
         className="approved-filters convocacao-filters"
         quantos={quantos}
@@ -581,7 +584,11 @@ export function AbaConvocacao({
         </div>
       </PainelDeFiltros>
 
-      <div className="convocacao-acoes" id="convocacaoAcoes">
+      <div
+        className="convocacao-acoes"
+        id="convocacaoAcoes"
+        data-tour="aprovados-convocacao-acoes"
+      >
         {podeEmitir ? (
           <>
             <span className="convocacao-escolhidos" aria-live="polite">
@@ -593,6 +600,7 @@ export function AbaConvocacao({
               type="button"
               className="btn secondary"
               id="convocacaoEscolherAConvocar"
+              data-tour="aprovados-escolher-a-convocar"
               disabled={!carregado || !resumo.aConvocar}
               onClick={escolherAConvocar}
             >
@@ -613,6 +621,7 @@ export function AbaConvocacao({
               type="button"
               className="btn green"
               id="convocacaoCartaBtn"
+              data-tour="aprovados-carta-de-convocacao"
               disabled={!escolhidosValidos.length}
               onClick={() => estado.abrirCarta(escolhidosValidos)}
             >
@@ -626,6 +635,7 @@ export function AbaConvocacao({
               type="button"
               className="btn secondary"
               id="convocacaoModelosBtn"
+              data-tour="aprovados-modelos-da-carta"
               onClick={estado.abrirModelosDaCarta}
             >
               <i className="fa-solid fa-file-pen" aria-hidden="true" /> Modelos
@@ -637,6 +647,7 @@ export function AbaConvocacao({
           type="button"
           className="btn secondary"
           id="convocacaoCsvBtn"
+          data-tour="aprovados-exportar-csv"
           disabled={!carregado || !grupos.length}
           onClick={exportarCsv}
         >
@@ -648,6 +659,7 @@ export function AbaConvocacao({
       <section
         className="ui-card ui-tabela approved-page-card"
         aria-label="Ordem de convocação"
+        data-tour="aprovados-tabela-convocacao"
       >
         <div className="ui-tabela-rolagem" ref={tabela}>
           <div id="convocacaoRows" className="convocacao-grupos">

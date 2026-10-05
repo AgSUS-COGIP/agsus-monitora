@@ -36,6 +36,7 @@ export function AlcaDeRecolher({ recolhida }) {
       id="globalSidebarToggle"
       type="button"
       className="global-side-toggle side-recolher"
+      data-tour="barra-recolher"
       aria-label={rotulo}
       aria-expanded={!recolhida}
       data-dica={rotulo}
@@ -62,6 +63,7 @@ export function AlcaNoCabecalho({ recolhida }) {
       id="globalSidebarToggle"
       type="button"
       className="global-side-toggle"
+      data-tour="barra-abrir-menu"
       title={rotulo}
       aria-label={rotulo}
       aria-expanded={!recolhida}

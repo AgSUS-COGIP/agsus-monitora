@@ -160,6 +160,7 @@ function FormularioDaRegra({ agenda, a, podeEditar }) {
     <section
       className="ui-card agenda-regra"
       aria-labelledby="agendaRegraTitulo"
+      data-tour="classificacao-agenda-regra"
     >
       <h3 className="ui-titulo" id="agendaRegraTitulo">
         Regra da agenda
@@ -488,6 +489,7 @@ function FormularioDaRegra({ agenda, a, podeEditar }) {
               type="submit"
               className="btn"
               data-acao="salvar-regra-agenda"
+              data-tour="classificacao-agenda-salvar-regra"
               disabled={a.salvando}
             >
               Salvar regra
@@ -496,7 +498,10 @@ function FormularioDaRegra({ agenda, a, podeEditar }) {
         </form>
       )}
       {regraSalva?.versoes?.length > 1 ? (
-        <details className="agenda-versoes">
+        <details
+          className="agenda-versoes"
+          data-tour="classificacao-agenda-versoes"
+        >
           <summary>Versões ({regraSalva.versoes.length})</summary>
           <ul>
             {regraSalva.versoes.map((v) => (
@@ -761,11 +766,16 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
     <section
       className="ui-card agenda-convocados"
       aria-labelledby="agendaConvocadosTitulo"
+      data-tour="classificacao-agenda-convocados"
     >
       <h3 className="ui-titulo" id="agendaConvocadosTitulo">
         Agenda dos convocados
       </h3>
-      <GradeDeKpis rotulo="Indicadores da agenda" className="agenda-kpis">
+      <GradeDeKpis
+        tour="classificacao-agenda-kpis"
+        rotulo="Indicadores da agenda"
+        className="agenda-kpis"
+      >
         <Kpi
           chave="agenda-convocados"
           icone="fa-users"
@@ -851,6 +861,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
               type="button"
               className="btn"
               data-acao="gerar-agenda"
+              data-tour="classificacao-agenda-gerar"
               disabled={!regra || !fonte || a.salvando}
               onClick={pedirGerar}
             >
@@ -861,6 +872,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
               type="button"
               className="btn"
               data-acao="salvar-agenda"
+              data-tour="classificacao-agenda-salvar"
               disabled={!rascunho || conflitos.length > 0 || a.salvando}
               onClick={salvar}
             >
@@ -882,6 +894,7 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
           type="button"
           className="btn secondary"
           data-exportar="xlsx-agenda"
+          data-tour="classificacao-agenda-xlsx"
           disabled={!itens.some((i) => i.data)}
           onClick={() => agenda.exportarXlsx(itens)}
         >
@@ -894,7 +907,10 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
 
       {itens.length ? (
         <div className="ui-tabela-rolagem">
-          <table className="agenda-tabela">
+          <table
+            className="agenda-tabela"
+            data-tour="classificacao-agenda-tabela"
+          >
             <thead>
               <tr>
                 <th scope="col">Hora</th>
@@ -969,7 +985,10 @@ function AgendaDosConvocados({ estado, agenda, a, e, calcular, podeEditar }) {
       ) : null}
 
       {a.dados?.historico?.length ? (
-        <details className="agenda-historico">
+        <details
+          className="agenda-historico"
+          data-tour="classificacao-agenda-historico"
+        >
           <summary>Gravações ({a.dados.historico.length})</summary>
           <ul>
             {a.dados.historico.map((h) => (

@@ -451,6 +451,7 @@ function CampoDeEscrita({ estado, e }) {
   return (
     <form
       className="chat-escrita"
+      data-tour="chat-escrita"
       onSubmit={(ev) => {
         ev.preventDefault();
         void enviar();

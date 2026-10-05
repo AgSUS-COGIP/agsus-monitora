@@ -210,6 +210,7 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
           className="carta-campos"
           role="group"
           aria-label="Inserir campo no texto"
+          data-tour="aprovados-modelos-campos"
         >
           {CAMPOS_DA_CARTA.map((campo) => (
             <button
@@ -300,6 +301,7 @@ function Editor({ estado, modelo, listas, exemplo, aoVoltar }) {
             acao="salvar-modelo-carta"
             className="btn green"
             id="cartaModeloSalvar"
+            data-tour="aprovados-modelos-salvar"
             disabled={Boolean(erros.length)}
             onClick={() => void salvar()}
           >
@@ -376,6 +378,7 @@ export function ModelosDaCarta({ estado, listas, candidatos }) {
                 type="button"
                 className="btn green"
                 id="cartaNovoModelo"
+                data-tour="aprovados-modelos-novo"
                 data-foco-inicial
                 onClick={() => setEditando("novo")}
               >
@@ -385,7 +388,11 @@ export function ModelosDaCarta({ estado, listas, candidatos }) {
             </div>
           ) : null}
           {carta.modelos.length ? (
-            <ul className="carta-lista-de-modelos" id="cartaListaDeModelos">
+            <ul
+              className="carta-lista-de-modelos"
+              id="cartaListaDeModelos"
+              data-tour="aprovados-modelos-lista"
+            >
               {carta.modelos.map((modelo) => (
                 <li
                   key={modelo.id}

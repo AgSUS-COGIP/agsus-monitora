@@ -137,6 +137,9 @@ function RodarAgora({ robo, linha, atual, estado }) {
       <button
         type="button"
         className="btn secondary saude-botao saude-rodar"
+        data-tour={
+          robo.id === "empregare" ? "cargas-rodar-empregare" : undefined
+        }
         disabled={botao.desabilitado}
         title={botao.aviso || undefined}
         onClick={() => void estado.rodarAgora(robo.id)}
@@ -165,6 +168,7 @@ function Linha({ linha, atual, estado }) {
     <li
       className={classes("saude-item", `saude-item--${linha.situacao}`)}
       data-carga={linha.id}
+      data-tour={linha.id === "empregare" ? "cargas-empregare" : undefined}
     >
       <div className="saude-item__topo">
         <div className="saude-item__nome">
@@ -240,6 +244,7 @@ function Resumo({ atencao, geradoEm, carregando, aoAtualizar }) {
       )}
       role="status"
       aria-live="polite"
+      data-tour="cargas-resumo"
     >
       <Icone nome={tudoBem ? "circle-check" : "triangle-alert"} tamanho={20} />
       <div className="saude-resumo__texto">
@@ -264,6 +269,7 @@ function Resumo({ atencao, geradoEm, carregando, aoAtualizar }) {
         <button
           type="button"
           className="btn secondary"
+          data-tour="cargas-atualizar"
           disabled={carregando}
           onClick={aoAtualizar}
         >
@@ -329,7 +335,7 @@ export function SaudeDasCargas({ estado }) {
         carregando={atual.status === "loading"}
         aoAtualizar={() => void estado.carregar()}
       />
-      <ul className="saude-lista">
+      <ul className="saude-lista" data-tour="cargas-lista">
         {linhas.map((linha) => (
           <Linha key={linha.id} linha={linha} atual={atual} estado={estado} />
         ))}

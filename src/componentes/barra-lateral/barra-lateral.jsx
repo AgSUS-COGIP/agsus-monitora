@@ -24,7 +24,7 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.js";
 
 function Marca() {
   return (
-    <div className="side-brand">
+    <div className="side-brand" data-tour="barra-marca">
       <span className="side-logo-wrap">
         {/*
           O `src` é de `sidebar-branding.js`, dono único da logo (com a volta

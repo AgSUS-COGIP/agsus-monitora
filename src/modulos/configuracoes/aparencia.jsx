@@ -267,7 +267,10 @@ export function SecaoAparencia({ estado, imagens }) {
     />
   );
   return (
-    <div className="config-secao-react config-secao-react--com-previa">
+    <div
+      className="config-secao-react config-secao-react--com-previa"
+      data-tour="config-aparencia"
+    >
       <div className="config-secao-react__campos">
         <Grupo
           secao="aparencia"

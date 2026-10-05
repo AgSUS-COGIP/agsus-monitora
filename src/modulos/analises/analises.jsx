@@ -294,6 +294,7 @@ function TelaDaArea({ estado, e }) {
   return (
     <div className="ui-tela analises-tela">
       <TopoDoPainel
+        tour="analises-topo"
         status={textoDoStatus(e)}
         aoAtualizar={() => void estado.atualizar()}
         atualizarDesativado={

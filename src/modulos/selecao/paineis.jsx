@@ -68,14 +68,22 @@ export function Filtros({
   const ativos = filtrosAtivos(filtros, area);
   return (
     <PainelDeFiltros
+      tour="selecao-filtros"
       idDoTitulo="selecaoFiltrosTitulo"
       className="selecao-filtros"
       quantos={ativos.length}
       aoLimpar={aoLimpar}
     >
-      <div className="ui-grade-de-campos selecao-filtros-grade">
+      <div
+        className="ui-grade-de-campos selecao-filtros-grade"
+        data-tour="selecao-filtros-campos"
+      >
         {CAMPOS_DO_FILTRO.map(({ campo, rotulo, todos }) => (
-          <div className="ui-campo" key={campo}>
+          <div
+            className="ui-campo"
+            key={campo}
+            data-tour={`selecao-filtro-${campo}`}
+          >
             <label htmlFor={`filtro-${campo}`}>
               {campo === "unidades" ? rotuloDaUnidade(area) : rotulo}
             </label>
@@ -123,7 +131,11 @@ export function Indicadores({ indicadores: k, carregado }) {
   const n = formatarQuantidade;
   const carregando = !carregado;
   return (
-    <GradeDeKpis className="selecao-kpis" rotulo="Indicadores do recorte">
+    <GradeDeKpis
+      tour="selecao-kpis"
+      className="selecao-kpis"
+      rotulo="Indicadores do recorte"
+    >
       <Kpi
         icone="fa-users"
         chave="inscritos"
@@ -532,6 +544,7 @@ export function Observacoes({ observacoes }) {
     <section
       className="ui-card selecao-observacoes"
       aria-labelledby="selecaoObservacoesTitulo"
+      data-tour="selecao-observacoes"
     >
       <h2 className="ui-titulo" id="selecaoObservacoesTitulo">
         Alertas identificados no recorte

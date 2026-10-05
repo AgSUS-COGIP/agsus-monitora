@@ -137,6 +137,7 @@ export function Filtros({ e, estado, textos }) {
     (e.atalho ? 1 : 0);
   return (
     <PainelDeFiltros
+      tour="visao-geral-filtros"
       idDoTitulo="visaoGeralFiltrosTitulo"
       className="visao-geral-filtros"
       quantos={quantos}
@@ -146,7 +147,10 @@ export function Filtros({ e, estado, textos }) {
       rotuloMostrar={textos.mostrarFiltros}
       rotuloOcultar={textos.ocultarFiltros}
     >
-      <div className="ui-grade-de-campos visao-geral-filtros-grade">
+      <div
+        className="ui-grade-de-campos visao-geral-filtros-grade"
+        data-tour="visao-geral-campos-do-filtro"
+      >
         <CampoDoAno e={e} estado={estado} />
         {CAMPOS_DO_FILTRO.filter((c) => !c.mais).map((c) => (
           <CampoDoFiltro key={c.campo} {...c} e={e} estado={estado} />
@@ -204,7 +208,11 @@ export function Filtros({ e, estado, textos }) {
 
 export function Indicadores({ e, estado, textos }) {
   return (
-    <GradeDeKpis className="visao-geral-kpis" rotulo={textos.indicadores}>
+    <GradeDeKpis
+      tour="visao-geral-kpis"
+      className="visao-geral-kpis"
+      rotulo={textos.indicadores}
+    >
       {INDICADORES.map(([chave, , icone, tom]) => {
         const critico = chave === "kpi_criticos_label";
         return (
@@ -258,7 +266,10 @@ export function ProcessosPorProjeto({ e, estado }) {
       titulo="Processos por projeto"
       className="visao-geral-projetos"
     >
-      <div className="visao-geral-itens visao-geral-itens-grade">
+      <div
+        className="visao-geral-itens visao-geral-itens-grade"
+        data-tour="visao-geral-processos-por-projeto"
+      >
         {projetos.map(({ projeto, processos, abertos, vagas, contratadas }) => (
           <button
             key={projeto}

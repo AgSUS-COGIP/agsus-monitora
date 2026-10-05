@@ -104,11 +104,13 @@ export function AbaAprovados({
   return (
     <div
       id="approvedPanelAprovados"
+      data-tour="aprovados-painel-aprovados"
       className={classes("approved-tabpanel", !ativa && "hidden")}
       role="tabpanel"
       aria-labelledby="approvedTabAprovados"
     >
       <GradeDeKpis
+        tour="aprovados-kpis"
         className="approved-kpis"
         rotulo="Resumo da lista de aprovados"
       >
@@ -163,6 +165,7 @@ export function AbaAprovados({
       </GradeDeKpis>
 
       <PainelDeFiltros
+        tour="aprovados-filtros"
         idDoTitulo="approvedFiltrosTitulo"
         className="approved-filters"
         quantos={quantos}
@@ -209,13 +212,18 @@ export function AbaAprovados({
       </PainelDeFiltros>
 
       {origens ? (
-        <p className="status-discreto" data-origem-das-listas>
+        <p
+          className="status-discreto"
+          data-origem-das-listas
+          data-tour="aprovados-origem-das-listas"
+        >
           {origens}
         </p>
       ) : null}
       <section
         className="ui-card ui-tabela approved-page-card"
         aria-label="Candidatos aprovados"
+        data-tour="aprovados-tabela"
       >
         <div className="ui-tabela-rolagem" ref={tabela}>
           <table className="approved-table">

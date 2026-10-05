@@ -121,7 +121,11 @@ function ConvocacaoDaClassificacao({ dados, grupos }) {
   const texto = textoDaRegraDaClassificacao(regra?.convocacao);
   const vagas = grupos.filter((g) => g.candidatos.length || g.total !== null);
   return (
-    <div className="entrevistas-bloco" data-bloco="convocacao-da-classificacao">
+    <div
+      className="entrevistas-bloco"
+      data-bloco="convocacao-da-classificacao"
+      data-tour="entrevistas-conduzir-vagas"
+    >
       <h4 className="entrevistas-subtitulo">Regra de convocação e vagas</h4>
       <div className="entrevistas-em-linha">
         <span>
@@ -466,6 +470,7 @@ function PassoDeConfiguracao({ dados, grupos, roteiros, salvando, aoSalvar }) {
     <section
       className="ui-card entrevistas-passo"
       data-passo="configuracao"
+      data-tour="entrevistas-conduzir-configuracao"
       aria-labelledby="entrevistasPasso1"
     >
       <div className="entrevistas-passo-topo">
@@ -499,6 +504,7 @@ function PassoDeConfiguracao({ dados, grupos, roteiros, salvando, aoSalvar }) {
               <button
                 type="button"
                 className="btn secondary"
+                data-tour="entrevistas-conduzir-editar-configuracao"
                 onClick={() => setEditando(true)}
               >
                 <i className="fa-solid fa-pen" aria-hidden="true" /> Editar
@@ -622,6 +628,7 @@ function PassoDeConvocacao({
     <section
       className="ui-card entrevistas-passo"
       data-passo="convocacao"
+      data-tour="entrevistas-conduzir-convocacao"
       data-fonte={fonte.tipo}
       aria-labelledby="entrevistasPasso2"
     >
@@ -801,6 +808,7 @@ function PassoDeConvocacao({
             type="button"
             className="btn"
             id="entrevistasConvocar"
+            data-tour="entrevistas-conduzir-convocar"
             disabled={!selecao.size || salvando}
             onClick={() => void aoConvocar([...selecao])}
           >
@@ -845,6 +853,7 @@ function PassoDaFicha({ dados, aoAbrir }) {
     <section
       className="ui-card entrevistas-passo"
       data-passo="ficha"
+      data-tour="entrevistas-conduzir-ficha"
       aria-labelledby="entrevistasPasso3"
     >
       <div className="entrevistas-passo-topo">
@@ -997,7 +1006,11 @@ function LiberacaoDoEdital({ conducao, item, ocupado, doPainel }) {
   const liberado = item.visivelPor === "liberado" && item.liberadoAte;
   const motivoValido = motivo.trim().length >= 3;
   return (
-    <div className="entrevistas-liberacao" id="entrevistasLiberacao">
+    <div
+      className="entrevistas-liberacao"
+      id="entrevistasLiberacao"
+      data-tour="entrevistas-conduzir-liberacao"
+    >
       <p className="entrevistas-liberacao-texto">
         <strong>Fora da janela</strong> — {textoDaJanela(item)}.{" "}
         {liberado
@@ -1083,6 +1096,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
       <section
         className="ui-card entrevistas-passo"
         aria-labelledby="entrevistasEditalTitulo"
+        data-tour="entrevistas-conduzir-edital"
       >
         <div className="entrevistas-passo-topo">
           <div>
@@ -1095,6 +1109,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
           <Campo rotulo="Edital da área" largo>
             <select
               id="entrevistasEdital"
+              data-tour="entrevistas-conduzir-seletor-edital"
               value={e.editalId}
               disabled={editais.carregando}
               onChange={(ev) => {

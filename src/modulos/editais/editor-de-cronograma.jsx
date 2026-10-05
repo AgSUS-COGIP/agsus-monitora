@@ -385,10 +385,17 @@ export function EditorDeCronograma({
   }
 
   return (
-    <section id="cronogramaEditor" className="cronograma-editor ui-campo-largo">
+    <section
+      id="cronogramaEditor"
+      className="cronograma-editor ui-campo-largo"
+      data-tour="editais-cronograma"
+    >
       <div className="cronograma-heading">
         <h4>Cronograma do edital</h4>
-        <label className="cronograma-auto-toggle">
+        <label
+          className="cronograma-auto-toggle"
+          data-tour="editais-cronograma-automatico"
+        >
           <input
             id="mCronogramaAutomatico"
             type="checkbox"
@@ -434,6 +441,7 @@ export function EditorDeCronograma({
         </button>
         <button
           id="cronogramaExample"
+          data-tour="editais-cronograma-modelo-padrao"
           type="button"
           className="btn secondary"
           title="Criar as atividades padrão e preencher as datas em lote"

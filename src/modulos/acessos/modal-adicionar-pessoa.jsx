@@ -122,7 +122,12 @@ export function ModalAdicionarPessoa({ estado }) {
         titulo="Adicionar pessoa"
         aoFechar={estado.fecharAdicionar}
       />
-      <form className="acessos-modal-corpo" onSubmit={salvar} noValidate>
+      <form
+        className="acessos-modal-corpo"
+        data-tour="acessos-adicionar-formulario"
+        onSubmit={salvar}
+        noValidate
+      >
         <Campo rotulo="E-mail institucional" erro={erro("email")}>
           <input
             id="acessosAdicionarEmail"
@@ -213,6 +218,7 @@ export function ModalAdicionarPessoa({ estado }) {
             estado={estado}
             acao="adicionar"
             type="submit"
+            data-tour="acessos-adicionar-confirmar"
             className="btn primary"
           >
             Adicionar pessoa

@@ -290,7 +290,7 @@ export function SecaoDaResposta({
       titulo="Resposta ao candidato"
       secao="resposta"
     >
-      <div className="recursos-resposta">
+      <div className="recursos-resposta" data-tour="recursos-resposta">
         {resposta ? (
           <div className="ui-kv-grade">
             <Kv rotulo="Estado">

@@ -54,7 +54,11 @@ function MenuDeColunas({ colunas, aoAlternar, textos }) {
   }, [aberto]);
 
   return (
-    <div className="visao-geral-colunas" ref={raiz}>
+    <div
+      className="visao-geral-colunas"
+      ref={raiz}
+      data-tour="visao-geral-colunas"
+    >
       <button
         type="button"
         className="btn secondary small"
@@ -262,7 +266,11 @@ export function TabelaDeProcessos({ e, estado, textos, aoAbrir, agora }) {
   const total = e.linhasDaArea.length;
 
   return (
-    <div className="visao-geral-tabela-caixa" ref={caixa}>
+    <div
+      className="visao-geral-tabela-caixa"
+      ref={caixa}
+      data-tour="visao-geral-tabela"
+    >
       <TabelaInfinita
         idDoTitulo="visaoGeralTabelaTitulo"
         titulo={textos.tabela}

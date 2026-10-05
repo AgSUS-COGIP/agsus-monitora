@@ -36,7 +36,10 @@ function Conteudo({ dados, agora }) {
 
   return (
     <>
-      <div className="nucleo-timeline-summary">
+      <div
+        className="nucleo-timeline-summary"
+        data-tour="editais-linha-do-tempo-resumo"
+      >
         <div>
           <span>Status</span>
           <strong>{atual.status || "Cronograma pendente"}</strong>
@@ -69,7 +72,10 @@ function Conteudo({ dados, agora }) {
           </div>
         </div>
       ) : null}
-      <section className="nucleo-timeline-section">
+      <section
+        className="nucleo-timeline-section"
+        data-tour="editais-linha-do-tempo-etapas"
+      >
         <div className="nucleo-timeline-section-title">
           <span>Linha do tempo</span>
           <strong>{etapas.length} etapa(s)</strong>
@@ -119,7 +125,10 @@ function Conteudo({ dados, agora }) {
           )}
         </div>
       </section>
-      <section className="nucleo-timeline-section">
+      <section
+        className="nucleo-timeline-section"
+        data-tour="editais-linha-do-tempo-historico"
+      >
         <div className="nucleo-timeline-section-title">
           <span>Histórico e erratas</span>
           <strong>{historico.length} registro(s)</strong>
@@ -205,7 +214,11 @@ export function ModalLinhaDoTempo({ estado, id, agora = () => new Date() }) {
           Fechar
         </button>
       </div>
-      <div id="nucleoTimelineContent" className="nucleo-timeline-content">
+      <div
+        id="nucleoTimelineContent"
+        className="nucleo-timeline-content"
+        data-tour="editais-linha-do-tempo-conteudo"
+      >
         {carga.estado === "carregando" ? (
           <div className="nucleo-timeline-loading" aria-busy="true">
             <BlocosEsqueleto

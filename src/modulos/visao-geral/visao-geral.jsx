@@ -67,7 +67,10 @@ import { TabelaDeProcessos } from "./tabela.jsx";
 function MapaDaSaudeIndigena({ e, estado, perfil, supabase }) {
   const { lmap, redeCnes } = e.mapa || {};
   return (
-    <div className="visao-geral-mapa">
+    <div
+      className="visao-geral-mapa"
+      data-tour="visao-geral-mapa-saude-indigena"
+    >
       <MapaSaudeIndigena
         perfil={perfil}
         supabase={supabase}
@@ -143,7 +146,7 @@ export function TelaDaVisaoGeral({
         />
       ) : null}
       {mapa === MAPA_DOS_MUNICIPIOS ? (
-        <div className="visao-geral-mapa">
+        <div className="visao-geral-mapa" data-tour="visao-geral-mapa-projetos">
           <MapaDeProjetos
             area={e.area}
             carregador={carregadorDeMunicipios}
@@ -158,7 +161,10 @@ export function TelaDaVisaoGeral({
       {temProcessosPorProjeto(e.area) ? (
         <ProcessosPorProjeto e={e} estado={estado} />
       ) : null}
-      <div className="ui-linha-de-cards">
+      <div
+        className="ui-linha-de-cards"
+        data-tour="visao-geral-fases-e-pos-resultado"
+      >
         <Fases e={e} estado={estado} />
         <PosResultado e={e} estado={estado} />
       </div>

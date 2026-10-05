@@ -426,6 +426,7 @@ function Versoes({ regra, podeEditar, aoUsar }) {
     <section
       className="ui-card classificacao-versoes"
       aria-labelledby="classificacaoVersoesTitulo"
+      data-tour="classificacao-regra-versoes"
     >
       <h2 className="ui-titulo" id="classificacaoVersoesTitulo">
         Versões da regra
@@ -501,14 +502,23 @@ export function Regra({ estado, e, dataDeCorte }) {
 
   const r = rascunho;
   return (
-    <form className="classificacao-regra" onSubmit={salvar} noValidate>
+    <form
+      className="classificacao-regra"
+      onSubmit={salvar}
+      noValidate
+      data-tour="classificacao-regra"
+    >
       {!regraSalva ? (
         <Aviso tom="warning" papel="status">
           Este edital ainda não tem regra de classificação.
         </Aviso>
       ) : null}
 
-      <section className="ui-card" aria-labelledby="regraEtapas">
+      <section
+        className="ui-card"
+        aria-labelledby="regraEtapas"
+        data-tour="classificacao-regra-etapas"
+      >
         <h2 className="ui-titulo" id="regraEtapas">
           Etapas e nota
         </h2>
@@ -597,7 +607,11 @@ export function Regra({ estado, e, dataDeCorte }) {
         </div>
       </section>
 
-      <section className="ui-card" aria-labelledby="regraMinimos">
+      <section
+        className="ui-card"
+        aria-labelledby="regraMinimos"
+        data-tour="classificacao-regra-minimos"
+      >
         <h2 className="ui-titulo" id="regraMinimos">
           Notas mínimas e eliminatórias
         </h2>
@@ -743,7 +757,11 @@ export function Regra({ estado, e, dataDeCorte }) {
         ) : null}
       </section>
 
-      <section className="ui-card" aria-labelledby="regraDesempate">
+      <section
+        className="ui-card"
+        aria-labelledby="regraDesempate"
+        data-tour="classificacao-regra-desempate"
+      >
         <h2 className="ui-titulo" id="regraDesempate">
           Desempate
         </h2>
@@ -799,7 +817,11 @@ export function Regra({ estado, e, dataDeCorte }) {
         </div>
       </section>
 
-      <section className="ui-card" aria-labelledby="regraModalidades">
+      <section
+        className="ui-card"
+        aria-labelledby="regraModalidades"
+        data-tour="classificacao-regra-modalidades"
+      >
         <h2 className="ui-titulo" id="regraModalidades">
           Modalidades
         </h2>
@@ -826,7 +848,11 @@ export function Regra({ estado, e, dataDeCorte }) {
         </div>
       </section>
 
-      <section className="ui-card" aria-labelledby="regraConvocacao">
+      <section
+        className="ui-card"
+        aria-labelledby="regraConvocacao"
+        data-tour="classificacao-regra-convocacao"
+      >
         <h2 className="ui-titulo" id="regraConvocacao">
           Convocação para entrevista
         </h2>
@@ -953,6 +979,7 @@ export function Regra({ estado, e, dataDeCorte }) {
         <section
           className="ui-card classificacao-salvar"
           aria-label="Salvar a regra"
+          data-tour="classificacao-regra-salvar"
         >
           {tentou && erros.length ? (
             <Aviso tom="danger" papel="alert">
@@ -994,6 +1021,7 @@ export function Regra({ estado, e, dataDeCorte }) {
               type="submit"
               className="btn"
               data-acao="salvar-regra"
+              data-tour="classificacao-regra-botao-salvar"
               disabled={e.salvando || (!mudou && Boolean(regraSalva))}
             >
               {regraSalva

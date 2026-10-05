@@ -184,6 +184,7 @@ export function ModalDeStatus({
             <label htmlFor="approvedStatusSelect">Status</label>
             <select
               id="approvedStatusSelect"
+              data-tour="aprovados-status-escolha"
               data-foco-inicial
               value={status}
               onChange={(evento) => setStatus(evento.target.value)}
@@ -205,6 +206,7 @@ export function ModalDeStatus({
               </label>
               <input
                 id="approvedStatusDataConvocacao"
+                data-tour="aprovados-status-data-convocacao"
                 type="date"
                 max={hoje}
                 required
@@ -258,6 +260,7 @@ export function ModalDeStatus({
             estado={estado}
             acao="status"
             id="approvedStatusSave"
+            data-tour="aprovados-status-salvar"
             className="btn green"
             disabled={anexosInvalidos}
             onClick={() =>

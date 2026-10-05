@@ -122,7 +122,10 @@ function LinhaDoEdital({ linha, item, perfil, estado, chat }) {
       <td>
         {linha.etapa}
         {alerta ? (
-          <div className={`nucleo-row-alert tone-${alerta.tone}`}>
+          <div
+            className={`nucleo-row-alert tone-${alerta.tone}`}
+            data-tour="editais-alerta-da-linha"
+          >
             <i className={`fa-solid ${alerta.icon}`} aria-hidden="true" />
             <span>{alerta.label}</span>
           </div>
@@ -139,12 +142,13 @@ function LinhaDoEdital({ linha, item, perfil, estado, chat }) {
         <Selo tom={SELO[tomDoRisco(linha.risco)]}>{linha.risco || "-"}</Selo>
       </td>
       <td>
-        <div className="nucleo-row-actions">
+        <div className="nucleo-row-actions" data-tour="editais-acoes-da-linha">
           {podeEditar ? (
             <button
               className="btn icon outline"
               type="button"
               title="Editar registro"
+              data-tour="editais-editar"
               aria-label={`Editar ${nome}`}
               onClick={() => estado.abrirEdital(linha.id)}
             >
@@ -172,6 +176,7 @@ function LinhaDoEdital({ linha, item, perfil, estado, chat }) {
               type="button"
               className="btn icon outline nucleo-view-timeline"
               title="Ver cronograma"
+              data-tour="editais-linha-do-tempo"
               aria-label={`Ver cronograma ${item.edital || ""}`}
               onClick={() => estado.abrirLinhaDoTempo(item.id)}
             >
@@ -254,6 +259,7 @@ export function Nucleo({ estado, agora }) {
   return (
     <div className="ui-tela editais-tela">
       <TopoDoPainel
+        tour="editais-topo"
         status={textoDoStatus(nucleo, carregado)}
         aoAtualizar={() =>
           void estado.carregarResumo({ force: true }).catch(() => {})
@@ -264,6 +270,7 @@ export function Nucleo({ estado, agora }) {
         {podeEditar ? (
           <button
             id="newEditalBtn"
+            data-tour="editais-novo"
             className="btn green"
             type="button"
             onClick={() => estado.abrirEdital()}
@@ -276,6 +283,7 @@ export function Nucleo({ estado, agora }) {
       <PainelOperacional estado={estado} nucleo={nucleo} />
 
       <TabelaInfinita
+        tour="editais-tabela"
         idDoTitulo="editaisTabelaTitulo"
         titulo="Controle de editais"
         className="nucleo-page-card"

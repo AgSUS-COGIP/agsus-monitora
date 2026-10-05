@@ -119,6 +119,7 @@ function Editor({
   return (
     <form
       className="acessos-detalhe"
+      data-tour="acessos-coordenacao-editor"
       onSubmit={salvar}
       noValidate
       aria-label={nova ? "Nova coordenação" : `Coordenação ${coordenacao.nome}`}
@@ -145,7 +146,10 @@ function Editor({
       <p className="acessos-secundario">
         Vê: <strong>{resumoDaCoordenacao(rascunho)}</strong>.
       </p>
-      <div className="acessos-grade-campos">
+      <div
+        className="acessos-grade-campos"
+        data-tour="acessos-coordenacao-area"
+      >
         <Campo rotulo="Área" erro={erro("area")}>
           <select
             id="acessosCoordArea"
@@ -241,6 +245,7 @@ function Editor({
             estado={estado}
             acao="coordenacao"
             type="submit"
+            data-tour="acessos-coordenacao-salvar"
             className="btn primary"
             disabled={!alterado && !nova}
           >
@@ -280,7 +285,11 @@ export function AbaCoordenacoes({ estado }) {
     );
 
   return (
-    <section className="acessos-mestre-detalhe" aria-label="Coordenações">
+    <section
+      className="acessos-mestre-detalhe"
+      aria-label="Coordenações"
+      data-tour="acessos-coordenacoes"
+    >
       <ListaMestre
         rotulo="Coordenações"
         rotuloCriar="Nova coordenação"

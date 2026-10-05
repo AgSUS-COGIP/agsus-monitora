@@ -40,7 +40,7 @@ const GRUPOS = Object.freeze([
 export function SecaoOperacao({ estado }) {
   useSyncExternalStore(estado.assinar, estado.obter);
   return (
-    <div className="config-secao-react">
+    <div className="config-secao-react" data-tour="config-operacao">
       <div className="config-secao-react__campos">
         {GRUPOS.map((grupo) => (
           <Grupo key={grupo.id} secao="operacao" {...grupo}>

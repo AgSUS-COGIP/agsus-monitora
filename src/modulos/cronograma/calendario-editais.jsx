@@ -181,12 +181,14 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
   return (
     <div className="ui-tela cronograma-tela">
       <TopoDoPainel
+        tour="cronograma-topo"
         status={textoDoStatus(carga)}
         aoAtualizar={recarregar}
         atualizarDesativado={carregando}
       />
 
       <PainelDeFiltros
+        tour="cronograma-filtros"
         idDoTitulo="calFiltrosTitulo"
         className="cal-filtros"
         quantos={quantos}
@@ -194,7 +196,10 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
         podeLimpar={quantos > 0 || ocultarConcluidas}
         aoLimpar={limparFiltros}
       >
-        <div className="ui-grade-de-campos">
+        <div
+          className="ui-grade-de-campos"
+          data-tour="cronograma-filtros-campos"
+        >
           <Campo rotulo="Pesquisar">
             <input
               id="calBusca"
@@ -232,7 +237,10 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
               aoMudar={(valor) => mudarFiltro("tipo", valor)}
             />
           </Campo>
-          <label className="cal-caixa">
+          <label
+            className="cal-caixa"
+            data-tour="cronograma-ocultar-concluidas"
+          >
             <input
               id="calOcultarConcluidas"
               type="checkbox"
@@ -245,10 +253,11 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
       </PainelDeFiltros>
 
       <section className="ui-card cal-card" aria-labelledby="calMesTitulo">
-        <div className="cal-barra">
+        <div className="cal-barra" data-tour="cronograma-barra-do-mes">
           <span className="cal-nav">
             <button
               id="calMesAnterior"
+              data-tour="cronograma-mes-anterior"
               className="btn secondary small"
               type="button"
               aria-label="Mês anterior"
@@ -259,6 +268,7 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
             </button>
             <button
               id="calMesSeguinte"
+              data-tour="cronograma-mes-seguinte"
               className="btn secondary small"
               type="button"
               aria-label="Próximo mês"
@@ -273,6 +283,7 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
           </h2>
           <button
             id="calHoje"
+            data-tour="cronograma-hoje"
             className="btn secondary small"
             type="button"
             onClick={irParaHoje}
@@ -292,7 +303,11 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
           </span>
         </div>
 
-        <div id="calLegenda" className="cal-legenda">
+        <div
+          id="calLegenda"
+          className="cal-legenda"
+          data-tour="cronograma-legenda"
+        >
           {TIPOS_DA_LEGENDA.map((tipo) => (
             <span key={tipo.id} className="cal-legenda-item">
               <i data-cor={tipo.cor} />
@@ -300,7 +315,11 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
             </span>
           ))}
         </div>
-        <div id="calGrade" aria-busy={primeiraCarga || undefined}>
+        <div
+          id="calGrade"
+          data-tour="cronograma-grade"
+          aria-busy={primeiraCarga || undefined}
+        >
           {erro ? (
             <ErroAoCarregar
               oQue="os cronogramas"
@@ -322,6 +341,7 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
       <div className="ui-linha-de-cards cal-inferior">
         <section
           className="ui-card ui-pilha"
+          data-tour="cronograma-proximas"
           aria-labelledby="calProximasTitulo"
         >
           <h2 className="ui-titulo" id="calProximasTitulo">
@@ -347,9 +367,13 @@ export function CalendarioEditais({ estado, agora = () => new Date() }) {
 
         <section
           className="ui-card ui-pilha"
+          data-tour="cronograma-linha-do-tempo"
           aria-labelledby="calTimelineTitulo"
         >
-          <div className="cal-cabecalho">
+          <div
+            className="cal-cabecalho"
+            data-tour="cronograma-edital-da-linha-do-tempo"
+          >
             <h2 className="ui-titulo" id="calTimelineTitulo">
               Linha do tempo do edital
             </h2>

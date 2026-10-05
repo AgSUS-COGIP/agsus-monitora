@@ -53,6 +53,7 @@ export function usarTelaCheia() {
     <button
       type="button"
       className="btn small mapa-si-tela-cheia"
+      data-tour="visao-geral-mapa-tela-cheia"
       aria-pressed={telaCheia}
       title={telaCheia ? "Sair da tela cheia (Esc)" : "Ampliar o mapa"}
       onClick={() => definirTelaCheia((valor) => !valor)}

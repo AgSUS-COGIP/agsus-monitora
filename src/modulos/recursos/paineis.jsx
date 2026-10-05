@@ -47,6 +47,7 @@ export function Topo({ aoNovo, novoDesativado, aoModelos, ...props }) {
           type="button"
           className="btn secondary"
           data-acao="modelos"
+          data-tour="recursos-modelos"
           title="Modelos de resposta aos recursos (administração)"
           onClick={aoModelos}
         >
@@ -59,6 +60,7 @@ export function Topo({ aoNovo, novoDesativado, aoModelos, ...props }) {
           type="button"
           className="btn"
           data-acao="novo-recurso"
+          data-tour="recursos-novo"
           disabled={novoDesativado}
           onClick={aoNovo}
         >
@@ -103,16 +105,18 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
 
   return (
     <PainelDeFiltros
+      tour="recursos-filtros"
       idDoTitulo="recursosFiltrosTitulo"
       quantos={ativos.length}
       aoLimpar={aoLimpar}
       aoRecolher={() => setMaisOpcoes(false)}
     >
-      <div className="ui-grade-de-campos">
+      <div className="ui-grade-de-campos" data-tour="recursos-filtros-campos">
         {CAMPOS_DO_FILTRO.map(([campo, rotulo, lista, todos]) => (
           <Campo rotulo={rotulo} key={campo}>
             <select
               id={`filtro-${campo}`}
+              data-tour={`recursos-filtro-${campo}`}
               name={campo}
               value={filtros[campo]}
               disabled={!carregado}
@@ -138,6 +142,7 @@ export function Filtros({ filtros, opcoes, carregado, aoMudar, aoLimpar }) {
         <Campo rotulo="Buscar em toda a tela">
           <input
             id="filtro-busca"
+            data-tour="recursos-busca"
             type="search"
             name="busca"
             value={filtros.busca}
@@ -193,7 +198,11 @@ export function Indicadores({ indicadores: k, carregado, filtros, aoFiltrar }) {
         }
       : {};
   return (
-    <GradeDeKpis className="recursos-kpis" rotulo="Indicadores">
+    <GradeDeKpis
+      tour="recursos-kpis"
+      className="recursos-kpis"
+      rotulo="Indicadores"
+    >
       <Kpi
         cor="k-purple"
         icone="fa-scale-balanced"

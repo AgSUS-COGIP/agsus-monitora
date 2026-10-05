@@ -109,6 +109,7 @@ export function TabelaDeEntrevistas({
 }) {
   return (
     <TabelaInfinita
+      tour="entrevistas-tabela"
       idDoTitulo="entrevistasTabelaTitulo"
       titulo="Entrevistas"
       busca={{
@@ -125,7 +126,10 @@ export function TabelaDeEntrevistas({
       total={total}
       vazio={MENSAGEM_SEM_ENTREVISTAS}
       informacao={(quantos) => (
-        <span className="entrevistas-contagem">
+        <span
+          className="entrevistas-contagem"
+          data-tour="entrevistas-tabela-contagem"
+        >
           {quantos === null
             ? "Carregando…"
             : quantos === total

@@ -100,7 +100,7 @@ function PainelDaBusca({ aoFechar, aoEscolher }) {
       rotulo="Busca global"
       aoFechar={aoFechar}
     >
-      <div className="search-modal-input-wrap">
+      <div className="search-modal-input-wrap" data-tour="busca-global-campo">
         <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
         <input
           type="text"
@@ -132,6 +132,7 @@ function PainelDaBusca({ aoFechar, aoEscolher }) {
       <ul
         id={idDaLista}
         className="search-results"
+        data-tour="busca-global-resultados"
         role="listbox"
         aria-label="Resultados da busca"
       >

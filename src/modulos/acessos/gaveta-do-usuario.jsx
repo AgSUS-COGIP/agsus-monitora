@@ -364,7 +364,7 @@ function ExcecoesPorModulo({
   pode,
 }) {
   return (
-    <ul className="acessos-modulos">
+    <ul className="acessos-modulos" data-tour="acessos-gaveta-modulos">
       {MODULOS.map((modulo) => {
         const celula = celulaExibida(
           usuario,
@@ -433,6 +433,7 @@ function SalvarNaGaveta({ estado, usuario, rascunho, matriz, semArea }) {
   return (
     <form
       className="ui-barra-de-salvar acessos-salvar acessos-salvar-gaveta"
+      data-tour="acessos-gaveta-salvar"
       aria-label={`Salvar alterações de ${usuario.nome || usuario.email}`}
       onSubmit={(evento) => {
         evento.preventDefault();
@@ -569,7 +570,10 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
 
         <div className="acessos-gaveta-colunas">
           <div className="acessos-gaveta-coluna">
-            <section aria-labelledby="acessosGavetaGrupo">
+            <section
+              aria-labelledby="acessosGavetaGrupo"
+              data-tour="acessos-gaveta-grupo"
+            >
               <h4 id="acessosGavetaGrupo">Grupo</h4>
               <select
                 aria-label={`Grupo de ${nome}`}
@@ -592,7 +596,10 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
             </section>
 
             {!adminGlobal ? (
-              <section aria-labelledby="acessosGavetaCoordenacao">
+              <section
+                aria-labelledby="acessosGavetaCoordenacao"
+                data-tour="acessos-gaveta-coordenacao"
+              >
                 <h4 id="acessosGavetaCoordenacao">Coordenação</h4>
                 <select
                   aria-label={`Coordenação de ${nome}`}
@@ -617,7 +624,10 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
               </section>
             ) : null}
 
-            <section aria-labelledby="acessosGavetaAreas">
+            <section
+              aria-labelledby="acessosGavetaAreas"
+              data-tour="acessos-gaveta-areas"
+            >
               <h4 id="acessosGavetaAreas">Áreas</h4>
               {adminGlobal ? (
                 <p className="acessos-secundario">
@@ -649,6 +659,7 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
           </div>
           <section
             className="acessos-gaveta-previa"
+            data-tour="acessos-gaveta-como-ve"
             aria-labelledby="acessosGavetaVe"
           >
             <h4 id="acessosGavetaVe">
@@ -669,7 +680,10 @@ export function GavetaDoUsuario({ estado, secoesDeConfiguracao = [] }) {
           </section>
         </div>
 
-        <details className="acessos-avancado">
+        <details
+          className="acessos-avancado"
+          data-tour="acessos-gaveta-avancado"
+        >
           <summary>
             <Icone nome="chevron-right" tamanho={16} />
             <span>Avançado</span>

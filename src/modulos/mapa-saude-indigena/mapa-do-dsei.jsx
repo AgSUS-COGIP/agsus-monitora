@@ -316,6 +316,7 @@ export function MapaDoDsei({
           <button
             type="button"
             className="btn small mapa-si-voltar"
+            data-tour="visao-geral-mapa-voltar-ao-brasil"
             title="Voltar ao mapa do Brasil (Esc)"
             onClick={() => aoVoltarAoBrasil?.()}
           >

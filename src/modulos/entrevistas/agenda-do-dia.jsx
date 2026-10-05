@@ -55,6 +55,7 @@ export function AgendaDoDia({
     <section
       className="ui-card entrevistas-passo"
       data-passo="agenda"
+      data-tour="entrevistas-conduzir-agenda-do-dia"
       aria-labelledby="entrevistasAgendaTitulo"
     >
       <div className="entrevistas-passo-topo">
