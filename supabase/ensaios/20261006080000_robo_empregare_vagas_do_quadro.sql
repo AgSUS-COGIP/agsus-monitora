@@ -353,11 +353,13 @@ begin
     raise exception 'FALHOU E3: vaga só da Seleção %', v;
   end if;
 
-  -- Sem filtro: edital ativo e sem cronograma entra; a vaga das duas fontes aparece uma vez.
+  -- Sem filtro: nenhum código repetido. (As vagas reais já enchem o teto de
+  -- 500 da lista padrão — conferido em 05/10/2026 —, então as sintéticas
+  -- podem ficar de fora dela; quem entra é conferido pelos filtros acima.)
   v := public.listar_vagas_empregare(null, null, 500);
-  if (select count(*) from jsonb_array_elements(v -> 'vagas') e where e ->> 'vaga' = '999999101') <> 1
-     or (select count(*) from jsonb_array_elements(v -> 'vagas') e where e ->> 'vaga' = '999999102') <> 1 then
-    raise exception 'FALHOU E3: lista padrão sem a vaga do quadro ou com duplicata';
+  if (select count(*) from jsonb_array_elements(v -> 'vagas') e)
+     <> (select count(distinct e ->> 'vaga') from jsonb_array_elements(v -> 'vagas') e) then
+    raise exception 'FALHOU E3: lista padrão com código de vaga repetido';
   end if;
   if (select count(*) from jsonb_array_elements(v -> 'vagas') e where e ->> 'vaga' = '999999103') <> 0 then
     raise exception 'FALHOU E3: vaga da Seleção sem edital ativo entrou na lista padrão';
