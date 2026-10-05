@@ -305,6 +305,10 @@ def principal(args):
 
 
 def main(lista=None):
+    # Acentos no console do Windows (no GitHub Actions a saída já é UTF-8).
+    for fluxo in (sys.stdout, sys.stderr):
+        if hasattr(fluxo, "reconfigure"):
+            fluxo.reconfigure(encoding="utf-8")
     try:
         return principal(argumentos(lista))
     except SystemExit:
