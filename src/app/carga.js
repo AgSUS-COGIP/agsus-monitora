@@ -33,7 +33,7 @@ import {
 import {
   esconderEsqueleto,
   marcarAtualizacao,
-} from "../modules/carregamento.js";
+} from "./carregamento.js";
 import {
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,

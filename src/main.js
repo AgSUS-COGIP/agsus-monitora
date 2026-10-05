@@ -54,7 +54,7 @@ import "./modules/monitoramento-operational-transport.js";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.js.
 import { ligarSistema } from "./app/sistema.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
-import { instalarCarregamento } from "./modules/carregamento.js";
+import { instalarCarregamento } from "./app/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import {

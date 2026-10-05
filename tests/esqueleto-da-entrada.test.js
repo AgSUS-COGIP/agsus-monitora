@@ -16,7 +16,7 @@ import {
   instalarCarregamento,
   marcarAtualizacao,
   mostrarEsqueleto,
-} from "../src/modules/carregamento.js";
+} from "../src/app/carregamento.js";
 import { CHAVE_DA_TELA_GUARDADA } from "../src/lib/navegacao.js";
 
 const html = readFileSync("index.html", "utf8");

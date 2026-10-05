@@ -1,7 +1,7 @@
 # Painel externo que avisa quando carregou
 
 Ao abrir um painel externo, o MONITORA cobre o quadro com um skeleton
-(`acompanharCarregamentoDoPainel`, em `src/modules/carregamento.js`). Sozinho, ele só sabe quando
+(`acompanharCarregamentoDoPainel`, em `src/app/carregamento.js`). Sozinho, ele só sabe quando
 a **página** do painel chegou (o `load` do iframe), e não quando os **dados** chegaram.
 
 Num painel feito em Google Apps Script (como o de Recursos), a página abre e só depois o script

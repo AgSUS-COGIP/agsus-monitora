@@ -2,7 +2,7 @@ import { getSupabaseClient } from "../lib/supabaseClient.js";
 import { permissaoLegada } from "../lib/access-roles.js";
 import { enderecoDoPainel } from "../lib/endereco-do-painel.js";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel.js";
-import { acompanharCarregamentoDoPainel } from "../modules/carregamento.js";
+import { acompanharCarregamentoDoPainel } from "./carregamento.js";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
 import { avisar as avisarPadrao } from "./avisos.js";
 
