@@ -69,6 +69,11 @@ export function instantaneoDaLista(
       cargo: v.cargo,
       lotacao: v.lotacao,
       cabecalho: v.cabecalho,
+      // As vagas e o limite da convocação como a Classificação os contou (Entrevistas mostra).
+      total: v.total ?? null,
+      cadastro_reserva: Boolean(v.cadastroReserva),
+      origem_das_vagas: v.origemDasVagas ?? null,
+      ...(v.limiteConvocacao ? { limite_convocacao: v.limiteConvocacao } : {}),
       geral: v.geral.map(linha),
       listas: Object.fromEntries(
         Object.entries(v.porModalidade).map(([codigo, linhas]) => [

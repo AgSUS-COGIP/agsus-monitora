@@ -501,14 +501,11 @@ table.entrevistas-tabela {
   width: 88px;
   max-width: 100%;
 }
-.entrevistas-selo-pcd {
+.entrevistas-selo-lista {
   margin-left: var(--space-1);
 }
 .entrevistas-col-marca {
   width: 40px;
-}
-.entrevistas-tabela tr.entrevistas-sugerido td {
-  background: color-mix(in srgb, var(--state-info-soft) 60%, transparent);
 }
 .entrevistas-tabela tr.entrevistas-convocado td {
   background: color-mix(in srgb, var(--state-success-soft) 70%, transparent);
@@ -525,6 +522,11 @@ table.entrevistas-tabela {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1-5);
+}
+.entrevistas-fonte-da-lista {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
 }
 .entrevistas-vaga {
   display: grid;
