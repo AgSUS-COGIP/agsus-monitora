@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.setConfig({ testTimeout: 20000 });
 import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
+import { reacoesComAlternancia } from "../../src/lib/chat.js";
 import { definirNaoLidasDaAba } from "../../src/lib/identidade-da-aba.js";
 
 /*
@@ -240,6 +241,7 @@ describe("ícone e permissão", () => {
     expect(canal.ouvintes.map((o) => o.filtro.table)).toEqual([
       "TB_MENSAGEM",
       "RL_CONVERSA_PARTICIPANTE",
+      "RL_MENSAGEM_REACAO",
     ]);
   });
 });
@@ -354,14 +356,25 @@ describe("mensagens", () => {
     ).toContain("Chegou agora");
   });
 
-  it("editar e apagar a própria mensagem; a dos outros não tem os botões", async () => {
+  it("o menu ⋯ fica à vista em cada mensagem: na própria, Editar e Apagar (com confirmação); na dos outros, só Copiar", async () => {
     const supabase = await montar();
     await abrirConversaDireta();
     const minha = document.querySelector('[data-mensagem="m1"]');
     const deAna = document.querySelector('[data-mensagem="m2"]');
-    expect(deAna.querySelector('[aria-label="Editar mensagem"]')).toBeNull();
+    const mais = (msg) => msg.querySelector('[aria-label="Ações da mensagem"]');
+    expect(mais(minha)).not.toBeNull();
+    expect(mais(deAna)).not.toBeNull();
 
-    await clicar(minha.querySelector('[aria-label="Editar mensagem"]'));
+    await clicar(mais(deAna));
+    const itensDeAna = [...deAna.querySelectorAll('[role="menuitem"]')].map(
+      (b) => b.textContent.trim(),
+    );
+    expect(itensDeAna).toEqual(["Copiar texto"]);
+    await clicar(mais(deAna));
+
+    await clicar(mais(minha));
+    expect(mais(minha).getAttribute("aria-expanded")).toBe("true");
+    await clicar(botao("Editar", minha.querySelector('[role="menu"]')));
     await digitar(minha.querySelector("textarea"), "Oi Ana!");
     await clicar(botao("Salvar", minha));
     expect(supabase.rpc).toHaveBeenCalledWith("editar_mensagem_chat", {
@@ -374,8 +387,12 @@ describe("mensagens", () => {
         minha.textContent.includes("editada"),
     );
 
-    await clicar(minha.querySelector('[aria-label="Apagar mensagem"]'));
+    await clicar(mais(minha));
+    await clicar(botao("Apagar", minha.querySelector('[role="menu"]')));
     expect(minha.textContent).toContain("Apagar esta mensagem?");
+    expect(
+      supabase.rpc.mock.calls.some(([n]) => n === "apagar_mensagem_chat"),
+    ).toBe(false);
     await clicar(botao("Apagar", minha.querySelector('[role="group"]')));
     expect(supabase.rpc).toHaveBeenCalledWith("apagar_mensagem_chat", {
       p_mensagem: "m1",
@@ -385,6 +402,50 @@ describe("mensagens", () => {
         .querySelector('[data-mensagem="m1"]')
         .textContent.includes("Mensagem apagada"),
     );
+    expect(
+      document.querySelector(
+        '[data-mensagem="m1"] [aria-label="Ações da mensagem"]',
+      ),
+    ).toBeNull();
+  });
+
+  it("Copiar texto põe o texto na área de transferência e avisa", async () => {
+    const escrever = vi.fn(async () => {});
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText: escrever },
+    });
+    try {
+      await montar();
+      await abrirConversaDireta();
+      const deAna = document.querySelector('[data-mensagem="m2"]');
+      await clicar(deAna.querySelector('[aria-label="Ações da mensagem"]'));
+      await clicar(botao("Copiar texto", deAna));
+      await esperar();
+      expect(escrever).toHaveBeenCalledWith("Viu @Eu Mesma?");
+      expect(toast).toHaveBeenCalledWith("Texto copiado.", "success");
+      expect(deAna.querySelector('[role="menu"]')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("menu ⋯ fecha com Escape sem sair da conversa e com clique fora", async () => {
+    await montar();
+    await abrirConversaDireta();
+    const minha = document.querySelector('[data-mensagem="m1"]');
+    await clicar(minha.querySelector('[aria-label="Ações da mensagem"]'));
+    const item = minha.querySelector('[role="menuitem"]');
+    await teclar(item, "Escape");
+    expect(minha.querySelector('[role="menu"]')).toBeNull();
+    expect(document.querySelector('[data-mensagem="m1"]')).not.toBeNull();
+    await clicar(minha.querySelector('[aria-label="Ações da mensagem"]'));
+    await act(async () => {
+      document.body.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true }),
+      );
+    });
+    expect(minha.querySelector('[role="menu"]')).toBeNull();
   });
 
   it("envio que falha fica como Não enviada, com Tentar de novo", async () => {
@@ -432,5 +493,349 @@ describe("abrir de fora do painel", () => {
     await aguardar(
       () => painel()?.querySelector("h2")?.textContent === "Edital 83/2026",
     );
+  });
+});
+
+describe("reações", () => {
+  function comReacoes(inicial = [{ emoji: "👀", usuarios: [ANA] }]) {
+    let reacoes = inicial;
+    return supabaseFalso({
+      listar_mensagens_chat: () => ({
+        conversa: DIRETA,
+        mensagens: [MENSAGENS[0], { ...MENSAGENS[1], reacoes }],
+        tem_mais: false,
+      }),
+      alternar_reacao_chat: (a) => {
+        reacoes = reacoesComAlternancia(reacoes, a.p_emoji, EU);
+        return { ...MENSAGENS[1], reacoes };
+      },
+    });
+  }
+  // Seletor de atributo com emoji falha no jsdom: procura pelo rótulo.
+  const reagirCom = (msg, emoji) =>
+    [...msg.querySelectorAll('[role="menu"] button')].find(
+      (b) => b.getAttribute("aria-label") === `Reagir com ${emoji}`,
+    );
+  const chip = (msg, emoji) =>
+    [...msg.querySelectorAll(".chat-reacao")].find((b) =>
+      b.textContent.startsWith(emoji),
+    );
+
+  it("reagir pelo menu ⋯ aparece na hora com contagem e quem reagiu; clicar na reação tira ou põe", async () => {
+    const supabase = comReacoes();
+    await montar({ supabase });
+    await abrirConversaDireta();
+    const deAna = document.querySelector('[data-mensagem="m2"]');
+    expect(chip(deAna, "👀").title).toBe("Ana Souza");
+    expect(chip(deAna, "👀").getAttribute("aria-pressed")).toBe("false");
+
+    await clicar(deAna.querySelector('[aria-label="Ações da mensagem"]'));
+    await clicar(reagirCom(deAna, "👍"));
+    expect(supabase.rpc).toHaveBeenCalledWith("alternar_reacao_chat", {
+      p_mensagem: "m2",
+      p_emoji: "👍",
+    });
+    expect(deAna.querySelector('[role="menu"]')).toBeNull();
+    await esperar();
+    const joinha = chip(deAna, "👍");
+    expect(joinha.textContent).toBe("👍1");
+    expect(joinha.title).toBe("Você");
+    expect(joinha.getAttribute("aria-pressed")).toBe("true");
+    // 👍 vem antes de 👀 (ordem das reações rápidas).
+    expect(
+      [...deAna.querySelectorAll(".chat-reacao")].map((b) => b.textContent),
+    ).toEqual(["👍1", "👀1"]);
+
+    await clicar(joinha);
+    await esperar();
+    expect(chip(deAna, "👍")).toBeUndefined();
+
+    await clicar(chip(deAna, "👀"));
+    await esperar();
+    expect(chip(deAna, "👀").title).toBe("Ana Souza, Você");
+    expect(chip(deAna, "👀").textContent).toBe("👀2");
+  });
+
+  it("reação de outra pessoa chega pelo Realtime (pôr e tirar); de outra conversa, não", async () => {
+    await montar();
+    await abrirConversaDireta();
+    const linha = (ativa, conversa = "c-direta") => ({
+      new: {
+        CO_MENSAGEM: "m1",
+        CO_USUARIO: ANA,
+        DS_EMOJI: "❤️",
+        CO_CONVERSA: conversa,
+        ST_REGISTRO_ATIVO: ativa ? "S" : "N",
+      },
+    });
+    const minha = document.querySelector('[data-mensagem="m1"]');
+    await act(async () => controlador.estado._aoMudarReacao(linha(true)));
+    expect(chip(minha, "❤️").title).toBe("Ana Souza");
+    await act(async () => controlador.estado._aoMudarReacao(linha(false)));
+    expect(chip(minha, "❤️")).toBeUndefined();
+    await act(async () =>
+      controlador.estado._aoMudarReacao(linha(true, "c-grupo")),
+    );
+    expect(minha.querySelector(".chat-reacao")).toBeNull();
+  });
+
+  it("reação que falha volta ao que era e avisa", async () => {
+    const supabase = supabaseFalso({
+      alternar_reacao_chat: () => ({ __erro: { message: "Sem rede" } }),
+    });
+    await montar({ supabase });
+    await abrirConversaDireta();
+    const deAna = document.querySelector('[data-mensagem="m2"]');
+    await clicar(deAna.querySelector('[aria-label="Ações da mensagem"]'));
+    await clicar(reagirCom(deAna, "🙏"));
+    await esperar();
+    expect(deAna.querySelector(".chat-reacao")).toBeNull();
+    expect(toast).toHaveBeenCalledWith("Sem rede", "error");
+  });
+});
+
+describe("limpar conversa", () => {
+  it("pede confirmação, esconde o histórico só na tela de quem limpou e o antigo não volta pelo Realtime", async () => {
+    const limpaEm = new Date().toISOString();
+    const supabase = supabaseFalso({
+      limpar_conversa_chat: () => ({
+        ...DIRETA,
+        nao_lidas: 0,
+        mencoes: 0,
+        limpa_em: limpaEm,
+        ultima: null,
+        participa: true,
+      }),
+    });
+    await montar({ supabase });
+    await abrirConversaDireta();
+    await clicar(painel().querySelector('[aria-label="Opções da conversa"]'));
+    const itens = [
+      ...painel().querySelectorAll('.chat-conversa__menu [role="menuitem"]'),
+    ].map((b) => b.textContent.trim());
+    // Direta: sem "Sair"; nada de "Apagar conversa".
+    expect(itens).toEqual(["Silenciar", "Limpar conversa"]);
+    await clicar(botao("Limpar conversa", painel()));
+    const confirmar = painel().querySelector('[aria-label="Limpar conversa?"]');
+    expect(confirmar.textContent).toContain("Limpar o histórico só para você?");
+    expect(
+      supabase.rpc.mock.calls.some(([n]) => n === "limpar_conversa_chat"),
+    ).toBe(false);
+    await clicar(botao("Limpar", confirmar));
+    expect(supabase.rpc).toHaveBeenCalledWith("limpar_conversa_chat", {
+      p_conversa: "c-direta",
+    });
+    await aguardar(() => !document.querySelector('[data-mensagem="m1"]'));
+    expect(document.querySelector('[data-mensagem="m2"]')).toBeNull();
+    expect(painel().textContent).toContain("Nenhuma mensagem ainda.");
+    expect(
+      painel().querySelector('[aria-label="Limpar conversa?"]'),
+    ).toBeNull();
+
+    // Edição de mensagem antiga pelo Realtime não volta; a nova entra.
+    await act(async () =>
+      controlador.estado._aoMudarMensagem({
+        eventType: "UPDATE",
+        new: {
+          CO_MENSAGEM: "m2",
+          CO_CONVERSA: "c-direta",
+          CO_USUARIO_AUTOR: ANA,
+          DS_TEXTO: "Viu @Eu Mesma? (editada)",
+          DT_CRIACAO: MENSAGENS[1].criada_em,
+          ST_APAGADA: "N",
+        },
+      }),
+    );
+    expect(document.querySelector('[data-mensagem="m2"]')).toBeNull();
+    await act(async () =>
+      controlador.estado._aoMudarMensagem({
+        eventType: "INSERT",
+        new: {
+          CO_MENSAGEM: "m9",
+          CO_CONVERSA: "c-direta",
+          CO_USUARIO_AUTOR: ANA,
+          DS_TEXTO: "Depois da limpeza",
+          DT_CRIACAO: new Date(Date.now() + 1000).toISOString(),
+          ST_APAGADA: "N",
+        },
+      }),
+    );
+    expect(document.querySelector('[data-mensagem="m9"]')).not.toBeNull();
+  });
+
+  it("no grupo, o menu tem Limpar conversa e Sair do grupo", async () => {
+    await montar({
+      supabase: supabaseFalso({
+        listar_mensagens_chat: () => ({
+          conversa: GRUPO,
+          mensagens: [],
+          tem_mais: false,
+        }),
+      }),
+    });
+    await clicar(botaoDoChat());
+    await clicar(
+      await aguardar(() => document.querySelector('[data-conversa="c-grupo"]')),
+    );
+    await clicar(
+      await aguardar(() =>
+        painel().querySelector('[aria-label="Opções da conversa"]'),
+      ),
+    );
+    const itens = [
+      ...painel().querySelectorAll('.chat-conversa__menu [role="menuitem"]'),
+    ].map((b) => b.textContent.trim());
+    expect(itens).toEqual([
+      "Silenciar",
+      "Adicionar pessoas",
+      "Limpar conversa",
+      "Sair do grupo",
+    ]);
+  });
+});
+
+describe("emojis", () => {
+  afterEach(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      /* sem armazenamento */
+    }
+  });
+
+  const seletor = () =>
+    painel().querySelector('[role="dialog"][aria-label="Emojis"]');
+
+  it("o botão abre o seletor; escolher insere no cursor e guarda nos recentes; busca por nome; Escape fecha", async () => {
+    const supabase = await montar();
+    await abrirConversaDireta();
+    const campo = painel().querySelector(".chat-escrita__campo");
+    await digitar(campo, "Oi tudo");
+    campo.setSelectionRange(2, 2);
+    const abrir = painel().querySelector('[aria-label="Emojis"]');
+    await clicar(abrir);
+    expect(abrir.getAttribute("aria-expanded")).toBe("true");
+    expect(
+      seletor()
+        .querySelector('[role="tab"][aria-selected="true"]')
+        .getAttribute("aria-label"),
+    ).toBe("Carinhas");
+    await clicar(seletor().querySelector('[role="tab"][aria-label="Gestos"]'));
+    await clicar(seletor().querySelector('[aria-label="joinha"]'));
+    expect(campo.value).toBe("Oi👍 tudo");
+    expect(
+      JSON.parse(localStorage.getItem("monitora.chat.emojis-recentes")),
+    ).toEqual(["👍"]);
+
+    const busca = seletor().querySelector('input[type="search"]');
+    await digitar(busca, "cafe");
+    expect(
+      [...seletor().querySelectorAll(".chat-emojis__emoji")].map(
+        (b) => b.textContent,
+      ),
+    ).toContain("☕");
+    // Enter na busca escolhe o primeiro e não envia a mensagem.
+    await teclar(busca, "Enter");
+    expect(campo.value).toContain("☕");
+    expect(
+      supabase.rpc.mock.calls.some(([n]) => n === "enviar_mensagem_chat"),
+    ).toBe(false);
+    await digitar(busca, "xyzxyz");
+    expect(seletor().textContent).toContain("Nenhum emoji encontrado.");
+
+    await teclar(busca, "Escape");
+    expect(seletor()).toBeNull();
+    expect(painel().querySelector(".chat-escrita__campo")).not.toBeNull();
+
+    // Reabrir começa nos Recentes (o último usado primeiro).
+    await clicar(painel().querySelector('[aria-label="Emojis"]'));
+    expect(
+      seletor()
+        .querySelector('[role="tab"][aria-selected="true"]')
+        .getAttribute("aria-label"),
+    ).toBe("Recentes");
+    expect(
+      [...seletor().querySelectorAll(".chat-emojis__emoji")].map(
+        (b) => b.textContent,
+      ),
+    ).toEqual(["☕", "👍"]);
+  });
+
+  it("o emoji vai no texto enviado (é texto Unicode)", async () => {
+    const supabase = await montar();
+    await abrirConversaDireta();
+    const campo = painel().querySelector(".chat-escrita__campo");
+    await digitar(campo, "Feito ");
+    campo.setSelectionRange(6, 6);
+    await clicar(painel().querySelector('[aria-label="Emojis"]'));
+    await digitar(seletor().querySelector('input[type="search"]'), "feito");
+    await clicar(seletor().querySelector('[aria-label="feito"]'));
+    await teclar(campo, "Enter");
+    await esperar();
+    const envio = supabase.rpc.mock.calls.find(
+      ([n]) => n === "enviar_mensagem_chat",
+    )[1];
+    expect(envio.p_texto).toBe("Feito ✅");
+  });
+});
+
+describe("rolagem", () => {
+  it("abre na última; lendo acima, mensagem nova mostra ↓ Nova mensagem e o botão leva ao fim", async () => {
+    const topo = new WeakMap();
+    const ehLista = (el) => el.classList?.contains("chat-conversa__mensagens");
+    const definir = (nome, descritor) =>
+      Object.defineProperty(HTMLElement.prototype, nome, {
+        configurable: true,
+        ...descritor,
+      });
+    definir("scrollHeight", {
+      get() {
+        return ehLista(this) ? 1000 : 0;
+      },
+    });
+    definir("clientHeight", {
+      get() {
+        return ehLista(this) ? 300 : 0;
+      },
+    });
+    definir("scrollTop", {
+      get() {
+        return topo.get(this) ?? 0;
+      },
+      set(valor) {
+        topo.set(this, valor);
+      },
+    });
+    try {
+      await montar();
+      await abrirConversaDireta();
+      const lista = painel().querySelector(".chat-conversa__mensagens");
+      expect(lista.scrollTop).toBe(1000);
+
+      lista.scrollTop = 100;
+      await act(async () => lista.dispatchEvent(new Event("scroll")));
+      await act(async () =>
+        controlador.estado._aoMudarMensagem({
+          eventType: "INSERT",
+          new: {
+            CO_MENSAGEM: "m4",
+            CO_CONVERSA: "c-direta",
+            CO_USUARIO_AUTOR: ANA,
+            DS_TEXTO: "Nova",
+            DT_CRIACAO: new Date().toISOString(),
+            ST_APAGADA: "N",
+          },
+        }),
+      );
+      expect(lista.scrollTop).toBe(100);
+      const novas = painel().querySelector(".chat-conversa__novas");
+      expect(novas.textContent).toContain("Nova mensagem");
+      await clicar(novas);
+      expect(lista.scrollTop).toBe(1000);
+      expect(painel().querySelector(".chat-conversa__novas")).toBeNull();
+    } finally {
+      for (const nome of ["scrollHeight", "clientHeight", "scrollTop"])
+        delete HTMLElement.prototype[nome];
+    }
   });
 });
