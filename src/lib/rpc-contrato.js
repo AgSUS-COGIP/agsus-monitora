@@ -541,7 +541,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
+      "Últimas 10 execuções de cada carga (análises por origem, entrevistas, seleção, robô da Empregare com vagas pedidas/baixadas/falhas/recusadas e quem disparou — 20261005170000) e das tarefas agsus_* do pg_cron, para a seção Status das atualizações (só administrador global).",
   },
   get_selecao_da_area: {
     argumentos: ["p_area"],

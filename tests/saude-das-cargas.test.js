@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   normalizarSaude,
   prazoDaAgenda,
+  prazoDosDiasUteis,
+  PRAZO_FIM_DE_SEMANA_MIN,
   PRAZO_DIARIO_MIN,
+  PRAZO_DE_HORA_EM_HORA_MIN,
+  PRAZO_DA_NOITE_MIN,
+  prazoDeHoraEmHora,
   PRAZO_FREQUENTE_MIN,
   PRAZO_MENSAL_MIN,
   textoDaIdade,
@@ -134,7 +139,7 @@ describe("selo de cada carga", () => {
     );
   });
 
-  it("entrevistas e seleção: atrasada depois de 26 h; rodando agora aparece", () => {
+  it("entrevistas e seleção: atrasada pelo prazo de hora em hora; rodando agora aparece", () => {
     expect(carga("entrevistas")).toMatchObject({
       situacao: "em_dia",
       idadeMin: 180,
@@ -268,5 +273,92 @@ describe("visão simples: uma linha por aba do sistema", () => {
       ultimaAtualizacao: null,
     });
     expect(visao.atencao.map((l) => l.id)).not.toContain("analises:sede");
+  });
+});
+
+describe("robô da Empregare (20261005170000)", () => {
+  const comRobo = (empregare, agora = AGORA) =>
+    normalizarSaude({ ...PAYLOAD, empregare }, agora);
+
+  it("sem a chave no payload (migration não aplicada), a linha não aparece", () => {
+    expect(visaoSimples(saude).linhas.map((l) => l.id)).not.toContain(
+      "empregare",
+    );
+  });
+
+  it("vira uma linha depois da Seleção, com as contagens e quem disparou na mensagem", () => {
+    const s = comRobo([
+      execucao("PARCIAL", 30, {
+        linhas: 812,
+        vagas_pedidas: 12,
+        vagas_baixadas: 11,
+        vagas_falha: 1,
+        vagas_recusadas: 0,
+        disparo: "MONITORA",
+      }),
+      execucao("CONCLUIDA", 24 * 60, { linhas: 800, disparo: "AGENDA" }),
+    ]);
+    const { linhas, atencao } = visaoSimples(s);
+    expect(linhas.map((l) => l.titulo).slice(-3)).toEqual([
+      "Seleção",
+      "Robô da Empregare",
+      "Atualização automática do banco",
+    ]);
+    const robo = linhas.find((l) => l.id === "empregare");
+    expect(robo.situacao).toBe("falhou");
+    expect(robo.erro.mensagem).toBe(
+      "12 vagas pedidas · 11 baixadas · 1 com falha · 0 recusadas · disparo: Rodar agora",
+    );
+    expect(atencao.map((l) => l.id)).toContain("empregare");
+    expect(robo.partes[0].historico[1].mensagem).toContain("disparo: agenda");
+  });
+
+  it("concluída dentro do prazo fica em dia; em andamento aparece", () => {
+    const s = comRobo([
+      { inicio: ha(5), situacao: "EM_ANDAMENTO" },
+      execucao("CONCLUIDA", 60, { linhas: 10 }),
+    ]);
+    const robo = visaoSimples(s).linhas.find((l) => l.id === "empregare");
+    expect(robo).toMatchObject({ situacao: "em_dia", emAndamento: true });
+  });
+
+  it("prazo de hora em hora: 4 h de dia, 14 h à noite", () => {
+    // 12h de Brasília = 15h UTC; 23h de Brasília = 02h UTC do dia seguinte.
+    expect(prazoDeHoraEmHora(new Date("2026-10-05T15:00:00Z"))).toBe(
+      PRAZO_DE_HORA_EM_HORA_MIN,
+    );
+    expect(prazoDeHoraEmHora(new Date("2026-10-06T02:00:00Z"))).toBe(
+      PRAZO_DA_NOITE_MIN,
+    );
+    // 8h de Brasília (11h UTC): a primeira carga das 7h pode atrasar; vale a noite.
+    expect(prazoDeHoraEmHora(new Date("2026-10-05T11:00:00Z"))).toBe(
+      PRAZO_DA_NOITE_MIN,
+    );
+  });
+
+  it("prazo dos dias úteis: o fim de semana não atrasa", () => {
+    // 01/10/2026 é quinta-feira.
+    expect(prazoDosDiasUteis(new Date("2026-10-01T12:00:00Z"))).toBe(
+      PRAZO_DIARIO_MIN,
+    );
+    expect(prazoDosDiasUteis(new Date("2026-10-03T15:00:00Z"))).toBe(
+      PRAZO_FIM_DE_SEMANA_MIN,
+    );
+    // Segunda 8h de Brasília (11h UTC): ainda vale o fim de semana; 10h, não.
+    expect(prazoDosDiasUteis(new Date("2026-10-05T11:00:00Z"))).toBe(
+      PRAZO_FIM_DE_SEMANA_MIN,
+    );
+    expect(prazoDosDiasUteis(new Date("2026-10-05T13:00:00Z"))).toBe(
+      PRAZO_DIARIO_MIN,
+    );
+    const domingo = new Date("2026-10-04T15:00:00Z");
+    const sexta = new Date("2026-10-02T09:40:00Z").toISOString();
+    const s = comRobo(
+      [{ inicio: sexta, fim: sexta, situacao: "CONCLUIDA" }],
+      domingo,
+    );
+    expect(
+      visaoSimples(s).linhas.find((l) => l.id === "empregare").situacao,
+    ).toBe("em_dia");
   });
 });

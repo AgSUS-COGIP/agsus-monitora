@@ -1,0 +1,116 @@
+name: Robô da Empregare
+
+# Entra no portal da empresa na Empregare (sem API: Selenium, Chrome headless),
+# pede a exportação "Candidatos da vaga (Excel)" de cada vaga, baixa na Central
+# de Exportações e grava os candidatos no Supabase
+# (scripts/robo-empregare/robo_empregare.py). A lista de vagas vem do MONITORA:
+# sem filtro, as vagas dos editais ativos em curso.
+#
+# Quando roda:
+#   - de segunda a sexta às 6h30 de Brasília (9h30 UTC; o Brasil não tem horário
+#     de verão), como reserva — antes das cargas das 9h;
+#   - pelo "Rodar agora" das Configurações › Status das atualizações
+#     (api/rodar-carga.js, só administrador global; disparado_por = id do usuário);
+#   - pelo botão "Run workflow" desta aba Actions.
+# Como operar e o que fazer quando falha: docs/robo-empregare.md.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o robô só imprime contagens,
+# códigos de vaga e números de edital (scripts/robo-empregare/mascaramento.py).
+#
+# Secrets do repositório (Settings → Secrets and variables → Actions):
+#   EMPREGARE_EMAIL              e-mail do usuário do robô no portal da Empregare
+#   EMPREGARE_SENHA              senha desse usuário
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+# (os dois últimos são os mesmos das sincronizações das planilhas).
+
+on:
+  schedule:
+    - cron: "30 9 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "normal = exporta e grava; seco = só lista as vagas; fumaca = só testa o login; forcar = aceita arquivo com menos da metade dos candidatos"
+        type: choice
+        options:
+          - normal
+          - seco
+          - fumaca
+          - forcar
+        default: normal
+      editais:
+        description: "Opcional: números de edital separados por vírgula (ex.: 80/2026, 81/2026)"
+        type: string
+        required: false
+        default: ""
+      vagas:
+        description: "Opcional: códigos de vaga da Empregare separados por vírgula (ex.: 177979)"
+        type: string
+        required: false
+        default: ""
+      limite:
+        description: "Máximo de vagas nesta execução (1 a 500)"
+        type: string
+        required: false
+        default: "60"
+      disparado_por:
+        description: "Preenchido pelo MONITORA (id do usuário); em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: robo-empregare
+  cancel-in-progress: false
+
+jobs:
+  robo:
+    name: Empregare → Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/robo-empregare/requirements.txt
+
+      - name: Instalar dependências do robô
+        run: pip install --disable-pip-version-check -r scripts/robo-empregare/requirements.txt
+
+      # O runner ubuntu já traz o Google Chrome; o Selenium Manager acha o chromedriver.
+      - name: Conferir o Chrome
+        run: google-chrome --version
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell) e o
+      # script valida o formato de cada um.
+      - name: Rodar o robô
+        env:
+          EMPREGARE_EMAIL: ${{ secrets.EMPREGARE_EMAIL }}
+          EMPREGARE_SENHA: ${{ secrets.EMPREGARE_SENHA }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          EDITAIS: ${{ inputs.editais }}
+          VAGAS: ${{ inputs.vagas }}
+          LIMITE: ${{ inputs.limite || '60' }}
+          DISPARADO_POR: ${{ github.event_name == 'schedule' && 'agenda' || inputs.disparado_por }}
+        run: |
+          args=(--editais "$EDITAIS" --vagas "$VAGAS" --limite "$LIMITE")
+          case "$MODO" in
+            seco)   args+=(--seco) ;;
+            fumaca) args+=(--fumaca) ;;
+            forcar) args+=(--forcar) ;;
+          esac
+          python scripts/robo-empregare/robo_empregare.py "${args[@]}"

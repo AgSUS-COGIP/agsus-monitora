@@ -3,8 +3,9 @@ name: Sincronizar seleção
 # Lê a aba Resultado da planilha "Auditoria" (funil da seleção por vaga) com a
 # conta de serviço do Google e grava no Supabase (scripts/sincronizar-selecao.mjs).
 # De hora em hora, das 7h às 19h de Brasília (10h–22h UTC; o Brasil não tem
-# horário de verão; o GitHub pode atrasar alguns minutos) e,
-# quando precisar, pelo botão "Run workflow" na aba Actions.
+# horário de verão; o GitHub pode atrasar alguns minutos) e, quando precisar,
+# pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora" das
+# Configurações › Status das atualizações (api/rodar-carga.js).
 # Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
 #
 # Secrets do repositório (Settings → Secrets and variables → Actions):
@@ -26,6 +27,11 @@ on:
           - seco
           - forcar
         default: normal
+      disparado_por:
+        description: "Preenchido pelo MONITORA (Rodar agora, id do usuário); em branco = GitHub"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read

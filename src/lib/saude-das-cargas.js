@@ -15,7 +15,12 @@
 
   OS PRAZOS (folga sobre o esperado, decisão de 01/10/2026)
     Análises, incremental   esperado a cada 20 min · atrasada depois de 1 h
-    Entrevistas e Seleção   esperado todo dia às 9h · atrasada depois de 26 h
+    Entrevistas e Seleção   esperado de hora em hora das 7h às 19h (Brasília) ·
+                            atrasada depois de 4 h das 9h às 20h; fora disso,
+                            depois de 14 h (a noite sem carga não conta)
+    Robô da Empregare       esperado de segunda a sexta às 6h30 (Brasília) ·
+                            atrasada depois de 26 h; do sábado até segunda 9h,
+                            depois de 74 h (o fim de semana não conta)
     Tarefas a cada 2 min    atrasada depois de 15 min
     Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
 */
@@ -25,6 +30,26 @@ export const PRAZO_ANALISES_MIN = 60;
 export const PRAZO_DIARIO_MIN = 26 * 60;
 export const PRAZO_FREQUENTE_MIN = 15;
 export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
+export const PRAZO_FIM_DE_SEMANA_MIN = 74 * 60;
+export const PRAZO_DE_HORA_EM_HORA_MIN = 4 * 60;
+export const PRAZO_DA_NOITE_MIN = 14 * 60;
+
+/** Prazo das cargas de hora em hora (7h–19h de Brasília): 4 h das 9h às 20h, 14 h no resto. */
+export function prazoDeHoraEmHora(agora = new Date()) {
+  const hora = new Date(agora.getTime() - 3 * 60 * MINUTO).getUTCHours();
+  return hora >= 9 && hora <= 20
+    ? PRAZO_DE_HORA_EM_HORA_MIN
+    : PRAZO_DA_NOITE_MIN;
+}
+
+/** Prazo do robô da Empregare (dias úteis): 74 h do sábado até segunda 9h de Brasília, 26 h no resto. */
+export function prazoDosDiasUteis(agora = new Date()) {
+  const brasilia = new Date(agora.getTime() - 3 * 60 * MINUTO);
+  const dia = brasilia.getUTCDay();
+  const fimDeSemana =
+    dia === 6 || dia === 0 || (dia === 1 && brasilia.getUTCHours() < 9);
+  return fimDeSemana ? PRAZO_FIM_DE_SEMANA_MIN : PRAZO_DIARIO_MIN;
+}
 
 export const SITUACOES = Object.freeze({
   em_dia: Object.freeze({ rotulo: "Em dia", tom: "sucesso", ordem: 4 }),
@@ -57,6 +82,7 @@ const TAREFAS = Object.freeze({
 const ESTADOS = Object.freeze({
   analise: { ok: ["processado"], falha: ["erro"] },
   planilha: { ok: ["CONCLUIDA"], falha: ["RECUSADA"] },
+  robo: { ok: ["CONCLUIDA"], falha: ["FALHOU", "PARCIAL"] },
   tarefa: { ok: ["succeeded"], falha: ["failed"] },
 });
 
@@ -122,6 +148,30 @@ export function situacaoDaCarga(execucoes, prazoMin, agora = new Date()) {
   return { situacao: "em_dia", ultimaOk, idadeMin };
 }
 
+const QUEM_DISPAROU = Object.freeze({
+  AGENDA: "agenda",
+  MONITORA: "Rodar agora",
+  GITHUB: "GitHub",
+});
+
+/* Execução do robô da Empregare: as contagens de vagas entram na mensagem. */
+function execucaoDoRobo(bruta) {
+  const n = (campo) => inteiro(bruta?.[campo]) ?? 0;
+  const partes = [
+    `${n("vagas_pedidas")} vagas pedidas`,
+    `${n("vagas_baixadas")} baixadas`,
+    `${n("vagas_falha")} com falha`,
+    `${n("vagas_recusadas")} recusadas`,
+  ];
+  const quem = QUEM_DISPAROU[texto(bruta?.disparo)];
+  if (quem) partes.push(`disparo: ${quem}`);
+  const mensagem = texto(bruta?.mensagem);
+  return {
+    ...bruta,
+    mensagem: `${partes.join(" · ")}${mensagem ? `. ${mensagem}` : ""}`,
+  };
+}
+
 function montarCarga(
   { id, nome, onde, esperado, prazoMin, tipo, execucoes },
   agora,
@@ -178,8 +228,8 @@ export function normalizarSaude(dados, agora = new Date()) {
         id: "entrevistas",
         nome: "Entrevistas",
         onde: "GitHub Actions · Sincronizar entrevistas",
-        esperado: "todo dia às 9h",
-        prazoMin: PRAZO_DIARIO_MIN,
+        esperado: "de hora em hora, das 7h às 19h",
+        prazoMin: prazoDeHoraEmHora(agora),
         tipo: "planilha",
         execucoes: dados?.entrevistas,
       },
@@ -190,14 +240,32 @@ export function normalizarSaude(dados, agora = new Date()) {
         id: "selecao",
         nome: "Seleção (planilha Auditoria)",
         onde: "GitHub Actions · Sincronizar seleção",
-        esperado: "todo dia às 9h",
-        prazoMin: PRAZO_DIARIO_MIN,
+        esperado: "de hora em hora, das 7h às 19h",
+        prazoMin: prazoDeHoraEmHora(agora),
         tipo: "planilha",
         execucoes: dados?.selecao,
       },
       agora,
     ),
   ];
+
+  // O robô só aparece depois da migration 20261005170000 (a chave vem no payload).
+  const robos = Array.isArray(dados?.empregare)
+    ? [
+        montarCarga(
+          {
+            id: "empregare",
+            nome: "Robô da Empregare",
+            onde: "GitHub Actions · Robô da Empregare",
+            esperado: "de segunda a sexta às 6h30",
+            prazoMin: prazoDosDiasUteis(agora),
+            tipo: "robo",
+            execucoes: dados.empregare.map(execucaoDoRobo),
+          },
+          agora,
+        ),
+      ]
+    : [];
 
   const tarefasDisponiveis = Array.isArray(dados?.tarefas);
   const tarefas = (tarefasDisponiveis ? dados.tarefas : []).map((t) => {
@@ -232,8 +300,15 @@ export function normalizarSaude(dados, agora = new Date()) {
       id: "planilhas",
       titulo: "Planilhas pelo GitHub Actions",
       descricao:
-        "Entrevistas e Seleção, todo dia às 9h. Para rodar agora: GitHub → Actions → o workflow → Run workflow.",
+        "Entrevistas e Seleção, de hora em hora das 7h às 19h. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
       cargas: planilhas,
+    },
+    {
+      id: "robos",
+      titulo: "Robô da Empregare",
+      descricao:
+        "Candidatos de cada vaga, do Excel exportado da Empregare, de segunda a sexta às 6h30.",
+      cargas: robos,
     },
     {
       id: "tarefas",
@@ -355,8 +430,21 @@ export function visaoSimples(saude) {
         titulo: carga.id === "selecao" ? "Seleção" : "Entrevistas",
         explicacao:
           carga.id === "selecao"
-            ? "Atualiza a aba Seleção a partir da planilha Auditoria, todo dia às 9h."
-            : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, todo dia às 9h.",
+            ? "Atualiza a aba Seleção a partir da planilha Auditoria, de hora em hora das 7h às 19h."
+            : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, de hora em hora das 7h às 19h.",
+        partes: [carga],
+        situacoesQueContam: [carga.situacao],
+      }),
+    );
+  }
+
+  for (const carga of porId.robos?.cargas || []) {
+    linhas.push(
+      juntar({
+        id: carga.id,
+        titulo: "Robô da Empregare",
+        explicacao:
+          "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, de segunda a sexta às 6h30.",
         partes: [carga],
         situacoesQueContam: [carga.situacao],
       }),

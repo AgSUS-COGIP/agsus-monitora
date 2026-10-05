@@ -25,7 +25,8 @@ Seleção
 ```
 
 O cruzamento das entrevistas continua no Apps Script porque as pastas das planilhas de vaga não
-são da conta `dados.recursoshumanos`. Este guia cobre só as cargas para o banco.
+são da conta `dados.recursoshumanos`. Este guia cobre só as cargas para o banco. Os candidatos
+da Empregare vêm por um robô à parte, com guia próprio: **`docs/robo-empregare.md`**.
 
 ### O que a Seleção calcula (e não lê da planilha)
 
@@ -44,8 +45,14 @@ são da conta `dados.recursoshumanos`. Este guia cobre só as cargas para o banc
 
 ## Rodar agora (sem esperar a próxima hora)
 
+**Pelo MONITORA** (administrador global): Configurações → **Status das atualizações** → linha
+Entrevistas ou Seleção → **Rodar agora** (modo `normal`). Precisa do `GITHUB_DISPATCH_TOKEN` na
+Vercel (ver `docs/robo-empregare.md`); o botão fica desabilitado enquanto a carga roda.
+
+**Pelo GitHub** (qualquer modo):
+
 1. GitHub → repositório → aba **Actions** → **Sincronizar entrevistas** ou **Sincronizar seleção**.
-2. **Run workflow** → escolha o modo → **Run workflow**.
+2. **Run workflow** → escolha o modo → **Run workflow** (`disparado_por` fica em branco).
 
 | Modo | Quando usar |
 |---|---|

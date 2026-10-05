@@ -1,0 +1,7 @@
+# Dependências do robô da Empregare (scripts/robo-empregare/), instaladas só no
+# GitHub Actions (.github/workflows/robo-empregare.yml). Ficam fora do
+# requirements.txt da raiz para não pesar as funções Python da Vercel.
+selenium==4.35.0
+pandas==2.3.2
+openpyxl==3.1.5
+xlrd==2.0.2
