@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  OPCOES_DO_FILTRO_DE_STATUS,
+  STATUS_DO_CANDIDATO,
   candidateCargosForEdital,
   candidateModalidadesForEdital,
   filterApprovedCandidates,
@@ -201,5 +203,14 @@ describe("candidateCargosForEdital com escolha múltipla", () => {
       "Enfermeiro",
       "Médico",
     ]);
+  });
+});
+
+describe("opções de status", () => {
+  it("Convocado entra e Fim de Fila sai, nos filtros e no modal", () => {
+    const valores = OPCOES_DO_FILTRO_DE_STATUS.map((o) => o.value);
+    expect(valores).toContain("Convocado");
+    expect(valores).not.toContain("Fim de Fila");
+    expect(STATUS_DO_CANDIDATO[0]).toBe("Convocado");
   });
 });
