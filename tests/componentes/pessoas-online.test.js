@@ -150,7 +150,7 @@ describe("lista", () => {
     expect(perfis).toEqual([
       "Administrador global",
       "Gestor · Recursos · Saúde Indígena",
-      "Administrador global · Análises curriculares",
+      "Administrador global · Painel das análises",
     ]);
     const texto = $("onlinePresenceList").textContent;
     expect(texto).not.toMatch(/Edital_gestor|\bAdmin\b|Master/);

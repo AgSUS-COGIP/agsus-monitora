@@ -9,7 +9,7 @@ describe("onde a pessoa está, em Pessoas online", () => {
   it("página da área: nome da página e da área", () => {
     expect(
       ondeEstaNoMonitora({ view: "analises", area: "saude-indigena" }),
-    ).toBe("Análises curriculares · Saúde Indígena");
+    ).toBe("Painel das análises · Saúde Indígena");
     expect(ondeEstaNoMonitora({ view: "approved", area: "projetos" })).toBe(
       "Lista de aprovados · Projetos",
     );
@@ -38,7 +38,7 @@ describe("onde a pessoa está, em Pessoas online", () => {
   });
 
   it("o que vem de quem ainda tem a versão anterior (só o código) vira o nome", () => {
-    expect(rotuloDoLocal("analises")).toBe("Análises curriculares");
+    expect(rotuloDoLocal("analises")).toBe("Painel das análises");
     expect(rotuloDoLocal("entrevistas")).toBe("Entrevistas");
     expect(rotuloDoLocal("Recursos · Projetos")).toBe("Recursos · Projetos");
     expect(rotuloDoLocal("")).toBe("");
@@ -53,6 +53,6 @@ describe("onde a pessoa está, em Pessoas online", () => {
         current_view: "analises",
       },
     ]);
-    expect(pessoa.currentView).toBe("Análises curriculares");
+    expect(pessoa.currentView).toBe("Painel das análises");
   });
 });
