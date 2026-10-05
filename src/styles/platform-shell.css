@@ -247,6 +247,18 @@ body.sidebar-theme-dark .app .side-logo {
   background: #f1f5f9;
   transform: translateY(-2px);
 }
+/*
+  O botão do cartão provisório do index.html (aria-hidden, sem id): mesmo
+  tamanho do #googleLoginBtn, que aparece por regra de id (visual-polish.css),
+  para o cartão não crescer quando o React monta. Sem clique.
+*/
+#loginScreen .login-card[aria-hidden="true"] .google-login-btn {
+  display: flex;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  pointer-events: none;
+}
 #loginScreen #googleLoginBtn:disabled {
   cursor: wait;
   opacity: 0.72;
