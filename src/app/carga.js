@@ -30,10 +30,7 @@ import {
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
 } from "../modules/situacao-dos-modulos.js";
-import {
-  esconderEsqueleto,
-  marcarAtualizacao,
-} from "./carregamento.js";
+import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.js";
 import {
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,

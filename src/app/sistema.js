@@ -6,10 +6,7 @@ import {
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
 } from "../modules/situacao-dos-modulos.js";
-import {
-  esconderEsqueleto,
-  mostrarEsqueleto,
-} from "./carregamento.js";
+import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.js";
 import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
 import { avisar, mostrarCarregamento } from "./avisos.js";
