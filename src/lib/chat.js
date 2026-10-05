@@ -128,6 +128,42 @@ export function mesclarMensagens(atuais, novas) {
 }
 
 /**
+ * Tira as mensagens pelos ids (o DELETE do Realtime traz só a chave: a
+ * retenção ou o "Zerar mensagens" das Configurações apagaram de fato). Sem
+ * nenhuma delas na lista, devolve a mesma lista (o estado não muda).
+ */
+export function tirarMensagens(mensagens, ids) {
+  const fora = new Set((Array.isArray(ids) ? ids : [ids]).map(String));
+  const lista = Array.isArray(mensagens) ? mensagens : [];
+  const restantes = lista.filter((m) => !fora.has(String(m?.id)));
+  return restantes.length === lista.length ? lista : restantes;
+}
+
+/**
+ * Releitura da página mais nova da conversa: a mensagem que estava na tela e
+ * não voltou foi apagada de fato (retenção ou zerar), então sai. Ficam as que
+ * vieram, a pendente e a que falhou (ainda não estão no banco), as mais novas
+ * que a página (chegaram pelo Realtime enquanto a leitura corria) e, se há
+ * páginas mais antigas (`temMais`), as anteriores à mais antiga da página.
+ */
+export function reconciliarPagina(atuais, recebidas, temMais) {
+  const vieram = Array.isArray(recebidas) ? recebidas : [];
+  const ids = new Set(vieram.map((m) => String(m?.id)));
+  const instantes = vieram.map((m) => instante(m?.criada_em));
+  const maisAntiga = vieram.length ? Math.min(...instantes) : null;
+  const maisNova = vieram.length ? Math.max(...instantes) : null;
+  const ficam = (Array.isArray(atuais) ? atuais : []).filter(
+    (m) =>
+      m?.pendente ||
+      m?.falhou ||
+      ids.has(String(m?.id)) ||
+      (maisNova !== null && instante(m?.criada_em) > maisNova) ||
+      (temMais && maisAntiga !== null && instante(m?.criada_em) < maisAntiga),
+  );
+  return mesclarMensagens(ficam, vieram);
+}
+
+/**
  * Linha do Realtime (TB_MENSAGEM, colunas MAD) no formato da tela — o mesmo de
  * FC_CHAT_MENSAGEM_JSON. Linha sem id ou sem conversa → null.
  */

@@ -433,9 +433,11 @@
       </script>
       <!--
         A tela de acesso é React (src/app/entrada/entrada.jsx) e monta aqui,
-        no lugar do cartão abaixo. Ele só segura a marca e o slogan no
-        primeiro quadro, com a cor do painel já aplicada, até o JavaScript
-        chegar.
+        no lugar do cartão abaixo. Ele segura o primeiro quadro, com a cor do
+        painel já aplicada, até o JavaScript chegar — com a MESMA estrutura e
+        altura do cartão do React (marca, slogan, saudação padrão e o botão do
+        Google, inerte): sem isso o cartão crescia na troca e a tela "piscava".
+        `tests/app/entrada.test.js` confere que os dois têm as mesmas peças.
       -->
       <div id="telaDeEntrada">
         <div class="login-outer">
@@ -452,6 +454,13 @@
               </div>
             </div>
             <p class="login-subtitle">Monitoramento de Processos Seletivos</p>
+            <h1>Boas-vindas!</h1>
+            <div class="login-form google-only-login">
+              <button type="button" class="google-login-btn" disabled tabindex="-1">
+                <span class="gmark">G</span>
+                <span>Entrar com sua conta institucional</span>
+              </button>
+            </div>
           </div>
           <div class="login-stripe"></div>
         </div>

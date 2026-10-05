@@ -24,11 +24,11 @@ local, sem caminho pessoal e sem senha no código.
 A lista vem do MONITORA (RPC `listar_vagas_empregare`), não de planilha. O código da vaga é o da
 aba **Seleção** (`TB_SELECAO_VAGA.CO_VAGA`, ex.: 177979, vindo da planilha Auditoria).
 
-| Pedido                                | Vagas                                                                                                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| sem filtro (agenda e **Rodar agora**) | vagas ativas com código cujo edital está **ativo** e **em curso**: sem cronograma, ou com alguma etapa terminando há no máximo **30 dias** |
-| `editais` (ex.: `80/2026, 81/2026`)   | as vagas desses editais, ativos ou não                                                                                                     |
-| `vagas` (ex.: `177979`)               | só esses códigos, mesmo fora da Seleção                                                                                                    |
+| Pedido                              | Vagas                                                                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| sem filtro (**Rodar agora**)        | vagas ativas com código cujo edital está **ativo** e **em curso**: sem cronograma, ou com alguma etapa terminando há no máximo **30 dias** |
+| `editais` (ex.: `80/2026, 81/2026`) | as vagas desses editais, ativos ou não                                                                                                     |
+| `vagas` (ex.: `177979`)             | só esses códigos, mesmo fora da Seleção                                                                                                    |
 
 As nunca carregadas e as carregadas há mais tempo vão primeiro, até o **limite** (60 por execução;
 cada vaga leva perto de meio minuto). Edital em curso com mais vagas que o limite completa nas
@@ -91,8 +91,8 @@ e não dispara o que já está rodando. O botão volta a ficar livre quando a ex
 | `vagas`   | opcional: códigos separados por vírgula                                                                                                                                                                                    |
 | `limite`  | máximo de vagas (padrão 60)                                                                                                                                                                                                |
 
-**Agenda de reserva:** de segunda a sexta às 6h30 de Brasília (`cron: "30 9 * * 1-5"`), antes da
-primeira carga de hora em hora das planilhas (7h). Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
+**Sem agenda automática** (decisão de 05/10/2026): o robô só roda quando um administrador clica em
+"Rodar agora" ou alguém dispara pelo GitHub. Uma execução por vez (as outras esperam na fila); tempo limite de 2 h.
 
 ### Teste de fumaça (depois de cadastrar os segredos)
 
@@ -106,7 +106,7 @@ primeira carga de hora em hora das planilhas (7h). Uma execução por vez (as ou
 
 - Configurações › Status das atualizações, linha **Robô da Empregare**: selo, "atualizado há…" e,
   em Detalhes, as 10 últimas execuções com vagas pedidas, baixadas, com falha, recusadas e quem
-  disparou (agenda, Rodar agora ou GitHub).
+  disparou (Rodar agora ou GitHub).
 - No banco (SQL Editor):
   ```sql
   select "CO_SYNC", "DT_INICIO", "TP_SITUACAO", "TP_DISPARO", "QT_VAGA_PEDIDA", "QT_VAGA_BAIXADA",
@@ -154,7 +154,7 @@ computador: rode-os pelo GitHub.
 
 ## Arquivos
 
-- `.github/workflows/robo-empregare.yml`: agenda, botão e segredos.
+- `.github/workflows/robo-empregare.yml`: disparo manual, botão e segredos.
 - `scripts/robo-empregare/robo_empregare.py` (entrada), `navegador_empregare.py` (Selenium),
   `planilha_empregare.py` (leitura do Excel e chave), `supabase_rpc.py`, `mascaramento.py`,
   `requirements.txt` (separado do da raiz, para não pesar as funções da Vercel).
