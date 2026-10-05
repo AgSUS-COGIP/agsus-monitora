@@ -441,7 +441,7 @@ export function PreClassificacao({ e, estado, pre }) {
         />
         <Kpi
           tom="sucesso"
-          icone="fa-clipboard-check"
+          icone="fa-user-check"
           rotulo="Lote (aptos para análise)"
           valor={
             cont.tamanho === null
@@ -451,7 +451,7 @@ export function PreClassificacao({ e, estado, pre }) {
         />
         <Kpi
           tom="alerta"
-          icone="fa-scale-unbalanced"
+          icone="fa-scale-balanced"
           rotulo="ART × declarada"
           valor={cont.divergencias}
         />

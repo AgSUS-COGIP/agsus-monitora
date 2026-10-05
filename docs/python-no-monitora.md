@@ -40,8 +40,14 @@ Só biblioteca padrão — não pesa na Vercel nem nos jobs.
 | `monitora.supabase_rpc` | `configuracao(guia)` e `chamar(config, "rpc", corpo)`: RPC com a `service_role`, repetindo só erro de rede/5xx, erro mascarado                              |
 | `monitora.execucao`     | `disparo(...)` (AGENDA/MONITORA/GITHUB), `identificador(prefixo=…)`, `url_da_execucao()` e `resumir(titulo, linhas)` (GITHUB_STEP_SUMMARY)                  |
 
-Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`) e as conferências
-(`scripts/conferencias/`).
+Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferências
+(`scripts/conferencias/`) e a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,
+com a conta em `monitora.avaliacao_documental`).
+
+| Módulo de domínio                                 | O que faz                                                                                                  |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                   |
+| `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`) |
 
 ### Importar a base
 
@@ -135,12 +141,38 @@ Limites conhecidos (a acertar com os dados reais, depois do ensaio):
 - Mesmo candidato em duas vagas da lista de aprovados: as listas não têm CPF; a pessoa é achada
   pelo código do candidato da análise ou, nas listas por planilha, pelo nome normalizado (em hash).
 
+## Segunda entrega: pré-classificação da Avaliação documental
+
+Job `scripts/pre_classificacao/pre_classificacao.py`, workflow `pre-classificacao.yml`, migration
+`20261006110000_pre_classificacao_e_lote.sql`. Para cada edital (os pedidos, os da última carga do
+robô ou os ativos com vagas da Empregare), lê a regra da avaliação e os inscritos de cada vaga **sem
+o cadastro** (nome, e-mail, CPF, telefone e endereço não saem do banco), calcula a Provisória por
+ART e o lote e grava o resultado pronto por vaga; o banco confere a forma e as travas e conta de
+novo o resumo.
+
+- **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare (passo
+  "Pré-classificar" em `robo-empregare.yml`, `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não
+  muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
+  `api/rodar-carga.js` confere `pode_recalcular_pre_classificacao` com o Bearer de quem clicou e
+  manda `editais` = o id do edital), pelo "Rodar agora" do Status das atualizações (todos) e pelo
+  "Run workflow".
+- **Modos:** `normal`, `seco` (calcula e mostra o resumo; um edital com a regra ainda "Conferir"
+  sai como prévia; sem regra, o resumo diz "edital sem regra conferida" e quantos inscritos
+  aguardam) e `refazer_lote` (recorta o lote do zero; recusado por edital que já tem ficha).
+- **Edital sem regra conferida:** não é gravado e não quebra a execução; aparece no resumo do
+  Actions e na aba (`ultima_execucao.edital.situacao` = `SEM_REGRA` ou `REGRA_NAO_CONFERIDA`).
+- **Casos dourados:** `tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json` (16
+  casos) e a nota declarada de `casos-de-pontuacao.json`, conferidos por
+  `tests/lib/avaliacao-documental-pre-classificacao.test.js` e `tests/python/test_pre_classificacao.py`.
+- **Log público:** contagens, códigos de vaga e de aviso e números de edital. O resultado por edital
+  que vai ao banco é recusado se tiver `@` ou 11 dígitos seguidos.
+
 ## Roteiro das próximas entregas Python
 
 Prioridade de cima para baixo. Estimativas em dias de trabalho de uma pessoa, contando testes,
 ensaio e conferência no navegador.
 
-### 1. Pré-classificação e lote de convocação depois do robô da Empregare
+### 1. Pré-classificação e lote de convocação depois do robô da Empregare (feita: ver acima)
 
 Insumo da futura **Avaliação documental** (`docs/analises-no-monitora/` no branch
 `docs/analises-no-monitora`, fases F2/F7/F8): depois que o robô grava os candidatos, um job lê as

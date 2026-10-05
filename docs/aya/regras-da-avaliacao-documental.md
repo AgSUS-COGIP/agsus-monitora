@@ -4,14 +4,16 @@ A tela Avaliação documental (view `avaliacao-documental`) é onde a avaliaçã
 títulos passa a ser feita dentro do MONITORA, no lugar das planilhas de vaga e do simulador. A tela
 mostra só rótulos, números e botões; o porquê fica aqui. Fontes: `src/modulos/avaliacao-documental/`,
 `src/lib/avaliacao-documental/` (regra, conta, nota declarada e equipe), as migrations
-`20261006090000_avaliacao_documental_permissao_e_menu.sql` e `20261006100000_regra_da_analise.sql`,
+`20261006090000_avaliacao_documental_permissao_e_menu.sql`, `20261006100000_regra_da_analise.sql` e
+`20261006110000_pre_classificacao_e_lote.sql` (pré-classificação), o job Python
+`scripts/pre_classificacao/` com a conta em `python/monitora/avaliacao_documental/`,
 os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o desenho em
 `docs/analises-no-monitora/`.
 
 ## Tela de Avaliação documental
 
 **perguntas:** avaliacao documental | tela de avaliacao documental | para que serve avaliacao documental | para que serve a avaliacao documental | modulo avaliacao documental | avaliacao documental e de titulos
-**resposta:** A Avaliação documental é o módulo de trabalho da etapa "Avaliação Documental e de Títulos": escolhido o edital, a coordenação cadastra a regra da avaliação daquele edital (blocos por documento ou pergunta da Empregare, eliminatórios com o item do edital, critério étnico com aldeias, escolaridade por nível, cursos, experiência, nota declarada, lote, distribuição, revisão e os textos do parecer) e diz quem analisa, quem revisa e quem coordena (aba Equipe). Nesta primeira fase há a regra e a equipe; a Provisória por ART, o lote, a fila e a ficha do candidato chegam nas fases seguintes. O resultado continua aparecendo no Painel das análises.
+**resposta:** A Avaliação documental é o módulo de trabalho da etapa "Avaliação Documental e de Títulos": escolhido o edital, a coordenação cadastra a regra da avaliação daquele edital (blocos por documento ou pergunta da Empregare, eliminatórios com o item do edital, critério étnico com aldeias, escolaridade por nível, cursos, experiência, nota declarada, lote, distribuição, revisão e os textos do parecer) e diz quem analisa, quem revisa e quem coordena (aba Equipe). Há a regra, a equipe e a Pré-classificação (a Lista Provisória por ART e o lote de convocação de cada vaga, com as listas oficiais PROVISORIA e LOTE); a fila e a ficha do candidato chegam nas fases seguintes. O resultado continua aparecendo no Painel das análises.
 **fonte:** src/modulos/avaliacao-documental/; docs/analises-no-monitora/plano-de-construcao.md
 **abrir:** avaliacao-documental
 
@@ -86,4 +88,55 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **perguntas:** aldeias do dsei | lista de aldeias | aldeia da lista | mora em aldeia | carregar aldeias
 **resposta:** O critério étnico só soma os pontos de aldeia quando a aldeia está na lista oficial do DSEI do edital (se a regra pedir a lista). A aba Regra mostra quantas aldeias o DSEI tem; só o administrador global carrega ou atualiza a lista ("Atualizar a lista"), uma por linha, no formato NOME ou NOME-(polo), com a fonte. A lista enviada passa a ser a vigente: as aldeias que saíram são desativadas, não apagadas.
 **fonte:** supabase/migrations/20261006100000_regra_da_analise.sql
+**abrir:** avaliacao-documental
+
+## Pré-classificação: Provisória por ART
+
+**perguntas:** pre-classificacao | pre classificacao | provisoria por art | lista provisoria | lista geral de classificacao provisoria | ranqueamento eletronico | como e montada a provisoria | ordem da provisoria | aba pre-classificacao
+**resposta:** A aba Pré-classificação mostra, por vaga, a Lista Geral de Classificação Provisória (item 8.3.1): os inscritos que o robô da Empregare trouxe, em ordem decrescente da ART (a nota do questionário da Empregare, "24,0/30,0"). Quem não tem ART no arquivo entra pela nota declarada recalculada pela regra, com aviso. Empate na ART segue o desempate da regra (por padrão: idoso de 60 anos ou mais, o mais velho primeiro, e depois a candidatura mais antiga) e, por último, o código do candidato, para a ordem nunca variar. A Provisória tem caráter provisório e classificatório e não valida documentos: a conferência é na ficha, na etapa seguinte. Quem calcula é um job Python que roda no GitHub Actions e grava o resultado pronto; a tela só lê.
+**fato:** No MONITORA, a Provisória por ART é calculada pelo job Python da pré-classificação (scripts/pre_classificacao/) e gravada em TB_PRE_CLASSIFICACAO; a tela só lê.
+**fonte:** python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261006110000_pre_classificacao_e_lote.sql
+**abrir:** avaliacao-documental
+
+## Eliminação automática na Provisória
+
+**perguntas:** eliminacao automatica | eliminados automaticos | por que o candidato foi eliminado na provisoria | cancelado na provisoria | reprovado na empregare | recusou o termo | saiu do arquivo da empregare
+**resposta:** Antes de ordenar, cada inscrito passa pelas regras de eliminação automática da regra do edital, na ordem em que estão lá: por exemplo, a coluna SITUAÇÃO igual a "Cancelado" (cancelou a inscrição), a situação do questionário diferente de "Finalizado", REPROVADO = "Sim" na Empregare ou a resposta "Não estou de acordo" no termo de responsabilidade. A primeira que vale dá o motivo, que aparece em "Eliminados" na vaga e na lista oficial. O valor é comparado inteiro, sem diferença de acento e de caixa. Se a coluna que a regra cita não vier no arquivo, ninguém é eliminado por ela e a vaga mostra o aviso. Quem estava na lista e sumiu do arquivo da Empregare vira eliminado com o motivo "Saiu do arquivo da Empregare".
+**fonte:** src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py
+**abrir:** avaliacao-documental
+
+## Divergência entre a ART e a nota declarada
+
+**perguntas:** art diferente da nota declarada | diverge | art x declarada | nota declarada diferente | por que diverge
+**resposta:** A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × declarada". É só um aviso para a coordenação conferir o questionário ou a regra; a ordem da Provisória continua pela ART.
+**fonte:** src/lib/avaliacao-documental/nota-declarada.js; python/monitora/avaliacao_documental/nota_declarada.py
+**abrir:** avaliacao-documental
+
+## Lote de convocação e linha de corte
+
+**perguntas:** lote de convocacao | tamanho do lote | linha de corte | quem entra no lote | como e calculado o lote | lote por modalidade | empatados no lote | tamanho do lote por vaga | sugerido
+**resposta:** Só quem está no lote de convocação (item 8.4) segue para a avaliação documental; o último do lote é a linha de corte. O tamanho de cada vaga vem, nesta ordem: do número definido para a vaga na aba Pré-classificação (campo "Tamanho do lote", que vira versão nova da regra com motivo); do número fixo da regra; ou do múltiplo das vagas imediatas do quadro de vagas, com o cadastro reserva contando como mais uma vaga quando a regra inclui o CR (ex.: 3 × (11 + CR) = 36). Sem quadro de vagas não há como sugerir: a vaga mostra o aviso e ninguém entra até alguém definir o tamanho. No lote por modalidade, a ampla concorrência pega os primeiros de todos e depois cada cota pega os seus, entre os que ainda não entraram. Com "inclui os empatados", quem tem a mesma nota do último do lote também entra.
+**fato:** No MONITORA, o tamanho do lote de uma vaga é o definido para a vaga, o número fixo da regra ou o múltiplo das vagas imediatas do quadro (o cadastro reserva conta como mais uma vaga quando a regra inclui o CR).
+**fonte:** src/lib/avaliacao-documental/pre-classificacao.js; python/monitora/avaliacao_documental/pre_classificacao.py
+**abrir:** avaliacao-documental
+
+## A linha anda: reposição do lote
+
+**perguntas:** a linha anda | reposicao do lote | quem sai do lote | entrou no lote | lote 2 | novo lote | por que o candidato entrou no lote | inscrito novo acima do corte
+**resposta:** Quem entrou no lote só sai eliminado (por exemplo, cancelou a inscrição depois). Quando alguém sai e a regra manda repor ("a linha anda"), o próximo da Provisória entra num lote novo (2, 3…), com o motivo gravado: "Entrou no lugar de 7000654 (Cancelou a inscrição)". Sem reposição na regra, o lugar fica aberto e a vaga avisa. Um inscrito que chega depois com a ART maior não tira ninguém do lote: ele fica fora, e a vaga mostra o aviso "Fora do lote com nota acima da linha de corte". Quem já tem ficha não muda por recálculo. Antes das fichas, dá para refazer o lote do zero (modo refazer_lote do job, no GitHub). Toda entrada e saída fica no histórico.
+**fonte:** python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261006110000_pre_classificacao_e_lote.sql
+**abrir:** avaliacao-documental
+
+## Recalcular a pré-classificação
+
+**perguntas:** recalcular | recalcular a pre-classificacao | quando a provisoria atualiza | botao recalcular | edital sem regra conferida | pre-classificacao nao atualizou | job da pre-classificacao
+**resposta:** A pré-classificação roda sozinha no fim de cada carga do robô da Empregare, para os editais das vagas carregadas. A coordenação do edital também pode clicar em "Recalcular" na aba Pré-classificação (o administrador global usa o "Rodar agora" das Configurações › Status das atualizações, para todos os editais). O botão fica travado enquanto a regra não está conferida ou enquanto o job roda; a lista atualiza quando o job termina (a tela relê sozinha depois de alguns segundos, ou use Atualizar). Edital sem regra conferida não é calculado: o job explica no resumo e a aba mostra o aviso "Edital sem regra conferida".
+**fonte:** scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; api/rodar-carga.js
+**abrir:** avaliacao-documental
+
+## Listas Provisória e Lote de convocação
+
+**perguntas:** lista provisoria oficial | lote de convocacao oficial | registrar a lista provisoria | publicar o lote | copiar para o sei a provisoria | baixar docx da provisoria | publicar cada reposicao | lista lote
+**resposta:** Na aba Pré-classificação, quem coordena o edital (ou quem tem Editor na Classificação) registra a "Lista Geral de Classificação Provisória (ART)" e o "Lote de convocação". Registrar grava um retrato com hash na Classificação (tipos PROVISORIA e LOTE), montado no banco a partir da pré-classificação gravada; depois saem "Copiar para o SEI" e "Baixar DOCX", no mesmo modelo das outras listas (por vaga: classificação, nome e a nota da ART; a Provisória também tem a lista dos eliminados com o motivo). Os textos-padrão citam os itens 8.3.1 e 8.4 e podem ser trocados por edital na regra de classificação. Com "publica cada reposição" na regra, cada lote novo aparece para registrar como um novo Lote de Convocação; sem, aparece só o lote inicial e as reposições ficam registradas no histórico. Registrar exige a regra de classificação do edital; marcar como publicada exige Editor na Classificação.
+**fonte:** supabase/migrations/20261006110000_pre_classificacao_e_lote.sql; src/lib/classificacao/documento-sei.js
 **abrir:** avaliacao-documental
