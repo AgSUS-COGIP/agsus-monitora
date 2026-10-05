@@ -7,7 +7,7 @@
     E1  estrutura: tabelas novas com RLS e sem grant, as 8 RPCs SECURITY
         DEFINER com search_path vazio, a alterar_status de 4 argumentos fora,
         o domínio do status com Convocado e sem Fim de Fila, o gatilho;
-    E2  atores sintéticos (editor = edital_gestor, leitor = usuario, admin),
+    E2  atores sintéticos (editor = contratador, leitor = usuario, admin),
         um edital real sem lista de aprovados, uma lista antiga (substituída)
         com um convocado e uma carta já emitida, e a lista vigente com seis
         candidatos (um contratado e um que veio da lista antiga);
@@ -1069,7 +1069,7 @@ begin
 end;
 $$;
 
--- E2. Atores sintéticos (editor = edital_gestor, leitor = usuario, admin), um edital real
+-- E2. Atores sintéticos (editor = contratador, leitor = usuario, admin), um edital real
 --     sem lista, uma lista antiga (substituída) com uma carta já emitida e a lista vigente
 --     com seis candidatos.
 do $$
@@ -1091,7 +1091,7 @@ begin
     ('00000000-0000-4000-a000-00000000e402', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.carta.leitor@ensaio.invalid'),
     ('00000000-0000-4000-a000-00000000e403', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ensaio.carta.admin@ensaio.invalid');
   insert into public."TB_PERFIL_USUARIO" (user_id, email, nome, perfil, ativo) values
-    ('00000000-0000-4000-a000-00000000e401', 'ensaio.carta.editor@ensaio.invalid', 'Ensaio Editor', 'edital_gestor', true),
+    ('00000000-0000-4000-a000-00000000e401', 'ensaio.carta.editor@ensaio.invalid', 'Ensaio Editor', 'contratador', true),
     ('00000000-0000-4000-a000-00000000e402', 'ensaio.carta.leitor@ensaio.invalid', 'Ensaio Leitor', 'usuario', true),
     ('00000000-0000-4000-a000-00000000e403', 'ensaio.carta.admin@ensaio.invalid', 'Ensaio Admin', 'admin', true);
 
