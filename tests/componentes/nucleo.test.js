@@ -300,7 +300,13 @@ describe("tabela de editais", () => {
     expect($("nucleoRows").textContent).toBe("");
     expect(
       indicadores().querySelectorAll('.ui-kpi[aria-busy="true"]'),
-    ).toHaveLength(6);
+    ).toHaveLength(8);
+    // ED-1.4: os cartões de situação também nascem skeleton.
+    expect(
+      indicadores()
+        .querySelector('[data-kpi="ativos"]')
+        .getAttribute("aria-busy"),
+    ).toBe("true");
     expect(
       document.querySelector("#page-nucleo [data-status-da-carga]").textContent,
     ).toBe("Carregando dados...");
@@ -394,6 +400,50 @@ describe("painel operacional", () => {
     expect($("nucleoActiveAlertFilter")).toBeNull();
   });
 
+  /* Histórias em docs/historias-de-usuario/editais.md. */
+  it("ED-1.1 — mostra Editais ativos e inativos no formato dos outros cartões", async () => {
+    await montar();
+    const ativos = cartao("ativos");
+    const inativos = cartao("inativos");
+    expect(ativos.textContent).toContain("Editais ativos");
+    expect(ativos.querySelector(".ui-kpi-valor").textContent).toBe("2");
+    expect(inativos.textContent).toContain("Editais inativos");
+    expect(inativos.querySelector(".ui-kpi-valor").textContent).toBe("1");
+    expect(cartao("todos").textContent).toContain("Total de editais");
+    expect(ativos.closest(".ui-kpi").querySelector(".ui-kpi-icone")).not.toBe(
+      null,
+    );
+  });
+
+  it("ED-2.1/2.2/2.3/2.4 — clicar filtra, clicar de novo tira; o chip diz Situação", async () => {
+    await montar();
+    await clicar(cartao("inativos"));
+    expect(linhasDaTabela()).toEqual(["2"]);
+    expect(cartao("inativos").getAttribute("aria-pressed")).toBe("true");
+    expect($("nucleoActiveAlertFilter").textContent).toContain("Situação");
+    expect($("nucleoActiveAlertFilter").textContent).toContain(
+      "Editais inativos",
+    );
+
+    // ED-2.2: o mesmo cartão de novo tira o filtro.
+    await clicar(cartao("inativos"));
+    expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+    expect($("nucleoActiveAlertFilter")).toBeNull();
+
+    // ED-2.3: o "x" do chip tira.
+    await clicar(cartao("ativos"));
+    expect(linhasDaTabela()).toEqual(["3", "1"]);
+    await clicar($("nucleoActiveAlertFilter").querySelector(".ui-chip"));
+    expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+
+    // ED-2.4: outro indicador troca o filtro.
+    await clicar(cartao("ativos"));
+    await clicar(cartao("sem_cronograma"));
+    expect(linhasDaTabela()).toEqual(["3"]);
+    expect(cartao("ativos").getAttribute("aria-pressed")).toBe("false");
+    expect($("nucleoActiveAlertFilter").textContent).toContain("Alerta");
+  });
+
   it("reabrir a página com cache não chama a RPC nem recria os cartões", async () => {
     const { supabase } = await montar();
     const card = cartao("incompleto");
@@ -434,19 +484,17 @@ describe("painel operacional", () => {
     await montar({ supabase, abrir: false });
     const esqueleto = () =>
       indicadores().querySelectorAll('.ui-kpi[aria-busy="true"]');
-    expect(esqueleto()).toHaveLength(6);
+    expect(esqueleto()).toHaveLength(8);
     expect(indicadores().querySelector("b.ui-kpi-valor")).toBeNull();
     expect(cartao("todos")).toBeNull();
     const pendente = controlador.render();
     await esperar();
-    expect(esqueleto()).toHaveLength(6);
+    expect(esqueleto()).toHaveLength(8);
     await esperar(async () => {
       entregar({ data: [], error: null });
       await pendente;
     });
-    expect(indicadores().textContent).toContain(
-      "Nenhum edital ativo nesta área.",
-    );
+    expect(indicadores().textContent).toContain("Nenhum edital nesta área.");
   });
 
   it("erro oferece Tentar de novo, sem mostrar a mensagem do banco", async () => {
