@@ -236,6 +236,11 @@ export const CONTRATO_RPC = {
     resumo:
       "Identidade da tela de acesso, antes de autenticar. Só as seis chaves públicas de branding.",
   },
+  obter_ultima_conferencia: {
+    argumentos: ["p_fonte", "p_area"],
+    resumo:
+      "Hora em que a última carga da fonte (analises, selecao, entrevistas) terminou bem, mesmo sem mudanças; só quem pode ler a tela (migration 20261005140000).",
+  },
   usuario_pode_ler_analises: {
     argumentos: [],
     critica: true,
