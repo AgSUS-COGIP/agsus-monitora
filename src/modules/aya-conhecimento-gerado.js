@@ -898,6 +898,22 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "classificacao",
   },
   {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Publicar como lista de aprovados",
+    perguntas: [
+      "botao publicar como lista de aprovados na classificacao",
+      "resultado final vira lista de aprovados",
+      "classificacao e lista de aprovados",
+      "a classificacao alimenta a lista de aprovados",
+    ],
+    resposta:
+      'No MONITORA, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.',
+    fato: 'No MONITORA, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".',
+    fonte:
+      "src/modulos/classificacao/publicar-aprovados.jsx; src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
     arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Tela da Lista de aprovados",
     perguntas: [
@@ -989,6 +1005,91 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/lib/anexos-do-candidato.js; src/lib/lista-aprovados-rules.js; supabase/migrations/20260928235000_anexos_so_admin.sql",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Origem da lista de aprovados",
+    perguntas: [
+      "origem da lista de aprovados",
+      "de onde vem a lista de aprovados",
+      "lista manual planilha",
+      "publicada da classificacao",
+      "lista publicada da classificacao",
+      "o que e lista manual",
+    ],
+    resposta:
+      'No MONITORA, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.',
+    fato: "No MONITORA, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.",
+    fonte:
+      "src/lib/publicacao-de-aprovados.js; src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Publicar a lista de aprovados da Classificação",
+    perguntas: [
+      "publicar lista de aprovados da classificacao",
+      "como publicar a lista de aprovados",
+      "publicar da classificacao",
+      "lista de aprovados pela classificacao",
+    ],
+    resposta:
+      'Na Classificação, abra o edital, vá ao "Resultado final", gere a lista e clique em "Publicar como lista de aprovados" (Editor de Classificação, na área do edital; lista com empate pendente não publica, e só o resultado final mais recente). A confirmação compara com a lista vigente: quantos entram, saem, mudam de posição, quantos têm status ou sub judice preservados e quantos sub judice são mantidos. Publicar cria a nova lista vigente do edital; a anterior fica inativa no histórico, sem apagar nada. Pelo modal "Listas do edital" da Lista de aprovados, "Publicar da Classificação" leva à Classificação no edital.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/publicar-aprovados.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "O que a publicação preserva",
+    perguntas: [
+      "status preservado na publicacao",
+      "contratado continua contratado",
+      "publicar perde status",
+      "sub judice na publicacao",
+      "casamento dos candidatos",
+      "quem nao casou na publicacao",
+      "revisar candidatos da publicacao",
+    ],
+    resposta:
+      'Quem já estava na lista vigente leva para a lista nova o status (Contratado, Desistente…), a matrícula, o processo SEI, o sub judice e os anexos. A pessoa é reconhecida pela análise (lista já publicada da Classificação) ou, nas listas de planilha — que não trazem CPF nem código do candidato —, pelo nome sem acento e sem diferença de maiúsculas no mesmo edital, desempatando pela vaga. Quem tinha nota ou modalidade alterada por decisão judicial continua com a da decisão (a da Classificação vira a original, para desfazer) e é recolocado pela nota; quem foi incluído sub judice e não está no resultado continua na lista como sub judice. Homônimo que não se resolve e quem sai com status ou matrícula aparecem em "Revisar" na confirmação, para dizer quem é na lista nova ou que não está; quem sai continua na lista anterior, com tudo, e fica registrado na publicação. Sub judice segue editável na Lista de aprovados.',
+    fato: "",
+    fonte:
+      "src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Trocar pela planilha uma lista da Classificação",
+    perguntas: [
+      "importar xlsx sobre lista da classificacao",
+      "motivo para trocar pela planilha",
+      "substituir lista publicada da classificacao",
+      "planilha depois da classificacao",
+    ],
+    resposta:
+      "Se a lista vigente foi publicada da Classificação, o administrador de Importação ainda pode trocá-la por um XLSX, mas precisa informar o motivo (de 3 a 500 caracteres), que fica no histórico das publicações junto com quem e quando. Editais sem análise no sistema continuam importando a planilha como antes, sem motivo.",
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/modal-listas-do-edital.jsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Histórico das publicações da lista",
+    perguntas: [
+      "historico das publicacoes da lista de aprovados",
+      "quem publicou a lista de aprovados",
+      "auditoria da lista de aprovados",
+      "versao da regra da lista de aprovados",
+    ],
+    resposta:
+      'Cada lista que entra em vigor num edital fica registrada: publicada da Classificação (quem, quando, a lista de classificação, a versão da regra, o hash, quantos entraram, saíram, mudaram de posição, preservados e sub judice mantidos, os vínculos aplicados e quem ficou para revisão) ou importada por planilha (quem, quando e o motivo, quando trocou uma lista da Classificação). O modal "Listas do edital" mostra as últimas publicações.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql (TH_PUBLICACAO_APROVADO)",
+    abrir: "approved",
   },
   {
     arquivo: "regras-da-selecao.md",
