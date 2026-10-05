@@ -12,6 +12,11 @@
     publicar_lista_classificacao(p_lista)
     obter_lista_classificacao(p_lista)       retrato de uma geração anterior
     registrar_desempate_classificacao(...)   sorteio ou decisão manual
+    obter_publicacao_lista_aprovados(...)    a lista de aprovados vigente do
+                                             edital e os candidatos (prévia)
+    publicar_lista_aprovados_da_classificacao(...)  o resultado final vira a
+                                             lista de aprovados (migration
+                                             20261005160000)
     listar_configuracao_convocacao()         a configuração de convocação
     listar_modelos_convocacao()              dos editais (Lista de aprovados):
                                              as vagas por modalidade saem da
@@ -66,6 +71,8 @@ const RPC_REGISTRAR_LISTA = "registrar_lista_classificacao";
 const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
 const RPC_OBTER_LISTA = "obter_lista_classificacao";
 const RPC_REGISTRAR_DESEMPATE = "registrar_desempate_classificacao";
+const RPC_OBTER_PUBLICACAO = "obter_publicacao_lista_aprovados";
+const RPC_PUBLICAR_APROVADOS = "publicar_lista_aprovados_da_classificacao";
 const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
 const RPC_MODELOS_CONVOCACAO = "listar_modelos_convocacao";
 
@@ -347,6 +354,58 @@ export function criarEstadoDaClassificacao({
     }
   }
 
+  /*
+    A prévia de "Publicar como lista de aprovados": o retrato da lista FINAL e
+    a lista de aprovados vigente do edital, com os candidatos (o casamento das
+    pessoas e o resumo são de src/lib/publicacao-de-aprovados.js).
+  */
+  async function prepararPublicacaoDeAprovados(registrado) {
+    if (!registrado?.id || !estado.editalId) return null;
+    try {
+      const [alvo, situacao] = await Promise.all([
+        registrado.retrato
+          ? Promise.resolve(registrado)
+          : rpc(RPC_OBTER_LISTA, { p_lista: registrado.id }).then((d) =>
+              d?.resultado ? { ...d.lista, retrato: d.resultado } : null,
+            ),
+        rpc(RPC_OBTER_PUBLICACAO, {
+          p_edital: estado.editalId,
+          p_com_candidatos: true,
+        }),
+      ]);
+      if (!alvo?.retrato) throw new Error("Lista não encontrada.");
+      return { registrado: alvo, situacao: situacao || {} };
+    } catch (erro) {
+      return { erro: mensagemDoBanco(erro) };
+    }
+  }
+
+  /* Publica o resultado final como a lista de aprovados vigente. */
+  async function publicarComoListaDeAprovados({
+    listaId,
+    listaVigente,
+    vinculos,
+  }) {
+    try {
+      const resultado = await rpc(RPC_PUBLICAR_APROVADOS, {
+        p_lista_classificacao: listaId,
+        p_lista_vigente: listaVigente || null,
+        p_vinculos: vinculos || [],
+      });
+      toast(
+        `Lista de aprovados publicada: ${resultado?.candidatos ?? 0} candidato(s).`,
+        "success",
+      );
+      return resultado;
+    } catch (erro) {
+      toast(
+        `Não foi possível publicar a lista de aprovados: ${mensagemDoBanco(erro)}`,
+        "error",
+      );
+      return null;
+    }
+  }
+
   /* Sorteio (semente vazia = do servidor) ou decisão manual. */
   async function registrarDesempate(dados) {
     try {
@@ -508,6 +567,8 @@ export function criarEstadoDaClassificacao({
     publicarLista,
     obterLista,
     registrarDesempate,
+    prepararPublicacaoDeAprovados,
+    publicarComoListaDeAprovados,
     exportar,
     documentoDaLista,
     marcaDoDocumento,

@@ -151,6 +151,17 @@ describe("presença", () => {
     });
   });
 
+  it("Gestor desativado não consulta nem exibe pessoas online", async () => {
+    const { presenca, cliente } = montar({
+      perfil: { ...GESTOR, ativo: false },
+    });
+    await presenca.sincronizar();
+    expect(chamadas(cliente, "listar_presenca_online_monitora")).toHaveLength(
+      0,
+    );
+    expect(presenca.obter().visivel).toBe(false);
+  });
+
   it("bate a cada 45 s e avisa na hora a troca de lugar", async () => {
     vi.useFakeTimers();
     const { presenca, cliente, avisarNavegacao, mudar } = montar();

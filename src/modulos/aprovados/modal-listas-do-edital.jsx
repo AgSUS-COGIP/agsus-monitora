@@ -5,7 +5,11 @@ import {
 } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
 import { PLANILHAS } from "../../lib/planilhas.js";
-import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
+import {
+  MOTIVO_MAXIMO,
+  origemDaLista,
+} from "../../lib/publicacao-de-aprovados.js";
+import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
 
 /*
@@ -13,7 +17,20 @@ import { FormularioDeConvocacao } from "./formulario-de-convocacao.jsx";
   controlador) com a página de aprovados possivelmente escondida — por isso é
   um portal. Duas abas: o XLSX da lista de aprovados e a configuração da lista
   de convocação (`formulario-de-convocacao.jsx`).
+
+  A lista de aprovados vem do resultado final da Classificação quando o edital
+  tem análise no sistema (migration 20261005160000): o modal diz a origem da
+  lista vigente, oferece "Publicar da Classificação" (leva à Classificação no
+  edital) e, para trocar pela planilha uma lista publicada de lá, pede o
+  motivo. O XLSX continua para os editais sem análise no sistema.
 */
+
+const dataBR = (valor) => {
+  const d = new Date(valor);
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+};
 
 const MODELO = PLANILHAS.modeloListaAprovados;
 const TIPOS_ACEITOS =
@@ -22,6 +39,8 @@ const TIPOS_ACEITOS =
 function ResumoDaListaAtual({ lista, podeSubstituir }) {
   if (!lista)
     return <span className="approved-status neutral">Sem lista importada</span>;
+  const origem = origemDaLista(lista);
+  const daClassificacao = origem.tipo === "CLASSIFICACAO";
   return (
     <>
       <div className="approved-import-summary-head">
@@ -41,9 +60,15 @@ function ResumoDaListaAtual({ lista, podeSubstituir }) {
       </div>
       <div className="approved-import-summary-details">
         <div className="approved-import-summary-detail">
-          <span>Arquivo atual</span>
-          <strong>{lista.arquivo_nome || "Arquivo importado"}</strong>
+          <span>Origem</span>
+          <strong data-origem-da-lista={origem.tipo}>{origem.texto}</strong>
         </div>
+        {daClassificacao ? null : (
+          <div className="approved-import-summary-detail">
+            <span>Arquivo atual</span>
+            <strong>{lista.arquivo_nome || "Arquivo importado"}</strong>
+          </div>
+        )}
         <div className="approved-import-summary-detail compact">
           <span>Candidatos</span>
           <strong>
@@ -54,15 +79,79 @@ function ResumoDaListaAtual({ lista, podeSubstituir }) {
       {podeSubstituir ? (
         <div className="approved-import-replace-warning">
           <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
-          <span>Atenção: enviar um novo XLSX substituirá a lista atual.</span>
+          <span>
+            {daClassificacao
+              ? "Atenção: a lista foi publicada da Classificação; trocar pela planilha exige motivo."
+              : "Atenção: enviar um novo XLSX substituirá a lista atual."}
+          </span>
         </div>
       ) : null}
     </>
   );
 }
 
-function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
+function DaClassificacao({ estado, editalId, rotulo, publicacao }) {
+  const dados = publicacao?.dados;
+  if (!dados) return null;
+  const final = dados.resultado_final;
+  if (!final && !dados.tem_analises) return null;
+  return (
+    <Aviso tom="info" papel="status" className="approved-import-classificacao">
+      <span>
+        {final
+          ? `Este edital tem resultado final na Classificação (gerado em ${dataBR(final.gerada_em)}).`
+          : "Este edital tem análises no sistema: a lista de aprovados sai do resultado final da Classificação."}
+      </span>
+      <button
+        type="button"
+        className="btn secondary"
+        data-acao="ir-para-classificacao"
+        onClick={() => estado.irParaClassificacao(editalId, rotulo)}
+      >
+        <i className="fa-solid fa-list-ol" aria-hidden="true" />{" "}
+        {final ? "Publicar da Classificação" : "Abrir a Classificação"}
+      </button>
+    </Aviso>
+  );
+}
+
+function HistoricoDasPublicacoes({ publicacao }) {
+  const lista = publicacao?.dados?.publicacoes || [];
+  if (!lista.length) return null;
+  return (
+    <details className="approved-import-historico">
+      <summary>Histórico das publicações ({lista.length})</summary>
+      <ul>
+        {lista.map((p) => (
+          <li key={p.id}>
+            <strong>{dataBR(p.em)}</strong> ·{" "}
+            {p.origem === "CLASSIFICACAO"
+              ? `Classificação (regra v${p.versao_regra}): ${p.candidatos} candidatos, +${p.entram} −${p.saem}, ${p.mudam} mudaram de posição`
+              : `Planilha: ${p.candidatos} candidatos`}
+            {p.por ? ` · ${p.por}` : ""}
+            {p.motivo ? ` · Motivo: ${p.motivo}` : ""}
+            {p.pendencias?.length
+              ? ` · ${p.pendencias.length} para revisar: ${p.pendencias.map((x) => x.nome).join(", ")}`
+              : ""}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function PainelDoArquivo({
+  ativa,
+  estado,
+  perfil,
+  editalId,
+  rotulo,
+  lista,
+  publicacao,
+}) {
   const arquivo = useRef(null);
+  const [motivo, setMotivo] = useState("");
+  const daClassificacao = origemDaLista(lista)?.tipo === "CLASSIFICACAO";
   const podeImportar = canImportApprovedList(perfil);
   const podeSubstituir = canReplaceApprovedList(perfil);
   const soLeitura = Boolean(lista && !podeSubstituir);
@@ -93,6 +182,12 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
       >
         <ResumoDaListaAtual lista={lista} podeSubstituir={podeSubstituir} />
       </div>
+      <DaClassificacao
+        estado={estado}
+        editalId={editalId}
+        rotulo={rotulo}
+        publicacao={publicacao}
+      />
       {soLeitura ? (
         <p id="approvedImportPermissionNote" className="modal-note">
           Só admin substitui ou remove o XLSX.
@@ -117,6 +212,20 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
             e modalidade.
           </small>
         </div>
+        {daClassificacao && !soLeitura ? (
+          <div className="form-row full">
+            <label htmlFor="approvedImportMotivo">
+              Motivo para trocar pela planilha
+            </label>
+            <textarea
+              id="approvedImportMotivo"
+              rows={2}
+              maxLength={MOTIVO_MAXIMO}
+              value={motivo}
+              onChange={(evento) => setMotivo(evento.target.value)}
+            />
+          </div>
+        ) : null}
         <div className="form-row full">
           <label htmlFor="approvedImportActive">Situação da lista</label>
           <select
@@ -139,7 +248,7 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
           <i className="fa-solid fa-download" aria-hidden="true" /> Baixar
           modelo de importação
         </a>
-        {lista ? (
+        {lista && !daClassificacao ? (
           <button
             id="approvedImportDownloadCurrent"
             className="btn outline"
@@ -187,6 +296,7 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
                 editalId,
                 arquivo: arquivo.current?.files?.[0] || null,
                 ativo,
+                motivo,
               })
             }
           >
@@ -204,6 +314,7 @@ function PainelDoArquivo({ ativa, estado, perfil, editalId, lista }) {
           </BotaoDeAcao>
         ) : null}
       </div>
+      <HistoricoDasPublicacoes publicacao={publicacao} />
     </div>
   );
 }
@@ -228,6 +339,10 @@ const ABAS = [
 export function ModalListasDoEdital({ estado, dados, editalId, rotulo }) {
   const [aba, setAba] = useState("arquivo");
   const { perfil, listas, candidatos, configs, modelos } = dados;
+  const publicacao =
+    String(dados.publicacao?.editalId ?? "") === String(editalId)
+      ? dados.publicacao
+      : null;
   const lista = listas.find(
     (row) => String(row.edital_id) === String(editalId),
   );
@@ -272,7 +387,9 @@ export function ModalListasDoEdital({ estado, dados, editalId, rotulo }) {
           estado={estado}
           perfil={perfil}
           editalId={editalId}
+          rotulo={rotulo}
           lista={lista}
+          publicacao={publicacao}
         />
         <FormularioDeConvocacao
           ativa={aba === "convocacao"}

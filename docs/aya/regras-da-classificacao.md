@@ -55,8 +55,8 @@ dos PDFs oficiais).
 ## Convocação para entrevista
 
 **perguntas:** convocacao para entrevista da classificacao | limite da convocacao | como funciona o limite da convocacao | quantos candidatos sao convocados
-**resposta:** A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso.
-**fonte:** src/lib/classificacao/motor.js
+**resposta:** A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Entrevistas › Conduzir entrevistas convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.
+**fonte:** src/lib/classificacao/motor.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql
 **abrir:** classificacao
 
 ## Modalidades e vagas
@@ -150,4 +150,12 @@ dos PDFs oficiais).
 **perguntas:** nota alterada pelo recurso | recurso mudou a nota na classificacao | ajuste aprovado na classificacao | ha recursos aprovados depois desta lista | gere de novo a lista | lista desatualizada
 **resposta:** No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.
 **fonte:** src/lib/classificacao/motor.js (aplicarAjustes); src/lib/classificacao/ajustes.js; src/modulos/classificacao/listas.jsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
+**abrir:** classificacao
+
+## Publicar como lista de aprovados
+
+**perguntas:** botao publicar como lista de aprovados na classificacao | resultado final vira lista de aprovados | classificacao e lista de aprovados | a classificacao alimenta a lista de aprovados
+**resposta:** No MONITORA, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.
+**fato:** No MONITORA, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".
+**fonte:** src/modulos/classificacao/publicar-aprovados.jsx; src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
 **abrir:** classificacao

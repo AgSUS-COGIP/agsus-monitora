@@ -1,7 +1,9 @@
 # Regras do sistema
 
 O que vale em todas as telas: Pessoas online, atualização do sistema e busca global. Fontes:
-`src/lib/online-presence.js`, `src/modules/legacy-app.js` (presença e `navigate`),
+`src/lib/online-presence.js`, `src/app/presenca.js`,
+`supabase/migrations/20261005151618_presenca_para_gestor.sql` (admin global e Gestor ativos),
+`src/modules/legacy-app.js` (`navigate`),
 `src/modules/pwa-lifecycle.js`, `src/lib/busca-global.js` e
 `src/componentes/busca-global/busca-global.jsx`.
 

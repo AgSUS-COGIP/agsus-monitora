@@ -1320,6 +1320,122 @@ describe("modal de listas do edital", () => {
   });
 });
 
+describe("lista de aprovados publicada da Classificação", () => {
+  const DA_CLASSIFICACAO = {
+    ...LISTA_ATIVA,
+    origem: "CLASSIFICACAO",
+    lista_classificacao_id: "lc1",
+    arquivo_nome: "Classificação — resultado final (regra v2)",
+    arquivo_path: "",
+    importado_em: "2026-10-05T15:00:00Z",
+  };
+  const SITUACAO = {
+    edital_id: "10",
+    pode_publicar: true,
+    tem_analises: true,
+    resultado_final: {
+      id: "lc2",
+      gerada_em: "2026-10-05T18:00:00Z",
+      versao_regra: 2,
+      pendencias: 0,
+    },
+    vigente: { lista_id: "L10", origem: "CLASSIFICACAO" },
+    publicacoes: [
+      {
+        id: "p1",
+        origem: "CLASSIFICACAO",
+        em: "2026-10-05T15:00:00Z",
+        por: "Gestora",
+        versao_regra: 2,
+        candidatos: 3,
+        entram: 1,
+        saem: 1,
+        mudam: 2,
+        pendencias: [{ nome: "Fulano Fora" }],
+      },
+    ],
+  };
+  function comSituacao(supabase, situacao = SITUACAO) {
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation((nome, argumentos) =>
+      nome === "obter_publicacao_lista_aprovados"
+        ? Promise.resolve({ data: situacao, error: null })
+        : original(nome, argumentos),
+    );
+    return supabase;
+  }
+  const abrir = (editalId = "10") =>
+    esperar(() =>
+      controlador.openImportModal(editalId, "03/2025 · DSEI Manaus"),
+    );
+
+  it("mostra a origem; trocar pela planilha pede motivo e o manda ao banco", async () => {
+    const supabase = comSituacao(
+      supabaseFalso({ listas: [DA_CLASSIFICACAO, LISTA_INATIVA] }),
+    );
+    const { toast } = await montar({ perfil: { perfil: "admin" }, supabase });
+    await abrir();
+    expect($("approvedImportCurrentState").textContent).toContain(
+      "Publicada da Classificação em 05/10",
+    );
+    expect($("approvedImportDownloadCurrent")).toBeNull();
+    Object.defineProperty($("approvedImportFile"), "files", {
+      value: [new File(["x"], "troca.xlsx")],
+    });
+    supabase.rpc.mockClear();
+    await clicar($("approvedImportSubmit"));
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("informe o motivo"),
+      "warn",
+    );
+    expect(supabase.rpc).not.toHaveBeenCalledWith(
+      "importar_lista_aprovados",
+      expect.anything(),
+    );
+    await digitar($("approvedImportMotivo"), "Edital sem análise no sistema");
+    await clicar($("approvedImportSubmit"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "importar_lista_aprovados",
+      expect.objectContaining({
+        p_substituir: true,
+        p_motivo: "Edital sem análise no sistema",
+      }),
+    );
+  });
+
+  it("edital com resultado final oferece publicar da Classificação e mostra o histórico", async () => {
+    const supabase = comSituacao(supabaseFalso());
+    await montar({ perfil: { perfil: "admin" }, supabase });
+    window.navigate = vi.fn();
+    await abrir();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "obter_publicacao_lista_aprovados",
+      {
+        p_edital: "10",
+        p_com_candidatos: false,
+      },
+    );
+    const botao = document.querySelector("[data-acao='ir-para-classificacao']");
+    expect(botao.textContent).toContain("Publicar da Classificação");
+    expect(
+      document.querySelector(".approved-import-historico").textContent,
+    ).toContain("Fulano Fora");
+    await clicar(botao);
+    expect(window.navigate).toHaveBeenCalledWith("classificacao");
+    expect($("approvedImportModal")).toBeNull();
+    delete window.navigate;
+  });
+
+  it("a aba de aprovados diz a origem das listas", async () => {
+    await montar({
+      supabase: supabaseFalso({ listas: [DA_CLASSIFICACAO, LISTA_INATIVA] }),
+    });
+    expect(document.querySelector("[data-origem-das-listas]").textContent).toBe(
+      "Listas: 1 publicada da Classificação · 1 manual (planilha)",
+    );
+  });
+});
+
 /*
   Só as listas e os candidatos dos editais da área escolhida no menu: o
   recorte é pelo conjunto de ids das linhas do monitoramento daquela área.

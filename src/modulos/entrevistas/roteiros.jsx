@@ -32,7 +32,6 @@ import {
   BotaoDeLinha,
   ComposicaoDaBanca,
   numeroBR,
-  RegraDeConvocacao,
   trocarNaLista,
 } from "./partes.jsx";
 
@@ -853,15 +852,6 @@ export function EditorDeRoteiro({
               erros={errosVisiveis}
               somenteLeitura={somenteLeitura}
               aoMudar={(desempate) => mudar({ desempate })}
-            />
-          </SecaoDoFormulario>
-
-          <SecaoDoFormulario titulo="Convocação padrão" icone="fa-bullhorn">
-            <RegraDeConvocacao
-              valor={r.convocacao}
-              erros={errosVisiveis}
-              somenteLeitura={somenteLeitura}
-              aoMudar={(convocacao) => mudar({ convocacao })}
             />
           </SecaoDoFormulario>
 

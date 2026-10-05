@@ -1,31 +1,39 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.js";
+import { enquadramentoDoRecorte } from "../../lib/enquadramento-do-brasil.js";
+import { OPACIDADE_DA_BOLHA } from "../../lib/mapa-render.js";
 import {
   MAPA_DOS_MUNICIPIOS,
   TEXTOS_DO_MAPA,
+  lugaresDoRecorte,
   plural,
   pontosDosMunicipios,
   projetosDosMunicipios,
 } from "../../lib/visao-geral-da-area.js";
-import { EstadoVazio, classes } from "../../ui/index.js";
+import { classes } from "../../ui/index.js";
 import { LegendaFlutuante } from "../mapa-saude-indigena/legenda.jsx";
 import {
-  criarMapaDoBrasil,
-  enquadrarNoBrasil,
+  criarLeque,
+  enquadrar,
   ligarDicaEPopup,
   obterLeaflet,
   remedir,
-  voltarAoBrasil,
 } from "../mapa-saude-indigena/leaflet.js";
+import {
+  MolduraDoMapa,
+  TopoDoMapa,
+  classesDoPainel,
+  propsDoEditor,
+  usarMapaDoBrasil,
+} from "../mapa-saude-indigena/painel-do-mapa.jsx";
 import { usarTelaCheia } from "../mapa-saude-indigena/tela-cheia.jsx";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.js";
 import { balaoDoLugar } from "./balao.js";
 import { ESCOLHA_INICIAL } from "./carregador.js";
 import { EditorDeCoordenadasDosProjetos } from "./editor-de-coordenadas.jsx";
 import {
-  BotaoDeRecolher,
   PainelDoEditor,
   usarModoDeEdicao,
 } from "../editor-de-coordenadas/modo-de-edicao.jsx";
@@ -34,13 +42,21 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
 /*
   MAPA DE PROJETOS (React)
 
-  O mapa da Visão geral da área Projetos, irmão do da Saúde Indígena
-  (src/modulos/mapa-saude-indigena/, de onde vêm o Leaflet, os contornos, as
-  dicas que não saem do mapa, a legenda flutuante e a tela cheia): um ponto
-  por lugar das vagas de todos os projetos — município, ou o meio do estado
-  quando o edital só diz a UF —, na cor do projeto, com o tamanho pelas
-  vagas, e a lista "Municípios por vagas" ao lado, com filtro e agrupamento
-  por projeto. Lógica pura em src/lib/visao-geral-da-area.js.
+  O mapa da Visão geral da área Projetos, com as MESMAS regras do da Saúde
+  Indígena (src/modulos/mapa-saude-indigena/): o painel, o topo (Coordenadas,
+  Brasil, Tela cheia), a moldura, a lista lateral, o leque, o enquadramento e
+  o observador de tamanho são as peças comuns de painel-do-mapa.jsx e
+  leaflet.js. Muda o que vai no mapa: um ponto por lugar das vagas de todos
+  os projetos — município, ou o meio do estado quando o edital só diz a UF —,
+  na cor do projeto, com o tamanho pelas vagas (a regra da bolha do DSEI), e a
+  lista "Municípios por vagas", com filtro e agrupamento por projeto. Lógica
+  pura em src/lib/visao-geral-da-area.js.
+
+  Os filtros da Visão geral valem aqui como na Saúde Indígena: com recorte
+  (`filtroAtivo`), só os lugares com algum edital das `linhas` recortadas
+  (`lugaresDoRecorte`). Enquadramento (`enquadramentoDoRecorte`): sem filtro
+  — nem da página, nem o "Projeto" da lista —, o Brasil; com filtro, o ponto
+  ou a caixa dos pontos que sobraram.
 
   Busca os lugares pelo `carregador` (carregador.js, um por Visão geral, com
   cache), só depois da primeira carga da página (`carregadoEm`: antes do
@@ -55,6 +71,9 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.jsx";
 */
 
 const TEXTOS = TEXTOS_DO_MAPA[MAPA_DOS_MUNICIPIOS];
+const SEM_LINHAS = Object.freeze([]);
+// Clicar num lugar da lista aproxima até, no mínimo, o zoom do ponto do recorte.
+const ZOOM_DO_LUGAR = 7;
 
 /*
   Os lugares da área: `null` enquanto carrega. O cache fresco responde já
@@ -85,6 +104,8 @@ export function MapaDeProjetos({
   area = "projetos",
   carregador,
   carregadoEm = 0,
+  linhas = SEM_LINHAS,
+  filtroAtivo = false,
   tema,
   idDoMapa = "mapaDosProjetos",
   perfil,
@@ -109,6 +130,10 @@ export function MapaDeProjetos({
       ),
     [lidos, corrigidas],
   );
+  const noRecorte = useMemo(
+    () => (filtroAtivo ? lugaresDoRecorte(municipios, linhas) : municipios),
+    [municipios, linhas, filtroAtivo],
+  );
 
   const [escolhaGuardada, definirEscolha] = useState(
     () => carregador?.obterEscolha?.() ?? ESCOLHA_INICIAL,
@@ -118,76 +143,67 @@ export function MapaDeProjetos({
     definirEscolha((atual) => ({ ...atual, ...mudanca }));
   };
 
-  const projetos = useMemo(
-    () => projetosDosMunicipios(municipios),
-    [municipios],
-  );
-  // Projeto que sumiu dos dados volta a "todos".
+  const projetos = useMemo(() => projetosDosMunicipios(noRecorte), [noRecorte]);
+  // Projeto que sumiu dos dados (ou do recorte) volta a "todos".
   const escolha = projetos.some(
     (projeto) => projeto.nome === escolhaGuardada.projeto,
   )
     ? escolhaGuardada
     : { ...escolhaGuardada, projeto: "" };
   const pontos = useMemo(
-    () => pontosDosMunicipios(municipios, { projeto: escolha.projeto }),
-    [municipios, escolha.projeto],
+    () =>
+      pontosDosMunicipios(noRecorte, {
+        projeto: escolha.projeto,
+        todos: municipios,
+      }),
+    [noRecorte, municipios, escolha.projeto],
+  );
+  const enquadramento = useMemo(
+    () =>
+      enquadramentoDoRecorte({
+        pontos: pontos
+          .filter((ponto) => ponto.coordenadas)
+          .map((ponto) => ponto.coordenadas),
+        filtroAtivo: filtroAtivo || Boolean(escolha.projeto),
+      }),
+    [pontos, filtroAtivo, escolha.projeto],
   );
 
-  // ── Leaflet ────────────────────────────────────────────────────────────
-  const refDoMapa = useRef(null);
-  const [mapa, definirMapa] = useState(null);
-  const camada = useRef(null);
-  const marcadores = useRef(new Map());
-  const ultimoEnquadramento = useRef("");
-  // pegar/soltar do criarMapaDoBrasil: acompanhar ou não o tamanho do contêiner.
-  const controle = useRef({ pegar() {}, soltar() {} });
-  // Quantas vezes o enquadramento teve de ser refeito (apareceu, mudou de tamanho).
-  const [aparecimentos, aparecer] = useReducer((n) => n + 1, 0);
+  // ── Leaflet (as peças comuns aos dois mapas nacionais) ─────────────────
+  const { refDoMapa, mapa, camadas, ultimoEnquadramento, aparecimentos } =
+    usarMapaDoBrasil(L, {
+      telaCheia,
+      aoCriar: (novo) => {
+        const lugares = L.layerGroup().addTo(novo);
+        const leque = criarLeque(L, novo, lugares);
+        return {
+          lugares,
+          leque,
+          marcadores: new Map(),
+          parar: leque.parar,
+        };
+      },
+    });
   const modo = usarModoDeEdicao({
     mapa,
     permitido: podeEditar,
-    pegar: () => controle.current.pegar(),
+    pegar: () => camadas.current?.pegar(),
   });
-  const idDoPainel = `${idDoMapa}-coordenadas`;
-
-  // Cria o mapa uma vez; o StrictMode desfaz e refaz, e o `remove` limpa tudo.
-  useEffect(() => {
-    const elemento = refDoMapa.current;
-    if (!L || !elemento) return undefined;
-    const {
-      mapa: novo,
-      pegar,
-      soltar,
-      parar,
-    } = criarMapaDoBrasil(L, elemento, {
-      aoReenquadrar: () => {
-        ultimoEnquadramento.current = "";
-        aparecer();
-      },
-    });
-    camada.current = L.layerGroup().addTo(novo);
-    controle.current = { pegar, soltar };
-    ultimoEnquadramento.current = "";
-    definirMapa(novo);
-    return () => {
-      parar();
-      novo.remove();
-      camada.current = null;
-      definirMapa(null);
-    };
-  }, [L]);
+  const idDoPainel = `${idDoMapa}-painel-lateral`;
 
   // Um ponto por lugar com coordenada, na cor do projeto.
   useEffect(() => {
-    if (!mapa || !camada.current) return;
-    camada.current.clearLayers();
-    marcadores.current = new Map();
+    if (!mapa || !camadas.current) return;
+    const { lugares, leque } = camadas.current;
+    lugares.clearLayers();
+    leque.limpar();
+    const marcadores = new Map();
     for (const ponto of pontos) {
       if (!ponto.coordenadas) continue;
       const marcador = L.circleMarker(ponto.coordenadas, {
         radius: ponto.raio,
         weight: 2,
-        fillOpacity: 0.78,
+        fillOpacity: OPACIDADE_DA_BOLHA,
         className: classes(
           "marcador-de-projeto",
           `marcador-de-projeto--${ponto.serie}`,
@@ -198,51 +214,42 @@ export function MapaDeProjetos({
         dica: balaoDoLugar(document, ponto),
         popup: balaoDoLugar(document, ponto),
       });
-      camada.current.addLayer(marcador);
-      marcadores.current.set(ponto.chave, marcador);
+      lugares.addLayer(marcador);
+      leque.adicionar(marcador, ...ponto.coordenadas);
+      marcadores.set(ponto.chave, marcador);
     }
-  }, [L, mapa, pontos]);
+    camadas.current.marcadores = marcadores;
+    leque.aplicar();
+  }, [L, mapa, camadas, pontos]);
 
   /*
-    Enquadramento: na primeira carga e ao trocar o projeto (não ao agrupar),
-    só quando muda o que enquadrar; ao reaparecer ou mudar de tamanho sem a
-    pessoa ter mexido (`criarMapaDoBrasil`), de novo.
+    Enquadramento: só quando muda o que enquadrar (filtro da página, "Projeto"
+    da lista — não ao agrupar) e, ao reaparecer ou mudar de tamanho sem a
+    pessoa ter mexido (`usarMapaDoBrasil`), de novo. Enquanto carrega, fica
+    no Brasil da criação.
   */
-  const noMapa = useMemo(
-    () => pontos.filter((ponto) => ponto.coordenadas),
-    [pontos],
-  );
-  const chaveDoEnquadramento = carregando
-    ? ""
-    : `${escolha.projeto}|${noMapa.map((ponto) => ponto.chave).join(";")}`;
   useEffect(() => {
-    if (!mapa || !chaveDoEnquadramento) return;
-    if (chaveDoEnquadramento === ultimoEnquadramento.current) return;
-    ultimoEnquadramento.current = chaveDoEnquadramento;
+    if (!mapa || !camadas.current || carregando) return;
+    if (enquadramento.chave === ultimoEnquadramento.current) return;
+    ultimoEnquadramento.current = enquadramento.chave;
     remedir(mapa);
     try {
-      if (noMapa.length)
-        mapa.fitBounds(
-          L.latLngBounds(noMapa.map((ponto) => ponto.coordenadas)),
-          {
-            padding: [60, 60],
-            maxZoom: 7,
-            animate: false,
-          },
-        );
-      else enquadrarNoBrasil(L, mapa);
+      enquadrar(L, mapa, enquadramento);
     } catch {
       // mapa sem tamanho ainda; o ResizeObserver reenquadra
     }
-    controle.current.soltar();
-  }, [L, mapa, chaveDoEnquadramento, noMapa, aparecimentos]);
-
-  // Mudou para tela cheia (ou voltou): o Leaflet remede.
-  useEffect(() => {
-    if (!mapa) return undefined;
-    const quadro = requestAnimationFrame(() => remedir(mapa));
-    return () => cancelAnimationFrame(quadro);
-  }, [mapa, telaCheia]);
+    camadas.current.soltar();
+    // Se o enquadramento não mudou o zoom, o `zoomend` não dispara.
+    camadas.current.leque.aplicar();
+  }, [
+    L,
+    mapa,
+    camadas,
+    ultimoEnquadramento,
+    enquadramento,
+    carregando,
+    aparecimentos,
+  ]);
 
   const chamadas = usarUltimo({
     aoAtualizarCoordenada: (data, ponto) => {
@@ -257,11 +264,13 @@ export function MapaDeProjetos({
         { lugar, latitude, longitude },
       ]);
     },
+    // A lista leva ao ponto: aproxima e abre o popup (Projetos não tem o
+    // nível do DSEI; o popup é o detalhe do lugar).
     aoEscolher: (ponto) => {
-      const marcador = marcadores.current.get(ponto?.chave);
+      const marcador = camadas.current?.marcadores.get(ponto?.chave);
       if (!mapa || !marcador) return;
-      controle.current.pegar();
-      mapa.setView(ponto.coordenadas, Math.max(mapa.getZoom(), 7), {
+      camadas.current.pegar();
+      mapa.setView(ponto.coordenadas, Math.max(mapa.getZoom(), ZOOM_DO_LUGAR), {
         animate: true,
       });
       marcador.openPopup?.();
@@ -280,66 +289,30 @@ export function MapaDeProjetos({
       role="region"
     >
       <section
-        className={classes(
-          "ui-card mapa-si-painel mapa-si-painel--nacional",
-          modo.editando && "mapa-si-painel--editando",
-        )}
+        className={classesDoPainel(modo)}
         aria-labelledby={`${idDoMapa}-titulo`}
       >
-        <header className="mapa-si-painel__topo">
-          <h2 className="ui-titulo" id={`${idDoMapa}-titulo`}>
-            {TEXTOS.titulo}
-          </h2>
-          <span className="mapa-si-painel__contagem">
-            {carregando
-              ? "…"
-              : plural(pontos.length, "município", "municípios")}
-          </span>
-          <div className="mapa-si-painel__acoes">
-            {podeEditar ? (
-              <button
-                type="button"
-                className="btn small"
-                aria-pressed={modo.editando}
-                aria-expanded={modo.editando}
-                aria-controls={idDoPainel}
-                title={modo.editando ? "Sair da edição (Esc)" : undefined}
-                onClick={modo.alternar}
-              >
-                Coordenadas
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="btn small"
-              onClick={() => {
-                voltarAoBrasil(L, mapa);
-                controle.current.soltar();
-              }}
-              disabled={!mapa}
-              title="Voltar à visão do Brasil inteiro"
-            >
-              Brasil
-            </button>
-            {modo.editando ? null : botaoDeTelaCheia}
-          </div>
-        </header>
+        <TopoDoMapa
+          L={L}
+          mapa={mapa}
+          camadas={camadas}
+          idDoMapa={idDoMapa}
+          titulo={TEXTOS.titulo}
+          contagem={
+            carregando ? "…" : plural(pontos.length, "município", "municípios")
+          }
+          podeEditar={podeEditar}
+          modo={modo}
+          idDoPainel={idDoPainel}
+          acoes={botaoDeTelaCheia}
+        />
         <div className="mapa-si-painel__corpo">
-          <div className="mapa-si-moldura">
-            {L ? (
-              <div
-                ref={refDoMapa}
-                id={idDoMapa}
-                className="mapa-si-mapa"
-                role="img"
-                aria-label={TEXTOS.mapa}
-              />
-            ) : (
-              <EstadoVazio className="ui-vazio mapa-si-sem-mapa">
-                Mapa indisponível sem conexão: o fundo geográfico precisa de
-                internet.
-              </EstadoVazio>
-            )}
+          <MolduraDoMapa
+            L={L}
+            refDoMapa={refDoMapa}
+            idDoMapa={idDoMapa}
+            rotulo={TEXTOS.mapa}
+          >
             {mapa ? (
               <LegendaFlutuante>
                 {projetos.map((projeto) => (
@@ -360,7 +333,7 @@ export function MapaDeProjetos({
                 </span>
               </LegendaFlutuante>
             ) : null}
-          </div>
+          </MolduraDoMapa>
           {modo.editando ? (
             <PainelDoEditor
               id={idDoPainel}
@@ -376,24 +349,18 @@ export function MapaDeProjetos({
                 aoAtualizarMapa={(data, ponto) =>
                   chamadas.current.aoAtualizarCoordenada(data, ponto)
                 }
-                aoFechar={modo.fechar}
-                areaLivre={modo.areaLivre}
-                versaoDaArea={modo.versaoDaArea}
-                botaoDeRecolher={
-                  <BotaoDeRecolher
-                    modo={modo}
-                    idDoConteudo={`${idDoPainel}-conteudo`}
-                  />
-                }
+                {...propsDoEditor(modo, idDoPainel)}
               />
             </PainelDoEditor>
           ) : (
             <ListaDeMunicipios
-              id={`${idDoMapa}-lista`}
+              id={idDoPainel}
+              idDoTitulo={`${idDoMapa}-lista`}
               titulo={TEXTOS.lista}
               carregando={carregando}
               indisponivel={resultado?.indisponivel}
               erro={resultado?.erro}
+              noRecorte={filtroAtivo}
               pontos={pontos}
               projetos={projetos}
               escolha={escolha}

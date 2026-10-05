@@ -1,9 +1,11 @@
 /*
   Condução da entrevista de um edital, sem React e sem banco: a configuração
-  (roteiro, convocação, banca, modo de lançamento, vagas imediatas, membros),
-  a convocação sugerida pela regra, a ficha de notas e o cálculo do resultado.
+  (roteiro, composição da banca, modo de lançamento, membros), a ficha de
+  notas e o cálculo do resultado. A convocação é a lista da Classificação
+  (src/lib/convocacao-da-entrevista.js): aqui não há regra nem vagas próprias.
 
-  O contrato é o da migration 20260930220000_entrevistas_roteiros_e_notas.sql
+  O contrato é o das migrations 20260930220000_entrevistas_roteiros_e_notas.sql
+  e 20261005150000_convocacao_unica_da_entrevista.sql
   (`obter_entrevistas_do_edital` e as RPCs de escrita, que devolvem o mesmo
   payload).
 
@@ -16,10 +18,7 @@ import {
   arredondar,
   bancaDoRascunho,
   bancaParaRascunho,
-  convocacaoDoRascunho,
-  convocacaoParaRascunho,
   errosDaBanca,
-  errosDaConvocacao,
   lerNumero,
   minimoEmPontos,
   novaChave,
@@ -174,22 +173,8 @@ export function rascunhoDaConfiguracao(dados) {
   const cfg = dados?.configuracao || null;
   return {
     roteiro: cfg?.roteiro?.id || "",
-    convocacao: convocacaoParaRascunho(cfg?.convocacao),
     banca: bancaParaRascunho(cfg?.banca),
     lancamento: cfg?.lancamento === "AVALIADOR" ? "AVALIADOR" : "SECRETARIA",
-    vagas: (dados?.vagas || []).map((v) => ({
-      vaga: texto(v.vaga),
-      cargo: texto(v.cargo),
-      aprovados: Number(v.aprovados) || 0,
-      vagas_imediatas: textoDoNumero(v.vagas_imediatas),
-      salvas: Boolean(v.vagas_imediatas_salvas),
-      /* De onde veio o número: "manual" (digitado aqui), "quadro" (quadro do edital) ou "lista". */
-      origem: texto(v.vagas_imediatas_origem),
-      lotacao_quadro: texto(v.lotacao_quadro),
-      sugerido: v.vagas_imediatas_salvas
-        ? ""
-        : textoDoNumero(v.vagas_imediatas),
-    })),
     avaliadores: (dados?.avaliadores || [])
       .filter((a) => a.ativo !== false)
       .map((a) => ({
@@ -204,15 +189,14 @@ export function rascunhoDaConfiguracao(dados) {
 }
 
 /**
- * Escolher o roteiro pré-preenche a convocação e a composição da banca com o
- * padrão dele (a pessoa pode mudar depois).
+ * Escolher o roteiro pré-preenche a composição da banca com o padrão dele (a
+ * pessoa pode mudar depois).
  */
 export function aplicarRoteiroNaConfiguracao(rascunho, roteiro) {
   if (!roteiro) return { ...rascunho, roteiro: "" };
   return {
     ...rascunho,
     roteiro: roteiro.id,
-    convocacao: convocacaoParaRascunho(roteiro.convocacao_padrao),
     banca: bancaParaRascunho(roteiro.banca_padrao),
   };
 }
@@ -240,19 +224,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function errosDaConfiguracao(r) {
   const erros = {};
   if (!r?.roteiro) erros.roteiro = "Escolha o roteiro da entrevista.";
-  Object.assign(
-    erros,
-    errosDaConvocacao(r?.convocacao),
-    errosDaBanca(r?.banca),
-  );
-  for (const v of r?.vagas || []) {
-    const n = lerNumero(v.vagas_imediatas);
-    if (
-      n !== null &&
-      (Number.isNaN(n) || !Number.isInteger(n) || n < 0 || n > 999)
-    )
-      erros[`vaga.${v.vaga}`] = "Vagas imediatas: número inteiro de 0 a 999.";
-  }
+  Object.assign(erros, errosDaBanca(r?.banca));
   for (const a of r?.avaliadores || []) {
     const p = `avaliador.${a.chave}`;
     const nome = texto(a.nome);
@@ -276,27 +248,15 @@ export function errosDaConfiguracao(r) {
   return erros;
 }
 
-/** O `p_dados` de `configurar_entrevista_edital`. */
+/**
+ * O `p_dados` de `configurar_entrevista_edital`: sem regra de convocação nem
+ * vagas imediatas (as da Classificação valem).
+ */
 export function dadosDaConfiguracaoParaSalvar(r) {
   return {
     roteiro: r.roteiro,
-    convocacao: convocacaoDoRascunho(r.convocacao),
     banca: bancaDoRascunho(r.banca),
     lancamento: r.lancamento === "AVALIADOR" ? "AVALIADOR" : "SECRETARIA",
-    /*
-      Só vai o que foi digitado aqui: o número que veio do quadro do edital (ou
-      da lista de convocação) e não foi mexido continua acompanhando a fonte.
-    */
-    vagas: (r.vagas || [])
-      .filter(
-        (v) =>
-          numero(v.vagas_imediatas) !== null &&
-          (v.salvas || numero(v.vagas_imediatas) !== numero(v.sugerido)),
-      )
-      .map((v) => ({
-        vaga: v.vaga,
-        vagas_imediatas: numero(v.vagas_imediatas),
-      })),
     avaliadores: (r.avaliadores || []).map((a) => {
       const membro = {
         nome: texto(a.nome),
@@ -308,120 +268,6 @@ export function dadosDaConfiguracaoParaSalvar(r) {
       return membro;
     }),
   };
-}
-
-/* ── Convocação ────────────────────────────────────────────────────── */
-
-/**
- * A regra que vale para o cargo: a padrão, ou a exceção cujo termo aparece no
- * cargo (sem diferenciar maiúsculas nem acentos).
- */
-export function regraDaVaga(convocacao, cargo) {
-  const base = {
-    multiplo: numero(convocacao?.multiplo_imediatas),
-    posicao: numero(convocacao?.posicao_cadastro_reserva),
-    termo: null,
-  };
-  const alvo = normalizarBusca(cargo);
-  for (const e of convocacao?.excecoes || []) {
-    const termo = normalizarBusca(e?.termo_cargo);
-    if (termo && alvo.includes(termo)) {
-      return {
-        multiplo: numero(e.multiplo_imediatas) ?? base.multiplo,
-        posicao: numero(e.posicao_cadastro_reserva) ?? base.posicao,
-        termo: texto(e.termo_cargo),
-      };
-    }
-  }
-  return base;
-}
-
-/**
- * Até que posição convocar: múltiplo × vagas imediatas, ou (sem vaga
- * imediata) a posição do cadastro reserva. Sem regra, 0.
- */
-export function limiteDeConvocacao(regra, vagasImediatas) {
-  const imediatas = numero(vagasImediatas) ?? 0;
-  if (imediatas > 0) return Math.max(0, (regra?.multiplo ?? 0) * imediatas);
-  return Math.max(0, regra?.posicao ?? 0);
-}
-
-export function textoDaRegra(regra, vagasImediatas, limite) {
-  const imediatas = numero(vagasImediatas) ?? 0;
-  const base =
-    imediatas > 0
-      ? `${regra.multiplo ?? 0}× ${imediatas} ${imediatas === 1 ? "vaga imediata" : "vagas imediatas"}`
-      : `só cadastro reserva: até a ${regra.posicao ?? 0}ª posição`;
-  const excecao = regra.termo ? ` (exceção “${regra.termo}”)` : "";
-  return `${base}${excecao} → convocar até a ${limite}ª posição`;
-}
-
-/**
- * Os aprovados de cada vaga, na ordem da análise, com a sugestão da regra e
- * quem já foi convocado. Convocado que não está mais entre os aprovados
- * (análise mudou) aparece em `fora`.
- */
-export function gruposDeConvocacao(dados) {
-  const convocacao = dados?.configuracao?.convocacao || {};
-  const convocadoPorAnalise = new Map(
-    (dados?.convocados || []).map((c) => [c.analise_id, c]),
-  );
-  const vagas = new Map();
-  for (const v of dados?.vagas || []) {
-    vagas.set(texto(v.vaga), {
-      vaga: texto(v.vaga),
-      cargo: texto(v.cargo),
-      aprovados: Number(v.aprovados) || 0,
-      vagasImediatas: numero(v.vagas_imediatas),
-      candidatos: [],
-      fora: [],
-    });
-  }
-  const grupo = (vaga, cargo) => {
-    const chave = texto(vaga);
-    if (!vagas.has(chave))
-      vagas.set(chave, {
-        vaga: chave,
-        cargo: texto(cargo),
-        aprovados: 0,
-        vagasImediatas: null,
-        candidatos: [],
-        fora: [],
-      });
-    return vagas.get(chave);
-  };
-  const vistos = new Set();
-  for (const c of dados?.candidatos || []) {
-    const g = grupo(c.vaga, c.cargo);
-    const convocado = convocadoPorAnalise.get(c.analise_id) || null;
-    if (convocado) vistos.add(convocado.id);
-    g.candidatos.push({ ...c, convocado });
-  }
-  for (const c of dados?.convocados || []) {
-    if (!vistos.has(c.id)) grupo(c.vaga, c.cargo).fora.push(c);
-  }
-  return [...vagas.values()].map((g) => {
-    const regra = regraDaVaga(convocacao, g.cargo);
-    const limite = limiteDeConvocacao(regra, g.vagasImediatas);
-    return {
-      ...g,
-      regra,
-      limite,
-      candidatos: g.candidatos
-        .slice()
-        .sort((a, b) => (a.posicao ?? 1e9) - (b.posicao ?? 1e9))
-        .map((c) => ({ ...c, sugerido: (c.posicao ?? Infinity) <= limite })),
-    };
-  });
-}
-
-/** Os ids de análise sugeridos pela regra e ainda não convocados. */
-export function selecaoSugerida(grupos) {
-  const ids = new Set();
-  for (const g of grupos)
-    for (const c of g.candidatos)
-      if (c.sugerido && !c.convocado) ids.add(c.analise_id);
-  return ids;
 }
 
 /* ── Ficha de notas ────────────────────────────────────────────────── */

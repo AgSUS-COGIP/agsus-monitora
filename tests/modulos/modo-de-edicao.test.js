@@ -337,7 +337,7 @@ describe("modo de edição no mapa de Projetos", () => {
     await clicar(botao("Coordenadas"));
     await aguardar();
     expect(painel().classList.contains("mapa-si-painel--editando")).toBe(true);
-    expect(editor().id).toBe("mapaDosProjetos-coordenadas");
+    expect(editor().id).toBe("mapaDosProjetos-painel-lateral");
     expect(host.querySelector(".mapa-projetos-lugar")).toBeNull();
     expect(botao("Tela cheia")).toBeUndefined();
     expect(document.body.style.overflow).toBe("hidden");
