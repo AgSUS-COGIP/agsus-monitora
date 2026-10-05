@@ -21,14 +21,27 @@ local, sem caminho pessoal e sem senha no código.
 
 ### Quais vagas
 
-A lista vem do MONITORA (RPC `listar_vagas_empregare`), não de planilha. O código da vaga é o da
-aba **Seleção** (`TB_SELECAO_VAGA.CO_VAGA`, ex.: 177979, vindo da planilha Auditoria).
+A lista vem do MONITORA (RPC `listar_vagas_empregare`), de duas fontes (desde a migration
+`20261006080000_robo_empregare_vagas_do_quadro.sql`):
 
-| Pedido                              | Vagas                                                                                                                                      |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| sem filtro (**Rodar agora**)        | vagas ativas com código cujo edital está **ativo** e **em curso**: sem cronograma, ou com alguma etapa terminando há no máximo **30 dias** |
-| `editais` (ex.: `80/2026, 81/2026`) | as vagas desses editais, ativos ou não                                                                                                     |
-| `vagas` (ex.: `177979`)             | só esses códigos, mesmo fora da Seleção                                                                                                    |
+1. **Quadro de vagas do edital** (fonte principal daqui para frente): todo edital com quadro de
+   vagas salvo (`TB_QUADRO_VAGA_EDITAL` vigente). O quadro não guarda o código da vaga da
+   Empregare; o código (ex.: 177979) vem das **análises ativas do edital**
+   (`TB_ANALISE_CURRICULAR.codigo_vaga`, mesma área e mesmo número de edital), que o MONITORA já
+   liga à linha do quadro na tela do quadro e na Classificação (`FC_QUADRO_DA_VAGA`). Edital e área
+   são os do edital do quadro.
+2. **Seleção** (segunda fonte, editais antigos): `TB_SELECAO_VAGA.CO_VAGA`, da planilha Auditoria.
+
+O mesmo código nas duas fontes entra **uma vez**, ligado ao edital do quadro. Cada vaga da lista
+diz a origem (`quadro`, `selecao` ou `pedida`), e o log da execução mostra a contagem por origem.
+Edital sem quadro e fora da Seleção não entra sozinho: salve o quadro de vagas do edital (no formulário do
+edital, pelo PDF de anexos) ou rode pelo GitHub com `vagas` = os códigos.
+
+| Pedido                              | Vagas                                                                                                                                                 |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| sem filtro (**Rodar agora**)        | vagas com código, das duas fontes, cujo edital está **ativo** e **em curso**: sem cronograma, ou com alguma etapa terminando há no máximo **30 dias** |
+| `editais` (ex.: `80/2026, 81/2026`) | as vagas desses editais, ativos ou não                                                                                                                |
+| `vagas` (ex.: `177979`)             | só esses códigos, mesmo fora do quadro e da Seleção (origem `pedida`, sem edital)                                                                     |
 
 As nunca carregadas e as carregadas há mais tempo vão primeiro, até o **limite** (60 por execução;
 cada vaga leva perto de meio minuto). Edital em curso com mais vagas que o limite completa nas
@@ -42,6 +55,8 @@ execuções seguintes.
 - **Trava**: arquivo com menos da metade dos candidatos ativos que a vaga já tinha é **recusado**,
   só naquela vaga — nada é gravado nem desativado nela. Se a redução for real, rode com `forcar`.
 - **Sem apagar**: quem sai do arquivo fica inativo (`ST_REGISTRO_ATIVO = N`, data de saída).
+- **Edital da vaga** (`TB_EMPREGARE_VAGA.CO_MONITORAMENTO`): pelo quadro do edital; sem ele, pela
+  Seleção; vaga pedida fora das duas fica sem edital (só o administrador global vê).
 - **Mudanças**: cada linha guarda o hash das colunas; a data de atualização só muda quando alguma
   coluna muda.
 - Quem lê (RPC `obter_candidatos_empregare`): Seleção ≥ editor, com a área e o recorte do edital;
@@ -161,7 +176,9 @@ computador: rode-os pelo GitHub.
 - `api/rodar-carga.js` e `src/lib/robos-de-carga.js`: o **Rodar agora** (lista fixa robô →
   workflow, regras do botão).
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.js`: a tela de status.
-- `supabase/migrations/20261005170000_robo_empregare.sql` (+ `ensaios/` e `rollback/`).
+- `supabase/migrations/20261005170000_robo_empregare.sql` e `20261006080000_robo_empregare_vagas_do_quadro.sql`
+  (vagas também do quadro do edital), cada uma com `ensaios/` e `rollback/`.
 - Testes: `tests/python/test_robo_empregare.py`, `tests/rodar-carga-api.test.js`,
-  `tests/robo-empregare-migration.test.js`, `tests/saude-das-cargas.test.js`,
+  `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,
+  `tests/saude-das-cargas.test.js`,
   `tests/componentes/saude-das-cargas.test.js`.
