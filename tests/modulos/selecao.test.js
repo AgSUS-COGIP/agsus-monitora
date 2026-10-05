@@ -47,7 +47,7 @@ const PAYLOAD = {
   schema_version: 1,
   area: "saude-indigena",
   gerado_em: "2026-10-01T12:00:00Z",
-  ultima_carga: { em: "2026-10-01T09:02:00", linhas: 2, sem_edital: 1 },
+  ultima_carga: { em: "2026-10-01T09:02:00-03:00", linhas: 2, sem_edital: 1 },
   vagas: [
     {
       id: "v1",
