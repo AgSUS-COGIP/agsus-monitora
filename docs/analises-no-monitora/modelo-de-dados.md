@@ -34,6 +34,7 @@ TB_MONITORAMENTO_INDIGENA (edital)
   ├─ TB_ORIGEM_ANALISE_EDITAL ── TH_ORIGEM_ANALISE_EDITAL      quem é o dono da análise do edital
   ├─ TB_REGRA_ANALISE ────────── TH_REGRA_ANALISE             regra da análise versionada (JSON)
   ├─ RL_ANALISTA_EDITAL                                       equipe: analista, revisor, coordenador
+  ├─ TB_PRE_CLASSIFICACAO (1 por candidato × vaga)            nota declarada, posição, linha de corte, eliminação automática
   └─ TB_FICHA_ANALISE  (1 por candidato × vaga; liga TB_EMPREGARE_CANDIDATO e TB_ANALISE_CURRICULAR)
        ├─ TB_ITEM_FICHA_ANALISE          checklist (eliminatórios) e critérios pontuados
        ├─ TB_VINCULO_EXPERIENCIA         vínculos comprovados (categoria, início, fim)
@@ -141,7 +142,9 @@ comment on table public."TB_REGRA_ANALISE_MODELO" is
 
 O formato é validado por `private."FC_VALIDAR_REGRA_ANALISE"`, com as mesmas regras em
 `src/lib/analise/regra-da-analise.js`, para a tela. O exemplo abaixo é a regra do simulador do
-28/2026, com textos encurtados:
+28/2026, com textos encurtados e comentários `//` só para leitura. Os blocos de eliminação automática
+e nota declarada usam os pesos vistos na planilha de vaga do 100/2026 (indígena +8, aldeia +6), de
+propósito diferentes dos do simulador (+7, +5): cada edital tem os seus.
 
 ```json
 {
@@ -153,9 +156,33 @@ O formato é validado por `private."FC_VALIDAR_REGRA_ANALISE"`, com as mesmas re
     "padrao": "superior"
   },
   "corte": { "fonte": "REGRA_CLASSIFICACAO", "item_edital": "7.13.1" },
-  "fila": { "situacoes_empregare": ["INSCRITO"], "questionario_finalizado": true },
-  "revisao": { "modo": "AMOSTRAGEM", "percentual": 10, "minimo_por_analista": 5,
-               "sempre": ["INABILITADO", "SINAL_VINCULO"], "divergencia_pontos": 2 },
+  "eliminacao_automatica": [
+    { "codigo": "CANCELADO", "coluna": "SITUAÇÃO", "quando": ["CANCELADO"], "motivo": "Cancelou a inscrição" },
+    { "codigo": "QUESTIONARIO", "coluna_prefixo": "SITUAÇÃO - ", "exceto": ["FINALIZADO"], "motivo": "Não finalizou o questionário" },
+    { "codigo": "REPROVADO_EMPREGARE", "coluna": "REPROVADO", "quando": ["SIM"], "motivo": "Reprovado na Empregare" }
+  ],
+  "nota_declarada": {
+    "itens": [
+      { "parcial": "FORMACAO", "pergunta": "Pergunta 15 -", "tipo": "OPCAO",
+        "pontos": { "Especialização na área à qual concorre": 1, "Não possuo": 0 } },
+      { "parcial": "EXPERIENCIA", "pergunta": "Pergunta 17 -", "tipo": "FAIXA_EM_MESES",
+        "pontos_por_mes": 0.2, "teto": 10, "sem_experiencia": ["Não possuo"] },
+      { "parcial": "ETNICO", "pergunta": "Pergunta 6 -", "tipo": "OPCOES_SOMADAS",
+        "pontos": { "Sou indígena": 8, "Moro em aldeia": 6 }, "teto": 14 }
+    ],
+    "desempate": ["IDADE_60", "DATA_CANDIDATURA"]
+  },
+  "linha_corte": {
+    "base": "MULTIPLO_VAGAS",              // MULTIPLO_VAGAS | FIXO
+    "multiplo": 5, "inclui_cr": true, "fixo": null,
+    "por_modalidade": false, "inclui_empatados": true,
+    "linha_anda": true                     // inabilitado/não habilitado sai → o próximo entra
+  },
+  "distribuicao": { "modo": "PEGAR_PROXIMO", // PEGAR_PROXIMO | INICIAL
+                    "inicial": { "criterio": "PARTES_IGUAIS", "novos": "MENOS_PENDENTES" } },
+  "revisao": { "amostra_percentual": 10, "minimo_por_analista": 5, "todas": false,
+               "inabilitadas": true, "nao_habilitadas": false, "divergencia_pontos": 2,
+               "sinais": ["VINCULO_ATIVO", "PARENTESCO"], "entrou_pela_linha": false, "duplo_cego": false },
 
   "checklist": [
     { "codigo": "ID_CPF", "rotulo": "ID/CPF: documentos legíveis e válidos", "item_edital": "3.4.1 c/d",
@@ -173,7 +200,7 @@ O formato é validado por `private."FC_VALIDAR_REGRA_ANALISE"`, com as mesmas re
 
   "etnico": {
     "parcial": "ETNICO", "pergunta": "Pergunta 6 -", "modalidade_indigena": ["Indígenas"],
-    "indigena": 7, "aldeia": 5, "teto": 12,
+    "indigena": 7, "aldeia": 5, "teto": 12,   // no 100/2026: 8, 6 e 14 — nada fixo no código
     "aldeia_exige_lista": true, "lista_aldeias": "DSEI_DO_EDITAL", "item_edital": "7.2.2"
   },
 
@@ -296,7 +323,62 @@ comment on table public."RL_ANALISTA_EDITAL" is
   'Equipe da análise de cada edital (substitui a aba DIM_RESPONSAVEIS): analista, revisor ou coordenador, no edital inteiro ou numa vaga.';
 ```
 
-Desativar não apaga (guarda quem foi da equipe).
+Desativar não apaga (guarda quem foi da equipe). O **gestor do edital** (o responsável cadastrado
+no edital) é tratado como COORDENADOR por `FC_PAPEL_NO_EDITAL`, sem precisar de linha aqui; o
+coordenador da área recebe o papel nesta tabela. Os dois podem cadastrar a regra, distribuir e
+configurar a revisão (decidido em 05/10/2026).
+
+## 4b. `TB_PRE_CLASSIFICACAO` — nota declarada, linha de corte e eliminação automática
+
+Substitui as abas IMPORTACAO EMPREGARE, TOTAL DE CANDIDATOS, ELIMINADOS e APTOS PARA ANÁLISE da
+planilha de vaga. É recalculada por `private."FC_PRE_CLASSIFICAR_VAGA"` no fim de cada carga do robô
+e sempre que uma ficha da vaga é concluída (para "a linha andar").
+
+```sql
+create table public."TB_PRE_CLASSIFICACAO" (
+  "CO_MONITORAMENTO" uuid not null,
+  "CO_VAGA" text not null,
+  "CO_EMPREGARE_CANDIDATO" uuid not null,
+  "NU_VERSAO_REGRA" integer not null,
+  "TP_SITUACAO" varchar(12) not null,           -- ELIMINADO | RANQUEADO | NA_LINHA | ANALISADO
+  "CO_MOTIVO_ELIMINACAO" varchar(30),           -- código da eliminação automática da regra
+  "VL_NOTA_DECLARADA" numeric(8,4),
+  "DS_NOTA_DECLARADA" jsonb,                    -- pontos por parcial e as respostas usadas
+  "VL_NOTA_EMPREGARE" numeric(8,4),             -- "x/30" do questionário, só referência
+  "NO_MODALIDADE" varchar(60),
+  "NU_POSICAO" integer,                         -- posição geral na vaga (nula se eliminado)
+  "NU_POSICAO_MODALIDADE" integer,
+  "NO_ORIGEM_CONVOCACAO" varchar(40),           -- ex.: AMPLA, COTA, LINHA_ANDOU (P15)
+  "DS_MOTIVO_ENTRADA" varchar(300),             -- "entrou porque <código> foi inabilitado"
+  "DT_ENTRADA_LINHA" timestamptz,
+  "DT_ATUALIZACAO" timestamptz not null default now(),
+  constraint "PK_TB_PRE_CLASSIFICACAO" primary key ("CO_MONITORAMENTO", "CO_EMPREGARE_CANDIDATO"),
+  constraint "FK_MONITORAMENTO_PRECLASSIF" foreign key ("CO_MONITORAMENTO")
+    references public."TB_MONITORAMENTO_INDIGENA" (id),
+  constraint "FK_EMPREGARECAND_PRECLASSIF" foreign key ("CO_EMPREGARE_CANDIDATO")
+    references public."TB_EMPREGARE_CANDIDATO" ("CO_EMPREGARE_CANDIDATO"),
+  constraint "CK_PRECLASSIF_TPSITUACAO" check ("TP_SITUACAO" in ('ELIMINADO', 'RANQUEADO', 'NA_LINHA', 'ANALISADO')),
+  constraint "CK_PRECLASSIF_ELIMINADO" check (("TP_SITUACAO" = 'ELIMINADO') = ("CO_MOTIVO_ELIMINACAO" is not null)),
+  constraint "CK_PRECLASSIF_POSICAO" check ("TP_SITUACAO" = 'ELIMINADO' or "NU_POSICAO" >= 1)
+);
+create index "IN_PRECLASSIF_VAGA" on public."TB_PRE_CLASSIFICACAO" ("CO_MONITORAMENTO", "CO_VAGA", "TP_SITUACAO", "NU_POSICAO");
+comment on table public."TB_PRE_CLASSIFICACAO" is
+  'Pré-classificação da vaga pela nota declarada (regra da análise): eliminados automáticos com motivo, ranqueados, os que estão na linha de corte (com ficha) e os já analisados. Os contadores da fila (inscritos, cancelados/reprovados, ranqueados, aptos) saem daqui.';
+```
+
+Regras de `FC_PRE_CLASSIFICAR_VAGA`:
+
+- **Ordem**: nota declarada desc, depois o desempate da regra (`IDADE_60`, data de candidatura).
+- **Tamanho da linha**: múltiplo × vagas imediatas (+ CR) ou fixo, geral ou por modalidade, com
+  empatados se a regra mandar; as vagas vêm do quadro do edital (`TB_QUADRO_VAGA_EDITAL`), pela
+  mesma conta da Classificação.
+- **A linha anda**: as fichas concluídas como **inabilitado** ou **não habilitado** deixam de ocupar
+  lugar na linha. Uma ficha **habilitada** cuja nota apurada ficou abaixo da nota declarada do
+  primeiro de fora também libera a vaga na linha. Os que passam a caber viram `NA_LINHA`, e
+  `abrir_fichas_do_edital` cria as fichas, com o motivo em `DS_MOTIVO_ENTRADA` e no histórico.
+- **Nada volta para trás**: quem já tem ficha não sai da linha por recálculo; só sai pela conclusão.
+- A troca da versão da regra (pesos da nota declarada ou tamanho da linha) recalcula as posições, e a
+  tela mostra quem entraria e quem sairia antes de confirmar.
 
 ## 5. `TB_FICHA_ANALISE` — a ficha
 
@@ -320,7 +402,9 @@ create table public."TB_FICHA_ANALISE" (
   "ST_INDIGENA" varchar(1) not null default 'N',
   "ST_MORA_ALDEIA" varchar(1) not null default 'N',
   "CO_ALDEIA_DSEI" uuid,
-  "VL_NOTA_DECLARADA" numeric(8,4),             -- só pelo que o candidato declarou
+  "VL_NOTA_DECLARADA" numeric(8,4),             -- só pelo que o candidato declarou (da pré-classificação)
+  "VL_NOTA_EMPREGARE" numeric(8,4),             -- "x/30" do questionário, só referência
+  "NO_ORIGEM_CONVOCACAO" varchar(40),           -- da pré-classificação (P15)
   "VL_NOTA_APURADA" numeric(8,4),               -- soma das parciais (calculada pelo banco)
   "VL_NOTA_FINAL" numeric(8,4),                 -- a publicada: 0 se INABILITADO
   "VL_NOTA_CORTE" numeric(8,4),                 -- o corte aplicado (retrato da regra de classificação)
@@ -594,9 +678,10 @@ pela `chave_natural`.
 |---|---|---|
 | `obter_fila_analise(p_edital uuid, p_filtros jsonb, p_pagina int)` | Leitor+ | indicadores, fichas paginadas e opções dos filtros; sem CPF |
 | `abrir_ficha_por_codigo(p_edital uuid, p_codigo text)` | papel no edital | o atalho do simulador: acha a ficha pelo código Empregare (só no edital e nas vagas da pessoa) |
-| `pegar_proxima_ficha(p_edital uuid, p_vaga text default null)` | analista no edital | reserva a próxima ficha livre (`for update skip locked`), grava `PEGAR` e devolve o id |
+| `obter_pre_classificacao(p_edital uuid, p_vaga text)` | Leitor+ | os contadores (inscritos, cancelados/reprovados, ranqueados, aptos para análise), a ordem pela nota declarada com a linha de corte, os primeiros de fora e os eliminados com motivo |
+| `pegar_proxima_ficha(p_edital uuid, p_vaga text default null)` | analista no edital (só se o modo do edital for `PEGAR_PROXIMO`) | reserva a próxima ficha livre na ordem da pré-classificação (`for update skip locked`), grava `PEGAR` e devolve o id |
 | `atribuir_fichas(p_fichas uuid[], p_usuario uuid, p_motivo text)` | coordenador | atribui ou redistribui (não tira ficha concluída) |
-| `distribuir_fichas(p_edital uuid, p_config jsonb)` | coordenador | reparte as pendentes entre analistas (partes iguais ou até o limite); prévia com `p_config.simular = true` |
+| `distribuir_fichas(p_edital uuid, p_config jsonb)` | gestor do edital ou coordenador | no modo `INICIAL`, reparte as pendentes entre analistas (partes iguais ou até o limite); prévia com `p_config.simular = true` |
 | `devolver_ficha_a_fila(p_ficha uuid, p_versao int, p_motivo text)` | responsável ou coordenador | volta para Pendente |
 | `obter_ficha_analise(p_ficha uuid)` | papel no edital (Leitor: só concluída) | ficha, itens, vínculos, regra da versão, respostas Empregare (CPF e nome do parente mascarados), sinais, histórico resumido, ajustes de recurso; registra `ABRIR_FICHA` |
 | `buscar_aldeia_dsei(p_ficha uuid, p_texto text)` | papel no edital | até 20 aldeias da lista do DSEI do edital que contêm o texto |
@@ -615,7 +700,7 @@ pela `chave_natural`.
 | `salvar_aldeias_dsei(p_unidade bigint, p_aldeias jsonb, p_fonte text)` | administrador global | carga ou atualização da lista de aldeias de um DSEI |
 | `salvar_equipe_edital(p_edital uuid, p_equipe jsonb, p_motivo text)` | coordenador | grava `RL_ANALISTA_EDITAL` |
 | `definir_origem_analise(p_edital uuid, p_origem text, p_motivo text)` | administrador global | `COMPARACAO`/`MONITORA`; na virada, adota as linhas da planilha e importa as fichas; devolve o resumo |
-| `abrir_fichas_do_edital(p_edital uuid)` | coordenador e o robô (fim da carga, via `service_role`) | cria e atualiza fichas a partir de `TB_EMPREGARE_CANDIDATO` (idempotente) |
+| `abrir_fichas_do_edital(p_edital uuid)` | coordenador e o robô (fim da carga, via `service_role`) | recalcula a pré-classificação e cria as fichas de quem está `NA_LINHA` (idempotente); no modo `INICIAL`, já atribui |
 | `obter_comparacao_analise(p_edital uuid)` | coordenador | planilha × MONITORA por candidato (situação, parciais, desempates, nota, divergência) |
 | `obter_produtividade_analise(p_edital uuid, p_de date, p_ate date)` | coordenador | fichas por analista e dia, tempo mediano, devoluções, motivos de inabilitação |
 
@@ -625,7 +710,8 @@ Funções privadas:
 - pontuação: `FC_PONTUAR_ITEM` (aplica o tipo e o teto), `FC_DIAS_SEM_SOBREPOSICAO`,
   `FC_FAIXA_EM_MESES` ("4 anos e 2 meses" → 50), `FC_NOTA_DA_FICHA`, `FC_RESULTADO_DA_FICHA`;
 - parecer e sinais: `FC_PARECER_DA_FICHA` (monta o texto pelo modelo da regra), `FC_SINAIS_DA_FICHA`;
-- fluxo: `FC_SORTEAR_REVISAO` (semente gravada), `FC_PUBLICAR_FICHA`,
+- pré-classificação: `FC_NOTA_DECLARADA` (mapeamento resposta → pontos), `FC_PRE_CLASSIFICAR_VAGA`, `FC_TAMANHO_LINHA_CORTE`;
+- fluxo: `FC_SORTEAR_REVISAO` (semente gravada, com as opções combináveis da revisão), `FC_PUBLICAR_FICHA`,
   `FC_PAPEL_NO_EDITAL(edital, usuario)`;
 - gatilhos: `FC_TG_FICHA_ANALISE_FLUXO`, `FC_TG_HISTORICO_IMUTAVEL`.
 
@@ -639,8 +725,9 @@ pessoa).
 
 ## 14. Ordem sugerida das migrations
 
-1. Origem por edital, regra da análise com modelos, aldeias do DSEI e equipe (sem fichas): permite
-   configurar o piloto.
+1. Origem por edital, regra da análise com modelos, aldeias do DSEI, equipe e a pré-classificação
+   (sem fichas): já permite comparar a nota declarada e a linha de corte com a planilha do piloto de
+   Projetos.
 2. Fichas, itens, vínculos, histórico, acesso, as RPCs da fila e da ficha e a abertura pelo robô:
    piloto em `COMPARACAO`.
 3. Publicação e virada (`FC_PUBLICAR_FICHA`, `definir_origem_analise` com a adoção): piloto em
