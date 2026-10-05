@@ -176,7 +176,13 @@ export function notaNaEscala(roteiro, competencia, nota) {
   return opcoesDaEscala(roteiro, maximo).some((o) => o.valor === n);
 }
 
-/* ── Convocação e banca (padrão do roteiro ou do edital) ───────────── */
+/* ── Convocação (só ida e volta) e banca do roteiro ─────────────────── */
+
+/*
+  A convocação padrão do roteiro não vale mais (a convocação é a lista da
+  Classificação, migration 20261005150000): o editor não a mostra, mas a
+  versão nova do roteiro leva o que estava gravado, sem mudar.
+*/
 
 export function convocacaoParaRascunho(convocacao) {
   const c = convocacao || {};
@@ -212,54 +218,11 @@ export function convocacaoDoRascunho(rascunho) {
   };
 }
 
-export function novaExcecao() {
-  return {
-    chave: novaChave(),
-    termo_cargo: "",
-    multiplo_imediatas: "",
-    posicao_cadastro_reserva: "",
-  };
-}
-
 function conferirQuantidade(erros, chave, valor, { minimo, maximo, rotulo }) {
   const n = lerNumero(valor);
   if (n === null) return;
   if (Number.isNaN(n) || !ehInteiro(n) || n < minimo || n > maximo)
     erros[chave] = `${rotulo}: número inteiro de ${minimo} a ${maximo}.`;
-}
-
-/** Erros da regra de convocação (chaves com o `prefixo`). */
-export function errosDaConvocacao(rascunho, prefixo = "convocacao") {
-  const erros = {};
-  const r = rascunho || {};
-  conferirQuantidade(erros, `${prefixo}.multiplo`, r.multiplo_imediatas, {
-    minimo: 1,
-    maximo: 100,
-    rotulo: "Múltiplo das vagas imediatas",
-  });
-  conferirQuantidade(erros, `${prefixo}.posicao`, r.posicao_cadastro_reserva, {
-    minimo: 1,
-    maximo: 2000,
-    rotulo: "Posição do cadastro reserva",
-  });
-  for (const e of r.excecoes || []) {
-    if (!texto(e.termo_cargo))
-      erros[`${prefixo}.excecao.${e.chave}`] =
-        "Exceção sem o termo do cargo (ex.: Enfermagem).";
-    conferirQuantidade(
-      erros,
-      `${prefixo}.excecao.${e.chave}.multiplo`,
-      e.multiplo_imediatas,
-      { minimo: 1, maximo: 100, rotulo: "Múltiplo da exceção" },
-    );
-    conferirQuantidade(
-      erros,
-      `${prefixo}.excecao.${e.chave}.posicao`,
-      e.posicao_cadastro_reserva,
-      { minimo: 1, maximo: 2000, rotulo: "Posição da exceção" },
-    );
-  }
-  return erros;
 }
 
 export function bancaParaRascunho(banca) {
@@ -354,10 +317,7 @@ export function rascunhoDoRoteiro(
       ausencia_elimina: true,
       desempate: [],
       soma_analise: true,
-      convocacao: convocacaoParaRascunho({
-        multiplo_imediatas: 5,
-        posicao_cadastro_reserva: 10,
-      }),
+      convocacao: convocacaoParaRascunho({}),
       banca: [],
     };
   }
@@ -508,11 +468,7 @@ export function errosDoRoteiro(r) {
     if (!texto(criterio))
       erros[`desempate.${indice}`] = "Critério de desempate vazio.";
   });
-  Object.assign(
-    erros,
-    errosDaConvocacao(r?.convocacao),
-    errosDaBanca(r?.banca),
-  );
+  Object.assign(erros, errosDaBanca(r?.banca));
   return erros;
 }
 

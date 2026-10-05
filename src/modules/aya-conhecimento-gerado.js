@@ -681,9 +681,10 @@ export const VERBETES_AYA = Object.freeze([
       "quantos candidatos sao convocados",
     ],
     resposta:
-      "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso.",
+      "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Entrevistas › Conduzir entrevistas convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.",
     fato: "",
-    fonte: "src/lib/classificacao/motor.js",
+    fonte:
+      "src/lib/classificacao/motor.js; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
     abrir: "classificacao",
   },
   {
@@ -1672,7 +1673,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a tela de entrevistas",
     ],
     resposta:
-      "Entrevistas tem três visões, escolhidas no topo: Resultados (só consulta), Conduzir entrevistas (Passo 1 Configuração, Passo 2 Convocação e Passo 3 Ficha de notas, por edital) e Roteiros. Tudo é da área atual; trocar de área recomeça filtros e edital aberto. Quem não tem nível Editor vê tudo, sem os botões. Lançar notas, convocar, configurar o edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital.",
+      "Entrevistas tem três visões, escolhidas no topo: Resultados (só consulta), Conduzir entrevistas (Passo 1 Configuração, Passo 2 Convocação — a lista de convocação da Classificação — e Passo 3 Ficha de notas, por edital) e Roteiros. Tudo é da área atual; trocar de área recomeça filtros e edital aberto. Quem não tem nível Editor vê tudo, sem os botões. Lançar notas, convocar, configurar o edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital.",
     fato: "",
     fonte:
       "src/modulos/entrevistas/entrevistas.jsx; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
@@ -1737,7 +1738,7 @@ export const VERBETES_AYA = Object.freeze([
       "o que e um roteiro",
     ],
     resposta:
-      'O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação, critérios de desempate, convocação padrão e banca padrão; serve a vários editais. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
+      'O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação, critérios de desempate e banca padrão; serve a vários editais. O roteiro não tem mais convocação padrão: quem é convocado sai da lista de convocação da Classificação, pela regra de classificação do edital. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
     fato: "",
     fonte:
       "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/roteiro-de-entrevista.js",
@@ -1772,7 +1773,7 @@ export const VERBETES_AYA = Object.freeze([
       "secretaria passa a limpo",
     ],
     resposta:
-      'Na configuração do edital, escolher o roteiro preenche a regra de convocação e a composição da banca com o padrão dele. "Completar pela composição" acrescenta as linhas que faltam, com o nome vazio; "Sou eu" liga o membro ao seu perfil. Quem sai da banca deixa de avaliar, mas as notas que já deu ficam na ficha, com a marca "saiu da banca". O modo de lançamento pode ser "Secretaria passa a limpo" (padrão) ou "Cada avaliador lança a sua": nesse caso cada avaliador só edita a própria coluna (o administrador global lança por qualquer um). A troca de roteiro fica bloqueada quando já há notas lançadas com outro roteiro.',
+      'Na configuração do edital, escolher o roteiro preenche a composição da banca com o padrão dele. "Completar pela composição" acrescenta as linhas que faltam, com o nome vazio; "Sou eu" liga o membro ao seu perfil. Quem sai da banca deixa de avaliar, mas as notas que já deu ficam na ficha, com a marca "saiu da banca". O modo de lançamento pode ser "Secretaria passa a limpo" (padrão) ou "Cada avaliador lança a sua": nesse caso cada avaliador só edita a própria coluna (o administrador global lança por qualquer um). A troca de roteiro fica bloqueada quando já há notas lançadas com outro roteiro.',
     fato: "",
     fonte:
       "src/lib/conducao-de-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
@@ -1786,14 +1787,54 @@ export const VERBETES_AYA = Object.freeze([
       "convocacao da entrevista",
       "desconvocar",
       "convocar candidatos",
-      "sugerido",
-      "alem da regra",
+      "quem e convocado para a entrevista",
+      "lista de convocacao na entrevista",
+      "conduzir entrevistas nao esta funcionando",
+      "ninguem convocado na entrevista",
     ],
     resposta:
-      'Na convocação aparecem só os candidatos aprovados na análise curricular, da mesma área e edital, na ordem de cada vaga (nota final, depois nome). A regra marca a sugestão: com vaga imediata, até a posição múltiplo × vagas imediatas; sem vaga imediata, até a posição X do cadastro reserva. Uma exceção vale quando o termo dela aparece no nome do cargo, sem diferenciar maiúsculas e acentos. Os de fora aparecem como "Além da regra", e "Voltar à sugestão" refaz a seleção. Convocar exige a configuração salva. Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota.',
+      'Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas, o Passo 2 mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva (Passo 1). Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.',
+    fato: "No MONITORA, a convocação para a entrevista é a lista de convocação da Classificação; Entrevistas não tem ranking, regra nem vagas próprios.",
+    fonte:
+      "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/conducao.jsx; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
+    abrir: "entrevistas",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Convocação sem lista gerada na Classificação",
+    perguntas: [
+      "lista ainda nao gerada na classificacao",
+      "gerar a lista de convocacao",
+      "convocar sem lista",
+      "por que nao consigo convocar",
+      "calculo atual da convocacao",
+      "a regra da classificacao mudou depois desta lista",
+    ],
+    resposta:
+      'Enquanto a Classificação não gerou a lista de convocação do edital, Conduzir entrevistas mostra o cálculo atual (a mesma conta da Classificação, com a regra e as vagas de agora) e o aviso "Lista ainda não gerada na Classificação", sem o botão de convocar: para convocar, gere a lista na Classificação (o botão "Gerar na Classificação" abre a tela já no edital, para quem é Editor de Classificação). Sem acesso à Classificação, a tela só avisa. Se a regra de classificação mudou depois da lista, aparece "A regra da Classificação mudou depois desta lista": gere a lista de novo.',
     fato: "",
     fonte:
-      "src/lib/conducao-de-entrevista.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+      "src/lib/convocacao-da-entrevista.js; src/modulos/entrevistas/estado-da-conducao.js",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Vagas imediatas e regra de convocação na entrevista",
+    perguntas: [
+      "vagas imediatas da entrevista",
+      "onde digitar as vagas imediatas",
+      "vagas imediatas por vaga",
+      "regra de convocacao da entrevista onde muda",
+      "multiplo das vagas imediatas",
+      "posicao do cadastro reserva na entrevista",
+      "de onde vem o numero de vagas da entrevista",
+    ],
+    resposta:
+      'As vagas imediatas não se digitam na entrevista. O Passo 1 de Conduzir entrevistas mostra, só para ler, a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/conducao.jsx; src/lib/convocacao-da-entrevista.js; src/lib/classificacao/vagas.js",
+    abrir: "entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",

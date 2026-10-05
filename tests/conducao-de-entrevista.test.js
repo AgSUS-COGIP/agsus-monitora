@@ -8,8 +8,6 @@ import {
   editaisParaConduzir,
   errosDaConfiguracao,
   filtrarConvocados,
-  gruposDeConvocacao,
-  limiteDeConvocacao,
   mapaDasAvaliacoes,
   mensagemDoErroDaEntrevista,
   motivosDoParecer,
@@ -17,8 +15,6 @@ import {
   podeLancarPor,
   progressoDasNotas,
   rascunhoDaConfiguracao,
-  regraDaVaga,
-  selecaoSugerida,
 } from "../src/lib/conducao-de-entrevista.js";
 
 const CONVOCACAO = {
@@ -91,109 +87,6 @@ const notas = (porCompetencia) =>
   Object.entries(porCompetencia).flatMap(([competencia, valores]) =>
     valores.map((nota, i) => ({ competencia, avaliador: `a${i + 1}`, nota })),
   );
-
-describe("regra de convocação", () => {
-  it("usa a exceção quando o termo está no cargo (sem acento nem caixa)", () => {
-    expect(regraDaVaga(CONVOCACAO, "Técnico de ENFERMAGEM")).toEqual({
-      multiplo: 10,
-      posicao: 20,
-      termo: "Enfermagem",
-    });
-    expect(
-      regraDaVaga(
-        { ...CONVOCACAO, excecoes: [{ termo_cargo: "médico" }] },
-        "Medico clinico",
-      ),
-    ).toEqual({
-      multiplo: 5,
-      posicao: 10,
-      termo: "médico",
-    });
-    expect(regraDaVaga(CONVOCACAO, "Nutricionista").termo).toBeNull();
-  });
-
-  it("limite: múltiplo × vagas imediatas, ou a posição do cadastro reserva", () => {
-    const regra = { multiplo: 5, posicao: 10 };
-    expect(limiteDeConvocacao(regra, 2)).toBe(10);
-    expect(limiteDeConvocacao(regra, 3)).toBe(15);
-    expect(limiteDeConvocacao(regra, 0)).toBe(10);
-    expect(limiteDeConvocacao(regra, null)).toBe(10);
-    expect(limiteDeConvocacao({ multiplo: null, posicao: null }, 1)).toBe(0);
-  });
-
-  it("agrupa por vaga, marca a sugestão e quem já foi convocado", () => {
-    const candidatos = [
-      ...[1, 2, 3].map((posicao) => ({
-        analise_id: `v1-${posicao}`,
-        candidato: `A${posicao}`,
-        vaga: "V1",
-        cargo: "Enfermeiro",
-        posicao,
-      })),
-      ...[1, 2, 3].map((posicao) => ({
-        analise_id: `v2-${posicao}`,
-        candidato: `B${posicao}`,
-        vaga: "V2",
-        cargo: "Técnico de Enfermagem",
-        posicao,
-      })),
-    ];
-    const dados = {
-      configuracao: {
-        convocacao: {
-          multiplo_imediatas: 1,
-          posicao_cadastro_reserva: 2,
-          excecoes: [
-            {
-              termo_cargo: "enfermagem",
-              multiplo_imediatas: 3,
-              posicao_cadastro_reserva: 1,
-            },
-          ],
-        },
-      },
-      vagas: [
-        { vaga: "V1", cargo: "Enfermeiro", aprovados: 3, vagas_imediatas: 0 },
-        {
-          vaga: "V2",
-          cargo: "Técnico de Enfermagem",
-          aprovados: 3,
-          vagas_imediatas: 1,
-        },
-      ],
-      candidatos,
-      convocados: [
-        { id: "e1", analise_id: "v1-1", vaga: "V1", avaliacoes: [] },
-        {
-          id: "e9",
-          analise_id: "fora",
-          vaga: "V1",
-          candidato: "Zé",
-          avaliacoes: [],
-        },
-      ],
-    };
-    const grupos = gruposDeConvocacao(dados);
-    expect(grupos.map((g) => [g.vaga, g.limite])).toEqual([
-      ["V1", 2],
-      ["V2", 3],
-    ]);
-    expect(grupos[0].candidatos.map((c) => c.sugerido)).toEqual([
-      true,
-      true,
-      false,
-    ]);
-    expect(grupos[0].candidatos[0].convocado.id).toBe("e1");
-    expect(grupos[0].fora.map((c) => c.id)).toEqual(["e9"]);
-    expect(grupos[1].regra.termo).toBe("enfermagem");
-    expect([...selecaoSugerida(grupos)].sort()).toEqual([
-      "v1-2",
-      "v2-1",
-      "v2-2",
-      "v2-3",
-    ]);
-  });
-});
 
 describe("cálculo do resultado (espelho de FC_CALCULAR_ENTREVISTA)", () => {
   it("APTO: média × peso por competência, total e mínimos cumpridos", () => {
@@ -401,15 +294,6 @@ describe("configuração do edital", () => {
   const DADOS = {
     meu_perfil: "p1",
     configuracao: null,
-    vagas: [
-      {
-        vaga: "V1",
-        cargo: "Enfermeiro",
-        aprovados: 4,
-        vagas_imediatas: 2,
-        vagas_imediatas_salvas: false,
-      },
-    ],
     avaliadores: [
       {
         id: "a1",
@@ -431,17 +315,16 @@ describe("configuração do edital", () => {
     convocados: [],
   };
 
-  it("escolher o roteiro pré-preenche convocação e banca", () => {
+  it("escolher o roteiro pré-preenche a banca; convocação e vagas não são da entrevista", () => {
     const r = aplicarRoteiroNaConfiguracao(
       rascunhoDaConfiguracao(DADOS),
       NIVEIS,
     );
     expect(r.roteiro).toBe("r1");
-    expect(r.convocacao.multiplo_imediatas).toBe("5");
-    expect(r.convocacao.excecoes[0].termo_cargo).toBe("Enfermagem");
     expect(r.banca.map((b) => b.origem)).toEqual(["AgSUS", "CONDISI"]);
     expect(r.avaliadores.map((a) => a.id)).toEqual(["a1"]);
-    expect(r.vagas[0].vagas_imediatas).toBe("2");
+    expect(r).not.toHaveProperty("convocacao");
+    expect(r).not.toHaveProperty("vagas");
   });
 
   it("completa os membros pela composição e valida", () => {
@@ -460,12 +343,6 @@ describe("configuração do edital", () => {
       2,
     );
     expect(errosDaConfiguracao({ ...r, roteiro: "" }).roteiro).toBeTruthy();
-    expect(
-      errosDaConfiguracao({
-        ...r,
-        vagas: [{ vaga: "V1", vagas_imediatas: "1.5" }],
-      })["vaga.V1"],
-    ).toBeTruthy();
   });
 
   it("monta o p_dados de configurar_entrevista_edital", () => {
@@ -490,59 +367,13 @@ describe("configuração do edital", () => {
     });
     expect(dados).toEqual({
       roteiro: "r1",
-      convocacao: CONVOCACAO,
       banca: NIVEIS.banca_padrao,
       lancamento: "AVALIADOR",
-      // V1 veio sugerida (quadro/lista) e não foi mexida: não vira número digitado.
-      vagas: [],
       avaliadores: [
         { id: "a1", nome: "Ana", origem: "AgSUS", banca: 1, perfil: null },
         { nome: "Bia", origem: "CONDISI", banca: 2, perfil: null },
       ],
     });
-  });
-});
-
-describe("vagas imediatas: digitadas × sugeridas", () => {
-  const vaga = (extra) =>
-    rascunhoDaConfiguracao({
-      vagas: [
-        {
-          vaga: "V1",
-          cargo: "Enfermeiro - Polo Base Leonardo",
-          aprovados: 4,
-          vagas_imediatas: 1,
-          vagas_imediatas_origem: "quadro",
-          lotacao_quadro: "Enfermeiro — Polo Base Leonardo",
-          vagas_imediatas_salvas: false,
-          ...extra,
-        },
-      ],
-    }).vagas;
-
-  it("guarda a origem e o número sugerido", () => {
-    const [v] = vaga();
-    expect(v).toMatchObject({
-      origem: "quadro",
-      sugerido: "1",
-      lotacao_quadro: "Enfermeiro — Polo Base Leonardo",
-    });
-  });
-
-  it("só manda o que foi digitado ou já estava digitado", () => {
-    const enviar = (vagas) => dadosDaConfiguracaoParaSalvar({ vagas }).vagas;
-    expect(enviar(vaga())).toEqual([]);
-    expect(enviar(vaga().map((v) => ({ ...v, vagas_imediatas: "3" })))).toEqual(
-      [{ vaga: "V1", vagas_imediatas: 3 }],
-    );
-    expect(
-      enviar(
-        vaga({
-          vagas_imediatas_salvas: true,
-          vagas_imediatas_origem: "manual",
-        }),
-      ),
-    ).toEqual([{ vaga: "V1", vagas_imediatas: 1 }]);
   });
 });
 

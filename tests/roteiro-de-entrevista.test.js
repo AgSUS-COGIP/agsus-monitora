@@ -284,8 +284,7 @@ describe("rascunho, validação e gravação", () => {
         `competencia.${c.chave}.peso`,
         "nota_minima_total",
         "desempate.0",
-        "convocacao.multiplo",
-        "convocacao.excecao.e1",
+        // A convocação padrão não vale mais (é a da Classificação): não é conferida.
       ].sort(),
     );
 
