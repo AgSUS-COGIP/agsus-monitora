@@ -252,3 +252,51 @@ export function correcaoDesfazivel(historico) {
     return null;
   return ultima;
 }
+
+/*
+  A folga do enquadramento no modo de edição. O editor flutua sobre o mapa
+  (à direita; no celular, embaixo): o `flyToBounds` do Leaflet precisa
+  descontar a parte coberta, senão o pin e a sugestão caem atrás do painel.
+  Recebe os retângulos da tela (`getBoundingClientRect`) do mapa e do painel
+  e devolve { paddingTopLeft, paddingBottomRight } em [x, y]: `base` de cada
+  lado, mais o que o painel cobre do lado em que está — o que deixar a maior
+  área livre (direita para o painel lateral, embaixo para a folha). Sem
+  painel, painel fora do mapa, ou área livre menor que `minimo`, só a base.
+*/
+export const FOLGA_DO_ENQUADRAMENTO = 72;
+export const AREA_LIVRE_MINIMA = 120;
+
+export function folgaDoEnquadramento(
+  mapa,
+  painel,
+  { base = FOLGA_DO_ENQUADRAMENTO, minimo = AREA_LIVRE_MINIMA } = {},
+) {
+  const soBase = {
+    paddingTopLeft: [base, base],
+    paddingBottomRight: [base, base],
+  };
+  if (!mapa || !painel) return soBase;
+  const largura = mapa.right - mapa.left;
+  const altura = mapa.bottom - mapa.top;
+  const cobreX =
+    Math.min(mapa.right, painel.right) - Math.max(mapa.left, painel.left);
+  const cobreY =
+    Math.min(mapa.bottom, painel.bottom) - Math.max(mapa.top, painel.top);
+  if (!(largura > 0 && altura > 0 && cobreX > 0 && cobreY > 0)) return soBase;
+  const direita = Math.max(0, mapa.right - painel.left);
+  const embaixo = Math.max(0, mapa.bottom - painel.top);
+  const livreSeDireita = (largura - direita) * altura;
+  const livreSeEmbaixo = largura * (altura - embaixo);
+  if (livreSeDireita >= livreSeEmbaixo) {
+    if (largura - direita - 2 * base < minimo) return soBase;
+    return {
+      paddingTopLeft: [base, base],
+      paddingBottomRight: [Math.round(direita + base), base],
+    };
+  }
+  if (altura - embaixo - 2 * base < minimo) return soBase;
+  return {
+    paddingTopLeft: [base, base],
+    paddingBottomRight: [base, Math.round(embaixo + base)],
+  };
+}
