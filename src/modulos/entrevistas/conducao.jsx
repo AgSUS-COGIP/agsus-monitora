@@ -7,20 +7,27 @@ import {
   errosDaConfiguracao,
   FILTROS_DA_FICHA,
   filtrarConvocados,
-  gruposDeConvocacao,
   MODOS_DE_LANCAMENTO,
   novoAvaliador,
   progressoDasNotas,
   rascunhoDaConfiguracao,
   rotuloDoLancamento,
-  selecaoSugerida,
-  textoDaRegra,
   avaliadoresDaFicha,
   nomeDoCargo,
-  ehPcd,
   marcaDoEdital,
   textoDaJanela,
 } from "../../lib/conducao-de-entrevista.js";
+import {
+  aConvocar,
+  avisosDaConvocacao,
+  fonteDaConvocacao,
+  gruposDaConvocacao,
+  origemDasVagas,
+  resumoDaConvocacao,
+  textoDaRegraDaClassificacao,
+  textoDasVagas,
+  textoDoLimite,
+} from "../../lib/convocacao-da-entrevista.js";
 import { rotuloDoComparecimento } from "../../lib/entrevistas-do-painel.js";
 import {
   pontuacaoMaxima,
@@ -35,13 +42,13 @@ import {
   Segmentado,
   Selo,
 } from "../../ui/index.js";
+import { irParaLink } from "../chat/ponte.js";
 import { AgendaDoDia } from "./agenda-do-dia.jsx";
 import { FichaDoCandidato } from "./ficha.jsx";
 import {
   BotaoDeLinha,
   ComposicaoDaBanca,
   numeroBR,
-  RegraDeConvocacao,
   trocarNaLista,
 } from "./partes.jsx";
 import { SeloDoParecer } from "./tabela.jsx";
@@ -50,13 +57,15 @@ import { SeloDoParecer } from "./tabela.jsx";
   Visão "Conduzir entrevistas" da tela de Entrevistas: escolhido o edital (da
   área atual do app), três passos em cartões (`.ui-card`) —
 
-  1. Configuração: o roteiro (a versão exata; pré-preenche a convocação e a
-     banca com o padrão dele), a regra de convocação, a composição da banca,
-     o modo de lançamento, as vagas imediatas de cada vaga e os membros da
-     banca.
-  2. Convocação: os aprovados na análise de cada vaga, na ordem, com a
-     sugestão da regra marcada; "Convocar selecionados" e "Desconvocar" (com
-     motivo, só sem notas).
+  1. Configuração: o roteiro (a versão exata; pré-preenche a banca com o
+     padrão dele), a composição da banca, o modo de lançamento e os membros
+     da banca. Abaixo, só leitura, a regra de convocação e as vagas da
+     Classificação, com o caminho de onde se mudam.
+  2. Convocação: a lista de convocação da Classificação (a última gerada; sem
+     ela, o cálculo atual, sem convocar), por vaga, na ordem dela;
+     "Convocar selecionados" registra os da lista para a ficha e
+     "Desconvocar" (com motivo, só sem notas). Uma convocação só — nada de
+     ranking, regra ou vagas próprios (src/lib/convocacao-da-entrevista.js).
   3. Ficha de notas: os convocados; cada um abre a ficha (ficha.jsx).
 
   Entre a convocação e a ficha, a "Agenda do dia" (agenda-do-dia.jsx), quando
@@ -67,6 +76,109 @@ import { SeloDoParecer } from "./tabela.jsx";
   (sem selo "Somente consulta"). O administrador global vê "Mostrar todos os
   editais da área" e libera um edital fora da janela.
 */
+
+/* ── Convocação e vagas da Classificação (só leitura) ─────────────── */
+
+const dataEHora = (iso) => {
+  const data = iso ? new Date(iso) : null;
+  return data && !Number.isNaN(data.getTime())
+    ? data.toLocaleString("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        dateStyle: "short",
+        timeStyle: "short",
+      })
+    : "—";
+};
+
+/* Vai para outra tela do app; na Classificação, já com o edital aberto. */
+function BotaoIrPara({ view, edital, children }) {
+  return (
+    <button
+      type="button"
+      className="btn secondary small"
+      data-ir-para={view}
+      onClick={() =>
+        irParaLink({
+          view,
+          ...(view === "classificacao" && edital?.id
+            ? { edital: { id: edital.id, titulo: edital.edital || "" } }
+            : {}),
+        })
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * A regra de convocação e as vagas são as da Classificação: aqui só se veem,
+ * com o caminho de onde se mudam (quadro de vagas no Editais, configuração da
+ * convocação na Lista de aprovados, regra na Classificação).
+ */
+function ConvocacaoDaClassificacao({ dados, grupos }) {
+  const regra = dados.regra_classificacao;
+  const texto = textoDaRegraDaClassificacao(regra?.convocacao);
+  const vagas = grupos.filter((g) => g.candidatos.length || g.total !== null);
+  return (
+    <div className="entrevistas-bloco" data-bloco="convocacao-da-classificacao">
+      <h4 className="entrevistas-subtitulo">Regra de convocação e vagas</h4>
+      <div className="entrevistas-em-linha">
+        <span>
+          {regra
+            ? `Classificação, regra v${regra.versao}: ${texto}`
+            : "O edital ainda não tem regra de classificação."}
+        </span>
+        <BotaoIrPara view="classificacao" edital={dados.edital}>
+          Regra na Classificação
+        </BotaoIrPara>
+      </div>
+      {vagas.length ? (
+        <div className="entrevistas-tabela-rolagem">
+          <table className="entrevistas-tabela" id="entrevistasVagas">
+            <thead>
+              <tr>
+                <th scope="col">Vaga</th>
+                <th scope="col">Cargo</th>
+                <th scope="col">Vagas</th>
+                <th scope="col">Convocar até</th>
+                <th scope="col">De onde vêm as vagas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vagas.map((g) => {
+                const origem = origemDasVagas(g);
+                return (
+                  <tr key={g.vaga} data-vaga={g.vaga}>
+                    <td>{g.vaga}</td>
+                    <td>
+                      {nomeDoCargo(g.cargo) || "—"}
+                      {g.lotacao ? (
+                        <span className="entrevistas-origem-vaga">
+                          {g.lotacao}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td>{textoDasVagas(g)}</td>
+                    <td>{textoDoLimite(g) || "—"}</td>
+                    <td>
+                      <span className="entrevistas-situacao">
+                        <span>{origem.rotulo}</span>
+                        <BotaoIrPara view={origem.view} edital={dados.edital}>
+                          {origem.onde}
+                        </BotaoIrPara>
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 /* ── Passo 1: configuração ─────────────────────────────────────────── */
 
@@ -95,24 +207,6 @@ function ResumoDaConfiguracao({ dados }) {
           {cfg.banca?.length ? (
             <small>
               {cfg.banca.map((b) => `${b.quantidade}× ${b.origem}`).join(" · ")}
-            </small>
-          ) : null}
-        </dd>
-      </div>
-      <div>
-        <dt>Convocação</dt>
-        <dd>
-          {cfg.convocacao?.multiplo_imediatas ?? "—"}× as vagas imediatas · até
-          a {cfg.convocacao?.posicao_cadastro_reserva ?? "—"}ª do CR
-          {cfg.convocacao?.excecoes?.length ? (
-            <small>
-              Exceções:{" "}
-              {cfg.convocacao.excecoes
-                .map(
-                  (e) =>
-                    `${e.termo_cargo} (${e.multiplo_imediatas ?? "—"}× / ${e.posicao_cadastro_reserva ?? "—"}ª)`,
-                )
-                .join(" · ")}
             </small>
           ) : null}
         </dd>
@@ -201,77 +295,6 @@ function FormularioDeConfiguracao({
         valor={r.lancamento}
         aoMudar={(lancamento) => mudar({ lancamento })}
       />
-
-      <h4 className="entrevistas-subtitulo">Regra de convocação</h4>
-      <RegraDeConvocacao
-        valor={r.convocacao}
-        erros={visiveis}
-        aoMudar={(convocacao) => mudar({ convocacao })}
-      />
-
-      <h4 className="entrevistas-subtitulo">Vagas imediatas por vaga</h4>
-      {r.vagas.length ? (
-        <div className="entrevistas-tabela-rolagem">
-          <table className="entrevistas-tabela">
-            <thead>
-              <tr>
-                <th scope="col">Vaga</th>
-                <th scope="col">Cargo</th>
-                <th scope="col">Aprovados</th>
-                <th scope="col">Vagas imediatas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {r.vagas.map((v) => (
-                <tr key={v.vaga}>
-                  <td>{v.vaga}</td>
-                  <td>{nomeDoCargo(v.cargo)}</td>
-                  <td>{v.aprovados}</td>
-                  <td>
-                    <input
-                      type="number"
-                      min="0"
-                      max="999"
-                      step="1"
-                      aria-label={`Vagas imediatas da vaga ${v.vaga}`}
-                      value={v.vagas_imediatas}
-                      aria-invalid={
-                        visiveis[`vaga.${v.vaga}`] ? true : undefined
-                      }
-                      onChange={(e) =>
-                        mudar({
-                          vagas: r.vagas.map((x) =>
-                            x.vaga === v.vaga
-                              ? { ...x, vagas_imediatas: e.target.value }
-                              : x,
-                          ),
-                        })
-                      }
-                    />
-                    {visiveis[`vaga.${v.vaga}`] ? (
-                      <small className="entrevistas-erro-campo" role="alert">
-                        {visiveis[`vaga.${v.vaga}`]}
-                      </small>
-                    ) : v.origem === "quadro" &&
-                      v.vagas_imediatas === v.sugerido ? (
-                      <small
-                        className="entrevistas-origem-vaga"
-                        title={v.lotacao_quadro}
-                      >
-                        do quadro do edital
-                      </small>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p className="entrevistas-vazio-linha">
-          Nenhuma vaga com análise curricular neste edital.
-        </p>
-      )}
 
       <h4 className="entrevistas-subtitulo">Composição da banca</h4>
       <ComposicaoDaBanca
@@ -433,7 +456,7 @@ function FormularioDeConfiguracao({
   );
 }
 
-function PassoDeConfiguracao({ dados, roteiros, salvando, aoSalvar }) {
+function PassoDeConfiguracao({ dados, grupos, roteiros, salvando, aoSalvar }) {
   const configurado = Boolean(dados.configuracao);
   const [editando, setEditando] = useState(!configurado && dados.pode_editar);
   useEffect(() => {
@@ -489,6 +512,7 @@ function PassoDeConfiguracao({ dados, roteiros, salvando, aoSalvar }) {
           A entrevista deste edital ainda não foi configurada.
         </p>
       )}
+      <ConvocacaoDaClassificacao dados={dados} grupos={grupos} />
     </section>
   );
 }
@@ -552,15 +576,28 @@ function ModalDeDesconvocar({ convocado, salvando, aoConfirmar, aoFechar }) {
   );
 }
 
-function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
-  const grupos = useMemo(() => gruposDeConvocacao(dados), [dados]);
-  const [selecao, setSelecao] = useState(() => selecaoSugerida(grupos));
+function PassoDeConvocacao({
+  dados,
+  fonte,
+  grupos,
+  calculo,
+  salvando,
+  aoConvocar,
+  aoDesconvocar,
+}) {
+  const pendentes = useMemo(() => aConvocar(grupos), [grupos]);
+  const [selecao, setSelecao] = useState(() => new Set(pendentes));
   const [desconvocando, setDesconvocando] = useState(null);
   const configurado = Boolean(dados.configuracao);
+  const daLista = fonte.tipo === "LISTA";
   const podeEditar = dados.pode_editar && configurado;
+  const podeConvocar = podeEditar && daLista;
+  const avisos = avisosDaConvocacao(dados, fonte, grupos);
+  const resumo = resumoDaConvocacao(grupos);
+  const lista = fonte.lista;
 
-  /* A cada payload novo (convocou, configurou), a sugestão é refeita. */
-  useEffect(() => setSelecao(selecaoSugerida(grupos)), [grupos]);
+  /* A cada payload novo (convocou, outra lista), todos os da lista a convocar ficam marcados. */
+  useEffect(() => setSelecao(new Set(pendentes)), [pendentes]);
 
   const alternar = (id) =>
     setSelecao((atual) => {
@@ -570,11 +607,22 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
       return nova;
     });
   const totalConvocados = dados.convocados.length;
+  const desconvocar = (c) =>
+    podeEditar && !c.avaliacoes?.length ? (
+      <button
+        type="button"
+        className="btn secondary small"
+        onClick={() => setDesconvocando(c)}
+      >
+        Desconvocar
+      </button>
+    ) : null;
 
   return (
     <section
       className="ui-card entrevistas-passo"
       data-passo="convocacao"
+      data-fonte={fonte.tipo}
       aria-labelledby="entrevistasPasso2"
     >
       <div className="entrevistas-passo-topo">
@@ -588,7 +636,32 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
           {totalConvocados} {totalConvocados === 1 ? "convocado" : "convocados"}
         </Selo>
       </div>
-      {!configurado ? (
+      {daLista ? (
+        <p className="entrevistas-fonte-da-lista">
+          Lista de convocação da Classificação · gerada em{" "}
+          {dataEHora(lista.gerada_em)}
+          {lista.por ? ` por ${lista.por}` : ""} · regra v{lista.versao_regra}
+          {lista.publicada ? " · publicada" : ""} · {resumo.naLista} na lista
+        </p>
+      ) : null}
+      {avisos.map((a) => (
+        <Aviso key={a.codigo} tom={a.tom}>
+          <span className="entrevistas-em-linha">
+            <span>{a.texto}</span>
+            {a.codigo === "SEM_LISTA" || a.codigo === "REGRA_MUDOU" ? (
+              dados.pode_gerar_lista ? (
+                <BotaoIrPara view="classificacao" edital={dados.edital}>
+                  Gerar na Classificação
+                </BotaoIrPara>
+              ) : null
+            ) : null}
+          </span>
+        </Aviso>
+      ))}
+      {calculo?.erro && fonte.tipo === "NENHUMA" ? (
+        <Aviso tom="info">{calculo.erro}</Aviso>
+      ) : null}
+      {daLista && !configurado ? (
         <Aviso tom="warning">
           Configure a entrevista (passo 1) antes de convocar.
         </Aviso>
@@ -600,11 +673,11 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
               <strong>
                 Vaga {g.vaga} · {nomeDoCargo(g.cargo) || "—"}
               </strong>
-              {configurado ? (
-                <small>
-                  {textoDaRegra(g.regra, g.vagasImediatas, g.limite)}
-                </small>
-              ) : null}
+              <small>
+                {[textoDasVagas(g), textoDoLimite(g)]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </small>
             </div>
             {g.candidatos.length || g.fora.length ? (
               <div className="entrevistas-tabela-rolagem">
@@ -617,68 +690,53 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                       <th scope="col">Posição</th>
                       <th scope="col">Candidato</th>
                       <th scope="col">Modalidade</th>
-                      <th scope="col">Nota da análise</th>
+                      <th scope="col">Nota</th>
                       <th scope="col">Situação</th>
                     </tr>
                   </thead>
                   <tbody>
                     {g.candidatos.map((c) => {
                       const convocado = c.convocado;
-                      const marcado = convocado
-                        ? true
-                        : selecao.has(c.analise_id);
                       return (
                         <tr
-                          key={c.analise_id}
+                          key={c.analiseId}
                           className={classes(
-                            c.sugerido && "entrevistas-sugerido",
                             convocado && "entrevistas-convocado",
                           )}
                         >
                           <td className="entrevistas-col-marca">
                             <input
                               type="checkbox"
-                              checked={marcado}
-                              disabled={!podeEditar || Boolean(convocado)}
-                              aria-label={`Convocar ${c.candidato}`}
-                              onChange={() => alternar(c.analise_id)}
+                              checked={
+                                convocado ? true : selecao.has(c.analiseId)
+                              }
+                              disabled={!podeConvocar || Boolean(convocado)}
+                              aria-label={`Convocar ${c.nome}`}
+                              onChange={() => alternar(c.analiseId)}
                             />
                           </td>
-                          <td>{c.posicao}ª</td>
+                          <td>{c.posicao ? `${c.posicao}ª` : "—"}</td>
                           <td>
-                            <div className="ui-texto-principal">
-                              {c.candidato}
-                            </div>
-                            <span className="ui-texto-secundario">
-                              {c.codigo ? `Cód. ${c.codigo}` : "Sem código"}
-                            </span>
+                            <div className="ui-texto-principal">{c.nome}</div>
                           </td>
                           <td>
-                            {c.modalidade || "—"}
-                            {ehPcd(c.pcd) ? (
-                              <Selo className="entrevistas-selo-pcd">PcD</Selo>
+                            {c.modalidades.join(" · ") || "—"}
+                            {c.lista ? (
+                              <Selo className="entrevistas-selo-lista">
+                                Lista {c.lista}
+                              </Selo>
                             ) : null}
                           </td>
-                          <td>{numeroBR(c.nota_analise)}</td>
+                          <td>{numeroBR(c.nota)}</td>
                           <td>
                             {convocado ? (
                               <span className="entrevistas-situacao">
                                 <Selo tom="aprovado">Convocado</Selo>
-                                {podeEditar && !convocado.avaliacoes?.length ? (
-                                  <button
-                                    type="button"
-                                    className="btn secondary small"
-                                    onClick={() => setDesconvocando(convocado)}
-                                  >
-                                    Desconvocar
-                                  </button>
-                                ) : null}
+                                {desconvocar(convocado)}
                               </span>
-                            ) : c.sugerido ? (
-                              <Selo tom="revisar">Sugerido</Selo>
                             ) : (
                               <span className="ui-texto-secundario">
-                                Além da regra
+                                {daLista ? "A convocar" : "Cálculo atual"}
                               </span>
                             )}
                           </td>
@@ -701,7 +759,7 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                             {c.candidato}
                           </div>
                           <span className="ui-texto-secundario">
-                            Fora dos aprovados atuais
+                            Fora da lista vigente
                           </span>
                         </td>
                         <td>{c.modalidade || "—"}</td>
@@ -709,15 +767,7 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
                         <td>
                           <span className="entrevistas-situacao">
                             <Selo tom="aprovado">Convocado</Selo>
-                            {podeEditar && !c.avaliacoes?.length ? (
-                              <button
-                                type="button"
-                                className="btn secondary small"
-                                onClick={() => setDesconvocando(c)}
-                              >
-                                Desconvocar
-                              </button>
-                            ) : null}
+                            {desconvocar(c)}
                           </span>
                         </td>
                       </tr>
@@ -727,24 +777,25 @@ function PassoDeConvocacao({ dados, salvando, aoConvocar, aoDesconvocar }) {
               </div>
             ) : (
               <p className="entrevistas-vazio-linha">
-                Nenhum aprovado nesta vaga.
+                Ninguém desta vaga na lista.
               </p>
             )}
           </div>
         ))
-      ) : (
+      ) : fonte.tipo !== "NENHUMA" ? (
         <p className="entrevistas-vazio-linha">
-          Nenhum aprovado na análise curricular deste edital.
+          A lista de convocação não tem candidatos.
         </p>
-      )}
-      {podeEditar ? (
+      ) : null}
+      {podeConvocar ? (
         <div className="entrevistas-acoes">
           <button
             type="button"
             className="btn secondary"
-            onClick={() => setSelecao(selecaoSugerida(grupos))}
+            disabled={!pendentes.length}
+            onClick={() => setSelecao(new Set(pendentes))}
           >
-            Voltar à sugestão
+            Marcar todos da lista
           </button>
           <button
             type="button"
@@ -1016,6 +1067,15 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
   const convocado = aberta
     ? dados?.convocados.find((c) => c.id === aberta)
     : null;
+  /* A convocação é a lista da Classificação (sem ela, o cálculo atual, só para ver). */
+  const fonte = useMemo(
+    () => (dados ? fonteDaConvocacao(dados, e.calculo?.resultado) : null),
+    [dados, e.calculo],
+  );
+  const grupos = useMemo(
+    () => (fonte ? gruposDaConvocacao(fonte.resultado, dados.convocados) : []),
+    [fonte, dados],
+  );
   const acao = e.acao?.tipo || "";
 
   return (
@@ -1113,6 +1173,7 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
           <PassoDeConfiguracao
             key={`cfg-${dados.edital?.id}`}
             dados={dados}
+            grupos={grupos}
             roteiros={roteiros.lista}
             salvando={acao === "configurar"}
             aoSalvar={conducao.configurar}
@@ -1120,6 +1181,9 @@ export function VisaoDeConducao({ conducao, area, entrevistasDoPainel }) {
           <PassoDeConvocacao
             key={`conv-${dados.edital?.id}`}
             dados={dados}
+            fonte={fonte}
+            grupos={grupos}
+            calculo={e.calculo}
             salvando={acao === "convocar" || acao === "desconvocar"}
             aoConvocar={conducao.convocar}
             aoDesconvocar={conducao.desconvocar}

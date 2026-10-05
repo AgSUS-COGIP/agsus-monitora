@@ -22,6 +22,12 @@
   20261005120000): só leitura aqui, para quem conduz ver a agenda do dia.
   Sem a migration ou sem acesso, `agenda` fica nula e a condução segue igual.
 
+  A convocação é a lista CONVOCACAO da Classificação (migration
+  20261005150000): `obter_entrevistas_do_edital` traz a lista vigente e
+  `convocar` manda o id dela (`p_lista`). Sem lista gerada, `calculo` guarda o
+  cálculo atual do motor (os mesmos dados da tela de Classificação), só para
+  ver; sem acesso à Classificação, o erro.
+
   A área é a do app: `trocarArea` (chamado pelo controlador e na troca de
   área com a tela aberta) descarta o que era da outra. Outro usuário na mesma
   aba também zera tudo.
@@ -35,6 +41,8 @@ import {
   editaisParaConduzir,
   mensagemDoErroDaEntrevista,
 } from "../../lib/conducao-de-entrevista.js";
+import { classificarEdital } from "../../lib/classificacao/ajustes.js";
+import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.js";
 
 const TEMPO_LIMITE_MS = 30000;
 
@@ -49,6 +57,10 @@ const RPC_LANCAR_NOTAS = "lancar_notas_entrevista";
 const RPC_LISTAR_EDITAIS = "listar_editais_entrevista";
 const RPC_LIBERAR_EDITAL = "liberar_entrevista_edital";
 const RPC_OBTER_AGENDA = "obter_agenda_entrevista";
+/* O cálculo atual da convocação, quando a Classificação ainda não gerou a lista. */
+const RPC_OBTER_CLASSIFICACAO = "obter_classificacao_do_edital";
+const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
+const RPC_MODELOS_CONVOCACAO = "listar_modelos_convocacao";
 
 const LISTA_VAZIA = Object.freeze({
   lista: [],
@@ -73,6 +85,11 @@ const ESTADO_INICIAL = Object.freeze({
   edital: null,
   /** Payload de `obter_agenda_entrevista` do edital aberto (ou null). */
   agenda: null,
+  /**
+   * Sem lista de convocação gerada: `{ resultado }` (o motor, CONVOCACAO) ou
+   * `{ erro }`; com lista, null.
+   */
+  calculo: null,
   carregandoEdital: false,
   erroDoEdital: "",
   /** `pode_editar` do último edital aberto (os roteiros não o devolvem). */
@@ -280,6 +297,7 @@ export function criarEstadoDaConducao({
       editalId: id || "",
       edital: mesmo ? estado.edital : null,
       agenda: mesmo ? estado.agenda : null,
+      calculo: mesmo ? estado.calculo : null,
       carregandoEdital: Boolean(id),
       erroDoEdital: "",
     });
@@ -290,7 +308,11 @@ export function criarEstadoDaConducao({
         rpc(RPC_OBTER_AGENDA, { p_edital: id }).catch(() => null),
       ]);
       if (meu !== pedidoDoEdital) return false;
-      publicar({ agenda: agenda || null });
+      const calculo = dados?.lista_convocacao
+        ? null
+        : await calcularConvocacao(id);
+      if (meu !== pedidoDoEdital) return false;
+      publicar({ agenda: agenda || null, calculo });
       mostrarEdital(dados);
       return true;
     } catch (erro) {
@@ -301,6 +323,37 @@ export function criarEstadoDaConducao({
   }
 
   const recarregarEdital = () => abrirEdital(estado.editalId);
+
+  /*
+    Sem lista gerada: a convocação como a Classificação a calcula agora (mesmo
+    motor, mesma regra, mesmas vagas). Sem a configuração da convocação do
+    edital, segue com a regra, como na Classificação.
+  */
+  async function calcularConvocacao(id) {
+    try {
+      const [dados, configuracoes, modelos] = await Promise.all([
+        rpc(RPC_OBTER_CLASSIFICACAO, { p_edital: id }),
+        rpc(RPC_CONFIGURACAO_CONVOCACAO).catch(() => null),
+        rpc(RPC_MODELOS_CONVOCACAO).catch(() => null),
+      ]);
+      if (!dados?.regra)
+        return { erro: "O edital ainda não tem regra de classificação." };
+      const convocacao =
+        configuracoes && modelos
+          ? convocacaoDoEdital({ configuracoes, modelos }, id)
+          : null;
+      return {
+        resultado: classificarEdital({ ...dados, convocacao }, "CONVOCACAO"),
+      };
+    } catch (erro) {
+      return {
+        erro:
+          erro?.code === "42501"
+            ? "Seu acesso não inclui a Classificação deste edital."
+            : mensagemDe(erro),
+      };
+    }
+  }
 
   /* Resposta de escrita: o payload novo entra na tela (se o edital é o mesmo). */
   function aplicar(dados, editalId) {
@@ -320,12 +373,23 @@ export function criarEstadoDaConducao({
     });
   }
 
+  /* Os da lista vigente da Classificação (o banco recusa quem está fora dela). */
   function convocar(analises) {
     const editalId = estado.editalId;
+    const lista = estado.edital?.lista_convocacao?.lista?.id || null;
     return executar("convocar", "Convocando…", async () => {
+      if (!lista)
+        throw new Error(
+          "Gere a lista de convocação na Classificação antes de convocar",
+        );
       const resposta = await rpc(RPC_CONVOCAR, {
         p_edital: editalId,
+        p_lista: lista,
         p_analises: analises,
+      }).catch((erro) => {
+        // A Classificação gerou outra lista: a tela relê a vigente.
+        if (erro?.code === "40001") void abrirEdital(editalId);
+        throw erro;
       });
       aplicar(resposta?.dados, editalId);
       const quantos = Number(resposta?.convocados) || 0;
