@@ -27,7 +27,8 @@ const texto = (valor) => (typeof valor === "string" ? valor : "");
  */
 export function previaDoAviso(valor, limite = LIMITE_DA_PREVIA) {
   const corpo = texto(valor)
-    .replace(/<[^>]*>/g, " ")
+    .replace(/<\/?(?:br|p|div|li|tr|h[1-6])\b[^>]*>/gi, " ")
+    .replace(/<[^>]*>/g, "")
     .replace(/\s+/g, " ")
     .trim();
   if (corpo.length <= limite) return corpo;

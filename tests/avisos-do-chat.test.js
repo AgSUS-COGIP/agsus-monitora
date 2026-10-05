@@ -39,7 +39,10 @@ const msg = (extra = {}) => ({
 describe("previaDoAviso", () => {
   it("tira marcação, junta espaços e corta com reticências", () => {
     expect(previaDoAviso("  <b>Olá</b>\n\n  mundo  ")).toBe("Olá mundo");
-    expect(previaDoAviso("<script>x</script>ok")).toBe("x ok");
+    expect(previaDoAviso("<p>um</p><p>dois</p>")).toBe("um dois");
+    expect(previaDoAviso("Pode ver o <b>edital</b>?")).toBe(
+      "Pode ver o edital?",
+    );
     const longo = "a".repeat(200);
     const previa = previaDoAviso(longo, 20);
     expect(previa).toHaveLength(20);
