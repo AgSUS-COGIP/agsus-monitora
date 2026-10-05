@@ -5,6 +5,7 @@ import { FASES, sessaoDoApp } from "../../app/sessao.js";
 import { podeUsarChat } from "../../lib/access-roles.js";
 import { totalDeNaoLidas } from "../../lib/chat.js";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { AvisosDoChat } from "./avisos.jsx";
 import { criarEstadoDoChat } from "./estado.js";
 import { EVENTO_ABRIR_CONVERSA } from "./ponte.js";
 
@@ -12,8 +13,9 @@ import { EVENTO_ABRIR_CONVERSA } from "./ponte.js";
   Chat do MONITORA (painel "Mensagens"), módulo do app.
 
   Monta no `#chatHost` do cabeçalho (ao lado de Pessoas online): o ícone com o
-  contador de não lidas. O painel lateral (painel.jsx) só é baixado na primeira
-  abertura (import sob demanda) e vai para o `body` por portal.
+  contador de não lidas e os avisos de mensagem nova (avisos.jsx, por portal).
+  O painel lateral (painel.jsx) só é baixado na primeira abertura (import sob
+  demanda) e vai para o `body` por portal.
 
   Liga e desliga pela sessão do app: conectado e com o recurso "chat" na matriz
   (`podeUsarChat`). Sem o recurso, nada aparece.
@@ -63,6 +65,10 @@ export function Chat({ estado }) {
             document.body,
           )
         : null}
+      {createPortal(
+        <AvisosDoChat estado={estado} avisos={e.avisos} comPainel={e.aberto} />,
+        document.body,
+      )}
     </>
   );
 }

@@ -173,6 +173,116 @@
   background: var(--color-status-success-solid);
 }
 
+/* ---------- Avisos de mensagem nova (avisos.jsx) ----------
+   Canto inferior direito, acima da arara da Aya; com o painel aberto, à
+   esquerda dele (no celular, onde o painel ocupa a tela, ficam escondidos).
+   Mesma camada do painel. */
+
+.chat-avisos {
+  position: fixed;
+  z-index: 10043;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(clamp(16px, 2vw, 24px) + 88px);
+  width: min(340px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.chat-avisos.com-painel {
+  right: calc(min(400px, 100vw) + 16px);
+}
+
+.chat-avisos__lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  pointer-events: auto;
+  animation: chat-aviso-entrada var(--motion-base) var(--ease-standard);
+}
+
+.chat-aviso__abrir {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-aviso__abrir:hover {
+  background: var(--surface-hover);
+}
+
+.chat-aviso button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.chat-aviso__corpo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chat-aviso__corpo strong,
+.chat-aviso__previa {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-aviso__corpo strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+.chat-aviso__previa {
+  color: var(--text-secondary);
+}
+
+.chat-aviso__fechar {
+  flex: none;
+}
+
+@keyframes chat-aviso-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-aviso {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-avisos.com-painel {
+    display: none;
+  }
+}
+
 /* ---------- Lista de conversas ---------- */
 
 .chat-lista {
