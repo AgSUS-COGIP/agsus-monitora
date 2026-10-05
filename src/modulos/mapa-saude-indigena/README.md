@@ -8,8 +8,13 @@ daqui `leaflet.js`, a legenda flutuante, a tela cheia e o CSS `.mapa-si-*`.
 Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela cheia,
 o painel cobre o shell, mantém o botão "Sair da tela cheia" visível e bloqueia a
 rolagem da página até sair (pelo botão ou Esc). O editor de coordenadas, restrito
-ao administrador global e ao Gestor, substitui a lista lateral e oferece "Voltar à lista";
-no celular, esse painel fica abaixo do mapa. Ele tem a fila de pontos (busca e
+ao administrador global e ao Gestor, abre o **modo de edição**
+(`src/modulos/editor-de-coordenadas/modo-de-edicao.jsx`): o painel cobre a página como a
+tela cheia, o mapa ocupa o corpo inteiro e o editor flutua à direita (no celular, numa
+folha embaixo, com o mapa em ≥ 55% da altura), recolhível ("Recolher editor" deixa uma
+faixa); o enquadramento do ponto desconta o painel (`folgaDoEnquadramento`, paddings do
+Leaflet). "Voltar à lista", "Coordenadas" ou Esc voltam ao layout de sempre
+(`--mapa-si-altura` não muda). Testes em `tests/modulos/modo-de-edicao.test.js`. Ele tem a fila de pontos (busca e
 "Só pendentes", com as pendências da auditoria), "Conferido", as sugestões de
 posição e o histórico com "Desfazer" — RPCs de
 `supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql`, regras em
@@ -31,7 +36,8 @@ legenda.jsx               <Forma>, <LegendaFlutuante> (recolhível; também a de
                           nacional, legenda do DSEI, fases das terras
 leaflet.js                fábrica do mapa (criarMapa, criarMapaDoBrasil), Brasil, fundo com recurso,
                           contornos, ícones/popup/dica em DOM seguro
-tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas)
+tela-cheia.jsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas);
+                          travarRolagemDaPagina (contada: tela cheia e modo de edição)
 volta-ao-brasil.js        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
 usar-ultimo.js            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
 editor-de-coordenadas.jsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
