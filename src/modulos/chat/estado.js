@@ -17,7 +17,10 @@
       da conversa aberta entra na hora (sem duplicar: `mesclarMensagens`); a
       lista é relida logo depois (contagem e prévia certas). O que a pessoa
       limpou (limpa_em) não volta pelo Realtime. Reações (RL_MENSAGEM_REACAO)
-      da conversa aberta entram na mensagem (aplicarReacaoDaLinha).
+      da conversa aberta entram na mensagem (aplicarReacaoDaLinha). DELETE de
+      TB_MENSAGEM (retenção ou "Zerar mensagens" das Configurações, só com a
+      chave): a mensagem sai da tela (tirarMensagens); a releitura da página
+      mais nova também tira o que sumiu do banco (reconciliarPagina).
     - canal privado "chat:<conversa>" da conversa aberta: broadcast "digitando".
     - Caiu e voltou (SUBSCRIBED depois de erro) ou a aba voltou a ficar visível:
       relê a lista e a conversa aberta.
@@ -41,6 +44,8 @@ import {
   ordenarConversas,
   REACOES_RAPIDAS,
   reacoesComAlternancia,
+  reconciliarPagina,
+  tirarMensagens,
   totalDeNaoLidas,
   validarTexto,
 } from "../../lib/chat.js";
@@ -275,7 +280,22 @@ export function criarEstadoDoChat({
 
   // ── Tempo real ───────────────────────────────────────────────────────────
 
+  /*
+    DELETE: a retenção ou o "Zerar mensagens" (Configurações) apagaram de
+    fato. O Realtime manda só a chave (sem RLS no DELETE): a mensagem sai da
+    conversa aberta e dos avisos, e a lista é relida (prévia e não lidas).
+  */
+  function aoApagarMensagem(payload) {
+    const id = payload?.old?.CO_MENSAGEM;
+    if (!id) return;
+    const mensagens = tirarMensagens(estado.mensagens, [id]);
+    if (mensagens !== estado.mensagens) publicar({ mensagens });
+    tirarAvisoDaMensagem(id);
+    agendarReleitura();
+  }
+
   function aoMudarMensagem(payload) {
+    if (payload?.eventType === "DELETE") return aoApagarMensagem(payload);
     const mensagem = mensagemDaLinha(payload?.new);
     if (!mensagem) return;
     const daAberta = mensagem.conversa === estado.conversaId;
@@ -563,7 +583,14 @@ export function criarEstadoDoChat({
         conversa: dados?.conversa
           ? { ...estado.conversa, ...dados.conversa }
           : estado.conversa,
-        mensagens: mesclarMensagens(estado.mensagens, recebidas),
+        // Página mais nova: o que sumiu do banco (retenção, zerar) sai da tela.
+        mensagens: antes
+          ? mesclarMensagens(estado.mensagens, recebidas)
+          : reconciliarPagina(
+              estado.mensagens,
+              recebidas,
+              Boolean(dados?.tem_mais),
+            ),
         ...(antes || !silencioso ? { temMais: Boolean(dados?.tem_mais) } : {}),
         carregandoMensagens: false,
         erroDaConversa: "",
