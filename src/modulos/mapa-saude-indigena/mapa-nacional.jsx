@@ -1,5 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
-import { calcularLeque } from "../../lib/leque-de-marcadores.js";
+import { useEffect, useReducer, useRef } from "react";
 import {
   dicaDaBolha,
   dicaDaCasaiNacional,
@@ -9,53 +8,41 @@ import {
   formatarNumero,
   plural,
 } from "../../lib/mapa-saude-indigena/chaves.js";
-import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.js";
 import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.js";
-import { EstadoVazio, classes } from "../../ui/index.js";
+import { classes } from "../../ui/index.js";
 import { LegendaNacional } from "./legenda.jsx";
 import {
   DURACAO_DA_VOLTA_AO_BRASIL,
   conteudoEmElemento,
-  criarMapaDoBrasil,
+  criarLeque,
+  enquadrar,
   iconeDaCasaiNacional,
-  enquadrarNoBrasil,
   ligarDicaEPopup,
   podeFlutuar,
   podeVoar,
   remedir,
-  voarAoBrasil,
-  voltarAoBrasil,
 } from "./leaflet.js";
+import {
+  ListaDoMapa,
+  MolduraDoMapa,
+  TopoDoMapa,
+  classesDoPainel,
+  propsDoEditor,
+  usarMapaDoBrasil,
+} from "./painel-do-mapa.jsx";
 import { usarUltimo } from "./usar-ultimo.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.js";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.jsx";
 import {
-  BotaoDeRecolher,
   PainelDoEditor,
   usarModoDeEdicao,
 } from "../editor-de-coordenadas/modo-de-edicao.jsx";
 
 /*
-  Enquadramento do recorte: o filtro que deixa um só DSEI ou CASAI vira zoom
-  7 nele; mais de um, a caixa deles. A volta de um DSEI parte da sede, no
-  zoom em que o mapa do distrito costuma estar, e voa até o enquadramento.
+  A volta de um DSEI parte da sede, no zoom em que o mapa do distrito costuma
+  estar, e voa até o enquadramento do recorte (`enquadrar`, leaflet.js).
 */
-const ZOOM_DO_PONTO = 7;
-const OPCOES_DA_CAIXA = Object.freeze({ padding: [60, 60], maxZoom: 7 });
 const ZOOM_DE_PARTIDA_DA_VOLTA = 7;
-
-/* O traço do leque usa o texto secundário do tema; o cinza-azulado é reserva. */
-function corDoTraco() {
-  try {
-    const cor = getComputedStyle(document.documentElement)
-      .getPropertyValue("--text-secondary")
-      .trim();
-    if (cor) return cor;
-  } catch {
-    // sem estilos computados (teste)
-  }
-  return CORES_DO_MAPA.traco;
-}
 
 /* Redesenha quando a camada de Terras Indígenas avisa que mudou. */
 export function usarAvisosDasTerras(mapa) {
@@ -66,51 +53,6 @@ export function usarAvisosDasTerras(mapa) {
     return () => mapa.off?.(EVENTO_DAS_TERRAS, avisar);
   }, [mapa]);
   return vez;
-}
-
-/*
-  Leque das sedes que caem no mesmo pixel (Yanomami e Leste de Roraima em Boa
-  Vista): a bolha é desenhada num círculo de 16 px em volta do ponto real, com
-  um traço até ele. A coordenada não muda; recalcula a cada zoom.
-*/
-function aplicarLeque(L, mapa, camada, marcadores, tracos) {
-  tracos.forEach((t) => camada.removeLayer(t));
-  tracos.length = 0;
-  const vivos = marcadores.filter(({ marcador }) => camada.hasLayer(marcador));
-  if (!vivos.length) return;
-  const pontos = vivos.map(({ lat, lon }) =>
-    mapa.latLngToLayerPoint([lat, lon]),
-  );
-  const cor = corDoTraco();
-  calcularLeque(pontos).forEach((desvio, i) => {
-    const { marcador, lat, lon } = vivos[i];
-    if (!desvio.emLeque) {
-      marcador.setLatLng([lat, lon]);
-      return;
-    }
-    const destino = mapa.layerPointToLatLng(
-      pontos[i].add(L.point(desvio.dx, desvio.dy)),
-    );
-    marcador.setLatLng(destino);
-    tracos.push(
-      L.polyline([[lat, lon], destino], {
-        color: cor,
-        weight: 1,
-        opacity: 0.7,
-        interactive: false,
-      }),
-      L.circleMarker([lat, lon], {
-        radius: 2,
-        stroke: false,
-        fillColor: cor,
-        fillOpacity: 0.9,
-        interactive: false,
-      }),
-    );
-  });
-  if (!tracos.length) return;
-  tracos.forEach((t) => camada.addLayer(t));
-  vivos.forEach(({ marcador }) => marcador.bringToFront?.());
 }
 
 function LinhaDoTerritorio({ territorio, aoEscolher }) {
@@ -155,7 +97,10 @@ function LinhaDoTerritorio({ territorio, aoEscolher }) {
 
 /*
   A visão nacional: o mapa na proporção que o Brasil preenche e, ao lado, os
-  territórios por vagas (a mesma porta de entrada que a bolha).
+  territórios por vagas (a mesma porta de entrada que a bolha). O painel, o
+  topo, a moldura, a lista, o leque e o enquadramento são os comuns aos dois
+  mapas nacionais (painel-do-mapa.jsx, leaflet.js); o de Projetos usa os
+  mesmos.
 */
 export function MapaNacional({
   lmap,
@@ -179,84 +124,49 @@ export function MapaNacional({
   aoFiltrarPorBusca,
 }) {
   const podeEditar = podeEditarCoordenadas(perfil);
-  const refDoMapa = useRef(null);
   const refDaLista = useRef(null);
-  const [mapa, definirMapa] = useState(null);
-  const camadas = useRef(null);
+  // Enquanto voa de volta ao Brasil, o "apareceu" do ResizeObserver não salta.
+  const voando = useRef(null);
+  const { refDoMapa, mapa, camadas, ultimoEnquadramento, aparecimentos } =
+    usarMapaDoBrasil(L, {
+      emVoo: voando,
+      visivel,
+      telaCheia,
+      aoCriar: (novo) => {
+        const dsei = L.layerGroup().addTo(novo);
+        const casai = L.layerGroup().addTo(novo);
+        novo.__agsusSuspenderCamadasIndigenas?.(false);
+        const leque = criarLeque(L, novo, dsei);
+        return {
+          dsei,
+          casai,
+          leque,
+          parar: () => {
+            voando.current?.();
+            leque.parar();
+          },
+        };
+      },
+    });
   const modo = usarModoDeEdicao({
     mapa,
     permitido: podeEditar && visivel,
     pegar: () => camadas.current?.pegar(),
   });
   const idDoPainel = `${idDoMapa}-painel-lateral`;
-  const ultimoEnquadramento = useRef("");
   // A última volta de DSEI já enquadrada e já com o foco devolvido (`vez`).
   const voltaEnquadrada = useRef(0);
   const voltaFocada = useRef(0);
-  // Enquanto voa de volta ao Brasil, o "apareceu" do ResizeObserver não salta.
-  const voando = useRef(null);
-  // Quantas vezes o enquadramento teve de ser refeito (apareceu, mudou de tamanho).
-  const [aparecimentos, aparecer] = useReducer((n) => n + 1, 0);
   const chamadas = usarUltimo({ aoEscolherDsei, aoFiltrarPorBusca });
   const avisosDasTerras = usarAvisosDasTerras(mapa);
-
-  // Cria o mapa uma vez; o StrictMode desfaz e refaz, e o `remove` limpa tudo.
-  useEffect(() => {
-    const elemento = refDoMapa.current;
-    if (!L || !elemento) return undefined;
-    /*
-      Criado escondido (antes do login, noutra tela) o enquadramento usa a
-      medida zero: ao aparecer, enquadra de novo. Também ao mudar de tamanho
-      (tela cheia, barra lateral), se a pessoa não mexeu no mapa.
-    */
-    const {
-      mapa: novo,
-      pegar,
-      soltar,
-      parar,
-    } = criarMapaDoBrasil(L, elemento, {
-      aoReenquadrar: () => {
-        if (voando.current) return;
-        ultimoEnquadramento.current = "";
-        aparecer();
-      },
-    });
-    const dsei = L.layerGroup().addTo(novo);
-    const casai = L.layerGroup().addTo(novo);
-    novo.__agsusSuspenderCamadasIndigenas?.(false);
-    const marcadores = [];
-    const tracos = [];
-    const leque = () => aplicarLeque(L, novo, dsei, marcadores, tracos);
-    novo.on("zoomend", leque);
-    camadas.current = {
-      dsei,
-      casai,
-      marcadores,
-      tracos,
-      leque,
-      pegar,
-      soltar,
-    };
-    ultimoEnquadramento.current = "";
-    definirMapa(novo);
-    return () => {
-      parar();
-      voando.current?.();
-      novo.off("zoomend", leque);
-      novo.remove();
-      camadas.current = null;
-      definirMapa(null);
-    };
-  }, [L]);
 
   // Bolhas dos DSEIs e CASAIs nacionais.
   useEffect(() => {
     if (!mapa || !camadas.current) return;
-    const { dsei, casai, marcadores, tracos, leque } = camadas.current;
+    const { dsei, casai, leque } = camadas.current;
     dsei.clearLayers();
     casai.clearLayers();
-    marcadores.length = 0;
-    tracos.length = 0;
+    leque.limpar();
     const flutua = podeFlutuar();
     for (const bolha of bolhas) {
       const marcador = L.circleMarker([bolha.lat, bolha.lon], bolha.estilo);
@@ -271,7 +181,7 @@ export function MapaNacional({
       }
       marcador.on("click", () => chamadas.current.aoEscolherDsei?.(bolha.dsei));
       dsei.addLayer(marcador);
-      marcadores.push({ marcador, lat: bolha.lat, lon: bolha.lon });
+      leque.adicionar(marcador, bolha.lat, bolha.lon);
     }
     for (const c of casais) {
       const marcador = L.marker([c.lat, c.lon], {
@@ -288,8 +198,8 @@ export function MapaNacional({
       );
       casai.addLayer(marcador);
     }
-    leque();
-  }, [L, mapa, bolhas, casais, resumoDaRede, chamadas]);
+    leque.aplicar();
+  }, [L, mapa, camadas, bolhas, casais, resumoDaRede, chamadas]);
 
   /*
     Enquadramento: só quando muda o que enquadrar, e só com o mapa à vista —
@@ -329,25 +239,24 @@ export function MapaNacional({
         mapa.on("moveend", pousar);
         voando.current = pousar;
       }
-      const duracao = { duration: DURACAO_DA_VOLTA_AO_BRASIL };
-      if (enquadramento.modo === "ponto") {
-        const [ponto] = enquadramento.pontos;
-        if (voar) mapa.flyTo(ponto, ZOOM_DO_PONTO, duracao);
-        else mapa.setView(ponto, ZOOM_DO_PONTO, { animate: false });
-      } else if (enquadramento.modo === "caixa") {
-        const caixa = L.latLngBounds(enquadramento.pontos);
-        if (voar) mapa.flyToBounds(caixa, { ...OPCOES_DA_CAIXA, ...duracao });
-        else mapa.fitBounds(caixa, { ...OPCOES_DA_CAIXA, animate: false });
-      } else if (voar) voarAoBrasil(L, mapa);
-      else enquadrarNoBrasil(L, mapa);
+      enquadrar(L, mapa, enquadramento, { voar });
     } catch {
       // mapa sem tamanho ainda; o ResizeObserver reenquadra
       voando.current?.();
     }
     camadas.current.soltar();
     // Se o enquadramento não mudou o zoom, o `zoomend` não dispara.
-    camadas.current.leque();
-  }, [L, mapa, enquadramento, visivel, aparecimentos, voltaDoDsei]);
+    camadas.current.leque.aplicar();
+  }, [
+    L,
+    mapa,
+    camadas,
+    ultimoEnquadramento,
+    enquadramento,
+    visivel,
+    aparecimentos,
+    voltaDoDsei,
+  ]);
 
   /*
     Quem saiu do DSEI pelo mapa ("Voltar ao Brasil" ou Esc) não perde o
@@ -364,14 +273,7 @@ export function MapaNacional({
     const alvo = linha || refDoMapa.current;
     alvo?.focus?.({ preventScroll: true });
     linha?.scrollIntoView?.({ block: "nearest" });
-  }, [visivel, voltaDoDsei]);
-
-  // Voltou a aparecer, ou mudou para tela cheia: o Leaflet remede.
-  useEffect(() => {
-    if (!mapa || !visivel) return undefined;
-    const quadro = requestAnimationFrame(() => remedir(mapa));
-    return () => cancelAnimationFrame(quadro);
-  }, [mapa, visivel, telaCheia]);
+  }, [visivel, voltaDoDsei, refDoMapa]);
 
   const temAbrangencia =
     avisosDasTerras >= 0 &&
@@ -379,77 +281,35 @@ export function MapaNacional({
 
   return (
     <section
-      className={classes(
-        "ui-card mapa-si-painel mapa-si-painel--nacional",
-        modo.editando && "mapa-si-painel--editando",
-      )}
+      className={classesDoPainel(modo)}
       hidden={!visivel}
       aria-labelledby={`${idDoMapa}-titulo`}
     >
-      <header className="mapa-si-painel__topo">
-        <div className="mapa-si-painel__titulos">
-          <h2 className="ui-titulo" id={`${idDoMapa}-titulo`}>
-            DSEIs e CASAIs do Brasil
-          </h2>
-          <span className="mapa-si-painel__contagem">
-            {carregando
-              ? "…"
-              : plural(bolhas.length, "território", "territórios")}
-          </span>
-        </div>
-        <div
-          className="mapa-si-painel__acoes"
-          role="group"
-          aria-label="Controles do mapa"
-        >
-          {podeEditar ? (
-            <button
-              type="button"
-              className="btn small"
-              aria-pressed={modo.editando}
-              aria-expanded={modo.editando}
-              aria-controls={idDoPainel}
-              title={modo.editando ? "Sair da edição (Esc)" : undefined}
-              onClick={modo.alternar}
-            >
-              Coordenadas
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="btn small"
-            onClick={() => {
-              voltarAoBrasil(L, mapa);
-              camadas.current?.soltar();
-            }}
-            disabled={!mapa}
-            title="Voltar à visão do Brasil inteiro"
-          >
-            Brasil
-          </button>
-          {modo.editando ? null : acoes}
-        </div>
-      </header>
+      <TopoDoMapa
+        L={L}
+        mapa={mapa}
+        camadas={camadas}
+        idDoMapa={idDoMapa}
+        titulo="DSEIs e CASAIs do Brasil"
+        contagem={
+          carregando ? "…" : plural(bolhas.length, "território", "territórios")
+        }
+        podeEditar={podeEditar}
+        modo={modo}
+        idDoPainel={idDoPainel}
+        acoes={acoes}
+      />
       <div className="mapa-si-painel__corpo">
-        <div className="mapa-si-moldura">
-          {L ? (
-            <div
-              ref={refDoMapa}
-              id={idDoMapa}
-              className="mapa-si-mapa"
-              role="img"
-              aria-label="Mapa do Brasil com processos seletivos por DSEI e CASAIs nacionais"
-            />
-          ) : (
-            <EstadoVazio className="ui-vazio mapa-si-sem-mapa">
-              Mapa indisponível sem conexão: o fundo geográfico precisa de
-              internet.
-            </EstadoVazio>
-          )}
+        <MolduraDoMapa
+          L={L}
+          refDoMapa={refDoMapa}
+          idDoMapa={idDoMapa}
+          rotulo="Mapa do Brasil com processos seletivos por DSEI e CASAIs nacionais"
+        >
           {mapa ? (
             <LegendaNacional mapa={mapa} temAbrangencia={temAbrangencia} />
           ) : null}
-        </div>
+        </MolduraDoMapa>
         {modo.editando ? (
           <PainelDoEditor
             id={idDoPainel}
@@ -464,46 +324,31 @@ export function MapaNacional({
               perfil={perfil}
               supabase={supabase}
               aoAtualizarMapa={aoAtualizarMapa}
-              aoFechar={modo.fechar}
-              areaLivre={modo.areaLivre}
-              versaoDaArea={modo.versaoDaArea}
-              botaoDeRecolher={
-                <BotaoDeRecolher
-                  modo={modo}
-                  idDoConteudo={`${idDoPainel}-conteudo`}
-                />
-              }
+              {...propsDoEditor(modo, idDoPainel)}
             />
           </PainelDoEditor>
         ) : (
-          <aside
-            ref={refDaLista}
-            className="mapa-si-lista"
+          <ListaDoMapa
+            refDaLista={refDaLista}
             id={idDoPainel}
-            aria-label="Territórios por vagas"
+            idDoTitulo={`${idDoMapa}-lista`}
+            titulo="Territórios por vagas"
+            total={territorios.length}
+            carregando={carregando}
+            vazio="Nenhum território no recorte."
           >
-            <>
-              <div className="mapa-si-lista__topo">
-                <span id={`${idDoMapa}-lista`}>Territórios por vagas</span>
-                <b>{carregando ? "…" : formatarNumero(territorios.length)}</b>
-              </div>
-              {carregando ? (
-                <div className="ui-esqueleto mapa-si-lista__esqueleto" />
-              ) : territorios.length ? (
-                <ol className="mapa-si-lista__itens">
-                  {territorios.map((t) => (
-                    <LinhaDoTerritorio
-                      key={t.chave}
-                      territorio={t}
-                      aoEscolher={(d) => chamadas.current.aoEscolherDsei?.(d)}
-                    />
-                  ))}
-                </ol>
-              ) : (
-                <EstadoVazio>Nenhum território no recorte.</EstadoVazio>
-              )}
-            </>
-          </aside>
+            {territorios.length ? (
+              <ol className="mapa-si-lista__itens">
+                {territorios.map((t) => (
+                  <LinhaDoTerritorio
+                    key={t.chave}
+                    territorio={t}
+                    aoEscolher={(d) => chamadas.current.aoEscolherDsei?.(d)}
+                  />
+                ))}
+              </ol>
+            ) : null}
+          </ListaDoMapa>
         )}
       </div>
     </section>

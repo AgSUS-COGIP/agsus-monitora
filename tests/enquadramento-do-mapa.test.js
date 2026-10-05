@@ -257,7 +257,13 @@ describe("as cores dos marcadores se separam do mapa", () => {
   chamamento e não um sítio.
 */
 describe("o mapa não inventa coordenadas", () => {
-  const codigo = semComentarios(nacional) + semComentarios(doDsei);
+  // O leque dos mapas nacionais (Saúde Indígena e Projetos) mora no leaflet.js comum.
+  const comum = readFileSync(
+    "src/modulos/mapa-saude-indigena/leaflet.js",
+    "utf8",
+  );
+  const codigo =
+    semComentarios(nacional) + semComentarios(doDsei) + semComentarios(comum);
 
   it("não cria selo numérico para DSEIs que compartilham sede", () => {
     expect(codigo).not.toContain("mapa-cluster--sede");
@@ -272,7 +278,8 @@ describe("o mapa não inventa coordenadas", () => {
       "L.polyline([[grupo.lat, grupo.lon], destino]",
     );
     // Sedes no mesmo pixel (Boa Vista): leque com traço e o ponto real desenhado.
-    const leque = semComentarios(nacional);
+    const leque = semComentarios(comum);
+    expect(semComentarios(nacional)).toContain("criarLeque(L, novo, dsei)");
     expect(leque).toContain("L.polyline([[lat, lon], destino]");
     expect(leque).toContain("L.circleMarker([lat, lon]");
   });
