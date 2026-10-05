@@ -73,6 +73,9 @@ const RETRATO = {
       chave: "V2",
       codigo: "V2",
       cargo: "Médico",
+      // Sem linha no quadro de vagas do edital.
+      total: null,
+      origem_das_vagas: null,
       geral: [],
       listas: {},
       eliminados: [],
@@ -251,6 +254,19 @@ describe("textos e avisos", () => {
     expect(origemDasVagas({ origemDasVagas: "REGRA" }).view).toBe(
       "classificacao",
     );
+  });
+
+  it("lista gerada antes de o retrato guardar as vagas: não diz que falta quadro", () => {
+    const [antiga] = vagasDaLista({
+      vagas: [{ codigo: "V1", cargo: "Enfermeiro", geral: [], listas: {} }],
+    });
+    expect(antiga.semVagasNaLista).toBe(true);
+    expect(textoDasVagas(antiga)).toBe("");
+    expect(origemDasVagas(antiga)).toMatchObject({
+      rotulo: "não registrado nesta lista",
+      view: "classificacao",
+    });
+    expect(vagasDaLista(RETRATO)[1].semVagasNaLista).toBe(false);
   });
 
   it("a regra da Classificação em uma linha, com as exceções", () => {

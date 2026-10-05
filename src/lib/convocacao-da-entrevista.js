@@ -50,6 +50,12 @@ export const ORIGENS_DAS_VAGAS = Object.freeze({
 
 /** A origem das vagas da vaga, ou a de quem não tem quadro (configurar no Editais). */
 export function origemDasVagas(grupo) {
+  if (grupo?.semVagasNaLista)
+    return {
+      rotulo: "não registrado nesta lista",
+      view: "classificacao",
+      onde: "Classificação",
+    };
   return (
     ORIGENS_DAS_VAGAS[grupo?.origemDasVagas] || {
       rotulo: "sem quadro de vagas",
@@ -115,6 +121,8 @@ export function vagasDaLista(resultado) {
       lotacao: texto(v.lotacao),
       cabecalho: texto(v.cabecalho),
       total: numero(v.total),
+      // Lista gerada antes de o retrato guardar as vagas (antes de 20261005150000).
+      semVagasNaLista: !("total" in v),
       cadastroReserva: Boolean(v.cadastro_reserva ?? v.cadastroReserva),
       origemDasVagas: v.origem_das_vagas ?? v.origemDasVagas ?? null,
       limite: numero(limite?.limite),
@@ -157,6 +165,7 @@ export function gruposDaConvocacao(resultado, convocados = []) {
         lotacao: "",
         cabecalho: "",
         total: null,
+        semVagasNaLista: true,
         cadastroReserva: false,
         origemDasVagas: null,
         limite: null,
@@ -193,8 +202,12 @@ export function resumoDaConvocacao(grupos) {
   return { naLista, naFicha, aConvocar: naLista - naFicha, fora };
 }
 
-/** "2 vagas imediatas", "cadastro reserva", "sem quadro de vagas". */
+/**
+ * "2 vagas imediatas", "cadastro reserva", "sem quadro de vagas"; lista antiga,
+ * sem as vagas no retrato, "" (a tela mostra o cabeçalho da vaga).
+ */
 export function textoDasVagas(grupo) {
+  if (grupo?.semVagasNaLista) return "";
   const total = numero(grupo?.total);
   if (total === null) return "sem quadro de vagas";
   if (total === 0) return "cadastro reserva";

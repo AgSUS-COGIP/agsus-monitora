@@ -159,7 +159,7 @@ function ConvocacaoDaClassificacao({ dados, grupos }) {
                         </span>
                       ) : null}
                     </td>
-                    <td>{textoDasVagas(g)}</td>
+                    <td>{textoDasVagas(g) || "—"}</td>
                     <td>{textoDoLimite(g) || "—"}</td>
                     <td>
                       <span className="entrevistas-situacao">
