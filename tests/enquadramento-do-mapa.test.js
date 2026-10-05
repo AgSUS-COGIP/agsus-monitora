@@ -27,6 +27,11 @@ const projetosJsx = readFileSync(
   "src/modulos/mapa-de-projetos/mapa-de-projetos.jsx",
   "utf8",
 );
+// A moldura, o topo e a lista comuns aos dois mapas nacionais.
+const painelComum = readFileSync(
+  "src/modulos/mapa-saude-indigena/painel-do-mapa.jsx",
+  "utf8",
+);
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -126,8 +131,10 @@ describe("o container do mapa preenche o card", () => {
 
   it("o mapa de Projetos e os da Saúde Indígena ocupam a largura toda", () => {
     // O de Projetos usa a mesma moldura e o mesmo contêiner do nacional da Saúde Indígena.
-    expect(projetosJsx).toContain('className="mapa-si-mapa"');
-    expect(projetosJsx).toContain('className="mapa-si-moldura"');
+    expect(projetosJsx).toContain("<MolduraDoMapa");
+    expect(nacional).toContain("<MolduraDoMapa");
+    expect(painelComum).toContain('className="mapa-si-mapa"');
+    expect(painelComum).toContain('className="mapa-si-moldura"');
     expect(css).not.toMatch(/.mapa-si-mapa|#mapaDosProjetos/);
     const modulo = cssDoModulo.slice(
       cssDoModulo.indexOf(".mapa-si-mapa {"),
