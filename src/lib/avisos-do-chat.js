@@ -29,6 +29,8 @@ export function previaDoAviso(valor, limite = LIMITE_DA_PREVIA) {
   const corpo = texto(valor)
     .replace(/<\/?(?:br|p|div|li|tr|h[1-6])\b[^>]*>/gi, " ")
     .replace(/<[^>]*>/g, "")
+    // Sobra de marcação (ex.: "<scr<script>ipt>") não chega à prévia.
+    .replace(/[<>]/g, "")
     .replace(/\s+/g, " ")
     .trim();
   if (corpo.length <= limite) return corpo;

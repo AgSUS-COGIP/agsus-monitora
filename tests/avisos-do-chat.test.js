@@ -40,6 +40,7 @@ describe("previaDoAviso", () => {
   it("tira marcação, junta espaços e corta com reticências", () => {
     expect(previaDoAviso("  <b>Olá</b>\n\n  mundo  ")).toBe("Olá mundo");
     expect(previaDoAviso("<p>um</p><p>dois</p>")).toBe("um dois");
+    expect(previaDoAviso("oi <scr<script>ipt>alert(1)")).not.toMatch(/[<>]/);
     expect(previaDoAviso("Pode ver o <b>edital</b>?")).toBe(
       "Pode ver o edital?",
     );
