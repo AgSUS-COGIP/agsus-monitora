@@ -93,9 +93,14 @@ export const TELAS_REACT = Object.freeze({
     janela.classificacaoController,
   ],
   analises: (_valor, janela) => [
-    "Análises curriculares",
+    "Painel das análises",
     "",
     janela.analisesController,
+  ],
+  "avaliacao-documental": (_valor, janela) => [
+    "Avaliação documental",
+    "",
+    janela.avaliacaoDocumentalController,
   ],
   selecao: (_valor, janela) => ["Seleção", "", janela.selecaoController],
 });

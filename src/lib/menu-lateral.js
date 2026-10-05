@@ -91,10 +91,13 @@ export const AREAS_DO_MENU = Object.freeze([
   Painéis até a aba nova ser aprovada.
 
   A ordem segue as etapas do processo seletivo (Editais → Cronograma →
-  Análises → Recursos → Entrevistas → Classificação → Aprovados → Seleção),
-  migrations `20261001160000_ordem_do_menu_por_etapa.sql` e
+  Painel das análises → Avaliação documental → Recursos → Entrevistas →
+  Classificação → Aprovados → Seleção), migrations
+  `20261001160000_ordem_do_menu_por_etapa.sql`,
   `20261002150000_classificacao.sql` (Classificação entra na 7 e empurra
-  Aprovados e Seleção).
+  Aprovados e Seleção) e `20261006090000_avaliacao_documental_permissao_e_menu.sql`
+  (Avaliação documental entra na 5 e empurra as seguintes; "Análises
+  curriculares" passa a se chamar "Painel das análises").
 
   `recurso` é o recurso de permissão que a aba usa hoje (`TB_ABA.CO_RECURSO`);
   por enquanto só informa — quem decide o que o perfil vê é o `buildNav`.
@@ -161,7 +164,7 @@ export const ABAS_DO_MENU = Object.freeze(
     },
     {
       id: "analises",
-      rotulo: "Análises curriculares",
+      rotulo: "Painel das análises",
       icone: "file-search",
       ordem: 4,
       view: "analises",
@@ -170,10 +173,21 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
+      id: "avaliacao-documental",
+      rotulo: "Avaliação documental",
+      icone: "graduation-cap",
+      ordem: 5,
+      view: "avaliacao-documental",
+      recurso: "avaliacao_documental",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
+    {
       id: "recursos",
       rotulo: "Recursos",
       icone: "scale",
-      ordem: 5,
+      ordem: 6,
       view: "recursos",
       recurso: "recursos",
       tipo: "nativa",
@@ -184,7 +198,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "entrevistas",
       rotulo: "Entrevistas",
       icone: "messages-square",
-      ordem: 6,
+      ordem: 7,
       view: "entrevistas",
       recurso: "entrevistas",
       tipo: "nativa",
@@ -195,7 +209,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "classificacao",
       rotulo: "Classificação",
       icone: "list-ordered",
-      ordem: 7,
+      ordem: 8,
       view: "classificacao",
       recurso: "classificacao",
       tipo: "nativa",
@@ -206,7 +220,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "aprovados",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
-      ordem: 8,
+      ordem: 9,
       view: "approved",
       recurso: "aprovados",
       tipo: "nativa",
@@ -216,7 +230,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "selecao",
       rotulo: "Seleção",
       icone: "funnel",
-      ordem: 9,
+      ordem: 10,
       view: "selecao",
       recurso: "selecao",
       tipo: "nativa",

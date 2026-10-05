@@ -1,4 +1,5 @@
 import {
+  canViewAvaliacaoDocumental,
   canViewClassificacao,
   canViewCore,
   canViewEntrevistas,
@@ -58,7 +59,11 @@ const BLOQUEIOS = Object.freeze({
   approved: [canViewCore, "Sem permissão para Lista de Aprovados."],
   analises: [
     (perfil) => permissaoLegada(perfil, "analises"),
-    "Sem permissão para Análises curriculares.",
+    "Sem permissão para o Painel das análises.",
+  ],
+  "avaliacao-documental": [
+    canViewAvaliacaoDocumental,
+    "Sem permissão para a Avaliação documental.",
   ],
   recursos: [canViewRecursos, "Sem permissão para Recursos."],
   entrevistas: [canViewEntrevistas, "Sem permissão para Entrevistas."],
@@ -100,6 +105,7 @@ export function telaInicialDoSistema(perfil, paineis) {
   if (pode("calendario")) return "calendario";
   if (canViewCore(perfil)) return "approved";
   if (pode("analises")) return "analises";
+  if (canViewAvaliacaoDocumental(perfil)) return "avaliacao-documental";
   if (canViewRecursos(perfil)) return "recursos";
   if (canViewEntrevistas(perfil)) return "entrevistas";
   if (canViewClassificacao(perfil)) return "classificacao";

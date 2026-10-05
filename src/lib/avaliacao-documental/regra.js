@@ -613,14 +613,14 @@ export function validarRegraAnalise(regra) {
     if (!valores(MODOS_DE_DISTRIBUICAO).has(distribuicao.modo))
       erros.push("Distribuição: Pegar próximo ou Distribuição inicial.");
     if (
-      distribuicao.criterio !== undefined &&
+      distribuicao.criterio != null &&
       !valores(CRITERIOS_DA_DISTRIBUICAO).has(distribuicao.criterio)
     )
       erros.push("Distribuição: partes iguais ou até um limite.");
     if (!nuloOuEntre(distribuicao.limite_por_analista, 1, 5000))
       erros.push("Distribuição: limite por analista de 1 a 5.000.");
     if (
-      distribuicao.novos !== undefined &&
+      distribuicao.novos != null &&
       !valores(DESTINO_DOS_NOVOS).has(distribuicao.novos)
     )
       erros.push("Distribuição: destino dos que entram depois inválido.");

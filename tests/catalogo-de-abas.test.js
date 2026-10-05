@@ -72,6 +72,19 @@ const MIGRATION_DA_CLASSIFICACAO = ler(
 const MIGRATION_QUE_LIGA_A_CLASSIFICACAO = ler(
   "supabase/migrations/20261002150500_liga_aba_classificacao.sql",
 );
+/*
+  Avaliação documental (20261006090000_avaliacao_documental_permissao_e_menu.sql):
+  o mesmo formato — entra desligada, em todas as áreas, na ordem 5, empurra
+  Recursos, Entrevistas, Classificação, Aprovados e Seleção, e troca o rótulo
+  de Análises para "Painel das análises" (update de "NO_ABA");
+  20261006090500_liga_aba_avaliacao_documental.sql a liga.
+*/
+const MIGRATION_DA_AVALIACAO = ler(
+  "supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql",
+);
+const MIGRATION_QUE_LIGA_A_AVALIACAO = ler(
+  "supabase/migrations/20261006090500_liga_aba_avaliacao_documental.sql",
+);
 /* A ordem por etapa do processo: só updates de "NU_ORDEM", aplicados por último. */
 const MIGRATION_DA_ORDEM = ler(
   "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql",
@@ -122,16 +135,22 @@ function abasDoSeed() {
     ...linhasDoInsertEm(MIGRATION_DAS_ENTREVISTAS, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DA_SELECAO, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DA_CLASSIFICACAO, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DA_AVALIACAO, "TB_ABA"),
   ];
   for (const sql of [
     MIGRATION_DAS_ENTREVISTAS,
     MIGRATION_DA_ORDEM,
     MIGRATION_DA_CLASSIFICACAO,
+    MIGRATION_DA_AVALIACAO,
   ])
     for (const [, ordem, aba] of sql.matchAll(
       /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
     ))
       abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
+  for (const [, rotulo, aba] of MIGRATION_DA_AVALIACAO.matchAll(
+    /update public."TB_ABA" set "NO_ABA" = '([^']+)'[^;]*where "CO_ABA" = '([^']+)'/g,
+  ))
+    abas.find((linha) => linha.CO_ABA === aba).NO_ABA = rotulo;
   return abas;
 }
 
@@ -154,9 +173,20 @@ function ligacoesDoSeed() {
   expect(MIGRATION_QUE_LIGA_A_CLASSIFICACAO).toContain(
     `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'classificacao'`,
   );
+  expect(MIGRATION_DA_AVALIACAO).toContain(
+    `select 'avaliacao-documental', a."CO_AREA", 'S' from public."TB_AREA" a`,
+  );
+  expect(MIGRATION_QUE_LIGA_A_AVALIACAO).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'avaliacao-documental'`,
+  );
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
-    ...["entrevistas", "selecao", "classificacao"].flatMap((aba) =>
+    ...[
+      "entrevistas",
+      "selecao",
+      "classificacao",
+      "avaliacao-documental",
+    ].flatMap((aba) =>
       AREAS_DO_SISTEMA.map((area) => ({ CO_ABA: aba, CO_AREA: area.id })),
     ),
   ];
@@ -233,6 +263,7 @@ describe("o seed da migration é o catálogo do código", () => {
       "calendario",
       "approved",
       "analises",
+      "avaliacao-documental",
       "entrevistas",
       "recursos",
       "selecao",
@@ -326,7 +357,7 @@ describe("a árvore segue o catálogo do banco quando ele chega", () => {
     const editais = resposta.find((aba) => aba.co_aba === "editais");
     Object.assign(
       editais.areas.find((a) => a.co_area === "projetos"),
-      { nu_ordem: 9, ds_icone: "folder" },
+      { nu_ordem: 11, ds_icone: "folder" },
     );
     const grupos = Object.fromEntries(
       arvore(PERMISSOES.admin, AREAS.todas, abasDoCatalogo(resposta)).map(
@@ -493,8 +524,14 @@ describe("contrato e acesso da função", () => {
 describe("selo beta das abas", () => {
   const recursosDe = (abas) => abas.find((aba) => aba.id === "recursos");
 
-  it("no código, só Recursos, Entrevistas, Classificação e Seleção são beta; as outras nem têm o campo", () => {
-    const beta = ["recursos", "entrevistas", "classificacao", "selecao"];
+  it("no código, só Avaliação documental, Recursos, Entrevistas, Classificação e Seleção são beta; as outras nem têm o campo", () => {
+    const beta = [
+      "avaliacao-documental",
+      "recursos",
+      "entrevistas",
+      "classificacao",
+      "selecao",
+    ];
     expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
       beta,
     );

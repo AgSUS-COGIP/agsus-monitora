@@ -113,7 +113,7 @@ describe("o que a pessoa pode usar agora", () => {
           acessos: "sem_acesso",
         },
       }),
-    ).toEqual(["Saúde Indígena: Visão geral, Análises curriculares, Editais"]);
+    ).toEqual(["Saúde Indígena: Visão geral, Painel das análises, Editais"]);
   });
 
   it("administrador global: todas as áreas; sem nenhum módulo, lista vazia", () => {
