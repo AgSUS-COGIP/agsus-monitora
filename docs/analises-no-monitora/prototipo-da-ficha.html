@@ -186,7 +186,7 @@ dialog kbd{display:inline-block;min-width:22px;padding:0 4px;border:1px solid va
         <div class="cont"><span>Ranqueados na Provisória (ART)</span><b>161</b></div>
         <div class="cont destaque"><span>Lote de convocação (aptos para análise)</span><b>22 de 161</b></div>
         <div class="config">
-          <span class="selo" data-tom="info">Lote: 5 × vagas imediatas + CR · a linha anda</span>
+          <span class="selo" data-tom="info">Lote: 3 × vagas imediatas + CR (sugerido, editável) · a linha anda · reposições: não publica</span>
           <span class="selo">Distribuição: Pegar próximo · Revisão: amostra 10% + inaptos</span>
         </div>
       </div>
@@ -243,6 +243,8 @@ dialog kbd{display:inline-block;min-width:22px;padding:0 4px;border:1px solid va
         </div>
         <span class="selo" id="h-sit">—</span>
         <span class="salvo" id="salvo">Salvo às 10:42</span>
+        <button class="btn sec small" type="button" data-empregare-cab>Abrir currículo na Empregare ↗</button>
+        <button class="btn ghost small" type="button" id="copiar-codigo">Copiar código 7000123</button>
         <div class="linha"><button class="btn ghost small" type="button">‹ Anterior</button><button class="btn ghost small" type="button">Próxima ›</button></div>
       </div>
       <div class="reserva" role="status">🔒 Esta ficha está reservada para você até 10:57 (renova enquanto a tela estiver aberta). Quem abrir agora vê "Em uso por Ana Analista", só para leitura.</div>
@@ -292,7 +294,7 @@ dialog kbd{display:inline-block;min-width:22px;padding:0 4px;border:1px solid va
       <form method="dialog"><button class="btn small">Fechar</button></form>
     </dialog>
 
-    <p class="nota-proto">Protótipo para aprovar o desenho. Dados fictícios. Os documentos ficam na Empregare: o botão "Abrir na Empregare" usa um modelo de endereço configurável por edital.</p>
+    <p class="nota-proto">Protótipo para aprovar o desenho. Dados fictícios. Os documentos ficam na Empregare: "Abrir na Empregare" abre o currículo do candidato pelo endereço capturado pelo robô; sem ele, abre as candidaturas da vaga e o "Copiar código" ajuda a buscar.</p>
   </main>
 </div>
 
@@ -434,6 +436,8 @@ dialog kbd{display:inline-block;min-width:22px;padding:0 4px;border:1px solid va
     else if (e.key === "j") focar(foco + 1); else if (e.key === "k") focar(foco - 1); else if (e.key === "?") $("dlg-atalhos").showModal();
   });
   $("concluir").addEventListener("click", () => { calcular(); evento($("falta").textContent ? "Concluir recusado: falta motivo" : "Concluir e próxima (exemplo)"); });
+  $("copiar-codigo").addEventListener("click", () => { navigator.clipboard?.writeText("7000123"); evento("Copiou o código do candidato"); });
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-empregare-cab]")) evento("Abrir currículo na Empregare"); });
   $("copiar").addEventListener("click", () => navigator.clipboard?.writeText($("parecer").value));
   $("atalhos").addEventListener("click", () => $("dlg-atalhos").showModal());
   $("tema").addEventListener("click", () => { const h = document.documentElement, esc = h.dataset.theme !== "dark"; h.dataset.theme = esc ? "dark" : "light"; $("tema").textContent = esc ? "Tema claro" : "Tema escuro"; });
