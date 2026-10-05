@@ -215,6 +215,22 @@ export function linhasDaPlanilha(retrato) {
 /** Os bytes do .xlsx da lista. */
 export function gerarXlsxDaLista(retrato, quando = new Date()) {
   const { classificacao, eliminados } = linhasDaPlanilha(retrato);
+  return gerarXlsx(
+    [
+      { nome: "Classificação", linhas: classificacao },
+      { nome: "Eliminados", linhas: eliminados },
+    ],
+    quando,
+  );
+}
+
+/**
+ * Um .xlsx (SpreadsheetML mínimo) com as planilhas dadas: [{ nome, linhas }],
+ * a primeira linha de cada uma em negrito. Também usado pela agenda das
+ * entrevistas.
+ */
+export function gerarXlsx(planilhas, quando = new Date()) {
+  const folhas = planilhas.map((p, i) => ({ ...p, n: i + 1 }));
   const arquivos = [
     {
       nome: "[Content_Types].xml",
@@ -224,8 +240,12 @@ export function gerarXlsxDaLista(retrato, quando = new Date()) {
         '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
         '<Default Extension="xml" ContentType="application/xml"/>' +
         '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
-        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
-        '<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+        folhas
+          .map(
+            (f) =>
+              `<Override PartName="/xl/worksheets/sheet${f.n}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`,
+          )
+          .join("") +
         '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
         "</Types>",
     },
@@ -242,16 +262,20 @@ export function gerarXlsxDaLista(retrato, quando = new Date()) {
       conteudo:
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
         '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-        '<sheets><sheet name="Classificação" sheetId="1" r:id="rId1"/><sheet name="Eliminados" sheetId="2" r:id="rId2"/></sheets></workbook>',
+        `<sheets>${folhas.map((f) => `<sheet name="${escaparXml(f.nome)}" sheetId="${f.n}" r:id="rId${f.n}"/>`).join("")}</sheets></workbook>`,
     },
     {
       nome: "xl/_rels/workbook.xml.rels",
       conteudo:
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
-        '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>' +
-        '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+        folhas
+          .map(
+            (f) =>
+              `<Relationship Id="rId${f.n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${f.n}.xml"/>`,
+          )
+          .join("") +
+        `<Relationship Id="rId${folhas.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>` +
         "</Relationships>",
     },
     {
@@ -264,8 +288,10 @@ export function gerarXlsxDaLista(retrato, quando = new Date()) {
         '<borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs>' +
         '<cellXfs count="2"><xf fontId="0"/><xf fontId="1" applyFont="1"/></cellXfs></styleSheet>',
     },
-    { nome: "xl/worksheets/sheet1.xml", conteudo: planilhaXml(classificacao) },
-    { nome: "xl/worksheets/sheet2.xml", conteudo: planilhaXml(eliminados) },
+    ...folhas.map((f) => ({
+      nome: `xl/worksheets/sheet${f.n}.xml`,
+      conteudo: planilhaXml(f.linhas),
+    })),
   ];
   return zipSemCompressao(arquivos, quando);
 }

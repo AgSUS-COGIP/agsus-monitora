@@ -16,7 +16,9 @@ import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
 import { abrirConversaDoEdital, definirEditalDaTela } from "../chat/ponte.js";
 import { usarChatLiberado } from "../chat/usar-chat-liberado.js";
+import { Agenda } from "./agenda.jsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
+import { criarEstadoDaAgenda } from "./estado-da-agenda.js";
 import { Listas } from "./listas.jsx";
 import { Regra } from "./regra.jsx";
 
@@ -28,7 +30,11 @@ import { Regra } from "./regra.jsx";
 
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
   - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).
-  - Visões: "Listas" (preliminar, convocação, resultado final) e "Regra".
+  - Visões: "Listas" (preliminar, convocação, resultado final), "Agenda"
+    (regra e agenda das entrevistas dos convocados; agenda.jsx) e "Regra".
+    A agenda fica aqui, junto da lista de convocação de onde saem os
+    convocados e do documento que ela preenche (DATA e HORA); quem conduz vê
+    a agenda do dia em Entrevistas › Conduzir entrevistas.
   - A conta é do motor puro (src/lib/classificacao/motor.js), com a data de
     corte do cronograma quando a regra não traz a sua.
   Sem tela de carregamento: KPIs e listas em skeleton até a primeira carga.
@@ -36,6 +42,7 @@ import { Regra } from "./regra.jsx";
 
 const VISOES = [
   { valor: "listas", rotulo: "Listas", icone: "fa-list-ol" },
+  { valor: "agenda", rotulo: "Agenda", icone: "fa-calendar-days" },
   { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
 ];
 
@@ -58,7 +65,7 @@ export function calcularClassificacao(dados, tipo) {
   return classificarEdital(dados, tipo);
 }
 
-function TelaDaArea({ estado, e }) {
+function TelaDaArea({ estado, agenda, e }) {
   const [visao, setVisao] = useState("listas");
   const idEdital = useId();
   const recarregar = () => {
@@ -73,6 +80,11 @@ function TelaDaArea({ estado, e }) {
   const tituloDoEdital = editalEscolhido
     ? editalEscolhido.edital || editalEscolhido.unidade || ""
     : "";
+
+  /* A agenda das entrevistas acompanha o edital escolhido (também preenche o documento). */
+  useEffect(() => {
+    void agenda.carregar(e.editalId);
+  }, [agenda, e.editalId]);
 
   /* O edital escolhido vale para "Compartilhar esta tela" do chat. */
   useEffect(() => {
@@ -102,7 +114,10 @@ function TelaDaArea({ estado, e }) {
         status={textoDoStatus(e)}
         aoAtualizar={() => {
           recarregar();
-          if (e.editalId) void estado.escolherEdital(e.editalId);
+          if (e.editalId) {
+            void estado.escolherEdital(e.editalId);
+            void agenda.carregar(e.editalId);
+          }
         }}
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
@@ -192,8 +207,17 @@ function TelaDaArea({ estado, e }) {
                 estado={estado}
                 e={e}
                 calcular={calcular}
+                aoAbrirAgenda={() => setVisao("agenda")}
               />
-            ) : e.dados ? (
+            ) : visao === "agenda" && e.dados ? (
+              <Agenda
+                key={e.editalId}
+                estado={estado}
+                agenda={agenda}
+                e={e}
+                calcular={calcular}
+              />
+            ) : visao === "regra" && e.dados ? (
               <Regra
                 key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
                 estado={estado}
@@ -213,7 +237,7 @@ function TelaDaArea({ estado, e }) {
   );
 }
 
-export function TelaDeClassificacao({ estado }) {
+export function TelaDeClassificacao({ estado, agenda }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
@@ -224,7 +248,14 @@ export function TelaDeClassificacao({ estado }) {
       void estado.carregar(areaDoApp);
   }, [estado, areaDoApp]);
 
-  return <TelaDaArea key={e.area || "sem-area"} estado={estado} e={e} />;
+  return (
+    <TelaDaArea
+      key={e.area || "sem-area"}
+      estado={estado}
+      agenda={agenda}
+      e={e}
+    />
+  );
 }
 
 /**
@@ -243,22 +274,33 @@ export function montarClassificacao({
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 } = {}) {
+  const agenda = criarEstadoDaAgenda({
+    supabase,
+    toast,
+    ...(baixar ? { baixar } : {}),
+  });
   const estado = criarEstadoDaClassificacao({
     supabase,
     toast,
     cabecalho,
+    agendaDoEdital: (editalId) => agenda.agendaDoDocumento(editalId),
     ...(baixar ? { baixar } : {}),
     ...(imprimir ? { imprimir } : {}),
     ...(copiar ? { copiar } : {}),
     ...(carregarLogo ? { carregarLogo } : {}),
   });
   const raiz = secao
-    ? montarModulo(secao, <TelaDeClassificacao estado={estado} />, {
-        nome: "a tela de classificação",
-      }).raiz
+    ? montarModulo(
+        secao,
+        <TelaDeClassificacao estado={estado} agenda={agenda} />,
+        {
+          nome: "a tela de classificação",
+        },
+      ).raiz
     : null;
   return {
     estado,
+    agenda,
     raiz,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());

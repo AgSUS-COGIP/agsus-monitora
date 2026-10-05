@@ -802,6 +802,25 @@ export const CONTRATO_RPC = {
     resumo:
       "Registra o empate final de um grupo: sorteio (semente do servidor ou informada, reprodutível) ou decisão manual com justificativa. Editor.",
   },
+  // ── Agenda das entrevistas (20261005120000_agenda_das_entrevistas.sql) ───
+  obter_agenda_entrevista: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "A agenda das entrevistas do edital: regra vigente e versões, horários por convocado (dia, hora de Brasília, banca, origem), bancas e histórico; pode_editar. Entrevistas ou Classificação leitor.",
+  },
+  salvar_regra_agenda_entrevista: {
+    argumentos: ["p_edital", "p_configuracao", "p_versao_atual", "p_motivo"],
+    critica: false,
+    resumo:
+      "Salva a regra da agenda do edital como versão nova (40001 se a versão aberta não é a vigente; motivo obrigatório da 2ª em diante). Entrevistas ou Classificação editor.",
+  },
+  salvar_agenda_entrevista: {
+    argumentos: ["p_edital", "p_dados"],
+    critica: false,
+    resumo:
+      "Grava a agenda inteira (GERAR, AJUSTAR ou LIMPAR) e o que mudou no histórico; recusa repetido, fora do edital e mesma banca com horário sobreposto. Entrevistas ou Classificação editor.",
+  },
   // ── Chat (20261002210000_chat.sql) — todas exigem o recurso 'chat' ────────
   listar_conversas_chat: {
     argumentos: [],

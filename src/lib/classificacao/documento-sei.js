@@ -545,9 +545,11 @@ const siglaDasModalidades = (l, modalidades) =>
     FINAL       CLASSIFICAÇÃO | NOME | [MODALIDADE] | NOTA FINAL
     eliminados  Nome | [Nota (Final) | parciais] | Justificativa
     CONVOCACAO  Nº | NOME | Vaga | [Modalidade] | DATA | HORA (uma tabela,
-                agrupada por vaga; data e hora o gestor preenche no SEI)
+                agrupada por vaga; data e hora vêm da agenda das entrevistas
+                salva — `agenda`, Map analise_id → { data, inicio } — e, sem
+                horário, ficam em branco para preencher no SEI)
 */
-function tabelasDaLista(retrato, lista) {
+function tabelasDaLista(retrato, lista, agenda = null) {
   const casas = retrato.casas ?? 2;
   const tipo = retrato.tipo;
   const modalidades = retrato.modalidades || [];
@@ -646,8 +648,7 @@ function tabelasDaLista(retrato, lista) {
           ...(rotulos.length === 6
             ? [siglaDasModalidades(l, modalidades)]
             : []),
-          "",
-          "",
+          ...dataEHoraDaAgenda(agenda, l.analise_id),
         ]);
     }
     return [
@@ -726,6 +727,14 @@ function emTitulo(valor) {
     .join("");
 }
 
+/* DATA e HORA da convocação: "06/10/2026" e "08:30" da agenda; sem horário, em branco. */
+function dataEHoraDaAgenda(agenda, analiseId) {
+  const h = analiseId && agenda?.get ? agenda.get(analiseId) : null;
+  if (!h?.data || !h?.inicio) return ["", ""];
+  const [a, m, d] = String(h.data).split("-");
+  return [`${d}/${m}/${a}`, String(h.inicio).slice(0, 5)];
+}
+
 /**
  * O modelo do documento oficial de uma lista registrada.
  *   retrato   o retrato da lista (instantaneoDaLista)
@@ -734,10 +743,18 @@ function emTitulo(valor) {
  *   regra     a configuração da regra do edital (textos em regra.documento,
  *             notas mínimas)
  *   hoje      a data do "Brasília, <data>." do Word quando o gestor não fixa
+ *   agenda    na convocação, Map analise_id → { data, inicio } da agenda das
+ *             entrevistas salva (agendaPorCandidato); preenche DATA e HORA
  */
 export function documentoOficial(
   retrato,
-  { lista = "todas", fase = null, regra = null, hoje = new Date() } = {},
+  {
+    lista = "todas",
+    fase = null,
+    regra = null,
+    hoje = new Date(),
+    agenda = null,
+  } = {},
 ) {
   const r = normalizarRegra(regra);
   const doc = documentoDaRegra(r);
@@ -807,7 +824,7 @@ export function documentoOficial(
       : `${local}, na data da assinatura digital.`,
     localDataPorExtenso: `${local}, ${dataPorExtenso(doc.data || hoje)}.`,
     preliminares,
-    blocos: tabelasDaLista(retrato, listaEfetiva),
+    blocos: tabelasDaLista(retrato, listaEfetiva, agenda),
     finais,
     nome: `${emTitulo(tituloPrincipal)} - ${nomeDaListaNoDocumento(retrato, listaEfetiva)}`,
     edital,

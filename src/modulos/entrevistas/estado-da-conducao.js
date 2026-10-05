@@ -17,6 +17,11 @@
   administrador global pode pedir todos (`todos`) e liberar um edital fora
   da janela até uma data (`liberarEdital`).
 
+  A agenda das entrevistas do edital (montada na Classificação › Agenda) vem
+  junto ao abrir o edital, por `obter_agenda_entrevista` (migration
+  20261005120000): só leitura aqui, para quem conduz ver a agenda do dia.
+  Sem a migration ou sem acesso, `agenda` fica nula e a condução segue igual.
+
   A área é a do app: `trocarArea` (chamado pelo controlador e na troca de
   área com a tela aberta) descarta o que era da outra. Outro usuário na mesma
   aba também zera tudo.
@@ -43,6 +48,7 @@ const RPC_DESCONVOCAR = "desconvocar_da_entrevista";
 const RPC_LANCAR_NOTAS = "lancar_notas_entrevista";
 const RPC_LISTAR_EDITAIS = "listar_editais_entrevista";
 const RPC_LIBERAR_EDITAL = "liberar_entrevista_edital";
+const RPC_OBTER_AGENDA = "obter_agenda_entrevista";
 
 const LISTA_VAZIA = Object.freeze({
   lista: [],
@@ -65,6 +71,8 @@ const ESTADO_INICIAL = Object.freeze({
   editalId: "",
   /** Payload de `obter_entrevistas_do_edital` do edital aberto. */
   edital: null,
+  /** Payload de `obter_agenda_entrevista` do edital aberto (ou null). */
+  agenda: null,
   carregandoEdital: false,
   erroDoEdital: "",
   /** `pode_editar` do último edital aberto (os roteiros não o devolvem). */
@@ -267,16 +275,22 @@ export function criarEstadoDaConducao({
 
   async function abrirEdital(id) {
     const meu = ++pedidoDoEdital;
+    const mesmo = id && estado.edital?.edital?.id === id;
     publicar({
       editalId: id || "",
-      edital: id && estado.edital?.edital?.id === id ? estado.edital : null,
+      edital: mesmo ? estado.edital : null,
+      agenda: mesmo ? estado.agenda : null,
       carregandoEdital: Boolean(id),
       erroDoEdital: "",
     });
     if (!id) return false;
     try {
-      const dados = await rpc(RPC_OBTER_EDITAL, { p_edital: id });
+      const [dados, agenda] = await Promise.all([
+        rpc(RPC_OBTER_EDITAL, { p_edital: id }),
+        rpc(RPC_OBTER_AGENDA, { p_edital: id }).catch(() => null),
+      ]);
       if (meu !== pedidoDoEdital) return false;
+      publicar({ agenda: agenda || null });
       mostrarEdital(dados);
       return true;
     } catch (erro) {

@@ -268,3 +268,73 @@
     grid-template-columns: minmax(320px, 2fr) 3fr;
   }
 }
+
+/* ── Agenda das entrevistas (agenda.jsx) ────────────────────────────── */
+
+.classificacao-agenda,
+.agenda-regra,
+.agenda-regra form,
+.agenda-convocados {
+  display: grid;
+  gap: var(--space-3);
+}
+.agenda-subtitulo {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--font-weight-semibold);
+}
+.agenda-periodos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.agenda-periodo {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+.agenda-caixas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.agenda-caixa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.agenda-resumo,
+.agenda-erros ul,
+.agenda-conflitos ul,
+.agenda-versoes ul,
+.agenda-historico ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.agenda-versoes summary,
+.agenda-historico summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+@media (min-width: 1100px) {
+  .agenda-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.agenda-tabela {
+  width: 100%;
+}
+.agenda-tabela .agenda-dia th {
+  background: var(--color-bg-subtle);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+}
+.agenda-tabela tr.agenda-conflito td {
+  background: var(--color-status-danger-bg);
+}
+.agenda-selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
