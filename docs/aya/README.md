@@ -35,8 +35,7 @@ documento de origem permite preferir a tela atual. Uma pergunta igual a uma das
 lê igual ("lista de aprovados" e "as listas dos aprovados") não podem estar em
 verbetes diferentes. Quando há ambiguidade, ela oferece até três perguntas em
 botões e um chamado pelo Gmail; pergunta sem relação com o MONITORA recebe a
-mensagem de fora do escopo. Não há modelo local, prompt em execução, bridge ou
-túnel.
+mensagem de fora do escopo. A Aya não usa IA: só devolve respostas escritas aqui.
 
 ## Quando o verbete precisa de fonte
 

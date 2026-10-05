@@ -11,7 +11,7 @@ dos PDFs oficiais).
 ## Tela de Classificação
 
 **perguntas:** tela de classificacao | aba classificacao | para que serve classificacao | para que serve a tela de classificacao | para que serve a classificacao
-**resposta:** A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; dela sai o documento oficial — "Copiar para o SEI", "Como fica no SEI", "Baixar DOCX" com papel timbrado, PDF — e a planilha XLSX. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.
+**resposta:** A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; dela sai o documento oficial — "Copiar para o SEI", "Como fica no SEI", "Baixar DOCX" com papel timbrado, PDF — e a planilha XLSX. A tela tem três visões, no topo: Listas, Agenda (a agenda das entrevistas dos convocados) e Regra. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.
 **fonte:** src/modulos/classificacao/; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
@@ -140,7 +140,7 @@ dos PDFs oficiais).
 
 ## Quem pode mudar a classificação
 
-**perguntas:** quem pode mudar a regra de classificacao | quem pode gerar a lista de classificacao | permissao classificacao
+**perguntas:** quem pode mudar a regra de classificacao | quem pode gerar a lista de classificacao | permissao classificacao | nao vejo a aba classificacao
 **resposta:** A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.
 **fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.js
 **abrir:** config:acessos
@@ -158,4 +158,25 @@ dos PDFs oficiais).
 **resposta:** No MONITORA, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.
 **fato:** No MONITORA, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".
 **fonte:** src/modulos/classificacao/publicar-aprovados.jsx; src/lib/publicacao-de-aprovados.js; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
+**abrir:** classificacao
+
+## Botões Gerar, exportar e publicar desabilitados
+
+**perguntas:** por que nao aparece o botao gerar | botao gerar nao aparece | botao publicar desabilitado | nao consigo publicar a lista de classificacao | copiar para o sei desabilitado | nao consigo exportar a classificacao | publicar como lista de aprovados nao aparece
+**resposta:** "Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão, e "Publicar como lista de aprovados" só existe na lista Resultado final.
+**fonte:** src/modulos/classificacao/listas.jsx; src/lib/access-roles.js (canEditClassificacao)
+**abrir:** classificacao
+
+## Siglas das modalidades e cadastro reserva
+
+**perguntas:** siglas das modalidades | o que e ac | ampla concorrencia | o que e pp | pretos e pardos | o que e pi | o que e pq | quilombolas | o que e pcd | pessoa com deficiencia | o que e ppiq | o que e cr | cotas da classificacao
+**resposta:** Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.
+**fonte:** src/lib/classificacao/catalogo.js (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.js; src/lib/classificacao/vagas.js
+**abrir:** classificacao
+
+## Nota da ART e lote de convocação
+
+**perguntas:** o que e art | nota da art | autodeclaracao de requisitos e titulos | ranqueamento eletronico | lote | lote de convocacao | linha de corte | triado
+**resposta:** ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo MONITORA: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).
+**fonte:** src/lib/classificacao/catalogo.js (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)
 **abrir:** classificacao

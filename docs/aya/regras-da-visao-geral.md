@@ -60,3 +60,17 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 **resposta:** Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h de Brasília. Valem para todo edital ativo que tem a fonte, com ou sem vaga na Seleção: as vagas da planilha Auditoria ligadas ao edital somadas, a lista de aprovados vigente do edital (Contratado ou Migração), as entrevistas do edital com parecer e as análises com status Aprovado do mesmo número de edital (ou do mesmo nome, para editais sem número, quando o nome é único na área). Sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte.
 **fato:** Os KPIs dos editais na Visão geral são recalculados pelo banco no fim de cada carga da Seleção e às 10h de Brasília, para todo edital ativo que tem a fonte (Seleção, lista de aprovados vigente, entrevistas, análises); sem a fonte, o valor anterior fica; as vagas vêm do cadastro do edital.
 **fonte:** supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.js
+
+## Números da Visão geral que não batem
+
+**perguntas:** por que o numero da visao geral nao bate | kpi da visao geral diferente | contratados diferente da lista de aprovados | numero da visao geral desatualizado | vagas nao batem
+**resposta:** Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção (de hora em hora, das 7h às 19h de Brasília) e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.
+**fonte:** src/lib/indicadores-do-monitoramento.js; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql
+**abrir:** dashboard
+
+## Quem vê a Visão geral
+
+**perguntas:** quem pode ver a visao geral | nao vejo a visao geral | permissao visao geral | posso editar a visao geral
+**resposta:** A Visão geral usa a permissão "Visão geral" (Leitor basta, em Configurações › Acessos), mostra só a área atual e é só de consulta. Para mudar vagas, cronograma ou status de um edital, use Editais (Editor em Editais ou em Cronograma); os rótulos dos indicadores mudam em Configurações › Página inicial. Corrigir coordenadas dos mapas é do administrador global ou do Gestor.
+**fonte:** src/lib/access-roles.js (paginasPermitidas, podeEditarCoordenadas)
+**abrir:** dashboard

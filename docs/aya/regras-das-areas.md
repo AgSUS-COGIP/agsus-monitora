@@ -9,7 +9,7 @@ As três áreas do sistema (Saúde Indígena, SEDE e Projetos), a área atual e 
 ## Áreas do sistema
 
 **perguntas:** areas do sistema | area do sistema | o que muda entre as areas do sistema | quais sao as areas | quais areas existem | o que e area atual | area atual
-**resposta:** O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.
+**resposta:** O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.
 **fato:** O MONITORA tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.
 **fonte:** src/lib/menu-lateral.js; supabase/migrations/20260925170000_areas_do_sistema.sql
 
@@ -22,8 +22,8 @@ As três áreas do sistema (Saúde Indígena, SEDE e Projetos), a área atual e 
 ## Ordem do menu
 
 **perguntas:** ordem do menu | qual e a ordem do menu | ordem das abas | paginas do menu | menu lateral
-**resposta:** O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.
-**fato:** O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Lista de aprovados e Seleção.
+**resposta:** O menu de cada área segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção. Abaixo das áreas fica Administração (as seções de Configurações). O grupo Painéis só aparece quando há painel externo ativo liberado para a pessoa. O selo BETA ao lado do nome marca a aba ainda em teste.
+**fato:** O menu segue as etapas do processo seletivo: Visão geral, Editais, Cronograma, Análises curriculares, Recursos, Entrevistas, Classificação, Lista de aprovados e Seleção.
 **fonte:** supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; src/lib/menu-lateral.js
 
 ## Recorte por área no banco
