@@ -52,6 +52,11 @@
   --z-header: 10010;
   --z-sidebar: 10020;
   --z-popover: 10040;
+
+  /* Cabeçalho fixo de tabela: só precisa ficar acima das linhas. Sem a
+     variável, o ui.css caía no reserva 100 e o cabeçalho passava por cima
+     da lista dos filtros (Lista de aprovados, 05/10/2026). */
+  --z-sticky: 2;
 }
 
 *,
@@ -303,14 +308,17 @@ body.access-request-mode .login-cogip {
   margin-top: 1px;
 }
 
-label {
+/* Rótulo de campo em caixa alta. O rótulo de caixa de marcar/opção (filtros,
+   "Agrupar por projeto", avisos do chat) é texto comum: fica de fora. */
+label:where(:not(:has(input[type="checkbox"], input[type="radio"]))) {
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: #172b46;
 }
-input,
+/* Caixa de marcar e de opção ficam no tamanho natural do navegador. */
+input:where(:not([type="checkbox"], [type="radio"])),
 select,
 textarea {
   width: 100%;
