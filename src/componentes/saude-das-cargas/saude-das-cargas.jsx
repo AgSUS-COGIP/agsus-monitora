@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import { formatNumberBR } from "../../lib/formatters.js";
+import { estadoDoBotao, roboDeCarga } from "../../lib/robos-de-carga.js";
 import {
   dataHora,
   SITUACOES,
@@ -23,6 +24,10 @@ import { criarEstadoDaSaude } from "./estado.js";
 
   Abre pela seção (src/modulos/configuracoes/secoes.js → `render()`), que relê a cada
   vez: o estado das cargas muda a cada poucos minutos.
+
+  Empregare, Seleção e Entrevistas têm "Rodar agora": o botão chama
+  /api/rodar-carga (api/rodar-carga.js), que dispara o workflow no GitHub;
+  fica desabilitado enquanto a carga roda (src/lib/robos-de-carga.js).
 */
 
 const classes = (...lista) => lista.filter(Boolean).join(" ");
@@ -118,8 +123,44 @@ function textoDaAtualizacao(linha) {
   return `Atualizado ${textoDaIdade(linha.idadeMin)}`;
 }
 
-function Linha({ linha }) {
+function RodarAgora({ robo, linha, atual, estado }) {
+  const botao = estadoDoBotao({
+    robo,
+    disponibilidade: atual.disparo,
+    linha,
+    pedidoEm: atual.pedidos[robo.id] || null,
+    agora: estado.agora(),
+  });
+  const aviso = atual.avisos[robo.id];
+  return (
+    <>
+      <button
+        type="button"
+        className="btn secondary saude-botao saude-rodar"
+        disabled={botao.desabilitado}
+        title={botao.aviso || undefined}
+        onClick={() => void estado.rodarAgora(robo.id)}
+      >
+        <Icone nome="refresh-cw" tamanho={14} />
+        {botao.rotulo}
+      </button>
+      {aviso ? (
+        <small
+          className={`saude-rodar__aviso saude-rodar__aviso--${aviso.tom}`}
+          role={aviso.tom === "erro" ? "alert" : "status"}
+        >
+          {aviso.texto}
+        </small>
+      ) : botao.aviso ? (
+        <small className="saude-rodar__aviso">{botao.aviso}</small>
+      ) : null}
+    </>
+  );
+}
+
+function Linha({ linha, atual, estado }) {
   const [aberta, setAberta] = useState(false);
+  const robo = roboDeCarga(linha.id);
   return (
     <li
       className={classes("saude-item", `saude-item--${linha.situacao}`)}
@@ -146,6 +187,14 @@ function Linha({ linha }) {
           >
             {textoDaAtualizacao(linha)}
           </span>
+          {robo ? (
+            <RodarAgora
+              robo={robo}
+              linha={linha}
+              atual={atual}
+              estado={estado}
+            />
+          ) : null}
           {linha.partes.length ? (
             <button
               type="button"
@@ -282,7 +331,7 @@ export function SaudeDasCargas({ estado }) {
       />
       <ul className="saude-lista">
         {linhas.map((linha) => (
-          <Linha key={linha.id} linha={linha} />
+          <Linha key={linha.id} linha={linha} atual={atual} estado={estado} />
         ))}
       </ul>
     </div>
@@ -298,11 +347,17 @@ export function montarSaudeDasCargas({
   supabase = getSupabaseClient(),
   getProfile,
   agora,
+  buscar,
+  obterToken,
+  agendar,
 } = {}) {
   const estado = criarEstadoDaSaude({
     supabase,
     getProfile,
     ...(agora ? { agora } : {}),
+    ...(buscar ? { buscar } : {}),
+    ...(obterToken ? { obterToken } : {}),
+    ...(agendar ? { agendar } : {}),
   });
   const raiz = raizDaTela
     ? montarModulo(raizDaTela, <SaudeDasCargas estado={estado} />, {

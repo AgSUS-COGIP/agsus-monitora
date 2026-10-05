@@ -198,8 +198,12 @@ describe("migration do robô da Empregare: regras da carga", () => {
 
   it("sem hard delete: quem sai fica inativo", () => {
     expect(MIGRATION).not.toMatch(/delete from public\."TB_EMPREGARE/i);
-    const fechar = corpoDaFuncao("create function public.fechar_vaga_empregare(");
-    expect(fechar).toContain(`"ST_REGISTRO_ATIVO" = 'N', "DT_DESATIVACAO" = now()`);
+    const fechar = corpoDaFuncao(
+      "create function public.fechar_vaga_empregare(",
+    );
+    expect(fechar).toContain(
+      `"ST_REGISTRO_ATIVO" = 'N', "DT_DESATIVACAO" = now()`,
+    );
   });
 
   it("hash da linha calculado no banco e data de atualização só quando muda", () => {
@@ -213,14 +217,18 @@ describe("migration do robô da Empregare: regras da carga", () => {
   });
 
   it("vagas padrão: editais ativos em curso (30 dias), nunca carregadas primeiro", () => {
-    const corpo = corpoDaFuncao("create function public.listar_vagas_empregare(");
+    const corpo = corpoDaFuncao(
+      "create function public.listar_vagas_empregare(",
+    );
     expect(corpo).toContain("s.edital_ativo is true");
     expect(corpo).toContain("s.fim_do_cronograma >= current_date - 30");
     expect(corpo).toContain('order by ev."DT_ULTIMA_CARGA" nulls first');
   });
 
   it("uma execução por vez e a esquecida não segura as próximas", () => {
-    const corpo = corpoDaFuncao("create function public.iniciar_sync_empregare(");
+    const corpo = corpoDaFuncao(
+      "create function public.iniciar_sync_empregare(",
+    );
     expect(corpo).toContain("interval '3 hours'");
     expect(corpo).toContain("errcode = '55P03'");
   });

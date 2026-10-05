@@ -88,7 +88,11 @@ function chamar({
   };
   const req = {
     method: metodo,
-    headers: { host: "monitora.exemplo", authorization: autorizacao, ...cabecalhos },
+    headers: {
+      host: "monitora.exemplo",
+      authorization: autorizacao,
+      ...cabecalhos,
+    },
     body: corpo,
   };
   return handler(req, res, { ambiente, buscar }).then(() => ({
@@ -142,9 +146,7 @@ describe("/api/rodar-carga", () => {
     expect((await chamar({ usuario: 401 })).res.statusCode).toBe(401);
     const semAdmin = await chamar({ admin: false });
     expect(semAdmin.res.statusCode).toBe(403);
-    expect(semAdmin.chamadas.some((c) => c.url.includes("github"))).toBe(
-      false,
-    );
+    expect(semAdmin.chamadas.some((c) => c.url.includes("github"))).toBe(false);
     const outraOrigem = await chamar({
       cabecalhos: { origin: "https://outro.exemplo" },
     });
@@ -157,7 +159,9 @@ describe("/api/rodar-carga", () => {
       expect(res.statusCode).toBe(400);
       expect(chamadas.some((c) => c.url.endsWith("/dispatches"))).toBe(false);
     }
-    const { res } = await chamar({ corpo: JSON.stringify({ robo: "selecao" }) });
+    const { res } = await chamar({
+      corpo: JSON.stringify({ robo: "selecao" }),
+    });
     expect(res.statusCode).toBe(202);
   });
 
@@ -206,7 +210,10 @@ describe("botão Rodar agora", () => {
     expect(
       estadoDoBotao({
         robo,
-        disponibilidade: { status: "ok", robos: { empregare: { rodando: true } } },
+        disponibilidade: {
+          status: "ok",
+          robos: { empregare: { rodando: true } },
+        },
         agora,
       }).desabilitado,
     ).toBe(true);
@@ -246,9 +253,13 @@ describe("botão Rodar agora", () => {
   it("explica quando falta configurar ou fora da versão publicada", () => {
     expect(
       estadoDoBotao({ robo, disponibilidade: { status: "sem_token" } }),
-    ).toMatchObject({ desabilitado: true, aviso: expect.stringMatching(/GITHUB_DISPATCH_TOKEN/) });
+    ).toMatchObject({
+      desabilitado: true,
+      aviso: expect.stringMatching(/GITHUB_DISPATCH_TOKEN/),
+    });
     expect(
-      estadoDoBotao({ robo, disponibilidade: { status: "indisponivel" } }).aviso,
+      estadoDoBotao({ robo, disponibilidade: { status: "indisponivel" } })
+        .aviso,
     ).toBe("Só na versão publicada.");
   });
 
