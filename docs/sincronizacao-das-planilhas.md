@@ -5,7 +5,7 @@ Guia para quem opera as cargas das planilhas no dia a dia, inclusive na ausênci
 
 ## O que é
 
-Duas abas do MONITORA vêm de planilhas do Google Drive. Todo dia às **9h** o GitHub Actions lê cada
+Duas abas do MONITORA vêm de planilhas do Google Drive. De hora em hora, das **7h às 19h**, o GitHub Actions lê cada
 planilha e grava no banco. As duas cargas funcionam do mesmo jeito e usam as mesmas credenciais.
 
 | Aba do MONITORA | Planilha (aba) | Workflow no Actions | Tabelas |
@@ -17,11 +17,11 @@ planilha e grava no banco. As duas cargas funcionam do mesmo jeito e usam as mes
 Entrevistas
   planilhas de entrevista de cada vaga
      └─ Apps Script "Cruzamento de entrevistados" (continua na planilha) monta a aba Entrevistados
-          └─ GitHub Actions, 9h: scripts/sincronizar-entrevistas.mjs → Supabase
+          └─ GitHub Actions, de hora em hora (7h–19h): scripts/sincronizar-entrevistas.mjs → Supabase
 
 Seleção
   planilha "Auditoria", aba Resultado (uma linha por vaga: inscritos, aptos, eliminados, triados…)
-     └─ GitHub Actions, 9h: scripts/sincronizar-selecao.mjs → Supabase
+     └─ GitHub Actions, de hora em hora (7h–19h): scripts/sincronizar-selecao.mjs → Supabase
 ```
 
 O cruzamento das entrevistas continua no Apps Script porque as pastas das planilhas de vaga não
@@ -42,7 +42,7 @@ são da conta `dados.recursoshumanos`. Este guia cobre só as cargas para o banc
 - Editais de **outras bancas** (04/2026, 96/2025, 97/2025, FGV, FCC) só têm inscritos e total de
   eliminados. Não é erro: o processo é outro.
 
-## Rodar agora (sem esperar as 9h)
+## Rodar agora (sem esperar a próxima hora)
 
 1. GitHub → repositório → aba **Actions** → **Sincronizar entrevistas** ou **Sincronizar seleção**.
 2. **Run workflow** → escolha o modo → **Run workflow**.
@@ -131,7 +131,7 @@ vai para o container (`docker run --env-file .env.local`).
 ## Arquivos
 
 - `.github/workflows/sincronizar-entrevistas.yml` e `sincronizar-selecao.yml`: horário
-  (`cron: "0 12 * * *"`, 12h UTC = 9h de Brasília) e o botão.
+  (`cron: "0 10-22 * * *"`, de hora em hora das 10h às 22h UTC = 7h às 19h de Brasília) e o botão.
 - `scripts/sincronizar-entrevistas.mjs` e `scripts/sincronizar-selecao.mjs`: as cargas;
   `scripts/carga-de-planilha.mjs`: o que as duas têm em comum (credencial, leitura da aba, RPC).
 - `src/lib/entrevistas-da-planilha.js` e `src/lib/selecao-da-planilha.js`: como cada aba vira

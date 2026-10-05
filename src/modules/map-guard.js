@@ -397,8 +397,6 @@ function enhanceMapAccessibility(L, map) {
     "aria-label",
     "Mapa da Saúde Indígena com foco inicial no Brasil e navegação permitida pela América do Sul. Use os botões mais e menos, a roda do mouse, duplo clique, gesto de pinça ou as teclas mais e menos para controlar o zoom.",
   );
-  container.title =
-    "Brasil em destaque. Afaste o zoom para consultar o contexto da América do Sul.";
 
   map.scrollWheelZoom?.enable?.();
   map.doubleClickZoom?.enable?.();

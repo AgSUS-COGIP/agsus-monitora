@@ -18,7 +18,12 @@
     seta, que não apontaria mais para o ponto). A largura tem teto e o texto quebra
     na palavra (`.dica-no-mapa` em src/ui/ui.css) em vez de uma linha sem fim;
   - popup: largura máxima e altura máxima relativas ao tamanho do mapa, e o
-    `autoPan` com folga suficiente para não ficar sob os controles.
+    `autoPan` com folga suficiente para não ficar sob os controles. Só o
+    `autoPan` da abertura, sem `keepInView`: ele repete o autoPan a cada
+    `moveend`, e o `maxBounds` do `map-guard` também puxa o mapa de volta a
+    cada `moveend`. Com o popup perto do limite (Pacaraima/RR, no norte), um
+    empurrava o mapa para cima e o outro para baixo, sem fim — o mapa
+    "saltitava" enquanto o popup estivesse aberto.
 
   A escolha da direção é pura (`escolherDirecaoDaDica`), testada com os casos
   de borda; o resto só mede e repete o posicionamento do próprio Leaflet
@@ -214,7 +219,7 @@ export function opcoesDoPopup({ largura, altura } = {}) {
     maxWidth,
     minWidth: Math.min(LARGURA_MINIMA_DO_POPUP, maxWidth),
     autoPan: true,
-    keepInView: true,
+    keepInView: false,
     autoPanPaddingTopLeft: [...FOLGA_DO_POPUP_EM_CIMA],
     autoPanPaddingBottomRight: [...FOLGA_DO_POPUP_EMBAIXO],
   };

@@ -1004,7 +1004,7 @@ export const VERBETES_AYA = Object.freeze([
       "para que serve a tela de selecao",
     ],
     resposta:
-      "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada todo dia no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
+      "A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada de hora em hora no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
     fato: "",
     fonte: "src/modulos/selecao/; src/lib/selecao-do-painel.js",
     abrir: "selecao",
@@ -1019,7 +1019,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao da selecao",
     ],
     resposta:
-      "A Seleção é carregada todo dia às 9h de Brasília pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.",
+      "A Seleção é carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, a partir da aba Resultado da planilha Auditoria (também pode ser disparada à mão). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.",
     fato: "",
     fonte:
       ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql",
@@ -1878,7 +1878,7 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao das entrevistas",
     ],
     resposta:
-      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada todo dia às 9h de Brasília pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
+      'Os dados de Resultados vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada de hora em hora, das 7h às 19h de Brasília, pelo GitHub Actions, que também pode ser disparado à mão. Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
     fato: "",
     fonte:
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
@@ -2150,6 +2150,24 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/modulos/chat/estado.js; src/modulos/chat/painel.jsx; src/lib/identidade-da-aba.js",
+  },
+  {
+    arquivo: "regras-do-chat.md",
+    titulo: "Aviso de mensagem nova",
+    perguntas: [
+      "aviso de mensagem nova",
+      "popup do chat",
+      "notificacao quando chega mensagem",
+      "nao aparece aviso de mensagem",
+      "aviso no canto da tela",
+      "ativar notificacao do navegador",
+      "aviso some sozinho",
+    ],
+    resposta:
+      'Quando chega mensagem de outra pessoa e você não está com aquela conversa aberta na tela, aparece um aviso no canto inferior direito com quem mandou e o começo do texto; clique nele para abrir a conversa, ou no X para dispensar. Ele some sozinho em alguns segundos (fica enquanto o mouse está em cima) e aparecem no máximo três, um por conversa. Com o MONITORA em outra aba ou minimizado, o aviso vem como notificação do navegador, se você ligou "Notificações do navegador" em Avisos, no fim da lista de conversas: o navegador pede a permissão nesse clique. Suas mensagens, as apagadas e as de conversas silenciadas não geram aviso.',
+    fato: "",
+    fonte:
+      "src/modulos/chat/avisos.jsx; src/modulos/chat/estado.js; src/lib/avisos-do-chat.js",
   },
   {
     arquivo: "regras-do-chat.md",
